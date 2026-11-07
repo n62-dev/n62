@@ -56,7 +56,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 12. **No lanes in the morning** (a selftest failed): the owner starts `scripts/night.sh` without `--lane`, and henri runs lane B's rows, then lane A's, as one queue.
 
 ### Night 2026-11-07 to 11-08, to 09:00, both lanes on the Tab One (owner, 2026-11-07)
-`ANDROID_SERIAL=HA24BZ2Y` for both lanes, `--until 09:00`, from the phase-1 worktree after the day chain (G181, G188, A83–A85; `.tasks/day-2026-11-07/chain.out`); one of them not merged gets its row back first in its lane (G181, G188 with `--no-worker`). Before the start the owner plugs in and unlocks the Tab One; `tools/stay-awake.sh HA24BZ2Y --restore` (STAY_ON=7). CORE DEVICE after each pass. Lane A: the last night's FIX, R151 (room under the start chunk) before the rows that grow it, the showcase and release rows, the UI rows, the engine rows; lane B: the FIX, G182, A64 to A75. The queue runs to Thu 11-12 (release Sun 11-15). A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. Every "After" was checked on 2026-11-07 ("–" is merged); a step whose "After" is not merged is skipped. Follow each Opus pass as written (rule 3).
+`ANDROID_SERIAL=HA24BZ2Y` for both lanes, `--until 09:00`, from the phase-1 worktree after the day chain (G181, G188, A83–A85; `.tasks/day-2026-11-07/chain.out`). Before the start the owner plugs in and unlocks the Tab One; `tools/stay-awake.sh HA24BZ2Y --restore` (STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. Every "After" was checked on 2026-11-07 ("–" is merged); a step whose "After" is not merged is skipped. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, then engine rows)
 Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry highlights (R116)" and the lifted --pick on the History picked row; R113's rings, gallery home-tips-small); after R24d (with R92's Constants and Tools; R108's gallery group "Decimal comma in apps"; R89 on the Fairphone: save two presets with different free keys and switch; R111's note at 360 px; R33's stored-name colour in each theme, decisions.md "Owner answers of 2026-11-02"; R120's gallery unitresult-t10-comma; R124's gallery group "Mark style (R124)" and R125's "Digit groups (R125)", ’ and , grouping only before the point since R125f1; G164's sample sources, decisions.md "Needs the user"; R59 on the Tab One: import a .txt library from Downloads and from Drive, paste a long one from the clipboard, read the 9 s notice; R135's note on CAS Σ cos(k)/k to 2000; R143's ▾ at 360 px, where Math's face and Help's Shift legend Settings come out up to 1 px smaller, kept by Opus pass 88).
@@ -65,18 +65,22 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 |---|---|---|---|---|
 | 545 | [R147f1](packages/R147f1.md) a tap on a history input keeps the focus in the entry line (pass 89's FIX) | ron, Sonnet | `p1/ron-tappickfocus` | – |
 | 547 | [R151](packages/R151.md) room under the start chunk's 61.00 kB limit (the limit stays) | ron, Opus | `p1/ron-startroom` | – |
+| 551 | [R161](packages/R161.md) the press is our flag, not `:active` (F191) | ron, Opus | `p1/ron-pressflag` | R151 |
+| 552 | [R162](packages/R162.md) the key pop | ron, Sonnet | `p1/ron-keypop` | R161 |
 | 539 | [R152](packages/R152.md) a history row draws e and i, never `\exponentialE` in red (F189) | ron, Sonnet | `p1/ron-historye` | – |
 | 548 | [R158](packages/R158.md) a plain number too wide for its row wraps at a digit group (F190, the showcase's 30 digits) | ron, Sonnet | `p1/ron-numberwrap` | R152 |
 | 540 | [R153](packages/R153.md) N62 turns teal; the old N62 becomes Black & White; Teal goes | ron, Opus | `p1/ron-tealn62` | – |
 | 541 | [R154](packages/R154.md) the entry outline says what the keypad will do | ron, Sonnet | `p1/ron-entryring` | R153, R151 |
 | 542 | [R155](packages/R155.md) a short dash runs round the outline while a job runs | ron, Sonnet | `p1/ron-entrysnake` | R154 |
 | 543 | [R156](packages/R156.md) key shadows, a switch in Appearance (on by default) | ron, Opus | `p1/ron-keyshadow` | R153, R151 |
+| 553 | [R163](packages/R163.md) a switch for the pops | ron, Opus | `p1/ron-popswitch` | R162, R156 |
 | 549 | [R160](packages/R160.md) the too-old WebView check says "update" below Chrome 111 | ron, Sonnet | `p1/ron-webview111` | – |
 | 550 | [R159](packages/R159.md) the unit-result e2e passes under load, or its lost tap is fixed | ron, Sonnet | `p1/ron-unitflake` | – |
 | 536 | [R53](packages/R53.md) results mode: the keypad folds by a handle or swipe | ron, Opus | `p1/ron-results-fold` | – |
 | 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | R53 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R153, R149, R151 |
+| 554 | [R164](packages/R164.md) the other presses use the flag | ron, Sonnet | `p1/ron-pressflag2` | R161 |
 | 495 | [G178](packages/G178.md) a divergent integral inside an expression is refused, not ⚠ 1 (F115) | gorge, Opus | `p1/gorge-intdivexpr` | – |
 | 496 | [G168](packages/G168.md) no value is a plain refusal: `undef`, empty calls, `DelAVars()`, the budget message (F93, F109) | gorge, Opus | `p1/gorge-novalue` | – |
 | 500 | [G169](packages/G169.md) a list as a distribution's x gives one value per element (F105, F93) | gorge, Opus | `p1/gorge-listlast` | – |
