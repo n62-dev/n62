@@ -97,7 +97,7 @@ describe("presets (R88)", () => {
     await presets.apply(id);
     expect(session.settings).toMatchObject({ angle: "deg", format: "eng", digits: 4, entry: "textbook" });
     expect(session.settings.decimalMark).toBe("comma");
-    expect(session.settings.haptics).toEqual({ on: true, strength: 50, ms: 30 });
+    expect(session.settings.haptics).toEqual({ on: true, strength: 50, ms: 30, click: false });
   });
 
   it("apply, then capture, gives the same snapshot", async () => {
@@ -128,8 +128,23 @@ describe("presets (R88)", () => {
     expect(session.settings.decimalMark).toBe("comma");
     expect(session.settings.fmtCycle).toEqual(["std", "sci"]);
     expect(session.settings.fixDecimals).toBe(2);
-    expect(session.settings.haptics).toEqual({ on: true, strength: 80, ms: 40 });
+    expect(session.settings.haptics).toEqual({ on: true, strength: 80, ms: 40, click: false });
     expect(presets.modified).toBe(false);
+  });
+
+  it("the Key vibration group holds the key click (A66); a group saved before it leaves the click alone", async () => {
+    const { session, presets } = await setup();
+    session.setHaptics({ on: true, click: true });
+    const id = presets.capture("Clicky", ["vibration"]);
+    expect(presets.list.find((p) => p.id === id)?.groups["vibration"]).toEqual({ on: true, strength: 50, ms: 15, click: true });
+    session.setHaptics({ on: false, click: false });
+    await presets.apply(id);
+    expect(session.settings.haptics).toEqual({ on: true, strength: 50, ms: 15, click: true });
+    const old: StoredPresets = { presets: [{ id: 1, name: "Old", groups: { vibration: { on: false, strength: 80, ms: 40 } } }], active: null, next: 2 };
+    const again = await setup({ "@n62": DATA_VERSION, value: old });
+    again.session.setHaptics({ click: true });
+    await again.presets.apply(1);
+    expect(again.session.settings.haptics).toEqual({ on: false, strength: 80, ms: 40, click: true });
   });
 
   it("a held field the app cannot read is skipped, and the other fields still apply", async () => {

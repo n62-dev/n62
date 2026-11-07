@@ -175,6 +175,10 @@ describe("the repeated rules agree with the start's readers", () => {
       { on: true, strength: 50, ms: 4 },
       { on: true, strength: 50 },
       { on: true, strength: 50, ms: 15, x: 1 },
+      { on: true, strength: 50, ms: 15, click: true }, // A66
+      { on: false, strength: 50, ms: 15, click: false },
+      { on: true, strength: 50, ms: 15, click: "yes" },
+      { click: true },
       { on: true, strength: 50.5, ms: 15 },
       { ms: 20 },
       {},

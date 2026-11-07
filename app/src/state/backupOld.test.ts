@@ -58,6 +58,7 @@ describe("a settings part without a nested field added later (R122, vr-9)", () =
     ["look", "contrast", false],
     ["haptics", "ms", 15],
     ["haptics", "strength", 50],
+    ["haptics", "click", false], // A66: a backup made before the key click
   ] as const)("without %s.%s: accepted, the field restored as its default", async (group, field, value) => {
     const s = await restored(without(group, field));
     expect((s[group] as unknown as Record<string, unknown>)[field]).toBe(value);

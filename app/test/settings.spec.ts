@@ -136,7 +136,7 @@ test.describe("by touch", () => {
 
   test("Key vibration: the switch, Strength, Length and Try it; switches keep the sheet open; Try it gives one pulse", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d3"]);
-    expect(await rowIds(page)).toEqual(["haptics", "strength", "ms", "try"]);
+    expect(await rowIds(page)).toEqual(["haptics", "strength", "ms", "try", "click"]); // (the Key click: A66, keyclick.spec.ts)
     await expect(row(page, "try")).toHaveAttribute("aria-disabled", "true"); // off: nothing to try
     await row(page, "haptics").tap();
     await expect(row(page, "haptics")).toHaveAttribute("data-selected", "true");
