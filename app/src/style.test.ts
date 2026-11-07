@@ -161,13 +161,13 @@ describe("no colour is written directly in the sheet", () => {
 describe("curve colours", () => {
   it("each curve colour is at least 3:1 on the --bg of its brightness", () => {
     const src = readFileSync(new URL("./apps/function/app.svelte.ts", import.meta.url), "utf8");
-    for (const b of ["dark", "light", "teal"] as const) {
+    for (const b of ["dark", "light", "n62_light"] as const) {
       const list = new RegExp(`CURVE_COLORS_${b.toUpperCase()}\\s*=\\s*\\[([^\\]]*)\\]`).exec(src)?.[1] ?? "";
       const colors = [...list.matchAll(/#[0-9a-fA-F]{6}/g)].map((m) => m[0]);
       expect(colors.length, b).toBe(10);
-      // N62's start blocks are the ones in style.css; Teal's own list (R150) is checked on every Teal combination in scripts/theme-gen.test.ts
+      // N62's start blocks are the ones in style.css; N62 Light draws its own list (R153), every combination in scripts/theme-gen.test.ts
       for (const [theme, t] of blocks)
-        if (b !== "teal" && theme.endsWith(b)) for (const c of colors) expect(contrast(c, t["bg"] as string), `${c} on ${theme} --bg`).toBeGreaterThanOrEqual(3);
+        if (b === "n62_light" ? theme === "n62 light" : theme.endsWith(b) && theme !== "n62 light") for (const c of colors) expect(contrast(c, t["bg"] as string), `${c} on ${theme} --bg`).toBeGreaterThanOrEqual(3);
     }
   });
 });
@@ -191,7 +191,7 @@ function entryMap(): Record<string, string> {
 }
 /** Every block of a theme combination, with whether it is High contrast. */
 function allThemeBlocks(): [string, Record<string, string>, boolean][] {
-  const files = ["./style.css", ...["n62", "teal", "solarized"].map((f) => `./theme/${f}.css`)];
+  const files = ["./style.css", ...["n62", "bw", "solarized"].map((f) => `./theme/${f}.css`)];
   return files.flatMap((f) =>
     [...readFileSync(new URL(f, import.meta.url), "utf8").matchAll(/:root(\[data-family="[a-z0-9]+"\]\[data-brightness="(?:dark|light)"\](?:\[data-[a-z]+="[a-z]+"\])*)\s*\{([^}]*)\}/g)].map(
       (m): [string, Record<string, string>, boolean] => [m[1] as string, tokens(m[2] as string), (m[1] as string).includes('data-contrast="high"')],

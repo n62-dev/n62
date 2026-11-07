@@ -3,7 +3,7 @@
 // contrast rules of docs/archive/shifts/2026-10-18-themes-report.md section 2. Output:
 //   - the two start blocks of N62 in src/style.css (replaced in place), and
 //   - src/theme/<family>.css, one lazy file per family with all its combinations ([data-contrast="high"],
-//     [data-keys="plain"] and both; the other four families' plain light/dark blocks too).
+//     [data-keys="plain"] and both; the other two families' plain light/dark blocks too).
 //   node scripts/theme-gen.ts            # write (npm run themes)
 //   node scripts/theme-gen.ts --check    # exit 1 when a file is out of date
 //   node scripts/theme-gen.ts --audit    # one line per combination (what tools/probes/themes-audit.mjs prints)
@@ -87,7 +87,7 @@ const getAll = (t: Palette, roles: readonly string[]): string[] => roles.map((r)
 
 // --- the roles with a key twin (R150) ----------------------------------------------------------
 /**
- * Legends on the keys and legends on the screen can need different colours (Teal: near-black on the teal screen, light on
+ * Legends on the keys and legends on the screen can need different colours (R150's Teal, taken out in R153: near-black on the teal screen, light on
  * its near-black keys). These five roles may have a twin `key-<role>` for the keys; a family that gives none has the twin
  * equal to the role, and then the role is checked against the keys and the screen together, as before R150.
  */
@@ -171,7 +171,7 @@ export function highContrast(t: Palette): Palette {
   const [extS, inkS] = sd ? ["#000000", "#ffffff"] : ["#ffffff", "#000000"];
   const [extK, inkK] = kd ? ["#000000", "#ffffff"] : ["#ffffff", "#000000"];
   const textHC = mix(get(t, "text"), inkS, 0.8);
-  // a screen whose own ink cannot reach 7:1 on it (Teal: black on #529997 is 6.4:1) is lightened along its hue until it does
+  // a screen whose own ink cannot reach 7:1 on it (R150's Teal: black on #529997 is 6.4:1; no family since R153) is lightened along its hue until it does
   o["bg"] = !sd && cr(textHC, get(t, "bg")) < 7 ? moveUntil(get(t, "bg"), true, (c) => cr(textHC, c) >= 7) : mix(get(t, "bg"), extS, 0.65);
   o["panel"] = mix(get(t, "panel"), extS, 0.5);
   o["pick"] = mix(get(t, "pick"), extS, 0.3);
@@ -279,7 +279,7 @@ function withPick(t: Palette, hc: boolean): Palette {
   legend(o, o, "text", SCREEN, KEYS, T, sd, kd);
   legend(o, o, "muted", ["bg", "panel", "pick"], ["key-num"], T, sd, kd);
   for (const r of ["approx", "warn", "error"]) o[r] = ensure(get(o, r), getAll(o, ["bg", "pick"]), T, sd);
-  // R150: a picked row's ground moves away from the text when the text cannot (black on Teal)
+  // R150: a picked row's ground moves away from the text when the text cannot (black on R150's Teal)
   o["pick"] = ensure(get(o, "pick"), [get(o, "text")], T, lum(get(o, "text")) < 0.5);
   return o;
 }
@@ -326,7 +326,7 @@ function withLayersApart(t: Palette, high: boolean): Palette {
   const away = (alpha: string, up: boolean, from: string): string =>
     moveUntil(from, up, (c) => Math.min(...Object.values(CVD).map((m) => apart(c, alpha, m))) >= LAYER_APART[k]);
   o["shift"] = away(get(t, "alpha"), sd, get(t, "shift"));
-  // R150: the keys' own Shift and Alpha (Teal) are held apart the same way; without a twin they follow the screen's
+  // R150: the keys' own Shift and Alpha (R150's Teal; no family since R153) are held apart the same way; without a twin they follow the screen's
   o["key-shift"] = isSplit(t, "shift") || isSplit(t, "alpha") ? away(get(t, "key-alpha"), kd, get(t, "key-shift")) : get(o, "shift");
   o["warn"] = moveUntil(get(t, "warn"), sd, (c) => apart(c, get(o, "shift")) >= WARN_APART[k]);
   return o;
@@ -423,7 +423,7 @@ export function block(c: Combo): string {
 }
 
 /** The UA colour scheme (scrollbars, native controls): light when the screen's text is dark, whatever the family's brightness
- *  name says, so Teal Dark (black text on the teal screen) is `light` too (R150). */
+ *  name says, as R150's Teal Dark (black text on a teal screen) was. */
 export const colorScheme = (t: Palette): "light" | "dark" => (lightInk(t) ? "dark" : "light");
 
 /** The content of src/theme/<family>.css. N62's untransformed blocks are in style.css, so they are not here. */

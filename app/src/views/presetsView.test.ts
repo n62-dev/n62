@@ -43,10 +43,10 @@ describe("what a preset says", () => {
         mode: { angle: "rad", format: "sci", digits: 4, entry: "textbook" },
         numbers: { decimalMark: "point", fmtCycle: ["std", "sci"], fixDecimals: 4 },
         keys: { userKeys: { u1: { primary: { label: "mol" }, shift: null }, u2: { primary: { label: "pH" }, alpha: { label: "M" } } }, unitPadCells: {} },
-        look: { family: "teal", brightness: "dark", contrast: false, plain: false },
+        look: { family: "bw", brightness: "dark", contrast: false, plain: false },
       },
     };
-    expect(summary(p)).toBe("RAD · SCI 4 · point · 3 keys · Teal");
+    expect(summary(p)).toBe("RAD · SCI 4 · point · 3 keys · Black & White");
     expect(summary({ id: 2, name: "Teaching", groups: { mode: { angle: "deg", format: "std", digits: 10, entry: "line" } } })).toBe("DEG · STD 10 · one line");
     expect(summary({ id: 3, name: "Default", groups: { keys: { userKeys: {} }, look: { family: "n62" } } })).toBe("no keys");
   });

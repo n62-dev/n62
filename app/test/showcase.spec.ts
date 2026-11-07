@@ -71,6 +71,7 @@ test.describe("showcase clips at the song's tempo", () => {
         await untimed(page, [...(prev.setup ?? []), ...prev.presses, prev.eval]);
       }
       await untimed(page, c.setup ?? []);
+      await expect(page.locator("html"), "the setup leaves the page in N62 (R153)").toHaveAttribute("data-family", "n62");
       const steps = [...c.presses, c.eval];
       const late: number[] = [];
       const t0 = Date.now() + 300;
