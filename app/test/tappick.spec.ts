@@ -186,3 +186,49 @@ test("a system paste drops the pick: the line holds the pasted text, uncovered, 
   await expect(page.locator('[data-status="done"]')).toHaveCount(3);
   await expect(results(page).last()).toHaveAttribute("data-text", "12");
 });
+
+// R147f1: a mouse click or tap on an input must not move the focus off the entry field (the .in button is a button; the
+// .result button already stops the pointerdown), so the hardware keys keep working on a picked row.
+const fieldFocused = (page: Page): Promise<boolean> =>
+  page.evaluate(() => {
+    const mf = window.n62.entry.field;
+    return !!mf && (document.activeElement === mf || mf.contains(document.activeElement));
+  });
+
+test("a click on an input picks its row with the focus still in the entry field", async ({ page }) => {
+  await two(page);
+  await page.evaluate(() => window.n62.entry.focus());
+  await inputs(page).last().click();
+  await expect(rows(page).last()).toHaveAttribute("data-selected", "true");
+  expect(await fieldFocused(page)).toBe(true);
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("MATH-FIELD");
+});
+
+test("after a click on an input a hardware 5 drops the pick and types 5", async ({ page }) => {
+  await two(page);
+  await inputs(page).last().click();
+  await expect(selected(page)).toHaveCount(1);
+  await page.keyboard.press("5");
+  await expect(selected(page)).toHaveCount(0);
+  await expect(bar(page)).toHaveCount(0);
+  await expect.poll(() => entryValue(page)).toBe("5");
+});
+
+test("after a click on an input a hardware Escape drops the pick", async ({ page }) => {
+  await two(page);
+  await inputs(page).last().click();
+  await expect(selected(page)).toHaveCount(1);
+  await page.keyboard.press("Escape");
+  await expect(selected(page)).toHaveCount(0);
+  await expect(bar(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("");
+});
+
+test("after a click on an input a hardware Enter inserts its result as a chip, as after ▲", async ({ page }) => {
+  await two(page);
+  await inputs(page).first().click();
+  await expect(selected(page)).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await expect.poll(() => entryValue(page)).toMatch(/^\\res\{\d+\}\{7\}$/);
+  await expect(bar(page)).toHaveCount(0);
+});
