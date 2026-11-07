@@ -108,7 +108,7 @@ The backup is one JSON file. It holds the app's own stored records, so you write
 - `mode`: `angle` = "rad" or "deg"; `format` = "std", "sci", "eng" or "pfx"; `digits` = a whole number from 1 to 30; `entry` = "textbook" or "line".
 - `numbers`: `decimalMark` = "point" or "comma"; `fixDecimals` = a whole number from 0 to 12; `uncertainty` = "sigma" or "muted"; `marks` = "muted", "colour" or "reason"; `groupSep` = "thin", "apos" or "comma".
 - `look`: `family` = "n62", "bw" or "solarized"; `brightness` = "system", "light" or "dark"; `contrast` = true or false; `plain` = true or false.
-- `vibration`: `on` = true or false; `strength` = a whole number from 0 to 100; `ms` = a whole number from 5 to 100.
+- `vibration`: `on` = true or false; `strength` = a whole number from 0 to 100; `ms` = a whole number from 5 to 100; `click` = true or false.
 - `keys`: `userKeys` and `unitPadCells`, each exactly the `value` of the part of that name above. Applying the preset puts those slots and cells on the keys.
 
 ### What refuses a file
