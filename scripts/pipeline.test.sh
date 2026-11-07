@@ -1113,5 +1113,63 @@ grep -qE '^acquire host-cpu' "$pf/locks" || fail "A83: the size pre-flight ran w
 grep -qE '^acquire integ' "$pf/locks" && fail "A83: a failing size pre-flight took integ: $(cat "$pf/locks")"
 grep -q 'F2: in the queue' "$pf/.coord/log.md" && fail "A83: a branch failing the size pre-flight entered the queue"
 
+# A84: the audit runs beside the long checks. A sandbox with a stand-in sofia and stand-in checks: golden and e2e wait (5 s at most) for
+# the audit to start; sofia waits for e2e to run; the behaviour tool notes when it ran. (a) the audit runs beside golden and e2e on the
+# HEAD they read, the behaviour diff before them under host-cpu; (c) that commit merges; (b) a failing e2e and a FIX make one fix-round
+# input, the check output first; (d) a failing cheap check starts no audit.
+ab="$tmp/ab"; mkdir -p "$ab/bin" "$ab/tools" "$ab/docs/shifts" "$ab/app/scripts"; git init -q -b main "$ab"
+printf '#!/bin/sh\necho "$*" >> "%s/locks"\nexit 0\n' "$ab" > "$ab/tools/devlock.sh"
+echo 'process.exit(0);' > "$ab/tools/docs-check.mjs"; cp "$ab/tools/docs-check.mjs" "$ab/tools/docs-check.test.mjs"
+for st in sweep seqsweep casback viewsweep findcensus; do echo 'console.log("fine");' > "$ab/app/scripts/$st.ts"; done
+: > "$ab/docs/shifts/brief.md"; echo node_modules/ > "$ab/.gitignore"
+printf '%s\n' "import fs from 'node:fs'; fs.appendFileSync('$ab/seen', 'behaviour\n'); fs.appendFileSync('$ab/locks', 'behaviour\n'); console.log('none');" > "$ab/behaviour.mjs"
+cat > "$ab/bin/npm" <<STUB
+#!/bin/sh
+w() { i=0; while [ ! -e "\$1" ] && [ \$i -lt 50 ]; do sleep 0.1; i=\$((i + 1)); done; [ -e "\$1" ]; }
+case "\$*" in
+  ci*) mkdir -p node_modules/x;;
+  *"run -s typecheck"*) [ -z "\$AB_TC_FAIL" ] || { echo "error TS2322: the stand-in type error"; exit 1; };;
+  *"run -s golden"*) echo "golden \$(git rev-parse HEAD)" >> "$ab/seen"; ! w "$ab/audit-on" || echo "golden beside the audit" >> "$ab/seen";;
+  *"run -s test:e2e"*) : > "$ab/e2e-running"; echo "e2e \$(git rev-parse HEAD)" >> "$ab/seen"
+     ! w "$ab/audit-on" || echo "e2e beside the audit" >> "$ab/seen"; w "$ab/audit-saw-e2e"; rm -f "$ab/e2e-running"
+     [ -z "\$AB_E2E_FAIL" ] || [ -e ../fix.txt ] || { echo "  ✘ c1 the stand-in e2e failure"; exit 1; };;
+esac
+exit 0
+STUB
+cat > "$ab/bin/claude" <<STUB
+#!/bin/sh
+c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
+case "\$*" in
+  *"--agent sofia"*) echo "audit \$(git rev-parse HEAD)" >> "$ab/seen"; : > "$ab/audit-on"
+     i=0; while [ ! -e "$ab/e2e-running" ] && [ \$i -lt 80 ]; do sleep 0.1; i=\$((i + 1)); done
+     [ ! -e "$ab/e2e-running" ] || { echo "audit beside e2e" >> "$ab/seen"; : > "$ab/audit-saw-e2e"; }
+     if [ -n "\$AB_FIX" ] && [ ! -e "$ab/fixed-once" ]; then : > "$ab/fixed-once"; printf 'FIX\napp/src/engine/x.ts:1 the stand-in audit finding: fix it\n'; else echo APPROVED; fi;;
+  *"fix round"*) date +%s%N > fix.txt; c -m fix; echo fixed;;
+  *) mkdir -p app/src/engine; date +%s%N > app/src/engine/x.ts; c -m "report: w" -m "Done: w.
+Tests: none."; echo done;;
+esac
+STUB
+chmod +x "$ab/bin/"* "$ab/tools/devlock.sh"; git -C "$ab" add -A; gc "$ab" init; git -C "$ab" branch phase-1
+abrun() { rm -f "$ab/seen" "$ab/locks" "$ab"/audit-* "$ab/e2e-running" "$ab/fixed-once"
+  (cd "$ab" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$ab/bin:$PATH" GIAC_OUT="$ab/engine" N62_BEHAVIOUR_TOOL="$ab/behaviour.mjs" "$@"); }
+out="$(abrun "$script" annabell "ab task" --id B1 --branch p1/b1 --checks docs,typecheck,golden,e2e 2>&1)"
+grep -q '^RESULT #[0-9]* B1: MERGED' <<<"$out" || fail "A84: a passing round with APPROVED does not merge: $out"
+grep -qx 'golden beside the audit' "$ab/seen" && grep -qx 'e2e beside the audit' "$ab/seen" && grep -qx 'audit beside e2e' "$ab/seen" || fail "A84 (a): the audit does not run beside golden and e2e: $(cat "$ab/seen")"
+heads="$(grep -E '^(audit|golden|e2e) [0-9a-f]{40}$' "$ab/seen" | cut -d' ' -f2 | sort -u)"; mp="$(git -C "$ab" log -1 --format=%P phase-1 | cut -d' ' -f2)"
+[[ "$(wc -l <<<"$heads")" -eq 1 && "$heads" == "$mp" ]] || fail "A84 (a, c): the audit, the checks and the merge read different commits: $(cat "$ab/seen"); merged $mp"
+[[ "$(grep -nx behaviour "$ab/seen" | head -n1 | cut -d: -f1)" -lt "$(grep -nE '^golden [0-9a-f]{40}$' "$ab/seen" | head -n1 | cut -d: -f1)" ]] 2>/dev/null || fail "A84: the behaviour diff does not run before the long checks: $(cat "$ab/seen")"
+[[ "$(grep -E '^(acquire|release) host-cpu|^behaviour$' "$ab/locks" | grep -B1 -x behaviour | head -n1)" == "acquire host-cpu"* ]] || fail "A84: the behaviour diff runs without host-cpu: $(cat "$ab/locks")"
+grep -q '^audit beside the checks (A84): ' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A84: the dry run does not show the audit beside the checks"
+grep -q 'the checks run meanwhile; judge the diff' "$here/pipeline.sh" && ! grep -q 'the deterministic checks passed' "$here/pipeline.sh" || fail "A84: the audit prompt still says the checks passed"
+out="$(AB_E2E_FAIL=1 AB_FIX=1 abrun "$script" annabell "ab task" --id B2 --branch p1/b2 --checks docs,typecheck,e2e 2>&1)"
+f1="$(ls "$ab"/.tasks/*-b2/fix-1.in 2>/dev/null | head -n1)"
+fe="$(grep -n '^## e2e failed' "$f1" 2>/dev/null | head -n1 | cut -d: -f1)"; fa="$(grep -n 'the stand-in audit finding' "$f1" 2>/dev/null | head -n1 | cut -d: -f1)"
+[[ -n "$fe" && -n "$fa" && "$fe" -lt "$fa" ]] || fail "A84 (b): the fix-round input lacks the failing e2e, then the audit findings: $(cat "$f1" 2>/dev/null | head -n 20)"
+grep -q '^RESULT #[0-9]* B2: MERGED' <<<"$out" && ! ls "$ab"/.tasks/*-b2/fix-2.in >/dev/null 2>&1 || fail "A84 (b): one fix round does not settle both the e2e failure and the FIX: $out"
+grep -q 'B2: checks failed (round 0)' "$ab/.coord/log.md" && grep -q 'B2: audit FIX (round 0)' "$ab/.coord/log.md" || fail "A84 (b): the log lacks the round's check failure or its FIX: $(grep B2 "$ab/.coord/log.md")"
+out="$(AB_TC_FAIL=1 abrun "$script" annabell "ab task" --id B3 --branch p1/b3 --checks docs,typecheck,e2e 2>&1)"
+grep -q '^RESULT #[0-9]* B3: NOT MERGED (the checks failed twice' <<<"$out" || fail "A84 (d): a failing typecheck does not end as NOT MERGED after two fix rounds: $out"
+grep -q '^audit' "$ab/seen" 2>/dev/null && fail "A84 (d): a failed cheap check started an audit: $(cat "$ab/seen")"
+
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"

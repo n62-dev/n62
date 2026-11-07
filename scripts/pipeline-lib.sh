@@ -280,6 +280,21 @@ own_sh() {
   owned_sessions=("${keep[@]}")
   return $rc
 }
+# own_bg <script> [args...] (A84): own_sh without the wait: the session starts in the background, registered (owned_kill ends it), its
+# pid in own_bg_pid. own_wait <pid> waits for it, ends what it left running and returns its exit code. Main shell only, as own_sh.
+own_bg_pid=""
+own_bg() {
+  setsid bash -c "$1" _ "${@:2}" <&0 &
+  own_bg_pid=$!
+  owned_sessions+=("$own_bg_pid")
+}
+own_wait() {
+  local rc=0
+  wait "$1" || rc=$?
+  session_kill "$1" || true
+  owned_forget "$1"
+  return $rc
+}
 
 # device_tree <phase-1 worktree> <sha> <dir> (A56): the device runner's own tree, so nothing it reads moves under it: the files
 # tracked at <sha> (git archive) and a hard-link copy of the worktree's app/node_modules; nodemods must be held (the copy reads

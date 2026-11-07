@@ -33,11 +33,11 @@
 #                           prints `RESULT selftest: PASSED` or `RESULT selftest: FAILED (<test>: <first failing line>)`
 #
 # Lifecycle: bundle → worker (own worktree from phase-1) → the merge queue (A47b): the run takes integ, merges phase-1 into
-# the branch (a conflict is a resolve round), runs the deterministic checks and sofia's audit of `git diff -U5
-# phase-1...<branch>` plus the acceptance criteria, and on APPROVED `git merge --no-ff --signoff <the audited sha>` into
-# phase-1 (NOT MERGED when the branch is not at that sha), promotes the engine and releases integ; so a merge commit's
-# tree is the tree the checks and the audit read. A failed check or a FIX releases integ, the fix round runs outside it
-# and the run queues again (at most two fix rounds) → worktree and branch removed.
+# the branch (a conflict is a resolve round), runs the cheap checks, then sofia's audit of `git diff -U5 phase-1...<branch>` plus
+# the acceptance criteria beside the long checks (A84: the round waits for both), and on APPROVED `git merge --no-ff --signoff
+# <the audited sha>` into phase-1 (NOT MERGED when the branch is not at that sha), promotes the engine and releases integ; so a merge commit's
+# tree is the tree the checks and the audit read. A failed check or a FIX releases integ, the fix round (the failing output, then the
+# findings) runs outside it and the run queues again (at most two fix rounds) → worktree and branch removed.
 # Progress goes to .tasks/<n>-<id>/run.log and one line per step to .coord/log.md; stdout gets
 # only the final RESULT line, on every exit (die too: "RESULT #n ID: NOT MERGED (why)", or
 # "RESULT -: NOT STARTED (why)" before a run number exists). Exit 0 merged, 1 not merged, 2 not started
@@ -523,7 +523,8 @@ if [[ $dry -eq 1 ]]; then
   else
     echo "cat $bundle | claude -p --agent $agent --model $model --effort $effort ${claude_common[*]} ${worker_tools[*]} -n pl-$n-$agent \"<worker prompt>\""
   fi
-  echo "queue (after the worker and after each fix round): tools/devlock.sh acquire integ pipeline-$n 7200 (wait logged); git -C $wt merge phase-1 (a conflict is a resolve round); the engine; the checks; the audit; on APPROVED the merge and the engine promotion, then release; a failed check or a FIX releases integ before its fix round"
+  echo "queue (after the worker and after each fix round): tools/devlock.sh acquire integ pipeline-$n 7200 (wait logged); git -C $wt merge phase-1 (a conflict is a resolve round); the engine; the cheap checks; the audit beside the long ones; on APPROVED the merge and the engine promotion, then release; a failed check or a FIX releases integ before its fix round"
+  echo "audit beside the checks (A84): once docs, typecheck, size, redfirst and vitest passed, audited=HEAD, the behaviour diff (under host-cpu, before golden or e2e start), then sofia in the background while golden, its stages, e2e and shell run; the round waits for both (a failed check releases integ first); a failed cheap check starts no audit; the fix round's input is the failing output, then the audit's findings"
   echo "checks in $wt (under host-cpu, in the order above, the first failure stops them): docs-check; typecheck; npm run index && build && size; red-first; npm run index && FIND_INDEX=required npm test; golden and the stages; e2e; the shell tests"
   echo "git -C $wt diff -U5 phase-1...<audited sha> | claude -p --agent sofia --model ${audit_model/auto/<auto: opus for --model opus or app/src/input/, app/src/engine/, engine/, spec/keyboard.yaml; else sonnet>} ${audit_tools[*]} \"AUDIT ...\""
   echo "audit input: the criteria, the diff, then \"## Behaviour changes\": when the diff touches engine/, app/src/engine/, app/src/input/ or app/src/units/, GIAC_MJS_A=<phase-1 engine>/giac.mjs GIAC_MJS_B=<the branch's engine>/giac.mjs node app/scripts/behaviour-diff.ts <phase-1 worktree> $wt (once per audit round, timeout 20 min, never retried; timeout -> \"timed out after 20 min\"; over half of a tree's runs throwing -> \"failed to run\"), else \"none\"; a change the package does not name is a FIX"
@@ -578,13 +579,18 @@ select_engine() {
 }
 select_engine
 
-# Run one headless agent; exit 75 on a usage limit.
-run_agent() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [tool options...]
+# Run one headless agent; exit 75 on a usage limit. A84: agent_start starts it in the background (its pid in agent_pid), agent_end
+# waits for it; run_agent does both.
+agent_pid=""
+agent_start() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [tool options...]
   local name="$1" out="$2" ag="$3" mdl="$4" eff="$5" input="$6" prompt="$7"; shift 7
-  local rc
-  set +e
-  own_sh 'cd "$1" && shift && timeout -k 60 10800 claude "$@"' "$wt" -p --agent "$ag" --model "$mdl" --effort "$eff" "${claude_common[@]}" "$@" -n "$name" "$prompt" < "$input" > "$out" 2> "$out.err"
-  rc=$?; set -e
+  own_bg 'cd "$1" && shift && timeout -k 60 10800 claude "$@"' "$wt" -p --agent "$ag" --model "$mdl" --effort "$eff" "${claude_common[@]}" "$@" -n "$name" "$prompt" < "$input" > "$out" 2> "$out.err"
+  agent_pid="$own_bg_pid"
+}
+run_agent() { agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; }
+agent_end() {  # <pid> <name> <log>
+  local name="$2" out="$3" rc=0
+  own_wait "$1" || rc=$?
   if [[ $rc -ne 0 ]] && grep -qiE 'usage limit|rate limit|429|overloaded' "$out" "$out.err"; then
     log "pipeline #$n $id: LIMIT during $name (claude exit $rc)"; echo "RESULT #$n $id: LIMIT"; exit 75
   fi
@@ -654,14 +660,18 @@ preflight() {  # <round>
   done
   runlog "pre-flight passed ($((SECONDS - t0)) s)"
 }
-run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure
+# A84: golden, its stages, e2e and shell are the long checks: the audit starts before the first of them (audit_start), so it runs beside
+# them; a round whose cheap checks (docs, typecheck, size, redfirst, vitest) fail starts no audit.
+long_check() { case "$1" in golden|stages|e2e|shell) return 0;; *) return 1;; esac; }
+run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; once the cheap checks passed, the audit runs (audit_start)
   local round="$1" list name rc=0 why redwhy="" p1_engine="${N62_P1_ENGINE:-$GIAC_OUT}"
   [[ $engine_managed -eq 0 ]] || p1_engine="$engine_root/key-$p1key"
   list="$(want_checks)"; [[ ",$list," == *,stages,* ]] || list="${list//golden/golden,stages}"  # A25: the engine stages follow golden
-  [[ -n "$list" ]] || { runlog "checks: none"; return 0; }
+  [[ -n "$list" ]] || { runlog "checks: none"; audit_start; return 0; }
   host_cpu_take "pipeline-$n" "pipeline #$n $id:" || die "host-cpu lock busy for 7200 s"
   : > "$run/fail-$round.txt"
   for name in ${list//,/ }; do
+    ! long_check "$name" || [[ -n "$audit_pid" ]] || audit_start
     local out="$run/check-$round-$name.log"
     case "$name" in
       typecheck|size|docs) cheap_check "$name" "$out" || rc=1;;  # A83
@@ -705,6 +715,7 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure
     fi
     runlog "check $name: ok"
   done
+  [[ -n "$audit_pid" ]] || audit_start  # a list without a long check
   host_cpu_drop
   return 0
 }
@@ -793,33 +804,57 @@ queue_enter() {
   select_engine  # the merge may have changed the key
 }
 
-# The checks and the audit share at most two fix rounds; a fix round runs outside the queue.
+# A84: the audit beside the long checks. audit_start, from run_checks once the cheap checks passed (host-cpu held): the commit it reads
+# (only that sha is merged, A17), its input with the behaviour diff (A18; it runs engines, so under host-cpu and before golden or e2e
+# start, never beside their wall-clock tests), then sofia in the background. audit_finish waits for her and sets verdict.
+audit_pid=""
+audit_start() {
+  local took=0
+  audited="$(git -C "$wt" rev-parse HEAD)"; runlog "audit $rounds reads $audited"
+  git -C "$wt" diff -U5 "phase-1...$audited" > "$run/audit-$rounds.diff"
+  { cat "$run/criteria.md"; echo; echo "## Diff (git diff -U5 phase-1...$audited, the HEAD of $branch, $(wc -l < "$run/audit-$rounds.diff") lines)"; cat "$run/audit-$rounds.diff"; } > "$run/audit-$rounds.in"
+  if changed | behaviour_selected; then  # A18: once per audit round, 20-minute cap
+    [[ $host_cpu_held -eq 1 ]] || { host_cpu_take "pipeline-$n" "pipeline #$n $id:" || die "host-cpu lock busy for 7200 s"; took=1; }
+    b_p1="${N62_P1_ENGINE:-$GIAC_OUT}"; [[ $engine_managed -eq 0 ]] || b_p1="$engine_root/key-$p1key"  # A53: phase-1's engine for A
+    behaviour_section "$integ" "$wt" "$run/behaviour-$rounds.md" "$b_p1" "$GIAC_OUT"; { echo; cat "$run/behaviour-$rounds.md"; } >> "$run/audit-$rounds.in"
+    [[ $took -eq 0 ]] || host_cpu_drop
+  else { echo; echo "## Behaviour changes"; echo "none (the diff touches no engine, input or units code)"; } >> "$run/audit-$rounds.in"; fi
+  audit_prompt="AUDIT pipeline run $n, package $id, branch $branch. On stdin: the acceptance criteria, then the diff against phase-1 (the checks run meanwhile; judge the diff). Judge the diff against the criteria and docs/rules-core.md only; read other files only to check a claim in the diff. Look for: a criterion not met; expected values without a trustworthy source; a new parser token without its round-trip case; a fixed bug without a regression test; files outside the task's scope; keys that move; missing SPDX lines; a dependency missing from THIRD_PARTY.md. After the diff, the section Behaviour changes lists inputs whose result differs from phase-1: call each change wanted (named in the criteria Done when) or not; a change not wanted is a FIX finding. Reply with the single word APPROVED on the first line, or FIX on the first line followed by at most five findings, each with file:line, the concrete failure and the fix. Nothing else."
+  agent_start "audit-$n-$rounds" "$run/audit-$rounds.log" sofia "$(resolve_audit_model)" high "$run/audit-$rounds.in" "$audit_prompt" "${audit_tools[@]}"
+  audit_pid="$agent_pid"; runlog "audit $rounds started beside the long checks"
+}
+audit_finish() {
+  agent_end "$audit_pid" "audit-$n-$rounds" "$run/audit-$rounds.log"; audit_pid=""
+  verdict="$(grep -m1 -oE '^(APPROVED|FIX)' "$run/audit-$rounds.log" || true)"
+  if [[ "$verdict" == APPROVED ]]; then log "pipeline #$n $id: audit APPROVED (round $rounds)"
+  else log "pipeline #$n $id: audit ${verdict:-unclear} (round $rounds): $(grep -vE '^(FIX|APPROVED)?$' "$run/audit-$rounds.log" | head -n 1 | cut -c1-120)"; fi
+}
+
+# The checks and the audit share at most two fix rounds; a fix round runs outside the queue. A84: a queue round runs the cheap checks,
+# then the audit beside the long ones, and waits for both; its fix round gets the failing output, then the audit's findings.
 verdict=""; audited=""
 fail_line() { local l; l="$(first_failing_line "$1")"; echo "$(head -n 1 "$1")${l:+: $l}"; }  # A83: the heading and the first failing line
 while :; do
   select_engine  # a branch with its own engine key builds it before it queues (host-cpu only)
+  verdict=""; audit_pid=""; audit_ran=0; crc=0
   if ! preflight "$rounds"; then  # A83: the cheap checks before the queue, without integ
     log "pipeline #$n $id: pre-flight failed (round $rounds): $(fail_line "$run/preflight-$rounds.txt")"
     reason="the pre-flight failed"; feedback="$run/preflight-$rounds.txt"
-  elif queue_enter; ! run_checks "$rounds"; then
-    log "pipeline #$n $id: checks failed (round $rounds): $(fail_line "$run/fail-$rounds.txt")"
-    reason="the checks failed"; feedback="$run/fail-$rounds.txt"
   else
-    log "pipeline #$n $id: checks passed (round $rounds)"
-    # the commit this audit reads; only that sha is merged (A17)
-    audited="$(git -C "$wt" rev-parse HEAD)"; runlog "audit $rounds reads $audited"
-    git -C "$wt" diff -U5 "phase-1...$audited" > "$run/audit-$rounds.diff"
-    { cat "$run/criteria.md"; echo; echo "## Diff (git diff -U5 phase-1...$audited, the HEAD of $branch, $(wc -l < "$run/audit-$rounds.diff") lines)"; cat "$run/audit-$rounds.diff"; } > "$run/audit-$rounds.in"
-    if changed | behaviour_selected; then  # A18: once per audit round, 20-minute cap
-      b_p1="${N62_P1_ENGINE:-$GIAC_OUT}"; [[ $engine_managed -eq 0 ]] || b_p1="$engine_root/key-$p1key"  # A53: phase-1's engine for A
-      behaviour_section "$integ" "$wt" "$run/behaviour-$rounds.md" "$b_p1" "$GIAC_OUT"; { echo; cat "$run/behaviour-$rounds.md"; } >> "$run/audit-$rounds.in"
-    else { echo; echo "## Behaviour changes"; echo "none (the diff touches no engine, input or units code)"; } >> "$run/audit-$rounds.in"; fi
-    audit_prompt="AUDIT pipeline run $n, package $id, branch $branch. On stdin: the acceptance criteria, then the diff against phase-1 (the deterministic checks passed). Judge the diff against the criteria and docs/rules-core.md only; read other files only to check a claim in the diff. Look for: a criterion not met; expected values without a trustworthy source; a new parser token without its round-trip case; a fixed bug without a regression test; files outside the task's scope; keys that move; missing SPDX lines; a dependency missing from THIRD_PARTY.md. After the diff, the section Behaviour changes lists inputs whose result differs from phase-1: call each change wanted (named in the criteria Done when) or not; a change not wanted is a FIX finding. Reply with the single word APPROVED on the first line, or FIX on the first line followed by at most five findings, each with file:line, the concrete failure and the fix. Nothing else."
-    run_agent "audit-$n-$rounds" "$run/audit-$rounds.log" sofia "$(resolve_audit_model)" high "$run/audit-$rounds.in" "$audit_prompt" "${audit_tools[@]}"
-    verdict="$(grep -m1 -oE '^(APPROVED|FIX)' "$run/audit-$rounds.log" || true)"
-    if [[ "$verdict" == "APPROVED" ]]; then log "pipeline #$n $id: audit APPROVED (round $rounds)"; break; fi
-    log "pipeline #$n $id: audit ${verdict:-unclear} (round $rounds): $(grep -vE '^(FIX|APPROVED)?$' "$run/audit-$rounds.log" | head -n 1 | cut -c1-120)"
-    reason="the audit asked for fixes"; feedback="$run/audit-$rounds.log"
+    queue_enter
+    run_checks "$rounds" || crc=1
+    if [[ $crc -eq 1 ]]; then
+      log "pipeline #$n $id: checks failed (round $rounds): $(fail_line "$run/fail-$rounds.txt")"
+      queue_leave  # nothing merges this round: the audit, if it runs, finishes outside the queue
+    else log "pipeline #$n $id: checks passed (round $rounds)"; fi
+    [[ -z "$audit_pid" ]] || { audit_finish; audit_ran=1; }
+    [[ $crc -eq 1 || "$verdict" != APPROVED ]] || break
+    if [[ $crc -eq 0 ]]; then reason="the audit asked for fixes"; feedback="$run/audit-$rounds.log"
+    elif [[ $audit_ran -eq 0 || "$verdict" == APPROVED ]]; then reason="the checks failed"; feedback="$run/fail-$rounds.txt"
+    else
+      reason="the checks failed and the audit asked for fixes"; feedback="$run/feedback-$rounds.txt"
+      { cat "$run/fail-$rounds.txt"; echo "## The audit's findings (sofia read ${audited:0:9} while the checks ran)"; cat "$run/audit-$rounds.log"; } > "$feedback"
+    fi
   fi
   queue_leave  # a failed check or a FIX: the fix round runs outside the queue
   if [[ $rounds -ge 2 ]]; then
@@ -828,7 +863,7 @@ while :; do
   fi
   rounds=$((rounds + 1))
   { echo "# Fix round $rounds for pipeline run $n ($id): $reason"; echo; cat "$feedback"; echo; echo "# The task bundle"; cat "$bundle"; } > "$run/fix-$rounds.in"
-  fix_prompt="You are $agent on branch $branch in your own worktree, fix round $rounds of 2 for package $id: $reason. On stdin: the failing output or the audit findings, then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
+  fix_prompt="You are $agent on branch $branch in your own worktree, fix round $rounds of 2 for package $id: $reason. On stdin: the failing output, then the audit findings (a round may have only one of them), then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
   run_agent "fix-$n-$rounds" "$run/fix-$rounds.log" "$agent" "$model" "$effort" "$run/fix-$rounds.in" "$fix_prompt" "${worker_tools[@]}"
   log "pipeline #$n $id: fix round $rounds done, $(git -C "$wt" log -1 --format=%h)"
   if task_questioned "$run/fix-$rounds.log"; then  # A55: as after the first worker
