@@ -357,6 +357,14 @@
   const noFocus = (e: Event): void => e.preventDefault();
 
   const busy = $derived(session.busy || shell.busy);
+  /** R155: a job runs or the engine starts; the dash round the entry outline shows once that has lasted 150 ms. */
+  const working = $derived(busy || session.engineState === "starting");
+  let dash = $state(false);
+  $effect(() => {
+    if (!working) return void (dash = false);
+    const id = setTimeout(() => (dash = true), 150); // as Working… (style.css .late): a job that ends sooner never shows it
+    return () => clearTimeout(id);
+  });
 </script>
 
 <main class="app">
@@ -400,9 +408,13 @@
       <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} onaction={() => (picked = null)} />
     {/if}
 
-    <div class="entry" class:hidden={!shell.showsEntry} data-ring={ring} aria-label={t("entry.label")} bind:clientHeight={entryHeight}>
+    <div class="entry" class:hidden={!shell.showsEntry} data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight}>
       {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
-      <div class="field" bind:this={host}></div>
+      <!-- R155: one flat dash on the outline's path while a job runs (aria-hidden: the hidden status line names the job); in the
+           field's box, where the unit view (units/open.ts) hides it with the field -->
+      <div class="field" bind:this={host}>
+        {#if dash}<svg class="rundash" data-testid="entry-dash" aria-hidden="true"><rect pathLength="100" /></svg>{/if}
+      </div>
     </div>
 
     <!-- a list that takes letters rises from just above the entry line, over the history or view, and takes the entry
@@ -552,9 +564,43 @@
     white-space: nowrap;
   }
   .field {
+    position: relative;
     flex: 1;
     min-width: 0;
   }
+  /* R155: over the field's outline (R154), which is --ring-on wide while a job runs, with the dash on the same path:
+     a rounded rectangle through the outline's middle, the field's radius less half its width. Flat --text, no gradient. */
+  .rundash {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .rundash rect {
+    x: calc(var(--ring-on) / 2);
+    y: calc(var(--ring-on) / 2);
+    width: calc(100% - var(--ring-on));
+    height: calc(100% - var(--ring-on));
+    rx: calc(var(--radius) - var(--ring-on) / 2);
+    ry: calc(var(--radius) - var(--ring-on) / 2);
+    fill: none;
+    stroke: var(--text);
+    stroke-width: var(--ring-on);
+    stroke-dasharray: var(--run-dash) var(--run-gap);
+    stroke-linecap: round;
+    animation: rundash var(--run-lap) linear infinite;
+  }
+  @keyframes rundash {
+    to {
+      stroke-dashoffset: -100;
+    }
+  }
+  .entry[data-running="true"] :global(math-field) {
+    --ring-w: var(--ring-on);
+  }
+
   .entry :global(math-field) {
     display: block;
     width: 100%;
@@ -593,6 +639,15 @@
   }
   .entry[data-ring="error"] :global(math-field) {
     --ring-c: var(--error);
+  }
+  /* reduced motion: nothing moves, so no dash; the whole outline stands in --text while the job runs */
+  @media (prefers-reduced-motion: reduce) {
+    .rundash rect {
+      display: none;
+    }
+    .entry[data-running="true"] :global(math-field) {
+      --ring-c: var(--text);
+    }
   }
   .entry :global(math-field::part(virtual-keyboard-toggle)),
   .entry :global(math-field::part(menu-toggle)) {
