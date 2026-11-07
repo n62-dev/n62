@@ -13,7 +13,8 @@
 #                           when sonnet is named (logged: "audit model raised to opus: <why>")
 #       --no-worker         review-only: the branch must exist; phase-1 is merged into it first (a conflict is a
 #                           fix round for <agent>), then the checks, the audit and the merge as usual
-#       --checks LIST       auto (default), none, or a comma list of typecheck,vitest,e2e,golden,size,docs
+#       --checks LIST       auto (default), none, or a comma list of docs,typecheck,size,redfirst,vitest,golden,e2e,shell (auto
+#                           runs them in that order, A83, and the pre-flight before each queue entry; a list runs no pre-flight)
 #       --no-merge          stop after the audit; print the merge command instead
 #       --dry-run           print the bundle and the commands; start no agent, make no worktree
 #   scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" ["<open questions>"] [--dry-run]
@@ -467,6 +468,23 @@ bundle="$run/spec.md"
 no_wait="Never start a background loop that waits on a process: pgrep -f matches the loop's own command line, so it never ends (run 58 held its session open 39 minutes); run every check in the foreground with a timeout."
 worker_prompt="You are $agent in pipeline run $n for package $id. The task bundle is on stdin (also at $bundle). You run in your own worktree on branch $branch from phase-1; never switch branches or commit elsewhere. Read docs/shifts/rules.md sections 3 and 5 for the standing rules, then work only from the bundle: read further files when the task needs them, by section. Keep your context small. Run typecheck and the unit tests you touch while you work; the pipeline runs the full checks afterwards. Tick your backlog line in docs/backlog.md and put open decisions under \"Needs the user\" in docs/decisions.md on this branch; change no other shared file. Commit small with git commit -s and the Co-Authored-By trailer of your model; end with the report commit from the bundle. $no_wait Reply in at most five lines: last commit, done or not done, open questions."
 
+# The checks a round runs (auto: the cheap ones first, A83); defined here for the dry run.
+changed() { git -C "$wt" diff --name-only "phase-1...HEAD"; }
+want_checks() {
+  case "$checks" in
+    none) echo "";;
+    auto)  # A83: the cheap checks first (medians: docs 3 s, typecheck 15 s, size 20 s, redfirst 5 s, vitest 53 s, golden 240 s, e2e 607 s)
+      local f app=0 list="docs,typecheck"; f="$(changed)"; grep -q '^app/' <<<"$f" && app=1
+      [[ $app -eq 0 ]] || list="$list,size"
+      ! red_first_wanted "$spec_file" || list="$list,redfirst"
+      list="$list,vitest"
+      ! golden_selected <<<"$f" || list="$list,golden"
+      [[ $app -eq 0 ]] || list="$list,e2e"
+      ! shell_selected <<<"$f" || list="$list,shell"
+      echo "$list";;
+    *) echo "$checks";;
+  esac
+}
 wt="$main/.claude/worktrees/pl-$(printf '%03d' "$n")-$slug"
 if [[ $dry -eq 1 ]]; then
   echo "DRY RUN: pipeline run $n, package $id, agent $agent ($model, $effort), branch $branch"
@@ -490,8 +508,10 @@ if [[ $dry -eq 1 ]]; then
     echo "red-first's stock engine (a package that says its tests fail on the stock build): $engine_root/stock-<key of build-wasm.sh stock-key>, built once with GIAC_PATCHES=none under host-cpu when missing"
   fi
   echo "checks: $checks; merge: $merge; audit model: $audit_model; no-worker: $nowork"
-  echo "checks run: typecheck, vitest, docs always; size when app/ changed; e2e when app/ changed; golden when engine or parser changed; shell when scripts/ or tools/*.sh changed"
-  echo "checks: typecheck,vitest,docs (+ size, e2e when app/ changed; + golden when engine or parser changed; + shell when scripts/ or tools/*.sh changed)"
+  echo "checks: docs,typecheck,vitest always; + size, e2e when app/ changed; + redfirst when the package says its tests fail on phase-1 or the stock build; + golden and its stages when engine or parser changed; + shell when scripts/ or tools/*.sh changed"
+  echo "checks order (auto): docs, typecheck, size, redfirst, vitest, golden, stages, e2e, shell (A83: the cheap ones first); every queue round runs the whole list"
+  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two) and never enters the queue"
+  if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
   [[ "$audit_model" == auto || "$audit_model" == opus ]] || { [[ "$agent" == gorge ]] && echo "audit model raised to opus: gorge package (--audit-model $audit_model is a floor)"; }
   echo "audit model: $audit_model$([[ "$audit_model" == auto ]] && { [[ "$model" == opus ]] && echo " (opus: --model opus; else opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)" || echo " (opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)"; })"
@@ -504,7 +524,7 @@ if [[ $dry -eq 1 ]]; then
     echo "cat $bundle | claude -p --agent $agent --model $model --effort $effort ${claude_common[*]} ${worker_tools[*]} -n pl-$n-$agent \"<worker prompt>\""
   fi
   echo "queue (after the worker and after each fix round): tools/devlock.sh acquire integ pipeline-$n 7200 (wait logged); git -C $wt merge phase-1 (a conflict is a resolve round); the engine; the checks; the audit; on APPROVED the merge and the engine promotion, then release; a failed check or a FIX releases integ before its fix round"
-  echo "checks in $wt/app: typecheck; npm run index && FIND_INDEX=required npm test; e2e when app/ changed; golden when engine or parser changed"
+  echo "checks in $wt (under host-cpu, in the order above, the first failure stops them): docs-check; typecheck; npm run index && build && size; red-first; npm run index && FIND_INDEX=required npm test; golden and the stages; e2e; the shell tests"
   echo "git -C $wt diff -U5 phase-1...<audited sha> | claude -p --agent sofia --model ${audit_model/auto/<auto: opus for --model opus or app/src/input/, app/src/engine/, engine/, spec/keyboard.yaml; else sonnet>} ${audit_tools[*]} \"AUDIT ...\""
   echo "audit input: the criteria, the diff, then \"## Behaviour changes\": when the diff touches engine/, app/src/engine/, app/src/input/ or app/src/units/, GIAC_MJS_A=<phase-1 engine>/giac.mjs GIAC_MJS_B=<the branch's engine>/giac.mjs node app/scripts/behaviour-diff.ts <phase-1 worktree> $wt (once per audit round, timeout 20 min, never retried; timeout -> \"timed out after 20 min\"; over half of a tree's runs throwing -> \"failed to run\"), else \"none\"; a change the package does not name is a FIX"
   echo "audited=\$(git -C $wt rev-parse HEAD) at each audit; the merge takes that sha, or stops with NOT MERGED (the branch is not the audited HEAD) when $branch is not at it"
@@ -573,22 +593,8 @@ run_agent() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [to
 }
 
 # The deterministic checks; the failing excerpt goes to $run/fail-<round>.txt.
-changed() { git -C "$wt" diff --name-only "phase-1...HEAD"; }
-want_checks() {
-  case "$checks" in
-    none) echo "";;
-    auto)
-      local list="typecheck,vitest"
-      changed | grep -q '^app/' && list="$list,e2e,size"
-      changed | golden_selected && list="$list,golden"
-      changed | shell_selected && list="$list,shell"
-      list="$list,docs"; red_first_wanted "$spec_file" && list="$list,redfirst"
-      echo "$list";;
-    *) echo "$checks";;
-  esac
-}
-excerpt() {  # the failing lines of a check log, capped
-  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED' -A4 "$1" | head -n 150
+excerpt() {  # the failing lines of a check log, capped (A83: docs-check's and the pre-flight lint's lines, the stage findings too)
+  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | head -n 150
   [[ -s "$1" ]] && { echo "--- tail ---"; tail -n 30 "$1"; }
 }
 # Wall-clock tests: the Find 16 ms/key test, the golden units p95 bar, the solve.spec.ts persistence test, the clipboard
@@ -609,6 +615,45 @@ rerun_timing() {  # <check> <log>: only the failing files, output appended to th
     golden) own_sh 'cd "$1" && timeout 2700 npm run -s golden' "$wt/app" >> "$2" 2>&1 < /dev/null;;
   esac
 }
+# A83: the cheap checks' commands, for run_checks and the pre-flight; size runs `npm run index` first (vite build imports the Find
+# index, which vitest used to generate before size ran).
+cheap_check() {  # <docs|typecheck|size> <log>
+  case "$1" in
+    docs)      own_sh 'cd "$1" && timeout 300 node tools/docs-check.mjs && timeout 120 node tools/docs-check.test.mjs' "$wt" > "$2" 2>&1 < /dev/null;;
+    typecheck) own_sh 'cd "$1" && timeout 900 npm run -s typecheck' "$wt/app" > "$2" 2>&1 < /dev/null;;
+    size)      own_sh 'cd "$1" && timeout 1800 npm run -s index && timeout 1800 npm run -s build && timeout 300 npm run -s size' "$wt/app" > "$2" 2>&1 < /dev/null;;
+  esac
+}
+machine_end() {  # <check> <log>: a machine failure ends the run, no fix round (A24)
+  host_cpu_drop; local mline; mline="$(grep -m1 -E "$MACHINE_RE" "$2" | cut -c1-160)"
+  log "pipeline #$n $id: NOT MERGED (machine: $1: $mline); branch $branch kept"
+  echo "RESULT #$n $id: NOT MERGED (machine: $1: $mline; worktree $wt kept; see $2)"; exit 1
+}
+# A83: the pre-flight, after the worker and after each fix round, before queue_enter (--checks auto only): in the run's worktree,
+# without integ, the lint rules (preflight_lint), docs, typecheck and, when the list has it, size (under host-cpu). It stops at the
+# first failure, writes preflight-<round>.txt and returns 1: a fix round, counted with the queue's. Every queue round runs the full list.
+preflight() {  # <round>
+  local round="$1" name out rc=0 list t0=$SECONDS
+  [[ "$checks" == auto ]] || return 0
+  list="$(want_checks)"; : > "$run/preflight-$round.txt"
+  for name in lint docs typecheck size; do
+    [[ $name == lint || ",$list," == *",$name,"* ]] || continue
+    out="$run/preflight-$round-$name.log"
+    case "$name" in
+      lint) preflight_lint "$wt" > "$out" 2>&1 || rc=1;;
+      size) host_cpu_take "pipeline-$n" "pipeline #$n $id:" || die "host-cpu lock busy for 7200 s"
+            cheap_check size "$out" || rc=1; host_cpu_drop;;
+      *)    cheap_check "$name" "$out" || rc=1;;
+    esac
+    if [[ $rc -eq 1 ]]; then
+      [[ "$name" == lint ]] || ! machine_failure "$out" || machine_end "$name" "$out"
+      { echo "## $name failed (full log: $out)"; excerpt "$out"; echo; } > "$run/preflight-$round.txt"
+      runlog "pre-flight $name: FAILED ($((SECONDS - t0)) s)"; return 1
+    fi
+    runlog "pre-flight $name: ok"
+  done
+  runlog "pre-flight passed ($((SECONDS - t0)) s)"
+}
 run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure
   local round="$1" list name rc=0 why redwhy="" p1_engine="${N62_P1_ENGINE:-$GIAC_OUT}"
   [[ $engine_managed -eq 0 ]] || p1_engine="$engine_root/key-$p1key"
@@ -619,7 +664,7 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure
   for name in ${list//,/ }; do
     local out="$run/check-$round-$name.log"
     case "$name" in
-      typecheck) own_sh 'cd "$1" && timeout 900 npm run -s typecheck' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
+      typecheck|size|docs) cheap_check "$name" "$out" || rc=1;;  # A83
       vitest)    own_sh 'cd "$1" && timeout 1800 npm run -s index && FORCE_COLOR=0 NO_COLOR=1 FIND_INDEX=required timeout 1800 npm run -s test' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
       e2e)       own_sh 'cd "$1" && FORCE_COLOR=0 timeout 2700 npm run -s test:e2e' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
       golden)    own_sh 'cd "$1" && timeout 2700 npm run -s golden' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
@@ -629,8 +674,6 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure
                  done
                  # each is a FAIL on NEW or NOW PASSING (the script's exit code too)
                  if [[ $sc -ne 0 ]] || stage_findings "$out" > /dev/null; then rc=1; fi;;
-      size)      own_sh 'cd "$1" && timeout 1800 npm run -s build && timeout 300 npm run -s size' "$wt/app" > "$out" 2>&1 < /dev/null || rc=1;;
-      docs)      own_sh 'cd "$1" && timeout 300 node tools/docs-check.mjs && timeout 120 node tools/docs-check.test.mjs' "$wt" > "$out" 2>&1 < /dev/null || rc=1;;
       shell)     # A47a: the shell tests (SELFTESTS); the full output in <log>.full, the FAIL lines here (never a machine failure: tests quote such lines)
                  local sr; selftest_run "$wt" "$out.full" > "$out.sr" || rc=1; sr="$(cat "$out.sr")"
                  { grep -E '^FAIL' "$out.full" | head -n 40 || true; echo "selftest: $sr (full output: $out.full)"; } > "$out";;
@@ -656,12 +699,7 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure
       [[ $rc -eq 0 ]] && runlog "check $name: re-run (timing) passed" || runlog "check $name: re-run (timing) failed"
     fi
     if [[ $rc -eq 1 ]]; then
-      if [[ "$name" != shell ]] && machine_failure "$out"; then
-        host_cpu_drop
-        mline="$(grep -m1 -E "$MACHINE_RE" "$out" | cut -c1-160)"
-        log "pipeline #$n $id: NOT MERGED (machine: $name: $mline); branch $branch kept"
-        echo "RESULT #$n $id: NOT MERGED (machine: $name: $mline; worktree $wt kept; see $out)"; exit 1
-      fi
+      if [[ "$name" != shell ]] && machine_failure "$out"; then machine_end "$name" "$out"; fi
       { [[ "$name" != redfirst ]] || echo "checks failed: red-first (${redwhy:-every new test passes on phase-1})"; echo "## $name failed (full log: $out)"; excerpt "$out"; echo; } >> "$run/fail-$round.txt"
       runlog "check $name: FAILED"; host_cpu_drop; return 1
     fi
@@ -746,7 +784,7 @@ queue_enter() {
   integ_clean "$integ" || dirty_stop
   merge_phase1
   queue_node_modules  # the merge may have brought a new dependency
-  [[ $nowork -eq 0 || $first_entry -eq 0 ]] || rounds=$merge_conflicts  # review-only: its first resolve round is a fix round (A10)
+  [[ $nowork -eq 0 || $first_entry -eq 0 ]] || rounds=$((rounds + merge_conflicts))  # review-only: its first resolve round is a fix round (A10)
   first_entry=0
   if [[ $engine_managed -eq 1 ]]; then  # phase-1's engine as it is now (red-first; promoted by the last merge, so usually a copy)
     p1key="$(engine_key "$main" phase-1)"
@@ -757,11 +795,14 @@ queue_enter() {
 
 # The checks and the audit share at most two fix rounds; a fix round runs outside the queue.
 verdict=""; audited=""
+fail_line() { local l; l="$(first_failing_line "$1")"; echo "$(head -n 1 "$1")${l:+: $l}"; }  # A83: the heading and the first failing line
 while :; do
   select_engine  # a branch with its own engine key builds it before it queues (host-cpu only)
-  queue_enter
-  if ! run_checks "$rounds"; then
-    log "pipeline #$n $id: checks failed (round $rounds): $(head -n 1 "$run/fail-$rounds.txt")"
+  if ! preflight "$rounds"; then  # A83: the cheap checks before the queue, without integ
+    log "pipeline #$n $id: pre-flight failed (round $rounds): $(fail_line "$run/preflight-$rounds.txt")"
+    reason="the pre-flight failed"; feedback="$run/preflight-$rounds.txt"
+  elif queue_enter; ! run_checks "$rounds"; then
+    log "pipeline #$n $id: checks failed (round $rounds): $(fail_line "$run/fail-$rounds.txt")"
     reason="the checks failed"; feedback="$run/fail-$rounds.txt"
   else
     log "pipeline #$n $id: checks passed (round $rounds)"

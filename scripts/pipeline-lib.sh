@@ -354,6 +354,29 @@ task_questioned() {
 # shell_selected: succeeds when a changed file (one per line, on stdin) is a pipeline script or a tool script (A47a).
 shell_selected() { grep -qE '^(scripts/|tools/[^/]*\.sh$)'; }
 
+# ---- A83: the cheap checks fail first ----
+# preflight_lint <worktree>: the two mechanical audit FIXes, against phase-1: a new engine/giac/patches/NNNN-*.patch needs its row (the
+# name in backticks) in engine/giac/patches/README.md; the branch needs a report commit (brief section 2: a body with a Done and a Tests
+# line). Prints one "lint: ..." line per finding; exit 1 when there is one.
+preflight_lint() {
+  local wt="$1" p bad=0 c
+  while IFS= read -r p; do
+    [[ -n "$p" ]] || continue
+    grep -qF "\`$(basename "$p")\`" "$wt/engine/giac/patches/README.md" 2>/dev/null || { echo "lint: $p has no row in engine/giac/patches/README.md"; bad=1; }
+  done < <(git -C "$wt" diff --name-only --diff-filter=A phase-1...HEAD -- 'engine/giac/patches/[0-9][0-9][0-9][0-9]-*.patch')
+  local found=0
+  for c in $(git -C "$wt" rev-list --no-merges phase-1..HEAD); do
+    git -C "$wt" log -1 --format=%b "$c" | awk '/^[#* ]*Done([^A-Za-z]|$)/{d=1} /^[#* ]*Tests([^A-Za-z]|$)/{t=1} END{exit !(d && t)}' && { found=1; break; }
+  done
+  [[ $found -eq 1 ]] || { echo "lint: no report commit (brief section 2: end with a commit whose body is the report, with its Done: and Tests: lines)"; bad=1; }
+  return $bad
+}
+# first_failing_line <fail file>: the first line of the excerpt after the "## <check> failed" heading (grep's "N:" or "N-" taken off,
+# the "--- tail ---" mark and blank lines skipped), cut to 120 characters, for the log line.
+first_failing_line() {
+  awk '!h { if (/^## /) h = 1; next } /^--- tail ---$/ || /^--$/ || /^[[:space:]]*$/ { next } { sub(/^[0-9]+[:-]/, ""); sub(/^[[:space:]]+/, ""); print; exit }' "$1" 2>/dev/null | cut -c1-120
+}
+
 # A37: the tests that failed in some of <total> runs and passed in others. Reads item files (one "file<TAB>title" per failing item,
 # one file per run) and prints "<failed runs>/<total><TAB><item>" for every item that failed in fewer than all runs.
 flaky_items() {  # <total> <item file>...
