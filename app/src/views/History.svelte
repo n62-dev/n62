@@ -208,7 +208,7 @@
       onpointerdown={(e) => pressStart(e, item)} onpointerup={endPress} onpointercancel={endPress} onclick={(e) => toggleSigma(e, item)}
       oncontextmenu={(e) => e.preventDefault()}
       data-selected={at === selected ? "true" : undefined}>
-      <button type="button" class="in" title={t("history.recall")} use:edgeFade onclick={() => tapRow(at, () => onrecall(item))}>
+      <button type="button" class="in" title={t("history.recall")} use:edgeFade onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => onrecall(item))}>
         <Math latex={drawnInput(item)} />
       </button>
       <div class="out" data-testid="result" use:edgeFade={item.status}>
