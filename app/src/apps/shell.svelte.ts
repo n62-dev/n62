@@ -8,7 +8,8 @@ import { t } from "../i18n/index.ts";
 import type { ActionBody } from "../keyboard/keyboard.ts";
 import type { Kv } from "../state/storage.ts";
 import type { IconId } from "../views/icons.ts";
-import { Sheet, type Picked } from "../views/sheet.svelte.ts";
+import type { Picked, Sheet } from "../views/sheet.svelte.ts";
+import { loadSheetModel, sheetChunk } from "../views/sheetView.svelte.ts";
 import { APPS, appEntry, isAppId, placeGlyph } from "./registry.ts";
 import { VIEW_IDS, type AppHost, type AppId, type AppInstance, type LoadedApp, type MenuItem, type NavDir, type SubMenu, type ViewId } from "./types.ts";
 
@@ -45,8 +46,19 @@ export class AppShell {
   view = $state<ViewId>("symb");
   /** Loaded apps (raw: instances keep their own reactive state). */
   loaded = $state.raw<Partial<Record<AppId, LoadedApp>>>({});
-  /** The open sheet (docs/05 3.1): the Apps list, a view's Menu, or a list such as a history row's actions. */
-  sheet = $state.raw<Sheet | null>(null);
+  /** The open sheet (docs/05 3.1): the Apps list, a view's Menu, or a list such as a history row's actions. Setting it
+   *  (a sheet or null) drops a sheet still waiting for its model (R151, openSheet). */
+  get sheet(): Sheet | null {
+    return this.#sheet;
+  }
+  set sheet(s: Sheet | null) {
+    this.sheetPending = null;
+    this.#sheet = s;
+  }
+  #sheet = $state.raw<Sheet | null>(null);
+  /** R151: a sheet asked for before its model (sheet.svelte.ts, a lazy chunk) is in: settles when it is open (or
+   *  dropped). Keys pressed meanwhile wait for it (route.ts), as for a sheet whose view is not in yet (F42). */
+  sheetPending: Promise<void> | null = null;
   /** Set while an app's code is loading (the view shows a short note). */
   loading = $state<AppId | null>(null);
   /** A name typed in the entry line under its label (R89, a preset's name): route.ts gives it each key's action first. */
@@ -262,10 +274,13 @@ export class AppShell {
   toggleApps(): void {
     if (this.switcherOpen) this.sheet = null;
     else
-      this.sheet = new Sheet("apps", t("apps.title"), () => [
-        ...(["home", "cas"] as const).map((v) => ({ id: v, label: t(`view.${v}`), glyph: placeGlyph(v), run: () => this.goTo?.(v) })),
-        ...APPS.map((a) => ({ id: a.id, label: t(a.name), glyph: a.glyph, run: () => void this.open(a.id) })),
-      ]);
+      this.openSheet(
+        (S) =>
+          new S("apps", t("apps.title"), () => [
+            ...(["home", "cas"] as const).map((v) => ({ id: v, label: t(`view.${v}`), glyph: placeGlyph(v), run: () => this.goTo?.(v) })),
+            ...APPS.map((a) => ({ id: a.id, label: t(a.name), glyph: a.glyph, run: () => void this.open(a.id) })),
+          ]),
+      );
   }
   /** Menu key: the open view's menu, or close the open sheet. False when the view has no menu (a dead key). */
   toggleMenu(opts?: { at?: string }): boolean {
@@ -274,26 +289,44 @@ export class AppShell {
       return true;
     }
     const place = this.app === null ? "home" : `${this.app}:${this.view}`;
-    const sheet = new Sheet(`menu:${place}`, this.menuTitle.text, () => this.menuItems, { icon: this.menuTitle.icon, at: opts?.at, settings: this.toSettings });
-    this.sheet = sheet;
-    // a view whose ☰ has no rows and no pointer opens Settings directly (R145)
-    if (this.menuItems.length === 0) this.picked(sheet.openSettings());
+    const { text, icon } = this.menuTitle;
+    this.openSheet(
+      (S) => new S(`menu:${place}`, text, () => this.menuItems, { icon, at: opts?.at, settings: this.toSettings }),
+      // a view whose ☰ has no rows and no pointer opens Settings directly (R145)
+      (sheet) => this.menuItems.length === 0 && this.picked(sheet.openSettings()),
+    );
     return true;
   }
   /** Open a list of items over the view (a long press on a history row): same sheet and keys as the Menu key.
    *  `settings`: the ⚙ in its title row opens Settings (R145). */
   showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; at?: string; settings?: boolean }): void {
-    this.sheet = new Sheet(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined });
+    this.openSheet((S) => new S(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
   }
   /** Find (R4a): its categories, searched by the letters typed (Sheet id "find"; route.ts gives it docs/04 3.7's keys). */
   showFind(title: string, categories: readonly MenuItem[], search: (q: string) => readonly MenuItem[]): void {
-    this.sheet = new Sheet("find", title, () => categories, { search, remember: false });
+    this.openSheet((S) => new S("find", title, () => categories, { search, remember: false }));
   }
   /** A palette on the grid sheet: Tmpl (R10; its key closes it again), Shift + 6 `rel` and Shift + 9 `sym` (R18; the
    *  digits pick inside those, so only Esc and Cancel close them). Each opens on its last pick. */
   togglePalette(id: PaletteId, title: string, items: () => readonly MenuItem[], columns: number): void {
     if (this.sheet?.id === id) this.sheet = null;
-    else this.sheet = new Sheet(id, title, items, { columns });
+    else this.openSheet((S) => new S(id, title, items, { columns }));
+  }
+  /** Opens the sheet `make` builds, and then runs `then` on it. Before the sheet's model is in (R151: a long press on a
+   *  history row before the idle load), it loads first and `sheetPending` holds the open; a sheet set meanwhile (or
+   *  none, Esc) wins. If the model does not load, nothing opens. */
+  private openSheet(make: (S: typeof Sheet) => Sheet, then?: (sheet: Sheet) => void): void {
+    const open = (S: typeof Sheet): void => {
+      const sheet = make(S);
+      this.sheet = sheet;
+      then?.(sheet);
+    };
+    if (sheetChunk.model) return open(sheetChunk.model.Sheet);
+    const pending: Promise<void> = loadSheetModel().then(
+      (m) => void (this.sheetPending === pending && open(m.Sheet)),
+      () => void (this.sheetPending === pending && (this.sheetPending = null)),
+    );
+    this.sheetPending = pending;
   }
   closeSheet(): void {
     this.sheet = null;
