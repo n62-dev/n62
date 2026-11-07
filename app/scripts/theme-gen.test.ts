@@ -29,12 +29,12 @@ describe("generated theme files", () => {
 });
 
 const CURVES = readFileSync(new URL("../src/apps/function/app.svelte.ts", import.meta.url), "utf8");
-const curves = (b: "dark" | "light" | "teal"): string[] => [...(new RegExp(`CURVE_COLORS_${b.toUpperCase()}\\s*=\\s*\\[([^\\]]*)\\]`).exec(CURVES)?.[1] ?? "").matchAll(/#[0-9a-fA-F]{6}/g)].map((m) => m[0]);
+const curves = (b: "dark" | "light" | "n62_light"): string[] => [...(new RegExp(`CURVE_COLORS_${b.toUpperCase()}\\s*=\\s*\\[([^\\]]*)\\]`).exec(CURVES)?.[1] ?? "").matchAll(/#[0-9a-fA-F]{6}/g)].map((m) => m[0]);
 
 describe("all 24 combinations", () => {
-  it("are 24: n62, teal, solarized in this order", () => {
+  it("are 24: n62, bw, solarized in this order", () => {
     expect(combos()).toHaveLength(24);
-    expect(FAMILIES.map((f) => f.id)).toEqual(["n62", "teal", "solarized"]);
+    expect(FAMILIES.map((f) => f.id)).toEqual(["n62", "bw", "solarized"]);
   });
   for (const c of combos())
     describe(selector(c), () => {
@@ -48,7 +48,7 @@ describe("all 24 combinations", () => {
         expect(cr(t["on-error"] as string, t["error"] as string)).toBeGreaterThanOrEqual(4.5);
       });
       it("each curve colour is at least 3:1 on --bg", () => {
-        for (const col of curves(c.family === "teal" ? "teal" : c.brightness)) expect(cr(col, t["bg"] as string), `${col} on --bg`).toBeGreaterThanOrEqual(3);
+        for (const col of curves(c.family === "n62" && c.brightness === "light" ? "n62_light" : c.brightness)) expect(cr(col, t["bg"] as string), `${col} on --bg`).toBeGreaterThanOrEqual(3);
       });
     });
 });
@@ -65,7 +65,7 @@ describe("R140: Shift, Alpha and ⚠ stay apart", () => {
       const { t } = theme(c);
       for (const [name, m] of Object.entries(CVD)) expect(apart(t["shift"] as string, t["alpha"] as string, m), name).toBeGreaterThanOrEqual(LAYER_APART[c.high ? "high" : "normal"]);
     });
-  // The legends on the keys (key-shift, key-alpha) are moved by their own branch of withLayersApart (Teal splits them from the screen's).
+  // The legends on the keys (key-shift, key-alpha) are moved by their own branch of withLayersApart (a family with key twins splits them from the screen's).
   for (const c of combos().filter((x) => !x.plain))
     it(`${selector(c)}: the key legends key-shift and key-alpha at least ${LAYER_APART[c.high ? "high" : "normal"]} apart for protanopia, deuteranopia and tritanopia`, () => {
       const { t } = theme(c);
@@ -84,20 +84,15 @@ describe("R150: color-scheme follows the screen's text", () => {
   /** [brightness named in the selector, color-scheme] of each block. */
   const schemes = (src: string): [string, string][] =>
     [...src.matchAll(/:root\[[^{]*data-brightness="(dark|light)"[^{]*\{[^}]*?color-scheme: (light|dark);/g)].map((m) => [m[1] as string, m[2] as string]);
-  it("all 8 Teal blocks end in color-scheme: light", () => {
-    const s = schemes(read("theme/teal.css"));
-    expect(s).toHaveLength(8);
-    expect(s.map((x) => x[1])).toEqual(Array(8).fill("light"));
-  });
-  it("N62 and Solarized keep dark for Dark and light for Light", () => {
-    for (const p of ["theme/n62.css", "theme/solarized.css", "style.css"]) {
+  it("every family keeps dark for Dark and light for Light", () => {
+    for (const p of ["theme/n62.css", "theme/bw.css", "theme/solarized.css", "style.css"]) {
       const s = schemes(read(p));
       expect(s.length, p).toBeGreaterThan(0);
       for (const [b, scheme] of s) expect(scheme, p).toBe(b);
     }
   });
   it("block() writes the same for every combination", () => {
-    for (const c of combos()) expect(block(c)).toContain(`color-scheme: ${c.family === "teal" ? "light" : c.brightness};\n`);
+    for (const c of combos()) expect(block(c)).toContain(`color-scheme: ${c.brightness};\n`);
   });
 });
 
@@ -147,54 +142,20 @@ describe("R140: the tip bubble takes the Shift colours, not a literal amber", ()
   });
 });
 
-// R150: the Teal family and the key twins.
+// R150: the key twins (theme-gen.ts TWINS). R150's Teal used them; since R153 no family does.
 describe("R150: key-text and the other key twins", () => {
-  const T = (brightness: "dark" | "light", high = false, pl = false): Record<string, string> => theme({ family: "teal", brightness, high, plain: pl }).t;
   const TWINNED = ["text", "muted", "text-dead", "shift", "alpha"] as const;
-  it("N62 and Solarized have every twin equal to its role, in every combination", () => {
-    for (const c of combos().filter((x) => x.family !== "teal")) {
+  it("no family gives a key twin of its own (R153: key and screen share the roles)", () => {
+    for (const f of FAMILIES) for (const b of ["dark", "light"] as const) for (const r of TWINNED) expect(f[b][`key-${r}`], `${f.id} ${b} key-${r}`).toBeUndefined();
+  });
+  it("every family has every twin equal to its role, in every combination", () => {
+    for (const c of combos()) {
       const { t } = theme(c);
       for (const r of TWINNED) expect(t[`key-${r}`], `${selector(c)} key-${r}`).toBe(t[r]);
     }
   });
-  it("Teal Dark: light legends on the near-black keys, black text on the teal screen", () => {
-    const t = T("dark");
-    expect(t["bg"]).toBe("#529997");
-    expect(t["text"]).toBe("#000000");
-    expect(t["key-text"]).toBe("#eef2f2");
-    expect(t["key-enter"]).toBe("#eef2f2");
-    expect(t["key-shift"]).toBe("#ff9a33");
-    expect(t["key-alpha"]).toBe("#529997");
-    for (const k of ["key-num", "key-op", "key-fn", "key-ctl", "key-nav"]) expect(cr(t["key-text"] as string, t[k] as string), k).toBeGreaterThanOrEqual(4.5);
-    for (const g of ["bg", "panel", "pick", "chip-bg"]) expect(cr(t["text"] as string, t[g] as string), g).toBeGreaterThanOrEqual(4.5);
-  });
-  it("Teal Light: the dark legends are the screen's text; the keys are white", () => {
-    const t = T("light");
-    expect(t["bg"]).toBe("#529997");
-    expect(t["key-num"]).toBe("#ffffff");
-    expect(t["key-text"]).toBe(t["text"]);
-    expect(t["key-enter"]).toBe("#0b1213");
-  });
-  it("Teal High contrast keeps a teal screen: lightened along its hue until black reads at 7:1 (#57a3a1), in Dark and Light", () => {
-    for (const b of ["dark", "light"] as const) {
-      const t = T(b, true);
-      expect(t["bg"], b).toBe("#57a3a1");
-      expect(cr(t["text"] as string, t["bg"] as string), b).toBeGreaterThanOrEqual(7);
-      expect(cr("#000000", t["bg"] as string), b).toBeGreaterThanOrEqual(7);
-    }
-    for (const k of ["key-num", "key-op", "key-fn"]) expect(cr(T("dark", true)["key-text"] as string, T("dark", true)[k] as string)).toBeGreaterThanOrEqual(7);
-  });
-  it("Plain keys sets the Shift and Alpha legends to key-text, not text", () => {
-    const t = T("dark", false, true);
-    expect(t["key-shift"]).toBe(t["key-text"]);
-    expect(t["key-alpha"]).toBe(t["key-text"]);
-    expect(t["shift"]).toBe(t["text"]);
-    expect(t["key-text"]).toBe("#eef2f2");
-    expect(cr(t["on-enter"] as string, t["key-enter"] as string)).toBeGreaterThanOrEqual(4.5);
-  });
-  it("the key-text role checked against the keys is in the audit, and text is not checked against the keys for Teal", () => {
-    const cs = checks(T("dark"), false);
+  it("the key-text role checked against the keys is in the audit", () => {
+    const cs = checks(theme({ family: "n62", brightness: "dark", high: false, plain: false }).t, false);
     expect(cs.some((x) => x.f === "key-text" && x.b === "key-num")).toBe(true);
-    expect(cs.some((x) => x.f === "text" && x.b === "key-num")).toBe(false);
   });
 });

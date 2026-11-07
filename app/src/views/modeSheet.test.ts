@@ -125,7 +125,7 @@ describe("Settings › Appearance (R50e)", () => {
   it("▶ ◀ step the theme in place, round the ends; the sheet stays", () => {
     const s = settings(1);
     s.right();
-    expect(session.settings.look.family).toBe("teal");
+    expect(session.settings.look.family).toBe("bw");
     expect(s.left()).toBe(true);
     expect(s.left()).toBe(true);
     expect(session.settings.look.family).toBe("solarized");
@@ -137,7 +137,7 @@ describe("Settings › Appearance (R50e)", () => {
     const s = settings(1);
     expect(s.enter()).toEqual({ kind: "stay" });
     expect(s.path).toBe("Settings › Appearance › Theme");
-    expect(s.level.items.map((x) => x.label)).toEqual(["N62", "Teal", "Solarized"]);
+    expect(s.level.items.map((x) => x.label)).toEqual(["N62", "Black & White", "Solarized"]);
     expect(s.level.items.every((x) => x.dots?.length === 5)).toBe(true);
     expect(s.pickNumber(3)).toEqual({ kind: "stay" });
     expect(session.settings.look.family).toBe("solarized");

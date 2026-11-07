@@ -14,8 +14,9 @@ export interface LookShot {
   readonly element?: string;
 }
 
-const FAMILIES = ["n62", "teal", "solarized"] as const;
-const name = (f: string): string => f[0]!.toUpperCase() + f.slice(1);
+const FAMILIES = ["n62", "bw", "solarized"] as const;
+const NAMES: Record<string, string> = { n62: "N62", bw: "Black & White", solarized: "Solarized" };
+const name = (f: string): string => NAMES[f] ?? f;
 
 /** Put a look on the page as Settings › Appearance does, and wait for its lazy CSS. */
 async function setLook(p: Page, patch: Record<string, unknown>): Promise<void> {
@@ -46,9 +47,10 @@ export function lookShots(someHistory: (p: Page) => Promise<void>): LookShot[] {
     { id: "look-plain", group: "Themes (R50e): the switches", title: "N62, Plain keys, Shift on (colour off; the italic letters stay)", setup: set({ plain: true }) },
     { id: "look-plain-alpha", group: "Themes (R50e): the switches", title: "N62, Plain keys, Alpha on (R142: the letters are italic, nothing is bold)", setup: async (p) => { await someHistory(p); await tap(p, ["alpha"]); await setLook(p, { plain: true }); } },
     { id: "look-plain-cas", group: "Themes (R50e): the switches", title: "N62, Plain keys, CAS view, Alpha on (lower case, italic)", setup: async (p) => { await tap(p, ["@cas", "alpha"]); await setLook(p, { plain: true }); } },
-    { id: "look-teal-contrast", group: "Themes (R50e): the switches", title: "Teal, High contrast (the teal lightened until black reads at 7:1)", setup: set({ family: "teal", contrast: true }) },
-    { id: "look-teal-plain", group: "Themes (R50e): the switches", title: "Teal, Plain keys", setup: set({ family: "teal", plain: true }) },
-    { id: "look-teal-both", group: "Themes (R50e): the switches", title: "Teal, High contrast and Plain keys together", setup: set({ family: "teal", contrast: true, plain: true }) },
+    { id: "look-bw-contrast", group: "Themes (R50e): the switches", title: "Black & White, High contrast (R153: N62 before it turned teal)", setup: set({ family: "bw", contrast: true }) },
+    { id: "look-bw-plain", group: "Themes (R50e): the switches", title: "Black & White, Plain keys", setup: set({ family: "bw", plain: true }) },
+    { id: "look-bw-both", group: "Themes (R50e): the switches", title: "Black & White, High contrast and Plain keys together", setup: set({ family: "bw", contrast: true, plain: true }) },
+    { id: "look-both", group: "Themes (R50e): the switches", title: "N62, High contrast and Plain keys together", setup: set({ contrast: true, plain: true }) },
   ];
 }
 

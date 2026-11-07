@@ -32,7 +32,7 @@ describe("applyTheme", () => {
     const root = fakeRoot();
     root.setAttribute("data-contrast", "high");
     root.setAttribute("data-keys", "plain");
-    await applyTheme({ family: "teal", brightness: "dark", contrast: "normal", keys: "colour" }, root, async () => {});
+    await applyTheme({ family: "bw", brightness: "dark", contrast: "normal", keys: "colour" }, root, async () => {});
     expect([...root.attrs.keys()]).toEqual(["data-family", "data-brightness"]);
   });
   it("N62 without transforms loads nothing; with one, its file", async () => {
@@ -42,7 +42,7 @@ describe("applyTheme", () => {
     expect(loaded).toEqual([]);
     await applyTheme({ family: "n62", brightness: "dark", contrast: "high", keys: "colour" }, fakeRoot(), load);
     expect(loaded).toEqual(["n62"]);
-    expect(needsFile({ family: "teal", brightness: "dark", contrast: "normal", keys: "colour" })).toBe(true);
+    expect(needsFile({ family: "bw", brightness: "dark", contrast: "normal", keys: "colour" })).toBe(true);
   });
 });
 
@@ -53,28 +53,28 @@ describe("applyTheme, two changes in a row", () => {
     const releases = new Map<Family, () => void>();
     const load = (f: Family): Promise<void> => new Promise((res) => void releases.set(f, res));
     const first = applyTheme(t("solarized"), root, load);
-    const second = applyTheme(t("teal"), root, load);
+    const second = applyTheme(t("bw"), root, load);
     await Promise.resolve();
-    releases.get("teal")?.();
+    releases.get("bw")?.();
     await second;
-    expect(root.attrs.get("data-family")).toBe("teal");
+    expect(root.attrs.get("data-family")).toBe("bw");
     releases.get("solarized")?.();
     await first;
-    expect(root.attrs.get("data-family")).toBe("teal");
+    expect(root.attrs.get("data-family")).toBe("bw");
   });
   it("a change after an unfinished one still wins when the first finishes first", async () => {
     const root = fakeRoot();
     const releases = new Map<Family, () => void>();
     const load = (f: Family): Promise<void> => new Promise((res) => void releases.set(f, res));
     const first = applyTheme(t("solarized"), root, load);
-    const second = applyTheme(t("teal"), root, load);
+    const second = applyTheme(t("bw"), root, load);
     await Promise.resolve();
     releases.get("solarized")?.();
     await first;
     expect(root.attrs.has("data-family")).toBe(false); // superseded: nothing set yet
-    releases.get("teal")?.();
+    releases.get("bw")?.();
     await second;
-    expect(root.attrs.get("data-family")).toBe("teal");
+    expect(root.attrs.get("data-family")).toBe("bw");
   });
 });
 
