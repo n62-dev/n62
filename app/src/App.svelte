@@ -15,7 +15,6 @@
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
   import { ringState } from "./entry/ringState.ts";
-  import { runDash } from "./entry/runDash.ts";
   import { resultToEntry } from "./render/insertable.ts";
   import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
@@ -359,7 +358,11 @@
   /** R155: a job runs or the engine starts; the dash round the entry outline shows once that has lasted 150 ms. */
   const working = $derived(busy || session.engineState === "starting");
   let dash = $state(false);
-  $effect(() => runDash(working, (on) => (dash = on)));
+  $effect(() => {
+    if (!working) return void (dash = false);
+    const id = setTimeout(() => (dash = true), 150); // as Working… (style.css .late): a job that ends sooner never shows it
+    return () => clearTimeout(id);
+  });
 </script>
 
 <main class="app">
