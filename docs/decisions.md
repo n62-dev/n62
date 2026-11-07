@@ -9,8 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
 
-**R151: start time on the Tab One.** The start chunk is 59.44 kB gzip (was 60.91 kB); workers run no adb, so `./build.sh --measure` before and after (keyboard-ready, engine-ready, medians of 5) waits for an annabell run by day, or the night's device. Proposal: an annabell measurement package on phase-1 after the merge (R151's report).
-
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
 
 ## Decided proposals
@@ -31,6 +29,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
 ### Feel, keys and screen (milestone 4a)
+- **R151's start time comes from A73f1 (Opus pass 92).** The start chunk went from 60.91 to 59.44 kB gzip and only the sheet's model left it (loaded with the sheet's view when idle), so no measurement package: A73f1's seven Home cold starts on the Tab One (phase-1 after R151) are the after numbers, against A73's 1299 ms engine ready and docs/04 8.3's 722 ms keyboard usable. Would change if: either is over its before by more than 50 ms (a ron package).
 - **Owner answers of 2026-11-06 (UI, before v0.1.0):** R140–R150 and R53 as written (families: R50); ▾ marks a menu key; they rewrite the core cases they change; a colour-blindness test, no picker (R140); the credits roll (R149). Mockup: `docs/mockups/ui-2026-11-06.html`.
 - **R41's status line at font scale 2.0 waits for a device (Opus pass 61).** Chromium's emulation puts it 35 px over 360 px at 2.0 (fine at 1.5); annabell's next device run checks it with TalkBack. Would change if: the device clips Mode or ☰ (a ron package).
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Full text: archive. Would change if: an outside round shows another first user.
