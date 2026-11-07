@@ -390,10 +390,10 @@ printf 'a\tt\na\tt\n' > "$tmp/d1"; : > "$tmp/d2"
 # A36: red-first: a package that says its tests fail on phase-1 must have a new test that fails there
 rf="$tmp/rf"; mkdir -p "$rf/app" "$rf/tests/golden"; git init -q -b phase-1 "$rf"; echo 1 > "$rf/app/code.txt"; printf -- '- id: old\n' > "$rf/tests/golden/g2.yaml"; cp "$rf/tests/golden/g2.yaml" "$rf/tests/golden/home.yaml"
 git -C "$rf" add -A; gc "$rf" base
-git -C "$rf" checkout -q -b p1/pass; echo 'PASSES' > "$rf/app/a.test.ts"; git -C "$rf" add -A; gc "$rf" t
-git -C "$rf" checkout -q -b p1/fail phase-1; echo 'FAILS-ON-OLD' > "$rf/app/b.test.ts"; git -C "$rf" add -A; gc "$rf" t
+git -C "$rf" checkout -q -b p1/pass; echo 'it("a", () => expect(1).toBe(1)); // PASSES' > "$rf/app/a.test.ts"; git -C "$rf" add -A; gc "$rf" t
+git -C "$rf" checkout -q -b p1/fail phase-1; echo 'it("b", () => expect(1).toBe(2)); // FAILS-ON-OLD' > "$rf/app/b.test.ts"; git -C "$rf" add -A; gc "$rf" t
 git -C "$rf" checkout -q -b p1/none phase-1; echo 2 > "$rf/app/code.txt"; git -C "$rf" add -A; gc "$rf" t
-git -C "$rf" checkout -q -b p1/crash phase-1; echo 'CRASHES' > "$rf/app/c.test.ts"; git -C "$rf" add -A; gc "$rf" t
+git -C "$rf" checkout -q -b p1/crash phase-1; echo 'it("c", () => expect(1).toBe(1)); // CRASHES' > "$rf/app/c.test.ts"; git -C "$rf" add -A; gc "$rf" t
 git -C "$rf" checkout -q -b p1/g2 phase-1; printf -- '- id: old\n- id: newcase\n' > "$rf/tests/golden/g2.yaml"; git -C "$rf" add -A; gc "$rf" t
 git -C "$rf" checkout -q -b p1/home phase-1; printf -- '- id: old\n- id: newcase\n' > "$rf/tests/golden/home.yaml"; git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1
 printf '#!/bin/sh\ngrep -q FAILS-ON-OLD "$@" && { echo " Test Files  1 failed (1)"; echo "      Tests  1 failed (1)"; exit 1; }\ngrep -q CRASHES "$@" && { echo "Error: cannot import"; exit 1; }\nexit 0\n' > "$tmp/fakevitest.sh"
@@ -426,8 +426,8 @@ changed() { echo docs/x.md; }; checks=auto
 spec_file="$tmp/spec-red"; [[ ",$(want_checks)," == *,redfirst,* ]] || fail "A36: want_checks lacks redfirst for a package that says so"
 spec_file="$tmp/spec-plain"; [[ ",$(want_checks)," != *,redfirst,* ]] || fail "A36: want_checks has redfirst without the claim"
 # A71: "fail on the stock build": the same stage on phase-1's code with the stock engine (GIAC_OUT of the stock build); the log says which engine ran
-git -C "$rf" checkout -q -b p1/vgiac phase-1; echo 'FAILS-ON-OLD reads GIAC_OUT' > "$rf/app/d.test.ts"; git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1
-git -C "$rf" checkout -q -b p1/vnode phase-1; printf 'import { nodeHost } from "./engine/nodeGiac.ts";\nFAILS-ON-OLD\n' > "$rf/app/e.test.ts"; git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1
+git -C "$rf" checkout -q -b p1/vgiac phase-1; echo 'expect(1).toBe(2); // FAILS-ON-OLD reads GIAC_OUT' > "$rf/app/d.test.ts"; git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1
+git -C "$rf" checkout -q -b p1/vnode phase-1; printf 'import { nodeHost } from "./engine/nodeGiac.ts";\nexpect(1).toBe(2); // FAILS-ON-OLD\n' > "$rf/app/e.test.ts"; git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1
 printf 'X, A2: tests that fail on the stock build\n' > "$tmp/spec-stock"
 printf '#!/bin/sh\necho "GIAC_OUT=$GIAC_OUT" > "%s/vitest-ran"\ngrep -q FAILS-ON-OLD "$@" && { echo " Test Files  1 failed (1)"; echo "      Tests  1 failed (1)"; exit 1; }\nexit 0\n' "$tmp" > "$tmp/fakevitest-env.sh"
 printf '#!/bin/sh\necho "GIAC_OUT=$GIAC_OUT ONLY=$ONLY" > "%s/golden-ran"\ncase "$GIAC_OUT" in *stock*) echo "FAIL home: 12/13 match"; echo "  home newcase: got 1, expect 2"; echo "GOLDEN GATE FAILED"; exit 1;; esac\nexit 0\n' "$tmp" > "$tmp/fakegolden-env.sh"
@@ -481,10 +481,49 @@ echo "# changed" >> "$ek/patches/README.md"; echo "--- a" > "$ek/patches/9999-ne
 # want_checks: redfirst for a spec that says the stock build, too
 spec_file="$tmp/spec-stock"; [[ ",$(want_checks)," == *,redfirst,* ]] || fail "A71: want_checks lacks redfirst for a package that says 'fail on the stock build'"
 grep -q 'stock_engine_ensure' "$here/pipeline.sh" || fail "A71: pipeline.sh does not build the stock engine"
+# A67: red-first counts a changed vitest file only when its diff adds more test lines (it(/test() or assertion lines (expect(/assert)
+# than it takes away; a file that only loosens or drops its asserts (R112, run #509) is not the package's red test
+git -C "$rf" checkout -q phase-1; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBe(false);\n});\n' > "$rf/app/l.test.ts"; git -C "$rf" add -A; gc "$rf" lbase
+rfb() { git -C "$rf" checkout -q -b "$1" phase-1; }; rfc() { git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1; }
+loose='it("old, renamed", () => {\n  f(1); // was an expect\n  f(2);\n});\n'
+rfb p1/loose; printf "$loose" > "$rf/app/l.test.ts"; mkdir -p "$rf/app/test"; echo 'test("e2e", () => expect(1).toBe(2));' > "$rf/app/test/x.spec.ts"; rfc
+rfb p1/loosemix; printf "$loose" > "$rf/app/l.test.ts"; echo 'it("m", () => expect(1).toBe(2)); // FAILS-ON-OLD' > "$rf/app/m.test.ts"; rfc
+rfb p1/purerename; mkdir -p "$rf/app/sub"; git -C "$rf" mv app/l.test.ts app/sub/l2.test.ts; rfc
+rfb p1/addexpect; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBe(false);\n  expect(f(3)).toBe(true); // FAILS-ON-OLD\n});\n' > "$rf/app/l.test.ts"; rfc
+rfb p1/addit; printf '  test("new", () => { f(3); }); // FAILS-ON-OLD\n' >> "$rf/app/l.test.ts"; rfc
+rfb p1/renamed; mkdir -p "$rf/app/sub"; git -C "$rf" mv app/l.test.ts app/sub/l2.test.ts; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBe(false);\n  expect(f(3)).toBe(true); // FAILS-ON-OLD\n});\n' > "$rf/app/sub/l2.test.ts"; rfc
+printf '#!/bin/sh\necho "$@" > "%s/vitest-args"\ngrep -q FAILS-ON-OLD "$@" && { echo " Test Files  1 failed (1)"; echo "      Tests  1 failed (1)"; exit 1; }\nexit 0\n' "$tmp" > "$tmp/fakevitest-args.sh"; chmod +x "$tmp/fakevitest-args.sh"
+export N62_REDFIRST_VITEST="$tmp/fakevitest-args.sh" N62_REDFIRST_GOLDEN="$tmp/fakegolden.sh"
+[[ "$(red_first_test_files "$(rfwt p1/loose)")" == $'drop\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on a loosened file: $(red_first_test_files "$tmp/rfwt-loose" | tr '\t\n' ' |')"
+[[ "$(red_first_test_files "$(rfwt p1/loosemix)" | sort)" == $'count\tapp/m.test.ts\ndrop\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on loosened + new: $(red_first_test_files "$tmp/rfwt-loosemix" | tr '\t\n' ' |')"
+# a loosened file alone, with e2e specs changed: skipped, the log names the e2e tests, vitest never runs
+rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loose" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a branch whose only vitest change loosens asserts is refused: $out"
+grep -q "^red-first: skipped (no new unit test; the package's red tests are e2e: app/test/x.spec.ts;" "$tmp/rf.log" || fail "A67: the log does not say the red tests are e2e: $(cat "$tmp/rf.log")"
+grep -q '^red-first: not counted (adds no test or assertion line): app/l.test.ts$' "$tmp/rf.log" || fail "A67: the log does not name the file it does not count: $(cat "$tmp/rf.log")"
+[[ ! -e "$tmp/vitest-args" ]] || fail "A67: vitest ran on a loosened file: $(cat "$tmp/vitest-args")"; noscratch loose
+# a loosened file beside a new failing one: only the new one runs, and it is red
+rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loosemix" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: loosened + a new red test is refused: $out"
+grep -q 'm.test.ts' "$tmp/vitest-args" 2>/dev/null && ! grep -q 'l.test.ts' "$tmp/vitest-args" || fail "A67: vitest did not run the new file alone: $(cat "$tmp/vitest-args" 2>&1)"
+grep -q '^red-first: not counted (adds no test or assertion line): app/l.test.ts$' "$tmp/rf.log" || fail "A67: loosemix: the dropped file is not logged: $(cat "$tmp/rf.log")"; noscratch loosemix
+# a rename without a new line is no new test; without e2e the skip keeps its old words
+rm -f "$tmp/vitest-args"; out="$(red_first "$(rfwt p1/purerename)" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a pure rename is refused: $out"
+grep -q '^red-first: skipped (no new or changed golden case or vitest file' "$tmp/rf.log" && [[ ! -e "$tmp/vitest-args" ]] || fail "A67: a pure rename ran or logged: $(cat "$tmp/rf.log")"; noscratch purerename
+# an added expect(, an added test( and a renamed file with an added expect( count as before (red: they fail on phase-1)
+for b in addexpect addit renamed; do
+  rm -f "$tmp/vitest-args"; out="$(red_first "$(rfwt "p1/$b")" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: $b: a new red test is refused: $out"
+  grep -qE '(^| )(l|sub/l2)\.test\.ts' "$tmp/vitest-args" 2>/dev/null || fail "A67: $b: the file did not run: $(cat "$tmp/vitest-args" 2>&1)"; noscratch "$b"
+done
+[[ "$(red_first_test_files "$tmp/rfwt-renamed")" == $'count\tapp/sub/l2.test.ts' ]] || fail "A67: a renamed file with an added expect( is not counted under its new path: $(red_first_test_files "$tmp/rfwt-renamed" | tr '\t\n' ' |')"
+# the same added expect( that passes on phase-1 still refuses the branch (counted, not red)
+rfb p1/addgreen; printf '  expect(f(4)).toBe(true);\n' >> "$rf/app/l.test.ts"; rfc
+out="$(red_first "$(rfwt p1/addgreen)" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" && fail "A67: an added expect( that passes on phase-1 passes the stage"
+grep -q 'every new test passes on phase-1' <<<"$out" || fail "A67: addgreen: no reason: $out"; noscratch addgreen
+unset N62_REDFIRST_VITEST N62_REDFIRST_GOLDEN
+grep -q "red-first: skipped (no new unit test" "$here/pipeline.sh" || fail "A67: pipeline.sh does not log the e2e skip in .coord/log.md"
 # the whole run: a sandbox with a worker that adds a passing test; the failure line reaches fail-<round>.txt
 sb4="$tmp/sb4"; mkdir -p "$sb4/bin" "$sb4/tools" "$sb4/docs/shifts" "$sb4/app/node_modules/x"; git init -q -b main "$sb4"
 cp "$sb/tools/devlock.sh" "$sb4/tools/"; cp "$sb/bin/npm" "$sb4/bin/"; : > "$sb4/docs/shifts/brief.md"; echo t > "$sb4/app/keep"
-printf '#!/bin/sh\ncase "$*" in *"--agent sofia"*) echo APPROVED;; *) echo PASSES > app/n.test.ts; git add -A; git -c user.name=t -c user.email=t@t commit -qm work; echo done;; esac\n' > "$sb4/bin/claude"; chmod +x "$sb4/bin/claude"
+printf '#!/bin/sh\ncase "$*" in *"--agent sofia"*) echo APPROVED;; *) echo "expect(1).toBe(1); // PASSES" > app/n.test.ts; git add -A; git -c user.name=t -c user.email=t@t commit -qm work; echo done;; esac\n' > "$sb4/bin/claude"; chmod +x "$sb4/bin/claude"
 git -C "$sb4" add -A; gc "$sb4" init; git -C "$sb4" branch phase-1
 out="$(cd "$sb4" && PATH="$sb4/bin:$PATH" GIAC_OUT="$sb4/engine" N62_REDFIRST_VITEST="$tmp/fakevitest.sh" "$script" ron "package A9: tests fail on phase-1" --id T9 --branch p1/t9 --checks redfirst 2>&1)"
 grep -q 'NOT MERGED' <<<"$out" || fail "A36: a passing new test does not fail the run: $out"
