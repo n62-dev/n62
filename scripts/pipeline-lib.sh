@@ -368,8 +368,8 @@ TASK_SUBJECT='(my|the) (task( text| block)?|bundle|package( file)?|spec block)'
 # a state that ends its clause: "is missing", "is missing (…)", "is missing from the bundle"; never "is missing a test name"
 TASK_GONE='(missing|empty|absent|not (found|included|in the bundle))[[:space:]]*($|[.;,:!?()]|from |in (the|my) )'
 TASK_QUESTION_RE="((re-?generate|re-?send|re-?build)[^.]*(the bundle|the task|the package file|the spec|[ -]block))|($TASK_SUBJECT (is|are|was|seems( to be)?|looks|appears( to be)?) $TASK_GONE)|($TASK_SUBJECT (lacks|has no) (the |an? )?([A-Z][0-9]+[a-z0-9]* )?(section|block|heading|package|task))|(no (package|task) (file|block|text)([.;,)]|$| in))|(cannot find (the |a )?(package|task)( file| block| text)?[[:space:]]*($|[.;,)]| in))"
-# the done field "not done" ("Last commit abc, NOT done.", "Done or not done: not done"); never a "Not done:" heading or list
-TASK_NOT_DONE_RE='(^[[:space:]*_-]*|[,;:.][[:space:]*_]*)not done([^:*a-z]|$)'
+# the done field "not done" ("Last commit abc, NOT done.", "Done or not done: not done"); never a "Not done:" heading or list, nor "Not done in full:" (words before the colon, A64f1)
+TASK_NOT_DONE_RE='(^[[:space:]*_-]*|[,;:.][[:space:]*_]*)not done[[:space:]*_]*([^:*a-z[:space:]_]|$)'
 # open_question_lines <reply file>: every line with "open question(s)" and the lines after it (a heading followed by bullets), up to the
 # next blank line or a new field ("Note: …", "Last commit: …"); nothing for "Open questions: none" (A64), one per line.
 open_question_lines() {
