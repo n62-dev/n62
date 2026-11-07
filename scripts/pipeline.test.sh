@@ -1065,6 +1065,10 @@ grep -q '0001-a' <<<"$out" && fail "A83: preflight_lint flags a changed patch th
 printf '| `0002-b.patch` | y |\n' >> "$pl/engine/giac/patches/README.md"; git -C "$pl" add -A
 git -C "$pl" -c user.name=t -c user.email=t@t commit -q -m 'report(X): b' -m $'Done: b.\nTests: none.\nNot done: nothing.'
 out="$(preflight_lint "$pl")" || fail "A83: preflight_lint refuses a branch with the row and a report: $out"
+# the report in brief section 2's own form, a bullet list (`- **Done:** ...`, `- **Tests:** ...`), counts as a report (fix round 1 of run 729)
+git -C "$pl" checkout -q -b p1/y phase-1; echo c > "$pl/c.txt"; git -C "$pl" add -A
+git -C "$pl" -c user.name=t -c user.email=t@t commit -q -m 'report(Y): c' -m $'- **Done:** x.\n- **Tests:** typecheck 0.\n- **Not done:** nothing.'
+out="$(preflight_lint "$pl")" || fail "A83: preflight_lint refuses a report written as brief section 2's bullet list: $out"
 # (c) the log line names the excerpt's first failing line (120 characters); the excerpt finds docs-check's and the lint's lines
 eval "$(sed -n '/^excerpt() {/,/^}/p' "$here/pipeline.sh")"
 printf 'warning (untracked, not counted): x\nbudget: docs/backlog.md is 20.1 kB, over 20 kB\ndocs FAILED (1): 3 links\n' > "$tmp/dl.log"
