@@ -135,6 +135,24 @@ export function groupShots(): LookShot[] {
   }));
 }
 
+/** R152 (F189): a history row with e and i in it, on Home and in CAS: e^(iπ) typed with the keys, and iⁱ as a stored
+ *  fixture (it cannot be typed yet, F184), both drawn as the entry line draws e and i, never `\\exponentialE` in red. */
+export function eiShots(): LookShot[] {
+  return ["home", "cas"].map((view) => ({
+    id: `${view}-history-ei`,
+    group: "e and i in the history (R152)",
+    title: `${view === "home" ? "Home" : "CAS"} history rows with e^(iπ) and iⁱ`,
+    setup: async (p) => {
+      if (view === "cas") await tap(p, ["@cas"]);
+      await tap(p, ["shift", "ln", "shift", "d2", "mul", "shift", "d3", "enter"]);
+      await p.waitForFunction(() => document.querySelectorAll('[data-status="done"]').length >= 1);
+      await p.evaluate(() => window.n62.session.submit("\\imaginaryI^{\\imaginaryI}"));
+      await p.waitForFunction(() => document.querySelectorAll('[data-status="done"]').length >= 2);
+      await p.waitForTimeout(250);
+    },
+  }));
+}
+
 /** R143: the ▾ on every legend that opens a menu, the keypad alone at both phone sizes (360 and 412 wide), tap layer and Shift
  *  armed (≤≠, α∞, Memory, Mode and Settings are marked), in N62 (light and dark come with every shot), with Plain keys and with High contrast. */
 export function menuMarkShots(): (LookShot & { viewport: { width: number; height: number } })[] {

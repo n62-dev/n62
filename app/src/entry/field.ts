@@ -5,7 +5,8 @@
 import type { MathfieldElement } from "mathlive";
 import type { ActionBody } from "../keyboard/keyboard.ts";
 import { deleteAtTemplate } from "./delete.ts";
-import { EMARK, ENTRY_MACROS, isChipLatex } from "./macros.ts";
+import { withEntryMacros } from "../render/macros.ts";
+import { EMARK, isChipLatex } from "./macros.ts";
 import { numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 
@@ -109,7 +110,7 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
   // R27c: a typed key takes no style from its neighbour. MathLive's default gave a 7 next to an upright letter that
   // letter's style, on the side its hidden style bias picked: 2\mathrm{i} 7 became \mathrm{i7}, one unknown name.
   mf.onInsertStyle = () => ({});
-  mf.macros = { ...mf.macros, ...ENTRY_MACROS };
+  mf.macros = withEntryMacros(mf.macros);
   const enforce = (): void => forceNoSystemKeyboard(mf);
   void customElements.whenDefined("math-field").then(() => requestAnimationFrame(enforce));
   mf.addEventListener("focusin", enforce);
