@@ -177,3 +177,24 @@ export function menuMarkShots(): (LookShot & { viewport: { width: number; height
     ),
   );
 }
+
+/** R158 (F190): a 30-digit Home result at 360 px (light and dark come with every shot): e^(π√163) wraps at a group gap onto a
+ *  second line, full size, right-aligned, with the mark beside its first group; after it √2 and a short sum. */
+export function wrapShots(): (LookShot & { viewport: { width: number; height: number } })[] {
+  return [
+    {
+      id: "home-number-wrap-360",
+      group: "A long number wraps (R158)",
+      title: "Home at 30 digits, 360 wide: a short sum, √2 and e^(π√163), wrapped at a group gap",
+      viewport: { width: 360, height: 740 },
+      setup: async (p: Page) => {
+        await p.evaluate(() => window.n62.session.setDigits(30));
+        for (const [i, l] of ["1/3+1/7", "\\sqrt{2}", "\\exponentialE^{\\pi\\sqrt{163}}"].entries()) {
+          await p.evaluate((x) => window.n62.session.submit(x), l);
+          await p.waitForFunction((k) => document.querySelectorAll('[data-status="done"]').length >= k, i + 1);
+        }
+        await p.waitForTimeout(250);
+      },
+    },
+  ];
+}

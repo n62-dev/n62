@@ -7,7 +7,7 @@ import { test, type Page } from "@playwright/test";
 import { parse } from "yaml";
 import { entryValue, flick, open, setFontScale, tap } from "../test/helpers.ts";
 import { popShots } from "./keypop.ts";
-import { eiShots, entryShots, groupShots, lookShots, markShots, menuMarkShots } from "./looks.ts";
+import { eiShots, entryShots, groupShots, lookShots, markShots, menuMarkShots, wrapShots } from "./looks.ts";
 
 const OUT = new URL("../test/gallery/", import.meta.url).pathname;
 const THEMES = ["light", "dark"] as const;
@@ -432,7 +432,7 @@ const shots: Shot[] = [
   ...padShots(),
   ...unitFindShots(),
   ...unitResultShots(),
-  ...lookShots(someHistory), ...menuMarkShots(),
+  ...lookShots(someHistory), ...menuMarkShots(), ...wrapShots(), // R158
   ...entryShots(),
   {
     id: "home-tmpl",
