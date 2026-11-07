@@ -133,9 +133,11 @@ test.describe("R153: N62 in teal, Black & White, Solarized", () => {
     expect(await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")))).toEqual(["n62", "bw", "solarized"]);
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim())).toBe("#092726");
   });
+  // Plain keys on, so the first frame links n62.css (in the dev server style.css comes with main.ts, which is held here)
   test("a stored teal (the mirror) paints N62 in the first frame", async ({ page }) => {
-    const f = await firstFrame(page, { family: "teal", brightness: "dark", contrast: false, plain: false, bg: "#529997" });
-    expect(f).toEqual({ attrs: ["n62", "dark", null, null], bg: "#092726", started: false });
+    const f = await firstFrame(page, { family: "teal", brightness: "dark", contrast: false, plain: true, bg: "#529997" });
+    expect(f).toEqual({ attrs: ["n62", "dark", null, "plain"], bg: "#092726", started: false });
+    expect(await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.getAttribute("content"))).toBe("#092726"); // not Teal's old screen
   });
   test("a stored bw paints Black & White in the first frame", async ({ page }) => {
     const f = await firstFrame(page, { family: "bw", brightness: "dark", contrast: false, plain: false, bg: "#000000" });
