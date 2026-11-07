@@ -221,3 +221,53 @@ describe("the decimal comma (R57)", () => {
     expect(commaResult('"a, b 1.5"', false)).toBe('"a, b 1.5"'); // a string is drawn as it is
   });
 });
+
+describe("renderNumeric wrap (R158)", () => {
+  const wide = { ...ctx, digits: 30 };
+  const big: NumericResult = { value: real(-262537412640768743999999999999n, 1000000000000n) };
+  const small: NumericResult = { value: real(-1234567891n, 1000n) }; // -1234567.891
+  const seps = { thin: "\\,", apos: "", comma: "" } as const;
+  /** the pieces joined as the screen draws them: the thin space between, the apostrophe and the comma already in the pieces */
+  const joined = (w: string[] | undefined, sep: keyof typeof seps): string | undefined => w?.join(sep === "thin" ? "\\," : "");
+
+  it("the pieces are the one-line drawing cut: std, sci, eng, a negative value, every separator", () => {
+    for (const mode of ["std", "sci", "eng"] as const) {
+      for (const sep of ["thin", "apos", "comma"] as const) {
+        for (const r of [big, small, { value: real(262537412640768743999999999999n, 1000000000000n) }]) {
+          const d = renderNumeric(r, mode, { ...wide, groupSep: sep }, true);
+          // the apostrophe and the comma group only before the point: a mantissa of one to three digits there has no gap to cut at
+          if (d?.wrap === undefined) {
+            expect(sep !== "thin" && mode !== "std", `${mode} ${sep}`).toBe(true);
+            continue;
+          }
+          expect(joined(d.wrap, sep), `${mode} ${sep}`).toBe(d.latex);
+          expect(d.gap === true, `${mode} ${sep}`).toBe(sep === "thin");
+        }
+      }
+    }
+  });
+  it("a plain number with two or more groups is cut, whatever its digits: 12 digits too", () => {
+    const w = renderNumeric(big, "std", wide, true)?.wrap;
+    expect(w?.slice(0, 6)).toEqual(["-262", "537", "412", "640", "768", "743.999"]);
+    expect(renderNumeric({ value: real(1n, 3n) }, "std", ctx, true)?.wrap).toEqual(["0.333", "333", "333", "333"]);
+    expect(renderNumeric(big, "std", wide)?.wrap).toBeUndefined(); // not grouped: chips, Copy
+  });
+  it("the apostrophe and the comma end each piece but the last; the exponent rides with the last piece", () => {
+    const apos = renderNumeric(big, "std", { ...wide, groupSep: "apos" }, true)?.wrap;
+    expect(apos?.slice(0, 2)).toEqual(["-262\\text{'}", "537\\text{'}"]);
+    expect(apos?.at(-1)).toBe("743.999999999999");
+    const sci = renderNumeric(big, "sci", wide, true)?.wrap;
+    expect(sci?.at(-1)).toMatch(/\\times10\^\{17\}$/);
+    expect(sci?.slice(0, -1).join("")).not.toContain("times");
+  });
+  it("a short number, a fraction, a complex number and a prefix keep the one line", () => {
+    expect(renderNumeric({ value: real(35n, 10n) }, "std", ctx, true)?.wrap).toBeUndefined(); // 3.5: no group
+    expect(renderNumeric(third, "std", ctx, true)?.wrap).toBeDefined(); // 0.333 333 333 333: groups
+    expect(renderNumeric({ value: real(1n, 3n), rational: { n: "1", d: "3" } }, "frac", wide, true)?.wrap).toBeUndefined();
+    expect(renderNumeric({ value: { re: q(262537412640768743999999999999n, 1000000000000n), im: q(1n) } }, "std", wide, true)?.wrap).toBeUndefined();
+    expect(renderNumeric({ value: real(123456789012n) }, "pfx", wide, true)?.wrap).toBeUndefined();
+  });
+  it("the decimal comma is drawn in the pieces", () => {
+    expect(renderNumeric(big, "std", { ...wide, decimalComma: true }, true)?.wrap?.[5]).toBe("743{,}999");
+  });
+});

@@ -19,6 +19,7 @@ import {
   commaResult,
   type FmtMode,
   type DisplayContext,
+  type Drawn,
   type FormStep,
   type Polar,
   type Rational,
@@ -571,7 +572,7 @@ export class Session {
 
   /** What the history shows for a finished item: Home numbers follow the current digits and format, or the mode
    *  the Format key chose for that item; a CAS result changes only when the Format key has chosen a mode. */
-  display(item: HistoryItem, grouped = false): { text: string; latex: string } {
+  display(item: HistoryItem, grouped = false): Drawn {
     const shown = item.view === "home" || item.fmt !== undefined || item.form !== undefined || item.facts !== undefined;
     if (item.status === "done" && shown) {
       const r = renderNumeric(item, this.modeOf(item), this.displayContext(), grouped);
