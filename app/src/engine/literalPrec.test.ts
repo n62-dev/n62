@@ -48,7 +48,7 @@ describe("literalStart", () => {
 describe("uncheckedPastCap (G141f2)", () => {
   const f = (exact: boolean, reliableDigits: number | null, warn?: "unaudited" | "unchecked") => ({ exact, reliableDigits, ...(warn ? { warn } : {}) });
   it("warns a float that has confirmed digits, keeping a warn it has", () => {
-    expect(uncheckedPastCap(f(false, 12))).toEqual(f(false, 12, "unchecked"));
+    expect(uncheckedPastCap(f(false, 12))).toEqual({ ...f(false, 12, "unchecked"), pastCap: true }); // G182: marked for the why line
     expect(uncheckedPastCap(f(false, 12, "unaudited"))).toEqual(f(false, 12, "unaudited"));
   });
   it("leaves an exact element and a no-digit one as they are", () => {
