@@ -785,7 +785,9 @@ export function homeEval(
   const full = printed && exactText.length <= FULL_EXACT_MAX ? exactText : b.decimal;
   const big = shape.kind === "scalar" && facts[0]!.big;
   // G44f1: an erf Giac computed itself (a non-real argument) leaves the value unaudited.
-  const why = differ ? { differ: true } : facts.some((f) => f.warn) ? whyOf(facts, exactBody) : undefined;
+  // G182: an input that runs once cannot be compared again: a past-the-cap term keeps its once beside pastCap
+  const why0 = differ ? { differ: true } : facts.some((f) => f.warn) ? whyOf(facts, exactBody) : undefined;
+  const why = once && why0?.pastCap ? { ...why0, once: true as const } : why0;
   const shownExact = printed ? exactText : undefined;
   if (!big) return fromBuilt(b, "exact", differ, shownExact, full, why);
   if (s.guardMode === "reeval-float") return viaFloat("float-big", shownExact);
