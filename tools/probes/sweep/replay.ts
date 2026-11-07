@@ -22,26 +22,6 @@ interface TrialData {
 export type Trial = { crashed: false; calls: number; heap: number; hang?: true } | { crashed: true; at: number; call: Call; error: string; heap: number; calls: number };
 const mb = (b: number): string => `${(b / 2 ** 20).toFixed(0)} MB`;
 
-if (!isMainThread) {
-  const d = workerData as TrialData;
-  const all = parseLog(readFileSync(d.log, "utf8"));
-  const calls = d.ranges.flatMap(([a, b]) => all.slice(a, b));
-  const L = await loadNodeGiac();
-  let i = 0;
-  try {
-    for (; i < calls.length; i++) {
-      replayCall(L, calls[i]!);
-      if ((i + 1) % 5000 === 0) parentPort!.postMessage({ progress: i + 1, heap: L.heapBytes() });
-    }
-    parentPort!.postMessage({ crashed: false, calls: calls.length, heap: L.heapBytes() } satisfies Trial);
-  } catch (e) {
-    const error = e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e);
-    parentPort!.postMessage({ crashed: true, at: i + 1, call: calls[i]!, error, heap: L.heapBytes(), calls: calls.length } satisfies Trial);
-  }
-} else {
-  await main();
-}
-
 /** One replay of `ranges` of `log` on a fresh engine in a worker thread. */
 export function trial(log: string, ranges: Ranges, deadlineS: number, progress?: (n: number, heap: number) => void): Promise<Trial> {
   const w = new Worker(new URL(import.meta.url), { workerData: { log, ranges } satisfies TrialData });
@@ -163,4 +143,24 @@ async function main(): Promise<void> {
       `REPLAY ${run}: ${t.crashed ? `CRASH at call ${t.at} of ${t.calls} (${t.error}), heap ${mb(t.heap)}; the call: ${JSON.stringify(t.call).slice(0, 300)}` : t.hang ? `past ${deadlineS} s` : `no crash in ${t.calls} calls, heap ${mb(t.heap)}`}; ${secs} s; heap by calls ${steps.join(", ") || "-"}`,
     );
   }
+}
+
+if (!isMainThread) {
+  const d = workerData as TrialData;
+  const all = parseLog(readFileSync(d.log, "utf8"));
+  const calls = d.ranges.flatMap(([a, b]) => all.slice(a, b));
+  const L = await loadNodeGiac();
+  let i = 0;
+  try {
+    for (; i < calls.length; i++) {
+      replayCall(L, calls[i]!);
+      if ((i + 1) % 5000 === 0) parentPort!.postMessage({ progress: i + 1, heap: L.heapBytes() });
+    }
+    parentPort!.postMessage({ crashed: false, calls: calls.length, heap: L.heapBytes() } satisfies Trial);
+  } catch (e) {
+    const error = e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e);
+    parentPort!.postMessage({ crashed: true, at: i + 1, call: calls[i]!, error, heap: L.heapBytes(), calls: calls.length } satisfies Trial);
+  }
+} else {
+  await main();
 }
