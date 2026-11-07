@@ -310,13 +310,13 @@ function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
 
 function wait(c: RouteCtx, w: Waiting): void {
   c.waiting.push(w);
-  if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.sheetLoad]).then(() => replay(c));
+  if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad]).then(() => replay(c));
 }
 function replay(c: RouteCtx): void {
   const keys = c.waiting;
   c.waiting = [];
   for (const w of keys)
-    if (c.shell.loading !== null || c.sheetLoad !== null) wait(c, w); // another app started loading meanwhile
+    if (c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null) wait(c, w); // another app or sheet started loading meanwhile
     else if ("letter" in w) typeLetter(c, w.letter);
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
@@ -332,9 +332,10 @@ function opensSheet(key: Key, mods: Mods): boolean {
 
 /** F42: a sheet is open but its chunk is not in (a long press on a history row opens one before the idle load), so
  *  nothing is drawn and no key may reach it. Start the load; the caller queues its key (R8), which then runs on the
- *  drawn sheet. If the chunk does not load, the sheet closes and the queued keys run without it. */
+ *  drawn sheet. If the chunk does not load, the sheet closes and the queued keys run without it. R151: likewise while a
+ *  sheet waits for its model (shell.sheetPending), which comes in the same load. */
 function sheetUndrawn(c: RouteCtx): boolean {
-  if (!c.shell.sheet || sheetChunk.C) return false;
+  if (!(c.shell.sheet || c.shell.sheetPending) || sheetChunk.C) return false;
   c.sheetLoad ??= loadSheetView()
     .catch(() => c.shell.closeSheet())
     .finally(() => (c.sheetLoad = null));

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R84: the apps list shows each place's glyph beside its name; other lists have none; numbers and picks are unchanged.
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Calc, CalcSettings } from "../calc/port.ts";
 import { lastPicks } from "../views/picks.ts";
+import { loadSheetModel } from "../views/sheetView.svelte.ts";
 import { placeGlyph } from "./registry.ts";
 import { AppShell } from "./shell.svelte.ts";
 
@@ -11,6 +12,7 @@ const kv = { get: async () => undefined, set: async () => undefined };
 const line = { value: "", set() {}, clear() {} };
 
 describe("R84 glyphs in the apps list", () => {
+  beforeAll(() => loadSheetModel()); // the sheet's model is a lazy chunk (R151)
   beforeEach(() => lastPicks.clear());
 
   it("every row carries its place's glyph, in order", () => {
