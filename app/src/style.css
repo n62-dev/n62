@@ -54,13 +54,17 @@
   /* R154: the entry field's outline: at rest, and when it has news (Shift, Alpha, an error) */
   --ring-rest: 2.5px;
   --ring-on: 3.5px;
+  /* R155: the dash that runs round the outline while a job runs: its length and the gap on a path of 100, one lap */
+  --run-dash: 14;
+  --run-gap: 86;
+  --run-lap: 1.3s;
   /* radii */
   --radius-s: 6px;
   --radius: 8px;
   --radius-m: 10px;
   --radius-l: 12px;
   --radius-pill: 16px;
-  /* no motion tokens: the key press is the only motion (R12c), sheets, results and marks appear at once */
+  /* no other motion tokens: the key press is the only motion (R12c), sheets, results and marks appear at once; the entry outline's running dash (R155) is the owner's exception */
   --shadow-sheet: 0 -2px 10px;
   --fade: 28px;
   /* a mask reads only alpha: the opaque end of a fade */
