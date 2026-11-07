@@ -473,14 +473,16 @@ red_first_stage() {
 reads_engine() {
   grep -qE 'GIAC_OUT|nodeGiac' <<<"$1"
 }
-# red_first_test_files <worktree> (A67): one "count<TAB>path" or "drop<TAB>path" line per app/**/*.test.ts the branch adds, changes or
-# renames (the new path). A file counts when its diff against phase-1 adds more test lines (it( or test(, .each/.only and the like too)
-# or more assertion lines (expect(, expect.soft(, assert) than it takes away: a file that only loosens or drops asserts, or renames
-# its tests (R112, run #509), is not the package's red test. An assertion edited in place counts neither way. Comment lines never count.
+# red_first_test_files <worktree> (A67): one "count<TAB>path", "edit<TAB>path" or "drop<TAB>path" line per app/**/*.test.ts the branch
+# adds, changes or renames (the new path). count: its diff against phase-1 adds more test lines (it( or test(, .each/.only and the like
+# too) or more assertion lines (expect(, expect.soft(, assert) than it takes away. edit: no net gain, but it adds at least one such line
+# (an assertion or a test title edited in place: a tightened expected value, or R112's loosening); red_first runs it and lets a red one
+# satisfy the stage, and skips with a note when it passes. drop: it adds none (asserts only removed, a pure rename): never run. Comment
+# lines never count.
 red_first_test_files() {
   git -C "$1" diff -M -U0 --diff-filter=AMR phase-1...HEAD -- '*.test.ts' | awk '
-    function flush() { if (f ~ /^app\/.*\.test\.ts$/) print ((nt > 0 || na > 0) ? "count" : "drop") "\t" f }
-    /^diff --git / { flush(); f = ""; nt = 0; na = 0; hdr = 1; next }
+    function flush() { if (f ~ /^app\/.*\.test\.ts$/) print ((nt > 0 || na > 0) ? "count" : (ga > 0 ? "edit" : "drop")) "\t" f }
+    /^diff --git / { flush(); f = ""; nt = 0; na = 0; ga = 0; hdr = 1; next }
     hdr && /^rename to / { f = substr($0, 11); next }
     hdr && /^\+\+\+ b\// { f = substr($0, 7); next }
     hdr && /^@@/ { hdr = 0 }
@@ -488,8 +490,8 @@ red_first_test_files() {
     /^[+-]/ {
       d = (substr($0, 1, 1) == "+") ? 1 : -1; l = substr($0, 2)
       if (l ~ /^[[:space:]]*(\/\/|\*|\/\*)/) next
-      if (l ~ /(^|[^A-Za-z0-9_.$])(it|test)(\.[A-Za-z]+)*[[:space:]]*[(`]/) nt += d
-      if (l ~ /(^|[^A-Za-z0-9_.$])(expect|assert)(\.[A-Za-z]+)*[[:space:]]*\(/) na += d
+      if (l ~ /(^|[^A-Za-z0-9_.$])(it|test)(\.[A-Za-z]+)*[[:space:]]*[(`]/) { nt += d; if (d > 0) ga++ }
+      if (l ~ /(^|[^A-Za-z0-9_.$])(expect|assert)(\.[A-Za-z]+)*[[:space:]]*\(/) { na += d; if (d > 0) ga++ }
     }
     END { flush() }'
 }
@@ -509,14 +511,16 @@ red_first() {
     eng="$stock"; vitest_out="$stock"
   fi
   local -a files=() gfiles=()
-  local -a dropped=() e2e=(); local kind
-  while IFS=$'\t' read -r kind f; do  # A67: a file that adds no test or assertion line is not counted
-    case "$kind" in count) files+=("$f");; drop) dropped+=("$f");; esac
+  local -a dropped=() edits=() e2e=(); local kind
+  while IFS=$'\t' read -r kind f; do  # A67: a file that adds no test or assertion line is not counted; one that edits them in place runs
+    case "$kind" in count) files+=("$f");; edit) edits+=("$f");; drop) dropped+=("$f");; esac
   done < <(red_first_test_files "$wt")
   local note=""; [[ ${#dropped[@]} -eq 0 ]] || note="red-first: not counted (adds no test or assertion line): ${dropped[*]}"
   if [[ $label == stock ]]; then  # only the files that read the engine can see the stock build
     local -a keep=(); for f in "${files[@]}"; do [[ -n "$f" ]] && reads_engine "$(git -C "$wt" show "HEAD:$f")" && keep+=("$f"); done
     files=("${keep[@]}")
+    keep=(); for f in "${edits[@]}"; do [[ -n "$f" ]] && reads_engine "$(git -C "$wt" show "HEAD:$f")" && keep+=("$f"); done
+    edits=("${keep[@]}")
   fi
   mapfile -t gfiles < <(git -C "$wt" diff --name-only --diff-filter=AMR phase-1...HEAD -- 'tests/golden/*.yaml' || true)
   for f in "${gfiles[@]}"; do
@@ -525,9 +529,10 @@ red_first() {
     ids+=" $(git -C "$wt" diff -U0 phase-1...HEAD -- "$f" | grep '^+' | grep -oE '\bid: *"?[A-Za-z0-9_.-]+' | sed -E 's/id: *"?//' | tr '\n' ' ')"
     case ",$stages," in *",$stage,"*) ;; *) stages+="${stages:+,}$stage";; esac
   done
-  if [[ ${#files[@]} -eq 0 && -z "${ids// /}" ]]; then
-    mapfile -t e2e < <(git -C "$wt" diff --name-only --diff-filter=AMR phase-1...HEAD -- 'app/test/*.spec.ts' tests/core/core.yaml || true)
-    { if [[ ${#e2e[@]} -gt 0 && -n "${e2e[0]}" ]]; then echo "red-first: skipped (no new unit test; the package's red tests are e2e: ${e2e[*]}; e2e is not run on $where)"
+  mapfile -t e2e < <(git -C "$wt" diff --name-only --diff-filter=AMR phase-1...HEAD -- 'app/test/*.spec.ts' tests/core/core.yaml || true)
+  [[ ${#e2e[@]} -gt 0 && -n "${e2e[0]}" ]] || e2e=()
+  if [[ ${#files[@]} -eq 0 && ${#edits[@]} -eq 0 && -z "${ids// /}" ]]; then
+    { if [[ ${#e2e[@]} -gt 0 ]]; then echo "red-first: skipped (no new unit test; the package's red tests are e2e: ${e2e[*]}; e2e is not run on $where)"
       else echo "red-first: skipped (no new or changed golden case$([[ $label == stock ]] && echo ' or vitest file that reads GIAC_OUT' || echo ' or vitest file') that adds a test or an assertion; e2e is not run on $where)"; fi
       [[ -z "$note" ]] || echo "$note"; } > "$log"
     return 0
@@ -535,15 +540,16 @@ red_first() {
   scratch="$(mktemp -d)"; rmdir "$scratch"
   git -C "$wt" worktree add -q --detach "$scratch" phase-1 >/dev/null 2>&1 || { echo "could not make a scratch worktree of phase-1"; return 1; }
   { echo "red-first: $label engine, GIAC_OUT=$eng (phase-1's code)"; [[ -z "$note" ]] || echo "$note"; } > "$log"
-  for f in "${files[@]}" "${gfiles[@]}"; do
+  for f in "${files[@]}" "${edits[@]}" "${gfiles[@]}"; do
     [[ -n "$f" ]] || continue
     mkdir -p "$scratch/$(dirname "$f")"; git -C "$wt" show "HEAD:$f" > "$scratch/$f"
   done
   [[ ! -d "$wt/app/node_modules" ]] || ln -s "$wt/app/node_modules" "$scratch/app/node_modules"
   [[ ! -d "$wt/app/src/find/_gen" ]] || { mkdir -p "$scratch/app/src/find"; cp -a "$wt/app/src/find/_gen" "$scratch/app/src/find/"; }
-  if [[ ${#files[@]} -gt 0 ]]; then
+  local -a vfiles=("${files[@]}" "${edits[@]}")  # the edited files run beside the counted ones; any red file satisfies the stage
+  if [[ ${#vfiles[@]} -gt 0 ]]; then
     ran=1; rc=0
-    own_sh 'cd "$1" && { [ -z "$3" ] || export GIAC_OUT="$3"; } && eval "$2"' "$scratch/app" "${N62_REDFIRST_VITEST:-FORCE_COLOR=0 NO_COLOR=1 timeout 600 npx vitest run} $(printf '%q ' "${files[@]#app/}")" "$vitest_out" >> "$log" 2>&1 < /dev/null || rc=$?
+    own_sh 'cd "$1" && { [ -z "$3" ] || export GIAC_OUT="$3"; } && eval "$2"' "$scratch/app" "${N62_REDFIRST_VITEST:-FORCE_COLOR=0 NO_COLOR=1 timeout 600 npx vitest run} $(printf '%q ' "${vfiles[@]#app/}")" "$vitest_out" >> "$log" 2>&1 < /dev/null || rc=$?
     if [[ $rc -eq 0 ]]; then :
     elif [[ $rc -eq 124 ]]; then err="stage error: vitest timed out on $where"
     elif grep -qE '(Test Files|Tests) +[0-9]+ failed' "$log"; then red=1
@@ -565,6 +571,11 @@ red_first() {
   fi
   rm -f "$scratch/app/node_modules"; git -C "$wt" worktree remove --force "$scratch" >/dev/null 2>&1 || rm -rf "$scratch"
   [[ -z "$err" ]] || { echo "$err"; return 1; }
+  if [[ $red -eq 0 && ${#files[@]} -eq 0 && -z "${ids// /}" ]]; then  # only in-place edits, all green there (R112's loosening): skipped, named
+    { echo "red-first: skipped (no new unit test; edited in place and passing on $where: ${edits[*]}$([[ ${#e2e[@]} -eq 0 ]] || echo "; the package's red tests are e2e: ${e2e[*]}"); e2e is not run on $where)"
+      cat "$log"; } > "$log.tmp" && mv "$log.tmp" "$log"
+    return 0
+  fi
   [[ $red -eq 1 ]] || { echo "every new test passes on $where"; return 1; }
 }
 # A25: the paths whose change plans the golden check: the engine, the parser, units, Find, the golden cases, and every script

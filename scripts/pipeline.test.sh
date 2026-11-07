@@ -487,20 +487,38 @@ git -C "$rf" checkout -q phase-1; printf 'it("old", () => {\n  expect(f(1)).toBe
 rfb() { git -C "$rf" checkout -q -b "$1" phase-1; }; rfc() { git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1; }
 loose='it("old, renamed", () => {\n  f(1); // was an expect\n  f(2);\n});\n'
 rfb p1/loose; printf "$loose" > "$rf/app/l.test.ts"; mkdir -p "$rf/app/test"; echo 'test("e2e", () => expect(1).toBe(2));' > "$rf/app/test/x.spec.ts"; rfc
-rfb p1/loosemix; printf "$loose" > "$rf/app/l.test.ts"; echo 'it("m", () => expect(1).toBe(2)); // FAILS-ON-OLD' > "$rf/app/m.test.ts"; rfc
+dropexp='it("old", () => {\n  f(1);\n  f(2);\n});\n'
+rfb p1/dropexp; printf "$dropexp" > "$rf/app/l.test.ts"; mkdir -p "$rf/app/test"; echo 'test("e2e", () => expect(1).toBe(2));' > "$rf/app/test/x.spec.ts"; rfc
+rfb p1/loosemix; printf "$dropexp" > "$rf/app/l.test.ts"; echo 'it("m", () => expect(1).toBe(2)); // FAILS-ON-OLD' > "$rf/app/m.test.ts"; rfc
 rfb p1/purerename; mkdir -p "$rf/app/sub"; git -C "$rf" mv app/l.test.ts app/sub/l2.test.ts; rfc
 rfb p1/addexpect; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBe(false);\n  expect(f(3)).toBe(true); // FAILS-ON-OLD\n});\n' > "$rf/app/l.test.ts"; rfc
 rfb p1/addit; printf '  test("new", () => { f(3); }); // FAILS-ON-OLD\n' >> "$rf/app/l.test.ts"; rfc
+rfb p1/tighten; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBe(true); // FAILS-ON-OLD\n});\n' > "$rf/app/l.test.ts"; rfc
+rfb p1/loosenin; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBeDefined();\n});\n' > "$rf/app/l.test.ts"; rfc
 rfb p1/renamed; mkdir -p "$rf/app/sub"; git -C "$rf" mv app/l.test.ts app/sub/l2.test.ts; printf 'it("old", () => {\n  expect(f(1)).toBe(true);\n  expect(f(2)).toBe(false);\n  expect(f(3)).toBe(true); // FAILS-ON-OLD\n});\n' > "$rf/app/sub/l2.test.ts"; rfc
 printf '#!/bin/sh\necho "$@" > "%s/vitest-args"\ngrep -q FAILS-ON-OLD "$@" && { echo " Test Files  1 failed (1)"; echo "      Tests  1 failed (1)"; exit 1; }\nexit 0\n' "$tmp" > "$tmp/fakevitest-args.sh"; chmod +x "$tmp/fakevitest-args.sh"
 export N62_REDFIRST_VITEST="$tmp/fakevitest-args.sh" N62_REDFIRST_GOLDEN="$tmp/fakegolden.sh"
-[[ "$(red_first_test_files "$(rfwt p1/loose)")" == $'drop\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on a loosened file: $(red_first_test_files "$tmp/rfwt-loose" | tr '\t\n' ' |')"
+[[ "$(red_first_test_files "$(rfwt p1/dropexp)")" == $'drop\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on a file that drops its asserts: $(red_first_test_files "$tmp/rfwt-dropexp" | tr '\t\n' ' |')"
+[[ "$(red_first_test_files "$(rfwt p1/loose)")" == $'edit\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on a retitled, loosened file: $(red_first_test_files "$tmp/rfwt-loose" | tr '\t\n' ' |')"
 [[ "$(red_first_test_files "$(rfwt p1/loosemix)" | sort)" == $'count\tapp/m.test.ts\ndrop\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on loosened + new: $(red_first_test_files "$tmp/rfwt-loosemix" | tr '\t\n' ' |')"
-# a loosened file alone, with e2e specs changed: skipped, the log names the e2e tests, vitest never runs
-rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loose" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a branch whose only vitest change loosens asserts is refused: $out"
+# a file that only drops its asserts, with e2e specs changed: skipped, the log names the e2e tests, vitest never runs
+rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-dropexp" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a branch whose only vitest change drops asserts is refused: $out"
 grep -q "^red-first: skipped (no new unit test; the package's red tests are e2e: app/test/x.spec.ts;" "$tmp/rf.log" || fail "A67: the log does not say the red tests are e2e: $(cat "$tmp/rf.log")"
 grep -q '^red-first: not counted (adds no test or assertion line): app/l.test.ts$' "$tmp/rf.log" || fail "A67: the log does not name the file it does not count: $(cat "$tmp/rf.log")"
-[[ ! -e "$tmp/vitest-args" ]] || fail "A67: vitest ran on a loosened file: $(cat "$tmp/vitest-args")"; noscratch loose
+[[ ! -e "$tmp/vitest-args" ]] || fail "A67: vitest ran on a file that drops its asserts: $(cat "$tmp/vitest-args")"; noscratch dropexp
+# R112's shape (a test retitled in place, its asserts made bare calls), with e2e specs changed: run, green there, skipped with both named
+rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loose" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a branch whose only vitest change loosens asserts in place is refused: $out"
+grep -q "^red-first: skipped (no new unit test; edited in place and passing on phase-1: app/l.test.ts; the package's red tests are e2e: app/test/x.spec.ts; e2e is not run on phase-1)$" "$tmp/rf.log" || fail "A67: loose: the skip line does not name the edited file and the e2e spec: $(cat "$tmp/rf.log")"
+grep -q 'l.test.ts' "$tmp/vitest-args" 2>/dev/null || fail "A67: loose: the edited file did not run: $(cat "$tmp/vitest-args" 2>&1)"; noscratch loose
+# an assertion tightened in place (a wrong expected value corrected) is run on phase-1 and, red there, passes the stage
+[[ "$(red_first_test_files "$(rfwt p1/tighten)")" == $'edit\tapp/l.test.ts' ]] || fail "A67: red_first_test_files on an in-place tightened expect(: $(red_first_test_files "$tmp/rfwt-tighten" | tr '\t\n' ' |')"
+rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-tighten" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a tightened expect( that fails on phase-1 is refused: $out"
+grep -q 'l.test.ts' "$tmp/vitest-args" 2>/dev/null || fail "A67: tighten: the edited file did not run: $(cat "$tmp/vitest-args" 2>&1)"
+grep -q 'skipped\|not counted' "$tmp/rf.log" && fail "A67: tighten: the stage was skipped or the file not counted: $(cat "$tmp/rf.log")"; noscratch tighten
+# an assertion loosened in place that passes on phase-1 is run, then skipped with a note naming it, never refused
+rm -f "$tmp/vitest-args"; out="$(red_first "$(rfwt p1/loosenin)" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: an in-place loosened expect( that passes on phase-1 is refused: $out"
+grep -q 'l.test.ts' "$tmp/vitest-args" 2>/dev/null || fail "A67: loosenin: the edited file did not run: $(cat "$tmp/vitest-args" 2>&1)"
+grep -q '^red-first: skipped (no new unit test; edited in place and passing on phase-1: app/l.test.ts; e2e is not run on phase-1)$' "$tmp/rf.log" || fail "A67: loosenin: no skip line naming the file: $(cat "$tmp/rf.log")"; noscratch loosenin
 # a loosened file beside a new failing one: only the new one runs, and it is red
 rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loosemix" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: loosened + a new red test is refused: $out"
 grep -q 'm.test.ts' "$tmp/vitest-args" 2>/dev/null && ! grep -q 'l.test.ts' "$tmp/vitest-args" || fail "A67: vitest did not run the new file alone: $(cat "$tmp/vitest-args" 2>&1)"
