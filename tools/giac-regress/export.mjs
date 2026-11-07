@@ -529,7 +529,7 @@ export const PATCHED_IDS = new Map([
   ["g176-limit-trunc-neg1-left", "0028-trunc-toward-zero.patch"],
   ["g176-limit-trunc-neg-half", "0028-trunc-toward-zero.patch"],
   // G188 (G94): a definite integral whose denominator holds no variable in x (intg.cc integrate_id_rem read propf.back() of an empty
-  // vector); stock Giac traps the engine on these at Digits 40 (in the main thread too), so a stock run of this file stops there.
+  // vector); stock Giac traps the engine on these at Digits 40 (in the main thread too); run.mjs counts such a line as failed and goes on in a fresh engine (lines.mjs, G188f2).
   // Home shows ⚠ (int is unaudited) and the lines compare Giac's own evalf of the integral, which caseLine admits for these ids only
   ["g188-int-2-pow-tanh", "0036-int-propfrac-empty-vars.patch"],
   ["g188-int-cosh-pow-tanh", "0036-int-propfrac-empty-vars.patch"],
