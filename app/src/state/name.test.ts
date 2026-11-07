@@ -124,6 +124,22 @@ describe("the backup (R138)", () => {
   });
 });
 
+describe("R153: a look naming Teal (taken out) restores as N62", () => {
+  it("from a backup's settings and a preset in it", () => {
+    const f = fixture();
+    const settings = f.parts["settings"]!["value"] as { look: Record<string, unknown> };
+    settings.look["family"] = "teal";
+    f.parts["presets"] = { "@n62": 3, value: { presets: [{ id: 1, name: "T", groups: { look: { family: "teal", brightness: "light" } } }], active: null, next: 2 } };
+    const r = checked(f);
+    expect((r.parts["settings"] as { look: { family: string } }).look.family).toBe("n62");
+    expect((r.parts["presets"] as { presets: { groups: { look: Record<string, unknown> } }[] }).presets[0]!.groups.look).toEqual({ family: "n62", brightness: "light" });
+  });
+  it("from a stored preset", () => {
+    const { record } = readPresets({ presets: [{ id: 1, name: "A", groups: { look: { family: "teal", plain: true } } }], active: null, next: 2 });
+    expect(record.presets[0]!.groups).toEqual({ look: { family: "n62", plain: true } });
+  });
+});
+
 describe("the house look (R138)", () => {
   it("is n62, named N62", () => {
     expect(FAMILY_IDS[0]).toBe("n62");

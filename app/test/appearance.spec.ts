@@ -55,8 +55,8 @@ test.describe("the level", () => {
   test("by keys: ▶ ◀ step the theme in place, Enter lists the three, a digit picks and the sheet stays", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d1"]);
     await sheetKey(page, ["right"]);
-    await expect(root(page)).toHaveAttribute("data-family", "teal");
-    await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Teal");
+    await expect(root(page)).toHaveAttribute("data-family", "bw");
+    await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Black & White");
     await sheetKey(page, ["left", "left"]);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Solarized");
     await tap(page, ["enter"]);
@@ -64,15 +64,15 @@ test.describe("the level", () => {
     await expect(sheet(page).getByRole("menuitem")).toHaveCount(3);
     await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "solarized");
     await tap(page, ["d2"]);
-    await expect(root(page)).toHaveAttribute("data-family", "teal");
+    await expect(root(page)).toHaveAttribute("data-family", "bw");
     await expect(title(page)).toHaveText("Settings › Appearance › Theme"); // a pick keeps the sheet open
     await tap(page, ["esc"]);
     await expect(title(page)).toHaveText("Mode › Settings › Appearance");
     await sheetKey(page, ["down", "right", "right"]); // Brightness: Light, Dark
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("Dark");
     await tap(page, ["d3", "d4"]);
-    expect(await look(page)).toEqual({ family: "teal", brightness: "dark", contrast: true, plain: true });
-    await expect.poll(() => attrs(page)).toEqual(["teal", "dark", "high", "plain"]); // the lazy CSS is in first
+    expect(await look(page)).toEqual({ family: "bw", brightness: "dark", contrast: true, plain: true });
+    await expect.poll(() => attrs(page)).toEqual(["bw", "dark", "high", "plain"]); // the lazy CSS is in first
   });
 
   test("by touch: a tap on Theme lists the three with their dots; a pick keeps the sheet open and the page follows", async ({ page }) => {
@@ -81,12 +81,12 @@ test.describe("the level", () => {
     await row(page, "theme").locator(".label").tap();
     await expect(title(page)).toHaveText("Settings › Appearance › Theme");
     await expect(sheet(page).locator("[data-testid=row-dots]")).toHaveCount(3);
-    await row(page, "teal").tap();
+    await row(page, "bw").tap();
     await expect(sheet(page)).toBeVisible();
-    await expect(root(page)).toHaveAttribute("data-family", "teal");
-    await expect(row(page, "teal")).toHaveAttribute("data-selected", "true");
+    await expect(root(page)).toHaveAttribute("data-family", "bw");
+    await expect(row(page, "bw")).toHaveAttribute("data-selected", "true");
     // the status line above the sheet already wears the theme
-    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim())).toBe("#529997");
+    await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim())).toBe("#000000");
     await sheet(page).getByRole("button", { name: "Back" }).tap();
     await row(page, "brightness").getByTestId("step-up").tap();
     await expect(root(page)).toHaveAttribute("data-brightness", "light");
@@ -102,6 +102,44 @@ test.describe("the level", () => {
     await expect(root(page)).toHaveAttribute("data-family", "solarized");
     await page.waitForTimeout(400);
     await expect(root(page)).toHaveAttribute("data-family", "solarized");
+  });
+});
+
+test.describe("R153: N62 in teal, Black & White, Solarized", () => {
+  /** The first frame of a start with `mirror` as the stored look (index.html's localStorage mirror), main.ts held. */
+  async function firstFrame(page: Page, mirror: Record<string, unknown>): Promise<{ attrs: (string | null)[]; bg: string; started: boolean }> {
+    await page.evaluate((m) => localStorage.setItem("n62.look", JSON.stringify(m)), mirror);
+    let release: () => void = () => {};
+    const held = new Promise<void>((res) => (release = res));
+    await page.route(/\/src\/main\.ts/, async (route) => {
+      await held;
+      await route.abort();
+    });
+    await page.goto("/?engine=fake&tips=off", { waitUntil: "commit" });
+    await page.waitForFunction(() => document.documentElement.hasAttribute("data-family") && getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() !== "");
+    const out = {
+      attrs: await attrs(page),
+      bg: await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()),
+      started: await page.evaluate(() => window.n62 !== undefined),
+    };
+    release();
+    return out;
+  }
+  test("Appearance lists N62, Black & White, Solarized in that order; N62 Dark is the deep teal", async ({ page }) => {
+    await tap(page, ["@mode", "d6", "d1", "enter"]);
+    await expect(title(page)).toHaveText("Settings › Appearance › Theme");
+    await expect(sheet(page).getByRole("menuitem")).toHaveCount(3);
+    await expect(sheet(page).getByRole("menuitem").locator(".label")).toHaveText(["N62", "Black & White", "Solarized"]);
+    expect(await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getAttribute("data-id")))).toEqual(["n62", "bw", "solarized"]);
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--bg").trim())).toBe("#092726");
+  });
+  test("a stored teal (the mirror) paints N62 in the first frame", async ({ page }) => {
+    const f = await firstFrame(page, { family: "teal", brightness: "dark", contrast: false, plain: false, bg: "#529997" });
+    expect(f).toEqual({ attrs: ["n62", "dark", null, null], bg: "#092726", started: false });
+  });
+  test("a stored bw paints Black & White in the first frame", async ({ page }) => {
+    const f = await firstFrame(page, { family: "bw", brightness: "dark", contrast: false, plain: false, bg: "#000000" });
+    expect(f).toEqual({ attrs: ["bw", "dark", null, null], bg: "#000000", started: false });
   });
 });
 
