@@ -51,6 +51,9 @@
   --stroke-mid: 1.5px;
   --stroke: 2px;
   --stroke-thick: 3px;
+  /* R154: the entry field's outline: at rest, and when it has news (Shift, Alpha, an error) */
+  --ring-rest: 2.5px;
+  --ring-on: 3.5px;
   /* radii */
   --radius-s: 6px;
   --radius: 8px;
