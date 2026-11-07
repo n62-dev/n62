@@ -35,4 +35,19 @@ describe.skipIf(!giacAvailable())("G182: the why of a value past the cap (real G
     expect(host.cas("evalf(x-0.54764225985)", defaultCasSettings).result.facts.why).toEqual({ once: true });
     expect(line("evalf(x-0.54764225985)")).toBe("⚠ evaluated once, nothing to compare");
   });
+
+  // homeEval.ts:480: an input that stores runs once (whyOf(…, null)); the stored c is an unchecked float
+  it("an input that runs once says so", () => {
+    home("c:=evalf(1/3)");
+    home("inc(x):={c:=c+1;c}");
+    expect(home("inc(1)").facts.why?.once).toBe(true);
+    expect(line("inc(1)")).toContain("⚠ evaluated once, nothing to compare");
+  });
+
+  it("an input that runs once keeps once beside a past-the-cap term", () => {
+    // exact d: the term past the cap is the only warn, and the input still ran once
+    home("d:=0");
+    home("bump(x):={d:=d+1;d}");
+    expect(home("bump(1)+atanh(10^-1000)").facts.why).toEqual({ once: true, pastCap: true });
+  });
 });

@@ -202,7 +202,7 @@ export function whyOf(facts: readonly ElementFacts[], expr: string | null): Prec
   // G182: a warn from a literal past the cap compared two evaluations (pastCap), so it is not "evaluated once"
   const past = facts.some((f) => f.pastCap && f.warn === "unchecked" && !(isZero(f.value.re) && isZero(f.value.im)));
   const rest = facts.filter((f) => !f.pastCap);
-  const once = rest.some((f) => f.warn === "unchecked" && !(isZero(f.value.re) && isZero(f.value.im))) || (expr === null && rest.some((f) => f.warn));
+  const once = rest.some((f) => f.warn === "unchecked" && !(isZero(f.value.re) && isZero(f.value.im))) || (expr === null && facts.some((f) => f.warn));
   if (!unaudited.length && !once && !past) return undefined;
   return { ...(unaudited.length ? { unaudited } : {}), ...(once ? { once: true } : {}), ...(past ? { pastCap: true } : {}) };
 }
