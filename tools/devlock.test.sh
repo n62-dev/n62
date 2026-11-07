@@ -60,6 +60,29 @@ mkdir -p "$T/c5/locks/r6"; echo dead > "$T/c5/locks/r6/owner"; echo "$live" > "$
 for i in 1 2 3 4 5 6; do ( N62_LOCK_PID=$$ "$T/main/tools/devlock.sh" acquire r6 "w$i" 0 >"$T/w$i.out" 2>&1 && echo ok >> "$T/winners" ) & done; wait $(jobs -p | grep -v "^$live$") 2>/dev/null || true
 [[ "$(wc -l < "$T/winners")" == 1 ]] || fail "$(wc -l < "$T/winners") waiters hold the same lock"
 ls -A "$T/c5/locks" | grep -q '^\.stale-\|^\.breaking-' && fail "stale or guard directories left behind"
+# A64 (vg-6): a lock records its holder's start time and the boot id; a live pid of another process (reused after a crash or a
+# reboot) does not keep the lock; a live holder whose start time and boot id match does
+sleep 300 & live2=$!
+st2="$(s=$(cat "/proc/$live2/stat"); awk '{print $20}' <<<"${s##*) }")"; boot="$(cat /proc/sys/kernel/random/boot_id)"
+N62_LOCK_PID=$live2 "$T/main/tools/devlock.sh" acquire r7 me >/dev/null
+[[ "$(cat "$T/c5/locks/r7/start" 2>/dev/null)" == "$st2" ]] || fail "acquire records no start time (or a wrong one): $(cat "$T/c5/locks/r7/start" 2>/dev/null), want $st2"
+[[ "$(cat "$T/c5/locks/r7/boot" 2>/dev/null)" == "$boot" ]] || fail "acquire records no boot id"
+if "$T/main/tools/devlock.sh" acquire r7 new 0 2>/dev/null; then fail "a live holder with its own start time and boot id was broken"; fi
+"$T/main/tools/devlock.sh" status | grep -q "r7: me .*pid $live2" || fail "status lost the live holder"
+echo 1 > "$T/c5/locks/r7/start"   # the pid now belongs to another process than the one that took the lock
+out="$("$T/main/tools/devlock.sh" acquire r7 new 0 2>&1)" || fail "a lock whose pid is alive but whose start time differs was not broken: $out"
+grep -q "broke stale lock r7 (pid $live2 reused: start time differs)" <<<"$out" || fail "no reused-pid line: $out"
+"$T/main/tools/devlock.sh" release r7 new >/dev/null
+mkdir -p "$T/c5/locks/r8"; echo old-boot > "$T/c5/locks/r8/owner"; echo "$live2" > "$T/c5/locks/r8/pid"; hostname > "$T/c5/locks/r8/host"
+echo "$st2" > "$T/c5/locks/r8/start"; echo 00000000-0000-0000-0000-000000000000 > "$T/c5/locks/r8/boot"
+out="$("$T/main/tools/devlock.sh" acquire r8 new 0 2>&1)" || fail "a lock of an earlier boot with a live pid was not broken: $out"
+grep -q "broke stale lock r8 (pid $live2 of an earlier boot)" <<<"$out" || fail "no earlier-boot line: $out"
+"$T/main/tools/devlock.sh" release r8 new >/dev/null
+# a lock of another host is never judged here, whatever its start time or boot id
+mkdir -p "$T/c5/locks/r9"; echo far > "$T/c5/locks/r9/owner"; echo "$live2" > "$T/c5/locks/r9/pid"; echo otherhost > "$T/c5/locks/r9/host"
+echo 1 > "$T/c5/locks/r9/start"; echo 00000000-0000-0000-0000-000000000000 > "$T/c5/locks/r9/boot"
+if "$T/main/tools/devlock.sh" acquire r9 new 0 2>/dev/null; then fail "a lock of another host was broken by its start time or boot id"; fi
+kill "$live2"; wait "$live2" 2>/dev/null || true
 unset N62_COORD
 
 # 6. A58: a pipeline wait for host-cpu that passes the note time logs one line with the holder and how long it has held the lock
