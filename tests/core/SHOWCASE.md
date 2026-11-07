@@ -94,6 +94,7 @@ Found on the way (no backlog line yet unless named):
 - **History rows show `\exponentialE` and `\imaginaryI` raw, in red** (clips K and s6; F189, package R152): `app/src/render/Math.svelte`
   passes `{ macros: ENTRY_MACROS }` to MathLive's `convertLatexToMarkup`, which replaces MathLive's own macros
   (checked in Node: `\exponentialE^{\imaginaryI\pi}` draws without the option, raw with any `macros`); the entry
-  line merges them (`entry/field.ts`). Every user with an e or i in a row sees it.
+  line merges them (`entry/field.ts`). Every user with an e or i in a row sees it. Fixed by R152: `render/macros.ts` merges
+  MathLive's table (read from one mounted field) with `ENTRY_MACROS`, for the field and for `Math.svelte`.
 - iⁱ cannot be typed (backlog F184); F1 = p(x) − 2 does not work in the Function app (the trace shows `(0)->-2`,
   Root fails).
