@@ -130,9 +130,40 @@
   // letter layer (FlickTracker: distance only, no hold time), a flick slid back to the middle nothing. A sideways slip
   // or a long hold is still a tap. ⌫ fires on touch and repeats while held instead; the trackpad has no flicks.
   type Gesture =
-    | { kind: "pad"; key: Key | undefined; x0: number; y0: number; steps: Stepper; open: unknown }
+    | { kind: "pad"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; steps: Stepper; open: unknown }
     | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker }
-    | { kind: "repeat"; repeat: Repeat };
+    | { kind: "repeat"; el: HTMLElement | undefined; repeat: Repeat };
+
+  // The press look (R161, F191): the app's own flag `data-down` on the touched key, never CSS :active (on a touch screen
+  // Chrome sets that from Android's tap detector: late, and stuck on one key in fast typing). Set at finger-down, removed
+  // at the later of the lift and PRESS_MS after the down, so a quick tap is seen; a cancel or the app going away clears
+  // every flag at once. Plain DOM, no Svelte state: nothing re-renders.
+  const PRESS_MS = 80;
+  const lit = new Map<HTMLElement, { at: number; timer?: ReturnType<typeof setTimeout> }>();
+  function light(el: HTMLElement | undefined): void {
+    if (!el) return;
+    clearTimeout(lit.get(el)?.timer); // (a new down on a key still lit keeps it lit)
+    lit.set(el, { at: performance.now() });
+    el.dataset["down"] = "";
+  }
+  function unlight(el: HTMLElement | undefined): void {
+    const l = el && lit.get(el);
+    if (!el || !l || l.timer !== undefined) return;
+    const off = (): void => {
+      lit.delete(el);
+      delete el.dataset["down"];
+    };
+    const left = Math.ceil(l.at + PRESS_MS - performance.now());
+    if (left <= 0) off();
+    else l.timer = setTimeout(off, left);
+  }
+  function unlightAll(): void {
+    for (const [el, l] of lit) {
+      clearTimeout(l.timer);
+      delete el.dataset["down"];
+    }
+    lit.clear();
+  }
 
   /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. */
   let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean } | null>(null);
@@ -176,6 +207,7 @@
     for (const g of gestures.values()) cancel(g);
     gestures.clear();
     hideBubble();
+    unlightAll();
   }
   $effect(() => {
     const onHide = (): void => {
@@ -195,11 +227,13 @@
     };
   });
 
-  function targetOf(ev: PointerEvent): Key | "pad" | undefined {
+  /** The touched key and its element (no element for the trackpad's surface or hub: they show no press). */
+  function targetOf(ev: PointerEvent): { target: Key | "pad" | undefined; el: HTMLElement | undefined } {
     const el = ev.target instanceof Element ? ev.target.closest<HTMLElement>("[data-key],[data-trackpad]") : null;
-    if (!el) return undefined;
-    if (el.dataset["trackpad"] !== undefined) return "pad";
-    return keys.find((k) => k.id === el.dataset["key"]);
+    if (!el) return { target: undefined, el: undefined };
+    if (el.dataset["trackpad"] !== undefined) return { target: "pad", el: undefined };
+    const target = keys.find((k) => k.id === el.dataset["key"]);
+    return { target, el: target ? el : undefined };
   }
 
   function down(ev: PointerEvent): void {
@@ -209,7 +243,8 @@
     // a second finger finishes the first one's gesture, so fast two-thumb typing keeps its order
     for (const g of gestures.values()) finish(g);
     gestures.clear();
-    const target = targetOf(ev);
+    const { target, el } = targetOf(ev);
+    light(el);
     if (target) ontouch();
     // a mouse has no implicit capture (a touch has): without it the release outside the pad is never seen
     try {
@@ -223,18 +258,15 @@
       oncount(`${target.id}:${alpha ? "alpha" : shift ? "shift" : "primary"}`);
       const open = sheet;
       onpress(target);
-      if (open && !sheet) return; // (R144: the tap closed a sheet; nothing repeats)
+      if (open && !sheet) return unlight(el); // (R144: the tap closed a sheet; nothing repeats)
       const layer: Layer = alpha ? "alpha" : shift ? "shift" : "primary";
-      gestures.set(ev.pointerId, { kind: "repeat", repeat: new Repeat(() => onpress(target, layer)) });
+      gestures.set(ev.pointerId, { kind: "repeat", el, repeat: new Repeat(() => onpress(target, layer)) });
       return;
     }
     const [x0, y0] = [ev.clientX, ev.clientY];
     if (target === "pad" || (target && isPadKey(target)))
-      gestures.set(ev.pointerId, { kind: "pad", key: target === "pad" ? undefined : target, x0, y0, steps: new Stepper(), open: sheet });
-    else {
-      const el = target && padEl ? (padEl.querySelector<HTMLElement>(`[data-key="${target.id}"]`) ?? undefined) : undefined;
-      gestures.set(ev.pointerId, { kind: "key", key: target, el, x0, y0, flick: new FlickTracker() });
-    }
+      gestures.set(ev.pointerId, { kind: "pad", key: target === "pad" ? undefined : target, el, x0, y0, steps: new Stepper(), open: sheet });
+    else gestures.set(ev.pointerId, { kind: "key", key: target, el, x0, y0, flick: new FlickTracker() });
   }
 
   function move(ev: PointerEvent): void {
@@ -274,6 +306,7 @@
    * touch is the key, ⌫ stops repeating.
    */
   function finish(g: Gesture): void {
+    unlight(g.el);
     if (touchPresses(g) > 0) oncount(touchKey(g, { shift, alpha }));
     if (g.kind === "pad") {
       if (g.steps.count === 0 && g.key) onpress(g.key);
@@ -297,6 +330,7 @@
     if (!g) return;
     gestures.delete(ev.pointerId);
     cancel(g);
+    unlightAll();
   }
 </script>
 
@@ -434,7 +468,7 @@
   }
   /* The press (R12c): the key's own text colour laid over it at once, no fade, a layer of its own so it shows over every
      background, Plain keys' and High contrast's too. It is the only motion in the app. */
-  .key:active::after {
+  .key:global([data-down])::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -442,7 +476,7 @@
     background: color-mix(in srgb, var(--key-text) 32%, transparent);
     pointer-events: none;
   }
-  .key.enter:active::after {
+  .key.enter:global([data-down])::after {
     background: color-mix(in srgb, var(--on-enter) 28%, transparent);
   }
   .key.op {
@@ -539,10 +573,10 @@
   }
   /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle),
      the glyph going from 0.7 to full opacity is its press */
-  .key[data-zone="true"]:active {
+  .key[data-zone="true"]:global([data-down]) {
     opacity: 1;
   }
-  .key[data-zone="true"]:active::after {
+  .key[data-zone="true"]:global([data-down])::after {
     content: none;
   }
   /* a key that does nothing in this layer (and only in this layer) is dimmed, still readable */

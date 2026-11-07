@@ -52,6 +52,8 @@ for (const family of FAMILIES)
           await set(page, family, brightness, m.keys, m.contrast);
           const box = await page.locator(`.pad [data-key="${id}"]`).boundingBox();
           if (!box) throw new Error(`no box for ${id}`);
+          // (the last press shows out its 80 ms first, R161)
+          await expect(page.locator(".pad [data-down]")).toHaveCount(0);
           const rest = await painted(page, id);
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
           await page.mouse.down();
