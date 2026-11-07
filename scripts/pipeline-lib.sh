@@ -359,19 +359,33 @@ selftest_run() {
 # ---- A55: guards that never fired ----
 # package_shaped <id>: succeeds for a package's id (A46, G112, R15c1) and fails for a FIX id (G112f1, R82f2, A47bf1) or free text.
 package_shaped() { [[ "$1" =~ ^[A-Z][0-9]+[a-z0-9]*$ && ! "$1" =~ f[0-9]+$ ]]; }
-# task_questioned <worker reply file>: succeeds when an "Open question" line of the reply says the worker's own task is missing or wrong
-# (run 312 asked for the bundle to be regenerated with the A46 block, and was merged); a "Needs the user" question is not such a line.
-# A line counts only when the task itself is the subject ("the spec says empty list" is a maths question, not this).
+# task_questioned <worker reply file>: succeeds when the reply says the worker has not done its package: an "Open question" line asks
+# for the task again (resend, regenerate the bundle) or says the task itself is missing (run 312 asked for the bundle to be regenerated
+# with the A46 block, and was merged), or the reply's done field says "not done" (A64). A remark about the task ("the spec block is
+# wrong about the cap; I followed the code", "the package file is missing a test name") is not such a line, nor is a "Needs the user"
+# question, a line after "Open questions: none" or a "Not done:" list (A64, vg-5).
 TASK_SUBJECT='(my|the) (task( text| block)?|bundle|package( file)?|spec block)'
-TASK_QUESTION_RE="((re-?generate|re-?send|re-?build)[^.]*(the bundle|the task|the package file|[ -]block))|($TASK_SUBJECT (is|are|was|seems( to be)?|looks|appears( to be)?) (missing|empty|incomplete|wrong|not (found|included|in the bundle)))|($TASK_SUBJECT (lacks|has no) )|(no (package|task) (file|block|text))|(cannot find (the |a )?(package|task))"
-# open_question_lines <reply file>: every line with "open question(s)" and the lines after it up to the next blank line (a heading
-# followed by bullets), one per line.
+# a state that ends its clause: "is missing", "is missing (…)", "is missing from the bundle"; never "is missing a test name"
+TASK_GONE='(missing|empty|absent|not (found|included|in the bundle))[[:space:]]*($|[.;,:!?()]|from |in (the|my) )'
+TASK_QUESTION_RE="((re-?generate|re-?send|re-?build)[^.]*(the bundle|the task|the package file|the spec|[ -]block))|($TASK_SUBJECT (is|are|was|seems( to be)?|looks|appears( to be)?) $TASK_GONE)|($TASK_SUBJECT (lacks|has no) (the |an? )?([A-Z][0-9]+[a-z0-9]* )?(section|block|heading|package|task))|(no (package|task) (file|block|text)([.;,)]|$| in))|(cannot find (the |a )?(package|task)( file| block| text)?[[:space:]]*($|[.;,)]| in))"
+# the done field "not done" ("Last commit abc, NOT done.", "Done or not done: not done"); never a "Not done:" heading or list
+TASK_NOT_DONE_RE='(^[[:space:]*_-]*|[,;:.][[:space:]*_]*)not done([^:*a-z]|$)'
+# open_question_lines <reply file>: every line with "open question(s)" and the lines after it (a heading followed by bullets), up to the
+# next blank line or a new field ("Note: …", "Last commit: …"); nothing for "Open questions: none" (A64), one per line.
 open_question_lines() {
-  awk 'tolower($0) ~ /open questions?/ { on = 1; print; next } /^[[:space:]]*$/ { on = 0; next } on { print }' "$1" 2>/dev/null
+  awk 'tolower($0) ~ /open questions?/ { on = 1; if (tolower($0) ~ /open questions?[*_]*[[:space:]]*[:=-]?[[:space:]]*[*_]*[[:space:]]*(none|no(ne)?[.;,)]|nothing|n\/a)/) { on = 0; next } print; next }
+       /^[[:space:]]*$/ { on = 0; next }
+       on && /^[[:space:]*_]*[A-Z][A-Za-z ]{0,30}[*_]*:/ { on = 0; next }
+       on { print }' "$1" 2>/dev/null
 }
-task_questioned() {
-  open_question_lines "$1" | grep -viE 'needs the user' | grep -qiE "$TASK_QUESTION_RE"
+# task_question_line <reply file>: the first line that makes task_questioned succeed (for the RESULT line); fails when there is none.
+task_question_line() {
+  local l
+  l="$(open_question_lines "$1" | grep -viE 'needs the user' | grep -m1 -iE "$TASK_QUESTION_RE")" \
+    || l="$(grep -m1 -iE "$TASK_NOT_DONE_RE" "$1" 2>/dev/null)" || return 1
+  printf '%s\n' "$l"
 }
+task_questioned() { task_question_line "$1" >/dev/null; }
 # shell_selected: succeeds when a changed file (one per line, on stdin) is a pipeline script or a tool script (A47a).
 shell_selected() { grep -qE '^(scripts/|tools/[^/]*\.sh$)'; }
 

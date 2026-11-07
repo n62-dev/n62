@@ -828,10 +828,10 @@ if [[ $nowork -eq 0 ]]; then
   [[ $resumed -eq 0 ]] || merge_phase1
   run_agent "pl-$n-$agent" "$run/worker-0.log" "$agent" "$model" "$effort" "$bundle" "$worker_prompt" "${worker_tools[@]}"
   log "pipeline #$n $id: worker done, $(git -C "$wt" log -1 --format=%h) — $(tail -n 1 "$run/worker-0.log" | cut -c1-120)"
-  # A55: a worker that says its task is missing or wrong has not done the package: no checks, no audit
+  # A55, A64: a worker that asks for its task again, says it is missing, or says not done has not done the package: no checks, no audit
   if task_questioned "$run/worker-0.log"; then
-    log "pipeline #$n $id: NOT MERGED (the worker questioned its task); branch $branch kept"
-    echo "RESULT #$n $id: NOT MERGED (the worker questioned its task; branch $branch, worktree $wt kept; reply: $(open_question_lines "$run/worker-0.log" | grep -viE 'needs the user' | grep -iE "$TASK_QUESTION_RE" | head -n 1 | cut -c1-120))"; exit 1
+    log "pipeline #$n $id: NOT MERGED (the worker questioned its task or said not done: $(task_question_line "$run/worker-0.log" | cut -c1-120)); branch $branch kept"
+    echo "RESULT #$n $id: NOT MERGED (the worker questioned its task or said not done; branch $branch, worktree $wt kept; reply: $(task_question_line "$run/worker-0.log" | cut -c1-120))"; exit 1
   fi
 fi
 if [[ -z "$(git -C "$wt" log --oneline "phase-1..HEAD")" ]]; then
@@ -928,8 +928,8 @@ while :; do
   run_agent "fix-$n-$rounds" "$run/fix-$rounds.log" "$agent" "$model" "$effort" "$run/fix-$rounds.in" "$fix_prompt" "${worker_tools[@]}"
   log "pipeline #$n $id: fix round $rounds done, $(git -C "$wt" log -1 --format=%h)"
   if task_questioned "$run/fix-$rounds.log"; then  # A55: as after the first worker
-    log "pipeline #$n $id: NOT MERGED (the worker questioned its task); branch $branch kept"
-    echo "RESULT #$n $id: NOT MERGED (the worker questioned its task; branch $branch, worktree $wt kept; reply: $(open_question_lines "$run/fix-$rounds.log" | grep -viE 'needs the user' | grep -iE "$TASK_QUESTION_RE" | head -n 1 | cut -c1-120))"; exit 1
+    log "pipeline #$n $id: NOT MERGED (the worker questioned its task or said not done: $(task_question_line "$run/fix-$rounds.log" | cut -c1-120)); branch $branch kept"
+    echo "RESULT #$n $id: NOT MERGED (the worker questioned its task or said not done; branch $branch, worktree $wt kept; reply: $(task_question_line "$run/fix-$rounds.log" | cut -c1-120))"; exit 1
   fi
 done
 

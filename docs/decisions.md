@@ -11,6 +11,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
 
+**A64 lo-11:** a worker wrote outside its worktree (run #488). Log new files in `source99/` after a worker step (warn only)?
+
 ## Decided proposals
 
 ### Pipeline and process

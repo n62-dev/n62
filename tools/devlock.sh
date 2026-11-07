@@ -24,20 +24,40 @@ if [[ -n "$COMMON" ]]; then MAIN_REPO="$(dirname "$COMMON")"; else MAIN_REPO="$R
 LOCKS="${N62_COORD:-$MAIN_REPO/.coord}/locks"
 mkdir -p "$LOCKS"
 cmd="${1:?usage: devlock.sh acquire|release|status|break|slice ...}"
+# A64: a pid alone does not name a process: after a crash or a reboot the number belongs to another one. pid_start <pid>: its start
+# time (field 22 of /proc/<pid>/stat, in clock ticks since boot; the fields are counted after the last ')', as the name may hold
+# spaces); empty when the pid is gone. boot_id: this boot's id.
+pid_start() { local s; s="$(cat "/proc/$1/stat" 2>/dev/null)" || return 0; awk '{print $20}' <<<"${s##*) }"; }
+boot_id() { cat /proc/sys/kernel/random/boot_id 2>/dev/null || true; }
+# stale_why <lock dir> <pid>: why a lock of this host whose recorded pid is <pid> is stale ("pid N gone", "pid N reused: start time
+# differs", "pid N of an earlier boot"); fails when its holder lives. A lock without a start or boot file (taken before A64) is judged
+# by its pid alone.
+stale_why() {
+  local d="$1" p="$2" lstart lboot now
+  lstart="$(cat "$d/start" 2>/dev/null || true)"; lboot="$(cat "$d/boot" 2>/dev/null || true)"
+  if [[ -n "$lboot" && "$lboot" != "$(boot_id)" ]]; then echo "pid $p of an earlier boot"; return 0; fi
+  kill -0 "$p" 2>/dev/null || { echo "pid $p gone"; return 0; }
+  now="$(pid_start "$p")"
+  if [[ -n "$lstart" && -n "$now" && "$lstart" != "$now" ]]; then echo "pid $p reused: start time differs"; return 0; fi
+  return 1
+}
 
 case "$cmd" in
   acquire)
     res="${2:?resource}" owner="${3:?owner}" wait="${4:-0}" start=$SECONDS
     while ! mkdir "$LOCKS/$res" 2>/dev/null; do
-      # A35: a lock whose recorded pid is gone on this host is broken; one without a pid (old format, or a caller that did not
-      # opt in with N62_LOCK_PID) only by hand. Breakers take a guard, re-read the pid inside it and move the lock aside,
-      # so two waiters that saw the same dead pid never delete a lock another waiter has just taken.
+      # A35: a lock whose recorded holder is gone on this host is broken; one without a pid (old format, or a caller that did not
+      # opt in with N62_LOCK_PID) only by hand. A64: the holder is gone when its pid is, when the pid now has another start time
+      # (reused), or when the lock was taken in an earlier boot. Breakers take a guard, re-read the pid and the start time inside it
+      # and move the lock aside, so two waiters that saw the same stale lock never delete a lock another waiter has just taken.
       lpid="$(cat "$LOCKS/$res/pid" 2>/dev/null || true)"; lhost="$(cat "$LOCKS/$res/host" 2>/dev/null || true)"
-      if [[ "$lpid" =~ ^[1-9][0-9]*$ && "$lhost" == "$(hostname)" ]] && ! kill -0 "$lpid" 2>/dev/null \
+      lstart="$(cat "$LOCKS/$res/start" 2>/dev/null || true)"
+      if [[ "$lpid" =~ ^[1-9][0-9]*$ && "$lhost" == "$(hostname)" ]] && why="$(stale_why "$LOCKS/$res" "$lpid")" \
          && mkdir "$LOCKS/.breaking-$res" 2>/dev/null; then
-        if [[ "$(cat "$LOCKS/$res/pid" 2>/dev/null || true)" == "$lpid" ]] && mv "$LOCKS/$res" "$LOCKS/.stale-$res.$$" 2>/dev/null; then
+        if [[ "$(cat "$LOCKS/$res/pid" 2>/dev/null || true)" == "$lpid" && "$(cat "$LOCKS/$res/start" 2>/dev/null || true)" == "$lstart" ]] \
+           && mv "$LOCKS/$res" "$LOCKS/.stale-$res.$$" 2>/dev/null; then
           rm -rf "${LOCKS:?}/.stale-$res.$$"
-          echo "broke stale lock $res (pid $lpid gone)" >&2
+          echo "broke stale lock $res ($why)" >&2
         fi
         rmdir "$LOCKS/.breaking-$res" 2>/dev/null || true
         continue
@@ -56,7 +76,9 @@ case "$cmd" in
     # a pid is recorded only when the caller opts in with N62_LOCK_PID=<its own long-lived pid> (build.sh, pipeline.sh, the
     # build-wasm scripts export $$); agents and interactive shells call us from a short-lived shell, so they record none
     hpid="${N62_LOCK_PID:-0}"
-    if [[ "$hpid" =~ ^[1-9][0-9]*$ ]]; then hostname > "$LOCKS/$res/host"; echo "$hpid" > "$LOCKS/$res/pid"; fi
+    if [[ "$hpid" =~ ^[1-9][0-9]*$ ]]; then  # A64: its start time and the boot id with it (the pid file last: a breaker reads it first)
+      hostname > "$LOCKS/$res/host"; pid_start "$hpid" > "$LOCKS/$res/start"; boot_id > "$LOCKS/$res/boot"; echo "$hpid" > "$LOCKS/$res/pid"
+    fi
     echo "acquired $res for $owner"
     ;;
   release)
