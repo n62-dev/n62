@@ -220,18 +220,20 @@ if [[ "${1:-}" == "pass" ]]; then
   git worktree add -q -b "$pbranch" "$wt" "$base" > "$run/worktree.log" 2>&1 || die "pass $n: no worktree $wt: $(tail -n 1 "$run/worktree.log")"
   setup_node_modules "$wt"  # nodemods alone, as a run's start (integ only for a stale phase-1 copy)
   log "Opus pass $n (job $job, PW_PORT $PW_PORT): spawned sofia (opus) on: $ids; waiting."
-  prompt="Opus pass $n of the night shift: follow \"Opus pass (instructions for the Opus agent)\" in docs/shifts/brief.md section 0c for packages $ids. Open questions from the log: $open. You run in your own worktree $wt on branch $pbranch, made from phase-1 at ${base:0:9}: run the checks there and commit your doc changes there with git commit -s and the Opus trailer; switch no branch and touch no other worktree. The log is $coord/log.md. Run any e2e with PW_PORT=$PW_PORT (exported; do not change it). After your reply the pipeline takes the integration lock (integ), merges phase-1 into your branch, runs the docs check and merges the branch into phase-1, so your FIX and QUEUE lines apply to phase-1 after that merge: do not take or release integ yourself, whatever the brief says. Reply in exactly the form the section gives (OPUS PASS, VERDICT, FIX lines, QUEUE, NOTES)."
+  prompt="Opus pass $n of the night shift: follow \"Opus pass (instructions for the Opus agent)\" in docs/shifts/brief.md section 0c for packages $ids. Open questions from the log: $open. You run in your own worktree $wt on branch $pbranch, made from phase-1 at ${base:0:9}: run the checks there and commit your doc changes there with git commit -s and the Opus trailer (where the brief says to work in the phase-1 worktree or to commit on phase-1, this replaces it); leave nothing uncommitted (the pipeline then merges nothing); switch no branch and touch no other worktree. The log is $coord/log.md. Run any e2e with PW_PORT=$PW_PORT (exported; do not change it). After your reply the pipeline takes the integration lock (integ), merges phase-1 into your branch, runs the docs check and merges the branch into phase-1, so your FIX and QUEUE lines apply to phase-1 after that merge: do not take or release integ yourself, whatever the brief says. Reply in exactly the form the section gives (OPUS PASS, VERDICT, FIX lines, QUEUE, NOTES)."
   set +e
   own_sh 'cd "$1" && shift && timeout -k 60 7200 claude "$@"' "$wt" -p --agent sofia --model opus --effort high "${claude_common[@]}" -n "pass-$n" "$prompt" < /dev/null > "$run/reply.md" 2> "$run/stderr.log"
   rc=$?; set -e
-  integ_clean "$wt" || log "Opus pass $n: left uncommitted changes in $wt (not merged)"
+  # A85f: what she left uncommitted (untracked files too) is never merged nor deleted: the branch and the worktree are kept
+  dirty="$(git -C "$wt" status --porcelain 2>/dev/null | head -n 5 | cut -c4- | paste -sd' ' -)"
   # pass_merge: what the pass committed, into phase-1 under integ; sets merged (the RESULT's note). A conflict or a failing docs check
-  # leaves phase-1 as it was and keeps the branch and the worktree.
+  # leaves phase-1 as it was and keeps the branch and the worktree; so does uncommitted work (nothing is merged then).
   pass_kept() {  # <why>
     merged="NOT MERGED ($1)"; log "Opus pass $n: NOT MERGED ($1); branch $pbranch kept, worktree $wt"
   }
   pass_merge() {
     local tip mc files l
+    if [[ -n "$dirty" ]]; then pass_kept "uncommitted changes in $wt: $dirty"; return 0; fi
     if git diff --quiet "$base" "refs/heads/$pbranch" --; then
       merged="nothing to merge"; log "Opus pass $n: changed no file; nothing to merge (integ not taken)"
       git worktree remove --force "$wt" >/dev/null 2>&1 || true; claude_scratch_remove "$wt"

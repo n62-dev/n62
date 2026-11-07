@@ -668,6 +668,7 @@ case "\$*" in
        conflict) echo mine > tracked; git add tracked; git -c user.name=t -c user.email=t@t commit -qm "docs: mine"
              echo theirs > "\$MQ_P1/tracked"; git -C "\$MQ_P1" add tracked; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane: theirs"
              git -C "\$MQ_P1" rev-parse HEAD > "$mq/p1-other";;
+       dirty) echo uncommitted >> tracked; echo new > docs/untracked-note.md;;  # A85f: edits she never commits
      esac
      owner > "$mq/pass-end"; echo "My preface."; echo "OPUS PASS 1"; echo "VERDICT: old"; echo; echo "OPUS PASS 2"; echo "VERDICT: last"; echo "NOTES: n";;
   *"Write the shift report"*) owner > "$mq/report-owner"; echo abc1234;;
@@ -775,6 +776,11 @@ grep -q "Opus pass $pn: NOT MERGED (docs check failed: docs: a broken link" "$mq
 r="$(mqpass none 8)"; pn="$(pass_at "$r")"
 grep -q "^RESULT pass $pn: done (exit 0; nothing to merge)" <<<"$r" && [[ "$(git -C "$mq" rev-parse phase-1)" == "$p1before" ]] || fail "A85 (d): a pass without changes merged something: $(cat "$tmp/pass-none.out")"
 [[ ! -d "$mq/.claude/worktrees/pass-$pn" ]] && ! git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85 (d): an empty pass's worktree or branch is left"
+# (A85f) uncommitted edits (a tracked file and a new untracked doc): nothing merged, nothing deleted, the worktree and branch kept
+r="$(mqpass dirty 10)"; pn="$(pass_at "$r")"
+grep -q "^RESULT pass $pn: done (exit 0; NOT MERGED (uncommitted changes in $mq/.claude/worktrees/pass-$pn: " <<<"$r" && [[ "$(git -C "$mq" rev-parse phase-1)" == "$p1before" ]] || fail "A85f: a pass with uncommitted edits is not NOT MERGED (uncommitted changes ...) or changed phase-1: $(cat "$tmp/pass-dirty.out")"
+grep -q 'uncommitted' "$mq/.claude/worktrees/pass-$pn/tracked" 2>/dev/null && [[ -f "$mq/.claude/worktrees/pass-$pn/docs/untracked-note.md" ]] && git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85f: a pass's uncommitted edits (tracked or untracked) were deleted, or its branch"
+grep -q "Opus pass $pn: NOT MERGED (uncommitted changes in .*untracked-note.md" "$mq/.coord/log.md" || fail "A85f: the untracked doc is not named in the log"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: pass/,/subcommand: device/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the pass prompt still takes integ"
 out="$(mqrun "$script" pass 9 "Q1" none --dry-run 2>&1)"
 grep -q "worktree $mq/.claude/worktrees/pass-9 on branch p1/pass-9 from phase-1" <<<"$out" || fail "A85: the pass dry run does not name its worktree and branch: $out"
