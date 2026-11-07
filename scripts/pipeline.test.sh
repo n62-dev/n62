@@ -1150,6 +1150,24 @@ task_questioned "$tmp/q-f" || fail "A55: task_questioned misses a bullet under a
 task_questioned "$tmp/q-g" && fail "A55: task_questioned reads past the blank line after the heading, or stops a Needs-the-user bullet"
 task_questioned "$tmp/q-b" && fail "A55: task_questioned stops a Needs-the-user question"
 task_questioned "$tmp/q-c" && fail "A55: task_questioned stops a reply with no question"
+# A64 (vg-5): an ordinary remark never fires; a request, a missing task or a "not done" status does (the probe review-1102/vg-task-questioned.sh)
+a64q() { printf '%s\n' "$@" > "$tmp/q-a64"; task_questioned "$tmp/q-a64"; }
+a64q 'Last commit 1a2b3c4, done.' 'Open questions: the spec block is wrong about the cap (600 s; the code has 1200 s); I followed the code' && fail "A64: 'the spec block is wrong about Y; I followed Z' fires"
+a64q 'Last commit 1a2b3c4, done.' 'Open questions: the package file is missing a test name for c63; I used core-c63' && fail "A64: 'the package file is missing a test name' fires"
+a64q 'Last commit 1a2b3c4, done.' 'Open questions: none' 'Note: the task text was incomplete on the label wording; I took the brief'"'"'s' && fail "A64: a remark after 'Open questions: none' fires"
+a64q 'Last commit 1a2b3c4, done.' 'Open questions: none' '- the task text is missing (I used the brief)' && fail "A64: a line after 'Open questions: none' is read as an open question"
+a64q 'Last commit 1a2b3c4, done.' 'Open questions: x or y? (default x)' 'Note: the task text was incomplete on the label wording' && fail "A64: a Note: field after the open questions is read as one"
+a64q 'Last commit 1a2b3c4; done. Not done: step 3 (lo-11 waits for the owner).' 'Open questions: none' && fail "A64: a 'Not done:' list fires as a not-done status"
+a64q '**Not done:** none' 'Open questions: none' && fail "A64: '**Not done:** none' fires"
+a64q 'Last commit 1a2b3c4, NOT done.' 'Open questions: my task block is missing (bundle has no A46 section)' || fail "A64: 'my task block is missing' does not fire"
+a64q 'Last commit 1a2b3c4, done.' 'Open questions: my task block is missing' || fail "A64: 'my task block is missing' alone does not fire"
+a64q 'Last commit 1a2b3c4.' 'Open questions: please resend the bundle' || fail "A64: 'please resend the bundle' does not fire"
+a64q 'Last commit 1a2b3c4, not done.' 'Open questions: none' || fail "A64: a reply whose done field says not done does not fire"
+a64q 'Last commit: 1a2b3c4' 'Done or not done: not done (the probe needs a device)' 'Open questions: none' || fail "A64: 'Done or not done: not done' does not fire"
+a64q 'Last commit: 1a2b3c4' 'Done or not done: done' 'Open questions: none' && fail "A64: 'Done or not done: done' fires"
+a64q 'Open questions: the bundle has no A64 section' || fail "A64: 'the bundle has no A64 section' does not fire"
+[[ "$(task_question_line "$tmp/q-a64")" == 'Open questions: the bundle has no A64 section' ]] || fail "A64: task_question_line does not print the line that fired: $(task_question_line "$tmp/q-a64")"
+grep -q 'task_question_line "$run/' "$here/pipeline.sh" || fail "A64: pipeline.sh does not name the line that fired with task_question_line"
 # (f) the two idle shell tests are in SELFTESTS (run by `pipeline.sh selftest` and the shell check) and in tools/README.md
 for t in tools/manifest-backup.test.sh tools/release-gate.test.sh; do
   printf '%s\n' "${SELFTESTS[@]}" | grep -qx "$t" || fail "A55: $t is not in SELFTESTS"
