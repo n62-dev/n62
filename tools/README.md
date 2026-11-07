@@ -20,6 +20,7 @@ tools/device_run.py page PATH [--wait MARK]                       # a measuremen
 tools/runs_summary.py                                             # medians from .coord/device-runs.jsonl
 tools/check-version.sh [vX.Y.Z]                                   # app/package.json, build.gradle and the F-Droid recipe agree (and equal the tag); test: check-version.test.sh, run by `npm run gate` (A48)
 tools/manifest-backup.test.sh                                     # A23, in SELFTESTS (A55): the manifest keeps android:allowBackup="false" and no backup rules (decisions S8)
+tools/folder-names.test.sh                                        # A65: FolderNames.java (the sync folder's name rule) against tests/fixtures/folder-names.json, the list folder.test.ts checks folder.ts with; run by app/scripts/folder-names.test.ts (Vitest); needs a JDK
 tools/release-gate.test.sh                                        # A42, in SELFTESTS (A55): release-gate.sh --dry-run lists its stages on _out/release
 ```
 

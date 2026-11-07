@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // A65: the sync folder's port with @capacitor/core mocked (never a device in unit tests; the device check is in the report).
+import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { folderList, folderName, folderRead, folderWrite, forgetFolder, pickFolder, validName } from "./folder.ts";
 
@@ -147,11 +148,21 @@ describe("with a folder", () => {
   });
 });
 
-describe("file names (the rule of FolderNames.java)", () => {
-  it.each(["n62-test.txt", ".hidden", "Ünïcødé ∑.txt", "a".repeat(255), "é".repeat(127)])("accepts %s", (n) => {
+// The names both copies of the rule are checked with (FolderNames.java: tools/folder-names.test.sh); null is Java's only.
+type Entry = string | null | { repeat: string; times: number };
+const fixture = JSON.parse(readFileSync(new URL("../../../tests/fixtures/folder-names.json", import.meta.url), "utf8")) as { accept: Entry[]; refuse: Entry[] };
+const names = (es: Entry[]): string[] =>
+  es.flatMap((e) => (e === null ? [] : typeof e === "string" ? [e] : [e.repeat.repeat(e.times)]));
+
+describe("file names (the rule of FolderNames.java, tests/fixtures/folder-names.json)", () => {
+  it("the fixture has names on both sides", () => {
+    expect(names(fixture.accept).length).toBeGreaterThan(0);
+    expect(names(fixture.refuse).length).toBeGreaterThan(0);
+  });
+  it.each(names(fixture.accept))("accepts %j", (n) => {
     expect(validName(n)).toBe(true);
   });
-  it.each(["", ".", "..", "a/b", "../x", "a\\b", "a\0b", "a".repeat(256), "é".repeat(128)])("refuses %j", (n) => {
+  it.each(names(fixture.refuse))("refuses %j", (n) => {
     expect(validName(n)).toBe(false);
   });
   it("a bad name never reaches the plugin", async () => {
