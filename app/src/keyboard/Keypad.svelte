@@ -152,6 +152,7 @@
     const off = (): void => {
       lit.delete(el);
       delete el.dataset["down"];
+      if (popEl === el) hidePop(); // (only its own key's: a newer key's pop stays)
     };
     const left = Math.ceil(l.at + PRESS_MS - performance.now());
     if (left <= 0) off();
@@ -163,7 +164,31 @@
       delete el.dataset["down"];
     }
     lit.clear();
+    hidePop();
   }
+
+  /** The key pop (R162): the pressed key's face above the finger, in the flick bubble's box and offset. One at a time, set in
+   *  down(), gone with the key's press look (the later of the lift and PRESS_MS) or at once for a flick bubble or a cancel. */
+  let pop = $state<{ x: number; y: number; text: string; variable: boolean } | null>(null);
+  let popEl: HTMLElement | undefined;
+  let popNode: HTMLDivElement | undefined = $state();
+  function hidePop(): void {
+    pop = null;
+    popEl = undefined;
+  }
+  function showPop(target: Key | "pad" | undefined, el: HTMLElement | undefined): void {
+    // (a key that does nothing in this layer, drawn dimmed, types nothing: no pop)
+    const text = target && target !== "pad" && el && !isPadKey(target) && !dead(target) ? face(target) : "";
+    if (!el || text === "") return hidePop();
+    popEl = el;
+    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typesVariable(act(target as Key)) };
+  }
+  // the pop stays inside the pad's width (a key at the edge): measured once the pop is drawn, before it is painted
+  $effect(() => {
+    if (!pop || !popNode || !padEl) return;
+    const half = popNode.offsetWidth / 2;
+    popNode.style.left = `${Math.min(Math.max(pop.x, half), padEl.clientWidth - half)}px`;
+  });
 
   /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. */
   let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean } | null>(null);
@@ -197,6 +222,7 @@
     }
     const text = flickText(g.key, st);
     bubbleOwner = id;
+    hidePop(); // (the flick bubble shows alone)
     // (the bubble's letter follows the same flag as the legend it shows; ✕ is none)
     const variable = text !== "" && typesVariable(actionFor(g.key, st === "up", st === "down", false, cas));
     bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable };
@@ -245,6 +271,7 @@
     gestures.clear();
     const { target, el } = targetOf(ev);
     light(el);
+    showPop(target, el);
     if (target) ontouch();
     // a mouse has no implicit capture (a touch has): without it the release outside the pad is never seen
     try {
@@ -377,6 +404,9 @@
     </button>
   {/each}
   {#if padArea}<div class="hub" data-trackpad data-testid="pad-hub" style:grid-row={padArea.rows} style:grid-column={padArea.cols}></div>{/if}
+  {#if pop}
+    <div class="bubble pop" data-testid="key-pop" data-var={pop.variable} style:left={`${pop.x}px`} style:top={`${pop.y}px`} bind:this={popNode} aria-hidden="true">{pop.text}</div>
+  {/if}
   {#if bubble}
     <div
       class="bubble"
@@ -656,6 +686,11 @@
     text-align: center;
     white-space: nowrap;
     pointer-events: none;
+  }
+  /* the key pop (R162): the same box in the key's own text colour; no fade, no motion */
+  .bubble.pop {
+    border-color: var(--key-text);
+    color: var(--key-text);
   }
   .bubble[data-dir="down"] {
     border-color: var(--alpha);
