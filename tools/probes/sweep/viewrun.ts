@@ -35,9 +35,10 @@ export interface ViewSweepResult {
   failures: ViewFailure[];
   compared: number;
   cases: number;
-  /** Engines ended by a crash or a hang (each is a finding), and the largest heap an engine reported (bytes). */
+  /** Engines ended by a crash or a hang (each is a finding), the largest heap an engine reported (bytes), the Giac calls of all engines. */
   restarts: number;
   maxHeap: number;
+  calls: number;
 }
 
 /** The view of a Home-style result at the digits it ran at. A failed result is a refusal (a timeout is not compared). */
@@ -73,6 +74,10 @@ export interface ViewSweepOptions {
   hostArg?: unknown;
   /** Per-call deadline, ms, by method (default deadlineOf). */
   deadlineMs?: (method: ViewMethod) => number;
+  /** The i-th of n contiguous slices of the expressions only (a nightly run in pieces; each piece starts a fresh engine). */
+  part?: { i: number; n: number };
+  /** Called at once with each crash or hang finding (a long run says so before its end). */
+  onFailed?: (f: ViewFailure) => void;
 }
 
 /** A call's deadline: Home and a raw call a few of Home's 2 s deadlines, the CAS view more, a table one Home call per x, Solve and the analyses
@@ -87,21 +92,25 @@ export const failedDetail = (f: Failed): string => `${f.detail}; ${f.calls} Giac
 export async function viewSweep(seed: number, count: number, lim: Limits, opts: ViewSweepOptions = { logDir: null }): Promise<ViewSweepResult> {
   const engine = new ViewEngine({ logDir: opts.logDir, host: opts.host, hostArg: opts.hostArg, deadlineMs: opts.deadlineMs ?? deadlineOf });
   try {
-    return await sweepWith(engine, seed, count, lim);
+    const all = viewCases(seed, count);
+    const p = opts.part;
+    const cases = p ? all.slice(Math.floor(((p.i - 1) * all.length) / p.n), Math.floor((p.i * all.length) / p.n)) : all;
+    return await sweepWith(engine, cases, lim, opts.onFailed ?? (() => {}));
   } finally {
     await engine.close();
   }
 }
 
-async function sweepWith(engine: ViewEngine, seed: number, count: number, lim: Limits): Promise<ViewSweepResult> {
-  const cases = viewCases(seed, count);
+async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFailed: (f: ViewFailure) => void): Promise<ViewSweepResult> {
   const failures: ViewFailure[] = [];
   let compared = 0;
   /** One host call for `latex` at `where`; null when the engine crashed or hung, which is a finding of that kind. */
   const ask = async <M extends ViewMethod>(angle: string, where: string, latex: string, method: M, ...args: Parameters<ViewHost[M]>): Promise<ReturnType<ViewHost[M]> | null> => {
     const r = await engine.call(method, ...args);
     if (r.ok) return r.value;
-    failures.push({ id: `${angle} ${where} ${latex}`, check: r.failed, detail: failedDetail(r) });
+    const f = { id: `${angle} ${where} ${latex}`, check: r.failed, detail: failedDetail(r) };
+    failures.push(f);
+    onFailed(f);
     return null;
   };
   const diff = (angle: string, check: string, x: string, latex: string, d: string | null): void => {
@@ -201,5 +210,5 @@ async function sweepWith(engine: ViewEngine, seed: number, count: number, lim: L
       if (so) residual("solve", so.ok, so.warn, so.roots[0]?.result.value, so.roots[0]?.result.display ?? "");
     }
   }
-  return { failures, compared, cases: cases.length, restarts: engine.restarts, maxHeap: engine.maxHeap };
+  return { failures, compared, cases: cases.length, restarts: engine.restarts, maxHeap: engine.maxHeap, calls: engine.calls };
 }

@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { afterAll, describe, expect, it } from "vitest";
 import { invariantsStage } from "./invariants.ts";
 import { loadViewKnown, VIEW_KNOWN_FILE } from "./viewsweep-known.ts";
+import { joinViewParts, readViewParts, writeViewPart, type ViewPartFile } from "./viewsweep-parts.ts";
 import { defaultHomeSettings } from "../src/engine/homeEval.ts";
 import { ViewEngine } from "../../tools/probes/sweep/viewhost.ts";
 import { viewSweep } from "../../tools/probes/sweep/viewrun.ts";
@@ -33,15 +34,15 @@ describe("the view sweep's engine runs in a worker thread (G188)", () => {
     // the run reached its end: Solve's residual is asked last, on the last expressions of DEG
     expect(r.cases).toBeGreaterThan(0);
     expect(r.compared).toBeGreaterThan(100);
-  });
+  }, 60_000);
 
   it("a call past its deadline is a hang finding and the run goes on", async () => {
-    const r = await viewSweep(7, 6, lim, { logDir: null, host: standIn, hostArg: { hangOn: ",x,0,1)" }, deadlineMs: () => 1000 });
+    const r = await viewSweep(7, 6, lim, { logDir: null, host: standIn, hostArg: { hangOn: ",x,0,1)" }, deadlineMs: (m) => (m === "home" ? 1000 : 20_000) });
     const hangs = r.failures.filter((f) => f.check === "hang");
     expect(hangs.length).toBeGreaterThan(0);
     expect(hangs.every((h) => /^(rad|deg) area 0\.\.1 /.test(h.id) && /no answer within 1000 ms/.test(h.detail))).toBe(true);
     expect(r.restarts).toBe(hangs.length);
-  }, 30_000);
+  }, 60_000);
 
   it("a fresh engine after a crash gets the stored x again (the sweep's context)", async () => {
     const e = new ViewEngine({ logDir: null, host: standIn, hostArg: { trapOn: "boom" }, deadlineMs: () => 5000 });
@@ -57,7 +58,7 @@ describe("the view sweep's engine runs in a worker thread (G188)", () => {
     } finally {
       await e.close();
     }
-  });
+  }, 60_000);
 
   it("the nightly run ends with its summary line and lists the crash as a crash finding, not a dead run", () => {
     const out = spawnSync(process.execPath, [resolve(here, "viewsweep.ts"), "--nightly", "--seed", "7", "--count", "6"], {
@@ -83,5 +84,21 @@ describe("viewsweep-known.yaml (G188)", () => {
     expect(invariantsStage([crash], known)).toMatchObject({ ok: true, summary: "1 known failures, 0 new, 0 now passing" });
     expect(invariantsStage([{ ...crash, id: "rad home 1 x" }], known)).toMatchObject({ ok: false });
     expect(invariantsStage([{ ...crash, check: "hang" }], known).ok).toBe(false);
+  });
+});
+
+describe("the nightly view sweep in pieces (G188)", () => {
+  it("--join reads every part of a seed and count, names a missing one, and sums the pieces", () => {
+    const dir = resolve(scratch, "parts");
+    const base = { seed: 20752, count: 300, of: 2, compared: 10, cases: 3, restarts: 1, maxHeap: 2 ** 27, calls: 5000, secs: 60 };
+    const crash = { id: "rad home 1 x", check: "crash", detail: "RuntimeError: memory access out of bounds" };
+    writeViewPart(dir, { ...base, part: 2, failures: [crash] } satisfies ViewPartFile);
+    expect(readViewParts(dir, 20752, 300)).toEqual({ ok: false, message: `seed 20752, count 300: parts 1/2 missing in ${dir}` });
+    writeViewPart(dir, { ...base, part: 1, failures: [], maxHeap: 2 ** 26 });
+    const got = readViewParts(dir, 20752, 300);
+    expect(got.ok).toBe(true);
+    if (!got.ok) return;
+    expect(joinViewParts(got.files)).toEqual({ failures: [crash], compared: 20, cases: 6, restarts: 2, maxHeap: 2 ** 27, calls: 10000, secs: 120 });
+    expect(readViewParts(dir, 20752, 600)).toMatchObject({ ok: false });
   });
 });

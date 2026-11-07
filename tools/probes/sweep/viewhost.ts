@@ -41,8 +41,12 @@ export class ViewEngine {
   context: { method: ViewMethod; args: unknown[] }[] = [];
   /** Engines ended by a crash or a hang. */
   restarts = 0;
-  /** The largest heap an engine reported, bytes. */
+  /** The largest heap an engine reported, bytes, and the Giac calls of every engine so far (an ended one's up to its last answer). */
   maxHeap = 0;
+  private ended = 0;
+  get calls(): number {
+    return this.ended + this.last.calls;
+  }
   private readonly o: ViewEngineOptions;
   constructor(o: ViewEngineOptions) {
     this.o = o;
@@ -66,6 +70,7 @@ export class ViewEngine {
       });
     });
     this.w = w;
+    this.ended += this.last.calls;
     this.last = { calls: 0, heap: 0 };
     for (const c of this.context) {
       const r = await this.post(w, c.method, c.args);
