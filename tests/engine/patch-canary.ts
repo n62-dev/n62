@@ -142,6 +142,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // (limit(trunc(x),x,-1,1) = -1, right 0)
   ["0035-limit-trunc-side.patch", "giac-2.1.0/src/series.cc", /direction=-1;\s*vecteur vsign\(loptab\(e,sign_floor_ceil_round_tab\)\);/, "static gen in_limit(const gen & e0,const identificateur & x,const gen & lim_point,int direction,GIAC_CONTEXT){"],
   ["0035-limit-trunc-side.patch", "giac-2.1.0/src/usual.cc", /sign_floor_ceil_round_tab_alias\[\]=\{\(alias_type\)&__sign,\(alias_type\)&__floor,\(alias_type\)&__ceil,\(alias_type\)&__round,\(alias_type\)&__sum,0\};/, "const alias_type sign_floor_ceil_round_tab_alias[]="],
+  // G188, patch 0036: the integrator's propfrac step takes propf.back() of lvarx(den,x) without checking that it is not empty
+  // (the view sweep's engine trapped: memory access out of bounds)
+  ["0036-int-propfrac-empty-vars.patch", "giac-2.1.0/src/intg.cc", /vecteur propf=lvarx\(den,gen_x\);\s*gen_sort_f\(propf\.begin\(\),propf\.end\(\),islesscomplexthanf\);\s*nd=_quorem\(makesequence\(num,den,propf\.back\(\)\),contextptr\);/, "// Propfrac step"],
 ];
 
 const tar = tarball(SOURCES.giac);

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G188: replays a view sweep call log (calllog.ts; the crash finding names it) on a fresh engine, to see whether the crash is the same
 // every time, and cuts a crashing log down by halving (ddmin) to a short sequence that still crashes.
-//   node tools/probes/sweep/replay.ts <log> [--runs N] [--to K]   # N replays of the log's first K calls (default all), each on a fresh engine:
-//                                                                # the call that traps (1-based), its text, the heap then and every 5,000 calls
+//   node tools/probes/sweep/replay.ts <log> [--runs N] [--to K] [--stack]   # N replays of the log's first K calls (default all), each on a fresh engine:
+//                                                                # the call that traps (1-based), its text, the heap then and every 5,000 calls;
+//                                                                # --stack: the trap's wasm frames (names with a --profiling-funcs build, GIAC_OUT)
 //   node tools/probes/sweep/replay.ts --shrink <state.json> [--log <log> --to K] [--minutes M]   # the halving, resumable: the first call
 //       starts it from <log> (calls 1..K); each call runs trials for at most M minutes (default 8), saves the state and says DONE or MORE;
 //       run it under `tools/devlock.sh slice <name> …`, one slice per call
@@ -19,7 +20,7 @@ interface TrialData {
   log: string;
   ranges: Ranges;
 }
-export type Trial = { crashed: false; calls: number; heap: number; hang?: true } | { crashed: true; at: number; call: Call; error: string; heap: number; calls: number };
+export type Trial = { crashed: false; calls: number; heap: number; hang?: true } | { crashed: true; at: number; call: Call; error: string; heap: number; calls: number; stack?: string };
 const mb = (b: number): string => `${(b / 2 ** 20).toFixed(0)} MB`;
 
 /** One replay of `ranges` of `log` on a fresh engine in a worker thread. */
@@ -142,10 +143,12 @@ async function main(): Promise<void> {
     console.log(
       `REPLAY ${run}: ${t.crashed ? `CRASH at call ${t.at} of ${t.calls} (${t.error}), heap ${mb(t.heap)}; the call: ${JSON.stringify(t.call).slice(0, 300)}` : t.hang ? `past ${deadlineS} s` : `no crash in ${t.calls} calls, heap ${mb(t.heap)}`}; ${secs} s; heap by calls ${steps.join(", ") || "-"}`,
     );
+    if (t.crashed && t.stack && args.includes("--stack")) console.log(`  stack: ${t.stack}`);
   }
 }
 
 if (!isMainThread) {
+  Error.stackTraceLimit = 200;
   const d = workerData as TrialData;
   const all = parseLog(readFileSync(d.log, "utf8"));
   const calls = d.ranges.flatMap(([a, b]) => all.slice(a, b));
@@ -159,7 +162,9 @@ if (!isMainThread) {
     parentPort!.postMessage({ crashed: false, calls: calls.length, heap: L.heapBytes() } satisfies Trial);
   } catch (e) {
     const error = e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e);
-    parentPort!.postMessage({ crashed: true, at: i + 1, call: calls[i]!, error, heap: L.heapBytes(), calls: calls.length } satisfies Trial);
+    // the wasm frames by name (a build linked with --profiling-funcs; the release build has numbers only)
+    const stack = e instanceof Error ? (e.stack ?? "").split("\n").slice(1, 200).map((l) => l.trim().replace(/^at /, "").replace(/ \(wasm:\/\/.*$/, "")).join(" < ") : undefined;
+    parentPort!.postMessage({ crashed: true, at: i + 1, call: calls[i]!, error, heap: L.heapBytes(), calls: calls.length, ...(stack ? { stack } : {}) } satisfies Trial);
   }
 } else {
   await main();
