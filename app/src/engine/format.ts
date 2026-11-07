@@ -308,6 +308,9 @@ export interface PrecisionWhy {
   unaudited?: string[];
   inherited?: string[];
   once?: boolean;
+  /** G182 (F178): the value has a literal past MAX_EVAL_DIGITS (1000 digits), which no further precision holds: it was
+   *  compared at P and P + 20 only, so it is ⚠ unchecked without having been "evaluated once". Apart from `once`. */
+  pastCap?: boolean;
   /** G38: a sign, comparison, floor or branch inside the exact evaluation gave different results at two precisions,
    *  or sits on its cut (a tie Giac decides by rounding error): "decided at limited precision". */
   decided?: boolean;

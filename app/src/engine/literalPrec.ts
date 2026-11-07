@@ -65,7 +65,10 @@ export function literalStart(text: string, P: number, cap: number, q: Quoting): 
  * The one past-the-cap rule (G141f2): an element that is not exact and has confirmed digits gets "unchecked" (a warn it
  * already has is kept). An exact element stays as it is, and so does a no-digit one, which stays "no digit confirmed"
  * (G23), as ⚠ unchecked would show its wrong digits. An element with no count (null) gets the warn, so it never reads ≈.
+ * The element it warns is marked `pastCap` (G182, F178), for the why line.
  */
-export function uncheckedPastCap<F extends { exact: boolean; reliableDigits: number | null; warn?: PrecisionWarn }>(f: F): F {
-  return f.exact || (f.reliableDigits !== null && f.reliableDigits <= 0) ? f : { ...f, warn: f.warn ?? "unchecked" };
+export function uncheckedPastCap<F extends { exact: boolean; reliableDigits: number | null; warn?: PrecisionWarn; pastCap?: true }>(f: F): F {
+  if (f.exact || (f.reliableDigits !== null && f.reliableDigits <= 0)) return f;
+  // G182: the warn this sets is `pastCap` (two evaluations were compared), not an evaluation that ran once
+  return f.warn ? f : { ...f, warn: "unchecked", pastCap: true };
 }
