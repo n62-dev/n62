@@ -24,7 +24,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
-6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): on Sun 11-15. Now: your look at the UI on the Tab One (N62, Teal, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); Sat 11-14 the showcase video; after the push, the issue forms on GitHub's New issue page (A81).
+6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): on Sun 11-15. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); Sat 11-14 the showcase video; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 8. **decisions.md "Needs the user":** G164's 16 sample sources (by the freeze, Thu 11-12); A64 lo-11, log stray worker files (yes recommended).
 
