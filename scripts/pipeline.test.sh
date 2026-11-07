@@ -661,14 +661,20 @@ cat > "$mq/bin/claude" <<STUB
 br=\$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr / -)
 case "\$*" in
   *"Opus pass "*) owner > "$mq/pass-start"; echo "\$(pwd) \$(git rev-parse --abbrev-ref HEAD) \$(git rev-parse --short=9 HEAD)" > "$mq/pass-where"
+     { cat "$mq/.coord/locks/pass/owner" 2>/dev/null || echo free; } > "$mq/passlock-start"  # A86: who holds the pass lock while sofia runs
      case "\$MQ_PASS" in  # A85: what sofia commits; edit and conflict also let another lane merge into phase-1 meanwhile
-       edit) echo note > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: pass"
-             echo x > "\$MQ_P1/other-lane.txt"; git -C "\$MQ_P1" add other-lane.txt; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane";;
+       edit) echo "note \$(basename "\$(pwd)")" > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: pass"
+             echo "x \$(basename "\$(pwd)")" > "\$MQ_P1/other-lane.txt"; git -C "\$MQ_P1" add other-lane.txt; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane";;
        bad) echo BAD""LINK > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: bad";;
-       conflict) echo mine > tracked; git add tracked; git -c user.name=t -c user.email=t@t commit -qm "docs: mine"
-             echo theirs > "\$MQ_P1/tracked"; git -C "\$MQ_P1" add tracked; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane: theirs"
+       conflict) echo "mine \$(basename "\$(pwd)")" > tracked; git add tracked; git -c user.name=t -c user.email=t@t commit -qm "docs: mine"
+             echo "theirs \$(basename "\$(pwd)")" > "\$MQ_P1/tracked"; git -C "\$MQ_P1" add tracked; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane: theirs"
              git -C "\$MQ_P1" rev-parse HEAD > "$mq/p1-other";;
        dirty) echo uncommitted >> tracked; echo new > docs/untracked-note.md;;  # A85f: edits she never commits
+       line) wn=\$(basename "\$(pwd)"); echo "start \$wn \$(cat "$mq/passlock-start")" >> "$mq/pass-seq"; cat docs/line.md >> "$mq/line-seen"
+             sleep 3; echo "\$wn" > docs/line.md; git add docs/line.md; git -c user.name=t -c user.email=t@t commit -qm "docs: line \$wn"
+             echo "end \$wn" >> "$mq/pass-seq";;  # A86 (a): two passes edit the same line
+       hold) touch "$mq/hold.started"; i=0; while [ ! -e "$mq/hold.go" ] && [ \$i -lt 300 ]; do sleep 0.2; i=\$((i + 1)); done;;
+       limit) echo "Claude usage limit reached" >&2; exit 1;;
      esac
      owner > "$mq/pass-end"; echo "My preface."; echo "OPUS PASS 1"; echo "VERDICT: old"; echo; echo "OPUS PASS 2"; echo "VERDICT: last"; echo "NOTES: n";;
   *"Write the shift report"*) owner > "$mq/report-owner"; echo abc1234;;
@@ -743,7 +749,7 @@ grep -q '^p1/q5 .* newdep=yes$' "$mq/checks" || fail "A47b: the checks ran on no
 printf 'import { spawnSync } from "node:child_process";\nif (spawnSync("git", ["grep", "-q", "BAD" + "LINK"]).status === 0) { console.error("docs: a broken link (BAD" + "LINK)"); process.exit(1); }\nconsole.log("docs: ok");\n' > "$p1q/tools/docs-check.mjs"
 git -C "$p1q" add tools/docs-check.mjs; gc "$p1q" "docs check stub"
 mqpass() {  # <mode: edit|none|bad|conflict> <n>: one pass; prints its RESULT line
-  rm -f "$mq/pass-start" "$mq/pass-end" "$mq/pass-where"
+  rm -f "$mq/pass-start" "$mq/pass-end" "$mq/pass-where" "$mq/passlock-start"
   mqrun env MQ_PASS="$1" MQ_P1="$p1q" "$script" pass "$2" "Q1" none 2>&1 | tee "$tmp/pass-$1.out" | grep '^RESULT pass '
 }
 pass_at() { sed -nE 's/^RESULT pass ([0-9]+):.*/\1/p' <<<"$1"; }
@@ -781,9 +787,63 @@ r="$(mqpass dirty 10)"; pn="$(pass_at "$r")"
 grep -q "^RESULT pass $pn: done (exit 0; NOT MERGED (uncommitted changes in $mq/.claude/worktrees/pass-$pn: " <<<"$r" && [[ "$(git -C "$mq" rev-parse phase-1)" == "$p1before" ]] || fail "A85f: a pass with uncommitted edits is not NOT MERGED (uncommitted changes ...) or changed phase-1: $(cat "$tmp/pass-dirty.out")"
 grep -q 'uncommitted' "$mq/.claude/worktrees/pass-$pn/tracked" 2>/dev/null && [[ -f "$mq/.claude/worktrees/pass-$pn/docs/untracked-note.md" ]] && git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85f: a pass's uncommitted edits (tracked or untracked) were deleted, or its branch"
 grep -q "Opus pass $pn: NOT MERGED (uncommitted changes in .*untracked-note.md" "$mq/.coord/log.md" || fail "A85f: the untracked doc is not named in the log"
+# A86: one pass at a time: the pass lock, taken before the pass number and the branch and held to the end; runs and integ go on meanwhile.
+plk="$mq/.coord/locks/pass"
+lock_cycle() {  # <requested n> <what>: the pass held the lock pass-<n> while sofia ran, and released it on its exit
+  [[ "$(cat "$mq/passlock-start" 2>/dev/null)" == "pass-$1" && ! -e "$plk" ]] || fail "A86 (c): $2: the pass lock was not held while sofia ran ($(cat "$mq/passlock-start" 2>&1)) or not released ($(cat "$plk/owner" 2>&1))"
+}
+# (c) every exit releases it: a normal end, nothing to merge, NOT MERGED (conflict, docs check, uncommitted), a LIMIT, a TERM
+r="$(mqpass edit 15)"; grep -q '^RESULT pass 15: done (exit 0; MERGED' <<<"$r" || fail "A86 (c): pass 15 did not merge: $(cat "$tmp/pass-edit.out")"; lock_cycle 15 "a merged pass"
+r="$(mqpass none 16)"; grep -q '^RESULT pass 16: done (exit 0; nothing to merge)' <<<"$r" || fail "A86 (c): pass 16: $r"; lock_cycle 16 "nothing to merge"
+r="$(mqpass conflict 17)"; grep -q '^RESULT pass 17: done (exit 0; NOT MERGED (conflict' <<<"$r" || fail "A86 (c): pass 17: $r"; lock_cycle 17 "NOT MERGED (conflict)"
+r="$(mqpass bad 18)"; grep -q '^RESULT pass 18: done (exit 0; NOT MERGED (docs check' <<<"$r" || fail "A86 (c): pass 18: $r"; lock_cycle 18 "NOT MERGED (docs check)"
+r="$(mqpass limit 19)"; grep -qx 'RESULT pass 19: LIMIT' <<<"$r" || fail "A86 (c): a usage limit is not RESULT pass 19: LIMIT: $(cat "$tmp/pass-limit.out")"; lock_cycle 19 "a LIMIT"
+rm -f "$mq/hold.started" "$mq/hold.go" "$mq/passlock-start"
+(cd "$mq" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$mq/bin:$PATH" GIAC_OUT="$mq/engine" MQ_PASS=hold exec "$script" pass 20 "Q1" none) > "$tmp/pass-term.out" 2>&1 & tp=$!
+for _ in $(seq 1 150); do [[ -e "$mq/hold.started" ]] && break; sleep 0.2; done
+kill -TERM "$tp" 2>/dev/null; wait "$tp"; rc=$?; touch "$mq/hold.go"
+[[ $rc -eq 143 ]] || fail "A86 (c): a pass killed with TERM exits $rc, not 143: $(cat "$tmp/pass-term.out")"; lock_cycle 20 "a pass killed with TERM"
+# (a) two passes started together that edit the same line: the second's sofia starts after the first's merge, on a branch made from
+# phase-1 after it; both merge
+rm -f "$mq/pass-seq" "$mq/line-seen"; echo base > "$p1q/docs/line.md"; git -C "$p1q" add docs/line.md; gc "$p1q" "docs: line"
+mqrun env MQ_PASS=line "$script" pass 21 "Q1" none > "$tmp/pass-a1.out" 2>&1 & pa=$!
+mqrun env MQ_PASS=line "$script" pass 22 "Q1" none > "$tmp/pass-a2.out" 2>&1 & pb=$!
+wait "$pa" "$pb"
+grep -qE '^RESULT pass [0-9]+: done \(exit 0; MERGED' "$tmp/pass-a1.out" && grep -qE '^RESULT pass [0-9]+: done \(exit 0; MERGED' "$tmp/pass-a2.out" || fail "A86 (a): two passes that edit the same line did not both merge: $(grep -h '^RESULT' "$tmp/pass-a1.out" "$tmp/pass-a2.out")"
+mapfile -t seq < "$mq/pass-seq" 2>/dev/null
+x="$(cut -d' ' -f2 <<<"${seq[0]:-}")"; y="$(cut -d' ' -f2 <<<"${seq[2]:-}")"
+lre='^start pass-[0-9]+ pass-2[12]$'  # the lock's owner is the asked number (taken before the pass number)
+[[ ${#seq[@]} -eq 4 && "${seq[0]}" =~ $lre && "${seq[1]}" == "end $x" && "${seq[2]}" =~ $lre && "${seq[3]}" == "end $y" && "$x" != "$y" ]] || fail "A86 (a): the second pass's sofia started before the first ended, or without the pass lock: $(cat "$mq/pass-seq" 2>&1)"
+[[ "$(sed -n 2p "$mq/line-seen" 2>/dev/null)" == "$x" ]] || fail "A86 (a): the second pass's branch was not made from phase-1 after the first's merge: $(cat "$mq/line-seen" 2>&1)"
+[[ "$(git -C "$mq" show phase-1:docs/line.md 2>/dev/null)" == "$y" && ! -e "$plk" ]] || fail "A86 (a): phase-1 does not end with the second pass's line, or the lock is left"
+# (b) while a pass holds the pass lock (sofia running), a package run takes integ, merges and releases it
+rm -f "$mq/hold.started" "$mq/hold.go"
+mqrun env MQ_PASS=hold "$script" pass 23 "Q1" none > "$tmp/pass-b.out" 2>&1 & pw=$!
+for _ in $(seq 1 150); do [[ -e "$mq/hold.started" ]] && break; sleep 0.2; done
+out="$(mqrun "$script" ron "queue task" --id Q6 --branch p1/q6 --checks typecheck 2>&1)"
+grep -q '^RESULT #[0-9]* Q6: MERGED' <<<"$out" && [[ "$(cat "$plk/owner" 2>/dev/null)" == pass-23 && ! -e "$mq/.coord/locks/integ" ]] || fail "A86 (b): a run during a pass holding the pass lock did not merge and release integ (pass lock: $(cat "$plk/owner" 2>&1)): $out"
+grep -q 'Q6: integ released after' "$mq/.coord/log.md" || fail "A86 (b): Q6 did not log its integ release"
+touch "$mq/hold.go"; wait "$pw"
+grep -q '^RESULT pass 23: done (exit 0; nothing to merge)' "$tmp/pass-b.out" || fail "A86 (b): the held pass did not end: $(cat "$tmp/pass-b.out")"; lock_cycle 23 "the held pass"
+# (d) a busy lock: past its cap the pass is NOT RUN with no branch, worktree or pass number; a wait is logged once
+(cd "$mq" && unset N62_LOCK_PID N62_COORD && tools/devlock.sh acquire pass owner-z 0 >/dev/null)
+pc0="$(cat "$mq/.tasks/pass-counter")"; jc0="$(cat "$mq/.tasks/counter")"
+r="$(N62_PASS_WAIT=2 mqpass none 40)"
+grep -qE '^RESULT pass 40: NOT RUN \(pass lock busy for [0-9]+ s\)$' <<<"$r" || fail "A86 (d): a pass past its wait cap is not NOT RUN (pass lock busy ...): $(cat "$tmp/pass-none.out")"
+[[ ! -e "$mq/.tasks/pass-40" && "$(cat "$mq/.tasks/pass-counter")" == "$pc0" && "$(cat "$mq/.tasks/counter")" == "$jc0" && ! -d "$mq/.claude/worktrees/pass-40" ]] && ! git -C "$mq" show-ref --verify --quiet refs/heads/p1/pass-40 || fail "A86 (d): a NOT RUN pass took a number, a branch or a worktree"
+grep -qE 'Opus pass 40: NOT RUN \(pass lock busy for [0-9]+ s' "$mq/.coord/log.md" && [[ "$(cat "$plk/owner" 2>/dev/null)" == owner-z ]] || fail "A86 (d): the NOT RUN is not logged, or the holder's lock was touched"
+mqpass none 41 > "$tmp/pass-41.res" & pw=$!
+sleep 2; (cd "$mq" && unset N62_COORD && tools/devlock.sh release pass owner-z >/dev/null); wait "$pw"
+grep -q '^RESULT pass 41: done (exit 0; nothing to merge)' "$tmp/pass-41.res" || fail "A86 (d): the pass that waited did not run: $(cat "$tmp/pass-none.out")"
+[[ "$(grep -cE 'Opus pass 41: waited [0-9]+ s for the pass lock$' "$mq/.coord/log.md")" -eq 1 && "$(grep -cE 'Opus pass 41: (waiting for pass|pass taken after|pass still busy)' "$mq/.coord/log.md")" -eq 0 ]] || fail "A86 (d): the wait is not logged once: $(grep 'pass 41' "$mq/.coord/log.md")"
+lock_cycle 41 "the pass that waited"
+grep -qE 'Opus pass (1[5-9]|20|23): waited' "$mq/.coord/log.md" && fail "A86 (d): a pass that never waited logs a wait"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: pass/,/subcommand: device/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the pass prompt still takes integ"
 out="$(mqrun "$script" pass 9 "Q1" none --dry-run 2>&1)"
 grep -q "worktree $mq/.claude/worktrees/pass-9 on branch p1/pass-9 from phase-1" <<<"$out" || fail "A85: the pass dry run does not name its worktree and branch: $out"
+# A86 (e): the dry run names the pass lock and takes nothing
+grep -qF "tools/devlock.sh acquire pass pass-9 9000" <<<"$out" || fail "A86 (e): the pass dry run does not name the pass lock: $out"
+[[ ! -e "$plk" && ! -e "$mq/.tasks/pass-9" ]] || fail "A86 (e): the pass dry run took the lock or a pass number"
 out="$(mqrun "$script" report 2>&1)"
 [[ "$(cat "$mq/report-owner" 2>/dev/null)" == report ]] && [[ ! -e "$mq/.coord/locks/integ" ]] || fail "A47b: the report does not hold integ for its run: $(cat "$mq/report-owner" 2>&1): $out"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: report/,/subcommand: selftest/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the report prompt still takes integ"
