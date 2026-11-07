@@ -487,7 +487,7 @@ git -C "$rf" checkout -q phase-1; printf 'it("old", () => {\n  expect(f(1)).toBe
 rfb() { git -C "$rf" checkout -q -b "$1" phase-1; }; rfc() { git -C "$rf" add -A; gc "$rf" t; git -C "$rf" checkout -q phase-1; }
 loose='it("old, renamed", () => {\n  f(1); // was an expect\n  f(2);\n});\n'
 rfb p1/loose; printf "$loose" > "$rf/app/l.test.ts"; mkdir -p "$rf/app/test"; echo 'test("e2e", () => expect(1).toBe(2));' > "$rf/app/test/x.spec.ts"; rfc
-dropexp='it("old", () => {\n  f(1);\n  f(2);\n});\n'
+dropexp='it("old", () => {\n});\n'  # its asserts only removed
 rfb p1/dropexp; printf "$dropexp" > "$rf/app/l.test.ts"; mkdir -p "$rf/app/test"; echo 'test("e2e", () => expect(1).toBe(2));' > "$rf/app/test/x.spec.ts"; rfc
 rfb p1/loosemix; printf "$dropexp" > "$rf/app/l.test.ts"; echo 'it("m", () => expect(1).toBe(2)); // FAILS-ON-OLD' > "$rf/app/m.test.ts"; rfc
 rfb p1/purerename; mkdir -p "$rf/app/sub"; git -C "$rf" mv app/l.test.ts app/sub/l2.test.ts; rfc
@@ -504,7 +504,7 @@ export N62_REDFIRST_VITEST="$tmp/fakevitest-args.sh" N62_REDFIRST_GOLDEN="$tmp/f
 # a file that only drops its asserts, with e2e specs changed: skipped, the log names the e2e tests, vitest never runs
 rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-dropexp" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a branch whose only vitest change drops asserts is refused: $out"
 grep -q "^red-first: skipped (no new unit test; the package's red tests are e2e: app/test/x.spec.ts;" "$tmp/rf.log" || fail "A67: the log does not say the red tests are e2e: $(cat "$tmp/rf.log")"
-grep -q '^red-first: not counted (adds no test or assertion line): app/l.test.ts$' "$tmp/rf.log" || fail "A67: the log does not name the file it does not count: $(cat "$tmp/rf.log")"
+grep -q '^red-first: not counted (adds no line but comments): app/l.test.ts$' "$tmp/rf.log" || fail "A67: the log does not name the file it does not count: $(cat "$tmp/rf.log")"
 [[ ! -e "$tmp/vitest-args" ]] || fail "A67: vitest ran on a file that drops its asserts: $(cat "$tmp/vitest-args")"; noscratch dropexp
 # R112's shape (a test retitled in place, its asserts made bare calls), with e2e specs changed: run, green there, skipped with both named
 rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loose" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a branch whose only vitest change loosens asserts in place is refused: $out"
@@ -522,7 +522,7 @@ grep -q '^red-first: skipped (no new unit test; edited in place and passing on p
 # a loosened file beside a new failing one: only the new one runs, and it is red
 rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-loosemix" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: loosened + a new red test is refused: $out"
 grep -q 'm.test.ts' "$tmp/vitest-args" 2>/dev/null && ! grep -q 'l.test.ts' "$tmp/vitest-args" || fail "A67: vitest did not run the new file alone: $(cat "$tmp/vitest-args" 2>&1)"
-grep -q '^red-first: not counted (adds no test or assertion line): app/l.test.ts$' "$tmp/rf.log" || fail "A67: loosemix: the dropped file is not logged: $(cat "$tmp/rf.log")"; noscratch loosemix
+grep -q '^red-first: not counted (adds no line but comments): app/l.test.ts$' "$tmp/rf.log" || fail "A67: loosemix: the dropped file is not logged: $(cat "$tmp/rf.log")"; noscratch loosemix
 # a rename without a new line is no new test; without e2e the skip keeps its old words
 rm -f "$tmp/vitest-args"; out="$(red_first "$(rfwt p1/purerename)" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: a pure rename is refused: $out"
 grep -q '^red-first: skipped (no new or changed golden case or vitest file' "$tmp/rf.log" && [[ ! -e "$tmp/vitest-args" ]] || fail "A67: a pure rename ran or logged: $(cat "$tmp/rf.log")"; noscratch purerename
@@ -536,6 +536,18 @@ done
 rfb p1/addgreen; printf '  expect(f(4)).toBe(true);\n' >> "$rf/app/l.test.ts"; rfc
 out="$(red_first "$(rfwt p1/addgreen)" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" && fail "A67: an added expect( that passes on phase-1 passes the stage"
 grep -q 'every new test passes on phase-1' <<<"$out" || fail "A67: addgreen: no reason: $out"; noscratch addgreen
+# a new row of an it.each table (the usual way to add a case here) adds no it( or expect( line: it runs on phase-1 all the same; red
+# there it passes the stage, green it is skipped with the note that pipeline.sh copies into .coord/log.md (audit, fix round 2)
+printf 'it.each([\n  [1, true],\n  [2, false],\n])("row %%s", (x, y) => {\n  expect(f(x)).toBe(y);\n});\n' >> "$rf/app/l.test.ts"; git -C "$rf" add -A; gc "$rf" table
+rfb p1/addrow; sed -i 's|^\])(|  [3, true], // FAILS-ON-OLD\n])(|' "$rf/app/l.test.ts"; rfc
+rfb p1/addrowgreen; sed -i 's|^\])(|  [4, true],\n])(|' "$rf/app/l.test.ts"; rfc
+[[ "$(red_first_test_files "$(rfwt p1/addrow)")" =~ ^(edit|count)$'\t'app/l\.test\.ts$ ]] || fail "A67: addrow: a new it.each row is not run: $(red_first_test_files "$tmp/rfwt-addrow" | tr '\t\n' ' |')"
+rm -f "$tmp/vitest-args"; out="$(red_first "$tmp/rfwt-addrow" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: addrow: a new it.each row red on phase-1 is refused: $out"
+grep -q 'l.test.ts' "$tmp/vitest-args" 2>/dev/null || fail "A67: addrow: the file did not run: $(cat "$tmp/vitest-args" 2>&1)"
+grep -q 'skipped\|not counted' "$tmp/rf.log" && fail "A67: addrow: the stage was skipped or the file not counted: $(cat "$tmp/rf.log")"; noscratch addrow
+rm -f "$tmp/vitest-args"; out="$(red_first "$(rfwt p1/addrowgreen)" "$tmp/spec-red" "$tmp/eng" "$tmp/rf.log")" || fail "A67: addrowgreen: refused: $out"
+grep -q 'l.test.ts' "$tmp/vitest-args" 2>/dev/null || fail "A67: addrowgreen: the file did not run: $(cat "$tmp/vitest-args" 2>&1)"
+grep -q '^red-first: skipped (no new unit test; edited in place and passing on phase-1: app/l.test.ts; e2e is not run on phase-1)$' "$tmp/rf.log" || fail "A67: addrowgreen: no logged skip line naming the file: $(cat "$tmp/rf.log")"; noscratch addrowgreen
 unset N62_REDFIRST_VITEST N62_REDFIRST_GOLDEN
 grep -q "red-first: skipped (no new unit test" "$here/pipeline.sh" || fail "A67: pipeline.sh does not log the e2e skip in .coord/log.md"
 # the whole run: a worker that loosens a vitest file and changes an e2e spec is merged, and .coord/log.md says why red-first let it by
@@ -545,7 +557,7 @@ printf '#!/bin/sh\ncase "$*" in *"--agent sofia"*) echo APPROVED;; *) printf "it
 git -C "$sb67" add -A; gc "$sb67" init; git -C "$sb67" branch phase-1
 out="$(cd "$sb67" && PATH="$sb67/bin:$PATH" GIAC_OUT="$sb67/engine" N62_REDFIRST_VITEST="$tmp/fakevitest.sh" "$script" ron "package A9: tests fail on phase-1" --id T7 --branch p1/t7 --checks redfirst 2>&1)"
 grep -q '^RESULT #1 T7: MERGED' <<<"$out" || fail "A67: a loosened vitest file beside an e2e spec is not merged: $out"
-grep -q "pipeline #1 T7: red-first: skipped (no new unit test; the package's red tests are e2e: app/test/y.spec.ts;" "$sb67/.coord/log.md" || fail "A67: .coord/log.md lacks the e2e skip line: $(grep -i red-first "$sb67/.coord/log.md")"
+grep -q "pipeline #1 T7: red-first: skipped (no new unit test; edited in place and passing on phase-1: app/k.test.ts; the package's red tests are e2e: app/test/y.spec.ts;" "$sb67/.coord/log.md" || fail "A67: .coord/log.md lacks the e2e skip line: $(grep -i red-first "$sb67/.coord/log.md")"
 # the whole run: a sandbox with a worker that adds a passing test; the failure line reaches fail-<round>.txt
 sb4="$tmp/sb4"; mkdir -p "$sb4/bin" "$sb4/tools" "$sb4/docs/shifts" "$sb4/app/node_modules/x"; git init -q -b main "$sb4"
 cp "$sb/tools/devlock.sh" "$sb4/tools/"; cp "$sb/bin/npm" "$sb4/bin/"; : > "$sb4/docs/shifts/brief.md"; echo t > "$sb4/app/keep"
