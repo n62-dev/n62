@@ -12,7 +12,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { isMainThread, parentPort, Worker, workerData } from "node:worker_threads";
 import { loadNodeGiac } from "../../../app/src/engine/nodeGiac.ts";
-import { parseLog, replayCall, type Call } from "./calllog.ts";
+import { parseLog, replayCall, trapText, type Call } from "./calllog.ts";
 
 /** Calls of the log by index ranges [from, to), 0-based. */
 type Ranges = [number, number][];
@@ -161,7 +161,7 @@ if (!isMainThread) {
     }
     parentPort!.postMessage({ crashed: false, calls: calls.length, heap: L.heapBytes() } satisfies Trial);
   } catch (e) {
-    const error = e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e);
+    const error = trapText(e);
     // the wasm frames by name (a build linked with --profiling-funcs; the release build has numbers only)
     const stack = e instanceof Error ? (e.stack ?? "").split("\n").slice(1, 200).map((l) => l.trim().replace(/^at /, "").replace(/ \(wasm:\/\/.*$/, "")).join(" < ") : undefined;
     parentPort!.postMessage({ crashed: true, at: i + 1, call: calls[i]!, error, heap: L.heapBytes(), calls: calls.length, ...(stack ? { stack } : {}) } satisfies Trial);

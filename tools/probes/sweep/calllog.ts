@@ -65,3 +65,7 @@ export const parseLog = (text: string): Call[] =>
     .split("\n")
     .filter((l) => l !== "")
     .map((l) => JSON.parse(l) as Call);
+
+/** What killed an engine call: a wasm trap (a RuntimeError), or a C++ exception that left Giac (a WebAssembly.Exception, which is no Error). */
+export const trapText = (e: unknown): string =>
+  e instanceof Error ? `${e.constructor.name}: ${e.message}` : e instanceof WebAssembly.Exception ? "WebAssembly.Exception: a C++ exception left Giac" : String(e);

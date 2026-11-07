@@ -7,7 +7,7 @@ import { parentPort, workerData } from "node:worker_threads";
 import { pasdegCommand } from "../../../app/src/engine/homeEval.ts";
 import { EngineHost } from "../../../app/src/engine/host.ts";
 import { loadNodeGiac } from "../../../app/src/engine/nodeGiac.ts";
-import { loggedGiac } from "./calllog.ts";
+import { loggedGiac, trapText } from "./calllog.ts";
 
 export type ViewMethod = "eval" | "home" | "cas" | "table" | "analyze" | "solve";
 /** The host methods the view sweep calls. */
@@ -49,7 +49,7 @@ parentPort!.on("message", (job: ViewJob) => {
     const value = (host[job.method] as (...a: unknown[]) => unknown).apply(host, job.args);
     reply = { id: job.id, ok: true, value, calls: calls(), heap: heap() };
   } catch (e) {
-    reply = { id: job.id, ok: false, error: e instanceof Error ? `${e.constructor.name}: ${e.message}` : String(e), calls: calls(), heap: heap() };
+    reply = { id: job.id, ok: false, error: trapText(e), calls: calls(), heap: heap() };
   }
   parentPort!.postMessage(reply);
 });
