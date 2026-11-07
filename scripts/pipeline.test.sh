@@ -521,13 +521,13 @@ grep -q 'every new test passes on phase-1' <<<"$out" || fail "A67: addgreen: no 
 unset N62_REDFIRST_VITEST N62_REDFIRST_GOLDEN
 grep -q "red-first: skipped (no new unit test" "$here/pipeline.sh" || fail "A67: pipeline.sh does not log the e2e skip in .coord/log.md"
 # the whole run: a worker that loosens a vitest file and changes an e2e spec is merged, and .coord/log.md says why red-first let it by
-sb7="$tmp/sb7"; mkdir -p "$sb7/bin" "$sb7/tools" "$sb7/docs/shifts" "$sb7/app/node_modules/x"; git init -q -b main "$sb7"
-cp "$sb/tools/devlock.sh" "$sb7/tools/"; cp "$sb/bin/npm" "$sb7/bin/"; : > "$sb7/docs/shifts/brief.md"; printf 'it("k", () => {\n  expect(k()).toBe(1);\n});\n' > "$sb7/app/k.test.ts"
-printf '#!/bin/sh\ncase "$*" in *"--agent sofia"*) echo APPROVED;; *) printf "it(\\"k\\", () => {\\n  k();\\n});\\n" > app/k.test.ts; mkdir -p app/test; echo "test(1)" > app/test/y.spec.ts; git add -A; git -c user.name=t -c user.email=t@t commit -qm work; echo done;; esac\n' > "$sb7/bin/claude"; chmod +x "$sb7/bin/claude"
-git -C "$sb7" add -A; gc "$sb7" init; git -C "$sb7" branch phase-1
-out="$(cd "$sb7" && PATH="$sb7/bin:$PATH" GIAC_OUT="$sb7/engine" N62_REDFIRST_VITEST="$tmp/fakevitest.sh" "$script" ron "package A9: tests fail on phase-1" --id T7 --branch p1/t7 --checks redfirst 2>&1)"
+sb67="$tmp/sb67"; mkdir -p "$sb67/bin" "$sb67/tools" "$sb67/docs/shifts" "$sb67/app/node_modules/x"; git init -q -b main "$sb67"
+cp "$sb/tools/devlock.sh" "$sb67/tools/"; cp "$sb/bin/npm" "$sb67/bin/"; : > "$sb67/docs/shifts/brief.md"; printf 'it("k", () => {\n  expect(k()).toBe(1);\n});\n' > "$sb67/app/k.test.ts"
+printf '#!/bin/sh\ncase "$*" in *"--agent sofia"*) echo APPROVED;; *) printf "it(\\"k\\", () => {\\n  k();\\n});\\n" > app/k.test.ts; mkdir -p app/test; echo "test(1)" > app/test/y.spec.ts; git add -A; git -c user.name=t -c user.email=t@t commit -qm work; echo done;; esac\n' > "$sb67/bin/claude"; chmod +x "$sb67/bin/claude"
+git -C "$sb67" add -A; gc "$sb67" init; git -C "$sb67" branch phase-1
+out="$(cd "$sb67" && PATH="$sb67/bin:$PATH" GIAC_OUT="$sb67/engine" N62_REDFIRST_VITEST="$tmp/fakevitest.sh" "$script" ron "package A9: tests fail on phase-1" --id T7 --branch p1/t7 --checks redfirst 2>&1)"
 grep -q '^RESULT #1 T7: MERGED' <<<"$out" || fail "A67: a loosened vitest file beside an e2e spec is not merged: $out"
-grep -q "pipeline #1 T7: red-first: skipped (no new unit test; the package's red tests are e2e: app/test/y.spec.ts;" "$sb7/.coord/log.md" || fail "A67: .coord/log.md lacks the e2e skip line: $(grep -i red-first "$sb7/.coord/log.md")"
+grep -q "pipeline #1 T7: red-first: skipped (no new unit test; the package's red tests are e2e: app/test/y.spec.ts;" "$sb67/.coord/log.md" || fail "A67: .coord/log.md lacks the e2e skip line: $(grep -i red-first "$sb67/.coord/log.md")"
 # the whole run: a sandbox with a worker that adds a passing test; the failure line reaches fail-<round>.txt
 sb4="$tmp/sb4"; mkdir -p "$sb4/bin" "$sb4/tools" "$sb4/docs/shifts" "$sb4/app/node_modules/x"; git init -q -b main "$sb4"
 cp "$sb/tools/devlock.sh" "$sb4/tools/"; cp "$sb/bin/npm" "$sb4/bin/"; : > "$sb4/docs/shifts/brief.md"; echo t > "$sb4/app/keep"
