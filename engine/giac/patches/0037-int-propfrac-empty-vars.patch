@@ -6,7 +6,7 @@
  	gen num=nd[0],den=nd[1];
  	vecteur propf=lvarx(den,gen_x);
  	gen_sort_f(propf.begin(),propf.end(),islesscomplexthanf);
-+	// Pascaline patch 0036 (G188): a denominator with no variable that depends on x (reached from int(2^tanh(x),x,0,1), Digits 40)
++	// Pascaline patch 0037 (G188): a denominator with no variable that depends on x (reached from int(2^tanh(x),x,0,1), Digits 40)
 +	// gives an empty propf, and propf.back() read the memory before it: _quorem compared that garbage as its variable
 +	// and trapped the wasm engine (memory access out of bounds), or not, by the heap's layout. No variable: no propfrac step.
 +	if (propf.empty())

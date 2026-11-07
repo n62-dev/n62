@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// G188 (G94, patch 0036): Giac's integrator read past an empty vector (intg.cc integrate_id_rem, the propfrac step:
+// G188 (G94, patch 0037): Giac's integrator read past an empty vector (intg.cc integrate_id_rem, the propfrac step:
 // propf.back() of an empty lvarx(den,x)) and compared that garbage inside _quorem, which trapped the wasm engine
 // ("memory access out of bounds") or went on, by the heap's layout: the view sweep's engine died on
 // int((cosh(x))^tanh(x),x,-1,1/2) and G94's int(sqrt(tanh(x)*sin(x)),x,0,1) at Home's 40 working digits. Which input
