@@ -1046,5 +1046,68 @@ PATH="$sa/bin:$PATH" N62_COORD="$sa" "$here/../tools/stay-awake.sh" S1 --restore
 [[ $r1 -eq 0 ]] && grep -q 'stay_on_while_plugged_in 0' "$sa/puts" && grep -q 'STAY_ON=7' "$sa/devices/S1.orig" && [[ -f "$sa/devices/S1.orig.real" ]] || fail "A55: --restore-real does not put .orig.real back and leave .orig alone"
 grep -qF 'tools/stay-awake.sh <serial> --restore' "$here/../tools/README.md" && grep -q '\.orig\.real' "$here/../tools/README.md" && grep -q '\.orig\.real' "$here/../tools/stay-awake.sh" || fail "A55: stay-awake.sh and tools/README.md do not say what .orig and .orig.real hold"
 
+# A83: the cheap checks fail first. (a) want_checks: docs, typecheck, size, redfirst, vitest, then golden (its stages follow), e2e, shell
+eval "$(sed -n '/^want_checks() {/,/^}/p' "$here/pipeline.sh")"
+checks=auto; spec_file="$tmp/spec-red"; changed() { printf '%s\n' app/src/engine/x.ts scripts/gc.sh; }
+[[ "$(want_checks)" == docs,typecheck,size,redfirst,vitest,golden,e2e,shell ]] || fail "A83: want_checks is not cheap first: $(want_checks)"
+spec_file="$tmp/spec-plain"; changed() { echo docs/x.md; }
+[[ "$(want_checks)" == docs,typecheck,vitest ]] || fail "A83: want_checks for a docs diff: $(want_checks)"
+out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
+grep -q '^checks order (auto): docs, typecheck, size' <<<"$out" && grep -q '^pre-flight (auto' <<<"$out" || fail "A83: the dry run shows no order or pre-flight: $(grep -E '^(checks|pre-flight)' <<<"$out")"
+# (b) the lint rules: a new patch without its README row, a branch without a report commit (brief section 2)
+pl="$tmp/pl"; mkdir -p "$pl/engine/giac/patches"; git init -q -b phase-1 "$pl"
+printf '| Patch | Why |\n|---|---|\n| `0001-a.patch` | x |\n' > "$pl/engine/giac/patches/README.md"; echo a > "$pl/engine/giac/patches/0001-a.patch"
+git -C "$pl" add -A; gc "$pl" base; git -C "$pl" checkout -q -b p1/x
+echo b > "$pl/engine/giac/patches/0002-b.patch"; echo a2 > "$pl/engine/giac/patches/0001-a.patch"; git -C "$pl" add -A; gc "$pl" "fix: a patch"
+out="$(preflight_lint "$pl")" && fail "A83: preflight_lint passes a new patch without its row and no report"
+grep -qx 'lint: engine/giac/patches/0002-b.patch has no row in engine/giac/patches/README.md' <<<"$out" && grep -q '^lint: no report commit' <<<"$out" || fail "A83: preflight_lint reasons: $out"
+grep -q '0001-a' <<<"$out" && fail "A83: preflight_lint flags a changed patch that has its row: $out"
+printf '| `0002-b.patch` | y |\n' >> "$pl/engine/giac/patches/README.md"; git -C "$pl" add -A
+git -C "$pl" -c user.name=t -c user.email=t@t commit -q -m 'report(X): b' -m $'Done: b.\nTests: none.\nNot done: nothing.'
+out="$(preflight_lint "$pl")" || fail "A83: preflight_lint refuses a branch with the row and a report: $out"
+# (c) the log line names the excerpt's first failing line (120 characters); the excerpt finds docs-check's and the lint's lines
+eval "$(sed -n '/^excerpt() {/,/^}/p' "$here/pipeline.sh")"
+printf 'warning (untracked, not counted): x\nbudget: docs/backlog.md is 20.1 kB, over 20 kB\ndocs FAILED (1): 3 links\n' > "$tmp/dl.log"
+[[ "$(excerpt "$tmp/dl.log" | head -n1)" == '2:budget: docs/backlog.md is 20.1 kB, over 20 kB' ]] || fail "A83: the excerpt misses docs-check's failure line: $(excerpt "$tmp/dl.log" | head -n2)"
+{ echo '## docs failed (full log: /x/check-0-docs.log)'; excerpt "$tmp/dl.log"; } > "$tmp/ff1"
+[[ "$(first_failing_line "$tmp/ff1")" == 'budget: docs/backlog.md is 20.1 kB, over 20 kB' ]] || fail "A83: first_failing_line: $(first_failing_line "$tmp/ff1")"
+printf 'checks failed: red-first (x)\n## redfirst failed (full log: y)\n--- tail ---\n\n  red-first: every new test passes\n' > "$tmp/ff2"
+[[ "$(first_failing_line "$tmp/ff2")" == 'red-first: every new test passes' ]] || fail "A83: first_failing_line after the tail mark: $(first_failing_line "$tmp/ff2")"
+printf '## e2e failed (full log: z)\n12:  %s\n' "$(printf 'x%.0s' $(seq 1 200))" > "$tmp/ff3"
+[[ "$(first_failing_line "$tmp/ff3")" == "$(printf 'x%.0s' $(seq 1 120))" ]] || fail "A83: first_failing_line is not cut to 120 characters"
+grep -q 'checks failed (round 0): ## stages failed (full log: [^)]*): sweep NOW PASSING g1' "$s5/.coord/log.md" || fail "A83: the checks-failed line lacks the first failing line: $(grep 'checks failed' "$s5/.coord/log.md")"
+# (b), (c) behaviour: --checks auto in a sandbox; a failing pre-flight is a fix round, never enters the queue, never takes integ
+pf="$tmp/pf"; mkdir -p "$pf/bin" "$pf/tools" "$pf/docs/shifts" "$pf/app" "$pf/engine/giac/patches"; git init -q -b main "$pf"
+printf '#!/bin/sh\necho "$*" >> "%s/locks"\nexit 0\n' "$pf" > "$pf/tools/devlock.sh"
+echo 'process.exit(0);' > "$pf/tools/docs-check.mjs"; cp "$pf/tools/docs-check.mjs" "$pf/tools/docs-check.test.mjs"
+printf '| Patch | Why |\n|---|---|\n' > "$pf/engine/giac/patches/README.md"; : > "$pf/docs/shifts/brief.md"; echo t > "$pf/app/keep"; echo node_modules/ > "$pf/.gitignore"
+printf '#!/bin/sh\ncase "$*" in\n  ci*) mkdir -p node_modules/x;;\n  *"run -s build"*) echo "FAIL start chunk 99.00 kB gzip, over its pin 61.00 kB"; exit 1;;\nesac\nexit 0\n' > "$pf/bin/npm"
+cat > "$pf/bin/claude" <<STUB
+#!/bin/sh
+c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
+case "\$*" in
+  *"fix round"*) echo fix >> "$pf/fixes-\$PF_WORK"; echo f >> fix.txt; c -m fix; echo fixed;;
+  *) : > "$pf/locks"
+     if [ "\$PF_WORK" = patch ]; then echo p > engine/giac/patches/0099-x.patch; c -m "fix: a patch"
+     else echo w > app/w.txt; c -m "report: w" -m "Done: w.
+Tests: none."; fi; echo done;;
+esac
+STUB
+chmod +x "$pf/bin/"* "$pf/tools/devlock.sh"; git -C "$pf" add -A; gc "$pf" init; git -C "$pf" branch phase-1
+pfrun() { (cd "$pf" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$pf/bin:$PATH" GIAC_OUT="$pf/engine" "$@"); }
+out="$(PF_WORK=patch pfrun "$script" annabell "pf task" --id F1 --branch p1/f1 2>&1)"
+grep -q '^RESULT #[0-9]* F1: NOT MERGED (the pre-flight failed twice' <<<"$out" || fail "A83: a lint failure in every round does not end as NOT MERGED after two fix rounds: $out"
+grep -q 'F1: pre-flight failed (round 0): ## lint failed (full log: [^)]*): lint: engine/giac/patches/0099-x.patch has no row' "$pf/.coord/log.md" || fail "A83: the pre-flight's lint failure is not logged: $(grep F1 "$pf/.coord/log.md")"
+grep -q 'F1: in the queue' "$pf/.coord/log.md" && fail "A83: a branch failing the pre-flight entered the queue"
+grep -qs 'lint: no report commit' "$pf"/.tasks/*-f1/fix-1.in || fail "A83: the fix round's input lacks the lint reasons"
+[[ "$(wc -l < "$pf/fixes-patch" 2>/dev/null)" -eq 2 ]] || fail "A83: the pre-flight failures did not count as the two fix rounds"
+grep -qE '^acquire integ' "$pf/locks" && fail "A83: integ taken after the worker (lint): $(cat "$pf/locks")"
+out="$(PF_WORK=size pfrun "$script" annabell "pf task" --id F2 --branch p1/f2 2>&1)"
+grep -q '^RESULT #[0-9]* F2: NOT MERGED (the pre-flight failed twice' <<<"$out" || fail "A83: a size failure does not end as NOT MERGED after two fix rounds: $out"
+grep -q 'F2: pre-flight failed (round 0): ## size failed (full log: [^)]*): FAIL start chunk 99.00 kB' "$pf/.coord/log.md" || fail "A83: the size pre-flight failure is not logged: $(grep F2 "$pf/.coord/log.md")"
+grep -qE '^acquire host-cpu' "$pf/locks" || fail "A83: the size pre-flight ran without host-cpu: $(cat "$pf/locks")"
+grep -qE '^acquire integ' "$pf/locks" && fail "A83: a failing size pre-flight took integ: $(cat "$pf/locks")"
+grep -q 'F2: in the queue' "$pf/.coord/log.md" && fail "A83: a branch failing the size pre-flight entered the queue"
+
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"
