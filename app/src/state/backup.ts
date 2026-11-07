@@ -164,7 +164,7 @@ export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = 
   fmtCycle: (x) => Array.isArray(x) && canon(normalizeCycle(x.filter(isFmtMode))) === canon(x),
   // R122: the nested groups check the fields they hold; a field missing (an older file) is filled by migrateSettings
   // at the next start, as it fills one missing from a stored record. A field this version does not know is a fault.
-  haptics: (x) => fields(x, { on: (v) => typeof v === "boolean", strength: (v) => whole(v, 0, 100), ms: (v) => whole(v, 5, 100) }), // HAPTIC_MS_RANGE
+  haptics: (x) => fields(x, { on: (v) => typeof v === "boolean", strength: (v) => whole(v, 0, 100), ms: (v) => whole(v, 5, 100), click: (v) => typeof v === "boolean" }), // HAPTIC_MS_RANGE
   look: (x) => isObject(x) && Object.entries(validLook(x, defaultLook())).every(([k, v]) => !(k in x) || x[k] === v) && Object.keys(x).every((k) => Object.hasOwn(defaultLook(), k)),
 };
 

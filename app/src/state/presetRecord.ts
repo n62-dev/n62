@@ -16,7 +16,7 @@ export const GROUP_FIELDS: Readonly<Record<PresetGroup, readonly string[]>> = {
   mode: ["angle", "format", "digits", "entry"],
   numbers: ["decimalMark", "fmtCycle", "fixDecimals", "uncertainty", "marks", "groupSep"],
   look: ["family", "brightness", "contrast", "plain"],
-  vibration: ["on", "strength", "ms"],
+  vibration: ["on", "strength", "ms", "click"],
   keys: ["userKeys", "unitPadCells"],
 };
 

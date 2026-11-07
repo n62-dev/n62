@@ -22,6 +22,13 @@ describe("N62Haptics Android side", () => {
     expect(plugin).toMatch(/SDK_INT >= 33[\s\S]*vibrator\.vibrate\(effect, attrs\)/);
     expect(plugin).not.toContain("USAGE_TOUCH");
   });
+  // A66: the key click is the system's key-click effect while the touch sounds are on, else a click made in code
+  it("has click(): the system's FX_KEY_CLICK, and its own click when the system's touch sounds are off", () => {
+    expect(plugin).toMatch(/@PluginMethod\s+public void click\(/);
+    expect(plugin).toContain("playSoundEffect(AudioManager.FX_KEY_CLICK)");
+    expect(plugin).toContain("Settings.System.SOUND_EFFECTS_ENABLED");
+    expect(plugin).toContain("AudioTrack.MODE_STATIC");
+  });
   it("is registered before super.onCreate and the manifest has VIBRATE", () => {
     const main = read("java/dev/n62/calc/MainActivity.java");
     expect(main.indexOf("registerPlugin(N62HapticsPlugin.class)")).toBeGreaterThan(0);

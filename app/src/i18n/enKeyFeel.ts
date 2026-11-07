@@ -9,6 +9,8 @@ export const enKeyFeel = {
   "settings.haptics.webNote": "The Android app only",
   "settings.haptics.off": "Switch key vibration on first",
   "settings.haptics.try": "Try it",
+  "settings.click": "Key click",
+  "settings.click.hint": "A short sound with each key press",
   "settings.counters": "Counters",
   "settings.counters.value": "{n} presses",
   "settings.taps.presses": "Key presses",

@@ -45,6 +45,8 @@ export interface HapticsSettings {
   on: boolean;
   strength: number;
   ms: number;
+  /** The optional key click at each press (A66), apart from the vibration: it sounds with the vibration off too. */
+  click: boolean;
 }
 export const HAPTIC_MS_RANGE = { min: 5, max: 100 } as const;
 
@@ -85,7 +87,7 @@ export const defaultSettings: Settings = {
   uncertainty: "sigma",
   marks: "reason",
   groupSep: "thin", // R125
-  haptics: { on: false, strength: 50, ms: 15 },
+  haptics: { on: false, strength: 50, ms: 15, click: false },
   look: defaultLook(),
 };
 
@@ -190,6 +192,7 @@ export function migrateSettings(saved: unknown, firstLook: Look = defaultSetting
       on: hh.on === true,
       strength: clamp(typeof hh.strength === "number" ? hh.strength : d.strength, 0, 100),
       ms: clamp(typeof hh.ms === "number" ? hh.ms : d.ms, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max),
+      click: hh.click === true, // A66: a record from before it is off
     };
   }
   s.look = validLook(x["look"], firstLook);
@@ -418,6 +421,7 @@ export class Session {
       on: next.on === true,
       strength: clamp(next.strength, 0, 100),
       ms: clamp(next.ms, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max),
+      click: next.click === true,
     };
     this.save();
   }

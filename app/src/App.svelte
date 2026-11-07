@@ -8,7 +8,7 @@
   import type { EntryController } from "./entry/controller.ts";
   import { t } from "./i18n/index.ts";
   import { openLayer } from "./input/backLayer.ts";
-  import { vibrate } from "./input/haptics.ts";
+  import { click, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
   import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
@@ -272,10 +272,12 @@
     );
   }
 
-  /** A finger went down on the keypad: vibrate when switched on in Settings (one pulse per touch, R112). */
+  /** A finger went down on the keypad: vibrate and click when switched on in Settings (one pulse and one click per touch,
+   *  R112, A66). */
   function touched(): void {
     const h = session.settings.haptics;
     if (h.on) vibrate(h.strength / 100, h.ms);
+    if (h.click) click();
   }
 
   /** A key that does nothing here (docs/05 3.7): a short double haptic and no other effect. */

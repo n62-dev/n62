@@ -5,6 +5,8 @@
 /** The native side (Android, written separately): vibrate for `ms` milliseconds at `amplitude` 1..255. */
 export interface N62HapticsPlugin {
   vibrate(options: { ms: number; amplitude: number }): Promise<void>;
+  /** The optional key click (A66): the system's key-click sound, else a click made in code. */
+  click(): Promise<void>;
 }
 
 // @capacitor/core (7.8 kB raw) is not in the start chunk (R35): `loadNative()` imports it once the keypad is drawn.
@@ -50,4 +52,40 @@ export function vibrate(strength01: number, ms: number): void {
     }
   }
   webVibrate(duration);
+}
+
+let audio: AudioContext | undefined;
+/** A66, the web build: one short click made with Web Audio (no file), at the press. The context is made at the first one,
+ *  which is a touch (a user gesture, so the browser lets it sound). */
+const webClick = (): void => {
+  try {
+    if (typeof AudioContext === "undefined") return;
+    audio ??= new AudioContext();
+    if (audio.state === "suspended") void audio.resume().catch(() => {});
+    const t0 = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.frequency.value = 2400;
+    gain.gain.setValueAtTime(0.2, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.015);
+    osc.connect(gain);
+    gain.connect(audio.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.02);
+  } catch {
+    // no Web Audio, or the browser forbids it: no click
+  }
+};
+
+/** Make one key click (A66). Never throws, never waits. */
+export function click(): void {
+  if (native !== null) {
+    try {
+      native.click().catch(webClick);
+      return;
+    } catch {
+      // an older shell without click(): fall through to the web click
+    }
+  }
+  webClick();
 }

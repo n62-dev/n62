@@ -7,7 +7,7 @@
 import type { MenuItem, SubMenu, ValueOption } from "../apps/types.ts";
 import type { AngleUnit, NumberFormat } from "../calc/port.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
-import { hasStrength, vibrate } from "../input/haptics.ts";
+import { click, hasStrength, vibrate } from "../input/haptics.ts";
 import { NOTATION_MODES } from "../state/displayMode.ts";
 import { MAX_DIGITS, type DecimalMark, type EntryMode, type MarkStyle, type Session, type UncertaintyView } from "../state/session.svelte.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
@@ -190,6 +190,19 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
             return keyFeelText("settings.haptics.off");
           },
           run: () => vibrate(s.haptics.strength / 100, s.haptics.ms), // one key-down pulse, as set
+        },
+        {
+          id: "click", // A66: apart from the vibration, so never disabled by it
+          label: keyFeelText("settings.click"),
+          hint: keyFeelText("settings.click.hint"),
+          keep: true,
+          get selected() {
+            return s.haptics.click;
+          },
+          run: () => {
+            session.setHaptics({ click: !s.haptics.click });
+            if (s.haptics.click) click(); // switched on: it sounds once, so the switch can be heard
+          },
         },
       ],
       () => keyFeelText(s.haptics.on ? "settings.on" : "settings.off"),
