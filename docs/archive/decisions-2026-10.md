@@ -5,6 +5,9 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-07 (Opus pass 93) to make room for A64's default and lo-11's recommendation, as it stood
+- **Owner answers of 2026-10-22 to 2026-10-31 and Opus passes 55–78, built:** R77, R78, A25, A33, A34, A36, G109 (a solve result in braces), G111, G112, G113, R4a's gate; Home's sequences as G119 shows them (F108), Find's ten categories, R90 dropped; R91's split start chunk, ron at night with milestone reviews, the weekly fuzz, `--effort high`; A52's gated deploys, A53, R103, `tests/core/ONE-TIME.md`; R69, R79, R80, G56, G75, G77, G82f1, G85–G90, G97, G99–G103, A32, S17, S23; the nine features approved and six dropped on 2026-10-18 ("Feature analysis"). Full text: further down in this file.
+
 ### Shortened 2026-11-07 (Opus pass 86) to make room for G184's and G185's Home time limits, as it stood
 - **Engine defaults, not G2 copies (owner, 2026-10-19).** Choice: the default is what the engine does as built; a G2 special case stays only for a silent wrong number (principle 3) or a keystroke saving (principle 2), never for the match alone; of two equal readings, less code wins; the G2's layout and flow stay the backbone (P11). Would change if: a removal costs muscle memory (docs/03 rule 8).
 

@@ -93,9 +93,6 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 546 | [G185f2](packages/G185f2.md) the Home watchdog counts from when the worker reaches the call (pass 91's FIX) | gorge, Opus | `p1/gorge-homewatchf2` | – |
-| 510 | [G182](packages/G182.md) the why line past the 1000-digit cap says what was checked (F178) | gorge, Sonnet | `p1/gorge-whypastcap` | G181 |
-| 485 | [A64](packages/A64.md) two pipeline guards that misfire | annabell, Opus | `p1/annabell-guardfix` | – |
 | 486 | [A67](packages/A67.md) red-first counts only a test the branch adds or tightens | annabell, Opus | `p1/annabell-redfirst` | – |
 | 487 | [A65](packages/A65.md) the sync folder on Android (the night's device) | annabell, Opus | `p1/annabell-syncfolder` | – |
 | 488 | [A66](packages/A66.md) an optional key click, off by default (the night's device) | annabell, Sonnet | `p1/annabell-keyclick` | – |
