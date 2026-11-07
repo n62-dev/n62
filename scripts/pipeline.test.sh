@@ -664,7 +664,7 @@ case "\$*" in
      case "\$MQ_PASS" in  # A85: what sofia commits; edit and conflict also let another lane merge into phase-1 meanwhile
        edit) echo note > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: pass"
              echo x > "\$MQ_P1/other-lane.txt"; git -C "\$MQ_P1" add other-lane.txt; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane";;
-       bad) echo BADLINK > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: bad";;
+       bad) echo BAD""LINK > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: bad";;
        conflict) echo mine > tracked; git add tracked; git -c user.name=t -c user.email=t@t commit -qm "docs: mine"
              echo theirs > "\$MQ_P1/tracked"; git -C "\$MQ_P1" add tracked; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane: theirs"
              git -C "\$MQ_P1" rev-parse HEAD > "$mq/p1-other";;
@@ -739,7 +739,7 @@ grep -q '^p1/q5 .* newdep=yes$' "$mq/checks" || fail "A47b: the checks ran on no
 # A85: a pass works in its own worktree on p1/pass-<n> from phase-1 and holds no integ while sofia runs; at the end it takes integ,
 # merges phase-1 into its branch, runs the docs check and merges --no-ff; a conflict or a failing docs check leaves phase-1 unchanged
 # and keeps the branch; a pass that changes no file merges nothing; a reply with several OPUS PASS blocks is logged once, the last.
-printf 'import { spawnSync } from "node:child_process";\nif (spawnSync("git", ["grep", "-q", "BAD" + "LINK"]).status === 0) { console.error("docs: a broken link (BAD" + "LINK)"); process.exit(1); }\n' > "$p1q/tools/docs-check.mjs"
+printf 'import { spawnSync } from "node:child_process";\nif (spawnSync("git", ["grep", "-q", "BAD" + "LINK"]).status === 0) { console.error("docs: a broken link (BAD" + "LINK)"); process.exit(1); }\nconsole.log("docs: ok");\n' > "$p1q/tools/docs-check.mjs"
 git -C "$p1q" add tools/docs-check.mjs; gc "$p1q" "docs check stub"
 mqpass() {  # <mode: edit|none|bad|conflict> <n>: one pass; prints its RESULT line
   rm -f "$mq/pass-start" "$mq/pass-end" "$mq/pass-where"

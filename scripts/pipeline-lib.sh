@@ -14,10 +14,10 @@ audited_head_check() {
   return 0
 }
 
-# from_opus_pass <reply file>: the reply from its first OPUS PASS line on (a line before it breaks the brief's form;
-# passes 20, 21, 24 and 27 began with one). A reply without that line is printed whole.
+# from_opus_pass <reply file>: the reply from its last OPUS PASS line on (a line before it breaks the brief's form;
+# passes 20, 21, 24 and 27 began with one; pass 91's reply held three blocks, A85). A reply without that line is printed whole.
 from_opus_pass() {
-  if grep -q '^OPUS PASS' "$1"; then sed -n '/^OPUS PASS/,$p' "$1"; else cat "$1"; fi
+  if grep -q '^OPUS PASS' "$1"; then awk 'NR == FNR { if (/^OPUS PASS/) last = FNR; next } FNR >= last' "$1" "$1"; else cat "$1"; fi
 }
 
 # A bare missing module ('vitest', '@capacitor/clipboard') is the machine's; a relative one ('./x.ts') is the worker's own import (A34).

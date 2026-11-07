@@ -18,8 +18,11 @@
 #       --no-merge          stop after the audit; print the merge command instead
 #       --dry-run           print the bundle and the commands; start no agent, make no worktree
 #   scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" ["<open questions>"] [--dry-run]
-#                           an Opus pass by sofia on phase-1 (brief section 0c "Opus pass"); n when it is free, else the next
-#                           free pass number (.tasks/pass-counter; logged), printed as `RESULT pass <used>: ...`
+#                           an Opus pass by sofia (brief section 0c "Opus pass"); n when it is free, else the next
+#                           free pass number (.tasks/pass-counter; logged), printed as `RESULT pass <used>: done (exit <rc>; <merge>)`;
+#                           A85: she works on p1/pass-<n> from phase-1 in .claude/worktrees/pass-<n>, without integ; then under
+#                           integ phase-1 is merged into the branch, the docs check runs and the branch merges --no-ff (MERGED <c>,
+#                           nothing to merge, or NOT MERGED (<why>) with the branch kept)
 #   scripts/pipeline.sh device <n> [--dry-run]
 #                           A33: the core list on the night's device ($ANDROID_SERIAL): test APK of phase-1's HEAD, install, tools/core-device.sh;
 #                           logs `CORE DEVICE <p>/<a> (known <k>, new <ids or none>) on <sha>`; skips (DEVICE SKIPPED), never fails
@@ -50,7 +53,7 @@
 # together never share a dev server. A run holds the lock branch-<branch> (its pid) for its whole life and writes <run>/pid
 # (gc leaves a live run alone). GIAC_OUT is always an immutable engine/giac/_out/key-<k>; gsl is a copy for people.
 # Locks (each waits up to 7200 s, logged): integ for the merge queue, an npm ci of the phase-1 worktree, a rebuild of phase-1's
-# engine at a start, a whole pass, a whole report and a device step's APK build; nodemods (A47bf1) for every copy out of the
+# engine at a start, a pass's merge (A85), a whole report and a device step's APK build; nodemods (A47bf1) for every copy out of the
 # phase-1 worktree's app/node_modules and every npm ci in it (the device build's and its runner's tree, A56), so a fresh start copies under nodemods
 # alone; host-cpu around the checks and builds.
 # Lock order: integ, then nodemods, then host-cpu, everywhere; nothing holding a later one waits for an earlier one.
@@ -201,31 +204,72 @@ if [[ "${1:-}" == "pass" ]]; then
     [[ "$open" == "--dry-run" ]] && open=none
     export PW_PORT="$(job_port "$(peek_number "$tasks")")"
     integ="$(integ_dir)"; : "${integ:=$main/.claude/worktrees/phase-1}"  # shown, never created
-    echo "DRY RUN: Opus pass $n on: $ids; open questions: $open; PW_PORT=$PW_PORT; worktree $integ; starts nothing"; echo "RESULT pass $n: DRY RUN"; exit 0
+    echo "DRY RUN: Opus pass $n on: $ids; open questions: $open; PW_PORT=$PW_PORT; worktree $main/.claude/worktrees/pass-$n on branch p1/pass-$n from phase-1 (A85: no integ while sofia runs); then under integ: phase-1 merged into the branch, node tools/docs-check.mjs, git -C $integ merge --no-ff --signoff (nothing when no file changed); starts nothing"; echo "RESULT pass $n: DRY RUN"; exit 0
   fi
   ensure_integ
   read -r job used < <(take_number "$tasks" "$n") || die "pass $n: the counter lock is busy"
   [[ -n "${used:-}" ]] || die "pass $n: no pass number taken"
   export PW_PORT="$(job_port "$job")"  # a pass's e2e never meets a dev server of another job
   [[ "$used" == "$n" ]] || log "Opus pass $n: pass number $n is taken; this pass is $used"
-  n="$used"; run="$tasks/pass-$n"; mkdir -p "$run"; echo $$ > "$run/pid"
-  # A47b: the pass holds integ from its start to its end: no merge meets its edits, and it reads one unmoving HEAD
-  trap 'owned_kill; integ_drop' EXIT
-  integ_take "pass-$n" "Opus pass $n:" || die "pass $n: integ lock busy for 7200 s"
-  integ_clean "$integ" || die "pass $n: phase-1 worktree $integ is not clean"
+  n="$used"; id="(Opus pass)"; run="$tasks/pass-$n"; mkdir -p "$run"; echo $$ > "$run/pid"
+  # A85: the pass works on its own branch p1/pass-<n> from phase-1 in its own worktree, so it reads one unmoving HEAD without integ;
+  # it takes integ only at the end, to merge what it committed (pass_merge).
+  trap 'owned_kill; host_cpu_drop; nodemods_drop; integ_drop' EXIT
+  pbranch="p1/pass-$n"; wt="$main/.claude/worktrees/pass-$n"; base="$(git rev-parse phase-1)"
+  ! git show-ref --verify --quiet "refs/heads/$pbranch" || die "pass $n: branch $pbranch exists"
+  git worktree add -q -b "$pbranch" "$wt" "$base" > "$run/worktree.log" 2>&1 || die "pass $n: no worktree $wt: $(tail -n 1 "$run/worktree.log")"
+  setup_node_modules "$wt"  # nodemods alone, as a run's start (integ only for a stale phase-1 copy)
   log "Opus pass $n (job $job, PW_PORT $PW_PORT): spawned sofia (opus) on: $ids; waiting."
-  prompt="Opus pass $n of the night shift: follow \"Opus pass (instructions for the Opus agent)\" in docs/shifts/brief.md section 0c for packages $ids. Open questions from the log: $open. You run in the phase-1 worktree $integ. Run any e2e with PW_PORT=$PW_PORT (exported; do not change it). The pipeline holds the integration lock (integ) for you for the whole pass: do not take or release it yourself, whatever the brief says. Reply in exactly the form the section gives (OPUS PASS, VERDICT, FIX lines, QUEUE, NOTES)."
+  prompt="Opus pass $n of the night shift: follow \"Opus pass (instructions for the Opus agent)\" in docs/shifts/brief.md section 0c for packages $ids. Open questions from the log: $open. You run in your own worktree $wt on branch $pbranch, made from phase-1 at ${base:0:9}: run the checks there and commit your doc changes there with git commit -s and the Opus trailer; switch no branch and touch no other worktree. The log is $coord/log.md. Run any e2e with PW_PORT=$PW_PORT (exported; do not change it). After your reply the pipeline takes the integration lock (integ), merges phase-1 into your branch, runs the docs check and merges the branch into phase-1, so your FIX and QUEUE lines apply to phase-1 after that merge: do not take or release integ yourself, whatever the brief says. Reply in exactly the form the section gives (OPUS PASS, VERDICT, FIX lines, QUEUE, NOTES)."
   set +e
-  own_sh 'cd "$1" && shift && timeout -k 60 7200 claude "$@"' "$integ" -p --agent sofia --model opus --effort high "${claude_common[@]}" -n "pass-$n" "$prompt" < /dev/null > "$run/reply.md" 2> "$run/stderr.log"
+  own_sh 'cd "$1" && shift && timeout -k 60 7200 claude "$@"' "$wt" -p --agent sofia --model opus --effort high "${claude_common[@]}" -n "pass-$n" "$prompt" < /dev/null > "$run/reply.md" 2> "$run/stderr.log"
   rc=$?; set -e
-  integ_clean "$integ" || log "Opus pass $n: left the phase-1 worktree not clean (the queue's next run stops on it)"
-  log "Opus pass $n: integ released after $((SECONDS - integ_t0)) s"; integ_drop
+  integ_clean "$wt" || log "Opus pass $n: left uncommitted changes in $wt (not merged)"
+  # pass_merge: what the pass committed, into phase-1 under integ; sets merged (the RESULT's note). A conflict or a failing docs check
+  # leaves phase-1 as it was and keeps the branch and the worktree.
+  pass_kept() {  # <why>
+    merged="NOT MERGED ($1)"; log "Opus pass $n: NOT MERGED ($1); branch $pbranch kept, worktree $wt"
+  }
+  pass_merge() {
+    local tip mc files l
+    if git diff --quiet "$base" "refs/heads/$pbranch" --; then
+      merged="nothing to merge"; log "Opus pass $n: changed no file; nothing to merge (integ not taken)"
+      git worktree remove --force "$wt" >/dev/null 2>&1 || true; claude_scratch_remove "$wt"
+      git -C "$integ" branch -d "$pbranch" >/dev/null 2>&1 || true; return 0
+    fi
+    integ_take "pass-$n" "Opus pass $n:" || { pass_kept "integ lock busy for 7200 s"; return 0; }
+    integ_clean "$integ" || { pass_kept "phase-1 worktree not clean"; return 0; }
+    if [[ "$(git -C "$wt" rev-parse --abbrev-ref HEAD)" != "$pbranch" ]]; then pass_kept "the worktree is not on $pbranch"; return 0; fi
+    if ! git -C "$wt" merge --no-edit --signoff phase-1 > "$run/premerge.log" 2>&1; then
+      files="$(git -C "$wt" diff --name-only --diff-filter=U | paste -sd' ' -)"
+      git -C "$wt" merge --abort >/dev/null 2>&1 || true
+      if [[ -n "$files" ]]; then pass_kept "conflict merging phase-1 into $pbranch: $files"
+      else pass_kept "merge of phase-1 into $pbranch failed: $(tail -n 1 "$run/premerge.log" | cut -c1-160)"; fi
+      return 0
+    fi
+    if ! own_sh 'cd "$1" && timeout -k 10 300 node tools/docs-check.mjs' "$wt" > "$run/docs-check.log" 2>&1 < /dev/null; then
+      l="$(grep -m1 -vE '^[[:space:]]*$' "$run/docs-check.log" | cut -c1-160)"
+      pass_kept "docs check failed: ${l:-no output}"; return 0
+    fi
+    tip="$(git -C "$wt" rev-parse HEAD)"
+    if git -C "$integ" merge --no-ff --signoff -m "Merge $pbranch: Opus pass $n" "$tip" > "$run/merge.log" 2>&1; then
+      mc="$(git -C "$integ" rev-parse --short HEAD)"; merged="MERGED $mc"
+      log "Opus pass $n: MERGED $mc"
+      git worktree remove --force "$wt" >/dev/null 2>&1 || true; claude_scratch_remove "$wt"
+      git -C "$integ" branch -d "$pbranch" >/dev/null 2>&1 || true
+    else
+      l="$(merge_failure_reason "$integ" "$run/merge.log")"; git -C "$integ" merge --abort >/dev/null 2>&1 || true
+      pass_kept "$l"
+    fi
+  }
+  merged=""; pass_merge
+  [[ $integ_held -eq 0 ]] || { log "Opus pass $n: integ released after $((SECONDS - integ_t0)) s"; integ_drop; }
   if [[ $rc -ne 0 ]] && grep -qiE 'usage limit|rate limit|429|overloaded' "$run/stderr.log" "$run/reply.md"; then
-    log "Opus pass $n: LIMIT (claude exit $rc)"; echo "RESULT pass $n: LIMIT"; exit 75
+    log "Opus pass $n: LIMIT (claude exit $rc; $merged)"; echo "RESULT pass $n: LIMIT"; exit 75
   fi
-  # the reply from its OPUS PASS line on (A17); reply.md keeps it whole
+  # the reply from its last OPUS PASS line on (A17, A85); reply.md keeps it whole
   { echo "- $(date +%H:%M) $(lane_tag)Opus pass $n reply:"; from_opus_pass "$run/reply.md" | sed 's/^/    /'; } >> "$coord/log.md"
-  from_opus_pass "$run/reply.md"; echo "RESULT pass $n: done (exit $rc)"; exit 0
+  from_opus_pass "$run/reply.md"; echo "RESULT pass $n: done (exit $rc; $merged)"; exit 0
 fi
 
 # ---------- subcommand: device ----------
