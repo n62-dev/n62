@@ -32,9 +32,7 @@
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, by Sat 11-14 (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
-| [A83](packages/A83.md) | The cheap checks fail first, before the queue and inside it (owner, 2026-11-07: A83 to A85 now, in this order) | annabell, Opus | day, no lane running | G181, G188 by day (owner, 2026-11-07) | ~0.5 d |
-| [A84](packages/A84.md) | The audit beside the long checks; one fix round gets both lists | annabell, Opus | day, no lane running | A83 | ~0.5 d |
-| [A85](packages/A85.md) | The Opus pass on its own branch, `integ` only to merge | annabell, Opus | day, no lane running | A84 | ~0.5 d |
+| [A86](packages/A86.md) | Two Opus passes one after the other: a `pass` lock (owner, 2026-11-07: before tonight) | annabell, Opus | day, no lane running | A85 | ~0.2 d |
 
 **Why these models:** Opus where a slip breaks entry, the unit chain or stored data for every later package, or gives a wrong number (P17: the engine, input and units); sandra and sofia run Opus; Sonnet elsewhere (an existing pattern, pinned by tests); the audit model follows P17.
 
