@@ -641,4 +641,61 @@ describe("WorkerEngine Home watchdog (G185, F62; stand-in workers, fake timers)"
     expect(out).toEqual({ value: result });
     engine.dispose();
   });
+
+  /** Runs one message at a time, as the real worker does (host.ts: every request is synchronous once the engine is up):
+   *  each call takes `took(msg)` ms from the moment the one before it answered, then answers. */
+  class SerialWorker extends OkWorker {
+    private tail: Promise<void> = Promise.resolve();
+    constructor(private readonly took: (msg: Request) => number) {
+      super();
+    }
+    override postMessage(msg: Request): void {
+      super.postMessage(msg);
+      if (msg.type === "init" || msg.type === "define") return;
+      this.tail = this.tail
+        .then(() => new Promise<void>((r) => setTimeout(r, this.took(msg))))
+        .then(() => !this.terminated && this.onmessage?.({ data: answerTo(msg) }));
+    }
+  }
+  const two = { ok: true, display: "2", path: "exact", approximate: false, exactMs: 1, totalMs: 1, facts: { exact: true, reliableDigits: null }, full: "2" } as const;
+  const refused = { result: { ok: false, error: "a stand-in refusal", line: 1, dirty: false }, lines: [] } as const;
+  function answerTo(msg: Request): Response {
+    if (msg.type === "home") return { id: msg.id, type: "home", result: two, defs: [] };
+    if (msg.type === "cas") return { id: msg.id, type: "cas", result: { ok: true, text: "1", latex: "1", timedOut: false, engineMs: 1 }, defs: [] };
+    if (msg.type === "library") return { id: msg.id, type: "library", ...refused };
+    throw new Error(`no stand-in answer to ${msg.type}`);
+  }
+
+  it("a home sent 1 s into a 9 s library import counts from when the worker reaches it: both answer, nothing restarts (G185f2)", async () => {
+    vi.useFakeTimers();
+    const { engine, workers } = await started(() => new SerialWorker((m) => (m.type === "library" ? 9000 : 10)));
+    const lib = watch(engine.call({ type: "library", input: "x", version: 1, log: [], replace: false }));
+    await vi.advanceTimersByTimeAsync(1000);
+    const home = watch(engine.home("1+1", defaultHomeSettings));
+    await vi.advanceTimersByTimeAsync(8000 + 10); // the import ends at 9 s, the home 10 ms later
+    expect(lib).toEqual({ value: { id: expect.any(Number), type: "library", ...refused } });
+    expect(home).toEqual({ value: two });
+    await vi.advanceTimersByTimeAsync(3 * HOME_WATCHDOG_MS);
+    expect(workers).toHaveLength(1);
+    expect(workers[0]!.terminated).toBe(false);
+    engine.dispose();
+  });
+
+  it("a home queued behind a cas call that ends at 2 s is stopped at 6 s, not at 4 s (G185f2)", async () => {
+    vi.useFakeTimers();
+    const { engine, workers } = await started(() => new SerialWorker((m) => (m.type === "cas" ? 2000 : 60_000)));
+    const cas = watch(engine.cas("int(exp(x^2),x)", defaultCasSettings));
+    const home = watch(engine.home("sin(cosh(10!))", defaultHomeSettings));
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(cas.value).toMatchObject({ ok: true, text: "1" });
+    await vi.advanceTimersByTimeAsync(3000); // 5 s: past 4 s, before 6 s
+    expect(home).toEqual({});
+    expect(workers).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(999); // 1 ms before 6 s
+    expect(home).toEqual({});
+    await vi.advanceTimersByTimeAsync(1); // 6 s
+    expect(home.value).toMatchObject({ ok: false, error: "timeout" });
+    expect(workers).toHaveLength(2);
+    engine.dispose();
+  });
 });
