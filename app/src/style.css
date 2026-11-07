@@ -110,6 +110,7 @@
   --warn: #f2c94c;
   --pick: #134948;
   --focus: #529997;
+  --ring: #529997;
   --key-on: #529997;
   --on-key-on: #000000;
   --key-text: #ebf6f6;
@@ -147,6 +148,7 @@
   --warn: #725400;
   --pick: #a9d9d8;
   --focus: #368281;
+  --ring: #368281;
   --key-on: #005b5a;
   --on-key-on: #ffffff;
   --key-text: #062424;

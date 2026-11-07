@@ -332,6 +332,32 @@ function withLayersApart(t: Palette, high: boolean): Palette {
   return o;
 }
 
+/** R154: --ring (the entry field's outline at rest) stands this far (OKLab, cvd.ts) from --shift, --alpha and --error. */
+export const RING_APART = 0.12;
+const SEEN = [null, ...Object.values(CVD)];
+/** Does `c` serve as --ring on `o`? 3:1 on the screen and the entry line (4.5:1 in High contrast); from Shift and Alpha for normal vision and the three deficiencies (R140's rule), from the error colour for normal vision. */
+function ringOk(o: Palette, c: string, hc: boolean): boolean {
+  if (!["bg", "panel"].every((b) => cr(c, get(o, b)) >= (hc ? 4.5 : 3))) return false;
+  if (["shift", "alpha"].some((r) => Math.min(...SEEN.map((m) => apart(c, get(o, r), m))) < RING_APART)) return false;
+  return apart(c, get(o, "error")) >= RING_APART;
+}
+/**
+ * R154: the outline of the entry field at rest. The family's own --ring when it has one, else the first of its accents
+ * that can serve; its lightness moves away from the screen (hue and saturation kept) until it meets ringOk. Set last,
+ * from the final colours. A family whose accents none can serve is a bug in the family data.
+ */
+function withRing(t: Palette, hc: boolean): Palette {
+  const sd = lightInk(t);
+  for (const from of [t["ring"], t["approx"], t["focus"], t["key-enter"], t["muted"]]) {
+    if (from === undefined) continue;
+    for (const up of [sd, !sd]) {
+      const c = moveUntil(from, up, (x) => ringOk(t, x, hc));
+      if (ringOk(t, c, hc)) return { ...t, ring: c };
+    }
+  }
+  throw new Error("theme-gen: no --ring for " + get(t, "bg"));
+}
+
 export interface Combo {
   family: string;
   brightness: Brightness;
@@ -354,7 +380,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.plain) o = plain(o);
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
-  return { t: withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), fixes };
+  return { t: withRing(withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), c.high), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---
@@ -388,6 +414,8 @@ export function checks(t: Palette, hc: boolean): Check[] {
   add("Entry", "caret on the entry line", "alpha", "panel", T);
   add("Entry", "caret in the bracket's box (non-text)", "alpha", "pick", 3);
   add("Entry", "the bracket's box apart from the entry line", "pick", "panel", PICK_APART);
+  add("Entry", "outline at rest on screen (non-text)", "ring", "bg", D);
+  add("Entry", "outline at rest on the entry line (non-text)", "ring", "panel", D);
   for (const k of [...KEYS, "key-pfx"]) {
     for (const f of ["text", "shift", "alpha"]) add("Keys", `${f} on ${k}`, keyOf(f), k, T);
     add("Keys", `dead face on ${k}`, "key-text-dead", k, D);
