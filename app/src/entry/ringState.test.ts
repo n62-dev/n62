@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { ringState, type RingInput } from "./ringState.ts";
 
-const base: RingInput = { shift: false, alpha: false, view: "home", newest: "done", lineEmpty: true, editedSinceEnter: false };
+const base: RingInput = { shift: false, alpha: false, view: "home", newest: "done", editedSinceEnter: false };
 const ring = (o: Partial<RingInput>) => ringState({ ...base, ...o });
 
 describe("ringState (R154)", () => {
@@ -20,7 +20,6 @@ describe("ringState (R154)", () => {
     it("not when the newest item is anything else", () => {
       for (const newest of ["done", "pending", "cancelled", "note", undefined] as const) expect(ring({ newest }), String(newest)).toBe("rest");
     });
-    it("not once the line holds something", () => expect(ring({ ...err, lineEmpty: false })).toBe("rest"));
     it("not once a key or an edit came since Enter, even back to an empty line", () => expect(ring({ ...err, editedSinceEnter: true })).toBe("rest"));
     it("Shift and Alpha win over it", () => {
       expect(ring({ ...err, shift: true })).toBe("shift");

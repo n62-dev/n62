@@ -14,20 +14,18 @@ export interface RingInput {
   view: View | "app";
   /** The status of the shown view's newest history item. */
   newest: ItemStatus | undefined;
-  /** The entry line holds nothing. */
-  lineEmpty: boolean;
-  /** A key was pressed or the line was edited since the last Enter. */
+  /** A key was pressed or the line was edited in any way since the last Enter (so a line that holds anything counts). */
   editedSinceEnter: boolean;
 }
 
 /**
  * Alpha, armed or locked, wins over Shift (in the lock the next key types a letter); then Shift. The error outline
- * shows only in Home and CAS, while the newest item is an error, the line is empty and nothing has touched it since
- * Enter: the next key puts it back to rest.
+ * shows only in Home and CAS, while the newest item is an error and nothing has touched the line since Enter
+ * (Enter empties it, so an untouched line is empty): the next key or edit puts it back to rest.
  */
 export function ringState(s: RingInput): Ring {
   if (s.alpha) return "alpha";
   if (s.shift) return "shift";
-  if ((s.view === "home" || s.view === "cas") && s.newest === "error" && s.lineEmpty && !s.editedSinceEnter) return "error";
+  if ((s.view === "home" || s.view === "cas") && s.newest === "error" && !s.editedSinceEnter) return "error";
   return "rest";
 }

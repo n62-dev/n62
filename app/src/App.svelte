@@ -90,6 +90,7 @@
       picked = null; // a key that types drops the pick (R147: its buttons may lie over the line)
       entry.run({ kind: "insert", latex: ch });
     });
+    entry.onEdit = () => (edited = true); // R154: MathLive's own typing (é, µ, π), a row menu's recall or insert
     entry.onDead = counted(hwOther("dead"), dead);
     entry.onPress = counted(hwOther("other"), () => {}); // R107f1: a leaving ) or | is a press that needs nothing more
     entry.onPaste = (text) => {
@@ -169,7 +170,6 @@
       alpha: session.alpha,
       view: shell.app === null ? session.view : "app",
       newest: session.items.at(-1)?.status,
-      lineEmpty: !edited || entry.value === "", // (not reactive: it is read again whenever `edited` changes)
       editedSinceEnter: edited,
     }),
   );

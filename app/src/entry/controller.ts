@@ -48,6 +48,8 @@ export class EntryController {
   onPress: (repeat: boolean) => void = () => {};
   /** A system paste on the field (Ctrl+V, Shift+Insert, the context menu; R114): App.svelte runs the Paste key's path on its text. */
   onPaste: (text: string) => void = () => {};
+  /** The line was edited other than by a key of the keypad (R154): MathLive typing a character itself, a recalled row, an inserted result. */
+  onEdit: () => void = () => {};
   /** The line was emptied (Enter, Esc, an app view): main.ts clears the kept line (R34). */
   onClear: () => void = () => {};
 
@@ -96,7 +98,10 @@ export class EntryController {
     mf.executeCommand("moveToMathfieldEnd");
     while (this.queue.length > 0) this.run(this.queue.shift() as ActionBody);
     // what MathLive edits itself (a character outside ASCII); a set of the value is silent
-    mf.addEventListener("input", () => (this.touched = true));
+    mf.addEventListener("input", () => {
+      this.touched = true;
+      this.onEdit();
+    });
   }
 
   /** R33: the names that hold a value (session.userNames); only a single letter is drawn in the stored-name colour. */
@@ -135,6 +140,7 @@ export class EntryController {
   /** Put a previous entry back on the line, with the values of its chips. */
   set(latex: string, chips: ChipTable = {}): void {
     this.touched = true;
+    this.onEdit();
     latex = this.adopt(latex, chips);
     if (!this.mf) {
       this.pendingValue = latex;
@@ -166,6 +172,7 @@ export class EntryController {
   /** Insert LaTeX at the cursor (a history result, L5). */
   insert(latex: string): void {
     this.touched = true;
+    this.onEdit();
     if (!this.mf) {
       this.pendingValue = (this.pendingValue ?? "") + latex;
       return;

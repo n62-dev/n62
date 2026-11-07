@@ -108,3 +108,25 @@ for (const [family, brightness] of LOOKS)
       expect(o.text, `${name}: the text`).toEqual(rest.text);
     }
   });
+
+// A character MathLive types itself (hwkeys.ts leaves é, µ and π to it) edits the line too: the error outline goes.
+test("the error outline goes when MathLive types a native-only character", async ({ page }) => {
+  await open(page, "");
+  await tap(page, ["d1", "emark", "d2", "dot", "d5", "enter"]); // 1ᴇ2.5: an error row
+  await expect(page.locator('[data-status="error"]')).toHaveCount(1);
+  const colour = () => page.evaluate(() => {
+    const mf = window.n62.entry.field;
+    const d = document.createElement("div");
+    d.style.color = "var(--error)";
+    document.body.append(d);
+    const err = getComputedStyle(d).color;
+    d.remove();
+    return { now: mf ? getComputedStyle(mf).outlineColor : "", err };
+  });
+  const before = await colour();
+  expect(before.now, "error outline after Enter").toBe(before.err);
+  await page.locator(".entry math-field").click();
+  await page.keyboard.type("π");
+  await expect.poll(async () => (await colour()).now).not.toBe(before.err);
+  expect(await page.evaluate(() => window.n62.entry.value)).toBe("π");
+});
