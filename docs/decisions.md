@@ -9,8 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
 
-**R153: N62 Light's Shift.** The table's Shift #a03f00 and Alpha #005b5a are 0.099 apart for protanopia, under R140's floor of 0.12 (deuteranopia 0.152, tritanopia 0.257, normal 0.219), so the generator moves Shift darker until they part: N62 Light's Shift is **#5b2400** (a dark brown, 10.3:1 on the keys; protanopia 0.172, deuteranopia 0.123). `theme-families.ts` keeps #a03f00. A lighter Shift cannot part them (5.45:1 on the keys at #a03f00, 0.12 apart only below 4:1); a lighter Alpha can (#2b6968: 0.121, 5.3:1) but comes close to the Light outline #368281, which is why the mockup deepened it. Recommended: keep the generator's move and judge #5b2400 in the gallery (N62 Light, Shift on); the other way is a lower floor for this one pair (R140).
-
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
 
 **A64 lo-11:** a worker wrote outside its worktree (run #488). Recommended (Opus pass 93): yes, warn only: after a worker step log new files in `source99/` (the main checkout's parent, where run #488's file was) and in `.claude/worktrees/`.

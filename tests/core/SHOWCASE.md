@@ -58,7 +58,7 @@ beat.
 `host-cpu`): every clip at its blocks' beat times; fails on a wrong press count, a wrong result, or a press more
 than 80 ms after its beat, or a result not on screen before the cut (the next beat after the eval, 267–441 ms
 later; a flick eval starts `lead` ms before its beat). The check also fails when a setup leaves
-the page in another family than N62.
+the page in another family than N62. 2026-11-07 on R153 (`p1/ron-tealn62`, the N62 setups): 12/12.
 
 ## Next
 
