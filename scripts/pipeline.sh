@@ -22,7 +22,9 @@
 #                           free pass number (.tasks/pass-counter; logged), printed as `RESULT pass <used>: done (exit <rc>; <merge>)`;
 #                           A85: she works on p1/pass-<n> from phase-1 in .claude/worktrees/pass-<n>, without integ; then under
 #                           integ phase-1 is merged into the branch, the docs check runs and the branch merges --no-ff (MERGED <c>,
-#                           nothing to merge, or NOT MERGED (<why>) with the branch kept)
+#                           nothing to merge, or NOT MERGED (<why>) with the branch kept); A86: first the pass lock (one pass at a
+#                           time, waits up to N62_PASS_WAIT, 9000 s, logged once), held to its end; past the wait: RESULT pass <n>:
+#                           NOT RUN (pass lock busy for <s> s), exit 2, with no pass number, branch or worktree taken
 #   scripts/pipeline.sh device <n> [--dry-run]
 #                           A33: the core list on the night's device ($ANDROID_SERIAL): test APK of phase-1's HEAD, install, tools/core-device.sh;
 #                           logs `CORE DEVICE <p>/<a> (known <k>, new <ids or none>) on <sha>`; skips (DEVICE SKIPPED), never fails
@@ -56,7 +58,8 @@
 # engine at a start, a pass's merge (A85), a whole report and a device step's APK build; nodemods (A47bf1) for every copy out of the
 # phase-1 worktree's app/node_modules and every npm ci in it (the device build's and its runner's tree, A56), so a fresh start copies under nodemods
 # alone; host-cpu around the checks and builds.
-# Lock order: integ, then nodemods, then host-cpu, everywhere; nothing holding a later one waits for an earlier one.
+# pass (A86): a whole Opus pass, from before its number to its end, so two passes run one after the other; runs never take it.
+# Lock order: pass, then integ, then nodemods, then host-cpu, everywhere; nothing holding a later one waits for an earlier one.
 # Children (A54): every check, agent, npm ci and device build runs in a session of its own (own_sh, pipeline-lib.sh); TERM, HUP, INT and
 # every EXIT trap kill those sessions and wait until they are empty (owned_kill) before integ, nodemods and host-cpu are dropped.
 # Starts read the package and the brief from phase-1's commit (git show), so a dirty phase-1 worktree never stops a start.
@@ -204,9 +207,21 @@ if [[ "${1:-}" == "pass" ]]; then
     [[ "$open" == "--dry-run" ]] && open=none
     export PW_PORT="$(job_port "$(peek_number "$tasks")")"
     integ="$(integ_dir)"; : "${integ:=$main/.claude/worktrees/phase-1}"  # shown, never created
-    echo "DRY RUN: Opus pass $n on: $ids; open questions: $open; PW_PORT=$PW_PORT; worktree $main/.claude/worktrees/pass-$n on branch p1/pass-$n from phase-1 (A85: no integ while sofia runs); then under integ: phase-1 merged into the branch, node tools/docs-check.mjs, git -C $integ merge --no-ff --signoff (nothing when no file changed); starts nothing"; echo "RESULT pass $n: DRY RUN"; exit 0
+    echo "DRY RUN: Opus pass $n on: $ids; open questions: $open; PW_PORT=$PW_PORT; first tools/devlock.sh acquire pass pass-$n ${N62_PASS_WAIT:-9000} (A86: one pass at a time; a wait is logged once, past it: RESULT pass $n: NOT RUN (pass lock busy for <s> s), no number, branch or worktree taken), held to the end; worktree $main/.claude/worktrees/pass-$n on branch p1/pass-$n from phase-1 (A85: no integ while sofia runs); then under integ: phase-1 merged into the branch, node tools/docs-check.mjs, git -C $integ merge --no-ff --signoff (nothing when no file changed); starts nothing"; echo "RESULT pass $n: DRY RUN"; exit 0
   fi
   ensure_integ
+  # A86: one pass at a time: the pass lock before the pass number and the branch, held to the end (the EXIT trap drops it), so a second
+  # pass branches from phase-1 after the first's merge and never conflicts with it. Runs and integ are not touched. The wait (9000 s)
+  # outlasts a whole pass (sofia's 7200 s plus its merge). Lock order: pass, then integ, nodemods, host-cpu.
+  pass_held=0; pass_owner="pass-$n"
+  pass_lock_drop() { [[ $pass_held -eq 1 ]] || return 0; tools/devlock.sh release pass "$pass_owner" >/dev/null 2>&1 || true; pass_held=0; }
+  trap 'owned_kill; host_cpu_drop; nodemods_drop; integ_drop; pass_lock_drop' EXIT
+  if ! lock_wait pass "$pass_owner" "Opus pass $n:" "${N62_PASS_WAIT:-9000}" quiet; then
+    log "Opus pass $n: NOT RUN (pass lock busy for $lock_waited s; held by $(cat "$coord/locks/pass/owner" 2>/dev/null || echo '?'))"
+    echo "RESULT pass $n: NOT RUN (pass lock busy for $lock_waited s)"; exit 2
+  fi
+  pass_held=1
+  [[ $lock_was_busy -eq 0 ]] || log "Opus pass $n: waited $lock_waited s for the pass lock"
   read -r job used < <(take_number "$tasks" "$n") || die "pass $n: the counter lock is busy"
   [[ -n "${used:-}" ]] || die "pass $n: no pass number taken"
   export PW_PORT="$(job_port "$job")"  # a pass's e2e never meets a dev server of another job
@@ -214,7 +229,6 @@ if [[ "${1:-}" == "pass" ]]; then
   n="$used"; id="(Opus pass)"; run="$tasks/pass-$n"; mkdir -p "$run"; echo $$ > "$run/pid"
   # A85: the pass works on its own branch p1/pass-<n> from phase-1 in its own worktree, so it reads one unmoving HEAD without integ;
   # it takes integ only at the end, to merge what it committed (pass_merge).
-  trap 'owned_kill; host_cpu_drop; nodemods_drop; integ_drop' EXIT
   pbranch="p1/pass-$n"; wt="$main/.claude/worktrees/pass-$n"; base="$(git rev-parse phase-1)"
   ! git show-ref --verify --quiet "refs/heads/$pbranch" || die "pass $n: branch $pbranch exists"
   git worktree add -q -b "$pbranch" "$wt" "$base" > "$run/worktree.log" 2>&1 || die "pass $n: no worktree $wt: $(tail -n 1 "$run/worktree.log")"
