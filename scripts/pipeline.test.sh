@@ -81,6 +81,9 @@ printf 'Here is my reply.\n\nOPUS PASS 9\nVERDICT ok\n' > "$tmp/reply.md"
 printf 'no form\nat all\n' > "$tmp/reply2.md"
 [[ "$(from_opus_pass "$tmp/reply2.md")" == $'no form\nat all' ]] || fail "from_opus_pass drops a reply without OPUS PASS"
 grep -q 'from_opus_pass "$run/reply.md" | sed' "$here/pipeline.sh" || fail "pipeline.sh logs the pass reply whole"
+# A85 (e): a reply with three OPUS PASS blocks (pass 91's reply.md) is printed once, from its last block
+printf 'OPUS PASS 91\nVERDICT: a\n\nOPUS PASS 91\nVERDICT: b\nOPUS PASS 91\nVERDICT: c\nNOTES: n\n' > "$tmp/reply3.md"
+[[ "$(from_opus_pass "$tmp/reply3.md")" == $'OPUS PASS 91\nVERDICT: c\nNOTES: n' ]] || fail "A85 (e): from_opus_pass does not print the last block only: $(from_opus_pass "$tmp/reply3.md")"
 # point 4: no stray waits in the worker prompt
 grep -q 'no_wait="Never start a background loop that waits on a process: pgrep -f' "$here/pipeline.sh" && grep -q '$no_wait Reply in at most five lines: last commit, done' "$here/pipeline.sh" || fail "the worker prompt does not forbid a background wait loop"
 # point 2: night.sh closes with the last pass and the report, at --until (across midnight) and at the cap - 2
@@ -657,7 +660,17 @@ cat > "$mq/bin/claude" <<STUB
 #!/bin/sh
 br=\$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr / -)
 case "\$*" in
-  *"Opus pass "*) owner > "$mq/pass-start"; sleep 1; owner > "$mq/pass-end"; echo "OPUS PASS";;
+  *"Opus pass "*) owner > "$mq/pass-start"; echo "\$(pwd) \$(git rev-parse --abbrev-ref HEAD) \$(git rev-parse --short=9 HEAD)" > "$mq/pass-where"
+     case "\$MQ_PASS" in  # A85: what sofia commits; edit and conflict also let another lane merge into phase-1 meanwhile
+       edit) echo note > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: pass"
+             echo x > "\$MQ_P1/other-lane.txt"; git -C "\$MQ_P1" add other-lane.txt; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane";;
+       bad) echo BAD""LINK > docs/pass-note.md; git add docs/pass-note.md; git -c user.name=t -c user.email=t@t commit -qm "docs: bad";;
+       conflict) echo mine > tracked; git add tracked; git -c user.name=t -c user.email=t@t commit -qm "docs: mine"
+             echo theirs > "\$MQ_P1/tracked"; git -C "\$MQ_P1" add tracked; git -C "\$MQ_P1" -c user.name=t -c user.email=t@t commit -qm "other lane: theirs"
+             git -C "\$MQ_P1" rev-parse HEAD > "$mq/p1-other";;
+       dirty) echo uncommitted >> tracked; echo new > docs/untracked-note.md;;  # A85f: edits she never commits
+     esac
+     owner > "$mq/pass-end"; echo "My preface."; echo "OPUS PASS 1"; echo "VERDICT: old"; echo; echo "OPUS PASS 2"; echo "VERDICT: last"; echo "NOTES: n";;
   *"Write the shift report"*) owner > "$mq/report-owner"; echo abc1234;;
   *"--agent sofia"*) echo "\$br \$(owner)" >> "$mq/audits"; sleep 2
      if [ -n "\$MQ_FIX" ] && [ "\$br" = "\$MQ_FIX" ] && [ ! -e "$mq/fixed-\$br" ]; then touch "$mq/fixed-\$br"; echo FIX; echo "a.txt:1: say more"; else echo APPROVED; fi;;
@@ -724,11 +737,53 @@ git -C "$p1q" add app/package-lock.json; git -C "$p1q" -c user.name=t -c user.em
 touch "$MQ_HOLD"; wait "$q5"; unset MQ_HOLD
 grep -q '^RESULT #[0-9]* Q5: MERGED' "$tmp/q5.out" || fail "A47b: the run after phase-1 gained a dependency did not merge: $(cat "$tmp/q5.out")"
 grep -q '^p1/q5 .* newdep=yes$' "$mq/checks" || fail "A47b: the checks ran on node_modules without phase-1's new dependency: $(grep '^p1/q5 ' "$mq/checks")"
-# a pass holds integ from its start to its end and releases it; its prompt no longer takes the lock; so does the report
-out="$(mqrun "$script" pass 5 "Q1" none 2>&1)"
-[[ "$(cat "$mq/pass-start" 2>/dev/null)" == pass-5 && "$(cat "$mq/pass-end" 2>/dev/null)" == pass-5 ]] || fail "A47b: the pass does not hold integ from start to end: $(cat "$mq/pass-start" "$mq/pass-end" 2>&1)"
-[[ ! -e "$mq/.coord/locks/integ" ]] || fail "A47b: the pass left integ held: $(cat "$mq/.coord/locks/integ/owner")"
+# A85: a pass works in its own worktree on p1/pass-<n> from phase-1 and holds no integ while sofia runs; at the end it takes integ,
+# merges phase-1 into its branch, runs the docs check and merges --no-ff; a conflict or a failing docs check leaves phase-1 unchanged
+# and keeps the branch; a pass that changes no file merges nothing; a reply with several OPUS PASS blocks is logged once, the last.
+printf 'import { spawnSync } from "node:child_process";\nif (spawnSync("git", ["grep", "-q", "BAD" + "LINK"]).status === 0) { console.error("docs: a broken link (BAD" + "LINK)"); process.exit(1); }\nconsole.log("docs: ok");\n' > "$p1q/tools/docs-check.mjs"
+git -C "$p1q" add tools/docs-check.mjs; gc "$p1q" "docs check stub"
+mqpass() {  # <mode: edit|none|bad|conflict> <n>: one pass; prints its RESULT line
+  rm -f "$mq/pass-start" "$mq/pass-end" "$mq/pass-where"
+  mqrun env MQ_PASS="$1" MQ_P1="$p1q" "$script" pass "$2" "Q1" none 2>&1 | tee "$tmp/pass-$1.out" | grep '^RESULT pass '
+}
+pass_at() { sed -nE 's/^RESULT pass ([0-9]+):.*/\1/p' <<<"$1"; }
+p1before="$(git -C "$mq" rev-parse phase-1)"
+r="$(mqpass edit 5)"; pn="$(pass_at "$r")"
+[[ "$(cat "$mq/pass-where" 2>/dev/null)" == "$mq/.claude/worktrees/pass-$pn p1/pass-$pn ${p1before:0:9}" ]] || fail "A85 (a): the pass does not run in its own worktree on p1/pass-$pn from phase-1: $(cat "$mq/pass-where" 2>&1)"
+[[ "$(cat "$mq/pass-start" 2>/dev/null)" == free && "$(cat "$mq/pass-end" 2>/dev/null)" == free ]] || fail "A85 (a): the pass holds integ while sofia runs: $(cat "$mq/pass-start" "$mq/pass-end" 2>&1)"
+grep -qE "^RESULT pass $pn: done \(exit 0; MERGED [0-9a-f]+\)" <<<"$r" || fail "A85 (b): the pass with a doc change did not merge: $(cat "$tmp/pass-edit.out")"
+[[ "$(git -C "$mq" log -1 --format=%s phase-1)" == "Merge p1/pass-$pn: Opus pass $pn" && "$(git -C "$mq" rev-list --parents -1 phase-1 | wc -w)" -eq 3 ]] || fail "A85 (b): phase-1's tip is not the pass's --no-ff merge: $(git -C "$mq" log -2 --format=%s phase-1)"
+git -C "$mq" show phase-1:docs/pass-note.md >/dev/null 2>&1 && git -C "$mq" show phase-1^2:other-lane.txt >/dev/null 2>&1 || fail "A85 (b): the merge lacks the pass's note or phase-1's commit made while it ran (phase-1 not merged into the branch)"
+[[ -s "$mq/.tasks/pass-$pn/docs-check.log" ]] || fail "A85 (b): the docs check did not run before the merge"
+grep -q "Opus pass $pn: integ released after [0-9]* s" "$mq/.coord/log.md" && [[ ! -e "$mq/.coord/locks/integ" ]] || fail "A85 (b): integ is not released (and logged) after the merge"
+[[ ! -d "$mq/.claude/worktrees/pass-$pn" ]] && ! git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85 (b): the merged pass's worktree or branch is left"
+# (e) the reply held two blocks: the log and stdout carry the last one, once
+[[ "$(grep -c '^OPUS PASS' "$tmp/pass-edit.out")" -eq 1 ]] && grep -q '^OPUS PASS 2$' "$tmp/pass-edit.out" || fail "A85 (e): stdout does not hold the reply once, from its last block: $(cat "$tmp/pass-edit.out")"
+[[ "$(grep -c '^    OPUS PASS' "$mq/.coord/log.md")" -eq 1 ]] && grep -q '^    VERDICT: last$' "$mq/.coord/log.md" && ! grep -q 'VERDICT: old' "$mq/.coord/log.md" || fail "A85 (e): the log does not hold the reply once, from its last block"
+# (c) a conflict with what phase-1 got meanwhile: phase-1 unchanged (but for that commit), NOT MERGED logged, the branch kept
+r="$(mqpass conflict 6)"; pn="$(pass_at "$r")"; p1other="$(cat "$mq/p1-other" 2>/dev/null)"
+grep -q "^RESULT pass $pn: done (exit 0; NOT MERGED (conflict" <<<"$r" || fail "A85 (c): a conflicting pass is not NOT MERGED (conflict ...): $(cat "$tmp/pass-conflict.out")"
+[[ -n "$p1other" && "$(git -C "$mq" rev-parse phase-1)" == "$p1other" ]] && integ_clean "$p1q" || fail "A85 (c): a conflicting pass changed phase-1 or left its worktree dirty"
+grep -q "Opus pass $pn: NOT MERGED (conflict" "$mq/.coord/log.md" && git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85 (c): the conflict is not logged or the branch is gone"
+# (c) a failing docs check
+p1before="$(git -C "$mq" rev-parse phase-1)"
+r="$(mqpass bad 7)"; pn="$(pass_at "$r")"
+grep -q "^RESULT pass $pn: done (exit 0; NOT MERGED (docs check failed" <<<"$r" || fail "A85 (c): a pass failing the docs check is not NOT MERGED (docs check failed ...): $(cat "$tmp/pass-bad.out")"
+[[ "$(git -C "$mq" rev-parse phase-1)" == "$p1before" ]] && git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85 (c): a failing docs check changed phase-1 or dropped the branch"
+grep -q "Opus pass $pn: NOT MERGED (docs check failed: docs: a broken link" "$mq/.coord/log.md" || fail "A85 (c): the docs check failure is not logged with its line"
+[[ ! -e "$mq/.coord/locks/integ" ]] || fail "A85 (c): a NOT MERGED pass left integ held"
+# (d) a pass that changes no file merges nothing and leaves no branch
+r="$(mqpass none 8)"; pn="$(pass_at "$r")"
+grep -q "^RESULT pass $pn: done (exit 0; nothing to merge)" <<<"$r" && [[ "$(git -C "$mq" rev-parse phase-1)" == "$p1before" ]] || fail "A85 (d): a pass without changes merged something: $(cat "$tmp/pass-none.out")"
+[[ ! -d "$mq/.claude/worktrees/pass-$pn" ]] && ! git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85 (d): an empty pass's worktree or branch is left"
+# (A85f) uncommitted edits (a tracked file and a new untracked doc): nothing merged, nothing deleted, the worktree and branch kept
+r="$(mqpass dirty 10)"; pn="$(pass_at "$r")"
+grep -q "^RESULT pass $pn: done (exit 0; NOT MERGED (uncommitted changes in $mq/.claude/worktrees/pass-$pn: " <<<"$r" && [[ "$(git -C "$mq" rev-parse phase-1)" == "$p1before" ]] || fail "A85f: a pass with uncommitted edits is not NOT MERGED (uncommitted changes ...) or changed phase-1: $(cat "$tmp/pass-dirty.out")"
+grep -q 'uncommitted' "$mq/.claude/worktrees/pass-$pn/tracked" 2>/dev/null && [[ -f "$mq/.claude/worktrees/pass-$pn/docs/untracked-note.md" ]] && git -C "$mq" show-ref --verify --quiet "refs/heads/p1/pass-$pn" || fail "A85f: a pass's uncommitted edits (tracked or untracked) were deleted, or its branch"
+grep -q "Opus pass $pn: NOT MERGED (uncommitted changes in .*untracked-note.md" "$mq/.coord/log.md" || fail "A85f: the untracked doc is not named in the log"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: pass/,/subcommand: device/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the pass prompt still takes integ"
+out="$(mqrun "$script" pass 9 "Q1" none --dry-run 2>&1)"
+grep -q "worktree $mq/.claude/worktrees/pass-9 on branch p1/pass-9 from phase-1" <<<"$out" || fail "A85: the pass dry run does not name its worktree and branch: $out"
 out="$(mqrun "$script" report 2>&1)"
 [[ "$(cat "$mq/report-owner" 2>/dev/null)" == report ]] && [[ ! -e "$mq/.coord/locks/integ" ]] || fail "A47b: the report does not hold integ for its run: $(cat "$mq/report-owner" 2>&1): $out"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: report/,/subcommand: selftest/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the report prompt still takes integ"
