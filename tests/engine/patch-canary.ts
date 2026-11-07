@@ -146,6 +146,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // digits for a small e (evalf(atanh(i/10^1000)) at Digits 40 was -0.5e-2000*i, evalf(atan(i/10^1000)) 0)
   ["0036-atanh-atan-small-complex.patch", "giac-2.1.0/src/usual.cc", /return e\._REALptr->atanh\(\);\s*if \( \(e\.type==_CPLX\) && \(e\.subtype \|\| e\._CPLXptr->type==_REAL\)\)\s*return no_context_evalf\(rdiv\(ln\(rdiv\(1\+e,1-e,contextptr\),contextptr\),plus_two\)\);/, "gen atanh(const gen & e0,GIAC_CONTEXT){"],
   ["0036-atanh-atan-small-complex.patch", "giac-2.1.0/src/usual.cc", /return plus_one_half\*cst_i\*ln\(rdiv\(cst_i\+e,cst_i-e,contextptr\),contextptr\);/, "static gen atanasln(const gen & e,GIAC_CONTEXT){"],
+  // G188, patch 0037: the integrator's propfrac step takes propf.back() of lvarx(den,x) without checking that it is not empty
+  // (the view sweep's engine trapped: memory access out of bounds)
+  ["0037-int-propfrac-empty-vars.patch", "giac-2.1.0/src/intg.cc", /vecteur propf=lvarx\(den,gen_x\);\s*gen_sort_f\(propf\.begin\(\),propf\.end\(\),islesscomplexthanf\);\s*nd=_quorem\(makesequence\(num,den,propf\.back\(\)\),contextptr\);/, "// Propfrac step"],
 ];
 
 const tar = tarball(SOURCES.giac);

@@ -1,0 +1,17 @@
+# Upstream: giac 2.1.0 intg.cc integrate_id_rem, the propfrac step: vecteur propf=lvarx(den,gen_x) is empty when the denominator of the integrand holds no variable that depends on x, and _quorem(makesequence(num,den,propf.back())) then read the memory before the empty vector as its variable (undefined behaviour). _quorem's lvar compared that garbage gen and trapped the wasm engine with "memory access out of bounds", or went on, depending on the heap's layout: Digits:=40 then int((cosh(x))^tanh(x),x,0,1), int(2^tanh(x),x,0,1), int(sqrt(tanh(x)*sin(x)),x,0,1) trapped in a worker thread every time and in the main thread for some Digits (15, 20, 40 trapped there, 16, 30, 60 did not); the view sweep's engine died on it (backlog G94). Now an empty propf skips the propfrac step (nd=undef, so the following test is false and the integration goes on as for a non-vector nd).
+# Changed by Pascaline contributors, 2026-11-07
+--- a/src/intg.cc
++++ b/src/intg.cc
+@@ -3487,6 +3487,12 @@
+ 	gen num=nd[0],den=nd[1];
+ 	vecteur propf=lvarx(den,gen_x);
+ 	gen_sort_f(propf.begin(),propf.end(),islesscomplexthanf);
++	// Pascaline patch 0037 (G188): a denominator with no variable that depends on x (reached from int(2^tanh(x),x,0,1), Digits 40)
++	// gives an empty propf, and propf.back() read the memory before it: _quorem compared that garbage as its variable
++	// and trapped the wasm engine (memory access out of bounds), or not, by the heap's layout. No variable: no propfrac step.
++	if (propf.empty())
++	  nd=undef;
++	else
+ 	nd=_quorem(makesequence(num,den,propf.back()),contextptr);
+ 	if (nd.type==_VECT && nd._VECTptr->size()==2){
+ 	  gen q=nd[0],r=nd[1];

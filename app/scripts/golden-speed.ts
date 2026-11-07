@@ -49,6 +49,9 @@ export const SPEED_KNOWN: Record<string, string> = {
   // factorial(10^6): one GMP call of 1.0 s that never looks at the interrupt; 8× slower it passes HOME_DEADLINE_MS (2 s)
   "precision/g58-factorial-1e6-12": "HOME_DEADLINE_MS",
   "precision/g58-factorial-1e6-30": "HOME_DEADLINE_MS",
+  // int((cosh(x))^tanh(x),x,0,1) (G188, patch 0037): Giac's numeric integral is one call of 444 ms (229,554 checks, step-budget.ts);
+  // 8× slower it passes HOME_CLOCK_S (1.5 s), so the Tab One shows the time-out where the desktop shows ⚠ 1.10413519221
+  "precision/g188-int-cosh-pow-tanh": "HOME_CLOCK_S",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));

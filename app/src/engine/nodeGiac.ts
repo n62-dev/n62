@@ -10,7 +10,11 @@ import { EngineHost, messageBuffer, setGiacHostGlobals, type GiacApi, type Loade
 
 interface GiacModule {
   cwrap(name: string, ret: string | null, args: string[]): (...a: (string | number)[]) => string & number;
+  wasmMemory?: WebAssembly.Memory;
 }
+
+/** A Node-loaded engine; `heapBytes` is the size of its wasm memory now (G188: the view sweep's call log reports it at a crash). */
+export type NodeLoadedGiac = LoadedGiac & { heapBytes: () => number };
 
 export function giacMjsPath(): string {
   if (process.env.GIAC_MJS) return process.env.GIAC_MJS;
@@ -30,7 +34,7 @@ export function giacAvailable(): boolean {
   return false;
 }
 
-export async function loadNodeGiac(mjs: string = giacMjsPath()): Promise<LoadedGiac> {
+export async function loadNodeGiac(mjs: string = giacMjsPath()): Promise<NodeLoadedGiac> {
   setGiacHostGlobals();
   const t0 = performance.now();
   const { default: create } = (await import(pathToFileURL(mjs).href)) as { default: (o: object) => Promise<GiacModule> };
@@ -41,7 +45,7 @@ export async function loadNodeGiac(mjs: string = giacMjsPath()): Promise<LoadedG
   const pow = M.cwrap("giac_set_pow_limit", "number", ["number"]);
   const giac: GiacApi = { eval: (s) => ev(s), setPowLimit: (n) => pow(n), messages: out.messages, clearMessages: out.clear };
   // G99: the host needs the bridge; bridgeOf throws NO_BRIDGE on an engine without its exports.
-  return { giac, bridge: bridgeOf(M), instantiateMs: performance.now() - t0 };
+  return { giac, bridge: bridgeOf(M), instantiateMs: performance.now() - t0, heapBytes: () => M.wasmMemory?.buffer.byteLength ?? 0 };
 }
 
 /** An engine host on a freshly loaded Giac (tests, the golden runner, probes). */
