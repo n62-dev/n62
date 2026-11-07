@@ -54,7 +54,7 @@ export interface WorkerEngineOptions {
   defs?: DefsStore;
 }
 
-/** G185 (F62): a Home or unit-view call that has not answered this long after the engine was ready is stopped: the
+/** G185 (F62): a Home or unit-view call that has not answered this long after the worker reached it is stopped: the
  *  worker is restarted on Cancel's path and the call answers Home's time-out. Some Giac calls never look at the
  *  interrupt (MPFR reducing sin(cosh(10!))'s argument), so neither Home's step budget nor Giac's clock stops them. The
  *  larger of 4 s and 8 × the slowest Home Enter that finishes (tools/probes/home-slowest.ts on the 8× fast clock: 228 ms,
@@ -64,7 +64,8 @@ export const HOME_WATCHDOG_MS = 4000;
 /** How long the first calls wait for the stored definitions before the engine starts without them (a blocked store). */
 export const DEFS_LOAD_TIMEOUT_MS = 3000;
 
-type Pending = { resolve: (r: Response) => void; reject: (e: Error) => void };
+/** `arm`: the watchdog of a call under it (post), started once the call is the oldest one the worker has not answered. */
+type Pending = { resolve: (r: Response) => void; reject: (e: Error) => void; arm?: (() => void) | undefined };
 type RequestBody = Request extends infer R ? (R extends { id: number } ? Omit<R, "id"> : never) : never;
 
 /** Vite's BASE_URL made absolute against the page: with `base: "./"` a relative base would
@@ -321,6 +322,7 @@ export class WorkerEngine implements MathEngine {
         p.reject(new Failure(message));
         if (dead && this.worker === w) this.restartAfterCrash(new Failure(message));
       } else p.resolve(ev.data);
+      this.reachNext();
     };
     // A crash (e.g. out of memory) rejects what is pending and takes the same restart + replay path as Cancel.
     w.onerror = (ev) => {
@@ -346,18 +348,29 @@ export class WorkerEngine implements MathEngine {
     });
   }
 
-  /** A request, posted now (init, and the stored definitions themselves). G185: with `late` (Home and the unit view) it is
-   *  under the watchdog, counted from the engine being ready (its start and the replay are not the call's; a call queued
-   *  behind another job counts from then too): at HOME_WATCHDOG_MS the call answers `late` and the worker restarts as on
-   *  Cancel. A timer whose call has answered, or was ended by a Cancel or a crash (pending emptied), finds it gone and does
-   *  nothing; so a new Enter, which the session sends only once the last one answered (session.busy), meets no old limit. */
+  /** A request, posted now (init, and the stored definitions themselves). G185, G185f2: with `late` (Home and the unit
+   *  view) it is under the watchdog, counted from when the worker reaches it: the worker runs one message at a time, in
+   *  order (host.ts), so that is once every request posted to it before this one has answered, init and the stored
+   *  definitions included (the start and the replay are not the call's, nor a library import it waits behind, R59). At
+   *  HOME_WATCHDOG_MS the call answers `late` and the worker restarts as on Cancel. A timer whose call has answered, or
+   *  was ended by a Cancel or a crash (pending emptied), finds it gone and does nothing; so a new Enter, which the session
+   *  sends only once the last one answered (session.busy), meets no old limit. */
   private post(body: RequestBody, late?: Response): Promise<Response> {
     const id = this.nextId++;
     return new Promise<Response>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      const arm = late && (() => setTimeout(() => this.pending.delete(id) && (resolve(late), this.cancel()), HOME_WATCHDOG_MS));
+      this.pending.set(id, { resolve, reject, arm });
       this.worker.postMessage({ ...body, id } as Request);
-      if (late)
-        this.readyPromise.then(() => setTimeout(() => this.pending.delete(id) && (resolve(late), this.cancel()), HOME_WATCHDOG_MS), () => {});
+      this.reachNext();
     });
+  }
+
+  /** Starts the watchdog of the call the worker works on now: the oldest one pending (a Map keeps the posting order). */
+  private reachNext(): void {
+    const head = this.pending.values().next().value;
+    if (!head?.arm) return;
+    const arm = head.arm;
+    head.arm = undefined;
+    arm();
   }
 }

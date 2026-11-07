@@ -9,6 +9,7 @@ import { EngineCancelled, EngineCrashError, EngineMemoryError, defaultCasSetting
 import { HOME_WATCHDOG_MS, WorkerEngine, type WorkerLike } from "./workerEngine.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { replayOrder, type DefEntry } from "./defs.ts";
+import type { LibraryReply } from "./library.ts";
 
 /** The commands a fresh worker replays, in replay order (the log; no safe start in these tests, so definitions() is it). */
 const replayCommands = async (e: WorkerEngine): Promise<string[]> => replayOrder(await e.definitions()).flatMap((d) => d.cmds);
@@ -654,14 +655,16 @@ describe("WorkerEngine Home watchdog (G185, F62; stand-in workers, fake timers)"
       if (msg.type === "init" || msg.type === "define") return;
       this.tail = this.tail
         .then(() => new Promise<void>((r) => setTimeout(r, this.took(msg))))
-        .then(() => !this.terminated && this.onmessage?.({ data: answerTo(msg) }));
+        .then(() => {
+          if (!this.terminated) this.onmessage?.({ data: answerTo(msg) });
+        });
     }
   }
   const two = { ok: true, display: "2", path: "exact", approximate: false, exactMs: 1, totalMs: 1, facts: { exact: true, reliableDigits: null }, full: "2" } as const;
-  const refused = { result: { ok: false, error: "a stand-in refusal", line: 1, dirty: false }, lines: [] } as const;
+  const refused: LibraryReply = { result: { ok: false, error: "a stand-in refusal", line: 1, dirty: false }, lines: [] };
   function answerTo(msg: Request): Response {
     if (msg.type === "home") return { id: msg.id, type: "home", result: two, defs: [] };
-    if (msg.type === "cas") return { id: msg.id, type: "cas", result: { ok: true, text: "1", latex: "1", timedOut: false, engineMs: 1 }, defs: [] };
+    if (msg.type === "cas") return { id: msg.id, type: "cas", result: { ok: true, text: "1", latex: "1", timedOut: false, engineMs: 1, facts: { exact: true, reliableDigits: null } }, defs: [] };
     if (msg.type === "library") return { id: msg.id, type: "library", ...refused };
     throw new Error(`no stand-in answer to ${msg.type}`);
   }
