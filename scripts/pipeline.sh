@@ -757,6 +757,8 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
                  fi
                  if ! red_first_stock_wanted "$spec_file" || [[ -n "$stock" ]]; then
                    red_first "$wt" "$spec_file" "${p1_engine}" "$out" "$stock" > "$out.why" || { rc=1; why="$(cat "$out.why")"; echo "red-first: $why" >> "$out"; redwhy="$why"; }
+                   # A67: no counted unit test, the red tests are e2e: said in the log, and the checks go on
+                   [[ $rc -ne 0 ]] || ! grep -q "^red-first: skipped (no new unit test" "$out" || log "pipeline #$n $id: $(head -n 1 "$out" | cut -c1-240)"
                  fi;;
       *) die "unknown check $name";;
     esac
