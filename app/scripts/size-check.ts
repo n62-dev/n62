@@ -104,8 +104,10 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
  *  (decisions.md R24b and R24c: G163, Opus pass 62); raised only with its reason in a report, as START_PIN_GZIP is.
  *  66.50 → 66.55 kB (R125): the branch measures 66,504 B (open 27,148 B, +238 B; the others as above): the separator
  *  in the unit view's groups (groupText's three separators, the rule for a comma under the decimal comma) and the sheet's
- *  view loaded with Find on units (R125 fix round 1: More… under load opened a Find nobody drew). 66,504 B + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 66_550;
+ *  view loaded with Find on units (R125 fix round 1: More… under load opened a Find nobody drew). 66,504 B + 0.05 kB.
+ *  66.55 → 66.60 kB (R151): the branch measures 66,553 B (+36 B over phase-1's 66,517 B, all in open): the sheet's model is a lazy
+ *  chunk now, so the unit view's load of the sheet's view names one more file in its preload list. */
+export const UNIT_VIEW_PIN_RAW = 66_600;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -150,8 +152,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  and the palette cells (loaded with the sheet's view), the result tidy-up, the palettes with their names. R70f1: how a
  *  key acts on the entry line's field, and the field's set-up (entry/field.ts, loaded with MathLive). R97: the update
  *  note's button and style (views/UpdateNote.svelte), which show only when an update waits. R103: the stored data's
- *  migration steps (state/migrations.ts, with the angle rewrite), loaded only for a record that has a step to run. */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts"];
+ *  migration steps (state/migrations.ts, with the angle rewrite), loaded only for a record that has a step to run. R151:
+ *  the sheet's model (views/sheet.svelte.ts), loaded with the sheet's view or by the first sheet that opens before it. */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, 1 kB under the budget of 61 kB, so the Settings base
  *  (R49, R86, R57) has room. A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -311,7 +314,10 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  export, its file and its row ride in the Mode sheet's chunk.
  *  60.99 → 61.00 kB (R127 fix round 2): after the review fix (a held ⌫ keeps the repeat layer; the hardware kinds are named
  *  hw:<kind>) the branch measures 60,992 B (173,080 B raw), 2 B over the pin. The pin is now the budget of 61 kB itself, so
- *  nothing is left to grow: the next package that touches the start chunk must split something out first. */
+ *  nothing is left to grow: the next package that touches the start chunk must split something out first.
+ *  R151 (owner, 2026-11-07: the 61 kB stays, this makes room under it): phase-1 f98453f5 measures 60,915 B gzip (172,082 B
+ *  raw); the branch 59,441 B (167,625 B raw, -1,474 B): the sheet's model (views/sheet.svelte.ts) is a lazy part. The pin
+ *  stays the budget, so about 1.5 kB is free for the next UI packages. */
 export const START_PIN_GZIP = 61_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

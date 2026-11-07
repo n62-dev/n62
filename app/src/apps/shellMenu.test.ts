@@ -3,6 +3,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { Calc, CalcSettings } from "../calc/port.ts";
 import { lastPicks } from "../views/picks.ts";
+import { loadSheetModel } from "../views/sheetView.svelte.ts";
 import type { FunctionApp } from "./function/app.svelte.ts";
 import { AppShell } from "./shell.svelte.ts";
 
@@ -27,7 +28,7 @@ const ids = (s: AppShell): string[] => (s.sheet?.level.items ?? []).map((i) => i
 describe("R83 the Menu says whose it is", () => {
   // the two apps' code is a cold transform on first import (0.8 s alone, over 5 s under a full parallel run: run 691):
   // loaded once here, under the hook's own limit, so each test's 5 s measures only the Menu
-  beforeAll(() => Promise.all([import("./function/index.ts"), import("./solve/index.ts")]), 60_000);
+  beforeAll(() => Promise.all([import("./function/index.ts"), import("./solve/index.ts"), loadSheetModel()]), 60_000); // the sheet's model is a lazy chunk (R151)
   beforeEach(() => lastPicks.clear());
 
   it("names Home and CAS", () => {
