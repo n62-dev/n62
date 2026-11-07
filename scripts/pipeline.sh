@@ -59,7 +59,8 @@
 # phase-1 worktree's app/node_modules and every npm ci in it (the device build's and its runner's tree, A56), so a fresh start copies under nodemods
 # alone; host-cpu around the checks and builds.
 # pass (A86): a whole Opus pass, from before its number to its end, so two passes run one after the other; runs never take it.
-# Lock order: pass, then integ, then nodemods, then host-cpu, everywhere; nothing holding a later one waits for an earlier one.
+# Lock order: integ, then nodemods, then host-cpu, everywhere, all after the pass lock (a pass takes it first, A86); nothing holding a
+# later one waits for an earlier one.
 # Children (A54): every check, agent, npm ci and device build runs in a session of its own (own_sh, pipeline-lib.sh); TERM, HUP, INT and
 # every EXIT trap kill those sessions and wait until they are empty (owned_kill) before integ, nodemods and host-cpu are dropped.
 # Starts read the package and the brief from phase-1's commit (git show), so a dirty phase-1 worktree never stops a start.

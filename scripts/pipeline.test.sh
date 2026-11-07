@@ -816,15 +816,16 @@ lre='^start pass-[0-9]+ pass-2[12]$'  # the lock's owner is the asked number (ta
 [[ ${#seq[@]} -eq 4 && "${seq[0]}" =~ $lre && "${seq[1]}" == "end $x" && "${seq[2]}" =~ $lre && "${seq[3]}" == "end $y" && "$x" != "$y" ]] || fail "A86 (a): the second pass's sofia started before the first ended, or without the pass lock: $(cat "$mq/pass-seq" 2>&1)"
 [[ "$(sed -n 2p "$mq/line-seen" 2>/dev/null)" == "$x" ]] || fail "A86 (a): the second pass's branch was not made from phase-1 after the first's merge: $(cat "$mq/line-seen" 2>&1)"
 [[ "$(git -C "$mq" show phase-1:docs/line.md 2>/dev/null)" == "$y" && ! -e "$plk" ]] || fail "A86 (a): phase-1 does not end with the second pass's line, or the lock is left"
-# (b) while a pass holds the pass lock (sofia running), a package run takes integ, merges and releases it
+# (b) while a pass holds the pass lock (sofia running), a package run takes integ, merges and releases it; pass 30: (a) may use 21-23,
+# whichever of its two passes wins the lock
 rm -f "$mq/hold.started" "$mq/hold.go"
-mqrun env MQ_PASS=hold "$script" pass 23 "Q1" none > "$tmp/pass-b.out" 2>&1 & pw=$!
+mqrun env MQ_PASS=hold "$script" pass 30 "Q1" none > "$tmp/pass-b.out" 2>&1 & pw=$!
 for _ in $(seq 1 150); do [[ -e "$mq/hold.started" ]] && break; sleep 0.2; done
 out="$(mqrun "$script" ron "queue task" --id Q6 --branch p1/q6 --checks typecheck 2>&1)"
-grep -q '^RESULT #[0-9]* Q6: MERGED' <<<"$out" && [[ "$(cat "$plk/owner" 2>/dev/null)" == pass-23 && ! -e "$mq/.coord/locks/integ" ]] || fail "A86 (b): a run during a pass holding the pass lock did not merge and release integ (pass lock: $(cat "$plk/owner" 2>&1)): $out"
+grep -q '^RESULT #[0-9]* Q6: MERGED' <<<"$out" && [[ "$(cat "$plk/owner" 2>/dev/null)" == pass-30 && ! -e "$mq/.coord/locks/integ" ]] || fail "A86 (b): a run during a pass holding the pass lock did not merge and release integ (pass lock: $(cat "$plk/owner" 2>&1)): $out"
 grep -q 'Q6: integ released after' "$mq/.coord/log.md" || fail "A86 (b): Q6 did not log its integ release"
 touch "$mq/hold.go"; wait "$pw"
-grep -q '^RESULT pass 23: done (exit 0; nothing to merge)' "$tmp/pass-b.out" || fail "A86 (b): the held pass did not end: $(cat "$tmp/pass-b.out")"; lock_cycle 23 "the held pass"
+grep -q '^RESULT pass 30: done (exit 0; nothing to merge)' "$tmp/pass-b.out" || fail "A86 (b): the held pass did not end: $(cat "$tmp/pass-b.out")"; lock_cycle 30 "the held pass"
 # (d) a busy lock: past its cap the pass is NOT RUN with no branch, worktree or pass number; a wait is logged once
 (cd "$mq" && unset N62_LOCK_PID N62_COORD && tools/devlock.sh acquire pass owner-z 0 >/dev/null)
 pc0="$(cat "$mq/.tasks/pass-counter")"; jc0="$(cat "$mq/.tasks/counter")"
@@ -837,7 +838,7 @@ sleep 2; (cd "$mq" && unset N62_COORD && tools/devlock.sh release pass owner-z >
 grep -q '^RESULT pass 41: done (exit 0; nothing to merge)' "$tmp/pass-41.res" || fail "A86 (d): the pass that waited did not run: $(cat "$tmp/pass-none.out")"
 [[ "$(grep -cE 'Opus pass 41: waited [0-9]+ s for the pass lock$' "$mq/.coord/log.md")" -eq 1 && "$(grep -cE 'Opus pass 41: (waiting for pass|pass taken after|pass still busy)' "$mq/.coord/log.md")" -eq 0 ]] || fail "A86 (d): the wait is not logged once: $(grep 'pass 41' "$mq/.coord/log.md")"
 lock_cycle 41 "the pass that waited"
-grep -qE 'Opus pass (1[5-9]|20|23): waited' "$mq/.coord/log.md" && fail "A86 (d): a pass that never waited logs a wait"
+grep -qE 'Opus pass (1[5-9]|20|30): waited' "$mq/.coord/log.md" && fail "A86 (d): a pass that never waited logs a wait"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: pass/,/subcommand: device/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the pass prompt still takes integ"
 out="$(mqrun "$script" pass 9 "Q1" none --dry-run 2>&1)"
 grep -q "worktree $mq/.claude/worktrees/pass-9 on branch p1/pass-9 from phase-1" <<<"$out" || fail "A85: the pass dry run does not name its worktree and branch: $out"
@@ -907,6 +908,7 @@ grep -q 'N5: waiting for nodemods (owner-z)' "$mq/.coord/log.md" && grep -q 'nod
 # the copy checks for nodemods; the order is in the header and the dry run's setup line
 grep -q 'copy_node_modules without the nodemods lock' "$here/pipeline.sh" || fail "A47bf1: copy_node_modules does not check for nodemods"
 grep -q '^# Lock order: integ, then nodemods, then host-cpu' "$here/pipeline.sh" || fail "A47bf1: the header does not state the lock order integ, nodemods, host-cpu"
+grep -q '^# Lock order: integ, then nodemods, then host-cpu, everywhere, all after the pass lock' "$here/pipeline.sh" || fail "A86: the header's lock order does not put the pass lock first"
 grep -q '^setup: .*under nodemods.*integ, then nodemods, then host-cpu' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A47bf1: the dry run's setup line does not state the nodemods lock and the order"
 # the lock order is stated in the header; the serial time (queue entry to release) of each run is logged
 grep -oE 'Q[1-4]: integ released after [0-9]+ s in the queue' "$mq/.coord/log.md" > "$tmp/serial" || true
