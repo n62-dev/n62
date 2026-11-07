@@ -113,6 +113,24 @@ export function ringShots(): LookShot[] {
   );
 }
 
+/** R155: the entry field while a job runs: the dash stopped a third of the way round (the page's own animation is
+ *  replaced by a fixed offset), and under reduced motion, where there is no dash and the whole outline is --text. Light
+ *  and dark come with every shot. The state is the engine's start, which the page shows the same way. */
+export function runShots(): LookShot[] {
+  return [false, true].map((reduced) => ({
+    id: `run-${reduced ? "reduced" : "mid"}`,
+    group: "The entry outline while a job runs (R155)",
+    title: reduced ? "Reduced motion: no dash, the outline in --text" : "Mid-run: the dash on the outline, stopped at a fixed offset",
+    element: ".entry",
+    setup: async (p: Page) => {
+      if (reduced) await p.emulateMedia({ reducedMotion: "reduce" });
+      await p.evaluate(() => void (window.n62.session.engineState = "starting"));
+      await p.waitForSelector('[data-testid="entry-dash"]');
+      await p.addStyleTag({ content: ".rundash rect { animation: none !important; stroke-dashoffset: -30; }" });
+    },
+  }));
+}
+
 /** R124: Settings › Numbers › Marks, the three styles on the same rows: two ⚠ with their reasons (G39 differ, G50
  *  unaudited, as why.spec.ts), a ≈ and an =. */
 export function markShots(): LookShot[] {
