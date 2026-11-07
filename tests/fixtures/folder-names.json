@@ -1,0 +1,23 @@
+{
+  "about": "A65: the sync folder's file-name rule, one list for both copies: android/.../FolderNames.java (tools/folder-names.test.sh, run by app/scripts/folder-names.test.ts) and app/src/clipboard/folder.ts (folder.test.ts). An entry is a string, null (Java only) or {\"repeat\": s, \"times\": n}.",
+  "accept": [
+    "n62-test.txt",
+    "n62-backup-2026-11-07.json",
+    "Ünïcødé ∑.txt",
+    ".hidden",
+    { "repeat": "a", "times": 255 },
+    { "repeat": "é", "times": 127 }
+  ],
+  "refuse": [
+    null,
+    "",
+    ".",
+    "..",
+    "a/b",
+    "../x",
+    "a\\b",
+    "a\u0000b",
+    { "repeat": "a", "times": 256 },
+    { "repeat": "é", "times": 128 }
+  ]
+}

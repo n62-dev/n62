@@ -90,8 +90,6 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 486 | [A67](packages/A67.md) red-first counts only a test the branch adds or tightens | annabell, Opus | `p1/annabell-redfirst` | – |
-| 487 | [A65](packages/A65.md) the sync folder on Android (the night's device) | annabell, Opus | `p1/annabell-syncfolder` | – |
 | 488 | [A66](packages/A66.md) an optional key click, off by default (the night's device) | annabell, Sonnet | `p1/annabell-keyclick` | – |
 | 490 | [A73f1](packages/A73f1.md) why a CAS-view start is 200 ms slower than Home (the night's device) | annabell, Sonnet | `p1/annabell-casstart` | – |
 | 525 | [A75](packages/A75.md) the pipeline deletes package files; gc ages reports by commit; the release-guard test runs | annabell, Opus | `p1/annabell-housekeeping` | – |
