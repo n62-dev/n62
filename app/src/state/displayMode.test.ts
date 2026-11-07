@@ -221,3 +221,31 @@ describe("the decimal comma (R57)", () => {
     expect(commaResult('"a, b 1.5"', false)).toBe('"a, b 1.5"'); // a string is drawn as it is
   });
 });
+
+describe("renderNumeric wrap (R158)", () => {
+  const wide = { ...ctx, digits: 30 };
+  const big: NumericResult = { value: real(-262537412640768743999999999999n, 1000000000000n) };
+  it("a plain number of 16+ digits is drawn as pieces: the sign with the first, the groups whole, only on the screen's row", () => {
+    const w = renderNumeric(big, "std", wide, true)?.wrap;
+    expect(w?.[0]).toBe("-262");
+    expect(w?.slice(0, 6)).toEqual(["-262", "537", "412", "640", "768", "743.999"]);
+    expect(w?.join("")).not.toContain("\\,");
+    expect(renderNumeric(big, "std", wide)?.wrap).toBeUndefined(); // not grouped: chips, Copy
+  });
+  it("the apostrophe and the comma end each piece but the last; the exponent rides with the last piece", () => {
+    const apos = renderNumeric(big, "std", { ...wide, groupSep: "apos" }, true)?.wrap;
+    expect(apos?.slice(0, 2)).toEqual(["-262\\text{'}", "537\\text{'}"]);
+    expect(apos?.at(-1)).toBe("743.999999999999");
+    const sci = renderNumeric(big, "sci", wide, true)?.wrap;
+    expect(sci?.at(-1)).toMatch(/\\times10\^\{17\}$/);
+    expect(sci?.slice(0, -1).join("")).not.toContain("times");
+  });
+  it("a short number, a fraction and a complex number keep the one line", () => {
+    expect(renderNumeric(third, "std", ctx, true)?.wrap).toBeUndefined();
+    expect(renderNumeric({ value: real(1n, 3n), rational: { n: "1", d: "3" } }, "frac", wide, true)?.wrap).toBeUndefined();
+    expect(renderNumeric({ value: { re: q(262537412640768743999999999999n, 1000000000000n), im: q(1n) } }, "std", wide, true)?.wrap).toBeUndefined();
+  });
+  it("the decimal comma is drawn in the pieces", () => {
+    expect(renderNumeric(big, "std", { ...wide, decimalComma: true }, true)?.wrap?.[5]).toBe("743{,}999");
+  });
+});

@@ -16,12 +16,13 @@ import {
   markOf,
   type ComplexValue,
   type DecimalValue,
+  type FormattedComplex,
   type FormatOptions,
   type MarkInfo,
   type PrecisionFacts,
 } from "../engine/format.ts";
 import type { NumberFormat } from "../calc/port.ts";
-import { complexToLatex, fractionToLatex, GROUP_LATEX, groupSepFor, homeResultToLatex, polarToLatex, type GroupSep, type Mute } from "../render/home.ts";
+import { complexToLatex, fractionToLatex, GROUP_LATEX, groupDigits, groupSepFor, homeResultToLatex, polarToLatex, type GroupSep, type Mute } from "../render/home.ts";
 
 export type FmtMode = "std" | "sci" | "eng" | "pfx" | "fix" | "frac" | "mixed" | "polar";
 
@@ -172,12 +173,39 @@ export function renderNumeric(
   mode: FmtMode | undefined,
   ctx: DisplayContext,
   grouped = false,
-): { text: string; latex: string } | undefined {
+): Drawn | undefined {
   const out = renderPoint(r, mode, ctx, grouped);
-  return out && ctx.decimalComma ? { text: commaResult(out.text, false), latex: commaResult(out.latex, true) } : out;
+  if (!out || !ctx.decimalComma) return out;
+  const wrap = out.wrap?.map((p) => commaResult(p, true));
+  return { text: commaResult(out.text, false), latex: commaResult(out.latex, true), ...(wrap ? { wrap } : {}) };
 }
 
-function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, grouped: boolean): { text: string; latex: string } | undefined {
+/** A result as drawn: `wrap` (R158) is set for a plain number too long for one phone row: its pieces as LaTeX, each an
+ *  unbreakable group (the sign with the first, the exponent with the last; with the apostrophe or the comma, the
+ *  separator ends each piece but the last, the thin space is the history's gap between pieces). */
+export interface Drawn {
+  text: string;
+  latex: string;
+  wrap?: string[];
+}
+
+/** R158: digits from which a plain number is drawn as wrapping pieces (below it a phone row holds the number whole). */
+const WRAP_DIGITS = 16;
+
+/** R158: the pieces of a plain number, decided from the value's kind (a real, no SI prefix, groups on, no muted digits):
+ *  undefined for every other result, which keeps the one scrolling line. */
+function wrapPieces(c: FormattedComplex, sep: string | undefined, muted: boolean): string[] | undefined {
+  if (c.im || c.re.prefix || sep === undefined || muted || c.re.mantissa.replace(/\D/g, "").length < WRAP_DIGITS) return undefined;
+  const parts = groupDigits(c.re.mantissa, sep, sep === GROUP_LATEX.thin).split(sep);
+  if (parts.length < 2) return undefined;
+  const last = parts.length - 1;
+  return parts.map((p, i) => {
+    const head = i === 0 && c.re.neg ? `-${p}` : p;
+    return `${head}${i === last ? (c.re.exponent === null ? "" : `\\times10^{${c.re.exponent}}`) : sep === GROUP_LATEX.thin ? "" : sep}`;
+  });
+}
+
+function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, grouped: boolean): Drawn | undefined {
   const m = mode ?? ctx.format;
   const digits = r.facts?.digits ?? ctx.digits;
   const opts = (f: keyof typeof BASE): FormatOptions => ({ format: BASE[f], digits, fixed: ctx.fixDecimals });
@@ -199,7 +227,10 @@ function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayCo
   }
   const c = formatComplex(r.value, confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base)));
   // R40: only the screen's row mutes the digits past a constant's σ (`grouped`): the text, chips and Copy keep them all
-  return { text: c.text, latex: complexToLatex(c, group, grouped ? ctx.mute?.(r) : undefined) };
+  const mute = grouped ? ctx.mute?.(r) : undefined;
+  const g = group === undefined ? "" : groupDigits(c.re.mantissa, group, group === GROUP_LATEX.thin);
+  const wrap = wrapPieces(c, group, mute !== undefined && !c.im && mute(g, c.re) !== g);
+  return { text: c.text, latex: complexToLatex(c, group, mute), ...(wrap ? { wrap } : {}) };
 }
 
 /**
