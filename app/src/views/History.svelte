@@ -227,17 +227,14 @@
           {@const d = display(item)}
           {@const m = mark(item)}
           {@const noDigit = hasNoDigit(m)}
-          {#snippet markSpan()}<span class="mark" data-mark={m!.mark} data-testid="mark" title={t(`mark.${m!.mark === "=" ? "exact" : m!.mark === "≈" ? "approx" : "warn"}`)}>{noDigit ? t("mark.noDigit") : markText(m!)}</span>{/snippet}
+          {#if m}<span class="mark" data-mark={m.mark} data-testid="mark" title={t(`mark.${m.mark === "=" ? "exact" : m.mark === "≈" ? "approx" : "warn"}`)}>{noDigit ? t("mark.noDigit") : markText(m)}</span>{/if}
           {#if d.wrap && !noDigit && d.latex.length <= MAX_DRAWN_LATEX}
-            <!-- R158: a plain number too long for one row: its groups, each unbreakable, wrap at the gap; the mark stays with the first -->
-            <button type="button" class="result wrapped" data-testid="wrapped" data-text={d.text} title={t("history.insert")}
+            <!-- R158: a plain number: its groups, each unbreakable, wrap at a gap when the row is too narrow for the whole; the mark stays beside the first line -->
+            <button type="button" class="result wrapped" data-text={d.text} title={t("history.insert")}
               onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
-              {#each d.wrap as piece, i}
-                <span class="piece">{#if i === 0 && m}{@render markSpan()}{/if}<Math latex={piece} size={d.text.length} /></span>
-              {/each}
+              <Math latex={d.latex} pieces={d.wrap} gap={d.gap === true} size={d.text.length} />
             </button>
           {:else}
-            {#if m}{@render markSpan()}{/if}
             <button type="button" class="result" data-text={d.latex.length > MAX_DRAWN_LATEX ? "" : d.text} title={t("history.insert")}
               onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
               {#if !noDigit}<Math latex={d.latex} size={d.text.length} />{/if}
@@ -357,24 +354,11 @@
     cursor: pointer;
     color: var(--text);
   }
-  /* R158: a plain number too long for the row wraps at a group gap, full size, right-aligned; nothing scrolls, so no fade.
-     The thin space of R55 is the margin before every piece but the first (the apostrophe and the comma end their piece). */
+  /* R158: the wrapped number is a box that may shrink to the row; the pieces wrap inside (render/Math.svelte) */
   .result.wrapped {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    align-items: baseline;
+    display: block;
     min-width: 0;
     max-width: 100%;
-  }
-  .piece {
-    white-space: nowrap;
-  }
-  .piece + .piece {
-    margin-inline-start: var(--group-gap);
-  }
-  .piece .mark {
-    margin-inline-end: var(--sp-25);
   }
   .mark {
     font-size: var(--fs-key);
