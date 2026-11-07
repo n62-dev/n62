@@ -87,6 +87,32 @@ export function entryShots(): LookShot[] {
   );
 }
 
+/** R154: the entry field's outline at rest, with Shift armed, with Alpha armed, and after an error row (1ᴇ2.5), in every
+ *  family's Dark and Light. */
+export function ringShots(): LookShot[] {
+  const cases: [string, string, (p: Page) => Promise<void>][] = [
+    ["rest", "at rest (--ring)", (p) => tap(p, ["d1", "add", "d2", "esc"])],
+    ["shift", "Shift armed (--shift)", (p) => tap(p, ["shift"])],
+    ["alpha", "Alpha armed (--alpha)", (p) => tap(p, ["alpha"])],
+    ["error", "after an error row (--error), until the next key", (p) => tap(p, ["d1", "emark", "d2", "dot", "d5", "enter"])],
+  ];
+  return FAMILIES.flatMap((family) =>
+    (["dark", "light"] as const).flatMap((brightness) =>
+      cases.map(([id, what, run]) => ({
+        id: `ring-${family}-${brightness}-${id}`,
+        group: `The entry outline (R154): ${name(family)}`,
+        title: `${name(family)} ${name(brightness)}: ${what}`,
+        element: ".entry",
+        setup: async (p: Page) => {
+          await setLook(p, { family, brightness });
+          await run(p);
+          await p.waitForTimeout(400);
+        },
+      })),
+    ),
+  );
+}
+
 /** R124: Settings › Numbers › Marks, the three styles on the same rows: two ⚠ with their reasons (G39 differ, G50
  *  unaudited, as why.spec.ts), a ≈ and an =. */
 export function markShots(): LookShot[] {

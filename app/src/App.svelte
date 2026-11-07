@@ -14,6 +14,7 @@
   import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
+  import { ringState } from "./entry/ringState.ts";
   import { resultToEntry } from "./render/insertable.ts";
   import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
@@ -85,12 +86,15 @@
     shell.settingsMenu = () => (loaders.modeSheet ? (settingsMenu ??= loaders.modeSheet.settingsMenu(session, settingsEnv)) : undefined); // (R49)
     shell.homeView = () => (session.view === "cas" ? "cas" : "home"); // the last row of every Menu
     entry.onSymbol = counted(hwOther("symbol"), (ch) => {
+      edited = true;
       picked = null; // a key that types drops the pick (R147: its buttons may lie over the line)
       entry.run({ kind: "insert", latex: ch });
     });
+    entry.onEdit = () => (edited = true); // R154: MathLive's own typing (é, µ, π), a row menu's recall or insert
     entry.onDead = counted(hwOther("dead"), dead);
     entry.onPress = counted(hwOther("other"), () => {}); // R107f1: a leaving ) or | is a press that needs nothing more
     entry.onPaste = (text) => {
+      edited = true;
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take the Paste key's path
     };
@@ -150,8 +154,25 @@
       shell.enter(entry.value);
       return;
     }
-    if (session.submit(entry.value, undefined, entry.chips)) entry.clear();
+    if (session.submit(entry.value, undefined, entry.chips)) {
+      entry.clear();
+      edited = false; // the line is empty again: an error outline (ringState) stays until the next key
+    }
   }
+
+  /** R154: a key was pressed or the line edited since the last Enter (an error outline lasts until then). Enter itself
+   *  counts, and enter() above takes it back when the line was submitted. */
+  let edited = $state(true); // (true at the start: only an Enter that sent a line clears it)
+  /** What the entry field's outline says (entry/ringState.ts): the layer armed, or the error of the last Enter. */
+  const ring = $derived(
+    ringState({
+      shift: session.shift,
+      alpha: session.alpha,
+      view: shell.app === null ? session.view : "app",
+      newest: session.items.at(-1)?.status,
+      editedSinceEnter: edited,
+    }),
+  );
 
   /** L5 and docs/04 2.8: a tapped or picked result goes on the line as a chip that carries its full value. */
   function insertResult(item: HistoryItem): void {
@@ -320,8 +341,14 @@
     loadClip: () => void loadClip(),
     dead,
   };
-  const press = (key: Key, layer?: Layer): void => route.press(ctx, key, layer);
-  const typeLetter = (ch: string): void => route.typeLetter(ctx, ch);
+  const press = (key: Key, layer?: Layer, screen?: boolean): void => {
+    edited = true;
+    route.press(ctx, key, layer, screen);
+  };
+  const typeLetter = (ch: string): void => {
+    edited = true;
+    route.typeLetter(ctx, ch);
+  };
   const cancel = (): Promise<void> => route.escape(ctx);
 
   /** A tap on the status line's strip is not a place for typing: it must not take the caret out of the entry line. */
@@ -348,8 +375,8 @@
           reason={(item) => session.reason(item)}
           marks={session.settings.marks}
           onpick={pick}
-          onrecall={(item) => { picked = null; shell.prompt?.cancel(); entry.set(session.input(item), item.chips); }}
-          oninsert={(item) => { picked = null; shell.prompt?.cancel(); insertResult(item); }}
+          onrecall={(item) => { edited = true; picked = null; shell.prompt?.cancel(); entry.set(session.input(item), item.chips); }}
+          oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); insertResult(item); }}
           oncancel={() => void cancel()}
           onlongpress={(item) => withClip((c) => c.openRowMenu(item))}
           undo={session.undoCopy?.kind ?? null}
@@ -371,7 +398,7 @@
       <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} onaction={() => (picked = null)} />
     {/if}
 
-    <div class="entry" class:hidden={!shell.showsEntry} aria-label={t("entry.label")} bind:clientHeight={entryHeight}>
+    <div class="entry" class:hidden={!shell.showsEntry} data-ring={ring} aria-label={t("entry.label")} bind:clientHeight={entryHeight}>
       {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
       <div class="field" bind:this={host}></div>
     </div>
@@ -400,7 +427,7 @@
       shiftLock={session.shiftLock}
       cas={casKeys} app={shell.app !== null}
       sheet={shell.sheet ? { filter: shell.sheet.level.filterable } : undefined}
-      onpress={(key, layer) => route.press(ctx, key, layer, true)}
+      onpress={(key, layer) => press(key, layer, true)}
       oncount={(key) => session.taps.press(key)}
       ontouch={touched}
     />
@@ -534,7 +561,14 @@
     border-radius: var(--radius);
     background: var(--panel);
     color: var(--text);
-    border: var(--stroke-thin) solid var(--line);
+    /* R154: the outline says what the keypad will do: --ring at rest, --shift, --alpha or --error otherwise (data-ring,
+       entry/ringState.ts). Flat colour, no transition; drawn inside the box with a negative offset, so neither the box
+       nor its text moves between the states. The border keeps the box's size. */
+    --ring-c: var(--ring);
+    --ring-w: var(--ring-rest);
+    border: var(--stroke-thin) solid transparent;
+    outline: var(--ring-w) solid var(--ring-c);
+    outline-offset: calc(-1 * var(--ring-w));
     /* R116: MathLive's highlights as theme tokens, so they follow our look and never the system's scheme (the unit
        view's field is in .entry too): the caret in the Alpha hue; the box of the bracket that holds the cursor and
        the selection (never both at once) on --pick, with --text on them */
@@ -543,6 +577,20 @@
     --contains-highlight-color: var(--text);
     --selection-background-color: var(--pick);
     --selection-color: var(--text);
+  }
+  .entry[data-ring="shift"] :global(math-field),
+  .entry[data-ring="alpha"] :global(math-field),
+  .entry[data-ring="error"] :global(math-field) {
+    --ring-w: var(--ring-on);
+  }
+  .entry[data-ring="shift"] :global(math-field) {
+    --ring-c: var(--shift);
+  }
+  .entry[data-ring="alpha"] :global(math-field) {
+    --ring-c: var(--alpha);
+  }
+  .entry[data-ring="error"] :global(math-field) {
+    --ring-c: var(--error);
   }
   .entry :global(math-field::part(virtual-keyboard-toggle)),
   .entry :global(math-field::part(menu-toggle)) {

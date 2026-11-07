@@ -69,6 +69,7 @@ describe("R153: N62 in teal", () => {
   for (const b of ["dark", "light"] as const)
     it(`Black & White ${b} is phase-1's N62 ${b}, role for role`, () => {
       const { t } = theme({ family: "bw", brightness: b, high: false, plain: false });
-      expect(t).toEqual(OLD_N62[b]);
+      const { ring: _ring, ...old } = t; // R154's role --ring is new; every other role is phase-1's
+      expect(old).toEqual(OLD_N62[b]);
     });
 });
