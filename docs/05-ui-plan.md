@@ -114,7 +114,7 @@ The layout stays. Only the drawing changes:
 - **Dead keys** (today `special: none`) dim only in the layers where they do nothing. A press on one gives a short double haptic and no other effect.
 - **Key vibration is one pulse per touch, at finger-down**: a trackpad step, an armed flick and a held ⌫'s repeat make none; a dead key's double pulse is the only second pulse (owner, 2026-11-02, R112).
 - **The unit view's ⌫ and More… (R118):** ⌫ on an empty slot steps back to the slot before, as on the entry line (its next ⌫ removes that slot's last token); on the first slot it is a dead key. Shift + ⌫ is dead in a slot (no cursor, nothing after the last token). More… opens Find on the dimension's units; the end slot and the result stay until a unit is picked, so Esc there leaves the view as it was.
-- **Press feedback** within one frame: the key darkens while the finger is down (keys fire on lift because of flicks, P11, so the feedback must start on touch).
+- **Press feedback** within one frame: the key is lit from finger-down by the app (its own `data-down` flag, set in the pad's pointerdown), not by the browser's `:active` (on a touch screen Chrome sets that from Android's tap detector: late, and stuck on one key in fast typing, F191); it stays lit while the finger is down and at least 80 ms, so a quick tap is seen (R161). Keys fire on lift because of flicks (P11), so the feedback must start on touch.
 
 *Built in R6 (2026-10-13): the legend line, the fit rule (faces and legends shrink, `app/src/keyboard/fit.ts`) and the contrast test (`app/src/style.test.ts`); dead keys dim per layer. The double haptic on a dead key came with R13 (2026-10-13): Menu in Symb, Tmpl in Plot, Fmt in an app, `special: none` keys and typing in Plot.*
 
