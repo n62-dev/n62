@@ -10,19 +10,25 @@ import { themeOf } from "./lookApply.ts";
 import { FAMILIES, stepped } from "./lookView.ts";
 
 describe("look", () => {
-  it("R150: the families are N62, Teal and Solarized, in this order in Appearance", () => {
-    expect(FAMILY_IDS).toEqual(["n62", "teal", "solarized"]);
-    expect(FAMILIES.map((f) => f.id)).toEqual(["n62", "teal", "solarized"]);
-    expect(FAMILIES.map((f) => f.name)).toEqual(["N62", "Teal", "Solarized"]);
+  it("R153: the families are N62, Black & White and Solarized, in this order in Appearance", () => {
+    expect(FAMILY_IDS).toEqual(["n62", "bw", "solarized"]);
+    expect(FAMILIES.map((f) => f.id)).toEqual(["n62", "bw", "solarized"]);
+    expect(FAMILIES.map((f) => f.name)).toEqual(["N62", "Black & White", "Solarized"]);
+  });
+  it("R153: a stored look naming Teal reads as N62 and keeps its other three values; a stored bw stays bw", () => {
+    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true });
+    expect(renamedLook({ family: "teal", brightness: "dark", plain: true })).toEqual({ family: "n62", brightness: "dark", plain: true });
+    expect(validLook({ family: "bw" }, defaultLook()).family).toBe("bw");
+    expect(renamedLook({ family: "bw" })).toEqual({ family: "bw" });
   });
   it("R150: a stored look naming Graphite, Gruvbox or Nord reads as N62 and keeps its brightness, High contrast and Plain keys", () => {
     for (const family of ["graphite", "gruvbox", "nord"])
-      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "teal" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true });
-    expect(validLook({ family: "x", brightness: "light" }, { ...defaultLook(), family: "teal" }).family).toBe("teal"); // an unknown name still falls back
+      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true });
+    expect(validLook({ family: "x", brightness: "light" }, { ...defaultLook(), family: "bw" }).family).toBe("bw"); // an unknown name still falls back
   });
   it("R150: a backup's or a preset's look naming a retired family is renamed to n62 with the rest kept; the other families stay", () => {
-    for (const family of ["pascaline", "graphite", "gruvbox", "nord"]) expect(renamedLook({ family, brightness: "dark", plain: true })).toEqual({ family: "n62", brightness: "dark", plain: true });
-    for (const family of ["n62", "teal", "solarized"]) expect(renamedLook({ family, plain: true })).toEqual({ family, plain: true });
+    for (const family of ["pascaline", "graphite", "gruvbox", "nord", "teal"]) expect(renamedLook({ family, brightness: "dark", plain: true })).toEqual({ family: "n62", brightness: "dark", plain: true });
+    for (const family of ["n62", "bw", "solarized"]) expect(renamedLook({ family, plain: true })).toEqual({ family, plain: true });
   });
   it("the dots are the dark block's screen, number key, Enter and the keys' Shift and Alpha of the generated CSS", () => {
     const roles = ["bg", "key-num", "key-enter", "key-shift", "key-alpha"];
@@ -54,7 +60,7 @@ describe("look", () => {
 function runInline(opts: { stored?: unknown; light?: boolean; more?: boolean; native?: boolean; throws?: boolean; files?: Record<string, string> }) {
   const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
   let script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "";
-  script = script.replace("/*theme-css*/{}", JSON.stringify(opts.files ?? { n62: "a/p.css", teal: "a/n.css", solarized: "a/s.css", modes: "a/m.css" }));
+  script = script.replace("/*theme-css*/{}", JSON.stringify(opts.files ?? { n62: "a/p.css", bw: "a/n.css", solarized: "a/s.css", modes: "a/m.css" }));
   const attrs: Record<string, string> = {};
   const meta: Record<string, string> = {};
   const written: string[] = [];
@@ -72,8 +78,8 @@ function runInline(opts: { stored?: unknown; light?: boolean; more?: boolean; na
 
 describe("the inline script of index.html", () => {
   it("shows the stored look and links its CSS", () => {
-    const r = runInline({ stored: { family: "teal", brightness: "light", contrast: true, plain: true, bg: "#57a3a1" } });
-    expect(r.attrs).toEqual({ "data-family": "teal", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain" });
+    const r = runInline({ stored: { family: "bw", brightness: "light", contrast: true, plain: true, bg: "#57a3a1" } });
+    expect(r.attrs).toEqual({ "data-family": "bw", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain" });
     expect(r.meta["content"]).toBe("#57a3a1");
     expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1])).toEqual(["http://x/a/n.css", "http://x/a/m.css"]);
   });
@@ -83,6 +89,15 @@ describe("the inline script of index.html", () => {
       expect(r.attrs, family).toEqual({ "data-family": "n62", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain" });
       expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1]), family).toEqual(["http://x/a/p.css", "http://x/a/m.css"]);
     }
+  });
+  it("R153: a stored family teal shows as n62 with the other three values, links n62's file and keeps the old screen colour out of theme-color", () => {
+    const r = runInline({ stored: { family: "teal", brightness: "dark", contrast: false, plain: true, bg: "#529997" } });
+    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark", "data-keys": "plain" });
+    expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1])).toEqual(["http://x/a/p.css", "http://x/a/m.css"]);
+    expect(r.meta["content"]).toBeUndefined();
+    const plainTeal = runInline({ stored: { family: "teal", brightness: "light", contrast: false, plain: false } });
+    expect(plainTeal.attrs).toEqual({ "data-family": "n62", "data-brightness": "light" });
+    expect(plainTeal.written).toEqual([]); // N62's own look is in style.css
   });
   it("N62 with no switch links nothing; a stored System follows the phone", () => {
     const r = runInline({ stored: { family: "n62", brightness: "system", contrast: false, plain: false }, light: true });
@@ -113,11 +128,11 @@ describe("the inline script of index.html", () => {
 describe("themeCssMap", () => {
   it("finds the four files by source name or by hashed name", () => {
     const m = themeCssMap([
-      { fileName: "assets/x-1.css", originalFileNames: ["src/theme/teal.css"] },
+      { fileName: "assets/x-1.css", originalFileNames: ["src/theme/bw.css"] },
       { fileName: "assets/solarized-AbC_1.css" },
       { fileName: "assets/nord-AbC_1.css" },
       { fileName: "assets/index-1.css" },
     ]);
-    expect(m).toEqual({ teal: "assets/x-1.css", solarized: "assets/solarized-AbC_1.css" });
+    expect(m).toEqual({ bw: "assets/x-1.css", solarized: "assets/solarized-AbC_1.css" });
   });
 });

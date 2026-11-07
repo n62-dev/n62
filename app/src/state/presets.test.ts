@@ -346,14 +346,14 @@ describe("presets (R88)", () => {
     session.settings.look = { ...session.settings.look, family: "solarized" };
     session.setAngle("deg");
     const a = presets.capture("A", PRESET_GROUPS);
-    session.settings.look = { ...session.settings.look, family: "teal" };
+    session.settings.look = { ...session.settings.look, family: "bw" };
     session.setAngle("rad");
     const b = presets.capture("B", PRESET_GROUPS);
     const first = presets.apply(a);
     const second = presets.apply(b);
     await Promise.all([first, second]);
-    expect(shown).toEqual(["solarized", "teal"]);
-    expect(session.settings.look.family).toBe("teal");
+    expect(shown).toEqual(["solarized", "bw"]);
+    expect(session.settings.look.family).toBe("bw");
     expect(session.settings.angle).toBe("rad");
     expect(presets.active).toBe(b);
   });
