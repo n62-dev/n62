@@ -11,16 +11,17 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
 
-**A64 lo-11:** a worker wrote outside its worktree (run #488). Log new files in `source99/` after a worker step (warn only)?
+**A64 lo-11:** a worker wrote outside its worktree (run #488). Recommended (Opus pass 93): yes, warn only: after a worker step log new files in `source99/` (the main checkout's parent, where run #488's file was) and in `.claude/worktrees/`.
 
 ## Decided proposals
 
 ### Pipeline and process
+- **A64: a reply that says not done ends the run before the checks (Opus pass 93).** As its block asks, but only "not done" as the done field ("Last commit x, not done."), never a heading ("Not done in full: …", "Not done: step 3"; A64f1). Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** "Pascaline" is taken. Id `dev.n62.calc`, never changed after the v0.1.0 tag; the web at `https://n62.dev/`, which Pages deploys from a release tag (A45); repo `n62-dev/n62`; every name changes 2026-11-06 (A77-A80, R138, R139, S35); old backups read; no redirect from pascaline-calc.org; spelling: docs/rules-core.md. Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Decided notes, old reports, merged packages' mockups and one-package probes are deleted, not archived. Rule: rules section 10. Full text: archive, "Shortened 2026-11-06 (Opus pass 85)". Would change if: a deleted file is needed back twice a month.
 - **Owner answers of 2026-11-05 (morning).** The weekly fuzz runs in 10-minute slices from Wed 11-11 (G167: `--part i/n` and a separate shrink, Opus pass 69); the red-first check can test the stock engine for a G125 package (A71); sofia's gate script calls `tools/devlock.sh` by its absolute path. Would change if: the fuzz count is cut to fit one slice.
 - **Owner answers of 2026-11-02, evening ([night review](research/night-review-2026-11-02.md) section 6, the full text).** The queue as proposed; red-first counts only added or tightened tests (A67). Would change if: a fix needs a test loosened.
-- **Owner answers of 2026-10-22 to 2026-10-31 and Opus passes 55–78, built:** R77, R78, A25, A33, A34, A36, G109 (a solve result in braces), G111, G112, G113, R4a's gate; Home's sequences as G119 shows them (F108), Find's ten categories, R90 dropped; R91's split start chunk, ron at night with milestone reviews, the weekly fuzz, `--effort high`; A52's gated deploys, A53, R103, `tests/core/ONE-TIME.md`; R69, R79, R80, G56, G75, G77, G82f1, G85–G90, G97, G99–G103, A32, S17, S23; the nine features approved and six dropped on 2026-10-18 ("Feature analysis"). Full text: [archive](archive/decisions-2026-10.md).
+- **Owner answers of 2026-10-22 to 2026-10-31 and Opus passes 55–78:** built; the list of packages: [archive](archive/decisions-2026-10.md), "Shortened 2026-11-07 (Opus pass 93)".
 - **G125 (Opus pass 5): a bug an earlier merge already fixed** keeps its tests as regression tests that fail on the stock build, and merges review-only. Rule: brief section 8a (A71). Would change if: a test passes on stock too.
 - **Owner answers of 2026-10-25, afternoon (verification check).** A wall-clock test that fails only under load is a timing case, not a bug (`isTiming`); the gate gets the pipeline's retry list (A39). Would change if: a timing case fails without load. Full text: archive.
 - **P23 (decided 2026-10-21, ended 2026-10-27, the owner): the core freeze and its net.** The net stays: the core list on every merge and on the night's device; a red case is a bug to fix, not a gate; the list changes only with the owner. Rule: brief section 0, `tests/core/README.md`. Full text: archive.
