@@ -11,7 +11,7 @@
 #                                         # 1 = host-cpu busy for N62_SLICE_WAIT, 1800 s). A worker holds host-cpu at most 10 minutes
 #                                         # at a time: a longer measurement is a loop of slices, so a waiting check gets the lock between them.
 #
-# <resource> is an adb serial, "host-cpu", "integ" (the phase-1 worktree: merges and interactive edits), or "nodemods" (its app/node_modules: a copy out, an npm ci in; A47bf1). Locks are directories (mkdir is atomic).
+# <resource> is an adb serial, "host-cpu", "integ" (the phase-1 worktree: merges and interactive edits), or "nodemods" (its app/node_modules: a copy out, an npm ci in; A47bf1), or "pass" (a whole Opus pass, one at a time; A86). Locks are directories (mkdir is atomic).
 # Locks live in the main checkout's .coord (shared by every git worktree); N62_COORD overrides.
 set -euo pipefail
 

@@ -162,14 +162,19 @@ peek_number() {
 }
 # job_port <job number>: every kind's dev-server port (runs, passes, censuses, device steps, reports): 5200 + n % 100.
 job_port() { echo $((5200 + $1 % 100)); }
-# lock_wait <resource> <owner> <log prefix> <wait s>: a devlock lock, waiting up to <wait s>; logs (with the caller's log function,
-# when it has one) "waiting for <resource> (<holder>)" once, and the wait's length when it ends.
+# lock_wait <resource> <owner> <log prefix> <wait s> [quiet]: a devlock lock, waiting up to <wait s>; logs (with the caller's log
+# function, when it has one) "waiting for <resource> (<holder>)" once, and the wait's length when it ends. With quiet it logs nothing
+# (the caller logs one line, A86). Either way it sets lock_was_busy (1 when the first try found the lock held) and lock_waited (s).
+lock_was_busy=0; lock_waited=0
 lock_wait() {
   local res="$1" owner="$2" pre="$3" wait="$4" t0=$SECONDS holder locks
+  lock_was_busy=0; lock_waited=0
   tools/devlock.sh acquire "$res" "$owner" 0 >/dev/null 2>&1 && return 0
+  lock_was_busy=1
+  local say=_lib_log; [[ "${5:-}" != quiet ]] || say=:
   locks="${coord:-${N62_COORD:-$(cd "$(git rev-parse --git-common-dir)/.." && pwd)/.coord}}/locks"
   holder="$(cat "$locks/$res/owner" 2>/dev/null || echo '?')"
-  _lib_log "$pre waiting for $res ($holder)"
+  $say "$pre waiting for $res ($holder)"
   # The wait runs in a session of its own and is waited for as a background job (A54f1): bash runs a trapped TERM, HUP or INT only
   # after a foreground command returns, so a foreground wait of up to 7200 s held the signal back until night.sh's KILL; `wait <pid>`
   # returns at once, the trap runs owned_kill (which ends the waiter before any lock is dropped) and the job exits.
@@ -184,17 +189,18 @@ lock_wait() {
       noted=1; holder="$(cat "$locks/$res/owner" 2>/dev/null || echo '?')"
       since="$(date -d "$(cat "$locks/$res/since" 2>/dev/null)" +%s 2>/dev/null || true)"
       hs="?"; [[ -z "$since" ]] || hs=$(( $(date +%s) - since ))
-      _lib_log "$pre $res held by $holder for $hs s; waited $((SECONDS - t0)) s so far"
+      $say "$pre $res held by $holder for $hs s; waited $((SECONDS - t0)) s so far"
     fi
     sleep 2 & wait $! || true
   done
   wait "$pid" || rc=$?
   session_kill "$pid" || true
   owned_forget "$pid"
+  lock_waited=$((SECONDS - t0))
   if [[ $rc -eq 0 ]]; then
-    _lib_log "$pre $res taken after a wait of $((SECONDS - t0)) s"; return 0
+    $say "$pre $res taken after a wait of $lock_waited s"; return 0
   fi
-  _lib_log "$pre $res still busy after a wait of $((SECONDS - t0)) s"; return 1
+  $say "$pre $res still busy after a wait of $lock_waited s"; return 1
 }
 # host_cpu_acquire <owner> <log prefix>: the host-cpu lock, waiting up to 7200 s (N62_CPU_WAIT).
 host_cpu_acquire() { lock_wait host-cpu "$1" "$2" "${N62_CPU_WAIT:-7200}"; }
