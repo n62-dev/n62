@@ -138,8 +138,9 @@ async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFaile
     // Home with x stored: a fresh engine after a crash stores x again
     const home: View[][] = [];
     for (const x of XS) {
-      await ask(angle, `home ${x}`, "(x:=)", "home", `x:=${x}`, s);
+      // the context first: if x:= itself crashes, the next call's fresh engine stores x before it (G188 fix round 1)
       engine.context = [{ method: "home", args: [`x:=${x}`, s] }];
+      await ask(angle, `home ${x}`, "(x:=)", "home", `x:=${x}`, s);
       const row: View[] = [];
       for (const e of cs) {
         const r = await ask(angle, `home ${x}`, e.c.latex, "home", e.k.giac, s);
@@ -161,8 +162,8 @@ async function sweepWith(engine: ViewEngine, cases: Case[], lim: Limits, onFaile
       }
     }
     // The plot evaluator against Giac's evalf(…, 20), in the mode Home just left (a fresh engine sets it again)
-    await ask(angle, "plot", "(mode)", "home", "0", s);
     engine.context = [{ method: "home", args: ["0", s] }];
+    await ask(angle, "plot", "(mode)", "home", "0", s);
     for (const e of cs) {
       if (!e.k.fn) continue;
       for (const x of XS) {
