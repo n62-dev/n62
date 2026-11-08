@@ -7,7 +7,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-**G164's sample sources** (`app/public/samples/materials.txt`): take [S36](shifts/2026-11-sandra-sample-sources.md)'s two copper edits (two values disagree with the sheet) and sign its short list by the freeze (11-12). Cost: seven clauses to read. If not signed, the lines stay "to verify".
+**G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-12); S36f1 sets the two copper values to the sheet's (pass 103 re-read it). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
 ## Decided proposals
 
