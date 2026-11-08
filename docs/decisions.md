@@ -9,6 +9,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
 
+**A75: a FIX package's own file** (`A73f1.md`) is not deleted by its run (A75 deletes only a package id's). Recommended: the Opus pass deletes the merged package files `scripts/gc.sh` lists.
+
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
 
 **A64 lo-11:** a worker wrote outside its worktree (run #488). Recommended (Opus pass 93): yes, warn only: after a worker step log new files in `source99/` (the main checkout's parent, where run #488's file was) and in `.claude/worktrees/`.
