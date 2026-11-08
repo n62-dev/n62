@@ -13,7 +13,8 @@ import { applyDefChanges, type DefEntry } from "../../../app/src/engine/defs.ts"
 import type { ChipEntry } from "../../../app/src/engine/chipFacts.ts";
 import type { KnownValue } from "../../../app/src/engine/types.ts";
 import { knownDigits } from "../../../app/src/engine/solve.ts";
-import { chipFactsOf, chipOf as itemChip, homeItem } from "../../../app/src/state/results.ts";
+import { chipFactsOf, chipOf as itemChip } from "../../../app/src/state/results.ts";
+import { homeItem } from "../../../app/src/state/resultItem.ts";
 import { checkCopy, copySourceOf, type InvariantFailure } from "../../../app/scripts/invariants.ts";
 import { lcg } from "./gen.ts";
 
