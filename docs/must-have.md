@@ -4,33 +4,44 @@ The owner's list of 2026-11-08, checked against the code and the engine, and tur
 
 A package starts only through `scripts/pipeline.sh`, and only when a lane row or a day's plan names it (brief section 0c); none has a row yet except by the days in [release-0.1.0.md](release-0.1.0.md). An item marked "stub" has no package: it says what must exist before it can be split. Line numbers in packages for v0.3 and later are as of de659c02; recheck at start.
 
+**When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
+- Tue 11-10, they hold up work before the freeze: B1, A1, A7, A3, A9.
+- Fri 11-13, for A91: A8, and G2 item 70 with it.
+- Sat 11-14, for the video: A4, A5.
+- Sun 11-15, the tag: A6, A10.
+- Before any forum post: D8.
+- Before v0.2 starts: B2, B4, B5, B6, B7, B9. Before v0.3: B3, B8.
+- Before section C's packages: C1 to C8. Before RPN: D1 to D4.
+- No date: D5, D6, E1 to E4. D6 runs as written unless you say otherwise.
+
 Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
 
 ## A. Before you tell anyone (v0.1.0, tag Sun 11-15, freeze Thu 11-12 evening)
 
-- **No known silent wrong number** [have, with one exception]. No open bug line shows a wrong value unmarked, except F192 (phasor entry, R180), which must land. The bar still counts the night review of 11-09. No package; F198 is a named limit.
+- **No known silent wrong number** [have, with one exception]. No open bug line shows a wrong value unmarked, except F192 (phasor entry, R180), which must land. The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
 - **Units and ± in the core list** [miss]. 66 cases, none with a unit or ±; the harness has no unit check. R170.
 - **Release notes** [part]. The release body holds only hashes; no notes file, no `changelogs/`. A90, then A91 after the freeze.
 - **First-run tips** [part, was miss]. The overlay is built with 2 cards; flicks, the round pad, Find and the marks are missing. R171.
 - **Report a problem** [part, was miss]. The form is merged (A81) with no session field; nothing in the app opens it. A92, R172, R173, A95.
-- **Why trust it** [miss]. "2,700" is not true: see the figures below. G200, G201, A93, A94, R174.
+- **Why trust it** [miss]. "2,700" is not true: see the figures below. G200, G201, G202, A93, A94, R174.
 - **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act, Sat 11-14; no package. Decision 4.
-- **F-Droid and IzzyOnDroid** [miss]. The recipe is a draft, never built. A96, A97, then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
+- **F-Droid and IzzyOnDroid** [miss]. The recipe is a draft, never built. A96, A97, A98, then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
 - **APK and site** [not yet; the list's "have" is early]. Releases hold only `deps-giac-2.1.0-1d9536e0`; Pages has one test deployment from 11-05. The tag produces both. Owner's act, no package. Do not publicise n62.dev before the tag.
 
 **The figures "Why trust it" prints** (counted at de659c02; A93 reads them from the files):
 - Golden: 1,966 recorded answers, 5 of them open cases. 892 expected values are computed independently of Giac (790 by mpmath, 102 by exact arithmetic); 422 more are hand-derived or reference values cross-checked by machine; the other 652 are hand-derived expected results or behaviour guards. Parser (648) and bench (57) rows are not answers.
-- Patches: 37 Giac patches. 12 sent to the author: he wrote that 2 "should be integrated" and applied 10 in his 7 Nov source, with differences being resolved; 25 not sent.
+- Patches: 37 Giac patches. 36 sent to the author: he wrote that 2 "should be integrated" and applied 10 in his 7 Nov source, with differences being resolved; 24 more went on 8 Nov and wait for his answer; 1 (0037) not sent.
 - Traps: Rump ≈ -0.827396059947 (ordinary IEEE double: about ±1.18E21, the sign depends on evaluation order); `1-cos(10⁻⁸)` RAD ≈ 5E-17 (double 0); `(1+10⁻¹⁶)^(10¹⁶)` ≈ 2.71828182846 (double 1); `e^(π√163)` at 30 digits ≈ 262537412640768743.999999999999 (double 2.6253741264076826E17); `∫1/x` from -1 to 1 refused (Giac alone gives 0).
 - The page may say values are re-checked only once G200 is merged: `oracle.py` crashes today and the gate does not run it (F197).
 
 Order (all v0.1.0):
-- Lane A, after R53 and R148: R170, R171, R172, R173, R174 (after A94).
-- Lane B: G200, G201, A90, A92, A93, A94, A95 (the device, after R173), A96, A97.
-- By day after the freeze: A91, refreshed Sun morning.
+- Lane A: R170 and R172 first, with no wait (R170 has no app code and is the net for the keypad rows); after R53 and R148: R171, R173.
+- Lane B: R180 (first, once decision B1 is in), G200, G201, G300, G202, A90, A92, A93, A94, G301, A96, A97, A98.
+- By day, by Thu 11-12: R174 (after A94) and A95 (the device, after R173). Each waits on the other lane, and a lane skips a row whose After is not merged and never repeats it.
+- By day after the freeze: A91, refreshed Sun morning; `npm run trust:refresh` first each time.
 - Must land before the freeze: R180 (the phasor fix, section B). Should land: G300 and G301 (section D); if G301 misses it, F196 joins the known limits.
-- If it gets tight, drop in this order (in `docs/release-0.1.0.md`): R174 and A94; A96 and A97 to Mon 11-16; if A95 fails, Android stays copy-only.
-- Capacity: 17 open rows in lane A (6 ron, 11 gorge; R53 is on its branch, unmerged) plus these 14 before the freeze and four nights left; 31 merges landed on 11-07. The unknowns are the 11-09 review's output and fix rounds.
+- If it gets tight, drop in this order (in `docs/release-0.1.0.md`): R174 and A94; A96, A97 and A98 to Mon 11-16; if A95 fails, Android stays copy-only.
+- Capacity: 17 open rows in lane A (6 ron, 11 gorge; R53 is on its branch, unmerged) plus these 16 before the freeze and four nights left; 31 merges landed on 11-07. The unknowns are the 11-09 review's output and fix rounds.
 
 Open bugs:
 - F197: `oracle.py` exits 1 with a TypeError at `precision.yaml:1166` (since eba26abf), so no full check of the oracle values has finished since; past it, 248 PROBLEM lines, none about a value. Reach: no user; it undercuts the "re-checked" claim. G200.
@@ -38,20 +49,21 @@ Open bugs:
 
 Decisions for the owner:
 1. Core cases c67–c69: add them, `hand: false`. The core list changes only with the owner; these are the flows you named.
-2. Patches claim: add 0037 to email 5 (its links are pinned at 8f398cca, which lacks it), then send. The README then says more than 12 of 37, truthfully.
+2. Patch 0037 goes in the next mail to the author; nothing to decide. Email 5 went on 2026-11-08 with 0013-0036, its links pinned at 8f398cca, which lacks it.
 3. Trust page location: in the app under Help and about, plus a README section. n62.dev is the app, with no separate pages.
 4. Video: keep the v6 cut and record the Qalculate side-by-side as a separate 10 s clip. Opening on it would re-cut the owner's 11-07 chapter order.
 5. "HP Prime key layout" in the video: the owner's choice, since `rules-core.md:21` does not list a video caption. Reword it without the name, which costs nothing; the other way is the disclaimer on screen.
 6. F-Droid without a local build: submit right after the tag and let the merge request's CI be the first real build. No build VM exists here.
 7. Tips layout: one screen, no steps. No new ring logic to get wrong.
 8. `infinity` for `1/0` and `tan(90°)`, beside G168's refused `0/0` (F198): ship as is and name it in the known limits; settle it with G2 item 70 after v0.1.0. It shows no wrong digits, and it stays neither exact, marked nor flagged under principle 3.
-9. v0.1.0 as a pre-release: make a plain tag a normal release (A90 step 3), reversing the 2026-10-29 choice. A pre-release can be invisible to a "latest" link and to IzzyOnDroid (from memory); `-test` tags stay pre-releases.
+9. v0.1.0 as a pre-release: make a plain tag a normal release (A90 step 3), reversing the 2026-10-29 choice. GitHub's `latest` skips a pre-release, so that link would miss it, and IzzyOnDroid may too (from memory); `-test` tags stay pre-releases.
+10. The move to the desktop PC: after the tag. CPU is not what limits the week, and the bar needs both devices green on a setup that works today.
 
 Not verified:
 - Capacitor's route to `ACTION_VIEW`: seen on upstream `main`, not at 8.5.3 and not on a device. A95's first check.
 - GitHub's issue-body limit (65,536) is from memory; prefill of dropdowns is not in its docs, so they are left to the user.
-- `releases/latest` skipping a pre-release, and IzzyOnDroid's handling of one: from memory.
-- The F-Droid build VM's Debian release (A96's first check) and the scanner's view of `prebuild` output (A97; inference).
+- IzzyOnDroid's handling of a pre-release: from memory.
+- The current F-Droid build VM's Debian release (a clone of 10-18 shows `buildserver-trixie`; A96's first check) and the scanner's view of `prebuild` output (A97; inference).
 - The trap marks were probed on the main checkout's built engine, whose patch level against de659c02 was not checked; G201 settles them through the gate.
 - n62.dev's content, IzzyOnDroid's APK size limit, Qalculate on Android.
 
@@ -66,7 +78,7 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 
 **Maths**
 - `[part]` Matrices and vectors. `tran`, `dot`, `cross`, `norm`, `rref`, `eigenvals`, `egv` all work; keys and editor are not built. G225, G227, R185, R186, R187, R188, R189, R190.
-- `[miss]` Number bases. `0xFF` is refused on purpose; AND, OR, XOR are right on big integers; `shift` is wrong on negative counts and big integers (F193). G226, R191, G228, G229, R192, R193, R194.
+- `[miss]` Number bases. `0xFF` is refused on purpose; AND, OR, XOR are right on big integers; `shift` is wrong on negative counts and big integers (F193). G226, R191, G228, G229, G235, R192, R193, R194.
 - `[part]` Statistics basics. Each statistic exists; no single call gives the pair with r², and unequal lengths show the generic `error.engine`. G223, R184.
 - `[part]` Distributions. Inverses are polished (38+ digits); forward tails and the alias `normal_icdf` are not (F195). G220, G221, G222.
 - `[part]` SI-prefix display. Works but pads: `4.70000000000 k` at 12 digits. G224.
@@ -85,7 +97,7 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 - `[check: FAIL]` Find shows where a function sits. Preview has no key field. G230, R195.
 
 **Everywhere**
-- `[check: FAIL]` Desktop browser with a keyboard: typed `sin(1)` is `s*i_*n*(1)`. R131 (existing, keys only), then R198.
+- `[check: FAIL]` Desktop browser with a keyboard: typed `sin(1)` is `s*i_*n*(1)` (F199, a named limit of v0.1.0). R131 (existing, keys only), then R198, which reaches every function Find has. Both open v0.2.
 - `[part]` Export: plain text only, and F180 half-reads templates. G232, R199, R200.
 - `[have]` Exact / ≈ / ⚠ marks, 30 digits, full precision on reuse, copy and paste. No package.
 - `[have]` Solve, Function, CAS. No package.
@@ -97,8 +109,8 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 
 **Order**
 - v0.1.0: R180.
-- v0.2: G220, G221, G210, G211, G212, G213, G214, G215, G216, G217, R181, A100, A101, G218, G219, R128, R182, R183, G222, G223, R184, G224.
-- v0.3: G225, G226, G227, R185, R186, R187, R188, R189, R190, R191, G228, G229, R192, R193, R194, G230, R195, G231, R196, R197, R131, R198, G232, R199, R200.
+- v0.2: R131, R198, G220, G221, G210, G211, G212, G213, G214, G215, G216, G217, R181, A100, A101, G218, G219, R128, R182, R183, G222, G223, R184, G224.
+- v0.3: G225, G226, G227, R185, R186, R187, R188, R189, R190, R191, G228, G229, G235, R192, R193, R194, G230, R195, G231, R196, R197, G232, R199, R200.
 - v0.4: G233, G234, R201, S45, then the two stubs.
 
 **Open bugs**
@@ -106,6 +118,7 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 - F193, Home and CAS: integer `shift` is wrong on negative counts and big integers, exact and no ⚠: `shift(1,-70)` = 64, `shift(1,-31)` = -2147483648, `shift(2^70,1)` unchanged. Giac's convention (n > 0 is a right shift) is not the bug. Reach: Find only; the parser refuses `<<`. G226.
 - F194, Home and CAS: `dot([1,2],[3,4,5])` = 11 and `cross([1,2,3],[4,5])` = `[-15,12,-3]`, exact, no ⚠. Reach: a Find typo, not everyday, not a bar item. G225.
 - F195, Home: far tails. `student_cdf(5,-100)` = 9.48002565337E-10 ⚠ (right 9.48000711231E-10); `student_cdf(30,-8)` wrong from the 6th digit, ⚠; `normald_cdf(0,1,-20)` = 0 ⚠ (right 2.75362411861E-89). All marked, so not a bar item. G220, G221.
+- F199, Home and CAS on a hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error, because letters stay names (`hwkeys.ts:13`, pinned by `hwkeys.spec.ts:203`). Reach: everyday on a laptop, and n62.dev goes public with the tag. The product of letters is visible on the line as typed; with `s` and `n` stored it would be a number (not probed). Named limit in A91. R131, R198 (start of v0.2).
 
 **Decisions for the owner**
 1. The ∡ rule (R180): recommend Giac's binding, ∡ tighter than + × ÷, with a bare `/` beside the angle and a factor directly after it refused. Why: a flat `2∡π/6` would otherwise be silently -1/3; `10∡2π` then needs brackets, which is honest.
@@ -164,7 +177,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 
 ## D. What the HP crowd will ask for first
 
-- **RPN entry: [miss], confirmed.** Entry is textbook or one-line; the stack is written as packages, nothing is built. After v0.1.0, on the owner's yes. R250, R251, R252, R253, R254, G302. Stack view: stub.
+- **RPN entry: [miss], confirmed.** Entry is textbook or one-line; the stack is written as packages, nothing is built. At v1, as the list says, after section C's order and on the owner's yes. R250, R251, R252, R253, R254, G302. Stack view: stub.
 - **Programs: [part], confirmed.** Library file from a laptop, or a one-line definition typed; no editor, no PPL (feedback #40, the owner's list). No package.
 - **The forensics chain: [have], unpublished (the list said miss).** Home DEG gives 9, mark `=`, at 12, 15, 30 digits; it cancels symbolically, branches picked by Giac's numeric reduction. No case guards it. G300; CAS DEG shows it badly, G301.
 - **Same CAS as the Prime: [have] overstated.** "Also built on Giac" holds, "same" does not; the Prime's Giac version is unknown. Wording below. No package.
@@ -175,29 +188,29 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 - **RPN** (only after decision 1 is yes): "N62 has no RPN today: entry is textbook or one-line. It is planned for after 0.1.0, with no date; the stack design is written, nothing is built. If you want it, tell me what you would need from it (stack depth, how the keys behave), since the view and part of the key behaviour are still open."
 - **Programs:** "No program editor on the device and no PPL: programs are Giac definitions, written on a laptop or typed one line at a time."
 - **The chain:** "N62 gives 9 for arcsin(arccos(arctan(tan(cos(sin(9)))))) in DEG, exactly, at 12, 15 and 30 digits. It cancels symbolically, with branches picked by Giac's numeric reduction, so this is not a float chain that lands on 9." (`approx()` of it shows 9 with ≈; its 40-digit working value 8.999… is internal, never shown or copied.)
-- **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 37 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Twelve have gone to its author: he wrote that the first two 'should be integrated', and he applied ten more in his own source of 7 Nov, not all identically. The other 25 are not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
+- **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 37 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Thirty-six have gone to its author: he wrote that the first two 'should be integrated', and he applied ten more in his own source of 7 Nov, not all identically; the other 24 went on 8 Nov and wait for his answer. One is not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
 
-Counts (must match section A): 37 patches; 12 sent (0001-0002, 0003-0012); 25 not sent (0013-0036 drafted in email 5, 0037 no email). Attach a primary source for "also built on" when posting; the repo has a Wikipedia citation only.
+Counts (must match section A): 37 patches; 36 sent (0001-0002, 0003-0012, and 0013-0036 on 2026-11-08); 1 not sent (0037). Attach a primary source for "also built on" when posting; the repo has a Wikipedia citation only.
 
 **Order:**
 - v0.1.0, before the 11-12 freeze: G300, G301. If G301 misses it: F196 joins the known limits and G301 runs in the 11-16/17 room, before the post.
-- After the tag and the owner's yes (the list says v1; decision 1 sets when): R250, R251, R252, R253, the owner's Virtual Calculator session, R254, G302; then the stub.
+- v1, after section C's order and the owner's yes: R250, R251, R252, R253, the owner's Virtual Calculator session, R254, G302; then the stub.
 
 **Open bugs:** F196: CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)` draws π/(6·π/180), the chain `180/20*pi/pi`); value right, form wrong. Reach: every exact inverse trig constant in CAS DEG. G301; a free name (`…+x`) and Home's same display stay open.
 
 **Decisions for the owner:**
-1. RPN after v0.1.0, Home only, a third Entry value: yes; it is the first thing this forum asks, and the design adds no evaluation path.
+1. RPN at v1, after section C's order, Home only, a third Entry value: yes; it is the first thing this forum asks, and the design adds no evaluation path.
 2. A Virtual Calculator session on RPN before R254, about 20 minutes, behaviour in our own words: yes; the reference's flow is the backbone and its RPN was never exercised.
 3. Units and ± on the stack: refuse. One chip used twice is one input, but across rows the result is a new independent chip, so σ would be wrong.
 4. The swap key (▶ is also a trackpad step, each 12 px of drag fires it), ▲/▼ and `frac` on an empty line: decide after the session, with the view.
 5. No program editor on the device: confirm, no package.
 6. The chain in the golden set, not in the core list: yes; the golden gate re-runs it whenever engine or parser code changes; the core list is everyday tasks.
-7. Email 5 (0013-0036, adding 0037) before the post: send it first, then refresh the counts (the same act as section A, decision 2).
+7. Patch 0037 is left for a later mail; refresh the counts on the day of the post (section A, item 2). Nothing to decide.
 8. Replace "Same CAS as the Prime" with the wording above, here and in `../outreach/reddit-post.md:23`: yes; the repo cannot prove "same".
 
 **Not verified:**
 - The Prime's Giac version, and whether the Virtual Calculator reports one.
-- Whether email 5 was sent; his answer to email 4 exists only as our note, with no reply file after 10-29.
+- His answer to email 4 exists only as our note, with no reply file after 10-29; email 5 has no answer yet.
 - The chain on stock Giac (patches 0014 and 0032 touch this path).
 - The CAS forms in a real WebView (probes use EngineHost).
 - What R254 adds to the start chunk (unmeasured).

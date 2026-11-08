@@ -36,18 +36,26 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
-- **F180, no package (sandra, 2026-11-05).** Share session writes template LaTeX half-read: `\sum_{k=1}^{10}k` → `\sum_k=1^10k`, `\sqrt[3]{8}` → `\sqrt[3]8`, `\lim_{x\to0}x` → `\lim_x → 0x`; their plain form is a design question (R134 took the Greek letters; `\sin`, `\measuredangle` and the relations stay LaTeX too).
+- **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
 - **F80, package G179 (G99; `tools/probes/bridge-forms.ts`).** After Home `(BesselJ(1,2))=>y`, `int(y^2,y,0,1)` shows `⚠ 0.333333333333` (right `≈`): Home stores at Digits 40, where `=>` keeps y as `BesselJ(1,2)` unevaluated, and Giac's int with that y errors (Bad Argument Value). `y:=` keeps the float. Test: `boundNames.test.ts` (`it.fails`), seqsweep `12 bound: int…`. Family 8.
 - **F73, package G172 (it waited for the end of the freeze; owner, 2026-10-24; G103 reads the doubles).** A double in a list shows Giac's text (`[BesselJ(1,2),1/3]`), not numbers with ⚠; no wrong value reaches the screen. Left: `hasFloat` (reads `1..3` and strings). Families 5, 6.
 - **F182, no package (G176).** Home shows `limit(floor(x),x,-1)`, `limit(sign(x),x,0)`, `limit(trunc(x),x,-1)` as an error ("Unidirectional limits are distinct"); right: No limit (converge.ts `noLimit`). Golden `g176-limit-trunc-neg1-two-sided`.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
-- **F191, packages R161 to R164 (owner, 2026-11-07).** Fast typing on a phone: the press look sticks on one key and lags; Chrome's touch `:active` follows the tap detector, not our pointers (the presses all arrive). R161 built: the keypad's press is the app's own `data-down` flag, at least 80 ms. R162 built: the key pop, a bubble above the pressed key with its face (`data-testid="key-pop"`). R163 built: Appearance › Key pop-ups (on by default) rules the pop and the flick bubble.
+- **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R163 built (own `data-down` flag, key pop, Appearance › Key pop-ups).
 - **F186, package R148 (Opus pass 86).** Core c45 is red on the Tab One (devices 84, 85; 1192 × 672): Solve's second root lies under the entry line (screen 174 px; 184 px and 1 px clear on the desktop).
-- **F172, A73 measured (report).** Stored history costs nothing (200 stored, Home last: 1274 ms against 1299 empty); the rows drawn at start do, by content: 20 program-definition rows 1821 ms, 20 plain rows 1469, 5 program rows 1345 (bar 1.5 s). A CAS-view start with nothing stored is also 1499 (worker's wasm instantiate slower), cause open. R133 merged (c9be0a7c): History draws 5 rows until engine ready; Tab One rerun pending. A73f1 measured (11-08): CAS-last 1507 against Home 1323, cause not named (report).
+- **F172, A73 measured (report).** Stored history costs nothing; the rows drawn at start do (20 program rows 1821 ms, 20 plain 1469, 5 program 1345; bar 1.5 s). R133 merged (c9be0a7c): History draws 5 rows until engine ready; Tab One rerun pending. A CAS-view start is 1499 to 1507 against Home 1323, cause open (A73f1).
+- **F192, package R180 (bar point 3).** DEG `10∡30+5` from the keys computes 10∠35, ≈, no ⚠.
+- **F196, package G301.** CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)`); the value is right.
+- **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
+- **F199, packages R131, R198 (named limit).** Hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error.
 - **Night review 2026-11-02:** the rest in [research/night-review-2026-11-02.md](research/night-review-2026-11-02.md).
 
 ### Background stream (extreme inputs; at night, by reach)
+- **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
+- **F194, package G225.** `dot`, `cross` pad vectors of unequal length, exact, no ⚠.
+- **F195, packages G220, G221.** Far tails of the forward CDFs: wrong digits, ⚠.
+- **F197, package G200.** `oracle.py` crashes at `precision.yaml:1166`; the gate does not run it.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
 - **F89, package G170 (G92's report).** Giac's `laplace` and `ilaplace` on tanh(sqrt(x)) leave VARS() entries that are no names (bytes, empty, error texts), then garbage after every command: freed memory in Giac's variable list. The put-back skips them. Not reachable by keys (laplace needs Find); an upstream candidate. Also `ilaplace(1/(x^2+1)^2)` (G110's census).
@@ -92,10 +100,10 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. `tests/engine/patch-canary.ts` unpacks the Giac tarball per canary (40 times, 100 s of CPU), so golden `flags` times out under load (A51: timing): unpack it once. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
-- **C3. CI** (needs your OK); **C4. F-Droid recipe:** untested end to end; `npm ci` after `prebuild` needs an offline rework; two drifts from build.sh in `fdroid/README.md`.
+- **C3. CI** (needs your OK); **C4. F-Droid recipe:** A96, A97.
 
 ### MVP release (docs/02 section 8; not scheduled)
-- **R1. v0.1.0, the APK and the website from one tag** (A8 done: `.github/workflows/release.yml`, the checklist [release.md](release.md); left: the test tag `v0.1.0-test`, then `v0.1.0`; the bar: [release-0.1.0.md](release-0.1.0.md)). **R2. Play testing track:** never published without your OK. **R3. Screenshots and store graphics.** **R4. The help pass** (About: R87; one APK hash from two `./build.sh --unsigned` runs: annabell, A7).
+- **R1. v0.1.0, the APK and the website from one tag** (A8 done: `.github/workflows/release.yml`, the checklist [release.md](release.md); left: `v0.1.0`; the bar: [release-0.1.0.md](release-0.1.0.md)). **R2. Play testing track:** never published without your OK. **R3. Screenshots and store graphics.** **R4. The help pass** (About: R87; one APK hash from two `./build.sh --unsigned` runs: annabell, A7).
 
 ### v1 and later
 In docs/02 section 8; P8 defers most of v1 behind the engineer core. v1: Statistics, Inference, Parametric/Polar/Sequence, Spreadsheet, Finance, Linear/Triangle solvers, RPN. v2: Geometry, Advanced Graphing, 3D, Explorers.
