@@ -68,6 +68,14 @@ describe("the sample library file (G164, no engine)", () => {
     }
     expect(quoted).toBe(13);
   });
+  // S36f1: the copper values are the Deutsches Kupferinstitut sheet Cu-ETP (CW004A, edition 2005) read again by Opus
+  // pass 103: section 3.9, annealed, 20 °C, E = 110 kN/mm² (not 127, which is no row of the sheet), and section 3.3,
+  // 16.8×10⁻⁶ per K for 20 to 100 °C (not 17)
+  it("E_copper and alpha_copper are the sheet's 110 kN/mm² and 16.8×10⁻⁶ per K", () => {
+    const def = (name: string) => lines.filter((l) => l.startsWith(`${name}:=`));
+    expect(def("E_copper")).toEqual(["E_copper:=110*10^9"]);
+    expect(def("alpha_copper")).toEqual(["alpha_copper:=168*10^-7"]);
+  });
   // G164 fix round 2: the owner checks a value against one document, so a source names its edition: a standard's year
   // after its number (`EN 1993-1-1:2005`), another document's `edition <year>`
   it("each source names its edition", () => {
