@@ -226,5 +226,25 @@ for t in "You've hit your 5-hour limit" "You've hit your weekly limit" "You're o
 done
 (source "$dir/pipeline-lib.sh"; grep -qiE "$LIMIT_RE" <<<"Error: exit 1") && fail "LIMIT_RE matches 'Error: exit 1'"
 
+# A89: `unsafe` reads a backslash and the character after it as one unit inside double quotes (an escaped quote does not close them)
+eval "$(sed -n '/^unsafe() {/,/^}/p' "$night")"
+P='scripts/pipeline.sh ron'
+acc() { unsafe "$1" && fail "unsafe refuses a safe line: $1"; return 0; }
+ref() { unsafe "$1" || fail "unsafe accepts an unsafe line: $1"; return 0; }
+acc "$P \"describe \\\"a & b\\\" here\" --id X1"
+acc "$P \"describe \\\"R153: N62 in teal, Black & White, Solarized\\\"\" --id X1"
+acc "$P \"a & b; c | d < e > f\" --id X1"
+acc "$P \"a\\\\\" --id X1"
+ref "$P a; rm x"; ref "$P a & b"; ref "$P a | b"; ref "$P a < b"; ref "$P a > b"
+ref "$P \"a\" ; rm x"; ref "$P \"a\" && rm x"
+ref "$P \"a \$HOME\""; ref "$P \"a \\\$HOME\""; ref "$P \"a \`id\`\""; ref "$P \"a \\\`id\\\`\""; ref "$P \$HOME"
+ref "$P \"a\\\"; rm x"
+ref "$P \"a\\\\\" ; rm x \"b\""
+ref "$P \"a\\\\\" & rm x \"b\""
+# the accepted line, run through the same eval, gives its prompt argument with the literal double quotes
+args() { printf '%s\n' "$2"; }
+line="args ron \"describe \\\"a & b\\\" here\" --id X1"
+[[ "$(eval "$line")" == 'describe "a & b" here' ]] || fail "eval of the accepted line: $(eval "$line")"
+
 [[ $fails -eq 0 ]] || { echo "night.test.sh: $fails failure(s)" >&2; exit 1; }
 echo "night.test.sh: ok"
