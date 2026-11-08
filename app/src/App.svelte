@@ -632,6 +632,9 @@
     position: relative;
     flex: 1;
     min-width: 0;
+    /* R155f1: the box has the mounted field's height (--field-h) before MathLive has put the field in: an empty box was
+       0 px high, and the dash, which fills it, with it. After the mount the field's own height is within a pixel of it. */
+    min-height: var(--field-h);
   }
   /* R155: over the field's outline (R154), which is --ring-on wide while a job runs, with the dash on the same path:
      a rounded rectangle through the outline's middle, the field's radius less half its width. Flat --text, no gradient. */

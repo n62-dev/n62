@@ -6,7 +6,7 @@ import { formatComplex, markOf, type MarkInfo } from "../src/engine/format.ts";
 import type { EngineHost } from "../src/engine/host.ts";
 import { defaultHomeSettings, precisionFacts, type HomeResult } from "../src/engine/homeEval.ts";
 import { hasAngleFactor } from "../src/engine/angles.ts";
-import { homeItem } from "../src/state/results.ts";
+import { homeItem } from "../src/state/resultItem.ts";
 
 /** One failed invariant: the case, the check ("a" RAD/DEG, "b" 12/30 digits, "c" copy and paste, "d" store), what differed. */
 export interface InvariantFailure {

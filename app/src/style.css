@@ -85,11 +85,14 @@
   --sheet-row: 42px;
   --line-h: 34px;
   --slot-h: 40px;
-  --entry-h: 66px;
   /* R53: the folded keypad's slice (the smallest touch target, docs/05 3.3) and the grabber on the keypad's top edge */
   --fold-h: 44px;
   --grip-w: 32px;
   --grip-h: 4px;
+  /* R155f1: the entry field as MathLive draws it: its line box (about 1.62 × --fs-entry, measured 63.6 px high at 28 px with
+     the padding and border), so the field's box has that height before the field mounts; the row is that plus its padding */
+  --field-h: calc(var(--fs-entry) * 1.62 + 2 * var(--sp-2) + 2 * var(--stroke-thin));
+  --entry-h: calc(var(--field-h) + 2 * var(--sp-2));
   --doc-min: 120px;
   --tile-w: 30px;
   --tile-h: 22px;

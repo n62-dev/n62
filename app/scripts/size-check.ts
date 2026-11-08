@@ -155,7 +155,7 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  migration steps (state/migrations.ts, with the angle rewrite), loaded only for a record that has a step to run. R151:
  *  the sheet's model (views/sheet.svelte.ts), loaded with the sheet's view or by the first sheet that opens before it. A66f1: the key click's code (input/click.ts), loaded only
  *  when the Key click setting is on. */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts"];
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, 1 kB under the budget of 61 kB, so the Settings base
  *  (R49, R86, R57) has room. A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -322,8 +322,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  R53: the merge base 05a1daf7 measures 61.00 kB gzip (171.91 kB raw); results mode's state, Esc and back in App.svelte
  *  and the lazy counter's hook (+1.19 kB gzip with the controls in, +0.59 kB with them in their own chunk,
  *  keyboard/Fold.svelte) are paid for by moving the apps' and the Mode sheet's texts out of en.ts (i18n/enNum.ts,
- *  i18n/enMode.ts): the branch measures 60.96 kB gzip (171.76 kB raw). The pin stays the budget. */
-export const START_PIN_GZIP = 61_000;
+ *  i18n/enMode.ts): the branch measures 60.96 kB gzip (171.76 kB raw). The pin stays the budget.
+ *  61,000 → 60,621 B (R155f2, no allowance, decisions.md Start chunk room): phase-1 e6cfc7cd measures 60,996 B gzip (171.91 kB
+ *  raw), the branch merged with it 61,001 B (171,905 B raw, 1 B over the pin: the R155f1 field box and a chunk hash); the cut
+ *  is 430 B gzip (−1,247 B raw) to 60,571 B (170,658 B raw): what a history item keeps of a result (factsFrom, homeItem,
+ *  casItem; state/resultItem.ts) runs once the engine has answered, so it is a lazy chunk loaded beside the first job
+ *  (state/itemLoad.ts) and the decimal code of engine/format.ts it reads left the start chunk. The pin is 60,571 B + 0.05 kB. */
+export const START_PIN_GZIP = 60_621;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

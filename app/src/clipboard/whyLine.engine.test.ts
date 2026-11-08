@@ -8,7 +8,7 @@ import type { EngineHost } from "../engine/host.ts";
 import { defaultHomeSettings, precisionFacts, type HomeResult } from "../engine/homeEval.ts";
 import { markOf } from "../engine/format.ts";
 import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";
-import { homeItem } from "../state/results.ts";
+import { homeItem } from "../state/resultItem.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { whyLine } from "./whyLine.ts";
 
