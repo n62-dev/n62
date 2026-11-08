@@ -60,7 +60,6 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 550 | [R159](packages/R159.md) the unit-result e2e passes under load, or its lost tap is fixed | ron, Sonnet | `p1/ron-unitflake` | – |
 | 536 | [R53](packages/R53.md) results mode: the keypad folds by a handle or swipe | ron, Opus | `p1/ron-results-fold` | – |
 | 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | R53 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
