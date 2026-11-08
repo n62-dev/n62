@@ -106,8 +106,12 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
  *  in the unit view's groups (groupText's three separators, the rule for a comma under the decimal comma) and the sheet's
  *  view loaded with Find on units (R125 fix round 1: More… under load opened a Find nobody drew). 66,504 B + 0.05 kB.
  *  66.55 → 66.60 kB (R151): the branch measures 66,553 B (+36 B over phase-1's 66,517 B, all in open): the sheet's model is a lazy
- *  chunk now, so the unit view's load of the sheet's view names one more file in its preload list. */
-export const UNIT_VIEW_PIN_RAW = 66_600;
+ *  chunk now, so the unit view's load of the sheet's view names one more file in its preload list.
+ *  66.60 → 66.97 kB (R159, R159f1; Opus pass 101: an allowance, the unit view is not the start chunk): the branch measures 66,917 B
+ *  (calc 429, find 9,141, open 27,474, factors 14,999, slot 10,234, userCells 4,640): the chips pick on pointerup, as the keypad
+ *  does (a tap Chromium gave no click for was lost; round 2 measured 66.81 kB), and a touchend listener on each chip cancels the
+ *  click the browser still makes, which landed on the Find sheet More… had just opened. 66,917 B + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 66_967;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {

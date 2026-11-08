@@ -65,10 +65,19 @@ export function counted<A extends unknown[]>(count: (...a: NoInfer<A>) => void, 
 /** Count every tap on the screen (a history row, a Find result, a chip, a menu item). Captured, so the count is in before
  *  the tap's own handler runs (Reset then zeroes it; a Settings tap counts itself). Returns the cleanup. */
 export function countScreenTaps(count: (kind: string) => void): () => void {
-  const on = (ev: MouseEvent): void => {
-    const el = ev.target instanceof Element ? ev.target : null;
-    if (el && isScreenTap(el)) count(screenKind(el));
+  const on = (ev: Event): void => {
+    const el = ev.target;
+    if (el instanceof Element && isScreenTap(el)) count(screenKind(el));
+  };
+  // R159f1: a control that cancels its touchend (the unit chips, which pick on pointerup) gets no click, so its tap is counted
+  // here; bubbling, so the control's own listener has run and `defaultPrevented` tells that no click follows.
+  const off = (ev: Event): void => {
+    if (ev.defaultPrevented) on(ev);
   };
   document.addEventListener("click", on, true);
-  return () => document.removeEventListener("click", on, true);
+  document.addEventListener("touchend", off);
+  return () => {
+    document.removeEventListener("click", on, true);
+    document.removeEventListener("touchend", off);
+  };
 }
