@@ -14,6 +14,7 @@ import { groupSepFor, type GroupSep } from "../render/home.ts";
 import { aboutText } from "../i18n/enAbout.ts";
 import { uncText } from "../i18n/enUnc.ts";
 import { keyFeelText } from "../i18n/enKeyFeel.ts";
+import { lookText } from "../i18n/enLook.ts";
 import { helpItems } from "./aboutItems.ts";
 import { findText } from "../i18n/enFind.ts";
 import { dataSection } from "./dataSection.svelte.ts";
@@ -113,15 +114,15 @@ export function settingsMenu(session: Session, env: SettingsEnv = {}): SubMenu {
   return { title: t("mode.settings"), items: settingsSections(session, env), remember: false };
 }
 
-/** A section: a row with › that opens its own level. */
-function section(id: string, title: string, items: MenuItem[], value?: () => string): MenuItem {
+/** A section: a row with › that opens its own level (on row `at` when given). */
+function section(id: string, title: string, items: MenuItem[], value?: () => string, at?: string): MenuItem {
   return {
     id,
     label: title,
     get value() {
       return value?.();
     },
-    submenu: { title, items, remember: false },
+    submenu: { title, items, remember: false, ...(at === undefined ? {} : { at }) },
   };
 }
 
@@ -134,7 +135,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
   const s = session.settings;
   const off = () => !s.haptics.on;
   return [
-    section("appearance", t("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${t(`appearance.brightness.${s.look.brightness}` as MessageKey)}`),
+    section("appearance", t("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${lookText(`appearance.brightness.${s.look.brightness}`)}`, "theme"),
     section("numbers", t("settings.numbers"), numbersItems(session), () => s.fmtCycle.map((m) => m.toUpperCase()).join(" ")),
     section(
       "vibration",
@@ -206,7 +207,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
 }
 
 /** Appearance (R50e): the theme (◀ ▶ step through the five families; a tap, a digit or Enter lists them, and a pick
- *  keeps the sheet open so the status line and keys above show it), the brightness, and the two switches. */
+ *  keeps the sheet open so the status line and keys above show it), the brightness, and the three switches (Key shadows: R156). */
 function appearanceItems(session: Session): MenuItem[] {
   const look = () => session.settings.look;
   const setLook = (patch: Partial<Look>): void => {
@@ -215,11 +216,11 @@ function appearanceItems(session: Session): MenuItem[] {
     session.onLook?.({ ...session.settings.look });
   };
   const ids = FAMILIES.map((f) => f.id);
-  const brightness = (b: (typeof BRIGHTNESS)[number]) => t(`appearance.brightness.${b}` as MessageKey);
+  const brightness = (b: (typeof BRIGHTNESS)[number]) => lookText(`appearance.brightness.${b}`);
   return [
     {
       id: "theme",
-      label: t("appearance.theme"),
+      label: lookText("appearance.theme"),
       get dots() {
         return familyOf(look().family).dots;
       },
@@ -228,7 +229,7 @@ function appearanceItems(session: Session): MenuItem[] {
       },
       adjust: (by) => setLook({ family: stepped(ids, look().family, by) }),
       submenu: {
-        title: t("appearance.theme"),
+        title: lookText("appearance.theme"),
         items: FAMILIES.map((f) => ({
           id: f.id,
           label: f.name,
@@ -244,7 +245,7 @@ function appearanceItems(session: Session): MenuItem[] {
     },
     {
       id: "brightness",
-      label: t("appearance.brightness"),
+      label: lookText("appearance.brightness"),
       keep: true,
       get value() {
         return brightness(look().brightness);
@@ -253,8 +254,8 @@ function appearanceItems(session: Session): MenuItem[] {
     },
     {
       id: "contrast",
-      label: t("appearance.contrast"),
-      hint: t("appearance.contrast.hint"),
+      label: lookText("appearance.contrast"),
+      hint: lookText("appearance.contrast.hint"),
       keep: true,
       get selected() {
         return look().contrast;
@@ -263,13 +264,23 @@ function appearanceItems(session: Session): MenuItem[] {
     },
     {
       id: "plain",
-      label: t("appearance.plain"),
-      hint: t("appearance.plain.hint"),
+      label: lookText("appearance.plain"),
+      hint: lookText("appearance.plain.hint"),
       keep: true,
       get selected() {
         return look().plain;
       },
       run: () => setLook({ plain: !look().plain }),
+    },
+    {
+      id: "shadow",
+      label: lookText("appearance.shadow"),
+      hint: lookText("appearance.shadow.hint"),
+      keep: true,
+      get selected() {
+        return look().shadow;
+      },
+      run: () => setLook({ shadow: !look().shadow }),
     },
   ];
 }

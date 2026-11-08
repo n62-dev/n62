@@ -29,7 +29,7 @@ async function setLook(p: Page, patch: Record<string, unknown>): Promise<void> {
   await p.waitForTimeout(400); // the lazy CSS is in
 }
 
-/** R50e: Home with some history and the Shift key on, in each family (light and dark come with every shot), then the two switches. */
+/** R50e: Home with some history and the Shift key on, in each family (light and dark come with every shot), then the switches (Key shadows: R156). */
 export function lookShots(someHistory: (p: Page) => Promise<void>): LookShot[] {
   const set = (patch: Record<string, unknown>) => async (p: Page) => {
     await someHistory(p);
@@ -51,6 +51,8 @@ export function lookShots(someHistory: (p: Page) => Promise<void>): LookShot[] {
     { id: "look-bw-plain", group: "Themes (R50e): the switches", title: "Black & White, Plain keys", setup: set({ family: "bw", plain: true }) },
     { id: "look-bw-both", group: "Themes (R50e): the switches", title: "Black & White, High contrast and Plain keys together", setup: set({ family: "bw", contrast: true, plain: true }) },
     { id: "look-both", group: "Themes (R50e): the switches", title: "N62, High contrast and Plain keys together", setup: set({ contrast: true, plain: true }) },
+    // R156: every shot above has Key shadows on (the default); this one is N62 flat, to set beside "N62"
+    { id: "look-n62-flat", group: "Themes (R50e): the switches", title: "N62, Key shadows off (R156: beside N62 above, which has them on)", setup: set({ shadow: false }) },
   ];
 }
 
