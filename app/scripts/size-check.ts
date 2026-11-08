@@ -318,7 +318,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  nothing is left to grow: the next package that touches the start chunk must split something out first.
  *  R151 (owner, 2026-11-07: the 61 kB stays, this makes room under it): phase-1 f98453f5 measures 60,915 B gzip (172,082 B
  *  raw); the branch 59,441 B (167,625 B raw, -1,474 B): the sheet's model (views/sheet.svelte.ts) is a lazy part. The pin
- *  stays the budget, so about 1.5 kB is free for the next UI packages. */
+ *  stays the budget, so about 1.5 kB is free for the next UI packages.
+ *  R53: the merge base 05a1daf7 measures 61.00 kB gzip (171.91 kB raw); results mode's state, Esc and back in App.svelte
+ *  and the lazy counter's hook (+1.19 kB gzip with the controls in, +0.59 kB with them in their own chunk,
+ *  keyboard/Fold.svelte) are paid for by moving the apps' and the Mode sheet's texts out of en.ts (i18n/enNum.ts,
+ *  i18n/enMode.ts): the branch measures 60.96 kB gzip (171.76 kB raw). The pin stays the budget. */
 export const START_PIN_GZIP = 61_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

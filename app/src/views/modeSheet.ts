@@ -6,7 +6,8 @@
 // drives all of it.
 import type { MenuItem, SubMenu, ValueOption } from "../apps/types.ts";
 import type { AngleUnit, NumberFormat } from "../calc/port.ts";
-import { t, type MessageKey } from "../i18n/index.ts";
+import { t } from "../i18n/index.ts";
+import { modeText, type ModeKey } from "../i18n/enMode.ts";
 import { hasStrength, loadClick, vibrate } from "../input/haptics.ts";
 import { NOTATION_MODES } from "../state/displayMode.ts";
 import { MAX_DIGITS, type DecimalMark, type EntryMode, type MarkStyle, type Session, type UncertaintyView } from "../state/session.svelte.ts";
@@ -72,7 +73,7 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
   return [
     {
       id: "angle",
-      label: t("mode.angle"),
+      label: modeText("mode.angle"),
       get options() {
         return buttons(ANGLES, () => s.angle, (v) => session.setAngle(v), (v) => v.toUpperCase(), (v) => t(`angle.${v}`));
       },
@@ -80,7 +81,7 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
     },
     {
       id: "format",
-      label: t("mode.format"),
+      label: modeText("mode.format"),
       get options() {
         return buttons(FORMATS, () => s.format, (v) => session.setFormat(v), (v) => v.toUpperCase(), (v) => t(`format.${v}`));
       },
@@ -88,18 +89,18 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
     },
     {
       id: "digits",
-      label: t("mode.digits"),
+      label: modeText("mode.digits"),
       get value() {
         return String(s.digits);
       },
       adjust: (by) => session.setDigits(s.digits + by),
-      submenu: { title: t("mode.digits"), items: presets(DIGITS_PRESETS, () => s.digits, (n) => session.setDigits(n)) },
+      submenu: { title: modeText("mode.digits"), items: presets(DIGITS_PRESETS, () => s.digits, (n) => session.setDigits(n)) },
     },
     {
       id: "entry",
-      label: t("mode.entry"),
+      label: modeText("mode.entry"),
       get options() {
-        return buttons(ENTRIES, () => s.entry, (v) => session.setEntry(v), (v) => t(`entry.${v}`));
+        return buttons(ENTRIES, () => s.entry, (v) => session.setEntry(v), (v) => modeText(`entry.${v}`));
       },
       adjust: (by) => session.setEntry(cycle(ENTRIES, s.entry, by)),
     },
@@ -135,11 +136,11 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
   const s = session.settings;
   const off = () => !s.haptics.on;
   return [
-    section("appearance", t("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${lookText(`appearance.brightness.${s.look.brightness}`)}`, "theme"),
-    section("numbers", t("settings.numbers"), numbersItems(session), () => s.fmtCycle.map((m) => m.toUpperCase()).join(" ")),
+    section("appearance", modeText("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${lookText(`appearance.brightness.${s.look.brightness}`)}`, "theme"),
+    section("numbers", modeText("settings.numbers"), numbersItems(session), () => s.fmtCycle.map((m) => m.toUpperCase()).join(" ")),
     section(
       "vibration",
-      t("settings.vibration"),
+      modeText("settings.vibration"),
       [
         {
           id: "haptics",
@@ -316,10 +317,10 @@ function numbersItems(session: Session): MenuItem[] {
   const s = session.settings;
   const mark: MenuItem = {
     id: "mark",
-    label: t("settings.decimalMark"),
+    label: modeText("settings.decimalMark"),
     keep: true,
     get value() {
-      return t(`settings.decimalMark.${s.decimalMark}`);
+      return modeText(`settings.decimalMark.${s.decimalMark}`);
     },
     adjust: (by) => session.setDecimalMark(cycle(MARKS, s.decimalMark, by)),
   };
@@ -333,7 +334,7 @@ function numbersItems(session: Session): MenuItem[] {
   };
   const decimals: MenuItem = {
     id: "decimals",
-    label: t("mode.decimals"),
+    label: modeText("mode.decimals"),
     keep: true,
     get value() {
       return String(s.fixDecimals);
@@ -398,8 +399,8 @@ function fmtTicks(session: Session): MenuItem[] {
   const s = session.settings;
   return NOTATION_MODES.map((mode, i): MenuItem => ({
     id: mode,
-    label: t(`settings.fmt.${mode}` as MessageKey),
-    ...(i === 0 ? { hint: t("settings.fmtCycle.hint") } : {}),
+    label: modeText(`settings.fmt.${mode}` as ModeKey),
+    ...(i === 0 ? { hint: modeText("settings.fmtCycle.hint") } : {}),
     keep: true,
     get selected() {
       return s.fmtCycle.includes(mode);

@@ -18,6 +18,11 @@ export const enKeyFeel = {
   "settings.taps.since": "Counted on this device since",
   "settings.taps.export": "Export the counts",
   "settings.taps.reset": "Reset the counter",
+  /** R53: the grabber on the keypad's top edge folds it into results mode; the 44 px slice left brings it back
+   *  (keyboard/Fold.svelte, its own chunk). */
+  "keys.fold": "Show history",
+  "keys.unfold": "Show keypad",
+  "keys.slice": "Keys",
   /** R53: the results mode's counts (decisions.md P16), one row in Counters and its own level. */
   "settings.uses": "Results mode",
   "settings.uses.value": "{n} folds",

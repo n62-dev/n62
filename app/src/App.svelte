@@ -8,7 +8,6 @@
   import type { EntryController } from "./entry/controller.ts";
   import { t } from "./i18n/index.ts";
   import { openLayer } from "./input/backLayer.ts";
-  import { FOLD_PX, foldSwipe } from "./keyboard/foldSwipe.ts";
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
@@ -106,6 +105,9 @@
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take the Paste key's path
     };
+    const loadFold = (): void => void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}); // R53
+    if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
+    else setTimeout(loadFold, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
     void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(showTips, { timeout: 2000 }) : setTimeout(showTips, 500)));
     return countScreenTaps((kind) => session.taps.press(kind));
@@ -353,34 +355,9 @@
   $effect(() => {
     if (folded) return openLayer(() => (folded = false));
   });
-  /** A drag down on the handle folds as its tap does; up on the slice unfolds as its tap does. */
-  let dragFrom: { id: number; y: number } | undefined;
-  const dragStart = (e: PointerEvent): void => {
-    e.preventDefault(); // the caret stays in the line
-    dragFrom = { id: e.pointerId, y: e.clientY };
-  };
-  const dragMove = (e: PointerEvent, down: boolean): void => {
-    if (!dragFrom || dragFrom.id !== e.pointerId) return;
-    const dy = e.clientY - dragFrom.y;
-    if (down ? dy < FOLD_PX : dy > -FOLD_PX) return;
-    dragFrom = undefined;
-    if (down) fold("handle");
-    else unfold();
-  };
-  // The swipe on the entry line (keyboard/foldSwipe.ts): down folds, up unfolds; any other pointer is MathLive's
+  /** The handle, the slice and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
+  let Fold = $state.raw<typeof import("./keyboard/Fold.svelte").default | undefined>();
   let entryBox: HTMLDivElement | undefined = $state();
-  $effect(() => {
-    if (!entryBox) return;
-    return foldSwipe(entryBox, {
-      on: () => canFold && (folded || !shell.sheet),
-      snapshot: () => entry.field?.selection,
-      restore: (s) => {
-        const f = entry.field;
-        if (f && s) f.selection = s as typeof f.selection;
-      },
-      fire: (dir) => (dir === "down" ? fold("swipe") : unfold()),
-    });
-  });
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
   /** The key routing (keyboard/route.ts, R15c2) works on this: the models, this component's state and its actions. */
@@ -504,18 +481,9 @@
   </div>
 
   <div class="keys" class:folded data-testid="keys" data-folded={folded} bind:this={keysEl}>
-    <!-- R53: the handle, a grabber on the keypad's top edge (Home and CAS); its 48 × 24 px target lies in the keypad's top
-         padding and the gap above it, over no key. Folded, the keypad is drawn as it was under a 44 px slice (no key
-         reflows) and hidden; the slice is the way back. -->
-    {#if folded}
-      <button type="button" class="slice" data-testid="fold-slice" aria-label={t("keys.unfold")} onpointerdown={dragStart} onpointermove={(e) => dragMove(e, false)} onclick={unfold}>
-        <span class="grip"></span>{t("keys.slice")}
-      </button>
-    {:else if canFold && !shell.sheet}
-      <button type="button" class="handle" data-testid="fold-handle" aria-label={t("keys.fold")} onpointerdown={dragStart} onpointermove={(e) => dragMove(e, true)} onclick={() => fold("handle")}>
-        <span class="grip"></span>
-      </button>
-    {/if}
+    <!-- R53: the handle on the keypad's top edge, and folded the 44 px slice over the keypad, drawn as it was (no key
+         reflows) and hidden (keyboard/Fold.svelte) -->
+    {#if Fold}<Fold {folded} handle={canFold && !shell.sheet} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
     <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}
@@ -614,45 +582,6 @@
   }
   .keys.folded .pad-wrap {
     visibility: hidden;
-  }
-  .handle,
-  .slice {
-    position: absolute;
-    z-index: 3; /* under the picked row's buttons (z 4) and the sheets (z 5) */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0;
-    border: 0;
-    font: inherit;
-    color: var(--muted);
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  /* 48 × 24: the gap above the keypad (the line's bottom padding and the field's) and the pad's top padding */
-  .handle {
-    top: calc(-2 * var(--sp-2));
-    left: calc(50% - var(--touch-big) / 2);
-    width: var(--touch-big);
-    height: calc(3 * var(--sp-2));
-    justify-content: flex-end;
-    background: transparent;
-  }
-  .handle .grip {
-    margin-bottom: var(--sp-05);
-  }
-  .slice {
-    inset: 0;
-    justify-content: center;
-    gap: var(--sp-1);
-    background: var(--panel);
-    font-size: var(--fs-note);
-  }
-  .grip {
-    width: var(--grip-w);
-    height: var(--grip-h);
-    border-radius: calc(var(--grip-h) / 2);
-    background: var(--muted);
   }
   .layer {
     position: absolute;
