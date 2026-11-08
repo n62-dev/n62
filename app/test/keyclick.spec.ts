@@ -19,7 +19,16 @@ async function recordClicks(page: Page): Promise<void> {
 }
 const clicks = (page: Page): Promise<number> => page.evaluate(() => (window as unknown as { __clicks: number[] }).__clicks.length);
 
+/** Turn the click on and wait for its lazy chunk (App's effect imports it): a press before that makes no click, by design. */
+const clickOn = async (page: Page): Promise<void> => {
+  await page.evaluate(async (path) => {
+    window.n62.session.setHaptics({ click: true });
+    await ((await import(/* @vite-ignore */ path)) as typeof import("../src/input/haptics.ts")).loadClick();
+  }, HAPTICS);
+};
+
 const row = (page: Page, id: string) => page.getByTestId("menu").locator(`[data-id="${id}"]`);
+const HAPTICS = "/src/input/haptics.ts";
 const MODE_SHEET = "/src/views/modeSheet.ts";
 type ModeSheet = typeof import("../src/views/modeSheet.ts");
 
@@ -44,14 +53,14 @@ test.describe("the click at finger-down", () => {
   });
 
   test("on: a tap is one click, with the pulse when that is on too, and without it when it is off", async ({ page }) => {
-    await page.evaluate(() => window.n62.session.setHaptics({ click: true }));
+    await clickOn(page);
     expect(await since(page, () => tap(page, ["d7"]))).toEqual({ clicks: 1, pulses: 0 });
     await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
     expect(await since(page, () => tap(page, ["d8"]))).toEqual({ clicks: 1, pulses: 1 });
   });
 
   test("on: a flick and a pad drag are one click each, and still fire; a dead key is one click", async ({ page }) => {
-    await page.evaluate(() => window.n62.session.setHaptics({ click: true }));
+    await clickOn(page);
     await tap(page, ["d1", "d2", "d3", "d4", "d5", "d6"]);
     expect((await since(page, () => drag(page, "left", -64, 0))).clicks).toBe(1); // five steps
     expect((await since(page, () => flick(page, "dot", "up"))).clicks).toBe(1);
