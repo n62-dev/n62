@@ -29,6 +29,7 @@ import {
 import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
 import { TapCounter } from "./taps.svelte.ts";
+import type { UseCounter } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
 import { chipFactsOf, chipOf, HISTORY_LIMIT, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
@@ -219,6 +220,9 @@ export class Session {
   shiftLock = $state(false);
   /** The local count of Shift and Alpha taps (R9, P7 point 4); shown in Settings. */
   readonly taps: TapCounter;
+  /** The results mode's counter (R53, uses.svelte.ts), once loaded: its own chunk, fetched by the first fold or Counters. */
+  usesCounter = $state.raw<UseCounter | undefined>();
+  private usesLoad: Promise<UseCounter> | undefined;
   settings = $state<Settings>(structuredClone(defaultSettings));
   home = $state<HistoryItem[]>([]);
   cas = $state<HistoryItem[]>([]);
@@ -246,6 +250,11 @@ export class Session {
   private savePending = false;
   /** R94: the stored settings are from a newer schema. They are read and kept in memory, never written. */
   private settingsNewer = false;
+
+  /** The results mode's counter (R53), loaded on first use. */
+  uses(): Promise<UseCounter> {
+    return (this.usesLoad ??= import("./uses.svelte.ts").then((m) => (this.usesCounter = new m.UseCounter(this.kv))));
+  }
 
   constructor(calc: Calc, kv: Kv = idbKv) {
     this.kv = kv;

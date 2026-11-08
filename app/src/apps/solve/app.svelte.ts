@@ -239,16 +239,16 @@ export class SolveApp implements AppInstance {
     const none = !this.selected || this.active.length === 0;
     const noValue = !this.selected;
     return [
-      { id: "solve", label: t("solve.solve"), disabled: none, reason: t("why.noEquation"), run: () => void this.solve() },
+      { id: "solve", label: numText("solve.solve"), disabled: none, reason: numText("why.noEquation"), run: () => void this.solve() },
       {
         id: "poly",
-        label: t("solve.polyRoots"),
+        label: numText("solve.polyRoots"),
         disabled: none || this.active.length !== 1,
-        reason: none ? t("why.noEquation") : t("why.oneEquation"),
+        reason: none ? numText("why.noEquation") : numText("why.oneEquation"),
         run: () => void this.polyRoots(),
       },
-      { id: "copy", label: tc("clip.copy"), disabled: noValue, reason: t("why.noEquation"), run: () => void this.copyValue(this.selected) },
-      { id: "shown", label: tc("clip.asShown"), disabled: noValue, reason: t("why.noEquation"), run: () => void this.copyValue(this.selected, true) },
+      { id: "copy", label: tc("clip.copy"), disabled: noValue, reason: numText("why.noEquation"), run: () => void this.copyValue(this.selected) },
+      { id: "shown", label: tc("clip.asShown"), disabled: noValue, reason: numText("why.noEquation"), run: () => void this.copyValue(this.selected, true) },
     ];
   }
 
@@ -331,7 +331,7 @@ export class SolveApp implements AppInstance {
     const names = this.targets();
     if (!this.selected || equations.length === 0) return;
     if (names.length < equations.length) {
-      this.report = { names, info: t("solve.tooFewUnknowns"), warn: true, ok: false };
+      this.report = { names, info: numText("solve.tooFewUnknowns"), warn: true, ok: false };
       return;
     }
     await this.settled(); // the full values of the last answers (F53: never the 12-digit display)
@@ -378,10 +378,10 @@ export class SolveApp implements AppInstance {
   }
 
   private failText(r: SolveOutcome): string {
-    if (r.error === "no-root") return `${t("solve.noRoot")} (${r.info})`;
-    if (r.error === "bad-input") return `${t("solve.badInput")} (${r.info})`;
-    if (r.error === "syntax") return t("solve.syntax");
-    return t("solve.failed");
+    if (r.error === "no-root") return `${numText("solve.noRoot")} (${r.info})`;
+    if (r.error === "bad-input") return `${numText("solve.badInput")} (${r.info})`;
+    if (r.error === "syntax") return numText("solve.syntax");
+    return numText("solve.failed");
   }
 
   private apply(names: string[], r: SolveOutcome): void {

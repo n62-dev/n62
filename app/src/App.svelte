@@ -43,7 +43,9 @@
     shell,
     entry,
     busy: () => busy,
-    insertResult: (item) => insertResult(item),
+    insertResult: (item) => onLine(item, false, false), // (the Menu's list counts its own)
+    recall: (item) => onLine(item, true, false),
+    acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -98,6 +100,9 @@
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take the Paste key's path
     };
+    const loadFold = (): void => void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}); // R53
+    if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
+    else setTimeout(loadFold, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
     void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(showTips, { timeout: 2000 }) : setTimeout(showTips, 500)));
     return countScreenTaps((kind) => session.taps.press(kind));
@@ -319,7 +324,43 @@
    *  the pick); its buttons come with the clipboard code, as after ▲. */
   function pick(i: number | null): void {
     if ((picked = i) !== null) void loadClip();
+    if (i !== null && folded) countUse("pick"); // R53
   }
+  /** Results mode (R53, decisions.md P16): the keypad folded to its 44 px slice, the history over the screen. Home and
+   *  CAS only; never stored, so a reload has the keys up. */
+  let folded = $state(false);
+  const canFold = $derived(shell.app === null);
+  $effect(() => {
+    if (!canFold) folded = false; // an app opened: it has no results mode
+  });
+  /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
+  const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
+  function fold(how: "handle" | "swipe"): void {
+    if (folded || !canFold) return;
+    folded = true;
+    countUse(`fold.${how}`);
+  }
+  /** The keys come back; false when they were up. */
+  function unfold(): boolean {
+    if (!folded) return false;
+    folded = false;
+    return true;
+  }
+  /** A row's value, or with `recall` its entry, goes on the line and the keys come back for it. `count`: false for the
+   *  Menu's list, which counts its own; a second tap on a row and Enter on a pick are counted here. */
+  function onLine(item: HistoryItem, recall: boolean, count = true): void {
+    if (count && folded) countUse(recall ? "recall" : "insert");
+    folded = false;
+    if (recall) entry.set(session.input(item), item.chips);
+    else insertResult(item);
+  }
+  // Android back brings the keys back (a sheet opened over the fold is a later layer: back closes it first)
+  $effect(() => {
+    if (folded) return openLayer(() => (folded = false));
+  });
+  /** The handle, the slice and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
+  let Fold = $state.raw<typeof import("./keyboard/Fold.svelte").default | undefined>();
+  let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
   /** The key routing (keyboard/route.ts, R15c2) works on this: the models, this component's state and its actions. */
@@ -334,7 +375,8 @@
     waiting: [],
     get casKeys() { return casKeys; },
     enter,
-    insertResult,
+    insertResult: (item) => onLine(item, false),
+    recallRow: (item) => onLine(item, true),
     goTo,
     clearKey,
     openSettings,
@@ -346,6 +388,7 @@
     withClip,
     loadClip: () => void loadClip(),
     dead,
+    unfold,
   };
   const press = (key: Key, layer?: Layer, screen?: boolean): void => {
     edited = true;
@@ -389,8 +432,8 @@
           reason={(item) => session.reason(item)}
           marks={session.settings.marks}
           onpick={pick}
-          onrecall={(item) => { edited = true; picked = null; shell.prompt?.cancel(); entry.set(session.input(item), item.chips); }}
-          oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); insertResult(item); }}
+          onrecall={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, true); }}
+          oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, false); }}
           oncancel={() => void cancel()}
           onlongpress={(item) => withClip((c) => c.openRowMenu(item))}
           undo={session.undoCopy?.kind ?? null}
@@ -409,10 +452,10 @@
     <!-- R11: the picked row's actions, items 1-5 of the Menu (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
       {@const Bar = rowBar}
-      <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} onaction={() => (picked = null)} />
+      <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />
     {/if}
 
-    <div class="entry" class:hidden={!shell.showsEntry} data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight}>
+    <div class="entry" class:hidden={!shell.showsEntry} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
       {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
       <!-- R155: one flat dash on the outline's path while a job runs (aria-hidden: the hidden status line names the job); in the
            field's box, where the unit view (units/open.ts) hides it with the field -->
@@ -424,8 +467,9 @@
     <!-- a list that takes letters rises from just above the entry line, over the history or view, and takes the entry
          line's room only when its rows need it; while a pick sheet is over the keypad, a tap in the viewport closes it
          (docs/05 3.1) -->
-    {#if shell.sheet?.letters}
-      {@render sheetView(shell.sheet, "view")}
+    {#if shell.sheet && (shell.sheet.letters || folded)}
+      <!-- R53: folded, every sheet rises from the slice's top edge over the history (a list that takes letters keeps the line) -->
+      {@render sheetView(shell.sheet, "view", shell.sheet.letters ? entryHeight : 0)}
     {:else if shell.sheet}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the Esc and Cancel keys close it too) -->
       <div class="catch" data-testid="sheet-catch" onpointerdown={(e) => { noFocus(e); catchPressed = true; }} onclick={() => {
@@ -435,7 +479,11 @@
     {/if}
   </div>
 
-  <div class="keys" bind:this={keysEl}>
+  <div class="keys" class:folded data-testid="keys" data-folded={folded} bind:this={keysEl}>
+    <!-- R53: the handle on the keypad's top edge, and folded the 44 px slice over the keypad, drawn as it was (no key
+         reflows) and hidden (keyboard/Fold.svelte) -->
+    {#if Fold}<Fold {folded} handle={canFold && !shell.sheet} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
+    <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}
       shift={session.shift}
@@ -450,22 +498,23 @@
       oncount={(key) => session.taps.press(key)}
       ontouch={touched}
     />
+    </div>
     <!-- a pick sheet rises over the maths rows (3–9), anchored at the keypad's bottom edge; the top cluster stays
          uncovered, a tap on it closes the sheet (R144), and no key moves (decisions.md "R21") -->
-    {#if shell.sheet && !shell.sheet.letters}
+    {#if shell.sheet && !shell.sheet.letters && !folded}
       <div class="layer" style:top="{mathsTop}px">{@render sheetView(shell.sheet, "keypad")}</div>
     {/if}
   </div>
 </main>
 
 
-{#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, over: "keypad" | "view")}
+{#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, over: "keypad" | "view", below = entryHeight)}
   {#if sheetChunk.C}
   <sheetChunk.C
     {sheet}
     {over}
     testid={shell.switcherOpen ? "apps" : sheet.id === "find" ? "find" : "menu"}
-    below={entryHeight}
+    {below}
     {keyBox}
     ontap={(i) => shell.picked(sheet.activate(i))}
     onoption={(i, o) => shell.picked(sheet.pickOption(i, o))}
@@ -525,6 +574,14 @@
   .keys {
     position: relative;
   }
+  /* R53: folded to the slice; the pad keeps its size under it, so no key reflows, and is hidden */
+  .keys.folded {
+    height: var(--fold-h);
+    overflow: hidden;
+  }
+  .keys.folded .pad-wrap {
+    visibility: hidden;
+  }
   .layer {
     position: absolute;
     left: 0;
@@ -560,6 +617,8 @@
     padding: var(--sp-2) var(--sp-3);
     /* room for the field before MathLive has loaded, so nothing jumps */
     min-height: var(--entry-h);
+    /* R53: a vertical swipe on the line folds or unfolds the keypad; the browser pans nothing vertically here */
+    touch-action: pan-x;
   }
   .entry.hidden {
     display: none;

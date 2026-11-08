@@ -9,21 +9,24 @@
   import { t } from "../i18n/index.ts";
   import type { HistoryItem } from "../state/session.svelte.ts";
 
-  let { clip, entry, row, height, onaction }: {
+  let { clip, entry, row, height, folded = false, onaction }: {
     clip: ClipActions;
     entry: EntryController;
     row: HistoryItem;
     /** The entry line's height (px): the slot it covers when `over`. */
     height: number;
-    /** A button was pressed: the pick ends before the action runs. */
-    onaction: () => void;
+    /** The keypad is folded (R53): the buttons sit on the slice's top edge, over the line, whatever it holds (a key
+     *  that types drops the pick, so nothing typed is hidden). */
+    folded?: boolean;
+    /** A button was pressed (its id: insert, recall, copy, store, delete): the pick ends before the action runs. */
+    onaction: (id: string) => void;
   } = $props();
 
   const why = $derived(clip.rowWhy(row));
   /** Over the empty entry line (R3), else above it (a tap can pick a row while the line has text; ▲ cannot). Read when
    *  the pick starts or moves (entry.value is not reactive): a key that types drops the pick, so the line cannot
    *  change under the buttons. */
-  const over = $derived((void row, entry.value === ""));
+  const over = $derived((void row, folded || entry.value === ""));
   /** A tap on a button must not take the caret out of the entry line. */
   const noFocus = (e: Event): void => e.preventDefault();
 </script>
@@ -32,7 +35,7 @@
   {#if why}<div class="rowwhy" data-testid="row-why">{why}</div>{/if}
   <div class="rowbar" role="toolbar" aria-label={t("history.actions")} data-testid="row-actions">
     {#each clip.rowButtons(row) as b (b.id)}
-      <button type="button" disabled={b.disabled} onpointerdown={noFocus} onclick={() => { onaction(); b.run?.(); }}>{b.label}</button>
+      <button type="button" disabled={b.disabled} onpointerdown={noFocus} onclick={() => { onaction(b.id); b.run?.(); }}>{b.label}</button>
     {/each}
   </div>
 </div>

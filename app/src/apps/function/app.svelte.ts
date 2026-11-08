@@ -115,9 +115,9 @@ export class FunctionApp implements AppInstance {
   }
   private fmtPoint(c: Cell | undefined): string {
     if (!c) return "…";
-    if (!c.ok) return t("function.undefined");
+    if (!c.ok) return numText("function.undefined");
     // a pole or an undefined value: NaN, as the reference's Num view and Signed area show it (G2 items 19, 22)
-    if (/^[-+]?(infinity|inf|undef)$/.test(c.display)) return t("function.nan");
+    if (/^[-+]?(infinity|inf|undef)$/.test(c.display)) return numText("function.nan");
     return c.value ? (confirmedText(c, this.host.settings) ?? c.display) : c.display;
   }
   /** ⚠: the cell shows more digits than the engine confirmed (the Num table and trace show no other mark). */
@@ -135,7 +135,7 @@ export class FunctionApp implements AppInstance {
   // ---- framework hooks
   entryLabel(view: ViewId): string | undefined {
     if (view === "symb") return `${this.slots.names[this.slots.selected]}(x)=`;
-    if (view === "num") return this.num.edit === "start" ? t("num.start") : t("num.step");
+    if (view === "num") return this.num.edit === "start" ? numText("num.start") : numText("num.step");
     return undefined;
   }
 
@@ -197,23 +197,23 @@ export class FunctionApp implements AppInstance {
   menu(view: ViewId): MenuItem[] {
     if (view === "plot") {
       const none = this.active.length === 0;
-      const why = none ? t("why.noFunction") : undefined;
+      const why = none ? numText("why.noFunction") : undefined;
       return [
-        { id: "root", label: t("fcn.root"), disabled: none, reason: why, run: () => void this.analyze("root") },
-        { id: "extremum", label: t("fcn.extremum"), disabled: none, reason: why, run: () => void this.analyze("extremum") },
-        { id: "intersection", label: t("fcn.intersection"), disabled: none, reason: why, submenu: this.intersectionMenu() },
-        { id: "slope", label: t("fcn.slope"), disabled: none, reason: why, run: () => void this.analyze("slope") },
-        { id: "area", label: t("fcn.area"), disabled: none, reason: why, run: () => this.startArea() },
-        { id: "default", label: t("plot.defaultWindow"), run: () => this.defaultWindow() },
+        { id: "root", label: numText("fcn.root"), disabled: none, reason: why, run: () => void this.analyze("root") },
+        { id: "extremum", label: numText("fcn.extremum"), disabled: none, reason: why, run: () => void this.analyze("extremum") },
+        { id: "intersection", label: numText("fcn.intersection"), disabled: none, reason: why, submenu: this.intersectionMenu() },
+        { id: "slope", label: numText("fcn.slope"), disabled: none, reason: why, run: () => void this.analyze("slope") },
+        { id: "area", label: numText("fcn.area"), disabled: none, reason: why, run: () => this.startArea() },
+        { id: "default", label: numText("plot.defaultWindow"), run: () => this.defaultWindow() },
         { id: "copy", label: tc("clip.copy"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine()) },
         { id: "shown", label: tc("clip.asShown"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine(), true) },
       ];
     }
     if (view === "num")
       return [
-        { id: "start", label: t("num.setStart"), run: () => this.editNum("start") },
-        { id: "step", label: t("num.setStep"), run: () => this.editNum("step") },
-        { id: "csv", label: tc("clip.csv"), disabled: this.numSlots.length === 0, reason: t("why.noFunction"), run: () => void this.copyNum() },
+        { id: "start", label: numText("num.setStart"), run: () => this.editNum("start") },
+        { id: "step", label: numText("num.setStep"), run: () => this.editNum("step") },
+        { id: "csv", label: tc("clip.csv"), disabled: this.numSlots.length === 0, reason: numText("why.noFunction"), run: () => void this.copyNum() },
       ];
     return [];
   }
@@ -267,7 +267,7 @@ export class FunctionApp implements AppInstance {
   // ---- Symb
   define(i: number, latex: string): void {
     const c = compileDefinition(latex, this.host.settings.angle);
-    this.slots.set(i, latex, c.error === "not a function of x" ? t("function.notFunction") : c.error);
+    this.slots.set(i, latex, c.error === "not a function of x" ? numText("function.notFunction") : c.error);
     const next = [...this.compiled];
     next[i] = c;
     this.compiled = next;
@@ -476,8 +476,8 @@ export class FunctionApp implements AppInstance {
     const items: MenuItem[] = this.active
       .filter((i) => i !== f)
       .map((i) => ({ id: `with-${i}`, label: name(i), run: () => void this.analyze("intersection", i) }));
-    items.push({ id: "x-axis", label: t("fcn.xAxis"), run: () => void this.analyze("root") });
-    return { title: t("fcn.intersectionOf", { f: name(f) }), items };
+    items.push({ id: "x-axis", label: numText("fcn.xAxis"), run: () => void this.analyze("root") });
+    return { title: numText("fcn.intersectionOf", { f: name(f) }), items };
   }
   /** `other`: the second function of an intersection. */
   async analyze(kind: "root" | "extremum" | "intersection" | "slope", other?: number): Promise<void> {
@@ -501,7 +501,7 @@ export class FunctionApp implements AppInstance {
 
   startArea(): void {
     this.areaStart = this.trace.x;
-    this.readout = { lines: [{ label: t("fcn.areaFrom"), value: this.fmtX(this.trace.x) }], info: t("fcn.areaHint"), warn: false };
+    this.readout = { lines: [{ label: numText("fcn.areaFrom"), value: this.fmtX(this.trace.x) }], info: numText("fcn.areaHint"), warn: false };
   }
   async finishArea(): Promise<void> {
     const a = this.areaStart;
@@ -521,7 +521,7 @@ export class FunctionApp implements AppInstance {
   private showAnalysis(kind: string, r: AnalysisOutcome, other?: number, a?: string, b?: string): void {
     if (!r.ok) {
       // e.g. a sign change at a pole: not a root. The engine's line says what it found.
-      const msg = t(r.error === "no-root" && kind !== "area" ? "fcn.noResult" : "fcn.failed");
+      const msg = numText(r.error === "no-root" && kind !== "area" ? "fcn.noResult" : "fcn.failed");
       this.readout = { lines: [], info: r.info ? `${msg} ${r.info}` : msg, warn: true };
       return;
     }
@@ -531,13 +531,13 @@ export class FunctionApp implements AppInstance {
     const xn = cellNumber(r.x);
     const yn = cellNumber(r.y);
     if (kind === "area") {
-      lines.push({ label: t("fcn.areaRange"), value: `${this.fmtX(a ?? "")} … ${this.fmtX(b ?? "")}` });
-      lines.push({ label: t("fcn.area"), value: this.fmt(r.value), warn: w(r.value), cell: r.value, primary: true });
+      lines.push({ label: numText("fcn.areaRange"), value: `${this.fmtX(a ?? "")} … ${this.fmtX(b ?? "")}` });
+      lines.push({ label: numText("fcn.area"), value: this.fmt(r.value), warn: w(r.value), cell: r.value, primary: true });
     } else {
       if (r.x) lines.push({ label: "x", value: this.fmt(r.x), warn: w(r.x), cell: r.x, primary: kind !== "slope" });
       if (r.y) lines.push({ label: "y", value: this.fmt(r.y), warn: w(r.y), cell: r.y });
-      if (kind === "slope") lines.push({ label: t("fcn.slope"), value: this.fmt(r.value), warn: w(r.value), cell: r.value, primary: true });
-      if (kind === "extremum" && r.extremum) lines.push({ label: t("fcn.kind"), value: t(`fcn.${r.extremum}`) });
+      if (kind === "slope") lines.push({ label: numText("fcn.slope"), value: this.fmt(r.value), warn: w(r.value), cell: r.value, primary: true });
+      if (kind === "extremum" && r.extremum) lines.push({ label: numText("fcn.kind"), value: numText(`fcn.${r.extremum}`) });
     }
     this.readout = { lines, info: r.info, warn: r.warn };
     if (xn !== undefined && yn !== undefined && Number.isFinite(xn) && Number.isFinite(yn)) {
