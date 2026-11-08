@@ -95,11 +95,10 @@ describe("click (web build)", () => {
     const a = audio();
     vi.resetModules();
     const h = await import("./haptics.ts");
-    h.click();
-    expect(a.starts).not.toHaveBeenCalled(); // until the click code is in, a press makes no click
-    await h.loadClick();
-    h.click();
-    h.click();
+    const click = await h.loadClick(); // until the click code is in, a press has no click to make
+    expect(a.starts).not.toHaveBeenCalled();
+    click();
+    click();
     expect(a.starts).toHaveBeenCalledTimes(2);
     expect(a.contexts).toHaveBeenCalledTimes(1);
   });
@@ -108,13 +107,13 @@ describe("click (web build)", () => {
     vi.stubGlobal("AudioContext", undefined);
     vi.resetModules();
     let h = await import("./haptics.ts");
-    await h.loadClick();
-    expect(() => h.click()).not.toThrow();
+    const first = await h.loadClick();
+    expect(() => first()).not.toThrow();
     vi.stubGlobal("AudioContext", class { constructor() { throw new Error("blocked"); } });
     vi.resetModules();
     h = await import("./haptics.ts");
-    await h.loadClick();
-    expect(() => h.click()).not.toThrow();
+    const second = await h.loadClick();
+    expect(() => second()).not.toThrow();
   });
 });
 
@@ -145,12 +144,12 @@ describe("click (native build)", () => {
     vi.resetModules();
     const h = await import("./haptics.ts");
     await h.loadNative();
-    await h.loadClick();
-    h.click();
+    const click = await h.loadClick();
+    click();
     expect(plugin.click).toHaveBeenCalledTimes(1);
     expect(starts).not.toHaveBeenCalled();
     plugin.click.mockImplementationOnce(() => Promise.reject(new Error("no audio")));
-    h.click();
+    click();
     await new Promise((r) => setTimeout(r, 0));
     expect(starts).toHaveBeenCalledTimes(1);
   });

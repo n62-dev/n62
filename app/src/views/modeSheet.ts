@@ -7,7 +7,7 @@
 import type { MenuItem, SubMenu, ValueOption } from "../apps/types.ts";
 import type { AngleUnit, NumberFormat } from "../calc/port.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
-import { click, hasStrength, loadClick, vibrate } from "../input/haptics.ts";
+import { hasStrength, loadClick, vibrate } from "../input/haptics.ts";
 import { NOTATION_MODES } from "../state/displayMode.ts";
 import { MAX_DIGITS, type DecimalMark, type EntryMode, type MarkStyle, type Session, type UncertaintyView } from "../state/session.svelte.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
@@ -202,7 +202,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
           },
           run: () => {
             session.setHaptics({ click: !s.haptics.click });
-            if (s.haptics.click) void loadClick().then(click); // switched on: it sounds once (when its code is in), so the switch can be heard
+            if (s.haptics.click) void loadClick().then((click) => click()); // switched on: it sounds once (when its code is in), so the switch can be heard
           },
         },
       ],
