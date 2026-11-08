@@ -34,5 +34,5 @@ describe("parser fuzz", () => {
     expect(crashes.slice(0, 5)).toEqual([]);
     expect(slow.slice(0, 5)).toEqual([]);
     expect(ok + rejected).toBe(20000);
-  });
+  }, 60_000); // each parse is held to 200 ms above; the whole loop only needs room when the machine is loaded (the full run has 230 workers)
 });
