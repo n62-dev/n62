@@ -12,9 +12,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ## Decided proposals
 
 ### Pipeline and process
-- **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0. Would change if: Max cannot carry the queue.
+- **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-11-08:** a Giac patch's worker writes its own row in `engine/giac/patches/README.md` (A83; rules section 5). A stray file outside a worktree is logged, warn only (A64 lo-11; A88). A CAS-last cold start, 1507 ms on the Tab One, 7 ms over 1.5 s, does not hold v0.1.0 (A73f2 after the tag). c29's single red is looked for now, not at a second red (F200; A120). Would change if: a stray file does harm before anyone reads the log.
-- **A75's leftovers (Opus pass 97):** the next Opus pass deletes a merged FIX package's file and any `scripts/gc.sh` lists.
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Full text: archive, "Opus pass 96". Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Decided notes, old reports, merged packages' mockups and one-package probes are deleted, not archived. Rule: rules section 10. Full text: archive, "Shortened 2026-11-06 (Opus pass 85)". Would change if: a deleted file is needed back twice a month.
