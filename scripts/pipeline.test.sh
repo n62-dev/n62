@@ -1410,7 +1410,7 @@ out="$(pkrun ron "a sandbox task" --id X3 --branch p1/x3 --checks none)"
 grep -q '^RESULT #[0-9]* X3: MERGED' <<<"$out" && p1has X3 || fail "A75: a task text's run deleted the package file of its id or did not merge: $out"
 out="$(pkrun ron X4 --checks none --no-merge)"
 grep -q '^RESULT #[0-9]* X4: APPROVED, not merged' <<<"$out" && p1has X4 || fail "A75: an unmerged run took phase-1's package file away: $out"
-grep -qE 'package file .*deleted on' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A75: the dry run does not show the package file's delete"
+grep -qE 'package file.* deleted on' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A75: the dry run does not show the package file's delete"
 
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"
