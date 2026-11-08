@@ -2,26 +2,49 @@
 // Android back as Esc for the open layer (R21b, backlog C8). A layer (a pick sheet, Settings in it since R49) pushes
 // one history entry when it opens; the platform's back (the Android WebView's goBack(), a browser's back button,
 // `history.back()`) pops it and closes the layer. A layer closed any other way (Esc, ×, a pick, a tap in the viewport)
-// takes its entry back, so the history never grows and back with nothing open leaves the app. No dependency.
+// takes its entry back, so the history never grows and back with nothing open leaves the app. Layers can overlap (R53:
+// a sheet over the folded keypad): one closed under another stays on the stack, released, and its entry goes back with
+// the layer above it. No dependency.
 
 interface Layer {
   readonly close: () => void;
+  /** Closed some other way while a layer lay over it: its entry waits to go back with that layer's. */
+  released?: boolean;
 }
 
 const stack: Layer[] = [];
-/** history.back() calls whose popstate has not arrived yet: those popstates are ours, not the user's back. */
-let ownPops = 0;
-/** Layers that opened while one of our own pops was pending: pushed when it arrives (a push before it would be undone). */
-const waiting: Layer[] = [];
-/** Layers opened in this task, pushed at its end: a layer that gives way to another in the same update (the Mode sheet
- *  to another sheet) is then taken back first, whatever order the two are seen in. */
+/** Our own traversal has not reached its popstate yet: that popstate is ours, not the user's back. One at a time (two
+ *  in a row can merge into one popstate). */
+let popping = false;
+/** Layers not pushed yet: opened in this task, pushed at its end, so a layer that gives way to another in the same
+ *  update (the Mode sheet to another sheet) is taken back first, whatever order the two are seen in; and while one of
+ *  our own pops is pending, until it arrives (a push before it would be undone). */
 const opening: Layer[] = [];
 
-function settle(): void {
-  for (const l of opening.splice(0)) {
-    if (ownPops > 0) waiting.push(l);
-    else push(l);
+/** Take back the released layers on top, in one traversal; a pending one runs this again when it lands. */
+function takeBack(): void {
+  if (popping) return;
+  let n = 0;
+  while (stack.at(-1)?.released) {
+    stack.pop();
+    n++;
   }
+  if (n === 0) return;
+  popping = true;
+  history.go(-n);
+}
+
+let due = false;
+function atTaskEnd(): void {
+  if (due) return;
+  due = true;
+  queueMicrotask(settle);
+}
+
+function settle(): void {
+  due = false;
+  takeBack();
+  if (!popping) for (const l of opening.splice(0)) push(l);
 }
 let listening = false;
 
@@ -35,13 +58,14 @@ function push(layer: Layer): void {
 }
 
 function onPop(): void {
-  if (ownPops > 0) {
-    ownPops--;
-    if (ownPops === 0) for (const l of waiting.splice(0)) push(l);
+  if (popping) {
+    popping = false;
+    settle();
     return;
   }
   const top = stack.pop();
   top?.close(); // the user's back: the layer closes; its release() finds it gone and does nothing
+  takeBack(); // a released layer it lay over goes too
 }
 
 /** Open a layer: `close` runs when the platform's back pops it. Returns `release`, to call when the layer closes some other way. */
@@ -52,23 +76,15 @@ export function openLayer(close: () => void): () => void {
   }
   const layer: Layer = { close };
   opening.push(layer);
-  if (opening.length === 1) queueMicrotask(settle);
+  atTaskEnd();
   return () => {
     const o = opening.indexOf(layer);
     if (o >= 0) {
-      opening.splice(o, 1); // opened and closed in the same task: it never had an entry
+      opening.splice(o, 1); // closed before it was pushed: it never had an entry
       return;
     }
-    const w = waiting.indexOf(layer);
-    if (w >= 0) {
-      waiting.splice(w, 1);
-      return;
-    }
-    const i = stack.indexOf(layer);
-    if (i < 0) return; // popped by back already
-    stack.splice(i, 1);
-    if (i !== stack.length) return; // not the top (cannot happen with one open layer at a time)
-    ownPops++;
-    history.back();
+    if (!stack.includes(layer)) return; // popped by back already
+    layer.released = true;
+    atTaskEnd(); // (two layers closed in one update: one traversal, whatever order they are seen in)
   };
 }

@@ -35,6 +35,8 @@ export interface RouteCtx {
   readonly casKeys: boolean;
   enter(): void;
   insertResult(item: HistoryItem): void;
+  /** A row's entry back on the line (Enter on a pick without a result). */
+  recallRow(item: HistoryItem): void;
   goTo(view: View): void;
   clearKey(): void;
   openSettings(): void;
@@ -50,6 +52,8 @@ export interface RouteCtx {
   loadClip(): void;
   /** A key that does nothing here (docs/05 3.7): the double haptic. */
   dead(): void;
+  /** Results mode (R53): bring the folded keypad back; false when it is up. */
+  unfold(): boolean;
 }
 
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
@@ -63,11 +67,12 @@ const NAV: Record<string, NavDir> = {
   moveToNextChar: "right",
 };
 
-/** Esc (R15c point 3), once an open sheet or pick has had it: a running job stops, else the line clears. Also a
- *  working row's own Cancel button. */
+/** Esc (R15c point 3), once an open sheet or pick has had it: a running job stops, else the folded keypad comes back
+ *  (R53), else the line clears. Also a working row's own Cancel button. */
 export async function escape(c: RouteCtx): Promise<void> {
   if (await c.shell.cancel()) return;
   if (await c.session.cancel()) return;
+  if (c.unfold()) return;
   c.entry.clear();
 }
 
@@ -196,12 +201,12 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     return true;
   }
   if (action.name === "copy" && item) {
-    c.withClip((x) => void x.copyKey(item)); // the Copy key copies the picked row
+    c.withClip((x) => void x.copyPicked(item)); // the Copy key copies the picked row
     return true;
   }
   if (action.name === "enter" && item) {
     if (item.status === "done") c.insertResult(item);
-    else c.entry.set(c.session.input(item), item.chips); // the line is empty while picking: the entry comes back with its chips
+    else c.recallRow(item); // the line is empty while picking: the entry comes back with its chips
     return true;
   }
   return false;

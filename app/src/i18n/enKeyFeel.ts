@@ -14,11 +14,22 @@ export const enKeyFeel = {
   "settings.counters": "Counters",
   "settings.counters.value": "{n} presses",
   "settings.taps.presses": "Key presses",
-  "settings.taps.shift": "Shift taps",
-  "settings.taps.alpha": "Alpha taps",
+  "settings.taps.shiftAlpha": "Shift / Alpha taps",
   "settings.taps.since": "Counted on this device since",
   "settings.taps.export": "Export the counts",
   "settings.taps.reset": "Reset the counter",
+  /** R53: the grabber on the keypad's top edge folds it into results mode; the 44 px slice left brings it back
+   *  (keyboard/Fold.svelte, its own chunk). */
+  "keys.fold": "Show history",
+  "keys.unfold": "Show keypad",
+  "keys.slice": "Keys",
+  /** R53: the results mode's counts (decisions.md P16), one row in Counters and its own level. */
+  "settings.uses": "Results mode",
+  "settings.uses.value": "{n} folds",
+  "settings.uses.handle": "Folds by the handle",
+  "settings.uses.swipe": "Folds by a swipe",
+  "settings.uses.pick": "Rows picked while folded",
+  "settings.uses.actions": "Row actions while folded",
   "settings.on": "On",
   "settings.off": "Off",
 } as const;
