@@ -37,6 +37,7 @@ async function rows(p: Page, n = 3): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await open(page);
+  await page.locator(HANDLE).waitFor(); // the controls' chunk is in (loaded when idle after the start)
 });
 
 test("the handle: a 48 × 24 px button on the keypad's top edge over no key; a tap folds to the 44 px slice, a tap on the slice brings the keys back", async ({ page }) => {
@@ -161,6 +162,7 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
   await isFolded(page, true);
   await open(page); // a reload
   await isFolded(page, false);
+  await expect(page.locator(HANDLE)).toBeVisible();
 });
 
 test("folded: a tap picks, the second inserts and unfolds; Copy and Delete stay down, Recall and Store ▶ unfold; a letter types; ☰ rises over the history", async ({ page }) => {

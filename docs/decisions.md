@@ -9,6 +9,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
 
+**R53:** Counters would have 8 rows (docs/05 3.4: 7), so Shift and Alpha share one ("3 / 5"); the new key `uses` is not backed up. Recommended: keep both (else Since joins Reset; `uses` backed up as `taps`).
+
 **A73f1: a CAS-last cold start is ready at 1507 ms** (Tab One), 7 ms over 1.5 s (Home 1323), in the worker's wasm instantiate. Recommended: A73f2 (gorge, the loader's times in a measure build, ~0.3 d) after v0.1.0; it does not hold the release.
 
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
