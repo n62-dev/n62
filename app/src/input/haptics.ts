@@ -54,38 +54,25 @@ export function vibrate(strength01: number, ms: number): void {
   webVibrate(duration);
 }
 
-let audio: AudioContext | undefined;
-/** A66, the web build: one short click made with Web Audio (no file), at the press. The context is made at the first one,
- *  which is a touch (a user gesture, so the browser lets it sound). */
-const webClick = (): void => {
-  try {
-    if (typeof AudioContext === "undefined") return;
-    audio ??= new AudioContext();
-    if (audio.state === "suspended") void audio.resume().catch(() => {});
-    const t0 = audio.currentTime;
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    osc.frequency.value = 2400;
-    gain.gain.setValueAtTime(0.2, t0);
-    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.015);
-    osc.connect(gain);
-    gain.connect(audio.destination);
-    osc.start(t0);
-    osc.stop(t0 + 0.02);
-  } catch {
-    // no Web Audio, or the browser forbids it: no click
-  }
-};
+// A66: the key click is off by default, so its code (input/click.ts) is a lazy chunk, fetched when the setting is on.
+let clicker: ((native: N62HapticsPlugin | null) => void) | null = null;
+let clickLoad: Promise<void> | undefined;
 
-/** Make one key click (A66). Never throws, never waits. */
+/** Fetch the click code (at start when the setting is on, and when the switch turns on). Never throws; until it is in,
+ *  `click()` makes no sound. */
+export function loadClick(): Promise<void> {
+  clickLoad ??= import("./click.ts").then(
+    (m) => {
+      clicker = m.click;
+    },
+    () => {
+      clickLoad = undefined; // the chunk did not load: a later switch or start tries again
+    },
+  );
+  return clickLoad;
+}
+
+/** Make one key click (A66) when its code has loaded, else nothing. Never throws, never waits. */
 export function click(): void {
-  if (native !== null) {
-    try {
-      native.click().catch(webClick);
-      return;
-    } catch {
-      // an older shell without click(): fall through to the web click
-    }
-  }
-  webClick();
+  clicker?.(native);
 }

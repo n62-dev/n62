@@ -8,7 +8,7 @@
   import type { EntryController } from "./entry/controller.ts";
   import { t } from "./i18n/index.ts";
   import { openLayer } from "./input/backLayer.ts";
-  import { click, vibrate } from "./input/haptics.ts";
+  import { click, loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
   import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
@@ -292,6 +292,11 @@
       },
     );
   }
+
+  /** A66f1: the click's code is a lazy chunk; fetch it at start when the setting is on (and after a restore or preset). */
+  $effect(() => {
+    if (session.settings.haptics.click) void loadClick();
+  });
 
   /** A finger went down on the keypad: vibrate and click when switched on in Settings (one pulse and one click per touch,
    *  R112, A66). */

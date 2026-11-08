@@ -58,7 +58,7 @@ public class N62HapticsPlugin extends Plugin {
             double env = Math.exp(-6.0 * i / n);
             pcm[i] = (short) (Math.sin(2 * Math.PI * 2500 * i / rate) * env * 9000);
         }
-        AudioTrack track = new AudioTrack.Builder()
+        AudioTrack.Builder builder = new AudioTrack.Builder()
             .setAudioAttributes(new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
@@ -69,9 +69,10 @@ public class N62HapticsPlugin extends Plugin {
                 .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                 .build())
             .setBufferSizeInBytes(n * 2)
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
-            .build();
+            .setTransferMode(AudioTrack.MODE_STATIC);
+        // setPerformanceMode is API 26; minSdk is 24 (an Android 7 device would throw NoSuchMethodError, which is no RuntimeException)
+        if (Build.VERSION.SDK_INT >= 26) builder.setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY);
+        AudioTrack track = builder.build();
         track.write(pcm, 0, n);
         return track;
     }

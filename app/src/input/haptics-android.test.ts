@@ -29,6 +29,11 @@ describe("N62Haptics Android side", () => {
     expect(plugin).toContain("Settings.System.SOUND_EFFECTS_ENABLED");
     expect(plugin).toContain("AudioTrack.MODE_STATIC");
   });
+  // minSdk is 24: setPerformanceMode is API 26, and a NoSuchMethodError is no RuntimeException, so the call is guarded
+  it("calls AudioTrack.Builder.setPerformanceMode (API 26) only on API 26+", () => {
+    expect(plugin).toMatch(/SDK_INT >= 26\) builder\.setPerformanceMode\(/);
+    expect(plugin.match(/setPerformanceMode\(/g)).toHaveLength(1);
+  });
   it("is registered before super.onCreate and the manifest has VIBRATE", () => {
     const main = read("java/dev/n62/calc/MainActivity.java");
     expect(main.indexOf("registerPlugin(N62HapticsPlugin.class)")).toBeGreaterThan(0);
