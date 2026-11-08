@@ -15,7 +15,7 @@
 ## How it runs
 - **Desktop:** `app/test/core.spec.ts` (R74) replays every case in Playwright on the real engine, one fresh page per case, in parallel; a reporter prints `CORE <passed>/<active> (known <n>, needs <n>)` once at the end. It is part of `npm run test:e2e`, so every pipeline run checks it.
 - **Device:** the same cases through the night's device's WebView (A32): a test build with WebView debugging, Playwright attached over adb, the same replay code. At night the pipeline's device step runs it after each Opus pass (A33; docs/shifts/rules.md section 6).
-- **By hand:** MORNING.md, the owner, about ten minutes on the night's device, on the APK the night checked (owner, 2026-10-24).
+- **By hand:** MORNING.md, the owner, about ten minutes before a release tag, on the APK the last automatic run checked (decisions.md P25).
 
 ## State on 2026-10-27 (desktop)
 66 cases: 63 active, 3 need R4a. All 63 pass (`CORE 63/63 (known 0, needs 3)`, Opus pass 86 on `13cc2da`). c61–c66 were added with the owner on 2026-10-26: the Format key, a b/c, polar in DEG, an error row then the fix, Ans inside a line, a CAS function after a relaunch. One green night is enough for them.

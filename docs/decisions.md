@@ -12,6 +12,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ## Decided proposals
 
 ### Pipeline and process
+- **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-11-08:** a Giac patch's worker writes its own row in `engine/giac/patches/README.md` (A83; rules section 5). A stray file outside a worktree is logged, warn only (A64 lo-11; A88). A CAS-last cold start, 1507 ms on the Tab One, 7 ms over 1.5 s, does not hold v0.1.0 (A73f2 after the tag). c29's single red is looked for now, not at a second red (F200; A120). Would change if: a stray file does harm before anyone reads the log.
 - **A75's leftovers (Opus pass 97):** the next Opus pass deletes a merged FIX package's file and any `scripts/gc.sh` lists.
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a finished package ends NOT MERGED on it.
