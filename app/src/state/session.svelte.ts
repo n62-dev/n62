@@ -45,6 +45,8 @@ export interface HapticsSettings {
   on: boolean;
   strength: number;
   ms: number;
+  /** The optional key click at each press (A66), apart from the vibration: it sounds with the vibration off too. */
+  click: boolean;
 }
 export const HAPTIC_MS_RANGE = { min: 5, max: 100 } as const;
 
@@ -85,7 +87,7 @@ export const defaultSettings: Settings = {
   uncertainty: "sigma",
   marks: "reason",
   groupSep: "thin", // R125
-  haptics: { on: false, strength: 50, ms: 15 },
+  haptics: { on: false, strength: 50, ms: 15, click: false },
   look: defaultLook(),
 };
 
@@ -160,6 +162,17 @@ const errorText = (code: CalcError | undefined, fallback: string): string =>
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.round(n)));
 const clampDigits = (n: number): number => Math.min(MAX_DIGITS, Math.max(1, Math.round(n)));
 
+/** The haptics settings from a stored or merged record: a missing number is the default's, the rest is clamped. */
+function hapticsOf(h: Partial<HapticsSettings>): HapticsSettings {
+  const d = defaultSettings.haptics;
+  return {
+    on: h.on === true,
+    strength: clamp(typeof h.strength === "number" ? h.strength : d.strength, 0, 100),
+    ms: clamp(typeof h.ms === "number" ? h.ms : d.ms, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max),
+    click: h.click === true,
+  };
+}
+
 /**
  * The settings from what was stored (docs/04 6.2): field by field, so a wrong or missing field keeps its default.
  * `schema` absent is version 1 (digits ≤ 15, formats std/sci/eng); version 2 allows digits ≤ 30 and `pfx`; version 3
@@ -182,16 +195,7 @@ export function migrateSettings(saved: unknown, firstLook: Look = defaultSetting
   if (typeof x["digits"] === "number" && Number.isFinite(x["digits"])) s.digits = clampDigits(x["digits"]);
   if (Array.isArray(x["fmtCycle"])) s.fmtCycle = normalizeCycle(x["fmtCycle"].filter(isFmtMode));
   if (typeof x["fixDecimals"] === "number" && Number.isFinite(x["fixDecimals"])) s.fixDecimals = clamp(x["fixDecimals"], 0, 12);
-  const h = x["haptics"];
-  if (h && typeof h === "object") {
-    const hh = h as Partial<HapticsSettings>;
-    const d = defaultSettings.haptics;
-    s.haptics = {
-      on: hh.on === true,
-      strength: clamp(typeof hh.strength === "number" ? hh.strength : d.strength, 0, 100),
-      ms: clamp(typeof hh.ms === "number" ? hh.ms : d.ms, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max),
-    };
-  }
+  s.haptics = hapticsOf((x["haptics"] ?? {}) as Partial<HapticsSettings>); // (no record, or one from before A66: the defaults, click off)
   s.look = validLook(x["look"], firstLook);
   const newer = typeof x["schema"] === "number" && x["schema"] > SETTINGS_SCHEMA;
   return { settings: s, migrated: !newer && x["schema"] !== SETTINGS_SCHEMA, newer };
@@ -413,12 +417,7 @@ export class Session {
     this.save();
   }
   setHaptics(h: Partial<HapticsSettings>): void {
-    const next = { ...this.settings.haptics, ...h };
-    this.settings.haptics = {
-      on: next.on === true,
-      strength: clamp(next.strength, 0, 100),
-      ms: clamp(next.ms, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max),
-    };
+    this.settings.haptics = hapticsOf({ ...this.settings.haptics, ...h });
     this.save();
   }
 

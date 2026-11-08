@@ -344,7 +344,7 @@ describe("Settings, a level of the sheet (R49)", () => {
   });
   it("Key vibration: the switch, then strength (the browser cannot set it), length and Try it follow", () => {
     const s = settings(3);
-    expect(s.level.items.map((x) => x.id)).toEqual(["haptics", "strength", "ms", "try"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["haptics", "strength", "ms", "try", "click"]);
     expect(byId(s, "ms")?.disabled).toBe(true);
     expect(byId(s, "try")?.disabled).toBe(true);
     expect(s.pickNumber(1)).toEqual({ kind: "stay" });
@@ -360,6 +360,18 @@ describe("Settings, a level of the sheet (R49)", () => {
     s.right();
     expect(session.settings.haptics.strength).toBe(50); // disabled: nothing happens
     expect(s.pickNumber(4)).toEqual({ kind: "stay" }); // Try it
+  });
+  it("Key click (A66): a switch of its own, off, that works with the vibration off and stays on the sheet", () => {
+    const s = settings(3);
+    const row = byId(s, "click");
+    expect(row?.selected).toBe(false);
+    expect(row?.disabled).toBeFalsy();
+    expect(session.settings.haptics.on).toBe(false);
+    expect(s.pickNumber(5)).toEqual({ kind: "stay" });
+    expect(session.settings.haptics).toMatchObject({ on: false, click: true });
+    expect(byId(s, "click")?.selected).toBe(true);
+    expect(s.pickNumber(5)).toEqual({ kind: "stay" });
+    expect(session.settings.haptics.click).toBe(false);
   });
   it("Counters: ▲ ▼ walk round the ends; an information row does nothing; Reset runs and stays", () => {
     const s = settings(4);

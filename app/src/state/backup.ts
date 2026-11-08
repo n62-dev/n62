@@ -133,6 +133,7 @@ function actionOk(a: unknown): boolean {
     throw e;
   }
 }
+const bool = (x: unknown): boolean => typeof x === "boolean";
 const whole = (x: unknown, lo: number, hi: number): boolean => typeof x === "number" && Number.isInteger(x) && x >= lo && x <= hi;
 /** An object whose every field has a rule that keeps it; a field it lacks is not checked. Own rules only: JSON.parse
  *  makes `"__proto__"` an ordinary key, and `rules["__proto__"]` would be Object.prototype (not a function). */
@@ -164,7 +165,7 @@ export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = 
   fmtCycle: (x) => Array.isArray(x) && canon(normalizeCycle(x.filter(isFmtMode))) === canon(x),
   // R122: the nested groups check the fields they hold; a field missing (an older file) is filled by migrateSettings
   // at the next start, as it fills one missing from a stored record. A field this version does not know is a fault.
-  haptics: (x) => fields(x, { on: (v) => typeof v === "boolean", strength: (v) => whole(v, 0, 100), ms: (v) => whole(v, 5, 100) }), // HAPTIC_MS_RANGE
+  haptics: (x) => fields(x, { on: bool, strength: (v) => whole(v, 0, 100), ms: (v) => whole(v, 5, 100), click: bool }), // HAPTIC_MS_RANGE
   look: (x) => isObject(x) && Object.entries(validLook(x, defaultLook())).every(([k, v]) => !(k in x) || x[k] === v) && Object.keys(x).every((k) => Object.hasOwn(defaultLook(), k)),
 };
 
