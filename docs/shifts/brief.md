@@ -80,11 +80,7 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 | 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
 
 ### Lane B queue (the release, then the engine)
-[A57](packages/A57.md) runs by day; the night review's queue goes on in [its note](../research/night-review-2026-11-02.md) section 2.
-
-| Step | What | Agent, model | Branch | After |
-|---|---|---|---|---|
-| 488 | [A66](packages/A66.md) an optional key click, off by default (the night's device) | annabell, Sonnet | `p1/annabell-keyclick` | – |
+[A57](packages/A57.md) runs by day; the night review's queue goes on in [its note](../research/night-review-2026-11-02.md) section 2. No rows left: A66 merged (A66f1, 7a9e113e); its device check is a backlog line.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
