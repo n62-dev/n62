@@ -108,7 +108,9 @@ test.describe("the level", () => {
 test.describe("R153: N62 in teal, Black & White, Solarized", () => {
   /** The first frame of a start with `mirror` as the stored look (index.html's localStorage mirror), main.ts held. */
   async function firstFrame(page: Page, mirror: Record<string, unknown>): Promise<{ attrs: (string | null)[]; bg: string; started: boolean }> {
-    await page.evaluate((m) => localStorage.setItem("n62.look", JSON.stringify(m)), mirror);
+    // An init script, not a setItem on the open page: the app's start-up applyLook writes the mirror after applyTheme and
+    // can land after a setItem, so the reload read N62 with no switch (2 of 3 runs). This is the last write before index.html's inline script.
+    await page.addInitScript((m) => localStorage.setItem("n62.look", JSON.stringify(m)), mirror);
     let release: () => void = () => {};
     const held = new Promise<void>((res) => (release = res));
     await page.route(/\/src\/main\.ts/, async (route) => {
