@@ -415,12 +415,42 @@ function tapsItems(session: Session, env: SettingsEnv): MenuItem[] {
   const taps = session.taps;
   return [
     { id: "presses", label: keyFeelText("settings.taps.presses"), keep: true, get value() { return String(taps.counts.presses); } },
-    { id: "shift", label: keyFeelText("settings.taps.shift"), keep: true, get value() { return String(taps.counts.shift); } },
-    { id: "alpha", label: keyFeelText("settings.taps.alpha"), keep: true, get value() { return String(taps.counts.alpha); } },
+    // P7 point 4's two counts share a row (R53: the level keeps docs/05 3.4's seven rows with Results mode in it)
+    { id: "taps", label: keyFeelText("settings.taps.shiftAlpha"), keep: true, get value() { return `${taps.counts.shift} / ${taps.counts.alpha}`; } },
     switchedRow(session), // R88, R89: the presets applied
+    usesRow(session), // R53: the results mode's counts, one row with its own level
     { id: "since", label: keyFeelText("settings.taps.since"), keep: true, get value() { return taps.counts.since || "—"; } },
     // R127: the counts per key and layer as a file (R128 writes the same text into the sync folder); only where the app gives the file port
     ...(env.data ? [{ id: "export", label: keyFeelText("settings.taps.export"), run: () => env.data?.((c) => c.saveCounts(taps.counts)) }] : []),
     { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => taps.reset() },
   ];
+}
+
+/** R53 (decisions.md P16's removal test): "Results mode ›", the counts under the IndexedDB key `uses` (state/uses.svelte.ts),
+ *  loaded when Counters is drawn: folds by the handle and by a swipe, rows picked while folded, row actions while folded,
+ *  since, reset. */
+function usesRow(session: Session): MenuItem {
+  const u = () => session.usesCounter;
+  const n = (get: (c: NonNullable<ReturnType<typeof u>>) => number) => () => String(u() ? get(u()!) : 0);
+  const row = (id: string, label: string, value: () => string): MenuItem => ({ id, label, keep: true, get value() { return value(); } });
+  return {
+    id: "uses",
+    label: keyFeelText("settings.uses"),
+    get value() {
+      void session.uses(); // (its chunk, once)
+      return keyFeelText("settings.uses.value", { n: n((c) => c.folds)() });
+    },
+    submenu: {
+      title: keyFeelText("settings.uses"),
+      remember: false,
+      items: [
+        row("handle", keyFeelText("settings.uses.handle"), n((c) => c.get("fold.handle"))),
+        row("swipe", keyFeelText("settings.uses.swipe"), n((c) => c.get("fold.swipe"))),
+        row("pick", keyFeelText("settings.uses.pick"), n((c) => c.get("pick"))),
+        row("actions", keyFeelText("settings.uses.actions"), n((c) => c.actions)),
+        row("since", keyFeelText("settings.taps.since"), () => u()?.state.since || "—"),
+        { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => void session.uses().then((c) => c.reset()) },
+      ],
+    },
+  };
 }

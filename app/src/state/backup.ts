@@ -38,8 +38,9 @@ export const DROPPED: readonly string[] = ["units.history"];
 /** Keys of docs/04 6.2 that stay out: `defsStarts` is per install (restored, it could make the engine skip the replay,
  *  G19); `backup.undo` (R38b) is the restore's own safety copy; `tipsSeen` (R15c4) belongs to this install: a restore
  *  on a new one shows the first-start tips once; `backup.last` (R96) is when this install last saved one, and
- *  `backup.offered` (R122) when it last offered one as a web download. */
-export const LEFT_OUT: readonly string[] = ["defsStarts", "backup.undo", "tipsSeen", "backup.last", "backup.offered"];
+ *  `backup.offered` (R122) when it last offered one as a web download; `uses` (R53) is the results mode's removal-test
+ *  count, which judges this install's use (decisions.md P16). */
+export const LEFT_OUT: readonly string[] = ["defsStarts", "backup.undo", "tipsSeen", "backup.last", "backup.offered", "uses"];
 
 export interface Backup {
   "n62-backup": 1;

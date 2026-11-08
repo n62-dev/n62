@@ -50,6 +50,8 @@ export interface RouteCtx {
   loadClip(): void;
   /** A key that does nothing here (docs/05 3.7): the double haptic. */
   dead(): void;
+  /** Results mode (R53): bring the folded keypad back; false when it is up. */
+  unfold(): boolean;
 }
 
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
@@ -63,11 +65,12 @@ const NAV: Record<string, NavDir> = {
   moveToNextChar: "right",
 };
 
-/** Esc (R15c point 3), once an open sheet or pick has had it: a running job stops, else the line clears. Also a
- *  working row's own Cancel button. */
+/** Esc (R15c point 3), once an open sheet or pick has had it: a running job stops, else the folded keypad comes back
+ *  (R53), else the line clears. Also a working row's own Cancel button. */
 export async function escape(c: RouteCtx): Promise<void> {
   if (await c.shell.cancel()) return;
   if (await c.session.cancel()) return;
+  if (c.unfold()) return;
   c.entry.clear();
 }
 

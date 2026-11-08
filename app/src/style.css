@@ -86,6 +86,10 @@
   --line-h: 34px;
   --slot-h: 40px;
   --entry-h: 66px;
+  /* R53: the folded keypad's slice (the smallest touch target, docs/05 3.3) and the grabber on the keypad's top edge */
+  --fold-h: 44px;
+  --grip-w: 32px;
+  --grip-h: 4px;
   --doc-min: 120px;
   --tile-w: 30px;
   --tile-h: 22px;

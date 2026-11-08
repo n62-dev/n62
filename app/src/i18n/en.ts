@@ -93,6 +93,10 @@ export const en = {
   /** R135f2: a tap on a result too long to draw puts nothing on the line. */
   "render.tooLongInsert": "Too long to insert: Copy holds it",
   "history.actions": "Row actions",
+  /** R53: the grabber on the keypad's top edge folds it into results mode; the 44 px slice left brings it back. */
+  "keys.fold": "Show history",
+  "keys.unfold": "Show keypad",
+  "keys.slice": "Keys",
   "history.recall": "Use this entry again",
   "history.usesHome": "stored in Home",
   "history.usesCas": "stored in CAS",
