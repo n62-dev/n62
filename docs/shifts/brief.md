@@ -88,7 +88,7 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 |---|---|---|---|---|
 | 555 | S36 check the 16 sources of the materials sample (result by Wed 11-11) | sandra, Opus | `p1/sandra-samplesources` | – |
 | 556 | A89 night.sh reads an escaped quote as a quote | annabell, Sonnet | `p1/annabell-nightquote` | – |
-| 557 | [A88](packages/A88.md) the pipeline logs a file a worker left outside its worktree | annabell, Sonnet | `p1/annabell-straywarn` | – |
+| 557 | A88 the pipeline logs a file a worker left outside its worktree | annabell, Sonnet | `p1/annabell-straywarn` | – |
 | 558 | [A120](packages/A120.md) why c29 went red once on the Tab One (F200) | annabell, Sonnet | `p1/annabell-c29loop` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 

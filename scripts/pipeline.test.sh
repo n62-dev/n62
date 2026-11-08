@@ -1426,5 +1426,50 @@ out="$(pkrun ron X4 --checks none --no-merge)"
 grep -q '^RESULT #[0-9]* X4: APPROVED, not merged' <<<"$out" && p1has X4 || fail "A75: an unmerged run took phase-1's package file away: $out"
 grep -qE 'package file.* deleted on' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A75: the dry run does not show the package file's delete"
 
+# A88: a file a worker leaves outside its worktree is logged, never removed, and never changes the run's result. The stand-in worker
+# makes one file in the main checkout's parent ($tmp), or a folder in .claude/worktrees/ that git worktree list does not know, or
+# a worktree of its own (known), or nothing; the log line names only what appeared during the run.
+sx="$tmp/sx"; mkdir -p "$sx/bin" "$sx/tools" "$sx/docs/shifts" "$sx/app/node_modules/x"; git init -q -b main "$sx"
+cp "$sb/tools/devlock.sh" "$sx/tools/"; : > "$sx/docs/shifts/brief.md"; echo t > "$sx/app/keep"; cp "$sb/bin/npm" "$sx/bin/"
+cat > "$sx/bin/claude" <<'STUB'
+#!/bin/sh
+case "$*" in
+  *"--agent sofia"*) echo APPROVED; exit 0;;
+esac
+case "$SX_MODE" in
+  parent) echo x > "$SX_PARENT/stray-$SX_MODE.txt";;
+  loc) echo x > "$SX_PARENT/stray-loc.txt";;
+  worktrees) mkdir -p "$SX_MAIN/.claude/worktrees/stray-dir";;
+  own) git -C "$SX_MAIN" worktree add -q -b p1/side "$SX_MAIN/.claude/worktrees/side" phase-1;;
+esac
+echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; echo done
+STUB
+chmod +x "$sx/bin/claude"; git -C "$sx" add -A; gc "$sx" init; git -C "$sx" branch phase-1
+# a comm that records the locale it runs in (the list is sorted under LC_ALL=C, so comm must run there too)
+printf '#!/bin/sh\necho "${LC_ALL:-unset}" >> "$SX_COMMLOG"\nexec %s "$@"\n' "$(command -v comm)" > "$sx/bin/comm"; chmod +x "$sx/bin/comm"
+sxrun() { (cd "$sx" && env -u LC_ALL LANG=en_US.UTF-8 SX_COMMLOG="$tmp/comm.log" PATH="$sx/bin:$PATH" GIAC_OUT="$sx/engine" SX_MAIN="$sx" SX_PARENT="$tmp" SX_MODE="$1" "$script" ron "sandbox task" --id "$2" --branch "p1/${2,,}" --checks none 2>&1); }
+out="$(sxrun parent S1)"
+grep -q '^RESULT #[0-9]* S1: MERGED' <<<"$out" || fail "A88: a stray file in the parent changed the run's result: $out"
+grep -qE "S1: WARN new file outside the worktree: $tmp/stray-parent.txt\$" "$sx/.coord/log.md" || fail "A88: no WARN line for a file left in the main checkout's parent: $(grep S1 "$sx/.coord/log.md")"
+[[ -f "$tmp/stray-parent.txt" ]] || fail "A88: the stray file was removed (it only warns)"
+out="$(sxrun worktrees S2)"
+grep -q '^RESULT #[0-9]* S2: MERGED' <<<"$out" || fail "A88: a stray folder in .claude/worktrees changed the run's result: $out"
+grep -qE "S2: WARN new file outside the worktree: $sx/.claude/worktrees/stray-dir\$" "$sx/.coord/log.md" || fail "A88: no WARN line for a folder in .claude/worktrees: $(grep S2 "$sx/.coord/log.md")"
+[[ -d "$sx/.claude/worktrees/stray-dir" ]] || fail "A88: the stray folder was removed (it only warns)"
+out="$(sxrun own S3)"
+grep -q '^RESULT #[0-9]* S3: MERGED' <<<"$out" || fail "A88: a run that made a worktree of its own did not merge: $out"
+grep -q 'S3: WARN' "$sx/.coord/log.md" && fail "A88: the run's own new worktree is warned about: $(grep S3 "$sx/.coord/log.md")"
+git -C "$sx" worktree remove --force "$sx/.claude/worktrees/side" 2>/dev/null; git -C "$sx" branch -D p1/side >/dev/null 2>&1
+out="$(sxrun none S4)"
+grep -q '^RESULT #[0-9]* S4: MERGED' <<<"$out" || fail "A88: a clean run did not merge: $out"
+grep -q 'S4: WARN' "$sx/.coord/log.md" && fail "A88: a run that left nothing outside logs a WARN: $(grep S4 "$sx/.coord/log.md")"
+# A88f2: names that sort differently in C and in en_US (SY99 before drafts in C) stay in the before-list; a new entry is reported
+# once, the old ones not, and comm ran under LC_ALL=C
+mkdir -p "$tmp/SY99" "$tmp/drafts"; : > "$tmp/comm.log"
+out="$(sxrun loc S5)"
+grep -q '^RESULT #[0-9]* S5: MERGED' <<<"$out" || fail "A88: the mixed-case run did not merge: $out"
+[[ "$(grep -c 'S5: WARN' "$sx/.coord/log.md")" -eq 1 ]] && grep -qE "S5: WARN new file outside the worktree: $tmp/stray-loc.txt\$" "$sx/.coord/log.md" || fail "A88: mixed-case before-list: not exactly the one new file reported: $(grep S5 "$sx/.coord/log.md")"
+[[ -s "$tmp/comm.log" ]] && ! grep -qv '^C$' "$tmp/comm.log" || fail "A88: comm did not run under LC_ALL=C: $(sort -u "$tmp/comm.log" | paste -sd' ' -)"
+
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"
