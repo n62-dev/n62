@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The five Appearance values (R50e, families R150, R153, R156): family, brightness, High contrast, Plain keys, Key shadows. Types, defaults and validation only,
+// The six Appearance values (R50e, families R150, R153, R156, R163): family, brightness, High contrast, Plain keys, Key shadows,
+// Key pop-ups. Types, defaults and validation only,
 // so the session (the start chunk) can hold them; the family names and colours are in lookView.ts and the mapping to
 // applyTheme in lookApply.ts (both lazy). The inline script of index.html reads the same values from a localStorage
 // mirror before the first paint.
@@ -15,6 +16,9 @@ export interface Look {
   plain: boolean;
   /** Key shadows (R156): a dark line under each key; on by default, and for a stored look from before it. */
   shadow: boolean;
+  /** Key pop-ups (R163): the bubbles over the keypad, the key pop (R162) and the flick bubble; on by default, and for a
+   *  stored look from before it. Read by the keypad only (no first-paint attribute: nothing shows before a touch). */
+  pops: boolean;
 }
 
 export const BRIGHTNESS: readonly BrightnessPref[] = ["system", "light", "dark"];
@@ -24,11 +28,11 @@ export const RETIRED_FAMILIES: readonly string[] = ["graphite", "gruvbox", "nord
 
 /** The look of a first start: Dark in the Android app, System in the PWA (docs/05 3.10); High contrast when the system asks. */
 export function defaultLook(native = false, moreContrast = false): Look {
-  return { family: "n62", brightness: native ? "dark" : "system", contrast: moreContrast, plain: false, shadow: true };
+  return { family: "n62", brightness: native ? "dark" : "system", contrast: moreContrast, plain: false, shadow: true, pops: true };
 }
 
-/** A stored look, field by field: a wrong or missing field keeps `fallback`'s; a missing `shadow` (a look stored before
- *  R156) is on, the default. */
+/** A stored look, field by field: a wrong or missing field keeps `fallback`'s; a missing `shadow` or `pops` (a look stored
+ *  before R156 or R163) is on, the default. */
 export function validLook(x: unknown, fallback: Look): Look {
   const o = (x && typeof x === "object" ? x : {}) as Partial<Record<keyof Look, unknown>>;
   const family = FAMILY_IDS.find((f) => f === o.family) ?? (typeof o.family === "string" && RETIRED_FAMILIES.includes(o.family) ? "n62" : fallback.family);
@@ -39,5 +43,6 @@ export function validLook(x: unknown, fallback: Look): Look {
     contrast: typeof o.contrast === "boolean" ? o.contrast : fallback.contrast,
     plain: typeof o.plain === "boolean" ? o.plain : fallback.plain,
     shadow: typeof o.shadow === "boolean" ? o.shadow : o.shadow === undefined || fallback.shadow,
+    pops: typeof o.pops === "boolean" ? o.pops : o.pops === undefined || fallback.pops,
   };
 }
