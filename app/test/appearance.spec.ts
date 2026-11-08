@@ -41,15 +41,16 @@ test.beforeEach(async ({ page }, info) => {
 });
 
 test.describe("the level", () => {
-  test("Mode, 6, 1: Theme with its dots and name, Brightness, and two switches with a line each", async ({ page }) => {
+  test("Mode, 6, 1: Theme with its dots and name, Brightness, and three switches with a line each", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d1"]);
     await expect(title(page)).toHaveText("Mode › Settings › Appearance");
-    await expect(sheet(page).getByRole("menuitem")).toHaveCount(4);
+    await expect(sheet(page).getByRole("menuitem")).toHaveCount(5);
     await expect(row(page, "theme").getByTestId("row-dots").locator("i")).toHaveCount(5);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("N62");
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("System");
     await expect(row(page, "contrast").getByTestId("row-hint")).toHaveText("Text at 7:1, outlined keys");
     await expect(row(page, "plain").getByTestId("row-hint")).toHaveText("No colour coding");
+    await expect(row(page, "shadow").getByTestId("row-hint")).toHaveText("A dark line under each key");
   });
 
   test("by keys: ▶ ◀ step the theme in place, Enter lists the three, a digit picks and the sheet stays", async ({ page }) => {
@@ -71,7 +72,7 @@ test.describe("the level", () => {
     await sheetKey(page, ["down", "right", "right"]); // Brightness: Light, Dark
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("Dark");
     await tap(page, ["d3", "d4"]);
-    expect(await look(page)).toEqual({ family: "bw", brightness: "dark", contrast: true, plain: true });
+    expect(await look(page)).toEqual({ family: "bw", brightness: "dark", contrast: true, plain: true, shadow: true });
     await expect.poll(() => attrs(page)).toEqual(["bw", "dark", "high", "plain"]); // the lazy CSS is in first
   });
 
@@ -156,9 +157,9 @@ test.describe("survives a reload", () => {
     await row(page, "brightness").getByTestId("step-up").tap(); // Light
     await row(page, "contrast").tap();
     await row(page, "plain").tap();
-    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true });
+    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true });
     await reload(page);
-    expect(await look(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true });
+    expect(await look(page)).toEqual({ family: "solarized", brightness: "light", contrast: true, plain: true, shadow: true });
     expect(await attrs(page)).toEqual(["solarized", "light", "high", "plain"]);
     await tap(page, ["@mode", "d6", "d1"]);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("Solarized");
@@ -170,7 +171,7 @@ test.describe("survives a reload", () => {
   test("each of the four values, set by keys", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d1"]);
     await sheetKey(page, ["left", "down", "left", "d3", "d4"]); // Solarized (left wraps), Dark, High contrast, Plain keys
-    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "dark", contrast: true, plain: true });
+    await expect.poll(() => stored(page)).toEqual({ family: "solarized", brightness: "dark", contrast: true, plain: true, shadow: true });
     await reload(page);
     expect(await attrs(page)).toEqual(["solarized", "dark", "high", "plain"]);
     await tap(page, ["@mode", "d6", "d1"]);
@@ -180,7 +181,7 @@ test.describe("survives a reload", () => {
   test("switching the switches off again survives too", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d1", "d3", "d4", "d3", "d4"]);
     await expect.poll(() => attrs(page)).toEqual(["n62", "dark", null, null]);
-    await expect.poll(() => stored(page)).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false });
+    await expect.poll(() => stored(page)).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true });
     await reload(page);
     expect(await attrs(page)).toEqual(["n62", "dark", null, null]);
   });
