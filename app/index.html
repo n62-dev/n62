@@ -38,10 +38,14 @@
     <script>
       // Too-old WebView check (ES5, feature detection only, no UA sniffing). Inline and English on purpose:
       // the i18n table lives in the bundle, which an old WebView cannot even parse.
-      // Needs: optional chaining (Chrome 80), WebAssembly legacy exception handling (Chrome 95, used by the Giac engine).
+      // Needs (minimum WebView Chrome 111, R160): optional chaining (Chrome 80), container units (105, the round pad),
+      // WebAssembly legacy exception handling (95, the Giac engine), CSS color-mix (111, the keypad colours).
       (function () {
         var ok = true;
         try { new Function("var a = null; return a?.b;"); } catch (e) { ok = false; }
+        try {
+          ok = ok && CSS.supports("color", "color-mix(in srgb, red, blue)") && CSS.supports("width", "1cqi");
+        } catch (e) { ok = false; }
         try {
           // (module (func (try (catch_all)))) : validates only where wasm exception handling exists
           ok = ok && typeof WebAssembly === "object" && WebAssembly.validate(new Uint8Array(
