@@ -45,7 +45,7 @@ One block per hunt: a heading `## <prefix>: <title>` (the prefix labels the find
 ## vr: this period's ron merges
 **Runs when:** the merges hold at least one `Merge p1/ron-*` (step 0a's "ron" count).
 - Every `Merge p1/ron-*` of the merges, up to `{BASE}`.
-- Per merge: its package file as it stood at the merge's first parent (`git show <merge>^1:docs/shifts/packages/<ID>.md`; it's deleted after the merge), its report (`git log -1 <merge>^2`) and its diff (`git diff <merge>^1 <merge>`).
+- Per merge: its package file as it stood at the merge's first parent (`git show <merge>^1:docs/shifts/packages/<ID>.md`; the merge deletes it), its report (`git log -1 <merge>^2`) and its diff (`git diff <merge>^1 <merge>`).
 - Check: each "Done when" line really met; tests that would fail on the parent (pick the riskiest test per package and judge it by reading, or run it as a single file at the parent through `git show` into `{RUN}/probes/` only if it's cheap, else "(to verify)"); invented expected values; keys that moved (`docs/03-feature-analysis.md` section 0, rules 5–13); scope creep; i18n of new strings.
 - Many merges: cover the riskiest first (entry, stored data, numbers), and list the ones you only skimmed.
 
