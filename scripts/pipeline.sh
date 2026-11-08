@@ -662,7 +662,7 @@ agent_start() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [
 stray_note() { stray_list "$main" > "$run/stray-before.txt" 2>/dev/null || : > "$run/stray-before.txt"; }
 stray_warn() {
   local f
-  while IFS= read -r f; do [[ -z "$f" ]] || log "pipeline #$n $id: WARN new file outside the worktree: $f"; done < <(comm -13 "$run/stray-before.txt" <(stray_list "$main" 2>/dev/null) 2>/dev/null || true)
+  while IFS= read -r f; do [[ -z "$f" ]] || log "pipeline #$n $id: WARN new file outside the worktree: $f"; done < <(LC_ALL=C comm -13 "$run/stray-before.txt" <(stray_list "$main" 2>/dev/null) 2>/dev/null || true)
   return 0
 }
 run_agent() { stray_note; agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; stray_warn; }
