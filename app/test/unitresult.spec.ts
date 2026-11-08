@@ -114,6 +114,49 @@ test.describe("the unit result view (R62)", () => {
     await expect(page.getByTestId("find")).toBeVisible();
   });
 
+  // R159f2: a finger of radius 16 that lands 2 px beside the chip (the chip is 24 px high) reaches it as pointerdown and pointerup,
+  // but the point is not on it, so the pick on pointerup does not run; the click the browser makes then picks (Opus pass 102:
+  // the result stayed km/h and the press counter still added one). A centre tap picks once and counts once.
+  const presses = (page: Page): Promise<number> => page.evaluate(() => window.n62.session.taps.counts.presses);
+  /** A finger of radius 16 down and up at `y(height)` below the chip's top and its centre's x, through CDP. The chip's box is read
+   *  once it has stopped moving (the row's layout shifts a few px after it is drawn), so the point is where the chip is. */
+  const touchAt = async (page: Page, target: Locator, y: (height: number) => number): Promise<void> => {
+    let box = await target.boundingBox();
+    for (let n = 0; n < 40; n++) {
+      await page.waitForTimeout(50);
+      const next = await target.boundingBox();
+      const same = box !== null && next !== null && box.x === next.x && box.y === next.y && box.width === next.width && box.height === next.height;
+      box = next;
+      if (same && n >= 3) break;
+    }
+    if (!box) throw new Error("the chip is not visible");
+    const at = [{ x: Math.round(box.x + box.width / 2), y: Math.round(box.y + y(box.height)), id: 1, radiusX: 16, radiusY: 16 }];
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: at });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await cdp.detach();
+  };
+
+  test("a real touch of radius 16 at the centre of the m/s chip picks it once and counts one press (R159f2)", async ({ page }) => {
+    await kmh(page);
+    const before = await presses(page);
+    const target = chip(page, "m/s");
+    await touchAt(page, target, (h) => h / 2);
+    await expect(result(page)).toHaveAttribute("data-unit", "m/s");
+    await page.waitForTimeout(300); // (a second pick, if the click made one, would be a second press)
+    expect(await presses(page)).toBe(before + 1);
+  });
+
+  test("a real touch of radius 16 at 2 px below the m/s chip picks it and counts one press (R159f2)", async ({ page }) => {
+    await kmh(page);
+    const before = await presses(page);
+    const target = chip(page, "m/s");
+    await touchAt(page, target, (h) => h + 2);
+    await expect(result(page)).toHaveAttribute("data-unit", "m/s");
+    await page.waitForTimeout(300);
+    expect(await presses(page)).toBe(before + 1);
+  });
+
   test("the row by keys (▼ ▶ Enter) picks what a tap on the same chip picks; Esc leaves the row, then the view", async ({ page }) => {
     await kmh(page);
     const row = await texts(page);
