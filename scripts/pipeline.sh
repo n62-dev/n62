@@ -34,10 +34,11 @@
 #   scripts/pipeline.sh report
 #                           the night's shift report, written and committed on phase-1 by a fresh agent
 #   scripts/pipeline.sh selftest [ignored options]
-#                           A47a: the shell tests (scripts/pipeline.test.sh, scripts/night.test.sh, scripts/gc.test.sh, tools/devlock.test.sh); logs and
+#                           A47a: the shell tests (SELFTESTS in scripts/pipeline-lib.sh: pipeline, night, gc, devlock, release-guard, ...); logs and
 #                           prints `RESULT selftest: PASSED` or `RESULT selftest: FAILED (<test>: <first failing line>)`
 #
-# Lifecycle: bundle → worker (own worktree from phase-1) → the merge queue (A47b): the run takes integ, merges phase-1 into
+# Lifecycle: bundle → worker (own worktree from phase-1) → the package's own file deleted on the branch in a commit of its own (A75; not
+# for a FIX id or a task text) → the merge queue (A47b): the run takes integ, merges phase-1 into
 # the branch (a conflict is a resolve round), runs the cheap checks, then sofia's audit of `git diff -U5 phase-1...<branch>` plus
 # the acceptance criteria beside the long checks (A84: the round waits for both), and on APPROVED `git merge --no-ff --signoff
 # <the audited sha>` into phase-1 (NOT MERGED when the branch is not at that sha), promotes the engine and releases integ; so a merge commit's
@@ -438,7 +439,7 @@ fi
 [[ $# -ge 2 ]] || die "usage: pipeline.sh <ron|gorge|annabell|sandra> \"<ID or task>\" [options]"
 agent="$1"; task="$2"; shift 2
 case "$agent" in ron|gorge|annabell|sandra) ;; *) die "unknown agent $agent";; esac
-branch=""; id=""; model="sonnet"; effort="high"; audit_model="auto"; checks="auto"; merge=1; dry=0; nowork=0
+branch=""; id=""; pkg_drop=""; model="sonnet"; effort="high"; audit_model="auto"; checks="auto"; merge=1; dry=0; nowork=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --branch) branch="$2"; shift 2;; --id) id="$2"; shift 2;; --model) model="$2"; shift 2;;
@@ -459,6 +460,7 @@ if [[ "$task" =~ ^[A-Z][0-9]+[a-z0-9]*$ ]]; then
   id="${id:-$task}"
   pkg="docs/shifts/packages/$task.md"
   p1file "$pkg" || die "package $task has no package file $pkg on phase-1"
+  ! package_shaped "$task" || pkg_drop="$pkg"  # A75: a package's own file goes with its merge; a FIX id's file stays
   git show "phase-1:$pkg" > "$spec_file"
   heading="$(head -n1 "$spec_file")"
   # shellcheck disable=SC2016
@@ -571,6 +573,8 @@ if [[ $dry -eq 1 ]]; then
   echo "checks: $checks; merge: $merge; audit model: $audit_model; no-worker: $nowork"
   echo "checks: docs,typecheck,vitest always; + size, e2e when app/ changed; + redfirst when the package says its tests fail on phase-1 or the stock build; + golden and its stages when engine or parser changed; + shell when scripts/ or tools/*.sh changed"
   echo "checks order (auto): docs, typecheck, size, redfirst, vitest, golden, stages, e2e, shell (A83: the cheap ones first); every queue round runs the whole list"
+  if [[ -n "$pkg_drop" ]]; then echo "package file: $pkg_drop deleted on $branch in a commit of its own before each queue entry (A75; phase-1 keeps it until the merge, so <merge>^1 has it)"
+  else echo "package file: none deleted (a FIX id or a task text)"; fi
   echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two) and never enters the queue"
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
@@ -840,6 +844,25 @@ if [[ -z "$(git -C "$wt" log --oneline "phase-1..HEAD")" ]]; then
   log "pipeline #$n $id: NOT MERGED (no commits on $branch)"; echo "RESULT #$n $id: NOT MERGED (no commits; worktree $wt kept)"; exit 1
 fi
 
+# A75: the package's own file is deleted on its branch, in a commit of its own, before each queue entry and again after the queue's
+# merge of phase-1 (a branch older than the file gets it from there), so the audited tree and the merge have it gone; phase-1 keeps
+# it until the merge, so the night review reads it at <merge>^1, and a run that ends unmerged leaves it in place. A FIX id and a task
+# text delete nothing (pkg_drop is empty). The same commit unlinks it in every tracked Markdown file (`[R156](packages/R156.md)` becomes
+# `R156`: docs-check fails on a link to a missing file); the row stays for the Opus pass.
+package_file_drop() {
+  [[ -n "$pkg_drop" ]] && git -C "$wt" cat-file -e "HEAD:$pkg_drop" 2>/dev/null || return 0
+  local f unlinked=()
+  while IFS= read -r f; do
+    [[ -n "$f" && "$f" != "$pkg_drop" ]] || continue
+    package_link_strip "$wt/$f" "$f" "$pkg_drop" && unlinked+=("$f")
+  done < <(git -C "$wt" grep -lF "$(basename "$pkg_drop")" -- '*.md' 2>/dev/null || true)
+  if ! { git -C "$wt" rm -q -- "$pkg_drop" && { [[ ${#unlinked[@]} -eq 0 ]] || git -C "$wt" add -- "${unlinked[@]}"; } &&
+         git -C "$wt" commit -q -s -m "chore($id): delete its package file and the links to it, merged with the package (A75)" -- "$pkg_drop" "${unlinked[@]}"; } > "$run/pkg-drop.log" 2>&1; then
+    die "could not delete $pkg_drop on $branch: $(tail -n 1 "$run/pkg-drop.log" | cut -c1-160)"
+  fi
+  log "pipeline #$n $id: package file $pkg_drop deleted on $branch ($(git -C "$wt" log -1 --format=%h))"
+}
+
 # A47b: the merge queue. The run takes integ (waits up to 7200 s, logged); while it holds it nothing else merges into phase-1, so
 # the checks and the audit read the branch with today's phase-1 merged in, and that is what merges. A stop ends the run.
 queue_stop() {  # <why>: leaves the queue and ends the run, the branch and the worktree kept
@@ -857,6 +880,7 @@ queue_enter() {
   in_queue=1
   integ_clean "$integ" || dirty_stop
   merge_phase1
+  package_file_drop  # A75: a merge of phase-1 into a branch older than the package file brings it back
   queue_node_modules  # the merge may have brought a new dependency
   [[ $nowork -eq 0 || $first_entry -eq 0 ]] || rounds=$((rounds + merge_conflicts))  # review-only: its first resolve round is a fix round (A10)
   first_entry=0
@@ -900,6 +924,7 @@ fail_line() { local l; l="$(first_failing_line "$1")"; echo "$(head -n 1 "$1")${
 while :; do
   select_engine  # a branch with its own engine key builds it before it queues (host-cpu only)
   verdict=""; audit_pid=""; audit_ran=0; crc=0
+  package_file_drop  # A75: before the pre-flight, so the docs check and the audit read the tree that merges
   if ! preflight "$rounds"; then  # A83: the cheap checks before the queue, without integ
     log "pipeline #$n $id: pre-flight failed (round $rounds): $(fail_line "$run/preflight-$rounds.txt")"
     reason="the pre-flight failed"; feedback="$run/preflight-$rounds.txt"

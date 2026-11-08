@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Test for ./build.sh --release (A7): each refusal happens before any build step, a good setup passes the guard, and
 # tools/release-verify.sh accepts only the pinned certificate. No Gradle, no engine, no network: a fake `npm` in PATH marks
-# "the first build step was reached" and stops the build. Run: tools/test-release-guard.sh
+# "the first build step was reached" and stops the build. Run: tools/release-guard.test.sh (in SELFTESTS, A75)
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/.." && pwd)"
@@ -116,5 +116,5 @@ fail_case "37 form, other certificate" "mismatch" "V2 Signer: certificate SHA-25
 [[ "$(tr -d ':\n ' < "$root/android/release-cert.sha256" | tr 'A-F' 'a-f')" == "$digest" ]] || fail "android/release-cert.sha256 is not the owner's certificate"
 [[ "$(grep -c . "$root/android/release-cert.sha256")" == 1 ]] || fail "android/release-cert.sha256 is not one line"
 
-[[ $fails -eq 0 ]] || { echo "test-release-guard.sh: $fails failure(s)" >&2; exit 1; }
-echo "test-release-guard.sh: ok"
+[[ $fails -eq 0 ]] || { echo "release-guard.test.sh: $fails failure(s)" >&2; exit 1; }
+echo "release-guard.test.sh: ok"

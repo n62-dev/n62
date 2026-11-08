@@ -16,6 +16,15 @@ echo b > engine/giac/build-wasm.sh; echo "# c" > CLAUDE.md; echo "# d" > docs/RE
 printf '# n\n**Status (2026-10-20): decided.** x\n' > docs/research/done.md
 printf '# n\n**Status (2026-10-20): open.** x\n' > docs/research/open.md
 git add -A; git commit -qm init
+# A75: reports age by their last commit, not their mtime (a fresh worktree's checkout time); merged package files are listed
+mkdir -p docs/shifts/packages
+dated() { GIT_AUTHOR_DATE="$(date -d "$1" -R)" GIT_COMMITTER_DATE="$(date -d "$1" -R)" git commit -qm "$2"; }
+echo r > docs/shifts/2026-01-01-night-report.md; echo r > docs/shifts/2026-01-02-check-report-2.md; git add docs/shifts; dated '8 days ago' old-reports
+echo r > docs/shifts/2026-01-03-night-report.md; git add docs/shifts; dated '6 days ago' new-report
+touch docs/shifts/2026-01-01-night-report.md docs/shifts/2026-01-02-check-report-2.md; touch -d '30 days ago' docs/shifts/2026-01-03-night-report.md
+for p in X1 X2 X3; do printf '### ron, %s: x, branch `p1/%s`\n' "$p" "${p,,}" > "docs/shifts/packages/$p.md"; done; git add docs/shifts/packages; git commit -qm packages
+git checkout -q -b p1/x1; git commit -q --allow-empty -m w; git checkout -q phase-1; git merge -q --no-ff -m 'Merge p1/x1: X1 (pipeline run 5)' p1/x1; git branch -q -d p1/x1
+git checkout -q -b p1/x2; git commit -q --allow-empty -m w; git checkout -q phase-1; git merge -q --no-ff -m 'Merge p1/x2: X2f1 (pipeline run 6)' p1/x2; git branch -q -d p1/x2
 # a branch with other engine inputs (keeps its key), a merged branch checked out in a worktree
 git branch -q p1/x; git checkout -q p1/x; echo b2 > engine/giac/build-wasm.sh; git commit -qam x; git checkout -q phase-1
 git branch -q p1/merged; git worktree add -q "$tmp/wt" p1/merged
@@ -67,6 +76,14 @@ grep -qF "$sgone" <<<"$out" || fail "A69: dry run does not list the scratch fold
 grep -qF "$slive" <<<"$out" && fail "A69: dry run lists a live run's scratch folder"
 [[ -d "$sgone" ]] || fail "A69: dry run removed a scratch folder"
 grep -qF open.md <<<"$out" && fail "lists an open note"
+grep -qF 'done.md' <<<"$(grep -A3 'Decided research notes' <<<"$out")" && grep -q 'Decided research notes (delete (rules section 10)' <<<"$out" || fail "A75: the decided note is not listed under delete (rules section 10)"
+grep -q 'move to docs/archive' <<<"$out" && fail "A75: gc still says move decided notes to docs/archive/"
+grep -qF '2026-01-01-night-report.md' <<<"$out" || fail "A75: a report whose last commit is 8 days old (mtime now) is not listed"
+grep -qF '2026-01-02-check-report-2.md' <<<"$out" || fail "A75: a *-report-2.md whose last commit is 8 days old is not listed"
+grep -qF '2026-01-03-night-report.md' <<<"$out" && fail "A75: a report whose last commit is 6 days old (mtime 30 days) is listed"
+grep -qF 'docs/shifts/packages/X1.md' <<<"$out" || fail "A75: a package file whose id has a merge commit on phase-1 is not listed"
+grep -qF 'docs/shifts/packages/X2.md' <<<"$out" && fail "A75: a package file is listed for its FIX id's merge"
+grep -qF 'docs/shifts/packages/X3.md' <<<"$out" && fail "A75: an unmerged package's file is listed"
 grep -qE 'space freed' <<<"$out" || fail "no space freed line"
 grep -qE 'saving' <<<"$out" || fail "no gzip saving line"
 grep -q 'git branch -d: .*p1/merged' <<<"$out" && fail "checked-out branch listed as deletable"

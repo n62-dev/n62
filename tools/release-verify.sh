@@ -6,7 +6,7 @@
 # `V2 Signer: certificate SHA-256 digest: <hex>` (one line per scheme, A8f2): every line with `certificate SHA-256 digest:`
 # counts whatever its prefix, a `public key SHA-256 digest` line never does, and the distinct values must be exactly one.
 # On any other outcome the APK is deleted and the exit code is 1.
-#   tools/release-verify.sh <apk>      # APKSIGNER=<path> and RELEASE_CERT_FILE=<file> override the defaults (tools/test-release-guard.sh)
+#   tools/release-verify.sh <apk>      # APKSIGNER=<path> and RELEASE_CERT_FILE=<file> override the defaults (tools/release-guard.test.sh)
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 apk="${1:?usage: release-verify.sh <apk>}"

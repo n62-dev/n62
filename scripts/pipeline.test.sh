@@ -1248,8 +1248,8 @@ a64q 'Last commit abc, NOT done' 'Open questions: none' || fail "A64f1: 'Last co
 a64q 'Open questions: the bundle has no A64 section' || fail "A64: 'the bundle has no A64 section' does not fire"
 [[ "$(task_question_line "$tmp/q-a64")" == 'Open questions: the bundle has no A64 section' ]] || fail "A64: task_question_line does not print the line that fired: $(task_question_line "$tmp/q-a64")"
 grep -q 'task_question_line "$run/' "$here/pipeline.sh" || fail "A64: pipeline.sh does not name the line that fired with task_question_line"
-# (f) the two idle shell tests are in SELFTESTS (run by `pipeline.sh selftest` and the shell check) and in tools/README.md
-for t in tools/manifest-backup.test.sh tools/release-gate.test.sh; do
+# (f) the idle shell tests (A55; release-guard, A75) are in SELFTESTS (run by `pipeline.sh selftest` and the shell check) and in tools/README.md
+for t in tools/manifest-backup.test.sh tools/release-gate.test.sh tools/release-guard.test.sh; do
   printf '%s\n' "${SELFTESTS[@]}" | grep -qx "$t" || fail "A55: $t is not in SELFTESTS"
   [[ -x "$here/../$t" ]] || fail "A55: $t is not executable"
   grep -qF "$(basename "$t")" "$here/../tools/README.md" || fail "A55: tools/README.md does not name $t"
@@ -1385,6 +1385,38 @@ grep -q 'B2: checks failed (round 0)' "$ab/.coord/log.md" && grep -q 'B2: audit 
 out="$(AB_TC_FAIL=1 abrun "$script" annabell "ab task" --id B3 --branch p1/b3 --checks docs,typecheck,e2e 2>&1)"
 grep -q '^RESULT #[0-9]* B3: NOT MERGED (the checks failed twice' <<<"$out" || fail "A84 (d): a failing typecheck does not end as NOT MERGED after two fix rounds: $out"
 grep -q '^audit' "$ab/seen" 2>/dev/null && fail "A84 (d): a failed cheap check started an audit: $(cat "$ab/seen")"
+
+# A75: a run of a package deletes its package file on the branch, in a commit of its own before the queue, so the audited tree and
+# the merge have it gone; a FIX id and a task text delete nothing; a run that ends unmerged leaves phase-1's file in place
+pk="$tmp/pk"; mkdir -p "$pk/bin" "$pk/tools" "$pk/docs/shifts/packages" "$pk/app/node_modules/x"; git init -q -b main "$pk"
+cp "$sb/tools/devlock.sh" "$here/../tools/docs-check.mjs" "$here/../tools/docs-check.test.mjs" "$pk/tools/"; cp "$sb/bin/claude" "$sb/bin/npm" "$pk/bin/"; echo t > "$pk/app/keep"
+# fix round 1: the brief links each queued package's file (docs-check fails on a link to a missing file), so the delete unlinks it
+printf '| 1 | [X1](packages/X1.md) one | ron |\n| 2 | [X1f1](packages/X1f1.md) fix |\n| 3 | [X4](packages/X4.md) four |\n' > "$pk/docs/shifts/brief.md"
+printf 'see [the X1 text](shifts/packages/X1.md#why)\n' > "$pk/docs/notes.md"
+for p in X1 X1f1 X3 X4; do printf '### ron, %s: a sandbox package, branch `p1/%s`\nbody\n' "$p" "${p,,}" > "$pk/docs/shifts/packages/$p.md"; done
+git -C "$pk" add -A; gc "$pk" init; git -C "$pk" branch phase-1
+pkrun() { (cd "$pk" && env -u SB_DIRTY PATH="$pk/bin:$PATH" GIAC_OUT="$pk/engine" "$script" "$@" 2>&1); }
+p1has() { [[ "$(git -C "$pk" cat-file -t "phase-1:docs/shifts/packages/$1.md" 2>/dev/null)" == blob ]]; }
+out="$(pkrun ron X1 --checks docs)"
+grep -q '^RESULT #[0-9]* X1: MERGED' <<<"$out" || fail "A75: the package run did not merge: $out"
+p1has X1 && fail "A75: phase-1 still has docs/shifts/packages/X1.md after the run merged"
+dc="$(git -C "$pk" log -1 --format=%H --diff-filter=D phase-1^2 -- docs/shifts/packages/X1.md 2>/dev/null)"
+[[ -n "$dc" && "$(git -C "$pk" show --name-only --format= "$dc" | sort | paste -sd' ' -)" == "docs/notes.md docs/shifts/brief.md docs/shifts/packages/X1.md" ]] || fail "A75: no commit of its own on p1/x1 deletes the package file and its links: $(git -C "$pk" log --stat --format=%s phase-1^2 -3)"
+[[ "$(git -C "$pk" show phase-1:docs/shifts/brief.md)" == $'| 1 | X1 one | ron |\n| 2 | [X1f1](packages/X1f1.md) fix |\n| 3 | [X4](packages/X4.md) four |' ]] || fail "A75: the brief's row of X1 is gone or still links, or another row changed: $(git -C "$pk" show phase-1:docs/shifts/brief.md)"
+[[ "$(git -C "$pk" show phase-1:docs/notes.md)" == "see the X1 text" ]] || fail "A75: a link from another folder (with an anchor) still points to the deleted file: $(git -C "$pk" show phase-1:docs/notes.md)"
+(cd "$pk/.claude/worktrees/phase-1" && node tools/docs-check.mjs >/dev/null 2>&1) || fail "A75: docs-check fails on phase-1 after the X1 merge"
+[[ "$(git -C "$pk" cat-file -t phase-1^2:docs/shifts/packages/X1.md 2>/dev/null)" != blob ]] || fail "A75: the audited commit (the merge's second parent) still has the package file"
+p1has X1f1 && p1has X3 && p1has X4 || fail "A75: the X1 run deleted another package's file"
+git -C "$pk" show phase-1^1:docs/shifts/packages/X1.md >/dev/null 2>&1 || fail "A75: the merge's first parent lacks the package file (night review reads it there)"
+lq="$(grep -n 'X1: in the queue' "$pk/.coord/log.md" | head -n1 | cut -d: -f1)"; ld="$(grep -n 'X1: package file .* deleted' "$pk/.coord/log.md" | head -n1 | cut -d: -f1)"
+[[ -n "$ld" && -n "$lq" && "$ld" -lt "$lq" ]] || fail "A75: the delete is not logged before the queue: $(grep X1 "$pk/.coord/log.md")"
+out="$(pkrun ron X1f1 --checks none)"
+grep -q '^RESULT #[0-9]* X1f1: MERGED' <<<"$out" && p1has X1f1 || fail "A75: a FIX id's run deleted its file or did not merge: $out"
+out="$(pkrun ron "a sandbox task" --id X3 --branch p1/x3 --checks none)"
+grep -q '^RESULT #[0-9]* X3: MERGED' <<<"$out" && p1has X3 || fail "A75: a task text's run deleted the package file of its id or did not merge: $out"
+out="$(pkrun ron X4 --checks none --no-merge)"
+grep -q '^RESULT #[0-9]* X4: APPROVED, not merged' <<<"$out" && p1has X4 || fail "A75: an unmerged run took phase-1's package file away: $out"
+grep -qE 'package file.* deleted on' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A75: the dry run does not show the package file's delete"
 
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"
