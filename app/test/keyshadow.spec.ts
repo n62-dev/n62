@@ -19,7 +19,7 @@ const show = (page: Page, look: Look): Promise<void> =>
   page.evaluate(async (l) => {
     const url = "/src/theme/lookApply.ts";
     const m = (await import(/* @vite-ignore */ url)) as typeof import("../src/theme/lookApply.ts");
-    await m.applyLook(l);
+    await m.applyLook({ ...l, pops: true }); // (Key pop-ups, R163: not drawn by the look)
   }, look);
 
 interface Drawn {

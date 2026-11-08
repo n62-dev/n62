@@ -41,16 +41,17 @@ test.beforeEach(async ({ page }, info) => {
 });
 
 test.describe("the level", () => {
-  test("Mode, 6, 1: Theme with its dots and name, Brightness, and three switches with a line each", async ({ page }) => {
+  test("Mode, 6, 1: Theme with its dots and name, Brightness, and four switches with a line each (Key pop-ups: R163)", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d1"]);
     await expect(title(page)).toHaveText("Mode › Settings › Appearance");
-    await expect(sheet(page).getByRole("menuitem")).toHaveCount(5);
+    await expect(sheet(page).getByRole("menuitem")).toHaveCount(6);
     await expect(row(page, "theme").getByTestId("row-dots").locator("i")).toHaveCount(5);
     await expect(row(page, "theme").getByTestId("sheet-value")).toHaveText("N62");
     await expect(row(page, "brightness").getByTestId("sheet-value")).toHaveText("System");
     await expect(row(page, "contrast").getByTestId("row-hint")).toHaveText("Text at 7:1, outlined keys");
     await expect(row(page, "plain").getByTestId("row-hint")).toHaveText("No colour coding");
     await expect(row(page, "shadow").getByTestId("row-hint")).toHaveText("A dark line under each key");
+    await expect(row(page, "pops").getByTestId("row-hint")).toHaveText("A bubble over the key you press or flick");
   });
 
   test("by keys: ▶ ◀ step the theme in place, Enter lists the three, a digit picks and the sheet stays", async ({ page }) => {

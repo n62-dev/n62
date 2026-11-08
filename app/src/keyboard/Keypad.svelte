@@ -22,6 +22,7 @@
     cas = false,
     app = false,
     sheet,
+    pops = true,
     onpress,
     oncount = () => {},
     ontouch = () => {},
@@ -41,6 +42,9 @@
     /** A sheet is open (docs/05 3.1): keys are read by sheetKeys.ts, and the ones that do nothing there look dead.
      *  `filter`: the open list takes letters. */
     sheet?: { filter: boolean } | undefined;
+    /** Key pop-ups (R163, Appearance): false draws no bubble over the pad, neither the key pop nor the flick bubble; the
+     *  flicks still fire. */
+    pops?: boolean;
     /** A key fires; `layer` overrides the Shift/Alpha state: "primary" for a trackpad step, "shift" for a flick up,
      *  "alpha" for a flick down (on Shift and Alpha themselves: the lock flicks). A press that closes an open sheet
      *  (R144) is the gesture's last: a drag steps nothing more and a held ⌫ does not repeat until the finger lifts. */
@@ -178,7 +182,7 @@
   }
   function showPop(target: Key | "pad" | undefined, el: HTMLElement | undefined): void {
     // (a key that does nothing in this layer, drawn dimmed, types nothing: no pop)
-    const text = target && target !== "pad" && el && !isPadKey(target) && !dead(target) ? face(target) : "";
+    const text = pops && target && target !== "pad" && el && !isPadKey(target) && !dead(target) ? face(target) : "";
     if (!el || text === "") return hidePop();
     popEl = el;
     pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typesVariable(act(target as Key)) };
@@ -190,7 +194,8 @@
     popNode.style.left = `${Math.min(Math.max(pop.x, half), padEl.clientWidth - half)}px`;
   });
 
-  /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. */
+  /** The bubble above a key while a flick is armed (P7 point 2): what the lift will fire, or ✕ for nothing. None while
+   *  Key pop-ups is off (R163): the flick still fires. */
   let bubble = $state<{ x: number; y: number; dir: Flick; text: string; none: boolean; variable: boolean } | null>(null);
   let bubbleOwner: number | undefined;
 
@@ -216,7 +221,7 @@
 
   function showBubble(id: number, g: Extract<Gesture, { kind: "key" }>): void {
     const st = g.flick.state;
-    if (!g.key || !g.el || (st !== "up" && st !== "down")) {
+    if (!pops || !g.key || !g.el || (st !== "up" && st !== "down")) {
       if (bubbleOwner === id) bubble = null;
       return;
     }

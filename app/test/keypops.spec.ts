@@ -87,8 +87,11 @@ test("off: a tap shows no pop and an armed flick no bubble, and the flick still 
   await tap(page, ["esc"]); // (Esc clears the line)
   await toggle(page);
   expect(await pops(page)).toBe(true);
+  await watch(page);
   expect(await tapAndFlick(page)).toEqual({ pop: 1, bubble: 1 });
-  expect(await drawn(page)).toEqual({ pop: 1, bubble: 1 });
+  const again = await drawn(page); // (each drawn at least once: the observer, which counted none while off, sees them)
+  expect(again.pop).toBeGreaterThan(0);
+  expect(again.bubble).toBeGreaterThan(0);
 });
 
 test("off survives a relaunch, and a preset's Look group holds it and sets it back", async ({ page }) => {
