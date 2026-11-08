@@ -35,7 +35,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **s36-copper, no package (S36).** Sample `E_copper`, `alpha_copper` off the sheet (110, 16.8): `tools/probes/sample-sources.py`; base 26390e12; only on import.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
