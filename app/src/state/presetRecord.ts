@@ -15,7 +15,7 @@ export const PRESET_GROUPS: readonly PresetGroup[] = ["mode", "numbers", "look",
 export const GROUP_FIELDS: Readonly<Record<PresetGroup, readonly string[]>> = {
   mode: ["angle", "format", "digits", "entry"],
   numbers: ["decimalMark", "fmtCycle", "fixDecimals", "uncertainty", "marks", "groupSep"],
-  look: ["family", "brightness", "contrast", "plain"],
+  look: ["family", "brightness", "contrast", "plain", "shadow"],
   vibration: ["on", "strength", "ms", "click"],
   keys: ["userKeys", "unitPadCells"],
 };

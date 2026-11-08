@@ -85,7 +85,7 @@ describe("migrateSettings", () => {
 });
 
 describe("the look (R50e, schema 3)", () => {
-  const first = { family: "n62", brightness: "dark", contrast: true, plain: false } as const;
+  const first = { family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true } as const;
   it("every schema before 3 gets the first-start look and is marked as migrated", () => {
     for (const old of [{ digits: 9 }, { schema: 2, digits: 9 }]) {
       const { settings, migrated } = migrateSettings(old, first);
@@ -95,7 +95,7 @@ describe("the look (R50e, schema 3)", () => {
     }
   });
   it("a stored look wins over the first-start look, field by field", () => {
-    const stored = { schema: 3, look: { family: "solarized", brightness: "light", contrast: false, plain: true } };
+    const stored = { schema: 3, look: { family: "solarized", brightness: "light", contrast: false, plain: true, shadow: false } };
     const { settings, migrated } = migrateSettings(stored, first);
     expect(migrated).toBe(true); // schema 3 → 4 (R57) keeps the look
     expect(settings.look).toEqual(stored.look);
@@ -103,15 +103,15 @@ describe("the look (R50e, schema 3)", () => {
     expect(migrateSettings({ schema: 3, look: 7 }, first).settings.look).toEqual(first);
   });
   it("migrating from schema 1, 2 or 3 to 4 keeps a stored look and gives the point as the decimal mark (R57)", () => {
-    const look = { family: "bw", brightness: "light", contrast: true, plain: true };
+    const look = { family: "bw", brightness: "light", contrast: true, plain: true, shadow: true };
     for (const schema of [undefined, 2, 3]) {
       const { settings, migrated } = migrateSettings({ ...(schema === undefined ? {} : { schema }), digits: 9, look }, first);
       expect(migrated).toBe(true);
       expect(settings).toMatchObject({ digits: 9, look, decimalMark: "point" });
     }
   });
-  it("the defaults are N62, System, both switches off", () => {
-    expect(defaultSettings.look).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false });
+  it("the defaults are N62, System, High contrast and Plain keys off, Key shadows on", () => {
+    expect(defaultSettings.look).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true });
   });
   it("restoring tells the page the look it read", async () => {
     const kv = fakeKv();
@@ -120,7 +120,7 @@ describe("the look (R50e, schema 3)", () => {
     const seen: unknown[] = [];
     s.onLook = (l) => seen.push(l);
     await s.restoreSettings();
-    expect(seen).toEqual([{ family: "bw", brightness: "light", contrast: false, plain: false }]);
+    expect(seen).toEqual([{ family: "bw", brightness: "light", contrast: false, plain: false, shadow: true }]); // R156: a look stored before Key shadows has them on
   });
   it("a start with nothing stored writes its look, so a later start does not ask the phone again", async () => {
     const kv = fakeKv();

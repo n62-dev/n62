@@ -13,8 +13,10 @@
 #    older than 2 days loses its runner tree (A56f1, size reported) and moves with its logs; *.log in
 #    the archive older than 2 days are gzipped; engine/giac/_out/key-<k> that no local branch (nor phase-1) uses and archive
 #    folders older than 14 days are deleted (never gsl, gsl.prev, base, release). The report gives the space freed.
-# 4. Audit: every repo path named in CLAUDE.md and docs/README.md must exist; reports in docs/shifts/
-#    older than 14 days are listed as candidates. Tracked files are never moved or deleted here: the
+# 4. Audit: every repo path named in CLAUDE.md and docs/README.md must exist; decided research notes, reports in docs/shifts/
+#    (*-report.md, *-report-N.md) whose last commit is more than 7 days old (git log, not the mtime: a fresh worktree's mtime is
+#    its checkout time) and package files whose id has a merge commit on phase-1 (`Merge p1/…: <ID> `) are listed to delete (rules
+#    section 10, A75). Tracked files are never moved or deleted here: the
 #    audit's findings go to .tasks/gc-<date>.md (a dry run: gc-<date>-dry.md) for the owner (or the next Opus pass).
 set -euo pipefail
 apply=0; [[ "${1:-}" == "--apply" ]] && apply=1
@@ -100,7 +102,7 @@ act() { if [[ $apply -eq 1 ]]; then "$@"; else echo "would: $*"; fi; }
     freed=$((freed + $(kb "$d"))); act rm -rf "$d"; echo "- $d (older than 14 days)"
   done
   echo "- space freed: $((freed / 1024)) MB ($freed kB)"
-  echo; echo "## Decided research notes (move to docs/archive/ in the next docs commit)"
+  echo; echo "## Decided research notes (delete (rules section 10): git rm in the next docs commit)"
   grep -liE '^\*\*status[^*]*decided' "$integ"/docs/research/*.md 2>/dev/null | sed "s|^$integ/|- |" || true
   echo; echo "## Stale paths in CLAUDE.md and docs/README.md (phase-1 worktree $integ)"
   cd "$integ"
@@ -113,8 +115,21 @@ act() { if [[ $apply -eq 1 ]]; then "$@"; else echo "would: $*"; fi; }
       [[ -e "$q" ]] || echo "- $doc names $p, which does not exist"
     done
   done
-  echo; echo "## Reports in docs/shifts/ older than 14 days (candidates for the owner; tracked, not moved)"
-  find docs/shifts -name '*-report.md' -mtime +14 2>/dev/null | sort | sed 's/^/- /' || true
+  echo; echo "## Reports in docs/shifts/ whose last commit is more than 7 days old (delete, rules section 10; tracked, not touched here)"
+  cut_s=$(( $(date +%s) - 7 * 86400 ))
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    ct="$(git log -1 --format=%ct -- "$f" 2>/dev/null || true)"
+    [[ "$ct" =~ ^[0-9]+$ && $ct -lt $cut_s ]] && echo "- $f (last commit $(git log -1 --format='%h %cs' -- "$f"))"
+  done < <(git ls-files -- 'docs/shifts/*-report.md' 'docs/shifts/*-report-[0-9].md' | sort)
+  echo; echo "## Package files whose package is merged (delete with its row, A75; tracked, not touched here)"
+  merges="$(git log phase-1 --merges --format='%h %s' 2>/dev/null | grep -E '^[0-9a-f]+ Merge p1/[^:]*: ' || true)"
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    pid="$(basename "$f" .md)"
+    m="$(awk -v id="$pid" 'index($0, ": " id " ") { print $1; exit }' <<<"$merges")"
+    [[ -z "$m" ]] || echo "- $f (merged in $m)"
+  done < <(git ls-files -- 'docs/shifts/packages/*.md' | sort)
   cd "$main"
   echo; echo "## Worktrees and branches"; git worktree list | sed 's/^/- /'
   del=""

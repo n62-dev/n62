@@ -159,3 +159,23 @@ describe("R150: key-text and the other key twins", () => {
     expect(cs.some((x) => x.f === "key-text" && x.b === "key-num")).toBe(true);
   });
 });
+
+describe("R156: --key-edge, the line under each key (Key shadows)", () => {
+  const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  it("is black in every dark combination and black at 30 % over the final --bg in every light one, as an opaque colour", () => {
+    for (const c of combos()) {
+      const { t } = theme(c);
+      const edge = t["key-edge"] ?? "";
+      expect(edge, selector(c)).toMatch(/^#[0-9a-f]{6}$/);
+      if (c.brightness === "dark") expect(edge, selector(c)).toBe("#000000");
+      else rgb(edge).forEach((v, i) => expect(Math.abs(v - (rgb(t["bg"] ?? "")[i] as number) * 0.7), selector(c)).toBeLessThanOrEqual(0.5));
+    }
+  });
+  it("N62 Light's is #8da1a0, and both start blocks carry it", () => {
+    expect(theme({ family: "n62", brightness: "light", high: false, plain: false }).t["key-edge"]).toBe("#8da1a0");
+    const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    expect(css).toContain("--key-edge: #000000;");
+    expect(css).toContain("--key-edge: #8da1a0;");
+    expect(css).toMatch(/--key-shadow: 2px;/);
+  });
+});

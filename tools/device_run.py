@@ -80,7 +80,7 @@ def parse_marks(text):
     """name -> dict of fields (first occurrence wins), from both Java and JS marks."""
     marks = {}
     for line in text.splitlines():
-        m = re.search(r"N62_(?:T|BENCH):? (\S+) (.*)$", line)
+        m = re.search(r"N62_(?:T|BENCH)\s*:?\s+(\S+) (.*)$", line)
         if not m:
             continue
         name, rest = m.group(1), m.group(2)

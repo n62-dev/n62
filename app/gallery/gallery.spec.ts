@@ -16,7 +16,7 @@ const THEMES = ["light", "dark"] as const;
 function settingsShots(): Shot[] {
   const levels = [
     { id: "", title: "Mode › Settings (R49): the next level of the sheet, the top cluster live", keys: [] },
-    { id: "-appearance", title: "Settings › Appearance (R50e): Theme with its dots, Brightness, High contrast and Plain keys", keys: ["d1"] },
+    { id: "-appearance", title: "Settings › Appearance (R50e): Theme with its dots, Brightness, High contrast, Plain keys and Key shadows (R156)", keys: ["d1"] },
     { id: "-theme", title: "Appearance › Theme: the five families with their dots (a pick keeps the sheet open)", keys: ["d1", "enter"] },
     { id: "-numbers", title: "Settings › Numbers: the Decimal mark (R57), the Fmt cycle (its hint under Standard) and Decimals in Fixed", keys: ["d2"] },
     { id: "-vibration", title: "Settings › Key vibration, switched on (strength disabled with its reason), Try it", keys: ["d3", "d1"] },

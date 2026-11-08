@@ -9,7 +9,8 @@ import type { MenuItem, SubMenu } from "../apps/types.ts";
 import type { EntryPrompt } from "../apps/shell.svelte.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import type { EntryController } from "../entry/controller.ts";
-import { t, type MessageKey } from "../i18n/index.ts";
+import { t } from "../i18n/index.ts";
+import { lookText, type LookKey } from "../i18n/enLook.ts";
 import { presetText as pt, type PresetKey } from "../i18n/enPresets.ts";
 import type { UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { PRESET_GROUPS, PresetError, presetsFor, type GroupValues, type Preset, type PresetGroup, type Presets } from "../state/presets.svelte.ts";
@@ -110,7 +111,7 @@ export function groupValue(g: PresetGroup, v: GroupValues): string {
     case "look": {
       const family = str(v["family"]);
       const b = str(v["brightness"]);
-      return [family ? familyOf(family as Family).name : "", b ? t(`appearance.brightness.${b}` as MessageKey) : ""].filter((x) => x !== "").join(" · ");
+      return [family ? familyOf(family as Family).name : "", b ? lookText(`appearance.brightness.${b}` as LookKey) : ""].filter((x) => x !== "").join(" · ");
     }
     case "vibration":
       return v["on"] === true ? pt("on", { strength: num(v["strength"]) ?? "?", ms: num(v["ms"]) ?? "?" }) : pt("off");
