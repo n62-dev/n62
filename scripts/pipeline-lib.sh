@@ -359,6 +359,24 @@ selftest_run() {
 # ---- A55: guards that never fired ----
 # package_shaped <id>: succeeds for a package's id (A46, G112, R15c1) and fails for a FIX id (G112f1, R82f2, A47bf1) or free text.
 package_shaped() { [[ "$1" =~ ^[A-Z][0-9]+[a-z0-9]*$ && ! "$1" =~ f[0-9]+$ ]]; }
+# package_link_strip <file> <its repo path> <package file's repo path> (A75): every Markdown link in <file> whose target (relative to the
+# file's folder, an #anchor dropped) is the package file becomes its plain text: `[R156](packages/R156.md) x` → `R156 x`. Succeeds when
+# it changed the file.
+package_link_strip() {
+  perl -e '
+    use strict; use warnings;
+    my ($file, $path, $target) = @ARGV;
+    sub norm { my @o; for (split m{/}, $_[0]) { next if $_ eq "" || $_ eq "."; if ($_ eq "..") { pop @o } else { push @o, $_ } } join "/", @o }
+    (my $dir = $path) =~ s{[^/]*$}{};
+    open my $in, "<", $file or exit 1; local $/; my $text = <$in>; close $in;
+    my $n = 0;
+    $text =~ s{\[([^\]\n]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)}{
+      my ($all, $t, $u) = ($&, $1, $2); (my $p = $u) =~ s/#.*$//; $p =~ s/%([0-9A-Fa-f]{2})/chr hex $1/ge;
+      ($p ne "" && $u !~ m{^(https?:|mailto:|#)} && norm("$dir$p") eq norm($target)) ? do { $n++; $t } : $all
+    }ge;
+    exit 1 unless $n;
+    open my $out, ">", $file or exit 2; print $out $text; close $out; exit 0;' "$1" "$2" "$3"
+}
 # task_questioned <worker reply file>: succeeds when the reply says the worker has not done its package: an "Open question" line asks
 # for the task again (resend, regenerate the bundle) or says the task itself is missing (run 312 asked for the bundle to be regenerated
 # with the A46 block, and was merged), or the reply's done field says "not done" (A64). A remark about the task ("the spec block is

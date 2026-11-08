@@ -1389,16 +1389,22 @@ grep -q '^audit' "$ab/seen" 2>/dev/null && fail "A84 (d): a failed cheap check s
 # A75: a run of a package deletes its package file on the branch, in a commit of its own before the queue, so the audited tree and
 # the merge have it gone; a FIX id and a task text delete nothing; a run that ends unmerged leaves phase-1's file in place
 pk="$tmp/pk"; mkdir -p "$pk/bin" "$pk/tools" "$pk/docs/shifts/packages" "$pk/app/node_modules/x"; git init -q -b main "$pk"
-cp "$sb/tools/devlock.sh" "$pk/tools/"; cp "$sb/bin/claude" "$sb/bin/npm" "$pk/bin/"; : > "$pk/docs/shifts/brief.md"; echo t > "$pk/app/keep"
+cp "$sb/tools/devlock.sh" "$here/../tools/docs-check.mjs" "$here/../tools/docs-check.test.mjs" "$pk/tools/"; cp "$sb/bin/claude" "$sb/bin/npm" "$pk/bin/"; echo t > "$pk/app/keep"
+# fix round 1: the brief links each queued package's file (docs-check fails on a link to a missing file), so the delete unlinks it
+printf '| 1 | [X1](packages/X1.md) one | ron |\n| 2 | [X1f1](packages/X1f1.md) fix |\n| 3 | [X4](packages/X4.md) four |\n' > "$pk/docs/shifts/brief.md"
+printf 'see [the X1 text](shifts/packages/X1.md#why)\n' > "$pk/docs/notes.md"
 for p in X1 X1f1 X3 X4; do printf '### ron, %s: a sandbox package, branch `p1/%s`\nbody\n' "$p" "${p,,}" > "$pk/docs/shifts/packages/$p.md"; done
 git -C "$pk" add -A; gc "$pk" init; git -C "$pk" branch phase-1
 pkrun() { (cd "$pk" && env -u SB_DIRTY PATH="$pk/bin:$PATH" GIAC_OUT="$pk/engine" "$script" "$@" 2>&1); }
 p1has() { [[ "$(git -C "$pk" cat-file -t "phase-1:docs/shifts/packages/$1.md" 2>/dev/null)" == blob ]]; }
-out="$(pkrun ron X1 --checks none)"
+out="$(pkrun ron X1 --checks docs)"
 grep -q '^RESULT #[0-9]* X1: MERGED' <<<"$out" || fail "A75: the package run did not merge: $out"
 p1has X1 && fail "A75: phase-1 still has docs/shifts/packages/X1.md after the run merged"
 dc="$(git -C "$pk" log -1 --format=%H --diff-filter=D phase-1^2 -- docs/shifts/packages/X1.md 2>/dev/null)"
-[[ -n "$dc" && "$(git -C "$pk" show --name-only --format= "$dc")" == docs/shifts/packages/X1.md ]] || fail "A75: no commit of its own on p1/x1 deletes the package file: $(git -C "$pk" log --stat --format=%s phase-1^2 -3)"
+[[ -n "$dc" && "$(git -C "$pk" show --name-only --format= "$dc" | sort | paste -sd' ' -)" == "docs/notes.md docs/shifts/brief.md docs/shifts/packages/X1.md" ]] || fail "A75: no commit of its own on p1/x1 deletes the package file and its links: $(git -C "$pk" log --stat --format=%s phase-1^2 -3)"
+[[ "$(git -C "$pk" show phase-1:docs/shifts/brief.md)" == $'| 1 | X1 one | ron |\n| 2 | [X1f1](packages/X1f1.md) fix |\n| 3 | [X4](packages/X4.md) four |' ]] || fail "A75: the brief's row of X1 is gone or still links, or another row changed: $(git -C "$pk" show phase-1:docs/shifts/brief.md)"
+[[ "$(git -C "$pk" show phase-1:docs/notes.md)" == "see the X1 text" ]] || fail "A75: a link from another folder (with an anchor) still points to the deleted file: $(git -C "$pk" show phase-1:docs/notes.md)"
+(cd "$pk/.claude/worktrees/phase-1" && node tools/docs-check.mjs >/dev/null 2>&1) || fail "A75: docs-check fails on phase-1 after the X1 merge"
 [[ "$(git -C "$pk" cat-file -t phase-1^2:docs/shifts/packages/X1.md 2>/dev/null)" != blob ]] || fail "A75: the audited commit (the merge's second parent) still has the package file"
 p1has X1f1 && p1has X3 && p1has X4 || fail "A75: the X1 run deleted another package's file"
 git -C "$pk" show phase-1^1:docs/shifts/packages/X1.md >/dev/null 2>&1 || fail "A75: the merge's first parent lacks the package file (night review reads it there)"

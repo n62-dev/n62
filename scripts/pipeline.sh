@@ -847,10 +847,17 @@ fi
 # A75: the package's own file is deleted on its branch, in a commit of its own, before each queue entry and again after the queue's
 # merge of phase-1 (a branch older than the file gets it from there), so the audited tree and the merge have it gone; phase-1 keeps
 # it until the merge, so the night review reads it at <merge>^1, and a run that ends unmerged leaves it in place. A FIX id and a task
-# text delete nothing (pkg_drop is empty).
+# text delete nothing (pkg_drop is empty). The same commit unlinks it in every tracked Markdown file (`[R156](packages/R156.md)` becomes
+# `R156`: docs-check fails on a link to a missing file); the row stays for the Opus pass.
 package_file_drop() {
   [[ -n "$pkg_drop" ]] && git -C "$wt" cat-file -e "HEAD:$pkg_drop" 2>/dev/null || return 0
-  if ! { git -C "$wt" rm -q -- "$pkg_drop" && git -C "$wt" commit -q -s -m "chore($id): delete its package file, merged with the package (A75)" -- "$pkg_drop"; } > "$run/pkg-drop.log" 2>&1; then
+  local f unlinked=()
+  while IFS= read -r f; do
+    [[ -n "$f" && "$f" != "$pkg_drop" ]] || continue
+    package_link_strip "$wt/$f" "$f" "$pkg_drop" && unlinked+=("$f")
+  done < <(git -C "$wt" grep -lF "$(basename "$pkg_drop")" -- '*.md' 2>/dev/null || true)
+  if ! { git -C "$wt" rm -q -- "$pkg_drop" && { [[ ${#unlinked[@]} -eq 0 ]] || git -C "$wt" add -- "${unlinked[@]}"; } &&
+         git -C "$wt" commit -q -s -m "chore($id): delete its package file and the links to it, merged with the package (A75)" -- "$pkg_drop" "${unlinked[@]}"; } > "$run/pkg-drop.log" 2>&1; then
     die "could not delete $pkg_drop on $branch: $(tail -n 1 "$run/pkg-drop.log" | cut -c1-160)"
   fi
   log "pipeline #$n $id: package file $pkg_drop deleted on $branch ($(git -C "$wt" log -1 --format=%h))"
