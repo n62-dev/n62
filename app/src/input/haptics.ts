@@ -5,6 +5,8 @@
 /** The native side (Android, written separately): vibrate for `ms` milliseconds at `amplitude` 1..255. */
 export interface N62HapticsPlugin {
   vibrate(options: { ms: number; amplitude: number }): Promise<void>;
+  /** The optional key click (A66): the system's key-click sound, else a click made in code. */
+  click(): Promise<void>;
 }
 
 // @capacitor/core (7.8 kB raw) is not in the start chunk (R35): `loadNative()` imports it once the keypad is drawn.
@@ -12,9 +14,8 @@ export interface N62HapticsPlugin {
 // cold start may vibrate without its strength.
 let native: N62HapticsPlugin | null = null;
 
-/** Load the native plugin (idle, after the keypad is drawn). On the web it finds no plugin and changes nothing. */
+/** Load the native plugin (once, idle, after the keypad is drawn). On the web it finds no plugin and changes nothing. */
 export async function loadNative(): Promise<void> {
-  if (native !== null) return;
   try {
     const { Capacitor, registerPlugin } = await import("@capacitor/core");
     if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable("N62Haptics"))
@@ -29,25 +30,31 @@ export function hasStrength(): boolean {
   return native !== null;
 }
 
-const webVibrate = (ms: number): void => {
-  try {
-    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") navigator.vibrate(ms);
-  } catch {
-    // no vibrator, or the browser forbids it before a user gesture: nothing to do
-  }
-};
-
 /** Fire one key-down pulse. `strength01` is 0..1, `ms` the duration. Never throws, never waits. */
 export function vibrate(strength01: number, ms: number): void {
   const duration = Math.max(1, Math.round(ms));
-  if (native !== null) {
-    const amplitude = Math.min(255, Math.max(1, Math.round(strength01 * 255)));
+  const web = (): void => {
     try {
-      native.vibrate({ ms: duration, amplitude }).catch(() => webVibrate(duration));
-      return;
+      navigator.vibrate(duration);
     } catch {
-      // fall through to the web call
+      // no navigator or vibrator, or the browser forbids it before a user gesture: nothing to do
     }
+  };
+  try {
+    if (!native) return web();
+    const amplitude = Math.min(255, Math.max(1, Math.round(strength01 * 255)));
+    native.vibrate({ ms: duration, amplitude }).catch(web);
+  } catch {
+    web(); // the plugin threw at once: the web call
   }
-  webVibrate(duration);
 }
+
+// A66: the key click is off by default, so its code (input/click.ts) is a lazy chunk, fetched when the setting is on.
+/** Fetch the click code (at start when the setting is on, and when the switch turns on): resolves with the function that
+ *  makes one key click (never throws, never waits). Never rejects; a failed fetch gives a function that does nothing, and
+ *  the next call tries again. */
+export const loadClick = (): Promise<() => void> =>
+  import("./click.ts").then(
+    (m) => () => m.click(native),
+    () => () => {},
+  );

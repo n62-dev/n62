@@ -46,6 +46,13 @@ describe("migrateSettings", () => {
     expect(settings).toEqual(defaultSettings);
     expect(migrateSettings({ digits: 20, angle: "grad" }).settings).toMatchObject({ digits: 20, angle: defaultSettings.angle });
   });
+  it("a haptics record from before the key click (A66) loads with the click off; a stored click is kept, anything else is off", () => {
+    expect(migrateSettings({ haptics: { on: true, strength: 80, ms: 20 }, schema: 4 }).settings.haptics).toEqual({ on: true, strength: 80, ms: 20, click: false });
+    expect(migrateSettings({ schema: 4 }).settings.haptics.click).toBe(false);
+    expect(migrateSettings({ haptics: { on: false, strength: 50, ms: 15, click: true } }).settings.haptics.click).toBe(true);
+    expect(migrateSettings({ haptics: { on: true, click: "yes" } }).settings.haptics.click).toBe(false);
+    expect(defaultSettings.haptics.click).toBe(false);
+  });
   it("nothing stored, or something that is not an object, gives the defaults", () => {
     for (const bad of [undefined, null, 7, "x", []]) expect(migrateSettings(bad).settings).toEqual(defaultSettings);
   });

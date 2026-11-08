@@ -95,7 +95,7 @@ test("the Format key cycle and the vibration settings persist across a reload", 
   await openCycle(page);
   const marked = await sheet(page).locator('[data-selected="true"]').evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
   expect(marked).toEqual(["std", "sci", "fix"]);
-  expect(await page.evaluate(() => window.n62.session.settings.haptics)).toEqual({ on: true, strength: 50, ms: 40 });
+  expect(await page.evaluate(() => window.n62.session.settings.haptics)).toEqual({ on: true, strength: 50, ms: 40, click: false });
 });
 
 test("key vibration: off by default, and on it calls navigator.vibrate on key-down", async ({ page }) => {

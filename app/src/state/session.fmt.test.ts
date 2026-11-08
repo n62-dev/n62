@@ -162,12 +162,12 @@ describe("Format key (stub engine)", () => {
     const s = new Session(new FakeCalc(), kv);
     for (const m of ["std", "sci", "eng"] as const) s.setFmtMode(m, false);
     expect(s.settings.fmtCycle).toEqual(["std", "sci", "eng"]);
-    expect(s.settings.haptics).toEqual({ on: false, strength: 50, ms: 15 });
+    expect(s.settings.haptics).toEqual({ on: false, strength: 50, ms: 15, click: false });
     s.setHaptics({ on: true, strength: 500, ms: 1 });
-    expect(s.settings.haptics).toEqual({ on: true, strength: 100, ms: 5 });
+    expect(s.settings.haptics).toEqual({ on: true, strength: 100, ms: 5, click: false });
     s.setHaptics({ strength: 30, ms: 20 });
     const t = new Session(new FakeCalc(), kv);
     await t.restoreSettings();
-    expect(t.settings.haptics).toEqual({ on: true, strength: 30, ms: 20 });
+    expect(t.settings.haptics).toEqual({ on: true, strength: 30, ms: 20, click: false });
   });
 });

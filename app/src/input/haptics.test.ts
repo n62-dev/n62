@@ -64,3 +64,93 @@ describe("vibrate (native build, R35)", () => {
     expect(h.hasStrength()).toBe(false);
   });
 });
+
+// A66: the optional key click. Android plays the system's key-click effect through the plugin; the web makes one short
+// click with Web Audio at the press. Never throws, never waits.
+describe("click (web build)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  /** An AudioContext double: counts the oscillators started (one per click). */
+  function audio(): { starts: ReturnType<typeof vi.fn>; contexts: ReturnType<typeof vi.fn> } {
+    const starts = vi.fn();
+    const param = { value: 0, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() };
+    const node = { connect: vi.fn(), disconnect: vi.fn() };
+    const contexts = vi.fn();
+    class Ctx {
+      currentTime = 0;
+      state = "running";
+      destination = {};
+      constructor() {
+        contexts();
+      }
+      resume = vi.fn(() => Promise.resolve());
+      createOscillator = () => ({ ...node, type: "square", frequency: { ...param }, start: starts, stop: vi.fn(), onended: null });
+      createGain = () => ({ ...node, gain: { ...param } });
+    }
+    vi.stubGlobal("AudioContext", Ctx);
+    return { starts, contexts };
+  }
+
+  it("makes one short sound per click, on one shared audio context", async () => {
+    const a = audio();
+    vi.resetModules();
+    const h = await import("./haptics.ts");
+    const click = await h.loadClick(); // until the click code is in, a press has no click to make
+    expect(a.starts).not.toHaveBeenCalled();
+    click();
+    click();
+    expect(a.starts).toHaveBeenCalledTimes(2);
+    expect(a.contexts).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing, and does not throw, without Web Audio or when it throws", async () => {
+    vi.stubGlobal("AudioContext", undefined);
+    vi.resetModules();
+    let h = await import("./haptics.ts");
+    const first = await h.loadClick();
+    expect(() => first()).not.toThrow();
+    vi.stubGlobal("AudioContext", class { constructor() { throw new Error("blocked"); } });
+    vi.resetModules();
+    h = await import("./haptics.ts");
+    const second = await h.loadClick();
+    expect(() => second()).not.toThrow();
+  });
+});
+
+describe("click (native build)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.doUnmock("@capacitor/core");
+    vi.resetModules();
+  });
+
+  it("asks the plugin for the system's key click once it is loaded, and falls back to Web Audio when that fails", async () => {
+    const plugin = { vibrate: vi.fn(() => Promise.resolve()), click: vi.fn(() => Promise.resolve()) };
+    vi.doMock("@capacitor/core", () => ({
+      Capacitor: { isNativePlatform: () => true, isPluginAvailable: () => true },
+      registerPlugin: () => plugin,
+    }));
+    const starts = vi.fn();
+    const node = { connect: vi.fn() };
+    const param = { value: 0, setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() };
+    vi.stubGlobal("AudioContext", class {
+      currentTime = 0;
+      state = "running";
+      destination = {};
+      resume = vi.fn(() => Promise.resolve());
+      createOscillator = () => ({ ...node, frequency: { ...param }, start: starts, stop: vi.fn() });
+      createGain = () => ({ ...node, gain: { ...param } });
+    });
+    vi.resetModules();
+    const h = await import("./haptics.ts");
+    await h.loadNative();
+    const click = await h.loadClick();
+    click();
+    expect(plugin.click).toHaveBeenCalledTimes(1);
+    expect(starts).not.toHaveBeenCalled();
+    plugin.click.mockImplementationOnce(() => Promise.reject(new Error("no audio")));
+    click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(starts).toHaveBeenCalledTimes(1);
+  });
+});
