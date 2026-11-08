@@ -9,7 +9,7 @@ import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { formatConfirmed, markOf } from "./format.ts";
 import { bracesOf } from "./giacPrint.ts";
-import { homeItem } from "../state/results.ts";
+import { homeItem } from "../state/resultItem.ts";
 import { copyFull } from "../clipboard/text.ts";
 import { giacOfEntry } from "../input/entry.ts";
 import { parsePastedNumber } from "../clipboard/paste.ts";

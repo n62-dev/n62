@@ -7,7 +7,8 @@
 import type { ChipTable } from "../input/chips.ts";
 import { unitLatex, validSlots } from "../input/chipUnit.ts";
 import { homeResultToLatex } from "../render/home.ts";
-import { HISTORY_LIMIT, homeItem } from "../state/results.ts";
+import { HISTORY_LIMIT } from "../state/results.ts";
+import { homeItem } from "../state/resultItem.ts";
 import { uncDigitsOf } from "../engine/constUnc.ts";
 // (types only from the session: a value import of it from this lazy chunk makes Rolldown split modules out of the
 // start chunk, +0.8 kB gzip there)

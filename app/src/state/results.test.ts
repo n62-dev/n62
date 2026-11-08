@@ -4,7 +4,8 @@
 // state/session.svelte.ts (run 181: each row went through Session.submit with a stub engine; source: derived).
 import { describe, expect, it } from "vitest";
 import { decimalFromString, type ComplexValue } from "../engine/format.ts";
-import { casItem, chipFactsOf, chipOf, homeItem, type CasIn, type HomeIn, type ItemResult } from "./results.ts";
+import { chipFactsOf, chipOf, type CasIn, type HomeIn, type ItemResult } from "./results.ts";
+import { casItem, homeItem } from "./resultItem.ts";
 
 
 const re = (s: string, sticky = false): ComplexValue => ({ re: { ...decimalFromString(s)!, ...(sticky ? { sticky: true } : {}) }, im: { neg: false, digits: "", exp: 0, sticky: false } });
