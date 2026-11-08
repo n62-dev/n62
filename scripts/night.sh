@@ -167,7 +167,7 @@ henri_stdin() {  # A47c: in a lane, henri_input (pipeline-lib.sh); else the log'
   if [[ -n "$lane" ]]; then henri_input "$coord/log.md" "$lane"; else tail -n 80 "$coord/log.md"; fi
 }
 unsafe() {  # <cmd>: shell metacharacters outside plain double quotes, or a backtick or $ anywhere
-  local bare; bare="$(sed -E 's/"[^"$`]*"//g' <<<"$1")"   # text inside plain double quotes may hold ; & | < > (no expansion there)
+  local bare; bare="$(sed -E 's/"([^"\\$`]|\\.)*"//g' <<<"$1")"   # text inside plain double quotes may hold ; & | < > (no expansion there); a backslash and the next character are one unit (A89: \" does not close the quotes)
   [[ "$bare" =~ [\;\&\|\`\$\<\>] || "$1" == *[\`\$]* ]]
 }
 run_cmd() {  # <cmd>: run one pipeline line; returns its exit code (75: usage limit, after the wait)
