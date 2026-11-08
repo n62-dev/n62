@@ -93,7 +93,7 @@ test.describe("by keys", () => {
     await page.keyboard.press("6");
     await expect(title(page)).toHaveText("Mode › Settings › Counters");
     await page.keyboard.press("ArrowDown");
-    await expect(active(page)).toHaveAttribute("data-id", "shift"); // the key presses (R70) come first
+    await expect(active(page)).toHaveAttribute("data-id", "taps"); // the key presses (R70) come first, then Shift / Alpha (R53: one row)
     await page.keyboard.press("Escape");
     await expect(title(page)).toHaveText("Mode › Settings");
     await expect(active(page)).toHaveAttribute("data-id", "counters");
