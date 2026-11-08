@@ -7,17 +7,12 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-**A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
-
-**A73f1: a CAS-last cold start is ready at 1507 ms** (Tab One), 7 ms over 1.5 s (Home 1323), in the worker's wasm instantiate. Recommended: A73f2 (gorge, the loader's times in a measure build, ~0.3 d) after v0.1.0; it does not hold the release.
-
-**G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
-
-**A64 lo-11:** a worker wrote outside its worktree (run #488). Recommended (Opus pass 93): yes, warn only: after a worker step log new files in `source99/` (the main checkout's parent, where run #488's file was) and in `.claude/worktrees/`.
+**G164's sample sources** (`app/public/samples/materials.txt`): S36 checks the 16 sources by Wed 11-11 (owner, 2026-11-08); the owner signs its short list by the freeze (11-12). Copper stays on its data sheet (G164's report).
 
 ## Decided proposals
 
 ### Pipeline and process
+- **Owner answers of 2026-11-08:** a Giac patch's worker writes its own row in `engine/giac/patches/README.md` (A83; rules section 5). A stray file outside a worktree is logged, warn only (A64 lo-11; A88). A CAS-last cold start, 1507 ms on the Tab One, 7 ms over 1.5 s, does not hold v0.1.0 (A73f2 after the tag). c29's single red is looked for now, not at a second red (F200; A120). Would change if: a stray file does harm before anyone reads the log.
 - **A75's leftovers (Opus pass 97):** the next Opus pass deletes a merged FIX package's file and any `scripts/gc.sh` lists.
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: TMview finds N62 in class 9; the domain lapses.

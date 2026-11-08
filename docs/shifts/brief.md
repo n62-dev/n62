@@ -32,6 +32,8 @@
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, by Sat 11-14 (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
+| [A120](packages/A120.md) | Why c29 went red once on the Tab One (F200) | annabell, Sonnet | day, by Thu 11-12 (the Tab One) | – | ~0.3 d |
+| [A73f2](packages/A73f2.md) | Where a CAS-last cold start spends its time | annabell, Sonnet | day (the Tab One) | the v0.1.0 tag | ~0.3 d |
 
 **Why these models:** Opus where a slip breaks entry, the unit chain or stored data for every later package, or gives a wrong number (P17: the engine, input and units); sandra and sofia run Opus; Sonnet elsewhere (an existing pattern, pinned by tests); the audit model follows P17.
 
@@ -60,8 +62,10 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 536 | [R53](packages/R53.md) results mode: the keypad folds by a handle or swipe | ron, Opus | `p1/ron-results-fold` | – |
-| 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | R53 |
+| 534 | [R159f2](packages/R159f2.md) a touch just beside a unit chip picks it again | ron, Sonnet | `p1/ron-unitnearmiss` | – |
+| 535 | [R53f1](packages/R53f1.md) results mode through the checks and the audit (carries R53) | ron, Sonnet | `p1/ron-results-fold` | – |
+| 536 | [R165](packages/R165.md) the preset specs wait for the name prompt before typing | ron, Sonnet | `p1/ron-presetswait` | – |
+| 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | R53f1 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 554 | [R164](packages/R164.md) the other presses use the flag | ron, Sonnet | `p1/ron-pressflag2` | R161 |
@@ -78,7 +82,13 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 | 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
 
 ### Lane B queue (the release, then the engine)
-[A57](packages/A57.md) runs by day; the night review's queue goes on in [its note](../research/night-review-2026-11-02.md) section 2. No rows left: A66 merged (A66f1, 7a9e113e); its device check is a backlog line.
+[A57](packages/A57.md) runs by day; the night review's queue goes on in [its note](../research/night-review-2026-11-02.md) section 2. A66's device check is a backlog line.
+
+| Step | What | Agent, model | Branch | After |
+|---|---|---|---|---|
+| 555 | [S36](packages/S36.md) check the 16 sources of the materials sample (result by Wed 11-11) | sandra, Opus | `p1/sandra-samplesources` | – |
+| 556 | [A89](packages/A89.md) night.sh reads an escaped quote as a quote | annabell, Sonnet | `p1/annabell-nightquote` | – |
+| 557 | [A88](packages/A88.md) the pipeline logs a file a worker left outside its worktree | annabell, Sonnet | `p1/annabell-straywarn` | – |
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
