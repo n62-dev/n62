@@ -4,7 +4,7 @@
 // its ⚠ before σ and the why-line, a note under a value that stays, a refusal with no row, and the alternatives row
 // picked by touch (a tap on a chip) and by keys (▼ ◀ ▶ Enter, Esc leaves). A pick writes the unit into the end slot and
 // evaluates again.
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { flick, open, tap, useClipboardLock } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
@@ -24,6 +24,33 @@ const endSlot = (page: Page): Promise<string> =>
     return (s?.tokens ?? []).map((t, i) => `${i === s?.per ? "/ " : ""}${t.prefix ?? ""}${t.unit}${t.power ? `^${t.power}` : ""}`).join(" ");
   });
 
+/** R159: a tap whose effect shows, tried again when it does not. Under load (16 workers) Chromium now and then handed a
+ *  touch (pointerdown, touchstart, pointerup, touchend) to a button that sat still and never made the click from it:
+ *  seen about once in 500 runs, on More… and on a chip, the row unchanged and no request pending. The same pick or the
+ *  same More… twice does what once does, and every retry is an annotation, so the count is not hidden. */
+async function tapUntil(target: Locator, effect: (timeout: number) => Promise<unknown>): Promise<void> {
+  for (let n = 1; ; n++) {
+    await target.tap();
+    try {
+      return void (await effect(n < 3 ? 2000 : 5000));
+    } catch (e) {
+      if (n >= 3) throw e;
+      test.info().annotations.push({ type: "lost tap", description: `tap ${n} of 3 showed no effect` });
+    }
+  }
+}
+
+/** R159: the requests the page has made and not had answered (a module on a cold dev server under load), per test. */
+let inFlight = new Set<unknown>();
+const track = (page: Page): void => {
+  inFlight = new Set();
+  page.on("request", (r) => void inFlight.add(r));
+  page.on("requestfinished", (r) => void inFlight.delete(r));
+  page.on("requestfailed", (r) => void inFlight.delete(r));
+};
+/** Waits on that state, not on time: a tap on More… then waits on no module. */
+const loaded = (): Promise<void> => expect.poll(() => inFlight.size, { timeout: 30_000 }).toBe(0);
+
 /** A key plan step: a key id, or ↑id for a flick up. */
 async function plan(page: Page, steps: string): Promise<void> {
   for (const s of steps.split(" ")) {
@@ -34,6 +61,7 @@ async function plan(page: Page, steps: string): Promise<void> {
 
 test.describe("the unit result view (R62)", () => {
   test.beforeEach(async ({ page }) => {
+    track(page);
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   });
@@ -56,7 +84,7 @@ test.describe("the unit result view (R62)", () => {
     expect(row).toContain("m/s");
     expect(row).not.toContain("km/h");
     await expect(page.getByTestId("unit-more")).toHaveText("More…");
-    await chip(page, "m/s").tap();
+    await tapUntil(chip(page, "m/s"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "m/s", { timeout }));
     await expect(result(page)).toHaveAttribute("data-text", "20");
     await expect(result(page)).toHaveAttribute("data-unit", "m/s");
     await expect(mark(page)).toHaveText("=");
@@ -68,8 +96,7 @@ test.describe("the unit result view (R62)", () => {
     await kmh(page);
     const row = await texts(page);
     const second = row[1] as string;
-    await chips(page).nth(1).tap();
-    await expect(result(page)).toHaveAttribute("data-unit", second);
+    await tapUntil(chips(page).nth(1), (timeout) => expect(result(page)).toHaveAttribute("data-unit", second, { timeout }));
     const byTap = [await result(page).getAttribute("data-text"), await result(page).getAttribute("data-unit")];
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
@@ -115,7 +142,7 @@ test.describe("the unit result view (R62)", () => {
     await expect(page.getByTestId("unit-unit")).toHaveText("mm");
     await expect(page.getByTestId("unit-dim")).toHaveText("L");
     await expect(chips(page).first()).toHaveText("m");
-    await chip(page, "m").tap();
+    await tapUntil(chip(page, "m"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "m", { timeout }));
     await expect(result(page)).toHaveAttribute("data-text", "0.157079632679");
     await expect(page.getByTestId("unit-unit")).toHaveText("m");
     await expect(mark(page)).toHaveText("≈");
@@ -126,8 +153,7 @@ test.describe("the unit result view (R62)", () => {
     await unitsKey(page);
     await plan(page, "neg ↑enter"); // 3600 J
     await expect(page.getByTestId("unit-unit")).toHaveText("J");
-    await chip(page, "Wh").tap();
-    await expect(result(page)).toHaveAttribute("data-unit", "Wh");
+    await tapUntil(chip(page, "Wh"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "Wh", { timeout }));
     await expect(page.getByTestId("unit-unit")).toHaveText("Wh");
     await expect(result(page)).toHaveAttribute("data-text", "1");
     expect(await endSlot(page)).toBe("Wh"); // the slot holds the unit, the result reads as the chip did
@@ -187,8 +213,8 @@ test.describe("the unit result view (R62)", () => {
     await kmh(page);
     const before = await endSlot(page); // (km/h was typed in the first slot and evaluated at once: the end slot is empty)
     const active = await page.evaluate(() => window.n62.unitView?.view.activeId);
-    await page.getByTestId("unit-more").tap();
-    await expect(page.getByTestId("find")).toBeVisible();
+    await loaded();
+    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(page.getByTestId("find")).toBeVisible({ timeout }));
     await expect(page.getByTestId("unit-view")).toBeVisible();
     await tap(page, ["esc"]);
     await expect(page.getByTestId("find")).toBeHidden();
@@ -207,8 +233,8 @@ test.describe("the unit result view (R62)", () => {
     page.on("request", (r) => void asked.push(new URL(r.url()).pathname));
     await kmh(page);
     await expect.poll(() => asked.includes("/src/units/find.ts")).toBe(true);
-    await page.getByTestId("unit-more").tap();
-    await expect(page.getByTestId("find")).toBeVisible();
+    await loaded();
+    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(page.getByTestId("find")).toBeVisible({ timeout }));
   });
 
   // R125 fix round 1: the sheet's view is fetched when the browser is idle (R46); under the full suite's load it was not
@@ -219,16 +245,17 @@ test.describe("the unit result view (R62)", () => {
     });
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+    track(page);
     await kmh(page);
-    await page.getByTestId("unit-more").tap();
-    await expect(page.getByTestId("find")).toBeVisible();
+    await loaded();
+    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(page.getByTestId("find")).toBeVisible({ timeout }));
   });
 
   test("More…, then a pick in Find: the end slot holds the picked unit and the result is in it", async ({ page }) => {
     await kmh(page);
-    await page.getByTestId("unit-more").tap();
+    await loaded();
     const find = page.getByTestId("find");
-    await expect(find).toBeVisible();
+    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(find).toBeVisible({ timeout }));
     await find.getByRole("menuitem").first().tap();
     await expect(find).toBeHidden();
     await expect(result(page)).toBeVisible();
@@ -288,8 +315,7 @@ test.describe("the row at phone widths", () => {
       await expect(page.getByTestId("unit-more")).toBeVisible();
       const box = await page.getByTestId("unit-more").boundingBox();
       expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
-      await chip(page, "m").tap(); // the chip is where it is drawn: a tap reaches it at every width
-      await expect(result(page)).toHaveAttribute("data-unit", "m");
+      await tapUntil(chip(page, "m"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "m", { timeout })); // the chip is where it is drawn: a tap reaches it at every width
       test.info().annotations.push({ type: "chips", description: `${width}: ${shown}` });
     });
   }

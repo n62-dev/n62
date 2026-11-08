@@ -7,6 +7,8 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+**R159: a click Chromium never made (unit result row).** Under 16 workers a tap on More… (once on a chip too) delivered pointerdown, touchstart, pointerup and touchend to a still button and no click, about once in 500 runs; the row was unchanged, no request pending, no extra redraw seen (`below` is replaced twice per result: working, then the result). The spec's `tapUntil` taps again (max 3) and annotates each "lost tap". Open: whether the app can make a missing click impossible (a pick on `pointerup` of the same chip, as the keypad does) or the drop is the headless touch path only. Recommended: leave it; if a Pixel shows it, take the `pointerup` route in a package then.
+
 **A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
 
 **A73f1: a CAS-last cold start is ready at 1507 ms** (Tab One), 7 ms over 1.5 s (Home 1323), in the worker's wasm instantiate. Recommended: A73f2 (gorge, the loader's times in a measure build, ~0.3 d) after v0.1.0; it does not hold the release.
