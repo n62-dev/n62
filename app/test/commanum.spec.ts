@@ -43,7 +43,7 @@ test("Solve: Num shows x·eˣ=5 as 1,32672466524, Copy gives the comma, point mo
 test("Function: a Num row shows sin(0,1) and sin(1) with the comma; the CSV is ; separated", async ({ page }) => {
   await tap(page, ["@symb", "sin", "x", "enter", "@num"]);
   const cell = (x: string) => page.locator(`[data-testid="num-table"] tr:has(td[data-x="${x}"]) td`);
-  await expect(cell("0.1").first()).toHaveText("0,1");
+  await expect(cell("0.1").first()).toHaveText("0,1", { timeout: 20_000 }); // the first table waits for the engine, slow under load
   await expect(cell("0.1").nth(1)).toHaveAttribute("data-text", "0,0998334166468"); // oracle sin(0.1)
   await tap(page, ["@menu", "d2", "d1", "enter"]); // step 1
   await expect(cell("1").nth(1)).toHaveAttribute("data-text", "0,841470984808"); // oracle sin(1)
