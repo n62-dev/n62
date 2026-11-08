@@ -77,6 +77,11 @@ sb="$tmp/sb"; mkdir -p "$sb/bin" "$sb/scripts"; git init -q -b main "$sb"
 cat > "$sb/scripts/pipeline.sh" <<'STUB'
 #!/bin/sh
 echo "lane=${N62_LANE:-} $*" >> "$SBN_CALLS"
+# A121: SBN_LIMITS names a file of lines; each call but a device step takes the first: L = a usage limit (exit 75)
+if [ "$1" != device ] && [ -s "$SBN_LIMITS" ]; then
+  first=$(head -n1 "$SBN_LIMITS"); sed -i 1d "$SBN_LIMITS"
+  if [ "$first" = L ]; then echo "You've hit your 5-hour limit"; exit 75; fi
+fi
 case "$1" in
   pass) echo "OPUS PASS"; echo "RESULT pass $((${2} + 2)): done (exit 0)";;
   device) echo "RESULT device $2: DEVICE SKIPPED (stub)";;
@@ -88,8 +93,14 @@ STUB
 cat > "$sb/bin/claude" <<'STUB'
 #!/bin/sh
 n=$(echo "$*" | grep -oE 'henri-[0-9]+' | cut -d- -f2)
-cat > "$SBN_IN.$n"; echo "$n" >> "$SBN_ASKED"
-r=$(sed -n "${n}p" "$SBN_REPLIES"); echo "${r:-SHIFT DONE}"
+k=$(( $(wc -l < "$SBN_ASKED") + 1 ))   # A121: a retried step keeps its number, so the reply is keyed on the count of asks
+cat > "$SBN_IN.$n"; echo "$k" >> "$SBN_ASKED"
+r=$(sed -n "${k}p" "$SBN_REPLIES")
+case "$r" in
+  LIMIT) echo "You've hit your 5-hour limit"; exit 1;;
+  FAIL) echo "boom"; echo "boom" >&2; exit 1;;
+esac
+echo "${r:-SHIFT DONE}"
 STUB
 # a fake df (A69): SBN_DF_KB set = that many KB available on every file system
 cat > "$sb/bin/df" <<'STUB'
@@ -103,7 +114,7 @@ sbnight() {
   local k="$1"; shift; : > "$tmp/$k.calls"; : > "$tmp/$k.asked"; [[ -f "$tmp/$k.replies" ]] || : > "$tmp/$k.replies"
   (cd "$sb" && unset N62_COORD N62_LANE && PATH="$sb/bin:$PATH" N62_NIGHT_INHIBITED=1 N62_NIGHT_POLL=1 \
     SBN_CALLS="$tmp/$k.calls" SBN_ASKED="$tmp/$k.asked" SBN_IN="$tmp/$k.in" SBN_REPLIES="$tmp/$k.replies" SBN_NIGHT="$night" \
-    SBN_DF_KB="${SBN_DF_KB:-}" SBN_STOP_ON="${SBN_STOP_ON:-}" SBN_STOP_LANE="${SBN_STOP_LANE:-}" timeout -k 5 60 "$night" "$@")
+    SBN_DF_KB="${SBN_DF_KB:-}" SBN_LIMITS="$tmp/$k.limits" SBN_STOP_ON="${SBN_STOP_ON:-}" SBN_STOP_LANE="${SBN_STOP_LANE:-}" timeout -k 5 60 "$night" "$@")
 }
 lg="$sb/.coord/log.md"
 # the guard: a running lane A refuses a second --lane A and a start without --lane, not --lane B
@@ -171,6 +182,49 @@ grep -q '\[A\] night.sh: waiting for lane B to end before the report' "$lg" && g
 printf '%s\n' 'scripts/pipeline.sh pass 3 "R1" "none"' > "$tmp/c3.replies"
 sbnight c3 >/dev/null 2>&1
 grep -qx 'lane= device 5' "$tmp/c3.calls" || fail "a pass in the night: the device step does not take the RESULT's number (5): $(cat "$tmp/c3.calls")"
+
+# A121: usage limits (--limit-wait 1). The retry keeps its step; a limit of henri or of the pipeline waits and costs no step
+# newlog: the log lines this case wrote (the sandbox log is shared)
+lcase() { l0="$(wc -l < "$lg")"; }
+newlog() { tail -n +$((l0 + 1)) "$lg"; }
+nwait() { newlog | grep -c 'night.sh: usage limit, waiting'; }
+R1='scripts/pipeline.sh ron "R1" --model sonnet'
+# henri at a limit twice, then a command: the command runs, two waits, no STOPPED
+printf '%s\n' LIMIT LIMIT "$R1" > "$tmp/l1.replies"; lcase
+out="$(sbnight l1 --limit-wait 1 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q 'ron R1' "$tmp/l1.calls" || fail "limits: henri at a limit twice, then a command: the command did not run (rc $rc): $out"
+newlog | grep -q 'STOPPED' && fail "limits: henri at a limit twice ended the lane: $(newlog)"
+[[ "$(nwait)" -eq 2 ]] || fail "limits: henri at a limit twice: $(nwait) waits, expected 2: $(newlog)"
+# henri at a limit in closing step 1, then a pass line: the pass and its device step run
+printf '%s\n' "$R1" LIMIT 'scripts/pipeline.sh pass 7 "R1" "none"' > "$tmp/l2.replies"; lcase
+out="$(sbnight l2 --limit-wait 1 --max-steps 3 2>&1)"; rc=$?
+grep -q ' pass 7 ' "$tmp/l2.calls" && grep -qx 'lane= device 9' "$tmp/l2.calls" || fail "limits: henri at a limit in closing step 1 lost the last pass (rc $rc): $(cat "$tmp/l2.calls")"
+newlog | grep -q 'no Opus pass line' && fail "limits: a limit in closing step 1 read as no pass line: $(newlog)"
+[[ "$(nwait)" -eq 1 ]] || fail "limits: closing step 1: $(nwait) waits, expected 1"
+# henri exits 1 with other text, twice: still the old stop, and no wait
+printf '%s\n' FAIL FAIL > "$tmp/l3.replies"; lcase
+out="$(sbnight l3 --limit-wait 1 2>&1)"; rc=$?
+[[ $rc -ne 0 ]] && newlog | grep -q 'STOPPED night.sh: henri gave no pipeline command twice' || fail "limits: another henri failure twice does not stop the lane (rc $rc): $(newlog)"
+[[ "$(nwait)" -eq 0 ]] || fail "limits: another henri failure waited"
+# the pipeline at rc 75 eleven times in a row: the stop
+for i in $(seq 1 12); do echo "$R1"; done > "$tmp/l4.replies"; printf 'L\n%.0s' $(seq 1 11) > "$tmp/l4.limits"; lcase
+out="$(sbnight l4 --limit-wait 1 2>&1)"; rc=$?
+[[ $rc -ne 0 ]] && newlog | grep -qx -- '- [0-9:]* STOPPED night.sh: usage limit 10 times' || fail "limits: 11 limits in a row do not stop with 'usage limit 10 times' (rc $rc): $(newlog | tail -n 4)"
+# ten, a merged step, ten: no stop (the count is of consecutive limits)
+{ for i in $(seq 1 10); do echo "$R1"; done; echo 'scripts/pipeline.sh ron "R2" --model sonnet'; for i in $(seq 1 10); do echo 'scripts/pipeline.sh ron "R3" --model sonnet'; done; } > "$tmp/l5.replies"
+{ printf 'L\n%.0s' $(seq 1 10); echo N; printf 'L\n%.0s' $(seq 1 10); } > "$tmp/l5.limits"; lcase
+out="$(sbnight l5 --limit-wait 1 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] && ! newlog | grep -q 'STOPPED' || fail "limits: ten limits, a merged step, ten limits stopped the lane (rc $rc): $(newlog | tail -n 4)"
+grep -q 'ron R2' "$tmp/l5.calls" || fail "limits: the merged step between did not run"
+# a small --max-steps: three limits before the merged step do not close the lane early
+{ for i in 1 2 3 4; do echo "$R1"; done; echo 'scripts/pipeline.sh ron "R2" --model sonnet'; echo 'scripts/pipeline.sh pass 7 "R1" "none"'; } > "$tmp/l6.replies"; printf 'L\nL\nL\n' > "$tmp/l6.limits"; lcase
+out="$(sbnight l6 --limit-wait 1 --max-steps 4 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q 'ron R2' "$tmp/l6.calls" || fail "limits: three limits ate the steps of --max-steps 4 (rc $rc): $(cat "$tmp/l6.calls")"
+# LIMIT_RE: the CLI's words
+for t in "You've hit your 5-hour limit" "You've hit your weekly limit" "You're out of usage credits" "You're out of extra usage" "Claude usage limit reached" "API Error: 429"; do
+  (source "$dir/pipeline-lib.sh"; grep -qiE "$LIMIT_RE" <<<"$t") || fail "LIMIT_RE does not match: $t"
+done
+(source "$dir/pipeline-lib.sh"; grep -qiE "$LIMIT_RE" <<<"Error: exit 1") && fail "LIMIT_RE matches 'Error: exit 1'"
 
 [[ $fails -eq 0 ]] || { echo "night.test.sh: $fails failure(s)" >&2; exit 1; }
 echo "night.test.sh: ok"

@@ -23,14 +23,15 @@
 # In lanes, --until is per lane; lane B's closing runs its last pass and no report; lane A's report waits for lane B's
 # night.sh to end (at most 5 h, N62_NIGHT_LANE_WAIT), so the writer reads both lanes' lines.
 # After every pass night.sh runs `scripts/pipeline.sh device <p>` with p from the pass's RESULT line (A47a may move it).
-# A usage limit inside the closing steps waits and retries the same step.
+# A usage limit (a pipeline step at rc 75, or henri's claude call, also in the closing steps) waits and asks or runs the same step again,
+# and costs no step (A121).
 # Disk (A69): before each step (the closing ones too) it needs NIGHT_MIN_FREE_GB (default 5) free on the file system of the phase-1
 # worktree; under it the lane logs `STOPPED night.sh (lane X): disk <n> GB free` and ends (exit 1), starting no step.
 # --dry-run starts no henri and runs nothing: it prints each step's kind on a simulated clock (N62_NIGHT_NOW=HH:MM,
 # default now, advanced --dry-step minutes per step, default 30), the two closing steps, and writes no log.
 #
-# Stops on SHIFT DONE, after the closing report, after 6 usage-limit waits, or when henri answers twice with
-# something that is not a pipeline command. Output: .coord/log.md (the state) and .tasks/night-<date>.log.
+# Stops on SHIFT DONE, after the closing report, after 10 usage-limit waits in a row (a finished step resets the count; a limit of henri
+# counts like one of a step), or when henri answers twice with something that is not a pipeline command. Output: .coord/log.md (the state) and .tasks/night-<date>.log.
 set -euo pipefail
 orig_args=("$@")
 max_steps=40; limit_wait=1800; until_hm=""; dry=0; dry_step=30; lane=""; stop=""
@@ -120,6 +121,8 @@ else
 fi
 log "night.sh started (${lane:+lane $lane, }max $max_steps steps$until_text)"
 export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
+limit_max=10   # A121: usage limits in a row; 10 x 1800 s covers the CLI's five-hour window, and a wait costs no usage
+henri_limit='(henri: usage limit)'
 dry_rc=0; steps=0; limits=0; bad=0; closing=0; declare -A norsl=()
 henri_prompt='You are henri, the night coordinator. Read docs/shifts/brief.md section 0c (the rules, the queue table and the Opus pass) and the tail of .coord/log.md on stdin. Reply with exactly one line and nothing else: the next command to run, one of
   scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto   (the next queue step not done; skip steps the table or the log marks merged or skipped)
@@ -146,9 +149,18 @@ ask_henri() {  # <n> <prompt>: henri's one-line reply
     if [[ -n "$f" && -f "$f" ]]; then sed -n "${1}p" "$f"; else echo "(dry run: henri not asked)"; fi
     return
   fi
-  # shellcheck disable=SC2016
-  local r
-  r="$(henri_stdin | (cd "$integ" && timeout -k 60 600 claude -p --agent henri --model sonnet --effort medium --permission-mode auto --output-format text --no-session-persistence --allowedTools Read,Grep --disallowedTools Bash,Edit,Write,Agent,NotebookEdit -n "henri-$1" "$2") 2>>"$out" | grep -vE '^\s*$' | tail -n 1 | sed 's/^[` ]*//; s/[` ]*$//')" || r="(henri failed)"
+  # A121: claude's stdout and stderr are kept (stderr also goes to $out); at a non-zero exit with LIMIT_RE in them henri_limit is
+  # printed, any other failure is "(henri failed)". This runs in a command substitution: the caller counts and waits (limit_hit).
+  local r tmp rc=0
+  tmp="$(mktemp)"; henri_stdin > "$tmp.in" 2>/dev/null || true
+  (cd "$integ" && timeout -k 60 600 claude -p --agent henri --model sonnet --effort medium --permission-mode auto --output-format text --no-session-persistence --allowedTools Read,Grep --disallowedTools Bash,Edit,Write,Agent,NotebookEdit -n "henri-$1" "$2") < "$tmp.in" > "$tmp" 2> "$tmp.err" || rc=$?
+  cat "$tmp.err" >> "$out"
+  if [[ $rc -ne 0 ]]; then
+    if grep -qiE "$LIMIT_RE" "$tmp" "$tmp.err"; then r="$henri_limit"; else r="(henri failed)"; fi
+  else
+    r="$(grep -vE '^\s*$' "$tmp" | tail -n 1 | sed 's/^[` ]*//; s/[` ]*$//' || true)"
+  fi
+  rm -f "$tmp" "$tmp.in" "$tmp.err"
   echo "$r"
 }
 henri_stdin() {  # A47c: in a lane, henri_input (pipeline-lib.sh); else the log's last 80 lines
@@ -178,11 +190,15 @@ run_cmd() {  # <cmd>: run one pipeline line; returns its exit code (75: usage li
     else log "RESULT -: NOT MERGED ($cmd: no RESULT line, rc=$rc)"; fi
   fi
   rm -f "$cmdout"
-  if [[ $rc -eq 75 ]]; then
-    limits=$((limits + 1)); (( limits > 6 )) && { log "STOPPED night.sh$lane_text: usage limit 6 times"; say "STOPPED night.sh$lane_text: usage limit 6 times"; exit 1; }
-    log "night.sh: usage limit, waiting $limit_wait s"; pause "$limit_wait"
-  fi
+  if [[ $rc -eq 75 ]]; then limit_hit; else limits=0; fi  # A121: the count is of limits in a row
   return $rc
+}
+limit_hit() {  # A121: one more usage limit (a step at rc 75, or henri_limit): the count, the stop past limit_max, the wait
+  limits=$((limits + 1))
+  if (( limits > limit_max )); then
+    log "STOPPED night.sh$lane_text: usage limit $limit_max times"; say "STOPPED night.sh$lane_text: usage limit $limit_max times"; exit 1
+  fi
+  log "night.sh: usage limit, waiting $limit_wait s"; pause "$limit_wait"
 }
 disk_check() {  # A69: under NIGHT_MIN_FREE_GB (default 5) free on the worktree's file system the lane ends before asking henri
   [[ $dry -eq 0 ]] || return 0
@@ -228,6 +244,7 @@ while :; do
 
   if (( closing == 1 )); then  # closing step 1: henri's last Opus pass line
     cmd="$(ask_henri "$n" "$closing_prompt")"
+    if [[ "$cmd" == "$henri_limit" ]]; then limit_hit; continue; fi  # A121: wait, ask the same step again (no tick)
     [[ $dry -eq 0 ]] || cmd='scripts/pipeline.sh pass <n> "<IDs since the last pass>" "<open questions or none>"   (henri, closing prompt)'
     say "henri #$n (closing 1 of 2): $cmd"; log "henri #$n (closing 1 of 2): $cmd"
     if [[ $dry -eq 1 ]]; then :
@@ -257,6 +274,7 @@ while :; do
     [[ ! -f "$coord/log.md" ]] || henri_input "$coord/log.md" "$lane" | sed 's/^/  | /'
   fi
   cmd="$(ask_henri "$n" "$henri_prompt")"
+  if [[ "$cmd" == "$henri_limit" ]]; then limit_hit; continue; fi  # A121: wait, ask the same step again; no tick, bad unchanged
   if [[ $dry -eq 1 && -n "${N62_NIGHT_REPLIES:-}" ]]; then
     [[ "$cmd" != 75:\ * ]] || { dry_rc=75; cmd="${cmd#75: }"; }
     [[ -n "$cmd" ]] || cmd="SHIFT DONE"
@@ -274,7 +292,9 @@ while :; do
       [[ "$cmd" == scripts/pipeline.sh\ pass\ * || "$cmd" == scripts/pipeline.sh\ device\ * || "$cmd" == "scripts/pipeline.sh report" || "$cmd" == *--audit-model* ]] || cmd="$cmd --audit-model auto"
       rc=0; run_cmd "$cmd" || rc=$?
       # A41: after every Opus pass but a usage limit (75: henri is asked again), the device step with the pass's number
-      if [[ "$cmd" == scripts/pipeline.sh\ pass\ * && $rc -ne 75 ]]; then pass_device; fi;;
+      if [[ "$cmd" == scripts/pipeline.sh\ pass\ * && $rc -ne 75 ]]; then pass_device; fi
+      (( rc == 75 )) && continue  # A121: the wait is done in run_cmd and costs no step; henri is asked again
+      ;;
     *)
       bad=$((bad + 1)); (( bad >= 2 )) && { log "STOPPED night.sh$lane_text: henri gave no pipeline command twice"; say "STOPPED night.sh$lane_text: henri gave no pipeline command twice"; exit 1; };;
   esac

@@ -754,7 +754,9 @@ case "\$*" in
        limit) echo "Claude usage limit reached" >&2; exit 1;;
      esac
      owner > "$mq/pass-end"; echo "My preface."; echo "OPUS PASS 1"; echo "VERDICT: old"; echo; echo "OPUS PASS 2"; echo "VERDICT: last"; echo "NOTES: n";;
-  *"Write the shift report"*) owner > "$mq/report-owner"; echo abc1234;;
+  *"Write the shift report"*) owner > "$mq/report-owner"
+     case "\$MQ_REPORT" in limit) echo "You've hit your 5-hour limit"; exit 1;; fail) echo "something broke"; exit 1;; esac
+     echo abc1234;;
   *"--agent sofia"*) echo "\$br \$(owner)" >> "$mq/audits"; sleep 2
      if [ -n "\$MQ_FIX" ] && [ "\$br" = "\$MQ_FIX" ] && [ ! -e "$mq/fixed-\$br" ]; then touch "$mq/fixed-\$br"; echo FIX; echo "a.txt:1: say more"; else echo APPROVED; fi;;
   *"fix round"*) echo "\$br \$(owner)" >> "$mq/fixes"; echo more >> "\$br.txt"; git add -A; git -c user.name=t -c user.email=t@t commit -qm fix; echo fixed;;
@@ -925,6 +927,12 @@ grep -qF "tools/devlock.sh acquire pass pass-9 9000" <<<"$out" || fail "A86 (e):
 out="$(mqrun "$script" report 2>&1)"
 [[ "$(cat "$mq/report-owner" 2>/dev/null)" == report ]] && [[ ! -e "$mq/.coord/locks/integ" ]] || fail "A47b: the report does not hold integ for its run: $(cat "$mq/report-owner" 2>&1): $out"
 grep -q 'acquire integ' <<<"$(sed -n '/subcommand: report/,/subcommand: selftest/p' "$here/pipeline.sh" | grep 'prompt=')" && fail "A47b: the report prompt still takes integ"
+# A121: a report whose claude exits 1 with the CLI's limit text is a LIMIT (exit 75, integ released); other text keeps today's result
+out="$(MQ_REPORT=limit mqrun "$script" report 2>/dev/null)"; rc=$?
+[[ $rc -eq 75 && "$out" == "RESULT report: LIMIT" && ! -e "$mq/.coord/locks/integ" ]] || fail "A121: a report at a limit: rc $rc, out '$out'"
+grep -q 'Shift report: LIMIT' "$mq/.coord/log.md" || fail "A121: a report at a limit logs no 'Shift report: LIMIT'"
+out="$(MQ_REPORT=fail mqrun "$script" report 2>/dev/null)"; rc=$?
+[[ $rc -eq 0 && "$out" == "RESULT report: something broke" ]] || fail "A121: a report failing with other text changed: rc $rc, out '$out'"
 # the device step holds integ while it builds the APK and releases it before the device run
 cat > "$mq/bin/adb" <<'STUB'
 #!/bin/sh
