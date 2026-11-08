@@ -114,13 +114,15 @@ describe("Mode sheet", () => {
 });
 
 describe("Settings › Appearance (R50e)", () => {
-  it("is the first section: Theme with its dots, Brightness, and the three switches with one line each (Key shadows: R156)", () => {
+  it("is the first section: Theme with its dots, Brightness, and the four switches with one line each (Key shadows: R156, Key pop-ups: R163)", () => {
     const s = settings(1);
     expect(s.path).toBe("Mode › Settings › Appearance");
-    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow", "pops"]);
+    expect(s.level.items.length).toBeLessThanOrEqual(7); // a level of settings holds at most seven rows
     expect(byId(s, "theme")?.dots).toHaveLength(5);
     expect(byId(s, "theme")?.value).toBe("N62");
-    expect(s.level.items.filter((x) => x.hint).map((x) => x.id)).toEqual(["contrast", "plain", "shadow"]);
+    expect(s.level.items.filter((x) => x.hint).map((x) => x.id)).toEqual(["contrast", "plain", "shadow", "pops"]);
+    expect(byId(s, "pops")).toMatchObject({ label: "Key pop-ups", hint: "A bubble over the key you press or flick", selected: true });
     expect(byId(s, "shadow")).toMatchObject({ label: "Key shadows", hint: "A dark line under each key", selected: true });
     expect(s.level.highlight).toBe(0); // R156: it opens on Theme, though Key shadows is ticked
   });
@@ -174,6 +176,14 @@ describe("Settings › Appearance (R50e)", () => {
     expect(session.settings.look.shadow).toBe(false);
     expect(byId(s, "shadow")?.selected).toBe(false);
     expect(seen).toEqual([false]);
+    const pops: boolean[] = [];
+    session.onLook = (l) => void pops.push(l.pops);
+    expect(s.pickNumber(6)).toEqual({ kind: "stay" }); // R163: Key pop-ups
+    expect(session.settings.look.pops).toBe(false);
+    expect(byId(s, "pops")?.selected).toBe(false);
+    expect(s.pickNumber(6)).toEqual({ kind: "stay" });
+    expect(session.settings.look.pops).toBe(true);
+    expect(pops).toEqual([false, true]);
   });
 });
 

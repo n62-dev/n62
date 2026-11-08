@@ -446,6 +446,7 @@
       shiftLock={session.shiftLock}
       cas={casKeys} app={shell.app !== null}
       sheet={shell.sheet ? { filter: shell.sheet.level.filterable } : undefined}
+      pops={session.settings.look.pops}
       onpress={(key, layer) => press(key, layer, true)}
       oncount={(key) => session.taps.press(key)}
       ontouch={touched}

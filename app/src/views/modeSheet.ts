@@ -220,7 +220,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
 }
 
 /** Appearance (R50e): the theme (◀ ▶ step through the five families; a tap, a digit or Enter lists them, and a pick
- *  keeps the sheet open so the status line and keys above show it), the brightness, and the three switches (Key shadows: R156). */
+ *  keeps the sheet open so the status line and keys above show it), the brightness, and the four switches (Key shadows: R156; Key pop-ups: R163). */
 function appearanceItems(session: Session): MenuItem[] {
   const look = () => session.settings.look;
   const setLook = (patch: Partial<Look>): void => {
@@ -294,6 +294,16 @@ function appearanceItems(session: Session): MenuItem[] {
         return look().shadow;
       },
       run: () => setLook({ shadow: !look().shadow }),
+    },
+    {
+      id: "pops",
+      label: lookText("appearance.pops"),
+      hint: lookText("appearance.pops.hint"),
+      keep: true,
+      get selected() {
+        return look().pops;
+      },
+      run: () => setLook({ pops: !look().pops }),
     },
   ];
 }

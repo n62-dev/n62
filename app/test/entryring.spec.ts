@@ -66,6 +66,10 @@ function outline(page: Page) {
 for (const [family, brightness] of LOOKS)
   test(`${family} ${brightness}: the outline is --ring at rest, --shift, --alpha (armed and locked), --error until the next key`, async ({ page }) => {
     await open(page, "");
+    // the real engine: while it starts the outline is --ring-on wide with the dash (R155); under load that outlasts open()
+    // (run 763: 3px at rest), so the states are measured once it has started
+    await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 30_000 });
+    await expect(page.locator(".entry")).not.toHaveAttribute("data-running", "true");
     await setLook(page, family, brightness);
     await tap(page, ["d1", "d2"]);
     await tap(page, ["esc"]); // an empty line, nothing armed

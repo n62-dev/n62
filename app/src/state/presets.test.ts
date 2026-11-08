@@ -105,7 +105,7 @@ describe("presets (R88)", () => {
     session.setAngle("deg");
     session.setFixDecimals(7);
     session.setFmtMode("pfx", true);
-    session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false };
+    session.settings.look = { family: "solarized", brightness: "light", contrast: true, plain: true, shadow: false, pops: false };
     userKeys.set(U2, "shift", mol);
     cells.set(C1, "up", { unit: "mol" });
     const id = presets.capture("Chemistry", PRESET_GROUPS);
@@ -345,6 +345,26 @@ describe("presets (R88)", () => {
     await again.presets.apply(1);
     expect(again.session.settings.look).toMatchObject({ family: "bw", shadow: false });
     expect(VALIDATORS[PRESETS_KEY]?.(old)).toBe(true);
+  });
+
+  it("R163: Look holds Key pop-ups: a capture keeps it, an apply sets it back; a look group saved without it leaves it alone", async () => {
+    expect(GROUP_FIELDS.look).toContain("pops");
+    const { session, presets, looks } = await setup();
+    session.settings.look = { ...session.settings.look, pops: false };
+    const id = presets.capture("Quiet keys", ["look"]);
+    expect(presets.list[0]?.groups.look).toMatchObject({ pops: false });
+    session.settings.look = { ...session.settings.look, pops: true };
+    await presets.apply(id);
+    expect(session.settings.look.pops).toBe(false);
+    expect(looks.at(-1)?.pops).toBe(false);
+    const old: StoredPresets = { presets: [{ id: 1, name: "Old", groups: { look: { family: "bw", brightness: "dark", contrast: false, plain: false, shadow: true } } }], active: null, next: 2 };
+    const again = await setup({ "@n62": DATA_VERSION, value: old });
+    again.session.settings.look = { ...again.session.settings.look, pops: false };
+    await again.presets.apply(1);
+    expect(again.session.settings.look).toMatchObject({ family: "bw", pops: false });
+    expect(VALIDATORS[PRESETS_KEY]?.(old)).toBe(true);
+    const withPops: StoredPresets = { presets: [{ id: 1, name: "New", groups: { look: { family: "bw", pops: false } } }], active: null, next: 2 };
+    expect(VALIDATORS[PRESETS_KEY]?.(withPops)).toBe(true);
   });
 
   it("R125: Numbers holds the digit-group separator: a capture keeps it, an apply sets it back", async () => {
