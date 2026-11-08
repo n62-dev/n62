@@ -31,9 +31,9 @@ SOURCES = {
     "rho_alu": ("2700 kg/m³", F(2700), F(2700)),
     "alpha_alu": ("23×10⁻⁶", F(23, 10**6), F(23, 10**6)),
     "lambda_alu": ("0.07 θ + 190", F(7, 100) * T + 190, F(7, 100) * T + 190),
-    "E_copper": ("127 kN/mm²", F(127) * 10**9, F(110) * 10**9),  # sheet 3.9: 110 annealed, 130 cold-worked (20 °C)
+    "E_copper": ("110 kN/mm²", F(110) * 10**9, F(110) * 10**9),  # sheet 3.9: 110 annealed, 130 cold-worked (20 °C)
     "rho_copper": ("8.93 g/cm³", F(8930), F(8930)),  # sheet 3.1, 20 °C
-    "alpha_copper": ("17×10⁻⁶", F(17, 10**6), F(168, 10**7)),  # sheet 3.3, 20 to 100 °C: 16.8
+    "alpha_copper": ("16.8×10⁻⁶", F(168, 10**7), F(168, 10**7)),  # sheet 3.3, 20 to 100 °C
     "lambda_copper": ("394 W/(m·K)", F(394), F(394)),  # sheet 3.5, 20 °C
     "E_C30": ("33 GPa", F(33) * 10**9, F(33) * 10**9),
     "gamma_C30": ("24 kN/m³", F(24000), F(24000)),
