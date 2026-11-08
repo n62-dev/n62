@@ -43,14 +43,9 @@
     shell,
     entry,
     busy: () => busy,
-    insertResult: (item) => {
-      unfold(); // R53: a row's value went on the line (Insert, Store ▶, Enter on a pick): the keys come back for it
-      insertResult(item);
-    },
-    recall: (item) => {
-      unfold();
-      entry.set(session.input(item), item.chips);
-    },
+    insertResult: (item) => onLine(item, false, false), // (the Menu's list counts its own)
+    recall: (item) => onLine(item, true, false),
+    acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -351,6 +346,14 @@
     folded = false;
     return true;
   }
+  /** A row's value, or with `recall` its entry, goes on the line and the keys come back for it. `count`: false for the
+   *  Menu's list, which counts its own; a second tap on a row and Enter on a pick are counted here. */
+  function onLine(item: HistoryItem, recall: boolean, count = true): void {
+    if (count && folded) countUse(recall ? "recall" : "insert");
+    folded = false;
+    if (recall) entry.set(session.input(item), item.chips);
+    else insertResult(item);
+  }
   // Android back brings the keys back (a sheet opened over the fold is a later layer: back closes it first)
   $effect(() => {
     if (folded) return openLayer(() => (folded = false));
@@ -372,7 +375,8 @@
     waiting: [],
     get casKeys() { return casKeys; },
     enter,
-    insertResult,
+    insertResult: (item) => onLine(item, false),
+    recallRow: (item) => onLine(item, true),
     goTo,
     clearKey,
     openSettings,
@@ -428,8 +432,8 @@
           reason={(item) => session.reason(item)}
           marks={session.settings.marks}
           onpick={pick}
-          onrecall={(item) => { edited = true; picked = null; shell.prompt?.cancel(); if (folded) countUse("recall"); unfold(); entry.set(session.input(item), item.chips); }}
-          oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); if (folded) countUse("insert"); unfold(); insertResult(item); }}
+          onrecall={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, true); }}
+          oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, false); }}
           oncancel={() => void cancel()}
           onlongpress={(item) => withClip((c) => c.openRowMenu(item))}
           undo={session.undoCopy?.kind ?? null}
@@ -448,12 +452,7 @@
     <!-- R11: the picked row's actions, items 1-5 of the Menu (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
       {@const Bar = rowBar}
-      <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={(id) => {
-        picked = null;
-        if (!folded) return;
-        countUse(id); // R53: each action while folded; Insert, Recall and Store ▶ put something on the line, so the keys come back
-        if (id === "insert" || id === "recall" || id === "store") unfold();
-      }} />
+      <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />
     {/if}
 
     <div class="entry" class:hidden={!shell.showsEntry} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>

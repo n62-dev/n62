@@ -35,6 +35,8 @@ export interface RouteCtx {
   readonly casKeys: boolean;
   enter(): void;
   insertResult(item: HistoryItem): void;
+  /** A row's entry back on the line (Enter on a pick without a result). */
+  recallRow(item: HistoryItem): void;
   goTo(view: View): void;
   clearKey(): void;
   openSettings(): void;
@@ -199,12 +201,12 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     return true;
   }
   if (action.name === "copy" && item) {
-    c.withClip((x) => void x.copyKey(item)); // the Copy key copies the picked row
+    c.withClip((x) => void x.copyPicked(item)); // the Copy key copies the picked row
     return true;
   }
   if (action.name === "enter" && item) {
     if (item.status === "done") c.insertResult(item);
-    else c.entry.set(c.session.input(item), item.chips); // the line is empty while picking: the entry comes back with its chips
+    else c.recallRow(item); // the line is empty while picking: the entry comes back with its chips
     return true;
   }
   return false;

@@ -106,9 +106,26 @@ test("a swipe down on the line folds and leaves its text, caret and selection; a
   await f.move(-60, 30, 3);
   await f.end();
   await isFolded(page, false);
+  // a sideways drag selects, by the mouse and by a finger (past `touch-action: pan-x` and the swipe's recognizer)
+  const collapsed = () => page.evaluate(() => window.n62.entry.field?.selectionIsCollapsed);
+  await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
+  expect(await collapsed()).toBe(true);
+  const drag = await touch(page, '[data-testid="entry"] math-field');
+  await drag.move(-70, 0, 20);
+  await drag.end();
+  await expect.poll(collapsed).toBe(false);
+  await isFolded(page, false);
+  await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
+  expect(await collapsed()).toBe(true);
+  const l = await box(page, "math-field");
+  await page.mouse.move(l.x + l.width / 2, l.y + l.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(l.x + 14, l.y + l.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await expect.poll(collapsed).toBe(false);
+  await isFolded(page, false);
   // a tap places the caret: at the line's left end it goes before the first digit
   await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
-  const l = await box(page, "math-field");
   await page.touchscreen.tap(l.x + 14, l.y + l.height / 2);
   await expect.poll(() => page.evaluate(() => window.n62.entry.field?.position ?? -1)).toBeLessThan(6);
   await isFolded(page, false);
@@ -212,6 +229,80 @@ test("folded: a tap picks, the second inserts and unfolds; Copy and Delete stay 
   expect(m.y).toBeGreaterThanOrEqual((await box(page, "header")).height);
 });
 
+test("by keys: Enter on a pick inserts, or recalls a row without a result, brings the keys back and counts; the Copy key counts and stays down", async ({ page }) => {
+  const counts = () => page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
+  await rows(page);
+  await page.locator(HANDLE).tap();
+  await results(page).last().tap();
+  await expect(picked(page)).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await isFolded(page, false);
+  expect(await entryValue(page)).toMatch(/^\\res/);
+  await expect.poll(async () => (await counts())["insert"]).toBe(1);
+
+  // the Copy key on a pick: the pad is inert while folded, so its press comes as the pad's own events
+  await clearLine(page);
+  await page.locator(HANDLE).tap();
+  await results(page).last().tap();
+  await expect(picked(page)).toHaveCount(1);
+  await page.evaluate(() => {
+    const k = document.querySelector('[data-key="copy"]');
+    for (const type of ["pointerdown", "pointerup"]) k?.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 9, button: 0, pointerType: "touch" }));
+  });
+  await expect(picked(page)).toHaveCount(0);
+  await expect.poll(async () => (await counts())["copy"]).toBe(1);
+  await isFolded(page, true);
+  await page.locator(SLICE).tap();
+
+  // a row without a result: Enter brings its entry back (1ᴇ2.5 fails to parse)
+  await tap(page, ["d1", "emark", "d2", "dot", "d5", "enter"]);
+  await expect(page.locator('[data-status="error"]')).toHaveCount(1);
+  await page.locator(HANDLE).tap();
+  await clearLine(page);
+  await page.keyboard.press("ArrowUp"); // Up on an empty line picks the newest row
+  await expect(picked(page)).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await isFolded(page, false);
+  expect(await entryValue(page)).not.toBe("");
+  await expect.poll(async () => (await counts())["recall"]).toBe(1);
+});
+
+test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back, Insert from the list", async ({ page }) => {
+  const layer = () => page.evaluate(() => (history.state as { n62Layer?: number } | null)?.n62Layer);
+  await rows(page);
+  // the slice under an open sheet, then Esc
+  await page.locator(HANDLE).tap();
+  await page.getByTestId("menu-button").tap();
+  await expect(sheet(page)).toBeVisible();
+  await page.locator(SLICE).tap();
+  await isFolded(page, false);
+  await expect(sheet(page)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(sheet(page)).toBeHidden();
+  await expect.poll(layer).toBeUndefined();
+  // a swipe up on the slice with ☰ open (the sheet covers the line), then Android back: the sheet, and the entry under it with it
+  await page.locator(HANDLE).tap();
+  await page.getByTestId("menu-button").tap();
+  await swipe(page, SLICE, -40);
+  await isFolded(page, false);
+  await page.evaluate(() => history.back());
+  await expect(sheet(page)).toBeHidden();
+  await expect.poll(layer).toBeUndefined();
+  // Insert from the list over the fold: the sheet and the fold close in one update
+  await page.locator(HANDLE).tap();
+  await page.getByTestId("menu-button").tap();
+  await sheet(page).locator('[data-id="insert"]').tap();
+  await isFolded(page, false);
+  await expect.poll(layer).toBeUndefined();
+  // the count is even: a new fold takes one entry, and back closes it
+  await clearLine(page);
+  await page.locator(HANDLE).tap();
+  await expect.poll(layer).toBe(0);
+  await page.evaluate(() => history.back());
+  await isFolded(page, false);
+  await expect.poll(layer).toBeUndefined();
+});
+
 test("Tab reaches the handle, and Enter on it folds", async ({ page }) => {
   await page.evaluate(() => window.n62.entry.focus());
   let at = "";
@@ -269,4 +360,37 @@ test("every counter counts (uses: folds by the handle and by a swipe, picks, eac
   await expect(page.getByTestId("sheet-title")).toContainText("Results mode");
   await expect(sheet(page).locator('[data-id="actions"]')).toContainText("6");
   await expect(sheet(page).locator('[data-id="pick"]')).toContainText("6");
+});
+
+test("the long press's list and ☰ count each action once, as the row buttons do", async ({ page }) => {
+  await rows(page, 4);
+  const longPress = async (id: string): Promise<void> => {
+    await page.locator(HANDLE).tap();
+    const f = await touch(page, '[data-testid="result"] .result[data-text="1"]');
+    await page.waitForTimeout(700); // past the long press
+    await f.end();
+    await sheet(page).locator(`[data-id="${id}"]`).tap();
+    await expect(sheet(page)).toBeHidden();
+  };
+  await longPress("copy");
+  await isFolded(page, true);
+  await page.locator(SLICE).tap();
+  await longPress("insert");
+  await isFolded(page, false);
+  await clearLine(page);
+  await longPress("recall");
+  await isFolded(page, false);
+  await clearLine(page);
+  await longPress("store");
+  await isFolded(page, false);
+  await clearLine(page);
+  await longPress("delete");
+  await expect(page.locator('[data-status="done"]')).toHaveCount(3);
+  await page.locator(SLICE).tap();
+  await page.locator(HANDLE).tap(); // ☰ with no row: the same list, on the last result
+  await page.getByTestId("menu-button").tap();
+  await sheet(page).locator('[data-id="copy"]').tap();
+  await expect(sheet(page)).toBeHidden();
+  const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
+  expect(counts).toEqual({ "fold.handle": 6, insert: 1, recall: 1, copy: 2, store: 1, delete: 1 });
 });

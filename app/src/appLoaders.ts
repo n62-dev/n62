@@ -22,6 +22,8 @@ export interface LoaderDeps {
   readonly insertResult: (item: HistoryItem) => void;
   /** A row's entry goes back on the line (the clipboard code's `recall`: Recall, Menu 2). */
   readonly recall: (item: HistoryItem) => void;
+  /** A row action of the Menu's list runs (the clipboard code's `acted`). */
+  readonly acted: (id: string) => void;
   /** The clipboard code is in, with the picked row's buttons (R147: they load with it). */
   readonly onClip: (clip: ClipActions, rowBar: RowBarView) => void;
 }
@@ -52,7 +54,7 @@ export function createLoaders(d: LoaderDeps) {
     /** Copy, paste and share: the shell reaches them for the apps (AppHost.copy) and for the Home/CAS Menu. */
     loadClip: (): Promise<ClipActions> =>
       (clipLoading ??= import("./clipboard/actions.svelte.ts").then((m) => {
-        const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall });
+        const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall, acted: d.acted });
         d.shell.clip = c;
         d.shell.homeMenu = () => c.menu();
         d.onClip(c, m.RowBar);
