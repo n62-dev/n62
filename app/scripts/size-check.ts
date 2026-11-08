@@ -326,7 +326,8 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  R53: the merge base 05a1daf7 measures 61.00 kB gzip (171.91 kB raw); results mode's state, Esc and back in App.svelte
  *  and the lazy counter's hook (+1.19 kB gzip with the controls in, +0.59 kB with them in their own chunk,
  *  keyboard/Fold.svelte) are paid for by moving the apps' and the Mode sheet's texts out of en.ts (i18n/enNum.ts,
- *  i18n/enMode.ts): the branch measures 60.96 kB gzip (171.76 kB raw). The pin stays the budget.
+ *  i18n/enMode.ts): the first measure was 60.96 kB gzip (171.76 kB raw); after fix round 2 and the merge of phase-1 the
+ *  branch measures 60.64 kB gzip (170.71 kB raw), under the pin of 60.65 kB.
  *  61,000 → 60,621 B (R155f2, no allowance, decisions.md Start chunk room): phase-1 e6cfc7cd measures 60,996 B gzip (171.91 kB
  *  raw), the branch merged with it 61,001 B (171,905 B raw, 1 B over the pin: the R155f1 field box and a chunk hash); the cut
  *  is 430 B gzip (−1,247 B raw) to 60,571 B (170,658 B raw): what a history item keeps of a result (factsFrom, homeItem,

@@ -7,8 +7,6 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-**R53:** Counters would have 8 rows (docs/05 3.4: 7), so Shift and Alpha share one ("3 / 5"); the new key `uses` is not backed up. Recommended: keep both (else Since joins Reset; `uses` backed up as `taps`).
-
 **G164's sample sources** (`app/public/samples/materials.txt`): take [S36](shifts/2026-11-sandra-sample-sources.md)'s two copper edits (two values disagree with the sheet) and sign its short list by the freeze (11-12). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
 ## Decided proposals
