@@ -293,8 +293,8 @@ while :; do
       rc=0; run_cmd "$cmd" || rc=$?
       # A41: after every Opus pass but a usage limit (75: henri is asked again), the device step with the pass's number
       if [[ "$cmd" == scripts/pipeline.sh\ pass\ * && $rc -ne 75 ]]; then pass_device; fi
-      (( rc == 75 )) && continue  # A121: the wait is done in run_cmd and costs no step; henri is asked again
-      ;;
+      # A121: the wait is done in run_cmd and costs no step; henri is asked again (a dry run's simulated 75 still ticks: its replies go by step)
+      if (( rc == 75 )); then [[ $dry -eq 0 ]] || tick; continue; fi;;
     *)
       bad=$((bad + 1)); (( bad >= 2 )) && { log "STOPPED night.sh$lane_text: henri gave no pipeline command twice"; say "STOPPED night.sh$lane_text: henri gave no pipeline command twice"; exit 1; };;
   esac
