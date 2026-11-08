@@ -9,7 +9,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
 
-**A75: a FIX package's own file** (`A73f1.md`) is not deleted by its run (A75 deletes only a package id's). Recommended: the Opus pass deletes the merged package files `scripts/gc.sh` lists.
+**A73f1: a CAS-last cold start is ready at 1507 ms** (Tab One), 7 ms over 1.5 s (Home 1323), in the worker's wasm instantiate. Recommended: A73f2 (gorge, the loader's times in a measure build, ~0.3 d) after v0.1.0; it does not hold the release.
 
 **G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
 
@@ -18,7 +18,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ## Decided proposals
 
 ### Pipeline and process
-- **A64: a reply that says not done ends the run before the checks (Opus pass 93).** As its block asks, but only "not done" as the done field ("Last commit x, not done."), never a heading ("Not done in full: …", "Not done: step 3"; A64f1). Would change if: a finished package ends NOT MERGED on it.
+- **A75's leftovers (Opus pass 97):** the next Opus pass deletes a merged FIX package's file and any `scripts/gc.sh` lists.
+- **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Decided notes, old reports, merged packages' mockups and one-package probes are deleted, not archived. Rule: rules section 10. Full text: archive, "Shortened 2026-11-06 (Opus pass 85)". Would change if: a deleted file is needed back twice a month.
 - **Owner answers of 2026-11-05 (morning).** The weekly fuzz runs in 10-minute slices from Wed 11-11 (G167, Opus pass 69); red-first may test the stock engine for a G125 package (A71). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: the fuzz count is cut to fit one slice.
@@ -43,7 +44,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R4b's four defaults, as built (Opus pass 18):** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Full text: archive.
 - **Settings in the Mode sheet, and presets (owner, 2026-10-27; built by R49, R85–R89).** Settings is a level of the pick sheet; a preset snapshots any user settings. Rule: docs/05 3.4. Full text: archive. Would change if: presets are switched under 5 times in 4 weeks (they go).
 - **R15c1 menus (the owner, 2026-10-20): a long menu scrolls** over the keypad (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
-- **R140's colour-vision floors (owner, 2026-11-07):** in High contrast Shift and Alpha stay 0.10 apart and ⚠ 0.06 from Shift (0.12 and 0.08 elsewhere): at 7:1 N62 Light's Alpha is #265c5a, and Shift reaches 0.12 from it only as the brown #5d2800. Would change if: a colour-vision test fails at these floors.
+- **R140's colour-vision floors (owner, 2026-11-07):** Shift and Alpha 0.12 apart, ⚠ 0.08 from Shift (High contrast 0.10, 0.06). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a colour-vision test fails.
 - **M4-2 (decided 2026-10-20, the owner):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Full text: archive. Your hand timing stays the gate.
 - **S8 (decided 2026-10-20, the owner):** every press is counted (R70); Android's backup is off (A23). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
 - **S6 (decided 2026-10-20, the owner; built by A11, R38a, R38b): the backup** goes out by Android's "Save to" screen and comes in by a file picker; restore checks the whole file. Full text: archive. Would change if: the Save-to screen is missing on a supported WebView.
@@ -142,19 +143,19 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Full text: archive. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
-- **R153–R155 (Opus pass 96):** the generator's moves stand (N62 Light's Shift #5b2400 for R140's protanopia floor; Black & White's ring #86bebd / #1b4342, as its Alpha is the logo teal; Solarized Dark's ring #d2f3ef); N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only (N62 Dark: 0.068 under protanopia; the error outline is also 1 px wider and has its row); the error outline follows a row whose status is error (1/0 is ∞, a result). Would change if: the owner's look after R24d.
+- **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: the owner's look after R24d.
 
 **Engine, precision and formats**
 - **Honest precision** (G2): rule: docs/04 2.4 rules 2–3; assignments evaluated once. **G44, G23:** the inverse distributions are solved against our MPFR forward functions, every fallback keeps ⚠. Full text: archive, "Shortened 2026-10-21 (P23)". Would change if: a G2 user types Giac's aliases.
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
 - **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Full text: archive. Would change if: Giac can size such a sum.
 - **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Full text: archive. Would change if: a cheaper test tells exp(-10^20) from 0.
-- **G22 (why):** `once` for a value evaluated once; every stored name with a known digit count is named when the perturbation costs digits. **G26:** `uncDigits` counts on the value as shown; none for lists, matrices, complex results or names holding a constant.
+- **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Full text: archive.
 - **The angle mode, route R (S14, R64, G46; Opus pass 31):** docs/04 2.12 (the ° template, the coordinate commands). `sinc` takes no factor (a function of a number, F29): sin(x)/x in radians in both modes; `polar_point`'s angle takes the factor (R64f2). Would change if: the G2 reads sinc in degrees.
 - **R39 (Function, Solve; S12):** a literal fraction exponent is reduced first (`(-8)^(2/6)` = −2); the root template stays the real root in every view.
-- **R18:** Greek names with Giac stand-ins (beta_, gamma_, Gamma_, epsilon_, Phi_, Psi_); XOR as `(a or b) and not(a and b)`; → is `->`; `&` refused until G2 item 41; `==` never answers on undecidable sides. **R18f3:** Home draws a non-number from Giac's `latex()`.
+- **R18:** Greek names with Giac stand-ins; `&` refused until G2 item 41; `==` never answers on undecidable sides; Home draws a non-number from `latex()` (R18f3). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)".
 - **R52:** `SerializeError` carries the English text plus key and values; `parseError(key, vars)` in `app/src/i18n/enParser.ts`.
 - **Home number formats:** `digits` are significant digits; STD plain for 1E-4 ≤ |x| < 10^digits; rounding half away from zero (the G2 rounds ties half to even, item 8; one rule, no option). **G31:** Fixed turns to scientific with the same decimals when a nonzero value would show only zeros, with confirmed digits only (in each complex part too, G36).
 - **G5:** a list's mark: docs/04 2.4. **Chips and Ans** (R2): rule: docs/04 2.8; a chip has two arguments (key, shown); an operator on an empty line starts with Ans only when the view has a result.
@@ -168,18 +169,18 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 - **The deep check of 2026-10-19 (G38, G57, G48, G39):** a result resting on a numeric decision is decided again at P + 20 and P + 40, refused when undecided; a run-once store is ⚠ without a count; a divergent sum or integral is refused. Rule: docs/04 2.4. Full text: archive.
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
-- **G158 (Opus pass 52):** `sem` and `median` refuse a second list or loose values ("needs one list of values"; `median(1,2,3)` too: one rule, Find's syntax is `median(list)`); `percentile`'s wrong count gets our words (G158f1). Weighted sem: when the owner asks.
+- **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)".
 
 **Units**
 - **G17:** dB is a field-ratio level, dBm and dBW to 1 mW and 1 W; offsets and levels alone convert, impossible levels and temperatures are refused (G16's zero: G35, below). Full text: archive.
 - **G18:** ± is `pasupm(value,sigma)`, each an independent standard uncertainty in the slot's unit; ± inside sin, cos, tan works. **G25:** a typed product is kept when at most one token carries a prefix or its factor is 1 (N·m, kW·h), else SI with a prefix.
-- **G13:** the 13 CODATA overrides and the hp, mmHg, inHg factors stay in `find/factors.yaml` until qalc agrees (`refresh-factors.mjs` shows the change, P22). **G7:** `rev`, `revolution`, `cycle` name `rev`; StdT 273.15 K and StdP 101325 Pa.
+- **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)".
 - **R28:** rule: docs/04 4.3 (`pasu<n>` in the order written, the end slot after `\to`); a slot only right after a number literal; σ is a number literal, or `n %` of the value (R104, docs/04 4.2); a product with a slot keeps its brackets.
 - **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
 - **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not. Full text: archive. Would change if: a power-triangle rule is packaged.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
 - **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ, as a constant (G26), also beside the constant it came from; one chip used twice is one input; a σ of 0 is none. Full text: archive. Would change if: a chip keeps its inputs' basis (G81).
-- **R63:** in the unit view a result chip is a number: a slot after it, filled with its unit, and its σ goes in as pasupm keyed by the chip's name, one input per chip (R115; G18 for a typed ±); Ans gets no slot (no Ans value there). Would change if: the owner wants a chip's σ dropped there.
+- **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: the owner wants a chip's σ dropped there.
 - **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is disabled until built. Full text: archive.
 
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35 rewrites G16's "an exact 0 loses its dimension" and the known gap of cancelling terms). Would change if: the per-term check costs more than the 5 ms p95 bar.
@@ -190,7 +191,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 **Library, release and process**
 - **The check of 2026-10-19:** (1) a Home value that leaves its evaluation (stored, Ans, a `\res` chip, an export) is the value shown, whatever the angle mode is later; a CAS value stays symbolic (G34). Would change if: (1) the G2 is found to re-read a stored Home value in the new mode.
 - **G33:** a definition's description is the comment line above it; G30's E-series tables are checked against round(10^(2+k/n)) with the one published exception (9.20 at E192).
-- **R59, R59f1 (Opus passes 72, 73):** the clash sheet (Replace and import / Cancel) stays (r10 3.1); WorkerEngine's call and keep are public (the library stays out of the start chunk); the owner counts the removal test's imports by hand. Would change if: an import count is wanted.
+- **R59, R59f1 (Opus passes 72, 73):** the clash sheet stays; the library stays out of the start chunk. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)".
 - **The release path (A7, A8, A45, A48; 2026-10-15, owner 2026-10-29 and 2026-11-03):** v0.1.0, APK and website from one tag (A48); golden on the release engine before signing; the web names (`sw.js`, IndexedDB, manifest `id`) frozen. The test tag is `vX.Y.Z-test`; `master` follows phase-1 from 2026-11-03 (owner). Full text: archive.
 - **Releases:** the engine is built in the pinned container (P2 met: +2.3 % start), under `setarch -R` so `giac.wasm` is bit-reproducible. **Minimum WebView:** Chrome 111 (owner, 2026-11-07: `color-mix` needs 111, R141's container units 105), with an inline "update" notice below it (R160; minSdk 24).
 - **Tests:** the golden gate as docs/04 7.3; a pending task's budget is its planned press count, values `derived` or `oracle`; timing tests skip their assertion when the load average exceeds the cores; Vitest has no DOM, a DOM count is a Playwright test (R132, Opus pass 72). Full text: archive.
@@ -199,8 +200,9 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R87 (Opus pass 15):** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **R38b, R88, the restore's checks and presets (Opus pass 29):** `state/backup.ts` repeats the start readers' rules, each guarded by a test on the same values; no pin in `vite.config.ts`. Full text: archive. Would change if: a guard misses a drift.
-- **R89, presets in Mode (Opus pass 47):** no built-in Default (none saved: the row says None); Delete acts at once; the active preset has the sheet's ✓; a preset's line leaves out vibration and the N62 theme; names are typed as maths. Would change if: the owner, at the review after R24d.
+- **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: the review after R24d.
 - **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04):** a level of settings holds seven rows, a list level scrolls; schema 4; σ in Scientific; Muted mutes every mark, the line keeps ⚠; ’ and , group only the digits before the point. Full text: archive, "Shortened 2026-11-04 (Opus pass 66)". Would change if: the milestone review.
 - **G119, Giac's sequence answers in Home (Opus pass 6):** each shows as its value (one element) or as a list in braces, so Ans reads back a value or a list; CAS unchanged (F108). Full text: archive.
-- **R156, Key shadows (ron, run 762):** a look stored before R156 has them on (the default), a wrong type keeps the current value; Appearance opens on Theme, not on the first ticked switch, so ◀ ▶ still step the theme; its texts moved to a lazy table (`app/src/i18n/enLook.ts`, the start chunk's pin). Would change if: the owner wants a stored look from before R156 to stay flat.
+- **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: the owner wants an older look flat.
+- **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112); its code loads on demand, the start chunk's 61 kB stays. Would change if: its device check, or the owner wants the system's setting to win.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on, a wrong type keeps the current value; no first-paint attribute. Would change if: the owner wants the pop and the flick bubble apart.
