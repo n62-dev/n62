@@ -22,6 +22,7 @@ const box = async (p: Page, sel: string) => {
   return b;
 };
 const screenHeight = (p: Page) => p.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
+const inLine = (p: Page): Promise<boolean> => p.evaluate(() => document.activeElement?.tagName === "MATH-FIELD");
 const selection = (p: Page) => p.evaluate(() => JSON.stringify(window.n62.entry.field?.selection.ranges));
 async function swipe(p: Page, sel: string, dy: number): Promise<void> {
   const f = await touch(p, sel);
@@ -313,6 +314,25 @@ test("Tab reaches the handle, and Enter on it folds", async ({ page }) => {
   expect(at).toBe("fold-handle");
   await page.keyboard.press("Enter");
   await isFolded(page, true);
+  // the focused button is gone: focus went back to the line, so a hardware letter types while folded
+  await expect.poll(() => inLine(page)).toBe(true);
+  await page.keyboard.press("x");
+  await expect.poll(() => entryValue(page)).toContain("x");
+  await isFolded(page, true);
+  // Enter on the slice unfolds and typing goes on
+  await page.locator(SLICE).focus();
+  await page.keyboard.press("Enter");
+  await isFolded(page, false);
+  await expect.poll(() => inLine(page)).toBe(true);
+  await page.keyboard.press("y");
+  await expect.poll(() => entryValue(page)).toContain("xy");
+  // folded again by Enter on the handle, Esc is heard and brings the keys back
+  await page.locator(HANDLE).focus();
+  await page.keyboard.press("Enter");
+  await isFolded(page, true);
+  await expect.poll(() => inLine(page)).toBe(true);
+  await page.keyboard.press("Escape");
+  await isFolded(page, false);
 });
 
 for (const [width, height] of [[412, 839], [360, 740]] as const) {

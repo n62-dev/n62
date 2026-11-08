@@ -6,6 +6,7 @@
      line is attached here too (foldSwipe.ts). Its own chunk, loaded when the browser is idle after the start, so the start
      chunk carries only the fold's state. -->
 <script lang="ts">
+  import { tick } from "svelte";
   import type { EntryController } from "../entry/controller.ts";
   import { keyFeelText as t } from "../i18n/enKeyFeel.ts";
   import { FOLD_PX, foldSwipe } from "./foldSwipe.ts";
@@ -28,6 +29,14 @@
   const start = (e: PointerEvent): void => {
     e.preventDefault(); // the caret stays in the line
     from = { id: e.pointerId, y: e.clientY };
+  };
+  /** A keyboard activation removes the focused button, and focus would fall to <body>, where no hardware key is heard:
+   *  hand it back to the line (a touch never takes it: `start` prevents the pointerdown's focus). */
+  const activate = (e: MouseEvent, go: () => void): void => {
+    const was = e.currentTarget === document.activeElement;
+    go();
+    // after Svelte has removed the button: its removal would otherwise drop the focus the call just gave
+    if (was) void tick().then(() => entry.focus());
   };
   const drag = (e: PointerEvent, down: boolean): void => {
     if (!from || from.id !== e.pointerId) return;
@@ -54,11 +63,11 @@
 </script>
 
 {#if folded}
-  <button type="button" class="slice" data-testid="fold-slice" aria-label={t("keys.unfold")} onpointerdown={start} onpointermove={(e) => drag(e, false)} onclick={onunfold}>
+  <button type="button" class="slice" data-testid="fold-slice" aria-label={t("keys.unfold")} onpointerdown={start} onpointermove={(e) => drag(e, false)} onclick={(e) => activate(e, onunfold)}>
     <span class="grip"></span>{t("keys.slice")}
   </button>
 {:else if handle}
-  <button type="button" class="handle" data-testid="fold-handle" aria-label={t("keys.fold")} onpointerdown={start} onpointermove={(e) => drag(e, true)} onclick={() => onfold("handle")}>
+  <button type="button" class="handle" data-testid="fold-handle" aria-label={t("keys.fold")} onpointerdown={start} onpointermove={(e) => drag(e, true)} onclick={(e) => activate(e, () => onfold("handle"))}>
     <span class="grip"></span>
   </button>
 {/if}
