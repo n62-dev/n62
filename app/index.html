@@ -36,17 +36,14 @@
   <body>
     <div id="app"></div>
     <script>
-      // Too-old WebView check (ES5, feature detection only, no UA sniffing). Inline and English on purpose:
-      // the i18n table lives in the bundle, which an old WebView cannot even parse.
-      // Needs: optional chaining (Chrome 80), WebAssembly legacy exception handling (Chrome 95, used by the Giac engine).
+      // Too-old WebView check (ES5, feature detection only). Inline and English: the i18n table is in the bundle.
+      // Chrome 111 (R160): color-mix (keys), container units 105 (pad), wasm exceptions 95 (Giac).
       (function () {
-        var ok = true;
-        try { new Function("var a = null; return a?.b;"); } catch (e) { ok = false; }
+        var ok = false; // the bytes: (module (func (try (catch_all))))
         try {
-          // (module (func (try (catch_all)))) : validates only where wasm exception handling exists
-          ok = ok && typeof WebAssembly === "object" && WebAssembly.validate(new Uint8Array(
+          ok = CSS.supports("color", "color-mix(in srgb,red,blue)") && CSS.supports("width", "1cqi") && WebAssembly.validate(new Uint8Array(
             [0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 10, 8, 1, 6, 0, 6, 64, 25, 11, 11]));
-        } catch (e) { ok = false; }
+        } catch (e) {}
         if (ok) return;
         var app = document.getElementById("app");
         if (app) app.removeAttribute("id");
