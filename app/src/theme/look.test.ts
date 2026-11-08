@@ -16,14 +16,14 @@ describe("look", () => {
     expect(FAMILIES.map((f) => f.name)).toEqual(["N62", "Black & White", "Solarized"]);
   });
   it("R153: a stored look naming Teal reads as N62 and keeps its other three values; a stored bw stays bw", () => {
-    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true });
+    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true, pops: true });
     expect(renamedLook({ family: "teal", brightness: "dark", plain: true })).toEqual({ family: "n62", brightness: "dark", plain: true });
     expect(validLook({ family: "bw" }, defaultLook()).family).toBe("bw");
     expect(renamedLook({ family: "bw" })).toEqual({ family: "bw" });
   });
   it("R150: a stored look naming Graphite, Gruvbox or Nord reads as N62 and keeps its brightness, High contrast and Plain keys", () => {
     for (const family of ["graphite", "gruvbox", "nord"])
-      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true });
+      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true, pops: true });
     expect(validLook({ family: "x", brightness: "light" }, { ...defaultLook(), family: "bw" }).family).toBe("bw"); // an unknown name still falls back
   });
   it("R150: a backup's or a preset's look naming a retired family is renamed to n62 with the rest kept; the other families stay", () => {
@@ -40,8 +40,8 @@ describe("look", () => {
     }
   });
   it("first-start defaults: Dark in the Android app, System in the browser, High contrast when asked, key shadows on", () => {
-    expect(defaultLook()).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true });
-    expect(defaultLook(true, true)).toEqual({ family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true });
+    expect(defaultLook()).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true, pops: true });
+    expect(defaultLook(true, true)).toEqual({ family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true, pops: true });
   });
   it("R156: validLook gives shadow true when the field is missing, keeps a stored boolean, and the fallback's for a wrong type", () => {
     const off = { ...defaultLook(), shadow: false };
@@ -52,6 +52,16 @@ describe("look", () => {
     expect(validLook({ shadow: "no" }, off).shadow).toBe(false);
     expect(validLook({ shadow: 0 }, defaultLook()).shadow).toBe(true);
   });
+  it("R163: validLook gives pops true when the field is missing, keeps a stored boolean, and the fallback's for a wrong type", () => {
+    const off = { ...defaultLook(), pops: false };
+    expect(defaultLook().pops).toBe(true);
+    expect(validLook({ family: "bw", brightness: "dark", contrast: false, plain: false, shadow: false }, off).pops).toBe(true);
+    expect(validLook({}, off).pops).toBe(true);
+    expect(validLook({ pops: false }, defaultLook()).pops).toBe(false);
+    expect(validLook({ pops: true }, off).pops).toBe(true);
+    expect(validLook({ pops: "no" }, off).pops).toBe(false);
+    expect(validLook({ pops: 0 }, defaultLook()).pops).toBe(true);
+  });
   it("System follows the phone; the other two do not", () => {
     const l = { ...defaultLook(), family: "solarized" as const, plain: true };
     expect(themeOf(l, true)).toEqual({ family: "solarized", brightness: "light", contrast: "normal", keys: "plain" });
@@ -59,7 +69,7 @@ describe("look", () => {
     expect(themeOf({ ...l, brightness: "light", contrast: true }, false)).toMatchObject({ brightness: "light", contrast: "high" });
   });
   it("validLook keeps the fallback for a wrong field; stepped goes round", () => {
-    expect(validLook({ family: "x", brightness: "light", contrast: 1, plain: true }, defaultLook())).toEqual({ family: "n62", brightness: "light", contrast: false, plain: true, shadow: true });
+    expect(validLook({ family: "x", brightness: "light", contrast: 1, plain: true }, defaultLook())).toEqual({ family: "n62", brightness: "light", contrast: false, plain: true, shadow: true, pops: true });
     expect(stepped(["a", "b", "c"], "c", 1)).toBe("a");
     expect(stepped(["a", "b", "c"], "a", -1)).toBe("c");
   });
