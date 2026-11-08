@@ -336,7 +336,7 @@ quiet_wait() {
 }
 _lib_log() { if declare -F log >/dev/null; then log "$*"; fi; }
 # The shell tests (A47a): run by `pipeline.sh selftest` and by the check `shell`. N62_SELFTEST_TESTS (absolute paths) overrides.
-SELFTESTS=(scripts/pipeline.test.sh scripts/night.test.sh scripts/gc.test.sh tools/devlock.test.sh tools/manifest-backup.test.sh tools/release-gate.test.sh)
+SELFTESTS=(scripts/pipeline.test.sh scripts/night.test.sh scripts/gc.test.sh tools/devlock.test.sh tools/manifest-backup.test.sh tools/release-gate.test.sh tools/release-guard.test.sh)
 # selftest_run <repo dir> <log>: runs each test (clean of the pipeline's own environment); prints "PASSED", or
 # "FAILED (<test>: <first failing line>)" and fails.
 selftest_run() {

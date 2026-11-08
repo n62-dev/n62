@@ -1248,8 +1248,8 @@ a64q 'Last commit abc, NOT done' 'Open questions: none' || fail "A64f1: 'Last co
 a64q 'Open questions: the bundle has no A64 section' || fail "A64: 'the bundle has no A64 section' does not fire"
 [[ "$(task_question_line "$tmp/q-a64")" == 'Open questions: the bundle has no A64 section' ]] || fail "A64: task_question_line does not print the line that fired: $(task_question_line "$tmp/q-a64")"
 grep -q 'task_question_line "$run/' "$here/pipeline.sh" || fail "A64: pipeline.sh does not name the line that fired with task_question_line"
-# (f) the two idle shell tests are in SELFTESTS (run by `pipeline.sh selftest` and the shell check) and in tools/README.md
-for t in tools/manifest-backup.test.sh tools/release-gate.test.sh; do
+# (f) the idle shell tests (A55; release-guard, A75) are in SELFTESTS (run by `pipeline.sh selftest` and the shell check) and in tools/README.md
+for t in tools/manifest-backup.test.sh tools/release-gate.test.sh tools/release-guard.test.sh; do
   printf '%s\n' "${SELFTESTS[@]}" | grep -qx "$t" || fail "A55: $t is not in SELFTESTS"
   [[ -x "$here/../$t" ]] || fail "A55: $t is not executable"
   grep -qF "$(basename "$t")" "$here/../tools/README.md" || fail "A55: tools/README.md does not name $t"

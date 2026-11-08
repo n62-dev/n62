@@ -22,6 +22,7 @@ tools/check-version.sh [vX.Y.Z]                                   # app/package.
 tools/manifest-backup.test.sh                                     # A23, in SELFTESTS (A55): the manifest keeps android:allowBackup="false" and no backup rules (decisions S8)
 tools/folder-names.test.sh                                        # A65: FolderNames.java (the sync folder's name rule) against tests/fixtures/folder-names.json, the list folder.test.ts checks folder.ts with; run by app/scripts/folder-names.test.ts (Vitest); needs a JDK
 tools/release-gate.test.sh                                        # A42, in SELFTESTS (A55): release-gate.sh --dry-run lists its stages on _out/release
+tools/release-guard.test.sh                                       # A7, in SELFTESTS (A75): build.sh --release refuses before any step; release-verify.sh takes only the pinned certificate
 ```
 
 They use `$ANDROID_SERIAL`: `core-device.sh` requires it, the Python tools default to the Tab One. `shots.py` (usage in its header) cold-starts a page N times and keeps a screenshot of each.
@@ -47,6 +48,6 @@ Build-time tools (no device):
 - `third-party/parse.mts`: `THIRD_PARTY.md`'s tables as data for the About screen (R87; `app/vite-plugin-about.ts`).
 - `library.ts`: the laptop's library check, the app's own check and import on the engine in Node (`node tools/library.ts check <file>`); kept for whoever writes a library file by hand or with an AI (G164's sample).
 
-Release (A7): `release-guard.sh` is what `./build.sh --release` checks before any step (keys, keystore, alias, version files); `release-verify.sh <apk>` checks the signed APK's certificate against `android/release-cert.sha256`; `test-release-guard.sh` tests both without Gradle or an engine.
+Release (A7): `release-guard.sh` is what `./build.sh --release` checks before any step (keys, keystore, alias, version files); `release-verify.sh <apk>` checks the signed APK's certificate against `android/release-cert.sha256`; `release-guard.test.sh` tests both without Gradle or an engine (in SELFTESTS, A75).
 
 Release gate (A42): `tools/release-gate.sh` runs the golden gate, the canaries and the core list on `_out/release` (the engine the APK carries), rebuilding it first unless its `.release-key` stamp matches; one line per stage, last line `RELEASE GATE PASSED` or `RELEASE GATE FAILED: <stages>`. Test: `tools/release-gate.test.sh` (A55: run by `pipeline.sh selftest` and the `shell` check with the others, as is `tools/manifest-backup.test.sh`, A23's guard that `android:allowBackup="false"` stays in the manifest, decisions S8). Needs `npm run index` done in the checkout; run it when the host is quiet (under load, `invariants` and core c46/c47 time out).
