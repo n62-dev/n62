@@ -64,7 +64,7 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 |---|---|---|---|---|
 | 534 | [R159f2](packages/R159f2.md) a touch just beside a unit chip picks it again | ron, Sonnet | `p1/ron-unitnearmiss` | – |
 | 535 | [R53f1](packages/R53f1.md) results mode through the checks and the audit (carries R53) | ron, Sonnet | `p1/ron-results-fold` | – |
-| 536 | [R165](packages/R165.md) the preset specs wait for the name prompt before typing | ron, Sonnet | `p1/ron-presetswait` | – |
+| 536 | R165 the preset specs wait for the name prompt before typing | ron, Sonnet | `p1/ron-presetswait` | – |
 | 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | R53f1 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
