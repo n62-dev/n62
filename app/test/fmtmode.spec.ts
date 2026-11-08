@@ -23,7 +23,7 @@ test("Shift, Fmt, ▶, Enter switches RAD → DEG", async ({ page }) => {
   expect(await angle(page)).toBe("rad");
   await tap(page, ["shift", "fmt"]);
   await sheetKey(page, ["right", "enter"]);
-  expect(await angle(page)).toBe("deg");
+  await expect.poll(() => angle(page)).toBe("deg");
 });
 
 test("Shift, Fmt, 6 opens Settings (row 6 since R89)", async ({ page }) => {

@@ -50,8 +50,31 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
       const b = el("button", `alt ${cls}`, testid, text);
       b.tabIndex = -1;
       b.dataset["i"] = `${i}`;
-      b.addEventListener("pointerdown", (e) => e.preventDefault()); // the view keeps the focus (hardware keys)
-      b.addEventListener("click", () => void v.pick(i));
+      // R159: the pick is made when the finger lifts on the chip it went down on (as the keypad's keys are), not on the click
+      // the browser makes from it: under load Chromium now and then gave a chip or More… pointerdown, touchstart, pointerup
+      // and touchend and no click, and the tap was lost. A click that follows a pointer (detail > 0) is that same press;
+      // one without (a keyboard or a screen reader activating the button) picks itself.
+      let down = false;
+      b.addEventListener("pointerdown", (e) => {
+        e.preventDefault(); // the view keeps the focus (hardware keys)
+        down = e.isPrimary && e.button === 0;
+      });
+      b.addEventListener("pointercancel", () => (down = false));
+      b.addEventListener("pointerup", (e) => {
+        const was = down;
+        down = false;
+        if (!was || e.button !== 0) return;
+        const at = document.elementFromPoint(e.clientX, e.clientY); // (a touch is captured by its first target: the finger may have left it)
+        if (at === b || b.contains(at)) void v.pick(i);
+      });
+      // R159f1: the click the browser still makes after the pick would land on what the pick opened (a tap on More… sent its
+      // click to the Find sheet just drawn); a cancelled touchend makes no click.
+      b.addEventListener("touchend", (e) => {
+        if (e.cancelable) e.preventDefault();
+      });
+      b.addEventListener("click", (e) => {
+        if (e.detail === 0) void v.pick(i);
+      });
       return b;
     };
     s.alts.forEach((a, i) => row.append(chip(a.text, i, "unit-alt", "")));

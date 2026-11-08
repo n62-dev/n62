@@ -20,6 +20,10 @@ from_opus_pass() {
   if grep -q '^OPUS PASS' "$1"; then awk 'NR == FNR { if (/^OPUS PASS/) last = FNR; next } FNR >= last' "$1" "$1"; else cat "$1"; fi
 }
 
+# A121: what a claude exit at a usage limit says (the words of Claude Code 2.1.319 included); always read only when claude exited
+# non-zero. Used by pipeline.sh (agents, pass, report) and night.sh (henri), with grep -iE.
+LIMIT_RE='usage limit|rate limit|429|overloaded|You.ve (hit|reached) your|You.re out of (usage|extra)'
+
 # A bare missing module ('vitest', '@capacitor/clipboard') is the machine's; a relative one ('./x.ts') is the worker's own import (A34).
 MACHINE_RE="command not found|node_modules (is )?missing|Cannot find module '[^./']"
 # machine_failure <check log>: succeeds when the log shows the machine, not the code, failed (A24, A34).

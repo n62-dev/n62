@@ -2,7 +2,7 @@
 
 N62 is an open-source graphing CAS calculator for engineers (Android and PWA, later iOS and desktop): the HP Prime G2's logical key layout and flow, our own look, plus units, uncertainty and honest precision. GPL-3.0. Repo: https://github.com/n62-dev/n62 (default `master`; work on `phase-1`; `gh` is not logged in). **Never push or commit without the owner's OK.**
 
-**[docs/rules-core.md](docs/rules-core.md) is binding:** the goal, the three principles, and the clean-room, F-Droid and maths-correctness rules. Read it first. **Now:** the core freeze (P23) ended on 2026-10-27; its net stays (the core list `tests/core/` on every merge and on the night's device; a red case is a bug to fix, not a gate). Engine fixes and features run in `docs/shifts/brief.md` section 0's order. Status and tasks: [docs/backlog.md](docs/backlog.md). Decisions: [docs/decisions.md](docs/decisions.md). What to read for a design question: [docs/README.md](docs/README.md).
+**[docs/rules-core.md](docs/rules-core.md) is binding:** the goal, the three principles, and the clean-room, F-Droid and maths-correctness rules. Read it first. **Now:** the core freeze (P23) ended on 2026-10-27; its net stays (the core list `tests/core/` on every merge and on the night's device; a red case is a bug to fix, not a gate). Work runs around the clock, auto or hands-on; "night" in names means auto (P25, brief section 0). Engine fixes and features run in `docs/shifts/brief.md` section 0's order. Status and tasks: [docs/backlog.md](docs/backlog.md). Decisions: [docs/decisions.md](docs/decisions.md). What to read for a design question: [docs/README.md](docs/README.md).
 
 ## Commands (Emscripten 6.0.12 in `~/emsdk`; the build scripts source it themselves)
 ```bash

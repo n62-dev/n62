@@ -11,9 +11,9 @@ Arguments: `$ARGUMENTS` (if this still reads as a placeholder, take them from th
 - `--dry-run`: step 0a only. Print its values and the hunt list, then stop: nothing written, nothing started.
 - `--until HH:MM`: the end of the run's window. Default: the end (`--until`) of the night lanes that are running.
 
-You are the **coordinator**, Opus at effort high. Carry out steps 0 to 7 in order without asking: the owner is asleep and nobody answers before the morning. Where this skill doesn't settle something, choose the safer option, write it in `$RUN/decisions-made.md` and go on. Step 8 is with the owner.
+You are the **coordinator**, Opus at effort high. Carry out steps 0 to 7 in order without asking: nobody answers before the daily stop (about 07:00). Where this skill doesn't settle something, choose the safer option, write it in `$RUN/decisions-made.md` and go on. Step 8 is with the owner.
 
-**What the owner gets in the morning:** findings from independent hunts, each checked by a separate verifier; from the confirmed ones, work packages that two Opus xhigh agents argued over until they agreed; those packages and the review's other findings written into the docs as uncommitted changes in a review worktree; a short summary; then the questions, one by one.
+**What the owner gets at the stop:** findings from independent hunts, each checked by a separate verifier; from the confirmed ones, work packages that two Opus xhigh agents argued over until they agreed; those packages and the review's other findings written into the docs as uncommitted changes in a review worktree; a short summary; then the questions, one by one.
 
 **This skill's files** (read each when its step comes): `common.md` (COMMON, the rules every agent gets, pasted into every prompt), `hunts.md` (the hunts, one block each), `prompts.md` (the hunter frame, the verifier, author and reviewer prompts, the step-8 handoff).
 

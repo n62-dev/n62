@@ -7,25 +7,20 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-**A83: who writes a patch's README row.** Rules section 5 lists `engine/giac/patches/README.md` as a shared file (text in the report), but the audits sent G181 and G188 back for its missing row, and A83's pre-flight now fails a new patch without one. Proposal: take the file off that list, so the worker of a patch adds its row (A83's report).
-
 **R53:** Counters would have 8 rows (docs/05 3.4: 7), so Shift and Alpha share one ("3 / 5"); the new key `uses` is not backed up. Recommended: keep both (else Since joins Reset; `uses` backed up as `taps`).
 
-**A73f1: a CAS-last cold start is ready at 1507 ms** (Tab One), 7 ms over 1.5 s (Home 1323), in the worker's wasm instantiate. Recommended: A73f2 (gorge, the loader's times in a measure build, ~0.3 d) after v0.1.0; it does not hold the release.
-
-**G164's sample sources** (`app/public/samples/materials.txt`): check its 16 sources by the freeze (11-12), and keep copper on its data sheet (G164's report).
-
-**A64 lo-11:** a worker wrote outside its worktree (run #488). Recommended (Opus pass 93): yes, warn only: after a worker step log new files in `source99/` (the main checkout's parent, where run #488's file was) and in `.claude/worktrees/`.
+**G164's sample sources** (`app/public/samples/materials.txt`): take [S36](shifts/2026-11-sandra-sample-sources.md)'s two copper edits (two values disagree with the sheet) and sign its short list by the freeze (11-12). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
 ## Decided proposals
 
 ### Pipeline and process
-- **A75's leftovers (Opus pass 97):** the next Opus pass deletes a merged FIX package's file and any `scripts/gc.sh` lists.
+- **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
+- **Owner answers of 2026-11-08:** a Giac patch's worker writes its own row in `engine/giac/patches/README.md` (A83; rules section 5). A stray file outside a worktree is logged, warn only (A64 lo-11; A88). A CAS-last cold start, 1507 ms on the Tab One, 7 ms over 1.5 s, does not hold v0.1.0 (A73f2 after the tag). c29's single red is looked for now, not at a second red (F200; A120). Would change if: a stray file does harm before anyone reads the log.
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a finished package ends NOT MERGED on it.
-- **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: TMview finds N62 in class 9; the domain lapses.
+- **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Full text: archive, "Opus pass 96". Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Decided notes, old reports, merged packages' mockups and one-package probes are deleted, not archived. Rule: rules section 10. Full text: archive, "Shortened 2026-11-06 (Opus pass 85)". Would change if: a deleted file is needed back twice a month.
-- **Owner answers of 2026-11-05 (morning).** The weekly fuzz runs in 10-minute slices from Wed 11-11 (G167, Opus pass 69); red-first may test the stock engine for a G125 package (A71). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: the fuzz count is cut to fit one slice.
-- **Owner answers of 2026-11-02, evening:** red-first counts only added or tightened tests (A67). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: a fix needs a test loosened.
+- **Owner answers of 2026-11-05 (morning).** The weekly fuzz runs in 10-minute slices from Wed 11-11 (G167, Opus pass 69); red-first may test the stock engine for a G125 package (A71). Full text: archive, "Opus pass 96". Would change if: the fuzz count is cut to fit one slice.
+- **Owner answers of 2026-11-02, evening:** red-first counts only added or tightened tests (A67). Full text: archive, "Opus pass 96". Would change if: a fix needs a test loosened.
 - **Owner answers of 2026-10-22 to 2026-10-31 and Opus passes 55–78:** built; the list of packages: [archive](archive/decisions-2026-10.md), "Shortened 2026-11-07 (Opus pass 93)".
 - **G125 (Opus pass 5): a bug an earlier merge already fixed** keeps its tests as regression tests that fail on the stock build, and merges review-only. Rule: brief section 8a (A71). Would change if: a test passes on stock too.
 - **Owner answers of 2026-10-25, afternoon (verification check).** A wall-clock test that fails only under load is a timing case, not a bug (`isTiming`); the gate gets the pipeline's retry list (A39). Would change if: a timing case fails without load. Full text: archive.
@@ -37,9 +32,9 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
 ### Feel, keys and screen (milestone 4a)
-- **R151's start time comes from A73f1 (Opus pass 92):** no measurement package; A73f1's Home cold starts on the Tab One are the after numbers. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: either is over its before by more than 50 ms (a ron package).
-- **Owner answers of 2026-11-06 (UI, before v0.1.0):** R140–R150 and R53 as written (families: R50); a colour-blindness test, no picker (R140). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
-- **R41's status line at font scale 2.0 waits for a device (Opus pass 61):** annabell's next device run checks it with TalkBack. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: the device clips Mode or ☰ (a ron package).
+- **R151's start time comes from A73f1 (Opus pass 92):** no measurement package; A73f1's Home cold starts on the Tab One are the after numbers. Full text: archive, "Opus pass 96". Would change if: either is over its before by more than 50 ms (a ron package).
+- **Owner answers of 2026-11-06 (UI, before v0.1.0):** R140–R150 and R53 as written (families: R50); a colour-blindness test, no picker (R140). Full text: archive, "Opus pass 96".
+- **R41's status line at font scale 2.0 waits for a device (Opus pass 61):** annabell's next device run checks it with TalkBack. Full text: archive, "Opus pass 96". Would change if: the device clips Mode or ☰ (a ron package).
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Full text: archive. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-10-31 and 2026-11-01 (stored data, the comma, `%`):** built (R95, R100, R94, R110). Full text: archive. Would change if: two tabs side by side are wanted on purpose.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); Android's splash and bars Dark (A59). Full text: archive. Would change if: users want the system switch to mute the keys.
@@ -48,19 +43,19 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R15c1 menus (the owner, 2026-10-20): a long menu scrolls** over the keypad (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **R140's colour-vision floors (owner, 2026-11-07):** Shift and Alpha 0.12 apart, ⚠ 0.08 from Shift (High contrast 0.10, 0.06). Full text: archive, "Shortened 2026-11-08 (Opus pass 97)". Would change if: a colour-vision test fails.
 - **M4-2 (decided 2026-10-20, the owner):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Full text: archive. Your hand timing stays the gate.
-- **S8 (decided 2026-10-20, the owner):** every press is counted (R70); Android's backup is off (A23). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
+- **S8 (decided 2026-10-20, the owner):** every press is counted (R70); Android's backup is off (A23). Full text: archive, "Opus pass 96".
 - **S6 (decided 2026-10-20, the owner; built by A11, R38a, R38b): the backup** goes out by Android's "Save to" screen and comes in by a file picker; restore checks the whole file. Full text: archive. Would change if: the Save-to screen is missing on a supported WebView.
 - **R50 (2026-10-18; owner 2026-11-07): themes N62 (teal, #529997's hue), Black & White (the old N62), Solarized**; entry outline, busy dash, key shadows, Home logo (R153–R157; `docs/mockups/n62-teal-2026-11-07.html`). Rule: docs/05 3.10. Would change if: a family goes unused for 4 weeks.
 - **Redo after ⌫ (Opus pass 44, 2026-10-20; R15c2):** Redo does not delete again (MathLive keeps no snapshot after a deletion, [#3125](https://github.com/arnog/mathlive/issues/3125)); no workaround of ours. Full text: archive.
 - **R15c Store (decided 2026-10-19, the owner; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
 - **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views move to the status line.** Rule: docs/04 5.1, docs/05 3.2; built by R15c1–R15c4. Full text: archive.
-- **R15b (2026-10-17): cluster rows 36 px; the place target at least 48 × 28 px** (R82f2). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: 36 px keys are mis-tapped on the phone.
+- **R15b (2026-10-17): cluster rows 36 px; the place target at least 48 × 28 px** (R82f2). Full text: archive, "Opus pass 96". Would change if: 36 px keys are mis-tapped on the phone.
 - **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by its handle or a swipe down on the line (R53; Home and CAS). Would change if: under 14 folds or 10 actions while folded in 14 days. Full text: archive.
 - **R21 (2026-10-14): pick sheets rise over the keypad's rows 3–9, Settings too since 2026-10-27;** 36 px rows, 44 px cells, then scroll. Full text: archive.
-- **S2: one menu system (2026-10-13).** Rule: [archive/r8-menus.md](archive/r8-menus.md) sections 5–6 (M1–M7). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: a G2 answer contradicts a rule.
+- **S2: one menu system (2026-10-13).** Rule: [archive/r8-menus.md](archive/r8-menus.md) sections 5–6 (M1–M7). Full text: archive, "Opus pass 96". Would change if: a G2 answer contradicts a rule.
 - **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke, never for the match alone; of two equal readings, less code wins. Full text: archive. Would change if: a removal costs muscle memory.
 - **S12 (the owner, 2026-10-19; built by R66, R67, R68, G45):** dropped R39's power form in Home, the half-even option and G42's wait for items 66–67; kept `mod` Euclidean. Full text: archive.
-- **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](06-keypad-vs-g2.md). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
+- **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](06-keypad-vs-g2.md). Full text: archive, "Opus pass 96".
 - **P11 (2026-10-13): back to the G2's flow; milestone 4a before the rest of milestone 4.** Departures sit on top of the G2 way, never instead of it (docs/03 rules 5–13). Built; full text: archive.
 - **P7 (2026-10-12, revised by P11): keypad gestures.** The arrow keys are one trackpad; flicks up (Shift) and down (letter) on every key. Thresholds: Defaults "Flicks". Full text: archive. Would change if: the owner finds a threshold wrong on the phone.
 - **The letters stay on the keys (2026-10-14).** Rule: docs/04 5.1 (the letters; the unassigned Shift cells). Would change if: Alpha taps near zero (P7 point 4); a function in the benchmark needs a key and no cell is free.
@@ -74,7 +69,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **G133f1 (Opus pass 24):** Home's "Underflow" for an exact 0 it cannot prove (`re(asin(i/10))`) is a bug line, F139 (wrong reason, no wrong number), not a plan change.
 - **G78 (Opus pass 45; F50, F51):** `√(asinh(asin 3.7))` stays refused at Home's budget; a series or limit whose value is ±∞ keeps Giac's infinity; an infinity inside a taken `when` or `piecewise` branch is not looked for. Full text: archive. Would change if: the owner wants these refused or computed.
 - **G78f1, G68, G84, G70, G71, G67, G65 (Opus passes 46–49):** an underflow is refused with its reason; Solve confirms only the digits every solve agrees on; Area applies Home's refusals. Full text: archive.
-- **G58, G59 (Opus pass 45):** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
+- **G58, G59 (Opus pass 45):** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Full text: archive, "Opus pass 96".
 - **A20 (decided 2026-10-20, the owner): Home's budget counts steps, not milliseconds** (G82); CAS and Solve keep clocks. Full text: archive.
 - **A12 (2026-10-20): the user's functions load on first use (G83) before R59; A62 (owner, 2026-11-05): R59 goes ahead.** Full text: archive.
 - **A16 after G53 (decided 2026-10-20, the owner): Enter p95 on the Tab One is under the 150 ms bar** (145–147 ms at 12 digits, 2026-10-27, `777120e`). Full text: archive; [archive/shifts/A16-enter-p95.md](archive/shifts/A16-enter-p95.md).
@@ -82,7 +77,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P18 (2026-10-20): Giac evaluates, our layer decides** what is shown; no other engine answers at run time. Rule: docs/04 6.1. Full text: archive. Would change if: a feature needs a second engine at run time; the checks push the Tab One's Enter p95 past 150 ms.
 - **P19 (2026-10-20): a Giac bug is fixed at its cause** (patch, canary, link to Parisse; a TypeScript workaround only for a cause that is not local, registered in S17). Rule: `docs/rules-core.md`. Full text: archive.
 - **P20 (2026-10-20; narrowed by G85's GO, 2026-10-22): Giac's tree, not its text.** Names, stores, bound names, settings and a value's kind come from the bridge (`bridge.ts`; G99–G103); only Giac's print is read as text, in one module (G105, before R59); new code adds no bracket loop or name regex (the text baseline, G88). Would change if: a question the bridge cannot answer.
-- **P21 (2026-10-20): Giac is pinned to Parisse's numbered Debian archive** (SHA-256 from its `.dsc`); a re-pin passes the golden gate. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: a fix we need is only in a snapshot.
+- **P21 (2026-10-20): Giac is pinned to Parisse's numbered Debian archive** (SHA-256 from its `.dsc`); a re-pin passes the golden gate. Full text: archive, "Opus pass 96". Would change if: a fix we need is only in a snapshot.
+- **P24 (2026-11-08): Commercial reuse of our Giac fixes.** Norman Bürli gave B. Parisse written permission (email 13) for Giac's authors, their institutions and their licensees to use patches 0001–0037, later fixes unless the mail sending them says otherwise, and the regression `.cas` files under any licence, closed commercial ones included; not revocable. N62 stays GPL-3.0-or-later. Instead of the `#ifdef` archive he offered as the alternative. Any fix from outside code or another contributor is flagged before it is sent. Would change if: a contributor other than the owner writes a Giac fix.
 - **F50, F51 (2026-10-20, the owner; built by G78):** a value through a division by zero, an overflow or a lost answer is refused with its reason, never Giac's text. Full text: archive.
 - **G33 and R56 (decided 2026-10-19, the owner; built by A12, G83, R56b):** lazy definitions before R59; Solve knows the user's functions; plots of user functions wait for the owner. Full text: archive.
 - **R58b (2026-10-19; built by R67): a letter typed with Alpha is always a name,** in CAS too; e and i come only from their keys. Full text: archive.
@@ -92,7 +88,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **F29 (decided 2026-10-18, after G2 item 54): `exp` ignores the angle mode,** as on the G2 (`e^(i·90)` is −0.4481+0.8940·i in both modes); built by G21. Would change if: a Giac patch (G21b) replaces the rewrite.
 - **R29: the parser's messages, and a space between two numbers (2026-10-17).** The messages are i18n keys (R52); a space between two numbers is an error ("put × between two numbers", R51), though the G2 gives 6. Full text: archive.
 - **G19 (2026-10-17): after a safe start, the next launch tries the stored definitions again.** Would change if: crashing definitions cost too many restarts in use.
-- **G20 (2026-10-16): a CAS result lists the stored values it used, not the names the input binds** (G28; `tools/probes/bound.ts`). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
+- **G20 (2026-10-16): a CAS result lists the stored values it used, not the names the input binds** (G28; `tools/probes/bound.ts`). Full text: archive, "Opus pass 96".
 - **The architecture check (2026-10-15): G27, R44, R45.** Rule: docs/04 2.4 (a non-number that holds a float is `⚠`, with its would change if), 2.8 (`full`; a chip whose value is not exact), 5.5 point 1 (one key path).
 - **F22 (2026-10-15): 10ˣ after a digit or a point inserts `×10^□`** (`5 10ˣ 2` = 500); DMS takes the number before it as its degrees. Confirmed by G2 item 48 (2026-10-19: the key types `ALOG`, 500).
 - **R18f1, R18f2 (2026-10-14): tests.** An exact true/false carries no mark; a test with a float side runs again at 14 and at P digits (true ≈, false ≈, or as typed). Full text: archive. Would change if: a function is audited.
@@ -106,17 +102,17 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 ### Units (milestone 5)
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none: a prefix is entered in the unit view's prefix cells (P11, docs/05 §7.2); docs/04 2.7's chip and its strip "if task 3 shows a gain" are dropped.
-- **G81 (Opus pass 24):** a result whose every leaf cancels (`μ₀·ε₀·c²` = 1, σ 0) keeps `≈`. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: the owner wants `=` for a σ of exactly 0.
+- **G81 (Opus pass 24):** a result whose every leaf cancels (`μ₀·ε₀·c²` = 1, σ 0) keeps `≈`. Full text: archive, "Opus pass 96". Would change if: the owner wants `=` for a σ of exactly 0.
 - **R24d (Opus pass 23):** an empty user cell's Find pick sets that leg and lands in the slot (one trip does both); the six off-pad units and the units menu's Tools and Const tabs: archive.
 - **R24b and R24c (Opus pass 22): the unit pad and the unit view's entry, as built** (the pad in the keys' own seams; the unit view's chunks: docs/04 8.3, G163: 66.55 kB, owner 2026-11-04). Full text: archive. Would change if: the Tab One's first unit result passes 1 s.
-- **P22 (2026-10-20): libqalculate leaves the build;** its numbers are checked in (`find/factors.yaml`), refreshed by a developer tool (A21, A60). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: the unit view needs qalc at run time.
+- **P22 (2026-10-20): libqalculate leaves the build;** its numbers are checked in (`find/factors.yaml`), refreshed by a developer tool (A21, A60). Full text: archive, "Opus pass 96". Would change if: the unit view needs qalc at run time.
 - **Angles in the unit view (decided 2026-10-19, the owner; built by G40):** an angle is a quantity both ways; the rad drop and the 2π·r·n note as built. Full text: archive. Would change if: G2 item 68 shows the G2 refusing both.
 - **G37 (the owner, 2026-10-19; built): °C and °F inside a compound unit are a temperature interval** (1 °C = 1 K); alone they keep their offset. Full text: archive.
 - **P15 (2026-10-14): the unit view computes on Giac** with the Find index's exact SI factors; libqalculate never runs in the app (P22). Full text: archive. Would change if: a unit need has no clean exact form; the unit view feels slow on the Tab One.
 - **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](archive/r9-unit-pad.md), `spec/unit-pad.yaml`. Full text: archive. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs; the owner misses letters in a slot.
-- **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
-- **G15 and G25 (2026-10-18): rpm and rev.** `rpm` counts turns (1/60 Hz); `rpm → rad/s` is refused (G32). Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: a user needs angular speed from rpm in one step.
-- **The units menu (2026-10-13): the G2's flow, our data** ([spec/units-menu.yaml](../spec/units-menu.yaml)); the grids from the Find index by dimension. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)". Would change if: the owner misses a G2 unit in a grid.
+- **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Full text: archive, "Opus pass 96".
+- **G15 and G25 (2026-10-18): rpm and rev.** `rpm` counts turns (1/60 Hz); `rpm → rad/s` is refused (G32). Full text: archive, "Opus pass 96". Would change if: a user needs angular speed from rpm in one step.
+- **The units menu (2026-10-13): the G2's flow, our data** ([spec/units-menu.yaml](../spec/units-menu.yaml)); the grids from the Find index by dimension. Full text: archive, "Opus pass 96". Would change if: the owner misses a G2 unit in a grid.
 - **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Full text: archive, "Shortened 2026-11-06 (Opus pass 85)". Would change if: keyboard set-ups are shared (a `// key:` line).
 
 ## Defaults
@@ -178,7 +174,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G18:** ± is `pasupm(value,sigma)`, each an independent standard uncertainty in the slot's unit; ± inside sin, cos, tan works. **G25:** a typed product is kept when at most one token carries a prefix or its factor is 1 (N·m, kW·h), else SI with a prefix.
 - **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Full text: archive, "Shortened 2026-11-08 (Opus pass 97)".
 - **R28:** rule: docs/04 4.3 (`pasu<n>` in the order written, the end slot after `\to`); a slot only right after a number literal; σ is a number literal, or `n %` of the value (R104, docs/04 4.2); a product with a slot keeps its brackets.
-- **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Full text: archive, "Shortened 2026-11-08 (Opus pass 96)".
+- **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Full text: archive, "Opus pass 96".
 - **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not. Full text: archive. Would change if: a power-triangle rule is packaged.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
 - **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ, as a constant (G26), also beside the constant it came from; one chip used twice is one input; a σ of 0 is none. Full text: archive. Would change if: a chip keeps its inputs' basis (G81).
@@ -209,3 +205,4 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112); its code loads on demand, the start chunk's 61 kB stays. Would change if: its device check, or the owner wants the system's setting to win.
 - **Start chunk room (Opus pass 99):** phase-1 measured 60,996 B gzip under the 61,000 B pin (A66f1), so R155f1, with the same raw bytes, failed on a chunk hash alone. A package that fails so gets a cut in its fix (R155f2: at least 0.15 kB out, no change of behaviour), never an allowance; the pin is then the measure plus 0.05 kB. Would change if: the owner raises the 61 kB budget.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on, a wrong type keeps the current value; no first-paint attribute. Would change if: the owner wants the pop and the flick bubble apart.
+- **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. The unit view pin rises for R159, as for R125 and R151: not the start chunk. Would change if: the owner wants the counts apart.

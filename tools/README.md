@@ -6,7 +6,7 @@ Run from the repo root. Shared state (locks, run logs) lives in the **main check
 ```bash
 tools/stay-awake.sh <serial>            # keep a device awake, record SoC/RAM/WebView; --restore undoes it
 tools/stay-awake.sh <serial> --restore   # puts back what .coord/devices/<serial>.orig holds: on the night devices that is STAY_ON=7 (the night setting); the device's real setting (STAY_ON=0) is kept in <serial>.orig.real
-tools/stay-awake.sh <serial> --restore-real   # by day: puts back <serial>.orig.real (the real setting) and leaves .orig (STAY_ON=7) alone
+tools/stay-awake.sh <serial> --restore-real   # when the device leaves the lanes: puts back <serial>.orig.real (the real setting) and leaves .orig (STAY_ON=7) alone
 tools/devlock.sh acquire <serial|host-cpu|integ> <owner> [wait_s]   # release / status / break; integ = the phase-1 worktree
 
 tools/device-build.sh [--measure] [--install] [--engine-dir DIR] # build our APK (wraps ./build.sh), prints its path
@@ -26,6 +26,8 @@ tools/release-guard.test.sh                                       # A7, in SELFT
 ```
 
 They use `$ANDROID_SERIAL`: `core-device.sh` requires it, the Python tools default to the Tab One. `shots.py` (usage in its header) cold-starts a page N times and keeps a screenshot of each.
+
+**On win99 (WSL2, A87):** the tablet stays on Windows and WSL reaches its adb server through `n62-adb-bridge.service` (127.0.0.1:5037): never start an adb server in WSL, and if the bridge is not `active`, fix that before `adb`. Before any gate or golden run `sysctl -n vm.overcommit_memory` must print 0 (at 1, one sweep run killed every WSL session); after a Windows reboot wait 3 min and check it: Docker Desktop sets it to 1 about 30 s in, and `n62-overcommit.timer` puts it back to 0 every 60 s. No release build there: the release engine is reproducible per machine only. The full gate takes about 11 min at 32 threads.
 
 Kept though no script calls them:
 - `update-device.sh` and `update-device.ts`: A76 points the update check at the release APKs. The fixture `tests/fixtures/update-from-ef857a6.json` was made once by `tools/make-update-snapshot.mjs` at `89859bd1`.

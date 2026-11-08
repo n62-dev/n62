@@ -282,7 +282,7 @@ if [[ "${1:-}" == "pass" ]]; then
   }
   merged=""; pass_merge
   [[ $integ_held -eq 0 ]] || { log "Opus pass $n: integ released after $((SECONDS - integ_t0)) s"; integ_drop; }
-  if [[ $rc -ne 0 ]] && grep -qiE 'usage limit|rate limit|429|overloaded' "$run/stderr.log" "$run/reply.md"; then
+  if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$run/stderr.log" "$run/reply.md"; then
     log "Opus pass $n: LIMIT (claude exit $rc; $merged)"; echo "RESULT pass $n: LIMIT"; exit 75
   fi
   # the reply from its last OPUS PASS line on (A17, A85); reply.md keeps it whole
@@ -421,8 +421,12 @@ if [[ "${1:-}" == "report" ]]; then
   log "Shift report (job $job): spawned sonnet writer; waiting."
   prompt="Write the shift report of docs/shifts/brief.md section 0c (\"Shift report\") for the night section of .coord/log.md (the log is on stdin; a line with [A] or [B] after its time belongs to that night lane: report both lanes). You run in the phase-1 worktree $integ: commit the report there with git commit -s and the Sonnet trailer. The pipeline holds the integration lock (integ) for you: do not take or release it yourself. Never push. Reply with the commit hash only."
   night_section "$coord/log.md" > "$run/input.txt"
-  own_sh 'cd "$1" && shift && timeout -k 60 1800 claude "$@"' "$integ" -p --model sonnet --effort high "${claude_common[@]}" -n report "$prompt" < "$run/input.txt" > "$run/reply.md" 2> "$run/stderr.log" || true
+  rc=0; own_sh 'cd "$1" && shift && timeout -k 60 1800 claude "$@"' "$integ" -p --model sonnet --effort high "${claude_common[@]}" -n report "$prompt" < "$run/input.txt" > "$run/reply.md" 2> "$run/stderr.log" || rc=$?
   integ_drop
+  # A121: at a usage limit the CLI's message is not the report: exit 75, night.sh waits and runs the report again
+  if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$run/stderr.log" "$run/reply.md"; then
+    log "Shift report: LIMIT (claude exit $rc)"; echo "RESULT report: LIMIT"; exit 75
+  fi
   log "Shift report: $(tail -n1 "$run/reply.md")"; echo "RESULT report: $(tail -n1 "$run/reply.md")"; exit 0
 fi
 
@@ -656,7 +660,7 @@ run_agent() { agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; }
 agent_end() {  # <pid> <name> <log>
   local name="$2" out="$3" rc=0
   own_wait "$1" || rc=$?
-  if [[ $rc -ne 0 ]] && grep -qiE 'usage limit|rate limit|429|overloaded' "$out" "$out.err"; then
+  if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$out" "$out.err"; then
     log "pipeline #$n $id: LIMIT during $name (claude exit $rc)"; echo "RESULT #$n $id: LIMIT"; exit 75
   fi
   runlog "$name: claude exit $rc; reply: $(tail -n 3 "$out" | tr '\n' ' ' | cut -c1-200)"
