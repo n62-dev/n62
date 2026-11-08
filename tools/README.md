@@ -27,6 +27,8 @@ tools/release-guard.test.sh                                       # A7, in SELFT
 
 They use `$ANDROID_SERIAL`: `core-device.sh` requires it, the Python tools default to the Tab One. `shots.py` (usage in its header) cold-starts a page N times and keeps a screenshot of each.
 
+**On win99 (WSL2, A87):** the tablet stays on Windows and WSL reaches its adb server through `n62-adb-bridge.service` (127.0.0.1:5037): never start an adb server in WSL, and if the bridge is not `active`, fix that before `adb`. Before any gate or golden run `sysctl -n vm.overcommit_memory` must print 0 (at 1, one sweep run killed every WSL session); after a Windows reboot wait 30 s and check it, as `n62-overcommit.service` sets it late. No release build there: the release engine is reproducible per machine only. The full gate takes about 11 min at 32 threads.
+
 Kept though no script calls them:
 - `update-device.sh` and `update-device.ts`: A76 points the update check at the release APKs. The fixture `tests/fixtures/update-from-ef857a6.json` was made once by `tools/make-update-snapshot.mjs` at `89859bd1`.
 - `shots.py`: for a page whose numbers only show on screen (the screenshots of a cold start).
