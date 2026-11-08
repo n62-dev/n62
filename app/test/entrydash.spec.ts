@@ -84,3 +84,29 @@ test("while the engine starts the dash runs too", async ({ page }) => {
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 10_000 });
   await expect(page.locator(DASH)).toHaveCount(0);
 });
+
+test("R155f1: before MathLive has mounted the dash is as high as after it", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  // hold the MathLive chunk back, so the .field box is empty while the engine starts (the cold start on the Tab One);
+  // the engine starts later still, so the dash is on the page after the mount too
+  await page.route(/mathlive[^/]*\.js(\?|$)/, async (route) => {
+    await new Promise((r) => setTimeout(r, 2500));
+    await route.continue();
+  });
+  await page.goto("/?engine=fake&readydelay=6000&tips=off");
+  await page.waitForFunction(() => window.n62 !== undefined);
+  await expect(page.locator(DASH)).toBeAttached({ timeout: 2000 });
+  const rect = () => page.locator(DASH).evaluate((e) => e.getBoundingClientRect().toJSON());
+  const before = await rect();
+  expect(await page.evaluate(() => customElements.get("math-field") === undefined)).toBe(true); // the height above is the empty box's
+  expect(before.width).toBeGreaterThan(0);
+  await page.waitForFunction(() => customElements.get("math-field") !== undefined && document.querySelector("math-field") !== null);
+  expect(await page.evaluate(() => window.n62.session.engineState)).toBe("starting");
+  await expect(page.locator(DASH)).toBeAttached();
+  const after = await rect();
+  expect(after.height).toBeGreaterThan(40);
+  expect(Math.abs(before.height - after.height)).toBeLessThanOrEqual(1); // the same path before and after
+  expect(Math.abs(before.width - after.width)).toBeLessThanOrEqual(1);
+  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 10_000 });
+  await expect(page.locator(DASH)).toHaveCount(0);
+});

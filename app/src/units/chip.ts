@@ -5,7 +5,8 @@
 // as its label and slot. Home has no units (P8): the unit never reaches the arithmetic. Pure; only erasable TypeScript.
 import { isZeroText } from "../engine/constBasis.ts";
 import type { Chip } from "../input/chips.ts";
-import { chipOf, FULL_LIMIT, homeItem } from "../state/results.ts";
+import { chipOf, FULL_LIMIT } from "../state/results.ts";
+import { homeItem } from "../state/resultItem.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
 
 /** The chip of a unit result; undefined for a refusal, or a value or σ with no chip text (as Home's: insert as drawn). */

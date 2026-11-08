@@ -30,7 +30,8 @@ import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
 import { TapCounter } from "./taps.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
-import { casItem, chipFactsOf, chipOf, HISTORY_LIMIT, homeItem, withUnit } from "./results.ts";
+import { chipFactsOf, chipOf, HISTORY_LIMIT, withUnit } from "./results.ts";
+import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
@@ -496,6 +497,7 @@ export class Session {
     let defines: string | undefined;
     let named: ChipFactsTable | undefined;
     let consts: ConstTable | undefined;
+    const items = prefetchItems(); // R155f2: loaded beside the parser, and awaited before the engine is sent anything
     try {
       if (giacOverride !== undefined) giac = giacOverride;
       else {
@@ -516,6 +518,16 @@ export class Session {
       live.text = parseFailText(e);
       return;
     }
+    try {
+      await itemsOr(items); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
+    } catch {
+      if (live.status === "pending") {
+        live.status = "error";
+        live.text = t("error.engine"); // G183: our own line, never a JS error's text
+      }
+      return;
+    }
+    if (live.status !== "pending") return;
     const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format };
     try {
       if (view === "home") {
@@ -523,6 +535,7 @@ export class Session {
         const r = await this.calc.home(giac, s, named, consts); // an absent table is not sent (EngineCalc.home)
         if (live.status !== "pending") return;
         const latex = !r.ok ? "" : r.latex !== undefined ? await tidyOr(tidy, r.latex, homeResultToLatex(r.display)) : homeResultToLatex(r.display);
+        const { homeItem } = await itemsOr(items);
         if (live.status !== "pending") return;
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.display : errorText(r.error, r.display);
@@ -536,6 +549,7 @@ export class Session {
         const r = await this.calc.cas(giac, s);
         if (live.status !== "pending") return;
         const latex = r.ok ? await tidyOr(tidy, r.latex, r.latex) : "";
+        const { casItem } = await itemsOr(items);
         if (live.status !== "pending") return;
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.text : errorText(r.error, r.text);
