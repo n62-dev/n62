@@ -24,32 +24,22 @@ const endSlot = (page: Page): Promise<string> =>
     return (s?.tokens ?? []).map((t, i) => `${i === s?.per ? "/ " : ""}${t.prefix ?? ""}${t.unit}${t.power ? `^${t.power}` : ""}`).join(" ");
   });
 
-/** R159: a tap whose effect shows, tried again when it does not. Under load (16 workers) Chromium now and then handed a
- *  touch (pointerdown, touchstart, pointerup, touchend) to a button that sat still and never made the click from it:
- *  seen about once in 500 runs, on More… and on a chip, the row unchanged and no request pending. The same pick or the
- *  same More… twice does what once does, and every retry is an annotation, so the count is not hidden. */
-async function tapUntil(target: Locator, effect: (timeout: number) => Promise<unknown>): Promise<void> {
-  for (let n = 1; ; n++) {
-    await target.tap();
-    try {
-      return void (await effect(n < 3 ? 2000 : 5000));
-    } catch (e) {
-      if (n >= 3) throw e;
-      test.info().annotations.push({ type: "lost tap", description: `tap ${n} of 3 showed no effect` });
-    }
-  }
-}
-
-/** R159: the requests the page has made and not had answered (a module on a cold dev server under load), per test. */
-let inFlight = new Set<unknown>();
-const track = (page: Page): void => {
-  inFlight = new Set();
-  page.on("request", (r) => void inFlight.add(r));
-  page.on("requestfinished", (r) => void inFlight.delete(r));
-  page.on("requestfailed", (r) => void inFlight.delete(r));
+/** R159: the result row is settled: the value drawn, the chips built and fitted to the width (`data-fit`, set once the panel
+ *  has measured them; a later draw of the same result keeps these elements). A tap waits on this state, not on time. */
+const settled = async (page: Page): Promise<void> => {
+  await expect(result(page)).toBeVisible();
+  await expect(page.getByTestId("unit-alts")).toHaveAttribute("data-fit", /^\d+$/);
 };
-/** Waits on that state, not on time: a tap on More… then waits on no module. */
-const loaded = (): Promise<void> => expect.poll(() => inFlight.size, { timeout: 30_000 }).toBe(0);
+
+/** R159: the press of a finger on `target` as the browser reports it, without the click it makes from it: what Chromium
+ *  under load now and then handed the page and nothing more (pointerdown, touchstart, pointerup, touchend). */
+const pressWithoutClick = (target: Locator): Promise<void> =>
+  target.evaluate((b) => {
+    const r = b.getBoundingClientRect();
+    const init = { bubbles: true, cancelable: true, composed: true, pointerId: 7, pointerType: "touch", isPrimary: true, button: 0, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2 };
+    b.dispatchEvent(new PointerEvent("pointerdown", { ...init, buttons: 1 }));
+    b.dispatchEvent(new PointerEvent("pointerup", { ...init, buttons: 0 }));
+  });
 
 /** A key plan step: a key id, or ↑id for a flick up. */
 async function plan(page: Page, steps: string): Promise<void> {
@@ -61,7 +51,6 @@ async function plan(page: Page, steps: string): Promise<void> {
 
 test.describe("the unit result view (R62)", () => {
   test.beforeEach(async ({ page }) => {
-    track(page);
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   });
@@ -71,7 +60,7 @@ test.describe("the unit result view (R62)", () => {
     await plan(page, "d7 d2");
     await unitsKey(page);
     await plan(page, "d4 d9 div ↑d3 ↑enter");
-    await expect(result(page)).toBeVisible();
+    await settled(page);
   }
 
   test("72 km/h shows = 72 km/h and L·T⁻¹; the row has m/s and More…, not km/h; a tap on m/s shows = 20 m/s in the end slot", async ({ page }) => {
@@ -84,7 +73,7 @@ test.describe("the unit result view (R62)", () => {
     expect(row).toContain("m/s");
     expect(row).not.toContain("km/h");
     await expect(page.getByTestId("unit-more")).toHaveText("More…");
-    await tapUntil(chip(page, "m/s"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "m/s", { timeout }));
+    await chip(page, "m/s").tap();
     await expect(result(page)).toHaveAttribute("data-text", "20");
     await expect(result(page)).toHaveAttribute("data-unit", "m/s");
     await expect(mark(page)).toHaveText("=");
@@ -92,11 +81,29 @@ test.describe("the unit result view (R62)", () => {
     expect(await page.evaluate(() => window.n62.unitView?.field.getPromptValue("end"))).toContain("\\mathrm{m}");
   });
 
+  // R159: a tap that the browser reports as pointerdown and pointerup but never as a click (Chromium under load, about
+  // once in 500 runs: a chip or More… unchanged, no request pending) still picks, since a pick is made on pointerup.
+  test("a press of a chip or More… that makes no click still picks (R159)", async ({ page }) => {
+    await kmh(page);
+    await page.evaluate(() => {
+      const w = window as unknown as { clicks: number };
+      w.clicks = 0;
+      document.addEventListener("click", () => void (w.clicks += 1), true);
+    });
+    await pressWithoutClick(chip(page, "m/s"));
+    await expect(result(page)).toHaveAttribute("data-unit", "m/s");
+    expect(await page.evaluate(() => (window as unknown as { clicks: number }).clicks)).toBe(0);
+    await settled(page);
+    await pressWithoutClick(page.getByTestId("unit-more"));
+    await expect(page.getByTestId("find")).toBeVisible();
+  });
+
   test("the row by keys (▼ ▶ Enter) picks what a tap on the same chip picks; Esc leaves the row, then the view", async ({ page }) => {
     await kmh(page);
     const row = await texts(page);
     const second = row[1] as string;
-    await tapUntil(chips(page).nth(1), (timeout) => expect(result(page)).toHaveAttribute("data-unit", second, { timeout }));
+    await chips(page).nth(1).tap();
+    await expect(result(page)).toHaveAttribute("data-unit", second);
     const byTap = [await result(page).getAttribute("data-text"), await result(page).getAttribute("data-unit")];
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
@@ -142,7 +149,8 @@ test.describe("the unit result view (R62)", () => {
     await expect(page.getByTestId("unit-unit")).toHaveText("mm");
     await expect(page.getByTestId("unit-dim")).toHaveText("L");
     await expect(chips(page).first()).toHaveText("m");
-    await tapUntil(chip(page, "m"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "m", { timeout }));
+    await settled(page);
+    await chip(page, "m").tap();
     await expect(result(page)).toHaveAttribute("data-text", "0.157079632679");
     await expect(page.getByTestId("unit-unit")).toHaveText("m");
     await expect(mark(page)).toHaveText("≈");
@@ -153,7 +161,9 @@ test.describe("the unit result view (R62)", () => {
     await unitsKey(page);
     await plan(page, "neg ↑enter"); // 3600 J
     await expect(page.getByTestId("unit-unit")).toHaveText("J");
-    await tapUntil(chip(page, "Wh"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "Wh", { timeout }));
+    await settled(page);
+    await chip(page, "Wh").tap();
+    await expect(result(page)).toHaveAttribute("data-unit", "Wh");
     await expect(page.getByTestId("unit-unit")).toHaveText("Wh");
     await expect(result(page)).toHaveAttribute("data-text", "1");
     expect(await endSlot(page)).toBe("Wh"); // the slot holds the unit, the result reads as the chip did
@@ -213,8 +223,8 @@ test.describe("the unit result view (R62)", () => {
     await kmh(page);
     const before = await endSlot(page); // (km/h was typed in the first slot and evaluated at once: the end slot is empty)
     const active = await page.evaluate(() => window.n62.unitView?.view.activeId);
-    await loaded();
-    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(page.getByTestId("find")).toBeVisible({ timeout }));
+    await page.getByTestId("unit-more").tap();
+    await expect(page.getByTestId("find")).toBeVisible();
     await expect(page.getByTestId("unit-view")).toBeVisible();
     await tap(page, ["esc"]);
     await expect(page.getByTestId("find")).toBeHidden();
@@ -233,8 +243,8 @@ test.describe("the unit result view (R62)", () => {
     page.on("request", (r) => void asked.push(new URL(r.url()).pathname));
     await kmh(page);
     await expect.poll(() => asked.includes("/src/units/find.ts")).toBe(true);
-    await loaded();
-    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(page.getByTestId("find")).toBeVisible({ timeout }));
+    await page.getByTestId("unit-more").tap();
+    await expect(page.getByTestId("find")).toBeVisible();
   });
 
   // R125 fix round 1: the sheet's view is fetched when the browser is idle (R46); under the full suite's load it was not
@@ -245,17 +255,16 @@ test.describe("the unit result view (R62)", () => {
     });
     await open(page, "");
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
-    track(page);
     await kmh(page);
-    await loaded();
-    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(page.getByTestId("find")).toBeVisible({ timeout }));
+    await page.getByTestId("unit-more").tap();
+    await expect(page.getByTestId("find")).toBeVisible();
   });
 
   test("More…, then a pick in Find: the end slot holds the picked unit and the result is in it", async ({ page }) => {
     await kmh(page);
-    await loaded();
+    await page.getByTestId("unit-more").tap();
     const find = page.getByTestId("find");
-    await tapUntil(page.getByTestId("unit-more"), (timeout) => expect(find).toBeVisible({ timeout }));
+    await expect(find).toBeVisible();
     await find.getByRole("menuitem").first().tap();
     await expect(find).toBeHidden();
     await expect(result(page)).toBeVisible();
@@ -309,13 +318,14 @@ test.describe("the row at phone widths", () => {
       await plan(page, "d2 mul ↑d3 mul d2 d5");
       await unitsKey(page);
       await plan(page, "enter d1 d9 ↑enter");
-      await expect(page.getByTestId("unit-alts")).toBeVisible();
+      await settled(page);
       const shown = await page.locator('[data-testid="unit-alt"]:not([hidden])').count();
       expect(shown).toBeGreaterThanOrEqual(width >= 360 ? 4 : 1);
       await expect(page.getByTestId("unit-more")).toBeVisible();
       const box = await page.getByTestId("unit-more").boundingBox();
       expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(width);
-      await tapUntil(chip(page, "m"), (timeout) => expect(result(page)).toHaveAttribute("data-unit", "m", { timeout })); // the chip is where it is drawn: a tap reaches it at every width
+      await chip(page, "m").tap(); // the chip is where it is drawn: a tap reaches it at every width
+      await expect(result(page)).toHaveAttribute("data-unit", "m");
       test.info().annotations.push({ type: "chips", description: `${width}: ${shown}` });
     });
   }
