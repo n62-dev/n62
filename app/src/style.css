@@ -66,6 +66,8 @@
   --radius-pill: 16px;
   /* no other motion tokens: the key press is the only motion (R12c), sheets, results and marks appear at once; the entry outline's running dash (R155) is the owner's exception */
   --shadow-sheet: 0 -2px 10px;
+  /* R156: Key shadows, a solid line under each key in --key-edge (a theme role), no blur; it takes no layout */
+  --key-shadow: 2px;
   --fade: 28px;
   /* a mask reads only alpha: the opaque end of a fade */
   --mask-on: #000;
@@ -131,6 +133,7 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
+  --key-edge: #000000;
   color-scheme: dark;
 }
 :root[data-family="n62"][data-brightness="light"] {
@@ -169,6 +172,7 @@
   --on-alpha: #ffffff;
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
+  --key-edge: #8da1a0;
   color-scheme: light;
 }
 * {

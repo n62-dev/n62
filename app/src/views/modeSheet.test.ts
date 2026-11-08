@@ -114,13 +114,15 @@ describe("Mode sheet", () => {
 });
 
 describe("Settings › Appearance (R50e)", () => {
-  it("is the first section: Theme with its dots, Brightness, and the two switches with one line each", () => {
+  it("is the first section: Theme with its dots, Brightness, and the three switches with one line each (Key shadows: R156)", () => {
     const s = settings(1);
     expect(s.path).toBe("Mode › Settings › Appearance");
-    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["theme", "brightness", "contrast", "plain", "shadow"]);
     expect(byId(s, "theme")?.dots).toHaveLength(5);
     expect(byId(s, "theme")?.value).toBe("N62");
-    expect(s.level.items.filter((x) => x.hint).map((x) => x.id)).toEqual(["contrast", "plain"]);
+    expect(s.level.items.filter((x) => x.hint).map((x) => x.id)).toEqual(["contrast", "plain", "shadow"]);
+    expect(byId(s, "shadow")).toMatchObject({ label: "Key shadows", hint: "A dark line under each key", selected: true });
+    expect(s.level.highlight).toBe(0); // R156: it opens on Theme, though Key shadows is ticked
   });
   it("▶ ◀ step the theme in place, round the ends; the sheet stays", () => {
     const s = settings(1);
@@ -166,6 +168,12 @@ describe("Settings › Appearance (R50e)", () => {
     expect(s.pickNumber(4)).toEqual({ kind: "stay" });
     expect(session.settings.look.plain).toBe(true);
     expect(byId(s, "plain")?.selected).toBe(true);
+    const seen: boolean[] = [];
+    session.onLook = (l) => void seen.push(l.shadow);
+    expect(s.pickNumber(5)).toEqual({ kind: "stay" });
+    expect(session.settings.look.shadow).toBe(false);
+    expect(byId(s, "shadow")?.selected).toBe(false);
+    expect(seen).toEqual([false]);
   });
 });
 

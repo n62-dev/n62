@@ -101,6 +101,8 @@ export interface SubMenu {
   readonly items: readonly MenuItem[];
   /** False: the level always opens on its first row (Settings, decisions.md "Sheets"); default true, on the last pick. */
   readonly remember?: boolean;
+  /** The row the level opens on, before a ticked one (R156: Appearance opens on Theme while Key shadows is on). */
+  readonly at?: string;
   /** Find's categories (R4a): letters typed in this level search with this (views/sheet.svelte.ts Level.search). */
   readonly search?: (query: string) => readonly MenuItem[];
   /** A text to read instead of rows (R87: a licence): it scrolls, ▲ ▼ page through it, ◀ and Esc go back. `items` is empty. */

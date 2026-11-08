@@ -358,6 +358,13 @@ function withRing(t: Palette, hc: boolean): Palette {
   throw new Error("theme-gen: no --ring for " + get(t, "bg"));
 }
 
+/** R156: the line under each key (Key shadows): black in a dark combination; in a light one black at 30 % over the final
+ *  --bg, written as the opaque mix (N62 Light #8da1a0). Set last, from the final colours. */
+export const KEY_EDGE_LIGHT = 0.3;
+function withKeyEdge(t: Palette, dark: boolean): Palette {
+  return { ...t, "key-edge": dark ? "#000000" : mix(get(t, "bg"), "#000000", KEY_EDGE_LIGHT) };
+}
+
 export interface Combo {
   family: string;
   brightness: Brightness;
@@ -380,7 +387,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.plain) o = plain(o);
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
-  return { t: withRing(withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), c.high), fixes };
+  return { t: withKeyEdge(withRing(withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), c.high), dark), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---

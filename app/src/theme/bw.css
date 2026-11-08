@@ -36,6 +36,7 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
+  --key-edge: #000000;
   color-scheme: dark;
 }
 :root[data-family="bw"][data-brightness="dark"][data-keys="plain"] {
@@ -74,6 +75,7 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
+  --key-edge: #000000;
   color-scheme: dark;
 }
 :root[data-family="bw"][data-brightness="dark"][data-contrast="high"] {
@@ -112,6 +114,7 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
+  --key-edge: #000000;
   color-scheme: dark;
 }
 :root[data-family="bw"][data-brightness="dark"][data-contrast="high"][data-keys="plain"] {
@@ -150,6 +153,7 @@
   --on-alpha: #000000;
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
+  --key-edge: #000000;
   color-scheme: dark;
 }
 :root[data-family="bw"][data-brightness="light"] {
@@ -188,6 +192,7 @@
   --on-alpha: #ffffff;
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
+  --key-edge: #abacac;
   color-scheme: light;
 }
 :root[data-family="bw"][data-brightness="light"][data-keys="plain"] {
@@ -226,6 +231,7 @@
   --on-alpha: #ffffff;
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
+  --key-edge: #abacac;
   color-scheme: light;
 }
 :root[data-family="bw"][data-brightness="light"][data-contrast="high"] {
@@ -264,6 +270,7 @@
   --on-alpha: #ffffff;
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
+  --key-edge: #b0b0b0;
   color-scheme: light;
 }
 :root[data-family="bw"][data-brightness="light"][data-contrast="high"][data-keys="plain"] {
@@ -302,5 +309,6 @@
   --on-alpha: #ffffff;
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
+  --key-edge: #b0b0b0;
   color-scheme: light;
 }

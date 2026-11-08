@@ -130,6 +130,8 @@ export const en = {
   "appearance.contrast.hint": "Text at 7:1, outlined keys",
   "appearance.plain": "Plain keys",
   "appearance.plain.hint": "No colour coding",
+  "appearance.shadow": "Key shadows",
+  "appearance.shadow.hint": "A dark line under each key",
   "angle.rad": "Radians",
   "angle.deg": "Degrees",
   "format.std": "Standard",

@@ -113,15 +113,15 @@ export function settingsMenu(session: Session, env: SettingsEnv = {}): SubMenu {
   return { title: t("mode.settings"), items: settingsSections(session, env), remember: false };
 }
 
-/** A section: a row with › that opens its own level. */
-function section(id: string, title: string, items: MenuItem[], value?: () => string): MenuItem {
+/** A section: a row with › that opens its own level (on row `at` when given). */
+function section(id: string, title: string, items: MenuItem[], value?: () => string, at?: string): MenuItem {
   return {
     id,
     label: title,
     get value() {
       return value?.();
     },
-    submenu: { title, items, remember: false },
+    submenu: { title, items, remember: false, ...(at === undefined ? {} : { at }) },
   };
 }
 
@@ -134,7 +134,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
   const s = session.settings;
   const off = () => !s.haptics.on;
   return [
-    section("appearance", t("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${t(`appearance.brightness.${s.look.brightness}` as MessageKey)}`),
+    section("appearance", t("settings.appearance"), appearanceItems(session), () => `${familyOf(s.look.family).name} · ${t(`appearance.brightness.${s.look.brightness}` as MessageKey)}`, "theme"),
     section("numbers", t("settings.numbers"), numbersItems(session), () => s.fmtCycle.map((m) => m.toUpperCase()).join(" ")),
     section(
       "vibration",
@@ -206,7 +206,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
 }
 
 /** Appearance (R50e): the theme (◀ ▶ step through the five families; a tap, a digit or Enter lists them, and a pick
- *  keeps the sheet open so the status line and keys above show it), the brightness, and the two switches. */
+ *  keeps the sheet open so the status line and keys above show it), the brightness, and the three switches (Key shadows: R156). */
 function appearanceItems(session: Session): MenuItem[] {
   const look = () => session.settings.look;
   const setLook = (patch: Partial<Look>): void => {
@@ -270,6 +270,16 @@ function appearanceItems(session: Session): MenuItem[] {
         return look().plain;
       },
       run: () => setLook({ plain: !look().plain }),
+    },
+    {
+      id: "shadow",
+      label: t("appearance.shadow"),
+      hint: t("appearance.shadow.hint"),
+      keep: true,
+      get selected() {
+        return look().shadow;
+      },
+      run: () => setLook({ shadow: !look().shadow }),
     },
   ];
 }

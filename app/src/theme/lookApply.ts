@@ -5,7 +5,7 @@
 import { applyTheme, type Theme } from "./apply.ts";
 import type { Look } from "./look.ts";
 
-/** The localStorage key of the mirror the inline script reads: `{ family, brightness, contrast, plain, bg }` (bg: the
+/** The localStorage key of the mirror the inline script reads: `{ family, brightness, contrast, plain, shadow, bg }` (bg: the
  *  screen colour, for `<meta name="theme-color">`). IndexedDB stays the source. */
 export const LOOK_KEY = "n62.look";
 
@@ -38,9 +38,17 @@ function mirroredBg(): string {
   }
 }
 
+/** Key shadows (R156): `data-shadow="on"` on the root, as index.html sets it. Needs no file, so it is set at once (the
+ *  calls run in order, so the last one's value stays); the line's rule and its --key-edge are in the start CSS. */
+function shadow(look: Look, root: HTMLElement): void {
+  if (look.shadow) root.setAttribute("data-shadow", "on");
+  else root.removeAttribute("data-shadow");
+}
+
 async function put(look: Look): Promise<void> {
   const root = document.documentElement;
   mirror(look, mirroredBg());
+  shadow(look, root);
   await applyTheme(themeOf(look, scheme()?.matches === true), root);
   if (current !== look) return; // a newer look began meanwhile: applyTheme set nothing, and the newest one writes the mirror
   const bg = getComputedStyle(root).getPropertyValue("--bg").trim();

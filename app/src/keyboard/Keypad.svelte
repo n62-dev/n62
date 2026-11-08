@@ -433,6 +433,13 @@
     /* no scrolling or zooming from the pad: every touch is a key, a flick or a trackpad drag */
     touch-action: none;
     -webkit-touch-callout: none;
+    /* Key shadows off (R156): an empty shadow, so a rule that adds it to an inset edge stays valid */
+    --key-drop: 0 0 transparent;
+  }
+  /* Key shadows (R156, Appearance): a solid line under each key and the round pad, in the row gap, drawn as a shadow so
+     no key's box or touch area moves; an empty slot (outlined) and the pad's arrow zones have none */
+  :global(:root[data-shadow="on"]) .pad {
+    --key-drop: 0 var(--key-shadow) 0 var(--key-edge);
   }
   /* Each key has a legend line above the face (the shift function, top left) and one below it (the letter, bottom
      left), never overlapping it (P7 point 2); fit.ts shrinks what is too wide. */
@@ -450,6 +457,7 @@
     font: inherit;
     font-size: var(--fs-key);
     background: var(--key-num);
+    box-shadow: var(--key-drop);
     -webkit-tap-highlight-color: transparent;
   }
   .key[data-letters="true"] {
@@ -531,7 +539,7 @@
     box-shadow: inset 0 0 0 var(--stroke-thin) var(--line);
   }
   .key[data-user="set"] {
-    box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted);
+    box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted), var(--key-drop);
   }
   /* the unit pad's prefix cells (R24b): their own colour, so the prefix m and the metre m never look alike */
   .key[data-pad="prefix"] {
@@ -539,10 +547,10 @@
   }
   /* High contrast leaves the key colours little room to differ: the prefix cells keep an outline there too */
   :global(:root[data-contrast="high"]) .key[data-pad="prefix"] {
-    box-shadow: inset 0 0 0 var(--stroke-thin) var(--line);
+    box-shadow: inset 0 0 0 var(--stroke-thin) var(--line), var(--key-drop);
   }
   .key[data-pad="user"] {
-    box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted);
+    box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted), var(--key-drop);
   }
   /* a user cell with a flick down has the letter line in the cluster too: the face's track may shrink to what is left of
      the key's 36 px less its 2 px padding (a fixed track, the face overflows it evenly), so the keys below do not move (docs/03 rule 8) */
@@ -588,6 +596,7 @@
     aspect-ratio: 1;
     border-radius: 50%;
     background: var(--key-ctl);
+    box-shadow: var(--key-drop);
   }
   .hub {
     position: relative;
@@ -599,6 +608,7 @@
   }
   .key[data-zone="true"] {
     background: transparent;
+    box-shadow: none;
     opacity: 0.7;
   }
   /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle),

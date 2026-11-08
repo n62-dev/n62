@@ -16,14 +16,14 @@ describe("look", () => {
     expect(FAMILIES.map((f) => f.name)).toEqual(["N62", "Black & White", "Solarized"]);
   });
   it("R153: a stored look naming Teal reads as N62 and keeps its other three values; a stored bw stays bw", () => {
-    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true });
+    expect(validLook({ family: "teal", brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "solarized" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true });
     expect(renamedLook({ family: "teal", brightness: "dark", plain: true })).toEqual({ family: "n62", brightness: "dark", plain: true });
     expect(validLook({ family: "bw" }, defaultLook()).family).toBe("bw");
     expect(renamedLook({ family: "bw" })).toEqual({ family: "bw" });
   });
   it("R150: a stored look naming Graphite, Gruvbox or Nord reads as N62 and keeps its brightness, High contrast and Plain keys", () => {
     for (const family of ["graphite", "gruvbox", "nord"])
-      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true });
+      expect(validLook({ family, brightness: "light", contrast: true, plain: true }, { ...defaultLook(), family: "bw" })).toEqual({ family: "n62", brightness: "light", contrast: true, plain: true, shadow: true });
     expect(validLook({ family: "x", brightness: "light" }, { ...defaultLook(), family: "bw" }).family).toBe("bw"); // an unknown name still falls back
   });
   it("R150: a backup's or a preset's look naming a retired family is renamed to n62 with the rest kept; the other families stay", () => {
@@ -39,9 +39,18 @@ describe("look", () => {
       expect(f.dots, f.id).toEqual(roles.map((r) => block.match(new RegExp(`--${r}:\\s*(#[0-9a-f]+)`))?.[1]));
     }
   });
-  it("first-start defaults: Dark in the Android app, System in the browser, High contrast when asked", () => {
-    expect(defaultLook()).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false });
-    expect(defaultLook(true, true)).toEqual({ family: "n62", brightness: "dark", contrast: true, plain: false });
+  it("first-start defaults: Dark in the Android app, System in the browser, High contrast when asked, key shadows on", () => {
+    expect(defaultLook()).toEqual({ family: "n62", brightness: "system", contrast: false, plain: false, shadow: true });
+    expect(defaultLook(true, true)).toEqual({ family: "n62", brightness: "dark", contrast: true, plain: false, shadow: true });
+  });
+  it("R156: validLook gives shadow true when the field is missing, keeps a stored boolean, and the fallback's for a wrong type", () => {
+    const off = { ...defaultLook(), shadow: false };
+    expect(validLook({ family: "bw", brightness: "dark", contrast: false, plain: false }, off).shadow).toBe(true);
+    expect(validLook({}, off).shadow).toBe(true);
+    expect(validLook({ shadow: false }, defaultLook()).shadow).toBe(false);
+    expect(validLook({ shadow: true }, off).shadow).toBe(true);
+    expect(validLook({ shadow: "no" }, off).shadow).toBe(false);
+    expect(validLook({ shadow: 0 }, defaultLook()).shadow).toBe(true);
   });
   it("System follows the phone; the other two do not", () => {
     const l = { ...defaultLook(), family: "solarized" as const, plain: true };
@@ -50,7 +59,7 @@ describe("look", () => {
     expect(themeOf({ ...l, brightness: "light", contrast: true }, false)).toMatchObject({ brightness: "light", contrast: "high" });
   });
   it("validLook keeps the fallback for a wrong field; stepped goes round", () => {
-    expect(validLook({ family: "x", brightness: "light", contrast: 1, plain: true }, defaultLook())).toEqual({ family: "n62", brightness: "light", contrast: false, plain: true });
+    expect(validLook({ family: "x", brightness: "light", contrast: 1, plain: true }, defaultLook())).toEqual({ family: "n62", brightness: "light", contrast: false, plain: true, shadow: true });
     expect(stepped(["a", "b", "c"], "c", 1)).toBe("a");
     expect(stepped(["a", "b", "c"], "a", -1)).toBe("c");
   });
@@ -79,34 +88,34 @@ function runInline(opts: { stored?: unknown; light?: boolean; more?: boolean; na
 describe("the inline script of index.html", () => {
   it("shows the stored look and links its CSS", () => {
     const r = runInline({ stored: { family: "bw", brightness: "light", contrast: true, plain: true, bg: "#57a3a1" } });
-    expect(r.attrs).toEqual({ "data-family": "bw", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain" });
+    expect(r.attrs).toEqual({ "data-family": "bw", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain", "data-shadow": "on" });
     expect(r.meta["content"]).toBe("#57a3a1");
     expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1])).toEqual(["http://x/a/n.css", "http://x/a/m.css"]);
   });
   it("R150: a stored family graphite, gruvbox or nord shows as n62 with the other three values, and links n62's file", () => {
     for (const family of ["graphite", "gruvbox", "nord"]) {
       const r = runInline({ stored: { family, brightness: "light", contrast: true, plain: true } });
-      expect(r.attrs, family).toEqual({ "data-family": "n62", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain" });
+      expect(r.attrs, family).toEqual({ "data-family": "n62", "data-brightness": "light", "data-contrast": "high", "data-keys": "plain", "data-shadow": "on" });
       expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1]), family).toEqual(["http://x/a/p.css", "http://x/a/m.css"]);
     }
   });
   it("R153: a stored family teal shows as n62 with the other three values, links n62's file and keeps the old screen colour out of theme-color", () => {
     const r = runInline({ stored: { family: "teal", brightness: "dark", contrast: false, plain: true, bg: "#529997" } });
-    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark", "data-keys": "plain" });
+    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark", "data-keys": "plain", "data-shadow": "on" });
     expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1])).toEqual(["http://x/a/p.css", "http://x/a/m.css"]);
     expect(r.meta["content"]).toBeUndefined();
     const plainTeal = runInline({ stored: { family: "teal", brightness: "light", contrast: false, plain: false } });
-    expect(plainTeal.attrs).toEqual({ "data-family": "n62", "data-brightness": "light" });
+    expect(plainTeal.attrs).toEqual({ "data-family": "n62", "data-brightness": "light", "data-shadow": "on" });
     expect(plainTeal.written).toEqual([]); // N62's own look is in style.css
   });
   it("N62 with no switch links nothing; a stored System follows the phone", () => {
     const r = runInline({ stored: { family: "n62", brightness: "system", contrast: false, plain: false }, light: true });
-    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "light" });
+    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "light", "data-shadow": "on" });
     expect(r.written).toEqual([]);
   });
   it("R138: a stored family pascaline (the name before N62) shows as n62 and links n62's file", () => {
     const r = runInline({ stored: { family: "pascaline", brightness: "dark", contrast: false, plain: true } });
-    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark", "data-keys": "plain" });
+    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark", "data-keys": "plain", "data-shadow": "on" });
     expect(r.written.map((w) => w.match(/href="([^"]+)"/)?.[1])).toEqual(["http://x/a/p.css", "http://x/a/m.css"]);
   });
   it("prefers-contrast: more counts only when nothing is stored", () => {
@@ -119,9 +128,17 @@ describe("the inline script of index.html", () => {
     expect(runInline({ throws: true, native: true }).attrs["data-brightness"]).toBe("dark");
   });
   it("a wrong stored value is ignored, field by field", () => {
-    const r = runInline({ stored: { family: "x", brightness: "light", contrast: "yes", bg: "red; x" } });
-    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "light" });
+    const r = runInline({ stored: { family: "x", brightness: "light", contrast: "yes", shadow: "no", bg: "red; x" } });
+    expect(r.attrs).toEqual({ "data-family": "n62", "data-brightness": "light", "data-shadow": "on" });
     expect(r.meta["content"]).toBeUndefined();
+  });
+  it("R156: key shadows: on when nothing is stored or the field is missing, off only for a stored false; no file for it", () => {
+    expect(runInline({}).attrs["data-shadow"]).toBe("on");
+    expect(runInline({ throws: true }).attrs["data-shadow"]).toBe("on");
+    const off = runInline({ stored: { family: "n62", brightness: "dark", contrast: false, plain: false, shadow: false } });
+    expect(off.attrs).toEqual({ "data-family": "n62", "data-brightness": "dark" });
+    expect(off.written).toEqual([]);
+    expect(runInline({ stored: { family: "n62", brightness: "dark", shadow: true } }).attrs["data-shadow"]).toBe("on");
   });
 });
 

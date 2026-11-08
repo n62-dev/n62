@@ -365,7 +365,7 @@ export class Sheet {
   /** A submenu on top of `level`, from the item `id`. */
   private push(level: Level, id: string, sub: SubMenu): void {
     const base: SheetOptions = sub.search ? { search: sub.search, remember: false } : { remember: sub.remember ?? true };
-    const opts: SheetOptions = { ...base, ...(sub.text === undefined ? {} : { text: sub.text }), ...(sub.longPreview ? { longPreview: true } : {}), ...(sub.loading ? { loading: sub.loading } : {}) };
+    const opts: SheetOptions = { ...base, ...(sub.text === undefined ? {} : { text: sub.text }), ...(sub.longPreview ? { longPreview: true } : {}), ...(sub.loading ? { loading: sub.loading } : {}), ...(sub.at === undefined ? {} : { at: sub.at }) };
     this.levels = [...this.levels, new Level(sub.title, () => sub.items, `${level.memo}/${id}`, opts)];
   }
 }
