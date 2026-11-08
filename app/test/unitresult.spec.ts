@@ -98,6 +98,22 @@ test.describe("the unit result view (R62)", () => {
     await expect(page.getByTestId("find")).toBeVisible();
   });
 
+  // R159f1: the pick runs on pointerup, so the click the browser still makes would land on what the pick opened (Opus pass 101
+  // logged a tap on More… sending its click to the Find sheet just drawn, 6 of 6); touchend's preventDefault stops it.
+  test("a real tap on More… makes no click on the Find sheet, and Find stays open (R159f1)", async ({ page }) => {
+    await kmh(page);
+    await page.evaluate(() => {
+      const w = window as unknown as { clicked: string[] };
+      w.clicked = [];
+      document.addEventListener("click", (e) => void w.clicked.push((e.target as HTMLElement).dataset["testid"] ?? (e.target as HTMLElement).tagName), true);
+    });
+    await page.getByTestId("unit-more").tap();
+    await expect(page.getByTestId("find")).toBeVisible();
+    await page.waitForTimeout(300); // (a click, if the browser makes one, comes within the tap's own task or the next frame)
+    expect(await page.evaluate(() => (window as unknown as { clicked: string[] }).clicked)).toEqual([]);
+    await expect(page.getByTestId("find")).toBeVisible();
+  });
+
   test("the row by keys (▼ ▶ Enter) picks what a tap on the same chip picks; Esc leaves the row, then the view", async ({ page }) => {
     await kmh(page);
     const row = await texts(page);

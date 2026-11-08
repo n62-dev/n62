@@ -67,6 +67,11 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
         const at = document.elementFromPoint(e.clientX, e.clientY); // (a touch is captured by its first target: the finger may have left it)
         if (at === b || b.contains(at)) void v.pick(i);
       });
+      // R159f1: the click the browser still makes after the pick would land on what the pick opened (a tap on More… sent its
+      // click to the Find sheet just drawn); a cancelled touchend makes no click.
+      b.addEventListener("touchend", (e) => {
+        if (e.cancelable) e.preventDefault();
+      });
       b.addEventListener("click", (e) => {
         if (e.detail === 0) void v.pick(i);
       });

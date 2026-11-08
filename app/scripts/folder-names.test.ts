@@ -19,5 +19,5 @@ describe("the sync folder's name rule in Java (tools/folder-names.test.sh)", () 
     const r = spawnSync(join(repo, "tools/folder-names.test.sh"), { encoding: "utf8", timeout: 120_000 });
     expect(r.stdout + r.stderr).toContain(`folder-names: ${count} passed`);
     expect(r.status).toBe(0);
-  });
+  }, 120_000); // spawnSync blocks, 1.1 s quiet, past vitest's 5000 ms under load
 });
