@@ -89,6 +89,13 @@ describe(".github/workflows/release.yml", () => {
     expect(steps[golden]?.run).toMatch(/grep -qx 'GOLDEN GATE PASSED'/);
   });
 
+  it("the README's Why trust it is checked in the golden step, after npm ci and before the gate (A93)", () => {
+    const run = steps[at(/npm run golden/)]?.run ?? "";
+    expect(run.indexOf("npm ci")).toBeGreaterThan(-1);
+    expect(run.indexOf("npm run trust:check")).toBeGreaterThan(run.indexOf("npm ci"));
+    expect(run.indexOf("npm run trust:check")).toBeLessThan(run.indexOf("npm run golden"));
+  });
+
   it("the secrets reach only the build step, as its env:, never a run: line or an echo; the keystore goes to RUNNER_TEMP, mode 600", () => {
     const build = at(/\.\/build\.sh --release/);
     for (const [i, s] of steps.entries()) {
