@@ -31,7 +31,7 @@ import { askedDigits, DOUBLE_DIGITS, exactFacts, floatFacts, floatPathFacts, int
 import { bracesOf, functionsIn, holdsMatrixType, isError, isTimeout, LIST_TYPE, replaceLiteral, whenCalls, wordsOf } from "./giacPrint.ts";
 import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals.ts";
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
-import { homeSequence } from "./sequences.ts";
+import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
 import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
@@ -474,7 +474,7 @@ export function homeEval(
   now: () => number = () => performance.now(),
   form: InputForm = PLAIN_FORM,
   fnBody: Bodies = NO_BODIES,
-  undefStands = false,
+  undefStands = false, logged: LoggedNames = NO_LOGGED_NAMES,
 ): HomeResult {
   const t0 = now();
   const ans = "pasans";
@@ -536,7 +536,7 @@ export function homeEval(
     }
   }
   // G119, G173: Giac's sequence answer as a value or a list (sequences.ts); none is refused below, once `refuse` exists
-  const seq = homeSequence(giac, ans, value, exactOut, at, (f) => withDigits(giac, P, s.digits, f), form.noValue);
+  const seq = homeSequence(giac, ans, value, exactOut, at, (f) => withDigits(giac, P, s.digits, f), form, logged);
   [value, exactOut] = [seq.value, seq.text];
   // G130: a value decided again (decideTwice) is Giac's print too
   if (holdsMatrixType(value.text) && !isError(exactOut)) {
