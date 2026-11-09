@@ -365,6 +365,17 @@ describe.skipIf(!giacAvailable())("G225 dot and cross of different lengths", () 
     expect(home("gd([1,2],[3,4])")).toMatchObject({ ok: true, display: "11" });
   });
 
+  // Fix round 1 (audit): an operand that cannot be evaluated again leaves the lengths unknown, so ⚠ and never =; the why
+  // line for the flag says "a matrix shape or vector length not checked" (whyLine.test.ts holds the text).
+  it("an operand that cannot be evaluated again is ⚠ with the why, in Home and CAS", () => {
+    const why = { squareUnchecked: true };
+    expect(home("dot(randvector(3),[1,2,3])")).toMatchObject({ ok: true, facts: { exact: false, warn: "unchecked", why } });
+    expect(cas("dot(randvector(3),[1,2,3])")).toMatchObject({ ok: true, facts: { warn: "unchecked", why } });
+    expect(home("cross(randvector(3),[1,2,3])")).toMatchObject({ ok: true, facts: { exact: false, warn: "unchecked", why } });
+    expect(home("dot(gs:=[1,2],[3,4])")).toMatchObject({ ok: true, display: "11", facts: { exact: false, warn: "unchecked", why } });
+    expect(cas("dot(gt:=[1,2],[3,4])")).toMatchObject({ ok: true, text: "11", facts: { warn: "unchecked", why } });
+  });
+
   it("keeps equal lengths and Giac's matrix forms", () => {
     expect(home("dot([1,2],[3,4])")).toMatchObject({ ok: true, display: "11" });
     expect(home("cross([1,2],[3,4])")).toMatchObject({ ok: true, display: "[0,0,-2]" });
