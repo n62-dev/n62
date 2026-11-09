@@ -1277,3 +1277,9 @@ cases:
   - { id: "g173-cas-matrix-in-vector", kind: "cas", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
   - { id: "g173-cas-matrix-in-list", kind: "cas", input: "list[idn(2)]", expect: "{[[1,0],[0,1]]}", source: "derived", note: "F127: it showed {matrix[[1,0],[0,1]]}" }
   - { id: "g173-cas-when", kind: "cas", input: "when(x>0,x+1,x-1)", expect: "when(x>0,x+1,x-1)", source: "derived", note: "F93: it showed C's ((x>0)? x+1 : x-1), which the entry line does not read" }
+  # --- G173f1: a store arrow of Giac's sequence in CAS (the names are this block's own: `before` runs on the stage's shared engine) ---
+  - { id: "g173f1-cas-arrow-list", kind: "cas", input: "Dg173+1", before: ["op([3,4])=>Dg173"], expect: "{4,5}", source: "derived", note: "D holds {3,4}, elementwise 3+1, 4+1; it showed 8 (Giac adds a stored sequence's elements into one sum)" }
+  - { id: "g173f1-cas-arrow-eigenvals", kind: "cas", input: "Lg173+1", before: ["eigenvals([[2,0],[0,3]])=>Lg173"], expect: "{3,4}", source: "derived", note: "the eigenvalues of diag(2,3) are 2 and 3, so L+1 = {3,4}; it showed 6" }
+  - { id: "g173f1-cas-arrow-empty-refused", kind: "cas", input: "op([])=>Eg173", expect: "error: noValue", source: "derived", note: "guard (passes on phase-1 too): a sequence of no element is no answer" }
+  - { id: "g173f1-cas-arrow-empty-free", kind: "cas", input: "Fg173", before: ["op([])=>Fg173"], expect: "Fg173", source: "derived", note: "the refused store leaves the name free; it kept the empty sequence, so reading it said No value found" }
+  - { id: "g173f1-cas-arrow-empty-keeps", kind: "cas", input: "Kg173", before: ["Kg173:=5", "op([])=>Kg173"], expect: "5", source: "derived", note: "the refused store leaves the earlier value 5; it kept the empty sequence, so reading it said No value found" }
