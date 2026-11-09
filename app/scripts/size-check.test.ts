@@ -273,9 +273,9 @@ describe("size-check", () => {
     const over = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 61_200 }, "assets/mathlive.js": 1000 }));
     expect(over.rows[0]!.gzip).toBeGreaterThan(61_000);
     expect(checkStartPin(over.rows[0]!)[0]).toContain("pinned"); // over both
-    const between = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_960 }, "assets/mathlive.js": 1000 }));
-    expect(between.failures).toEqual([]); // inside the budget of 61 kB ...
-    expect(checkStartPin(between.rows[0]!)[0]).toContain("pinned"); // ... but over the pin
+    // the pin leaves 1 B under the budget (R157), too narrow for a random file to land in: the edges are tested on the row itself
+    expect(checkStartPin({ ...at.rows[0]!, gzip: START_PIN_GZIP + 1 })[0]).toContain("pinned"); // one over the pin
+    expect(checkStartPin({ ...at.rows[0]!, gzip: START_PIN_GZIP })).toEqual([]); // on the pin
     const inside = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 58_000 }, "assets/mathlive.js": 1000 }));
     expect(checkStartPin(inside.rows[0]!)).toEqual([]);
   });
