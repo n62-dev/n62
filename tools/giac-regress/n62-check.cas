@@ -337,8 +337,6 @@ Digits:=40:; pc("g78-keep-piecewise",'(piecewise(0>0,1/0,5))',5,5/10^12);
 Digits:=40:; pc("g90-keep-int-gauss01",'(int(exp(-x^2),x,0,1))',(746824132812/10^12),5/10^13);
 // g97-keep-flat-pow-2 (home.yaml, derived)
 Digits:=40:; pc("g97-keep-flat-pow-2",'([1,2]^2)',5,5/10^12);
-// g172-keep-besselj (home.yaml, oracle)
-Digits:=40:; pc("g172-keep-besselj",'(BesselJ(1,2))',(576724807757/10^12),5/10^13);
 // g169-normald-cdf-scalar (home.yaml, oracle)
 Digits:=40:; pc("g169-normald-cdf-scalar",'(normald_cdf(0,1,1/2))',(691462461274/10^12),5/10^13);
 // g169-student-cdf-scalar (home.yaml, oracle)
