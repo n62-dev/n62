@@ -4,6 +4,9 @@
 export const enAbout = {
   "help": "Help and about",
   "tips.row": "Show the first-start tips",
+  "report.row": "Report a problem",
+  "report.copied": "Copied. The form opens: paste the report into it",
+  "report.openBy": "Copied. Open github.com/n62-dev/n62/issues/new and paste it",
   "title": "About N62",
   "aboutTitle": "About",
   "hint": "Version, source, GPL-3.0",

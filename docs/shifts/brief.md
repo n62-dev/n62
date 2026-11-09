@@ -60,7 +60,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 560 | R170 core list: units, ± | ron, Sonnet | `p1/ron-coreunits` | – |
 | 561 | R172 the report text | ron, Sonnet | `p1/ron-reporttext` | – |
-| 562 | [R173](packages/R173.md) Report a problem (again: run 820 came before R172 and built nothing) | ron, Sonnet | `p1/ron-reportrow2` | R172 |
+| 562 | R173 Report a problem (again: run 820 came before R172 and built nothing) | ron, Sonnet | `p1/ron-reportrow2` | R172 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 554 | [R164](packages/R164.md) the other presses use the flag | ron, Sonnet | `p1/ron-pressflag2` | R161 |

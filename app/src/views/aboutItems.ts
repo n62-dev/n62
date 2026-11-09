@@ -74,6 +74,7 @@ export function helpItems(env: SettingsEnv = {}): MenuItem[] {
   const tips = env.tips;
   return [
     ...(tips ? [{ id: "tips", label: t("tips.row"), run: () => tips() }] : []),
+    { id: "report", label: t("report.row"), run: () => env.data?.((c) => c.reportProblem()) },
     { id: "about", label: t("title"), hint: t("hint"), submenu: lazy(t("aboutTitle"), aboutRows) },
     { id: "parts", label: t("parts"), hint: t("partsHint"), submenu: lazy(t("partsTitle"), partRows, { longPreview: true }) },
   ];
