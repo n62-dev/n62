@@ -171,6 +171,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The deep check of 2026-10-19 (G38, G57, G48, G39):** a result resting on a numeric decision is decided again at P + 20 and P + 40, refused when undecided; a run-once store is ⚠ without a count; a divergent sum or integral is refused. Rule: docs/04 2.4. Full text: archive.
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Full text: archive, "Opus pass 97".
+- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. Would change if: the owner says.
 
 **Units**
 - **G17:** dB is a field-ratio level, dBm and dBW to 1 mW and 1 W; offsets and levels alone convert, impossible levels and temperatures are refused (G16's zero: G35, below). Full text: archive.
