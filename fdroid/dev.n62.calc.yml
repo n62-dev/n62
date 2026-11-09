@@ -23,16 +23,31 @@ Builds:
     subdir: android/app
     sudo:
       - apt-get update
-      # Same Debian emscripten as the release container (P2): 3.1.69+dfsg-3 in trixie. Then `emcc` is on PATH (EMSDK_DIR=system).
-      - apt-get install -y emscripten make patch gcc g++ m4 perl xz-utils bzip2 curl python3 pkg-config npm
+      # Same Debian emscripten as the release container (P2): 3.1.69+dfsg-3 in trixie (A96: the buildserver-trixie image has it; build-wasm-release.sh pins the same).
+      # Then `emcc` is on PATH (EMSDK_DIR=system); EMSCRIPTEN_PKG_VERSION below makes build-wasm.sh refuse any other compiler.
+      - apt-get install -y emscripten=3.1.69+dfsg-3 make patch gcc g++ m4 perl xz-utils bzip2 curl python3 pkg-config npm
+    # A97: F-Droid's reference: "nothing should be built during this prebuild phase"; `build` "runs during the actual build phase ... Use this only for
+    # actions that do actual building". The source scanner runs between the two, so prebuild only fetches (SHA-256-checked downloads, npm ci) and
+    # everything that compiles or bundles is in `build`. The downloads go to /tmp, outside the scanned tree, so the source scan finds nothing generated.
+    # No scandelete: fdroidserver's scan_source fails on a scandelete path that matches nothing (common.getpaths_map), and every path that once stood here is created only in `build`.
     prebuild:
       - cd ../..
+      - export N62_DL_DIR=/tmp/n62-dl
+      - export N62_QALC_DL_DIR=/tmp/n62-qalc-dl
+      - engine/giac/build-wasm.sh --fetch-only
+      - engine/qalc/build-wasm.sh dev --fetch-only
+      - cd app
+      - npm ci
+    build:
+      - cd ../..
+      - export N62_DL_DIR=/tmp/n62-dl
+      - export N62_QALC_DL_DIR=/tmp/n62-qalc-dl
       - export EMSDK_DIR=system
+      - export EMSCRIPTEN_PKG_VERSION=3.1.69+dfsg-3
       - engine/giac/build-wasm.sh
       # libqalculate for the Find index (milestone 4; the Units worker is milestone 5). Skip with build.sh's --no-units.
       - engine/qalc/build-wasm.sh dev
       - cd app
-      - npm ci
       # P22 (A60): recompute find/factors.yaml from the qalc build above; any difference exits 1 and fails the build, so F-Droid's own build proves the checked-in file.
       - node ../tools/find-index/refresh-factors.mjs
       - npm run index
@@ -40,12 +55,6 @@ Builds:
       - npx cap sync android
     gradle:
       - yes
-    scandelete:
-      - app/node_modules/
-      - engine/giac/_downloads/
-      - engine/giac/_build/
-      - engine/qalc/_downloads/
-      - engine/qalc/_work/
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
