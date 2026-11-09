@@ -166,9 +166,18 @@ ask_henri() {  # <n> <prompt>: henri's one-line reply
 henri_stdin() {  # A47c: in a lane, henri_input (pipeline-lib.sh); else the log's last 80 lines
   if [[ -n "$lane" ]]; then henri_input "$coord/log.md" "$lane"; else tail -n 80 "$coord/log.md"; fi
 }
-unsafe() {  # <cmd>: shell metacharacters outside plain double quotes, or a backtick or $ anywhere
-  local bare; bare="$(sed -E 's/"([^"\\$`]|\\.)*"//g' <<<"$1")"   # text inside plain double quotes may hold ; & | < > (no expansion there); a backslash and the next character are one unit (A89: \" does not close the quotes)
-  [[ "$bare" =~ [\;\&\|\`\$\<\>] || "$1" == *[\`\$]* ]]
+unsafe() {  # <cmd>: true (unsafe) for a bare ; & | < > outside quotes, a backslash outside quotes, a line ending inside quotes, or a backtick or $ anywhere
+  [[ "$1" != *[\`\$]* ]] || return 0
+  local s="$1" i c st=u   # A89f1: a scanner reads the line as the shell does; st: u unquoted, d inside double quotes, s inside single quotes
+  for (( i = 0; i < ${#s}; i++ )); do
+    c="${s:i:1}"
+    case "$st" in
+      u) case "$c" in '"') st=d;; "'") st=s;; \\|\;|\&|\||\<|\>) return 0;; esac;;
+      d) case "$c" in \\) i=$((i + 1));; '"') st=u;; esac;;   # a backslash and the next character are one unit; text in double quotes may hold ; & | < > (no expansion there)
+      s) case "$c" in "'") st=u;; \;|\&|\||\<|\>) return 0;; esac;;   # a double quote is plain text here
+    esac
+  done
+  [[ "$st" != u ]]
 }
 run_cmd() {  # <cmd>: run one pipeline line; returns its exit code (75: usage limit, after the wait)
   local cmd="$1" cmdout rc
