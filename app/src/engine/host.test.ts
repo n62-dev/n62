@@ -878,7 +878,7 @@ describe.skipIf(!giacAvailable())("G83: the user's functions are defined on firs
     const { host, calls } = await fresh(log);
     expect(calls.some((c) => c.includes("bad("))).toBe(false); // restore left it for later
     const ref = await eager(log);
-    expect(host.home("bad(2)", defaultHomeSettings).result).toMatchObject({ ok: true, display: ref.home("bad(2)", defaultHomeSettings).result.display });
+    expect(host.home("bad(2)", defaultHomeSettings).result).toMatchObject({ ok: false, display: ref.home("bad(2)", defaultHomeSettings).result.display }); // G168: Giac's undef, refused in both
     expect(host.cas("bad(3)", defaultCasSettings).result.text).toBe(ref.cas("bad(3)", defaultCasSettings).result.text);
     const next = host.home("1+1", defaultHomeSettings).result;
     expect(next).toMatchObject({ ok: true, display: "2" });

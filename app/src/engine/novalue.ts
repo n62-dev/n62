@@ -12,10 +12,13 @@
 // - G148 (vg-3, vvg-1), G148f1, G148f2: approx and evalf make Giac's answer ±infinity, undef or a float 0, at once,
 //   inside a larger input too (1/approx(exp(-10^20)), ln(approx(exp(-10^20)))); the input with each call replaced by its
 //   argument is refused as the bare input is, or as a call's argument is (approxRange).
+// - G168 (F93): Giac's undef as the whole answer, or as an element of a Home list, is refused too: "division by zero"
+//   when a part of the input divides by an exact 0, else "no value found" (undefReason); CAS asks the same of a bare undef
+//   and of an answer with no free name whose evalf is no number (lostCas).
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
-import { hasFloat, MAX_EVAL_DIGITS, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
-import { callsOf, firstNameIn, functionsIn, isError, names, topLevelArgs, type Quoting, withoutStrings } from "./giacPrint.ts";
+import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { callsOf, firstNameIn, functionsIn, isError, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero } from "./format.ts";
 
 /** The reasons of this module; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
@@ -68,12 +71,9 @@ const WALK_BUDGET_MS = 500;
 export function throughInfinity(giac: Giac, input: string, output: string, late: () => boolean, exactMs: number, userFn: (name: string) => boolean): boolean {
   if (infinite(output) || firstNameIn(input, TYPED_INF, "typed") !== null || !hasSource(input.replace(SAFE_DIVISION, "")) || callsIn(input).length) return false;
   if (changesState(input, "typed") || functionsIn(input, "typed").some(userFn)) return false;
-  try {
-    // First the shape, with no evaluation (G103: the tree of the quoted input as Giac stores it in pasq, from bridge-3 in
-    // the same call, tree.ts); the sources in it, innermost first, so the infinity is found at the part that makes it;
-    // the whole input is not evaluated again.
-    const tree = late() ? null : treeOf(giac.value(`pasq:=quote(${input})`, [], true).tree, "pasq");
-    if (!tree) return false;
+  // The sources in the tree, innermost first, so the infinity is found at the part that makes it; the whole input is
+  // not evaluated again.
+  return withTree(giac, input, late, (tree) => {
     const sources: string[] = [];
     const visit = (t: TreeNode, root: boolean): void => {
       if (t.kind === 1 && UNEVALUATED.has(t.head)) return;
@@ -81,27 +81,81 @@ export function throughInfinity(giac: Giac, input: string, output: string, late:
       if (!root && t.kind === 1 && t.source && SOURCE_OPS.has(t.head)) sources.push(t.path);
     };
     visit(tree, true);
-    const t0 = performance.now();
-    for (const p of sources) {
-      if (late() || performance.now() - t0 + exactMs > WALK_BUDGET_MS) return false;
-      if (giac.eval(`when(has(eval(${p}),infinity),1,0)`).trim() === "1") return true;
-    }
-    return false;
+    return firstWithin(sources, (p) => `when(has(eval(${p}),infinity),1,0)`, giac, late, exactMs);
+  });
+}
+
+/** The tree of the quoted input as Giac stores it in pasq (G103, from bridge-3 in the same call, tree.ts), given to
+ *  `walk` before the name is purged; no evaluation here. False (nothing found) without a tree, or once `late()`. */
+function withTree(giac: Giac, input: string, late: () => boolean, walk: (tree: TreeNode) => boolean): boolean {
+  try {
+    const tree = late() ? null : treeOf(giac.value(`pasq:=quote(${input})`, [], true).tree, "pasq");
+    return tree ? walk(tree) : false;
   } finally {
     giac.eval("purge(pasq)");
   }
+}
+
+/** Whether Giac answers 1 for `ask(p)` of one of `parts`, within WALK_BUDGET_MS (a part costs at most `exactMs`). */
+function firstWithin(parts: readonly string[], ask: (p: string) => string, giac: Giac, late: () => boolean, exactMs: number): boolean {
+  const t0 = performance.now();
+  for (const p of parts) {
+    if (late() || performance.now() - t0 + exactMs > WALK_BUDGET_MS) return false;
+    if (giac.eval(ask(p)).trim() === "1") return true;
+  }
+  return false;
+}
+
+/**
+ * G168: whether a part of `input` (decimals exact), the whole included, divides by an exact 0: the denominator of a `/`
+ * or the argument of an `inv` evaluates to Giac's integer 0 (a float 0, from approx(0), is no exact 0). Only those parts
+ * are evaluated, within the same limits as throughInfinity's walk, and none for an input that changes state when run,
+ * calls a function `userFn` names, or holds a definite integral, sum or limit (callsIn: those are refused by convergence).
+ */
+function dividesByZero(giac: Giac, input: string, late: () => boolean, exactMs: number, userFn: (name: string) => boolean): boolean {
+  if (callsIn(input).length || changesState(input, "typed") || functionsIn(input, "typed").some(userFn)) return false;
+  return withTree(giac, input, late, (tree) => {
+    const denominators: string[] = [];
+    const visit = (t: TreeNode): void => {
+      if (t.kind === 1 && UNEVALUATED.has(t.head)) return;
+      for (const c of t.children) visit(c);
+      if (t.kind !== 1) return;
+      if (t.head === "/" && t.children.length === 2) denominators.push(t.children[1]!.path);
+      else if (t.head === "inv" && t.children.length === 1) denominators.push(t.children[0]!.path);
+    };
+    visit(tree);
+    return firstWithin(denominators, (p) => `when(string(eval(${p}))=="0",1,0)`, giac, late, exactMs);
+  });
+}
+
+/** G168: why Giac's undef of `input` is no value: "divisionByZero" when it came through an infinity (F51) or a part of the
+ *  input divides by an exact 0, else "noValue". */
+function undefReason(giac: Giac, input: string, late: () => boolean, exactMs: number, userFn: (name: string) => boolean): NoValue {
+  return throughInfinity(giac, input, "undef", late, exactMs, userFn) || dividesByZero(giac, input, late, exactMs, userFn) ? "divisionByZero" : "noValue";
+}
+
+/** G168: a list or matrix Giac printed (Giac's `list[…]` type too, at any depth) that holds an `undef` element. */
+function holdsUndef(n: PrintedNode | null): boolean {
+  if (!n) return false;
+  if (n.items) return n.items.some(holdsUndef);
+  if (n.str !== undefined) return false;
+  return n.raw === "undef" || (n.raw.startsWith(LIST_TYPE) && holdsUndef(parsePrinted(n.raw.slice(LIST_TYPE.length - 1))));
 }
 
 /** A name in Giac's text that is not a call nor a constant: the result has a free name (or a stored function's name),
  *  so it is not a lost number; read from the text, so such a result costs no engine call. */
 const NOT_FREE: ReadonlySet<string> = new Set(["pi", "e", "i", "euler_gamma"]);
 const freeName = (t: string): boolean => [...names(t, "printed")].some((n) => !n.call && !NOT_FREE.has(n.name));
+/** A printed test, function or string: no lost number (lostNumber, lostCas). */
+const notAValue = (t: string): boolean => /==|<>|->|"/.test(t);
 
 /**
  * F50: the reason for a result held in `slot` that is Giac's text with no free name (a number was asked for, and Giac
- * found none): "overflow" when its value is an infinity, else "noValue"; for Giac's undef of an `input` through an
- * infinity, "divisionByZero" (F51, the walk's limits as there); null for anything else (a name in it, a list, a string, a function, an infinity
- * Giac gave as the answer, a test, the undef of 0/0).
+ * found none): "overflow" when its value is an infinity, else "noValue". G168 (F93): Giac's undef as the whole answer,
+ * or as an element of a list or matrix (no number can stand for it, F50 of the owner, 2026-10-20), is refused with
+ * undefReason's reason; null for anything else (a name in it, a list without undef, a string, a function, an infinity
+ * Giac gave as the answer, a test). G168f1: with `undefStands` (the Num table, where a cell shows NaN) only a whole-answer
+ * undef through an infinity is refused, "divisionByZero" (F51, the walk's limits as there); no list element is asked.
  */
 export function lostNumber(
   giac: Giac,
@@ -111,13 +165,46 @@ export function lostNumber(
   late: () => boolean,
   exactMs: number,
   userFn: (name: string) => boolean,
+  undefStands = false,
 ): NoValue | null {
   const out = output.trim();
-  if (out === "undef") return throughInfinity(giac, input, out, late, exactMs, userFn) ? "divisionByZero" : null;
-  if (infinite(out) || /==|<>|->|"/.test(out) || freeName(out)) return null;
+  if (undefStands && out === "undef") return throughInfinity(giac, input, out, late, exactMs, userFn) ? "divisionByZero" : null;
+  if (!undefStands && out.includes("undef") && holdsUndef(parsePrinted(out))) return undefReason(giac, input, late, exactMs, userFn);
+  if (infinite(out) || notAValue(out) || freeName(out)) return null;
   if (giac.eval(`type(${slot})`).trim() !== "expression") return null;
   if (namesOf(giac, slot)?.length !== 0) return null;
   return infinite(giac.eval(`evalf(${slot})`)) ? "overflow" : "noValue";
+}
+
+const NO_NUMBER: ReadonlySet<string> = new Set(["expression", "identifier"]);
+/** Giac's operator of an interval and of a geometry object: values of their own, with no number to find. */
+const OBJECT_HEADS: ReadonlySet<string> = new Set([" .. ", "pnt"]);
+
+/**
+ * G168 (F93): the reason for the CAS answer `output` of `input` (decimals exact), held in `slot`, when no value came:
+ * Giac's bare undef (undefReason), or an answer with no free name, whose top is a function `input` itself calls or Giac's
+ * seq operator (seq(0.3,-2) comes back as `(3/10^1)$-2`), and whose evalf is no number (Giac's call back unevaluated, binomial_icdf(4,0.5,3.0)), "noValue", asked at a double's digits: Giac has no MPFR value for some functions (igamma), so a call kept
+ * at P or at a high CAS setting is no lost number. When the input may run again (`rerun`) it is asked too,
+ * since the answer may hold P-digit floats a double cannot read (evalf(gammad_cdf(2,3,-2,1)) at P). An exact form whose evalf is a number stays (sqrt(2), BesselJ(1,2)), as does one
+ * whose evalf is an infinity (exp(10^30), an exact form MPFR's range cannot print), and a form Giac rewrote whose evalf
+ * fails only past the numeric range (acos(9007199254740993^9007199254740993)*asin(2), whose top is a product); a name, a list, a string, a test, an
+ * interval (`1 .. 3`), a geometry object and an answer of any other type are no lost number. An undef inside a larger
+ * answer is not looked for here. `evalf` is read through type(), never printed: a geometry object as the value of a call
+ * makes Giac draw it ("window is not defined" in the engine).
+ */
+export function lostCas(giac: Giac, slot: string, input: string, output: string, late: () => boolean, userFn: (name: string) => boolean, digits: number, rerun: boolean): NoValue | null {
+  const out = output.trim();
+  if (out === "undef") return undefReason(giac, input, late, 0, userFn);
+  // No call in the text (and no `$`, Giac's seq operator): no engine call at all (an exact rational, a name), so most
+  // answers cost nothing here.
+  if (infinite(out) || notAValue(out) || freeName(out) || (!functionsIn(out, "printed").length && !out.includes("$"))) return null;
+  // bridge-3's elements of the list (no printing of a value here): the printed strings hold their quotes, a head its '…' too.
+  const info = giac.value(`[string(type(${slot})),size(lname(${slot})),string(sommet(${slot}))]`, []).elements;
+  if (info?.length !== 3 || info[0] !== '"expression"' || info[1] !== "0") return null;
+  const head = info[2]!.slice(2, -2);
+  if (OBJECT_HEADS.has(head) || (head !== "$" && !functionsIn(input, "typed").includes(head))) return null;
+  const noNumber = (e: string): boolean => NO_NUMBER.has(withDigits(giac, DOUBLE_DIGITS, digits, () => giac.eval(`type(evalf(${e}))`)).trim());
+  return noNumber(slot) && (!rerun || noNumber(input)) ? "noValue" : null;
 }
 
 /**

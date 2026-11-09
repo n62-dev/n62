@@ -48,7 +48,7 @@ const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; 
   // every CalcError code (calc/port.ts, engine/converge.ts Refusal), shown by errorText
   {
     prefix: "error.",
-    suffixes: ["syntax", "timeout", "engine", "integralDiverges", "seriesDiverges", "noLimit", "undecided", "divisionByZero", "overflow", "underflow", "noValue", "notSquare", "listPlusNumber", "listAsArguments", "listInArgument", "lengthsDiffer", "vectorsOnly"],
+    suffixes: ["syntax", "timeout", "engine", "integralDiverges", "seriesDiverges", "noLimit", "undecided", "divisionByZero", "overflow", "underflow", "noValue", "unknownFunction", "notSquare", "listPlusNumber", "listAsArguments", "listInArgument", "lengthsDiffer", "vectorsOnly"],
     file: "state/session.svelte.ts",
   },
   { prefix: "part.", suffixes: "any", file: "state/backup.ts" }, // a backup part's name, from the part's key

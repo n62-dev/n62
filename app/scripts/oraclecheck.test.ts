@@ -44,6 +44,11 @@ describe("oracle.py (G200, F197)", () => {
     expect(r.out).toMatch(/^PROBLEM home\.yaml t-wrong: expect '0\.4' but oracle '0\.333333333333'/m);
     expect(r.code).toBe(1);
   }, SPAWN_MS);
+  it("an id may stand once per check (a known file's rows, G168), and twice for one check is a duplicate", () => {
+    const row = (check: string): string => `{ id: "t-known", check: ${check}, package: F66 }`;
+    expect(run([rows(row("num"), row("cas"))]).code).toBe(0);
+    expect(run([rows(row("num"), row("num"))]).out).toMatch(/^PROBLEM home\.yaml t-known: duplicate id/m);
+  }, SPAWN_MS);
   it("a broken oracle expression is one PROBLEM for its row and the run goes on", () => {
     const r = run([
       rows(

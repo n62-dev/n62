@@ -462,7 +462,7 @@ function undecidedResult(r: HomeResult, why: PrecisionWhy = { decided: true }): 
 }
 
 /** `form` (G100, stores.ts): how the input stores, from Giac's tree, which the host reads; an input that stores nothing
- *  by default (the Num table's cells, tests). */
+ *  by default (the Num table's cells, tests). `undefStands` (G168f1, the Num table alone): Giac's undef is no lost answer, a cell shows NaN (G2 items 19, 22). */
 export function homeEval(
   giac: Giac,
   input: string,
@@ -470,6 +470,7 @@ export function homeEval(
   now: () => number = () => performance.now(),
   form: InputForm = PLAIN_FORM,
   fnBody: Bodies = NO_BODIES,
+  undefStands = false,
 ): HomeResult {
   const t0 = now();
   const ans = "pasans";
@@ -653,7 +654,8 @@ export function homeEval(
   const shape = shapeOfValue(value);
   const symbolic = (forced?: "unaudited"): HomeResult => {
     // G78: Giac's text with no free name where a number was asked for (asin(acos(π²)), sinh(6020³)), or undef through ∞.
-    const lost = once || forced || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn);
+    // G168: a polish that could not replace Giac's undef is a lost answer too, ⚠ or not (only an infinity stays Giac's word).
+    const lost = once || (forced && (undefStands || exactOut.trim() !== "undef")) || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn, undefStands);
     if (lost) return refuse(lost, "exact");
     // Not a number (symbolic, a set, a nested list…): show Giac's text. This build does not apply the
     // "regroup" autosimplify at the top level (x*x stays x*x), so collect equal factors here.

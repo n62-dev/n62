@@ -11,6 +11,7 @@ export const enEngine = {
   "error.overflow": "Overflow: the number is too large",
   "error.underflow": "Underflow: the number is too small",
   "error.noValue": "No value found",
+  "error.unknownFunction": "Unknown function",
   "error.notSquare": "The matrix is not square",
   "error.lengthsDiffer": "The lists, vectors or matrices have different sizes",
   "error.vectorsOnly": "Dot and cross products take two vectors",

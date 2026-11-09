@@ -139,15 +139,57 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
     expect(home("int(1/x^2,x,-1,1)")).toMatchObject({ ok: false, error: "integralDiverges" });
     expect(host.cas("int(1/x^2,x,-1,1)", defaultCasSettings).result).toMatchObject({ ok: true, text: "+infinity" });
   });
-  it("keeps an infinity typed as such, a branch not taken, a free name and 0/0", () => {
+  it("keeps an infinity typed as such, a branch not taken and a free name; 0/0 is refused (G168)", () => {
     expect(home("limit(1/x^2,x,0)")).toMatchObject({ ok: true, display: "+infinity" });
     expect(home("1/0")).toMatchObject({ ok: true, display: "infinity" });
     expect(home("int(exp(-x),x,0,inf)")).toMatchObject({ ok: true, display: "1" });
     expect(home("atan(inf)")).toMatchObject({ ok: true, display: "1.57079632679" });
     expect(home("piecewise(0>0,1/0,5)")).toMatchObject({ ok: true, display: "5" });
     expect(home("x+1/x")).toMatchObject({ ok: true });
-    expect(home("0/0")).toMatchObject({ ok: true, display: "undef" });
+    expect(home("0/0")).toMatchObject({ ok: false, display: "Division by zero", error: "divisionByZero" });
     expect(home("sin(x)/x")).toMatchObject({ ok: true });
+  });
+  it("G168 (F93, F109): refuses undef and the call back, and stores nothing; a stored empty call and a free name stay", () => {
+    const cas = (input: string) => host.cas(input, defaultCasSettings).result;
+    expect(cas("g168b:=1")).toMatchObject({ ok: true, text: "1" });
+    // refused store: the earlier value stays, and a new name keeps nothing (as a non-square power's, G171)
+    expect(cas("g168b:=0/0")).toMatchObject({ ok: false, error: "divisionByZero", text: "Division by zero" });
+    expect(cas("g168b")).toMatchObject({ ok: true, text: "1" });
+    expect(cas("g168c:=inf-inf")).toMatchObject({ ok: false, error: "noValue" });
+    expect(cas("g168c")).toMatchObject({ ok: true, text: "g168c" });
+    expect(cas("g168d:=binomial_icdf(4,0.5,3)")).toMatchObject({ ok: false, error: "noValue" });
+    expect(cas("g168d")).toMatchObject({ ok: true, text: "g168d" });
+    expect(cas("g168e():=2")).toMatchObject({ ok: true });
+    expect(cas("g168e()")).toMatchObject({ ok: true, text: "2" });
+    expect(cas("g168f()")).toMatchObject({ ok: false, error: "unknownFunction", text: "Unknown function" });
+    expect(home("g168g()")).toMatchObject({ ok: false, error: "unknownFunction", display: "Unknown function" });
+    expect(home("g168g")).toMatchObject({ ok: true, display: "g168g" });
+    expect(home("list[undef,2]")).toMatchObject({ ok: false, error: "noValue" });
+    expect(home("[1,[inf-inf]]")).toMatchObject({ ok: false, error: "noValue" });
+    expect(home("[1,\"undef\"]")).toMatchObject({ ok: true });
+    // no MPFR value at the setting's or P's digits is no lost number: asked at a double's (g111-cas-gammad-cdf-2bounds)
+    expect(host.cas("BesselJ(1,2)", { ...defaultCasSettings, digits: 30 }).result).toMatchObject({ ok: true, text: "BesselJ(1,2)" });
+    expect(cas("evalf(gammad_cdf(2,3,-2,1))")).toMatchObject({ ok: true });
+    expect(host.cas("binomial_icdf(4,0.5,3)", { ...defaultCasSettings, digits: 30 }).result).toMatchObject({ ok: false, error: "noValue" });
+    // an exact form whose evalf is an infinity stays, and an interval
+    expect(cas("seq(0.3,-2)")).toMatchObject({ ok: false, error: "noValue" });
+    // G168 fix round 1: a form Giac rewrote is no call back, though its evalf fails past the numeric range (a product on top)
+    expect(cas("acos(9007199254740993^9007199254740993)*asin(2)")).toMatchObject({ ok: true });
+    expect(cas("exp(10^30)")).toMatchObject({ ok: true });
+    expect(cas("1..3")).toMatchObject({ ok: true });
+  });
+  it("G168f1: a Num cell keeps Giac's undef (it shows NaN, G2 items 19, 22); Home, without the parameter, refuses it", () => {
+    const cell = (f: string, x: string) => host.table({ fns: [f], xs: [x] }, defaultHomeSettings)[0]![0]!;
+    expect(cell("sin(x)/x", "0")).toMatchObject({ ok: true, display: "undef", path: "exact" });
+    expect(home("subst((sin(x)/x),x=(0))")).toMatchObject({ ok: false, error: "noValue" });
+    // no list element is refused for holding undef, in a list or a matrix
+    expect(cell("[sin(x)/x,1]", "0")).toMatchObject({ ok: true, display: "[undef,1]" });
+    expect(cell("[[1,sin(x)/x]]", "0")).toMatchObject({ ok: true, display: "[[1,undef]]" });
+    // a polish that could not replace Giac's undef stays Giac's word with its ⚠
+    expect(cell("normald_icdf(inf-inf,1,x)", "0.5")).toMatchObject({ ok: true, display: "undef", facts: { warn: "unaudited" } });
+    expect(home("normald_icdf(inf-inf,1,0.5)")).toMatchObject({ ok: false, error: "noValue" });
+    // a whole-answer undef through an infinity is still a division by zero (F51)
+    expect(cell("1/0-1/0", "0")).toMatchObject({ ok: false, display: "Division by zero", error: "engine" });
   });
   it("never runs a part again that changes state: an assignment, =<, a program, rand (audit, fix round 2)", () => {
     const none = (): boolean => false;
