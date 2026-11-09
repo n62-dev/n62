@@ -63,7 +63,7 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 560 | R167 the first engine result gets the time it needs under load | ron, Sonnet | `p1/ron-firstwait` | – |
-| 561 | [R166](packages/R166.md) finish R159f2 (a touch just beside a unit chip), tests that see a second pick | ron, Sonnet | `p1/ron-unitnearmiss` | – |
+| 561 | R166 finish R159f2 (a touch just beside a unit chip), tests that see a second pick | ron, Sonnet | `p1/ron-unitnearmiss` | – |
 | 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | – |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
