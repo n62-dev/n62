@@ -830,13 +830,8 @@ merge_phase1() {
       die "merge of phase-1 into $branch failed without conflicts: $(tail -n 1 "$run/premerge.log")"
     fi
     resolves=$((resolves + 1)); r="$run/resolve-$resolves"
-    { echo "## merging phase-1 into $branch conflicts in:"; echo "$conflicts"; echo
-      # a file without markers (a modify/delete conflict) makes grep exit 1: that must not end the run under pipefail
-      while IFS= read -r f; do
-        echo "### $f"; marks="$(grep -nE '^(<<<<<<<|=======|>>>>>>>)' "$wt/$f" 2>/dev/null | head -n 40 || true)"
-        if [[ -n "$marks" ]]; then echo "$marks"
-        else echo "no conflict markers: a modify/delete conflict (one side deleted the file, the other changed it); keep the file (git add) or delete it (git rm)"; fi
-      done <<<"$conflicts"; } > "$r.txt"
+    { echo "## merging phase-1 into $branch conflicts in:"; echo "$conflicts"; echo  # a file without markers (modify/delete) makes grep exit 1: never the run's end
+      while IFS= read -r f; do echo "### $f"; marks="$(grep -nE '^(<<<<<<<|=======|>>>>>>>)' "$wt/$f" 2>/dev/null | head -n 40 || true)"; echo "${marks:-no conflict markers: a modify/delete conflict (one side deleted the file, the other changed it); keep the file (git add) or delete it (git rm)}"; done <<<"$conflicts"; } > "$r.txt"
     merge_conflicts=1
     run_agent "resolve-$n-$resolves" "$r.log" "$agent" "$model" "$effort" "$r.txt" "You are $agent on branch $branch in your own worktree, a merge of phase-1 is in progress with conflicts (files and conflict markers on stdin) for package $id. Resolve every conflict keeping both sides' intent, git add the files and finish the merge with git commit -s (and your model's trailer). Run the typecheck. Reply in at most three lines." "${worker_tools[@]}"
     if git -C "$wt" rev-parse -q --verify MERGE_HEAD >/dev/null || [[ -n "$(git -C "$wt" diff --name-only --diff-filter=U)" ]]; then
