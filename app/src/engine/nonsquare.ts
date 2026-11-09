@@ -144,7 +144,8 @@ export function nonSquarePower(
   // bridge-2's tree writes both a/b and inv(M) as the head "/" (inv(M) is stored as 1/M), so either head is a division
   const powers = mayPower && (powIn || inBodies("^"));
   const inverses = mayInverse && (invIn || inBodies("/", "inv"));
-  const products = productTyped || inBodies(...VECTOR_PRODUCTS);
+  // G225: the bodies only for a call of a stored function (the input's reads are an engine call that every other input is spared)
+  const products = productTyped || (functionsIn(input, "typed").some((n) => !!bodies.of(n)) && inBodies(...VECTOR_PRODUCTS));
   if (!(powers || inverses || products) || !(typed || reached().known.size > 0)) return false;
   // G101: a call's arguments are evaluated once more to bind the body: not when the input stores, or reads a function
   // of the user's whose body is not known (the known bodies store nothing, nor do the functions they read)
