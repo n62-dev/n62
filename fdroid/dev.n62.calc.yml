@@ -28,7 +28,8 @@ Builds:
       - apt-get install -y emscripten=3.1.69+dfsg-3 make patch gcc g++ m4 perl xz-utils bzip2 curl python3 pkg-config npm
     # A97: F-Droid's reference: "nothing should be built during this prebuild phase"; `build` "runs during the actual build phase ... Use this only for
     # actions that do actual building". The source scanner runs between the two, so prebuild only fetches (SHA-256-checked downloads, npm ci) and
-    # everything that compiles or bundles is in `build`. The downloads go to /tmp, outside the scanned tree (scandelete never meets them).
+    # everything that compiles or bundles is in `build`. The downloads go to /tmp, outside the scanned tree, so the source scan finds nothing generated.
+    # No scandelete: fdroidserver's scan_source fails on a scandelete path that matches nothing (common.getpaths_map), and every path that once stood here is created only in `build`.
     prebuild:
       - cd ../..
       - export N62_DL_DIR=/tmp/n62-dl
@@ -54,11 +55,6 @@ Builds:
       - npx cap sync android
     gradle:
       - yes
-    scandelete:
-      - engine/giac/_downloads/
-      - engine/giac/_build/
-      - engine/qalc/_downloads/
-      - engine/qalc/_work/
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

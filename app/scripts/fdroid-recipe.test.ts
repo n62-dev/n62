@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** The lines of one list key (`prebuild`, `build`, `sudo`, `scandelete`) of the recipe's first build, comments and indentation stripped. */
+/** The lines of one list key (`prebuild`, `build`, `sudo`) of the recipe's first build, comments and indentation stripped. */
 function list(key: string): string[] {
   const lines = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8").split("\n");
   const start = lines.findIndex((l) => new RegExp(`^\\s+${key}:\\s*$`).test(l));
@@ -135,7 +135,7 @@ describe("F-Droid recipe builds outside prebuild (A97)", () => {
     }
   });
 
-  it("the downloads sit outside the source tree, the same folder in prebuild and build (scandelete never meets them)", () => {
+  it("the downloads sit outside the source tree, the same folder in prebuild and build (the scanned tree holds nothing downloaded)", () => {
     const dl = (steps: string[], v: string): string | undefined => steps.map((s) => new RegExp(`^export ${v}=(\\S+)$`).exec(s)?.[1]).find(Boolean);
     for (const v of ["N62_DL_DIR", "N62_QALC_DL_DIR"]) {
       expect(dl(pre, v), `prebuild exports ${v}`).toMatch(/^\/tmp\//);
@@ -143,8 +143,9 @@ describe("F-Droid recipe builds outside prebuild (A97)", () => {
     }
   });
 
-  it("scandelete does not list app/node_modules/ (capacitor.settings.gradle builds Capacitor's modules from it)", () => {
-    expect(list("scandelete").some((s) => /node_modules/.test(s))).toBe(false);
+  it("the recipe has no scandelete: fdroidserver's scan_source fails on a path that matches nothing, and none exists after prebuild (capacitor.settings.gradle also builds Capacitor's modules from app/node_modules/)", () => {
+    const text = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8");
+    expect(text).not.toMatch(/^\s+scandelete:/m);
     expect(readFileSync(join(repo, "android/capacitor.settings.gradle"), "utf8")).toContain("node_modules");
   });
 });
