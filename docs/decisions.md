@@ -9,6 +9,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-12); S36f1 set the two copper values to the sheet's (pass 103 re-read it). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
+**F-Droid repro builds:** fdroid/SUBMIT.md
+
 ## Decided proposals
 
 ### Pipeline and process
