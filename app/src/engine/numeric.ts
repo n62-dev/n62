@@ -30,7 +30,7 @@ import {
 import { binary64Of } from "./binary64.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
-import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall } from "./giacPrint.ts";
+import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
 import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 
@@ -80,7 +80,7 @@ const FLOAT_LITERAL = /(?<![A-Za-z_0-9.])(?:\d+\.\d*|\.\d+|\d+(?=e[+-]?\d))(?:e[
 
 /** Giac printed a float somewhere in this text (its exact results never contain one). */
 export function hasFloat(text: string): boolean {
-  return FLOAT_LITERAL.test(text);
+  return FLOAT_LITERAL.test(text.includes('"') ? withoutStrings(text, '""', "printed") : text); // G172: `"1.5"` is text
 }
 
 /**

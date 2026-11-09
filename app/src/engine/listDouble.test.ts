@@ -7,6 +7,7 @@ import { EngineHost } from "./host.ts";
 import { engineGiac, giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { hasFloat } from "./numeric.ts";
+import { MAX_DOUBLE_ELEMENTS } from "./doubleElements.ts";
 
 describe("G172: hasFloat skips strings", () => {
   it("reads no float inside a string", () => {
@@ -48,20 +49,20 @@ describe.skipIf(!giacAvailable())("G172: the double fallback per element", () =>
 
   it("holds the numbers in Ans, the exact element exact", () => {
     home("list[BesselJ(1,2),1/3]");
-    expect(giac.eval("pasans")).toBe("list[0.576724807757,1/3]");
+    expect(giac.eval("pasans")).toMatch(/^list\[0\.5767248077\d*,1\/3\]$/); // the printed digits follow the engine's Digits
     expect(home("pasans[0]*2").display).toBe("1.15344961551");
   });
 
   it("holds them in a matrix too", () => {
     const r = home("matrix(1,2,BesselJ(1,2))");
     expect(r.shape).toEqual([1, 2]);
-    expect(giac.eval("pasans[0][1]")).toBe("0.576724807757");
+    expect(giac.eval("pasans[0][1]")).toMatch(/^0\.5767248077\d*$/);
   });
 
   it("stores the numbers in the name of an assignment", () => {
     const r = home("LD:=[BesselJ(1,2),1/3]");
     expect(r.display).toBe("[0.576724807757,0.333333333333]");
-    expect(giac.eval("LD")).toBe("[0.576724807757,1/3]");
+    expect(giac.eval("LD")).toMatch(/^\[0\.5767248077\d*,1\/3\]$/);
   });
 
   it("keeps a whole result with a free name symbolic and Ans untouched", () => {
@@ -70,6 +71,22 @@ describe.skipIf(!giacAvailable())("G172: the double fallback per element", () =>
     expect(r.items).toBeUndefined();
     expect(r.facts.warn).toBeUndefined();
     expect(giac.eval("pasans")).toBe("list[x,BesselJ(1,2)]");
+  });
+
+  // G153 per element: the first element is atanh(89999/10^1003)'s cancelling form (fallbackCount.test.ts), a number at P
+  // and none at P + 20, so the double confirms no digit; right value about -2298.085 (derived there), the double says -70.
+  it("gives no count to an element whose number is lost at P + 20, beside an unaudited one", () => {
+    const r = home("[ln(ln((10^1003+89999)/(10^1003-89999))/2),BesselJ(1,2)]");
+    expect(r.ok).toBe(true);
+    expect(r.items![0]!.facts.reliableDigits).toBeNull();
+    expect(r.items![1]!.facts.reliableDigits).toBe(12);
+    expect(r.facts.warn).toBeDefined();
+    expect(r.facts.reliableDigits).toBeNull();
+  });
+
+  it("stops at MAX_DOUBLE_ELEMENTS: a longer list stays Giac's text", () => {
+    expect(home(`seq(BesselJ(1,k),k,1,${MAX_DOUBLE_ELEMENTS})`).items).toHaveLength(MAX_DOUBLE_ELEMENTS);
+    expect(home(`seq(BesselJ(1,k),k,1,${MAX_DOUBLE_ELEMENTS + 1})`).items).toBeUndefined();
   });
 
   it("leaves no helper name behind", () => {
