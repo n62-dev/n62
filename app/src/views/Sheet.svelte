@@ -11,6 +11,7 @@
   import { sheetText } from "../i18n/enSheet.ts";
   import { ICONS } from "./icons.ts";
   import MathView from "../render/Math.svelte";
+  import Credits from "./Credits.svelte";
   import type { MenuItem } from "../apps/types.ts";
   import type { Row, Sheet } from "./sheet.svelte.ts";
   import { fitCell, fitRow, hasOptions, hasSteps, ROW, rowHeight, showsReason, twoLines } from "./sheetFit.ts";
@@ -247,7 +248,9 @@
         {#if sheet.hasSettings}<button type="button" class="icon gear" data-testid="sheet-gear" aria-label={t("mode.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
         <button type="button" class="icon" aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
-      {#if level.text !== undefined}
+      {#if level.credits !== undefined}
+        <Credits blocks={level.credits} {level} />
+      {:else if level.text !== undefined}
         <!-- a text to read (R87, a licence): the list's scroll and fade, no rows; ▲ ▼ page through it -->
         <div class="list doc" class:cut-top={cutTop} class:cut-bottom={cutBottom} data-testid="sheet-text" bind:this={list} onscroll={measure}>{level.text}</div>
       {:else}

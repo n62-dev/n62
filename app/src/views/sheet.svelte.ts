@@ -29,6 +29,9 @@ export function matches(label: string, filter: string): boolean {
   return false;
 }
 
+/** The credits sheet's text (R149, views/creditsSheet.ts): a heading, or a paragraph under it. */
+export type CreditBlock = { readonly heading: string } | { readonly text: string };
+
 /** One level of the stack: the root list or a submenu. */
 export class Level {
   /** Index of the highlighted item in the full list (-1: none, e.g. the filter matches nothing). */
@@ -49,6 +52,8 @@ export class Level {
   private dropped = $state(0);
   /** A text to read in place of rows (R87, a licence). */
   readonly text: string | undefined;
+  /** R149: the credits, a list of headings and paragraphs that rolls up (Sheet.svelte); ▲ ▼ page through it like a text. */
+  readonly credits: readonly CreditBlock[] | undefined;
   /** The preview under the list may take several lines. */
   readonly longPreview: boolean;
   /** The load of rows that are not in yet (a lazy submenu, R87), else null: keys wait for it (route.ts, R8). */
@@ -70,6 +75,7 @@ export class Level {
     this.columns = opts?.columns;
     this.search = opts?.search;
     this.text = opts?.text;
+    this.credits = opts?.credits;
     this.longPreview = opts?.longPreview ?? false;
     this.loading = opts?.loading ?? (() => null);
     this.filterable = this.columns === undefined && (this.search !== undefined || (opts?.filterable ?? source().length > FILTER_ABOVE));
@@ -128,7 +134,7 @@ export class Level {
   /** ▲ ▼: the next row up or down, round the ends. Disabled rows can be highlighted (their reason is read there).
    *  In a grid: the cell above or below, round the ends of its column. */
   move(by: 1 | -1): void {
-    if (this.text !== undefined) {
+    if (this.text !== undefined || this.credits !== undefined) {
       this.nudge += by;
       return;
     }
@@ -199,6 +205,8 @@ export interface SheetOptions {
   search?: (query: string) => readonly MenuItem[];
   /** A text to read in place of rows (see Level.text). */
   text?: string;
+  /** The credits (see Level.credits). */
+  credits?: readonly CreditBlock[];
   /** Several lines for the preview (see Level.longPreview). */
   longPreview?: boolean;
   /** The rows' load while they are not in (see Level.loading). */
