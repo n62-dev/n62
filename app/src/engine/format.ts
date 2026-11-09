@@ -319,6 +319,8 @@ export interface PrecisionWhy {
   /** G171: a power, inverse or division of a matrix in the input could not be checked for a non-square operand (it
    *  calls a program, or reads a name the run wrote): "a matrix power not checked". */
   squareUnchecked?: boolean;
+  /** G178 (F115): a check that the value exists (a divergent integral or series, no limit: converge.ts) did not finish. */
+  existsUnchecked?: boolean;
   /** R36f1: the user's stored names (never ours) the input read whose value is not exact (a float, or a value from an
    *  inexact constant or chip) and that are not in `inherited`: why an `≈` result is rounded ("uses B, itself rounded").
    *  A name stored exact (Home's 1/3) lends no facts, so it is never one. */
