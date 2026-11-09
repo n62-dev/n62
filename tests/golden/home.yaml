@@ -688,41 +688,41 @@ cases:
   - { id: "trust-cos-12", latex: "1-\\cos\\left(10^{-8}\\right)", oracle: "1-cos(F(1,10**8))", expect: "5E-17", mark: "≈", source: "oracle", note: "trust page: trap 2. 4.99999999999999995833E-17 (RAD, the default)" }
   - { id: "trust-limit-12", latex: "\\left(1+10^{-16}\\right)^{10^{16}}", oracle: "power(1+F(1,10**16),10**16)", expect: "2.71828182846", mark: "≈", source: "oracle", note: "trust page: trap 3. 2.71828182845904509945" }
   # --- G225 (backlog F194): dot and cross of vectors of different lengths are refused; Giac pads the short one, its convention, not a value ---
-  - { id: "g225-dot-lengths", input: "dot([1,2],[3,4,5])", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "F194: Giac pads [1,2] with 0 and showed = 11; a dot product needs two vectors of one length" }
-  - { id: "g225-dot-lengths-list", input: "dot(list[1,2],list[3,4,5])", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "F194: the { } list as Home sends it; it showed = 11" }
-  - { id: "g225-cross-lengths", input: "cross([1,2,3],[4,5])", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "F194: Giac pads [4,5] with 0 and showed = [-15,12,-3]; only the 2-vector form is documented" }
-  - { id: "g225-cross-lengths-2-3", input: "cross([1,2],[3,4,5])", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "F194: the short vector first; it showed = [10,-5,-2]" }
+  - { id: "g225-dot-lengths", input: "dot([1,2],[3,4,5])", expect: "The sizes do not match", source: "derived", note: "F194: Giac pads [1,2] with 0 and showed = 11; a dot product needs two vectors of one length" }
+  - { id: "g225-dot-lengths-list", input: "dot(list[1,2],list[3,4,5])", expect: "The sizes do not match", source: "derived", note: "F194: the { } list as Home sends it; it showed = 11" }
+  - { id: "g225-cross-lengths", input: "cross([1,2,3],[4,5])", expect: "The sizes do not match", source: "derived", note: "F194: Giac pads [4,5] with 0 and showed = [-15,12,-3]; only the 2-vector form is documented" }
+  - { id: "g225-cross-lengths-2-3", input: "cross([1,2],[3,4,5])", expect: "The sizes do not match", source: "derived", note: "F194: the short vector first; it showed = [10,-5,-2]" }
   - { id: "g225-keep-dot", input: "dot([1,2],[3,4])", oracle: "F(11)", expect: "11", mark: "=", source: "derived", note: "guard: 1*3+2*4" }
   - { id: "g225-keep-cross", input: "cross([1,2,3],[4,5,6])", expect: "[-3,6,-3]", mark: "=", source: "derived", note: "guard: (2*6-3*5, 3*4-1*6, 1*5-2*4)" }
   - { id: "g225-keep-cross-2d", input: "cross([1,2],[3,4])", expect: "[0,0,-2]", mark: "=", source: "derived", note: "guard: Giac's documented 2-vector form keeps its z = 0; z = 1*4-2*3 = -2" }
   # --- G225f1 (pass 119, decisions.md Defaults: unequal shapes are refused): + - * and the pointwise operators; dot and cross take vectors only ---
-  - { id: "g225f1-times-short-left", input: "[1,2]*[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads [1,2] with 0 and showed = 11" }
-  - { id: "g225f1-times-short-right", input: "[1,2,3]*[4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads [4,5] with 0 and showed = 14" }
-  - { id: "g225f1-plus-lengths", input: "[1,2]+[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads and showed = [4,6,5]" }
-  - { id: "g225f1-minus-lengths", input: "[1,2]-[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads and showed = [-2,-2,-5]" }
-  - { id: "g225f1-list-plus-lengths", input: "list[1,2]+list[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "the { } list as Home sends it; it showed = {4,6,5}" }
-  - { id: "g225f1-list-minus-lengths", input: "list[1,2]-list[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "it showed = {-2,-2,-5}" }
-  - { id: "g225f1-list-times-lengths", input: "list[1,2]*list[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac cuts to the shorter and showed = {3,8}" }
-  - { id: "g225f1-pointwise-plus-lengths", input: "[1,2].+[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: ".+ pads (probe): [4,6,5]" }
-  - { id: "g225f1-pointwise-minus-lengths", input: "[1,2].-[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: ".- pads (probe): [-2,-2,-5]" }
-  - { id: "g225f1-pointwise-times-lengths", input: "[1,2].*[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: ".* cuts to the shorter: it showed = [3,8]" }
-  - { id: "g225f1-pointwise-divide-lengths", input: "[1,2]./[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "./ cuts: it showed = [1/3,1/2]" }
-  - { id: "g225f1-pointwise-power-lengths", input: "[1,2].^[3,4,5]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: ".^ cuts (probe): [1,16]" }
-  - { id: "g225f1-matrix-plus-shapes", input: "[[1,2],[3,4]]+[[1,2,3],[4,5,6]]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
-  - { id: "g225f1-matrix-minus-shapes", input: "[[1,2],[3,4]]-[[1,2],[3,4],[5,6]]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads: it showed = [[0,0],[0,0],[-5,-6]]" }
-  - { id: "g225f1-pointwise-matrix-shapes", input: "[[1,2],[3,4]].+[[1,2,3],[4,5,6]]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
-  - { id: "g225f1-vector-times-matrix-size", input: "[1,2,3]*[[1,2],[3,4]]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "Giac drops the 3 and showed = [7,10]; the row vector needs as many entries as the matrix has rows" }
-  - { id: "g225f1-chain-refused", input: "[1,2]*[3,4,5]*2", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "the first pair has different lengths, read from the left: Giac showed = 22" }
-  - { id: "g225f1-chain-after-scalar", input: "[1,2]*3*[4,5,6]", expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "[1,2]*3 = [3,6], then two lengths: it showed = 42" }
-  - { id: "g225f1-stored-times", steps: [{"input": "a:=[1,2]"}, {"input": "b:=[3,4,5]"}, {"input": "a*b"}], expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "stored names: it showed = 11" }
-  - { id: "g225f1-stored-plus", steps: [{"input": "a:=[1,2]"}, {"input": "b:=[3,4,5]"}, {"input": "a+b"}], expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "stored names: it showed = [4,6,5]" }
-  - { id: "g225f1-body-plus", steps: [{"input": "f(u,v):=u+v"}, {"input": "f([1,2],[3,4,5])"}], expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "a stored body bound to the arguments: it showed = [4,6,5]" }
-  - { id: "g225f1-body-literal", steps: [{"input": "h(u):=u*[1,2]*[3,4,5]"}, {"input": "h(2)"}], expect: "The lists, vectors or matrices have different sizes", source: "derived", note: "a stored body holding lists: the second product pairs [2,4] with [3,4,5]" }
-  - { id: "g225f1-dot-matrix-vector", input: "dot([[1,2],[3,4]],[1,2,3])", expect: "Dot and cross products take two vectors", source: "derived", note: "dot of a matrix and a vector: it showed = [7,10]" }
-  - { id: "g225f1-dot-matrix-vector-3", input: "dot([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross products take two vectors", source: "derived", note: "it showed = [9,12,15]" }
-  - { id: "g225f1-dot-row-matrix", input: "dot([[1,2],[3,4]],[[1,2]])", expect: "Dot and cross products take two vectors", source: "derived", note: "it showed = 5" }
-  - { id: "g225f1-dot-matrices", input: "dot([[1,2],[3,4]],[[5,6],[7,8]])", expect: "Dot and cross products take two vectors", source: "derived", note: "equal shapes included: it showed = 70" }
-  - { id: "g225f1-cross-matrix-vector", input: "cross([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross products take two vectors", source: "derived", note: "it showed = [12,-3,-2]" }
+  - { id: "g225f1-times-short-left", input: "[1,2]*[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads [1,2] with 0 and showed = 11" }
+  - { id: "g225f1-times-short-right", input: "[1,2,3]*[4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads [4,5] with 0 and showed = 14" }
+  - { id: "g225f1-plus-lengths", input: "[1,2]+[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads and showed = [4,6,5]" }
+  - { id: "g225f1-minus-lengths", input: "[1,2]-[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads and showed = [-2,-2,-5]" }
+  - { id: "g225f1-list-plus-lengths", input: "list[1,2]+list[3,4,5]", expect: "The sizes do not match", source: "derived", note: "the { } list as Home sends it; it showed = {4,6,5}" }
+  - { id: "g225f1-list-minus-lengths", input: "list[1,2]-list[3,4,5]", expect: "The sizes do not match", source: "derived", note: "it showed = {-2,-2,-5}" }
+  - { id: "g225f1-list-times-lengths", input: "list[1,2]*list[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac cuts to the shorter and showed = {3,8}" }
+  - { id: "g225f1-pointwise-plus-lengths", input: "[1,2].+[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".+ pads (probe): [4,6,5]" }
+  - { id: "g225f1-pointwise-minus-lengths", input: "[1,2].-[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".- pads (probe): [-2,-2,-5]" }
+  - { id: "g225f1-pointwise-times-lengths", input: "[1,2].*[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".* cuts to the shorter: it showed = [3,8]" }
+  - { id: "g225f1-pointwise-divide-lengths", input: "[1,2]./[3,4,5]", expect: "The sizes do not match", source: "derived", note: "./ cuts: it showed = [1/3,1/2]" }
+  - { id: "g225f1-pointwise-power-lengths", input: "[1,2].^[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".^ cuts (probe): [1,16]" }
+  - { id: "g225f1-matrix-plus-shapes", input: "[[1,2],[3,4]]+[[1,2,3],[4,5,6]]", expect: "The sizes do not match", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
+  - { id: "g225f1-matrix-minus-shapes", input: "[[1,2],[3,4]]-[[1,2],[3,4],[5,6]]", expect: "The sizes do not match", source: "derived", note: "Giac pads: it showed = [[0,0],[0,0],[-5,-6]]" }
+  - { id: "g225f1-pointwise-matrix-shapes", input: "[[1,2],[3,4]].+[[1,2,3],[4,5,6]]", expect: "The sizes do not match", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
+  - { id: "g225f1-vector-times-matrix-size", input: "[1,2,3]*[[1,2],[3,4]]", expect: "The sizes do not match", source: "derived", note: "Giac drops the 3 and showed = [7,10]; the row vector needs as many entries as the matrix has rows" }
+  - { id: "g225f1-chain-refused", input: "[1,2]*[3,4,5]*2", expect: "The sizes do not match", source: "derived", note: "the first pair has different lengths, read from the left: Giac showed = 22" }
+  - { id: "g225f1-chain-after-scalar", input: "[1,2]*3*[4,5,6]", expect: "The sizes do not match", source: "derived", note: "[1,2]*3 = [3,6], then two lengths: it showed = 42" }
+  - { id: "g225f1-stored-times", steps: [{"input": "a:=[1,2]"}, {"input": "b:=[3,4,5]"}, {"input": "a*b"}], expect: "The sizes do not match", source: "derived", note: "stored names: it showed = 11" }
+  - { id: "g225f1-stored-plus", steps: [{"input": "a:=[1,2]"}, {"input": "b:=[3,4,5]"}, {"input": "a+b"}], expect: "The sizes do not match", source: "derived", note: "stored names: it showed = [4,6,5]" }
+  - { id: "g225f1-body-plus", steps: [{"input": "f(u,v):=u+v"}, {"input": "f([1,2],[3,4,5])"}], expect: "The sizes do not match", source: "derived", note: "a stored body bound to the arguments: it showed = [4,6,5]" }
+  - { id: "g225f1-body-literal", steps: [{"input": "h(u):=u*[1,2]*[3,4,5]"}, {"input": "h(2)"}], expect: "The sizes do not match", source: "derived", note: "a stored body holding lists: the second product pairs [2,4] with [3,4,5]" }
+  - { id: "g225f1-dot-matrix-vector", input: "dot([[1,2],[3,4]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "dot of a matrix and a vector: it showed = [7,10]" }
+  - { id: "g225f1-dot-matrix-vector-3", input: "dot([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = [9,12,15]" }
+  - { id: "g225f1-dot-row-matrix", input: "dot([[1,2],[3,4]],[[1,2]])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = 5" }
+  - { id: "g225f1-dot-matrices", input: "dot([[1,2],[3,4]],[[5,6],[7,8]])", expect: "Dot and cross take two vectors", source: "derived", note: "equal shapes included: it showed = 70" }
+  - { id: "g225f1-cross-matrix-vector", input: "cross([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = [12,-3,-2]" }
   - { id: "g225f1-keep-times", input: "[1,2]*[3,4]", expect: "11", mark: "=", source: "derived", note: "guard: 1*3+2*4" }
   - { id: "g225f1-keep-plus", input: "[1,2]+[3,4]", expect: "[4,6]", mark: "=", source: "derived", note: "guard" }
   - { id: "g225f1-keep-scalar", input: "2*[1,2]", expect: "[2,4]", mark: "=", source: "derived", note: "guard" }

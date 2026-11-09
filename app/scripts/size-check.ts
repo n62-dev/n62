@@ -349,8 +349,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  60,950 → 60,953 B (R149f2, Opus pass 118: the budget of 61 kB stays): R149's credits check (the line's N62 then Enter, the guard for a
  *  stored N) measured 61,011 B with the Array polyfills; the polyfills are out (src/polyfills.ts: the minimum WebView is Chrome 111, which has
  *  toSorted, toReversed, findLast and findLastIndex, and index.html's check stops older ones), and the branch merged with phase-1 5b9fcf7f
- *  measures 60,903 B gzip (171,148 B raw): 60,903 B + 0.05 kB. */
-export const START_PIN_GZIP = 60_953;
+ *  measures 60,903 B gzip (171,148 B raw): 60,903 B + 0.05 kB.
+ *  60,953 → 60,990 B (G225f1, decisions.md "Start chunk room": a cut, no allowance): the two refusal texts of enEngine.ts
+ *  (the app's table holds them too) measured 60,954 B after merging phase-1, one byte over the pin; both texts shortened,
+ *  the branch merged with phase-1 703af0e3 measures 60,940 B gzip (171,232 B raw): 60,940 B + 0.05 kB. */
+export const START_PIN_GZIP = 60_990;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

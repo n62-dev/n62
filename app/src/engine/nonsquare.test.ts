@@ -346,7 +346,7 @@ describe.skipIf(!giacAvailable())("G225 dot and cross of different lengths", () 
   });
   const home = (input: string) => host.home(input, defaultHomeSettings).result;
   const cas = (input: string) => host.cas(input, defaultCasSettings).result;
-  const refused = { ok: false, error: "lengthsDiffer", display: "The lists, vectors or matrices have different sizes" };
+  const refused = { ok: false, error: "lengthsDiffer", display: "The sizes do not match" };
 
   it("refuses them typed, under Giac's other names, inside a larger input and as one list of two", () => {
     for (const input of ["dot([1,2],[3,4,5])", "dot(list[1,2],list[3,4,5])", "cross([1,2,3],[4,5])", "cross([1,2],[3,4,5])", "dotP([1,2],[3,4,5])", "dotprod([1,2],[3,4,5])", "scalar_product([1,2],[3,4,5])", "scalarProduct([1,2],[3,4,5])", "crossP([1,2,3],[4,5])", "crossproduct([1,2,3],[4,5])", "2*dot([1,2],[3,4,5])+1", "dot([[1,2],[3,4,5]])", "dot([x,y],[1,2,3])"]) {
@@ -421,7 +421,7 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
   });
   const home = (input: string) => host.home(input, defaultHomeSettings).result;
   const cas = (input: string) => host.cas(input, defaultCasSettings).result;
-  const differ = { ok: false, error: "lengthsDiffer", display: "The lists, vectors or matrices have different sizes" };
+  const differ = { ok: false, error: "lengthsDiffer", display: "The sizes do not match" };
 
   it("refuses a sum and a product of stored names, and a refused store stores nothing", () => {
     home("su:=[1,2]");
@@ -434,7 +434,7 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
     expect(cas("sy")).toMatchObject({ ok: true, text: "sy" });
     // a matrix operand of dot, stored
     home("sm:=[[1,2],[3,4]]");
-    expect(home("dot(sm,sv)")).toMatchObject({ ok: false, error: "vectorsOnly", display: "Dot and cross products take two vectors" });
+    expect(home("dot(sm,sv)")).toMatchObject({ ok: false, error: "vectorsOnly", display: "Dot and cross take two vectors" });
     expect(cas("dot(sm,su)")).toMatchObject({ ok: false, error: "vectorsOnly" });
   });
 
