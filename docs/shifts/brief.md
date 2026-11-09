@@ -79,7 +79,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 574 | [A96](packages/A96.md) F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |
+| 574 | A96 F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |
 | 575 | [A97](packages/A97.md) F-Droid build step | annabell, Sonnet | `p1/annabell-fdroidbuild` | A96 |
 | 576 | [A98](packages/A98.md) `SUBMIT.md` | annabell, Sonnet | `p1/annabell-fdroidsubmit` | A97 |
 | 580 | [G225](packages/G225.md) `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
