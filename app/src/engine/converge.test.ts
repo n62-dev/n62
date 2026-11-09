@@ -36,9 +36,9 @@ describe("converge helpers", () => {
   });
   it("G176: a limit Giac leaves unevaluated (patch 0035: the side of a trunc undecided) stands with ⚠; no Giac call for it", () => {
     const none = fakeGiac((): string => { throw new Error("no call expected"); });
-    expect(refusalOf(none, "limit(trunc(sin(1/x)/2),x,0)", "limit(trunc(sin(1/x)/2),x=0)")).toBe("unchecked");
-    expect(refusalOf(none, "1+limit(trunc(a*x),x,1,-1)", "limit(trunc(a*x),x=1,-1)+1")).toBe("unchecked");
-    expect(refusalOf(none, "limit(trunc(x),x,-1,1)", "0")).toBeNull();
+    expect(refusalOf(none, "limit(trunc(sin(1/x)/2),x,0)", "limit(trunc(sin(1/x)/2),x=0)", 12)).toBe("unchecked");
+    expect(refusalOf(none, "1+limit(trunc(a*x),x,1,-1)", "limit(trunc(a*x),x=1,-1)+1", 12)).toBe("unchecked");
+    expect(refusalOf(none, "limit(trunc(x),x,-1,1)", "0", 12)).toBeNull();
   });
   it("G90: Giac's exact answer with an integrate(…) left in it is its numeric integration; no Giac call for it", () => {
     const none = fakeGiac((): string => { throw new Error("no call expected"); });
@@ -61,7 +61,7 @@ describe("converge helpers", () => {
       [/^(limit|int)\(/, "GIAC_ERROR: Stopped by user interruption."],
     ];
     const giac = fakeGiac((t: string) => answers.find(([re]) => re.test(t))?.[1] ?? "GIAC_ERROR: unexpected");
-    expect(refusalOf(giac, "int(1/x,x,-1,1)", "0")).toBe("unchecked");
+    expect(refusalOf(giac, "int(1/x,x,-1,1)", "0", 12)).toBe("unchecked");
   });
   it("more singular points in [a, b] than are checked leave the result unchecked, never ok", () => {
     // Nine poles, each one integrable as far as the checks go: before the fix only eight were looked at and the verdict
@@ -79,7 +79,59 @@ describe("converge helpers", () => {
       if (n) return `${n[1]}.0`;
       return answers.find(([re]) => re.test(t))?.[1] ?? "GIAC_ERROR: unexpected";
     });
-    expect(refusalOf(giac, "int(g(x),x,0,10)", "3")).toBe("unchecked");
+    expect(refusalOf(giac, "int(g(x),x,0,10)", "3", 12)).toBe("unchecked");
+  });
+  // G178 (F115): Giac's answers for ∫₋₁¹ 1/x, the value call stopped as the step budget stopped it at Digits ≤ 14.
+  const STOP = "GIAC_ERROR: User interrupt or Out of memory";
+  const inverseX = (value: (digits: string) => string, seen: string[] = []) => {
+    let digits = "12";
+    const answers: [RegExp, string][] = [
+      [/^lname\(1\/x\)$/, "[x]"],
+      [/^lname\(/, "[]"],
+      [/^singular\(/, "[0]"],
+      [/^evalf\(-1,30\)$/, "-1.0"],
+      [/^evalf\(1,30\)$/, "1.0"],
+      [/^evalf\(0,30\)$/, "0.0"],
+      [/^limit\(/, "1"],
+      [/^evalf\(abs\(1\),30\)$/, "1.0"],
+    ];
+    return fakeGiac((t: string) => {
+      seen.push(t);
+      const set = /^Digits:=(\d+)$/.exec(t);
+      if (set) return (digits = set[1]!);
+      if (t === "int(1/x,x,-1,1)") return value(digits);
+      return answers.find(([re]) => re.test(t))?.[1] ?? "GIAC_ERROR: unexpected";
+    });
+  };
+  it("G178: a call inside a larger input is valued at the exact run's Digits, not the display's, which are put back", () => {
+    const seen: string[] = [];
+    const giac = inverseX((d) => (Number(d) <= 14 ? STOP : "0"), seen);
+    expect(refusalOf(giac, "3*int(1/x,x,-1,1)+1", "1", 12)).toBe("integralDiverges");
+    expect(seen.filter((t) => /^Digits/.test(t) || t.startsWith("int("))).toEqual(["Digits:=40", "int(1/x,x,-1,1)", "Digits:=12"]);
+  });
+  it("G178: the Digits a value call puts back are the caller's, and valuePrecision follows them; Giac is not asked", () => {
+    const seen: string[] = [];
+    expect(refusalOf(inverseX(() => "0", seen), "3*int(1/x,x,-1,1)+1", "1", 35)).toBe("integralDiverges");
+    expect(seen.filter((t) => /^Digits/.test(t) || t.startsWith("int("))).toEqual(["Digits:=45", "int(1/x,x,-1,1)", "Digits:=35"]);
+  });
+  it("G178: a whole-input call costs no value call, so no Digits change either", () => {
+    const seen: string[] = [];
+    expect(refusalOf(inverseX(() => { throw new Error("no value call expected"); }, seen), "int(1/x,x,-1,1)", "0", 12)).toBe("integralDiverges");
+    expect(seen.some((t) => /^Digits/.test(t))).toBe(false);
+  });
+  it("G178: a value the budget stopped at any Digits still lets the check prove the divergence", () => {
+    expect(refusalOf(inverseX(() => STOP), "3*int(1/x,x,-1,1)+1", "1", 12)).toBe("integralDiverges");
+  });
+  it("G178: a stopped value and a check that proves nothing leave the result unchecked, never kept as checked", () => {
+    const answers: [RegExp, string][] = [
+      [/^Digits:=/, "12"],
+      [/^lname\(1\/x\)$/, "[x]"],
+      [/^lname\(/, "[]"],
+      [/^singular\(/, "[]"],
+      [/^int\(1\/x,/, STOP],
+    ];
+    const giac = fakeGiac((t: string) => answers.find(([re]) => re.test(t))?.[1] ?? "GIAC_ERROR: unexpected");
+    expect(refusalOf(giac, "3*int(1/x,x,-1,1)+1", "1", 12)).toBe("unchecked");
   });
 });
 
@@ -98,6 +150,20 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
   // G46: typed text gets the parser's angle rule (sin(pasdeg*x)), as the keys' LaTeX would.
   const home = (input: string, angle: "rad" | "deg" = "rad") => host.home(rewriteAngles(input, "typed"), { ...defaultHomeSettings, angle, budgetSteps: 20 * defaultHomeSettings.budgetSteps }).result;
   const cas = (input: string, angle: "rad" | "deg" = "rad") => host.cas(rewriteAngles(input, "typed"), { ...defaultCasSettings, angle }).result;
+
+  it("G178: at Home's own budget a divergent integral inside a larger input is refused like the bare one", () => {
+    for (const input of ["int(1/x,x,-1,1)", "3*int(1/x,x,-1,1)+1", "int(1/x,x,-1,1)^2+sin(1)"]) {
+      expect(host.home(rewriteAngles(input, "typed"), defaultHomeSettings).result).toMatchObject({ ok: false, error: "integralDiverges" });
+    }
+  });
+  it("G178: a check a step stopped keeps the result with ⚠, and its why says the check did not finish (Home and CAS)", () => {
+    const stopped = { ...giac, eval: (t: string) => (/^int\(abs\(/.test(t) ? "GIAC_ERROR: Stopped by user interruption." : giac.eval(t)) };
+    const h = new EngineHost(stopped, bridge);
+    const r = h.home("int(1/sqrt(x),x,0,1)", { ...defaultHomeSettings, budgetSteps: 1e7 }).result;
+    expect(r).toMatchObject({ ok: true, display: "2", approximate: true, facts: { warn: "unchecked", why: { existsUnchecked: true } } });
+    expect(h.cas("3*int(1/sqrt(x),x,0,1)+1", defaultCasSettings).result).toMatchObject({ ok: true, facts: { warn: "unchecked", why: { existsUnchecked: true } } });
+    expect(host.home("int(1/sqrt(x),x,0,1)", { ...defaultHomeSettings, budgetSteps: 1e7 }).result.facts).toMatchObject({ exact: true });
+  });
 
   it.each([
     ["int(1/x,x,-1,1)", "integralDiverges"],
@@ -139,10 +205,10 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     expect(cas("int(tan(x)+x,x,2,5)")).toMatchObject({ ok: false, error: "integralDiverges" });
     // Giac answers undef here itself; had it given a number (7, say), singular() lists only ±π/2, outside [2, 5], and
     // before the fix the pole at 3π/2 was never looked at.
-    expect(refusalOf(giac, "int(tan(x)+x,x,2,5)", "7")).toBe("integralDiverges");
-    expect(refusalOf(giac, "int(x*tan(x),x,2,5)", "7")).toBe("integralDiverges");
+    expect(refusalOf(giac, "int(tan(x)+x,x,2,5)", "7", 12)).toBe("integralDiverges");
+    expect(refusalOf(giac, "int(x*tan(x),x,2,5)", "7", 12)).toBe("integralDiverges");
     // A trig subterm without poles adds no shifts: sin(x)/x keeps its one point (and the sinc case its value).
-    expect(refusalOf(giac, "int(sin(x)/x,x,-1,20)", "7")).toBeNull();
+    expect(refusalOf(giac, "int(sin(x)/x,x,-1,20)", "7", 12)).toBeNull();
   });
 
   it.each([

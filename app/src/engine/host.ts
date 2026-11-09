@@ -1002,7 +1002,7 @@ export class EngineHost implements FactsHost {
     }
     // G39: a divergent integral or series, or no limit, is refused as in Home; Giac's [exact, numeric] pair of a
     // definite integral is shown as Giac's text (both answers) with ⚠, never as a numeric list.
-    const refused = guarded ? refusalOf(this.giac, guarded.rhs, text) : single ? null : refusalOf(this.giac, exactInput, text);
+    const refused = guarded ? refusalOf(this.giac, guarded.rhs, text, digitsSet) : single ? null : refusalOf(this.giac, exactInput, text, digitsSet);
     if (refused && refused !== "unchecked") return fail(enEngine[`error.${refused}`], refused);
     if (refusedCut) return fail(enEngine["error.undecided"], "undecided");
     // G97 (F69): a power, inverse or division of a non-square matrix is Giac's elementwise answer, refused as in Home.
@@ -1058,7 +1058,7 @@ export class EngineHost implements FactsHost {
         if (asked !== null) numeric.digits = asked;
         const body = asg ? asg.rhs : input;
         const why0 = whyOf(facts, single ? null : exactInput);
-        const why = square === "unchecked" ? { ...(why0 ?? {}), squareUnchecked: true } : why0;
+        const why = refused === "unchecked" || square === "unchecked" ? { ...(why0 ?? {}), ...(refused === "unchecked" ? { existsUnchecked: true } : {}), ...(square === "unchecked" ? { squareUnchecked: true } : {}) } : why0;
         if (why) numeric.facts = { ...numeric.facts, why };
         const post = after();
         numeric = inherited(this, numeric, post.reads, single || post.flagsChanged ? null : exactInput, digits, Math.trunc(s.digits));
@@ -1091,7 +1091,7 @@ export class EngineHost implements FactsHost {
     const symWhy = symbolicWhy(own, testSides(exactInput));
     // G38: "decided at limited precision"; the value was computed, not compared, so `once` is not said.
     const why0 = pair ? { differ: true } : undecided ? { ...(symWhy && !symWhy.once ? symWhy : {}), decided: true } : symWhy;
-    const why1 = square === "unchecked" ? { ...(why0 ?? {}), squareUnchecked: true } : why0;
+    const why1 = refused === "unchecked" || square === "unchecked" ? { ...(why0 ?? {}), ...(refused === "unchecked" ? { existsUnchecked: true } : {}), ...(square === "unchecked" ? { squareUnchecked: true } : {}) } : why0;
     const why = read && (read.causes.length || read.rounded.length) ? { ...(why1 ?? {}), ...(read.causes.length ? { inherited: read.causes } : {}), ...(read.rounded.length ? { rounded: read.rounded } : {}) } : why1;
     // G46 (S14 option 2): in DEG the radian text is drawn and copied as a DEG engine prints it; Ans, chips (`full`) and
     // pcasans keep the radian text, which means the same in every mode.

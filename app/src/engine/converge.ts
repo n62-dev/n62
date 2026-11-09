@@ -9,8 +9,8 @@
 //   conditionally convergent integral (∫₀^∞ sin x / x) is not refused for its tail, which is not the singular point.
 // Only inputs that hold one of these calls pay, and an integral pays for the second integral only when f has a real
 // singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
-import { hasFloat, type Giac } from "./numeric.ts";
-import { callsOf, functionsIn, isError, isName, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
+import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
+import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
 
 /** Why a result is refused; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 /** `undecided` (G57) comes from decisions.ts decideTwice: a decision on a cut Giac cannot make. `divisionByZero`,
@@ -70,9 +70,11 @@ function realOf(giac: Giac, e: string): number | null {
   return Number.isFinite(v) ? v : null;
 }
 
-/** The value of `call` alone: the whole input's output when the call is the whole input, else one more evaluation. */
-function valueOf(giac: Giac, call: Call, input: string, output: string): string {
-  return call.text === input.trim() ? output : giac.eval(call.text);
+/** The value of `call` alone: the whole input's output when the call is the whole input, else one more evaluation, at
+ *  the Digits of the exact run (valuePrecision, G38). G178 (F115): the host's Digits is the display's, and at Digits ≤ 14
+ *  Giac's int(1/x,x,-1,1) makes 2,015,554 checks where the exact run's makes 134, so Home's step budget stopped it. */
+function valueOf(giac: Giac, call: Call, input: string, output: string, digits: number): string {
+  return call.text === input.trim() ? output : withDigits(giac, valuePrecision(digits), digits, () => giac.eval(call.text));
 }
 
 /** The series check: the term of `sum(t,k,a,b)` tends to 0 at each infinite end. Runs in radians. */
@@ -220,16 +222,17 @@ function integralCheck(giac: Giac, c: Call): Verdict {
 /**
  * The refusal for an input whose result `output` is a number for something that does not exist; null to keep it;
  * "unchecked" when a check could not finish (the result is kept with ⚠).
- * `input` is what ran (decimals exact). Giac's `undef` for an input that holds a definite integral, a series or a limit
+ * `input` is what ran (decimals exact); `digits` is the Digits Giac is at now, which a value call puts back. Giac's `undef` for an input that holds a definite integral, a series or a limit
  * is refused with that call's message, and so is a `bounded_function(…)` left in the result of a limit.
  */
-export function refusalOf(engine: Giac, input: string, output: string, home = false): Refusal | "unchecked" | null {
+export function refusalOf(engine: Giac, input: string, output: string, digits: number, home = false): Refusal | "unchecked" | null {
   const calls = callsIn(input);
   if (!calls.length) return null;
   // Giac's timeout can stop any step of a check (singular, a limit, the second integral); a step it stopped proves
   // nothing, so the check then ends "unchecked" unless another step already proved the divergence.
   let interrupted = false;
   const giac: Giac = {
+    ...(engine.digits ? { digits: (d: number) => engine.digits!(d) } : {}),
     value: (t, p, tree) => engine.value(t, p, tree),
     eval: (t) => {
       const o = engine.eval(t);
@@ -237,11 +240,11 @@ export function refusalOf(engine: Giac, input: string, output: string, home = fa
       return o;
     },
   };
-  const verdict = check(giac, calls, input, output, home);
+  const verdict = check(giac, calls, input, output, digits, home);
   return verdict === null && interrupted ? "unchecked" : verdict;
 }
 
-function check(giac: Giac, calls: Call[], input: string, output: string, home: boolean): Refusal | "unchecked" | null {
+function check(giac: Giac, calls: Call[], input: string, output: string, digits: number, home: boolean): Refusal | "unchecked" | null {
   const out = output.trim();
   if (out === "undef") {
     const c = calls.find((k) => k.kind === "limit" || k.args.length >= 4);
@@ -254,7 +257,7 @@ function check(giac: Giac, calls: Call[], input: string, output: string, home: b
   // G78 (Home only; the CAS view keeps Giac's ∞): a definite integral whose value is an infinity does not converge
   // (∫₋₁¹ 1/x² = +∞); a limit keeps its ∞.
   if (home && /^[+-]?infinity$/.test(out)) {
-    const c = calls.find((k) => k.kind === "int" && k.args.length === 4 && /infinity/.test(valueOf(giac, k, input, out)));
+    const c = calls.find((k) => k.kind === "int" && k.args.length === 4 && /infinity/.test(valueOf(giac, k, input, out, digits)));
     if (c) return "integralDiverges";
   }
   // The calls to check (Giac runs in radians in every mode, G46).
@@ -266,10 +269,12 @@ function check(giac: Giac, calls: Call[], input: string, output: string, home: b
     // Only a fully numeric call: a free name (Σ x^k = 1/(1−x)) leaves an answer with conditions, which stays.
     if (!onlyNames(giac, body, [v]) || !onlyNames(giac, a, []) || !onlyNames(giac, b, [])) continue;
     if (c.kind === "sum" && !wordsOf(`${a},${b}`).some((w) => w === "inf" || w === "infinity")) continue;
-    const value = valueOf(giac, c, input, out).trim();
+    const value = valueOf(giac, c, input, out, digits).trim();
     if (value === "undef") return REFUSAL[c.kind];
     const pair = c.kind === "int" ? giacPair(value) : null;
-    if (!pair && !finiteValue(value)) continue;
+    // G178: a value the budget stopped says nothing about the integral, so the check on its arguments still runs (a stop
+    // already makes the result "unchecked" unless the check proves the divergence).
+    if (!pair && !finiteValue(value) && !isTimeout(value)) continue;
     todo.push(c);
   }
   if (!todo.length) return null;
