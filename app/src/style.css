@@ -103,6 +103,12 @@
   --icon-w: 16px;
   --icon-h: 14px;
   --dot: 10px;
+  /* R157: the logo as the app icon draws it, on Home's tile: black mark (the file's own colour) on the logo teal, in every family and mode (not theme roles) */
+  --logo-ground: #529997;
+  --logo-ink: #000000;
+  --tile-mark: 18px;
+  /* R157: the faint mark on an empty history; its colour is the generated role --mark-faint */
+  --mark-h: 128px;
 }
 :root[data-family="n62"][data-brightness="dark"] {
   --bg: #092726;
@@ -141,6 +147,7 @@
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
   --key-edge: #000000;
+  --mark-faint: #061b1b;
   color-scheme: dark;
 }
 :root[data-family="n62"][data-brightness="light"] {
@@ -180,6 +187,7 @@
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
   --key-edge: #8da1a0;
+  --mark-faint: #bcd8d7;
   color-scheme: light;
 }
 * {

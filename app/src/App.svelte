@@ -167,10 +167,12 @@
     if (credits || session.submit(entry.value, undefined, entry.chips)) {
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
-      if (credits) {
-        onFind(finder().then((f) => f.loadCredits()), (m) => { picked = null; m.showCredits(shell); });
-      }
+      if (credits) openCredits();
     }
+  }
+  /** The credits sheet (a lazy chunk with the About data, reached through the Find chunk): N62 then Enter, and a tap on the empty history's faint mark (R157). */
+  function openCredits(): void {
+    onFind(finder().then((f) => f.loadCredits()), (m) => { picked = null; m.showCredits(shell); });
   }
 
   /** R154: a key was pressed or the line edited since the last Enter (an error outline lasts until then). Enter itself
@@ -434,6 +436,7 @@
           items={session.items}
           selected={picked}
           engineState={session.engineState}
+          oncredits={openCredits}
           display={(item) => session.display(item, true)}
           input={(item) => session.input(item)}
           mark={(item) => session.mark(item)}

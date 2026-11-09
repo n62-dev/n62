@@ -30,7 +30,10 @@
     onundo,
     selected = null,
     engineState,
+    oncredits = () => {},
   }: {
+    /** R157: a tap on the faint mark of an empty history opens the credits sheet, as N62 then Enter does (R149). */
+    oncredits?: () => void;
     /** R133: while the engine starts only the newest FIRST_PAINT rows are drawn (their cost is on the main thread the
      *  start needs); a frame after it is ready or failed the page grows to PAGE. */
     engineState: "starting" | "ready" | "failed";
@@ -193,7 +196,12 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (R147: a tap on the empty part drops a pick; Esc does it by keys) -->
 <section class="history" aria-label={t("history.label")} data-marks={marks} bind:this={scroller} onclick={tapHistory}>
   {#if items.length === 0 && !undo}
-    <p class="empty">{t("history.empty")}</p>
+    <div class="empty">
+      <!-- R157: the faint N62 mark; decoration for a screen reader (the credits are reached by N62 then Enter), a tap opens them -->
+      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (decoration: the keys open the credits with N62 then Enter) -->
+      <div class="faint" data-testid="empty-mark" aria-hidden="true" onclick={(e) => { e.stopPropagation(); oncredits(); }}></div>
+      <p>{t("history.empty")}</p>
+    </div>
   {/if}
   {#if items.length > shown.length}
     <div class="earlier" bind:this={sentinel} aria-hidden="true"></div>
@@ -285,8 +293,23 @@
   }
   .empty {
     margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-4);
     color: var(--muted);
     text-align: center;
+  }
+  .empty p {
+    margin: 0;
+  }
+  /* R157: the mark as a mask of the one file (public/n62-mark.svg), in --mark-faint, so one file serves every theme */
+  .faint {
+    height: var(--mark-h);
+    aspect-ratio: 48.4 / 47;
+    background: var(--mark-faint);
+    -webkit-mask: url("/n62-mark.svg") center / contain no-repeat;
+    mask: url("/n62-mark.svg") center / contain no-repeat;
   }
   .item {
     display: flex;
