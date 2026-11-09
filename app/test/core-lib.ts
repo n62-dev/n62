@@ -164,8 +164,10 @@ export async function replay(page: Page, steps: readonly CoreStep[], hooks: Repl
     } else if ("back" in s) await (hooks.back ? hooks.back() : page.evaluate(() => history.back()));
     else if ("wait" in s) await page.waitForTimeout(s.wait);
     else {
-      await page.evaluate(() => window.n62.shell.flush());
-      await page.waitForTimeout(800); // the stores' writes are debounced and asynchronous (persist.spec)
+      // two waits, two things: the awaited call covers the `defs` write (a promise, started when a call defines something);
+      // the 800 ms covers the other stores, whose writes are debounced (persist.spec) and give nothing to wait for
+      await page.evaluate(() => Promise.all([window.n62.shell.flush(), window.n62.calc.engine?.defsWritten?.()]));
+      await page.waitForTimeout(800);
       if (hooks.relaunch) page = await hooks.relaunch();
       else await page.reload();
       await engineReady(page);
