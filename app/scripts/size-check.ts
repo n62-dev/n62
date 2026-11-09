@@ -340,8 +340,10 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  relaunch waits for the `defs` write; 22 B over the old pin, 60,672 B gzip, 170,829 B raw): 60,672 B + 0.05 kB.
  *  60,720 B stays (R148): the keypad's 4 px gap and padding in the trackpad's width formula and the short rows' query
  *  (Keypad.svelte) add 0.02 kB gzip (measured 60.67 kB, 170.78 kB raw, on the base before A123); the merge with A123 is
- *  measured by the gate against this pin. */
-export const START_PIN_GZIP = 60_720;
+ *  measured by the gate against this pin.
+ *  60,720 → 60,780 B (R148f2): the view keys' wait behind queued keys during a load (route.ts runsAtOnce) measures 60,729 B
+ *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB. */
+export const START_PIN_GZIP = 60_780;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
