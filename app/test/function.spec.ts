@@ -176,6 +176,26 @@ test("keys typed while the app's code is still loading are kept (regression)", a
   await expect(page.locator('[data-name="F2"] .math')).toHaveAttribute("data-latex", "\\frac{1}{x}");
 });
 
+// R148f2 (F201): a view key pressed while the app loads waits behind the typing already queued (decisions.md, View keys
+// and the load queue). The chunk is held by a gate: tapping fast without it passes on the old code too.
+for (const view of ["plot", "num"] as const)
+  test(`Symb, x²−2, Enter, ${view === "plot" ? "Plot" : "Num"} during the app's load: F1 keeps the typing, then the view opens`, async ({ page }) => {
+    let release = (): void => {};
+    const gate = new Promise<void>((r) => (release = r));
+    await page.route(/\/src\/apps\/function\/index\.ts/, async (route) => {
+      await gate;
+      await route.continue();
+    });
+    await tap(page, ["@symb", "x", "sq", "sub", "d2", "enter", `@${view}`]);
+    expect(await page.evaluate(() => window.n62.shell.loading)).toBe("function");
+    release();
+    await page.waitForFunction(() => window.n62.shell.loading === null, undefined, { timeout: 15_000 });
+    await expect(page.getByTestId("place")).toHaveAttribute("data-view", view);
+    expect(await entryValue(page)).toBe("");
+    await tap(page, ["@symb"]);
+    await expect(page.locator('[data-name="F1"] .math')).toHaveAttribute("data-latex", "x^2-2");
+  });
+
 test("Apps key lists Home, CAS and the apps; U2 (Home by default) goes back to Home", async ({ page }) => {
   await tap(page, ["@place"]);
   await expect(page.getByTestId("apps")).toBeVisible();

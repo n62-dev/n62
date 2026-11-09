@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* R24c: the unit view's panel (units/panel.ts); loaded with it. The panel holds the focus for the hardware keys, so no
    outline: the active slot shows where they go. */
-.unitview { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; outline: none; }
+/* R148f1: the fold handle (Fold.svelte) reaches 20 px above the keypad; 4 px below the last row keep More… (24 px tall, 8 px above
+   the keypad) from lying half under it */
+.unitview { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; outline: none; }
 .unitview .reading, .unitview .why, .unitview .note, .unitview .working { color: var(--muted); font-size: 14px; min-height: 1.2em; }
 .unitview .rare, .unitview .warn { color: var(--warn, var(--error)); }
 .unitview .message { color: var(--error); font-size: 14px; }

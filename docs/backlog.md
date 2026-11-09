@@ -43,7 +43,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F182, no package (G176).** Home shows `limit(floor(x),x,-1)`, `limit(sign(x),x,0)`, `limit(trunc(x),x,-1)` as an error ("Unidirectional limits are distinct"); right: No limit (converge.ts `noLimit`). Golden `g176-limit-trunc-neg1-two-sided`.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R163 built (own `data-down` flag, key pop, Appearance › Key pop-ups).
-- **F186, package R148 (Opus pass 86).** Core c45 is red on the Tab One (devices 84, 85; 1192 × 672): Solve's second root lies under the entry line (screen 174 px; 184 px and 1 px clear on the desktop).
+- **F186, package R148 built (Opus pass 86).** Core c45 was red on the Tab One (1192 × 672): Solve's second root lay under the entry line. R148's keypad leaves 27.6 px (`solveroom.spec.ts`); Tab One check next.
 - **F172, A73 measured (report).** Stored history costs nothing; the rows drawn at start do (20 program rows 1821 ms, 20 plain 1469, 5 program 1345; bar 1.5 s). R133 merged (c9be0a7c): History draws 5 rows until engine ready; Tab One rerun pending. A CAS-view start is 1499 to 1507 against Home 1323, cause open (A73f1).
 - **F192, package R180 (bar point 3).** DEG `10∡30+5` from the keys computes 10∠35, ≈, no ⚠.
 - **F196, package G301.** CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)`); the value is right.
@@ -66,7 +66,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F105, package G169.** Home `normald_cdf(0,1,{1/2,3/2})` stays the symbolic `(erf({…})+1)/2`, no numbers (erf of a list in the exact form); honest, no value.
 - **F115, package G178 (Opus pass 83).** Home `3*int(1/x,x,-1,1)+1` at the default budget shows ⚠ 1 (unchecked), not the refusal the bare `int(1/x,x,-1,1)` gets: the divergence checks need about 20× the steps. Flagged, so honest; family 5.
 - **F200 (Opus pass 102; A120).** Core c29 red once on the Tab One (device 100, `de659c02`); 135 runs since (relaunch 800/200/0 ms, host load 32) all green. A123 (run 808) makes the core runner await the `defs` write and log `defs` on a red; a second red is a FIX.
-- **F201, R148f2 (Opus pass 109).** Symb, x²−2, Enter, Plot during the app's load loses F1: Plot overtakes (route.ts:378).
+- **F201, R148f2 (Opus pass 109).** Built: a view key waits behind queued typing in a load (route.ts runsAtOnce).
 - **Flaky under load.** Golden `interrupt` (F128, run 307: `expand((x+y+z+1)^40)` at timeout 0.2 s took 406 ms of 400; pass 10: a second sighting puts it into `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, limit 60; no rerun) beside the other lane (passes 32, 34, run 415).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
 - **F63, package G179.** A stored ⚠ value (`BesselJ(1,2)`) read through a function, after a relaunch or by its name shows one confirmed digit fewer than the value itself (11, not 12: cautious, not wrong; `tests/golden/seqsweep-known.yaml` 6–7).

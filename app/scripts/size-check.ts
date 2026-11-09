@@ -337,8 +337,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  and 60,623 B on win99, both 170,880 B raw (the entry's name differs, index-8z3XHpW_ and index-Bbpwr7Ub), so a pin 2 B
  *  over the measure failed on the difference between machines.
  *  60,650 → 60,720 B (A123): WorkerEngine.defsWritten and the write's promise kept beside the store call (the core runner's
- *  relaunch waits for the `defs` write; 22 B over the old pin, 60,672 B gzip, 170,829 B raw): 60,672 B + 0.05 kB. */
-export const START_PIN_GZIP = 60_720;
+ *  relaunch waits for the `defs` write; 22 B over the old pin, 60,672 B gzip, 170,829 B raw): 60,672 B + 0.05 kB.
+ *  60,720 B stays (R148): the keypad's 4 px gap and padding in the trackpad's width formula and the short rows' query
+ *  (Keypad.svelte) add 0.02 kB gzip (measured 60.67 kB, 170.78 kB raw, on the base before A123); the merge with A123 is
+ *  measured by the gate against this pin.
+ *  60,720 → 60,780 B (R148f2): the view keys' wait behind queued keys during a load (route.ts runsAtOnce) measures 60,729 B
+ *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB. */
+export const START_PIN_GZIP = 60_780;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

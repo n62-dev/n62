@@ -13,19 +13,38 @@ const active = (page: Page) => sheet(page).locator('[role="menuitem"][data-activ
 /** Measured after R8 (Pixel 7, 412 × 915): 0.3540 with the 28 px status line. A package may not go below it. */
 const FLOOR = 0.35;
 
-test("the status line is at most 28 px, and the viewport keeps its share of the screen (the floor of docs/03 rule 9)", async ({ page }) => {
-  await open(page);
-  const m = await page.evaluate(() => {
-    const h = document.querySelector("header")?.getBoundingClientRect();
-    const v = document.querySelector(".screen")?.getBoundingClientRect();
-    return { header: h?.height ?? 0, screen: v?.height ?? 0, window: window.innerHeight, tabs: document.querySelectorAll('[role="tab"]').length };
+// R148 (S25, docs/research/r19-results-and-keys.md §3): the floor holds at the three sizes the room was measured at
+for (const [width, height] of [[412, 915], [412, 839], [360, 740]] as const)
+  test(`the status line is at most 28 px, and the viewport keeps its share of the screen (the floor of docs/03 rule 9) at ${width} × ${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page);
+    const m = await page.evaluate(() => {
+      const h = document.querySelector("header")?.getBoundingClientRect();
+      const v = document.querySelector(".screen")?.getBoundingClientRect();
+      return { header: h?.height ?? 0, screen: v?.height ?? 0, window: window.innerHeight, tabs: document.querySelectorAll('[role="tab"]').length };
+    });
+    expect(m.tabs).toBe(0);
+    expect(m.header).toBeLessThanOrEqual(28);
+    const share = m.screen / m.window;
+    console.log(`viewport share at ${width} × ${height}: ${share.toFixed(4)} (screen ${m.screen} of ${m.window} px, status line ${m.header} px)`);
+    expect(share).toBeGreaterThanOrEqual(FLOOR);
   });
-  expect(m.tabs).toBe(0);
-  expect(m.header).toBeLessThanOrEqual(28);
-  const share = m.screen / m.window;
-  console.log(`viewport share ${share.toFixed(4)} (screen ${m.screen} of ${m.window} px, status line ${m.header} px)`);
-  expect(share).toBeGreaterThanOrEqual(FLOOR);
-});
+
+// R148 R2: the keypad's gaps and padding are 4 px; R1: the short rows apply below 760 px tall (a digit key 42 px), not above (48 px)
+for (const [width, height, key] of [[360, 740, 42], [412, 839, 48]] as const)
+  test(`the keypad has 4 px gaps and padding, and digit keys ${key} px tall, at ${width} × ${height} (R148)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page);
+    const m = await page.evaluate(() => {
+      const cs = getComputedStyle(document.querySelector(".pad") as HTMLElement);
+      const d = (document.querySelector('[data-key="d5"]') as HTMLElement).getBoundingClientRect();
+      return { rowGap: cs.rowGap, columnGap: cs.columnGap, padding: [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft], key: d.height };
+    });
+    expect(m.rowGap).toBe("4px");
+    expect(m.columnGap).toBe("4px");
+    expect(m.padding).toEqual(["4px", "4px", "4px", "4px"]);
+    expect(m.key).toBe(key);
+  });
 
 test("the status line shows the place, the angle unit, the format and digits", async ({ page }) => {
   await open(page);
