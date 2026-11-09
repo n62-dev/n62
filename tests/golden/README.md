@@ -27,6 +27,7 @@ the ⚠, and every other case must not.
 | `findcensus-known.yaml` | — | G110: the census of Find's tier-1 functions (`app/scripts/findcensus.ts`): each function's classes in Home and CAS |
 | `giaccheck-known.yaml` | — | A19: the inputs of Giac's own check suite whose answer differs on our build (`tools/probes/giac-check.mjs`) |
 | `corpus.yaml` | 199 inputs, 6 sequences | G55: everyday engineering inputs with **no expected values** (rounding, statistics, distributions, trig, complex, physics formulas, stored names and functions, lists and run-once assignments), one per line under an area comment, plus short `sequences` run in order. Not a gate: `app/scripts/behaviour-diff.ts <treeA> <treeB>` runs it, with the single inputs of `home.yaml`, `precision.yaml` and `bench.yaml`, through two trees (Home and CAS, 12 and 30 digits, RAD and DEG) and prints every input whose display, mark, warn or why differs; "none" when equal; about 170 s |
+| `oracle-counts.json` | `{ "exact": 102, "mpmath": 796 }` | G202: how many `source: oracle` rows have an oracle value that is an int or a Fraction (exact; a list element by element) and how many one that is not (mpmath: a float, or a Label such as "true" from a comparison). Written by `oracle.py --counts` (the whole tree), by hand at the release only; no check reads its age, so a row added in between is no PROBLEM. A93 prints the two numbers |
 | `g2.yaml` | 71 items (13 unanswered: 41, 42, 52, 56, 63–71, backlog "Needs the user" 3; items 8, 29 and the real-G2 spot checks are still worth a device check) | G2 checklist questions and answers; `tests/golden/G2-CHECKLIST.md` is generated from it |
 
 **Marks (docs/04 section 2.4).** In `home.yaml` and `precision.yaml` every case whose `expect` is a number has `mark:`.
@@ -51,6 +52,7 @@ The gate also runs `tests/engine/interrupt-test.mjs` (16 forced interrupts, Giac
 python3 -m venv tests/golden/.venv && tests/golden/.venv/bin/pip install mpmath==1.3.0 pyyaml==6.0.2   # once
 tests/golden/.venv/bin/python tests/golden/oracle.py          # check expect values and the format
 tests/golden/.venv/bin/python tests/golden/oracle.py --write  # fill expect for source: oracle
+tests/golden/.venv/bin/python tests/golden/oracle.py --counts # G202: write oracle-counts.json (at the release)
 tests/golden/.venv/bin/python tests/golden/oracle.py --g2     # regenerate tests/golden/G2-CHECKLIST.md
 (cd app && npm run golden)                                    # the gate: interrupt, steps, flags, home, precision, solve, function, bench, calls, invariants, units, parser
 (cd app && GIAC_MJS=<other>/giac.mjs npm run golden)          # gate another engine build
