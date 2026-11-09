@@ -335,8 +335,10 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (state/itemLoad.ts) and the decimal code of engine/format.ts it reads left the start chunk. The pin is 60,571 B + 0.05 kB.
  *  60,621 → 60,650 B (A87, the move to the desktop; no code change): phase-1 1c6af195 measures 60,619 B gzip on the laptop
  *  and 60,623 B on win99, both 170,880 B raw (the entry's name differs, index-8z3XHpW_ and index-Bbpwr7Ub), so a pin 2 B
- *  over the measure failed on the difference between machines. */
-export const START_PIN_GZIP = 60_650;
+ *  over the measure failed on the difference between machines.
+ *  60,650 → 60,720 B (A123): WorkerEngine.defsWritten and the write's promise kept beside the store call (the core runner's
+ *  relaunch waits for the `defs` write; 22 B over the old pin, 60,672 B gzip, 170,829 B raw): 60,672 B + 0.05 kB. */
+export const START_PIN_GZIP = 60_720;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

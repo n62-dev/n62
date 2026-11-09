@@ -96,7 +96,7 @@ export class WorkerEngine implements MathEngine {
   /** Saving is on once the stored log was read (a store that timed out is never overwritten with a partial log). */
   private storeOk = false;
   /** The last write of the log (A123), failures swallowed: what `defsWritten` waits for. */
-  private lastWrite: Promise<unknown> = Promise.resolve();
+  private lastWrite: Promise<void> = Promise.resolve();
   /** Settles once the stored definitions were read and sent to the worker; every call is posted after it. */
   private readonly gate: Promise<void>;
   private gateOpen = false;
@@ -179,13 +179,13 @@ export class WorkerEngine implements MathEngine {
     // a purge reaches the entries a safe start left out too, or stored() would bring the name back (G19)
     const purges = changes.filter((c) => "purge" in c);
     if (this.skipped.length && purges.length) this.skipped = applyDefChanges(this.skipped, purges);
-    if (this.storeOk && this.store) this.lastWrite = Promise.resolve(this.store.save(this.stored())).catch(() => {});
+    if (this.storeOk && this.store) this.lastWrite = Promise.resolve(this.store.save(this.stored())).then(() => {}, () => {});
   }
 
   /** Resolves once the last write of the definitions log has finished, whether it succeeded or not (A123: a core-case
    *  relaunch must not stop the app before `defs` is on the store). At once with no store or nothing written. */
   defsWritten(): Promise<void> {
-    return this.lastWrite.then(() => {});
+    return this.lastWrite;
   }
 
   /** The log as stored: what is live plus what a safe start left out (G19). */
