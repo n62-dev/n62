@@ -77,3 +77,9 @@ body:
     attributes:
       label: Device
       description: "Phone model and Android version, or the browser. Optional."
+  - type: textarea
+    id: session
+    attributes:
+      label: Session
+      description: "Report a problem copied this; paste it here. Remove anything private first."
+      render: text
