@@ -140,6 +140,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Full text: archive. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
 - **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
+- **View keys and the load queue** (Opus pass 109, R148f2): during an app's load Symb, Plot and Num run at once only when no key is waiting; behind waiting keys they wait in order (R8: nothing typed is lost; c46). The other at-once keys stay. Would change if: a view key feels dead during a load on the Tab One.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1): R148's short rows, which the owner chose for the history's room, leave Settings › Appearance 287 px for the 304 its rows need at the floor (docs/05 3.1, fit, then scroll); that level scrolls, no key row or floor gives way. Would change if: the owner's look at 360 × 740 says otherwise.
 
 **Engine, precision and formats**
