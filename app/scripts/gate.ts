@@ -2,7 +2,7 @@
 // `npm run gate`: every check a branch must pass (docs/shifts/brief.md section 8), one line each, the full log in
 // app/_out/gate/<name>.log. Exit 1 on any FAIL.
 //   npm run gate            # typecheck, index (when missing), vitest (FIND_INDEX=required), e2e, golden (when engine or
-//                           # parser code changed against phase-1), sweep (G61, the oracle sweep), seqsweep (G62), casback (G64), viewsweep (G63), findcensus (G110), size test, docs sizes
+//                           # parser code changed against phase-1), sweep (G61, the oracle sweep), seqsweep (G62), casback (G64), viewsweep (G63), findcensus (G110), size test, docs sizes, g2check (G79), oraclecheck (G200, oracle.py when tests/golden changed)
 //   npm run gate -- --quick # typecheck and vitest only (engine tests skipped, and said so, when no engine build is found)
 //   npm run gate -- --update-text-baseline # rules stage (G88: text matches and `.eval(` outside engine and units are counted): write app/scripts/text-baseline.json (G88)
 // The vitest stage sets ENGINE=required (G146) unless --quick finds no engine build.
@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { oracleVenvPython, setupLine, touchesG2 } from "./g2check.ts";
+import { problemLines, touchesOracle } from "./oraclecheck.ts";
 import { checkImportDirection } from "./import-rules.ts";
 import { countAll, evalOutside, judge, readBaseline, totals, writeBaseline } from "./text-rules.ts";
 import {
@@ -263,6 +264,18 @@ const checks: Check[] = [
       const r = run("g2check", py, [join(repo, "tests/golden/oracle.py"), "--g2", "--check"], {}, 5 * 60_000, repo);
       const bad = r.out.split("\n").filter((l) => l.startsWith("PROBLEM"));
       return r.code === 0 ? { ok: true, detail: "checklist matches g2.yaml" } : { ok: false, detail: bad.length ? bad.slice(0, 3).join("; ") : `exit ${r.code}` };
+    },
+  },
+  {
+    // G200 (F197): every `expect` and `mark` of tests/golden/*.yaml against the oracle (oracle.py, about 10 s)
+    name: "oraclecheck",
+    skip: () => (changed !== null && !touchesOracle(changed) ? `no tests/golden file changed against ${base}` : null),
+    run: () => {
+      const py = oracleVenvPython(repo, mainCheckout);
+      if (!py) return { ok: false, detail: `no oracle venv; set it up: ${setupLine}` };
+      const r = run("oraclecheck", py, [join(repo, "tests/golden/oracle.py")], {}, 5 * 60_000, repo);
+      const bad = problemLines(r.out);
+      return r.code === 0 ? { ok: true, detail: (r.out.trim().split("\n").pop() ?? "").trim() } : { ok: false, detail: bad.length ? bad.join("; ") : `exit ${r.code}: ${(r.out.trim().split("\n").pop() ?? "").trim()}` };
     },
   },
 ];

@@ -31,7 +31,11 @@ the ⚠, and every other case must not.
 
 **Marks (docs/04 section 2.4).** In `home.yaml` and `precision.yaml` every case whose `expect` is a number has `mark:`.
 `oracle.py` derives it: `=` when the oracle value equals the shown text exactly, `≈` when the text is rounded. `⚠` is
-never derived: it is written by hand for functions whose result the engine cannot confirm, and needs a `note`.
+never derived: it is written by hand for functions whose result the engine cannot confirm, and needs a `note`;
+`⚠ n` (n confirmed digits) is a `⚠` with a count. Where no value can be derived (no `oracle:` expression, or `expect` is no number)
+a hand-written `=` or `≈` needs a `note` as well (the golden gate checks it against the engine). An exception from a case's `oracle:`
+expression is one problem for that case, and the check goes on. `corpus.yaml` is not checked (no ids, no values). The gate's
+`oraclecheck` stage runs `oracle.py` when a `tests/golden/` file changed (G200).
 A case with a mark and no `expect` is mark-only (the gate checks the mark, and that an answer came back: a number, or a
 non-number that holds a float, never the input echoed back).
 
