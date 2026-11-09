@@ -406,6 +406,8 @@ describe.skipIf(!giacAvailable())("G225 dot and cross of different lengths", () 
 describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
   let host: EngineHost;
   let quotes = 0;
+  // G225f2: the eval calls of the walk: its candidates (they read pasq) and its purge
+  let walkEvals = 0;
   beforeAll(async () => {
     const { giac, bridge } = await loadNodeGiac();
     const spy = new Proxy(bridge, {
@@ -417,7 +419,16 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
         };
       },
     });
-    host = new EngineHost(giac, spy);
+    const evals = new Proxy(giac, {
+      get(t, k, r) {
+        if (k !== "eval") return Reflect.get(t, k, r);
+        return (text: string) => {
+          if (text.includes("pasq")) walkEvals++;
+          return t.eval(text);
+        };
+      },
+    });
+    host = new EngineHost(evals, spy);
   });
   const home = (input: string) => host.home(input, defaultHomeSettings).result;
   const cas = (input: string) => host.cas(input, defaultCasSettings).result;
@@ -470,5 +481,33 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
     expect(quotes).toBe(0);
     expect(home("[1,2]+[3,4]")).toMatchObject({ ok: true, display: "[4,6]" });
     expect(quotes).toBe(1);
+  });
+
+  // G225f2: expected values derived (2.5+1, 2.5+0.25, the sum by position) and from G225f1's refusals
+  describe("chips (G225f2)", () => {
+    const chip = (value: string) => ({ value, reliableDigits: null, exact: false });
+    const held = (input: string, ...values: string[]) => host.home(input, defaultHomeSettings, undefined, Object.fromEntries(values.map((v, k) => [String(k), chip(v)]))).result;
+
+    it("a chip that holds a number makes no walk", () => {
+      quotes = 0;
+      walkEvals = 0;
+      expect(held("pasr_0+1", "2.5")).toMatchObject({ ok: true, display: "3.5" });
+      expect(held("pasr_0+pasr_1", "2.5", "0.25")).toMatchObject({ ok: true, display: "2.75" });
+      expect(quotes).toBe(0);
+      expect(walkEvals).toBe(0);
+    });
+
+    it("a chip that holds a list is walked", () => {
+      expect(held("pasr_0+pasr_1", "[1.5,2.5]", "[1.5,2.5,3.5]")).toMatchObject(differ);
+      expect(held("pasr_0+pasr_1", "list[1.5,2.5]", "list[1.5,2.5,3.5]")).toMatchObject(differ);
+      expect(held("pasr_0+pasr_1", "[1.5,2.5]", "[0.5,0.5]")).toMatchObject({ ok: true, display: "[2,3]" });
+    });
+
+    it("a chip that holds a matrix is walked", () => {
+      const m22 = "[[1.5,2.5],[3.5,4.5]]";
+      expect(held("pasr_0+pasr_1", m22, "[[1.5,2.5,3.5],[4.5,5.5,6.5]]")).toMatchObject(differ);
+      expect(held("dot(pasr_0,pasr_1)", m22, "[1.5,2.5]")).toMatchObject({ ok: false, error: "vectorsOnly" });
+      expect(held("pasr_0+pasr_1", m22, m22)).toMatchObject({ ok: true });
+    });
   });
 });
