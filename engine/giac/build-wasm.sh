@@ -3,9 +3,10 @@
 #
 # Build Giac + GSL + GMP + MPFR to WebAssembly from pinned, hash-checked sources.
 #
-#   [WITH_GSL=0] engine/giac/build-wasm.sh [stage...]
+#   [WITH_GSL=0] engine/giac/build-wasm.sh [--fetch-only | stage...]
 #
 # Stages: fetch gmp mpfr gsl giac link (default: all, gsl skipped with WITH_GSL=0)
+# --fetch-only (A97): the SHA-256-checked downloads of stage fetch and nothing else: no emsdk or emcc needed, nothing compiled (the F-Droid recipe's prebuild).
 # Output: engine/giac/_out/<variant>/giac.{mjs,wasm}; variant = gsl (default) | base (WITH_GSL=0, comparisons only)
 # GIAC_PATCHES=none (A71): no patch of patches/ is applied, the stock giac_2.1.0-1 for the red-first check of a package that says its
 #   tests "fail on the stock build" (scripts/pipeline-lib.sh); variant = stock-<key> (stock-base-<key> with WITH_GSL=0), where
@@ -262,6 +263,7 @@ main() {
   local stages=("$@")
   [[ "$GIAC_PATCHES" == all || "$GIAC_PATCHES" == none ]] || { echo "GIAC_PATCHES is '$GIAC_PATCHES': all (default) or none" >&2; exit 1; }
   [[ "${stages[0]:-}" != stock-key ]] || { stock_key; return; }  # needs no emsdk
+  [[ "${stages[0]:-}" != --fetch-only ]] || { [[ ${#stages[@]} -eq 1 ]] || { echo "--fetch-only takes no stage" >&2; exit 2; }; stage_fetch; return; }  # needs no emsdk
   [[ ${#stages[@]} -gt 0 ]] || stages=(fetch gmp mpfr gsl giac link)
   emsdk_env
   local s

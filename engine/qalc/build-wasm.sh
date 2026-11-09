@@ -5,7 +5,8 @@
 # Promoted from the P3 spike. Milestone 4 builds it for the Find index (constant values and unit factors, run in Node);
 # the worker and the Units app that load it in the browser are milestone 5.
 #
-#   engine/qalc/build-wasm.sh [dev|release] [stage...]      (default: dev; stages: fetch gmp mpfr xml2 qalc link)
+#   engine/qalc/build-wasm.sh [dev|release] [--fetch-only | stage...]      (default: dev; stages: fetch gmp mpfr xml2 qalc link)
+#   --fetch-only (A97)  stage fetch and nothing else (no toolchain, no lock, no build tree): the F-Droid recipe's prebuild; GMP and MPFR must be in the cache already (engine/giac/build-wasm.sh --fetch-only)
 #   fetch    only the SHA-256-checked source tarballs, no toolchain, no lock (the Pages workflow, A45; run engine/giac/build-wasm-release.sh or its stage_fetch first for GMP/MPFR)
 #   dev      local emsdk (~/emsdk, 6.0.12), fast iteration            -> engine/qalc/_out/dev/qalc.{mjs,wasm}
 #   release  Debian trixie's emscripten in the pinned container (P2)  -> engine/qalc/_out/release/qalc.{mjs,wasm} + SHA256SUMS
@@ -24,6 +25,9 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
 MODE="${1:-dev}"; shift || true
+FETCH_ONLY=0
+if [[ "$MODE" == --fetch-only ]]; then MODE=dev; FETCH_ONLY=1; fi
+if [[ "${1:-}" == --fetch-only ]]; then FETCH_ONLY=1; shift; fi
 JOBS="${JOBS:-8}"
 CE="${CONTAINER_ENGINE:-podman}"
 WORK="${QALC_WORK:-$HERE/_work}"
@@ -162,6 +166,12 @@ publish() { # <mode>: copy $WORK/out to _out/<mode> and print checksums
 LOCK="$REPO/tools/devlock.sh"
 take_lock() { [[ "${NO_LOCK:-0}" == 1 ]] || "$LOCK" acquire host-cpu annabell-qalc 1800 >&2; }
 drop_lock() { [[ "${NO_LOCK:-0}" == 1 ]] || "$LOCK" release host-cpu annabell-qalc >/dev/null 2>&1 || true; }
+
+if (( FETCH_ONLY )); then
+  [[ "$MODE" == dev || "$MODE" == release ]] && [[ $# -eq 0 ]] || { echo "usage: $0 [dev|release] --fetch-only" >&2; exit 2; }
+  stage_fetch >&2
+  exit 0
+fi
 
 case "$MODE" in
   dev)
