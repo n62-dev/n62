@@ -345,8 +345,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB.
  *  60,780 → 60,990 B (R149): the check before Enter (entry/credits.ts: a regex, the stored names, the chips) and the call that
  *  opens the credits sheet (App.svelte openCredits) measure 60,939 B gzip (171,470 B raw), +180 B gzip (+450 B raw) over
- *  the base (60.76 kB); the sheet, its text and the About data are lazy chunks: 60,939 B + 0.05 kB, under the budget of 61.00 kB. */
-export const START_PIN_GZIP = 60_990;
+ *  the base (60.76 kB); the sheet, its text and the About data are lazy chunks: 60,939 B + 0.05 kB, under the budget of 61.00 kB.
+ *  60,780 → 60,950 B (R164, on the base without R149): the shared press flag (input/pressFlag.ts: R161's keypad code moved there, and a 4-line action
+ *  for the status line's two buttons; the sheets' and the update note's use of it are lazy chunks) measures 60.89 kB gzip
+ *  (171.40 kB raw), +0.13 kB over the phase-1 build (60.76 kB, 171.02 kB raw): 60.89 kB + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 61_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

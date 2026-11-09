@@ -22,6 +22,7 @@ The web version also keeps its own program files in the browser's cache (a servi
 
 - **Web version:** the page and its files are loaded from `n62.dev`. Like any web server, the one behind that address may log the request itself (time, address of the file, your IP address) under its provider's terms; the app sends nothing else, and the page contains no third-party scripts, fonts or trackers.
 - **Android app:** everything is inside the APK. The app does not ask for the `INTERNET` permission, so it cannot reach the network at all.
+- **Report a problem** (Settings › Help and about) puts your version, device and history on the clipboard and opens the bug form in your browser, only when you tap it. You see the text before you send it; the app itself sends nothing.
 
 ## Android permissions
 

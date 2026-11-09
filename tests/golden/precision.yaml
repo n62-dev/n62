@@ -257,6 +257,7 @@ cases:
   # G39: the CAS view refuses the same divergent integrals, series and limits as Home, and shows Giac's pair with ⚠
   - { id: "g39-cas-int-1/x", kind: "cas", input: "int(1/x,x,-1,1)", expect: "error: integralDiverges", source: "derived", note: "Giac gave 0, the principal value" }
   - { id: "g39-cas-int-tan", kind: "cas", input: "int(tan(x),x,0,pi)", expect: "error: integralDiverges", source: "derived" }
+  - { id: "g178-cas-int-1/x-in-sum", kind: "cas", input: "3*int(1/x,x,-1,1)+1", expect: "error: integralDiverges", source: "derived", note: "F115: the check of the call in a larger input; Giac gave 1" }
   - { id: "g39-cas-sum-cos", kind: "cas", input: "sum(cos(k),k,1,inf)", expect: "error: seriesDiverges", source: "derived", note: "Giac gave the Abel sum -1/2" }
   - { id: "g39-cas-sum-exp-ik", kind: "cas", input: "sum(exp(i*k),k,0,inf)", expect: "error: seriesDiverges", source: "derived" }
   - { id: "g39-cas-sum-undef", kind: "cas", input: "sum((-1)^k,k,0,inf)", expect: "error: seriesDiverges", source: "derived", note: "Giac's own undef" }
@@ -1209,3 +1210,5 @@ cases:
   - { id: "g188-int-sqrt-tanh-sin", input: "int(sqrt(tanh(x)*sin(x)),x,0,1)", oracle: "quad(lambda x: sqrt(tanh(x)*sin(x)), [0, 1])", expect: "0.446504265471", mark: "⚠", source: "oracle", note: "G94's input from the 2026-10-21 run (there sin(pasdeg*x), DEG), here in RAD; trapped at Digits 40 before patch 0037; int is unaudited, ⚠" }
   # --- G300 (mh-D3): approx() of the forum chain in DEG ---
   - { id: "g300-chain-deg-approx-30", latex: "\\operatorname{approx}\\left(\\arcsin\\left(\\arccos\\left(\\arctan\\left(\\tan\\left(\\cos\\left(\\sin\\left(9\\right)\\right)\\right)\\right)\\right)\\right)\\right)", settings: { angle: "deg", digits: 30 }, expect: "9", mark: "≈", source: "derived", note: "G300: approx() reports the value as computed; its 40-digit working value 8.999… is internal, never shown or copied. The exact value is 9 (g300-chain-deg-30); no oracle: check_mark would derive = from an exact oracle" }
+  # --- G201: trust page, trap 4 (Ramanujan's constant, almost an integer), through the keys ---
+  - { id: "trust-ramanujan-30", latex: "\\exponentialE^{\\pi\\sqrt{163}}", settings: { digits: 30 }, oracle: "exp(mp.pi*sqrt(163))", expect: "262537412640768743.999999999999", mark: "≈", source: "oracle", note: "trust page: trap 4. 262537412640768743.99999999999925 (mpmath)" }

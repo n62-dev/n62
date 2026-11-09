@@ -60,8 +60,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 538 | R149 N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
-| 554 | [R164](packages/R164.md) the other presses use the flag | ron, Sonnet | `p1/ron-pressflag2` | R161 |
-| 495 | [G178](packages/G178.md) a divergent integral inside an expression is refused, not ⚠ 1 (F115) | gorge, Opus | `p1/gorge-intdivexpr` | – |
 | 496 | [G168](packages/G168.md) no value is a plain refusal: `undef`, empty calls, `DelAVars()`, the budget message (F93, F109) | gorge, Opus | `p1/gorge-novalue` | – |
 | 500 | [G169](packages/G169.md) a list as a distribution's x gives one value per element (F105, F93) | gorge, Opus | `p1/gorge-listlast` | – |
 | 501 | [G172](packages/G172.md) a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
@@ -81,9 +79,8 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 570 | [A92](packages/A92.md) bug form session | annabell, Sonnet | `p1/annabell-formsession` | – |
-| 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201f1, G202 |
-| 572 | [A94](packages/A94.md) trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
+| 571 | A93 counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201f1, G202 |
+| 572 | A94 trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
 | 573 | [G301](packages/G301.md) CAS degree quotient (F196) | gorge, Opus | `p1/gorge-degquot` | – |
 | 574 | [A96](packages/A96.md) F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |
 | 575 | [A97](packages/A97.md) F-Droid build step | annabell, Sonnet | `p1/annabell-fdroidbuild` | A96 |

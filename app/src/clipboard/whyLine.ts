@@ -67,6 +67,7 @@ export function whyLine(item: HistoryItem, mark: MarkInfo | null, digits: number
   if (why?.once) parts.push(tc("why.once"));
   if (why?.pastCap) parts.push(tc("why.pastCap"));
   if (why?.squareUnchecked) parts.push(tc("why.squareUnchecked"));
+  if (why?.existsUnchecked) parts.push(tc("why.existsUnchecked"));
   if (why?.unaudited?.length) parts.push(`${list(why.unaudited)} ${tc(why.unaudited.length > 1 ? "why.areNotChecked" : "why.isNotChecked")}`);
   if (why?.inherited?.length) parts.push(`${tc("why.uses")} ${list(why.inherited)}, ${tc("why.itselfUncertain")}`);
   if (!parts.length) parts.push(tc(mark.warn ? "why.notChecked" : "why.notConfirmed"));
