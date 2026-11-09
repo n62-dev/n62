@@ -67,10 +67,11 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22"
-      - name: Golden gate on the release engine (GOLDEN GATE PASSED before the key is decoded)
+      - name: Golden gate on the release engine (GOLDEN GATE PASSED before the key is decoded); the README's "Why trust it" is fresh (A93)
         working-directory: app
         run: |
           npm ci --no-audit --no-fund
+          npm run trust:check
           npm run index
           GIAC_OUT="$GITHUB_WORKSPACE/engine/giac/_out/release" npm run golden 2>&1 | tee "$RUNNER_TEMP/golden.log"
           grep -qx 'GOLDEN GATE PASSED' "$RUNNER_TEMP/golden.log"

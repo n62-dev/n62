@@ -201,7 +201,7 @@ export const MARK_END = "<!-- trust:end -->";
 export function goldenCells(g: GoldenFacts): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [name, fl] of Object.entries(g.files)) out[name] = fl.pending > 0 ? `${fl.rows} (${fl.pending} \`pending\`)` : String(fl.rows);
-  out["oracle-counts.json"] = `{ "exact": ${g.exact}, "mpmath": ${g.mpmath} }`;
+  out["oracle-counts.json"] = `\`{ "exact": ${g.exact}, "mpmath": ${g.mpmath} }\``;
   return out;
 }
 
