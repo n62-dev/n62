@@ -22,9 +22,8 @@ const inverseIn = (t: string): boolean => t.includes("/") || callsOf(t, ["inv"],
 /** Names that hold no matrix. */
 const NO_MATRIX: ReadonlySet<string> = new Set(["pi", "e", "i", "euler_gamma", "pasdeg", "inf", "infinity"]);
 const operandIn = (t: string): boolean => t.includes("[") || [...names(t, "typed")].some((n) => !n.call && !NO_MATRIX.has(n.name));
-/** G225: what can hold a dot or cross call: a wide net for their spellings (and Giac's infix ⊗), which costs one engine
- *  call; the tree then names the head. */
-const productIn = (t: string): boolean => /dot|cross|scalar|⊗/i.test(t);
+/** G225: what can hold a dot or cross call: a call by one of their spellings, or Giac's infix ⊗; the tree then names the head. */
+const productIn = (t: string): boolean => t.includes("⊗") || callsOf(t, VECTOR_PRODUCTS, "typed").length > 0;
 /** G225: every spelling of `_dotprod` and `_cross` in the pinned Giac; the tree's head is the one typed. */
 const VECTOR_PRODUCTS: ReadonlySet<string> = new Set(["dot", "dotP", "dotprod", "DOT", "scalar_product", "scalarProduct", "cross", "crossP", "crossproduct", "CROSS"]);
 /** G225: Giac's test that `s`, the slot of a call's evaluated arguments, is two flat vectors of different lengths.
