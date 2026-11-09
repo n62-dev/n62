@@ -2,7 +2,7 @@
 # A8: the release. A tag v* pushed to GitHub (or Run workflow with an existing tag) builds the release engine and libqalculate in the
 # pinned container (P2), runs the golden gate on that engine, and only then decodes the owner's key and signs the APK (A7:
 # ./build.sh --release, which checks the certificate against android/release-cert.sha256). Last, a GitHub release with the APK and
-# its SHA-256 and docs/release-notes/X.Y.Z.md (checked first: a missing file stops the run); a pre-release only when the tag holds a
+# its SHA-256 and the release-notes file of its version (checked first: a missing file stops the run); a pre-release only when the tag holds a
 # `-` (the test tag vX.Y.Z-test). A failed step publishes nothing. The owner's checklist: docs/release.md.
 # Secrets (A7; Settings → Secrets and variables → Actions): KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD. They reach one
 # step only, as its env:, never a run: line; the keystore file lives in $RUNNER_TEMP (mode 600) and an always() step deletes it.
@@ -45,7 +45,7 @@ jobs:
           persist-credentials: false
       - name: One version (the tag's X.Y.Z equals app/package.json, build.gradle and the F-Droid recipe)
         run: tools/check-version.sh "$TAG"
-      - name: The release notes exist (docs/release-notes/X.Y.Z.md, A90; a missing file stops the run before any build)
+      - name: The release notes exist (the file for the version, A90; a missing file stops the run before any build)
         run: |
           v="$(node -p 'require("./app/package.json").version')"
           if [[ ! -f "docs/release-notes/$v.md" ]]; then
