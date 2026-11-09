@@ -7,12 +7,15 @@
 // from the text: a part `M^n` (n ≠ 1), `inv(M)` or `a/M` whose M evaluates to a matrix with rows ≠ columns. A flat
 // vector ([1,2]^2 = v·v, [5,1]^-1 elementwise) keeps Giac's meaning: it is no matrix.
 // G225 (backlog F194): the same walk finds dot and cross of two flat vectors of different lengths, where Giac pads the
-// short one with zeros (its convention; only the 2-vector cross is documented), a value nothing asked for. A matrix
-// operand keeps Giac's reading.
+// short one with zeros (its convention; only the 2-vector cross is documented), a value nothing asked for.
+// G225f1 (backlog F194, decisions.md Defaults): dot and cross take vectors only, so a matrix operand of the two-argument
+// form is refused, equal shapes included; and +, -, * and the pointwise operators of operands of different shape are
+// refused (Giac pads or cuts), the shapes read from the operands' values in Giac.
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { type Giac } from "./numeric.ts";
-import { callsOf, functionsIn, names, withoutStrings } from "./giacPrint.ts";
+import { callsOf, functionsIn, names, namesIn, withoutStrings } from "./giacPrint.ts";
 import { changesState } from "./novalue.ts";
+import { asksPoly } from "./polyvec.ts";
 import { MAX_NODES, treeOf, UNEVALUATED, type TreeNode } from "./tree.ts";
 import type { ParseNode } from "./bridge.ts";
 
@@ -26,12 +29,34 @@ const operandIn = (t: string): boolean => t.includes("[") || [...names(t, "typed
 const productIn = (t: string): boolean => t.includes("⊗") || callsOf(t, VECTOR_PRODUCTS, "typed").length > 0;
 /** G225: every spelling of `_dotprod` and `_cross` in the pinned Giac; the tree's head is the one typed. */
 const VECTOR_PRODUCTS: ReadonlySet<string> = new Set(["dot", "dotP", "dotprod", "DOT", "scalar_product", "scalarProduct", "cross", "crossP", "crossproduct", "CROSS"]);
-/** G225: Giac's test that `s`, the slot of a call's evaluated arguments, is two flat vectors of different lengths.
- *  Nested whens: `s[k]` is read only on two. */
-const lengthsDiffer = (s: string): string => {
-  const flat = (k: number): string => `count_eq(DOM_LIST,apply(type,${s}[${k}]))==0`;
-  return `when(type(${s})==DOM_LIST,when(size(${s})==2,when(type(${s}[0])==DOM_LIST and type(${s}[1])==DOM_LIST,when(size(${s}[0])!=size(${s}[1]) and ${flat(0)} and ${flat(1)},1,0),0),0),0)`;
+/** G225f1: what `s`, the slot of a dot or cross call's evaluated arguments, holds: 2 a matrix operand (a list holding a
+ *  list) of a two-argument call, 1 two flat vectors of different lengths, 0 anything else. Nested whens: `s[k]` is read
+ *  only on two. */
+const productShape = (s: string): string => {
+  const kind = (k: number): string => `when(type(${s}[${k}])!=DOM_LIST,0,when(count_eq(DOM_LIST,apply(type,${s}[${k}]))==0,1,2))`;
+  return `when(type(${s})!=DOM_LIST,0,when(size(${s})!=2,0,when(${kind(0)}==2 or ${kind(1)}==2,2,when(${kind(0)}==1 and ${kind(1)}==1 and size(${s}[0])!=size(${s}[1]),1,0))))`;
 };
+/** G225f1: the operators that take their operands position by position (`-` is a `+` of a negated operand). Giac's parser
+ *  makes `*` and the pointwise ones binary, read from the left (`[1,2]*[3,4]*[5,6,7]` is a number after its first pair);
+ *  `+` is n-ary. */
+const COMBINING: ReadonlySet<string> = new Set(["+", "*", ".+", ".-", ".*", "./", ".^"]);
+/** G225f1: each operand's shape in one Giac value, read from its value (`s` the list of them, evaluated): 0 a non-list or
+ *  an asked coefficient vector (subtype 10, polyvec.ts), n+1 a flat list of n, -1 a list of lists that is no matrix,
+ *  -(r*100000+c) an r by c matrix. */
+const shapeCodes = (s: string): string =>
+  `apply(v->when(subtype(v)==10 or type(v)!=DOM_LIST,0,when(count_eq(DOM_LIST,apply(type,v))==0,size(v)+1,when(is_matrix(v),-(rowdim(v)*100000+coldim(v)),-1))),${s})`;
+const ROWS = 100000;
+/** G225f1: whether the operands' shape codes (shapeCodes) are ones `op` cannot combine. `*` of two matrices is the matrix
+ *  product and of a matrix and a vector Giac's own check; a row vector times a matrix needs as many entries as rows. */
+function shapesDiffer(op: string, codes: readonly number[]): boolean {
+  const flat = new Set(codes.filter((c) => c > 0));
+  if (flat.size > 1) return true;
+  if (op === "*") {
+    const [a, b] = codes;
+    return codes.length === 2 && a! > 0 && b! < -1 && a! - 1 !== Math.floor(-b! / ROWS);
+  }
+  return new Set(codes.filter((c) => c < 0)).size > 1;
+}
 /** Time the operands may take, as throughInfinity's walk (novalue.ts): a part costs at most about the whole input. */
 const WALK_BUDGET_MS = 500;
 
@@ -47,6 +72,8 @@ export interface KnownBody {
   params: readonly string[];
   reads: readonly string[];
   heads: readonly string[];
+  /** G225f1: its text holds a list. */
+  list?: boolean;
 }
 
 /** G101: the names the input reads (G99, its tree; asked for only when a body could matter), and the stored functions:
@@ -57,6 +84,8 @@ export interface Bodies {
   /** G171: the names a run of the input may have written (its targets, the stores of the programs it reaches; the host's
    *  candidatesOf), null when they are not known; asked for only for an input that runs once. */
   writes?: () => ReadonlySet<string> | null;
+  /** G225f1: whether a stored name (or a chip) holds a list, from the host's table: no engine call. */
+  isList?: (name: string) => boolean;
 }
 
 export const NO_BODIES: Bodies = { reads: () => [], of: () => undefined };
@@ -82,6 +111,14 @@ function bodiesRead(bodies: Bodies): { known: Map<string, KnownBody>; unknown: b
   return { known, unknown };
 }
 
+/** G225f1: cheap text test for an input or a value to store that may combine lists by position: it holds an operator of
+ *  COMBINING and a list, or a name `isList` says holds one (the host reads that from its table, no engine call), so an input
+ *  with no list costs no engine call. */
+export function mayCombineLists(input: string, isList: (name: string) => boolean): boolean {
+  const t = withoutStrings(input, "", "typed");
+  return (/[-+*]|\.[/^]/.test(t)) && (t.includes("[") || namesIn(t, "typed").some(isList));
+}
+
 /** Cheap text test: could `input` hold a power, inverse or division of a matrix, or (G225) a dot or cross call? */
 export function mayPowerMatrix(input: string): boolean {
   const t = withoutStrings(input, "", "typed");
@@ -89,8 +126,8 @@ export function mayPowerMatrix(input: string): boolean {
 }
 
 /** What the walk's answer refuses (the name of the refusal), null when it refuses nothing. */
-export function shapeRefusal(found: boolean | "unchecked" | "lengthsDiffer"): "notSquare" | "lengthsDiffer" | null {
-  return found === true ? "notSquare" : found === "lengthsDiffer" ? found : null;
+export function shapeRefusal(found: boolean | "unchecked" | "lengthsDiffer" | "vectorsOnly"): "notSquare" | "lengthsDiffer" | "vectorsOnly" | null {
+  return found === true ? "notSquare" : found === "lengthsDiffer" || found === "vectorsOnly" ? found : null;
 }
 
 /**
@@ -114,7 +151,10 @@ export function shapeRefusal(found: boolean | "unchecked" | "lengthsDiffer"): "n
  * matrix that is not square (Giac's elementwise answer keeps X's shape, a square X gives a square answer, a scalar or
  * flat vector X none). True: refused; false: nothing found.
  * G225: a dot or cross call is a candidate too, its arguments evaluated under the same rules; "lengthsDiffer" when they
- * are two flat vectors of different lengths.
+ * are two flat vectors of different lengths, G225f1: "vectorsOnly" when one is a matrix.
+ * G225f1: so is a `+`, `*` or pointwise part (mayCombineLists; never for an input with no list) whose operands can be
+ * lists, "lengthsDiffer" when they are flat lists of different lengths (or matrices of different shape in `+` and the
+ * pointwise ones, or a row vector and a matrix with another number of rows in `*`).
  */
 export function nonSquarePower(
   giac: Giac,
@@ -127,12 +167,15 @@ export function nonSquarePower(
   bodies: Bodies = NO_BODIES,
   once = false,
   ans?: string,
-): boolean | "unchecked" | "lengthsDiffer" {
+): boolean | "unchecked" | "lengthsDiffer" | "vectorsOnly" {
   const mayPower = ambiguous !== false;
   const mayInverse = output.includes("[");
   const [powIn, invIn] = [powerIn(input), inverseIn(input)];
-  const productTyped = productIn(withoutStrings(input, "", "typed"));
-  const typed = (mayPowerMatrix(input) && ((mayPower && powIn) || (mayInverse && invIn))) || productTyped;
+  const plain = withoutStrings(input, "", "typed");
+  const productTyped = productIn(plain);
+  const listName = bodies.isList ?? ((): boolean => false);
+  const combinesTyped = mayCombineLists(input, listName);
+  const typed = (mayPowerMatrix(input) && ((mayPower && powIn) || (mayInverse && invIn))) || productTyped || combinesTyped;
   // G101: the input's reads (its tree) when the typed text alone is not enough, or it calls a known stored function
   let read: ReturnType<typeof bodiesRead> | null = null;
   const reached = (): ReturnType<typeof bodiesRead> => (read ??= bodiesRead(bodies));
@@ -144,8 +187,12 @@ export function nonSquarePower(
   const powers = mayPower && (powIn || inBodies("^"));
   const inverses = mayInverse && (invIn || inBodies("/", "inv"));
   // G225: the bodies only for a call of a stored function (the input's reads are an engine call that every other input is spared)
-  const products = productTyped || (functionsIn(input, "typed").some((n) => !!bodies.of(n)) && inBodies(...VECTOR_PRODUCTS));
-  if (!(powers || inverses || products) || !(typed || reached().known.size > 0)) return false;
+  const callsStored = functionsIn(input, "typed").some((n) => !!bodies.of(n));
+  const products = productTyped || (callsStored && inBodies(...VECTOR_PRODUCTS));
+  // G225f1: and those bodies, for a list operand, only when a list can be in play: in the input, a name, or a body
+  const listInPlay = (): boolean => plain.includes("[") || namesIn(plain, "typed").some(listName) || [...reached().known.values()].some((k) => k.list || k.reads.some(listName));
+  const combines = combinesTyped || (callsStored && listInPlay() && inBodies(...COMBINING));
+  if (!(powers || inverses || products || combines) || !(typed || reached().known.size > 0)) return false;
   // G101: a call's arguments are evaluated once more to bind the body: not when the input stores, or reads a function
   // of the user's whose body is not known (the known bodies store nothing, nor do the functions they read)
   const inline = (): boolean => !once && !changesState(input, "typed") && !reached().unknown;
@@ -155,7 +202,7 @@ export function nonSquarePower(
   const overBudget = (): boolean => late() || performance.now() - t0 + exactMs > WALK_BUDGET_MS;
   try {
     // `proof`: the other operand is a number literal (an inverse's numerator, a power's exponent), G171
-    const candidates: { part: string; operand: string; power: boolean; bind: Bind; proof: boolean; product?: true }[] = [];
+    const candidates: { part: string; operand: string; power: boolean; bind: Bind; proof: boolean; product?: true; combine?: string }[] = [];
     let nodes = 0;
     // G103: each tree (the input's, a body's) in one call (tree.ts), walked here: a power, a division or inv is a
     // candidate, a call of a known stored function is walked into
@@ -180,6 +227,8 @@ export function nonSquarePower(
           if (!literal(0)) candidates.push({ part: p, operand: `feuille(${p})`, power: false, bind, proof: true });
         }
         else if (t.kind === 1 && VECTOR_PRODUCTS.has(op) && products) candidates.push({ part: p, operand: `[op(${p})]`, power: false, bind, proof: false, product: true });
+        // G225f1: two operands that can be lists at the least (a number literal is none); only a `*` of two is the product read from the left
+        else if (t.kind === 1 && COMBINING.has(op) && combines && t.children.filter((c) => !c.number).length >= 2 && (op === "+" || t.children.length === 2)) candidates.push({ part: p, operand: `[op(${p})]`, power: false, bind, proof: false, combine: op });
         else if (t.kind === 1 && op === "of" && depth < MAX_DEPTH && !into(p, bind, depth)) return false;
         return t.children.every(visit);
       };
@@ -243,15 +292,28 @@ export function nonSquarePower(
       }
       // G171 (F88): the part as Giac prints it (printing a part does not evaluate it), so its calls and stores are seen
       // G225: of a dot or cross only the arguments are evaluated (notBuiltin takes the head DOT for a program of the user's)
-      if (!evaluable(giac.eval(c.product ? c.operand : c.part))) {
+      const operandsOnly = c.product || c.combine !== undefined;
+      const printed = giac.eval(operandsOnly ? c.operand : c.part);
+      // G225f1: a list the input asks for as coefficients (an operand that is a call of a polynomial function)
+      if (c.combine !== undefined && asksPoly(printed, "printed")) continue;
+      if (!evaluable(printed)) {
         unchecked.push(c);
+        continue;
+      }
+      if (c.combine !== undefined) {
+        // one call: the shapes come from the values in Giac, printed as a list of integers
+        const out = giac.eval(shapeCodes(`eval(${c.bind(c.operand)})`)).trim();
+        const codes = /^\[-?\d+(,-?\d+)*\]$/.test(out) ? out.slice(1, -1).split(",").map(Number) : [];
+        if (shapesDiffer(c.combine, codes)) return "lengthsDiffer";
         continue;
       }
       if (c.product) {
         // one argument can hold the two (`dot(L)`, L stored): Giac reads a list of two as the two arguments
         giac.eval(`pasnb:=eval(${c.bind(c.operand)})`);
         giac.eval("pasnb:=when(type(pasnb)==DOM_LIST and size(pasnb)==1,pasnb[0],pasnb)");
-        if (giac.eval(lengthsDiffer("pasnb")).trim() === "1") return "lengthsDiffer";
+        const shape = giac.eval(productShape("pasnb")).trim();
+        if (shape === "1") return "lengthsDiffer";
+        if (shape === "2") return "vectorsOnly";
         continue;
       }
       const first = c.power ? `when(eval(${c.bind(`[op(${c.part})][1]`)})==1,0,1)` : "1";

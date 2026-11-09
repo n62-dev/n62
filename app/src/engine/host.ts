@@ -29,8 +29,8 @@ import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
 import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts";
 import { resolveAngle } from "./angleMigration.ts";
-import { mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
-import { mayAddToList, unaskedPoly } from "./polyvec.ts";
+import { mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
+import { unaskedPoly } from "./polyvec.ts";
 import { approxRange, mayApproxRange } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
@@ -543,13 +543,19 @@ export class EngineHost implements FactsHost {
     if (!t?.fn) return undefined;
     if (writesThrough([name], (n) => this.keptOf(n))) return null;
     const tree = this.treeFrom(t.text);
-    return tree.ok && tree.heads[0] === "program" && !tree.heads.includes("local") ? { params: tree.bound, reads: tree.reads, heads: tree.heads } : null;
+    return tree.ok && tree.heads[0] === "program" && !tree.heads.includes("local") ? { params: tree.bound, reads: tree.reads, heads: tree.heads, list: t.text.includes("[") } : null;
   };
 
   /** G101: the stored functions `input` reads (its tree, G99) and their bodies, for nonsquare.ts. */
   private bodiesFor(input: string): Bodies {
-    return { reads: () => this.treeOf(input).reads, of: this.bodyOf, writes: () => this.candidatesOf(input) };
+    return { reads: () => this.treeOf(input).reads, of: this.bodyOf, writes: () => this.candidatesOf(input), isList: this.isList };
   }
+
+  /** G106, G225f1: a name that holds a list (G109: `list[…]` too), from the stored table's print; a chip may hold one. */
+  private readonly isList = (n: string): boolean => {
+    const t = this.stored.get(n)?.text;
+    return this.chipFacts.has(n) || (t !== undefined && (t.startsWith("[") || t.startsWith(LIST_TYPE)));
+  };
 
   /** G100/G101: the tree of a stored text (bridge-2), parsed once per text. */
   private readonly treeByText = new Map<string, GiacParse>();
@@ -932,17 +938,11 @@ export class EngineHost implements FactsHost {
     const asg0 = formIn(form, exactInput).assignment;
     // G57: so does one whose value rests on a decision, which may be refused as undecided.
     // G97: and one whose value may be a power of a non-square matrix, which is refused; G106: or a list plus a number;
-    // G111: or a call that may read one list as its argument list; G148: or an approx or evalf, refused past the range.
-    // G106: whether a name holds a list is read from Giac's print in the stored table (G65's state read, already made):
-    // the assignment must be routed before it runs, and asking the engine would cost a call on every assignment. This
-    // text gate moves to bridge-3 with the poly1 check when G103 reads a value's kind (docs/04 6.1).
-    // G109: Giac's list type (`list[…]`) is a list too
-    const isList = (n: string): boolean => {
-      const t = this.stored.get(n)?.text;
-      return t !== undefined && (t.startsWith("[") || t.startsWith(LIST_TYPE));
-    };
+    // G111: or a call that may read one list as its argument list; G148: or an approx or evalf, refused past the range;
+    // G225f1: or lists combined by position, whose sizes may differ. A name that holds a list is read from the stored
+    // table (isList), so routing an assignment costs no engine call; G103 can read a value's kind later (docs/04 6.1).
     const guarded =
-      asg0 && !form.once && (callsIn(asg0.rhs).length || mayApproxRange(asg0.rhs) || mayPowerMatrix(asg0.rhs) || mayAddToList(asg0.rhs, isList) || mayListAsArguments(asg0.rhs) || restsOnDecision(asg0.rhs, "typed", "", notBuiltin(this.giac))) ? asg0 : null;
+      asg0 && !form.once && (callsIn(asg0.rhs).length || mayApproxRange(asg0.rhs) || mayPowerMatrix(asg0.rhs) || mayCombineLists(asg0.rhs, this.isList) || mayListAsArguments(asg0.rhs) || restsOnDecision(asg0.rhs, "typed", "", notBuiltin(this.giac))) ? asg0 : null;
     // G38 (docs/04 2.4 rule 2): Giac decides signs, comparisons and floor at Digits, so the evaluation runs at P; the
     // mode's Digits stays the setting, which prints the floats of a non-number.
     const digitsSet = Math.trunc(s.digits);

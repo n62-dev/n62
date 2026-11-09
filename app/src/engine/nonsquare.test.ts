@@ -7,7 +7,7 @@ import { EngineHost, type GiacApi } from "./host.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac, nodeHost } from "./nodeGiac.ts";
-import { mayPowerMatrix, NO_BODIES, nonSquarePower, type Bodies } from "./nonsquare.ts";
+import { mayCombineLists, mayPowerMatrix, NO_BODIES, nonSquarePower, type Bodies } from "./nonsquare.ts";
 
 describe("mayPowerMatrix", () => {
   it("needs an operator and a list or a name", () => {
@@ -17,6 +17,17 @@ describe("mayPowerMatrix", () => {
     expect(mayPowerMatrix("1/3+2^64")).toBe(false);
     expect(mayPowerMatrix("sin(pi/6)")).toBe(false);
     expect(mayPowerMatrix("[1,2]+[3,4]")).toBe(false);
+  });
+});
+
+describe("mayCombineLists", () => {
+  it("needs an operator and a list, or a name that holds one", () => {
+    expect(mayCombineLists("[1,2]+[3,4]", () => false)).toBe(true);
+    expect(mayCombineLists("[1,2].*a", () => false)).toBe(true);
+    expect(mayCombineLists("L+1", (n) => n === "L")).toBe(true);
+    expect(mayCombineLists("a+b*2", () => false)).toBe(false);
+    expect(mayCombineLists("sin(1)-2", () => false)).toBe(false);
+    expect(mayCombineLists("mean([1,2])", () => false)).toBe(false);
   });
 });
 
@@ -332,7 +343,7 @@ describe.skipIf(!giacAvailable())("G225 dot and cross of different lengths", () 
   });
   const home = (input: string) => host.home(input, defaultHomeSettings).result;
   const cas = (input: string) => host.cas(input, defaultCasSettings).result;
-  const refused = { ok: false, error: "lengthsDiffer", display: "The vectors have different lengths" };
+  const refused = { ok: false, error: "lengthsDiffer", display: "The lists, vectors or matrices have different sizes" };
 
   it("refuses them typed, under Giac's other names, inside a larger input and as one list of two", () => {
     for (const input of ["dot([1,2],[3,4,5])", "dot(list[1,2],list[3,4,5])", "cross([1,2,3],[4,5])", "cross([1,2],[3,4,5])", "dotP([1,2],[3,4,5])", "dotprod([1,2],[3,4,5])", "scalar_product([1,2],[3,4,5])", "scalarProduct([1,2],[3,4,5])", "crossP([1,2,3],[4,5])", "crossproduct([1,2,3],[4,5])", "2*dot([1,2],[3,4,5])+1", "dot([[1,2],[3,4,5]])", "dot([x,y],[1,2,3])"]) {
@@ -379,10 +390,82 @@ describe.skipIf(!giacAvailable())("G225 dot and cross of different lengths", () 
   it("keeps equal lengths and Giac's matrix forms", () => {
     expect(home("dot([1,2],[3,4])")).toMatchObject({ ok: true, display: "11" });
     expect(home("cross([1,2],[3,4])")).toMatchObject({ ok: true, display: "[0,0,-2]" });
-    // a matrix operand is not a pair of vectors: Giac's own reading stands (no value claimed here, G225's report)
-    expect(home("dot([[1,2,3],[4,5,6]],[1,2,3])")).toMatchObject({ ok: true });
-    expect(cas("dot([[1,2,3],[4,5,6]],[1,2,3])")).toMatchObject({ ok: true });
+    // G225f1: a matrix operand is not a vector
+    expect(home("dot([[1,2,3],[4,5,6]],[1,2,3])")).toMatchObject({ ok: false, error: "vectorsOnly" });
+    expect(cas("dot([[1,2,3],[4,5,6]],[1,2,3])")).toMatchObject({ ok: false, error: "vectorsOnly" });
     // a name is no vector: Giac's symbolic dot stays
     expect(home("dot(gfree,[1,2,3])")).toMatchObject({ ok: true });
+  });
+});
+
+// G225f1 (pass 119): expected values by hand (the g225f1-* golden cases hold the full list); here what the goldens cannot
+// say: a refused store stores nothing, the unchecked mark, and that an input with no list makes no walk.
+describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
+  let host: EngineHost;
+  let quotes = 0;
+  beforeAll(async () => {
+    const { giac, bridge } = await loadNodeGiac();
+    const spy = new Proxy(bridge, {
+      get(t, k, r) {
+        if (k !== "value") return Reflect.get(t, k, r);
+        return (text: string, p: readonly number[], tree?: boolean) => {
+          if (text.startsWith("pasq:=")) quotes++;
+          return t.value(text, p, tree);
+        };
+      },
+    });
+    host = new EngineHost(giac, spy);
+  });
+  const home = (input: string) => host.home(input, defaultHomeSettings).result;
+  const cas = (input: string) => host.cas(input, defaultCasSettings).result;
+  const differ = { ok: false, error: "lengthsDiffer", display: "The lists, vectors or matrices have different sizes" };
+
+  it("refuses a sum and a product of stored names, and a refused store stores nothing", () => {
+    home("su:=[1,2]");
+    home("sv:=[3,4,5]");
+    expect(home("su+sv")).toMatchObject(differ);
+    expect(home("su*sv")).toMatchObject(differ);
+    expect(home("sw:=su+sv")).toMatchObject(differ);
+    expect(home("sw")).toMatchObject({ ok: true, display: "sw" });
+    expect(cas("sy:=su*sv")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(cas("sy")).toMatchObject({ ok: true, text: "sy" });
+    // a matrix operand of dot, stored
+    home("sm:=[[1,2],[3,4]]");
+    expect(home("dot(sm,sv)")).toMatchObject({ ok: false, error: "vectorsOnly", display: "Dot and cross products take two vectors" });
+    expect(cas("dot(sm,su)")).toMatchObject({ ok: false, error: "vectorsOnly" });
+  });
+
+  it("walks a stored function's body whose list only the body or an argument holds", () => {
+    home("sb(p,q):=p*q");
+    expect(home("sb([1,2],[3,4,5])")).toMatchObject(differ);
+    expect(cas("sb([1,2],[3,4,5])")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(home("sb([1,2],[3,4])")).toMatchObject({ ok: true, display: "11" });
+    home("sk(p):=p+[1,2,3]");
+    expect(home("sk(su)")).toMatchObject(differ);
+  });
+
+  it("an operand that cannot be evaluated again is ⚠, in Home and CAS", () => {
+    const why = { squareUnchecked: true };
+    expect(home("[1,2,3]+randvector(3)")).toMatchObject({ ok: true, facts: { exact: false, warn: "unchecked", why } });
+    expect(cas("[1,2,3]*randvector(3)")).toMatchObject({ ok: true, facts: { warn: "unchecked", why } });
+  });
+
+  it("keeps a coefficient vector and a stored polynomial, read from its value", () => {
+    home("pp:=symb2poly(x+2)");
+    home("pq:=symb2poly(x^2+1)");
+    expect(home("pp+pq")).toMatchObject({ ok: true, display: "poly1[1,1,3]" });
+    expect(home("symb2poly(x+2)+symb2poly(x^2+1)")).toMatchObject({ ok: true, display: "poly1[1,1,3]" });
+    expect(cas("pp+pq")).toMatchObject({ ok: true, text: "poly1[1,1,3]" });
+  });
+
+  it("an input with no list makes no walk (G52, the calls-home budget)", () => {
+    home("sn:=5");
+    home("sf(p):=p+2");
+    quotes = 0;
+    for (const input of ["1+2*3", "sin(1)-2", "sn+1", "sn*sn", "sf(3)+1"]) expect(home(input).ok, input).toBe(true);
+    expect(cas("1+2").ok).toBe(true);
+    expect(quotes).toBe(0);
+    expect(home("[1,2]+[3,4]")).toMatchObject({ ok: true, display: "[4,6]" });
+    expect(quotes).toBe(1);
   });
 });

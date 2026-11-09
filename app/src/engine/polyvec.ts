@@ -59,9 +59,3 @@ export function unaskedPoly(giac: Giac, slot: string, input: string, output: str
   const held = out.slice(3);
   return !printsPoly(held) && !asksPoly(held, "printed");
 }
-
-/** Cheap text test for a CAS assignment, which must not store a value this check refuses: its right-hand side adds or
- *  subtracts and holds a list, or a name `isList` says holds one. */
-export function mayAddToList(rhs: string, isList: (name: string) => boolean): boolean {
-  return (rhs.includes("+") || rhs.includes("-")) && !asksPoly(rhs, "typed") && (rhs.includes("[") || namesIn(rhs, "typed").some(isList));
-}

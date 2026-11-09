@@ -20,7 +20,7 @@ import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelAr
  *  polyvec.ts: Giac's polynomial of a list plus a number. `listAsArguments` (G111) and `listInArgument` (R80f1) come from
  *  listargs.ts: a list read as the argument list, or answered wrongly. `lengthsDiffer` (G225) comes from nonsquare.ts:
  *  dot or cross of two vectors of different lengths. */
-export type Refusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer";
+export type Refusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer" | "vectorsOnly";
 
 /** A check's answer: the result stands, it is refused, or the check could not finish (an error or Giac's timeout), in
  *  which case the result stands with ⚠ (nothing confirmed that it exists). */
