@@ -749,3 +749,8 @@ cases:
   - { id: "g225f1-keep-poly-sum", input: "symb2poly(x+2)+symb2poly(x^2+1)", expect: "poly1[1,1,3]", source: "derived", note: "guard: coefficient vectors asked for: (x+2)+(x^2+1) = x^2+x+3" }
   - { id: "g225f1-keep-list-plus-number", input: "[1,2]+1", expect: "A list plus a number: use .+ or add a list of the same length", source: "derived", note: "guard: stays listPlusNumber" }
   - { id: "g225f1-keep-matrix-vector-error", input: "[[1,2],[3,4]]*[1,2,3]", expect: "GIAC_ERROR: dotvecteur Error: Invalid dimension", source: "derived", note: "guard: a 2x2 matrix cannot take a 3-vector; stays Giac's error" }
+  # --- G173 (F108, F127, F93): Giac's print forms never reach the text ------------------------------------------------
+  - { id: "g173-empty-seq", input: "op([])", expect: "No value found", source: "derived", note: "F108: a sequence of no element is no answer; it showed Giac's seq[]" }
+  - { id: "g173-matrix-in-vector", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
+  - { id: "g173-matrix-in-list", input: "list[idn(2)]", expect: "{[[1,0],[0,1]]}", source: "derived", note: "F127: a list holding the 2×2 identity; it showed {matrix[[1,0],[0,1]]}" }
+  - { id: "g173-when", input: "when(x>0,x+1,x-1)", expect: "when(x>0,x+1,x-1)", source: "derived", note: "F93: the conditional as typed; it showed C's ((x>0)? x+1 : x-1), which the entry line does not read" }

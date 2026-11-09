@@ -60,7 +60,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 501 | G172 a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
-| 502 | [G173](packages/G173.md) no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
+| 502 | G173 no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
 | 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
 | 504 | [G180](packages/G180.md) DEG sqrt(asinh(asin(3.7))) gets the same mark on any clock (F159) | gorge, Opus | `p1/gorge-degmarkclock` | – |
 | 505 | [G186](packages/G186.md) Home's checks end on acos, asin, acosh of a huge or tiny real (F145) | gorge, Opus | `p1/gorge-cuthang` | – |
@@ -76,6 +76,15 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 594 | [A128](packages/A128.md) start chunk budget 63 kB (owner) | annabell, Sonnet | `p1/annabell-startbudget` | – |
+| 595 | [A124](packages/A124.md) docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
+| 596 | [A127](packages/A127.md) a row waits for its After | annabell, Sonnet | `p1/annabell-aftercheck` | A124 |
+| 597 | [A129](packages/A129.md) one rerun of untouched e2e failures | annabell, Sonnet | `p1/annabell-flakerun` | A127 |
+| 598 | [A130](packages/A130.md) the log names every failing test | annabell, Sonnet | `p1/annabell-failnames` | A129 |
+| 599 | [A131](packages/A131.md) a Not done list item does not stop a run | annabell, Sonnet | `p1/annabell-notdone` | A130 |
+| 600 | [A125](packages/A125.md) clipboard lock in turn (F202) | annabell, Sonnet | `p1/annabell-clipqueue` | A124 |
+| 601 | [A132](packages/A132.md) pipeline rates from the log | annabell, Sonnet | `p1/annabell-pipestats` | A130 |
+| 602 | [A126](packages/A126.md) e2e flakes at 16 and 8 workers | annabell, Sonnet | `p1/annabell-e2eworkers` | A125 |
 | 593 | [G303](packages/G303.md) a stored name `k` survives Enter (F205) | gorge, Opus | `p1/gorge-statenames` | – |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
