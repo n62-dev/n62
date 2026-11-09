@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 560 | [R170](packages/R170.md) core list: units, ± | ron, Sonnet | `p1/ron-coreunits` | – |
+| 560 | R170 core list: units, ± | ron, Sonnet | `p1/ron-coreunits` | – |
 | 561 | [R172](packages/R172.md) the report text | ron, Sonnet | `p1/ron-reporttext` | – |
 | 562 | [R173](packages/R173.md) Report a problem (again: run 820 came before R172 and built nothing) | ron, Sonnet | `p1/ron-reportrow2` | R172 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
