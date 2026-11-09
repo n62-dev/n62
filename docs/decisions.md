@@ -140,6 +140,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Full text: archive. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
 - **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
+- **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1): R148's short rows, which the owner chose for the history's room, leave Settings › Appearance 287 px for the 304 its rows need at the floor (docs/05 3.1, fit, then scroll); that level scrolls, no key row or floor gives way. Would change if: the owner's look at 360 × 740 says otherwise.
 
 **Engine, precision and formats**
 - **Honest precision** (G2): rule: docs/04 2.4 rules 2–3; assignments evaluated once. **G44, G23:** the inverse distributions are solved against our MPFR forward functions, every fallback keeps ⚠. Full text: archive, "Shortened 2026-10-21 (P23)". Would change if: a G2 user types Giac's aliases.
