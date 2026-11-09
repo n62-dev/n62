@@ -31,6 +31,7 @@ import { askedDigits, DOUBLE_DIGITS, exactFacts, floatFacts, floatPathFacts, int
 import { bracesOf, functionsIn, holdsMatrixType, isError, isTimeout, LIST_TYPE, replaceLiteral, whenCalls, wordsOf } from "./giacPrint.ts";
 import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals.ts";
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
+import { homeSequence } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
 import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
@@ -189,8 +190,7 @@ export const ENGINE_DEFINITIONS: Readonly<Record<string, string>> = {
     "s:=0; for (k:=0;k<size(l);k:=k+1) s:=s+1/l[k]; return normal(1/s); }",
   // G106f1: whether a value holds a coefficient vector at any depth (polyvec.ts; its check defines it in the same call).
   [POLY_AT]: POLY_AT_ANY_DEPTH,
-  // G173: rewrites Giac's matrix type at any depth (matrixType.ts; its call defines it in the same call).
-  [PLAIN_AT]: PLAIN_AT_ANY_DEPTH,
+  [PLAIN_AT]: PLAIN_AT_ANY_DEPTH, // G173: Giac's matrix type at any depth (matrixType.ts; its call defines it again)
 };
 
 /** Our names whose definition host.ts builds (tables out of the start chunk): G30 `eseries` and its helper (G139). */
@@ -248,8 +248,7 @@ export function definitionsUsedBy(input: string): string[] {
 /** Giac's latex() of the result in `slot`, whose text is `text`; R64: one that holds the degree factor (a function
  *  body, which Giac prints as given) is drawn from its text without it, as typed; G173: a list of one matrix as that. */
 export function latexShown(giac: Giac, slot: string, text: string): string {
-  if (hasAngleFactor(text, "printed")) return giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`);
-  return soleMatrixLatex(giac, slot, text) ?? giac.eval(`latex(${slot})`);
+  return hasAngleFactor(text, "printed") ? giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`) : (soleMatrixLatex(giac, slot, text) ?? giac.eval(`latex(${slot})`));
 }
 
 /** R64, G46 (route R): the degree factor our parser puts in every angle (engine/angles.ts): pi/180 in DEG, 1 in RAD.
@@ -536,17 +535,9 @@ export function homeEval(
       if (d.value) value = d.value;
     }
   }
-  // G119 (F108): Giac's sequence answer (fMin, fMax, op) is no value Home shows (`seq[1/2]`, `1,-1`), and Giac adds a stored
-  // sequence's elements into one sum (Ans+1 of 1,-1 gave 1): one element becomes its value with its own mark, several Giac's
-  // list type, shown in braces as G109's; Ans, the chips and the copy read back what Giac reads.
-  // G173: no element (`op([])`, printed `seq[]`) is no value: refused below, once `refuse` exists.
-  const isSeq = value.kind === "sequence" && !isError(exactOut);
-  const seqSize = isSeq ? Number(giac.eval(`size(${ans})`)) : 0;
-  const emptySeq = isSeq && seqSize === 0 && !form.noValue;
-  if (Number.isInteger(seqSize) && seqSize >= 1) {
-    const v = withDigits(giac, P, s.digits, () => giac.value(`${ans}:=${seqSize === 1 ? `${ans}[0]` : `list[${ans}]`}`, at));
-    if (!isError(v.text)) [value, exactOut] = [v, v.cut ? withDigits(giac, P, s.digits, () => giac.eval(ans)) : v.text];
-  }
+  // G119, G173: Giac's sequence answer as a value or a list (sequences.ts); none is refused below, once `refuse` exists
+  const seq = homeSequence(giac, ans, value, exactOut, at, (f) => withDigits(giac, P, s.digits, f), form.noValue);
+  [value, exactOut] = [seq.value, seq.text];
   // G130: a value decided again (decideTwice) is Giac's print too
   if (holdsMatrixType(value.text) && !isError(exactOut)) {
     const v = withDigits(giac, P, s.digits, () => plainRows(giac, ans, value, at));
@@ -644,7 +635,7 @@ export function homeEval(
   }
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
-  if (emptySeq) return refuse("noValue", "exact");
+  if (seq.empty) return refuse("noValue", "exact");
   // G39: Giac's [exact, numeric] pair of a definite integral is never a list. The two answers differ, so neither is
   // confirmed: the float is the value, with no digit confirmed (⚠, docs/04 2.4), and the why-line says the pair differs.
   const pair = !once && hasDefiniteIntegral(exactBody) ? giacPair(exactOut) : null;

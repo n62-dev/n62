@@ -37,7 +37,7 @@ import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerica
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, printsSequence, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
+import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
@@ -54,6 +54,7 @@ import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
 import { plainRowsText } from "./matrixType.ts";
+import { casSequence } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine } from "./dead.ts";
 
@@ -1014,19 +1015,14 @@ export class EngineHost implements FactsHost {
         text = d.text;
       }
     }
-    // G173 (F108, owner 2026-11-05): G119's rule for Giac's sequence answers, as in Home: one element is its value, several
-    // Giac's list type; no element (`op([])`) is refused below. The kind is asked only of a print that may be one.
-    let emptySeq = false;
-    if (printsSequence(text) && this.giac.value("pcasans", []).kind === "sequence") {
-      const n = Number(this.giac.eval("size(pcasans)"));
-      emptySeq = n === 0 && !form.noValue;
-      if (Number.isInteger(n) && n >= 1) {
-        const v = withDigits(this.giac, valuePrecision(digitsSet), digitsSet, () => this.giac.eval(`pcasans:=${n === 1 ? "pcasans[0]" : "list[pcasans]"}`));
-        if (!isError(v)) {
-          text = v;
-          if (asg && !guarded) this.giac.eval(`${asg.name}:=pcasans`);
-        }
-      }
+    // G119, G173 (owner, 2026-11-05): Giac's sequence answer as in Home (sequences.ts); none is refused, and a name it was
+    // stored under goes back (a guarded assignment has stored nothing yet)
+    const seq = casSequence(this.giac, "pcasans", text, (f) => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, f), form.noValue);
+    if (seq?.empty && asg0 && !guarded) this.giac.eval(this.byName.has(asg0.name) ? putBack([], [this.byName.get(asg0.name)!]) : `purge(${asg0.name})`);
+    if (seq?.empty) return fail(enEngine["error.noValue"], "noValue");
+    if (seq) {
+      text = seq.text;
+      if (asg && !guarded) this.giac.eval(`${asg.name}:=pcasans`);
     }
     // G39: a divergent integral or series, or no limit, is refused as in Home; Giac's [exact, numeric] pair of a
     // definite integral is shown as Giac's text (both answers) with ⚠, never as a numeric list.
@@ -1057,11 +1053,6 @@ export class EngineHost implements FactsHost {
     const lost = guarded || !single || (onceRun && asg0 && !form.noValue) ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
     if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
     if (lost) return fail(enEngine[`error.${lost}`], lost);
-    if (emptySeq) {
-      // a guarded assignment has stored nothing yet; any other has: its name goes back, as a refused once store's (G171)
-      if (asg0 && !guarded) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
-      return fail(enEngine["error.noValue"], "noValue");
-    }
     if (guarded) {
       const stored = this.giac.eval(`${guarded.name}:=pcasans`);
       if (isError(stored)) return fail(stored, isTimeout(stored) ? "timeout" : "engine");
