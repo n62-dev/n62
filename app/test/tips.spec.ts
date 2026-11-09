@@ -4,7 +4,7 @@
 // Android back closes it. It is shown once (the flag is in the kv store), and Settings › Help and about shows it again.
 // `open` adds tips=off to every other test; `tips=on` keeps the default.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, tap } from "./helpers.ts";
+import { entryValue, open, setFontScale, tap } from "./helpers.ts";
 
 const tips = (page: Page) => page.getByTestId("tips");
 const ON = "engine=fake&tips=on";
@@ -37,6 +37,11 @@ test("a fresh profile shows the tips; a reload does not", async ({ page }) => {
   await expect(tips(page)).toBeVisible();
   await expect(tips(page)).toContainText("Tap the name for your apps, Home and CAS");
   await expect(tips(page)).toContainText("Tap ☰ for the menu: copy, paste, settings");
+  await expect(tips(page)).toContainText("Flick a key up for its Shift function, down for its letter");
+  await expect(tips(page)).toContainText("Drag on the round pad to move the cursor");
+  await expect(tips(page)).toContainText("Math opens Find: one search for every function, constant and unit");
+  await expect(tips(page)).toContainText("= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.");
+  await expect(tips(page).locator(".tip .n")).toHaveCount(2); // R171: only the two ringed cards carry a number
   await expect(page.getByTestId("tips-got-it")).toHaveText("Got it");
   await page.getByTestId("tips-got-it").tap();
   await expect(tips(page)).toHaveCount(0);
@@ -87,6 +92,25 @@ test("each ring is centred on its control's content and stays within the status 
     expect(c.h, target).toBeGreaterThan(0);
     expect(Math.abs(r.y + r.height / 2 - c.mid), `${ring}: centre`).toBeLessThanOrEqual(1);
     expect(r.y + r.height, `${ring}: bottom`).toBeLessThanOrEqual(status.y + status.height + 4);
+  }
+});
+
+// R171: six cards and Got it fit the small phone at the largest font scale: none cut by the screen's edges.
+test("at 360 × 740 and font scale 2.0 every card and Got it lie inside the viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page, "engine=fake&tips=off");
+  await setFontScale(page, 2);
+  await tap(page, ["@mode", "d6", "d7"]);
+  await page.getByTestId("menu").locator('[data-id="tips"]').tap();
+  await expect(tips(page)).toBeVisible();
+  const boxes = [...(await page.locator(".tips .tip").all()), page.getByTestId("tips-got-it")];
+  expect(boxes.length).toBe(7);
+  for (const [i, b] of boxes.entries()) {
+    const r = (await b.boundingBox())!;
+    expect(r.x, `box ${i}: left`).toBeGreaterThanOrEqual(0);
+    expect(r.y, `box ${i}: top`).toBeGreaterThanOrEqual(0);
+    expect(r.x + r.width, `box ${i}: right`).toBeLessThanOrEqual(360);
+    expect(r.y + r.height, `box ${i}: bottom`).toBeLessThanOrEqual(740);
   }
 });
 

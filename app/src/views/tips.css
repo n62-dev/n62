@@ -42,6 +42,8 @@
   left: 16px;
   right: 16px;
   max-width: 420px;
+  bottom: 8px;
+  overflow-y: auto; /* a safety net: nothing is lost where the screen is still too short */
   margin-inline: auto;
   display: flex;
   flex-direction: column;
@@ -57,7 +59,7 @@
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 10px;
-  font-size: 16px;
+  font-size: min(var(--fs-body), 18px); /* the font scale reaches it, up to 18 px: six cards must fit 360 × 740 at scale 2.0 (R171) */
   line-height: 1.3;
 }
 .tips .gotit {
