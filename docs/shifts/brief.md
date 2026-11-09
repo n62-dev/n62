@@ -79,9 +79,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 571 | A93 counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201f1, G202 |
-| 572 | A94 trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
-| 573 | G301 CAS degree quotient (F196) | gorge, Opus | `p1/gorge-degquot` | – |
 | 574 | [A96](packages/A96.md) F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |
 | 575 | [A97](packages/A97.md) F-Droid build step | annabell, Sonnet | `p1/annabell-fdroidbuild` | A96 |
 | 576 | [A98](packages/A98.md) `SUBMIT.md` | annabell, Sonnet | `p1/annabell-fdroidsubmit` | A97 |

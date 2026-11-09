@@ -42,6 +42,8 @@ scripts/night.sh --until 07:30 --dry-run   # prints each step's kind on a simula
 
 Desktop probes (no device): `tools/probes/` checks what the engine, the parser and the qalc and Find data do today; see its README.
 
+Trust facts (no device; from `app/`): `npm run trust:check` compares README.md's "Why trust it" and `tests/golden/README.md`'s counts with the files; `npm run trust:refresh` runs `oracle.py --counts` and rewrites both (A93; A91 runs it at the tag). `TRUST_SKIP_ORACLE=1` skips the Python step; `ORACLE_PYTHON` picks the interpreter.
+
 Docs check (no device): `node tools/docs-check.mjs` checks every Markdown link and the docs' size budgets; `npm run gate` runs it (S7). `docs-check.test.mjs` tests it on fixture repos (the pipeline's `docs` check runs both). `line-baseline.yaml` lists the source files over 800 lines at their allowed size (A22; the docs check reads it).
 
 Build-time tools (no device):
