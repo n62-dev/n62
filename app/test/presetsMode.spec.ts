@@ -75,7 +75,11 @@ test.describe("by keys", () => {
 
   test("a hardware Enter on the name saves and nothing reaches the history; an empty or taken name is refused with a notice; Esc cancels", async ({ page }) => {
     await tap(page, ["d1", "d2"]);
-    await tap(page, ["@mode", "d5", "d1"]);
+    await tap(page, ["@mode", "d5"]);
+    await expect(title(page)).toHaveText("Mode › Presets");
+    await expect(row(page, "save")).toBeVisible();
+    await tap(page, ["d1"]);
+    await expect(label(page)).toHaveText("Preset name");
     await page.keyboard.press("Enter");
     await expect(notice(page)).toHaveText("A preset needs a name");
     await expect(label(page)).toHaveText("Preset name"); // still naming
@@ -85,6 +89,7 @@ test.describe("by keys", () => {
     expect(await historyRows(page)).toBe(0);
     expect(await entryValue(page)).toBe("12");
     await tap(page, ["@mode", "d5", "d2"]); // Save is row 2 now
+    await expect(label(page)).toHaveText("Preset name");
     await page.keyboard.type("lab");
     await page.keyboard.press("Enter");
     await expect(notice(page)).toHaveText("There is already a preset named lab");
@@ -204,7 +209,11 @@ test.describe("by touch", () => {
   });
 
   test("a tap elsewhere ends the naming: the format chip, then Save again, then Esc gives the line back; the place name too", async ({ page }) => {
-    await tap(page, ["d1", "d2", "@mode", "d5", "d1"]);
+    await tap(page, ["d1", "d2", "@mode", "d5"]);
+    await expect(title(page)).toHaveText("Mode › Presets");
+    await expect(row(page, "save")).toBeVisible();
+    await tap(page, ["d1"]);
+    await expect(label(page)).toHaveText("Preset name");
     await page.keyboard.type("La");
     expect(await entryValue(page)).toBe("La");
     await page.getByTestId("chip-format").tap(); // a sheet opens: the half-typed name goes, the line comes back
@@ -215,7 +224,11 @@ test.describe("by touch", () => {
     await tap(page, ["esc"]);
     await expect(label(page)).toHaveCount(0);
     expect(await entryValue(page)).toBe("12"); // never "La"
-    await tap(page, ["@mode", "d5", "d1"]);
+    await tap(page, ["@mode", "d5"]);
+    await expect(title(page)).toHaveText("Mode › Presets");
+    await expect(row(page, "save")).toBeVisible();
+    await tap(page, ["d1"]);
+    await expect(label(page)).toHaveText("Preset name");
     await page.keyboard.type("La");
     await tap(page, ["@place"]);
     await expect(page.getByTestId("apps")).toBeVisible();

@@ -1302,6 +1302,13 @@ printf 'checks failed: red-first (x)\n## redfirst failed (full log: y)\n--- tail
 [[ "$(first_failing_line "$tmp/ff2")" == 'red-first: every new test passes' ]] || fail "A83: first_failing_line after the tail mark: $(first_failing_line "$tmp/ff2")"
 printf '## e2e failed (full log: z)\n12:  %s\n' "$(printf 'x%.0s' $(seq 1 200))" > "$tmp/ff3"
 [[ "$(first_failing_line "$tmp/ff3")" == "$(printf 'x%.0s' $(seq 1 120))" ]] || fail "A83: first_failing_line is not cut to 120 characters"
+# A83f1: a passing Playwright line whose title holds the multiplication sign (a check mark, "2×2 matrix") is no failure: the excerpt drops it,
+# so first_failing_line names the real failing line, and 200 passing lines do not use up the 150-line cap
+{ for i in $(seq 1 200); do printf '  ✓  %s [chromium] › bksp-array.spec.ts:%s › 2×2 matrix (1.2s)\n' "$i" "$i"; done
+  printf '  ✘  201 [chromium] › solve.spec.ts:9 › solves x (2.0s)\n'; } > "$tmp/pw.log"
+{ echo '## e2e failed (full log: /x/check-0-e2e.log)'; excerpt "$tmp/pw.log"; } > "$tmp/ff4"
+[[ "$(first_failing_line "$tmp/ff4")" == '✘  201 [chromium] › solve.spec.ts:9 › solves x (2.0s)' ]] || fail "A83f1: first_failing_line names a passing line: $(first_failing_line "$tmp/ff4")"
+grep -qE '^[0-9]+[:-] *✓' "$tmp/ff4" && fail "A83f1: the excerpt keeps a passing (check mark) line"
 grep -q 'checks failed (round 0): ## stages failed (full log: [^)]*): sweep NOW PASSING g1' "$s5/.coord/log.md" || fail "A83: the checks-failed line lacks the first failing line: $(grep 'checks failed' "$s5/.coord/log.md")"
 # (b), (c) behaviour: --checks auto in a sandbox; a failing pre-flight is a fix round, never enters the queue, never takes integ
 pf="$tmp/pf"; mkdir -p "$pf/bin" "$pf/tools" "$pf/docs/shifts" "$pf/app" "$pf/engine/giac/patches"; git init -q -b main "$pf"
