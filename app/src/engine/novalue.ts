@@ -146,6 +146,8 @@ function holdsUndef(n: PrintedNode | null): boolean {
  *  so it is not a lost number; read from the text, so such a result costs no engine call. */
 const NOT_FREE: ReadonlySet<string> = new Set(["pi", "e", "i", "euler_gamma"]);
 const freeName = (t: string): boolean => [...names(t, "printed")].some((n) => !n.call && !NOT_FREE.has(n.name));
+/** A printed test, function or string: no lost number (lostNumber, lostCas). */
+const notAValue = (t: string): boolean => /==|<>|->|"/.test(t);
 
 /**
  * F50: the reason for a result held in `slot` that is Giac's text with no free name (a number was asked for, and Giac
@@ -165,11 +167,15 @@ export function lostNumber(
 ): NoValue | null {
   const out = output.trim();
   if (out.includes("undef") && holdsUndef(parsePrinted(out))) return undefReason(giac, input, late, exactMs, userFn);
-  if (infinite(out) || /==|<>|->|"/.test(out) || freeName(out)) return null;
+  if (infinite(out) || notAValue(out) || freeName(out)) return null;
   if (giac.eval(`type(${slot})`).trim() !== "expression") return null;
   if (namesOf(giac, slot)?.length !== 0) return null;
   return infinite(giac.eval(`evalf(${slot})`)) ? "overflow" : "noValue";
 }
+
+const NO_NUMBER: ReadonlySet<string> = new Set(["expression", "identifier"]);
+/** Giac's operator of an interval and of a geometry object: values of their own, with no number to find. */
+const OBJECT_HEADS: ReadonlySet<string> = new Set(["' .. '", "'pnt'"]);
 
 /**
  * G168 (F93): the reason for the CAS answer `output` of `input` (decimals exact), held in `slot`, when no value came:
@@ -185,10 +191,10 @@ export function lostNumber(
 export function lostCas(giac: Giac, slot: string, input: string, output: string, late: () => boolean, userFn: (name: string) => boolean, digits: number, rerun: boolean): NoValue | null {
   const out = output.trim();
   if (out === "undef") return undefReason(giac, input, late, 0, userFn);
-  if (infinite(out) || /==|<>|->|"|\.\.|\bpnt\(/.test(out) || freeName(out)) return null;
+  if (infinite(out) || notAValue(out) || freeName(out)) return null;
   if (giac.eval(`type(${slot})`).trim() !== "expression") return null;
-  if (namesOf(giac, slot)?.length !== 0) return null;
-  const noNumber = (e: string): boolean => /^(expression|identifier)$/.test(withDigits(giac, DOUBLE_DIGITS, digits, () => giac.eval(`type(evalf(${e}))`)).trim());
+  if (namesOf(giac, slot)?.length !== 0 || OBJECT_HEADS.has(giac.eval(`sommet(${slot})`).trim())) return null;
+  const noNumber = (e: string): boolean => NO_NUMBER.has(withDigits(giac, DOUBLE_DIGITS, digits, () => giac.eval(`type(evalf(${e}))`)).trim());
   return noNumber(slot) && (!rerun || noNumber(input)) ? "noValue" : null;
 }
 

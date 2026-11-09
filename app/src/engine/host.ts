@@ -562,9 +562,8 @@ export class EngineHost implements FactsHost {
   /** G168 (F109): the input is `name()` of a name that is neither Giac's, nor stored in this engine, nor one of our
    *  library definitions (Giac drops the empty call: `type(DelAVars())` is identifier), so no value and no refusal would come. */
   private unknownEmptyCall(input: string): boolean {
-    const t = input.trim();
-    const name = leadingName(t);
-    if (name === null || !/^\(\s*\)$/.test(t.slice(name.length).trimStart())) return false;
+    const name = leadingName(input.trim());
+    if (name === null || wholeCall(input, name, "typed")?.join("") !== "") return false;
     return notBuiltin(this.giac)(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name) && !this.byName.has(name) && !this.pending.has(name) && !this.stored.has(name) && !this.skipped.has(name);
   }
 
