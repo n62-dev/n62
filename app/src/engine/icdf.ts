@@ -10,7 +10,7 @@
 // |F(x) − p|/min(p, 1 − p) is above 10^−digits, the definition returns Giac's value and sets the flag ICDF_FAILED:
 // the caller keeps today's ⚠ (the unaudited check). Synchronous, UI-free; only erasable TypeScript syntax.
 import type { Giac } from "./numeric.ts";
-import { closing, functionsIn, renameCalls, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { callsOf, closing, functionsIn, renameCalls, withoutStrings, type Quoting } from "./giacPrint.ts";
 
 /** The Giac names polished, and our definition each call is replaced by. */
 export const ICDF_REPLACED: Readonly<Record<string, string>> = {
@@ -190,12 +190,11 @@ export function erfValueText(giac: Giac, text: string, q: Quoting): string {
     s = `${s.slice(0, k)}erfc(${s.slice(k + 6)}`;
     bare = withoutStrings(s, (str) => " ".repeat(str.length), q);
   }
-  for (let k = bare.indexOf("erf("); k >= 0; k = bare.indexOf("erf(", k + 1)) {
-    const close = closing(s, k + 3, q);
-    if (close < 0) break;
-    if (s.slice(close + 1, close + 3) !== "+1" || !alone(k, close + 3)) continue;
-    s = `${s.slice(0, k)}erfc(-(${s.slice(k + 4, close)}))${s.slice(close + 3)}`;
-    bare = withoutStrings(s, (str) => " ".repeat(str.length), q);
+  // from the last call back: a rewrite leaves the places before it as they were (the close of an outer call is found again)
+  for (const c of callsOf(s, ["erf"], q).reverse()) {
+    const close = closing(s, c.open, q);
+    if (close < 0 || s.slice(close + 1, close + 3) !== "+1" || !alone(c.at, close + 3)) continue;
+    s = `${s.slice(0, c.at)}erfc(-(${s.slice(c.open + 1, close)}))${s.slice(close + 3)}`;
   }
   s = renameCalls(s, ERF_REPLACED, q);
   const last = ERF_DEFINITIONS[ERF_DEFINITIONS.length - 1]!;
