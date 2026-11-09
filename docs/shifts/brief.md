@@ -86,7 +86,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 566 | [G201](packages/G201.md) the four traps (review-only, `--no-worker`: the branch is done) | gorge, Sonnet | `p1/gorge-trustrows` | – |
 | 567 | G300 trig chain cases | gorge, Sonnet | `p1/gorge-chain9` | G201 |
-| 569 | [A90](packages/A90.md) release notes file | annabell, Sonnet | `p1/annabell-relnotes` | – |
+| 569 | A90 release notes file | annabell, Sonnet | `p1/annabell-relnotes` | – |
 | 570 | [A92](packages/A92.md) bug form session | annabell, Sonnet | `p1/annabell-formsession` | – |
 | 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201, G202 |
 | 572 | [A94](packages/A94.md) trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // A8: the release workflow stays small and pinned, and the signing key reaches one step only, after the golden gate.
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -111,15 +113,63 @@ describe(".github/workflows/release.yml", () => {
     expect(steps[del]?.if).toBe("always()");
   });
 
-  it("publishes the versioned APK and its .sha256, a pre-release for 0.x or a tag with a -, with GITHUB_TOKEN", () => {
+  it("publishes the versioned APK and its .sha256, with GITHUB_TOKEN", () => {
     const s = steps[at(/gh release create/)] as Step;
     expect(s.env?.["GH_TOKEN"]).toBe("${{ github.token }}");
     expect(s.run).toMatch(/gh release create "\$TAG" "\$apk" "\$apk\.sha256"/);
     expect(s.run).toMatch(/apk="dist\/n62-\$v\.apk"/);
-    expect(s.run).toMatch(/"\$v" == 0\.\* \|\| "\$TAG" == \*-\*/);
     expect(s.run).toMatch(/--prerelease/);
     // the notes: commit, both SHA256SUMS, the certificate
     for (const f of ["git rev-parse HEAD", "engine/giac/_out/release/SHA256SUMS", "engine/qalc/_out/release/SHA256SUMS", "android/release-cert.sha256"])
       expect(s.run).toContain(f);
+  });
+
+  it("a missing docs/release-notes/$v.md stops the job before the build (A90): the check sits right after the version check", () => {
+    const ver = at(/tools\/check-version\.sh "\$TAG"/);
+    const notes = steps.findIndex((s) => /release-notes\/\$v\.md/.test(s.run ?? "") && !/gh release create/.test(s.run ?? ""));
+    const engine = at(/build-wasm-release\.sh/);
+    expect(notes).toBeGreaterThan(-1);
+    expect(notes).toBeGreaterThan(ver);
+    expect(notes).toBeLessThan(engine);
+    expect(notes).toBeLessThan(at(/npm ci/));
+    const run = steps[notes]?.run ?? "";
+    // $v comes from app/package.json, as the publish step reads it (never from the tag: a -test tag has the same file)
+    expect(run).toMatch(/v="\$\(node -p 'require\("\.\/app\/package\.json"\)\.version'\)"/);
+    expect(run).toMatch(/\[\[ (! )?-f "docs\/release-notes\/\$v\.md" \]\]/);
+    expect(run).toMatch(/exit 1/);
+    // run it: no file fails (non-zero, before anything else), a file passes
+    for (const [have, code] of [[false, 1], [true, 0]] as const) {
+      const dir = mkdtempSync(join(tmpdir(), "relnotes-"));
+      mkdirSync(join(dir, "app"));
+      mkdirSync(join(dir, "docs/release-notes"), { recursive: true });
+      writeFileSync(join(dir, "app/package.json"), '{"version":"7.8.9"}');
+      if (have) writeFileSync(join(dir, "docs/release-notes/7.8.9.md"), "notes\n");
+      const r = spawnSync("bash", ["-eo", "pipefail", "-c", run], { cwd: dir, env: { ...process.env, TAG: "v7.8.9-test" } });
+      rmSync(dir, { recursive: true, force: true });
+      expect(r.status).toBe(code);
+    }
+  });
+
+  it("the publish step puts the notes file first in $notes, above the hashes (A90)", () => {
+    const run = steps[at(/gh release create/)]?.run ?? "";
+    const block = run.slice(run.indexOf("{"), run.indexOf('} > "$notes"'));
+    const cat = block.indexOf('cat "docs/release-notes/$v.md"');
+    expect(cat).toBeGreaterThan(-1);
+    expect(block.slice(0, cat)).not.toMatch(/\becho\b|\bcat\b/);
+    expect(cat).toBeLessThan(block.indexOf("git rev-parse HEAD"));
+    expect(cat).toBeLessThan(block.indexOf("SHA256SUMS"));
+    expect(cat).toBeLessThan(block.indexOf("android/release-cert.sha256"));
+  });
+
+  it("only a tag with a - is a pre-release; v0.1.0 is a normal release (A90)", () => {
+    const s = steps[at(/gh release create/)] as Step;
+    expect(s.name).toMatch(/pre-release for a tag with a -/);
+    expect(s.name).not.toMatch(/0\.x/);
+    const line = (s.run ?? "").split("\n").find((l) => /prerelease/.test(l) && /^\s*if /.test(l)) ?? "";
+    expect(line).not.toMatch(/\$v/);
+    for (const [tag, flagged] of [["v0.1.0", false], ["v0.1.0-test", true], ["v1.2.3", false], ["v1.2.3-rc1", true]] as const) {
+      const r = spawnSync("bash", ["-c", `pre=(); ${line.trim()}; echo "\${pre[@]}"`], { env: { ...process.env, TAG: tag, v: tag.slice(1).replace(/-.*/, "") }, encoding: "utf8" });
+      expect(r.stdout.trim()).toBe(flagged ? "--prerelease" : "");
+    }
   });
 });
