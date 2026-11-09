@@ -12,7 +12,7 @@ const dir = join(repo, ".github/ISSUE_TEMPLATE");
 interface Field {
   type: string;
   id?: string;
-  attributes?: { label?: string; options?: string[] };
+  attributes?: { label?: string; options?: string[]; render?: string };
   validations?: { required?: boolean };
 }
 interface Form {
@@ -53,6 +53,23 @@ describe("issue forms (A81)", () => {
     const where = fields(f).find((b) => b.id === "where");
     expect(where?.attributes?.options).toEqual(["Android app", "Web app (n62.dev)", "Other"]);
     for (const b of fields(f)) expect(b.attributes?.label).toBeTruthy();
+  });
+
+  it("bug.yml has an optional render:text session textarea after device (A92)", () => {
+    const f = fields(load("bug.yml"));
+    const i = f.findIndex((b) => b.id === "session");
+    expect(i).toBe(f.findIndex((b) => b.id === "device") + 1);
+    expect(f[i]?.type).toBe("textarea");
+    expect(f[i]?.attributes?.label).toBe("Session");
+    expect(f[i]?.attributes?.render).toBe("text");
+    expect(f[i]?.validations?.required).toBeFalsy();
+    expect(required(load("bug.yml")).sort()).toEqual(["expected", "input", "result", "version", "view", "where"]);
+  });
+
+  it("PRIVACY.md says what Report a problem does (A92)", () => {
+    expect(readFileSync(join(repo, "PRIVACY.md"), "utf8")).toContain(
+      "**Report a problem** (Settings › Help and about) puts your version, device and history on the clipboard and opens the bug form in your browser, only when you tap it. You see the text before you send it; the app itself sends nothing.",
+    );
   });
 
   it("feature.yml is an enhancement form with one required field", () => {
