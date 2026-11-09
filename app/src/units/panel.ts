@@ -54,10 +54,14 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
       // the browser makes from it: under load Chromium now and then gave a chip or More… pointerdown, touchstart, pointerup
       // and touchend and no click, and the tap was lost. A click that follows a pointer (detail > 0) is that same press;
       // one without (a keyboard or a screen reader activating the button) picks itself.
+      // R159f2: `picked` is set only where pointerup picked. A touch that lands just beside the chip (a finger's radius) is not
+      // on it at pointerup, so nothing is picked and the browser's click, which lands on the chip, picks instead.
       let down = false;
+      let picked = false;
       b.addEventListener("pointerdown", (e) => {
         e.preventDefault(); // the view keeps the focus (hardware keys)
         down = e.isPrimary && e.button === 0;
+        picked = false;
       });
       b.addEventListener("pointercancel", () => (down = false));
       b.addEventListener("pointerup", (e) => {
@@ -65,15 +69,21 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
         down = false;
         if (!was || e.button !== 0) return;
         const at = document.elementFromPoint(e.clientX, e.clientY); // (a touch is captured by its first target: the finger may have left it)
-        if (at === b || b.contains(at)) void v.pick(i);
+        if (at === b || b.contains(at)) {
+          picked = true;
+          void v.pick(i);
+        }
       });
       // R159f1: the click the browser still makes after the pick would land on what the pick opened (a tap on More… sent its
-      // click to the Find sheet just drawn); a cancelled touchend makes no click.
+      // click to the Find sheet just drawn); a cancelled touchend makes no click. Only after a pick: a near miss keeps its click.
       b.addEventListener("touchend", (e) => {
-        if (e.cancelable) e.preventDefault();
+        if (picked && e.cancelable) e.preventDefault();
+        picked = false;
       });
       b.addEventListener("click", (e) => {
-        if (e.detail === 0) void v.pick(i);
+        const again = picked;
+        picked = false;
+        if (e.detail === 0 || !again) void v.pick(i);
       });
       return b;
     };
