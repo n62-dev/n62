@@ -2,10 +2,10 @@
 
 The owner's list of 2026-11-08, checked against the code and the engine, and turned into work packages. Package texts are in [shifts/packages/](shifts/packages/); this file holds the status of each item, the order, the open bugs found and the decisions still open. A status in brackets is what the check found, where it differs from the first list. Decision numbers are per section.
 
-A package starts only through `scripts/pipeline.sh`, and only when a lane row or a day's plan names it (brief section 0c); none has a row yet except by the days in [release-0.1.0.md](release-0.1.0.md). An item marked "stub" has no package: it says what must exist before it can be split. Line numbers in packages for v0.3 and later are as of de659c02; recheck at start.
+A package starts only through `scripts/pipeline.sh`, and only when a lane row or a day's plan names it (brief section 0c); section A's have rows (2026-11-09), a few of section B's as the lanes' tail; the others have none yet. An item marked "stub" has no package: it says what must exist before it can be split. Line numbers in packages for v0.3 and later are as of de659c02; recheck at start.
 
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
-- Tue 11-10, they hold up work before the freeze: B1, A1, A7, A3, A9.
+- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9.
 - Fri 11-13, for A91: A8, and G2 item 70 with it.
 - Sat 11-14, for the video: A4, A5.
 - Sun 11-15, the tag: A6, A10.
@@ -36,7 +36,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 
 Order (all v0.1.0):
 - Lane A: R170 and R172 first, with no wait (R170 has no app code and is the net for the keypad rows); after R53 and R148: R171, R173.
-- Lane B: R180 (first, once decision B1 is in), G200, G201, G300, G202, A90, A92, A93, A94, G301, A96, A97, A98.
+- Lane B: R180 (first), G200, G201, G300, G202, A90, A92, A93, A94, G301, A96, A97, A98.
 - By day, by Thu 11-12: R174 (after A94) and A95 (the device, after R173). Each waits on the other lane, and a lane skips a row whose After is not merged and never repeats it.
 - By day after the freeze: A91, refreshed Sun morning; `npm run trust:refresh` first each time.
 - Must land before the freeze: R180 (the phasor fix, section B). Should land: G300 and G301 (section D); if G301 misses it, F196 joins the known limits.
@@ -48,15 +48,15 @@ Open bugs:
 - F198: `1/0`, `tan(pi/2)` and DEG `tan(90)` show `infinity` with no mark (a deliberate pin since G78, `app/src/engine/novalue.test.ts:144`); once G168 lands, `0/0` is refused "Division by zero" while `1/0` stays `infinity`. No finite digits appear, so it is not a silent wrong number. Reach: everyday. No package unless the owner says; a named limit in A91.
 
 Decisions for the owner:
-1. Core cases c67–c69: add them, `hand: false`. The core list changes only with the owner; these are the flows you named.
+1. **Yes (2026-11-09).** Core cases c67–c69: add them, `hand: false`. The core list changes only with the owner; these are the flows you named.
 2. Patch 0037 goes in the next mail to the author; nothing to decide. Email 5 went on 2026-11-08 with 0013-0036, its links pinned at 8f398cca, which lacks it.
-3. Trust page location: in the app under Help and about, plus a README section. n62.dev is the app, with no separate pages.
+3. **Yes (2026-11-09).** Trust page location: in the app under Help and about, plus a README section. n62.dev is the app, with no separate pages.
 4. Video: keep the v6 cut and record the Qalculate side-by-side as a separate 10 s clip. Opening on it would re-cut the owner's 11-07 chapter order.
 5. "HP Prime key layout" in the video: the owner's choice, since `rules-core.md:21` does not list a video caption. Reword it without the name, which costs nothing; the other way is the disclaimer on screen.
 6. F-Droid without a local build: submit right after the tag and let the merge request's CI be the first real build. No build VM exists here.
-7. Tips layout: one screen, no steps. No new ring logic to get wrong.
+7. **Yes (2026-11-09).** Tips layout: one screen, no steps. No new ring logic to get wrong.
 8. `infinity` for `1/0` and `tan(90°)`, beside G168's refused `0/0` (F198): ship as is and name it in the known limits; settle it with G2 item 70 after v0.1.0. It shows no wrong digits, and it stays neither exact, marked nor flagged under principle 3.
-9. v0.1.0 as a pre-release: make a plain tag a normal release (A90 step 3), reversing the 2026-10-29 choice. GitHub's `latest` skips a pre-release, so that link would miss it, and IzzyOnDroid may too (from memory); `-test` tags stay pre-releases.
+9. **Yes (2026-11-09).** v0.1.0 as a pre-release: make a plain tag a normal release (A90 step 3), reversing the 2026-10-29 choice. GitHub's `latest` skips a pre-release, so that link would miss it, and IzzyOnDroid may too (from memory); `-test` tags stay pre-releases.
 10. The move to the desktop PC: after the tag. CPU is not what limits the week, and the bar needs both devices green on a setup that works today.
 
 Not verified:
@@ -121,7 +121,7 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 - F199, Home and CAS on a hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error, because letters stay names (`hwkeys.ts:13`, pinned by `hwkeys.spec.ts:203`). Reach: everyday on a laptop, and n62.dev goes public with the tag. The product of letters is visible on the line as typed; with `s` and `n` stored it would be a number (not probed). Named limit in A91. R131, R198 (start of v0.2).
 
 **Decisions for the owner**
-1. The ∡ rule (R180): recommend Giac's binding, ∡ tighter than + × ÷, with a bare `/` beside the angle and a factor directly after it refused. Why: a flat `2∡π/6` would otherwise be silently -1/3; `10∡2π` then needs brackets, which is honest.
+1. The ∡ rule (R180), **yes (owner, 2026-11-09; the G2 reads `10∡(30+5)` and N62 differs on purpose):** recommend Giac's binding, ∡ tighter than + × ÷, with a bare `/` beside the angle and a factor directly after it refused. Why: a flat `2∡π/6` would otherwise be silently -1/3; `10∡2π` then needs brackets, which is honest.
 2. Rewrite mode (A101): recommend none. Why: it truncates per result, so a crash loses confirmed lines, and it contradicts "appended, never edited".
 3. `shift` direction (G226): recommend keeping Giac's, n > 0 right. Why: the patch then changes only what is wrong.
 4. A NOT TRANSLATED line (G213): recommend it binds no value, with later lines that read it also comment-only. Why: the `.py` always runs and never guesses.
