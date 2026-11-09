@@ -288,8 +288,12 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
 // waits with the layer it was pressed in (Shift and Alpha act at once), so "Plot, Shift, ᴇ" typed fast stores as it
 // would after the load (decisions.md R8). A key whose action changes place, opens a sheet or stops a job runs at once:
 // the status line's controls too (they go through press(), R15b, R15c1), and a user key while it holds Home or CAS; a
-// user key that holds anything else waits like the key it stands for.
+// user key that holds anything else waits like the key it stands for. The exception is a view key (Symb, Plot, Num):
+// it runs at once only when no key is waiting, else it joins the queue behind the typing it would overtake (R148f2).
 const AT_ONCE: readonly string[] = ["esc", "home", "cas", "switch", "apps", "symb", "plot", "num", "settings", "mode"];
+const VIEW_KEYS: readonly string[] = ["symb", "plot", "num"];
+/** During a load: does this action run at once? (AT_ONCE; a view key only when no key is waiting.) */
+const runsAtOnce = (c: RouteCtx, name: string): boolean => AT_ONCE.includes(name) && (c.waiting.length === 0 || !VIEW_KEYS.includes(name));
 
 /** R114: a system paste's text (Ctrl+V, Shift+Insert, the context menu) takes the Paste key's path, and the keys
  *  pressed meanwhile wait for it as they do after Paste. */
@@ -377,7 +381,7 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
   if (c.sheetLoad !== null) return wait(c, { key, mods, layer });
   if (c.shell.loading !== null) {
     const a = actionFor(key, mods.shift, mods.alpha);
-    if (!(a?.kind === "special" && AT_ONCE.includes(a.name))) return wait(c, { key, mods, layer });
+    if (!(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
   }
   run(c, key, mods);
 }
