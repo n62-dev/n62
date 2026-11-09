@@ -1,7 +1,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # G63: the failures the view sweep (app/scripts/viewsweep.ts, seed 20261022, 100 trees) finds today. id = "<angle> <x or interval> <keyboard LaTeX>" (a leak: "<angle> <call> <LaTeX>"),
 # check = num|cas|plot|slope|area|root|leak, package = the open backlog id whose fix removes the entry. The stage passes when its failures are exactly these.
-# F66: the plot evaluator has NaN at x = 0 where Giac simplifies x/x to 1.
+# F66: x/x has no value at x = 0, and Home refuses it there (G168: a division by an exact 0), but Giac simplifies x/x to 1 first: Num and CAS (subst) show the number, the plot evaluator has NaN.
 known:
   - { id: "rad 0 x\\times \\frac{x}{x}", check: plot, package: F66 }
+  - { id: "rad 0 x\\times \\frac{x}{x}", check: num, package: F66 }
+  - { id: "rad 0 x\\times \\frac{x}{x}", check: cas, package: F66 }
   - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: plot, package: F66 }
+  - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: num, package: F66 }
+  - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: cas, package: F66 }

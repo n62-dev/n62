@@ -175,15 +175,16 @@ export function lostNumber(
 
 const NO_NUMBER: ReadonlySet<string> = new Set(["expression", "identifier"]);
 /** Giac's operator of an interval and of a geometry object: values of their own, with no number to find. */
-const OBJECT_HEADS: ReadonlySet<string> = new Set(["' .. '", "'pnt'"]);
+const OBJECT_HEADS: ReadonlySet<string> = new Set([" .. ", "pnt"]);
 
 /**
  * G168 (F93): the reason for the CAS answer `output` of `input` (decimals exact), held in `slot`, when no value came:
- * Giac's bare undef (undefReason), or an answer with no free name whose evalf is no number (Giac's call back unevaluated,
- * binomial_icdf(4,0.5,3.0)), "noValue", asked at a double's digits: Giac has no MPFR value for some functions (igamma), so a call kept
+ * Giac's bare undef (undefReason), or an answer with no free name, whose top is a function `input` itself calls or Giac's
+ * seq operator (seq(0.3,-2) comes back as `(3/10^1)$-2`), and whose evalf is no number (Giac's call back unevaluated, binomial_icdf(4,0.5,3.0)), "noValue", asked at a double's digits: Giac has no MPFR value for some functions (igamma), so a call kept
  * at P or at a high CAS setting is no lost number. When the input may run again (`rerun`) it is asked too,
  * since the answer may hold P-digit floats a double cannot read (evalf(gammad_cdf(2,3,-2,1)) at P). An exact form whose evalf is a number stays (sqrt(2), BesselJ(1,2)), as does one
- * whose evalf is an infinity (exp(10^30), an exact form MPFR's range cannot print); a name, a list, a string, a test, an
+ * whose evalf is an infinity (exp(10^30), an exact form MPFR's range cannot print), and a form Giac rewrote whose evalf
+ * fails only past the numeric range (acos(9007199254740993^9007199254740993)*asin(2), whose top is a product); a name, a list, a string, a test, an
  * interval (`1 .. 3`), a geometry object and an answer of any other type are no lost number. An undef inside a larger
  * answer is not looked for here. `evalf` is read through type(), never printed: a geometry object as the value of a call
  * makes Giac draw it ("window is not defined" in the engine).
@@ -194,8 +195,11 @@ export function lostCas(giac: Giac, slot: string, input: string, output: string,
   // No call in the text (and no `$`, Giac's seq operator): no engine call at all (an exact rational, a name), so most
   // answers cost nothing here.
   if (infinite(out) || notAValue(out) || freeName(out) || (!functionsIn(out, "printed").length && !out.includes("$"))) return null;
-  const info = parsePrinted(giac.eval(`[string(type(${slot})),size(lname(${slot})),string(sommet(${slot}))]`))?.items;
-  if (info?.length !== 3 || info[0]!.str !== "expression" || info[1]!.raw !== "0" || OBJECT_HEADS.has(info[2]!.str ?? "")) return null;
+  // bridge-3's elements of the list (no printing of a value here): the printed strings hold their quotes, a head its '…' too.
+  const info = giac.value(`[string(type(${slot})),size(lname(${slot})),string(sommet(${slot}))]`, []).elements;
+  if (info?.length !== 3 || info[0] !== '"expression"' || info[1] !== "0") return null;
+  const head = info[2]!.slice(2, -2);
+  if (OBJECT_HEADS.has(head) || (head !== "$" && !functionsIn(input, "typed").includes(head))) return null;
   const noNumber = (e: string): boolean => NO_NUMBER.has(withDigits(giac, DOUBLE_DIGITS, digits, () => giac.eval(`type(evalf(${e}))`)).trim());
   return noNumber(slot) && (!rerun || noNumber(input)) ? "noValue" : null;
 }
