@@ -242,6 +242,12 @@ test("the place name's target is the line's full height and at least 96 px from 
   // a full history: the top row's formula lies right under the line, and a tap on it is the row's, not the switch's
   for (let i = 0; i < 12; i++) await tap(page, ["d1", "add", "d2", "enter"]);
   await page.waitForTimeout(300);
+  // scrolled so that one row's formula starts right under the line (R148: the history's height moved with the keypad's gaps)
+  await page.evaluate(() => {
+    const h = document.querySelector(".history") as HTMLElement;
+    const row = document.querySelectorAll("article.item")[4] as HTMLElement;
+    h.scrollTop += row.getBoundingClientRect().top - 23;
+  });
   const hit = await page.evaluate(() => (document.elementFromPoint(50, 38)?.closest("article") ? "row" : "other"));
   expect(hit).toBe("row");
   await page.touchscreen.tap(50, 38);

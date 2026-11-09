@@ -69,6 +69,23 @@ test("the handle: a 48 × 24 px button on the keypad's top edge over no key; a t
   expect(await screenHeight(page)).toBe(up); // the keys as they were: the viewport has its old share
 });
 
+test("the handle's 24 px lie on the pad's 4 px padding and the gap above it: the Up key is not covered, a tap just above the handle is the entry line's", async ({ page }) => {
+  const [h, pad, line, up] = await Promise.all([box(page, HANDLE), box(page, ".pad"), box(page, LINE), box(page, '[data-key="up"]')]);
+  expect(h.height).toBe(24);
+  expect(h.y + h.height).toBeLessThanOrEqual(pad.y + 4 + 0.5); // ends at the pad's padding
+  expect(h.y + h.height).toBeLessThanOrEqual(up.y + 0.5);
+  const x = h.x + h.width / 2;
+  const hit = await page.evaluate(([px, py]) => {
+    const el = document.elementFromPoint(px as number, py as number);
+    return { handle: !!el?.closest('[data-testid="fold-handle"]'), line: !!el?.closest('[data-testid="entry"]') };
+  }, [x, h.y - 1]);
+  expect(hit).toEqual({ handle: false, line: true });
+  // the tap just above the handle is the line's: it focuses the field and does not fold
+  await page.touchscreen.tap(x, h.y - 1);
+  await isFolded(page, false);
+  expect(await inLine(page)).toBe(true);
+});
+
 test("a drag of 24 px down on the handle folds, a swipe up on the slice unfolds; a short drag does neither", async ({ page }) => {
   let f = await touch(page, HANDLE);
   await f.move(0, 12, 3);

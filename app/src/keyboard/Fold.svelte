@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- R53 (decisions.md P16): results mode's controls, in the keypad's box (App.svelte `.keys`). Up: the handle, a grabber
-     (32 × 4 px, --muted) on the keypad's top edge; its 48 × 24 px target lies in the keypad's top padding and the gap above
+     (32 × 4 px, --muted) on the keypad's top edge; its 48 × 24 px target lies in the keypad's 4 px top padding and the gap above
      it (the line's bottom padding and the field's), over no key. Folded: the 44 px slice over the hidden keypad, with the
      grabber and "Keys". A tap or a 24 px drag (down on the handle, up on the slice) folds or unfolds; the swipe on the entry
      line is attached here too (foldSwipe.ts). Its own chunk, loaded when the browser is idle after the start, so the start
@@ -87,9 +87,10 @@
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
   }
-  /* 48 × 24: the gap above the keypad (the line's bottom padding and the field's) and the pad's top padding */
+  /* 48 × 24: the gap above the keypad (the line's bottom padding and the field's) and the pad's top padding (4 px, R148f1:
+     it ends where the pad's padding does, so it covers no part of the Up key) */
   .handle {
-    top: calc(-2 * var(--sp-2));
+    top: calc(-2 * var(--sp-2) - var(--sp-1));
     left: calc(50% - var(--touch-big) / 2);
     width: var(--touch-big);
     height: calc(3 * var(--sp-2));

@@ -227,6 +227,8 @@ const LEVELS: Record<string, string[]> = {
   "Mode › Settings › Data": ["@mode", "d6", "d5"],
   "Mode › Settings › Counters": ["@mode", "d6", "d6"],
 };
+/** The one level that scrolls at 360 × 740 (decisions.md, R148f1): its rows need 304 px at the floor, the room is 287. */
+const SCROLLS = "Mode › Settings › Appearance";
 for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
   test(`fit at ${w} × ${h}: every Settings level shows all its rows, the top cluster uncovered`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
@@ -235,8 +237,16 @@ for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
       await expect(title(page)).toHaveText(path);
       if (path.endsWith("Key vibration")) await row(page, "haptics").tap(); // on: no reason line, but ◀ ▶ rows
       const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      expect(m.scroll, path).toBeLessThanOrEqual(m.client);
-      await expect(page.getByTestId("sheet-count")).toHaveCount(0);
+      if (w === 360 && path === SCROLLS) {
+        // R148f1 (decisions.md): its rows need 304 px at the floor and the room is 287 or 288: it scrolls, by at most 17 px
+        expect(m.scroll - m.client, path).toBeLessThanOrEqual(17);
+        await sheet(page).getByRole("menuitem").last().scrollIntoViewIfNeeded();
+        const [list, last] = await Promise.all([sheet(page).locator(".list").boundingBox(), sheet(page).getByRole("menuitem").last().boundingBox()]);
+        expect(last && list && last.y + last.height <= list.y + list.height + 0.5 && last.y >= list.y - 0.5, `${path}: its last row scrolls into view`).toBe(true);
+      } else {
+        expect(m.scroll, path).toBeLessThanOrEqual(m.client);
+        await expect(page.getByTestId("sheet-count")).toHaveCount(0);
+      }
       const hits = await page.evaluate((ids) =>
         ids.map((id) => {
           const r = document.querySelector(`[data-key="${id}"]`)?.getBoundingClientRect();

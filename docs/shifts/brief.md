@@ -58,7 +58,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 537 | [R148](packages/R148.md) more room: 4 px gaps, short rows below 760 px | ron, Sonnet | `p1/ron-room` | – |
 | 560 | [R170](packages/R170.md) core list: units, ± | ron, Sonnet | `p1/ron-coreunits` | – |
 | 561 | [R172](packages/R172.md) the report text | ron, Sonnet | `p1/ron-reporttext` | – |
 | 562 | [R173](packages/R173.md) Report a problem | ron, Sonnet | `p1/ron-reportrow` | R172 |

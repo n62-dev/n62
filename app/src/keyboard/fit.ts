@@ -71,7 +71,9 @@ export function fitLegends(pad: HTMLElement): void {
     const room = avail.get(it.el) ?? 0;
     const line = cap.get(it.el) ?? 0;
     let size = it.base;
-    if (w > 0 && w > room) size = Math.min(size, (it.base * room) / w);
+    // scrollWidth is an integer (the text's true width rounded, up to half a pixel off): shrunk against the room less 1 px, the
+    // text at the new size is not wider than the room (R148f1: Help's "Settings" was 48 px in 47 at 11 px)
+    if (w > 0 && w > room) size = Math.min(size, (it.base * (room - 1)) / w);
     if (line > 0) size = Math.min(size, line);
     size = Math.floor(size * 10) / 10;
     if (size >= it.base) continue;
