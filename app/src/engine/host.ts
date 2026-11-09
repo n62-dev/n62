@@ -27,9 +27,9 @@ import {
 } from "./homeEval.ts";
 import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
-import { backInDegrees, needsDegrees } from "./degrees.ts";
+import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts";
 import { resolveAngle } from "./angleMigration.ts";
-import { mayPowerMatrix, nonSquarePower, type Bodies, type KnownBody } from "./nonsquare.ts";
+import { mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { mayAddToList, unaskedPoly } from "./polyvec.ts";
 import { approxRange, mayApproxRange } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
@@ -1013,8 +1013,9 @@ export class EngineHost implements FactsHost {
     const square = onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, text, ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans");
     // a refused once store keeps the name's earlier value, as Home (which stores only on success): its logged entry back
     const logged = asg0 ? this.byName.get(asg0.name) : undefined;
-    if (square === true && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
-    if (square === true) return fail(enEngine["error.notSquare"], "notSquare");
+    const badShape = shapeRefusal(square); // G225: or dot, cross of vectors of different lengths
+    if (badShape && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
+    if (badShape) return fail(enEngine[`error.${badShape}`], badShape);
     // G111 (F98), R80f1: one list argument of LambertW, a distribution and others read as their argument list, refused as in Home.
     const listRefused = listAsArguments(this.giac, asg0 ? asg0.rhs : exactInput, userFn);
     if (listRefused) return fail(enEngine[`error.${listRefused}`], listRefused);
@@ -1095,7 +1096,7 @@ export class EngineHost implements FactsHost {
     const why = read && (read.causes.length || read.rounded.length) ? { ...(why1 ?? {}), ...(read.causes.length ? { inherited: read.causes } : {}), ...(read.rounded.length ? { rounded: read.rounded } : {}) } : why1;
     // G46 (S14 option 2): in DEG the radian text is drawn and copied as a DEG engine prints it; Ans, chips (`full`) and
     // pcasans keep the radian text, which means the same in every mode.
-    const deg = s.angle === "deg" && needsDegrees(text) ? backInDegrees(this.giac, text) : null;
+    const deg = s.angle !== "deg" ? null : needsDegrees(text) ? backInDegrees(this.giac, text) : withoutDegreeQuotient(this.giac, text);
     // G109: Giac's list type (a solve result too) is shown and copied with braces, as Home shows it; `full` keeps
     // Giac's `list[…]` for Ans and the chips, and MathPrint draws Giac's latex() (`\{…\}`)
     const drawn = deg ?? text;

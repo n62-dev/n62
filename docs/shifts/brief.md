@@ -61,7 +61,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 538 | R149 N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 496 | [G168](packages/G168.md) no value is a plain refusal: `undef`, empty calls, `DelAVars()`, the budget message (F93, F109) | gorge, Opus | `p1/gorge-novalue` | – |
-| 500 | [G169](packages/G169.md) a list as a distribution's x gives one value per element (F105, F93) | gorge, Opus | `p1/gorge-listlast` | – |
 | 501 | [G172](packages/G172.md) a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
 | 502 | [G173](packages/G173.md) no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
 | 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
@@ -79,13 +78,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 571 | A93 counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201f1, G202 |
-| 572 | A94 trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
-| 573 | [G301](packages/G301.md) CAS degree quotient (F196) | gorge, Opus | `p1/gorge-degquot` | – |
-| 574 | [A96](packages/A96.md) F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |
-| 575 | [A97](packages/A97.md) F-Droid build step | annabell, Sonnet | `p1/annabell-fdroidbuild` | A96 |
-| 576 | [A98](packages/A98.md) `SUBMIT.md` | annabell, Sonnet | `p1/annabell-fdroidsubmit` | A97 |
-| 580 | [G225](packages/G225.md) `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
+| 580 | G225 `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
 | 581 | [G220](packages/G220.md) normal cdf tail (F195) | gorge, Opus | `p1/gorge-normalcdf` | – |
 | 582 | [G221](packages/G221.md) `student_cdf`, `chisquare_cdf` (F195) | gorge, Opus | `p1/gorge-tchicdf` | – |
 | 583 | [G228](packages/G228.md) `formatBase` | gorge, Sonnet | `p1/gorge-formatbase` | – |

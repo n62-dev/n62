@@ -3,15 +3,16 @@
 #
 # Build Giac + GSL + GMP + MPFR to WebAssembly from pinned, hash-checked sources.
 #
-#   [WITH_GSL=0] engine/giac/build-wasm.sh [stage...]
+#   [WITH_GSL=0] engine/giac/build-wasm.sh [--fetch-only | stage...]
 #
 # Stages: fetch gmp mpfr gsl giac link (default: all, gsl skipped with WITH_GSL=0)
+# --fetch-only (A97): the SHA-256-checked downloads of stage fetch and nothing else: no emsdk or emcc needed, nothing compiled (the F-Droid recipe's prebuild).
 # Output: engine/giac/_out/<variant>/giac.{mjs,wasm}; variant = gsl (default) | base (WITH_GSL=0, comparisons only)
 # GIAC_PATCHES=none (A71): no patch of patches/ is applied, the stock giac_2.1.0-1 for the red-first check of a package that says its
 #   tests "fail on the stock build" (scripts/pipeline-lib.sh); variant = stock-<key> (stock-base-<key> with WITH_GSL=0), where
 #   <key> is `build-wasm.sh stock-key`: a hash of the tarball's SHA-256, of this script and of the files in wasm/, so a stock build is made once and reused.
 #   Use GIAC_BUILD_DIR of its own, so a build with patches is not clobbered.
-# Needs: emsdk (EMSDK_DIR, default ~/emsdk) at $EMSDK_VERSION, or EMSDK_DIR=system for an emcc already on PATH (unpinned; F-Droid tests).
+# Needs: emsdk (EMSDK_DIR, default ~/emsdk) at $EMSDK_VERSION, or EMSDK_DIR=system for an emcc already on PATH (checked against EMSCRIPTEN_PKG_VERSION's upstream part when that is set: the release container and the F-Droid recipe set it).
 # N62_DL_DIR overrides the download cache (e.g. to share one cache between git worktrees).
 # Nothing here touches the user's shell rc files.
 set -euo pipefail
@@ -65,11 +66,16 @@ log() { printf '\n==> %s\n' "$*"; }
 emsdk_env() {
   local v
   if [[ "$EMSDK_DIR" == system ]]; then
-    # Emscripten already on PATH (e.g. a distro package, as F-Droid's build server uses). Any version
-    # is accepted, but it is not the pinned one, so the output is not the reference build.
+    # Emscripten already on PATH (e.g. a distro package, as F-Droid's build server uses). With EMSCRIPTEN_PKG_VERSION set
+    # (the Debian package version the release build pins, build-wasm-release.sh) the upstream part of it must match the
+    # compiler's version (A96): another compiler is another engine. Unset: any version, not the reference build.
     command -v emcc >/dev/null || { echo "EMSDK_DIR=system but no emcc on PATH" >&2; exit 1; }
     v="$(emcc --version | head -1 | sed -E 's/.* ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
     echo "using system emcc $v (pinned: $EMSDK_VERSION)" >&2
+    if [[ -n "${EMSCRIPTEN_PKG_VERSION:-}" && "$v" != "${EMSCRIPTEN_PKG_VERSION%%[+-]*}" ]]; then
+      echo "system emcc $v found, ${EMSCRIPTEN_PKG_VERSION%%[+-]*} required (EMSCRIPTEN_PKG_VERSION=$EMSCRIPTEN_PKG_VERSION): install emscripten=$EMSCRIPTEN_PKG_VERSION" >&2
+      exit 1
+    fi
     return 0
   fi
   # shellcheck disable=SC1091
@@ -257,6 +263,7 @@ main() {
   local stages=("$@")
   [[ "$GIAC_PATCHES" == all || "$GIAC_PATCHES" == none ]] || { echo "GIAC_PATCHES is '$GIAC_PATCHES': all (default) or none" >&2; exit 1; }
   [[ "${stages[0]:-}" != stock-key ]] || { stock_key; return; }  # needs no emsdk
+  [[ "${stages[0]:-}" != --fetch-only ]] || { [[ ${#stages[@]} -eq 1 ]] || { echo "--fetch-only takes no stage" >&2; exit 2; }; stage_fetch; return; }  # needs no emsdk
   [[ ${#stages[@]} -gt 0 ]] || stages=(fetch gmp mpfr gsl giac link)
   emsdk_env
   local s

@@ -44,7 +44,7 @@ const clip = {
   "why.differ": "the exact and numeric answers differ",
   "why.once": "evaluated once, nothing to compare",
   "why.pastCap": "more than 1000 digits: compared at two precisions only, not raised further",
-  "why.squareUnchecked": "a matrix power or inverse not checked",
+  "why.squareUnchecked": "a matrix shape or vector length not checked",
   "why.existsUnchecked": "the check that this value exists did not finish",
   "why.isNotChecked": "is not checked",
   "why.areNotChecked": "are not checked",

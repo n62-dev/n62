@@ -337,6 +337,18 @@ Digits:=40:; pc("g78-keep-piecewise",'(piecewise(0>0,1/0,5))',5,5/10^12);
 Digits:=40:; pc("g90-keep-int-gauss01",'(int(exp(-x^2),x,0,1))',(746824132812/10^12),5/10^13);
 // g97-keep-flat-pow-2 (home.yaml, derived)
 Digits:=40:; pc("g97-keep-flat-pow-2",'([1,2]^2)',5,5/10^12);
+// g169-normald-cdf-scalar (home.yaml, oracle)
+Digits:=40:; pc("g169-normald-cdf-scalar",'(normald_cdf(0,1,1/2))',(691462461274/10^12),5/10^13);
+// g169-student-cdf-scalar (home.yaml, oracle)
+Digits:=40:; pc("g169-student-cdf-scalar",'(student_cdf(3,1/2))',(674276017576/10^12),5/10^13);
+// g169-chisquare-cdf-scalar (home.yaml, oracle)
+Digits:=40:; pc("g169-chisquare-cdf-scalar",'(chisquare_cdf(2,1))',(393469340287/10^12),5/10^13);
+// g169-fisher-cdf-scalar (home.yaml, oracle)
+Digits:=40:; pc("g169-fisher-cdf-scalar",'(fisher_cdf(2,3,1))',(535241998455/10^12),5/10^13);
+// g169-poisson-cdf-scalar (home.yaml, oracle)
+Digits:=40:; pc("g169-poisson-cdf-scalar",'(poisson_cdf(2,1))',(40600584971/10^11),5/10^13);
+// g169-keep-max-one-list (home.yaml, derived)
+Digits:=40:; pc("g169-keep-max-one-list",'(max(list[1,2]))',2,5/10^12);
 // g111-exponential-inside (home.yaml, oracle)
 Digits:=40:; pc("g111-exponential-inside",'(exponential(2,1))',(270670566473/10^12),5/10^13);
 // g111-gammad-at-0 (home.yaml, oracle)
@@ -391,6 +403,8 @@ Digits:=40:; pc("g129-sin-atan-neg2i",'(sin(atan(-2*i)))',-(115470053838/10^11),
 Digits:=40:; pc("g129-cos-atan-i/2",'(cos(atan(1/2*i)))',(115470053838/10^11),5/10^12);
 // g129-cos-atan-1+i (home.yaml, oracle)
 Digits:=40:; pc("g129-cos-atan-1+i",'(cos(atan(1+i)))',(568864481006/10^12)-(351577584254/10^12)*i,5/10^13+5/10^13);
+// g225-keep-dot (home.yaml, derived)
+Digits:=40:; pc("g225-keep-dot",'(dot([1,2],[3,4]))',11,5/10^11);
 // prec-20-sqrt2 (precision.yaml, oracle)
 Digits:=40:; pc("prec-20-sqrt2",'(sqrt(2))',(14142135623730950488/10^19),5/10^20);
 // prec-20-third (precision.yaml, oracle)

@@ -19,7 +19,7 @@ import { floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumeri
 import { enEngine } from "../i18n/enEngine.ts";
 import { approxRange, elementAt, lostFloat, lostNumber, overflowAt, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 import { icdfAtEnd, icdfCalls } from "./icdf.ts";
-import { NO_BODIES, nonSquarePower, type Bodies } from "./nonsquare.ts";
+import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
 import { POLY_AT, POLY_AT_ANY_DEPTH, unaskedPoly } from "./polyvec.ts";
 import { listAsArguments } from "./listargs.ts";
 import { backInDegrees, needsDegrees } from "./degrees.ts";
@@ -619,7 +619,8 @@ export function homeEval(
   // G97 (F69): a power, inverse or division of a non-square matrix is Giac's elementwise answer, no matrix power.
   // G171: an input that runs once too (its parts that read nothing the run wrote); a definition holds no power to check
   const square = form.noValue || isTimeout(exactOut) ? false : nonSquarePower(giac, exactBody, exactOut, ambiguous, late, exactMs, userFn, fnBody, once, ans);
-  if (square === true) return refuse("notSquare", "exact");
+  const badShape = shapeRefusal(square); // G225: or dot, cross of vectors of different lengths
+  if (badShape) return refuse(badShape, "exact");
   if (square === "unchecked") unsquared = { ...(once ? { once: true } : {}), squareUnchecked: true };
   if (isTimeout(exactOut)) return viaFloat("float-timeout");
   if (isError(exactOut)) return viaFloat("float-error");

@@ -5,7 +5,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
-import { acquireClipboardLock, open, useClipboardLock } from "./helpers.ts";
+import { acquireClipboardLock, clipboardBudget, open, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "parallel" });
@@ -13,7 +13,7 @@ test.describe.configure({ mode: "parallel" });
 const SHARED = resolve("test-results", "clipboard-lock-shared.txt");
 
 test("a second acquire stays pending while the first holds the lock, and succeeds after the release", async () => {
-  test.setTimeout(test.info().project.timeout + 150_000); // the wait for the lock (held by the suite's clipboard tests) must not eat the test's own budget, as in useClipboardLock
+  test.setTimeout(clipboardBudget(test.info().project.timeout)); // the wait for the lock (held by the suite's clipboard tests) must not eat the test's own budget, as in useClipboardLock
   const release = await acquireClipboardLock();
   try {
     await expect(acquireClipboardLock(300)).rejects.toThrow("clipboard lock not free");

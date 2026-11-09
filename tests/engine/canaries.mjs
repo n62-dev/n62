@@ -45,6 +45,8 @@ const ROWS = [
     ["evalf(BesselJ(1,2),40)"], ([a]) => sig(a) > 0 && sig(a) <= 15],
   ["nonsquare-power", "^ and inv of a non-square matrix: [[5],[1]]^2 = 26 (v.v), inv([[5],[1]]) elementwise", 12,
     ["[[5],[1]]^2", "inv([[5],[1]])"], ([a, b]) => a === "26" && b === "[[1/5],[1]]"],
+  ["vector-padding", "dot and cross pad the shorter vector with zeros: dot([1,2],[3,4,5]) = 11, cross([1,2,3],[4,5]) = [-15,12,-3]", 12,
+    ["dot([1,2],[3,4,5])", "cross([1,2,3],[4,5])"], ([a, b]) => a === "11" && b === "[-15,12,-3]"],
   ["list-plus-number", "a list plus a number is a polynomial: [1,4]+1 = poly1[1,5]", 12,
     ["[1,4]+1"], ([a]) => a === "poly1[1,5]"],
   ["list-as-arguments", "one list argument is the argument list: evalf(LambertW([1,2])) is W(1) on branch 2, hermite([1,2]) = hermite(1,2) = 4", 12,
