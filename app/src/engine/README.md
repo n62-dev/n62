@@ -61,7 +61,8 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `ourNames.ts` | G54: our replacements for Giac functions by the name the user writes; called by `input/emit.ts`, `host.ts`, `library.ts` |
 | `listargs.ts` | G111: functions that read one list argument as their argument list; called by `homeEval.ts`, `host.ts` |
 | `listargsTable.ts` | generated table for `listargs.ts` (`tools/probes/list-args.ts`); the evidence behind it is `tests/engine/listargs-evidence.ts` (G189), read by `listargsTable.test.ts` only |
-| `matrixType.ts` | G130: Giac's matrix subtype printed as `matrix[…]`; called by `homeEval.ts`, `host.ts` |
+| `matrixType.ts` | G130, G173: Giac's matrix subtype printed as `matrix[…]`, at any depth; called by `homeEval.ts`, `host.ts` |
+| `sequences.ts` | G119, G173: Giac's sequence answers as a value or a list, none refused; called by `homeEval.ts`, `host.ts` |
 | `nonsquare.ts` | G97: powers of a non-square matrix; called by `homeEval.ts`, `host.ts` |
 | `novalue.ts` | G78: no number that went through a division by zero; called by `homeEval.ts`, `listargs.ts` |
 | `polyvec.ts` | G106: a list plus or minus a number read as polynomial coefficients; called by `homeEval.ts`, `host.ts` |

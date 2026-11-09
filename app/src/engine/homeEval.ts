@@ -28,9 +28,10 @@ import { principalPowers } from "./powers.ts";
 import { dropAngleFactor, hasAngleFactor } from "./angles.ts";
 import { decimalFromRational, decimalFromString, formatConfirmed, isZero, ZERO_VALUE, type ComplexValue, type DecimalValue, type PrecisionFacts, type PrecisionWarn, type PrecisionWhy } from "./format.ts";
 import { askedDigits, DOUBLE_DIGITS, exactFacts, floatFacts, floatPathFacts, integratedFacts, hasFloat, isAudited, doubleFormsIn, unauditedIn, numericDisagrees, notBuiltin, floatsShown, heavySplit, REGROUP_MAX, shapeOfValue, endsEarly, valuePrecision, whyOf, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
-import { bracesOf, functionsIn, isError, isTimeout, LIST_TYPE, matrixTyped, replaceLiteral, wordsOf } from "./giacPrint.ts";
+import { bracesOf, functionsIn, holdsMatrixType, isError, isTimeout, LIST_TYPE, replaceLiteral, whenCalls, wordsOf } from "./giacPrint.ts";
 import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals.ts";
-import { plainRows } from "./matrixType.ts";
+import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
+import { homeSequence } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
 import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
@@ -189,6 +190,7 @@ export const ENGINE_DEFINITIONS: Readonly<Record<string, string>> = {
     "s:=0; for (k:=0;k<size(l);k:=k+1) s:=s+1/l[k]; return normal(1/s); }",
   // G106f1: whether a value holds a coefficient vector at any depth (polyvec.ts; its check defines it in the same call).
   [POLY_AT]: POLY_AT_ANY_DEPTH,
+  [PLAIN_AT]: PLAIN_AT_ANY_DEPTH, // G173: Giac's matrix type at any depth (matrixType.ts; its call defines it again)
 };
 
 /** Our names whose definition host.ts builds (tables out of the start chunk): G30 `eseries` and its helper (G139). */
@@ -244,9 +246,9 @@ export function definitionsUsedBy(input: string): string[] {
 }
 
 /** Giac's latex() of the result in `slot`, whose text is `text`; R64: one that holds the degree factor (a function
- *  body, which Giac prints as given) is drawn from its text without it, as typed. */
+ *  body, which Giac prints as given) is drawn from its text without it, as typed; G173: a list of one matrix as that. */
 export function latexShown(giac: Giac, slot: string, text: string): string {
-  return hasAngleFactor(text, "printed") ? giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`) : giac.eval(`latex(${slot})`);
+  return hasAngleFactor(text, "printed") ? giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`) : (soleMatrixLatex(giac, slot, text) ?? giac.eval(`latex(${slot})`));
 }
 
 /** R64, G46 (route R): the degree factor our parser puts in every angle (engine/angles.ts): pi/180 in DEG, 1 in RAD.
@@ -533,16 +535,11 @@ export function homeEval(
       if (d.value) value = d.value;
     }
   }
-  // G119 (F108): Giac's sequence answer (fMin, fMax, op) is no value Home shows (`seq[1/2]`, `1,-1`), and Giac adds a stored
-  // sequence's elements into one sum (Ans+1 of 1,-1 gave 1): one element becomes its value with its own mark, several Giac's
-  // list type, shown in braces as G109's; Ans, the chips and the copy read back what Giac reads.
-  const seqSize = value.kind === "sequence" && !isError(exactOut) ? Number(giac.eval(`size(${ans})`)) : 0;
-  if (Number.isInteger(seqSize) && seqSize >= 1) {
-    const v = withDigits(giac, P, s.digits, () => giac.value(`${ans}:=${seqSize === 1 ? `${ans}[0]` : `list[${ans}]`}`, at));
-    if (!isError(v.text)) [value, exactOut] = [v, v.cut ? withDigits(giac, P, s.digits, () => giac.eval(ans)) : v.text];
-  }
+  // G119, G173: Giac's sequence answer as a value or a list (sequences.ts); none is refused below, once `refuse` exists
+  const seq = homeSequence(giac, ans, value, exactOut, at, (f) => withDigits(giac, P, s.digits, f), form.noValue);
+  [value, exactOut] = [seq.value, seq.text];
   // G130: a value decided again (decideTwice) is Giac's print too
-  if (value.kind === "matrix" && matrixTyped(value.text) && !isError(exactOut)) {
+  if (holdsMatrixType(value.text) && !isError(exactOut)) {
     const v = withDigits(giac, P, s.digits, () => plainRows(giac, ans, value, at));
     if (v !== value) [value, exactOut] = [v, v.cut ? withDigits(giac, P, s.digits, () => giac.eval(ans)) : v.text];
   }
@@ -638,6 +635,7 @@ export function homeEval(
   }
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
+  if (seq.empty) return refuse("noValue", "exact");
   // G39: Giac's [exact, numeric] pair of a definite integral is never a list. The two answers differ, so neither is
   // confirmed: the float is the value, with no digit confirmed (⚠, docs/04 2.4), and the why-line says the pair differs.
   const pair = !once && hasDefiniteIntegral(exactBody) ? giacPair(exactOut) : null;
@@ -678,7 +676,9 @@ export function homeEval(
     if (atN !== null) giac.eval("purge(pasfl)");
     // G109: Giac's list type at any depth (a solve result too, `[list[1,2],3]`) shows with braces, as CAS does
     // (host.ts); Giac draws a list of rows as a matrix, so that one is drawn from the text shown
-    const shownText = deg ?? dropAngleFactor(text, "printed");
+    // G173 (F93): Giac's `?:` as when(c,a,b), which the entry line reads; `exact` and `full` keep Giac's print for Ans
+    const plainShown = deg ?? dropAngleFactor(text, "printed");
+    const shownText = whenCalls(plainShown);
     const display = shownText.includes(LIST_TYPE) ? bracesOf(shownText) : shownText;
     const listed = display !== shownText;
     const rows = listed && text.trimStart().startsWith(LIST_TYPE) && tex.includes("\\begin{array}");
@@ -687,7 +687,7 @@ export function homeEval(
     const unchecked = hasFloat(text) || forced !== undefined;
     const warn = decided?.warn ?? forced ?? (unchecked ? "unchecked" : undefined);
     const why = symbolicWhy(warn, testSides(exactBody));
-    return done({ ok: true, display, ...(listed ? { braces: true as const } : {}), exact: text, ...(deg !== null || listed ? { full: text } : {}), ...latex, path: "exact", approximate: inexactTest || unchecked, facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) } });
+    return done({ ok: true, display, ...(listed ? { braces: true as const } : {}), exact: text, ...(deg !== null || listed || shownText !== plainShown ? { full: text } : {}), ...latex, path: "exact", approximate: inexactTest || unchecked, facts: { exact: false, reliableDigits: null, ...(warn ? { warn } : {}), ...(why ? { why } : {}) } });
   };
   // G44f1: Giac's inverse distribution function gives ±infinity for some p inside (0, 1) (fisher_icdf(3,4,1-10^-20)):
   // the polish computes the value; when it cannot, Giac's infinity is shown with ⚠. At p = 0 or 1 it is exact.

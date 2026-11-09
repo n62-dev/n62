@@ -173,6 +173,25 @@ export function matrixTyped(text: string): boolean {
   return text.startsWith(MATRIX_TYPE) && closing(text, MATRIX_TYPE.length - 1, "printed") === text.length - 1;
 }
 
+/** `text` (Giac's print) holds a value of the matrix type, at any depth, outside strings (not `mymatrix[1]`). */
+export function holdsMatrixType(text: string): boolean {
+  if (!text.includes(MATRIX_TYPE)) return false;
+  return walk(text, 0, (k) => text.startsWith(MATRIX_TYPE, k) && !isNameChar(text.charAt(k - 1)) && text.charAt(k - 1) !== ".", "printed") >= 0;
+}
+
+/** G173: `text` (Giac's print) is one value of the matrix type and no other stands inside it. */
+export function onlyMatrixType(text: string): boolean {
+  return matrixTyped(text) && text.lastIndexOf(MATRIX_TYPE) === 0;
+}
+
+/** G173: the one element of the list or vector `text` (Giac's print) when that element is a matrix, its rows vectors, and
+ *  whether `text` is of Giac's list type; null for any other value. */
+export function soleMatrix(text: string): { matrix: string; list: boolean } | null {
+  const parts = text.includes("[[") ? splitList(text) : null;
+  const rows = parts?.length === 1 ? splitList(parts[0]!) : null;
+  return rows?.length && rows.every((r) => r.startsWith("[")) ? { matrix: parts![0]!, list: text.startsWith(LIST_TYPE) } : null;
+}
+
 /** Giac's print with every value of its list type written with braces, as the G2 shows a list (`list[[1,2],3]` →
  *  `{[1,2],3}`, `[list[1,2],3]` → `[{1,2},3]`), at any depth; strings and a name that ends in `list` are left alone.
  *  Bridge-3 gives the kind and the flat elements but no print in braces, and a list inside a vector needs the nesting. */
@@ -188,6 +207,35 @@ export function bracesOf(text: string): string {
     cuts.set(close, [1, "}"]);
   }, "printed");
   return withCuts(text, cuts);
+}
+
+// --- Giac's when (G173) ----------------------------------------------------------------------------------------------
+
+/** Giac's print of a conditional, C's `((c)? a : b)`, written as the call `when(c,a,b)` our entry line reads, nested
+ *  and inside larger answers; for the text shown and copied only (Ans keeps Giac's value, and Giac reads its own print back). */
+export function whenCalls(text: string): string {
+  if (!text.includes(")? ")) return text;
+  let out = "";
+  let i = 0;
+  walk(text, 0, (k, _d, ch) => {
+    if (k < i || ch !== "(" || text.charAt(k + 1) !== "(") return;
+    const c = closing(text, k + 1, "printed");
+    const end = closing(text, k, "printed");
+    if (c < 0 || end < 0 || !text.startsWith("? ", c + 1)) return;
+    // the branches' colon: at the conditional's own depth, with a space on each side (a `:=` inside a branch has none)
+    const sep = walk(text, c + 3, (j, d, x) => d === 0 && x === ":" && text.charAt(j - 1) === " " && text.charAt(j + 1) === " ", "printed");
+    if (sep < 0 || sep > end) return;
+    const [cond, yes, no] = [text.slice(k + 2, c), text.slice(c + 3, sep - 1), text.slice(sep + 2, end)];
+    out += `${text.slice(i, k)}when(${whenCalls(cond)},${whenCalls(yes)},${whenCalls(no)})`;
+    i = end + 1;
+  }, "printed");
+  return out + text.slice(i);
+}
+
+/** `text` (Giac's print) may be a sequence: `seq[…]` (no or one element) or elements at the top level (`1,-1`). The caller
+ *  asks the value's kind (a sequence is the only value printed so). */
+export function printsSequence(text: string): boolean {
+  return text.startsWith("seq[") || topLevelArgs(text, "printed").length > 1;
 }
 
 /** R80f1: the inverse of bracesOf: every brace pair outside strings written as Giac's `list[…]` again

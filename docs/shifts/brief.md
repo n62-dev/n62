@@ -60,7 +60,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 501 | G172 a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
-| 502 | [G173](packages/G173.md) no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
+| 502 | G173 no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
 | 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
 | 504 | [G180](packages/G180.md) DEG sqrt(asinh(asin(3.7))) gets the same mark on any clock (F159) | gorge, Opus | `p1/gorge-degmarkclock` | – |
 | 505 | [G186](packages/G186.md) Home's checks end on acos, asin, acosh of a huge or tiny real (F145) | gorge, Opus | `p1/gorge-cuthang` | – |
