@@ -9,11 +9,11 @@ import { describe, expect, it } from "vitest";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
-/** The `prebuild` lines of the recipe's first build, comments and indentation stripped. */
-function prebuild(): string[] {
+/** The lines of one list key (`prebuild`, `build`, `sudo`) of the recipe's first build, comments and indentation stripped. */
+function list(key: string): string[] {
   const lines = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8").split("\n");
-  const start = lines.findIndex((l) => /^\s+prebuild:\s*$/.test(l));
-  expect(start).toBeGreaterThan(-1);
+  const start = lines.findIndex((l) => new RegExp(`^\\s+${key}:\\s*$`).test(l));
+  expect(start, `no ${key}: block in the recipe`).toBeGreaterThan(-1);
   const out: string[] = [];
   for (const l of lines.slice(start + 1)) {
     const m = /^\s+-\s+(.*\S)\s*$/.exec(l);
@@ -22,20 +22,9 @@ function prebuild(): string[] {
   }
   return out;
 }
-
-/** The `sudo` lines of the recipe's first build, same shape as prebuild(). */
-function sudo(): string[] {
-  const lines = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8").split("\n");
-  const start = lines.findIndex((l) => /^\s+sudo:\s*$/.test(l));
-  expect(start).toBeGreaterThan(-1);
-  const out: string[] = [];
-  for (const l of lines.slice(start + 1)) {
-    const m = /^\s+-\s+(.*\S)\s*$/.exec(l);
-    if (m) out.push(m[1] as string);
-    else if (!/^\s*#/.test(l)) break;
-  }
-  return out;
-}
+const prebuild = (): string[] => list("prebuild");
+const build = (): string[] => list("build");
+const sudo = (): string[] => list("sudo");
 
 /** The release build's pin (build-wasm-release.sh), the one value the recipe must repeat. */
 function pinnedEmscripten(): string {
@@ -49,11 +38,11 @@ describe("F-Droid recipe pins the release Emscripten (A96)", () => {
 
   it("installs emscripten=<pin> and exports EMSCRIPTEN_PKG_VERSION=<pin> before the engine build", () => {
     expect(sudo().some((s) => /^apt-get install\b/.test(s) && s.split(/\s+/).includes(`emscripten=${pin}`))).toBe(true);
-    const steps = prebuild();
+    const steps = build();
     const exp = steps.findIndex((s) => s === `export EMSCRIPTEN_PKG_VERSION=${pin}`);
-    const build = steps.findIndex((s) => /^engine\/giac\/build-wasm\.sh$/.test(s));
-    expect(exp, "no export EMSCRIPTEN_PKG_VERSION in prebuild").toBeGreaterThan(-1);
-    expect(build).toBeGreaterThan(exp);
+    const eng = steps.findIndex((s) => /^engine\/giac\/build-wasm\.sh$/.test(s));
+    expect(exp, "no export EMSCRIPTEN_PKG_VERSION in build").toBeGreaterThan(-1);
+    expect(eng).toBeGreaterThan(exp);
   });
 });
 
@@ -96,24 +85,121 @@ describe("build-wasm.sh with EMSDK_DIR=system checks the compiler version (A96)"
 });
 
 describe("F-Droid recipe checks find/factors.yaml (A60)", () => {
-  const steps = prebuild();
+  const steps = build();
   const at = (re: RegExp): number => steps.findIndex((s) => re.test(s));
 
   it("runs refresh-factors.mjs after the qalc build and npm ci, before npm run index", () => {
     const qalc = at(/^engine\/qalc\/build-wasm\.sh dev$/);
-    const ci = at(/^npm ci$/);
+    const ci = prebuild().findIndex((s) => /^npm ci$/.test(s));
     const refresh = at(/refresh-factors\.mjs/);
     const index = at(/^npm run index$/);
     expect(qalc).toBeGreaterThan(-1);
     expect(ci).toBeGreaterThan(-1);
     expect(index).toBeGreaterThan(-1);
-    expect(refresh, "no refresh-factors.mjs step in prebuild").toBeGreaterThan(-1);
+    expect(refresh, "no refresh-factors.mjs step in build").toBeGreaterThan(-1);
     expect(refresh).toBeGreaterThan(qalc);
-    expect(refresh).toBeGreaterThan(ci);
+    expect(ci, "npm ci stays in prebuild").toBeGreaterThan(-1);
     expect(refresh).toBeLessThan(index);
   });
 
   it("the step is a plain `node` call of the script (a difference exits 1 and fails the build)", () => {
     expect(steps[at(/refresh-factors\.mjs/)]).toMatch(/^node \.\.\/tools\/find-index\/refresh-factors\.mjs$/);
+  });
+});
+
+describe("F-Droid recipe builds outside prebuild (A97)", () => {
+  const pre = prebuild();
+  const bld = build();
+  const at = (steps: string[], re: RegExp): number => steps.findIndex((s) => re.test(s));
+
+  it("prebuild builds nothing: no engine build without --fetch-only, no npm run build, no cap sync, no index", () => {
+    for (const s of pre) {
+      if (/build-wasm\.sh/.test(s)) expect(s, `prebuild builds: ${s}`).toMatch(/ --fetch-only$/);
+      expect(s).not.toMatch(/npm run build|cap sync|npm run index|refresh-factors/);
+    }
+    expect(at(pre, /^engine\/giac\/build-wasm\.sh --fetch-only$/)).toBeGreaterThan(-1);
+    expect(at(pre, /^engine\/qalc\/build-wasm\.sh dev --fetch-only$/)).toBeGreaterThan(at(pre, /^engine\/giac\/build-wasm\.sh --fetch-only$/));
+    expect(at(pre, /^npm ci$/)).toBeGreaterThan(-1);
+  });
+
+  it("a build: block holds the builds in today's order", () => {
+    const order = [
+      /^cd \.\.\/\.\.$/, /^export EMSDK_DIR=system$/, /^engine\/giac\/build-wasm\.sh$/, /^engine\/qalc\/build-wasm\.sh dev$/, /^cd app$/,
+      /refresh-factors\.mjs$/, /^npm run index$/, /npm run build$/, /^npx cap sync android$/,
+    ];
+    let last = -1;
+    for (const re of order) {
+      const i = at(bld, re);
+      expect(i, `build: has no step ${re}`).toBeGreaterThan(last);
+      last = i;
+    }
+  });
+
+  it("the downloads sit outside the source tree, the same folder in prebuild and build (the scanned tree holds nothing downloaded)", () => {
+    const dl = (steps: string[], v: string): string | undefined => steps.map((s) => new RegExp(`^export ${v}=(\\S+)$`).exec(s)?.[1]).find(Boolean);
+    for (const v of ["N62_DL_DIR", "N62_QALC_DL_DIR"]) {
+      expect(dl(pre, v), `prebuild exports ${v}`).toMatch(/^\/tmp\//);
+      expect(dl(bld, v)).toBe(dl(pre, v));
+    }
+  });
+
+  it("the recipe has no scandelete: fdroidserver's scan_source fails on a path that matches nothing, and none exists after prebuild (capacitor.settings.gradle also builds Capacitor's modules from app/node_modules/)", () => {
+    const text = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8");
+    expect(text).not.toMatch(/^\s+scandelete:/m);
+    expect(readFileSync(join(repo, "android/capacitor.settings.gradle"), "utf8")).toContain("node_modules");
+  });
+});
+
+describe("--fetch-only compiles nothing (A97)", () => {
+  /** Runs a build script with fake curl/sha256sum (every download "succeeds") and fake compilers that log their calls. */
+  function run(script: string, args: string[], emsdkSystem: boolean) {
+    const dir = mkdtempSync(join(tmpdir(), "n62-a97-"));
+    try {
+      const bin = join(dir, "bin");
+      spawnSync("mkdir", ["-p", bin]);
+      const calls = join(dir, "calls.log");
+      const fake = (name: string, body: string): void => {
+        writeFileSync(join(bin, name), `#!/bin/bash\n${body}\n`);
+        chmodSync(join(bin, name), 0o755);
+      };
+      for (const t of ["make", "emcc", "em++", "emconfigure", "emmake", "gcc", "g++", "patch", "tar", "xz"]) fake(t, `echo "${t} $*" >> "${calls}"; echo "emcc 3.1.69"`);
+      fake("sha256sum", "exit 0");
+      // the .dsc must name the pin; any other download is a dummy file
+      fake("curl", `out=""; url=""; while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift;; http*) url="$1";; esac; shift; done
+case "$url" in *.dsc) printf 'Checksums-Sha256:\\n cdec29897d6a55f9e53f82285ffd85cd82bcaba0bd90a494f710be002bd73f57 1 giac_2.1.0-1.tar.gz\\n' > "$out";; *) echo x > "$out";; esac
+echo "curl $url" >> "${calls}"`);
+      const env: NodeJS.ProcessEnv = { ...process.env, PATH: `${bin}:${process.env.PATH ?? ""}`, N62_DL_DIR: join(dir, "dl"), N62_QALC_DL_DIR: join(dir, "qdl"),
+        GIAC_BUILD_DIR: join(dir, "b"), GIAC_BUILD_OUT: join(dir, "o"), QALC_WORK: join(dir, "w"), NO_LOCK: "1", EMSDK_DIR: emsdkSystem ? "system" : join(dir, "no-emsdk") };
+      delete env.EMSCRIPTEN_PKG_VERSION;
+      const r = spawnSync("bash", [join(repo, script), ...args], { env, encoding: "utf8", timeout: 60000 });
+      let log = "";
+      try { log = readFileSync(calls, "utf8"); } catch { /* nothing ran */ }
+      const made = (d: string): string[] => { try { return readdirSync(d); } catch { return []; } };
+      return { status: r.status, err: r.stderr, log, built: [...made(join(dir, "b")), ...made(join(dir, "o")), ...made(join(dir, "w"))] };
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  const compilers = /^(make|emcc|em\+\+|emconfigure|emmake|gcc|g\+\+|patch|tar|xz) /m;
+
+  it("giac: downloads, then stops: no compiler, make, unpack or patch, no build tree, no emsdk needed", () => {
+    const r = run("engine/giac/build-wasm.sh", ["--fetch-only"], false);
+    expect(r.status, r.err).toBe(0);
+    expect(r.log).toContain("curl ");
+    expect(r.log).not.toMatch(compilers);
+    expect(r.built).toEqual([]);
+  });
+
+  it("qalc: downloads, then stops, in dev mode, the lock never taken", () => {
+    const r = run("engine/qalc/build-wasm.sh", ["dev", "--fetch-only"], false);
+    expect(r.status, r.err).toBe(0);
+    expect(r.log).toContain("curl ");
+    expect(r.log).not.toMatch(compilers);
+    expect(r.built).toEqual([]);
+  });
+
+  it("control: without the option the same harness sees the compiler called", () => {
+    const r = run("engine/giac/build-wasm.sh", [], true);
+    expect(r.log).toMatch(compilers);
   });
 });
