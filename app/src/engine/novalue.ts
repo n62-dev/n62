@@ -148,6 +148,8 @@ const NOT_FREE: ReadonlySet<string> = new Set(["pi", "e", "i", "euler_gamma"]);
 const freeName = (t: string): boolean => [...names(t, "printed")].some((n) => !n.call && !NOT_FREE.has(n.name));
 /** A printed test, function or string: no lost number (lostNumber, lostCas). */
 const notAValue = (t: string): boolean => /==|<>|->|"/.test(t);
+/** G172: Giac's print `t` holds no free name and nothing that is no value: the elements of a list may all have numbers. */
+export const mayBeNumbers = (t: string): boolean => !notAValue(t) && !freeName(t.split(LIST_TYPE).join("["));
 
 /**
  * F50: the reason for a result held in `slot` that is Giac's text with no free name (a number was asked for, and Giac
