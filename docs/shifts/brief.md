@@ -85,7 +85,6 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 562 | A123 the core runner waits for the `defs` write, a red case shows `defs` (F200) | gorge, Sonnet | `p1/gorge-defswait` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
