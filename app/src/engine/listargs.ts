@@ -6,8 +6,8 @@
 // a call of one of LIST_AS_ARGUMENTS whose one argument is a list, typed (`[…]`, Giac's `list[…]`) or held by what the
 // argument evaluates to (a stored list, Ans). Two arguments typed as two keep Giac's answer. R80f1: Giac's densities, cdfs
 // and inverse cdfs do the same (normald_cdf([0.5,1.5]) = normald_cdf(0.5,1.5), P(0.5 ≤ X ≤ 1.5)); a list as their x after
-// the parameters is one value per element since G111's patch 0007, except negbinomial_icdf; it and mlr_beta, mlr_predict
-// answer a list among their arguments wrongly (LIST_IN_ARGUMENTS). G112: the names come from a probe (listargsTable.ts), no
+// the parameters is one value per element (patch 0007, G169's 0038); mlr_beta, mlr_predict and, among two or more arguments,
+// max, min, Psi, ugamma, trail answer a list wrongly or not at all (LIST_IN_ARGUMENTS). G112: the names come from a probe (listargsTable.ts), no
 // longer by hand: Psi({1,2}) was Psi(1,2) = -2 Zeta(3), Zeta, the Bessel functions, atan2, comb, perm, surd, irem, Beta too.
 // G124 (F107): a hit whose one-list form Giac documents keeps Giac's answer in that form (PROBED_LIST_FORMS, the probe's
 // second class, tools/probes/listargs/intended.ts): matrix({{1,2},{3,4}}) from rows, zeros({2,3}) and ranm({2,3}) from
@@ -48,10 +48,12 @@ function outsideForm(a: string, form: "integers" | "rows"): string {
 /** R80f1: functions that answer a list among their arguments wrongly (probed on the shared engine with patch 0007,
  *  2026-10-26), refused when one argument is a list: "any" for a `[ ]` vector or Giac's list type in any argument, a number
  *  k for the list type only (subtype 23, typed braces since R80) as argument k (from 0; a list-type X is answered right). negbinomial_icdf(3,0.5,[0.2,0.7]) was 0 for both (right {1,4}), the one
- *  distribution patch 0007 left (since patch 0009, G113, Giac refuses the list itself; Home keeps this reason); mlr_beta(X,list[2.1,…]) is a 2×5 matrix and mlr_predict(X,list[0.05,1.99]) a matrix,
- *  where the vector gives the betas [0.05,1.99] and the five predictions (mlr and its other forms give an error). */
-export const LIST_IN_ARGUMENTS: Readonly<Record<string, "any" | number>> = {
-  negbinomial_icdf: "any", mlr_beta: 1, mlr_predict: 1,
+ *  distribution patch 0007 left, and since G169's patch 0038 Giac gives one value per element (left off this table); mlr_beta(X,list[2.1,…]) is a 2×5 matrix and mlr_predict(X,list[0.05,1.99]) a matrix,
+ *  where the vector gives the betas [0.05,1.99] and the five predictions (mlr and its other forms give an error).
+ *  G169 (F93): "several" refuses a list among a call's arguments only when the call has two or more of them; Giac's help documents no one-value-per-element form for these and answers the call back:
+ *  max(25,list[1,2]), min, Psi(3,list[1,2]) (a list as the order, Psi shows Psi(list[1,2],3)), ugamma(5,list[1,2]), trail(1,2,3,4,list[1,2]). max(list[1,2]) alone is the documented form. */
+export const LIST_IN_ARGUMENTS: Readonly<Record<string, "any" | "several" | number>> = {
+  mlr_beta: 1, mlr_predict: 1, max: "several", min: "several", Psi: "several", ugamma: "several", trail: "several",
 };
 let either: Set<string> | undefined;
 const EITHER = (): Set<string> => (either ??= new Set([...LIST_AS(), ...FORMED().keys(), ...Object.keys(LIST_IN_ARGUMENTS)]));
@@ -81,7 +83,7 @@ export function listAsArguments(
   giac: Giac,
   input: string,
   userFn: (name: string) => boolean,
-  table: Readonly<Record<string, "any" | number>> = LIST_IN_ARGUMENTS,
+  table: Readonly<Record<string, "any" | "several" | number>> = LIST_IN_ARGUMENTS,
 ): ListRefusal | null {
   const names = table === LIST_IN_ARGUMENTS ? EITHER() : new Set([...LIST_AS(), ...FORMED().keys(), ...Object.keys(table)]);
   const calls = callsOf(input, names, "typed");
@@ -90,7 +92,10 @@ export function listAsArguments(
   for (const c of calls) {
     if (c.close < 0) continue;
     const args = topLevelArgs(input.slice(c.open + 1, c.close), "typed");
-    const mode = Object.hasOwn(table, c.name) ? table[c.name] : undefined;
+    const listed = Object.hasOwn(table, c.name) ? table[c.name] : undefined;
+    // G169: a "several" name's one-argument call is its documented form (max(list)), or (Psi, ugamma) LIST_AS_ARGUMENTS's case
+    if (listed === "several" && args.length < 2 && !LIST_AS().has(c.name) && !FORMED().has(c.name)) continue;
+    const mode = listed === "several" && args.length < 2 ? undefined : listed;
     const why: ListRefusal = mode !== undefined ? "listInArgument" : "listAsArguments";
     if (mode === undefined && args.length !== 1) continue;
     const listType = typeof mode === "number";

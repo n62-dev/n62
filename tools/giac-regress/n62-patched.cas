@@ -848,6 +848,27 @@ Digits:=40:; pc("g96-cas-im-2sqrt",'subst(im(2*sqrt(x)),x,-1)',2,1/10^30);
 // patch 0017-mpfr-nan-not-zero.patch
 // g131-nan-times-complex (precision.yaml g120-acos-overflow-times-sqrt-neg2-12, derived)
 Digits:=40:; pc("g131-nan-times-complex",'when(string(evalf(acos(9007199254740993^9007199254740993)*sqrt(-2)))=="undef",1,0)',1,1/10^30);
+// patch 0038-list-x-per-element.patch
+// g169-normald-cdf-list-0 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-normald-cdf-list-0",'normald_cdf(0,1,list[1/2,3/2])[0]',691462461274/10^12,5/10^13);
+// patch 0038-list-x-per-element.patch
+// g169-normald-cdf-list-1 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-normald-cdf-list-1",'normald_cdf(0,1,list[1/2,3/2])[1]',933192798731/10^12,5/10^13);
+// patch 0038-list-x-per-element.patch
+// g169-student-cdf-list-1 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-student-cdf-list-1",'student_cdf(3,list[1/2,3/2])[1]',884708067378/10^12,5/10^13);
+// patch 0038-list-x-per-element.patch
+// g169-chisquare-cdf-list-1 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-chisquare-cdf-list-1",'chisquare_cdf(2,list[1,2])[1]',632120558829/10^12,5/10^13);
+// patch 0038-list-x-per-element.patch
+// g169-fisher-cdf-list-1 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-fisher-cdf-list-1",'fisher_cdf(2,3,list[1,2])[1]',719434141125/10^12,5/10^13);
+// patch 0038-list-x-per-element.patch
+// g169-poisson-cdf-list-1 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-poisson-cdf-list-1",'poisson_cdf(2,list[1,2])[1]',676676416183/10^12,5/10^13);
+// patch 0038-list-x-per-element.patch
+// g169-negbinomial-icdf-list-1 (home.yaml g169-*, oracle)
+Digits:=40:; pc("g169-negbinomial-icdf-list-1",'negbinomial_icdf(3,1/2,list[1/5,7/10])[1]',4,1/10^30);
 // patch 0024-evalf-complex-double-workaround.patch
 // g140-evalf-gamma-1+i-14 (home.yaml g140-gamma-1+i-12, oracle)
 Digits:=14:; pc("g140-evalf-gamma-1+i-14",'evalf(Gamma(1+i))',(4980156681183560427/10^19)-(1549498283018106851/10^19)*i,1/10^13);
