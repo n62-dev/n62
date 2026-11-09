@@ -217,6 +217,32 @@ export class ClipActions {
     return this.put(text, tc("clip.sharedAsCopy"));
   }
 
+  /** Settings › Help and about › Report a problem (R173): the report (version, device, the session) on the clipboard, then
+   *  the issue form in a new tab. The session travels on the clipboard, only the short fields in the link (report.ts). */
+  reportProblem(): Promise<void> {
+    return this.serial(() => this.reportNow());
+  }
+  private async reportNow(): Promise<void> {
+    const m = await impl();
+    const { reportText, issueUrl } = await import("./report.ts");
+    const { aboutText } = await import("../i18n/enAbout.ts");
+    const version = (await import("virtual:about")).default.version;
+    const device = navigator.userAgent;
+    const session = m.sessionText(this.session.items.map(source), this.opts, this.session.displayContext());
+    const text = reportText(version, device, session);
+    const { Capacitor } = await import("@capacitor/core");
+    // A95 opens the form on a native platform; until then the address is said and the user opens it
+    if (Capacitor.isNativePlatform()) {
+      await this.put(text, aboutText("report.openBy"));
+      return;
+    }
+    if (!(await this.put(text, aboutText("report.copied")))) return;
+    // not the `noopener` feature: with it window.open returns null even when the form opened
+    const w = window.open(issueUrl({ version, device }), "_blank");
+    if (w) w.opener = null;
+    else this.say(aboutText("report.openBy"));
+  }
+
   /** The row an action means: the picked one, else the newest finished result. Recall also takes an error or a
    *  cancelled entry when it is picked (its input comes back). */
   private recallable(row?: HistoryItem): HistoryItem | undefined {

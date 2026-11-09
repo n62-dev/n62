@@ -393,11 +393,24 @@ describe("Settings, a level of the sheet (R49)", () => {
 describe("Help and about (R87)", () => {
   const loaded = (s: Sheet) => vi.waitFor(() => expect(s.level.items[0]?.id).not.toBe("loading"));
 
-  it("is the fourth section; it holds About and Parts, each opening a level", () => {
+  it("is the fourth section; it holds Report a problem (R173), About and Parts; About and Parts open a level", () => {
     const s = settings(5);
     expect(s.path).toBe("Mode › Settings › Help and about");
-    expect(s.level.items.map((x) => x.id)).toEqual(["about", "parts"]);
-    expect(s.level.items.every((x) => x.submenu)).toBe(true);
+    expect(s.level.items.map((x) => x.id)).toEqual(["report", "about", "parts"]);
+    expect(byId(s, "report")?.label).toBe("Report a problem");
+    expect(s.level.items.filter((x) => x.id !== "report").every((x) => x.submenu)).toBe(true);
+  });
+
+  it("Report a problem runs the clipboard code's reportProblem through the app's data hook (R173)", () => {
+    const reported = vi.fn();
+    const data = (run: (c: ClipActions) => void | Promise<void>): void => void run({ reportProblem: reported } as unknown as ClipActions);
+    const s = new Sheet("mode", "Mode", () => modeItems(session, { data }), { remember: false });
+    s.pickNumber(6);
+    s.pickNumber(6); // (with Data: Help and about is the sixth section)
+    const p = s.activate(at(s, "report"));
+    expect(p.kind).toBe("run");
+    if (p.kind === "run") p.item.run?.();
+    expect(reported).toHaveBeenCalledTimes(1);
   });
 
   it("with the app's tips (R15c4) the first row shows the first-start tips again (the other test: without them there is no such row)", () => {
@@ -405,7 +418,7 @@ describe("Help and about (R87)", () => {
     const s = new Sheet("mode", "Mode", () => modeItems(session, { tips: shown }), { remember: false });
     s.pickNumber(6);
     s.pickNumber(5); // (no Your keys or Data here: Help and about is the fifth section)
-    expect(s.level.items.map((x) => x.id)).toEqual(["tips", "about", "parts"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["tips", "report", "about", "parts"]);
     expect(s.level.items[0]?.label).toBe("Show the first-start tips");
     const p = s.activate(0);
     expect(p.kind).toBe("run"); // the shell closes the sheet, then runs it
@@ -415,7 +428,7 @@ describe("Help and about (R87)", () => {
 
   it("About: the version from package.json, the licence, the source URL; the licence opens its text", async () => {
     const s = settings(5);
-    s.pickNumber(1);
+    s.pickNumber(2);
     expect(s.path).toBe("Settings › Help and about › About"); // the last three levels
     await loaded(s);
     const { version } = (await import("../../package.json")).default;
@@ -429,7 +442,7 @@ describe("Help and about (R87)", () => {
 
   it("Parts: a row per part of THIRD_PARTY.md; a single licence opens its text, a dual one a list of both", async () => {
     const s = settings(5);
-    s.pickNumber(2);
+    s.pickNumber(3);
     await loaded(s);
     const about = (await import("virtual:about")).default;
     expect(s.level.items.length).toBe(about.parts.length);
@@ -449,7 +462,7 @@ describe("Help and about (R87)", () => {
 
   it("a text level pages with ▲ ▼ and goes back with ◀", async () => {
     const s = settings(5);
-    s.pickNumber(1);
+    s.pickNumber(2);
     await loaded(s);
     s.activate(at(s, "licence"));
     s.level.move(1);
