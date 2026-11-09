@@ -3,11 +3,12 @@
      when state/updateOffer.svelte.ts holds a restart function). -->
 <script lang="ts">
   import { t } from "../i18n/index.ts";
+  import { pressFlag } from "../input/pressFlag.ts";
 
   let { restart }: { restart: () => void } = $props();
 </script>
 
-<button type="button" class="update" data-testid="update-note" title={t("update.ready")} onclick={restart}>{t("update.restart")}</button>
+<button type="button" class="update" use:pressFlag data-testid="update-note" title={t("update.ready")} onclick={restart}>{t("update.restart")}</button>
 
 <style>
   /* (the status line's `header button` reset does not reach into this component, so it is repeated here) */
@@ -25,7 +26,7 @@
     white-space: nowrap;
     color: var(--shift);
   }
-  .update:active {
+  .update:global([data-down]) {
     background: var(--key-nav);
     color: var(--key-shift);
   }

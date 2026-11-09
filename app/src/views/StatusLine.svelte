@@ -5,6 +5,7 @@
   import { t, type MessageKey } from "../i18n/index.ts";
   import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
+  import { pressFlag } from "../input/pressFlag.ts";
   import { updateOffer } from "../state/updateOffer.svelte.ts";
   import { ICONS } from "./icons.ts";
 
@@ -60,6 +61,7 @@
     <button
       type="button"
       class="place"
+      use:pressFlag
       data-testid="place"
       data-tip="place"
       data-app={shell.app ?? ""}
@@ -111,7 +113,7 @@
         <button type="button" class="chip" data-testid="chip-digits" onclick={() => onmode("digits")}>{session.settings.digits}</button>
       </span>
     </span>
-    <button type="button" class="menubtn" data-testid="menu-button" data-tip="menu" aria-label={t("status.menu")} onclick={() => onpress(MENU_KEY, "primary")}>☰</button>
+    <button type="button" class="menubtn" use:pressFlag data-testid="menu-button" data-tip="menu" aria-label={t("status.menu")} onclick={() => onpress(MENU_KEY, "primary")}>☰</button>
     <!-- the busy ring is drawn on an aria-hidden tile: a screen reader hears the job from this hidden line (R102) -->
     {#if busy}<span class="sr" role="status" data-testid="busy-status">{t("status.busy")}</span>{/if}
   </header>
@@ -167,7 +169,7 @@
     font-weight: 700;
     color: var(--text);
   }
-  .place:active {
+  .place:global([data-down]) {
     background: var(--key-nav);
     color: var(--key-text);
   }
@@ -259,7 +261,7 @@
     font-size: var(--fs-key-fn);
     color: var(--text);
   }
-  .menubtn:active {
+  .menubtn:global([data-down]) {
     background: var(--key-nav);
     color: var(--key-text);
   }
