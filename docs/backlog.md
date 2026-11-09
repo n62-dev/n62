@@ -54,7 +54,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
 - **F194, G225 built, G225f1 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
-- **F195, G220 built, package G221.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf`: ⚠.
+- **F195, G220 and G221 built.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf` at the working precision.
 - **F203, no package (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.

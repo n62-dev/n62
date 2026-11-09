@@ -611,6 +611,15 @@ export function homeEval(
     return fromBuilt(b, path, true, exact, b.decimal, why);
   };
 
+  // The input as one number through the polish (icdf.ts); null when it runs once or cannot be polished.
+  const polishedResult = (): HomeResult | null => {
+    const facts = once ? null : floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
+    if (!facts) return null;
+    store();
+    const b = build(facts, { kind: "scalar" }, s.digits, "exact", true);
+    return fromBuilt(b, "exact", true, undefined, b.decimal, whyOf(facts, exactBody));
+  };
+
   // G58: past the deadline after the exact steps: refused, not checked for as long again.
   if (late()) return { ...failed(enEngine["error.timeout"], "exact"), error: "timeout" };
   // G111 (F98), R80f1: Giac reads one list argument of LambertW, a distribution and others as their argument list
@@ -624,16 +633,9 @@ export function homeEval(
   if (badShape) return refuse(badShape, "exact");
   if (square === "unchecked") unsquared = { ...(once ? { once: true } : {}), squareUnchecked: true };
   if (isTimeout(exactOut)) return viaFloat("float-timeout");
-  // G221 (F195): Giac refuses a ν that is no integer (student_cdf(2.5,1)); the polish computes it. A polish that cannot
-  // leaves Giac's error, so nothing is read and the float path below answers as before.
-  if (isError(exactOut) && !once && giacRefusesOurs(exactBody)) {
-    const facts = floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
-    if (facts) {
-      store();
-      const b = build(facts, { kind: "scalar" }, s.digits, "exact", true);
-      return fromBuilt(b, "exact", true, undefined, b.decimal, whyOf(facts, exactBody));
-    }
-  }
+  // G221 (F195): Giac refuses a ν that is no integer (student_cdf(2.5,1)): the polish computes it, or the float path answers as before.
+  const polished = isError(exactOut) && giacRefusesOurs(exactBody) ? polishedResult() : null;
+  if (polished) return polished;
   if (isError(exactOut)) return viaFloat("float-error");
   // G106 (F78): Giac's polynomial of a list plus a number (`[1,4]+1` = poly1[1,5]), which the input did not ask for.
   if (unaskedPoly(giac, ans, exactBody, exactOut, userFn)) return refuse("listPlusNumber", "exact");
@@ -702,12 +704,8 @@ export function homeEval(
   // G44f2: and undef (normald_icdf(10^-30) from about the third call on one engine): polished from the centre, and
   // never an unmarked undef when the polish refuses.
   if (/^([+-]?infinity|undef)$/.test(exactOut.trim()) && icdfEndCalls(exactBody).length) {
-    const facts = once ? null : floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
-    if (facts) {
-      store();
-      const b = build(facts, { kind: "scalar" }, s.digits, "exact", true);
-      return fromBuilt(b, "exact", true, undefined, b.decimal, whyOf(facts, exactBody));
-    }
+    const atEnd = polishedResult();
+    if (atEnd) return atEnd;
     giac.eval(`${ans}:=${exactOut}`);
     // Exact only when the polish itself gives the end of the support (p = 0 or 1); a polish refused, or one that
     // converged at P but not at P + 20, leaves Giac's infinity unaudited.
