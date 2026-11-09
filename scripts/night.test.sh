@@ -241,6 +241,14 @@ ref "$P \"a \$HOME\""; ref "$P \"a \\\$HOME\""; ref "$P \"a \`id\`\""; ref "$P \
 ref "$P \"a\\\"; rm x"
 ref "$P \"a\\\\\" ; rm x \"b\""
 ref "$P \"a\\\\\" & rm x \"b\""
+# A89f1: a quote the shell does not read as one (escaped, or inside single quotes) opens nothing; the scanner reads the line like the shell
+for m in ';' '&' '|'; do
+  ref "$P \\\"a $m touch f \" \""
+  ref "$P '\"' $m touch f $m '\"'"
+done
+ref "$P \"a"; ref "$P 'a"
+acc "$P 'a \" b' --id X1"; acc "$P \"a 'b' c\" --id X1"
+ref "$P 'a ; b'"; ref "$P \\\"a"
 # the accepted line, run through the same eval, gives its prompt argument with the literal double quotes
 args() { printf '%s\n' "$2"; }
 line="args ron \"describe \\\"a & b\\\" here\" --id X1"
