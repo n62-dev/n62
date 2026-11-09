@@ -9,7 +9,6 @@ The legend is missing on the keytop only because the feature is not built; the k
 | Key and layer | Planned as | Where decided |
 |---|---|---|
 | Help (row 0, col 4, the G2's r1c4) | context help from the Find index (milestone 6); the owner may veto | docs/04 5.1, R15c, R146 |
-| results mode: the handle on the keypad's top edge and a swipe down on the entry line (R53) | the keypad collapses to a slice | P16, S9, R146 |
 | Shift + 4, 5 | matrix editor, `[ ]` (EN5, milestone 6) | docs/04 5.1 |
 | Shift + 7 (List) | deferred with Statistics | docs/04 5.1 |
 | Shift + − (Base) | Base menu (EN6, milestone 6) | docs/04 5.4 |
