@@ -19,7 +19,7 @@ import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelAr
  *  nonsquare.ts: a power, inverse or division of a matrix that is not square. `listPlusNumber` (G106) comes from
  *  polyvec.ts: Giac's polynomial of a list plus a number. `listAsArguments` (G111) and `listInArgument` (R80f1) come from
  *  listargs.ts: a list read as the argument list, or answered wrongly. */
-export type Refusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument";
+export type Refusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "unknownFunction";
 
 /** A check's answer: the result stands, it is refused, or the check could not finish (an error or Giac's timeout), in
  *  which case the result stands with ⚠ (nothing confirmed that it exists). */

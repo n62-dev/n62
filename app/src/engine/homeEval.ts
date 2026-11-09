@@ -652,7 +652,8 @@ export function homeEval(
   const shape = shapeOfValue(value);
   const symbolic = (forced?: "unaudited"): HomeResult => {
     // G78: Giac's text with no free name where a number was asked for (asin(acos(π²)), sinh(6020³)), or undef through ∞.
-    const lost = once || forced || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn);
+    // G168: a polish that could not replace Giac's undef is a lost answer too, ⚠ or not (only an infinity stays Giac's word).
+    const lost = once || (forced && exactOut.trim() !== "undef") || inexactTest ? null : lostNumber(giac, ans, exactBody, exactOut, late, exactMs, userFn);
     if (lost) return refuse(lost, "exact");
     // Not a number (symbolic, a set, a nested list…): show Giac's text. This build does not apply the
     // "regroup" autosimplify at the top level (x*x stays x*x), so collect equal factors here.
