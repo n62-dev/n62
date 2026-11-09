@@ -45,6 +45,13 @@ export const ICDF_DIGITS = "pasicdfd";
 /** A real number: a float, or an exact integer or rational (evalf(0) stays the integer 0). */
 const REAL = (v: string) => `(type(${v})==integer or type(${v})==rational or type(evalf(${v}))==DOM_FLOAT)`;
 
+/** G221f1: the parameters and the locals of a definition. */
+export function boundNames(def: string): string[] {
+  const params = /^\w+\(([^)]*)\):=/.exec(def)?.[1] ?? "";
+  const locals = [...def.matchAll(/\blocal ([^;]*);/g)].map((m) => m[1]!);
+  return [...params.split(","), ...locals.flatMap((l) => l.split(","))].map((n) => n.trim()).filter(Boolean);
+}
+
 /** The definitions, in the order they are loaded (helpers first). */
 export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   // ln Γ(a) with MPFR at Digits.
