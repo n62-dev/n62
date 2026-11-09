@@ -11,6 +11,7 @@ in the canonical text of app/src/engine/format.ts (STD).
   tests/golden/.venv/bin/python tests/golden/oracle.py --write    # fill/refresh expect for source: oracle
   tests/golden/.venv/bin/python tests/golden/oracle.py --g2       # also regenerate tests/golden/G2-CHECKLIST.md
   tests/golden/.venv/bin/python tests/golden/oracle.py --g2 --check # exit 1 with the item numbers when G2-CHECKLIST.md was edited by hand (G79)
+  tests/golden/.venv/bin/python tests/golden/oracle.py --counts   # also write tests/golden/oracle-counts.json (G202; by hand at the release only)
   tests/golden/.venv/bin/python tests/golden/oracle.py home.yaml  # one file
   tests/golden/.venv/bin/python tests/golden/oracle.py --digits 30 # default digits for cases without settings.digits (12)
 
@@ -22,6 +23,10 @@ the engine cannot confirm (the case then needs a `note`); so is a "≈" where th
 as a double (needs a `note`, and an input that is a top-level call of round( or trunc(), or of asin( or acos( that Giac leaves
 unevaluated (G121). "⚠ n" (n confirmed digits) is a "⚠" with a count. When no value can be derived (no `oracle:` expression, or
 `expect` is no number) a hand-written "=" or "≈" needs a `note` too, as "⚠" does. A case with a mark but no `expect` is mark-only.
+
+--counts (G202, the whole tree only) writes `oracle-counts.json`, `{ "exact": n, "mpmath": n }` with sorted keys: how many `source: oracle`
+rows have an oracle value that is an int or a Fraction (exact; a list: every element) and how many have a float (mpmath; one float element
+in a list makes the row mpmath). It is refreshed by hand at the release; plain runs never read it, so its age is no PROBLEM.
 
 An exception from a case's oracle expression is one PROBLEM for that case; the run goes on with the next. corpus.yaml (G55, inputs
 with no ids and no expected values) and g2.yaml are not case files here. The gate's `oraclecheck` stage runs this check (G200).
@@ -411,8 +416,16 @@ def check_mark(case: dict, write: bool) -> list:
     return [f"mark {mark!r} but the oracle says {want!r}" if mark else f"numeric case without mark (oracle says {want!r})"]
 
 
-def check_file(path: Path, write: bool, g2_items: set):
-    """The number of problems in `path`, and with `write` the file's new text (None when nothing changed)."""
+def is_exact_value(v) -> bool:
+    """G202: an oracle value is exact when it is an int or a Fraction, a list element by element; anything else (an mpmath number, a Label such as "true" from a comparison of mpmath values) is mpmath."""
+    if isinstance(v, (list, tuple)):
+        return all(is_exact_value(x) for x in v)
+    return isinstance(v, (int, Fraction))
+
+
+def check_file(path: Path, write: bool, g2_items: set, counts=None):
+    """The number of problems in `path`, and with `write` the file's new text (None when nothing changed).
+    `counts` (G202), a dict, gets one more under "exact" or "mpmath" for each `source: oracle` row evaluated."""
     lines = path.read_text().splitlines()
     bad = 0
     seen = set()
@@ -444,7 +457,10 @@ def check_file(path: Path, write: bool, g2_items: set):
             if "oracle" in case:
                 digits = case_digits(case)
                 lo, hi = stability_dps(digits)
-                v30, v60 = evaluate(case["oracle"], lo, digits), evaluate(case["oracle"], hi, digits)
+                value = raw(case["oracle"], lo)
+                v30, v60 = display(value, digits), evaluate(case["oracle"], hi, digits)
+                if src == "oracle" and counts is not None:
+                    counts["exact" if is_exact_value(value) else "mpmath"] += 1
                 if v30 != v60:
                     problems.append(f"unstable oracle: {lo} digits {v30} vs {hi} digits {v60}")
                 if src == "oracle":
@@ -547,6 +563,10 @@ def main(argv) -> int:
             print(f"PROBLEM g2.yaml item {it['n']}: answered but source is {it.get('source')!r}")
             bad += 1
     files = case_files(argv)
+    counts = {"exact": 0, "mpmath": 0} if "--counts" in argv else None
+    if counts is not None and any(not a.startswith("--") for a in argv):
+        print("PROBLEM --counts counts the whole tree: name no file")
+        return 1
     if "--check" in argv:  # G79: read-only; the stored checklist must be what --g2 would write
         diff = checklist_diff(build_checklist(items, golden_files()), stored.read_text())
         for k in diff:
@@ -555,7 +575,7 @@ def main(argv) -> int:
         return 1 if diff or bad else 0
     texts = []
     for path in files:
-        n, text = check_file(path, write, set(numbers))
+        n, text = check_file(path, write, set(numbers), counts)
         bad += n
         if text is not None:
             texts.append((path, text))
@@ -563,6 +583,12 @@ def main(argv) -> int:
     for path, text in texts:
         path.write_text(text)
         print(f"wrote {path.name}")
+    if counts is not None and not bad:
+        text = json.dumps(counts, sort_keys=True, indent=2) + "\n"
+        target = HERE / "oracle-counts.json"
+        if not target.exists() or target.read_text() != text:
+            target.write_text(text)
+            print(f"wrote {target.name}")
     if "--g2" in argv:
         write_checklist(items, golden_files())
     print(f"{'written' if write else 'checked'} {len(files)} file(s); problems: {bad}")
