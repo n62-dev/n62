@@ -53,7 +53,7 @@ import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
-import { plainRowsText } from "./matrixType.ts";
+import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
 import { casSequence } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine } from "./dead.ts";
@@ -1130,7 +1130,7 @@ export class EngineHost implements FactsHost {
     // Giac's `list[…]` for Ans and the chips, and MathPrint draws Giac's latex() (`\{…\}`)
     const drawn = whenCalls(deg ?? text); // G173 (F93): Giac's `?:` as when(c,a,b), which the entry line reads
     const shown = drawn.includes(LIST_TYPE) ? bracesOf(drawn) : drawn;
-    const tex = deg !== null ? this.giac.eval(`latex(quote(${deg}))`) : latexShown(this.giac, slot, text);
+    const tex = deg !== null ? (soleMatrixLatexOfText(this.giac, deg) ?? this.giac.eval(`latex(quote(${deg}))`)) : latexShown(this.giac, slot, text);
     if (atN !== null) this.giac.eval("purge(pasfl)");
     if (isError(tex)) return fail(tex, isTimeout(tex) ? "timeout" : "engine");
     return {

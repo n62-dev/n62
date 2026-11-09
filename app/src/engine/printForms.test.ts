@@ -7,7 +7,7 @@ import type { EngineHost } from "./host.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, nodeHost } from "./nodeGiac.ts";
-import { holdsMatrixType, whenCalls } from "./giacPrint.ts";
+import { holdsMatrixType, onlyMatrixType, soleMatrix, whenCalls } from "./giacPrint.ts";
 import { casItem, homeItem } from "../state/resultItem.ts";
 import { copyFull } from "../clipboard/text.ts";
 import { giacOfEntry } from "../input/entry.ts";
@@ -37,6 +37,29 @@ describe("holdsMatrixType", () => {
     expect(holdsMatrixType("mymatrix[1]")).toBe(false);
     expect(holdsMatrixType('["matrix[1]",2]')).toBe(false);
     expect(holdsMatrixType("[[1,0],[0,1]]")).toBe(false);
+  });
+});
+
+describe("soleMatrix and onlyMatrixType", () => {
+  it("reads the one matrix a list or vector holds, and which of the two it is", () => {
+    expect(soleMatrix("list[[[1,0],[0,1]]]")).toEqual({ matrix: "[[1,0],[0,1]]", list: true });
+    expect(soleMatrix("[[[1,0],[0,1]]]")).toEqual({ matrix: "[[1,0],[0,1]]", list: false });
+    expect(soleMatrix("[list[[[1]]]]")).toEqual({ matrix: "list[[[1]]]", list: false });
+  });
+
+  it("is null for a matrix, a vector of numbers, or more than one element", () => {
+    expect(soleMatrix("[[1,0],[0,1]]")).toBeNull();
+    expect(soleMatrix("[[1,2]]")).toBeNull();
+    expect(soleMatrix("list[[[1,0],[0,1]],1]")).toBeNull();
+    expect(soleMatrix("list[1,2]")).toBeNull();
+    expect(soleMatrix("x")).toBeNull();
+  });
+
+  it("says when the only matrix type is the whole print", () => {
+    expect(onlyMatrixType("matrix[[1,0],[0,1]]")).toBe(true);
+    expect(onlyMatrixType("matrix[matrix[[1]],[2]]")).toBe(false);
+    expect(onlyMatrixType("[matrix[[1]],1]")).toBe(false);
+    expect(onlyMatrixType("matrix[[1]]*x")).toBe(false);
   });
 });
 
@@ -98,6 +121,17 @@ describe.skipIf(!giacAvailable())("G173 on the real engine", () => {
     expect(latex).toContain("\\{");
     expect(latex).toContain("\\begin{array}{cc}\n1 & 0 \\\\\n0 & 1\n\\end{array}");
     expect(latex).not.toContain("[1,0]");
+  });
+
+  // fix round 1: in DEG the drawing comes from the degree text; pasdeg is the factor our parser puts in every angle
+  it("draws a list holding one matrix as that, in CAS DEG too", () => {
+    const deg = { ...defaultCasSettings, angle: "deg" as const };
+    const r = host.cas("list[[[sin(pasdeg*x),1],[1,cos(pasdeg*x)]]]", deg).result;
+    expect(r).toMatchObject({ ok: true, text: "{[[sin(x),1],[1,cos(x)]]}" });
+    expect(r.latex).toContain("\\{");
+    expect(r.latex).toContain("\\begin{array}{cc}");
+    expect(r.latex).not.toContain("[1,");
+    expect(r.latex).not.toContain("pi");
   });
 
   it("still reads a stored list of a matrix (guard: passes on phase-1 too)", () => {

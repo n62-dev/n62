@@ -179,6 +179,19 @@ export function holdsMatrixType(text: string): boolean {
   return walk(text, 0, (k) => text.startsWith(MATRIX_TYPE, k) && !isNameChar(text.charAt(k - 1)) && text.charAt(k - 1) !== ".", "printed") >= 0;
 }
 
+/** G173: `text` (Giac's print) is one value of the matrix type and no other stands inside it. */
+export function onlyMatrixType(text: string): boolean {
+  return matrixTyped(text) && text.lastIndexOf(MATRIX_TYPE) === 0;
+}
+
+/** G173: the one element of the list or vector `text` (Giac's print) when that element is a matrix, its rows vectors, and
+ *  whether `text` is of Giac's list type; null for any other value. */
+export function soleMatrix(text: string): { matrix: string; list: boolean } | null {
+  const parts = text.includes("[[") ? splitList(text) : null;
+  const rows = parts?.length === 1 ? splitList(parts[0]!) : null;
+  return rows?.length && rows.every((r) => r.startsWith("[")) ? { matrix: parts![0]!, list: text.startsWith(LIST_TYPE) } : null;
+}
+
 /** Giac's print with every value of its list type written with braces, as the G2 shows a list (`list[[1,2],3]` →
  *  `{[1,2],3}`, `[list[1,2],3]` → `[{1,2},3]`), at any depth; strings and a name that ends in `list` are left alone.
  *  Bridge-3 gives the kind and the flat elements but no print in braces, and a list inside a vector needs the nesting. */
