@@ -84,11 +84,8 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 564 | R180 ∡ binds tighter (F192) | ron, Opus | `p1/ron-phasor` | – |
-| 565 | G200 oracle check in the gate | gorge, Sonnet | `p1/gorge-oraclegate` | – |
-| 566 | [G201](packages/G201.md) the four traps | gorge, Sonnet | `p1/gorge-trustrows` | G200 |
+| 566 | [G201](packages/G201.md) the four traps (review-only, `--no-worker`: the branch is done) | gorge, Sonnet | `p1/gorge-trustrows` | – |
 | 567 | [G300](packages/G300.md) trig chain cases | gorge, Sonnet | `p1/gorge-chain9` | G201 |
-| 568 | G202 oracle counts | gorge, Sonnet | `p1/gorge-oraclecounts` | G200 |
 | 569 | [A90](packages/A90.md) release notes file | annabell, Sonnet | `p1/annabell-relnotes` | – |
 | 570 | [A92](packages/A92.md) bug form session | annabell, Sonnet | `p1/annabell-formsession` | – |
 | 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201, G202 |

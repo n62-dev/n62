@@ -45,7 +45,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R163 built (own `data-down` flag, key pop, Appearance › Key pop-ups).
 - **F186, package R148 built (Opus pass 86).** Core c45 was red on the Tab One (1192 × 672): Solve's second root lay under the entry line. R148's keypad leaves 27.6 px (`solveroom.spec.ts`); Tab One check next.
 - **F172, A73 measured (report).** Stored history costs nothing; the rows drawn at start do (20 program rows 1821 ms, 20 plain 1469, 5 program 1345; bar 1.5 s). R133 merged (c9be0a7c): History draws 5 rows until engine ready; Tab One rerun pending. A CAS-view start is 1499 to 1507 against Home 1323, cause open (A73f1).
-- **F192, closed by R180 (bar point 3).** DEG `10∡30+5` computed 10∠35; ∡ now binds tighter than + × ÷.
 - **F196, package G301.** CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)`); the value is right.
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
 - **F199, packages R131, R198 (named limit).** Hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error.
