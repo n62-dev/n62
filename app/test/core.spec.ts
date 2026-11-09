@@ -24,6 +24,11 @@ test.describe("core list file", () => {
     expect(run([ok(), ok()]).join()).toContain("id repeated");
     expect(run([{ ...ok(), id: "c98", hand: true }]).join()).toContain("not in MORNING.md");
     expect(run([{ ...ok(), id: "c99", hand: false }], new Set([...m, "c99"])).join()).toContain("without hand: true");
+    const unit = (u: unknown): string => run([{ ...ok(), expect: { unit: u as never } }]).join();
+    expect(unit({ text: 5, unit: "lb" })).toContain("unit expect: text is not a string");
+    expect(unit({ text: "5" })).toContain("unit expect: unit is not a string");
+    expect(unit({ text: "5", unit: "lb", mark: 1 })).toContain("unit expect: mark is not a string");
+    expect(unit({ text: "5", unit: "lb", has: "± 1", mark: "≈" })).not.toContain("unit expect");
     expect(run([{ ...ok(), known: "F999" }]).join()).toContain("not an open bug line");
   });
 });

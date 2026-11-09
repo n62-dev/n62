@@ -17,5 +17,5 @@
 - **Device:** the same cases through the night's device's WebView (A32): a test build with WebView debugging, Playwright attached over adb, the same replay code. The pipeline's device step runs it after each Opus pass (A33; docs/shifts/rules.md section 6).
 - **By hand:** MORNING.md, the owner, about ten minutes before a release tag, on the APK the last automatic run checked (decisions.md P25).
 
-## State on 2026-10-27 (desktop)
-66 cases: 63 active, 3 need R4a. All 63 pass (`CORE 63/63 (known 0, needs 3)`, Opus pass 86 on `13cc2da`). c61–c66 were added with the owner on 2026-10-26: the Format key, a b/c, polar in DEG, an error row then the fix, Ans inside a line, a CAS function after a relaunch. One green night is enough for them.
+## State on 2026-11-09 (desktop)
+69 cases, all active (`CORE 69/69`). c67–c69 (R170, owner's yes on mh-A2) are the first with a unit and a ±: 5 kg in lb, 500 m in 40 ± 1 s, and 1 m + 1 s refused. The device run skips c53 (desktop-only), so it prints `CORE DEVICE 68/68`. c61–c66 were added with the owner on 2026-10-26.
