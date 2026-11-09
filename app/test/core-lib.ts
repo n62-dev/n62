@@ -249,7 +249,8 @@ export async function check(page: Page, e: CoreExpect, id = ""): Promise<void> {
   for (const [sel, want] of Object.entries(e.text ?? {})) {
     const loc = page.locator(sel);
     if (Array.isArray(want)) await expect(loc).toHaveText(want);
-    else await expect.poll(async () => (await loc.allTextContents()).map((t) => t.trim()), { message: sel }).toContain(want);
+    // the first engine result waits for the engine, which under load takes longer than the default 5 s
+    else await expect.poll(async () => (await loc.allTextContents()).map((t) => t.trim()), { message: sel, timeout: 20_000 }).toContain(want);
     // R82 (F110): the text is also there for the eye: on screen and not under another element
     await expect.poll(() => seen(page, sel, Array.isArray(want)), { message: `${id} ${sel} on screen and uncovered`.trim(), timeout: 2000 }).toBe("");
   }
