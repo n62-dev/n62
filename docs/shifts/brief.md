@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
+| 544 | R157 the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 501 | [G172](packages/G172.md) a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
 | 502 | [G173](packages/G173.md) no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
 | 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
