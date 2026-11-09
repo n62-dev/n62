@@ -178,6 +178,19 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
     expect(cas("exp(10^30)")).toMatchObject({ ok: true });
     expect(cas("1..3")).toMatchObject({ ok: true });
   });
+  it("G168f1: a Num cell keeps Giac's undef (it shows NaN, G2 items 19, 22); Home, without the parameter, refuses it", () => {
+    const cell = (f: string, x: string) => host.table({ fns: [f], xs: [x] }, defaultHomeSettings)[0]![0]!;
+    expect(cell("sin(x)/x", "0")).toMatchObject({ ok: true, display: "undef", path: "exact" });
+    expect(home("subst((sin(x)/x),x=(0))")).toMatchObject({ ok: false, error: "noValue" });
+    // no list element is refused for holding undef, in a list or a matrix
+    expect(cell("[sin(x)/x,1]", "0")).toMatchObject({ ok: true, display: "[undef,1]" });
+    expect(cell("[[1,sin(x)/x]]", "0")).toMatchObject({ ok: true, display: "[[1,undef]]" });
+    // a polish that could not replace Giac's undef stays Giac's word with its ⚠
+    expect(cell("normald_icdf(inf-inf,1,x)", "0.5")).toMatchObject({ ok: true, display: "undef", facts: { warn: "unaudited" } });
+    expect(home("normald_icdf(inf-inf,1,0.5)")).toMatchObject({ ok: false, error: "noValue" });
+    // a whole-answer undef through an infinity is still a division by zero (F51)
+    expect(cell("1/0-1/0", "0")).toMatchObject({ ok: false, display: "Division by zero", error: "engine" });
+  });
   it("never runs a part again that changes state: an assignment, =<, a program, rand (audit, fix round 2)", () => {
     const none = (): boolean => false;
     giac.eval("purge(n);n:=1");

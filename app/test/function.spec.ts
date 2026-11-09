@@ -158,6 +158,18 @@ test("Function: Num shows NaN at the pole of 1/x (virtual-calc, G2 item 19)", as
   await expect(cell("0.3")).toHaveAttribute("data-text", "3.33333333333");
 });
 
+test("Function: Num shows NaN where the engine has no value, sin(x)/x at 0, and the CSV row says NaN (G168f1; virtual-calc, G2 items 19 and 22)", async ({ page }) => {
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["sin", "x", "right", "div", "x", "enter"]);
+  await expect(page.locator('[data-name="F1"] .math')).toHaveAttribute("data-latex", "\\frac{\\sin\\left(x\\right)}{x}");
+  await tap(page, ["@num"]);
+  await expect(page.locator('[data-testid="num-table"] tr:has(td[data-x="0"]) td').nth(1)).toHaveAttribute("data-text", "NaN");
+  // the text the Copy key and Menu's CSV item copy (copy.spec.ts holds the clipboard path)
+  const csv = await page.evaluate(() => (window.n62.shell.loaded.function!.instance as unknown as { numCsv(): Promise<string | undefined> }).numCsv());
+  expect(csv?.split("\r\n").slice(0, 2)).toEqual(["x,F1", "0,NaN"]);
+});
+
 test("Esc stops a running Num job; the definitions survive", async ({ page }) => {
   await open(page, "engine=fake&delay=4000");
   await tap(page, ["@symb"]);

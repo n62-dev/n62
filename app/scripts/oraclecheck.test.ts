@@ -48,7 +48,7 @@ describe("oracle.py (G200, F197)", () => {
     const row = (check: string): string => `{ id: "t-known", check: ${check}, package: F66 }`;
     expect(run([rows(row("num"), row("cas"))]).code).toBe(0);
     expect(run([rows(row("num"), row("num"))]).out).toMatch(/^PROBLEM home\.yaml t-known: duplicate id/m);
-  });
+  }, SPAWN_MS);
   it("a broken oracle expression is one PROBLEM for its row and the run goes on", () => {
     const r = run([
       rows(

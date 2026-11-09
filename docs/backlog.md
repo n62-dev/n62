@@ -48,6 +48,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
 - **F199, packages R131, R198 (named limit).** Hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error.
+- **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **Night review 2026-11-02:** the rest in [research/night-review-2026-11-02.md](research/night-review-2026-11-02.md).
 
 ### Background stream (extreme inputs; at night, by reach)
@@ -58,8 +59,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
 - **F89, package G170 (G92's report).** Giac's `laplace` and `ilaplace` on tanh(sqrt(x)) leave VARS() entries that are no names (bytes, empty, error texts), then garbage after every command: freed memory in Giac's variable list. The put-back skips them. Not reachable by keys (laplace needs Find); an upstream candidate. Also `ilaplace(1/(x^2+1)^2)` (G110's census).
-- **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93, F96 and F97 have no package (the rest: G111, G113, G113f1, R80f1); an exact input past Home's budget (`negbinomial_icdf(1,1/10^6,1-1/10^6)`) shows Giac's `User interrupt or Out of memory`, not a plain refusal. Family 5.
-- **F93.** No answer shown as Giac's word: `undef` and the CAS call back are refused (G168); left: lists (Home `Airy_Ai({1,2})` = `[Airy_Ai(1),Airy_Ai(2)]`, G169, G172), `when` as C's `?:` (G173).
+- **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93, F96 and F97 have no package (the rest: G111, G113, G113f1, R80f1). Family 5.
+- **F93.** No answer shown as Giac's word: `undef` and the CAS call back are refused (G168); left: lists (Home `Airy_Ai({1,2})` = `[Airy_Ai(1),Airy_Ai(2)]`, G172), `when` as C's `?:` (G173).
 - **F96.** Names left that the definitions log does not hold (not in Vars, gone after a relaunch): `gbasis` (lastgb), `syzygy` (lastv), `GF(2,8)` (K, g), `wz_certificate` (k, n), and the name arguments of `QR`, `LU`, `Fill`, `CopyVar`, `point3d`, `is_hamiltonian`; `debug(…)` turns on Giac's debugger, after which every program call, our helpers too, throws `prompt is not defined`; `interactive_plotode` throws the same (both left out of Find, G111).
 - **F97.** CAS has no answer within 6 s (600 s hard timeout): `ellipse(-1,1,point(1+i))`, `hyperbola(…)`, `ecm_factor` of a 73-digit number; Home refuses them after 2 s.
 - **F115, fixed by G178.** Home `3*int(1/x,x,-1,1)+1` showed ⚠ 1: the check valued the call at Digits 12, where Giac's int needs 15,000× the checks of the exact run's Digits. Refused now, as the bare call. Family 5.

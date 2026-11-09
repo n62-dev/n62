@@ -154,7 +154,8 @@ const notAValue = (t: string): boolean => /==|<>|->|"/.test(t);
  * found none): "overflow" when its value is an infinity, else "noValue". G168 (F93): Giac's undef as the whole answer,
  * or as an element of a list or matrix (no number can stand for it, F50 of the owner, 2026-10-20), is refused with
  * undefReason's reason; null for anything else (a name in it, a list without undef, a string, a function, an infinity
- * Giac gave as the answer, a test).
+ * Giac gave as the answer, a test). G168f1: with `undefStands` (the Num table, where a cell shows NaN) only a whole-answer
+ * undef through an infinity is refused, "divisionByZero" (F51, the walk's limits as there); no list element is asked.
  */
 export function lostNumber(
   giac: Giac,
@@ -164,9 +165,11 @@ export function lostNumber(
   late: () => boolean,
   exactMs: number,
   userFn: (name: string) => boolean,
+  undefStands = false,
 ): NoValue | null {
   const out = output.trim();
-  if (out.includes("undef") && holdsUndef(parsePrinted(out))) return undefReason(giac, input, late, exactMs, userFn);
+  if (undefStands && out === "undef") return throughInfinity(giac, input, out, late, exactMs, userFn) ? "divisionByZero" : null;
+  if (!undefStands && out.includes("undef") && holdsUndef(parsePrinted(out))) return undefReason(giac, input, late, exactMs, userFn);
   if (infinite(out) || notAValue(out) || freeName(out)) return null;
   if (giac.eval(`type(${slot})`).trim() !== "expression") return null;
   if (namesOf(giac, slot)?.length !== 0) return null;
