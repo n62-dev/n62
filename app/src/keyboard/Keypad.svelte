@@ -430,8 +430,8 @@
   .pad {
     position: relative;
     display: grid;
-    gap: var(--sp-15);
-    padding: var(--sp-2);
+    gap: var(--sp-1);
+    padding: var(--sp-1);
     background: var(--panel);
     user-select: none;
     -webkit-user-select: none;
@@ -570,9 +570,10 @@
   .key[data-zone="true"] {
     min-height: var(--nav-h);
   }
-  /* R82: a short screen (bars, a larger font scale) lowers the rows (514 → 460 px), so the header, the keypad and the Plot
-     readout still fit the column without a scroll; a taller screen keeps the full rows */
-  @media (max-height: 700px) {
+  /* R82: a short screen (bars, a larger font scale) lowers the rows, so the header, the keypad and the Plot readout still
+     fit the column without a scroll; a taller screen keeps the full rows. R148: from 760 px tall (was 700), because
+     360 × 740 reaches the viewport floor of docs/03 rule 9 only with them (S25, r19 §3; owner, 2026-11-06) */
+  @media (max-height: 760px) {
     .key {
       --legend-h: var(--sp-25);
       min-height: var(--key-h-short);
@@ -594,7 +595,7 @@
   }
   .trackpad {
     --area-w: calc(
-      (100cqw - (var(--pad-units) - 1) * var(--sp-15)) / var(--pad-units) * var(--pad-span) + (var(--pad-span) - 1) * var(--sp-15)
+      (100cqw - (var(--pad-units) - 1) * var(--sp-1)) / var(--pad-units) * var(--pad-span) + (var(--pad-span) - 1) * var(--sp-1)
     );
     place-self: center;
     height: min(100%, var(--area-w));

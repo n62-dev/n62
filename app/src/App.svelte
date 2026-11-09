@@ -110,7 +110,7 @@
   let host: HTMLElement | undefined = $state();
   let entryHeight = $state(0);
 
-  // The pick sheets' layer (R21a): from the top of the first maths row to the keypad's bottom edge, measured once per
+  // The pick sheets' layer (R21a): from the gap above the first maths row to the keypad's bottom edge, measured once per
   // resize of the keypad.
   let keysEl: HTMLDivElement | undefined = $state();
   let mathsTop = $state(0);
@@ -127,7 +127,10 @@
     if (!el || !firstMaths) return;
     const place = (): void => {
       const k = keyBox(firstMaths.id);
-      if (k) mathsTop = k.top - el.getBoundingClientRect().top;
+      // R148: from the gap above the first maths row (the keypad's 4 px gap covers no key): the Home menu's nine rows at the
+      // floor still fit at 412 × 915 with the tighter keypad
+      const gap = parseFloat(getComputedStyle(el.querySelector(".pad") ?? el).rowGap) || 0;
+      if (k) mathsTop = k.top - gap - el.getBoundingClientRect().top;
     };
     place();
     if (typeof ResizeObserver === "undefined") return;

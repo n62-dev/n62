@@ -98,7 +98,7 @@ test.describe("at 412 × 915", () => {
       await openSheet(page, name);
       const [s, pad, row3] = await Promise.all([boxOf(page, '[role="menu"]'), boxOf(page, ".pad"), boxOf(page, '[data-key="vars"]')]);
       expect(Math.abs(s.y + s.height - (pad.y + pad.height))).toBeLessThanOrEqual(1);
-      expect(s.y).toBeGreaterThanOrEqual(row3.y - 1);
+      expect(s.y).toBeGreaterThanOrEqual(row3.y - 4 - 1); // R148: from the 4 px gap above row 3, which covers no key
       const hits = await page.evaluate((ids) => {
         return ids.map((id) => {
           const r = document.querySelector(`[data-key="${id}"]`)?.getBoundingClientRect();

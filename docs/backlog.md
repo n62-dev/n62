@@ -43,7 +43,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F182, no package (G176).** Home shows `limit(floor(x),x,-1)`, `limit(sign(x),x,0)`, `limit(trunc(x),x,-1)` as an error ("Unidirectional limits are distinct"); right: No limit (converge.ts `noLimit`). Golden `g176-limit-trunc-neg1-two-sided`.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R163 built (own `data-down` flag, key pop, Appearance › Key pop-ups).
-- **F186, package R148 (Opus pass 86).** Core c45 is red on the Tab One (devices 84, 85; 1192 × 672): Solve's second root lies under the entry line (screen 174 px; 184 px and 1 px clear on the desktop).
+- **F186, package R148 built (Opus pass 86).** Core c45 was red on the Tab One (devices 84, 85; 1192 × 672): Solve's second root lay under the entry line (1.6 px clear in the e2e replay). With R148's keypad (4 px gaps, short rows below 760 px) it is 27.6 px clear (`solveroom.spec.ts`); the device check is the next Tab One run.
 - **F172, A73 measured (report).** Stored history costs nothing; the rows drawn at start do (20 program rows 1821 ms, 20 plain 1469, 5 program 1345; bar 1.5 s). R133 merged (c9be0a7c): History draws 5 rows until engine ready; Tab One rerun pending. A CAS-view start is 1499 to 1507 against Home 1323, cause open (A73f1).
 - **F192, package R180 (bar point 3).** DEG `10∡30+5` from the keys computes 10∠35, ≈, no ⚠.
 - **F196, package G301.** CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)`); the value is right.

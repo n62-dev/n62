@@ -126,17 +126,20 @@ try {
       const sh = (m.screen.h + gained) / m.window;
       console.log(`slice ${name}: ${slice.toFixed(1)} px → viewport +${gained.toFixed(1)} px = share ${sh.toFixed(4)}, ≈ ${(gained / item.pitch).toFixed(1)} more rows (row pitch ${item.pitch.toFixed(1)} px)`);
     }
-    // S25 part 3's room options, each applied as CSS on top of today's page and measured (history box, no pick and
+    // S25 part 3's room options, each applied as CSS on top of the built page (R148: R1 + R2 are built) and measured (history box, no pick and
     // with a picked row; the viewport and its share). R1: the short rows of the R82 rule (Keypad.svelte, max-height
     // 700px) at every height. R2: the keypad's gaps 6 → 4 px and its padding 8 → 4 px. R3: while a row is picked the
     // line is empty (route.ts historyKey picks only on an empty line), so the row's buttons take the entry line's place.
     if (process.argv.includes('--options')) {
       await tapKeys(['esc']); // drop the pick
+      // R148 built R1 + R2, so the page itself is "R1 + R2" now; the other rows are CSS laid over it that undo or keep parts
+      const SHORT = '.pad .key{--legend-h:var(--sp-25)!important;min-height:var(--key-h-short)!important}.pad .key[data-letters="true"] .main{line-height:1!important}.pad .key.nav,.pad .key[data-zone="true"]{min-height:var(--nav-h-short)!important}';
+      const FULL = '.pad .key{--legend-h:12px!important;min-height:var(--key-h)!important}.pad .key[data-letters="true"] .main{line-height:1.1!important}.pad .key.nav,.pad .key[data-zone="true"]{min-height:var(--nav-h)!important}';
       const OPTIONS = [
-        ['today', ''],
-        ['R1 short rows', '.pad .key{--legend-h:var(--sp-25)!important;min-height:var(--key-h-short)!important}.pad .key[data-letters="true"] .main{line-height:1!important}.pad .key.nav,.pad .key[data-zone="true"]{min-height:var(--nav-h-short)!important}'],
-        ['R2 tight gaps', '.pad{gap:4px!important;padding:4px!important}'],
-        ['R1 + R2', '.pad .key{--legend-h:var(--sp-25)!important;min-height:var(--key-h-short)!important}.pad .key[data-letters="true"] .main{line-height:1!important}.pad .key.nav,.pad .key[data-zone="true"]{min-height:var(--nav-h-short)!important}.pad{gap:4px!important;padding:4px!important}'],
+        ['built (R148)', ''],
+        ['before R148', FULL + '.pad{gap:6px!important;padding:8px!important}'],
+        ['R1 only', FULL + SHORT + '.pad{gap:6px!important;padding:8px!important}'],
+        ['R2 only', FULL + '.pad{gap:4px!important;padding:4px!important}'],
       ];
       for (const [name, css] of OPTIONS) {
         const id = await page.evaluate((c) => { const st = document.createElement('style'); st.id = 'opt'; st.textContent = c; document.head.append(st); return st.id; }, css);
