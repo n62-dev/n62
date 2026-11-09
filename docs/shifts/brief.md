@@ -81,11 +81,8 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 566 | [G201](packages/G201.md) the four traps (review-only, `--no-worker`: the branch is done) | gorge, Sonnet | `p1/gorge-trustrows` | – |
-| 567 | G300 trig chain cases | gorge, Sonnet | `p1/gorge-chain9` | G201 |
-| 569 | A90 release notes file | annabell, Sonnet | `p1/annabell-relnotes` | – |
 | 570 | [A92](packages/A92.md) bug form session | annabell, Sonnet | `p1/annabell-formsession` | – |
-| 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201, G202 |
+| 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201f1, G202 |
 | 572 | [A94](packages/A94.md) trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
 | 573 | [G301](packages/G301.md) CAS degree quotient (F196) | gorge, Opus | `p1/gorge-degquot` | – |
 | 574 | [A96](packages/A96.md) F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |

@@ -3,7 +3,7 @@
 A tag `vX.Y.Z` pushed to GitHub runs [`.github/workflows/release.yml`](../.github/workflows/release.yml): the version check, the engine and
 libqalculate in the pinned container (P2), the golden gate on that engine, then the APK signed with your key (`./build.sh --release`, A7,
 which checks its certificate against [`android/release-cert.sha256`](../android/release-cert.sha256)) and a GitHub release with
-`n62-X.Y.Z.apk` and its `.sha256`. While the major version is 0, or when the tag holds a `-`, the release is a pre-release.
+`n62-X.Y.Z.apk` and its `.sha256`. Only a tag that holds a `-` makes a pre-release; `vX.Y.Z` is a normal release.
 The same tag deploys the website ([`pages.yml`](../.github/workflows/pages.yml)); a tag with a `-` does not (below). The bar for v0.1.0:
 [release-0.1.0.md](release-0.1.0.md).
 
@@ -16,6 +16,7 @@ The four secrets (Settings → Secrets and variables → Actions, set once; A7):
   a new `Builds` entry with that `versionName`, `versionCode` and `commit: vX.Y.Z`, and `CurrentVersion` / `CurrentVersionCode`.
 - `tools/check-version.sh vX.Y.Z` prints `check-version: ok X.Y.Z (<code>), tag vX.Y.Z`. Commit (`git commit -s`).
 - A test tag needs no bump: `vX.Y.Z-test` (suffix of letters, digits and dots) is checked against the current X.Y.Z.
+- Write the release notes, `X.Y.Z.md` in the folder release-notes of `docs/` (what is in it, the known limits, what is next); the release run stops in its second step without it (a test tag needs the same file) and puts it above the hashes in the release body.
 
 ## 2. Push phase-1 and master, then the tag
 ```bash
@@ -25,7 +26,7 @@ git push origin vX.Y.Z
 ```
 
 ## 3. Watch the run
-GitHub → Actions → **release** (the run named after the tag). The steps in order: one version, the tarballs, the release engine, the
+GitHub → Actions → **release** (the run named after the tag). The steps in order: one version, the release notes file, the tarballs, the release engine, the
 release libqalculate, the checksums, the golden gate (its log ends in `GOLDEN GATE PASSED`), the signed APK, the keystore deleted, the
 release. A release tag also starts **pages**, which deploys https://n62.dev/ after its own golden gate.
 
@@ -53,6 +54,6 @@ in the web UI and the tag: `git push origin :refs/tags/vX.Y.Z-test && git tag -d
 Nothing is published: the release is the last step, and the keystore step runs `if: always()`. Only `gh release create` itself can leave
 something behind (a draft release when an upload failed): delete it in the web UI. Then:
 - **The runner failed** (network, a timeout): the run's page → Re-run all jobs, or Actions → release → Run workflow with the tag.
-- **The code failed** (version check, golden gate, certificate): fix it on phase-1, delete the tag (`git push origin :refs/tags/vX.Y.Z`,
+- **The code failed** (version check, a missing release notes file, golden gate, certificate): fix it on phase-1, delete the tag (`git push origin :refs/tags/vX.Y.Z`,
   `git tag -d vX.Y.Z`), and tag the fixed commit (from step 2; a fix after the bump commit keeps the version).
 - A run on a tag that already has a release stops at the last step (`gh` refuses): delete that release first.
