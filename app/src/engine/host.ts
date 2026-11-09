@@ -29,7 +29,7 @@ import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
 import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts";
 import { resolveAngle } from "./angleMigration.ts";
-import { mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
+import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { unaskedPoly } from "./polyvec.ts";
 import { approxRange, lostCas, mayApproxRange } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
@@ -972,7 +972,17 @@ export class EngineHost implements FactsHost {
       if (e instanceof GiacSyntaxError) return fail(e.message, "syntax");
       throw e;
     }
+    // A call to a stored function that stores (inc(x):={c:=c+1;c}) must not run again either, assigned or not (form.once).
+    const single = form.stores;
+    const builtin = notBuiltin(this.giac);
+    const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name);
+    // G171: an input that ran once too (not a definition); its refused store is purged, so no name keeps Giac's answer
+    const onceRun = single && !guarded;
+    const shapes = (): ReturnType<typeof nonSquarePower> => onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, text, ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans");
     if (isError(text)) {
+      // G225f2: Giac's error for operands of its matrix type of different shape is the refusal their plain rows get, as in Home
+      const sizes = isDimensionError(text) ? shapeRefusal(shapes()) : null;
+      if (sizes) return fail(enEngine[`error.${sizes}`], sizes);
       // G71 (F59): no MPFR value at P (a decision over BesselJ): an expression that stores nothing is decided at the double,
       // with ⚠, as in Home. An assignment keeps the error (its definitions-log entry would hold a double).
       const dbl = isTimeout(text) || asg0 || form.stores ? null : decidedAtDouble(this.giac, "pcasans", body, digitsSet);
@@ -984,8 +994,6 @@ export class EngineHost implements FactsHost {
       const numeric = { ...r, facts: { ...r.facts, why } };
       return { result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs, numeric, facts: numeric.facts }, defs: [] };
     }
-    // A call to a stored function that stores (inc(x):={c:=c+1;c}) must not run again either, assigned or not (form.once).
-    const single = form.stores;
     // An == or ≠ test on a float side: decided by its own digits, as in Home (R18f2).
     const inexactTest = test && this.giac.eval(EQ_INEXACT_FLAG) === "1";
     const decided = inexactTest && !single ? decideFloatTest(this.giac, exactInput, digitsSet) : null;
@@ -1021,11 +1029,7 @@ export class EngineHost implements FactsHost {
     if (refused && refused !== "unchecked") return fail(enEngine[`error.${refused}`], refused);
     if (refusedCut) return fail(enEngine["error.undecided"], "undecided");
     // G97 (F69): a power, inverse or division of a non-square matrix is Giac's elementwise answer, refused as in Home.
-    const builtin = notBuiltin(this.giac);
-    const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name);
-    // G171: an input that ran once too (not a definition); its refused store is purged, so no name keeps Giac's answer
-    const onceRun = single && !guarded;
-    const square = onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, text, ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans");
+    const square = shapes();
     // a refused once store keeps the name's earlier value, as Home (which stores only on success): its logged entry back
     const logged = asg0 ? this.byName.get(asg0.name) : undefined;
     const badShape = shapeRefusal(square); // G225: or dot, cross of vectors of different lengths

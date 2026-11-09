@@ -472,12 +472,63 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
     expect(cas("pp+pq")).toMatchObject({ ok: true, text: "poly1[1,1,3]" });
   });
 
+  // G225f2 fix round 1, probed: Giac cuts `.*` of its matrix type (`matrix[…]`) to the smaller shape and pads operands that
+  // only evaluate to flat lists; `+` of its matrix type is its own "Invalid dimension" error, named as the plain rows' refusal.
+  // Expected values: pass 119's refusal; the sums by hand (identity plus zero).
+  const kept = "[[1,0],[0,1]]";
+  const differCas = { ok: false, error: "lengthsDiffer" };
+  it("refuses stored values of Giac's matrix type of different shape, keeps equal shapes, in Home and CAS", () => {
+    cas("ma:=idn(2)");
+    cas("mb:=zeros(2,3)");
+    cas("mc:=zeros(2,2)");
+    expect(home("ma.*mb")).toMatchObject(differ);
+    expect(cas("ma.*mb")).toMatchObject(differCas);
+    expect(home("ma+mb")).toMatchObject(differ);
+    expect(cas("ma+mb")).toMatchObject(differCas);
+    expect(home("ma+mc")).toMatchObject({ ok: true, display: kept });
+    expect(cas("ma+mc")).toMatchObject({ ok: true, text: kept });
+    // a refused store stores nothing
+    expect(home("md:=ma.*mb")).toMatchObject(differ);
+    expect(home("md")).toMatchObject({ ok: true, display: "md" });
+    expect(cas("me:=ma.*mb")).toMatchObject(differCas);
+    expect(cas("me")).toMatchObject({ ok: true, text: "me" });
+    // what only the table's reading of `matrix[` decides. The store that reads its own name runs guarded (the walk may read
+    // the name), and a body's operands are walked only when a list is in play; Giac's cut value otherwise
+    cas("mi:=idn(2)");
+    expect(cas("mi:=mi.*mb")).toMatchObject(differCas);
+    expect(cas("mi")).toMatchObject({ ok: true, text: kept });
+    home("mp(p,q):=p.*q");
+    expect(home("mp(ma,mb)")).toMatchObject(differ);
+    expect(cas("mp(ma,mb)")).toMatchObject(differCas);
+  });
+
+  it("refuses operands that only evaluate to lists, and a refused store stores nothing, in Home and CAS", () => {
+    for (const input of ["idn(2)+zeros(2,3)", "idn(2).*zeros(2,3)", "col(idn(2),0)+col(zeros(3,3),0)"]) {
+      expect(home(input), input).toMatchObject(differ);
+      expect(cas(input), input).toMatchObject(differCas);
+    }
+    expect(home("idn(2)+zeros(2,2)")).toMatchObject({ ok: true, display: kept });
+    expect(cas("idn(2)+zeros(2,2)")).toMatchObject({ ok: true, text: kept });
+    expect(home("idn(2)*zeros(2,3)")).toMatchObject({ ok: true, display: "[[0,0,0],[0,0,0]]" });
+    expect(home("mf:=idn(2).*zeros(2,3)")).toMatchObject(differ);
+    expect(home("mf")).toMatchObject({ ok: true, display: "mf" });
+    expect(cas("mg:=idn(2).*zeros(2,3)")).toMatchObject(differCas);
+    expect(cas("mg")).toMatchObject({ ok: true, text: "mg" });
+    expect(cas("mh:=idn(2)+zeros(2,3)")).toMatchObject(differCas);
+    expect(cas("mh")).toMatchObject({ ok: true, text: "mh" });
+    // random operands are not evaluated again, so the answer cannot be called checked
+    expect(home("randvector(2)+randvector(3)")).toMatchObject({ ok: true, facts: { exact: false, warn: "unchecked" } });
+    expect(cas("randvector(2)+randvector(3)")).toMatchObject({ ok: true, facts: { warn: "unchecked" } });
+  });
+
   it("an input with no list makes no walk (G52, the calls-home budget)", () => {
     home("sn:=5");
     home("sf(p):=p+2");
     quotes = 0;
     for (const input of ["1+2*3", "sin(1)-2", "sn+1", "sn*sn", "sf(3)+1"]) expect(home(input).ok, input).toBe(true);
     expect(cas("1+2").ok).toBe(true);
+    // G225f2 fix round 1: calls in the text and an operator, but no list in the result
+    for (const input of ["abs(-2)+1", "max(1,2)*3"]) expect(home(input).ok, input).toBe(true);
     expect(quotes).toBe(0);
     expect(home("[1,2]+[3,4]")).toMatchObject({ ok: true, display: "[4,6]" });
     expect(quotes).toBe(1);

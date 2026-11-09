@@ -734,6 +734,10 @@ cases:
   - { id: "g225f1-dot-row-matrix", input: "dot([[1,2],[3,4]],[[1,2]])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = 5" }
   - { id: "g225f1-dot-matrices", input: "dot([[1,2],[3,4]],[[5,6],[7,8]])", expect: "Dot and cross take two vectors", source: "derived", note: "equal shapes included: it showed = 70" }
   - { id: "g225f1-cross-matrix-vector", input: "cross([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = [12,-3,-2]" }
+  - { id: "g225f1-matrix-type-plus-shapes", input: "idn(2)+zeros(2,3)", expect: "The sizes do not match", source: "derived", note: "no list in the text; Giac's own answer is Invalid dimension" }
+  - { id: "g225f1-matrix-type-pointwise-shapes", input: "idn(2).*zeros(2,3)", expect: "The sizes do not match", source: "derived", note: "no list in the text; Giac cuts and showed = [[0,0],[0,0]]" }
+  - { id: "g225f1-calls-plus-lengths", input: "col(idn(2),0)+col(zeros(3,3),0)", expect: "The sizes do not match", source: "derived", note: "no list in the text; Giac pads and showed = [1,0,0]" }
+  - { id: "g225f1-keep-matrix-type-sum", input: "idn(2)+zeros(2,2)", expect: "[[1,0],[0,1]]", source: "derived", note: "guard: identity plus zero, equal shapes" }
   - { id: "g225f1-keep-times", input: "[1,2]*[3,4]", expect: "11", mark: "=", source: "derived", note: "guard: 1*3+2*4" }
   - { id: "g225f1-keep-plus", input: "[1,2]+[3,4]", expect: "[4,6]", mark: "=", source: "derived", note: "guard" }
   - { id: "g225f1-keep-scalar", input: "2*[1,2]", expect: "[2,4]", mark: "=", source: "derived", note: "guard" }

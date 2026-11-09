@@ -42,6 +42,10 @@ const productShape = (s: string): string => {
 const COMBINING: ReadonlySet<string> = new Set(["+", "*", ".+", ".-", ".*", "./", ".^"]);
 /** G225f1: how those operators read in the typed text (`-` is `+` in the tree; `.+`, `.-`, `.*` hold `+`, `-`, `*`). */
 const COMBINING_TEXT: readonly string[] = ["+", "-", "*", "./", ".^"];
+const combiningIn = (t: string): boolean => COMBINING_TEXT.some((op) => t.includes(op));
+/** G225f2: Giac's answer to `+`, `-` or `.+` of operands of its matrix type of different shape: an error, not padded rows. */
+const DIMENSION_ERROR = /Invalid dimension/;
+export const isDimensionError = (output: string): boolean => DIMENSION_ERROR.test(output);
 /** G225f1: each operand's shape in one Giac value, read from its value (`s` the list of them, evaluated): 0 a non-list or
  *  an asked coefficient vector (subtype 10, polyvec.ts), n+1 a flat list of n, -1 a list of lists that is no matrix,
  *  -(r*100000+c) an r by c matrix. */
@@ -118,7 +122,7 @@ function bodiesRead(bodies: Bodies): { known: Map<string, KnownBody>; unknown: b
  *  with no list costs no engine call. */
 export function mayCombineLists(input: string, isList: (name: string) => boolean): boolean {
   const t = withoutStrings(input, "", "typed");
-  return COMBINING_TEXT.some((op) => t.includes(op)) && (t.includes("[") || namesIn(t, "typed").some(isList));
+  return combiningIn(t) && (t.includes("[") || namesIn(t, "typed").some(isList));
 }
 
 /** Cheap text test: could `input` hold a power, inverse or division of a matrix, or (G225) a dot or cross call? */
@@ -154,8 +158,9 @@ export function shapeRefusal(found: boolean | "unchecked" | "lengthsDiffer" | "v
  * flat vector X none). True: refused; false: nothing found.
  * G225: a dot or cross call is a candidate too, its arguments evaluated under the same rules; "lengthsDiffer" when they
  * are two flat vectors of different lengths, G225f1: "vectorsOnly" when one is a matrix.
- * G225f1: so is a `+`, `*` or pointwise part (mayCombineLists; never for an input with no list) whose operands can be
- * lists, "lengthsDiffer" when they are flat lists of different lengths (or matrices of different shape in `+` and the
+ * G225f1: so is a `+`, `*` or pointwise part (mayCombineLists; G225f2: or any part with such an operator when the result
+ * holds a list or is Giac's dimension error, for operands that only evaluate to lists, `idn(2)+zeros(2,3)`; never for an
+ * input whose result holds no list) whose operands can be lists, "lengthsDiffer" when they are flat lists of different lengths (or matrices of different shape in `+` and the
  * pointwise ones, or a row vector and a matrix with another number of rows in `*`).
  */
 export function nonSquarePower(
@@ -176,7 +181,7 @@ export function nonSquarePower(
   const plain = withoutStrings(input, "", "typed");
   const productTyped = productIn(plain);
   const listName = bodies.isList ?? ((): boolean => false);
-  const combinesTyped = mayCombineLists(input, listName);
+  const combinesTyped = mayCombineLists(input, listName) || ((mayInverse || isDimensionError(output)) && combiningIn(plain));
   const typed = (mayPowerMatrix(input) && ((mayPower && powIn) || (mayInverse && invIn))) || productTyped || combinesTyped;
   // G101: the input's reads (its tree) when the typed text alone is not enough, or it calls a known stored function
   let read: ReturnType<typeof bodiesRead> | null = null;
