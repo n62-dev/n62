@@ -321,3 +321,68 @@ describe.skipIf(!giacAvailable())("G171 F88 the candidate filter", () => {
     expect(host.home("inv(p(A))", defaultHomeSettings).result).toMatchObject({ ok: false, error: "notSquare" });
   });
 });
+
+// G225 (F194): expected values by hand. dot and cross of flat vectors of different lengths are refused (Giac pads the short
+// one with zeros); a matrix times a vector is no such pair, whatever their sizes.
+describe.skipIf(!giacAvailable())("G225 dot and cross of different lengths", () => {
+  let host: EngineHost;
+  beforeAll(async () => {
+    const { giac, bridge } = await loadNodeGiac();
+    host = new EngineHost(giac, bridge);
+  });
+  const home = (input: string) => host.home(input, defaultHomeSettings).result;
+  const cas = (input: string) => host.cas(input, defaultCasSettings).result;
+  const refused = { ok: false, error: "lengthsDiffer", display: "The vectors have different lengths" };
+
+  it("refuses them typed, under Giac's other names, inside a larger input and as one list of two", () => {
+    for (const input of ["dot([1,2],[3,4,5])", "dot(list[1,2],list[3,4,5])", "cross([1,2,3],[4,5])", "cross([1,2],[3,4,5])", "dotP([1,2],[3,4,5])", "dotprod([1,2],[3,4,5])", "scalar_product([1,2],[3,4,5])", "scalarProduct([1,2],[3,4,5])", "crossP([1,2,3],[4,5])", "crossproduct([1,2,3],[4,5])", "2*dot([1,2],[3,4,5])+1", "dot([[1,2],[3,4,5]])", "dot([x,y],[1,2,3])"]) {
+      expect(home(input), input).toMatchObject(refused);
+      expect(cas(input), input).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    }
+    // the upper-case spellings reach the CAS view only (Home's parser refuses them, equal lengths too)
+    expect(cas("DOT([1,2],[3,4,5])")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(cas("CROSS([1,2,3],[4,5])")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(cas("DOT([1,2],[3,4])")).toMatchObject({ ok: true, text: "11" });
+  });
+
+  it("reads stored vectors, and stores nothing when refused", () => {
+    home("gu:=[1,2]");
+    home("gv:=[3,4,5]");
+    expect(home("dot(gu,gv)")).toMatchObject(refused);
+    expect(home("gw:=dot(gu,gv)")).toMatchObject(refused);
+    home("gl:=[[1,2],[3,4,5]]");
+    expect(home("dot(gl)")).toMatchObject(refused);
+    expect(cas("dot(gl)")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(home("gw")).toMatchObject({ ok: true, display: "gw" });
+    expect(cas("gz:=cross(gv,gu)")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(cas("gz")).toMatchObject({ ok: true, text: "gz" });
+  });
+
+  it("walks into a stored function's body", () => {
+    home("gd(a,b):=dot(a,b)");
+    expect(home("gd([1,2],[3,4,5])")).toMatchObject(refused);
+    expect(cas("gd([1,2],[3,4,5])")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(home("gd([1,2],[3,4])")).toMatchObject({ ok: true, display: "11" });
+  });
+
+  // Fix round 1 (audit): an operand that cannot be evaluated again leaves the lengths unknown, so ⚠ and never =; the why
+  // line for the flag says "a matrix shape or vector length not checked" (whyLine.test.ts holds the text).
+  it("an operand that cannot be evaluated again is ⚠ with the why, in Home and CAS", () => {
+    const why = { squareUnchecked: true };
+    expect(home("dot(randvector(3),[1,2,3])")).toMatchObject({ ok: true, facts: { exact: false, warn: "unchecked", why } });
+    expect(cas("dot(randvector(3),[1,2,3])")).toMatchObject({ ok: true, facts: { warn: "unchecked", why } });
+    expect(home("cross(randvector(3),[1,2,3])")).toMatchObject({ ok: true, facts: { exact: false, warn: "unchecked", why } });
+    expect(home("dot(gs:=[1,2],[3,4])")).toMatchObject({ ok: true, display: "11", facts: { exact: false, warn: "unchecked", why } });
+    expect(cas("dot(gt:=[1,2],[3,4])")).toMatchObject({ ok: true, text: "11", facts: { warn: "unchecked", why } });
+  });
+
+  it("keeps equal lengths and Giac's matrix forms", () => {
+    expect(home("dot([1,2],[3,4])")).toMatchObject({ ok: true, display: "11" });
+    expect(home("cross([1,2],[3,4])")).toMatchObject({ ok: true, display: "[0,0,-2]" });
+    // a matrix operand is not a pair of vectors: Giac's own reading stands (no value claimed here, G225's report)
+    expect(home("dot([[1,2,3],[4,5,6]],[1,2,3])")).toMatchObject({ ok: true });
+    expect(cas("dot([[1,2,3],[4,5,6]],[1,2,3])")).toMatchObject({ ok: true });
+    // a name is no vector: Giac's symbolic dot stays
+    expect(home("dot(gfree,[1,2,3])")).toMatchObject({ ok: true });
+  });
+});

@@ -13,6 +13,7 @@ export const enEngine = {
   "error.noValue": "No value found",
   "error.unknownFunction": "Unknown function",
   "error.notSquare": "The matrix is not square",
+  "error.lengthsDiffer": "The vectors have different lengths",
   "error.listPlusNumber": "A list plus a number: use .+ or add a list of the same length",
   "error.listAsArguments": "This function reads a list as its arguments: give it one value at a time",
   "error.listInArgument": "This function answers a list wrongly: give it one value at a time",

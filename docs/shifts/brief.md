@@ -58,10 +58,9 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
+| 538 | R149 N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 496 | G168 no value is a plain refusal: `undef`, empty calls, `DelAVars()`, the budget message (F93, F109) | gorge, Opus | `p1/gorge-novalue` | – |
-| 500 | [G169](packages/G169.md) a list as a distribution's x gives one value per element (F105, F93) | gorge, Opus | `p1/gorge-listlast` | – |
 | 501 | [G172](packages/G172.md) a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
 | 502 | [G173](packages/G173.md) no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
 | 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
@@ -79,8 +78,8 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 580 | [G225](packages/G225.md) `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
-| 581 | [G220](packages/G220.md) normal cdf tail (F195) | gorge, Opus | `p1/gorge-normalcdf` | – |
+| 580 | G225 `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
+| 581 | G220 normal cdf tail (F195) | gorge, Opus | `p1/gorge-normalcdf` | – |
 | 582 | [G221](packages/G221.md) `student_cdf`, `chisquare_cdf` (F195) | gorge, Opus | `p1/gorge-tchicdf` | – |
 | 583 | [G228](packages/G228.md) `formatBase` | gorge, Sonnet | `p1/gorge-formatbase` | – |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |

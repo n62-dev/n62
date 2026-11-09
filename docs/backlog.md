@@ -52,8 +52,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, package G225.** `dot`, `cross` pad vectors of unequal length, exact, no ⚠.
-- **F195, packages G220, G221.** Far tails of the forward CDFs: wrong digits, ⚠.
+- **F194, G225 built.** `dot`, `cross` refuse vectors of unequal length.
+- **F195, G220 built, package G221.** Far tails of `student_cdf`, `chisquare_cdf`: wrong digits, ⚠.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
 - **F89, package G170 (G92's report).** Giac's `laplace` and `ilaplace` on tanh(sqrt(x)) leave VARS() entries that are no names (bytes, empty, error texts), then garbage after every command: freed memory in Giac's variable list. The put-back skips them. Not reachable by keys (laplace needs Find); an upstream candidate. Also `ilaplace(1/(x^2+1)^2)` (G110's census).
@@ -61,7 +61,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F93.** No answer shown as Giac's word: `undef` and the CAS call back are refused (G168); left: lists (Home `Airy_Ai({1,2})` = `[Airy_Ai(1),Airy_Ai(2)]`, G169, G172), `when` as C's `?:` (G173).
 - **F96.** Names left that the definitions log does not hold (not in Vars, gone after a relaunch): `gbasis` (lastgb), `syzygy` (lastv), `GF(2,8)` (K, g), `wz_certificate` (k, n), and the name arguments of `QR`, `LU`, `Fill`, `CopyVar`, `point3d`, `is_hamiltonian`; `debug(…)` turns on Giac's debugger, after which every program call, our helpers too, throws `prompt is not defined`; `interactive_plotode` throws the same (both left out of Find, G111).
 - **F97.** CAS has no answer within 6 s (600 s hard timeout): `ellipse(-1,1,point(1+i))`, `hyperbola(…)`, `ecm_factor` of a 73-digit number; Home refuses them after 2 s.
-- **F105, package G169.** Home `normald_cdf(0,1,{1/2,3/2})` stays the symbolic `(erf({…})+1)/2`, no numbers (erf of a list in the exact form); honest, no value.
 - **F115, fixed by G178.** Home `3*int(1/x,x,-1,1)+1` showed ⚠ 1: the check valued the call at Digits 12, where Giac's int needs 15,000× the checks of the exact run's Digits. Refused now, as the bare call. Family 5.
 - **F200 (Opus pass 102; A120).** Core c29 red once on the Tab One (device 100, `de659c02`); 135 runs since (relaunch 800/200/0 ms, host load 32) all green. A123 (run 808) makes the core runner await the `defs` write and log `defs` on a red; a second red is a FIX.
 - **F202, no package (pass 115).** e2e clipboard lock: waiters poll, no queue; run 838 timed out at 120 s, `fold.spec.ts:203`. Wanted: a fair queue.
@@ -100,7 +99,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. `tests/engine/patch-canary.ts` unpacks the Giac tarball per canary (40 times, 100 s of CPU), so golden `flags` times out under load (A51: timing): unpack it once. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
-- **C3. CI** (needs your OK); **C4. F-Droid recipe:** A97f1.
+- **C3. CI** (needs your OK); **C4. F-Droid recipe:** A97f1 done.
 
 ### MVP release (docs/02 section 8; not scheduled)
 - **R1. v0.1.0, the APK and the website from one tag** (A8 done: `.github/workflows/release.yml`, the checklist [release.md](release.md); left: `v0.1.0`; the bar: [release-0.1.0.md](release-0.1.0.md)). **R2. Play testing track:** never published without your OK. **R3. Screenshots and store graphics.** **R4. The help pass** (About: R87; one APK hash from two `./build.sh --unsigned` runs: annabell, A7).

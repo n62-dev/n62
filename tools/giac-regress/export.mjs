@@ -124,6 +124,8 @@ const PREAMBLE = [
 export const KNOWN_RULES = [
   [/^(g47-)?(prec-g44f?\d?-)?(prec-2-)?(normald|student|chisquare|fisher)_icdf|^prec-g44f?\d?-(normald|student|chisquare|fisher)_icdf|^g47-normald_icdf/, "register row icdf-double (G44): the inverse distribution functions return a double at any Digits (or +infinity far in a tail)"],
   [/^prec-g44f1-(evalf-)?erf-|^prec-g44f1-(evalf-)?erfc|^prec-3-UTPN/, "register row erfc-as-1-erf (G44f1): erfc is 1-erf and cancels, a small erf argument returns the argument"],
+  [/^g220-normald?-cdf-/, "register row erfc-as-1-erf (G220): Giac prints normald_cdf as (erf(u)+1)/2, whose sum cancels in the lower tail at Digits 40"],
+  [/^g220-normal-icdf-/, "register row icdf-double (G44, G220): normal_icdf is normald_icdf under another name, a double at any Digits"],
   [/sin1e(50|60|70|100)|sin-1e100|^prec-G23/, "register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong"],
   [/Bessel|Airy|besselj/, "register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14"],
   [/^prec-4-romberg/, "register row no-mpfr-path (G4, G50): romberg works in a double, 30 digits asked"],
@@ -132,6 +134,15 @@ export const KNOWN_RULES = [
 ];
 // The ids Giac fails on the pin (run.mjs: every line of the known file fails).
 export const KNOWN_IDS = new Set([
+  "g220-normald-cdf-neg20-12",
+  "g220-normald-cdf-neg40-12",
+  "g220-normal-cdf-neg20-12",
+  "g220-normald-cdf-neg8-30",
+  "g220-normald-cdf-neg20-30",
+  "g220-normald-cdf-neg40-30",
+  "g220-normal-cdf-neg20-30",
+  "g220-normald-cdf-8-9-30",
+  "g220-normal-icdf-0.975-30",
   "g38-floor-sin1e60",
   "prec-2-normald_icdf-value",
   "prec-g44-normald_icdf-0.025-30",
@@ -626,6 +637,19 @@ export function build(cases) {
   // which no golden line at Digits 40 reaches): evalf of Gamma(1+i) at Digits 14 is the complex double (stock Giac: Gamma(1.0+i)
   // left unevaluated, its overflow test z/z!=1 having sent it to 30 digits, where Gamma has no complex MPFR path). Expected
   // value: mpmath, gamma(1+1j) = 0.4980156681183560427136911174622-0.1549498283018106851249551304839j; a double's tolerance.
+  // G169, patch 0038: a list as x gives one value per element; stock Giac keeps the list inside erf, UTPC, Beta or ugamma, so element [k] of that expression is an error
+  for (const [id, expr, value, tol] of [
+    ["g169-normald-cdf-list-0", "normald_cdf(0,1,list[1/2,3/2])[0]", "691462461274/10^12", "5/10^13"],
+    ["g169-normald-cdf-list-1", "normald_cdf(0,1,list[1/2,3/2])[1]", "933192798731/10^12", "5/10^13"],
+    ["g169-student-cdf-list-1", "student_cdf(3,list[1/2,3/2])[1]", "884708067378/10^12", "5/10^13"],
+    ["g169-chisquare-cdf-list-1", "chisquare_cdf(2,list[1,2])[1]", "632120558829/10^12", "5/10^13"],
+    ["g169-fisher-cdf-list-1", "fisher_cdf(2,3,list[1,2])[1]", "719434141125/10^12", "5/10^13"],
+    ["g169-poisson-cdf-list-1", "poisson_cdf(2,list[1,2])[1]", "676676416183/10^12", "5/10^13"],
+    ["g169-negbinomial-icdf-list-1", "negbinomial_icdf(3,1/2,list[1/5,7/10])[1]", "4", "1/10^30"],
+  ]) {
+    patched.push("// patch 0038-list-x-per-element.patch", `// ${id} (home.yaml g169-*, oracle)`, `Digits:=40:; pc("${id}",'${expr}',${value},${tol});`);
+    nPatched++;
+  }
   patched.push("// patch 0024-evalf-complex-double-workaround.patch", "// g140-evalf-gamma-1+i-14 (home.yaml g140-gamma-1+i-12, oracle)", 'Digits:=14:; pc("g140-evalf-gamma-1+i-14",\'evalf(Gamma(1+i))\',(4980156681183560427/10^19)-(1549498283018106851/10^19)*i,1/10^13);');
   nPatched++;
   // Patch 0030 (G152), tests/golden/precision.yaml g152-cas-evalf-sqrt-neg-pi-12 and -30, g152-cas-evalf-neg-pi-pow-3/2-12 (CAS rows):

@@ -53,8 +53,8 @@ describe.skipIf(!giacAvailable())("G111 a list read as the argument list", () =>
 
 // R80f1: Giac's densities, cdfs and inverse cdfs read one list argument as their argument list too, probed with patch 0007
 // (normald_cdf([0.5,1.5]) = normald_cdf(0.5,1.5) = P(0.5 ≤ X ≤ 1.5) ≈ 0.2417); a list as their x after the parameters is
-// one value per element (uniform_cdf(3.2,5.7,list[1,2]) = list[0,0]), but negbinomial_icdf(3,1/2,list[1/5,7/10]) = 0
-// (right {1,4}: P(K ≤ 0) = 1/8 < 1/5 ≤ P(K ≤ 1) = 5/16, and P(K ≤ 3) = 21/32 < 7/10 ≤ P(K ≤ 4) = 99/128) is refused.
+// one value per element (uniform_cdf(3.2,5.7,list[1,2]) = list[0,0]); negbinomial_icdf(3,1/2,list[1/5,7/10]) = 0 (right {1,4}: P(K ≤ 0) = 1/8
+// < 1/5 ≤ P(K ≤ 1) = 5/16, and P(K ≤ 3) = 21/32 < 7/10 ≤ P(K ≤ 4) = 99/128) was refused until G169's patch 0038 made it one value per element.
 describe.skipIf(!giacAvailable())("R80f1 a list in a distribution", () => {
   let host: EngineHost;
   const home = (input: string) => host.home(input, defaultHomeSettings).result;
@@ -72,15 +72,30 @@ describe.skipIf(!giacAvailable())("R80f1 a list in a distribution", () => {
     expect(cas("normald_cdf([1/2,3/2])")).toMatchObject({ ok: false, error: "listAsArguments" });
   });
 
-  it("refuses a list anywhere in negbinomial_icdf's arguments", () => {
-    const wrong = { ok: false, error: "listInArgument", display: "This function answers a list wrongly: give it one value at a time" };
-    expect(home("negbinomial_icdf(3,1/2,list[1/5,7/10])")).toMatchObject(wrong);
+  it("gives negbinomial_icdf a list per element (G169's patch 0038), typed or stored", () => {
+    expect(home("negbinomial_icdf(3,1/2,list[1/5,7/10])")).toMatchObject({ ok: true, display: "{1,4}" });
     expect(home("P:=list[1/5,7/10]")).toMatchObject({ ok: true });
-    expect(home("negbinomial_icdf(3,1/2,P)")).toMatchObject(wrong);
-    // G113: since patch 0009 Giac refuses a list itself (its probability must be a double), so CAS shows Giac's message
-    expect(cas("negbinomial_icdf(3,1/2,[1/5,7/10])")).toMatchObject({ ok: false, error: "engine" });
-    // one number is not refused, and is right since patch 0009 (G113, F104: it was 0)
+    expect(home("negbinomial_icdf(3,1/2,P)")).toMatchObject({ ok: true, display: "{1,4}" });
+    expect(cas("negbinomial_icdf(3,1/2,[1/5,7/10])")).toMatchObject({ ok: true, text: "[1,4]" });
+    // one number stays right since patch 0009 (G113, F104: it was 0)
     expect(home("negbinomial_icdf(3,1/2,1/5)")).toMatchObject({ ok: true, display: "1" });
+  });
+
+  it("refuses a list among two or more arguments of max, min, Psi, ugamma, trail, keeps the one-list forms (G169)", () => {
+    const wrong = { ok: false, error: "listInArgument", display: "This function answers a list wrongly: give it one value at a time" };
+    for (const input of ["max(25,list[1,2])", "max(list[1,2],25)", "min(25,list[1,2])", "Psi(3,list[1,2])", "ugamma(5,list[1,2])", "trail(1,2,3,4,list[1,2])"]) {
+      expect(home(input), input).toMatchObject(wrong);
+    }
+    expect(home("Q:=list[1,2]")).toMatchObject({ ok: true });
+    expect(home("max(25,Q)")).toMatchObject(wrong);
+    expect(cas("max(25,list[1,2])")).toMatchObject({ ok: false, error: "listInArgument" });
+    expect(cas("Psi(3,list[1,2])")).toMatchObject({ ok: false, error: "listInArgument" });
+    // the one-list forms and plain numbers
+    expect(home("max(list[1,2])")).toMatchObject({ ok: true, display: "2" });
+    expect(home("min(list[1,2])")).toMatchObject({ ok: true, display: "1" });
+    expect(home("max(25,1)")).toMatchObject({ ok: true, display: "25" });
+    expect(home("Psi(list[1,2])")).toMatchObject({ ok: false, error: "listAsArguments" });
+    expect(home("ugamma(list[1,2])")).toMatchObject({ ok: false, error: "listAsArguments" });
   });
 
   // mlr_beta(X, y): the vector y gives Giac's betas [0.05,1.99] (intercept, slope of 2.1, 3.9, 6.2, 7.8, 10.1 on 1…5);
