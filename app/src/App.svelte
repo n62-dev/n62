@@ -168,8 +168,7 @@
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
       if (credits) {
-        picked = null;
-        onFind(import("./find/finder.ts").then((f) => f.loadCredits()), (m) => m.showCredits(shell));
+        onFind(finder().then((f) => f.loadCredits()), (m) => { picked = null; m.showCredits(shell); });
       }
     }
   }
@@ -240,7 +239,7 @@
   function openFind(slot?: FindSlot): void {
     if (!slot && !shell.showsEntry) return dead();
     if (loaders.findCode && sheetChunk.C) return showFind(loaders.findCode, slot);
-    if (loaders.findLoading) void import("./find/finder.ts").then((m) => m.loadIndex(true)).catch(() => {}); // hurry the idle load
+    if (loaders.findLoading) void finder().then((m) => m.loadIndex(true)).catch(() => {}); // hurry the idle load
     onFind(loadFind(true), (f) => showFind(f, slot));
   }
   type FindSlot = { id: string; layer: Layer };
@@ -248,8 +247,9 @@
   /** Vars and Shift + Math (R4b): Find on the user's variables and functions, or Memory (the code only, not the index). */
   function openNames(memory: boolean): void {
     if (!memory && !shell.showsEntry) return dead();
-    onFind(import("./find/finder.ts"), (m) => { picked = null; m.showNames(shell, entry, session, memory); });
+    onFind(finder(), (m) => { picked = null; m.showNames(shell, entry, session, memory); });
   }
+  const finder = (): Promise<typeof import("./find/finder.ts")> => import("./find/finder.ts"); // (one import() site: each carries its own preload list)
   function onFind<T>(load: Promise<T>, show: (t: T) => void): void {
     sheetLoad = Promise.all([load, loadSheetView()]).then(([t]) => { sheetLoad = null; show(t); }, () => { sheetLoad = null; dead(); }); // (a load that fails: the queued keys run without the sheet)
   }
