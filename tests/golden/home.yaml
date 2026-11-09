@@ -329,6 +329,10 @@ cases:
   - { id: "g39-int-tan-shift", input: "int(tan(2*x),x,0,pi)", expect: "The integral does not converge", source: "derived", note: "poles at pi/4 and 3pi/4: singular() lists one period, the shifts are ours; Giac gave 0" }
   - { id: "g39-int-tan-plus-x", input: "int(tan(x)+x,x,2,5)", expect: "The integral does not converge", source: "derived", note: "audit fix: pole of tan at 3pi/2 = 4.71 inside [2, 5]; tan(x)+x is not periodic, singular() lists only pi/2" }
   - { id: "g39-int-undef", input: "int(1/(x-2)^3,x,0,3)", expect: "The integral does not converge", source: "derived", note: "Giac's own undef, same message" }
+  - { id: "g178-int-1/x-in-sum", input: "3*int(1/x,x,-1,1)+1", expect: "The integral does not converge", source: "derived", note: "F115: the integral is in a larger input; it showed ⚠ 1 (the principal value 0 inside the sum), the check having been stopped" }
+  - { id: "g178-int-1/x-squared-plus-sin", input: "int(1/x,x,-1,1)^2+sin(1)", expect: "The integral does not converge", source: "derived", note: "F115: it showed ⚠ 0.841470984808" }
+  - { id: "g178-keep-int-1/x^2-in-sum", input: "3*int(1/x^2,x,1,2)+1", oracle: "3*F(1,2)+1", expect: "2.5", mark: "=", source: "derived", note: "guard: no singular point in [1, 2]; the integral is 1/2" }
+  - { id: "g178-keep-sinc-in-product", input: "2*int(sin(x)/x,x,0,1)", oracle: "2*mp.si(1)", expect: "1.89216614073", mark: "≈", source: "oracle", note: "guard: sin(x)/x has a removable singular point at 0, so the integral exists" }
   - { id: "g39-sum-cos-abel", input: "sum(cos(k),k,1,inf)", expect: "The series does not converge", source: "derived", note: "cos(k) does not tend to 0; Giac gave the Abel sum -1/2" }
   - { id: "g39-sum-sin-abel", input: "sum(sin(k),k,1,inf)", expect: "The series does not converge", source: "derived", note: "sin(k) does not tend to 0; Giac gave an Abel sum" }
   - { id: "g39-sum-exp-ik-abel", input: "sum(exp(i*k),k,0,inf)", expect: "The series does not converge", source: "derived", note: "|exp(ik)| = 1; Giac gave the Abel sum 1/(1-e^i)" }

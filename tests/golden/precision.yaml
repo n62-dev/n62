@@ -257,6 +257,7 @@ cases:
   # G39: the CAS view refuses the same divergent integrals, series and limits as Home, and shows Giac's pair with ⚠
   - { id: "g39-cas-int-1/x", kind: "cas", input: "int(1/x,x,-1,1)", expect: "error: integralDiverges", source: "derived", note: "Giac gave 0, the principal value" }
   - { id: "g39-cas-int-tan", kind: "cas", input: "int(tan(x),x,0,pi)", expect: "error: integralDiverges", source: "derived" }
+  - { id: "g178-cas-int-1/x-in-sum", kind: "cas", input: "3*int(1/x,x,-1,1)+1", expect: "error: integralDiverges", source: "derived", note: "F115: the check of the call in a larger input; Giac gave 1" }
   - { id: "g39-cas-sum-cos", kind: "cas", input: "sum(cos(k),k,1,inf)", expect: "error: seriesDiverges", source: "derived", note: "Giac gave the Abel sum -1/2" }
   - { id: "g39-cas-sum-exp-ik", kind: "cas", input: "sum(exp(i*k),k,0,inf)", expect: "error: seriesDiverges", source: "derived" }
   - { id: "g39-cas-sum-undef", kind: "cas", input: "sum((-1)^k,k,0,inf)", expect: "error: seriesDiverges", source: "derived", note: "Giac's own undef" }
