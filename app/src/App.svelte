@@ -14,6 +14,7 @@
   import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
+  import { creditsAsked } from "./entry/credits.ts";
   import { ringState } from "./entry/ringState.ts";
   import { resultToEntry } from "./render/insertable.ts";
   import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
@@ -162,10 +163,19 @@
       shell.enter(entry.value);
       return;
     }
+    if (creditsAsked(entry.value, session.view, session.userNames, entry.chips)) return openCredits(); // R149
     if (session.submit(entry.value, undefined, entry.chips)) {
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
     }
+  }
+
+  /** R149: N62 then Enter: the credits sheet (a lazy chunk with the About data), the line cleared, nothing submitted. */
+  function openCredits(): void {
+    entry.clear();
+    edited = false;
+    picked = null;
+    onFind(import("./views/creditsSheet.ts"), (m) => m.showCredits(shell));
   }
 
   /** R154: a key was pressed or the line edited since the last Enter (an error outline lasts until then). Enter itself
