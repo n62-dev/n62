@@ -17,7 +17,8 @@ import { valueFactsOf, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
-import { approxRange, elementAt, lostFloat, lostNumber, overflowAt, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, elementAt, lostFloat, lostNumber, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { doubleElements } from "./doubleElements.ts";
 import { icdfAtEnd, icdfCalls } from "./icdf.ts";
 import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
 import { POLY_AT, POLY_AT_ANY_DEPTH, unaskedPoly } from "./polyvec.ts";
@@ -26,7 +27,7 @@ import { backInDegrees, needsDegrees } from "./degrees.ts";
 import { principalPowers } from "./powers.ts";
 import { dropAngleFactor, hasAngleFactor } from "./angles.ts";
 import { decimalFromRational, decimalFromString, formatConfirmed, isZero, ZERO_VALUE, type ComplexValue, type DecimalValue, type PrecisionFacts, type PrecisionWarn, type PrecisionWhy } from "./format.ts";
-import { askedDigits, DOUBLE_DIGITS, doubleFallback, exactFacts, floatFacts, floatPathFacts, integratedFacts, hasFloat, isAudited, doubleFormsIn, unauditedIn, numericDisagrees, notBuiltin, floatsShown, heavySplit, REGROUP_MAX, shapeOfValue, endsEarly, valuePrecision, whyOf, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { askedDigits, DOUBLE_DIGITS, exactFacts, floatFacts, floatPathFacts, integratedFacts, hasFloat, isAudited, doubleFormsIn, unauditedIn, numericDisagrees, notBuiltin, floatsShown, heavySplit, REGROUP_MAX, shapeOfValue, endsEarly, valuePrecision, whyOf, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { bracesOf, functionsIn, isError, isTimeout, LIST_TYPE, matrixTyped, replaceLiteral, wordsOf } from "./giacPrint.ts";
 import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals.ts";
 import { plainRows } from "./matrixType.ts";
@@ -394,7 +395,8 @@ function build(facts: ElementFacts[], shape: Shape, digits: number, path: HomePa
     };
   }
   const shp: [number, number] | undefined = shape.kind === "matrix" ? [shape.rows, shape.cols] : undefined;
-  const reliable = els.reduce<number | null>((n, { facts: { reliableDigits: d } }) => (d === null ? n : n === null ? d : Math.min(n, d)), null);
+  const counted = els.reduce<number | null>((n, { facts: { reliableDigits: d } }) => (d === null ? n : n === null ? d : Math.min(n, d)), null);
+  const reliable = els.some(({ facts: f }) => !f.exact && f.reliableDigits === null) ? null : counted; // G172: an element with no count, no count
   const warn = els.find((e) => e.facts.warn)?.facts.warn;
   // G109: Giac's list type shows with braces; its full text keeps Giac's `list[…]`, which Giac reads back
   const braces = shape.kind === "list" && shape.braces === true;
@@ -746,13 +748,11 @@ export function homeEval(
   const underflowAt = once ? undefined : (k: number): boolean => checked.set(k, !late() && underflow(giac, [elementAt(ans, shape, k)], valuePrecision(s.digits))).get(k)!;
   let facts = exactFacts(giac, ans, shape, s.digits, s.maxExactDigits, exactOut, value, underflowAt);
   if (!facts) {
-    // G123 (F123): MPFR's infinity at P is an overflow, whatever a double makes of it (1.000000000000001^(10^50) gave 1.0).
-    if (!once && !late() && shape.kind === "scalar" && overflowAt(giac, ans, exactOut, valuePrecision(s.digits))) return refuse("overflow", "exact");
-    const d = shape.kind === "scalar" ? doubleFallback(giac, ans, body, s.digits, s.digits, value) : null;
-    if (!d) return symbolic();
-    // G84 (F60): a double's 0 where MPFR found no value (exp(cosh(asin(π)/pasdeg))) whose exact answer is not 0.
-    if (!once && !late() && underflow(giac, zeroElements(`(${exactOut})`, [d], shape), null)) return refuse("underflow", "exact");
-    const b = build([d], shape, s.digits, "exact", true);
+    // G172 (F73): the double fallback, element by element in a list or matrix (doubleElements.ts).
+    const d = doubleElements(giac, { name: ans, input: body, exactOut, value, shape, digits: s.digits, maxExactDigits: s.maxExactDigits, once, late });
+    if (d === null) return symbolic();
+    if (typeof d === "string") return refuse(d, "exact");
+    const b = build(d, shape, s.digits, "exact", true);
     store();
     return fromBuilt(b, "exact", true, exactOut, b.decimal, { once: true });
   }

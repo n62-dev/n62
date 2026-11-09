@@ -11,6 +11,8 @@ Digits:=40:; pc("g184-sum-harmonic-1e6",'(sum(1/x,x,1,1000000))',(143927267229/1
 Digits:=40:; pc("g38-floor-sin1e60",'(floor(sin(10^60)*10^12))',830389765219,5/10^1);
 // g38-floor-sin1e100 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
 Digits:=40:; pc("g38-floor-sin1e100",'(floor(sin(10^100)*10^12))',-372376123662,5/10^1);
+// g172-keep-besselj (home.yaml, oracle): register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14
+Digits:=40:; pc("g172-keep-besselj",'(BesselJ(1,2))',(576724807757/10^12),5/10^13);
 // prec-2-normald_icdf-value (precision.yaml, oracle): register row icdf-double (G44): the inverse distribution functions return a double at any Digits (or +infinity far in a tail)
 Digits:=40:; pc("prec-2-normald_icdf-value",'(normald_icdf(10^-10))',-(63613409024/10^10),5/10^12);
 // prec-g44-normald_icdf-0.025-30 (precision.yaml, oracle): register row icdf-double (G44): the inverse distribution functions return a double at any Digits (or +infinity far in a tail)
