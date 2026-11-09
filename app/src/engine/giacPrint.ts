@@ -160,6 +160,11 @@ export function splitList(text: string): string[] | null {
  *  subtype, so bridge-3's text and the state read's give it with no extra call. A solve result is one too. */
 export const LIST_TYPE = "list[";
 
+/** G225f2: a value's printed text is a list (`[…]`, a matrix's rows too, or `list[…]`). A text test: it routes, Giac's values decide. */
+export function holdsList(text: string): boolean {
+  return text.startsWith("[") || text.startsWith(LIST_TYPE);
+}
+
 // --- Giac's matrix type (G130) ---------------------------------------------------------------------------------------
 
 /** How Giac prints a value of its matrix subtype (11: matrix(2,3), zeros, idn, tran, a matrix times one). Bridge-3's

@@ -37,7 +37,7 @@ import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerica
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
+import { balanced, bracesOf, callsOf, holdsList, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
@@ -185,6 +185,8 @@ export class EngineHost implements FactsHost {
   byName = new Map<string, DefEntry>();
   /** G49: the chips the current Home input holds by name (`pasr_<k>`), with the facts they lend (as a stored float's). */
   readonly chipFacts = new Map<string, NameFacts>();
+  /** G225f2: the chips of the current Home input whose value is a list (isList). */
+  private readonly listChips = new Set<string>();
   /** G65: Giac's stored user names, read after every input that may store and after restore() (stateRead.ts). */
   stored = new Map<string, StoredName>();
   /** G104: the names Giac's VARS() listed at the last state read that `stored` leaves out (ours, an assumed name). */
@@ -551,11 +553,8 @@ export class EngineHost implements FactsHost {
     return { reads: () => this.treeOf(input).reads, of: this.bodyOf, writes: () => this.candidatesOf(input), isList: this.isList };
   }
 
-  /** G106, G225f1: a name that holds a list (G109: `list[…]` too), from the stored table's print; a chip may hold one. */
-  private readonly isList = (n: string): boolean => {
-    const t = this.stored.get(n)?.text;
-    return this.chipFacts.has(n) || (t !== undefined && (t.startsWith("[") || t.startsWith(LIST_TYPE)));
-  };
+  /** G106, G225f1: a name that holds a list (G109: `list[…]` too), from the stored table's print or the chip's value. */
+  private readonly isList = (n: string): boolean => this.listChips.has(n) || holdsList(this.stored.get(n)?.text ?? "");
 
   /** G100/G101: the tree of a stored text (bridge-2), parsed once per text. */
   private readonly treeByText = new Map<string, GiacParse>();
@@ -826,6 +825,7 @@ export class EngineHost implements FactsHost {
     for (const k of keep) {
       this.giac.eval(chipCommand(k, chips![k]!));
       this.chipFacts.set(`${CHIP_PREFIX}${k}`, chipNameFacts(chips![k]!));
+      if (holdsList(chips![k]!.value)) this.listChips.add(`${CHIP_PREFIX}${k}`);
     }
     try {
       const ran = consts ? withConstValues(named, consts) : named;
@@ -838,6 +838,7 @@ export class EngineHost implements FactsHost {
     } finally {
       if (keep.size) this.giac.eval(`purge(${[...keep].map((k) => CHIP_PREFIX + k).join(",")})`);
       this.chipFacts.clear();
+      this.listChips.clear();
     }
   }
 
