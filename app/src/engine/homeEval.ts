@@ -18,7 +18,7 @@ import type { GiacValue } from "./bridge.ts";
 import { floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { approxRange, elementAt, lostFloat, lostNumber, overflowAt, throughInfinity, underflow, zeroElements } from "./novalue.ts";
-import { icdfAtEnd, icdfCalls } from "./icdf.ts";
+import { giacRefusesOurs, icdfAtEnd, icdfCalls, icdfEndCalls } from "./icdf.ts";
 import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
 import { POLY_AT, POLY_AT_ANY_DEPTH, unaskedPoly } from "./polyvec.ts";
 import { listAsArguments } from "./listargs.ts";
@@ -624,6 +624,16 @@ export function homeEval(
   if (badShape) return refuse(badShape, "exact");
   if (square === "unchecked") unsquared = { ...(once ? { once: true } : {}), squareUnchecked: true };
   if (isTimeout(exactOut)) return viaFloat("float-timeout");
+  // G221 (F195): Giac refuses a ν that is no integer (student_cdf(2.5,1)); the polish computes it. A polish that cannot
+  // leaves Giac's error, so nothing is read and the float path below answers as before.
+  if (isError(exactOut) && !once && giacRefusesOurs(exactBody)) {
+    const facts = floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
+    if (facts) {
+      store();
+      const b = build(facts, { kind: "scalar" }, s.digits, "exact", true);
+      return fromBuilt(b, "exact", true, undefined, b.decimal, whyOf(facts, exactBody));
+    }
+  }
   if (isError(exactOut)) return viaFloat("float-error");
   // G106 (F78): Giac's polynomial of a list plus a number (`[1,4]+1` = poly1[1,5]), which the input did not ask for.
   if (unaskedPoly(giac, ans, exactBody, exactOut, userFn)) return refuse("listPlusNumber", "exact");
@@ -691,7 +701,7 @@ export function homeEval(
   // the polish computes the value; when it cannot, Giac's infinity is shown with ⚠. At p = 0 or 1 it is exact.
   // G44f2: and undef (normald_icdf(10^-30) from about the third call on one engine): polished from the centre, and
   // never an unmarked undef when the polish refuses.
-  if (/^([+-]?infinity|undef)$/.test(exactOut.trim()) && icdfCalls(exactBody).length) {
+  if (/^([+-]?infinity|undef)$/.test(exactOut.trim()) && icdfEndCalls(exactBody).length) {
     const facts = once ? null : floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
     if (facts) {
       store();
