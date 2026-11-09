@@ -481,33 +481,23 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
     expect(quotes).toBe(0);
     expect(home("[1,2]+[3,4]")).toMatchObject({ ok: true, display: "[4,6]" });
     expect(quotes).toBe(1);
-  });
-
-  // G225f2: expected values derived (2.5+1, 2.5+0.25, the sum by position) and from G225f1's refusals
-  describe("chips (G225f2)", () => {
+    // G225f2: a chip counts only when its value is a list. Expected values derived (2.5+1, 2.5+0.25, the sum by position)
+    // and from G225f1's refusals.
     const chip = (value: string) => ({ value, reliableDigits: null, exact: false });
     const held = (input: string, ...values: string[]) => host.home(input, defaultHomeSettings, undefined, Object.fromEntries(values.map((v, k) => [String(k), chip(v)]))).result;
-
-    it("a chip that holds a number makes no walk", () => {
-      quotes = 0;
-      walkEvals = 0;
-      expect(held("pasr_0+1", "2.5")).toMatchObject({ ok: true, display: "3.5" });
-      expect(held("pasr_0+pasr_1", "2.5", "0.25")).toMatchObject({ ok: true, display: "2.75" });
-      expect(quotes).toBe(0);
-      expect(walkEvals).toBe(0);
-    });
-
-    it("a chip that holds a list is walked", () => {
-      expect(held("pasr_0+pasr_1", "[1.5,2.5]", "[1.5,2.5,3.5]")).toMatchObject(differ);
-      expect(held("pasr_0+pasr_1", "list[1.5,2.5]", "list[1.5,2.5,3.5]")).toMatchObject(differ);
-      expect(held("pasr_0+pasr_1", "[1.5,2.5]", "[0.5,0.5]")).toMatchObject({ ok: true, display: "[2,3]" });
-    });
-
-    it("a chip that holds a matrix is walked", () => {
-      const m22 = "[[1.5,2.5],[3.5,4.5]]";
-      expect(held("pasr_0+pasr_1", m22, "[[1.5,2.5,3.5],[4.5,5.5,6.5]]")).toMatchObject(differ);
-      expect(held("dot(pasr_0,pasr_1)", m22, "[1.5,2.5]")).toMatchObject({ ok: false, error: "vectorsOnly" });
-      expect(held("pasr_0+pasr_1", m22, m22)).toMatchObject({ ok: true });
-    });
+    quotes = 0;
+    walkEvals = 0;
+    expect(held("pasr_0+1", "2.5")).toMatchObject({ ok: true, display: "3.5" });
+    expect(held("pasr_0+pasr_1", "2.5", "0.25")).toMatchObject({ ok: true, display: "2.75" });
+    expect(quotes).toBe(0);
+    expect(walkEvals).toBe(0);
+    expect(held("pasr_0+pasr_1", "[1.5,2.5]", "[1.5,2.5,3.5]")).toMatchObject(differ);
+    expect(quotes).toBe(1);
+    expect(held("pasr_0+pasr_1", "list[1.5,2.5]", "list[1.5,2.5,3.5]")).toMatchObject(differ);
+    expect(held("pasr_0+pasr_1", "[1.5,2.5]", "[0.5,0.5]")).toMatchObject({ ok: true, display: "[2,3]" });
+    const m22 = "[[1.5,2.5],[3.5,4.5]]";
+    expect(held("pasr_0+pasr_1", m22, "[[1.5,2.5,3.5],[4.5,5.5,6.5]]")).toMatchObject(differ);
+    expect(held("dot(pasr_0,pasr_1)", m22, "[1.5,2.5]")).toMatchObject({ ok: false, error: "vectorsOnly" });
+    expect(held("pasr_0+pasr_1", m22, m22)).toMatchObject({ ok: true });
   });
 });
