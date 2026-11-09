@@ -20,7 +20,11 @@ every case whose `expect` is a number also carries `mark:` (docs/04 section 2.4)
 oracle value exactly, "≈" when it is rounded; "⚠" is never derived, it is written by hand for functions whose result
 the engine cannot confirm (the case then needs a `note`); so is a "≈" where the oracle says "=" for an exact value Giac returns
 as a double (needs a `note`, and an input that is a top-level call of round( or trunc(), or of asin( or acos( that Giac leaves
-unevaluated (G121). A case with a mark but no `expect` is mark-only.
+unevaluated (G121). "⚠ n" (n confirmed digits) is a "⚠" with a count. When no value can be derived (no `oracle:` expression, or
+`expect` is no number) a hand-written "=" or "≈" needs a `note` too, as "⚠" does. A case with a mark but no `expect` is mark-only.
+
+An exception from a case's oracle expression is one PROBLEM for that case; the run goes on with the next. corpus.yaml (G55, inputs
+with no ids and no expected values) and g2.yaml are not case files here. The gate's `oraclecheck` stage runs this check (G200).
 
 Sources: `oracle` (expect written here), `derived` (by hand; an oracle expression must agree),
 `device` / `virtual-calc` (seen on the reference calculator; an oracle expression must agree),
@@ -45,6 +49,8 @@ CHECKLIST = HERE.parent.parent / "tests/golden/G2-CHECKLIST.md"
 DIGITS = 12  # default significant digits; --digits N changes it, settings.digits overrides it per case
 MARK_FILES = {"home.yaml", "precision.yaml", "units.yaml"}
 MARKS = {"=", "≈", "⚠"}
+WARN_COUNT = re.compile(r"⚠\d+")  # "⚠ n": a result shown with n confirmed digits; a mark like "⚠" for this file (written by hand, needs a note)
+NOT_CASES = {"g2.yaml", "corpus.yaml"}  # corpus.yaml (G55) is inputs with no ids and no expected values: nothing to check
 SOURCES = {"oracle", "derived", "device", "virtual-calc", "reference", "assumed"}
 KEYS = ["id", "kind", "input", "to", "tap", "target", "latex", "eq", "var", "guess", "f", "g", "x0", "lo", "hi", "a", "b", "xs", "settings", "budgetMs", "oracle",
         "options", "formula", "slots", "before", "beforeCas", "beforeHome", "relaunch", "uses", "steps", "consts", "code", "file", "home", "expect", "error", "chips",
@@ -352,11 +358,20 @@ def emit(case: dict) -> str:
     return "  - { " + ", ".join(f"{k}: {emit_value(case[k])}" for k in KEYS if k in case) + " }"
 
 
+def is_warn(mark) -> bool:
+    return mark == "⚠" or (isinstance(mark, str) and WARN_COUNT.fullmatch(mark) is not None)
+
+
+def golden_files():
+    """Every case file the checks cover."""
+    return sorted(p for p in HERE.glob("*.yaml") if p.name not in NOT_CASES)
+
+
 def case_files(args):
     named = [a for a in args if not a.startswith("--")]
     if named:
         return [p if p.is_absolute() else (HERE / p if (HERE / p).exists() else Path(p).resolve()) for p in map(Path, named)]
-    return sorted(p for p in HERE.glob("*.yaml") if p.name != "g2.yaml")
+    return golden_files()
 
 
 def load_cases(path: Path):
@@ -366,20 +381,22 @@ def load_cases(path: Path):
 def check_mark(case: dict, write: bool) -> list:
     """The `mark:` field (docs/04 section 2.4). Numbers get "=" or "≈" from the oracle; "⚠" is written by hand."""
     mark = case.get("mark")
-    if mark is not None and mark not in MARKS:
+    if mark is not None and mark not in MARKS and not is_warn(mark):
         return [f"mark {mark!r} not one of {sorted(MARKS)}"]
     if case.get("unc", "none") != "none":
         return [] if mark == "≈" else [f"a result with a σ is always ≈, not {mark!r}"]
-    if mark == "⚠":
+    if is_warn(mark):
         return [] if case.get("note") else ["mark ⚠ needs a note (why the result cannot be confirmed)"]
     if "expect" not in case:
-        return [] if mark in (None, "⚠") else ["mark without expect needs ⚠ (a mark-only case has no value to derive from)"]
+        return [] if mark is None or is_warn(mark) else ["mark without expect needs ⚠ (a mark-only case has no value to derive from)"]
     want = derived_mark(case)
     if want is None:
-        # A true or false that rests on a float (an == test, R18f1) is "≈": written by hand, with a note.
-        if not mark or (mark == "≈" and case.get("note")):
+        # No value to derive from (no oracle expression, or expect is no number). A true or false that rests on a float (an == test,
+        # R18f1) is "≈"; a value with no oracle expression is "=" or "≈" as its source says (the gate checks it against the engine):
+        # a mark written by hand needs a note, the rule "⚠" has.
+        if not mark or (mark in ("=", "≈") and case.get("note")):
             return []
-        return [f"mark {mark!r} on a case whose expect is not a number (only a hand-written ≈ with a note)"]
+        return [f"mark {mark!r} with no oracle value to derive it from needs a note (why it is = or ≈)"]
     if mark == want:
         return []
     # An exact value that Giac returns as a double (round, trunc) is shown ≈ although the oracle says = (docs/04 2.4
@@ -423,26 +440,29 @@ def check_file(path: Path, write: bool, g2_items: set):
             problems.append("source assumed without a g2 item")
         if "g2" in case and case["g2"] not in g2_items:
             problems.append(f"g2 item {case['g2']} does not exist")
-        if "oracle" in case:
-            digits = case_digits(case)
-            lo, hi = stability_dps(digits)
-            v30, v60 = evaluate(case["oracle"], lo, digits), evaluate(case["oracle"], hi, digits)
-            if v30 != v60:
-                problems.append(f"unstable oracle: {lo} digits {v30} vs {hi} digits {v60}")
-            if src == "oracle":
-                if case.get("expect") != v30:
-                    if write:
-                        case["expect"] = v30
+        try:
+            if "oracle" in case:
+                digits = case_digits(case)
+                lo, hi = stability_dps(digits)
+                v30, v60 = evaluate(case["oracle"], lo, digits), evaluate(case["oracle"], hi, digits)
+                if v30 != v60:
+                    problems.append(f"unstable oracle: {lo} digits {v30} vs {hi} digits {v60}")
+                if src == "oracle":
+                    if case.get("expect") != v30:
+                        if write:
+                            case["expect"] = v30
+                        else:
+                            problems.append(f"expect {case.get('expect')!r} but oracle {v30!r}")
+                elif case.get("expect") != v30:
+                    if src == "assumed":
+                        print(f"NOTE {path.name} {cid} (assumed, G2 item {case.get('g2')}): expect {case.get('expect')!r}, oracle {v30!r}")
                     else:
-                        problems.append(f"expect {case.get('expect')!r} but oracle {v30!r}")
-            elif case.get("expect") != v30:
-                if src == "assumed":
-                    print(f"NOTE {path.name} {cid} (assumed, G2 item {case.get('g2')}): expect {case.get('expect')!r}, oracle {v30!r}")
-                else:
-                    problems.append(f"cross-check ({src}): expect {case.get('expect')!r} but oracle {v30!r}")
-        if path.name in MARK_FILES:
-            problems += check_mark(case, write)
-        problems += check_exact(case) + check_exact(case, "si", "si_oracle") + check_unc(case)
+                        problems.append(f"cross-check ({src}): expect {case.get('expect')!r} but oracle {v30!r}")
+            if path.name in MARK_FILES:
+                problems += check_mark(case, write)
+            problems += check_exact(case) + check_exact(case, "si", "si_oracle") + check_unc(case)
+        except Exception as e:  # F197: a row whose oracle expression raises is one PROBLEM for it, and the run goes on
+            problems.append(f"oracle expression failed: {type(e).__name__}: {' '.join(str(e).split())}")
         for p in problems:
             print(f"PROBLEM {path.name} {cid}: {p}")
         bad += len(problems)
@@ -528,7 +548,7 @@ def main(argv) -> int:
             bad += 1
     files = case_files(argv)
     if "--check" in argv:  # G79: read-only; the stored checklist must be what --g2 would write
-        diff = checklist_diff(build_checklist(items, sorted(p for p in HERE.glob("*.yaml") if p.name != "g2.yaml")), stored.read_text())
+        diff = checklist_diff(build_checklist(items, golden_files()), stored.read_text())
         for k in diff:
             print(f"PROBLEM {stored.name}: item {k} differs from g2.yaml (regenerate with --g2)")
         print(f"checklist {'differs' if diff else 'ok'}: {len(diff)} item(s)")
@@ -544,7 +564,7 @@ def main(argv) -> int:
         path.write_text(text)
         print(f"wrote {path.name}")
     if "--g2" in argv:
-        write_checklist(items, sorted(p for p in HERE.glob("*.yaml") if p.name != "g2.yaml"))
+        write_checklist(items, golden_files())
     print(f"{'written' if write else 'checked'} {len(files)} file(s); problems: {bad}")
     return 1 if bad else 0
 
