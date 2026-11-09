@@ -195,9 +195,6 @@ export const vibrations = (page: Page): Promise<unknown[]> => page.evaluate(() =
 // R74f1: the system clipboard is one for every Playwright worker, so a test that writes or reads it holds this lock
 // (an exclusive lock file under test-results, holding its owner's pid and a nonce) for its whole run. A lock whose
 // owner process is dead (a killed worker) is taken over; a live owner is never overridden, however long it holds.
-/** How long a test waits for the lock: the holders run one after the other (c53 alone holds it for a minute), so on a loaded
- *  machine with 16 workers a waiter's turn can come after more than the old 120 s (run 838: fold.spec.ts). */
-const LOCK_WAIT_MS = 360_000;
 const LOCK = resolve("test-results", "clipboard.lock");
 
 const alive = (pid: number): boolean => {
@@ -211,7 +208,7 @@ const alive = (pid: number): boolean => {
 
 /** Wait for the clipboard lock and take it; returns the release function (safe to call twice; it removes only its own
  *  file). Throws once `timeoutMs` has passed without the lock, so a late acquisition never happens after the caller gave up. */
-export async function acquireClipboardLock(timeoutMs = LOCK_WAIT_MS): Promise<() => void> {
+export async function acquireClipboardLock(timeoutMs = 120_000): Promise<() => void> {
   mkdirSync(dirname(LOCK), { recursive: true });
   const deadline = Date.now() + timeoutMs;
   const token = `${process.pid} ${Math.random().toString(36).slice(2)}`;
@@ -267,8 +264,8 @@ export async function withClipboardLock<T>(fn: () => Promise<T>): Promise<T> {
 export function useClipboardLock(): void {
   let release: (() => void) | undefined;
   test.beforeEach(async () => {
-    test.setTimeout(test.info().project.timeout + LOCK_WAIT_MS + 30_000); // the wait for the lock must not eat the test's own budget
-    release = await acquireClipboardLock(LOCK_WAIT_MS);
+    test.setTimeout(test.info().project.timeout + 150_000); // the wait for the lock must not eat the test's own budget
+    release = await acquireClipboardLock(120_000);
   });
   test.afterEach(() => {
     release?.();

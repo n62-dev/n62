@@ -163,19 +163,15 @@
       shell.enter(entry.value);
       return;
     }
-    if (creditsAsked(entry.value, session.view, session.userNames, entry.chips)) return openCredits(); // R149
-    if (session.submit(entry.value, undefined, entry.chips)) {
+    const credits = creditsAsked(entry.value, session.userNames, entry.chips); // R149: N62 then Enter shows the credits sheet (a lazy chunk with the About data, reached through the Find chunk), submits nothing
+    if (credits || session.submit(entry.value, undefined, entry.chips)) {
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
+      if (credits) {
+        picked = null;
+        onFind(import("./find/finder.ts").then((f) => f.loadCredits()), (m) => m.showCredits(shell));
+      }
     }
-  }
-
-  /** R149: N62 then Enter: the credits sheet (a lazy chunk with the About data), the line cleared, nothing submitted. */
-  function openCredits(): void {
-    entry.clear();
-    edited = false;
-    picked = null;
-    onFind(import("./views/creditsSheet.ts"), (m) => m.showCredits(shell));
   }
 
   /** R154: a key was pressed or the line edited since the last Enter (an error outline lasts until then). Enter itself
