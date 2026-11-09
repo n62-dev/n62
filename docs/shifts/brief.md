@@ -81,7 +81,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 570 | [A92](packages/A92.md) bug form session | annabell, Sonnet | `p1/annabell-formsession` | – |
 | 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201f1, G202 |
 | 572 | [A94](packages/A94.md) trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
 | 573 | [G301](packages/G301.md) CAS degree quotient (F196) | gorge, Opus | `p1/gorge-degquot` | – |
