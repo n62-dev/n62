@@ -179,3 +179,36 @@ describe("R156: --key-edge, the line under each key (Key shadows)", () => {
     expect(css).toMatch(/--key-shadow: 2px;/);
   });
 });
+
+describe("R157: --mark-faint, the faint mark on an empty history", () => {
+  const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const mixed = (a: string, b: string, k: number): number[] => rgb(a).map((v, i) => v + ((rgb(b)[i] as number) - v) * k);
+  it("is 30 % black over --bg in a dark combination and 7 % of --text over it in a light one, as an opaque colour, at most 1.3:1 on --bg and not lost", () => {
+    for (const c of combos()) {
+      const { t } = theme(c);
+      const m = t["mark-faint"] ?? "";
+      expect(m, selector(c)).toMatch(/^#[0-9a-f]{6}$/);
+      const r = cr(m, t["bg"] ?? "");
+      expect(r, selector(c)).toBeLessThanOrEqual(1.3);
+      expect(r, selector(c)).toBeGreaterThanOrEqual(1.05);
+      const near = (w: number[]): boolean => rgb(m).every((v, i) => Math.abs(v - (w[i] as number)) <= 0.5);
+      const black = [0.3, 0.29, 0.28, 0.27, 0.26, 0.25, 0.24, 0.23, 0.22, 0.21, 0.2].some((k) => near(mixed(t["bg"] ?? "", "#000000", k)));
+      expect(black || near(mixed(t["bg"] ?? "", t["text"] ?? "", 0.07)), selector(c)).toBe(true);
+      if (c.brightness === "light") expect(black, selector(c)).toBe(false);
+    }
+  });
+  it("N62 Dark's is #061b1b and N62 Light's #bcd8d7, in both start blocks", () => {
+    expect(theme({ family: "n62", brightness: "dark", high: false, plain: false }).t["mark-faint"]).toBe("#061b1b");
+    expect(theme({ family: "n62", brightness: "light", high: false, plain: false }).t["mark-faint"]).toBe("#bcd8d7");
+    const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    expect(css).toContain("--mark-faint: #061b1b;");
+    expect(css).toContain("--mark-faint: #bcd8d7;");
+  });
+  it("style.css holds the two tiles' colours and the mark's height as tokens, not theme roles", () => {
+    const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    expect(css).toMatch(/--logo-ground: #529997;/);
+    expect(css).toMatch(/--logo-ink: #000000;/);
+    expect(css).toMatch(/--mark-h: 128px;/);
+    for (const c of combos()) expect(Object.keys(theme(c).t)).not.toContain("logo-ground");
+  });
+});

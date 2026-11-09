@@ -276,3 +276,29 @@ export function creditsShots(someHistory: (page: Page) => Promise<void>): LookSh
     },
   ];
 }
+
+/** R157: the status line in Home (the mark on the logo-teal tile) and in CAS (its ∫ glyph), and the empty history with the faint mark, in every
+ *  family; light and dark come with every shot, so N62 Dark and Light, Black & White and Solarized are all there. */
+export function logoShots(): LookShot[] {
+  return FAMILIES.flatMap((family) => [
+    ...(["home", "cas"] as const).map((view) => ({
+      id: `logo-status-${family}-${view}`,
+      group: "Home's tile and the empty history (R157)",
+      title: `${name(family)}: the status line in ${view === "home" ? "Home (the mark on the tile)" : "CAS (its own glyph)"}`,
+      element: "header",
+      setup: async (p: Page) => {
+        await p.evaluate((v) => window.n62.session.setView(v), view);
+        await setLook(p, { family, brightness: "system" });
+      },
+    })),
+    ...(["home", "cas"] as const).map((view) => ({
+      id: `logo-empty-${family}-${view}`,
+      group: "Home's tile and the empty history (R157)",
+      title: `${name(family)}: the empty history in ${view === "home" ? "Home" : "CAS"}, the faint mark above the hint`,
+      setup: async (p: Page) => {
+        await p.evaluate((v) => window.n62.session.setView(v), view);
+        await setLook(p, { family, brightness: "system" });
+      },
+    })),
+  ]);
+}
