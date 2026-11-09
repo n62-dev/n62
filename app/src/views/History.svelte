@@ -30,10 +30,10 @@
     onundo,
     selected = null,
     engineState,
-    oncredits = () => {},
+    oncredits,
   }: {
     /** R157: a tap on the faint mark of an empty history opens the credits sheet, as N62 then Enter does (R149). */
-    oncredits?: () => void;
+    oncredits: () => void;
     /** R133: while the engine starts only the newest FIRST_PAINT rows are drawn (their cost is on the main thread the
      *  start needs); a frame after it is ready or failed the page grows to PAGE. */
     engineState: "starting" | "ready" | "failed";
@@ -199,7 +199,7 @@
     <div class="empty">
       <!-- R157: the faint N62 mark; decoration for a screen reader (the credits are reached by N62 then Enter), a tap opens them -->
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (decoration: the keys open the credits with N62 then Enter) -->
-      <div class="faint" data-testid="empty-mark" aria-hidden="true" onclick={(e) => { e.stopPropagation(); oncredits(); }}></div>
+      <div class="faint" aria-hidden="true" onclick={oncredits}></div>
       <p>{t("history.empty")}</p>
     </div>
   {/if}

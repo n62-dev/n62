@@ -64,7 +64,7 @@ test.describe("fake engine", () => {
     test(`Home's tile: black mark on #529997 (${name(look)})`, async ({ page }) => {
       await show(page, look);
       await expect(page.locator(":root")).toHaveAttribute("data-family", look.family);
-      const mark = tile(page).getByTestId("logo-mark");
+      const mark = tile(page).locator(".logomark");
       await expect(mark).toBeVisible();
       expect(await tile(page).evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(82, 153, 151)");
       expect(await mark.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(0, 0, 0)");
@@ -83,12 +83,12 @@ test.describe("fake engine", () => {
   });
 
   test("CAS and an app keep their glyphs; the busy ring still draws over Home's tile", async ({ page }) => {
-    await expect(tile(page).getByTestId("logo-mark")).toHaveCount(1);
+    await expect(tile(page).locator(".logomark")).toHaveCount(1);
     await page.evaluate(() => window.n62.session.setView("cas"));
-    await expect(tile(page).getByTestId("logo-mark")).toHaveCount(0);
+    await expect(tile(page).locator(".logomark")).toHaveCount(0);
     await expect(tile(page)).toHaveText("∫");
     await page.evaluate(() => window.n62.shell.open("function", "symb"));
-    await expect(tile(page).getByTestId("logo-mark")).toHaveCount(0);
+    await expect(tile(page).locator(".logomark")).toHaveCount(0);
     await expect(tile(page)).toHaveText("ƒ");
     await page.evaluate(() => {
       window.n62.shell.close();
@@ -96,7 +96,7 @@ test.describe("fake engine", () => {
       window.n62.session.engineState = "starting";
     });
     await expect(tile(page)).toHaveAttribute("data-ring", "true");
-    await expect(tile(page).getByTestId("logo-mark")).toHaveCount(1);
+    await expect(tile(page).locator(".logomark")).toHaveCount(1);
     const ring = await tile(page).evaluate((el) => {
       const s = getComputedStyle(el, "::after");
       return { w: s.borderTopWidth, c: s.borderTopColor, content: s.content };
@@ -115,7 +115,7 @@ test.describe("fake engine", () => {
         test(`the faint mark above the hint (${name(look)})`, async ({ page }) => {
           await show(page, look);
           await expect(page.locator(":root")).toHaveAttribute("data-family", look.family);
-          const faint = page.getByTestId("empty-mark");
+          const faint = page.locator(".faint");
           await expect(faint).toBeVisible();
           await expect(faint).toHaveAttribute("aria-hidden", "true");
           const [fb, hb] = await Promise.all([faint.boundingBox(), page.getByText("Type a calculation and press Enter.").boundingBox()]);
@@ -130,14 +130,14 @@ test.describe("fake engine", () => {
         });
 
       test("one result and it is gone", async ({ page }) => {
-        await expect(page.getByTestId("empty-mark")).toBeVisible();
+        await expect(page.locator(".faint")).toBeVisible();
         await tap(page, ["d1", "add", "d2", "enter"]);
         await expect(page.locator('[data-testid="result"]')).toHaveCount(1);
-        await expect(page.getByTestId("empty-mark")).toHaveCount(0);
+        await expect(page.locator(".faint")).toHaveCount(0);
       });
 
       test("a tap on it opens the credits sheet, nothing is submitted", async ({ page }) => {
-        await page.getByTestId("empty-mark").tap();
+        await page.locator(".faint").tap();
         await expect(credits(page)).toBeVisible();
         await expect(credits(page)).toContainText("N for number, 6 first perfect number, 2 first prime number");
         expect(await page.evaluate(() => window.n62.session.items.length)).toBe(0);

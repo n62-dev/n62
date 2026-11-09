@@ -349,8 +349,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  60,950 → 60,953 B (R149f2, Opus pass 118: the budget of 61 kB stays): R149's credits check (the line's N62 then Enter, the guard for a
  *  stored N) measured 61,011 B with the Array polyfills; the polyfills are out (src/polyfills.ts: the minimum WebView is Chrome 111, which has
  *  toSorted, toReversed, findLast and findLastIndex, and index.html's check stops older ones), and the branch merged with phase-1 5b9fcf7f
- *  measures 60,903 B gzip (171,148 B raw): 60,903 B + 0.05 kB. */
-export const START_PIN_GZIP = 60_953;
+ *  measures 60,903 B gzip (171,148 B raw): 60,903 B + 0.05 kB.
+ *  60,953 → 60,999 B (R157, the budget of 61 kB stays): the mark on Home's tile (the span the mask is drawn on) and on an empty history
+ *  (the faint div and its tap, App's openCredits shared with N62 then Enter) measure 60,999 B gzip on the branch (after the testids, the stopPropagation and the {#if} went) (the path itself is the
+ *  lazy public/n62-mark.svg, not in the chunk): the pin is the measurement, since the budget leaves no room for the usual 0.05 kB. */
+export const START_PIN_GZIP = 60_999;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

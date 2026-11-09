@@ -70,7 +70,7 @@
       onclick={() => onpress(PLACE_KEY, "primary")}>
       <!-- the glyph is our own table's text or icon (registry.ts), never user text -->
       <!-- Home's tile is the app icon's (R157): the black mark on the logo teal, the same in every theme; the button keeps its label -->
-      <span class="tile math" class:logo={"icon" in glyph} class:small={"text" in glyph && glyph.text.length > 1} data-ring={ring} aria-hidden="true">{#if "icon" in glyph}<span class="logomark" data-testid="logo-mark"></span>{:else}{@html glyph.text}{/if}</span>
+      <span class="tile math" class:logo={"icon" in glyph} class:small={"text" in glyph && glyph.text.length > 1} data-ring={ring} aria-hidden="true">{@html "icon" in glyph ? '<span class="logomark"></span>' : glyph.text}</span>
       {#if shell.app === null}<span class="name" aria-hidden="true">{place}</span>{/if}
       <span class="caret" aria-hidden="true">▾</span>
     </button>
@@ -192,7 +192,7 @@
     background: var(--logo-ground);
   }
   /* the mark as a mask of the one file (public/n62-mark.svg) in --logo-ink */
-  .logomark {
+  .tile :global(.logomark) {
     width: var(--tile-mark);
     height: var(--tile-mark);
     background: var(--logo-ink);
