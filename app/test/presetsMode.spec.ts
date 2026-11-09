@@ -49,7 +49,7 @@ test.describe("by keys", () => {
     await expect(title(page)).toHaveText("Mode › Settings");
     await tap(page, ["esc", "d5"]);
     await expect(title(page)).toHaveText("Mode › Presets");
-    expect(await rowIds(page)).toEqual(["save", "edit"]);
+    await expect.poll(() => rowIds(page)).toEqual(["save", "edit"]); // the presets are read: until then the list holds a loading row
     await expect(row(page, "edit")).toHaveAttribute("aria-disabled", "true"); // nothing to edit yet
     await tap(page, ["d1"]);
     await expect(sheet(page)).toHaveCount(0);

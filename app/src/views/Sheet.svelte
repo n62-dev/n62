@@ -9,7 +9,7 @@
   import { t } from "../i18n/index.ts";
   import { pressFlag } from "../input/pressFlag.ts";
   import { sheetText } from "../i18n/enSheet.ts";
-  import { ICONS } from "./icons.ts";
+  import { ICONS, type IconId } from "./icons.ts";
   import MathView from "../render/Math.svelte";
   import Credits from "./Credits.svelte";
   import type { MenuItem } from "../apps/types.ts";
@@ -21,6 +21,12 @@
    *  icons.ts: only this lazy chunk draws it, and icons.ts is in the start chunk (R145f1). */
   const GEAR =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg>';
+
+  /** R157f1: the home icon, the sheet's title icon and a row's glyph (the other icons are the views', in icons.ts). Here, not in
+   *  icons.ts: StatusLine draws the N62 mark now, and icons.ts is in the start chunk. The markup is the same as ICONS.home was. */
+  const HOME =
+    '<svg viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 7.5 8 2.5l5.5 5M4 6.5v6h8v-6" stroke-linejoin="round"/></svg>';
+  const icon = (id: IconId): string => (id === "home" ? HOME : ICONS[id]);
 
   let {
     sheet,
@@ -242,7 +248,7 @@
     {:else}
       <div class="head">
         {#if sheet.depth > 1}<button type="button" class="icon" aria-label={sheetText("sheet.back")} onclick={onback}>‹</button>{/if}
-        {#if sheet.icon}<span class="ticon" aria-hidden="true">{@html ICONS[sheet.icon]}</span>{/if}<span class="title" data-testid="sheet-title">{sheet.path}</span>
+        {#if sheet.icon}<span class="ticon" aria-hidden="true">{@html icon(sheet.icon)}</span>{/if}<span class="title" data-testid="sheet-title">{sheet.path}</span>
         {#if level.filter !== ""}<span class="filter" data-testid="sheet-filter">{level.filter}</span>{/if}
         {#if (cutTop || cutBottom) && level.text === undefined}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
         {#if sheet.hasSettings}<button type="button" class="icon gear" data-testid="sheet-gear" aria-label={t("mode.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
@@ -279,7 +285,7 @@
             style:height={px(rowHeight(row, { reason: second, steps, options: options !== undefined }))}
             onclick={() => ontap(r.index)}
           >
-            <span class="n">{r.n === undefined ? "" : r.n % 10}</span>{#if r.item.glyph}<span class="tile math" class:small={"text" in r.item.glyph && r.item.glyph.text.length > 1} data-testid="row-glyph" aria-hidden="true">{@html "icon" in r.item.glyph ? ICONS.home : r.item.glyph.text}</span>{/if}<span class="text"><span class="label">{r.item.label}</span>{#if reason}<span class="reason">{r.item.reason}</span>{:else if r.item.hint}<span class="reason" data-testid="row-hint">{r.item.hint}</span>{:else if r.item.dots && steps}<span class="dots under" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}</span>{#if r.item.dots && !steps}<span class="dots" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}{#if r.item.note}<span class="note" data-testid="row-note">{r.item.note}</span>{/if}{#if options}<span class="seg" data-testid="row-options">{#each options as o (o.id)}<button type="button" class="opt" use:pressFlag data-option={o.id} aria-label={o.spoken} aria-pressed={o.selected} disabled={r.item.disabled || o.disabled} onclick={(e) => { e.stopPropagation(); onoption(r.index, o.id); }}>{o.label}</button>{/each}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-down" aria-label={sheetText("sheet.stepDown")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, -1); }}>◀</button>{/if}{#if r.item.value !== undefined}<span class="value" data-testid="sheet-value">{r.item.value}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-up" aria-label={sheetText("sheet.stepUp")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, 1); }}>▶</button>{/if}{#if r.item.selected !== undefined}<span class="tick" aria-hidden="true">{r.item.selected ? "✓" : ""}</span>{/if}{#if r.item.submenu}<span class="more" aria-hidden="true">›</span>{/if}
+            <span class="n">{r.n === undefined ? "" : r.n % 10}</span>{#if r.item.glyph}<span class="tile math" class:small={"text" in r.item.glyph && r.item.glyph.text.length > 1} data-testid="row-glyph" aria-hidden="true">{@html "icon" in r.item.glyph ? HOME : r.item.glyph.text}</span>{/if}<span class="text"><span class="label">{r.item.label}</span>{#if reason}<span class="reason">{r.item.reason}</span>{:else if r.item.hint}<span class="reason" data-testid="row-hint">{r.item.hint}</span>{:else if r.item.dots && steps}<span class="dots under" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}</span>{#if r.item.dots && !steps}<span class="dots" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}{#if r.item.note}<span class="note" data-testid="row-note">{r.item.note}</span>{/if}{#if options}<span class="seg" data-testid="row-options">{#each options as o (o.id)}<button type="button" class="opt" use:pressFlag data-option={o.id} aria-label={o.spoken} aria-pressed={o.selected} disabled={r.item.disabled || o.disabled} onclick={(e) => { e.stopPropagation(); onoption(r.index, o.id); }}>{o.label}</button>{/each}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-down" aria-label={sheetText("sheet.stepDown")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, -1); }}>◀</button>{/if}{#if r.item.value !== undefined}<span class="value" data-testid="sheet-value">{r.item.value}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-up" aria-label={sheetText("sheet.stepUp")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, 1); }}>▶</button>{/if}{#if r.item.selected !== undefined}<span class="tick" aria-hidden="true">{r.item.selected ? "✓" : ""}</span>{/if}{#if r.item.submenu}<span class="more" aria-hidden="true">›</span>{/if}
           </div>
         {/each}
         {/if}

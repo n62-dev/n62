@@ -15,6 +15,9 @@ describe("R157: the mark file", () => {
   it("crops to the mark: a viewBox of 29.8 30.5 48.4 47", () => {
     expect(mark()).toMatch(/viewBox="29\.8 30\.5 48\.4 47"/);
   });
+  it("has an SPDX line first (rules-core), as public/icons/icon.svg has", () => {
+    expect(mark().split("\n")[0]).toBe("<!-- SPDX-License-Identifier: GPL-3.0-or-later -->");
+  });
   it("is filled black", () => {
     expect(mark()).toMatch(/<path fill="#000000" /);
   });

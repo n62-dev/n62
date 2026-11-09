@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R157: the N62 mark as the app draws it (Home's tile, the empty history): public/n62-mark.svg, cropped from the logo file
 // logo/monochrome/n62_monochrome.svg (its path unchanged, its 108 × 108 canvas cut to the mark so it fills its box) with a
-// black fill. Written here, never by hand; the test (mark.test.ts) fails when the file differs from what this writes.
+// black fill and an SPDX line (rules-core). Written here, never by hand; the test (mark.test.ts) fails when the file differs from what this writes.
 //   node scripts/gen-mark.ts           # write (npm run mark)
 //   node scripts/gen-mark.ts --check   # exit 1 when the file is out of date
 import { readFileSync, writeFileSync } from "node:fs";
@@ -21,7 +21,7 @@ export function logoPath(logo: string): string {
 
 /** The mark file's content for a logo file's text. */
 export function markSvg(logo: string): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARK_VIEWBOX}"><path fill="#000000" d="${logoPath(logo)}"/></svg>\n`;
+  return `<!-- SPDX-License-Identifier: GPL-3.0-or-later -->\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARK_VIEWBOX}"><path fill="#000000" d="${logoPath(logo)}"/></svg>\n`;
 }
 
 if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1]) {
