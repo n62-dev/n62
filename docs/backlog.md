@@ -39,7 +39,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
 - **F80, package G179 (G99; `tools/probes/bridge-forms.ts`).** After Home `(BesselJ(1,2))=>y`, `int(y^2,y,0,1)` shows `⚠ 0.333333333333` (right `≈`): Home stores at Digits 40, where `=>` keeps y as `BesselJ(1,2)` unevaluated, and Giac's int with that y errors (Bad Argument Value). `y:=` keeps the float. Test: `boundNames.test.ts` (`it.fails`), seqsweep `12 bound: int…`. Family 8.
-- **F73, package G172 (it waited for the end of the freeze; owner, 2026-10-24; G103 reads the doubles).** A double in a list shows Giac's text (`[BesselJ(1,2),1/3]`), not numbers with ⚠; no wrong value reaches the screen. Left: `hasFloat` (reads `1..3` and strings). Families 5, 6.
+- **F73 (lists, strings: G172).** A list or matrix element only a double values shows its number with ⚠ (longer than 32 elements: Giac's text). Left: `hasFloat` reads `1..3` as a float. Families 5, 6.
+- **F206, no package (G172's report; id: Opus pass 122).** Numbers rounded inside a string: when a non-number also holds a real float, `floatsAtDigits` (numeric.ts) rounds a string's decimals: `list[x,"0.1234567890123456789",evalf(1/3)]` shows the string as `"0.123456789012"`, Home and CAS. Family 1.
+- **F207, no package (G173's Not done).** A matrix inside a set, a coefficient vector or an equation keeps Giac's word (`set[matrix…]`, `poly1[matrix…]`, `matrix[[1,0],[0,1]]=x`). Family 1.
 - **F182, no package (G176).** Home shows `limit(floor(x),x,-1)`, `limit(sign(x),x,0)`, `limit(trunc(x),x,-1)` as an error ("Unidirectional limits are distinct"); right: No limit (converge.ts `noLimit`). Golden `g176-limit-trunc-neg1-two-sided`.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R164 built (own `data-down` flag, key pop, Appearance › Key pop-ups; R164: the status line, the sheets' ◀ ▶ and value buttons and the update note use the same flag through `input/pressFlag.ts`, no `:active` left in `app/src`).
@@ -53,28 +55,26 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, G225 built, G225f1 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
-- **F195, G220 and G221 built.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf` at the working precision.
-- **F203, no package (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
+- **F194, G225 built, G225f2 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
+- **F195, G220 and G221 built, G221f1 open.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf` at the working precision. Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
+- **F205, package G303.** A stored `k` is lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
+- **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
 - **F89, package G170 (G92's report).** Giac's `laplace` and `ilaplace` on tanh(sqrt(x)) leave VARS() entries that are no names (bytes, empty, error texts), then garbage after every command: freed memory in Giac's variable list. The put-back skips them. Not reachable by keys (laplace needs Find); an upstream candidate. Also `ilaplace(1/(x^2+1)^2)` (G110's census).
-- **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93, F96 and F97 have no package (the rest: G111, G113, G113f1, R80f1). Family 5.
-- **F93.** No answer shown as Giac's word: `undef` and the CAS call back are refused (G168); left: lists (Home `Airy_Ai({1,2})` = `[Airy_Ai(1),Airy_Ai(2)]`, G172), `when` as C's `?:` (G173).
+- **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F96 and F97 have no package (the rest: G111, G113, G113f1, R80f1). Family 5.
 - **F96.** Names left that the definitions log does not hold (not in Vars, gone after a relaunch): `gbasis` (lastgb), `syzygy` (lastv), `GF(2,8)` (K, g), `wz_certificate` (k, n), and the name arguments of `QR`, `LU`, `Fill`, `CopyVar`, `point3d`, `is_hamiltonian`; `debug(…)` turns on Giac's debugger, after which every program call, our helpers too, throws `prompt is not defined`; `interactive_plotode` throws the same (both left out of Find, G111).
 - **F97.** CAS has no answer within 6 s (600 s hard timeout): `ellipse(-1,1,point(1+i))`, `hyperbola(…)`, `ecm_factor` of a 73-digit number; Home refuses them after 2 s.
 - **F115, fixed by G178.** Home `3*int(1/x,x,-1,1)+1` showed ⚠ 1: the check valued the call at Digits 12, where Giac's int needs 15,000× the checks of the exact run's Digits. Refused now, as the bare call. Family 5.
-- **F200 (Opus pass 102; A120).** Core c29 red once on the Tab One (device 100, `de659c02`); 135 runs since (relaunch 800/200/0 ms, host load 32) all green. A123 (run 808) makes the core runner await the `defs` write and log `defs` on a red; a second red is a FIX.
-- **F202, no package (pass 115).** e2e clipboard lock: waiters poll, no queue; run 838 timed out at 120 s, `fold.spec.ts:203`. Wanted: a fair queue.
+- **F200 (A120).** Core c29 red once (device 100). A123 makes the runner await the `defs` write and log it on a red; a second red is a FIX.
+- **F202, package A125.** e2e clipboard lock: waiters poll, no queue; run 838 timed out at 120 s, `fold.spec.ts:203`. Wanted: a fair queue.
 - **Flaky under load.** Golden `interrupt` (F128, run 307: `expand((x+y+z+1)^40)` at timeout 0.2 s took 406 ms of 400; pass 10: a second sighting puts it into `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, limit 60; no rerun) beside the other lane (passes 32, 34, run 415).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
 - **F63, package G179.** A stored ⚠ value (`BesselJ(1,2)`) read through a function, after a relaunch or by its name shows one confirmed digit fewer than the value itself (11, not 12: cautious, not wrong; `tests/golden/seqsweep-known.yaml` 6–7).
-- **F108, package G173 (Home and CAS, owner 2026-11-05) (Home fixed by G119).** CAS `fMin(x^2-2*x+1,x)` still shows Giac's `seq[1]` (census `cas fMin/0`, `cas fMax/0`); Home `op([])` shows `seq[]`. Family 5.
 - **F109, fixed by G168.** `foo()` of an unknown name showed `foo`; Home and CAS refuse it now. Family 5.
 - **F122, package G187 (G116); G183: the engine restarts and says so.** Home `(atan(ln(-π)+9007199254740993))^(sin(10^-300)-10^300)` kills the engine (stack overflow inside Giac's wasm); also `(asinh(∛0.5))^((π/2+10^-3)^((90+10^-3)/(π/2+10^-6)))` (G120). G94's kind.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
-- **F127, package G173 (G130's Not done).** A matrix inside a list keeps Giac's word: Home and CAS `[idn(2),1]` show `[matrix[[1,0],[0,1]],1]`, `list[idn(2)]` `{matrix[[1,0],[0,1]]}`; and Home `zeros(2,3)` costs 13 Giac calls per Enter (was 10; G130's bar was one more). Family 1.
 - **F181 (G175's probe).** Home `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i (CAS right): `sym2poly.cc` sym2rxrootnum picks the root by the arg of evalf(z²), which lies on the cut with a rounding imaginary part. Family 3.
 - **F138 (G177).** CAS DEG `evalf(cos(atan(2*i)))` shows -1.37121078136E-60-0.57735026919·i in the golden precision stage after earlier cases (right -0.57735026919·i; a fresh engine is right since patch 0019): state leaks between cases. Row `g177-cas-deg-evalf-cos-atan-2i` (pending). Family 2.
 - **F161, fixed by G154 (left, no package).** An underflow whose size Giac cannot state (`exp(-10^30)+exp(-10^31)`: no finite re(lnexpand(ln(e))), e^(10^-1000) is 0) shows ⚠ 0 again, as before G84; was "Underflow". Family 3.
@@ -101,7 +101,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. `tests/engine/patch-canary.ts` unpacks the Giac tarball per canary (40 times, 100 s of CPU), so golden `flags` times out under load (A51: timing): unpack it once. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
-- **C3. CI** (needs your OK); **C4. F-Droid recipe:** A97f1 done.
+- **C3. CI** (needs your OK);
 
 ### MVP release (docs/02 section 8; not scheduled)
 - **R1. v0.1.0, the APK and the website from one tag** (A8 done: `.github/workflows/release.yml`, the checklist [release.md](release.md); left: `v0.1.0`; the bar: [release-0.1.0.md](release-0.1.0.md)). **R2. Play testing track:** never published without your OK. **R3. Screenshots and store graphics.** **R4. The help pass** (About: R87; one APK hash from two `./build.sh --unsigned` runs: annabell, A7).

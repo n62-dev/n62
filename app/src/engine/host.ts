@@ -37,7 +37,7 @@ import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerica
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
+import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
@@ -53,7 +53,8 @@ import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
-import { plainRowsText } from "./matrixType.ts";
+import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
+import { casSequence } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine } from "./dead.ts";
 
@@ -1014,6 +1015,15 @@ export class EngineHost implements FactsHost {
         text = d.text;
       }
     }
+    // G119, G173 (owner, 2026-11-05): Giac's sequence answer as in Home (sequences.ts); none is refused, and a name it was
+    // stored under goes back (a guarded assignment has stored nothing yet)
+    const seq = casSequence(this.giac, "pcasans", text, (f) => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, f), form.noValue);
+    if (seq?.empty && asg0 && !guarded) this.giac.eval(this.byName.has(asg0.name) ? putBack([], [this.byName.get(asg0.name)!]) : `purge(${asg0.name})`);
+    if (seq?.empty) return fail(enEngine["error.noValue"], "noValue");
+    if (seq) {
+      text = seq.text;
+      if (asg && !guarded) this.giac.eval(`${asg.name}:=pcasans`);
+    }
     // G39: a divergent integral or series, or no limit, is refused as in Home; Giac's [exact, numeric] pair of a
     // definite integral is shown as Giac's text (both answers) with ⚠, never as a numeric list.
     const refused = guarded ? refusalOf(this.giac, guarded.rhs, text, digitsSet) : single ? null : refusalOf(this.giac, exactInput, text, digitsSet);
@@ -1118,9 +1128,9 @@ export class EngineHost implements FactsHost {
     const deg = s.angle !== "deg" ? null : needsDegrees(text) ? backInDegrees(this.giac, text) : withoutDegreeQuotient(this.giac, text);
     // G109: Giac's list type (a solve result too) is shown and copied with braces, as Home shows it; `full` keeps
     // Giac's `list[…]` for Ans and the chips, and MathPrint draws Giac's latex() (`\{…\}`)
-    const drawn = deg ?? text;
+    const drawn = whenCalls(deg ?? text); // G173 (F93): Giac's `?:` as when(c,a,b), which the entry line reads
     const shown = drawn.includes(LIST_TYPE) ? bracesOf(drawn) : drawn;
-    const tex = deg !== null ? this.giac.eval(`latex(quote(${deg}))`) : latexShown(this.giac, slot, text);
+    const tex = deg !== null ? (soleMatrixLatexOfText(this.giac, deg) ?? this.giac.eval(`latex(quote(${deg}))`)) : latexShown(this.giac, slot, text);
     if (atN !== null) this.giac.eval("purge(pasfl)");
     if (isError(tex)) return fail(tex, isTimeout(tex) ? "timeout" : "engine");
     return {

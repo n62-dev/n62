@@ -1319,3 +1319,9 @@ cases:
   - { id: "g221-cas-evalf-normald-neg20", kind: "cas", input: "evalf(normald_cdf(0,1,-20))", oracle: "mp.ncdf(M(-20))", expect: "2.75362411861E-89", mark: "≈", source: "oracle", note: "CAS: showed ⚠ 0" }
   - { id: "g221-evalf-normald-complex", input: "evalf(normald_cdf(0,1,i))", oracle: "(1+erf(I/sqrt(2)))/2", expect: "0.5+0.476719134626*i", mark: "⚠", source: "oracle", note: "guard: an argument that is not a real number is Giac's own value with the flag ICDF_FAILED, today's ⚠" }
   - { id: "g221-keep-1-normald-20", input: "1-normald_cdf(0,1,20)", expect: "0", mark: "⚠", source: "derived", note: "guard, F203 (a named limit): the typed 1- cancels; right 2.75362411861E-89 (mpmath ncdf), and no number without the mark" }
+  # --- G173 (F108, F127, F93): Giac's print forms never reach CAS's text ------------------------------------------------
+  - { id: "g173-cas-empty-seq", kind: "cas", input: "op([])", expect: "error: noValue", source: "derived", note: "F108: a sequence of no element is no answer; it showed Giac's seq[]" }
+  - { id: "g173-cas-fmin-one", kind: "cas", input: "fMin(x^2-2*x+1,x)", expect: "1", source: "derived", note: "F108: x²−2x+1 = (x−1)² has its minimum at x = 1; it showed Giac's seq[1]" }
+  - { id: "g173-cas-matrix-in-vector", kind: "cas", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
+  - { id: "g173-cas-matrix-in-list", kind: "cas", input: "list[idn(2)]", expect: "{[[1,0],[0,1]]}", source: "derived", note: "F127: it showed {matrix[[1,0],[0,1]]}" }
+  - { id: "g173-cas-when", kind: "cas", input: "when(x>0,x+1,x-1)", expect: "when(x>0,x+1,x-1)", source: "derived", note: "F93: it showed C's ((x>0)? x+1 : x-1), which the entry line does not read" }

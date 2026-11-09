@@ -365,6 +365,24 @@ function withKeyEdge(t: Palette, dark: boolean): Palette {
   return { ...t, "key-edge": dark ? "#000000" : mix(get(t, "bg"), "#000000", KEY_EDGE_LIGHT) };
 }
 
+/** R157: the faint N62 mark on an empty history (--mark-faint, drawn by History.svelte as a mask): in a dark combination black at 30 % over
+ *  the final --bg (N62 Dark #061b1b), less where a brighter --bg would make that more than MARK_MAX apart (Solarized Dark); in a light one
+ *  7 % of the final --text over it (N62 Light #bcd8d7). A dark --bg too near black for black to show (Black & White Dark's #000000) takes
+ *  the light recipe, so the mark is never fully lost. Set last, from the final colours. */
+export const MARK_DARK = 0.3;
+export const MARK_LIGHT = 0.07;
+export const MARK_SEEN = 1.05;
+export const MARK_MAX = 1.3;
+function withMarkFaint(t: Palette, dark: boolean): Palette {
+  const bg = get(t, "bg");
+  const light = mix(bg, get(t, "text"), MARK_LIGHT);
+  if (!dark) return { ...t, "mark-faint": light };
+  let share = MARK_DARK;
+  while (share > 0.05 && cr(mix(bg, "#000000", share), bg) > MARK_MAX) share -= 0.01;
+  const black = mix(bg, "#000000", share);
+  return { ...t, "mark-faint": cr(black, bg) >= MARK_SEEN ? black : light };
+}
+
 export interface Combo {
   family: string;
   brightness: Brightness;
@@ -387,7 +405,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.plain) o = plain(o);
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
-  return { t: withKeyEdge(withRing(withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), c.high), dark), fixes };
+  return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), c.high), dark), dark), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---

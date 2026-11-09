@@ -202,6 +202,7 @@ export const KNOWN_IDS = new Set([
   "prec-5-BesselJ(1,2)-12",
   "prec-5-Airy_Ai(1)-12",
   "prec-5-BesselJ(0,100)-12",
+  "g172-keep-besselj",
   "prec-G23-sin-1e100",
   "g71-trunc-sin1e70",
   "g71-heaviside-sin1e70",

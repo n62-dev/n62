@@ -121,15 +121,16 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 **Entry and keys**
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Full text: archive. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
-- **The cursor stops only at a box** (R27b): ◀ ▶ ▲ ▼ skip names, a function's name-bracket gap and template marks; the parser refuses `sin 7(2)`. **The cursor goes where the user aims** (R42, R43): a finger tap places once; ▶ leaving a template stops at the end of its box. Would change if: G2 items 50 or 57 differ.
+- **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Full text: archive, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45): docs/04 5.5 point 1; `e` after digits is ᴇ; characters no key types do nothing.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows (the owner's check, backlog).
 - **Flicks** (R9): arm at 20 px, cancel within 12 px, a cancelled touch stays cancelled; one lock at a time. **⌫ auto-repeat:** archive. **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Would change if: the owner's hands say otherwise.
 - **R58 (Opus pass 18): in the CAS view Alpha types lower case and Shift + Alpha the capital;** the lock flicks swap with it; Home, the apps, Find and the unit slots keep Alpha = capital. Would change if: the rest of G2 item 45 differs.
-- **A selection is the argument of the key** (R17): functions, ÷, roots and powers take it (bracketed unless one number, letter or chip); other keys replace it. **Powers after a compound term** (L8): x², xʸ, x⁻¹ bracket a fraction, root, power or mixed number before the cursor.
+- **A selection is the argument of the key** (R17); **powers bracket a compound term before the cursor** (L8). Full text: archive, "Opus pass 122".
 - **The exponent mark** (R14): `\emark` drawn `ᴇ`, one number literal; `1ᴇ` on an empty line, after an operator, a bracket or a comma, and at a box's start (G2 item 40); a non-integer exponent is an error.
 - **Tmpl and a b/c** (R10): one toggle per result type; ▶ jumps to the next empty box while one is ahead; ° and DMS mean degrees in every angle mode. **Mixed numbers** are a Tmpl template, `\tfrac` after anything but a whole number is an error.
+- **Enter during a job (Opus pass 120):** starts nothing, the line stays (`session.submit`). Would change if: the owner wants it queued.
 - **Sheets** (R7, R8, R21a): the last pick per sheet in memory only; the letter filter on lists over 10 items; Mode and Settings open on their first row; a sheet's place is fixed when it opens; the viewport is not dimmed under a pick sheet.
 - **User keys** (R15b): a slot is `{ label, action }` in keyboard.yaml's action form, null empties it, the user's choice wins over a default.
 - **Keypad legends** (R6): a key is dimmed when its layer gives nothing; faces and legends fitted in JS (9 px face, 8 px legend minimum); 4.5:1 contrast.
@@ -141,8 +142,9 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Full text: archive. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
+- **R157, the mark (Opus pass 122):** `--mark-faint` steps its share down until the mark is at most 1.3:1 on `bg` (Solarized Dark); a dark `bg` where black gives under 1.05:1 takes the light recipe, 7 % of `text`; Home's tile is a mask, not an image, so `--logo-ink` is real. Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
-- **View keys and the load queue** (Opus pass 109, R148f2): during an app's load Symb, Plot and Num run at once only when no key is waiting; behind waiting keys they wait in order (R8: nothing typed is lost; c46). The other at-once keys stay. Would change if: a view key feels dead during a load on the Tab One.
+- **View keys and the load queue** (Opus pass 109, R148f2): behind waiting keys Symb, Plot and Num wait in order (c46). Full text: archive, "Opus pass 122". Would change if: a view key feels dead during a load on the Tab One.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): six cards at scale 2.0 cannot fit 360 × 740 at 32 px; it was a fixed 16 px. Would change if: the owner wants them to follow the scale and scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1; docs/05 3.1): Settings › Appearance scrolls; no key row or floor gives way. Full text: archive, "Opus pass 117". Would change if: the owner's look at 360 × 740 says otherwise.
 
@@ -168,7 +170,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G140 (Opus pass 34): a value Giac holds only as a double** is an unaudited double: ⚠, at most 14 digits, never ≈. Full text: archive. Would change if: Giac gets an MPFR path for them.
 - **R55: digit groups** in a drawn Home or CAS numeric result: the mantissa in threes from the point with a thin space, on a side of five or more digits; not in the entry line, a chip, Copy or the status line. Full text: archive.
 
-- **The deep check of 2026-10-19 (G38, G57, G48, G39):** a result resting on a numeric decision is decided again at P + 20 and P + 40, refused when undecided; a run-once store is ⚠ without a count; a divergent sum or integral is refused. Rule: docs/04 2.4. Full text: archive.
+- **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Full text: archive, "Opus pass 122".
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Full text: archive, "Opus pass 97".
 - **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. Would change if: the owner says.
@@ -181,7 +183,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Full text: archive, "Opus pass 96".
 - **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not. Full text: archive. Would change if: a power-triangle rule is packaged.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
-- **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ, as a constant (G26), also beside the constant it came from; one chip used twice is one input; a σ of 0 is none. Full text: archive. Would change if: a chip keeps its inputs' basis (G81).
+- **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ. Full text: archive, "Opus pass 122". Would change if: a chip keeps its inputs' basis (G81).
 - **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Full text: archive, "Opus pass 97". Would change if: the owner wants a chip's σ dropped there.
 - **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is disabled until built. Full text: archive.
 
@@ -203,10 +205,11 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **R38b, R88, the restore's checks and presets (Opus pass 29):** `state/backup.ts` repeats the start readers' rules, each guarded by a test on the same values; no pin in `vite.config.ts`. Full text: archive. Would change if: a guard misses a drift.
 - **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Full text: archive, "Opus pass 97". Would change if: the review after R24d.
-- **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04):** a level of settings holds seven rows, a list level scrolls; schema 4; σ in Scientific; Muted mutes every mark, the line keeps ⚠; ’ and , group only the digits before the point. Full text: archive, "Opus pass 66". Would change if: the milestone review.
-- **G119, Giac's sequence answers in Home (Opus pass 6):** each shows as its value (one element) or as a list in braces, so Ans reads back a value or a list; CAS unchanged (F108). Full text: archive.
+- **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04).** Full text: archive, "Opus pass 122" and "Opus pass 66". Would change if: the milestone review.
+- **G119, Giac's sequence answers in Home (Opus pass 6):** each shows as its value (one element) or as a list in braces, so Ans reads back a value or a list; CAS follows the same rule since G173 (owner, 2026-11-05). Full text: archive.
+- **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`, doubleElements.ts; Opus pass 122): about 11 Giac calls an element, so 32 stay inside `HOME_DEADLINE_MS` on a device 8× slower; a longer list shows Giac's text. Would change if: the per-element calls are batched.
 - **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Full text: archive, "Opus pass 97". Would change if: the owner wants an older look flat.
 - **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112). Full text: archive, "Opus pass 106". Would change if: its device check, or the owner wants the system's setting to win.
 - **Start chunk room (Opus pass 99):** a package that fails the 61 kB pin on a chunk hash alone gets a cut in its fix (no change of behaviour), never an allowance; the pin is then the measure plus 0.05 kB. Full text: archive, "Opus pass 106". Would change if: the owner raises the 61 kB budget.
-- **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on, a wrong type keeps the current value; no first-paint attribute. Would change if: the owner wants the pop and the flick bubble apart.
-- **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. The unit view pin rises for R159, as for R125 and R151: not the start chunk. Would change if: the owner wants the counts apart.
+- **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
+- **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.

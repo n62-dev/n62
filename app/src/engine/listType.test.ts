@@ -75,10 +75,10 @@ describe.skipIf(!giacAvailable())("G109 on the real engine", () => {
   });
 
   it("shows a list-type value that is no number as Giac's text with braces", () => {
-    const r = home("list[1/3,BesselJ(1,2)]");
-    expect(r).toMatchObject({ ok: true, display: "{1/3,BesselJ(1,2)}" });
-    expect(copy("list[1/3,BesselJ(1,2)]")).toBe("{1/3,BesselJ(1,2)}");
-    expect(r.full).toBe("list[1/3,BesselJ(1,2)]");
+    const r = home("list[1/3,x]"); // G172: a free name; BesselJ(1,2) here now shows its double's number
+    expect(r).toMatchObject({ ok: true, display: "{1/3,x}" });
+    expect(copy("list[1/3,x]")).toBe("{1/3,x}");
+    expect(r.full).toBe("list[1/3,x]");
   });
 
   it("shows a list of two lists as its two rows, never a matrix", () => {

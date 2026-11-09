@@ -19,6 +19,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `exactLiterals.ts` | G163: decimal literals as exact rationals (`toExactLiterals`), pure text with no engine; `homeEval.ts` re-exports it, the unit view's chunks read it from here |
 | `precisionFacts.ts` | G163: `precisionFacts()` maps a Home result to the facts `format.ts` reads; pure, a module of its own so the start chunk does not carry it; `homeEval.ts` re-exports it |
 | `format.ts` | Home number formatter (D5): STD/SCI/ENG/FIX/PFX from a BigInt-derived `DecimalValue`, no engine round trip; `markOf()` and `formatConfirmed()` turn the engine's facts into the mark and the digits shown; called by `state/`, `render/`, `apps/`, `clipboard/` |
+| `formatBase.ts` | G228: `formatBase()` writes an integer text as `0x…`, `0b…` or `0o…` in a word of n bits (BigInt on the digits, never `Number`; an error value for a non-integer or a value outside the word); pure, loaded lazily by the base display |
 | `defs.ts` | the definitions log (docs/04 6.2): plain data and pure functions used on both sides; called by `workerEngine.ts`, `host.ts`, `find/`, `state/backup.ts` |
 | `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists); no imports of its own; used by nearly every module here and by `render/`, `state/results.ts`, `units/` |
 
@@ -42,6 +43,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `eseries.ts` | IEC 60063 E-series as published (G30); called by `homeEval.ts`, `decisions.ts`, `host.ts` |
 | `binary64.ts` | G140: whether a part Giac printed holds only a double's bits (exact BigInt); called by `numeric.ts` |
 | `literalPrec.ts` | G141: where the agreement check starts for an input with a long exact literal (its digits plus P); called by `numeric.ts` |
+| `doubleElements.ts` | G172: the double fallback of a result with no MPFR value, element by element in a list or matrix; called by `homeEval.ts` |
 | `complex.ts` | G50, G60: the complex workaround (our atan); called by `numeric.ts`, `homeEval.ts`, `stateRead.ts` |
 | `powers.ts` | G59f1: powers that Giac's exact evaluation may move to another branch; called by `homeEval.ts` |
 | `asked.ts` | G91: the precision an `evalf(e,n)`/`approx(e,n)` asks for, made a literal; called by `host.ts` |
@@ -59,7 +61,8 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `ourNames.ts` | G54: our replacements for Giac functions by the name the user writes; called by `input/emit.ts`, `host.ts`, `library.ts` |
 | `listargs.ts` | G111: functions that read one list argument as their argument list; called by `homeEval.ts`, `host.ts` |
 | `listargsTable.ts` | generated table for `listargs.ts` (`tools/probes/list-args.ts`); the evidence behind it is `tests/engine/listargs-evidence.ts` (G189), read by `listargsTable.test.ts` only |
-| `matrixType.ts` | G130: Giac's matrix subtype printed as `matrix[…]`; called by `homeEval.ts`, `host.ts` |
+| `matrixType.ts` | G130, G173: Giac's matrix subtype printed as `matrix[…]`, at any depth; called by `homeEval.ts`, `host.ts` |
+| `sequences.ts` | G119, G173: Giac's sequence answers as a value or a list, none refused; called by `homeEval.ts`, `host.ts` |
 | `nonsquare.ts` | G97: powers of a non-square matrix; called by `homeEval.ts`, `host.ts` |
 | `novalue.ts` | G78: no number that went through a division by zero; called by `homeEval.ts`, `listargs.ts` |
 | `polyvec.ts` | G106: a list plus or minus a number read as polynomial coefficients; called by `homeEval.ts`, `host.ts` |

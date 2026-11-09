@@ -18,6 +18,7 @@
     "index": "node ../tools/find-index/generate.mjs",
     "gate": "node scripts/gate.ts",
     "themes": "node scripts/theme-gen.ts",
+    "mark": "node scripts/gen-mark.ts",
     "trust:check": "node ../tools/trust/cli.mts check",
     "trust:refresh": "node ../tools/trust/cli.mts refresh",
     "test:e2e": "playwright test",
