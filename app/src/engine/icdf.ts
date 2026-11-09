@@ -52,8 +52,13 @@ export function boundNames(def: string): string[] {
   return [...params.split(","), ...locals.flatMap((l) => l.split(","))].map((n) => n.trim()).filter(Boolean);
 }
 
-/** The definitions, in the order they are loaded (helpers first). */
-export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
+/** G221f1: `def` with its parameters and locals under the pas prefix (as ICDF_FAILED), out of a user's way. A free name passed
+ *  as an argument is evaluated in the definition's scope by evalf, type or a comparison: student_cdf(x,1) read the free x
+ *  as pascdfok's own x and showed 0.75. The table below keeps the short names for reading. */
+const scoped = (def: string): string => def.replace(new RegExp(`\\b(${boundNames(def).join("|")})\\b`, "g"), "pas$1");
+
+/** The definitions as written, in the order they are loaded (helpers first). */
+const WRITTEN_DEFINITIONS: Readonly<Record<string, string>> = {
   // ln Γ(a) with MPFR at Digits.
   paslg: "paslg(a):=lgamma(evalf(a))",
   // Lentz's evaluation of the continued fraction of I_x(a,b) (DLMF 8.17.22), y = 1 − x given separately. G221: a loop that
@@ -123,6 +128,7 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   // Newton from Giac's x0 on the smaller tail; Giac's x0 with the flag set when it cannot be polished.
   pasicdf:
     "pasicdf(k,a,b,p,x0):={ local x,q,lo,md,t,r,w,dx,n,ok,tol,d,xl,xh,j,us,xs,xc,br,pv; " +
+    `if (size(lname([p,a,b]))>0) { ${ICDF_FAILED}:=1; return x0; } ` +
     `if (not(${REAL("p")}) or not(${REAL("a")}) or not(${REAL("b")})) { ${ICDF_FAILED}:=1; return x0; } ` +
     `if ((k>0 and a<=0) or ((k==0 or k==3) and b<=0)) { ${ICDF_FAILED}:=1; return x0; } ` +
     // G44f1: at p = 0 and p = 1 Giac's value is the end of the support (±infinity, 0), which is exact.
@@ -174,8 +180,9 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   pasfisher_icdf:
     "pasfisher_icdf(l):={ local v; v:=[l]; if (size(v)==3) return pasicdf(3,v[0],v[1],v[2],fisher_icdf(v[0],v[1],v[2])); " +
     `${ICDF_FAILED}:=1; return fisher_icdf(l); }`,
-  // G221 (F195): the forward functions: 1 when the arguments are real and in the distribution's range.
-  pascdfok: `pascdfok(k,a,b,x,z):={ if (not(${REAL("a")}) or not(${REAL("b")}) or not(${REAL("x")}) or not(${REAL("z")})) return 0; if ((k>0 and evalf(a)<=0) or (k==0 and evalf(b)<=0)) return 0; return 1; }`,
+  // G221 (F195): the forward functions: 1 when the arguments are real and in the distribution's range. G221f1: lname first, as it
+  // reads the arguments without evaluating them again; evalf would read a free name through this definition's scope.
+  pascdfok: `pascdfok(k,a,b,x,z):={ if (size(lname([a,b,x,z]))>0) return 0; if (not(${REAL("a")}) or not(${REAL("b")}) or not(${REAL("x")}) or not(${REAL("z")})) return 0; if ((k>0 and evalf(a)<=0) or (k==0 and evalf(b)<=0)) return 0; return 1; }`,
   // tail j (0 lower, 1 upper) at x; pasicdft computes each tail directly on its own side
   pascdf1: "pascdf1(k,a,b,x,j):=pasicdft(k,evalf(a),evalf(b),evalf(x))[j]",
   // F(z) − F(x), on the upper tails when both bounds are in the upper one (the lower ones would cancel)
@@ -201,6 +208,9 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
     "if (size(v)==3) { if (pascdfok(0,v[0],sqrt(v[1]),v[2],v[2])) return pascdf1(0,v[0],sqrt(v[1]),v[2],1); } " +
     `${ICDF_FAILED}:=1; return UTPN(l); }`,
 };
+
+/** The definitions, in the order they are loaded (helpers first). */
+export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(WRITTEN_DEFINITIONS).map(([name, def]) => [name, scoped(def)]));
 
 /** The polished names `text` calls (outside strings). */
 export function icdfCalls(text: string): string[] {

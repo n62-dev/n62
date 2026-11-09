@@ -8,8 +8,9 @@ import { giacAvailable, nodeHost } from "./nodeGiac.ts";
 import type { EngineHost } from "./host.ts";
 import { defaultCasSettings } from "./types.ts";
 
-/** The letters that are a free name in Giac: e is Giac's constant exp(1), a real number (student_cdf(e,1) has a value). */
-const LETTERS = [..."abcdefghijklmnopqrstuvwxyz"].filter((c) => c !== "e");
+/** The letters that are a free name in Giac: e is its constant exp(1), a real number (student_cdf(e,1) has a value), and
+ *  i its imaginary unit, for which Giac's own value stays, with its ⚠ (chisquare_cdf(i,1) is 0 ⚠ unaudited, as on phase-1). */
+const LETTERS = [..."abcdefghijklmnopqrstuvwxyz"].filter((c) => c !== "e" && c !== "i");
 /** The definitions the forward functions reach. */
 const REACHED = ["paslg", "pasbetacf", "paserf", "paserfc", "pasibeta", "pasigamma", "pasicdft", "pascdfok", "pascdf1", "pascdf2", "passtudent_cdf", "paschisquare_cdf", "pasnormald_cdf", "pasutpn"];
 const BOUND = [...new Set(REACHED.flatMap((d) => boundNames(ICDF_DEFINITIONS[d]!)))];
@@ -49,7 +50,7 @@ describe.skipIf(!giacAvailable())("a free name gives no number (real Giac)", () 
   }, 120_000);
   it("each parameter and local of the definitions, the name as it is now and as it was written", () => {
     const short = BOUND.map((n) => n.slice("pas".length));
-    expect(numbers([...new Set([...BOUND, ...short])].filter((n) => n !== "e").flatMap(FORMS))).toEqual([]);
+    expect(numbers([...new Set([...BOUND, ...short])].filter((n) => n !== "e" && n !== "i").flatMap(FORMS))).toEqual([]);
   }, 300_000);
   it("the inverse functions, each letter (the same cause: normald_icdf(b,1,0.3) showed 0.475599487292)", () => {
     const INVERSE = (n: string): string[] => [`normald_icdf(${n},1,0.3)`, `normald_icdf(2,${n},0.3)`, `student_icdf(${n},0.5)`, `chisquare_icdf(${n},0.5)`, `fisher_icdf(${n},2,0.5)`];
