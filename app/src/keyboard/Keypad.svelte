@@ -585,6 +585,10 @@
     .key[data-zone="true"] {
       min-height: var(--nav-h-short);
     }
+    /* the user cell's letter line at the short height: the same track, from the short nav height */
+    .key[data-pad="user"][data-letters="true"] {
+      grid-template-rows: var(--legend-h) calc(var(--nav-h-short) - var(--sp-05) - 2 * var(--legend-h)) var(--legend-h);
+    }
   }
   /* the trackpad (K1): one surface under the four arrow keys, which stay as its tap zones; drawn as a true circle (R15c, R3,
      R141) whose diameter is the smaller side of its grid area, centred in it. The area's width is two columns, worked out
