@@ -10,7 +10,7 @@
 // |F(x) − p|/min(p, 1 − p) is above 10^−digits, the definition returns Giac's value and sets the flag ICDF_FAILED:
 // the caller keeps today's ⚠ (the unaudited check). Synchronous, UI-free; only erasable TypeScript syntax.
 import type { Giac } from "./numeric.ts";
-import { closing, functionsIn, renameCalls, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { callsOf, closing, functionsIn, renameCalls, withoutStrings, type Quoting } from "./giacPrint.ts";
 
 /** The Giac names polished, and our definition each call is replaced by. */
 export const ICDF_REPLACED: Readonly<Record<string, string>> = {
@@ -18,6 +18,8 @@ export const ICDF_REPLACED: Readonly<Record<string, string>> = {
   student_icdf: "passtudent_icdf",
   chisquare_icdf: "paschisquare_icdf",
   fisher_icdf: "pasfisher_icdf",
+  // G220 (F195): Giac's alias of normald_icdf, the same arguments.
+  normal_icdf: "pasnormald_icdf",
   // G44f1: erf and erfc by our MPFR definitions (below), checked like the inverse functions.
   erf: "paserfv",
   erfc: "paserfcv",
@@ -170,22 +172,29 @@ const ERF_REPLACED: Readonly<Record<string, string>> = { erf: ICDF_REPLACED.erf!
  * G44f1: `text` (an exact result as Giac prints it, or a typed input: `q` says which) for its value, with erf and erfc read through our MPFR definitions
  * and the definitions loaded on first use; the text itself when it calls neither. Giac prints erfc(u) as 1-erf(u),
  * which cancels the tail's digits (erfc(10) loses 45): a term 1-erf(u) is read as erfc(u) when nothing binds tighter
- * on either side.
+ * on either side. G220 (F195): the same for a term erf(u)+1, read as erfc(-(u)): Giac prints normald_cdf(0,1,-20) as
+ * (erf(-10*sqrt(2))+1)/2, whose sum is 0 at any precision below 89 digits. `erfc(-u)` is 2 - erfc(u) for u > 0 (paserfcv),
+ * so the side away from the tail keeps its digits.
  */
 export function erfValueText(giac: Giac, text: string, q: Quoting): string {
   if (!functionsIn(text, q).some((f) => Object.hasOwn(ERF_REPLACED, f))) return text;
   let s = text;
   // the strings blanked to their length, so a "1-erf(" inside one is not read as a term
   let bare = withoutStrings(s, (str) => " ".repeat(str.length), q);
+  // nothing binds tighter on either side of the term s[k..end)
+  const alone = (k: number, end: number): boolean => /^[(,[+]?$/.test(k === 0 ? "" : s[k - 1]!) && /^[),\]+-]?$/.test(end === s.length ? "" : s[end]!);
   for (let k = bare.indexOf("1-erf("); k >= 0; k = bare.indexOf("1-erf(", k + 1)) {
     const close = closing(s, k + 5, q);
     if (close < 0) break;
-    const end = close + 1;
-    const before = k === 0 ? "" : s[k - 1]!;
-    const after = end === s.length ? "" : s[end]!;
-    if (!/^[(,[+]?$/.test(before) || !/^[),\]+-]?$/.test(after)) continue;
+    if (!alone(k, close + 1)) continue;
     s = `${s.slice(0, k)}erfc(${s.slice(k + 6)}`;
     bare = withoutStrings(s, (str) => " ".repeat(str.length), q);
+  }
+  // from the last call back: a rewrite leaves the places before it as they were (the close of an outer call is found again)
+  for (const c of callsOf(s, ["erf"], q).reverse()) {
+    const close = closing(s, c.open, q);
+    if (close < 0 || s.slice(close + 1, close + 3) !== "+1" || !alone(c.at, close + 3)) continue;
+    s = `${s.slice(0, c.at)}erfc(-(${s.slice(c.open + 1, close)}))${s.slice(close + 3)}`;
   }
   s = renameCalls(s, ERF_REPLACED, q);
   const last = ERF_DEFINITIONS[ERF_DEFINITIONS.length - 1]!;

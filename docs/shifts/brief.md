@@ -79,7 +79,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 580 | G225 `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
-| 581 | [G220](packages/G220.md) normal cdf tail (F195) | gorge, Opus | `p1/gorge-normalcdf` | – |
+| 581 | G220 normal cdf tail (F195) | gorge, Opus | `p1/gorge-normalcdf` | – |
 | 582 | [G221](packages/G221.md) `student_cdf`, `chisquare_cdf` (F195) | gorge, Opus | `p1/gorge-tchicdf` | – |
 | 583 | [G228](packages/G228.md) `formatBase` | gorge, Sonnet | `p1/gorge-formatbase` | – |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |

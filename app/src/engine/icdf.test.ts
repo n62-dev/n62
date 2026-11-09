@@ -26,6 +26,17 @@ describe("erf value text (G44f1)", () => {
     expect(erfValueText(fake, "-1-erf(2)", "printed")).toBe("-1-paserfv(2)");
     expect(erfValueText(fake, "1-erf(2)*3", "printed")).toBe("1-paserfv(2)*3");
     expect(erfValueText(fake, "21-erf(2)+x^1-erf(1)", "printed")).toBe("21-paserfv(2)+x^1-paserfv(1)");
+    // G220 (F195): a term erf(u)+1 is erfc(-u), when nothing binds tighter on either side
+    expect(erfValueText(fake, "(erf(-10*sqrt(2))+1)/2", "printed")).toBe("(paserfcv(-(-10*sqrt(2))))/2");
+    expect(erfValueText(fake, "(erf(-4)+1)/2-(erf(-5)+1)/2", "printed")).toBe("(paserfcv(-(-4)))/2-(paserfcv(-(-5)))/2");
+    expect(erfValueText(fake, "[erf(a)+1,x+erf(b)+1-2]", "printed")).toBe("[paserfcv(-(a)),x+paserfcv(-(b))-2]");
+    expect(erfValueText(fake, "erf(erf(2)+1)+1", "printed")).toBe("paserfcv(-(paserfcv(-(2))))");
+    // not a term of its own: a tighter operator on a side, or another number after the +
+    for (const [text, read] of [["2*erf(3)+1", "2*paserfv(3)+1"], ["3-erf(3)+1", "3-paserfv(3)+1"], ["erf(3)+1/2", "paserfv(3)+1/2"], ["erf(3)+1*x", "paserfv(3)+1*x"], ["erf(3)+12", "paserfv(3)+12"], ["erf(3)+1.5", "paserfv(3)+1.5"], ["erf(3)+1^x", "paserfv(3)+1^x"], ["myerf(3)+1+erf(2)", "myerf(3)+1+paserfv(2)"]] as const) {
+      expect(erfValueText(fake, text, "printed")).toBe(read);
+    }
+    expect(erfValueText(fake, '"erf(2)+1"+erf(1)', "printed")).toBe('"erf(2)+1"+paserfv(1)');
+    expect(erfValueText(fake, 'size("a\\"")*0+(erf(1)+1)/2', "typed")).toContain("(paserfcv(-(1)))/2");
     expect(erfValueText(fake, 'erfc (1)+"erf(1)"+myerf(2)', "printed")).toBe('paserfcv (1)+"erf(1)"+myerf(2)');
   });
   it("reads the text as the caller says: typed escapes a quote with a backslash, Giac's print doubles it", () => {
@@ -135,6 +146,8 @@ describe.skipIf(!giacAvailable())("icdf polish (real Giac)", () => {
     expect(at40(erfValueText(giac, "erf(-0.3)", "printed"))).toMatchObject({ value: expect.stringMatching(/^-0\.32862675945912742763891404786675/), failed: false });
     // Giac's 1-erf(10) as our continued fraction: mpmath 2.08848758376254475700078629495778…E-45
     expect(at40(erfValueText(giac, "1-erf(10)", "printed"))).toMatchObject({ value: expect.stringMatching(/^0\.20884875837625447570007862949577\d*e-44$/), failed: false });
+    // G220: Giac's print of normald_cdf(0,1,-20); mpmath ncdf(-20) = 2.75362411860623369507562278086E-89 (g220 rows)
+    expect(at40(erfValueText(giac, "(erf(-10*sqrt(2))+1)/2", "printed"))).toMatchObject({ value: expect.stringMatching(/^0\.27536241186062336950756227808\d*e-88$/), failed: false });
     expect(at40(erfValueText(giac, "erf(0)", "printed"))).toEqual({ value: "0", failed: false });
   });
   it("G44f1: erf of a non-real argument is Giac's own, with the flag", () => {

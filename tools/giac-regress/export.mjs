@@ -124,6 +124,8 @@ const PREAMBLE = [
 export const KNOWN_RULES = [
   [/^(g47-)?(prec-g44f?\d?-)?(prec-2-)?(normald|student|chisquare|fisher)_icdf|^prec-g44f?\d?-(normald|student|chisquare|fisher)_icdf|^g47-normald_icdf/, "register row icdf-double (G44): the inverse distribution functions return a double at any Digits (or +infinity far in a tail)"],
   [/^prec-g44f1-(evalf-)?erf-|^prec-g44f1-(evalf-)?erfc|^prec-3-UTPN/, "register row erfc-as-1-erf (G44f1): erfc is 1-erf and cancels, a small erf argument returns the argument"],
+  [/^g220-normald?-cdf-/, "register row erfc-as-1-erf (G220): Giac prints normald_cdf as (erf(u)+1)/2, whose sum cancels in the lower tail at Digits 40"],
+  [/^g220-normal-icdf-/, "register row icdf-double (G44, G220): normal_icdf is normald_icdf under another name, a double at any Digits"],
   [/sin1e(50|60|70|100)|sin-1e100|^prec-G23/, "register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong"],
   [/Bessel|Airy|besselj/, "register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14"],
   [/^prec-4-romberg/, "register row no-mpfr-path (G4, G50): romberg works in a double, 30 digits asked"],
@@ -132,6 +134,15 @@ export const KNOWN_RULES = [
 ];
 // The ids Giac fails on the pin (run.mjs: every line of the known file fails).
 export const KNOWN_IDS = new Set([
+  "g220-normald-cdf-neg20-12",
+  "g220-normald-cdf-neg40-12",
+  "g220-normal-cdf-neg20-12",
+  "g220-normald-cdf-neg8-30",
+  "g220-normald-cdf-neg20-30",
+  "g220-normald-cdf-neg40-30",
+  "g220-normal-cdf-neg20-30",
+  "g220-normald-cdf-8-9-30",
+  "g220-normal-icdf-0.975-30",
   "g38-floor-sin1e60",
   "prec-2-normald_icdf-value",
   "prec-g44-normald_icdf-0.025-30",
