@@ -574,7 +574,7 @@ cat > "$sb6/bin/claude" <<'STUB'
 #!/bin/sh
 case "$*" in
   *"--agent sofia"*) echo APPROVED;;
-  *"merge of phase-1 is in progress"*) [ -z "$SB_NORESOLVE" ] || { echo unresolved; exit 0; }; echo resolved > conf.txt; git add conf.txt; git -c user.name=t -c user.email=t@t commit -qm resolve; echo resolved;;
+  *"merge of phase-1 is in progress"*) [ -z "$SB_NORESOLVE" ] || { echo unresolved; exit 0; }; git ls-files -u del.txt | grep -q . && git rm -q del.txt; echo resolved > conf.txt; git add conf.txt; git -c user.name=t -c user.email=t@t commit -qm resolve; echo resolved;;
   *) echo "worker saw $(git log --oneline | wc -l) commits, p1.txt=$(cat p1.txt 2>/dev/null)" > seen.txt; echo w >> w.txt; git add -A; git -c user.name=t -c user.email=t@t commit -qm work; echo done;;
 esac
 STUB
@@ -597,6 +597,14 @@ grep -q 'merging phase-1 into p1/uptodate2' "$sb6/.coord/log.md" && fail "A38: a
 [[ "$(git -C "$sb6" log --merges --format=%s p1/uptodate2 | wc -l)" -eq 0 ]] || fail "A38: a branch containing phase-1 got a merge commit: $out"
 out="$(sb6run "$script" ron "x" --id P3 --branch p1/conflict --checks none --no-merge 2>&1)"
 grep -q 'conflicts with phase-1 resolved by ron' "$sb6/.coord/log.md" && [[ "$(git -C "$sb6" show p1/conflict:conf.txt)" == resolved ]] || fail "A38: a conflict on resume does not go to the resolve round: $out"
+# A38f1: a branch that deleted a file phase-1 modified (modify/delete: no conflict markers) reaches the resolve round, with a note in the resolve file
+echo base > "$p1wt/del.txt"; git -C "$p1wt" add del.txt; gc "$p1wt" "add del"; git -C "$sb6" branch p1/mdel phase-1
+git -C "$sb6" worktree add -q "$tmp/mw" p1/mdel; git -C "$tmp/mw" rm -q del.txt; gc "$tmp/mw" "branch deletes del.txt"; git -C "$sb6" worktree remove --force "$tmp/mw"
+echo changed > "$p1wt/del.txt"; git -C "$p1wt" add del.txt; gc "$p1wt" "phase modifies del.txt"
+out="$(sb6run "$script" ron "x" --id P4 --branch p1/mdel --checks none --no-merge 2>&1)"
+grep -q '^RESULT #[0-9]* P4: ' <<<"$out" || fail "A38f1: a modify/delete conflict on resume ended without a RESULT line: $out"
+grep -q 'conflicts with phase-1 resolved by ron' "$sb6/.coord/log.md" && git -C "$sb6" merge-base --is-ancestor phase-1 p1/mdel || fail "A38f1: a modify/delete conflict on resume did not finish the merge: $out"
+grep -qs 'no conflict markers: a modify/delete conflict' "$sb6"/.tasks/*-p4/resolve-1.txt || fail "A38f1: the resolve file has no modify/delete note for del.txt"
 
 # A18: the audit sees the behaviour diff
 out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
