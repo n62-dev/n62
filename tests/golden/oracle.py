@@ -440,9 +440,10 @@ def check_file(path: Path, write: bool, g2_items: set, counts=None):
         before = json.dumps(case, sort_keys=True, ensure_ascii=False)
         cid = case.get("id")
         problems = []
-        if cid in seen:
+        key = (cid, case.get("check"))  # G168: a known file's id may stand once per check it fails (num, cas, plot)
+        if key in seen:
             problems.append("duplicate id")
-        seen.add(cid)
+        seen.add(key)
         src = case.get("source")
         if src is None and "expect" not in case:
             pass  # a run-only case (benchmark timing set)

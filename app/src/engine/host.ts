@@ -31,7 +31,7 @@ import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts
 import { resolveAngle } from "./angleMigration.ts";
 import { mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { mayAddToList, unaskedPoly } from "./polyvec.ts";
-import { approxRange, mayApproxRange } from "./novalue.ts";
+import { approxRange, lostCas, mayApproxRange } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -559,6 +559,14 @@ export class EngineHost implements FactsHost {
     return t;
   }
 
+  /** G168 (F109): the input is `name()` of a name that is neither Giac's, nor stored in this engine, nor one of our
+   *  library definitions (Giac drops the empty call: `type(DelAVars())` is identifier), so no value and no refusal would come. */
+  private unknownEmptyCall(input: string): boolean {
+    const name = leadingName(input.trim());
+    if (name === null || wholeCall(input, name, "typed")?.join("") !== "") return false;
+    return notBuiltin(this.giac)(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name) && !this.byName.has(name) && !this.pending.has(name) && !this.stored.has(name) && !this.skipped.has(name);
+  }
+
   private keptFrom(text: string): ProgramStores {
     let k = this.keptByText.get(text);
     if (!k) this.keptByText.set(text, (k = programStores(this.treeFrom(text))));
@@ -833,6 +841,11 @@ export class EngineHost implements FactsHost {
     this.need(input);
     this.useHomeMode(s);
     const t0 = performance.now();
+    if (this.unknownEmptyCall(input)) {
+      const display = enEngine["error.unknownFunction"];
+      const ms = performance.now() - t0;
+      return { result: { ok: false, display, path: "float-error", approximate: false, exactMs: ms, totalMs: ms, error: "unknownFunction", ...safePrecision(display) }, defs: [] };
+    }
     let result: HomeResult;
     // G100: a chip's or constant's input brings the form of its typed text (homeTabled), the value cut from this one
     const form = given ?? this.formFor(input);
@@ -921,6 +934,7 @@ export class EngineHost implements FactsHost {
       result: { ok: false, text, latex: "", timedOut: error === "timeout", error, engineMs: performance.now() - t0, facts: { exact: false, reliableDigits: null } },
       defs: [],
     });
+    if (this.unknownEmptyCall(input)) return fail(enEngine["error.unknownFunction"], "unknownFunction");
     // P9 (docs/04 section 2.9): typed decimals are exact rationals, as in Home; approx() gives decimals.
     const exactInput = toExactLiterals(input);
     const test = input.includes(EQ_INEXACT_FLAG);
@@ -1024,6 +1038,11 @@ export class EngineHost implements FactsHost {
     // G148: approx or evalf of a finite value past MPFR's range (±infinity, or a float 0) is refused as in Home.
     const range = guarded || !single ? approxRange(this.giac, asg0 ? asg0.rhs : exactInput, text, valuePrecision(digitsSet), () => false, userFn) : null;
     if (range) return fail(enEngine[`error.${range}`], range);
+    // G168 (F93): Giac's undef, or the call back with no free name (no number comes of it), is refused as in Home; an
+    // assignment that ran once puts its name back, as a non-square power's (G171), so no name keeps Giac's word.
+    const lost = guarded || !single || (onceRun && asg0 && !form.noValue) ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
+    if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
+    if (lost) return fail(enEngine[`error.${lost}`], lost);
     if (guarded) {
       const stored = this.giac.eval(`${guarded.name}:=pcasans`);
       if (isError(stored)) return fail(stored, isTimeout(stored) ? "timeout" : "engine");

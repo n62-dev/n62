@@ -36,7 +36,7 @@ export function table(giac: Giac, req: TableRequest, s: HomeSettings, form: (cel
         req.fns.map((f) => {
           // G100: a cell that calls a stored program that stores runs once (stores.ts)
           const cell = `subst((${f}),${v}=(${x}))`;
-          const r = homeEval(giac, cell, s, undefined, form(cell));
+          const r = homeEval(giac, cell, s, undefined, form(cell), undefined, true); // G168f1: Giac's undef stands, the cell shows NaN
           return r.ok ? r : { ...r, error: "engine" as const };
         }),
       ),
