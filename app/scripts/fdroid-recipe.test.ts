@@ -203,3 +203,26 @@ echo "curl $url" >> "${calls}"`);
     expect(r.log).toMatch(compilers);
   });
 });
+
+describe("fdroid/SUBMIT.md (A98)", () => {
+  const recipe = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8");
+  const text = (): string => readFileSync(join(repo, "fdroid/SUBMIT.md"), "utf8");
+
+  it("names the application id and the recipe's file, both read from the recipe", () => {
+    const id = /^# DRAFT .*\((metadata\/([\w.]+)\.yml)\)/m.exec(recipe);
+    expect(id, "the recipe's header names metadata/<id>.yml").not.toBeNull();
+    const [, metadata, appId] = id as RegExpExecArray;
+    expect(readFileSync(join(repo, `fdroid/${appId}.yml`), "utf8")).toBe(recipe);
+    expect(text()).toContain(appId as string);
+    expect(text()).toContain(metadata as string);
+    expect(text()).toContain(`fdroid/${appId}.yml`);
+  });
+
+  it("names the tag the recipe builds, the size limit and the CI job that builds first", () => {
+    const tag = /^\s+commit:\s*(\S+)\s*$/m.exec(recipe)?.[1];
+    expect(tag).toMatch(/^v\d/);
+    expect(text()).toContain(tag as string);
+    expect(text()).toMatch(/30 MB/);
+    expect(text()).toContain("fdroid build");
+  });
+});

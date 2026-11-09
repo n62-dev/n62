@@ -5,6 +5,10 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-09 (Opus pass 117) to make room for A98's question, as they stood
+- **Owner answers of 2026-11-08:** a Giac patch's worker writes its own row in `engine/giac/patches/README.md` (A83; rules section 5). A stray file outside a worktree is logged, warn only (A64 lo-11; A88). A CAS-last cold start, 1507 ms on the Tab One, 7 ms over 1.5 s, does not hold v0.1.0 (A73f2 after the tag). c29's one red did not return in 135 runs (F200): the core runner waits for the `defs` write and logs `defs` on a red (A123, pass 106); `main.ts`'s pagehide flush does not, as it cannot await and each definition writes at once (pass 107). Would change if: a stray file does harm before anyone reads the log, or a red c29 logs `defs: (no entry)`.
+- **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1): R148's short rows, which the owner chose for the history's room, leave Settings › Appearance 288 px (R148f1 took 1 px from the sheet's top padding) for the 304 its rows need at the floor (docs/05 3.1, fit, then scroll); that level scrolls, no key row or floor gives way. Would change if: the owner's look at 360 × 740 says otherwise.
+
 ### Shortened 2026-11-09 (Opus pass 106) to make room for A123's default, as they stood
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Decided notes, old reports, merged packages' mockups and one-package probes are deleted, not archived. Rule: rules section 10. Full text: archive, "Shortened 2026-11-06 (Opus pass 85)". Would change if: a deleted file is needed back twice a month.
 - **P23 (decided 2026-10-21, ended 2026-10-27, the owner): the core freeze and its net.** The net stays: the core list on every merge and on the night's device; a red case is a bug to fix, not a gate; the list changes only with the owner. Rule: brief section 0, `tests/core/README.md`. Full text: archive.

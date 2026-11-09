@@ -9,11 +9,13 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-12); S36f1 set the two copper values to the sheet's (pass 103 re-read it). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
+**F-Droid Reproducible Builds** (before the fdroiddata merge request; `fdroid/SUBMIT.md`): tick the box and ask for them, as without them F-Droid signs with its own key for good and its APK and ours cannot update each other. Cost: `AllowedAPKSigningKeys` and `Binaries` in the recipe, and a rework of the merge request if the first build is not bit-identical (never compared).
+
 ## Decided proposals
 
 ### Pipeline and process
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
-- **Owner answers of 2026-11-08:** a Giac patch's worker writes its own row in `engine/giac/patches/README.md` (A83; rules section 5). A stray file outside a worktree is logged, warn only (A64 lo-11; A88). A CAS-last cold start, 1507 ms on the Tab One, 7 ms over 1.5 s, does not hold v0.1.0 (A73f2 after the tag). c29's one red did not return in 135 runs (F200): the core runner waits for the `defs` write and logs `defs` on a red (A123, pass 106); `main.ts`'s pagehide flush does not, as it cannot await and each definition writes at once (pass 107). Would change if: a stray file does harm before anyone reads the log, or a red c29 logs `defs: (no entry)`.
+- **Owner answers of 2026-11-08:** a Giac patch's worker writes its own patches README row (A83); a stray file outside a worktree is logged, warn only (A64 lo-11; A88); a CAS-last cold start of 1507 ms does not hold v0.1.0; the c29 red (F200, A123). Full text: archive, "Opus pass 117". Would change if: a stray file does harm before anyone reads the log.
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Full text: archive, "Opus pass 97". Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Full text: archive, "Opus pass 96". Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Rule: rules section 10. Full text: archive, "Opus pass 106". Would change if: a deleted file is needed back twice a month.
@@ -142,7 +144,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
 - **View keys and the load queue** (Opus pass 109, R148f2): during an app's load Symb, Plot and Num run at once only when no key is waiting; behind waiting keys they wait in order (R8: nothing typed is lost; c46). The other at-once keys stay. Would change if: a view key feels dead during a load on the Tab One.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): six cards at scale 2.0 cannot fit 360 × 740 at 32 px; it was a fixed 16 px. Would change if: the owner wants them to follow the scale and scroll.
-- **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1): R148's short rows, which the owner chose for the history's room, leave Settings › Appearance 288 px (R148f1 took 1 px from the sheet's top padding) for the 304 its rows need at the floor (docs/05 3.1, fit, then scroll); that level scrolls, no key row or floor gives way. Would change if: the owner's look at 360 × 740 says otherwise.
+- **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1; docs/05 3.1): Settings › Appearance scrolls; no key row or floor gives way. Full text: archive, "Opus pass 117". Would change if: the owner's look at 360 × 740 says otherwise.
 
 **Engine, precision and formats**
 - **Honest precision** (G2): rule: docs/04 2.4 rules 2–3; assignments evaluated once. **G44, G23:** the inverse distributions are solved against our MPFR forward functions, every fallback keeps ⚠. Full text: archive, "Shortened 2026-10-21 (P23)". Would change if: a G2 user types Giac's aliases.
