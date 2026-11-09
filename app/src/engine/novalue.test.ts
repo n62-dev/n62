@@ -167,6 +167,10 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
     expect(home("list[undef,2]")).toMatchObject({ ok: false, error: "noValue" });
     expect(home("[1,[inf-inf]]")).toMatchObject({ ok: false, error: "noValue" });
     expect(home("[1,\"undef\"]")).toMatchObject({ ok: true });
+    // no MPFR value at the setting's or P's digits is no lost number: asked at a double's (g111-cas-gammad-cdf-2bounds)
+    expect(host.cas("BesselJ(1,2)", { ...defaultCasSettings, digits: 30 }).result).toMatchObject({ ok: true, text: "BesselJ(1,2)" });
+    expect(cas("evalf(gammad_cdf(2,3,-2,1))")).toMatchObject({ ok: true });
+    expect(host.cas("binomial_icdf(4,0.5,3)", { ...defaultCasSettings, digits: 30 }).result).toMatchObject({ ok: false, error: "noValue" });
     // an exact form whose evalf is an infinity stays, and an interval
     expect(cas("exp(10^30)")).toMatchObject({ ok: true });
     expect(cas("1..3")).toMatchObject({ ok: true });

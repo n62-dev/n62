@@ -1040,7 +1040,7 @@ export class EngineHost implements FactsHost {
     if (range) return fail(enEngine[`error.${range}`], range);
     // G168 (F93): Giac's undef, or the call back with no free name (no number comes of it), is refused as in Home; an
     // assignment that ran once puts its name back, as a non-square power's (G171), so no name keeps Giac's word.
-    const lost = guarded || !single || (onceRun && asg0 && !form.noValue) ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn) : null;
+    const lost = guarded || !single || (onceRun && asg0 && !form.noValue) ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
     if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
     if (lost) return fail(enEngine[`error.${lost}`], lost);
     if (guarded) {

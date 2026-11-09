@@ -17,7 +17,7 @@
 //   and of an answer with no free name whose evalf is no number (lostCas).
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
-import { hasFloat, MAX_EVAL_DIGITS, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { callsOf, firstNameIn, functionsIn, isError, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero } from "./format.ts";
 
@@ -174,20 +174,22 @@ export function lostNumber(
 /**
  * G168 (F93): the reason for the CAS answer `output` of `input` (decimals exact), held in `slot`, when no value came:
  * Giac's bare undef (undefReason), or an answer with no free name whose evalf is no number (Giac's call back unevaluated,
- * binomial_icdf(4,0.5,3.0)), "noValue". An exact form whose evalf is a number stays (sqrt(2), BesselJ(1,2)), as does one
+ * binomial_icdf(4,0.5,3.0)), "noValue", asked at a double's digits: Giac has no MPFR value for some functions (igamma), so a call kept
+ * at P or at a high CAS setting is no lost number. When the input may run again (`rerun`) it is asked too,
+ * since the answer may hold P-digit floats a double cannot read (evalf(gammad_cdf(2,3,-2,1)) at P). An exact form whose evalf is a number stays (sqrt(2), BesselJ(1,2)), as does one
  * whose evalf is an infinity (exp(10^30), an exact form MPFR's range cannot print); a name, a list, a string, a test, an
  * interval (`1 .. 3`), a geometry object and an answer of any other type are no lost number. An undef inside a larger
  * answer is not looked for here. `evalf` is read through type(), never printed: a geometry object as the value of a call
  * makes Giac draw it ("window is not defined" in the engine).
  */
-export function lostCas(giac: Giac, slot: string, input: string, output: string, late: () => boolean, userFn: (name: string) => boolean): NoValue | null {
+export function lostCas(giac: Giac, slot: string, input: string, output: string, late: () => boolean, userFn: (name: string) => boolean, digits: number, rerun: boolean): NoValue | null {
   const out = output.trim();
   if (out === "undef") return undefReason(giac, input, late, 0, userFn);
   if (infinite(out) || /==|<>|->|"|\.\.|\bpnt\(/.test(out) || freeName(out)) return null;
   if (giac.eval(`type(${slot})`).trim() !== "expression") return null;
   if (namesOf(giac, slot)?.length !== 0) return null;
-  const kind = giac.eval(`type(evalf(${slot}))`).trim();
-  return kind === "expression" || kind === "identifier" ? "noValue" : null;
+  const noNumber = (e: string): boolean => /^(expression|identifier)$/.test(withDigits(giac, DOUBLE_DIGITS, digits, () => giac.eval(`type(evalf(${e}))`)).trim());
+  return noNumber(slot) && (!rerun || noNumber(input)) ? "noValue" : null;
 }
 
 /**
