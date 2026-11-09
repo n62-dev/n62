@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
+| 538 | R149 N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 496 | [G168](packages/G168.md) no value is a plain refusal: `undef`, empty calls, `DelAVars()`, the budget message (F93, F109) | gorge, Opus | `p1/gorge-novalue` | – |
 | 501 | [G172](packages/G172.md) a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
