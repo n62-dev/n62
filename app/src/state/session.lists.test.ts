@@ -74,7 +74,7 @@ describe.skipIf(!giacAvailable())("a stored { } list stays a list (R80, real eng
   });
 
   // R80f1: G111's patch 0007 maps a list-type x per element, so R80 fix 1's refusal went; a list read as the argument list
-  // (normald_cdf({0.5,1.5}) = P(0.5 ≤ X ≤ 1.5)) and negbinomial_icdf's wrong answer stay refused (listargs.ts)
+  // (normald_cdf({0.5,1.5}) = P(0.5 ≤ X ≤ 1.5)) stays refused (listargs.ts)
   it("a { } list in a distribution is one value per element, typed or stored", async () => {
     const last = async (...entries: string[]): Promise<HistoryItem> => {
       const s = new Session(calc, noKv);
@@ -94,7 +94,7 @@ describe.skipIf(!giacAvailable())("a stored { } list stays a list (R80, real eng
     expect(await run(`${L12}+\\operatorname{normald\\_cdf}\\left(1\\right)`)).toEqual({ text: "{1.84134474607,2.84134474607}", mark: "≈" });
     // a list as the only argument is Giac's argument list (P(0.5 ≤ X ≤ 1.5) = 0.2417…), refused
     expect(await last("\\operatorname{normald\\_cdf}\\left(\\left\\{0.5,1.5\\right\\}\\right)")).toMatchObject({ status: "error" });
-    // negbinomial_icdf(3,0.5,list[0.2,0.7]) = 0, right {1,4}: refused
-    expect(await last("\\operatorname{negbinomial\\_icdf}\\left(3,0.5,\\left\\{0.2,0.7\\right\\}\\right)")).toMatchObject({ status: "error" });
+    // G169's patch 0038: P(K ≤ 0) = 1/8 < 0.2 ≤ P(K ≤ 1) = 5/16, P(K ≤ 3) = 21/32 < 0.7 ≤ P(K ≤ 4) = 99/128, {1,4}; it was refused, Giac's 0 for both
+    expect(await run("\\operatorname{negbinomial\\_icdf}\\left(3,0.5,\\left\\{0.2,0.7\\right\\}\\right)")).toEqual({ text: "{1,4}", mark: "=" });
   });
 });

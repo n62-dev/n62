@@ -97,6 +97,7 @@ def namespace():
     ns["sortroots"] = sortroots
     ns["D200"] = at200
     ns["S"] = lambda label: Label(label)
+    ns["Braces"] = lambda *xs: Label("{" + ",".join(display(x) for x in xs) + "}")  # G169: a `{ }` list as the app shows it (12 digits)
     return ns
 
 
