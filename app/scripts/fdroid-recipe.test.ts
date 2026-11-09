@@ -143,10 +143,17 @@ describe("F-Droid recipe builds outside prebuild (A97)", () => {
     }
   });
 
-  it("the recipe has no scandelete: fdroidserver's scan_source fails on a path that matches nothing, and none exists after prebuild (capacitor.settings.gradle also builds Capacitor's modules from app/node_modules/)", () => {
-    const text = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8");
-    expect(text).not.toMatch(/^\s+scandelete:/m);
+  it("scandelete is exactly app/node_modules/ and scanignore keeps the tarball cap sync unpacks (A97f1: the scan flags 7 files there; cap sync needs the one)", () => {
+    expect(list("scandelete")).toEqual(["app/node_modules/"]);
+    expect(list("scanignore")).toContain("app/node_modules/@capacitor/cli/assets/capacitor-cordova-android-plugins.tar.gz");
     expect(readFileSync(join(repo, "android/capacitor.settings.gradle"), "utf8")).toContain("node_modules");
+  });
+
+  it("the fields stand in the order fdroid rewritemeta writes: sudo, gradle, prebuild, scanignore, scandelete, build", () => {
+    const keys = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8").split("\n")
+      .map((l) => /^ {4}(\w+):/.exec(l)?.[1])
+      .filter((k): k is string => k !== undefined && ["sudo", "gradle", "prebuild", "scanignore", "scandelete", "build"].includes(k));
+    expect(keys).toEqual(["sudo", "gradle", "prebuild", "scanignore", "scandelete", "build"]);
   });
 });
 
