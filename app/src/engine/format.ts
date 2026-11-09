@@ -316,8 +316,9 @@ export interface PrecisionWhy {
   decided?: boolean;
   /** G39: Giac returned its [exact, numeric] pair for a definite integral, and the two answers differ ("why.pairDiffers"). */
   differ?: boolean;
-  /** G171: a power, inverse or division of a matrix in the input could not be checked for a non-square operand (it
-   *  calls a program, or reads a name the run wrote): "a matrix power not checked". */
+  /** G171, G225: a power, inverse or division of a matrix could not be checked for a non-square operand, or a dot or
+   *  cross for vectors of different lengths (it calls a program or randvector, stores, or reads a name the run wrote):
+   *  "a matrix shape or vector length not checked". */
   squareUnchecked?: boolean;
   /** G178 (F115): a check that the value exists (a divergent integral or series, no limit: converge.ts) did not finish. */
   existsUnchecked?: boolean;
