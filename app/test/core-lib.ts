@@ -143,7 +143,13 @@ export async function replay(page: Page, steps: readonly CoreStep[], hooks: Repl
     if (typeof s === "string") {
       if (/^d\d$/.test(s)) await pickSeen(page, s.slice(1));
       await tap(page, [s]);
-      if (/^@(symb|plot|num)$/.test(s)) await viewSeen(page, s.slice(1));
+      if (/^@(symb|plot|num)$/.test(s)) {
+        await viewSeen(page, s.slice(1));
+        // The view key runs at once (route.ts AT_ONCE) while the app's code loads, and keys typed meanwhile wait for the load:
+        // a later view key overtakes them (c46 at 16 workers: x²−2 typed into Plot, Symb's line left empty). The view is
+        // loaded before the next key, as a person sees it ("Loading…" gone) before typing.
+        await page.waitForFunction(() => window.n62.shell.loading === null, undefined, { timeout: 15_000 });
+      }
       // a new row appears at once as pending (some views, Solve, add none); a {wait} next means the job is to be
       // interrupted, so do not wait for it
       const next = steps[i + 1];
