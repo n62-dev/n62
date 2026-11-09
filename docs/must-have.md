@@ -18,7 +18,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 
 ## A. Before you tell anyone (v0.1.0, tag Sun 11-15, freeze Thu 11-12 evening)
 
-- **No known silent wrong number** [have, with one exception]. No open bug line shows a wrong value unmarked, except F192 (phasor entry, R180), which must land. The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
+- **No known silent wrong number** [have]. No open bug line shows a wrong value unmarked (F192, phasor entry, closed by R180). The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
 - **Units and ± in the core list** [miss]. 66 cases, none with a unit or ±; the harness has no unit check. R170.
 - **Release notes** [part]. The release body holds only hashes; no notes file, no `changelogs/`. A90, then A91 after the freeze.
 - **First-run tips** [part, was miss]. The overlay is built with 2 cards; flicks, the round pad, Find and the marks are missing. R171.
@@ -69,7 +69,7 @@ Not verified:
 
 ## B. For daily use by engineers (v0.2 to v0.4)
 
-The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys is a silent wrong number at everyday reach (F192). R180 goes before the 11-12 freeze.
+The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10∡30+5` from the keys now adds 5 to the phasor.
 
 **Hand-off to the laptop**
 - `[miss]` Session format v1. `HistoryItem` holds no Giac text, angle or digits per row; `uses` is CAS only. G210, G211, G212.
@@ -82,7 +82,7 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 - `[part]` Statistics basics. Each statistic exists; no single call gives the pair with r², and unequal lengths show the generic `error.engine`. G223, R184.
 - `[part]` Distributions. Inverses are polished (38+ digits); forward tails and the alias `normal_icdf` are not (F195). G220, G221, G222.
 - `[part]` SI-prefix display. Works but pads: `4.70000000000 k` at 12 digits. G224.
-- `[check: FAIL]` Phasor entry. `10∡30+5` is 10∠35, and the owner's `10∡30+5∡-45` is refused. R180.
+- `[have]` Phasor entry. ∡ binds tighter than + × ÷ (R180): `10∡30+5` is 13.66+5i and the owner's `10∡30+5∡-45` adds two phasors. No package.
 
 **Units and uncertainty**
 - `[have]` Units: 5 kg → lb, 20 °C → °F = 68, `5 m + 1 s` refused. "400+" not counted. No package.
@@ -108,13 +108,12 @@ The v0.1.0 bar is not met until the phasor fix lands: `10∡30+5` from the keys 
 **Existing packages.** R128: depended on, not changed; R183 adds two rows to its level. R130: not amended and not waited for; its pick follows R129, which has no package, so G232 stands alone and R130 reuses it when built. R131: depended on by R198, not changed.
 
 **Order**
-- v0.1.0: R180.
+- v0.1.0: R180 (merged).
 - v0.2: R131, R198, G220, G221, G210, G211, G212, G213, G214, G215, G216, G217, R181, A100, A101, G218, G219, R128, R182, R183, G222, G223, R184, G224.
 - v0.3: G225, G226, G227, R185, R186, R187, R188, R189, R190, R191, G228, G229, G235, R192, R193, R194, G230, R195, G231, R196, R197, G232, R199, R200.
 - v0.4: G233, G234, R201, S45, then the two stubs.
 
 **Open bugs**
-- F192, Home and CAS: `10∡30+5` gives 10∠35 with ≈ and no ⚠, `3+4∡30` gives 7∠30, `10∡30*2` gives 10∠60. Keypad reach, everyday AC work. R180 (v0.1.0).
 - F193, Home and CAS: integer `shift` is wrong on negative counts and big integers, exact and no ⚠: `shift(1,-70)` = 64, `shift(1,-31)` = -2147483648, `shift(2^70,1)` unchanged. Giac's convention (n > 0 is a right shift) is not the bug. Reach: Find only; the parser refuses `<<`. G226.
 - F194, Home and CAS: `dot([1,2],[3,4,5])` = 11 and `cross([1,2,3],[4,5])` = `[-15,12,-3]`, exact, no ⚠. Reach: a Find typo, not everyday, not a bar item. G225.
 - F195, Home: far tails. `student_cdf(5,-100)` = 9.48002565337E-10 ⚠ (right 9.48000711231E-10); `student_cdf(30,-8)` wrong from the 6th digit, ⚠; `normald_cdf(0,1,-20)` = 0 ⚠ (right 2.75362411861E-89). All marked, so not a bar item. G220, G221.

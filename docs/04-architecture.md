@@ -320,6 +320,8 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 
 **Decision:** one key path: every key, keypad or hardware, goes through `press()`. One owner per key press (`keyboard/route.ts`: an open sheet, Find, a unit slot, a picked history row or the entry line); the unit view's slots change only through R24a's model, through press(): the pad's cells (UnitPad.route) and the unit view's other keys (unitPad.other). One box model, `entry/boxes.ts`, checked by the cursor and ⌫ grids before any MathLive upgrade merges; a new template brings its parser rule with its round trip and, for a new LaTeX shape, a recogniser. **Would change if:** a MathLive upgrade breaks the recognisers more than once (then a template registry) (`4d80167f`).
 
+**The polar sign (R180, F192):** ∡ binds tighter than + × ÷ and looser than a power. Left operand: one factor (`3+4∡30` is `3+(4∡30)`). Right operand: one signed factor (a power counts, `30^2`; a `\frac` counts). `10∡30*2` is `(10∡30)*2`. In a flat line a bare `/` right after the angle or right before the radius is refused with "put the angle in brackets" (Giac would read `2∡π/6` as `(2∡π)/6` = -1/3, silently not what is meant); a factor written directly after the angle (`10∡2π`, `10∡2x`) is refused the same way, since it would otherwise multiply `(10∡2)·π` silently. A stacked `\frac` stays fine (`2∡\frac{π}{6}`). On the real G2 `10∡30+5` becomes `10∡(30+5)` with those brackets shown; N62 takes this rule on purpose, so that `10∡30+5∡-45` adds two phasors (owner, 2026-11-09).
+
 ---
 
 ## 6. Engine, workers and state
