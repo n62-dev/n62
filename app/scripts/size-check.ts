@@ -342,8 +342,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (Keypad.svelte) add 0.02 kB gzip (measured 60.67 kB, 170.78 kB raw, on the base before A123); the merge with A123 is
  *  measured by the gate against this pin.
  *  60,720 → 60,780 B (R148f2): the view keys' wait behind queued keys during a load (route.ts runsAtOnce) measures 60,729 B
- *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB. */
-export const START_PIN_GZIP = 60_780;
+ *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB.
+ *  60,780 → 60,990 B (R149): the check before Enter (entry/credits.ts: a regex, the stored names, the chips) and the call that
+ *  opens the credits sheet (App.svelte openCredits) measure 60,939 B gzip (171,470 B raw), +180 B gzip (+450 B raw) over
+ *  the base (60.76 kB); the sheet, its text and the About data are lazy chunks: 60,939 B + 0.05 kB, under the budget of 61.00 kB. */
+export const START_PIN_GZIP = 60_990;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

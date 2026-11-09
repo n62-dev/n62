@@ -47,7 +47,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions (a touch only stops the roll; the text is a plain list with headings) -->
 <div class="credits" data-testid="credits" data-rolling={rolling} bind:this={list} onpointerdown={halt} onwheel={halt} ontouchstart={halt}>
-  <div class="roll" class:on={rolling} style:--lead="{lead}px" style:--roll={roll} style:--dur="{roll / SPEED}s" bind:this={inner}>
+  <div class="roll" class:on={rolling} style:--lead="{lead}px" style:--roll="{roll}px" style:--dur="{roll / SPEED}s" bind:this={inner}>
     {#each blocks as b, i (i)}
       {#if "heading" in b}<h3>{b.heading}</h3>{:else}<p class:story={i === 0}>{b.text}</p>{/if}
     {/each}
@@ -73,7 +73,7 @@
   }
   @keyframes credits-roll {
     to {
-      transform: translateY(calc(-1px * var(--roll)));
+      transform: translateY(calc(-1 * var(--roll)));
     }
   }
   @media (prefers-reduced-motion: reduce) {
