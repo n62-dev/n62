@@ -1229,3 +1229,9 @@ cases:
   - { id: "g300-chain-deg-approx-30", latex: "\\operatorname{approx}\\left(\\arcsin\\left(\\arccos\\left(\\arctan\\left(\\tan\\left(\\cos\\left(\\sin\\left(9\\right)\\right)\\right)\\right)\\right)\\right)\\right)", settings: { angle: "deg", digits: 30 }, expect: "9", mark: "≈", source: "derived", note: "G300: approx() reports the value as computed; its 40-digit working value 8.999… is internal, never shown or copied. The exact value is 9 (g300-chain-deg-30); no oracle: check_mark would derive = from an exact oracle" }
   # --- G201: trust page, trap 4 (Ramanujan's constant, almost an integer), through the keys ---
   - { id: "trust-ramanujan-30", latex: "\\exponentialE^{\\pi\\sqrt{163}}", settings: { digits: 30 }, oracle: "exp(mp.pi*sqrt(163))", expect: "262537412640768743.999999999999", mark: "≈", source: "oracle", note: "trust page: trap 4. 262537412640768743.99999999999925 (mpmath)" }
+  # --- G225 (backlog F194): CAS refuses dot and cross of vectors of different lengths too; Giac pads the short one ---
+  - { id: "g225-cas-dot-lengths", kind: "cas", input: "dot([1,2],[3,4,5])", expect: "error: lengthsDiffer", source: "derived", note: "F194: Giac pads [1,2] with 0 and showed 11; refused as in Home" }
+  - { id: "g225-cas-cross-lengths", kind: "cas", input: "cross([1,2,3],[4,5])", expect: "error: lengthsDiffer", source: "derived", note: "F194: Giac pads [4,5] with 0 and showed [-15,12,-3]; refused as in Home" }
+  - { id: "g225-cas-keep-dot", kind: "cas", input: "dot([1,2],[3,4])", expect: "11", source: "derived", note: "guard: 1*3+2*4" }
+  - { id: "g225-cas-keep-cross", kind: "cas", input: "cross([1,2,3],[4,5,6])", expect: "[-3,6,-3]", source: "derived", note: "guard: (2*6-3*5, 3*4-1*6, 1*5-2*4)" }
+  - { id: "g225-cas-keep-cross-2d", kind: "cas", input: "cross([1,2],[3,4])", expect: "[0,0,-2]", source: "derived", note: "guard: Giac's documented 2-vector form keeps its z = 0; z = 1*4-2*3 = -2" }
