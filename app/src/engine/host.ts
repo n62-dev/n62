@@ -27,7 +27,7 @@ import {
 } from "./homeEval.ts";
 import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
-import { backInDegrees, needsDegrees } from "./degrees.ts";
+import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts";
 import { resolveAngle } from "./angleMigration.ts";
 import { mayPowerMatrix, nonSquarePower, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { mayAddToList, unaskedPoly } from "./polyvec.ts";
@@ -1095,7 +1095,7 @@ export class EngineHost implements FactsHost {
     const why = read && (read.causes.length || read.rounded.length) ? { ...(why1 ?? {}), ...(read.causes.length ? { inherited: read.causes } : {}), ...(read.rounded.length ? { rounded: read.rounded } : {}) } : why1;
     // G46 (S14 option 2): in DEG the radian text is drawn and copied as a DEG engine prints it; Ans, chips (`full`) and
     // pcasans keep the radian text, which means the same in every mode.
-    const deg = s.angle === "deg" && needsDegrees(text) ? backInDegrees(this.giac, text) : null;
+    const deg = s.angle !== "deg" ? null : needsDegrees(text) ? backInDegrees(this.giac, text) : withoutDegreeQuotient(this.giac, text);
     // G109: Giac's list type (a solve result too) is shown and copied with braces, as Home shows it; `full` keeps
     // Giac's `list[…]` for Ans and the chips, and MathPrint draws Giac's latex() (`\{…\}`)
     const drawn = deg ?? text;
