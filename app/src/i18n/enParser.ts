@@ -89,6 +89,7 @@ export const enParser = {
   "parse.pmNeedsNumber": "± goes right after a number: 12.3 ± 0.1",
   "parse.pmUnitView": "± is read in the unit view: press the units key",
   "parse.pmNeedsSigma": "± needs a plain number after it: 12.3 ± 0.1",
+  "parse.angleBrackets": "put the angle in brackets",
 } as const satisfies Record<string, string>;
 
 export type ParseKey = keyof typeof enParser;

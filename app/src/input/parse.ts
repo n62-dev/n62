@@ -9,7 +9,7 @@ import type { Json } from "./emit.ts";
 import { bigOp, integral, limit, matrix, tryDerivative, tryPartial, type CalcParser } from "./parseCalculus.ts";
 import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName,
   type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
-import { percentSigma } from "./pmPercent.ts";
+import { negateUncertain, percentSigma } from "./pmPercent.ts";
 import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./tokenize.ts";
 
 export { GREEK, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
@@ -150,12 +150,7 @@ class Parser implements CalcParser {
 
   /** One comparison: a < b, a ≤ b, a = b (an equation), a == b (a test, R18), a ≠ b. */
   private compare(): Json {
-    let left = this.additive();
-    // P4: polar entry r∡θ (shift ×), the angle in the current angle mode.
-    if (this.isCmd("measuredangle")) {
-      this.pos++;
-      left = ["PolarComplex", left, this.additive()];
-    }
+    const left = this.additive();
     if (this.isCh("=") && this.isCh("=", 1)) {
       this.pos += 2;
       return ["EqualTest", left, this.additive()];
@@ -205,6 +200,7 @@ class Parser implements CalcParser {
           this.besideResult();
           parts.push(this.postfix());
         }
+        if (this.isCmd("measuredangle")) this.fail("parse.angleBrackets"); // R180: 1/2∡30 reads two ways
         left = parts.length === 1 ? (parts[0] as Json) : ["Multiply", ...parts];
       } else if (this.isCmd("bmod")) {
         this.pos++;
@@ -216,24 +212,7 @@ class Parser implements CalcParser {
   /** Unary minus. In units mode a sign before a ± value goes inside its pasupm call (-20±0.5 u is pasupm(-20,0.5)·u,
    *  decisions Opus pass 2), and a double minus cancels; elsewhere it is Negate. */
   private negate(x: Json): Json {
-    if (this.units) {
-      const f = (e: Json): Json | null => {
-        if (!Array.isArray(e)) return null;
-        if (e[0] === "Call" && e[1] === "pasupm") {
-          if (e.length > 4) return ["Negate", e]; // R115: a chip's call (with its key) is one input: the sign stays outside
-          const v = e[2] as Json;
-          return ["Call", "pasupm", Array.isArray(v) && v[0] === "Negate" ? (v[1] as Json) : ["Negate", v], ...e.slice(3)] as Json;
-        }
-        if ((e[0] === "Multiply" || e[0] === "Divide") && e.length > 1) {
-          const l = f(e[1] as Json);
-          return l ? ([e[0], l, ...e.slice(2)] as Json) : null;
-        }
-        return null;
-      };
-      const r = f(x);
-      if (r) return r;
-    }
-    return ["Negate", x];
+    return (this.units ? negateUncertain(x) : null) ?? ["Negate", x];
   }
 
   private signedImplicit(): Json {
@@ -287,12 +266,27 @@ class Parser implements CalcParser {
   }
 
   implicit(): Json {
-    const parts: Json[] = [this.postfix()];
+    const parts: Json[] = [this.polar()];
     while (this.startsFactor()) {
       this.besideResult();
-      parts.push(this.postfix());
+      parts.push(this.polar());
     }
     return parts.length === 1 ? (parts[0] as Json) : ["Multiply", ...parts];
+  }
+
+  /**
+   * One factor, or r∡θ (P4, shift ×; R180): ∡ binds tighter than + × ÷ and looser than a power, as in Giac's own parse.
+   * The radius is one factor, the angle one signed factor. A bare ÷ or another factor after the angle would divide or
+   * multiply the phasor, not the angle (2∡π/6 is (2∡π)/6 to Giac): refused, not guessed.
+   */
+  private polar(): Json {
+    const radius = this.postfix();
+    if (!this.isCmd("measuredangle")) return radius;
+    this.pos++;
+    if (this.isCh("+")) this.pos++;
+    const z: Json = ["PolarComplex", radius, this.signedFactor()];
+    if (this.isCmd("measuredangle") || this.isCmd("div") || this.isCh("/") || this.startsFactor()) this.fail("parse.angleBrackets");
+    return z;
   }
 
   /**
