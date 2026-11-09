@@ -20,7 +20,7 @@ These sit under the three principles in CLAUDE.md and decide the details below.
 3. **State is always visible.** Angle mode, format, digits, Shift/Alpha, a running job and the current place are always on screen, in the same spot.
 4. **Nothing is lost without notice.** No key goes "through" an open sheet; a dead key looks dead and gives a short haptic "no".
 5. **Two keys for frequent things.** Anything an engineer does several times a day (switch DEG/RAD, copy a result, reuse a constant, change format) takes at most 2 key presses or 1 tap. The EN0 benchmark measures it.
-6. **No motion that waits.** The key press is the only motion (owner, 2026-11-02), apart from the entry outline's running dash while a job runs (R155), stilled by reduced motion: sheets, results and marks appear at once, with no rise, fade or slide, in every setting, so `prefers-reduced-motion` has nothing else to turn off. A pressed key shows at once, in every family, in Plain keys and under High contrast.
+6. **No motion that waits.** The key press is the only motion (owner, 2026-11-02), apart from the entry outline's running dash while a job runs (R155), stilled by reduced motion, and the credits sheet (R149), which rolls its text, the owner's own exception: sheets, results and marks appear at once, with no rise, fade or slide, in every setting, so `prefers-reduced-motion` has nothing else to turn off. A pressed key shows at once, in every family, in Plain keys and under High contrast.
 7. **Our own look.** Our colours, shapes and icons; nothing traced from the reference (CLAUDE.md, clean room).
 
 ## 3. The interaction model
@@ -45,6 +45,7 @@ There is no hold-and-drag (P11); the sheet keys never mention it.
 - **Fit, then scroll:** rows and grid cells shrink to the room, from their normal size down to a floor (list rows 36 px, grid cells 44 px); only below the floor does the sheet scroll, with a fade at the cut edge and a count ("7 items") in the title row. A grid has no title row: its title and × share the hint line. Shift + 6 draws each cell over the key that picks it (7 8 9 ÷ / 4 5 6 × / 1 2 3).
 - **Disabled items** stay in place (numbers never shift) and say why on a second line, once for a run of neighbouring rows with the same reason, under the last of them ("Define a function first").
 - Built once as `Sheet.svelte` plus a small model (`items`, `submenu`, `lastPick`, `filter`). Find (EN1), the template list (EN5), Base (EN6), the Units suggestions (EN2) and Settings values all use it. Find adds its preview pane and ranking but keeps the same keys.
+- **Credits (R149):** N62, then Enter, opens a sheet over the keypad like the others, titled N62, with the story of the name, the parts of THIRD_PARTY.md and the licence; its text rolls up once at about 20 px/s (a touch or ▲ ▼ stops it; under reduced motion it is a still list); Esc, a tap outside and the top cluster close it. With a stored name equal to the line's letter (N for N62) the line is a calculation.
 
 ### 3.2 A status bar instead of the tab row
 

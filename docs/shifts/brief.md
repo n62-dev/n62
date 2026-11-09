@@ -58,9 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 538 | R149 N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
-| 496 | G168 no value is a plain refusal: `undef`, empty calls, `DelAVars()`, the budget message (F93, F109) | gorge, Opus | `p1/gorge-novalue` | – |
 | 501 | [G172](packages/G172.md) a list element only a double can value shows its number with ⚠ (F73) | gorge, Opus | `p1/gorge-listdouble` | – |
 | 502 | [G173](packages/G173.md) no Giac print forms: empty `seq[]`, `matrix[…]` in a list, `when` (F127, F108) | gorge, Opus | `p1/gorge-printforms` | – |
 | 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
@@ -78,11 +76,10 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 582 | [G221](packages/G221.md) `student_cdf`, `chisquare_cdf`, `evalf` of the normal cdf (F195) | gorge, Opus | `p1/gorge-tchicdf` | – |
-| 583 | [G228](packages/G228.md) `formatBase` | gorge, Sonnet | `p1/gorge-formatbase` | – |
+| 593 | [G303](packages/G303.md) a stored name `k` survives Enter (F205) | gorge, Opus | `p1/gorge-statenames` | – |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
-| 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221 |
+| 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f1 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 
