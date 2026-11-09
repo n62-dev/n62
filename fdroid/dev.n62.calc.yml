@@ -26,10 +26,15 @@ Builds:
       # Same Debian emscripten as the release container (P2): 3.1.69+dfsg-3 in trixie (A96: the buildserver-trixie image has it; build-wasm-release.sh pins the same).
       # Then `emcc` is on PATH (EMSDK_DIR=system); EMSCRIPTEN_PKG_VERSION below makes build-wasm.sh refuse any other compiler.
       - apt-get install -y emscripten=3.1.69+dfsg-3 make patch gcc g++ m4 perl xz-utils bzip2 curl python3 pkg-config npm
+    gradle:
+      - yes
     # A97: F-Droid's reference: "nothing should be built during this prebuild phase"; `build` "runs during the actual build phase ... Use this only for
     # actions that do actual building". The source scanner runs between the two, so prebuild only fetches (SHA-256-checked downloads, npm ci) and
     # everything that compiles or bundles is in `build`. The downloads go to /tmp, outside the scanned tree, so the source scan finds nothing generated.
-    # No scandelete: fdroidserver's scan_source fails on a scandelete path that matches nothing (common.getpaths_map), and every path that once stood here is created only in `build`.
+    # The scan (fdroidserver 2.4.5, scanner.scan_source, measured 2026-11-09 on a clean checkout after this npm ci) flags 7 files under app/node_modules/ (gzip archives
+    # in @capacitor/cli/assets, playwright-core's webp_codec.wasm, jsxgraph's jsxcompressor.zip). scandelete removes only the files the scanner flags, not the directory,
+    # so Capacitor's Android modules (capacitor.settings.gradle) stay; 57 of 62 Capacitor recipes in fdroiddata list node_modules there. But `cap sync` unpacks
+    # android/capacitor-cordova-android-plugins from the one tarball below, so that file is scanignored (it fails ENOENT without it).
     prebuild:
       - cd ../..
       - export N62_DL_DIR=/tmp/n62-dl
@@ -38,6 +43,10 @@ Builds:
       - engine/qalc/build-wasm.sh dev --fetch-only
       - cd app
       - npm ci
+    scanignore:
+      - app/node_modules/@capacitor/cli/assets/capacitor-cordova-android-plugins.tar.gz
+    scandelete:
+      - app/node_modules/
     build:
       - cd ../..
       - export N62_DL_DIR=/tmp/n62-dl
@@ -53,8 +62,6 @@ Builds:
       - npm run index
       - GIAC_OUT=../engine/giac/_out/gsl npm run build
       - npx cap sync android
-    gradle:
-      - yes
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
