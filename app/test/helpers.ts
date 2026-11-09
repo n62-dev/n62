@@ -197,6 +197,12 @@ export const vibrations = (page: Page): Promise<unknown[]> => page.evaluate(() =
 // owner process is dead (a killed worker) is taken over; a live owner is never overridden, however long it holds.
 const LOCK = resolve("test-results", "clipboard.lock");
 
+/** How long a test waits for the lock. The lock runs the suite's clipboard tests one at a time, and they hold it about
+ *  230 s in all (G301, 16 workers); a waiter is not served in turn, so it may wait through most of that. */
+export const CLIPBOARD_WAIT_MS = 300_000;
+/** A test's budget that holds the wait as well: its own timeout, the wait, and the time to give up cleanly. */
+export const clipboardBudget = (timeout: number): number => timeout + CLIPBOARD_WAIT_MS + 30_000;
+
 const alive = (pid: number): boolean => {
   try {
     process.kill(pid, 0);
@@ -208,7 +214,7 @@ const alive = (pid: number): boolean => {
 
 /** Wait for the clipboard lock and take it; returns the release function (safe to call twice; it removes only its own
  *  file). Throws once `timeoutMs` has passed without the lock, so a late acquisition never happens after the caller gave up. */
-export async function acquireClipboardLock(timeoutMs = 120_000): Promise<() => void> {
+export async function acquireClipboardLock(timeoutMs = CLIPBOARD_WAIT_MS): Promise<() => void> {
   mkdirSync(dirname(LOCK), { recursive: true });
   const deadline = Date.now() + timeoutMs;
   const token = `${process.pid} ${Math.random().toString(36).slice(2)}`;
@@ -264,8 +270,8 @@ export async function withClipboardLock<T>(fn: () => Promise<T>): Promise<T> {
 export function useClipboardLock(): void {
   let release: (() => void) | undefined;
   test.beforeEach(async () => {
-    test.setTimeout(test.info().project.timeout + 150_000); // the wait for the lock must not eat the test's own budget
-    release = await acquireClipboardLock(120_000);
+    test.setTimeout(clipboardBudget(test.info().project.timeout)); // the wait for the lock must not eat the test's own budget
+    release = await acquireClipboardLock();
   });
   test.afterEach(() => {
     release?.();

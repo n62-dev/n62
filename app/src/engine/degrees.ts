@@ -61,14 +61,23 @@ export function backInDegrees(giac: Giac, text: string): string | null {
 /** The two forms Giac prints for a constant over `pasdeg`: `pi/6/(pi/180)`, and G300's chain of inverses, `180/20*pi/pi`. */
 const DEGREE_QUOTIENTS = ["/(pi/180)", "*pi/pi"];
 
+/** A root inside a root. `normal` of such a text can run for minutes and may move its branch (F2). */
+function holdsNestedRoot(text: string): boolean {
+  const roots = callsOf(text, ["sqrt"], "printed");
+  return roots.some((a) => roots.some((b) => b.at > a.open && (a.close < 0 || b.at < a.close)));
+}
+
 /**
  * G301 (F196): a constant's degree quotient reduced, or null when the text is to stay as it is. `asin(1/2)/pasdeg` prints
  * `pi/6/(pi/180)`, which has no trig call left, so `needsDegrees` passes over it. Only those two printed forms, and only
  * with no free name: `normal` of any other text rewrites an answer nobody asked to change (`1/(1+sqrt(2))` → `sqrt(2)-1`).
+ * Its answer counts only when it is shorter and has no `1*1` run, the sign that it expanded instead of reducing.
  */
 export function withoutDegreeQuotient(giac: Giac, text: string): string | null {
   if (!DEGREE_QUOTIENTS.some((q) => text.includes(q)) || text.includes('"') || callsOf(text, NAMES, "printed").length > 0) return null;
-  if (giac.eval(`lname(${text})`) !== "[]") return null;
+  if (holdsNestedRoot(text) || giac.eval(`lname(${text})`) !== "[]") return null;
   const out = giac.eval(`normal(${text})`);
-  return isError(out) || out === "undef" ? null : out;
+  if (isError(out) || out === "undef") return null;
+  // a reduced quotient is shorter; a longer text (or Giac's `1*1*…` padding) is `normal` rewriting a nested root or a sum
+  return out.includes("1*1") || out.length >= text.length ? null : out;
 }

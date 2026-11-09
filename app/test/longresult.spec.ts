@@ -3,14 +3,14 @@
 // 1,749,440 characters, LaTeX 1,773,448 on the engine build of 2026-11-05). MathLive cannot draw it (its SSR build took 2.5 s
 // and overflowed the stack), and the row showed the LaTeX source. Now the row is a drawn note, and Copy holds the whole text.
 import { expect, test } from "@playwright/test";
-import { open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { clipboardBudget, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
 useClipboardLock();
 
 test("CAS Σ cos(k)/k to 2000: a drawn note, no LaTeX source, and Copy still holds the whole text", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(clipboardBudget(120_000)); // set in the body, it would otherwise replace the budget that holds the lock wait
   await open(page, "");
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   await tap(page, ["@cas"]);

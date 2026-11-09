@@ -62,6 +62,29 @@ describe("withoutDegreeQuotient", () => {
     }
   });
 
+  it("gives null for a root inside a root, without asking Giac", () => {
+    for (const text of ["sqrt(sqrt(pi/6/(pi/180)))", "3*sqrt(5*(pi+sqrt(2)))/(pi/180)"]) {
+      const { giac, asked } = fake({});
+      expect(withoutDegreeQuotient(giac, text)).toBeNull();
+      expect(asked).toEqual([]);
+    }
+  });
+
+  it("still reduces two roots side by side", () => {
+    expect(withoutDegreeQuotient(fake({ normal: "sqrt(2)+30" }).giac, "pi/6/(pi/180)+sqrt(2)+sqrt(3)-sqrt(3)")).toBe("sqrt(2)+30");
+  });
+
+  it("gives null when normal answers a text that is not shorter", () => {
+    const text = "3+exp(9)/(pi/6/(pi/180))";
+    for (const normal of [`${text}+0`, "(i*pi*exp(150000000)+540*ln(3))/(180*ln(3))", "x".repeat(text.length)]) {
+      expect(withoutDegreeQuotient(fake({ normal }).giac, text)).toBeNull();
+    }
+  });
+
+  it("gives null when normal answers a run of 1*1, even a shorter one", () => {
+    expect(withoutDegreeQuotient(fake({ normal: "1*1*sqrt(3)" }).giac, "sqrt(pi/6/(pi/180)+pi/4/(pi/180))")).toBeNull();
+  });
+
   it("gives null when normal answers an error or undef", () => {
     for (const normal of ["GIAC_ERROR: Bad Argument Value", "undef"]) {
       const { giac } = fake({ normal });
