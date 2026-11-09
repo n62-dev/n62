@@ -47,7 +47,7 @@ export interface GoldenFacts {
   /** The rest. */
   readonly handOrGuard: number;
   /** The rows the trap table reads, by id. */
-  readonly traps: Readonly<Record<string, { readonly expect: string; readonly note: string }>>;
+  readonly traps: Readonly<Record<string, { readonly input: string; readonly expect: string; readonly mark: string; readonly note: string }>>;
 }
 export interface PatchFacts {
   readonly files: readonly string[];
@@ -72,6 +72,9 @@ interface Row {
   source?: unknown;
   status?: unknown;
   oracle?: unknown;
+  input?: unknown;
+  latex?: unknown;
+  mark?: unknown;
   expect?: unknown;
   note?: unknown;
 }
@@ -86,7 +89,7 @@ const TRAP_IDS = (id: string): boolean => id.startsWith("trust-") || id === "g39
 export function goldenFacts(root: string = REPO_ROOT): GoldenFacts {
   const dir = join(root, "tests", "golden");
   const files: Record<string, FileFacts> = {};
-  const traps: Record<string, { expect: string; note: string }> = {};
+  const traps: Record<string, { input: string; expect: string; mark: string; note: string }> = {};
   let answers = 0, open = 0, computed = 0, crossChecked = 0;
   for (const name of [...ANSWER_FILES, ...OTHER_FILES]) {
     const rows = casesOf(join(dir, name));
@@ -97,7 +100,7 @@ export function goldenFacts(root: string = REPO_ROOT): GoldenFacts {
       if (r.status === "pending") open += 1;
       if (r.source === "oracle") computed += 1;
       else if (typeof r.oracle === "string") crossChecked += 1;
-      if (typeof r.id === "string" && TRAP_IDS(r.id)) traps[r.id] = { expect: String(r.expect ?? ""), note: String(r.note ?? "") };
+      if (typeof r.id === "string" && TRAP_IDS(r.id)) traps[r.id] = { input: String(r.input ?? r.latex ?? ""), expect: String(r.expect ?? ""), mark: String(r.mark ?? ""), note: String(r.note ?? "") };
     }
   }
   const counts = JSON.parse(readFileSync(join(dir, "oracle-counts.json"), "utf8")) as { exact: number; mpmath: number };
@@ -144,6 +147,25 @@ export function trustFacts(root: string = REPO_ROOT): TrustFacts {
   return { golden: goldenFacts(root), patches: patchFacts(root) };
 }
 
+/** What the in-app "Why trust it" page reads (virtual:about, A94): the counts, and each trap's golden input, shown value and mark with
+ *  its label, true value and double. Keys sorted at every level, so two builds of one commit give the same bytes. */
+export function aboutTrust(f: TrustFacts = trustFacts()): {
+  readonly golden: { readonly answers: number; readonly computed: number; readonly crossChecked: number; readonly exact: number; readonly handOrGuard: number; readonly mpmath: number; readonly open: number };
+  readonly patches: { readonly applied: number; readonly notSent: number; readonly reported: number; readonly sent: number; readonly total: number; readonly waiting: number };
+  readonly traps: readonly { readonly double: string; readonly expect: string; readonly id: string; readonly input: string; readonly label: string; readonly mark: string; readonly truth: string }[];
+} {
+  const g = f.golden, p = f.patches;
+  return {
+    golden: { answers: g.answers, computed: g.computed, crossChecked: g.crossChecked, exact: g.exact, handOrGuard: g.handOrGuard, mpmath: g.mpmath, open: g.open },
+    patches: { applied: p.applied, notSent: p.notSent, reported: p.reported, sent: p.sent, total: p.total, waiting: p.waiting },
+    traps: TRAPS.map((t) => {
+      const row = g.traps[t.id];
+      if (!row) throw new Error(`trust: no golden row ${t.id}`);
+      return { double: t.double, expect: row.expect, id: t.id, input: row.input, label: t.label, mark: row.mark, truth: trapTruth(t, row.note) };
+    }),
+  };
+}
+
 /** 1966 → "1,966". */
 export function group(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -173,6 +195,13 @@ const TRAPS: readonly {
   { label: "`∫ 1/x dx` from -1 to 1", id: "g39-int-1/x-pv", truth: "diverges", double: "n/a" },
 ];
 
+/** The true value of a trap, from its golden row's note. */
+function trapTruth(t: (typeof TRAPS)[number], note: string): string {
+  const truth = typeof t.truth === "string" ? t.truth : (t.truth.exec(note)?.[1] ?? "");
+  if (!truth) throw new Error(`trust: no true value in the note of ${t.id}`);
+  return truth;
+}
+
 /** The trap table (markdown): N62's shown value and the true value come from the golden rows. */
 export function trapTable(f: TrustFacts): string {
   const out = ["| Trap | N62 | True value | Ordinary IEEE double |", "|---|---|---|---|"];
@@ -180,8 +209,7 @@ export function trapTable(f: TrustFacts): string {
     const row = f.golden.traps[t.id];
     if (!row) throw new Error(`trust: no golden row ${t.id}`);
     const shown = t.id === "g39-int-1/x-pv" ? `refused: "${row.expect}"` : `≈ ${row.expect}`;
-    const truth = typeof t.truth === "string" ? t.truth : (t.truth.exec(row.note)?.[1] ?? "");
-    if (!truth) throw new Error(`trust: no true value in the note of ${t.id}`);
+    const truth = trapTruth(t, row.note);
     out.push(`| ${t.label} | ${shown} | ${truth} | ${t.double} |`);
   }
   return out.join("\n");
