@@ -81,6 +81,55 @@ describe("converge helpers", () => {
     });
     expect(refusalOf(giac, "int(g(x),x,0,10)", "3")).toBe("unchecked");
   });
+  // G178 (F115): Giac's answers for ∫₋₁¹ 1/x, the value call stopped as the step budget stopped it at Digits ≤ 14.
+  const STOP = "GIAC_ERROR: User interrupt or Out of memory";
+  const inverseX = (value: (digits: string) => string, seen: string[] = []) => {
+    let digits = "12";
+    const answers: [RegExp, string][] = [
+      [/^lname\(1\/x\)$/, "[x]"],
+      [/^lname\(/, "[]"],
+      [/^singular\(/, "[0]"],
+      [/^evalf\(-1,30\)$/, "-1.0"],
+      [/^evalf\(1,30\)$/, "1.0"],
+      [/^evalf\(0,30\)$/, "0.0"],
+      [/^limit\(/, "1"],
+      [/^evalf\(abs\(1\),30\)$/, "1.0"],
+    ];
+    return fakeGiac((t: string) => {
+      seen.push(t);
+      if (t === "Digits") return digits;
+      const set = /^Digits:=(\d+)$/.exec(t);
+      if (set) return (digits = set[1]!);
+      if (t === "int(1/x,x,-1,1)") return value(digits);
+      return answers.find(([re]) => re.test(t))?.[1] ?? "GIAC_ERROR: unexpected";
+    });
+  };
+  it("G178: a call inside a larger input is valued at the exact run's Digits, not the display's, which are put back", () => {
+    const seen: string[] = [];
+    const giac = inverseX((d) => (Number(d) <= 14 ? STOP : "0"), seen);
+    expect(refusalOf(giac, "3*int(1/x,x,-1,1)+1", "1")).toBe("integralDiverges");
+    expect(seen.filter((t) => /^Digits/.test(t) || t.startsWith("int("))).toEqual(["Digits", "Digits:=40", "int(1/x,x,-1,1)", "Digits:=12"]);
+  });
+  it("G178: a whole-input call costs no value call, so no Digits change either", () => {
+    const seen: string[] = [];
+    expect(refusalOf(inverseX(() => { throw new Error("no value call expected"); }, seen), "int(1/x,x,-1,1)", "0")).toBe("integralDiverges");
+    expect(seen.some((t) => /^Digits/.test(t))).toBe(false);
+  });
+  it("G178: a value the budget stopped at any Digits still lets the check prove the divergence", () => {
+    expect(refusalOf(inverseX(() => STOP), "3*int(1/x,x,-1,1)+1", "1")).toBe("integralDiverges");
+  });
+  it("G178: a stopped value and a check that proves nothing leave the result unchecked, never kept as checked", () => {
+    const answers: [RegExp, string][] = [
+      [/^Digits$/, "12"],
+      [/^Digits:=/, "12"],
+      [/^lname\(1\/x\)$/, "[x]"],
+      [/^lname\(/, "[]"],
+      [/^singular\(/, "[]"],
+      [/^int\(1\/x,/, STOP],
+    ];
+    const giac = fakeGiac((t: string) => answers.find(([re]) => re.test(t))?.[1] ?? "GIAC_ERROR: unexpected");
+    expect(refusalOf(giac, "3*int(1/x,x,-1,1)+1", "1")).toBe("unchecked");
+  });
 });
 
 describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
@@ -98,6 +147,20 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
   // G46: typed text gets the parser's angle rule (sin(pasdeg*x)), as the keys' LaTeX would.
   const home = (input: string, angle: "rad" | "deg" = "rad") => host.home(rewriteAngles(input, "typed"), { ...defaultHomeSettings, angle, budgetSteps: 20 * defaultHomeSettings.budgetSteps }).result;
   const cas = (input: string, angle: "rad" | "deg" = "rad") => host.cas(rewriteAngles(input, "typed"), { ...defaultCasSettings, angle }).result;
+
+  it("G178: at Home's own budget a divergent integral inside a larger input is refused like the bare one", () => {
+    for (const input of ["int(1/x,x,-1,1)", "3*int(1/x,x,-1,1)+1", "int(1/x,x,-1,1)^2+sin(1)"]) {
+      expect(host.home(rewriteAngles(input, "typed"), defaultHomeSettings).result).toMatchObject({ ok: false, error: "integralDiverges" });
+    }
+  });
+  it("G178: a check a step stopped keeps the result with ⚠, and its why says the check did not finish (Home and CAS)", () => {
+    const stopped = { ...giac, eval: (t: string) => (/^int\(abs\(/.test(t) ? "GIAC_ERROR: Stopped by user interruption." : giac.eval(t)) };
+    const h = new EngineHost(stopped, bridge);
+    const r = h.home("int(1/sqrt(x),x,0,1)", { ...defaultHomeSettings, budgetSteps: 1e7 }).result;
+    expect(r).toMatchObject({ ok: true, display: "2", approximate: true, facts: { warn: "unchecked", why: { existsUnchecked: true } } });
+    expect(h.cas("3*int(1/sqrt(x),x,0,1)+1", defaultCasSettings).result).toMatchObject({ ok: true, facts: { warn: "unchecked", why: { existsUnchecked: true } } });
+    expect(host.home("int(1/sqrt(x),x,0,1)", { ...defaultHomeSettings, budgetSteps: 1e7 }).result.facts).toMatchObject({ exact: true });
+  });
 
   it.each([
     ["int(1/x,x,-1,1)", "integralDiverges"],

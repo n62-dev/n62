@@ -9,8 +9,8 @@
 //   conditionally convergent integral (∫₀^∞ sin x / x) is not refused for its tail, which is not the singular point.
 // Only inputs that hold one of these calls pay, and an integral pays for the second integral only when f has a real
 // singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
-import { hasFloat, type Giac } from "./numeric.ts";
-import { callsOf, functionsIn, isError, isName, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
+import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
+import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
 
 /** Why a result is refused; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 /** `undecided` (G57) comes from decisions.ts decideTwice: a decision on a cut Giac cannot make. `divisionByZero`,
@@ -70,9 +70,13 @@ function realOf(giac: Giac, e: string): number | null {
   return Number.isFinite(v) ? v : null;
 }
 
-/** The value of `call` alone: the whole input's output when the call is the whole input, else one more evaluation. */
+/** The value of `call` alone: the whole input's output when the call is the whole input, else one more evaluation, at
+ *  the Digits of the exact run (valuePrecision, G38). G178 (F115): the host's Digits is the display's, and at Digits ≤ 14
+ *  Giac's int(1/x,x,-1,1) makes 2,015,554 checks where the exact run's makes 134, so Home's step budget stopped it. */
 function valueOf(giac: Giac, call: Call, input: string, output: string): string {
-  return call.text === input.trim() ? output : giac.eval(call.text);
+  if (call.text === input.trim()) return output;
+  const digits = Number(giac.eval("Digits"));
+  return digits > 0 ? withDigits(giac, valuePrecision(digits), digits, () => giac.eval(call.text)) : giac.eval(call.text);
 }
 
 /** The series check: the term of `sum(t,k,a,b)` tends to 0 at each infinite end. Runs in radians. */
@@ -230,6 +234,7 @@ export function refusalOf(engine: Giac, input: string, output: string, home = fa
   // nothing, so the check then ends "unchecked" unless another step already proved the divergence.
   let interrupted = false;
   const giac: Giac = {
+    ...(engine.digits ? { digits: (d: number) => engine.digits!(d) } : {}),
     value: (t, p, tree) => engine.value(t, p, tree),
     eval: (t) => {
       const o = engine.eval(t);
@@ -269,7 +274,9 @@ function check(giac: Giac, calls: Call[], input: string, output: string, home: b
     const value = valueOf(giac, c, input, out).trim();
     if (value === "undef") return REFUSAL[c.kind];
     const pair = c.kind === "int" ? giacPair(value) : null;
-    if (!pair && !finiteValue(value)) continue;
+    // G178: a value the budget stopped says nothing about the integral, so the check on its arguments still runs (a stop
+    // already makes the result "unchecked" unless the check proves the divergence).
+    if (!pair && !finiteValue(value) && !isTimeout(value)) continue;
     todo.push(c);
   }
   if (!todo.length) return null;

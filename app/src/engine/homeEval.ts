@@ -560,7 +560,7 @@ export function homeEval(
   const done = (r: Omit<HomeResult, "exactMs" | "totalMs" | "full"> & { full?: string }): HomeResult => {
     const out: HomeResult = {
       ...r,
-      ...(unverified && r.ok ? { facts: { ...r.facts, warn: r.facts.warn ?? "unchecked" }, approximate: true } : {}),
+      ...(unverified && r.ok ? { facts: { ...r.facts, warn: r.facts.warn ?? "unchecked", why: { ...r.facts.why, existsUnchecked: true } }, approximate: true } : {}),
       full: r.full ?? r.display,
       ...(r.ok && defined ? { defined } : {}),
       exactMs,
