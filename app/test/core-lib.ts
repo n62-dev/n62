@@ -22,6 +22,14 @@ export interface RowCheck {
   status?: string;
 }
 
+/** R170: the unit view's result (`[data-testid="unit-result"]`: data-text, data-unit, the text holds `has`) and its mark. */
+export interface UnitExpect {
+  text: string;
+  unit: string;
+  has?: string;
+  mark?: string;
+}
+
 export interface CoreExpect {
   result?: string;
   mark?: string;
@@ -29,6 +37,7 @@ export interface CoreExpect {
   clipboard?: string;
   entry?: string;
   text?: Record<string, string | string[]>;
+  unit?: UnitExpect;
 }
 
 export interface CoreCase {
@@ -92,6 +101,14 @@ export function validate(
     seen.add(c.id);
     if (!SOURCES.includes(c.source)) at(`source is ${String(c.source)}`);
     if (c.expect === undefined || c.expect === null || Object.keys(c.expect).length === 0) at("empty expect");
+    if (c.expect?.unit !== undefined) {
+      const u = c.expect.unit as unknown as Record<string, unknown>;
+      if (u === null || typeof u !== "object") at("unit expect is not an object");
+      else {
+        for (const k of ["text", "unit"]) if (typeof u[k] !== "string") at(`unit expect: ${k} is not a string`);
+        for (const k of ["has", "mark"]) if (u[k] !== undefined && typeof u[k] !== "string") at(`unit expect: ${k} is not a string`);
+      }
+    }
     for (const s of c.keys ?? []) {
       if (typeof s === "string") {
         if (!s.startsWith("@") && !keys.has(s)) at(`no key "${s}" in spec/keyboard.yaml`);
@@ -121,6 +138,11 @@ async function settled(page: Page): Promise<void> {
 export async function engineReady(page: Page): Promise<void> {
   await page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 20_000 });
   await page.evaluate(() => window.n62.entry.ready);
+}
+
+/** R170: the unit view is open and holds the focus, its pad drawn (what a key pressed next needs). */
+async function unitViewUp(page: Page): Promise<void> {
+  await page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
 }
 
 /** A fresh page at the app, engine ready. */
@@ -156,7 +178,11 @@ export async function replay(page: Page, steps: readonly CoreStep[], hooks: Repl
       const sheet = page.getByTestId("menu");
       await sheet.locator(`[data-id="${s.tmpl}"]`).tap();
       await expect(sheet).toBeHidden();
-    } else if ("up" in s) await flick(page, s.up, "up");
+    } else if ("up" in s) {
+      await flick(page, s.up, "up");
+      // R170: the flick up on Tmpl opens the unit view; the next key lands there only once it has the focus
+      if (s.up === "tmpl") await unitViewUp(page);
+    }
     else if ("down" in s) await flick(page, s.down, "down");
     else if ("tap" in s) {
       if (s.tap === "result:last") await lastRow(page).locator(".result").tap();
@@ -233,6 +259,25 @@ export async function check(page: Page, e: CoreExpect, id = ""): Promise<void> {
       }, { message: "last row" })
       .toEqual(want);
   }
+  if (e.clipboard !== undefined) await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain(e.clipboard); // the copy code loads on first use
+  if (e.entry !== undefined) expect(await page.evaluate(() => window.n62.entry.value), "entry").toBe(e.entry);
+  for (const [sel, want] of Object.entries(e.text ?? {})) {
+    const loc = page.locator(sel);
+    if (Array.isArray(want)) await expect(loc).toHaveText(want);
+    // the first engine result waits for the engine, which under load takes longer than the default 5 s
+    else await expect.poll(async () => (await loc.allTextContents()).map((t) => t.trim()), { message: sel, timeout: 20_000 }).toContain(want);
+    // R82 (F110): the text is also there for the eye: on screen and not under another element
+    await expect.poll(() => seen(page, sel, Array.isArray(want)), { message: `${id} ${sel} on screen and uncovered`.trim(), timeout: 2000 }).toBe("");
+  }
+  if (e.unit !== undefined) {
+    // R170: the unit view's result (showcase.spec.ts reads it the same way); polled, the first engine result waits for the engine
+    const r = page.getByTestId("unit-result");
+    await expect(r, `${id} unit-result`).toBeVisible({ timeout: 20_000 });
+    await expect(r).toHaveAttribute("data-text", e.unit.text);
+    await expect(r).toHaveAttribute("data-unit", e.unit.unit);
+    if (e.unit.has !== undefined) await expect(r).toContainText(e.unit.has);
+    if (e.unit.mark !== undefined) await expect(page.getByTestId("unit-mark"), `${id} unit-mark`).toHaveText(e.unit.mark);
+  }
   if (e.rows !== undefined) {
     const all = rowsOf(page);
     const n = await all.count();
@@ -246,16 +291,6 @@ export async function check(page: Page, e: CoreExpect, id = ""): Promise<void> {
       if (w.status !== undefined) expect(got[i]?.status, `row ${i} status`).toBe(w.status);
     });
   }
-  if (e.clipboard !== undefined) await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain(e.clipboard); // the copy code loads on first use
-  if (e.entry !== undefined) expect(await page.evaluate(() => window.n62.entry.value), "entry").toBe(e.entry);
-  for (const [sel, want] of Object.entries(e.text ?? {})) {
-    const loc = page.locator(sel);
-    if (Array.isArray(want)) await expect(loc).toHaveText(want);
-    // the first engine result waits for the engine, which under load takes longer than the default 5 s
-    else await expect.poll(async () => (await loc.allTextContents()).map((t) => t.trim()), { message: sel, timeout: 20_000 }).toContain(want);
-    // R82 (F110): the text is also there for the eye: on screen and not under another element
-    await expect.poll(() => seen(page, sel, Array.isArray(want)), { message: `${id} ${sel} on screen and uncovered`.trim(), timeout: 2000 }).toBe("");
-  }
 }
 
 /** Why the first match of `sel` cannot be read ("" = it can): hidden, outside the viewport, or covered at its centre
@@ -265,8 +300,8 @@ export function seen(page: Page, sel: string, every = false): Promise<string> {
   return page.evaluate(({ s, every }) => {
     const all = [...document.querySelectorAll(s)];
     if (all.length === 0) return "no match";
-    const one = (el: Element): string => {
-    const r = el.getBoundingClientRect();
+    const one = (el: Element, rect?: DOMRect): string => {
+    const r = rect ?? el.getBoundingClientRect();
     const box = (b: DOMRect): string => `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}×${Math.round(b.height)}`;
     const where = (): string =>
       ` (viewport ${innerWidth}×${innerHeight} dpr ${devicePixelRatio}; ` +
@@ -296,7 +331,15 @@ export function seen(page: Page, sel: string, every = false): Promise<string> {
     return `covered at its ${at} by ${name(top)}${owner && owner !== top ? ` in ${name(owner)}` : ""}, box ${box(r)}${where()}`;
     };
     for (const [i, el] of (every ? all : all.slice(0, 1)).entries()) {
-      const why = one(el);
+      let why = one(el);
+      // R170: a block's box can be wider than its text (a message on the left of a full-width line, with the fold handle's
+      // centred hit area over the box's bottom middle): when the box is covered but the text itself is clear, the text is readable
+      if (why !== "" && el.children.length === 0 && el.textContent?.trim()) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const t = range.getBoundingClientRect();
+        if (t.width > 0 && t.height > 0 && one(el, t) === "") why = "";
+      }
       if (why !== "") return every && all.length > 1 ? `match ${i + 1} of ${all.length}: ${why}` : why;
     }
     return "";
