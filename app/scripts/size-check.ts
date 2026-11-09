@@ -350,10 +350,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  stored N) measured 61,011 B with the Array polyfills; the polyfills are out (src/polyfills.ts: the minimum WebView is Chrome 111, which has
  *  toSorted, toReversed, findLast and findLastIndex, and index.html's check stops older ones), and the branch merged with phase-1 5b9fcf7f
  *  measures 60,903 B gzip (171,148 B raw): 60,903 B + 0.05 kB.
- *  60,953 → 60,999 B (R157, the budget of 61 kB stays): the mark on Home's tile (the span the mask is drawn on) and on an empty history
- *  (the faint div and its tap, App's openCredits shared with N62 then Enter) measure 60,999 B gzip on the branch (after the testids, the stopPropagation and the {#if} went) (the path itself is the
- *  lazy public/n62-mark.svg, not in the chunk): the pin is the measurement, since the budget leaves no room for the usual 0.05 kB. */
-export const START_PIN_GZIP = 60_999;
+ *  60,953 → 60,985 B (R157f1, the budget of 61 kB stays): R157's mark on Home's tile (the span its mask is drawn on) and on an empty
+ *  history (the faint div and its tap, App's openCredits shared with N62 then Enter) measured 60,999 B gzip (171,442 B raw) on the branch merged
+ *  with phase-1 ec58fc58; the home icon's markup is drawn only by the lazy Sheet.svelte (its title icon and row glyph), so it moved out of
+ *  icons.ts (read at start) into that chunk, as the gear did (R145f1): 60,935 B gzip (171,361 B raw, -64 B). The path itself is the lazy
+ *  public/n62-mark.svg, not in the chunk. The pin is 60,935 B + 0.05 kB. */
+export const START_PIN_GZIP = 60_985;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
