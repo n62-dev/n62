@@ -678,7 +678,7 @@ agent_end() {  # <pid> <name> <log>
 
 # The deterministic checks; the failing excerpt goes to $run/fail-<round>.txt.
 excerpt() {  # the failing lines of a check log, capped (A83: docs-check's and the pre-flight lint's lines, the stage findings too)
-  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | head -n 150
+  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | grep -vE '^[0-9]+[:-] *✓' | head -n 150 || true  # A83f1: a passing Playwright line (✓) that holds × is no failure
   [[ -s "$1" ]] && { echo "--- tail ---"; tail -n 30 "$1"; }
 }
 # Wall-clock tests: the Find 16 ms/key test, the golden units p95 bar, the solve.spec.ts persistence test, the clipboard
