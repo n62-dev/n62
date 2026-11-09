@@ -53,9 +53,10 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, G225 built, G225f1 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
-- **F195, G220 built, package G221.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf`: ⚠.
-- **F203, no package (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
+- **F194, G225 built, G225f2 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
+- **F195, G220 built; G221 on its branch, G221f1.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf`: ⚠. Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
+- **F205, package G303.** A stored `k` is lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
+- **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
 - **F89, package G170 (G92's report).** Giac's `laplace` and `ilaplace` on tanh(sqrt(x)) leave VARS() entries that are no names (bytes, empty, error texts), then garbage after every command: freed memory in Giac's variable list. The put-back skips them. Not reachable by keys (laplace needs Find); an upstream candidate. Also `ilaplace(1/(x^2+1)^2)` (G110's census).
@@ -64,7 +65,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F96.** Names left that the definitions log does not hold (not in Vars, gone after a relaunch): `gbasis` (lastgb), `syzygy` (lastv), `GF(2,8)` (K, g), `wz_certificate` (k, n), and the name arguments of `QR`, `LU`, `Fill`, `CopyVar`, `point3d`, `is_hamiltonian`; `debug(…)` turns on Giac's debugger, after which every program call, our helpers too, throws `prompt is not defined`; `interactive_plotode` throws the same (both left out of Find, G111).
 - **F97.** CAS has no answer within 6 s (600 s hard timeout): `ellipse(-1,1,point(1+i))`, `hyperbola(…)`, `ecm_factor` of a 73-digit number; Home refuses them after 2 s.
 - **F115, fixed by G178.** Home `3*int(1/x,x,-1,1)+1` showed ⚠ 1: the check valued the call at Digits 12, where Giac's int needs 15,000× the checks of the exact run's Digits. Refused now, as the bare call. Family 5.
-- **F200 (Opus pass 102; A120).** Core c29 red once on the Tab One (device 100, `de659c02`); 135 runs since (relaunch 800/200/0 ms, host load 32) all green. A123 (run 808) makes the core runner await the `defs` write and log `defs` on a red; a second red is a FIX.
+- **F200 (A120).** Core c29 red once (device 100). A123 makes the runner await the `defs` write and log it on a red; a second red is a FIX.
 - **F202, no package (pass 115).** e2e clipboard lock: waiters poll, no queue; run 838 timed out at 120 s, `fold.spec.ts:203`. Wanted: a fair queue.
 - **Flaky under load.** Golden `interrupt` (F128, run 307: `expand((x+y+z+1)^40)` at timeout 0.2 s took 406 ms of 400; pass 10: a second sighting puts it into `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, limit 60; no rerun) beside the other lane (passes 32, 34, run 415).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
@@ -101,7 +102,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. `tests/engine/patch-canary.ts` unpacks the Giac tarball per canary (40 times, 100 s of CPU), so golden `flags` times out under load (A51: timing): unpack it once. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
-- **C3. CI** (needs your OK); **C4. F-Droid recipe:** A97f1 done.
+- **C3. CI** (needs your OK);
 
 ### MVP release (docs/02 section 8; not scheduled)
 - **R1. v0.1.0, the APK and the website from one tag** (A8 done: `.github/workflows/release.yml`, the checklist [release.md](release.md); left: `v0.1.0`; the bar: [release-0.1.0.md](release-0.1.0.md)). **R2. Play testing track:** never published without your OK. **R3. Screenshots and store graphics.** **R4. The help pass** (About: R87; one APK hash from two `./build.sh --unsigned` runs: annabell, A7).
