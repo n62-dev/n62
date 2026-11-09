@@ -617,6 +617,13 @@ cases:
   - { id: "g112f1-cas-lvar-list", kind: "cas", input: "lvar(list[x+y,z])", expect: "[x,y,z]", source: "derived", note: "G112f1 (round-2 audit finding 1): the probe took lvar(list[1,2]) = lvar(1,2) = [] as evidence and refused lvar; an empty answer is no evidence now, so lvar keeps its names (MODE=cas tools/probes/engine.ts on 8f39055; refused on the G112 table)" }
   - { id: "g112f1-cas-lname-list", kind: "cas", input: "lname(list[x+y,z])", expect: "[x,y,z]", source: "derived", note: "G112f1: as g112f1-cas-lvar-list, lname(list[1,2]) = [] was the evidence; lname keeps its names (MODE=cas tools/probes/engine.ts on 8f39055)" }
   - { id: "g111-cas-fracmod-negative", kind: "cas", input: "fracmod(41,-2)", expect: "error: engine", source: "derived", note: "F91: refused by patch 0008 (it trapped the wasm); CAS shows Giac's message" }
+  # --- G169 (F105, F93): a list as a distribution's x, in CAS (patch 0038) ---
+  - { id: "g169-cas-normald-cdf-list", kind: "cas", input: "normald_cdf(0,1,list[1/2,3/2])", expect: "{(erf(sqrt(2)/4)+1)/2,(erf(3*sqrt(2)/4)+1)/2}", source: "derived", note: "Φ(x) = (1+erf(x/√2))/2 at x = 1/2 (√2/4) and 3/2 (3√2/4): a list of two exact forms, was erf of the list" }
+  - { id: "g169-cas-max-list-among-args", kind: "cas", input: "max(25,list[1,2])", expect: "error: listInArgument", source: "derived", note: "G169: Giac answers the call back; refused as in Home" }
+  - { id: "g169-cas-min-list-among-args", kind: "cas", input: "min(25,list[1,2])", expect: "error: listInArgument", source: "derived", note: "as max" }
+  - { id: "g169-cas-psi-list-order", kind: "cas", input: "Psi(3,list[1,2])", expect: "error: listInArgument", source: "derived", note: "as max; a list as Psi's order" }
+  - { id: "g169-cas-ugamma-list-x", kind: "cas", input: "ugamma(5,list[1,2])", expect: "error: listInArgument", source: "derived", note: "as max; ugamma is no distribution" }
+  - { id: "g169-cas-trail-list", kind: "cas", input: "trail(1,2,3,4,list[1,2])", expect: "error: listInArgument", source: "derived", note: "as max; trail takes graph vertices" }
   # --- G113 (F101, F104): a pmf off the integers is 0, a cdf there is the cdf at the floor (patch 0009); negbinomial_icdf of exact arguments
   - { id: "g113-poisson-1.5", input: "poisson(2,1.5)", oracle: "F(0)", expect: "0", mark: "=", source: "oracle", note: "F101: k off the integers (support k = 0, 1, …): the value is 0; showed ⚠ 0.287951821404 (the formula with (3/2)! = Gamma(5/2))" }
   - { id: "g113-geometric-1.5", input: "geometric(0.5,1.5)", oracle: "F(0)", expect: "0", mark: "=", source: "oracle", note: "F101: support k = 1, 2, …; showed ≈ 0.353553390593 (sqrt(1/2)/2)" }
