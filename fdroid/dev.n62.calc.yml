@@ -23,11 +23,13 @@ Builds:
     subdir: android/app
     sudo:
       - apt-get update
-      # Same Debian emscripten as the release container (P2): 3.1.69+dfsg-3 in trixie. Then `emcc` is on PATH (EMSDK_DIR=system).
-      - apt-get install -y emscripten make patch gcc g++ m4 perl xz-utils bzip2 curl python3 pkg-config npm
+      # Same Debian emscripten as the release container (P2): 3.1.69+dfsg-3 in trixie (A96: the buildserver-trixie image has it; build-wasm-release.sh pins the same).
+      # Then `emcc` is on PATH (EMSDK_DIR=system); EMSCRIPTEN_PKG_VERSION below makes build-wasm.sh refuse any other compiler.
+      - apt-get install -y emscripten=3.1.69+dfsg-3 make patch gcc g++ m4 perl xz-utils bzip2 curl python3 pkg-config npm
     prebuild:
       - cd ../..
       - export EMSDK_DIR=system
+      - export EMSCRIPTEN_PKG_VERSION=3.1.69+dfsg-3
       - engine/giac/build-wasm.sh
       # libqalculate for the Find index (milestone 4; the Units worker is milestone 5). Skip with build.sh's --no-units.
       - engine/qalc/build-wasm.sh dev
