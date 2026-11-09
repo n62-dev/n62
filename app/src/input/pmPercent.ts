@@ -4,6 +4,21 @@
 // writes it as the literal σ it writes for `± σ`, computed exactly from the two decimal literals. Plain TS, no engine.
 import type { Json } from "./emit.ts";
 
+/** Units mode, a sign before a ± value: `e` with the sign inside its pasupm call, or null when `e` holds none. */
+export function negateUncertain(e: Json): Json | null {
+  if (!Array.isArray(e)) return null;
+  if (e[0] === "Call" && e[1] === "pasupm") {
+    if (e.length > 4) return ["Negate", e]; // R115: a chip's call (with its key) is one input: the sign stays outside
+    const v = e[2] as Json;
+    return ["Call", "pasupm", Array.isArray(v) && v[0] === "Negate" ? (v[1] as Json) : ["Negate", v], ...e.slice(3)] as Json;
+  }
+  if ((e[0] === "Multiply" || e[0] === "Divide") && e.length > 1) {
+    const l = negateUncertain(e[1] as Json);
+    return l ? ([e[0], l, ...e.slice(2)] as Json) : null;
+  }
+  return null;
+}
+
 /** A literal's text as the parser writes it ("250", "0.4", "1.5e3", "2e-9") as m·10^k, or null. */
 function decimal(text: string): { m: bigint; k: number } | null {
   const t = /^(\d*)\.?(\d*)(?:e([+-]?\d+))?$/.exec(text);

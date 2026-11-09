@@ -101,13 +101,49 @@ describe("store and polar entry (P4)", () => {
     ["1+2\\blacktriangleright x", "x:=1+2"],
     ["2\\measuredangle30", "2*(cos(pasdeg*30)+i*sin(pasdeg*30))"],
     ["2\\measuredangle\\frac{\\pi}{6}", "2*(cos(pasdeg*(pi/6))+i*sin(pasdeg*(pi/6)))"],
-    ["1+1\\measuredangle-45", "(1+1)*(cos(pasdeg*(-45))+i*sin(pasdeg*(-45)))"],
+    ["1+1\\measuredangle-45", "1+1*(cos(pasdeg*(-45))+i*sin(pasdeg*(-45)))"], // R180: the radius is one factor
     ["2\\mathbin{\\measuredangle}\\frac{\\pi}{6}", "2*(cos(pasdeg*(pi/6))+i*sin(pasdeg*(pi/6)))"],
     ["2\\mathbin{\\measuredangle}30", "2*(cos(pasdeg*30)+i*sin(pasdeg*30))"],
     ["\\operatorname{\\mathrm{approx}}\\left(\\frac13\\right)", "approx(1/3)"], // shift Enter, as MathLive serialises it
   ];
   for (const [latex, giac] of forms) it(latex, () => expect(latexToGiac(latex).replace(/\s/g, "")).toBe(giac));
   it("store needs a name after ▶", () => expect(() => latexToGiac("5\\blacktriangleright 3")).toThrow());
+});
+
+// R180 (F192, owner 2026-11-09): ∡ binds tighter than + × ÷ and looser than a power, as in Giac's own parse: the radius is
+// one factor, the angle one signed factor. What would read two ways is refused. Expected text derived.
+describe("r∡θ binds tighter than + × ÷ (R180)", () => {
+  const P = "\\mathbin{\\measuredangle}";
+  const polar = (r: string, t: string): string => `${r}*(cos(pasdeg*${t})+i*sin(pasdeg*${t}))`;
+  const reads: [string, string][] = [
+    [`10${P}30+5`, `${polar("10", "30")}+5`],
+    [`10${P}30-5`, `${polar("10", "30")}-5`],
+    [`3+4${P}30`, `3+${polar("4", "30")}`],
+    [`10${P}30+5${P}-45`, `${polar("10", "30")}+${polar("5", "(-45)")}`],
+    [`10${P}30\\times2`, `(${polar("10", "30")})*2`],
+    [`2\\times3${P}30`, `2*(${polar("3", "30")})`],
+    [`-10${P}30`, `-${polar("10", "30")}`],
+    [`10${P}+30`, polar("10", "30")],
+    [`10${P}30^2`, polar("10", "(30^2)")],
+    [`5^2${P}30`, polar("5^2", "30")],
+    [`\\frac{1}{2}${P}30`, polar("1/2", "30")],
+    [`10${P}\\left(30+5\\right)`, polar("10", "(30+5)")],
+    [`10${P}30=z`, `${polar("10", "30")}=z`],
+    [`\\sin2${P}30`, polar("sin(pasdeg*2)", "30")],
+  ];
+  for (const [latex, giac] of reads) it(latex, () => expect(latexToGiac(latex).replace(/\s/g, "")).toBe(giac));
+  for (const latex of [
+    `2${P}\\pi/6`,
+    `2${P}\\pi\\div6`,
+    `1/2${P}30`,
+    `1\\div2${P}30`,
+    `1/2x${P}30`,
+    `10${P}2\\pi`,
+    `10${P}2x`,
+    `10${P}30\\left(2\\right)`,
+    `10${P}30${P}5`,
+  ])
+    it(`${latex} is refused`, () => expect(() => latexToGiac(latex)).toThrow(/put the angle in brackets/));
 });
 
 // R27b (F23, G2 item 50, owner 2026-10-15): a term between a bare function name and a bracket reads two ways

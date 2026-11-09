@@ -139,6 +139,13 @@ cases:
   - { id: "g21-rad-exp-i90", input: "exp(i*90)", oracle: "exp(90*I)", expect: "-0.448073616129+0.893996663601*i", mark: "≈", source: "derived", g2: 54 }
   - { id: "g21-deg-cos+isin90", input: "cos(90)+i*sin(90)", settings: { angle: "deg" }, oracle: "I", expect: "i", mark: "=", source: "derived", note: "trig keeps degrees" }
   - { id: "g21-deg-polar-2-90", input: "2*(cos(90)+i*sin(90))", settings: { angle: "deg" }, oracle: "2*I", expect: "2*i", mark: "=", source: "derived", note: "what polar entry 2∡90 emits (emit.ts PolarComplex): degrees stay" }
+  # --- R180 (F192): ∡ binds tighter than + × ÷, typed as the Shift + × key types it; 10∡30+5 gave 10∠35, ≈, no ⚠ ------
+  - { id: "r180-deg-polar-plus", latex: "10\\mathbin{\\measuredangle}30+5", settings: { angle: "deg" }, oracle: "10*(cosd(30)+I*sind(30))+5", expect: "13.6602540378+5*i", mark: "≈", source: "oracle", note: "it gave 10∠35 = 8.19152044289+5.73576436351*i (F192)" }
+  - { id: "r180-deg-polar-radius", latex: "3+4\\mathbin{\\measuredangle}30", settings: { angle: "deg" }, oracle: "3+4*(cosd(30)+I*sind(30))", expect: "6.46410161514+2*i", mark: "≈", source: "oracle", note: "the radius is one factor; it gave 7∠30" }
+  - { id: "r180-deg-polar-two", latex: "10\\mathbin{\\measuredangle}30+5\\mathbin{\\measuredangle}-45", settings: { angle: "deg" }, oracle: "10*(cosd(30)+I*sind(30))+5*(cosd(-45)+I*sind(-45))", expect: "12.1957879438+1.46446609407*i", mark: "≈", source: "oracle", note: "the owner's case: two phasors added; it was refused" }
+  - { id: "r180-deg-polar-times", latex: "10\\mathbin{\\measuredangle}30\\times2", settings: { angle: "deg" }, oracle: "2*10*(cosd(30)+I*sind(30))", expect: "17.3205080757+10*i", mark: "≈", source: "oracle", note: "(10∡30)*2; it gave 10∠60" }
+  - { id: "r180-deg-polar-times-left", latex: "2\\times3\\mathbin{\\measuredangle}30", settings: { angle: "deg" }, oracle: "2*3*(cosd(30)+I*sind(30))", expect: "5.19615242271+3*i", mark: "≈", source: "oracle", note: "guard: now 2*(3∡30), before (2*3)∡30, the same value" }
+  - { id: "r180-deg-polar-minus", latex: "10\\mathbin{\\measuredangle}30-5", settings: { angle: "deg" }, oracle: "10*(cosd(30)+I*sind(30))-5", expect: "3.66025403784+5*i", mark: "≈", source: "oracle", note: "it gave 10∠25" }
   # --- G46 (route R): Giac always in radians, the degree mode in the parser's text (S14 matrix) ----------------------
   - { id: "g46-deg-cosh90i", input: "cosh(90*i)", settings: { angle: "deg" }, oracle: "cosh(90*I)", expect: "-0.448073616129", mark: "≈", source: "oracle", note: "deep check D4: DEG gave = 0" }
   - { id: "g46-deg-sinh90i", input: "sinh(90*i)", settings: { angle: "deg" }, oracle: "sinh(90*I)", expect: "0.893996663601*i", mark: "≈", source: "oracle", note: "D4: DEG gave = i" }
