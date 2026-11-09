@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G200 (F197): `oracle.py` runs clean on the tree, names a wrong value or a broken oracle expression and goes on, and the gate stage's helpers.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -79,6 +79,76 @@ describe("oracle.py (G200, F197)", () => {
   it("leaves corpus.yaml out of a whole-tree run", () => {
     const r = run(["--g2", "--check"]);
     expect(r.code).toBe(0);
+  }, SPAWN_MS);
+});
+
+/** A temp copy of tests/golden (no venv) holding only g2.yaml, corpus.yaml and a home.yaml of these lines: its own oracle.py, its own oracle-counts.json. */
+function goldenCopy(...lines: string[]): { dir: string; script: string; counts: string } {
+  // no lines: the whole tree's case files stay
+  const dir = mkdtempSync(join(tmpdir(), "oraclecounts-"));
+  cpSync(join(repo, "tests/golden"), dir, { recursive: true, filter: (src) => !src.includes(".venv") });
+  rmSync(join(dir, "oracle-counts.json"), { force: true });
+  if (lines.length > 0) {
+    for (const f of readdirSync(dir)) if (f.endsWith(".yaml") && f !== "g2.yaml" && f !== "corpus.yaml") rmSync(join(dir, f));
+    writeFileSync(join(dir, "home.yaml"), `cases:\n${lines.map((l) => `  - ${l}`).join("\n")}\n`);
+  }
+  return { dir, script: join(dir, "oracle.py"), counts: join(dir, "oracle-counts.json") };
+}
+
+function runIn(script: string, args: string[]): { code: number; out: string } {
+  const r = spawnSync(py as string, [script, ...args], { encoding: "utf8" });
+  return { code: r.status ?? 1, out: `${r.stdout}${r.stderr}` };
+}
+
+describe("oracle.py --counts (G202)", () => {
+  // expect is YAML text: "0.25", or ["0.5", "3"] for a list (no mark on a list)
+  const row = (id: string, oracleExpr: string, expect: string, src = "oracle", mark = "") =>
+    `{ id: "${id}", input: "x", oracle: "${oracleExpr}", expect: ${expect}, ${mark ? `mark: "${mark}", ` : ""}source: "${src}" }`;
+  it("writes sorted keys and a final newline, and a second run leaves the bytes unchanged", () => {
+    const g = goldenCopy(row("t-a", "F(1,4)", '"0.25"', "oracle", "="), row("t-b", "sqrt(2)", '"1.41421356237"', "oracle", "≈"));
+    const r = runIn(g.script, ["--counts"]);
+    expect(r.code).toBe(0);
+    const text = readFileSync(g.counts, "utf8");
+    expect(text.endsWith("\n")).toBe(true);
+    expect(text.endsWith("\n\n")).toBe(false);
+    const parsed = JSON.parse(text) as Record<string, number>;
+    expect(Object.keys(parsed)).toEqual(["exact", "mpmath"]);
+    expect(parsed).toEqual({ exact: 1, mpmath: 1 });
+    runIn(g.script, ["--counts"]);
+    expect(readFileSync(g.counts, "utf8")).toBe(text);
+  }, SPAWN_MS);
+  it("a value is exact when it is an int or a Fraction, element by element; one float element makes the row mpmath, a Label too; only source: oracle rows count", () => {
+    const g = goldenCopy(
+      row("t-int", "factorial(5)", '"120"', "oracle", "="),
+      row("t-frac", "F(1,8)", '"0.125"', "oracle", "="),
+      row("t-list-exact", "[F(1,2), 3]", '["0.5", "3"]'),
+      row("t-list-mixed", "[F(1,2), sqrt(2)]", '["0.5", "1.41421356237"]'),
+      row("t-float", "pi", '"3.14159265359"', "oracle", "≈"),
+      row("t-label", "S('true') if pi > 3 else S('false')", '"true"'),
+      row("t-derived", "F(1,4)", '"0.25"', "derived", "="),
+    );
+    const r = runIn(g.script, ["--counts"]);
+    expect(r.out).not.toMatch(/PROBLEM/);
+    expect(JSON.parse(readFileSync(g.counts, "utf8"))).toEqual({ exact: 3, mpmath: 3 });
+  }, SPAWN_MS);
+  it("on the tree, exact + mpmath is the number of source: oracle rows", () => {
+    const g = goldenCopy();
+    const r = runIn(g.script, ["--counts"]);
+    expect(r.code).toBe(0);
+    const c = JSON.parse(readFileSync(g.counts, "utf8")) as { exact: number; mpmath: number };
+    let n = 0;
+    for (const f of readdirSync(g.dir)) if (f.endsWith(".yaml")) n += readFileSync(join(g.dir, f), "utf8").split("\n").filter((l) => /^\s*- \{.*source: "oracle"/.test(l)).length;
+    expect(c.exact + c.mpmath).toBe(n);
+  }, TREE_MS);
+  it("a row added without --counts leaves plain oracle.py at exit 0: the file's age is no PROBLEM", () => {
+    const g = goldenCopy(row("t-a", "F(1,4)", '"0.25"', "oracle", "="));
+    runIn(g.script, ["--counts"]);
+    const before = readFileSync(g.counts, "utf8");
+    writeFileSync(join(g.dir, "home.yaml"), `cases:\n  - ${row("t-a", "F(1,4)", '"0.25"', "oracle", "=")}\n  - ${row("t-b", "pi", '"3.14159265359"', "oracle", "≈")}\n`);
+    const r = runIn(g.script, []);
+    expect(r.code).toBe(0);
+    expect(r.out).not.toMatch(/PROBLEM/);
+    expect(readFileSync(g.counts, "utf8")).toBe(before);
   }, SPAWN_MS);
 });
 
