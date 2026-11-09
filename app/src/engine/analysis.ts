@@ -169,7 +169,7 @@ function run(giac: Giac, req: AnalysisRequest, v: string, h: HomeSettings, t0: n
       ev(`Digits:=${W}`);
       /** Home's refusal for this integral given Giac's exact answer (converge.ts), or null. */
       const refusedBy = (exact: string): "integralDiverges" | "unchecked" | null => {
-        const r = refusalOf(giac, `int(${integrand},${v},${A},${B})`, exact, true);
+        const r = refusalOf(giac, `int(${integrand},${v},${A},${B})`, exact, W, true);
         return r === "integralDiverges" || r === "unchecked" ? r : null;
       };
       let method = "romberg";

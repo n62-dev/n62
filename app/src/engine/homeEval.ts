@@ -591,7 +591,7 @@ export function homeEval(
     if ("error" in f && lost) return refuse(lost, path);
     if ("error" in f) return once ? failed(f.error, path, exact) : atDouble(path, f.error, exact);
     // G39: the float of a divergent integral or series (the principal value 0 of ∫₋₁¹ 1/x) is refused as on the exact path.
-    const refused = once ? null : refusalOf(giac, exactBody, giac.eval(ans));
+    const refused = once ? null : refusalOf(giac, exactBody, giac.eval(ans), Math.trunc(s.digits));
     if (refused === "unchecked") unverified = true;
     else if (refused) return refuse(refused, path);
     store();
@@ -628,7 +628,7 @@ export function homeEval(
 
   // G39: a number for something that does not exist (a principal value, an Abel sum, a bounded_function) is refused.
   if (!once) {
-    const refused = refusalOf(giac, exactBody, exactOut, true);
+    const refused = refusalOf(giac, exactBody, exactOut, Math.trunc(s.digits), true);
     if (refused === "unchecked") unverified = true;
     else if (refused) return refuse(refused, "exact");
   }

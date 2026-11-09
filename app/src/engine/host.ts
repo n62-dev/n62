@@ -1002,7 +1002,7 @@ export class EngineHost implements FactsHost {
     }
     // G39: a divergent integral or series, or no limit, is refused as in Home; Giac's [exact, numeric] pair of a
     // definite integral is shown as Giac's text (both answers) with ⚠, never as a numeric list.
-    const refused = guarded ? refusalOf(this.giac, guarded.rhs, text) : single ? null : refusalOf(this.giac, exactInput, text);
+    const refused = guarded ? refusalOf(this.giac, guarded.rhs, text, digitsSet) : single ? null : refusalOf(this.giac, exactInput, text, digitsSet);
     if (refused && refused !== "unchecked") return fail(enEngine[`error.${refused}`], refused);
     if (refusedCut) return fail(enEngine["error.undecided"], "undecided");
     // G97 (F69): a power, inverse or division of a non-square matrix is Giac's elementwise answer, refused as in Home.
