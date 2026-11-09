@@ -7,6 +7,7 @@
   // (`over: "view"`) stays above the keypad, over the history or view. The keys drive it through App.svelte and
   // sheetKeys.ts; touch is a shortcut: a tap on a row picks it, ◀ ▶ step a value, ‹ goes back a level, × closes it.
   import { t } from "../i18n/index.ts";
+  import { pressFlag } from "../input/pressFlag.ts";
   import { sheetText } from "../i18n/enSheet.ts";
   import { ICONS } from "./icons.ts";
   import MathView from "../render/Math.svelte";
@@ -275,7 +276,7 @@
             style:height={px(rowHeight(row, { reason: second, steps, options: options !== undefined }))}
             onclick={() => ontap(r.index)}
           >
-            <span class="n">{r.n === undefined ? "" : r.n % 10}</span>{#if r.item.glyph}<span class="tile math" class:small={"text" in r.item.glyph && r.item.glyph.text.length > 1} data-testid="row-glyph" aria-hidden="true">{@html "icon" in r.item.glyph ? ICONS.home : r.item.glyph.text}</span>{/if}<span class="text"><span class="label">{r.item.label}</span>{#if reason}<span class="reason">{r.item.reason}</span>{:else if r.item.hint}<span class="reason" data-testid="row-hint">{r.item.hint}</span>{:else if r.item.dots && steps}<span class="dots under" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}</span>{#if r.item.dots && !steps}<span class="dots" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}{#if r.item.note}<span class="note" data-testid="row-note">{r.item.note}</span>{/if}{#if options}<span class="seg" data-testid="row-options">{#each options as o (o.id)}<button type="button" class="opt" data-option={o.id} aria-label={o.spoken} aria-pressed={o.selected} disabled={r.item.disabled || o.disabled} onclick={(e) => { e.stopPropagation(); onoption(r.index, o.id); }}>{o.label}</button>{/each}</span>{/if}{#if steps}<button type="button" class="step" data-testid="step-down" aria-label={sheetText("sheet.stepDown")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, -1); }}>◀</button>{/if}{#if r.item.value !== undefined}<span class="value" data-testid="sheet-value">{r.item.value}</span>{/if}{#if steps}<button type="button" class="step" data-testid="step-up" aria-label={sheetText("sheet.stepUp")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, 1); }}>▶</button>{/if}{#if r.item.selected !== undefined}<span class="tick" aria-hidden="true">{r.item.selected ? "✓" : ""}</span>{/if}{#if r.item.submenu}<span class="more" aria-hidden="true">›</span>{/if}
+            <span class="n">{r.n === undefined ? "" : r.n % 10}</span>{#if r.item.glyph}<span class="tile math" class:small={"text" in r.item.glyph && r.item.glyph.text.length > 1} data-testid="row-glyph" aria-hidden="true">{@html "icon" in r.item.glyph ? ICONS.home : r.item.glyph.text}</span>{/if}<span class="text"><span class="label">{r.item.label}</span>{#if reason}<span class="reason">{r.item.reason}</span>{:else if r.item.hint}<span class="reason" data-testid="row-hint">{r.item.hint}</span>{:else if r.item.dots && steps}<span class="dots under" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}</span>{#if r.item.dots && !steps}<span class="dots" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}{#if r.item.note}<span class="note" data-testid="row-note">{r.item.note}</span>{/if}{#if options}<span class="seg" data-testid="row-options">{#each options as o (o.id)}<button type="button" class="opt" use:pressFlag data-option={o.id} aria-label={o.spoken} aria-pressed={o.selected} disabled={r.item.disabled || o.disabled} onclick={(e) => { e.stopPropagation(); onoption(r.index, o.id); }}>{o.label}</button>{/each}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-down" aria-label={sheetText("sheet.stepDown")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, -1); }}>◀</button>{/if}{#if r.item.value !== undefined}<span class="value" data-testid="sheet-value">{r.item.value}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-up" aria-label={sheetText("sheet.stepUp")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, 1); }}>▶</button>{/if}{#if r.item.selected !== undefined}<span class="tick" aria-hidden="true">{r.item.selected ? "✓" : ""}</span>{/if}{#if r.item.submenu}<span class="more" aria-hidden="true">›</span>{/if}
           </div>
         {/each}
         {/if}
@@ -600,7 +601,7 @@
     color: var(--muted);
     cursor: pointer;
   }
-  .step:active {
+  .step:global([data-down]) {
     color: var(--shift);
   }
   .step:disabled {
@@ -638,7 +639,7 @@
     color: var(--text);
     font-weight: 700;
   }
-  .opt:active {
+  .opt:global([data-down]) {
     color: var(--shift);
   }
   .opt:disabled {
@@ -705,7 +706,7 @@
     box-shadow: inset var(--stroke-thick) 0 0 var(--focus);
   }
   .row[data-active="true"] :is(.n, .value, .tick),
-  .row[data-active="true"] :is(.step, .opt):active {
+  .row[data-active="true"] :is(.step, .opt):global([data-down]) {
     color: var(--text);
   }
   .row[data-active="true"][aria-disabled="true"] :is(.label, .n, .value, .step) {

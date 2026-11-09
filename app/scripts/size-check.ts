@@ -342,8 +342,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (Keypad.svelte) add 0.02 kB gzip (measured 60.67 kB, 170.78 kB raw, on the base before A123); the merge with A123 is
  *  measured by the gate against this pin.
  *  60,720 → 60,780 B (R148f2): the view keys' wait behind queued keys during a load (route.ts runsAtOnce) measures 60,729 B
- *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB. */
-export const START_PIN_GZIP = 60_780;
+ *  gzip (170,988 B raw, +9 B over the pin): 60,729 B + 0.05 kB.
+ *  60,780 → 60,950 B (R164): the shared press flag (input/pressFlag.ts: R161's keypad code moved there, and a 4-line action
+ *  for the status line's two buttons; the sheets' and the update note's use of it are lazy chunks) measures 60.89 kB gzip
+ *  (171.40 kB raw), +0.13 kB over the phase-1 build (60.76 kB, 171.02 kB raw): 60.89 kB + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 60_950;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

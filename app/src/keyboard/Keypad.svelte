@@ -8,6 +8,7 @@
   import { actionFor, gridPlace, keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
   import { opensSheet } from "./opens.ts";
   import { typesVariable, varLayers } from "./variable.ts";
+  import { createPressFlag } from "../input/pressFlag.ts";
   import { touchKey, touchPresses } from "../state/pressCount.ts";
   import { sheetChunk } from "../views/sheetView.svelte.ts";
   import type { UserKeys } from "./userKeys.svelte.ts";
@@ -138,41 +139,21 @@
     | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker }
     | { kind: "repeat"; el: HTMLElement | undefined; repeat: Repeat };
 
-  // The press look (R161, F191): the app's own flag `data-down` on the touched key, never CSS :active (on a touch screen
-  // Chrome sets that from Android's tap detector: late, and stuck on one key in fast typing). Set at finger-down, removed
-  // at the later of the lift and PRESS_MS after the down, so a quick tap is seen; a cancel or the app going away clears
-  // every flag at once. Plain DOM, no Svelte state: nothing re-renders.
-  const PRESS_MS = 80;
-  const lit = new Map<HTMLElement, { at: number; timer?: ReturnType<typeof setTimeout> }>();
-  function light(el: HTMLElement | undefined): void {
-    if (!el) return;
-    clearTimeout(lit.get(el)?.timer); // (a new down on a key still lit keeps it lit)
-    lit.set(el, { at: performance.now() });
-    el.dataset["down"] = "";
-  }
-  function unlight(el: HTMLElement | undefined): void {
-    const l = el && lit.get(el);
-    if (!el || !l || l.timer !== undefined) return;
-    const off = (): void => {
-      lit.delete(el);
-      delete el.dataset["down"];
-      if (popEl === el) hidePop(); // (only its own key's: a newer key's pop stays)
-    };
-    const left = Math.ceil(l.at + PRESS_MS - performance.now());
-    if (left <= 0) off();
-    else l.timer = setTimeout(off, left);
-  }
+  // The press look (R161, F191): the app's own flag `data-down` on the touched key, never CSS :active (input/pressFlag.ts: set
+  // at finger-down, out at the later of the lift and 80 ms after the down; a cancel or the app going away clears every flag
+  // at once). A key's pop goes with its flag.
+  const flag = createPressFlag((el) => {
+    if (popEl === el) hidePop(); // (only its own key's: a newer key's pop stays)
+  });
+  const light = (el: HTMLElement | undefined): void => flag.light(el);
+  const unlight = (el: HTMLElement | undefined): void => flag.unlight(el);
   function unlightAll(): void {
-    for (const [el, l] of lit) {
-      clearTimeout(l.timer);
-      delete el.dataset["down"];
-    }
-    lit.clear();
+    flag.clearAll();
     hidePop();
   }
 
   /** The key pop (R162): the pressed key's face above the finger, in the flick bubble's box and offset. One at a time, set in
-   *  down(), gone with the key's press look (the later of the lift and PRESS_MS) or at once for a flick bubble or a cancel. */
+   *  down(), gone with the key's press look (the later of the lift and 80 ms) or at once for a flick bubble or a cancel. */
   let pop = $state<{ x: number; y: number; text: string; variable: boolean } | null>(null);
   let popEl: HTMLElement | undefined;
   let popNode: HTMLDivElement | undefined = $state();
