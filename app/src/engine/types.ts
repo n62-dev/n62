@@ -262,6 +262,8 @@ export class EngineCancelled extends Error {
 }
 
 export interface MathEngine {
+  /** A123: resolves once the last write of the definitions log has finished (the core runner's relaunch waits for it). */
+  defsWritten?(): Promise<void>;
   /** Resolves once the engine can take calls. */
   ready(): Promise<EngineTimings>;
   /** Exact-first Home evaluation: a decimal result rounded to `settings.digits`. `consts` (G26): the constants the

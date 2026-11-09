@@ -36,7 +36,8 @@ export interface WorkerLike {
 /** Where the definitions log is kept between launches (the app: IndexedDB key `defs`). */
 export interface DefsStore {
   load(): Promise<unknown>;
-  save(log: readonly DefEntry[]): void;
+  /** May return the write's promise (A123: `defsWritten` waits for it). */
+  save(log: readonly DefEntry[]): void | Promise<unknown>;
   /** G19: starts that began a replay of the log and never got ready (0 when absent). Written before a replay, cleared
    *  once ready, so a crash that kills the whole app counts too. */
   loadStarts?(): Promise<number>;
@@ -94,6 +95,8 @@ export class WorkerEngine implements MathEngine {
   private readonly store: DefsStore | undefined;
   /** Saving is on once the stored log was read (a store that timed out is never overwritten with a partial log). */
   private storeOk = false;
+  /** The last write of the log (A123), failures swallowed: what `defsWritten` waits for. */
+  private lastWrite: Promise<unknown> = Promise.resolve();
   /** Settles once the stored definitions were read and sent to the worker; every call is posted after it. */
   private readonly gate: Promise<void>;
   private gateOpen = false;
@@ -176,7 +179,13 @@ export class WorkerEngine implements MathEngine {
     // a purge reaches the entries a safe start left out too, or stored() would bring the name back (G19)
     const purges = changes.filter((c) => "purge" in c);
     if (this.skipped.length && purges.length) this.skipped = applyDefChanges(this.skipped, purges);
-    if (this.storeOk) this.store?.save(this.stored());
+    if (this.storeOk && this.store) this.lastWrite = Promise.resolve(this.store.save(this.stored())).catch(() => {});
+  }
+
+  /** Resolves once the last write of the definitions log has finished, whether it succeeded or not (A123: a core-case
+   *  relaunch must not stop the app before `defs` is on the store). At once with no store or nothing written. */
+  defsWritten(): Promise<void> {
+    return this.lastWrite.then(() => {});
   }
 
   /** The log as stored: what is live plus what a safe start left out (G19). */

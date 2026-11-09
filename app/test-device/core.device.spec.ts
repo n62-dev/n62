@@ -58,6 +58,26 @@ test.afterAll(async () => {
   await device?.close().catch(() => undefined);
 });
 
+/** The stored `defs` record as one line (cut to 400 characters), read from IndexedDB; "(no entry)" or "(page gone)". */
+async function storedDefs(page: Page): Promise<string> {
+  return page
+    .evaluate(
+      () =>
+        new Promise<string>((resolve, reject) => {
+          const open = indexedDB.open("n62");
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const db = open.result;
+            if (!db.objectStoreNames.contains("kv")) return resolve("(no entry)");
+            const r = db.transaction("kv").objectStore("kv").get("defs");
+            r.onsuccess = () => resolve(r.result === undefined ? "(no entry)" : JSON.stringify(r.result).slice(0, 400));
+            r.onerror = () => reject(r.error);
+          };
+        }),
+    )
+    .catch(() => "(page gone)");
+}
+
 const title = (c: { id: string; title: string; known?: string; needs?: string }): string =>
   `${c.id} ${c.title}${c.known ? ` [known ${c.known}]` : ""}${c.needs ? ` [needs ${c.needs}]` : ""}`;
 
@@ -81,6 +101,7 @@ test.describe("core list on the device", () => {
         // what the screen showed, for the report (a failing case is read from the log, not from a screenshot)
         const seen = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " ").slice(0, 400)).catch(() => "(page gone)");
         console.log(`${c.id} screen: ${seen}`);
+        console.log(`${c.id} defs: ${await storedDefs(page)}`); // A123 (F200): what the store held, to tell a lost write from a lost replay
         throw e;
       }
     });
