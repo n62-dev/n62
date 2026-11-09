@@ -296,6 +296,78 @@ describe.skipIf(!giacAvailable())("WorkerEngine definitions across a relaunch (r
   }, 10_000);
 });
 
+// --- A123 (F200): the write of `defs` can be waited for -----------------------------------------------------------
+
+/** A store whose `save` returns a promise the test settles by hand. */
+class HandStore {
+  writes: { resolve: () => void; reject: (e: Error) => void }[] = [];
+  load(): Promise<unknown> {
+    return Promise.resolve(undefined);
+  }
+  save(): Promise<void> {
+    return new Promise<void>((resolve, reject) => this.writes.push({ resolve, reject }));
+  }
+}
+
+describe("WorkerEngine.defsWritten (A123)", () => {
+  const make = async (store?: HandStore): Promise<WorkerEngine> => {
+    const e = new WorkerEngine({ baseUrl: "/", createWorker: () => new OkWorker(), ...(store ? { defs: store } : {}) });
+    await e.definitions(); // the stored log has been read: saving is on
+    return e;
+  };
+  /** Whether the promise has settled after the microtasks and a timer turn. */
+  const settled = async (p: Promise<unknown>): Promise<boolean> => {
+    let done = false;
+    void p.then(() => (done = true), () => (done = true));
+    await new Promise((r) => setTimeout(r, 5));
+    return done;
+  };
+
+  it("stays pending after keep until the store's write resolves", async () => {
+    const store = new HandStore();
+    const e = await make(store);
+    e.keep([{ set: entry("A", "A:=5") }]);
+    const w = e.defsWritten();
+    expect(await settled(w)).toBe(false);
+    store.writes[0]!.resolve();
+    expect(await settled(w)).toBe(true);
+    e.dispose();
+  });
+
+  it("after two keeps it waits for the last write", async () => {
+    const store = new HandStore();
+    const e = await make(store);
+    e.keep([{ set: entry("A", "A:=5") }]);
+    e.keep([{ set: entry("B", "B:=6") }]);
+    const w = e.defsWritten();
+    store.writes[0]!.resolve();
+    expect(await settled(w)).toBe(false);
+    store.writes[1]!.resolve();
+    expect(await settled(w)).toBe(true);
+    e.dispose();
+  });
+
+  it("a write that fails does not hang it and does not throw", async () => {
+    const store = new HandStore();
+    const e = await make(store);
+    e.keep([{ set: entry("A", "A:=5") }]);
+    const w = e.defsWritten();
+    store.writes[0]!.reject(new Error("quota"));
+    await expect(w).resolves.toBeUndefined();
+    e.dispose();
+  });
+
+  it("with no store, and with nothing written, it resolves at once", async () => {
+    const none = await make();
+    none.keep([{ set: entry("A", "A:=5") }]);
+    await expect(none.defsWritten()).resolves.toBeUndefined();
+    const idle = await make(new HandStore());
+    await expect(idle.defsWritten()).resolves.toBeUndefined();
+    none.dispose();
+    idle.dispose();
+  });
+});
+
 // --- G19 (F31): a safe start ---------------------------------------------------------------------------------------
 
 /** Answers init and define like StuckWorker, but crashes (onerror) whenever it is asked to replay definitions. */

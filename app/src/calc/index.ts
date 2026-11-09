@@ -19,7 +19,7 @@ export function createCalc(): Calc {
 export function defsStore(kv: Kv): DefsStore {
   return {
     load: () => kv.get<unknown>("defs"),
-    save: (log) => void kv.set("defs", log),
+    save: (log) => kv.set("defs", log),
     loadStarts: async () => (await kv.get<number>("defsStarts")) ?? 0,
     saveStarts: (n) => void kv.set("defsStarts", n),
   };
