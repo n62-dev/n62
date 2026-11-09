@@ -191,8 +191,9 @@ const OBJECT_HEADS: ReadonlySet<string> = new Set(["' .. '", "'pnt'"]);
 export function lostCas(giac: Giac, slot: string, input: string, output: string, late: () => boolean, userFn: (name: string) => boolean, digits: number, rerun: boolean): NoValue | null {
   const out = output.trim();
   if (out === "undef") return undefReason(giac, input, late, 0, userFn);
-  // No call in the text: no engine call at all (an exact rational, a name), so most answers cost nothing here.
-  if (infinite(out) || notAValue(out) || freeName(out) || !functionsIn(out, "printed").length) return null;
+  // No call in the text (and no `$`, Giac's seq operator): no engine call at all (an exact rational, a name), so most
+  // answers cost nothing here.
+  if (infinite(out) || notAValue(out) || freeName(out) || (!functionsIn(out, "printed").length && !out.includes("$"))) return null;
   const info = parsePrinted(giac.eval(`[string(type(${slot})),size(lname(${slot})),string(sommet(${slot}))]`))?.items;
   if (info?.length !== 3 || info[0]!.str !== "expression" || info[1]!.raw !== "0" || OBJECT_HEADS.has(info[2]!.str ?? "")) return null;
   const noNumber = (e: string): boolean => NO_NUMBER.has(withDigits(giac, DOUBLE_DIGITS, digits, () => giac.eval(`type(evalf(${e}))`)).trim());
