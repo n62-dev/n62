@@ -4,19 +4,16 @@
 **Every package runs through `scripts/pipeline.sh`** (rules section 4): `scripts/night.sh` runs the queue of section 0c around the clock (P25); a hands-on package the owner starts himself, one at a time (`scripts/pipeline.sh <agent> "<ID>" --model <m>`, the table gives agent and model), and reads the RESULT line. Nobody starts a worker or merges another way (CLAUDE.md). The standing rules in [rules.md](rules.md) apply; where the two differ, this brief wins. Each open package is one file in [packages/](packages/), in the shape the pipeline bundles (section 2). The shape of a package file: the heading `### <agent>, <ID>: <title>, branch \`p1/<agent>-<slug>\``; **Lane** (old words, kept in the files; night = auto: no device, no APK, no eye on the UI; night (the night's device) = auto on the device `night.sh` was started with, only, P23; day = hands-on, but see 0c's rule 10); **Starts when**; **Read** (repo paths get bundled, first 400 lines; the big shared docs by bare name and section); the steps; **Done when** (lines an auditor checks in the diff).
 
 ## 0. State and the path
-`phase-1` at `6831322f` on 2026-11-07 (the night of 11-06: 15 merges, passes 84–91, [its report](2026-11-07-night-report.md)). CORE 66/66 desktop (`edc62383`, pass 91); CORE DEVICE 65/65 on the Tab One (`b8ea3bd7`, device 91; one case is desktop only). Every merge: `git log --merges --oneline phase-1`; the audits are in the Opus passes' defaults (decisions.md, older ones in [archive/decisions-2026-10.md](../archive/decisions-2026-10.md)) and the night reports ([archive/shifts/](../archive/shifts/)).
+State: the newest night report in this folder. Every merge: `git log --merges --oneline phase-1`; the audits are in the Opus passes' defaults (decisions.md, older ones in [archive/decisions-2026-10.md](../archive/decisions-2026-10.md)) and the night reports ([archive/shifts/](../archive/shifts/)).
 
 ### The path after the freeze (owner, 2026-10-27; decisions.md "P23")
 **The freeze ended** on 2026-10-27. **The net stays:** every merge runs the core list (R74; [tests/core/core.yaml](../../tests/core/core.yaml), 66 cases, all active), night.sh runs the device's core list after each Opus pass when the night has a device (A33, A41), and the owner's [hand check](../../tests/core/MORNING.md) runs before a release tag. A red result is a bug to fix (a FIX of the next Opus pass, or a backlog bug line past a day of work), not a gate. **The pace:** the most important steps first, so a usage limit late costs the least.
 
 **Auto or hands-on, around the clock (owner, 2026-11-08; P25).** win99 runs the queue 24/7; "night" in names and docs (`night.sh`, `/night-review`, this brief) now means auto. A package is hands-on only when it needs the owner's input or a physical act (a decision, an eye on a look, a key, a tag, the phone); automated device lists stay auto, with the Tab One plugged in. v0.1.0 keeps Sun 11-15 and its freeze; the new packages follow from about 11-16. The load: about 180 open packages and the owner's estimate of 1,800 more from fixes, new bugs and features, in under 6 months, about 77 a week. The owner moves from Ultra (20× Pro) to Max (5×, 90 CHF a month), a quarter of the usage. The week to 11-08 merged about 165 packages (162 to 170, by which seven days; 28% FIX packages); if that was the week of about 60% of Ultra, Max pays for about 70 a week at that cost, about 1,800 in 26 weeks, so the target needs a package to cost about 10% less, or more time. Both lanes to the v0.1.0 tag; from the move to Max one lane, measured for a week (it needs about 10 h a day at that rate; fewer Opus passes than one per three packages is the first cut). **To build before 24/7** (checked 2026-11-08). Code: a henri call that fails at a usage limit counts as a bad reply and two end the lane; the six waits add up over a whole `night.sh` run; neither has met a real limit since `night.sh` began. Flags today: `--limit-wait 18000` (5 h a wait), `--max-steps 100`, `--until`; a shift a day is the daily stop (rules section 4a). The stop covers planned reboots and Windows updates and writes the queue's rows; a lane lost to an unplanned reboot restarts at the next stop.
 
-**Two lanes** (owner, 2026-10-29; decisions.md P17 and "Owner answers of 2026-10-29"): lane A (ron's UI) and lane B (the release, then the engine) run around the clock, each with its own table in section 0c, merged through one queue (A47b). ron's packages run at night too: the owner's look moves to the milestone reviews (Lane A's queue), and a package's "owner's eye" item joins the next review. Device steps run in the lanes; the owner's acts (a key, a tag, a phone) wait for the owner (P25). The order:
-1. **Find:** built; A4b and A74 merged (E3 met on the Tab One); R91's before/after is in [ONE-TIME.md](../../tests/core/ONE-TIME.md).
-2. **The Settings base** (owner, 2026-10-27; decisions.md "Settings in the Mode sheet, and presets"; [mockups/settings.html](../mockups/settings.html)): merged up to R89 → R59 and R12b → R12c → R41; R53; R36, R33 → R40.
-3. **The units** (owner, 2026-10-29: right after R86, R57, R50e): R24b–R24d, G81, R60–R63, R71 and R92 (the units menu's Constants and Tools) merged.
-4. **Lane B, to v0.1.0** (the APK and the website from one tag): the release path tested 11-05 (A8, A70); then wrong numbers by reach, C4. The bar and the days: [release-0.1.0.md](../release-0.1.0.md); the release is on Sun 11-15 (owner, 2026-11-06, confirmed 2026-11-07): the queue to Thu 11-12 (the UI rows first), the freeze that evening, test nights to Sat, the showcase video and A82 on Sat 11-14.
-5. **Before a release tag, not daily (P25):** the owner's hand check (MORNING.md, on the device of the last automatic run, about 10 minutes). The next session writes each failed step as a backlog bug line on phase-1 and logs one line in `.coord/log.md`: `- HH:MM morning <date>: clean` or `- HH:MM morning <date>: fails <ids>`.
+**Two lanes** (owner, 2026-10-29; decisions.md P17 and "Owner answers of 2026-10-29"): lane A (ron's UI) and lane B (the release, then the engine) run around the clock, each with its own table in section 0c, merged through one queue (A47b). ron's packages run at night too: the owner's look moves to the milestone reviews ([release-0.1.0.md](../release-0.1.0.md), end), and a package's "owner's eye" item joins the next review. Device steps run in the lanes; the owner's acts (a key, a tag, a phone) wait for the owner (P25). The order:
+1. **Lane B, to v0.1.0** (the APK and the website from one tag): The bar and the days: [release-0.1.0.md](../release-0.1.0.md); the release is on Sun 11-15 (owner, 2026-11-06, confirmed 2026-11-07): the queue to Thu 11-12 (the UI rows first), the freeze that evening, test nights to Sat, the showcase video and A82 on Sat 11-14.
+2. **Before a release tag, not daily (P25):** the owner's hand check (MORNING.md, on the device of the last automatic run, about 10 minutes). The next session writes each failed step as a backlog bug line on phase-1 and logs one line in `.coord/log.md`: `- HH:MM morning <date>: clean` or `- HH:MM morning <date>: fails <ids>`.
 
 **The weekly extreme night** (owner, 2026-10-29; replaces the nightly fuzz of 2026-10-27): once a week lane B runs the extreme-input packages (none open) and the fuzz, in 10-minute slices (G167: from `app/`, each command as `../tools/devlock.sh slice <name> node scripts/sweep.ts …`; n = 4 for the 5,000 `--edges` trees: a part of 1,250 takes about 2 min at G138's 90 s per 1,000 trees, never more than 5,000 trees a part (8 min): `--nightly --edges --seed <clock> --count 5000 --part i/4` for i = 1..4, then `--shrink <seed>`; a missing part is named and exit 1; a long shrink: `--shrink <seed> --part i/m` for each i, then `--shrink <seed> --join`), with its triage (each week the text of G138, its package file at d1278849, with a new ID); the Opus pass files the backlog lines. Wrong numbers of everyday or medium reach run any time, by reach.
 
@@ -58,10 +55,13 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is skipped. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, then engine rows)
-Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry highlights (R116)" and the lifted --pick on the History picked row; R113's rings, gallery home-tips-small); after R24d (with R92's Constants and Tools; R108's gallery group "Decimal comma in apps"; R89 on the Fairphone: save two presets with different free keys and switch; R111's note at 360 px; R33's stored-name colour in each theme, decisions.md "Owner answers of 2026-11-02"; R120's gallery unitresult-t10-comma; R124's gallery group "Mark style (R124)" and R125's "Digit groups (R125)", ’ and , grouping only before the point since R125f1; G164's sample sources, decisions.md "Needs the user"; R59 on the Tab One: import a .txt library from Downloads and from Drive, paste a long one from the clipboard, read the 9 s notice; R135's note on CAS Σ cos(k)/k to 2000; R143's ▾ at 360 px, where Math's face and Help's Shift legend Settings come out up to 1 px smaller, kept by Opus pass 88; R161 on the Fairphone: fast two-thumb typing, the press follows every key, and R162's pop over each; R158's 30-digit e^(π√163) row on the Fairphone, two lines, nothing faded; R153's N62 Light Shift #5b2400 (the generator's move from #a03f00), R154's rings: Black & White's #86bebd / #1b4342, Solarized Dark's pale #d2f3ef, N62 Dark's #529997 beside the error outline under protanopia; decisions.md "R153–R155"; R156's gallery look-n62-flat beside look-n62, the line under N62 Light's keys).
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 560 | [R170](packages/R170.md) core list: units, ± | ron, Sonnet | `p1/ron-coreunits` | – |
+| 561 | [R172](packages/R172.md) the report text | ron, Sonnet | `p1/ron-reporttext` | – |
+| 562 | [R173](packages/R173.md) Report a problem | ron, Sonnet | `p1/ron-reportrow` | R172 |
+| 563 | [R171](packages/R171.md) the tips | ron, Sonnet | `p1/ron-tipslines` | R148 |
 | 538 | [R149](packages/R149.md) N62 + Enter rolls the credits | ron, Sonnet | `p1/ron-credits` | – |
 | 544 | [R157](packages/R157.md) the logo on Home's tile, and faint on an empty history | ron, Sonnet | `p1/ron-logomark` | R149 |
 | 554 | [R164](packages/R164.md) the other presses use the flag | ron, Sonnet | `p1/ron-pressflag2` | R161 |
@@ -76,12 +76,36 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 | 506 | [G187](packages/G187.md) a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
 | 507 | [G170](packages/G170.md) ilaplace leaves no broken entry in Giac's variable list (F89) | gorge, Opus | `p1/gorge-ilaplacevars` | – |
 | 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
+| 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
+| 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
+| 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
 
 ### Lane B queue (the release, then the engine)
 [A57](packages/A57.md) runs by day; the night review's queue goes on in [its note](../research/night-review-2026-11-02.md) section 2. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 564 | [R180](packages/R180.md) ∡ binds tighter (F192) | ron, Opus | `p1/ron-phasor` | – |
+| 565 | [G200](packages/G200.md) oracle check in the gate | gorge, Sonnet | `p1/gorge-oraclegate` | – |
+| 566 | [G201](packages/G201.md) the four traps | gorge, Sonnet | `p1/gorge-trustrows` | G200 |
+| 567 | [G300](packages/G300.md) trig chain cases | gorge, Sonnet | `p1/gorge-chain9` | G201 |
+| 568 | [G202](packages/G202.md) oracle counts | gorge, Sonnet | `p1/gorge-oraclecounts` | G200 |
+| 569 | [A90](packages/A90.md) release notes file | annabell, Sonnet | `p1/annabell-relnotes` | – |
+| 570 | [A92](packages/A92.md) bug form session | annabell, Sonnet | `p1/annabell-formsession` | – |
+| 571 | [A93](packages/A93.md) counts from the files | annabell, Sonnet | `p1/annabell-trustfacts` | G200, G201, G202 |
+| 572 | [A94](packages/A94.md) trust facts | annabell, Sonnet | `p1/annabell-aboutfacts` | A93 |
+| 573 | [G301](packages/G301.md) CAS degree quotient (F196) | gorge, Opus | `p1/gorge-degquot` | – |
+| 574 | [A96](packages/A96.md) F-Droid Emscripten pin | annabell, Sonnet | `p1/annabell-fdroidpin` | – |
+| 575 | [A97](packages/A97.md) F-Droid build step | annabell, Sonnet | `p1/annabell-fdroidbuild` | A96 |
+| 576 | [A98](packages/A98.md) `SUBMIT.md` | annabell, Sonnet | `p1/annabell-fdroidsubmit` | A97 |
+| 580 | [G225](packages/G225.md) `dot`, `cross` lengths (F194) | gorge, Opus | `p1/gorge-dotlen` | – |
+| 581 | [G220](packages/G220.md) normal cdf tail (F195) | gorge, Opus | `p1/gorge-normalcdf` | – |
+| 582 | [G221](packages/G221.md) `student_cdf`, `chisquare_cdf` (F195) | gorge, Opus | `p1/gorge-tchicdf` | – |
+| 583 | [G228](packages/G228.md) `formatBase` | gorge, Sonnet | `p1/gorge-formatbase` | – |
+| 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
+| 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
+| 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221 |
+| 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
