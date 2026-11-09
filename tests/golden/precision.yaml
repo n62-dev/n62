@@ -1271,3 +1271,9 @@ cases:
   - { id: "g220-normald-cdf-neg1-1-30", input: "normald_cdf(0,1,-1,1)", settings: { digits: 30 }, oracle: "erf(sqrt(F(1,2)))", expect: "0.682689492137085897170465091264", mark: "≈", source: "oracle", note: "guard: two bounds, Φ(1) - Φ(-1) = erf(1/sqrt(2))" }
   - { id: "g220-normal-icdf-0.975-30", input: "normal_icdf(0,1,0.975)", settings: { digits: 30 }, oracle: "sqrt(2)*mp.erfinv(M(F(19,20)))", expect: "1.95996398454005423552459443052", mark: "≈", source: "oracle", note: "F195: the alias showed ⚠ 13 1.95996398454 (unaudited, Giac's double): now polished as normald_icdf (ICDF_REPLACED)" }
   - { id: "g220-cas-keep-normald-cdf-1", kind: "cas", input: "normald_cdf(1)", expect: "(erf(sqrt(2)/2)+1)/2", source: "derived", note: "guard: the exact text stays; the reading of erf(u)+1 is for the value only. Φ(x) = (1+erf(x/sqrt(2)))/2" }
+  # --- G173 (F108, F127, F93): Giac's print forms never reach CAS's text ------------------------------------------------
+  - { id: "g173-cas-empty-seq", kind: "cas", input: "op([])", expect: "No value found", source: "derived", note: "F108: a sequence of no element is no answer; it showed Giac's seq[]" }
+  - { id: "g173-cas-fmin-one", kind: "cas", input: "fMin(x^2-2*x+1,x)", expect: "1", source: "derived", note: "F108: x²−2x+1 = (x−1)² has its minimum at x = 1; it showed Giac's seq[1]" }
+  - { id: "g173-cas-matrix-in-vector", kind: "cas", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
+  - { id: "g173-cas-matrix-in-list", kind: "cas", input: "list[idn(2)]", expect: "{[[1,0],[0,1]]}", source: "derived", note: "F127: it showed {matrix[[1,0],[0,1]]}" }
+  - { id: "g173-cas-when", kind: "cas", input: "when(x>0,x+1,x-1)", expect: "when(x>0,x+1,x-1)", source: "derived", note: "F93: it showed C's ((x>0)? x+1 : x-1), which the entry line does not read" }

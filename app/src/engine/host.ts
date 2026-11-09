@@ -37,7 +37,7 @@ import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerica
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
+import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, printsSequence, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
@@ -1014,6 +1014,20 @@ export class EngineHost implements FactsHost {
         text = d.text;
       }
     }
+    // G173 (F108, owner 2026-11-05): G119's rule for Giac's sequence answers, as in Home: one element is its value, several
+    // Giac's list type; no element (`op([])`) is refused below. The kind is asked only of a print that may be one.
+    let emptySeq = false;
+    if (printsSequence(text) && this.giac.value("pcasans", []).kind === "sequence") {
+      const n = Number(this.giac.eval("size(pcasans)"));
+      emptySeq = n === 0 && !form.noValue;
+      if (Number.isInteger(n) && n >= 1) {
+        const v = withDigits(this.giac, valuePrecision(digitsSet), digitsSet, () => this.giac.eval(`pcasans:=${n === 1 ? "pcasans[0]" : "list[pcasans]"}`));
+        if (!isError(v)) {
+          text = v;
+          if (asg && !guarded) this.giac.eval(`${asg.name}:=pcasans`);
+        }
+      }
+    }
     // G39: a divergent integral or series, or no limit, is refused as in Home; Giac's [exact, numeric] pair of a
     // definite integral is shown as Giac's text (both answers) with ⚠, never as a numeric list.
     const refused = guarded ? refusalOf(this.giac, guarded.rhs, text, digitsSet) : single ? null : refusalOf(this.giac, exactInput, text, digitsSet);
@@ -1043,6 +1057,11 @@ export class EngineHost implements FactsHost {
     const lost = guarded || !single || (onceRun && asg0 && !form.noValue) ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
     if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
     if (lost) return fail(enEngine[`error.${lost}`], lost);
+    if (emptySeq) {
+      // a guarded assignment has stored nothing yet; any other has: its name goes back, as a refused once store's (G171)
+      if (asg0 && !guarded) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
+      return fail(enEngine["error.noValue"], "noValue");
+    }
     if (guarded) {
       const stored = this.giac.eval(`${guarded.name}:=pcasans`);
       if (isError(stored)) return fail(stored, isTimeout(stored) ? "timeout" : "engine");
@@ -1118,7 +1137,7 @@ export class EngineHost implements FactsHost {
     const deg = s.angle !== "deg" ? null : needsDegrees(text) ? backInDegrees(this.giac, text) : withoutDegreeQuotient(this.giac, text);
     // G109: Giac's list type (a solve result too) is shown and copied with braces, as Home shows it; `full` keeps
     // Giac's `list[…]` for Ans and the chips, and MathPrint draws Giac's latex() (`\{…\}`)
-    const drawn = deg ?? text;
+    const drawn = whenCalls(deg ?? text); // G173 (F93): Giac's `?:` as when(c,a,b), which the entry line reads
     const shown = drawn.includes(LIST_TYPE) ? bracesOf(drawn) : drawn;
     const tex = deg !== null ? this.giac.eval(`latex(quote(${deg}))`) : latexShown(this.giac, slot, text);
     if (atN !== null) this.giac.eval("purge(pasfl)");
