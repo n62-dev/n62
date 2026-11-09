@@ -86,7 +86,7 @@ Milestone reviews (section 0): after R50e (with R116's gallery groups "Entry hig
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 558 | [A120](packages/A120.md) why c29 went red once on the Tab One (F200) | annabell, Sonnet | `p1/annabell-c29loop` | – |
+| 558 | A120 why c29 went red once on the Tab One (F200) | annabell, Sonnet | `p1/annabell-c29loop` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
