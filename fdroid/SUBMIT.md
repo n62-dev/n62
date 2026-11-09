@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Submitting N62 to F-Droid and IzzyOnDroid (the owner's steps after the tag)
 
-Application id `dev.n62.calc`; the recipe is `fdroid/dev.n62.calc.yml` (draft, never built: [README.md](README.md)); in fdroiddata it becomes `metadata/dev.n62.calc.yml`. Read on 2026-11-09 from fdroiddata's `CONTRIBUTING.md`, its MR template and `.gitlab-ci.yml` (the clone `../fdroiddata`, 2e8653f777), and from izzyondroid.org's inclusion policy. Both requests wait for the tag `v0.1.0` and its GitHub release (`tools/check-version.sh v0.1.0` passes; the release holds `n62-0.1.0.apk`, signed with the owner's key).
+Application id `dev.n62.calc`; the recipe is `fdroid/dev.n62.calc.yml` (draft, never built: [README.md](README.md)); in fdroiddata it becomes `metadata/dev.n62.calc.yml`. Sources, read on 2026-11-09: fdroiddata at 2e8653f777 (a clone beside this repo): `.gitlab/merge_request_templates/App inclusion.md` (the full-hash line 44, Reproducible Builds line 40, CI runners line 50), `CONTRIBUTING.md` (RFP line 11, squash line 173) and `.gitlab-ci.yml` (the jobs below; `fdroid build` at line 342, image `buildserver-trixie` at line 349); IzzyOnDroid: https://izzyondroid.org/docs/general/AppInclusionPolicy/ (fetched the same day). Both requests wait for the tag `v0.1.0` and its GitHub release (`tools/check-version.sh v0.1.0` passes; the release holds `n62-0.1.0.apk`, signed with the owner's key).
 
 ## 1. The fdroiddata merge request (gitlab.com/fdroid/fdroiddata)
 1. Fork fdroiddata (public); keep its `master` untouched; make a branch `n62-add` (not protected). One app per MR.
@@ -32,6 +32,7 @@ I am the developer. The app is not in the repo yet. It is submitted to F-Droid i
 
 **Size:** the policy's limit is "usually up to 30 MB per app", also the limit for one `.apk`; the repo keeps up to 3 versions if they fit. The APK is 14.1 MB (the package's figure; the file is not in the repo: `ls -l dist/n62-0.1.0.apk` or the release page, and put the real number in the issue), so about half the limit and room to grow. The limit was not checked before 2026-11-09; this page is the check, and the policy says exceptions are the maintainer's call.
 
-## Open decisions (decisions.md, "Needs the user")
-- **Reproducible Builds:** the MR template says F-Droid then publishes with *our* signature; without it F-Droid signs with its own key and "you can't enable it later". Then F-Droid's APK and the owner's GitHub/IzzyOnDroid APK have different keys and cannot update each other. The recipe has no `Binaries:` or `AllowedAPKSigningKeys:` line, and bit-identity of the VM build with the owner's APK is unproven. Decide before filing whether to ask for it (a failure costs a rework, not the app) or to state in the MR why not.
-- A pre-release on IzzyOnDroid (from memory only): v0.1.0 is a normal release (must-have 9), so it does not arise.
+## Open decision: Reproducible Builds (the owner decides before filing)
+**Recommendation: tick the box and ask for them.** The template (line 40) says F-Droid then publishes with *our* signature; without it F-Droid signs with its own key and "you can't enable it later", so its APK and the owner's GitHub/IzzyOnDroid APK would have different keys and could not update each other. Cost: the recipe needs `AllowedAPKSigningKeys:` (our certificate, `android/release-cert.sha256`), and bit-identity of the VM build with the owner's APK is unproven (the system-emscripten wasm was never compared with the container's); if the first build differs, the MR needs a rework, not the app. Would change if: the first CI build shows the wasm differs and the fix is long; then state the reasons in the MR (the template asks for them) and take F-Droid's key.
+
+A pre-release on IzzyOnDroid (from memory only): v0.1.0 is a normal release (must-have 9), so it does not arise.
