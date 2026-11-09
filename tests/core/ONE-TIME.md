@@ -14,3 +14,4 @@ Each is done once, by the owner, or by annabell when a package names it; the dai
 - R91 (`e80eda0`): the Fairphone's start time before and after the split (annabell; lo-8).
 - R49 (`d60fbfb`): on the Fairphone, the pill, 5, 1 shows Numbers and the pad moves its highlight (the owner; vr-9).
 - R87 (`56d017f`): on the Fairphone, Settings › Help and about › Parts we use (the owner); its two `./build.sh --unsigned` runs give the same APK hash (annabell; vr-9).
+- R173 (`c83ccfb4`): on the PWA, Settings › Help and about › Report a problem opens the bug form with Version and Device filled, and the report pastes into it (the owner; needs `bug.yml` on the pushed `master`, forms are live only from the default branch).

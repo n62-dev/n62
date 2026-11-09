@@ -8,7 +8,7 @@ The one place for "where are we and what's left", one or two lines per open item
 | Stage | State |
 |---|---|
 | Phase 0 spike; MVP milestones 1 (Home, CAS), 2 (Function, Solve), 3 (Python, removed by P11) | **Done** 2026-10-11 (reports in [archive/shifts/](archive/shifts/)) |
-| **The core freeze (P23)** | **Ended 2026-10-27** (owner). Its net stays: [tests/core/](../tests/core/README.md) (66 everyday tasks, all active) runs on every merge and on the night's device; a red case is a bug to fix. |
+| **The core freeze (P23)** | **Ended 2026-10-27** (owner). Its net stays: [tests/core/](../tests/core/README.md) (69 everyday tasks, all active) runs on every merge and on the night's device; a red case is a bug to fix. |
 | Milestone 4a: feel (P11) | Built: the entry work, sheets, flicks, Settings in the Mode sheet (R49, R87), history-row actions, R15b–R15c4, the mockups and the visual pass (R12a, R12b), press feedback only (R12c), TalkBack names and font scale 2.0 (R41), σ on tap (R40), the mark style (R124), the digit-group separator (R125), the palettes (R140, R150), Key shadows (R156), results mode (R53). Waiting: the trust features |
 | Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: A4b 31.9 ms, after R132 (A74, 11-05) p95 14.1 ms ≤ 16, E3 met; the gate is not complete |
 | Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), menu Constants and Tools (R92) |
@@ -18,7 +18,7 @@ The one place for "where are we and what's left", one or two lines per open item
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
 
 ## Needs the user
-0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml) (66 cases; tell a session what to drop or add); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
+0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml) (69 cases; tell a session what to drop or add); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
 1. **Your outreach steps** (decisions.md P18–P22): mirror G77's pin (`gh` logged in; the command is in `engine/giac/README.md`).
 2. **G2 questions:** the unanswered items of `tests/golden/G2-CHECKLIST.md` (41, 42, 52, 56, 63–71; each package built a default, named in decisions.md; 63–65 can reverse S14's route R); the optional real-G2 spot checks (`spec/mapping/vc-2026-10-11/SPOT-CHECK.md`).
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
