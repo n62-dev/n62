@@ -19,8 +19,11 @@ const selected = (page: Page): Locator => page.locator('article.item[data-select
 
 /** 7 and 8, each finished (8 is the last row). */
 async function two(page: Page): Promise<void> {
-  await tap(page, ["d7", "enter", "d8", "enter"]);
-  await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+  const done = page.locator('[data-status="done"]');
+  await tap(page, ["d7", "enter"]);
+  await expect(done).toHaveCount(1); // an Enter while a job runs starts nothing (session.submit): on a loaded host 8's Enter was lost
+  await tap(page, ["d8", "enter"]);
+  await expect(done).toHaveCount(2);
 }
 
 /** One finger, by CDP touch events: down on the element's centre, then `dy` px in steps, then up after `holdMs`. */
