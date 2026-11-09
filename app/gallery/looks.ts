@@ -246,3 +246,33 @@ export function wrapShots(): (LookShot & { viewport: { width: number; height: nu
     },
   ];
 }
+
+/** R149: N62, then Enter: the credits sheet over the keypad, mid-roll (the text has risen a little) and under reduced motion (a still list). */
+export function creditsShots(someHistory: (page: Page) => Promise<void>): LookShot[] {
+  const open = async (p: Page): Promise<void> => {
+    await someHistory(p);
+    await tap(p, ["alpha", "paren", "d6", "d2", "enter"]);
+  };
+  return [
+    {
+      id: "home-credits",
+      group: "Home",
+      title: "Home, N62 then Enter (R149): the credits sheet, mid-roll",
+      setup: async (p) => {
+        await open(p);
+        await p.locator('[data-testid="credits"][data-rolling="true"]').waitFor();
+        await p.waitForTimeout(6000);
+      },
+    },
+    {
+      id: "home-credits-still",
+      group: "Home",
+      title: "Home, the credits sheet under reduced motion (R149): a still list",
+      setup: async (p) => {
+        await p.emulateMedia({ reducedMotion: "reduce" });
+        await open(p);
+        await p.getByTestId("credits").waitFor();
+      },
+    },
+  ];
+}
