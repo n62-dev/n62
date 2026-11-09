@@ -31,6 +31,8 @@ export interface RowOps {
   insert(item: HistoryItem): void;
   /** Put the entry back on the line, with its chips (a tap on it). */
   recall(item: HistoryItem): void;
+  /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button or a list (R53's count). */
+  acted?(id: string): void;
 }
 
 export class ClipActions {
@@ -135,6 +137,12 @@ export class ClipActions {
       if (this.shell.app !== null) return this.put(await this.shell.copyText());
       return this.copyNow(item);
     });
+  }
+  /** The Copy key on a picked row: outside the Menu's list, so it tells the app itself (a row without a result copies
+   *  nothing: only the notice). */
+  copyPicked(item: HistoryItem): Promise<boolean> {
+    if (item.status === "done") this.ops.acted?.("copy");
+    return this.copyKey(item);
   }
   copy(item?: HistoryItem): Promise<boolean> {
     return this.serial(() => this.copyNow(item));
@@ -270,17 +278,22 @@ export class ClipActions {
       { id: "latex", label: tc("clip.subLatex"), disabled: none, reason: why, run: () => void this.copyLatex(row) },
     ];
     const finished = this.session.items.some((x) => x.status === "done" || x.status === "error");
+    /** A row action: told to the app first, while the keypad is as the user left it (the row buttons share these items). */
+    const act = (id: string, run: () => unknown) => (): void => {
+      this.ops.acted?.(id);
+      void run();
+    };
     return [
-      { id: "insert", label: tc("clip.insert"), disabled: none || noLine, reason: why, run: () => void this.insertRow(row) },
-      { id: "recall", label: tc("clip.recall"), disabled: this.recallable(row) === undefined || noLine, reason: why, run: () => void this.recallRow(row) },
-      { id: "copy", label: tc("clip.copy"), disabled: none, reason: why, run: () => void this.copy(row) },
-      { id: "store", label: tc("clip.store"), disabled: none || noLine, reason: why, run: () => void this.storeRow(row) },
+      { id: "insert", label: tc("clip.insert"), disabled: none || noLine, reason: why, run: act("insert", () => this.insertRow(row)) },
+      { id: "recall", label: tc("clip.recall"), disabled: this.recallable(row) === undefined || noLine, reason: why, run: act("recall", () => this.recallRow(row)) },
+      { id: "copy", label: tc("clip.copy"), disabled: none, reason: why, run: act("copy", () => this.copy(row)) },
+      { id: "store", label: tc("clip.store"), disabled: none || noLine, reason: why, run: act("store", () => this.storeRow(row)) },
       {
         id: "delete",
         label: tc("clip.delete"),
         disabled: last === undefined || last.status === "pending",
         reason: last === undefined ? undefined : tc("clip.working"),
-        run: () => void this.deleteRow(row),
+        run: act("delete", () => this.deleteRow(row)),
       },
       { id: "copyAs", label: tc("clip.copyAs"), disabled: none, reason: why, submenu: { title: tc("clip.copyAs"), items: copies } },
       { id: "paste", label: tc("clip.paste"), run: () => void this.paste() },

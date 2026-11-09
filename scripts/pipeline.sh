@@ -581,6 +581,7 @@ if [[ $dry -eq 1 ]]; then
   else echo "package file: none deleted (a FIX id or a task text)"; fi
   echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two) and never enters the queue"
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
+  echo "stray check (A88): before the worker and each fix or resolve round the top level of $(dirname "$main") and $main/.claude/worktrees is listed; afterwards one log line per new entry: pipeline #<n> $id: WARN new file outside the worktree: <path> (a worktree git knows is not new; warns only)"
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
   [[ "$audit_model" == auto || "$audit_model" == opus ]] || { [[ "$agent" == gorge ]] && echo "audit model raised to opus: gorge package (--audit-model $audit_model is a floor)"; }
   echo "audit model: $audit_model$([[ "$audit_model" == auto ]] && { [[ "$model" == opus ]] && echo " (opus: --model opus; else opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)" || echo " (opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)"; })"
@@ -656,7 +657,15 @@ agent_start() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [
   own_bg 'cd "$1" && shift && timeout -k 60 10800 claude "$@"' "$wt" -p --agent "$ag" --model "$mdl" --effort "$eff" "${claude_common[@]}" "$@" -n "$name" "$prompt" < "$input" > "$out" 2> "$out.err"
   agent_pid="$own_bg_pid"
 }
-run_agent() { agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; }
+# A88: before an agent and after it the run lists the top level of the main checkout's parent and of .claude/worktrees/, and logs
+# each new entry; only a warning (nothing is removed or moved, the run's result never changes). Another lane may have made the entry.
+stray_note() { stray_list "$main" > "$run/stray-before.txt" 2>/dev/null || : > "$run/stray-before.txt"; }
+stray_warn() {
+  local f
+  while IFS= read -r f; do [[ -z "$f" ]] || log "pipeline #$n $id: WARN new file outside the worktree: $f"; done < <(LC_ALL=C comm -13 "$run/stray-before.txt" <(stray_list "$main" 2>/dev/null) 2>/dev/null || true)
+  return 0
+}
+run_agent() { stray_note; agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; stray_warn; }
 agent_end() {  # <pid> <name> <log>
   local name="$2" out="$3" rc=0
   own_wait "$1" || rc=$?
@@ -669,7 +678,7 @@ agent_end() {  # <pid> <name> <log>
 
 # The deterministic checks; the failing excerpt goes to $run/fail-<round>.txt.
 excerpt() {  # the failing lines of a check log, capped (A83: docs-check's and the pre-flight lint's lines, the stage findings too)
-  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | head -n 150
+  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | grep -vE '^[0-9]+[:-] *✓' | head -n 150 || true  # A83f1: a passing Playwright line (✓) that holds × is no failure
   [[ -s "$1" ]] && { echo "--- tail ---"; tail -n 30 "$1"; }
 }
 # Wall-clock tests: the Find 16 ms/key test, the golden units p95 bar, the solve.spec.ts persistence test, the clipboard

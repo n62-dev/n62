@@ -111,22 +111,22 @@ try {
   await keys(line);
   const end = await caret();
   console.log(`\n--ends: line 12+3/4+56 typed; caret at ${end.pos} of ${end.last}`);
-  await keys(['lstart']); console.log(`⇤ from the end → ${(await caret()).pos} (0 = the start)`);
-  await keys(['lend']); console.log(`⇥ from the start → ${(await caret()).pos} (${end.last} = the end)`);
+  await keys(['shift', 'undo']); console.log(`⇤ from the end → ${(await caret()).pos} (0 = the start)`);
+  await keys(['shift', 'redo']); console.log(`⇥ from the start → ${(await caret()).pos} (${end.last} = the end)`);
   // the caret's walk by ▶ from the start, then Shift + ⇤ and Shift + ⇥ from inside the numerator (the 3)
-  await keys(['lstart']);
+  await keys(['shift', 'undo']);
   const walk = [];
   for (let i = 0; i < 6; i++) { await keys(['right']); walk.push((await caret()).pos); }
   console.log(`▶ from the start walks ${walk.join(' ')}`);
-  await keys(['lstart', 'right', 'right', 'right', 'right']);
+  await keys(['shift', 'undo', 'right', 'right', 'right', 'right']);
   const inBox = (await caret()).pos;
-  await keys(['shift', 'lend']); const boxEnd = (await caret()).pos;
-  await keys(['shift', 'lstart']); const boxStart = (await caret()).pos;
+  await keys(['shift', 'paste']); const boxEnd = (await caret()).pos;
+  await keys(['shift', 'copy']); const boxStart = (await caret()).pos;
   console.log(`caret after ▶ ▶ ▶ ▶ (in the numerator) at ${inBox}; Shift + ⇥ → ${boxEnd}; then Shift + ⇤ → ${boxStart}`);
   // a tap at the entry line's right end (past the formula) and at its left end, each from the caret at 2
   const box = await page.locator('math-field').boundingBox();
   const at = async (x) => {
-    await keys(['lstart', 'right', 'right']);
+    await keys(['shift', 'undo', 'right', 'right']);
     const from = (await caret()).pos;
     await page.evaluate(() => document.querySelector('math-field').focus());
     await page.waitForTimeout(550); // MathLive reads a second tap within 500 ms as a double tap (app/test/tap.spec.ts)

@@ -1,9 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # The 16 sources of the materials sample (S36)
 
-**Status: open.** The owner signs the table, reads the short list below and approves the two copper edits, by the freeze on Thu 11-12.
+**Status: open.** The owner signs the table and reads the short list below, by the freeze on Thu 11-12. The two copper edits go in with S36f1: Opus pass 103 read sections 3.3 and 3.9 of the sheet [D1] again and found 16.8 and 110 (annealed) there; the lines keep "(to verify: owner)".
 
-**Recommendation: take the two copper edits now and read the seven short-list clauses before signing.** Two of the 16 values are wrong against the sheet they cite, and no line was found wrong against a Eurocode. Only four lines reach "confirmed at the clause", because the Eurocodes are paywalled and free texts rarely name a clause.
+**Recommendation: read the seven short-list clauses before signing.** Two of the 16 values are wrong against the sheet they cite, and no line was found wrong against a Eurocode. Only four lines reach "confirmed at the clause", because the Eurocodes are paywalled and free texts rarely name a clause.
 
 Checked on `phase-1` at 26390e12, 2026-11-08, on `app/public/samples/materials.txt` (not edited). Rerun: `python3 tools/probes/sample-sources.py` (exit 1, the two copper lines). All 16 definitions agree with their source lines, and the 7 `// test:` lines on values agree in exact arithmetic. `node tools/probes/library.ts check` passed all 11 tests on import, the 4 function tests among them.
 

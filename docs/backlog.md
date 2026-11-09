@@ -9,7 +9,7 @@ The one place for "where are we and what's left", one or two lines per open item
 |---|---|
 | Phase 0 spike; MVP milestones 1 (Home, CAS), 2 (Function, Solve), 3 (Python, removed by P11) | **Done** 2026-10-11 (reports in [archive/shifts/](archive/shifts/)) |
 | **The core freeze (P23)** | **Ended 2026-10-27** (owner). Its net stays: [tests/core/](../tests/core/README.md) (66 everyday tasks, all active) runs on every merge and on the night's device; a red case is a bug to fix. |
-| Milestone 4a: feel (P11) | Built: the entry work, sheets, flicks, Settings in the Mode sheet (R49, R87), history-row actions, R15b–R15c4, the mockups and the visual pass (R12a, R12b), press feedback only (R12c), TalkBack names and font scale 2.0 (R41), σ on tap (R40), the mark style (R124), the digit-group separator (R125), the palettes (R140, R150), Key shadows (R156). Waiting: results mode (R53), the trust features |
+| Milestone 4a: feel (P11) | Built: the entry work, sheets, flicks, Settings in the Mode sheet (R49, R87), history-row actions, R15b–R15c4, the mockups and the visual pass (R12a, R12b), press feedback only (R12c), TalkBack names and font scale 2.0 (R41), σ on tap (R40), the mark style (R124), the digit-group separator (R125), the palettes (R140, R150), Key shadows (R156), results mode (R53). Waiting: the trust features |
 | Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: A4b 31.9 ms, after R132 (A74, 11-05) p95 14.1 ms ≤ 16, E3 met; the gate is not complete |
 | Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), menu Constants and Tools (R92) |
 | Milestone 6: Structure | Not started (EN5–EN7, Help) |
@@ -30,12 +30,11 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75.
-- **Giac**, not filed yet. Regression files: `tools/giac-regress/` (G89; `n62-patched.cas`: fails on stock giac_2.1.0-1, passes with our patches; in the golden gate since G108). 0003–0036 sent (emails 4 and 5, 2026-11-08); the rest as four forum threads; new since: `simplify`'s assume leak (G92: subst.cc:2419, 2802), `restart(1)` clearing nothing (G93: VARS(1) lists equations, usual.cc:251), a typed string ending in a backslash refused inside brackets (G105f1), the laplace VARS() garbage (F89), stock `int(ceil(x),x,1/2,3/2)` = [1,1.5] (right 3/2; intg.cc's falling floor split, patch 0029 part 2).
+- **Giac**, not filed yet. Regression files: `tools/giac-regress/` (G89; `n62-patched.cas`: fails on stock giac_2.1.0-1, passes with our patches; in the golden gate since G108). 0003–0036 in his archive (email 14, 2026-11-08); the rest as four forum threads; new since: `simplify`'s assume leak (G92: subst.cc:2419, 2802), `restart(1)` clearing nothing (G93: VARS(1) lists equations, usual.cc:251), a typed string ending in a backslash refused inside brackets (G105f1), the laplace VARS() garbage (F89), stock `int(ceil(x),x,1/2,3/2)` = [1,1.5] (right 3/2; intg.cc's falling floor split, patch 0029 part 2).
 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **s36-copper, no package (S36).** Sample `E_copper`, `alpha_copper` off the sheet (110, 16.8): `tools/probes/sample-sources.py`; base 26390e12; only on import.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
@@ -66,7 +65,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F97.** CAS has no answer within 6 s (600 s hard timeout): `ellipse(-1,1,point(1+i))`, `hyperbola(…)`, `ecm_factor` of a 73-digit number; Home refuses them after 2 s.
 - **F105, package G169.** Home `normald_cdf(0,1,{1/2,3/2})` stays the symbolic `(erf({…})+1)/2`, no numbers (erf of a list in the exact form); honest, no value.
 - **F115, package G178 (Opus pass 83).** Home `3*int(1/x,x,-1,1)+1` at the default budget shows ⚠ 1 (unchecked), not the refusal the bare `int(1/x,x,-1,1)` gets: the divergence checks need about 20× the steps. Flagged, so honest; family 5.
-- **F200 (Opus pass 102).** Core c29 (5 ▶ A, relaunch, A×2) was red once on the Tab One (device 100, `de659c02`) and green in device 101; cause not read (a pass may not open the device record). A120 looks for it by day; a second red is a FIX, starting at the unawaited save of `defs` (`app/src/calc/index.ts:22`).
+- **F200 (Opus pass 102; A120).** Core c29 red once on the Tab One (device 100, `de659c02`); 135 runs since (relaunch 800/200/0 ms, host load 32) all green. The runner's `flush()` does not cover `defs` (the unawaited `kv.set`, `app/src/calc/index.ts:22`); only the 800 ms wait does. A123 awaits that write and logs `defs` on a red; a second red before it is a FIX.
 - **Flaky under load.** Golden `interrupt` (F128, run 307: `expand((x+y+z+1)^40)` at timeout 0.2 s took 406 ms of 400; pass 10: a second sighting puts it into `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, limit 60; no rerun) beside the other lane (passes 32, 34, run 415).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
 - **F63, package G179.** A stored ⚠ value (`BesselJ(1,2)`) read through a function, after a relaunch or by its name shows one confirmed digit fewer than the value itself (11, not 12: cautious, not wrong; `tests/golden/seqsweep-known.yaml` 6–7).
@@ -93,7 +92,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Without a package yet
 - **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, sounding only when Key click is on, and its latency against the pulse from a screen recording. Removal test: nobody (owner or an outside tester) turns it on in the four weeks after it ships, and the switch and its code go.
 - **R155f1's device check** (annabell, by day, the Tab One): the run dash in Home on a cold start is above 0 px high.
-- **R41's device check** (annabell, the next device run): TalkBack for a minute on the keypad and a sheet, and the status line at font scale 2.0 (decisions.md "R41").
+- **R41's device check** (annabell, the next device run): TalkBack for a minute on the keypad and a sheet, and the status line at font scale 2.0 (decisions.md "R41"). Same run, R53: the swipe on a real WebView, TalkBack on the handle and slice.
 - Plots of user functions after v0.1.0 (owner, 2026-11-02; R56b covers Solve); **R58b** Alpha letters are always names in CAS (G2 item 62 can reverse it).
 - **G9. Number formats against the G2** (item 15): decide in the settings and help pass. **K1:** a pending one-shot Shift is used up by the first drag step. **K5:** the gestures in the help texts.
 - **docs/05 section 5's five UI tasks** are not in `tests/tasks/tasks.yaml` (budget 2 presses or 1 tap, docs/05 section 2 rule 5).

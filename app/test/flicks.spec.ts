@@ -256,11 +256,10 @@ test("Shift and Alpha taps stay as on the G2 (one-shot, Alpha twice locks) and a
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
   await tap(page, ["d6"]); // R49: Counters, a section of the Settings level (the sixth since R38a: Data is fifth)
   const value = (id: string) => page.getByTestId("menu").locator(`[data-id="${id}"]`).getByTestId("sheet-value");
-  await expect(value("shift")).toHaveText("3"); // the Shift that opened Settings counts too
-  await expect(value("alpha")).toHaveText("5");
+  await expect(value("taps")).toHaveText("3 / 5"); // Shift / Alpha (R53: one row); the Shift that opened Settings counts too
   await expect(value("since")).toHaveText(/^\d{4}-\d\d-\d\d$/);
   await page.getByTestId("menu").locator('[data-id="reset"]').tap();
-  await expect(value("shift")).toHaveText("0");
+  await expect(value("taps")).toHaveText("0 / 0");
   // stored on the device: still zero after a relaunch (the write waits a second)
   await page.waitForTimeout(1300);
   await page.reload();

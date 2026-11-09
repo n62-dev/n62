@@ -72,6 +72,24 @@ claude_scratch_remove() {
   return 0
 }
 
+# stray_list <main checkout>: A88: the top level of the main checkout's parent and of its .claude/worktrees/, sorted, one path a
+# line, without the worktrees git knows (a run's own are not strays). Never fails.
+stray_list() {
+  local main="$1" wtd w known="" parent
+  wtd="$main/.claude/worktrees"; parent="$(dirname "$main")"
+  {
+    find "$parent" -mindepth 1 -maxdepth 1 2>/dev/null
+    if [[ -d "$wtd" ]]; then
+      wtd="$(cd "$wtd" && pwd -P)"
+      while IFS= read -r w; do [[ "$(dirname "$w")" != "$wtd" ]] || known+="$w"$'\n'; done < <(git -C "$main" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')
+      find "$main/.claude/worktrees" -mindepth 1 -maxdepth 1 2>/dev/null | while IFS= read -r w; do
+        grep -qxF "$wtd/$(basename "$w")" <<<"$known" || echo "$w"
+      done
+    fi
+  } | LC_ALL=C sort
+  return 0
+}
+
 # ---- engine builds (A28) ----
 # engine_key <git dir> <rev>: a hash of the engine's inputs at <rev> (build-wasm.sh, patches/ without its README, wasm/), from the
 # blob ids in the tree, so it needs no checkout and takes milliseconds.

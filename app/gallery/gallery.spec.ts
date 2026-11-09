@@ -6,6 +6,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { test, type Page } from "@playwright/test";
 import { parse } from "yaml";
 import { entryValue, flick, open, setFontScale, tap } from "../test/helpers.ts";
+import { foldShots } from "./fold.ts";
 import { popShots } from "./keypop.ts";
 import { eiShots, entryShots, groupShots, ringShots, runShots, lookShots, markShots, menuMarkShots, wrapShots } from "./looks.ts";
 
@@ -294,6 +295,7 @@ const shots: Shot[] = [
   { id: "layer-alpha-cas", group: "Keypad layers", title: "Alpha layer in CAS (lower case)", setup: (p) => tap(p, ["@cas", "alpha"]) },
   { id: "layer-shift-alpha", group: "Keypad layers", title: "Shift then Alpha (lower case)", setup: (p) => tap(p, ["shift", "alpha"]) },
   ...popShots(), // R162
+  ...foldShots(someHistory), // R53
   // ---- R146: rows 0–2 (Help | Esc, Undo | Redo, Copy | Paste; on Shift Settings | Clear, ⇤ | ⇥, ⇤□ | □⇥), N62 Light and Dark
   ...([[360, 740], [412, 915]] as const).flatMap(([width, height]) => [false, true].map((on) => ({ id: `sixkeys-${width}${on ? "-shift" : ""}`, group: "The six keys (R146)",
     title: `Rows 0–2 at ${width} × ${height}, Shift ${on ? "on" : "off"}`, viewport: { width, height }, element: ".pad", setup: (p: Page) => tap(p, on ? ["shift"] : []) }))),

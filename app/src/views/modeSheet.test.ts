@@ -383,7 +383,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     session.taps.counts.shift = 4;
     session.taps.press();
     expect(byId(s, "presses")?.value).toBe("1");
-    expect(byId(s, "shift")?.value).toBe("4");
+    expect(byId(s, "taps")?.value).toBe("4 / 0");
     expect(s.activate(at(s, "reset"))).toEqual({ kind: "stay" });
     expect(session.taps.counts.shift).toBe(0);
     expect(byId(s, "presses")?.value).toBe("0");
@@ -582,14 +582,14 @@ describe("Settings › Data (R38a)", () => {
 
 describe("Settings › Counters › Export the counts (R127)", () => {
   it("is a row before Reset only where the app gives the file port; it saves the counts as they stand", () => {
-    expect(settings(4).level.items.map((x) => x.id)).toEqual(["presses", "shift", "alpha", "presets", "since", "reset"]);
+    expect(settings(4).level.items.map((x) => x.id)).toEqual(["presses", "taps", "presets", "uses", "since", "reset"]);
     const saved: string[] = [];
     const userKeys = new UserKeys(fakeKv());
     const clip = { saveCounts: async (counts: unknown) => void saved.push(JSON.stringify(counts)) } as unknown as ClipActions;
     const s = new Sheet("mode", "Mode", () => modeItems(session, { userKeys, data: (run) => void run(clip) }), { remember: false });
     s.pickNumber(6);
     s.pickNumber(6); // Counters (Your keys and Data come first)
-    expect(s.level.items.map((x) => x.id)).toEqual(["presses", "shift", "alpha", "presets", "since", "export", "reset"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["presses", "taps", "presets", "uses", "since", "export", "reset"]);
     session.taps.press("d7:primary");
     const picked = s.activate(at(s, "export"));
     if (picked.kind === "run") picked.item.run?.();

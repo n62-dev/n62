@@ -93,7 +93,7 @@ test.describe("by keys", () => {
     await page.keyboard.press("6");
     await expect(title(page)).toHaveText("Mode › Settings › Counters");
     await page.keyboard.press("ArrowDown");
-    await expect(active(page)).toHaveAttribute("data-id", "shift"); // the key presses (R70) come first
+    await expect(active(page)).toHaveAttribute("data-id", "taps"); // the key presses (R70) come first, then Shift / Alpha (R53: one row)
     await page.keyboard.press("Escape");
     await expect(title(page)).toHaveText("Mode › Settings");
     await expect(active(page)).toHaveAttribute("data-id", "counters");
@@ -154,14 +154,13 @@ test.describe("by touch", () => {
   test("Counters: the Shift and Alpha counts, the presets switched (R89), since when, and Reset, which keeps the sheet open", async ({ page }) => {
     await tap(page, ["shift", "shift", "alpha", "alpha"]);
     await tap(page, ["@mode", "d6", "d6"]);
-    expect(await rowIds(page)).toEqual(["presses", "shift", "alpha", "presets", "since", "export", "reset"]);
+    expect(await rowIds(page)).toEqual(["presses", "taps", "presets", "uses", "since", "export", "reset"]);
     await expect(row(page, "presses").getByTestId("sheet-value")).toHaveText("8"); // R70: Shift Shift Alpha Alpha, the format chip, ▲, 6, 6
-    await expect(row(page, "shift").getByTestId("sheet-value")).toHaveText("2");
-    await expect(row(page, "alpha").getByTestId("sheet-value")).toHaveText("2");
+    await expect(row(page, "taps").getByTestId("sheet-value")).toHaveText("2 / 2"); // Shift / Alpha (R53: one row)
     await expect(row(page, "presets").getByTestId("sheet-value")).toHaveText("0");
     await expect(row(page, "since").getByTestId("sheet-value")).toHaveText(/^\d{4}-\d\d-\d\d$/);
     await row(page, "reset").tap();
-    await expect(row(page, "shift").getByTestId("sheet-value")).toHaveText("0");
+    await expect(row(page, "taps").getByTestId("sheet-value")).toHaveText("0 / 0");
     await expect(title(page)).toHaveText("Mode › Settings › Counters");
   });
 });
