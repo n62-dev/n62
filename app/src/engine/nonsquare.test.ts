@@ -24,6 +24,9 @@ describe("mayCombineLists", () => {
   it("needs an operator and a list, or a name that holds one", () => {
     expect(mayCombineLists("[1,2]+[3,4]", () => false)).toBe(true);
     expect(mayCombineLists("[1,2].*a", () => false)).toBe(true);
+    expect(mayCombineLists("[1,2]./a", () => false)).toBe(true);
+    expect(mayCombineLists("[1,2].^a", () => false)).toBe(true);
+    expect(mayCombineLists("[1,2]/a", () => false)).toBe(false);
     expect(mayCombineLists("L+1", (n) => n === "L")).toBe(true);
     expect(mayCombineLists("a+b*2", () => false)).toBe(false);
     expect(mayCombineLists("sin(1)-2", () => false)).toBe(false);

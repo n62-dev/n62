@@ -13,7 +13,7 @@
 // refused (Giac pads or cuts), the shapes read from the operands' values in Giac.
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { type Giac } from "./numeric.ts";
-import { callsOf, functionsIn, names, namesIn, withoutStrings } from "./giacPrint.ts";
+import { callsOf, functionsIn, names, namesIn, parsePrinted, withoutStrings } from "./giacPrint.ts";
 import { changesState } from "./novalue.ts";
 import { asksPoly } from "./polyvec.ts";
 import { MAX_NODES, treeOf, UNEVALUATED, type TreeNode } from "./tree.ts";
@@ -40,6 +40,8 @@ const productShape = (s: string): string => {
  *  makes `*` and the pointwise ones binary, read from the left (`[1,2]*[3,4]*[5,6,7]` is a number after its first pair);
  *  `+` is n-ary. */
 const COMBINING: ReadonlySet<string> = new Set(["+", "*", ".+", ".-", ".*", "./", ".^"]);
+/** G225f1: how those operators read in the typed text (`-` is `+` in the tree; `.+`, `.-`, `.*` hold `+`, `-`, `*`). */
+const COMBINING_TEXT: readonly string[] = ["+", "-", "*", "./", ".^"];
 /** G225f1: each operand's shape in one Giac value, read from its value (`s` the list of them, evaluated): 0 a non-list or
  *  an asked coefficient vector (subtype 10, polyvec.ts), n+1 a flat list of n, -1 a list of lists that is no matrix,
  *  -(r*100000+c) an r by c matrix. */
@@ -116,7 +118,7 @@ function bodiesRead(bodies: Bodies): { known: Map<string, KnownBody>; unknown: b
  *  with no list costs no engine call. */
 export function mayCombineLists(input: string, isList: (name: string) => boolean): boolean {
   const t = withoutStrings(input, "", "typed");
-  return (/[-+*]|\.[/^]/.test(t)) && (t.includes("[") || namesIn(t, "typed").some(isList));
+  return COMBINING_TEXT.some((op) => t.includes(op)) && (t.includes("[") || namesIn(t, "typed").some(isList));
 }
 
 /** Cheap text test: could `input` hold a power, inverse or division of a matrix, or (G225) a dot or cross call? */
@@ -303,7 +305,8 @@ export function nonSquarePower(
       if (c.combine !== undefined) {
         // one call: the shapes come from the values in Giac, printed as a list of integers
         const out = giac.eval(shapeCodes(`eval(${c.bind(c.operand)})`)).trim();
-        const codes = /^\[-?\d+(,-?\d+)*\]$/.test(out) ? out.slice(1, -1).split(",").map(Number) : [];
+        const printed = (parsePrinted(out)?.items ?? []).map((n) => Number(n.raw));
+        const codes = printed.every(Number.isInteger) ? printed : [];
         if (shapesDiffer(c.combine, codes)) return "lengthsDiffer";
         continue;
       }
