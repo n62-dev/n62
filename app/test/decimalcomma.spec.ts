@@ -327,7 +327,7 @@ test("Solve: a known x typed 2 , 5 with the keys is 2,5, and y=2x solves to 5; a
   await expect(page.getByTestId("entry-label")).toHaveText("E1:");
   await tap(page, ["shift", "x", "shift", "dot", "d2", "x", "enter", "@num"]);
   await row("x").locator("th button").tap();
-  await tap(page, ["esc", "d2", "dot", "d5"]);
+  await tap(page, ["shift", "esc", "d2", "dot", "d5"]); // Clear: Esc puts the value back (R261)
   expect(await entryValue(page)).toBe("2{,}5");
   await tap(page, ["enter"]);
   await expect(row("x").locator("td")).toHaveAttribute("data-value", "2.5");
@@ -359,7 +359,7 @@ test("Solve: selecting x (2,5) shows 2{,}5 on the line, Enter keeps 2.5 with no 
   await tap(page, ["@place", "d4", "@symb"]);
   await tap(page, ["shift", "x", "shift", "dot", "d2", "x", "enter", "@num"]);
   await row("x").locator("th button").tap();
-  await tap(page, ["esc", "d2", "dot", "d5", "enter"]);
+  await tap(page, ["shift", "esc", "d2", "dot", "d5", "enter"]);
   await expect(row("x").locator("td")).toHaveAttribute("data-value", "2.5");
   await row("y").locator("th button").tap();
   await row("x").locator("th button").tap();

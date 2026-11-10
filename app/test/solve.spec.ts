@@ -45,11 +45,11 @@ async function flushStored(page: Page, ok: (rec: { values?: Record<string, strin
     .toBe(true);
 }
 
-/** In Num: select `name` and type a new value (Clear first: the entry holds the current value). */
+/** In Num: select `name` and type a new value (Clear, Shift + Esc, first: the entry holds the current value; R261: Esc puts it back). */
 async function setValue(page: Page, name: string, keys: string[]): Promise<void> {
   await page.locator(`[data-testid="solve-table"] tr[data-name="${name}"] th button`).tap();
   await expect(page.getByTestId("entry-label")).toHaveText(`${name}=`);
-  await tap(page, ["esc", ...keys, "enter"]);
+  await tap(page, ["shift", "esc", ...keys, "enter"]);
 }
 
 test("Solve: x·e^x=5 with guess 1 gives the oracle root and the info line", async ({ page }) => {
@@ -134,7 +134,7 @@ test("Solve: Esc stops a long solve; equations and values survive and the engine
   // The engine works again: replace E1 by x^2=2 and solve from 1 (oracle sqrt(2), solve.yaml sqrt2-pos).
   await tap(page, ["@symb"]);
   await expect(page.locator('[data-name="E1"] .math')).toHaveAttribute("data-latex", /sum/);
-  await tap(page, ["esc", "x", "pow", "d2", "right", "shift", "dot", "d2", "enter"]);
+  await tap(page, ["shift", "esc", "x", "pow", "d2", "right", "shift", "dot", "d2", "enter"]);
   await tap(page, ["@num", "@menu", "d1"]);
   await expect(value(page, "x")).toHaveText("1.41421356237");
 });
@@ -213,7 +213,7 @@ test("a value set in Num does not follow you to Home; nor does a root (F72)", as
   await openSolve(page);
   await tap(page, ["x", "sq", "shift", "dot", "d2", "enter", "@num"]);
   await page.locator('[data-testid="solve-table"] tr[data-name="x"] th button').tap();
-  await tap(page, ["esc", "d1", "enter", "@home"]);
+  await tap(page, ["shift", "esc", "d1", "enter", "@home"]);
   expect(await entryValue(page)).toBe("");
   await tap(page, ["@place", "d4", "@num"]);
   await tap(page, ["@menu", "d1"]);
@@ -221,7 +221,7 @@ test("a value set in Num does not follow you to Home; nor does a root (F72)", as
   await tap(page, ["@home"]);
   expect(await entryValue(page)).toBe("");
   // half-typed, no Enter: still follows (R34)
-  await tap(page, ["@place", "d4", "@num", "esc", "d7", "@home"]);
+  await tap(page, ["@place", "d4", "@num", "shift", "esc", "d7", "@home"]);
   expect(await entryValue(page)).toBe("7");
 });
 
@@ -240,4 +240,68 @@ test("Enter in Num empties the line and never rounds a root (R76f1)", async ({ p
   await tap(page, ["d1", "enter"]);
   expect(await entryValue(page)).toBe("");
   await expect(value(page, "x")).toHaveText("1");
+});
+
+// R261 (night review 2026-11-09, bu-5; owner 2026-11-09): in Symb and Num, Esc puts the stored text back, Enter on an
+// empty line leaves it alone; Symb's Menu › Clear empties an equation as one Undo step.
+const edited = (page: Page): Promise<boolean> => page.evaluate(() => window.n62.shell.entryEdited);
+
+/** E1 x²+y²=4, E2 y=x. */
+async function twoEquations(page: Page): Promise<void> {
+  await openSolve(page);
+  await tap(page, ["x", "pow", "d2", "right", "add", "shift", "x", "pow", "d2", "right", "shift", "dot", "d4", "enter", "down"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("E2:");
+  await tap(page, ["shift", "x", "shift", "dot", "x", "enter"]);
+  await expect(page.locator('[data-name="E2"] .math')).toHaveAttribute("data-latex", "y=x");
+}
+
+test("Solve Symb: typed text keeps ▲▼ in the line; Esc puts E1 back, then ▼ and ▲ move (R261)", async ({ page }) => {
+  await twoEquations(page);
+  await tap(page, ["up"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("E1:");
+  const e1 = await page.locator('[data-name="E1"] .math').getAttribute("data-latex");
+  await tap(page, ["add", "d1", "down"]); // control
+  await expect(page.getByTestId("entry-label")).toHaveText("E1:");
+  await tap(page, ["esc"]);
+  expect(await entryValue(page)).toBe(e1);
+  expect(await edited(page)).toBe(false);
+  await tap(page, ["down"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("E2:");
+  await tap(page, ["up"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("E1:");
+});
+
+test("Solve Symb: Esc, the line cleared, Enter keeps E1; Menu › Clear empties it, Undo brings it back (R261)", async ({ page }) => {
+  await twoEquations(page);
+  await tap(page, ["up", "esc", "shift", "esc", "enter"]);
+  await expect(page.locator('[data-name="E1"] .math')).toHaveAttribute("data-latex", /x\^2\+y\^2=4/);
+  await tap(page, ["@menu"]);
+  await expect(page.getByTestId("menu").getByRole("menuitem").first()).toHaveText("1Clear");
+  await tap(page, ["d1"]);
+  await expect(page.locator('[data-name="E1"] .math')).toHaveCount(0);
+  await tap(page, ["undo"]);
+  await expect(page.locator('[data-name="E1"] .math')).toHaveAttribute("data-latex", /x\^2\+y\^2=4/);
+  await expect(page.getByTestId("entry-label")).toHaveText("E1:");
+  await tap(page, ["@num"]);
+  await expect(value(page, "y")).toBeVisible(); // both equations count again
+});
+
+test("Solve Num: typed text keeps ▲▼ in the line; Esc puts x's value back, then ▼ and ▲ move; Esc, Clear, Enter keeps it (R261)", async ({ page }) => {
+  await twoEquations(page);
+  await tap(page, ["@num"]);
+  await expect(value(page, "y")).toBeVisible();
+  await setValue(page, "x", ["d3"]);
+  await page.locator('[data-testid="solve-table"] tr[data-name="x"] th button').tap();
+  expect(await entryValue(page)).toBe("3");
+  await tap(page, ["d5", "down"]); // control
+  await expect(page.getByTestId("entry-label")).toHaveText("x=");
+  await tap(page, ["esc"]);
+  expect(await entryValue(page)).toBe("3");
+  expect(await edited(page)).toBe(false);
+  await tap(page, ["down"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("y=");
+  await tap(page, ["up"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("x=");
+  await tap(page, ["esc", "shift", "esc", "enter"]);
+  await expect(value(page, "x")).toHaveAttribute("data-value", "3");
 });

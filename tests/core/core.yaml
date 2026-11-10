@@ -390,7 +390,7 @@ cases:
     area: solve
     title: "Solve: x·eˣ = 5 from the guess 1"
     keys: ["@place", d4, "@symb", x, shift, ln, x, right, shift, dot, d5, enter, "@num",
-           {tap: '[data-testid="solve-table"] tr[data-name="x"] th button'}, esc, d1, enter, "@menu", d1]
+           {tap: '[data-testid="solve-table"] tr[data-name="x"] th button'}, shift, esc, d1, enter, "@menu", d1]
     expect: { text: { '[data-testid="solve-table"] tr[data-name="x"] td': "1.32672466524" } }
     value: "1.32672466524220022363509929776"
     source: oracle
@@ -493,7 +493,7 @@ cases:
     area: state
     title: "a value typed in Solve's Num view does not follow you to Home: Solve x²=2, x set to 1, Home, 2+2"
     keys: ["@place", d4, "@symb", x, sq, shift, dot, d2, enter, "@num",
-           {tap: '[data-testid="solve-table"] tr[data-name="x"] th button'}, esc, d1, enter, "@home", d2, add, d2, enter]
+           {tap: '[data-testid="solve-table"] tr[data-name="x"] th button'}, shift, esc, d1, enter, "@home", d2, add, d2, enter]
     expect: { result: "4", mark: "=" }
     value: "4"
     source: derived

@@ -43,12 +43,31 @@ export class SlotsState {
   move(delta: number): void {
     this.select(Math.min(this.names.length - 1, Math.max(0, this.selected + delta)));
   }
-  /** Store an entry; an empty entry clears the slot. A new entry is switched on. */
+  /** Store an entry (empty only from `clear`: Enter on an empty line leaves the slot alone, R261). A new entry is
+   *  switched on. Any store drops the copy Clear kept for Undo. */
   set(i: number, latex: string, error = ""): void {
+    this.cleared = null;
     const was = this.latex[i] ?? "";
     this.latex[i] = latex.trim() === "" ? "" : latex;
     if (was === "" && latex !== "") this.enabled[i] = true;
     this.errors[i] = error;
+  }
+  /** R261: what the last Menu › Clear took, while Undo can bring it back (one step; the next store drops it). Not stored. */
+  private cleared: { i: number; latex: string; enabled: boolean } | null = null;
+  /** R261: Menu › Clear: empty slot `i`, keeping what it held for one Undo. The app compiles the empty entry itself. */
+  clear(i: number): void {
+    const latex = this.latex[i] ?? "";
+    if (latex === "") return;
+    const kept = { i, latex, enabled: this.enabled[i] !== false };
+    this.set(i, "");
+    this.cleared = kept;
+  }
+  /** R261: Undo after Clear: the slot and what it held, once; null when nothing is kept or the slot holds an entry again.
+   *  The app stores the text back (`set`), then the on/off (`enabled`). */
+  takeCleared(): { i: number; latex: string; enabled: boolean } | null {
+    const c = this.cleared;
+    this.cleared = null;
+    return c && (this.latex[c.i] ?? "") === "" ? c : null;
   }
   toggle(i: number): void {
     this.enabled[i] = !this.enabled[i];

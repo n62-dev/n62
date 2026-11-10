@@ -68,11 +68,13 @@ const NAV: Record<string, NavDir> = {
 };
 
 /** Esc (R15c point 3), once an open sheet or pick has had it: a running job stops, else the folded keypad comes back
- *  (R53), else the line clears. Also a working row's own Cancel button. */
+ *  (R53), else the line clears; in an app view it goes back to what the app put there (R261: a slot's stored text).
+ *  Also a working row's own Cancel button. */
 export async function escape(c: RouteCtx): Promise<void> {
   if (await c.shell.cancel()) return;
   if (await c.session.cancel()) return;
   if (c.unfold()) return;
+  if (c.shell.app !== null && c.shell.restoreEntry()) return;
   c.entry.clear();
 }
 
@@ -429,6 +431,7 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;
     if (dir && shell.nav(dir)) return;
     if (!shell.showsEntry) return c.dead(); // a view without an entry line (Plot) ignores typing, ⇤ ⇥ and Undo
+    if (action.kind === "cmd" && action.name === "undo" && shell.undo()) return; // R261: what Menu › Clear took
     // Ans belongs to Home and CAS; ± (R71) is read by the unit view, from the Home or CAS line
     if (action.kind === "insert" && (action.latex === ANS_CHIP || action.units)) return c.dead();
   } else if (entry.empty && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {

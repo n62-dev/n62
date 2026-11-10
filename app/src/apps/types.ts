@@ -70,6 +70,9 @@ export interface MenuItem {
   readonly options?: readonly ValueOption[];
   /** Picking the item runs it and the sheet stays open (a switch in a list of switches). */
   readonly keep?: boolean;
+  /** A row that acts on the selected slot alone (R261: Symb's Clear): a view whose rows are all such rows still gets the
+   *  row pointing to the view with the analysis rows (R83, shell.svelte.ts). */
+  readonly slotRow?: boolean;
   /** Picking the item runs it, or opens this follow-up list in place of the menu (e.g. Intersection: with which?). */
   run?(): void;
   readonly submenu?: SubMenu;
@@ -127,6 +130,9 @@ export interface AppInstance {
   enter(view: ViewId, latex: string): void;
   /** Arrow keys. `edited`: the entry line differs from the last setEntry. Return true when handled. */
   nav?(view: ViewId, dir: NavDir, edited: boolean): boolean;
+  /** R261: Undo on a line the app left as it put it: bring back what the view's Menu › Clear took. False: nothing to
+   *  bring back (the line's own undo runs). */
+  undo?(view: ViewId): boolean;
   /** What the Copy key copies in this view (the Num table as CSV); undefined: nothing to copy. */
   copyText?(view: ViewId): Promise<string | undefined> | string | undefined;
   /** The view's menu (Menu key), shown on the sheet (docs/05 3.1). */
