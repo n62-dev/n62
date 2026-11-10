@@ -43,7 +43,7 @@
 # the acceptance criteria beside the long checks (A84: the round waits for both), and on APPROVED `git merge --no-ff --signoff
 # <the audited sha>` into phase-1 (NOT MERGED when the branch is not at that sha), promotes the engine and releases integ; so a merge commit's
 # tree is the tree the checks and the audit read. A failed check or a FIX releases integ, the fix round (the failing output, then the
-# findings) runs outside it and the run queues again (at most two fix rounds) → worktree and branch removed.
+# findings) runs outside it and the run queues again (at most two fix rounds, plus two free ones for docs or size alone, A124) → worktree and branch removed.
 # Progress goes to .tasks/<n>-<id>/run.log and one line per step to .coord/log.md; stdout gets
 # only the final RESULT line, on every exit (die too: "RESULT #n ID: NOT MERGED (why)", or
 # "RESULT -: NOT STARTED (why)" before a run number exists). Exit 0 merged, 1 not merged, 2 not started
@@ -579,7 +579,7 @@ if [[ $dry -eq 1 ]]; then
   echo "checks order (auto): docs, typecheck, size, redfirst, vitest, golden, stages, e2e, shell (A83: the cheap ones first); every queue round runs the whole list"
   if [[ -n "$pkg_drop" ]]; then echo "package file: $pkg_drop deleted on $branch in a commit of its own before each queue entry (A75; phase-1 keeps it until the merge, so <merge>^1 has it)"
   else echo "package file: none deleted (a FIX id or a task text)"; fi
-  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two) and never enters the queue"
+  echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two; free when only docs or size failed, A124) and never enters the queue"
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "stray check (A88): before the worker and each fix or resolve round the top level of $(dirname "$main") and $main/.claude/worktrees is listed; afterwards one log line per new entry: pipeline #<n> $id: WARN new file outside the worktree: <path> (a worktree git knows is not new; warns only)"
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
@@ -816,7 +816,7 @@ resolve_audit_model() {
 }
 
 # Round 0: the worker (with --no-worker, none: the queue's merge of phase-1 is its first step).
-rounds=0; resolves=0
+rounds=0; resolves=0; counted=0; free_used=0  # A124: rounds numbers every fix round (file names); counted holds those that use up one of two
 # A38: bring phase-1 into the branch (a branch that already contains it is left alone); a conflict is a resolve round for the agent.
 # Sets merge_conflicts=1 when a resolve round ran; ends the run when it fails.
 merge_phase1() {
@@ -895,7 +895,7 @@ queue_enter() {
   merge_phase1
   package_file_drop  # A75: a merge of phase-1 into a branch older than the package file brings it back
   queue_node_modules  # the merge may have brought a new dependency
-  [[ $nowork -eq 0 || $first_entry -eq 0 ]] || rounds=$((rounds + merge_conflicts))  # review-only: its first resolve round is a fix round (A10)
+  [[ $nowork -eq 0 || $first_entry -eq 0 ]] || { rounds=$((rounds + merge_conflicts)); counted=$((counted + merge_conflicts)); }  # review-only: its first resolve round is a fix round (A10), the only one the new counter takes (A124)
   first_entry=0
   if [[ $engine_managed -eq 1 ]]; then  # phase-1's engine as it is now (red-first; promoted by the last merge, so usually a copy)
     p1key="$(engine_key "$main" phase-1)"
@@ -930,7 +930,8 @@ audit_finish() {
   else log "pipeline #$n $id: audit ${verdict:-unclear} (round $rounds): $(grep -vE '^(FIX|APPROVED)?$' "$run/audit-$rounds.log" | head -n 1 | cut -c1-120)"; fi
 }
 
-# The checks and the audit share at most two fix rounds; a fix round runs outside the queue. A84: a queue round runs the cheap checks,
+# The checks and the audit share at most two counted fix rounds, plus at most two free ones (A124: only docs or size failed, the audit asked for
+# nothing); a fix round runs outside the queue. A84: a queue round runs the cheap checks,
 # then the audit beside the long ones, and waits for both; its fix round gets the failing output, then the audit's findings.
 verdict=""; audited=""
 fail_line() { local l; l="$(first_failing_line "$1")"; echo "$(head -n 1 "$1")${l:+: $l}"; }  # A83: the heading and the first failing line
@@ -940,7 +941,7 @@ while :; do
   package_file_drop  # A75: before the pre-flight, so the docs check and the audit read the tree that merges
   if ! preflight "$rounds"; then  # A83: the cheap checks before the queue, without integ
     log "pipeline #$n $id: pre-flight failed (round $rounds): $(fail_line "$run/preflight-$rounds.txt")"
-    reason="the pre-flight failed"; feedback="$run/preflight-$rounds.txt"
+    reason="the pre-flight failed"; feedback="$run/preflight-$rounds.txt"; afix=0
   else
     queue_enter
     run_checks "$rounds" || crc=1
@@ -950,6 +951,7 @@ while :; do
     else log "pipeline #$n $id: checks passed (round $rounds)"; fi
     [[ -z "$audit_pid" ]] || { audit_finish; audit_ran=1; }
     [[ $crc -eq 1 || "$verdict" != APPROVED ]] || break
+    afix=0; [[ $audit_ran -eq 0 || "$verdict" == APPROVED ]] || afix=1  # A124: a free round has no audit FIX
     if [[ $crc -eq 0 ]]; then reason="the audit asked for fixes"; feedback="$run/audit-$rounds.log"
     elif [[ $audit_ran -eq 0 || "$verdict" == APPROVED ]]; then reason="the checks failed"; feedback="$run/fail-$rounds.txt"
     else
@@ -958,13 +960,16 @@ while :; do
     fi
   fi
   queue_leave  # a failed check or a FIX: the fix round runs outside the queue
-  if [[ $rounds -ge 2 ]]; then
+  free=0; round_free "$feedback" "$afix" "$free_used" && free=1  # A124
+  if [[ $free -eq 0 && $counted -ge 2 ]]; then
     log "pipeline #$n $id: NOT MERGED after two fix rounds; branch $branch kept at $(git -C "$wt" log -1 --format=%h)"
     echo "RESULT #$n $id: NOT MERGED ($reason twice; branch $branch, worktree $wt kept; see $run)"; exit 1
   fi
   rounds=$((rounds + 1))
+  if [[ $free -eq 1 ]]; then free_used=$((free_used + 1)); rnd="fix round $rounds"; log "pipeline #$n $id: round $rounds free (docs or size only; $free_used of 2)"
+  else counted=$((counted + 1)); rnd="fix round $counted of 2"; fi
   { echo "# Fix round $rounds for pipeline run $n ($id): $reason"; echo; cat "$feedback"; echo; echo "# The task bundle"; cat "$bundle"; } > "$run/fix-$rounds.in"
-  fix_prompt="You are $agent on branch $branch in your own worktree, fix round $rounds of 2 for package $id: $reason. On stdin: the failing output, then the audit findings (a round may have only one of them), then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
+  fix_prompt="You are $agent on branch $branch in your own worktree, $rnd for package $id: $reason. On stdin: the failing output, then the audit findings (a round may have only one of them), then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
   run_agent "fix-$n-$rounds" "$run/fix-$rounds.log" "$agent" "$model" "$effort" "$run/fix-$rounds.in" "$fix_prompt" "${worker_tools[@]}"
   log "pipeline #$n $id: fix round $rounds done, $(git -C "$wt" log -1 --format=%h)"
   if task_questioned "$run/fix-$rounds.log"; then  # A55: as after the first worker
