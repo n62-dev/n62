@@ -15,6 +15,9 @@ import { isName } from "./giacPrint.ts";
  *  (never `exact`: an exact value stores none). */
 export type NameFacts = ValueFacts;
 
+/** The mark Vars draws for a name that holds no facts (an exact value). */
+export type StoredMark = "=" | "≈";
+
 /** var: a value (`A:=…`, `…▶A`, `L[2]:=…`, and since G65 every name any input set: `a,b:=1,2`, `(A:=5)+1`, a called
  *  program's global); fn: `f(x):=…`; assume: `assume`/`additionally` on a name; other: a stateful input with no single
  *  name, replayed as typed: only in a log stored before G65 (F58: `x:=y:=3` outlived purge(x), purge(y)). */
@@ -31,6 +34,9 @@ export interface DefEntry {
   facts?: NameFacts;
   /** The value as shown when it was defined (Vars and Find previews, docs/04 3.4). */
   preview: string;
+  /** A variable: the mark of the result it was stored from, as the history drew it (S53f1: `=` for 5, `≈` for 1/3 shown
+   *  as 0.333333333333). Absent in a log stored before S53f1 and when the result had no mark: Vars then shows none. */
+  mark?: StoredMark;
   view: "home" | "cas";
   /** When it was defined (ms since 1970). */
   time: number;
@@ -118,6 +124,7 @@ export function validDefs(x: unknown): DefEntry[] {
       ...(kind === "var" && (e["angle"] === "rad" || e["angle"] === "deg") ? { angle: e["angle"] } : {}),
       ...(typeof e["desc"] === "string" && e["desc"] ? { desc: e["desc"].slice(0, DESC_MAX) } : {}),
       ...(kind === "var" && e["migrate"] === "angle" ? { migrate: "angle" as const } : {}),
+      ...(kind === "var" && (e["mark"] === "=" || e["mark"] === "≈") ? { mark: e["mark"] } : {}),
     });
   }
   return out.slice(-MAX_DEFS);
@@ -131,6 +138,8 @@ export interface UserName {
   view: "home" | "cas";
   time: number;
   facts?: NameFacts;
+  /** The mark of the result it was stored from (DefEntry.mark); none for a name stored before S53f1. */
+  mark?: StoredMark;
   desc?: string;
 }
 
@@ -138,7 +147,7 @@ export function userNamesOf(log: readonly DefEntry[]): UserName[] {
   const out: UserName[] = [];
   for (const e of log) {
     if (e.kind !== "var" && e.kind !== "fn") continue;
-    out.push({ name: e.name, kind: e.kind, preview: e.preview, view: e.view, time: e.time, ...(e.facts ? { facts: e.facts } : {}), ...(e.desc ? { desc: e.desc } : {}) });
+    out.push({ name: e.name, kind: e.kind, preview: e.preview, view: e.view, time: e.time, ...(e.facts ? { facts: e.facts } : {}), ...(e.mark ? { mark: e.mark } : {}), ...(e.desc ? { desc: e.desc } : {}) });
   }
   return out;
 }

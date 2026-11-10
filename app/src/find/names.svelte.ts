@@ -7,7 +7,9 @@ import type { MenuItem } from "../apps/types.ts";
 import type { UserName } from "../engine/defs.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
+import { decimalFromString, ZERO_VALUE } from "../engine/format.ts";
 import { homeResultToLatex } from "../render/home.ts";
+import { markFor, markText, type DisplayContext, type NumericResult } from "../state/displayMode.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
 import { functionInsert, search } from "./rank.ts";
@@ -32,9 +34,30 @@ export function liveItem(n: UserName): FindItem {
   return { id: `${n.kind === "fn" ? "userfn" : "var"}:${n.name}`, kind: n.kind === "fn" ? "userfn" : "var", names: [n.name], title: n.name, ...(desc ? { desc } : {}), tier: 0, insert: insertOf(n) };
 }
 
-/** Details under the list: `A = 5`, or a function with its comment. */
-function previewOf(n: UserName): string {
-  return n.kind === "fn" ? `${n.name}(…)${n.desc ? ` · ${n.desc}` : ""}` : `${n.name} = ${n.preview}${n.desc ? ` · ${n.desc}` : ""}`;
+/** A stored value's mark (S53f1): the one rule the history uses (displayMode.ts markFor), worked out for the text that is
+ *  drawn: the preview was fixed when the value was stored, so the context is STD at the preview's own significant digits
+ *  (Digits or FIX now do not change it). A name with facts (a float, an inexact value) gets its mark from them; a preview
+ *  that is not one decimal (a list, a complex) has no value to read, so the facts alone say it is not exact (`approximate`:
+ *  ≈ or ⚠, never `=`). A name without facts holds an exact value: the mark the engine noted when it was stored (`mark`);
+ *  a name of a log stored before that shows none. */
+function markOfName(n: UserName, ctx: DisplayContext): string {
+  if (!n.facts) return n.mark ?? "";
+  const re = decimalFromString(n.preview.toLowerCase());
+  const own: DisplayContext = { ...ctx, format: "std", digits: re ? Math.max(1, re.digits.length) : ctx.digits };
+  const r: NumericResult = { facts: n.facts, ...(re ? { value: { re, im: ZERO_VALUE } } : { approximate: true }) };
+  const m = markFor(r, undefined, own);
+  return m ? markText(m) : "";
+}
+
+/** The value of a variable with its mark, as the history draws a result (`≈ 0.333333333333`). */
+function valueOf(n: UserName, ctx: DisplayContext): string {
+  const mark = markOfName(n, ctx);
+  return mark ? `${mark} ${n.preview}` : n.preview;
+}
+
+/** Details under the list: `A = 5`, `A ≈ 0.333333333333`, or a function with its comment. */
+function previewOf(n: UserName, ctx: DisplayContext): string {
+  return n.kind === "fn" ? `${n.name}(…)${n.desc ? ` · ${n.desc}` : ""}` : `${n.name} ${valueOf(n, ctx)}${n.desc ? ` · ${n.desc}` : ""}`;
 }
 
 /** Whether the clear-all row was pressed once (it clears on the second Enter). Reactive, so the row redraws. */
@@ -61,8 +84,8 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   const row = (n: UserName): MenuItem => ({
     id: liveItem(n).id,
     label: n.name,
-    value: n.kind === "fn" ? t("memory.fn") : n.preview,
-    preview: previewOf(n),
+    value: n.kind === "fn" ? t("memory.fn") : valueOf(n, session.displayContext()),
+    preview: previewOf(n, session.displayContext()),
     ...(memory ? { keep: true } : {}),
     run: () => run(n),
   });
