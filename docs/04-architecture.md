@@ -283,13 +283,13 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Alpha key [r8c1] | one-shot Alpha with lock flicks; stays its own key (P7 point 4, owner 2026-10-19; reopens if Alpha taps fall near zero) | P7 |
 | a b/c (row 3, col 4) [r4c5] | toggles the last result's form: decimal ↔ fraction, polar ↔ rectangular (built, R10) | G2 item 29, P12 |
 | Exponent key (row 6, col 0) [r7c1] | types the mark `ᴇ` (`\emark`, one token); Shift = Sto ▶ (built, R14) | P12 |
-| Rows 0–2 | R3 (built, R15c2; the pairs R146): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; Help \| Esc, Undo \| Redo, Copy \| Paste in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, ⇤□ \| □⇥ on Shift. Apps, Mode, the views, Menu: the status line (R15c1); results mode: R53's handle and swipe | P12, S2, R15c, R146 |
+| Rows 0–2 | R3 (built, R15c2; the pairs R146): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; Help \| Esc, Undo \| Redo, Copy \| Paste in columns 4–5, with Settings \| Clear, ⇤ \| ⇥ on Shift. Apps, Mode, the views, Menu: the status line (R15c1); results mode: R53's handle and swipe | P12, S2, R15c, R146 |
 | Alpha + 0 (quote); Shift + ◀ ▶ (line jumps) | removed (R13); the jumps came back as ⇤ ⇥ (R15c2), on Shift + Undo and Shift + Redo since R146 | P12, R15c |
 | Shift + 6, Shift + 9 | the G2's palettes: relations and logic; symbols and Greek with `!` and ∞ (built, R18) | P12 |
 | Help (row 0, col 4) [r1c4] | context help (milestone 6), dead and dimmed until built; Shift = Settings (R146; the G2's User is omitted) | reference; R15c, R146 |
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
-| Copy \| Paste (row 2, cols 4–5) | Copy, Paste (built, A3; on their own keys since R146): the picked row's or the last result's full value; Shift: ⇤□ \| □⇥, the start and end of the box the cursor is in, dead without an entry line | reference; R15c, R146 |
+| Copy \| Paste (row 2, cols 4–5) | Copy, Paste (built, A3; on their own keys since R146): the picked row's or the last result's full value; no Shift layer (the jumps to the ends of a box were removed, R275) | reference; R15c, R146 |
 | ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of nine on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
 | Help (context help) | the Find preview of the function before the cursor; with none there, Find (milestone 6) | ours; P8 left Help free |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
