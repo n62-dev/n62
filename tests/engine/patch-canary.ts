@@ -160,6 +160,10 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G186, patch 0040: simplifier's search for an exact power of an integer base runs to N=int(log2 of the base's double),
   // and a base past the double range (10^330+7) has an infinite double: the loop never ends, with no interrupt check
   ["0040-simplifier-root-huge-base.patch", "giac-2.1.0/src/prog.cc", /gen b=evalf_double\(base,1,contextptr\);\s*if \(b\.type==_DOUBLE_\)\{\s*double bd=b\._DOUBLE_val;\s*bd=std::log\(bd\);\s*int N=int\(bd\/std::log\(2\.0\)\);/, "gen simplifier(const gen & g,GIAC_CONTEXT){"],
+  // G187, patch 0041: a double exponent past the int range goes through int() (INT_MIN in wasm), and pow(gen,int) tests INT_MIN
+  // with -exponent<0, which the compiler drops: 3.0^(-1e10) recursed until the stack overflowed
+  ["0041-pow-double-exponent-int-range.patch", "giac-2.1.0/src/gen.cc", /case _DOUBLE___DOUBLE_:\s*if \(exponent\._DOUBLE_val==int\(std::floor\(exponent\._DOUBLE_val\+\.25\)\)\)/, "case _CPLX__INT_: case _IDNT__INT_:"],
+  ["0041-pow-double-exponent-int-range.patch", "giac-2.1.0/src/gen.cc", /if \(exponent<0\)\{\s*if \(-exponent<0\)/, "gen pow(const gen & base, int exponent){"],
 ];
 
 const tar = tarball(SOURCES.giac);

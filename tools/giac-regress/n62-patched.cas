@@ -896,6 +896,12 @@ Digits:=40:; pc("g186-simplify-sqrt-1e330+7",'simplify(sqrt(10^330+7))',sqrt(10^
 // patch 0040-simplifier-root-huge-base.patch
 // g186-abs-cos-acosh-1e-300-30 (precision.yaml, oracle)
 Digits:=40:; pc("g186-abs-cos-acosh-1e-300-30",'(abs(cos(pi/10^7)+acosh(1/10^300)))',186209588911856012363779923385/10^29,5/10^30);
+// patch 0041-pow-double-exponent-int-range.patch
+// g187-pow-double-3-neg-1e10 (derived: 10^(-4.77E9) is 0 in a double)
+Digits:=40:; pc("g187-pow-double-3-neg-1e10",'3.0^(-1e10)',0,1/10^30);
+// patch 0041-pow-double-exponent-int-range.patch
+// g187-normal-pi-pow-sqrt2-1e16 (derived: 10^(-4.97E15), MPFR's 0 at Digits 40)
+Digits:=40:; pc("g187-normal-pi-pow-sqrt2-1e16",'normal(pi^(sqrt(2)-10^16))',0,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);
