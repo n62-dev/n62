@@ -12,7 +12,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 **Auto or hands-on, around the clock (owner, 2026-11-08; P25).** win99 runs the queue 24/7; "night" in names and docs (`night.sh`, `/night-review`, this brief) now means auto. A package is hands-on only when it needs the owner's input or a physical act (a decision, an eye on a look, a key, a tag, the phone); automated device lists stay auto, with the Tab One plugged in. v0.1.0 keeps Sun 11-15 and its freeze; the new packages follow from about 11-16. The load: about 180 open packages and the owner's estimate of 1,800 more from fixes, new bugs and features, in under 6 months, about 77 a week. The owner moves from Ultra (20× Pro) to Max (5×, 90 CHF a month), a quarter of the usage. The week to 11-08 merged about 165 packages (162 to 170, by which seven days; 28% FIX packages); if that was the week of about 60% of Ultra, Max pays for about 70 a week at that cost, about 1,800 in 26 weeks, so the target needs a package to cost about 10% less, or more time. Both lanes to the v0.1.0 tag; from the move to Max one lane, measured for a week (it needs about 10 h a day at that rate; fewer Opus passes than one per three packages is the first cut). **To build before 24/7** (checked 2026-11-08). Code: a henri call that fails at a usage limit counts as a bad reply and two end the lane; the six waits add up over a whole `night.sh` run; neither has met a real limit since `night.sh` began. Flags today: `--limit-wait 18000` (5 h a wait), `--max-steps 100`, `--until`; a shift a day is the daily stop (rules section 4a). The stop covers planned reboots and Windows updates and writes the queue's rows; a lane lost to an unplanned reboot restarts at the next stop.
 
 **Two lanes** (owner, 2026-10-29; decisions.md P17 and "Owner answers of 2026-10-29"): lane A (ron's UI) and lane B (the release, then the engine) run around the clock, each with its own table in section 0c, merged through one queue (A47b). ron's packages run at night too: the owner's look moves to the milestone reviews ([release-0.1.0.md](../release-0.1.0.md), end), and a package's "owner's eye" item joins the next review. Device steps run in the lanes; the owner's acts (a key, a tag, a phone) wait for the owner (P25). The order:
-1. **Lane B, to v0.1.0** (the APK and the website from one tag): The bar and the days: [release-0.1.0.md](../release-0.1.0.md); the release is on Sun 11-15 (owner, 2026-11-06, confirmed 2026-11-07): the queue to Thu 11-12 (the UI rows first), the freeze that evening, test nights to Sat, the showcase video and A82 on Sat 11-14.
+1. **Lane B, to v0.1.0** (the APK and the website from one tag): The bar and the days: [release-0.1.0.md](../release-0.1.0.md); the target is Sun 11-15 (owner, 2026-11-06), not a fixed date: the tag waits for the bar (owner, 2026-11-10): the queue to Thu 11-12 (the UI rows first), the freeze that evening, test nights to Sat, the showcase video and A82 on Sat 11-14.
 2. **Before a release tag, not daily (P25):** the owner's hand check (MORNING.md, on the device of the last automatic run, about 10 minutes). The next session writes each failed step as a backlog bug line on phase-1 and logs one line in `.coord/log.md`: `- HH:MM morning <date>: clean` or `- HH:MM morning <date>: fails <ids>`.
 
 **The weekly extreme night** (owner, 2026-10-29; replaces the nightly fuzz of 2026-10-27): once a week lane B runs the extreme-input packages (G306–G308) and the fuzz (G309), in 10-minute slices (G167: from `app/`, each command as `../tools/devlock.sh slice <name> node scripts/sweep.ts …`; n = 4 for the 5,000 `--edges` trees: a part of 1,250 takes about 2 min at G138's 90 s per 1,000 trees, never more than 5,000 trees a part (8 min): `--nightly --edges --seed <clock> --count 5000 --part i/4` for i = 1..4, then `--shrink <seed>`; a missing part is named and exit 1; a long shrink: `--shrink <seed> --part i/m` for each i, then `--shrink <seed> --join`), with its triage (each week the text of G138, its package file at d1278849, with a new ID); the Opus pass files the backlog lines. Wrong numbers of everyday or medium reach run any time, by reach.
@@ -27,6 +27,8 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 
 | # | Package | Agent, model | Lane | Starts when merged | Size |
 |---|---|---|---|---|---|
+| [A144](packages/A144.md) | The core list in Firefox; the WebKit try (replaces A110) | annabell, Sonnet | day, Wed 11-11, before the tag | – | ~0.3 d |
+| [A145](packages/A145.md) | F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | day, when a slot is free; the tag does not wait | – | ~0.5 d |
 | [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
 | [A140](packages/A140.md) | No dead package links after a merge of phase-1 | annabell, Sonnet | day, no lane running, before Thu 11-12's restart (owner) | – | ~0.3 d |
@@ -63,6 +65,8 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 649 | [R284](packages/R284.md) the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
+| 650 | [R285](packages/R285.md) a browser that has not passed says so at start | ron, Sonnet | `p1/ron-browsernote` | A144 |
 | 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
 | 618 | [R272](packages/R272.md) one note when history drops past 200 (fh-13) | ron, Sonnet | `p1/ron-historynote` | – |
 | 619 | [R273](packages/R273.md) a typed line beats a picked row (vr-3) | ron, Sonnet | `p1/ron-pickkeep` | – |
@@ -93,6 +97,11 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 644 | [G318](packages/G318.md) an engine that cannot start stops after two tries (arch review N2) | gorge, Opus | `p1/gorge-startcap` | – |
+| 645 | [G322](packages/G322.md) `solve` keeps the real root of a cubic (arch review H2) | gorge, Opus | `p1/gorge-solvecount` | – |
+| 646 | [G319](packages/G319.md) the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
+| 647 | [G320](packages/G320.md) CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
+| 648 | [G321](packages/G321.md) a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
 | 601 | A132 pipeline rates from the log | annabell, Sonnet | `p1/annabell-pipestats` | A130 |
 | 602 | [A126](packages/A126.md) e2e flakes at 16 and 8 workers | annabell, Sonnet | `p1/annabell-e2eworkers` | A125 |
 | 643 | [G317](packages/G317.md) a name set beside the result keeps its own value and mark in Vars (pass 135) | gorge, Opus | `p1/gorge-sidepreview` | – |

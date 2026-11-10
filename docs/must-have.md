@@ -5,10 +5,10 @@ The owner's list of 2026-11-08, checked against the code and the engine, and tur
 A package starts only through `scripts/pipeline.sh`, and only when a lane row or a day's plan names it (brief section 0c); section A's have rows (2026-11-09), a few of section B's as the lanes' tail; the others have none yet. An item marked "stub" has no package: it says what must exist before it can be split. Line numbers in packages for v0.3 and later are as of de659c02; recheck at start.
 
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
-- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9.
+- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only).
 - Fri 11-13, for A91: A8, and G2 item 70 with it.
 - Sat 11-14, for the video: A4, A5.
-- Sun 11-15, the tag: A6, A10.
+- The tag (target Sun 11-15; it moves if the bar needs it, owner 2026-11-10): A6, A10.
 - Before any forum post: D8.
 - Before v0.2 starts: B2, B4, B5, B6, B7, B9. Before v0.3: B3, B8.
 - Before section C's packages: C1 to C8. Before RPN: D1 to D4.
@@ -16,7 +16,7 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 
 Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
 
-## A. Before you tell anyone (v0.1.0, tag Sun 11-15, freeze Thu 11-12 evening)
+## A. Before you tell anyone (v0.1.0, target tag Sun 11-15, freeze Thu 11-12 evening)
 
 - **No known silent wrong number** [have]. No open bug line shows a wrong value unmarked (F192, phasor entry, closed by R180). The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
 - **Units and ± in the core list** [miss]. 66 cases, none with a unit or ±; the harness has no unit check. R170.
@@ -147,7 +147,7 @@ The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10
 - **mh-C4 Library from a laptop** [have]. Import, export, "copy the format for your AI", tested (`libraryJobs.engine.test.ts:71`). No package.
 - **mh-C5 Published benchmark** [part: harness exists, `compare` empty, no `qalculate` column; only t07 is truly unbuilt; t08 and t09 work today]. Packages S50, R221, R222, R223. Hand-measuring is the owner's act, not a package. A task N62 loses triggers rework or removal (docs/03 rule 13).
 - **mh-C6 Tablet / landscape** [miss; deferred 10-13]. Package R224 (tablet and desktop). Stubs: phone landscape (C6b), split when decision 5 reopens it; the PWA manifest to `any` (C6c), split when phone landscape lands, because one manifest cannot differ by device: until then the installed PWA stays portrait.
-- **mh-C7 iOS** [miss; web app on iPhone unverified, Chromium only]. Packages S51, A110 (time-boxed; "could not run here" is a valid result), R225. No Capacitor iOS work. The legal lines are opinion.
+- **mh-C7 iPhone web app, checked** [miss; unverified, Chromium only; the web app only, owner 2026-11-10]. Packages S51, A110 (time-boxed; "could not run here" is a valid result), R225. No Capacitor iOS work. The legal lines are opinion.
 
 **Order:** all v0.5–v1.
 G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50, R221, R222, owner measures, R223 → S51, A110, R225 → R224 → G275, G276 → stubs of C3.
@@ -161,7 +161,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 4. The HP name: the README only, with the disclaimer, no new exception. Recommended: it is the existing rule.
 5. Reopen the deferred layout for tablet and desktop only (R224); phone landscape waits. Recommended: one column wastes a tablet, and phone landscape has no design.
 6. Formula sets live in a lazy Symb/Num app, after the pick on `results-mode.html`, sharing R130's step idea. Recommended: no second worksheet.
-7. iOS for v1: confirm web app only, and reword the list item to "iPhone web app, checked". Recommended: the FSF reads the App Store as a further restriction (legal opinion); S51 lists the holders, and no Capacitor work is needed for the web app.
+7. iOS for v1: **decided (owner, 2026-11-10): the web app only**; the list item is reworded. Why: the FSF reads the App Store as a further restriction (legal opinion); S51 lists the holders, and no Capacitor work is needed for the web app.
 8. R130 writes `± σ (k = 1)`. Change it to "standard uncertainty (σ)". Recommended: GUM 7.2.2 NOTE warns that "k = 1" misreads.
 
 **Not verified:**
