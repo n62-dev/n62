@@ -6,7 +6,7 @@
 // agreement check), so markOf() marks it as Home. Synchronous, UI-free. Only erasable TypeScript syntax.
 import { FULL_EXACT_MAX, resultFromFacts, toExactLiterals, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
 import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
-import { callsOf, isError, isNameChar, splitList } from "../engine/giacPrint.ts";
+import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
@@ -17,6 +17,13 @@ const ANY_DIM = BASES.map((b) => `has(pasy_,${b.symbol})`).join(" or ");
 const ONES = `[${BASES.map(() => "1").join(",")}]`;
 /** G40: the inverse functions that give an angle (the parser's ANGLE_OUT puts `/pasdeg` after each, R64). */
 const INVERSES = ["atan2", "asin", "acos", "atan", "asec", "acsc", "acot"] as const;
+/** G310: functions of a pure number, whose first argument the check reads (a zero of a length too: exp(0 m) is refused). */
+const PURE_FNS = ["exp", "ln", "log10", "logb", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sec", "csc", "cot", "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "Gamma", "erf", "erfc", "surd"] as const;
+/** sin, cos and tan take a pure number or an angle (P15). */
+const TRIG_FNS = ["sin", "cos", "tan"] as const;
+/** G310: the rad dimension alone, as pasuq's exponents. */
+const RAD = `[${BASES.map((b) => (b.symbol === "pasdimA" ? "1" : "0")).join(",")}]`;
+const ZERO = `[${BASES.map(() => "0").join(",")}]`;
 /** G159: the heads of a condition pasujk reads as one comparison; the tests Giac's evaluation decides on a free name;
  *  every head that makes a truth value or picks a case (a side holding one is not read: kind 3). */
 const CMP = "['<','<=','>','>=','==','=']";
@@ -26,10 +33,14 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
 /**
  * Our Giac definitions for the unit view, loaded once per engine on the first units request:
  * - every dimension symbol is positive, so √(4 m²) is 2 m and not 2·|m|;
- * - pasuq(f): [0, exponents, number] for one term; [1, the terms' exponents] for a sum of terms; [2] for anything
- *   else (a function of a quantity with units: also a term whose number part still holds a dimension symbol, as
- *   floor(3/2·m) or Giac's irem of two lengths); [3] when sin, cos or tan met a unit; [4] for an exact 0; [5] for Giac's infinity or undef (a division by 0);
+ * - pasuq(f): [0, exponents, number] for one term; [1, the terms' exponents] for a sum of terms; [2, pasumx(f)] for
+ *   anything else (a function of a quantity with units: also a term whose number part still holds a dimension symbol,
+ *   as floor(3/2·m) or Giac's irem of two lengths); [3] when sin, cos or tan met a unit (pasubad); [4] for an exact 0; [5] for Giac's infinity or undef (a division by 0);
  * - pasuh(y): whether y holds a dimension symbol;
+ * - pasue(f,s): the exponents d·∂f/∂d / f of f, 0 without a diff for a dimension symbol f does not hold (G310: the diff
+ *   by an absent symbol cost up to 2 ms on a piecewise); with s = 1 the first exponent that is not a number ends the
+ *   reading (the rest 0): f is then not one term. pasuq skips expand() when f has no + at all (it can make no sum),
+ *   and tests f == 0 only when f is not symbolic (after normal() a 0 is the integer 0; == on a max() cost 0.6 ms);
  * - pasua(x): the argument of sin, cos and tan, in radians (Giac runs in radians in every mode, G46): an angle (the
  *   rad dimension once, its value in rad) as it is; a pure number in the angle mode, as Home does (G15 default), so
  *   times pasdeg (π/180 in DEG); anything else gives the free symbol pasubad, which pasuq finds;
@@ -51,6 +62,15 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  *   by pasujk. q = 1 reads e as typed (quote): only the conditions with ==, = or != (Giac's evaluation makes `v==3`
  *   false and `v!=3` true, so the evaluated e has lost them), no step function;
  * - pasujc(x,H): 1 when a node of x has a head in H;
+ * - pasumx(x) (G310): 1 when a + node of x has two terms whose dimensions it reads (numbers) and that differ;
+ * - pasucg(x,ok) (G310, the check text only): pasubad when pasuq reads x as one term whose exponents are not in ok,
+ *   as [2] with pasumx's 1 (a sum of different dimensions inside a function it cannot read), or as a sum with
+ *   pasumx's 1 or a term it reads whose exponents are not in ok; x itself when it is 0 or undefined; else the free
+ *   symbol pasuw, a pure number the outer function's check reads at once (reading the argument again there cost up to
+ *   60 ms). pasucz(x) allows a pure number, pasuca(x) also one rad. The check text calls each function of PURE_FNS as
+ *   pasucf(pasucz(first argument), the others), a free function Giac leaves alone (round(pasuw,1) is its error);
+ *   pasucsin and the others are pasucf of pasuca, the inverses pasucf of pasucz times rad, pasucatan2(y,x) the rad
+ *   dimension when y/x passes pasucz (no atan2 of symbols: Giac's "User interrupt"), else pasubad;
  * - pasujk(c) (G159): a condition c of kind 1 at 0 of lhs − rhs when it is one comparison (<, <=, >, >=, ==, =) of
  *   sides that hold none, else kind 3 with c's names (and, or, not, !=, a nested comparison, a bare name): a jump
  *   wherever c holds the input (a number or true/false has no name, so no jump);
@@ -67,12 +87,14 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
 export const UNIT_DEFINITIONS: readonly string[] = [
   ...BASES.map((b) => `assume(${b.symbol}>0)`),
   `pasuh(pasy_):=${ANY_DIM}`,
-  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (pasf_==0) return [4]; ` +
-    `pasa_:=map(${S},pask_->normal(pask_*diff(pasf_,pask_)/pasf_)); ` +
-    `if (lvar(pasa_)==[]) { pasc_:=normal(pasf_/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasa_))); if (pasuh(pasc_)) return [2]; return [0,pasa_,pasc_]; } ` +
-    `past_:=expand(pasf_); if (sommet(past_)!='+') return [2]; past_:=[op(past_)]; ` +
-    `pasb_:=map(past_,pasu_->map(${S},pask_->normal(pask_*diff(pasu_,pask_)/pasu_))); ` +
-    `for (pasj_:=0;pasj_<size(past_);pasj_++) { if (lvar(pasb_[pasj_])==[] and pasuh(normal(past_[pasj_]/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasb_[pasj_]))))) return [2]; } ` +
+  `pasue(pasf_,pass_):={local pasr_,pask_,pase_; pasr_:=[]; for (pask_:=0;pask_<${BASES.length};pask_++) { pase_:=0; if (has(pasf_,${S}[pask_])) { pase_:=normal(${S}[pask_]*diff(pasf_,${S}[pask_])/pasf_); } ` +
+    `pasr_:=append(pasr_,pase_); if (pass_ and lvar(pase_)!=[]) { return concat(pasr_,seq(0,${BASES.length}-size(pasr_))); } } return pasr_; }`,
+  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (type(pasf_)!=DOM_SYMBOLIC and pasf_==0) return [4]; ` +
+    `pasa_:=pasue(pasf_,1); ` +
+    `if (lvar(pasa_)==[]) { pasc_:=normal(pasf_/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasa_))); if (pasuh(pasc_)) return [2,pasumx(pasf_)]; return [0,pasa_,pasc_]; } ` +
+    `if (!pasujc(pasf_,['+'])) return [2,0]; past_:=expand(pasf_); if (sommet(past_)!='+') return [2,pasumx(pasf_)]; past_:=[op(past_)]; ` +
+    `pasb_:=map(past_,pasu_->pasue(pasu_,0)); ` +
+    `for (pasj_:=0;pasj_<size(past_);pasj_++) { if (lvar(pasb_[pasj_])==[] and pasuh(normal(past_[pasj_]/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasb_[pasj_]))))) return [2,pasumx(pasf_)]; } ` +
     `return [1,pasb_]; }`,
   `pasua(pasx_):={local pasw_,pasy_; if (pasx_==0) return 0; pasw_:=normal(pasdimA*diff(pasx_,pasdimA)/pasx_); pasy_:=normal(subst(pasx_,pasdimA,1)); ` +
     `if ((pasw_!=0 and pasw_!=1) or ${ANY_DIM}) return pasubad; if (pasw_==1) return pasy_; return pasy_*pasdeg; }`,
@@ -91,6 +113,18 @@ export const UNIT_DEFINITIONS: readonly string[] = [
     `for (pasj_:=0;pasj_<size(pasL_);pasj_++) { pasp_:=evalf(pasL_[pasj_]); if (im(pasp_)==0 and abs(pasp_-pasa_)<=2*pass_) return 1; } return 0; }`,
   `pasujc(pasx_,pasH_):={local paso_,pasj_; if (type(pasx_)!=DOM_SYMBOLIC) { return 0; } if (member(sommet(pasx_),pasH_)) { return 1; } paso_:=[op(pasx_)]; ` +
     `for (pasj_:=0;pasj_<size(paso_);pasj_++) { if (pasujc(paso_[pasj_],pasH_)) { return 1; } } return 0; }`,
+  `pasumx(pasx_):={local paso_,pasj_,pasb_,pasv_; if (type(pasx_)!=DOM_SYMBOLIC) { return 0; } paso_:=[op(pasx_)]; if (sommet(pasx_)=='+') { pasb_:=[]; ` +
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { pasv_:=pasue(paso_[pasj_],1); if (lvar(pasv_)==[]) { pasb_:=append(pasb_,pasv_); } } ` +
+    `for (pasj_:=1;pasj_<size(pasb_);pasj_++) { if (pasb_[pasj_]!=pasb_[0]) { return 1; } } } ` +
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { if (pasumx(paso_[pasj_])) { return 1; } } return 0; }`,
+  `pasucg(pasx_,pasok_):={local pasn_,pasq_,pasj_; pasn_:=normal(pasx_); pasq_:=pasuq(pasn_); if (pasq_[0]==4 or pasq_[0]==5) return pasx_; ` +
+    `if (pasq_[0]==2) { if (pasq_[1]==1) return pasubad; return pasuw; } if (pasq_[0]==0) { if (member(pasq_[1],pasok_)) return pasuw; return pasubad; } ` +
+    `if (pasq_[0]!=1 or pasumx(pasn_)) return pasubad; for (pasj_:=0;pasj_<size(pasq_[1]);pasj_++) { if (lvar(pasq_[1][pasj_])==[] and !member(pasq_[1][pasj_],pasok_)) return pasubad; } return pasuw; }`,
+  `pasucz(pasx_):=pasucg(pasx_,[${ZERO}])`,
+  `pasuca(pasx_):=pasucg(pasx_,[${ZERO},${RAD}])`,
+  ...TRIG_FNS.map((f) => `pasuc${f}(pasx_):=pasucf(pasuca(pasx_))`),
+  ...INVERSES.filter((f) => f !== "atan2").map((f) => `pasuc${f}(pasx_):=pasucf(pasucz(pasx_))*pasdimA`),
+  `pasucatan2(pasy_,pasx_):={ if (has(pasucz(normal(pasy_/pasx_)),pasubad)) return pasubad; return pasdimA; }`,
   `pasujk(pasc_):={local paso_; if (type(pasc_)!=DOM_SYMBOLIC) { return [3,lname(pasc_)]; } paso_:=[op(pasc_)]; ` +
     `if (member(sommet(pasc_),${CMP}) and size(paso_)==2 and !pasujc(paso_[0],${BOOL}) and !pasujc(paso_[1],${BOOL})) { return [1,paso_[0]-paso_[1]]; } ` +
     `return [3,lname(pasc_)]; }`,
@@ -159,7 +193,36 @@ function degreeAfter(t: string): number {
   return t.length - after.length;
 }
 
-type Checked = { kind: "term"; exps: string[]; num: string } | { kind: "sum"; terms: string[][] } | { kind: "function" } | { kind: "trig" } | { kind: "zero" } | { kind: "undefined" };
+const CHECKED_CALLS: ReadonlySet<string> = new Set([...TRIG_FNS, ...INVERSES].map((f) => `pasu${f}`));
+
+/** G310: the dimension check's text (after withAngles) with every argument the check reads put through its test: sin,
+ *  cos, tan, the inverses and atan2 as pasuc<name>, each function of PURE_FNS as pasucf(pasucz(first argument), the
+ *  others): a pure number when its argument is one. The value's text keeps Giac's own calls. */
+export function checkArgs(t: string): string {
+  return pureArgs(mapNames(t, (n) => (n.call && CHECKED_CALLS.has(n.name) ? `pasuc${n.name.slice(4)}` : null), "typed"));
+}
+
+/** G310: whether the check's text (after withAngles) has a dimension symbol inside a call whose argument the check
+ *  reads, a slot or a constant there: the check then runs with the value, whatever the value is (exp(0 m)). */
+export function dimInCall(t: string): boolean {
+  return callsOf(t, [...PURE_FNS, ...CHECKED_CALLS], "typed").some((c) => c.close >= 0 && [...names(t.slice(c.open + 1, c.close), "typed")].some((n) => !n.call && n.name.startsWith("pasdim")));
+}
+
+function pureArgs(t: string): string {
+  let out = "";
+  let i = 0;
+  for (const c of callsOf(t, PURE_FNS, "typed")) {
+    if (c.at < i) continue;
+    // Unbalanced: the rest stays as it is, for Giac's syntax error.
+    if (c.close < 0) break;
+    const [first, ...rest] = topLevelArgs(t.slice(c.open + 1, c.close), "typed");
+    out += `${t.slice(i, c.at)}pasucf(pasucz(${pureArgs(first ?? "")})${rest.map((a) => `,${pureArgs(a)}`).join("")})`;
+    i = c.close + 1;
+  }
+  return out + t.slice(i);
+}
+
+type Checked = { kind: "term"; exps: string[]; num: string } | { kind: "sum"; terms: string[][] } | { kind: "function"; mixed?: true } | { kind: "trig" } | { kind: "zero" } | { kind: "undefined" };
 
 /** pasuq's printed answer. */
 function checked(text: string): Checked | null {
@@ -179,7 +242,7 @@ function checked(text: string): Checked | null {
       return terms && terms.every((t) => t !== null) ? { kind: "sum", terms: terms as string[][] } : null;
     }
     case "2":
-      return { kind: "function" };
+      return parts[1]?.trim() === "1" ? { kind: "function", mixed: true } : { kind: "function" };
     case "3":
       return { kind: "trig" };
     case "4":
@@ -384,8 +447,11 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const f = withAngles(toExactLiterals(job.expr));
   let g = job.end ? withAngles(toExactLiterals(job.end)) : "1";
   // G35: the dimension check (job.check, every number beside a slot a symbol of its own) goes in the same call.
-  const checkText = job.check !== undefined ? `pasuq(normal(${withAngles(toExactLiterals(job.check))}))` : null;
-  const chk = checkText !== null && job.checkSum ? `,${checkText}` : "";
+  const checkForm = job.check !== undefined ? withAngles(toExactLiterals(job.check)) : null;
+  const checkText = checkForm !== null ? `pasuq(normal(${checkArgs(checkForm)}))` : null;
+  // G310: a slot inside a function whose argument the check reads is checked whatever the value is (exp(0 m)).
+  const withValue = job.checkSum === true || (checkForm !== null && dimInCall(checkForm));
+  const chk = checkText !== null && withValue ? `,${checkText}` : "";
   const out = giac.eval(`pasuR:=[pasuq(normal(${f})),pasuq(normal(${g}))${chk}]`);
   if (isError(out)) return { error: "engine", detail: out };
   const both = splitList(out);
@@ -393,11 +459,14 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   let dst = both?.[1] !== undefined ? checked(both[1]) : null;
   if (!src || !dst) return { error: "engine", detail: out };
   // The check refuses terms of different dimensions, whatever their numbers; a function it cannot read (max, with
-  // symbols) leaves the decision to the value's own check.
-  // Without a sum only a value 0 needs the check, for its dimension: a call of its own then.
-  const later = checkText !== null && !job.checkSum && src.kind === "zero" ? giac.eval(checkText) : null;
+  // symbols) leaves the decision to the value's own check, unless a sum in it has terms of different dimensions.
+  // Otherwise only a value 0 needs the check, for its dimension: a call of its own then.
+  const later = checkText !== null && !withValue && src.kind === "zero" ? giac.eval(checkText) : null;
   const third = later !== null ? (isError(later) ? undefined : later) : both?.[2];
   const per = third !== undefined ? checked(third) : null;
+  // G310: an argument the check reads with the wrong dimension ([3]), or a sum whose terms differ inside a function
+  // the check cannot read ([2] with pasumx's 1), is refused whatever the value is: exp(0 m) as exp(1 m).
+  if (per?.kind === "trig" || (per?.kind === "function" && per.mixed)) return { error: "function" };
   const mixed = per?.kind === "sum" ? refusal(per, job) : null;
   if (mixed && mixed.error !== "function") return mixed;
   const bad = refusal(src, job) ?? refusal(dst, job);
