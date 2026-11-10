@@ -12,6 +12,17 @@
 import type { Giac } from "./numeric.ts";
 import { callsOf, closing, functionsIn, renameCalls, withoutStrings, type Quoting } from "./giacPrint.ts";
 
+/** G221 (F195): the forward functions read from pasicdft at Digits, with Giac's aliases (`MODE=raw`). */
+const CDF_REPLACED: Readonly<Record<string, string>> = {
+  student_cdf: "passtudent_cdf",
+  studentd_cdf: "passtudent_cdf",
+  chisquare_cdf: "paschisquare_cdf",
+  chisquared_cdf: "paschisquare_cdf",
+  normald_cdf: "pasnormald_cdf",
+  normal_cdf: "pasnormald_cdf",
+  UTPN: "pasutpn",
+};
+
 /** The Giac names polished, and our definition each call is replaced by. */
 export const ICDF_REPLACED: Readonly<Record<string, string>> = {
   normald_icdf: "pasnormald_icdf",
@@ -23,6 +34,7 @@ export const ICDF_REPLACED: Readonly<Record<string, string>> = {
   // G44f1: erf and erfc by our MPFR definitions (below), checked like the inverse functions.
   erf: "paserfv",
   erfc: "paserfcv",
+  ...CDF_REPLACED,
 };
 
 /** Set to 1 by a polish that fell back to Giac's value. */
@@ -33,17 +45,22 @@ export const ICDF_DIGITS = "pasicdfd";
 /** A real number: a float, or an exact integer or rational (evalf(0) stays the integer 0). */
 const REAL = (v: string) => `(type(${v})==integer or type(${v})==rational or type(evalf(${v}))==DOM_FLOAT)`;
 
-/** The definitions, in the order they are loaded (helpers first). */
+/** The definitions, in the order they are loaded (helpers first). Every parameter and local is written pas<name>_ (G303,
+ *  ourNames.ts OUR_BOUND): G221f1, a free name passed as an argument is evaluated in the definition's scope by evalf, type
+ *  or a comparison (student_cdf(x,1) read the free x as pascdfok's own x and showed 0.75). */
 export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   // ln Γ(a) with MPFR at Digits.
   paslg: "paslg(pasa_):=lgamma(evalf(pasa_))",
-  // Lentz's evaluation of the continued fraction of I_x(a,b) (DLMF 8.17.22), y = 1 − x given separately.
+  // Lentz's evaluation of the continued fraction of I_x(a,b) (DLMF 8.17.22), y = 1 − x given separately. G221: a loop that
+  // ends without converging sets the flag here and in the series below: its truncation is the same at P and P + 20, so
+  // the agreement check would confirm digits no iteration reached.
   pasbetacf:
     "pasbetacf(pasa_,pasb_,pasx_,pasy_):={ local pastn_,pastol_,pasfv_,pascv_,pasdv_,pasj_,pasm_,pash_,pasaj_,pasdl_; pastn_:=evalf(10^(-2*Digits)); pastol_:=evalf(10^(-Digits-2)); " +
     "pasfv_:=pastn_; pascv_:=pasfv_; pasdv_:=0; " +
     "for (pasj_:=1;pasj_<=20000;pasj_:=pasj_+1) { if (pasj_==1) pasaj_:=1; else { pasm_:=pasj_-1; if (irem(pasm_,2)==1) { pash_:=(pasm_-1)/2; pasaj_:=-(pasa_+pash_)*(pasa_+pasb_+pash_)*pasx_/((pasa_+2*pash_)*(pasa_+2*pash_+1)); } " +
     "else { pash_:=pasm_/2; pasaj_:=pash_*(pasb_-pash_)*pasx_/((pasa_+2*pash_-1)*(pasa_+2*pash_)); } } " +
     "pasdv_:=1+pasaj_*pasdv_; if (pasdv_==0) pasdv_:=pastn_; pascv_:=1+pasaj_/pascv_; if (pascv_==0) pascv_:=pastn_; pasdv_:=1/pasdv_; pasdl_:=pascv_*pasdv_; pasfv_:=pasfv_*pasdl_; if (abs(pasdl_-1)<pastol_) break; } " +
+    `if (pasj_>20000) ${ICDF_FAILED}:=1; ` +
     "return exp(pasa_*ln(pasx_)+pasb_*ln(pasy_)-paslg(pasa_)-paslg(pasb_)+paslg(pasa_+pasb_))/pasa_*pasfv_; }",
   // erf(y) for 0 ≤ y < 2 at Digits by its series of positive terms (DLMF 7.6.2). Giac's MPFR erf of a float below
   // about 1E-11 is the argument itself (erf(1e-19) gives 1e-19, right 1.128…e-19).
@@ -58,6 +75,7 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
     "pasfv_:=pastn_; pascv_:=pasfv_; pasdv_:=0; " +
     "for (pasj_:=1;pasj_<=20000;pasj_:=pasj_+1) { if (pasj_==1) pasaj_:=1; else pasaj_:=(pasj_-1)/2; " +
     "pasdv_:=pasy_+pasaj_*pasdv_; if (pasdv_==0) pasdv_:=pastn_; pascv_:=pasy_+pasaj_/pascv_; if (pascv_==0) pascv_:=pastn_; pasdv_:=1/pasdv_; pasdl_:=pascv_*pasdv_; pasfv_:=pasfv_*pasdl_; if (abs(pasdl_-1)<pastol_) break; } " +
+    `if (pasj_>20000) ${ICDF_FAILED}:=1; ` +
     "return exp(-pasy_^2)/sqrt(pi)*pasfv_; }",
   // G44f1: erf and erfc of any argument at Digits: erf(-y) = -erf(y), erfc(-y) = 2 - erfc(y), erf(y) = 1 - erfc(y) from
   // 2 on (the continued fraction keeps the tail's digits). A list is mapped; an argument that is not a real number is
@@ -76,10 +94,13 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   pasigamma:
     "pasigamma(pasa_,pasx_):={ local pastn_,pastol_,paspre_,pass_,past_,pasn_,pasfv_,pascv_,pasdv_,pasj_,pasaj_,pasbj_,pasdl_; if (pasx_<=0) return [0,1]; " +
     "pastn_:=evalf(10^(-2*Digits)); pastol_:=evalf(10^(-Digits-2)); paspre_:=exp(pasa_*ln(pasx_)-pasx_-paslg(pasa_)); " +
-    "if (pasx_<pasa_+1) { past_:=1/pasa_; pass_:=past_; for (pasn_:=1;pasn_<=100000;pasn_:=pasn_+1) { past_:=past_*pasx_/(pasa_+pasn_); pass_:=pass_+past_; if (abs(past_)<abs(pass_)*pastol_) break; } pass_:=pass_*paspre_; return [pass_,1-pass_]; } " +
+    "if (pasx_<pasa_+1) { past_:=1/pasa_; pass_:=past_; for (pasn_:=1;pasn_<=100000;pasn_:=pasn_+1) { past_:=past_*pasx_/(pasa_+pasn_); pass_:=pass_+past_; if (abs(past_)<abs(pass_)*pastol_) break; } " +
+    `if (pasn_>100000) ${ICDF_FAILED}:=1; ` +
+    "pass_:=pass_*paspre_; return [pass_,1-pass_]; } " +
     "pasfv_:=pastn_; pascv_:=pasfv_; pasdv_:=0; " +
     "for (pasj_:=1;pasj_<=20000;pasj_:=pasj_+1) { if (pasj_==1) { pasaj_:=1; pasbj_:=pasx_+1-pasa_; } else { pasaj_:=-(pasj_-1)*(pasj_-1-pasa_); pasbj_:=pasx_+2*pasj_-1-pasa_; } " +
     "pasdv_:=pasbj_+pasaj_*pasdv_; if (pasdv_==0) pasdv_:=pastn_; pascv_:=pasbj_+pasaj_/pascv_; if (pascv_==0) pascv_:=pastn_; pasdv_:=1/pasdv_; pasdl_:=pascv_*pasdv_; pasfv_:=pasfv_*pasdl_; if (abs(pasdl_-1)<pastol_) break; } " +
+    `if (pasj_>20000) ${ICDF_FAILED}:=1; ` +
     "pass_:=paspre_*pasfv_; return [1-pass_,pass_]; }",
   // [lower tail, upper tail, density, lower tail − 1/2] at x of: k = 0 normal (a = μ, b = σ), 1 Student (a = ν),
   // 2 χ² (a = k), 3 Fisher (a = d₁, b = d₂). The last is computed directly for the symmetric two (erf, I_y(1/2, ν/2)),
@@ -97,6 +118,7 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   // Newton from Giac's x0 on the smaller tail; Giac's x0 with the flag set when it cannot be polished.
   pasicdf:
     "pasicdf(pask_,pasa_,pasb_,pasp_,pasx0_):={ local pasx_,pasq_,paslo_,pasmd_,past_,pasr_,pasw_,pasdx_,pasn_,pasok_,pastol_,pasd_,pasxl_,pasxh_,pasj_,pasus_,pasxs_,pasxc_,pasbr_,paspv_; " +
+    `if (size(lname([pasp_,pasa_,pasb_]))>0) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
     `if (not(${REAL("pasp_")}) or not(${REAL("pasa_")}) or not(${REAL("pasb_")})) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
     `if ((pask_>0 and pasa_<=0) or ((pask_==0 or pask_==3) and pasb_<=0)) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
     // G44f1: at p = 0 and p = 1 Giac's value is the end of the support (±infinity, 0), which is exact.
@@ -148,11 +170,49 @@ export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   pasfisher_icdf:
     "pasfisher_icdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==3) return pasicdf(3,pasv_[0],pasv_[1],pasv_[2],fisher_icdf(pasv_[0],pasv_[1],pasv_[2])); " +
     `${ICDF_FAILED}:=1; return fisher_icdf(pasl_); }`,
+  // G221 (F195): the forward functions: 1 when the arguments are real and in the distribution's range. G221f1: lname first, as it
+  // reads the arguments without evaluating them again; evalf would read a free name through this definition's scope.
+  pascdfok: `pascdfok(pask_,pasa_,pasb_,pasx_,pasz_):={ if (size(lname([pasa_,pasb_,pasx_,pasz_]))>0) return 0; if (not(${REAL("pasa_")}) or not(${REAL("pasb_")}) or not(${REAL("pasx_")}) or not(${REAL("pasz_")})) return 0; if ((pask_>0 and evalf(pasa_)<=0) or (pask_==0 and evalf(pasb_)<=0)) return 0; return 1; }`,
+  // tail j (0 lower, 1 upper) at x; pasicdft computes each tail directly on its own side
+  pascdf1: "pascdf1(pask_,pasa_,pasb_,pasx_,pasj_):=pasicdft(pask_,evalf(pasa_),evalf(pasb_),evalf(pasx_))[pasj_]",
+  // F(z) − F(x), on the upper tails when both bounds are in the upper one (the lower ones would cancel)
+  pascdf2:
+    "pascdf2(pask_,pasa_,pasb_,pasx_,pasz_):={ local pass_,past_; pass_:=pasicdft(pask_,evalf(pasa_),evalf(pasb_),evalf(pasx_)); past_:=pasicdft(pask_,evalf(pasa_),evalf(pasb_),evalf(pasz_)); " +
+    "if (pass_[0]>1/2 and past_[0]>1/2) return pass_[1]-past_[1]; return past_[0]-pass_[0]; }",
+  // Giac's own function, with the flag set, for what is not read here. Giac refuses a ν that is no integer; ours has no such limit.
+  passtudent_cdf:
+    "passtudent_cdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==2) { if (pascdfok(1,pasv_[0],1,pasv_[1],pasv_[1])) return pascdf1(1,pasv_[0],1,pasv_[1],0); } " +
+    `if (size(pasv_)==3) { if (pascdfok(1,pasv_[0],1,pasv_[1],pasv_[2])) return pascdf2(1,pasv_[0],1,pasv_[1],pasv_[2]); } ${ICDF_FAILED}:=1; return student_cdf(pasl_); }`,
+  paschisquare_cdf:
+    "paschisquare_cdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==2) { if (pascdfok(2,pasv_[0],1,pasv_[1],pasv_[1])) return pascdf1(2,pasv_[0],1,pasv_[1],0); } " +
+    `if (size(pasv_)==3) { if (pascdfok(2,pasv_[0],1,pasv_[1],pasv_[2])) return pascdf2(2,pasv_[0],1,pasv_[1],pasv_[2]); } ${ICDF_FAILED}:=1; return chisquare_cdf(pasl_); }`,
+  // (x), (μ,σ,x), (μ,σ,a,b); bounds a > b are Giac's own error. Giac's (a,b) stays its double, with ⚠.
+  pasnormald_cdf:
+    "pasnormald_cdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==1) { if (pascdfok(0,0,1,pasv_[0],pasv_[0])) return pascdf1(0,0,1,pasv_[0],0); } " +
+    "if (size(pasv_)==3) { if (pascdfok(0,pasv_[0],pasv_[1],pasv_[2],pasv_[2])) return pascdf1(0,pasv_[0],pasv_[1],pasv_[2],0); } " +
+    "if (size(pasv_)==4) { if (pascdfok(0,pasv_[0],pasv_[1],pasv_[2],pasv_[3])) { if (evalf(pasv_[2])<=evalf(pasv_[3])) return pascdf2(0,pasv_[0],pasv_[1],pasv_[2],pasv_[3]); } } " +
+    `${ICDF_FAILED}:=1; return normald_cdf(pasl_); }`,
+  // UTPN(x), UTPN(μ,v,x): the upper tail, v the variance (Giac: UTPN(1,2,3) is (1-erf(1))/2).
+  pasutpn:
+    "pasutpn(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==1) { if (pascdfok(0,0,1,pasv_[0],pasv_[0])) return pascdf1(0,0,1,pasv_[0],1); } " +
+    "if (size(pasv_)==3) { if (pascdfok(0,pasv_[0],sqrt(pasv_[1]),pasv_[2],pasv_[2])) return pascdf1(0,pasv_[0],sqrt(pasv_[1]),pasv_[2],1); } " +
+    `${ICDF_FAILED}:=1; return UTPN(pasl_); }`,
 };
 
 /** The polished names `text` calls (outside strings). */
 export function icdfCalls(text: string): string[] {
   return functionsIn(text, "typed").filter((f) => Object.hasOwn(ICDF_REPLACED, f));
+}
+
+/** G221: the polished names `text` calls whose Giac infinity or undef the polish may replace: the inverse functions and
+ *  erf; a forward function's undef (normald_cdf(0,0,1)) is Giac's own answer to a call that has no value. */
+export function icdfEndCalls(text: string): string[] {
+  return icdfCalls(text).filter((f) => !Object.hasOwn(CDF_REPLACED, f));
+}
+
+/** G221: `text` calls a function Giac refuses for arguments ours computes (student_cdf(2.5,1): Bad Argument Value). */
+export function giacRefusesOurs(text: string): boolean {
+  return icdfCalls(text).some((f) => CDF_REPLACED[f] === "passtudent_cdf");
 }
 
 /** `text` with every call of a polished name replaced by ours, and our definitions loaded on first use. */
