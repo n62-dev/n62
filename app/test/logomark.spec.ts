@@ -79,7 +79,7 @@ test.describe("fake engine", () => {
   test("the mark file is served", async ({ page }) => {
     const r = await page.request.get("/n62-mark.svg");
     expect(r.ok()).toBe(true);
-    expect(await r.text()).toContain('viewBox="29.8 30.5 48.4 47"');
+    expect(await r.text()).toContain('viewBox="31.35 30.5 45.3 47"');
   });
 
   test("CAS and an app keep their glyphs; the busy ring still draws over Home's tile", async ({ page }) => {

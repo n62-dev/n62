@@ -337,6 +337,8 @@ test("R255: 2 Enter + 4 before the field: the + after Enter starts with Ans, as 
   await tap(next, ["d2", "enter", "add", "d4"]);
   await fieldUp(next, release);
   await expect.poll(() => entryValue(next)).toMatch(/^\\ans\+4$/);
+  // the queued 2 may still be pending: Session.submit drops an Enter while a job runs, so wait for both rows first
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2);
   await tap(next, ["enter"]);
   await expect(next.locator('[data-status="done"]')).toHaveCount(3);
   expect(await results(next)).toEqual(["7", "2", "6"]); // derived: 2, then Ans + 4 = 6

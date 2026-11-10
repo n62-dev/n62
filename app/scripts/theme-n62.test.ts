@@ -21,7 +21,7 @@ function oklch(h: string): [number, number] {
 
 /** The owner's table (R153), the roles the plain blocks must carry. */
 const TABLE = {
-  dark: { bg: "#092726", "key-num": "#194241", "key-fn": "#123736", "key-enter": "#529997", text: "#ebf6f6", shift: "#ff9a33", alpha: "#6ae5e2" },
+  dark: { bg: "#092726", "key-num": "#194241", "key-fn": "#123736", "key-enter": "#529997", text: "#ebf6f6", shift: "#ffa800", alpha: "#6ae5e2" },
   light: { bg: "#cae6e5", "key-num": "#eefaf9", "key-fn": "#d7efee", "key-enter": "#529997", text: "#062424", shift: "#a03f00", alpha: "#005b5a" },
 } as const;
 /** The generator's moves of the table's roles above (theme-gen.ts, R140): N62 Light's Shift #a03f00 and Alpha #005b5a are
