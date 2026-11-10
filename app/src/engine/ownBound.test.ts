@@ -25,6 +25,34 @@ describe("ownBound", () => {
     expect([...boundIn("f(n,x):={ local t; }; g(m):={ local b; }")].sort()).toEqual(["b", "m", "n", "t", "x"]);
   });
 
+  it("reads only real binders: a space before the arrow counts, a string or a call that is no head does not", () => {
+    expect([...boundIn("f(a):=map(L,k ->k+a)")].sort()).toEqual(["a", "k"]);
+    expect([...boundIn("f(a):=zip((u, v) -> u+v,a,a)")].sort()).toEqual(["a", "u", "v"]);
+    expect([...boundIn('f(a):={ throw("k-> local z; g(y):="); return a; }')]).toEqual(["a"]);
+    expect([...boundIn("f(a):={ g(y); return a-1>0; }")]).toEqual(["a"]);
+    expect([...boundIn("f(a):=h(a):=1")]).toEqual(["a"]);
+  });
+
+  // The same names the first reader (three patterns, 5f251e68) gave, on the real definitions.
+  it("names every definition's binders", () => {
+    const allBound = new Set(ALL.flatMap((def) => [...boundIn(def)]));
+    expect(allBound.size).toBeGreaterThan(10);
+    for (const def of ALL) {
+      const want = new Set<string>();
+      const add = (list: string): void => {
+        for (const part of list.split(",")) {
+          const n = /^\s*([A-Za-z]\w*)/.exec(part);
+          if (n) want.add(n[1]!);
+        }
+      };
+      const bare = def.replace(/"[^"]*"/g, '""');
+      for (const m of bare.matchAll(/(?:^|;\s*)[A-Za-z_]\w*\(([^()]*)\)\s*:=/g)) add(m[1]!);
+      for (const m of bare.matchAll(/\blocal\s+([^;]+);/g)) add(m[1]!);
+      for (const m of bare.matchAll(/(?:\(([^()]*)\)|\b([A-Za-z_]\w*))\s*->/g)) add(m[1] ?? m[2]!);
+      expect([...boundIn(def)].sort(), def.slice(0, 60)).toEqual([...want].sort());
+    }
+  });
+
   it("every definition, once renamed, binds only our names, and every loop variable is bound", () => {
     expect(ALL.length).toBeGreaterThan(30);
     for (const def of ALL) {

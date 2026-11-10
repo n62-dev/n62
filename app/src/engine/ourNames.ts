@@ -2,7 +2,7 @@
 // G54: our replacements for Giac functions, by the name the user writes. One map for the parser (input/emit.ts) and for
 // every path that sends Giac text without the parser (the library import and its `// test:` lines, the export back).
 // No UI imports; only erasable TypeScript syntax.
-import { leadingName, mapNames, renameNames, type Quoting } from "./giacPrint.ts";
+import { closing, leadingName, mapNames, names, opening, renameNames, topLevelArgs, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
 
 /** Giac's own `mod` is the modular-number constructor (an error as a call); Find's `mod` is irem (Euclidean,
  *  never negative: irem(-7,3) = 2), so the written word is renamed to our pasmod (homeEval.ts ENGINE_DEFINITIONS:
@@ -84,18 +84,35 @@ export function isOurStore(name: string): boolean {
 /** Already safe: our prefix, or the trailing `_`. */
 const safe = (n: string): boolean => n.startsWith("pas") || n.endsWith("_");
 
-/** The names a definition binds: parameters of each `name(a,b):=`, `local` names, and arrow parameters. */
+/** The names a definition binds: parameters of each `name(a,b):=` that starts a statement, `local` names, and arrow
+ *  parameters. Strings are skipped. */
 export function boundIn(def: string): Set<string> {
+  const t = withoutStrings(def, (x) => " ".repeat(x.length), "typed");
   const out = new Set<string>();
   const add = (list: string): void => {
-    for (const part of list.split(",")) {
+    for (const part of topLevelArgs(list, "typed")) {
       const n = leadingName(part);
       if (n !== null) out.add(n);
     }
   };
-  for (const m of def.matchAll(/(?:^|;\s*)[A-Za-z_]\w*\(([^()]*)\)\s*:=/g)) add(m[1]!);
-  for (const m of def.matchAll(/\blocal\s+([^;]+);/g)) add(m[1]!);
-  for (const m of def.matchAll(/(?:\(([^()]*)\)|\b([A-Za-z_]\w*))\s*->/g)) add(m[1] ?? m[2]!);
+  for (const { name, at, call, open } of names(t, "typed")) {
+    const end = at + name.length;
+    if (call) {
+      const before = t.slice(0, at).trimEnd();
+      const close = closing(t, open, "typed");
+      if ((before === "" || before.endsWith(";")) && close > 0 && t.slice(close + 1).trimStart().startsWith(":=")) add(t.slice(open + 1, close));
+    } else if (name === "local") {
+      const semi = walk(t, end, (_k, _d, ch) => ch === ";", "typed");
+      if (semi > 0) add(t.slice(end, semi));
+    } else if (t.slice(end).trimStart().startsWith("->")) add(name);
+  }
+  // `(a,b)->`: the parameters are inside the bracket before the arrow, not the name before it
+  walk(t, 0, (k, _d, ch) => {
+    if (ch !== "-" || t.charAt(k + 1) !== ">") return;
+    const head = t.slice(0, k).trimEnd();
+    const open = head.endsWith(")") ? opening(head, head.length - 1) : -1;
+    if (open >= 0) add(head.slice(open + 1, -1));
+  }, "typed");
   return out;
 }
 
