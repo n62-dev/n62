@@ -10,6 +10,8 @@ const workers = process.env["PW_WORKERS"] ? Number(process.env["PW_WORKERS"]) : 
 export default defineConfig({
   testDir: "test",
   timeout: 30_000,
+  // PW_WORKERS=<n> sets the worker count; unset, Playwright's default (half the logical CPUs). A126 measures whether fewer help.
+  ...(process.env["PW_WORKERS"] ? { workers: Number(process.env["PW_WORKERS"]) } : {}),
   ...(workers !== undefined && Number.isInteger(workers) && workers > 0 ? { workers } : {}),
   webServer: {
     // GIAC_OUT=<dir with giac.mjs/giac.wasm> when the engine is not built in this checkout
