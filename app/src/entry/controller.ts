@@ -56,13 +56,13 @@ export class EntryController {
   /** Resolves when the entry line is on the page and the queued keys have been replayed. */
   ready: Promise<void> = Promise.resolve();
   private started = false;
-  /** R255: the kept line (R34) is still to be read ("wait"), or was read with text ("line"). */
-  private kept: "" | "wait" | "line" = "";
-  /** R255: MathLive did not load, so the field never comes. */
-  private failed = false;
-  private up: () => void = () => {};
-  /** R255: resolves once the field is up with the queued keys on it, or will never come (route.ts holds Enter for it). */
-  readonly fieldUp: Promise<void> = new Promise((r) => (this.up = r));
+  /** R255: 1 while the kept line (R34) is being read, 2 once it was read with text. */
+  private kept = 0;
+  /** R255: true until the field is up with the queued keys on it, or will never come (MathLive did not load). Read only. */
+  fieldPending = true;
+  private up = (): void => {};
+  /** R255: resolves when `fieldPending` turns false (route.ts holds Enter and the keys after it for this). */
+  readonly fieldUp = new Promise<void>((r) => (this.up = r));
 
   /** The page element the field goes into (set by the shell). */
   setHost(host: HTMLElement): void {
@@ -78,8 +78,8 @@ export class EntryController {
     if (this.started) return this.ready;
     this.started = true;
     const line = Promise.race([kept, new Promise<null>((resolve) => setTimeout(resolve, 1000, null))]).catch(() => null);
-    this.kept = "wait";
-    void line.then((l) => (this.kept = l?.latex ? "line" : ""));
+    this.kept = 1;
+    void line.then((l) => (this.kept = l?.latex ? 2 : 0));
     this.ready = Promise.all([mathlive.load(), import("./field.ts"), import("./hwkeys.ts"), line]).then(([m, f, h, l]) => {
       this.onField = f.runOnField;
       this.hwKey = h.hardwareKey;
@@ -87,7 +87,10 @@ export class EntryController {
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips) + (this.pendingValue ?? "");
       return this.create(f.makeField, m.MathfieldElement);
     });
-    void this.ready.catch(() => void (this.failed = true)).then(this.up);
+    void this.ready.catch(() => {}).then(() => {
+      this.fieldPending = false;
+      this.up();
+    });
     return this.ready;
   }
 
@@ -137,12 +140,7 @@ export class EntryController {
   /** R255: the line is empty for the keys with an empty-line job (Ans, a b/c, ▲, Undo, Clear): no text on the field,
    *  and before the field none pending, no key queued and no kept line still to come (R34). */
   get empty(): boolean {
-    if (this.mf) return this.mf.value === "";
-    return !this.pendingValue && this.queue.length === 0 && (this.kept === "" || (this.kept === "line" && this.keptStale));
-  }
-  /** R255: the field is loading (or not started yet): Enter must wait for it to send the queued keys' line. */
-  get fieldPending(): boolean {
-    return !this.mf && !this.failed;
+    return this.mf ? !this.mf.value : !this.pendingValue && !this.queue.length && (!this.kept || (this.kept > 1 && this.keptStale));
   }
   /** The chip table of the line: only the chips still on it. */
   get chips(): ChipTable {

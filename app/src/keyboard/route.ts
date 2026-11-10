@@ -318,7 +318,7 @@ function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
 }
 
 /** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. */
-const forLine = (c: RouteCtx, w: Waiting): boolean => "line" in w && !!w.line && c.entry.fieldPending;
+const forLine = (c: RouteCtx, w: Waiting): boolean | undefined => "line" in w && w.line && c.entry.fieldPending;
 function wait(c: RouteCtx, w: Waiting): void {
   c.waiting.push(w);
   if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad, forLine(c, w) && c.entry.fieldUp]).then(() => replay(c));
@@ -335,10 +335,6 @@ function replay(c: RouteCtx): void {
 const SHEET_KEYS: readonly string[] = ["apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory"];
 /** The open sheet is Find (R4a): its keys follow docs/04 3.7 (sheetKeys.ts findKey). */
 const FIND_SHEET = "find";
-const isEnter = (key: Key, mods: Mods): boolean => {
-  const a = actionFor(key, mods.shift, mods.alpha);
-  return a?.kind === "special" && a.name === "enter";
-};
 /** Does this key open a sheet? (Mode and Settings load the view with their lists.) */
 function opensSheet(key: Key, mods: Mods): boolean {
   const a = actionFor(key, mods.shift, mods.alpha);
@@ -385,13 +381,11 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
       .finally(() => (c.sheetLoad = null)); // if it fails, the queued keys run without a sheet
   }
   if (c.sheetLoad !== null) return wait(c, { key, mods, layer });
+  const a = actionFor(key, mods.shift, mods.alpha);
   // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
   // typed, and a key after it meets the empty line as live
-  if (c.entry.fieldPending && (c.waiting.length > 0 || isEnter(key, mods))) return wait(c, { key, mods, layer, line: true });
-  if (c.shell.loading !== null) {
-    const a = actionFor(key, mods.shift, mods.alpha);
-    if (!(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
-  }
+  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && a.name === "enter"))) return wait(c, { key, mods, layer, line: true });
+  if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
   run(c, key, mods);
 }
 
