@@ -28,7 +28,8 @@ export interface Chip extends Omit<ValueFacts, "reliableDigits">, Partial<Pick<V
    *  digits (R271f1); absent when exact. */
   unc?: string;
   /** R271f1: a unit result's σ from a result chip: its confirmed digits and ⚠ reason (units/sigmaFacts.ts), which the
-   *  unit view gives σ again when the chip goes in; absent for a typed σ, which limits nothing. */
+   *  unit view gives σ again when the chip goes in; absent for a typed σ, which limits nothing. A stored one is kept as
+   *  read back, unchecked: read it through readSigmaFacts (input/chipUnit.ts), which checks it. */
   uncFacts?: SigmaFacts;
   /** R61: a unit result's unit (label and slot); absent on every other chip. A stored one is kept as read back, unchecked
    *  (the check is not in the start chunk, as G81's basis): read it through chipUnit (input/chipUnit.ts), which checks it. */
@@ -66,17 +67,6 @@ export function pruneChips(table: ChipTable, latex: string): ChipTable {
   return out;
 }
 
-/** A significant-digit count as stored: null (not limited) or a whole number from 0 to 1000. */
-const isDigits = (rd: unknown): rd is number | null => rd === null || (typeof rd === "number" && Number.isInteger(rd) && rd >= 0 && rd <= 1000);
-
-/** R271f1: stored σ facts (a chip's uncFacts, a unit row's σ) read back checked: undefined when not of their shape. */
-export function readSigmaFacts(x: unknown): SigmaFacts | undefined {
-  if (!x || typeof x !== "object") return undefined;
-  const { reliableDigits: rd, warn } = x as Record<string, unknown>;
-  if (!isDigits(rd) || (warn !== undefined && warn !== "unaudited" && warn !== "unchecked")) return undefined;
-  return { reliableDigits: rd, ...(warn ? { warn } : {}) };
-}
-
 /** A stored chip table read back from IndexedDB: keep the well-formed entries only. */
 export function validChips(x: unknown): ChipTable | undefined {
   if (!x || typeof x !== "object") return undefined;
@@ -92,9 +82,9 @@ export function validChips(x: unknown): ChipTable | undefined {
     // start chunk)
     const chip: Chip = { value, exact };
     if (typeof unc === "string") Object.assign(chip, { unc }, basis !== undefined ? { basis } : {}, basisLeaves !== undefined ? { basisLeaves } : {});
-    if (isDigits(rd)) chip.reliableDigits = rd;
-    const uf = typeof unc === "string" ? readSigmaFacts(uncFacts) : undefined;
-    if (uf) chip.uncFacts = uf;
+    if (rd === null || (typeof rd === "number" && Number.isInteger(rd) && rd >= 0 && rd <= 1000)) chip.reliableDigits = rd;
+    // R271f1: a σ's facts as stored, as the unit below; chipUnit.ts readSigmaFacts (off the start chunk) checks them before any use
+    if (typeof unc === "string" && uncFacts && typeof uncFacts === "object") chip.uncFacts = uncFacts as SigmaFacts;
     if (warn === "unaudited" || warn === "unchecked") chip.warn = warn;
     // R61: a result chip's unit as stored; chipUnit (chipUnit.ts, off the start chunk) checks its shape before any use
     if (k.startsWith("res:") && unit && typeof unit === "object") chip.unit = unit as ChipUnit;

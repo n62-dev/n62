@@ -4,8 +4,8 @@
 // homeItem on Quantity.value, as R61's chip), and `units` (types.ts UnitRow) keeps the request (the line, its filled
 // slots and end slot), the Quantity summary (unit, dimension, σ, note) and R61's chip. One row per visit of the view: a
 // later result of the same visit (an alternative tapped, a slot changed) takes its place. Loaded with the unit view.
-import { readSigmaFacts, type ChipTable } from "../input/chips.ts";
-import { unitLatex, validSlots } from "../input/chipUnit.ts";
+import type { ChipTable } from "../input/chips.ts";
+import { readSigmaFacts, unitLatex, validSlots } from "../input/chipUnit.ts";
 import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import { homeItem } from "../state/resultItem.ts";
