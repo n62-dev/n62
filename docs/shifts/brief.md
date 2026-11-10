@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 503 | [G179](packages/G179.md) a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
+| 503 | G179 a stored value read later keeps the mark it left with (F80, F63) | gorge, Opus | `p1/gorge-storedmark` | – |
 | 504 | [G180](packages/G180.md) DEG sqrt(asinh(asin(3.7))) gets the same mark on any clock (F159) | gorge, Opus | `p1/gorge-degmarkclock` | – |
 | 505 | [G186](packages/G186.md) Home's checks end on acos, asin, acosh of a huge or tiny real (F145) | gorge, Opus | `p1/gorge-cuthang` | – |
 | 506 | [G187](packages/G187.md) a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
