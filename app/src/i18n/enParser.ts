@@ -36,6 +36,8 @@ export const enParser = {
   "parse.aMixedNumber": "a mixed number needs a whole number before its fraction",
   "parse.needsBrackets": "{text} needs brackets: {text}(…)",
   "parse.unsupportedNameUnits": "unsupported name \\{name}{{text}} (units are not supported yet)",
+  "parse.notStored": "{text} is not a stored name",
+  "parse.storedHomeOnly": "{text}: a stored name of more than one letter is read in Home and CAS only",
   "parse.hasNoMeaning": "& has no meaning here yet; for logic use AND (Shift + 6)",
   "parse.unitChip": "{name} is a unit: units come with the unit view",
   "parse.isAUnit": "Å is a unit (the ångström): units come with the unit view",

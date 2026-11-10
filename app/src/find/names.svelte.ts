@@ -8,6 +8,7 @@ import type { UserName } from "../engine/defs.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { homeResultToLatex } from "../render/home.ts";
+import { spelledLatex, spelledName } from "../input/valueName.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
 import { functionInsert, search } from "./rank.ts";
@@ -17,9 +18,11 @@ const NO_INDEX = { items: [] };
 
 /** What an item inserts: a variable as the name the keys would type, a function as a call with the cursor in its
  *  argument, as `\operatorname` whatever the name's length: the parser reads it as a call and the box model as a name
- *  that owns its pair (R117: a one-letter `p\left(#0\right)` was a letter and a plain pair, so ⌫ left p3, p·3). */
+ *  that owns its pair (R117: a one-letter `p\left(#0\right)` was a letter and a plain pair, so ⌫ left p3, p·3). R258: a
+ *  value whose name the keys do not type as one letter (`rate`, `g0`) as `\operatorname{rate}`, one name (never r·a·t·e). */
 function insertOf(n: UserName): string {
-  return n.kind === "var" ? homeResultToLatex(n.name) : functionInsert(`fn:${n.name}`);
+  if (n.kind !== "var") return functionInsert(`fn:${n.name}`);
+  return spelledName(n.name) ? spelledLatex(n.name) : homeResultToLatex(n.name);
 }
 
 /** A name as a Find live item (types.ts: kind `var` or `userfn`). Its value text is searched too (`desc`). */

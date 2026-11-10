@@ -6,6 +6,7 @@ import type { ChipTable } from "./chips.ts";
 import { parseLatexInfo, type UnitsInfo } from "./parse.ts";
 import type { UserName } from "../engine/defs.ts";
 import { CHIP_PREFIX, CONST_PREFIX } from "../engine/ourNames.ts";
+import { spelledName } from "./valueName.ts";
 
 export interface LatexToGiacOptions extends SerializeOptions {
   /** Not read (R57f1: parsing never depends on the decimal mark); kept for the golden rows' options. */
@@ -15,6 +16,9 @@ export interface LatexToGiacOptions extends SerializeOptions {
   /** R65 (Home): a result chip that is not exact goes in as `pasr_<k>`, listed in the answer's `named` (G49); R40: a
    *  constant that is not exact as `pasc_<id>`, listed in `consts` (G26). */
   chipNames?: boolean;
+  /** R258: the stored values whose names `\operatorname{name}` spells out (userValuesOf); without it such a name is
+   *  refused, as in Function and Solve. */
+  userValues?: ReadonlySet<string>;
   /** R28: units mode (docs/04 4.3). The Giac text is then G16's `UnitRequest.formula`: `72*pasu1` per unit slot,
    *  `pask1` per constant, `pasupm(value,sigma)` per ± (G18); `units` names the slots, the constants and the end slot. */
   units?: boolean;
@@ -32,6 +36,12 @@ export function userFunctionsOf(names: readonly Pick<UserName, "name" | "kind">[
   const out = new Set(DEFAULT_USER_FUNCTIONS);
   for (const u of names) if (u.kind === "fn" && /^[A-Za-z]$/.test(u.name)) out.add(u.name);
   return out;
+}
+
+/** R258: the stored values Vars puts on the line as `\operatorname{name}` (input/valueName.ts), as the definitions log
+ *  has them: a name deleted since is refused, never read as loose letters. */
+export function userValuesOf(names: readonly Pick<UserName, "name" | "kind">[]): ReadonlySet<string> {
+  return new Set(names.filter((u) => u.kind === "var" && spelledName(u.name)).map((u) => u.name));
 }
 
 /** The single letter an input defines as a function (`p(x):=...`), if any. */
@@ -67,6 +77,7 @@ export function latexToGiacInfo(
   const user = o.userFunctions ?? DEFAULT_USER_FUNCTIONS;
   const { json, inexact, named, units } = parseLatexInfo(latex, {
     userFunctions: user,
+    ...(o.userValues ? { userValues: o.userValues } : {}),
     ...(o.chips ? { chips: o.chips } : {}),
     ...(o.chipNames ? { chipNames: true } : {}),
     ...(o.units ? { units: true } : {}),

@@ -12,8 +12,8 @@ type EntryResult = Omit<ReturnType<typeof latexToGiacInfo>, "consts"> & { consts
 
 /** The Giac text of an entry in `view`. Home sends a chip that is not exact by name (`pasr_<k>`, R65/G49), and an
  *  inexact constant (`pasc_<id>`, R40); a power keeps Giac's principal root in both views (R66). `o` carries what is not
- *  per view: the entry's chips and the user's functions. */
-export function giacOfEntry(latex: string, view: EntryView, o: Pick<LatexToGiacOptions, "chips" | "userFunctions"> = {}): EntryResult {
+ *  per view: the entry's chips, the user's functions and stored values (R258). */
+export function giacOfEntry(latex: string, view: EntryView, o: Pick<LatexToGiacOptions, "chips" | "userFunctions" | "userValues"> = {}): EntryResult {
   const r = latexToGiacInfo(latex, { ...o, ...(view === "home" ? { chipNames: true } : {}) });
   return r.consts ? { ...r, consts: constTableOf(r.consts) } : (r as EntryResult);
 }
