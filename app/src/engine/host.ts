@@ -896,8 +896,7 @@ export class EngineHost implements FactsHost {
       const inexact = !fn && facts !== null && (inexactIn || result.facts.warn !== undefined);
       // G48: a symbolic value's facts count only when they say it is not exact (a float in it, a ⚠).
       const own = inexact ? { ...facts, inexact: true as const } : result.value || result.items ? facts : null;
-      defs = this.defsAfter(input, ran, result.display, storeFacts(own, lent, read), fn ? facts : null, "home", digits, s.angle, post);
-      defs = noteMark(defs, result, digits); // S53f1
+      defs = noteMark(this.defsAfter(input, ran, result.display, storeFacts(own, lent, read), fn ? facts : null, "home", digits, s.angle, post), result, digits); // S53f1
     }
     return { result, defs };
   }
