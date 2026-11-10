@@ -45,13 +45,6 @@ export const ICDF_DIGITS = "pasicdfd";
 /** A real number: a float, or an exact integer or rational (evalf(0) stays the integer 0). */
 const REAL = (v: string) => `(type(${v})==integer or type(${v})==rational or type(evalf(${v}))==DOM_FLOAT)`;
 
-/** G221f1: the parameters and the locals of a definition (icdfNames.test.ts). */
-export function boundNames(def: string): string[] {
-  const params = /^\w+\(([^)]*)\):=/.exec(def)?.[1] ?? "";
-  const locals = [...def.matchAll(/\blocal ([^;]*);/g)].map((m) => m[1]!);
-  return [...params.split(","), ...locals.flatMap((l) => l.split(","))].map((n) => n.trim()).filter(Boolean);
-}
-
 /** The definitions, in the order they are loaded (helpers first). Every parameter and local is written pas<name>_ (G303,
  *  ourNames.ts OUR_BOUND): G221f1, a free name passed as an argument is evaluated in the definition's scope by evalf, type
  *  or a comparison (student_cdf(x,1) read the free x as pascdfok's own x and showed 0.75). */
