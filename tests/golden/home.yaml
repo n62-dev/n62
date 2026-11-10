@@ -125,6 +125,10 @@ cases:
   - { id: "deg-acos0", input: "acos(0)", settings: { angle: "deg" }, oracle: "F(90)", expect: "90", mark: "=", source: "derived" }
   - { id: "deg-atan1", input: "atan(1)", settings: { angle: "deg" }, oracle: "F(45)", expect: "45", mark: "=", source: "derived" }
   - { id: "deg-acos0.3", input: "acos(0.3)", settings: { angle: "deg" }, oracle: "acosd(F('0.3'))", expect: "72.5423968763", mark: "≈", source: "oracle" }
+  # --- G304 (night review 2026-11-09, be-4): Giac's other spellings of an angle function follow the mode as well ------
+  - { id: "g304-deg-arcsin0.5", latex: "\\operatorname{arcsin}\\left(0.5\\right)", settings: { angle: "deg" }, oracle: "F(30)", expect: "30", mark: "=", source: "derived", note: "arcsin is Giac's lexer alias of asin; it showed ≈ 0.523598775598 (radians) in DEG" }
+  - { id: "g304-deg-arccot1", latex: "\\operatorname{arccot}\\left(1\\right)", settings: { angle: "deg" }, oracle: "F(45)", expect: "45", mark: "=", source: "derived", note: "arccot is Giac's own name for acot (misc.cc); cot 45° = 1. Without the factor DEG gave the radian value pi/4" }
+  - { id: "g304-deg-SIN30", latex: "\\operatorname{SIN}\\left(30\\right)", settings: { angle: "deg" }, oracle: "F(1,2)", expect: "0.5", mark: "=", source: "derived", note: "SIN is Giac's uppercase sin (rpn.cc); without the factor DEG took 30 as radians" }
   # --- complex results ----------------------------------------------------------------------------
   - { id: "cx-product", input: "(3+4*i)*(1-2*i)", oracle: "(3+4*I)*(1-2*I)", expect: "11-2*i", mark: "=", source: "derived" }
   - { id: "cx-sqrt-4", input: "sqrt(-4)", oracle: "2*I", expect: "2*i", mark: "=", source: "derived", g2: 9, note: "whether Home shows a complex result or an error in real mode is a G2 checklist item" }

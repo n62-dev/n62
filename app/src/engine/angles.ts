@@ -28,6 +28,36 @@ export const ANGLE_OUT: ReadonlySet<string> = new Set([
   "asin", "acos", "atan", "asec", "acsc", "acot", "arg", "atan2", "angle", "instphase", "instfreq",
 ]);
 
+/**
+ * G304: Giac's other spellings of the commands above → the canonical name (tools/probes/g304/aliases.out). The lexer's
+ * arcsin, arccos, arctan; misc.cc's arcsec, arccsc, arccot; rpn.cc's uppercase forms, which call the same functions;
+ * the lexer's sin, cos and tan followed by U+F005 (a calculator's inverse glyph) for asin, acos, atan. Found by a scan
+ * of Giac 2.1.0's source for every name whose evaluator is one of these commands' functions (the G304 report). Giac
+ * reads none of tg, arctg, cotan, cosec, acotan, phase, argument, Arg, Sin, Arcsin or ATAN2: they stay out.
+ */
+export const ANGLE_ALIAS: Readonly<Record<string, string>> = {
+  arcsin: "asin", arccos: "acos", arctan: "atan", arcsec: "asec", arccsc: "acsc", arccot: "acot",
+  ASIN: "asin", ACOS: "acos", ATAN: "atan", ASEC: "asec", ACSC: "acsc", ACOT: "acot", ARG: "arg",
+  SIN: "sin", COS: "cos", TAN: "tan", SEC: "sec", CSC: "csc", COT: "cot",
+  "sin\uF005": "asin", "cos\uF005": "acos", "tan\uF005": "atan",
+};
+
+/** The canonical name of a command (G304): an alias's, else the name itself. */
+export function angleName(name: string): string {
+  return Object.hasOwn(ANGLE_ALIAS, name) ? ANGLE_ALIAS[name]! : name;
+}
+
+/** ANGLE_IN's entry for a command under any of its spellings (G304). */
+export function angleInSpec(name: string): (typeof ANGLE_IN)[string] | undefined {
+  const c = angleName(name);
+  return Object.hasOwn(ANGLE_IN, c) ? ANGLE_IN[c] : undefined;
+}
+
+/** The command returns an angle, under any of its spellings (G304). */
+export function returnsAngle(name: string): boolean {
+  return ANGLE_OUT.has(angleName(name));
+}
+
 /** A typed degree (° and DMS, R10): u° is u*DEGREE, u in the mode's unit (30 in DEG, π/6 in RAD; Giac in radians). */
 export const DEGREE = `pi/180/${PASDEG}`;
 
@@ -115,8 +145,26 @@ function newDegrees(text: string, q: Quoting): string {
  * only R64's ° form brought to DEGREE, so the rewrite never applies twice. Strings are left alone.
  */
 export function rewriteAngles(text: string, q: Quoting): string {
-  return hasAngleFactor(text, q) ? newDegrees(text, q) : rewrite(text, q);
+  return hasAngleFactor(text, q) ? newDegrees(text, q) : rewrite(glyphNames(text, q), q);
 }
+
+/** `text` with each U+F005 spelling outside strings as its canonical name (G304): giacPrint.ts reads ASCII names, so
+ *  `sin<U+F005>(x)` is the name sin and a character; the rewrite then meets `asin(x)`. */
+function glyphNames(text: string, q: Quoting): string {
+  if (!text.includes(GLYPH)) return text;
+  let out = "";
+  let i = 0;
+  for (const { name, at } of names(text, q)) {
+    const end = at + name.length;
+    if (text.charAt(end) !== GLYPH || !Object.hasOwn(ANGLE_ALIAS, name + GLYPH)) continue;
+    out += text.slice(i, at) + angleName(name + GLYPH);
+    i = end + 1;
+  }
+  return out + text.slice(i);
+}
+
+/** The character after sin, cos or tan that makes Giac's lexer read asin, acos, atan. */
+const GLYPH = "\uF005";
 
 function rewrite(text: string, q: Quoting): string {
   const t = bare(text, q);
@@ -133,8 +181,9 @@ function rewrite(text: string, q: Quoting): string {
     i = Math.max(i, to);
   };
   for (const { name, at, call, open } of names(text, q)) {
-    const inSpec = Object.hasOwn(ANGLE_IN, name) ? ANGLE_IN[name] : undefined;
-    if (at < i || !call || !(inSpec || ANGLE_OUT.has(name) || name === POLAR)) continue;
+    const inSpec = angleInSpec(name);
+    const outs = returnsAngle(name);
+    if (at < i || !call || !(inSpec || outs || name === POLAR)) continue;
     const close = closing(text, open, q);
     if (close < 0) continue;
     copy(at);
@@ -147,7 +196,7 @@ function rewrite(text: string, q: Quoting): string {
       args[0] = rectArg(a, p && [p[0], withFactor(p[1].trim(), false)]);
     }
     const c = `${text.slice(at, open + 1)}${args.join(",")})`;
-    out += ANGLE_OUT.has(name) ? `(${c}/${PASDEG})` : name === POLAR ? `${POLAR_OUT}(${c})` : c;
+    out += outs ? `(${c}/${PASDEG})` : name === POLAR ? `${POLAR_OUT}(${c})` : c;
     i = close + 1;
   }
   copy(text.length);

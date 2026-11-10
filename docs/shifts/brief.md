@@ -59,7 +59,10 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 614 | R269 Copy on a unit row writes the unit and σ (vfh-2) | ron, Opus | `p1/ron-copyunit` | – |
-| 603 | R255 keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
+| 621 | [R274](packages/R274.md) the selection's own colour, 3:1 (owner) | ron, Sonnet | `p1/ron-selcolour` | – |
+| 622 | [R275](packages/R275.md) ⇤□ and □⇥ leave the keypad (owner) | ron, Sonnet | `p1/ron-noboxkeys` | – |
+| 623 | [S53](packages/S53.md) Store, designed (owner; docs and a mockup) | sandra, Opus | `p1/sandra-storedesign` | – |
+| 603 | [R255](packages/R255.md) keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
 | 604 | [R257](packages/R257.md) Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
 | 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
 | 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
@@ -74,13 +77,17 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
 | 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
+| 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
+| 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
+| 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, the owner's choice for the cells |
+| 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R276, R277 |
 
 ### Lane B queue (the release, then the engine)
 The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 607 | [G304](packages/G304.md) every Giac spelling of an angle function (be-4) | gorge, Opus | `p1/gorge-anglealias` | – |
+| 607 | G304 every Giac spelling of an angle function (be-4) | gorge, Opus | `p1/gorge-anglealias` | – |
 | 608 | [G305](packages/G305.md) a limit at a jump (be-5, F182) | gorge, Opus | `p1/gorge-limitjump` | – |
 | 609 | [G310](packages/G310.md) a zero inside a function, unit check (be-8) | gorge, Opus | `p1/gorge-unitzero` | – |
 | 620 | [A138](packages/A138.md) the F-Droid recipe asks for Reproducible Builds (owner) | annabell, Sonnet | `p1/annabell-fdroidrb` | – |
