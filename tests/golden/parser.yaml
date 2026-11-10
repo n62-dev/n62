@@ -390,7 +390,7 @@ cases:
   - { id: "values-02", latex: "2\\operatorname{g0}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "2*g0", source: "derived", group: "values", note: "R258: g0 of the library format's worked example, never g*0" }
   - { id: "values-03", latex: "\\operatorname{beam\\_w}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "beam_w", source: "derived", group: "values", note: "R258: _ is written \\_, as in a function's insert" }
   - { id: "values-04", latex: "\\operatorname{\\mathrm{rate}}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "rate", source: "derived", group: "values", note: "R258: the same name as MathLive writes it back" }
-  - { id: "values-05", latex: "\\operatorname{rate}\\left(2\\right)", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "rate*2", source: "derived", group: "values", note: "R258: a stored value is a value: a bracket after it multiplies, as after a one-letter value (default, decisions R258)" }
+  - { id: "values-05", latex: "\\operatorname{rate}\\left(2\\right)", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "rate*2", source: "derived", group: "values", note: "R258: a stored value is a value: a bracket after it multiplies, as after a one-letter value (a default, R258's report)" }
   - { id: "values-06", latex: "\\operatorname{rate}", options: { userValues: ["g0"] }, error: true, source: "derived", group: "values", note: "R258 control: a name not stored (deleted since, or a pasted \\operatorname{km}) is refused, as before" }
   # --- decimals
   - { id: "decimals-01", latex: "1.5", expect: "3/2", source: "derived", group: "decimals" }
