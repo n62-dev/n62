@@ -748,6 +748,8 @@ export function homeEval(
   const underflowAt = once ? undefined : (k: number): boolean => checked.set(k, !late() && underflow(giac, [elementAt(ans, shape, k)], valuePrecision(s.digits))).get(k)!;
   let facts = exactFacts(giac, ans, shape, s.digits, s.maxExactDigits, exactOut, value, underflowAt);
   if (!facts) {
+    // G180 (F159): a form past 2 kB unread at P+20 used up its call's step budget (api.cc giac_value): as on a time-out
+    if (!once && value.cut) return viaFloat("float-timeout");
     // G172 (F73): the double fallback, element by element in a list or matrix (doubleElements.ts).
     const d = doubleElements(giac, { name: ans, input: body, exactOut, value, shape, digits: s.digits, maxExactDigits: s.maxExactDigits, once, late });
     if (d === null) return symbolic();
