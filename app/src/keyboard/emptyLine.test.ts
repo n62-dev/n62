@@ -8,6 +8,9 @@ import { describe, expect, test, vi } from "vitest";
 vi.mock("../render/mathlive.svelte.ts", () => ({ mathlive: { load: () => new Promise(() => {}) } }));
 vi.mock("../entry/field.ts", () => ({}));
 vi.mock("../entry/hwkeys.ts", () => ({}));
+// R255f1: the unit view's chunk, a spy here (it would need the page's entry line)
+const { openUnits } = vi.hoisted(() => ({ openUnits: vi.fn(async () => {}) }));
+vi.mock("../units/open.ts", () => ({ openUnits }));
 
 const { EntryController } = await import("../entry/controller.ts");
 const route = await import("./route.ts");
@@ -134,5 +137,38 @@ describe("controls: a truly empty line keeps its empty-line jobs before the fiel
     press("add");
     expect(inner.pendingValue).toBeUndefined();
     expect(queued()).toEqual(["+"]);
+  });
+});
+
+describe("the units key reads the line only once the field is up (R255f1)", () => {
+  const tmpl = keyboard.byId.get("tmpl");
+  const unitsKey = (c: unknown): void => {
+    if (!tmpl) throw new Error("no key tmpl");
+    route.press(c as never, tmpl, "shift"); // a flick up on Tmpl: the units key
+  };
+  test("5 then the units key: the unit view does not open on a line without the 5", async () => {
+    openUnits.mockClear();
+    const { c, press, queued } = ctx();
+    press("d5");
+    unitsKey(c);
+    await vi.dynamicImportSettled();
+    await tick();
+    expect(openUnits).not.toHaveBeenCalled();
+    expect(queued()).toEqual(["5"]);
+    expect(c.waiting).toHaveLength(1);
+    press("d6"); // a key after it waits behind it, not on the line under the unit view
+    expect(queued()).toEqual(["5"]);
+    expect(c.waiting).toHaveLength(2);
+  });
+  test("▲ then the units key: the picked row's unit view waits for the field too", async () => {
+    openUnits.mockClear();
+    const { c, press } = ctx();
+    press("up");
+    expect(c.picked).toBe(0);
+    unitsKey(c);
+    await vi.dynamicImportSettled();
+    await tick();
+    expect(openUnits).not.toHaveBeenCalled();
+    expect(c.waiting).toHaveLength(1);
   });
 });

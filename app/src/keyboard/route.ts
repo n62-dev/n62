@@ -154,7 +154,8 @@ export function special(c: RouteCtx, name: Special): void {
   }
 }
 
-/** The units key (R24c): the unit view (a lazy chunk) on the line or `row`; keys pressed while it loads wait (R8). */
+/** The units key (R24c): the unit view (a lazy chunk) on the line or `row`; keys pressed while it loads wait (R8). It
+ *  reads the line, so before the field is up press holds it as it holds Enter (R255f1). */
 function units(c: RouteCtx, row?: HistoryItem): void {
   const load: Promise<void> = import("../units/open.ts")
     .then((m) => m.openUnits(c, row))
@@ -383,8 +384,8 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
   if (c.sheetLoad !== null) return wait(c, { key, mods, layer });
   const a = actionFor(key, mods.shift, mods.alpha);
   // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
-  // typed, and a key after it meets the empty line as live
-  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && a.name === "enter"))) return wait(c, { key, mods, layer, line: true });
+  // typed, and a key after it meets the empty line as live; so does the units key, which reads the line (R255f1)
+  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && (a.name === "enter" || a.name === "units")))) return wait(c, { key, mods, layer, line: true });
   if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
   run(c, key, mods);
 }
