@@ -23,6 +23,7 @@ tools/manifest-backup.test.sh                                     # A23, in SELF
 tools/folder-names.test.sh                                        # A65: FolderNames.java (the sync folder's name rule) against tests/fixtures/folder-names.json, the list folder.test.ts checks folder.ts with; run by app/scripts/folder-names.test.ts (Vitest); needs a JDK
 tools/release-gate.test.sh                                        # A42, in SELFTESTS (A55): release-gate.sh --dry-run lists its stages on _out/release
 tools/release-guard.test.sh                                       # A7, in SELFTESTS (A75): build.sh --release refuses before any step; release-verify.sh takes only the pinned certificate
+node app/scripts/pipeline-stats.ts [--from N] [--to N] [--band SIZE] [--log PATH]   # A132: the pipeline's rates from .coord/log.md (read-only): not merged, first-pass, fix rounds, audit FIX, failures per check per band, agent and model, and the lock waits per lane; test: app/scripts/pipeline-stats.test.ts
 ```
 
 They use `$ANDROID_SERIAL`: `core-device.sh` requires it, the Python tools default to the Tab One. `shots.py` (usage in its header) cold-starts a page N times and keeps a screenshot of each.
