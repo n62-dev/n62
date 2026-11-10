@@ -1566,5 +1566,89 @@ grep -q '^RESULT #[0-9]* S5: MERGED' <<<"$out" || fail "A88: the mixed-case run 
 [[ "$(grep -c 'S5: WARN' "$sx/.coord/log.md")" -eq 1 ]] && grep -qE "S5: WARN new file outside the worktree: $tmp/stray-loc.txt\$" "$sx/.coord/log.md" || fail "A88: mixed-case before-list: not exactly the one new file reported: $(grep S5 "$sx/.coord/log.md")"
 [[ -s "$tmp/comm.log" ]] && ! grep -qv '^C$' "$tmp/comm.log" || fail "A88: comm did not run under LC_ALL=C: $(sort -u "$tmp/comm.log" | paste -sd' ' -)"
 
+# A127: a row whose After names an id not merged on phase-1 stops before the worker (WAITS, exit 2, no worktree, no branch); the merge
+# subjects decide, not the package files; a FIX id with no file waits; "–" and plain words wait for nothing; no row, or a task text, starts
+aw="$tmp/aw"; mkdir -p "$aw/bin" "$aw/tools" "$aw/docs/shifts/packages" "$aw/app/node_modules/x"; git init -q -b main "$aw"
+cp "$sb/tools/devlock.sh" "$aw/tools/"; cp "$sb/bin/npm" "$aw/bin/"; echo t > "$aw/app/keep"
+cat > "$aw/bin/claude" <<'STUB'
+#!/bin/sh
+case "$*" in
+  *"--agent sofia"*) echo APPROVED;;
+  *) echo "worker called" >> "$AW/worker-called"; echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; echo done;;
+esac
+STUB
+chmod +x "$aw/bin/claude"
+{
+  echo '### Lane B queue'; echo
+  echo '| Step | What | Agent, model | Branch | After |'; echo '|---|---|---|---|---|'
+  echo '| 1 | [R901](packages/R901.md) after an unmerged package | ron, Sonnet | `p1/r901` | R900 |'
+  echo '| 2 | [R902](packages/R902.md) after a FIX id with no file | ron, Sonnet | `p1/r902` | G909f1 |'
+  echo '| 3 | [R903](packages/R903.md) after a merged package whose file stayed | ron, Sonnet | `p1/r903` | R910 |'
+  echo '| 4 | [R904](packages/R904.md) after a package whose f1 merged | ron, Sonnet | `p1/r904` | R911 |'
+  echo '| 5 | [R905](packages/R905.md) after a dash | ron, Sonnet | `p1/r905` | – |'
+  echo '| 6 | [R906](packages/R906.md) after plain words | ron, Sonnet | `p1/r906` | the v0.1.0 tag |'
+  echo '| 7 | R908 after a package with no file and no merge subject | ron, Sonnet | `p1/r908` | R920 |'
+  echo '| 8 | [R909](packages/R909.md) after one merged and one not | ron, Sonnet | `p1/r909` | R910, R900 |'
+  echo '| 9 | [R912](packages/R912.md) after a FIX id that merged | ron, Sonnet | `p1/r912` | R913f1 |'
+  echo; echo '### Another table'; echo
+  echo '| 1 | [R907](packages/R907.md) not in a lane table | ron, Sonnet | `p1/r907` | R900 |'
+} > "$aw/docs/shifts/brief.md"
+for p in R900 R901 R902 R903 R904 R905 R906 R907 R908 R909 R910 R911 R912; do
+  printf '### ron, %s: a sandbox package, branch `p1/%s`\nbody\n' "$p" "${p,,}" > "$aw/docs/shifts/packages/$p.md"
+done
+# thousands of older commits (> the 64 KB pipe buffer of `git log --format=%s`): grep -q on the newest subjects must not SIGPIPE git log under pipefail
+for i in $(seq 1 4000); do printf 'commit refs/heads/main\ncommitter t <t@t> %s +0000\ndata 41\nfiller commit number %05d of the history\n\n' "$((1000000000 + i))" "$i"; done | git -C "$aw" fast-import --quiet
+git -C "$aw" add -A; gc "$aw" init
+gc "$aw" "Merge p1/ron-x: R910 (pipeline run 5)"; gc "$aw" "Merge p1/ron-y: R911f1 (pipeline run 6)"; gc "$aw" "Merge p1/ron-z: R913f1 (pipeline run 7)"
+gc "$aw" "Merge p1/ron-w: R900x (pipeline run 8)"   # another id that merely starts with R900: not R900
+git -C "$aw" branch phase-1; git -C "$aw" branch p1/r901
+awrun() { (cd "$aw" && env PATH="$aw/bin:$PATH" AW="$aw" GIAC_OUT="$aw/engine" "$script" "$@" 2>&1); }
+awstarts() { # <label> <id> [extra args]: the run is not stopped: the worker ran
+  local label="$1" pid="$2"; shift 2; rm -f "$aw/worker-called"
+  out="$(awrun ron "$pid" --checks none --no-merge "$@")"; rc=$?
+  [[ -e "$aw/worker-called" ]] && ! grep -q 'WAITS' <<<"$out" || fail "A127: $label: $pid did not start (rc $rc): $out"
+  git -C "$aw" worktree remove --force "$aw"/.claude/worktrees/pl-*-"${pid,,}" 2>/dev/null; git -C "$aw" branch -D "p1/${pid,,}" >/dev/null 2>&1
+}
+awwaits() { # <label> <id> <ids it waits for> [extra args]
+  local label="$1" pid="$2" want="$3"; shift 3; rm -f "$aw/worker-called"
+  out="$(awrun ron "$pid" --checks none --no-merge "$@")"; rc=$?
+  grep -qE "^RESULT #[0-9]+ $pid: WAITS for $want\$" <<<"$out" && [[ $rc -eq 2 ]] || fail "A127: $label: $pid did not end WAITS for $want with exit 2 (rc $rc): $out"
+  [[ ! -e "$aw/worker-called" ]] || fail "A127: $label: the worker ran for $pid"
+  grep -qE "pipeline #[0-9]+ $pid: WAITS for $want\$" "$aw/.coord/log.md" || fail "A127: $label: no WAITS line in the log: $(tail -n 3 "$aw/.coord/log.md")"
+  grep -q "$pid: NOT MERGED" "$aw/.coord/log.md" && fail "A127: $label: the wait is logged as NOT MERGED"
+  ls "$aw"/.claude/worktrees/ 2>/dev/null | grep -qi "${pid}" && fail "A127: $label: a worktree was made for $pid"
+}
+awwaits "unmerged package" R901 R900
+git -C "$aw" show-ref --verify --quiet refs/heads/p1/r901 || fail "A127: a wait removed the existing branch p1/r901"
+git -C "$aw" branch -D p1/r901 >/dev/null; awwaits "unmerged package, no branch" R901 R900
+git -C "$aw" show-ref --verify --quiet refs/heads/p1/r901 && fail "A127: a wait made the branch p1/r901"
+awwaits "FIX id with no file" R902 G909f1
+awwaits "one merged, one not" R909 R900
+awstarts "merged id whose file stayed" R903
+awstarts "FIX id that merged, a long history after its subject" R912
+awstarts "merge subject of its f1" R904
+awstarts "a dash" R905
+awstarts "plain words" R906
+awstarts "no file and no subject counts as merged" R908
+awstarts "a FIX id that merged" R912
+awstarts "no row in a lane table" R907
+out="$(awrun ron "do the R901 thing" --id R901 --checks none --no-merge)"
+grep -q 'WAITS' <<<"$out" && fail "A127: a task text with --id R901 is checked: $out"
+git -C "$aw" branch p1/r901 2>/dev/null; out="$(awrun ron R901 --no-worker --checks none)"; rc=$?
+grep -qE '^RESULT #[0-9]+ R901: WAITS for R900$' <<<"$out" && [[ $rc -eq 2 ]] || fail "A127: --no-worker R901 is not checked (rc $rc): $out"
+out="$(awrun ron R901 --dry-run)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q '^after: WAITS for R900 ' <<<"$out" && ! grep -q '^RESULT.*WAITS' <<<"$out" || fail "A127: a dry run does not note the wait and go on (rc $rc): $out"
+# the lib function alone
+# id_merged under pipefail with a long history: a stand-in git writes the matching subject first and far more than a pipe holds after it,
+# so grep -q exits while git still writes (SIGPIPE, 141); the id must still count as merged
+(set -o pipefail; source "$here/pipeline-lib.sh"
+ git() { echo "Merge p1/x: R913f1 (pipeline run 7)"; seq 1 300000; }
+ id_merged R913f1 phase-1 || echo "FAIL: A127: id_merged loses a merge subject when git log dies of SIGPIPE") 2>&1 | grep '^FAIL' >&2 && fails=$((fails + 1))
+(cd "$aw" && source "$here/pipeline-lib.sh"
+ [[ "$(after_ids "$aw/docs/shifts/brief.md" R909)" == $'R910\nR900' ]] || echo "FAIL: A127: after_ids of R909: $(after_ids "$aw/docs/shifts/brief.md" R909)"
+ [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R906)" ]] || echo "FAIL: A127: after_ids of plain words is not empty"
+ [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R907)" ]] || echo "FAIL: A127: after_ids reads a row outside the lane tables"
+ [[ "$(after_waits "$aw/docs/shifts/brief.md" R909 phase-1)" == R900 ]] || echo "FAIL: A127: after_waits of R909: $(after_waits "$aw/docs/shifts/brief.md" R909 phase-1)") 2>&1 | grep '^FAIL' >&2 && fails=$((fails + 1))
+
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"

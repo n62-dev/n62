@@ -52,7 +52,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 12. **No lanes after a failed selftest:** the owner starts `scripts/night.sh` without `--lane`, and henri runs lane B's rows, then lane A's, as one queue.
 
 ### The lanes on the Tab One (owner, 2026-11-07)
-`ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is skipped. Follow each Opus pass as written (rule 3).
+`ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, then engine rows)
 
@@ -81,7 +81,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 595 | A124 docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
-| 596 | [A127](packages/A127.md) a row waits for its After | annabell, Sonnet | `p1/annabell-aftercheck` | A124 |
+| 596 | A127 a row waits for its After | annabell, Sonnet | `p1/annabell-aftercheck` | A124 |
 | 597 | [A129](packages/A129.md) one rerun of untouched e2e failures | annabell, Sonnet | `p1/annabell-flakerun` | A127 |
 | 598 | [A130](packages/A130.md) the log names every failing test | annabell, Sonnet | `p1/annabell-failnames` | A129 |
 | 599 | [A131](packages/A131.md) a Not done list item does not stop a run | annabell, Sonnet | `p1/annabell-notdone` | A130 |
