@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # R129 report: the mockup of results mode, the six keys and the room (ron, 2026-11-05)
 
-Pipeline run 650, branch `p1/ron-resultsmockup`. The page: [mockups/results-mode.html](../mockups/results-mode.html), built from [r19](../research/r19-results-and-keys.md) and [S25's report](2026-11-05-sandra-resultskeys-report.md). Nothing in `app/src` changed.
+Pipeline run 650, branch `p1/ron-resultsmockup`. The page: [mockups/results-mode.html](../mockups/results-mode.html), built from [r19](../archive/r19-results-and-keys.md) and [S25's report](2026-11-05-sandra-resultskeys-report.md). Nothing in `app/src` changed.
 
 ## Needs the user
 

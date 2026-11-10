@@ -1,0 +1,9 @@
+rad ;; \left(1+1ᴇ-15\imaginaryI \right)^{\frac{1}{3}} ;; 1+3.33333333333E-16i
+rad ;; \left(1+1ᴇ-15\imaginaryI \right)^{\pi} ;; 1+3.14159265359E-15i
+rad ;; \left(1+1ᴇ-12\imaginaryI \right)^{\frac{1}{3}} ;; 1+3.33E-13i
+rad ;; \left(1+1ᴇ-11\imaginaryI \right)^{\frac{1}{3}} ;; 1+3.33E-12i
+rad ;; \sqrt[3]{1+1ᴇ-20\imaginaryI } ;; 1+3.33E-21i
+rad ;; \sqrt{1+1ᴇ-15\imaginaryI } ;; 1+5E-16i
+rad ;; \left(1+1ᴇ-15\right)^{\frac{1}{3}} ;; 1
+rad ;; \left(1+1ᴇ-13\times(1+\imaginaryI) \right)^{\frac{1}{3}} ;; 
+rad ;; \left(1+1ᴇ-15+1ᴇ-15\imaginaryI \right)^{\frac{1}{3}} ;; 

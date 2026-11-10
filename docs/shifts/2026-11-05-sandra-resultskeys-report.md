@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # S25 report: results mode, the six top-right keys, the viewport room (sandra, 2026-11-05)
 
-Pipeline run 643, branch `p1/sandra-resultskeys` from `phase-1` 6ce82ab8. The note: [r19](../research/r19-results-and-keys.md) (open). Nothing in `app/src` changed.
+Pipeline run 643, branch `p1/sandra-resultskeys` from `phase-1` 6ce82ab8. The note: [r19](../archive/r19-results-and-keys.md) (open). Nothing in `app/src` changed.
 
 ## What I verified (rerun commands)
 
@@ -28,7 +28,7 @@ At 360 × 740 (1.36 rows) touch costs one scroll from k = 2 on. A visit with n a
 
 - `tests/tasks/tasks.yaml`: t01 and t03 active, t06's plan, and the header's Find letters.
 - `tools/probes/results-geometry.mjs` (extended), `tools/probes/results-keys.mjs` (new), and their two rows in `tools/probes/README.md`.
-- `docs/research/r19-results-and-keys.md` (new, 7.6 kB; the live notes are now 149.2 of 150 kB).
+- `docs/archive/r19-results-and-keys.md` (new, 7.6 kB; the live notes are now 149.2 of 150 kB).
 - `docs/decisions.md` "Needs the user": one short line (the file is at 39,996 of 40,000 bytes; the full entry is below).
 - `docs/README.md`: r19's index entry. `tools/docs-check.mjs` requires every live note linked once, so this one shared-file line is applied rather than left to the report.
 

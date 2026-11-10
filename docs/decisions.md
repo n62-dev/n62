@@ -11,6 +11,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **F-Droid Reproducible Builds** (before the fdroiddata merge request; `fdroid/SUBMIT.md`): tick the box and ask for them, as without them F-Droid signs with its own key for good and its APK and ours cannot update each other. Cost: `AllowedAPKSigningKeys` and `Binaries` in the recipe, and a rework of the merge request if the first build is not bit-identical (never compared).
 
+**Night review 2026-11-09:** sixteen questions, each with its recommendation: [the note](research/night-review-2026-11-09.md) section 6.
+
 ## Decided proposals
 
 ### Pipeline and process
@@ -141,8 +143,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R98, Clear and Delete (Opus pass 50):** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Full text: archive.
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Full text: archive. Would change if: the owner wants the text floor in the box.
-- **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
-- **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
+- **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit.
+- **R153–R155 (Opus pass 96):** built. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
 - **View keys and the load queue** (Opus pass 109, R148f2): during an app's load Symb, Plot and Num run at once only when no key is waiting; behind waiting keys they wait in order (R8: nothing typed is lost; c46). The other at-once keys stay. Would change if: a view key feels dead during a load on the Tab One.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): six cards at scale 2.0 cannot fit 360 × 740 at 32 px; it was a fixed 16 px. Would change if: the owner wants them to follow the scale and scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1; docs/05 3.1): Settings › Appearance scrolls; no key row or floor gives way. Full text: archive, "Opus pass 117". Would change if: the owner's look at 360 × 740 says otherwise.

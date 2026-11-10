@@ -117,7 +117,7 @@ Not bugs: decided or asked. Users will report them, so each needs our choice, th
 
 ## 4. Leads for the next hunt
 
-The leads of 2026-10-19 are built (G54–G62, G67f1, S11), except lead 8 (Find's lazy chunk against each key kind), kept in family 11's Hunt; new leads come from each night review's hunts ([the newest note](night-review-2026-11-02.md)).
+The leads of 2026-10-19 are built (G54–G62, G67f1, S11), except lead 8 (Find's lazy chunk against each key kind), kept in family 11's Hunt; new leads come from each night review's hunts ([the newest note](night-review-2026-11-09.md)).
 
 ## 5. How to rerun
 

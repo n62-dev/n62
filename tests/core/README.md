@@ -8,7 +8,7 @@
 ## Rules
 - **Expected values** are `derived` or `oracle` (mpmath 1.3.0 in `tests/golden/.venv`), as in a golden case; never from memory of another calculator, never from what the app shows today. The shown text follows docs/04 2.4 and 2.6: 12 digits, `E` for large and small numbers, `=` exact, `≈` rounded with every digit right. A CAS result built from exact names carries no mark (docs/04 2.9, G51): those cases say `mark: none`.
 - **`known: <bug>`** marks a case that fails today for an open bug line of `docs/backlog.md`. The harness expects it to fail; when it passes, the harness fails until the `known:` goes (a ratchet, like `tests/golden/viewsweep-known.yaml`). A new failure without `known:` fails the check.
-- **`needs: <package>`** marks a case that cannot be keyed today: a command by name (`solve`, `det`) waits for Find (R4a), because letters typed with Alpha multiply (`det` is d·e·t, parser.yaml `implicit-multiplication-03`). The harness skips it and prints why. Its keys are a placeholder: Find does not change how typed letters read, so the package named rewrites them as its own route (R4a's Done when).
+- **`needs: <package>`** marks a case that cannot be keyed today. The harness skips it and prints why; the package named rewrites its keys as its own route.
 - **The list changes with the owner.** A case is added when the owner asks, or as the regression case of a bug the list missed; a case leaves only with the owner's word. Keys are ids of `spec/keyboard.yaml` and the status-line controls of `app/test/helpers.ts` (`@cas`, `@mode`, …).
 - **`hand: true`** puts a case on the hand check's list. MORNING.md lists exactly those ids (R74 checks it).
 

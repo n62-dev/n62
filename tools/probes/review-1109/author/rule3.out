@@ -1,0 +1,23 @@
+  already refused: exp(pasupm(0,0.1)*{m}) {"error":"engine","detail":"no uncertainty: [[1,[[0,4,0,0,0,0,0,0,0,0],[0,2,0,0,0,0,0,0,0,0]]],0.0147783251232,0]"}
+OPEN: exp(max(0*{m},0*{m})/(1*{s})) | today 1 |  | rule ok | kind [2] | mx 0
+OPEN: exp(abs(0*{m}-0*{m})/(1*{s})) | today 1 |  | rule ok | kind [2] | mx 0
+OPEN: sin(max(0*{m},0*{m})/(1*{s})) | today 0 |  | rule ok | kind [2] | mx 0
+OPEN: atan2(max(0*{m},0*{m}),1*{s}) | today 0 |  | rule ok | kind [0,[0,0,0,0,0,0,0,1,0,0],pasz5] | mx -
+OPEN: f1(0*{m}) | today 1 |  | rule ok | kind - | mx -
+  today an error, on a KEEP list: besselJ(0,0*{m}) {"error":"engine","detail":"[[0,[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],1],[0,[0,0,0,0,0,0,0,0,0,0],1]]"}
+OPEN: exp(0*{rad}) | today 1 |  | rule REFUSE-3 | kind [3] | mx -
+  today an error, on a KEEP list: ln(10*{m})-ln(5*{m}) {"error":"function"}
+  today an error, on a KEEP list: sec(60*{deg}) {"error":"function"}
+  today an error, on a KEEP list: csc(30*{deg}) {"error":"function"}
+  today an error, on a KEEP list: cot(45*{deg}) {"error":"function"}
+REFUSED A RIGHT ANSWER (sofia-r4-extra.txt): exp(0*{rad})  | today 1 |  | kind [3] | mx -
+  today an error, on a KEEP list: exp(1*{rad}) {"error":"function"}
+  today an error, on a KEEP list: -273.15*{oC} {"error":"dimension","dims":["","K1"],"end":true}
+  today an error, on a KEEP list: pasupm(-273.15,0.1)*{oC} {"error":"dimension","dims":["","K1"],"end":true}
+  today an error, on a KEEP list: pasupm(-273.15,0.1)*{oC} {"error":"engine","detail":"uncertainty of K1 on "}
+  today an error, on a KEEP list: (1*{m}^2+1*{m}^2)^(1/3) {"error":"function"}
+  today an error, on a KEEP list: sigfig(3.14159*{m},3) {"error":"engine","detail":"GIAC_ERROR: \"sigfig: x must be a real number\" Error: Bad Argument Value"}
+REFUSED A RIGHT ANSWER (sofia-r3-extra.txt): exp(0*{m})*abs(-1)  | today 1 |  | kind [3] | mx -
+REFUSED A RIGHT ANSWER (sofia-r3-extra.txt): exp(0*{m})+max(1,2)  | today 3 |  | kind [3] | mx -
+  today an error, on a KEEP list: sqrt((1*{m}+2*{m})^2+(3*{s})^2) {"error":"function"}
+{"rows":416,"valued":352,"refusedRight":3,"missed":0,"closed":26,"golden":0,"errs":49}

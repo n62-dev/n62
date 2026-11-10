@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Probe (S25, docs/research/r19-results-and-keys.md parts 1 and 2): presses per job on past results, today and in
+// Probe (S25, docs/archive/r19-results-and-keys.md parts 1 and 2): presses per job on past results, today and in
 // results mode, and per editing action under three layouts of the six top-right keys. Counting is docs/04 5.2: every
 // key, flick, tap, long press and scroll drag counts 1.
 //

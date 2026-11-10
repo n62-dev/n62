@@ -1,0 +1,178 @@
+# author, round 4 of NEW-11: everyday engineering formulas, wider than the two lists so far.
+#KEEP
+# RC, RL, diode, logarithms and decibels
+5*{V}*exp(-2*{ms}/(1*{k:ohm}*1*{u:F})) |
+5*{V}*(1-exp(-2*{ms}/(1*{k:ohm}*1*{u:F}))) |
+5*{V}*exp(-2*{ms}*10*{ohm}/(1*{m:H})) |
+1*{A}*(exp(0.7*{V}/(0.026*{V}))-1) |
+1*{A}*(exp({=q_e}*0.6*{V}/(1.5*{=k_B}*300*{K}))-1) |
+exp(-1500*{K}/(300*{K})) |
+exp(-50000*{J / mol}/({=gas_constant}*300*{K})) |
+20*log10(0.5*{V}/(1*{V})) |
+10*log10(3*{W}/(1*{m:W})) |
+20*log10(abs(1*{V}-2*{V})/(1*{V})) |
+20*log10(sqrt((3*{V})^2+(4*{V})^2)/(1*{V})) |
+ln(2*{V}/(1*{V})) |
+ln(2)*1*{k:ohm}*1*{u:F} |
+ln(5*{k:ohm}/(1*{ohm})) |
+log10(100*{m}/(1*{m})) |
+(50*{K}-20*{K})/ln(50*{K}/(20*{K})) |
+log10(1*{k:W}/(1*{W}))*10 |
+# hyperbolic: catenary, transmission line
+cosh(3*{m}/(10*{m}))*10*{m} |
+sinh(1*{m}/(2*{m})) |
+tanh(2*{m}/(5*{m})) |
+asinh(1*{V}/(2*{V})) |
+acosh(3*{m}/(2*{m})) |
+atanh(1*{V}/(2*{V})) |
+# trig with angles, with pure ratios, with ω t
+sin(30*{deg})*10*{N} |
+cos(60*{deg})*5*{m} |
+tan(45*{deg})*2*{m} |
+sin(1*{rad}) |
+cos(0.5*{rad})*3*{V} |
+sin(90*{deg}+45*{deg}) |
+cos(1*{rad}-0.5*{rad}) |
+sin(1*{rad}+30*{deg}) |
+sin(2*{rad / s}*1*{s}) |
+cos(2*{rad / s}*3*{s}+1*{rad}) |
+sin(2*pi*50*{Hz}*1*{ms}) |
+cos(2*pi*1*{k:Hz}*1*{u:s}) |
+sin(1*{m}/(2*{m})) |
+tan(1*{V}/(2*{V})) |
+sin(max(1*{m},2*{m})/(3*{m})) |
+cos(abs(1*{m}-2*{m})/(3*{m})) |
+sin(sqrt((1*{m})^2+(2*{m})^2)/(3*{m})) |
+sin(0*{rad}) |
+cos(0*{deg}) |
+sin(0*{m}/(1*{m})) |
+cos(0*{rad / s}*1*{s}) |
+# inverses and atan2
+atan(1*{m}/(2*{m})) |
+asin(1*{m}/(2*{m})) |
+acos(0.5*{m}/(1*{m})) |
+atan(2*pi*50*{Hz}*1*{m:H}/(10*{ohm})) |
+atan2(1*{m},2*{m}) |
+atan2(3*{V},4*{V}) |
+atan2(max(1*{m},2*{m}),3*{m}) |
+atan2(1*{m}+2*{m},3*{m}) |
+atan(abs(1*{m}-2*{m})/(3*{m})) |
+atan2(0*{m},1*{m}) |
+# roots, powers, sums
+sqrt(2*9.81*{m / s^2}*10*{m}) |
+sqrt(1*{kg}*2*{m}/(3*{N})) |
+2*pi*sqrt(1*{m}/(9.81*{m / s^2})) |
+1/(2*pi*sqrt(1*{m:H}*1*{u:F})) |
+sqrt((10*{ohm})^2+(2*pi*50*{Hz}*1*{m:H})^2) |
+sqrt((3*{m})^2+(4*{m})^2+(12*{c:m})^2) |
+(8*{m^3})^(1/3) |
+(1*{m}^2+2*{m}^2)^(1/2) |
+((1*{m}+2*{m})^2)^(1/2) |
+sqrt(abs(1*{m^2}-3*{m^2})) |
+3*{N}*4*{m}+5*{J} |
+1*{k:m}+500*{m}+20*{c:m} |
+2*{k:W h}+3600*{J} |
+# abs, sign, max, min, piecewise, when
+abs(1*{V}-2*{V})/(1*{k:ohm}) |
+max(1*{N},2*{N})*3*{m} |
+min(1*{m},2*{m})/(1*{s}) |
+exp(-abs(1*{m}-2*{m})/(3*{m})) |
+exp(max(1*{m},2*{m})/(3*{m})) |
+exp(piecewise(1*{m}<2*{m},1*{m},2*{m})/(3*{m})) |
+exp(sqrt((1*{m}+2*{m})^2)/(3*{m})) |
+sign(1*{V}-2*{V})*3*{A} |
+max(abs(1*{m}-2*{m}),3*{m}) |
+piecewise(1*{m}<2*{m},1*{V},2*{V}) |
+when(3*{A}>2*{A},1*{m},2*{m}) |
+# floor, round, Gamma, erf with a ratio
+floor(3.7*{m}/(1*{m}))*2*{m} |
+ceil(2.1*{kg}/(1*{kg})) |
+round(2.5*{m}/(1*{m})) |
+floor(max(1*{m},2*{m})/(1*{m})) |
+erf(1*{m}/(2*{m})) |
+erfc(0.5*{s}/(1*{s})) |
+Gamma(3*{m}/(1*{m})) |
+# with ±
+pasupm(10,0.1)*{V}*exp(-pasupm(2,0.1)*{ms}/(1*{k:ohm}*1*{u:F})) |
+sin(pasupm(30,1)*{deg})*pasupm(10,0.5)*{N} |
+sqrt(pasupm(9,0.6)*{m^2}+pasupm(16,0.8)*{m^2}) |
+ln(pasupm(2,0.1)*{V}/(1*{V})) |
+atan2(pasupm(1,0.1)*{m},pasupm(2,0.1)*{m}) |
+exp(pasupm(0,0.1)*{m}/(1*{m})) |
+# right dimensions, value zero
+exp(0*{m}/(1*{m})) |
+ln(1*{m}/(1*{m})) |
+sqrt(0*{m^2}) |
+abs(0*{m}) |
+0*{m}+1*{m} |
+exp(0) |
+# a stored function, a stored value
+!k1(x):=x^2
+!g(x):=abs(x)
+!h(a,b):=max(a,b)
+!c0:=3
+k1(3*{m}) |
+k1(1*{m}+2*{m}) |
+g(1*{m}-2*{m}) |
+h(1*{m},2*{m}) |
+exp(g(1*{m}-2*{m})/(3*{m})) |
+exp(k1(1*{m})/(1*{m^2})) |
+c0*{m} |
+sin(c0*{m}/(5*{m})) |
+#REFUSE
+# wrong dimensions, the value zero: each is a value today or already refused
+exp(0*{m}) |
+exp(0*{V}/(1*{A})) |
+exp((5*{m}-5*{m})/(1*{s})) |
+exp(abs(0*{m})) |
+ln(0*{m}+1) |
+cosh(0*{Pa}) |
+sinh(0*{N}) |
+floor(0*{N}) |
+round(0*{m}) |
+Gamma(0*{m}+1) |
+sec(0*{m}) |
+sin(0*{s}) |
+cos(0*{N}) |
+tan(0*{V}) |
+sin(0*{rad / s}) |
+asin(0*{m}) |
+atan(0*{s}) |
+acos(0*{kg}*1) |
+atan2(0*{m},1*{s}) |
+atan2(1*{m},0*{s}) |
+sqrt(0*{m}^2+1*{s}^2) |
+abs(0*{m}+1*{s}) |
+max(0*{m}+1*{s},2*{s}) |
+max(1*{m},2*{m})*exp(0*{m}) |
+exp(0*{m})*abs(-1) |
+exp(pasupm(0,0.1)*{m}) |
+sin(pasupm(0,0.1)*{m}) |
+#KEEP
+# angle-like units and Np, and DEG mode
+sin(1*{rev}) |
+cos(30*{tr / min}*1*{s}) |
+sin(1*{Hz}*1*{s}) |
+exp(-1*{ms}*1*{k:Hz}) |
+atan(1*{rad}/(2*{rad})) |
+atan2(1*{rad},2*{rad}) |
+exp(1*{rad}/(2*{rad})) |
+sin(30*{deg}) | | deg
+sin(1*{m}/(2*{m})) | | deg
+cos(abs(1*{m}-2*{m})/(3*{m})) | | deg
+tan(0*{m}/(1*{m})) | | deg
+atan2(1*{m},2*{m}) | | deg
+asin(1*{m}/(2*{m})) | | deg
+atan(max(1*{m},2*{m})/(3*{m})) | | deg
+#OPEN
+# what the rule cannot see: printed, whatever it does
+exp(max(0*{m},0*{m})/(1*{s})) |
+exp(abs(0*{m}-0*{m})/(1*{s})) |
+sin(max(0*{m},0*{m})/(1*{s})) |
+atan2(max(0*{m},0*{m}),1*{s}) |
+!f1(x):=exp(x)
+f1(0*{m}) |
+besselJ(0,0*{m}) |
+exp(1*{Np}) |
+exp(0*{Np}) |
+exp(0*{rad}) |

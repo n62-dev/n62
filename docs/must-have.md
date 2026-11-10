@@ -105,7 +105,7 @@ The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10
 - `[have]` Complex numbers, DEG/RAD, Sci/Eng/Std, fractions. No package.
 - `[have]` User keys, flicks, trackpad, themes, TalkBack, font scale, offline. R41's TalkBack check is still open. No package.
 
-**Existing packages.** R128: depended on, not changed; R183 adds two rows to its level. R130: not amended and not waited for; its pick follows R129, which has no package, so G232 stands alone and R130 reuses it when built. R131: depended on by R198, not changed.
+**Existing packages.** R128: depended on, not changed; R183 adds two rows to its level. R130: not amended and not waited for; G232 stands alone and R130 reuses it when built. R131: depended on by R198, not changed.
 
 **Order**
 - v0.1.0: R180 (merged).

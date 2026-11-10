@@ -1,0 +1,12 @@
+rad ;; \sqrt[3]{\pi-3.1415926535897932384626433832795028841971693993751} ;; 1.79886501953E-17
+rad ;; \sqrt[3]{3.1415926535897932384626433832795028841971693993751-\pi} ;; -1.79886501953E-17
+rad ;; \sqrt[3]{\sin\left(10^{70}\right)} ;; -0.52907532059
+rad ;; \sqrt[5]{\sin\left(10^{70}\right)} ;; -0.682512331077
+rad ;; \operatorname{atan2}\left(\sin\left(10^{70}\right),-1\right) ;; -2.99456226261
+deg ;; \operatorname{atan2}\left(\sin\left(10^{70}\right),-1\right) ;; -171.575779137
+rad ;; \ln\left(\sin\left(10^{70}\right)^{2}\right) ;; -3.81974684575
+rad ;; \log\left(\sin\left(10^{70}\right)^{2}\right) ;; -1.65889497738
+rad ;; \ln\left(\sin\left(10^{70}\right)^{3}\right) ;; -5.72962026862+3.14159265359i
+rad ;; \operatorname{sort}\left(\left\lbrace\sin\left(10^{70}\right),0,\cos\left(10^{70}\right)\right\rbrace\right) ;; {-0.148,0,0.989}
+rad ;; \sqrt[3]{\sin\left(4\right)} ;;
+rad ;; \sqrt[3]{-8} ;; -2

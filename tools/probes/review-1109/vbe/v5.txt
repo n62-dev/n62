@@ -1,0 +1,10 @@
+rad ;; \lim_{x\to 1.5}\left(\operatorname{round}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 0.5}\left(\operatorname{round}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 2.5}\left(\operatorname{round}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 1.5}\left(2\times\operatorname{round}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 1.5}\left(\sin\left(\operatorname{round}\left(x\right)\right)\right) ;; none
+rad ;; \lim_{x\to 1}\left(\operatorname{iPart}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 1}\left(\operatorname{floor}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 1}\left(\operatorname{ceil}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 1}\left(\operatorname{frac}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to 1.2}\left(\operatorname{round}\left(x\right)\right) ;; 1
