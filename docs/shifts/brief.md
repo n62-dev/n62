@@ -93,7 +93,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 |---|---|---|---|---|
 | 598 | A130 the log names every failing test | annabell, Sonnet | `p1/annabell-failnames` | A129 |
 | 599 | A131 a Not done list item does not stop a run | annabell, Sonnet | `p1/annabell-notdone` | A130 |
-| 600 | [A125](packages/A125.md) clipboard lock in turn (F202) | annabell, Sonnet | `p1/annabell-clipqueue` | A124 |
+| 600 | A125 clipboard lock in turn (F202) | annabell, Sonnet | `p1/annabell-clipqueue` | A124 |
 | 601 | [A132](packages/A132.md) pipeline rates from the log | annabell, Sonnet | `p1/annabell-pipestats` | A130 |
 | 602 | [A126](packages/A126.md) e2e flakes at 16 and 8 workers | annabell, Sonnet | `p1/annabell-e2eworkers` | A125 |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
