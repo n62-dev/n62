@@ -102,37 +102,37 @@ describe.skipIf(!giacAvailable())("stored names lend their facts (real Giac)", (
     expect(home("A6+1").facts.why).toBeUndefined();
   });
 
-  it("F63 (pinned known): at 12 digits pb shows its 12 digits, through f(t):=t one fewer (11: cautious, not wrong)", async () => {
+  it("G179 (F63): at 12 digits pb shows its 12 digits, through f(t):=t too", async () => {
     const { home } = await stored(12);
     expect(seen(home("pb"))).toEqual({ display: "0.576724807757", reliableDigits: 12, warn: "unaudited" });
     const r = home("f(pb)");
-    expect(seen(r)).toEqual({ display: "0.57672480776", reliableDigits: 11, warn: "unaudited" });
+    expect(seen(r)).toEqual({ display: "0.576724807757", reliableDigits: 12, warn: "unaudited" });
     expect(r.facts.why).toEqual({ unaudited: ["f"], inherited: ["pb"] });
   });
 
-  it("F63 (pinned known): at 30 digits the store confirms the double's 14, a read by name 13, through f 13", async () => {
+  it("G179 (F63): at 30 digits the store confirms the double's 14, a read by name and through f keep them", async () => {
     const { log, home } = await stored(30);
     expect(log.find((e) => e.name === "pb")?.facts).toEqual({ ...WARN12, reliableDigits: 14 });
-    expect(seen(home("pb"))).toEqual({ display: "0.5767248077569", reliableDigits: 13, warn: "unaudited" });
-    expect(seen(home("f(pb)"))).toEqual({ display: "0.5767248077569", reliableDigits: 13, warn: "unaudited" });
+    expect(seen(home("pb"))).toEqual({ display: "0.57672480775687", reliableDigits: 14, warn: "unaudited" });
+    expect(seen(home("f(pb)"))).toEqual({ display: "0.57672480775687", reliableDigits: 14, warn: "unaudited" });
   });
 
-  it("a relaunch replays the log: pb keeps its facts (14 at 30 digits, not the 13 of a read before it), f(pb) 13, A6 stays exact", async () => {
+  it("a relaunch replays the log: pb keeps its facts (14 at 30 digits), f(pb) too, A6 stays exact", async () => {
     const { log } = await stored(30);
     const next = await nodeHost();
     next.restore(log);
     const s = { ...defaultHomeSettings, digits: 30 };
     expect(next.byName.get("pb")?.facts).toEqual({ ...WARN12, reliableDigits: 14 });
     expect(seen(next.home("pb", s).result)).toEqual({ display: "0.57672480775687", reliableDigits: 14, warn: "unaudited" });
-    expect(seen(next.home("f(pb)", s).result)).toEqual({ display: "0.5767248077569", reliableDigits: 13, warn: "unaudited" });
+    expect(seen(next.home("f(pb)", s).result)).toEqual({ display: "0.57672480775687", reliableDigits: 14, warn: "unaudited" });
     expect(next.home("A6*3", s).result.facts).toEqual({ exact: true, reliableDigits: null });
   });
 
-  it("a relaunch at 12 digits: pb 12, f(pb) 11 (F63), as before it", async () => {
+  it("a relaunch at 12 digits: pb 12, f(pb) 12, as before it", async () => {
     const { log } = await stored(12);
     const next = await nodeHost();
     next.restore(log);
     expect(seen(next.home("pb", defaultHomeSettings).result)).toEqual({ display: "0.576724807757", reliableDigits: 12, warn: "unaudited" });
-    expect(seen(next.home("f(pb)", defaultHomeSettings).result)).toEqual({ display: "0.57672480776", reliableDigits: 11, warn: "unaudited" });
+    expect(seen(next.home("f(pb)", defaultHomeSettings).result)).toEqual({ display: "0.576724807757", reliableDigits: 12, warn: "unaudited" });
   });
 });

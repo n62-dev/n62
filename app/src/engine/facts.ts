@@ -163,21 +163,22 @@ export function inherited(host: FactsHost, r: HomeResult, reads: InputReads, exp
   const shape = shapeOfResult(r);
   const values = els.map((e) => e.value!);
   const runs = expr !== null && moved.length > 0 && !isName(expr.trim(), true);
-  // G179 (F63): the result is the one name's own value (read by its name or through f(t):=t): it keeps that name's digits
+  // G179 (F63): the result is the one name's own value (read by its name or through f(t):=t): it keeps that name's digits;
+  // the perturbation check still runs, for a line that cannot run again (why.once)
   const same = used.length === 1 && moved.length === 1 && (runs || els.some((e) => (e.facts.reliableDigits ?? P) < cap)) && holdsValues(host.giac, moved[0]!.name, shape, values, digits, restoreDigits);
   let pert: number[] | null | undefined;
   let once = false;
-  if (runs && !same) pert = perturbedDigits(host.giac, expr, shape, values, moved, digits, restoreDigits);
+  if (runs) pert = perturbedDigits(host.giac, expr, shape, values, moved, digits, restoreDigits);
   const facts: ElementFacts[] = els.map((e, k) => {
     let n = Math.min(same ? keptDigits(e.facts.reliableDigits ?? P, cap, e.value!) : (e.facts.reliableDigits ?? P), cap);
-    if (pert) n = Math.min(n, pert[k]!);
+    if (pert && !same) n = Math.min(n, pert[k]!);
     const w = warn ?? e.facts.warn ?? (pert === null ? "unchecked" : undefined);
     if (pert === null && !warn && !e.facts.warn) once = true;
     return { value: e.value!, exact: false, reliableDigits: n, ...(w ? { warn: w } : {}), big: false };
   });
   const b = resultFromFacts(facts, shape, digits, r.path, true, r.totalMs);
   // Only the names behind a ⚠: one with a warning, or one known to fewer digits than the setting shows.
-  const lost = pert ? pert.some((d) => d < digits) : false;
+  const lost = pert && !same ? pert.some((d) => d < digits) : false;
   const causes = used
     .filter((u) => u.facts.warn !== undefined || (u.facts.reliableDigits !== null && (u.facts.reliableDigits < digits || lost)))
     .map((u) => u.name);
