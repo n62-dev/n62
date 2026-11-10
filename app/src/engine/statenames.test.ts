@@ -21,6 +21,7 @@ import { POLAR_OUT, RECT_IN } from "./angles.ts";
 import { SIZED } from "./novalue.ts";
 import { partsOf } from "./numeric.ts";
 import { PLAIN_AT_ANY_DEPTH, rowsOf } from "./matrixType.ts";
+import { BASES } from "../units/dims.ts";
 
 const home = { ...defaultHomeSettings, digits: 12 };
 const cas = { ...defaultCasSettings, digits: 12 };
@@ -153,6 +154,9 @@ describe.skipIf(!giacAvailable())("G303: every name our Giac text binds is ours,
   // split of a value in its parts, the matrix type's plain rows
   const ARROWS = [`${POLAR_OUT}([1,2])`, `${RECT_IN}([1,2])`, SIZED("exp(-10^30)", 40), partsOf("1+2*i"), rowsOf("A"), PLAIN_AT_ANY_DEPTH];
   const PARSER_NAMES = new Set([...Object.values(LETTER_NAMES), ...Object.values(GREEK)]);
+  // the unit view's dimension symbols (pasdimA…): free by design, never assigned; the bridge counts one as bound where it
+  // is diff's or subst's variable (units/evaluate.ts pasua), which binds no value a user's name could be read through
+  const DIMENSIONS = new Set(BASES.map((b) => b.symbol));
 
   it("no bound name of a definition or a state read is a user's or one the parser's tables give", async () => {
     const { bridge } = await loadNodeGiac();
@@ -162,7 +166,7 @@ describe.skipIf(!giacAvailable())("G303: every name our Giac text binds is ours,
       expect(p.ok, text.slice(0, 60)).toBe(true);
       for (const n of p.bound) {
         // the whole form (ourNames.ts OUR_BOUND): pas, the name, an underscore; `pasrow` alone is a name a user may type
-        expect(/^pas[A-Za-z0-9]+_$/.test(n), `${n} in ${text.slice(0, 60)}`).toBe(true);
+        expect(/^pas[A-Za-z0-9]+_$/.test(n) || DIMENSIONS.has(n), `${n} in ${text.slice(0, 60)}`).toBe(true);
         expect(PARSER_NAMES.has(n), `${n} in ${text.slice(0, 60)}`).toBe(false);
       }
     }

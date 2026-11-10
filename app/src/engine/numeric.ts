@@ -396,7 +396,7 @@ function rationalOf(nd: readonly [string, string] | null | undefined, keep: numb
 }
 
 /** G59: the Giac text of `expr`'s value split in its real and imaginary parts, `[re, im]`, in one call. */
-export const partsOf = (expr: string): string => `(pasz->[re(pasz),im(pasz)])(${expr})`;
+export const partsOf = (expr: string): string => `(pasz_->[re(pasz_),im(pasz_)])(${expr})`;
 
 /** G103: Giac's symbolic re() and im() of every element of `expr` (bridge-3, one call) as exact rationals where they
  *  are (null where not); null when Giac gave no such parts (an error, a time-out). */

@@ -37,7 +37,7 @@ export const DEGREE = `pi/180/${PASDEG}`;
  * argument's text (a complex number, a name) does not show it.
  */
 export const POLAR = "polar_coordinates";
-export const POLAR_OUT = `((p_)->when(type(p_[0])==vector,map(p_,q_->[q_[0],q_[1]/${PASDEG}]),[p_[0],p_[1]/${PASDEG}]))`;
+export const POLAR_OUT = `((pasp_)->when(type(pasp_[0])==vector,map(pasp_,pasq_->[pasq_[0],pasq_[1]/${PASDEG}]),[pasp_[0],pasp_[1]/${PASDEG}]))`;
 
 /**
  * R64f1: rectangular_coordinates of one list, [r, θ] or a list of those: every θ times pasdeg. A literal point
@@ -46,7 +46,12 @@ export const POLAR_OUT = `((p_)->when(type(p_[0])==vector,map(p_,q_->[q_[0],q_[1
  */
 export const RECT = "rectangular_coordinates";
 export const RECT_IN =
-  `((p_)->when(type(p_)!=vector,p_,when(type(p_[0])==vector,map(p_,q_->[q_[0],${PASDEG}*q_[1]]),[p_[0],${PASDEG}*p_[1]])))`;
+  `((pasp_)->when(type(pasp_)!=vector,pasp_,when(type(pasp_[0])==vector,map(pasp_,pasq_->[pasq_[0],${PASDEG}*pasq_[1]]),[pasp_[0],${PASDEG}*pasp_[1]])))`;
+
+/** G303f1: POLAR_OUT and RECT_IN as they were written before their bound names took our form (`p_`, `q_`; ourNames.ts
+ *  OUR_BOUND). A log or chip kept from then still holds them, so what is drawn and the export drop them as well. */
+const WRAPPERS_BEFORE: readonly string[] = [POLAR_OUT, RECT_IN].map((w) => w.replace(/pas([pq])_/g, "$1_"));
+const WRAPPERS: readonly string[] = [POLAR_OUT, RECT_IN, ...WRAPPERS_BEFORE];
 
 /**
  * Giac text that is a number by itself: number literals and pi with + - * / ^ and brackets. Only then can the text
@@ -175,7 +180,7 @@ export function dropAngleFactor(text: string, q: Quoting): string {
       i = j;
       continue;
     }
-    const wrapper = text.startsWith(`${POLAR_OUT}(`, i) ? POLAR_OUT : text.startsWith(`${RECT_IN}(`, i) ? RECT_IN : "";
+    const wrapper = WRAPPERS.find((w) => text.startsWith(`${w}(`, i)) ?? "";
     const end = wrapper ? closing(text, i + wrapper.length, q) : -1;
     if (end > 0) {
       out += dropAngleFactor(text.slice(i + wrapper.length + 1, end), q);
