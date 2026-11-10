@@ -29,6 +29,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 |---|---|---|---|---|---|
 | [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
+| [A136](packages/A136.md) | Golden gate on a module change | annabell, Sonnet | day, Thu 11-12 after the lanes (owner) | – | ~0.3 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, by Sat 11-14 (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
 
@@ -69,6 +70,12 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
 | 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
+| 633 | [R264](packages/R264.md) start chunk room | ron, Opus | `p1/ron-chunkroom` | – |
+| 634 | [R259](packages/R259.md) unit view: Ans, σ | ron, Opus | `p1/ron-unitmsgs` | – |
+| 635 | [R263](packages/R263.md) lazy chunk retry | ron, Opus | `p1/ron-lazydoors` | – |
+| 636 | [R262](packages/R262.md) To Home with marks | ron, Opus | `p1/ron-tohome` | – |
+| 637 | [R266](packages/R266.md) no tips while typing | ron, Sonnet | `p1/ron-tipspress` | – |
+| 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
 | 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
 | 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
 | 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
@@ -93,6 +100,10 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
+| 639 | [G316](packages/G316.md) absolute zero's unit | gorge, Opus | `p1/gorge-abszero` | – |
+| 640 | [G311](packages/G311.md) library round trip | gorge, Opus | `p1/gorge-libstandins` | – |
+| 641 | [G312](packages/G312.md) polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
+| 642 | [G313](packages/G313.md) `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | the weekly night |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | the weekly night |
