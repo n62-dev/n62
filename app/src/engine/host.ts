@@ -29,15 +29,15 @@ import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
 import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts";
 import { resolveAngle } from "./angleMigration.ts";
-import { mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
-import { mayAddToList, unaskedPoly } from "./polyvec.ts";
+import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
+import { unaskedPoly } from "./polyvec.ts";
 import { approxRange, lostCas, mayApproxRange } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, bracesOf, callsOf, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
+import { balanced, bracesOf, callsOf, holdsList, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
@@ -186,6 +186,8 @@ export class EngineHost implements FactsHost {
   byName = new Map<string, DefEntry>();
   /** G49: the chips the current Home input holds by name (`pasr_<k>`), with the facts they lend (as a stored float's). */
   readonly chipFacts = new Map<string, NameFacts>();
+  /** G225f2: the chips of the current Home input whose value is a list (isList). */
+  private readonly listChips = new Set<string>();
   /** G65: Giac's stored user names, read after every input that may store and after restore() (stateRead.ts). */
   stored = new Map<string, StoredName>();
   /** G104: the names Giac's VARS() listed at the last state read that `stored` leaves out (ours, an assumed name). */
@@ -544,13 +546,16 @@ export class EngineHost implements FactsHost {
     if (!t?.fn) return undefined;
     if (writesThrough([name], (n) => this.keptOf(n))) return null;
     const tree = this.treeFrom(t.text);
-    return tree.ok && tree.heads[0] === "program" && !tree.heads.includes("local") ? { params: tree.bound, reads: tree.reads, heads: tree.heads } : null;
+    return tree.ok && tree.heads[0] === "program" && !tree.heads.includes("local") ? { params: tree.bound, reads: tree.reads, heads: tree.heads, list: t.text.includes("[") } : null;
   };
 
   /** G101: the stored functions `input` reads (its tree, G99) and their bodies, for nonsquare.ts. */
   private bodiesFor(input: string): Bodies {
-    return { reads: () => this.treeOf(input).reads, of: this.bodyOf, writes: () => this.candidatesOf(input) };
+    return { reads: () => this.treeOf(input).reads, of: this.bodyOf, writes: () => this.candidatesOf(input), isList: this.isList };
   }
+
+  /** G106, G225f1: a name that holds a list (G109: `list[…]` too), from the stored table's print or the chip's value. */
+  private readonly isList = (n: string): boolean => this.listChips.has(n) || holdsList(this.stored.get(n)?.text ?? "");
 
   /** G100/G101: the tree of a stored text (bridge-2), parsed once per text. */
   private readonly treeByText = new Map<string, GiacParse>();
@@ -821,6 +826,7 @@ export class EngineHost implements FactsHost {
     for (const k of keep) {
       this.giac.eval(chipCommand(k, chips![k]!));
       this.chipFacts.set(`${CHIP_PREFIX}${k}`, chipNameFacts(chips![k]!));
+      if (holdsList(chips![k]!.value)) this.listChips.add(`${CHIP_PREFIX}${k}`);
     }
     try {
       const ran = consts ? withConstValues(named, consts) : named;
@@ -833,6 +839,7 @@ export class EngineHost implements FactsHost {
     } finally {
       if (keep.size) this.giac.eval(`purge(${[...keep].map((k) => CHIP_PREFIX + k).join(",")})`);
       this.chipFacts.clear();
+      this.listChips.clear();
     }
   }
 
@@ -947,17 +954,11 @@ export class EngineHost implements FactsHost {
     const asg0 = formIn(form, exactInput).assignment;
     // G57: so does one whose value rests on a decision, which may be refused as undecided.
     // G97: and one whose value may be a power of a non-square matrix, which is refused; G106: or a list plus a number;
-    // G111: or a call that may read one list as its argument list; G148: or an approx or evalf, refused past the range.
-    // G106: whether a name holds a list is read from Giac's print in the stored table (G65's state read, already made):
-    // the assignment must be routed before it runs, and asking the engine would cost a call on every assignment. This
-    // text gate moves to bridge-3 with the poly1 check when G103 reads a value's kind (docs/04 6.1).
-    // G109: Giac's list type (`list[…]`) is a list too
-    const isList = (n: string): boolean => {
-      const t = this.stored.get(n)?.text;
-      return t !== undefined && (t.startsWith("[") || t.startsWith(LIST_TYPE));
-    };
+    // G111: or a call that may read one list as its argument list; G148: or an approx or evalf, refused past the range;
+    // G225f1: or lists combined by position, whose sizes may differ. A name that holds a list is read from the stored
+    // table (isList), so routing an assignment costs no engine call; G103 can read a value's kind later (docs/04 6.1).
     const guarded =
-      asg0 && !form.once && (callsIn(asg0.rhs).length || mayApproxRange(asg0.rhs) || mayPowerMatrix(asg0.rhs) || mayAddToList(asg0.rhs, isList) || mayListAsArguments(asg0.rhs) || restsOnDecision(asg0.rhs, "typed", "", notBuiltin(this.giac))) ? asg0 : null;
+      asg0 && !form.once && (callsIn(asg0.rhs).length || mayApproxRange(asg0.rhs) || mayPowerMatrix(asg0.rhs) || mayCombineLists(asg0.rhs, this.isList) || mayListAsArguments(asg0.rhs) || restsOnDecision(asg0.rhs, "typed", "", notBuiltin(this.giac))) ? asg0 : null;
     // G38 (docs/04 2.4 rule 2): Giac decides signs, comparisons and floor at Digits, so the evaluation runs at P; the
     // mode's Digits stays the setting, which prints the floats of a non-number.
     const digitsSet = Math.trunc(s.digits);
@@ -972,7 +973,17 @@ export class EngineHost implements FactsHost {
       if (e instanceof GiacSyntaxError) return fail(e.message, "syntax");
       throw e;
     }
+    // A call to a stored function that stores (inc(x):={c:=c+1;c}) must not run again either, assigned or not (form.once).
+    const single = form.stores;
+    const builtin = notBuiltin(this.giac);
+    const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name);
+    // G171: an input that ran once too (not a definition); its refused store is purged, so no name keeps Giac's answer
+    const onceRun = single && !guarded;
+    const shapes = (): ReturnType<typeof nonSquarePower> => onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, text, ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans");
     if (isError(text)) {
+      // G225f2: Giac's error for operands of its matrix type of different shape is the refusal their plain rows get, as in Home
+      const sizes = isDimensionError(text) ? shapeRefusal(shapes()) : null;
+      if (sizes) return fail(enEngine[`error.${sizes}`], sizes);
       // G71 (F59): no MPFR value at P (a decision over BesselJ): an expression that stores nothing is decided at the double,
       // with ⚠, as in Home. An assignment keeps the error (its definitions-log entry would hold a double).
       const dbl = isTimeout(text) || asg0 || form.stores ? null : decidedAtDouble(this.giac, "pcasans", body, digitsSet);
@@ -984,8 +995,6 @@ export class EngineHost implements FactsHost {
       const numeric = { ...r, facts: { ...r.facts, why } };
       return { result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs, numeric, facts: numeric.facts }, defs: [] };
     }
-    // A call to a stored function that stores (inc(x):={c:=c+1;c}) must not run again either, assigned or not (form.once).
-    const single = form.stores;
     // An == or ≠ test on a float side: decided by its own digits, as in Home (R18f2).
     const inexactTest = test && this.giac.eval(EQ_INEXACT_FLAG) === "1";
     const decided = inexactTest && !single ? decideFloatTest(this.giac, exactInput, digitsSet) : null;
@@ -1030,11 +1039,7 @@ export class EngineHost implements FactsHost {
     if (refused && refused !== "unchecked") return fail(enEngine[`error.${refused}`], refused);
     if (refusedCut) return fail(enEngine["error.undecided"], "undecided");
     // G97 (F69): a power, inverse or division of a non-square matrix is Giac's elementwise answer, refused as in Home.
-    const builtin = notBuiltin(this.giac);
-    const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name);
-    // G171: an input that ran once too (not a definition); its refused store is purged, so no name keeps Giac's answer
-    const onceRun = single && !guarded;
-    const square = onceRun && form.noValue ? false : nonSquarePower(this.giac, onceRun && asg0 ? asg0.rhs : body, text, ambiguous, () => false, performance.now() - t0, userFn, this.bodiesFor(input), onceRun, "pcasans");
+    const square = shapes();
     // a refused once store keeps the name's earlier value, as Home (which stores only on success): its logged entry back
     const logged = asg0 ? this.byName.get(asg0.name) : undefined;
     const badShape = shapeRefusal(square); // G225: or dot, cross of vectors of different lengths

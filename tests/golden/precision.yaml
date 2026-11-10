@@ -1253,6 +1253,48 @@ cases:
   - { id: "g225-cas-keep-dot", kind: "cas", input: "dot([1,2],[3,4])", expect: "11", source: "derived", note: "guard: 1*3+2*4" }
   - { id: "g225-cas-keep-cross", kind: "cas", input: "cross([1,2,3],[4,5,6])", expect: "[-3,6,-3]", source: "derived", note: "guard: (2*6-3*5, 3*4-1*6, 1*5-2*4)" }
   - { id: "g225-cas-keep-cross-2d", kind: "cas", input: "cross([1,2],[3,4])", expect: "[0,0,-2]", source: "derived", note: "guard: Giac's documented 2-vector form keeps its z = 0; z = 1*4-2*3 = -2" }
+  # --- G225f1 (pass 119): CAS refuses unequal shapes too, in + - * and the pointwise operators; dot and cross take vectors only ---
+  - { id: "g225f1-cas-times-short-left", kind: "cas", input: "[1,2]*[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads [1,2] with 0 and showed = 11" }
+  - { id: "g225f1-cas-times-short-right", kind: "cas", input: "[1,2,3]*[4,5]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads [4,5] with 0 and showed = 14" }
+  - { id: "g225f1-cas-plus-lengths", kind: "cas", input: "[1,2]+[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads and showed = [4,6,5]" }
+  - { id: "g225f1-cas-minus-lengths", kind: "cas", input: "[1,2]-[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads and showed = [-2,-2,-5]" }
+  - { id: "g225f1-cas-list-plus-lengths", kind: "cas", input: "list[1,2]+list[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "the { } list as Home sends it; it showed = {4,6,5}" }
+  - { id: "g225f1-cas-list-minus-lengths", kind: "cas", input: "list[1,2]-list[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "it showed = {-2,-2,-5}" }
+  - { id: "g225f1-cas-list-times-lengths", kind: "cas", input: "list[1,2]*list[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "Giac cuts to the shorter and showed = {3,8}" }
+  - { id: "g225f1-cas-pointwise-plus-lengths", kind: "cas", input: "[1,2].+[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: ".+ pads (probe): [4,6,5]" }
+  - { id: "g225f1-cas-pointwise-minus-lengths", kind: "cas", input: "[1,2].-[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: ".- pads (probe): [-2,-2,-5]" }
+  - { id: "g225f1-cas-pointwise-times-lengths", kind: "cas", input: "[1,2].*[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: ".* cuts to the shorter: it showed = [3,8]" }
+  - { id: "g225f1-cas-pointwise-divide-lengths", kind: "cas", input: "[1,2]./[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: "./ cuts: it showed = [1/3,1/2]" }
+  - { id: "g225f1-cas-pointwise-power-lengths", kind: "cas", input: "[1,2].^[3,4,5]", expect: "error: lengthsDiffer", source: "derived", note: ".^ cuts (probe): [1,16]" }
+  - { id: "g225f1-cas-matrix-plus-shapes", kind: "cas", input: "[[1,2],[3,4]]+[[1,2,3],[4,5,6]]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
+  - { id: "g225f1-cas-matrix-minus-shapes", kind: "cas", input: "[[1,2],[3,4]]-[[1,2],[3,4],[5,6]]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads: it showed = [[0,0],[0,0],[-5,-6]]" }
+  - { id: "g225f1-cas-pointwise-matrix-shapes", kind: "cas", input: "[[1,2],[3,4]].+[[1,2,3],[4,5,6]]", expect: "error: lengthsDiffer", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
+  - { id: "g225f1-cas-vector-times-matrix-size", kind: "cas", input: "[1,2,3]*[[1,2],[3,4]]", expect: "error: lengthsDiffer", source: "derived", note: "Giac drops the 3 and showed = [7,10]; the row vector needs as many entries as the matrix has rows" }
+  - { id: "g225f1-cas-chain-refused", kind: "cas", input: "[1,2]*[3,4,5]*2", expect: "error: lengthsDiffer", source: "derived", note: "the first pair has different lengths, read from the left: Giac showed = 22" }
+  - { id: "g225f1-cas-chain-after-scalar", kind: "cas", input: "[1,2]*3*[4,5,6]", expect: "error: lengthsDiffer", source: "derived", note: "[1,2]*3 = [3,6], then two lengths: it showed = 42" }
+  - { id: "g225f1-cas-stored-times", kind: "cas", input: "a*b", before: ["a:=[1,2]","b:=[3,4,5]"], expect: "error: lengthsDiffer", source: "derived", note: "stored names: it showed 11" }
+  - { id: "g225f1-cas-stored-plus", kind: "cas", input: "a+b", before: ["a:=[1,2]","b:=[3,4,5]"], expect: "error: lengthsDiffer", source: "derived", note: "it showed [4,6,5]" }
+  - { id: "g225f1-cas-body-plus", kind: "cas", input: "f([1,2],[3,4,5])", before: ["f(u,v):=u+v"], expect: "error: lengthsDiffer", source: "derived", note: "a stored body: it showed [4,6,5]" }
+  - { id: "g225f1-cas-dot-matrix-vector", kind: "cas", input: "dot([[1,2],[3,4]],[1,2,3])", expect: "error: vectorsOnly", source: "derived", note: "dot of a matrix and a vector: it showed = [7,10]" }
+  - { id: "g225f1-cas-dot-matrix-vector-3", kind: "cas", input: "dot([[1,2,3],[4,5,6]],[1,2,3])", expect: "error: vectorsOnly", source: "derived", note: "it showed = [9,12,15]" }
+  - { id: "g225f1-cas-dot-row-matrix", kind: "cas", input: "dot([[1,2],[3,4]],[[1,2]])", expect: "error: vectorsOnly", source: "derived", note: "it showed = 5" }
+  - { id: "g225f1-cas-dot-matrices", kind: "cas", input: "dot([[1,2],[3,4]],[[5,6],[7,8]])", expect: "error: vectorsOnly", source: "derived", note: "equal shapes included: it showed = 70" }
+  - { id: "g225f1-cas-cross-matrix-vector", kind: "cas", input: "cross([[1,2,3],[4,5,6]],[1,2,3])", expect: "error: vectorsOnly", source: "derived", note: "it showed = [12,-3,-2]" }
+  - { id: "g225f1-cas-keep-times", kind: "cas", input: "[1,2]*[3,4]", expect: "11", source: "derived", note: "guard: 1*3+2*4" }
+  - { id: "g225f1-cas-keep-plus", kind: "cas", input: "[1,2]+[3,4]", expect: "[4,6]", source: "derived", note: "guard" }
+  - { id: "g225f1-cas-keep-scalar", kind: "cas", input: "2*[1,2]", expect: "[2,4]", source: "derived", note: "guard" }
+  - { id: "g225f1-cas-keep-matrix-vector", kind: "cas", input: "[[1,2],[3,4]]*[5,6]", expect: "[17,39]", source: "derived", note: "guard: 1*5+2*6, 3*5+4*6" }
+  - { id: "g225f1-cas-keep-vector-matrix", kind: "cas", input: "[1,2]*[[1,2],[3,4]]", expect: "[7,10]", source: "derived", note: "guard: a row of two against two rows: 1*1+2*3, 1*2+2*4" }
+  - { id: "g225f1-cas-keep-chain", kind: "cas", input: "[1,2]*[3,4]*[5,6,7]", expect: "[55,66,77]", source: "derived", note: "guard: the chain is read from the left and is 11 after its first pair; 11*[5,6,7]" }
+  - { id: "g225f1-cas-keep-dot-one-list", kind: "cas", input: "dot([[1,2],[3,4]])", expect: "11", source: "derived", note: "guard: the one-list form, 1*3+2*4" }
+  - { id: "g225f1-cas-matrix-type-plus-shapes", kind: "cas", input: "idn(2)+zeros(2,3)", expect: "error: lengthsDiffer", source: "derived", note: "no list in the text; Giac's own answer is Invalid dimension" }
+  - { id: "g225f1-cas-matrix-type-pointwise-shapes", kind: "cas", input: "idn(2).*zeros(2,3)", expect: "error: lengthsDiffer", source: "derived", note: "no list in the text; Giac cuts and showed = [[0,0],[0,0]]" }
+  - { id: "g225f1-cas-calls-plus-lengths", kind: "cas", input: "col(idn(2),0)+col(zeros(3,3),0)", expect: "error: lengthsDiffer", source: "derived", note: "no list in the text; Giac pads and showed = [1,0,0]" }
+  - { id: "g225f1-cas-keep-matrix-type-sum", kind: "cas", input: "idn(2)+zeros(2,2)", expect: "[[1,0],[0,1]]", source: "derived", note: "guard: identity plus zero, equal shapes" }
+  - { id: "g225f1-cas-keep-cross-one-list", kind: "cas", input: "cross([[1,2,3],[4,5,6]])", expect: "[-3,6,-3]", source: "derived", note: "guard: the one-list form (2*6-3*5, 3*4-1*6, 1*5-2*4)" }
+  - { id: "g225f1-cas-keep-poly-sum", kind: "cas", input: "symb2poly(x+2)+symb2poly(x^2+1)", expect: "poly1[1,1,3]", source: "derived", note: "guard: coefficient vectors asked for: (x+2)+(x^2+1) = x^2+x+3" }
+  - { id: "g225f1-cas-keep-list-plus-number", kind: "cas", input: "[1,2]+1", expect: "error: listPlusNumber", source: "derived", note: "guard: stays listPlusNumber" }
+  - { id: "g225f1-cas-keep-matrix-vector-error", kind: "cas", input: "[[1,2],[3,4]]*[1,2,3]", expect: "error: engine", source: "derived", note: "guard: stays Giac's error" }
   - { id: "g220-normald-cdf-neg8-12", input: "normald_cdf(0,1,-8)", oracle: "mp.ncdf(M(-8))", expect: "6.22096057427E-16", mark: "≈", source: "oracle", note: "F195: guard at 12 digits (25 digits confirmed through the cancellation); the row at 30 digits fails before G220" }
   - { id: "g220-normald-cdf-neg20-12", input: "normald_cdf(0,1,-20)", oracle: "mp.ncdf(M(-20))", expect: "2.75362411861E-89", mark: "≈", source: "oracle", note: "F195: showed ⚠ 0: Giac prints (erf(-10*sqrt(2))+1)/2 and the sum cancels at every precision tried. Now read as erfc(10*sqrt(2))/2" }
   - { id: "g220-normald-cdf-neg40-12", input: "normald_cdf(0,1,-40)", oracle: "mp.ncdf(M(-40))", expect: "3.65589354092E-350", mark: "≈", source: "oracle", note: "F195: showed ⚠ 0, as normald_cdf(0,1,-20)" }

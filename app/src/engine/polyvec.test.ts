@@ -7,7 +7,7 @@ import { EngineHost, type GiacApi } from "./host.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
-import { asksPoly, mayAddToList, printsPoly, unaskedPoly } from "./polyvec.ts";
+import { asksPoly, printsPoly, unaskedPoly } from "./polyvec.ts";
 
 const MESSAGE = "A list plus a number: use .+ or add a list of the same length";
 
@@ -18,9 +18,6 @@ describe("text tests", () => {
     expect(asksPoly("symb2poly(x^2+1)*2", "typed")).toBe(true);
     expect(asksPoly("[1,4]+1", "typed")).toBe(false);
     expect(asksPoly("[1,4]+1+diff(x,x)*0", "typed")).toBe(false);
-    expect(mayAddToList("[1,4]+1", () => false)).toBe(true);
-    expect(mayAddToList("L+1", (n) => n === "L")).toBe(true);
-    expect(mayAddToList("a+1", () => false)).toBe(false);
   });
 });
 

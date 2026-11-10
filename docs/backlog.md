@@ -56,7 +56,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, G225 built; G225f2 on its branch, a review-only run.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
+- **F194, G225, G225f2 built.** Unequal shapes are refused: `dot`, `cross`, `+`, `-`, `*`, pointwise.
 - **F195, G220 built; G221, G221f1, G221f2 on their branch.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf` at the working precision (⚠ until then). Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
 - **F205, G303 and G303f1 built.** A stored `k` was lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
