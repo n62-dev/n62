@@ -5,12 +5,6 @@
 # "now passing" and the next fix removes it. The nightly fuzz adds rows here, not to sweep-known.yaml; a row of a cause with no open backlog
 # line stays out (its finding is in the run's report).
 known:
-  # F122: exact base to an exact huge exponent kills the engine (seed 1793285778 and G116's)
-  - { id: 'rad 30 \left(\operatorname{asinh}\left(\sqrt[3]{0.5}\right)\right)^{\left(\frac{\pi}{2}+10^{-3}\right)^{\frac{90+10^{-3}}{\frac{\pi}{2}+10^{-6}}}}', check: crash, package: F122 }
-  - { id: 'rad 12 \left(\arctan\left(\ln\left(-\pi\right)+9007199254740993\right)\right)^{\sin\left(1ᴇ-300\right)-\left(1ᴇ300\right)}', check: crash, package: F122 }
-  - { id: 'deg 12 \left(\arctan\left(\ln\left(-\pi\right)+9007199254740993\right)\right)^{\sin\left(1ᴇ-300\right)-\left(1ᴇ300\right)}', check: crash, package: F122 }
-  # F122: an exact base to a huge exponent kills the engine (G138, seed 1793847163: (90+10^-k)^(…-√1ᴇ1000))
-  - { id: 'rad 12 \left(90+10^{-6}\right)^{\left(\left(1-10^{-218}\right)^{3\times 10^{218}}\right)-\sqrt{1ᴇ1000}}', check: crash, package: F122 }
   # F144 (G152): the imaginary part of acosh/asinh of a huge argument halved (G138: asinh(1ᴇ1000+…+atanh(10)); mpmath keeps the right im there)
   - { id: 'rad 30 \operatorname{asinh}\left(\left(\left(1ᴇ1000\right)+\sin\left(\frac{\pi}{2}-\frac{\pi}{10^{4}}\right)\right)+\operatorname{atanh}\left(10\right)\right)', check: "≈", package: F144 }
   # F145 (G186 fixed the hangs: Giac's simplifier loop, patch 0040, and the bridge's re-evaluation at Digits 12): Giac's exact asin of
