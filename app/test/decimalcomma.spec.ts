@@ -91,6 +91,85 @@ test("Del before the 5 of 3,5² deletes the 5 alone and keeps the exponent, as b
   expect(await delBefore5()).toBe("3{,}^2");
 });
 
+// R256f1: the 10 right after a comma number is no 10ˣ mark, and the degrees before a DMS mark are the whole number: each
+// comma sequence gives its point twin's line and ⌫ and Del results, the point replaced by the group {,}.
+const twin = (l: string): string => l.replaceAll("{,}", ".");
+/** Runs `go` in point mode, then in comma mode on a cleared line; the comma lines must equal the point lines. */
+const sameAsPoint = async (page: Page, go: () => Promise<string[]>): Promise<{ point: string[]; comma: string[] }> => {
+  await page.evaluate(() => window.n62.session.setDecimalMark("point"));
+  const point = await go();
+  await page.evaluate(() => window.n62.session.setDecimalMark("comma"));
+  await tap(page, ["esc"]);
+  const comma = await go();
+  expect(comma.map(twin)).toEqual(point);
+  return { point, comma };
+};
+const insertDms = (page: Page): Promise<void> =>
+  page.evaluate(() => window.n62.entry.run({ kind: "insert", latex: "#@\\degree#?\\prime#?\\doubleprime" }));
+const bkspTwice = async (page: Page): Promise<string[]> => {
+  const out: string[] = [];
+  for (let n = 0; n < 2; n++) {
+    await tap(page, ["bksp"]);
+    out.push(await entryValue(page));
+  }
+  return out;
+};
+
+test("3 , 1 0 x², cursor after the 0, then ⌫ ⌫ acts as 3.10²: the 10 is a digit pair of the number, not the 10ˣ mark", async ({ page }) => {
+  const { point, comma } = await sameAsPoint(page, async () => {
+    await tap(page, ["d3", "dot", "d1", "d0", "sq"]);
+    await page.evaluate(() => {
+      const mf = window.n62.entry.field;
+      if (mf) mf.position = mf.lastOffset - 3; // after the 0, the end of the base: the exponent's sentinel, 2 and ^2 follow
+    });
+    return [await entryValue(page), ...(await bkspTwice(page))];
+  });
+  expect(point).toEqual(["3.10^2", "3.1^2", "3.^2"]); // the point-mode control
+  expect(comma).toEqual(["3{,}10^2", "3{,}1^2", "3{,}^2"]);
+});
+
+test("3 , 1 0 x², Del before the 1 deletes the 1 alone and keeps the exponent, as 3.10²", async ({ page }) => {
+  const { point, comma } = await sameAsPoint(page, async () => {
+    await tap(page, ["d3", "dot", "d1", "d0", "sq"]);
+    await page.evaluate(() => {
+      const mf = window.n62.entry.field;
+      if (mf) mf.position = mf.lastOffset - 5; // before the 1: the 1, the 0, the exponent's sentinel, its 2 and ^2 follow
+    });
+    await tap(page, ["shift", "bksp"]);
+    return [await entryValue(page)];
+  });
+  expect(point).toEqual(["3.0^2"]); // the point-mode control
+  expect(comma).toEqual(["3{,}0^2"]);
+});
+
+test("DMS after 3 , 5 takes 3,5 as its degrees: ⌫ inside the template acts as for 3.5", async ({ page }) => {
+  const { point, comma } = await sameAsPoint(page, async () => {
+    await tap(page, ["d3", "dot", "d5"]);
+    await insertDms(page);
+    const out = [await entryValue(page)];
+    // the places of the number by position (the group {,} is three offsets, its parts included, in comma mode): ⌫ and Del there
+    const isComma = (await page.evaluate(() => window.n62.session.settings.decimalMark)) === "comma";
+    for (const k of [0, 1, 2, 3]) {
+      for (const del of [false, true]) {
+        await tap(page, ["esc", "d3", "dot", "d5"]);
+        await insertDms(page);
+        await page.evaluate((o) => {
+          const mf = window.n62.entry.field;
+          if (mf) mf.position = o;
+        }, isComma && k > 1 ? k + 2 : k);
+        await tap(page, del ? ["shift", "bksp"] : ["bksp"]);
+        out.push(`${k}${del ? "Del" : "⌫"} ${await entryValue(page)}`);
+      }
+    }
+    return out;
+  });
+  const dms = "\\degree\\placeholder{}\\prime\\placeholder{}\\doubleprime";
+  expect(point[0]).toBe(`3.5${dms}`); // the point-mode control: Del before the 5 deletes the 5 and leaves the 3.
+  expect(point[6]).toBe(`2Del 3.${dms}`);
+  expect(point[7]).toBe(`3⌫ 3.${dms}`);
+  expect(comma[0]).toBe(`3{,}5${dms}`);
+});
+
 test("max(1;2) typed with letters and the , key (;) gives 2; a list element is never read as a decimal", async ({ page }) => {
   await maxCall(page);
   await tap(page, ["d1", "comma", "d2"]);
