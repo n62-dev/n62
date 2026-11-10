@@ -5,10 +5,10 @@
 // (exp(1/3) = 1.39561242508609, mpmath) and derived.
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "../engine/host.ts";
-import { defaultHomeSettings } from "../engine/homeEval.ts";
+import { defaultHomeSettings, toExactLiterals } from "../engine/homeEval.ts";
 import { giacAvailable, loadNodeGiac } from "../engine/nodeGiac.ts";
 import type { IndexItem } from "../find/types.ts";
-import { checkArgs } from "./evaluate.ts";
+import { checkArgs, dimInCall, withAngles } from "./evaluate.ts";
 import { buildJob } from "./build.ts";
 import { factorTable } from "./factors.ts";
 import { isUnitError, type Quantity, type UnitError, type UnitRequest } from "./types.ts";
@@ -25,6 +25,20 @@ describe("the check text (G310)", () => {
     expect(checkArgs("exp(floor(pasz1*L))")).toBe("pasucf(pasucz(pasucf(pasucz(pasz1*L))))");
     expect(checkArgs("pasusin(pasz1*L)+pasuatan2(pasz2*L,pasz3*T)")).toBe("pasucsin(pasz1*L)+pasucatan2(pasz2*L,pasz3*T)");
     expect(checkArgs("max(pasz1*L,pasz2*L)")).toBe("max(pasz1*L,pasz2*L)");
+  });
+});
+
+describe("a slot inside a function the check reads (G310)", () => {
+  const flag = (formula: string): boolean => {
+    const j = buildJob({ formula, slots: [M] }, TABLE);
+    if (isUnitError(j) || j.check === undefined) throw new Error(`no check: ${formula}`);
+    return dimInCall(withAngles(toExactLiterals(j.check)));
+  };
+  it("exp, cos, floor, the inverses and atan2 around a slot run the check with the value", () => {
+    for (const f of ["exp(0*pasu1)", "cos(0*pasu1)", "floor(0*pasu1)", "2*asin(0*pasu1/(1*pasu1))", "atan2(1*pasu1,0*pasu1)", "logb(8*pasu1/(1*pasu1),2)"]) expect(flag(f)).toBe(true);
+  });
+  it("a slot outside every such call, or only in a function not on the list, does not", () => {
+    for (const f of ["0*pasu1", "exp(2)*pasu1", "max(1*pasu1,2*pasu1)", "abs(0*pasu1)", "sqrt(4*pasu1)"]) expect(flag(f)).toBe(false);
   });
 });
 

@@ -331,18 +331,3 @@ describe("the dimension check's text (G35)", () => {
     expect("error" in sum && sum.error).toBe("temperature");
   });
 });
-
-describe("a slot inside a function the check reads (G310)", () => {
-  const m = { tokens: [{ unit: "m" }] };
-  const flag = (formula: string, slots = [m]) => {
-    const j = buildJob({ formula, slots }, table);
-    if ("error" in j) throw new Error(unitErrorMessage(j));
-    return j.checkCall;
-  };
-  it("exp, cos, floor, the inverses and atan2 around a slot or a constant set checkCall", () => {
-    for (const f of ["exp(0*pasu1)", "cos(0*pasu1)", "floor(0*pasu1)", "2*asin(0*pasu1/(1*pasu1))", "atan2(1*pasu1,0*pasu1)", "logb(8*pasu1/(1*pasu1),2)"]) expect(flag(f)).toBe(true);
-  });
-  it("a slot outside every such call, or only in a function not on the list, leaves it unset", () => {
-    for (const f of ["0*pasu1", "exp(2)*pasu1", "max(1*pasu1,2*pasu1)", "abs(0*pasu1)", "sqrt(4*pasu1)"]) expect(flag(f)).toBeUndefined();
-  });
-});

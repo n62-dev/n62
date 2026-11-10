@@ -6,16 +6,21 @@
 // agreement check), so markOf() marks it as Home. Synchronous, UI-free. Only erasable TypeScript syntax.
 import { FULL_EXACT_MAX, resultFromFacts, toExactLiterals, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
 import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
-import { callsOf, isError, isNameChar, mapNames, splitList, topLevelArgs } from "../engine/giacPrint.ts";
+import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
 import { shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
-import { INVERSES, PURE_FNS, TRIG_FNS } from "./argCheck.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
 const ANY_DIM = BASES.map((b) => `has(pasy_,${b.symbol})`).join(" or ");
 const ONES = `[${BASES.map(() => "1").join(",")}]`;
+/** G40: the inverse functions that give an angle (the parser's ANGLE_OUT puts `/pasdeg` after each, R64). */
+const INVERSES = ["atan2", "asin", "acos", "atan", "asec", "acsc", "acot"] as const;
+/** G310: functions of a pure number, whose first argument the check reads (a zero of a length too: exp(0 m) is refused). */
+const PURE_FNS = ["exp", "ln", "log10", "logb", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sec", "csc", "cot", "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "Gamma", "erf", "erfc", "surd"] as const;
+/** sin, cos and tan take a pure number or an angle (P15). */
+const TRIG_FNS = ["sin", "cos", "tan"] as const;
 /** G310: the rad dimension alone, as pasuq's exponents. */
 const RAD = `[${BASES.map((b) => (b.symbol === "pasdimA" ? "1" : "0")).join(",")}]`;
 const ZERO = `[${BASES.map(() => "0").join(",")}]`;
@@ -195,6 +200,12 @@ const CHECKED_CALLS: ReadonlySet<string> = new Set([...TRIG_FNS, ...INVERSES].ma
  *  others): a pure number when its argument is one. The value's text keeps Giac's own calls. */
 export function checkArgs(t: string): string {
   return pureArgs(mapNames(t, (n) => (n.call && CHECKED_CALLS.has(n.name) ? `pasuc${n.name.slice(4)}` : null), "typed"));
+}
+
+/** G310: whether the check's text (after withAngles) has a dimension symbol inside a call whose argument the check
+ *  reads, a slot or a constant there: the check then runs with the value, whatever the value is (exp(0 m)). */
+export function dimInCall(t: string): boolean {
+  return callsOf(t, [...PURE_FNS, ...CHECKED_CALLS], "typed").some((c) => c.close >= 0 && [...names(t.slice(c.open + 1, c.close), "typed")].some((n) => !n.call && n.name.startsWith("pasdim")));
 }
 
 function pureArgs(t: string): string {
@@ -436,9 +447,10 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const f = withAngles(toExactLiterals(job.expr));
   let g = job.end ? withAngles(toExactLiterals(job.end)) : "1";
   // G35: the dimension check (job.check, every number beside a slot a symbol of its own) goes in the same call.
-  const checkText = job.check !== undefined ? `pasuq(normal(${checkArgs(withAngles(toExactLiterals(job.check)))}))` : null;
+  const checkForm = job.check !== undefined ? withAngles(toExactLiterals(job.check)) : null;
+  const checkText = checkForm !== null ? `pasuq(normal(${checkArgs(checkForm)}))` : null;
   // G310: a slot inside a function whose argument the check reads is checked whatever the value is (exp(0 m)).
-  const withValue = job.checkSum === true || job.checkCall === true;
+  const withValue = job.checkSum === true || (checkForm !== null && dimInCall(checkForm));
   const chk = checkText !== null && withValue ? `,${checkText}` : "";
   const out = giac.eval(`pasuR:=[pasuq(normal(${f})),pasuq(normal(${g}))${chk}]`);
   if (isError(out)) return { error: "engine", detail: out };

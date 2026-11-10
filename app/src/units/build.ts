@@ -7,7 +7,6 @@ import type { FactorTable, UnitFactor } from "./factors.ts";
 import { balanced, closing, mapNames, names, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
-import { slotInCall } from "./argCheck.ts";
 
 const letters = (s: string): boolean => s !== "" && [...s].every((c) => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z"));
 const digits = (s: string): boolean => s !== "" && [...s].every((c) => c >= "0" && c <= "9");
@@ -491,7 +490,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
     const cycle = cycleUnit([...req.slots, ...(req.end ? [req.end] : [])]);
     return {
       expr,
-      ...(check !== null ? { check, ...(count.sum ? { checkSum: true as const } : {}), ...(slotInCall(formula) ? { checkCall: true as const } : {}) } : {}),
+      ...(check !== null ? { check, ...(count.sum ? { checkSum: true as const } : {}) } : {}),
       ...endJob(req, table),
       ...(shows.length ? { shows } : {}),
       ...(cycle ? { cycle } : {}),
