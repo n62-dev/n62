@@ -113,8 +113,16 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
  *  click the browser still makes, which landed on the Find sheet More… had just opened. 66,917 B + 0.05 kB.
  *  66.97 → 67.09 kB (R258): phase-1 bc527dcd measures 66.96 kB, the branch 67.04 kB (unit view chunk 37.09 → 37.16 kB): the
  *  unit view reads a stored value of more than one letter (`\operatorname{rate}`) as Home does, so its host passes the
- *  session's stored values to the parser at each request (open.ts `values`, view.ts request). 67.04 kB + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 67_090;
+ *  session's stored values to the parser at each request (open.ts `values`, view.ts request). 67.04 kB + 0.05 kB.
+ *  67.09 → 69.21 kB (R271): phase-1 5ce86572 measures 66,972 B, the branch 69,155 B (open 27,530 → 28,142, factors
+ *  14,998 → 16,424, slot 10,234 → 10,379): a result chip after ± is the σ, so the builder links it to its value's slot,
+ *  checks its dimension and converts its unit (build.ts sigmaIn, slotDim, slotFactor), the request carries its facts
+ *  (chipUnit.ts sigmaChipOf) and the shown mark takes σ's (result.ts). 69,155 B + 0.05 kB.
+ *  69.21 → 69.47 kB (R271f1): the branch before the fix measures 69.15 kB, after it 69.41 kB (unit view chunk 37.71 → 37.88 kB):
+ *  σ's mark is decided once (evaluate.ts, in the worker), and the row and the chip store σ's facts, the view reads them where the
+ *  ⚠ sits (result.ts), and a chip with them limits σ again when it goes in (chipUnit.ts uncChipsIn, build.ts sigmaFacts checks
+ *  them). 69.41 kB + 0.06 kB. */
+export const UNIT_VIEW_PIN_RAW = 69_470;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {

@@ -14,7 +14,7 @@ const digits = (s: string): boolean => s !== "" && [...s].every((c) => c >= "0" 
 const uncName = (name: string): boolean => name.startsWith("pasv") && digits(name.slice(4));
 /** Our names a formula may hold: the dimension symbols, the uncertain inputs, the degree factor. */
 const ourSymbol = (name: string): boolean => (name.startsWith("pasdim") && letters(name.slice(6))) || uncName(name) || name === "pasdeg";
-import type { ShownUnit, UncVar, UnitError, UnitJob, UnitRequest, UnitSlot, UnitToken } from "./types.ts";
+import type { ShownUnit, SigmaFacts, UncVar, UnitError, UnitJob, UnitRequest, UnitSlot, UnitToken } from "./types.ts";
 
 /** The logarithmic units: any unit with the Np dimension, and these. Each is a level of a ratio to a reference:
  *  `k`·log10 of the field ratio (dB 20, bel 2) or the power ratio (dBm, dBW 10), Np the ln of the field ratio; `ref`
@@ -159,7 +159,7 @@ function constGiac(id: string, table: FactorTable, vars: UncVar[], seen: Map<str
 /** `pasupm(value,sigma)` calls of a formula (G18) become the symbols pasv<n>, appended to `vars`: every typed one an
  *  input of its own (G18), every call with a chip's key `pasupm(value,sigma,key)` one input per key (R115, decisions
  *  R61: one chip used twice is one input), as `uncVar` does for a constant. */
-function uncertainValues(formula: string, vars: UncVar[]): string {
+function uncertainValues(formula: string, vars: UncVar[], sigmaIn: SigmaIn): string {
   const CALL = "pasupm(";
   const bad = (): Refused => new Refused({ error: "engine", detail: "a bad ± in the formula" });
   const byKey = new Map<string, UncVar>();
@@ -181,7 +181,16 @@ function uncertainValues(formula: string, vars: UncVar[]): string {
     const value = formula.slice(open + 1, commas[0]).trim();
     const sigma = formula.slice(commas[0]! + 1, commas[1] ?? close).trim();
     const key = commas[1] === undefined ? undefined : formula.slice(commas[1] + 1, close).trim();
-    if (!value || !sigma || /pas/.test(value + sigma) || (key !== undefined && !isChipName(key))) throw bad();
+    const link = key?.startsWith("pasws") && digits(key.slice(5)) ? Number(key.slice(5)) : null;
+    if (!value || !sigma || /pas/.test(value + sigma) || (key !== undefined && link === null && !isChipName(key))) throw bad();
+    if (link !== null) {
+      // R271: a result chip as σ: an input of its own (the value is typed), σ in the value's unit
+      const v: UncVar = { name: `pasv${vars.length + 1}`, value, sigma: sigmaIn(link, sigma), chip: true };
+      vars.push(v);
+      out += v.name;
+      i = close + 1;
+      continue;
+    }
     const known = key !== undefined ? byKey.get(key) : undefined;
     // one key is one chip: the parser writes it with one value and one σ, so anything else is not ours
     if (known && (known.value !== value || known.sigma !== sigma)) throw bad();
@@ -193,6 +202,69 @@ function uncertainValues(formula: string, vars: UncVar[]): string {
     out += v.name;
     i = close + 1;
   }
+}
+
+/** R271: σ of a result chip (`pasws<j>`, UnitRequest.sigmas[j-1]) in the value's unit. */
+type SigmaIn = (j: number, sigma: string) => string;
+
+/** R271: the SigmaIn of a request. A chip with no unit is in the value's unit; one with a unit must have the dimension
+ *  of the value's slot (none: a pure number), and its σ is converted to that slot's unit, an interval for °C and °F. */
+function sigmaIn(req: UnitRequest, table: FactorTable): SigmaIn {
+  return (j, sigma) => {
+    const c = req.sigmas?.[j - 1];
+    if (!c) throw new Refused({ error: "engine", detail: `no σ chip ${j}` });
+    if (!c.unit) return sigma;
+    const own = c.slot === null ? undefined : req.slots[c.slot];
+    // the factors first: they refuse an unknown unit or power before its dimension is read
+    const ratio = `${slotFactor(c.unit, table)}${own ? `/${slotFactor(own, table)}` : ""}`;
+    const dims: [string, string] = [slotDim(c.unit, table), own ? slotDim(own, table) : ""];
+    if (dims[0] !== dims[1]) throw new Refused({ error: "sigmadim", dims });
+    return `(${sigma})*${ratio}`;
+  };
+}
+
+/** R271: the worst facts of the request's σ chips (the fewest confirmed digits, a ⚠ reason), R271f1 with those of the
+ *  chips that carry a σ chip's facts, as stored: only a whole count from 0 and a known ⚠ reason count; undefined
+ *  without one. */
+function sigmaFacts(req: UnitRequest): SigmaFacts | undefined {
+  const all: SigmaFacts[] = [...(req.sigmas ?? []), ...(req.uncChips ?? [])];
+  if (!all.length) return undefined;
+  const digits = all.flatMap((c) => (Number.isInteger(c.reliableDigits) && c.reliableDigits! >= 0 ? [c.reliableDigits!] : []));
+  const warn = all.find((c) => c.warn === "unaudited" || c.warn === "unchecked")?.warn;
+  return { reliableDigits: digits.length ? Math.min(...digits) : null, ...(warn ? { warn } : {}) };
+}
+
+/** R271: a slot's factor to SI without its dimension symbols, °C and °F as an interval (a σ has no offset). */
+function slotFactor(slot: UnitSlot, table: FactorTable): string {
+  const per = slot.per ?? slot.tokens.length;
+  return mapNames(`(${slot.tokens.map((t, i) => tokenGiac(t, i >= per, table, true)).join("*")})`, (n) => (n.name.startsWith("pasdim") ? "1" : null), "typed");
+}
+
+/** R271: a slot's dimension key, from its units' keys and powers (exact fractions). */
+function slotDim(slot: UnitSlot, table: FactorTable): string {
+  const per = slot.per ?? slot.tokens.length;
+  const sum = new Map<string, [bigint, bigint]>();
+  const frac = (e: string): [bigint, bigint] => {
+    const [p, q] = e.split("/");
+    return [BigInt(p!), BigInt(q ?? "1")];
+  };
+  slot.tokens.forEach((t, i) => {
+    const [pn, pd] = frac(t.power ?? "1");
+    for (const [b, e] of parseDimKey(table.units.get(t.unit)?.dim ?? "")) {
+      const [en, ed] = frac(e);
+      const [a, c] = sum.get(b) ?? [0n, 1n];
+      const n = (i >= per ? -pn : pn) * en;
+      const d = pd * ed;
+      sum.set(b, [a * d + n * c, c * d]);
+    }
+  });
+  const text = ([n, d]: [bigint, bigint]): string => {
+    let [x, y] = [n < 0n ? -n : n, d];
+    while (y) [x, y] = [y, x % y];
+    const [p, q] = [n / (x || 1n), d / (x || 1n)];
+    return q === 1n ? `${p}` : `${p}/${q}`;
+  };
+  return dimKeyOf(BASES.map((b) => text(sum.get(b.key) ?? [0n, 1n])));
 }
 
 /** A slot as text, in the order typed: positive powers, then the ones below the ÷ ("km/h", "cm²"). */
@@ -438,7 +510,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
       // A single pasupm(value,sigma) is the lone number of °C and °F (G18f1): K = a·x + b gives σ = a·σx, the offset drops out.
       const uvars: UncVar[] = [];
       const withPm = lone && !isLog(x.id, x.u) && req.formula.includes("pasupm(");
-      const symbolic = withPm ? uncertainValues(req.formula, uvars) : "";
+      const symbolic = withPm ? uncertainValues(req.formula, uvars, sigmaIn(req, table)) : "";
       // R115: a chip's call keeps its minus outside it, (-pasv1)
       const pmMatch = withPm && uvars.length === 1 ? new RegExp(`^\\s*(pasv1|\\(\\s*-\\s*pasv1\\s*\\))\\s*\\*\\s*pasu${alone + 1}\\s*$`).exec(symbolic) : null;
       const pm = pmMatch !== null;
@@ -458,13 +530,14 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
       if (pm) {
         const v = uvars[0]!;
         const sign = minus ? "-" : "";
-        return { expr: specialSource(x.id, x.u, `(${sign}(${v.value}))`), ...endJob(req, table), ...abs, inexact: true, unc: { expr: specialSource(x.id, x.u, `(${sign}pasv1)`), vars: uvars } };
+        const chip = sigmaFacts(req);
+        return { expr: specialSource(x.id, x.u, `(${sign}(${v.value}))`), ...endJob(req, table), ...abs, inexact: true, unc: { expr: specialSource(x.id, x.u, `(${sign}pasv1)`), vars: uvars, ...(chip ? { chip } : {}) } };
       }
       return { expr: specialSource(x.id, x.u, num), ...endJob(req, table), ...abs, inexact: false };
     }
     const slots = req.slots.map((s) => slotGiac(s, table));
     const vars: UncVar[] = [];
-    const formula = uncertainValues(req.formula, vars);
+    const formula = uncertainValues(req.formula, vars, sigmaIn(req, table));
     const seen = new Map<string, string>();
     const through = correlated((req.consts ?? []).map((id) => [id, table.consts.get(id) ?? {}] as const));
     const consts = (req.consts ?? []).map((id) => constGiac(id, table, vars, seen, through));
@@ -487,6 +560,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
     const form = dimensionForm(formula, count);
     const check = count.k ? values(form.replace(PLACEHOLDER, (_, kind: string, n: string) => (kind === "u" ? slots[Number(n) - 1]! : consts[Number(n) - 1]!.giac))) : null;
     const shows = req.end ? [] : shownUnits(req, table);
+    const chip = sigmaFacts(req);
     const cycle = cycleUnit([...req.slots, ...(req.end ? [req.end] : [])]);
     return {
       expr,
@@ -496,7 +570,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
       ...(cycle ? { cycle } : {}),
       ...(hasCycles([...req.slots, ...(req.end ? [req.end] : [])]) ? { cycles: true as const } : {}),
       inexact: vars.length > 0 || consts.some((c) => c.inexact),
-      ...(vars.length ? { unc: { expr: sym, vars } } : {}),
+      ...(vars.length ? { unc: { expr: sym, vars, ...(chip ? { chip } : {}) } } : {}),
     };
   } catch (e) {
     if (e instanceof Refused) return e.why;

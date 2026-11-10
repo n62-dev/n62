@@ -8,8 +8,10 @@ import { FULL_EXACT_MAX, resultFromFacts, toExactLiterals, type HomeResult, type
 import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
 import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
+import { decimalToString, roundSignificant } from "../engine/format.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
+import { worseFacts } from "./sigmaFacts.ts";
 import { shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
@@ -370,6 +372,10 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   // A level is of a pure number: the ratio, the dimension symbols set to 1 (both sides have the same dimension).
   const level = job.endLog !== undefined && src.kind === "term";
   const G = level ? job.endLog!.replace(/pasux/g, `(subst(${F},[${ones.join(",")}])/(${dst.num}))`) : `(${F})/(${dst.num})`;
+  // R271: a result chip as σ must be a real number, not below 0 (σ² would hide its sign; a typed σ is a plain number).
+  // Decided exactly in Giac, as the sign checks below: a float would read -1/10^500 as -0, which passes >= 0.
+  const realNonNegative = (x: string): boolean => giac.eval(`when(im(${x})==0 and sign(re(${x}))>=0,1,0)`).trim() === "1";
+  if (u.vars.some((v) => v.chip && !realNonNegative(`(${lit(v.sigma)})`))) return { error: "sigma" };
   const list = (f: (v: UncVar) => string): string => `[${u.vars.map(f).join(",")}]`;
   const out = giac.eval(`pasuW:=pasuu(${G},${list((v) => v.name)},${list((v) => `(${lit(v.value)})`)},${list((v) => `(${lit(v.sigma)})`)},${list((v) => `${v.name}=(${lit(v.value)})`)},quote(${G}))`);
   if (isError(out)) return { error: "engine", detail: out };
@@ -391,7 +397,15 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   const big = (Number.isFinite(share) ? share : Number(giac.eval("evalf(pasuW[1])"))) > ORDER2_SHARE;
   const flag = parts?.[2]?.trim();
   const why = flag === "2" ? "jump" : flag === "1" ? "singular" : big ? "order2" : null;
-  return { value, text, shown, ...(why ? { why } : {}) };
+  const c = u.chip;
+  if (!c) return { value, text, shown, ...(why ? { why } : {}) };
+  // R271: σ keeps the chips' facts: no more confirmed digits than theirs, and their ⚠ reason; R271f1: its `full` (the
+  // chip's σ, units/chip.ts) then has its confirmed digits only, a decimal Giac reads (none confirmed: no chip text)
+  const facts = worseFacts(value.facts, c);
+  const n = facts.reliableDigits;
+  const v = value.value?.re;
+  const full = n === null || !v || v.digits.length <= n ? value.full : n < 1 ? "" : decimalToString({ ...roundSignificant(v, n), sticky: false });
+  return { value: { ...value, facts, full }, text, shown, ...(why ? { why } : {}), chip: { reliableDigits: n, ...(facts.warn ? { warn: facts.warn } : {}) } };
 }
 
 const PREFIXES: Readonly<Record<number, string>> = { [-15]: "f", [-12]: "p", [-9]: "n", [-6]: "µ", [-3]: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T", 15: "P" };
@@ -512,6 +526,9 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const done = (value: HomeResult, valueExpr: string): Quantity | UnitError => {
     const unc = job.unc ? uncertainty(giac, job, src, shownDst, valueExpr, value.display, dimension, s) : null;
     if (unc && isUnitError(unc)) return unc;
+    // R271f1: σ's mark decided once: a σ from a result chip limits the value's facts (its confirmed digits, its ⚠), so
+    // the view, the Home row, Copy and the chip read one fact (units/sigmaFacts.ts)
+    if (unc?.chip) value = { ...value, facts: worseFacts(value.facts, unc.chip) };
     return { value, dimension, dimensionText: dimension === null ? null : dimensionText(dimension), unit, ...(shownSlot ? { shownSlot } : {}), siPrefixed: sp?.text ?? "", ...si, ...(unc ? { unc } : {}), ...(note ? { note } : {}), ms: performance.now() - t0 };
   };
   if ((job.absTemp || job.endOffset !== undefined) && src.kind === "term" && giac.eval(`sign(${num})`).trim() === "-1") return { error: "belowzero" };
