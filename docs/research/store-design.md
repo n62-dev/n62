@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Store, designed: from a result to a name and back (S53)
 
-**Status (sandra, 2026-11-10): open.** The owner picks a design (recommended: the store sheet, section 4) and, with R278, whether Store ▶ gets a tap cell. Labels `sd-1` to `sd-4` are this note's; ids are minted when the packages are written. Base: `phase-1` at `510a098b`. Mockup: [mockups/store-2026-11.html](../mockups/store-2026-11.html).
+**Status: decided (owner, 2026-11-10): design A, the store sheet** (decisions.md "Touch, keys and Store"). sd-1 ran as S53f1; sd-2, sd-3, sd-4 are R280, R281, R282. Store ▶ keeps Shift + ᴇ (no tap cell: r2c4 and r2c5 are Select and Deselect, R278). Labels `sd-1` to `sd-4` are this note's. Base: `phase-1` at `510a098b`. Mockup: [mockups/store-2026-11.html](../mockups/store-2026-11.html).
 
 Words used here. **Store ▶**: the store arrow; `value ▶ A` puts the value into the name A. **Ans**: the view's last result, as a chip on the line. **Chip**: a result put on the line as one unit that carries its full value. **Facts and marks**: what the engine knows about a value (exact, how many digits are sure, a warning), drawn as `=`, `≈` or `⚠ n` before a number (docs/04 2.4). A stored name keeps the facts of what was stored, and a result that reads it inherits them (docs/04 2.8). **Press**: every key, flick, drag or screen tap counts 1 (docs/04 5.2).
 

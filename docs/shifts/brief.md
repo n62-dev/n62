@@ -71,8 +71,13 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
 | 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
 | 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
-| 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, the owner's choice for the cells |
-| 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R276, R277 |
+| 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
+| 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, R279 |
+| 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | the v0.1.0 tag |
+| 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R278, R279, R283 |
+| 630 | [R280](packages/R280.md) Store ▶ acts on the picked row (sd-2) | ron, Opus | `p1/ron-storepick` | the v0.1.0 tag |
+| 631 | [R281](packages/R281.md) the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
+| 632 | [R282](packages/R282.md) Vars in the store sheet's look (sd-4) | ron, Sonnet | `p1/ron-varsgrid` | R281 |
 
 ### Lane B queue (the release, then the engine)
 The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
