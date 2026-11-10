@@ -218,13 +218,27 @@ export class AppShell {
     const a = this.instance;
     return a?.nav?.(this.view, dir, this.entryEdited) ?? false;
   }
+  /** R261: Esc in an app view puts back what the app last put on the line (a slot's stored text, an unknown's value),
+   *  so nothing counts as edited and ▲▼ move again. False in Home and CAS, and while the app's code loads. */
+  restoreEntry(): boolean {
+    if (!this.instance) return false;
+    if (this.entryBase === "") this.entry.clear();
+    else if (this.entry.value !== this.entryBase) this.entry.set(this.entryBase);
+    return true;
+  }
+  /** R261: Undo on a line as the app put it goes to the app first (Symb: what Menu › Clear took). */
+  undo(): boolean {
+    const a = this.instance;
+    return !this.entryEdited && (a?.undo?.(this.view) ?? false);
+  }
   /** The open view's own Menu items (Home/CAS: the copy actions), or the pointer row (R83). Settings is the ⚙ in the
    *  title row (R145), not a row. */
   get menuItems(): readonly MenuItem[] {
     const own = this.app === null ? this.homeMenu?.() : this.instance?.menu?.(this.view);
-    return own && own.length > 0 ? own : this.pointer();
+    if (!own || own.length === 0) return this.pointer();
+    return own.every((r) => r.slotRow) ? [...own, ...this.pointer()] : own; // R261: Symb's Clear keeps the pointer
   }
-  /** R83: a view whose Menu has no rows of its own gets one row naming the view that has them; it switches there and
+  /** R83: a view whose Menu has no rows of its own (or only slot rows, R261) gets one row naming the view that has them; it switches there and
    *  opens that Menu on its first row. Nothing when the view has rows, or no view has. */
   private pointer(): MenuItem[] {
     const a = this.instance;

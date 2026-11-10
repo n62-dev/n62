@@ -31,7 +31,7 @@ test("Solve: Num shows x·eˣ=5 as 1,32672466524, Copy gives the comma, point mo
   await tap(page, ["@place", "d4", "@symb"]);
   await tap(page, ["x", "shift", "ln", "x", "right", "shift", "dot", "d5", "enter", "@num"]);
   await row(page, "x").locator("th button").tap();
-  await tap(page, ["esc", "d1", "enter", "@menu", "d1"]); // guess 1, Menu → Solve
+  await tap(page, ["shift", "esc", "d1", "enter", "@menu", "d1"]); // Clear (R261: Esc puts the value back), guess 1, Menu → Solve
   await expect(row(page, "x").locator("td")).toHaveText("1,32672466524");
   await expect(row(page, "x").locator("td")).toHaveAttribute("data-value", /^1\.3267246652/); // the stored value keeps the point
   await tap(page, ["copy"]);

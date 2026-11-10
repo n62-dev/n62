@@ -151,7 +151,8 @@ export class FunctionApp implements AppInstance {
 
   enter(view: ViewId, latex: string): void {
     if (view === "symb") {
-      this.define(this.slots.selected, latex);
+      // R261: an empty line leaves the slot alone (Menu › Clear empties it); the stored text comes back on the line
+      if (latex.trim() !== "") this.define(this.slots.selected, latex);
       this.host.setEntry(this.slots.latex[this.slots.selected] ?? "");
     } else if (view === "num") {
       if (latex === "") return; // R99f1: an empty line is not a value (no notice; start and step stay, as Solve's Num)
@@ -215,7 +216,33 @@ export class FunctionApp implements AppInstance {
         { id: "step", label: numText("num.setStep"), run: () => this.editNum("step") },
         { id: "csv", label: tc("clip.csv"), disabled: this.numSlots.length === 0, reason: numText("why.noFunction"), run: () => void this.copyNum() },
       ];
+    if (view === "symb") {
+      const empty = (this.slots.latex[this.slots.selected] ?? "") === "";
+      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }];
+    }
     return [];
+  }
+
+  /** R261: Menu › Clear: the selected function goes, as one step Undo takes back. */
+  clearSlot(): void {
+    const i = this.slots.selected;
+    this.slots.clear(i);
+    const next = [...this.compiled];
+    next[i] = compileDefinition("", this.host.settings.angle);
+    this.compiled = next;
+    this.marks = [];
+    this.readout = undefined;
+    this.host.setEntry("");
+    this.save();
+  }
+  /** R261: Undo after Clear brings the function back, on or off as it was, and selects it. */
+  undo(view: ViewId): boolean {
+    const c = view === "symb" ? this.slots.takeCleared() : null;
+    if (!c) return false;
+    this.define(c.i, c.latex);
+    this.slots.enabled[c.i] = c.enabled;
+    this.select(c.i);
+    return true;
   }
 
   // ---- Copy (docs/04 section 2.6): the Num table as CSV, full values

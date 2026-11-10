@@ -55,14 +55,18 @@ describe("R83 the Menu says whose it is", () => {
 
   it("Function's Symb Menu points to Plot's, by tap row, Enter and digit", async () => {
     for (const pick of ["digit", "enter"] as const) {
+      lastPicks.clear(); // the highlight starts on the first row, not the pointer the digit picked
       const s = shell();
       await s.open("function", "symb");
       (s.instance as FunctionApp).define(0, "x^2");
       s.toggleMenu();
-      expect(ids(s)).toEqual(["in-plot"]);
-      expect(s.sheet?.level.items[0]?.label).toBe("Root, extremum … in Plot");
-      if (pick === "digit") expect(s.pick(1)).toBe(true);
-      else s.picked(s.sheet!.enter());
+      expect(ids(s)).toEqual(["clear", "in-plot"]); // R261: Clear is a slot row, so the pointer stays
+      expect(s.sheet?.level.items[1]?.label).toBe("Root, extremum … in Plot");
+      if (pick === "digit") expect(s.pick(2)).toBe(true);
+      else {
+        s.sheet!.level.move(1);
+        s.picked(s.sheet!.enter());
+      }
       await Promise.resolve();
       await Promise.resolve();
       expect(s.view).toBe("plot");
@@ -76,8 +80,10 @@ describe("R83 the Menu says whose it is", () => {
     const s = shell();
     await s.open("solve", "symb");
     s.toggleMenu();
-    expect(s.sheet?.level.items[0]?.label).toBe("Solve, polynomial roots … in Num");
-    s.pick(1);
+    expect(ids(s)).toEqual(["clear", "in-num"]);
+    expect(s.sheet?.level.items[0]?.disabled).toBe(true); // R261: E1 is empty, nothing to clear
+    expect(s.sheet?.level.items[1]?.label).toBe("Solve, polynomial roots … in Num");
+    s.pick(2);
     await Promise.resolve();
     await Promise.resolve();
     expect(s.view).toBe("num");
