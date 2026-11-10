@@ -58,8 +58,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 621 | R274 the selection's own colour, 3:1 (owner) | ron, Sonnet | `p1/ron-selcolour` | – |
-| 622 | R275 ⇤□ and □⇥ leave the keypad (owner) | ron, Sonnet | `p1/ron-noboxkeys` | – |
 | 623 | [S53](packages/S53.md) Store, designed (owner; docs and a mockup) | sandra, Opus | `p1/sandra-storedesign` | – |
 | 604 | [R257](packages/R257.md) Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
 | 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
