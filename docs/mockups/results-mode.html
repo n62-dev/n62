@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Results mode, keys and room</title>
 <style>
-/* R129, from S25 (docs/research/r19-results-and-keys.md and docs/shifts/2026-11-05-sandra-resultskeys-report.md).
+/* R129, from S25 (docs/archive/r19-results-and-keys.md and docs/shifts/2026-11-05-sandra-resultskeys-report.md).
    Nothing here is built and nothing loads from outside this file: system fonts, no network. The phones use the N62
    theme's colours (app/src/style.css, the dark and light blocks). Every phone is drawn 1:1 in CSS px; "Scale" only
    shrinks the picture. A number on the page names the probe it came from, or says "drawn" (a design value for the
@@ -137,7 +137,7 @@ body[data-zoom="80"] { --zoom: .8; }
 </head>
 <body data-show="dark" data-zoom="100">
 <h1>Results mode, the six keys and the viewport room</h1>
-<p class="muted">2026-11-05, package R129, built from S25 (<a href="../research/r19-results-and-keys.md">r19</a>, <a href="../shifts/2026-11-05-sandra-resultskeys-report.md">its report</a>). Three things to pick, one per section: <strong>the keys</strong> (section 1), <strong>what results mode shows</strong> (section 2) and <strong>the room</strong> (section 3). S25's recommendation comes first in each. Nothing here is built. Keys move once (decisions.md, 2026-11-02 point 5), so the keys pick is final.</p>
+<p class="muted">2026-11-05, package R129, built from S25 (<a href="../archive/r19-results-and-keys.md">r19</a>, <a href="../shifts/2026-11-05-sandra-resultskeys-report.md">its report</a>). Three things to pick, one per section: <strong>the keys</strong> (section 1), <strong>what results mode shows</strong> (section 2) and <strong>the room</strong> (section 3). S25's recommendation comes first in each. Nothing here is built. Keys move once (decisions.md, 2026-11-02 point 5), so the keys pick is final.</p>
 <p class="muted">Every phone is drawn 1:1 in CSS px, at 412 × 839 (the Pixel 7 profile of <code>results-geometry.mjs</code>) and 360 × 740 (the narrow size of the e2e tests). Where a number is printed it names its probe: <code>geometry</code> = <code>node tools/probes/results-geometry.mjs --options</code>, <code>keys</code> = <code>node tools/probes/results-keys.mjs</code>. <em>Drawn</em> = a design value for the picture that nobody measured (R53b measures it in the app). <em>Derived</em> = arithmetic on measured numbers.</p>
 
 <div class="bar" id="bar">

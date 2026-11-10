@@ -1,0 +1,9 @@
+deg ;; 30\degree15 ;; ?
+deg ;; 1\degree2\prime3 ;; ?
+rad ;; 30\degree15 ;; ?
+deg ;; 30\degree15^{\prime} ;; 30.25
+deg ;; 30\degree15\prime ;; 30.25
+rad ;; 2\%3 ;; ?
+rad ;; 5\%\pi ;; ?
+rad ;; 5!3 ;; ?
+rad ;; 2\pi ;; 2pi

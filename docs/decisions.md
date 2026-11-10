@@ -9,11 +9,11 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-12); S36f1 set the two copper values to the sheet's (pass 103 re-read it). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
-**F-Droid Reproducible Builds** (before the fdroiddata merge request; `fdroid/SUBMIT.md`): tick the box and ask for them, as without them F-Droid signs with its own key for good and its APK and ours cannot update each other. Cost: `AllowedAPKSigningKeys` and `Binaries` in the recipe, and a rework of the merge request if the first build is not bit-identical (never compared).
-
 ## Decided proposals
 
 ### Pipeline and process
+- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](research/night-review-2026-11-09.md) section 6. New: R261, R269–R273 (R272 ends "no backup reminder" in part). Kept: `200 + 10 %` = 200.1, `30°15` = 450 (docs/04 5.5), digit-group paste refused. Would change if: the G2 or an outside round reads one otherwise.
+- **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). Would change if: the first build cannot be made bit-identical.
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-11-08:** a Giac patch's worker writes its own patches README row (A83); a stray file outside a worktree is logged, warn only (A64 lo-11; A88); a CAS-last cold start of 1507 ms does not hold v0.1.0; the c29 red (F200, A123). Archived, "Opus pass 117". Would change if: a stray file does harm before anyone reads the log.
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Archived, "Opus pass 97". Would change if: a finished package ends NOT MERGED on it.

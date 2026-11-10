@@ -1,0 +1,6 @@
+rad ;; \lim_{x\to\frac{3}{2}}\left(\operatorname{round}\left(x\right)\right) ;; none (exact point)
+rad ;; \lim_{x\to1.0}\left(\operatorname{floor}\left(x\right)\right) ;; none (float point at a jump)
+rad ;; \lim_{x\to2.0}\left(\operatorname{ceil}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to0.0}\left(\operatorname{sign}\left(x\right)\right) ;; none
+rad ;; \lim_{x\to1.5}\left(\operatorname{floor}\left(2x\right)\right) ;; none
+rad ;; \lim_{x\to1.5}\left(\frac{\left|x-1.5\right|}{x-1.5}\right) ;; none

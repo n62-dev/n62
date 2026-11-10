@@ -1,0 +1,6 @@
+rad ;; \left(1+\pi^{-200}\right)^{\pi^{200}} ;; 2.71828182846
+rad ;; \left(1+\exponentialE^{-200}\right)^{\exponentialE^{200}} ;; 2.71828182846
+rad ;; \left(1+\exponentialE^{-100}\right)^{\exponentialE^{100}} ;; 2.71828182846
+rad ;; \left(\sqrt{\exponentialE^{-300}+1}-1\right)\times \exponentialE^{300} ;; 0.5
+rad ;; \left(1+\pi^{-80}\right)^{\pi^{80}} ;; 2.71828182846
+rad ;; \left(1+2^{-300}\right)^{2^{300}} ;; 2.71828182846

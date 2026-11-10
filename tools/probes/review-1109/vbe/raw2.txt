@@ -1,0 +1,4 @@
+limit(round(x),x,1.5)
+limit(round(x),x,3/2)
+limit(floor(x),x,1.0)
+limit(floor(x),x,1)

@@ -13,7 +13,7 @@ const active = (page: Page) => sheet(page).locator('[role="menuitem"][data-activ
 /** Measured after R8 (Pixel 7, 412 × 915): 0.3540 with the 28 px status line. A package may not go below it. */
 const FLOOR = 0.35;
 
-// R148 (S25, docs/research/r19-results-and-keys.md §3): the floor holds at the three sizes the room was measured at
+// R148 (S25, docs/archive/r19-results-and-keys.md §3): the floor holds at the three sizes the room was measured at
 for (const [width, height] of [[412, 915], [412, 839], [360, 740]] as const)
   test(`the status line is at most 28 px, and the viewport keeps its share of the screen (the floor of docs/03 rule 9) at ${width} × ${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });

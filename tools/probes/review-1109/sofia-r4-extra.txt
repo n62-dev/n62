@@ -1,0 +1,24 @@
+# sofia, review round 4: right today, an unreadable call inside a listed or trig function's argument; the angle-taking names; the ± zero
+exp(-abs(1*{m}-2*{m})/(3*{m})) |
+20*log10(abs(1*{V}-2*{V})/(1*{V})) |
+exp(max(1*{m},2*{m})/(3*{m})) |
+floor(max(1*{m},2*{m})/(1*{m})) |
+sin(max(1*{m},2*{m})/(3*{m})) |
+cos(abs(1*{m}-2*{m})/(3*{m})) |
+atan2(max(1*{m},2*{m}),3*{m}) |
+exp(piecewise(1*{m}<2*{m},1*{m},2*{m})/(3*{m})) |
+exp(sqrt((1*{m}+2*{m})^2)/(3*{m})) |
+exp(abs(2*{m})/(3*{m})) |
+!g(x):=abs(x)
+exp(g(1*{m}-2*{m})/(3*{m})) |
+ln(10*{m})-ln(5*{m}) |
+sec(60*{deg}) |
+csc(30*{deg}) |
+cot(45*{deg}) |
+sin(60*{deg}) |
+exp(0*{rad}) |
+exp(1*{rad}) |
+-273.15*{oC} | K
+pasupm(-273.15,0.1)*{oC} | K
+pasupm(-273.15,0.1)*{oC} |
+-273.15*{oC} |

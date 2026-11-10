@@ -283,7 +283,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Alpha key [r8c1] | one-shot Alpha with lock flicks; stays its own key (P7 point 4, owner 2026-10-19; reopens if Alpha taps fall near zero) | P7 |
 | a b/c (row 3, col 4) [r4c5] | toggles the last result's form: decimal ↔ fraction, polar ↔ rectangular (built, R10) | G2 item 29, P12 |
 | Exponent key (row 6, col 0) [r7c1] | types the mark `ᴇ` (`\emark`, one token); Shift = Sto ▶ (built, R14) | P12 |
-| Rows 0–2 | R3 (built, R15c2; the pairs R146): U1–U6 in columns 0–1; the round pad (one drag surface, a dashed hub, no OK) in columns 2–3; Help \| Esc, Undo \| Redo, Copy \| Paste in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, ⇤□ \| □⇥ on Shift. Apps, Mode, the views, Menu: the status line (R15c1); results mode: R53's handle and swipe | P12, S2, R15c, R146 |
+| Rows 0–2 | R3 (built, R15c2; the pairs R146): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; Help \| Esc, Undo \| Redo, Copy \| Paste in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, ⇤□ \| □⇥ on Shift. Apps, Mode, the views, Menu: the status line (R15c1); results mode: R53's handle and swipe | P12, S2, R15c, R146 |
 | Alpha + 0 (quote); Shift + ◀ ▶ (line jumps) | removed (R13); the jumps came back as ⇤ ⇥ (R15c2), on Shift + Undo and Shift + Redo since R146 | P12, R15c |
 | Shift + 6, Shift + 9 | the G2's palettes: relations and logic; symbols and Greek with `!` and ∞ (built, R18) | P12 |
 | Help (row 0, col 4) [r1c4] | context help (milestone 6), dead and dimmed until built; Shift = Settings (R146; the G2's User is omitted) | reference; R15c, R146 |
@@ -322,6 +322,8 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 
 **The polar sign (R180, F192):** ∡ binds tighter than + × ÷ and looser than a power. Left operand: one factor (`3+4∡30` is `3+(4∡30)`). Right operand: one signed factor (a power counts, `30^2`; a `\frac` counts). `10∡30*2` is `(10∡30)*2`. In a flat line a bare `/` right after the angle or right before the radius is refused with "put the angle in brackets" (Giac would read `2∡π/6` as `(2∡π)/6` = -1/3, silently not what is meant); a factor written directly after the angle (`10∡2π`, `10∡2x`) is refused the same way, since it would otherwise multiply `(10∡2)·π` silently. A stacked `\frac` stays fine (`2∡\frac{π}{6}`). On the real G2 `10∡30+5` becomes `10∡(30+5)` with those brackets shown; N62 takes this rule on purpose, so that `10∡30+5∡-45` adds two phasors (owner, 2026-11-09).
 
+**A number after a mark is a product (be-7; owner, 2026-11-09: kept, a point for discussion):** `30°15` = 450 in DEG (30·15, not 30.25°), `1°2′3` = 3.1, `2%3` = 0.06, `5!3` = 360. The parser reads minutes and seconds only with their marks (`input/parse.ts`, the DMS rows), so the line computes a product it shows no × for. The G2's reading of `30°15` is unchecked. Would change if: the G2 or an outside tester reads `30°15` as 30.25° or refuses it; the fix is then a refusal after °, ′, % and ! that names the missing mark, as `parse.oneExponent` does for ᴇ.
+
 ---
 
 ## 6. Engine, workers and state
@@ -337,7 +339,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 
 | Key | Holds |
 |---|---|
-| `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look; later the base word size; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
+| `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; later the base word size; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
 | `view`, `place`, `entry` | the open view and app; the half-typed line |
 | `history` | ≤ 200 items per view, with `full` (≤ 2 kB) and the mark facts |
 | `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. `restore()` replays values, assumptions and typed inputs; a function (one balanced command) stays pending until `need()` loads it: pending names that are words in the input, then, transitively, those in each loaded body or stored value it reads, in one batch; `VARS`, `expr`, `rm_all_vars`, `restart` load all; redefining or purging a pending name drops it. **Variables are kept as their value**, not their command: `B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`; functions and `assume` keep their command; symbolic values replay first; a library function keeps its `desc` |
@@ -417,10 +419,10 @@ Web build: the service worker precaches the whole build; the engine files carry 
 
 ### 8.2 Interfaces (every async interface)
 The types live in the code; this is the map. Views see `Calc` (`app/src/calc/port.ts`), which wraps `MathEngine` (`app/src/engine/types.ts`), which talks to worker 1.
-- **`MathEngine`:** `ready`, `home(input, s, consts?)`, `cas`, `solve`, `unknowns`, `analyze`, `table`, `eval` (tools and benchmarks only), `definitions()` (the defs log, 6.2), `units(job, s)`, `cancel`, `dispose`. The worker's home, cas and eval replies carry `defs: DefChange[]`; `{type: "define", defs}` → `{type: "defined", replayMs}`.
+- **`MathEngine`:** `ready`, `home(input, s, consts?)`, `cas`, `solve`, `unknowns`, `analyze`, `table`, `eval` (tools and benchmarks only), `definitions()` (the defs log, 6.2), `defsWritten?()`, `units(job, s)`, `cancel`, `dispose`. The worker's home, cas and eval replies carry `defs: DefChange[]`; `{type: "define", defs}` → `{type: "defined", replayMs}`.
 - **`HomeResult`** (`engine/homeEval.ts`) carries, beside the display and timings, the facts for the mark: `facts` (`ValueFacts` in `engine/types.ts`, passed whole by the port); `full` (the copy and chip value: exact text or P digits); `defined` (what a stateful input defined); `items` and `shape` for a numeric list or matrix; `digits` (what `evalf(e,n)` asked for). `facts.why` (`PrecisionWhy`, `engine/format.ts`) says why a value is `⚠`; its `pastCap`: a literal past `MAX_EVAL_DIGITS`, compared at P and P + 20 only, not raised further (G182).
 - **`CasResult`:** `numeric` when the result is a number; `approximate`, `warn` and `why` for a non-number; `uses` (the stored variables the input read, not the names it binds).
-- **`Calc`:** the same calls with `CalcSettings`, plus `names()` (the user's names, 3.4) and `units(req, s)` (a lazy chunk; the factor table loads on the first call).
+- **`Calc`:** the same calls with `CalcSettings`, plus `names()` (the user's names, 3.4), `importLibrary`, `exportLibrary` and `units(req, s)` (a lazy chunk; the factor table loads on the first call).
 - **Units** (`app/src/units/types.ts`, the fields there): `UnitRequest` → `UnitJob` (built by `units/build.ts`) → `Quantity` or `UnitError` (its kinds and `unitErrorMessage()` in `units/messages.ts`).
 - **Find** (main thread): `FindItem` (`app/src/find/types.ts`, the schema of 3.3); `loadIndex()` (`find/finder.ts`) and a synchronous `search(index, query, ctx)` (`find/rank.ts`) within 16 ms.
 - **`Kv`** (`state/storage.ts`): `get`, `set`. **`ClipboardPort`** (`app/src/clipboard/port.ts`): `writeText`, `readText`, `share` (false when the platform cannot share; then copy); the Capacitor plugins sit behind it (`4d80167f`).
@@ -433,7 +435,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | Inline scripts of `index.html` (run before the first paint, outside the start chunk) | pin 1.53 kB gzip (`INLINE_PIN_GZIP`; per script, summed) | 1.53 kB (`4d80167f`) | size test |
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB (2026-10-18) | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
-| Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB (2026-10-15) | size test (once Find loads it) |
+| Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB (2026-10-15) | size test |
 | Unit view chunks | ≤ 38 kB raw (entries); pin 66.97 kB with shared ones (R159f1) | 37.04; 66.92 kB (R159f1) | size test |
 | Precache total | ≤ 18 MB | 12.4 MB (2026-10-18) | size test |
 | Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions (`4d80167f`); nothing stored (A73f1, 11-08, 4cb8e068): Home 790 / 1330 ms, CAS last 795 / 1507 ms (the worker's wasm instantiate 510 against 390 ms; giac.wasm is compiled in full on every start) | device runs |

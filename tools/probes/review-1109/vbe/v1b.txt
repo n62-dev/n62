@@ -1,0 +1,2 @@
+rad ;; \operatorname{sort}\left(\left\{\sin\left(10^{70}\right),0,\cos\left(10^{70}\right)\right\}\right) ;; {-0.148,0,0.989}
+rad ;; \operatorname{sort}\left(\left\{\sqrt{2},1.4,\pi,3\right\}\right) ;; {1.4,sqrt2,3,pi}
