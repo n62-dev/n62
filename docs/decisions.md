@@ -9,7 +9,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-12); S36f1 set the two copper values to the sheet's (pass 103 re-read it). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
-**R269's paste back:** Copy on a unit row now writes `39.488 ± 1.2 m²` (the writer of Copy as shown and Share), but Paste reads one number, so that text gives "Paste: not a number", and the unit view takes no paste (`units/open.ts` stops it): R269's round trip has no path to run on. Recommended: a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
+**R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row now writes `39.488 ± 1.2 m²` (the writer of Copy as shown and Share), but Paste reads one number, so that text gives "Paste: not a number" (paste.test.ts checks the refusal), and the unit view takes no paste (`units/open.ts` stops it). Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
 
 ## Decided proposals
 

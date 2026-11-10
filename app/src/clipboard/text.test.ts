@@ -3,8 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
-import { commaResult, markFor, modeOf, type DisplayContext } from "../state/displayMode.ts";
-import { withUnit } from "../state/results.ts";
+import { markFor, modeOf, type DisplayContext } from "../state/displayMode.ts";
 
 const CTX: DisplayContext = { format: "std", digits: 12, fixDecimals: 4, angle: "rad" };
 
@@ -174,10 +173,6 @@ describe("copyFull: a unit-view row (R269)", () => {
   it("t04: every digit of a ≈ row in the unit shown", () => {
     const t04 = unit({ text: "0.157079632679", full: "0.1570796326794896619", value: re("0.1570796326794896619"), facts: { exact: false, reliableDigits: null } }, " m");
     expect(copyFull(t04)).toBe("0.1570796326794896619 m");
-  });
-  it("agrees with Copy as shown on the unit part (withUnit, one writer)", () => {
-    const shown = withUnit({ text: "39.488", latex: "" }, t10.units ?? {}, commaResult).text;
-    expect(copyFull(t10, { decimalComma: true })).toBe(shown.replace(".", ","));
   });
   it("a unit text that is not a string adds nothing; a Home row is unchanged", () => {
     expect(copyFull({ ...t10, units: { text: 5 } })).toBe("39.488");

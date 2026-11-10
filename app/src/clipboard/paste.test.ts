@@ -77,6 +77,25 @@ describe("copy → paste gives the value back (P5)", () => {
   }
 });
 
+// R269: Copy on a unit row writes the value, ± σ and the unit. Paste reads one number, so each such text is refused
+// (the notice says so) until Paste reads the unit and σ too ("R269 round trip", decisions.md): never the number alone,
+// the unit and σ dropped. A unit ending in `i` takes the complex branch and must be refused there as well.
+describe("a unit row's Copy text is refused, never pasted without its unit (R269)", () => {
+  const copied: [string, boolean][] = [
+    ["20 m/s", false],
+    ["39.488 ± 1.2 m²", false],
+    ["39,488 ± 1,2 m²", true],
+    ["20 mi", false],
+    ["1.5 psi", false],
+    ["1,5 psi", true],
+    ["0.1570796326794896619 m", false],
+  ];
+  for (const [text, comma] of copied)
+    it(`${text}${comma ? " (decimal comma)" : ""}`, () => {
+      expect(parsePastedNumber(text, comma ? { decimalComma: true } : {})).toBeNull();
+    });
+});
+
 // G109: Copy writes a list with braces (`{1,16}`); the paste reader takes it back as the list key types it
 describe("parsePastedNumber, a list in braces", () => {
   it("reads a list of numbers", () => {
