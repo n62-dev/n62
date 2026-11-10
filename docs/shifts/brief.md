@@ -58,22 +58,31 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 614 | [R269](packages/R269.md) Copy on a unit row writes the unit and σ (vfh-2) | ron, Opus | `p1/ron-copyunit` | – |
+| 603 | [R255](packages/R255.md) keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
+| 604 | [R257](packages/R257.md) Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
+| 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
+| 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
+| 615 | [R261](packages/R261.md) Esc in a slot line restores it; Menu › Clear (bu-5) | ron, Opus | `p1/ron-escnav` | – |
+| 616 | [R270](packages/R270.md) a half-typed Home line waits while an app is open (bu-8) | ron, Sonnet | `p1/ron-setaside` | – |
+| 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
+| 618 | [R272](packages/R272.md) one note when history drops past 200 (fh-13) | ron, Sonnet | `p1/ron-historynote` | – |
+| 619 | [R273](packages/R273.md) a typed line beats a picked row (vr-3) | ron, Sonnet | `p1/ron-pickkeep` | – |
 | 506 | [G187](packages/G187.md) a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
 | 507 | [G170](packages/G170.md) ilaplace leaves no broken entry in Giac's variable list (F89) | gorge, Opus | `p1/gorge-ilaplacevars` | – |
 | 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
 | 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
-| 603 | [R255](packages/R255.md) keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
-| 604 | [R257](packages/R257.md) Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
-| 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
-| 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
 
 ### Lane B queue (the release, then the engine)
 The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 607 | [G304](packages/G304.md) every Giac spelling of an angle function (be-4) | gorge, Opus | `p1/gorge-anglealias` | – |
+| 608 | [G305](packages/G305.md) a limit at a jump (be-5, F182) | gorge, Opus | `p1/gorge-limitjump` | – |
+| 609 | [G310](packages/G310.md) a zero inside a function, unit check (be-8) | gorge, Opus | `p1/gorge-unitzero` | – |
 | 594 | [A128](packages/A128.md) start chunk budget 63 kB (owner) | annabell, Sonnet | `p1/annabell-startbudget` | – |
 | 595 | [A124](packages/A124.md) docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
 | 596 | [A127](packages/A127.md) a row waits for its After | annabell, Sonnet | `p1/annabell-aftercheck` | A124 |
@@ -88,9 +97,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
-| 607 | [G304](packages/G304.md) every Giac spelling of an angle function (be-4) | gorge, Opus | `p1/gorge-anglealias` | – |
-| 608 | [G305](packages/G305.md) a limit at a jump (be-5, F182) | gorge, Opus | `p1/gorge-limitjump` | – |
-| 609 | [G310](packages/G310.md) a zero inside a function, unit check (be-8) | gorge, Opus | `p1/gorge-unitzero` | – |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | the weekly night |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | the weekly night |
 | 612 | [G308](packages/G308.md) (1+εi)^p (be-2) | gorge, Opus | `p1/gorge-powbase1` | the weekly night |

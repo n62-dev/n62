@@ -322,6 +322,8 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 
 **The polar sign (R180, F192):** ∡ binds tighter than + × ÷ and looser than a power. Left operand: one factor (`3+4∡30` is `3+(4∡30)`). Right operand: one signed factor (a power counts, `30^2`; a `\frac` counts). `10∡30*2` is `(10∡30)*2`. In a flat line a bare `/` right after the angle or right before the radius is refused with "put the angle in brackets" (Giac would read `2∡π/6` as `(2∡π)/6` = -1/3, silently not what is meant); a factor written directly after the angle (`10∡2π`, `10∡2x`) is refused the same way, since it would otherwise multiply `(10∡2)·π` silently. A stacked `\frac` stays fine (`2∡\frac{π}{6}`). On the real G2 `10∡30+5` becomes `10∡(30+5)` with those brackets shown; N62 takes this rule on purpose, so that `10∡30+5∡-45` adds two phasors (owner, 2026-11-09).
 
+**A number after a mark is a product (be-7; owner, 2026-11-09: kept, a point for discussion):** `30°15` = 450 in DEG (30·15, not 30.25°), `1°2′3` = 3.1, `2%3` = 0.06, `5!3` = 360. The parser reads minutes and seconds only with their marks (`input/parse.ts`, the DMS rows), so the line computes a product it shows no × for. The G2's reading of `30°15` is unchecked. Would change if: the G2 or an outside tester reads `30°15` as 30.25° or refuses it; the fix is then a refusal after °, ′, % and ! that names the missing mark, as `parse.oneExponent` does for ᴇ.
+
 ---
 
 ## 6. Engine, workers and state

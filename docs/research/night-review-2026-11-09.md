@@ -23,11 +23,11 @@ Nine S1 root causes: be-1 to be-5, bu-1 to bu-4. Refuted, no package: ca-4, fh-1
 
 ## 2. The queue it proposes (past what fits in the brief)
 
-The brief holds the first rows, steps 603 to 613 (R255, R257, R256, R258 in lane A; G304, G305, G310 and the weekly G306 to G309 in lane B), after the lanes' rows; each Opus pass moves the next rows in from here. Order: importance, then dependencies.
+The brief holds steps 603 to 619. At the head of lane A: R269, R255, R257, R256, R258, then R261, R270 to R273 (the owner's answers). At the head of lane B: G304, G305, G310; the weekly G306 to G309 at its end (owner, 2026-11-10). Each Opus pass moves the next rows in from here. Order: importance, then dependencies.
 
-**Before the freeze (Thu 11-12 evening; bar point 3).** Lane A: R255 keys before the field, R257 Function's stale numbers, R256 comma mode and a power, R258 a multi-letter name. Lane B: G304 every Giac spelling of an angle function, G305 a limit at a jump, G310 a zero inside a function.
+**Before the freeze (Thu 11-12 evening; bar point 3).** Lane A: R269 Copy with unit, R255 keys before the field, R257 Function's stale numbers, R256 comma mode and a power, R258 a multi-letter name. Lane B: G304 every Giac spelling of an angle function, G305 a limit at a jump, G310 a zero inside a function.
 
-**Lane A, then:** R264 start chunk room; R259 unit view: Ans and σ; R261 ▲▼ after Esc; R263 lazy doors; R262 To Home; R260 stand-ins (after G311); R266 tips and a typing run.
+**Lane A, then:** R264 start chunk room; R259 unit view: Ans and σ; R263 lazy doors; R262 To Home; R260 stand-ins (after G311); R266 tips and a typing run.
 
 **Lane B, then:** G316 absolute zero; G311 library round trip; G312 polar digits; G313 sigfig and interpolation in Find.
 
@@ -37,7 +37,7 @@ The brief holds the first rows, steps 603 to 613 (R255, R257, R256, R258 in lane
 
 **After the tag or at v0.2:** R267 dead exports, R268 tokens and probes, G314 host split, G315 names module (no refactor races the freeze); R265 a row's angle mode (after G211).
 
-Amendments, for the owner first: R199's tests gain `2\tfrac12` → `2 1/2`, `2\tfrac{11}{13}` → `2 11/13`, `1.5\emark-3` → `1.5E-3`, `\log_{16}(256)` → `log_16(256)` (bu-6; item 3). R128's Starts when gains "A137 merged".
+Amendments made (owner's yes): R199's tests gain `2\tfrac12` → `2 1/2`, `2\tfrac{11}{13}` → `2 11/13`, `1.5\emark-3` → `1.5E-3`, `\log_{16}(256)` → `log_16(256)` (bu-6; item 3). R128 starts after A137. R130 starts on R53. G310's Done-when is the reviewer's comparison.
 
 ## 3. Backlog lines
 
@@ -72,26 +72,30 @@ Taken over from the 11-02 note, with today's state:
 
 The owner's list, one line each (no question): be-9's residual: `max` and `min` of ± values and `mod` in a unit formula are refused with the honest generic line, a feature gap. fh-3: no worst-case min…max for a ± chain (`docs/03:69`, a later add-on). lo-14: the pipeline audit of 11-08 (`../drafts/2026-11-08-desktop-move/VERIFY-pipeline-prompt.md`) has no trace of a run: one day session before the freeze, or drop it. Patch 0037 goes in the next mail to Parisse (must-have:52).
 
-## 6. Questions for the owner
+## 6. The owner's answers (2026-11-09 evening, 2026-11-10)
 
-One recommendation each; items 1 and 2 first, as a change needs a package before the freeze.
-1. **Copy on a unit row (vfh-2; docs/04 2.6).** Copy writes `20` for 20 m/s. Follow the docs table (`20 m/s`, `39.5±1.2 m^2`): a number without its unit is the worse thing to leave silently.
-2. **`200 + 10 %` (fh-9; touches R110).** It is 200.1 `=`. Refuse % right after + or − with a line giving both readings, until the G2's result is checked.
-3. **R199's forms (bu-6; must-have B8).** Yes, with `2 1/2` and `E`, so Share stops writing `21/2` for 2½.
-4. **`30°15` (be-7).** It is 450 `=`. Refuse a number right after °, ′ or % with the missing mark named, after a virtual-calc check; `2π` and `2x` untouched; decide `!` with it.
-5. **Esc in Symb, then Enter (bu-5).** Esc restores the stored text and Enter leaves the slot alone, with a Menu row to clear a slot.
-6. **Opening an app with a half-typed Home line (bu-8).** Set it aside and put it back on close, as R89's name prompt does (R34's "follows you between views").
-7. **σ after ± (fh-4; R28's literal rule).** Allow a result chip after ±, with its own digits and marks.
-8. **Paste with digit groups (fh-12; docs/04 2.6).** Digit groups only and only when unambiguous; `1,234` stays refused.
-9. **Rows past 200 (fh-13; the "no backup reminder" decision).** One note row the first time a row is dropped, once per install.
-10. **Enter on an empty line (fh-10).** The G2 repeats; settle only which reading, and run the input again except a store.
-11. **Enter on a picked row without a result (vr-3; R147).** Leave the line alone and drop the pick when text is on the line; Enter and the second tap must agree, so the question is recall with text on the line.
-12. **R130's start condition (lo-9).** The 11-06 answers made the pick (a "step" is a history row): R130 starts on "R53 merged", `must-have.md:108` drops its clause.
-13. **The `baseline-8f398cca` worktree (lo-16).** Remove it (861 MB, clean).
-14. **Budgets (dc-14).** See section 7.
-15. **"Ready to work offline", once per install (fh-14).** No for now: it doesn't pass docs/03 rule 5. An outside round that asks whether the web app works offline would change this.
-16. **G310's Done-when on `rule3.mts` (the open point).** Replace it with the reviewer's comparison on the built code: as written it can't fail, because the probe's first branch takes every refusal.
+Decided; decisions.md has one line pointing here.
+1. **Copy on a unit row (vfh-2):** Copy writes the unit and σ, as docs/04 2.6's table (`20 m/s`, `39.5±1.2 m^2`). R269, before the freeze.
+2. **`200 + 10 %` (fh-9):** stays 200.1 `=`: % is /100 and binds before +. R110 unchanged; no package.
+3. **R199's forms (bu-6):** yes, with `2 1/2`, `2 11/13`, `1.5E-3`, `log_16(256)` (R199 amended).
+4. **`30°15` (be-7):** the product stays (450); written in docs/04 5.5 as a point for discussion, with `2%3`, `5!3`. No refusal package.
+5. **Esc in Symb, then Enter (bu-5):** Esc restores the stored text, Enter on an empty line leaves the slot, a Menu row clears a slot (R261, rewritten).
+6. **A half-typed Home line when an app opens (bu-8):** set aside and put back on close, as R89 (R270).
+7. **σ after ± (fh-4):** a result chip may stand after ±, with its own digits and marks (R271; R28's literal rule changes for a chip only).
+8. **Paste with digit groups (fh-12):** all stay refused; docs/04 2.6 unchanged. The owner asked whether offering ambiguous formats on Copy makes this a flaw: no, digit groups are only drawn (R125); Copy, the entry line and stored values stay plain (`apps/grouped.ts:3`).
+9. **Rows past 200 (fh-13):** one note row the first time a row is dropped, once per install, pointing to Settings › Backup (later the sync folder too; Syncthing is named in the sync folder's help). R272; ends "no backup reminder" in part.
+10. **Enter on an empty line (fh-10):** stays doing nothing (N62 differs from the G2 here). No package.
+11. **Enter on a picked row without a result (vr-3):** with text on the line, the line stays and the pick drops; Enter and the second tap alike (R273).
+12. **R130's start (lo-9):** the 11-06 answers were the pick (a step is a history row): R130 starts on R53 merged.
+13. **`baseline-8f398cca` (lo-16):** removed, with `p1/ron-reportrow`, `p1/gorge-trustrows` and `pl-823-g201`, each after a check.
+14. **Budgets (dc-14):** the step-5 trims; S33 stays as it stands.
+15. **"Ready to work offline" (fh-14):** not now (docs/03 rule 5).
+16. **G310's Done-when:** the reviewer's comparison on the built code (G310 amended).
+17. **Queue head (2026-11-10):** the before-freeze packages at the head of both lanes.
+18. **R128:** starts after A137 (the folder's write replaces a file whole).
+19. **F-Droid Reproducible Builds (pass 117):** asked for (decisions.md).
+20. **Cleanup:** item 13.
 
 ## 7. Budgets
 
-On `e0580ff6b` with this diff: brief 31.1 of 32 kB, backlog 19.4 of 20, decisions 39.9 of 40 (FULL), docs/04 66.6 of 70, research notes under 80 of 150. The recommendation: the trims made here, and S33 (brief 0c against rules section 4) left as it stands by day. decisions.md stays the tight one; the next cheapest full texts to move to the archive are the 2026-11-08 answers, once A73f2 and A123 have run, and R148f1's entry.
+After phase-1 `53d89cae2` merged in and the answers applied (2026-11-10): brief 30.8 of 32 kB, backlog 20.0 of 20 (FULL: the weekly night's three lines wait in section 3), decisions 39.9 of 40 (FULL), docs/04 67.2 of 70, research notes about 80 of 150. The recommendation: the trims made here, and S33 (brief 0c against rules section 4) left as it stands by day. decisions.md stays the tight one; the next cheapest full texts to move to the archive are the 2026-11-08 answers, once A73f2 and A123 have run, and R148f1's entry.
