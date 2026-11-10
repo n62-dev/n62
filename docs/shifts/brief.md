@@ -60,7 +60,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 623 | S53 Store, designed (owner; docs and a mockup) | sandra, Opus | `p1/sandra-storedesign` | – |
 | 604 | R257 Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
-| 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
+| 605 | R256 comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
 | 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
 | 615 | [R261](packages/R261.md) Esc in a slot line restores it; Menu › Clear (bu-5) | ron, Opus | `p1/ron-escnav` | – |
 | 616 | [R270](packages/R270.md) a half-typed Home line waits while an app is open (bu-8) | ron, Sonnet | `p1/ron-setaside` | – |
