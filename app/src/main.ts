@@ -9,7 +9,8 @@ import { createCalc } from "./calc/index.ts";
 import type { Calc } from "./calc/port.ts";
 import { loadSheetView } from "./views/sheetView.svelte.ts";
 import { EntryController } from "./entry/controller.ts";
-import { lineKeeper, lineRecord } from "./entry/keep.ts";
+import { lineKeeper, lineRecord, type KeptLine } from "./entry/keep.ts";
+import type { ChipTable } from "./input/chips.ts";
 import { renderStats } from "./render/mathlive.svelte.ts";
 import { loadForms, loadRemoved, loadTidy, Session } from "./state/session.svelte.ts";
 import { AppShell } from "./apps/shell.svelte.ts";
@@ -54,14 +55,15 @@ const userKeys = new UserKeys(idbKv);
 void userKeys.restore();
 // R34 (F30): the half-typed Home/CAS line survives a kill (an app's line belongs to the app, which keeps its slots).
 const keeper = lineKeeper(idbKv);
-entry.onClear = () => keeper.save(null);
+// R270: while an app is open the kept line is Home's line set aside in the shell, and an app's clear leaves it.
+const record = (l: { latex: string; chips: ChipTable } | null): KeptLine | null => l && lineRecord(session.view, l.latex, l.chips);
+entry.onClear = () => keeper.save(shell.app !== null ? record(shell.aside) : null);
 const flush = (): void => {
   session.flushHistory();
   shell.flush();
   // before the kept line is on the field (or the line was typed or cleared) the stored line stays as it is; while a
   // name is typed on the line (R89), the line it set aside is the one kept (R123)
-  const line = shell.prompt?.aside ?? { latex: entry.value, chips: entry.chips };
-  if (entry.settled) keeper.save(shell.app === null ? lineRecord(session.view, line.latex, line.chips) : null);
+  if (entry.settled) keeper.save(record(shell.app !== null ? shell.aside : (shell.prompt?.aside ?? { latex: entry.value, chips: entry.chips })));
 };
 // Leaving the app (a swipe, the app switcher): drop the focus. Android restores focus to the focused element when
 // the app comes back and opens the system keyboard on it, inputmode=none or not (K0, user 2026-10-13). The next key
@@ -125,7 +127,14 @@ requestAnimationFrame(() =>
     // The history is read after the keypad is up, so it does not compete with the first paint. The kept line comes
     // after it (an Ans on it is the restored last result) and only into the view it was typed in.
     const history = session.restoreHistory();
-    void entry.load(Promise.all([settingsRead, history]).then(() => keeper.read(session.view)));
+    // With an app open at the last exit the kept line is Home's, set aside in the shell (R270): the app opens on an empty line.
+    const kept = Promise.all([settingsRead, history, place]).then(async ([, , app]) => {
+      const l = await keeper.read(session.view);
+      if (!app || !l) return l;
+      shell.aside = l;
+      return undefined;
+    });
+    void entry.load(kept);
     // An app that was open at the last exit comes back once the keypad is up (its code loads lazily).
     void place.then((app) => app && shell.open(app));
   }),

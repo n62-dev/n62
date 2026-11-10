@@ -359,8 +359,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  icons.ts (read at start) into that chunk, as the gear did (R145f1): 60,935 B gzip (171,361 B raw, -64 B). The path itself is the lazy
  *  public/n62-mark.svg, not in the chunk. The pin is 60,935 B + 0.05 kB.
  *  60,985 B stays (G225f1, decisions.md "Start chunk room": a cut, no allowance): the two refusal texts of enEngine.ts (the app's table
- *  holds them too) are shortened; the branch merged with phase-1 aa57eb81 measures 60,964 B gzip (171,402 B raw), inside this pin. */
-export const START_PIN_GZIP = 60_985;
+ *  holds them too) are shortened; the branch merged with phase-1 aa57eb81 measures 60,964 B gzip (171,402 B raw), inside this pin.
+ *  60,985 → 61,100 B (R270, the budget of 63 kB stays): Home's line set aside while an app is open (AppShell.aside, setAside and its
+ *  put-back in close; main.ts reads the kept line into it when an app was open at the last exit) measures 61,048 B gzip
+ *  (172,275 B raw), +63 B over the phase-1 pin: 61,048 B + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 61_100;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

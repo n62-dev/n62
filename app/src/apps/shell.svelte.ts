@@ -16,7 +16,9 @@ import { VIEW_IDS, type AppHost, type AppId, type AppInstance, type LoadedApp, t
 /** The entry line as the shell sees it (EntryController in the app, a stub in tests). */
 export interface EntryLine {
   readonly value: string;
-  set(latex: string): void;
+  /** The chips on the line (the real controller; a test stub may leave it out: no chips). */
+  readonly chips?: ChipTable;
+  set(latex: string, chips?: ChipTable): void;
   clear(): void;
 }
 
@@ -61,6 +63,9 @@ export class AppShell {
   sheetPending: Promise<void> | null = null;
   /** Set while an app's code is loading (the view shows a short note). */
   loading = $state<AppId | null>(null);
+  /** R270: Home's unentered line while an app is open (the shared Home/CAS line): put back on the line by `close`, stored by
+   *  main.ts as the kept line (R34). Null: nothing set aside. */
+  aside: { readonly latex: string; readonly chips: ChipTable } | null = null;
   /** A name typed in the entry line under its label (R89, a preset's name): route.ts gives it each key's action first. */
   prompt = $state.raw<EntryPrompt | null>(null);
 
@@ -83,6 +88,8 @@ export class AppShell {
   private readonly userNames: () => readonly UserName[];
   /** What the app last put on the entry line (to tell "edited" from "as loaded"). */
   private entryBase = "";
+  /** The entry line still holds Home's line (no app view has taken it yet): `showView` sets it aside, `close` gives it back. */
+  private homeLine = true;
   private pending = new Map<AppId, Promise<LoadedApp>>();
 
   constructor(calc: Calc, kv: Kv, entry: EntryLine, settings: () => AppHost["settings"], userNames: () => readonly UserName[] = () => []) {
@@ -188,6 +195,7 @@ export class AppShell {
   }
 
   private showView(a: AppInstance, v: ViewId): void {
+    if (this.homeLine) this.setAside();
     if (this.view !== v || this.entryBase !== "" || this.entry.value !== "") {
       this.entryBase = "";
       this.entry.clear();
@@ -197,13 +205,26 @@ export class AppShell {
     a.show?.(v);
   }
 
+  /** R270: leaving Home for an app view sets Home's unentered line (text and chips) aside; a name being typed (R89) ends
+   *  first, so the line it set aside is the one taken. An empty line sets nothing aside (a stored one stays). */
+  private setAside(): void {
+    this.homeLine = false;
+    this.prompt?.cancel();
+    const latex = this.entry.value;
+    if (latex !== "") this.aside = { latex, chips: this.entry.chips ?? {} };
+  }
+
   /** Back to Home/CAS (the place name, U2, U3 or the Apps sheet from inside an app). */
   close(): void {
     if (this.app !== null) this.lastApp = this.app;
     this.app = null;
     this.sheet = null;
+    const back = this.aside;
+    this.aside = null;
+    if (back) this.entry.set(back.latex, back.chips); // R270: Home's line comes back (what the app had on the line is not carried)
     // What the app put on the line (a value, a root, an equation) stays with the app; only the user's typing follows (R34, R76).
-    if (!this.entryEdited) this.entry.clear();
+    else if (!this.entryEdited) this.entry.clear();
+    this.homeLine = true;
     this.entryBase = "";
     this.save();
   }
