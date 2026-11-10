@@ -1370,7 +1370,8 @@ cat > "$fr/bin/npm" <<STUB
 case "\$*" in
   ci*) mkdir -p node_modules/x;;
   *"run -s typecheck"*) k=\$(( \$(cat "$fr/cnt-tc" 2>/dev/null || echo 0) + 1 )); echo \$k > "$fr/cnt-tc"
-     [ "\$FR_TC" != two ] || [ \$k -gt 2 ] || { echo "error TS2322: the stand-in type error"; exit 1; };;
+     [ "\$FR_TC" != two ] || [ \$k -gt 2 ] || { echo "error TS2322: the stand-in type error"; exit 1; }
+     [ "\$FR_TC" != late ] || [ \$k -lt 2 ] || [ \$k -gt 3 ] || { echo "error TS2322: the stand-in type error"; exit 1; };;  # late: runs 2 and 3 fail (1 is the pre-flight, 2 the queue's)
   *"run -s build"*) [ "\$FR_SIZE" != fail ] || { echo "FAIL start chunk 99.00 kB gzip, over its pin 61.00 kB"; exit 1; };;
 esac
 exit 0
@@ -1380,9 +1381,12 @@ cat > "$fr/bin/claude" <<STUB
 c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
 case "\$*" in
   *"--agent sofia"*) if [ "\$FR_AUDIT" = fix ]; then printf 'FIX\napp/w.txt:1 the stand-in audit finding\n'; else echo APPROVED; fi;;
+  *"a merge of phase-1 is in progress"*) echo resolved > app/w.txt; c --no-edit; echo resolved;;
   *"fix round"*) echo "\$*" | grep -o 'fix round [0-9]*[^:]*:' >> "$fr/prompts"; echo f >> "$fr/fixes"; date +%s%N > fix.txt; c -m fix; echo fixed;;
   *) date +%s%N > app/w.txt; c -m "report: w" -m "Done: w.
-Tests: none."; echo done;;
+Tests: none."
+     if [ -n "\$FR_CONFLICT" ]; then echo theirs > "$fr/.claude/worktrees/phase-1/app/w.txt"; git -C "$fr/.claude/worktrees/phase-1" add -A; git -C "$fr/.claude/worktrees/phase-1" -c user.name=t -c user.email=t@t commit -q -m "other lane: w"; fi  # A124f1: phase-1 moves while the worker works
+     echo done;;
 esac
 STUB
 chmod +x "$fr/bin/"* "$fr/tools/devlock.sh"; git -C "$fr" add -A; gc "$fr" init; git -C "$fr" branch phase-1
@@ -1413,6 +1417,19 @@ out="$(FR_DOCS=always frrun "$script" annabell "fr task" --id FR4 --branch p1/fr
 # (d) a typecheck failure counts as today: two fix rounds, then the end
 out="$(FR_TC=two frrun "$script" annabell "fr task" --id FR5 --branch p1/fr5 2>&1)"
 grep -q '^RESULT #[0-9]* FR5: MERGED' <<<"$out" && [[ "$(nfix)" -eq 2 ]] || fail "A124 (d): two typecheck failures are not two counted rounds (fix rounds $(nfix)): $out"
+# (e) A124f1: a queue-entry merge of phase-1 that conflicts, in a worker run, is no counted round: after the conflict, a failing queue check
+# and a failing next pre-flight still leave both fix rounds, and it merges
+out="$(FR_CONFLICT=1 FR_TC=late frrun "$script" annabell "fr task" --id FR6 --branch p1/fr6 2>&1)"
+grep -q 'FR6: conflicts with phase-1 resolved by annabell' "$fr/.coord/log.md" || fail "A124f1 (e): the stand-in conflict did not happen: $out"
+grep -q '^RESULT #[0-9]* FR6: MERGED' <<<"$out" && [[ "$(nfix)" -eq 2 ]] || fail "A124f1 (e): a queue-entry conflict of a worker run used up a counted round (fix rounds $(nfix)): $out"
+# (f) review-only: the first entry's conflict is a counted round (A10), so one fix round is left and the second failure ends the run
+fp1="$fr/.claude/worktrees/phase-1"
+git -C "$fr" branch p1/fr7 phase-1; git -C "$fr" worktree add -q "$tmp/fr7-b" p1/fr7; echo mine > "$tmp/fr7-b/app/w.txt"; git -C "$tmp/fr7-b" add -A; git -C "$tmp/fr7-b" -c user.name=t -c user.email=t@t commit -q -m "report: w" -m "Done: w.
+Tests: none."
+git -C "$fr" worktree remove --force "$tmp/fr7-b"; echo theirs2 > "$fp1/app/w.txt"; git -C "$fp1" add -A; gc "$fp1" "other lane: w2"
+out="$(FR_TC=late frrun "$script" annabell "fr task" --id FR7 --branch p1/fr7 --no-worker 2>&1)"
+grep -q 'FR7: conflicts with phase-1 resolved by annabell' "$fr/.coord/log.md" || fail "A124f1 (f): the stand-in conflict did not happen: $out"
+grep -q '^RESULT #[0-9]* FR7: NOT MERGED' <<<"$out" && [[ "$(nfix)" -eq 1 ]] || fail "A124f1 (f): a review-only first-entry conflict is not a counted round (fix rounds $(nfix)): $out"
 
 # A84: the audit runs beside the long checks. A sandbox with a stand-in sofia and stand-in checks: golden and e2e wait (5 s at most) for
 # the audit to start; sofia waits for e2e to run; the behaviour tool notes when it ran. (a) the audit runs beside golden and e2e on the

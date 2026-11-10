@@ -895,7 +895,7 @@ queue_enter() {
   merge_phase1
   package_file_drop  # A75: a merge of phase-1 into a branch older than the package file brings it back
   queue_node_modules  # the merge may have brought a new dependency
-  [[ $nowork -eq 0 || $first_entry -eq 0 ]] || rounds=$((rounds + merge_conflicts)); counted=$((counted + merge_conflicts))  # review-only: its first resolve round is a fix round (A10)
+  [[ $nowork -eq 0 || $first_entry -eq 0 ]] || { rounds=$((rounds + merge_conflicts)); counted=$((counted + merge_conflicts)); }  # review-only: its first resolve round is a fix round (A10), the only one the new counter takes (A124)
   first_entry=0
   if [[ $engine_managed -eq 1 ]]; then  # phase-1's engine as it is now (red-first; promoted by the last merge, so usually a copy)
     p1key="$(engine_key "$main" phase-1)"
