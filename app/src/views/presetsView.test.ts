@@ -107,33 +107,39 @@ describe("Mode's Preset row", () => {
     ]);
     expect(rows.map((r) => r.reason)).toEqual(["Could not be read: kept as it is", "Could not be read: kept as it is"]);
   });
-  it("R255f1: Save and Rename read the line once the field is up (the host's afterField), not the line before the queued keys", async () => {
+  it("R255f1: before the entry field is up, Save and Rename hold the name's keys and read the line once it is up", async () => {
     const { session, presets } = await setup();
     presets.capture("Lab");
     const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
     let line = "";
+    let up = (): void => {};
     const entry = {
       get value() {
         return line;
       },
       chips: {},
       set: (latex: string) => void (line = latex),
-      run: () => {},
+      run: (a: ActionBody) => void (line += a.kind === "type" ? a.text : ""),
       clear: () => void (line = ""),
+      fieldPending: true,
+      fieldUp: Promise.resolve(),
     };
-    const jobs: (() => void)[] = [];
-    const host = { shell, entry, afterField: (job: () => void) => void jobs.push(job) };
-    const rows = items(presetRow(session, host));
+    const rows = items(presetRow(session, { shell, entry }));
     const sub = (r: MenuItem | undefined): readonly MenuItem[] => r?.submenu?.items ?? [];
     const rename = sub(sub(sub(rows.find((r) => r.id === "edit"))[0]).find((r) => r.id === "manage")).find((r) => r.id === "rename");
-    for (const run of [rows.find((r) => r.id === "save")?.run, rename?.run]) {
+    for (const [run, start] of [[rows.find((r) => r.id === "save")?.run, ""], [rename?.run, "Lab"]] as const) {
       line = "";
+      entry.fieldPending = true;
+      entry.fieldUp = new Promise<void>((r) => (up = r));
       run?.();
-      expect(shell.prompt).toBeNull(); // the field is still to come: nothing read, nothing set
+      expect(line).toBe(""); // the field is still to come: nothing read, nothing set
+      expect(shell.prompt?.key({ kind: "type", text: "X" })).toBe(true); // the name's key waits
       expect(line).toBe("");
       line = "5"; // the queued 5 is on the field now
-      jobs.shift()?.();
-      expect(shell.prompt?.aside).toEqual({ latex: "5", chips: {} });
+      entry.fieldPending = false;
+      up();
+      await vi.waitFor(() => expect(shell.prompt?.aside).toEqual({ latex: "5", chips: {} }));
+      expect(line).toBe(`${start}X`); // the held key went into the name
       shell.prompt?.key({ kind: "special", name: "esc" });
       expect(line).toBe("5");
     }

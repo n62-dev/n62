@@ -140,7 +140,7 @@ describe("controls: a truly empty line keeps its empty-line jobs before the fiel
   });
 });
 
-describe("the units key and a name prompt read the line only once the field is up (R255f1)", () => {
+describe("the units key reads the line only once the field is up (R255f1)", () => {
   const tmpl = keyboard.byId.get("tmpl");
   const unitsKey = (c: unknown): void => {
     if (!tmpl) throw new Error("no key tmpl");
@@ -170,23 +170,5 @@ describe("the units key and a name prompt read the line only once the field is u
     await tick();
     expect(openUnits).not.toHaveBeenCalled();
     expect(c.waiting).toHaveLength(1);
-  });
-  test("a job after the field (the presets' name prompt) waits, and the keys typed after it wait behind it", () => {
-    const { c, press, queued } = ctx();
-    const ran: string[] = [];
-    press("d5");
-    route.afterField(c as never, () => ran.push("name"));
-    press("d6");
-    expect(ran).toEqual([]);
-    expect(queued()).toEqual(["5"]);
-    expect(c.waiting).toHaveLength(2);
-  });
-  test("control: once the field is up the job runs at once", () => {
-    const { c, entry } = ctx();
-    entry.fieldPending = false;
-    const ran: string[] = [];
-    route.afterField(c as never, () => ran.push("name"));
-    expect(ran).toEqual(["name"]);
-    expect(c.waiting).toHaveLength(0);
   });
 });

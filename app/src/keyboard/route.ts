@@ -17,8 +17,8 @@ import { actionFor, type ActionBody, type Key, type Layer, type Special } from "
 
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
 export type Mods = { shift: boolean; alpha: boolean };
-/** A key (or a hardware letter, R45) waiting for an app's or a sheet's code; a `job` waits for the entry field (R255f1). */
-export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean; line?: boolean } | { letter: string } | { job: () => void; line: true };
+/** A key (or a hardware letter, R45) waiting for an app's or a sheet's code. */
+export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean; line?: boolean } | { letter: string };
 
 /** What the routing reads and calls: the models, the App-owned state (as accessors) and the App-owned actions. */
 export interface RouteCtx {
@@ -155,9 +155,8 @@ export function special(c: RouteCtx, name: Special): void {
 }
 
 /** The units key (R24c): the unit view (a lazy chunk) on the line or `row`; keys pressed while it loads wait (R8). It
- *  reads the line, so before the field is up it waits for it as Enter does (R255f1). */
+ *  reads the line, so before the field is up press holds it as it holds Enter (R255f1). */
 function units(c: RouteCtx, row?: HistoryItem): void {
-  if (c.entry.fieldPending) return afterField(c, () => units(c, row));
   const load: Promise<void> = import("../units/open.ts")
     .then((m) => m.openUnits(c, row))
     .catch(() => c.dead())
@@ -321,12 +320,6 @@ function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
 
 /** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. */
 const forLine = (c: RouteCtx, w: Waiting): boolean | undefined => "line" in w && w.line && c.entry.fieldPending;
-/** R255f1: run `job`, which reads the line (the units key, the presets' name prompt), once the field is up with the
- *  queued keys on it; the keys pressed meanwhile wait behind it (R8), so they keep the order they were typed in. */
-export function afterField(c: RouteCtx, job: () => void): void {
-  if (c.entry.fieldPending) wait(c, { job, line: true });
-  else job();
-}
 function wait(c: RouteCtx, w: Waiting): void {
   c.waiting.push(w);
   if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad, forLine(c, w) && c.entry.fieldUp]).then(() => replay(c));
@@ -337,7 +330,6 @@ function replay(c: RouteCtx): void {
   for (const w of keys)
     if (c.waiting.length > 0 || c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null || forLine(c, w)) wait(c, w); // another app or sheet started loading meanwhile (or the field is still to come), and all after it
     else if ("letter" in w) typeLetter(c, w.letter);
-    else if ("job" in w) w.job();
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
 
@@ -392,8 +384,8 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
   if (c.sheetLoad !== null) return wait(c, { key, mods, layer });
   const a = actionFor(key, mods.shift, mods.alpha);
   // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
-  // typed, and a key after it meets the empty line as live
-  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && a.name === "enter"))) return wait(c, { key, mods, layer, line: true });
+  // typed, and a key after it meets the empty line as live; so does the units key, which reads the line (R255f1)
+  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && (a.name === "enter" || a.name === "units")))) return wait(c, { key, mods, layer, line: true });
   if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
   run(c, key, mods);
 }
