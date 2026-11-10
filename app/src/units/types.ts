@@ -2,6 +2,7 @@
 // The unit evaluator's input and output (P15, docs/04 4.2 and 8.2). R24a's slot model and R28's units mode produce
 // a UnitRequest; Calc.units() builds it into a UnitJob with the Find index's factors (main thread) and the Giac
 // worker evaluates the job. Types only.
+import type { PrecisionWarn } from "../engine/format.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
 import type { Chip } from "../input/chips.ts";
 
@@ -33,6 +34,17 @@ export interface UnitRequest {
   consts?: string[];
   /** The end slot "→ should be". */
   end?: UnitSlot;
+  /** R271: the result chips after ±, `pasupm(value,sigma,pasws<j>)` is sigmas[j-1]. */
+  sigmas?: SigmaChip[];
+}
+
+/** R271: a result chip as the σ of a typed value: the value's unit slot (index in `slots`, null for none), the chip's
+ *  unit (absent: none, so σ is in the value's unit) and the facts it was shown with. */
+export interface SigmaChip {
+  slot: number | null;
+  unit?: UnitSlot;
+  reliableDigits: number | null;
+  warn?: PrecisionWarn;
 }
 
 /** What the worker evaluates: Giac text with every unit and constant replaced by factor × dimension symbols. */
@@ -71,7 +83,13 @@ export interface UnitJob {
   inexact: boolean;
   /** Uncertain inputs (G18): `expr` is the formula with a free symbol per uncertain value, which the worker
    *  differentiates; `expr` above has them replaced by their values. */
-  unc?: { expr: string; vars: UncVar[] };
+  unc?: { expr: string; vars: UncVar[]; chip?: SigmaFacts };
+}
+
+/** R271: the worst facts of the result chips read as a σ: the fewest confirmed digits, and a ⚠ reason. */
+export interface SigmaFacts {
+  reliableDigits: number | null;
+  warn?: PrecisionWarn;
 }
 
 /** A unit typed in the formula's slots, as a unit to show the result in. */
@@ -91,6 +109,8 @@ export interface UncVar {
   name: string;
   value: string;
   sigma: string;
+  /** R271: σ is a result chip's value: the evaluator checks it is real and not below 0. */
+  chip?: true;
 }
 
 export interface Quantity {
@@ -153,6 +173,8 @@ export interface Uncertainty {
   shown: string;
   /** G41: present when σ carries ⚠, with the reason. */
   why?: UncWhy;
+  /** R271: σ took a result chip's facts; the result's mark is then the worse of the value's and σ's. */
+  chip?: true;
 }
 
 /** A refusal. The message is built by messages.ts from the i18n table. */
@@ -174,6 +196,10 @@ export type UnitError =
   | { error: "divzero" }
   /** G35: a ± in the power of a unit (m^(2 ± 0.1)): σ would need ln of a unit. */
   | { error: "uncpower" }
+  /** R271: a result chip after ± is negative or not a real number. */
+  | { error: "sigma" }
+  /** R271: a result chip after ± has another dimension than the value's unit: the two dimension keys, σ's first. */
+  | { error: "sigmadim"; dims: [string, string] }
   /** G35: a minus before a bracketed °C, °F or level quantity, −(5 °C): the minus belongs on the number. */
   | { error: "minus"; unit: string }
   /** The number part is not a number (a free name): Giac's text of it. */

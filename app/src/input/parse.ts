@@ -517,6 +517,7 @@ class Parser implements CalcParser {
     if (this.isCmd("pm")) {
       this.pos++;
       const t = this.peek();
+      if (this.isCmd("res")) return this.sigmaChip(n);
       if (t?.t !== "num" || t.gap) throw parseError("parse.pmNeedsSigma");
       this.pos++;
       const sigma: Json = this.isCmd(EMARK) ? this.eNumber(t.v) : { num: t.v.replace(/^0+(?=\d)/, "") };
@@ -525,7 +526,34 @@ class Parser implements CalcParser {
       if (pct) this.pos++;
       v = ["Call", "pasupm", n, pct ? percentSigma(n, sigma) : sigma];
     }
-    return this.slotAfter(v);
+    const out = this.slotAfter(v);
+    // vfh-1: the formula puts a σ that is no number after the slot (unitFormula.ts afterSigma): ± there is that σ's
+    if (v === n && out !== v && this.isCmd("pm")) throw parseError("parse.pmNeedsSigma");
+    return out;
+  }
+
+  /** R271: a result chip after ± is the σ of the number `n`, its whole value: `pasupm(n,σ,pasws<j>)`, its facts and unit
+   *  by its entry j in UnitsInfo.sigmas (units/build.ts); the slot after it is the value's. */
+  private sigmaChip(n: Json): Json {
+    const key = this.resChipKey();
+    const c = this.chips[key];
+    if (!c) throw parseError("parse.valueMissing", { what: "result chip" });
+    const units = this.units as UnitsInfo;
+    const sigmas = (units.sigmas ??= []);
+    const before = units.slots.length;
+    const v = this.slotAfter(["Call", "pasupm", n, ["Chip", { str: chipToGiac(c.value) }], ["Chip", { str: `pasws${sigmas.length + 1}` }]]);
+    sigmas.push({ key, slot: units.slots.length > before ? before : null });
+    return v;
+  }
+
+  /** `\res{k}{shown}` at the cursor (docs/04 2.8): its table key; the cursor goes past it. */
+  private resChipKey(): string {
+    this.pos++;
+    const k = this.groupText();
+    if (!/^\d+$/.test(k)) throw parseError("parse.unsupportedResultChip", { k });
+    this.skipGroup();
+    this.resEnd = this.pos;
+    return resKey(k);
   }
 
   /** Units mode: a prompt right after a number (or a result chip, R63) is its unit slot, `pasu<i>` multiplying it. */
@@ -628,15 +656,8 @@ class Parser implements CalcParser {
     }
     if (name in FUNCS) return this.func(name);
     switch (name) {
-      case "res": {
-        // \res{k}{shown}: a history result (docs/04 2.8)
-        this.pos++;
-        const k = this.groupText();
-        if (!/^\d+$/.test(k)) throw parseError("parse.unsupportedResultChip", { k });
-        this.skipGroup();
-        this.resEnd = this.pos;
-        return this.resultChip(resKey(k));
-      }
+      case "res":
+        return this.resultChip(this.resChipKey());
       case "ans":
         this.pos++;
         return this.chip(ANS_KEY, "Ans");

@@ -8,7 +8,9 @@ import type { Json } from "./emit.ts";
 export function negateUncertain(e: Json): Json | null {
   if (!Array.isArray(e)) return null;
   if (e[0] === "Call" && e[1] === "pasupm") {
-    if (e.length > 4) return ["Negate", e]; // R115: a chip's call (with its key) is one input: the sign stays outside
+    // R115: a chip's call (with its key) is one input: the sign stays outside; R271: a σ chip's link (pasws<j>) is no key
+    const link = Array.isArray(e[4]) ? (e[4][1] as { str?: string } | undefined)?.str : undefined;
+    if (e.length > 4 && !/^pasws\d+$/.test(link ?? "")) return ["Negate", e];
     const v = e[2] as Json;
     return ["Call", "pasupm", Array.isArray(v) && v[0] === "Negate" ? (v[1] as Json) : ["Negate", v], ...e.slice(3)] as Json;
   }

@@ -16,6 +16,8 @@ export const enUnits = {
   "units.function": "A function takes a pure number (sin, cos and tan also an angle)",
   "units.divzero": "Not defined: a division by 0",
   "units.uncpower": "A power of a unit can't carry ±",
+  "units.sigma": "The result after ± must be a real number, 0 or more",
+  "units.sigmadim": "The result after ± doesn't fit the value's unit: {dims}",
   "units.minus": "Put the minus on the number, not before the bracket around {unit}",
   "units.symbolic": "Not a number: {detail}",
   "units.engine": "The unit view could not evaluate this",

@@ -28,6 +28,10 @@ export function unitErrorMessage(e: UnitError): string {
       return unitText("units.divzero");
     case "uncpower":
       return unitText("units.uncpower");
+    case "sigma":
+      return unitText("units.sigma");
+    case "sigmadim":
+      return unitText("units.sigmadim", { dims: e.dims.map(dimensionText).join(unitText("units.mismatchSep")) });
     case "minus":
       return unitText("units.minus", { unit: e.unit });
     case "symbolic":
