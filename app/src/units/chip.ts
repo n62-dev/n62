@@ -4,9 +4,12 @@
 // when an exact text exists and no σ or inexact constant went in, whatever the mark), σ in the same unit, and the unit
 // as its label and slot. Home has no units (P8): the unit never reaches the arithmetic. Pure; only erasable TypeScript.
 import { isZeroText } from "../engine/constBasis.ts";
+import { decimalToString, roundSignificant } from "../engine/format.ts";
+import type { HomeResult } from "../engine/homeEval.ts";
 import type { Chip } from "../input/chips.ts";
 import { chipOf, FULL_LIMIT } from "../state/results.ts";
 import { homeItem } from "../state/resultItem.ts";
+import { sigmaLimit } from "./sigmaFacts.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
 
 /** The chip of a unit result; undefined for a refusal, or a value or σ with no chip text (as Home's: insert as drawn). */
@@ -17,10 +20,22 @@ export function quantityChip(q: Quantity | UnitError): Chip | undefined {
   const item = homeItem(q.value, inexact);
   const chip = chipOf({ status: "done", ...item });
   if (!chip) return undefined;
-  const sigma = q.unc?.value.full;
+  // R271f1: the value's facts (so the chip's) already hold a σ chip's limit (evaluate.ts done); σ itself goes in with
+  // its confirmed digits only, and with its facts, which the unit view gives σ again (view.ts request)
+  const limit = sigmaLimit(q.unc);
+  const sigma = q.unc && limit ? confirmedSigma(q.unc.value, limit.reliableDigits) : q.unc?.value.full;
   if (q.unc && (!q.unc.value.ok || !sigma || sigma.length > FULL_LIMIT)) return undefined;
-  if (sigma !== undefined && !isZeroText(sigma)) chip.unc = sigma;
+  if (sigma !== undefined && !isZeroText(sigma)) Object.assign(chip, { unc: sigma }, limit ? { uncFacts: limit } : {});
   // the loader keeps a unit text of up to 40 characters (input/chips.ts validChips)
   if (q.unit !== "" && q.unit.length <= 40 && q.dimension && q.shownSlot) chip.unit = { text: q.unit, dim: q.dimension, slot: q.shownSlot };
   return chip;
+}
+
+/** R271f1: σ as a chip keeps it: its `full`, cut to `digits` significant digits when they limit it (a decimal text Giac
+ *  reads); undefined with no confirmed digit. */
+function confirmedSigma(r: HomeResult, digits: number | null): string | undefined {
+  if (digits === null || !r.value) return r.full;
+  if (digits < 1) return undefined;
+  const v = r.value.re;
+  return v.digits.length <= digits ? r.full : decimalToString({ ...roundSignificant(v, digits), sticky: false });
 }

@@ -2,8 +2,8 @@
 // R61: the check of a result chip's unit (units/chip.ts quantityChip makes it); R63's of a unit row's slots, and the
 // unit's label. The loader keeps a stored unit as it reads it (chips.ts validChips, at start); this check runs where
 // the unit is used, off the start chunk (R91's pin): do not import this file from code loaded at start. Pure; only erasable TypeScript.
-import type { SigmaChip, UnitSlot } from "../units/types.ts";
-import type { Chip, ChipUnit } from "./chips.ts";
+import type { SigmaChip, SigmaFacts, UnitSlot } from "../units/types.ts";
+import { chipKeysIn, readSigmaFacts, type Chip, type ChipTable, type ChipUnit } from "./chips.ts";
 
 /** A stored text of this form (a non-string never passes). */
 const str = (x: unknown, re: RegExp): x is string => typeof x === "string" && re.test(x);
@@ -24,6 +24,16 @@ export function chipUnit(c: Chip | undefined): ChipUnit | undefined {
 export function sigmaChipOf(c: Chip | undefined, slot: number | null): SigmaChip {
   const unit = chipUnit(c);
   return { slot, ...(unit ? { unit: unit.slot } : {}), reliableDigits: c && !c.exact ? (c.reliableDigits ?? null) : null, ...(c?.warn ? { warn: c.warn } : {}) };
+}
+
+/** R271f1: the σ facts (Chip.uncFacts, checked) of the result chips `latex` holds that carry a σ: a unit result whose σ
+ *  came from a result chip. As a value in the unit view, the chip's σ keeps that limit (UnitRequest.uncChips). */
+export function uncChipsIn(latex: string, chips: ChipTable): SigmaFacts[] {
+  return [...chipKeysIn(latex)].flatMap((k) => {
+    const c = chips[k];
+    const f = typeof c?.unc === "string" ? readSigmaFacts(c.uncFacts) : undefined;
+    return f ? [f] : [];
+  });
 }
 
 /** A stored slot (a chip's unit, R61; a unit row's slots, R63) when it has its shape: 1 to 16 tokens, each a unit id

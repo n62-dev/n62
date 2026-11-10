@@ -36,6 +36,8 @@ export interface UnitRequest {
   end?: UnitSlot;
   /** R271: the result chips after ±, `pasupm(value,sigma,pasws<j>)` is sigmas[j-1]. */
   sigmas?: SigmaChip[];
+  /** R271f1: the facts of the σ chips that went in as values (Chip.uncFacts): they limit σ as a chip after ± does. */
+  uncChips?: SigmaFacts[];
 }
 
 /** R271: a result chip as the σ of a typed value: the value's unit slot (index in `slots`, null for none), the chip's
@@ -222,8 +224,9 @@ export interface UnitRow {
   unit: string;
   dim: string | null;
   dimText: string | null;
-  /** σ as the view showed it (Uncertainty.text, .shown, .why). */
-  unc?: { text: string; shown: string; why?: UncWhy };
+  /** σ as the view showed it (Uncertainty.text, .shown, .why); R271f1: a σ from a result chip with its facts
+   *  (sigmaFacts.ts sigmaLimit), which the row's own facts already hold; read back checked by row.ts rowSigma. */
+  unc?: { text: string; shown: string; why?: UncWhy } & Partial<SigmaFacts>;
   note?: UnitNote;
   /** R121: the note on the names the formula read as pure numbers, as the view showed it (messages.ts unitNamesText). */
   names?: string;

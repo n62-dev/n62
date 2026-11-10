@@ -10,6 +10,7 @@ import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs 
 import { PASDEG } from "../engine/angles.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
+import { sigmaLimit, worseFacts } from "./sigmaFacts.ts";
 import { shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
@@ -398,10 +399,7 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   const c = u.chip;
   if (!c) return { value, text, shown, ...(why ? { why } : {}) };
   // R271: σ keeps the chips' facts: no more confirmed digits than theirs, and their ⚠ reason
-  const own = value.facts.reliableDigits;
-  const reliableDigits = c.reliableDigits === null ? own : Math.min(own ?? c.reliableDigits, c.reliableDigits);
-  const facts = { ...value.facts, reliableDigits, ...(c.warn && !value.facts.warn ? { warn: c.warn } : {}) };
-  return { value: { ...value, facts }, text, shown, ...(why ? { why } : {}), chip: true };
+  return { value: { ...value, facts: worseFacts(value.facts, c) }, text, shown, ...(why ? { why } : {}), chip: true };
 }
 
 const PREFIXES: Readonly<Record<number, string>> = { [-15]: "f", [-12]: "p", [-9]: "n", [-6]: "µ", [-3]: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T", 15: "P" };
@@ -522,9 +520,10 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const done = (value: HomeResult, valueExpr: string): Quantity | UnitError => {
     const unc = job.unc ? uncertainty(giac, job, src, shownDst, valueExpr, value.display, dimension, s) : null;
     if (unc && isUnitError(unc)) return unc;
-    // R271: a σ chip shown with ⚠ makes the result ⚠ (its mark is the worse of the value's and σ's)
-    const warn = job.unc?.chip?.warn;
-    if (warn && !value.facts.warn) value = { ...value, facts: { ...value.facts, warn } };
+    // R271f1: σ's mark decided once: a σ from a result chip limits the value's facts (its confirmed digits, its ⚠), so
+    // the view, the Home row, Copy and the chip read one fact (units/sigmaFacts.ts)
+    const limit = unc ? sigmaLimit(unc) : undefined;
+    if (limit) value = { ...value, facts: worseFacts(value.facts, limit) };
     return { value, dimension, dimensionText: dimension === null ? null : dimensionText(dimension), unit, ...(shownSlot ? { shownSlot } : {}), siPrefixed: sp?.text ?? "", ...si, ...(unc ? { unc } : {}), ...(note ? { note } : {}), ms: performance.now() - t0 };
   };
   if ((job.absTemp || job.endOffset !== undefined) && src.kind === "term" && giac.eval(`sign(${num})`).trim() === "-1") return { error: "belowzero" };

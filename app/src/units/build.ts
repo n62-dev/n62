@@ -223,11 +223,13 @@ function sigmaIn(req: UnitRequest, table: FactorTable): SigmaIn {
   };
 }
 
-/** R271: the worst facts of the request's σ chips (the fewest confirmed digits, a ⚠ reason); undefined without one. */
+/** R271: the worst facts of the request's σ chips (the fewest confirmed digits, a ⚠ reason), R271f1 with those of the
+ *  chips that carry a σ chip's facts; undefined without one. */
 function sigmaFacts(req: UnitRequest): SigmaFacts | undefined {
-  if (!req.sigmas?.length) return undefined;
-  const digits = req.sigmas.flatMap((c) => (c.reliableDigits === null ? [] : [c.reliableDigits]));
-  const warn = req.sigmas.find((c) => c.warn)?.warn;
+  const all: SigmaFacts[] = [...(req.sigmas ?? []), ...(req.uncChips ?? [])];
+  if (!all.length) return undefined;
+  const digits = all.flatMap((c) => (c.reliableDigits === null ? [] : [c.reliableDigits]));
+  const warn = all.find((c) => c.warn)?.warn;
   return { reliableDigits: digits.length ? Math.min(...digits) : null, ...(warn ? { warn } : {}) };
 }
 

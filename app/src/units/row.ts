@@ -4,7 +4,7 @@
 // homeItem on Quantity.value, as R61's chip), and `units` (types.ts UnitRow) keeps the request (the line, its filled
 // slots and end slot), the Quantity summary (unit, dimension, σ, note) and R61's chip. One row per visit of the view: a
 // later result of the same visit (an alternative tapped, a slot changed) takes its place. Loaded with the unit view.
-import type { ChipTable } from "../input/chips.ts";
+import { readSigmaFacts, type ChipTable } from "../input/chips.ts";
 import { unitLatex, validSlots } from "../input/chipUnit.ts";
 import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
@@ -14,8 +14,9 @@ import { uncDigitsOf } from "../engine/constUnc.ts";
 // start chunk, +0.8 kB gzip there)
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { quantityChip } from "./chip.ts";
+import { sigmaLimit } from "./sigmaFacts.ts";
 import { unitNamesText } from "./messages.ts";
-import type { Quantity, UnitRow, UnitSlot } from "./types.ts";
+import type { Quantity, SigmaFacts, UnitRow, UnitSlot } from "./types.ts";
 
 export interface RowIn {
   /** The entry line the view was opened on, and its chips. */
@@ -41,7 +42,7 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
     unit: q.unit,
     dim: q.dimension,
     dimText: q.dimensionText,
-    ...(q.unc ? { unc: { text: q.unc.text, shown: q.unc.shown, ...(q.unc.why ? { why: q.unc.why } : {}) } } : {}),
+    ...(q.unc ? { unc: { text: q.unc.text, shown: q.unc.shown, ...(q.unc.why ? { why: q.unc.why } : {}), ...sigmaLimit(q.unc) } } : {}),
     ...(q.note ? { note: q.note } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     latex: sigma + (q.unit ? unitLatex(q.unit) : ""),
@@ -49,7 +50,8 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
     input,
     ...(chip ? { chip } : {}),
   };
-  // σ's digits (R61): the shown value's digits past σ's first are not confirmed, as for a chip with σ in Home
+  // σ's digits (R61): the shown value's digits past σ's first are not confirmed, as for a chip with σ in Home. R271f1:
+  // the mark is the worse of the value's and σ's, as q.value's facts hold it (evaluate.ts done, units/sigmaFacts.ts)
   const home = homeItem(q.value, inexact);
   const n = q.value.value && q.unc?.value.value ? uncDigitsOf(q.value.value.re, q.unc.value.value.re, Math.trunc(q.value.digits ?? digits)) : null;
   if (n !== null && home.facts) home.facts = { ...home.facts, uncDigits: n };
@@ -84,3 +86,6 @@ export function putRow(s: Session, row: Omit<HistoryItem, "id">, id?: number): n
  *  for a row that is no unit row or holds none. */
 export const rowSlots = (item: HistoryItem | undefined): Record<string, UnitSlot> | undefined =>
   validSlots((item?.units as { slots?: unknown } | undefined)?.slots);
+
+/** R271f1: a unit row's σ facts (a σ from a result chip), read back checked; undefined for a typed σ, no σ or a bad shape. */
+export const rowSigma = (item: HistoryItem | undefined): SigmaFacts | undefined => readSigmaFacts((item?.units as { unc?: unknown } | undefined)?.unc);
