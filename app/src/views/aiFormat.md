@@ -89,7 +89,7 @@ The backup is one JSON file. It holds the app's own stored records, so you write
 - A slot is `{ "label": "…", "action": { … } }`, or `null` to empty that slot. A slot that is not written keeps its default (empty).
 - `label`: non-empty text, drawn on the key; keep it to a few characters.
 - `action`: an object with exactly one of these four fields (the app's own `sample`, `chip`, `units` and `line` extras are accepted but not meant for you, so do not write them):
-  - `"insert"`: a LaTeX template put into the line. `#0` is the place for the main argument: what the user selected, else an empty placeholder where the cursor goes. A function you defined is `"\\operatorname{name}\\left(#0\\right)"`, never loose letters (those read as a product of letters); a built-in is as in `"\\sinh\\left(#0\\right)"`. These are JSON strings, so every backslash is doubled.
+  - `"insert"`: a LaTeX template put into the line. `#0` is the place for the main argument: what the user selected, else an empty placeholder where the cursor goes. A function you defined is `"\\operatorname{name}\\left(#0\\right)"`, never loose letters (those read as a product of letters); a named value of more than one letter is `"\\operatorname{name}"`, never loose letters, with `\\_` for `_` (`"\\operatorname{beam\\_w}"`); a built-in is as in `"\\sinh\\left(#0\\right)"`. These are JSON strings, so every backslash is doubled.
   - `"type"`: text typed as if by the keys, such as `"mol"`.
   - `"special"`: a place or sheet, one of `"home"`, `"cas"`, `"settings"`, `"mode"`, `"units"`, `"find"`, `"vars"`, `"memory"`, `"none"`.
   - `"cmd"`: an editing command of the entry field; do not write it.

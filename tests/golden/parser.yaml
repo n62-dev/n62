@@ -386,6 +386,12 @@ cases:
   - { id: "functions-15", latex: "\\operatorname{mod}\\left(-7,3\\right)", expect: "2", source: "derived", group: "functions", note: "Find states the remainder is never negative (fn:irem); -7 = -3*3 + 2" }
   - { id: "functions-16", latex: "\\operatorname{f}\\left(x+1\\right)", expect: "f(x+1)", source: "derived", group: "functions", note: "R117: Vars inserts a one-letter user function in the call form a longer name has" }
   - { id: "functions-17", latex: "\\operatorname{\\mathrm{f}}\\left(x\\right)", expect: "f(x)", source: "derived", group: "functions", note: "R117: the same call as MathLive writes it back" }
+  - { id: "values-01", latex: "\\operatorname{rate}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "rate", source: "derived", group: "values", note: "R258: Vars inserts a stored value of more than one letter as one name; the session lists its stored values (userValues)" }
+  - { id: "values-02", latex: "2\\operatorname{g0}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "2*g0", source: "derived", group: "values", note: "R258: g0 of the library format's worked example, never g*0" }
+  - { id: "values-03", latex: "\\operatorname{beam\\_w}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "beam_w", source: "derived", group: "values", note: "R258: _ is written \\_, as in a function's insert" }
+  - { id: "values-04", latex: "\\operatorname{\\mathrm{rate}}", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "rate", source: "derived", group: "values", note: "R258: the same name as MathLive writes it back" }
+  - { id: "values-05", latex: "\\operatorname{rate}\\left(2\\right)", options: { userValues: ["rate", "g0", "beam_w"] }, expect: "rate*2", source: "derived", group: "values", note: "R258: a stored value is a value: a bracket after it multiplies, as after a one-letter value (a default, R258's report)" }
+  - { id: "values-06", latex: "\\operatorname{rate}", options: { userValues: ["g0"] }, error: true, source: "derived", group: "values", note: "R258 control: a name not stored (deleted since, or a pasted \\operatorname{km}) is refused, as before" }
   # --- decimals
   - { id: "decimals-01", latex: "1.5", expect: "3/2", source: "derived", group: "decimals" }
   - { id: "decimals-02", latex: "0.1+0.2", expect: "3/10", source: "derived", group: "decimals" }

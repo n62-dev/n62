@@ -32,6 +32,26 @@ describe("live items", () => {
   });
 });
 
+describe("R258: a stored value of more than one letter", () => {
+  it("goes on the line as one name, \\operatorname{…} with \\_ for _ (as functionInsert writes a function)", () => {
+    const ins = (n: string): string => liveItem(name(n, "var", "1", 0)).insert ?? "";
+    expect(ins("rate")).toBe("\\operatorname{rate}");
+    expect(ins("A1")).toBe("\\operatorname{A1}");
+    expect(ins("ab")).toBe("\\operatorname{ab}");
+    expect(ins("pi2")).toBe("\\operatorname{pi2}");
+    expect(ins("g0")).toBe("\\operatorname{g0}");
+    expect(ins("beam_w")).toBe("\\operatorname{beam\\_w}");
+  });
+  it("controls: one letter, a letter with a subscript and a Greek stand-in keep today's form", () => {
+    const ins = (n: string): string => liveItem(name(n, "var", "1", 0)).insert ?? "";
+    expect(ins("A")).toBe("A");
+    expect(ins("x_1")).toBe("x_{1}");
+    expect(ins("k_B")).toBe("k_{B}");
+    expect(ins("theta")).toBe("\\theta ");
+    expect(ins("beta_")).toBe("\\beta ");
+  });
+});
+
 describe("Vars", () => {
   it("lists the names newest first, searches them by name, and a pick inserts", () => {
     const { sheet, inserted } = setup(false);

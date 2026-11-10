@@ -216,9 +216,10 @@ function powerAt(mf: Field, q: number): Power | undefined {
   else if (isPair(mf, b)) kind = "pair";
   else if (sup && bl === "\\exponentialE") kind = "mark";
   else if (sup && bl === "0" && start === b - 1 && b - 1 > 0 && latexAt(mf, b - 1) === "1" && depthAt(mf, b - 1) === d) {
-    // 10ˣ, unless a digit stands before the 10: after one the key puts ×10^□ (R27a), so 110² is a typed power of 110
+    // 10ˣ, unless a digit stands before the 10: after one the key puts ×10^□ (R27a), so 110² is a typed power of 110,
+    // and 3,10² (a digit, a point or the decimal comma before it, R256f1) one of 3,10
     const n = b - 2;
-    if (n === 0 || depthAt(mf, n) !== d || !isNumberPart(latexAt(mf, n))) {
+    if (numberRunStart(mf, n, d) === n) {
       kind = "mark";
       start = n;
     }

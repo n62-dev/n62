@@ -465,6 +465,7 @@ if [[ "$task" =~ ^[A-Z][0-9]+[a-z0-9]*$ ]]; then
   pkg="docs/shifts/packages/$task.md"
   p1file "$pkg" || die "package $task has no package file $pkg on phase-1"
   ! package_shaped "$task" || pkg_drop="$pkg"  # A75: a package's own file goes with its merge; a FIX id's file stays
+  ! package_shaped "$task" || after_wait="$(after_waits "$brief" "$task" phase-1)" || true  # A127: its row's After names an id not merged
   git show "phase-1:$pkg" > "$spec_file"
   heading="$(head -n1 "$spec_file")"
   # shellcheck disable=SC2016
@@ -507,6 +508,13 @@ if [[ -n "${no_package:-}" ]]; then
   runno="$n"; why="no package file for $no_package"
   if [[ $dry -eq 1 ]]; then rm -rf "$run"; else log "pipeline #$n $id: NOT MERGED ($why)"; fi
   echo "RESULT #$n $id: NOT MERGED ($why)"; exit 1
+fi
+
+# A127: the row's After is not merged: not started (no worker, worktree or branch), no failure; night.sh and henri come back to it
+if [[ -n "${after_wait:-}" && $dry -eq 1 ]]; then echo "after: WAITS for $after_wait (a real run stops here: exit 2)"
+elif [[ -n "${after_wait:-}" ]]; then
+  runno="$n"; rm -rf "$run"; log "pipeline #$n $id: WAITS for $after_wait"
+  echo "RESULT #$n $id: WAITS for $after_wait"; exit 2
 fi
 
 # The bundle: spec, the files it names (capped), the report format and the definition of done.
@@ -742,7 +750,7 @@ preflight() {  # <round>
 # them; a round whose cheap checks (docs, typecheck, size, redfirst, vitest) fail starts no audit.
 long_check() { case "$1" in golden|stages|e2e|shell) return 0;; *) return 1;; esac; }
 run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; once the cheap checks passed, the audit runs (audit_start)
-  local round="$1" list name rc=0 why redwhy="" p1_engine="${N62_P1_ENGINE:-$GIAC_OUT}"
+  local round="$1" list name rc=0 why redwhy="" kind p1_engine="${N62_P1_ENGINE:-$GIAC_OUT}"
   [[ $engine_managed -eq 0 ]] || p1_engine="$engine_root/key-$p1key"
   list="$(want_checks)"; [[ ",$list," == *,stages,* ]] || list="${list//golden/golden,stages}"  # A25: the engine stages follow golden
   [[ -n "$list" ]] || { runlog "checks: none"; audit_start; return 0; }
@@ -782,11 +790,11 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
     if [[ $rc -eq 1 && ( "$name" == e2e || "$name" == vitest ) ]] && mm="$(node "$wt/app/scripts/pipeline-logs.ts" mismatch "$name" "$out")"; then
       # the parsed failures differ from the runner's own count: no timing re-run can be trusted; a failure for the fix round
       runlog "check $name: count mismatch: $mm"; echo "count mismatch: $mm" >> "$out"
-    elif [[ $rc -eq 1 ]] && timing_only "$name" "$out"; then
-      # every failing item is a wall-clock test: run the check once more (not a fix round)
-      runlog "check $name: re-run (timing): $(node "$wt/app/scripts/pipeline-logs.ts" files "$name" "$out" | tr '\n' ' ')"
+    elif [[ $rc -eq 1 ]] && kind="$(rerun_kind "$name" "$out")"; then
+      # every failing item is a wall-clock test, or an e2e failure the branch cannot have written (A129): run the check once more (not a fix round)
+      runlog "check $name: re-run ($kind): $(node "$wt/app/scripts/pipeline-logs.ts" files "$name" "$out" | tr '\n' ' ')"; cp "$out" "$out.failed"
       rc=0; rerun_timing "$name" "$out" || rc=1
-      [[ $rc -eq 0 ]] && runlog "check $name: re-run (timing) passed" || runlog "check $name: re-run (timing) failed"
+      [[ $rc -eq 0 ]] && { runlog "check $name: re-run ($kind) passed"; flake_log "$kind" "$out.failed"; } || runlog "check $name: re-run ($kind) failed"
     fi
     if [[ $rc -eq 1 ]]; then
       if [[ "$name" != shell ]] && machine_failure "$out"; then machine_end "$name" "$out"; fi

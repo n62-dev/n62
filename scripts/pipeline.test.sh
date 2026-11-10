@@ -1489,6 +1489,66 @@ out="$(AB_TC_FAIL=1 abrun "$script" annabell "ab task" --id B3 --branch p1/b3 --
 grep -q '^RESULT #[0-9]* B3: NOT MERGED (the checks failed twice' <<<"$out" || fail "A84 (d): a failing typecheck does not end as NOT MERGED after two fix rounds: $out"
 grep -q '^audit' "$ab/seen" 2>/dev/null && fail "A84 (d): a failed cheap check started an audit: $(cat "$ab/seen")"
 
+# A129: an e2e failure in a spec the branch did not change runs once more before a fix round (FLAKE line when it passes); a spec the
+# branch changed, a shared test helper, more than 5 failures, no parsed test and a count mismatch get no rerun. A sandbox with stand-in
+# npm (test:e2e fails until the fix round's file exists), npx (the rerun: FL_RERUN=pass|fail) and a worker that writes FL_WORKER's files.
+fl="$tmp/fl"; mkdir -p "$fl/bin" "$fl/tools" "$fl/docs/shifts" "$fl/app/scripts"; git init -q -b main "$fl"
+printf '#!/bin/sh\nexit 0\n' > "$fl/tools/devlock.sh"; echo 'process.exit(0);' > "$fl/tools/docs-check.mjs"; cp "$fl/tools/docs-check.mjs" "$fl/tools/docs-check.test.mjs"
+cp "$here/../app/scripts/pipeline-logs.ts" "$fl/app/scripts/"; : > "$fl/docs/shifts/brief.md"; echo node_modules/ > "$fl/.gitignore"
+echo 'console.log("none");' > "$fl/behaviour.mjs"
+cat > "$fl/bin/npm" <<STUB
+#!/bin/sh
+case "\$*" in
+  ci*) mkdir -p node_modules/x;;
+  *"run -s test:e2e"*) [ -e "../fix-\$FL_ID.txt" ] && exit 0
+     case "\$FL_FAIL" in
+       none) echo "Error: Timed out waiting 60000 ms from config.webServer"; exit 1;;
+       many) for i in 1 2 3 4 5 6; do echo "  \$i) [chromium-phone] › test/s\$i.spec.ts:12:1 › case \$i ────────"; done; printf '\n  6 failed\n';;
+       mismatch) echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case 1 ────────"; printf '\n  3 failed\n';;
+       *) echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case one ────────"; printf '\n  1 failed\n  300 passed\n';;
+     esac; exit 1;;
+esac
+exit 0
+STUB
+cat > "$fl/bin/npx" <<STUB
+#!/bin/sh
+echo "\$*" >> "$fl/npx.log"
+[ "\$FL_RERUN" = pass ] && { echo "  1 passed"; exit 0; }
+echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case one ────────"; printf '\n  1 failed\n'; exit 1
+STUB
+cat > "$fl/bin/claude" <<STUB
+#!/bin/sh
+c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
+case "\$*" in
+  *"--agent sofia"*) echo APPROVED;;
+  *"fix round"*) date +%s%N > "fix-\$FL_ID.txt"; c -m fix; echo fixed;;
+  *) mkdir -p app/test; for f in \$FL_WORKER; do mkdir -p "\$(dirname "\$f")"; date +%s%N > "\$f"; done; c -m "report: w" -m "Done: w.
+Tests: none."; echo done;;
+esac
+STUB
+chmod +x "$fl/bin/"* "$fl/tools/devlock.sh"; git -C "$fl" add -A; gc "$fl" init; git -C "$fl" branch phase-1
+flrun() {  # <id> <FL_FAIL> <FL_RERUN> <FL_WORKER>: the run's output; $fl/npx.log lists the reruns
+  rm -f "$fl/npx.log"; local id="$1"
+  (cd "$fl" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$fl/bin:$PATH" GIAC_OUT="$fl/engine" N62_BEHAVIOUR_TOOL="$fl/behaviour.mjs" N62_NPROC=100000 N62_QUIET_MAX=0 \
+    FL_ID="$id" FL_FAIL="$2" FL_RERUN="$3" FL_WORKER="$4" "$script" annabell "fl task" --id "$id" --branch "p1/${id,,}" --checks e2e 2>&1)
+}
+flfix() { ls "$fl"/.tasks/*-"${1,,}"/fix-1.in >/dev/null 2>&1; }
+out="$(flrun FL1 one pass app/src/x.ts)"
+grep -q '^RESULT #[0-9]* FL1: MERGED' <<<"$out" && ! flfix FL1 && [[ "$(wc -l < "$fl/npx.log" 2>/dev/null)" -eq 1 ]] || fail "A129: an e2e failure in an untouched spec that passes on the rerun costs a fix round or is not merged: $out"
+grep -qE 'pipeline #[0-9]+ FL1: FLAKE s1.spec.ts › case one$' "$fl/.coord/log.md" || fail "A129: no FLAKE line for the passing rerun: $(grep FL1 "$fl/.coord/log.md")"
+ls "$fl"/.tasks/*-fl1/check-0-e2e.log.failed >/dev/null 2>&1 && grep -q 'case one' "$fl"/.tasks/*-fl1/check-0-e2e.log.failed || fail "A129: the failing log is not kept in the run directory"
+grep -q 're-run (flake) passed' "$fl"/.tasks/*-fl1/run.log || fail "A129: the run log does not say the flake rerun passed"
+out="$(flrun FL2 one fail app/src/x.ts)"
+grep -q '^RESULT #[0-9]* FL2: MERGED' <<<"$out" && flfix FL2 && [[ "$(wc -l < "$fl/npx.log")" -eq 1 ]] || fail "A129: a failure that fails again on the rerun is not one fix round after one rerun: $out"
+grep -q 'FL2: FLAKE' "$fl/.coord/log.md" && fail "A129: a rerun that failed again logged a FLAKE line"
+for c in "FL3|one|app/test/s1.spec.ts|a changed spec" "FL4|many|app/src/x.ts|more than 5 failures" "FL5|none|app/src/x.ts|no parsed test" "FL6|mismatch|app/src/x.ts|a count mismatch" "FL7|one|app/test/helpers.ts|a changed shared test helper"; do
+  IFS='|' read -r fid ffail fwork what <<<"$c"
+  out="$(flrun "$fid" "$ffail" pass "$fwork")"
+  [[ ! -s "$fl/npx.log" ]] && flfix "$fid" || fail "A129: $what: the e2e failure was rerun or got no fix round: $(cat "$fl/npx.log" 2>/dev/null)"
+  grep -q "$fid: FLAKE" "$fl/.coord/log.md" && fail "A129: $what: a FLAKE line was logged"
+done
+! grep -q 'retries' "$here/../app/playwright.config.ts" || fail "A129: playwright.config.ts sets retries"
+
 # A75: a run of a package deletes its package file on the branch, in a commit of its own before the queue, so the audited tree and
 # the merge have it gone; a FIX id and a task text delete nothing; a run that ends unmerged leaves phase-1's file in place
 pk="$tmp/pk"; mkdir -p "$pk/bin" "$pk/tools" "$pk/docs/shifts/packages" "$pk/app/node_modules/x"; git init -q -b main "$pk"
@@ -1565,6 +1625,90 @@ out="$(sxrun loc S5)"
 grep -q '^RESULT #[0-9]* S5: MERGED' <<<"$out" || fail "A88: the mixed-case run did not merge: $out"
 [[ "$(grep -c 'S5: WARN' "$sx/.coord/log.md")" -eq 1 ]] && grep -qE "S5: WARN new file outside the worktree: $tmp/stray-loc.txt\$" "$sx/.coord/log.md" || fail "A88: mixed-case before-list: not exactly the one new file reported: $(grep S5 "$sx/.coord/log.md")"
 [[ -s "$tmp/comm.log" ]] && ! grep -qv '^C$' "$tmp/comm.log" || fail "A88: comm did not run under LC_ALL=C: $(sort -u "$tmp/comm.log" | paste -sd' ' -)"
+
+# A127: a row whose After names an id not merged on phase-1 stops before the worker (WAITS, exit 2, no worktree, no branch); the merge
+# subjects decide, not the package files; a FIX id with no file waits; "–" and plain words wait for nothing; no row, or a task text, starts
+aw="$tmp/aw"; mkdir -p "$aw/bin" "$aw/tools" "$aw/docs/shifts/packages" "$aw/app/node_modules/x"; git init -q -b main "$aw"
+cp "$sb/tools/devlock.sh" "$aw/tools/"; cp "$sb/bin/npm" "$aw/bin/"; echo t > "$aw/app/keep"
+cat > "$aw/bin/claude" <<'STUB'
+#!/bin/sh
+case "$*" in
+  *"--agent sofia"*) echo APPROVED;;
+  *) echo "worker called" >> "$AW/worker-called"; echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; echo done;;
+esac
+STUB
+chmod +x "$aw/bin/claude"
+{
+  echo '### Lane B queue'; echo
+  echo '| Step | What | Agent, model | Branch | After |'; echo '|---|---|---|---|---|'
+  echo '| 1 | [R901](packages/R901.md) after an unmerged package | ron, Sonnet | `p1/r901` | R900 |'
+  echo '| 2 | [R902](packages/R902.md) after a FIX id with no file | ron, Sonnet | `p1/r902` | G909f1 |'
+  echo '| 3 | [R903](packages/R903.md) after a merged package whose file stayed | ron, Sonnet | `p1/r903` | R910 |'
+  echo '| 4 | [R904](packages/R904.md) after a package whose f1 merged | ron, Sonnet | `p1/r904` | R911 |'
+  echo '| 5 | [R905](packages/R905.md) after a dash | ron, Sonnet | `p1/r905` | – |'
+  echo '| 6 | [R906](packages/R906.md) after plain words | ron, Sonnet | `p1/r906` | the v0.1.0 tag |'
+  echo '| 7 | R908 after a package with no file and no merge subject | ron, Sonnet | `p1/r908` | R920 |'
+  echo '| 8 | [R909](packages/R909.md) after one merged and one not | ron, Sonnet | `p1/r909` | R910, R900 |'
+  echo '| 9 | [R912](packages/R912.md) after a FIX id that merged | ron, Sonnet | `p1/r912` | R913f1 |'
+  echo; echo '### Another table'; echo
+  echo '| 1 | [R907](packages/R907.md) not in a lane table | ron, Sonnet | `p1/r907` | R900 |'
+} > "$aw/docs/shifts/brief.md"
+for p in R900 R901 R902 R903 R904 R905 R906 R907 R908 R909 R910 R911 R912; do
+  printf '### ron, %s: a sandbox package, branch `p1/%s`\nbody\n' "$p" "${p,,}" > "$aw/docs/shifts/packages/$p.md"
+done
+# thousands of older commits (> the 64 KB pipe buffer of `git log --format=%s`): grep -q on the newest subjects must not SIGPIPE git log under pipefail
+for i in $(seq 1 4000); do printf 'commit refs/heads/main\ncommitter t <t@t> %s +0000\ndata 41\nfiller commit number %05d of the history\n\n' "$((1000000000 + i))" "$i"; done | git -C "$aw" fast-import --quiet
+git -C "$aw" add -A; gc "$aw" init
+gc "$aw" "Merge p1/ron-x: R910 (pipeline run 5)"; gc "$aw" "Merge p1/ron-y: R911f1 (pipeline run 6)"; gc "$aw" "Merge p1/ron-z: R913f1 (pipeline run 7)"
+gc "$aw" "Merge p1/ron-w: R900x (pipeline run 8)"   # another id that merely starts with R900: not R900
+git -C "$aw" branch phase-1; git -C "$aw" branch p1/r901
+awrun() { (cd "$aw" && env PATH="$aw/bin:$PATH" AW="$aw" GIAC_OUT="$aw/engine" "$script" "$@" 2>&1); }
+awstarts() { # <label> <id> [extra args]: the run is not stopped: the worker ran
+  local label="$1" pid="$2"; shift 2; rm -f "$aw/worker-called"
+  out="$(awrun ron "$pid" --checks none --no-merge "$@")"; rc=$?
+  [[ -e "$aw/worker-called" ]] && ! grep -q 'WAITS' <<<"$out" || fail "A127: $label: $pid did not start (rc $rc): $out"
+  git -C "$aw" worktree remove --force "$aw"/.claude/worktrees/pl-*-"${pid,,}" 2>/dev/null; git -C "$aw" branch -D "p1/${pid,,}" >/dev/null 2>&1
+}
+awwaits() { # <label> <id> <ids it waits for> [extra args]
+  local label="$1" pid="$2" want="$3"; shift 3; rm -f "$aw/worker-called"
+  out="$(awrun ron "$pid" --checks none --no-merge "$@")"; rc=$?
+  grep -qE "^RESULT #[0-9]+ $pid: WAITS for $want\$" <<<"$out" && [[ $rc -eq 2 ]] || fail "A127: $label: $pid did not end WAITS for $want with exit 2 (rc $rc): $out"
+  [[ ! -e "$aw/worker-called" ]] || fail "A127: $label: the worker ran for $pid"
+  grep -qE "pipeline #[0-9]+ $pid: WAITS for $want\$" "$aw/.coord/log.md" || fail "A127: $label: no WAITS line in the log: $(tail -n 3 "$aw/.coord/log.md")"
+  grep -q "$pid: NOT MERGED" "$aw/.coord/log.md" && fail "A127: $label: the wait is logged as NOT MERGED"
+  ls "$aw"/.claude/worktrees/ 2>/dev/null | grep -qi "${pid}" && fail "A127: $label: a worktree was made for $pid"
+}
+awwaits "unmerged package" R901 R900
+git -C "$aw" show-ref --verify --quiet refs/heads/p1/r901 || fail "A127: a wait removed the existing branch p1/r901"
+git -C "$aw" branch -D p1/r901 >/dev/null; awwaits "unmerged package, no branch" R901 R900
+git -C "$aw" show-ref --verify --quiet refs/heads/p1/r901 && fail "A127: a wait made the branch p1/r901"
+awwaits "FIX id with no file" R902 G909f1
+awwaits "one merged, one not" R909 R900
+awstarts "merged id whose file stayed" R903
+awstarts "FIX id that merged, a long history after its subject" R912
+awstarts "merge subject of its f1" R904
+awstarts "a dash" R905
+awstarts "plain words" R906
+awstarts "no file and no subject counts as merged" R908
+awstarts "a FIX id that merged" R912
+awstarts "no row in a lane table" R907
+out="$(awrun ron "do the R901 thing" --id R901 --checks none --no-merge)"
+grep -q 'WAITS' <<<"$out" && fail "A127: a task text with --id R901 is checked: $out"
+git -C "$aw" branch p1/r901 2>/dev/null; out="$(awrun ron R901 --no-worker --checks none)"; rc=$?
+grep -qE '^RESULT #[0-9]+ R901: WAITS for R900$' <<<"$out" && [[ $rc -eq 2 ]] || fail "A127: --no-worker R901 is not checked (rc $rc): $out"
+out="$(awrun ron R901 --dry-run)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q '^after: WAITS for R900 ' <<<"$out" && ! grep -q '^RESULT.*WAITS' <<<"$out" || fail "A127: a dry run does not note the wait and go on (rc $rc): $out"
+# the lib function alone
+# id_merged under pipefail with a long history: a stand-in git writes the matching subject first and far more than a pipe holds after it,
+# so grep -q exits while git still writes (SIGPIPE, 141); the id must still count as merged
+(set -o pipefail; source "$here/pipeline-lib.sh"
+ git() { echo "Merge p1/x: R913f1 (pipeline run 7)"; seq 1 300000; }
+ id_merged R913f1 phase-1 || echo "FAIL: A127: id_merged loses a merge subject when git log dies of SIGPIPE") 2>&1 | grep '^FAIL' >&2 && fails=$((fails + 1))
+(cd "$aw" && source "$here/pipeline-lib.sh"
+ [[ "$(after_ids "$aw/docs/shifts/brief.md" R909)" == $'R910\nR900' ]] || echo "FAIL: A127: after_ids of R909: $(after_ids "$aw/docs/shifts/brief.md" R909)"
+ [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R906)" ]] || echo "FAIL: A127: after_ids of plain words is not empty"
+ [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R907)" ]] || echo "FAIL: A127: after_ids reads a row outside the lane tables"
+ [[ "$(after_waits "$aw/docs/shifts/brief.md" R909 phase-1)" == R900 ]] || echo "FAIL: A127: after_waits of R909: $(after_waits "$aw/docs/shifts/brief.md" R909 phase-1)") 2>&1 | grep '^FAIL' >&2 && fails=$((fails + 1))
 
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"
