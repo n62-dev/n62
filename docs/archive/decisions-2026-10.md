@@ -5,6 +5,10 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-10 (Opus pass 123) to make room for G221's, G225's and G303's defaults, as they stood
+- **R157, the mark (Opus pass 122):** `--mark-faint` steps its share down until the mark is at most 1.3:1 on `bg` (Solarized Dark); a dark `bg` where black gives under 1.05:1 takes the light recipe, 7 % of `text`; Home's tile is a mask, not an image, so `--logo-ink` is real. Would change if: the mark cannot be seen on a device.
+- **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`, doubleElements.ts; Opus pass 122): about 11 Giac calls an element, so 32 stay inside `HOME_DEADLINE_MS` on a device 8× slower; a longer list shows Giac's text. Would change if: the per-element calls are batched.
+
 ### Shortened 2026-11-10 (Opus pass 122) to make room for G172's and R157's defaults, as they stood
 - **The cursor stops only at a box** (R27b): ◀ ▶ ▲ ▼ skip names, a function's name-bracket gap and template marks; the parser refuses `sin 7(2)`. **The cursor goes where the user aims** (R42, R43): a finger tap places once; ▶ leaving a template stops at the end of its box. Would change if: G2 items 50 or 57 differ.
 - **A selection is the argument of the key** (R17): functions, ÷, roots and powers take it (bracketed unless one number, letter or chip); other keys replace it. **Powers after a compound term** (L8): x², xʸ, x⁻¹ bracket a fraction, root, power or mixed number before the cursor.

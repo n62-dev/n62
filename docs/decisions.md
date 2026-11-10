@@ -142,7 +142,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Full text: archive. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
-- **R157, the mark (Opus pass 122):** `--mark-faint` steps its share down until the mark is at most 1.3:1 on `bg` (Solarized Dark); a dark `bg` where black gives under 1.05:1 takes the light recipe, 7 % of `text`; Home's tile is a mask, not an image, so `--logo-ink` is real. Would change if: the mark cannot be seen on a device.
+- **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is a mask. Full text: archive, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Full text: archive, "Opus pass 97". Would change if: the owner's look after R24d.
 - **View keys and the load queue** (Opus pass 109, R148f2): behind waiting keys Symb, Plot and Num wait in order (c46). Full text: archive, "Opus pass 122". Would change if: a view key feels dead during a load on the Tab One.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): six cards at scale 2.0 cannot fit 360 × 740 at 32 px; it was a fixed 16 px. Would change if: the owner wants them to follow the scale and scroll.
@@ -173,7 +173,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Full text: archive, "Opus pass 122".
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Full text: archive, "Opus pass 97".
-- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. Would change if: the owner says.
+- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. A result with no list and no dimension error is not walked (pass 123): `col(idn(2),0)*col(zeros(3,3),0)` stays 0 with ⚠. Would change if: the owner says.
+- **Our Giac text binds only `pas…_` names (pass 123; G303, F205):** no user can type one; a free name in a cdf or icdf call gives no number, the inverse ones too (G221f1). Would change if: the parser takes a trailing `_`.
 
 **Units**
 - **G17:** dB is a field-ratio level, dBm and dBW to 1 mW and 1 W; offsets and levels alone convert, impossible levels and temperatures are refused (G16's zero: G35, below). Full text: archive.
@@ -206,8 +207,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R38b, R88, the restore's checks and presets (Opus pass 29):** `state/backup.ts` repeats the start readers' rules, each guarded by a test on the same values; no pin in `vite.config.ts`. Full text: archive. Would change if: a guard misses a drift.
 - **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Full text: archive, "Opus pass 97". Would change if: the review after R24d.
 - **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04).** Full text: archive, "Opus pass 122" and "Opus pass 66". Would change if: the milestone review.
-- **G119, Giac's sequence answers in Home (Opus pass 6):** each shows as its value (one element) or as a list in braces, so Ans reads back a value or a list; CAS follows the same rule since G173 (owner, 2026-11-05). Full text: archive.
-- **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`, doubleElements.ts; Opus pass 122): about 11 Giac calls an element, so 32 stay inside `HOME_DEADLINE_MS` on a device 8× slower; a longer list shows Giac's text. Would change if: the per-element calls are batched.
+- **G119, Giac's sequence answers in Home (Opus pass 6):** each shows its value (one element) or a list in braces, so Ans and a stored name (`=>` too, G173f1) read back a value or a list; CAS too since G173 (owner, 11-05). Full text: archive.
+- **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Full text: archive, "Opus pass 123". Would change if: the per-element calls are batched.
 - **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Full text: archive, "Opus pass 97". Would change if: the owner wants an older look flat.
 - **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112). Full text: archive, "Opus pass 106". Would change if: its device check, or the owner wants the system's setting to win.
 - **Start chunk room (Opus pass 99):** a package that fails the 61 kB pin on a chunk hash alone gets a cut in its fix (no change of behaviour), never an allowance; the pin is then the measure plus 0.05 kB. Full text: archive, "Opus pass 106". Would change if: the owner raises the 61 kB budget.
