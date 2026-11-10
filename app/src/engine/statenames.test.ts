@@ -17,6 +17,10 @@ import { changedPart, namesPart, statePart } from "./stateRead.ts";
 import { leakPart } from "./assumed.ts";
 import { UNIT_DEFINITIONS } from "../units/evaluate.ts";
 import { GREEK, LETTER_NAMES, letterName } from "../input/parseTables.ts";
+import { POLAR_OUT, RECT_IN } from "./angles.ts";
+import { SIZED } from "./novalue.ts";
+import { partsOf } from "./numeric.ts";
+import { PLAIN_AT_ANY_DEPTH, rowsOf } from "./matrixType.ts";
 
 const home = { ...defaultHomeSettings, digits: 12 };
 const cas = { ...defaultCasSettings, digits: 12 };
@@ -117,6 +121,24 @@ describe.skipIf(!giacAvailable())("G303: a name our programs bind does not captu
     for (const n of ["k", "a", "b", "c", "j", "t", "f", "e_", "i_"]) expect(await error(n), n).toBe(ref);
   });
 
+  // G303f1: Giac's matrix type (idn, matrix(…), a matrix times one) is stored back as plain rows (matrixType.ts), one
+  // apply whose arrow bound `pasrow`, a name the parser lets through; a free one in the value was read through it
+  it.each(["idn(2)*N", "[idn(2)*N,1]", "matrix(2,2,[[N,1],[2,N]])"])("a matrix-type value holding a free name: %s (Home, CAS)", async (value) => {
+    for (const n of ["pasrow"]) {
+      await same(`A:=${value}`, n);
+      const h = await fresh();
+      h.home(`A:=${value.replaceAll("N", n)}`, home);
+      const ref = await fresh();
+      ref.home(`A:=${value.replaceAll("N", "zz")}`, home);
+      expect(shown(h, "A"), `Home ${value} with ${n}`).toBe(shown(ref, "A").replaceAll("zz", n));
+      const c = await fresh();
+      const cRef = await fresh();
+      const cGot = casShown(c, `A:=${value.replaceAll("N", n)}`);
+      expect(cGot, `CAS ${value} with ${n}`).toBe(casShown(cRef, `A:=${value.replaceAll("N", "zz")}`).replaceAll("zz", n));
+      expect(casShown(c, "A"), `CAS ${value} with ${n}`).toBe(casShown(cRef, "A").replaceAll("zz", n));
+    }
+  });
+
   it("Solve: a system whose unknown is k (the residual's index does not read the unknown)", async () => {
     const host = await fresh();
     const out = host.solve({ kind: "equations", equations: ["k+y=3", "k-y=1"], unknowns: ["k", "y"], guesses: ["1", "1"] }, { ...home, workDigits: 30 });
@@ -127,16 +149,20 @@ describe.skipIf(!giacAvailable())("G303: a name our programs bind does not captu
 describe.skipIf(!giacAvailable())("G303: every name our Giac text binds is ours, by Giac's own tree", () => {
   const DEFINITIONS = [...Object.values(ENGINE_DEFINITIONS), ...Object.values(COMPLEX_DEFINITIONS), ...Object.values(ICDF_DEFINITIONS), eseriesDefinition(), ...UNIT_DEFINITIONS];
   const READS = [statePart(12), changedPart(12, ["a"]), namesPart(12, ["a"]), leakPart(["a"], [])];
+  // G303f1: the other Giac texts our code sends that bind a name: the angle converters, the underflow's size test, the
+  // split of a value in its parts, the matrix type's plain rows
+  const ARROWS = [`${POLAR_OUT}([1,2])`, `${RECT_IN}([1,2])`, SIZED("exp(-10^30)", 40), partsOf("1+2*i"), rowsOf("A"), PLAIN_AT_ANY_DEPTH];
   const PARSER_NAMES = new Set([...Object.values(LETTER_NAMES), ...Object.values(GREEK)]);
 
   it("no bound name of a definition or a state read is a user's or one the parser's tables give", async () => {
     const { bridge } = await loadNodeGiac();
     expect(DEFINITIONS.length).toBeGreaterThan(30);
-    for (const text of [...DEFINITIONS, ...READS]) {
+    for (const text of [...DEFINITIONS, ...READS, ...ARROWS]) {
       const p = bridge.parse(text);
       expect(p.ok, text.slice(0, 60)).toBe(true);
       for (const n of p.bound) {
-        expect(n.startsWith("pas"), `${n} in ${text.slice(0, 60)}`).toBe(true);
+        // the whole form (ourNames.ts OUR_BOUND): pas, the name, an underscore; `pasrow` alone is a name a user may type
+        expect(/^pas[A-Za-z0-9]+_$/.test(n), `${n} in ${text.slice(0, 60)}`).toBe(true);
         expect(PARSER_NAMES.has(n), `${n} in ${text.slice(0, 60)}`).toBe(false);
       }
     }

@@ -10,7 +10,7 @@ import type { Giac } from "./numeric.ts";
 import { holdsMatrixType, onlyMatrixType, soleMatrix } from "./giacPrint.ts";
 
 /** Giac text of the matrix `slot` holds as plain rows. */
-function rowsOf(slot: string): string {
+export function rowsOf(slot: string): string {
   return `apply(pasrow->[op(pasrow)],[op(${slot})])`;
 }
 

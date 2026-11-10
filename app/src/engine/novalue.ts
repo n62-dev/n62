@@ -313,7 +313,7 @@ export function zeroElements(slot: string, facts: readonly ElementFacts[], shape
 }
 
 /** G154: Giac's test that `e` (MPFR's 0 at every precision) has a size it can state at `P` digits (underflow). */
-const SIZED = (e: string, P: number): string =>
+export const SIZED = (e: string, P: number): string =>
   `(pasx->type(pasx)==real and pasx-pasx==0)(evalf(re(lnexpand(ln(${e}))),${P})) or (pasx->pasx!=0 and pasx-pasx==0)(evalf((${e})^(1/10^1000),${P}))`;
 
 /**
