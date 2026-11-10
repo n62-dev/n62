@@ -15,6 +15,7 @@ import type { Key } from "../keyboard/keyboard.ts";
 import type { Mods, RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { engineFormat } from "../calc/port.ts";
+import { userValuesOf } from "../input/latex-to-giac.ts";
 import { idbKv } from "../state/storage.ts";
 import { loadSheetView } from "../views/sheetView.svelte.ts";
 import { alternatives, readTargets, writeTarget } from "./alternatives.ts";
@@ -92,6 +93,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     },
     remember: (dim, slot) => writeTarget(idbKv, dim, slot).then(() => undefined),
     dead: () => c.dead(),
+    values: () => userValuesOf(c.session.userNames),
     changed: () => panel.draw(),
     result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId)),
   };

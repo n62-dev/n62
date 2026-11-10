@@ -17,9 +17,13 @@ const NO_INDEX = { items: [] };
 
 /** What an item inserts: a variable as the name the keys would type, a function as a call with the cursor in its
  *  argument, as `\operatorname` whatever the name's length: the parser reads it as a call and the box model as a name
- *  that owns its pair (R117: a one-letter `p\left(#0\right)` was a letter and a plain pair, so ⌫ left p3, p·3). */
+ *  that owns its pair (R117: a one-letter `p\left(#0\right)` was a letter and a plain pair, so ⌫ left p3, p·3). R258: a
+ *  value is drawn as one letter when the keys type it so (`A`, `x_1`, `k_B`, a Greek letter, which home.ts draws with a
+ *  command); any other name (`rate`, `g0`, `beam_w`) goes in as `\operatorname{rate}`, one name, never r·a·t·e. */
 function insertOf(n: UserName): string {
-  return n.kind === "var" ? homeResultToLatex(n.name) : functionInsert(`fn:${n.name}`);
+  if (n.kind !== "var") return functionInsert(`fn:${n.name}`);
+  const drawn = homeResultToLatex(n.name);
+  return /^[A-Za-z](_[A-Za-z0-9]*)?$/.test(n.name) || drawn.startsWith("\\") ? drawn : `\\operatorname{${n.name.replace(/_/g, "\\_")}}`;
 }
 
 /** A name as a Find live item (types.ts: kind `var` or `userfn`). Its value text is searched too (`desc`). */
