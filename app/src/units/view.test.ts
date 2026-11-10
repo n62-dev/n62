@@ -214,3 +214,13 @@ describe("UnitView: More… keeps the result until a unit is picked (R118, vr-8)
     expect(h.requests).toHaveLength(2);
   });
 });
+
+describe("R258: a stored value of more than one letter in the unit view", () => {
+  it("is read as the name when the session holds it, and refused as not stored when it does not", () => {
+    const h = host();
+    const view = new UnitView(CAT, "2\\operatorname{rate}", {}, { ...h.host, values: () => new Set(["rate"]) });
+    expect(view.request().formula).toBe("2*rate");
+    const gone = new UnitView(CAT, "2\\operatorname{rate}", {}, { ...h.host, values: () => new Set() });
+    expect(() => gone.request()).toThrow("rate is not a stored name");
+  });
+});

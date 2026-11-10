@@ -110,8 +110,11 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
  *  66.60 → 66.97 kB (R159, R159f1; Opus pass 101: an allowance, the unit view is not the start chunk): the branch measures 66,917 B
  *  (calc 429, find 9,141, open 27,474, factors 14,999, slot 10,234, userCells 4,640): the chips pick on pointerup, as the keypad
  *  does (a tap Chromium gave no click for was lost; round 2 measured 66.81 kB), and a touchend listener on each chip cancels the
- *  click the browser still makes, which landed on the Find sheet More… had just opened. 66,917 B + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 66_967;
+ *  click the browser still makes, which landed on the Find sheet More… had just opened. 66,917 B + 0.05 kB.
+ *  66.97 → 67.09 kB (R258): phase-1 bc527dcd measures 66.96 kB, the branch 67.04 kB (unit view chunk 37.09 → 37.16 kB): the
+ *  unit view reads a stored value of more than one letter (`\operatorname{rate}`) as Home does, so its host passes the
+ *  session's stored values to the parser at each request (open.ts `values`, view.ts request). 67.04 kB + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 67_090;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
