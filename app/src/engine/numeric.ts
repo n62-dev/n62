@@ -31,7 +31,7 @@ import { binary64Of } from "./binary64.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
 import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
-import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, purgeReads } from "./complex.ts";
+import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 
 export interface Giac {
@@ -379,7 +379,7 @@ export function numbersAt(v: GiacValue, prec: number, keep: number, n: number): 
 
 /** G103: the value of `text` evaluated once (bridge-3) with its parts at `prec`, when it is a number of `shape`; the
  *  value too (its print, its kind). */
-function valueAt(giac: Giac, text: string, shape: Shape, prec: number, keep: number): { v: GiacValue; parts: Parts[] | null } {
+export function valueAt(giac: Giac, text: string, shape: Shape, prec: number, keep: number): { v: GiacValue; parts: Parts[] | null } {
   const v = giac.value(text, [prec]);
   const s = shapeOfValue(v);
   const same = s !== null && size(s) === size(shape) && s.kind === shape.kind;
@@ -398,7 +398,7 @@ function rationalOf(nd: readonly [string, string] | null | undefined, keep: numb
 /** G103: Giac's symbolic re() and im() of every element of `expr` (bridge-3, one call) as exact rationals where they
  *  are (null where not); null when Giac gave no such parts (an error, a time-out). */
 function splitParts(giac: Giac, expr: string, n: number, keep: number): { re: ReturnType<typeof rationalOf>[]; im: ReturnType<typeof rationalOf>[] } | null {
-  const v = giac.value(`(pasz->[re(pasz),im(pasz)])(${expr})`, []);
+  const v = giac.value(partsOf(expr), []);
   const ex = v.exact;
   if (v.kind === "error" || !ex || ex.length !== 2 * n) return null;
   return { re: ex.slice(0, n).map((x) => rationalOf(x, keep)), im: ex.slice(n).map((x) => rationalOf(x, keep)) };
@@ -445,7 +445,7 @@ function denoised<T extends ComplexValue>(a: ComplexValue, b: T, aPrecision: num
 
 /** Confirmed digits of a complex value: the weaker of its two parts (an exactly zero part and a noise part need no
  *  check). */
-function confirmedComplex(a: ComplexValue, b: ComplexValue, aPrecision: number, cap: number): number {
+export function confirmedComplex(a: ComplexValue, b: ComplexValue, aPrecision: number, cap: number): number {
   let n = cap;
   for (const k of ["re", "im"] as const) {
     if ((isZero(a[k]) && isZero(b[k])) || noisePart(a, b, k, aPrecision)) continue;

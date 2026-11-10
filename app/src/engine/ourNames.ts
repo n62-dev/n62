@@ -61,6 +61,16 @@ export function isChipName(name: string): boolean {
   return k === CHIP_ANS || (k !== "" && [...k].every((c) => c >= "0" && c <= "9"));
 }
 
+/** G303 (F205): the bound name of the state read's maps and Solve's residual. Giac binds a parameter, a `local` and an
+ *  arrow's parameter on the symbol itself for the time of the call, so a value that holds the free symbol of that name
+ *  is read through the binding: a bound `k` answered `k` for the user's stored k, which was then purged. Every name our
+ *  Giac text binds is therefore written `pas<name>_` (the definitions in homeEval.ts, complex.ts, icdf.ts, eseries.ts,
+ *  polyvec.ts, matrixType.ts, units/evaluate.ts): no parser table gives such a name (`e_`, `i_`, `beta_`… are the
+ *  parser's own, input/parseTables.ts), the parser refuses a typed trailing `_` (`expected subscript`), a library
+ *  may not define one (library.ts), and the state read takes the `pas` prefix for ours. statenames.test.ts checks
+ *  each definition with Giac's own tree (bridge-2's `bound`). */
+export const OUR_BOUND = "pask_";
+
 /** G100: the names our own test helper stores into (input/emit.ts equalityTest: the float flag, the difference and
  *  the verdict): a store into one is not the user's. */
 export const OUR_STORES: readonly string[] = [EQ_INEXACT_FLAG, EQ_DIFF, EQ_VERDICT];

@@ -25,14 +25,14 @@ describe("assumed.ts", () => {
     expect(setsAssumption("about(x)")).toBe(false);
   });
   it("reads a leak part's print: the names that hold only themselves and the about()s asked", () => {
-    expect(leakPart(["a"], ["y"])).toBe("[0,map(VARS(),k->when(member(k,['a']),k,[k,string(eval(k))])),[about(y)],0]");
+    expect(leakPart(["a"], ["y"])).toBe("[0,map(VARS(),pask_->when(member(pask_,['a']),pask_,[pask_,string(eval(pask_))])),[about(y)],0]");
     const n = parsePrinted('[0,[a,[x,"x"],[b,"2"]],[assume[[],[line[0,3]],[0,3]]],0]')!;
     expect(selfHolding(n)).toEqual(["x"]);
     expect(aboutsOf(n, 1)).toEqual(["assume[[],[line[0,3]],[0,3]]"]);
     expect(aboutsOf(n, 2)).toBeNull();
   });
   it("puts the about()s inside the state part, which tableOf still reads", () => {
-    expect(statePart(12, ["x"])).toBe("[(Digits:=14),map(VARS(),k->[k,string(eval(k)),lname(eval(k))]),[about(x)],(Digits:=12)]");
+    expect(statePart(12, ["x"])).toBe("[(Digits:=14),map(VARS(),pask_->[pask_,string(eval(pask_)),lname(eval(pask_))]),[about(x)],(Digits:=12)]");
     const n = parsePrinted('[14,[[x,"x",[x]],[b,"2",[]]],[assume[integer]],12]')!;
     expect([...tableOf(n, () => false)!.keys()]).toEqual(["b"]);
     expect(aboutsOf(n, 1)).toEqual(["assume[integer]"]);

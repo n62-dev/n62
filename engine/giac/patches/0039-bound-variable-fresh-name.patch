@@ -1,0 +1,92 @@
+# Upstream: giac 2.1.0 intg.cc _integrate_ and solve.cc _fsolve: the variable of a definite integral or of fsolve runs as a fresh name whatever the name holds. At Digits 40 a name holding BesselJ(1,2) unevaluated made int(y^2,y,0,1) and fsolve(y^2=2,y,1) fail with Bad Argument Value; a name holding a float gave int(y^2,y,0,a) = 0.
+# Changed by Pascaline contributors, 2026-11-10
+--- a/src/intg.cc
++++ b/src/intg.cc
+@@ -4694,6 +4694,22 @@
+   }
+   // "unary" version
+   gen _integrate(const gen & args_,GIAC_CONTEXT){
++    // N62 patch 0039 (G179): the variable of a definite integral is a fresh name whatever it holds. evalf_double of the
++    // integrand below, with a name holding BesselJ(1,2) kept unevaluated at 40 digits, failed with Bad Argument Value;
++    // a name holding a float went on, and int(y^2,y,0,a) was 0. The bounds are read with the name's value, as before.
++    if (args_.type==_VECT && args_._VECTptr->size()>=4 && (*args_._VECTptr)[1].type==_IDNT && args_._VECTptr->back()!=at_assume){
++      const gen & x=(*args_._VECTptr)[1];
++      gen xval=assumeeval(x,contextptr);
++      if (xval!=x && !(xval.type==_VECT && xval.subtype==_ASSUME__VECT)){
++	vecteur w(*args_._VECTptr);
++	for (size_t i=2;i<w.size();++i)
++	  w[i]=eval(w[i],eval_level(contextptr),contextptr);
++	purgenoassume(x,contextptr);
++	gen res=protect_integrate(gen(w,_SEQ__VECT),contextptr);
++	sto(xval,x,contextptr);
++	return res;
++      }
++    }
+     bool setcplx=false;
+     if (!complex_mode(contextptr)){
+       // if there are ln inside, switch to complex mode
+--- a/src/solve.cc
++++ b/src/solve.cc
+@@ -4026,13 +4026,60 @@
+ #endif // HAVE_LIBGSL
+ 
+   // fsolve(expr,var[,interval/guess,method])
++  // N62 patch 0039 (G179): the names fsolve's variable argument binds (x, x=guess, [x,y], [x=1,y=2]), and what a guess reads.
++  static void fsolve_names(const gen & g,vecteur & names,vecteur & read){
++    if (g.type==_IDNT)
++      names.push_back(g);
++    else if (g.is_symb_of_sommet(at_equal) && g._SYMBptr->feuille.type==_VECT && g._SYMBptr->feuille._VECTptr->size()==2){
++      fsolve_names(g._SYMBptr->feuille._VECTptr->front(),names,read);
++      read=mergevecteur(read,lidnt(g._SYMBptr->feuille._VECTptr->back()));
++    }
++    else if (g.type==_VECT){
++      for (size_t i=0;i<g._VECTptr->size();++i)
++	fsolve_names((*g._VECTptr)[i],names,read);
++    }
++  }
++  static void fsolve_restore(const vecteur & names,const vecteur & held,GIAC_CONTEXT){
++    for (size_t i=0;i<held.size();++i){
++      if (held[i]!=names[i])
++	sto(held[i],names[i],contextptr);
++    }
++  }
+   gen _fsolve(const gen & args,GIAC_CONTEXT){
+     if ( args.type==_STRNG && args.subtype==-1) return  args;
+     if (calc_mode(contextptr)==1 && args.type!=_VECT)
+       return _fsolve(makesequence(args,ggb_var(args)),contextptr);
+-    vecteur v(plotpreprocess(args,contextptr));
++    // N62 patch 0039 (G179): the variables of fsolve are fresh names whatever they hold (as in int, intg.cc): in_fsolve
++    // evalf's the names of its equation, and a name holding BesselJ(1,2) at 40 digits failed with Bad Argument Value.
++    vecteur names,held;
++    if (args.type==_VECT && args.subtype==_SEQ__VECT && args._VECTptr->size()>=2){
++      vecteur read;
++      fsolve_names((*args._VECTptr)[1],names,read);
++      for (size_t i=2;i<args._VECTptr->size();++i)
++	read=mergevecteur(read,lidnt((*args._VECTptr)[i]));
++      for (size_t i=0;i<names.size();++i){
++	gen xval=assumeeval(names[i],contextptr);
++	if (xval==names[i] || equalposcomp(read,names[i]) || (xval.type==_VECT && xval.subtype==_ASSUME__VECT))
++	  xval=names[i];
++	else
++	  purgenoassume(names[i],contextptr);
++	held.push_back(xval);
++      }
++    }
++    vecteur v;
+     gen res=undef;
+-    res=in_fsolve(v,contextptr);
++#ifndef NO_STDEXCEPT
++    try {
++#endif
++      v=plotpreprocess(args,contextptr);
++      res=in_fsolve(v,contextptr);
++#ifndef NO_STDEXCEPT
++    } catch (std::runtime_error & err){
++      fsolve_restore(names,held,contextptr);
++      throw;
++    }
++#endif
++    fsolve_restore(names,held,contextptr);
+     if (calc_mode(contextptr)!=1)
+       return res;
+     // ggb always in a list
