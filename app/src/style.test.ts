@@ -214,7 +214,8 @@ describe("entry highlights (R116)", () => {
   const map = entryMap();
   it("every MathLive highlight of the entry line (and the unit view's field, inside .entry) is a theme token", () => {
     for (const v of MATHLIVE) expect(map[v], `--${v}`).toMatch(/^[a-z-]+$/);
-    expect(map["selection-background-color"]).toBe(map["contains-highlight-background-color"]); // the box and the selection: one ground (never both at once)
+    expect(map["selection-background-color"]).toBe("sel"); // R274: the selection has its own ground, not the box's --pick
+    expect(map["selection-color"]).toBe("on-sel");
   });
   const blocks24 = allThemeBlocks();
   it("reads the 24 theme combinations", () => expect(blocks24).toHaveLength(24));
@@ -228,7 +229,16 @@ describe("entry highlights (R116)", () => {
       expect(contrast(c("caret-color"), t["panel"] as string), "caret on the entry line").toBeGreaterThanOrEqual(T);
       expect(contrast(c("caret-color"), c("contains-highlight-background-color")), "caret in the box (non-text)").toBeGreaterThanOrEqual(3);
       expect(contrast(c("contains-highlight-background-color"), t["panel"] as string), "the box apart from --panel").toBeGreaterThanOrEqual(PICK_APART);
-      expect(contrast(c("selection-background-color"), t["panel"] as string), "the selection apart from --panel").toBeGreaterThanOrEqual(PICK_APART);
+    });
+  // R274 (owner 2026-11-10: "highlight selection must have greater contrast"): --sel is a state indicator (WCAG 1.4.11, 3:1)
+  // on the entry field's own ground (--panel) and apart from the bracket's box (--pick); the text on it keeps the floor.
+  for (const [sel, t, hc] of blocks24)
+    it(`${sel}: --sel stands 3:1 from --panel and --pick, --on-sel on --sel at least ${hc ? 7 : 4.5}:1`, () => {
+      expect(t["sel"], "--sel").toBeDefined();
+      expect(t["on-sel"], "--on-sel").toBeDefined();
+      expect(contrast(t["sel"] as string, t["panel"] as string), "--sel on --panel").toBeGreaterThanOrEqual(3);
+      expect(contrast(t["sel"] as string, t["pick"] as string), "--sel on --pick").toBeGreaterThanOrEqual(3);
+      expect(contrast(t["on-sel"] as string, t["sel"] as string), "--on-sel on --sel").toBeGreaterThanOrEqual(hc ? 7 : 4.5);
     });
   for (const [sel, t] of blocks24)
     it(`${sel}: the caret and the box are one hue family (at most ${HUE_NEAR}° apart when both have a hue)`, () => {
