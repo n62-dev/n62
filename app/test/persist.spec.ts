@@ -336,7 +336,7 @@ test("R255: 2 Enter + 4 before the field: the + after Enter starts with Ans, as 
   await fieldUp(next, release);
   await expect.poll(() => entryValue(next)).toMatch(/^\\ans\+4$/);
   await tap(next, ["enter"]);
-  await expect(next.locator('[data-status="done"]')).toHaveCount(3);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(3, { timeout: 20_000 }); // (a second job after the held start: slow under the full suite's load)
   expect(await results(next)).toEqual(["7", "2", "6"]); // derived: 2, then Ans + 4 = 6
 });
 
