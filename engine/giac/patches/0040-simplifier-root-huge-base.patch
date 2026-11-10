@@ -1,0 +1,15 @@
+# Upstream: giac 2.1.0 prog.cc simplifier: for an integer base of a fractional power the search for an exact power b=g^k takes the double of the base, and a base past the double range (10^330+7) gives an infinite double, N=int(inf/log 2) saturates and the loop for (ii=3;ii<=N;++ii) never ends, with no interrupt check: simplify(sqrt(10^330+7)) and sign(ln(10^300+3*sqrt((10^600-1)/9))) at Digits 12 never return. Such a base now skips the double search; zint2simpldoublpos (mpz_perfect_power_p, trial division) treats it as before.
+# Changed by Pascaline contributors, 2026-11-10
+--- a/src/prog.cc
++++ b/src/prog.cc
+@@ -8395,7 +8395,9 @@
+ 	  gen d= f._VECTptr->back()._FRACptr->den;
+ 	  if ( (base.type==_INT_ && absint(base.val)>3) || base.type==_ZINT){
+ 	    gen b=evalf_double(base,1,contextptr);
+-	    if (b.type==_DOUBLE_){
++	    // Pascaline patch 0040 (G186): a base past the double range gives an infinite b, N=int(inf) and a loop that never ends; such a
++	    // base goes to zint2simpldoublpos below, whose mpz_perfect_power_p finds its exact powers
++	    if (b.type==_DOUBLE_ && std::isfinite(b._DOUBLE_val)){
+ 	      double bd=b._DOUBLE_val;
+ 	      bd=std::log(bd);
+ 	      int N=int(bd/std::log(2.0));
