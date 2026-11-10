@@ -370,6 +370,8 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   // A level is of a pure number: the ratio, the dimension symbols set to 1 (both sides have the same dimension).
   const level = job.endLog !== undefined && src.kind === "term";
   const G = level ? job.endLog!.replace(/pasux/g, `(subst(${F},[${ones.join(",")}])/(${dst.num}))`) : `(${F})/(${dst.num})`;
+  // R271: a result chip as σ must be a real number, not below 0 (σ² would hide its sign; a typed σ is a plain number)
+  if (u.vars.some((v) => v.chip && !(Number(giac.eval(`evalf(${lit(v.sigma)})`)) >= 0))) return { error: "sigma" };
   const list = (f: (v: UncVar) => string): string => `[${u.vars.map(f).join(",")}]`;
   const out = giac.eval(`pasuW:=pasuu(${G},${list((v) => v.name)},${list((v) => `(${lit(v.value)})`)},${list((v) => `(${lit(v.sigma)})`)},${list((v) => `${v.name}=(${lit(v.value)})`)},quote(${G}))`);
   if (isError(out)) return { error: "engine", detail: out };
@@ -391,7 +393,13 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   const big = (Number.isFinite(share) ? share : Number(giac.eval("evalf(pasuW[1])"))) > ORDER2_SHARE;
   const flag = parts?.[2]?.trim();
   const why = flag === "2" ? "jump" : flag === "1" ? "singular" : big ? "order2" : null;
-  return { value, text, shown, ...(why ? { why } : {}) };
+  const c = u.chip;
+  if (!c) return { value, text, shown, ...(why ? { why } : {}) };
+  // R271: σ keeps the chips' facts: no more confirmed digits than theirs, and their ⚠ reason
+  const own = value.facts.reliableDigits;
+  const reliableDigits = c.reliableDigits === null ? own : Math.min(own ?? c.reliableDigits, c.reliableDigits);
+  const facts = { ...value.facts, reliableDigits, ...(c.warn && !value.facts.warn ? { warn: c.warn } : {}) };
+  return { value: { ...value, facts }, text, shown, ...(why ? { why } : {}), chip: true };
 }
 
 const PREFIXES: Readonly<Record<number, string>> = { [-15]: "f", [-12]: "p", [-9]: "n", [-6]: "µ", [-3]: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T", 15: "P" };
@@ -512,6 +520,9 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const done = (value: HomeResult, valueExpr: string): Quantity | UnitError => {
     const unc = job.unc ? uncertainty(giac, job, src, shownDst, valueExpr, value.display, dimension, s) : null;
     if (unc && isUnitError(unc)) return unc;
+    // R271: a σ chip shown with ⚠ makes the result ⚠ (its mark is the worse of the value's and σ's)
+    const warn = job.unc?.chip?.warn;
+    if (warn && !value.facts.warn) value = { ...value, facts: { ...value.facts, warn } };
     return { value, dimension, dimensionText: dimension === null ? null : dimensionText(dimension), unit, ...(shownSlot ? { shownSlot } : {}), siPrefixed: sp?.text ?? "", ...si, ...(unc ? { unc } : {}), ...(note ? { note } : {}), ms: performance.now() - t0 };
   };
   if ((job.absTemp || job.endOffset !== undefined) && src.kind === "term" && giac.eval(`sign(${num})`).trim() === "-1") return { error: "belowzero" };

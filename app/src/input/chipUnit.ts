@@ -2,7 +2,7 @@
 // R61: the check of a result chip's unit (units/chip.ts quantityChip makes it); R63's of a unit row's slots, and the
 // unit's label. The loader keeps a stored unit as it reads it (chips.ts validChips, at start); this check runs where
 // the unit is used, off the start chunk (R91's pin): do not import this file from code loaded at start. Pure; only erasable TypeScript.
-import type { UnitSlot } from "../units/types.ts";
+import type { SigmaChip, UnitSlot } from "../units/types.ts";
 import type { Chip, ChipUnit } from "./chips.ts";
 
 /** A stored text of this form (a non-string never passes). */
@@ -17,6 +17,13 @@ export function chipUnit(c: Chip | undefined): ChipUnit | undefined {
   if (!str(text, /^[^]{1,40}$/) || !str(dim, /^(?=.{1,64}$)(?:[A-Za-z]+-?\d+)+$/)) return undefined;
   const s = validSlot(slot);
   return s && { text, dim, slot: s };
+}
+
+/** R271: a result chip read as σ after ± (UnitsInfo.sigmas), as the unit view's request takes it: the value's slot,
+ *  the chip's checked unit, and the facts it was shown with (an exact chip limits nothing). */
+export function sigmaChipOf(c: Chip | undefined, slot: number | null): SigmaChip {
+  const unit = chipUnit(c);
+  return { slot, ...(unit ? { unit: unit.slot } : {}), reliableDigits: c && !c.exact ? (c.reliableDigits ?? null) : null, ...(c?.warn ? { warn: c.warn } : {}) };
 }
 
 /** A stored slot (a chip's unit, R61; a unit row's slots, R63) when it has its shape: 1 to 16 tokens, each a unit id

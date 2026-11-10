@@ -68,7 +68,11 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   const comma = (s: string): string => (decimalComma ? commaResult(s, false) : s);
   const drawn = (s: string): string => comma(grouped ? groupText(s, sep) : s);
   const facts = precisionFacts(q.value);
-  const m = markOf(facts, o);
+  // R271: σ from a result chip with its facts: σ ⚠ (fewer confirmed digits than shown, or the chip's ⚠) makes the result ⚠
+  const sm = q.unc?.chip ? markOf(precisionFacts(q.unc.value), o) : null;
+  const sigmaWarn = sm?.mark === "⚠";
+  const vm = markOf(facts, o);
+  const m = sigmaWarn && vm?.mark !== "⚠" ? { mark: "⚠" as const, ...(sm.warn ? { warn: sm.warn } : {}) } : vm;
   const mark: Mark = m?.mark === "⚠" ? "⚠" : q.unc ? "≈" : (m?.mark ?? "≈");
   const number = (v: Quantity["value"]): string => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)).text : v.display);
   const value = number(q.value);
@@ -84,7 +88,7 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
     mark,
     markText: m ? markText({ ...m, mark }) : mark,
     ...(q.unc && q.unc.shown.endsWith(q.unc.text) ? { sigma: { head: drawn(q.unc.shown.slice(0, q.unc.shown.length - q.unc.text.length)), tail: drawn(q.unc.text) } } : {}),
-    warn: why !== undefined,
+    warn: why !== undefined || sigmaWarn,
     ...(why ? { why: unitWhyText(why) } : {}),
     ...(q.note ? { note: unitNoteText(q.note) } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),

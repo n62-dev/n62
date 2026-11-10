@@ -6,7 +6,7 @@
 // open.ts), never through the entry line. Plain TS (no runes): a change calls `host.changed()`. Evaluation: the parser's units mode (R28) on the formula, the slots' tokens,
 // then Calc.units(). Loaded with the unit view.
 import type { ChipTable } from "../input/chips.ts";
-import { chipUnit } from "../input/chipUnit.ts";
+import { chipUnit, sigmaChipOf } from "../input/chipUnit.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { END, slotFormula, type SlotFormula } from "../input/unitFormula.ts";
@@ -337,7 +337,8 @@ export class UnitView {
     const r = latexToGiacInfo(latex, { units: true, chips: this.#chips, userValues: this.#host.values?.() });
     const u = r.units ?? { slots: [], consts: [] };
     const slot = (id: string): UnitSlot => (this.#models.get(id) as SlotModel).slot;
-    return { formula: r.giac, slots: u.slots.map(slot), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: slot(u.end) } : {}) };
+    const sigmas = u.sigmas?.map((c) => sigmaChipOf(this.#chips[c.key], c.slot));
+    return { formula: r.giac, slots: u.slots.map(slot), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: slot(u.end) } : {}), ...(sigmas ? { sigmas } : {}) };
   }
 
   /** Evaluate from any slot: every slot must be complete. */
