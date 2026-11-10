@@ -25,6 +25,8 @@ describe("slotFormula (R24c)", () => {
     // R271: a result chip after ± is the σ: the slot goes after it, and the units key fills it with the chip's unit (R63)
     expect(slotFormula("10.1\\pm\\res{3}{0.0707}")).toEqual({ latex: "10.1\\pm\\res{3}{0.0707}\\placeholder[u1]{}\\to\\placeholder[end]{}", slots: ["u1"], chips: { u1: "res:3" } });
     expect(slotFormula("10.1\\pm \\res{3}{0.0707}\\times2").slots).toEqual(["u1", "u2"]);
+    // a \% after the σ chip goes with the σ, as after a number, so the parser refuses it there (not ÷100 after the slot)
+    expect(slotFormula("10\\pm\\res{3}{0.4}\\%").latex).toBe("10\\pm\\res{3}{0.4}\\%\\placeholder[u1]{}\\to\\placeholder[end]{}");
   });
   it("no slot inside a power, a subscript, a name, a constant or a root's index", () => {
     expect(slotFormula("5^{2}").latex).toBe("5\\placeholder[u1]{}^{2}\\to\\placeholder[end]{}"); // (5 u)²: the parser reads a slot only right after a number (R28)

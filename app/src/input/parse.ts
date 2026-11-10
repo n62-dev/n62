@@ -533,11 +533,12 @@ class Parser implements CalcParser {
   }
 
   /** R271: a result chip after ± is the σ of the number `n`, its whole value: `pasupm(n,σ,pasws<j>)`, its facts and unit
-   *  by its entry j in UnitsInfo.sigmas (units/build.ts); the slot after it is the value's. */
+   *  by its entry j in UnitsInfo.sigmas (units/build.ts); the slot after it is the value's. A % after it is refused (R104 is for a typed n). */
   private sigmaChip(n: Json): Json {
     const key = this.resChipKey();
     const c = this.chips[key];
     if (!c) throw parseError("parse.valueMissing", { what: "result chip" });
+    if (this.isCmd("%") || (promptId(this.peek()) !== undefined && this.isCmd("%", 1))) throw parseError("parse.pmChipPercent");
     const units = this.units as UnitsInfo;
     const sigmas = (units.sigmas ??= []);
     const before = units.slots.length;

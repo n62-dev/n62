@@ -96,6 +96,14 @@ describe("units mode (R28)", () => {
       expect(s.units?.sigmas).toEqual([{ key: "res:4", slot: null }, { key: "res:3", slot: null }]);
       expect(u("-10.1\\pm\\res{3}{0.07}").giac).toBe("pasupm(-10.1,(707106781187/10^13),pasws1)");
     });
+    it("% after a σ chip is refused, before or after its slot: a typed σ follows R104, a chip's would be ÷100 of the value", () => {
+      const msg = "% after a result chip as σ: give σ in the value's unit, or type the percentage as a number";
+      expect(() => u("10\\pm\\res{3}{0.4}\\%\\placeholder[u1]{}")).toThrow(msg);
+      expect(() => u("10\\pm\\res{3}{0.4}\\placeholder[u1]{}\\%")).toThrow(msg);
+      expect(() => u("10\\pm\\res{3}{0.4}\\%")).toThrow(msg);
+      // the typed σ: R104, 10 ± 0.4 % is σ 0.04
+      expect(u("10\\pm0.4\\%\\placeholder[u1]{}").giac).toBe("pasupm(10,0.04)*pasu1");
+    });
     it("a chip with no value, or a number right after it, is refused", () => {
       expect(() => u("10.1\\pm\\res{9}{1}")).toThrow("result chip: its value is missing");
       expect(() => u("10.1\\pm\\res{3}{0.07}5")).toThrow(/beside a result|number/);

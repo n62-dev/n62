@@ -12,6 +12,7 @@ import type { IndexItem } from "../find/types.ts";
 import type { Chip, ChipTable } from "../input/chips.ts";
 import { sigmaChipOf } from "../input/chipUnit.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
+import { slotFormula } from "../input/unitFormula.ts";
 import { buildJob } from "./build.ts";
 import { factorTable } from "./factors.ts";
 import { unitErrorMessage } from "./messages.ts";
@@ -59,6 +60,14 @@ describe("R271: a σ chip in the builder (no engine)", () => {
     const degC: Chip = { value: "0.5", exact: false, reliableDigits: 12, unit: { text: "°C", dim: "K1", slot: { tokens: [{ unit: "oC" }] } } };
     const t = buildJob(request("300\\pm\\res{6}{0.5}\\placeholder[u1]{}", { "res:6": degC }, [{ tokens: [{ unit: "K" }] }]), table);
     expect(isUnitError(t) ? t : t.unc?.vars[0]?.sigma).toBe("((5/10^1))*(((1)*1^(1)))/(((1)*1^(1)))");
+  });
+  it("10 ± <chip> %, from the entry line through the slot formula to the request, is refused, never 0.1 ± 0.004 m", () => {
+    const f = slotFormula("10\\pm\\res{3}{0.4}\\%");
+    const latex = f.latex.replace("\\to\\placeholder[end]{}", "");
+    expect(() => request(latex, { "res:3": { value: "0.4", exact: false, reliableDigits: 12 } }, [M])).toThrow("% after a result chip as σ");
+    // a typed 0.4 there is R104's σ = 10·0.4/100 = 0.04 in the value's unit
+    const typed = buildJob(request("10\\pm0.4\\%\\placeholder[u1]{}", {}, [M]), table);
+    expect(isUnitError(typed) ? typed : typed.unc?.vars[0]?.sigma).toBe("0.04");
   });
 });
 
