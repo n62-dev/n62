@@ -3,7 +3,7 @@
 // bracket that holds the cursor in its own colour, picked by `prefers-color-scheme`: on the APK's Dark look under
 // Android's light scheme a near-white box hid the white digits (night review 2026-11-02, Tab One). Here the system
 // scheme and our brightness are set opposite each other (and the same), in every family: after `(`, `0` the box is
-// --pick, the caret --alpha, the selection --pick with --text glyphs; the unit view's field gets the same mapping.
+// --pick, the caret --alpha, the selection --sel with --on-sel glyphs (R274); the unit view's field gets the same mapping.
 import { expect, test, type Page } from "@playwright/test";
 import { open, tap } from "./helpers.ts";
 
@@ -58,6 +58,8 @@ function colours(page: Page, testid?: string) {
     const brackets = [...sr.querySelectorAll(".ML__contains-caret.ML__open, .ML__contains-caret.ML__close")].map((e) => getComputedStyle(e).color);
     return {
       pick: tok("pick"),
+      selTok: tok("sel"),
+      onSel: tok("on-sel"),
       alpha: tok("alpha"),
       text: tok("text"),
       box: box ? getComputedStyle(box).backgroundColor : "no box",
@@ -75,7 +77,7 @@ function colours(page: Page, testid?: string) {
 
 for (const [system, look] of [["light", "dark"], ["dark", "light"], ["dark", "dark"], ["light", "light"]] as const)
   for (const family of FAMILIES)
-    test(`${family} ${look} under a ${system} system: ( 0 draws the bracket's box in --pick, the caret in --alpha; a selection is --pick with --text`, async ({ page }) => {
+    test(`${family} ${look} under a ${system} system: ( 0 draws the bracket's box in --pick, the caret in --alpha; a selection is --sel with --on-sel`, async ({ page }) => {
       await page.emulateMedia({ colorScheme: system });
       await open(page);
       await setLook(page, family, look);
@@ -86,8 +88,9 @@ for (const [system, look] of [["light", "dark"], ["dark", "light"], ["dark", "da
       expect(c.brackets, "the bracket's own glyphs, ( and )").toEqual([c.text, c.text]);
       await page.evaluate(() => window.n62.entry.field?.executeCommand("extendSelectionBackward"));
       const s = await colours(page);
-      expect(s.sel, "the selection").toBe(s.pick);
-      expect(s.glyph, "the selected glyph").toBe(s.text);
+      expect(s.sel, "the selection").toBe(s.selTok);
+      expect(s.sel, "the selection is not the bracket box").not.toBe(s.pick);
+      expect(s.glyph, "the selected glyph").toBe(s.onSel);
     });
 
 test("the unit view's field (dark look, light system) takes the same mapping", async ({ page }) => {
@@ -97,5 +100,5 @@ test("the unit view's field (dark look, light system) takes the same mapping", a
   await tap(page, ["d1", "shift", "tmpl"]);
   await page.getByTestId("unit-field").waitFor();
   const c = await colours(page, "unit-field");
-  expect([c.boxVar, c.selVar, c.caret, c.selColor, c.bracketVar]).toEqual([c.pick, c.pick, c.alpha, c.text, c.text]);
+  expect([c.boxVar, c.selVar, c.caret, c.selColor, c.bracketVar]).toEqual([c.pick, c.selTok, c.alpha, c.onSel, c.text]);
 });
