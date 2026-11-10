@@ -6,7 +6,7 @@
 // agreement check), so markOf() marks it as Home. Synchronous, UI-free. Only erasable TypeScript syntax.
 import { FULL_EXACT_MAX, resultFromFacts, toExactLiterals, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
 import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
-import { callsOf, isError, isNameChar, splitList, topLevelArgs } from "../engine/giacPrint.ts";
+import { callsOf, isError, isNameChar, mapNames, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
@@ -188,13 +188,13 @@ function degreeAfter(t: string): number {
   return t.length - after.length;
 }
 
-const CHECKED_CALL = new RegExp(`\\bpasu(${[...TRIG_FNS, ...INVERSES].join("|")})\\(`, "g");
+const CHECKED_CALLS: ReadonlySet<string> = new Set([...TRIG_FNS, ...INVERSES].map((f) => `pasu${f}`));
 
 /** G310: the dimension check's text (after withAngles) with every argument the check reads put through its test: sin,
  *  cos, tan, the inverses and atan2 as pasuc<name>, each function of PURE_FNS as pasucf(pasucz(first argument), the
  *  others): a pure number when its argument is one. The value's text keeps Giac's own calls. */
 export function checkArgs(t: string): string {
-  return pureArgs(t.replace(CHECKED_CALL, "pasuc$1("));
+  return pureArgs(mapNames(t, (n) => (n.call && CHECKED_CALLS.has(n.name) ? `pasuc${n.name.slice(4)}` : null), "typed"));
 }
 
 function pureArgs(t: string): string {
