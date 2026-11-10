@@ -21,8 +21,13 @@ class QuickCalc extends FakeCalc {
 }
 
 const notes = (s: Session, view: View): string[] => (view === "home" ? s.home : s.cas).filter((i) => i.status === "note").map((i) => i.text);
-/** The note comes after a lazy import and a store read. */
-const settle = (): Promise<void> => new Promise((r) => setTimeout(r, 60));
+/** The note comes after a lazy import and a store read. The chunk is loaded once up front, so under a loaded machine
+ *  (the whole suite at once) the first drop does not wait for the import's transform. */
+const warm = import("./dropNote.ts");
+const settle = async (): Promise<void> => {
+  await warm;
+  await new Promise((r) => setTimeout(r, 60));
+};
 
 async function enter(s: Session, n: number, view: View = "home"): Promise<void> {
   s.setView(view);
