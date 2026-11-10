@@ -370,8 +370,10 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   // A level is of a pure number: the ratio, the dimension symbols set to 1 (both sides have the same dimension).
   const level = job.endLog !== undefined && src.kind === "term";
   const G = level ? job.endLog!.replace(/pasux/g, `(subst(${F},[${ones.join(",")}])/(${dst.num}))`) : `(${F})/(${dst.num})`;
-  // R271: a result chip as σ must be a real number, not below 0 (σ² would hide its sign; a typed σ is a plain number)
-  if (u.vars.some((v) => v.chip && !(Number(giac.eval(`evalf(${lit(v.sigma)})`)) >= 0))) return { error: "sigma" };
+  // R271: a result chip as σ must be a real number, not below 0 (σ² would hide its sign; a typed σ is a plain number).
+  // Decided exactly in Giac, as the sign checks below: a float would read -1/10^500 as -0, which passes >= 0.
+  const realNonNegative = (x: string): boolean => giac.eval(`when(im(${x})==0 and sign(re(${x}))>=0,1,0)`).trim() === "1";
+  if (u.vars.some((v) => v.chip && !realNonNegative(`(${lit(v.sigma)})`))) return { error: "sigma" };
   const list = (f: (v: UncVar) => string): string => `[${u.vars.map(f).join(",")}]`;
   const out = giac.eval(`pasuW:=pasuu(${G},${list((v) => v.name)},${list((v) => `(${lit(v.value)})`)},${list((v) => `(${lit(v.sigma)})`)},${list((v) => `${v.name}=(${lit(v.value)})`)},quote(${G}))`);
   if (isError(out)) return { error: "engine", detail: out };

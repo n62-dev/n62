@@ -123,6 +123,8 @@ describe.skipIf(!giacAvailable())("R271: a σ chip evaluated (real Giac)", () =>
       expect(r).toEqual({ error: "sigma" });
       expect(unitErrorMessage(r as UnitError)).toBe("The result after ± must be a real number, 0 or more");
     }
+    // an exact chip below 0 by less than a double can hold: as a float it is -0, which >= 0 accepts
+    expect(run("10.1\\pm\\res{6}{x}\\placeholder[u1]{}", { "res:6": { value: "-1/10^500", exact: true } }, [M])).toEqual({ error: "sigma" });
     // an exact chip of 0 is a σ of 0
     expect(shown(run("10.1\\pm\\res{4}{0}\\placeholder[u1]{}", { "res:4": { value: "0", exact: true } }, [M])).text).toBe("10.1 ± 0");
   });
