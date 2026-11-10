@@ -272,3 +272,102 @@ test("a definitions log stamped 2 is migrated at start, its steps loaded on dema
     )
     .toEqual([4, ["A:=(exp(0))"]]);
 });
+
+// R255 (bu-1): on a cold start with a stored history the keypad is up before MathLive's field; keys pressed then wait
+// in the entry's queue, and the keys with an empty-line job must see them (and a kept line still to come) as text.
+/** A cold start on `page`'s store with MathLive held back until `release()`; `stored` (Home) is typed and sent first,
+ *  `kept` typed after it and left on the line for the kill to keep (R34). */
+async function heldStart(page: Page, stored: string[], kept: string[] = []): Promise<{ next: Page; release: () => void }> {
+  await open(page, "");
+  await engineReady(page);
+  if (stored.length > 0) {
+    await tap(page, [...stored, "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  }
+  if (kept.length > 0) await tap(page, kept);
+  await page.waitForTimeout(800); // the history write is debounced (400 ms) and asynchronous
+  await hide(page);
+  await page.evaluate(() => window.n62.yieldWriter());
+  let release = (): void => {};
+  const gate = new Promise<void>((r) => (release = r));
+  const next = await page.context().newPage();
+  await next.route(/\.vite\/deps\/mathlive/, async (r) => {
+    await gate;
+    await r.continue();
+  });
+  await next.goto("/?tips=off");
+  await next.locator('[data-key="d2"]').waitFor();
+  const rows = stored.length > 0 ? 1 : 0;
+  await next.waitForFunction((n) => window.n62?.session.items.length === n, rows);
+  return { next, release };
+}
+/** Release MathLive and wait until the field is up with the queued keys replayed. */
+async function fieldUp(next: Page, release: () => void): Promise<void> {
+  expect(await next.evaluate(() => window.n62.entry.field)).toBeUndefined(); // every key above went in before the field
+  release();
+  await next.waitForFunction(() => window.n62.entry.field !== undefined, undefined, { timeout: 20_000 });
+  await next.evaluate(() => window.n62.entry.ready);
+}
+const lastInput = (p: Page): Promise<string | undefined> => p.evaluate(() => window.n62.session.items.at(-1)?.latex);
+const results = (p: Page): Promise<string[]> =>
+  p.evaluate(() => window.n62.session.items.filter((i) => i.status === "done").map((i) => i.text));
+
+test("R255: 2 + 3 Enter before the field, with a stored result: 5, no Ans in front", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d2", "add", "d3", "enter"]);
+  await fieldUp(next, release);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(lastResult(next).locator(".result")).toHaveAttribute("data-text", "5"); // derived: 2 + 3
+  expect(await lastInput(next)).not.toContain("\\ans");
+});
+
+test("R255: 2 + 3 Enter 4 before the field: the row is 5 and 4 stays on the line", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d2", "add", "d3", "enter", "d4"]);
+  await fieldUp(next, release);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(lastResult(next).locator(".result")).toHaveAttribute("data-text", "5"); // derived: 2 + 3
+  expect(await entryValue(next)).toBe("4");
+});
+
+test("R255: 2 Enter + 4 before the field: the + after Enter starts with Ans, as on a live line", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d2", "enter", "add", "d4"]);
+  await fieldUp(next, release);
+  await expect.poll(() => entryValue(next)).toMatch(/^\\ans\+4$/);
+  await tap(next, ["enter"]);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(3);
+  expect(await results(next)).toEqual(["7", "2", "6"]); // derived: 2, then Ans + 4 = 6
+});
+
+test("R255: Shift + Esc on a queued line clears the line, not the history", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d2", "shift", "esc"]);
+  await fieldUp(next, release);
+  expect(await entryValue(next)).toBe("");
+  expect(await results(next)).toEqual(["7"]);
+});
+
+test("R255: a kept 5, then + 3 Enter before the field: 8, no Ans", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"], ["d5"]);
+  await tap(next, ["add", "d3", "enter"]);
+  await fieldUp(next, release);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(lastResult(next).locator(".result")).toHaveAttribute("data-text", "8"); // derived: 5 + 3
+  expect(await lastInput(next)).not.toContain("\\ans");
+});
+
+test("R255: a kept 5, then Shift + Esc before the field: the line goes, the history stays", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"], ["d5"]);
+  await tap(next, ["shift", "esc"]);
+  await fieldUp(next, release);
+  expect(await entryValue(next)).toBe("");
+  expect(await results(next)).toEqual(["7"]);
+});
+
+test("R255 control: an empty history, 2 + 3 before the field: the line is 2+3", async ({ page }) => {
+  const { next, release } = await heldStart(page, []);
+  await tap(next, ["d2", "add", "d3"]);
+  await fieldUp(next, release);
+  expect(await entryValue(next)).toBe("2+3");
+});
