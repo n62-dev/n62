@@ -35,13 +35,13 @@ Tested in this order: the promise of the app first, then the areas with the thin
 | 9 | Look and layout | none | Everything; the review list in [release-0.1.0.md](release-0.1.0.md) | Should be settled |
 | 10 | First run and release pages | none | Whether a stranger understands them | Test after the freeze |
 
-Not worth testing yet: matrix entry beyond Tmpl and number bases (v0.3 replaces or builds them), and desktop typing of function names (F199, v0.2).
+Not worth testing yet: number bases (v0.3 builds them) and desktop typing of function names (F199, v0.2). Matrices are tested through Tmpl only; the editor and keys come in v0.2 to v0.3, so an idea for their entry counts as much as a bug.
 
 ## Tasks and reporting
 
-The tasks are in the owner's own `todo.txt` under `+N62`, one line each with its steps, the answer wanted and a `Report:` field; contexts `@n62-01-home` to `@n62-10-release` are the segments. Expected numbers come from `mpmath`, the core list or the golden files, never from memory. Priority A is the first round (about two and a half hours), B the second, C waits for its date.
+The tasks are open sessions in the owner's own `todo.txt` under `+N62`: S01 to S20, 20 to 45 minutes in one area each, with a start, directions to try, the bugs already known and a `Report:` field (since 2026-11-10; the first 76 scripted steps were too small to explore with). Contexts `@n62-01-home` to `@n62-10-release` are the segments. A number quoted in a session comes from `mpmath`, the core list or the golden files, never from memory. Priority A is the first round, B the second, C waits for its date.
 
-A report is one word and the owner's own text after `Report:`: `ok`, `bad W` (wrong number), `bad B` (broken), `bad F` (feel), `bad L` (look), `bad I` (idea), or `?`.
+A report is one note per finding after `Report:`, split by `;`, each starting with `bad W` (wrong number), `bad B` (broken), `bad F` (feel), `bad L` (look), `bad I` (idea) or `?`; or `ok` and what was covered. `SIGN OFF` on a session signs its segment.
 
 **When the owner says "process N62 todo",** a session:
 1. reads the `+N62` lines whose `Report:` is filled in, and works out the build from the date and `.coord/device-runs.jsonl`;
