@@ -7,8 +7,6 @@
 // that defined it: `B:=A*2` replayed after `A:=5` would give B a different value than it had (the log keeps one entry
 // per name, so the order of the commands is gone). Functions are kept as their definition (the body is not evaluated
 // when it is defined, so order does not matter). Inputs whose effect has no single name are kept as typed, in order.
-import { markOf } from "./format.ts";
-import { precisionFacts, type ResultLike } from "./precisionFacts.ts";
 import { readValueFacts, type ValueFacts } from "./types.ts";
 import type { ProgramStores } from "./stores.ts";
 import { isName } from "./giacPrint.ts";
@@ -86,15 +84,6 @@ export function applyDefChanges(log: readonly DefEntry[], changes: readonly DefC
     }
   }
   return out.length > MAX_DEFS ? out.slice(out.length - MAX_DEFS) : out;
-}
-
-/** S53f1: the mark of `r`, the result just stored (the weakest of a list's elements), noted on the variables set from it
- *  as the history draws it: Vars shows it for a name that has no facts (an exact value stores none). A result with no
- *  mark, or a mark that is not = or ≈ (⚠ is the facts' to say), notes nothing. */
-export function noteMark(defs: DefChange[], r: ResultLike, digits: number): DefChange[] {
-  const mark = markOf(precisionFacts(r), { format: "STD", digits })?.mark;
-  if (mark !== "=" && mark !== "≈") return defs;
-  return defs.map((c) => ("set" in c && c.set.kind === "var" ? { set: { ...c.set, mark } } : c));
 }
 
 /** The commands to replay, in order: symbolic values first (while every name in them is still free), then the rest. */
