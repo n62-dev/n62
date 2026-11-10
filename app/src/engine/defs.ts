@@ -7,7 +7,8 @@
 // that defined it: `B:=A*2` replayed after `A:=5` would give B a different value than it had (the log keeps one entry
 // per name, so the order of the commands is gone). Functions are kept as their definition (the body is not evaluated
 // when it is defined, so order does not matter). Inputs whose effect has no single name are kept as typed, in order.
-import { markOf, type ComplexValue } from "./format.ts";
+import { markOf } from "./format.ts";
+import { precisionFacts, type ResultLike } from "./precisionFacts.ts";
 import { readValueFacts, type ValueFacts } from "./types.ts";
 import type { ProgramStores } from "./stores.ts";
 import { isName } from "./giacPrint.ts";
@@ -15,6 +16,9 @@ import { isName } from "./giacPrint.ts";
 /** How far a variable that holds a float can be trusted (decisions M4-7): the facts of the result it was stored from
  *  (never `exact`: an exact value stores none). */
 export type NameFacts = ValueFacts;
+
+/** The mark Vars draws for a name that holds no facts (an exact value). */
+export type StoredMark = "=" | "≈";
 
 /** var: a value (`A:=…`, `…▶A`, `L[2]:=…`, and since G65 every name any input set: `a,b:=1,2`, `(A:=5)+1`, a called
  *  program's global); fn: `f(x):=…`; assume: `assume`/`additionally` on a name; other: a stateful input with no single
@@ -32,9 +36,9 @@ export interface DefEntry {
   facts?: NameFacts;
   /** The value as shown when it was defined (Vars and Find previews, docs/04 3.4). */
   preview: string;
-  /** A variable with no facts (an exact value) whose preview is that value rounded (1/3 as 0.333333333333): its mark is
-   *  ≈, as the history's (S53f1). Absent when the preview is the value itself, and in a log stored before S53f1. */
-  rounded?: true;
+  /** A variable: the mark of the result it was stored from, as the history drew it (S53f1: `=` for 5, `≈` for 1/3 shown
+   *  as 0.333333333333). Absent in a log stored before S53f1 and when the result had no mark: Vars then shows none. */
+  mark?: StoredMark;
   view: "home" | "cas";
   /** When it was defined (ms since 1970). */
   time: number;
@@ -84,11 +88,13 @@ export function applyDefChanges(log: readonly DefEntry[], changes: readonly DefC
   return out.length > MAX_DEFS ? out.slice(out.length - MAX_DEFS) : out;
 }
 
-/** S53f1: `r`, the value just stored, prints rounded (its mark is ≈, as the history draws it): the variables set from it
- *  that hold an exact value (no facts) are noted `rounded`, so Vars marks their preview ≈. */
-export function noteRounded(defs: DefChange[], r: { value?: ComplexValue; facts: ValueFacts }, digits: number): DefChange[] {
-  if (!r.value || markOf({ ...r.facts, value: r.value }, { format: "STD", digits })?.mark !== "≈") return defs;
-  return defs.map((c) => ("set" in c && c.set.kind === "var" && !c.set.facts ? { set: { ...c.set, rounded: true as const } } : c));
+/** S53f1: the mark of `r`, the result just stored (the weakest of a list's elements), noted on the variables set from it
+ *  as the history draws it: Vars shows it for a name that has no facts (an exact value stores none). A result with no
+ *  mark, or a mark that is not = or ≈ (⚠ is the facts' to say), notes nothing. */
+export function noteMark(defs: DefChange[], r: ResultLike, digits: number): DefChange[] {
+  const mark = markOf(precisionFacts(r), { format: "STD", digits })?.mark;
+  if (mark !== "=" && mark !== "≈") return defs;
+  return defs.map((c) => ("set" in c && c.set.kind === "var" ? { set: { ...c.set, mark } } : c));
 }
 
 /** The commands to replay, in order: symbolic values first (while every name in them is still free), then the rest. */
@@ -129,7 +135,7 @@ export function validDefs(x: unknown): DefEntry[] {
       ...(kind === "var" && (e["angle"] === "rad" || e["angle"] === "deg") ? { angle: e["angle"] } : {}),
       ...(typeof e["desc"] === "string" && e["desc"] ? { desc: e["desc"].slice(0, DESC_MAX) } : {}),
       ...(kind === "var" && e["migrate"] === "angle" ? { migrate: "angle" as const } : {}),
-      ...(kind === "var" && e["rounded"] === true ? { rounded: true as const } : {}),
+      ...(kind === "var" && (e["mark"] === "=" || e["mark"] === "≈") ? { mark: e["mark"] } : {}),
     });
   }
   return out.slice(-MAX_DEFS);
@@ -143,8 +149,8 @@ export interface UserName {
   view: "home" | "cas";
   time: number;
   facts?: NameFacts;
-  /** The value is exact but its preview is rounded (DefEntry.rounded): the mark is ≈. */
-  rounded?: true;
+  /** The mark of the result it was stored from (DefEntry.mark); none for a name stored before S53f1. */
+  mark?: StoredMark;
   desc?: string;
 }
 
@@ -152,7 +158,7 @@ export function userNamesOf(log: readonly DefEntry[]): UserName[] {
   const out: UserName[] = [];
   for (const e of log) {
     if (e.kind !== "var" && e.kind !== "fn") continue;
-    out.push({ name: e.name, kind: e.kind, preview: e.preview, view: e.view, time: e.time, ...(e.facts ? { facts: e.facts } : {}), ...(e.rounded ? { rounded: true as const } : {}), ...(e.desc ? { desc: e.desc } : {}) });
+    out.push({ name: e.name, kind: e.kind, preview: e.preview, view: e.view, time: e.time, ...(e.facts ? { facts: e.facts } : {}), ...(e.mark ? { mark: e.mark } : {}), ...(e.desc ? { desc: e.desc } : {}) });
   }
   return out;
 }

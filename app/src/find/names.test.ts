@@ -15,7 +15,7 @@ const name = (n: string, kind: UserName["kind"], preview: string, time: number):
 
 function setup(memory: boolean) {
   const session = new Session(new FakeCalc(), kv());
-  session.userNames = [name("A", "var", "5", 1), name("b_1", "var", "7", 2), name("p", "fn", "done", 3), name("area", "fn", "done", 4)];
+  session.userNames = [{ ...name("A", "var", "5", 1), mark: "=" }, { ...name("b_1", "var", "7", 2), mark: "=" }, name("p", "fn", "done", 3), name("area", "fn", "done", 4)];
   const inserted: string[] = [];
   const entry = { run: (a: { kind: string; latex?: string }) => void inserted.push(a.latex ?? "") } as unknown as EntryController;
   const shell: { sheet: Sheet | null } = { sheet: null };
@@ -61,9 +61,27 @@ describe("marks (S53f1, store-bu-1)", () => {
     expect(rowOf(third)?.value).toBe("≈ 0.333333333333");
     expect(rowOf(third, true)?.preview).toBe("A ≈ 0.333333333333");
   });
-  it("an exact name whose preview is rounded (the engine says so: 1/3 stores no facts) reads ≈", () => {
-    expect(rowOf({ ...name("A", "var", "0.333333333333", 1), rounded: true })?.preview).toBe("A ≈ 0.333333333333");
-    expect(rowOf(name("A", "var", "0.333333333333", 1))?.preview).toBe("A = 0.333333333333");
+  it("an exact name carries the mark the engine noted when it was stored (1/3 stores no facts)", () => {
+    expect(rowOf({ ...name("A", "var", "0.333333333333", 1), mark: "≈" })?.preview).toBe("A ≈ 0.333333333333");
+    expect(rowOf({ ...name("A", "var", "[0.333333333333,1]", 1), mark: "≈" })?.value).toBe("≈ [0.333333333333,1]");
+  });
+  it("a name with no facts and no mark (an old saved log) shows no mark, not =", () => {
+    expect(rowOf(name("A", "var", "0.333333333333", 1))?.preview).toBe("A 0.333333333333");
+    expect(rowOf(name("A", "var", "0.333333333333", 1))?.value).toBe("0.333333333333");
+  });
+  it("the mark is worked out for the preview as drawn, not for the Digits now (reliable 7, a 12-digit preview: ⚠ 7)", () => {
+    const wrong = { ...third, facts: { exact: false, reliableDigits: 7 } };
+    const rows = (digits: number) => {
+      const session = new Session(new FakeCalc(), kv());
+      session.userNames = [wrong];
+      session.settings.digits = digits;
+      const shell: { sheet: Sheet | null } = { sheet: null };
+      showNames(shell, { run: () => undefined } as unknown as EntryController, session, false);
+      return (shell.sheet as Sheet).level.items[0];
+    };
+    expect(rows(6)?.value).toBe("⚠ 7 0.333333333333");
+    expect(rows(6)?.preview).toBe("A ⚠ 7 0.333333333333");
+    expect(rows(12)?.value).toBe("⚠ 7 0.333333333333");
   });
   it("a name whose confirmed digits are fewer than shown reads ⚠ n; an un-audited float a bare ⚠", () => {
     expect(rowOf({ ...third, facts: { exact: false, reliableDigits: 7 } })?.value).toBe("⚠ 7 0.333333333333");
@@ -73,7 +91,7 @@ describe("marks (S53f1, store-bu-1)", () => {
     expect(rowOf({ ...third, preview: "[1,2]" })?.preview).toBe("A ≈ [1,2]");
   });
   it("control: an exact name keeps =", () => {
-    expect(rowOf(name("A", "var", "5", 1))?.preview).toBe("A = 5");
+    expect(rowOf({ ...name("A", "var", "5", 1), mark: "=" })?.preview).toBe("A = 5");
     expect(rowOf({ ...name("A", "var", "5", 1), facts: { exact: true, reliableDigits: null } })?.preview).toBe("A = 5");
   });
   it("a function has no mark", () => {

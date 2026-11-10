@@ -30,17 +30,18 @@ export function liveItem(n: UserName): FindItem {
   return { id: `${n.kind === "fn" ? "userfn" : "var"}:${n.name}`, kind: n.kind === "fn" ? "userfn" : "var", names: [n.name], title: n.name, ...(desc ? { desc } : {}), tier: 0, insert: insertOf(n) };
 }
 
-/** A stored value's mark (S53f1): the one rule the history uses (displayMode.ts markFor), fed with the name's facts and
- *  its value read back from the preview. A name stored without facts holds an exact value (defs.ts: an exact value
- *  stores none): `=`, or ≈ when the engine noted that its preview is rounded (`rounded`). A preview that is not one
- *  decimal (a list, a complex) has no value to read: the facts alone say it is not exact (`approximate`), so ≈ or ⚠,
- *  never `=`. */
+/** A stored value's mark (S53f1): the one rule the history uses (displayMode.ts markFor), worked out for the text that is
+ *  drawn: the preview was fixed when the value was stored, so the context is STD at the preview's own significant digits
+ *  (Digits or FIX now do not change it). A name with facts (a float, an inexact value) gets its mark from them; a preview
+ *  that is not one decimal (a list, a complex) has no value to read, so the facts alone say it is not exact (`approximate`:
+ *  ≈ or ⚠, never `=`). A name without facts holds an exact value: the mark the engine noted when it was stored (`mark`);
+ *  a name of a log stored before that shows none. */
 function markOfName(n: UserName, ctx: DisplayContext): string {
-  const facts = n.facts ?? { exact: !n.rounded, reliableDigits: null };
+  if (!n.facts) return n.mark ?? "";
   const re = decimalFromString(n.preview.toLowerCase());
-  if (!re && facts.exact) return "="; // an exact value shown as it is (a list, an expression): nothing to read back
-  const r: NumericResult = { facts, ...(re ? { value: { re, im: ZERO_VALUE } } : { approximate: true }) };
-  const m = markFor(r, undefined, ctx);
+  const own: DisplayContext = { ...ctx, format: "std", digits: re ? Math.max(1, re.digits.length) : ctx.digits };
+  const r: NumericResult = { facts: n.facts, ...(re ? { value: { re, im: ZERO_VALUE } } : { approximate: true }) };
+  const m = markFor(r, undefined, own);
   return m ? markText(m) : "";
 }
 
