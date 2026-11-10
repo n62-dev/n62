@@ -175,8 +175,9 @@ export interface Uncertainty {
   shown: string;
   /** G41: present when σ carries ⚠, with the reason. */
   why?: UncWhy;
-  /** R271: σ took a result chip's facts; the result's mark is then the worse of the value's and σ's. */
-  chip?: true;
+  /** R271: σ took a result chip's facts; the result's mark is then the worse of the value's and σ's. R271f1: σ's facts
+   *  (its confirmed digits, its ⚠ reason), decided once here; the value's facts hold them (units/sigmaFacts.ts). */
+  chip?: SigmaFacts;
 }
 
 /** A refusal. The message is built by messages.ts from the i18n table. */
@@ -225,7 +226,7 @@ export interface UnitRow {
   dim: string | null;
   dimText: string | null;
   /** σ as the view showed it (Uncertainty.text, .shown, .why); R271f1: a σ from a result chip with its facts
-   *  (sigmaFacts.ts sigmaLimit), which the row's own facts already hold; read back checked by row.ts rowSigma. */
+   *  (Uncertainty.chip), which the row's own facts already hold (readValueFacts checks those when the history is read back). */
   unc?: { text: string; shown: string; why?: UncWhy } & Partial<SigmaFacts>;
   note?: UnitNote;
   /** R121: the note on the names the formula read as pure numbers, as the view showed it (messages.ts unitNamesText). */

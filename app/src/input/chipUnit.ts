@@ -26,24 +26,11 @@ export function sigmaChipOf(c: Chip | undefined, slot: number | null): SigmaChip
   return { slot, ...(unit ? { unit: unit.slot } : {}), reliableDigits: c && !c.exact ? (c.reliableDigits ?? null) : null, ...(c?.warn ? { warn: c.warn } : {}) };
 }
 
-/** R271f1: stored σ facts (a chip's uncFacts, a unit row's σ) read back checked: undefined when not of their shape. */
-export function readSigmaFacts(x: unknown): SigmaFacts | undefined {
-  if (!x || typeof x !== "object") return undefined;
-  const { reliableDigits: rd, warn } = x as Record<string, unknown>;
-  if (!(rd === null || (typeof rd === "number" && Number.isInteger(rd) && rd >= 0 && rd <= 1000))) return undefined;
-  if (warn !== undefined && warn !== "unaudited" && warn !== "unchecked") return undefined;
-  return { reliableDigits: rd, ...(warn ? { warn } : {}) };
-}
-
-/** R271f1: the σ facts (Chip.uncFacts, checked) of the result chips `latex` holds that carry a σ: a unit result whose σ
- *  came from a result chip. As a value in the unit view, the chip's σ keeps that limit (UnitRequest.uncChips). */
-export function uncChipsIn(latex: string, chips: ChipTable): SigmaFacts[] {
-  return [...chipKeysIn(latex)].flatMap((k) => {
-    const c = chips[k];
-    const f = typeof c?.unc === "string" ? readSigmaFacts(c.uncFacts) : undefined;
-    return f ? [f] : [];
-  });
-}
+/** R271f1: the σ facts (Chip.uncFacts, as stored: build.ts sigmaFacts checks them) of the result chips `latex` holds
+ *  that carry a σ: a unit result whose σ came from a result chip. As a value in the unit view, the chip's σ keeps that
+ *  limit (UnitRequest.uncChips). */
+export const uncChipsIn = (latex: string, chips: ChipTable): SigmaFacts[] =>
+  [...chipKeysIn(latex)].flatMap((k) => (chips[k]?.unc !== undefined && chips[k]!.uncFacts ? [chips[k]!.uncFacts!] : []));
 
 /** A stored slot (a chip's unit, R61; a unit row's slots, R63) when it has its shape: 1 to 16 tokens, each a unit id
  *  with an optional prefix id and power, `per` an integer within them; else undefined. Only the fields read are copied;

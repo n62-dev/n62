@@ -29,7 +29,7 @@ export interface Chip extends Omit<ValueFacts, "reliableDigits">, Partial<Pick<V
   unc?: string;
   /** R271f1: a unit result's σ from a result chip: its confirmed digits and ⚠ reason (units/sigmaFacts.ts), which the
    *  unit view gives σ again when the chip goes in; absent for a typed σ, which limits nothing. A stored one is kept as
-   *  read back, unchecked: read it through readSigmaFacts (input/chipUnit.ts), which checks it. */
+   *  read back, unchecked: units/build.ts sigmaFacts checks it where it is used. */
   uncFacts?: SigmaFacts;
   /** R61: a unit result's unit (label and slot); absent on every other chip. A stored one is kept as read back, unchecked
    *  (the check is not in the start chunk, as G81's basis): read it through chipUnit (input/chipUnit.ts), which checks it. */
@@ -83,7 +83,7 @@ export function validChips(x: unknown): ChipTable | undefined {
     const chip: Chip = { value, exact };
     if (typeof unc === "string") Object.assign(chip, { unc }, basis !== undefined ? { basis } : {}, basisLeaves !== undefined ? { basisLeaves } : {});
     if (rd === null || (typeof rd === "number" && Number.isInteger(rd) && rd >= 0 && rd <= 1000)) chip.reliableDigits = rd;
-    // R271f1: a σ's facts as stored, as the unit below; chipUnit.ts readSigmaFacts (off the start chunk) checks them before any use
+    // R271f1: a σ's facts as stored, as the unit below; units/build.ts sigmaFacts (off the start chunk) checks them before any use
     if (typeof unc === "string" && uncFacts && typeof uncFacts === "object") chip.uncFacts = uncFacts as SigmaFacts;
     if (warn === "unaudited" || warn === "unchecked") chip.warn = warn;
     // R61: a result chip's unit as stored; chipUnit (chipUnit.ts, off the start chunk) checks its shape before any use

@@ -224,12 +224,13 @@ function sigmaIn(req: UnitRequest, table: FactorTable): SigmaIn {
 }
 
 /** R271: the worst facts of the request's σ chips (the fewest confirmed digits, a ⚠ reason), R271f1 with those of the
- *  chips that carry a σ chip's facts; undefined without one. */
+ *  chips that carry a σ chip's facts, as stored: only a whole count from 0 and a known ⚠ reason count; undefined
+ *  without one. */
 function sigmaFacts(req: UnitRequest): SigmaFacts | undefined {
   const all: SigmaFacts[] = [...(req.sigmas ?? []), ...(req.uncChips ?? [])];
   if (!all.length) return undefined;
-  const digits = all.flatMap((c) => (c.reliableDigits === null ? [] : [c.reliableDigits]));
-  const warn = all.find((c) => c.warn)?.warn;
+  const digits = all.flatMap((c) => (Number.isInteger(c.reliableDigits) && c.reliableDigits! >= 0 ? [c.reliableDigits!] : []));
+  const warn = all.find((c) => c.warn === "unaudited" || c.warn === "unchecked")?.warn;
   return { reliableDigits: digits.length ? Math.min(...digits) : null, ...(warn ? { warn } : {}) };
 }
 

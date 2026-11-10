@@ -13,7 +13,7 @@ import { EngineHost } from "../engine/host.ts";
 import { giacAvailable, loadNodeGiac } from "../engine/nodeGiac.ts";
 import type { IndexItem } from "../find/types.ts";
 import type { Chip, ChipTable } from "../input/chips.ts";
-import { readSigmaFacts, sigmaChipOf, uncChipsIn } from "../input/chipUnit.ts";
+import { sigmaChipOf, uncChipsIn } from "../input/chipUnit.ts";
 import { validChips } from "../input/chips.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 import { fakeKv } from "../state/fakeKv.ts";
@@ -23,7 +23,7 @@ import { buildJob } from "./build.ts";
 import { quantityChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
 import { shownOf, type UnitShown } from "./result.ts";
-import { putRow, rowSigma, unitRow } from "./row.ts";
+import { putRow, unitRow } from "./row.ts";
 import { isUnitError, type Quantity, type UnitRequest, type UnitSlot } from "./types.ts";
 
 const M: UnitSlot = { tokens: [{ unit: "m" }] };
@@ -51,16 +51,24 @@ const SETTINGS: { format: NumberFormat; digits: number; o: FormatOptions }[] = [
   { format: "eng", digits: 3, o: { format: "ENG", digits: 3 } },
 ];
 
-describe("R271f1: stored σ facts read back checked (no engine)", () => {
-  it("a chip's uncFacts and a row's σ: the well-formed shape only; only a chip with σ limits the unit view's σ", () => {
-    expect(readSigmaFacts({ reliableDigits: 3, warn: "unaudited", text: "0.071" })).toEqual({ reliableDigits: 3, warn: "unaudited" });
-    expect(readSigmaFacts({ reliableDigits: null })).toEqual({ reliableDigits: null });
-    for (const bad of [undefined, "3", { reliableDigits: 3.5 }, { reliableDigits: -1 }, { text: "0.071" }, { reliableDigits: 3, warn: "x" }]) expect(readSigmaFacts(bad)).toBeUndefined();
-    const stored = validChips({ "res:1": { value: "10.1", exact: false, unc: "0.0707", uncFacts: { reliableDigits: 3 } }, "res:2": { value: "2", exact: false, uncFacts: { reliableDigits: 1 } }, "res:3": { value: "1", exact: false, unc: "0.1", uncFacts: { reliableDigits: "x" } } })!;
+describe("R271f1: a stored chip's σ facts, checked where the builder reads them (no engine)", () => {
+  it("only a chip with σ limits the unit view's σ; only a whole count from 0 and a known ⚠ reason count", () => {
+    const stored = validChips({
+      "res:1": { value: "10.1", exact: false, unc: "0.0707", uncFacts: { reliableDigits: 3 } },
+      "res:2": { value: "2", exact: false, uncFacts: { reliableDigits: 1 } },
+      "res:3": { value: "1", exact: false, unc: "0.1", uncFacts: { reliableDigits: "x", warn: "x" } },
+      "res:4": { value: "1", exact: false, unc: "0.1", uncFacts: { reliableDigits: 2.5, warn: "unchecked" } },
+    })!;
     expect(stored["res:1"]?.uncFacts).toEqual({ reliableDigits: 3 });
     expect(stored["res:2"]).not.toHaveProperty("uncFacts");
-    expect(uncChipsIn("\\res{1}{10.1}+\\res{2}{2}+\\res{3}{1}", stored)).toEqual([{ reliableDigits: 3 }]);
     expect(uncChipsIn("\\res{2}{2}", stored)).toEqual([]);
+    const facts = (latex: string) => {
+      const job = buildJob(request(`${latex}\\placeholder[u1]{}`, stored, [M]), TABLE);
+      return isUnitError(job) ? job : job.unc?.chip;
+    };
+    expect(facts("\\res{1}{10.1}+\\res{2}{2}")).toEqual({ reliableDigits: 3 });
+    expect(facts("\\res{3}{1}")).toEqual({ reliableDigits: null });
+    expect(facts("\\res{4}{1}+\\res{1}{10.1}")).toEqual({ reliableDigits: 3, warn: "unchecked" });
   });
 });
 
@@ -108,7 +116,7 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
     s.flushHistory();
     const back = await session(kv);
     const item = back.home[0] as HistoryItem;
-    expect(rowSigma(item)).toEqual({ reliableDigits: 3 });
+    expect(item.units?.unc).toEqual(r.units?.unc);
     const marks = SETTINGS.map((t) => {
       back.setFormat(t.format);
       back.setDigits(t.digits);
@@ -148,7 +156,7 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
     putRow(s, r);
     const item = s.home[0] as HistoryItem;
     expect(s.mark(item)?.mark).toBe("≈");
-    expect(rowSigma(item)).toBeUndefined();
+    expect(item.units?.unc).not.toHaveProperty("reliableDigits");
     expect(quantityChip(q)).not.toHaveProperty("uncFacts");
   });
 });

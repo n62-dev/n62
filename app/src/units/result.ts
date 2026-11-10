@@ -12,7 +12,6 @@ import { groupSepFor, type GroupSep } from "../render/home.ts";
 import { commaResult, markText } from "../state/displayMode.ts";
 import type { Alternative } from "./alternatives.ts";
 import { unitErrorMessage, unitNamesText, unitNoteText, unitWhyText } from "./messages.ts";
-import { sigmaLimit } from "./sigmaFacts.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
 
 /** What the view shows under the reading: nothing, a refusal (a slot's or the evaluator's), Working…, or a result. */
@@ -72,8 +71,8 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   // R271f1: the value's facts already hold σ's limit (evaluate.ts done, sigmaFacts.ts), as the Home row and the chip do
   const m = markOf(facts, o);
   // the ⚠ sits before σ when σ's facts are the limit the value carries (its ⚠ reason, or its confirmed digits)
-  const limit = sigmaLimit(q.unc);
-  const sigmaWarn = m?.mark === "⚠" && limit !== undefined && ((limit.warn !== undefined && limit.warn === facts.warn) || (limit.reliableDigits !== null && limit.reliableDigits === facts.reliableDigits));
+  const limit = q.unc?.chip;
+  const sigmaWarn = m?.mark === "⚠" && !!limit && (!!limit.warn || (limit.reliableDigits ?? -1) === facts.reliableDigits);
   const mark: Mark = m?.mark === "⚠" ? "⚠" : q.unc ? "≈" : (m?.mark ?? "≈");
   const number = (v: Quantity["value"]): string => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)).text : v.display);
   const value = number(q.value);
