@@ -26,9 +26,7 @@ export const enKeyNames = {
   redo: "Redo",
   "redo.shift": "End of the line",
   copy: "Copy",
-  "copy.shift": "Start of the box",
   paste: "Paste",
-  "paste.shift": "End of the box",
   // the maths rows
   vars: "Variables",
   math: "Math",

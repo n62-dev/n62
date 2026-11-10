@@ -60,11 +60,11 @@ describe("keyboard spec", () => {
     expect(actionFor(k("redo"), false, false)).toEqual({ kind: "cmd", name: "redo" });
     expect(actionFor(k("redo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldEnd" });
     expect(actionFor(k("copy"), false, false)).toEqual({ kind: "special", name: "copy" });
-    expect(actionFor(k("copy"), true, false)).toEqual({ kind: "cmd", name: "moveToGroupStart" });
+    expect(actionFor(k("copy"), true, false)).toBeUndefined(); // R275: no box jumps
     expect(actionFor(k("paste"), false, false)).toEqual({ kind: "special", name: "paste" });
-    expect(actionFor(k("paste"), true, false)).toEqual({ kind: "cmd", name: "moveToGroupEnd" });
+    expect(actionFor(k("paste"), true, false)).toBeUndefined();
     expect([k("undo"), k("redo"), k("copy"), k("paste")].map((x) => [x.label.primary, x.label.shift])).toEqual([
-      ["$key.undo", "⇤"], ["$key.redo", "⇥"], ["$key.copy", "⇤□"], ["$key.paste", "□⇥"],
+      ["$key.undo", "⇤"], ["$key.redo", "⇥"], ["$key.copy", undefined], ["$key.paste", undefined],
     ]);
     // Help at the G2's r1c4: not built (milestone 6), so dead and drawn dimmed; Shift + Help (the G2's User, omitted) is Settings
     expect(actionFor(k("help"), false, false)).toEqual({ kind: "special", name: "none" });

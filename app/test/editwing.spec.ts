@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R15c2: the R3 cluster's editing wing (Undo | Redo, Copy | Paste, Esc's jobs; since R146 ⇤ ⇥ on Shift + Undo and
-// Redo, ⇤□ □⇥ on Shift + Copy and Paste), Store from the last result and the round pad's hub (decisions.md "R15c"
+// Redo), Store from the last result and the round pad's hub (decisions.md "R15c"
 // points 1–5, "R15c Store"). Expected values are derived (what the keys must type).
 import { expect, test } from "@playwright/test";
 import { drag, entryValue, open, recordVibrations, sheetKey, tap, touch, vibrations } from "./helpers.ts";
@@ -15,21 +15,6 @@ test("⇤ and ⇥ (Shift + Undo, Shift + Redo) go to the line's ends", async ({ 
   await tap(page, ["bksp", "bksp", "bksp", "bksp", "bksp"]);
   await tap(page, ["d1", "d2", "div", "d3", "d4", "shift", "undo", "d7"]);
   expect(await entryValue(page)).toBe("7\\frac{12}{34}");
-});
-
-test("⇤□ and □⇥ (Shift + Copy, Shift + Paste) go to the ends of the box: a numerator, an exponent", async ({ page }) => {
-  await open(page);
-  // the prototype's finding: 12 ÷ 34, ⇤□, 5 puts the 5 at the start of the denominator
-  await tap(page, ["d1", "d2", "div", "d3", "d4", "shift", "copy", "d5"]);
-  expect(await entryValue(page)).toBe("\\frac{12}{534}");
-  await page.evaluate(() => window.n62.entry.clear());
-  await tap(page, ["d2", "pow", "d3", "d4", "shift", "copy", "d7"]);
-  expect(await entryValue(page)).toBe("2^{734}");
-  await tap(page, ["shift", "paste", "d5"]);
-  expect(await entryValue(page)).toBe("2^{7345}");
-  // the end of the box is not the end of the line: a digit after □⇥ stays in the exponent
-  await tap(page, ["left", "left", "shift", "paste", "d6"]);
-  expect(await entryValue(page)).toBe("2^{73456}");
 });
 
 test("Undo, then Redo: one press each (R146)", async ({ page }) => {

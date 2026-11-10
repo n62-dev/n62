@@ -296,7 +296,7 @@ const shots: Shot[] = [
   { id: "layer-shift-alpha", group: "Keypad layers", title: "Shift then Alpha (lower case)", setup: (p) => tap(p, ["shift", "alpha"]) },
   ...popShots(), // R162
   ...foldShots(someHistory), // R53
-  // ---- R146: rows 0–2 (Help | Esc, Undo | Redo, Copy | Paste; on Shift Settings | Clear, ⇤ | ⇥, ⇤□ | □⇥), N62 Light and Dark
+  // ---- R146: rows 0–2 (Help | Esc, Undo | Redo, Copy | Paste; on Shift Settings | Clear, ⇤ | ⇥), N62 Light and Dark
   ...([[360, 740], [412, 915]] as const).flatMap(([width, height]) => [false, true].map((on) => ({ id: `sixkeys-${width}${on ? "-shift" : ""}`, group: "The six keys (R146)",
     title: `Rows 0–2 at ${width} × ${height}, Shift ${on ? "on" : "off"}`, viewport: { width, height }, element: ".pad", setup: (p: Page) => tap(p, on ? ["shift"] : []) }))),
   // ---- Home
