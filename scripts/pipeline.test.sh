@@ -1261,6 +1261,11 @@ a64q 'Last commit: 1a2b3c4' 'Done or not done: done' 'Open questions: none' && f
 a64q 'Last commit abc. Not done in full: the Teal gallery shots are unchecked.' 'Open questions: none' && fail "A64f1: 'Not done in full: x' fires"
 a64q 'Last commit abc.' '- **Not done** in full: x' 'Open questions: none' && fail "A64f1: '- **Not done** in full: x' fires"
 a64q 'Last commit abc, NOT done' 'Open questions: none' || fail "A64f1: 'Last commit abc, NOT done' (end of line) does not fire"
+# A131: a "Not done, …" list item (a colon later) is a list; "not done, step 2 needs a device" after the commit is the status
+a64q 'Last commit abc.' 'Not done, same as phase-1: the gallery shots are out of scope.' 'Open questions: none' && fail "A131: 'Not done, same as phase-1: …' fires"
+a64q 'Last commit abc.' '- **Not done, step 2:** the device probe needs the tablet.' 'Open questions: none' && fail "A131: '- **Not done, step 2:** …' fires"
+a64q 'Last commit abc, not done, step 2 needs a device' 'Open questions: none' || fail "A131: 'Last commit abc, not done, step 2 needs a device' does not fire"
+a64q 'Not done, step 2: x' 'Last commit abc, NOT done' 'Open questions: none' || fail "A131: a list item before a real not-done status hides it"
 a64q 'Open questions: the bundle has no A64 section' || fail "A64: 'the bundle has no A64 section' does not fire"
 [[ "$(task_question_line "$tmp/q-a64")" == 'Open questions: the bundle has no A64 section' ]] || fail "A64: task_question_line does not print the line that fired: $(task_question_line "$tmp/q-a64")"
 grep -q 'task_question_line "$run/' "$here/pipeline.sh" || fail "A64: pipeline.sh does not name the line that fired with task_question_line"
