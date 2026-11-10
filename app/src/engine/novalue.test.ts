@@ -10,7 +10,7 @@ import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { rewriteAngles } from "./angles.ts";
 import type { Giac } from "./numeric.ts";
-import { approxRange, lostNumber, overflowAt, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, lostNumber, overflowAt, powerPastRange, throughInfinity, topLevelPower, underflow, zeroElements } from "./novalue.ts";
 
 describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
   let host: EngineHost;
@@ -133,6 +133,30 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
       expect(() => overflowAt(giac, "pasov", "pnt", 40), g).not.toThrow();
     }
     giac.eval("purge(pasov);1");
+  });
+  it("refuses a power past MPFR's range by its size, before Giac's normal recursed (G187, F122)", () => {
+    // The parser's text of the sweep rows; sizes 10^(-1.96E299) (RAD), 10^(-1.95E300) (DEG), 10^(-1.95E500) (mpmath).
+    const typedRows: [string, "rad" | "deg"][] = [
+      ["(atan(ln(-pi)+9007199254740993)/pasdeg)^(sin(pasdeg*1e-300)-(1e300))", "rad"],
+      ["(atan(ln(-pi)+9007199254740993)/pasdeg)^(sin(pasdeg*1e-300)-(1e300))", "deg"],
+      ["(90+10^(-6))^(((1-10^(-218))^(3*10^218))-sqrt(1e1000))", "rad"],
+    ];
+    for (const [input, angle] of typedRows)
+      expect(host.home(input, { ...defaultHomeSettings, angle }).result, `${input} ${angle}`).toMatchObject({ ok: false, error: "underflow" });
+    // The size by the modulus of a complex base; a power inside the range and a free name decide nothing.
+    // |atan(2+i)| = 1.19 (mpmath), so 10^(7.58E398) and 10^(-7.58E398); Giac keeps the power (an integer exponent
+    // becomes exp(n*ln(b)), G123's path)
+    for (const [e, why] of [["10^400+sqrt(2)", "overflow"], ["-10^400+sqrt(2)", "underflow"]]) {
+      expect(powerPastRange(giac, "pasov", giac.eval(`pasov:=atan(2+i)^(${e})`), 40), e).toBe(why);
+      expect(host.home(`atan(2+i)^(${e})`, defaultHomeSettings).result.error, e).toBe(why);
+    }
+    // 10^(-323228249.0), inside the range (about 10^(-323228496.3))
+    expect(powerPastRange(giac, "pasov", giac.eval("pasov:=(1/2)^(1073741000+sqrt(2))"), 40)).toBeNull();
+    expect(powerPastRange(giac, "pasov", giac.eval("pasov:=x^(10^400+sqrt(2))"), 40)).toBeNull();
+    giac.eval("purge(pasov);1");
+    expect(topLevelPower("(a+b)^(c-d)")).toBe(true);
+    expect(topLevelPower("2^-3")).toBe(true);
+    for (const t of ["-a^b", "a^b+1", "2*a^b", "f(a^b)", "[a^b,1]", "a"]) expect(topLevelPower(t), t).toBe(false);
   });
 
   it("refuses an infinite definite integral in Home; the CAS view keeps Giac's +infinity", () => {

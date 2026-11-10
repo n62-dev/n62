@@ -17,7 +17,7 @@ import { valueFactsOf, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
-import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 import { doubleElements } from "./doubleElements.ts";
 import { giacRefusesOurs, icdfAtEnd, icdfCalls, icdfEndCalls } from "./icdf.ts";
 import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
@@ -647,6 +647,9 @@ export function homeEval(
     if (refused === "unchecked") unverified = true;
     else if (refused) return refuse(refused, "exact");
   }
+  // G187 (F122): a power past MPFR's range by its size, before the checks that read its value (Giac's normal recursed) and the cut's word
+  const pastRange = once || late() ? null : powerPastRange(giac, ans, exactOut, P);
+  if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
   if (seq.empty) return refuse("noValue", "exact");
