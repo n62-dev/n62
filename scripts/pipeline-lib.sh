@@ -369,6 +369,21 @@ quiet_wait() {
     first=0; sleep "$every"
   done
 }
+# rerun_kind (A129) <check> <log>: prints why the failing check runs once more before a fix round, "timing" (every failing item is a
+# wall-clock test, timing_only) or "flake" (e2e only: 1 to 5 failing tests whose specs the branch did not change, no shared test
+# helper changed, nothing interrupted, rerunnable in pipeline-logs.ts; `changed` is the branch's diff); 1 for neither.
+rerun_kind() {
+  if timing_only "$1" "$2"; then echo timing
+  elif [[ "$1" == e2e ]] && changed | node "$wt/app/scripts/pipeline-logs.ts" rerunnable e2e "$2"; then echo flake
+  else return 1; fi
+}
+# flake_log (A129) <kind> <log>: after a rerun of kind "flake" that passed, one log line per test that failed first; the failing
+# output stays in the log. Always returns 0.
+flake_log() {
+  [[ "$1" == flake ]] || return 0
+  local l; while IFS= read -r l; do _lib_log "pipeline #$n $id: FLAKE $l"; done < <(node "$wt/app/scripts/pipeline-logs.ts" flakelines e2e "$2" | head -n 5)
+  return 0
+}
 _lib_log() { if declare -F log >/dev/null; then log "$*"; fi; }
 # The shell tests (A47a): run by `pipeline.sh selftest` and by the check `shell`. N62_SELFTEST_TESTS (absolute paths) overrides.
 SELFTESTS=(scripts/pipeline.test.sh scripts/night.test.sh scripts/gc.test.sh tools/devlock.test.sh tools/manifest-backup.test.sh tools/release-gate.test.sh tools/release-guard.test.sh)

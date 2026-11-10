@@ -5,6 +5,8 @@
 //   node app/scripts/pipeline-logs.ts files <vitest|e2e|golden> <log>   # the failing files, sorted, unique
 //   node app/scripts/pipeline-logs.ts timing <vitest|e2e|golden> <log>  # exit 0 when every failing item is a timing test
 //   node app/scripts/pipeline-logs.ts mismatch <vitest|e2e> <log>      # prints the message, exit 0, when the parsed count differs from the runner's own
+//   <changed files, one per line on stdin> | node app/scripts/pipeline-logs.ts rerunnable e2e <log>   # A129: exit 0 when the failures may be flakes
+//   node app/scripts/pipeline-logs.ts flakelines e2e <log>             # A129: one "<spec> › <title>" per failing test, cut to 200 characters
 // Only erasable TypeScript syntax (Node runs this file).
 import { readFileSync } from "node:fs";
 
@@ -159,14 +161,37 @@ export function onlyTiming(check: Check, log: string): boolean {
   return items.length > 0 && items.every((i) => isTiming(check, i));
 }
 
+/** A129: the most failing e2e tests that still get one rerun. */
+export const FLAKE_CAP = 5;
+
+/** A129: an e2e failure the branch cannot have written, worth one rerun before a fix round: 1 to FLAKE_CAP parsed failing
+ *  tests that agree with Playwright's own count, nothing interrupted or left unrun, no failing test's spec in `changed`
+ *  (the branch's diff against phase-1, repo paths), and no file under app/test/ that is not a spec (a shared helper or
+ *  fixture) nor the Playwright config in it. */
+export function rerunnable(check: Check, log: string, changed: string[]): boolean {
+  if (check !== "e2e") return false;
+  const items = failedItems(check, log);
+  if (items.length < 1 || items.length > FLAKE_CAP || countMismatch(check, log) !== null) return false;
+  if (/^\s*\d+ (?:interrupted|did not run)\s*$/m.test(stripAnsi(log))) return false;
+  if (changed.some((p) => (p.startsWith("app/test/") && !p.endsWith(".spec.ts")) || p === "app/playwright.config.ts")) return false;
+  return !items.some((i) => changed.some((p) => p === `app/test/${i.file}` || p.endsWith(`/${i.file}`)));
+}
+
+/** A129: the log lines of a rerun that passed, one per failing test (a test of several projects once). */
+export function flakeLines(check: Check, log: string): string[] {
+  return [...new Set(failedItems(check, log).map((i) => `${i.file} › ${i.title}`.slice(0, 200)))];
+}
+
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
   const [cmd, check, path] = process.argv.slice(2);
   if (!cmd || !path || !["vitest", "e2e", "golden"].includes(check ?? "")) {
-    console.error("usage: pipeline-logs.ts items|files|timing|mismatch <vitest|e2e|golden> <log>");
+    console.error("usage: pipeline-logs.ts items|files|timing|mismatch|rerunnable|flakelines <vitest|e2e|golden> <log>");
     process.exit(2);
   }
   const log = readFileSync(path, "utf8");
   const c = check as Check;
+  if (cmd === "rerunnable") process.exit(rerunnable(c, log, readFileSync(0, "utf8").split(/\r?\n/).filter(Boolean)) ? 0 : 1);
+  if (cmd === "flakelines") { for (const l of flakeLines(c, log)) console.log(l); process.exit(0); }
   if (cmd === "mismatch") { const m = countMismatch(c, log); if (m !== null) console.log(m); process.exit(m !== null ? 0 : 1); }
   if (cmd === "timing") process.exit(onlyTiming(c, log) ? 0 : 1);
   const items = failedItems(c, log);
