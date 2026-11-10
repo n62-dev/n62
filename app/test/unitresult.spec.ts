@@ -5,7 +5,7 @@
 // picked by touch (a tap on a chip) and by keys (▼ ◀ ▶ Enter, Esc leaves). A pick writes the unit into the end slot and
 // evaluates again.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { flick, open, tap, useClipboardLock } from "./helpers.ts";
+import { flick, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -266,6 +266,28 @@ test.describe("the unit result view (R62)", () => {
     await expect(page.getByTestId("unit-sub")).toContainText("39.488 · σ 1.244");
     await expect(page.getByTestId("unit-warn")).toHaveCount(0);
     expect(await texts(page)).toContain("ft²");
+  });
+
+  // R271: sem of 10.1, 10.3, 9.9, 10.0, 10.2 is 0.07071067811865475244… (source: oracle, mpmath); its chip after ± is σ
+  test("mean and sem of a list, then 10.1 ± the sem chip in m: ≈ 10.100 ± 0.071 m with σ to the chip's 12 digits", async ({ page }) => {
+    const list = "\\left(\\left\\{10.1,10.3,9.9,10.0,10.2\\right\\}\\right)";
+    for (const [i, f] of ["mean", "sem"].entries()) {
+      await page.evaluate((t) => window.n62.session.submit(t), `\\operatorname{${f}}${list}`);
+      await expect(page.locator('[data-status="done"]')).toHaveCount(i + 1);
+    }
+    const rows = page.locator('[data-testid="result"]');
+    await expect(rows.nth(0).locator(".result")).toHaveText("10.1");
+    await expect(rows.nth(1).locator(".result")).toHaveText("0.0707106781187");
+    await tap(page, ["d1", "d0", "dot", "d1", "shift", "comma"]);
+    await tapTwice(rows.nth(1).locator(".result"));
+    await expect.poll(() => page.evaluate(() => window.n62.entry.field?.value ?? "")).toMatch(/^10\.1\\pm\\res\{\d+\}/);
+    await unitsKey(page);
+    await plan(page, "d9 ↑enter");
+    await expect(mark(page)).toHaveText("≈");
+    await expect(result(page).locator(".value")).toHaveText("10.100 ± 0.071");
+    await expect(page.getByTestId("unit-unit")).toHaveText("m");
+    await expect(page.getByTestId("unit-warn")).toHaveCount(0);
+    await expect.poll(async () => (await page.getByTestId("unit-sub").textContent())?.replaceAll("\u2009", "")).toBe("10.1 · σ 0.0707106781187");
   });
 
   test("3000 rpm × 0.1 m → m/s shows the rpm note under = 5 m/s, and the value stays", async ({ page }) => {
