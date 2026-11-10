@@ -125,12 +125,12 @@
   --text: #ebf6f6;
   --text-dead: #749392;
   --muted: #abccca;
-  --shift: #ff9a33;
+  --shift: #ffa800;
   --alpha: #6ae5e2;
   --error: #ff8e7f;
   --chip-bg: #123736;
   --approx: #6ae5e2;
-  --warn: #f2c94c;
+  --warn: #f3cb53;
   --pick: #134948;
   --focus: #529997;
   --ring: #529997;
@@ -139,7 +139,7 @@
   --key-text: #ebf6f6;
   --key-muted: #abccca;
   --key-text-dead: #749392;
-  --key-shift: #ff9a33;
+  --key-shift: #ffa800;
   --key-alpha: #6ae5e2;
   --key-pfx: #1e4948;
   --sel: #299c9a;

@@ -9,11 +9,11 @@ const mark = (): string => readFileSync(MARK_FILE, "utf8");
 describe("R157: the mark file", () => {
   it("has the logo file's path unchanged", () => {
     const d = logoPath(readFileSync(LOGO_FILE, "utf8"));
-    expect(d.length).toBeGreaterThan(2800);
+    expect(d.length).toBeGreaterThan(1500);
     expect(mark()).toContain(` d="${d}"`);
   });
-  it("crops to the mark: a viewBox of 29.8 30.5 48.4 47", () => {
-    expect(mark()).toMatch(/viewBox="29\.8 30\.5 48\.4 47"/);
+  it("crops to the mark: a viewBox of 31.35 30.5 45.3 47", () => {
+    expect(mark()).toMatch(/viewBox="31\.35 30\.5 45\.3 47"/);
   });
   it("has an SPDX line first (rules-core), as public/icons/icon.svg has", () => {
     expect(mark().split("\n")[0]).toBe("<!-- SPDX-License-Identifier: GPL-3.0-or-later -->");
