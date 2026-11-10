@@ -284,6 +284,25 @@ function withPick(t: Palette, hc: boolean): Palette {
   return o;
 }
 
+/** R274: the selection on the entry line stands this far (non-text, WCAG 1.4.11) from the entry line's --panel and from --pick. */
+export const SEL_APART = 3;
+/**
+ * R274: --sel, the entry line's selection (MathLive's selection ground), and --on-sel, the text on it. It keeps the box's hue and
+ * saturation (--pick's, which took the caret's hue); only its lightness moves, from --pick away from the ground, to the nearest
+ * value that stands SEL_APART from --panel and --pick and carries black or white at the text floor (7:1 in High contrast).
+ */
+function withSel(t: Palette, hc: boolean): Palette {
+  const T = hc ? 7 : 4.5;
+  const sd = lightInk(t);
+  const [h, s, l0] = rgb2hsl(get(t, "pick"));
+  for (let i = 0; i <= 200; i++) {
+    const c = hsl2hex([h, s, sd ? Math.min(1, l0 + i * 0.005) : Math.max(0, l0 - i * 0.005)]);
+    const on = cr("#000000", c) >= cr("#ffffff", c) ? "#000000" : "#ffffff";
+    if (cr(c, get(t, "panel")) >= SEL_APART && cr(c, get(t, "pick")) >= SEL_APART && cr(on, c) >= T) return { ...t, sel: c, "on-sel": on };
+  }
+  throw new Error(`theme-gen: no --sel for pick ${get(t, "pick")} on panel ${get(t, "panel")}`);
+}
+
 /** The label on an --error ground (Cancel and the like): the family's --bg in dark, white in light. Set last, from the final --bg. */
 function withOnError(t: Palette, dark: boolean): Palette {
   return { ...t, "on-error": dark ? get(t, "bg") : "#ffffff" };
@@ -405,7 +424,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.plain) o = plain(o);
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
-  return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withPfx(withPick(o, c.high), c.high), dark)), c.high), dark), dark), fixes };
+  return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high), c.high), dark)), c.high), dark), dark), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---
@@ -435,10 +454,13 @@ export function checks(t: Palette, hc: boolean): Check[] {
   add("Screen", "text on a chip", "text", "chip-bg", T);
   add("Screen", "focus ring on screen (non-text)", "focus", "bg", 3);
   // R116: the entry line (App.svelte maps MathLive's highlights): the caret is --alpha, the box of the bracket that
-  // holds the cursor and the selection are --pick, both with --text on them
+  // holds the cursor and the selection are --pick, the box with --text on it, the selection --sel with --on-sel (R274)
   add("Entry", "caret on the entry line", "alpha", "panel", T);
   add("Entry", "caret in the bracket's box (non-text)", "alpha", "pick", 3);
   add("Entry", "the bracket's box apart from the entry line", "pick", "panel", PICK_APART);
+  add("Entry", "the selection apart from the entry line (non-text)", "sel", "panel", SEL_APART);
+  add("Entry", "the selection apart from the bracket's box (non-text)", "sel", "pick", SEL_APART);
+  add("Entry", "selected text", "on-sel", "sel", T);
   add("Entry", "outline at rest on screen (non-text)", "ring", "bg", D);
   add("Entry", "outline at rest on the entry line (non-text)", "ring", "panel", D);
   for (const k of [...KEYS, "key-pfx"]) {
