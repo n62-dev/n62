@@ -181,11 +181,11 @@ function uncertainValues(formula: string, vars: UncVar[], sigmaIn: SigmaIn): str
     const value = formula.slice(open + 1, commas[0]).trim();
     const sigma = formula.slice(commas[0]! + 1, commas[1] ?? close).trim();
     const key = commas[1] === undefined ? undefined : formula.slice(commas[1] + 1, close).trim();
-    const link = key === undefined ? null : /^pasws(\d+)$/.exec(key);
-    if (!value || !sigma || /pas/.test(value + sigma) || (key !== undefined && !link && !isChipName(key))) throw bad();
-    if (link) {
+    const link = key?.startsWith("pasws") && digits(key.slice(5)) ? Number(key.slice(5)) : null;
+    if (!value || !sigma || /pas/.test(value + sigma) || (key !== undefined && link === null && !isChipName(key))) throw bad();
+    if (link !== null) {
       // R271: a result chip as σ: an input of its own (the value is typed), σ in the value's unit
-      const v: UncVar = { name: `pasv${vars.length + 1}`, value, sigma: sigmaIn(Number(link[1]), sigma), chip: true };
+      const v: UncVar = { name: `pasv${vars.length + 1}`, value, sigma: sigmaIn(link, sigma), chip: true };
       vars.push(v);
       out += v.name;
       i = close + 1;
