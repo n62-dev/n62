@@ -5,7 +5,7 @@
 import { engineGiac, type EngineGiac } from "./nodeGiac.ts";
 import { fakeGiac } from "./fakeGiac.ts";
 import { beforeAll, describe, expect, it } from "vitest";
-import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
+import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { EngineHost, type GiacApi } from "./host.ts";
 import type { GiacBridge } from "./bridge.ts";
 import { defaultHomeSettings, precisionFacts } from "./homeEval.ts";
@@ -39,6 +39,20 @@ describe("converge helpers", () => {
     expect(refusalOf(none, "limit(trunc(sin(1/x)/2),x,0)", "limit(trunc(sin(1/x)/2),x=0)", 12)).toBe("unchecked");
     expect(refusalOf(none, "1+limit(trunc(a*x),x,1,-1)", "limit(trunc(a*x),x=1,-1)+1", 12)).toBe("unchecked");
     expect(refusalOf(none, "limit(trunc(x),x,-1,1)", "0", 12)).toBeNull();
+  });
+  it("G305: Giac's error for one-sided limits that differ is noLimit when the input holds a limit; no Giac call for it", () => {
+    const none = fakeGiac((): string => { throw new Error("no call expected"); });
+    const distinct = "GIAC_ERROR: Unidirectional limits are distinct 1,2 Error: Bad Argument Value";
+    const distincts = "GIAC_ERROR: Unidirectional limits are distincts -1/2*pi,1/2*pi Error: Bad Argument Value";
+    expect(errorRefusal("limit(round(x),x,(15/10^1))", distinct)).toBe("noLimit");
+    expect(errorRefusal("2*limit(atan(1/x),x,0)", distincts)).toBe("noLimit");
+    expect(refusalOf(none, "limit(round(x),x,3/2)", distinct, 12)).toBe("noLimit");
+    expect(refusalOf(none, "limit(atan(1/x),x,0)", distincts, 12)).toBe("noLimit");
+    // not Giac's limit error, or no limit typed: not ours to read
+    expect(errorRefusal("limit(round(x),x,3/2)", "GIAC_ERROR: Bad Argument Value")).toBeNull();
+    expect(errorRefusal("round(x)", distinct)).toBeNull();
+    expect(errorRefusal("mylimit(round(x),x,3/2)", distinct)).toBeNull();
+    expect(errorRefusal("limit(round(x),x,3/2,1)", "2")).toBeNull();
   });
   it("G90: Giac's exact answer with an integrate(…) left in it is its numeric integration; no Giac call for it", () => {
     const none = fakeGiac((): string => { throw new Error("no call expected"); });
@@ -178,6 +192,10 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     ["sum(exp(i*k),k,0,inf)", "seriesDiverges"],
     ["sum((-1)^k,k,0,inf)", "seriesDiverges"],
     ["limit(sin(x),x,inf)", "noLimit"],
+    // G305: one-sided limits that differ (Giac's error), at an exact and at a typed decimal point (exact in the run)
+    ["limit(round(x),x,1.5)", "noLimit"],
+    ["limit(sign(x),x,0.0)", "noLimit"],
+    ["limit(atan(1/x),x,0)", "noLimit"],
   ])("Home and CAS refuse %s", (input, code) => {
     expect(home(input)).toMatchObject({ ok: false, error: code });
     expect(cas(input)).toMatchObject({ ok: false, error: code });
@@ -198,6 +216,13 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     expect(cas("g39c").text).toBe("g39c");
     expect(cas("g39d:=sum(1/k^2,k,1,inf)")).toMatchObject({ ok: true });
     expect(cas("g39d").text).toBe("1/6*pi^2");
+    // G305: a limit with no value stores nothing, assigned or stored with =>
+    expect(home("g305a:=limit(round(x),x,3/2)")).toMatchObject({ ok: false, error: "noLimit" });
+    expect(home("g305a").display).toBe("g305a");
+    expect(home("limit(round(x),x,3/2)=>g305b")).toMatchObject({ ok: false, error: "noLimit" });
+    expect(home("g305b").display).toBe("g305b");
+    expect(cas("g305c:=limit(floor(x),x,1)")).toMatchObject({ ok: false, error: "noLimit" });
+    expect(cas("g305c").text).toBe("g305c");
   });
 
   it("a trig integrand that is not periodic: every pole of the trig part in [a, b] is checked", () => {

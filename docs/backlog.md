@@ -35,7 +35,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **nr1109-bu-1 (S1; R255).** Cold start with history: `2+3` Enter before the field is up gives Ans·2+3 = 17 (right 5). Rerun: `tools/probes/review-1109/rerun.sh bu-1`. Family 11.
 - **nr1109-bu-2 (S1; R257).** Function: after F1 or the angle unit changes, Plot's y and Num keep the old values (Copy too). Rerun: `tools/probes/review-1109/rerun.sh bu-2`. Family 2.
 - **nr1109-bu-3 (S1; R256).** Comma mode: `3,5 x² ÷ 2` is 37.5 (right 6.125). Rerun: `node tools/probes/parse.ts '3{,}\frac{5^{2}}{2}'`. Family 7.
 - **nr1109-bu-4 (S1; R258).** Vars on a library's `g0`, `rate`: loose letters, `g*0` = 0 (right 9.80665). Rerun: `node tools/probes/parse.ts 'g0'`. Family 7.
@@ -47,7 +46,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F207, no package (G173's Not done).** A matrix inside a set, a coefficient vector or an equation keeps Giac's word (`set[matrix…]`, `poly1[matrix…]`, `matrix[[1,0],[0,1]]=x`). Family 1.
 - **F208, no package (Opus pass 124).** A stored float list read back shows vector brackets: `J:=list[evalf(1/3),evalf(2/3)]` shows `{…}`, then `J` and `J*J` show `[…]` (copy text `list[…]`); the read's rebuild (facts.ts `inherited`) drops Giac's list type. Family 1.
 - **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
-- **F182, nr1109-be-5 (S1; G305).** A limit at a jump: Home `lim x→1.5 round(x)` ≈ 2, `sign` at 0.0 ⚠ 0; at an exact point Giac's raw text. Right: No limit. Rerun: `node tools/probes/engine.ts 'limit(round(x),x,1.5)'`. Family 5.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R164 built (own `data-down` flag, key pop, Appearance › Key pop-ups; R164: the status line, the sheets' ◀ ▶ and value buttons and the update note use the same flag through `input/pressFlag.ts`, no `:active` left in `app/src`).
 - **F172, A73 measured.** Stored history costs nothing; the rows drawn at start do (bar 1.5 s; R133 draws 5 rows until engine ready). A CAS-last cold start is 1507 ms against Home's 1323; A73f2 after the tag says where.
@@ -101,7 +99,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **A9's leftover:** the strength slider does nothing on a motor without amplitude control (Fairphone 6); a composition of ticks would give it (owner, 2026-11-02: a package later).
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
-- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.
+- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown. Golden `interrupt` (`tests/engine/interrupt-test.mjs`, 0.2 s clock plus 200 ms slack) failed once at 417 ms in run 909 round 2, the quiet rerun after an `invariants` miss (87.9 s against 60; 56.2 s on the same code in round 1): load, and neither is the package's (pass 128). `isTiming` has invariants but not interrupt; add it after a second failure.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
 - **C3. CI** (needs your OK);
 

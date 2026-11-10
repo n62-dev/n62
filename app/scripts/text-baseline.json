@@ -4,7 +4,7 @@
   "src/engine/angles.ts": 5,
   "src/engine/complex.ts": 2,
   "src/engine/constBasis.ts": 1,
-  "src/engine/converge.ts": 9,
+  "src/engine/converge.ts": 10,
   "src/engine/dead.ts": 1,
   "src/engine/decisions.ts": 9,
   "src/engine/exactLiterals.ts": 1,
