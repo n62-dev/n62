@@ -83,7 +83,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 595 | [A124](packages/A124.md) docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
+| 595 | A124 docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
 | 596 | [A127](packages/A127.md) a row waits for its After | annabell, Sonnet | `p1/annabell-aftercheck` | A124 |
 | 597 | [A129](packages/A129.md) one rerun of untouched e2e failures | annabell, Sonnet | `p1/annabell-flakerun` | A127 |
 | 598 | [A130](packages/A130.md) the log names every failing test | annabell, Sonnet | `p1/annabell-failnames` | A129 |
