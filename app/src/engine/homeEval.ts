@@ -17,7 +17,7 @@ import { valueFactsOf, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
-import { approxRange, elementAt, lostFloat, lostNumber, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 import { doubleElements } from "./doubleElements.ts";
 import { giacRefusesOurs, icdfAtEnd, icdfCalls, icdfEndCalls } from "./icdf.ts";
 import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
@@ -756,6 +756,8 @@ export function homeEval(
   const underflowAt = once ? undefined : (k: number): boolean => checked.set(k, !late() && underflow(giac, [elementAt(ans, shape, k)], valuePrecision(s.digits))).get(k)!;
   let facts = exactFacts(giac, ans, shape, s.digits, s.maxExactDigits, exactOut, value, underflowAt);
   if (!facts) {
+    // G180 (F159): a number past 2 kB read at only one of P, P+20 ran out of steps (api.cc giac_value): as on a time-out
+    if (!once && value.cut && mayBeNumbers(exactOut) && [P, P + 20].filter((p) => value.at?.[String(p)]).length === 1) return viaFloat("float-timeout");
     // G172 (F73): the double fallback, element by element in a list or matrix (doubleElements.ts).
     const d = doubleElements(giac, { name: ans, input: body, exactOut, value, shape, digits: s.digits, maxExactDigits: s.maxExactDigits, once, late });
     if (d === null) return symbolic();

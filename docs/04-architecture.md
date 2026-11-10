@@ -68,7 +68,7 @@ Every Home and CAS number is marked by 2.4's rules; the agreement check runs on 
 | Home exact, irrational (`sqrt(2)`, `sin(10^22)`) | `homeEval.ts` | `evalf` at P = `max(40, digits+10)` and P + 20 | once | `≈`, or `⚠ n` |
 | Home "exact" path where Giac's numeric code returns a float (`normald_icdf`, `romberg`, `BesselJ`) | `homeEval.ts` | Giac's routine, re-evaluated on the other side of 14 digits | once | `⚠` unless every function is audited (tier 0) |
 | Home exact-big (`2^200`) | `homeEval.ts` | exact; the chip keeps the exact text up to 2 kB | once | `≈` |
-| Home float fallback (timeout, error) | `homeEval.ts` | Giac floats at `max(30, digits+10)` | once | by the agreement check |
+| Home float fallback (timeout, error, an exact form past 2 kB whose check ran out of its call's step budget, G180) | `homeEval.ts` | Giac floats at `max(30, digits+10)` | once | by the agreement check |
 | Home non-number (lists, matrices, symbols) | `homeEval.ts` `symbolic()`, `render/tidy.ts` | exact | elements by our formatter | the weakest element's; a symbol with a float `⚠` (2.3 #17) |
 | Solve, Function analysis | `solve.ts`, `analysis.ts` | `max(30, digits+10)`; residual relative ≤ 1e-15 | once | `⚠` when the residual check fails |
 | Function Num, Plot | `analysis.ts` (each cell is Home's), `input/emit-js.ts` | as Home; Plot draws in JS doubles | as Home | `⚠` only; trace values come from the engine |
