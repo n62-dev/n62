@@ -250,7 +250,7 @@ test.describe("the way back from the unit view (R63)", () => {
   });
 });
 
-// R63f1: Copy as shown gives the row as drawn, ± σ and the unit too (the clipboard is one for the whole browser)
+// R63f1: Copy as shown (and R269 Copy) gives the row as drawn, ± σ and the unit too (the clipboard is one for the whole browser)
 test.describe("Copy as shown on a unit row (R63f1)", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   test.describe.configure({ mode: "serial" });
@@ -267,6 +267,14 @@ test.describe("Copy as shown on a unit row (R63f1)", () => {
     await tap(page, ["@menu", "d6"]);
     await expect(page.getByTestId("menu")).toBeVisible();
     await page.getByRole("menuitem", { name: /^\d As shown$/ }).click();
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");
+  });
+
+  // R269: the Copy key gives the value, ± σ and the unit (docs/04 2.6), never the number alone
+  test("the Copy key on t10's row copies 39.488 ± 1.2 m², as Copy as shown", async ({ page }) => {
+    await t10(page);
+    await leaveView(page);
+    await tap(page, ["copy"]);
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");
   });
 

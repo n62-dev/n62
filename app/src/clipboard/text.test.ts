@@ -3,7 +3,8 @@
 import { describe, expect, it } from "vitest";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
-import { markFor, modeOf, type DisplayContext } from "../state/displayMode.ts";
+import { commaResult, markFor, modeOf, type DisplayContext } from "../state/displayMode.ts";
+import { withUnit } from "../state/results.ts";
 
 const CTX: DisplayContext = { format: "std", digits: 12, fixDecimals: 4, angle: "rad" };
 
@@ -148,6 +149,39 @@ describe("sessionText: a unit-view row (R63f2)", () => {
   it("a row without those fields keeps today's line", () => {
     expect(sessionText([{ ...t04, units: {} }], {}, CTX)).toBe("2×π×25 ≈ 0.1570796326794896619");
     expect(sessionText([{ ...t04, units: { input: 5, text: " m" } }], {}, CTX)).toBe("2×π×25 ≈ 0.1570796326794896619");
+  });
+});
+
+// R269: Copy on a unit-view row writes the value, its ± σ and its unit, as Copy as shown and Share do (docs/04 2.6). Values:
+// t10 derived (12.34·3.2 = 39.488, σ 1.2 by G41, decisions R61), t04 oracle (tasks.yaml t04), 20 m/s and √2 derived.
+describe("copyFull: a unit-view row (R269)", () => {
+  const unit = (o: Partial<CopySource>, text: string): CopySource => done({ ...o, units: { input: "x\\,\\mathrm{m}", text } });
+  const t10 = unit({ text: "39.488", full: "39.488", value: re("39.488"), facts: { exact: false, reliableDigits: null } }, " ± 1.2 m²");
+  it("20 m/s: an exact integer and its unit", () => {
+    expect(copyFull(unit({ text: "20", full: "20", fullExact: true, value: re("20"), facts: { exact: true, reliableDigits: null } }, " m/s"))).toBe("20 m/s");
+  });
+  it("t10: the value, ± σ with its digits as shown, the unit", () => {
+    expect(copyFull(t10)).toBe("39.488 ± 1.2 m²");
+    expect(copyFull({ ...t10, units: { text: " ± 0.0012 m²" } })).toBe("39.488 ± 0.0012 m²");
+  });
+  it("the decimal comma rewrites the value and σ", () => {
+    expect(copyFull(t10, { decimalComma: true })).toBe("39,488 ± 1,2 m²");
+  });
+  it("a ⚠ row keeps only its confirmed digits, then the unit", () => {
+    const sqrt2 = unit({ text: "1.41421356237", full: "1.4142135623730950488", value: re("1.4142135623730950488"), facts: { exact: false, reliableDigits: 5 } }, " m");
+    expect(copyFull(sqrt2)).toBe("1.4142 m");
+  });
+  it("t04: every digit of a ≈ row in the unit shown", () => {
+    const t04 = unit({ text: "0.157079632679", full: "0.1570796326794896619", value: re("0.1570796326794896619"), facts: { exact: false, reliableDigits: null } }, " m");
+    expect(copyFull(t04)).toBe("0.1570796326794896619 m");
+  });
+  it("agrees with Copy as shown on the unit part (withUnit, one writer)", () => {
+    const shown = withUnit({ text: "39.488", latex: "" }, t10.units ?? {}, commaResult).text;
+    expect(copyFull(t10, { decimalComma: true })).toBe(shown.replace(".", ","));
+  });
+  it("a unit text that is not a string adds nothing; a Home row is unchanged", () => {
+    expect(copyFull({ ...t10, units: { text: 5 } })).toBe("39.488");
+    expect(copyFull({ ...t10, units: undefined })).toBe("39.488");
   });
 });
 

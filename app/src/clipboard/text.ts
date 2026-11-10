@@ -15,6 +15,7 @@ import {
 } from "../engine/format.ts";
 import type { ValueFacts } from "../engine/types.ts";
 import type { ChipTable } from "../input/chips.ts";
+import { withUnit } from "../state/results.ts";
 import { commaResult, markFor, modeOf, type DisplayContext, type FmtMode, type FormStep, type Rational } from "../state/displayMode.ts";
 
 /** The part of a history item that Copy reads (HistoryItem in state/session.svelte.ts has all of it). */
@@ -90,9 +91,16 @@ function copyDigits(i: CopySource): number {
 /**
  * The default copy (the Copy key, docs/04 section 2.6): a number as every confirmed digit up to 40 with trailing
  * zeros dropped (an exact `1/3` as its 40 digits, an exact integer in full); anything else as the engine wrote it.
- * undefined: nothing finished to copy.
+ * R269: a unit-view row adds its ` ± σ unit` (`39.488 ± 1.2 m²`) through withUnit, the writer of Copy as shown, so the
+ * two agree on the unit part. undefined: nothing finished to copy.
  */
 export function copyFull(i: CopySource, o: TextOptions = {}): string | undefined {
+  const v = valueFull(i, o);
+  return v === undefined || !i.units ? v : withUnit({ text: v, latex: "" }, i.units, o.decimalComma ? commaResult : undefined).text;
+}
+
+/** copyFull's number alone, without a unit row's ` ± σ unit`. */
+function valueFull(i: CopySource, o: TextOptions): string | undefined {
   if (i.status !== "done") return undefined;
   if (i.drawn !== undefined) return o.decimalComma ? commaResult(i.drawn, false) : i.drawn; // R100: a list's elements by `;`
   const f = i.full;
@@ -140,13 +148,14 @@ export function sessionText(items: readonly CopySource[], o: TextOptions, ctx: D
   const lines: string[] = [];
   for (const i of items) {
     if (i.status === "done") {
-      let result = copyFull(i, o) ?? i.text;
+      let result = valueFull(i, o) ?? i.text;
       let input = i.latex;
-      // R63f2: a unit row's latex is the plain line and its value is in the result's unit: the request as drawn, the unit after the value
+      // R63f2: a unit row's latex is the plain line and its value is in the result's unit: the request as drawn, the
+      // value with its unit (copyFull); without the request the line is Home's, the number alone (never `2×π×25 ≈ 0.157 m`)
       const u = i.units;
       if (u && typeof u.input === "string" && typeof u.text === "string") {
         input = u.input;
-        result += o.decimalComma ? commaResult(u.text, false) : u.text;
+        result = copyFull(i, o) ?? result;
       }
       lines.push(`${entryText(input)} ${markText(copyMark(i, ctx))} ${result}`);
     } else if (i.status === "error") lines.push(`${entryText(i.latex)} → ${i.text}`);
