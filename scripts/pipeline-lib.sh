@@ -706,7 +706,8 @@ after_ids() {
 # id_merged <id> <git ref>: succeeds when the id counts as merged on the ref: a merge subject `: <id> (pipeline run` or `: <id>f<k> (pipeline run`,
 # or a package-shaped id (no f<k> suffix) with no package file on the ref (merged before the subjects, or its file deleted by A75).
 id_merged() {
-  git log "$2" --format=%s 2>/dev/null | grep -qE ": $1(f[0-9]+)? \(pipeline run" && return 0
+  local s; s="$(git log "$2" --format=%s 2>/dev/null)"  # captured first: grep -q would SIGPIPE git log under pipefail (a long history)
+  ! grep -qE ": $1(f[0-9]+)? \(pipeline run" <<<"$s" || return 0
   package_shaped "$1" && [[ "$(git cat-file -t "$2:docs/shifts/packages/$1.md" 2>/dev/null)" != blob ]]
 }
 # after_waits <brief file> <package id> <git ref>: prints the After ids of the package's row that are not merged (", " apart) and succeeds

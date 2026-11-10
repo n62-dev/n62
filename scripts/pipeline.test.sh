@@ -1596,6 +1596,8 @@ chmod +x "$aw/bin/claude"
 for p in R900 R901 R902 R903 R904 R905 R906 R907 R908 R909 R910 R911 R912; do
   printf '### ron, %s: a sandbox package, branch `p1/%s`\nbody\n' "$p" "${p,,}" > "$aw/docs/shifts/packages/$p.md"
 done
+# thousands of older commits (> the 64 KB pipe buffer of `git log --format=%s`): grep -q on the newest subjects must not SIGPIPE git log under pipefail
+for i in $(seq 1 4000); do printf 'commit refs/heads/main\ncommitter t <t@t> %s +0000\ndata 41\nfiller commit number %05d of the history\n\n' "$((1000000000 + i))" "$i"; done | git -C "$aw" fast-import --quiet
 git -C "$aw" add -A; gc "$aw" init
 gc "$aw" "Merge p1/ron-x: R910 (pipeline run 5)"; gc "$aw" "Merge p1/ron-y: R911f1 (pipeline run 6)"; gc "$aw" "Merge p1/ron-z: R913f1 (pipeline run 7)"
 gc "$aw" "Merge p1/ron-w: R900x (pipeline run 8)"   # another id that merely starts with R900: not R900
@@ -1623,6 +1625,7 @@ git -C "$aw" show-ref --verify --quiet refs/heads/p1/r901 && fail "A127: a wait 
 awwaits "FIX id with no file" R902 G909f1
 awwaits "one merged, one not" R909 R900
 awstarts "merged id whose file stayed" R903
+awstarts "FIX id that merged, a long history after its subject" R912
 awstarts "merge subject of its f1" R904
 awstarts "a dash" R905
 awstarts "plain words" R906
@@ -1636,6 +1639,11 @@ grep -qE '^RESULT #[0-9]+ R901: WAITS for R900$' <<<"$out" && [[ $rc -eq 2 ]] ||
 out="$(awrun ron R901 --dry-run)"; rc=$?
 [[ $rc -eq 0 ]] && grep -q '^after: WAITS for R900 ' <<<"$out" && ! grep -q '^RESULT.*WAITS' <<<"$out" || fail "A127: a dry run does not note the wait and go on (rc $rc): $out"
 # the lib function alone
+# id_merged under pipefail with a long history: a stand-in git writes the matching subject first and far more than a pipe holds after it,
+# so grep -q exits while git still writes (SIGPIPE, 141); the id must still count as merged
+(set -o pipefail; source "$here/pipeline-lib.sh"
+ git() { echo "Merge p1/x: R913f1 (pipeline run 7)"; seq 1 300000; }
+ id_merged R913f1 phase-1 || echo "FAIL: A127: id_merged loses a merge subject when git log dies of SIGPIPE") 2>&1 | grep '^FAIL' >&2 && fails=$((fails + 1))
 (cd "$aw" && source "$here/pipeline-lib.sh"
  [[ "$(after_ids "$aw/docs/shifts/brief.md" R909)" == $'R910\nR900' ]] || echo "FAIL: A127: after_ids of R909: $(after_ids "$aw/docs/shifts/brief.md" R909)"
  [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R906)" ]] || echo "FAIL: A127: after_ids of plain words is not empty"
