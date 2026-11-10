@@ -379,7 +379,7 @@ export function numbersAt(v: GiacValue, prec: number, keep: number, n: number): 
 
 /** G103: the value of `text` evaluated once (bridge-3) with its parts at `prec`, when it is a number of `shape`; the
  *  value too (its print, its kind). */
-function valueAt(giac: Giac, text: string, shape: Shape, prec: number, keep: number): { v: GiacValue; parts: Parts[] | null } {
+export function valueAt(giac: Giac, text: string, shape: Shape, prec: number, keep: number): { v: GiacValue; parts: Parts[] | null } {
   const v = giac.value(text, [prec]);
   const s = shapeOfValue(v);
   const same = s !== null && size(s) === size(shape) && s.kind === shape.kind;
@@ -445,7 +445,7 @@ function denoised<T extends ComplexValue>(a: ComplexValue, b: T, aPrecision: num
 
 /** Confirmed digits of a complex value: the weaker of its two parts (an exactly zero part and a noise part need no
  *  check). */
-function confirmedComplex(a: ComplexValue, b: ComplexValue, aPrecision: number, cap: number): number {
+export function confirmedComplex(a: ComplexValue, b: ComplexValue, aPrecision: number, cap: number): number {
   let n = cap;
   for (const k of ["re", "im"] as const) {
     if ((isZero(a[k]) && isZero(b[k])) || noisePart(a, b, k, aPrecision)) continue;
