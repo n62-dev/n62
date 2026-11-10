@@ -12,7 +12,6 @@ import type { Request, Response } from "../engine/protocol.ts";
 import { WorkerEngine, type WorkerLike } from "../engine/workerEngine.ts";
 import { liveItem } from "../find/names.svelte.ts";
 import { giacOfEntry } from "../input/entry.ts";
-import { userFunctionsOf, userValuesOf } from "../input/latex-to-giac.ts";
 import { aiFormat, formatExample } from "./libraryJobs.ts";
 
 class InProcessWorker implements WorkerLike {
@@ -43,11 +42,11 @@ describe.skipIf(!giacAvailable())("R258: a stored value of more than one letter 
     const g0 = names.find((u) => u.name === "g0");
     expect(g0?.kind).toBe("var");
     const insert = liveItem(g0!).insert ?? "";
-    const p = giacOfEntry(insert, "home", { userFunctions: userFunctionsOf(names), userValues: userValuesOf(names) });
+    const p = giacOfEntry(insert, "home", { names });
     expect(p.giac).toBe("g0");
     expect((await calc.home(p.giac, settings)).display).toBe("9.80665");
     // the same name in a product: 2·g0
-    const two = giacOfEntry(`2${insert}`, "home", { userFunctions: userFunctionsOf(names), userValues: userValuesOf(names) });
+    const two = giacOfEntry(`2${insert}`, "home", { names });
     expect((await calc.home(two.giac, settings)).display).toBe("19.6133");
   });
 });

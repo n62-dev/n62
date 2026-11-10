@@ -61,7 +61,7 @@ export function polarToLatex(p: FormattedPolar, group?: string): string {
 /** The Greek variable names as Giac prints them (input/parse.ts GREEK, R18; beta_, gamma_, Gamma_, epsilon_, Phi_,
  *  Psi_ stand in for names Giac keeps), and the letter each one is drawn as. Kept here, not imported, so the parser
  *  stays lazy. */
-const GREEK_NAMES: ReadonlySet<string> = new Set([
+export const GREEK_NAMES: ReadonlySet<string> = new Set([
   "alpha", "beta_", "gamma_", "delta", "epsilon_", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "rho", "sigma",
   "tau", "phi", "chi", "psi", "omega", "Gamma_", "Delta", "Theta", "Lambda", "Sigma", "Phi_", "Psi_", "Omega",
 ]);

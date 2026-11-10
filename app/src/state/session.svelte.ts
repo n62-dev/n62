@@ -4,7 +4,7 @@
 import { CalcCancelled, type AngleUnit, type CalcError, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type NumberFormat, type UserName } from "../calc/port.ts";
 import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
-import { loadEntry, loadParser } from "../input/parser.ts";
+import { loadEntry } from "../input/parser.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
 import { EngineCrashError, EngineMemoryError } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
@@ -510,12 +510,11 @@ export class Session {
     try {
       if (giacOverride !== undefined) giac = giacOverride;
       else {
-        const [parser, entry] = await Promise.all([loadParser(), loadEntry(), this.namesRead]);
+        const [entry] = await Promise.all([loadEntry(), this.namesRead]);
         if (live.status !== "pending") return; // Cancel came while the parser chunk or the names were loading
-        // R56: single letters are calls when the user's names (Home and CAS share them) hold them as functions
-        const userFunctions = parser.userFunctionsOf(this.userNames);
+        // R56, R258: the user's names (Home and CAS share them) make their functions calls and spell out their values.
         // R65: Home sends a chip that is not exact by name. A power keeps Giac's principal root here, as in CAS (R66)
-        const p = entry.giacOfEntry(latex, view, { chips, userFunctions, userValues: parser.userValuesOf(this.userNames) }); // R258
+        const p = entry.giacOfEntry(latex, view, { chips, names: this.userNames });
         giac = p.giac;
         defines = p.defines;
         if (p.inexact) live.inexactInput = true;
