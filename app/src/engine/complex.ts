@@ -50,6 +50,9 @@ export function complexReplacedIn(input: string, q: Quoting): string[] {
   return functionsIn(input, q).filter((f) => Object.hasOwn(COMPLEX_REPLACED, f));
 }
 
+/** G59: the Giac text of `expr`'s value split in its real and imaginary parts, `[re, im]`, in one call (numeric.ts splitParts). */
+export const partsOf = (expr: string): string => `(pasz_->[re(pasz_),im(pasz_)])(${expr})`;
+
 /** The value of `name` has a non-zero imaginary part (or its im() cannot be had). */
 export function nonReal(giac: Giac, name: string): boolean {
   const im = giac.eval(`im(${name})`);

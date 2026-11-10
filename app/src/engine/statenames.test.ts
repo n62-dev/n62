@@ -19,7 +19,7 @@ import { UNIT_DEFINITIONS } from "../units/evaluate.ts";
 import { GREEK, LETTER_NAMES, letterName } from "../input/parseTables.ts";
 import { POLAR_OUT, RECT_IN } from "./angles.ts";
 import { SIZED } from "./novalue.ts";
-import { partsOf } from "./numeric.ts";
+import { partsOf } from "./complex.ts";
 import { PLAIN_AT_ANY_DEPTH, rowsOf } from "./matrixType.ts";
 import { BASES } from "../units/dims.ts";
 

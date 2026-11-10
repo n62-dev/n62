@@ -31,7 +31,7 @@ import { binary64Of } from "./binary64.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
 import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
-import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, purgeReads } from "./complex.ts";
+import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 
 export interface Giac {
@@ -394,9 +394,6 @@ function rationalOf(nd: readonly [string, string] | null | undefined, keep: numb
   const q = sign * BigInt(nd[1]);
   return q === 0n ? null : { v: decimalFromRational(p, q, keep), p, q };
 }
-
-/** G59: the Giac text of `expr`'s value split in its real and imaginary parts, `[re, im]`, in one call. */
-export const partsOf = (expr: string): string => `(pasz_->[re(pasz_),im(pasz_)])(${expr})`;
 
 /** G103: Giac's symbolic re() and im() of every element of `expr` (bridge-3, one call) as exact rationals where they
  *  are (null where not); null when Giac gave no such parts (an error, a time-out). */
