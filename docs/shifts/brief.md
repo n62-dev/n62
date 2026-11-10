@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 505 | [G186](packages/G186.md) Home's checks end on acos, asin, acosh of a huge or tiny real (F145) | gorge, Opus | `p1/gorge-cuthang` | – |
+| 505 | G186 Home's checks end on acos, asin, acosh of a huge or tiny real (F145) | gorge, Opus | `p1/gorge-cuthang` | – |
 | 506 | [G187](packages/G187.md) a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
 | 507 | [G170](packages/G170.md) ilaplace leaves no broken entry in Giac's variable list (F89) | gorge, Opus | `p1/gorge-ilaplacevars` | – |
 | 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
