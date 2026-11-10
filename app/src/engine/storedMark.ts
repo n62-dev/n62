@@ -2,6 +2,7 @@
 // S53f1, G317: the preview and mark a stored variable carries into Vars. Worker side only (host.ts): defs.ts is read at
 // start and must not pull the formatter in.
 import { keepingAns } from "./analysis.ts";
+import type { StoredMark } from "./defs.ts";
 import { markOf } from "./format.ts";
 import { bracesOf, LIST_TYPE } from "./giacPrint.ts";
 import { homeEval, type Giac, type HomeSettings } from "./homeEval.ts";
@@ -14,7 +15,7 @@ import { PLAIN_FORM } from "./stores.ts";
  *  Vars shows it for a name that has no facts (an exact value stores none). G317: the result's for the target of a plain
  *  store of it (`X ▶ A`, `A:=X`), the name's own value's for any other name the input sets. A result with no mark, or a
  *  mark that is not = or ≈ (⚠ is the facts' to say), notes nothing. */
-export function storedMark(r: ResultLike, digits: number): { mark?: "=" | "≈" } {
+export function storedMark(r: ResultLike, digits: number): { mark?: StoredMark } {
   const mark = markOf(precisionFacts(r), { format: "STD", digits })?.mark;
   return mark === "=" || mark === "≈" ? { mark } : {};
 }

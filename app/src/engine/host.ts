@@ -42,7 +42,7 @@ import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
-import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts } from "./defs.ts";
+import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
 import { sideShown, storedMark } from "./storedMark.ts";
 import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
@@ -770,7 +770,7 @@ export class EngineHost implements FactsHost {
   }
 
   /** G317 (storedMark.ts sideShown): the preview and mark of a name set beside the result. The input's tree is kept. */
-  private side(name: string, view: "home" | "cas", s: HomeSettings | undefined): { preview: string; mark?: "=" | "≈" } {
+  private side(name: string, view: "home" | "cas", s: HomeSettings | undefined): { preview: string; mark?: StoredMark } {
     const parsed = this.parsed;
     const own = sideShown(this.watched, name, view === "home" && s ? { s, bodies: this.bodiesFor(name), logged: this.byName } : null);
     this.parsed = parsed;
