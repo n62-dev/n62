@@ -154,6 +154,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G188, patch 0037: the integrator's propfrac step takes propf.back() of lvarx(den,x) without checking that it is not empty
   // (the view sweep's engine trapped: memory access out of bounds)
   ["0037-int-propfrac-empty-vars.patch", "giac-2.1.0/src/intg.cc", /vecteur propf=lvarx\(den,gen_x\);\s*gen_sort_f\(propf\.begin\(\),propf\.end\(\),islesscomplexthanf\);\s*nd=_quorem\(makesequence\(num,den,propf\.back\(\)\),contextptr\);/, "// Propfrac step"],
+  // G179, patch 0039: int's variable (a name holding BesselJ(1,2) at 40 digits: Bad Argument Value) and fsolve's are read with what they hold
+  ["0039-bound-variable-fresh-name.patch", "giac-2.1.0/src/intg.cc", /gen _integrate\(const gen & args_,GIAC_CONTEXT\)\{\s*bool setcplx=false;/, "gen _integrate(const gen & args_,GIAC_CONTEXT){"],
+  ["0039-bound-variable-fresh-name.patch", "giac-2.1.0/src/solve.cc", /vecteur v\(plotpreprocess\(args,contextptr\)\);\s*gen res=undef;\s*res=in_fsolve\(v,contextptr\);/, "gen _fsolve(const gen & args,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);
