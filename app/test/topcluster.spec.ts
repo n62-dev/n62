@@ -42,7 +42,7 @@ test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, Help | Esc, 
   await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
   const faces = { help: "Help", esc: "Esc", undo: "Undo", redo: "Redo", copy: "Copy", paste: "Paste" };
   for (const [id, l] of Object.entries(faces)) await expect(page.locator(`[data-key="${id}"] .main`), id).toHaveText(l);
-  const legends = { help: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", copy: "⇤□", paste: "□⇥" };
+  const legends = { help: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", copy: "", paste: "" };
   for (const [id, l] of Object.entries(legends)) await expect(page.locator(`[data-key="${id}"] .shiftlegend`), id).toHaveText(l);
   // no letter line in the cluster (vertical space)
   await expect(page.locator('[data-key="esc"] .alphalegend, [data-key="u1"] .alphalegend')).toHaveCount(0);

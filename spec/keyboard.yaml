@@ -77,7 +77,7 @@ keys:
   # ---- rows 0-2: the upper cluster, R3 (decisions.md "R15c", chosen by the owner 2026-10-17; built in R15c2). Three bands
   # of two columns: the free keys U1-U6 (`user: true`, all empty, set from Find, R4b), the round pad (a circle, no drawn hub, no OK; a drag from
   # anywhere on it, the centre too, steps the cursor, a tap at the centre does nothing; Keypad.svelte) and the editing wing, read in pairs level with the pad, each pair on one layer
-  # (R146, S25's K1, owner 2026-11-06): Help | Esc, Undo | Redo, Copy | Paste on the tap; Settings | Clear, ⇤ | ⇥, ⇤□ | □⇥
+  # (R146, S25's K1, owner 2026-11-06): Help | Esc, Undo | Redo, Copy | Paste on the tap; Settings | Clear, ⇤ | ⇥
   # on Shift (a flick up reaches each). Apps, Menu and the views are on the status line (R15c1); Mode is on its chips;
   # results mode is R53's handle and the swipe on the entry line, so there is no View key. There is no Cancel key: Esc
   # stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line. Help (r1c4),
@@ -107,12 +107,10 @@ keys:
   - { id: u5, row: 2, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: u6, row: 2, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: down, row: 2, col: 2, span: 2, cls: ctl, label: { primary: "▼" }, primary: { cmd: moveDown }, source: virtual-calc }  # pad down
-  # Copy | Paste (docs/04 2.6): the last result's full value, or the picked row's; Paste reads one number. Shift: ⇤□ | □⇥,
-  # the start and end of the box the cursor is in (a numerator, an exponent).
-  - { id: copy, row: 2, col: 4, cls: nav, label: { primary: "$key.copy", shift: "⇤□" },
-      primary: { special: copy }, shift: { cmd: moveToGroupStart }, source: assumed }
-  - { id: paste, row: 2, col: 5, cls: nav, label: { primary: "$key.paste", shift: "□⇥" },
-      primary: { special: paste }, shift: { cmd: moveToGroupEnd }, source: assumed }
+  # Copy | Paste (docs/04 2.6): the last result's full value, or the picked row's; Paste reads one number. No Shift layer
+  # (the jumps to the ends of a box were removed, R275, owner 2026-11-10).
+  - { id: copy, row: 2, col: 4, cls: nav, label: { primary: "$key.copy" }, primary: { special: copy }, source: assumed }
+  - { id: paste, row: 2, col: 5, cls: nav, label: { primary: "$key.paste" }, primary: { special: paste }, source: assumed }
 
   # ---- row 3 (r4). P8, docs/04 section 5.1: Vars = Find on variables (R4b), Math = Find (R4a), shift Math = Memory
   # (R4b); shift Tmpl = the unit view (R24c). The Alpha letters stay. Tmpl opens the template palette (R10,
