@@ -26,6 +26,8 @@ export interface PresetsHost {
   readonly shell?: { prompt: EntryPrompt | null; readonly sheet: unknown; readonly app: unknown; readonly view: unknown };
   readonly entry?: Pick<EntryController, "value" | "chips" | "set" | "run" | "clear">;
   data?(run: (c: ClipActions) => void | Promise<void>): void;
+  /** R255f1: run `job` once the entry field is up, the keys typed meanwhile behind it (keyboard/route.ts afterField). */
+  afterField?(job: () => void): void;
 }
 const say = (host: PresetsHost, message: string): void => host.data?.((c) => c.say(message));
 
@@ -167,6 +169,11 @@ const nameLatex = (name: string): string => name.replace(/[\\{}]/g, "").replace(
  *  never the history nor the kept line (R123: the line's own clear would drop it, main.ts onClear); the space key types a space; a key or a tap that goes elsewhere (a sheet, a place) cancels first. Either way the
  *  line then holds what it held before. */
 function askName(host: PresetsHost, start: string, save: (name: string) => void, said: (name: string) => string): void {
+  // R255f1: the line it keeps is read once the field is up with the keys typed before it; the name's keys come after
+  if (host.afterField) return host.afterField(() => nameNow(host, start, save, said));
+  nameNow(host, start, save, said);
+}
+function nameNow(host: PresetsHost, start: string, save: (name: string) => void, said: (name: string) => string): void {
   const { shell, entry } = host;
   if (!shell || !entry) return;
   shell.prompt?.cancel(); // a name still being typed (a tap went elsewhere): its line comes back first, and is the one kept

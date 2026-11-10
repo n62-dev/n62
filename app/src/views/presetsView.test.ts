@@ -107,6 +107,37 @@ describe("Mode's Preset row", () => {
     ]);
     expect(rows.map((r) => r.reason)).toEqual(["Could not be read: kept as it is", "Could not be read: kept as it is"]);
   });
+  it("R255f1: Save and Rename read the line once the field is up (the host's afterField), not the line before the queued keys", async () => {
+    const { session, presets } = await setup();
+    presets.capture("Lab");
+    const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
+    let line = "";
+    const entry = {
+      get value() {
+        return line;
+      },
+      chips: {},
+      set: (latex: string) => void (line = latex),
+      run: () => {},
+      clear: () => void (line = ""),
+    };
+    const jobs: (() => void)[] = [];
+    const host = { shell, entry, afterField: (job: () => void) => void jobs.push(job) };
+    const rows = items(presetRow(session, host));
+    const sub = (r: MenuItem | undefined): readonly MenuItem[] => r?.submenu?.items ?? [];
+    const rename = sub(sub(sub(rows.find((r) => r.id === "edit"))[0]).find((r) => r.id === "manage")).find((r) => r.id === "rename");
+    for (const run of [rows.find((r) => r.id === "save")?.run, rename?.run]) {
+      line = "";
+      run?.();
+      expect(shell.prompt).toBeNull(); // the field is still to come: nothing read, nothing set
+      expect(line).toBe("");
+      line = "5"; // the queued 5 is on the field now
+      jobs.shift()?.();
+      expect(shell.prompt?.aside).toEqual({ latex: "5", chips: {} });
+      shell.prompt?.key({ kind: "special", name: "esc" });
+      expect(line).toBe("5");
+    }
+  });
   it("C while naming clears the name only, never through the line's clear (its kept copy, R123); the prompt holds the line it set aside", async () => {
     const { session } = await setup();
     const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
