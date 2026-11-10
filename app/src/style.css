@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* Colour roles per family and brightness (R50b). The values are tools/probes/themes-audit.mjs `--css`; the contrast
    test (src/style.test.ts) reads every [data-family][data-brightness] block. index.html sets both attributes before
-   the first paint. --approx ≈, --warn ⚠, --pick the picked row and the entry line's bracket box and selection (R116),
-   --focus focus ring, --alpha also the entry line's caret, --key-on and --on-key-on a key that is on, --on-error the
+   the first paint. --approx ≈, --warn ⚠, --pick the picked row and the entry line's bracket box (R116), --sel the
+   entry line's selection and --on-sel its text (R274: 3:1 against --panel and --pick, text 4.5:1), --focus focus
+   ring, --alpha also the entry line's caret, --key-on and --on-key-on a key that is on, --on-error the
    label on an --error ground. */
 :root {
   /* R33: a name that holds a value, on the entry line (entry/namemarks.ts); the ≈ colour until a theme gets its own */
@@ -141,6 +142,8 @@
   --key-shift: #ff9a33;
   --key-alpha: #6ae5e2;
   --key-pfx: #1e4948;
+  --sel: #299c9a;
+  --on-sel: #000000;
   --on-error: #092726;
   --on-shift: #000000;
   --on-alpha: #000000;
@@ -181,6 +184,8 @@
   --key-shift: #5b2400;
   --key-alpha: #005b5a;
   --key-pfx: #b9d9d8;
+  --sel: #387e7d;
+  --on-sel: #ffffff;
   --on-error: #ffffff;
   --on-shift: #ffffff;
   --on-alpha: #ffffff;

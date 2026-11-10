@@ -697,13 +697,13 @@
     outline: var(--ring-w) solid var(--ring-c);
     outline-offset: calc(-1 * var(--ring-w));
     /* R116: MathLive's highlights as theme tokens, so they follow our look and never the system's scheme (the unit
-       view's field is in .entry too): the caret in the Alpha hue; the box of the bracket that holds the cursor and
-       the selection (never both at once) on --pick, with --text on them */
+       view's field is in .entry too): the caret in the Alpha hue; the box of the bracket that holds the cursor on
+       --pick with --text on it, the selection on its own --sel with --on-sel (R274: it must not look like the box) */
     --caret-color: var(--alpha);
     --contains-highlight-background-color: var(--pick);
     --contains-highlight-color: var(--text);
-    --selection-background-color: var(--pick);
-    --selection-color: var(--text);
+    --selection-background-color: var(--sel);
+    --selection-color: var(--on-sel);
   }
   .entry[data-ring="shift"] :global(math-field),
   .entry[data-ring="alpha"] :global(math-field),
