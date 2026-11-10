@@ -16,7 +16,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ## Decided proposals
 
 ### Pipeline and process
-- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](research/night-review-2026-11-09.md) section 6. New: R261, R269–R273 (R272 ends "no backup reminder" in part). Kept: `200 + 10 %` = 200.1, `30°15` = 450 (docs/04 5.5), digit-group paste refused. Would change if: the G2 or an outside round reads one otherwise.
+- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](research/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
+- **Owner answers of 2026-11-10 (architecture review):** [the note](research/arch-review-2026-11-10.md) section 3.
 - **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). Bit-identity is untested until the merge request's first CI build, and no package tests it before (Opus pass 130). Would change if: the first build cannot be made bit-identical.
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-11-08:** a Giac patch's worker writes its own patches README row (A83); a stray file outside a worktree is logged, warn only (A64 lo-11; A88); a CAS-last cold start of 1507 ms does not hold v0.1.0; the c29 red (F200, A123). Archived, "Opus pass 117". Would change if: a stray file does harm before anyone reads the log.
