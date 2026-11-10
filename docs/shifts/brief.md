@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
+| 606 | R258 a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
 | 615 | [R261](packages/R261.md) Esc in a slot line restores it; Menu › Clear (bu-5) | ron, Opus | `p1/ron-escnav` | – |
 | 616 | [R270](packages/R270.md) a half-typed Home line waits while an app is open (bu-8) | ron, Sonnet | `p1/ron-setaside` | – |
 | 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
