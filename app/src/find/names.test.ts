@@ -47,6 +47,40 @@ describe("Vars", () => {
   });
 });
 
+describe("marks (S53f1, store-bu-1)", () => {
+  const rowOf = (n: UserName, memory = false) => {
+    const session = new Session(new FakeCalc(), kv());
+    session.userNames = [n];
+    const shell: { sheet: Sheet | null } = { sheet: null };
+    showNames(shell, { run: () => undefined } as unknown as EntryController, session, memory);
+    return (shell.sheet as Sheet).level.items[0];
+  };
+  const third = { ...name("A", "var", "0.333333333333", 1), facts: { exact: false, reliableDigits: null } };
+  it("a name stored from 1/3 reads ≈, in the row and its details line, as History would draw it", () => {
+    expect(rowOf(third)?.preview).toBe("A ≈ 0.333333333333");
+    expect(rowOf(third)?.value).toBe("≈ 0.333333333333");
+    expect(rowOf(third, true)?.preview).toBe("A ≈ 0.333333333333");
+  });
+  it("an exact name whose preview is rounded (the engine says so: 1/3 stores no facts) reads ≈", () => {
+    expect(rowOf({ ...name("A", "var", "0.333333333333", 1), rounded: true })?.preview).toBe("A ≈ 0.333333333333");
+    expect(rowOf(name("A", "var", "0.333333333333", 1))?.preview).toBe("A = 0.333333333333");
+  });
+  it("a name whose confirmed digits are fewer than shown reads ⚠ n; an un-audited float a bare ⚠", () => {
+    expect(rowOf({ ...third, facts: { exact: false, reliableDigits: 7 } })?.value).toBe("⚠ 7 0.333333333333");
+    expect(rowOf({ ...third, facts: { exact: false, reliableDigits: null, warn: "unaudited" } })?.value).toBe("⚠ 0.333333333333");
+  });
+  it("a value that is not one decimal (a list) still takes ≈ from its facts, never =", () => {
+    expect(rowOf({ ...third, preview: "[1,2]" })?.preview).toBe("A ≈ [1,2]");
+  });
+  it("control: an exact name keeps =", () => {
+    expect(rowOf(name("A", "var", "5", 1))?.preview).toBe("A = 5");
+    expect(rowOf({ ...name("A", "var", "5", 1), facts: { exact: true, reliableDigits: null } })?.preview).toBe("A = 5");
+  });
+  it("a function has no mark", () => {
+    expect(rowOf(name("p", "fn", "done", 1))?.preview).toBe("p(…)");
+  });
+});
+
 describe("Memory", () => {
   it("a pick deletes the name and the sheet stays; the hits are read again", () => {
     const { sheet, session } = setup(true);

@@ -7,6 +7,7 @@
 // that defined it: `B:=A*2` replayed after `A:=5` would give B a different value than it had (the log keeps one entry
 // per name, so the order of the commands is gone). Functions are kept as their definition (the body is not evaluated
 // when it is defined, so order does not matter). Inputs whose effect has no single name are kept as typed, in order.
+import { markOf, type ComplexValue } from "./format.ts";
 import { readValueFacts, type ValueFacts } from "./types.ts";
 import type { ProgramStores } from "./stores.ts";
 import { isName } from "./giacPrint.ts";
@@ -31,6 +32,9 @@ export interface DefEntry {
   facts?: NameFacts;
   /** The value as shown when it was defined (Vars and Find previews, docs/04 3.4). */
   preview: string;
+  /** A variable with no facts (an exact value) whose preview is that value rounded (1/3 as 0.333333333333): its mark is
+   *  ≈, as the history's (S53f1). Absent when the preview is the value itself, and in a log stored before S53f1. */
+  rounded?: true;
   view: "home" | "cas";
   /** When it was defined (ms since 1970). */
   time: number;
@@ -80,6 +84,13 @@ export function applyDefChanges(log: readonly DefEntry[], changes: readonly DefC
   return out.length > MAX_DEFS ? out.slice(out.length - MAX_DEFS) : out;
 }
 
+/** S53f1: `r`, the value just stored, prints rounded (its mark is ≈, as the history draws it): the variables set from it
+ *  that hold an exact value (no facts) are noted `rounded`, so Vars marks their preview ≈. */
+export function noteRounded(defs: DefChange[], r: { value?: ComplexValue; facts: ValueFacts }, digits: number): DefChange[] {
+  if (!r.value || markOf({ ...r.facts, value: r.value }, { format: "STD", digits })?.mark !== "≈") return defs;
+  return defs.map((c) => ("set" in c && c.set.kind === "var" && !c.set.facts ? { set: { ...c.set, rounded: true as const } } : c));
+}
+
 /** The commands to replay, in order: symbolic values first (while every name in them is still free), then the rest. */
 export function replayOrder(log: readonly DefEntry[]): DefEntry[] {
   return [...log.filter((e) => e.early), ...log.filter((e) => !e.early)];
@@ -118,6 +129,7 @@ export function validDefs(x: unknown): DefEntry[] {
       ...(kind === "var" && (e["angle"] === "rad" || e["angle"] === "deg") ? { angle: e["angle"] } : {}),
       ...(typeof e["desc"] === "string" && e["desc"] ? { desc: e["desc"].slice(0, DESC_MAX) } : {}),
       ...(kind === "var" && e["migrate"] === "angle" ? { migrate: "angle" as const } : {}),
+      ...(kind === "var" && e["rounded"] === true ? { rounded: true as const } : {}),
     });
   }
   return out.slice(-MAX_DEFS);
@@ -131,6 +143,8 @@ export interface UserName {
   view: "home" | "cas";
   time: number;
   facts?: NameFacts;
+  /** The value is exact but its preview is rounded (DefEntry.rounded): the mark is ≈. */
+  rounded?: true;
   desc?: string;
 }
 
@@ -138,7 +152,7 @@ export function userNamesOf(log: readonly DefEntry[]): UserName[] {
   const out: UserName[] = [];
   for (const e of log) {
     if (e.kind !== "var" && e.kind !== "fn") continue;
-    out.push({ name: e.name, kind: e.kind, preview: e.preview, view: e.view, time: e.time, ...(e.facts ? { facts: e.facts } : {}), ...(e.desc ? { desc: e.desc } : {}) });
+    out.push({ name: e.name, kind: e.kind, preview: e.preview, view: e.view, time: e.time, ...(e.facts ? { facts: e.facts } : {}), ...(e.rounded ? { rounded: true as const } : {}), ...(e.desc ? { desc: e.desc } : {}) });
   }
   return out;
 }

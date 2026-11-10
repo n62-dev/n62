@@ -18,4 +18,4 @@
 - **By hand:** MORNING.md, the owner, about ten minutes before a release tag, on the APK the last automatic run checked (decisions.md P25).
 
 ## State on 2026-11-09 (desktop)
-69 cases, all active (`CORE 69/69`). c67–c69 (R170, owner's yes on mh-A2) are the first with a unit and a ±: 5 kg in lb, 500 m in 40 ± 1 s, and 1 m + 1 s refused. The device run skips c53 (desktop-only), so it prints `CORE DEVICE 68/68`. c61–c66 were added with the owner on 2026-10-26.
+70 cases, all active (`CORE 70/70`). c70 (S53f1): Vars shows a stored 1 ÷ 3 with ≈. c67–c69 (R170, owner's yes on mh-A2) are the first with a unit and a ±: 5 kg in lb, 500 m in 40 ± 1 s, and 1 m + 1 s refused. The device run skips c53 (desktop-only), so it prints `CORE DEVICE 69/69`. c61–c66 were added with the owner on 2026-10-26.
