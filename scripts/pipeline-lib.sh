@@ -438,6 +438,8 @@ TASK_GONE='(missing|empty|absent|not (found|included|in the bundle))[[:space:]]*
 TASK_QUESTION_RE="((re-?generate|re-?send|re-?build)[^.]*(the bundle|the task|the package file|the spec|[ -]block))|($TASK_SUBJECT (is|are|was|seems( to be)?|looks|appears( to be)?) $TASK_GONE)|($TASK_SUBJECT (lacks|has no) (the |an? )?([A-Z][0-9]+[a-z0-9]* )?(section|block|heading|package|task))|(no (package|task) (file|block|text)([.;,)]|$| in))|(cannot find (the |a )?(package|task)( file| block| text)?[[:space:]]*($|[.;,)]| in))"
 # the done field "not done" ("Last commit abc, NOT done.", "Done or not done: not done"); never a "Not done:" heading or list, nor "Not done in full:" (words before the colon, A64f1)
 TASK_NOT_DONE_RE='(^[[:space:]*_-]*|[,;:.][[:space:]*_]*)not done[[:space:]*_]*([^:*a-z[:space:]_]|$)'
+# a list item that starts "Not done, …" and has a colon later ("Not done, same as phase-1: …", "- **Not done, step 2:** …") is a list, as "Not done:" is (A131)
+TASK_NOT_DONE_LIST_RE='^[[:space:]*_-]*not done,[^:]*:'
 # open_question_lines <reply file>: every line with "open question(s)" and the lines after it (a heading followed by bullets), up to the
 # next blank line or a new field ("Note: …", "Last commit: …"); nothing for "Open questions: none" (A64), one per line.
 open_question_lines() {
@@ -450,7 +452,7 @@ open_question_lines() {
 task_question_line() {
   local l
   l="$(open_question_lines "$1" | grep -viE 'needs the user' | grep -m1 -iE "$TASK_QUESTION_RE")" \
-    || l="$(grep -m1 -iE "$TASK_NOT_DONE_RE" "$1" 2>/dev/null)" || return 1
+    || l="$(grep -iE "$TASK_NOT_DONE_RE" "$1" 2>/dev/null | grep -m1 -viE "$TASK_NOT_DONE_LIST_RE")" || return 1
   printf '%s\n' "$l"
 }
 task_questioned() { task_question_line "$1" >/dev/null; }
