@@ -1261,6 +1261,11 @@ a64q 'Last commit: 1a2b3c4' 'Done or not done: done' 'Open questions: none' && f
 a64q 'Last commit abc. Not done in full: the Teal gallery shots are unchecked.' 'Open questions: none' && fail "A64f1: 'Not done in full: x' fires"
 a64q 'Last commit abc.' '- **Not done** in full: x' 'Open questions: none' && fail "A64f1: '- **Not done** in full: x' fires"
 a64q 'Last commit abc, NOT done' 'Open questions: none' || fail "A64f1: 'Last commit abc, NOT done' (end of line) does not fire"
+# A131: a "Not done, …" list item (a colon later) is a list; "not done, step 2 needs a device" after the commit is the status
+a64q 'Last commit abc.' 'Not done, same as phase-1: the gallery shots are out of scope.' 'Open questions: none' && fail "A131: 'Not done, same as phase-1: …' fires"
+a64q 'Last commit abc.' '- **Not done, step 2:** the device probe needs the tablet.' 'Open questions: none' && fail "A131: '- **Not done, step 2:** …' fires"
+a64q 'Last commit abc, not done, step 2 needs a device' 'Open questions: none' || fail "A131: 'Last commit abc, not done, step 2 needs a device' does not fire"
+a64q 'Not done, step 2: x' 'Last commit abc, NOT done' 'Open questions: none' || fail "A131: a list item before a real not-done status hides it"
 a64q 'Open questions: the bundle has no A64 section' || fail "A64: 'the bundle has no A64 section' does not fire"
 [[ "$(task_question_line "$tmp/q-a64")" == 'Open questions: the bundle has no A64 section' ]] || fail "A64: task_question_line does not print the line that fired: $(task_question_line "$tmp/q-a64")"
 grep -q 'task_question_line "$run/' "$here/pipeline.sh" || fail "A64: pipeline.sh does not name the line that fired with task_question_line"
@@ -1317,6 +1322,27 @@ printf '## e2e failed (full log: z)\n12:  %s\n' "$(printf 'x%.0s' $(seq 1 200))"
 { echo '## e2e failed (full log: /x/check-0-e2e.log)'; excerpt "$tmp/pw.log"; } > "$tmp/ff4"
 [[ "$(first_failing_line "$tmp/ff4")" == '✘  201 [chromium] › solve.spec.ts:9 › solves x (2.0s)' ]] || fail "A83f1: first_failing_line names a passing line: $(first_failing_line "$tmp/ff4")"
 grep -qE '^[0-9]+[:-] *✓' "$tmp/ff4" && fail "A83f1: the excerpt keeps a passing (check mark) line"
+# A130: a skipped Playwright line (a dash) that holds × and a golden stage line that starts with PASS are no failure either; the log line
+# takes its text from pipeline-logs.ts names (<N> failing: <first title>, then one line of every failing test), golden's from its first FAIL line
+wt="$(cd "$here/.." && pwd)"
+pwl() { printf '  -  1 [chromium-phone] › test/showcase.spec.ts:64:5 › E 72.25 kg × g₀\n  ✘  2 [chromium] › units.spec.ts:10:5 › two × two (1.0s)\n  ✘  3 [chromium] › solve.spec.ts:20:5 › solves x (2.0s)\n\n  1) [chromium] › units.spec.ts:10:5 › two × two ──────\n     Error: x\n  2) [chromium] › solve.spec.ts:20:5 › solves x ──────\n     Error: y\n\n  2 failed\n  1 skipped\n'; }
+pwl > "$tmp/pw2.log"
+{ echo '## e2e failed (full log: /x/check-0-e2e.log)'; excerpt "$tmp/pw2.log"; echo; } > "$tmp/ff5"
+sed '/^--- tail ---$/,$d' "$tmp/ff5" | grep -q 'kg × g₀' && fail "A130: the excerpt keeps a skipped Playwright line"
+fail_names e2e "$tmp/pw2.log" "$tmp/ff5.names"
+[[ "$(fail_line "$tmp/ff5" "$tmp/ff5.names" | head -n1)" == '## e2e failed (full log: /x/check-0-e2e.log): 2 failing: two × two' ]] || fail "A130: the e2e log line does not name the first real failure: $(fail_line "$tmp/ff5" "$tmp/ff5.names" | head -n1)"
+[[ "$(fail_line "$tmp/ff5" "$tmp/ff5.names" | sed -n 2p)" == '    units.spec.ts › two × two; solve.spec.ts › solves x' ]] || fail "A130: the e2e continuation line does not name both failing tests: $(fail_line "$tmp/ff5" "$tmp/ff5.names" | sed -n 2p)"
+printf ' FAIL  src/a.test.ts > suite > one × two\n FAIL  src/b.test.ts > other\n Test Files  2 failed (2)\n' > "$tmp/vt.log"
+{ echo '## vitest failed (full log: /x/check-0-vitest.log)'; excerpt "$tmp/vt.log"; } > "$tmp/ff6"; fail_names vitest "$tmp/vt.log" "$tmp/ff6.names"
+[[ "$(fail_line "$tmp/ff6" "$tmp/ff6.names")" == $'## vitest failed (full log: /x/check-0-vitest.log): 2 failing: suite > one × two\n    src/a.test.ts › suite > one × two; src/b.test.ts › other' ]] || fail "A130: the vitest log line: $(fail_line "$tmp/ff6" "$tmp/ff6.names")"
+printf 'PASS steps: PASS step-budget-test: … clock ×1 and ×8\nFAIL invariants: 3 known failures, 0 new, 0 now passing; 87.9 s (< 60)\nFAIL interrupt: timed out\nGOLDEN GATE FAILED\n' > "$tmp/gd.log"
+{ echo '## golden failed (full log: /x/check-0-golden.log)'; excerpt "$tmp/gd.log"; } > "$tmp/ff7"; fail_names golden "$tmp/gd.log" "$tmp/ff7.names"
+grep -qE '^[0-9]+[:-] *PASS ' "$tmp/ff7" && fail "A130: the excerpt keeps a golden PASS stage line"
+[[ "$(fail_line "$tmp/ff7" "$tmp/ff7.names" | head -n1)" == '## golden failed (full log: /x/check-0-golden.log): FAIL invariants: 3 known failures, 0 new, 0 now passing; 87.9 s (< 60)' ]] || fail "A130: the golden log line does not name the FAIL stage: $(fail_line "$tmp/ff7" "$tmp/ff7.names" | head -n1)"
+# a check with no parsed items (docs, size, typecheck) logs as today, with no continuation line
+fail_names docs "$tmp/dl.log" "$tmp/ff1.names"; [[ ! -s "$tmp/ff1.names" ]] || fail "A130: a docs log gave failing-test names"
+[[ "$(fail_line "$tmp/ff1" "$tmp/ff1.names")" == '## docs failed (full log: /x/check-0-docs.log): budget: docs/backlog.md is 20.1 kB, over 20 kB' ]] || fail "A130: a docs failure no longer logs as before: $(fail_line "$tmp/ff1" "$tmp/ff1.names")"
+[[ "$(fail_line "$tmp/ff1")" == "$(fail_line "$tmp/ff1" "$tmp/ff1.names")" ]] || fail "A130: fail_line without a names file differs"
 grep -q 'checks failed (round 0): ## stages failed (full log: [^)]*): sweep NOW PASSING g1' "$s5/.coord/log.md" || fail "A83: the checks-failed line lacks the first failing line: $(grep 'checks failed' "$s5/.coord/log.md")"
 # (b), (c) behaviour: --checks auto in a sandbox; a failing pre-flight is a fix round, never enters the queue, never takes integ
 pf="$tmp/pf"; mkdir -p "$pf/bin" "$pf/tools" "$pf/docs/shifts" "$pf/app" "$pf/engine/giac/patches"; git init -q -b main "$pf"
@@ -1503,6 +1529,8 @@ case "\$*" in
   *"run -s test:e2e"*) [ -e "../fix-\$FL_ID.txt" ] && exit 0
      case "\$FL_FAIL" in
        none) echo "Error: Timed out waiting 60000 ms from config.webServer"; exit 1;;
+       two) echo "  -  1 [chromium-phone] › test/s1.spec.ts:64:5 › E 72.25 kg × g₀"; echo "  ✘  2 [chromium-phone] › test/s1.spec.ts:12:1 › case one (1s)"; echo "  ✘  3 [chromium-phone] › test/s2.spec.ts:12:1 › case two (1s)"
+          echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case one ────────"; echo "  2) [chromium-phone] › test/s2.spec.ts:12:1 › case two ────────"; printf '\n  2 failed\n  1 skipped\n';;
        many) for i in 1 2 3 4 5 6; do echo "  \$i) [chromium-phone] › test/s\$i.spec.ts:12:1 › case \$i ────────"; done; printf '\n  6 failed\n';;
        mismatch) echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case 1 ────────"; printf '\n  3 failed\n';;
        *) echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case one ────────"; printf '\n  1 failed\n  300 passed\n';;
@@ -1548,6 +1576,13 @@ for c in "FL3|one|app/test/s1.spec.ts|a changed spec" "FL4|many|app/src/x.ts|mor
   grep -q "$fid: FLAKE" "$fl/.coord/log.md" && fail "A129: $what: a FLAKE line was logged"
 done
 ! grep -q 'retries' "$here/../app/playwright.config.ts" || fail "A129: playwright.config.ts sets retries"
+# A130 behaviour: two failing e2e tests next to a skipped line with × (the changed spec s1 gets no rerun): the "checks failed" line names the first
+# real failure, one indented line names both tests, and the fix round's input starts with that list
+out="$(flrun FL8 two pass app/test/s1.spec.ts)"
+grep -qE '^- [0-9:]+ (\[[AB]\] )?pipeline #[0-9]+ FL8: checks failed \(round 0\): ## e2e failed \(full log: [^)]*\): 2 failing: case one$' "$fl/.coord/log.md" || fail "A130: the checks-failed line does not name the first failing test: $(grep 'FL8: checks failed' "$fl/.coord/log.md")"
+grep -qxF '    s1.spec.ts › case one; s2.spec.ts › case two' "$fl/.coord/log.md" || fail "A130: no continuation line naming both failing tests in the log"
+grep -q 'FL8.*kg × g₀' "$fl/.coord/log.md" && fail "A130: the log names the skipped test"
+[[ "$(sed -n 3p "$fl"/.tasks/*-fl8/fix-1.in 2>/dev/null)" == 'Failing tests (every one, once each): s1.spec.ts › case one; s2.spec.ts › case two' ]] || fail "A130: the fix round's input does not start with the failing tests: $(sed -n 1,4p "$fl"/.tasks/*-fl8/fix-1.in 2>/dev/null)"
 
 # A75: a run of a package deletes its package file on the branch, in a commit of its own before the queue, so the audited tree and
 # the merge have it gone; a FIX id and a task text delete nothing; a run that ends unmerged leaves phase-1's file in place
