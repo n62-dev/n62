@@ -10,6 +10,7 @@
 // So in `5\sin\left(23\right)` the offsets are 0 (line start), 1 `5`, 2 `\sin`, 3 (body start), 4 `2`, 5 `3`,
 // 6 the pair.
 import type { MathfieldElement } from "mathlive";
+import { numberRunStart } from "./numberRun.ts";
 
 type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
 
@@ -53,7 +54,10 @@ const SEC = "\\doubleprime";
 /** What stands before a ° without being its degrees: a box's start, an operator, a relation, another mark. */
 const NOT_DEGREES = /^(?:|[+\-=,<>:]|\\(?:times|div|cdot|pm|mp|le|ge|ne|leq|geq|neq|to|degree|prime|doubleprime))$/;
 
-/** A digit or a decimal point: part of a number. */
+/**
+ * A single digit or point atom: part of a number. A decimal comma is a group atom with parts of its own, so a walk back
+ * over a number is numberRunStart's (numberRun.ts), never a loop over this.
+ */
 export const isNumberPart = (l: string): boolean => /^[\d.]$/.test(l);
 
 // ---- fractions and roots (R26e, F18) -------------------------------------------------------------------------------
@@ -482,11 +486,9 @@ function degreesOf(mf: Field, x: number): Box {
   if (b < 1 || NOT_DEGREES.test(l)) return { from: b, s: b, e: b };
   if (l === PLACEHOLDER) return { from: b - 1, s: b - 1, e: b };
   const d = depthAt(mf, x);
-  if (isNumberPart(l)) {
-    let i = b;
-    while (i > 1 && depthAt(mf, i - 1) === d && isNumberPart(latexAt(mf, i - 1))) i--;
-    return { from: i - 1, s: i - 1, e: b };
-  }
+  // the digits, points and decimal commas before the ° (R256f1: 3,5° takes 3,5 whole, as 3.5°)
+  const i = numberRunStart(mf, b, d);
+  if (i < b) return { from: i, s: i, e: b };
   const s = atomStart(mf, b);
   return { from: s, s, e: b };
 }
