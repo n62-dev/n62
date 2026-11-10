@@ -41,7 +41,11 @@ Amendments, for the owner first: R199's tests gain `2\tfrac12` → `2 1/2`, `2\t
 
 ## 3. Backlog lines
 
-All nine S1 lines are in `docs/backlog.md`, none waits for room: under "Open bugs" nr1109-bu-1 to bu-4 and be-4, and F182 now with be-5; under "Background stream" be-1, be-2, be-3. The room came from dc-7 and lo-11 (lines already fixed or stale).
+Six S1 lines are in `docs/backlog.md` under "Open bugs": nr1109-bu-1 to bu-4 and be-4, and F182 now with be-5 (found on `f9352ae2a`; room from dc-7 and lo-11). The weekly night's three wait here for room (the backlog is full after the night's F205–F213); their packages hold the same text:
+- **nr1109-be-1 (S1, extreme; G306).** `∛sin(10⁷⁰)` ≈ 0.26454+0.45819·i (right −0.52908); also `atan2`, `ln` of a power, `sort`. Rerun: `tools/probes/review-1109/rerun.sh be-1`. Family 3.
+- **nr1109-be-2 (S1, extreme; G308).** `(1+1ᴇ-15·i)^(1/3)` ≈ 1+1E-15·i (right 1+3.33E-16·i). Rerun: `tools/probes/review-1109/rerun.sh be-2`. Family 4.
+- **nr1109-be-3 (S1, extreme; G307).** `(1+e⁻²⁰⁰)^(e²⁰⁰)` ≈ 1 (right e). Rerun: `tools/probes/review-1109/rerun.sh be-3`. Family 4.
+- For F155: `acosh(1E1000+i)` is the short case of a halved imaginary part.
 
 ## 4. To verify
 

@@ -7,8 +7,12 @@ import { dropAngleFactor, rewriteAngles } from "./angles.ts";
 import { withAngles } from "../units/evaluate.ts";
 
 // R64f1: the converters, as the rule writes them (angles.ts POLAR_OUT, RECT_IN)
-const POLAR = "((p_)->when(type(p_[0])==vector,map(p_,q_->[q_[0],q_[1]/pasdeg]),[p_[0],p_[1]/pasdeg]))";
-const RECT = "((p_)->when(type(p_)!=vector,p_,when(type(p_[0])==vector,map(p_,q_->[q_[0],pasdeg*q_[1]]),[p_[0],pasdeg*p_[1]])))";
+// G303f1: their bound names in our form (pasp_, pasq_; ourNames.ts OUR_BOUND)
+const POLAR = "((pasp_)->when(type(pasp_[0])==vector,map(pasp_,pasq_->[pasq_[0],pasq_[1]/pasdeg]),[pasp_[0],pasp_[1]/pasdeg]))";
+const RECT = "((pasp_)->when(type(pasp_)!=vector,pasp_,when(type(pasp_[0])==vector,map(pasp_,pasq_->[pasq_[0],pasdeg*pasq_[1]]),[pasp_[0],pasdeg*pasp_[1]])))";
+// as they were written before G303f1: a log or chip kept from then holds these
+const POLAR_BEFORE = "((p_)->when(type(p_[0])==vector,map(p_,q_->[q_[0],q_[1]/pasdeg]),[p_[0],p_[1]/pasdeg]))";
+const RECT_BEFORE = "((p_)->when(type(p_)!=vector,p_,when(type(p_[0])==vector,map(p_,q_->[q_[0],pasdeg*q_[1]]),[p_[0],pasdeg*p_[1]])))";
 
 describe("R64: every angle the user types carries pasdeg", () => {
   it.each([
@@ -135,6 +139,8 @@ describe("dropAngleFactor: what is drawn shows the text as typed", () => {
     ["(x)->x*pi/180/pasdeg", "(x)->x*pi/180"],
     [`(z)->${POLAR}(polar_coordinates(z+1))[1]`, "(z)->polar_coordinates(z+1)[1]"],
     [`rectangular_coordinates(${RECT}(L))`, "rectangular_coordinates(L)"],
+    [`(z)->${POLAR_BEFORE}(polar_coordinates(z+1))[1]`, "(z)->polar_coordinates(z+1)[1]"],
+    [`rectangular_coordinates(${RECT_BEFORE}(L))`, "rectangular_coordinates(L)"],
     ["rectangular_coordinates([2,pasdeg*30])", "rectangular_coordinates([2,30])"],
     ["instfreq(s)/pasdeg", "instfreq(s)"],
     ["(x)->rotation(0,pasdeg*(a+1),p)", "(x)->rotation(0,a+1,p)"],

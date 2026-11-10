@@ -750,8 +750,10 @@ EMSCRIPTEN_KEEPALIVE const char *giac_value(const char *text, const char *precis
       std::string e;
       try {
         // Through protecteval, as caseval runs `evalf(…,P)`: an evalf that throws (BesselJ(1,2) at 50 digits) must not
-        // leave Digits at P, which a bare _evalf does.
-        x = giac::protecteval(gen(giac::symbolic(giac::at_evalf, giac::makesequence(els[k], gen((int)n)))), 1, C);
+        // leave Digits at P, which a bare _evalf does. G186: the element quoted, as caseval's `evalf(pasans,P)` reads the
+        // stored value: evalf's argument was evaluated again first, exactly and at the caller's Digits (12), where
+        // sqrt(atan(acos(10^300)))'s text took 1 s, grew to 50 kB of sign() terms, and the 1.5 s clock stopped both precisions.
+        x = giac::protecteval(gen(giac::symbolic(giac::at_evalf, giac::makesequence(gen(giac::symbolic(giac::at_quote, els[k])), gen((int)n)))), 1, C);
         if (k) parts += ',', dbls += ',';
         int dbl = 0;
         ok = !giac::ctrl_c && !giac::interrupted && !giac::has_undef_stringerr(x, e) && partsOf(x, c, parts, dbl);

@@ -35,17 +35,20 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **nr1109-bu-1 (S1, `f9352ae2a`; R255).** Cold start with a history: `2+3` Enter before the entry field is up gives Ans·2+3, 17 (right 5). Rerun: `tools/probes/review-1109/rerun.sh bu-1`. Family 11.
-- **nr1109-bu-2 (S1, `f9352ae2a`; R257).** Function: after F1 or the angle unit changes, Plot's y and Num keep the old values (Copy too). Rerun: `tools/probes/review-1109/rerun.sh bu-2`. Family 2.
-- **nr1109-bu-3 (S1, `f9352ae2a`; R256).** Comma mode: `3,5 x² ÷ 2` is 37.5 (right 6.125). Rerun: `node tools/probes/parse.ts '3{,}\frac{5^{2}}{2}'`. Family 7.
-- **nr1109-bu-4 (S1, `f9352ae2a`; R258).** Vars on a library's `g0`, `rate`: loose letters, `g*0` = 0 (right 9.80665). Rerun: `node tools/probes/parse.ts 'g0'`. Family 7.
-- **nr1109-be-4 (S1, `f9352ae2a`; G304).** DEG, a library's `arcsin`: 0.5236 for arcsin 0.5 (right 30), as `arccos`, `arctan`, `SIN`. Rerun: `tools/probes/review-1109/rerun.sh be-4`. Family 8.
+- **nr1109-bu-1 (S1; R255).** Cold start with history: `2+3` Enter before the field is up gives Ans·2+3 = 17 (right 5). Rerun: `tools/probes/review-1109/rerun.sh bu-1`. Family 11.
+- **nr1109-bu-2 (S1; R257).** Function: after F1 or the angle unit changes, Plot's y and Num keep the old values (Copy too). Rerun: `tools/probes/review-1109/rerun.sh bu-2`. Family 2.
+- **nr1109-bu-3 (S1; R256).** Comma mode: `3,5 x² ÷ 2` is 37.5 (right 6.125). Rerun: `node tools/probes/parse.ts '3{,}\frac{5^{2}}{2}'`. Family 7.
+- **nr1109-bu-4 (S1; R258).** Vars on a library's `g0`, `rate`: loose letters, `g*0` = 0 (right 9.80665). Rerun: `node tools/probes/parse.ts 'g0'`. Family 7.
+- **nr1109-be-4 (S1; G304).** DEG, a library's `arcsin`: 0.5236 for arcsin 0.5 (right 30), as `arccos`, `arctan`, `SIN`. Rerun: `tools/probes/review-1109/rerun.sh be-4`. Family 8.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
-- **F80, package G179 (G99; `tools/probes/bridge-forms.ts`).** After Home `(BesselJ(1,2))=>y`, `int(y^2,y,0,1)` shows `⚠ 0.333333333333` (right `≈`): Home stores at Digits 40, where `=>` keeps y as `BesselJ(1,2)` unevaluated, and Giac's int with that y errors (Bad Argument Value). `y:=` keeps the float. Test: `boundNames.test.ts` (`it.fails`), seqsweep `12 bound: int…`. Family 8.
 - **F73 (lists, strings: G172).** A list or matrix element only a double values shows its number with ⚠ (longer than 32 elements: Giac's text). Left: `hasFloat` reads `1..3` as a float. Families 5, 6.
-- **F182, nr1109-be-5 (S1, `f9352ae2a`; G305).** A limit at a jump: Home `lim x→1.5 round(x)` ≈ 2, `sign` at 0.0 ⚠ 0; at an exact point Giac's raw text. Right: No limit. Rerun: `node tools/probes/engine.ts 'limit(round(x),x,1.5)'`. Family 5.
+- **F206, no package (G172's report; id: Opus pass 122).** Numbers rounded inside a string: when a non-number also holds a real float, `floatsAtDigits` (numeric.ts) rounds a string's decimals: `list[x,"0.1234567890123456789",evalf(1/3)]` shows the string as `"0.123456789012"`, Home and CAS. Family 1.
+- **F207, no package (G173's Not done).** A matrix inside a set, a coefficient vector or an equation keeps Giac's word (`set[matrix…]`, `poly1[matrix…]`, `matrix[[1,0],[0,1]]=x`). Family 1.
+- **F208, no package (Opus pass 124).** A stored float list read back shows vector brackets: `J:=list[evalf(1/3),evalf(2/3)]` shows `{…}`, then `J` and `J*J` show `[…]` (copy text `list[…]`); the read's rebuild (facts.ts `inherited`) drops Giac's list type. Family 1.
+- **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
+- **F182, nr1109-be-5 (S1; G305).** A limit at a jump: Home `lim x→1.5 round(x)` ≈ 2, `sign` at 0.0 ⚠ 0; at an exact point Giac's raw text. Right: No limit. Rerun: `node tools/probes/engine.ts 'limit(round(x),x,1.5)'`. Family 5.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F191, package R164 (owner, 2026-11-07).** Fast typing on a phone: the press look stuck (Chrome's touch `:active`). R161 to R164 built (own `data-down` flag, key pop, Appearance › Key pop-ups; R164: the status line, the sheets' ◀ ▶ and value buttons and the update note use the same flag through `input/pressFlag.ts`, no `:active` left in `app/src`).
 - **F172, A73 measured.** Stored history costs nothing; the rows drawn at start do (bar 1.5 s; R133 draws 5 rows until engine ready). A CAS-last cold start is 1507 ms against Home's 1323; A73f2 after the tag says where.
@@ -56,13 +59,10 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **Night review 2026-11-09:** the rest in [research/night-review-2026-11-09.md](research/night-review-2026-11-09.md).
 
 ### Background stream (extreme inputs; at night, by reach)
-- **nr1109-be-1 (S1, extreme, `f9352ae2a`; G306).** `∛sin(10⁷⁰)` ≈ 0.26454+0.45819·i (right −0.52908); also `atan2`, `ln` of a power, `sort`. Rerun: `tools/probes/review-1109/rerun.sh be-1`. Family 3.
-- **nr1109-be-2 (S1, extreme, `f9352ae2a`; G308).** `(1+1ᴇ-15·i)^(1/3)` ≈ 1+1E-15·i (right 1+3.33E-16·i). Rerun: `tools/probes/review-1109/rerun.sh be-2`. Family 4.
-- **nr1109-be-3 (S1, extreme, `f9352ae2a`; G307).** `(1+e⁻²⁰⁰)^(e²⁰⁰)` ≈ 1 (right e). Rerun: `tools/probes/review-1109/rerun.sh be-3`. Family 4.
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, G225 built, G225f2 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
-- **F195, G220 built; G221 on its branch, G221f1.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf`: ⚠. Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
-- **F205, package G303.** A stored `k` is lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
+- **F195, G220 to G221f2 built.** Left (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf` (error).
+- **F210, no package (G303f1; pass 125).** Our global stores take typable names (only `pasdeg` is refused): a free `pasx` in Solve reads solve1.ts's `pasx` (raw Giac: `subst` gives -1.0). Fix: refuse a typed `pas`. Family 9.
+- **F211, no package (pass 125).** Bound names outside G303's form, no capture (probed): `v` in nonsquare.ts shapeCodes, `a_`, `b_`, `d_` in emit.ts equalityTest; statenames.test.ts parses neither. Family 8.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
@@ -70,22 +70,21 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93 is G168; F96 and F97 are G174 (the rest: G111, G113, G113f1, R80f1). Family 5.
 - **F96.** Names left that the definitions log does not hold (not in Vars, gone after a relaunch): `gbasis` (lastgb), `syzygy` (lastv), `GF(2,8)` (K, g), `wz_certificate` (k, n), and the name arguments of `QR`, `LU`, `Fill`, `CopyVar`, `point3d`, `is_hamiltonian`; `debug(…)` turns on Giac's debugger, after which every program call, our helpers too, throws `prompt is not defined`; `interactive_plotode` throws the same (both left out of Find, G111).
 - **F97.** CAS has no answer within 6 s (600 s hard timeout): `ellipse(-1,1,point(1+i))`, `hyperbola(…)`, `ecm_factor` of a 73-digit number; Home refuses them after 2 s.
-- **F115, fixed by G178.** Home `3*int(1/x,x,-1,1)+1` showed ⚠ 1: the check valued the call at Digits 12, where Giac's int needs 15,000× the checks of the exact run's Digits. Refused now, as the bare call. Family 5.
 - **F200 (A120).** Core c29 red once (device 100). A123 makes the runner await the `defs` write and log it on a red; a second red is a FIX.
 - **F202, package A125.** e2e clipboard lock: waiters poll, no queue; run 838 timed out at 120 s, `fold.spec.ts:203`. Wanted: a fair queue.
 - **Flaky under load.** Golden `interrupt` (F128, run 307: `expand((x+y+z+1)^40)` at timeout 0.2 s took 406 ms of 400; pass 10: a second sighting puts it into `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, limit 60; no rerun) beside the other lane (passes 32, 34, run 415).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
-- **F63, package G179.** A stored ⚠ value (`BesselJ(1,2)`) read through a function, after a relaunch or by its name shows one confirmed digit fewer than the value itself (11, not 12: cautious, not wrong; `tests/golden/seqsweep-known.yaml` 6–7).
-- **F109, fixed by G168.** `foo()` of an unknown name showed `foo`; Home and CAS refuse it now. Family 5.
-- **F122, package G187 (G116); G183: the engine restarts and says so.** Home `(atan(ln(-π)+9007199254740993))^(sin(10^-300)-10^300)` kills the engine (stack overflow inside Giac's wasm); also `(asinh(∛0.5))^((π/2+10^-3)^((90+10^-3)/(π/2+10^-6)))` (G120). The same kind as G94 (a wasm trap by heap layout, patch 0037).
+- **F122, package G187 (G116); G183: the engine restarts and says so.** Home `(atan(ln(-π)+9007199254740993))^(sin(10^-300)-10^300)` kills the engine (stack overflow inside Giac's wasm); also `(asinh(∛0.5))^((π/2+10^-3)^((90+10^-3)/(π/2+10^-6)))` (G120). G94's kind (a wasm trap by heap layout, patch 0037).
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
 - **F181 (G175's probe).** Home `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i (CAS right): `sym2poly.cc` sym2rxrootnum picks the root by the arg of evalf(z²), which lies on the cut with a rounding imaginary part. Family 3.
 - **F138 (G177).** CAS DEG `evalf(cos(atan(2*i)))` shows -1.37121078136E-60-0.57735026919·i in the golden precision stage after earlier cases (right -0.57735026919·i; a fresh engine is right since patch 0019): state leaks between cases. Row `g177-cas-deg-evalf-cos-atan-2i` (pending). Family 2.
 - **F161, fixed by G154 (left, no package).** An underflow whose size Giac cannot state (`exp(-10^30)+exp(-10^31)`: no finite re(lnexpand(ln(e))), e^(10^-1000) is 0) shows ⚠ 0 again, as before G84; was "Underflow". Family 3.
-- **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. Its nightly rows: 685 of 699 passed on the engine of 2026-11-06 and were dropped (G189); 14 stay, 9 with an `(e^{0.5+10^-k}-e^{0.5})·10^k` term, the others `ln`, `√` and a power of 0.99…9, and the `tan(1ᴇ1000)` one. `acosh(1E1000+i)` is the short case of a halved imaginary part.
-- **F145, packages G186, G183 (G120, G137, G138).** Nightly sweep hangs; the rows are in `tests/golden/sweep-nightly-known.yaml` (G186). The sweep oracle (`tools/probes/sweep/oracle.py`) drops a part of mpmath's acosh and acos of a tiny complex (G137's 2 oracle rows).
-- **F159, package G180 (G149f1).** DEG `sqrt(asinh(asin(3.7)))` ⚠ on the desktop, ≈ on the 8× clock; golden `g149-deg-sqrt-asinh-asin-3.7-*` pending.
+- **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. Its nightly rows: 685 of 699 passed on the engine of 2026-11-06 and were dropped (G189); 14 stay, 9 with an `(e^{0.5+10^-k}-e^{0.5})·10^k` term, the others `ln`, `√` and a power of 0.99…9, and the `tan(1ᴇ1000)` one.
+- **F145, G183 (G120, G137, G138).** Nightly sweep hangs. G186 fixed G120's 20 and G137's 6; left: `(1ᴇ1000)^asin(√-2-1ᴇ1000)` (F212), G138's 9 (mostly (√(a+10^-k)-√a)·10^k+b) and 4 wasm "unreachable" traps in arctan, arccos. The sweep oracle (`tools/probes/sweep/oracle.py`) drops a part of mpmath's acosh and acos of a tiny complex (G137's 2 oracle rows).
+- **F212, no package (G186; id: pass 126).** Giac's exact `asin(sqrt(-2)-10^1000)` loses ln 2 from its imaginary part (2302.585…, mpmath 2303.278…): Home `(1ᴇ1000)^asin(√-2-1ᴇ1000)` shows ⚠ 14 (RAD 30), ⚠ 12 (DEG 30) with wrong digits (mpmath -5.71306543428E-1572+1.49276491197E-1571·i); its 2 nightly known rows sit under F145. Family 4.
+- **F213, no package (G186; id: pass 126).** The sweep writes exp as `e^{…}` and the constant as `e` (`tools/probes/sweep/gen.ts` 63, 90, 119–123; `edges.ts` 68, 219), which the parser reads as the name `e_` since R67: such trees are not numbers and never judged (262 of 1187 runs of the gate's seed). Fix: `\exponentialE`, then triage what it unmasks. Family 14.
+- **F159, fixed by G180 (G149f1).** DEG `sqrt(asinh(asin(3.7)))` showed ⚠ on the desktop, ≈ on the 8× clock: the 83 kB exact form's check ran out of its call's step budget; now the float path's ≈ on both; golden `g149-deg-sqrt-asinh-asin-3.7-*`.
 - **The hardening without a bug line:** r16's end mark, a 50,000-input sweep with no new false mark, is not met (Opus pass 82); A44: `tests/golden/sweep-nightly-known.yaml` holds the nightly sweep's open rows (F122, F145, F155); the gate never reads it.
 
 ### Next (packages and order: brief section 0)
@@ -103,6 +102,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **A9's leftover:** the strength slider does nothing on a motor without amplitude control (Fairphone 6); a composition of ticks would give it (owner, 2026-11-02: a package later).
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
+- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
 - **C3. CI** (needs your OK);
 

@@ -890,6 +890,12 @@ Digits:=40:; purge(gr157,yr157):; gr157:=trunc(yr157):; yr157:=-13/10:; pc("g157
 // patch 0019-atan-exact-cut.patch
 // g135-cos-quote-atan-2i (derived: cos(atan(2*i)) = 1/sqrt(-3) = -i/sqrt(3))
 Digits:=40:; pc("g135-cos-quote-atan-2i",'cos(quote(atan(2*i)))',-(57735026918962576450914878050195745564760/10^41)*i,1/10^35);
+// patch 0040-simplifier-root-huge-base.patch
+// g186-simplify-sqrt-1e330+7 (derived: no square factor that trial division finds, so the root stays as it is)
+Digits:=40:; pc("g186-simplify-sqrt-1e330+7",'simplify(sqrt(10^330+7))',sqrt(10^330+7),1/10^30);
+// patch 0040-simplifier-root-huge-base.patch
+// g186-abs-cos-acosh-1e-300-30 (precision.yaml, oracle)
+Digits:=40:; pc("g186-abs-cos-acosh-1e-300-30",'(abs(cos(pi/10^7)+acosh(1/10^300)))',186209588911856012363779923385/10^29,5/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

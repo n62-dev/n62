@@ -405,6 +405,10 @@ Digits:=40:; pc("g129-cos-atan-i/2",'(cos(atan(1/2*i)))',(115470053838/10^11),5/
 Digits:=40:; pc("g129-cos-atan-1+i",'(cos(atan(1+i)))',(568864481006/10^12)-(351577584254/10^12)*i,5/10^13+5/10^13);
 // g225-keep-dot (home.yaml, derived)
 Digits:=40:; pc("g225-keep-dot",'(dot([1,2],[3,4]))',11,5/10^11);
+// g225f1-keep-times (home.yaml, derived)
+Digits:=40:; pc("g225f1-keep-times",'([1,2]*[3,4])',11,5/10^11);
+// g225f1-keep-dot-one-list (home.yaml, derived)
+Digits:=40:; pc("g225f1-keep-dot-one-list",'(dot([[1,2],[3,4]]))',11,5/10^11);
 // prec-20-sqrt2 (precision.yaml, oracle)
 Digits:=40:; pc("prec-20-sqrt2",'(sqrt(2))',(14142135623730950488/10^19),5/10^20);
 // prec-20-third (precision.yaml, oracle)
@@ -867,6 +871,42 @@ Digits:=40:; pc("g220-normald-cdf-10-2-12-30",'(normald_cdf(10,2,12))',(84134474
 Digits:=40:; pc("g220-normald-cdf-1.96-30",'(normald_cdf((196/10^2)))',(975002104851779565863415730959/10^30),5/10^31);
 // g220-normald-cdf-neg1-1-30 (precision.yaml, oracle)
 Digits:=40:; pc("g220-normald-cdf-neg1-1-30",'(normald_cdf(0,1,-1,1))',(682689492137085897170465091264/10^30),5/10^31);
+// g221-student-5-2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-5-2-12",'(student_cdf(5,2))',(949030260585/10^12),5/10^13);
+// g221-student-5-2-30 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-5-2-30",'(student_cdf(5,2))',(949030260585070821877319447079/10^30),5/10^31);
+// g221-student-100-3-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-100-3-12",'(student_cdf(100,3))',(998296042328/10^12),5/10^13);
+// g221-student-100-3-30 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-100-3-30",'(student_cdf(100,3))',(998296042328335275231482502915/10^30),5/10^31);
+// g221-student-5-neg1-1-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-5-neg1-1-12",'(student_cdf(5,-1,1))',(636782532351/10^12),5/10^13);
+// g221-student-5-neg1-1-30 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-5-neg1-1-30",'(student_cdf(5,-1,1))',(636782532350877374399851480002/10^30),5/10^31);
+// g221-student-5-1-neg1-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-5-1-neg1-12",'(student_cdf(5,1,-1))',-(636782532351/10^12),5/10^13);
+// g221-student-5-1-neg1-30 (precision.yaml, oracle)
+Digits:=40:; pc("g221-student-5-1-neg1-30",'(student_cdf(5,1,-1))',-(636782532350877374399851480002/10^30),5/10^31);
+// g221-chi-3-2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-chi-3-2-12",'(chisquare_cdf(3,2))',(427593295529/10^12),5/10^13);
+// g221-chi-3-1-2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-chi-3-1-2-12",'(chisquare_cdf(3,1,2))',(22884525243/10^11),5/10^13);
+// g221-evalf-normald-neg8-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-normald-neg8-12",'(evalf(normald_cdf(0,1,-8)))',(622096057427/10^27),5/10^28);
+// g221-evalf-normald-1.96-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-normald-1.96-12",'(evalf(normald_cdf((196/10^2))))',(975002104852/10^12),5/10^13);
+// g221-evalf-normald-1.96-30 (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-normald-1.96-30",'(evalf(normald_cdf((196/10^2))))',(975002104851779565863415730959/10^30),5/10^31);
+// g221-evalf-normald-8-9-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-normald-8-9-12",'(evalf(normald_cdf(0,1,8,9)))',(621983198587/10^27),5/10^28);
+// g221-evalf-UTPN-variance-12 (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-UTPN-variance-12",'(evalf(UTPN(1,2,3)))',(786496035251/10^13),5/10^14);
+// g221-evalf-UTPN-variance-30 (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-UTPN-variance-30",'(evalf(UTPN(1,2,3)))',(786496035251425653293896824587/10^31),5/10^32);
+// g221-evalf-normald-complex (precision.yaml, oracle)
+Digits:=40:; pc("g221-evalf-normald-complex",'(evalf(normald_cdf(0,1,i)))',(5/10^1)+(476719134626/10^12)*i,5/10^13+5/10^13);
+// g221-keep-1-normald-20 (precision.yaml, derived)
+Digits:=40:; pc("g221-keep-1-normald-20",'(1-normald_cdf(0,1,20))',0,1/10^30);
 // g149-cas-keep-forms (precision.yaml g149-cas-keep-acosh-neg2, g149-cas-keep-ln-neg-pi-pow-3/2, g149-cas-keep-sqrt-neg-pi-cubed, g149f1-cas-keep-*, derived)
 Digits:=40:; pc("g149-cas-keep-forms",'when(string(acosh(-2))=="ln(-2+sqrt(-2+1)*sqrt(-2-1))" and string(ln((-pi)^(3/2)))=="ln(-sqrt(-pi)*pi)" and string(sqrt((-pi)^3))=="sqrt((-pi)^3)" and string(sqrt(acosh(-1/2)^2))=="sqrt(ln(-1/2+sqrt(-1/2+1)*sqrt(-1/2-1))^2)" and string((-1-i/10^20)^(1/2))=="sqrt((-100000000000000000000-i)/100000000000000000000)" and string(asinh(-10^300))=="-ln(1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000+sqrt((-1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)^2+1))",1,0)',1,1/10^30);
 print("n62-check: "+pasfail+" of "+pasn+" failed");

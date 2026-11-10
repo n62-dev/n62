@@ -313,8 +313,8 @@ export function zeroElements(slot: string, facts: readonly ElementFacts[], shape
 }
 
 /** G154: Giac's test that `e` (MPFR's 0 at every precision) has a size it can state at `P` digits (underflow). */
-const SIZED = (e: string, P: number): string =>
-  `(pasx->type(pasx)==real and pasx-pasx==0)(evalf(re(lnexpand(ln(${e}))),${P})) or (pasx->pasx!=0 and pasx-pasx==0)(evalf((${e})^(1/10^1000),${P}))`;
+export const SIZED = (e: string, P: number): string =>
+  `(pasx_->type(pasx_)==real and pasx_-pasx_==0)(evalf(re(lnexpand(ln(${e}))),${P})) or (pasx_->pasx_!=0 and pasx_-pasx_==0)(evalf((${e})^(1/10^1000),${P}))`;
 
 /**
  * F60: whether one of `elements` (Giac texts of values that read as 0) is an underflow: a number too small for MPFR's

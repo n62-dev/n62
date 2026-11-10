@@ -68,6 +68,8 @@ export interface Case {
   /** precision.yaml (G67): after the `before…` inputs, the definitions log they left is replayed into a fresh engine (a
    *  relaunch), and the case's input runs there. */
   relaunch?: boolean;
+  /** precision.yaml (G303): the case stores a name later cases read free (a one-letter name), so it runs on its own engine. */
+  own?: boolean;
   /** home.yaml (G34): a sequence of lines, each in its own angle mode; the last one is checked against expect and mark. */
   steps?: Step[];
   /** home.yaml sequences (G49): the constants the steps hold by name (`pasc_<id>`), as G26's table. */
@@ -222,7 +224,7 @@ export async function runPrecisionCase(c: Case, shared: EngineHost, fresh: () =>
   let shown: string;
   // G67: a case whose inputs before it set a Giac setting runs on its own engine too (were the setting kept, it would
   // reach every later case); G92: so does one that sets or may leave an assumption
-  const own = c.beforeHome?.length || c.beforeCas?.length || c.relaunch || (c.before ?? []).some((b) => namesFlag(b, "typed") || setsAssumption(b) || namesAssuming(b));
+  const own = c.own || c.beforeHome?.length || c.beforeCas?.length || c.relaunch || (c.before ?? []).some((b) => namesFlag(b, "typed") || setsAssumption(b) || namesAssuming(b));
   let host = own ? await fresh() : shared;
   const defs: DefChange[] = [];
   const relaunched = async (): Promise<void> => {

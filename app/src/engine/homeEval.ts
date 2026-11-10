@@ -17,9 +17,9 @@ import { valueFactsOf, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
-import { approxRange, elementAt, lostFloat, lostNumber, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 import { doubleElements } from "./doubleElements.ts";
-import { icdfAtEnd, icdfCalls } from "./icdf.ts";
+import { giacRefusesOurs, icdfAtEnd, icdfCalls, icdfEndCalls } from "./icdf.ts";
 import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
 import { POLY_AT, POLY_AT_ANY_DEPTH, unaskedPoly } from "./polyvec.ts";
 import { listAsArguments } from "./listargs.ts";
@@ -31,7 +31,7 @@ import { askedDigits, DOUBLE_DIGITS, exactFacts, floatFacts, floatPathFacts, int
 import { bracesOf, functionsIn, holdsMatrixType, isError, isTimeout, LIST_TYPE, replaceLiteral, whenCalls, wordsOf } from "./giacPrint.ts";
 import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals.ts";
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
-import { homeSequence } from "./sequences.ts";
+import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
 import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
@@ -148,46 +148,46 @@ export const ENGINE_DEFINITIONS: Readonly<Record<string, string>> = {
   // Find's `mod` (input/emit.ts): Euclidean, never negative. Giac's irem is an error on a rational (irem(15/2,2)), and
   // typed decimals are exact rationals, so mod(7.5,2) fell to the float path and was marked ≈ (G14).
   pasmod:
-    "pasmod(a,b):={ if (type(a)==integer and type(b)==integer) return irem(a,b); " +
-    "if (b==0) return a; return a-abs(b)*floor(a/abs(b)); }",
+    "pasmod(pasa_,pasb_):={ if (type(pasa_)==integer and type(pasb_)==integer) return irem(pasa_,pasb_); " +
+    "if (pasb_==0) return pasa_; return pasa_-abs(pasb_)*floor(pasa_/abs(pasb_)); }",
   sigfig:
-    "sigfig(x,n):={ local a,p,k,m,g; " +
-    'if (type(n)!=integer or n<1) throw("sigfig: n must be a positive integer"); ' +
-    "if (x==0) return 0; " +
-    'if (type(x)!=integer and type(x)!=rational and type(evalf(x,n+30))!=real) throw("sigfig: x must be a real number"); ' +
-    "g:=sign(x); a:=g*x; p:=floor(evalf(log10(a),30)); while (10^p>a) p:=p-1; while (10^(p+1)<=a) p:=p+1; " +
-    "k:=n-1-p; m:=floor(a*10^k+1/2); return g*m/10^k; }",
+    "sigfig(pasx_,pasn_):={ local pasa_,pasp_,pask_,pasm_,pasg_; " +
+    'if (type(pasn_)!=integer or pasn_<1) throw("sigfig: n must be a positive integer"); ' +
+    "if (pasx_==0) return 0; " +
+    'if (type(pasx_)!=integer and type(pasx_)!=rational and type(evalf(pasx_,pasn_+30))!=real) throw("sigfig: x must be a real number"); ' +
+    "pasg_:=sign(pasx_); pasa_:=pasg_*pasx_; pasp_:=floor(evalf(log10(pasa_),30)); while (10^pasp_>pasa_) pasp_:=pasp_-1; while (10^(pasp_+1)<=pasa_) pasp_:=pasp_+1; " +
+    "pask_:=pasn_-1-pasp_; pasm_:=floor(pasa_*10^pask_+1/2); return pasg_*pasm_/10^pask_; }",
   // G42: Giac's median of an even list is the lower middle, as a float; `median` is also a reserved word, so the
   // parser renames the written word (input/emit.ts CALL_NAME). Sorted, the middle value or the mean of the two middle ones.
   pasmedian:
-    "pasmedian(l):={ local s,n,k; if (subtype(l)==1) throw(\"median: needs one list of values\"); if (type(l)!=DOM_LIST) throw(\"median: needs a list of values\"); " +
-    "for (k:=0;k<size(l);k:=k+1) { if (type(l[k])!=integer and type(l[k])!=rational and type(evalf(l[k]))!=DOM_FLOAT) throw(\"median: needs a list of real numbers\"); } " +
-    "s:=sort(l); n:=size(s); if (n==0) throw(\"median: needs at least one value\"); " +
-    "if (irem(n,2)==1) return s[(n-1)/2]; return (s[n/2-1]+s[n/2])/2; }",
+    "pasmedian(pasl_):={ local pass_,pasn_,pask_; if (subtype(pasl_)==1) throw(\"median: needs one list of values\"); if (type(pasl_)!=DOM_LIST) throw(\"median: needs a list of values\"); " +
+    "for (pask_:=0;pask_<size(pasl_);pask_:=pask_+1) { if (type(pasl_[pask_])!=integer and type(pasl_[pask_])!=rational and type(evalf(pasl_[pask_]))!=DOM_FLOAT) throw(\"median: needs a list of real numbers\"); } " +
+    "pass_:=sort(pasl_); pasn_:=size(pass_); if (pasn_==0) throw(\"median: needs at least one value\"); " +
+    "if (irem(pasn_,2)==1) return pass_[(pasn_-1)/2]; return (pass_[pasn_/2-1]+pass_[pasn_/2])/2; }",
   // G42: Giac leaves percentile unevaluated. Linear interpolation between the closest ranks: rank r = p/100·(n−1) on
   // the sorted list (the inclusive method, Excel's PERCENTILE.INC), 0 ≤ p ≤ 100. G158f1: one parameter, the sequence of the
   // call: Giac refuses a fixed (l,p) function a wrong count before it runs, with its own text (size() != [l,p]).
   paspercentile:
-    "paspercentile(a):={ local l,p,s,n,r,k; if (subtype(a)!=1 or size(a)!=2) throw(\"percentile: needs one list and a percentage\"); l:=a[0]; p:=a[1]; " +
-    "if (type(l)!=DOM_LIST) throw(\"percentile: needs a list of values\"); " +
-    "for (k:=0;k<size(l);k:=k+1) { if (type(l[k])!=integer and type(l[k])!=rational and type(evalf(l[k]))!=DOM_FLOAT) throw(\"percentile: needs a list of real numbers\"); } " +
-    "s:=sort(l); n:=size(s); " +
-    "if (type(p)!=integer and type(p)!=rational and type(evalf(p))!=DOM_FLOAT) throw(\"percentile: needs a list of real numbers\"); " +
-    "if (n==0 or p<0 or p>100) throw(\"percentile: needs a list and 0 <= p <= 100\"); " +
-    "r:=p/100*(n-1); k:=floor(r); if (k>=n-1) return s[n-1]; return s[k]+(r-k)*(s[k+1]-s[k]); }",
+    "paspercentile(pasa_):={ local pasl_,pasp_,pass_,pasn_,pasr_,pask_; if (subtype(pasa_)!=1 or size(pasa_)!=2) throw(\"percentile: needs one list and a percentage\"); pasl_:=pasa_[0]; pasp_:=pasa_[1]; " +
+    "if (type(pasl_)!=DOM_LIST) throw(\"percentile: needs a list of values\"); " +
+    "for (pask_:=0;pask_<size(pasl_);pask_:=pask_+1) { if (type(pasl_[pask_])!=integer and type(pasl_[pask_])!=rational and type(evalf(pasl_[pask_]))!=DOM_FLOAT) throw(\"percentile: needs a list of real numbers\"); } " +
+    "pass_:=sort(pasl_); pasn_:=size(pass_); " +
+    "if (type(pasp_)!=integer and type(pasp_)!=rational and type(evalf(pasp_))!=DOM_FLOAT) throw(\"percentile: needs a list of real numbers\"); " +
+    "if (pasn_==0 or pasp_<0 or pasp_>100) throw(\"percentile: needs a list and 0 <= p <= 100\"); " +
+    "pasr_:=pasp_/100*(pasn_-1); pask_:=floor(pasr_); if (pask_>=pasn_-1) return pass_[pasn_-1]; return pass_[pask_]+(pasr_-pask_)*(pass_[pask_+1]-pass_[pask_]); }",
   // G155: the standard error of the mean, s/√n with Giac's stddevp (the sample deviation, n−1); exact for exact readings.
   // Giac has no sem; the parser renames the written word (ourNames.ts CALL_NAME). Fewer than two values have no sample
   // deviation (Giac's stddevp answers undef): refused here. G158: so is a call with several arguments (a second list,
   // loose values), which Giac hands over as one sequence, subtype 1 (stddevp read two lists as values and weights).
   passem:
-    "passem(l):={ if (subtype(l)==1) throw(\"sem: needs one list of values\"); if (type(l)!=DOM_LIST) throw(\"sem: needs a list of values\"); " +
-    "if (size(l)<2) throw(\"sem: needs at least two values\"); return stddevp(l)/sqrt(size(l)); }",
+    "passem(pasl_):={ if (subtype(pasl_)==1) throw(\"sem: needs one list of values\"); if (type(pasl_)!=DOM_LIST) throw(\"sem: needs a list of values\"); " +
+    "if (size(pasl_)<2) throw(\"sem: needs at least two values\"); return stddevp(pasl_)/sqrt(size(pasl_)); }",
   // G30 (EN7a): n resistors in parallel, 1/(1/a+1/b+…), exact; a zero argument gives exactly 0. Giac hands the
   // arguments of a call to a one-parameter function as one sequence, which [a] makes a list.
   par:
-    "par(a):={ local l,s,k; l:=[a]; if (size(l)==0) throw(\"par: needs at least one value\"); " +
-    "for (k:=0;k<size(l);k:=k+1) { if (l[k]==0) return 0; } " +
-    "s:=0; for (k:=0;k<size(l);k:=k+1) s:=s+1/l[k]; return normal(1/s); }",
+    "par(pasa_):={ local pasl_,pass_,pask_; pasl_:=[pasa_]; if (size(pasl_)==0) throw(\"par: needs at least one value\"); " +
+    "for (pask_:=0;pask_<size(pasl_);pask_:=pask_+1) { if (pasl_[pask_]==0) return 0; } " +
+    "pass_:=0; for (pask_:=0;pask_<size(pasl_);pask_:=pask_+1) pass_:=pass_+1/pasl_[pask_]; return normal(1/pass_); }",
   // G106f1: whether a value holds a coefficient vector at any depth (polyvec.ts; its check defines it in the same call).
   [POLY_AT]: POLY_AT_ANY_DEPTH,
   [PLAIN_AT]: PLAIN_AT_ANY_DEPTH, // G173: Giac's matrix type at any depth (matrixType.ts; its call defines it again)
@@ -474,7 +474,7 @@ export function homeEval(
   now: () => number = () => performance.now(),
   form: InputForm = PLAIN_FORM,
   fnBody: Bodies = NO_BODIES,
-  undefStands = false,
+  undefStands = false, logged: LoggedNames = NO_LOGGED_NAMES,
 ): HomeResult {
   const t0 = now();
   const ans = "pasans";
@@ -536,7 +536,7 @@ export function homeEval(
     }
   }
   // G119, G173: Giac's sequence answer as a value or a list (sequences.ts); none is refused below, once `refuse` exists
-  const seq = homeSequence(giac, ans, value, exactOut, at, (f) => withDigits(giac, P, s.digits, f), form.noValue);
+  const seq = homeSequence(giac, ans, value, exactOut, at, (f) => withDigits(giac, P, s.digits, f), form, logged);
   [value, exactOut] = [seq.value, seq.text];
   // G130: a value decided again (decideTwice) is Giac's print too
   if (holdsMatrixType(value.text) && !isError(exactOut)) {
@@ -610,6 +610,15 @@ export function homeEval(
     return fromBuilt(b, path, true, exact, b.decimal, why);
   };
 
+  // The input as one number through the polish (icdf.ts); null when it runs once or cannot be polished.
+  const polishedResult = (): HomeResult | null => {
+    const facts = once ? null : floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
+    if (!facts) return null;
+    store();
+    const b = build(facts, { kind: "scalar" }, s.digits, "exact", true);
+    return fromBuilt(b, "exact", true, undefined, b.decimal, whyOf(facts, exactBody));
+  };
+
   // G58: past the deadline after the exact steps: refused, not checked for as long again.
   if (late()) return { ...failed(enEngine["error.timeout"], "exact"), error: "timeout" };
   // G111 (F98), R80f1: Giac reads one list argument of LambertW, a distribution and others as their argument list
@@ -623,6 +632,9 @@ export function homeEval(
   if (badShape) return refuse(badShape, "exact");
   if (square === "unchecked") unsquared = { ...(once ? { once: true } : {}), squareUnchecked: true };
   if (isTimeout(exactOut)) return viaFloat("float-timeout");
+  // G221 (F195): Giac refuses a ν that is no integer (student_cdf(2.5,1)): the polish computes it, or the float path answers as before.
+  const polished = isError(exactOut) && giacRefusesOurs(exactBody) ? polishedResult() : null;
+  if (polished) return polished;
   if (isError(exactOut)) return viaFloat("float-error");
   // G106 (F78): Giac's polynomial of a list plus a number (`[1,4]+1` = poly1[1,5]), which the input did not ask for.
   if (unaskedPoly(giac, ans, exactBody, exactOut, userFn)) return refuse("listPlusNumber", "exact");
@@ -693,13 +705,9 @@ export function homeEval(
   // the polish computes the value; when it cannot, Giac's infinity is shown with ⚠. At p = 0 or 1 it is exact.
   // G44f2: and undef (normald_icdf(10^-30) from about the third call on one engine): polished from the centre, and
   // never an unmarked undef when the polish refuses.
-  if (/^([+-]?infinity|undef)$/.test(exactOut.trim()) && icdfCalls(exactBody).length) {
-    const facts = once ? null : floatFacts(giac, ans, exactBody, { kind: "scalar" }, s.digits, s.digits, exactBody);
-    if (facts) {
-      store();
-      const b = build(facts, { kind: "scalar" }, s.digits, "exact", true);
-      return fromBuilt(b, "exact", true, undefined, b.decimal, whyOf(facts, exactBody));
-    }
+  if (/^([+-]?infinity|undef)$/.test(exactOut.trim()) && icdfEndCalls(exactBody).length) {
+    const atEnd = polishedResult();
+    if (atEnd) return atEnd;
     giac.eval(`${ans}:=${exactOut}`);
     // Exact only when the polish itself gives the end of the support (p = 0 or 1); a polish refused, or one that
     // converged at P but not at P + 20, leaves Giac's infinity unaudited.
@@ -748,6 +756,8 @@ export function homeEval(
   const underflowAt = once ? undefined : (k: number): boolean => checked.set(k, !late() && underflow(giac, [elementAt(ans, shape, k)], valuePrecision(s.digits))).get(k)!;
   let facts = exactFacts(giac, ans, shape, s.digits, s.maxExactDigits, exactOut, value, underflowAt);
   if (!facts) {
+    // G180 (F159): a number past 2 kB read at only one of P, P+20 ran out of steps (api.cc giac_value): as on a time-out
+    if (!once && value.cut && mayBeNumbers(exactOut) && [P, P + 20].filter((p) => value.at?.[String(p)]).length === 1) return viaFloat("float-timeout");
     // G172 (F73): the double fallback, element by element in a list or matrix (doubleElements.ts).
     const d = doubleElements(giac, { name: ans, input: body, exactOut, value, shape, digits: s.digits, maxExactDigits: s.maxExactDigits, once, late });
     if (d === null) return symbolic();

@@ -18,7 +18,7 @@ import { functionsIn, isError, leadingName, names, namesIn, programParams, type 
  * is mapped element by element first (its type is DOM_LIST, which would fall back to Giac's own function).
  */
 export const COMPLEX_DEFINITIONS: Readonly<Record<string, string>> = {
-  pasatan: "pasatan(z):={ if (type(z)==DOM_LIST) return map(z,pasatan); if (type(evalf(z))==DOM_COMPLEX) { if (abs(evalf(z))<1/4) return -i*atanh(i*z); return i/2*(ln(1-i*z)-ln(1+i*z)); } return atan(z); }",
+  pasatan: "pasatan(pasz_):={ if (type(pasz_)==DOM_LIST) return map(pasz_,pasatan); if (type(evalf(pasz_))==DOM_COMPLEX) { if (abs(evalf(pasz_))<1/4) return -i*atanh(i*pasz_); return i/2*(ln(1-i*pasz_)-ln(1+i*pasz_)); } return atan(pasz_); }",
 };
 
 /** The Giac names (and aliases) that COMPLEX_DEFINITIONS replace. */
@@ -49,6 +49,9 @@ export function forValue(giac: Giac, text: string, q: Quoting): string {
 export function complexReplacedIn(input: string, q: Quoting): string[] {
   return functionsIn(input, q).filter((f) => Object.hasOwn(COMPLEX_REPLACED, f));
 }
+
+/** G59: the Giac text of `expr`'s value split in its real and imaginary parts, `[re, im]`, in one call (numeric.ts splitParts). */
+export const partsOf = (expr: string): string => `(pasz_->[re(pasz_),im(pasz_)])(${expr})`;
 
 /** The value of `name` has a non-zero imaginary part (or its im() cannot be had). */
 export function nonReal(giac: Giac, name: string): boolean {

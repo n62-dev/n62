@@ -11,6 +11,7 @@ describe("icdf text", () => {
   it("finds and replaces the four names outside strings only", () => {
     const text = 'normald_icdf(1/40)+student_icdf (5,1/2)+"fisher_icdf(1,2,3)"+mynormald_icdf(2)';
     expect(icdfCalls(text)).toEqual(["normald_icdf", "student_icdf"]);
+    expect(icdfCalls("UTPN(1)+chisquared_cdf(2,1)+normal_cdf(1)")).toEqual(["UTPN", "chisquared_cdf", "normal_cdf"]);
     const fake: Giac = fakeGiac(() => "defined");
     expect(icdfPolished(fake, text)).toBe('pasnormald_icdf(1/40)+passtudent_icdf (5,1/2)+"fisher_icdf(1,2,3)"+mynormald_icdf(2)');
   });
@@ -68,6 +69,37 @@ describe.skipIf(!giacAvailable())("icdf polish (real Giac)", () => {
     giac.eval(`purge(${ICDF_FAILED})`);
     return { value, failed };
   };
+  it("G221: the forward functions at Digits (oracle: mpmath, the g221 cases)", () => {
+    expect(at40("student_cdf(5,-100)")).toMatchObject({ value: expect.stringMatching(/^0\.94800071123118136942735414/), failed: false });
+    expect(at40("studentd_cdf(5,-100)")).toMatchObject({ value: expect.stringMatching(/^0\.94800071123118136942735414/), failed: false });
+    expect(at40("chisquared_cdf(10,1/100)")).toMatchObject({ value: expect.stringMatching(/^0\.259333918983953946105636/), failed: false });
+    expect(at40("normald_cdf(0,1,-20)")).toMatchObject({ value: expect.stringMatching(/^0\.27536241186062336950756227808\d*e-88$/), failed: false });
+    expect(at40("UTPN(20)")).toMatchObject({ value: expect.stringMatching(/^0\.27536241186062336950756227808\d*e-88$/), failed: false });
+    // UTPN(μ,v,x): v is the variance (Giac: UTPN(1,2,3) = (1-erf(1))/2 = 0.07864960352514256532938968…)
+    expect(at40("UTPN(1,2,3)")).toMatchObject({ value: expect.stringMatching(/^0\.78649603525142565329389\d*e-1$/), failed: false });
+    expect(at40("normal_cdf(0,1,8,9)")).toMatchObject({ value: expect.stringMatching(/^0\.62198319858658302828682596\d*e-15$/), failed: false });
+    // reversed bounds are F(b) − F(a), as Giac's student_cdf(5,1,-1)
+    expect(at40("student_cdf(5,1,-1)")).toMatchObject({ value: expect.stringMatching(/^-0\.63678253235087737439985/), failed: false });
+  });
+  it("G221: what is not read here is Giac's own value with the flag set", () => {
+    expect(at40("student_cdf(5,list[1,2])").failed).toBe(true);
+    expect(at40("normald_cdf(0,1,i)").failed).toBe(true);
+    expect(at40("normald_cdf(0,-1,1)").failed).toBe(true);
+    expect(at40("UTPN(0,-1,1)").failed).toBe(true);
+    expect(at40("student_cdf(5,-inf,1)").failed).toBe(true);
+  });
+  it("G221: a continued fraction that ends without converging sets the flag (regression)", () => {
+    // Its truncation is the same at P and P + 20, so the agreement check would have confirmed it. The loop is cut to 3
+    // iterations here (the real limit of 20000 is minutes of Giac at a = b = 10^11).
+    icdfPolished(giac, "");
+    giac.eval(ICDF_DEFINITIONS.pasbetacf!.replaceAll("20000", "3"));
+    try {
+      expect(at40("pasbetacf(3,4,0.4,0.6)").failed).toBe(true);
+    } finally {
+      giac.eval(ICDF_DEFINITIONS.pasbetacf!);
+    }
+    expect(at40("pasbetacf(3,4,0.4,0.6)").failed).toBe(false);
+  });
   it("polishes at Giac's Digits (oracle: mpmath, prec-g44 cases)", () => {
     // -6.36134090240405620469537582827 (30 digits, oracle); Giac's double is -6.3613403515334
     expect(at40("normald_icdf(10^-10)")).toMatchObject({ value: expect.stringMatching(/^-6\.36134090240405620469537582826/), failed: false });

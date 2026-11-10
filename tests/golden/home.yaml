@@ -549,9 +549,9 @@ cases:
   - { id: "g169-normald-cdf-list", input: "normald_cdf(0,1,list[1/2,3/2])", oracle: "Braces(mp.ncdf(M(F(1,2))),mp.ncdf(M(F(3,2))))", expect: "{0.691462461274,0.933192798731}", mark: "≈", source: "oracle", note: "it showed (erf({sqrt(2)/4,3*sqrt(2)/4})+1)/2, no numbers; Φ(1/2), Φ(3/2) (mpmath ncdf)" }
   - { id: "g169-normald-cdf-scalar", input: "normald_cdf(0,1,1/2)", oracle: "mp.ncdf(M(F(1,2)))", expect: "0.691462461274", mark: "≈", source: "oracle", note: "guard: the first element of g169-normald-cdf-list as a scalar call, mark ≈" }
   - { id: "g169-student-cdf-list", input: "student_cdf(3,list[1/2,3/2])", oracle: "Braces(1-mp.betainc(3/M(F(2)),M(F(1,2)),0,3/(3+M(F(1,2))**2),regularized=True)/2,1-mp.betainc(3/M(F(2)),M(F(1,2)),0,3/(3+M(F(3,2))**2),regularized=True)/2)", expect: "{0.674276017576,0.884708067378}", mark: "⚠", source: "oracle", note: "it showed ⚠ -UTPT(3,{0.5,1.5})+1; regularized incomplete beta I_{n/(n+t²)}(n/2,1/2); ⚠ as the scalar call: student_cdf is unaudited (a double)" }
-  - { id: "g169-student-cdf-scalar", input: "student_cdf(3,1/2)", oracle: "1-mp.betainc(3/M(F(2)),M(F(1,2)),0,3/(3+M(F(1,2))**2),regularized=True)/2", expect: "0.674276017576", mark: "⚠", source: "oracle", note: "guard: the first element as a scalar call; ⚠, student_cdf is unaudited (a double)" }
+  - { id: "g169-student-cdf-scalar", input: "student_cdf(3,1/2)", oracle: "1-mp.betainc(3/M(F(2)),M(F(1,2)),0,3/(3+M(F(1,2))**2),regularized=True)/2", expect: "0.674276017576", mark: "≈", source: "oracle", note: "the first element as a scalar call; ⚠ before G221 (Giac's double), now pasicdft at the working precision" }
   - { id: "g169-chisquare-cdf-list", input: "chisquare_cdf(2,list[1,2])", oracle: "Braces(1-exp(-M(F(1,2))),1-exp(-1))", expect: "{0.393469340287,0.632120558829}", mark: "⚠", source: "oracle", note: "it showed 1-UTPC(2,{1,2}); 1-e^(-x/2); ⚠ as the scalar call (unaudited)" }
-  - { id: "g169-chisquare-cdf-scalar", input: "chisquare_cdf(2,1)", oracle: "1-exp(-M(F(1,2)))", expect: "0.393469340287", mark: "⚠", source: "oracle", note: "guard: the first element as a scalar call; ⚠, chisquare_cdf is unaudited (a double)" }
+  - { id: "g169-chisquare-cdf-scalar", input: "chisquare_cdf(2,1)", oracle: "1-exp(-M(F(1,2)))", expect: "0.393469340287", mark: "≈", source: "oracle", note: "the first element as a scalar call; ⚠ before G221 (Giac's double), now pasicdft at the working precision" }
   - { id: "g169-fisher-cdf-list", input: "fisher_cdf(2,3,list[1,2])", oracle: "Braces(mp.betainc(1,M(F(3,2)),0,M(F(2,5)),regularized=True),mp.betainc(1,M(F(3,2)),0,M(F(4,7)),regularized=True))", expect: "{0.535241998455,0.719434141125}", mark: "⚠", source: "oracle", note: "it showed Beta(1,3/2,{2/5,4/7},1); I_{2x/(2x+3)}(1,3/2) at x = 1, 2; ⚠ as the scalar call (unaudited)" }
   - { id: "g169-fisher-cdf-scalar", input: "fisher_cdf(2,3,1)", oracle: "mp.betainc(1,M(F(3,2)),0,M(F(2,5)),regularized=True)", expect: "0.535241998455", mark: "⚠", source: "oracle", note: "guard: the first element as a scalar call; ⚠, fisher_cdf is unaudited" }
   - { id: "g169-poisson-cdf-list", input: "poisson_cdf(2,list[1,2])", oracle: "Braces(exp(-2)*(1+2),exp(-2)*(1+2+2))", expect: "{0.40600584971,0.676676416183}", mark: "⚠", source: "oracle", note: "it showed ⚠ ugamma({2,3},2.0,1); e^-2(1+2), e^-2(1+2+2); ⚠ as the scalar call (unaudited)" }
@@ -699,15 +699,64 @@ cases:
   - { id: "trust-cos-12", latex: "1-\\cos\\left(10^{-8}\\right)", oracle: "1-cos(F(1,10**8))", expect: "5E-17", mark: "≈", source: "oracle", note: "trust page: trap 2. 4.99999999999999995833E-17 (RAD, the default)" }
   - { id: "trust-limit-12", latex: "\\left(1+10^{-16}\\right)^{10^{16}}", oracle: "power(1+F(1,10**16),10**16)", expect: "2.71828182846", mark: "≈", source: "oracle", note: "trust page: trap 3. 2.71828182845904509945" }
   # --- G225 (backlog F194): dot and cross of vectors of different lengths are refused; Giac pads the short one, its convention, not a value ---
-  - { id: "g225-dot-lengths", input: "dot([1,2],[3,4,5])", expect: "The vectors have different lengths", source: "derived", note: "F194: Giac pads [1,2] with 0 and showed = 11; a dot product needs two vectors of one length" }
-  - { id: "g225-dot-lengths-list", input: "dot(list[1,2],list[3,4,5])", expect: "The vectors have different lengths", source: "derived", note: "F194: the { } list as Home sends it; it showed = 11" }
-  - { id: "g225-cross-lengths", input: "cross([1,2,3],[4,5])", expect: "The vectors have different lengths", source: "derived", note: "F194: Giac pads [4,5] with 0 and showed = [-15,12,-3]; only the 2-vector form is documented" }
-  - { id: "g225-cross-lengths-2-3", input: "cross([1,2],[3,4,5])", expect: "The vectors have different lengths", source: "derived", note: "F194: the short vector first; it showed = [10,-5,-2]" }
+  - { id: "g225-dot-lengths", input: "dot([1,2],[3,4,5])", expect: "The sizes do not match", source: "derived", note: "F194: Giac pads [1,2] with 0 and showed = 11; a dot product needs two vectors of one length" }
+  - { id: "g225-dot-lengths-list", input: "dot(list[1,2],list[3,4,5])", expect: "The sizes do not match", source: "derived", note: "F194: the { } list as Home sends it; it showed = 11" }
+  - { id: "g225-cross-lengths", input: "cross([1,2,3],[4,5])", expect: "The sizes do not match", source: "derived", note: "F194: Giac pads [4,5] with 0 and showed = [-15,12,-3]; only the 2-vector form is documented" }
+  - { id: "g225-cross-lengths-2-3", input: "cross([1,2],[3,4,5])", expect: "The sizes do not match", source: "derived", note: "F194: the short vector first; it showed = [10,-5,-2]" }
   - { id: "g225-keep-dot", input: "dot([1,2],[3,4])", oracle: "F(11)", expect: "11", mark: "=", source: "derived", note: "guard: 1*3+2*4" }
   - { id: "g225-keep-cross", input: "cross([1,2,3],[4,5,6])", expect: "[-3,6,-3]", mark: "=", source: "derived", note: "guard: (2*6-3*5, 3*4-1*6, 1*5-2*4)" }
   - { id: "g225-keep-cross-2d", input: "cross([1,2],[3,4])", expect: "[0,0,-2]", mark: "=", source: "derived", note: "guard: Giac's documented 2-vector form keeps its z = 0; z = 1*4-2*3 = -2" }
+  # --- G225f1 (pass 119, decisions.md Defaults: unequal shapes are refused): + - * and the pointwise operators; dot and cross take vectors only ---
+  - { id: "g225f1-times-short-left", input: "[1,2]*[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads [1,2] with 0 and showed = 11" }
+  - { id: "g225f1-times-short-right", input: "[1,2,3]*[4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads [4,5] with 0 and showed = 14" }
+  - { id: "g225f1-plus-lengths", input: "[1,2]+[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads and showed = [4,6,5]" }
+  - { id: "g225f1-minus-lengths", input: "[1,2]-[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac pads and showed = [-2,-2,-5]" }
+  - { id: "g225f1-list-plus-lengths", input: "list[1,2]+list[3,4,5]", expect: "The sizes do not match", source: "derived", note: "the { } list as Home sends it; it showed = {4,6,5}" }
+  - { id: "g225f1-list-minus-lengths", input: "list[1,2]-list[3,4,5]", expect: "The sizes do not match", source: "derived", note: "it showed = {-2,-2,-5}" }
+  - { id: "g225f1-list-times-lengths", input: "list[1,2]*list[3,4,5]", expect: "The sizes do not match", source: "derived", note: "Giac cuts to the shorter and showed = {3,8}" }
+  - { id: "g225f1-pointwise-plus-lengths", input: "[1,2].+[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".+ pads (probe): [4,6,5]" }
+  - { id: "g225f1-pointwise-minus-lengths", input: "[1,2].-[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".- pads (probe): [-2,-2,-5]" }
+  - { id: "g225f1-pointwise-times-lengths", input: "[1,2].*[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".* cuts to the shorter: it showed = [3,8]" }
+  - { id: "g225f1-pointwise-divide-lengths", input: "[1,2]./[3,4,5]", expect: "The sizes do not match", source: "derived", note: "./ cuts: it showed = [1/3,1/2]" }
+  - { id: "g225f1-pointwise-power-lengths", input: "[1,2].^[3,4,5]", expect: "The sizes do not match", source: "derived", note: ".^ cuts (probe): [1,16]" }
+  - { id: "g225f1-matrix-plus-shapes", input: "[[1,2],[3,4]]+[[1,2,3],[4,5,6]]", expect: "The sizes do not match", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
+  - { id: "g225f1-matrix-minus-shapes", input: "[[1,2],[3,4]]-[[1,2],[3,4],[5,6]]", expect: "The sizes do not match", source: "derived", note: "Giac pads: it showed = [[0,0],[0,0],[-5,-6]]" }
+  - { id: "g225f1-pointwise-matrix-shapes", input: "[[1,2],[3,4]].+[[1,2,3],[4,5,6]]", expect: "The sizes do not match", source: "derived", note: "Giac pads rows and showed = [[2,4,3],[7,9,6]]" }
+  - { id: "g225f1-vector-times-matrix-size", input: "[1,2,3]*[[1,2],[3,4]]", expect: "The sizes do not match", source: "derived", note: "Giac drops the 3 and showed = [7,10]; the row vector needs as many entries as the matrix has rows" }
+  - { id: "g225f1-chain-refused", input: "[1,2]*[3,4,5]*2", expect: "The sizes do not match", source: "derived", note: "the first pair has different lengths, read from the left: Giac showed = 22" }
+  - { id: "g225f1-chain-after-scalar", input: "[1,2]*3*[4,5,6]", expect: "The sizes do not match", source: "derived", note: "[1,2]*3 = [3,6], then two lengths: it showed = 42" }
+  - { id: "g225f1-stored-times", steps: [{"input": "a:=[1,2]"}, {"input": "b:=[3,4,5]"}, {"input": "a*b"}], expect: "The sizes do not match", source: "derived", note: "stored names: it showed = 11" }
+  - { id: "g225f1-stored-plus", steps: [{"input": "a:=[1,2]"}, {"input": "b:=[3,4,5]"}, {"input": "a+b"}], expect: "The sizes do not match", source: "derived", note: "stored names: it showed = [4,6,5]" }
+  - { id: "g225f1-body-plus", steps: [{"input": "f(u,v):=u+v"}, {"input": "f([1,2],[3,4,5])"}], expect: "The sizes do not match", source: "derived", note: "a stored body bound to the arguments: it showed = [4,6,5]" }
+  - { id: "g225f1-body-literal", steps: [{"input": "h(u):=u*[1,2]*[3,4,5]"}, {"input": "h(2)"}], expect: "The sizes do not match", source: "derived", note: "a stored body holding lists: the second product pairs [2,4] with [3,4,5]" }
+  - { id: "g225f1-dot-matrix-vector", input: "dot([[1,2],[3,4]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "dot of a matrix and a vector: it showed = [7,10]" }
+  - { id: "g225f1-dot-matrix-vector-3", input: "dot([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = [9,12,15]" }
+  - { id: "g225f1-dot-row-matrix", input: "dot([[1,2],[3,4]],[[1,2]])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = 5" }
+  - { id: "g225f1-dot-matrices", input: "dot([[1,2],[3,4]],[[5,6],[7,8]])", expect: "Dot and cross take two vectors", source: "derived", note: "equal shapes included: it showed = 70" }
+  - { id: "g225f1-cross-matrix-vector", input: "cross([[1,2,3],[4,5,6]],[1,2,3])", expect: "Dot and cross take two vectors", source: "derived", note: "it showed = [12,-3,-2]" }
+  - { id: "g225f1-matrix-type-plus-shapes", input: "idn(2)+zeros(2,3)", expect: "The sizes do not match", source: "derived", note: "no list in the text; Giac's own answer is Invalid dimension" }
+  - { id: "g225f1-matrix-type-pointwise-shapes", input: "idn(2).*zeros(2,3)", expect: "The sizes do not match", source: "derived", note: "no list in the text; Giac cuts and showed = [[0,0],[0,0]]" }
+  - { id: "g225f1-calls-plus-lengths", input: "col(idn(2),0)+col(zeros(3,3),0)", expect: "The sizes do not match", source: "derived", note: "no list in the text; Giac pads and showed = [1,0,0]" }
+  - { id: "g225f1-keep-matrix-type-sum", input: "idn(2)+zeros(2,2)", expect: "[[1,0],[0,1]]", source: "derived", note: "guard: identity plus zero, equal shapes" }
+  - { id: "g225f1-keep-times", input: "[1,2]*[3,4]", expect: "11", mark: "=", source: "derived", note: "guard: 1*3+2*4" }
+  - { id: "g225f1-keep-plus", input: "[1,2]+[3,4]", expect: "[4,6]", mark: "=", source: "derived", note: "guard" }
+  - { id: "g225f1-keep-scalar", input: "2*[1,2]", expect: "[2,4]", mark: "=", source: "derived", note: "guard" }
+  - { id: "g225f1-keep-matrix-vector", input: "[[1,2],[3,4]]*[5,6]", expect: "[17,39]", mark: "=", source: "derived", note: "guard: 1*5+2*6, 3*5+4*6" }
+  - { id: "g225f1-keep-vector-matrix", input: "[1,2]*[[1,2],[3,4]]", expect: "[7,10]", mark: "=", source: "derived", note: "guard: a row of two against two rows: 1*1+2*3, 1*2+2*4" }
+  - { id: "g225f1-keep-chain", input: "[1,2]*[3,4]*[5,6,7]", expect: "[55,66,77]", mark: "=", source: "derived", note: "guard: the chain is read from the left and is 11 after its first pair; 11*[5,6,7]" }
+  - { id: "g225f1-keep-dot-one-list", input: "dot([[1,2],[3,4]])", expect: "11", mark: "=", source: "derived", note: "guard: the one-list form, 1*3+2*4" }
+  - { id: "g225f1-keep-cross-one-list", input: "cross([[1,2,3],[4,5,6]])", expect: "[-3,6,-3]", mark: "=", source: "derived", note: "guard: the one-list form (2*6-3*5, 3*4-1*6, 1*5-2*4)" }
+  - { id: "g225f1-keep-poly-sum", input: "symb2poly(x+2)+symb2poly(x^2+1)", expect: "poly1[1,1,3]", source: "derived", note: "guard: coefficient vectors asked for: (x+2)+(x^2+1) = x^2+x+3" }
+  - { id: "g225f1-keep-list-plus-number", input: "[1,2]+1", expect: "A list plus a number: use .+ or add a list of the same length", source: "derived", note: "guard: stays listPlusNumber" }
+  - { id: "g225f1-keep-matrix-vector-error", input: "[[1,2],[3,4]]*[1,2,3]", expect: "GIAC_ERROR: dotvecteur Error: Invalid dimension", source: "derived", note: "guard: a 2x2 matrix cannot take a 3-vector; stays Giac's error" }
   # --- G173 (F108, F127, F93): Giac's print forms never reach the text ------------------------------------------------
   - { id: "g173-empty-seq", input: "op([])", expect: "No value found", source: "derived", note: "F108: a sequence of no element is no answer; it showed Giac's seq[]" }
   - { id: "g173-matrix-in-vector", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
   - { id: "g173-matrix-in-list", input: "list[idn(2)]", expect: "{[[1,0],[0,1]]}", source: "derived", note: "F127: a list holding the 2×2 identity; it showed {matrix[[1,0],[0,1]]}" }
   - { id: "g173-when", input: "when(x>0,x+1,x-1)", expect: "when(x>0,x+1,x-1)", source: "derived", note: "F93: the conditional as typed; it showed C's ((x>0)? x+1 : x-1), which the entry line does not read" }
+  # --- G173f1: a store arrow of Giac's sequence holds the list the result shows; the Sto key types `:=` (G119), so `=>` is Giac's text ---
+  - { id: "g173f1-arrow-list", steps: [{"input": "op([3,4])=>G"}, {"input": "G+1"}], expect: "{4,5}", mark: "=", source: "derived", note: "G holds {3,4}, elementwise 3+1, 4+1; Giac adds a stored sequence's elements into one sum, so it showed 8" }
+  - { id: "g173f1-arrow-empty-refused", steps: [{"input": "op([])=>E"}], expect: "No value found", source: "derived", note: "guard (passes on phase-1 too): a sequence of no element is no answer, as g173-empty-seq" }
+  - { id: "g173f1-arrow-empty-free", steps: [{"input": "op([])=>E"}, {"input": "E"}], expect: "E", source: "derived", note: "the refused store leaves E free; E kept the empty sequence, so reading it said No value found" }
+  - { id: "g173f1-arrow-empty-keeps", steps: [{"input": "E:=5"}, {"input": "op([])=>E"}, {"input": "E"}], oracle: "F(5)", expect: "5", mark: "=", source: "derived", note: "the refused store leaves E's earlier value 5; E kept the empty sequence, so reading it said No value found" }
+  - { id: "g173f1-sto-key-list", steps: [{"latex": "\\operatorname{op}\\left(\\left\\{3,4\\right\\}\\right)\\blacktriangleright G"}, {"latex": "G+1"}], expect: "{4,5}", mark: "=", source: "derived", note: "guard (passes on phase-1 too): the Sto key types G:=op(list[3,4]), G119's path; {3,4}+1 = {4,5}" }

@@ -125,6 +125,8 @@ export const KNOWN_RULES = [
   [/^(g47-)?(prec-g44f?\d?-)?(prec-2-)?(normald|student|chisquare|fisher)_icdf|^prec-g44f?\d?-(normald|student|chisquare|fisher)_icdf|^g47-normald_icdf/, "register row icdf-double (G44): the inverse distribution functions return a double at any Digits (or +infinity far in a tail)"],
   [/^prec-g44f1-(evalf-)?erf-|^prec-g44f1-(evalf-)?erfc|^prec-3-UTPN/, "register row erfc-as-1-erf (G44f1): erfc is 1-erf and cancels, a small erf argument returns the argument"],
   [/^g220-normald?-cdf-/, "register row erfc-as-1-erf (G220): Giac prints normald_cdf as (erf(u)+1)/2, whose sum cancels in the lower tail at Digits 40"],
+  [/^g221-(student|studentd|chi|chisquared)-/, "register row cdf-double (G221): the forward student_cdf and chisquare_cdf are a double at any Digits, a far tail wrong from the 6th digit; a degree of freedom that is no integer is refused"],
+  [/^g221-evalf-/, "register row cdf-double (G221): evalf of normald_cdf, normal_cdf and UTPN cancels as the erf form does: 0 in the far tail at Digits 40"],
   [/^g220-normal-icdf-/, "register row icdf-double (G44, G220): normal_icdf is normald_icdf under another name, a double at any Digits"],
   [/sin1e(50|60|70|100)|sin-1e100|^prec-G23/, "register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong"],
   [/Bessel|Airy|besselj/, "register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14"],
@@ -143,6 +145,32 @@ export const KNOWN_IDS = new Set([
   "g220-normal-cdf-neg20-30",
   "g220-normald-cdf-8-9-30",
   "g220-normal-icdf-0.975-30",
+  "g221-student-5-neg100-12",
+  "g221-student-5-neg100-30",
+  "g221-student-30-neg8-12",
+  "g221-student-30-neg8-30",
+  "g221-student-2.5-1-12",
+  "g221-student-2.5-1-30",
+  "g221-studentd-5-neg100-12",
+  "g221-studentd-5-neg100-30",
+  "g221-chi-3-2-30",
+  "g221-chi-10-0.01-12",
+  "g221-chi-10-0.01-30",
+  "g221-chi-3-1e-6-12",
+  "g221-chi-3-1e-6-30",
+  "g221-chi-3-1-2-30",
+  "g221-chisquared-10-0.01-12",
+  "g221-chisquared-10-0.01-30",
+  "g221-evalf-normald-neg20-12",
+  "g221-evalf-normald-neg20-30",
+  "g221-evalf-UTPN-20-12",
+  "g221-evalf-UTPN-20-30",
+  "g221-evalf-normald-neg8-30",
+  "g221-evalf-normald-8-9-30",
+  "g221-evalf-normal-neg20-12",
+  "g221-evalf-normal-neg20-30",
+  "g221-evalf-normald-mu-sigma-12",
+  "g221-evalf-normald-mu-sigma-30",
   "g38-floor-sin1e60",
   "prec-2-normald_icdf-value",
   "prec-g44-normald_icdf-0.025-30",
@@ -683,6 +711,19 @@ export function build(cases) {
   const negInvSqrt3 = "-(57735026918962576450914878050195745564760/10^41)*i";
   patched.push("// patch 0019-atan-exact-cut.patch", "// g135-cos-quote-atan-2i (derived: cos(atan(2*i)) = 1/sqrt(-3) = -i/sqrt(3))", `Digits:=40:; pc("g135-cos-quote-atan-2i",'cos(quote(atan(2*i)))',${negInvSqrt3},1/10^35);`);
   nPatched++;
+  // Patch 0040 (G186), tests/golden/precision.yaml g186-* (LaTeX rows, which the export leaves out): prog.cc's simplifier, which sign()
+  // reaches through sturmsign for a value whose double is not finite, ends for an integer base past the double range. A stock wasm build
+  // never returns on these lines (its loop is deaf to the clock: run.mjs on a stock engine stops here); a native x86 build reads
+  // int(inf) as INT_MIN and skips the loop.
+  patched.push(
+    "// patch 0040-simplifier-root-huge-base.patch",
+    "// g186-simplify-sqrt-1e330+7 (derived: no square factor that trial division finds, so the root stays as it is)",
+    `Digits:=40:; pc("g186-simplify-sqrt-1e330+7",'simplify(sqrt(10^330+7))',sqrt(10^330+7),1/10^30);`,
+    "// patch 0040-simplifier-root-huge-base.patch",
+    "// g186-abs-cos-acosh-1e-300-30 (precision.yaml, oracle)",
+    `Digits:=40:; pc("g186-abs-cos-acosh-1e-300-30",'(abs(cos(pi/10^7)+acosh(1/10^300)))',186209588911856012363779923385/10^29,5/10^30);`,
+  );
+  nPatched += 2;
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
