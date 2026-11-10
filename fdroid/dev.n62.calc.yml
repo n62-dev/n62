@@ -16,6 +16,10 @@ AutoName: N62
 RepoType: git
 Repo: https://github.com/n62-dev/n62.git
 
+# A138 (owner, 2026-11-10, decisions.md "F-Droid Reproducible Builds"): F-Droid builds, compares its APK with the release APK below and publishes ours (our signature) if they match.
+# %v is the versionName (tag v0.1.0, asset n62-0.1.0.apk, .github/workflows/release.yml).
+Binaries: https://github.com/n62-dev/n62/releases/download/v%v/n62-%v.apk
+
 Builds:
   - versionName: 0.1.0
     versionCode: 1
@@ -62,6 +66,9 @@ Builds:
       - npm run index
       - GIAC_OUT=../engine/giac/_out/gsl npm run build
       - npx cap sync android
+
+# The release certificate's SHA-256 (android/release-cert.sha256; lowercase hex, no colons).
+AllowedAPKSigningKeys: 34e53a5bbd0d2f5f25eeb0faa0330618dc64e07cd1b74e8110d20d88add0d9c0
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
