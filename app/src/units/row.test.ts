@@ -17,6 +17,10 @@ import { unitLatex } from "../input/chipUnit.ts";
 import { putRow, rowSlots, unitRow } from "./row.ts";
 import { isUnitError, type Quantity, type UnitRequest } from "./types.ts";
 import { fakeKv } from "../state/fakeKv.ts";
+import type { AppShell } from "../apps/shell.svelte.ts";
+import { ClipActions } from "../clipboard/actions.svelte.ts";
+import type { ClipboardPort } from "../clipboard/port.ts";
+import type { EntryController } from "../entry/controller.ts";
 
 const item = (kind: string, id: string, x: Record<string, string>): IndexItem =>
   ({ id: `${kind}:${id}`, kind, names: [id], title: id, tier: 0, insert: "", ...x }) as unknown as IndexItem;
@@ -115,6 +119,28 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     s.setDecimalMark("comma");
     expect(s.display(it).latex).toContain("\\pm1{,}2");
     expect(s.display(it).text).toBe("39,488 ± 1,2 m²");
+  });
+
+  // R269: the Copy key and Copy as shown (☰ → Copy as → As shown, which reads Session.display) write the same unit part
+  // for t10's row, in point and in comma mode; the real Session and ClipActions, only the clipboard is a fake
+  it("t10: Copy and Copy as shown agree on the value, σ and unit (R269)", async () => {
+    const q = units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [M, M] });
+    const s = await session(fakeKv([], { cloneReads: true }));
+    putRow(s, unitRow({ line: "12.34\\pm0.05\\times3.2\\pm0.1", chips: {}, q, slots: { u1: M, u2: M }, input: "", digits: 12 }));
+    const it = s.home[0] as HistoryItem;
+    let clip = "";
+    const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
+    const shell = { app: null, showsEntry: true } as unknown as AppShell;
+    const c = new ClipActions(s, shell, {} as EntryController, { insert() {}, recall() {} }, port);
+    const both = async (): Promise<[string, string]> => {
+      await c.copy(it);
+      const copied = clip;
+      await c.copyShown(it);
+      return [copied, clip];
+    };
+    expect(await both()).toEqual(["39.488 ± 1.2 m²", "39.488 ± 1.2 m²"]);
+    s.setDecimalMark("comma");
+    expect(await both()).toEqual(["39,488 ± 1,2 m²", "39,488 ± 1,2 m²"]);
   });
 
   it("a stored row that lost its shape gives no chip and no slots, never a wrong one", async () => {
