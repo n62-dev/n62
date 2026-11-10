@@ -52,7 +52,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 12. **No lanes after a failed selftest:** the owner starts `scripts/night.sh` without `--lane`, and henri runs lane B's rows, then lane A's, as one queue.
 
 ### The lanes on the Tab One (owner, 2026-11-07)
-`ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is skipped. Follow each Opus pass as written (rule 3).
+`ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, then engine rows)
 

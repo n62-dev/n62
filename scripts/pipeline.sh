@@ -465,6 +465,7 @@ if [[ "$task" =~ ^[A-Z][0-9]+[a-z0-9]*$ ]]; then
   pkg="docs/shifts/packages/$task.md"
   p1file "$pkg" || die "package $task has no package file $pkg on phase-1"
   ! package_shaped "$task" || pkg_drop="$pkg"  # A75: a package's own file goes with its merge; a FIX id's file stays
+  ! package_shaped "$task" || after_wait="$(after_waits "$brief" "$task" phase-1)" || true  # A127: its row's After names an id not merged
   git show "phase-1:$pkg" > "$spec_file"
   heading="$(head -n1 "$spec_file")"
   # shellcheck disable=SC2016
@@ -507,6 +508,13 @@ if [[ -n "${no_package:-}" ]]; then
   runno="$n"; why="no package file for $no_package"
   if [[ $dry -eq 1 ]]; then rm -rf "$run"; else log "pipeline #$n $id: NOT MERGED ($why)"; fi
   echo "RESULT #$n $id: NOT MERGED ($why)"; exit 1
+fi
+
+# A127: the row's After is not merged: not started (no worker, worktree or branch), no failure; night.sh and henri come back to it
+if [[ -n "${after_wait:-}" && $dry -eq 1 ]]; then echo "after: WAITS for $after_wait (a real run stops here: exit 2)"
+elif [[ -n "${after_wait:-}" ]]; then
+  runno="$n"; rm -rf "$run"; log "pipeline #$n $id: WAITS for $after_wait"
+  echo "RESULT #$n $id: WAITS for $after_wait"; exit 2
 fi
 
 # The bundle: spec, the files it names (capped), the report format and the definition of done.

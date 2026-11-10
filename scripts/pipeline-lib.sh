@@ -690,3 +690,32 @@ henri_input() {
 night_section() {
   awk '/^## .* night/ { h = NR } { l[NR] = $0 } END { s = NR - 399; if (h && h < s) s = h; if (s < 1) s = 1; for (i = s; i <= NR; i++) print l[i] }' "$1"
 }
+
+# ---- A127: a row waits for its After ----
+# after_ids <brief file> <package id>: the ids (one a line) in the After column of the package's row in a lane table of brief 0c
+# (the tables under "### Lane A queue", "### Lane B queue", or "### The queue"); a row is the one whose What column starts with the id, bare or as
+# a link `[ID](...)`. Plain words in the column ("the v0.1.0 tag") and "–" give none; an id with no row gives none.
+after_ids() {
+  awk -F'|' -v id="$2" '
+    /^###? / { lane = ($0 ~ /^### (Lane [AB] queue|The queue)/); next }
+    lane && NF >= 6 {
+      w = $3; gsub(/^[ \t]+|[ \t]+$/, "", w)
+      if (w ~ ("^\\[?" id "([]) ]|$)")) { a = $(NF - 1); while (match(a, /[AGRS][0-9]+[a-z0-9]*/)) { print substr(a, RSTART, RLENGTH); a = substr(a, RSTART + RLENGTH) } }
+    }' "$1"
+}
+# id_merged <id> <git ref>: succeeds when the id counts as merged on the ref: a merge subject `: <id> (pipeline run` or `: <id>f<k> (pipeline run`,
+# or a package-shaped id (no f<k> suffix) with no package file on the ref (merged before the subjects, or its file deleted by A75).
+id_merged() {
+  git log "$2" --format=%s 2>/dev/null | grep -qE ": $1(f[0-9]+)? \(pipeline run" && return 0
+  package_shaped "$1" && [[ "$(git cat-file -t "$2:docs/shifts/packages/$1.md" 2>/dev/null)" != blob ]]
+}
+# after_waits <brief file> <package id> <git ref>: prints the After ids of the package's row that are not merged (", " apart) and succeeds
+# when there are any.
+after_waits() {
+  local a w=""
+  while IFS= read -r a; do
+    [[ -z "$a" ]] || id_merged "$a" "$3" || w+="${w:+, }$a"
+  done < <(after_ids "$1" "$2")
+  [[ -z "$w" ]] || { echo "$w"; return 0; }
+  return 1
+}
