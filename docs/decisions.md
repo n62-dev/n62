@@ -65,7 +65,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P7 (2026-10-12, revised by P11): keypad gestures.** The arrow keys are one trackpad; flicks up (Shift) and down (letter) on every key. Thresholds: Defaults "Flicks". Archived. Would change if: the owner finds a threshold wrong on the phone.
 - **The letters stay on the keys (2026-10-14).** Rule: docs/04 5.1 (the letters; the unassigned Shift cells). Would change if: Alpha taps near zero (P7 point 4); a function in the benchmark needs a key and no cell is free.
 - **Stored data carries a version; one signing key (2026-10-14).** Rule: docs/04 6.2 (the stamp); the throwaway key lives in `~/.cache/n62/keys/` for every worktree, so an install over the last keeps its data.
-- **Start chunk: 175 kB raw, 61 kB gzip (owner, 2026-10-27, kept 2026-10-31), pinned** (size-check.ts; the inline scripts 1.53 kB gzip). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
+- **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts; the inline scripts 1.53 kB gzip). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
 - **Owner answers of 2026-10-19 (feel).** R34: one shared entry line, as on the G2 (an unentered line follows you between views; after Enter it clears); R43, R7's defaults and A4a points 3 and 4 as built. Archived.
 
 ### Precision, engine and parser
@@ -216,6 +216,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Archived, "Opus pass 123". Would change if: the per-element calls are batched.
 - **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Archived, "Opus pass 97". Would change if: the owner wants an older look flat.
 - **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112). Archived, "Opus pass 106". Would change if: its device check, or the owner wants the system's setting to win.
-- **Start chunk room (Opus pass 99):** a package that fails the 61 kB pin on a chunk hash alone gets a cut in its fix (no change of behaviour), never an allowance; the pin is then the measure plus 0.05 kB. Archived, "Opus pass 106". Would change if: the owner raises the 61 kB budget.
+- **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
 - **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.

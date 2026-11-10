@@ -74,8 +74,8 @@ describe("size-check", () => {
     expect(over.failures.map((f) => f.split(":")[0])).toEqual(["Inline scripts"]);
   });
 
-  it("fails a start chunk over 175 kB raw", () => {
-    const { manifest, files } = base(175_001);
+  it("fails a start chunk over 180 kB raw", () => {
+    const { manifest, files } = base(180_001);
     const r = checkSizes(fakeDist(manifest, files));
     expect(r.failures).toHaveLength(1);
     expect(r.failures[0]).toContain("Start chunk");
@@ -92,13 +92,13 @@ describe("size-check", () => {
       "lazy.js": { file: "assets/lazy.js", isDynamicEntry: true, src: "lazy.js" },
     };
     expect(startFiles(manifest).sort()).toEqual(["assets/a.js", "assets/b.js", "assets/c.js", "assets/index.js"]);
-    // Each file is 50 kB: the entry alone is under 175 kB, the four together (200 kB) are over. lazy.js (1 MB) must not count.
+    // Each file is 50 kB: the entry alone is under 180 kB, the four together (200 kB) are over. lazy.js (1 MB) must not count.
     const files = { ...FINDER_FILE, "assets/index.js": 50_000, "assets/a.js": 50_000, "assets/b.js": 50_000, "assets/c.js": 50_000, "assets/lazy.js": 1_000_000 };
     const r = checkSizes(fakeDist(manifest, files));
     const start = r.rows.find((x) => x.rule === "Start chunk");
     expect(start?.raw).toBe(200_000);
     expect(start?.files.sort()).toEqual(["assets/a.js", "assets/b.js", "assets/c.js", "assets/index.js"]);
-    // Over both the raw budget (200 kB > 175 kB) and the gzip one (80 kB of random bytes > 61 kB); nothing else fails.
+    // Over both the raw budget (200 kB > 180 kB) and the gzip one (80 kB of random bytes > 63 kB); nothing else fails.
     expect(r.failures.every((f) => f.startsWith("Start chunk"))).toBe(true);
     expect(r.failures.some((f) => f.includes("raw"))).toBe(true);
   });
@@ -118,10 +118,10 @@ describe("size-check", () => {
     expect(() => startFiles(manifest)).toThrow(/_missing\.js/);
   });
 
-  it("fails a start chunk over 61 kB gzip even when it is under 175 kB raw", () => {
+  it("fails a start chunk over 63 kB gzip even when it is under 180 kB raw", () => {
     const { manifest } = base(0);
-    // Random bytes do not compress, so 62 kB raw is over 61 kB gzip and well under 175 kB raw.
-    const r = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 62_000 }, "assets/mathlive.js": 1000 }));
+    // Random bytes do not compress, so 64 kB raw is over 63 kB gzip and well under 180 kB raw.
+    const r = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 64_000 }, "assets/mathlive.js": 1000 }));
     expect(r.failures).toHaveLength(1);
     expect(r.failures[0]).toContain("gzip");
   });
@@ -268,13 +268,13 @@ describe("size-check", () => {
     expect(START_PIN_GZIP).toBe(60_985);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
-    expect(at.failures).toEqual([]); // inside the budget of 61 kB ...
+    expect(at.failures).toEqual([]); // inside the budget of 63 kB ...
     expect(checkStartPin(at.rows[0]!)).toEqual([]); // ... and inside the pin
-    const over = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 61_200 }, "assets/mathlive.js": 1000 }));
-    expect(over.rows[0]!.gzip).toBeGreaterThan(61_000);
+    const over = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 63_200 }, "assets/mathlive.js": 1000 }));
+    expect(over.rows[0]!.gzip).toBeGreaterThan(63_000);
     expect(checkStartPin(over.rows[0]!)[0]).toContain("pinned"); // over both
     const between = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_960 }, "assets/mathlive.js": 1000 }));
-    expect(between.failures).toEqual([]); // inside the budget of 61 kB ...
+    expect(between.failures).toEqual([]); // inside the budget of 63 kB ...
     expect(checkStartPin(between.rows[0]!)[0]).toContain("pinned"); // ... but over the pin
     const inside = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 58_000 }, "assets/mathlive.js": 1000 }));
     expect(checkStartPin(inside.rows[0]!)).toEqual([]);
