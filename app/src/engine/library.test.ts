@@ -341,6 +341,27 @@ describe.skipIf(!giacAvailable())("the degree factor in library files (G46, real
     expect(h.home("sn(90)", deg).result.display).toBe("1");
   });
 
+  it("G304: a body's other Giac spelling of an angle function follows the mode (derived: arcsin 1/2 = 30°, arccos 1/2 = 60°, arctan 1 = arccot 1 = 45°, arcsec 2 = 60°, arccsc 2 = 30°, SIN 30° = 1/2; oracle: asin(0.5) = 0.523598775598 rad)", async () => {
+    const h = await fresh();
+    const defs = ["fa(x):=arcsin(x)", "fb(x):=arccos(x)", "fc(x):=arctan(x)", "fd(x):=arccot(x)", "fe(x):=arcsec(x)", "ff(x):=arccsc(x)", "fg(x):=SIN(x)"];
+    const text = `// n62 library 3\n${defs.map((d) => `// ${d}\n${d}\n`).join("")}`;
+    const r = importLibrary(h, parseLibrary(text, parse, LIBRARY_FORMAT), []);
+    expect(r).toMatchObject({ ok: true });
+    const shown = (input: string, s = deg): string => h.home(input, s).result.display;
+    expect(shown("fa(0.5)")).toBe("30");
+    expect(shown("fb(0.5)")).toBe("60");
+    expect(shown("fc(1)")).toBe("45");
+    expect(shown("fd(1)")).toBe("45");
+    expect(shown("fe(2)")).toBe("60");
+    expect(shown("ff(2)")).toBe("30");
+    expect(shown("fg(30)")).toBe("0.5");
+    expect(shown("fa(0.5)", defaultHomeSettings)).toBe("0.523598775598");
+    // the export writes the file's own spelling back, without the factor
+    const out = exportLibrary(r.ok ? r.log : [], LIBRARY_FORMAT).text;
+    for (const d of defs) expect(out).toContain(d);
+    expect(out).not.toContain("pasdeg");
+  });
+
   it("a version-2 file's pasexp reads as exp (derived: exp(i*pi) = -1)", async () => {
     const h = await fresh();
     const r = importLibrary(h, parseLibrary("// n62 library 2\n// phasor\nph(w):=pasexp(i*w)\n", parse, LIBRARY_FORMAT), []);
