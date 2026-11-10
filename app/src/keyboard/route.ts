@@ -18,7 +18,7 @@ import { actionFor, type ActionBody, type Key, type Layer, type Special } from "
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
 export type Mods = { shift: boolean; alpha: boolean };
 /** A key (or a hardware letter, R45) waiting for an app's or a sheet's code. */
-export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean } | { letter: string };
+export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean; line?: boolean } | { letter: string };
 
 /** What the routing reads and calls: the models, the App-owned state (as accessors) and the App-owned actions. */
 export interface RouteCtx {
@@ -174,7 +174,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   // a "note" row (the safe-start line) is drawn without a pick, so it is never picked
   if (picked === null || picked >= n || !canPick(items, picked)) {
     c.picked = null;
-    if (!isCmd("moveUp") || n === 0 || c.entry.value !== "") return false;
+    if (!isCmd("moveUp") || n === 0 || !c.entry.empty) return false;
     c.picked = pickAtOrBefore(items, n - 1);
     if (c.picked === null) return false; // only notes: Up does its normal job
     c.loadClip(); // the row buttons come from its list
@@ -317,15 +317,17 @@ function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
   return capped;
 }
 
+/** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. */
+const forLine = (c: RouteCtx, w: Waiting): boolean => "line" in w && !!w.line && c.entry.fieldPending;
 function wait(c: RouteCtx, w: Waiting): void {
   c.waiting.push(w);
-  if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad]).then(() => replay(c));
+  if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad, forLine(c, w) && c.entry.fieldUp]).then(() => replay(c));
 }
 function replay(c: RouteCtx): void {
   const keys = c.waiting;
   c.waiting = [];
   for (const w of keys)
-    if (c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null) wait(c, w); // another app or sheet started loading meanwhile
+    if (c.waiting.length > 0 || c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null || forLine(c, w)) wait(c, w); // another app or sheet started loading meanwhile (or the field is still to come), and all after it
     else if ("letter" in w) typeLetter(c, w.letter);
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
@@ -333,6 +335,10 @@ function replay(c: RouteCtx): void {
 const SHEET_KEYS: readonly string[] = ["apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory"];
 /** The open sheet is Find (R4a): its keys follow docs/04 3.7 (sheetKeys.ts findKey). */
 const FIND_SHEET = "find";
+const isEnter = (key: Key, mods: Mods): boolean => {
+  const a = actionFor(key, mods.shift, mods.alpha);
+  return a?.kind === "special" && a.name === "enter";
+};
 /** Does this key open a sheet? (Mode and Settings load the view with their lists.) */
 function opensSheet(key: Key, mods: Mods): boolean {
   const a = actionFor(key, mods.shift, mods.alpha);
@@ -379,6 +385,9 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
       .finally(() => (c.sheetLoad = null)); // if it fails, the queued keys run without a sheet
   }
   if (c.sheetLoad !== null) return wait(c, { key, mods, layer });
+  // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
+  // typed, and a key after it meets the empty line as live
+  if (c.entry.fieldPending && (c.waiting.length > 0 || isEnter(key, mods))) return wait(c, { key, mods, layer, line: true });
   if (c.shell.loading !== null) {
     const a = actionFor(key, mods.shift, mods.alpha);
     if (!(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
@@ -427,14 +436,14 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     if (!shell.showsEntry) return c.dead(); // a view without an entry line (Plot) ignores typing, ⇤ ⇥ and Undo
     // Ans belongs to Home and CAS; ± (R71) is read by the unit view, from the Home or CAS line
     if (action.kind === "insert" && (action.latex === ANS_CHIP || action.units)) return c.dead();
-  } else if (entry.value === "" && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {
+  } else if (entry.empty && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {
     return; // R98: on an empty line Undo brings back what Clear or Delete took first; then the line's own undo (P13)
-  } else if (entry.value === "" && key.id === "frac" && layerOf(mods) === "primary") {
+  } else if (entry.empty && key.id === "frac" && layerOf(mods) === "primary") {
     // a b/c on an empty line (R10): the last result in its next form (decimal ↔ fraction, a+bi ↔ polar), as on the
     // G2; while typing it is the stacked fraction below
     void session.cycleForm();
     return;
-  } else if (entry.value === "" && startsWithAns(key.id, layerOf(mods)) && session.hasResult()) {
+  } else if (entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult()) {
     entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   }
   entry.run(action);
