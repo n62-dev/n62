@@ -54,7 +54,7 @@ import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
 import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
-import { casSequence } from "./sequences.ts";
+import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine } from "./dead.ts";
 
@@ -851,7 +851,7 @@ export class EngineHost implements FactsHost {
     // G100: a chip's or constant's input brings the form of its typed text (homeTabled), the value cut from this one
     const form = given ?? this.formFor(input);
     try {
-      result = homeEval(this.strict, input, s, undefined, form, this.bodiesFor(input));
+      result = homeEval(this.strict, input, s, undefined, form, this.bodiesFor(input), false, this.byName);
     } catch (e) {
       if (!(e instanceof GiacSyntaxError)) throw e;
       const ms = performance.now() - t0;
@@ -1017,8 +1017,8 @@ export class EngineHost implements FactsHost {
     }
     // G119, G173 (owner, 2026-11-05): Giac's sequence answer as in Home (sequences.ts); none is refused, and a name it was
     // stored under goes back (a guarded assignment has stored nothing yet)
-    const seq = casSequence(this.giac, "pcasans", text, (f) => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, f), form.noValue);
-    if (seq?.empty && asg0 && !guarded) this.giac.eval(this.byName.has(asg0.name) ? putBack([], [this.byName.get(asg0.name)!]) : `purge(${asg0.name})`);
+    const seq = casSequence(this.giac, "pcasans", text, (f) => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, f), form, this.byName);
+    if (seq?.empty && asg0 && !guarded) this.giac.eval(nameBack(asg0.name, this.byName));
     if (seq?.empty) return fail(enEngine["error.noValue"], "noValue");
     if (seq) {
       text = seq.text;
