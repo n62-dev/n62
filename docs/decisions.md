@@ -34,6 +34,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
 ### Feel, keys and screen (milestone 4a)
+- **Touch and reuse (owner, 2026-11-10):** one rule per gesture: on a history row a tap picks, a second tap puts it on the line, a hold copies, a swipe deletes (Undo note); on the entry line a drag scrolls, a tap places the caret, a hold selects the term (touch only, no drag selection). The row bar keeps Store ▶ and Copy as ›. The Copy and Paste keys leave the keypad (a key move, the owner's choice; what takes r2c4 and r2c5 is open); ⇤□ and □⇥ go before the freeze. Store gets a design round (S53). Packages R274–R278, S53, A139. Would change if: A139 shows the gestures clash on a real WebView.
 - **R151's start time comes from A73f1 (Opus pass 92),** no measurement package. Archived, "Opus pass 96". Would change if: either is over its before by more than 50 ms.
 - **Owner answers of 2026-11-06 (UI, before v0.1.0):** R140–R150 and R53 as written (families: R50); a colour-blindness test, no picker (R140). Archived, "Opus pass 96".
 - **R41's status line at font scale 2.0 waits for a device (Opus pass 61):** annabell's next device run checks it with TalkBack. Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
