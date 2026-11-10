@@ -5,7 +5,8 @@
 // Node runs this file directly.
 import type { HomeResult } from "./homeEval.ts";
 import { resultFromFacts } from "./homeEval.ts";
-import { perturbedDigits, valuePrecision, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { confirmedComplex, perturbedDigits, valueAt, valuePrecision, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import type { ComplexValue } from "./format.ts";
 import type { DefEntry, NameFacts } from "./defs.ts";
 import { isOurs, type InputReads, type StoredName } from "./stateRead.ts";
 import { callsOf, isName } from "./giacPrint.ts";
@@ -125,6 +126,25 @@ function shapeOfResult(r: HomeResult): Shape {
 }
 
 /**
+ * G179 (F63): Giac holds `values` under `name`: all but the last digits of P agree (two reads of one number at different
+ * precisions can differ there; two different numbers do not agree to some 37 digits). One Giac call.
+ */
+function holdsValues(giac: Giac, name: string, shape: Shape, values: readonly ComplexValue[], digits: number, restoreDigits: number): boolean {
+  const P = valuePrecision(digits);
+  const held = withDigits(giac, P, restoreDigits, () => valueAt(giac, name, shape, P, P).parts);
+  return held !== null && held.length === values.length && held.every((h, k) => confirmedComplex(h, values[k]!, P, P) >= P - 3);
+}
+
+/**
+ * G179 (F63): the digits a stored value keeps when a line only reads it: those it left its line with (`stored`), never
+ * fewer because the read counted its print again (a C double prints 14 digits and confirms 13, shortDigits; the
+ * perturbation check moves the name in that last digit), unless the value Giac holds has fewer digits than that.
+ */
+function keptDigits(counted: number, stored: number, value: ComplexValue): number {
+  return Math.max(counted, Math.min(stored, Math.max(value.re.digits.length, value.im.digits.length)));
+}
+
+/**
  * Decisions M4-7: a numeric result computed from stored names with facts (floats, inexact values, G49), or from chips
  * named in the input (G49), inherits their facts. Its confirmed digits are at most theirs, its warn is theirs, and it
  * is never exact; when the input can be run again (`expr`, decimals exact) and is more than the bare name, it is
@@ -141,13 +161,15 @@ export function inherited(host: FactsHost, r: HomeResult, reads: InputReads, exp
   const warn = used.some((u) => u.facts.warn === "unaudited") ? "unaudited" : used.some((u) => u.facts.warn === "unchecked") ? "unchecked" : undefined;
   const moved = used.filter((u) => u.own !== undefined && u.own.reliableDigits !== null).map((u) => ({ name: u.name, n: u.own!.reliableDigits! }));
   const shape = shapeOfResult(r);
+  const values = els.map((e) => e.value!);
+  const runs = expr !== null && moved.length > 0 && !isName(expr.trim(), true);
+  // G179 (F63): the result is the one name's own value (read by its name or through f(t):=t): it keeps that name's digits
+  const same = used.length === 1 && moved.length === 1 && (runs || els.some((e) => (e.facts.reliableDigits ?? P) < cap)) && holdsValues(host.giac, moved[0]!.name, shape, values, digits, restoreDigits);
   let pert: number[] | null | undefined;
   let once = false;
-  if (expr !== null && moved.length && !isName(expr.trim(), true)) {
-    pert = perturbedDigits(host.giac, expr, shape, els.map((e) => e.value!), moved, digits, restoreDigits);
-  }
+  if (runs && !same) pert = perturbedDigits(host.giac, expr, shape, values, moved, digits, restoreDigits);
   const facts: ElementFacts[] = els.map((e, k) => {
-    let n = Math.min(e.facts.reliableDigits ?? P, cap);
+    let n = Math.min(same ? keptDigits(e.facts.reliableDigits ?? P, cap, e.value!) : (e.facts.reliableDigits ?? P), cap);
     if (pert) n = Math.min(n, pert[k]!);
     const w = warn ?? e.facts.warn ?? (pert === null ? "unchecked" : undefined);
     if (pert === null && !warn && !e.facts.warn) once = true;
