@@ -173,6 +173,11 @@ export function matrixTyped(text: string): boolean {
   return text.startsWith(MATRIX_TYPE) && closing(text, MATRIX_TYPE.length - 1, "printed") === text.length - 1;
 }
 
+/** G225f2: a value's printed text is a list (`[…]`, a matrix's rows too, `list[…]` or `matrix[…]`). A text test: it routes, Giac's values decide. */
+export function holdsList(text: string): boolean {
+  return text.startsWith("[") || text.startsWith(LIST_TYPE) || text.startsWith(MATRIX_TYPE);
+}
+
 /** `text` (Giac's print) holds a value of the matrix type, at any depth, outside strings (not `mymatrix[1]`). */
 export function holdsMatrixType(text: string): boolean {
   if (!text.includes(MATRIX_TYPE)) return false;
