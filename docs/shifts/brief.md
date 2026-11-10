@@ -59,7 +59,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 614 | R269 Copy on a unit row writes the unit and σ (vfh-2) | ron, Opus | `p1/ron-copyunit` | – |
-| 621 | [R274](packages/R274.md) the selection's own colour, 3:1 (owner) | ron, Sonnet | `p1/ron-selcolour` | – |
+| 621 | R274 the selection's own colour, 3:1 (owner) | ron, Sonnet | `p1/ron-selcolour` | – |
 | 622 | [R275](packages/R275.md) ⇤□ and □⇥ leave the keypad (owner) | ron, Sonnet | `p1/ron-noboxkeys` | – |
 | 623 | [S53](packages/S53.md) Store, designed (owner; docs and a mockup) | sandra, Opus | `p1/sandra-storedesign` | – |
 | 603 | R255 keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
