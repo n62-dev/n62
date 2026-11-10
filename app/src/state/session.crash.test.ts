@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// G183 (real Giac, the app's whole path): F122's input stops the engine; the row says so, the engine is restarted, and the
+// G183 (real Giac, the app's whole path): a stack overflow inside Giac stops the engine; the row says so, the engine is restarted, and the
 // next Enter works with the user's stored names back.
 import { describe, expect, it } from "vitest";
 import { EngineCalc } from "../calc/engine.ts";
@@ -28,16 +28,17 @@ class InProcessWorker implements WorkerLike {
   }
 }
 
-describe.skipIf(!giacAvailable())("F122's input in the app (G183, real Giac)", () => {
+describe.skipIf(!giacAvailable())("a stack overflow inside Giac in the app (G183, real Giac)", () => {
   it("shows error.crashed; then 1+1 is 2 and a stored name is back", async () => {
     const workers: InProcessWorker[] = [];
     const engine = new WorkerEngine({ baseUrl: "/", createWorker: () => (workers.push(new InProcessWorker()), workers.at(-1)!) });
     const s = new Session(new EngineCalc(engine), fakeKv());
     await s.submit("a:=5", "a:=5");
     expect(s.home.at(-1)).toMatchObject({ status: "done", text: "5" });
-    // sandra's probe 2026-11-05 (F122): RangeError: Maximum call stack size exceeded inside Giac's wasm
-    const f122 = "(atan(ln(-pi)+9007199254740993))^(sin(10^-300)-10^300)";
-    await s.submit(f122, f122);
+    // RangeError: Maximum call stack size exceeded inside Giac's wasm. F122's input (sandra's probe 2026-11-05) is refused
+    // Underflow since G187; simplify of G120's power still recurses in subst.cc decompose (G187's report)
+    const crash = "simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))";
+    await s.submit(crash, crash);
     expect(s.home.at(-1)).toMatchObject({ status: "error", text: t("error.crashed") });
     expect(workers).toHaveLength(2);
     expect(workers[0]!.terminated).toBe(true);
