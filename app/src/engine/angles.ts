@@ -50,8 +50,12 @@ export const RECT_IN =
 
 /** G303f1: POLAR_OUT and RECT_IN as they were written before their bound names took our form (`p_`, `q_`; ourNames.ts
  *  OUR_BOUND). A log or chip kept from then still holds them, so what is drawn and the export drop them as well. */
-const WRAPPERS_BEFORE: readonly string[] = [POLAR_OUT, RECT_IN].map((w) => w.replace(/pas([pq])_/g, "$1_"));
-const WRAPPERS: readonly string[] = [POLAR_OUT, RECT_IN, ...WRAPPERS_BEFORE];
+const WRAPPERS: readonly string[] = [
+  POLAR_OUT,
+  RECT_IN,
+  `((p_)->when(type(p_[0])==vector,map(p_,q_->[q_[0],q_[1]/${PASDEG}]),[p_[0],p_[1]/${PASDEG}]))`,
+  `((p_)->when(type(p_)!=vector,p_,when(type(p_[0])==vector,map(p_,q_->[q_[0],${PASDEG}*q_[1]]),[p_[0],${PASDEG}*p_[1]])))`,
+];
 
 /**
  * Giac text that is a number by itself: number literals and pi with + - * / ^ and brackets. Only then can the text
