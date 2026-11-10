@@ -345,6 +345,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. `restore()` replays values, assumptions and typed inputs; a function (one balanced command) stays pending until `need()` loads it: pending names that are words in the input, then, transitively, those in each loaded body or stored value it reads, in one batch; `VARS`, `expr`, `rm_all_vars`, `restart` load all; redefining or purging a pending name drops it. **Variables are kept as their value**, not their command: `B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`; functions and `assume` keep their command; symbolic values replay first; a library function keeps its `desc` |
 | `defsStarts` | starts that began the replay and never got ready; at 2 the engine starts without the log |
 | `tipsSeen` | tips shown |
+| `historyDropNoted` | the note "older rows are dropped after 200" was said (once per install, left out of the backup) |
 | `userKeys`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets` | the last target per dimension |

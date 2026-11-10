@@ -362,8 +362,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  holds them too) are shortened; the branch merged with phase-1 aa57eb81 measures 60,964 B gzip (171,402 B raw), inside this pin.
  *  60,985 → 61,100 B (R270, the budget of 63 kB stays): Home's line set aside while an app is open (AppShell.aside, setAside and its
  *  put-back in close; main.ts reads the kept line into it when an app was open at the last exit) measures 61,048 B gzip
- *  (172,275 B raw), +63 B over the phase-1 pin: 61,048 B + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 61_100;
+ *  (172,275 B raw), +63 B over the phase-1 pin: 61,048 B + 0.05 kB, rounded up.
+ *  61,100 → 61,200 B (R272): the call that hands a dropped history row to the lazy state/dropNote.ts (the words, the flag and the
+ *  once-per-install rule are in that chunk; the start chunk holds the trim's call and the import) measures 61,131 B gzip
+ *  (172,479 B raw), +82 B over phase-1 (61,049 B): 61,131 B + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 61_200;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
