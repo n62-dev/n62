@@ -10,7 +10,7 @@ export const enData = {
   "backup.cancelled": "Backup cancelled",
   "backup.failed": "Could not save the backup",
   // R272: the one note, once per install, when a view's history first drops its oldest row (state/dropNote.ts)
-  "history.dropped": "Older rows are dropped after 200. Save a backup: Settings › Backup.",
+  "history.dropped": "Older rows are dropped after 200. Save a backup: Settings › Data.",
   // R127: Settings › Counters › Export the counts
   "counts.saved": "Counts saved",
   "counts.offered": "Counts offered as a download",

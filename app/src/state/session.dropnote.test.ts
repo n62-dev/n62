@@ -37,7 +37,7 @@ async function enter(s: Session, n: number, view: View = "home"): Promise<void> 
 
 describe("the note at the first dropped row (R272)", () => {
   it("the text says what happens and where the backup is", () => {
-    expect(dataText("history.dropped")).toBe("Older rows are dropped after 200. Save a backup: Settings › Backup.");
+    expect(dataText("history.dropped")).toBe("Older rows are dropped after 200. Save a backup: Settings › Data.");
   });
 
   it("no note before the first drop, and none at exactly the limit", async () => {
