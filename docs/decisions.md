@@ -11,6 +11,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row now writes `39.488 ± 1.2 m²` (the writer of Copy as shown and Share), but Paste reads one number, so that text gives "Paste: not a number" (paste.test.ts checks the refusal), and the unit view takes no paste (`units/open.ts` stops it). Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
 
+**Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
+
 ## Decided proposals
 
 ### Pipeline and process
