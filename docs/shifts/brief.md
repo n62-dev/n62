@@ -59,7 +59,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 614 | R269 Copy on a unit row writes the unit and σ (vfh-2) | ron, Opus | `p1/ron-copyunit` | – |
-| 603 | [R255](packages/R255.md) keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
+| 603 | R255 keys before the entry field is up (bu-1) | ron, Opus | `p1/ron-emptyline` | – |
 | 604 | [R257](packages/R257.md) Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
 | 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
 | 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
