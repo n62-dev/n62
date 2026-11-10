@@ -711,6 +711,19 @@ export function build(cases) {
   const negInvSqrt3 = "-(57735026918962576450914878050195745564760/10^41)*i";
   patched.push("// patch 0019-atan-exact-cut.patch", "// g135-cos-quote-atan-2i (derived: cos(atan(2*i)) = 1/sqrt(-3) = -i/sqrt(3))", `Digits:=40:; pc("g135-cos-quote-atan-2i",'cos(quote(atan(2*i)))',${negInvSqrt3},1/10^35);`);
   nPatched++;
+  // Patch 0040 (G186), tests/golden/precision.yaml g186-* (LaTeX rows, which the export leaves out): prog.cc's simplifier, which sign()
+  // reaches through sturmsign for a value whose double is not finite, ends for an integer base past the double range. A stock wasm build
+  // never returns on these lines (its loop is deaf to the clock: run.mjs on a stock engine stops here); a native x86 build reads
+  // int(inf) as INT_MIN and skips the loop.
+  patched.push(
+    "// patch 0040-simplifier-root-huge-base.patch",
+    "// g186-simplify-sqrt-1e330+7 (derived: no square factor that trial division finds, so the root stays as it is)",
+    `Digits:=40:; pc("g186-simplify-sqrt-1e330+7",'simplify(sqrt(10^330+7))',sqrt(10^330+7),1/10^30);`,
+    "// patch 0040-simplifier-root-huge-base.patch",
+    "// g186-abs-cos-acosh-1e-300-30 (precision.yaml, oracle)",
+    `Digits:=40:; pc("g186-abs-cos-acosh-1e-300-30",'(abs(cos(pi/10^7)+acosh(1/10^300)))',186209588911856012363779923385/10^29,5/10^30);`,
+  );
+  nPatched += 2;
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],

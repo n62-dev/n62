@@ -69,9 +69,11 @@ describe("giac-regress exporter", () => {
     // evalf(Gamma(1+i)) at Digits 14) and patch 0019 (G135: the cos rule at a quoted atan(2*i), atan(2*i) and cos(atan(2*i))
     // in DEG and in GRAD), patch 0028 (G157: trunc of a free name stays trunc, a stored trunc(y) reads -1 at y = -13/10),
     // patch 0030 (G152: the real part of evalf(sqrt(-pi)) and of (-pi)^(3/2) is 0, at Digits 40 and 14) and patch 0038
-    // (G169: one element of a distribution's list x, 7 lines);
+    // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
+    // 10^-300 in an abs);
     // the check file gets G149's written line for the CAS view's exact forms
-    expect([r.nCheck, r.nPatched]).toEqual([1, 21]);
+    expect([r.nCheck, r.nPatched]).toEqual([1, 23]);
+    expect(r.patched).toContain('// patch 0040-simplifier-root-huge-base.patch\n// g186-simplify-sqrt-1e330+7');
     expect(r.patched.match(/\/\/ patch 0038-list-x-per-element\.patch\n/g)).toHaveLength(7);
     expect(r.patched).toContain("// patch 0038-list-x-per-element.patch\n// g169-normald-cdf-list-0");
     expect(r.patched).toContain('// patch 0030-pow-half-odd-negative-float.patch\n// g152-evalf-sqrt-neg-pi-re-40');
