@@ -56,9 +56,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, G225, G225f2 built.** Unequal shapes are refused: `dot`, `cross`, `+`, `-`, `*`, pointwise.
-- **F195, G220 built; G221, G221f1, G221f2 on their branch.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf` at the working precision (⚠ until then). Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
-- **F205, G303 and G303f1 built.** A stored `k` was lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
+- **F195, G220 to G221f2 built.** Left (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf` (error).
+- **F210, no package (G303f1; pass 125).** Our global stores take typable names (only `pasdeg` is refused): a free `pasx` in Solve reads solve1.ts's `pasx` (raw Giac: `subst` gives -1.0). Fix: refuse a typed `pas`. Family 9.
+- **F211, no package (pass 125).** Bound names outside G303's form, no capture (probed): `v` in nonsquare.ts shapeCodes, `a_`, `b_`, `d_` in emit.ts equalityTest; statenames.test.ts parses neither. Family 8.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
