@@ -33,7 +33,7 @@ import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shap
 import { unaskedPoly } from "./polyvec.ts";
 import { approxRange, lostCas, mayApproxRange } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
-import { callsIn, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
+import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
@@ -984,6 +984,8 @@ export class EngineHost implements FactsHost {
       // G225f2: Giac's error for operands of its matrix type of different shape is the refusal their plain rows get, as in Home
       const sizes = isDimensionError(text) ? shapeRefusal(shapes()) : null;
       if (sizes) return fail(enEngine[`error.${sizes}`], sizes);
+      const noLimit = errorRefusal(body, text); // G305 (F182): one-sided limits that differ: no limit, as in Home, nothing stored
+      if (noLimit) return fail(enEngine[`error.${noLimit}`], noLimit);
       // G71 (F59): no MPFR value at P (a decision over BesselJ): an expression that stores nothing is decided at the double,
       // with ⚠, as in Home. An assignment keeps the error (its definitions-log entry would hold a double).
       const dbl = isTimeout(text) || asg0 || form.stores ? null : decidedAtDouble(this.giac, "pcasans", body, digitsSet);
