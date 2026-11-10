@@ -52,6 +52,12 @@ export const SPEED_KNOWN: Record<string, string> = {
   // int((cosh(x))^tanh(x),x,0,1) (G188, patch 0037): Giac's numeric integral is one call of 444 ms (229,554 checks, step-budget.ts);
   // 8× slower it passes HOME_CLOCK_S (1.5 s), so the Tab One shows the time-out where the desktop shows ⚠ 1.10413519221
   "precision/g188-int-cosh-pow-tanh": "HOME_CLOCK_S",
+  // G186 (F145, hangs before patch 0040): Giac's exact path is one call of 186 ms (the exact modulus of cos(pi/10^7)+acosh(10^-300))
+  // and of 461 ms (DEG: Giac's cos of pi/180*i*tan(…) of acosh(10^-1000)'s 4 kB form, 15,302 checks; RAD's cos(i*tan(…)) takes 1 ms);
+  // 8× slower they pass HOME_CLOCK_S (1.5 s): the Tab One shows the time-out (abs) and the float path's No value found (DEG, where the
+  // desktop shows Overflow)
+  "precision/g186-abs-cos-acosh-1e-300-30": "HOME_CLOCK_S",
+  "precision/g186-deg-cos-tanh-acosh-1e-1000-12": "HOME_CLOCK_S",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
