@@ -6,6 +6,7 @@ import { type Case } from "../../src/goldenRun.ts";
 import { ENGINE_DEFINITIONS } from "../../src/engine/homeEval.ts";
 import { DEFAULT_USER_FUNCTIONS, latexToGiac, latexToGiacInfo, type UnitsInfo } from "../../src/input/latex-to-giac.ts";
 import { SerializeError } from "../../src/input/errors.ts";
+import { sigmaChipOf } from "../../src/input/chipUnit.ts";
 import { buildJob } from "../../src/units/build.ts";
 import { factorTable, type FactorTable } from "../../src/units/factors.ts";
 import { isUnitError } from "../../src/units/types.ts";
@@ -52,7 +53,14 @@ function unitsCase(g: GiacApi, c: Case, formula: string, u: UnitsInfo | undefine
   if (!unitTable) return { ok: false, how: "no Find index: run npm run index" };
   const table = unitTable;
   const job = buildJob(
-    { formula, slots: (c.slots ?? []).map((s) => slotOf(s, table)), ...(u.consts.length ? { consts: u.consts } : {}), ...(c.to !== undefined ? { end: slotOf(c.to, table) } : {}) },
+    {
+      formula,
+      slots: (c.slots ?? []).map((s) => slotOf(s, table)),
+      ...(u.consts.length ? { consts: u.consts } : {}),
+      ...(c.to !== undefined ? { end: slotOf(c.to, table) } : {}),
+      // R271: the result chips after ±, as the unit view's request carries them
+      ...(u.sigmas ? { sigmas: u.sigmas.map((s) => sigmaChipOf(c.chips?.[s.key], s.slot)) } : {}),
+    },
     table,
   );
   if (isUnitError(job)) return { ok: false, how: `builder refused: ${JSON.stringify(job)}` };

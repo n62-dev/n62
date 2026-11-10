@@ -2,8 +2,8 @@
 // R61: the check of a result chip's unit (units/chip.ts quantityChip makes it); R63's of a unit row's slots, and the
 // unit's label. The loader keeps a stored unit as it reads it (chips.ts validChips, at start); this check runs where
 // the unit is used, off the start chunk (R91's pin): do not import this file from code loaded at start. Pure; only erasable TypeScript.
-import type { UnitSlot } from "../units/types.ts";
-import type { Chip, ChipUnit } from "./chips.ts";
+import type { SigmaChip, SigmaFacts, UnitSlot } from "../units/types.ts";
+import { chipKeysIn, type Chip, type ChipTable, type ChipUnit } from "./chips.ts";
 
 /** A stored text of this form (a non-string never passes). */
 const str = (x: unknown, re: RegExp): x is string => typeof x === "string" && re.test(x);
@@ -18,6 +18,19 @@ export function chipUnit(c: Chip | undefined): ChipUnit | undefined {
   const s = validSlot(slot);
   return s && { text, dim, slot: s };
 }
+
+/** R271: a result chip read as σ after ± (UnitsInfo.sigmas), as the unit view's request takes it: the value's slot,
+ *  the chip's checked unit, and the facts it was shown with (an exact chip limits nothing). */
+export function sigmaChipOf(c: Chip | undefined, slot: number | null): SigmaChip {
+  const unit = chipUnit(c);
+  return { slot, ...(unit ? { unit: unit.slot } : {}), reliableDigits: c && !c.exact ? (c.reliableDigits ?? null) : null, ...(c?.warn ? { warn: c.warn } : {}) };
+}
+
+/** R271f1: the σ facts (Chip.uncFacts, as stored: build.ts sigmaFacts checks them) of the result chips `latex` holds
+ *  that carry a σ: a unit result whose σ came from a result chip. As a value in the unit view, the chip's σ keeps that
+ *  limit (UnitRequest.uncChips). */
+export const uncChipsIn = (latex: string, chips: ChipTable): SigmaFacts[] =>
+  [...chipKeysIn(latex)].flatMap((k) => (chips[k]?.unc !== undefined && chips[k]!.uncFacts ? [chips[k]!.uncFacts!] : []));
 
 /** A stored slot (a chip's unit, R61; a unit row's slots, R63) when it has its shape: 1 to 16 tokens, each a unit id
  *  with an optional prefix id and power, `per` an integer within them; else undefined. Only the fields read are copied;

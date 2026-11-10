@@ -106,15 +106,18 @@ function braceArgs(src: string): string {
 }
 
 /** `\pm` and a number right after position `j` (spaces allowed): the σ belongs to the number before it (R28), so the
- *  slot goes after the σ, and after its `\%` (R104: `± n %`). Returns the end of the σ, or `j`. */
-function afterSigma(s: string, j: number): number {
+ *  slot goes after the σ, and after its `\%` (R104: `± n %`). R271: a result chip as σ, the same (its `\%` too), with its key. Returns
+ *  the end of the σ, or `j`. */
+function afterSigma(s: string, j: number): { end: number; chip?: string | undefined } {
   const m = /^\s*\\pm\s*/.exec(s.slice(j));
-  if (!m) return j;
+  if (!m) return { end: j };
   const k = j + m[0].length;
-  if (!/^(?:\d|\.)/.test(s.slice(k))) return j;
-  const e = numberEnd(s, k);
+  const res = /^\\res\s*\{(\d+)\}/.exec(s.slice(k));
+  if (!res && !/^(?:\d|\.)/.test(s.slice(k))) return { end: j };
+  const e = res ? groupEnd(s, k + res[0].length) : numberEnd(s, k);
+  // a `\%` after a chip goes with the σ too, as after a number, so the parser sees it there (and refuses it)
   const pct = /^\s*\\%/.exec(s.slice(e));
-  return pct ? e + pct[0].length : e;
+  return { end: pct ? e + pct[0].length : e, chip: res ? `res:${res[1] as string}` : undefined };
 }
 
 /** The end of a one-line exponent at `i`: a sign, then a number, a group or one character. */
@@ -182,9 +185,11 @@ export function slotFormula(latex: string): SlotFormula {
         i = j;
         continue;
       }
-      j = afterSigma(src, j);
+      const sigma = afterSigma(src, j);
+      j = sigma.end;
       const id = `u${slots.length + 1}`;
       slots.push(id);
+      if (sigma.chip) chips[id] = sigma.chip;
       out += `${src.slice(i, j)}\\placeholder[${id}]{}`;
       i = j;
     } else {

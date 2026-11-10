@@ -41,7 +41,7 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
     unit: q.unit,
     dim: q.dimension,
     dimText: q.dimensionText,
-    ...(q.unc ? { unc: { text: q.unc.text, shown: q.unc.shown, ...(q.unc.why ? { why: q.unc.why } : {}) } } : {}),
+    ...(q.unc ? { unc: { text: q.unc.text, shown: q.unc.shown, ...(q.unc.why ? { why: q.unc.why } : {}), ...q.unc.chip } } : {}),
     ...(q.note ? { note: q.note } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     latex: sigma + (q.unit ? unitLatex(q.unit) : ""),
@@ -49,7 +49,8 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
     input,
     ...(chip ? { chip } : {}),
   };
-  // σ's digits (R61): the shown value's digits past σ's first are not confirmed, as for a chip with σ in Home
+  // σ's digits (R61): the shown value's digits past σ's first are not confirmed, as for a chip with σ in Home. R271f1:
+  // the mark is the worse of the value's and σ's, as q.value's facts hold it (evaluate.ts done, units/sigmaFacts.ts)
   const home = homeItem(q.value, inexact);
   const n = q.value.value && q.unc?.value.value ? uncDigitsOf(q.value.value.re, q.unc.value.value.re, Math.trunc(q.value.digits ?? digits)) : null;
   if (n !== null && home.facts) home.facts = { ...home.facts, uncDigits: n };
@@ -84,3 +85,4 @@ export function putRow(s: Session, row: Omit<HistoryItem, "id">, id?: number): n
  *  for a row that is no unit row or holds none. */
 export const rowSlots = (item: HistoryItem | undefined): Record<string, UnitSlot> | undefined =>
   validSlots((item?.units as { slots?: unknown } | undefined)?.slots);
+

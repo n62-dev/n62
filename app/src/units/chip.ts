@@ -17,10 +17,15 @@ export function quantityChip(q: Quantity | UnitError): Chip | undefined {
   const item = homeItem(q.value, inexact);
   const chip = chipOf({ status: "done", ...item });
   if (!chip) return undefined;
+  // R271f1: the value's facts (so the chip's) already hold a σ chip's limit (evaluate.ts done); σ itself goes in with
+  // its confirmed digits only (its `full`, evaluate.ts uncertainty), and with its facts, which the unit view gives σ
+  // again (view.ts request)
+  const limit = q.unc?.chip;
   const sigma = q.unc?.value.full;
   if (q.unc && (!q.unc.value.ok || !sigma || sigma.length > FULL_LIMIT)) return undefined;
-  if (sigma !== undefined && !isZeroText(sigma)) chip.unc = sigma;
+  if (sigma !== undefined && !isZeroText(sigma)) Object.assign(chip, { unc: sigma }, limit ? { uncFacts: limit } : {});
   // the loader keeps a unit text of up to 40 characters (input/chips.ts validChips)
   if (q.unit !== "" && q.unit.length <= 40 && q.dimension && q.shownSlot) chip.unit = { text: q.unit, dim: q.dimension, slot: q.shownSlot };
   return chip;
 }
+

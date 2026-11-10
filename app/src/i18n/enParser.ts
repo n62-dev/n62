@@ -91,6 +91,7 @@ export const enParser = {
   "parse.pmNeedsNumber": "± goes right after a number: 12.3 ± 0.1",
   "parse.pmUnitView": "± is read in the unit view: press the units key",
   "parse.pmNeedsSigma": "± needs a plain number after it: 12.3 ± 0.1",
+  "parse.pmChipPercent": "% after a result chip as σ: give σ in the value's unit, or type the percentage as a number",
   "parse.angleBrackets": "put the angle in brackets",
 } as const satisfies Record<string, string>;
 

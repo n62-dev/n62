@@ -87,6 +87,9 @@ export interface UnitsInfo {
   consts: string[];
   /** The prompt id of the end slot after `\to`, if there is one. */
   end?: string;
+  /** R271: the result chips read as a σ after ±, in the order written (`pasws<j>` is sigmas[j-1]): the chip's key, and
+   *  the index in `slots` of the value's unit slot (null: the value has none). */
+  sigmas?: { key: string; slot: number | null }[];
 }
 
 /** What the parser found besides the expression. */
