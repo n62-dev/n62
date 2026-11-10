@@ -347,7 +347,7 @@ describe.skipIf(!giacAvailable())("the degree factor in library files (G46, real
     const text = `// n62 library 3\n${defs.map((d) => `// ${d}\n${d}\n`).join("")}`;
     const r = importLibrary(h, parseLibrary(text, parse, LIBRARY_FORMAT), []);
     expect(r).toMatchObject({ ok: true });
-    const shown = (input: string, s = deg): string => h.home(input, s).result.display;
+    const shown = (input: string, s: typeof defaultHomeSettings = deg): string => h.home(input, s).result.display;
     expect(shown("fa(0.5)")).toBe("30");
     expect(shown("fb(0.5)")).toBe("60");
     expect(shown("fc(1)")).toBe("45");
