@@ -44,6 +44,9 @@ export interface UnitJob {
   /** G35: `check` has a sum, where a term can vanish: it is evaluated with the value. Without one it is needed only
    *  when the value is 0 (its dimension). */
   checkSum?: true;
+  /** G310: a slot or constant sits inside a function whose argument the check reads (argCheck.ts: exp, sin, atan2, …):
+   *  `check` is evaluated with the value, so `exp(0 m)` is refused as `exp(1 m)` is. */
+  checkCall?: true;
   /** The end slot's factor × dimension symbols. */
   end?: string;
   /** The end slot is an absolute temperature (°C, °F): the offset b in K = a·x + b, as exact text (end holds a). */
