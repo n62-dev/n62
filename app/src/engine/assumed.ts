@@ -8,6 +8,7 @@
 // purged, a logged assumption whose about() changed is purged and set again from its entry. As flags.ts does for Giac's
 // settings; nothing is logged. Plain data and pure functions; only erasable TypeScript syntax, so Node runs this file.
 import { wordsOf } from "./giacPrint.ts";
+import { OUR_BOUND as K } from "./ourNames.ts";
 
 /** Giac's commands that leave an assumption after they return (probe 2026-10-25: 60 commands, each in a fresh engine, on
  *  integrate(tanh(sqrt(x)),x), tanh(sqrt(x)) and sqrt(x)*exp(sqrt(x))+x^(1/3); VARS() after each). The simplify family,
@@ -41,7 +42,7 @@ export function aboutsPart(names: readonly string[]): string {
  *  its 2nd element, a name of `known` bare, any other with its text), the about() of `logged` as its 3rd. One call. */
 export function leakPart(known: readonly string[], logged: readonly string[]): string {
   const quoted = `[${known.map((n) => `'${n}'`).join(",")}]`;
-  return `[0,map(VARS(),k->when(member(k,${quoted}),k,[k,string(eval(k))])),${aboutsPart(logged)},0]`;
+  return `[0,map(VARS(),${K}->when(member(${K},${quoted}),${K},[${K},string(eval(${K}))])),${aboutsPart(logged)},0]`;
 }
 
 /** A node of Giac's printed list (giacPrint.ts parsePrinted). */

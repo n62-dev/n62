@@ -36,118 +36,118 @@ const REAL = (v: string) => `(type(${v})==integer or type(${v})==rational or typ
 /** The definitions, in the order they are loaded (helpers first). */
 export const ICDF_DEFINITIONS: Readonly<Record<string, string>> = {
   // ln Γ(a) with MPFR at Digits.
-  paslg: "paslg(a):=lgamma(evalf(a))",
+  paslg: "paslg(pasa_):=lgamma(evalf(pasa_))",
   // Lentz's evaluation of the continued fraction of I_x(a,b) (DLMF 8.17.22), y = 1 − x given separately.
   pasbetacf:
-    "pasbetacf(a,b,x,y):={ local tn,tol,fv,cv,dv,j,m,h,aj,dl; tn:=evalf(10^(-2*Digits)); tol:=evalf(10^(-Digits-2)); " +
-    "fv:=tn; cv:=fv; dv:=0; " +
-    "for (j:=1;j<=20000;j:=j+1) { if (j==1) aj:=1; else { m:=j-1; if (irem(m,2)==1) { h:=(m-1)/2; aj:=-(a+h)*(a+b+h)*x/((a+2*h)*(a+2*h+1)); } " +
-    "else { h:=m/2; aj:=h*(b-h)*x/((a+2*h-1)*(a+2*h)); } } " +
-    "dv:=1+aj*dv; if (dv==0) dv:=tn; cv:=1+aj/cv; if (cv==0) cv:=tn; dv:=1/dv; dl:=cv*dv; fv:=fv*dl; if (abs(dl-1)<tol) break; } " +
-    "return exp(a*ln(x)+b*ln(y)-paslg(a)-paslg(b)+paslg(a+b))/a*fv; }",
+    "pasbetacf(pasa_,pasb_,pasx_,pasy_):={ local pastn_,pastol_,pasfv_,pascv_,pasdv_,pasj_,pasm_,pash_,pasaj_,pasdl_; pastn_:=evalf(10^(-2*Digits)); pastol_:=evalf(10^(-Digits-2)); " +
+    "pasfv_:=pastn_; pascv_:=pasfv_; pasdv_:=0; " +
+    "for (pasj_:=1;pasj_<=20000;pasj_:=pasj_+1) { if (pasj_==1) pasaj_:=1; else { pasm_:=pasj_-1; if (irem(pasm_,2)==1) { pash_:=(pasm_-1)/2; pasaj_:=-(pasa_+pash_)*(pasa_+pasb_+pash_)*pasx_/((pasa_+2*pash_)*(pasa_+2*pash_+1)); } " +
+    "else { pash_:=pasm_/2; pasaj_:=pash_*(pasb_-pash_)*pasx_/((pasa_+2*pash_-1)*(pasa_+2*pash_)); } } " +
+    "pasdv_:=1+pasaj_*pasdv_; if (pasdv_==0) pasdv_:=pastn_; pascv_:=1+pasaj_/pascv_; if (pascv_==0) pascv_:=pastn_; pasdv_:=1/pasdv_; pasdl_:=pascv_*pasdv_; pasfv_:=pasfv_*pasdl_; if (abs(pasdl_-1)<pastol_) break; } " +
+    "return exp(pasa_*ln(pasx_)+pasb_*ln(pasy_)-paslg(pasa_)-paslg(pasb_)+paslg(pasa_+pasb_))/pasa_*pasfv_; }",
   // erf(y) for 0 ≤ y < 2 at Digits by its series of positive terms (DLMF 7.6.2). Giac's MPFR erf of a float below
   // about 1E-11 is the argument itself (erf(1e-19) gives 1e-19, right 1.128…e-19).
   paserf:
-    "paserf(y):={ local tol,s,t,n; if (y==0) return 0; tol:=evalf(10^(-Digits-2)); t:=y; s:=t; " +
-    "for (n:=1;n<=100000;n:=n+1) { t:=t*2*y^2/(2*n+1); s:=s+t; if (t<s*tol) break; } return 2/sqrt(pi)*exp(-y^2)*s; }",
+    "paserf(pasy_):={ local pastol_,pass_,past_,pasn_; if (pasy_==0) return 0; pastol_:=evalf(10^(-Digits-2)); past_:=pasy_; pass_:=past_; " +
+    "for (pasn_:=1;pasn_<=100000;pasn_:=pasn_+1) { past_:=past_*2*pasy_^2/(2*pasn_+1); pass_:=pass_+past_; if (past_<pass_*pastol_) break; } return 2/sqrt(pi)*exp(-pasy_^2)*pass_; }",
   // erfc(y) for y ≥ 0 at Digits: 1 − erf(y) below 2 (at most 3 digits cancel), Laplace's continued fraction above
   // (DLMF 7.9.2). Giac's own MPFR erfc is 1 − erf: erfc(4.5) at 40 digits is right to 31 digits only, and erfc of a
   // negative float is erfc(|x|) (erfc(-1.0) at 40 digits gives 0.157…, right 1.842…).
   paserfc:
-    "paserfc(y):={ local tn,tol,fv,cv,dv,j,aj,dl; if (y<2) return 1-paserf(y); tn:=evalf(10^(-2*Digits)); tol:=evalf(10^(-Digits-2)); " +
-    "fv:=tn; cv:=fv; dv:=0; " +
-    "for (j:=1;j<=20000;j:=j+1) { if (j==1) aj:=1; else aj:=(j-1)/2; " +
-    "dv:=y+aj*dv; if (dv==0) dv:=tn; cv:=y+aj/cv; if (cv==0) cv:=tn; dv:=1/dv; dl:=cv*dv; fv:=fv*dl; if (abs(dl-1)<tol) break; } " +
-    "return exp(-y^2)/sqrt(pi)*fv; }",
+    "paserfc(pasy_):={ local pastn_,pastol_,pasfv_,pascv_,pasdv_,pasj_,pasaj_,pasdl_; if (pasy_<2) return 1-paserf(pasy_); pastn_:=evalf(10^(-2*Digits)); pastol_:=evalf(10^(-Digits-2)); " +
+    "pasfv_:=pastn_; pascv_:=pasfv_; pasdv_:=0; " +
+    "for (pasj_:=1;pasj_<=20000;pasj_:=pasj_+1) { if (pasj_==1) pasaj_:=1; else pasaj_:=(pasj_-1)/2; " +
+    "pasdv_:=pasy_+pasaj_*pasdv_; if (pasdv_==0) pasdv_:=pastn_; pascv_:=pasy_+pasaj_/pascv_; if (pascv_==0) pascv_:=pastn_; pasdv_:=1/pasdv_; pasdl_:=pascv_*pasdv_; pasfv_:=pasfv_*pasdl_; if (abs(pasdl_-1)<pastol_) break; } " +
+    "return exp(-pasy_^2)/sqrt(pi)*pasfv_; }",
   // G44f1: erf and erfc of any argument at Digits: erf(-y) = -erf(y), erfc(-y) = 2 - erfc(y), erf(y) = 1 - erfc(y) from
   // 2 on (the continued fraction keeps the tail's digits). A list is mapped; an argument that is not a real number is
   // left to Giac's own function, with the flag set.
   paserfv:
-    "paserfv(z):={ local y; if (type(z)==DOM_LIST) return map(z,paserfv); if (z==0) return 0; y:=evalf(z); " +
-    `if (type(y)!=DOM_FLOAT) { ${ICDF_FAILED}:=1; return erf(z); } if (y<0) return -paserfv(-y); if (y<2) return paserf(y); return 1-paserfc(y); }`,
+    "paserfv(pasz_):={ local pasy_; if (type(pasz_)==DOM_LIST) return map(pasz_,paserfv); if (pasz_==0) return 0; pasy_:=evalf(pasz_); " +
+    `if (type(pasy_)!=DOM_FLOAT) { ${ICDF_FAILED}:=1; return erf(pasz_); } if (pasy_<0) return -paserfv(-pasy_); if (pasy_<2) return paserf(pasy_); return 1-paserfc(pasy_); }`,
   paserfcv:
-    "paserfcv(z):={ local y; if (type(z)==DOM_LIST) return map(z,paserfcv); if (z==0) return 1; y:=evalf(z); " +
-    `if (type(y)!=DOM_FLOAT) { ${ICDF_FAILED}:=1; return erfc(z); } if (y<0) return 2-paserfc(-y); return paserfc(y); }`,
+    "paserfcv(pasz_):={ local pasy_; if (type(pasz_)==DOM_LIST) return map(pasz_,paserfcv); if (pasz_==0) return 1; pasy_:=evalf(pasz_); " +
+    `if (type(pasy_)!=DOM_FLOAT) { ${ICDF_FAILED}:=1; return erfc(pasz_); } if (pasy_<0) return 2-paserfc(-pasy_); return paserfc(pasy_); }`,
   // [I_x(a,b), I_y(b,a)] = [lower, upper], the smaller one computed directly.
   pasibeta:
-    "pasibeta(a,b,x,y):={ local s; if (x<=0) return [0,1]; if (y<=0) return [1,0]; " +
-    "if (x<(a+1)/(a+b+2)) { s:=pasbetacf(a,b,x,y); return [s,1-s]; } s:=pasbetacf(b,a,y,x); return [1-s,s]; }",
+    "pasibeta(pasa_,pasb_,pasx_,pasy_):={ local pass_; if (pasx_<=0) return [0,1]; if (pasy_<=0) return [1,0]; " +
+    "if (pasx_<(pasa_+1)/(pasa_+pasb_+2)) { pass_:=pasbetacf(pasa_,pasb_,pasx_,pasy_); return [pass_,1-pass_]; } pass_:=pasbetacf(pasb_,pasa_,pasy_,pasx_); return [1-pass_,pass_]; }",
   // [P(a,x), Q(a,x)]: the series below a + 1 (DLMF 8.7.1), else Legendre's continued fraction (DLMF 8.9.2).
   pasigamma:
-    "pasigamma(a,x):={ local tn,tol,pre,s,t,n,fv,cv,dv,j,aj,bj,dl; if (x<=0) return [0,1]; " +
-    "tn:=evalf(10^(-2*Digits)); tol:=evalf(10^(-Digits-2)); pre:=exp(a*ln(x)-x-paslg(a)); " +
-    "if (x<a+1) { t:=1/a; s:=t; for (n:=1;n<=100000;n:=n+1) { t:=t*x/(a+n); s:=s+t; if (abs(t)<abs(s)*tol) break; } s:=s*pre; return [s,1-s]; } " +
-    "fv:=tn; cv:=fv; dv:=0; " +
-    "for (j:=1;j<=20000;j:=j+1) { if (j==1) { aj:=1; bj:=x+1-a; } else { aj:=-(j-1)*(j-1-a); bj:=x+2*j-1-a; } " +
-    "dv:=bj+aj*dv; if (dv==0) dv:=tn; cv:=bj+aj/cv; if (cv==0) cv:=tn; dv:=1/dv; dl:=cv*dv; fv:=fv*dl; if (abs(dl-1)<tol) break; } " +
-    "s:=pre*fv; return [1-s,s]; }",
+    "pasigamma(pasa_,pasx_):={ local pastn_,pastol_,paspre_,pass_,past_,pasn_,pasfv_,pascv_,pasdv_,pasj_,pasaj_,pasbj_,pasdl_; if (pasx_<=0) return [0,1]; " +
+    "pastn_:=evalf(10^(-2*Digits)); pastol_:=evalf(10^(-Digits-2)); paspre_:=exp(pasa_*ln(pasx_)-pasx_-paslg(pasa_)); " +
+    "if (pasx_<pasa_+1) { past_:=1/pasa_; pass_:=past_; for (pasn_:=1;pasn_<=100000;pasn_:=pasn_+1) { past_:=past_*pasx_/(pasa_+pasn_); pass_:=pass_+past_; if (abs(past_)<abs(pass_)*pastol_) break; } pass_:=pass_*paspre_; return [pass_,1-pass_]; } " +
+    "pasfv_:=pastn_; pascv_:=pasfv_; pasdv_:=0; " +
+    "for (pasj_:=1;pasj_<=20000;pasj_:=pasj_+1) { if (pasj_==1) { pasaj_:=1; pasbj_:=pasx_+1-pasa_; } else { pasaj_:=-(pasj_-1)*(pasj_-1-pasa_); pasbj_:=pasx_+2*pasj_-1-pasa_; } " +
+    "pasdv_:=pasbj_+pasaj_*pasdv_; if (pasdv_==0) pasdv_:=pastn_; pascv_:=pasbj_+pasaj_/pascv_; if (pascv_==0) pascv_:=pastn_; pasdv_:=1/pasdv_; pasdl_:=pascv_*pasdv_; pasfv_:=pasfv_*pasdl_; if (abs(pasdl_-1)<pastol_) break; } " +
+    "pass_:=paspre_*pasfv_; return [1-pass_,pass_]; }",
   // [lower tail, upper tail, density, lower tail − 1/2] at x of: k = 0 normal (a = μ, b = σ), 1 Student (a = ν),
   // 2 χ² (a = k), 3 Fisher (a = d₁, b = d₂). The last is computed directly for the symmetric two (erf, I_y(1/2, ν/2)),
   // so a p next to 1/2 keeps its digits (normald_icdf(1/2+10^-30)).
   pasicdft:
-    "pasicdft(k,a,b,x):={ local y,z,s,t,w; " +
-    "if (k==0) { z:=(x-a)/b; w:=exp(-z^2/2)/(b*sqrt(2*pi)); y:=abs(z)/sqrt(2); " +
-    "if (y<2) { t:=paserf(y)/2; s:=1/2-t; } else { s:=paserfc(y)/2; t:=1/2-s; } if (z<0) return [s,1-s,w,-t]; return [1-s,s,w,t]; } " +
-    "if (k==1) { w:=a+x^2; s:=pasibeta(a/2,1/2,a/w,x^2/w); t:=s[0]/2; " +
-    "z:=exp(paslg((a+1)/2)-paslg(a/2)-(a+1)/2*ln(1+x^2/a))/sqrt(a*pi); if (x>0) return [1-t,t,z,s[1]/2]; return [t,1-t,z,-s[1]/2]; } " +
-    "if (x<=0) return [0,1,0,-1/2]; " +
-    "if (k==2) { s:=pasigamma(a/2,x/2); return [s[0],s[1],exp((a/2-1)*ln(x)-x/2-a/2*ln(2)-paslg(a/2)),s[0]-1/2]; } " +
-    "w:=a*x+b; s:=pasibeta(a/2,b/2,a*x/w,b/w); " +
-    "return [s[0],s[1],exp(a/2*ln(a*x/w)+b/2*ln(b/w)-ln(x)-paslg(a/2)-paslg(b/2)+paslg(a/2+b/2)),s[0]-1/2]; }",
+    "pasicdft(pask_,pasa_,pasb_,pasx_):={ local pasy_,pasz_,pass_,past_,pasw_; " +
+    "if (pask_==0) { pasz_:=(pasx_-pasa_)/pasb_; pasw_:=exp(-pasz_^2/2)/(pasb_*sqrt(2*pi)); pasy_:=abs(pasz_)/sqrt(2); " +
+    "if (pasy_<2) { past_:=paserf(pasy_)/2; pass_:=1/2-past_; } else { pass_:=paserfc(pasy_)/2; past_:=1/2-pass_; } if (pasz_<0) return [pass_,1-pass_,pasw_,-past_]; return [1-pass_,pass_,pasw_,past_]; } " +
+    "if (pask_==1) { pasw_:=pasa_+pasx_^2; pass_:=pasibeta(pasa_/2,1/2,pasa_/pasw_,pasx_^2/pasw_); past_:=pass_[0]/2; " +
+    "pasz_:=exp(paslg((pasa_+1)/2)-paslg(pasa_/2)-(pasa_+1)/2*ln(1+pasx_^2/pasa_))/sqrt(pasa_*pi); if (pasx_>0) return [1-past_,past_,pasz_,pass_[1]/2]; return [past_,1-past_,pasz_,-pass_[1]/2]; } " +
+    "if (pasx_<=0) return [0,1,0,-1/2]; " +
+    "if (pask_==2) { pass_:=pasigamma(pasa_/2,pasx_/2); return [pass_[0],pass_[1],exp((pasa_/2-1)*ln(pasx_)-pasx_/2-pasa_/2*ln(2)-paslg(pasa_/2)),pass_[0]-1/2]; } " +
+    "pasw_:=pasa_*pasx_+pasb_; pass_:=pasibeta(pasa_/2,pasb_/2,pasa_*pasx_/pasw_,pasb_/pasw_); " +
+    "return [pass_[0],pass_[1],exp(pasa_/2*ln(pasa_*pasx_/pasw_)+pasb_/2*ln(pasb_/pasw_)-ln(pasx_)-paslg(pasa_/2)-paslg(pasb_/2)+paslg(pasa_/2+pasb_/2)),pass_[0]-1/2]; }",
   // Newton from Giac's x0 on the smaller tail; Giac's x0 with the flag set when it cannot be polished.
   pasicdf:
-    "pasicdf(k,a,b,p,x0):={ local x,q,lo,md,t,r,w,dx,n,ok,tol,d,xl,xh,j,us,xs,xc,br,pv; " +
-    `if (not(${REAL("p")}) or not(${REAL("a")}) or not(${REAL("b")})) { ${ICDF_FAILED}:=1; return x0; } ` +
-    `if ((k>0 and a<=0) or ((k==0 or k==3) and b<=0)) { ${ICDF_FAILED}:=1; return x0; } ` +
+    "pasicdf(pask_,pasa_,pasb_,pasp_,pasx0_):={ local pasx_,pasq_,paslo_,pasmd_,past_,pasr_,pasw_,pasdx_,pasn_,pasok_,pastol_,pasd_,pasxl_,pasxh_,pasj_,pasus_,pasxs_,pasxc_,pasbr_,paspv_; " +
+    `if (not(${REAL("pasp_")}) or not(${REAL("pasa_")}) or not(${REAL("pasb_")})) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
+    `if ((pask_>0 and pasa_<=0) or ((pask_==0 or pask_==3) and pasb_<=0)) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
     // G44f1: at p = 0 and p = 1 Giac's value is the end of the support (±infinity, 0), which is exact.
-    `if (p==0 or p==1) return x0; if (p<0 or p>1) { ${ICDF_FAILED}:=1; return x0; } ` +
+    `if (pasp_==0 or pasp_==1) return pasx0_; if (pasp_<0 or pasp_>1) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
     // The median of the symmetric ones is exact (Giac's normald_icdf(0.5) is -1.9E-19).
-    "if (p==1/2 and k==0) return a; if (p==1/2 and k==1) return 0; " +
+    "if (pasp_==1/2 and pask_==0) return pasa_; if (pasp_==1/2 and pask_==1) return 0; " +
     // md: p next to the median of a symmetric one, solved for F(x) − 1/2 = p − 1/2; else on the smaller tail.
     // Giac's value as the start (us = 1); its centre when that is not a real number in the support (fisher_icdf(3,4,1-10^-20)
     // is +infinity, chisquare_icdf(3,10^-30) is negative, normald_icdf(10^-30) is undef from about the third call, G44f2).
-    "xc:=evalf(when(k==0,a,when(k==1,0,when(k==2,a,1)))); xs:=xc; us:=0; " +
-    `if (${REAL("x0")}) { if (not((k==2 or k==3) and x0<=0)) { xs:=evalf(exact(x0)); us:=1; } } ` +
-    "md:=(k<=1 and p>1/4 and p<3/4); lo:=(p<=1/2); " +
-    "if (md) q:=abs(p-1/2); else { if (lo) q:=p; else q:=1-p; } tol:=evalf(10^(5-Digits)); ok:=0; " +
+    "pasxc_:=evalf(when(pask_==0,pasa_,when(pask_==1,0,when(pask_==2,pasa_,1)))); pasxs_:=pasxc_; pasus_:=0; " +
+    `if (${REAL("pasx0_")}) { if (not((pask_==2 or pask_==3) and pasx0_<=0)) { pasxs_:=evalf(exact(pasx0_)); pasus_:=1; } } ` +
+    "pasmd_:=(pask_<=1 and pasp_>1/4 and pasp_<3/4); paslo_:=(pasp_<=1/2); " +
+    "if (pasmd_) pasq_:=abs(pasp_-1/2); else { if (paslo_) pasq_:=pasp_; else pasq_:=1-pasp_; } pastol_:=evalf(10^(5-Digits)); pasok_:=0; " +
     // pv 0: Newton from the start; pv 1, for the upper tail of χ² and Fisher (br) with no usable start or when Newton from
     // it did not converge (G44f2f1: the bracket every time made chisquare_icdf(3,9/10) 3 to 4 times slower, and Home's
     // budget cut the agreement run): first a bracket in ln x, x doubled (or halved) until the upper tail crosses 1 − p,
     // then bisected in ln x down to a ratio of 1.01, so that Newton starts next to the root (G44f2:
     // chisquare_icdf(3,1-10^-30) from the centre took more than 20 steps). The bracket starts from the centre, as a start
     // Newton could not use is no better. Not bracketed in 60 doublings: refused.
-    "br:=((k==2 or k==3) and not(lo)); " +
-    "for (pv:=when(br and us==1,0,1);pv<=1 and ok==0;pv:=pv+1) { x:=when(br and pv==1,xc,xs); " +
-    "if (br and pv==1) { t:=pasicdft(k,a,b,x); j:=0; " +
-    "if (t[1]>q) { while (j<60 and t[1]>q) { x:=2*x; t:=pasicdft(k,a,b,x); j:=j+1; } xl:=x/2; xh:=x; } " +
-    "else { while (j<60 and not(t[1]>q)) { x:=x/2; t:=pasicdft(k,a,b,x); j:=j+1; } xl:=x; xh:=2*x; } " +
-    `if (j>=60) { ${ICDF_FAILED}:=1; return x0; } ` +
-    "for (j:=1;j<=30 and xh>xl*1.01;j:=j+1) { x:=sqrt(xl*xh); t:=pasicdft(k,a,b,x); if (t[1]>q) xl:=x; else xh:=x; } x:=sqrt(xl*xh); } " +
-    "for (n:=1;n<=20;n:=n+1) { t:=pasicdft(k,a,b,x); if (not(t[2]>0)) break; " +
+    "pasbr_:=((pask_==2 or pask_==3) and not(paslo_)); " +
+    "for (paspv_:=when(pasbr_ and pasus_==1,0,1);paspv_<=1 and pasok_==0;paspv_:=paspv_+1) { pasx_:=when(pasbr_ and paspv_==1,pasxc_,pasxs_); " +
+    "if (pasbr_ and paspv_==1) { past_:=pasicdft(pask_,pasa_,pasb_,pasx_); pasj_:=0; " +
+    "if (past_[1]>pasq_) { while (pasj_<60 and past_[1]>pasq_) { pasx_:=2*pasx_; past_:=pasicdft(pask_,pasa_,pasb_,pasx_); pasj_:=pasj_+1; } pasxl_:=pasx_/2; pasxh_:=pasx_; } " +
+    "else { while (pasj_<60 and not(past_[1]>pasq_)) { pasx_:=pasx_/2; past_:=pasicdft(pask_,pasa_,pasb_,pasx_); pasj_:=pasj_+1; } pasxl_:=pasx_; pasxh_:=2*pasx_; } " +
+    `if (pasj_>=60) { ${ICDF_FAILED}:=1; return pasx0_; } ` +
+    "for (pasj_:=1;pasj_<=30 and pasxh_>pasxl_*1.01;pasj_:=pasj_+1) { pasx_:=sqrt(pasxl_*pasxh_); past_:=pasicdft(pask_,pasa_,pasb_,pasx_); if (past_[1]>pasq_) pasxl_:=pasx_; else pasxh_:=pasx_; } pasx_:=sqrt(pasxl_*pasxh_); } " +
+    "for (pasn_:=1;pasn_<=20;pasn_:=pasn_+1) { past_:=pasicdft(pask_,pasa_,pasb_,pasx_); if (not(past_[2]>0)) break; " +
     // In a tail, Newton on ln F: the same root and the derivative f/F, but it converges from Giac's far value
     // (normald_icdf below 1E-16 is a different number on each call: -8.58, -8.65 for 10^-20, right -9.26).
-    "if (md) dx:=(t[3]-(p-1/2))/t[2]; else { if (lo) w:=t[0]; else w:=t[1]; if (not(w>0)) break; " +
-    "dx:=(ln(w)-ln(q))*w/t[2]; if (not(lo)) dx:=-dx; } " +
+    "if (pasmd_) pasdx_:=(past_[3]-(pasp_-1/2))/past_[2]; else { if (paslo_) pasw_:=past_[0]; else pasw_:=past_[1]; if (not(pasw_>0)) break; " +
+    "pasdx_:=(ln(pasw_)-ln(pasq_))*pasw_/past_[2]; if (not(paslo_)) pasdx_:=-pasdx_; } " +
     // χ² and Fisher live on x > 0 and have power-law tails at 0: the step is taken in ln x, and dx becomes the step x
     // made (G140f2: dx is in units of the old x, so from a start far below the root, Giac's fisher_icdf(3,4,10^-20) of
     // 1.4E-64 on some calls, the first step of 3.4E-14 counted as 1.7E-62 and stopped Newton 13 digits short).
-    "if (k==2 or k==3) { w:=x; x:=x*exp(-dx/x); dx:=x-w; } else x:=x-dx; if (abs(dx)<=tol*max(abs(x),when(k==0,b,when(k==1,1,0)))) { ok:=1; break; } } } " +
-    `if (ok==1) { t:=pasicdft(k,a,b,x); if (md) r:=t[3]-(p-1/2); else { if (lo) r:=t[0]-p; else r:=q-t[1]; } ` +
-    `if (type(${ICDF_DIGITS})==integer) d:=${ICDF_DIGITS}; else d:=Digits-10; if (abs(r)>q*10^(-d)) ok:=0; } ` +
-    `if (ok==0) { ${ICDF_FAILED}:=1; return x0; } return x; }`,
+    "if (pask_==2 or pask_==3) { pasw_:=pasx_; pasx_:=pasx_*exp(-pasdx_/pasx_); pasdx_:=pasx_-pasw_; } else pasx_:=pasx_-pasdx_; if (abs(pasdx_)<=pastol_*max(abs(pasx_),when(pask_==0,pasb_,when(pask_==1,1,0)))) { pasok_:=1; break; } } } " +
+    `if (pasok_==1) { past_:=pasicdft(pask_,pasa_,pasb_,pasx_); if (pasmd_) pasr_:=past_[3]-(pasp_-1/2); else { if (paslo_) pasr_:=past_[0]-pasp_; else pasr_:=pasq_-past_[1]; } ` +
+    `if (type(${ICDF_DIGITS})==integer) pasd_:=${ICDF_DIGITS}; else pasd_:=Digits-10; if (abs(pasr_)>pasq_*10^(-pasd_)) pasok_:=0; } ` +
+    `if (pasok_==0) { ${ICDF_FAILED}:=1; return pasx0_; } return pasx_; }`,
   // The four Giac names with their arguments; the arguments of a call to a one-parameter function come as one sequence.
   pasnormald_icdf:
-    "pasnormald_icdf(l):={ local v; v:=[l]; if (size(v)==1) return pasicdf(0,0,1,v[0],normald_icdf(v[0])); " +
-    `if (size(v)==3) return pasicdf(0,v[0],v[1],v[2],normald_icdf(v[0],v[1],v[2])); ${ICDF_FAILED}:=1; return normald_icdf(l); }`,
+    "pasnormald_icdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==1) return pasicdf(0,0,1,pasv_[0],normald_icdf(pasv_[0])); " +
+    `if (size(pasv_)==3) return pasicdf(0,pasv_[0],pasv_[1],pasv_[2],normald_icdf(pasv_[0],pasv_[1],pasv_[2])); ${ICDF_FAILED}:=1; return normald_icdf(pasl_); }`,
   passtudent_icdf:
-    "passtudent_icdf(l):={ local v; v:=[l]; if (size(v)==2) return pasicdf(1,v[0],1,v[1],student_icdf(v[0],v[1])); " +
-    `${ICDF_FAILED}:=1; return student_icdf(l); }`,
+    "passtudent_icdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==2) return pasicdf(1,pasv_[0],1,pasv_[1],student_icdf(pasv_[0],pasv_[1])); " +
+    `${ICDF_FAILED}:=1; return student_icdf(pasl_); }`,
   paschisquare_icdf:
-    "paschisquare_icdf(l):={ local v; v:=[l]; if (size(v)==2) return pasicdf(2,v[0],1,v[1],chisquare_icdf(v[0],v[1])); " +
-    `${ICDF_FAILED}:=1; return chisquare_icdf(l); }`,
+    "paschisquare_icdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==2) return pasicdf(2,pasv_[0],1,pasv_[1],chisquare_icdf(pasv_[0],pasv_[1])); " +
+    `${ICDF_FAILED}:=1; return chisquare_icdf(pasl_); }`,
   pasfisher_icdf:
-    "pasfisher_icdf(l):={ local v; v:=[l]; if (size(v)==3) return pasicdf(3,v[0],v[1],v[2],fisher_icdf(v[0],v[1],v[2])); " +
-    `${ICDF_FAILED}:=1; return fisher_icdf(l); }`,
+    "pasfisher_icdf(pasl_):={ local pasv_; pasv_:=[pasl_]; if (size(pasv_)==3) return pasicdf(3,pasv_[0],pasv_[1],pasv_[2],fisher_icdf(pasv_[0],pasv_[1],pasv_[2])); " +
+    `${ICDF_FAILED}:=1; return fisher_icdf(pasl_); }`,
 };
 
 /** The polished names `text` calls (outside strings). */

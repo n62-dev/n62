@@ -30,8 +30,8 @@ const POLY = new Set(POLYNOMIAL_FUNCTIONS);
  *  it again inside its one call, so a user's `paspoly1:=5` cannot turn the check off. */
 export const POLY_AT = "paspoly1";
 export const POLY_AT_ANY_DEPTH =
-  `${POLY_AT}(v):={ local k; if (subtype(v)==10) return 1; if (type(v)!=DOM_LIST) return 0; ` +
-  `for (k:=0;k<size(v);k:=k+1) { if (${POLY_AT}(v[k])==1) return 1; } return 0; }`;
+  `${POLY_AT}(pasv_):={ local pask_; if (subtype(pasv_)==10) return 1; if (type(pasv_)!=DOM_LIST) return 0; ` +
+  `for (pask_:=0;pask_<size(pasv_);pask_:=pask_+1) { if (${POLY_AT}(pasv_[pask_])==1) return 1; } return 0; }`;
 
 /** Cheap text test: Giac printed a coefficient vector in `text` (one inside a string too; the engine call tells). */
 export function printsPoly(text: string): boolean {

@@ -30,19 +30,19 @@ export const ESERIES_CUT = "pasesb";
  *  checked (eseries is a decision function, decisions.ts). */
 export function eseriesDefinition(): string {
   const pick = Object.keys(ESERIES)
-    .map((n) => `if (n==${n}) { t:=[${ESERIES[Number(n)]!.join(",")}]; d:=${ESERIES_SCALE[Number(n)]}; } `)
+    .map((n) => `if (pasn_==${n}) { past_:=[${ESERIES[Number(n)]!.join(",")}]; pasd_:=${ESERIES_SCALE[Number(n)]}; } `)
     .join("");
   return (
-    `${ESERIES_CUT}(n,x):={ local t,d,p,s,k,lo,hi; t:=0; d:=0; ` +
+    `${ESERIES_CUT}(pasn_,pasx_):={ local past_,pasd_,pasp_,pass_,pask_,paslo_,pashi_; past_:=0; pasd_:=0; ` +
     pick +
-    "p:=floor(evalf(log10(x),30)); while (10^p>x) p:=p-1; while (10^(p+1)<=x) p:=p+1; " +
-    "s:=x/10^p*d; lo:=t[0]; hi:=10*d; " +
-    "for (k:=0;k<size(t);k:=k+1) { if (t[k]<=s) { lo:=t[k]; if (k+1<size(t)) hi:=t[k+1]; else hi:=10*d; } } " +
-    "return [lo,hi,d,p,normal(s^2-lo*hi)]; }; " +
-    "eseries(n,x):={ local b; " +
-    `if (!member(n,[${Object.keys(ESERIES).join(",")}])) throw("eseries: n must be 6, 12, 24, 48, 96 or 192"); ` +
-    'if (type(x)!=integer and type(x)!=rational and type(evalf(x,30))!=real) throw("eseries: x must be a real number"); ' +
-    'if (x<=0) throw("eseries: x must be positive"); ' +
-    `b:=${ESERIES_CUT}(n,x); if (b[4]<0) return b[0]/b[2]*10^b[3]; return b[1]/b[2]*10^b[3]; }`
+    "pasp_:=floor(evalf(log10(pasx_),30)); while (10^pasp_>pasx_) pasp_:=pasp_-1; while (10^(pasp_+1)<=pasx_) pasp_:=pasp_+1; " +
+    "pass_:=pasx_/10^pasp_*pasd_; paslo_:=past_[0]; pashi_:=10*pasd_; " +
+    "for (pask_:=0;pask_<size(past_);pask_:=pask_+1) { if (past_[pask_]<=pass_) { paslo_:=past_[pask_]; if (pask_+1<size(past_)) pashi_:=past_[pask_+1]; else pashi_:=10*pasd_; } } " +
+    "return [paslo_,pashi_,pasd_,pasp_,normal(pass_^2-paslo_*pashi_)]; }; " +
+    "eseries(pasn_,pasx_):={ local pasb_; " +
+    `if (!member(pasn_,[${Object.keys(ESERIES).join(",")}])) throw("eseries: n must be 6, 12, 24, 48, 96 or 192"); ` +
+    'if (type(pasx_)!=integer and type(pasx_)!=rational and type(evalf(pasx_,30))!=real) throw("eseries: x must be a real number"); ' +
+    'if (pasx_<=0) throw("eseries: x must be positive"); ' +
+    `pasb_:=${ESERIES_CUT}(pasn_,pasx_); if (pasb_[4]<0) return pasb_[0]/pasb_[2]*10^pasb_[3]; return pasb_[1]/pasb_[2]*10^pasb_[3]; }`
   );
 }

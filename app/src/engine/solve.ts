@@ -10,6 +10,7 @@ import { splitList } from "./giacPrint.ts";
 import { defaultSolveSettings, negZero, num, solve1, type SolveSettings } from "./solve1.ts";
 import { IDENT, type KnownValue, type SolveOutcome, type SolveRequest } from "./types.ts";
 import { PASDEG } from "./angles.ts";
+import { OUR_BOUND as K } from "./ourNames.ts";
 
 /** Giac's own interrupt for one call inside Solve and Function analysis: a safety net only; the
  *  solvers keep their own budgets and the user has Cancel. */
@@ -266,7 +267,7 @@ function system(giac: Giac, eqs: string[], vars: string[], guesses: string[], wr
   /** Largest |f_k| / max(1, |left_k|, |right_k|) at pasX. */
   const residual = (): number => {
     ev(`Digits:=${s.workDigits}`);
-    const r = num(ev(`evalf(max(seq(abs(subst(pasF[k],${V},pasX))/max(1,abs(subst(pasL[k],${V},pasX)),abs(subst(pasR[k],${V},pasX))),k,0,${n - 1})))`));
+    const r = num(ev(`evalf(max(seq(abs(subst(pasF[${K}],${V},pasX))/max(1,abs(subst(pasL[${K}],${V},pasX)),abs(subst(pasR[${K}],${V},pasX))),${K},0,${n - 1})))`));
     return r ?? Infinity;
   };
 
@@ -355,7 +356,7 @@ function polyRoots(giac: Giac, eq: string, v: string, wrap: (e: string) => strin
     ev(`pasr[${k}]:=pasz`);
   }
   // Reals first (ascending), then complex by real part, then imaginary part.
-  ev("pasr:=sort(pasr,(a,b)->when(im(a)==0,when(im(b)==0,re(a)<re(b),true),when(im(b)==0,false,when(abs(re(a)-re(b))<=10^(-20)*max(1,abs(a),abs(b)),im(a)<im(b),re(a)<re(b)))))");
+  ev("pasr:=sort(pasr,(pasa_,pasb_)->when(im(pasa_)==0,when(im(pasb_)==0,re(pasa_)<re(pasb_),true),when(im(pasb_)==0,false,when(abs(re(pasa_)-re(pasb_))<=10^(-20)*max(1,abs(pasa_),abs(pasb_)),im(pasa_)<im(pasb_),re(pasa_)<re(pasb_)))))");
   // M4-8: each root polished again at work precision + 20 (pasr2); the digits on which the two agree are shown.
   const W2 = s.workDigits + SECOND_POLISH;
   ev(`Digits:=${W2}`);

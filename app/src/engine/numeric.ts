@@ -31,7 +31,7 @@ import { binary64Of } from "./binary64.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
 import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
-import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, purgeReads } from "./complex.ts";
+import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 
 export interface Giac {
@@ -398,7 +398,7 @@ function rationalOf(nd: readonly [string, string] | null | undefined, keep: numb
 /** G103: Giac's symbolic re() and im() of every element of `expr` (bridge-3, one call) as exact rationals where they
  *  are (null where not); null when Giac gave no such parts (an error, a time-out). */
 function splitParts(giac: Giac, expr: string, n: number, keep: number): { re: ReturnType<typeof rationalOf>[]; im: ReturnType<typeof rationalOf>[] } | null {
-  const v = giac.value(`(pasz->[re(pasz),im(pasz)])(${expr})`, []);
+  const v = giac.value(partsOf(expr), []);
   const ex = v.exact;
   if (v.kind === "error" || !ex || ex.length !== 2 * n) return null;
   return { re: ex.slice(0, n).map((x) => rationalOf(x, keep)), im: ex.slice(n).map((x) => rationalOf(x, keep)) };
