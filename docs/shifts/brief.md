@@ -64,7 +64,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
-| 618 | [R272](packages/R272.md) one note when history drops past 200 (fh-13) | ron, Sonnet | `p1/ron-historynote` | – |
+| 618 | R272 one note when history drops past 200 (fh-13) | ron, Sonnet | `p1/ron-historynote` | – |
 | 619 | [R273](packages/R273.md) a typed line beats a picked row (vr-3) | ron, Sonnet | `p1/ron-pickkeep` | – |
 | 506 | [G187](packages/G187.md) a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
 | 507 | [G170](packages/G170.md) ilaplace leaves no broken entry in Giac's variable list (F89) | gorge, Opus | `p1/gorge-ilaplacevars` | – |
