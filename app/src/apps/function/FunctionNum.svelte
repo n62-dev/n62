@@ -20,6 +20,14 @@
     return () => ro.disconnect();
   });
 
+  // R257: the angle mode changed while Num is open: the rows are asked again at once (refreshNum's signature holds
+  // the angle and drops the old cells). The first run on opening asks nothing new (one call per key, FunctionApp.single).
+  // In a microtask, so the angle stays this effect's only dependency (no `untrack`: it would grow the start chunk).
+  $effect(() => {
+    void app.angle;
+    queueMicrotask(() => void app.refreshNum());
+  });
+
   let touchY: number | undefined;
   function wheel(e: WheelEvent): void {
     e.preventDefault();

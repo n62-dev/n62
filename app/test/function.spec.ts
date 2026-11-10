@@ -282,3 +282,33 @@ test("Function in DEG: sin(x) is drawn in degrees; the curve is 0 at 180 and 1 a
   await tap(page, ["@menu", "d1"]);
   await expect(page.getByTestId("readout-x")).toHaveText("180");
 });
+
+// R257: the trace y and the Num cells follow the angle unit at once (night review 2026-11-09, bu-2).
+test("Function: sin(x) traced at 0.1, the angle chip to DEG: y becomes sin(0.1°) (R257)", async ({ page }) => {
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["sin", "x", "enter", "@plot"]);
+  await page.waitForFunction(() => window.n62.plot.board !== undefined);
+  await tap(page, ["right"]);
+  await expect(page.getByTestId("trace-x")).toHaveText("0.1");
+  await expect(page.getByTestId("trace-y")).toHaveAttribute("data-text", "0.0998334166468"); // oracle sin(0.1)
+  await page.getByTestId("chip-angle").tap();
+  expect(await page.evaluate(() => window.n62.session.settings.angle)).toBe("deg");
+  await expect(page.getByTestId("trace-y")).toHaveAttribute("data-text", "0.0017453283659"); // oracle sin(0.1°)
+});
+
+test("Function: Num of sin(x), the angle chip to DEG: the rows change without a scroll, and the CSV with them (R257)", async ({ page }) => {
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["sin", "x", "enter", "@num"]);
+  await tap(page, ["@menu", "d2", "d1", "enter"]); // step 1
+  const cell = page.locator('[data-testid="num-table"] tr:has(td[data-x="1"]) td').nth(1);
+  await expect(cell).toHaveAttribute("data-text", "0.841470984808"); // oracle sin(1)
+  await page.getByTestId("chip-angle").tap();
+  expect(await page.evaluate(() => window.n62.session.settings.angle)).toBe("deg");
+  await expect(cell).toHaveAttribute("data-text", "0.0174524064373"); // oracle sin(1°)
+  // the text the Copy key and Menu's CSV item copy: the full value of sin(1°), 0.0174524064372835128… (oracle)
+  const csv = await page.evaluate(() => (window.n62.shell.loaded.function!.instance as unknown as { numCsv(): Promise<string | undefined> }).numCsv());
+  const row = csv?.split("\r\n").find((l) => l.startsWith("1,"));
+  expect(Number(row?.split(",")[1])).toBeCloseTo(0.0174524064373, 12);
+});

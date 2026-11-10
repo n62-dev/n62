@@ -280,6 +280,12 @@ export class FunctionApp implements AppInstance {
     const angle = this.host.settings.angle;
     if (this.compiled.every((c) => c.angle === angle)) return false;
     this.compiled = this.slots.latex.map((l) => compileDefinition(l, angle));
+    // R257: the last analysis and the trace y belong to the old unit. The trace is asked in a microtask, outside
+    // FunctionPlot.svelte's angle effect that calls this (its reads are not that effect's dependencies).
+    this.marks = [];
+    this.readout = undefined;
+    this.areaStart = undefined;
+    queueMicrotask(() => void this.refreshTrace());
     return true;
   }
   select(i: number): void {
@@ -441,24 +447,27 @@ export class FunctionApp implements AppInstance {
     this.save();
     void this.refreshTrace();
   }
-  /** The engine's y at the trace position, with the position and function it belongs to. */
-  private traceAt = $state.raw<{ x: string; slot: number; y: Cell } | undefined>(undefined);
+  /** The engine's y at the trace position, keyed as the Num cache is: position, slot, the function's Giac text and the angle unit (R257). */
+  private traceAt = $state.raw<{ x: string; slot: number; f: string; angle: string; y: Cell } | undefined>(undefined);
+  private traceKey(): { x: string; slot: number; f: string; angle: string } {
+    const slot = this.trace.slot;
+    return { x: this.trace.x, slot, f: this.compiled[slot]?.giac ?? "", angle: this.host.settings.angle };
+  }
   get traceY(): Cell | undefined {
     const a = this.traceAt;
-    return a && a.x === this.trace.x && a.slot === this.trace.slot ? a.y : undefined;
+    const k = this.traceKey();
+    return a && a.x === k.x && a.slot === k.slot && a.f === k.f && a.angle === k.angle ? a.y : undefined;
   }
   set traceY(y: Cell | undefined) {
-    this.traceAt = y ? { x: this.trace.x, slot: this.trace.slot, y } : undefined;
+    this.traceAt = y ? { ...this.traceKey(), y } : undefined;
   }
   refreshTrace(): Promise<void> {
     return this.single("trace", async () => {
-      const slot = this.trace.slot;
-      const x = this.trace.x;
-      const f = this.compiled[slot]?.giac ?? "";
-      if (f === "" || !this.active.includes(slot) || this.traceY) return;
-      const r = await this.job(() => this.fc.table({ fns: [f], xs: [x] }, this.host.settings));
+      const k = this.traceKey();
+      if (k.f === "" || !this.active.includes(k.slot) || this.traceY) return;
+      const r = await this.job(() => this.fc.table({ fns: [k.f], xs: [k.x] }, this.host.settings));
       const y = r?.[0]?.[0];
-      if (y) this.traceAt = { x, slot, y };
+      if (y) this.traceAt = { ...k, y };
     });
   }
 
@@ -491,8 +500,10 @@ export class FunctionApp implements AppInstance {
     } else if (kind === "slope") req = { kind, f, x0 };
     else req = { kind, f, x0, ...this.windowBounds() };
     this.readout = { lines: [], info: t("history.working"), warn: false };
+    const angle = this.angle;
     const r = await this.fresh("analysis", () => this.fc.analyze(req, this.host.settings));
-    if (!r) {
+    // R257: an answer for the old angle unit is not shown
+    if (!r || this.angle !== angle) {
       this.readout = undefined;
       return;
     }
@@ -510,8 +521,9 @@ export class FunctionApp implements AppInstance {
     if (a === undefined || !f) return;
     const b = this.trace.x;
     this.readout = { lines: [], info: t("history.working"), warn: false };
+    const angle = this.angle;
     const r = await this.fresh("analysis", () => this.fc.analyze({ kind: "area", f, a, b }, this.host.settings));
-    if (!r) {
+    if (!r || this.angle !== angle) {
       this.readout = undefined;
       return;
     }

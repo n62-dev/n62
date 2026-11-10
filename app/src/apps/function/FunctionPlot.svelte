@@ -141,7 +141,8 @@
     app.setWindow(w);
   });
 
-  // The angle mode changed while Plot is open: the evaluators are rebuilt, redraw.
+  // The angle mode changed while Plot is open: the evaluators are rebuilt, the last analysis goes and the trace y is
+  // asked again (R257, in syncAngle), redraw.
   $effect(() => {
     void app.angle;
     if (app.syncAngle() && ready) board?.update();
