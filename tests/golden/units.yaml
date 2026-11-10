@@ -194,6 +194,38 @@ cases:
   - { id: "z15", input: "max(1*{m},50*{c:m})", oracle: "F(1)", expect: "1", mark: "=", exact: "1", dim: "m1", unit: "m", source: "derived", note: "a function the check cannot read with symbols leaves the decision to the value" }
   - { id: "z16", input: "-5*{oC}", to: "K", oracle: "F(-5)+F('273.15')", expect: "268.15", mark: "=", exact: "5363/20", source: "derived", note: "the minus on the number converts" }
   - { id: "z17", input: "{m}-{m}+{s}", message: "Units don't match: L vs T", source: "derived", note: "slots with no number before them cancel too" }
+  # --- G310: a zero inside a function gets the same dimension check as any other value (night review 2026-11-09 be-8; decisions.md G35): the arguments of exp, ln, cosh, floor, … (a pure number), sin, cos, tan (also an angle), the inverses and atan2 (y/x a pure number) are checked in the dimension form; z32–z48 are controls that keep their value ---
+  - { id: "z18", input: "cos(0*{m})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "night review 2026-11-09 be-8: 0 m is still a length (was = 1)" }
+  - { id: "z19", input: "sin(0*{s})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 0" }
+  - { id: "z20", input: "tan(0*{kg})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 0" }
+  - { id: "z21", input: "exp(0*{m})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 1" }
+  - { id: "z22", input: "cosh(0*{m})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 1" }
+  - { id: "z23", input: "floor(0*{m})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 0" }
+  - { id: "z24", input: "exp((5*{m}-5*{m})/(1*{s}))", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "a length per time, worth 0 (was = 1)" }
+  - { id: "z25", input: "exp(abs(0*{m}))", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "a function the check reads inside the argument (was = 1)" }
+  - { id: "z26", input: "atan2(0*{m},1*{s})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "atan2 takes two quantities of one dimension (was = 0)" }
+  - { id: "z27", input: "atan2(1*{m},0*{s})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was ≈ 1.5708 rad" }
+  - { id: "z28", input: "sqrt(0*{m}^2+1*{s}^2)", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "a sum inside a function whose terms differ (was = 1 s)" }
+  - { id: "z29", input: "abs(0*{m}+1*{s})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 1 s" }
+  - { id: "z30", input: "max(1*{m},2*{m})*exp(0*{m})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "no exemption for the rest of the formula (was = 2 m)" }
+  - { id: "z31", input: "exp(0*{m})*abs(-1)", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "was = 1" }
+  - { id: "z32", input: "exp(1*{m}/(2*{m}))", oracle: "exp(F(1,2))", expect: "1.6487212707", mark: "≈", exact: "exp(1/2)", dim: "", unit: "", source: "derived", note: "control: a ratio of lengths" }
+  - { id: "z33", input: "sqrt((1*{m}+2*{m})^2)", oracle: "F(3)", expect: "3", mark: "=", exact: "3", dim: "m1", unit: "m", source: "derived", note: "control" }
+  - { id: "z34", input: "sign(1*{m}-2*{m})", oracle: "F(-1)", expect: "-1", mark: "=", exact: "-1", dim: "", unit: "", source: "derived", note: "control: sign is not on the list" }
+  - { id: "z35", input: "abs(1*{m}-2*{m})", oracle: "F(1)", expect: "1", mark: "=", exact: "1", dim: "m1", unit: "m", source: "derived", note: "control" }
+  - { id: "z36", input: "max(1*{m}+1*{m},3*{m})", oracle: "F(3)", expect: "3", mark: "=", exact: "3", dim: "m1", unit: "m", source: "derived", note: "control" }
+  - { id: "z37", input: "sin(30*{deg})", oracle: "F(1,2)", expect: "0.5", mark: "=", exact: "1/2", dim: "", unit: "", source: "derived", note: "control: an angle in sin" }
+  - { id: "z38", input: "sin(2*{rad / s}*1*{s})", oracle: "sin(2)", expect: "0.909297426826", mark: "≈", exact: "sin(2)", dim: "", unit: "", source: "derived", note: "control: ω·t" }
+  - { id: "z39", input: "atan2(0*{m},1*{m})", oracle: "F(0)", expect: "0", mark: "=", exact: "0", dim: "rad1", unit: "rad", source: "derived", note: "control: a zero of the right dimension" }
+  - { id: "z40", input: "exp(-abs(1*{m}-2*{m})/(3*{m}))", oracle: "exp(-F(1,3))", expect: "0.716531310574", mark: "≈", exact: "exp(-1/3)", dim: "", unit: "", source: "derived", note: "control: [3] on an unread symbol in the old check, not a refusal" }
+  - { id: "z41", input: "20*log10(abs(1*{V}-2*{V})/(1*{V}))", oracle: "F(0)", expect: "0", mark: "=", exact: "0", source: "derived", note: "control: a level of 0 dB" }
+  - { id: "z42", input: "exp(max(1*{m},2*{m})/(3*{m}))", oracle: "exp(F(2,3))", expect: "1.94773404105", mark: "≈", exact: "exp(2/3)", dim: "", unit: "", source: "derived", note: "control: max the check cannot read ([2])" }
+  - { id: "z43", input: "floor(max(1*{m},2*{m})/(1*{m}))", oracle: "F(2)", expect: "2", mark: "=", exact: "2", dim: "", unit: "", source: "derived", note: "control" }
+  - { id: "z44", input: "sin(max(1*{m},2*{m})/(3*{m}))", oracle: "sin(F(2,3))", expect: "0.61836980307", mark: "≈", exact: "sin(2/3)", dim: "", unit: "", source: "derived", note: "control" }
+  - { id: "z45", input: "cos(abs(1*{m}-2*{m})/(3*{m}))", oracle: "cos(F(1,3))", expect: "0.944956946315", mark: "≈", exact: "cos(1/3)", dim: "", unit: "", source: "derived", note: "control" }
+  - { id: "z46", input: "atan2(max(1*{m},2*{m}),3*{m})", oracle: "atan(F(2,3))", expect: "0.588002603548", mark: "≈", exact: "atan(2/3)", dim: "rad1", unit: "rad", source: "derived", note: "control" }
+  - { id: "z47", input: "exp(piecewise(1*{m}<2*{m},1*{m},2*{m})/(3*{m}))", oracle: "exp(F(1,3))", expect: "1.39561242509", mark: "≈", exact: "exp(1/3)", dim: "", unit: "", source: "derived", note: "control" }
+  - { id: "z48", input: "exp(sqrt((1*{m}+2*{m})^2)/(3*{m}))", oracle: "exp(F(1))", expect: "2.71828182846", mark: "≈", exact: "exp(1)", dim: "", unit: "", source: "derived", note: "control" }
   # --- G37: °C and °F inside a compound unit are a temperature interval (decisions.md "G37"; check-2026-10-19 finding 12) ---
   - { id: "i01", input: "1*{J / k:g oC}", to: "J / k:g K", oracle: "F(1)", expect: "1", mark: "=", exact: "1", source: "derived", note: "inside a compound unit 1 °C is 1 K, no offset (was the temperature-difference refusal)" }
   - { id: "i02", input: "10*{W / m^2 oC}", to: "W / m^2 K", oracle: "F(10)", expect: "10", mark: "=", exact: "10", source: "derived", note: "a heat-transfer coefficient written with °C" }

@@ -85,7 +85,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 609 | [G310](packages/G310.md) a zero inside a function, unit check (be-8) | gorge, Opus | `p1/gorge-unitzero` | – |
+| 609 | G310 a zero inside a function, unit check (be-8) | gorge, Opus | `p1/gorge-unitzero` | – |
 | 620 | [A138](packages/A138.md) the F-Droid recipe asks for Reproducible Builds (owner) | annabell, Sonnet | `p1/annabell-fdroidrb` | – |
 | 594 | [A128](packages/A128.md) start chunk budget 63 kB (owner) | annabell, Sonnet | `p1/annabell-startbudget` | – |
 | 595 | [A124](packages/A124.md) docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
