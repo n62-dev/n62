@@ -79,9 +79,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 595 | A124 docs and size failures are free rounds | annabell, Sonnet | `p1/annabell-freerounds` | A128 |
-| 596 | A127 a row waits for its After | annabell, Sonnet | `p1/annabell-aftercheck` | A124 |
-| 597 | A129 one rerun of untouched e2e failures | annabell, Sonnet | `p1/annabell-flakerun` | A127 |
 | 598 | [A130](packages/A130.md) the log names every failing test | annabell, Sonnet | `p1/annabell-failnames` | A129 |
 | 599 | [A131](packages/A131.md) a Not done list item does not stop a run | annabell, Sonnet | `p1/annabell-notdone` | A130 |
 | 600 | [A125](packages/A125.md) clipboard lock in turn (F202) | annabell, Sonnet | `p1/annabell-clipqueue` | A124 |
