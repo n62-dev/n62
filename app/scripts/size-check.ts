@@ -125,7 +125,7 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   };
   const dynamic = (prefix: string): string[] => chunks.filter((c) => c.isDynamicEntry && normalSrc(c.src).startsWith(prefix)).map((c) => c.file);
 
-  add("Start chunk", startFiles(manifest), { rawMax: 175 * KB, gzipMax: 61 * KB });
+  add("Start chunk", startFiles(manifest), { rawMax: 180 * KB, gzipMax: 63 * KB });
   add("MathLive chunk", chunks.filter((c) => /(^|\/)mathlive\/mathlive\.min\.m?js$/.test(normalSrc(c.src))).map((c) => c.file), { rawMax: 830 * KB });
   // The chunk that holds src/find/finder.ts, whether it is a dynamic entry (src in the manifest) or a shared chunk
   // (units/find.ts and units/menu.ts import it statically, so Rollup names it "finder" and the manifest has no src).
@@ -161,8 +161,8 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  when the Key click setting is on. */
 export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts"];
 
-/** R91's pin: the start chunk is at most this many bytes gzip, 1 kB under the budget of 61 kB, so the Settings base
- *  (R49, R86, R57) has room. A package that needs more raises the pin with a reason, here and in docs/04 8.3.
+/** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
+ *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
  *  58.5 → 59.5 kB (R4b): phase-1 measures 58.50 kB gzip, the branch 59.42 kB (+0.92 kB): the Vars and Memory keys,
  *  the Your keys level and the free keys' three layers are on the key path.
  *  59.5 → 60 kB (R50e): phase-1 59.42 kB, the branch 59.90 kB (+0.48 kB, raw +1.2 kB): the stored look (its
