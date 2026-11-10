@@ -378,6 +378,19 @@ test("÷ after a root, a power or a mixed number divides the whole term", async 
   await resultIs(page, "0.5", 3); // derived: (5/2)/5 = 1/2
 });
 
+// R256 (bu-9): a base of more than one digit is taken whole by L8 and L9 (the point-mode control of decimalcomma.spec's
+// comma cases). Derived: (12²)² = 20736, 12²/2 = 72.
+test("x² and ÷ after a power of a two-digit number take the whole power: 12 x² x², 12 x² ÷ 2", async ({ page }) => {
+  await tap(page, ["d1", "d2", "sq", "sq"]);
+  expect(await entryValue(page)).toBe("\\left(12^2\\right)^2");
+  await tap(page, ["enter"]);
+  await resultIs(page, "20736", 1);
+  await tap(page, ["d1", "d2", "sq", "div", "d2"]);
+  expect(await entryValue(page)).toBe("\\frac{12^2}{2}");
+  await tap(page, ["enter"]);
+  await resultIs(page, "72", 2);
+});
+
 test("÷ after a plain number or a sum is unchanged", async ({ page }) => {
   await tap(page, ["d1", "add", "d6", "div", "d3"]);
   expect(await entryValue(page)).toBe("1+\\frac63");

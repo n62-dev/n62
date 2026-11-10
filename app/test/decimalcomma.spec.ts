@@ -55,6 +55,42 @@ test("1 , 5 ÷ 2 draws 0,75", async ({ page }) => {
   await expect(lastResult(page)).toContainText("0,75");
 });
 
+// R256 (bu-3, night review 2026-11-09): a power key or ÷ after a power takes the whole number with its comma as the base,
+// as in point mode (L8, L9); it took only the digits after the comma: 3,5² ÷ 2 was 3·(5²/2) = 37,5. Expected values
+// derived (3,5² = 12,25; 3,5²/2 = 6,125 also oracle); 1/12,25 = 0,0816326530612… to 12 digits.
+for (const [name, keys, line, result] of [
+  ["3 , 5 x² ÷ 2", ["d3", "dot", "d5", "sq", "div", "d2"], "\\frac{3{,}5^2}{2}", "6,125"],
+  ["3 , 5 x² x²", ["d3", "dot", "d5", "sq", "sq"], "\\left(3{,}5^2\\right)^2", "150,0625"],
+  ["3 , 5 xʸ 2 ▶ x⁻¹", ["d3", "dot", "d5", "pow", "d2", "right", "shift", "div"], "\\left(3{,}5^2\\right)^{-1}", "0,0816326530612"],
+  ["12 , 25 x² ÷ 2", ["d1", "d2", "dot", "d2", "d5", "sq", "div", "d2"], "\\frac{12{,}25^2}{2}", "75,03125"],
+] as const) {
+  test(`${name} takes the whole number 3,5 (12,25) as the base: ${result}`, async ({ page }) => {
+    await tap(page, [...keys]);
+    expect(await entryValue(page)).toBe(line);
+    await tap(page, ["enter"]);
+    await resultIs(page, result, 1);
+  });
+}
+
+test("Del before the 5 of 3,5² deletes the 5 alone and keeps the exponent, as before the 5 of 3.5²", async ({ page }) => {
+  const delBefore5 = async (): Promise<string> => {
+    await page.evaluate(() => {
+      const mf = window.n62.entry.field;
+      if (mf) mf.position = mf.lastOffset - 4; // before the 5: the 5, the exponent's sentinel, its 2 and ^2 follow
+    });
+    await tap(page, ["shift", "bksp"]);
+    return entryValue(page);
+  };
+  await page.evaluate(() => window.n62.session.setDecimalMark("point"));
+  await tap(page, ["d3", "dot", "d5", "sq"]);
+  expect(await entryValue(page)).toBe("3.5^2");
+  expect(await delBefore5()).toBe("3.^2");
+  await page.evaluate(() => window.n62.session.setDecimalMark("comma"));
+  await tap(page, ["esc", "d3", "dot", "d5", "sq"]);
+  expect(await entryValue(page)).toBe("3{,}5^2");
+  expect(await delBefore5()).toBe("3{,}^2");
+});
+
 test("max(1;2) typed with letters and the , key (;) gives 2; a list element is never read as a decimal", async ({ page }) => {
   await maxCall(page);
   await tap(page, ["d1", "comma", "d2"]);
