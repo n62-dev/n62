@@ -1350,6 +1350,86 @@ grep -q 'F2: pre-flight failed (round 0): ## size failed (full log: [^)]*): FAIL
 grep -qE '^acquire host-cpu' "$pf/locks" || fail "A83: the size pre-flight ran without host-cpu: $(cat "$pf/locks")"
 grep -qE '^acquire integ' "$pf/locks" && fail "A83: a failing size pre-flight took integ: $(cat "$pf/locks")"
 grep -q 'F2: in the queue' "$pf/.coord/log.md" && fail "A83: a branch failing the size pre-flight entered the queue"
+# A124: the size failures are free for two rounds (see the FR cases below), so F2 ended after four fix rounds, not two
+[[ "$(wc -l < "$pf/fixes-size" 2>/dev/null)" -eq 4 ]] || fail "A124: a size failure in every round: expected 2 free and 2 counted fix rounds, got $(wc -l < "$pf/fixes-size" 2>/dev/null)"
+
+# A124: a round whose only failures are docs or size, and where the audit asked for nothing, is free: a run has at most two of them, and
+# `rounds` still numbers every round. A sandbox as the pre-flight one, with counters: FR_DOCS=two|always (docs fails its first two runs,
+# or always), FR_TC=two (typecheck fails its first two runs), FR_SIZE=fail (the build, so size, always fails), FR_AUDIT=fix (sofia says FIX).
+fr="$tmp/fr"; mkdir -p "$fr/bin" "$fr/tools" "$fr/docs/shifts" "$fr/app" "$fr/engine/giac/patches"; git init -q -b main "$fr"
+printf '#!/bin/sh\nexit 0\n' > "$fr/tools/devlock.sh"; cp "$pf/tools/docs-check.test.mjs" "$fr/tools/"
+cat > "$fr/tools/docs-check.mjs" <<STUB
+import fs from 'node:fs';
+const f = '$fr/cnt-docs', k = (fs.existsSync(f) ? +fs.readFileSync(f, 'utf8') : 0) + 1; fs.writeFileSync(f, String(k));
+const m = process.env.FR_DOCS || '';
+if (m === 'always' || (m === 'two' && k <= 2)) { console.log('budget: docs/backlog.md is 20.1 kB, over 20 kB'); process.exit(1); }
+STUB
+printf '| Patch | Why |\n|---|---|\n' > "$fr/engine/giac/patches/README.md"; : > "$fr/docs/shifts/brief.md"; echo t > "$fr/app/keep"; echo node_modules/ > "$fr/.gitignore"
+cat > "$fr/bin/npm" <<STUB
+#!/bin/sh
+case "\$*" in
+  ci*) mkdir -p node_modules/x;;
+  *"run -s typecheck"*) k=\$(( \$(cat "$fr/cnt-tc" 2>/dev/null || echo 0) + 1 )); echo \$k > "$fr/cnt-tc"
+     [ "\$FR_TC" != two ] || [ \$k -gt 2 ] || { echo "error TS2322: the stand-in type error"; exit 1; }
+     [ "\$FR_TC" != late ] || [ \$k -lt 2 ] || [ \$k -gt 3 ] || { echo "error TS2322: the stand-in type error"; exit 1; };;  # late: runs 2 and 3 fail (1 is the pre-flight, 2 the queue's)
+  *"run -s build"*) [ "\$FR_SIZE" != fail ] || { echo "FAIL start chunk 99.00 kB gzip, over its pin 61.00 kB"; exit 1; };;
+esac
+exit 0
+STUB
+cat > "$fr/bin/claude" <<STUB
+#!/bin/sh
+c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
+case "\$*" in
+  *"--agent sofia"*) if [ "\$FR_AUDIT" = fix ]; then printf 'FIX\napp/w.txt:1 the stand-in audit finding\n'; else echo APPROVED; fi;;
+  *"a merge of phase-1 is in progress"*) echo resolved > app/w.txt; c --no-edit; echo resolved;;
+  *"fix round"*) echo "\$*" | grep -o 'fix round [0-9]*[^:]*:' >> "$fr/prompts"; echo f >> "$fr/fixes"; date +%s%N > fix.txt; c -m fix; echo fixed;;
+  *) date +%s%N > app/w.txt; c -m "report: w" -m "Done: w.
+Tests: none."
+     if [ -n "\$FR_CONFLICT" ]; then echo theirs > "$fr/.claude/worktrees/phase-1/app/w.txt"; git -C "$fr/.claude/worktrees/phase-1" add -A; git -C "$fr/.claude/worktrees/phase-1" -c user.name=t -c user.email=t@t commit -q -m "other lane: w"; fi  # A124f1: phase-1 moves while the worker works
+     echo done;;
+esac
+STUB
+chmod +x "$fr/bin/"* "$fr/tools/devlock.sh"; git -C "$fr" add -A; gc "$fr" init; git -C "$fr" branch phase-1
+frrun() { rm -f "$fr/cnt-docs" "$fr/cnt-tc" "$fr/fixes" "$fr/prompts";
+  (cd "$fr" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$fr/bin:$PATH" GIAC_OUT="$fr/engine" "$@"); }
+nfix() { wc -l < "$fr/fixes" 2>/dev/null || echo 0; }
+# (a) docs fails twice, then typecheck fails twice, then all passes: the two docs rounds are free, the two typecheck rounds count, it merges
+out="$(FR_DOCS=two FR_TC=two frrun "$script" annabell "fr task" --id FR1 --branch p1/fr1 2>&1)"
+grep -q '^RESULT #[0-9]* FR1: MERGED' <<<"$out" || fail "A124 (a): docs failing twice, then two real failures, does not merge with both fix rounds left: $out"
+[[ "$(nfix)" -eq 4 ]] || fail "A124 (a): expected 4 fix rounds (2 free, 2 counted), got $(nfix)"
+grep -q 'FR1: round 1 free (docs or size only; 1 of 2)' "$fr/.coord/log.md" && grep -q 'FR1: round 2 free (docs or size only; 2 of 2)' "$fr/.coord/log.md" || fail "A124 (a): the free rounds are not logged: $(grep FR1 "$fr/.coord/log.md")"
+grep -q 'FR1: round 3 free' "$fr/.coord/log.md" && fail "A124 (a): a typecheck round is logged free"
+grep -q 'FR1: fix round 4 done' "$fr/.coord/log.md" || fail "A124 (a): the words 'fix round 4 done' are gone"
+[[ "$(sed -n 1p "$fr/prompts")" == 'fix round 1 for package FR1:' && "$(sed -n 2p "$fr/prompts")" == 'fix round 2 for package FR1:' ]] || fail "A124 (a): a free round's prompt names an 'of 2' or a wrong number: $(head -n2 "$fr/prompts" | tr '\n' '|')"
+[[ "$(sed -n 3p "$fr/prompts")" == 'fix round 1 of 2 for package FR1:' && "$(sed -n 4p "$fr/prompts")" == 'fix round 2 of 2 for package FR1:' ]] || fail "A124 (a): a counted round's prompt does not say 'fix round <counted> of 2': $(tail -n2 "$fr/prompts" | tr '\n' '|')"
+# (b) a size failure no worker fixes: two free rounds, two counted ones, then the run ends
+out="$(FR_SIZE=fail frrun "$script" annabell "fr task" --id FR2 --branch p1/fr2 2>&1)"
+grep -q '^RESULT #[0-9]* FR2: NOT MERGED (the pre-flight failed twice' <<<"$out" || fail "A124 (b): an unfixable size failure does not end as NOT MERGED after two counted rounds: $out"
+[[ "$(nfix)" -eq 4 ]] || fail "A124 (b): expected 4 fix rounds (2 free, 2 counted) for a size failure that stays, got $(nfix)"
+grep -q 'FR2: NOT MERGED after two fix rounds' "$fr/.coord/log.md" || fail "A124 (b): the words 'NOT MERGED after two fix rounds' are gone"
+grep -q 'FR2: round 3 free' "$fr/.coord/log.md" && fail "A124 (b): a third size failure is free"
+# (c) --checks with a long check before docs: the audit runs first; docs failing with an audit FIX counts, with APPROVED it is free
+out="$(FR_DOCS=always FR_AUDIT=fix frrun "$script" annabell "fr task" --id FR3 --branch p1/fr3 --checks e2e,docs 2>&1)"
+grep -q '^RESULT #[0-9]* FR3: NOT MERGED' <<<"$out" && [[ "$(nfix)" -eq 2 ]] || fail "A124 (c): a docs failure with a failed audit is not an ordinary round (fix rounds $(nfix)): $out"
+grep -q 'FR3: round [0-9] free' "$fr/.coord/log.md" && fail "A124 (c): a docs failure with an audit FIX is logged free"
+out="$(FR_DOCS=always frrun "$script" annabell "fr task" --id FR4 --branch p1/fr4 --checks e2e,docs 2>&1)"
+[[ "$(nfix)" -eq 4 ]] || fail "A124 (c): a docs failure beside an approved audit is not free (fix rounds $(nfix)): $out"
+# (d) a typecheck failure counts as today: two fix rounds, then the end
+out="$(FR_TC=two frrun "$script" annabell "fr task" --id FR5 --branch p1/fr5 2>&1)"
+grep -q '^RESULT #[0-9]* FR5: MERGED' <<<"$out" && [[ "$(nfix)" -eq 2 ]] || fail "A124 (d): two typecheck failures are not two counted rounds (fix rounds $(nfix)): $out"
+# (e) A124f1: a queue-entry merge of phase-1 that conflicts, in a worker run, is no counted round: after the conflict, a failing queue check
+# and a failing next pre-flight still leave both fix rounds, and it merges
+out="$(FR_CONFLICT=1 FR_TC=late frrun "$script" annabell "fr task" --id FR6 --branch p1/fr6 2>&1)"
+grep -q 'FR6: conflicts with phase-1 resolved by annabell' "$fr/.coord/log.md" || fail "A124f1 (e): the stand-in conflict did not happen: $out"
+grep -q '^RESULT #[0-9]* FR6: MERGED' <<<"$out" && [[ "$(nfix)" -eq 2 ]] || fail "A124f1 (e): a queue-entry conflict of a worker run used up a counted round (fix rounds $(nfix)): $out"
+# (f) review-only: the first entry's conflict is a counted round (A10), so one fix round is left and the second failure ends the run
+fp1="$fr/.claude/worktrees/phase-1"
+git -C "$fr" branch p1/fr7 phase-1; git -C "$fr" worktree add -q "$tmp/fr7-b" p1/fr7; echo mine > "$tmp/fr7-b/app/w.txt"; git -C "$tmp/fr7-b" add -A; git -C "$tmp/fr7-b" -c user.name=t -c user.email=t@t commit -q -m "report: w" -m "Done: w.
+Tests: none."
+git -C "$fr" worktree remove --force "$tmp/fr7-b"; echo theirs2 > "$fp1/app/w.txt"; git -C "$fp1" add -A; gc "$fp1" "other lane: w2"
+out="$(FR_TC=late frrun "$script" annabell "fr task" --id FR7 --branch p1/fr7 --no-worker 2>&1)"
+grep -q 'FR7: conflicts with phase-1 resolved by annabell' "$fr/.coord/log.md" || fail "A124f1 (f): the stand-in conflict did not happen: $out"
+grep -q '^RESULT #[0-9]* FR7: NOT MERGED' <<<"$out" && [[ "$(nfix)" -eq 1 ]] || fail "A124f1 (f): a review-only first-entry conflict is not a counted round (fix rounds $(nfix)): $out"
 
 # A84: the audit runs beside the long checks. A sandbox with a stand-in sofia and stand-in checks: golden and e2e wait (5 s at most) for
 # the audit to start; sofia waits for e2e to run; the behaviour tool notes when it ran. (a) the audit runs beside golden and e2e on the

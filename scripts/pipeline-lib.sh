@@ -58,6 +58,19 @@ merge_failure_reason() {
   else echo "merge failed: $(tail -n 1 "$2" | cut -c1-200)"; fi
 }
 
+# ---- A124: free fix rounds ----
+# docs_size_only <failure file>: succeeds when the file's "## <check> failed" headings are all docs or size, and there is one (a lint,
+# typecheck, vitest, e2e, golden, red-first or shell failure in it makes the round an ordinary one).
+docs_size_only() {
+  local h; h="$(grep -E '^## [a-z0-9]+ failed' "$1" 2>/dev/null | awk '{ print $2 }' | sort -u || true)"
+  [[ -n "$h" ]] && ! grep -qvxE 'docs|size' <<<"$h"
+}
+# round_free <failure file> <audit asked for fixes: 0|1> <free rounds used>: succeeds when this fix round is free: the only failures are
+# docs or size, the audit asked for nothing, and fewer than two free rounds were used (a run has at most two; then it counts as any).
+round_free() {
+  [[ "$2" -eq 0 && "$3" -lt 2 ]] && docs_size_only "$1"
+}
+
 # ---- A69: Claude's scratch folders ----
 # Claude Code keeps a scratch folder per working directory in <tmp>/claude-<uid>/<the path, / and . written as ->; a gorge run leaves about
 # 560 MB in it when its worktree is removed. claude_tmp_dir: the user's own root (N62_CLAUDE_TMP for tests).
