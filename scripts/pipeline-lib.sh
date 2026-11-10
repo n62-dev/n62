@@ -480,6 +480,19 @@ first_failing_line() {
   awk '!h { if (/^## /) h = 1; next } /^--- tail ---$/ || /^--$/ || /^[[:space:]]*$/ { next } { sub(/^[0-9]+[:-]/, ""); sub(/^[[:space:]]+/, ""); print; exit }' "$1" 2>/dev/null | cut -c1-120
 }
 
+# A130: what the log says about a failed check. fail_names <check> <check log> <names file> writes pipeline-logs.ts names (line 1 the log line's
+# text, line 2 every failing test) there, or nothing for a check with no parsed items (docs, size, typecheck, redfirst; $wt is the run's worktree).
+fail_names() { node "$wt/app/scripts/pipeline-logs.ts" names "$1" "$2" > "$3" 2>/dev/null || : > "$3"; }
+# fail_line <fail file> [<names file>]: the heading, then ": " and the names file's first line, else the excerpt's first failing line (A83); a
+# second line, indented four spaces as an Opus pass reply is, lists every failing test (log() writes both lines in one write).
+fail_line() {
+  local l; l="$(head -n 1 "${2:-/dev/null}" 2>/dev/null || true)"; [[ -n "$l" ]] || l="$(first_failing_line "$1")"
+  echo "$(head -n 1 "$1")${l:+: $l}"
+  l="$(sed -n 2p "${2:-/dev/null}" 2>/dev/null || true)"; [[ -z "$l" ]] || printf '    %s\n' "$l"
+}
+# names_block <names file>: the fix round's input starts with this: every failing test, and a blank line (nothing without a list).
+names_block() { local l; l="$(sed -n 2p "$1" 2>/dev/null || true)"; [[ -z "$l" ]] || printf 'Failing tests (every one, once each): %s\n\n' "$l"; }
+
 # A37: the tests that failed in some of <total> runs and passed in others. Reads item files (one "file<TAB>title" per failing item,
 # one file per run) and prints "<failed runs>/<total><TAB><item>" for every item that failed in fewer than all runs.
 flaky_items() {  # <total> <item file>...

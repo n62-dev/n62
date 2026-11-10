@@ -686,7 +686,7 @@ agent_end() {  # <pid> <name> <log>
 
 # The deterministic checks; the failing excerpt goes to $run/fail-<round>.txt.
 excerpt() {  # the failing lines of a check log, capped (A83: docs-check's and the pre-flight lint's lines, the stage findings too)
-  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | grep -vE '^[0-9]+[:-] *✓' | head -n 150 || true  # A83f1: a passing Playwright line (✓) that holds × is no failure
+  grep -nE 'FAIL|Error|error TS|✘|×|✗|AssertionError|Expected|Received|expected|Timed out|not ok|GOLDEN GATE FAILED|^(budget|path|lines|ids|research|index|lint): |^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|NOW PASSING|CHANGED|GONE)' -A4 "$1" | grep -vE '^[0-9]+[:-] *(✓|- +[0-9]+ \[|PASS )' | head -n 150 || true  # A83f1: a passing Playwright line (✓) that holds × is no failure; A130: nor a skipped one (-) or a golden stage line that starts with PASS
   [[ -s "$1" ]] && { echo "--- tail ---"; tail -n 30 "$1"; }
 }
 # Wall-clock tests: the Find 16 ms/key test, the golden units p95 bar, the solve.spec.ts persistence test, the clipboard
@@ -799,7 +799,7 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
     if [[ $rc -eq 1 ]]; then
       if [[ "$name" != shell ]] && machine_failure "$out"; then machine_end "$name" "$out"; fi
       { [[ "$name" != redfirst ]] || echo "checks failed: red-first (${redwhy:-every new test passes on phase-1})"; echo "## $name failed (full log: $out)"; excerpt "$out"; echo; } >> "$run/fail-$round.txt"
-      runlog "check $name: FAILED"; host_cpu_drop; return 1
+      runlog "check $name: FAILED"; fail_names "$name" "$out" "$run/fail-$round.names"; host_cpu_drop; return 1
     fi
     runlog "check $name: ok"
   done
@@ -942,7 +942,6 @@ audit_finish() {
 # nothing); a fix round runs outside the queue. A84: a queue round runs the cheap checks,
 # then the audit beside the long ones, and waits for both; its fix round gets the failing output, then the audit's findings.
 verdict=""; audited=""
-fail_line() { local l; l="$(first_failing_line "$1")"; echo "$(head -n 1 "$1")${l:+: $l}"; }  # A83: the heading and the first failing line
 while :; do
   select_engine  # a branch with its own engine key builds it before it queues (host-cpu only)
   verdict=""; audit_pid=""; audit_ran=0; crc=0
@@ -954,7 +953,7 @@ while :; do
     queue_enter
     run_checks "$rounds" || crc=1
     if [[ $crc -eq 1 ]]; then
-      log "pipeline #$n $id: checks failed (round $rounds): $(fail_line "$run/fail-$rounds.txt")"
+      log "pipeline #$n $id: checks failed (round $rounds): $(fail_line "$run/fail-$rounds.txt" "$run/fail-$rounds.names")"
       queue_leave  # nothing merges this round: the audit, if it runs, finishes outside the queue
     else log "pipeline #$n $id: checks passed (round $rounds)"; fi
     [[ -z "$audit_pid" ]] || { audit_finish; audit_ran=1; }
@@ -976,7 +975,7 @@ while :; do
   rounds=$((rounds + 1))
   if [[ $free -eq 1 ]]; then free_used=$((free_used + 1)); rnd="fix round $rounds"; log "pipeline #$n $id: round $rounds free (docs or size only; $free_used of 2)"
   else counted=$((counted + 1)); rnd="fix round $counted of 2"; fi
-  { echo "# Fix round $rounds for pipeline run $n ($id): $reason"; echo; cat "$feedback"; echo; echo "# The task bundle"; cat "$bundle"; } > "$run/fix-$rounds.in"
+  { echo "# Fix round $rounds for pipeline run $n ($id): $reason"; echo; names_block "$run/fail-$((rounds - 1)).names"; cat "$feedback"; echo; echo "# The task bundle"; cat "$bundle"; } > "$run/fix-$rounds.in"
   fix_prompt="You are $agent on branch $branch in your own worktree, $rnd for package $id: $reason. On stdin: the failing output, then the audit findings (a round may have only one of them), then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
   run_agent "fix-$n-$rounds" "$run/fix-$rounds.log" "$agent" "$model" "$effort" "$run/fix-$rounds.in" "$fix_prompt" "${worker_tools[@]}"
   log "pipeline #$n $id: fix round $rounds done, $(git -C "$wt" log -1 --format=%h)"

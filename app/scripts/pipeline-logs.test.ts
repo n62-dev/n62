@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { countMismatch, failedItems, FLAKE_CAP, flakeLines, isTiming, onlyTiming, rerunnable } from "./pipeline-logs.ts";
+import { countMismatch, failedItems, FLAKE_CAP, failNames, flakeLines, isTiming, NAMES_CHARS, NAMES_MAX, onlyTiming, rerunnable } from "./pipeline-logs.ts";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/pipeline");
 const colour = readFileSync(join(dir, "vitest-find-timing.log"), "utf8");
@@ -232,5 +232,43 @@ describe("rerunnable e2e failures (A129)", () => {
     expect(lines[0]).toBe("copy.spec.ts › copy → paste");
     expect(lines[1]).toHaveLength(200);
     expect(lines[1]!.startsWith("a.spec.ts › xxx")).toBe(true);
+  });
+});
+
+describe("the failing tests of the log line (A130)", () => {
+  const pw = (i: number, title: string) => `  ${i}) [chromium-phone] › test/showcase.spec.ts:64:5 › ${title} ────────────\n`;
+  it("an e2e log: N failing and the first title, then every test once (a skipped line with × is none)", () => {
+    const l = `  -  1 [chromium-phone] › test/showcase.spec.ts:64:5 › E 72.25 kg × g₀\n${pw(1, "first")}${pw(2, "second")}  2 failed\n  1 skipped\n`;
+    expect(failNames("e2e", l)).toEqual({ head: "2 failing: first", list: "showcase.spec.ts › first; showcase.spec.ts › second" });
+  });
+  it("a vitest log gives the same", () => {
+    const l = " FAIL  src/a.test.ts > suite > one\n FAIL  src/b.test.ts > two\n FAIL  src/c.test.ts [ src/c.test.ts ]\n Test Files  3 failed (3)\n";
+    expect(failNames("vitest", l)).toEqual({ head: "3 failing: suite > one", list: "src/a.test.ts › suite > one; src/b.test.ts › two; src/c.test.ts" });
+  });
+  it("after a failed rerun the log holds both runs: one entry per file and title", () => {
+    const l = `${pw(1, "a")}${pw(2, "b")}  2 failed\n${pw(1, "a")}  1 failed\n`;
+    expect(failNames("e2e", l)).toEqual({ head: "2 failing: a", list: "showcase.spec.ts › a; showcase.spec.ts › b" });
+  });
+  it("golden: the head is the first FAIL stage line, not a PASS line with ×", () => {
+    const l = "PASS steps: PASS step-budget-test: … clock ×1 and ×8\nFAIL invariants: 3 known failures, 0 new, 0 now passing; 87.9 s (< 60)\nFAIL interrupt: timed out\nGOLDEN GATE FAILED\n";
+    const r = failNames("golden", l);
+    expect(r?.head).toBe("FAIL invariants: 3 known failures, 0 new, 0 now passing; 87.9 s (< 60)");
+    expect(r?.list).toBe("invariants › 3 known failures, 0 new, 0 now passing; 87.9 s (< 60); interrupt › timed out");
+  });
+  it("no parsed item: none", () => {
+    expect(failNames("e2e", "Error: Timed out waiting for the web server\n")).toBeNull();
+    expect(failNames("golden", "GOLDEN GATE FAILED\n")).toBeNull();
+    expect(failNames("vitest", "")).toBeNull();
+  });
+  it("at most 40 tests and 2000 characters, then (and <k> more)", () => {
+    const many = Array.from({ length: 45 }, (_, i) => pw(i + 1, `t${i}`)).join("");
+    const r = failNames("e2e", many)!;
+    expect(NAMES_MAX).toBe(40);
+    expect(r.head).toBe("45 failing: t0");
+    expect(r.list.endsWith("; showcase.spec.ts › t39 (and 5 more)")).toBe(true);
+    const long = Array.from({ length: 20 }, (_, i) => pw(i + 1, `${i}`.padEnd(190, "x"))).join("");
+    const c = failNames("e2e", long)!;
+    expect(c.list.replace(/ \(and \d+ more\)$/, "").length).toBeLessThanOrEqual(NAMES_CHARS);
+    expect(c.list).toMatch(/\(and \d+ more\)$/);
   });
 });
