@@ -54,9 +54,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
-- **F194, G225 built, G225f2 open.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
-- **F195, G220 built; G221 on its branch, G221f1.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf`: ⚠. Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
-- **F205, package G303.** A stored `k` is lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
+- **F194, G225 built; G225f2 on its branch, a review-only run.** `dot`, `cross` refuse unequal lengths; `+`, `-`, `*` still pad.
+- **F195, G220 built; G221, G221f1 on their branch, G221f2 after G303f1.** Far tails of `student_cdf`, `chisquare_cdf`, `evalf` of `normald_cdf`: ⚠. Rest (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf`.
+- **F205, G303 on its branch, G303f1.** A stored `k` is lost after Enter (Home, CAS): `k:=5`, `k+1` → `k+1`.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F87, package G174 (G93's report).** CAS `restart(0)`, `restart_vars(0)`, `restart(1)` and Home `restart(1)` show "pcasans: recursive definition" (pasans in Home): the answer lists our Ans slot's own name. The command took effect. Our name on screen (family 9); not reachable by keys until Find.
@@ -98,6 +98,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **A9's leftover:** the strength slider does nothing on a motor without amplitude control (Fairphone 6); a composition of ticks would give it (owner, 2026-11-02: a package later).
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
+- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. `tests/engine/patch-canary.ts` unpacks the Giac tarball per canary (40 times, 100 s of CPU), so golden `flags` times out under load (A51: timing): unpack it once. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
 - **C3. CI** (needs your OK);
 
