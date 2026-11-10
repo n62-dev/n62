@@ -541,7 +541,9 @@ bundle="$run/spec.md"
 { echo "## Acceptance criteria"; cat "$spec_file"; echo; awk '/^## 8\. Definition of done/{p=1;next} /^## 8a/{p=0} p' "$brief" | head -n 3; } > "$run/criteria.md"
 
 no_wait="Never start a background loop that waits on a process: pgrep -f matches the loop's own command line, so it never ends (run 58 held its session open 39 minutes); run every check in the foreground with a timeout."
-worker_prompt="You are $agent in pipeline run $n for package $id. The task bundle is on stdin (also at $bundle). You run in your own worktree on branch $branch from phase-1; never switch branches or commit elsewhere. Read docs/shifts/rules.md sections 3 and 5 for the standing rules, then work only from the bundle: read further files when the task needs them, by section. Keep your context small. Run typecheck and the unit tests you touch while you work; the pipeline runs the full checks afterwards. Tick your backlog line in docs/backlog.md and put open decisions under \"Needs the user\" in docs/decisions.md on this branch; change no other shared file. Commit small with git commit -s and the Co-Authored-By trailer of your model; end with the report commit from the bundle. $no_wait Reply in at most five lines: last commit, done or not done, open questions."
+# A146: the worker knows its limit (agent_start's timeout), which counts the waits for host-cpu beside a busy lane; "not done" ends the run by A55
+time_note="Your session ends after 3 hours, waits for a lock included: if the work will not fit (a long measurement), commit what you have, say where its data is, and reply not done."
+worker_prompt="You are $agent in pipeline run $n for package $id. The task bundle is on stdin (also at $bundle). You run in your own worktree on branch $branch from phase-1; never switch branches or commit elsewhere. Read docs/shifts/rules.md sections 3 and 5 for the standing rules, then work only from the bundle: read further files when the task needs them, by section. Keep your context small. Run typecheck and the unit tests you touch while you work; the pipeline runs the full checks afterwards. Tick your backlog line in docs/backlog.md and put open decisions under \"Needs the user\" in docs/decisions.md on this branch; change no other shared file. Commit small with git commit -s and the Co-Authored-By trailer of your model; end with the report commit from the bundle. $time_note $no_wait Reply in at most five lines: last commit, done or not done, open questions."
 
 # The checks a round runs (auto: the cheap ones first, A83); defined here for the dry run.
 changed() { git -C "$wt" diff --name-only "phase-1...HEAD"; }
@@ -660,6 +662,7 @@ select_engine
 # Run one headless agent; exit 75 on a usage limit. A84: agent_start starts it in the background (its pid in agent_pid), agent_end
 # waits for it; run_agent does both.
 agent_pid=""
+agent_rc=0  # A146: the last agent's exit code (agent_end sets it)
 agent_start() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [tool options...]
   local name="$1" out="$2" ag="$3" mdl="$4" eff="$5" input="$6" prompt="$7"; shift 7
   own_bg 'cd "$1" && shift && timeout -k 60 10800 claude "$@"' "$wt" -p --agent "$ag" --model "$mdl" --effort "$eff" "${claude_common[@]}" "$@" -n "$name" "$prompt" < "$input" > "$out" 2> "$out.err"
@@ -677,11 +680,21 @@ run_agent() { stray_note; agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; st
 agent_end() {  # <pid> <name> <log>
   local name="$2" out="$3" rc=0
   own_wait "$1" || rc=$?
+  agent_rc=$rc
   if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$out" "$out.err"; then
     log "pipeline #$n $id: LIMIT during $name (claude exit $rc)"; echo "RESULT #$n $id: LIMIT"; exit 75
   fi
   runlog "$name: claude exit $rc; reply: $(tail -n 3 "$out" | tr '\n' ' ' | cut -c1-200)"
   return 0
+}
+# A146: agent_cut <who> ends the run when the agent that just ended was killed: timeout's 124 is the 3-hour limit, 137 its KILL 60 s
+# later or the system's. A killed worker is not "done" (run 951 was logged so, and a fix round would have started the package again
+# from nothing): no checks, no audit and no fix round on half a package; the branch and the worktree stay for the next run.
+agent_cut() {  # <who: "worker" | "worker of fix round N">
+  local why
+  case $agent_rc in 124) why="reached the 3-hour limit" ;; 137) why="was killed (claude exit 137)" ;; *) return 0 ;; esac
+  log "pipeline #$n $id: NOT MERGED (the $1 $why); branch $branch kept at $(git -C "$wt" log -1 --format=%h)"
+  echo "RESULT #$n $id: NOT MERGED (the $1 $why; branch $branch, worktree $wt kept; see $run)"; exit 1
 }
 
 # The deterministic checks; the failing excerpt goes to $run/fail-<round>.txt.
@@ -854,6 +867,7 @@ if [[ $nowork -eq 0 ]]; then
   # A38: a resumed branch gets phase-1 first, so its worker starts on today's code
   [[ $resumed -eq 0 ]] || merge_phase1
   run_agent "pl-$n-$agent" "$run/worker-0.log" "$agent" "$model" "$effort" "$bundle" "$worker_prompt" "${worker_tools[@]}"
+  agent_cut worker
   log "pipeline #$n $id: worker done, $(git -C "$wt" log -1 --format=%h) — $(tail -n 1 "$run/worker-0.log" | cut -c1-120)"
   # A55, A64: a worker that asks for its task again, says it is missing, or says not done has not done the package: no checks, no audit
   if task_questioned "$run/worker-0.log"; then
@@ -976,8 +990,9 @@ while :; do
   if [[ $free -eq 1 ]]; then free_used=$((free_used + 1)); rnd="fix round $rounds"; log "pipeline #$n $id: round $rounds free (docs or size only; $free_used of 2)"
   else counted=$((counted + 1)); rnd="fix round $counted of 2"; fi
   { echo "# Fix round $rounds for pipeline run $n ($id): $reason"; echo; names_block "$run/fail-$((rounds - 1)).names"; cat "$feedback"; echo; echo "# The task bundle"; cat "$bundle"; } > "$run/fix-$rounds.in"
-  fix_prompt="You are $agent on branch $branch in your own worktree, $rnd for package $id: $reason. On stdin: the failing output, then the audit findings (a round may have only one of them), then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
+  fix_prompt="You are $agent on branch $branch in your own worktree, $rnd for package $id: $reason. On stdin: the failing output, then the audit findings (a round may have only one of them), then the task bundle. Fix the cause (not the test), add the regression test where one is missing, run the failing check yourself, commit with git commit -s and your model's trailer, and amend nothing. $time_note $no_wait Reply in at most five lines: last commit, what you fixed, anything you could not fix."
   run_agent "fix-$n-$rounds" "$run/fix-$rounds.log" "$agent" "$model" "$effort" "$run/fix-$rounds.in" "$fix_prompt" "${worker_tools[@]}"
+  agent_cut "worker of fix round $rounds"
   log "pipeline #$n $id: fix round $rounds done, $(git -C "$wt" log -1 --format=%h)"
   if task_questioned "$run/fix-$rounds.log"; then  # A55: as after the first worker
     log "pipeline #$n $id: NOT MERGED (the worker questioned its task or said not done: $(task_question_line "$run/fix-$rounds.log" | cut -c1-120)); branch $branch kept"
