@@ -6,7 +6,7 @@
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
-import { open, savePicker, savedText, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, lastResult, open, savePicker, savedText, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 useClipboardLock();
@@ -133,4 +133,25 @@ test("a clash with an own name shows the notice and changes nothing; Replace imp
   await expect(notice(page)).toContainText("1 replaced");
   expect(await cas(page, "beam_M(2,4)")).toBe("4");
   expect(Object.keys(await names(page))).toContain("beam_w");
+});
+
+test("R258: a library value of more than one letter: Vars puts it on the line as one name, Enter gives its value, ⌫ removes it whole", async ({ page }) => {
+  await start(page);
+  await fromClipboard(page, "// n62 library 4\n// An interest rate\nrate:=0.05\n");
+  await expect(notice(page)).toContainText("1 new");
+  await tap(page, ["esc"]);
+  await tap(page, ["vars"]);
+  const find = page.getByTestId("find");
+  await expect(find.locator('[role="menuitem"][data-active="true"]')).toHaveAttribute("data-id", "var:rate");
+  await tap(page, ["enter"]);
+  await expect(find).toBeHidden();
+  expect(await entryValue(page)).toMatch(/^\\operatorname\{(\\mathrm\{)?rate\}?\}$/);
+  await tap(page, ["enter"]);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "0.05"); // not r·a·t·e_
+  // the name is one box: a single ⌫ after the pick leaves an empty line
+  await tap(page, ["vars", "enter"]);
+  await expect(find).toBeHidden();
+  expect(await entryValue(page)).toMatch(/rate/);
+  await tap(page, ["bksp"]);
+  expect(await entryValue(page)).toBe("");
 });

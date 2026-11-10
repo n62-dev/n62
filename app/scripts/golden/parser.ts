@@ -74,7 +74,9 @@ export async function stageParser(): Promise<void> {
     try {
       // A function a `before` entry defines is a call in what follows, as the session counts it (R56)
       const userFunctions = new Set(DEFAULT_USER_FUNCTIONS);
-      const o = { ...(c.options ?? {}), ...(c.chips ? { chips: c.chips } : {}), userFunctions };
+      // R258: the stored values of more than one letter the session would list (a set, as userValuesOf gives it)
+      const { userValues, ...opts } = c.options ?? {};
+      const o = { ...opts, ...(userValues ? { userValues: new Set(userValues) } : {}), ...(c.chips ? { chips: c.chips } : {}), userFunctions };
       for (const b of c.before ?? []) {
         const d = latexToGiacInfo(b, o).defines;
         if (d) userFunctions.add(d);

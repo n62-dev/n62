@@ -106,3 +106,11 @@ describe("Function drawing follows the angle mode (R64a)", () => {
     expect(f("\\arctan\\left(x\\right)", "rad")(1)).toBeCloseTo(Math.PI / 4, 12);
   });
 });
+
+describe("R258: a stored value of more than one letter in Function and Solve", () => {
+  it("is refused with a line that says such a name is read in Home and CAS (stored names are not read here)", () => {
+    const why = "rate: a stored name of more than one letter is read in Home and CAS only";
+    expect(compileDefinition("2\\operatorname{rate}x").error).toContain(why);
+    expect(compileEquation("\\operatorname{rate}x=1").error).toContain(why);
+  });
+});

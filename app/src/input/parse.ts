@@ -18,6 +18,7 @@ class Parser implements CalcParser {
   pos = 0;
   noDiff = 0;
   user: ReadonlySet<string>;
+  private readonly values: ReadonlySet<string> | undefined; // R258: the session's stored values (ParseOptions)
   toks: Tok[];
   private readonly chips: ChipTable;
   /** R28: units mode and what it found (null outside units mode). */
@@ -32,13 +33,14 @@ class Parser implements CalcParser {
   constructor(toks: Tok[], o: ParseOptions) {
     this.toks = toks;
     this.user = o.userFunctions ?? new Set(["f", "g", "h"]);
+    this.values = o.userValues;
     this.chips = o.chips ?? {};
     this.named = o.chipNames ? {} : null;
     this.units = o.units ? { slots: [], consts: [] } : null;
   }
 
   subParse(toks: Tok[]): Json {
-    return new Parser(toks, { userFunctions: this.user }).parseAll();
+    return new Parser(toks, { userFunctions: this.user, ...(this.values ? { userValues: this.values } : {}) }).parseAll();
   }
   peek(k = 0): Tok | undefined {
     return this.toks[this.pos + k];
@@ -704,6 +706,7 @@ class Parser implements CalcParser {
         } else text = this.groupText();
         if (name === "mathrm" && text === "e") return "ExponentialE";
         if (name === "mathrm" && text === "i") return "ImaginaryUnit";
+        if (name === "operatorname" && this.values?.has(text)) return text; // R258: a stored value; a bracket after it multiplies
         const logic = LOGIC_FUNCS[text];
         if (logic) {
           // R18: NOT(a) and EQ(a, b) from the Shift + 6 palette
@@ -723,6 +726,7 @@ class Parser implements CalcParser {
             return head ? [head, ...args] : ["Call", text, ...args];
           }
         }
+        if (name === "operatorname" && /^[A-Za-z]\w*$/.test(text)) throw this.values ? parseError("parse.notStored", { text }) : parseError("parse.storedHomeOnly", { text });
         throw parseError("parse.unsupportedNameUnits", { name, text });
       }
       case "&":

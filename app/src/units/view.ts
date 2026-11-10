@@ -36,6 +36,8 @@ export interface ViewHost {
   dead(): void;
   /** The active slot, the reading or what is shown changed: draw them (units/panel.ts). */
   changed(): void;
+  /** R258: the session's stored values (latex-to-giac.ts userValuesOf), read at each request. */
+  values?(): ReadonlySet<string>;
   /** R63: a result is in (as shown: the unit a tapped chip names): it becomes Home's history row of this visit. */
   result?(q: Quantity): void;
 }
@@ -332,7 +334,7 @@ export class UnitView {
       if (!(this.#models.get(id) as SlotModel).empty) continue;
       latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
     }
-    const r = latexToGiacInfo(latex, { units: true, chips: this.#chips });
+    const r = latexToGiacInfo(latex, { units: true, chips: this.#chips, userValues: this.#host.values?.() });
     const u = r.units ?? { slots: [], consts: [] };
     const slot = (id: string): UnitSlot => (this.#models.get(id) as SlotModel).slot;
     return { formula: r.giac, slots: u.slots.map(slot), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: slot(u.end) } : {}) };
