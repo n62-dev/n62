@@ -169,3 +169,51 @@ describe("G105f1: Giac text is read with the quoting of where it comes from (gia
     expect(dropAngleFactor('["C:\\",(asin(x)/pasdeg)]', "printed")).toBe('["C:\\",asin(x)]');
   });
 });
+
+// G304 (night review 2026-11-09, be-4): Giac reads more spellings of an angle function than the canonical names
+// (tools/probes/g304/aliases.out: the lexer's arcsin, arccos, arctan; misc.cc's arcsec, arccsc, arccot; rpn.cc's
+// uppercase SIN … ACOT and ARG; the lexer's sin, cos, tan with U+F005 for asin, acos, atan). Each follows the mode
+// as its canonical name does (expected texts: the R64 rule, derived).
+describe("G304: every Giac spelling of an angle function carries the factor", () => {
+  const OUT = ["arcsin", "arccos", "arctan", "arcsec", "arccsc", "arccot", "ASIN", "ACOS", "ATAN", "ASEC", "ACSC", "ACOT", "ARG"];
+  const IN = ["SIN", "COS", "TAN", "SEC", "CSC", "COT"];
+  const GLYPH: [string, string][] = [["sin", "asin"], ["cos", "acos"], ["tan", "atan"]];
+
+  it.each(OUT)("rewriteAngles: %s(x) returns over pasdeg", (f) => {
+    expect(rewriteAngles(`${f}(x)`, "typed")).toBe(`(${f}(x)/pasdeg)`);
+    expect(rewriteAngles(`g(x):=2*${f}(x+1)`, "typed")).toBe(`g(x):=2*(${f}(x+1)/pasdeg)`);
+  });
+  it.each(IN)("rewriteAngles: %s(x) takes its angle times pasdeg", (f) => {
+    expect(rewriteAngles(`${f}(x)`, "typed")).toBe(`${f}(pasdeg*(x))`);
+  });
+  it.each(GLYPH)("rewriteAngles: %s(x), Giac's %s, returns over pasdeg under its canonical name", (g, c) => {
+    expect(rewriteAngles(`${g}(x)+1`, "typed")).toBe(`(${c}(x)/pasdeg)+1`);
+  });
+  it("leaves a string, a longer name, a name that is no call and the spellings Giac does not read alone", () => {
+    for (const t of [
+      'print("arcsin(x)")', "myarcsin(x)", "arcsinh(x)+SINH(x)+ASINH(x)", "arcsin+SIN", "f(ARG)",
+      "tg(x)+atg(x)+arctg(x)+ctg(x)+cotan(x)+cotg(x)+acosec(x)+acotan(x)+cosec(x)",
+      "arctan2(y,x)+phase(z)+argument(z)+Arg(z)+ATAN2(y,x)+Sin(x)+Arcsin(x)",
+      'print("sin(x)")', "xsin(x)",
+    ]) expect(rewriteAngles(t, "typed"), t).toBe(t);
+  });
+  it("the export drops the factor again: the file keeps the user's spelling", () => {
+    for (const f of [...OUT, ...IN]) expect(dropAngleFactor(rewriteAngles(`${f}(x)^2`, "typed"), "typed")).toBe(`${f}(x)^2`);
+  });
+
+  it.each([
+    ["\\operatorname{arcsin}\\left(x\\right)", "asin(x)/pasdeg"],
+    ["\\operatorname{arccot}\\left(x\\right)^2", "(acot(x)/pasdeg)^2"],
+    ["\\operatorname{ASEC}\\left(x\\right)", "asec(x)/pasdeg"],
+    ["\\operatorname{ARG}\\left(z\\right)", "arg(z)/pasdeg"],
+    ["\\operatorname{SIN}\\left(x\\right)", "sin(pasdeg*x)"],
+    ["\\operatorname{COT}\\left(x+1\\right)", "cot(pasdeg*(x+1))"],
+    ["\\operatorname{arcsinh}\\left(x\\right)", "arcsinh(x)"],
+  ])("the emitter writes %s as %s (the canonical name, so the unit view meets it)", (latex, giac) => {
+    expect(latexToGiac(latex)).toBe(giac);
+  });
+  it("the unit view reads a typed alias as its own inverse (G40: an angle in rad)", () => {
+    expect(withAngles(latexToGiac("\\operatorname{arcsin}\\left(x\\right)"))).toBe("pasuasin(x)");
+    expect(withAngles(latexToGiac("\\operatorname{SIN}\\left(x\\right)"))).toBe("pasusin(x)");
+  });
+});

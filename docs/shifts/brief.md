@@ -87,7 +87,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 607 | [G304](packages/G304.md) every Giac spelling of an angle function (be-4) | gorge, Opus | `p1/gorge-anglealias` | – |
+| 607 | G304 every Giac spelling of an angle function (be-4) | gorge, Opus | `p1/gorge-anglealias` | – |
 | 608 | [G305](packages/G305.md) a limit at a jump (be-5, F182) | gorge, Opus | `p1/gorge-limitjump` | – |
 | 609 | [G310](packages/G310.md) a zero inside a function, unit check (be-8) | gorge, Opus | `p1/gorge-unitzero` | – |
 | 620 | [A138](packages/A138.md) the F-Droid recipe asks for Reproducible Builds (owner) | annabell, Sonnet | `p1/annabell-fdroidrb` | – |

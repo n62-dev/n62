@@ -3,7 +3,7 @@
 import { parseError } from "../i18n/enParser.ts";
 import { SerializeError } from "./errors.ts";
 import { CALL_NAME, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "../engine/ourNames.ts";
-import { ANGLE_IN, ANGLE_OUT, DEGREE, PASDEG, POLAR, POLAR_OUT, RECT, numericLiteral, rectArg, withFactor } from "../engine/angles.ts";
+import { DEGREE, PASDEG, POLAR, POLAR_OUT, RECT, angleInSpec, angleName, numericLiteral, rectArg, returnsAngle, withFactor } from "../engine/angles.ts";
 
 export { SerializeError };
 
@@ -151,8 +151,10 @@ function symbolText(e: Json): string | undefined {
 function call(name: string, args: Json[], o: SerializeOptions): Out {
   if (name === PASDEG) throw parseError("parse.reservedName", { name });
   const outs = args.map((a) => ser(a, o));
-  const head = CALL_NAME[name] ?? name;
-  const spec = o.angleFactor === false ? undefined : ANGLE_IN[head];
+  // G304: Giac's other spellings of an angle command (arcsin, SIN, …) are written by their canonical name, so every
+  // later reader of the text (the unit view's inverses, the audited list) meets that one
+  const head = angleName(CALL_NAME[name] ?? name);
+  const spec = o.angleFactor === false ? undefined : angleInSpec(head);
   const texts = outs.map((a) => a.s);
   if (spec && outs.length > spec[0] && (spec[1] === 0 || outs.length === spec[1])) {
     const a = outs[spec[0]]!;
@@ -167,7 +169,7 @@ function call(name: string, args: Json[], o: SerializeOptions): Out {
     texts[0] = point ? `list${rectArg("", [point[0]!.s, withFactor(point[1]!.s, point[1]!.p === 5)])}` : rectArg(texts[0]!);
   }
   const text = `${head}(${texts.join(",")})`;
-  if (o.angleFactor !== false && ANGLE_OUT.has(head)) return { s: `${text}/${PASDEG}`, p: 2 };
+  if (o.angleFactor !== false && returnsAngle(head)) return { s: `${text}/${PASDEG}`, p: 2 };
   if (o.angleFactor !== false && head === POLAR) return { s: `${POLAR_OUT}(${text})`, p: 5 };
   return { s: text, p: 5 };
 }
