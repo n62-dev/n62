@@ -35,6 +35,7 @@ import {
   atomStart,
   isPair,
 } from "./boxes.ts";
+import { numberRunStart } from "./numberRun.ts";
 
 type Field = Pick<
   MathfieldElement,
@@ -309,8 +310,9 @@ function deleteAtPower(mf: Field, c: number, dir: -1 | 1): boolean {
   }
   // (a base with parts of its own, a root or a fraction, follows its own template's rules)
   if (sel || atomStart(mf, t) !== t - 1) return false;
-  if (isNumberPart(tl) && isNumberPart(latexAt(mf, t - 1)) && depthAt(mf, t - 1) === depthAt(mf, t)) {
-    // a digit of a longer number: delete it alone (MathLive's Del would take the exponent with it)
+  if (isNumberPart(tl) && numberRunStart(mf, t - 1, depthAt(mf, t)) < t - 1) {
+    // a digit of a longer number (a digit, a point or the decimal comma `{,}` before it, R256): delete it alone
+    // (MathLive's Del would take the exponent with it)
     mf.selection = { ranges: [[t - 1, t]] };
     mf.executeCommand("deleteBackward");
     return true;

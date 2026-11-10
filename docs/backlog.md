@@ -20,13 +20,13 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Needs the user
 0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml) (69 cases; tell a session what to drop or add); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
 1. **Your outreach steps** (decisions.md P18–P22): mirror G77's pin (`gh` logged in; the command is in `engine/giac/README.md`).
-2. **G2 questions:** the unanswered items of `tests/golden/G2-CHECKLIST.md` (41, 42, 52, 56, 63–71; each package built a default, named in decisions.md; 63–65 can reverse S14's route R); the optional real-G2 spot checks (`spec/mapping/vc-2026-10-11/SPOT-CHECK.md`).
+2. **G2 questions:** the unanswered items of `tests/golden/G2-CHECKLIST.md` (41, 42, 52, 56, 63–73; each package built a default, named in decisions.md; 63–65 can reverse S14's route R); the optional real-G2 spot checks (`spec/mapping/vc-2026-10-11/SPOT-CHECK.md`).
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): on Sun 11-15. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); Sat 11-14 the showcase video; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by Thu 11-12; R269 round trip.
+8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by Thu 11-12; R269 round trip; the Store design (S53).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75.
@@ -35,10 +35,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **nr1109-bu-2 (S1; R257 built).** Function: after F1 or the angle unit changed, Plot's y and Num kept the old values (Copy too). Rerun: `tools/probes/review-1109/rerun.sh bu-2`. Family 2.
-- **nr1109-bu-3 (S1; R256).** Comma mode: `3,5 x² ÷ 2` is 37.5 (right 6.125). Rerun: `node tools/probes/parse.ts '3{,}\frac{5^{2}}{2}'`. Family 7.
 - **nr1109-bu-4 (S1; R258).** Vars on a library's `g0`, `rate`: loose letters, `g*0` = 0 (right 9.80665). Rerun: `node tools/probes/parse.ts 'g0'`. Family 7.
-- **store-bu-1 (S53; sd-1).** Vars shows a stored 1/3 as `A = 0.333333333333`, no ≈ (`find/names.svelte.ts:33`). Rerun: [store-design.md](research/store-design.md) 1. Family 1.
+- **store-bu-1 (S53; S53f1).** Vars shows a stored 1/3 as `A = 0.333333333333`, no ≈ (`find/names.svelte.ts:33`). Rerun: [store-design.md](research/store-design.md) 1. Family 1.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.

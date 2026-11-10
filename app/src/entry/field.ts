@@ -354,13 +354,14 @@ function selectCompound(mf: MathfieldElement): boolean {
     while (s > 0 && depthAt(s) > de) s--;
     return s;
   };
-  const digit = (o: number): boolean => o > 0 && depthAt(o) === de && /^[\d.]$/.test(latexAt(o));
   let start = before(end);
+  // R256: a number's digits, its point or its decimal comma `{,}` (R57): the whole number is the base or the whole part
+  const run = numberRunStart(mf, start, de);
   if (MIXED_FRAC.test(latex)) {
-    while (digit(start)) start--;
+    start = run;
   } else if (latex.startsWith("^")) {
     // a power whose exponent is an atom of its own: the base comes before it
-    if (digit(start)) while (digit(start)) start--;
+    if (run < start) start = run;
     else if (start > 0) start = before(start);
     else return false;
   } else if (!COMPOUND.test(latex) && !hasOuterSup(latex)) return false;
