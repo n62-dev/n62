@@ -235,3 +235,22 @@ describe("fdroid/SUBMIT.md (A98)", () => {
     expect(text()).toContain("fdroid build");
   });
 });
+
+describe("F-Droid recipe asks for Reproducible Builds (A138)", () => {
+  const recipe = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8");
+  const field = (k: string): string | undefined => new RegExp(`^${k}:[ \\t]*(\\S+)[ \\t]*$`, "m").exec(recipe)?.[1];
+
+  it("AllowedAPKSigningKeys is the release certificate's SHA-256: lowercase hex, no colons", () => {
+    const cert = readFileSync(join(repo, "android/release-cert.sha256"), "utf8").trim();
+    expect(cert).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/i);
+    const key = field("AllowedAPKSigningKeys");
+    expect(key, "no AllowedAPKSigningKeys in the recipe").toBeDefined();
+    expect(key).toBe(cert.replaceAll(":", "").toLowerCase());
+  });
+
+  it("Binaries is the release APK under the SourceCode repository: releases/download/v%v/n62-%v.apk", () => {
+    const source = field("SourceCode");
+    expect(source, "no SourceCode in the recipe").toBeDefined();
+    expect(field("Binaries"), "no Binaries in the recipe").toBe(`${source as string}/releases/download/v%v/n62-%v.apk`);
+  });
+});
