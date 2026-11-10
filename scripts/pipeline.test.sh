@@ -1489,6 +1489,66 @@ out="$(AB_TC_FAIL=1 abrun "$script" annabell "ab task" --id B3 --branch p1/b3 --
 grep -q '^RESULT #[0-9]* B3: NOT MERGED (the checks failed twice' <<<"$out" || fail "A84 (d): a failing typecheck does not end as NOT MERGED after two fix rounds: $out"
 grep -q '^audit' "$ab/seen" 2>/dev/null && fail "A84 (d): a failed cheap check started an audit: $(cat "$ab/seen")"
 
+# A129: an e2e failure in a spec the branch did not change runs once more before a fix round (FLAKE line when it passes); a spec the
+# branch changed, a shared test helper, more than 5 failures, no parsed test and a count mismatch get no rerun. A sandbox with stand-in
+# npm (test:e2e fails until the fix round's file exists), npx (the rerun: FL_RERUN=pass|fail) and a worker that writes FL_WORKER's files.
+fl="$tmp/fl"; mkdir -p "$fl/bin" "$fl/tools" "$fl/docs/shifts" "$fl/app/scripts"; git init -q -b main "$fl"
+printf '#!/bin/sh\nexit 0\n' > "$fl/tools/devlock.sh"; echo 'process.exit(0);' > "$fl/tools/docs-check.mjs"; cp "$fl/tools/docs-check.mjs" "$fl/tools/docs-check.test.mjs"
+cp "$here/../app/scripts/pipeline-logs.ts" "$fl/app/scripts/"; : > "$fl/docs/shifts/brief.md"; echo node_modules/ > "$fl/.gitignore"
+echo 'console.log("none");' > "$fl/behaviour.mjs"
+cat > "$fl/bin/npm" <<STUB
+#!/bin/sh
+case "\$*" in
+  ci*) mkdir -p node_modules/x;;
+  *"run -s test:e2e"*) [ -e "../fix-\$FL_ID.txt" ] && exit 0
+     case "\$FL_FAIL" in
+       none) echo "Error: Timed out waiting 60000 ms from config.webServer"; exit 1;;
+       many) for i in 1 2 3 4 5 6; do echo "  \$i) [chromium-phone] › test/s\$i.spec.ts:12:1 › case \$i ────────"; done; printf '\n  6 failed\n';;
+       mismatch) echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case 1 ────────"; printf '\n  3 failed\n';;
+       *) echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case one ────────"; printf '\n  1 failed\n  300 passed\n';;
+     esac; exit 1;;
+esac
+exit 0
+STUB
+cat > "$fl/bin/npx" <<STUB
+#!/bin/sh
+echo "\$*" >> "$fl/npx.log"
+[ "\$FL_RERUN" = pass ] && { echo "  1 passed"; exit 0; }
+echo "  1) [chromium-phone] › test/s1.spec.ts:12:1 › case one ────────"; printf '\n  1 failed\n'; exit 1
+STUB
+cat > "$fl/bin/claude" <<STUB
+#!/bin/sh
+c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
+case "\$*" in
+  *"--agent sofia"*) echo APPROVED;;
+  *"fix round"*) date +%s%N > "fix-\$FL_ID.txt"; c -m fix; echo fixed;;
+  *) mkdir -p app/test; for f in \$FL_WORKER; do mkdir -p "\$(dirname "\$f")"; date +%s%N > "\$f"; done; c -m "report: w" -m "Done: w.
+Tests: none."; echo done;;
+esac
+STUB
+chmod +x "$fl/bin/"* "$fl/tools/devlock.sh"; git -C "$fl" add -A; gc "$fl" init; git -C "$fl" branch phase-1
+flrun() {  # <id> <FL_FAIL> <FL_RERUN> <FL_WORKER>: the run's output; $fl/npx.log lists the reruns
+  rm -f "$fl/npx.log"; local id="$1"
+  (cd "$fl" && unset N62_COORD PW_PORT N62_LOCK_PID && PATH="$fl/bin:$PATH" GIAC_OUT="$fl/engine" N62_BEHAVIOUR_TOOL="$fl/behaviour.mjs" N62_NPROC=100000 N62_QUIET_MAX=0 \
+    FL_ID="$id" FL_FAIL="$2" FL_RERUN="$3" FL_WORKER="$4" "$script" annabell "fl task" --id "$id" --branch "p1/${id,,}" --checks e2e 2>&1)
+}
+flfix() { ls "$fl"/.tasks/*-"${1,,}"/fix-1.in >/dev/null 2>&1; }
+out="$(flrun FL1 one pass app/src/x.ts)"
+grep -q '^RESULT #[0-9]* FL1: MERGED' <<<"$out" && ! flfix FL1 && [[ "$(wc -l < "$fl/npx.log" 2>/dev/null)" -eq 1 ]] || fail "A129: an e2e failure in an untouched spec that passes on the rerun costs a fix round or is not merged: $out"
+grep -qE 'pipeline #[0-9]+ FL1: FLAKE s1.spec.ts › case one$' "$fl/.coord/log.md" || fail "A129: no FLAKE line for the passing rerun: $(grep FL1 "$fl/.coord/log.md")"
+ls "$fl"/.tasks/*-fl1/check-0-e2e.log.failed >/dev/null 2>&1 && grep -q 'case one' "$fl"/.tasks/*-fl1/check-0-e2e.log.failed || fail "A129: the failing log is not kept in the run directory"
+grep -q 're-run (flake) passed' "$fl"/.tasks/*-fl1/run.log || fail "A129: the run log does not say the flake rerun passed"
+out="$(flrun FL2 one fail app/src/x.ts)"
+grep -q '^RESULT #[0-9]* FL2: MERGED' <<<"$out" && flfix FL2 && [[ "$(wc -l < "$fl/npx.log")" -eq 1 ]] || fail "A129: a failure that fails again on the rerun is not one fix round after one rerun: $out"
+grep -q 'FL2: FLAKE' "$fl/.coord/log.md" && fail "A129: a rerun that failed again logged a FLAKE line"
+for c in "FL3|one|app/test/s1.spec.ts|a changed spec" "FL4|many|app/src/x.ts|more than 5 failures" "FL5|none|app/src/x.ts|no parsed test" "FL6|mismatch|app/src/x.ts|a count mismatch" "FL7|one|app/test/helpers.ts|a changed shared test helper"; do
+  IFS='|' read -r fid ffail fwork what <<<"$c"
+  out="$(flrun "$fid" "$ffail" pass "$fwork")"
+  [[ ! -s "$fl/npx.log" ]] && flfix "$fid" || fail "A129: $what: the e2e failure was rerun or got no fix round: $(cat "$fl/npx.log" 2>/dev/null)"
+  grep -q "$fid: FLAKE" "$fl/.coord/log.md" && fail "A129: $what: a FLAKE line was logged"
+done
+! grep -q 'retries' "$here/../app/playwright.config.ts" || fail "A129: playwright.config.ts sets retries"
+
 # A75: a run of a package deletes its package file on the branch, in a commit of its own before the queue, so the audited tree and
 # the merge have it gone; a FIX id and a task text delete nothing; a run that ends unmerged leaves phase-1's file in place
 pk="$tmp/pk"; mkdir -p "$pk/bin" "$pk/tools" "$pk/docs/shifts/packages" "$pk/app/node_modules/x"; git init -q -b main "$pk"

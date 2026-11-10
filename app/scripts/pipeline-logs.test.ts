@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { countMismatch, failedItems, isTiming, onlyTiming } from "./pipeline-logs.ts";
+import { countMismatch, failedItems, FLAKE_CAP, flakeLines, isTiming, onlyTiming, rerunnable } from "./pipeline-logs.ts";
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "../../tests/fixtures/pipeline");
 const colour = readFileSync(join(dir, "vitest-find-timing.log"), "utf8");
@@ -192,5 +192,45 @@ describe("golden steps and flags under load (A51)", () => {
   });
   it("a timing item next to a real failure of another stage stays a real failure", () => {
     expect(onlyTiming("golden", flags(ok, timedOut("canaries.mjs")) + "FAIL home: 12/13 match\n")).toBe(false);
+  });
+});
+
+// A129: an e2e failure the branch cannot have written gets one rerun before a fix round (R165, R159f2, R149 lost rounds to tests they did not touch)
+describe("rerunnable e2e failures (A129)", () => {
+  const fail = (i: number, spec: string, title: string) => `  ${i}) [chromium-phone] › test/${spec}:12:1 › ${title} ────────────\n`;
+  const log = (n: number, summary = n) => `${Array.from({ length: n }, (_, i) => fail(i + 1, `s${i}.spec.ts`, `case ${i}`)).join("\n")}\n  ${summary} failed\n  300 passed\n`;
+  const other = ["app/src/views/Foo.svelte", "app/test/other.spec.ts", "docs/backlog.md"];
+  it("one to five failures in specs the branch did not change are rerunnable", () => {
+    expect(FLAKE_CAP).toBe(5);
+    expect(rerunnable("e2e", log(1), other)).toBe(true);
+    expect(rerunnable("e2e", log(5), [])).toBe(true);
+  });
+  it("a failure in a spec the branch changed, or any of several, gets no rerun", () => {
+    expect(rerunnable("e2e", log(1), ["app/test/s0.spec.ts"])).toBe(false);
+    expect(rerunnable("e2e", log(3), ["app/test/s2.spec.ts"])).toBe(false);
+    expect(rerunnable("e2e", fail(1, "sub/x.spec.ts", "t") + "\n  1 failed\n", ["app/test/sub/x.spec.ts"])).toBe(false);
+  });
+  it("more failures than the cap, none parsed, or a count mismatch get no rerun", () => {
+    expect(rerunnable("e2e", log(6), [])).toBe(false);
+    expect(rerunnable("e2e", "Error: Timed out waiting 60000 ms from config.webServer\n", [])).toBe(false);
+    expect(rerunnable("e2e", "", [])).toBe(false);
+    expect(rerunnable("e2e", log(1, 3), [])).toBe(false);
+    expect(rerunnable("e2e", `${log(1)}  4 interrupted\n  200 did not run\n`, [])).toBe(false);
+  });
+  it("a changed shared test helper, fixture or config gets no rerun; a changed spec of another test does not matter", () => {
+    expect(rerunnable("e2e", log(1), ["app/test/helpers.ts"])).toBe(false);
+    expect(rerunnable("e2e", log(1), ["app/test/gallery/index.html", "app/test/x.spec.ts"])).toBe(false);
+    expect(rerunnable("e2e", log(1), ["app/playwright.config.ts"])).toBe(false);
+  });
+  it("only e2e is rerun this way", () => {
+    expect(rerunnable("vitest", " FAIL  src/a.test.ts > one\n Test Files  1 failed (1)\n", [])).toBe(false);
+  });
+  it("the log lines: one per failing test, cut to 200 characters, a test of two projects once", () => {
+    const l = fail(1, "copy.spec.ts", "copy → paste") + fail(2, "copy.spec.ts", "copy → paste").replace("phone", "tablet") + fail(3, "a.spec.ts", "x".repeat(300));
+    const lines = flakeLines("e2e", l);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toBe("copy.spec.ts › copy → paste");
+    expect(lines[1]).toHaveLength(200);
+    expect(lines[1]!.startsWith("a.spec.ts › xxx")).toBe(true);
   });
 });
