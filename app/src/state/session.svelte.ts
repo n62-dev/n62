@@ -289,6 +289,11 @@ export class Session {
     }
   }
 
+  /** R272: a dropped row says so once per install, in the view that dropped it (state/dropNote.ts, a lazy chunk, decides). */
+  private noteDrop(view: View, gone: HistoryItem[]): void {
+    void import("./dropNote.ts").then((m) => m.noteFirstDrop(this.kv, gone, (text) => this.note(text, [view])), () => undefined);
+  }
+
   /** Reads the user's names again from the engine's definitions log (after a job that may have changed it). */
   async refreshNames(): Promise<void> {
     try {
@@ -463,7 +468,7 @@ export class Session {
     });
     // Read and write through the proxy in the list from here on.
     const live = list[list.length - 1] as HistoryItem;
-    if (list.length > HISTORY_LIMIT) list.splice(0, list.length - HISTORY_LIMIT);
+    if (list.length > HISTORY_LIMIT) this.noteDrop(view, list.splice(0, list.length - HISTORY_LIMIT));
     if (!ans && this.hasResult(view) && /\\ans(?![a-zA-Z])/.test(latex)) {
       // A finished result with no chip value (a symbolic text over 2 kB, R44): say why, not "no result yet"
       live.status = "error";
