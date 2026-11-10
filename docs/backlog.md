@@ -35,7 +35,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **nr1109-bu-1 (S1; R255).** Cold start with history: `2+3` Enter before the field is up gives Ans·2+3 = 17 (right 5). Rerun: `tools/probes/review-1109/rerun.sh bu-1`. Family 11.
 - **nr1109-bu-2 (S1; R257).** Function: after F1 or the angle unit changes, Plot's y and Num keep the old values (Copy too). Rerun: `tools/probes/review-1109/rerun.sh bu-2`. Family 2.
 - **nr1109-bu-3 (S1; R256).** Comma mode: `3,5 x² ÷ 2` is 37.5 (right 6.125). Rerun: `node tools/probes/parse.ts '3{,}\frac{5^{2}}{2}'`. Family 7.
 - **nr1109-bu-4 (S1; R258).** Vars on a library's `g0`, `rate`: loose letters, `g*0` = 0 (right 9.80665). Rerun: `node tools/probes/parse.ts 'g0'`. Family 7.
