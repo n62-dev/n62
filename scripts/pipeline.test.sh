@@ -1211,7 +1211,7 @@ cat > "$sb10/bin/claude" <<'STUB'
 #!/bin/sh
 case "$*" in
   *"--agent sofia"*) echo audited >> "$SB10/audit-called"; echo APPROVED;;
-  *) echo "worker called" >> "$SB10/worker-called"; echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; printf '%s\n' "$SB_REPLY";;
+  *) echo "worker called" >> "$SB10/worker-called"; echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; printf '%s\n' "$SB_REPLY"; exit "${SB_EXIT:-0}";;
 esac
 STUB
 chmod +x "$sb10/bin/claude"; git -C "$sb10" add -A; gc "$sb10" init; git -C "$sb10" branch phase-1
@@ -1230,6 +1230,24 @@ export SB_REPLY=$'Last commit abc1234; done.\nOpen question: Needs the user: sho
 out="$(sb10run annabell "task text" --id probe-e2 --branch p1/annabell-e2 --checks none --no-merge)"; rc=$?
 grep -qE '^RESULT #[0-9]+ probe-e2: APPROVED, not merged' <<<"$out" && [[ $rc -eq 0 ]] || fail "A55: an Open question that is a 'Needs the user' item stops the run (rc $rc): $out"
 [[ -e "$sb10/audit-called" ]] || fail "A55: the audit did not run for a run whose open question is a Needs-the-user item"
+# A146: a worker killed at its 3-hour limit (timeout's 124; 137 after its KILL) ends the run: it is not logged as done, and no audit
+# and no fix round follow (run 951: 24 of 30 shards measured, "worker done", then a fix round that would have measured again)
+rm -f "$sb10/audit-called"; export SB_REPLY='' SB_EXIT=124
+out="$(sb10run annabell "task text" --id probe-e3 --branch p1/annabell-e3 --checks none --no-merge)"; rc=$?
+grep -qE '^RESULT #[0-9]+ probe-e3: NOT MERGED \(the worker reached the 3-hour limit; branch p1/annabell-e3, worktree ' <<<"$out" && [[ $rc -eq 1 ]] || fail "A146: a worker at its 3-hour limit does not end the run (rc $rc): $out"
+[[ ! -e "$sb10/audit-called" ]] || fail "A146: the audit ran after the worker reached its limit"
+grep -q 'probe-e3: NOT MERGED (the worker reached the 3-hour limit); branch p1/annabell-e3 kept at ' "$sb10/.coord/log.md" || fail "A146: the limit is not logged"
+grep -q 'probe-e3: worker done' "$sb10/.coord/log.md" && fail "A146: a worker at its limit is logged as done"
+git -C "$sb10" show-ref --verify --quiet refs/heads/p1/annabell-e3 || fail "A146: the branch of a worker at its limit is not kept"
+export SB_EXIT=137
+out="$(sb10run annabell "task text" --id probe-e4 --branch p1/annabell-e4 --checks none --no-merge)"; rc=$?
+grep -qE '^RESULT #[0-9]+ probe-e4: NOT MERGED \(the worker was killed \(claude exit 137\); branch ' <<<"$out" && [[ $rc -eq 1 ]] || fail "A146: a killed worker does not end the run (rc $rc): $out"
+export SB_EXIT=1 SB_REPLY='Last commit abc1234; done.'  # any other exit goes on as before
+out="$(sb10run annabell "task text" --id probe-e5 --branch p1/annabell-e5 --checks none --no-merge)"; rc=$?
+grep -qE '^RESULT #[0-9]+ probe-e5: APPROVED, not merged' <<<"$out" && [[ $rc -eq 0 ]] || fail "A146: a worker with another exit code is stopped (rc $rc): $out"
+unset SB_EXIT
+grep -q 'agent_cut "worker of fix round $rounds"' "$here/pipeline.sh" || fail "A146: a fix round's worker at its limit is not checked"
+[[ "$(grep -c '\$time_note \$no_wait Reply in at most five lines' "$here/pipeline.sh")" -eq 2 ]] || fail "A146: the worker and the fix prompt do not both name the 3-hour limit"
 unset SB_REPLY
 # the reply check itself
 printf 'x\nOpen question: the package file is missing from the bundle\n' > "$tmp/q-a"; printf 'Open questions: Needs the user: use x or y?\n' > "$tmp/q-b"; printf 'done, no questions\n' > "$tmp/q-c"
