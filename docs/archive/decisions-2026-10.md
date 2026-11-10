@@ -5,6 +5,14 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-10 (Opus pass 132) to make room for R258's and S53f1's defaults, as they stood
+- **Tmpl and a b/c** (R10): one toggle per result type; ▶ jumps to the next empty box while one is ahead; ° and DMS mean degrees in every angle mode. **Mixed numbers** are a Tmpl template, `\tfrac` after anything but a whole number is an error.
+- **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.
+- **Flicks** (R9): arm at 20 px, cancel within 12 px, a cancelled touch stays cancelled; one lock at a time. **⌫ auto-repeat:** archive. **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Would change if: the owner's hands say otherwise.
+- **Keypad legends** (R6): a key is dimmed when its layer gives nothing; faces and legends fitted in JS (9 px face, 8 px legend minimum); 4.5:1 contrast.
+- **Time limits:** CAS 10 s soft budget (Cancel prominent), Giac's 600 s net; Solve and analysis 30 s; Cancel replays the definitions only (not Ans). Home and units (passes 86, 91; G185; owner, 2026-11-07): a 4 s watchdog from engine-ready restarts the engine; a Σ Giac sums term by term is stopped, no closed form (G184), CAS keeps it.
+- **Sheets** (R7, R8, R21a): the last pick per sheet in memory only; the letter filter on lists over 10 items; Mode and Settings open on their first row; a sheet's place is fixed when it opens; the viewport is not dimmed under a pick sheet.
+
 ### Shortened 2026-11-10 (Opus pass 123) to make room for G221's, G225's and G303's defaults, as they stood
 - **R157, the mark (Opus pass 122):** `--mark-faint` steps its share down until the mark is at most 1.3:1 on `bg` (Solarized Dark); a dark `bg` where black gives under 1.05:1 takes the light recipe, 7 % of `text`; Home's tile is a mask, not an image, so `--logo-ink` is real. Would change if: the mark cannot be seen on a device.
 - **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`, doubleElements.ts; Opus pass 122): about 11 Giac calls an element, so 32 stay inside `HOME_DEADLINE_MS` on a device 8× slower; a longer list shows Giac's text. Would change if: the per-element calls are batched.
