@@ -293,6 +293,10 @@ Digits:=40:; pc("g38-sign-sqrt2-near",'(sign(sqrt(2)-(14142135623730951/10^16)))
 Digits:=40:; pc("g178-keep-int-1/x^2-in-sum",'(3*int(1/x^2,x,1,2)+1)',(25/10^1),5/10^12);
 // g178-keep-sinc-in-product (home.yaml, oracle)
 Digits:=40:; pc("g178-keep-sinc-in-product",'(2*int(sin(x)/x,x,0,1))',(189216614073/10^11),5/10^12);
+// g305-keep-limit-round-3/2-right (home.yaml, derived)
+Digits:=40:; pc("g305-keep-limit-round-3/2-right",'(limit(round(x),x,3/2,1))',2,5/10^12);
+// g305-keep-limit-round-3/2-left (home.yaml, derived)
+Digits:=40:; pc("g305-keep-limit-round-3/2-left",'(limit(round(x),x,3/2,-1))',1,5/10^12);
 // g39-keep-sum-cos/k (home.yaml, oracle)
 Digits:=40:; pc("g39-keep-sum-cos/k",'(sum(cos(k)/k,k,1,inf))',(420195058254/10^13),5/10^14);
 // g39-keep-sum-alt-harmonic (home.yaml, oracle)
