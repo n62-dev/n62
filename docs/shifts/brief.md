@@ -29,6 +29,10 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 |---|---|---|---|---|---|
 | [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
+| [A140](packages/A140.md) | No dead package links after a merge of phase-1 | annabell, Sonnet | day, no lane running, before Thu 11-12's restart (owner) | – | ~0.3 d |
+| [A141](packages/A141.md) | The device step runs beside the lane | annabell, Sonnet | day, no lane running, Thu 11-12 with A136 (owner) | A140 | ~0.5 d |
+| [A142](packages/A142.md) | The lane queues in a file of their own | annabell, Sonnet | day, no lane running | the v0.1.0 tag | ~0.5 d |
+| [A143](packages/A143.md) | night.sh picks the plain step; henri the rest | annabell, Opus | day, no lane running | A142 | ~1 d |
 | [A136](packages/A136.md) | Golden gate on a module change | annabell, Sonnet | day, Thu 11-12 after the lanes (owner) | – | ~0.3 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, by Sat 11-14 (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
@@ -59,7 +63,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 615 | [R261](packages/R261.md) Esc in a slot line restores it; Menu › Clear (bu-5) | ron, Opus | `p1/ron-escnav` | – |
+| 615 | R261 Esc in a slot line restores it; Menu › Clear (bu-5) | ron, Opus | `p1/ron-escnav` | – |
 | 616 | [R270](packages/R270.md) a half-typed Home line waits while an app is open (bu-8) | ron, Sonnet | `p1/ron-setaside` | – |
 | 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
 | 618 | [R272](packages/R272.md) one note when history drops past 200 (fh-13) | ron, Sonnet | `p1/ron-historynote` | – |

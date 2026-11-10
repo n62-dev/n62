@@ -43,7 +43,7 @@ async function solved(page: Page): Promise<void> {
   const row = page.locator('[data-testid="solve-table"] tr[data-name="x"]');
   await expect(row).toBeVisible();
   await row.locator("th button").tap();
-  await tap(page, ["esc", "d1", "enter", "@menu", "d1"]); // guess 1, Menu → Solve
+  await tap(page, ["shift", "esc", "d1", "enter", "@menu", "d1"]); // Clear (R261: Esc puts the value back), guess 1, Menu → Solve
   await expect(row.locator("td")).toHaveText("1.32672466524");
 }
 
@@ -54,7 +54,7 @@ test("Solve: Copy copies the full root, and it pastes back as the same value (P5
   const text = await clipboard(page);
   expect(text.startsWith(LAMBERT5.slice(0, 26))).toBe(true);
   expect(digits(text)).toBeGreaterThan(25);
-  await tap(page, ["esc", "paste", "enter"]);
+  await tap(page, ["shift", "esc", "paste", "enter"]); // Clear: Esc puts the value back (R261)
   await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"] td')).toHaveAttribute("data-value", text);
 });
 
@@ -79,7 +79,7 @@ test("Solve: the full root survives a reload; an edit drops it", async ({ page }
   await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"] td')).toHaveText("1.32672466524");
   await tap(page, ["copy"]);
   await expect.poll(async () => digits(await clipboard(page))).toBeGreaterThan(25);
-  await tap(page, ["esc", "d2", "enter", "copy"]);
+  await tap(page, ["shift", "esc", "d2", "enter", "copy"]);
   await expect.poll(() => clipboard(page)).toBe("2");
 });
 

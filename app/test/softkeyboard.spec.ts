@@ -308,9 +308,9 @@ const screens: Record<string, (page: Page) => Promise<void>> = {
   "Solve Num after an edit (c44)": async (page) => {
     await tap(page, ["@place", "d4", "@symb", "x", "shift", "ln", "x", "right", "shift", "dot", "d5", "enter", "@num"]);
     await page.locator('[data-testid="solve-table"] tr[data-name="x"] th button').tap();
-    await tap(page, ["esc", "d1", "enter"]);
+    await tap(page, ["shift", "esc", "d1", "enter"]); // Clear (R261: Esc puts the value back)
     await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"]')).toBeVisible();
-    await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"] td').first()).toContainText("1");
+    await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"] td').first()).toHaveAttribute("data-value", "1");
   },
   "Function Plot": async (page) => {
     await tap(page, ["@symb", "x", "sq", "enter", "@plot"]);

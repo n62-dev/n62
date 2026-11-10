@@ -312,3 +312,54 @@ test("Function: Num of sin(x), the angle chip to DEG: the rows change without a 
   const row = csv?.split("\r\n").find((l) => l.startsWith("1,"));
   expect(Number(row?.split(",")[1])).toBeCloseTo(0.0174524064373, 12);
 });
+
+// R261 (night review 2026-11-09, bu-5; owner 2026-11-09): Esc puts the slot's stored text back, Enter on an empty line
+// leaves the slot alone, and Menu › Clear empties it as one Undo step.
+const stored = (page: Page, name: string): Promise<string | null> => page.locator(`[data-name="${name}"] .math`).getAttribute("data-latex");
+const edited = (page: Page): Promise<boolean> => page.evaluate(() => window.n62.shell.entryEdited);
+
+test("Function Symb: typed text keeps ▲▼ in the line; Esc puts F1 back, then ▼ and ▲ move (R261)", async ({ page }) => {
+  await defineTwo(page);
+  await tap(page, ["up"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  const f1 = await stored(page, "F1");
+  await tap(page, ["add", "d1", "down"]); // control: ▼ stays in a typed line
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  expect(await edited(page)).toBe(true);
+  await tap(page, ["esc"]);
+  expect(await entryValue(page)).toBe(f1);
+  expect(await edited(page)).toBe(false);
+  await tap(page, ["down"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F2(x)=");
+  await tap(page, ["up"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  expect(await entryValue(page)).toBe(f1);
+});
+
+test("Function Symb: Esc, the line cleared, Enter: F1 keeps its text (R261)", async ({ page }) => {
+  await defineTwo(page);
+  await tap(page, ["up", "esc", "shift", "esc"]); // Shift + Esc: Clear empties the line
+  expect(await entryValue(page)).toBe("");
+  await tap(page, ["enter"]);
+  await expect(page.locator('[data-name="F1"] .math')).toHaveAttribute("data-latex", "\\sin\\left(x\\right)");
+  expect(await entryValue(page)).toBe("\\sin\\left(x\\right)");
+  expect(await edited(page)).toBe(false);
+});
+
+test("Function Symb: Menu › Clear empties F1, Undo brings it back (R261)", async ({ page }) => {
+  await defineTwo(page);
+  await tap(page, ["up", "@menu"]);
+  await expect(page.getByTestId("menu").getByRole("menuitem").first()).toHaveText("1Clear");
+  await tap(page, ["d1"]);
+  await expect(page.locator('[data-name="F1"] .math')).toHaveCount(0);
+  await expect(page.locator('[data-name="F2"] .math')).toHaveAttribute("data-latex", "x^3-2x");
+  expect(await entryValue(page)).toBe("");
+  await tap(page, ["undo"]);
+  await expect(page.locator('[data-name="F1"] .math')).toHaveAttribute("data-latex", "\\sin\\left(x\\right)");
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  expect(await entryValue(page)).toBe("\\sin\\left(x\\right)");
+  expect(await page.evaluate(() => window.n62.shell.loaded.function!.instance.busy)).toBe(false);
+  await tap(page, ["@plot"]);
+  await page.waitForFunction(() => window.n62.plot.board !== undefined);
+  expect(await page.evaluate(() => window.n62.plot.curves)).toBe(2);
+});

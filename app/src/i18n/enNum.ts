@@ -24,6 +24,9 @@ export const enNum = {
   "why.noFunction": "Define a function first",
   "why.noEquation": "Enter an equation and pick an unknown first",
   "why.oneEquation": "Needs exactly one equation",
+  /** R261: Symb's Menu row that empties the selected slot (Undo brings it back), and why it is greyed */
+  "slot.clear": "Clear",
+  "why.emptySlot": "This one is empty",
   "function.undefined": "undefined",
   "function.nan": "NaN",
   "function.notFunction": "Enter an expression in x, not an equation",

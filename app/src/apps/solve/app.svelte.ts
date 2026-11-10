@@ -150,7 +150,8 @@ export class SolveApp implements AppInstance {
 
   enter(view: ViewId, latex: string): void {
     if (view === "symb") {
-      this.define(this.slots.selected, latex);
+      // R261: an empty line leaves the equation alone (Menu › Clear empties it); the stored text comes back on the line
+      if (latex.trim() !== "") this.define(this.slots.selected, latex);
       this.host.setEntry(this.slots.latex[this.slots.selected] ?? "");
     } else if (view === "num" && this.selected) {
       // R76f1: Enter empties the line. A line left as the app loaded it (a root's 12-digit display) changes nothing.
@@ -235,6 +236,10 @@ export class SolveApp implements AppInstance {
   }
 
   menu(view: ViewId): MenuItem[] {
+    if (view === "symb") {
+      const empty = (this.slots.latex[this.slots.selected] ?? "") === "";
+      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }];
+    }
     if (view !== "num") return [];
     const none = !this.selected || this.active.length === 0;
     const noValue = !this.selected;
@@ -261,6 +266,26 @@ export class SolveApp implements AppInstance {
     this.giac = next;
     this.report = undefined;
     this.save();
+  }
+  /** R261: Menu › Clear: the selected equation goes, as one step Undo takes back. */
+  clearSlot(): void {
+    const i = this.slots.selected;
+    this.slots.clear(i);
+    const next = [...this.giac];
+    next[i] = "";
+    this.giac = next;
+    this.report = undefined;
+    this.host.setEntry("");
+    this.save();
+  }
+  /** R261: Undo after Clear brings the equation back, on or off as it was, and selects it. */
+  undo(view: ViewId): boolean {
+    const c = view === "symb" ? this.slots.takeCleared() : null;
+    if (!c) return false;
+    this.define(c.i, c.latex);
+    this.slots.enabled[c.i] = c.enabled;
+    this.selectSlot(c.i);
+    return true;
   }
   selectSlot(i: number): void {
     this.slots.select(i);
