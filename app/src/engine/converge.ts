@@ -48,6 +48,21 @@ export function callsIn(input: string): Call[] {
   return out;
 }
 
+/** G305 (F182): Giac's error for a two-sided limit whose one-sided limits differ (`Unidirectional limits are distinct 1,2`
+ *  for limit(round(x),x,3/2); `distincts` for limit(atan(1/x),x,0)). */
+const LIMITS_DIFFER = /Unidirectional limits are distincts?\b/;
+/** Giac's run of an input that holds a limit ended in that error: the limit does not exist. */
+const limitsDiffer = (calls: Call[], out: string): boolean => isError(out) && LIMITS_DIFFER.test(out) && calls.some((c) => c.kind === "limit");
+
+/**
+ * G305: the refusal for an input whose run ended in Giac's error `output`, read from Giac's words alone (no Giac call):
+ * an input that holds a limit whose one-sided limits differ has no value (`noLimit`). null for any other error. Home
+ * asks it before its float fallback (whose limit at the float point is one side's value), CAS before its error text.
+ */
+export function errorRefusal(input: string, output: string): Refusal | null {
+  return limitsDiffer(callsIn(input), output) ? "noLimit" : null;
+}
+
 /** Giac's text for "no finite number": undef, or an infinity anywhere in it. */
 const notFinite = (t: string): boolean => t === "undef" || t.includes("infinity") || wordsOf(t).includes("inf");
 /** A result that is a value we may test: no infinity, no undef, no unevaluated call of the same kind left in it. */
@@ -224,7 +239,8 @@ function integralCheck(giac: Giac, c: Call): Verdict {
  * The refusal for an input whose result `output` is a number for something that does not exist; null to keep it;
  * "unchecked" when a check could not finish (the result is kept with ⚠).
  * `input` is what ran (decimals exact); `digits` is the Digits Giac is at now, which a value call puts back. Giac's `undef` for an input that holds a definite integral, a series or a limit
- * is refused with that call's message, and so is a `bounded_function(…)` left in the result of a limit.
+ * is refused with that call's message, and so is a `bounded_function(…)` left in the result of a limit, or Giac's error
+ * for a limit whose one-sided limits differ (G305, errorRefusal).
  */
 export function refusalOf(engine: Giac, input: string, output: string, digits: number, home = false): Refusal | "unchecked" | null {
   const calls = callsIn(input);
@@ -247,6 +263,7 @@ export function refusalOf(engine: Giac, input: string, output: string, digits: n
 
 function check(giac: Giac, calls: Call[], input: string, output: string, digits: number, home: boolean): Refusal | "unchecked" | null {
   const out = output.trim();
+  if (limitsDiffer(calls, out)) return "noLimit";
   if (out === "undef") {
     const c = calls.find((k) => k.kind === "limit" || k.args.length >= 4);
     if (c) return REFUSAL[c.kind];

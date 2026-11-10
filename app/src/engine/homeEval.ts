@@ -15,7 +15,7 @@
 // erasable TypeScript syntax, so Node runs this file directly.
 import { valueFactsOf, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
-import { floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
+import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 import { doubleElements } from "./doubleElements.ts";
@@ -632,6 +632,8 @@ export function homeEval(
   if (badShape) return refuse(badShape, "exact");
   if (square === "unchecked") unsquared = { ...(once ? { once: true } : {}), squareUnchecked: true };
   if (isTimeout(exactOut)) return viaFloat("float-timeout");
+  const noLimit = errorRefusal(exactBody, exactOut); // G305 (F182): one-sided limits that differ: no limit, never the float's one side
+  if (noLimit) return refuse(noLimit, "exact");
   // G221 (F195): Giac refuses a ν that is no integer (student_cdf(2.5,1)): the polish computes it, or the float path answers as before.
   const polished = isError(exactOut) && giacRefusesOurs(exactBody) ? polishedResult() : null;
   if (polished) return polished;
