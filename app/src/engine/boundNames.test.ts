@@ -59,22 +59,40 @@ describe.skipIf(!giacAvailable())("G99: a bound variable is no read of the store
 });
 
 // F80 (G99's Not done): after Home (BesselJ(1,2))=>y, y holds BesselJ(1,2) unevaluated (Home stores at Digits 40) and
-// Giac's int(y^2,y,0,1) with that y errors at Digits 40 (Bad Argument Value, tools/probes/bridge-forms.ts), so Home shows
-// its float fallback ⚠. Expected as for a stored float x (the guard above): ≈ 0.333333333333. it.fails until F80's fix.
+// Giac's int(y^2,y,0,1) with that y failed at Digits 40 (Bad Argument Value), so Home showed its float fallback ⚠. Expected
+// as for a stored float x (the guard above): ≈ 0.333333333333. Patch 0039 runs the variable as a fresh name.
 describe.skipIf(!giacAvailable())("F80: int with a bound name stored by =>", () => {
-  it.fails("after (BesselJ(1,2))=>y, int(y^2,y,0,1) is ≈ 0.333333333333, not ⚠", async () => {
+  it("after (BesselJ(1,2))=>y, int(y^2,y,0,1) is ≈ 0.333333333333, not ⚠", async () => {
     const host = await nodeHost();
     host.home("(BesselJ(1,2))=>y", defaultHomeSettings);
     const r = host.home("int(y^2,y,0,1)", defaultHomeSettings).result;
     expect([r.display, mark(r)]).toEqual(["0.333333333333", "≈"]);
   });
 
-  it("the cause today: Giac's int errors at Digits 40 on y holding BesselJ(1,2) unevaluated", async () => {
+  // Expected: fresh-name answers (source: derived: ∫₀¹y²dy = 1/3, ∫₁⁰ = -1/3, ∫₀^a = a³/3, y²=2 near 1 is √2); y keeps its value.
+  it.each([
+    ["int(y^2,y,0,1)", "1/3"],
+    ["integrate(y^2,y,0,1)", "1/3"],
+    ["int(y^2,y,1,0)", "-1/3"],
+    ["int(y^2,y,0,a1)", "a1^3/3"],
+    ["fsolve(y^2=2,y,1)", "1.4142135623731"],
+    ["fsolve(y^2=2,y=1)", "1.4142135623731"],
+  ])("patch 0039: at Digits 40 %s runs y as a fresh name, and y keeps BesselJ(1,2)", async (input, want) => {
     const { giac } = await nodeHost();
     giac.eval("Digits:=40");
     expect(giac.eval("(BesselJ(1,2))=>y")).toBe("BesselJ(1,2)");
-    expect(giac.eval("int(y^2,y,0,1)")).toMatch(/^GIAC_ERROR:[\s\S]*Bad Argument Value/);
+    expect(giac.eval(input)).toBe(want);
+    expect(giac.eval("y")).toBe("BesselJ(1,2)");
     giac.eval("Digits:=12");
+    giac.eval("purge(y)");
+  });
+
+  // F80's sibling, a wrong value and no error: with a float stored, int(y^2,y,0,a1) gave 0.000… (source: derived, a1³/3).
+  it("patch 0039: a stored float no longer turns a symbolic bound's integral into 0", async () => {
+    const { giac } = await nodeHost();
+    giac.eval("y:=evalf(57672480775687/10^14,15)");
+    expect(giac.eval("int(y^2,y,0,a1)")).toBe("a1^3/3");
+    expect(giac.eval("y")).toMatch(/^0\.57672480/);
     giac.eval("purge(y)");
   });
 });
