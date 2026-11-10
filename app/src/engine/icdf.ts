@@ -10,6 +10,7 @@
 // |F(x) − p|/min(p, 1 − p) is above 10^−digits, the definition returns Giac's value and sets the flag ICDF_FAILED:
 // the caller keeps today's ⚠ (the unaudited check). Synchronous, UI-free; only erasable TypeScript syntax.
 import type { Giac } from "./numeric.ts";
+import { ownBound } from "./ourNames.ts";
 import { callsOf, closing, functionsIn, renameCalls, withoutStrings, type Quoting } from "./giacPrint.ts";
 
 /** The Giac names polished, and our definition each call is replaced by. */
@@ -159,7 +160,7 @@ export function icdfCalls(text: string): string[] {
 export function icdfPolished(giac: Giac, text: string): string {
   for (const [name, def] of Object.entries(ICDF_DEFINITIONS)) {
     // A defined function prints as its program; an undefined name prints as itself.
-    if (giac.eval(name).trim() === name) giac.eval(def);
+    if (giac.eval(name).trim() === name) giac.eval(ownBound(def));
   }
   return renameCalls(text, ICDF_REPLACED, "typed");
 }
@@ -198,7 +199,7 @@ export function erfValueText(giac: Giac, text: string, q: Quoting): string {
   }
   s = renameCalls(s, ERF_REPLACED, q);
   const last = ERF_DEFINITIONS[ERF_DEFINITIONS.length - 1]!;
-  if (giac.eval(last).trim() === last) for (const name of ERF_DEFINITIONS) giac.eval(ICDF_DEFINITIONS[name]!);
+  if (giac.eval(last).trim() === last) for (const name of ERF_DEFINITIONS) giac.eval(ownBound(ICDF_DEFINITIONS[name]!));
   return s;
 }
 

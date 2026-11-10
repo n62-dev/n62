@@ -1277,3 +1277,16 @@ cases:
   - { id: "g173-cas-matrix-in-vector", kind: "cas", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
   - { id: "g173-cas-matrix-in-list", kind: "cas", input: "list[idn(2)]", expect: "{[[1,0],[0,1]]}", source: "derived", note: "F127: it showed {matrix[[1,0],[0,1]]}" }
   - { id: "g173-cas-when", kind: "cas", input: "when(x>0,x+1,x-1)", expect: "when(x>0,x+1,x-1)", source: "derived", note: "F93: it showed C's ((x>0)? x+1 : x-1), which the entry line does not read" }
+  # --- G303 (F205): the state read's own bound name took the user's k: the value was lost after one Enter -----------------
+  - { id: "g303-home-k-store", input: "k+1", before: ["k:=5"], own: true, expect: "6", mark: "=", source: "derived", note: "showed k+1: the state read read k as itself and purged it" }
+  - { id: "g303-home-k-function", input: "k(3)", before: ["k(u):=u+2"], own: true, expect: "5", mark: "=", source: "derived", note: "3+2; showed k(3)" }
+  - { id: "g303-home-k-list", input: "k", before: ["k:=[1,2]"], own: true, expect: "[1,2]", source: "derived", note: "showed k" }
+  - { id: "g303-cas-k-store", kind: "cas", input: "k+1", before: ["k:=5"], own: true, expect: "6", source: "derived", note: "showed k+1" }
+  - { id: "g303-cas-k-function", kind: "cas", input: "k(3)", before: ["k(u):=u+2"], own: true, expect: "5", source: "derived", note: "3+2; showed k(3)" }
+  - { id: "g303-cas-k-list", kind: "cas", input: "k", before: ["k:=[1,2]"], own: true, expect: "[1,2]", source: "derived", note: "showed k" }
+  - { id: "g303-home-k-store-relaunch", input: "k+1", before: ["k:=5"], relaunch: true, expect: "6", mark: "=", source: "derived", note: "after a relaunch: the log held no k, the store was purged" }
+  - { id: "g303-home-k-function-relaunch", input: "k(3)", before: ["k(u):=u+2"], relaunch: true, expect: "5", mark: "=", source: "derived", note: "3+2, after a relaunch" }
+  - { id: "g303-home-k-list-relaunch", input: "k", before: ["k:=[1,2]"], relaunch: true, expect: "[1,2]", source: "derived", note: "after a relaunch" }
+  - { id: "g303-cas-k-store-relaunch", kind: "cas", input: "k+1", before: ["k:=5"], relaunch: true, expect: "6", source: "derived", note: "after a relaunch" }
+  - { id: "g303-cas-k-function-relaunch", kind: "cas", input: "k(3)", before: ["k(u):=u+2"], relaunch: true, expect: "5", source: "derived", note: "3+2, after a relaunch" }
+  - { id: "g303-cas-k-list-relaunch", kind: "cas", input: "k", before: ["k:=[1,2]"], relaunch: true, expect: "[1,2]", source: "derived", note: "after a relaunch" }

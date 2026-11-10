@@ -4,6 +4,7 @@
 // through our definition (pasatan); a stored name or user function that calls it is read through a copy
 // (complexReads). Split from numeric.ts (cleanup 2026-10-20, item 13). Synchronous, UI-free; only erasable TypeScript.
 import { AUDITED_FUNCTIONS, namePrint, type Giac } from "./numeric.ts";
+import { ownBound } from "./ourNames.ts";
 import { functionsIn, isError, leadingName, names, namesIn, programParams, type Quoting, renameCalls, renameNames, topLevelArgs } from "./giacPrint.ts";
 
 /**
@@ -40,7 +41,7 @@ export function forValue(giac: Giac, text: string, q: Quoting): string {
   for (const [name, def] of Object.entries(COMPLEX_DEFINITIONS)) {
     if (!safe.includes(name)) continue;
     // A defined function prints as its program; an undefined name prints as itself.
-    if (giac.eval(name).trim() === name) giac.eval(def);
+    if (giac.eval(name).trim() === name) giac.eval(ownBound(def));
   }
   return safe;
 }

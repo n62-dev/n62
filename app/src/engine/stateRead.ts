@@ -13,7 +13,7 @@ import { ENGINE_DEFINITIONS, WORKER_DEFINITION_NAMES } from "./homeEval.ts";
 import { DOUBLE_DIGITS } from "./numeric.ts";
 import { definedName, isName, programParams, type PrintedNode } from "./giacPrint.ts";
 import { COMPLEX_DEFINITIONS } from "./complex.ts";
-import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
+import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT, OUR_BOUND as K } from "./ourNames.ts";
 import { UNIT_DEFINITIONS } from "../units/evaluate.ts";
 import { aboutsPart } from "./assumed.ts";
 
@@ -47,7 +47,8 @@ export function statePart(digits: number, assumed: readonly string[] = []): stri
 
 /** The entry of each name in `names` (quoted, so the list holds the names), as in statePart: Digits pinned, then put
  *  back. Its print reads as statePart's for tableOf. */
-const entries = (list: string): string => `map(${list},k->[k,string(eval(k)),lname(eval(k))])`;
+const entry = `[${K},string(eval(${K})),lname(eval(${K}))]`;
+const entries = (list: string): string => `map(${list},${K}->${entry})`;
 const quoted = (names: readonly string[]): string => `[${names.map((n) => `'${n}'`).join(",")}]`;
 // G92: `assumed` (the log's assumed names) adds their about() as a 3rd element, printed with Digits pinned (assumed.ts)
 const pinned = (part: string, digits: number, assumed: readonly string[] = []): string =>
@@ -61,7 +62,7 @@ export function namesPart(digits: number, names: readonly string[]): string {
 /** G104: the state part after an input whose candidates are known: every name of `VARS()`, a name of `known` bare (its
  *  entry did not change), any other with its entry (a candidate, or a name new since the last read). One call. */
 export function changedPart(digits: number, known: readonly string[], assumed: readonly string[] = []): string {
-  return pinned(`map(VARS(),k->when(member(k,${quoted(known)}),k,[k,string(eval(k)),lname(eval(k))]))`, digits, assumed);
+  return pinned(`map(VARS(),${K}->when(member(${K},${quoted(known)}),${K},${entry}))`, digits, assumed);
 }
 
 /** The names in a list of the state part's print (an element of `lname`). */
