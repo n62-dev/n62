@@ -170,7 +170,9 @@ describe("--fetch-only compiles nothing (A97)", () => {
         chmodSync(join(bin, name), 0o755);
       };
       for (const t of ["make", "emcc", "em++", "emconfigure", "emmake", "gcc", "g++", "patch", "tar", "xz"]) fake(t, `echo "${t} $*" >> "${calls}"; echo "emcc 3.1.69"`);
-      fake("sha256sum", "exit 0");
+      // reads its input as the real one does: a fake that exits first leaves the script's `echo … | sha256sum -c -` a
+      // SIGPIPE (141), which pipefail turns into "SHA-256 mismatch" whenever echo runs late (a loaded machine, run 891)
+      fake("sha256sum", '[[ $# -eq 0 || " $* " == *" - "* ]] && cat >/dev/null; exit 0');
       // the .dsc must name the pin; any other download is a dummy file
       fake("curl", `out=""; url=""; while [ $# -gt 0 ]; do case "$1" in -o) out="$2"; shift;; http*) url="$1";; esac; shift; done
 case "$url" in *.dsc) printf 'Checksums-Sha256:\\n cdec29897d6a55f9e53f82285ffd85cd82bcaba0bd90a494f710be002bd73f57 1 giac_2.1.0-1.tar.gz\\n' > "$out";; *) echo x > "$out";; esac
