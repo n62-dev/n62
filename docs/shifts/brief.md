@@ -58,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 623 | [S53](packages/S53.md) Store, designed (owner; docs and a mockup) | sandra, Opus | `p1/sandra-storedesign` | – |
+| 623 | S53 Store, designed (owner; docs and a mockup) | sandra, Opus | `p1/sandra-storedesign` | – |
 | 604 | [R257](packages/R257.md) Function's numbers follow the function (bu-2) | ron, Opus | `p1/ron-fcnstale` | – |
 | 605 | [R256](packages/R256.md) comma mode and a power (bu-3) | ron, Opus | `p1/ron-commabase` | – |
 | 606 | [R258](packages/R258.md) a multi-letter named value (bu-4) | ron, Opus | `p1/ron-varname` | – |
