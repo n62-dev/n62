@@ -9,6 +9,14 @@ import { defaultHomeSettings } from "./homeEval.ts";
 import { defaultCasSettings } from "./types.ts";
 import { applyDefChanges, type DefEntry } from "./defs.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
+import { ENGINE_DEFINITIONS } from "./homeEval.ts";
+import { COMPLEX_DEFINITIONS } from "./complex.ts";
+import { ICDF_DEFINITIONS } from "./icdf.ts";
+import { eseriesDefinition } from "./eseries.ts";
+import { changedPart, namesPart, statePart } from "./stateRead.ts";
+import { leakPart } from "./assumed.ts";
+import { UNIT_DEFINITIONS } from "../units/evaluate.ts";
+import { GREEK, LETTER_NAMES, letterName } from "../input/parseTables.ts";
 
 const home = { ...defaultHomeSettings, digits: 12 };
 const cas = { ...defaultCasSettings, digits: 12 };
@@ -25,8 +33,8 @@ const casShown = (host: EngineHost, input: string): string => {
   return r.ok ? r.text : `error: ${r.error ?? "engine"}`;
 };
 
-/** Every lower-case letter that names a variable: Giac reads `e` as exp(1) and `i` as the imaginary unit. */
-const LETTERS = [..."abcdefghijklmnopqrstuvwxyz"].filter((c) => c !== "e" && c !== "i");
+/** Every letter a–z under the name the parser gives it (a typed e and i are the names `e_` and `i_`, R67). */
+const LETTERS = [..."abcdefghijklmnopqrstuvwxyz"].map((c) => letterName(c));
 
 describe.skipIf(!giacAvailable())("G303: a stored name survives Enter", () => {
   let hostH: EngineHost;
@@ -54,7 +62,8 @@ describe.skipIf(!giacAvailable())("G303: a stored name survives Enter", () => {
     for (const c of LETTERS) expect(hostC.stored.has(c), c).toBe(true);
   });
 
-  it("the letters e and i stay Giac's constants (they are not names: no entry in the table)", async () => {
+  // raw Giac text, as a library line may send it, never what the parser sends for a typed e or i (`e_`, the loops above)
+  it("raw `e:=7` and `i:=7` leave Giac's constants, and no entry in the table", async () => {
     const host = await fresh();
     host.home("e:=7", home);
     host.home("i:=7", home);
@@ -105,12 +114,40 @@ describe.skipIf(!giacAvailable())("G303: a name our programs bind does not captu
     };
     const ref = await error("zz");
     expect(ref).toBe("symbolic");
-    for (const n of ["k", "a", "b", "c", "j", "t", "f"]) expect(await error(n), n).toBe(ref);
+    for (const n of ["k", "a", "b", "c", "j", "t", "f", "e_", "i_"]) expect(await error(n), n).toBe(ref);
   });
 
   it("Solve: a system whose unknown is k (the residual's index does not read the unknown)", async () => {
     const host = await fresh();
     const out = host.solve({ kind: "equations", equations: ["k+y=3", "k-y=1"], unknowns: ["k", "y"], guesses: ["1", "1"] }, { ...home, workDigits: 30 });
     expect(out.ok ? out.roots.map((r) => (r.result.ok ? r.result.display : "")) : out).toEqual(["2", "1"]);
+  });
+});
+
+describe.skipIf(!giacAvailable())("G303: every name our Giac text binds is ours, by Giac's own tree", () => {
+  const DEFINITIONS = [...Object.values(ENGINE_DEFINITIONS), ...Object.values(COMPLEX_DEFINITIONS), ...Object.values(ICDF_DEFINITIONS), eseriesDefinition(), ...UNIT_DEFINITIONS];
+  const READS = [statePart(12), changedPart(12, ["a"]), namesPart(12, ["a"]), leakPart(["a"], [])];
+  const PARSER_NAMES = new Set([...Object.values(LETTER_NAMES), ...Object.values(GREEK)]);
+
+  it("no bound name of a definition or a state read is a user's or one the parser's tables give", async () => {
+    const { bridge } = await loadNodeGiac();
+    expect(DEFINITIONS.length).toBeGreaterThan(30);
+    for (const text of [...DEFINITIONS, ...READS]) {
+      const p = bridge.parse(text);
+      expect(p.ok, text.slice(0, 60)).toBe(true);
+      for (const n of p.bound) {
+        expect(n.startsWith("pas"), `${n} in ${text.slice(0, 60)}`).toBe(true);
+        expect(PARSER_NAMES.has(n), `${n} in ${text.slice(0, 60)}`).toBe(false);
+      }
+    }
+  });
+
+  it("a definition stores into its own bound names or our names only (no undeclared loop variable)", async () => {
+    const { bridge } = await loadNodeGiac();
+    for (const text of DEFINITIONS) {
+      const p = bridge.parse(text);
+      // `top` is the one store of a single program; eseries's text holds two programs
+      for (const n of p.targets.filter((t) => !p.top.includes(t) && t !== "eseries")) expect(n.startsWith("pas"), `${n} in ${text.slice(0, 60)}`).toBe(true);
+    }
   });
 });

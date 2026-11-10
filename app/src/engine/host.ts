@@ -47,7 +47,7 @@ import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
 import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
 import { constUncDigits, inexactConstsIn, withConstValues, type ConstTable } from "./constUnc.ts";
-import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT, ownBound } from "./ourNames.ts";
+import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
 import { chipCommand, chipNameFacts, chipSigma, chipsIn, literalChip, withChipValues, type ChipFactsTable } from "./chipFacts.ts";
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
@@ -211,7 +211,7 @@ export class EngineHost implements FactsHost {
   private needOurs(text: string): void {
     for (const name of definitionsUsedBy(text)) {
       if (this.loaded.has(name)) continue;
-      this.giac.eval(ownBound(ENGINE_DEFINITIONS[name] ?? eseriesDefinition()));
+      this.giac.eval(ENGINE_DEFINITIONS[name] ?? eseriesDefinition());
       for (const n of name in ENGINE_DEFINITIONS ? [name] : WORKER_DEFINITION_NAMES) this.loaded.add(n); // eseries + helper
     }
   }
@@ -1174,7 +1174,7 @@ export class EngineHost implements FactsHost {
   units(job: UnitJob, s: HomeSettings): Quantity | UnitError {
     this.need(expressionsOf([job.expr, job.check, job.end]));
     if (!this.unitsLoaded) {
-      for (const d of UNIT_DEFINITIONS) this.giac.eval(ownBound(d));
+      for (const d of UNIT_DEFINITIONS) this.giac.eval(d);
       this.unitsLoaded = true;
     }
     this.useHomeMode(s);

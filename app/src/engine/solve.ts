@@ -356,7 +356,7 @@ function polyRoots(giac: Giac, eq: string, v: string, wrap: (e: string) => strin
     ev(`pasr[${k}]:=pasz`);
   }
   // Reals first (ascending), then complex by real part, then imaginary part.
-  ev("pasr:=sort(pasr,(a_,b_)->when(im(a_)==0,when(im(b_)==0,re(a_)<re(b_),true),when(im(b_)==0,false,when(abs(re(a_)-re(b_))<=10^(-20)*max(1,abs(a_),abs(b_)),im(a_)<im(b_),re(a_)<re(b_)))))");
+  ev("pasr:=sort(pasr,(pasa_,pasb_)->when(im(pasa_)==0,when(im(pasb_)==0,re(pasa_)<re(pasb_),true),when(im(pasb_)==0,false,when(abs(re(pasa_)-re(pasb_))<=10^(-20)*max(1,abs(pasa_),abs(pasb_)),im(pasa_)<im(pasb_),re(pasa_)<re(pasb_)))))");
   // M4-8: each root polished again at work precision + 20 (pasr2); the digits on which the two agree are shown.
   const W2 = s.workDigits + SECOND_POLISH;
   ev(`Digits:=${W2}`);

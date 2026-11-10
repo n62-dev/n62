@@ -2,7 +2,7 @@
 // G54: our replacements for Giac functions, by the name the user writes. One map for the parser (input/emit.ts) and for
 // every path that sends Giac text without the parser (the library import and its `// test:` lines, the export back).
 // No UI imports; only erasable TypeScript syntax.
-import { closing, leadingName, mapNames, names, opening, renameNames, topLevelArgs, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { mapNames, type Quoting } from "./giacPrint.ts";
 
 /** Giac's own `mod` is the modular-number constructor (an error as a call); Find's `mod` is irem (Euclidean,
  *  never negative: irem(-7,3) = 2), so the written word is renamed to our pasmod (homeEval.ts ENGINE_DEFINITIONS:
@@ -61,9 +61,14 @@ export function isChipName(name: string): boolean {
   return k === CHIP_ANS || (k !== "" && [...k].every((c) => c >= "0" && c <= "9"));
 }
 
-/** G303 (F205): the bound name of the state read's maps and Solve's residual. Giac binds it on the symbol, so a bound `k`
- *  answered `k` for the user's stored k, which was then purged. It ends in `_`: the parser refuses such a name and a
- *  library may not define one (ownBound below), where a bare `pask` is a name a library can define. */
+/** G303 (F205): the bound name of the state read's maps and Solve's residual. Giac binds a parameter, a `local` and an
+ *  arrow's parameter on the symbol itself for the time of the call, so a value that holds the free symbol of that name
+ *  is read through the binding: a bound `k` answered `k` for the user's stored k, which was then purged. Every name our
+ *  Giac text binds is therefore written `pas<name>_` (the definitions in homeEval.ts, complex.ts, icdf.ts, eseries.ts,
+ *  polyvec.ts, matrixType.ts, units/evaluate.ts): no parser table gives such a name (`e_`, `i_`, `beta_`… are the
+ *  parser's own, input/parseTables.ts), the parser refuses a typed trailing `_` (`expected subscript`), a library
+ *  may not define one (library.ts), and the state read takes the `pas` prefix for ours. statenames.test.ts checks
+ *  each definition with Giac's own tree (bridge-2's `bound`). */
 export const OUR_BOUND = "pask_";
 
 /** G100: the names our own test helper stores into (input/emit.ts equalityTest: the float flag, the difference and
@@ -73,51 +78,4 @@ export const OUR_STORES: readonly string[] = [EQ_INEXACT_FLAG, EQ_DIFF, EQ_VERDI
 /** A store target that is one of our helpers' names, not the user's state. */
 export function isOurStore(name: string): boolean {
   return OUR_STORES.includes(name);
-}
-
-// --- G303 (F205): a name our Giac programs bind is not the user's ------------------------------------------------------
-// Giac binds a parameter, a `local` and an arrow's parameter on the symbol itself, for the time of the call, so a value
-// that holds the free symbol of that name is read through the binding: `pasmod(b,3)` printed b-3, and the state read lost
-// a stored `k` (OUR_BOUND). A name that ends in `_` cannot be typed: the parser refuses it (`expected subscript`) and a
-// library may not define it (library.ts). Every definition goes to Giac through `ownBound`.
-
-/** Already safe: our prefix, or the trailing `_`. */
-const safe = (n: string): boolean => n.startsWith("pas") || n.endsWith("_");
-
-/** The names a definition binds: parameters of each `name(a,b):=` that starts a statement, `local` names, and arrow
- *  parameters. Strings are skipped. */
-export function boundIn(def: string): Set<string> {
-  const t = withoutStrings(def, (x) => " ".repeat(x.length), "typed");
-  const out = new Set<string>();
-  const add = (list: string): void => {
-    for (const part of topLevelArgs(list, "typed")) {
-      const n = leadingName(part);
-      if (n !== null) out.add(n);
-    }
-  };
-  for (const { name, at, call, open } of names(t, "typed")) {
-    const end = at + name.length;
-    if (call) {
-      const before = t.slice(0, at).trimEnd();
-      const close = closing(t, open, "typed");
-      if ((before === "" || before.endsWith(";")) && close > 0 && t.slice(close + 1).trimStart().startsWith(":=")) add(t.slice(open + 1, close));
-    } else if (name === "local") {
-      const semi = walk(t, end, (_k, _d, ch) => ch === ";", "typed");
-      if (semi > 0) add(t.slice(end, semi));
-    } else if (t.slice(end).trimStart().startsWith("->")) add(name);
-  }
-  // `(a,b)->`: the parameters are inside the bracket before the arrow, not the name before it
-  walk(t, 0, (k, _d, ch) => {
-    if (ch !== "-" || t.charAt(k + 1) !== ">") return;
-    const head = t.slice(0, k).trimEnd();
-    const open = head.endsWith(")") ? opening(head, head.length - 1) : -1;
-    if (open >= 0) add(head.slice(open + 1, -1));
-  }, "typed");
-  return out;
-}
-
-/** `def` with every name it binds ending in `_`, so that no user's name is one of them. */
-export function ownBound(def: string): string {
-  const to = new Map([...boundIn(def)].filter((n) => !safe(n)).map((n) => [n, `${n}_`]));
-  return to.size ? renameNames(def, to, "typed") : def;
 }

@@ -13,7 +13,7 @@ import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitErr
 import { shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
-const ANY_DIM = BASES.map((b) => `has(y,${b.symbol})`).join(" or ");
+const ANY_DIM = BASES.map((b) => `has(pasy_,${b.symbol})`).join(" or ");
 const ONES = `[${BASES.map(() => "1").join(",")}]`;
 /** G40: the inverse functions that give an angle (the parser's ANGLE_OUT puts `/pasdeg` after each, R64). */
 const INVERSES = ["atan2", "asin", "acos", "atan", "asec", "acsc", "acot"] as const;
@@ -66,52 +66,52 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  */
 export const UNIT_DEFINITIONS: readonly string[] = [
   ...BASES.map((b) => `assume(${b.symbol}>0)`),
-  `pasuh(y):=${ANY_DIM}`,
-  `pasuq(f):={local a,b,c,j,t; if (has(f,pasubad)) return [3]; if (has(f,undef) or has(f,infinity)) return [5]; if (f==0) return [4]; ` +
-    `a:=map(${S},k->normal(k*diff(f,k)/f)); ` +
-    `if (lvar(a)==[]) { c:=normal(f/product(zip((x,y)->x^y,${S},a))); if (pasuh(c)) return [2]; return [0,a,c]; } ` +
-    `t:=expand(f); if (sommet(t)!='+') return [2]; t:=[op(t)]; ` +
-    `b:=map(t,u->map(${S},k->normal(k*diff(u,k)/u))); ` +
-    `for (j:=0;j<size(t);j++) { if (lvar(b[j])==[] and pasuh(normal(t[j]/product(zip((x,y)->x^y,${S},b[j]))))) return [2]; } ` +
-    `return [1,b]; }`,
-  `pasua(x):={local w,y; if (x==0) return 0; w:=normal(pasdimA*diff(x,pasdimA)/x); y:=normal(subst(x,pasdimA,1)); ` +
-    `if ((w!=0 and w!=1) or ${ANY_DIM}) return pasubad; if (w==1) return y; return y*pasdeg; }`,
-  ...["sin", "cos", "tan"].map((f) => `pasu${f}(x):=${f}(pasua(x))`),
-  `pasuz(x):={local y; y:=normal(x); if (pasuh(y)) return pasubad; return y; }`,
-  ...INVERSES.filter((f) => f !== "atan2").map((f) => `pasu${f}(x):=${f}(pasuz(x))*pasdimA`),
-  `pasuatan2(y,x):={local a,b; a:=normal(y); b:=normal(x); if (a!=0 and b!=0 and pasuh(normal(a/b))) return pasubad; ` +
-    `return atan2(subst(a,${S},${ONES}),subst(b,${S},${ONES}))*pasdimA; }`,
-  `pasup(m):={if (denom(normal(m))==1) return 10^m; return exp(m*ln(10)); }`,
-  `pasul(e):={local r,s; r:=normal(e); s:=simplify(r); if (length(string(s))<length(string(r))) return s; return r; }`,
-  `pasun(f,g):={local a,b; a:=pasuq(normal(f)); b:=pasuq(normal(g)); return normal(a[2]/b[2]); }`,
-  `pasuo(a,b):={local x,y,t,r,q; if (a==0 and b==0) return [[4],0]; x:=evalf(subst(a,${S},${ONES})); y:=evalf(subst(b,${S},${ONES})); ` +
-    `if (x+y>0) { t:=a+b; r:=abs(y)/(x+y); } else { t:=a; r:=2; } q:=pasuq(normal(t)); ` +
-    `if (q[0]==0) return [[0,q[1]/2,sqrt(q[2])],r]; return [q,r]; }`,
-  `pasusg(e,t,a,s):={local L,j,p; L:=singular(e,t); if (type(L)!=DOM_LIST) return 0; ` +
-    `for (j:=0;j<size(L);j++) { p:=evalf(L[j]); if (im(p)==0 and abs(p-a)<=2*s) return 1; } return 0; }`,
-  `pasujc(x,H):={local o,j; if (type(x)!=DOM_SYMBOLIC) { return 0; } if (member(sommet(x),H)) { return 1; } o:=[op(x)]; ` +
-    `for (j:=0;j<size(o);j++) { if (pasujc(o[j],H)) { return 1; } } return 0; }`,
-  `pasujk(c):={local o; if (type(c)!=DOM_SYMBOLIC) { return [3,lname(c)]; } o:=[op(c)]; ` +
-    `if (member(sommet(c),${CMP}) and size(o)==2 and !pasujc(o[0],${BOOL}) and !pasujc(o[1],${BOOL})) { return [1,o[0]-o[1]]; } ` +
-    `return [3,lname(c)]; }`,
-  `pasujl(e,q):={local h,o,r,j; if (type(e)!=DOM_SYMBOLIC) { return []; } h:=sommet(e); o:=[op(e)]; r:=[]; ` +
-    `if (q==0 and member(h,['floor','ceil','trunc','iPart','frac','fPart'])) { r:=[0,o[0]]; } if (q==0 and h=='round') { r:=[2,o[0]]; } ` +
-    `if (q==0 and member(h,['sign','Heaviside'])) { r:=[1,o[0]]; } ` +
-    `if (h=='piecewise' or h=='when') { for (j:=0;j+1<size(o);j:=j+2) { if (q==0 or pasujc(o[j],${EQS})) { r:=concat(r,pasujk(o[j])); } } } ` +
-    `for (j:=0;j<size(o);j++) { r:=concat(r,pasujl(o[j],q)); } return r; }`,
-  `pasujr(c,q,t,a,s):={local d,P,R,j,p,V,lo,hi; if (!has(q,t)) { return 0; } if (c==3) { return 1; } P:=[a-2*s,a+2*s]; d:=diff(q,t); ` +
-    `if (has(d,t)) { R:=singular(d,t); if (type(R)==DOM_LIST) { for (j:=0;j<size(R);j++) { p:=evalf(R[j]); if (im(p)==0 and abs(p-a)<=2*s) { return 1; } } } ` +
-    `R:=solve(d=0,t); if (type(R)!=DOM_LIST) { return 1; } ` +
-    `for (j:=0;j<size(R);j++) { if (!has(R[j],t)) { p:=evalf(R[j]); if (im(p)==0 and abs(p-a)<=2*s) { P:=append(P,R[j]); } } } } ` +
-    `V:=map(P,p->normal(subst(q,t,p))); for (j:=0;j<size(V);j++) { if (has(V[j],undef) or has(V[j],infinity) or im(evalf(V[j]))!=0) { return 1; } } ` +
-    `lo:=min(V); hi:=max(V); if (c==1) { return lo<=0 and hi>=0; } if (c==2) { lo:=lo-1/2; hi:=hi-1/2; } return ceil(lo)<=hi; }`,
-  `pasuu(g,v,x,u,w,Q):={local n,k,m,h,f,d,s1,s2,z,L,i; n:=size(v); s1:=0; s2:=0; z:=0; ` +
-    `L:=concat(pasujl(subst(g,${S},${ONES}),0),subst(pasujl(Q,1),${S},${ONES})); ` +
-    `for (k:=0;k<n;k++) { h:=diff(g,v[k]); d:=subst(h,w); s1:=s1+d^2*u[k]^2; ` +
-    `for (m:=0;m<n;m++) { f:=diff(h,v[m]); s2:=s2+(1/2*subst(f,w)^2+d*subst(diff(f,v[m]),w))*u[k]^2*u[m]^2; } ` +
-    `for (i:=0;i<size(L) and z==0;i:=i+2) { if (pasujr(L[i],subst(L[i+1],suppress(w,k)),v[k],x[k],u[k])) { z:=2; } } ` +
-    `if (z==0 and has(h,v[k]) and pasusg(subst(subst(h,suppress(w,k)),${S},${ONES}),v[k],x[k],u[k])==1) z:=1; } ` +
-    `return [op(pasuo(normal(s1),normal(s2))),z]; }`,
+  `pasuh(pasy_):=${ANY_DIM}`,
+  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (pasf_==0) return [4]; ` +
+    `pasa_:=map(${S},pask_->normal(pask_*diff(pasf_,pask_)/pasf_)); ` +
+    `if (lvar(pasa_)==[]) { pasc_:=normal(pasf_/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasa_))); if (pasuh(pasc_)) return [2]; return [0,pasa_,pasc_]; } ` +
+    `past_:=expand(pasf_); if (sommet(past_)!='+') return [2]; past_:=[op(past_)]; ` +
+    `pasb_:=map(past_,pasu_->map(${S},pask_->normal(pask_*diff(pasu_,pask_)/pasu_))); ` +
+    `for (pasj_:=0;pasj_<size(past_);pasj_++) { if (lvar(pasb_[pasj_])==[] and pasuh(normal(past_[pasj_]/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasb_[pasj_]))))) return [2]; } ` +
+    `return [1,pasb_]; }`,
+  `pasua(pasx_):={local pasw_,pasy_; if (pasx_==0) return 0; pasw_:=normal(pasdimA*diff(pasx_,pasdimA)/pasx_); pasy_:=normal(subst(pasx_,pasdimA,1)); ` +
+    `if ((pasw_!=0 and pasw_!=1) or ${ANY_DIM}) return pasubad; if (pasw_==1) return pasy_; return pasy_*pasdeg; }`,
+  ...["sin", "cos", "tan"].map((f) => `pasu${f}(pasx_):=${f}(pasua(pasx_))`),
+  `pasuz(pasx_):={local pasy_; pasy_:=normal(pasx_); if (pasuh(pasy_)) return pasubad; return pasy_; }`,
+  ...INVERSES.filter((f) => f !== "atan2").map((f) => `pasu${f}(pasx_):=${f}(pasuz(pasx_))*pasdimA`),
+  `pasuatan2(pasy_,pasx_):={local pasa_,pasb_; pasa_:=normal(pasy_); pasb_:=normal(pasx_); if (pasa_!=0 and pasb_!=0 and pasuh(normal(pasa_/pasb_))) return pasubad; ` +
+    `return atan2(subst(pasa_,${S},${ONES}),subst(pasb_,${S},${ONES}))*pasdimA; }`,
+  `pasup(pasm_):={if (denom(normal(pasm_))==1) return 10^pasm_; return exp(pasm_*ln(10)); }`,
+  `pasul(pase_):={local pasr_,pass_; pasr_:=normal(pase_); pass_:=simplify(pasr_); if (length(string(pass_))<length(string(pasr_))) return pass_; return pasr_; }`,
+  `pasun(pasf_,pasg_):={local pasa_,pasb_; pasa_:=pasuq(normal(pasf_)); pasb_:=pasuq(normal(pasg_)); return normal(pasa_[2]/pasb_[2]); }`,
+  `pasuo(pasa_,pasb_):={local pasx_,pasy_,past_,pasr_,pasq_; if (pasa_==0 and pasb_==0) return [[4],0]; pasx_:=evalf(subst(pasa_,${S},${ONES})); pasy_:=evalf(subst(pasb_,${S},${ONES})); ` +
+    `if (pasx_+pasy_>0) { past_:=pasa_+pasb_; pasr_:=abs(pasy_)/(pasx_+pasy_); } else { past_:=pasa_; pasr_:=2; } pasq_:=pasuq(normal(past_)); ` +
+    `if (pasq_[0]==0) return [[0,pasq_[1]/2,sqrt(pasq_[2])],pasr_]; return [pasq_,pasr_]; }`,
+  `pasusg(pase_,past_,pasa_,pass_):={local pasL_,pasj_,pasp_; pasL_:=singular(pase_,past_); if (type(pasL_)!=DOM_LIST) return 0; ` +
+    `for (pasj_:=0;pasj_<size(pasL_);pasj_++) { pasp_:=evalf(pasL_[pasj_]); if (im(pasp_)==0 and abs(pasp_-pasa_)<=2*pass_) return 1; } return 0; }`,
+  `pasujc(pasx_,pasH_):={local paso_,pasj_; if (type(pasx_)!=DOM_SYMBOLIC) { return 0; } if (member(sommet(pasx_),pasH_)) { return 1; } paso_:=[op(pasx_)]; ` +
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { if (pasujc(paso_[pasj_],pasH_)) { return 1; } } return 0; }`,
+  `pasujk(pasc_):={local paso_; if (type(pasc_)!=DOM_SYMBOLIC) { return [3,lname(pasc_)]; } paso_:=[op(pasc_)]; ` +
+    `if (member(sommet(pasc_),${CMP}) and size(paso_)==2 and !pasujc(paso_[0],${BOOL}) and !pasujc(paso_[1],${BOOL})) { return [1,paso_[0]-paso_[1]]; } ` +
+    `return [3,lname(pasc_)]; }`,
+  `pasujl(pase_,pasq_):={local pash_,paso_,pasr_,pasj_; if (type(pase_)!=DOM_SYMBOLIC) { return []; } pash_:=sommet(pase_); paso_:=[op(pase_)]; pasr_:=[]; ` +
+    `if (pasq_==0 and member(pash_,['floor','ceil','trunc','iPart','frac','fPart'])) { pasr_:=[0,paso_[0]]; } if (pasq_==0 and pash_=='round') { pasr_:=[2,paso_[0]]; } ` +
+    `if (pasq_==0 and member(pash_,['sign','Heaviside'])) { pasr_:=[1,paso_[0]]; } ` +
+    `if (pash_=='piecewise' or pash_=='when') { for (pasj_:=0;pasj_+1<size(paso_);pasj_:=pasj_+2) { if (pasq_==0 or pasujc(paso_[pasj_],${EQS})) { pasr_:=concat(pasr_,pasujk(paso_[pasj_])); } } } ` +
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { pasr_:=concat(pasr_,pasujl(paso_[pasj_],pasq_)); } return pasr_; }`,
+  `pasujr(pasc_,pasq_,past_,pasa_,pass_):={local pasd_,pasP_,pasR_,pasj_,pasp_,pasV_,paslo_,pashi_; if (!has(pasq_,past_)) { return 0; } if (pasc_==3) { return 1; } pasP_:=[pasa_-2*pass_,pasa_+2*pass_]; pasd_:=diff(pasq_,past_); ` +
+    `if (has(pasd_,past_)) { pasR_:=singular(pasd_,past_); if (type(pasR_)==DOM_LIST) { for (pasj_:=0;pasj_<size(pasR_);pasj_++) { pasp_:=evalf(pasR_[pasj_]); if (im(pasp_)==0 and abs(pasp_-pasa_)<=2*pass_) { return 1; } } } ` +
+    `pasR_:=solve(pasd_=0,past_); if (type(pasR_)!=DOM_LIST) { return 1; } ` +
+    `for (pasj_:=0;pasj_<size(pasR_);pasj_++) { if (!has(pasR_[pasj_],past_)) { pasp_:=evalf(pasR_[pasj_]); if (im(pasp_)==0 and abs(pasp_-pasa_)<=2*pass_) { pasP_:=append(pasP_,pasR_[pasj_]); } } } } ` +
+    `pasV_:=map(pasP_,pasp_->normal(subst(pasq_,past_,pasp_))); for (pasj_:=0;pasj_<size(pasV_);pasj_++) { if (has(pasV_[pasj_],undef) or has(pasV_[pasj_],infinity) or im(evalf(pasV_[pasj_]))!=0) { return 1; } } ` +
+    `paslo_:=min(pasV_); pashi_:=max(pasV_); if (pasc_==1) { return paslo_<=0 and pashi_>=0; } if (pasc_==2) { paslo_:=paslo_-1/2; pashi_:=pashi_-1/2; } return ceil(paslo_)<=pashi_; }`,
+  `pasuu(pasg_,pasv_,pasx_,pasu_,pasw_,pasQ_):={local pasn_,pask_,pasm_,pash_,pasf_,pasd_,pass1_,pass2_,pasz_,pasL_,pasi_; pasn_:=size(pasv_); pass1_:=0; pass2_:=0; pasz_:=0; ` +
+    `pasL_:=concat(pasujl(subst(pasg_,${S},${ONES}),0),subst(pasujl(pasQ_,1),${S},${ONES})); ` +
+    `for (pask_:=0;pask_<pasn_;pask_++) { pash_:=diff(pasg_,pasv_[pask_]); pasd_:=subst(pash_,pasw_); pass1_:=pass1_+pasd_^2*pasu_[pask_]^2; ` +
+    `for (pasm_:=0;pasm_<pasn_;pasm_++) { pasf_:=diff(pash_,pasv_[pasm_]); pass2_:=pass2_+(1/2*subst(pasf_,pasw_)^2+pasd_*subst(diff(pasf_,pasv_[pasm_]),pasw_))*pasu_[pask_]^2*pasu_[pasm_]^2; } ` +
+    `for (pasi_:=0;pasi_<size(pasL_) and pasz_==0;pasi_:=pasi_+2) { if (pasujr(pasL_[pasi_],subst(pasL_[pasi_+1],suppress(pasw_,pask_)),pasv_[pask_],pasx_[pask_],pasu_[pask_])) { pasz_:=2; } } ` +
+    `if (pasz_==0 and has(pash_,pasv_[pask_]) and pasusg(subst(subst(pash_,suppress(pasw_,pask_)),${S},${ONES}),pasv_[pask_],pasx_[pask_],pasu_[pask_])==1) pasz_:=1; } ` +
+    `return [op(pasuo(normal(pass1_),normal(pass2_))),pasz_]; }`,
 ];
 
 /** G41: the second-order part above this share of σ² gives ⚠ "first order does not hold here". */

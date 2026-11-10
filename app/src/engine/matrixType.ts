@@ -20,8 +20,8 @@ function rowsOf(slot: string): string {
  *  the state read takes the name for ours; the call that uses it defines it again, so a user's `pasplain:=5` changes nothing. */
 export const PLAIN_AT = "pasplain";
 export const PLAIN_AT_ANY_DEPTH =
-  `${PLAIN_AT}(v):={ local w,t; t:=subtype(v); if (type(v)!=DOM_LIST or (t!=0 and t!=11 and t!=23)) return v; ` +
-  `w:=[op(v)]; if (t==11) w:=apply(pasrow->[op(pasrow)],w); w:=apply(${PLAIN_AT},w); if (t==23) return list[op(w)]; return w; }`;
+  `${PLAIN_AT}(pasv_):={ local pasw_,past_; past_:=subtype(pasv_); if (type(pasv_)!=DOM_LIST or (past_!=0 and past_!=11 and past_!=23)) return pasv_; ` +
+  `pasw_:=[op(pasv_)]; if (past_==11) pasw_:=apply(pasrow->[op(pasrow)],pasw_); pasw_:=apply(${PLAIN_AT},pasw_); if (past_==23) return list[op(pasw_)]; return pasw_; }`;
 
 /** The Giac text that stores `slot`, printed `text`, as plain rows: Giac's own apply for one matrix (no call per element of
  *  a large one), the helper when a matrix type stands inside it. One call; the value of the store is the call's value. */

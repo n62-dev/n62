@@ -4,7 +4,6 @@
 // through our definition (pasatan); a stored name or user function that calls it is read through a copy
 // (complexReads). Split from numeric.ts (cleanup 2026-10-20, item 13). Synchronous, UI-free; only erasable TypeScript.
 import { AUDITED_FUNCTIONS, namePrint, type Giac } from "./numeric.ts";
-import { ownBound } from "./ourNames.ts";
 import { functionsIn, isError, leadingName, names, namesIn, programParams, type Quoting, renameCalls, renameNames, topLevelArgs } from "./giacPrint.ts";
 
 /**
@@ -19,7 +18,7 @@ import { functionsIn, isError, leadingName, names, namesIn, programParams, type 
  * is mapped element by element first (its type is DOM_LIST, which would fall back to Giac's own function).
  */
 export const COMPLEX_DEFINITIONS: Readonly<Record<string, string>> = {
-  pasatan: "pasatan(z):={ if (type(z)==DOM_LIST) return map(z,pasatan); if (type(evalf(z))==DOM_COMPLEX) { if (abs(evalf(z))<1/4) return -i*atanh(i*z); return i/2*(ln(1-i*z)-ln(1+i*z)); } return atan(z); }",
+  pasatan: "pasatan(pasz_):={ if (type(pasz_)==DOM_LIST) return map(pasz_,pasatan); if (type(evalf(pasz_))==DOM_COMPLEX) { if (abs(evalf(pasz_))<1/4) return -i*atanh(i*pasz_); return i/2*(ln(1-i*pasz_)-ln(1+i*pasz_)); } return atan(pasz_); }",
 };
 
 /** The Giac names (and aliases) that COMPLEX_DEFINITIONS replace. */
@@ -41,7 +40,7 @@ export function forValue(giac: Giac, text: string, q: Quoting): string {
   for (const [name, def] of Object.entries(COMPLEX_DEFINITIONS)) {
     if (!safe.includes(name)) continue;
     // A defined function prints as its program; an undefined name prints as itself.
-    if (giac.eval(name).trim() === name) giac.eval(ownBound(def));
+    if (giac.eval(name).trim() === name) giac.eval(def);
   }
   return safe;
 }
