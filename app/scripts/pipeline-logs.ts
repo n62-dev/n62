@@ -7,6 +7,7 @@
 //   node app/scripts/pipeline-logs.ts mismatch <vitest|e2e> <log>      # prints the message, exit 0, when the parsed count differs from the runner's own
 //   <changed files, one per line on stdin> | node app/scripts/pipeline-logs.ts rerunnable e2e <log>   # A129: exit 0 when the failures may be flakes
 //   node app/scripts/pipeline-logs.ts flakelines e2e <log>             # A129: one "<spec> › <title>" per failing test, cut to 200 characters
+//   node app/scripts/pipeline-logs.ts names <vitest|e2e|golden> <log>  # A130: line 1 the log line's text, line 2 every failing test; exit 1, no output, when none is parsed
 // Only erasable TypeScript syntax (Node runs this file).
 import { readFileSync } from "node:fs";
 
@@ -182,15 +183,49 @@ export function flakeLines(check: Check, log: string): string[] {
   return [...new Set(failedItems(check, log).map((i) => `${i.file} › ${i.title}`.slice(0, 200)))];
 }
 
+/** A130: the most tests, and characters, the log's list of failing tests holds. */
+export const NAMES_MAX = 40;
+export const NAMES_CHARS = 2000;
+
+/** A130: what .coord/log.md says about a failed check: `head` ends the "checks failed" line, `list` is the continuation line.
+ *  vitest and e2e: head "<N> failing: <first title>", N counting the failing tests unique by file and title (after a failed
+ *  rerun the log holds both runs); golden: head is the first "FAIL <stage>:" line (120 characters; a passing stage line that
+ *  holds a × is no failure). list: "<file> › <title>" separated by "; ", at most NAMES_MAX tests and NAMES_CHARS characters,
+ *  with "(and <k> more)" when cut. Null when no failing item is parsed (docs, size, typecheck, a log that only says it failed). */
+export function failNames(check: Check, log: string): { head: string; list: string } | null {
+  const seen = new Set<string>();
+  const items = failedItems(check, log).filter((i) => {
+    const k = `${i.file}\t${i.title}`;
+    return !seen.has(k) && !!seen.add(k);
+  });
+  if (items.length === 0) return null;
+  let head: string;
+  if (check === "golden") {
+    const m = /^FAIL\s+[^:\s]+:.*$/m.exec(stripAnsi(log));
+    if (!m) return null;
+    head = m[0].trim().slice(0, 120);
+  } else head = `${items.length} failing: ${(items[0]!.title || items[0]!.file).slice(0, 120)}`;
+  const names = items.map((i) => (i.title ? `${i.file} › ${i.title}` : i.file).slice(0, 200));
+  let used = 0;
+  let len = 0;
+  while (used < Math.min(names.length, NAMES_MAX) && len + names[used]!.length + (used > 0 ? 2 : 0) <= NAMES_CHARS) {
+    len += names[used]!.length + (used > 0 ? 2 : 0);
+    used++;
+  }
+  const rest = names.length - used;
+  return { head, list: names.slice(0, used).join("; ") + (rest > 0 ? ` (and ${rest} more)` : "") };
+}
+
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
   const [cmd, check, path] = process.argv.slice(2);
   if (!cmd || !path || !["vitest", "e2e", "golden"].includes(check ?? "")) {
-    console.error("usage: pipeline-logs.ts items|files|timing|mismatch|rerunnable|flakelines <vitest|e2e|golden> <log>");
+    console.error("usage: pipeline-logs.ts items|files|timing|mismatch|rerunnable|flakelines|names <vitest|e2e|golden> <log>");
     process.exit(2);
   }
   const log = readFileSync(path, "utf8");
   const c = check as Check;
   if (cmd === "rerunnable") process.exit(rerunnable(c, log, readFileSync(0, "utf8").split(/\r?\n/).filter(Boolean)) ? 0 : 1);
+  if (cmd === "names") { const r = failNames(c, log); if (r) console.log(`${r.head}\n${r.list}`); process.exit(r ? 0 : 1); }
   if (cmd === "flakelines") { for (const l of flakeLines(c, log)) console.log(l); process.exit(0); }
   if (cmd === "mismatch") { const m = countMismatch(c, log); if (m !== null) console.log(m); process.exit(m !== null ? 0 : 1); }
   if (cmd === "timing") process.exit(onlyTiming(c, log) ? 0 : 1);
