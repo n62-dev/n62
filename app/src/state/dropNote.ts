@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R272 (night review 2026-11-09, fh-13): the first time a view's history drops its oldest row (past HISTORY_LIMIT) the app
-// says so once, in one note row, and points to Settings › Backup. The flag is per install: it is in the store, and
+// says so once, in one note row, and points to Settings › Data. The flag is per install: it is in the store, and
 // stays out of the backup (state/backup.ts LEFT_OUT), so a restore on a new install says it once more. A lazy chunk
 // (the session imports it at the first drop of a session), so the start chunk carries neither the words nor this code.
 import { dataText } from "../i18n/enData.ts";

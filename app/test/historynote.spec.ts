@@ -4,7 +4,7 @@
 import { expect, test } from "@playwright/test";
 import { tap } from "./helpers.ts";
 
-const NOTE = "Older rows are dropped after 200. Save a backup: Settings › Backup.";
+const NOTE = "Older rows are dropped after 200. Save a backup: Settings › Data.";
 
 test("the first dropped row says it once, and a relaunch does not say it again", async ({ page }) => {
   await page.goto("/?engine=fake&tips=off");
