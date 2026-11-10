@@ -209,7 +209,7 @@
   }
 
   function clearKey(): void {
-    if (shell.app === null && entry.value === "") void session.clearHistory();
+    if (shell.app === null && entry.empty) void session.clearHistory(); // R255: a queued line or a kept one still to come is not empty
     else entry.clear();
   }
 

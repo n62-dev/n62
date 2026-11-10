@@ -26,7 +26,7 @@
   /** Over the empty entry line (R3), else above it (a tap can pick a row while the line has text; ▲ cannot). Read when
    *  the pick starts or moves (entry.value is not reactive): a key that types drops the pick, so the line cannot
    *  change under the buttons. */
-  const over = $derived((void row, folded || entry.value === ""));
+  const over = $derived((void row, folded || entry.empty));
   /** A tap on a button must not take the caret out of the entry line. */
   const noFocus = (e: Event): void => e.preventDefault();
 </script>

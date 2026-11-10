@@ -22,10 +22,10 @@ import type { IndexItem } from "../find/types.ts";
 
 /**
  * What the port does with each key of an engine result (G76): "pass" gives it to the view as it is (`facts` whole, so
- * every fact the engine adds reaches the views); any other text is the reason it is not given. A key added to
- * HomeResult or CasResult fails to compile here until it is listed.
+ * every fact the engine adds reaches the views); "held" keeps it back, the reason in a comment beside it (R255: the
+ * reasons were texts in the start chunk). A key added to HomeResult or CasResult fails to compile here until it is listed.
  */
-export type PortKeys<T> = { readonly [K in keyof Required<T>]: "pass" | (string & {}) };
+export type PortKeys<T> = { readonly [K in keyof Required<T>]: "pass" | "held" };
 
 export const HOME_KEYS = {
   ok: "pass",
@@ -42,11 +42,11 @@ export const HOME_KEYS = {
   digits: "pass",
   latex: "pass",
   settingReset: "pass",
-  exact: "given only when `rational` says it is a plain integer or p/q: the Format key's fraction modes read it",
-  rational: "read for `exact`",
-  path: "the engine's route, for its tests and probes; no view reads it",
-  exactMs: "a timing (measurement builds read the engine's own)",
-  totalMs: "a timing (measurement builds read the engine's own)",
+  exact: "held", // given only when `rational` says it is a plain integer or p/q: the Format key's fraction modes read it
+  rational: "held", // read for `exact`
+  path: "held", // the engine's route, for its tests and probes; no view reads it
+  exactMs: "held", // a timing (measurement builds read the engine's own)
+  totalMs: "held", // a timing (measurement builds read the engine's own)
 } as const satisfies PortKeys<HomeResult>;
 
 export const CAS_KEYS = {
@@ -60,8 +60,8 @@ export const CAS_KEYS = {
   approximate: "pass",
   facts: "pass",
   settingReset: "pass",
-  timedOut: "`error` is \"timeout\" then",
-  engineMs: "a timing (measurement builds read the engine's own)",
+  timedOut: "held", // `error` is "timeout" then
+  engineMs: "held", // a timing (measurement builds read the engine's own)
 } as const satisfies PortKeys<CasResult>;
 
 /** The keys of T that `M` passes. */
