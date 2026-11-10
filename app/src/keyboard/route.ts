@@ -167,7 +167,7 @@ function units(c: RouteCtx, row?: HistoryItem): void {
 }
 
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
- *  result on the entry line (L5; an entry without a result puts its input back), Esc drops the pick, Copy and Menu act
+ *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Copy and Menu act
  *  on the picked row. Any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
@@ -209,7 +209,8 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   }
   if (action.name === "enter" && item) {
     if (item.status === "done") c.insertResult(item);
-    else c.recallRow(item); // the line is empty while picking: the entry comes back with its chips
+    else if (c.entry.value === "") c.recallRow(item); // an empty line: the entry comes back with its chips
+    // (R273: text on the line stays; the pick is dropped above)
     return true;
   }
   return false;
