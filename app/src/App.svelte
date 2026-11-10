@@ -374,6 +374,14 @@
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
+  /** A second tap on a picked input row (R147): its entry goes on an empty line; text on the line stays and the pick is
+   *  dropped (R273, owner 2026-11-09), as for Enter on a pick (keyboard/route.ts). */
+  function recallTapped(item: HistoryItem): void {
+    edited = true;
+    picked = null;
+    shell.prompt?.cancel();
+    if (entry.value === "") onLine(item, true);
+  }
   /** The key routing (keyboard/route.ts, R15c2) works on this: the models, this component's state and its actions. */
   const ctx: RouteCtx = {
     get session() { return session; },
@@ -444,7 +452,7 @@
           reason={(item) => session.reason(item)}
           marks={session.settings.marks}
           onpick={pick}
-          onrecall={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, true); }}
+          onrecall={recallTapped}
           oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, false); }}
           oncancel={() => void cancel()}
           onlongpress={(item) => withClip((c) => c.openRowMenu(item))}
