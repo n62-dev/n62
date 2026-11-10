@@ -63,8 +63,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 615 | R261 Esc in a slot line restores it; Menu › Clear (bu-5) | ron, Opus | `p1/ron-escnav` | – |
-| 616 | R270 a half-typed Home line waits while an app is open (bu-8) | ron, Sonnet | `p1/ron-setaside` | – |
 | 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
 | 618 | [R272](packages/R272.md) one note when history drops past 200 (fh-13) | ron, Sonnet | `p1/ron-historynote` | – |
 | 619 | [R273](packages/R273.md) a typed line beats a picked row (vr-3) | ron, Sonnet | `p1/ron-pickkeep` | – |
@@ -97,6 +95,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 |---|---|---|---|---|
 | 601 | [A132](packages/A132.md) pipeline rates from the log | annabell, Sonnet | `p1/annabell-pipestats` | A130 |
 | 602 | [A126](packages/A126.md) e2e flakes at 16 and 8 workers | annabell, Sonnet | `p1/annabell-e2eworkers` | A125 |
+| 643 | [G317](packages/G317.md) a name set beside the result keeps its own value and mark in Vars (pass 135) | gorge, Opus | `p1/gorge-sidepreview` | – |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |

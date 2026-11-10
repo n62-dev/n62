@@ -5,6 +5,10 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-10 (Opus pass 135) to make room for R261's default, as they stood
+- **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Archived, "Opus pass 97". Would change if: the owner's look after R24d.
+- **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112). Archived, "Opus pass 106". Would change if: its device check, or the owner wants the system's setting to win.
+
 ### Shortened 2026-11-10 (Opus pass 132) to make room for R258's and S53f1's defaults, as they stood
 - **Tmpl and a b/c** (R10): one toggle per result type; ▶ jumps to the next empty box while one is ahead; ° and DMS mean degrees in every angle mode. **Mixed numbers** are a Tmpl template, `\tfrac` after anything but a whole number is an error.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it); Shift + Help reads "Settings", its face shrunk to fit. Would change if: the owner's look on 11-07.

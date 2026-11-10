@@ -127,6 +127,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 **Entry and keys**
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
+- **R261 (Opus pass 135):** Symb's ☰ lists Clear, then R83's pointer row; Esc on Solve's Num value line puts the value back; a new value takes Clear or ⌫ first (docs/05 3.5). Would change if: the owner wants type-to-replace.
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45): docs/04 5.5 point 1; `e` after digits is ᴇ; characters no key types do nothing.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
@@ -148,7 +149,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Archived. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it). Archived, "Opus pass 132".
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is a mask. Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
-- **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Archived, "Opus pass 97". Would change if: the owner's look after R24d.
+- **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
 - **View keys and the load queue** (Opus pass 109, R148f2): behind waiting keys Symb, Plot and Num wait in order (c46). Archived, "Opus pass 122". Would change if: a view key feels dead during a load on the Tab One.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): six cards at scale 2.0 cannot fit 360 × 740 at 32 px. Would change if: the owner wants them to follow the scale and scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (Opus pass 108, R148f1; docs/05 3.1): Settings › Appearance scrolls; no key row or floor gives way. Archived, "Opus pass 117". Would change if: the owner's look at 360 × 740 says otherwise.
@@ -217,7 +218,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G119, Giac's sequence answers in Home (Opus pass 6):** each shows its value (one element) or a list in braces, so Ans and a stored name (`=>` too, G173f1) read back a value or a list; CAS too since G173 (owner, 11-05). Archived.
 - **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Archived, "Opus pass 123". Would change if: the per-element calls are batched.
 - **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Archived, "Opus pass 97". Would change if: the owner wants an older look flat.
-- **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112). Archived, "Opus pass 106". Would change if: its device check, or the owner wants the system's setting to win.
+- **A66, the key click (Opus pass 97):** the app's switch alone decides (R112). Archived, "Opus pass 135". Would change if: its device check, or the owner wants the system's setting to win.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
 - **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.
