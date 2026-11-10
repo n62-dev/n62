@@ -43,6 +43,7 @@ import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STR
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
 import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts } from "./defs.ts";
+import { noteMark } from "./storedMark.ts";
 import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
 import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
@@ -895,7 +896,7 @@ export class EngineHost implements FactsHost {
       const inexact = !fn && facts !== null && (inexactIn || result.facts.warn !== undefined);
       // G48: a symbolic value's facts count only when they say it is not exact (a float in it, a ⚠).
       const own = inexact ? { ...facts, inexact: true as const } : result.value || result.items ? facts : null;
-      defs = this.defsAfter(input, ran, result.display, storeFacts(own, lent, read), fn ? facts : null, "home", digits, s.angle, post);
+      defs = noteMark(this.defsAfter(input, ran, result.display, storeFacts(own, lent, read), fn ? facts : null, "home", digits, s.angle, post), result, digits); // S53f1
     }
     return { result, defs };
   }
