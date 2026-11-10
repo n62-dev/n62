@@ -82,7 +82,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 600 | [A125](packages/A125.md) clipboard lock in turn (F202) | annabell, Sonnet | `p1/annabell-clipqueue` | A124 |
 | 601 | [A132](packages/A132.md) pipeline rates from the log | annabell, Sonnet | `p1/annabell-pipestats` | A130 |
 | 602 | [A126](packages/A126.md) e2e flakes at 16 and 8 workers | annabell, Sonnet | `p1/annabell-e2eworkers` | A125 |
-| 593 | [G303](packages/G303.md) a stored name `k` survives Enter (F205) | gorge, Opus | `p1/gorge-statenames` | – |
+| 593 | G303 a stored name `k` survives Enter (F205) | gorge, Opus | `p1/gorge-statenames` | – |
 | 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f1 |
