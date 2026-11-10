@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- S53 (sandra, 2026-11-10): design A of docs/research/store-design.md, the store sheet, at phone width in the N62
+     theme (dark tokens of app/src/theme/n62.css). A picture to build from, not code: the app's own Sheet and history
+     draw it. Our own design; nothing from the reference calculator's screens. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>N62 · Store, designed (S53 mockup)</title>
+<style>
+:root {
+  --bg: #092726; --panel: #0e2f2e; --line: #335b59; --key-num: #263534; --key-fn: #1d2929;
+  --text: #ebf6f6; --text-dead: #749392; --muted: #abccca; --warn: #f2c94c; --pick: #244343; --focus: #ebf6f6;
+  --ring: #529997; --chip-bg: #1d2929; --sel: #4f9393; --on-sel: #000000; --page: #030e0d;
+  --app: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --math: "STIX Two Math", "Cambria Math", "Latin Modern Math", serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font: 15px/1.4 var(--app); }
+header, .notes { max-width: 900px; margin: 0 auto; padding: 16px; }
+header h1 { font-size: 20px; margin: 0 0 6px; }
+header p, .notes p, .notes li { color: var(--muted); margin: 4px 0; }
+.row { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; padding: 8px 16px 24px; }
+figure { margin: 0; }
+figcaption { color: var(--muted); font-size: 13px; max-width: 412px; margin-top: 8px; }
+.phone { width: 412px; height: 839px; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; overflow: hidden;
+  display: flex; flex-direction: column; position: relative; }
+.status { height: 32px; display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 13px; color: var(--muted);
+  border-bottom: 1px solid var(--line); }
+.status b { color: var(--text); font-weight: 600; }
+.status .sp { flex: 1; }
+.history { flex: 1; padding: 8px 12px; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; }
+.item { padding: 4px 6px; border-radius: 8px; position: relative; }
+.item + .item::before { content: ""; position: absolute; left: 0; right: 0; top: -5px; border-top: 1px solid var(--line); }
+.item.picked { background: var(--pick); outline: 2px solid var(--focus); }
+.in { color: var(--muted); font-family: var(--math); font-size: 17px; }
+.out { text-align: right; font-family: var(--math); font-size: 24px; }
+.mark { font-family: var(--app); font-size: 15px; color: var(--muted); margin-right: 8px; }
+.mark.warn { color: var(--warn); }
+.bar { display: flex; gap: 4px; padding: 4px 8px; }
+.bar span { flex: 1; height: 44px; display: grid; place-items: center; background: var(--key-fn); border-radius: 8px; font-size: 14px; }
+.bar span.on { background: var(--sel); color: var(--on-sel); font-weight: 600; }
+.entry { margin: 4px 8px 6px; min-height: 44px; border: 2px solid var(--ring); border-radius: 10px; padding: 8px 10px;
+  font-family: var(--math); font-size: 20px; display: flex; align-items: center; gap: 6px; }
+.chip { background: var(--chip-bg); border-radius: 6px; padding: 0 6px; }
+.caret { width: 2px; height: 22px; background: var(--text); }
+/* the keypad's upper rows stay; the sheet covers rows 3-9 (R21) */
+.cluster { height: 120px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 4px; }
+.cluster span { background: var(--key-fn); border-radius: 8px; display: grid; place-items: center; font-size: 12px; color: var(--muted); }
+.sheet { height: 368px; background: var(--panel); border-top: 1px solid var(--line); display: flex; flex-direction: column; }
+.sheet .title { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.sheet .title .v { font-family: var(--math); font-weight: 400; }
+.sheet .title .filter { margin-left: auto; color: var(--text-dead); font-weight: 400; font-size: 13px; }
+.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 6px 8px; }
+.cell { height: 44px; border-radius: 8px; background: var(--key-fn); display: flex; flex-direction: column; align-items: center;
+  justify-content: center; line-height: 1.1; }
+.cell .l { font-family: var(--math); font-style: italic; font-size: 18px; }
+.cell .val { font-size: 10px; color: var(--muted); max-width: 60px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.cell.free .l { color: var(--text-dead); }
+.cell.filled { background: var(--key-num); }
+.cell.hl { outline: 2px solid var(--focus); }
+.cell.armed { background: var(--sel); color: var(--on-sel); }
+.cell.armed .val, .cell.armed .l { color: var(--on-sel); }
+.names { border-top: 1px solid var(--line); margin-top: 2px; overflow: hidden; }
+.names div { height: 36px; display: flex; align-items: center; padding: 0 12px; gap: 10px; }
+.names .n { font-family: var(--math); font-style: italic; font-size: 17px; }
+.names .v { margin-left: auto; color: var(--muted); font-family: var(--math); }
+.preview { margin-top: auto; padding: 6px 12px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); }
+.keys-below { height: 88px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 4px; opacity: .35; }
+.keys-below span { background: var(--key-num); border-radius: 8px; }
+table { border-collapse: collapse; margin: 8px 0; }
+td, th { border: 1px solid var(--line); padding: 4px 8px; text-align: left; font-size: 14px; }
+th { color: var(--muted); font-weight: 500; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Store, designed (S53): the store sheet</h1>
+  <p>Design A of <code>docs/research/store-design.md</code>. Store ▶ (Shift + ᴇ, the row bar, ☰ 4) puts <i>value ▶</i> on the line as today and opens “Store in”: the letters A–Z with their values, then your own names. A tap on a free letter stores; a tap on a filled one asks first. Alpha and letters, then Enter, still store a typed name, as on the G2.</p>
+</header>
+
+<div class="row">
+  <figure>
+    <div class="phone" aria-label="Store sheet from a picked row">
+      <div class="status"><b>Home</b><span>RAD</span><span>12</span><span class="sp"></span><span>☰</span></div>
+      <div class="history">
+        <div class="item picked"><div class="in">1 ÷ 3</div><div class="out"><span class="mark">≈</span>0.333333333333</div></div>
+        <div class="item"><div class="in">√2</div><div class="out"><span class="mark">≈</span>1.41421356237</div></div>
+        <div class="item"><div class="in">2 + 3</div><div class="out"><span class="mark">=</span>5</div></div>
+      </div>
+      <div class="bar"><span>Insert</span><span>Recall</span><span>Copy as ›</span><span class="on">Store ▶</span><span>Delete</span></div>
+      <div class="entry"><span class="chip">0.333333333333</span><span>▶</span><span class="caret"></span></div>
+      <div class="cluster"><span>U1</span><span>U2</span><span style="grid-column: span 2">▲</span><span>Help</span><span>Esc</span>
+        <span>U3</span><span>U4</span><span>◀</span><span>▶</span><span>Undo</span><span>Redo</span></div>
+      <div class="sheet">
+        <div class="title">Store <span class="v">≈ 0.333333333333</span> in<span class="filter">type a name ⌨</span></div>
+        <div class="grid">
+          <div class="cell filled armed"><span class="l">A</span><span class="val">5 · again?</span></div>
+          <div class="cell free hl"><span class="l">B</span></div>
+          <div class="cell filled"><span class="l">C</span><span class="val">= 299792458</span></div>
+          <div class="cell free"><span class="l">D</span></div>
+          <div class="cell free"><span class="l">E</span></div>
+          <div class="cell free"><span class="l">F</span></div>
+          <div class="cell free"><span class="l">G</span></div>
+          <div class="cell free"><span class="l">H</span></div>
+          <div class="cell free"><span class="l">I</span></div>
+          <div class="cell free"><span class="l">J</span></div>
+          <div class="cell filled"><span class="l">K</span><span class="val">= 1000</span></div>
+          <div class="cell free"><span class="l">L</span></div>
+          <div class="cell free"><span class="l">M</span></div>
+          <div class="cell free"><span class="l">N</span></div>
+          <div class="cell free"><span class="l">O</span></div>
+          <div class="cell free"><span class="l">P</span></div>
+          <div class="cell free"><span class="l">Q</span></div>
+          <div class="cell filled"><span class="l">R</span><span class="val">= 4700</span></div>
+          <div class="cell free"><span class="l">S</span></div>
+          <div class="cell free"><span class="l">T</span></div>
+          <div class="cell free"><span class="l">U</span></div>
+          <div class="cell free"><span class="l">V</span></div>
+          <div class="cell free"><span class="l">W</span></div>
+          <div class="cell free"><span class="l">X</span></div>
+          <div class="cell free"><span class="l">Y</span></div>
+          <div class="cell free"><span class="l">Z</span></div>
+        </div>
+        <div class="names">
+          <div><span class="n">rate</span><span class="v">≈ 0.0425</span></div>
+          <div><span class="n">R2</span><span class="v">= 10000</span></div>
+        </div>
+        <div class="preview">A holds 5. Tap A again to replace it with ≈ 0.333333333333.</div>
+      </div>
+      <div class="keys-below"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <figcaption>The first row picked (a tap), then Store ▶ on the row bar: 2 presses. A third tap on the free letter B would store at once; A is filled, so its first tap armed it (“5 · again?”) and the line below says what it holds; a second tap replaces it. Long values end in … in the cell; the line below the grid shows the highlighted one in full. Every value carries its mark (=, ≈, or ⚠ n for a flagged one), as the history draws it. The grid shows capitals only; any other name is typed (Alpha) and appears in the list below the grid.</figcaption>
+  </figure>
+
+  <figure>
+    <div class="phone" aria-label="Vars in the same look">
+      <div class="status"><b>Home</b><span>RAD</span><span>12</span><span class="sp"></span><span>☰</span></div>
+      <div class="history">
+        <div class="item"><div class="in">1 ÷ 3 ▶ A</div><div class="out"><span class="mark">≈</span>0.333333333333</div></div>
+        <div class="item"><div class="in">√2</div><div class="out"><span class="mark">≈</span>1.41421356237</div></div>
+      </div>
+      <div class="entry"><span>2 ×</span><span class="caret"></span></div>
+      <div class="cluster"><span>U1</span><span>U2</span><span style="grid-column: span 2">▲</span><span>Help</span><span>Esc</span>
+        <span>U3</span><span>U4</span><span>◀</span><span>▶</span><span>Undo</span><span>Redo</span></div>
+      <div class="sheet">
+        <div class="title">Vars<span class="filter">tap to insert</span></div>
+        <div class="grid">
+          <div class="cell filled hl"><span class="l">A</span><span class="val">≈ 0.333333333333</span></div>
+          <div class="cell free"><span class="l">B</span></div>
+          <div class="cell filled"><span class="l">C</span><span class="val">= 299792458</span></div>
+          <div class="cell free"><span class="l">D</span></div>
+          <div class="cell free"><span class="l">E</span></div>
+          <div class="cell free"><span class="l">F</span></div>
+          <div class="cell free"><span class="l">G</span></div>
+          <div class="cell free"><span class="l">H</span></div>
+          <div class="cell free"><span class="l">I</span></div>
+          <div class="cell free"><span class="l">J</span></div>
+          <div class="cell filled"><span class="l">K</span><span class="val">= 1000</span></div>
+          <div class="cell free"><span class="l">L</span></div>
+          <div class="cell free"><span class="l">M</span></div>
+          <div class="cell free"><span class="l">N</span></div>
+          <div class="cell free"><span class="l">O</span></div>
+          <div class="cell free"><span class="l">P</span></div>
+          <div class="cell free"><span class="l">Q</span></div>
+          <div class="cell filled"><span class="l">R</span><span class="val">= 4700</span></div>
+          <div class="cell free"><span class="l">S</span></div>
+          <div class="cell free"><span class="l">T</span></div>
+          <div class="cell free"><span class="l">U</span></div>
+          <div class="cell free"><span class="l">V</span></div>
+          <div class="cell free"><span class="l">W</span></div>
+          <div class="cell free"><span class="l">X</span></div>
+          <div class="cell free"><span class="l">Y</span></div>
+          <div class="cell free"><span class="l">Z</span></div>
+        </div>
+        <div class="names">
+          <div><span class="n">rate</span><span class="v">≈ 0.0425</span></div>
+          <div><span class="n">p(x)</span><span class="v">function</span></div>
+        </div>
+        <div class="preview">A ≈ 0.333333333333</div>
+      </div>
+      <div class="keys-below"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <figcaption>Vars (r4c1) in the same look, its own verb: a tap inserts the name (2 × A). The value keeps its mark: today's Vars shows a stored 1/3 as “A = 0.333333333333” (store-bu-1). Free letters are dim, so “which letter is free?” is one press.</figcaption>
+  </figure>
+</div>
+
+<div class="notes">
+  <p><b>The four tasks, presses</b> (every key, flick and tap counts 1; docs/04 5.2):</p>
+  <table>
+    <tr><th>Task</th><th>Today, taps (flicks)</th><th>Store sheet, taps (flicks)</th></tr>
+    <tr><td>Store the last result as A</td><td>5 (3)</td><td>3 (2); +1 when A is filled</td></tr>
+    <tr><td>Store an earlier row as A</td><td>5 by the row bar; 9 by keys</td><td>3 by the row bar; 6 by keys</td></tr>
+    <tr><td>Use A in a new line</td><td>2 (1)</td><td>2 (1)</td></tr>
+    <tr><td>See what A, B, … hold</td><td>1, no marks, no free letters</td><td>1, with marks and free letters</td></tr>
+  </table>
+  <ul>
+    <li>Typed path kept: Store ▶, Alpha, A, Enter stores A exactly as today (the letters go to the sheet's filter); Esc leaves <i>value ▶</i> on the line.</li>
+    <li>A tap types the name and Enter: one store path through the parser and the engine, the history row as before, the facts carried (docs/04 2.8).</li>
+    <li>Keypad: no move needed; Store ▶ stays on Shift + ᴇ. A tap cell for Store ▶ (R278's freed cells) would save one more press per store: the owner's choice.</li>
+  </ul>
+</div>
+</body>
+</html>
