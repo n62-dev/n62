@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-import { linkSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { linkSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { test, type Locator, type Page } from "@playwright/test";
 
@@ -197,8 +197,12 @@ export const vibrations = (page: Page): Promise<unknown[]> => page.evaluate(() =
 // owner process is dead (a killed worker) is taken over; a live owner is never overridden, however long it holds.
 const LOCK = resolve("test-results", "clipboard.lock");
 
+/** F202: a waiter first takes a numbered ticket in this directory (a file named by its number, holding its pid and a
+ *  nonce); only the lowest live ticket may take the lock, so the waiters are served in the order they came. */
+export const CLIPBOARD_TICKETS = resolve("test-results", "clipboard-tickets");
+
 /** How long a test waits for the lock. The lock runs the suite's clipboard tests one at a time, and they hold it about
- *  230 s in all (G301, 16 workers); a waiter is not served in turn, so it may wait through most of that. */
+ *  230 s in all (G301, 16 workers); the waiters are served in turn (F202), so a late one waits through most of that. */
 export const CLIPBOARD_WAIT_MS = 300_000;
 /** A test's budget that holds the wait as well: its own timeout, the wait, and the time to give up cleanly. */
 export const clipboardBudget = (timeout: number): number => timeout + CLIPBOARD_WAIT_MS + 30_000;
@@ -212,33 +216,88 @@ const alive = (pid: number): boolean => {
   }
 };
 
-/** Wait for the clipboard lock and take it; returns the release function (safe to call twice; it removes only its own
- *  file). Throws once `timeoutMs` has passed without the lock, so a late acquisition never happens after the caller gave up. */
+/** Take the next ticket: one number above the highest there is, made by an exclusive link (a ticket never shows half
+ *  written; two waiters after the same number meet an EEXIST and the later one counts again). Returns its path. */
+function takeTicket(token: string): string {
+  mkdirSync(CLIPBOARD_TICKETS, { recursive: true });
+  const tmp = resolve(CLIPBOARD_TICKETS, `.tmp-${process.pid}-${token.split(" ")[1]}`);
+  writeFileSync(tmp, token);
+  try {
+    for (;;) {
+      const top = ticketNames().reduce((m, n) => Math.max(m, Number(n)), 0);
+      const path = resolve(CLIPBOARD_TICKETS, String(top + 1).padStart(9, "0"));
+      try {
+        linkSync(tmp, path);
+        return path;
+      } catch (e) {
+        if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+      }
+    }
+  } finally {
+    rmSync(tmp, { force: true });
+  }
+}
+
+const ticketNames = (): string[] => {
+  try {
+    return readdirSync(CLIPBOARD_TICKETS).filter((n) => /^\d+$/.test(n)).sort();
+  } catch {
+    return [];
+  }
+};
+
+/** Is `path` (a ticket of mine) the lowest live ticket? A ticket whose owner process is dead is removed on the way. */
+function myTurn(path: string): boolean {
+  for (const name of ticketNames()) {
+    const p = resolve(CLIPBOARD_TICKETS, name);
+    if (p === path) return true;
+    try {
+      const pid = Number.parseInt(readFileSync(p, "utf8"), 10);
+      if (Number.isInteger(pid) && !alive(pid)) rmSync(p, { force: true });
+      else return false;
+    } catch {
+      /* taken back meanwhile */
+    }
+  }
+  return false; // my ticket is gone (cannot happen unless something removed it): wait on
+}
+
+/** Wait for the clipboard lock and take it, in the order the waiters came (a numbered ticket, F202); returns the release
+ *  function (safe to call twice; it removes only its own file). Throws once `timeoutMs` has passed without the lock, so
+ *  a late acquisition never happens after the caller gave up, and withdraws the ticket first. */
 export async function acquireClipboardLock(timeoutMs = CLIPBOARD_WAIT_MS): Promise<() => void> {
   mkdirSync(dirname(LOCK), { recursive: true });
   const deadline = Date.now() + timeoutMs;
   const token = `${process.pid} ${Math.random().toString(36).slice(2)}`;
-  for (;;) {
-    try {
-      writeFileSync(LOCK, token, { flag: "wx" });
-      return () => {
+  const ticket = takeTicket(token);
+  try {
+    for (;;) {
+      const turn = myTurn(ticket);
+      if (turn) {
         try {
-          if (readFileSync(LOCK, "utf8") === token) rmSync(LOCK, { force: true });
-        } catch {
-          /* already gone */
+          writeFileSync(LOCK, token, { flag: "wx" });
+          return () => {
+            try {
+              if (readFileSync(LOCK, "utf8") === token) rmSync(LOCK, { force: true });
+            } catch {
+              /* already gone */
+            }
+          };
+        } catch (e) {
+          if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
+          try {
+            const pid = Number.parseInt(readFileSync(LOCK, "utf8"), 10);
+            if (Number.isInteger(pid) && !alive(pid)) takeOverDead(pid);
+          } catch {
+            /* released meanwhile */
+          }
         }
-      };
-    } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== "EEXIST") throw e;
-      try {
-        const pid = Number.parseInt(readFileSync(LOCK, "utf8"), 10);
-        if (Number.isInteger(pid) && !alive(pid)) takeOverDead(pid);
-      } catch {
-        /* released meanwhile */
       }
       if (Date.now() >= deadline) throw new Error(`clipboard lock not free after ${timeoutMs} ms`);
-      await new Promise((r) => setTimeout(r, 50 + Math.random() * 50));
+      await new Promise((r) => setTimeout(r, turn ? 25 + Math.random() * 25 : 100 + Math.random() * 100));
     }
+  } finally {
+    rmSync(ticket, { force: true }); // taken the lock or given up: the ticket goes either way
   }
 }
 
