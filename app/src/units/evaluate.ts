@@ -34,7 +34,8 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  * - pasuh(y): whether y holds a dimension symbol;
  * - pasue(f,s): the exponents d·∂f/∂d / f of f, 0 without a diff for a dimension symbol f does not hold (G310: the diff
  *   by an absent symbol cost up to 2 ms on a piecewise); with s = 1 the first exponent that is not a number ends the
- *   reading (the rest 0): f is then not one term. pasuq skips expand() when f has no + at all (it can make no sum);
+ *   reading (the rest 0): f is then not one term. pasuq skips expand() when f has no + at all (it can make no sum),
+ *   and tests f == 0 only when f is not symbolic (after normal() a 0 is the integer 0; == on a max() cost 0.6 ms);
  * - pasua(x): the argument of sin, cos and tan, in radians (Giac runs in radians in every mode, G46): an angle (the
  *   rad dimension once, its value in rad) as it is; a pure number in the angle mode, as Home does (G15 default), so
  *   times pasdeg (π/180 in DEG); anything else gives the free symbol pasubad, which pasuq finds;
@@ -83,7 +84,7 @@ export const UNIT_DEFINITIONS: readonly string[] = [
   `pasuh(pasy_):=${ANY_DIM}`,
   `pasue(pasf_,pass_):={local pasr_,pask_,pase_; pasr_:=[]; for (pask_:=0;pask_<${BASES.length};pask_++) { pase_:=0; if (has(pasf_,${S}[pask_])) { pase_:=normal(${S}[pask_]*diff(pasf_,${S}[pask_])/pasf_); } ` +
     `pasr_:=append(pasr_,pase_); if (pass_ and lvar(pase_)!=[]) { return concat(pasr_,seq(0,${BASES.length}-size(pasr_))); } } return pasr_; }`,
-  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (pasf_==0) return [4]; ` +
+  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (type(pasf_)!=DOM_SYMBOLIC and pasf_==0) return [4]; ` +
     `pasa_:=pasue(pasf_,1); ` +
     `if (lvar(pasa_)==[]) { pasc_:=normal(pasf_/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasa_))); if (pasuh(pasc_)) return [2,pasumx(pasf_)]; return [0,pasa_,pasc_]; } ` +
     `if (!pasujc(pasf_,['+'])) return [2,0]; past_:=expand(pasf_); if (sommet(past_)!='+') return [2,pasumx(pasf_)]; past_:=[op(past_)]; ` +
