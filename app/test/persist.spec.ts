@@ -301,12 +301,14 @@ async function heldStart(page: Page, stored: string[], kept: string[] = []): Pro
   await next.waitForFunction((n) => window.n62?.session.items.length === n, rows);
   return { next, release };
 }
-/** Release MathLive and wait until the field is up with the queued keys replayed. */
+/** Release MathLive and wait until the field is up with the queued keys replayed, and the new page's engine is ready
+ *  (heldStart waits for the first page's only; under the full suite's load a cold engine outlasted a row count's 5 s). */
 async function fieldUp(next: Page, release: () => void): Promise<void> {
   expect(await next.evaluate(() => window.n62.entry.field)).toBeUndefined(); // every key above went in before the field
   release();
   await next.waitForFunction(() => window.n62.entry.field !== undefined, undefined, { timeout: 20_000 });
   await next.evaluate(() => window.n62.entry.ready);
+  await engineReady(next);
 }
 const lastInput = (p: Page): Promise<string | undefined> => p.evaluate(() => window.n62.session.items.at(-1)?.latex);
 const results = (p: Page): Promise<string[]> =>
@@ -370,4 +372,15 @@ test("R255 control: an empty history, 2 + 3 before the field: the line is 2+3", 
   await tap(next, ["d2", "add", "d3"]);
   await fieldUp(next, release);
   expect(await entryValue(next)).toBe("2+3");
+});
+
+// R255f1: the units key reads the line, so it waits for the field as Enter does (R8: the keys keep their order)
+test("R255f1: 5 then the units key before the field: the unit view opens on the line 5", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d5", "shift", "tmpl"]);
+  await fieldUp(next, release);
+  await next.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null, undefined, { timeout: 20_000 });
+  expect(await next.evaluate(() => window.n62.unitView?.view.line)).toBe("5");
+  expect(await entryValue(next)).toBe("5");
+  expect(await results(next)).toEqual(["7"]);
 });
