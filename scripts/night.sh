@@ -123,14 +123,14 @@ log "night.sh started (${lane:+lane $lane, }max $max_steps steps$until_text)"
 export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
 limit_max=10   # A121: usage limits in a row; 10 x 1800 s covers the CLI's five-hour window, and a wait costs no usage
 henri_limit='(henri: usage limit)'
-dry_rc=0; steps=0; limits=0; bad=0; closing=0; declare -A norsl=()
+dry_rc=0; steps=0; limits=0; bad=0; closing=0; declare -A norsl=() waited_at=(); merges=0
 henri_prompt='You are henri, the night coordinator. Read docs/shifts/brief.md section 0c (the rules, the queue table and the Opus pass) and the tail of .coord/log.md on stdin. Reply with exactly one line and nothing else: the next command to run, one of
   scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto   (the next queue step not done; skip steps the table or the log marks merged or skipped)
   scripts/pipeline.sh <agent> "<FIX prompt, verbatim>" --id <IDf1> --branch <branch> --model <m> --audit-model auto   (a FIX line of the last Opus pass, one per call, in order)
   scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" "<open questions or none>"   (after every 3 finished packages since the last pass, and at the end)
   scripts/pipeline.sh report                                                     (after the last pass, its device step and its FIX packages)
   SHIFT DONE                                                                     (after the report)
-A step whose log line says MERGED, NOT MERGED or SKIPPED (the pipeline line, or the RESULT line night.sh writes) is finished; never repeat a finished step. Follow the last Opus pass QUEUE line. Decide nothing else. In a FIX prompt use no backtick and no dollar sign (the command is refused with them).'
+A step whose log line says MERGED, NOT MERGED or SKIPPED (the pipeline line, or the RESULT line night.sh writes) is finished; never repeat a finished step. A step whose log line says WAITS is not finished: take the next row whose After is met and come back to it once that After has merged. Follow the last Opus pass QUEUE line. Decide nothing else. In a FIX prompt use no backtick and no dollar sign (the command is refused with them).'
 closing_prompt='You are henri, the night coordinator. The night is closing (night.sh --until or its step cap): only the last Opus pass is left, and night.sh runs the report after it. Read docs/shifts/brief.md section 0c (the Opus pass) and the tail of .coord/log.md on stdin. Reply with exactly one line and nothing else, one of
   scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches since the last Opus pass>" "<open questions or none>"   (n: the last pass number plus 1)
   NO PASS   (no package finished since the last Opus pass)
@@ -199,8 +199,17 @@ run_cmd() {  # <cmd>: run one pipeline line; returns its exit code (75: usage li
     else log "RESULT -: NOT MERGED ($cmd: no RESULT line, rc=$rc)"; fi
   fi
   rm -f "$cmdout"
+  step_waits "$cmd"  # A127: a row whose After is not merged
   if [[ $rc -eq 75 ]]; then limit_hit; else limits=0; fi  # A121: the count is of limits in a row
   return $rc
+}
+step_waits() {  # <cmd> (A127): a WAITS result is no finish; the same command's second WAITS with no MERGED line since is SKIPPED, in any order of commands
+  local mark
+  if [[ "$result_line" == *": WAITS for "* ]]; then
+    mark="$(grep -cE '^- [0-9:]+ (\[[AB]\] )?pipeline #[0-9]+ [^ ]+: MERGED ' "$coord/log.md" 2>/dev/null || true)"; mark=$((merges + ${mark:-0}))
+    if [[ "${waited_at[$1]:-}" == "$mark" ]]; then log "RESULT -: SKIPPED ($1: WAITS twice with no MERGED since); do not repeat it"
+    else waited_at["$1"]=$mark; fi
+  elif [[ "$result_line" =~ ^RESULT\ [^:]*:\ MERGED ]]; then merges=$((merges + 1)); fi
 }
 limit_hit() {  # A121: one more usage limit (a step at rc 75, or henri_limit): the count, the stop past limit_max, the wait
   limits=$((limits + 1))

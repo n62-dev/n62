@@ -86,7 +86,8 @@ case "$1" in
   pass) echo "OPUS PASS"; echo "RESULT pass $((${2} + 2)): done (exit 0)";;
   device) echo "RESULT device $2: DEVICE SKIPPED (stub)";;
   report) echo "RESULT report: abc1234";;
-  *) if [ "$2" = "$SBN_STOP_ON" ]; then "$SBN_NIGHT" --stop "$SBN_STOP_LANE" >> "$SBN_CALLS" 2>&1; sleep 1; echo "finished $2" >> "$SBN_CALLS"; fi
+  *) case "$2" in W*) echo "RESULT #1 $2: WAITS for X9"; exit 2;; esac   # A127: an id starting with W waits
+     if [ "$2" = "$SBN_STOP_ON" ]; then "$SBN_NIGHT" --stop "$SBN_STOP_LANE" >> "$SBN_CALLS" 2>&1; sleep 1; echo "finished $2" >> "$SBN_CALLS"; fi
      echo "RESULT #1 $2: MERGED abc";;
 esac
 STUB
@@ -220,6 +221,21 @@ grep -q 'ron R2' "$tmp/l5.calls" || fail "limits: the merged step between did no
 { for i in 1 2 3 4; do echo "$R1"; done; echo 'scripts/pipeline.sh ron "R2" --model sonnet'; echo 'scripts/pipeline.sh pass 7 "R1" "none"'; } > "$tmp/l6.replies"; printf 'L\nL\nL\n' > "$tmp/l6.limits"; lcase
 out="$(sbnight l6 --limit-wait 1 --max-steps 4 2>&1)"; rc=$?
 [[ $rc -eq 0 ]] && grep -q 'ron R2' "$tmp/l6.calls" || fail "limits: three limits ate the steps of --max-steps 4 (rc $rc): $(cat "$tmp/l6.calls")"
+# A127: a WAITS result is no finish; a second WAITS of one command with no MERGED since is SKIPPED, in any order (A, B, A, B); a MERGED between resets
+W1='scripts/pipeline.sh ron "W1" --model sonnet'; W2='scripts/pipeline.sh ron "W2" --model sonnet'
+printf '%s\n' "$W1" "$W2" "$W1" "$W2" > "$tmp/w1.replies"; lcase
+out="$(sbnight w1 2>&1)"; rc=$?
+[[ "$(grep -c ' W[12] ' "$tmp/w1.calls")" -eq 4 ]] || fail "WAITS: A, B, A, B did not run four steps (rc $rc): $(cat "$tmp/w1.calls")"
+[[ "$(newlog | grep -c 'RESULT -: SKIPPED.*"W[12]".*WAITS twice')" -eq 2 ]] || fail "WAITS: A, B, A, B does not end both as SKIPPED: $(newlog)"
+newlog | grep 'SKIPPED' | head -n1 | grep -q '"W1"' || fail "WAITS: the first SKIPPED is not the third step (W1): $(newlog)"
+printf '%s\n' "$W1" "$W2" "$R1" "$W1" "$W2" > "$tmp/w2.replies"; lcase
+out="$(sbnight w2 2>&1)"; rc=$?
+newlog | grep -q 'SKIPPED' && fail "WAITS: a MERGED between the two WAITS did not reset the count: $(newlog)"
+printf '%s\n' "$W1" "$W1" > "$tmp/w3.replies"; lcase
+out="$(sbnight w3 2>&1)"; rc=$?
+[[ "$(newlog | grep -c 'SKIPPED.*"W1".*WAITS twice')" -eq 1 ]] || fail "WAITS: the same command twice in a row is not SKIPPED once: $(newlog)"
+newlog | grep -q 'NOT MERGED' && fail "WAITS: a wait is logged as NOT MERGED: $(newlog)"
+grep -qF 'A step whose log line says WAITS is not finished: take the next row whose After is met and come back to it' "$night" || fail "WAITS: henri's prompt does not say a WAITS step is not finished"
 # LIMIT_RE: the CLI's words
 for t in "You've hit your 5-hour limit" "You've hit your weekly limit" "You're out of usage credits" "You're out of extra usage" "Claude usage limit reached" "API Error: 429"; do
   (source "$dir/pipeline-lib.sh"; grep -qiE "$LIMIT_RE" <<<"$t") || fail "LIMIT_RE does not match: $t"
