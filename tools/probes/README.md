@@ -51,6 +51,8 @@ and `app/node_modules` (`cd app && npm ci`); Node 22 runs the `.ts` files direct
 | `review-1102/vg-task-questioned.sh` | the night review of 2026-11-02 ([its note](../../docs/archive/night-review-2026-11-02.md), vg-5): ordinary worker replies fed to A55's `task_questioned`; kept for A64, which fixes that guard. The review's other probes: `tools/probes/review-1102/` at `742169a8` | `bash tools/probes/review-1102/vg-task-questioned.sh [checkout]` |
 | `review-1109/` | the night review of 2026-11-09 ([its note](../../docs/research/night-review-2026-11-09.md)): the probes its backlog lines and packages name, in their sub-folders; `rerun.sh <label>` reruns an S1 finding | `tools/probes/review-1109/rerun.sh be-4` |
 | `complex-double.ts` | G140: special functions at a non-real argument, Home at 12 and 30 digits against mpmath; bridge-3's `doubles` flag at P, P+20, P+60 and whether each part is a binary64 | `node tools/probes/complex-double.ts ['Zeta(1/2+i)' …]` |
+| `sidefacts.ts` | G328, F215: the facts a name set beside the result stores, and what reading it shows | `node tools/probes/sidefacts.ts` |
+| `sigma-scale.ts` | R286, F218: a unit row ± a 3-digit σ chip: the view, its chip in Home, twice in the view | `node tools/probes/sigma-scale.ts` |
 
 **Oracle values** (never from memory): `tests/golden/.venv/bin/python -I -c "import mpmath as m; m.mp.dps=40; print(m.ncdf(-6))"`
 (set the venv up once as in CLAUDE.md).
