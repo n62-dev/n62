@@ -65,9 +65,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 649 | R284 the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
-| 650 | [R285](packages/R285.md) a browser that has not passed says so at start | ron, Sonnet | `p1/ron-browsernote` | A144 |
-| 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
+| 649 | [R284](packages/R284.md) the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
 | 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
@@ -95,9 +93,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 651 | A144 the core list in Firefox; the WebKit try | annabell, Sonnet | `p1/annabell-otherbrowsers` | – |
-| 646 | [G319](packages/G319.md) the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
-| 647 | [G320](packages/G320.md) CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
 | 648 | [G321](packages/G321.md) a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
 | 653 | [G324](packages/G324.md) ≈ of a cubic's real root, no `2E-40*i` (F220) | gorge, Opus | `p1/gorge-rootofnoise` | – |
 | 654 | [G329](packages/G329.md) the calls stage keeps the bridge's tree (F216) | gorge, Sonnet | `p1/gorge-callstree` | – |

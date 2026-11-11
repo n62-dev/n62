@@ -12,6 +12,7 @@ export const enEngine = {
   "error.underflow": "Underflow: the number is too small",
   "error.noValue": "No value found",
   "error.unknownFunction": "Unknown function",
+  "error.notHere": "Not available in N62",
   "error.notSquare": "The matrix is not square",
   "error.lengthsDiffer": "The sizes do not match",
   "error.vectorsOnly": "Dot and cross take two vectors",

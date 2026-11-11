@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The message for a unit-view refusal (docs/04 4.3), from the i18n table. Plain TS.
 import { unitText } from "../i18n/enUnits.ts";
+import { t } from "../i18n/index.ts";
 import { dimensionText } from "./dims.ts";
 import type { UncWhy, UnitError, UnitNote } from "./types.ts";
 
@@ -36,6 +37,9 @@ export function unitErrorMessage(e: UnitError): string {
       return unitText("units.minus", { unit: e.unit });
     case "symbolic":
       return unitText("units.symbolic", { detail: e.detail });
+    case "refused":
+      // Home's words (en.ts holds enEngine): the start chunk's table, so enEngine is no chunk of its own (G319 fix 1)
+      return t(`error.${e.code}`);
     case "engine":
       return unitText("units.engine");
   }

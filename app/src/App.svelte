@@ -101,7 +101,10 @@
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take the Paste key's path
     };
-    const loadFold = (): void => void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}); // R53
+    const loadFold = (): void => {
+      void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}); // R53
+      void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {}); // R285: a browser that has not passed says so once (the chunk decides)
+    };
     if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
     else setTimeout(loadFold, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start

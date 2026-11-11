@@ -19,6 +19,7 @@
 // The findings are raw, wrong, state, hang and crash.
 import { judge, type Oracle, type Shown } from "../sweep/judge.ts";
 import type { Answer, Item } from "./worker.ts";
+import { ARG_STORE_HEADS } from "../../../app/src/engine/stores.ts";
 
 /** oracle.py's answer for one input: the sweep's shape, or one per element for a list argument. */
 export type CensusOracle = Oracle | { kind: "items"; items: readonly Oracle[] };
@@ -35,7 +36,8 @@ export const CLASS_OF_LETTER: Readonly<Record<string, CensusClass>> = Object.fro
 
 /** The commands whose purpose is to change the engine's state (find/functions.yaml `notes`, and the two that store): their input
  *  is `defined`, not `state`, when everything it left is in the definitions log. */
-export const INTENDED_STATE: ReadonlySet<string> = new Set(["sto", "assign", "assume", "additionally", "purge"]);
+// G174: and the commands that store into a name argument (stores.ts ARG_STORE_HEADS: QR, LU, Fill, CopyVar, point3d, …)
+export const INTENDED_STATE: ReadonlySet<string> = new Set(["sto", "assign", "assume", "additionally", "purge", ...ARG_STORE_HEADS]);
 
 /** Everything `left` names is in the definitions log: each `name x` has its `logged x`, each `purged x` its `logged purge …x…`, and
  *  nothing else (no setting, no failing program call, no name the log does not hold). */

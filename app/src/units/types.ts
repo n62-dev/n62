@@ -4,6 +4,7 @@
 // worker evaluates the job. Types only.
 import type { PrecisionWarn } from "../engine/format.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
+import type { Refusal } from "../engine/converge.ts";
 import type { Chip } from "../input/chips.ts";
 
 /** One factor of a slot: a Find unit id with an optional Find prefix id and a power. */
@@ -52,6 +53,9 @@ export interface SigmaChip {
 /** What the worker evaluates: Giac text with every unit and constant replaced by factor × dimension symbols. */
 export interface UnitJob {
   expr: string;
+  /** G319: `expr`'s number part, each slot and constant as its factor (no dimension symbols; rad as 1/pasdeg, so the
+   *  parser's degree factor reads an angle in rad as pasua does): the text Home's refusals are asked of. */
+  number: string;
   /** G35: `expr` with each number beside a slot or constant replaced by its own symbol pasz<n>, for the dimension check:
    *  a term worth 0 (`0 m + 1 s`) or terms that cancel (`5 m − 5 m + 1 s`) keep their dimension there. */
   check?: string;
@@ -207,6 +211,9 @@ export type UnitError =
   | { error: "minus"; unit: string }
   /** The number part is not a number (a free name): Giac's text of it. */
   | { error: "symbolic"; detail: string }
+  /** G319: Home's refusal of the formula's number part (a division by zero through an infinity, a divergent integral or
+   *  series, no limit, no value found): worded with Home's message (`error.<code>`, enEngine.ts). */
+  | { error: "refused"; code: Refusal }
   /** Anything else (a syntax error, a timeout, a bad request): the detail is for the log, not for the user. */
   | { error: "engine"; detail: string };
 

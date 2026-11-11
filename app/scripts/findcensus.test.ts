@@ -82,7 +82,10 @@ describe("findcensus classes", () => {
     // the log does not hold the name, a setting moved, or the command is not one that stores
     expect(classify("sto", "home", "sto(2,a)", answer({ text: "2", left: ["name a"] }), null).cls).toBe("state");
     expect(classify("assume", "cas", "assume(a>0)", answer({ text: "a", left: ["name a", "logged a", "setting 1: 0 -> 1"] }), null).cls).toBe("state");
-    expect(classify("QR", "cas", "QR(A,Q,R)", answer({ text: "", left: ["name Q", "logged Q"] }), null).cls).toBe("state");
+    expect(classify("det", "cas", "det(A)", answer({ text: "-2", left: ["name Q", "logged Q"] }), null).cls).toBe("state");
+    // G174: a command that stores into a name argument (stores.ts ARG_STORE_HEADS) is one that stores; a name the log misses stays state
+    expect(classify("QR", "cas", "QR(A,Q,R)", answer({ text: "", left: ["name Q", "logged Q", "name R", "logged R"] }), null).cls).toBe("defined");
+    expect(classify("QR", "cas", "QR(A,Q,R)", answer({ text: "", left: ["name Q", "logged Q", "name R"] }), null).cls).toBe("state");
     expect(loggedOnly(["name a", "logged a", "name b"])).toBe(false);
     expect(loggedOnly(["a program call throws prompt is not defined", "logged a"])).toBe(false);
   });

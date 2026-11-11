@@ -62,7 +62,7 @@ describe("unit view builder (G16)", () => {
   });
   it("a user cell's prefixed unit is one token with its prefix", () => {
     const job = buildJob({ formula: "2*pasu1*3*pasu2", slots: [{ tokens: [{ prefix: "k", unit: "N" }] }, { tokens: [{ unit: "m" }] }] }, table);
-    expect(job).toEqual({ expr: "2*(((1000)*(1)*pasdimM^(1)*pasdimL^(1)*pasdimT^(-2)))*3*(((1)*pasdimL^(1)))", inexact: false,
+    expect(job).toEqual({ expr: "2*(((1000)*(1)*pasdimM^(1)*pasdimL^(1)*pasdimT^(-2)))*3*(((1)*pasdimL^(1)))", number: "2*(((1000)*(1)))*3*(((1)))", inexact: false,
       check: "pasz1*(((1000)*(1)*pasdimM^(1)*pasdimL^(1)*pasdimT^(-2)))*(((1)*pasdimL^(1)))",
       shows: [
         { text: "kN·m", dim: "kg1m2s-2", factor: "1000", slot: { tokens: [{ prefix: "k", unit: "N" }, { unit: "m" }] } },
@@ -166,7 +166,7 @@ describe("unit view builder (G16)", () => {
   });
   it("an absolute temperature or a logarithmic unit alone is its kelvin or ratio value; at the end, offset or level", () => {
     const one = (u: string, formula = "20*pasu1") => buildJob({ formula, slots: [{ tokens: [{ unit: u }] }] }, table);
-    expect(one("oC")).toEqual({ expr: "(((1)*(20)+(5463/20))*pasdimK^(1))", inexact: false, absTemp: true });
+    expect(one("oC")).toEqual({ expr: "(((1)*(20)+(5463/20))*pasdimK^(1))", number: "(((1)*(20)+(5463/20)))", inexact: false, absTemp: true });
     expect(one("oC", "-(1+2)*3*pasu1")).toMatchObject({ expr: "(((1)*(-(1+2)*3)+(5463/20))*pasdimK^(1))" });
     expect(one("dB", "pasu1")).toEqual({ error: "logarithmic", unit: "dB" });
     expect(one("Np", "3*pasu1")).toEqual({ error: "logarithmic", unit: "Np" });
@@ -212,6 +212,27 @@ describe("dimensions (G16)", () => {
     expect(unitErrorMessage({ error: "dimension", dims: ["m1", "s1"] })).toBe("Units don't match: L vs T");
     expect(unitErrorMessage({ error: "cycle", unit: "rpm" })).toBe("rpm counts turns: write tr/min for an angular speed");
     expect(unitErrorMessage({ error: "cycle", unit: "rev" })).toBe("rev counts turns: write tr for an angle");
+  });
+});
+
+describe("the number part (G319)", () => {
+  it("each slot and constant as its factor: no dimension symbol, decimals as typed", () => {
+    const job = buildJob({ formula: "1.5*pasu1/(pasu2)*pask1", slots: [{ tokens: [{ prefix: "k", unit: "m" }, { unit: "h" }], per: 1 }, { tokens: [{ unit: "s", power: "2" }] }], consts: ["c"] }, table);
+    if ("error" in job) throw new Error(job.error);
+    expect(job.number).toBe("1.5*(((1000)*(1))*((3600))^(-1))/((((1))^(2)))*((299792458))");
+  });
+  it("rad is 1/pasdeg, so the parser's degree factor reads an angle in rad as it is", () => {
+    const job = buildJob({ formula: "sin(pasdeg*(30*pasu1))", slots: [{ tokens: [{ unit: "deg" }] }] }, table);
+    if ("error" in job) throw new Error(job.error);
+    expect(job.number).toBe("sin(pasdeg*(30*(((pi/180)*(1/pasdeg)^(1)))))");
+  });
+  it("an uncertain value is its value; an absolute temperature its K", () => {
+    const pm = buildJob({ formula: "pasupm(12.34,0.05)*pasu1", slots: [{ tokens: [{ unit: "m" }] }] }, table);
+    if ("error" in pm) throw new Error(pm.error);
+    expect(pm.number).toBe("(12.34)*(((1)))");
+    const t = buildJob({ formula: "20*pasu1", slots: [{ tokens: [{ unit: "oC" }] }] }, table);
+    if ("error" in t) throw new Error(t.error);
+    expect(t.number).toBe("(((1)*(20)+(5463/20)))");
   });
 });
 

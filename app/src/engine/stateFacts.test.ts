@@ -67,7 +67,7 @@ describe.skipIf(!giacAvailable())("G65: stored names from Giac's state", () => {
     const jobs = [
       () => host.solve({ kind: "equations", equations: ["X*exp(X)=5"], unknowns: ["X"], guesses: ["1"] }, defaultHomeSettings),
       () => host.analyze({ kind: "area", f: "x^2+a", a: "0", b: "1" }, defaultHomeSettings),
-      () => host.units({ expr: "2*(((1)*pasdimL^(1)))", inexact: false }, defaultHomeSettings),
+      () => host.units({ expr: "2*(((1)*pasdimL^(1)))", number: "2*(((1)))", inexact: false }, defaultHomeSettings),
     ];
     for (const job of jobs) {
       stateReads = 0;
@@ -166,4 +166,117 @@ describe.skipIf(!giacAvailable())("G104: the state read costs what changed", () 
     expect(defs.some((d) => "purge" in d && d.purge.includes("c"))).toBe(true);
     expect((host as unknown as { stored: Map<string, StoredName> }).stored.has("c")).toBe(false);
   });
+});
+
+// G174 (F96, F87): names Giac stores through an argument (QR, LU, Fill, CopyVar; stores.ts ARG_STORE_HEADS) reach the
+// definitions log; the names Giac stores for itself (gbasis's lastgb and lastv) do not; debug is refused; restart answers
+// the user's names it cleared. Expected values are derived: Giac's own answers on a fresh engine, and a restore of the log.
+describe.skipIf(!giacAvailable())("G174: names stored through an argument, Giac's scratch names, debug and restart", () => {
+  const setNames = (defs: DefChange[]): string[] => defs.flatMap((d) => ("set" in d ? [d.set.name] : []));
+  const casText = (host: EngineHost, input: string): string => {
+    const r = host.cas(input, defaultCasSettings).result;
+    return r.ok ? r.text : `error ${r.error}: ${r.text}`;
+  };
+
+  for (const [call, names] of [["QR(M,Q,R)", ["Q", "R"]], ["LU(M,L,U,P)", ["L", "U", "P"]], ["Fill(1.1,A)", ["A"]], ["CopyVar(M,B)", ["B"]]] as const) {
+    for (const view of ["home", "cas"] as const) {
+      it(`${view}: ${call} logs ${names.join(", ")} with Giac's values, and a restore holds them`, async () => {
+        const host = await nodeHost();
+        const run = (t: string): DefChange[] => (view === "home" ? host.home(t, defaultHomeSettings).defs : host.cas(t, defaultCasSettings).defs);
+        const defs = [...run("M:=[[1,2],[3,4]]"), ...run(call)];
+        expect(setNames(defs).filter((n) => n !== "M").sort()).toEqual([...names].sort());
+        const next = await nodeHost();
+        next.restore(applyDefChanges([], defs));
+        for (const n of names) {
+          const want = host.giac.eval(`string(simplify(${n}))`);
+          expect(want, n).not.toBe(`"${n}"`);
+          expect(next.giac.eval(`string(simplify(${n}))`), n).toBe(want);
+        }
+      });
+    }
+  }
+
+  it("gbasis and syzygy leave no lastgb or lastv in VARS() or the log, and answer as Giac does", async () => {
+    const raw = (await loadNodeGiac()).giac;
+    const host = await nodeHost();
+    for (const input of ["gbasis([x^2-y^3,x+y^2],[x,y])", "syzygy([x^2-y^3,x+y^2],[x,y])"]) {
+      const want = raw.eval(input);
+      const r = host.cas(input, defaultCasSettings);
+      expect(r.result.ok, input).toBe(true);
+      expect(setNames(r.defs), input).toEqual([]);
+      expect(host.giac.eval("VARS()"), input).not.toMatch(/lastgb|lastv/);
+      // raw Giac runs the same inputs in the same order (gbasis, then syzygy), with its lastgb and lastv kept. syzygy
+      // answers a sequence of four lists, which CAS shows as Giac's list type in braces (G119, G173: sequences.ts), so
+      // its expected text is raw Giac's with braces; the elements are compared as Giac printed them.
+      expect(r.result.text, input).toBe(input.startsWith("syzygy") ? `{${want}}` : want);
+    }
+    expect(host.home("gbasis([x^2-y^3,x+y^2],[x,y])", defaultHomeSettings).result.ok).toBe(true);
+    expect(host.giac.eval("VARS()")).not.toMatch(/lastgb|lastv/);
+  });
+
+  it("guard: a lastv of the user's own stays as stored", async () => {
+    const host = await nodeHost();
+    host.cas("lastv:=7", defaultCasSettings);
+    host.cas("gbasis([x^2-y^3,x+y^2])", defaultCasSettings);
+    expect(casText(host, "lastv")).toBe("7");
+  });
+
+  it("wz_certificate leaves no assumption on k or n (Giac's own, intg.cc:6402), and answers as Giac does", async () => {
+    const input = "wz_certificate((-1)^k*binomial(n,k)/2^n)";
+    const want = (await loadNodeGiac()).giac.eval(input);
+    const host = await nodeHost();
+    const r = host.cas(input, defaultCasSettings);
+    expect(r.result.text).toBe(want);
+    expect(setNames(r.defs)).toEqual([]);
+    expect([host.giac.eval("about(k)"), host.giac.eval("about(n)")]).toEqual(["k", "n"]);
+  });
+
+  it("guard: GF(2,8) keeps K and g for the session (the log cannot hold g; G174's report): g^200+1 is in the field", async () => {
+    const raw = (await loadNodeGiac()).giac;
+    raw.eval("GF(2,8)");
+    const host = await nodeHost();
+    host.cas("GF(2,8)", defaultCasSettings);
+    expect(casText(host, "g^200+1")).toBe(raw.eval("g^200+1"));
+  });
+
+  it("debug(f(2)) is refused in Home and CAS, and f(3) still gives 4", async () => {
+    const host = await nodeHost();
+    host.home("f(x):=x+1", defaultHomeSettings);
+    const h = host.home("debug(f(2))", defaultHomeSettings).result;
+    expect([h.ok, h.error, h.display]).toEqual([false, "notHere", "Not available in N62"]);
+    const c = host.cas("debug(f(2))", defaultCasSettings).result;
+    expect([c.ok, c.error, c.text]).toEqual([false, "notHere", "Not available in N62"]);
+    expect(host.home("f(3)", defaultHomeSettings).result.display).toBe("4");
+    expect(casText(host, "f(3)")).toBe("4");
+  });
+
+  for (const view of ["home", "cas"] as const) {
+    it(`${view}: restart(0), restart and restart(1) answer the user's names they cleared, none of ours`, async () => {
+      const host = await nodeHost();
+      const run = (t: string, angle: "rad" | "deg" = "rad"): { text: string; defs: DefChange[] } => {
+        if (view === "home") {
+          const o = host.home(t, { ...defaultHomeSettings, angle });
+          return { text: o.result.ok ? o.result.display : `error ${o.result.error}`, defs: o.defs };
+        }
+        const o = host.cas(t, { ...defaultCasSettings, angle });
+        return { text: o.result.ok ? o.result.text : `error ${o.result.error}`, defs: o.defs };
+      };
+      // a fresh engine: nothing of the user's to clear
+      expect(run("restart(0)").text).toBe("[]");
+      expect(run("restart").text).toBe("[]");
+      expect(run("restart(1)", "deg").text).toBe("[]");
+      // after stores: restart(0) clears them (Giac's answer listed pcasans and pasdeg too) and the log follows
+      const defs = [...run("a:=5").defs, ...run("b:=7").defs];
+      const cleared = run("restart(0)");
+      expect(cleared.text).toBe("[a,b]");
+      expect(applyDefChanges([], [...defs, ...cleared.defs])).toEqual([]);
+      expect(run("a").text).toBe("a");
+      // restart(1) clears nothing in Giac (G93, usual.cc:251): the names stay, the answer is empty
+      run("c:=3");
+      expect(run("restart(1)").text).toBe("[]");
+      expect(run("c+1").text).toBe("4");
+      run("d:=2");
+      expect(run("restart").text).toBe("[c,d]");
+    });
+  }
 });

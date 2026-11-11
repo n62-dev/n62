@@ -84,6 +84,7 @@
   }
   th button {
     all: unset;
+    box-sizing: border-box;
     display: block;
     width: 100%;
     padding: var(--sp-2);
