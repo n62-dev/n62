@@ -65,7 +65,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 649 | [R284](packages/R284.md) the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
+| 649 | R284 the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
 | 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
