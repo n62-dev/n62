@@ -164,6 +164,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // with -exponent<0, which the compiler drops: 3.0^(-1e10) recursed until the stack overflowed
   ["0041-pow-double-exponent-int-range.patch", "giac-2.1.0/src/gen.cc", /case _DOUBLE___DOUBLE_:\s*if \(exponent\._DOUBLE_val==int\(std::floor\(exponent\._DOUBLE_val\+\.25\)\)\)/, "case _CPLX__INT_: case _IDNT__INT_:"],
   ["0041-pow-double-exponent-int-range.patch", "giac-2.1.0/src/gen.cc", /if \(exponent<0\)\{\s*if \(-exponent<0\)/, "gen pow(const gen & base, int exponent){"],
+  // G170, patch 0042: ilaplace2 assumes its local name ` n` with sto, which keys the table by the name's characters, and never
+  // purges it (the _purge line is commented out): every ilaplace left an entry under a freed name in VARS()
+  ["0042-ilaplace-assumed-name-purged.patch", "giac-2.1.0/src/signalprocessing.cc", /sto\(gen\(makevecteur\(change_subtype\(2,1\)\),_ASSUME__VECT\),n,contextptr\);(?:(?!purge)[\s\S])*?return true;\s*\}/, "bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {"],
 ];
 
 const tar = tarball(SOURCES.giac);
