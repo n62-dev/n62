@@ -373,8 +373,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (172,275 B raw), +63 B over the phase-1 pin: 61,048 B + 0.05 kB, rounded up.
  *  61,100 → 61,200 B (R272): the call that hands a dropped history row to the lazy state/dropNote.ts (the words, the flag and the
  *  once-per-install rule are in that chunk; the start chunk holds the trim's call and the import) measures 61,131 B gzip
- *  (172,479 B raw), +82 B over phase-1 (61,049 B): 61,131 B + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 61_200;
+ *  (172,479 B raw), +82 B over phase-1 (61,049 B): 61,131 B + 0.05 kB, rounded up.
+ *  61,200 → 61,300 B (G322, no app source changed): the chunk holds the engine worker's hashed file name, and that hash follows
+ *  the engine build (vite.config.ts __GIAC_MJS__), so a branch with a new Giac patch moves the gzip size with the same raw size:
+ *  phase-1 a7b802ec measures 172,709 B raw, 61,193 B gzip with phase-1's engine and 61,202 B gzip with G322's (patch 0043):
+ *  61,202 B + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 61_300;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

@@ -71,8 +71,11 @@ describe("giac-regress exporter", () => {
     // patch 0030 (G152: the real part of evalf(sqrt(-pi)) and of (-pi)^(3/2) is 0, at Digits 40 and 14) and patch 0038
     // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
     // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power), patch 0042 (G170:
-    // VARS() keeps its size after ilaplace); the check file gets G149's written line for the CAS view's exact forms
-    expect([r.nCheck, r.nPatched]).toEqual([1, 26]);
+    // VARS() keeps its size after ilaplace), patch 0043 (G322: solve keeps the real root of a cubic, 6 lines); the check file
+    // gets G149's written line for the CAS view's exact forms
+    expect([r.nCheck, r.nPatched]).toEqual([1, 32]);
+    expect(r.patched.match(/\/\/ patch 0043-solve-ckrange-imag-noise\.patch\n/g)).toHaveLength(6);
+    expect(r.patched).toContain('Digits:=60:; pc("g322-size-solve-x3-2x-5-60",\'size(solve(x^3-2*x-5=0,x))\',1,1/10^30);');
     expect(r.patched).toContain("// patch 0042-ilaplace-assumed-name-purged.patch\n// g170-ilaplace-vars-size");
     expect(r.patched).toContain('// patch 0041-pow-double-exponent-int-range.patch\n// g187-pow-double-3-neg-1e10');
     expect(r.patched).toContain('// patch 0040-simplifier-root-huge-base.patch\n// g186-simplify-sqrt-1e330+7');

@@ -110,11 +110,12 @@ export function caseLine(c, file) {
   };
 }
 
+// G322: each line starts at the host's epsilon (1e-12, flags.ts), as the app restores it: Giac's proot leaves 10^-Digits.
 // Giac's value must be within the tolerance of the expected one (G113: an MPFR NaN, printed undef, is both <= and > tol, so both are tested;
 // G118: another NaN, from abs(evalf(acos(pi)^2-e)) on stock at Digits 40, is <= tol and not > tol, so a difference that prints undef never passes); a failing line is printed, the count comes last.
 const PREAMBLE = [
   'pasn:=0:; pasfail:=0:;',
-  'pc(id,v,e,tol):={ local d,g,ok; pasn:=pasn+1; ok:=0; try { g:=eval(v); d:=abs(evalf(g-e)); if (d<=tol && string(d)!="undef") { if (d>tol) { ok:=0; } else { ok:=1; } } } catch (err) { ok:=0; } if (ok==0) { pasfail:=pasfail+1; print("FAIL "+id); return 0; } return 1; }:;',
+  'pc(id,v,e,tol):={ local d,g,ok; epsilon:=1e-12; pasn:=pasn+1; ok:=0; try { g:=eval(v); d:=abs(evalf(g-e)); if (d<=tol && string(d)!="undef") { if (d>tol) { ok:=0; } else { ok:=1; } } } catch (err) { ok:=0; } if (ok==0) { pasfail:=pasfail+1; print("FAIL "+id); return 0; } return 1; }:;',
 ];
 
 // Cases Giac gets wrong today, found by running n62-check.cas on the pin (giac_2.1.0-1). The first rule that matches an
@@ -747,6 +748,21 @@ export function build(cases) {
     `Digits:=40:; purge(x):; pasv170:=0:; pasv170:=size(VARS()):; ilaplace(1/(x^2+1)):; ilaplace(1/(s^2+1),s,t):; pc("g170-ilaplace-vars-size",'size(VARS())-pasv170',0,1/10^30);`,
   );
   nPatched++;
+  // Patch 0043 (G322), written lines (the golden rows are lists): solve dropped the real root of a cubic at Digits > 14. Counts
+  // derived (nops(realroot(p)): 1, 1, 2, 1, 1), roots by mpmath (findroot, 80 digits); stock Giac gives [] (or [1]) on each.
+  const ROOT_X3_2X_5 = "20945514815423265914823865405793029638573061056282391803041/10^58";
+  const ROOT_X3_X_1 = "13247179572447460259609088544780973407344040569017333645340/10^58";
+  for (const [id, digits, input, value, tol] of [
+    ["g322-size-solve-x3-2x-5-60", 60, "size(solve(x^3-2*x-5=0,x))", "1", "1/10^30"],
+    ["g322-solve-x3-2x-5-60", 60, "solve(x^3-2*x-5=0,x)[0]", ROOT_X3_2X_5, "1/10^55"],
+    ["g322-solve-x3-x-1-40", 40, "solve(x^3-x-1=0,x)[0]", ROOT_X3_X_1, "1/10^35"],
+    ["g322-size-solve-x-1-times-x3-x-1-40", 40, "size(solve((x-1)*(x^3-x-1)=0,x))", "2", "1/10^30"],
+    ["g322-size-zeros-x3-x-1-40", 40, "size(zeros(x^3-x-1,x))", "1", "1/10^30"],
+    ["g322-size-solve-x3-2x-5-gt-60", 60, "size(solve(x^3-2*x-5>0,x))", "1", "1/10^30"],
+  ]) {
+    patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath findroot" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
