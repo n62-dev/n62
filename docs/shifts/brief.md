@@ -30,7 +30,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 | [A145](packages/A145.md) | F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | day, when a slot is free; the tag does not wait | – | ~0.5 d |
 | [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
-| [A140](packages/A140.md) | No dead package links after a merge of phase-1 | annabell, Sonnet | day, no lane running, before Thu 11-12's restart (owner) | – | ~0.3 d |
+| A140 | No dead package links after a merge of phase-1 | annabell, Sonnet | day, no lane running, before Thu 11-12's restart (owner) | – | ~0.3 d |
 | [A147](packages/A147.md) | A worker's limit is 4 h; a heartbeat line in the log | annabell, Sonnet | day, no lane running, Wed 11-11 after A140 (owner) | A140 | ~0.2 d |
 | [A141](packages/A141.md) | The device step runs beside the lane | annabell, Sonnet | day, no lane running, Thu 11-12 with A136 (owner) | A140 | ~0.5 d |
 | [A142](packages/A142.md) | The lane queues in a file of their own | annabell, Sonnet | day, no lane running | the v0.1.0 tag | ~0.5 d |

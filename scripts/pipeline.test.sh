@@ -1634,6 +1634,49 @@ out="$(pkrun ron X4 --checks none --no-merge)"
 grep -q '^RESULT #[0-9]* X4: APPROVED, not merged' <<<"$out" && p1has X4 || fail "A75: an unmerged run took phase-1's package file away: $out"
 grep -qE 'package file.* deleted on' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A75: the dry run does not show the package file's delete"
 
+# A140: after every merge of phase-1 into a branch, no link to a missing docs/shifts/packages/*.md is left, for any id (R274f1's flow:
+# a kept branch edits its row, phase-1 deleted that row, its neighbours and their files, the merge is resolved with the branch's side,
+# then a FIX run on it); a link to a file that exists stays, and a run with no dead link makes no commit
+dl="$tmp/dl"; mkdir -p "$dl/bin" "$dl/tools" "$dl/docs/shifts/packages" "$dl/app/node_modules/x"; git init -q -b main "$dl"
+cp "$sb/tools/devlock.sh" "$here/../tools/docs-check.mjs" "$here/../tools/docs-check.test.mjs" "$dl/tools/"; cp "$sb/bin/npm" "$dl/bin/"; echo t > "$dl/app/keep"
+cat > "$dl/bin/claude" <<'STUB'
+#!/bin/sh
+case "$*" in
+  *"--agent sofia"*) echo APPROVED; exit 0;;
+esac
+if git rev-parse -q --verify MERGE_HEAD >/dev/null; then  # a resolve round: the branch's side of every conflict
+  for f in $(git diff --name-only --diff-filter=U); do git checkout -q --ours "$f"; git add "$f"; done
+  git -c user.name=t -c user.email=t@t commit -q --no-edit -s; echo resolved; exit 0
+fi
+echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; echo done
+STUB
+chmod +x "$dl/bin/claude"
+printf '| 1 | [Y1](packages/Y1.md) one |\n| 2 | [Y2](packages/Y2.md) two |\n| 3 | [Y3](packages/Y3.md) three |\n| 4 | [Y9](packages/Y9.md) nine |\n' > "$dl/docs/shifts/brief.md"
+for p in Y1 Y2 Y3 Y9; do printf '### ron, %s: a sandbox package, branch `p1/%s`\nbody\n' "$p" "${p,,}" > "$dl/docs/shifts/packages/$p.md"; done
+git -C "$dl" add -A; gc "$dl" init; git -C "$dl" branch phase-1; git -C "$dl" branch p1/y1; git -C "$dl" branch p1/y9
+git -C "$dl" worktree add -q "$tmp/dlw" p1/y1
+printf '| 1 | [Y1](packages/Y1.md) one, edited |\n| 2 | [Y2](packages/Y2.md) two |\n| 3 | [Y3](packages/Y3.md) three |\n| 4 | [Y9](packages/Y9.md) nine |\n' > "$tmp/dlw/docs/shifts/brief.md"
+printf 'see [Y3](shifts/packages/Y3.md#why) and `[Y3](packages/Y3.md)` and [Y9](shifts/packages/Y9.md)\n' > "$tmp/dlw/docs/notes.md"  # a link in a file phase-1 never touched
+git -C "$tmp/dlw" add -A; gc "$tmp/dlw" "branch edits its row"; git -C "$dl" worktree remove --force "$tmp/dlw"
+dlp="$tmp/dlp"; git -C "$dl" worktree add -q "$dlp" phase-1  # the opus pass: the merged rows and their files go
+git -C "$dlp" rm -q docs/shifts/packages/Y1.md docs/shifts/packages/Y2.md docs/shifts/packages/Y3.md
+printf '| 4 | [Y9](packages/Y9.md) nine |\n' > "$dlp/docs/shifts/brief.md"; git -C "$dlp" add -A; gc "$dlp" "pass deletes merged rows"; git -C "$dl" worktree remove --force "$dlp"
+dlrun() { (cd "$dl" && env -u SB_DIRTY PATH="$dl/bin:$PATH" GIAC_OUT="$dl/engine" "$script" "$@" 2>&1); }
+out="$(dlrun ron "fix" --id Y1f1 --branch p1/y1 --checks docs)"
+grep -q '^RESULT #[0-9]* Y1f1: MERGED' <<<"$out" || fail "A140: the FIX run on a kept branch with dead package links did not merge: $out"
+grep -q 'conflicts with phase-1 resolved by ron' "$dl/.coord/log.md" || fail "A140: the sandbox did not reach the resolve round"
+[[ "$(git -C "$dl" show phase-1:docs/shifts/brief.md)" == $'| 1 | Y1 one, edited |\n| 2 | Y2 two |\n| 3 | Y3 three |\n| 4 | [Y9](packages/Y9.md) nine |' ]] || fail "A140: the brief keeps a dead link or lost the live one: $(git -C "$dl" show phase-1:docs/shifts/brief.md)"
+[[ "$(git -C "$dl" show phase-1:docs/notes.md)" == 'see Y3 and `[Y3](packages/Y3.md)` and [Y9](shifts/packages/Y9.md)' ]] || fail "A140: notes.md: a dead link stays, a code span or a live link changed: $(git -C "$dl" show phase-1:docs/notes.md)"
+(cd "$dl/.claude/worktrees/phase-1" && node tools/docs-check.mjs >/dev/null 2>&1) || fail "A140: docs-check fails on phase-1 after the merge"
+[[ "$(git -C "$dl" log --format=%s --grep='(A140)' phase-1^2 | wc -l)" -eq 1 ]] && git -C "$dl" log --format=%s phase-1^2 | grep -qxF 'chore(Y1f1): drop links to deleted package files (A140)' || fail "A140: no commit of its own named chore(Y1f1): drop links to deleted package files (A140): $(git -C "$dl" log --format=%s phase-1^2 -5)"
+grep -qE 'Y1f1: dropped 4 link\(s\) to deleted package files in 2 file\(s\)' "$dl/.coord/log.md" || fail "A140: the drop is not logged with its count: $(grep 'Y1f1' "$dl/.coord/log.md" | grep -i dropped)"
+# control: a run whose merge of phase-1 brings no dead link makes no such commit
+printf 'more\n' > "$dl/.claude/worktrees/phase-1/more.md"; git -C "$dl/.claude/worktrees/phase-1" add more.md; gc "$dl/.claude/worktrees/phase-1" "phase-1 moves on"
+out="$(dlrun ron "fix" --id Y9f1 --branch p1/y9 --checks docs)"
+grep -q '^RESULT #[0-9]* Y9f1: MERGED' <<<"$out" || fail "A140: the control run did not merge: $out"
+[[ -z "$(git -C "$dl" log --format=%s --grep='(A140)' phase-1^1..phase-1^2)" ]] || fail "A140: a run with no dead link made a drop commit"
+[[ "$(git -C "$dl" show phase-1:docs/shifts/brief.md | tail -n1)" == '| 4 | [Y9](packages/Y9.md) nine |' ]] || fail "A140: the link to a package file that exists is gone"
+
 # A88: a file a worker leaves outside its worktree is logged, never removed, and never changes the run's result. The stand-in worker
 # makes one file in the main checkout's parent ($tmp), or a folder in .claude/worktrees/ that git worktree list does not know, or
 # a worktree of its own (known), or nothing; the log line names only what appeared during the run.
