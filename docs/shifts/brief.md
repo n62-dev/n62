@@ -27,11 +27,11 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 
 | # | Package | Agent, model | Lane | Starts when merged | Size |
 |---|---|---|---|---|---|
-| [A144](packages/A144.md) | The core list in Firefox; the WebKit try (replaces A110) | annabell, Sonnet | day, Wed 11-11, before the tag | – | ~0.3 d |
 | [A145](packages/A145.md) | F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | day, when a slot is free; the tag does not wait | – | ~0.5 d |
 | [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
 | [A140](packages/A140.md) | No dead package links after a merge of phase-1 | annabell, Sonnet | day, no lane running, before Thu 11-12's restart (owner) | – | ~0.3 d |
+| [A147](packages/A147.md) | A worker's limit is 4 h; a heartbeat line in the log | annabell, Sonnet | day, no lane running, Wed 11-11 after A140 (owner) | A140 | ~0.2 d |
 | [A141](packages/A141.md) | The device step runs beside the lane | annabell, Sonnet | day, no lane running, Thu 11-12 with A136 (owner) | A140 | ~0.5 d |
 | [A142](packages/A142.md) | The lane queues in a file of their own | annabell, Sonnet | day, no lane running | the v0.1.0 tag | ~0.5 d |
 | [A143](packages/A143.md) | night.sh picks the plain step; henri the rest | annabell, Opus | day, no lane running | A142 | ~1 d |
@@ -92,6 +92,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 651 | [A144](packages/A144.md) the core list in Firefox; the WebKit try | annabell, Sonnet | `p1/annabell-otherbrowsers` | – |
 | 646 | [G319](packages/G319.md) the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
 | 647 | [G320](packages/G320.md) CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
 | 648 | [G321](packages/G321.md) a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
@@ -102,6 +103,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | 640 | [G311](packages/G311.md) library round trip | gorge, Opus | `p1/gorge-libstandins` | – |
 | 641 | [G312](packages/G312.md) polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
 | 642 | [G313](packages/G313.md) `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
+| 652 | [G323](packages/G323.md) each giac-regress file in a fresh engine (F223) | gorge, Sonnet | `p1/gorge-regressfresh` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | the weekly night |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | the weekly night |
