@@ -45,7 +45,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F215, package G328 (G317; pass 138).** A name set beside the result takes its facts: `(A:=5)*approx(1)` gives the exact A a ⚠, then `A*2` is ⚠ 10. Family 1.
 - **F218, package R286 (R271f1; pass 139).** σ's confirmed digits cut the exact value's, in Home and the unit view. Family 1.
 - **F224, package G325 (sandra, 2026-11-11; probed).** Home `asin(sqrt(-2)-10^35)` is ≈ -1.57079632679-81.2836254354·i, right +81.28…·i; also `asin(sqrt(-2)*10^-30-2)` and acos: the cut's imaginary sign. Family 5.
-- **F220, package G324 (G322; pass 141).** Home evalf of F221's rootof (x^3-x-1's real root) shows ⚠ 0 `1+2E-40·i` (MPFR rounding). Family 5.
+- **F220, fixed by G324 (run 992).** ≈ of a rootof (x^3-x-1's real root) showed ⚠ 0 `1+2E-40·i` (MPFR rounding); the unaudited check reads a part 0 as a double once more at P + 20 (G60's noise rule). Family 5.
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.
 - **F222, package G327 (G318's report; pass 141).** Two failed loads with a stored log raise G19's count: the next launch leaves the log out (kept, listed). Count replay crashes only. Family 2.
 - **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
