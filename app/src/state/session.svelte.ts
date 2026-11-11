@@ -159,11 +159,8 @@ export const loadForms = (): Promise<typeof import("./cycleForms.ts") | undefine
 export const loadRemoved = (): Promise<typeof import("./removedRows.ts") | undefined> =>
   import("./removedRows.ts").then((m) => (removedCode = m), () => undefined);
 
-/** G223: a code whose words only the worker has (enEngine.ts, out of the start chunk) shows the worker's text. */
-const errorText = (code: CalcError | undefined, fallback: string): string => {
-  const key = `error.${code ?? ""}`;
-  return code && hasMessage(key) ? t(key) : fallback;
-};
+const errorText = (code: CalcError | undefined, fallback: string): string => // G223: words only the worker has (enEngine.ts): its text
+  code && hasMessage(`error.${code}`) ? t(`error.${code}` as MessageKey) : fallback;
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.round(n)));
 const clampDigits = (n: number): number => Math.min(MAX_DIGITS, Math.max(1, Math.round(n)));
 
