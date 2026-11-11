@@ -70,9 +70,10 @@ describe("giac-regress exporter", () => {
     // in DEG and in GRAD), patch 0028 (G157: trunc of a free name stays trunc, a stored trunc(y) reads -1 at y = -13/10),
     // patch 0030 (G152: the real part of evalf(sqrt(-pi)) and of (-pi)^(3/2) is 0, at Digits 40 and 14) and patch 0038
     // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
-    // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power);
-    // the check file gets G149's written line for the CAS view's exact forms
-    expect([r.nCheck, r.nPatched]).toEqual([1, 25]);
+    // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power), patch 0042 (G170:
+    // VARS() keeps its size after ilaplace); the check file gets G149's written line for the CAS view's exact forms
+    expect([r.nCheck, r.nPatched]).toEqual([1, 26]);
+    expect(r.patched).toContain("// patch 0042-ilaplace-assumed-name-purged.patch\n// g170-ilaplace-vars-size");
     expect(r.patched).toContain('// patch 0041-pow-double-exponent-int-range.patch\n// g187-pow-double-3-neg-1e10');
     expect(r.patched).toContain('// patch 0040-simplifier-root-huge-base.patch\n// g186-simplify-sqrt-1e330+7');
     expect(r.patched.match(/\/\/ patch 0038-list-x-per-element\.patch\n/g)).toHaveLength(7);
