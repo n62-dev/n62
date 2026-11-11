@@ -33,6 +33,7 @@ import type { GiacValue } from "./bridge.ts";
 import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
 import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
+import { noisePart, withoutDoubleNoise, ZERO, zeroInDouble } from "./rootofNoise.ts";
 
 export interface Giac {
   eval(input: string): string;
@@ -416,25 +417,6 @@ export interface ElementFacts extends ValueFacts {
   /** G182: the ⚠ unchecked is from a literal past MAX_EVAL_DIGITS (uncheckedPastCap): P and P + 20 were compared (why.pastCap). */
   pastCap?: true;
 }
-
-/** G60: a part this many decades below the other one at aPrecision digits is within the rounding of the value. */
-const NOISE_MARGIN = 10;
-/** G60: decades a noise part falls by when the precision rises by 20 digits (the rounding falls by 20). */
-const NOISE_DROP = 10;
-
-/**
- * G60 (r16 F6): part `k` of a non-real value is rounding noise: at aPrecision digits it is NOISE_MARGIN decades or
- * fewer above the rounding of the other part, and in `b` (more digits) it fell by NOISE_DROP decades or more, or is 0.
- * sqrt(asinh(cos(10))) is 7.4E-41+0.873…*i at 40 digits and 1E-61+0.873…*i at 60; mpmath's real part is 0. A true
- * small part keeps its size when the precision rises (tanh(1E-40+i) = 3.4E-40+1.557…*i).
- */
-function noisePart(a: ComplexValue, b: ComplexValue, k: "re" | "im", aPrecision: number): boolean {
-  const o = k === "re" ? "im" : "re";
-  if (isZero(a[k]) || isZero(a[o]) || isZero(b[o])) return false;
-  return a[k].exp <= a[o].exp - (aPrecision - NOISE_MARGIN) && (isZero(b[k]) || b[k].exp <= a[k].exp - NOISE_DROP);
-}
-
-const ZERO: DecimalValue = { neg: false, digits: "", exp: 0, sticky: false };
 
 /** `b` with its noise parts (noisePart against `a`) set to 0: a part below the rounding is not shown (G60). */
 function denoised<T extends ComplexValue>(a: ComplexValue, b: T, aPrecision: number): T {
@@ -889,8 +871,11 @@ function floatFactsOf(
     const M = at(P, "pasm");
     const fnWarn: PrecisionWarn = "unaudited";
     if (D && M) {
+      // G324: a part 0 in the double and not at P is read once more at P + 20; G60's noise is shown as 0 (rootofNoise.ts)
+      const B = M.some((m, k) => zeroInDouble(D[k]!, m)) ? at(P + 20, "pasm2") : null;
+      const V = M.map((m, k) => withoutDoubleNoise(D[k]!, m, B?.[k] ?? null, P));
       giac.eval(`${name}:=pasm`);
-      return facts(M, (k) => confirmedComplex(D[k]!, M[k]!, DOUBLE_DIGITS, P), fnWarn);
+      return facts(V, (k) => confirmedComplex(D[k]!, V[k]!, DOUBLE_DIGITS, P), fnWarn);
     }
     if (D) {
       giac.eval(`${name}:=pasd`);
