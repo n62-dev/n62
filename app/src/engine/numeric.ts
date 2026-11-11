@@ -30,7 +30,7 @@ import {
 import { binary64Of } from "./binary64.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
-import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
+import { callsOf, functionsIn, isError, KEYWORDS, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
 import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
 import { noiseFreeStores, noisePart, withoutDoubleNoise, ZERO, zeroInDouble } from "./rootofNoise.ts";
@@ -67,14 +67,15 @@ export function valuePrecision(digits: number): number {
  * COMPLEX_DEFINITIONS (complex.ts); complex tanh was coth until patch 0003 (G75), and ln of a negative MPFR real and
  * acos met pi as a double until patch 0005 (G60). Any part Giac still prints as a double where MPFR digits were asked
  * confirms one digit fewer than it prints (shortDigits). Giac runs in radians in every mode (G46), so DEG reads
- * the same routines (the probe's DEG rows).
+ * the same routines (the probe's DEG rows). G223f1: linreg and stats1 (G223, tier 0) and the word ops shl, shr, rotl,
+ * rotr, bnot (G229's golden rows; Find tier 0 comes with G235) are ours, exact for exact data: a float comes from approx.
  */
 export const AUDITED_FUNCTIONS: ReadonlySet<string> = new Set([
   "evalf", "approx",
   "sqrt", "exp", "ln", "log", "log10", "sin", "cos", "tan", "asin", "acos", "atan",
   "sinh", "cosh", "tanh", "asinh", "acosh", "atanh",
   "abs", "re", "im", "conj", "arg", "sign", "floor", "ceil", "round", "frac", "max", "min",
-  "sigfig", "par", "eseries", "pasmedian", "paspercentile", "passem",
+  "sigfig", "par", "eseries", "pasmedian", "paspercentile", "passem", "linreg", "stats1", "shl", "shr", "rotl", "rotr", "bnot",
 ]);
 
 const FLOAT_LITERAL = /(?<![A-Za-z_0-9.])(?:\d+\.\d*|\.\d+|\d+(?=e[+-]?\d))(?:e[+-]?\d+)?/;
@@ -1052,15 +1053,6 @@ export function numberLatex(text: string): string {
 
 // --- G53: the prints of names (the G38 decision code is in decisions.ts) ---------------------------------------------
 
-/** Giac's language keywords that functionsIn finds in a printed program (`if (`, `while (`): like a built-in, none
- *  can hold a value, so each prints the same all session. Every entry is checked to refuse both `k:=3` and `k(x):=x`
- *  in precision.test.ts ("G53: every KEYWORDS entry refuses a value"). `return` is left out: Giac reads
- *  `return(x):=x` as `return(x:=x)` without an error, so it is asked like a user's name. */
-export const KEYWORDS: ReadonlySet<string> = new Set([
-  "if", "while", "throw", "and", "or", "xor", "local", "else", "elif", "then", "try", "catch", "break", "continue",
-  "repeat", "until", "switch", "case", "default", "do", "from", "to", "step", "in",
-]);
-
 /** G93: Giac's words whose lexer token is T_RETURN (define_unary_function_ptr5(…, T_RETURN) in the pinned tarball): the
  *  word alone parses as a call with no argument, so evaluating it to read its print runs it (`restart` alone is
  *  restart(), which purges every name; Home's complex audit asked it of `restart(1)`). Each is a built-in: its print is
@@ -1078,16 +1070,18 @@ const RUNS_BARE: ReadonlySet<string> = new Set([
 const FIXED_PRINTS = new WeakMap<Giac, Map<string, string>>();
 
 /** Giac's print of `name`, trimmed (`'sin'`, a stored function's definition, the name itself when free). A built-in
- *  (printed quoted) is reserved, Giac refuses to store into it, and a keyword cannot be stored into either: their
- *  prints are asked once per Giac instance (G53: notBuiltin and callsStateful asked them on every Enter). */
+ *  (printed quoted) is reserved, Giac refuses to store into it: its print is asked once per Giac instance (G53:
+ *  notBuiltin and callsStateful asked them on every Enter). G223f1: a keyword cannot be stored into either, and is
+ *  answered as a built-in without asking: a bare `local`, `catch` or `else` is a Giac parse error, which the host's
+ *  strict eval turns into the whole input's syntax error (`inc(1)` of a body with try/catch, through decidingStored). */
 export function namePrint(giac: Giac, name: string): string {
   let fixed = FIXED_PRINTS.get(giac);
   if (!fixed) FIXED_PRINTS.set(giac, (fixed = new Map()));
   const known = fixed.get(name);
   if (known !== undefined) return known;
-  if (RUNS_BARE.has(name)) return `'${name}'`;
+  if (RUNS_BARE.has(name) || KEYWORDS.has(name)) return `'${name}'`;
   const out = giac.eval(name).trim();
-  if (out === `'${name}'` || KEYWORDS.has(name)) fixed.set(name, out);
+  if (out === `'${name}'`) fixed.set(name, out);
   return out;
 }
 

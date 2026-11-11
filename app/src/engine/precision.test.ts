@@ -394,7 +394,7 @@ describe.skipIf(!giacAvailable())("G38: the exact path decides at P and at P + 2
     expect(notBuiltin(giac)("sin")).toBe(false);
   });
 
-  it("G53: a built-in's or keyword's print is asked once per Giac instance, a user's name on every call (source: derived, Giac refuses sin:=3)", async () => {
+  it("G53: a built-in's print is asked once per Giac instance, a keyword's never, a user's name on every call (source: derived, Giac refuses sin:=3)", async () => {
     const { notBuiltin, namePrint } = await import("./numeric.ts");
     const giac = engineGiac(await loadNodeGiac());
     const asked: string[] = [];
@@ -402,10 +402,10 @@ describe.skipIf(!giacAvailable())("G38: the exact path decides at P and at P + 2
     expect(notBuiltin(counted)("sin")).toBe(false);
     expect(notBuiltin(counted)("sin")).toBe(false);
     expect(asked.filter((t) => t === "sin")).toEqual(["sin"]);
-    // `if` is a keyword (asked once); `return` is not on the list (Giac takes return(x):=x without an error), so it is
-    // asked on each call.
-    for (const k of ["if", "if", "return", "return"]) namePrint(counted, k);
-    expect(asked.filter((t) => t === "if" || t === "return")).toEqual(["if", "return", "return"]);
+    // `if` is a keyword: answered as a built-in, never asked (G223f1: a bare `catch` is a parse error); `return` is not
+    // on the list (Giac takes return(x):=x without an error), so it is asked on each call.
+    for (const k of ["if", "if", "catch", "return", "return"]) expect(namePrint(counted, k)).toBe(k === "return" ? "return(seq[])" : `'${k}'`);
+    expect(asked.filter((t) => t === "if" || t === "catch" || t === "return")).toEqual(["return", "return"]);
     // A user's name may change between calls: it is asked each time, so a later definition is seen.
     expect(notBuiltin(counted)("g53u")).toBe(true);
     giac.eval("g53u(x):={ c53:=x; }");
@@ -419,7 +419,7 @@ describe.skipIf(!giacAvailable())("G38: the exact path decides at P and at P + 2
   });
 
   it("G53: every KEYWORDS entry refuses a value: k:=3 and k(x):=x are errors and store nothing (source: derived, Giac)", async () => {
-    const { KEYWORDS } = await import("./numeric.ts");
+    const { KEYWORDS } = await import("./giacPrint.ts");
     const { giac, bridge } = await loadNodeGiac();
     const varsBefore = giac.eval("VARS()");
     const accepted: string[] = [];

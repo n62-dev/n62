@@ -21,7 +21,7 @@ every case whose `expect` is a number also carries `mark:` (docs/04 section 2.4)
 oracle value exactly, "≈" when it is rounded; "⚠" is never derived, it is written by hand for functions whose result
 the engine cannot confirm (the case then needs a `note`); so is a "≈" where the oracle says "=" for an exact value Giac returns
 as a double (needs a `note`, and an input that is a top-level call of round( or trunc(), or of asin( or acos( that Giac leaves
-unevaluated (G121). "⚠ n" (n confirmed digits) is a "⚠" with a count. When no value can be derived (no `oracle:` expression, or
+unevaluated (G121), or of approx( or evalf( (G223f1). "⚠ n" (n confirmed digits) is a "⚠" with a count. When no value can be derived (no `oracle:` expression, or
 `expect` is no number) a hand-written "=" or "≈" needs a `note` too, as "⚠" does. A case with a mark but no `expect` is mark-only.
 
 --counts (G202, the whole tree only) writes `oracle-counts.json`, `{ "exact": n, "mpmath": n }` with sorted keys: how many `source: oracle`
@@ -446,8 +446,9 @@ def check_mark(case: dict, write: bool) -> list:
     # An exact value that Giac returns as a double (round, trunc) is shown ≈ although the oracle says = (docs/04 2.4
     # rule 3: = needs the engine to report an exact rational): a hand-written ≈ with a note, and only when the input is
     # a top-level call of round or trunc. G121: the same for asin and acos, which Giac leaves unevaluated at a complex
-    # sin or cos (patch 0013), so Home shows their numeric value: asin(sin(2*i)) is exactly 2*i, shown ≈.
-    if mark == "≈" and want == "=" and case.get("note") and re.match(r" *(round|trunc|asin|acos)\(", str(case.get("input", ""))):
+    # sin or cos (patch 0013), so Home shows their numeric value: asin(sin(2*i)) is exactly 2*i, shown ≈. G223f1: the
+    # same for a top-level approx or evalf, a float by request (approx(bnot(5,8,0)) is exactly 250, shown ≈).
+    if mark == "≈" and want == "=" and case.get("note") and re.match(r" *(round|trunc|asin|acos|approx|evalf)\(", str(case.get("input", ""))):
         return []
     if write:
         case["mark"] = want
