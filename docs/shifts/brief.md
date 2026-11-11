@@ -77,6 +77,9 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 636 | [R262](packages/R262.md) To Home with marks | ron, Opus | `p1/ron-tohome` | – |
 | 637 | [R266](packages/R266.md) no tips while typing | ron, Sonnet | `p1/ron-tipspress` | – |
 | 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
+| 656 | [R286](packages/R286.md) σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
+| 657 | [G327](packages/G327.md) a failed load never counts against the stored definitions (F222) | gorge, Opus | `p1/gorge-loadcount` | R284 |
+| 658 | [G328](packages/G328.md) a name set beside the result stores its own facts (F215) | gorge, Opus | `p1/gorge-sidefacts` | G174 |
 | 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
 | 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
 | 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
@@ -96,6 +99,9 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | 646 | [G319](packages/G319.md) the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
 | 647 | [G320](packages/G320.md) CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
 | 648 | [G321](packages/G321.md) a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
+| 653 | [G324](packages/G324.md) ≈ of a cubic's real root, no `2E-40*i` (F220) | gorge, Opus | `p1/gorge-rootofnoise` | – |
+| 654 | [G329](packages/G329.md) the calls stage keeps the bridge's tree (F216) | gorge, Sonnet | `p1/gorge-callstree` | – |
+| 655 | [G325](packages/G325.md) asin and acos near their cuts: the imaginary sign (F224, F212) | gorge, Opus | `p1/gorge-asincut` | G329 |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
@@ -104,6 +110,8 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | 641 | [G312](packages/G312.md) polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
 | 642 | [G313](packages/G313.md) `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
 | 652 | [G323](packages/G323.md) each giac-regress file in a fresh engine (F223) | gorge, Sonnet | `p1/gorge-regressfresh` | – |
+| 659 | [G326](packages/G326.md) the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
+| 660 | [S54](packages/S54.md) why `decompose` recurses without end (F214) | sandra, Opus | `p1/sandra-decompose` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | the weekly night |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | the weekly night |
