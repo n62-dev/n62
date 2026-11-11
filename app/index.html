@@ -49,7 +49,7 @@
         if (app) app.removeAttribute("id");
         var p = document.createElement("p");
         p.style.cssText = "font:16px sans-serif;padding:24px";
-        p.appendChild(document.createTextNode(/; wv\)|Version\/[\d.]+ .*Chrome\//.test(navigator.userAgent) ? "This app needs a newer Android System WebView / Chrome. Update it from your app store." : "This app needs a newer browser. Update it and reload."));
+        p.appendChild(document.createTextNode(/Version\/4\./.test(navigator.userAgent) ? "This app needs a newer Android System WebView / Chrome. Update it from your app store." : "This app needs a newer browser. Update it and reload."));
         document.body.insertBefore(p, document.body.firstChild);
       })();
     </script>
