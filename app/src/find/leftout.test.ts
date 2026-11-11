@@ -37,6 +37,12 @@ describe.skipIf(!existsSync(indexFile) && !required)("G111 functions left out of
     expect(left.filter((n) => names.has(n))).toEqual([]);
   });
 
+  // G174 (F97): Giac's conic objects, F90's family, answer no pnt(…) within 6 s in CAS; the graphics group holds them now
+  it("leaves out ellipse and hyperbola (F97)", () => {
+    expect(items.length).toBeGreaterThan(0);
+    expect(["ellipse", "hyperbola"].filter((n) => names.has(n))).toEqual([]);
+  });
+
   it("still holds the functions next to them", () => {
     for (const n of ["sin", "exponential", "LambertW", "fracmod", "normald", "Gamma"]) expect(names.has(n), n).toBe(true);
   });
