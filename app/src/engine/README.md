@@ -29,7 +29,8 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 |---|---|
 | `giac.worker.ts` | the Web Worker: loads `engine/giac.mjs` (copied to `app/public/engine/` by `npm run engine:copy`) and runs `host.ts`; started by `workerEngine.ts` |
 | `host.ts` | engine side, synchronous, UI-free: Home/CAS modes (D3), syntax-error detection, replay log; also runs in Node (golden runner, tests) |
-| `storedMark.ts` | S53f1: `noteMark()` notes the mark (equals or approx) on the variables a Home result sets, so that Vars can draw it; worker side only, called by `host.ts`; `defs.ts` must not import it, as that would pull the formatter into the start chunk |
+| `storedMark.ts` | S53f1, G317: `storedMark()` gives the mark (equals or approx) a stored variable carries into Vars, and `sideShown()` the preview and mark of a name set beside the result (its own value as Home shows it, Ans kept); worker side only, called by `host.ts`; `defs.ts` must not import it, as that would pull the formatter into the start chunk |
+| `shownText.ts` | G317: the CAS view's text of a value that is not one checked number (floats at the view's digits, regrouped, DEG text, `when`, list braces), one path for the CAS result and for a name set beside a result (`nameShown()`, never Giac's print at P); called by `host.ts` and `storedMark.ts` |
 | `dead.ts` | G183: `deadEngine()`, whether a throw out of a request left the engine dead (`memory` G24, or `crash`: a wasm trap or a stack overflow), so the client restarts it; called by `host.ts` |
 | `homeEval.ts` | exact-first Home (from the Phase 0 spike): results carry a `value` and the precision facts; `sigfig` and our other engine definitions; called by `host.ts`, `solve.ts`, `analysis.ts`, `units/` |
 | `numeric.ts` | honest precision (docs/04 2.4): values, shapes, the agreement check at two precisions, the re-evaluation of floats, the double fallback; called by `homeEval.ts` and most guards |
