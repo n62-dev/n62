@@ -219,6 +219,24 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
     expect(cas("exp(10^30)")).toMatchObject({ ok: true });
     expect(cas("1..3")).toMatchObject({ ok: true });
   });
+  it("G320: CAS refuses a number through an infinity as Home, and stores nothing; a free name keeps Giac's algebra", () => {
+    const cas = (input: string) => host.cas(input, defaultCasSettings).result;
+    for (const input of ["1/(1/0)", "exp(ln(0))", "[1/(1/0),2]", "evalf(1/(1/0))"]) {
+      expect(cas(input), input).toMatchObject({ ok: false, error: "divisionByZero", text: "Division by zero" });
+      expect(home(input), input).toMatchObject({ ok: false, error: "divisionByZero" });
+    }
+    // a refused store: the earlier value stays, and a new name keeps nothing
+    expect(cas("g320b:=5")).toMatchObject({ ok: true, text: "5" });
+    expect(cas("g320b:=1/(1/0)")).toMatchObject({ ok: false, error: "divisionByZero" });
+    expect(cas("g320b")).toMatchObject({ ok: true, text: "5" });
+    expect(cas("g320c:=exp(ln(0))")).toMatchObject({ ok: false, error: "divisionByZero" });
+    expect(cas("g320c")).toMatchObject({ ok: true, text: "g320c" });
+    expect(cas("exp(ln(x))")).toMatchObject({ ok: true, text: "x" });
+    expect(cas("exp(ln(0))+x")).toMatchObject({ ok: true, text: "x" });
+    expect(cas("limit(1/(1/x),x,0)")).toMatchObject({ ok: true, text: "0" });
+    expect(cas("1/0")).toMatchObject({ ok: true, text: "infinity" });
+    expect(cas("1/(1/2)")).toMatchObject({ ok: true, text: "2" });
+  });
   it("G168f1: a Num cell keeps Giac's undef (it shows NaN, G2 items 19, 22); Home, without the parameter, refuses it", () => {
     const cell = (f: string, x: string) => host.table({ fns: [f], xs: [x] }, defaultHomeSettings)[0]![0]!;
     expect(cell("sin(x)/x", "0")).toMatchObject({ ok: true, display: "undef", path: "exact" });
