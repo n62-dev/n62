@@ -12,6 +12,7 @@
 import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
 import { statsRefusal, type StatsRefusal } from "./stats.ts";
+import { wordRefusal, type WordRefusal } from "./wordOps.ts";
 
 /** Why a result is refused; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 /** `undecided` (G57) comes from decisions.ts decideTwice: a decision on a cut Giac cannot make. `divisionByZero`,
@@ -21,10 +22,11 @@ import { statsRefusal, type StatsRefusal } from "./stats.ts";
  *  polyvec.ts: Giac's polynomial of a list plus a number. `listAsArguments` (G111) and `listInArgument` (R80f1) come from
  *  listargs.ts: a list read as the argument list, or answered wrongly. `lengthsDiffer` (G225) comes from nonsquare.ts:
  *  dot or cross of two vectors of different lengths. `notHere` (G174) comes from host.ts: a command N62 cannot serve (debug,
- *  stores.ts NOT_HERE_HEADS). The `StatsRefusal` codes (G223) come from stats.ts: linreg and stats1 refusing their data. */
-/** The refusals a check of ours gives (all but the stats ones, which only errorRefusal reads; G223). */
+ *  stores.ts NOT_HERE_HEADS). The `StatsRefusal` codes (G223) come from stats.ts: linreg and stats1 refusing their data; the `WordRefusal` codes
+ *  (G229) from wordOps.ts: a word operation refusing its arguments. */
+/** The refusals a check of ours gives (all but the stats and word ones, which only errorRefusal reads; G223, G229). */
 export type CheckRefusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer" | "vectorsOnly" | "unknownFunction" | "notHere";
-export type Refusal = StatsRefusal | CheckRefusal;
+export type Refusal = StatsRefusal | WordRefusal | CheckRefusal;
 
 /** A check's answer: the result stands, it is refused, or the check could not finish (an error or Giac's timeout), in
  *  which case the result stands with ⚠ (nothing confirmed that it exists). */
@@ -61,11 +63,12 @@ const limitsDiffer = (calls: Call[], out: string): boolean => isError(out) && LI
 /**
  * G305: the refusal for an input whose run ended in Giac's error `output`, read from Giac's words alone (no Giac call):
  * an input that holds a limit whose one-sided limits differ has no value (`noLimit`); G223: linreg or stats1 refused its
- * data (stats.ts statsRefusal; a stored function that calls them too). null for any other error. Home
+ * data (stats.ts statsRefusal; a stored function that calls them too); G229: a word operation refused its arguments
+ * (wordOps.ts wordRefusal). null for any other error. Home
  * asks it before its float fallback (whose limit at the float point is one side's value), CAS before its error text.
  */
 export function errorRefusal(input: string, output: string): Refusal | null {
-  return limitsDiffer(callsIn(input), output) ? "noLimit" : statsRefusal(output);
+  return limitsDiffer(callsIn(input), output) ? "noLimit" : (statsRefusal(output) ?? wordRefusal(output));
 }
 
 /** Giac's text for "no finite number": undef, or an infinity anywhere in it. */
