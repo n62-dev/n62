@@ -70,6 +70,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `novalue.ts` | G78: no number that went through a division by zero; called by `homeEval.ts`, `listargs.ts` |
 | `polyvec.ts` | G106: a list plus or minus a number read as polynomial coefficients; called by `homeEval.ts`, `host.ts` |
 | `stats.ts` | G223: our `linreg` and `stats1` definitions and their refusals in words; read by `homeEval.ts` (ENGINE_DEFINITIONS) and `converge.ts` (errorRefusal) |
+| `wordOps.ts` | G229: our `shl`, `shr`, `rotl`, `rotr`, `bnot` in a word of 8 to 64 bits (docs/04 5.4) and their refusals; read by `homeEval.ts` (ENGINE_DEFINITIONS) and `converge.ts` (errorRefusal) |
 
 **Angles (route R, S14)**
 

@@ -96,6 +96,7 @@ def namespace(digits=None):
     ns["diff"] = mpmath.diff
     ns["sortroots"] = sortroots
     ns["D200"] = at200
+    ns.update(WORD_OPS)  # G229
     ns["S"] = lambda label: Label(label)
     ns["Braces"] = lambda *xs: Label("{" + ",".join(display(x, digits) for x in xs) + "}")  # G169: a `{ }` list as the app shows it (the case's digits, G322)
     ns["Bracket"] = lambda *xs: Label("[" + ",".join(display(x, digits) for x in xs) + "]")  # G172: a `[ ]` list or matrix row as the app shows it
@@ -108,6 +109,42 @@ def at200(f):
     with mp.workdps(200):
         v = f()
         return v if isinstance(v, (int, Fraction)) else +v
+
+
+def _pattern(x, w, s):
+    """G229: the w-bit pattern of x, an int that fits the word as read (signed s=1: two's complement)."""
+    lo, hi = (-(1 << (w - 1)), 1 << (w - 1)) if s else (0, 1 << w)
+    if type(x) is not int or not lo <= x < hi or w not in (8, 16, 32, 64) or s not in (0, 1):
+        raise ValueError(f"{x} is not a {w}-bit {'signed' if s else 'unsigned'} word")
+    return x & ((1 << w) - 1)
+
+
+def _word(u, w, s):
+    """G229: a w-bit pattern read back as unsigned, or signed (the top bit counts -2^(w-1))."""
+    return u - (1 << w) if s and u >> (w - 1) else u
+
+
+def _count(n):
+    if type(n) is not int or n < 0:
+        raise ValueError(f"count {n}")
+    return n
+
+
+def _shr(x, n, w, s):
+    """G229: signed, the arithmetic shift of the value (Python's >>); unsigned, the logical shift of the pattern."""
+    u = _pattern(x, w, s)
+    return _word(((x if s else u) >> n) & ((1 << w) - 1), w, s)
+
+
+# G229 (app/src/engine/wordOps.ts): word operations in Python's unbounded ints with masks, word size w, signed s; the
+# defaults of the two-argument forms are 64 bits, unsigned. Python's >> on a negative int is the arithmetic shift.
+WORD_OPS = {
+    "shl": lambda x, n, w=64, s=0: _word((_pattern(x, w, s) << _count(n)) & ((1 << w) - 1), w, s),
+    "shr": lambda x, n, w=64, s=0: _shr(x, _count(n), w, s),
+    "rotl": lambda x, n, w=64, s=0: _word(((_pattern(x, w, s) << (_count(n) % w)) | (_pattern(x, w, s) >> (w - n % w))) & ((1 << w) - 1), w, s),
+    "rotr": lambda x, n, w=64, s=0: _word(((_pattern(x, w, s) >> (_count(n) % w)) | (_pattern(x, w, s) << (w - n % w))) & ((1 << w) - 1), w, s),
+    "bnot": lambda x, w=64, s=0: _word(~_pattern(x, w, s) & ((1 << w) - 1), w, s),
+}
 
 
 class Label(str):
