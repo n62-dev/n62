@@ -228,7 +228,7 @@ describe.skipIf(!giacAvailable())("G174: names stored through an argument, Giac'
     expect([host.giac.eval("about(k)"), host.giac.eval("about(n)")]).toEqual(["k", "n"]);
   });
 
-  it("guard: GF(2,8) keeps K and g for the session (the log cannot hold g; decisions.md, G174): g^200+1 is in the field", async () => {
+  it("guard: GF(2,8) keeps K and g for the session (the log cannot hold g; G174's report): g^200+1 is in the field", async () => {
     const raw = (await loadNodeGiac()).giac;
     raw.eval("GF(2,8)");
     const host = await nodeHost();

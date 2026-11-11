@@ -28,7 +28,7 @@ import { putBack } from "./assumed.ts";
  * 368–374 assigns them on purpose, "Now e.g. g^200+1 will build an element of K"), but g holds a field element that
  * prints as its own name, which a state read takes for a leaked assumption (G92 purges it) and the log cannot replay
  * (K's printed value has four arguments; only the three-argument branch assigns, 336–374): GF keeps them for the session
- * only (decisions.md, G174).
+ * only (a proposal in G174's report).
  */
 export const ARG_STORE_HEADS: readonly string[] = [
   "SortA", "SortD", "Fill", "mRow", "mRowAdd", "rowAdd", "rowSwap", "LU", "QR", "CopyVar", "NewPic", "igcdex", "gcdex", "rowspace",
