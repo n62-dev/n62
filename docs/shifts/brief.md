@@ -94,7 +94,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 648 | G321 a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
-| 653 | [G324](packages/G324.md) ≈ of a cubic's real root, no `2E-40*i` (F220) | gorge, Opus | `p1/gorge-rootofnoise` | – |
+| 653 | G324 ≈ of a cubic's real root, no `2E-40*i` (F220) | gorge, Opus | `p1/gorge-rootofnoise` | – |
 | 654 | [G329](packages/G329.md) the calls stage keeps the bridge's tree (F216) | gorge, Sonnet | `p1/gorge-callstree` | – |
 | 655 | [G325](packages/G325.md) asin and acos near their cuts: the imaginary sign (F224, F212) | gorge, Opus | `p1/gorge-asincut` | G329 |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |

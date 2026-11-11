@@ -10,6 +10,8 @@ import { copyFull } from "../../src/clipboard/text.ts";
 import { parsePastedNumber } from "../../src/clipboard/paste.ts";
 import { root, only, cases, freshHost, report } from "./lib.ts";
 
+const INVARIANTS_LIMIT_S = 75;
+
 /** G43: the invariants over every home.yaml and precision.yaml input without settings; see invariants.ts. */
 export async function stageInvariants(): Promise<void> {
   const seen = new Set<string>();
@@ -88,5 +90,6 @@ export async function stageInvariants(): Promise<void> {
   const r = invariantsStage(failures, known.known ?? []);
   for (const l of r.lines) console.log(`  invariants ${l}`);
   const secs = (performance.now() - t0) / 1000;
-  report("invariants", r.ok && secs < 60, `${inputs.length} inputs, ${checked.a} (a) RAD/DEG, ${checked.b} (b) 12/30 digits, ${checked.c} (c) copy and paste, ${checked.d} (d) store; ${r.summary}; ${secs.toFixed(1)} s (< 60)`);
+  // G324: 75 s (was 60): phase-1 fd679565 took 59.8 s on win99 for 1063 inputs, G324's rows make 1071 (61 s)
+  report("invariants", r.ok && secs < INVARIANTS_LIMIT_S, `${inputs.length} inputs, ${checked.a} (a) RAD/DEG, ${checked.b} (b) 12/30 digits, ${checked.c} (c) copy and paste, ${checked.d} (d) store; ${r.summary}; ${secs.toFixed(1)} s (< ${INVARIANTS_LIMIT_S})`);
 }

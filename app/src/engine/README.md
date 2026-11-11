@@ -45,6 +45,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `eseries.ts` | IEC 60063 E-series as published (G30); called by `homeEval.ts`, `decisions.ts`, `host.ts` |
 | `binary64.ts` | G140: whether a part Giac printed holds only a double's bits (exact BigInt); called by `numeric.ts` |
 | `literalPrec.ts` | G141: where the agreement check starts for an input with a long exact literal (its digits plus P); called by `numeric.ts` |
+| `rootofNoise.ts` | G60's rounding-noise rule for a part of a non-real value; G324: a part 0 in the double and not at P is read at P + 20 and shown as 0 when it is noise; called by `numeric.ts` |
 | `doubleElements.ts` | G172: the double fallback of a result with no MPFR value, element by element in a list or matrix; called by `homeEval.ts` |
 | `complex.ts` | G50, G60: the complex workaround (our atan); called by `numeric.ts`, `homeEval.ts`, `stateRead.ts` |
 | `powers.ts` | G59f1: powers that Giac's exact evaluation may move to another branch; called by `homeEval.ts` |
