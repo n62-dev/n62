@@ -22,7 +22,9 @@ import { statsRefusal, type StatsRefusal } from "./stats.ts";
  *  listargs.ts: a list read as the argument list, or answered wrongly. `lengthsDiffer` (G225) comes from nonsquare.ts:
  *  dot or cross of two vectors of different lengths. `notHere` (G174) comes from host.ts: a command N62 cannot serve (debug,
  *  stores.ts NOT_HERE_HEADS). The `StatsRefusal` codes (G223) come from stats.ts: linreg and stats1 refusing their data. */
-export type Refusal = StatsRefusal | "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer" | "vectorsOnly" | "unknownFunction" | "notHere";
+/** The refusals a check of ours gives (all but the stats ones, which only errorRefusal reads; G223). */
+export type CheckRefusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer" | "vectorsOnly" | "unknownFunction" | "notHere";
+export type Refusal = StatsRefusal | CheckRefusal;
 
 /** A check's answer: the result stands, it is refused, or the check could not finish (an error or Giac's timeout), in
  *  which case the result stands with ⚠ (nothing confirmed that it exists). */
@@ -32,7 +34,7 @@ type Kind = "int" | "sum" | "limit";
 
 const KIND: Readonly<Record<string, Kind>> = { int: "int", integrate: "int", sum: "sum", limit: "limit" };
 const KINDS = Object.keys(KIND);
-const REFUSAL: Readonly<Record<Kind, Refusal>> = { int: "integralDiverges", sum: "seriesDiverges", limit: "noLimit" };
+const REFUSAL: Readonly<Record<Kind, CheckRefusal>> = { int: "integralDiverges", sum: "seriesDiverges", limit: "noLimit" };
 
 interface Call {
   kind: Kind;
@@ -245,7 +247,7 @@ function integralCheck(giac: Giac, c: Call): Verdict {
  * is refused with that call's message, and so is a `bounded_function(…)` left in the result of a limit, or Giac's error
  * for a limit whose one-sided limits differ (G305, errorRefusal).
  */
-export function refusalOf(engine: Giac, input: string, output: string, digits: number, home = false): Refusal | "unchecked" | null {
+export function refusalOf(engine: Giac, input: string, output: string, digits: number, home = false): CheckRefusal | "unchecked" | null {
   const calls = callsIn(input);
   if (!calls.length) return null;
   // Giac's timeout can stop any step of a check (singular, a limit, the second integral); a step it stopped proves
@@ -264,7 +266,7 @@ export function refusalOf(engine: Giac, input: string, output: string, digits: n
   return verdict === null && interrupted ? "unchecked" : verdict;
 }
 
-function check(giac: Giac, calls: Call[], input: string, output: string, digits: number, home: boolean): Refusal | "unchecked" | null {
+function check(giac: Giac, calls: Call[], input: string, output: string, digits: number, home: boolean): CheckRefusal | "unchecked" | null {
   const out = output.trim();
   if (limitsDiffer(calls, out)) return "noLimit";
   if (out === "undef") {
