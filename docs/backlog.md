@@ -71,7 +71,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 ms of 400 in run 307, 417 in run 909; two sightings, so it is due in `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, 87.9 s in run 909, limit 60; in `isTiming`) beside the other lane.
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
 - **F214, research S54 (G187; G183 restarts the engine).** `simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))` kills the engine: simplify recurses ~7,800 deep in `subst.cc` `decompose` (from `tsimplify_common`) to a stack overflow; cause not found. G183's crash tests use it.
-- **F216, package G329 (G187; pass 139).** The golden calls stage's bridge (`calls.ts:30`) drops giac_value's tree, so it counts a shorter path than the app's. Family 8.
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
