@@ -41,3 +41,17 @@ export function withoutDoubleNoise<T extends ComplexValue>(d: ComplexValue, m: T
   const noise = PARTS.filter((k) => isZero(d[k]) && !isZero(m[k]) && noisePart(m, b, k, P));
   return noise.length ? { ...m, ...Object.fromEntries(noise.map((k) => [k, ZERO])) } : m;
 }
+
+/**
+ * G324f1: Giac statements that set each element of `name` (which holds `m`, read at P) whose part withoutDoubleNoise
+ * zeroed in `v` to the element without that part: `re` of it, or `i*im` of it. `at(k)` is element k's index text
+ * (`[k]`, `[r,c]`, "" for a scalar). So the name holds the value shown (W:=evalf(solve(x^3-x-1=0,x)), then W).
+ */
+export function noiseFreeStores(name: string, m: readonly ComplexValue[], v: readonly ComplexValue[], at: (k: number) => string): string[] {
+  return m.flatMap((x, k) => {
+    const y = v[k]!;
+    if (y === x) return [];
+    const e = `${name}${at(k)}`;
+    return isZero(y.im) && !isZero(x.im) ? [`${e}:=re(${e})`] : isZero(y.re) && !isZero(x.re) ? [`${e}:=i*im(${e})`] : [];
+  });
+}

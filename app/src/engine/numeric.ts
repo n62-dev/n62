@@ -33,7 +33,7 @@ import type { GiacValue } from "./bridge.ts";
 import { callsOf, functionsIn, isError, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
 import { complexReads, complexReplacedIn, complexSafe, forValue, nonReal, partsOf, purgeReads } from "./complex.ts";
 import { literalStart, uncheckedPastCap } from "./literalPrec.ts";
-import { noisePart, withoutDoubleNoise, ZERO, zeroInDouble } from "./rootofNoise.ts";
+import { noiseFreeStores, noisePart, withoutDoubleNoise, ZERO, zeroInDouble } from "./rootofNoise.ts";
 
 export interface Giac {
   eval(input: string): string;
@@ -874,7 +874,9 @@ function floatFactsOf(
       // G324: a part 0 in the double and not at P is read once more at P + 20; G60's noise is shown as 0 (rootofNoise.ts)
       const B = M.some((m, k) => zeroInDouble(D[k]!, m)) ? at(P + 20, "pasm2") : null;
       const V = M.map((m, k) => withoutDoubleNoise(D[k]!, m, B?.[k] ?? null, P));
-      giac.eval(`${name}:=pasm`);
+      // G324f1: the name holds the value shown, each element without the part zeroed here (one call)
+      const index = (k: number): string => (shape.kind === "scalar" ? "" : shape.kind === "list" ? `[${k}]` : `[${Math.floor(k / shape.cols)},${k % shape.cols}]`);
+      giac.eval([`${name}:=pasm`, ...noiseFreeStores(name, M, V, index)].join(";"));
       return facts(V, (k) => confirmedComplex(D[k]!, V[k]!, DOUBLE_DIGITS, P), fnWarn);
     }
     if (D) {
