@@ -121,8 +121,13 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
  *  69.21 → 69.47 kB (R271f1): the branch before the fix measures 69.15 kB, after it 69.41 kB (unit view chunk 37.71 → 37.88 kB):
  *  σ's mark is decided once (evaluate.ts, in the worker), and the row and the chip store σ's facts, the view reads them where the
  *  ⚠ sits (result.ts), and a chip with them limits σ again when it goes in (chipUnit.ts uncChipsIn, build.ts sigmaFacts checks
- *  them). 69.41 kB + 0.06 kB. */
-export const UNIT_VIEW_PIN_RAW = 69_470;
+ *  them). 69.41 kB + 0.06 kB.
+ *  69.47 → 69.84 kB (G319): phase-1 d55b37b1 measures 69,410 B, the branch 69,790 B (factors 16,512 → 16,840, open 28,313 →
+ *  28,361): the builder writes the formula's number part beside it (build.ts numberDims, UnitJob.number: each slot and
+ *  constant as its factor), which the worker asks Home's refusals of (a text read of the job in the worker is what the
+ *  text-rules ratchet counts), and messages.ts words Home's refusal with the app's table (t, not enEngine: that import made
+ *  enEngine a chunk of its own, +0.14 kB gzip at start). 69,790 B + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 69_840;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
