@@ -121,6 +121,11 @@ queries:
   - { query: "stdev", expect: "fn:stddevp", note: "the sample standard deviation (n−1); Giac's stddevp" }
   - { query: "standard error", expect: "fn:sem", note: "G155: s/√n, our passem" }
   - { query: "sem", expect: "fn:sem", note: "G155" }
+  - { query: "linear regression", expect: "fn:linreg", note: "G223" }
+  - { query: "line of best fit", expect: "fn:linreg", note: "G223" }
+  - { query: "linreg", expect: "fn:linreg", note: "G223" }
+  - { query: "summary statistics", expect: "fn:stats1", note: "G223: n, mean, s, σ, min, max" }
+  - { query: "stats1", expect: "fn:stats1", note: "G223" }
   - { query: "variance", expect: "fn:variance" }
   - { query: "normal cdf", expect: "fn:normald_cdf" }
   - { query: "integral", expect: "fn:int" }
