@@ -902,6 +902,9 @@ Digits:=40:; pc("g187-pow-double-3-neg-1e10",'3.0^(-1e10)',0,1/10^30);
 // patch 0041-pow-double-exponent-int-range.patch
 // g187-normal-pi-pow-sqrt2-1e16 (derived: 10^(-4.97E15), MPFR's 0 at Digits 40)
 Digits:=40:; pc("g187-normal-pi-pow-sqrt2-1e16",'normal(pi^(sqrt(2)-10^16))',0,1/10^30);
+// patch 0042-ilaplace-assumed-name-purged.patch
+// g170-ilaplace-vars-size (derived: ilaplace stores no name, so VARS() keeps its size)
+Digits:=40:; purge(x):; pasv170:=0:; pasv170:=size(VARS()):; ilaplace(1/(x^2+1)):; ilaplace(1/(s^2+1),s,t):; pc("g170-ilaplace-vars-size",'size(VARS())-pasv170',0,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

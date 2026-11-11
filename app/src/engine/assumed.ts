@@ -12,8 +12,8 @@ import { OUR_BOUND as K } from "./ourNames.ts";
 
 /** Giac's commands that leave an assumption after they return (probe 2026-10-25: 60 commands, each in a fresh engine, on
  *  integrate(tanh(sqrt(x)),x), tanh(sqrt(x)) and sqrt(x)*exp(sqrt(x))+x^(1/3); VARS() after each). The simplify family,
- *  solve and zeros on the first leave assume(x>0); laplace and ilaplace leave x assumed too (and names that are not
- *  names, F-finding in G92's report); fourier_an and fourier_bn leave assume(n,integer), fourier_cn does not.
+ *  solve and zeros on the first leave assume(x>0); laplace and ilaplace leave x assumed too (ilaplace also left an entry
+ *  under a freed name, G92's report, until patch 0042, G170); fourier_an and fourier_bn leave assume(n,integer), fourier_cn does not.
  *  tests/engine/assume-canary.ts checks that simplify and fourier_an still do. */
 export const ASSUMING_WORDS: readonly string[] = [
   "simplify", "simplifier", "trigsimplify", "solve", "csolve", "zeros", "cZeros", "laplace", "ilaplace", "fourier_an", "fourier_bn",

@@ -1,0 +1,46 @@
+# Upstream: giac 2.1.0 signalprocessing.cc ilaplace2 (L. Marohnic's periodic summation, called first by desolve.cc ilaplace): sto(gen(makevecteur(change_subtype(2,1)),_ASSUME__VECT),n,contextptr) assumes the local name n=identificateur(" n") an integer, and nothing purges it (the _purge line above it is commented out). sto keys the global variable table by the name's character pointer (usual.cc sto, (*symtabptr)[name]=aa), which the local identificateur owns and frees when it dies, so after every ilaplace the table kept an entry under freed memory: VARS() after ilaplace(1/(x^2+1)) printed [^A,...], its bytes changing after each later call, and each later ilaplace added one more such entry (backlog F89). Now n is assumed an integer only around the _sum that reads it, by a scope guard that purges it (purgenoassume, as laplace does for its own temporary name) when the scope ends, an error or an interrupt too; the answers do not change.
+# Changed by Pascaline contributors, 2026-11-11
+--- a/src/signalprocessing.cc
++++ b/src/signalprocessing.cc
+@@ -5092,13 +5092,28 @@
+     return true;
+ }
+ 
++// Pascaline patch 0042 (G170): sto keys the variable table's entry by the name's own characters (usual.cc sto,
++// (*symtabptr)[name]=aa), which the local name n owns. The assumption stored on n here was never purged, so after
++// ilaplace2 returned the table kept an entry under a freed name: VARS() after ilaplace(1/(x^2+1)) listed an entry of
++// garbage bytes, and every later lookup compared names with freed memory. Now n is assumed an integer only around the
++// sum that reads it, and purged when that scope ends (an error or an interrupt too).
++struct ilaplace2_integer_name {
++    gen n;
++    const context * ctx;
++    ilaplace2_integer_name(const gen &n_,const context * ctx_):n(n_),ctx(ctx_) {
++        sto(gen(makevecteur(change_subtype(2,1)),_ASSUME__VECT),n,ctx);
++    }
++    ~ilaplace2_integer_name() {
++        try { purgenoassume(n,ctx); } catch (...) {}
++    }
++};
++
+ bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {
+     if (s.type!=_IDNT || x.type!=_IDNT)
+         return false;
+     vecteur f,a;
+     gen F,h,n=identificateur(" n"),k=identificateur(" k");
+     //_purge(makesequence(n,k),contextptr);
+-    sto(gen(makevecteur(change_subtype(2,1)),_ASSUME__VECT),n,contextptr);
+     orig=0;
+     expand_lt(g,s,f,a,contextptr);
+     if (a.empty())
+@@ -5117,7 +5132,10 @@
+         orig+=_periodic(makesequence(h,*x._IDNTptr,0,T),contextptr);
+         h=ratnormal(eval_for_x_in_ab(F,*x._IDNTptr,T,plus_inf,contextptr),contextptr);
+         if (!is_zero(h)) {
+-            h=_sum(makesequence(subst(h,x,x-T*(k-1),false,contextptr),k,1,n),contextptr);
++            {
++                ilaplace2_integer_name n_integer(n,contextptr);
++                h=_sum(makesequence(subst(h,x,x-T*(k-1),false,contextptr),k,1,n),contextptr);
++            }
+             orig+=subst(h,n,_floor(x/T,contextptr),false,contextptr)*_Heaviside(x-T,contextptr);
+         }
+     }
