@@ -9,7 +9,8 @@
 import type { GiacParse } from "./bridge.ts";
 import { FLAG_WORDS } from "./flags.ts";
 import { isOurStore } from "./ourNames.ts";
-import { afterStore, wordsOf } from "./giacPrint.ts";
+import { afterStore, leadingName, wholeCall, wordsOf } from "./giacPrint.ts";
+import { putBack } from "./assumed.ts";
 
 /**
  * G174 (F96): Giac's commands that store into a name given as an argument, a name no store node of the tree holds (giac
@@ -20,16 +21,19 @@ import { afterStore, wordsOf } from "./giacPrint.ts";
  * (1609), inverser 407; vecteur.cc: jordan 15561 and rat_jordan 15571 (15542); plot.cc: point2d and point3d (each name a
  * random point, point2d3d 3950); prog.cc: convert 9153 (a continued fraction), member 10136; misc.cc: clear 770; rpn.cc:
  * ADDROW 1445, ADDCOL 1483, SWAPCOL 1547, SUB 1615–1621, RANDMAT 1649–1653, REDIM 1703, REPLACE 1736–1801, INPUT 2722;
- * quater.cc: GF 372–374 (the field K and its generator g, assigned on purpose: "Now e.g. g^200+1 will build an element of
- * K"); graphtheory.cc (identifier_assign): draw_graph 2152, is_regular 3732, is_strongly_regular 3764,
+ * graphtheory.cc (identifier_assign): draw_graph 2152, is_regular 3732, is_strongly_regular 3764,
  * number_of_triangles 4005, is_planar 4119, is_eulerian 4527, chromatic_number 5594, st_ordering 6150, is_bipartite
  * 6217, is_vertex_colorable 6305, find_cliques 6415, is_isomorphic 6549, is_subgraph_isomorphic 6606, is_hamiltonian
- * 6801, maxflow 7018. gbasis and syzygy store Giac's own names (GIAC_SCRATCH).
+ * 6801, maxflow 7018. gbasis and syzygy store Giac's own names (GIAC_SCRATCH). Not GF: its K and g are the user's (quater.cc
+ * 368–374 assigns them on purpose, "Now e.g. g^200+1 will build an element of K"), but g holds a field element that
+ * prints as its own name, which a state read takes for a leaked assumption (G92 purges it) and the log cannot replay
+ * (K's printed value has four arguments; only the three-argument branch assigns, 336–374): GF keeps them for the session
+ * only (decisions.md, G174).
  */
 export const ARG_STORE_HEADS: readonly string[] = [
   "SortA", "SortD", "Fill", "mRow", "mRowAdd", "rowAdd", "rowSwap", "LU", "QR", "CopyVar", "NewPic", "igcdex", "gcdex", "rowspace",
   "colspace", "delrows", "delcols", "inverser", "jordan", "rat_jordan", "point2d", "point3d", "convert", "member", "clear", "ADDROW",
-  "ADDCOL", "SWAPCOL", "SUB", "RANDMAT", "REDIM", "REPLACE", "INPUT", "GF", "draw_graph", "is_regular", "is_strongly_regular",
+  "ADDCOL", "SWAPCOL", "SUB", "RANDMAT", "REDIM", "REPLACE", "INPUT", "draw_graph", "is_regular", "is_strongly_regular",
   "number_of_triangles", "is_planar", "is_eulerian", "chromatic_number", "st_ordering", "is_bipartite", "is_vertex_colorable",
   "find_cliques", "is_isomorphic", "is_subgraph_isomorphic", "is_hamiltonian", "maxflow",
 ];
@@ -57,6 +61,30 @@ export const STATE_HEADS: ReadonlySet<string> = new Set([
 /** G174 (F87): the commands that clear every name and answer Giac's list of them (maple.cc:492 _restart, usual.cc:251
  *  _rm_all_vars, which restart_vars is): the list holds our names and the Ans slot, which the host leaves out. */
 export const CLEARING_HEADS: ReadonlySet<string> = new Set(["restart", "restart_vars", "rm_all_vars"]);
+
+/** G174 (F87): `text` is one of CLEARING_HEADS alone, bare (`restart`) or as one call (`restart(0)`). */
+export function clearingCall(text: string): boolean {
+  const name = leadingName(text);
+  return name !== null && CLEARING_HEADS.has(name) && (text.trim() === name || wholeCall(text, name, "typed") !== null);
+}
+
+/** G174: `text`, or a stored program it reaches (`kept`, walked as writesThrough), calls a head of GIAC_SCRATCH. */
+export function writesScratch(text: string, kept: (name: string) => ProgramStores | null): boolean {
+  const scratch = (w: string): boolean => Object.hasOwn(GIAC_SCRATCH, w);
+  const words = wordsOf(text);
+  if (words.some(scratch)) return true;
+  return writesThrough(words, (n) => {
+    const k = kept(n);
+    return k && { writes: k.writes.filter((w) => scratch(w.slice(0, -1))), calls: k.calls };
+  });
+}
+
+/** G174: the Giac text that takes GIAC_SCRATCH's names back from Giac: a name the user typed stays, a logged one goes back
+ *  to its entry, any other is purged (a purge of a free name answers a string, no error). */
+export function scratchBack(typed: ReadonlySet<string>, logged: (name: string) => { name: string; cmds: readonly string[] } | undefined): string {
+  const names = [...new Set(Object.values(GIAC_SCRATCH).flat())].filter((n) => !typed.has(n));
+  return putBack(names.filter((n) => !logged(n)), names.flatMap((n) => logged(n) ?? []));
+}
 
 /** G174 (F96): Giac's commands that need what N62 has not got, refused before they run: debug turns on Giac's step mode
  *  (prog.cc:6163–6167), whose loop asks the browser's prompt() (6728), so "prompt is not defined" is thrown out of the

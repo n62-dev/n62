@@ -218,6 +218,24 @@ describe.skipIf(!giacAvailable())("G174: names stored through an argument, Giac'
     expect(casText(host, "lastv")).toBe("7");
   });
 
+  it("wz_certificate leaves no assumption on k or n (Giac's own, intg.cc:6402), and answers as Giac does", async () => {
+    const input = "wz_certificate((-1)^k*binomial(n,k)/2^n)";
+    const want = (await loadNodeGiac()).giac.eval(input);
+    const host = await nodeHost();
+    const r = host.cas(input, defaultCasSettings);
+    expect(r.result.text).toBe(want);
+    expect(setNames(r.defs)).toEqual([]);
+    expect([host.giac.eval("about(k)"), host.giac.eval("about(n)")]).toEqual(["k", "n"]);
+  });
+
+  it("guard: GF(2,8) keeps K and g for the session (the log cannot hold g; decisions.md, G174): g^200+1 is in the field", async () => {
+    const raw = (await loadNodeGiac()).giac;
+    raw.eval("GF(2,8)");
+    const host = await nodeHost();
+    host.cas("GF(2,8)", defaultCasSettings);
+    expect(casText(host, "g^200+1")).toBe(raw.eval("g^200+1"));
+  });
+
   it("debug(f(2)) is refused in Home and CAS, and f(3) still gives 4", async () => {
     const host = await nodeHost();
     host.home("f(x):=x+1", defaultHomeSettings);

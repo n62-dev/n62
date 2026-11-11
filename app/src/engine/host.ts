@@ -38,7 +38,7 @@ import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
-import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
+import { assignmentIn, clearingCall, formIn, formOf, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
 import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
@@ -408,6 +408,8 @@ export class EngineHost implements FactsHost {
     const logged = [...this.byName.values()].filter((e) => e.kind === "assume").map((e) => e.name);
     const assumed = keep ? [...new Set([...logged, ...this.assumedBy(input)])] : logged;
     const risky = this.assumeRisk || this.callsDefining(input, namesAssuming, true);
+    // G174: Giac's own names (gbasis's lastgb, lastv) go before the state is read; a logged one goes back to its entry
+    if (state === true && writesScratch(input, (n) => this.keptOf(n))) this.giac.eval(scratchBack(typed, (n) => this.byName.get(n)));
     let stateNode = state ? parsePrinted(this.giac.eval(cands ? changedPart(this.modeDigits, known, assumed) : statePart(this.modeDigits, assumed))) : null;
     const leakNode = stateNode ?? (risky ? parsePrinted(this.giac.eval(leakPart([...this.stored.keys(), ...this.skipped], assumed))) : null);
     const purged = leakNode ? this.assumptionsBack(input, leakNode, assumed, typed, keep) : [];
@@ -567,6 +569,24 @@ export class EngineHost implements FactsHost {
 
   /** G168 (F109): the input is `name()` of a name that is neither Giac's, nor stored in this engine, nor one of our
    *  library definitions (Giac drops the empty call: `type(DelAVars())` is identifier), so no value and no refusal would come. */
+  /** G174: refused before Giac runs it: a command N62 cannot serve (NOT_HERE_HEADS, from the tree), or G168's empty call. */
+  private refusedFirst(input: string): "notHere" | "unknownFunction" | null {
+    if (wordsOf(input).some((w) => NOT_HERE_HEADS.has(w)) && this.treeOf(input).heads.some((h) => NOT_HERE_HEADS.has(h))) return "notHere";
+    return this.unknownEmptyCall(input) ? "unknownFunction" : null;
+  }
+
+  /** G174 (F87): restart, restart_vars or rm_all_vars alone (stores.ts clearingCall). Giac's answer lists every name it
+   *  cleared, ours and the Ans slot among them (storing it in the slot is a recursive definition), so the command runs
+   *  alone; the answer to evaluate is the list of the user's names it cleared (G93's lost, of the call after it). */
+  private clearing(input: string, mode: () => void): { post: AfterInput; answer: string } | null {
+    if (!clearingCall(input)) return null;
+    this.need(input);
+    mode();
+    this.giac.eval(input);
+    const post = this.after(input, false, true);
+    return { post, answer: `[${[...post.lost].sort().join(",")}]` };
+  }
+
   private unknownEmptyCall(input: string): boolean {
     const name = leadingName(input.trim());
     if (name === null || wholeCall(input, name, "typed")?.join("") !== "") return false;
@@ -811,9 +831,10 @@ export class EngineHost implements FactsHost {
     this.assumeRisk = false;
     // G91: a precision with no name in it (`approx(e,2*10)`) is read as the literal it gives
     const input = askedLiterals(this.giac, typed, () => this.useHomeMode(s));
-    const out = this.homeTabled(input, s, consts, chips);
+    const cleared = this.clearing(input, () => this.useHomeMode(s));
+    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips);
     // G67, G65: the call after the input, if the run did not make it (an error: a syntax error ran nothing)
-    const post = this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
+    const post = cleared?.post ?? this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
     out.defs = this.followLost(post, out.defs);
     this.commit(post);
     return post.reset ? { ...out, result: { ...out.result, settingReset: true } } : out;
@@ -859,10 +880,11 @@ export class EngineHost implements FactsHost {
     this.need(input);
     this.useHomeMode(s);
     const t0 = performance.now();
-    if (this.unknownEmptyCall(input)) {
-      const display = enEngine["error.unknownFunction"];
+    const first = this.refusedFirst(input);
+    if (first) {
+      const display = enEngine[`error.${first}`];
       const ms = performance.now() - t0;
-      return { result: { ok: false, display, path: "float-error", approximate: false, exactMs: ms, totalMs: ms, error: "unknownFunction", ...safePrecision(display) }, defs: [] };
+      return { result: { ok: false, display, path: "float-error", approximate: false, exactMs: ms, totalMs: ms, error: first, ...safePrecision(display) }, defs: [] };
     }
     let result: HomeResult;
     // G100: a chip's or constant's input brings the form of its typed text (homeTabled), the value cut from this one
@@ -934,10 +956,11 @@ export class EngineHost implements FactsHost {
     const input = askedLiterals(this.giac, typed, () => this.useCasMode(s));
     const used = this.usesOf(input);
     this.post = null;
-    const out = this.casRun(input, s);
+    const cleared = this.clearing(input, () => this.useCasMode(s));
+    const out = this.casRun(cleared?.answer ?? input, s);
     if (used.length && out.result.ok) out.result.uses = used;
     // G67, G65: the call after the input, if the run did not make it (an error or a refusal)
-    const post = this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
+    const post = cleared?.post ?? this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
     out.defs = this.followLost(post, out.defs);
     this.commit(post);
     if (post.reset) out.result.settingReset = true;
@@ -952,7 +975,8 @@ export class EngineHost implements FactsHost {
       result: { ok: false, text, latex: "", timedOut: error === "timeout", error, engineMs: performance.now() - t0, facts: { exact: false, reliableDigits: null } },
       defs: [],
     });
-    if (this.unknownEmptyCall(input)) return fail(enEngine["error.unknownFunction"], "unknownFunction");
+    const first = this.refusedFirst(input);
+    if (first) return fail(enEngine[`error.${first}`], first);
     // P9 (docs/04 section 2.9): typed decimals are exact rationals, as in Home; approx() gives decimals.
     const exactInput = toExactLiterals(input);
     const test = input.includes(EQ_INEXACT_FLAG);
