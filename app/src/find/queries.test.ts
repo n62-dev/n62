@@ -19,7 +19,9 @@ const indexJson = existsSync(indexFile) ? readFileSync(indexFile, "utf8") : "[]"
 const hasIndex = (JSON.parse(indexJson) as IndexItem[]).some((it) => it.kind === "unit"); // functions only = --no-units
 
 interface Query { query: string; expect: string; where?: "slot"; note?: string; status?: "pending" }
-const doc = parse(readFileSync(join(here, "../../../tests/tasks/find-queries.yaml"), "utf8")) as { schema: number; queries: Query[] };
+/** G321: a bare name finds every variant (`items`: id → a word its title holds); `none` is an id no item may have. */
+interface Variant { query: string; items: Record<string, string>; none?: string }
+const doc = parse(readFileSync(join(here, "../../../tests/tasks/find-queries.yaml"), "utf8")) as { schema: number; queries: Query[]; variants: Variant[] };
 const active = doc.queries.filter((q) => q.status !== "pending");
 /** G161: `expect: none` rows say what must not be found; the others name the item to find. */
 const found = active.filter((q) => q.expect !== "none");
@@ -96,6 +98,18 @@ describe.skipIf(!hasIndex)("Find index and query test", () => {
   it("finds no unit for a gauge reading (G161: psig is not psi, barg not bar)", () => {
     const wrong = absent.map((q) => ({ q: q.query, units: search(index, q.query, ctxOf(q)).slice(0, 3).filter((h) => h.item.kind === "unit").map((h) => h.item.id) }));
     expect(wrong.filter((w) => w.units.length)).toEqual([]);
+  });
+
+  it("G321: a bare name finds the US and UK variants, each with its country in its title; no item keeps the bare id", () => {
+    expect(doc.variants.length).toBeGreaterThan(0);
+    for (const v of doc.variants) {
+      const top = search(index, v.query).slice(0, 3).map((h) => h.item.id);
+      for (const [id, word] of Object.entries(v.items)) {
+        expect(top, `${v.query} -> ${id}`).toContain(id);
+        expect(byId.get(id)?.title, id).toContain(word);
+      }
+      if (v.none) expect(byId.has(v.none), v.none).toBe(false);
+    }
   });
 
   it("takes well under 16 ms per key on the desktop (the device gate is ?bench=find)", () => {

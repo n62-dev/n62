@@ -101,6 +101,20 @@ defined:
 dropNames:
   "unit:tr": [rev, revolution, cyc, cycle]
 
+# explicit (G321; owner, 2026-11-10: "A bare name means the metric or international unit … US and UK variants carry
+#   explicit names"): a unit whose factor in find/factors.yaml is a US customary measure carries `suffix` in its id. The
+#   rule reads the factor, not a list of ids: `numerator` the factors of the US liquid gallon (231 in³ = 473176473/
+#   125000000000 m³; 157725491 = 473176473/3) and of the US dry gallon (220244188543); `denominator` the US gallon's
+#   factor left in a quotient by it (mpg: 473176473 = 4191 × 112903); `si` the US hundredweight of 100 lb (the UK one,
+#   l_cwt, is 112 lb). `except`: the oil barrel of 42 US gallons, one unit worldwide (its Find title says so). The
+#   generator fails on an id that breaks it (app/src/find/factors.test.ts also reads factors.yaml with it).
+explicit:
+  suffix: _US
+  numerator: ["473176473", "157725491", "220244188543"]
+  denominator: ["112903"]
+  si: ["45359237/1000000"]
+  except: [bbl]
+
 checks:
   # length, mass, force, pressure (international yard and pound, 1959; standard gravity 9.80665)
   "unit:in": { si: "0.0254" }
@@ -127,8 +141,11 @@ checks:
   "unit:mph": { si: "1609.344/3600" }
   "unit:knot": { si: "1852/3600" }
   "unit:L": { si: "0.001" }
-  "unit:gal": { si: "231*0.0254*0.0254*0.0254" }
+  "unit:gal_US": { si: "231*0.0254*0.0254*0.0254" }
   "unit:gal_UK": { si: "0.00454609" }
+  # the metric cup (ours, `defined`) and the US food-label cup (21 CFR 101.9(b)(5)(viii): 240 mL), qalc's "cup" (G321)
+  "unit:cup": { si: "0.00025" }
+  "unit:cup_US_label": { si: "0.00024" }
   # energy, power (thermochemical and IT calorie, IT Btu; mechanical horsepower = 550 ft·lbf/s)
   "unit:cal": { si: "4.184" }
   "unit:cal_IT": { si: "4.1868" }

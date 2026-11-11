@@ -8,7 +8,9 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
+import { explicitProblems } from "../../../tools/find-index/units-items.mjs";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const giac = join(process.env.N62_DL_DIR ?? join(repo, "engine/giac/_downloads"), "giac_2.1.0-1.tar.gz"); // G77: the pin (build-wasm.sh)
@@ -21,6 +23,17 @@ const INDEX_SHA256 = "b7ee6258a562b23694325146ffdca13a17d08d2002e90c69b63cc45c6f
 describe("factors.yaml", () => {
   it("exists", () => {
     expect(existsSync(join(repo, "find/factors.yaml"))).toBe(true);
+  });
+  it("G321: a bare id is the metric or international unit, a US measure carries _US (find/units.yaml explicit)", () => {
+    const read = (f: string): Record<string, unknown> => parse(readFileSync(join(repo, f), "utf8")) as Record<string, unknown>;
+    const units = read("find/factors.yaml")["units"] as Record<string, { si?: string }>;
+    const rule = read("find/units.yaml")["explicit"] as { suffix: string; except: string[] };
+    expect(rule.suffix).toBe("_US");
+    expect(rule.except).toEqual(["bbl"]);
+    expect(explicitProblems(units, rule)).toEqual([]);
+    // the rule reads the factor: the US gallon, the dry bushel, mpg and the 100 lb hundredweight are caught under any id
+    const probe = { a: { si: "473176473/125000000000" }, b: { si: "220244188543/6250000000000" }, c: { si: "48000000000/112903" }, d: { si: "45359237/1000000" }, e: { si: "454609/100000000" }, bbl: { si: "9936705933/62500000000" } };
+    expect(explicitProblems(probe, rule)).toEqual(["a (473176473/125000000000)", "b (220244188543/6250000000000)", "c (48000000000/112903)", "d (45359237/1000000)"]);
   });
   it.skipIf(!have && !required)("builds the Find index byte for byte without the qalc build", { timeout: 120_000 }, () => {
     const dir = mkdtempSync(join(tmpdir(), "factors-"));
