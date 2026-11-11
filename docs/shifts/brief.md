@@ -95,7 +95,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 644 | [G318](packages/G318.md) an engine that cannot start stops after two tries (arch review N2) | gorge, Opus | `p1/gorge-startcap` | – |
+| 644 | G318 an engine that cannot start stops after two tries (arch review N2) | gorge, Opus | `p1/gorge-startcap` | – |
 | 645 | [G322](packages/G322.md) `solve` keeps the real root of a cubic (arch review H2) | gorge, Opus | `p1/gorge-solvecount` | – |
 | 646 | [G319](packages/G319.md) the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
 | 647 | [G320](packages/G320.md) CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
