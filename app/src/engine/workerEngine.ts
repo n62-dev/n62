@@ -340,7 +340,8 @@ export class WorkerEngine implements MathEngine {
     // A crash (e.g. out of memory) rejects what is pending and takes the same restart + replay path as Cancel. G318:
     // before ready it is a load error (a worker script that is gone: no message; a browser without module workers)
     // unless its text names memory (`out of memory`, `Cannot enlarge memory`, `could not allocate memory`). A failed
-    // init is classed in the worker (dead.ts startDead); this is the start chunk's short form of its rule.
+    // init is classed in the worker (dead.ts startDead); this is the start chunk's short form of its namesMemory, held
+    // to startDead's cases by workerEngine.startcap.test.ts with the differences named (ONERROR_DIFFERS).
     w.onerror = (ev) => {
       if (this.worker === w) this.restart(new (this.reached || ev.message?.includes("memory") ? EngineMemoryError : EngineLoadError)(ev.message), true);
     };

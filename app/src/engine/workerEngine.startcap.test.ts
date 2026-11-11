@@ -131,24 +131,60 @@ describe("WorkerEngine: an engine that cannot start (G318)", () => {
   });
 });
 
+/** startDead's cases (G318): a failed init's error, and the class it gets. */
+const START_CASES: readonly (readonly [Error, "memory" | "crash" | "load"])[] = [
+  // measured on 2026-11-10 with the dev engine and no giac.wasm beside it; deadEngine says memory (any abort)
+  [new Error("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')"), "load"],
+  [new Error("Aborted(both async and sync fetching of the wasm failed)"), "load"],
+  // Chrome's text when the wasm memory cannot be reserved (from memory, not measured); deadEngine says null
+  [new RangeError("WebAssembly.Memory(): could not allocate memory"), "memory"],
+  [new Error("Aborted(OOM)"), "memory"],
+  [new Error("Cannot enlarge memory arrays to size 1073807360 bytes"), "memory"],
+  [new Error("out of memory"), "memory"],
+  [new RangeError("Maximum call stack size exceeded"), "crash"],
+  [new WebAssembly.RuntimeError("memory access out of bounds"), "crash"],
+  [new WebAssembly.RuntimeError("unreachable"), "crash"],
+  [new Error("boom"), "load"],
+];
+
+/**
+ * Where an onerror before ready classes a text otherwise than startDead classes the error it came from, by the error's
+ * message; every other case must agree. The onerror check is the start chunk's short form (`includes("memory")`), and a
+ * failed init never takes that path: host.ts catches it and replies with startDead's class, so only an error thrown
+ * outside a request reaches it. Accepted:
+ * - an error event carries only a text (`Uncaught RangeError: …`), never the error, so it cannot tell a trap or a stack
+ *   overflow (a crash to startDead, by its instance or its whole message) from another failure;
+ * - `OOM` alone does not count as memory there: the full rule (namesMemory's regex) measured +13 to +26 B of start-chunk
+ *   gzip against 5 B of room under R91's pin (2026-11-11). Either way the start stops after two tries.
+ */
+const ONERROR_DIFFERS: Readonly<Record<string, "memory" | "load">> = {
+  "Aborted(OOM)": "load",
+  "Maximum call stack size exceeded": "load",
+  "memory access out of bounds": "memory",
+  unreachable: "load",
+};
+
 describe("startDead (G318): the class of a failed init, by when it happened", () => {
   it("load unless the text names memory; a trap or a stack overflow is a crash; a running engine's class is deadEngine's, unchanged", () => {
-    // measured on 2026-11-10 with the dev engine and no giac.wasm beside it; deadEngine says memory (any abort)
-    const enoent = new Error("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')");
-    expect(startDead(enoent)).toBe("load");
-    expect(deadEngine(enoent)).toBe("memory");
-    const fetchFailed = new Error("Aborted(both async and sync fetching of the wasm failed)");
-    expect(startDead(fetchFailed)).toBe("load");
-    expect(deadEngine(fetchFailed)).toBe("memory");
-    // Chrome's text when the wasm memory cannot be reserved (from memory, not measured); deadEngine says null
-    const reserve = new RangeError("WebAssembly.Memory(): could not allocate memory");
-    expect(startDead(reserve)).toBe("memory");
-    expect(deadEngine(reserve)).toBeNull();
-    expect(startDead(new Error("Aborted(OOM)"))).toBe("memory");
-    expect(startDead(new Error("Cannot enlarge memory arrays to size 1073807360 bytes"))).toBe("memory");
-    expect(startDead(new Error("out of memory"))).toBe("memory");
-    expect(startDead(new RangeError("Maximum call stack size exceeded"))).toBe("crash");
-    expect(startDead(new Error("boom"))).toBe("load");
+    for (const [e, kind] of START_CASES) expect([e.message, startDead(e)]).toEqual([e.message, kind]);
+    expect(deadEngine(START_CASES[0]![0])).toBe("memory");
+    expect(deadEngine(START_CASES[1]![0])).toBe("memory");
+    expect(deadEngine(START_CASES[2]![0])).toBeNull();
+  });
+
+  it("an onerror before ready classes each case's text as startDead classes the error, but for the differences named", async () => {
+    const classes = { memory: EngineMemoryError, crash: EngineCrashError, load: EngineLoadError };
+    for (const [e, kind] of START_CASES) {
+      const { engine } = failing({ error: `Uncaught ${e.name}: ${e.message}` });
+      const got = await outcome(engine.ready());
+      engine.dispose();
+      expect([e.message, got]).toEqual([e.message, expect.any(classes[ONERROR_DIFFERS[e.message] ?? kind])]);
+    }
+    // a difference that is no longer one is taken off the list
+    for (const text of Object.keys(ONERROR_DIFFERS)) {
+      const [e, kind] = START_CASES.find(([x]) => x.message === text)!;
+      expect([e.message, ONERROR_DIFFERS[text]]).not.toEqual([e.message, kind]);
+    }
   });
 
   it("host.ts marks a failed init with it", async () => {
