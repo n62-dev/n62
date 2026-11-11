@@ -383,15 +383,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  the engine build (vite.config.ts __GIAC_MJS__), so a branch with a new Giac patch moves the gzip size with the same raw size:
  *  phase-1 a7b802ec measures 172,709 B raw, 61,193 B gzip with phase-1's engine and 61,202 B gzip with G322's (patch 0043):
  *  61,202 B + 0.05 kB, rounded up.
- *  61,300 → 61,400 B (R284): the engine-failed note's words, its Reload button and its styles are in the lazy views/EngineFailed.svelte
- *  and i18n/enFail.ts; the start chunk holds the kind of the failure (Session.engineFailure, from the error's class), the guard in
- *  submit, and the import of that component (the effect, its state and the preload entry): phase-1 d7a0f8ff measures 61,22x B gzip
- *  (172,709 B raw), this branch 61,337 B (173,301 B raw): 61,337 B + 0.05 kB, rounded up.
- *  61,400 → 61,450 B (R284 fix round 2): the Reload button (its markup, its `engine.reload` string, one rule) moved from the lazy chunk
- *  into the start chunk, so the way on does not depend on a chunk fetched over the network that may be down; the words and the
- *  button's look stay lazy. Measured 61,42x B gzip (173,6xx B raw): 61,42x B + 0.03 kB, rounded up.
- *  61,450 → 61,600 B (merge of phase-1 into R284, which brings G174's refusal text error.notHere, +39 B raw, and the engine build's
- *  newer base): the merged build measures 173.84 kB raw, 61,53x B gzip: 61,53x B + 0.05 kB, rounded up. */
+ *  61,400 → 61,600 B (R284, R284f1): the engine-failed note's way on is in the start chunk and its words and look are not: the
+ *  kind of the failure (Session.engineFailure, from the error's class), the guard in submit, the Reload button (its markup, its
+ *  `engine.reload` string, one rule; it must not depend on a chunk fetched over a network that may be down), and the idle import
+ *  of the lazy views/EngineFailed.svelte (the effect, its state, the preload entry); the words (i18n/enFail.ts) and the button's
+ *  look stay in the lazy chunk. phase-1 43cb1a7d (G174 and R285) is 61,303 B gzip (172,954 B raw) at its last pin measure; the
+ *  branch merged with it measures 61,537 B gzip (173,844 B raw): 61,537 B + 0.05 kB, rounded up to the next 50 B. */
 export const START_PIN_GZIP = 61_600;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
