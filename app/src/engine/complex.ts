@@ -4,7 +4,7 @@
 // through our definition (pasatan); a stored name or user function that calls it is read through a copy
 // (complexReads). Split from numeric.ts (cleanup 2026-10-20, item 13). Synchronous, UI-free; only erasable TypeScript.
 import { AUDITED_FUNCTIONS, namePrint, type Giac } from "./numeric.ts";
-import { functionsIn, isError, leadingName, names, namesIn, programParams, PROGRAM_WORDS, type Quoting, renameCalls, renameNames, topLevelArgs } from "./giacPrint.ts";
+import { functionsIn, isError, isProgramWord, leadingName, names, namesIn, programParams, type Quoting, renameCalls, renameNames, topLevelArgs } from "./giacPrint.ts";
 
 /**
  * G50 (deep check 2026-10-19 D10), G60: our definitions for the functions whose complex values Giac gets wrong. Left:
@@ -82,7 +82,7 @@ export function complexReads(giac: Giac, expr: string, copy = true): { text: str
   // a program word (`local`, `else`, `return`) is no name: Giac asked it bare gives a parse error, never a stored text.
   const stored = (n: string): string | null => {
     if (known.has(n)) return known.get(n)!;
-    if (Object.hasOwn(COMPLEX_REPLACED, n) || Object.hasOwn(COMPLEX_DEFINITIONS, n) || AUDITED_FUNCTIONS.has(n) || PROGRAM_WORDS.has(n)) return null;
+    if (Object.hasOwn(COMPLEX_REPLACED, n) || Object.hasOwn(COMPLEX_DEFINITIONS, n) || AUDITED_FUNCTIONS.has(n) || isProgramWord(n)) return null;
     if (known.size >= MAX_READS) {
       capped = true;
       return null;

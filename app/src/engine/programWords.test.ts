@@ -6,7 +6,7 @@
 // 3, 7/3, sqrt(7/3), sqrt(14)/3, 1, 4, as home.yaml g223f1-approx-stats1).
 import { beforeAll, describe, expect, it } from "vitest";
 import { complexReads } from "./complex.ts";
-import { PROGRAM_WORDS } from "./giacPrint.ts";
+import { isProgramWord } from "./giacPrint.ts";
 import type { EngineHost } from "./host.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { giacAvailable, nodeHost } from "./nodeGiac.ts";
@@ -25,7 +25,7 @@ describe("G223f1 complexReads asks no program word", () => {
     };
     complexReads(giac, "f223(1)");
     expect(asked).toEqual(["f223", "w"]);
-    expect(asked.filter((s) => PROGRAM_WORDS.has(s))).toEqual([]);
+    expect(asked.filter((s) => isProgramWord(s))).toEqual([]);
   });
 });
 

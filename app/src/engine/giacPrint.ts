@@ -352,8 +352,9 @@ export const KEYWORDS: ReadonlySet<string> = new Set([
 /** G223f1: the words Giac's printer writes in a program that no user's name can be: KEYWORDS, `for` (a built-in) and
  *  `return` (Giac reads `return(x):=x` as return(x:=x), so it never holds a definition). A program's body is read for
  *  the names it uses (complexReads); none of these is one, and Giac asked a bare `local`, `else` or `then` gives a parse
- *  error (`undef`), which ended the whole input as a syntax error. */
-export const PROGRAM_WORDS: ReadonlySet<string> = new Set([...KEYWORDS, "for", "return"]);
+ *  error (`undef`), which ended the whole input as a syntax error. A function, not a Set spread from KEYWORDS: the
+ *  bundler keeps a module-level spread in the start chunk (giacPrint.ts is in it), +0.10 kB gzip (R91 pin). */
+export const isProgramWord = (w: string): boolean => KEYWORDS.has(w) || w === "for" || w === "return";
 
 /** A name as Giac's language writes one. */
 export const NAME = "[A-Za-z_][A-Za-z0-9_]*";
