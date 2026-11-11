@@ -292,6 +292,52 @@ cases:
   - { id: "g223-stats1-empty", input: "stats1([])", expect: "The list is empty", source: "derived", note: "no value: no mean, no deviation" }
   - { id: "g223-stats1-one", input: "stats1([5])", expect: "A sample deviation needs at least two values", source: "derived", note: "s divides by n-1 = 0; Giac's stddevp([5]) is undef" }
   - { id: "g223-stats1-complex", input: "stats1([1,i])", expect: "Needs lists of real numbers", source: "derived", note: "complex numbers have no min or max" }
+  # --- G229 (docs/04 5.4): shl, shr, rotl, rotr, bnot respect the word size (8, 16, 32, 64) and sign; ours (wordOps.ts), the oracle in Python ints ---
+  - { id: "g229-shl-8-out", input: "shl(1,8,8,0)", oracle: "shl(1,8,8,0)", expect: "0", mark: "=", source: "oracle", note: "G229: Giac had no such name and printed the call unevaluated; the bit leaves the 8-bit word" }
+  - { id: "g229-shl-8-top", input: "shl(1,7,8,0)", oracle: "shl(1,7,8,0)", expect: "128", mark: "=", source: "oracle", note: "the top bit of an unsigned byte is 128" }
+  - { id: "g229-shl-8-signed", input: "shl(1,7,8,1)", oracle: "shl(1,7,8,1)", expect: "-128", mark: "=", source: "oracle", note: "the same pattern read signed (two's complement) is -128" }
+  - { id: "g229-shr-8", input: "shr(128,1,8,0)", oracle: "shr(128,1,8,0)", expect: "64", mark: "=", source: "oracle", note: "logical shift of an unsigned byte" }
+  - { id: "g229-shr-8-signed", input: "shr(-128,1,8,1)", oracle: "shr(-128,1,8,1)", expect: "-64", mark: "=", source: "oracle", note: "arithmetic shift: the sign bit is copied in" }
+  - { id: "g229-shr-8-signed-all", input: "shr(-128,8,8,1)", oracle: "shr(-128,8,8,1)", expect: "-1", mark: "=", source: "oracle", note: "every bit shifted out of a negative signed word leaves -1 (all ones)" }
+  - { id: "g229-rotl-8", input: "rotl(129,1,8,0)", oracle: "rotl(129,1,8,0)", expect: "3", mark: "=", source: "oracle", note: "10000001 turned left is 00000011" }
+  - { id: "g229-rotr-8", input: "rotr(1,1,8,0)", oracle: "rotr(1,1,8,0)", expect: "128", mark: "=", source: "oracle", note: "the low bit turns round to the top" }
+  - { id: "g229-rotl-8-signed", input: "rotl(-128,1,8,1)", oracle: "rotl(-128,1,8,1)", expect: "1", mark: "=", source: "oracle", note: "10000000 turned left is 00000001" }
+  - { id: "g229-rotl-8-wrap", input: "rotl(1,9,8,0)", oracle: "rotl(1,9,8,0)", expect: "2", mark: "=", source: "oracle", note: "a rotation turns by n mod w: 9 mod 8 = 1" }
+  - { id: "g229-bnot-8", input: "bnot(5,8,0)", oracle: "bnot(5,8,0)", expect: "250", mark: "=", source: "oracle", note: "every bit of 00000101 flipped; Giac's bitnot(5) gives -6 whatever the word" }
+  - { id: "g229-bnot-8-signed", input: "bnot(5,8,1)", oracle: "bnot(5,8,1)", expect: "-6", mark: "=", source: "oracle", note: "the same pattern read signed" }
+  - { id: "g229-shl-16-signed", input: "shl(1,15,16,1)", oracle: "shl(1,15,16,1)", expect: "-32768", mark: "=", source: "oracle", note: "the 16-bit sign bit" }
+  - { id: "g229-shr-16-signed", input: "shr(-32768,15,16,1)", oracle: "shr(-32768,15,16,1)", expect: "-1", mark: "=", source: "oracle", note: "arithmetic shift of the 16-bit minimum" }
+  - { id: "g229-rotl-16", input: "rotl(32769,1,16,0)", oracle: "rotl(32769,1,16,0)", expect: "3", mark: "=", source: "oracle", note: "the top bit of 16 turns round to bit 0" }
+  - { id: "g229-rotr-16", input: "rotr(5,3,16,0)", oracle: "rotr(5,3,16,0)", expect: "40960", mark: "=", source: "oracle", note: "101 turned right by 3 puts bits 0 and 2 at 13 and 15" }
+  - { id: "g229-bnot-16", input: "bnot(255,16,0)", oracle: "bnot(255,16,0)", expect: "65280", mark: "=", source: "oracle", note: "the high byte of a 16-bit word set" }
+  - { id: "g229-shl-32", input: "shl(3,31,32,0)", oracle: "shl(3,31,32,0)", expect: "2147483648", mark: "=", source: "oracle", note: "bit 1 leaves the 32-bit word, bit 0 becomes the top" }
+  - { id: "g229-shl-32-signed", input: "shl(3,31,32,1)", oracle: "shl(3,31,32,1)", expect: "-2147483648", mark: "=", source: "oracle", note: "the same pattern read signed" }
+  - { id: "g229-shr-32", input: "shr(4294967295,4,32,0)", oracle: "shr(4294967295,4,32,0)", expect: "268435455", mark: "=", source: "oracle", note: "all ones shifted right by 4 (logical)" }
+  - { id: "g229-rotr-32", input: "rotr(1,1,32,0)", oracle: "rotr(1,1,32,0)", expect: "2147483648", mark: "=", source: "oracle", note: "the low bit turns round to bit 31" }
+  - { id: "g229-bnot-32", input: "bnot(5,32,0)", oracle: "bnot(5,32,0)", expect: "4294967290", mark: "=", source: "oracle", note: "32 bits flipped" }
+  - { id: "g229-bnot-32-signed", input: "bnot(5,32,1)", oracle: "bnot(5,32,1)", expect: "-6", mark: "=", source: "oracle", note: "read signed it is -6 at any word size" }
+  - { id: "g229-shl-64-signed", input: "shl(1,63,64,1)", oracle: "shl(1,63,64,1)", expect: "-9.22337203685E18", mark: "≈", exact: "-9223372036854775808", source: "oracle", note: "the 64-bit minimum; the copy holds every digit" }
+  - { id: "g229-rotr-64", input: "rotr(1,1,64,0)", oracle: "rotr(1,1,64,0)", expect: "9.22337203685E18", mark: "≈", exact: "9223372036854775808", source: "oracle", note: "2^63: the low bit turns round to bit 63" }
+  - { id: "g229-shl-default", input: "shl(1,63)", oracle: "shl(1,63)", expect: "9.22337203685E18", mark: "≈", exact: "9223372036854775808", source: "oracle", note: "the two-argument form: 64 bits, unsigned, until R194 makes them settings" }
+  - { id: "g229-shl-default-out", input: "shl(1,64)", oracle: "shl(1,64)", expect: "0", mark: "=", source: "oracle", note: "the two-argument form: the bit leaves the 64-bit word; 2^64 is never built for a count past the word" }
+  - { id: "g229-bnot-default", input: "bnot(5)", oracle: "bnot(5)", expect: "1.84467440737E19", mark: "≈", exact: "18446744073709551610", source: "oracle", note: "the one-argument form: 64 bits, unsigned" }
+  - { id: "g229-bnot-64-signed", input: "bnot(5,64,1)", oracle: "bnot(5,64,1)", expect: "-6", mark: "=", source: "oracle", note: "read signed it is -6" }
+  - { id: "g229-shl-in-sum", input: "2*shl(1,2)+1", oracle: "2*shl(1,2)+1", expect: "9", mark: "=", source: "oracle", note: "a word operation inside a larger input" }
+  - { id: "g229-shl-count-negative", input: "shl(1,-1,8,0)", expect: "The count must be a whole number, 0 or more", source: "derived", note: "a count below 0 is refused, not read as a shift the other way" }
+  - { id: "g229-shl-count-fraction", input: "shl(1,1/2,8,0)", expect: "The count must be a whole number, 0 or more", source: "derived", note: "a count that is no integer" }
+  - { id: "g229-rotl-count-negative", input: "rotl(1,-1,8,0)", expect: "The count must be a whole number, 0 or more", source: "derived", note: "rotations take a count of 0 or more too" }
+  - { id: "g229-shl-unsigned-over", input: "shl(256,1,8,0)", expect: "The value must be an integer that fits the word", source: "derived", note: "256 does not fit an unsigned byte (0 to 255)" }
+  - { id: "g229-shl-unsigned-negative", input: "shl(-1,1,8,0)", expect: "The value must be an integer that fits the word", source: "derived", note: "an unsigned word holds no negative value" }
+  - { id: "g229-shl-signed-over", input: "shl(128,1,8,1)", expect: "The value must be an integer that fits the word", source: "derived", note: "128 does not fit a signed byte (-128 to 127)" }
+  - { id: "g229-bnot-signed-under", input: "bnot(-129,8,1)", expect: "The value must be an integer that fits the word", source: "derived", note: "-129 does not fit a signed byte" }
+  - { id: "g229-shl-default-over", input: "shl(2^64,1)", expect: "The value must be an integer that fits the word", source: "derived", note: "2^64 does not fit the default 64-bit unsigned word" }
+  - { id: "g229-shl-32-over", input: "shl(2^32,0,32,0)", expect: "The value must be an integer that fits the word", source: "derived", note: "2^32 does not fit 32 bits" }
+  - { id: "g229-shl-value-fraction", input: "shl(1.5,1)", expect: "The value must be an integer that fits the word", source: "derived", note: "a typed 1.5 is the exact 3/2, no integer" }
+  - { id: "g229-shl-value-name", input: "shl(a,1)", expect: "The value must be an integer that fits the word", source: "derived", note: "an unknown a has no bits" }
+  - { id: "g229-shl-word-12", input: "shl(1,1,12,0)", expect: "The word size is 8, 16, 32 or 64; signed is 0 or 1", source: "derived", note: "a word of 12 bits is not offered (docs/04 5.4: 8, 16, 32, 64)" }
+  - { id: "g229-shl-sign-2", input: "shl(1,1,8,2)", expect: "The word size is 8, 16, 32 or 64; signed is 0 or 1", source: "derived", note: "signed is 0 or 1" }
+  - { id: "g229-shl-one-arg", input: "shl(1)", expect: "Needs a value, a count for a shift or rotation, then the word size and signed", source: "derived", note: "a shift needs a count" }
+  - { id: "g229-bnot-four-args", input: "bnot(1,8,0,1)", expect: "Needs a value, a count for a shift or rotation, then the word size and signed", source: "derived", note: "bnot takes a value, a word size and signed" }
   # --- G139 (night review 2026-10-30, be-10, vbe-1): eseries and sigfig decide on the exact x, through the decision check ---
   - { id: "g139-eseries-tie-1500-2200", input: "eseries(6,sqrt(1500*2200))", oracle: "F(2200)", expect: "2200", mark: "=", source: "derived", note: "x^2 = 1500·2200 exactly, the geometric mean of two E6 neighbours: a ratio tie goes up (eseries.ts); it showed = 1500 (x pinned to 30 digits)" }
   - { id: "g139-eseries-tie-3.3", input: "eseries(6,sqrt(33/10))", oracle: "F(11,5)", expect: "2.2", mark: "=", source: "derived", note: "x^2 = 1.5·2.2 exactly: up; it showed = 1.5" }
