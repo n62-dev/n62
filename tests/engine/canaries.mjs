@@ -64,6 +64,14 @@ const ROWS = [
     ["1-0.9-0.1"], ([a]) => a === "1.7763568394e-15"],
 ];
 
+// G322 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
+// its patch (a stock pin, or a build that lost it), never when upstream fixes the cause (patch-canary.ts says that).
+// [patch, what it fixes, [Digits, input, the output our build gives]…]
+const PATCHED = [
+  ["0043-solve-ckrange-imag-noise.patch", "solve keeps the real root of a cubic with one irrational real root at Digits > 14 (stock giac_2.1.0-1: [] for x^3-2*x-5 at 60, for x^3-x-1 at 40; mpmath 2.0945514815, 1.3247179572)",
+    [[60, "size(solve(x^3-2*x-5=0,x))", "1"], [40, "size(solve(x^3-x-1=0,x))", "1"]]],
+];
+
 const { giac } = await loadNodeGiac();
 const flipped = [];
 for (const [id, says, digits, inputs, holds] of ROWS) {
@@ -76,6 +84,13 @@ for (const [id, says, digits, inputs, holds] of ROWS) {
     flipped.push(`${id}: ${says}\n      now: ${outs.join(" | ")}\n      probe: ${probe}`);
   }
 }
+const lost = [];
+for (const [patch, fixes, checks] of PATCHED) {
+  const outs = checks.map(([d, input]) => (giac.eval(`Digits:=${d}`), giac.eval(input).trim()));
+  if (checks.some(([, , want], k) => outs[k] !== want)) {
+    lost.push(`${patch}: ${fixes}\n      now: ${checks.map(([d, input], k) => `Digits ${d} ${input} = ${outs[k]}`).join(" | ")}`);
+  }
+}
 giac.eval("Digits:=12");
 
 const patches = spawnSync(process.execPath, [fileURLToPath(new URL("./patch-canary.ts", import.meta.url))], { encoding: "utf8", timeout: 120000 });
@@ -85,5 +100,6 @@ console.log(patchLine);
 if (flipped.length) {
   console.log(`FLIPPED ${flipped.length} of ${ROWS.length} workaround canaries (Giac no longer does it; the README row's workaround may go):\n  ${flipped.join("\n  ")}`);
 }
-if (flipped.length || patches.status !== 0) process.exit(1);
-console.log(`PASS canaries: ${ROWS.length} workaround rows, Giac still does each`);
+if (lost.length) console.log(`LOST ${lost.length} of ${PATCHED.length} patched canaries (this build does not have the patch's answer):\n  ${lost.join("\n  ")}`);
+if (flipped.length || lost.length || patches.status !== 0) process.exit(1);
+console.log(`PASS canaries: ${ROWS.length} workaround rows, Giac still does each; ${PATCHED.length} patched rows hold`);

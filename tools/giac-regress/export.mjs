@@ -738,6 +738,23 @@ export function build(cases) {
     `Digits:=40:; pc("g187-normal-pi-pow-sqrt2-1e16",'normal(pi^(sqrt(2)-10^16))',0,1/10^30);`,
   );
   nPatched += 2;
+  // Patch 0043 (G322), written lines (the golden hunt-*, hunt2-*, g322-* rows are lists, which caseLine leaves out): solve.cc
+  // solve_ckrange dropped the real root of a cubic with one irrational real root at Digits > 14, where the MPFR evalf of its rootof
+  // form carries a rounding imaginary part. Counts derived (nops(realroot(p)), Giac's exact count of real roots: 1, 1, 2, 1, 1);
+  // the roots by mpmath (findroot, 80 digits). Stock Giac gives [] (or [1]) on each at these Digits.
+  const ROOT_X3_2X_5 = "20945514815423265914823865405793029638573061056282391803041/10^58";
+  const ROOT_X3_X_1 = "13247179572447460259609088544780973407344040569017333645340/10^58";
+  for (const [id, digits, input, value, tol] of [
+    ["g322-size-solve-x3-2x-5-60", 60, "size(solve(x^3-2*x-5=0,x))", "1", "1/10^30"],
+    ["g322-solve-x3-2x-5-60", 60, "solve(x^3-2*x-5=0,x)[0]", ROOT_X3_2X_5, "1/10^55"],
+    ["g322-solve-x3-x-1-40", 40, "solve(x^3-x-1=0,x)[0]", ROOT_X3_X_1, "1/10^35"],
+    ["g322-size-solve-x-1-times-x3-x-1-40", 40, "size(solve((x-1)*(x^3-x-1)=0,x))", "2", "1/10^30"],
+    ["g322-size-zeros-x3-x-1-40", 40, "size(zeros(x^3-x-1,x))", "1", "1/10^30"],
+    ["g322-size-solve-x3-2x-5-gt-60", 60, "size(solve(x^3-2*x-5>0,x))", "1", "1/10^30"],
+  ]) {
+    patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath findroot" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
