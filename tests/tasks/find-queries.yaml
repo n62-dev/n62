@@ -8,6 +8,8 @@
 #   status  pending: the item arrives in a later milestone (milestone 6); not run, ids are plans
 #   where   slot: searched as a unit slot's Find does (units and prefixes only, units first; app/src/units/menu.ts)
 #   expect  none: no unit is in the top 3 (G161: a gauge reading is never taken for an absolute unit)
+# variants (G321): a bare name of a unit with US and UK variants finds each of `items` in the top 3, each title holding
+#   its word (the country); `none` is an id no item may have (a bare id is the metric or international unit).
 schema: 1
 
 queries:
@@ -76,7 +78,7 @@ queries:
   - { query: "rpm", expect: "unit:rpm" }
   - { query: "hz", expect: "unit:Hz" }
   - { query: "litre", expect: "unit:L" }
-  - { query: "gallon", expect: "unit:gal", note: "the U.S. gallon" }
+  - { query: "gallon", expect: "unit:gal_US", note: "the U.S. gallon (G321: no bare gal)" }
   - { query: "electronvolt", expect: "unit:eV" }
   - { query: "ampere hour", expect: "unit:Ah" }
   - { query: "kip", expect: "unit:kip", note: "1000 lbf" }
@@ -147,3 +149,8 @@ queries:
   - { query: "dms", expect: "tmpl:dms", note: "degrees-minutes-seconds", status: pending }
   - { query: "db", expect: "fn:db", note: "the dB function in Home, the dB unit in the unit view (context decides)", status: pending }
   - { query: "bitand", expect: "fn:bitand", note: "EN6", status: pending }
+
+variants:
+  - { query: "gal", none: "unit:gal", items: { "unit:gal_US": "U.S.", "unit:gal_UK": "UK" } }
+  - { query: "cup", items: { "unit:cup": "Metric", "unit:cup_US": "U.S.", "unit:cup_US_label": "U.S." } }
+  - { query: "cwt", none: "unit:cwt", items: { "unit:cwt_US": "U.S." } }

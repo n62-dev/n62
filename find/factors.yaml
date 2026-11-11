@@ -4,11 +4,11 @@
 # the numbers. Run by a developer only: node tools/find-index/refresh-factors.mjs recomputes them from the qalc build
 # (engine/qalc/build-wasm.sh) and prints the difference; a change needs a find/units.yaml checks case or the owner's OK.
 #
-# Rows (the id is the Find id without its kind prefix):
+# Rows (the id is the Find id without its kind prefix; a unit find/units.yaml `rename`s is keyed by our id, G321):
 #   prefixes  si    the factor as 1/10^n or 10^n or 2^n
 #   units     si    the factor to SI base units (kg, not g), exact "p/q" (or "p/q*pi"); a temperature unit "k+offset"; none = no exact factor
 #             dim   the dimension key (kg1m2s-2); "" = a pure number
-#             sym   the printed symbol qalc gives (where it is more than the id)
+#             sym   the printed symbol qalc gives (where it is more than the id); none on a renamed unit (it shows our id)
 #   constants value, unc (the 2-digit uncertainty, last digits), dim
 #   source    "exact definition" (2019 SI, the 1959 yard and pound, NIST SP 811: find/units.yaml checks audit every one),
 #             "CODATA 2022" (NIST allascii.txt), or "libqalculate 5.13.1" (qalc's own number)
@@ -114,7 +114,7 @@ units:
   "dr": { si: "45359237/25600000000", dim: "kg1", sym: "1 dr", source: "libqalculate 5.13.1" }
   "oz": { si: "45359237/1600000000", dim: "kg1", sym: "1 oz", source: "libqalculate 5.13.1" }
   "lb": { si: "45359237/100000000", dim: "kg1", sym: "1 lb", source: "exact definition" }
-  "cwt": { si: "45359237/1000000", dim: "kg1", sym: "1 cwt", source: "libqalculate 5.13.1" }
+  "cwt_US": { si: "45359237/1000000", dim: "kg1", source: "libqalculate 5.13.1" }
   "l_cwt": { si: "317514659/6250000", dim: "kg1", sym: "1 l_cwt", source: "libqalculate 5.13.1" }
   "s_ton": { si: "45359237/50000", dim: "kg1", sym: "1 s_ton", source: "libqalculate 5.13.1" }
   "l_ton": { si: "317514659/312500", dim: "kg1", sym: "1 l_ton", source: "libqalculate 5.13.1" }
@@ -237,14 +237,14 @@ units:
   "cm^3": { si: "1/1000000", dim: "m3", sym: "1 cm³", source: "libqalculate 5.13.1" }
   "L/km": { si: "1/1000000", dim: "m2", sym: "1 L ∕ km", source: "libqalculate 5.13.1" }
   "km/L": { si: "1000000", dim: "m-2", sym: "1 km ∕ L", source: "libqalculate 5.13.1" }
-  "mpg": { si: "48000000000/112903", dim: "m-2", sym: "1 mpg", source: "libqalculate 5.13.1" }
+  "mpg_US": { si: "48000000000/112903", dim: "m-2", source: "libqalculate 5.13.1" }
   "tsp": { si: "1/200000", dim: "m3", sym: "1 tsp", source: "libqalculate 5.13.1" }
   "dessertspoon": { si: "1/100000", dim: "m3", sym: "1 dessertspoon", source: "libqalculate 5.13.1" }
   "tbsp": { si: "3/200000", dim: "m3", sym: "1 tbsp", source: "libqalculate 5.13.1" }
   "tsp_US": { si: "157725491/32000000000000", dim: "m3", sym: "1 tsp_US", source: "libqalculate 5.13.1" }
-  "US_dessertspoon": { si: "157725491/16000000000000", dim: "m3", sym: "1 US_dessertspoon", source: "libqalculate 5.13.1" }
+  "dessertspoon_US": { si: "157725491/16000000000000", dim: "m3", source: "libqalculate 5.13.1" }
   "tbsp_US": { si: "473176473/32000000000000", dim: "m3", sym: "1 tbsp_US", source: "libqalculate 5.13.1" }
-  "cup": { si: "3/12500", dim: "m3", sym: "1 cup", source: "libqalculate 5.13.1" }
+  "cup_US_label": { si: "3/12500", dim: "m3", source: "libqalculate 5.13.1" }
   "cup_US": { si: "473176473/2000000000000", dim: "m3", sym: "1 cup_US", source: "libqalculate 5.13.1" }
   "fl_oz_UK": { si: "454609/16000000000", dim: "m3", sym: "1 fl_oz_UK", source: "libqalculate 5.13.1" }
   "gi_UK": { si: "454609/3200000000", dim: "m3", sym: "1 gi_UK", source: "libqalculate 5.13.1" }
@@ -255,17 +255,17 @@ units:
   "imperial_fluid_scruple": { si: "454609/384000000000", dim: "m3", sym: "1 ImperialFluidScruple", source: "libqalculate 5.13.1" }
   "fl_dr_UK": { si: "454609/128000000000", dim: "m3", sym: "1 fl_dr_UK", source: "libqalculate 5.13.1" }
   "bu_UK": { si: "454609/12500000", dim: "m3", sym: "1 bu_UK", source: "libqalculate 5.13.1" }
-  "fl_oz": { si: "473176473/16000000000000", dim: "m3", sym: "1 fl_oz", source: "libqalculate 5.13.1" }
-  "gi": { si: "473176473/4000000000000", dim: "m3", sym: "1 gi", source: "libqalculate 5.13.1" }
-  "liq_pt": { si: "473176473/1000000000000", dim: "m3", sym: "1 liq_pt", source: "libqalculate 5.13.1" }
-  "liq_qt": { si: "473176473/500000000000", dim: "m3", sym: "1 liq_qt", source: "libqalculate 5.13.1" }
-  "minim": { si: "157725491/2560000000000000", dim: "m3", sym: "1 minim", source: "libqalculate 5.13.1" }
-  "fl_dr": { si: "473176473/128000000000000", dim: "m3", sym: "1 fl_dr", source: "libqalculate 5.13.1" }
-  "dry_pt": { si: "220244188543/400000000000000", dim: "m3", sym: "1 dry_pt", source: "libqalculate 5.13.1" }
-  "dry_qt": { si: "220244188543/200000000000000", dim: "m3", sym: "1 dry_qt", source: "libqalculate 5.13.1" }
-  "pk": { si: "220244188543/25000000000000", dim: "m3", sym: "1 pk", source: "libqalculate 5.13.1" }
-  "bu": { si: "220244188543/6250000000000", dim: "m3", sym: "1 bu", source: "libqalculate 5.13.1" }
-  "gal": { si: "473176473/125000000000", dim: "m3", sym: "1 gal", source: "exact definition" }
+  "fl_oz_US": { si: "473176473/16000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "gi_US": { si: "473176473/4000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "liq_pt_US": { si: "473176473/1000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "liq_qt_US": { si: "473176473/500000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "minim_US": { si: "157725491/2560000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "fl_dr_US": { si: "473176473/128000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "dry_pt_US": { si: "220244188543/400000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "dry_qt_US": { si: "220244188543/200000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "pk_US": { si: "220244188543/25000000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "bu_US": { si: "220244188543/6250000000000", dim: "m3", source: "libqalculate 5.13.1" }
+  "gal_US": { si: "473176473/125000000000", dim: "m3", source: "exact definition" }
   "bbl": { si: "9936705933/62500000000", dim: "m3", sym: "1 bbl", source: "libqalculate 5.13.1" }
   "acre*ft": { si: "60228605349/48828125", dim: "m3", sym: "1 acre⋅ft", source: "libqalculate 5.13.1" }
   "m^3/kg": { si: "1", dim: "kg-1m3", sym: "1 m³ ∕ kg", source: "libqalculate 5.13.1" }
@@ -279,9 +279,9 @@ units:
   "cfm": { si: "18435447/39062500000", dim: "m3s-1", sym: "1 cfm", source: "libqalculate 5.13.1" }
   "ft^3/s": { si: "55306341/1953125000", dim: "m3s-1", sym: "1 ft³ ∕ s", source: "libqalculate 5.13.1" }
   "cfs": { si: "55306341/1953125000", dim: "m3s-1", sym: "1 cfs", source: "libqalculate 5.13.1" }
-  "gpm": { si: "157725491/2500000000000", dim: "m3s-1", sym: "1 gpm", source: "libqalculate 5.13.1" }
-  "gph": { si: "157725491/150000000000000", dim: "m3s-1", sym: "1 gph", source: "libqalculate 5.13.1" }
-  "gal/s": { si: "473176473/125000000000", dim: "m3s-1", sym: "1 gal ∕ s", source: "libqalculate 5.13.1" }
+  "gpm_US": { si: "157725491/2500000000000", dim: "m3s-1", source: "libqalculate 5.13.1" }
+  "gph_US": { si: "157725491/150000000000000", dim: "m3s-1", source: "libqalculate 5.13.1" }
+  "gal_US/s": { si: "473176473/125000000000", dim: "m3s-1", source: "libqalculate 5.13.1" }
   "acre*ft/d": { si: "2230689087/156250000000", dim: "m3s-1", sym: "1 acre⋅ft ∕ d", source: "libqalculate 5.13.1" }
   "m/s": { si: "1", dim: "m1s-1", sym: "1 m ∕ s", source: "libqalculate 5.13.1" }
   "km/h": { si: "5/18", dim: "m1s-1", sym: "1 km ∕ h", source: "exact definition" }

@@ -249,6 +249,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
   const rows = { prefixes: {}, units: {}, consts: {} };
   const F = q ? null : factors;
   const items = [];
+  const checked = new Set(); // the find/units.yaml checks entries that audited an item (G321: none may go unread)
   const stats = { units: 0, unitsSkipped: [], composites: 0, prefixes: 0, consts: 0, constsSkipped: [], noSi: [], overrides: [], siChecked: 0 };
 
   // --- prefixes
@@ -301,7 +302,10 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     d.type = d.el.attrs.type;
     byRef.set(d.ref, d);
   }
-  const unitId = new Map(); // ref -> chosen id text
+  // G321 (find/units.yaml rename): qalc's id -> ours. The qalc text stays the old id (the round trip, refresh-factors.mjs),
+  // the factors row and the symbol shown are the new id, and the old id stays a name the user may search for.
+  const rename = ours.rename ?? {};
+  const unitId = new Map(); // ref -> chosen id text (qalc's)
   for (const d of defs.filter((x) => x.type !== "composite")) {
     if (d.hidden) { stats.unitsSkipped.push(`${d.ref} (hidden)`); continue; }
     const cands = [
@@ -309,7 +313,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
       ...d.names.filter((n) => n.flags.has("r") && !n.flags.has("u")),
       ...d.names.filter((n) => !n.flags.has("u") && !n.flags.has("i") && !n.flags.has("p")),
     ].map((n) => n.name).filter((n) => /^[A-Za-z][A-Za-z0-9_]*$/.test(n));
-    const id = cands.find((c) => { if (!q) return F.units?.[c] !== undefined; const t = q.parse(c); return t.t === "unit" && t.u === d.ref && !t.pfx; });
+    const id = cands.find((c) => { if (!q) return F.units?.[rename[c] ?? c] !== undefined; const t = q.parse(c); return t.t === "unit" && t.u === d.ref && !t.pfx; });
     if (!id) { stats.unitsSkipped.push(`${d.ref} (no name parses back)`); continue; }
     unitId.set(d.ref, id);
   }
@@ -342,7 +346,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     return { text, expect };
   };
 
-  const rename = ours.ids ?? {};
+  const renamed = new Set();
   const unitDefs = [];
   for (const d of defs) {
     if (d.hidden) { if (d.type === "composite") stats.unitsSkipped.push(`${d.ref} (hidden)`); continue; }
@@ -350,7 +354,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     if (d.type === "composite") {
       const c = compositeText(d);
       if (!c) { stats.unitsSkipped.push(`${d.ref} (composite of units without an id)`); continue; }
-      id = rename[c.text] ?? c.text;
+      id = c.text;
       expect = c.expect;
       stats.composites++;
     } else {
@@ -359,7 +363,10 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
       expect = [{ u: d.ref, pfx: "", e: 1 }];
     }
     const nl = d.names.filter((n) => !n.flags.has("i")).map((n) => n.name).filter((n) => d.type !== "composite");
-    unitDefs.push({ id, expect, names: nl, title: d.title, cat: d.cat, nonlinear: hasNonlinear(d), def: d });
+    const to = rename[id];
+    if (to !== undefined) renamed.add(id);
+    const as = to === undefined ? {} : { id: to, text: id, symbol: to, names: uniq([id, ...nl]) };
+    unitDefs.push({ id, expect, names: nl, title: d.title, cat: d.cat, nonlinear: hasNonlinear(d), def: d, ...as });
   }
   // our prefixed and compound units (find/units.yaml)
   for (const u of ours.units ?? []) {
@@ -367,6 +374,8 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     if (!expect) { fail(`find/units.yaml ${u.id}: bad parts "${u.parts}"`); continue; }
     unitDefs.push({ id: u.id, text: u.text, symbol: u.symbol, expect, names: u.names ?? [], title: u.title ?? autoTitle(expect, byRef, pfxBySym), cat: "ours", nonlinear: false, ours: true });
   }
+  for (const id of Object.keys(rename)) if (!renamed.has(id)) fail(`find/units.yaml rename ${id}: qalc gives no unit of that id`);
+  for (const u of unitDefs) if (u.text !== undefined && renamed.has(u.text) && unitDefs.some((o) => o !== u && o.id === u.id)) fail(`find/units.yaml rename ${u.text}: ${u.id} is another unit's id`);
   function hasNonlinear(d) {
     const b = child(d.el, "base");
     if (b && child(b, "inverse_relation")) return true;
@@ -405,7 +414,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     let names = uniq([u.id, symbol, ...u.names]);
     names = uniq(names.flatMap((n) => (/[µμ]/.test(n) ? [n.replace(/μ/g, "µ"), n.replace(/µ/g, "μ")] : [n])));
     names = names.filter((n) => !names.some((m) => m !== n && m.length >= 3 && (n === `${m}s` || n === `${m}es`)));
-    const item = { id: `unit:${u.id}`, kind: "unit", names, title: u.title, tier: 0, insert: "" };
+    const item = { id: `unit:${u.id}`, kind: "unit", names, title: ours.titles?.[`unit:${u.id}`] ?? u.title, tier: 0, insert: "" };
     // the SI factor and dimension
     let si = null;
     if (F) {
@@ -416,6 +425,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
       const check = ours.checks?.[item.id];
       if (check !== undefined) {
         stats.siChecked++;
+        checked.add(item.id);
         if (si !== ftext(evalProduct(check.si))) fail(`${item.id}: find/factors.yaml gives ${si}, the definition ${check.si}`);
       }
     } else {
@@ -452,6 +462,12 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     if (at < 0 && d.replace) { fail(`find/units.yaml defined ${d.id}: replace: true, but qalc has no such unit`); continue; }
     try { frac(evalProduct(d.si).n); } catch { fail(`find/units.yaml defined ${d.id}: bad si "${d.si}"`); continue; }
     const item = { id: `unit:${d.id}`, kind: "unit", names: uniq([d.id, ...(d.names ?? [])]), title: d.title, dim: d.dim, si: ftext(evalProduct(d.si)), tier: 0, insert: `\\unit{${d.id}}{\\mathrm{${d.symbol ?? d.id}}}` };
+    // G321: a checks entry audits a defined unit too (the metric cup against its 250 mL)
+    const check = ours.checks?.[item.id];
+    if (check !== undefined) {
+      checked.add(item.id);
+      if (item.si !== ftext(evalProduct(check.si))) fail(`${item.id}: find/units.yaml defined gives ${item.si}, the definition ${check.si}`);
+    }
     if (at >= 0) { notes.push(`unit:${d.id}: qalc's ${items[at].si} (${items[at].dim}) replaced by ours ${item.si} (${d.source})`); items[at] = item; } else items.push(item);
     stats.siChecked++;
   }
@@ -506,6 +522,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
       const check = ours.checks?.[item.id];
       if (check !== undefined) {
         stats.siChecked++;
+        checked.add(item.id);
         const same = feq(evalProduct(row.value), evalProduct(check.value)) && (check.unc === undefined || (row.unc !== undefined && feq(decFrac(row.unc), decFrac(check.unc))));
         if (!same) fail(`${item.id}: find/factors.yaml gives ${row.value}${row.unc ? ` ± ${row.unc}` : ""}, the definition ${check.value}${check.unc ? ` ± ${check.unc}` : ""}`);
       }
@@ -559,6 +576,7 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     if (!c.value || !c.title || !c.source || !r || r.dec || r.piPow || !feq(r.coef, frac(1n))) { fail(`find/units.yaml constants.define ${id}: needs value, title, source and a unit of SI base units`); continue; }
     const check = ours.checks?.[`const:${id}`];
     if (!check || !feq(decFrac(check.value), decFrac(c.value))) { fail(`find/units.yaml constants.define ${id}: a checks entry with the same value is required`); continue; }
+    checked.add(`const:${id}`);
     stats.siChecked++;
     if (F && F.consts?.[id]?.value !== c.value) fail(`find/factors.yaml constants ${id}: value ${F.consts?.[id]?.value}, find/units.yaml ${c.value}`);
     rows.consts[id] = { value: c.value, dim: dimKey(r.dims) };
@@ -567,6 +585,12 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
       insert: `\\const{${id}}{${sym ? symbolLatex(sym) : `\\mathrm{${latexName(id)}}`}}` });
     stats.consts++;
   }
+  for (const id of Object.keys(ours.titles ?? {})) if (!items.some((i) => i.id === id)) fail(`find/units.yaml titles ${id}: no item of that id`);
+  // G321: a checks entry whose id no item has (a unit renamed or dropped) would audit nothing
+  if (F) for (const id of Object.keys(ours.checks ?? {})) if (!checked.has(id)) fail(`find/units.yaml checks ${id}: no item of that id`);
+  // G321: a bare id is the metric or international unit; a US customary measure carries _US (find/units.yaml explicit)
+  const unitRows = Object.fromEntries(items.filter((i) => i.kind === "unit").map((i) => [i.id.slice(5), { si: i.si }]));
+  for (const p of explicitProblems(unitRows, ours.explicit)) fail(`find/units.yaml explicit: unit:${p} is a US measure without ${ours.explicit.suffix} in its id`);
   return { items, stats, rows };
 }
 
@@ -602,6 +626,23 @@ export function evalProduct(s) {
     r = op === "*" ? fmul(r, v) : fdiv(r, v);
   }
   return r;
+}
+
+/** G321 (find/units.yaml `explicit`): the ids of `units` ({ id: { si } }) whose factor is a US customary measure and
+ *  whose id lacks the suffix: a numerator divisible by one of `numerator`, a denominator by one of `denominator`, or
+ *  an `si` of the list; `except` ids are left out. An empty list when every such id carries the suffix. */
+export function explicitProblems(units, rule) {
+  if (!rule) return [];
+  const big = (xs) => (xs ?? []).map((x) => BigInt(x));
+  const [num, den, si, except] = [big(rule.numerator), big(rule.denominator), new Set(rule.si ?? []), new Set(rule.except ?? [])];
+  const out = [];
+  for (const [id, row] of Object.entries(units)) {
+    const m = /^(\d+)(?:\/(\d+))?$/.exec(row?.si ?? "");
+    if (!m || except.has(id) || id.includes(rule.suffix)) continue;
+    const [n, d] = [BigInt(m[1]), BigInt(m[2] ?? "1")];
+    if (num.some((p) => n % p === 0n) || den.some((p) => d % p === 0n) || si.has(row.si)) out.push(`${id} (${row.si})`);
+  }
+  return out;
 }
 
 export const uniq = (a) => [...new Set(a.filter((x) => x !== undefined && x !== ""))];
