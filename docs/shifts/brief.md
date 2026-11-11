@@ -68,7 +68,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | 649 | [R284](packages/R284.md) the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
 | 650 | [R285](packages/R285.md) a browser that has not passed says so at start | ron, Sonnet | `p1/ron-browsernote` | A144 |
 | 617 | [R271](packages/R271.md) a result chip after ± (fh-4) | ron, Opus | `p1/ron-sigmachip` | – |
-| 506 | [G187](packages/G187.md) a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
+| 506 | G187 a power that underflows past the range says Underflow, not a stack overflow (F122) | gorge, Opus | `p1/gorge-powunder` | – |
 | 507 | [G170](packages/G170.md) ilaplace leaves no broken entry in Giac's variable list (F89) | gorge, Opus | `p1/gorge-ilaplacevars` | – |
 | 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |

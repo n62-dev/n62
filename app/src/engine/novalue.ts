@@ -19,7 +19,8 @@
 import { callsIn, type Refusal } from "./converge.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { callsOf, firstNameIn, functionsIn, isError, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
-import { decimalFromString, isZero } from "./format.ts";
+import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
+import type { ParseNode } from "./bridge.ts";
 
 /** The reasons of this module; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 export type NoValue = Extract<Refusal, "divisionByZero" | "overflow" | "underflow" | "noValue">;
@@ -218,6 +219,54 @@ export function lostCas(giac: Giac, slot: string, input: string, output: string,
 export function overflowAt(giac: Giac, slot: string, output: string, P: number): boolean {
   // G123f2: the module's one infinity rule on the string() text, so a part that is infinite (+infinity*i) is one too.
   return !infinite(output) && infinite(giac.eval(`string(evalf(${slot},${P}))`));
+}
+
+/** G187: log10 of the largest number MPFR holds here, (2^30-1)*log10(2) = 323228496.32 rounded up (its smallest is
+ *  the inverse): evalf(exp(-744261000),40) is 4.0E-323228445, evalf(exp(-744261200),40) MPFR's 0. */
+export const MPFR_LOG10_RANGE = 323228497;
+
+/** G187: the value whose tree (bridge-3, `giac.value(…, true).tree`) is `tree` is a power a^b at its top: head ^ with
+ *  two children (`-a^b`, `2*a^b`, `[a^b]` are not). */
+export function powerAtTop(tree: ParseNode | null | undefined): boolean {
+  return !!tree && tree[0] === 1 && tree[1] === "^" && tree[3].length === 2;
+}
+
+/**
+ * G187 (F122): the value in `slot`, a power a^b by its tree `tree` (powerAtTop), past MPFR's range by its size:
+ * log10|a^b| = re(b*ln(a))/ln(10) (a complex base by its modulus, a complex exponent by its real part) beyond
+ * ±MPFR_LOG10_RANGE: "overflow" or "underflow". Asked before the checks that read the value (Giac's normal and
+ * simplify of (atan(ln(-pi)+9007199254740993))^(sin(10^-300)-10^300), 10^(-1.96E299), overflowed the wasm stack).
+ * The size is a claim like any value (docs/04 2.4): it is read at `P` and at P+20 in one engine call, and refuses only
+ * when both are past the range on the same side and agree to SIZE_AGREE; a base or exponent that cancels
+ * ((sin(1)^2+cos(1)^2)^(10^400+sqrt(2)), whose value is 1: its ln at P is a unit of the last place, the size 10^360,
+ * and 0 at P+20) decides nothing, and the checks after it do. One engine call, only for a power; a size Giac cannot
+ * state (a free name, an error) decides nothing.
+ */
+export function powerPastRange(giac: Giac, slot: string, tree: ParseNode | null | undefined, P: number): NoValue | null {
+  if (!powerAtTop(tree)) return null;
+  const size = `re(([op(${slot})][1])*ln([op(${slot})][0]))/ln(10)`;
+  const out = giac.eval(`[evalf(${size},${P}),evalf(${size},${P + 20})]`).trim();
+  const parts = out.startsWith("[") && out.endsWith("]") ? out.slice(1, -1).split(",") : [];
+  const [a, b] = parts.map((t) => decimalFromString(t, 12));
+  if (parts.length !== 2 || !a || !b || !pastRange(a) || !pastRange(b) || !sameSize(a, b)) return null;
+  return b.neg ? "underflow" : "overflow";
+}
+
+/** G187: the relative difference within which the sizes at P and P+20 agree (their first six digits, about). */
+const SIZE_AGREE = 1e-6;
+
+/** G187: a size (a log10) past ±MPFR_LOG10_RANGE; an exponent of 9 or more is past it, a smaller one is a double. */
+function pastRange(v: DecimalValue): boolean {
+  return v.digits !== "" && (v.exp >= 9 || Number(`0.${v.digits}e${v.exp + 1}`) > MPFR_LOG10_RANGE);
+}
+
+/** G187: two sizes with the same sign that agree to SIZE_AGREE (their mantissas compared, so a size past a double's
+ *  range, 10^(-1.95E500)'s -1.95E500, is compared too). */
+function sameSize(a: DecimalValue, b: DecimalValue): boolean {
+  if (a.neg !== b.neg || Math.abs(a.exp - b.exp) > 1) return false;
+  const x = Number(`0.${a.digits}`) * 10 ** (a.exp - b.exp);
+  const y = Number(`0.${b.digits}`);
+  return Math.abs(x - y) <= SIZE_AGREE * y;
 }
 
 /** G148: the calls that evaluate their argument in floating point at once. */
