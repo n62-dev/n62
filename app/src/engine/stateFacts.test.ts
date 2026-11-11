@@ -205,7 +205,10 @@ describe.skipIf(!giacAvailable())("G174: names stored through an argument, Giac'
       expect(r.result.ok, input).toBe(true);
       expect(setNames(r.defs), input).toEqual([]);
       expect(host.giac.eval("VARS()"), input).not.toMatch(/lastgb|lastv/);
-      if (input.startsWith("gbasis")) expect(r.result.text).toBe(want);
+      // raw Giac runs the same inputs in the same order (gbasis, then syzygy), with its lastgb and lastv kept. syzygy
+      // answers a sequence of four lists, which CAS shows as Giac's list type in braces (G119, G173: sequences.ts), so
+      // its expected text is raw Giac's with braces; the elements are compared as Giac printed them.
+      expect(r.result.text, input).toBe(input.startsWith("syzygy") ? `{${want}}` : want);
     }
     expect(host.home("gbasis([x^2-y^3,x+y^2],[x,y])", defaultHomeSettings).result.ok).toBe(true);
     expect(host.giac.eval("VARS()")).not.toMatch(/lastgb|lastv/);

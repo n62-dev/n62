@@ -567,8 +567,6 @@ export class EngineHost implements FactsHost {
     return t;
   }
 
-  /** G168 (F109): the input is `name()` of a name that is neither Giac's, nor stored in this engine, nor one of our
-   *  library definitions (Giac drops the empty call: `type(DelAVars())` is identifier), so no value and no refusal would come. */
   /** G174: refused before Giac runs it: a command N62 cannot serve (NOT_HERE_HEADS, from the tree), or G168's empty call. */
   private refusedFirst(input: string): "notHere" | "unknownFunction" | null {
     if (wordsOf(input).some((w) => NOT_HERE_HEADS.has(w)) && this.treeOf(input).heads.some((h) => NOT_HERE_HEADS.has(h))) return "notHere";
@@ -587,6 +585,8 @@ export class EngineHost implements FactsHost {
     return { post, answer: `[${[...post.lost].sort().join(",")}]` };
   }
 
+  /** G168 (F109): the input is `name()` of a name that is neither Giac's, nor stored in this engine, nor one of our
+   *  library definitions (Giac drops the empty call: `type(DelAVars())` is identifier), so no value and no refusal would come. */
   private unknownEmptyCall(input: string): boolean {
     const name = leadingName(input.trim());
     if (name === null || wholeCall(input, name, "typed")?.join("") !== "") return false;
