@@ -8,7 +8,7 @@
 import "./tips.css";
 import { tipsText as tr } from "../i18n/enTips.ts";
 import { openLayer } from "../input/backLayer.ts";
-import { markSeen } from "../state/seenWrite.ts";
+import { markTipsSeen } from "../state/tips.ts";
 
 const PAD = 4;
 const EDGE = 1; // a ring stays this far inside the screen
@@ -32,7 +32,7 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string,
 /** Put the tips on the page (once at a time). */
 export function showTips(): void {
   if (release) return;
-  void markSeen("tips");
+  markTipsSeen();
   const root = el("div", "tips", undefined, document.body);
   root.dataset["testid"] = "tips";
   root.setAttribute("role", "dialog");

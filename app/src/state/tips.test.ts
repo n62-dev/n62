@@ -21,10 +21,3 @@ describe("the first-start tips flag (R15c4)", () => {
     expect(await tipsDue("?tips=off", async () => { throw new Error("read"); })).toBe(false);
   });
 });
-
-describe("the browser note's flag in the same record (R285)", () => {
-  it("a record that holds only the browser flag still shows the tips", async () => {
-    expect(await tipsDue("", async () => ({ kind: "value", value: { browser: true } }))).toBe(true);
-    expect(await tipsDue("", async () => ({ kind: "value", value: { tips: true, browser: true } }))).toBe(false);
-  });
-});

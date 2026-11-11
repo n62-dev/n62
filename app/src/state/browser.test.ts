@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
 import { engineOf, isTested, TESTED } from "./browser.ts";
-import { says } from "./tips.ts";
 
 const CHROME = "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
 const WEBVIEW = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/90.0.0.0 Mobile Safari/537.36";
@@ -35,19 +34,5 @@ describe("engineOf (R285)", () => {
   it("tests Blink only (A144: Firefox and WebKit failed)", () => {
     expect(TESTED).toEqual(["blink"]);
     expect(isTested("gecko") || isTested("webkit") || isTested("other")).toBe(false);
-  });
-});
-
-describe("says (the tipsSeen record, R285)", () => {
-  it("takes the old `true` as the tips and nothing else", () => {
-    expect(says(true, "tips")).toBe(true);
-    expect(says(true, "browser")).toBe(false);
-  });
-  it("reads the object's flags apart", () => {
-    expect(says({ browser: true }, "tips")).toBe(false);
-    expect(says({ browser: true }, "browser")).toBe(true);
-    expect(says({ tips: true, browser: true }, "tips")).toBe(true);
-    expect(says(null, "tips")).toBe(false);
-    expect(says(undefined, "browser")).toBe(false);
   });
 });
