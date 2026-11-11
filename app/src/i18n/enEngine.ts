@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// G39: the messages the engine side gives with a refusal (engine/converge.ts; G78 engine/novalue.ts; G58 the time-out, engine/homeEval.ts) and a why-line (format.ts PrecisionWhy).
+// G39: the messages the engine side gives with a refusal (engine/converge.ts; G78 engine/novalue.ts; G58 the time-out, engine/homeEval.ts; G223 engine/stats.ts) and a why-line (format.ts PrecisionWhy).
 // A table of its own, so the engine worker carries these few lines and not the app's whole table; en.ts includes it.
 // English only so far.
-export const enEngine = {
+/** The app's part (en.ts spreads it), in the start chunk. */
+export const enEngineShown = {
   "error.integralDiverges": "The integral does not converge",
   "error.seriesDiverges": "The series does not converge",
   "error.noLimit": "No limit",
@@ -21,4 +22,17 @@ export const enEngine = {
   "error.listInArgument": "This function answers a list wrongly: give it one value at a time",
   "error.undecided": "undecided: the value sits on a cut Giac cannot decide",
   "why.pairDiffers": "The exact and numeric answers differ",
+} as const;
+
+/** The worker's table: the app's part and (G223) the refusals of linreg and stats1 (engine/stats.ts). Those are not in en.ts,
+ *  so the start chunk does not carry them (size-check.ts START_PIN_GZIP): their row shows the words the worker sends
+ *  (state/session.svelte.ts errorText falls back to them, i18n/index.ts hasMessage). */
+export const enEngine = {
+  ...enEngineShown,
+  "error.notData": "Needs lists of real numbers",
+  "error.listsDiffer": "The lists have different lengths",
+  "error.emptyList": "The list is empty",
+  "error.fewValues": "A sample deviation needs at least two values",
+  "error.xAllEqual": "The x values are all equal",
+  "error.yAllEqual": "No spread in y: r² is undefined",
 } as const;

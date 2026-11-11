@@ -9,6 +9,10 @@ export function t(key: MessageKey, vars?: Readonly<Record<string, string>>): str
   return vars ? m.replace(/\{(\w+)\}/g, (all, k: string) => vars[k] ?? all) : m;
 }
 
+/** `key` is in the table: a key built at run time may not be (G223: an engine refusal whose words only the worker has,
+ *  enEngine.ts; its reader shows the worker's text then). */
+export const hasMessage = (key: string): key is MessageKey => key in en;
+
 /** Resolve a keyboard legend: "$key.shift" is a message key, "$$…" a text that starts with "$" (a user key's own
  *  label, R15b), anything else is shown as is. */
 export function legend(label: string): string {
