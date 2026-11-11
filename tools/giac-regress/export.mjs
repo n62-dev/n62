@@ -585,13 +585,7 @@ export const PATCHED_IDS = new Map([
   ["g188-int-2-pow-tanh", "0037-int-propfrac-empty-vars.patch"],
   ["g188-int-cosh-pow-tanh", "0037-int-propfrac-empty-vars.patch"],
   ["g188-int-sqrt-tanh-sin", "0037-int-propfrac-empty-vars.patch"],
-  ["g325-asin-sqrt-neg2-1e35", "0044-sqrt-complex-real-part-normal.patch"],
-  ["g325-acos-sqrt-neg2-1e35", "0044-sqrt-complex-real-part-normal.patch"],
-  ["g325-asin-sqrt-neg2-1e40", "0044-sqrt-complex-real-part-normal.patch"],
-  ["g325-asin-sqrt-neg2-1e45", "0044-sqrt-complex-real-part-normal.patch"],
-  ["g325-asin-sqrt-neg2-1e-30-minus-2", "0044-sqrt-complex-real-part-normal.patch"],
-  ["g325-acos-sqrt-neg2-1e-30-minus-2", "0044-sqrt-complex-real-part-normal.patch"],
-  ["g325-asin-sqrt-neg2-1e60", "0044-sqrt-complex-real-part-normal.patch"],
+  ...["1e35", "1e40", "1e45", "1e60", "1e-30-minus-2"].map((k) => [`g325-asin-sqrt-neg2-${k}`, "0044-sqrt-complex-real-part-normal.patch"]), ...["1e35", "1e-30-minus-2"].map((k) => [`g325-acos-sqrt-neg2-${k}`, "0044-sqrt-complex-real-part-normal.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
