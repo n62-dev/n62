@@ -13,6 +13,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
 
+**Copy of a 13-digit ⚠ value rounds twice** (G324f1, invariants (c), listed in `invariants-known.yaml`): `approx(solve(x^3-x-1=0,x))[0]` shows ⚠ 1.32471795724, its copy holds the 13 confirmed digits 1.324717957245 (…7244|7 rounded up), and the paste shows ≈ 1.32471795725. Recommended, a small package (gorge): the copy text keeps its confirmed digits only when they round back to the text shown, else one digit fewer (here 1.32471795724, 12 digits). Changes if: copies must always carry every confirmed digit.
+
 ## Decided proposals
 
 ### Pipeline and process

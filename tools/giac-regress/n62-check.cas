@@ -415,6 +415,8 @@ Digits:=40:; pc("g225f1-keep-times",'([1,2]*[3,4])',11,5/10^11);
 Digits:=40:; pc("g225f1-keep-dot-one-list",'(dot([[1,2],[3,4]]))',11,5/10^11);
 // hunt2-solve-three-real-control (home.yaml, oracle)
 Digits:=40:; pc("hunt2-solve-three-real-control",'(max(solve(x^3-3*x+1=0,x)))',(153208888624/10^11),5/10^12);
+// g324f1-approx-solve-x3-x-1-element (home.yaml, oracle)
+Digits:=40:; pc("g324f1-approx-solve-x3-x-1-element",'(approx(solve(x^3-x-1=0,x))[0])',(132471795724/10^11),5/10^12);
 // prec-20-sqrt2 (precision.yaml, oracle)
 Digits:=40:; pc("prec-20-sqrt2",'(sqrt(2))',(14142135623730950488/10^19),5/10^20);
 // prec-20-third (precision.yaml, oracle)
