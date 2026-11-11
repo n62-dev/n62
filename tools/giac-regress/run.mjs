@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G89: runs n62-check.cas, n62-known.cas and n62-patched.cas line by line on a Giac build (nodeGiac) and counts.
 //   GIAC_OUT=<dir> node tools/giac-regress/run.mjs [file.cas …]     exit 1 when a check line fails, a known line passes, or a patched line fails on the patched build
-// (on a stock build a patched line is expected to fail; one that passes there is reported: patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0043 may no longer be needed)
+// (on a stock build a patched line is expected to fail; one that passes there is reported: patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0042/0043 may no longer be needed)
 // A line passes when pc() returns 1; a line that errors (or is stopped by the timeout) counts as failed. A line that traps the engine
 // (stock Giac on the g188-int-* lines, G188f2) counts as failed and the run goes on in a fresh engine with the file's preamble (lines.mjs);
 // in the whole-file pass a trap is "trapped (stock)" for the patched file on a stock build (expected) and a failure otherwise.
@@ -34,7 +34,7 @@ for (const f of files) {
     const support = giac.eval("exponential(2,-1)").trim(); // patch 0007: 0 (stock Giac: 2*exp(2))
     const icdf = giac.eval("negbinomial_icdf(3,1/2,1/5)").trim(); // patch 0009: 1 (stock Giac: 0)
     isPatched = lnPi.startsWith("3.14159265358979323846264338328") && tanh.startsWith("1.0839233273386945434757520612") && reim === "2" && support === "0" && icdf === "1";
-    console.log(isPatched ? `${f}: these lines fail on stock giac_2.1.0-1; this build is the patched one (our patches 0003, 0005, 0006, 0007, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023, 0024, 0025, 0026, 0027, 0028, 0029, 0030, 0031, 0032, 0033, 0034, 0035, 0036, 0037, 0038, 0040, 0041, 0043), every line must pass` : `${f}: stock build: patched lines expected to fail (ln(-pi) im ${lnPi}, tanh(1+i) re ${tanh})`);
+    console.log(isPatched ? `${f}: these lines fail on stock giac_2.1.0-1; this build is the patched one (our patches 0003, 0005, 0006, 0007, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023, 0024, 0025, 0026, 0027, 0028, 0029, 0030, 0031, 0032, 0033, 0034, 0035, 0036, 0037, 0038, 0040, 0041, 0042, 0043), every line must pass` : `${f}: stock build: patched lines expected to fail (ln(-pi) im ${lnPi}, tanh(1+i) re ${tanh})`);
   }
   const t0 = performance.now();
   let pass = 0;
@@ -48,7 +48,7 @@ for (const f of files) {
     if (ok) pass++;
     else fail++;
     if (patchedFile && !isPatched) {
-      if (ok) wrong.push(`${id}: passes on stock, patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0043 may no longer be needed`);
+      if (ok) wrong.push(`${id}: passes on stock, patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0042/0043 may no longer be needed`);
     } else if (ok === known || (!ok && !known)) wrong.push(`${id}: ${out.slice(0, 120)}`);
   }
   const secs = ((performance.now() - t0) / 1000).toFixed(1);

@@ -738,6 +738,15 @@ export function build(cases) {
     `Digits:=40:; pc("g187-normal-pi-pow-sqrt2-1e16",'normal(pi^(sqrt(2)-10^16))',0,1/10^30);`,
   );
   nPatched += 2;
+  // Patch 0042 (G170), a written line (the golden g170-cas-* rows are texts; tests/engine/ilaplace-vars-test.ts reads the entries'
+  // bytes): signalprocessing.cc ilaplace2 stored an assumption on a local name that dies when it returns, so each ilaplace left one
+  // more entry in VARS(), under a freed name (derived: an ilaplace stores nothing the user asked for, so VARS() keeps its size).
+  patched.push(
+    "// patch 0042-ilaplace-assumed-name-purged.patch",
+    "// g170-ilaplace-vars-size (derived: ilaplace stores no name, so VARS() keeps its size)",
+    `Digits:=40:; purge(x):; pasv170:=0:; pasv170:=size(VARS()):; ilaplace(1/(x^2+1)):; ilaplace(1/(s^2+1),s,t):; pc("g170-ilaplace-vars-size",'size(VARS())-pasv170',0,1/10^30);`,
+  );
+  nPatched++;
   // Patch 0043 (G322), written lines (the golden hunt-*, hunt2-*, g322-* rows are lists, which caseLine leaves out): solve.cc
   // solve_ckrange dropped the real root of a cubic with one irrational real root at Digits > 14, where the MPFR evalf of its rootof
   // form carries a rounding imaginary part. Counts derived (nops(realroot(p)), Giac's exact count of real roots: 1, 1, 2, 1, 1);
