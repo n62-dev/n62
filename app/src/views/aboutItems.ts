@@ -5,6 +5,7 @@
 import type { MenuItem, SubMenu } from "../apps/types.ts";
 import { aboutText as t } from "../i18n/enAbout.ts";
 import { aboutData, aboutLoading, type AboutData } from "./aboutData.svelte.ts";
+import { currentEngine, isTested } from "../state/browser.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
 
 export const REPO_URL = "https://github.com/n62-dev/n62";
@@ -66,6 +67,7 @@ function aboutRows(d: AboutData): MenuItem[] {
     { id: "licence", label: t("licence"), hint: LICENCE, submenu: textLevel(LICENCE, d.licences[LICENCE] ?? "") },
     { id: "source", label: t("source"), hint: REPO_URL, keep: true },
     { id: "credits", label: t("credits"), submenu: { title: t("credits"), items: [], text: t("credits.text"), remember: false } },
+    { id: "browser", label: t("browser"), keep: true, value: `${t(`engine.${currentEngine()}`)}, ${t(isTested(currentEngine()) ? "tested" : "notTested")}` },
   ];
 }
 

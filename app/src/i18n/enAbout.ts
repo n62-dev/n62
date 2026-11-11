@@ -17,6 +17,14 @@ export const enAbout = {
   "version": "Version",
   "licence": "Licence",
   "source": "Source code",
+  /** R285: the engine this browser runs and whether N62 was tested on it (state/browser.ts). */
+  "browser": "Browser",
+  "engine.blink": "Blink (Chrome)",
+  "engine.gecko": "Gecko (Firefox)",
+  "engine.webkit": "WebKit (Safari)",
+  "engine.other": "Unknown engine",
+  "tested": "tested",
+  "notTested": "not tested",
   "credits": "Credits",
   "credits.text": "N62 is free software under the GNU General Public License, version 3 or later, with no warranty. It stands on the work of others: the Giac computer algebra system by Bernard Parisse and its authors, with GMP, MPFR and GSL under it; MathLive by Arno Gourdol for the entry line and the result display; libqalculate by Hanna Knutsson for the names and titles of units and constants and for their numbers (unit factors, constant values and uncertainties, checked in as find/factors.yaml); JSXGraph for the plots; Svelte, Vite and Capacitor for the app; the colour scheme Solarized. Every part, its licence and its full licence text are listed under Parts we use.",
   /** R149: the credits sheet (N62, then Enter). The story is the owner's own words, unedited. */

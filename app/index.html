@@ -35,11 +35,12 @@
   </head>
   <body>
     <div id="app"></div>
+    <!-- Too-old browser check (ES5, feature detection only; R160, R285). Inline and English: the i18n table is in the bundle.
+         Chrome 111: color-mix (keys), container units 105 (pad), wasm exceptions 95 (Giac; the bytes are
+         (module (func (try (catch_all))))). An Android WebView ("Version/4.") is told to update the WebView, any other browser to update itself. -->
     <script>
-      // Too-old WebView check (ES5, feature detection only). Inline and English: the i18n table is in the bundle.
-      // Chrome 111 (R160): color-mix (keys), container units 105 (pad), wasm exceptions 95 (Giac).
       (function () {
-        var ok = false; // the bytes: (module (func (try (catch_all))))
+        var ok = false;
         try {
           ok = CSS.supports("color", "color-mix(in srgb,red,blue)") && CSS.supports("width", "1cqi") && WebAssembly.validate(new Uint8Array(
             [0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 10, 8, 1, 6, 0, 6, 64, 25, 11, 11]));
@@ -49,7 +50,7 @@
         if (app) app.removeAttribute("id");
         var p = document.createElement("p");
         p.style.cssText = "font:16px sans-serif;padding:24px";
-        p.appendChild(document.createTextNode("This app needs a newer Android System WebView / Chrome. Update it from your app store."));
+        p.appendChild(document.createTextNode("This app needs a newer " + (/Version\/4\./.test(navigator.userAgent) ? "Android System WebView / Chrome. Update it from your app store." : "browser. Update it and reload.")));
         document.body.insertBefore(p, document.body.firstChild);
       })();
     </script>
