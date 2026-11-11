@@ -5,8 +5,8 @@
 // A refusal is a throw of REFUSAL_MARK and its code; Giac's error text carries it, and statsRefusal reads it back
 // (converge.ts errorRefusal, which Home and CAS ask before their error text), so the row shows its words, not the
 // generic `error.engine`. Only erasable TypeScript syntax: the worker and Node run this file directly.
-/** What a definition throws before the code; never typed by a user. */
-const REFUSAL_MARK = "n62refusal:";
+/** What a definition throws before the code; never typed by a user (wordOps.ts throws it too, G229). */
+export const REFUSAL_MARK = "n62refusal:";
 
 /** The refusals of these definitions (text: enEngine.ts). */
 export const STATS_REFUSALS = ["notData", "listsDiffer", "emptyList", "fewValues", "xAllEqual", "yAllEqual"] as const;

@@ -37,6 +37,7 @@ import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from ".
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
+import { WORD_DEFINITIONS } from "./wordOps.ts";
 import { defaultHomeSettings } from "./homeDefaults.ts";
 import { EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
 
@@ -190,6 +191,7 @@ export const ENGINE_DEFINITIONS: Readonly<Record<string, string>> = {
     "for (pask_:=0;pask_<size(pasl_);pask_:=pask_+1) { if (pasl_[pask_]==0) return 0; } " +
     "pass_:=0; for (pask_:=0;pask_<size(pasl_);pask_:=pask_+1) pass_:=pass_+1/pasl_[pask_]; return normal(1/pass_); }",
   ...STATS_DEFINITIONS, // G223: linreg(x,y), stats1(l), with their refusals in words (stats.ts)
+  ...WORD_DEFINITIONS, // G229: shl, shr, rotl, rotr, bnot in a word of 8 to 64 bits (wordOps.ts)
   // G106f1: whether a value holds a coefficient vector at any depth (polyvec.ts; its check defines it in the same call).
   [POLY_AT]: POLY_AT_ANY_DEPTH,
   [PLAIN_AT]: PLAIN_AT_ANY_DEPTH, // G173: Giac's matrix type at any depth (matrixType.ts; its call defines it again)
