@@ -191,6 +191,18 @@ Digits:=40:; pc("cx-decimal",'(((1/10^1)+(2/10^1)*i)*3)',(3/10^1)+(6/10^1)*i,5/1
 Digits:=40:; pc("cx-asin2",'(asin(2))',(157079632679/10^11)-(131695789692/10^11)*i,5/10^12+5/10^12);
 // cx-cbrt-neg8 (home.yaml, oracle)
 Digits:=40:; pc("cx-cbrt-neg8",'((-8)^(1/3))',1+(173205080757/10^11)*i,5/10^12+5/10^12);
+// g325-keep-asin-sqrt-neg2-1e34 (home.yaml, oracle)
+Digits:=40:; pc("g325-keep-asin-sqrt-neg2-1e34",'(asin(sqrt(-2)-10^34))',-(157079632679/10^11)+(789810403424/10^10)*i,5/10^12+5/10^11);
+// g325-keep-asin-2i-1e35 (home.yaml, oracle)
+Digits:=40:; pc("g325-keep-asin-2i-1e35",'(asin(2*i-10^35))',-(157079632679/10^11)+(812836254354/10^10)*i,5/10^12+5/10^11);
+// g325-keep-asin-sqrt-neg2-plus-1e35 (home.yaml, oracle)
+Digits:=40:; pc("g325-keep-asin-sqrt-neg2-plus-1e35",'(asin(sqrt(-2)+10^35))',(157079632679/10^11)+(812836254354/10^10)*i,5/10^12+5/10^11);
+// g325-keep-asin-neg2 (home.yaml, oracle)
+Digits:=40:; pc("g325-keep-asin-neg2",'(asin(-2))',-(157079632679/10^11)+(131695789692/10^11)*i,5/10^12+5/10^12);
+// g325-keep-asin-half (home.yaml, oracle)
+Digits:=40:; pc("g325-keep-asin-half",'(asin(1/2))',(523598775598/10^12),5/10^13);
+// g325-keep-ln-sqrt-neg2-1e35 (home.yaml, oracle)
+Digits:=40:; pc("g325-keep-ln-sqrt-neg2-1e35",'(ln(sqrt(-2)-10^35))',(805904782548/10^10)+(314159265359/10^11)*i,5/10^11+5/10^12);
 // int-floor2.5 (home.yaml, derived)
 Digits:=40:; pc("int-floor2.5",'(floor((25/10^1)))',2,5/10^12);
 // int-ceil-2.5 (home.yaml, derived)

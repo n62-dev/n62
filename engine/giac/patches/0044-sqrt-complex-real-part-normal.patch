@@ -1,0 +1,17 @@
+# Upstream: giac 2.1.0 usual.cc sqrt, the exact complex branch: the imaginary part b is ratnormal(im(e)) but the real part a is re(e) as it comes, so for e = 1-x*x, x = sqrt(-2)-10^35 (asin's ln form, sqrt_one_minus_square), a was 1-10^70+sqrt(2)*sqrt(2); rho = sqrt(a^2+b^2) and rho-a then held sqrt(2) as an algebraic number, and normalize_sqrt of the root t = sqrt((rho-a)/2) took the sign of a nested root from its value at Digits, which cancels (10^70 against 2): at Digits 40 sqrt(1-x*x) was the other root (evalf 1.35E14+1.05E21*i, right 1.414+1E35*i), at Digits 60 the right one, so asin(sqrt(-2)-10^35) at Digits 40 was the conjugate of the principal value (-pi/2-81.28*i, mpmath -pi/2+81.28*i), also acos, -10^40, -10^45 (wrong at 40, 60 and 80), sqrt(-2)*10^-30-2 (backlog F224, F212). Now a is ratnormal(re(e)), as b is; a with no sqrt of a square keeps its value and form.
+# Changed by Pascaline contributors, 2026-11-11
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -1425,7 +1425,11 @@
+       // sqrt of an exact complex number
+       if (!lop(e,at_exp).empty())
+ 	return pow(e,plus_one_half,contextptr);
+-      a=re(e,contextptr);b=ratnormal(im(e,contextptr),contextptr);
++      // Pascaline patch 0044 (G325): the real part is normalized as the imaginary part is. re() of 1-x*x for
++      // x=sqrt(-2)-10^35 is 1-10^70+sqrt(2)*sqrt(2), so rho and rho-a below held sqrt(2) as an algebraic number and
++      // normalize_sqrt chose the sign of a nested root at Digits (10^70 against 2): sqrt(1-x*x) took the other root at
++      // Digits 40, and asin(sqrt(-2)-10^35) was its conjugate, -pi/2-81.28*i (right -pi/2+81.28*i).
++      a=ratnormal(re(e,contextptr),contextptr);b=ratnormal(im(e,contextptr),contextptr);
+       if (a!=e && is_zero(b,contextptr))
+ 	return sqrt(a,contextptr);
+       // Pascaline patch 0021 (G134): an imaginary part that is exactly 0 but not after ratnormal (im(z^2+1) for

@@ -172,6 +172,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // solve_inequation keeps a double test point complex by the same epsilon
   ["0043-solve-ckrange-imag-noise.patch", "giac-2.1.0/src/solve.cc", /if \(!\(isolate_mode &1\) && \( \(sol\.type==_CPLX && !is_zero\(im\(sol,contextptr\),contextptr\)\)/, "static void solve_ckrange(const identificateur & x,vecteur & v,int isolate_mode,GIAC_CONTEXT){"],
   ["0043-solve-ckrange-imag-noise.patch", "giac-2.1.0/src/solve.cc", /testval=evalf_double\(testval,1,contextptr\);\s*if \(testval\.type==_CPLX && is_zero\(\*\(testval\._CPLXptr\+1\),contextptr\)\)/, "gen testval;"],
+  // G325, patch 0044: sqrt's exact complex branch normalizes the imaginary part only, so re(1-x*x) for x = sqrt(-2)-10^35 kept
+  // sqrt(2)*sqrt(2) and normalize_sqrt took the sign of a nested root at Digits (asin(sqrt(-2)-10^35) the conjugate at Digits 40)
+  ["0044-sqrt-complex-real-part-normal.patch", "giac-2.1.0/src/usual.cc", /a=re\(e,contextptr\);b=ratnormal\(im\(e,contextptr\),contextptr\);/, "// sqrt of an exact complex number"],
 ];
 
 const tar = tarball(SOURCES.giac);
