@@ -648,8 +648,8 @@ export function homeEval(
     else if (refused) return refuse(refused, "exact");
   }
   // G187 (F122): a power past MPFR's range by its size, before the checks that read its value (Giac's normal recursed) and the cut's word;
-  // asked late too (one evalf): the checks after it are skipped then, and its value would be read as a 0. The tree came with the
-  // exact run; a value decided again (decideTwice) comes without it, and only a symbolic one can be a power
+  // asked late too (one engine call): the checks after it are skipped then, and its value would be read as a 0. The tree comes with the exact
+  // run and with a value decided again (decideTwice keeps it, decisions.ts); a symbolic one without it is asked (only those can be a power)
   const pastRange = once ? null : powerPastRange(giac, ans, value.tree !== undefined || value.kind !== "symbolic" ? value.tree : giac.value(ans, [], true).tree, P);
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).

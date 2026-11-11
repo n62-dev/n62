@@ -143,6 +143,18 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
     ];
     for (const [input, angle] of typedRows)
       expect(host.home(input, { ...defaultHomeSettings, angle }).result, `${input} ${angle}`).toMatchObject({ ok: false, error: "underflow" });
+    // G187 fix round 2: a base or exponent that cancels exactly. Giac keeps the power (the exponent is no integer); at P the
+    // base's ln (or the exponent) is a unit of the last place, a size of about ±10^360, and at P+20 it is 0 (or log10 of
+    // 2^sqrt(2)): the size is no claim, so it refuses nothing and the checks after it decide. Values (derived): 1^x = 1,
+    // and 2^(0+sqrt(2)) = 2^sqrt(2) = 2.66514414269022518865…
+    const cancelling: [string, string][] = [
+      ["(sin(1)^2+cos(1)^2)^(10^400+sqrt(2))", "1"],
+      ["2^(10^400*(sin(1)^2+cos(1)^2-1)+sqrt(2))", "2.66514414269"],
+    ];
+    for (const [input, shown] of cancelling) {
+      expect(powerPastRange(giac, "pasov", giac.value(`pasov:=${input}`, [], true).tree, 40), input).toBeNull();
+      expect(host.home(input, defaultHomeSettings).result, input).toMatchObject({ ok: true, display: shown });
+    }
     // The size by the modulus of a complex base; a power inside the range and a free name decide nothing.
     // |atan(2+i)| = 1.19 (mpmath), so 10^(7.58E398) and 10^(-7.58E398); Giac keeps the power (an integer exponent
     // becomes exp(n*ln(b)), G123's path)
