@@ -153,7 +153,7 @@
  	  eps=lfd*eps;
        }
 +      if (testeq.type==_REAL)
-+	eps*=1e4; // N62 patch 0043 (G322), as at l
++	eps*=1e4; // N62 patch 0043 (G322): as at l
        if ( (is_greater(eps,testeq,contextptr) || test!=1) &&
  	  (equalposcomp(excluded_not_singu,m) || equalposcomp(singu,m) ||
  	   ( !(direction %2) && equalposcomp(veq_not_singu,m)) )
