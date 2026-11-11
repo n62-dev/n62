@@ -9,7 +9,9 @@ import { defaultHomeSettings } from "./homeEval.ts";
 import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, nodeHost } from "./nodeGiac.ts";
 import { errorRefusal } from "./converge.ts";
-import { statsRefusal } from "./stats.ts";
+import { STATS_REFUSALS, statsRefusal } from "./stats.ts";
+import { enEngine } from "../i18n/enEngine.ts";
+import { hasMessage } from "../i18n/index.ts";
 
 describe("G223 statsRefusal", () => {
   it("reads the code a definition threw from Giac's error text", () => {
@@ -22,6 +24,16 @@ describe("G223 statsRefusal", () => {
     expect(statsRefusal('GIAC_ERROR: "median: needs one list of values" Error: Bad Argument Value')).toBeNull();
     expect(statsRefusal('GIAC_ERROR: "n62refusal:noSuchCode" Error: Bad Argument Value')).toBeNull();
     expect(statsRefusal("GIAC_ERROR: Invalid dimension")).toBeNull();
+  });
+});
+
+describe("G223 the words stay with the worker", () => {
+  it("are in the worker's table, not the app's (start chunk): the row shows the worker's text", () => {
+    for (const code of STATS_REFUSALS) {
+      expect(enEngine[`error.${code}`], code).toBeTruthy();
+      expect(hasMessage(`error.${code}`), code).toBe(false);
+    }
+    expect(hasMessage("error.noLimit")).toBe(true);
   });
 });
 

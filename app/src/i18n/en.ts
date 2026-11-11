@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // English strings. Every user-facing string of the app lives here (CLAUDE.md: i18n from the start).
-import { enEngine } from "./enEngine.ts";
+import { enEngineShown } from "./enEngine.ts";
 
 export const en = {
-  ...enEngine,
+  ...enEngineShown,
   "view.home": "Home",
   "view.cas": "CAS",
   "key.shift": "shift",

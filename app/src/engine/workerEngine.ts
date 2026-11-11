@@ -24,7 +24,7 @@ import {
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import type { ConstTable } from "./constUnc.ts";
 import type { ChipFactsTable } from "./chipFacts.ts";
-import { enEngine } from "../i18n/enEngine.ts";
+import { enEngineShown } from "../i18n/enEngine.ts"; // the app's part: this file is in the start chunk (G223)
 
 /** The part of a Worker that WorkerEngine uses (lets tests drive it without a browser). */
 export interface WorkerLike {
@@ -83,7 +83,7 @@ function defaultWorker(): WorkerLike {
 }
 
 /** Home's time-out result (homeEval.ts `failed` with Giac's interrupt): the row shows `error.timeout`. */
-const timedOut = (text = enEngine["error.timeout"]): HomeResult =>
+const timedOut = (text = enEngineShown["error.timeout"]): HomeResult =>
   ({ ok: false, display: text, path: "exact", approximate: true, exactMs: 0, totalMs: HOME_WATCHDOG_MS, error: "timeout", full: text, facts: { exact: false, reliableDigits: null } });
 
 export class WorkerEngine implements MathEngine {

@@ -5,7 +5,7 @@ import { CalcCancelled, type AngleUnit, type CalcError, type Calc, type CalcSett
 import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
-import { t, type MessageKey } from "../i18n/index.ts";
+import { hasMessage, t, type MessageKey } from "../i18n/index.ts";
 import { EngineCrashError, EngineLoadError, EngineMemoryError } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
 import { homeResultToLatex, type GroupSep } from "../render/home.ts";
@@ -159,8 +159,11 @@ export const loadForms = (): Promise<typeof import("./cycleForms.ts") | undefine
 export const loadRemoved = (): Promise<typeof import("./removedRows.ts") | undefined> =>
   import("./removedRows.ts").then((m) => (removedCode = m), () => undefined);
 
-const errorText = (code: CalcError | undefined, fallback: string): string =>
-  code ? t(`error.${code}` as MessageKey) : fallback;
+/** G223: a code whose words only the worker has (enEngine.ts, out of the start chunk) shows the worker's text. */
+const errorText = (code: CalcError | undefined, fallback: string): string => {
+  const key = `error.${code ?? ""}`;
+  return code && hasMessage(key) ? t(key) : fallback;
+};
 const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, Math.round(n)));
 const clampDigits = (n: number): number => Math.min(MAX_DIGITS, Math.max(1, Math.round(n)));
 
