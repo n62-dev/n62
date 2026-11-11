@@ -51,6 +51,11 @@ describe.skipIf(!giacAvailable())("G223f1 a program body read for its names is n
     expect(s.ok).toBe(true);
     expect(s.display).toContain("3,2.33333333333,1.52752523165,1.24721912892,1,4");
     expect(run("approx(stats1([1,2,4]))")).toMatchObject({ ok: true, display: "{3,2.33333333333,1.52752523165,1.24721912892,1,4}" });
+    // G223f1: decidingStored (an input that runs once) read a try/catch body's `catch(` as a call and asked it bare.
+    expect(run("c223:=0")).toMatchObject({ ok: true });
+    expect(run("inc223(x):={try {c223:=c223+x;} catch(e) {c223:=0;} return c223;}")).toMatchObject({ ok: true });
+    expect(run("inc223(1)")).toMatchObject({ ok: true, display: "1" });
+    expect(run("B223:=inc223(2)")).toMatchObject({ ok: true, display: "3" });
     expect(shown.filter((d) => /syntax error/.test(d))).toEqual([]);
   });
 });

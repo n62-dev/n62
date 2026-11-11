@@ -1070,16 +1070,18 @@ const RUNS_BARE: ReadonlySet<string> = new Set([
 const FIXED_PRINTS = new WeakMap<Giac, Map<string, string>>();
 
 /** Giac's print of `name`, trimmed (`'sin'`, a stored function's definition, the name itself when free). A built-in
- *  (printed quoted) is reserved, Giac refuses to store into it, and a keyword cannot be stored into either: their
- *  prints are asked once per Giac instance (G53: notBuiltin and callsStateful asked them on every Enter). */
+ *  (printed quoted) is reserved, Giac refuses to store into it: its print is asked once per Giac instance (G53:
+ *  notBuiltin and callsStateful asked them on every Enter). G223f1: a keyword cannot be stored into either, and is
+ *  answered as a built-in without asking: a bare `local`, `catch` or `else` is a Giac parse error, which the host's
+ *  strict eval turns into the whole input's syntax error (`inc(1)` of a body with try/catch, through decidingStored). */
 export function namePrint(giac: Giac, name: string): string {
   let fixed = FIXED_PRINTS.get(giac);
   if (!fixed) FIXED_PRINTS.set(giac, (fixed = new Map()));
   const known = fixed.get(name);
   if (known !== undefined) return known;
-  if (RUNS_BARE.has(name)) return `'${name}'`;
+  if (RUNS_BARE.has(name) || KEYWORDS.has(name)) return `'${name}'`;
   const out = giac.eval(name).trim();
-  if (out === `'${name}'` || KEYWORDS.has(name)) fixed.set(name, out);
+  if (out === `'${name}'`) fixed.set(name, out);
   return out;
 }
 
