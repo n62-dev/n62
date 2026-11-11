@@ -1,0 +1,27 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* R285: the browser note (browserNote.ts), one line under the status line. Loaded with its chunk. */
+.browser-note {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  background: var(--panel);
+  border-bottom: var(--stroke-thin) solid var(--line);
+  color: var(--muted);
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+}
+.browser-note p {
+  flex: 1;
+  margin: 0;
+}
+.browser-note button {
+  min-height: 32px;
+  padding: 0 var(--sp-4);
+  border: 0;
+  border-radius: var(--radius-m);
+  background: var(--key-enter);
+  color: var(--on-enter);
+  font: inherit;
+  font-weight: 600;
+}

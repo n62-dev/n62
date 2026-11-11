@@ -105,7 +105,9 @@
     if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
     else setTimeout(loadFold, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
-    void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(showTips, { timeout: 2000 }) : setTimeout(showTips, 500)));
+    const idle = (f: () => void): unknown => ("requestIdleCallback" in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 500));
+    void tipsDue(location.search).then((due) => due && idle(showTips));
+    idle(() => void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {})); // R285: a browser that has not passed says so once (the chunk decides)
     return countScreenTaps((kind) => session.taps.press(kind));
   });
   let host: HTMLElement | undefined = $state();

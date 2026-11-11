@@ -7,6 +7,8 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+**R285 browser note: when an engine joins `TESTED`** (`app/src/state/browser.ts`): only Blink is listed, as A144's Firefox (65 of 72) and WebKit (41 of 72, Linux WebKit) lines are `failed`. Recommended: add `gecko` after the three A144 follow-ups (flick, clipboard and tap helpers, SolveNum border-box) pass the core list in Firefox, and `webkit` only after the owner's iPhone check (R225); each time the note's line "Tested on Chrome and Android" (`app/src/i18n/enBrowser.ts`) is reworded to name the engines then tested. The flag is a field of the `tipsSeen` record (no new key, so docs/04 6.2 stays true).
+
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-12); S36f1 set the two copper values to the sheet's (pass 103 re-read it). Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
 **R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row now writes `39.488 ± 1.2 m²` (the writer of Copy as shown and Share), but Paste reads one number, so that text gives "Paste: not a number" (paste.test.ts checks the refusal), and the unit view takes no paste (`units/open.ts` stops it). Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.

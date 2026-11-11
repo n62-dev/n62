@@ -60,6 +60,16 @@ for (const [name, ua] of [["Firefox", FIREFOX], ["Safari", SAFARI]] as const) {
       await expect(note(page)).toHaveCount(0);
     });
 
+    test("with the tips on the same first start, each is shown once and neither writes over the other", async ({ page }) => {
+      await open(page, "engine=fake&tips=on");
+      await expect(page.getByTestId("tips")).toBeVisible();
+      await expect(note(page)).toBeVisible();
+      await open(page, "engine=fake&tips=on");
+      await settle(page);
+      await expect(page.getByTestId("tips")).toHaveCount(0);
+      await expect(note(page)).toHaveCount(0);
+    });
+
     test("About names the engine and says not tested", async ({ page }) => {
       await open(page);
       await tap(page, ["@mode", "d6", "d7", "d3"]);
