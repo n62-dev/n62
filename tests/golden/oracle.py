@@ -81,7 +81,7 @@ def _wrap(name):
     return lambda *a: f(*[M(x) for x in a])
 
 
-def namespace():
+def namespace(digits=None):
     ns = {"F": F, "M": M, "factorial": math.factorial, "mp": mp, "mpf": mp.mpf, "mpc": mp.mpc, "I": mp.mpc(0, 1)}
     for n in ["sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh",
               "atanh", "exp", "ln", "log10", "sqrt", "cbrt", "gamma", "erf", "power", "nsum", "quad",
@@ -97,8 +97,8 @@ def namespace():
     ns["sortroots"] = sortroots
     ns["D200"] = at200
     ns["S"] = lambda label: Label(label)
-    ns["Braces"] = lambda *xs: Label("{" + ",".join(display(x) for x in xs) + "}")  # G169: a `{ }` list as the app shows it (12 digits)
-    ns["Bracket"] = lambda *xs: Label("[" + ",".join(display(x) for x in xs) + "]")  # G172: a `[ ]` list or matrix row as the app shows it
+    ns["Braces"] = lambda *xs: Label("{" + ",".join(display(x, digits) for x in xs) + "}")  # G169: a `{ }` list as the app shows it (the case's digits, G322)
+    ns["Bracket"] = lambda *xs: Label("[" + ",".join(display(x, digits) for x in xs) + "]")  # G172: a `[ ]` list or matrix row as the app shows it
     return ns
 
 
@@ -210,14 +210,14 @@ def display(x, digits=None):
     return fmt_real(round_decimal(to_decimal(x), digits), digits)
 
 
-def raw(expr: str, dps: int):
+def raw(expr: str, dps: int, digits=None):
     mp.dps = dps
-    return eval(expr, namespace())  # expressions come from our own case files
+    return eval(expr, namespace(digits))  # expressions come from our own case files
 
 
 def evaluate(expr: str, dps: int, digits=None):
     mp.dps = dps
-    return display(eval(expr, namespace()), digits)  # expressions come from our own case files
+    return display(eval(expr, namespace(digits)), digits)  # expressions come from our own case files
 
 
 def case_digits(case: dict) -> int:
@@ -460,7 +460,7 @@ def check_file(path: Path, write: bool, g2_items: set, counts=None):
             if "oracle" in case:
                 digits = case_digits(case)
                 lo, hi = stability_dps(digits)
-                value = raw(case["oracle"], lo)
+                value = raw(case["oracle"], lo, digits)
                 v30, v60 = display(value, digits), evaluate(case["oracle"], hi, digits)
                 if src == "oracle" and counts is not None:
                     counts["exact" if is_exact_value(value) else "mpmath"] += 1
