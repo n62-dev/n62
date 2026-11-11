@@ -56,7 +56,7 @@ import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption
 import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
 import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
-import { deadEngine } from "./dead.ts";
+import { deadEngine, startDead } from "./dead.ts";
 
 /** G65: what the call after an input found: the names it read and stored (stateRead.ts), and Giac's settings. */
 interface AfterInput {
@@ -1309,7 +1309,7 @@ export function createRequestHandler(load: GiacLoader, post: (r: Response) => vo
           break;
       }
     } catch (e) {
-      const dead = deadEngine(e);
+      const dead = req.type === "init" ? startDead(e) : deadEngine(e); // G318: a failed start is classed by when it happened
       post({ id: req.id, type: "fatal", message: e instanceof Error ? e.message : String(e), ...(dead ? { dead } : {}) });
     }
   };

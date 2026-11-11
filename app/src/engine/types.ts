@@ -254,6 +254,12 @@ export class EngineCrashError extends Error {
   override name = "EngineCrashError";
 }
 
+/** G318: the engine could not start (its wasm or worker script did not load), twice; it is not started again until a
+ *  Cancel. A start that failed for memory is EngineMemoryError, one a trap stopped EngineCrashError. */
+export class EngineLoadError extends Error {
+  override name = "EngineLoadError";
+}
+
 export class EngineCancelled extends Error {
   constructor() {
     super("cancelled");
