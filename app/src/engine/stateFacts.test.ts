@@ -67,7 +67,7 @@ describe.skipIf(!giacAvailable())("G65: stored names from Giac's state", () => {
     const jobs = [
       () => host.solve({ kind: "equations", equations: ["X*exp(X)=5"], unknowns: ["X"], guesses: ["1"] }, defaultHomeSettings),
       () => host.analyze({ kind: "area", f: "x^2+a", a: "0", b: "1" }, defaultHomeSettings),
-      () => host.units({ expr: "2*(((1)*pasdimL^(1)))", inexact: false }, defaultHomeSettings),
+      () => host.units({ expr: "2*(((1)*pasdimL^(1)))", number: "2*(((1)))", inexact: false }, defaultHomeSettings),
     ];
     for (const job of jobs) {
       stateReads = 0;

@@ -91,7 +91,7 @@ describe.skipIf(!giacAvailable())("a stored name in the unit view (R121, real Gi
     const entry: ChipEntry = { value: "50*pi", exact: false, reliableDigits: 12 };
     const built = buildJob({ formula: "chipq*pasu1*2", slots: [{ tokens: [{ unit: "m" }] }] }, TABLE) as UnitJob;
     const swap = (t: string): string => t.replace(/\bchipq\b/g, name);
-    const job: UnitJob = { ...built, expr: swap(built.expr), ...(built.check !== undefined ? { check: swap(built.check) } : {}) };
+    const job: UnitJob = { ...built, expr: swap(built.expr), number: swap(built.number), ...(built.check !== undefined ? { check: swap(built.check) } : {}) };
     expect(job.expr).toContain(name);
     host.giac.eval(chipCommand("1", entry));
     host.chipFacts.set(name, chipNameFacts(entry));

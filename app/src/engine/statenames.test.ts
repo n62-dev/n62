@@ -114,7 +114,7 @@ describe.skipIf(!giacAvailable())("G303: a name our programs bind does not captu
   it("the unit view: a free name is the user's to fix, whichever letter it is", async () => {
     const error = async (n: string): Promise<string> => {
       const host = await fresh();
-      const r = host.units({ expr: `${n}*pasdimL` } as Parameters<EngineHost["units"]>[0], home) as { error?: string };
+      const r = host.units({ expr: `${n}*pasdimL`, number: `${n}*1` } as Parameters<EngineHost["units"]>[0], home) as { error?: string };
       return r.error ?? "no error";
     };
     const ref = await error("zz");
