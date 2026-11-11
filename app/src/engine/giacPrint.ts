@@ -340,6 +340,21 @@ export function parsePrinted(text: string): PrintedNode | null {
 
 // --- names ----------------------------------------------------------------------------------------------------------
 
+/** G53: Giac's language keywords that functionsIn finds in a printed program (`if (`, `while (`): like a built-in, none
+ *  can hold a value, so each prints the same all session. Every entry is checked to refuse both `k:=3` and `k(x):=x`
+ *  in precision.test.ts ("G53: every KEYWORDS entry refuses a value"). `return` is left out: Giac reads
+ *  `return(x):=x` as `return(x:=x)` without an error, so it is asked like a user's name. */
+export const KEYWORDS: ReadonlySet<string> = new Set([
+  "if", "while", "throw", "and", "or", "xor", "local", "else", "elif", "then", "try", "catch", "break", "continue",
+  "repeat", "until", "switch", "case", "default", "do", "from", "to", "step", "in",
+]);
+
+/** G223f1: the words Giac's printer writes in a program that no user's name can be: KEYWORDS, `for` (a built-in) and
+ *  `return` (Giac reads `return(x):=x` as return(x:=x), so it never holds a definition). A program's body is read for
+ *  the names it uses (complexReads); none of these is one, and Giac asked a bare `local`, `else` or `then` gives a parse
+ *  error (`undef`), which ended the whole input as a syntax error. */
+export const PROGRAM_WORDS: ReadonlySet<string> = new Set([...KEYWORDS, "for", "return"]);
+
 /** A name as Giac's language writes one. */
 export const NAME = "[A-Za-z_][A-Za-z0-9_]*";
 const WHOLE_NAME = new RegExp(`^${NAME}$`);

@@ -419,7 +419,7 @@ describe.skipIf(!giacAvailable())("G38: the exact path decides at P and at P + 2
   });
 
   it("G53: every KEYWORDS entry refuses a value: k:=3 and k(x):=x are errors and store nothing (source: derived, Giac)", async () => {
-    const { KEYWORDS } = await import("./numeric.ts");
+    const { KEYWORDS } = await import("./giacPrint.ts");
     const { giac, bridge } = await loadNodeGiac();
     const varsBefore = giac.eval("VARS()");
     const accepted: string[] = [];
