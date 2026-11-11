@@ -7,11 +7,6 @@
 known:
   # F144 (G152): the imaginary part of acosh/asinh of a huge argument halved (G138: asinh(1ᴇ1000+…+atanh(10)); mpmath keeps the right im there)
   - { id: 'rad 30 \operatorname{asinh}\left(\left(\left(1ᴇ1000\right)+\sin\left(\frac{\pi}{2}-\frac{\pi}{10^{4}}\right)\right)+\operatorname{atanh}\left(10\right)\right)', check: "≈", package: F144 }
-  # F145 (G186 fixed the hangs: Giac's simplifier loop, patch 0040, and the bridge's re-evaluation at Digits 12): Giac's exact asin of
-  # -10^1000+i*sqrt(2) loses ln 2 from its imaginary part (2302.585…, mpmath 2303.278…), and the agreement check, past MAX_EVAL_DIGITS
-  # from the 1001-digit literal (G141), shows ⚠ 12 (DEG), ⚠ 14 (RAD) with wrong digits (G138, seed 1793847163)
-  - { id: 'deg 30 \left(1ᴇ1000\right)^{\arcsin\left(\sqrt{-2}-\left(1ᴇ1000\right)\right)}', check: "⚠n", package: F145 }
-  - { id: 'rad 30 \left(1ᴇ1000\right)^{\arcsin\left(\sqrt{-2}-\left(1ᴇ1000\right)\right)}', check: "⚠n", package: F145 }
   # F155 (G141 closes F151): the cancellation families of G162, (1±10^-k)^(c·10^k), (f(a+10^-k)-f(a))·10^k+b and (1-cos 10^-k)·10^(2k)+b, and trees
   # over them: P and P+20 share the lost 10^-k term (G138, seed 1793847163); 14 rows still fail (G189 dropped the 685 that pass); they are past MAX_EVAL_DIGITS (S20 the cure)
   - { id: 'rad 30 \sqrt[3]{\left(\ln\left(3+10^{-249}\right)-\ln\left(3\right)\right)\times 10^{249}+1}', check: "≈", package: F155 }

@@ -8,6 +8,7 @@ import { callsOf, closing, functionsIn, isError, isName, namesIn, numbers, type 
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import type { GiacValue } from "./bridge.ts";
 import { ESERIES_CUT } from "./eseries.ts";
+import { nonReal } from "./complex.ts";
 
 const INTEGER = /^\s*\d+\s*$/;
 
@@ -45,14 +46,13 @@ function complexDecision(input: string, q: Quoting, result: string, complexArg: 
 }
 
 /** G325: whether an argument (typed Giac text) is not real: Giac's evalf of it at the current Digits has an imaginary part,
- *  or no imaginary part can be had (an error decides, as the safe side). One Giac call per argument, kept for the input. */
+ *  or no imaginary part can be had (an error decides, as the safe side; complex.ts nonReal). One Giac call per argument, kept for the input. */
 export function nonRealArg(giac: Giac): (arg: string) => boolean {
   const known = new Map<string, boolean>();
   return (arg) => {
     const k = known.get(arg);
     if (k !== undefined) return k;
-    const im = giac.eval(`im(evalf(${arg}))`);
-    const r = isError(im) || /[1-9]/.test(im.replace(/e[+-]?\d+/g, ""));
+    const r = nonReal(giac, `evalf(${arg})`);
     known.set(arg, r);
     return r;
   };
