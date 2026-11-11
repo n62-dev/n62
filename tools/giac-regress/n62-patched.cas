@@ -4,7 +4,7 @@
 // Each line: Giac's value of the input (typed decimals as exact rationals, Digits 40 or more) against the expected value
 // within half a unit of its last digit. Expected values: mpmath (oracle) or by hand (derived); see the comment above a line.
 pasn:=0:; pasfail:=0:;
-pc(id,v,e,tol):={ local d,g,ok; pasn:=pasn+1; ok:=0; try { g:=eval(v); d:=abs(evalf(g-e)); if (d<=tol && string(d)!="undef") { if (d>tol) { ok:=0; } else { ok:=1; } } } catch (err) { ok:=0; } if (ok==0) { pasfail:=pasfail+1; print("FAIL "+id); return 0; } return 1; }:;
+pc(id,v,e,tol):={ local d,g,ok; epsilon:=1e-12; pasn:=pasn+1; ok:=0; try { g:=eval(v); d:=abs(evalf(g-e)); if (d<=tol && string(d)!="undef") { if (d>tol) { ok:=0; } else { ok:=1; } } } catch (err) { ok:=0; } if (ok==0) { pasfail:=pasfail+1; print("FAIL "+id); return 0; } return 1; }:;
 // patch 0005-mpfr-pi-and-real-domains.patch
 // g78-novalue-asin-acos (home.yaml, oracle)
 Digits:=40:; pc("g78-novalue-asin-acos",'(asin(acos(pi*pi)))',(181211256762/10^11)*i,5/10^12);
@@ -905,6 +905,24 @@ Digits:=40:; pc("g187-normal-pi-pow-sqrt2-1e16",'normal(pi^(sqrt(2)-10^16))',0,1
 // patch 0042-ilaplace-assumed-name-purged.patch
 // g170-ilaplace-vars-size (derived: ilaplace stores no name, so VARS() keeps its size)
 Digits:=40:; purge(x):; pasv170:=0:; pasv170:=size(VARS()):; ilaplace(1/(x^2+1)):; ilaplace(1/(s^2+1),s,t):; pc("g170-ilaplace-vars-size",'size(VARS())-pasv170',0,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g322-size-solve-x3-2x-5-60 (derived: nops(realroot(p)))
+Digits:=60:; pc("g322-size-solve-x3-2x-5-60",'size(solve(x^3-2*x-5=0,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g322-solve-x3-2x-5-60 (oracle: mpmath findroot)
+Digits:=60:; pc("g322-solve-x3-2x-5-60",'solve(x^3-2*x-5=0,x)[0]',20945514815423265914823865405793029638573061056282391803041/10^58,1/10^55);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g322-solve-x3-x-1-40 (oracle: mpmath findroot)
+Digits:=40:; pc("g322-solve-x3-x-1-40",'solve(x^3-x-1=0,x)[0]',13247179572447460259609088544780973407344040569017333645340/10^58,1/10^35);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g322-size-solve-x-1-times-x3-x-1-40 (derived: nops(realroot(p)))
+Digits:=40:; pc("g322-size-solve-x-1-times-x3-x-1-40",'size(solve((x-1)*(x^3-x-1)=0,x))',2,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g322-size-zeros-x3-x-1-40 (derived: nops(realroot(p)))
+Digits:=40:; pc("g322-size-zeros-x3-x-1-40",'size(zeros(x^3-x-1,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g322-size-solve-x3-2x-5-gt-60 (derived: nops(realroot(p)))
+Digits:=60:; pc("g322-size-solve-x3-2x-5-gt-60",'size(solve(x^3-2*x-5>0,x))',1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

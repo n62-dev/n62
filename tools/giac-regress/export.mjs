@@ -110,11 +110,13 @@ export function caseLine(c, file) {
   };
 }
 
+// G322: each line starts at the host's epsilon (1e-12, flags.ts hostContext), as the app puts it back after every input: Giac's
+// proot leaves epsilon at its own tolerance (10^-Digits after a cubic's solve), which changed later lines (erf of a small argument).
 // Giac's value must be within the tolerance of the expected one (G113: an MPFR NaN, printed undef, is both <= and > tol, so both are tested;
 // G118: another NaN, from abs(evalf(acos(pi)^2-e)) on stock at Digits 40, is <= tol and not > tol, so a difference that prints undef never passes); a failing line is printed, the count comes last.
 const PREAMBLE = [
   'pasn:=0:; pasfail:=0:;',
-  'pc(id,v,e,tol):={ local d,g,ok; pasn:=pasn+1; ok:=0; try { g:=eval(v); d:=abs(evalf(g-e)); if (d<=tol && string(d)!="undef") { if (d>tol) { ok:=0; } else { ok:=1; } } } catch (err) { ok:=0; } if (ok==0) { pasfail:=pasfail+1; print("FAIL "+id); return 0; } return 1; }:;',
+  'pc(id,v,e,tol):={ local d,g,ok; epsilon:=1e-12; pasn:=pasn+1; ok:=0; try { g:=eval(v); d:=abs(evalf(g-e)); if (d<=tol && string(d)!="undef") { if (d>tol) { ok:=0; } else { ok:=1; } } } catch (err) { ok:=0; } if (ok==0) { pasfail:=pasfail+1; print("FAIL "+id); return 0; } return 1; }:;',
 ];
 
 // Cases Giac gets wrong today, found by running n62-check.cas on the pin (giac_2.1.0-1). The first rule that matches an

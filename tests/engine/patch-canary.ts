@@ -167,6 +167,11 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G170, patch 0042: ilaplace2 assumes its local name ` n` with sto, which keys the table by the name's characters, and never
   // purges it (the _purge line is commented out): every ilaplace left an entry under a freed name in VARS()
   ["0042-ilaplace-assumed-name-purged.patch", "giac-2.1.0/src/signalprocessing.cc", /sto\(gen\(makevecteur\(change_subtype\(2,1\)\),_ASSUME__VECT\),n,contextptr\);(?:(?!purge)[\s\S])*?return true;\s*\}/, "bool ilaplace2(const gen &g,const gen &s,const gen &x,gen &orig,GIAC_CONTEXT) {"],
+  // G322, patch 0043: solve_ckrange drops a candidate whose evalf has an imaginary part that is_zero does not take for 0, and
+  // epsilon inside solve is 10^-Digits, so the rounding of an MPFR rootof (the real root of x^3-x-1 at Digits 40) dropped it;
+  // solve_inequation keeps a double test point complex by the same epsilon
+  ["0043-solve-ckrange-imag-noise.patch", "giac-2.1.0/src/solve.cc", /if \(!\(isolate_mode &1\) && \( \(sol\.type==_CPLX && !is_zero\(im\(sol,contextptr\),contextptr\)\)/, "static void solve_ckrange(const identificateur & x,vecteur & v,int isolate_mode,GIAC_CONTEXT){"],
+  ["0043-solve-ckrange-imag-noise.patch", "giac-2.1.0/src/solve.cc", /testval=evalf_double\(testval,1,contextptr\);\s*if \(testval\.type==_CPLX && is_zero\(\*\(testval\._CPLXptr\+1\),contextptr\)\)/, "gen testval;"],
 ];
 
 const tar = tarball(SOURCES.giac);
