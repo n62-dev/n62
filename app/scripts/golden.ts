@@ -19,6 +19,7 @@
 //              cause still in the pinned tarball; tests/engine/mpfr-pi-test.ts (G60): patch 0005's ln, asin, acos, acosh;
 //              tests/engine/reim-test.ts (G96): patch 0006's re and im of a root of unknown sign;
 //              tests/engine/support-test.ts (G111): patch 0007's densities and cdfs outside their support, 0008's fracmod;
+//              tests/engine/ilaplace-vars-test.ts (G170): patch 0042, ilaplace leaves no freed name in VARS();
 //              (A51: a sub-test that fails prints "FAIL <file>: ..." in this line, "timed out after 120 s" when it ran out of its spawn
 //              timeout, so pipeline-logs.ts can tell a load-only timeout from a wrong value);
 //              tests/engine/canaries.mjs (S17, G77): every workaround row still holds on the engine, so a re-pin that

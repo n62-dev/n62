@@ -29,7 +29,7 @@ export function stageFlags(): void {
   // G102: ctx-canary.ts sets each of bridge-1's fields and reads it back with Giac's own getter (needs the engine);
   // G92: assume-canary.ts, raw Giac still leaves the assumptions assumed.ts puts back (needs the engine);
   // G75: tanh-test.ts (needs the engine) and patch-canary.ts (the tarball) for patch 0003; G60: mpfr-pi-test.ts, 0005;
-  // G96: reim-test.ts, 0006; G111: support-test.ts, 0007 and 0008;
+  // G96: reim-test.ts, 0006; G111: support-test.ts, 0007 and 0008; G170: ilaplace-vars-test.ts, 0042;
   // A19: memcap-test.mjs (the 1 GB cap of build-wasm.sh; a hog job ends and a fresh instance works);
   // G77: canaries.mjs (S17's workaround rows on the engine) and fetch-test.mjs (the pin's .dsc check, no network)
   const runs = FLAGS_TESTS.map((f) =>
@@ -47,7 +47,7 @@ export function stageFlags(): void {
   stageGiacCheck();
 }
 const FLAGS_TIMEOUT_MS = 120_000;
-const FLAGS_TESTS = ["flags-canary.ts", "ctx-canary.ts", "assume-canary.ts", "tanh-test.ts", "mpfr-pi-test.ts", "reim-test.ts", "support-test.ts", "patch-canary.ts", "canaries.mjs", "fetch-test.mjs", "memcap-test.mjs"];
+const FLAGS_TESTS = ["flags-canary.ts", "ctx-canary.ts", "assume-canary.ts", "tanh-test.ts", "mpfr-pi-test.ts", "reim-test.ts", "support-test.ts", "ilaplace-vars-test.ts", "patch-canary.ts", "canaries.mjs", "fetch-test.mjs", "memcap-test.mjs"];
 
 /** A19: Giac's own check/ suite (tools/probes/giac-check.mjs) on this build, against tests/golden/giaccheck-known.yaml.
  *  The release build runs the same stage: GIAC_OUT=engine/giac/_out/release npm run golden. */
