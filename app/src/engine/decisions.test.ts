@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { decidedAtDouble, decideTwice, evenPowerRoot, restsOnDecision, type Decision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decisionArgs, evenPowerRoot, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -147,6 +147,18 @@ describe.skipIf(!giacAvailable())("decideTwice (G38, G57; real Giac)", () => {
     expect(giac.eval("pasdec2")).toBe("pasdec2");
   });
 
+  it("G325: an asin of a non-real argument past the cap is refused as a branch (Home skips G187's size check); a sqrt of an even power past it is not", () => {
+    const at = (exact: string): string => withDigits(giac, valuePrecision(12), 12, () => giac.eval(`(${exact})`));
+    const f212 = "(10^1000)^asin(sqrt(-2)-10^1000)";
+    expect(decideTwice(giac, f212, at(f212), 12, 12)).toEqual({ undecided: true, refused: true, branch: true });
+    // G187's own row: the refusal comes from sqrt(10^1000), so the size check runs and says underflow (golden g187-underflow-90-pow-sqrt-1e1000-12)
+    const g187 = "(90+1/10^6)^(sqrt(10^1000))";
+    expect(decideTwice(giac, g187, at(g187), 12, 12)).toEqual({ undecided: true, refused: true });
+    const t0 = performance.now();
+    const r = host.home(f212, defaultHomeSettings).result;
+    expect({ error: r.error, fast: performance.now() - t0 < 750 }).toEqual({ error: "undecided", fast: true });
+  });
+
   it("iPart (known): Giac's iPart prints a float, so Home does not decide it again; it shows ⚠ with no digit (oracle -148099131371)", () => {
     const r = host.home("iPart(sin(10^70)*10^12)", defaultHomeSettings).result;
     expect({ display: r.display, reliableDigits: r.facts.reliableDigits, warn: r.facts.warn }).toEqual({ display: "4E11", reliableDigits: 0, warn: "unaudited" });
@@ -198,4 +210,42 @@ describe("evenPowerRoot (G156)", () => {
     ["x^2+x^(1/3)", false],
     ['sqrt("a^2")', false],
   ])("%s → %s", (input, want) => expect(evenPowerRoot(input, "typed")).toBe(want));
+});
+
+describe("asin and acos of a non-real argument decide (G325)", () => {
+  const none = (): boolean => false;
+  // the argument's realness as nonRealArg finds it with Giac (here: an argument holding sqrt(-…) or i is not real)
+  const nonReal = (arg: string): boolean => /sqrt\(-|(?<![a-z])i(?![a-z])/.test(arg);
+  it.each([
+    // Giac's text of the result at P: one that holds i, of an argument that is not real, is made again at P + 20, P + 40
+    ["asin(sqrt(-2)-10^35)", "i*ln(2*sqrt(2)/(2*sqrt(2*(sqrt(5)+2)))+i*sqrt(2*(sqrt(5)+2)))", true],
+    ["acos(sqrt(-2)-10^35)", "1/2*pi+(-i)*ln(sqrt(2)+i)", true],
+    ["arcsin(2*i-10^35)", "asin(-100000000000000000000000000000000000+2*i)", true],
+    ["arccos(x)", "arccos(x)", false],
+    // a real result costs no call; a real argument outside [-1, 1] is not made again
+    ["asin(1/2)", "pi/6", false],
+    ["asin(2)", "(-i)*ln(i*sqrt(3)+2*i)+1/2*pi", false],
+    ["acos(sqrt(2)/2)", "pi/4", false],
+    // another function with a non-real result is not a decision
+    ["ln(sqrt(-2)-10^35)", "ln(i*sqrt(2)-100000000000000000000000000000000000)", false],
+  ])("%s with %s → %s", (input, text, want) => expect(restsOnDecision(input, "typed", text, none, nonReal)).toBe(want));
+
+  it("is no decision without the argument check (a stored function's body, an input that runs once)", () => {
+    expect(restsOnDecision("asin(sqrt(-2)-10^35)", "typed", "i*ln(2)")).toBe(false);
+  });
+
+  it("asks the argument only when the result is not real", () => {
+    const asked: string[] = [];
+    const spy = (arg: string): boolean => (asked.push(arg), true);
+    restsOnDecision("asin(1/2)+acos(1/3)", "typed", "pi/6+acos(1/3)", none, spy);
+    expect(asked).toEqual([]);
+    restsOnDecision("asin(sqrt(-2)-10^35)", "typed", "i*ln(2)", none, spy);
+    expect(asked).toEqual(["sqrt(-2)-10^35"]);
+  });
+
+  it("an asin argument that holds a literal past the cap is a decision's text when it and the result are not real", () => {
+    expect(decisionArgs("asin(sqrt(-2)-10^1000)", "i*ln(2)", none, nonReal)).toContain("sqrt(-2)-10^1000");
+    expect(decisionArgs("asin(tan(2)-10^1000)", "i*ln(2)", none, nonReal)).toEqual([]);
+    expect(decisionArgs("asin(1/2)+10^1000", "pi/6+10^1000", none, nonReal)).toEqual([]);
+  });
 });

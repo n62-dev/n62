@@ -64,12 +64,14 @@ const ROWS = [
     ["1-0.9-0.1"], ([a]) => a === "1.7763568394e-15"],
 ];
 
-// G322 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
+// G322, G325 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
 // its patch (a stock pin, or a build that lost it), never when upstream fixes the cause (patch-canary.ts says that).
 // [patch, what it fixes, [Digits, input, the output our build gives]…]
 const PATCHED = [
   ["0043-solve-ckrange-imag-noise.patch", "solve keeps the real root of a cubic with one irrational real root at Digits > 14 (stock giac_2.1.0-1: [] for x^3-2*x-5 at 60, for x^3-x-1 at 40; mpmath 2.0945514815, 1.3247179572)",
     [[60, "size(solve(x^3-2*x-5=0,x))", "1"], [40, "size(solve(x^3-x-1=0,x))", "1"]]],
+  ["0044-sqrt-complex-real-part-normal.patch", "asin of a non-real argument whose imaginary part is small beside its real part is the principal value at Digits 40 (a build without the patch makes its exact text with another root, whose imaginary part is 12.86 or, for -10^45, 81; mpmath asin(sqrt(-2)-10^35) = -1.5707963268+81.2836254354*i, asin(sqrt(-2)-10^45) = -1.5707963268+104.309476365*i)",
+    [[40, "round(im(evalf(asin(sqrt(-2)-10^35),100)))", "81"], [40, "round(im(evalf(asin(sqrt(-2)-10^45),100)))", "104"]]],
 ];
 
 const { giac } = await loadNodeGiac();

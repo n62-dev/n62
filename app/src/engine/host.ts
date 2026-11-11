@@ -37,7 +37,7 @@ import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
-import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, clearingCall, formIn, formOf, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
@@ -1050,7 +1050,7 @@ export class EngineHost implements FactsHost {
     const decisionExpr = asg ? toExactLiterals(asg.rhs) : exactInput;
     // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
     let refusedCut = false;
-    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac))) {
+    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), nonRealArg(this.giac))) {
       const d = decideTwice(this.giac, decisionExpr, text, digitsSet, digitsSet);
       if ("undecided" in d) undecided = true;
       if ("undecided" in d && d.refused) refusedCut = true;

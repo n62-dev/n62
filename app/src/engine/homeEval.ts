@@ -33,7 +33,7 @@ import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
 import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
-import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decidingStored, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
@@ -527,11 +527,11 @@ export function homeEval(
   // G48: an input that runs once and rests on a decision is ⚠ (it cannot be decided again).
   let undecided = once && !inexactTest && onceUndecided(giac, form, exactBody, exactOut);
   // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused (any value would be a guess).
-  let refusedCut = false;
-  if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac))) {
+  let refusedCut: boolean | "branch" = false;
+  if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac), nonRealArg(giac))) {
     const d = decideTwice(giac, exactBody, exactOut, s.digits, s.digits);
     if ("undecided" in d) undecided = true;
-    if ("undecided" in d && d.refused) refusedCut = true;
+    if ("undecided" in d && d.refused) refusedCut = d.branch ? "branch" : true;
     if (!("undecided" in d) && d.from !== undefined) {
       // one call; an error in the store (a recursive definition) stops the purge, which then goes alone
       if (isError(giac.eval(`${ans}:=${d.from};purge(${d.from})`))) giac.eval(`purge(${d.from})`);
@@ -651,9 +651,9 @@ export function homeEval(
     if (refused === "unchecked") unverified = true;
     else if (refused) return refuse(refused, "exact");
   }
-  // G187 (F122): a power past MPFR's range by its size, before the checks that read its value (Giac's normal recursed) and the cut's word;
-  // asked late too (one engine call): the checks after it are skipped then, and its value would be read as a 0. The tree comes with the exact
-  // run and with a value decided again (decideTwice keeps it, decisions.ts); a symbolic one without it is asked (only those can be a power)
+  // G187 (F122): a power past MPFR's range by its size (tree from the exact run or decideTwice, else asked), before the checks that read its value
+  // (Giac's normal recursed), late too (its value would read as 0); not after an undecided asin or acos branch (G325, decisions.ts Undecided)
+  if (refusedCut === "branch") return refuse("undecided", "exact");
   const pastRange = once ? null : powerPastRange(giac, ans, value.tree !== undefined || value.kind !== "symbolic" ? value.tree : giac.value(ans, [], true).tree, P);
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
