@@ -34,6 +34,16 @@ describe.skipIf(!giacAvailable())("Home's deadline (real Giac)", () => {
     expect(r.display).toBe(enEngine["error.timeout"]);
   });
 
+  it("a power past MPFR's range is refused Underflow when the deadline passes after the time-out check (G187)", () => {
+    // Readings 1-3: the start, the exact time and the check before listAsArguments; every later one is past the deadline.
+    // Without the size check then, the F122 power was shown as 0 (and the 1ᴇ1000 one undecided).
+    for (const input of ["(atan(ln(-pi)+9007199254740993))^(sin(10^-300)-10^300)", "(90+10^(-6))^(((1-10^(-218))^(3*10^218))-sqrt(1e1000))"]) {
+      let calls = 0;
+      const r = homeEval(giac, input, defaultHomeSettings, () => (++calls <= 3 ? 0 : HOME_DEADLINE_MS + 1));
+      expect(r, input).toMatchObject({ ok: false, error: "underflow" });
+    }
+  });
+
   it("within the deadline the same input answers", () => {
     const r = homeEval(giac, "sqrt(2)", defaultHomeSettings);
     expect(r.ok).toBe(true);

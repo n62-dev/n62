@@ -1,0 +1,32 @@
+# Upstream: giac 2.1.0 gen.cc pow: the _DOUBLE_^_DOUBLE_ case converts the exponent with int(std::floor(e+.25)) without a range test, undefined for |e| >= 2^31; the wasm build took the integer branch with INT_MIN, and pow(const gen &,int) tests an INT_MIN exponent with -exponent<0, itself undefined (signed overflow), which the compiler drops: pow(base,INT_MIN) calls inv(pow(base,-exponent)) with INT_MIN again until the stack overflows. 3.0^(-1e10), 3.0^(-2147483648.0) and normal(pi^(sqrt(2)-10^16)) (whose algnum_convert asks has_evalf of the power in doubles, where sqrt(2)-10^16 is an integer double) stopped the engine with a stack overflow. Now an integer double exponent past the int range takes C's pow (0, inf, or the sign of a negative base by the parity), a fraction there goes on as before without the conversion, and INT_MIN is refused with the existing pow: int exponent underflow.
+# Changed by Pascaline contributors, 2026-11-11
+--- a/src/gen.cc
++++ b/src/gen.cc
+@@ -7269,7 +7269,15 @@
+     case _INT___INT_: case _ZINT__INT_: case _REAL__INT_: case _CPLX__INT_: case _IDNT__INT_: 
+       return pow(base,exponent.val);
+     case _DOUBLE___DOUBLE_:
+-      if (exponent._DOUBLE_val==int(std::floor(exponent._DOUBLE_val+.25)))
++      // Pascaline patch 0041 (G187): int() of an exponent past the int range is undefined; the wasm build saturates it to
++      // INT_MIN or INT_MAX and took the integer branch, so 3.0^(-1e10) called pow(base,INT_MIN), which recursed until
++      // the stack overflowed (Home's underflow check reached it through normal and has_evalf). An integer exponent there
++      // takes the double power (C's pow keeps the sign of a negative base by the parity); a fraction goes on as before.
++      if (std::fabs(exponent._DOUBLE_val)>=2147483647.0){
++	if (exponent._DOUBLE_val==std::floor(exponent._DOUBLE_val))
++	  return std::pow(base._DOUBLE_val,exponent._DOUBLE_val);
++      }
++      else if (exponent._DOUBLE_val==int(std::floor(exponent._DOUBLE_val+.25)))
+ 	return pow(base,int(std::floor(exponent._DOUBLE_val+.25)));
+       if (base._DOUBLE_val>=0)
+ #ifdef _SOFTMATH_H
+@@ -8107,7 +8115,9 @@
+       return plus_inf;
+     }
+     if (exponent<0){
+-      if (-exponent<0)
++      // Pascaline patch 0041 (G187): -INT_MIN overflows (undefined), so the test -exponent<0 was dropped by the
++      // compiler and pow(base,INT_MIN) called itself until the stack overflowed
++      if (exponent==-2147483647-1)
+ 	return gensizeerr("pow: int exponent underflow");
+       return inv(pow(base,-exponent),context0);
+     }

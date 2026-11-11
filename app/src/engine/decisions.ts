@@ -402,7 +402,7 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const kept = (e: string): string | null =>
     withDigits(giac, P + 40, restore, () => {
       pasdec2 = true;
-      const v = giac.value(`pasdec2:=(${e})`, []);
+      const v = giac.value(`pasdec2:=(${e})`, [], true); // G187: with its tree (homeEval.ts powerPastRange)
       keptValue = v;
       if (isError(v.text)) return null;
       return v.cut ? giac.eval("pasdec2") : v.text;

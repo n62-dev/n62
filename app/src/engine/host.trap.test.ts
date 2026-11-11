@@ -73,9 +73,12 @@ describe.skipIf(!giacAvailable())("the request handler's reply to a trap (G183, 
     expect(out.at(-1)).toMatchObject({ id: 2, type: "fatal", dead: "memory" });
   });
 
-  it("F122's input reaches the handler as a crashed engine, not an uncaught throw", async () => {
-    // sandra's probe 2026-11-05: RangeError: Maximum call stack size exceeded inside Giac's wasm
-    const out = await run(() => loadNodeGiac(), [init, { id: 2, type: "home", input: "(atan(ln(-pi)+9007199254740993))^(sin(10^-300)-10^300)", settings: defaultHomeSettings }]);
+  it("a stack overflow inside Giac reaches the handler as a crashed engine, not an uncaught throw", async () => {
+    // RangeError: Maximum call stack size exceeded inside Giac's wasm. F122's input (sandra's probe 2026-11-05) is refused
+    // before it since G187 and patch 0041; simplify of G120's power still recurses in subst.cc decompose (backlog F214):
+    // when that is fixed, this test needs another input that overflows the stack
+    const input = "simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))";
+    const out = await run(() => loadNodeGiac(), [init, { id: 2, type: "home", input, settings: defaultHomeSettings }]);
     expect(out.at(-1)).toMatchObject({ id: 2, type: "fatal", dead: "crash" });
   }, 60_000);
 });

@@ -724,6 +724,20 @@ export function build(cases) {
     `Digits:=40:; pc("g186-abs-cos-acosh-1e-300-30",'(abs(cos(pi/10^7)+acosh(1/10^300)))',186209588911856012363779923385/10^29,5/10^30);`,
   );
   nPatched += 2;
+  // Patch 0041 (G187), written lines (the golden g187-* rows are LaTeX, and Home refuses them before Giac's normal now): gen.cc pow
+  // of a double base to an integer double exponent past the int range, and normal of a power whose exponent's double is such an
+  // integer (algnum_convert's has_evalf). Derived: 3^(-10^10) = 10^(-4.77E9), below the smallest double, so C's pow gives 0;
+  // pi^(sqrt(2)-10^16) = 10^(-4.97E15), below MPFR's smallest at Digits 40, so its evalf is 0. A stock wasm build overflows the stack
+  // on both (run.mjs counts the trap as a failed line and goes on in a fresh engine).
+  patched.push(
+    "// patch 0041-pow-double-exponent-int-range.patch",
+    "// g187-pow-double-3-neg-1e10 (derived: 10^(-4.77E9) is 0 in a double)",
+    `Digits:=40:; pc("g187-pow-double-3-neg-1e10",'3.0^(-1e10)',0,1/10^30);`,
+    "// patch 0041-pow-double-exponent-int-range.patch",
+    "// g187-normal-pi-pow-sqrt2-1e16 (derived: 10^(-4.97E15), MPFR's 0 at Digits 40)",
+    `Digits:=40:; pc("g187-normal-pi-pow-sqrt2-1e16",'normal(pi^(sqrt(2)-10^16))',0,1/10^30);`,
+  );
+  nPatched += 2;
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],

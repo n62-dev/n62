@@ -10,7 +10,7 @@ import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { rewriteAngles } from "./angles.ts";
 import type { Giac } from "./numeric.ts";
-import { approxRange, lostNumber, overflowAt, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, lostNumber, overflowAt, powerAtTop, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 
 describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
   let host: EngineHost;
@@ -132,6 +132,47 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
       giac.eval(`pasov:=${g};1`);
       expect(() => overflowAt(giac, "pasov", "pnt", 40), g).not.toThrow();
     }
+    giac.eval("purge(pasov);1");
+  });
+  it("refuses a power past MPFR's range by its size, before Giac's normal recursed (G187, F122)", () => {
+    // The parser's text of the sweep rows; sizes 10^(-1.96E299) (RAD), 10^(-1.95E300) (DEG), 10^(-1.95E500) (mpmath).
+    const typedRows: [string, "rad" | "deg"][] = [
+      ["(atan(ln(-pi)+9007199254740993)/pasdeg)^(sin(pasdeg*1e-300)-(1e300))", "rad"],
+      ["(atan(ln(-pi)+9007199254740993)/pasdeg)^(sin(pasdeg*1e-300)-(1e300))", "deg"],
+      ["(90+10^(-6))^(((1-10^(-218))^(3*10^218))-sqrt(1e1000))", "rad"],
+    ];
+    for (const [input, angle] of typedRows)
+      expect(host.home(input, { ...defaultHomeSettings, angle }).result, `${input} ${angle}`).toMatchObject({ ok: false, error: "underflow" });
+    // G187 fix round 2: a base or exponent that cancels exactly. Giac keeps the power (the exponent is no integer); at P the
+    // base's ln (or the exponent) is a unit of the last place, a size of about ±10^360, and at P+20 it is 0 (or log10 of
+    // 2^sqrt(2)): the size is no claim, so it refuses nothing and the checks after it decide. Values (derived): 1^x = 1,
+    // and 2^(0+sqrt(2)) = 2^sqrt(2) = 2.66514414269022518865…
+    const cancelling: [string, string][] = [
+      ["(sin(1)^2+cos(1)^2)^(10^400+sqrt(2))", "1"],
+      ["2^(10^400*(sin(1)^2+cos(1)^2-1)+sqrt(2))", "2.66514414269"],
+    ];
+    for (const [input, shown] of cancelling) {
+      expect(powerPastRange(giac, "pasov", giac.value(`pasov:=${input}`, [], true).tree, 40), input).toBeNull();
+      expect(host.home(input, defaultHomeSettings).result, input).toMatchObject({ ok: true, display: shown });
+    }
+    // The size by the modulus of a complex base; a power inside the range and a free name decide nothing.
+    // |atan(2+i)| = 1.19 (mpmath), so 10^(7.58E398) and 10^(-7.58E398); Giac keeps the power (an integer exponent
+    // becomes exp(n*ln(b)), G123's path)
+    const treeOf = (t: string) => giac.value(`pasov:=${t}`, [], true).tree;
+    for (const [e, why] of [["10^400+sqrt(2)", "overflow"], ["-10^400+sqrt(2)", "underflow"]]) {
+      expect(powerPastRange(giac, "pasov", treeOf(`atan(2+i)^(${e})`), 40), e).toBe(why);
+      expect(host.home(`atan(2+i)^(${e})`, defaultHomeSettings).result.error, e).toBe(why);
+    }
+    // 10^(-323228249.0), inside the range (about 10^(-323228496.3))
+    expect(powerPastRange(giac, "pasov", treeOf("(1/2)^(1073741000+sqrt(2))"), 40)).toBeNull();
+    expect(powerPastRange(giac, "pasov", treeOf("x^(10^400+sqrt(2))"), 40)).toBeNull();
+    // A power at the top of the value by its tree (bridge-3), not by its print: a sum, product, negation, call or list
+    // holding the past-range power is not one (and decides nothing)
+    expect(powerAtTop(treeOf("(a+b)^(c-d)"))).toBe(true);
+    expect(powerAtTop(treeOf("2^(-sqrt(3))"))).toBe(true);
+    for (const t of ["-a^b", "a^b+1", "2*a^b", "f(a^b)", "[a^b,1]", "a", "7"]) expect(powerAtTop(treeOf(t)), t).toBe(false);
+    for (const t of ["atan(2+i)^(10^400+sqrt(2))+1", "3*atan(2+i)^(10^400+sqrt(2))"]) expect(powerPastRange(giac, "pasov", treeOf(t), 40), t).toBeNull();
+    expect(powerAtTop(null)).toBe(false);
     giac.eval("purge(pasov);1");
   });
 
