@@ -1674,7 +1674,7 @@ grep -qE 'Y1f1: dropped 4 link\(s\) to deleted package files in 2 file\(s\)' "$d
 printf 'more\n' > "$dl/.claude/worktrees/phase-1/more.md"; git -C "$dl/.claude/worktrees/phase-1" add more.md; gc "$dl/.claude/worktrees/phase-1" "phase-1 moves on"
 out="$(dlrun ron "fix" --id Y9f1 --branch p1/y9 --checks docs)"
 grep -q '^RESULT #[0-9]* Y9f1: MERGED' <<<"$out" || fail "A140: the control run did not merge: $out"
-[[ -z "$(git -C "$dl" log --format=%s --grep='(A140)' phase-1^2)" ]] || fail "A140: a run with no dead link made a drop commit"
+[[ -z "$(git -C "$dl" log --format=%s --grep='(A140)' phase-1^1..phase-1^2)" ]] || fail "A140: a run with no dead link made a drop commit"
 [[ "$(git -C "$dl" show phase-1:docs/shifts/brief.md | tail -n1)" == '| 4 | [Y9](packages/Y9.md) nine |' ]] || fail "A140: the link to a package file that exists is gone"
 
 # A88: a file a worker leaves outside its worktree is logged, never removed, and never changes the run's result. The stand-in worker

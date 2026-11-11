@@ -589,6 +589,7 @@ if [[ $dry -eq 1 ]]; then
   echo "checks order (auto): docs, typecheck, size, redfirst, vitest, golden, stages, e2e, shell (A83: the cheap ones first); every queue round runs the whole list"
   if [[ -n "$pkg_drop" ]]; then echo "package file: $pkg_drop deleted on $branch in a commit of its own before each queue entry (A75; phase-1 keeps it until the merge, so <merge>^1 has it)"
   else echo "package file: none deleted (a FIX id or a task text)"; fi
+  echo "dead links (A140): after every merge of phase-1 into the branch (a resumed worker start, the queue entry, review-only) every link in tracked Markdown to a missing docs/shifts/packages/*.md, any id, is unlinked in a commit of its own: chore($id): drop links to deleted package files (A140)"
   echo "pre-flight (auto; after the worker and after each fix round, before the queue, in $wt without integ): lint (a new engine/giac/patches/NNNN-*.patch has its README row; a report commit), docs, typecheck, size when app/ changed (under host-cpu); a failure is a fix round (one of the two; free when only docs or size failed, A124) and never enters the queue"
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "stray check (A88): before the worker and each fix or resolve round the top level of $(dirname "$main") and $main/.claude/worktrees is listed; afterwards one log line per new entry: pipeline #<n> $id: WARN new file outside the worktree: <path> (a worktree git knows is not new; warns only)"
@@ -838,8 +839,23 @@ resolve_audit_model() {
 
 # Round 0: the worker (with --no-worker, none: the queue's merge of phase-1 is its first step).
 rounds=0; resolves=0; counted=0; free_used=0  # A124: rounds numbers every fix round (file names); counted holds those that use up one of two
+# A140: after a merge of phase-1 into the branch (the Opus pass deleted merged rows and their package files there; a conflict resolved with
+# the branch's side, or the branch's own edit of its row, brings a link to one back): every link in tracked Markdown whose target is a
+# missing docs/shifts/packages/*.md, for any id, becomes its text, in one commit of its own. A75's own-file drop stays as it is.
+dead_links_drop() {
+  local f c total=0 files=()
+  while IFS= read -r f; do
+    c="$(package_links_dead_strip "$wt" "$wt/$f" "$f")" || continue
+    files+=("$f"); total=$((total + c))
+  done < <(git -C "$wt" grep -lE '\]\([^) ]*\.md' -- '*.md' 2>/dev/null || true)
+  [[ ${#files[@]} -gt 0 ]] || return 0
+  if ! { git -C "$wt" add -- "${files[@]}" && git -C "$wt" commit -q -s -m "chore($id): drop links to deleted package files (A140)" -- "${files[@]}"; } > "$run/dead-links.log" 2>&1; then
+    die "could not drop the links to deleted package files on $branch: $(tail -n 1 "$run/dead-links.log" | cut -c1-160)"
+  fi
+  log "pipeline #$n $id: dropped $total link(s) to deleted package files in ${#files[@]} file(s) on $branch ($(git -C "$wt" log -1 --format=%h)) (A140)"
+}
 # A38: bring phase-1 into the branch (a branch that already contains it is left alone); a conflict is a resolve round for the agent.
-# Sets merge_conflicts=1 when a resolve round ran; ends the run when it fails.
+# Sets merge_conflicts=1 when a resolve round ran; ends the run when it fails. A140: a merge that happened is followed by dead_links_drop.
 merge_phase1() {
   merge_conflicts=0
   git -C "$wt" merge-base --is-ancestor phase-1 HEAD && return 0
@@ -861,6 +877,7 @@ merge_phase1() {
     fi
     log "pipeline #$n $id: conflicts with phase-1 resolved by $agent"
   fi
+  dead_links_drop
 }
 
 if [[ $nowork -eq 0 ]]; then
@@ -889,7 +906,7 @@ package_file_drop() {
   local f unlinked=()
   while IFS= read -r f; do
     [[ -n "$f" && "$f" != "$pkg_drop" ]] || continue
-    package_link_strip "$wt/$f" "$f" "$pkg_drop" && unlinked+=("$f")
+    package_link_strip "$wt/$f" "$f" "$pkg_drop" >/dev/null && unlinked+=("$f")
   done < <(git -C "$wt" grep -lF "$(basename "$pkg_drop")" -- '*.md' 2>/dev/null || true)
   if ! { git -C "$wt" rm -q -- "$pkg_drop" && { [[ ${#unlinked[@]} -eq 0 ]] || git -C "$wt" add -- "${unlinked[@]}"; } &&
          git -C "$wt" commit -q -s -m "chore($id): delete its package file and the links to it, merged with the package (A75)" -- "$pkg_drop" "${unlinked[@]}"; } > "$run/pkg-drop.log" 2>&1; then

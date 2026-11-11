@@ -411,21 +411,32 @@ selftest_run() {
 package_shaped() { [[ "$1" =~ ^[A-Z][0-9]+[a-z0-9]*$ && ! "$1" =~ f[0-9]+$ ]]; }
 # package_link_strip <file> <its repo path> <package file's repo path> (A75): every Markdown link in <file> whose target (relative to the
 # file's folder, an #anchor dropped) is the package file becomes its plain text: `[R156](packages/R156.md) x` → `R156 x`. Succeeds when
-# it changed the file.
-package_link_strip() {
+# it changed the file; prints the number of links it changed (A140).
+# package_links_dead_strip <worktree> <file> <its repo path> (A140): the same for every link whose target is a docs/shifts/packages/*.md
+# that does not exist in <worktree> (any id); links in fenced blocks and code spans stay, as docs-check reads none there.
+package_link_strip() { _package_link_strip "$1" "$2" "$3" ""; }
+package_links_dead_strip() { _package_link_strip "$2" "$3" "" "$1"; }
+_package_link_strip() {
   perl -e '
     use strict; use warnings;
-    my ($file, $path, $target) = @ARGV;
+    my ($file, $path, $target, $root) = @ARGV;
+    my $dead = $target eq "";
     sub norm { my @o; for (split m{/}, $_[0]) { next if $_ eq "" || $_ eq "."; if ($_ eq "..") { pop @o } else { push @o, $_ } } join "/", @o }
     (my $dir = $path) =~ s{[^/]*$}{};
     open my $in, "<", $file or exit 1; local $/; my $text = <$in>; close $in;
     my $n = 0;
-    $text =~ s{\[([^\]\n]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)}{
-      my ($all, $t, $u) = ($&, $1, $2); (my $p = $u) =~ s/#.*$//; $p =~ s/%([0-9A-Fa-f]{2})/chr hex $1/ge;
-      ($p ne "" && $u !~ m{^(https?:|mailto:|#)} && norm("$dir$p") eq norm($target)) ? do { $n++; $t } : $all
-    }ge;
+    my $strip = sub {
+      my $s = shift;
+      $s =~ s{\[([^\]\n]*)\]\(([^)\s]+)((?:\s+"[^"]*")?)\)}{
+        my ($all, $t, $u) = ($&, $1, $2); (my $p = $u) =~ s/#.*$//; $p =~ s/%([0-9A-Fa-f]{2})/chr hex $1/ge;
+        my $q = ($p ne "" && $u !~ m{^(https?:|mailto:|#)}) ? norm("$dir$p") : "";
+        (($dead ? ($q =~ m{^docs/shifts/packages/[^/]+\.md$} && !-e "$root/$q") : ($q ne "" && $q eq norm($target))) ? do { $n++; $t } : $all)
+      }ge;
+      $s };
+    if ($dead) { my @parts = split /(```[\s\S]*?```|`[^`\n]*`)/, $text, -1; for (my $i = 0; $i < @parts; $i += 2) { $parts[$i] = $strip->($parts[$i]) } $text = join "", @parts }
+    else { $text = $strip->($text) }
     exit 1 unless $n;
-    open my $out, ">", $file or exit 2; print $out $text; close $out; exit 0;' "$1" "$2" "$3"
+    open my $out, ">", $file or exit 2; print $out $text; close $out; print "$n\n"; exit 0;' "$1" "$2" "$3" "$4"
 }
 # task_questioned <worker reply file>: succeeds when the reply says the worker has not done its package: an "Open question" line asks
 # for the task again (resend, regenerate the bundle) or says the task itself is missing (run 312 asked for the bundle to be regenerated
