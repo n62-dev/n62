@@ -37,6 +37,9 @@ export interface FindItem {
   tier: 0 | 1;
   /** The LaTeX the entry line receives: a chip macro or an \operatorname template with #0 (the selection or a box). */
   insert: string;
+  /** fn, tmpl: where the function sits on the keypad (G230): the key's name, "Shift sin" for a layer, "Tmpl" for a palette
+   *  cell, several joined with ", ". Absent when no key or palette cell inserts it. From spec/keyboard.yaml and find/where.yaml. */
+  where?: string;
 }
 
 /** An item as the generated index holds it: a tier-1 function has no `insert` (always the \operatorname template of
