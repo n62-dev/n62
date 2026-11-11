@@ -40,7 +40,7 @@ test("the wasm does not load: the note says so, with Reload, and a tap on it sta
   await expect(note(page)).toContainText("The engine could not be loaded. Check the connection and reload.");
   await page.unroute("**/engine/giac*.wasm");
   await note(page).getByTestId("engine-reload").tap();
-  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 60_000 });
+  await page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 60_000 });
   await expect(note(page)).toHaveCount(0);
 });
 
@@ -59,7 +59,7 @@ test("the wasm and the note's own chunk both fail to load: Reload still shows, w
   await page.unroute("**/engine/giac*.wasm");
   await page.unroute("**/EngineFailed*");
   await note(page).getByTestId("engine-reload").tap();
-  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 60_000 });
+  await page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 60_000 });
 });
 
 test("the browser gives no memory: the note says so, with Reload", async ({ page }) => {
