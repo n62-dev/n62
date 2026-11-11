@@ -97,6 +97,8 @@ defined:
   - { id: var, title: "Volt-ampere reactive (reactive power)", names: ["volt-ampere reactive", "reactive power"], si: "1", dim: "kg1m2s-3", source: derived }
   - { id: kvar, title: "Kilovar (reactive power)", names: ["kilovar"], si: "1000", dim: "kg1m2s-3", source: derived }
   - { id: Mvar, title: "Megavar (reactive power)", names: ["megavar"], si: "1000000", dim: "kg1m2s-3", source: derived }
+  # the metric cup (G321): the bare cup is 250 mL; qalc's cup, the US food-label cup of 240 mL, is cup_US_label (rename)
+  - { id: cup, title: "Metric Cup (250 mL)", names: ["metric cup"], si: "0.00025", dim: "m3", source: derived }
 
 dropNames:
   "unit:tr": [rev, revolution, cyc, cycle]
@@ -114,6 +116,38 @@ explicit:
   denominator: ["112903"]
   si: ["45359237/1000000"]
   except: [bbl]
+
+# rename (G321): libqalculate's id -> ours, so `explicit` holds (the explicit form `_US`, as tsp_US and gal_UK have it).
+#   The generator keeps qalc's id as the text qalc parses, shows the new id as the symbol and keeps the old id as a
+#   search name; find/factors.yaml rows are keyed by the new id. The ids are stored with the user's data (docs/04 6.2):
+#   after v0.1.0 a rename needs a DATA_VERSION step (app/src/state/storage.ts).
+rename:
+  gal: gal_US
+  fl_oz: fl_oz_US
+  gi: gi_US
+  liq_pt: liq_pt_US   # pt_US is qalc's American (typographic) point; a US pint is liquid or dry (dry_pt_US)
+  liq_qt: liq_qt_US
+  dry_pt: dry_pt_US
+  dry_qt: dry_qt_US
+  pk: pk_US
+  bu: bu_US
+  minim: minim_US
+  fl_dr: fl_dr_US
+  cwt: cwt_US
+  mpg: mpg_US
+  gpm: gpm_US
+  gph: gph_US
+  gal/s: gal_US/s
+  US_dessertspoon: dessertspoon_US
+  cup: cup_US_label
+
+# titles (G321): Find titles of ours where qalc's leave the definition or the country out.
+titles:
+  "unit:hp": "Horsepower (mechanical, 550 ft·lbf/s)"
+  "unit:bbl": "Oil barrel (42 US gallons)"
+  "unit:gal_UK": "Imperial Gallon (UK)"
+  "unit:cwt_US": "U.S. Hundredweight (short, 100 lb)"
+  "unit:mpg_US": "Miles per U.S. Gallon"
 
 checks:
   # length, mass, force, pressure (international yard and pound, 1959; standard gravity 9.80665)

@@ -115,7 +115,7 @@ units:
   - id: knot
     weight: 0.0044
     find: true
-  - id: gal
+  - id: gal_US
     weight: 0.0043
     find: true
   - id: H
@@ -707,7 +707,7 @@ expressions:
     weight: 0.0021
     sources:
       chemical_process_hvac: 3
-  - parts: gal min^-1
+  - parts: gal_US min^-1
     weight: 0.0021
     sources:
       chemical_process_hvac: 3
@@ -719,7 +719,7 @@ expressions:
     weight: 0.0021
     sources:
       chemical_process_hvac: 3
-  - parts: gal
+  - parts: gal_US
     weight: 0.0021
     sources:
       chemical_process_hvac: 3

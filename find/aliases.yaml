@@ -36,6 +36,7 @@ aliases:
   "unit:oC": ["degC", "deg C", "degree celsius"]
   "unit:oF": ["degF", "deg F", "degree fahrenheit"]
   "unit:L": ["liter", "litre"]
+  "unit:gal_UK": ["gal", "uk gallon"]   # G321: the bare word finds both gallons (gal_US keeps qalc's gal)
   "unit:t": ["metric ton"]
   "unit:hp": ["horsepower"]
   "unit:Btu": ["british thermal unit"]

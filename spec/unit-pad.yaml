@@ -14,7 +14,7 @@
 #
 #   row 3   mi ↑yd ↓mil | Find      | knot ↑mph | Hz ↑rpm   | ° ↑rad    | ⌫
 #   row 4   ³ ↑⁴        | A         | V         | Ω ↑S      | F         | T
-#   row 5   ² ↑√        | J ↑Wh ↓Btu| W ↑hp ↓TR | L ↑gal ↓bbl | Enter (next slot; ↑ evaluate now)
+#   row 5   ² ↑√        | J ↑Wh ↓Btu| W ↑hp ↓TR | L ↑gal_US ↓bbl | Enter (next slot; ↑ evaluate now)
 #   row 6   mol         | G ↑T      | M         | m ↑ft ↓in | ÷ per ↑⁻¹
 #   row 7   Alpha       | k ↓h      | c         | g ↑lb ↓t  | × ·
 #   row 8   Shift       | m         | µ         | s ↑h ↓min | N ↑lbf
@@ -82,7 +82,7 @@ units:
   - { key: add, quantity: pressure, tap: Pa, up: bar, down: psi }         # 182.5
   - { key: neg, quantity: energy, tap: J, up: Wh, down: Btu }             # 109.6
   - { key: paren, quantity: power, tap: W, up: hp, down: TR }             # 224.1; TR: G7 adds it to Find
-  - { key: comma, quantity: volume, tap: L, up: gal, down: bbl }          # 52.9
+  - { key: comma, quantity: volume, tap: L, up: gal_US, down: bbl }       # 52.9; gal_US: the US gallon (G321)
   - { key: sin, quantity: current, tap: A }                               # 97.9
   - { key: cos, quantity: voltage, tap: V }                               # 128.4
   - { key: tan, quantity: resistance, tap: ohm, up: S }                   # 65.3

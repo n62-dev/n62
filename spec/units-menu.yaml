@@ -41,8 +41,8 @@ categories:
     hide: [L/km, da]                        # L/km: fuel use, an area by dimension; da: the decare, read as the prefix
   - name: Volume
     dims: [m3]
-    first: [m^3, L, mL, cm^3, mm^3, in^3, ft^3, yd^3, gal, liq_qt, liq_pt, fl_oz, gal_UK, pt_UK, fl_oz_UK, bbl, bu, fbm]
-    hide: [imperial_minim, imperial_fluid_scruple, minim, fl_dr, fl_dr_UK]
+    first: [m^3, L, mL, cm^3, mm^3, in^3, ft^3, yd^3, gal_US, liq_qt_US, liq_pt_US, fl_oz_US, gal_UK, pt_UK, fl_oz_UK, bbl, bu_US, fbm]
+    hide: [imperial_minim, imperial_fluid_scruple, minim_US, fl_dr_US, fl_dr_UK]
   - name: Time
     dims: [s1, s-1]
     first: [s, ms, us, ns, min, h, d, week, a_j, Hz, kHz, MHz, GHz]
@@ -97,7 +97,7 @@ categories:
     first: [N*m, kN*m, ft*lbf, in*lbf]
   - name: Flow
     dims: [m3s-1]
-    first: [m^3/s, L/s, L/min, L/h, m^3/h, cfm, cfs, gpm, gph]
+    first: [m^3/s, L/s, L/min, L/h, m^3/h, cfm, cfs, gpm_US, gph_US]
   - name: Density
     dims: [kg1m-3]
     first: [kg/m^3, g/cm^3, g/L, lb/ft^3]

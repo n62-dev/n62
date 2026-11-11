@@ -10,6 +10,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
+// @ts-expect-error plain .mjs generator module
 import { explicitProblems } from "../../../tools/find-index/units-items.mjs";
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -18,7 +19,7 @@ const qalc = join(process.env.N62_QALC_DL_DIR ?? join(repo, "engine/qalc/_downlo
 const have = existsSync(giac) && existsSync(qalc);
 const required = process.env.FIND_INDEX === "required";
 
-const INDEX_SHA256 = "b7ee6258a562b23694325146ffdca13a17d08d2002e90c69b63cc45c6f0a6ccc"; // G230: `where` on the 25 functions a key or palette cell inserts (before it 1a27c672…); G161: VA, kVA, MVA, var, kvar, Mvar (before it fa87cda8…); G155: the sem row (before it ccd54489…); G111: 167 more Giac entries left out (graphics, graphs, strings, debugger); before them G80's f9602d6b…, the G67 bytes 9807d9e1…
+const INDEX_SHA256 = "6f529658cc186f62791559fda7a7affc096844cea860e074c048949eb5e1e1db"; // G321: US measures carry _US, the metric cup, the hp and bbl titles (before it b7ee6258…); G230: `where` on the 25 functions a key or palette cell inserts (before it 1a27c672…); G161: VA, kVA, MVA, var, kvar, Mvar (before it fa87cda8…); G155: the sem row (before it ccd54489…); G111: 167 more Giac entries left out (graphics, graphs, strings, debugger); before them G80's f9602d6b…, the G67 bytes 9807d9e1…
 
 describe("factors.yaml", () => {
   it("exists", () => {
