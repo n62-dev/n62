@@ -110,8 +110,7 @@ export function caseLine(c, file) {
   };
 }
 
-// G322: each line starts at the host's epsilon (1e-12, flags.ts hostContext), as the app puts it back after every input: Giac's
-// proot leaves epsilon at its own tolerance (10^-Digits after a cubic's solve), which changed later lines (erf of a small argument).
+// G322: each line starts at the host's epsilon (1e-12, flags.ts), as the app restores it: Giac's proot leaves 10^-Digits.
 // Giac's value must be within the tolerance of the expected one (G113: an MPFR NaN, printed undef, is both <= and > tol, so both are tested;
 // G118: another NaN, from abs(evalf(acos(pi)^2-e)) on stock at Digits 40, is <= tol and not > tol, so a difference that prints undef never passes); a failing line is printed, the count comes last.
 const PREAMBLE = [
@@ -749,10 +748,8 @@ export function build(cases) {
     `Digits:=40:; purge(x):; pasv170:=0:; pasv170:=size(VARS()):; ilaplace(1/(x^2+1)):; ilaplace(1/(s^2+1),s,t):; pc("g170-ilaplace-vars-size",'size(VARS())-pasv170',0,1/10^30);`,
   );
   nPatched++;
-  // Patch 0043 (G322), written lines (the golden hunt-*, hunt2-*, g322-* rows are lists, which caseLine leaves out): solve.cc
-  // solve_ckrange dropped the real root of a cubic with one irrational real root at Digits > 14, where the MPFR evalf of its rootof
-  // form carries a rounding imaginary part. Counts derived (nops(realroot(p)), Giac's exact count of real roots: 1, 1, 2, 1, 1);
-  // the roots by mpmath (findroot, 80 digits). Stock Giac gives [] (or [1]) on each at these Digits.
+  // Patch 0043 (G322), written lines (the golden rows are lists): solve dropped the real root of a cubic at Digits > 14. Counts
+  // derived (nops(realroot(p)): 1, 1, 2, 1, 1), roots by mpmath (findroot, 80 digits); stock Giac gives [] (or [1]) on each.
   const ROOT_X3_2X_5 = "20945514815423265914823865405793029638573061056282391803041/10^58";
   const ROOT_X3_X_1 = "13247179572447460259609088544780973407344040569017333645340/10^58";
   for (const [id, digits, input, value, tol] of [
