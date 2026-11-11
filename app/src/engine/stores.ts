@@ -12,16 +12,56 @@ import { isOurStore } from "./ourNames.ts";
 import { afterStore, wordsOf } from "./giacPrint.ts";
 
 /**
+ * G174 (F96): Giac's commands that store into a name given as an argument, a name no store node of the tree holds (giac
+ * 2.1.0, read in the pinned tarball; each `sto(…, <argument>)` or identifier_assign): the names are the user's, the
+ * state read after the input logs them. ti89.cc: SortA 1691, SortD 1715, Fill 1830–1838, mRow 1855, mRowAdd 1881, rowAdd
+ * 1911, rowSwap 1941, LU 1993–1997, QR 2022–2024, CopyVar 2285, NewPic 2535; maple.cc: igcdex 443 and gcdex 455 (their
+ * last two names, 429–432), rowspace 1040 and colspace 1048 (the dimension, 1014–1016), delrows 1634 and delcols 1642
+ * (1609), inverser 407; vecteur.cc: jordan 15561 and rat_jordan 15571 (15542); plot.cc: point2d and point3d (each name a
+ * random point, point2d3d 3950); prog.cc: convert 9153 (a continued fraction), member 10136; misc.cc: clear 770; rpn.cc:
+ * ADDROW 1445, ADDCOL 1483, SWAPCOL 1547, SUB 1615–1621, RANDMAT 1649–1653, REDIM 1703, REPLACE 1736–1801, INPUT 2722;
+ * quater.cc: GF 372–374 (the field K and its generator g, assigned on purpose: "Now e.g. g^200+1 will build an element of
+ * K"); graphtheory.cc (identifier_assign): draw_graph 2152, is_regular 3732, is_strongly_regular 3764,
+ * number_of_triangles 4005, is_planar 4119, is_eulerian 4527, chromatic_number 5594, st_ordering 6150, is_bipartite
+ * 6217, is_vertex_colorable 6305, find_cliques 6415, is_isomorphic 6549, is_subgraph_isomorphic 6606, is_hamiltonian
+ * 6801, maxflow 7018. gbasis and syzygy store Giac's own names (GIAC_SCRATCH).
+ */
+export const ARG_STORE_HEADS: readonly string[] = [
+  "SortA", "SortD", "Fill", "mRow", "mRowAdd", "rowAdd", "rowSwap", "LU", "QR", "CopyVar", "NewPic", "igcdex", "gcdex", "rowspace",
+  "colspace", "delrows", "delcols", "inverser", "jordan", "rat_jordan", "point2d", "point3d", "convert", "member", "clear", "ADDROW",
+  "ADDCOL", "SWAPCOL", "SUB", "RANDMAT", "REDIM", "REPLACE", "INPUT", "GF", "draw_graph", "is_regular", "is_strongly_regular",
+  "number_of_triangles", "is_planar", "is_eulerian", "chromatic_number", "st_ordering", "is_bipartite", "is_vertex_colorable",
+  "find_cliques", "is_isomorphic", "is_subgraph_isomorphic", "is_hamiltonian", "maxflow",
+];
+
+/** G174 (F96): the names Giac stores for itself, by the head that stores them (solve.cc, giac 2.1.0): gbasis keeps its
+ *  answer in lastgb (_gbasis_, 9267) and the variables it chose in lastv (9033, 9170); syzygy reads lastv back (9004).
+ *  Scratch, not the user's: the host purges them after the input (a logged one goes back to its entry), so the log and
+ *  Vars never hold them. */
+export const GIAC_SCRATCH: Readonly<Record<string, readonly string[]>> = { gbasis: ["lastgb", "lastv"], syzygy: ["lastv"] };
+
+/**
  * Heads that change the engine's state with no target in the tree, or whose target the tree may miss (giac 2.1.0,
  * read in the pinned tarball): purge and its aliases (DelVar, del, unassign; their names are targets too), assume,
  * additionally, assign (`assign(q,5)` stores q), restart, rm_all_vars, restart_vars, restart_modes, rm_a_z (G93: purges
- * the one-letter names, usual.cc:231), the file readers read, ramene and unarchive, the writers write and archive, and
- * every Giac setting (flags.ts; the check after the call puts them back, the input still runs once).
+ * the one-letter names, usual.cc:231), the file readers read, ramene and unarchive, the writers write and archive,
+ * every Giac setting (flags.ts; the check after the call puts them back, the input still runs once), and G174's heads
+ * that store into an argument or into Giac's own names.
  */
 export const STATE_HEADS: ReadonlySet<string> = new Set([
   "purge", "DelVar", "del", "assume", "additionally", "assign", "restart", "rm_all_vars", "restart_vars", "restart_modes", "rm_a_z",
   "reset", "read", "ramene", "unarchive", "write", "archive", ...FLAG_WORDS,
+  ...ARG_STORE_HEADS, ...Object.keys(GIAC_SCRATCH),
 ]);
+
+/** G174 (F87): the commands that clear every name and answer Giac's list of them (maple.cc:492 _restart, usual.cc:251
+ *  _rm_all_vars, which restart_vars is): the list holds our names and the Ans slot, which the host leaves out. */
+export const CLEARING_HEADS: ReadonlySet<string> = new Set(["restart", "restart_vars", "rm_all_vars"]);
+
+/** G174 (F96): Giac's commands that need what N62 has not got, refused before they run: debug turns on Giac's step mode
+ *  (prog.cc:6163–6167), whose loop asks the browser's prompt() (6728), so "prompt is not defined" is thrown out of the
+ *  call and out of every program call after it. */
+export const NOT_HERE_HEADS: ReadonlySet<string> = new Set(["debug"]);
 
 /**
  * Heads that parse a string and evaluate (or return) what it holds (giac 2.1.0, every function that builds a gen from a
