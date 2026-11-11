@@ -73,6 +73,8 @@ export const en = {
   "error.ansTooLong": "Ans: the last result is too long to reuse (over 2 kB)",
   "engine.starting": "Starting the engine…",
   "engine.error": "The engine failed to start.",
+  /** R284: the failure note's button (in the start chunk: it must show when the note's own chunk did not load). */
+  "engine.reload": "Reload",
   /** The update line (A49): a new version of the web build is installed and waits for the user's Restart. */
   "update.ready": "A new version is ready.",
   "update.restart": "Restart",

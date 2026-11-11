@@ -383,10 +383,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  the engine build (vite.config.ts __GIAC_MJS__), so a branch with a new Giac patch moves the gzip size with the same raw size:
  *  phase-1 a7b802ec measures 172,709 B raw, 61,193 B gzip with phase-1's engine and 61,202 B gzip with G322's (patch 0043):
  *  61,202 B + 0.05 kB, rounded up.
- *  61,300 → 61,400 B (G174): the refusal text of a command N62 cannot serve (enEngine.ts error.notHere, "Not available in
- *  N62", for debug; the app's table holds every engine text) is the whole growth: phase-1 76675067 measures 172,915 B raw,
- *  61,285 B gzip, the branch merged with it 172,954 B raw (+39, the one line), 61,303 B gzip: 61,303 B + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 61_400;
+ *  61,400 → 61,600 B (R284, R284f1): the engine-failed note's way on is in the start chunk and its words and look are not: the
+ *  kind of the failure (Session.engineFailure, from the error's class), the guard in submit, the Reload button (its markup, its
+ *  `engine.reload` string, one rule; it must not depend on a chunk fetched over a network that may be down), and the idle import
+ *  of the lazy views/EngineFailed.svelte (the effect, its state, the preload entry); the words (i18n/enFail.ts) and the button's
+ *  look stay in the lazy chunk. phase-1 43cb1a7d (G174 and R285) is 61,303 B gzip (172,954 B raw) at its last pin measure; the
+ *  branch merged with it measures 61,537 B gzip (173,844 B raw): 61,537 B + 0.05 kB, rounded up to the next 50 B. */
+export const START_PIN_GZIP = 61_600;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
