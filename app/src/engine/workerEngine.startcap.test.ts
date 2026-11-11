@@ -3,9 +3,9 @@
 import { describe, expect, it } from "vitest";
 import type { Request, Response } from "./protocol.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
-import { deadEngine, startFailure } from "./dead.ts";
+import { deadEngine } from "./dead.ts";
 import { EngineCrashError, EngineLoadError, EngineMemoryError } from "./types.ts";
-import { WorkerEngine, type WorkerLike } from "./workerEngine.ts";
+import { WorkerEngine, startError, type WorkerLike } from "./workerEngine.ts";
 
 /** How a start fails: a fatal reply to init (with `dead` as host.ts would mark it), or a worker error event. */
 type Fail = { fatal: string; dead?: "memory" | "crash" } | { error?: string };
@@ -141,16 +141,16 @@ describe("WorkerEngine: an engine that cannot start (G318)", () => {
   });
 });
 
-describe("startFailure (G318): what stopped a start, by its text", () => {
+describe("startError (G318): the class of a failed start, by its text", () => {
   it("memory when the text names memory, else load", () => {
-    expect(startFailure("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')")).toBe("load");
-    expect(startFailure("Aborted(both async and sync fetching of the wasm failed)")).toBe("load");
-    expect(startFailure("WebAssembly.Memory(): could not allocate memory")).toBe("memory");
-    expect(startFailure("out of memory")).toBe("memory");
-    expect(startFailure("Cannot enlarge memory arrays to size 1073807360 bytes")).toBe("memory");
-    expect(startFailure("Aborted(OOM)")).toBe("memory");
-    expect(startFailure("")).toBe("load");
-    expect(startFailure(undefined)).toBe("load");
+    expect(startError("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')")).toBe(EngineLoadError);
+    expect(startError("Aborted(both async and sync fetching of the wasm failed)")).toBe(EngineLoadError);
+    expect(startError("WebAssembly.Memory(): could not allocate memory")).toBe(EngineMemoryError);
+    expect(startError("out of memory")).toBe(EngineMemoryError);
+    expect(startError("cannot enlarge memory")).toBe(EngineMemoryError);
+    expect(startError("Aborted(OOM)")).toBe(EngineMemoryError);
+    expect(startError("")).toBe(EngineLoadError);
+    expect(startError(undefined)).toBe(EngineLoadError);
   });
 });
 

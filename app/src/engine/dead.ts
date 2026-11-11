@@ -30,14 +30,3 @@ export function deadEngine(e: unknown): "memory" | "crash" | null {
   if (e instanceof Error && isStackOverflow(e)) return "crash";
   return null;
 }
-
-/**
- * G318: what stopped a start (a failed init, or a worker error before ready), by its text: "memory" when it names memory
- * (Emscripten's `OOM` and `Cannot enlarge memory`, Chrome's `WebAssembly.Memory(): could not allocate memory`), else
- * "load" (a wasm file or worker script that did not load: `Aborted(Error: ENOENT …)`, `Aborted(both async and sync
- * fetching of the wasm failed)`, an error event with no message). Not deadEngine: that one classes a running engine, where
- * any abort is a heap at its cap.
- */
-export function startFailure(text: string | undefined): "memory" | "load" {
-  return /\bOOM\b|out of memory|cannot enlarge memory|could not allocate memory/i.test(text ?? "") ? "memory" : "load";
-}

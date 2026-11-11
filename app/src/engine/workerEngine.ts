@@ -25,7 +25,6 @@ import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import type { ConstTable } from "./constUnc.ts";
 import type { ChipFactsTable } from "./chipFacts.ts";
 import { enEngine } from "../i18n/enEngine.ts";
-import { startFailure } from "./dead.ts";
 
 /** The part of a Worker that WorkerEngine uses (lets tests drive it without a browser). */
 export interface WorkerLike {
@@ -49,6 +48,15 @@ export interface DefsStore {
 /** Failed starts after which the stored log is left out of the replay (G19), and, with no log left to leave out, after
  *  which the engine is not started again (G318). */
 export const MAX_FAILED_STARTS = 2;
+
+/**
+ * G318: the class of a failed start (an init that failed, or a worker error before ready), by its text: memory when it
+ * names memory (Emscripten's `OOM`, `Cannot enlarge memory`; Chrome's `WebAssembly.Memory(): could not allocate
+ * memory`), else a load error (a wasm file or worker script that did not load: `Aborted(Error: ENOENT …)`, `Aborted(both
+ * async and sync fetching of the wasm failed)`, an error event with no message). Not deadEngine (dead.ts): that one
+ * classes a running engine, where any abort is a heap at its cap. Here, not in dead.ts: the start chunk (R91's pin).
+ */
+export const startError = (text = ""): typeof EngineMemoryError => (/\bOOM\b|(out of|enlarge|allocate) memory/i.test(text) ? EngineMemoryError : EngineLoadError);
 
 export interface WorkerEngineOptions {
   /** Base URL under which `engine/giac.mjs` is served (Vite's BASE_URL by default). */
@@ -118,9 +126,7 @@ export class WorkerEngine implements MathEngine {
   private skipped: DefEntry[] = [];
   private safe: { skipped: number } | undefined;
   /** G318: starts that ended before ready since the last ready (in memory; the stored count is G19's `attempts`). */
-  private failedStarts = 0;
-  /** G318: the failure that stopped the engine for good: ready() and every call reject with it until a Cancel. */
-  private gaveUp: Error | undefined;
+  private fails = 0;
 
   constructor(opts: WorkerEngineOptions = {}) {
     this.baseUrl = opts.baseUrl ?? defaultBaseUrl();
@@ -140,10 +146,8 @@ export class WorkerEngine implements MathEngine {
         noReplay();
         return;
       }
-      this.log = applyDefChanges(this.log, stored.map((e) => ({ set: e })));
-      // G318: the engine stopped before the store answered: no replay began (a Cancel's start replays the log)
-      if (this.gaveUp) return;
       this.beginAttempt(stored.length);
+      this.log = applyDefChanges(this.log, stored.map((e) => ({ set: e })));
       this.defined = this.post({ type: "define", defs: stored }).then((r) => {
         if (r.type !== "defined") return 0;
         // G46: stored values the engine read again (angleMigration.ts) are kept and stored in their new form
@@ -215,7 +219,7 @@ export class WorkerEngine implements MathEngine {
   /** The replay finished: the engine is ready with its log. */
   private reach(): void {
     this.reached = true;
-    this.failedStarts = 0;
+    this.fails = 0;
     if (this.attempts > 0) this.writeAttempts(0);
   }
 
@@ -288,7 +292,6 @@ export class WorkerEngine implements MathEngine {
     const wasReached = this.reached;
     this.stop(new EngineCancelled());
     if (wasReached) this.beginAttempt(); // a Cancel during the start is the same attempt, not a new one
-    this.gaveUp = undefined; // G318: one fresh attempt (failedStarts stays: a failure of it stops the engine again)
     this.start();
     return this.readyPromise;
   }
@@ -316,37 +319,25 @@ export class WorkerEngine implements MathEngine {
 
   /** The worker died (an error event, or a fatal reply marked dead): a clean worker takes its place and replays the
    *  log. G19: a crash before the replay finished is a failed start; the second one leaves the stored log out. G318:
-   *  the second failed start since the last ready with no log left to leave out starts nothing: ready() and every call
-   *  reject with `err` until a Cancel. */
+   *  the second failed start since the last ready with no log left to leave out starts no worker but a stand-in that
+   *  stops every request with `err`: ready() and every call reject with it until a Cancel, which starts one fresh
+   *  attempt (`fails` stays, so a failure of it stops the engine again). */
   private restartAfterCrash(err: Error): void {
-    const wasReached = this.reached;
+    const failed = this.reached ? 0 : ++this.fails;
+    const stuck = !this.log.length && failed >= MAX_FAILED_STARTS;
     this.stop(err);
-    if (!wasReached) this.failedStarts++;
-    if (!wasReached && this.log.length && this.attempts >= MAX_FAILED_STARTS) this.leaveOut(this.stored());
-    else if (!wasReached && !this.log.length && this.failedStarts >= MAX_FAILED_STARTS) return this.giveUp(err);
+    if (failed && this.log.length && this.attempts >= MAX_FAILED_STARTS) this.leaveOut(this.stored());
     else this.beginAttempt();
-    this.start();
+    this.start(stuck ? ({ postMessage: () => this.stop(err), terminate() {} } as unknown as WorkerLike) : undefined);
   }
 
-  private giveUp(err: Error): void {
-    this.gaveUp = err;
-    this.readyPromise = Promise.reject(err);
-    this.readyPromise.catch(() => {});
-  }
-
-  /** The error of a worker's failure. G318: before ready, by its text (dead.ts startFailure) unless a trap stopped it;
-   *  after, by `dead` (G24, G183), a worker error being memory's. */
-  private failure(message: string | undefined, dead: "memory" | "crash" | undefined, ready: boolean): Error {
-    const kind = ready ? dead : dead === "crash" ? dead : startFailure(message);
-    return new (kind === "crash" ? EngineCrashError : kind === "memory" ? EngineMemoryError : kind === "load" ? EngineLoadError : Error)(message);
-  }
-
-  private start(): void {
+  private start(w = this.createWorker()): void {
     const t0 = performance.now();
     this.startedAt = t0;
-    const w = this.createWorker();
     this.worker = w;
     this.reached = false;
+    // G318: before ready a trap is still a crash and the rest is classed by its text (startError); after, by `dead`
+    const fail = (m?: string, dead?: "memory" | "crash"): Error => new (dead === "crash" ? EngineCrashError : !this.reached ? startError(m) : dead ? EngineMemoryError : Error)(m);
     w.onmessage = (ev) => {
       const p = this.pending.get(ev.data.id);
       if (!p) return;
@@ -355,7 +346,7 @@ export class WorkerEngine implements MathEngine {
         // G24: the heap only grows, and an aborted module is dead; G183: so is one a trap unwound: reject the call and
         // start a clean worker, which replays the log. A fatal reply not marked dead keeps the worker.
         const { dead, message } = ev.data;
-        const err = this.failure(message, dead, this.reached);
+        const err = fail(message, dead);
         p.reject(err);
         if (dead && this.worker === w) this.restartAfterCrash(err);
       } else p.resolve(ev.data);
@@ -363,7 +354,7 @@ export class WorkerEngine implements MathEngine {
     };
     // A crash (e.g. out of memory) rejects what is pending and takes the same restart + replay path as Cancel.
     w.onerror = (ev) => {
-      if (this.worker === w) this.restartAfterCrash(this.failure(ev.message, "memory", this.reached));
+      if (this.worker === w) this.restartAfterCrash(fail(ev.message, "memory"));
     };
     this.readyPromise = this.post({ type: "init", baseUrl: this.baseUrl, replay: [...this.log] }).then((r) => {
       if (r.type !== "ready") throw new Error(`unexpected ${r.type}`);
@@ -393,7 +384,6 @@ export class WorkerEngine implements MathEngine {
    *  was ended by a Cancel or a crash (pending emptied), finds it gone and does nothing; so a new Enter, which the session
    *  sends only once the last one answered (session.busy), meets no old limit. */
   private post(body: RequestBody, late?: Response): Promise<Response> {
-    if (this.gaveUp) return Promise.reject(this.gaveUp);
     const id = this.nextId++;
     return new Promise<Response>((resolve, reject) => {
       const arm = late && (() => setTimeout(() => this.pending.delete(id) && (resolve(late), this.cancel()), HOME_WATCHDOG_MS));
