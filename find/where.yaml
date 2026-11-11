@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Find: which Find function a key layer or palette cell of spec/keyboard.yaml inserts when its insert is not the
+# function's own `insert` (find/functions.yaml) and no \operatorname{NAME} of it. Read by tools/find-index/where.mjs
+# (via generate.mjs), which writes each item's `where` ("Shift ln", "Tmpl", G230) and fails when an id does not exist
+# or when an insert here is no key's or palette cell's. Find id: the insert LaTeX exactly as spec/keyboard.yaml has it.
+
+links:
+  "fn:exp": "\\exponentialE^{#0}"          # Shift + ln
+  "fn:abs": "\\left|#0\\right|"            # Shift + (−), the palette's abs
+  "fn:surd": "\\sqrt[#?]{#0}"              # Shift + xʸ, the nth root
+  "fn:diff": "\\frac{\\partial#0}{\\partial#?}"
+  "fn:subst": "\\left.#0\\right|_{#?=#?}"
+  "fn:piecewise": "\\begin{cases}#? & \\text{if }#?\\\\ #? & \\text{if }#?\\end{cases}"
+  "fn:limit": "\\lim_{#?\\to#?}\\left(#0\\right)"
+  "fn:int": "\\int_{#?}^{#?}#0\\,\\mathrm{d}#?"
+  "fn:sum": "\\sum_{#?=#?}^{#?}\\left(#0\\right)"
+  "fn:product": "\\prod_{#?=#?}^{#?}\\left(#0\\right)"
+  "fn:logb": "\\log_{#?}\\left(#0\\right)"
+  "fn:factorial": "!"

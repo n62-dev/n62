@@ -100,9 +100,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | 646 | [G319](packages/G319.md) the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
 | 647 | [G320](packages/G320.md) CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
 | 648 | [G321](packages/G321.md) a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
-| 602 | A126 e2e flakes at 16 and 8 workers | annabell, Sonnet | `p1/annabell-e2eworkers` | A125 |
-| 643 | G317 a name set beside the result keeps its own value and mark in Vars (pass 135) | gorge, Opus | `p1/gorge-sidepreview` | – |
-| 584 | [G230](packages/G230.md) Find: key positions | gorge, Sonnet | `p1/gorge-findwhere` | – |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
