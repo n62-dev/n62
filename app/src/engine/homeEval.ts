@@ -33,7 +33,7 @@ import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
 import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
-import { decidedAtDouble, decideTwice, decidingStored, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decidingStored, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
@@ -528,7 +528,7 @@ export function homeEval(
   let undecided = once && !inexactTest && onceUndecided(giac, form, exactBody, exactOut);
   // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused (any value would be a guess).
   let refusedCut = false;
-  if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac))) {
+  if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac), nonRealArg(giac))) {
     const d = decideTwice(giac, exactBody, exactOut, s.digits, s.digits);
     if ("undecided" in d) undecided = true;
     if ("undecided" in d && d.refused) refusedCut = true;

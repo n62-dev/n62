@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { decidedAtDouble, decideTwice, evenPowerRoot, restsOnDecision, type Decision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decisionArgs, evenPowerRoot, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -198,4 +198,42 @@ describe("evenPowerRoot (G156)", () => {
     ["x^2+x^(1/3)", false],
     ['sqrt("a^2")', false],
   ])("%s → %s", (input, want) => expect(evenPowerRoot(input, "typed")).toBe(want));
+});
+
+describe("asin and acos of a non-real argument decide (G325)", () => {
+  const none = (): boolean => false;
+  // the argument's realness as nonRealArg finds it with Giac (here: an argument holding sqrt(-…) or i is not real)
+  const nonReal = (arg: string): boolean => /sqrt\(-|(?<![a-z])i(?![a-z])/.test(arg);
+  it.each([
+    // Giac's text of the result at P: one that holds i, of an argument that is not real, is made again at P + 20, P + 40
+    ["asin(sqrt(-2)-10^35)", "i*ln(2*sqrt(2)/(2*sqrt(2*(sqrt(5)+2)))+i*sqrt(2*(sqrt(5)+2)))", true],
+    ["acos(sqrt(-2)-10^35)", "1/2*pi+(-i)*ln(sqrt(2)+i)", true],
+    ["arcsin(2*i-10^35)", "asin(-100000000000000000000000000000000000+2*i)", true],
+    ["arccos(x)", "arccos(x)", false],
+    // a real result costs no call; a real argument outside [-1, 1] is not made again
+    ["asin(1/2)", "pi/6", false],
+    ["asin(2)", "(-i)*ln(i*sqrt(3)+2*i)+1/2*pi", false],
+    ["acos(sqrt(2)/2)", "pi/4", false],
+    // another function with a non-real result is not a decision
+    ["ln(sqrt(-2)-10^35)", "ln(i*sqrt(2)-100000000000000000000000000000000000)", false],
+  ])("%s with %s → %s", (input, text, want) => expect(restsOnDecision(input, "typed", text, none, nonReal)).toBe(want));
+
+  it("is no decision without the argument check (a stored function's body, an input that runs once)", () => {
+    expect(restsOnDecision("asin(sqrt(-2)-10^35)", "typed", "i*ln(2)")).toBe(false);
+  });
+
+  it("asks the argument only when the result is not real", () => {
+    const asked: string[] = [];
+    const spy = (arg: string): boolean => (asked.push(arg), true);
+    restsOnDecision("asin(1/2)+acos(1/3)", "typed", "pi/6+acos(1/3)", none, spy);
+    expect(asked).toEqual([]);
+    restsOnDecision("asin(sqrt(-2)-10^35)", "typed", "i*ln(2)", none, spy);
+    expect(asked).toEqual(["sqrt(-2)-10^35"]);
+  });
+
+  it("an asin argument that holds a literal past the cap is a decision's text when it and the result are not real", () => {
+    expect(decisionArgs("asin(sqrt(-2)-10^1000)", "i*ln(2)", none, nonReal)).toContain("sqrt(-2)-10^1000");
+    expect(decisionArgs("asin(tan(2)-10^1000)", "i*ln(2)", none, nonReal)).toEqual([]);
+    expect(decisionArgs("asin(1/2)+10^1000", "pi/6+10^1000", none, nonReal)).toEqual([]);
+  });
 });
