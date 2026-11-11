@@ -22,6 +22,7 @@ import { dirname, join, resolve } from "node:path";
 
 import { gzipSync } from "node:zlib";
 import { latexName, unitItems, uniq } from "./units-items.mjs";
+import { insertLinks, messages, whereMap } from "./where.mjs";
 import { REPO, SOURCES, fail, member, notes, problems, qalcXml, tarball } from "./state.mjs";
 
 const argv = process.argv.slice(2);
@@ -168,6 +169,19 @@ for (const [id, names] of Object.entries(aliases.aliases ?? {})) {
   it.names = uniq([...it.names, ...names.map(String)]);
 }
 
+// where each function sits on the keypad (G230): spec/keyboard.yaml's inserts joined to the Find ids, named by the key labels' i18n texts
+{
+  const kb = loadYaml("spec/keyboard.yaml");
+  const msgs = messages(readFileSync(join(REPO, "app/src/i18n/en.ts"), "utf8"), readFileSync(join(REPO, "app/src/i18n/enKeyNames.ts"), "utf8"));
+  const extra = loadYaml("find/where.yaml").links ?? {};
+  const links = insertLinks(kb, curated, extra, (id) => byId.has(id));
+  for (const [id, insert] of Object.entries(extra)) {
+    if (!byId.has(id)) fail(`find/where.yaml: no item ${id}`);
+    else if (!whereMap(kb, msgs, new Map([[String(insert), id]])).has(id)) fail(`find/where.yaml: no key or palette cell inserts ${insert} (${id})`);
+  }
+  for (const [id, where] of whereMap(kb, msgs, links)) if (byId.has(id)) byId.get(id).where = where; else fail(`where: no item ${id}`);
+}
+
 // checks over the whole index
 for (const it of items) {
   if (/^(unit|const|pfx):/.test(it.id) && /currency|^unit:(EUR|USD|GBP|JPY|CHF|BTC)\b/i.test(`${it.id} ${it.title}`)) fail(`currency in the index: ${it.id}`);
@@ -177,7 +191,7 @@ for (const it of items) {
 if (new Set(items.map((i) => i.id)).size !== items.length) fail("duplicate ids");
 
 // field order of the schema (docs/04 3.3)
-const ORDER = ["id", "kind", "names", "title", "desc", "syntax", "example", "value", "unc", "unit", "dim", "basis", "basisLeaves", "si", "tier", "insert"];
+const ORDER = ["id", "kind", "names", "title", "desc", "syntax", "example", "value", "unc", "unit", "dim", "basis", "basisLeaves", "si", "tier", "insert", "where"];
 items = items.map((it) => Object.fromEntries(ORDER.filter((k) => it[k] !== undefined).map((k) => [k, it[k]])));
 
 if (problems.length) {
