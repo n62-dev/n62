@@ -283,6 +283,21 @@ cases:
   - { id: "g39-cas-pair", kind: "cas", input: "int(abs(x-sin(10^50)),x,-1,1)", mark: "⚠", source: "derived", note: "mark-only: Giac's [exact, numeric] pair is shown as Giac's text with ⚠ (the two disagree: 1.62358264688 against 1.35506364264)" }
   - { id: "g39-cas-keep-basel", kind: "cas", input: "sum(1/k^2,k,1,inf)", expect: "1/6*pi^2", source: "derived", note: "Giac's text for pi^2/6" }
   - { id: "g39-cas-keep-1/x^2", kind: "cas", input: "int(1/x^2,x,-1,1)", expect: "+infinity", source: "derived" }
+  # G320 (arch review N5; owner 2026-11-10, answer 7): for an answer with no free name CAS refuses a number through an
+  # infinity as Home does (throughInfinity); with a free name Giac's algebra stays. Giac computes in the extended reals:
+  # 1/0 is infinity, 1/infinity is 0, ln(0) is -infinity and exp(-infinity) is 0.
+  - { id: "g320-cas-1/(1/0)", kind: "cas", input: "1/(1/0)", expect: "error: divisionByZero", source: "derived", note: "1/0 has no value, so neither has 1/(1/0); Home refuses it (homeEval.ts throughInfinity). CAS showed an exact 0 with no mark" }
+  - { id: "g320-cas-keys-1/(1/0)", kind: "cas", latex: "\\frac{1}{\\frac{1}{0}}", expect: "error: divisionByZero", source: "derived", note: "as typed by the keys; CAS showed 0" }
+  - { id: "g320-cas-exp-ln-0", kind: "cas", input: "exp(ln(0))", expect: "error: divisionByZero", source: "derived", note: "ln(0) has no value; Home refuses it. CAS showed 0" }
+  - { id: "g320-cas-assign-1/(1/0)", kind: "cas", input: "g320a:=1/(1/0)", expect: "error: divisionByZero", source: "derived", note: "an assignment is refused as in Home, which stores nothing (host.test.ts checks the name stays free). CAS showed and stored 0" }
+  - { id: "g320-cas-list-1/(1/0)", kind: "cas", input: "[1/(1/0),2]", expect: "error: divisionByZero", source: "derived", note: "an element through an infinity, as in Home. CAS showed [0,2]" }
+  - { id: "g320-cas-0*(1/0)", kind: "cas", input: "0*(1/0)", expect: "error: divisionByZero", source: "derived", note: "guard: 0 times infinity is Giac's undef, refused by G168 (lostCas) before G320 already" }
+  - { id: "g320-cas-keep-1/(1/x)", kind: "cas", input: "1/(1/x)", expect: "1/(1/x)", source: "derived", note: "guard: a free name keeps Giac's algebra; Giac's CAS leaves the text as typed (probe on phase-1 2b65206b), equal to x" }
+  - { id: "g320-cas-keep-limit-1/(1/x)", kind: "cas", input: "limit(1/(1/x),x,0)", expect: "0", source: "derived", note: "guard: 1/(1/x) = x for x ≠ 0, which tends to 0" }
+  - { id: "g320-cas-keep-exp-ln-x", kind: "cas", input: "exp(ln(x))", expect: "x", source: "derived", note: "guard: a free name keeps Giac's algebra (exp(ln(x)) = x for x ≠ 0)" }
+  - { id: "g320-cas-keep-exp-ln-0-plus-x", kind: "cas", input: "exp(ln(0))+x", expect: "x", source: "derived", note: "guard: with a free name in the answer Giac's algebra stays, as decided (answer 7)" }
+  - { id: "g320-cas-keep-1/(1/2)", kind: "cas", input: "1/(1/2)", expect: "2", mark: "=", source: "derived", note: "guard: 1/(1/2) = 2" }
+  - { id: "g320-cas-keep-exp-ln-3", kind: "cas", input: "exp(ln(3))", expect: "3", mark: "=", source: "derived", note: "guard: exp(ln(3)) = 3" }
   # --- G50 (deep check 2026-10-19 D9–D11): complex arguments of the audited functions, RAD. Each function on two complex
   # arguments at 12 and 30 digits (tools/probes/complex-audit.ts sweeps 12 arguments at 12, 30 and 50 digits). Giac's
   # complex tanh is coth, and its complex asin, acos, atan and acosh are a double at any Digits.

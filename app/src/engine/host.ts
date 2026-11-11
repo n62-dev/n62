@@ -30,7 +30,7 @@ import { floatsAtView, shownOf } from "./shownText.ts";
 import { resolveAngle } from "./angleMigration.ts";
 import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { unaskedPoly } from "./polyvec.ts";
-import { approxRange, lostCas, mayApproxRange } from "./novalue.ts";
+import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -1091,9 +1091,16 @@ export class EngineHost implements FactsHost {
     if (range) return fail(enEngine[`error.${range}`], range);
     // G168 (F93): Giac's undef, or the call back with no free name (no number comes of it), is refused as in Home; an
     // assignment that ran once puts its name back, as a non-square power's (G171), so no name keeps Giac's word.
-    const lost = guarded || !single || (onceRun && asg0 && !form.noValue) ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
+    const lostAsked = !!guarded || !single || (onceRun && !!asg0 && !form.noValue);
+    const lost = lostAsked ? lostCas(this.giac, "pcasans", asg0 ? asg0.rhs : exactInput, text, () => false, userFn, digitsSet, !!guarded || !single) : null;
     if (lost && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
     if (lost) return fail(enEngine[`error.${lost}`], lost);
+    // G320 (arch review N5; owner 2026-11-10, answer 7): an answer with no free name that rests on an infinity inside
+    // (1/(1/0), exp(ln(0)): Giac's extended reals) is refused as in Home, after the lost number (lostCas, as Home's
+    // lostNumber) and with the same inputs; with a free name in the answer Giac's algebra stays.
+    const viaInf = lostAsked && mayBeNumbers(text) && throughInfinity(this.giac, asg0 ? asg0.rhs : exactInput, text, () => false, performance.now() - t0, userFn);
+    if (viaInf && onceRun && asg0) this.giac.eval(logged ? putBack([], [logged]) : `purge(${asg0.name})`);
+    if (viaInf) return fail(enEngine["error.divisionByZero"], "divisionByZero");
     if (guarded) {
       const stored = this.giac.eval(`${guarded.name}:=pcasans`);
       if (isError(stored)) return fail(stored, isTimeout(stored) ? "timeout" : "engine");
