@@ -15,7 +15,7 @@ const EXACT_INT_S = 0.5;
 
 /** Home's answer variable: analysis must not change what Ans means in Home. G103: kept in one call (a free pasans
  *  prints as itself, so the copy says whether there was one) and put back in one. */
-function keepingAns<T>(giac: Giac, fn: () => T): T {
+export function keepingAns<T>(giac: Giac, fn: () => T): T {
   const had = giac.eval("paskeep:=pasans") !== "pasans";
   try {
     return fn();
