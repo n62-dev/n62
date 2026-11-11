@@ -67,3 +67,36 @@ describe.skipIf(!giacAvailable())("G324: a part 0 as a double is G60's noise onl
     expect(kept.display).toMatch(/^1\+1E-38\*i$/);
   });
 });
+
+// G324f1 (F220): the name a value is stored in holds what was shown, so the noise part G324 shows as 0 is not stored.
+describe.skipIf(!giacAvailable())("G324f1: a stored value holds the element without G60's noise part", () => {
+  it("W:=evalf(solve(x^3-x-1=0,x)): W and W[0] show the real root with no imaginary part, ⚠ inherited from W", async () => {
+    const host = await nodeHost();
+    const home = (input: string) => host.home(input, defaultHomeSettings).result;
+    expect(home("W:=evalf(solve(x^3-x-1=0,x))").display).toBe("{1.32471795724}"); // mpmath findroot: 1.32471795724474…
+    for (const input of ["W", "W[0]"]) {
+      const r = home(input);
+      expect(r.display).not.toMatch(/i/);
+      expect(r.display).toMatch(/^[[{]?1\.32471795724[\]}]?$/);
+      expect(r.facts.warn).toBe("unaudited");
+      expect(r.why?.inherited).toEqual(["W"]);
+    }
+  });
+
+  it("S:=approx(solve(x^3-x-1=0,x))[0], a scalar: S shows 1.32471795724, ⚠", async () => {
+    const host = await nodeHost();
+    const home = (input: string) => host.home(input, defaultHomeSettings).result;
+    expect(home("S:=approx(solve(x^3-x-1=0,x))[0]").display).toBe("1.32471795724");
+    const r = home("S");
+    expect(r.display).toBe("1.32471795724");
+    expect(r.facts.warn).toBe("unaudited");
+  });
+
+  it("control: a true small part (x = 1 ± 10^-20*i, derived) is stored and read back with it", async () => {
+    const host = await nodeHost();
+    const home = (input: string) => host.home(input, defaultHomeSettings).result;
+    expect(home("C:=approx(csolve(x^2-2*x+1+10^-40=0,x))").display).toBe("{1+1E-20*i,1-1E-20*i}");
+    expect(home("C").display).toMatch(/^[[{]1\+1E-20\*i,1-1E-20\*i[\]}]$/);
+    expect(home("C[0]").display).toBe("1+1E-20*i");
+  });
+});
