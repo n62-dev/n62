@@ -7,7 +7,7 @@ import { safePrecision } from "../engine/homeEval.ts";
 import { t } from "../i18n/index.ts";
 import { loadRemoved, Session } from "./session.svelte.ts";
 import { fakeKv } from "./fakeKv.ts";
-import { EngineCrashError, EngineMemoryError } from "../engine/types.ts";
+import { EngineCrashError, EngineLoadError, EngineMemoryError } from "../engine/types.ts";
 
 
 const third: ComplexValue = {
@@ -357,4 +357,24 @@ describe("an engine that stopped on the input (G183)", () => {
     await s.submit("1+1");
     expect(s.home[0]).toMatchObject({ status: "error", text: t("error.memory") });
   });
+});
+
+// R284: the kind of a failed start comes from the error's class, never its text; no row is added while it stands
+describe("a failed engine start", () => {
+  const failing = (err: Error): Calc => Object.assign(new ValueCalc(), { ready: () => Promise.reject(err) });
+  const cases: [string, Error, string][] = [
+    ["a load error", new EngineLoadError("out of memory"), "load"],
+    ["a memory error", new EngineMemoryError("could not load"), "memory"],
+    ["a crash", new EngineCrashError("x"), "crash"],
+    ["any other error", new Error("x"), "crash"],
+  ];
+  for (const [name, err, kind] of cases)
+    it(`${name} is kept as "${kind}", and Enter adds no row`, async () => {
+      const s = new Session(failing(err), fakeKv());
+      await new Promise((r) => setTimeout(r, 0));
+      expect(s.engineState).toBe("failed");
+      expect(s.engineFailure).toBe(kind);
+      expect(s.submit("1+1")).toBeUndefined();
+      expect(s.items).toHaveLength(0);
+    });
 });

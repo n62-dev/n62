@@ -288,6 +288,8 @@ async function longList(page: Page): Promise<void> {
 const shots: Shot[] = [
   // ---- keypad layers (on an empty Home)
   { id: "home-empty", group: "Home", title: "Home, empty", setup: async () => {} },
+  // R284: the engine-failed note (the wasm did not load): why, and Reload
+  { id: "engine-failed", group: "Home", title: "Engine failed: the note says why and offers Reload", setup: (p) => p.evaluate(() => { window.n62.session.engineFailure = "load"; window.n62.session.engineState = "failed"; }) },
   { id: "layer-shift", group: "Keypad layers", title: "Shift layer", setup: (p) => tap(p, ["shift"]) },
   { id: "layer-alpha", group: "Keypad layers", title: "Alpha layer", setup: (p) => tap(p, ["alpha"]) },
   { id: "layer-alpha-lock", group: "Keypad layers", title: "Alpha lock (capitals)", setup: (p) => tap(p, ["alpha", "alpha"]) },

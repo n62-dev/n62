@@ -6,7 +6,7 @@ import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../i
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
 import { t, type MessageKey } from "../i18n/index.ts";
-import { EngineCrashError, EngineMemoryError } from "../engine/types.ts";
+import { EngineCrashError, EngineLoadError, EngineMemoryError } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
 import { homeResultToLatex, type GroupSep } from "../render/home.ts";
 import {
@@ -228,6 +228,8 @@ export class Session {
   cas = $state<HistoryItem[]>([]);
   /** Set when the engine is starting or failed to start. */
   engineState = $state<"starting" | "ready" | "failed">("starting");
+  /** R284: why the engine failed to start, from G318's error class (never its text); unset until it has. */
+  engineFailure = $state<"load" | "memory" | "crash">();
   /** The user's variables and functions, the stored ones included (Vars, Find's live items; docs/04 3.4, 6.2). */
   userNames = $state<UserName[]>([]);
 
@@ -266,7 +268,8 @@ export class Session {
         this.engineState = "ready";
         return this.refreshNames();
       },
-      () => {
+      (e: unknown) => {
+        this.engineFailure = e instanceof EngineLoadError ? "load" : e instanceof EngineMemoryError ? "memory" : "crash";
         this.engineState = "failed";
       },
     );
@@ -443,7 +446,7 @@ export class Session {
    * the job has finished, failed or been cancelled.
    */
   submit(latex: string, giacOverride?: string, chips: ChipTable = {}): Promise<void> | undefined {
-    if (latex.trim() === "" || this.busy) return undefined;
+    if (latex.trim() === "" || this.busy || this.engineState === "failed") return undefined; // (R284: nothing would answer)
     const view = this.view;
     if (this.undoCopy) {
       this.setCopy(view, null); // R98: a new input drops this view's Undo of Clear and Delete (R119: the other view's stays),
