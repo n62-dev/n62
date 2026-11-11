@@ -330,6 +330,13 @@ export function onceUndecided(giac: Giac, form: InputForm, body: string, out: st
   return restsOnDecision(body, "typed", out, decidingStored(giac));
 }
 
+/** G78: whether a name is a function of the user's (a program may change globals), which stops the walk for an infinity;
+ *  ours (ENGINE_DEFINITIONS, WORKER_DEFINITION_NAMES, and `ours`: G319 the unit view's) do not. Giac is asked per name. */
+export function userFunctions(giac: Giac, ours: (name: string) => boolean = () => false): (name: string) => boolean {
+  const builtin = notBuiltin(giac);
+  return (name) => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name) && !ours(name);
+}
+
 /** Longest exact text kept as `full` (docs/04 section 2.8: ≤ 2 kB). */
 export const FULL_EXACT_MAX = 2048;
 
@@ -545,9 +552,7 @@ export function homeEval(
   }
   const W = Math.max(s.workDigits, s.digits + 10);
   const late = (): boolean => now() - t0 > HOME_DEADLINE_MS;
-  // G78: a function of the user's (a program may change globals) stops the walk for an infinity; ours do not.
-  const builtin = notBuiltin(giac);
-  const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name);
+  const userFn = userFunctions(giac);
   const defined = form.defined;
   const store = () => {
     if (asg) giac.eval(`${asg.name}:=${ans}`);

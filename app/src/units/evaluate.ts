@@ -4,7 +4,9 @@
 // product of dimension symbols (each exponent d·∂f/∂d / f is then a number), else the dimensions of its terms are
 // named; with an end slot the quotient must be a pure number. The number gets Home's facts (numeric.ts: exact, or the
 // agreement check), so markOf() marks it as Home. Synchronous, UI-free. Only erasable TypeScript syntax.
-import { FULL_EXACT_MAX, resultFromFacts, toExactLiterals, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
+import { FULL_EXACT_MAX, HOME_DEADLINE_MS, resultFromFacts, toExactLiterals, userFunctions, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
+import { callsIn, refusalOf } from "../engine/converge.ts";
+import { lostNumber, throughInfinity } from "../engine/novalue.ts";
 import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
 import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
@@ -149,6 +151,32 @@ export const UNIT_DEFINITIONS: readonly string[] = [
     `if (pasz_==0 and has(pash_,pasv_[pask_]) and pasusg(subst(subst(pash_,suppress(pasw_,pask_)),${S},${ONES}),pasv_[pask_],pasx_[pask_],pasu_[pask_])==1) pasz_:=1; } ` +
     `return [op(pasuo(normal(pass1_),normal(pass2_))),pasz_]; }`,
 ];
+
+/** G319: our unit functions (UNIT_DEFINITIONS, pasup of a level too): they change nothing the user stored, so they are not
+ *  the user's functions that stop Home's walk for an infinity. */
+const UNIT_FNS: ReadonlySet<string> = new Set(UNIT_DEFINITIONS.flatMap((d) => /^(pasu\w+)\(/.exec(d)?.[1] ?? []));
+const DIM_SYMBOLS: ReadonlySet<string> = new Set(BASES.map((b) => b.symbol));
+const RAD_SYMBOL = "pasdimA";
+
+const DIM_POWER = /\^\((-?\d+(?:\/\d+)?)\)/y;
+
+/** G319: the formula's number part, for Home's refusals: `expr` (decimals exact) with each slot as its factor: every
+ *  dimension symbol with its power (`pasdimT^(-1)`) 1, so no power of it is a part Home's walk evaluates again, but rad,
+ *  which is 1/pasdeg: the parser's degree factor in sin, cos and tan (`sin(pasdeg*…)`) then takes an angle in rad as it
+ *  is and a pure number in the angle mode, as pasua does (tan(90 rad) in DEG is no tan(π/2)). */
+export function numberPart(expr: string): string {
+  const t = toExactLiterals(expr);
+  let out = "";
+  let i = 0;
+  for (const n of names(t, "typed")) {
+    if (n.call || n.at < i || !DIM_SYMBOLS.has(n.name)) continue;
+    DIM_POWER.lastIndex = n.at + n.name.length;
+    const p = DIM_POWER.exec(t);
+    out += t.slice(i, n.at) + (n.name === RAD_SYMBOL ? `(1/${PASDEG})${p?.[0] ?? ""}` : "1");
+    i = p ? DIM_POWER.lastIndex : n.at + n.name.length;
+  }
+  return out + t.slice(i);
+}
 
 /** G41: the second-order part above this share of σ² gives ⚠ "first order does not hold here". */
 const ORDER2_SHARE = 0.1;
@@ -467,11 +495,31 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const withValue = job.checkSum === true || (checkForm !== null && dimInCall(checkForm));
   const chk = checkText !== null && withValue ? `,${checkText}` : "";
   const out = giac.eval(`pasuR:=[pasuq(normal(${f})),pasuq(normal(${g}))${chk}]`);
-  if (isError(out)) return { error: "engine", detail: out };
+  // G319: Home's refusals of the formula's number part, in Home's order (homeEval.ts: refusalOf, then lostNumber where no
+  // number came, below, then throughInfinity), within Home's deadline; Giac's step budget is Home's (host.ts useHomeMode).
+  const exactMs = performance.now() - t0;
+  const n = numberPart(job.expr);
+  const late = (): boolean => performance.now() - t0 > HOME_DEADLINE_MS;
+  let ownFn: ((name: string) => boolean) | null = null;
+  const userFn = (name: string): boolean => (ownFn ??= userFunctions(giac, (m) => UNIT_FNS.has(m)))(name);
+  let unverified = false;
+  const converges = (numOut: string): UnitError | null => {
+    const r = refusalOf(giac, n, numOut, Math.trunc(s.digits), true);
+    if (r === "unchecked") unverified = true;
+    return r && r !== "unchecked" ? { error: "refused", code: r } : null;
+  };
+  if (isError(out)) return converges(out) ?? { error: "engine", detail: out };
   const both = splitList(out);
   const src = both?.[0] !== undefined ? checked(both[0]) : null;
   let dst = both?.[1] !== undefined ? checked(both[1]) : null;
   if (!src || !dst) return { error: "engine", detail: out };
+  // The number part's answer: the term's number (the dimension symbols are positive, so it is the number part's value),
+  // 0, or for Giac's infinity or undef its own answer (asked only when it holds an integral, a series or a limit).
+  const numOut = src.kind === "term" ? src.num : src.kind === "zero" ? "0" : src.kind === "undefined" && callsIn(n).length ? giac.eval(n) : null;
+  if (numOut !== null) {
+    const home = converges(numOut) ?? (src.kind !== "undefined" && throughInfinity(giac, n, numOut, late, exactMs, userFn) ? ({ error: "refused", code: "divisionByZero" } as const) : null);
+    if (home) return home;
+  }
   // The check refuses terms of different dimensions, whatever their numbers; a function it cannot read (max, with
   // symbols) leaves the decision to the value's own check, unless a sum in it has terms of different dimensions.
   // Otherwise only a value 0 needs the check, for its dimension: a call of its own then.
@@ -529,6 +577,8 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
     // R271f1: σ's mark decided once: a σ from a result chip limits the value's facts (its confirmed digits, its ⚠), so
     // the view, the Home row, Copy and the chip read one fact (units/sigmaFacts.ts)
     if (unc?.chip) value = { ...value, facts: worseFacts(value.facts, unc.chip) };
+    // G319: a convergence check that could not finish: the value stands with ⚠, as in Home (nothing confirmed it exists).
+    if (unverified) value = { ...value, facts: { ...value.facts, warn: value.facts.warn ?? "unchecked", why: { ...value.facts.why, existsUnchecked: true } }, approximate: true };
     return { value, dimension, dimensionText: dimension === null ? null : dimensionText(dimension), unit, ...(shownSlot ? { shownSlot } : {}), siPrefixed: sp?.text ?? "", ...si, ...(unc ? { unc } : {}), ...(note ? { note } : {}), ms: performance.now() - t0 };
   };
   if ((job.absTemp || job.endOffset !== undefined) && src.kind === "term" && giac.eval(`sign(${num})`).trim() === "-1") return { error: "belowzero" };
@@ -553,6 +603,9 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   giac.eval(job.endLog !== undefined ? `pasuv:=pasul(${level(ratio)})` : `pasuv:=normal(${ratio})`);
   const value = numberOf(giac, "pasuv", job.endLog !== undefined ? `pasul(${level(rerun)})` : rerun, s, job.inexact);
   if (value) return done(value, "pasuv");
+  // G319: Giac's text with no free name where a number was asked for (Home's lostNumber): Home's reason.
+  const lost = lostNumber(giac, "pasuv", n, giac.eval("pasuv"), late, exactMs, userFn);
+  if (lost) return { error: "refused", code: lost };
   // Not a number: a free name in it is the user's to fix; anything else (a timeout in the check) is the engine's.
   const names = giac.eval("lname(pasuv)");
   return /^\[\s*\]$/.test(names) || isError(names) ? { error: "engine", detail: `no number: ${num}` } : { error: "symbolic", detail: num };

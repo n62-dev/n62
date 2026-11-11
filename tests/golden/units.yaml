@@ -294,3 +294,4 @@ cases:
   - { id: "v06", input: "(1/(1/0))*{m}", to: "m:m", message: "Division by zero", source: "derived", note: "with an end slot the same (was = 0 mm)" }
   - { id: "v07", input: "(1/4)*{m}", oracle: "F(1,4)", expect: "0.25", mark: "=", exact: "1/4", dim: "m1", unit: "m", source: "derived", note: "control: a division by a literal is no source of an infinity" }
   - { id: "v08", input: "int(x,x,0,2)*{m}", oracle: "F(2)", expect: "2", mark: "=", exact: "2", dim: "m1", unit: "m", source: "derived", note: "control: a convergent integral stands" }
+  - { id: "v09", input: "tan(90*{rad})", settings: { angle: "deg" }, oracle: "tan(90)", expect: "-1.99520041221", mark: "≈", exact: "tan(90)", dim: "", source: "oracle", note: "control: in the number part an angle in rad is no number in degrees (tan(90 rad), not tan(π/2))" }
