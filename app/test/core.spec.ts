@@ -50,8 +50,8 @@ function caseTest(c: CoreCase): void {
 
 test.describe("core list", () => {
   test.describe.configure({ mode: "parallel" });
-  // A144: Firefox's newContext rejects these permissions (playwright.firefox.config.ts sets N62_BROWSER)
-  test.use({ permissions: process.env["N62_BROWSER"] === "firefox" ? [] : ["clipboard-read", "clipboard-write"] });
+  // A144: Firefox's and WebKit's newContext reject these permissions (their configs set N62_BROWSER)
+  test.use({ permissions: process.env["N62_BROWSER"] === undefined ? ["clipboard-read", "clipboard-write"] : [] });
   for (const c of cases) if (!usesClipboard(c)) caseTest(c);
   test.describe("the clipboard", () => {
     // one worker, in order (a known case's expected failure counts as a pass, so it skips nothing after it)
