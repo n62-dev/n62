@@ -10,6 +10,17 @@ import { giacOfEntry } from "../../src/input/entry.ts";
 import { callsStage, type CallsBaseline } from "../calls-budget.ts";
 import { root, cases, freshEngine, report } from "./lib.ts";
 
+/** G99: a bridge call is a Giac call too. G329: every argument is forwarded, `value`'s tree too, as the app's wrappers do
+ *  (ctxGate.ts, host.ts), so the stage counts the path the app runs. */
+export function countingBridge(bridge: GiacBridge, tick: () => void): GiacBridge {
+  return {
+    ctxGet: () => (tick(), bridge.ctxGet()),
+    ctxSet: (f) => (tick(), bridge.ctxSet(f)),
+    parse: (t) => (tick(), bridge.parse(t)),
+    value: (t, p, tree) => (tick(), bridge.value(t, p, tree)),
+  };
+}
+
 /** G52: Giac calls per input (one Enter at 12 digits) for the bench inputs (CAS) and home.yaml's single inputs (Home),
  *  against tests/golden/calls-baseline.yaml. A set whose calls per input are more than 10 % over its baseline fails. */
 export async function stageCalls(): Promise<void> {
@@ -22,14 +33,7 @@ export async function stageCalls(): Promise<void> {
       n++;
       return evalOnce(text);
     };
-    // G99: a bridge call is a Giac call too
-    const counted: GiacBridge = {
-      ctxGet: () => (n++, bridge.ctxGet()),
-      ctxSet: (f) => (n++, bridge.ctxSet(f)),
-      parse: (t) => (n++, bridge.parse(t)),
-      value: (t, p) => (n++, bridge.value(t, p)),
-    };
-    return { host: new EngineHost(giac, counted), calls: () => n };
+    return { host: new EngineHost(giac, countingBridge(bridge, () => n++)), calls: () => n };
   };
   const bench = new Map<string, number>();
   {
