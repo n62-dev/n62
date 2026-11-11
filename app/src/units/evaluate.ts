@@ -4,10 +4,10 @@
 // product of dimension symbols (each exponent d·∂f/∂d / f is then a number), else the dimensions of its terms are
 // named; with an end slot the quotient must be a pure number. The number gets Home's facts (numeric.ts: exact, or the
 // agreement check), so markOf() marks it as Home. Synchronous, UI-free. Only erasable TypeScript syntax.
-import { FULL_EXACT_MAX, HOME_DEADLINE_MS, resultFromFacts, toExactLiterals, userFunctions, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
+import { ENGINE_DEFINITIONS, FULL_EXACT_MAX, HOME_DEADLINE_MS, resultFromFacts, toExactLiterals, WORKER_DEFINITION_NAMES, type HomeResult, type HomeSettings } from "../engine/homeEval.ts";
 import { callsIn, refusalOf } from "../engine/converge.ts";
 import { lostNumber, throughInfinity } from "../engine/novalue.ts";
-import { exactFacts, floatFacts, hasFloat, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
+import { exactFacts, floatFacts, hasFloat, notBuiltin, rationalValue, valuePrecision, type ElementFacts, type Giac } from "../engine/numeric.ts";
 import { callsOf, isError, isNameChar, mapNames, names, splitList, topLevelArgs } from "../engine/giacPrint.ts";
 import { PASDEG } from "../engine/angles.ts";
 import { decimalToString, roundSignificant } from "../engine/format.ts";
@@ -478,8 +478,9 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const exactMs = performance.now() - t0;
   const n = toExactLiterals(job.number);
   const late = (): boolean => performance.now() - t0 > HOME_DEADLINE_MS;
-  let ownFn: ((name: string) => boolean) | null = null;
-  const userFn = (name: string): boolean => (ownFn ??= userFunctions(giac, (m) => m.startsWith(UNIT_PREFIX)))(name);
+  // Home's test of a function of the user's (a program may change globals), which stops the walk; ours do not.
+  const builtin = notBuiltin(giac);
+  const userFn = (name: string): boolean => builtin(name) && !(name in ENGINE_DEFINITIONS) && !WORKER_DEFINITION_NAMES.includes(name) && !name.startsWith(UNIT_PREFIX);
   let unverified = false;
   const converges = (numOut: string): UnitError | null => {
     const r = refusalOf(giac, n, numOut, Math.trunc(s.digits), true);
