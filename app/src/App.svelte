@@ -108,6 +108,9 @@
     void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(showTips, { timeout: 2000 }) : setTimeout(showTips, 500)));
     return countScreenTaps((kind) => session.taps.press(kind));
   });
+  /** R284: the failure note's inside (views/EngineFailed.svelte), fetched once the engine has failed. */
+  let EngineFailed = $state.raw<typeof import("./views/EngineFailed.svelte").default | undefined>();
+  $effect(() => void (session.engineState === "failed" && import("./views/EngineFailed.svelte").then((m) => (EngineFailed = m.default), () => {})));
   let host: HTMLElement | undefined = $state();
   let entryHeight = $state(0);
 
@@ -438,7 +441,11 @@
 
   <div class="screen">
     <div class="stage">
-      {#if session.engineState !== "ready"}<p class="enginenote" role="status" data-testid="engine-note">{t(session.engineState === "failed" ? "engine.error" : "engine.starting")}</p>{/if}
+      {#if session.engineState !== "ready"}
+        <p class="enginenote" role="status" data-testid="engine-note">
+          {#if EngineFailed}<EngineFailed kind={session.engineFailure} />{:else}{t(session.engineState === "failed" ? "engine.error" : "engine.starting")}{/if}
+        </p>
+      {/if}
       {#if shell.app === null}
         <History
           items={session.items}
