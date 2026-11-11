@@ -67,7 +67,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 649 | [R284](packages/R284.md) the engine-failed note says why and offers Reload | ron, Sonnet | `p1/ron-enginenote` | G318 |
 | 650 | R285 a browser that has not passed says so at start | ron, Sonnet | `p1/ron-browsernote` | A144 |
-| 508 | [G174](packages/G174.md) names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
+| 508 | G174 names stored through an argument (QR, LU…) reach the log; restart shows none of ours (F87, F96, F97) | gorge, Opus | `p1/gorge-argnames` | – |
 | 590 | [G223](packages/G223.md) `linreg`, `stats1` | gorge, Opus | `p1/gorge-stats` | – |
 | 591 | [G229](packages/G229.md) word-size bit ops | gorge, Opus | `p1/gorge-wordops` | – |
 | 592 | [G235](packages/G235.md) bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
