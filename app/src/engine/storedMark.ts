@@ -4,9 +4,9 @@
 import { keepingAns } from "./analysis.ts";
 import type { StoredMark } from "./defs.ts";
 import { markOf } from "./format.ts";
-import { bracesOf, LIST_TYPE } from "./giacPrint.ts";
 import { homeEval, type Giac, type HomeSettings } from "./homeEval.ts";
 import type { Bodies } from "./nonsquare.ts";
+import { nameShown } from "./shownText.ts";
 import { precisionFacts, type ResultLike } from "./precisionFacts.ts";
 import type { LoggedNames } from "./sequences.ts";
 import { PLAIN_FORM } from "./stores.ts";
@@ -23,12 +23,12 @@ export function storedMark(r: ResultLike, digits: number): { mark?: StoredMark }
 /** G317: a name an input set beside its result (inside it, `(A:=1/3)*0`, or one of a list assignment's, `A,B:=5,1/3`)
  *  holds its own value, not the result. In Home that value is shown as Home shows the name typed alone (homeEval, the
  *  one formatter of a result, Ans kept), with that value's mark; in CAS, on the raw eval path or for a value Home
- *  refuses, Giac's print of it at the view's Digits (a list type with braces, as CAS shows one), with no mark. */
-export function sideShown(giac: Giac, name: string, home: { s: HomeSettings; bodies: Bodies; logged: LoggedNames } | null): { preview: string; mark?: "=" | "≈" } {
+ *  refuses, as the CAS view shows a result that is not one checked number (shownText.ts: floats at `digits`, never
+ *  Giac's print at P), with no mark. */
+export function sideShown(giac: Giac, name: string, home: { s: HomeSettings; bodies: Bodies; logged: LoggedNames } | null, digits: number, angle: "rad" | "deg" | undefined): { preview: string; mark?: "=" | "≈" } {
   if (home) {
     const r = keepingAns(giac, () => homeEval(giac, name, home.s, undefined, PLAIN_FORM, home.bodies, false, home.logged));
     if (r.ok) return { preview: r.display, ...storedMark(r, Math.trunc(home.s.digits)) };
   }
-  const t = giac.eval(name).trim();
-  return { preview: t.includes(LIST_TYPE) ? bracesOf(t) : t };
+  return { preview: nameShown(giac, name, digits, angle) };
 }

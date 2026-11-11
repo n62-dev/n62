@@ -71,4 +71,15 @@ describe.skipIf(!giacAvailable())("G317: a name set beside the result keeps its 
     const a = (await sets("(A:=1/3)*0", true)).sets.find((e) => e.name === "A");
     expect(a?.preview).toBe("1/3");
   });
+  // Fix round 1: a float made at P (CAS runs at valuePrecision(12) = 40) prints at the view's digits, as the CAS view
+  // shows it, never P's unchecked digits. Expected: approx(1/3) at 12 digits (derived).
+  it("CAS (A:=approx(1/3))*0: A previews 0.333333333333, not P's 40 digits", async () => {
+    const a = (await sets("(A:=approx(1/3))*0", true)).sets.find((e) => e.name === "A");
+    expect(a?.preview).toBe("0.333333333333");
+  });
+  it("CAS A,B:=approx(1/3),2: A previews 0.333333333333, B 2", async () => {
+    const s = (await sets("A,B:=approx(1/3),2", true)).sets;
+    expect(s.find((e) => e.name === "A")?.preview).toBe("0.333333333333");
+    expect(s.find((e) => e.name === "B")?.preview).toBe("2");
+  });
 });

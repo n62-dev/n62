@@ -17,7 +17,6 @@ import {
   pasdegCommand,
   latexShown,
   onceUndecided,
-  regrouped,
   resultFromFacts,
   safePrecision,
   symbolicWhy,
@@ -27,7 +26,7 @@ import {
 } from "./homeEval.ts";
 import { eseriesDefinition } from "./eseries.ts";
 import { askedLiterals } from "./asked.ts";
-import { backInDegrees, needsDegrees, withoutDegreeQuotient } from "./degrees.ts";
+import { floatsAtView, shownOf } from "./shownText.ts";
 import { resolveAngle } from "./angleMigration.ts";
 import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shapeRefusal, type Bodies, type KnownBody } from "./nonsquare.ts";
 import { unaskedPoly } from "./polyvec.ts";
@@ -36,8 +35,8 @@ import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
-import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, floatsShown, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
-import { balanced, bracesOf, callsOf, holdsList, isError, isName, isTimeout, leadingName, LIST_TYPE, namesIn, parsePrinted, typedFromPrinted, wholeCall, whenCalls, wordsOf } from "./giacPrint.ts";
+import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
+import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
 import { decidedAtDouble, decideTwice, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, formIn, formOf, mayStore, programStores, STATE_HEADS, STRING_HEADS, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
@@ -750,7 +749,7 @@ export class EngineHost implements FactsHost {
       const snap = this.snapshot(name, digits);
       changes.push(
         snap
-          ? { set: { name, kind: "var", cmds: [snap.cmd], ...storedFacts(facts, snap.float), ...(kept && def?.name === name ? { stores: kept } : {}), ...base, ...(name !== target ? this.side(name, view, home?.s) : home ? storedMark(home.r, digits) : {}), ...(snap.early ? { early: true } : {}), ...(angle ? { angle } : {}) } }
+          ? { set: { name, kind: "var", cmds: [snap.cmd], ...storedFacts(facts, snap.float), ...(kept && def?.name === name ? { stores: kept } : {}), ...base, ...(name !== target ? this.side(name, view, home?.s, digits, angle) : home ? storedMark(home.r, digits) : {}), ...(snap.early ? { early: true } : {}), ...(angle ? { angle } : {}) } }
           : { purge: [name] },
       );
     }
@@ -770,9 +769,9 @@ export class EngineHost implements FactsHost {
   }
 
   /** G317 (storedMark.ts sideShown): the preview and mark of a name set beside the result. The input's tree is kept. */
-  private side(name: string, view: "home" | "cas", s: HomeSettings | undefined): { preview: string; mark?: StoredMark } {
+  private side(name: string, view: "home" | "cas", s: HomeSettings | undefined, digits: number, angle: "rad" | "deg" | undefined): { preview: string; mark?: StoredMark } {
     const parsed = this.parsed;
-    const own = sideShown(this.watched, name, view === "home" && s ? { s, bodies: this.bodiesFor(name), logged: this.byName } : null);
+    const own = sideShown(this.watched, name, view === "home" && s ? { s, bodies: this.bodiesFor(name), logged: this.byName } : null, digits, angle);
     this.parsed = parsed;
     return { ...own, preview: dropAngleFactor(own.preview, "printed").slice(0, PREVIEW_MAX) };
   }
@@ -1118,11 +1117,9 @@ export class EngineHost implements FactsHost {
     }
     // G38: a float in a non-number prints with the precision it was computed at (P). pcasans keeps the P result; the
     // text prints its floats at the setting (floatsShown), never by running the input again (that redid decisions).
-    const atN = hasFloat(text) ? floatsShown(this.giac, text, digitsSet, "pasfl") : null;
-    const slot = atN === null ? "pcasans" : "pasfl";
-    if (atN !== null) text = atN;
-    // This build leaves x*x unevaluated (no top-level "regroup" autosimplify), and latex() then draws x·x as "xx".
-    if (text.includes("*")) text = regrouped(this.giac, slot, text);
+    // G317: shownText.ts, the one path a side name's CAS preview takes too
+    const { text: atView, slot, atN } = floatsAtView(this.giac, text, "pcasans", digitsSet);
+    text = atView;
     // An == or ≠ test on a side with a float in it (input/emit.ts equalityTest): its true or false is approximate.
     // A float in a non-number (x-0.54764225985): nobody checked its digits, so ⚠ without a count (G27, docs/04 2.4),
     // as the definitions log records it.
@@ -1141,15 +1138,11 @@ export class EngineHost implements FactsHost {
     const why0 = pair ? { differ: true } : undecided ? { ...(symWhy && !symWhy.once ? symWhy : {}), decided: true } : symWhy;
     const why1 = refused === "unchecked" || square === "unchecked" ? { ...(why0 ?? {}), ...(refused === "unchecked" ? { existsUnchecked: true } : {}), ...(square === "unchecked" ? { squareUnchecked: true } : {}) } : why0;
     const why = read && (read.causes.length || read.rounded.length) ? { ...(why1 ?? {}), ...(read.causes.length ? { inherited: read.causes } : {}), ...(read.rounded.length ? { rounded: read.rounded } : {}) } : why1;
-    // G46 (S14 option 2): in DEG the radian text is drawn and copied as a DEG engine prints it; Ans, chips (`full`) and
-    // pcasans keep the radian text, which means the same in every mode.
-    const deg = s.angle !== "deg" ? null : needsDegrees(text) ? backInDegrees(this.giac, text) : withoutDegreeQuotient(this.giac, text);
-    // G109: Giac's list type (a solve result too) is shown and copied with braces, as Home shows it; `full` keeps
-    // Giac's `list[…]` for Ans and the chips, and MathPrint draws Giac's latex() (`\{…\}`)
-    const drawn = whenCalls(deg ?? text); // G173 (F93): Giac's `?:` as when(c,a,b), which the entry line reads
-    const shown = drawn.includes(LIST_TYPE) ? bracesOf(drawn) : drawn;
+    // G46, G109, G173 (shownText.ts shownOf): Ans, chips (`full`) and pcasans keep the radian text, which means the same
+    // in every mode, and Giac's `list[…]`; MathPrint draws Giac's latex() (`\{…\}`)
+    const { deg, shown } = shownOf(this.giac, text, s.angle);
     const tex = deg !== null ? (soleMatrixLatexOfText(this.giac, deg) ?? this.giac.eval(`latex(quote(${deg}))`)) : latexShown(this.giac, slot, text);
-    if (atN !== null) this.giac.eval("purge(pasfl)");
+    if (atN) this.giac.eval("purge(pasfl)");
     if (isError(tex)) return fail(tex, isTimeout(tex) ? "timeout" : "engine");
     return {
       result: {
