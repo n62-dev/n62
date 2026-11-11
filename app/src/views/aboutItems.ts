@@ -64,10 +64,10 @@ function partRows(d: AboutData): MenuItem[] {
 function aboutRows(d: AboutData): MenuItem[] {
   return [
     { id: "version", label: t("version"), keep: true, value: d.version },
-    { id: "browser", label: t("browser"), keep: true, value: `${t(`engine.${currentEngine()}`)}, ${t(isTested(currentEngine()) ? "tested" : "notTested")}` },
     { id: "licence", label: t("licence"), hint: LICENCE, submenu: textLevel(LICENCE, d.licences[LICENCE] ?? "") },
     { id: "source", label: t("source"), hint: REPO_URL, keep: true },
     { id: "credits", label: t("credits"), submenu: { title: t("credits"), items: [], text: t("credits.text"), remember: false } },
+    { id: "browser", label: t("browser"), keep: true, value: `${t(`engine.${currentEngine()}`)}, ${t(isTested(currentEngine()) ? "tested" : "notTested")}` },
   ];
 }
 
