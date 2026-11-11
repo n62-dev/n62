@@ -7,6 +7,7 @@ import type { FactorTable, UnitFactor } from "./factors.ts";
 import { balanced, closing, mapNames, names, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
+import { PASDEG } from "../engine/pasdeg.ts";
 
 const letters = (s: string): boolean => s !== "" && [...s].every((c) => (c >= "a" && c <= "z") || (c >= "A" && c <= "Z"));
 const digits = (s: string): boolean => s !== "" && [...s].every((c) => c >= "0" && c <= "9");
@@ -41,9 +42,17 @@ function negate(e: string): string {
  *  interval, 1 °C = 1 K and 1 °F = 5/9 K; alone in its slot it is an absolute temperature with its offset (G17). */
 const isInterval = (slot: UnitSlot, t: UnitToken): boolean => slot.tokens.length > 1 || (t.power ?? "1") !== "1";
 
+/** G319: a dimension key in the number part (UnitJob.number): nothing, but rad as 1/pasdeg, so the parser's degree
+ *  factor in sin, cos and tan (`sin(pasdeg*…)`) takes an angle in rad as it is and a pure number in the angle mode, as
+ *  pasua does (tan(90 rad) in DEG is no tan(π/2)). */
+function numberDims(key: string): string {
+  const rad = parseDimKey(key).get("rad");
+  return rad === undefined ? "" : `(1/${PASDEG})^(${rad})`;
+}
+
 /** One token as Giac text: (prefix · factor · dimension symbols)^power. With `interval`, an affine unit (K = a·x + b)
- *  is its factor a without the offset b. */
-function tokenGiac(t: UnitToken, below: boolean, table: FactorTable, interval: boolean): string {
+ *  is its factor a without the offset b. With `number` (G319) the dimension symbols are left out (numberDims). */
+function tokenGiac(t: UnitToken, below: boolean, table: FactorTable, interval: boolean, number = false): string {
   const u = table.units.get(t.unit);
   if (!u) throw new Refused({ error: "engine", detail: `no unit ${t.unit} in the index` });
   if (LOGARITHMIC.has(t.unit) || /Np/.test(u.dim ?? "")) throw new Refused({ error: "logarithmic", unit: u.symbol });
@@ -58,18 +67,18 @@ function tokenGiac(t: UnitToken, below: boolean, table: FactorTable, interval: b
   }
   const power = t.power ?? "1";
   if (!isExponent(power)) throw new Refused({ error: "engine", detail: `bad power ${power}` });
-  const dims = dimSymbols(u.dim);
+  const dims = number ? numberDims(u.dim) : dimSymbols(u.dim);
   const body = `(${factor}${dims ? `*${dims}` : ""})`;
   const p = below ? negate(power) : power;
   return p === "1" ? body : `${body}^(${p})`;
 }
 
-/** A slot as Giac text: the product of its tokens, those from `per` on below the ÷. */
-export function slotGiac(slot: UnitSlot, table: FactorTable): string {
+/** A slot as Giac text: the product of its tokens, those from `per` on below the ÷; with `number` its factor (G319). */
+export function slotGiac(slot: UnitSlot, table: FactorTable, number = false): string {
   if (!slot.tokens.length) throw new Refused({ error: "engine", detail: "an empty slot" });
   const per = slot.per ?? slot.tokens.length;
   if (slot.per !== undefined && (per < 1 || per >= slot.tokens.length)) throw new Refused({ error: "engine", detail: `bad ÷ place ${per}` });
-  return `(${slot.tokens.map((t, i) => tokenGiac(t, i >= per, table, isInterval(slot, t))).join("*")})`;
+  return `(${slot.tokens.map((t, i) => tokenGiac(t, i >= per, table, isInterval(slot, t), number)).join("*")})`;
 }
 
 const isAffine = (u: UnitFactor): boolean => u.si?.includes("+") === true;
@@ -103,9 +112,10 @@ function aloneNumber(formula: string, n: number): string | null {
   return walk(num, 0, sign, "typed") < 0 ? num : null;
 }
 
-/** A source quantity that is alone and absolute: °C, °F by K = a·x + b, a logarithmic unit by its level's ratio. */
-function specialSource(id: string, u: UnitFactor, num: string): string {
-  const dims = dimSymbols(u.dim ?? "");
+/** A source quantity that is alone and absolute: °C, °F by K = a·x + b, a logarithmic unit by its level's ratio; with
+ *  `number` its number part (G319). */
+function specialSource(id: string, u: UnitFactor, num: string, number = false): string {
+  const dims = number ? numberDims(u.dim ?? "") : dimSymbols(u.dim ?? "");
   const rule = LOGARITHMIC.get(id);
   if (isLog(id, u)) {
     if (!rule) throw refuseSpecial(id, u);
@@ -143,7 +153,7 @@ function uncVar(key: string, value: string, sigma: string, vars: UncVar[], seen:
  *  with a CODATA uncertainty is an uncertain input: its number is the symbol `uncVar` names, once per constant. G81:
  *  one in `through` (it shares a leaf with another constant of the formula) is its basis instead, each leaf an
  *  uncertain input once (`pasl_<leaf>` in `seen`), so the two are correlated; a leaf of zero uncertainty is its value. */
-function constGiac(id: string, table: FactorTable, vars: UncVar[], seen: Map<string, string>, through: ReadonlySet<string>): { giac: string; inexact: boolean } {
+function constGiac(id: string, table: FactorTable, vars: UncVar[], seen: Map<string, string>, through: ReadonlySet<string>): { giac: string; number: string; inexact: boolean } {
   const c = table.consts.get(id);
   if (!c) throw new Refused({ error: "engine", detail: `no constant ${id} in the index` });
   if (c.dim === undefined) throw new Refused({ error: "nofactor", unit: c.symbol });
@@ -153,7 +163,8 @@ function constGiac(id: string, table: FactorTable, vars: UncVar[], seen: Map<str
   if (basis !== undefined) {
     number = `(${basisGiac(c, basis, (l, leaf) => uncVar(`${LEAF_PREFIX}${l}`, leaf.value, leaf.unc, vars, seen))})`;
   } else if (c.unc !== undefined) number = uncVar(id, c.value, c.unc, vars, seen);
-  return { giac: `(${number}${dims ? `*${dims}` : ""})`, inexact: c.unc !== undefined };
+  const nd = numberDims(c.dim);
+  return { giac: `(${number}${dims ? `*${dims}` : ""})`, number: `(${number}${nd ? `*${nd}` : ""})`, inexact: c.unc !== undefined };
 }
 
 /** `pasupm(value,sigma)` calls of a formula (G18) become the symbols pasv<n>, appended to `vars`: every typed one an
@@ -531,11 +542,12 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
         const v = uvars[0]!;
         const sign = minus ? "-" : "";
         const chip = sigmaFacts(req);
-        return { expr: specialSource(x.id, x.u, `(${sign}(${v.value}))`), ...endJob(req, table), ...abs, inexact: true, unc: { expr: specialSource(x.id, x.u, `(${sign}pasv1)`), vars: uvars, ...(chip ? { chip } : {}) } };
+        return { expr: specialSource(x.id, x.u, `(${sign}(${v.value}))`), number: specialSource(x.id, x.u, `(${sign}(${v.value}))`, true), ...endJob(req, table), ...abs, inexact: true, unc: { expr: specialSource(x.id, x.u, `(${sign}pasv1)`), vars: uvars, ...(chip ? { chip } : {}) } };
       }
-      return { expr: specialSource(x.id, x.u, num), ...endJob(req, table), ...abs, inexact: false };
+      return { expr: specialSource(x.id, x.u, num), number: specialSource(x.id, x.u, num, true), ...endJob(req, table), ...abs, inexact: false };
     }
     const slots = req.slots.map((s) => slotGiac(s, table));
+    const slotNumbers = req.slots.map((s) => slotGiac(s, table, true));
     const vars: UncVar[] = [];
     const formula = uncertainValues(req.formula, vars, sigmaIn(req, table));
     const seen = new Map<string, string>();
@@ -555,6 +567,8 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
     // The value of every uncertain input goes in; the worker differentiates the symbolic text for σ.
     const values = (t: string): string => (vars.length ? mapNames(t, (w) => (uncName(w.name) ? `(${vars[Number(w.name.slice(4)) - 1]!.value})` : null), "typed") : t);
     const expr = values(sym);
+    // G319: the number part, each slot and constant as its factor, for Home's refusals in the worker.
+    const number = values(formula.replace(PLACEHOLDER, (_, kind: string, n: string) => (kind === "u" ? slotNumbers[Number(n) - 1]! : consts[Number(n) - 1]!.number)));
     // G35: the dimension check's text, the slots and constants put in as in `sym`.
     const count = { k: 0, sum: false };
     const form = dimensionForm(formula, count);
@@ -564,6 +578,7 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
     const cycle = cycleUnit([...req.slots, ...(req.end ? [req.end] : [])]);
     return {
       expr,
+      number,
       ...(check !== null ? { check, ...(count.sum ? { checkSum: true as const } : {}) } : {}),
       ...endJob(req, table),
       ...(shows.length ? { shows } : {}),

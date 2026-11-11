@@ -152,31 +152,9 @@ export const UNIT_DEFINITIONS: readonly string[] = [
     `return [op(pasuo(normal(pass1_),normal(pass2_))),pasz_]; }`,
 ];
 
-/** G319: our unit functions (UNIT_DEFINITIONS, pasup of a level too): they change nothing the user stored, so they are not
- *  the user's functions that stop Home's walk for an infinity. */
-const UNIT_FNS: ReadonlySet<string> = new Set(UNIT_DEFINITIONS.flatMap((d) => /^(pasu\w+)\(/.exec(d)?.[1] ?? []));
-const DIM_SYMBOLS: ReadonlySet<string> = new Set(BASES.map((b) => b.symbol));
-const RAD_SYMBOL = "pasdimA";
-
-const DIM_POWER = /\^\((-?\d+(?:\/\d+)?)\)/y;
-
-/** G319: the formula's number part, for Home's refusals: `expr` (decimals exact) with each slot as its factor: every
- *  dimension symbol with its power (`pasdimT^(-1)`) 1, so no power of it is a part Home's walk evaluates again, but rad,
- *  which is 1/pasdeg: the parser's degree factor in sin, cos and tan (`sin(pasdeg*…)`) then takes an angle in rad as it
- *  is and a pure number in the angle mode, as pasua does (tan(90 rad) in DEG is no tan(π/2)). */
-export function numberPart(expr: string): string {
-  const t = toExactLiterals(expr);
-  let out = "";
-  let i = 0;
-  for (const n of names(t, "typed")) {
-    if (n.call || n.at < i || !DIM_SYMBOLS.has(n.name)) continue;
-    DIM_POWER.lastIndex = n.at + n.name.length;
-    const p = DIM_POWER.exec(t);
-    out += t.slice(i, n.at) + (n.name === RAD_SYMBOL ? `(1/${PASDEG})${p?.[0] ?? ""}` : "1");
-    i = p ? DIM_POWER.lastIndex : n.at + n.name.length;
-  }
-  return out + t.slice(i);
-}
+/** G319: our unit functions (UNIT_DEFINITIONS, pasup of a level too) start with it: they change nothing the user stored,
+ *  so they are not the user's functions that stop Home's walk for an infinity (a user name may not start with pas). */
+const UNIT_PREFIX = "pasu";
 
 /** G41: the second-order part above this share of σ² gives ⚠ "first order does not hold here". */
 const ORDER2_SHARE = 0.1;
@@ -498,10 +476,10 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   // G319: Home's refusals of the formula's number part, in Home's order (homeEval.ts: refusalOf, then lostNumber where no
   // number came, below, then throughInfinity), within Home's deadline; Giac's step budget is Home's (host.ts useHomeMode).
   const exactMs = performance.now() - t0;
-  const n = numberPart(job.expr);
+  const n = toExactLiterals(job.number);
   const late = (): boolean => performance.now() - t0 > HOME_DEADLINE_MS;
   let ownFn: ((name: string) => boolean) | null = null;
-  const userFn = (name: string): boolean => (ownFn ??= userFunctions(giac, (m) => UNIT_FNS.has(m)))(name);
+  const userFn = (name: string): boolean => (ownFn ??= userFunctions(giac, (m) => m.startsWith(UNIT_PREFIX)))(name);
   let unverified = false;
   const converges = (numOut: string): UnitError | null => {
     const r = refusalOf(giac, n, numOut, Math.trunc(s.digits), true);

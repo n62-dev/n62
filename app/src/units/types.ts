@@ -53,6 +53,9 @@ export interface SigmaChip {
 /** What the worker evaluates: Giac text with every unit and constant replaced by factor × dimension symbols. */
 export interface UnitJob {
   expr: string;
+  /** G319: `expr`'s number part, each slot and constant as its factor (no dimension symbols; rad as 1/pasdeg, so the
+   *  parser's degree factor reads an angle in rad as pasua does): the text Home's refusals are asked of. */
+  number: string;
   /** G35: `expr` with each number beside a slot or constant replaced by its own symbol pasz<n>, for the dimension check:
    *  a term worth 0 (`0 m + 1 s`) or terms that cancel (`5 m − 5 m + 1 s`) keep their dimension there. */
   check?: string;

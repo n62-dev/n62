@@ -67,7 +67,7 @@ describe("WorkerEngine cancel (stand-in worker)", () => {
     const workers: StuckWorker[] = [];
     const engine = new WorkerEngine({ baseUrl: "/", createWorker: () => (workers.push(new StuckWorker()), workers.at(-1)!) });
     await engine.ready();
-    const job = expect(engine.units({ expr: "2*(((1)*pasdimL^(1)))", inexact: false }, defaultHomeSettings)).rejects.toBeInstanceOf(EngineCancelled);
+    const job = expect(engine.units({ expr: "2*(((1)*pasdimL^(1)))", number: "2*(((1)))", inexact: false }, defaultHomeSettings)).rejects.toBeInstanceOf(EngineCancelled);
     await engine.cancel();
     await job;
     expect(workers).toHaveLength(2);
@@ -150,7 +150,7 @@ describe.skipIf(!giacAvailable())("WorkerEngine unit view (real Giac in process,
     const engine = new WorkerEngine({ baseUrl: "/", createWorker: () => new InProcessWorker() });
     await engine.ready();
     await engine.home("ua:=0.5", defaultHomeSettings);
-    const job = { expr: "ua*(((1000)*(1)*pasdimL^(1)))", end: "(((1)*pasdimL^(1)))", inexact: false };
+    const job = { expr: "ua*(((1000)*(1)*pasdimL^(1)))", number: "ua*(((1000)*(1)))", end: "(((1)*pasdimL^(1)))", inexact: false };
     const first = await engine.units(job, defaultHomeSettings);
     expect(first).toMatchObject({ value: { display: "500", facts: { exact: true } }, dimension: "m1" }); // derived: 0.5 km = 500 m
     await engine.cancel();
@@ -642,7 +642,7 @@ describe("WorkerEngine Home watchdog (G185, F62; stand-in workers, fake timers)"
   it("a unit-view job that never answers ends as the unit view's engine error at the same limit, and the engine restarts", async () => {
     vi.useFakeTimers();
     const { engine, workers } = await started(() => new StuckWorker());
-    const out = watch(engine.units({ expr: "2*(((1)*pasdimL^(1)))", inexact: false }, defaultHomeSettings));
+    const out = watch(engine.units({ expr: "2*(((1)*pasdimL^(1)))", number: "2*(((1)))", inexact: false }, defaultHomeSettings));
     await vi.advanceTimersByTimeAsync(HOME_WATCHDOG_MS);
     expect(out).toEqual({ value: { error: "engine", detail: "timeout" } });
     expect(workers).toHaveLength(2);
