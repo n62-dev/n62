@@ -191,7 +191,8 @@ parentPort!.on("message", (job: Job) => {
   let dirty: boolean;
   try {
     kind = kindOf(job.giac);
-    dirty = leftBehind(mid, snapshot(), []).length > 0;
+    // G174: the raw evaluation of a refused debug(…) turns Giac's debug mode on, which the next job's program call would meet
+    dirty = leftBehind(mid, snapshot(), []).length > 0 || programCall() !== null;
   } catch (e) {
     kind = "error";
     dirty = true;
