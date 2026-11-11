@@ -51,4 +51,4 @@ export const PROBED_LIST_FORMS: Readonly<Record<string, "any" | "integers" | "ro
 };
 
 /** How many names the probe asked (the index's and the census's, the skipped ones included). */
-export const PROBED_NAMES = 1591;
+export const PROBED_NAMES = 1595; // G223: + linreg, stats1 and their Find names regression, statistics (no hit)

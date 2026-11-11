@@ -4,7 +4,7 @@
 // worker evaluates the job. Types only.
 import type { PrecisionWarn } from "../engine/format.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
-import type { Refusal } from "../engine/converge.ts";
+import type { CheckRefusal } from "../engine/converge.ts";
 import type { Chip } from "../input/chips.ts";
 
 /** One factor of a slot: a Find unit id with an optional Find prefix id and a power. */
@@ -213,7 +213,7 @@ export type UnitError =
   | { error: "symbolic"; detail: string }
   /** G319: Home's refusal of the formula's number part (a division by zero through an infinity, a divergent integral or
    *  series, no limit, no value found): worded with Home's message (`error.<code>`, enEngine.ts). */
-  | { error: "refused"; code: Refusal }
+  | { error: "refused"; code: CheckRefusal }
   /** Anything else (a syntax error, a timeout, a bad request): the detail is for the log, not for the user. */
   | { error: "engine"; detail: string };
 

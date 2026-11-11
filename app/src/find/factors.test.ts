@@ -19,7 +19,7 @@ const qalc = join(process.env.N62_QALC_DL_DIR ?? join(repo, "engine/qalc/_downlo
 const have = existsSync(giac) && existsSync(qalc);
 const required = process.env.FIND_INDEX === "required";
 
-const INDEX_SHA256 = "21aca917c2d97fdce3b9b233f63593b52c56ed3320b312748950222a6e096996"; // G321: US measures carry _US, the metric cup, the hp and bbl titles (before it ca44f46e…); G174: ellipse and hyperbola left out (graphics; before it b7ee6258…); G230: `where` on the 25 functions a key or palette cell inserts (before it 1a27c672…); G161: VA, kVA, MVA, var, kvar, Mvar (before it fa87cda8…); G155: the sem row (before it ccd54489…); G111: 167 more Giac entries left out (graphics, graphs, strings, debugger); before them G80's f9602d6b…, the G67 bytes 9807d9e1…
+const INDEX_SHA256 = "d880d09922d61d9a07dff1abb8507a1bea213f2346de552c74b54046be55aa55"; // G223: the linreg and stats1 rows (before it 21aca917…); G321: US measures carry _US, the metric cup, the hp and bbl titles (before it ca44f46e…); G174: ellipse and hyperbola left out (graphics; before it b7ee6258…); G230: `where` on the 25 functions a key or palette cell inserts (before it 1a27c672…); G161: VA, kVA, MVA, var, kvar, Mvar (before it fa87cda8…); G155: the sem row (before it ccd54489…); G111: 167 more Giac entries left out (graphics, graphs, strings, debugger); before them G80's f9602d6b…, the G67 bytes 9807d9e1…
 
 describe("factors.yaml", () => {
   it("exists", () => {
