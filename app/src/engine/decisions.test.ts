@@ -147,6 +147,18 @@ describe.skipIf(!giacAvailable())("decideTwice (G38, G57; real Giac)", () => {
     expect(giac.eval("pasdec2")).toBe("pasdec2");
   });
 
+  it("G325: an asin of a non-real argument past the cap is refused as a branch (Home skips G187's size check); a sqrt of an even power past it is not", () => {
+    const at = (exact: string): string => withDigits(giac, valuePrecision(12), 12, () => giac.eval(`(${exact})`));
+    const f212 = "(10^1000)^asin(sqrt(-2)-10^1000)";
+    expect(decideTwice(giac, f212, at(f212), 12, 12)).toEqual({ undecided: true, refused: true, branch: true });
+    // G187's own row: the refusal comes from sqrt(10^1000), so the size check runs and says underflow (golden g187-underflow-90-pow-sqrt-1e1000-12)
+    const g187 = "(90+1/10^6)^(sqrt(10^1000))";
+    expect(decideTwice(giac, g187, at(g187), 12, 12)).toEqual({ undecided: true, refused: true });
+    const t0 = performance.now();
+    const r = host.home(f212, defaultHomeSettings).result;
+    expect({ error: r.error, fast: performance.now() - t0 < 750 }).toEqual({ error: "undecided", fast: true });
+  });
+
   it("iPart (known): Giac's iPart prints a float, so Home does not decide it again; it shows ⚠ with no digit (oracle -148099131371)", () => {
     const r = host.home("iPart(sin(10^70)*10^12)", defaultHomeSettings).result;
     expect({ display: r.display, reliableDigits: r.facts.reliableDigits, warn: r.facts.warn }).toEqual({ display: "4E11", reliableDigits: 0, warn: "unaudited" });

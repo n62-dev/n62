@@ -397,8 +397,11 @@ function cutHit(giac: Giac, c: Cut, P: number): { cut: Cut; n: string; proven: b
 
 /** A decision that did not hold. `refused` (G57): the two precisions printed different texts, or the decision sits on
  *  a cut Giac cannot prove a tie on, so any value shown would be a guess and the result is refused (`error.undecided`);
- *  without it (a higher precision failed to run, a proven tie with no value to put in its place) the result is ⚠. */
-export type Undecided = { undecided: true; refused?: true };
+ *  without it (a higher precision failed to run, a proven tie with no value to put in its place) the result is ⚠.
+ *  `branch` (G325): refused because an asin or acos of a non-real argument holds a literal past the cap (no precision
+ *  decides its branch), so Home refuses it before G187's size check of a power over it (homeEval.ts), which read that
+ *  exact text until Home's 1.5 s clock stopped it ((10^1000)^asin(sqrt(-2)-10^1000)). */
+export type Undecided = { undecided: true; refused?: true; branch?: true };
 
 /** What the second decision found: the text stands (`from` set when it is another evaluation's, stored in `pasdec2`,
  *  which the caller purges, with its `value` from bridge-3), or the evaluations disagree (`undecided`). */
@@ -424,7 +427,13 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const P0 = valuePrecision(digits);
   const typed = literalStart(expr, P0, MAX_EVAL_DIGITS, "typed");
   const pastCap = (a: string): boolean => literalStart(a, P0, MAX_EVAL_DIGITS, "typed").unchecked;
-  if (typed.unchecked && decisionArgs(expr, text, decidingStored(giac), nonRealArg(giac)).some(pastCap)) return { undecided: true, refused: true };
+  const complexArg = nonRealArg(giac);
+  if (typed.unchecked && decisionArgs(expr, text, decidingStored(giac), complexArg).some(pastCap)) {
+    const argOf = (c: { open: number; close: number }): string => expr.slice(c.open + 1, c.close);
+    const calls = callsOf(expr, COMPLEX_DECISION_FUNCTIONS, "typed").filter((c) => c.close >= 0);
+    const branch = nonRealText(text) && calls.some((c) => pastCap(argOf(c)) && complexArg(argOf(c)));
+    return branch ? { undecided: true, refused: true, branch: true } : { undecided: true, refused: true };
+  }
   const printed = literalStart(text, P0, MAX_EVAL_DIGITS, "printed");
   const P = Math.max(typed.at, printed.unchecked ? P0 : printed.at);
   const failed: Undecided = P > P0 ? { undecided: true, refused: true } : { undecided: true };
