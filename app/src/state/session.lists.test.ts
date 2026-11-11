@@ -15,7 +15,8 @@ const noKv: Kv = { get: () => Promise.resolve(undefined), set: () => Promise.res
 
 /** Home answered in-process by an EngineHost (no worker), with the chip table (Ans). */
 function inProcess(host: EngineHost): MathEngine {
-  const engine: Pick<MathEngine, "home" | "cas"> = {
+  const engine: Pick<MathEngine, "ready" | "home" | "cas"> = {
+    ready: () => Promise.resolve({ instantiateMs: 0, initMs: 0, replayMs: 0, readyMs: 0 }), // (a stub with no ready() is a failed start, R284)
     home: (input, s, consts, chips) => Promise.resolve(host.home(input, s, consts, chips).result),
     cas: (input, s) => Promise.resolve(host.cas(input, s).result),
   };

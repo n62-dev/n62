@@ -24,7 +24,7 @@
     pointer-events: auto;
     display: block;
     margin: var(--sp-15) auto 0;
-    min-height: 36px;
+    min-height: var(--touch);
     padding: var(--sp-1) var(--sp-4);
     border: var(--stroke-thin) solid var(--line);
     border-radius: var(--radius-pill);
