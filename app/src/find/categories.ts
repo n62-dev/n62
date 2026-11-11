@@ -27,6 +27,8 @@ export const CATEGORIES: readonly Category[] = [
   { id: "eng", title: "cat.eng", ids: fn("par", "eseries") },
   { id: "const", title: "cat.const", kinds: ["const"] },
   { id: "units", title: "cat.units", kinds: ["unit", "pfx"] },
+  // G235: the eleventh, so the digits 1…9, 0 keep their categories; the word operations are ours (engine/wordOps.ts), the three bit* are Giac's
+  { id: "bits", title: "cat.bits", ids: fn("bitand", "bitor", "bitxor", "bnot", "shl", "shr", "rotl", "rotr") },
 ];
 
 /** The items of a category, in its order; an id the index lacks is left out. */
