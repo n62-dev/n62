@@ -49,15 +49,6 @@ export interface DefsStore {
  *  which the engine is not started again (G318). */
 export const MAX_FAILED_STARTS = 2;
 
-/**
- * G318: the class of a failed start (an init that failed, or a worker error before ready), by its text: memory when it
- * names memory (Emscripten's `OOM`, `Cannot enlarge memory`; Chrome's `WebAssembly.Memory(): could not allocate
- * memory`), else a load error (a wasm file or worker script that did not load: `Aborted(Error: ENOENT …)`, `Aborted(both
- * async and sync fetching of the wasm failed)`, an error event with no message). Not deadEngine (dead.ts): that one
- * classes a running engine, where any abort is a heap at its cap. Here, not in dead.ts: the start chunk (R91's pin).
- */
-export const startError = (text = ""): typeof EngineMemoryError => (/\bOOM\b|(out of|enlarge|allocate) memory/i.test(text) ? EngineMemoryError : EngineLoadError);
-
 export interface WorkerEngineOptions {
   /** Base URL under which `engine/giac.mjs` is served (Vite's BASE_URL by default). */
   baseUrl?: string;
@@ -125,8 +116,6 @@ export class WorkerEngine implements MathEngine {
   /** G19: entries of the stored log left out because their replay stopped the engine; still stored, still listed. */
   private skipped: DefEntry[] = [];
   private safe: { skipped: number } | undefined;
-  /** G318: starts that ended before ready since the last ready (in memory; the stored count is G19's `attempts`). */
-  private fails = 0;
 
   constructor(opts: WorkerEngineOptions = {}) {
     this.baseUrl = opts.baseUrl ?? defaultBaseUrl();
@@ -219,7 +208,6 @@ export class WorkerEngine implements MathEngine {
   /** The replay finished: the engine is ready with its log. */
   private reach(): void {
     this.reached = true;
-    this.fails = 0;
     if (this.attempts > 0) this.writeAttempts(0);
   }
 
@@ -289,10 +277,7 @@ export class WorkerEngine implements MathEngine {
   }
 
   cancel(): Promise<EngineTimings> {
-    const wasReached = this.reached;
-    this.stop(new EngineCancelled());
-    if (wasReached) this.beginAttempt(); // a Cancel during the start is the same attempt, not a new one
-    this.start();
+    this.restart(new EngineCancelled());
     return this.readyPromise;
   }
 
@@ -310,24 +295,26 @@ export class WorkerEngine implements MathEngine {
     this.generation++;
     this.firstPending = false;
     this.stopError = err;
-    this.worker.onmessage = null;
-    this.worker.onerror = null;
+    // (the old worker's handlers stay: onerror checks it is the current worker, and a reply finds no pending id, the
+    // ids being new for every request; G318 took the two lines out for the start chunk's pin)
     this.worker.terminate();
     for (const p of this.pending.values()) p.reject(err);
     this.pending.clear();
   }
 
-  /** The worker died (an error event, or a fatal reply marked dead): a clean worker takes its place and replays the
-   *  log. G19: a crash before the replay finished is a failed start; the second one leaves the stored log out. G318:
-   *  the second failed start since the last ready with no log left to leave out starts no worker but a stand-in that
-   *  stops every request with `err`: ready() and every call reject with it until a Cancel, which starts one fresh
-   *  attempt (`fails` stays, so a failure of it stops the engine again). */
-  private restartAfterCrash(err: Error): void {
-    const failed = this.reached ? 0 : ++this.fails;
-    const stuck = !this.log.length && failed >= MAX_FAILED_STARTS;
+  /** A Cancel, or the worker died (`crash`: an error event, or a fatal reply marked dead): a clean worker takes its
+   *  place and replays the log. A Cancel during the start is the same attempt, not a new one. G19: a crash before the
+   *  replay finished is a failed start; the second one leaves the stored log out. G318:
+   *  with no log left to leave out, the second failed start since the last ready starts no worker but a stand-in that
+   *  stops every request with `err`, so ready() and every call reject with it, until a Cancel starts one fresh attempt.
+   *  These starts are counted in `attempts` in memory only: with no log, beginAttempt and the gate write nothing, the
+   *  gate's read replaces the count, and reach() clears it (stored, it stays G19's own). */
+  private restart(err: Error, crash?: boolean): void {
+    const failed = crash && !this.reached;
+    const stuck = failed && !this.log.length && ++this.attempts >= MAX_FAILED_STARTS;
     this.stop(err);
     if (failed && this.log.length && this.attempts >= MAX_FAILED_STARTS) this.leaveOut(this.stored());
-    else this.beginAttempt();
+    else if (crash || this.reached) this.beginAttempt();
     this.start(stuck ? ({ postMessage: () => this.stop(err), terminate() {} } as unknown as WorkerLike) : undefined);
   }
 
@@ -336,8 +323,6 @@ export class WorkerEngine implements MathEngine {
     this.startedAt = t0;
     this.worker = w;
     this.reached = false;
-    // G318: before ready a trap is still a crash and the rest is classed by its text (startError); after, by `dead`
-    const fail = (m?: string, dead?: "memory" | "crash"): Error => new (dead === "crash" ? EngineCrashError : !this.reached ? startError(m) : dead ? EngineMemoryError : Error)(m);
     w.onmessage = (ev) => {
       const p = this.pending.get(ev.data.id);
       if (!p) return;
@@ -346,15 +331,18 @@ export class WorkerEngine implements MathEngine {
         // G24: the heap only grows, and an aborted module is dead; G183: so is one a trap unwound: reject the call and
         // start a clean worker, which replays the log. A fatal reply not marked dead keeps the worker.
         const { dead, message } = ev.data;
-        const err = fail(message, dead);
-        p.reject(err);
-        if (dead && this.worker === w) this.restartAfterCrash(err);
+        const Failure = dead === "crash" ? EngineCrashError : dead === "load" ? EngineLoadError : dead ? EngineMemoryError : Error;
+        p.reject(new Failure(message));
+        if (dead && this.worker === w) this.restart(new Failure(message), true);
       } else p.resolve(ev.data);
       this.reachNext();
     };
-    // A crash (e.g. out of memory) rejects what is pending and takes the same restart + replay path as Cancel.
+    // A crash (e.g. out of memory) rejects what is pending and takes the same restart + replay path as Cancel. G318:
+    // before ready it is a load error (a worker script that is gone: no message; a browser without module workers)
+    // unless its text names memory (`out of memory`, `Cannot enlarge memory`, `could not allocate memory`). A failed
+    // init is classed in the worker (dead.ts startDead); this is the start chunk's short form of its rule.
     w.onerror = (ev) => {
-      if (this.worker === w) this.restartAfterCrash(fail(ev.message, "memory"));
+      if (this.worker === w) this.restart(new (this.reached || ev.message?.includes("memory") ? EngineMemoryError : EngineLoadError)(ev.message), true);
     };
     this.readyPromise = this.post({ type: "init", baseUrl: this.baseUrl, replay: [...this.log] }).then((r) => {
       if (r.type !== "ready") throw new Error(`unexpected ${r.type}`);

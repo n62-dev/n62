@@ -5,7 +5,7 @@
   "src/engine/complex.ts": 2,
   "src/engine/constBasis.ts": 1,
   "src/engine/converge.ts": 10,
-  "src/engine/dead.ts": 1,
+  "src/engine/dead.ts": 2,
   "src/engine/decisions.ts": 9,
   "src/engine/exactLiterals.ts": 1,
   "src/engine/format.ts": 7,

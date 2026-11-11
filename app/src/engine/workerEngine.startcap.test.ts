@@ -3,12 +3,13 @@
 import { describe, expect, it } from "vitest";
 import type { Request, Response } from "./protocol.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
-import { deadEngine } from "./dead.ts";
+import { deadEngine, startDead } from "./dead.ts";
+import { createRequestHandler } from "./host.ts";
 import { EngineCrashError, EngineLoadError, EngineMemoryError } from "./types.ts";
-import { WorkerEngine, startError, type WorkerLike } from "./workerEngine.ts";
+import { WorkerEngine, type WorkerLike } from "./workerEngine.ts";
 
-/** How a start fails: a fatal reply to init (with `dead` as host.ts would mark it), or a worker error event. */
-type Fail = { fatal: string; dead?: "memory" | "crash" } | { error?: string };
+/** How a start fails: a fatal reply to init (with `dead` as host.ts marks it, startDead), or a worker error event. */
+type Fail = { fatal: string; dead?: "memory" | "crash" | "load" } | { error?: string };
 
 const two = { ok: true, display: "2", path: "exact", approximate: false, exactMs: 1, totalMs: 1, facts: { exact: true, reliableDigits: null }, full: "2" } as const;
 
@@ -80,33 +81,22 @@ describe("WorkerEngine: an engine that cannot start (G318)", () => {
     engine.dispose();
   });
 
-  it("a wasm file that is not there (the dev engine's text, 2026-11-10; deadEngine says memory) is a load error", async () => {
-    const text = "Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')";
-    expect(deadEngine(new Error(text))).toBe("memory"); // the running engine's class stays as it was
-    const { engine, workers } = failing({ fatal: text, dead: "memory" });
+  it("a wasm that did not load (host.ts marks the init's failure load): at most 3 workers, and ready() rejects with EngineLoadError", async () => {
+    const { engine, workers } = failing({ fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" });
     expect(await outcome(engine.ready())).toBeInstanceOf(EngineLoadError);
     expect(workers.length).toBeLessThanOrEqual(3);
-    engine.dispose();
-  });
-
-  it("a wasm fetch that failed is a load error", async () => {
-    const { engine, workers } = failing({ fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "memory" });
-    expect(await outcome(engine.ready())).toBeInstanceOf(EngineLoadError);
-    expect(workers.length).toBeLessThanOrEqual(3);
-    engine.dispose();
-  });
-
-  it("a wasm memory that cannot be allocated (Chrome's RangeError; deadEngine says null) is a memory error, after one worker", async () => {
-    const text = "WebAssembly.Memory(): could not allocate memory";
-    expect(deadEngine(new RangeError(text))).toBeNull();
-    const { engine, workers } = failing({ fatal: text });
-    expect(await outcome(engine.ready())).toBeInstanceOf(EngineMemoryError);
-    expect(workers).toHaveLength(1);
     engine.dispose();
   });
 
   it("a worker error with no message before ready (a worker script that is gone) is a load error, at most 3 workers", async () => {
     const { engine, workers } = failing({});
+    expect(await outcome(engine.ready())).toBeInstanceOf(EngineLoadError);
+    expect(workers.length).toBeLessThanOrEqual(3);
+    engine.dispose();
+  });
+
+  it("a worker error before ready whose text does not name memory (no module workers) is a load error", async () => {
+    const { engine, workers } = failing({ error: "SyntaxError: import declarations may only appear at top level of a module" });
     expect(await outcome(engine.ready())).toBeInstanceOf(EngineLoadError);
     expect(workers.length).toBeLessThanOrEqual(3);
     engine.dispose();
@@ -141,16 +131,34 @@ describe("WorkerEngine: an engine that cannot start (G318)", () => {
   });
 });
 
-describe("startError (G318): the class of a failed start, by its text", () => {
-  it("memory when the text names memory, else load", () => {
-    expect(startError("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')")).toBe(EngineLoadError);
-    expect(startError("Aborted(both async and sync fetching of the wasm failed)")).toBe(EngineLoadError);
-    expect(startError("WebAssembly.Memory(): could not allocate memory")).toBe(EngineMemoryError);
-    expect(startError("out of memory")).toBe(EngineMemoryError);
-    expect(startError("cannot enlarge memory")).toBe(EngineMemoryError);
-    expect(startError("Aborted(OOM)")).toBe(EngineMemoryError);
-    expect(startError("")).toBe(EngineLoadError);
-    expect(startError(undefined)).toBe(EngineLoadError);
+describe("startDead (G318): the class of a failed init, by when it happened", () => {
+  it("load unless the text names memory; a trap or a stack overflow is a crash; a running engine's class is deadEngine's, unchanged", () => {
+    // measured on 2026-11-10 with the dev engine and no giac.wasm beside it; deadEngine says memory (any abort)
+    const enoent = new Error("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')");
+    expect(startDead(enoent)).toBe("load");
+    expect(deadEngine(enoent)).toBe("memory");
+    const fetchFailed = new Error("Aborted(both async and sync fetching of the wasm failed)");
+    expect(startDead(fetchFailed)).toBe("load");
+    expect(deadEngine(fetchFailed)).toBe("memory");
+    // Chrome's text when the wasm memory cannot be reserved (from memory, not measured); deadEngine says null
+    const reserve = new RangeError("WebAssembly.Memory(): could not allocate memory");
+    expect(startDead(reserve)).toBe("memory");
+    expect(deadEngine(reserve)).toBeNull();
+    expect(startDead(new Error("Aborted(OOM)"))).toBe("memory");
+    expect(startDead(new Error("Cannot enlarge memory arrays to size 1073807360 bytes"))).toBe("memory");
+    expect(startDead(new Error("out of memory"))).toBe("memory");
+    expect(startDead(new RangeError("Maximum call stack size exceeded"))).toBe("crash");
+    expect(startDead(new Error("boom"))).toBe("load");
+  });
+
+  it("host.ts marks a failed init with it", async () => {
+    const replies: Response[] = [];
+    const handle = createRequestHandler(() => Promise.reject(new Error("Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')")), (r) => replies.push(r));
+    await handle({ id: 1, type: "init", baseUrl: "/", replay: [] });
+    expect(replies).toEqual([{ id: 1, type: "fatal", message: "Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')", dead: "load" }]);
+    const memory = createRequestHandler(() => Promise.reject(new RangeError("WebAssembly.Memory(): could not allocate memory")), (r) => replies.push(r));
+    await memory({ id: 2, type: "init", baseUrl: "/", replay: [] });
+    expect(replies.at(-1)).toMatchObject({ id: 2, type: "fatal", dead: "memory" });
   });
 });
 
@@ -168,6 +176,15 @@ describe("WorkerEngine start-up controls (G318; pass before it too)", () => {
     workers[0]!.onerror?.({ message: "out of memory" });
     expect((await engine.home("1+1", defaultHomeSettings)).display).toBe("2");
     expect(workers).toHaveLength(2);
+    engine.dispose();
+  });
+
+  it("a worker error after ready stays a memory error whatever its text (G24)", async () => {
+    const { engine, workers } = failing(() => null);
+    await engine.ready();
+    const job = engine.home("1+1", defaultHomeSettings);
+    workers[0]!.onerror?.({ message: "boom" });
+    await expect(job).rejects.toBeInstanceOf(EngineMemoryError);
     engine.dispose();
   });
 

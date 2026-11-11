@@ -30,3 +30,20 @@ export function deadEngine(e: unknown): "memory" | "crash" | null {
   if (e instanceof Error && isStackOverflow(e)) return "crash";
   return null;
 }
+
+/** G318: a failure's text names memory: Emscripten's `OOM` and `Cannot enlarge memory`, `out of memory`, Chrome's
+ *  `WebAssembly.Memory(): could not allocate memory`. */
+export const namesMemory = (text = ""): boolean => /\bOOM\b|(out of|enlarge|allocate) memory/i.test(text);
+
+/**
+ * G318: why an init failed, by when it happened, not by deadEngine alone (that one classes a running engine, where any
+ * abort is a heap at its cap): a trap or a stack overflow is a crash; memory when deadEngine says so of something that
+ * is no abort (a C++ allocation failure) or the text names memory; else "load", a wasm or worker that did not load
+ * (`Aborted(Error: ENOENT: no such file or directory, open '…/giac.wasm')`, `Aborted(both async and sync fetching of
+ * the wasm failed)`).
+ */
+export function startDead(e: unknown): "memory" | "crash" | "load" {
+  const text = e instanceof Error ? e.message : String(e);
+  const dead = deadEngine(e);
+  return dead === "crash" ? dead : namesMemory(text) || (dead && !text.startsWith("Aborted")) ? "memory" : "load";
+}

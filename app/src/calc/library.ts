@@ -31,8 +31,9 @@ export function jobs(engine: MathEngine): LibraryJobs {
       } catch (e) {
         // The worker's import threw partway (a `fatal` reply not marked dead, which does not restart it): the
         // definitions it already ran stay in Giac and in no log entry, so restart from the unchanged log, as a dirty
-        // refusal does. Not after the user's own Cancel (already restarted) nor a dead engine (restartAfterCrash, G24,
-        // G183).
+        // refusal does. Not after the user's own Cancel (already restarted) nor a dead engine (WorkerEngine.restart, G24,
+        // G183). One that could not load
+        // (G318, EngineLoadError) is started once more, as a Cancel would.
         // By name: a value import of engine/types.ts would move it out of the start chunk (see above).
         const name = e instanceof Error ? e.name : "";
         if (name !== "EngineCancelled" && name !== "EngineMemoryError" && name !== "EngineCrashError") await worker.cancel();

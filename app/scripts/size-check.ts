@@ -373,13 +373,8 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (172,275 B raw), +63 B over the phase-1 pin: 61,048 B + 0.05 kB, rounded up.
  *  61,100 → 61,200 B (R272): the call that hands a dropped history row to the lazy state/dropNote.ts (the words, the flag and the
  *  once-per-install rule are in that chunk; the start chunk holds the trim's call and the import) measures 61,131 B gzip
- *  (172,479 B raw), +82 B over phase-1 (61,049 B): 61,131 B + 0.05 kB, rounded up.
- *  61,200 → 61,340 B (G318): an engine that cannot start stops after two tries (WorkerEngine's count of failed starts,
- *  the stand-in worker that stops every request with the failure, EngineLoadError and the class of a failure before
- *  ready by its text, startError) measures 61,281 B gzip (172,871 B raw), +121 B over phase-1 e5da5c73 (61,160 B,
- *  172,614 B raw): 61,281 B + 0.05 kB, rounded up. It is the start's own path: a load that fails must be told apart
- *  without a chunk that may not load either. */
-export const START_PIN_GZIP = 61_340;
+ *  (172,479 B raw), +82 B over phase-1 (61,049 B): 61,131 B + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 61_200;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
