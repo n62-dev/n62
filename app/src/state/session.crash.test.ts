@@ -36,7 +36,7 @@ describe.skipIf(!giacAvailable())("a stack overflow inside Giac in the app (G183
     await s.submit("a:=5", "a:=5");
     expect(s.home.at(-1)).toMatchObject({ status: "done", text: "5" });
     // RangeError: Maximum call stack size exceeded inside Giac's wasm. F122's input (sandra's probe 2026-11-05) is refused
-    // Underflow since G187; simplify of G120's power still recurses in subst.cc decompose (G187's report)
+    // Underflow since G187; simplify of G120's power still recurses in subst.cc decompose (backlog F214)
     const crash = "simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))";
     await s.submit(crash, crash);
     expect(s.home.at(-1)).toMatchObject({ status: "error", text: t("error.crashed") });

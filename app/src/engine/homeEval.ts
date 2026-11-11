@@ -501,7 +501,7 @@ export function homeEval(
   // G130 (F125): Giac's matrix type becomes plain rows in Ans (matrixType.ts), in the run's Digits
   const exactRun = (): string =>
     withDigits(giac, P, s.digits, () => {
-      const first = giac.value(`${ans}:=(${exactBody})`, at);
+      const first = giac.value(`${ans}:=(${exactBody})`, at, true); // G187: with its tree (powerPastRange)
       ambiguous = giac.ambiguousPower?.();
       const v = plainRows(giac, ans, first, at);
       value = v;
@@ -647,8 +647,10 @@ export function homeEval(
     if (refused === "unchecked") unverified = true;
     else if (refused) return refuse(refused, "exact");
   }
-  // G187 (F122): a power past MPFR's range by its size, before the checks that read its value (Giac's normal recursed) and the cut's word
-  const pastRange = once || late() ? null : powerPastRange(giac, ans, exactOut, P);
+  // G187 (F122): a power past MPFR's range by its size, before the checks that read its value (Giac's normal recursed) and the cut's word;
+  // asked late too (one evalf): the checks after it are skipped then, and its value would be read as a 0. The tree came with the
+  // exact run; a value decided again (decideTwice) comes without it, and only a symbolic one can be a power
+  const pastRange = once ? null : powerPastRange(giac, ans, value.tree !== undefined || value.kind !== "symbolic" ? value.tree : giac.value(ans, [], true).tree, P);
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");

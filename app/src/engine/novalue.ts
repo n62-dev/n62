@@ -18,8 +18,9 @@
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
-import { callsOf, firstNameIn, functionsIn, isError, LIST_TYPE, names, parsePrinted, topLevelArgs, walk, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
+import { callsOf, firstNameIn, functionsIn, isError, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero } from "./format.ts";
+import type { ParseNode } from "./bridge.ts";
 
 /** The reasons of this module; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 export type NoValue = Extract<Refusal, "divisionByZero" | "overflow" | "underflow" | "noValue">;
@@ -224,27 +225,21 @@ export function overflowAt(giac: Giac, slot: string, output: string, P: number):
  *  the inverse): evalf(exp(-744261000),40) is 4.0E-323228445, evalf(exp(-744261200),40) MPFR's 0. */
 export const MPFR_LOG10_RANGE = 323228497;
 
-/** G187: Giac printed a power at the top of `text` (`a^b`, `(a)^(b)`): a top-level ^ and no other top-level operator
- *  (a minus right after the ^ is the exponent's sign). */
-export function topLevelPower(text: string): boolean {
-  let power = false;
-  const other = walk(text, 0, (k, d, ch) => {
-    if (d !== 0 || ")]}".includes(ch)) return false;
-    if (ch === "^") power = true;
-    return "+-*/,=<>!&|$:".includes(ch) && !(ch === "-" && text.charAt(k - 1) === "^");
-  }, "printed");
-  return power && other === -1;
+/** G187: the value whose tree (bridge-3, `giac.value(…, true).tree`) is `tree` is a power a^b at its top: head ^ with
+ *  two children (`-a^b`, `2*a^b`, `[a^b]` are not). */
+export function powerAtTop(tree: ParseNode | null | undefined): boolean {
+  return !!tree && tree[0] === 1 && tree[1] === "^" && tree[3].length === 2;
 }
 
 /**
- * G187 (F122): the value in `slot`, whose text `output` is a power a^b, past MPFR's range by its size: log10|a^b| =
- * re(b*ln(a))/ln(10) at `P` digits (a complex base by its modulus, a complex exponent by its real part) beyond
- * ±MPFR_LOG10_RANGE: "overflow" or "underflow". Asked before the checks that read the value (Giac's normal and simplify
- * of (atan(ln(-pi)+9007199254740993))^(sin(10^-300)-10^300), 10^(-1.96E299), overflowed the wasm stack). One engine
- * call, only for a power; a size Giac cannot state (a free name, an error) decides nothing.
+ * G187 (F122): the value in `slot`, a power a^b by its tree `tree` (powerAtTop), past MPFR's range by its size:
+ * log10|a^b| = re(b*ln(a))/ln(10) at `P` digits (a complex base by its modulus, a complex exponent by its real part)
+ * beyond ±MPFR_LOG10_RANGE: "overflow" or "underflow". Asked before the checks that read the value (Giac's normal and
+ * simplify of (atan(ln(-pi)+9007199254740993))^(sin(10^-300)-10^300), 10^(-1.96E299), overflowed the wasm stack).
+ * One engine call, only for a power; a size Giac cannot state (a free name, an error) decides nothing.
  */
-export function powerPastRange(giac: Giac, slot: string, output: string, P: number): NoValue | null {
-  if (!topLevelPower(output)) return null;
+export function powerPastRange(giac: Giac, slot: string, tree: ParseNode | null | undefined, P: number): NoValue | null {
+  if (!powerAtTop(tree)) return null;
   const size = Number(giac.eval(`evalf(re(([op(${slot})][1])*ln([op(${slot})][0]))/ln(10),${P})`).trim());
   return Number.isNaN(size) || Math.abs(size) <= MPFR_LOG10_RANGE ? null : size > 0 ? "overflow" : "underflow";
 }
