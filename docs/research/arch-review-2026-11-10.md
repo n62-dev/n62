@@ -113,4 +113,5 @@ Placed on 2026-11-10 after sofia's check (`SOFIA-CHECK.md`: every claim held, an
 - X18 and X17 move to the end of their lanes, because units and drawn results were clean in the hunt.
 - The small finds H3 to H7 go with X14, X15 and X16. H5, the `x → a·x² ▶ f` arrow store, needs its own package.
 - HUNT-2's rule C (the count of solutions shown equals `nops(realroot(p))`) goes into the shared rule list (X14), as the net behind G322's patch.
+- G319's gap (pass 142) is a row of X14: the unit view's `int(1/x^2,x,-1,1)*{m}` says "The unit view could not evaluate this" where Home says "The integral does not converge" (the exact run stops at the step budget, and refusalOf, given Giac's error, reads Giac's +infinity as no divergence). A refusal, so no wrong value: no id of its own.
 - The hunt's 660 tasks (`hunt-tasks.yaml`, 584 passing, 35 marked `duplicate_of`) become golden rows in a gorge package, with the gate's time checked. The copy that lasts is in `../drafts/2026-11-10-arch-review/`.
