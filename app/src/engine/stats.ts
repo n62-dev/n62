@@ -46,10 +46,8 @@ export const STATS_DEFINITIONS: Readonly<Record<string, string>> = {
     "return list[pasn_,mean(pasl_),normal(stddevp(pasl_)),normal(stddev(pasl_)),min(pasl_),max(pasl_)]; }",
 };
 
-const MARKED = new RegExp(`"${REFUSAL_MARK}(\\w+)"`);
-
-/** The refusal a definition of this file threw in Giac's error text `output`; null for any other text. */
+/** The refusal a definition of this file threw in Giac's error text `output` (the code in quotes after the mark); null
+ *  for any other text. */
 export function statsRefusal(output: string): StatsRefusal | null {
-  const code = MARKED.exec(output)?.[1];
-  return code !== undefined && (STATS_REFUSALS as readonly string[]).includes(code) ? (code as StatsRefusal) : null;
+  return STATS_REFUSALS.find((code) => output.includes(`"${REFUSAL_MARK}${code}"`)) ?? null;
 }
