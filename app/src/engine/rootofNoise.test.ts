@@ -79,7 +79,7 @@ describe.skipIf(!giacAvailable())("G324f1: a stored value holds the element with
       expect(r.display).not.toMatch(/i/);
       expect(r.display).toMatch(/^[[{]?1\.32471795724[\]}]?$/);
       expect(r.facts.warn).toBe("unaudited");
-      expect(r.why?.inherited).toEqual(["W"]);
+      expect(r.facts.why?.inherited).toEqual(["W"]);
     }
   });
 
