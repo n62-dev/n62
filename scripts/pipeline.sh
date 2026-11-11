@@ -542,7 +542,7 @@ bundle="$run/spec.md"
 
 no_wait="Never start a background loop that waits on a process: pgrep -f matches the loop's own command line, so it never ends (run 58 held its session open 39 minutes); run every check in the foreground with a timeout."
 # A146: the worker knows its limit (agent_start's timeout), which counts the waits for host-cpu beside a busy lane; "not done" ends the run by A55
-time_note="Your session ends after 3 hours, waits for a lock included: if the work will not fit (a long measurement), commit what you have, say where its data is, and reply not done."
+time_note="Your session ends after 4 hours, waits for a lock included: if the work will not fit (a long measurement), commit what you have, say where its data is, and reply not done."
 worker_prompt="You are $agent in pipeline run $n for package $id. The task bundle is on stdin (also at $bundle). You run in your own worktree on branch $branch from phase-1; never switch branches or commit elsewhere. Read docs/shifts/rules.md sections 3 and 5 for the standing rules, then work only from the bundle: read further files when the task needs them, by section. Keep your context small. Run typecheck and the unit tests you touch while you work; the pipeline runs the full checks afterwards. Tick your backlog line in docs/backlog.md and put open decisions under \"Needs the user\" in docs/decisions.md on this branch; change no other shared file. Commit small with git commit -s and the Co-Authored-By trailer of your model; end with the report commit from the bundle. $time_note $no_wait Reply in at most five lines: last commit, done or not done, open questions."
 
 # The checks a round runs (auto: the cheap ones first, A83); defined here for the dry run.
@@ -664,10 +664,11 @@ select_engine
 # waits for it; run_agent does both.
 agent_pid=""
 agent_rc=0  # A146: the last agent's exit code (agent_end sets it)
+agent_t0=0  # A147: when agent_start started the agent (SECONDS), for the heartbeat
 agent_start() {  # <name> <log> <agent> <model> <effort> <stdin file> <prompt> [tool options...]
   local name="$1" out="$2" ag="$3" mdl="$4" eff="$5" input="$6" prompt="$7"; shift 7
-  own_bg 'cd "$1" && shift && timeout -k 60 10800 claude "$@"' "$wt" -p --agent "$ag" --model "$mdl" --effort "$eff" "${claude_common[@]}" "$@" -n "$name" "$prompt" < "$input" > "$out" 2> "$out.err"
-  agent_pid="$own_bg_pid"
+  own_bg 'cd "$1" && shift && timeout -k 60 14400 claude "$@"' "$wt" -p --agent "$ag" --model "$mdl" --effort "$eff" "${claude_common[@]}" "$@" -n "$name" "$prompt" < "$input" > "$out" 2> "$out.err"
+  agent_pid="$own_bg_pid"; agent_t0=$SECONDS
 }
 # A88: before an agent and after it the run lists the top level of the main checkout's parent and of .claude/worktrees/, and logs
 # each new entry; only a warning (nothing is removed or moved, the run's result never changes). Another lane may have made the entry.
@@ -678,8 +679,26 @@ stray_warn() {
   return 0
 }
 run_agent() { stray_note; agent_start "$@"; agent_end "$agent_pid" "$1" "$2"; stray_warn; }
+# A147: while a worker runs, one log line every N62_HEARTBEAT_SECONDS (default 1800): slow and hung then look different in the log. The
+# loop is the pipeline's own: kill -0 on the worker's pid and a one-second sleep in the foreground (never a pgrep -f loop); it ends
+# with the worker, and own_wait then collects the exit code.
+worker_heartbeat() {  # <pid> <log>
+  local pid="$1" out="$2" hb="${N62_HEARTBEAT_SECONDS:-1800}" next c age
+  [[ "$hb" =~ ^[0-9]+$ && "$hb" -gt 0 ]] || hb=1800
+  next=$((agent_t0 + hb))
+  while kill -0 "$pid" 2>/dev/null; do
+    if (( SECONDS >= next )); then
+      c="$(git -C "$wt" log -1 --format='%h %ct' phase-1..HEAD 2>/dev/null || true)"
+      if [[ -n "$c" ]]; then age="${c%% *} $(( ($(date +%s) - ${c##* }) / 60 )) min ago"; else age="none"; fi
+      log "pipeline #$n $id: worker alive $(( (SECONDS - agent_t0) / 60 )) min; last commit $age; reply $(( $(stat -c %s "$out" 2>/dev/null || echo 0) / 1024 )) kB"
+      next=$((SECONDS + hb))
+    fi
+    sleep 1
+  done
+}
 agent_end() {  # <pid> <name> <log>
   local name="$2" out="$3" rc=0
+  [[ "$name" == audit-* ]] || worker_heartbeat "$1" "$out"
   own_wait "$1" || rc=$?
   agent_rc=$rc
   if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$out" "$out.err"; then
@@ -688,12 +707,12 @@ agent_end() {  # <pid> <name> <log>
   runlog "$name: claude exit $rc; reply: $(tail -n 3 "$out" | tr '\n' ' ' | cut -c1-200)"
   return 0
 }
-# A146: agent_cut <who> ends the run when the agent that just ended was killed: timeout's 124 is the 3-hour limit, 137 its KILL 60 s
+# A146: agent_cut <who> ends the run when the agent that just ended was killed: timeout's 124 is the 4-hour limit, 137 its KILL 60 s
 # later or the system's. A killed worker is not "done" (run 951 was logged so, and a fix round would have started the package again
 # from nothing): no checks, no audit and no fix round on half a package; the branch and the worktree stay for the next run.
 agent_cut() {  # <who: "worker" | "worker of fix round N">
   local why
-  case $agent_rc in 124) why="reached the 3-hour limit" ;; 137) why="was killed (claude exit 137)" ;; *) return 0 ;; esac
+  case $agent_rc in 124) why="reached the 4-hour limit" ;; 137) why="was killed (claude exit 137)" ;; *) return 0 ;; esac
   log "pipeline #$n $id: NOT MERGED (the $1 $why); branch $branch kept at $(git -C "$wt" log -1 --format=%h)"
   echo "RESULT #$n $id: NOT MERGED (the $1 $why; branch $branch, worktree $wt kept; see $run)"; exit 1
 }

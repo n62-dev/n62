@@ -187,7 +187,8 @@ run_cmd() {  # <cmd>: run one pipeline line; returns its exit code (75: usage li
     local r=$dry_rc; dry_rc=0; return "$r"
   fi
   set +e; cmdout="$(mktemp)"
-  (cd "$integ" && eval "timeout -k 60 14400 $cmd") > "$cmdout" 2>&1; rc=$?
+  # A147: 6 h: the worker's 4 h (pipeline.sh agent_start) and 2 h for the checks, the audit and a fix round
+  (cd "$integ" && eval "timeout -k 60 21600 $cmd") > "$cmdout" 2>&1; rc=$?
   set -e
   cat "$cmdout" >> "$out"
   say "rc=$rc: $(tail -n 1 "$cmdout")"

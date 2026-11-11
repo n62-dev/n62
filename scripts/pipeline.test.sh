@@ -281,9 +281,10 @@ grep -q 'timeout -k 60 1200 tools/device-build.sh' "$here/pipeline.sh" || fail "
 # every timeout of the three scripts (run_agent, pass, report, device, night) escalates to KILL; the adb probes use -k 5, the install -k 30
 grep -qE 'timeout [0-9]+ (claude|tools/|"\$integ|adb)' "$here/pipeline.sh" && fail "A35: pipeline.sh has an agent/device timeout without -k"
 grep -qE 'timeout [0-9]' "$here/night.sh" && fail "A35: night.sh has a timeout without -k"
-for pat in 'timeout -k 60 10800 claude' 'timeout -k 60 7200 claude' 'timeout -k 60 1800 claude' 'timeout -k 60 14400'; do
-  grep -qF "$pat" "$here/pipeline.sh" "$here/night.sh" || fail "A35: no '$pat'"
+for pat in 'timeout -k 60 14400 claude' 'timeout -k 60 7200 claude' 'timeout -k 60 1800 claude'; do  # A147: the worker 4 h, the Opus pass 2 h
+  grep -qF "$pat" "$here/pipeline.sh" || fail "A35: no '$pat' in pipeline.sh"
 done
+grep -qF 'timeout -k 60 21600 $cmd' "$here/night.sh" || fail "A147: night.sh's step limit is not 6 h (timeout -k 60 21600 \$cmd)"  # worker 4 h + checks, audit and a fix round
 # build.sh, behaviour: a sandbox copy with stub npm/npx and a stub gradle that records its stdin and arguments
 bs="$tmp/bs"; mkdir -p "$bs/bin" "$bs/cache/gradle-8.14.3/bin" "$bs/app" "$bs/android" "$bs/eng"; cp "$here/../build.sh" "$bs/"
 printf '#!/bin/sh\nexit 0\n' > "$bs/bin/npm"; cp "$bs/bin/npm" "$bs/bin/npx"
@@ -1211,7 +1212,7 @@ cat > "$sb10/bin/claude" <<'STUB'
 #!/bin/sh
 case "$*" in
   *"--agent sofia"*) echo audited >> "$SB10/audit-called"; echo APPROVED;;
-  *) echo "worker called" >> "$SB10/worker-called"; echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; printf '%s\n' "$SB_REPLY"; exit "${SB_EXIT:-0}";;
+  *) echo "worker called" >> "$SB10/worker-called"; echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; printf '%s\n' "$SB_REPLY"; [ -z "$SB_SLEEP" ] || sleep "$SB_SLEEP"; exit "${SB_EXIT:-0}";;
 esac
 STUB
 chmod +x "$sb10/bin/claude"; git -C "$sb10" add -A; gc "$sb10" init; git -C "$sb10" branch phase-1
@@ -1230,13 +1231,13 @@ export SB_REPLY=$'Last commit abc1234; done.\nOpen question: Needs the user: sho
 out="$(sb10run annabell "task text" --id probe-e2 --branch p1/annabell-e2 --checks none --no-merge)"; rc=$?
 grep -qE '^RESULT #[0-9]+ probe-e2: APPROVED, not merged' <<<"$out" && [[ $rc -eq 0 ]] || fail "A55: an Open question that is a 'Needs the user' item stops the run (rc $rc): $out"
 [[ -e "$sb10/audit-called" ]] || fail "A55: the audit did not run for a run whose open question is a Needs-the-user item"
-# A146: a worker killed at its 3-hour limit (timeout's 124; 137 after its KILL) ends the run: it is not logged as done, and no audit
+# A146: a worker killed at its 4-hour limit (timeout's 124; 137 after its KILL) ends the run: it is not logged as done, and no audit
 # and no fix round follow (run 951: 24 of 30 shards measured, "worker done", then a fix round that would have measured again)
 rm -f "$sb10/audit-called"; export SB_REPLY='' SB_EXIT=124
 out="$(sb10run annabell "task text" --id probe-e3 --branch p1/annabell-e3 --checks none --no-merge)"; rc=$?
-grep -qE '^RESULT #[0-9]+ probe-e3: NOT MERGED \(the worker reached the 3-hour limit; branch p1/annabell-e3, worktree ' <<<"$out" && [[ $rc -eq 1 ]] || fail "A146: a worker at its 3-hour limit does not end the run (rc $rc): $out"
+grep -qE '^RESULT #[0-9]+ probe-e3: NOT MERGED \(the worker reached the 4-hour limit; branch p1/annabell-e3, worktree ' <<<"$out" && [[ $rc -eq 1 ]] || fail "A146: a worker at its 4-hour limit does not end the run (rc $rc): $out"
 [[ ! -e "$sb10/audit-called" ]] || fail "A146: the audit ran after the worker reached its limit"
-grep -q 'probe-e3: NOT MERGED (the worker reached the 3-hour limit); branch p1/annabell-e3 kept at ' "$sb10/.coord/log.md" || fail "A146: the limit is not logged"
+grep -q 'probe-e3: NOT MERGED (the worker reached the 4-hour limit); branch p1/annabell-e3 kept at ' "$sb10/.coord/log.md" || fail "A146: the limit is not logged"
 grep -q 'probe-e3: worker done' "$sb10/.coord/log.md" && fail "A146: a worker at its limit is logged as done"
 git -C "$sb10" show-ref --verify --quiet refs/heads/p1/annabell-e3 || fail "A146: the branch of a worker at its limit is not kept"
 export SB_EXIT=137
@@ -1247,8 +1248,22 @@ out="$(sb10run annabell "task text" --id probe-e5 --branch p1/annabell-e5 --chec
 grep -qE '^RESULT #[0-9]+ probe-e5: APPROVED, not merged' <<<"$out" && [[ $rc -eq 0 ]] || fail "A146: a worker with another exit code is stopped (rc $rc): $out"
 unset SB_EXIT
 grep -q 'agent_cut "worker of fix round $rounds"' "$here/pipeline.sh" || fail "A146: a fix round's worker at its limit is not checked"
-[[ "$(grep -c '\$time_note \$no_wait Reply in at most five lines' "$here/pipeline.sh")" -eq 2 ]] || fail "A146: the worker and the fix prompt do not both name the 3-hour limit"
+[[ "$(grep -c '\$time_note \$no_wait Reply in at most five lines' "$here/pipeline.sh")" -eq 2 ]] || fail "A146: the worker and the fix prompt do not both name the 4-hour limit"
 unset SB_REPLY
+# A147: a long worker logs "worker alive" every N62_HEARTBEAT_SECONDS (default 1800), until it ends; the pipeline's own loop (kill -0), no pgrep
+export SB_REPLY='Last commit abc1234; done.' SB_SLEEP=6 N62_HEARTBEAT_SECONDS=2
+out="$(sb10run annabell "task text" --id probe-h1 --branch p1/annabell-h1 --checks none --no-merge)"; rc=$?
+unset SB_SLEEP N62_HEARTBEAT_SECONDS
+hb="$(grep -E 'pipeline #[0-9]+ probe-h1: worker alive ' "$sb10/.coord/log.md")"
+[[ "$(wc -l <<<"$hb")" -ge 2 && -n "$hb" ]] || fail "A147: a worker running 6 s with a 2 s heartbeat logs fewer than 2 'worker alive' lines: $hb"
+grep -qvE '^- [0-9:]+ pipeline #[0-9]+ probe-h1: worker alive [0-9]+ min; last commit ([0-9a-f]+ [0-9]+ min ago|none); reply [0-9]+ kB$' <<<"$hb" && fail "A147: a 'worker alive' line has the wrong form: $hb"
+echo "$hb" | head -n1 | sed 's/^/    heartbeat line from the sandbox: /' >&2
+ha="$(grep -n 'probe-h1: worker alive ' "$sb10/.coord/log.md" | tail -n1 | cut -d: -f1)"; hd="$(grep -n 'probe-h1: worker done' "$sb10/.coord/log.md" | cut -d: -f1)"
+[[ -n "$ha" && -n "$hd" && "$ha" -lt "$hd" ]] || fail "A147: a 'worker alive' line comes after the worker ended ($ha, done $hd)"
+grep -q 'probe-h1: worker alive' <<<"$(sed -n "$hd,\$p" "$sb10/.coord/log.md")" && fail "A147: the heartbeat goes on after the worker ended"
+grep -qE '^RESULT #[0-9]+ probe-h1: APPROVED, not merged' <<<"$out" || fail "A147: a worker with a heartbeat does not finish as before (rc $rc): $out"
+unset SB_REPLY
+grep -q 'pgrep' <(sed -n '/^agent_end()/,/^}/p' "$here/pipeline.sh") && fail "A147: agent_end's heartbeat uses pgrep"
 # the reply check itself
 printf 'x\nOpen question: the package file is missing from the bundle\n' > "$tmp/q-a"; printf 'Open questions: Needs the user: use x or y?\n' > "$tmp/q-b"; printf 'done, no questions\n' > "$tmp/q-c"
 printf -- '- Open question: the task text is empty, please resend the spec\n' > "$tmp/q-d"
