@@ -305,3 +305,16 @@ test("Solve Num: typed text keeps ▲▼ in the line; Esc puts x's value back, t
   await tap(page, ["esc", "shift", "esc", "enter"]);
   await expect(value(page, "x")).toHaveAttribute("data-value", "3");
 });
+
+// A144f1: `all: unset` put the th button back to content-box, two paddings wider than its th; it covered the left of the value cell.
+test("Solve Num: the unknown's button ends before the value cell starts (A144f1)", async ({ page }) => {
+  await openSolve(page);
+  await tap(page, ["x", "sq", "shift", "dot", "d2", "enter", "@num"]);
+  await expect(value(page, "x")).toBeVisible();
+  const row = page.locator('[data-testid="solve-table"] tr[data-name="x"]');
+  const b = await row.locator("th button").boundingBox();
+  const v = await value(page, "x").boundingBox();
+  expect(b).not.toBeNull();
+  expect(v).not.toBeNull();
+  expect(b!.x + b!.width).toBeLessThanOrEqual(v!.x + 0.5);
+});
