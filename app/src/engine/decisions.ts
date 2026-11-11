@@ -8,6 +8,7 @@ import { callsOf, closing, functionsIn, isError, isName, namesIn, numbers, type 
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import type { GiacValue } from "./bridge.ts";
 import { ESERIES_CUT } from "./eseries.ts";
+import { nonReal } from "./complex.ts";
 
 const INTEGER = /^\s*\d+\s*$/;
 
@@ -24,6 +25,38 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
   // G139: our definitions (homeEval.ts ENGINE_DEFINITIONS, eseries.ts) that compare and floor an exact x inside
   "eseries", "sigfig",
 ]);
+
+/**
+ * G325 (F224, F212): functions whose exact text of a non-real argument rested on a sign Giac decided at `Digits`. asin
+ * and acos of a non-real argument whose imaginary part is small beside its real part took a nested complex root whose
+ * sign was decided numerically and cancels (asin(sqrt(-2)-10^35): 10^70 against 2; patch 0044 fixes the cause in
+ * sqrt), so the text made at Digits 40 was the conjugate of the principal value. They decide only for a non-real
+ * argument (nonRealArg), asked only when Giac's text of the result holds i: asin(1/2) = pi/6 costs no call, asin(2)
+ * one, and neither is made again.
+ */
+const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "arcsin", "arccos"]);
+
+/** G325: Giac's text of the result (`text`) is not real, so a COMPLEX_DECISION_FUNCTIONS call in the input may decide. */
+const nonRealText = (text: string): boolean => namesIn(text, "printed").includes("i");
+
+/** G325: `input` calls asin or acos on an argument `complexArg` finds not real, and `result` is not real. */
+function complexDecision(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): boolean {
+  if (!nonRealText(result)) return false;
+  return callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).some((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
+}
+
+/** G325: whether an argument (typed Giac text) is not real: Giac's evalf of it at the current Digits has an imaginary part,
+ *  or no imaginary part can be had (an error decides, as the safe side; complex.ts nonReal). One Giac call per argument, kept for the input. */
+export function nonRealArg(giac: Giac): (arg: string) => boolean {
+  const known = new Map<string, boolean>();
+  return (arg) => {
+    const k = known.get(arg);
+    if (k !== undefined) return k;
+    const r = nonReal(giac, `evalf(${arg})`);
+    known.set(arg, r);
+    return r;
+  };
+}
 
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.
  *  `->` and `=>` are not comparisons. */
@@ -96,12 +129,20 @@ export function decidingStored(giac: Giac): (name: string) => boolean {
 /** The result of `input` (printed as `result`) may rest on a decision Giac made at `Digits`: the input calls a
  *  decision function, or a name that is not a Giac built-in (`stored`: a stored function's body may decide,
  *  `f(x):=floor(x*10^12)` then `f(sin(10^60))`), or holds a comparison, or the result holds `abs(` (sqrt of an even
- *  power comes back as one), or a root of an even power (evenPowerRoot). An input of rationals only (rationalOnly)
- *  decides exactly. */
-export function restsOnDecision(input: string, q: Quoting, result: string, stored: (name: string) => boolean = () => false): boolean {
+ *  power comes back as one), or a root of an even power (evenPowerRoot), or calls asin or acos on an argument that
+ *  `complexArg` finds not real (G325, nonRealArg; none without it). An input of rationals only (rationalOnly) decides
+ *  exactly. */
+export function restsOnDecision(
+  input: string,
+  q: Quoting,
+  result: string,
+  stored: (name: string) => boolean = () => false,
+  complexArg: (arg: string) => boolean = () => false,
+): boolean {
   if (rationalOnly(input, q)) return false;
   const calls = functionsIn(input, q);
-  return calls.some((f) => DECISION_FUNCTIONS.has(f)) || hasComparison(input, q) || result.includes("abs(") || evenPowerRoot(input, q) || calls.some(stored);
+  if (calls.some((f) => DECISION_FUNCTIONS.has(f)) || hasComparison(input, q) || result.includes("abs(") || evenPowerRoot(input, q)) return true;
+  return calls.some(stored) || complexDecision(input, q, result, complexArg);
 }
 
 /** `s` holds a power with an even integer exponent (`^2`, `^(4)`, `^-2`, `^(-2)`; not `^0`, `^(2/3)`, `^2.5`), by the
@@ -137,12 +178,12 @@ function topComparison(seg: string): boolean {
 }
 
 /**
- * G156: the texts the decisions of `expr` are made on: the arguments of a decision function (abs included) and of a
- * stored function that decides (`stored`, decidingStored), each argument or bracket (and `expr` itself) with a comparison
- * at its top, the argument of a sqrt over an even power, and all of `expr` for a ^(1/2) over one or for an abs( Giac
+ * G156: the texts the decisions of `expr` are made on: the arguments of a decision function (abs included; asin and
+ * acos of an argument `complexArg` finds not real when `text` is not real, G325) and of a stored function that decides (`stored`, decidingStored), each argument
+ * or bracket (and `expr` itself) with a comparison at its top, the argument of a sqrt over an even power, and all of `expr` for a ^(1/2) over one or for an abs( Giac
  * printed (`text`) that `expr` does not call. A literal outside them (`sign(x)+10^2000`) is no decision's.
  */
-export function decisionArgs(expr: string, text: string, stored: (name: string) => boolean): string[] {
+export function decisionArgs(expr: string, text: string, stored: (name: string) => boolean, complexArg: (arg: string) => boolean = () => false): string[] {
   const named = new Map(callsOf(expr, undefined, "typed").map((c) => [c.open, c.name]));
   const opens: number[] = [];
   walk(expr, 0, (k, _d, ch) => void ("([{".includes(ch) && opens.push(k)), "typed");
@@ -153,7 +194,7 @@ export function decisionArgs(expr: string, text: string, stored: (name: string) 
     const inner = expr.slice(open + 1, close);
     const args = topLevelArgs(inner, "typed");
     const name = named.get(open);
-    const decides = name !== undefined && (DECISION_FUNCTIONS.has(name) || (name === "sqrt" && holdsEvenPower(inner, "typed")) || stored(name));
+    const decides = name !== undefined && (DECISION_FUNCTIONS.has(name) || (COMPLEX_DECISION_FUNCTIONS.has(name) && nonRealText(text) && complexArg(inner)) || (name === "sqrt" && holdsEvenPower(inner, "typed")) || stored(name));
     out.push(...(decides ? args : args.filter(topComparison)));
   }
   if (halfOfEvenPower(expr, "typed") || (text.includes("abs(") && ![...named.values()].includes("abs"))) out.push(expr);
@@ -356,8 +397,11 @@ function cutHit(giac: Giac, c: Cut, P: number): { cut: Cut; n: string; proven: b
 
 /** A decision that did not hold. `refused` (G57): the two precisions printed different texts, or the decision sits on
  *  a cut Giac cannot prove a tie on, so any value shown would be a guess and the result is refused (`error.undecided`);
- *  without it (a higher precision failed to run, a proven tie with no value to put in its place) the result is ⚠. */
-export type Undecided = { undecided: true; refused?: true };
+ *  without it (a higher precision failed to run, a proven tie with no value to put in its place) the result is ⚠.
+ *  `branch` (G325): refused because an asin or acos of a non-real argument holds a literal past the cap (no precision
+ *  decides its branch), so Home refuses it before G187's size check of a power over it (homeEval.ts), which read that
+ *  exact text until Home's 1.5 s clock stopped it ((10^1000)^asin(sqrt(-2)-10^1000)). */
+export type Undecided = { undecided: true; refused?: true; branch?: true };
 
 /** What the second decision found: the text stands (`from` set when it is another evaluation's, stored in `pasdec2`,
  *  which the caller purges, with its `value` from bridge-3), or the evaluations disagree (`undecided`). */
@@ -383,7 +427,13 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const P0 = valuePrecision(digits);
   const typed = literalStart(expr, P0, MAX_EVAL_DIGITS, "typed");
   const pastCap = (a: string): boolean => literalStart(a, P0, MAX_EVAL_DIGITS, "typed").unchecked;
-  if (typed.unchecked && decisionArgs(expr, text, decidingStored(giac)).some(pastCap)) return { undecided: true, refused: true };
+  const complexArg = nonRealArg(giac);
+  if (typed.unchecked && decisionArgs(expr, text, decidingStored(giac), complexArg).some(pastCap)) {
+    const argOf = (c: { open: number; close: number }): string => expr.slice(c.open + 1, c.close);
+    const calls = callsOf(expr, COMPLEX_DECISION_FUNCTIONS, "typed").filter((c) => c.close >= 0);
+    const branch = nonRealText(text) && calls.some((c) => pastCap(argOf(c)) && complexArg(argOf(c)));
+    return branch ? { undecided: true, refused: true, branch: true } : { undecided: true, refused: true };
+  }
   const printed = literalStart(text, P0, MAX_EVAL_DIGITS, "printed");
   const P = Math.max(typed.at, printed.unchecked ? P0 : printed.at);
   const failed: Undecided = P > P0 ? { undecided: true, refused: true } : { undecided: true };
