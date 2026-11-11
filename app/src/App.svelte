@@ -108,7 +108,8 @@
     void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(showTips, { timeout: 2000 }) : setTimeout(showTips, 500)));
     return countScreenTaps((kind) => session.taps.press(kind));
   });
-  /** R284: the failure note's inside (views/EngineFailed.svelte), fetched once the engine has failed. */
+  /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
+   *  not in it: the chunk goes over the network that may be the cause, and the way on must not depend on it. */
   let EngineFailed = $state.raw<typeof import("./views/EngineFailed.svelte").default | undefined>();
   $effect(() => void (session.engineState === "failed" && import("./views/EngineFailed.svelte").then((m) => (EngineFailed = m.default), () => {})));
   let host: HTMLElement | undefined = $state();
@@ -444,6 +445,7 @@
       {#if session.engineState !== "ready"}
         <p class="enginenote" role="status" data-testid="engine-note">
           {#if EngineFailed}<EngineFailed kind={session.engineFailure} />{:else}{t(session.engineState === "failed" ? "engine.error" : "engine.starting")}{/if}
+          {#if session.engineState === "failed"}<button type="button" class="reload" data-testid="engine-reload" onclick={() => location.reload()}>{t("engine.reload")}</button>{/if}
         </p>
       {/if}
       {#if shell.app === null}
@@ -576,6 +578,9 @@
     font-size: var(--fs-note);
     white-space: nowrap;
     pointer-events: none;
+  }
+  .reload {
+    pointer-events: auto; /* the one part of the note that takes a touch (the note lets them through); its look is in the note's chunk */
   }
   .screen {
     position: relative;

@@ -381,8 +381,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  61,300 → 61,400 B (R284): the engine-failed note's words, its Reload button and its styles are in the lazy views/EngineFailed.svelte
  *  and i18n/enFail.ts; the start chunk holds the kind of the failure (Session.engineFailure, from the error's class), the guard in
  *  submit, and the import of that component (the effect, its state and the preload entry): phase-1 d7a0f8ff measures 61,22x B gzip
- *  (172,709 B raw), this branch 61,337 B (173,301 B raw): 61,337 B + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 61_400;
+ *  (172,709 B raw), this branch 61,337 B (173,301 B raw): 61,337 B + 0.05 kB, rounded up.
+ *  61,400 → 61,450 B (R284 fix round 2): the Reload button (its markup, its `engine.reload` string, one rule) moved from the lazy chunk
+ *  into the start chunk, so the way on does not depend on a chunk fetched over the network that may be down; the words and the
+ *  button's look stay lazy. Measured 61,42x B gzip (173,6xx B raw): 61,42x B + 0.03 kB, rounded up. */
+export const START_PIN_GZIP = 61_450;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

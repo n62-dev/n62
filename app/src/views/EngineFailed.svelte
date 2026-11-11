@@ -1,14 +1,13 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
   // R284: the inside of the engine-failed note (App.svelte draws the note itself): why the engine did not start,
-  // from the failure's kind (state/session.svelte.ts engineFailure), and Reload. A lazy chunk, fetched on a failure.
+  // from the failure's kind (state/session.svelte.ts engineFailure); App.svelte draws Reload. A lazy chunk, fetched on a failure.
   import { enFail } from "../i18n/enFail.ts";
 
   let { kind }: { kind: "load" | "memory" | "crash" | undefined } = $props();
 </script>
 
 {enFail[kind ?? "crash"]}
-<button type="button" class="reload" data-testid="engine-reload" onclick={() => location.reload()}>{enFail.reload}</button>
 
 <style>
   /* the note says why, so it wraps inside the stage (360 px) and is centred; these rules come with the note's chunk (the selector outweighs App's scoped one) */
@@ -19,9 +18,8 @@
     max-width: calc(100% - 2 * var(--sp-4));
     border-radius: var(--radius-l);
   }
-  /* the only part of the note that takes a touch (the note itself lets touches through) */
-  .reload {
-    pointer-events: auto;
+  /* the button's look (App.svelte makes it take touches); without this chunk it is a plain button */
+  :global(.enginenote .reload) {
     display: block;
     margin: var(--sp-15) auto 0;
     min-height: var(--touch);
