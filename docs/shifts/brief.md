@@ -95,9 +95,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 651 | A144 the core list in Firefox; the WebKit try | annabell, Sonnet | `p1/annabell-otherbrowsers` | – |
-| 646 | G319 the unit view refuses what Home refuses (arch review N1) | gorge, Opus | `p1/gorge-unitrefusals` | – |
-| 647 | G320 CAS refuses a number through an infinity, as Home (arch review N5) | gorge, Opus | `p1/gorge-casinfinity` | G319 |
 | 648 | [G321](packages/G321.md) a bare unit name is the metric unit (owner answer 6) | gorge, Opus | `p1/gorge-unitnames` | G319 |
 | 653 | [G324](packages/G324.md) ≈ of a cubic's real root, no `2E-40*i` (F220) | gorge, Opus | `p1/gorge-rootofnoise` | – |
 | 654 | [G329](packages/G329.md) the calls stage keeps the bridge's tree (F216) | gorge, Sonnet | `p1/gorge-callstree` | – |

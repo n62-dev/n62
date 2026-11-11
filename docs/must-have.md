@@ -147,10 +147,10 @@ The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10
 - **mh-C4 Library from a laptop** [have]. Import, export, "copy the format for your AI", tested (`libraryJobs.engine.test.ts:71`). No package.
 - **mh-C5 Published benchmark** [part: harness exists, `compare` empty, no `qalculate` column; only t07 is truly unbuilt; t08 and t09 work today]. Packages S50, R221, R222, R223. Hand-measuring is the owner's act, not a package. A task N62 loses triggers rework or removal (docs/03 rule 13).
 - **mh-C6 Tablet / landscape** [miss; deferred 10-13]. Package R224 (tablet and desktop). Stubs: phone landscape (C6b), split when decision 5 reopens it; the PWA manifest to `any` (C6c), split when phone landscape lands, because one manifest cannot differ by device: until then the installed PWA stays portrait.
-- **mh-C7 iPhone web app, checked** [miss; unverified, Chromium only; the web app only, owner 2026-11-10]. Packages S51, A110 (time-boxed; "could not run here" is a valid result), R225. No Capacitor iOS work. The legal lines are opinion.
+- **mh-C7 iPhone web app, checked** [miss; unverified, Chromium only; the web app only, owner 2026-11-10]. Packages S51, A144 (merged d55b37b1, replacing A110: WebKit starts in the Playwright container, the engine boots and the offline reload works; the core list does not run there yet, its tap sends no click), R225. No Capacitor iOS work. The legal lines are opinion.
 
 **Order:** all v0.5–v1.
-G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50, R221, R222, owner measures, R223 → S51, A110, R225 → R224 → G275, G276 → stubs of C3.
+G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50, R221, R222, owner measures, R223 → S51, A144, R225 → R224 → G275, G276 → stubs of C3.
 
 **Open bugs:** none.
 
@@ -167,7 +167,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 **Not verified:**
 - Which constants have no basis (the index is build output).
 - Whether CSS alone resizes the Plot (R224 checks first).
-- Phone-landscape overflow, and whether WebKit runs on this host (A110).
+- Phone-landscape overflow, and whether WebKit runs on this host (A144: only in the Playwright container).
 - The ± path in Qalculate! (S50), and the Virtual Calculator's licence for publishing timings.
 - Current Apple terms and EU routes; whether LGPL alone blocks the store (opinion, S51).
 - Whether the owner has an iPhone (R225 waits on the owner's check).
