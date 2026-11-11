@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Decision log
 
-Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This file holds what binds from Phase 1 on, as Choice and Would change if; "Rule:" names where a rule is stated in full. "Archived" means the full text (why, evidence, costs, alternatives) is in [archive/decisions-2026-10.md](archive/decisions-2026-10.md) under the same name, or under the section named after it: read it only when a decision is questioned. A decision changes in place (rules section 9).
+Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This file holds what binds from Phase 1 on, as Choice and Would change if; "Rule:" names where a rule is stated in full. "Archived" means the full text is in [archive/decisions-2026-10.md](archive/decisions-2026-10.md) under the same name, or under the section named after it: read it only when a decision is questioned. A decision changes in place (rules section 9).
 
 ## Needs the user
 
@@ -167,7 +167,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R39 (Function, Solve; S12):** a literal fraction exponent is reduced first (`(-8)^(2/6)` = −2); the root template stays the real root in every view.
 - **R18:** Greek names with Giac stand-ins; `&` refused until G2 item 41; `==` never answers on undecidable sides; Home draws a non-number from `latex()` (R18f3). Archived, "Opus pass 97".
 - **R52:** `SerializeError` carries the English text plus key and values; `parseError(key, vars)` in `app/src/i18n/enParser.ts`.
-- **Home number formats:** `digits` are significant digits; STD plain for 1E-4 ≤ |x| < 10^digits; rounding half away from zero (the G2 rounds ties half to even, item 8; one rule, no option). **G31:** Fixed turns to scientific with the same decimals when a nonzero value would show only zeros, with confirmed digits only (in each complex part too, G36).
+- **Home number formats:** `digits` are significant digits; STD plain for 1E-4 ≤ |x| < 10^digits; rounding half away from zero (G2: half to even, item 8; one rule). Copy rounds once: a tie may paste one ulp off (G324f1; P5 holds). **G31:** Fixed turns to scientific with the same decimals when a nonzero value would show only zeros, with confirmed digits only (in each complex part too, G36).
 - **G5:** a list's mark: docs/04 2.4. **Chips and Ans** (R2): rule: docs/04 2.8; a chip has two arguments (key, shown); an operator on an empty line starts with Ans only when the view has a result.
 - **A stored name's mark in Vars (S53f1, Opus pass 132):** from its facts by History's rule; a name without facts takes the `=` or `≈` noted when Home stored it (`DefEntry.mark`); a name with neither (stored before S53f1) shows no mark, never `=`. Would change if: the owner wants old names marked.
 - **Time limits:** CAS 10 s soft budget, Giac's 600 s net; Solve and analysis 30 s; Home and units a 4 s watchdog from engine-ready (G185); Cancel replays the definitions only. Archived, "Opus pass 132".

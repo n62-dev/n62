@@ -90,8 +90,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 654 | G329 the calls stage keeps the bridge's tree (F216) | gorge, Sonnet | `p1/gorge-callstree` | – |
-| 655 | G325 asin and acos near their cuts: the imaginary sign (F224, F212) | gorge, Opus | `p1/gorge-asincut` | G329 |
 | 585 | [G231](packages/G231.md) Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
 | 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
