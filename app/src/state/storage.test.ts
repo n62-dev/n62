@@ -121,7 +121,16 @@ describe("the migration steps load only for a record that needs one (R103)", () 
     vi.resetModules();
   });
   const put = (key: string, record: unknown): void => void idb.stores.get("kv")!.set(key, record);
-  const settle = (): Promise<void> => new Promise((r) => setTimeout(r, 20));
+  /** Waits for the write-back of `key` (a read writes it back without waiting, `void kvSet`): polled up to 2 s, since a
+   *  fixed 20 ms lost the race under the full suite's load (run 987: the record was still the version-2 one). */
+  const written = async (key: string): Promise<unknown> => {
+    for (let t = 0; t < 100; t++) {
+      const v = idb.stores.get("kv")?.get(key);
+      if (typeof v === "object" && v !== null && (v as Record<string, unknown>)["@n62"] === DATA_VERSION) return v;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    return idb.stores.get("kv")?.get(key);
+  };
 
   it("STEP_KEYS lists exactly the keys of MIGRATIONS, step by step", () => {
     for (let v = 0; v < DATA_VERSION; v++) expect([...(STEP_KEYS[v] ?? [])].sort(), `step ${v} → ${v + 1}`).toEqual(Object.keys(MIGRATIONS[v] ?? {}).sort());
@@ -134,9 +143,8 @@ describe("the migration steps load only for a record that needs one (R103)", () 
     expect(await s.kvGet("defs")).toEqual({ kind: "value", value: [{ name: "a" }] });
     expect(await s.kvGet("view")).toEqual({ kind: "value", value: "cas" });
     expect(await s.kvGet("library")).toEqual({ kind: "value", value: "f(x):=pasexp(x)" });
-    await settle();
+    expect(await written("view")).toEqual(s.stamp("cas")); // the stamp is still brought up to date
     expect(loads).toBe(0);
-    expect(idb.stores.get("kv")?.get("view")).toEqual(s.stamp("cas")); // the stamp is still brought up to date
   });
 
   it("a version-2 record loads the steps, migrates and is written back stamped today", async () => {
@@ -144,8 +152,7 @@ describe("the migration steps load only for a record that needs one (R103)", () 
     const r = await s.kvGet<{ cmds: string[] }[]>("defs");
     expect(loads).toBe(1);
     expect(r.kind === "value" ? r.value[0]!.cmds : []).toEqual(["f(x):=exp(i*x)+sin(pasdeg*(x))"]);
-    await settle();
-    expect(idb.stores.get("kv")?.get("defs")).toEqual(s.stamp(r.kind === "value" ? r.value : null));
+    expect(await written("defs")).toEqual(s.stamp(r.kind === "value" ? r.value : null));
   });
 
   it("needsSteps: only a key with a step between its stamp and DATA_VERSION", () => {
