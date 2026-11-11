@@ -18,9 +18,9 @@ findings:
   F92: ["home graph/0", "cas graph/0", "home graph/3", "cas graph/3", "home graph_complement/0", "cas graph_complement/0", "home subgraph/0", "cas subgraph/0", "home make_directed/0", "cas make_directed/0", "home underlying_graph/0", "cas underlying_graph/0", "home cycle_graph/0", "cas cycle_graph/0", "home lcf_graph/0", "cas lcf_graph/0", "home hypercube_graph/0", "cas hypercube_graph/0", "home seidel_switch/0", "cas seidel_switch/0", "home sierpinski_graph/0", "cas sierpinski_graph/0", "home complete_graph/0", "cas complete_graph/0", "home complete_graph/3", "cas complete_graph/3", "home petersen_graph/0", "cas petersen_graph/0", "home random_graph/0", "cas random_graph/0", "home random_graph/1", "cas random_graph/1", "home random_graph/3", "cas random_graph/3", "home random_digraph/0", "cas random_digraph/0", "home random_digraph/1", "cas random_digraph/1", "home random_bipartite_graph/0", "cas random_bipartite_graph/0", "home random_bipartite_graph/1", "cas random_bipartite_graph/1", "home random_tournament/0", "cas random_tournament/0", "home random_tournament/3", "cas random_tournament/3", "home random_sequence_graph/0", "cas random_sequence_graph/0", "home assign_edge_weights/0", "cas assign_edge_weights/0", "home add_arc/0", "cas add_arc/0", "home delete_arc/0", "cas delete_arc/0", "home add_edge/0", "cas add_edge/0", "home delete_edge/0", "cas delete_edge/0", "home delete_vertex/0", "cas delete_vertex/0", "home contract_edge/0", "cas contract_edge/0", "home make_weighted/0", "cas make_weighted/0", "home isomorphic_copy/0", "cas isomorphic_copy/0", "home permute_vertices/0", "cas permute_vertices/0", "home complete_binary_tree/0", "cas complete_binary_tree/0", "home complete_kary_tree/0", "cas complete_kary_tree/0", "home prism_graph/0", "cas prism_graph/0", "home antiprism_graph/0", "cas antiprism_graph/0", "home star_graph/0", "cas star_graph/0", "home wheel_graph/0", "cas wheel_graph/0", "home grid_graph/0", "cas grid_graph/0", "home torus_grid_graph/0", "cas torus_grid_graph/0", "home web_graph/0", "cas web_graph/0", "home cartesian_product/0", "cas cartesian_product/0", "home tensor_product/0", "cas tensor_product/0", "home path_graph/0", "cas path_graph/0", "home path_graph/3", "cas path_graph/3", "home kneser_graph/0", "cas kneser_graph/0", "home odd_graph/0", "cas odd_graph/0", "home johnson_graph/0", "cas johnson_graph/0", "home flower_snark/0", "cas flower_snark/0", "home goldberg_snark/0", "cas goldberg_snark/0", "home haar_graph/0", "cas haar_graph/0", "home paley_graph/0", "cas paley_graph/0", "home subdivide_edges/0", "cas subdivide_edges/0", "home minimal_spanning_tree/0", "cas minimal_spanning_tree/0", "home plane_dual/0", "cas plane_dual/0", "home line_graph/0", "cas line_graph/0", "home random_network/0", "cas random_network/0", "home tonnetz/0", "cas tonnetz/0", "home fundamental_cycle/0", "cas fundamental_cycle/0"]
   F93: ["cas binomial_icdf/3", "cas student_icdf/3", "home binomial_icdf/3", "home student_icdf/3"]
   F94: ["home mathml/0", "cas mathml/0", "home latex/0", "cas latex/0", "home getType/0", "cas getType/0", "home str/0", "cas str/0", "home str/1", "cas str/1", "home str/2", "cas str/2", "home str/3", "cas str/3", "home char/0", "cas char/0", "home char/2", "cas char/2", "home char/3", "cas char/3", "home tabvar/0", "cas tabvar/0", "home tabsign/0", "cas tabsign/0", "home mc_mean_antithetic/0", "cas mc_mean_antithetic/0"]
-  F96: ["home wz_certificate/0", "cas wz_certificate/0", "home GF/0", "cas GF/0", "home point3d/0", "cas point3d/0", "home harmonic_division/0", "home QR/0", "cas QR/0", "home LU/0", "cas LU/0", "home Fill/0", "cas Fill/0", "home CopyVar/0", "cas CopyVar/0", "home debug/0", "cas debug/0", "home syzygy/0", "cas syzygy/0", "home gbasis/0", "cas gbasis/0", "home is_hamiltonian/0", "cas is_hamiltonian/0", "home interactive_plotode/0", "cas interactive_plotode/0"]
+  F96: ["home GF/0", "cas GF/0", "home harmonic_division/0", "home interactive_plotode/0", "cas interactive_plotode/0"]
   F97: ["cas ellipse/0", "cas hyperbola/0", "cas ecm_factor/0"]
-deadline: ["cas ellipse/0", "cas hyperbola/0", "cas ecm_factor/0"]
+deadline: ["home ellipse/0", "cas ellipse/0", "home hyperbola/0", "cas hyperbola/0", "home ecm_factor/0", "cas ecm_factor/0"]
 classes:
   "Airy_Ai": "cccc|cccc"
   "Airy_Bi": "cccc|cccc"
@@ -33,7 +33,7 @@ classes:
   "Ci": "cccc|cccc"
   "Circle": "kkkk|kkkk"
   "Col": "r|r"
-  "CopyVar": "x|x"
+  "CopyVar": "d|d"
   "Det": "u|s"
   "Dirac": "uuuu|usuu"
   "DrawInv": "k|k"
@@ -41,7 +41,7 @@ classes:
   "Ei": "cccc|cccc"
   "Factor": "s|s"
   "Fahrenheit2Celsius": "uuuu|uuuu"
-  "Fill": "x|x"
+  "Fill": "d|d"
   "Fourier": "-"
   "GF": "xrrr|xrrr"
   "Gcd": "uuuu|ssss"
@@ -52,7 +52,7 @@ classes:
   "Inverse": "u|s"
   "JordanBlock": "urrr|urrr"
   "LQ": "s|u"
-  "LU": "x|x"
+  "LU": "d|d"
   "LambertW": "cccr|cccr"
   "Li": "cccs|cccs"
   "Line": "kkkk|kkkk"
@@ -61,7 +61,7 @@ classes:
   "LineVert": "tktt|kkkk"
   "Nullspace": "r|u"
   "Psi": "curr|csrr"
-  "QR": "x|x"
+  "QR": "d|d"
   "Quo": "s|s"
   "RandSeed": "uuuu|uuuu"
   "Rem": "s|s"
@@ -307,7 +307,7 @@ classes:
   "cyclotomic": "urrr|urrr"
   "cylinder": "s|s"
   "dayofweek": "uuuu|uuuu"
-  "debug": "x|x"
+  "debug": "r|r"
   "default": "-"
   "degree": "u|u"
   "degree_centrality": "-"
@@ -462,7 +462,7 @@ classes:
   "gauss_seidel_linsolve": "-"
   "gaussian_window": "-"
   "gaussquad": "u|u"
-  "gbasis": "x|x"
+  "gbasis": "s|u"
   "gbasis_max_pairs": "uuuu|uuuu"
   "gbasis_reinject": "urur|rrur"
   "gbasis_simult_primes": "uuur|uuur"
@@ -622,7 +622,7 @@ classes:
   "is_eulerian": "s|s"
   "is_forest": "s|s"
   "is_graphic_sequence": "s|s"
-  "is_hamiltonian": "x|x"
+  "is_hamiltonian": "d|d"
   "is_harmonic": "u|u"
   "is_harmonic_circle_bundle": "u|u"
   "is_harmonic_line_bundle": "u|u"
@@ -921,7 +921,7 @@ classes:
   "pmin": "s|s"
   "point": "ktkr|kkkr"
   "point2d": "k|k"
-  "point3d": "x|x"
+  "point3d": "d|d"
   "poisson": "cucc|cucc"
   "poisson_cdf": "cccc|cccc"
   "poisson_icdf": "urrr|urrr"
@@ -1179,7 +1179,7 @@ classes:
   "symb2poly": "s|s"
   "symbol_array": "-"
   "syst2mat": "u|s"
-  "syzygy": "x|x"
+  "syzygy": "s|u"
   "table": "-"
   "tabsign": "t|t"
   "tabvar": "t|t"
@@ -1279,7 +1279,7 @@ classes:
   "wilcoxonp": "rrrr|rrrr"
   "wilcoxons": "u|u"
   "wilcoxont": "u|u"
-  "wz_certificate": "x|x"
+  "wz_certificate": "s|s"
   "xml_print": "s|s"
   "xor": "-"
   "xyz2rgb": "urrr|rrrr"
