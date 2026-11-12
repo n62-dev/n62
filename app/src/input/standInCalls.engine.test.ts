@@ -43,4 +43,28 @@ describe.skipIf(!giacAvailable())("R260: a function named e or i (real Giac)", (
     expect(imported.result.plan.added).toEqual(["e_"]);
     expect(back.home(giacOfEntry("e\\left(2\\right)", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("3");
   });
+
+  it("R260f1: the export's comment lines name beta_ and e_ as typed (β = 2, e(x)), the definitions keep the stand-ins, and the file round-trips (derived)", { timeout: 30_000 }, async () => {
+    const h = await nodeHost();
+    const s = { ...defaultHomeSettings, angle: "rad" as const };
+    let log: DefEntry[] = [];
+    for (const latex of ["\\beta:=2", "e\\left(x\\right):=x+1"]) log = applyDefChanges(log, h.home(giacOfEntry(latex, "home", { names: userNamesOf(log) }).giac, s).defs);
+    expect(userNamesOf(log).map((n) => n.name).sort()).toEqual(["beta_", "e_"]);
+    const { text, skipped } = exportLibrary(log, LIBRARY_FORMAT);
+    expect(skipped).toEqual([]);
+    const lines = text.split("\n");
+    expect(lines).toContain("// β = 2");
+    expect(lines).toContain("// e(x)");
+    expect(text).not.toMatch(/\/\/.*(beta_|e_)/);
+    expect(lines).toContain("beta_:=(2)");
+    expect(lines).toContain("e_(x):=x+1");
+    const back = await nodeHost();
+    const imported = importText(back, text, LIBRARY_FORMAT.version, [], false);
+    if (!imported.result.ok) throw new Error(imported.result.error);
+    expect(imported.result.plan.added.sort()).toEqual(["beta_", "e_"]);
+    expect(back.home(giacOfEntry("e\\left(2\\right)", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("3");
+    expect(back.home(giacOfEntry("\\beta", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("2");
+    expect(exportLibrary(imported.result.log, LIBRARY_FORMAT).text).toBe(text);
+  });
 });
+
