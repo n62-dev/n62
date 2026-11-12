@@ -207,6 +207,14 @@ Digits:=40:; pc("g325-keep-ln-sqrt-neg2-1e35",'(ln(sqrt(-2)-10^35))',(8059047825
 Digits:=40:; pc("g325f2-keep-evalf-acosh-sqrt-neg2-1e35",'(evalf(acosh(sqrt(-2)-10^35)))',(812836254354/10^10)+(314159265359/10^11)*i,5/10^11+5/10^12);
 // g325f2-keep-evalf-asin-half (home.yaml, oracle)
 Digits:=40:; pc("g325f2-keep-evalf-asin-half",'(evalf(asin(1/2)))',(523598775598/10^12),5/10^13);
+// g325f2-keep-evalf-acosh-half-tiny-i (home.yaml, oracle)
+Digits:=40:; pc("g325f2-keep-evalf-acosh-half-tiny-i",'(evalf(acosh(1/2+i/10^20)))',(115470053838/10^31)+(10471975512/10^10)*i,5/10^32+5/10^12);
+// g325f2-keep-evalf-asin-half-tiny-i (home.yaml, oracle)
+Digits:=40:; pc("g325f2-keep-evalf-asin-half-tiny-i",'(evalf(asin(1/2+i/10^20)))',(523598775598/10^12)+(115470053838/10^31)*i,5/10^13+5/10^32);
+// g325f2-keep-evalf-acos-half-tiny-i (home.yaml, oracle)
+Digits:=40:; pc("g325f2-keep-evalf-acos-half-tiny-i",'(evalf(acos(1/2+i/10^20)))',(10471975512/10^10)-(115470053838/10^31)*i,5/10^12+5/10^32);
+// g325f2-keep-evalf-asin-neg1-tiny (home.yaml, oracle)
+Digits:=40:; pc("g325f2-keep-evalf-asin-neg1-tiny",'(evalf(asin(-1-10^-30+i/10^40)))',-(157079632679/10^11)+(141421356237/10^26)*i,5/10^12+5/10^27);
 // int-floor2.5 (home.yaml, derived)
 Digits:=40:; pc("int-floor2.5",'(floor((25/10^1)))',2,5/10^12);
 // int-ceil-2.5 (home.yaml, derived)

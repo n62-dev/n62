@@ -6,6 +6,8 @@ import { literalStart } from "./literalPrec.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { callsOf, closing, functionsIn, isError, isName, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
+import { toExactLiterals } from "./exactLiterals.ts";
+import { mayStore } from "./stores.ts";
 import type { GiacValue } from "./bridge.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { nonReal } from "./complex.ts";
@@ -88,16 +90,42 @@ export function pastCapFloats(giac: Giac, input: string, result: string, P: numb
   return argumentsAsFloats(input, "typed", result, nonRealArg(giac, P));
 }
 
-/** G325f2: argumentsAsFloats of `input` when Giac's text of it (`result`) holds a float: Giac's evalf of its own exact
- *  text of the call (evalf, approx), whose nested roots cancel to the same wrong value at both precisions, so the
- *  agreement check confirmed it (evalf(asin(sqrt(-2)*10^-330-2)) showed ln 2 for 1.31695789692 with 40 digits). Home
- *  and CAS then take MPFR's function of the argument's float. One call per argument (complexArg). */
 /** G325f2: Giac's text of a result holds a float and a free name (x+evalf(asin(z))): not a number, so Home runs the
  *  floatResultFloats input again for its text instead of taking the float path. */
 export const floatsBesideName = (result: string): boolean => hasFloat(result) && namesIn(result, "printed").some((n) => n !== "i");
 
+/** G325f2: argumentsAsFloats of `input` when Giac's text of it (`result`) holds a float: Giac's evalf of its own exact
+ *  text of the call (evalf, approx), whose nested roots cancel to the same wrong value at both precisions, so the
+ *  agreement check confirmed it (evalf(asin(sqrt(-2)*10^-330-2)) showed ln 2 for 1.31695789692 with 40 digits). Home
+ *  and CAS then take MPFR's function of the argument's float when floatsContradict finds Giac's value wrong. One call
+ *  per argument (complexArg). */
 export function floatResultFloats(input: string, result: string, complexArg: (arg: string) => boolean): string | null {
   return hasFloat(result) ? argumentsAsFloats(input, "typed", result, complexArg) : null;
+}
+
+/**
+ * G325f2 fix round 1: Giac's value of the input (stored in `name`, its evalf at P) is contradicted by MPFR's function of
+ * the argument's float (`floats`, floatResultFloats): a part of it differs from that route's value at P + 20 by more
+ * than ten times the route's own change from P to P + 20, plus 10^(3-P) of its size. Only then is the exact text the
+ * wrong one. Near ±1 the argument's float loses digits instead (acosh(1/2+i/10^20) kept 9 of its tiny real part, which
+ * Giac's ln form has whole; asin(-1-10^-30+i/10^40) none), so a route that changes much contradicts nothing. One
+ * evaluation; a text that stores, a list (whose comparison is no truth value) or an error takes the float route.
+ */
+export function floatsContradict(giac: Giac, name: string, floats: string, P: number, restore: number): boolean {
+  if (mayStore(floats)) return true;
+  const e = toExactLiterals(floats);
+  const part = (f: string): string => `abs(${f}(${name})-${f}(pasfb))<=10*abs(${f}(pasfa)-${f}(pasfb))+10^(${3 - P})*abs(pasfb)`;
+  const run = `Digits:=${P}:;pasfa:=evalf(${e}):;Digits:=${P + 20}:;pasfb:=evalf(${e}):;[${part("re")} and ${part("im")},purge(pasfa,pasfb)][0]`;
+  const kept = withDigits(giac, P + 20, restore, () => giac.eval(run));
+  if (isError(kept)) giac.eval("purge(pasfa,pasfb)");
+  return !kept.endsWith(",true");
+}
+
+/** G325f2: floatResultFloats of `input` (Giac's value of it in `name`, printed `result`) when floatsContradict finds
+ *  Giac's value wrong; null otherwise. */
+export function contradictedFloats(giac: Giac, input: string, result: string, name: string, P: number, restore: number): string | null {
+  const floats = floatResultFloats(input, result, nonRealArg(giac, P));
+  return floats !== null && floatsContradict(giac, name, floats, P, restore) ? floats : null;
 }
 
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.

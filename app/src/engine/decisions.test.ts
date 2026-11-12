@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { argumentsAsFloats, decidedAtDouble, floatResultFloats, floatsBesideName, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
+import { argumentsAsFloats, decidedAtDouble, floatResultFloats, floatsBesideName, floatsContradict, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -178,6 +178,27 @@ describe.skipIf(!giacAvailable())("nonRealArg at MPFR precision (G325f1; real Gi
     expect(nonRealArg(giac, P)("sqrt(-2)/10^400-2")).toBe(true);
     expect(nonRealArg(giac, P)("sqrt(2)*10^-330-2")).toBe(false);
     expect(nonRealArg(giac, P)("2")).toBe(false);
+  });
+
+  it("finds Giac's evalf contradicted only where its exact text cancels (G325f2 fix round 1)", () => {
+    const P = valuePrecision(12);
+    const contradicted = (input: string, floats: string): boolean => {
+      withDigits(giac, P, 12, () => giac.eval(`pasg325:=${input}`));
+      try {
+        return floatsContradict(giac, "pasg325", floats, P, 12);
+      } finally {
+        giac.eval("purge(pasg325)");
+      }
+    };
+    expect(contradicted("evalf(asin(sqrt(-2)*10^-330-2))", "evalf(asin(evalf(sqrt(-2)*10^-330-2)))")).toBe(true);
+    expect(contradicted("evalf(acosh(sqrt(-2)*10^-330-2))", "evalf(acosh(evalf(sqrt(-2)*10^-330-2)))")).toBe(true);
+    // the argument's float loses the tiny part's digits near 1 (MPFR's ln), Giac's ln form keeps them
+    expect(contradicted("evalf(acosh(1/2+i/10^20))", "evalf(acosh(evalf(1/2+i/10^20)))")).toBe(false);
+    expect(contradicted("evalf(asin(1/2+i/10^20))", "evalf(asin(evalf(1/2+i/10^20)))")).toBe(false);
+    expect(contradicted("evalf(asin(-1-10^-30+i/10^40))", "evalf(asin(evalf(-1-10^-30+i/10^40)))")).toBe(false);
+    // a text that stores is never run for the check
+    expect(contradicted("evalf(asin(2*i))", "pq:=evalf(asin(evalf(2*i)))")).toBe(true);
+    expect(giac.eval("pq")).toBe("pq");
   });
 });
 

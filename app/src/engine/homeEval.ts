@@ -33,7 +33,7 @@ import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
 import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
-import { decidedAtDouble, decideTwice, decidingStored, floatResultFloats, floatsBesideName, nonRealArg, pastCapFloats, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decidingStored, contradictedFloats, floatsBesideName, nonRealArg, pastCapFloats, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
@@ -658,8 +658,8 @@ export function homeEval(
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
-  // G325f1, G325f2: asin, acos or acosh of a non-real argument whose exact text is past the cap, or under evalf: from the argument's float
-  const asFloats = once || undecided ? null : (pastCapFloats(giac, body, exactOut, P) ?? floatResultFloats(body, exactOut, nonRealArg(giac, P)));
+  // G325f1, G325f2: asin, acos or acosh of a non-real argument whose exact text is past the cap, or under evalf when the argument's float contradicts it
+  const asFloats = once || undecided ? null : (pastCapFloats(giac, body, exactOut, P) ?? contradictedFloats(giac, body, exactOut, ans, P, s.digits));
   if (asFloats !== null && !floatsBesideName(exactOut)) return viaFloat("float-big", undefined, asFloats);
   if (asFloats !== null) exactOut = exactRun(toExactLiterals(asFloats)); // G325f2: a non-number keeps Giac's text of it
   if (seq.empty) return refuse("noValue", "exact");
