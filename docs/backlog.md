@@ -8,9 +8,9 @@ The one place for "where are we and what's left", one or two lines per open item
 | Stage | State |
 |---|---|
 | Phase 0 spike; MVP milestones 1 (Home, CAS), 2 (Function, Solve), 3 (Python, removed by P11) | **Done** 2026-10-11 |
-| **The core freeze (P23)** | **Ended 2026-10-27** (owner). Its net stays: [tests/core/](../tests/core/README.md) (69 everyday tasks, all active) runs on every merge and on the night's device; a red case is a bug to fix. |
-| Milestone 4a: feel (P11) | Built: the entry work, sheets, flicks, Settings in the Mode sheet (R49, R87), history-row actions, R15b–R15c4, the mockups and the visual pass (R12a, R12b), press feedback only (R12c), TalkBack names and font scale 2.0 (R41), σ on tap (R40), the mark style (R124), the digit-group separator (R125), the palettes (R140, R150), Key shadows (R156), results mode (R53). Waiting: the trust features |
-| Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: A4b 31.9 ms, after R132 (A74, 11-05) p95 14.1 ms ≤ 16, E3 met; the gate is not complete |
+| **The core freeze (P23)** | **Ended 2026-10-27** (owner). Its net stays: [tests/core/](../tests/core/README.md) (everyday tasks, all active) runs on every merge and on the night's device; a red case is a bug to fix. |
+| Milestone 4a: feel (P11) | Built (the entry work, sheets, flicks, Settings, history-row actions, the visual pass, themes, results mode; the list: git). Waiting: the trust features |
+| Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: p95 14.1 ms ≤ 16 (A74), E3 met; the gate is not complete |
 | Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), a result chip as σ (R271), menu Constants and Tools (R92) |
 | Milestone 6: Structure | Not started (EN5–EN7, Help) |
 | MVP release | v0.1.0, the APK and the website from one tag, after the 11-17 freeze, at the bar: [release-0.1.0.md](release-0.1.0.md) |
@@ -18,7 +18,7 @@ The one place for "where are we and what's left", one or two lines per open item
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
 
 ## Needs the user
-0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml) (69 cases; tell a session what to drop or add); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
+0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml) (tell a session what to drop or add); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
 1. **Your outreach steps** (decisions.md P18–P22): mirror G77's pin (`gh` logged in; the command is in `engine/giac/README.md`).
 2. **G2 questions:** the unanswered items of `tests/golden/G2-CHECKLIST.md` (41, 42, 52, 56, 63–73; each package built a default, named in decisions.md; 63–65 can reverse S14's route R); the optional real-G2 spot checks (`spec/mapping/vc-2026-10-11/SPOT-CHECK.md`).
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
@@ -26,7 +26,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by Thu 11-12; R269 round trip.
+8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by the freeze (11-17); R269 round trip.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -63,8 +63,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93 is G168; F96 and F97 are G174 (the rest: G111, G113, G113f1, R80f1). Family 5.
-- **F96.** G174 (run 983): the name arguments of QR, LU, Fill, CopyVar, point3d, is_hamiltonian (and every such head, stores.ts) reach the log; gbasis's lastgb, lastv are purged; so are wz_certificate's assumptions on k and n; `debug` is refused. Left: `GF(2,8)`'s K and g hold for the session only (fix after the tag: log the three-argument `GF(p,P,[k,K,g])`, quater.cc:336–374); a log from before G174 may keep `lastgb`, `lastv` (Vars lists them, Delete removes; no migration, pass 143); `interactive_plotode` throws `prompt is not defined` (left out of Find, G111).
-- **F97.** G174 (run 983): `ellipse` and `hyperbola` are left out of Find (graphics group); `ecm_factor` of a 73-digit number is long by nature (Cancel stops it), not a bug.
+- **F96.** G174 built (run 983). Left: `GF(2,8)`'s K and g hold for the session only (fix after the tag: log the three-argument `GF(p,P,[k,K,g])`, quater.cc:336–374); a log from before G174 may keep `lastgb`, `lastv` (Vars lists them, Delete removes; no migration, pass 143); `interactive_plotode` throws `prompt is not defined` (left out of Find, G111).
 - **F200 (A120, A123 built).** Core c29 red once (device 100); a second red is a FIX.
 - **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 ms of 400 in run 307, 417 in run 909; two sightings, so it is due in `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, 87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; golden `steps` at ×8: G325 rows stopped (run 1032: 4; run 1054: 2, and g186-cos-tanh-acosh-1e-1000-12 gave No value found); two sightings, so due in `isTiming`.
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
@@ -77,8 +76,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F161, fixed by G154 (left, no package).** An underflow whose size Giac cannot state (`exp(-10^30)+exp(-10^31)`: no finite re(lnexpand(ln(e))), e^(10^-1000) is 0) shows ⚠ 0 again, as before G84; was "Underflow". Family 3.
 - **F225, no package (pass 151).** `evalf(sqrt(-2+i/10^330))`, Home and CAS, is ⚠ 0 2E-126+3E-205·i (right 3.53553390593E-331+1.41421356237·i; plain `sqrt` is right): Giac's evalf of its exact sqrt text cancels as in F224, past the double range. Flagged (the two precisions differ); likely fix: sqrt in contradictedCall (G325f2). Family 4.
 - **F226, no package (pass 152).** At the steps stage's ×8 clock (run 1032) `evalf(acos(sqrt(-2)*10^-330-2))` showed ⚠ 3.14159265359-728.156455628·i (right imaginary part -1.31695789692), not a stop. Family 5.
-- **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. Its nightly rows: 6 stay (685 of 699 passed and went, G189; 8 of 9 with an `(e^{0.5+10^-k}-e^{0.5})·10^k` term pass once e is typed as the keys type it, G326), 1 with that term, the others `ln`, `√` and a power of 0.99…9, and the `tan(1ᴇ1000)` one.
-- **F145, G183 (G120, G137, G138).** Nightly sweep hangs. G186 fixed G120's 20 and G137's 6; left: G138's 9 (mostly (√(a+10^-k)-√a)·10^k+b) and 4 wasm "unreachable" traps in arctan, arccos. The sweep oracle (`tools/probes/sweep/oracle.py`) drops a part of mpmath's acosh and acos of a tiny complex (G137's 2 oracle rows).
+- **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. Its nightly rows: 6 stay: 1 with an `(e^{0.5+10^-k}-e^{0.5})·10^k` term, the others `ln`, `√` and a power of 0.99…9, and the `tan(1ᴇ1000)` one.
+- **F145, G183 (G120, G137, G138).** Nightly sweep hangs. Left: G138's 9 (mostly (√(a+10^-k)-√a)·10^k+b) and 4 wasm "unreachable" traps in arctan, arccos. The sweep oracle (`tools/probes/sweep/oracle.py`) drops a part of mpmath's acosh and acos of a tiny complex (G137's 2 oracle rows).
 - **The hardening without a bug line:** r16's end mark, a 50,000-input sweep with no new false mark, is not met (Opus pass 82); A44: `tests/golden/sweep-nightly-known.yaml` holds the nightly sweep's open rows (F145, F155); the gate never reads it.
 
 ### Next (packages and order: brief section 0)

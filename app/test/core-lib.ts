@@ -144,8 +144,10 @@ function target(page: Page, name: string): import("@playwright/test").Locator {
 }
 
 /** R276: one finger on the target's centre by CDP touch events (the browser's own touch path, touch-action included),
- *  for a hold (`ms` down, no move) or a swipe (`dx` across in `steps` moves, then lift). */
-export async function finger(page: Page, name: string, how: { ms?: number; dx?: number; dy?: number; steps?: number }): Promise<void> {
+ *  for a hold (`ms` down, no move) or a swipe (`dx` across in `steps` moves, then lift). `still`: ms the finger rests
+ *  after its last move before the lift, so Chrome reads no speed and starts no fling (a lift at speed starts one, and
+ *  Chrome takes the next tap within it as the fling's stop: no click; under load that lasted past a 250 ms wait, R279). */
+export async function finger(page: Page, name: string, how: { ms?: number; dx?: number; dy?: number; steps?: number; still?: number }): Promise<void> {
   const loc = target(page, name);
   await loc.scrollIntoViewIfNeeded();
   const box = await loc.boundingBox();
@@ -162,15 +164,18 @@ export async function finger(page: Page, name: string, how: { ms?: number; dx?: 
       await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: at(((how.dx ?? 0) * i) / steps, ((how.dy ?? 0) * i) / steps) });
       await page.waitForTimeout(16);
     }
+  if (how.still) await page.waitForTimeout(how.still);
   await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await cdp.detach();
 }
 
-/** R276: a swipe across 60 % of the row's width (past the 40 % that deletes), slowly enough to be no fling. */
+/** How long a slow swipe's finger rests before its lift: past Chrome's 40 ms "the pointer stopped" (its velocity tracker). */
+export const STILL_MS = 120;
+/** R276: a swipe across 60 % of the row's width (past the 40 % that deletes), slowly and lifted at rest: no fling. */
 async function swipeRow(page: Page, name: string, dir: "left" | "right"): Promise<void> {
   const row = name === "row:last" ? rowsOf(page).last() : target(page, name).locator("xpath=ancestor-or-self::article[1]");
   const width = (await row.boundingBox())?.width ?? 0;
-  await finger(page, name, { dx: (dir === "left" ? -0.6 : 0.6) * width, steps: 10 });
+  await finger(page, name, { dx: (dir === "left" ? -0.6 : 0.6) * width, steps: 10, still: STILL_MS });
 }
 
 /** Every row's status is settled (nothing pending). */

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R277: the term a hold on the entry line selects, and the term of an atom (R279's Select starts from it). A term is what
+// R277: the term a hold on the entry line selects, and the term of an atom (R279's Select starts from it, grow.ts). A term is what
 // R17, L8 and L9 take as one: a number with its ᴇ part (and its power), a chip, a fraction, a root, a bracket group (a
 // function's name goes with its bracket), a letter, each with a power after it. An operator, a relation, a separator or
 // a box's start is no term. Offsets as in boxes.ts (an atom's parts come before it, one level deeper; a power `^…` is an
@@ -24,8 +24,8 @@ interface Bounds {
   bottom: number;
 }
 
-/** The atoms on the level of the atom at `o`, in its box, in order (their offsets). */
-function level(mf: Field, o: number): number[] {
+/** The atoms on the level of the atom at `o`, in its box, in order (their offsets; R279's Select reads them too). */
+export function level(mf: Field, o: number): number[] {
   const d = depthAt(mf, o);
   const row = [o];
   for (let s = atomStart(mf, o); s > 0 && depthAt(mf, s) === d && latexAt(mf, s) !== ""; s = atomStart(mf, s)) row.unshift(s);
@@ -82,7 +82,7 @@ function boundsOf(mf: Field, o: number): Bounds | undefined {
 }
 
 /** The atom whose part holds the atom at `o` (the first later offset one level up), or 0 on the line. */
-function parentOf(mf: Field, o: number): number {
+export function parentOf(mf: Field, o: number): number {
   const d = depthAt(mf, o);
   if (d === 0) return 0;
   for (let p = o + 1; p <= mf.lastOffset; p++) if (depthAt(mf, p) < d) return p;

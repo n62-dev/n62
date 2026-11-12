@@ -16,6 +16,8 @@ export class EntryController {
   private onField: typeof import("./field.ts").runOnField | undefined;
   /** Backspace, Delete and the printable keys of a hardware keyboard (entry/hwkeys.ts, R26b, R31): loaded with MathLive. */
   private hwKey: typeof import("./hwkeys.ts").hardwareKey | undefined;
+  /** R279: the chain of Select presses that Deselect walks back (entry/grow.ts): loaded with MathLive. */
+  private chain: import("./grow.ts").SelectChain | undefined;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
   private stored: string[] = [];
@@ -82,6 +84,7 @@ export class EntryController {
     void line.then((l) => (this.kept = l?.latex ? 2 : 0));
     this.ready = Promise.all([mathlive.load(), import("./field.ts"), import("./hwkeys.ts"), line]).then(([m, f, h, l]) => {
       this.onField = f.runOnField;
+      this.chain = new f.SelectChain();
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips) + (this.pendingValue ?? "");
@@ -223,6 +226,7 @@ export class EntryController {
    */
   run(a: ActionBody): void {
     if (a.kind === "special") return;
+    this.endSelect();
     if (a.kind === "insert" && a.chip) this.table[a.chip.key] = a.chip.chip; // a constant on a free key (R4b)
     this.touched = true;
     if (!this.mf) {
@@ -230,5 +234,14 @@ export class EntryController {
       return;
     }
     this.onField?.(this.mf, a);
+  }
+
+  /** R279: Select (`grow`) or Deselect on the line (entry/grow.ts); false where the key does nothing. */
+  select(grow: boolean): boolean {
+    return !!this.mf && !!this.chain?.step(this.mf, grow);
+  }
+  /** Any other key ends the chain of Select presses (R279; a tap does by changing the selection). */
+  endSelect(): void {
+    this.chain?.end();
   }
 }
