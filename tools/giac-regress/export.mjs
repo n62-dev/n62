@@ -99,7 +99,7 @@ export function caseLine(c, file) {
   if (c.mark === "⚠" && /(?<![A-Za-z_0-9])int\(/.test(c.input) && !PATCHED_IDS.has(c.id)) return { leftOut: "shown value from Home's numeric integration (G90), not Giac's answer" };
   // G111: Home shows the double of a function with no MPFR path (igamma), which Giac keeps unevaluated at Digits 40
   if (c.id.startsWith("g111-") && c.mark === "⚠" && /no MPFR path/.test(c.note ?? "")) return { leftOut: "a double of a function with no MPFR path (Home's value, G111)" };
-  if (CANCELS_IDS.has(c.id)) return { leftOut: "an exact answer whose evalf at Digits 40 cancels a large k*pi (Home raises the precision, G122)" };
+  if (CANCELS_IDS.has(c.id)) return { leftOut: "an exact answer whose evalf at Digits 40 cancels (a large k*pi: Home raises the precision, G122; G325f1)" };
   if (c.expect === undefined) return { leftOut: "mark only (no value)" };
   if (partsOf(c.expect) === null) return { leftOut: "not a number (refusal, text, list or truth value)" };
   const digits = file === "home.yaml" ? 12 : (s.digits ?? 12); // the home stage evaluates at 12 digits whatever settings.digits says
@@ -607,6 +607,7 @@ export const CANCELS_IDS = new Set([
   "g126-asin-sin-1e100-30",
   "prec-zero-cancel",
   "g126-asinh-neg-1e-20-30",
+  ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), // G325f1: nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
 ]);
 export const knownReason = (id) => (KNOWN_IDS.has(id) ? KNOWN_RULES.find(([re]) => re.test(id))?.[1] : undefined);
 

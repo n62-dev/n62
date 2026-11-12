@@ -44,7 +44,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F208, no package (Opus pass 124).** A stored float list read back shows vector brackets: `J:=list[evalf(1/3),evalf(2/3)]` shows `{…}`, then `J` and `J*J` show `[…]` (copy text `list[…]`); the read's rebuild (facts.ts `inherited`) drops Giac's list type. Family 1.
 - **F215, package G328 (G317; pass 138).** A name set beside the result takes its facts: `(A:=5)*approx(1)` gives the exact A a ⚠, then `A*2` is ⚠ 10. Family 1.
 - **F218, package R286 (R271f1; pass 139).** σ's confirmed digits cut the exact value's, in Home and the unit view. Family 1.
-- **F224, G325f1 (G325, run 1001: patch 0044).** Home `asin(sqrt(-2)-10^35)` showed the conjugate; fixed, but G325's check reads an imaginary part below the double range as real: `acos(sqrt(-2)*10^-330-2)` ≈ 5-7E2·i (mpmath 3.14159265359-1.31695789692·i). Family 5.
+- **F224, fixed by G325 (run 1001: patch 0044) and G325f1 (run 1009).** asin or acos of a non-real argument: the conjugate (`asin(sqrt(-2)-10^35)`), and an imaginary part below the double range read as real (`acos(sqrt(-2)*10^-330-2)` was ≈ 5-7E2·i). Family 5.
 - **F220, fixed by G324f1 (run 995).** A rootof's ≈ was stored with Giac's `+1.6E-40·i` (`W:=evalf(solve(x^3-x-1=0,x))`, then `W`); the unaudited check stores each element without the part it shows as 0. Family 1.
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.
 - **F222, package G327 (G318's report; pass 141).** Two failed loads with a stored log raise G19's count: the next launch leaves the log out (kept, listed). Count replay crashes only. Family 2.

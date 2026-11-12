@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { decidedAtDouble, decideTwice, decisionArgs, evenPowerRoot, restsOnDecision, type Decision } from "./decisions.ts";
+import { argumentsAsFloats, decidedAtDouble, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -165,6 +165,22 @@ describe.skipIf(!giacAvailable())("decideTwice (G38, G57; real Giac)", () => {
   });
 });
 
+describe.skipIf(!giacAvailable())("nonRealArg at MPFR precision (G325f1; real Giac)", () => {
+  let giac: EngineGiac;
+  beforeAll(async () => {
+    giac = engineGiac(await loadNodeGiac());
+  });
+  it("finds an imaginary part below the double's range, at Digits 12", () => {
+    // im(evalf(sqrt(-2)*10^-330-2)) is 0 at Digits 12 (a double), 1.414E-330 at 40 digits
+    giac.eval("Digits:=12");
+    const P = valuePrecision(12);
+    expect(nonRealArg(giac, P)("sqrt(-2)*10^-330-2")).toBe(true);
+    expect(nonRealArg(giac, P)("sqrt(-2)/10^400-2")).toBe(true);
+    expect(nonRealArg(giac, P)("sqrt(2)*10^-330-2")).toBe(false);
+    expect(nonRealArg(giac, P)("2")).toBe(false);
+  });
+});
+
 describe.skipIf(!giacAvailable())("decidedAtDouble (G71, F59; real Giac)", () => {
   let giac: EngineGiac;
   beforeAll(async () => {
@@ -247,5 +263,14 @@ describe("asin and acos of a non-real argument decide (G325)", () => {
     expect(decisionArgs("asin(sqrt(-2)-10^1000)", "i*ln(2)", none, nonReal)).toContain("sqrt(-2)-10^1000");
     expect(decisionArgs("asin(tan(2)-10^1000)", "i*ln(2)", none, nonReal)).toEqual([]);
     expect(decisionArgs("asin(1/2)+10^1000", "pi/6+10^1000", none, nonReal)).toEqual([]);
+  });
+
+  it("reads the argument of every asin or acos that decides as its float (G325f1), inner calls too", () => {
+    expect(argumentsAsFloats("acos(sqrt(-2)*10^-330-2)", "typed", "i*ln(2)", nonReal)).toBe("acos(evalf(sqrt(-2)*10^-330-2))");
+    expect(argumentsAsFloats("2*asin(sqrt(-2)-1)+acos(1/3)", "typed", "i*ln(2)+acos(1/3)", nonReal)).toBe("2*asin(evalf(sqrt(-2)-1))+acos(1/3)");
+    expect(argumentsAsFloats("asin(asin(sqrt(-2))+i)", "typed", "i*ln(2)", nonReal)).toBe("asin(evalf(asin(evalf(sqrt(-2)))+i))");
+    // a real result, or no argument that is not real: none
+    expect(argumentsAsFloats("asin(sqrt(-2)-1)", "typed", "pi/6", nonReal)).toBeNull();
+    expect(argumentsAsFloats("asin(2)", "typed", "i*ln(2)", nonReal)).toBeNull();
   });
 });
