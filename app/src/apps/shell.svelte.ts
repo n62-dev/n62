@@ -3,7 +3,7 @@
 // apps beside them. App code loads on first use (registry.ts); the open app and view are stored like the
 // settings, so the calculator comes back where it was.
 import type { Calc, UserName } from "../calc/port.ts";
-import type { ChipTable } from "../input/chips.ts";
+import type { Chip, ChipTable } from "../input/chips.ts";
 import { t } from "../i18n/index.ts";
 import type { ActionBody } from "../keyboard/keyboard.ts";
 import type { Kv } from "../state/storage.ts";
@@ -20,6 +20,8 @@ export interface EntryLine {
   readonly chips?: ChipTable;
   set(latex: string, chips?: ChipTable): void;
   clear(): void;
+  /** A result as a chip at the cursor (R262: an app's answer taken to Home; a test stub may leave it out). */
+  insertResult?(shown: string, chip: Chip): void;
 }
 
 interface Place {
@@ -143,6 +145,7 @@ export class AppShell {
       },
       copy: (text: string, notice?: string) => void this.clip?.copyRaw(text, notice),
       notice: (text: string) => this.clip?.say(text),
+      toHome: (shown: string, chip: Chip) => this.toHome(shown, chip),
     };
   }
 
@@ -229,6 +232,15 @@ export class AppShell {
     this.save();
   }
   lastApp: AppId | null = null;
+  /** R262: Menu › To Home: Home comes back as the place keys bring it (Home's set-aside line too), and the answer goes on
+   *  its line as a chip, as a tapped history result does. The explicit carry R76 allows: what the app had on its line
+   *  (a value, a half-typed one too) stays with the app. */
+  toHome(shown: string, chip: Chip): void {
+    this.entryBase = this.entry.value; // the app's line is not carried: close() clears it
+    if (this.goTo) this.goTo("home");
+    else this.close();
+    this.entry.insertResult?.(shown, chip);
+  }
 
   // ---- keys routed to the app
   enter(latex: string): void {

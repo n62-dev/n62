@@ -24,6 +24,9 @@ export const enNum = {
   "why.noFunction": "Define a function first",
   "why.noEquation": "Enter an equation and pick an unknown first",
   "why.oneEquation": "Needs exactly one equation",
+  /** R262: the Menu row that takes the answer to Home's line as a chip, and why it is greyed (Solve, then Plot) */
+  "app.toHome": "To Home",
+  "why.noAnswerSolve": "No answer yet: solve first",
   /** R261: Symb's Menu row that empties the selected slot (Undo brings it back), and why it is greyed */
   "slot.clear": "Clear",
   "why.emptySlot": "This one is empty",

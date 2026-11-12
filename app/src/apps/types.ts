@@ -4,6 +4,7 @@
 // component. The shell owns the keyboard, the shared entry line and the view switching.
 import type { Component } from "svelte";
 import type { Calc, CalcSettings, UserName } from "../calc/port.ts";
+import type { Chip } from "../input/chips.ts";
 import type { Kv } from "../state/storage.ts";
 import type { GroupSep } from "../render/home.ts";
 
@@ -26,6 +27,9 @@ export interface AppHost {
   copy(text: string, notice?: string): void;
   /** Show a short notice in the stage, as Copy's (R99: a value the Num entry refuses says why). */
   notice(text: string): void;
+  /** R262: Menu › To Home: leave the app and put the answer on Home's line as a chip (`shown` its LaTeX, `chip` its value
+   *  and facts), as a tapped history result goes on the line. */
+  toHome(shown: string, chip: Chip): void;
 }
 
 /** A place's glyph on the status line's tile (R82f2) and in the apps list (R84): maths-font text, or a drawn icon (Home's house). */

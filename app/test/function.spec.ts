@@ -363,3 +363,34 @@ test("Function Symb: Menu › Clear empties F1, Undo brings it back (R261)", asy
   await page.waitForFunction(() => window.n62.plot.board !== undefined);
   expect(await page.evaluate(() => window.n62.plot.curves)).toBe(2);
 });
+
+// R262: Plot's Menu › To Home takes the readout's answer to Home's line as a chip with its facts.
+const menuRow = (page: Page, id: string) => page.getByTestId("menu").locator(`[role="menuitem"][data-id="${id}"]`);
+test("Function: a Root readout, Menu › To Home: one chip on Home's line; ×2 gives 2.82842712475 ≈ (R262, oracle)", async ({ page }) => {
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["x", "pow", "d2", "right", "sub", "d2", "enter", "@plot"]);
+  await page.waitForFunction(() => window.n62.plot.board !== undefined);
+  // no analysis yet: no row (Plot's eight rows and their reasons fill the room at the floor; the last row moves no number)
+  await tap(page, ["@menu"]);
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(8);
+  await expect(menuRow(page, "tohome")).toHaveCount(0);
+  await tap(page, ["esc"]);
+  await tap(page, Array<string>(10).fill("right")); // x = 1
+  await expect(page.getByTestId("trace-x")).toHaveText("1");
+  await tap(page, ["@menu", "d1"]); // Root
+  await expect(page.getByTestId("readout-x")).toHaveText("1.41421356237");
+  await tap(page, ["@menu"]);
+  await expect(menuRow(page, "tohome")).toHaveAttribute("data-count", "tohome");
+  await menuRow(page, "tohome").click();
+  await expect(page.locator('[data-app="function"]')).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => Object.keys(window.n62.entry.chips).length)).toBe(1);
+  const chip = await page.evaluate(() => Object.values(window.n62.entry.chips)[0]);
+  expect(chip?.exact).toBe(false);
+  expect(chip?.value.startsWith("1.41421356237309504880")).toBe(true);
+  await tap(page, ["mul", "d2", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  // 2·√2 = 2.828427124746190… (oracle, mpmath)
+  await expect(page.locator('[data-status="done"]').last().locator(".result")).toHaveAttribute("data-text", "2.82842712475");
+  await expect(page.getByTestId("mark").last()).toHaveAttribute("data-mark", "≈");
+});

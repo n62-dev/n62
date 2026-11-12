@@ -318,3 +318,67 @@ test("Solve Num: the unknown's button ends before the value cell starts (A144f1)
   expect(v).not.toBeNull();
   expect(b!.x + b!.width).toBeLessThanOrEqual(v!.x + 0.5);
 });
+
+// R262: Menu › To Home takes the selected answer to Home's line as a chip with its facts (2 presses, not Copy … Paste).
+const menuRow = (page: Page, id: string) => page.getByTestId("menu").locator(`[role="menuitem"][data-id="${id}"]`);
+const lineChips = (page: Page): Promise<number> => page.evaluate(() => Object.keys(window.n62.entry.chips).length);
+const lastMark = (page: Page) => page.getByTestId("mark").last();
+/** x²=2 solved from x = 1 in Num (the answer's full value kept: the copy code loads on first use). */
+async function solvedRoot(page: Page): Promise<void> {
+  await openSolve(page);
+  await tap(page, ["x", "sq", "shift", "dot", "d2", "enter", "@num"]);
+  await setValue(page, "x", ["d1"]);
+  await tap(page, ["@menu", "d1"]);
+  await expect(value(page, "x")).toHaveText("1.41421356237");
+  await expect.poll(() => page.evaluate(() => "x" in (window.n62.shell.loaded.solve!.instance as unknown as { copies: Record<string, string> }).copies)).toBe(true);
+}
+async function toHome(page: Page): Promise<void> {
+  await tap(page, ["@menu"]);
+  await expect(menuRow(page, "tohome")).toHaveAttribute("data-count", "tohome");
+  await menuRow(page, "tohome").click();
+  await expect(page.locator('[data-app="solve"]')).toHaveCount(0);
+  await expect.poll(() => lineChips(page)).toBe(1);
+}
+
+test("Solve: Menu › To Home puts the answer on Home's line as one chip; ×2 gives 2.82842712475 ≈ (R262, oracle)", async ({ page }) => {
+  await solvedRoot(page);
+  await toHome(page);
+  expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{1\.41421356237\}$/);
+  await tap(page, ["mul", "d2", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  // 2·√2 = 2.828427124746190… (oracle, mpmath): the chip carries every confirmed digit, so the 12th rounds up
+  await expect(page.locator('[data-status="done"]').last().locator(".result")).toHaveAttribute("data-text", "2.82842712475");
+  await expect(lastMark(page)).toHaveAttribute("data-mark", "≈");
+});
+
+test("Solve: a ⚠ answer goes to Home with its ⚠, and the next line keeps it (R262)", async ({ page }) => {
+  await solvedRoot(page);
+  // an answer with fewer confirmed digits than shown, as solve() keeps it (isWarned, keepFull's facts)
+  await page.evaluate(() => {
+    const app = window.n62.shell.loaded.solve!.instance as unknown as { warned: Record<string, boolean>; confirmed: Record<string, number | "exact"> };
+    app.warned = { x: true };
+    app.confirmed = { x: 5 };
+  });
+  await expect(page.locator('[data-testid="solve-table"] [data-testid="mark"]')).toHaveText("⚠");
+  await toHome(page);
+  const chip = await page.evaluate(() => Object.values(window.n62.entry.chips)[0]);
+  expect(chip?.exact).toBe(false);
+  expect(chip?.warn).toBe("unchecked");
+  expect(chip?.reliableDigits).toBe(5);
+  await tap(page, ["mul", "d2", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  await expect(lastMark(page)).toHaveAttribute("data-mark", "⚠");
+});
+
+test("Solve: To Home is disabled with its reason while x has no answer; a typed value does not go (R262)", async ({ page }) => {
+  await openSolve(page);
+  await tap(page, ["x", "sq", "shift", "dot", "d2", "enter", "@num"]);
+  await setValue(page, "x", ["d1"]);
+  await tap(page, ["@menu"]);
+  await expect(menuRow(page, "tohome")).toHaveAttribute("aria-disabled", "true");
+  await expect(menuRow(page, "tohome").locator(".reason")).toHaveText("No answer yet: solve first");
+  await tap(page, ["d5"]); // its number: a disabled row does nothing
+  await expect(page.getByTestId("menu")).toBeVisible();
+  await expect(page.locator('[data-app="solve"]')).toBeVisible();
+  expect(await lineChips(page)).toBe(0);
+});

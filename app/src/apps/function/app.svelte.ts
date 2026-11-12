@@ -13,6 +13,7 @@ import { commaResult } from "../../state/displayMode.ts";
 import { drawnGroups } from "../grouped.ts";
 import { addMul, decText, decToNumber, nearestK, niceStep, parseDec, plainNumber, showDecimal, type Dec } from "../decimal.ts";
 import { slotNames, SlotsState, type SlotsJson } from "../slots.svelte.ts";
+import { answerChip, answerShown } from "../toHome.ts";
 import type { AppHost, AppInstance, MenuItem, NavDir, SubMenu, ViewId } from "../types.ts";
 import { compileDefinition, type Compiled } from "./compile.ts";
 import type { AnalysisOutcome, AnalysisRequest, Cell } from "./engineApi.ts";
@@ -208,6 +209,9 @@ export class FunctionApp implements AppInstance {
         { id: "default", label: numText("plot.defaultWindow"), run: () => this.defaultWindow() },
         { id: "copy", label: tc("clip.copy"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine()) },
         { id: "shown", label: tc("clip.asShown"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine(), true) },
+        // R262: the ninth row only with an answer: at the 36 px floor nine rows with a reason line do not fit over the keys
+        // (412 × 915, the Fairphone: R145, R82f1), and as the last row it moves no other row's number (docs/05 3.1)
+        ...(this.copyLine() ? [{ id: "tohome", count: "tohome", label: numText("app.toHome"), run: () => void this.toHome(this.copyLine()) }] : []),
       ];
     }
     if (view === "num")
@@ -268,6 +272,15 @@ export class FunctionApp implements AppInstance {
     if (!l) return;
     const text = shown ? l.value : await this.readoutFull(l);
     if (text !== undefined) this.host.copy(text);
+  }
+  /** R262: the readout's answer to Home's line as a chip: every confirmed digit (as Copy reads it) and the cell's facts. */
+  async toHome(l: Readout["lines"][number] | undefined): Promise<void> {
+    const c = l?.cell;
+    if (!c?.ok || !c.value) return; // (a NaN or a value the engine did not give: nothing to take)
+    const { copyFull } = await import("../../clipboard/impl.ts");
+    const full = copyFull(numberSource(c.display, c));
+    if (full === undefined) return;
+    this.host.toHome(answerShown(this.fmtPoint(c), c.facts, this.host.settings.decimalMark === "comma"), answerChip(full, c.facts));
   }
   private async copyNum(): Promise<void> {
     const csv = await this.numCsv();
