@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows to step 666 change how today's calculato
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch2` | – (Opus pass 155: the scroll route decided) |
+| 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner); review-only `--no-worker` (Opus pass 157: done at 726f440f, its fix round never audited; shared-file text in the reports of 9c2369ac and 726f440f; merged with phase-1, docs/04 is 105 bytes over 70 kB: its own 5.5 paragraph is trimmed) | ron, Opus | `p1/ron-linetouch2` | – |
 | 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
 | 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, R279 |
 | 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | R278 (owner 11-12: in v0.1.0) |
