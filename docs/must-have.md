@@ -7,8 +7,8 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
 - Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only).
 - Fri 11-13, for A91: A8, and G2 item 70 with it.
-- Sat 11-14, for the video: A4, A5.
-- The tag (target Sun 11-15; it moves if the bar needs it, owner 2026-11-10): A6, A10.
+- Sun 11-15, for the video: A4, A5.
+- The tag (target Mon 11-16, owner 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
 - Before any forum post: D8.
 - Before v0.2 starts: B2, B4, B5, B6, B7, B9. Before v0.3: B3, B8.
 - Before section C's packages: C1 to C8. Before RPN: D1 to D4.
@@ -16,7 +16,7 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 
 Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
 
-## A. Before you tell anyone (v0.1.0, target tag Sun 11-15, freeze Thu 11-12 evening)
+## A. Before you tell anyone (v0.1.0, target tag Mon 11-16, freeze Fri 11-13 after A139)
 
 - **No known silent wrong number** [have]. No open bug line shows a wrong value unmarked (F192, phasor entry, closed by R180). The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
 - **Units and ± in the core list** [miss]. 66 cases, none with a unit or ±; the harness has no unit check. R170.
@@ -24,7 +24,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 - **First-run tips** [part, was miss]. The overlay is built with 2 cards; flicks, the round pad, Find and the marks are missing. R171.
 - **Report a problem** [part, was miss]. The form is merged (A81) with no session field; nothing in the app opens it. A92, R172, R173, A95.
 - **Why trust it** [miss]. "2,700" is not true: see the figures below. G200, G201, G202, A93, A94, R174.
-- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act, Sat 11-14; no package. Decision 4.
+- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act, Sun 11-15; no package. Decision 4.
 - **F-Droid and IzzyOnDroid** [miss]. The recipe is a draft, never built. A96, A97, A98, then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
 - **APK and site** [not yet; the list's "have" is early]. Releases hold only `deps-giac-2.1.0-1d9536e0`; Pages has one test deployment from 11-05. The tag produces both. Owner's act, no package. Do not publicise n62.dev before the tag.
 

@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key: cycle logic and the display modes. Expected values are `derived` (decimal arithmetic by hand).
 import { describe, expect, it } from "vitest";
-import { decimalFromRational, type ComplexValue } from "../engine/format.ts";
+import { decimalFromRational, decimalFromString, type ComplexValue, type DecimalValue } from "../engine/format.ts";
 import {
   DEFAULT_FMT_CYCLE,
   factsOf,
   normalizeCycle,
   markFor,
   markText,
+  noDigit,
   renderNumeric,
   commaResult,
   type DisplayContext,
   type FmtMode,
   type NumericResult,
 } from "./displayMode.ts";
-import { isApplicable, nextForm, nextMode } from "./cycleForms.ts";
+import { isApplicable, nextForm, nextMode, polarOf } from "./cycleForms.ts";
 
 const q = (p: bigint, d = 1n) => decimalFromRational(p, d);
 const real = (p: bigint, d = 1n): ComplexValue => ({ re: q(p, d), im: q(0n) });
@@ -117,13 +118,78 @@ describe("renderNumeric", () => {
   it("a complex result: a+b*i and, once the engine gave r and theta, polar", () => {
     const z: NumericResult = { value: { re: q(3n), im: q(1n) } };
     expect(renderNumeric(z, "std", ctx)).toEqual({ text: "3+i", latex: "3+\\mathrm{i}" }); // regression: 3+1*i
-    const polar = { ...z, polar: { r: q(5n), theta: q(1n, 2n), angle: "rad" as const } };
+    const polar = { ...z, polar: { r: q(5n), theta: q(1n, 2n), angle: "rad" as const, confirmed: null } };
     expect(renderNumeric(polar, "polar", ctx)).toEqual({
       text: "5∡0.5",
       latex: "5\\mathbin{\\measuredangle}0.5",
     });
     // an angle computed for the other unit is not shown
     expect(renderNumeric(polar, "polar", { ...ctx, angle: "deg" })?.text).toBe("3+i");
+  });
+});
+
+// G312 (be-10): the polar form of a value with n confirmed digits draws only the digits of r and θ that those confirm.
+// z = 1+i, r = √2 and θ = π/4 (oracle, mpmath at 50 digits). Derived by hand: each part is off by less than one unit in
+// its 14th digit, so |Δz| < 2E-13: r = 1.41421356237309… ± 2E-13 rounds alike to 13 digits (1.414213562373), not 14;
+// θ moves by at most 2E-13 / (√2 − 2E-13) = 1.4142E-13: 0.785398163397307… to 0.785398163397590… round alike to 11.
+// Both are drawn to the fewer, 11 (1.41421356237309… is 1.4142135624), and the mark says 11.
+describe("G312: the polar form draws the confirmed digits only", () => {
+  const dec = (s: string): DecimalValue => decimalFromString(s) as DecimalValue;
+  const [r, theta] = [dec("1.4142135623730950488016887242097"), dec("0.78539816339744830961566084581988")];
+  // as the a b/c key stores it (cycleForms.computePolar)
+  const z = (reliableDigits: number | null, exact = false): NumericResult => {
+    const item: NumericResult = { value: { re: q(1n), im: q(1n) }, facts: { exact, reliableDigits } };
+    return { ...item, polar: polarOf(item, item.value as ComplexValue, r, theta, "rad") };
+  };
+  const c30: DisplayContext = { ...ctx, digits: 30 };
+  it("14 confirmed digits at digits 30: r and θ to the digits the 14 confirm, the mark says how many", () => {
+    expect(renderNumeric(z(14), "polar", c30)?.text).toBe("1.4142135624∡0.7853981634");
+    expect(markFor(z(14), "polar", c30)).toEqual({ mark: "⚠", n: 11 });
+    expect(renderNumeric(z(14), undefined, c30)?.text).toBe("1+i"); // the point form as before
+  });
+  it("Scientific: r and θ to the same confirmed digits", () => {
+    const sci: DisplayContext = { ...c30, format: "sci" };
+    expect(renderNumeric(z(14), "polar", sci)?.text).toBe("1.4142135624E0∡7.8539816340E-1");
+    expect(markFor(z(14), "polar", sci)).toEqual({ mark: "⚠", n: 11 });
+  });
+  it("an exact value, no count, or more confirmed digits than shown: today's 30 digits", () => {
+    const all = "1.41421356237309504880168872421∡0.78539816339744830961566084582";
+    expect(renderNumeric(z(null, true), "polar", c30)?.text).toBe(all);
+    expect(renderNumeric(z(null), "polar", c30)?.text).toBe(all);
+    expect(renderNumeric(z(40), "polar", c30)?.text).toBe(all);
+    expect(markFor(z(40), "polar", c30)).toEqual({ mark: "≈" });
+  });
+  it("a polar form stored before G312 (no counts) is not drawn: the point form is, with its mark", () => {
+    const old = (n: number | null): NumericResult => ({ ...z(n), polar: { r, theta, angle: "rad" } });
+    expect(renderNumeric(old(14), "polar", c30)?.text).toBe("1+i");
+    expect(markFor(old(14), "polar", c30)).toEqual({ mark: "⚠", n: 14 });
+    expect(renderNumeric(old(null), "polar", c30)?.text).toBe("1+i");
+  });
+  it("DEG: θ in degrees confirms fewer digits (45 ± 5.8E-12°: 12), r and θ drawn to 12, the mark says 12", () => {
+    const item: NumericResult = { value: { re: q(1n), im: q(1n) }, facts: { exact: false, reliableDigits: 14 } };
+    const deg: NumericResult = { ...item, polar: polarOf(item, item.value as ComplexValue, r, dec("45"), "deg") };
+    const cd: DisplayContext = { ...c30, angle: "deg" };
+    // 1.41421356237309… to 12 digits is 1.41421356237
+    expect(renderNumeric(deg, "polar", cd)?.text).toBe("1.41421356237∡45");
+    expect(markFor(deg, "polar", cd)).toEqual({ mark: "⚠", n: 12 });
+  });
+  it("FIX: the decimals follow r and θ, not the point value (0.001+0.001i: θ to 11 digits, ⚠ 11)", () => {
+    // z = 0.001+0.001i with 14 digits: r = 0.001·√2 ± 2E-16 (13 digits), θ = π/4 ± 1.4E-13 (11, as for 1+i: θ does not
+    // depend on the scale). FIX 12 would draw θ 0.785398163397 (12 digits); 11 digits is FIX 11: 0.78539816340, and r
+    // 0.00141421356237309… to 11 decimals is 0.00141421356
+    const v: ComplexValue = { re: q(1n, 1000n), im: q(1n, 1000n) };
+    const item: NumericResult = { value: v, facts: { exact: false, reliableDigits: 14 } };
+    const small: NumericResult = { ...item, polar: polarOf(item, v, dec("0.0014142135623730950488016887242097"), theta, "rad") };
+    expect(small.polar?.confirmed).toBe(11);
+    // the Number format setting has no Fixed today (calc/port NumberFormat), so this context is forced: the guard holds
+    // for when the polar form is drawn in a FIX context
+    const fix: DisplayContext = { ...c30, format: "fix" as unknown as DisplayContext["format"], fixDecimals: 12 };
+    expect(renderNumeric(small, "polar", fix)?.text).toBe("0.00141421356∡0.78539816340");
+    expect(markFor(small, "polar", fix)).toEqual({ mark: "⚠", n: 11 });
+  });
+  it("⚠ 0 draws no number, as the point form", () => {
+    expect(noDigit(markFor(z(0), "polar", c30))).toBe(true);
+    expect(noDigit(markFor(z(0), undefined, c30))).toBe(true);
   });
 });
 
