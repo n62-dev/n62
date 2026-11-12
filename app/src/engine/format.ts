@@ -255,10 +255,11 @@ export interface FormattedPolar {
   text: string;
 }
 
-/** Polar form r∡θ; both numbers use the same format. The engine computes r and θ (abs and arg). */
-export function formatPolar(r: DecimalValue, theta: DecimalValue, o: FormatOptions): FormattedPolar {
-  const fr = formatReal(r, o);
-  const ft = formatReal(theta, o);
+/** Polar form r∡θ, given as `re` r and `im` θ (as confirmedOptions reads the parts drawn, G312); both numbers use the
+ *  same format. The engine computes r and θ (abs and arg). */
+export function formatPolar(p: ComplexValue, o: FormatOptions): FormattedPolar {
+  const fr = formatReal(p.re, o);
+  const ft = formatReal(p.im, o);
   return { r: fr, theta: ft, text: `${toText(fr)}${POLAR_SIGN}${toText(ft)}` };
 }
 

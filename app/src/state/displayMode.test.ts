@@ -165,6 +165,28 @@ describe("G312: the polar form draws the confirmed digits only", () => {
     expect(markFor(old(14), "polar", c30)).toEqual({ mark: "⚠", n: 14 });
     expect(renderNumeric(old(null), "polar", c30)?.text).toBe("1+i");
   });
+  it("DEG: θ in degrees confirms fewer digits (45 ± 5.8E-12°: 12), r and θ drawn to 12, the mark says 12", () => {
+    const item: NumericResult = { value: { re: q(1n), im: q(1n) }, facts: { exact: false, reliableDigits: 14 } };
+    const deg: NumericResult = { ...item, polar: polarOf(item, item.value as ComplexValue, r, dec("45"), "deg") };
+    const cd: DisplayContext = { ...c30, angle: "deg" };
+    // 1.41421356237309… to 12 digits is 1.41421356237
+    expect(renderNumeric(deg, "polar", cd)?.text).toBe("1.41421356237∡45");
+    expect(markFor(deg, "polar", cd)).toEqual({ mark: "⚠", n: 12 });
+  });
+  it("FIX: the decimals follow r and θ, not the point value (0.001+0.001i: θ to 11 digits, ⚠ 11)", () => {
+    // z = 0.001+0.001i with 14 digits: r = 0.001·√2 ± 2E-16 (13 digits), θ = π/4 ± 1.4E-13 (11, as for 1+i: θ does not
+    // depend on the scale). FIX 12 would draw θ 0.785398163397 (12 digits); 11 digits is FIX 11: 0.78539816340, and r
+    // 0.00141421356237309… to 11 decimals is 0.00141421356
+    const v: ComplexValue = { re: q(1n, 1000n), im: q(1n, 1000n) };
+    const item: NumericResult = { value: v, facts: { exact: false, reliableDigits: 14 } };
+    const small: NumericResult = { ...item, polar: polarOf(item, v, dec("0.0014142135623730950488016887242097"), theta, "rad") };
+    expect(small.polar?.confirmed).toBe(11);
+    // the Number format setting has no Fixed today (calc/port NumberFormat), so this context is forced: the guard holds
+    // for when the polar form is drawn in a FIX context
+    const fix: DisplayContext = { ...c30, format: "fix" as unknown as DisplayContext["format"], fixDecimals: 12 };
+    expect(renderNumeric(small, "polar", fix)?.text).toBe("0.00141421356∡0.78539816340");
+    expect(markFor(small, "polar", fix)).toEqual({ mark: "⚠", n: 11 });
+  });
   it("⚠ 0 draws no number, as the point form", () => {
     expect(noDigit(markFor(z(0), "polar", c30))).toBe(true);
     expect(noDigit(markFor(z(0), undefined, c30))).toBe(true);

@@ -161,11 +161,12 @@ function precisionOf(r: NumericResult): (PrecisionFacts & { shape?: [number, num
   };
 }
 
-/** The polar form drawn: computed in the angle unit set now, with its counts (G312; one stored before them is not). */
-function polarShown(r: NumericResult, ctx: DisplayContext): (Polar & { confirmed: number | null }) | undefined {
+/** The polar form drawn in mode `m`, as the facts markOf and confirmedOptions read: r and θ as the parts (FIX reads each part's
+ *  exponent) and their confirmed digits. Only one computed in the angle unit set now, with its counts (G312; one stored
+ *  before them is not). */
+function polarShown(r: NumericResult, m: FmtMode, ctx: DisplayContext): { value: ComplexValue; reliableDigits: number | null } | undefined {
   const p = r.polar;
-  // the check is the narrowing TypeScript cannot draw on `p` itself
-  if (p?.angle === ctx.angle && p.confirmed !== undefined) return p as Polar & { confirmed: number | null };
+  if (m === "polar" && p?.angle === ctx.angle && p.confirmed !== undefined) return { value: { re: p.r, im: p.theta }, reliableDigits: p.confirmed };
 }
 
 /** The mode a result is drawn in, once the global setting stands in for none. */
@@ -225,11 +226,10 @@ function renderPoint(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayCo
     const f = formatFraction(BigInt(r.rational.n), BigInt(r.rational.d), m === "mixed");
     return { text: f.text, latex: fractionToLatex(f) };
   }
-  const pol = m === "polar" ? polarShown(r, ctx) : undefined;
+  const pol = polarShown(r, m, ctx);
   if (pol) {
-    // G312: the digits of r and θ that the value's confirmed digits confirm (as in markFor, the point value stands for r
-    // and θ: the format is a notation, which reads only that a part is non-zero)
-    const p = formatPolar(pol.r, pol.theta, confirmedOptions(r.value, pol.confirmed, opts(ctx.format)));
+    // G312: the digits of r and θ that the value's confirmed digits confirm, read from r and θ themselves, as in markFor
+    const p = formatPolar(pol.value, confirmedOptions(pol.value, pol.reliableDigits, opts(ctx.format)));
     return { text: p.text, latex: polarToLatex(p, group) };
   }
   const c = formatComplex(r.value, confirmedOptions(r.value, r.facts?.reliableDigits ?? null, opts(base)));
@@ -255,10 +255,9 @@ export function markFor(r: NumericResult, mode: FmtMode | undefined, ctx: Displa
   let info: MarkInfo | null;
   if ((m === "frac" || m === "mixed") && r.rational && r.value) info = p.exact && !p.warn && !p.inexact ? { mark: "=" } : markOf(p, o);
   else {
-    const polar = m === "polar" ? polarShown(r, ctx) : undefined;
-    // G312: r and θ drawn, so their confirmed digits count, not the point form's (the format is a notation, never FIX:
-    // markOf reads of the value's parts only that they are non-zero, so the point value stands for r and θ)
-    info = markOf(polar ? { ...p, reliableDigits: polar.confirmed } : p, o);
+    const polar = polarShown(r, m, ctx);
+    // G312: r and θ drawn, so their confirmed digits count, and their digits shown (polarShown)
+    info = markOf({ ...p, ...polar }, o);
     if (info?.mark === "=" && polar) info = { mark: "≈" };
   }
   return info?.mark === "=" && r.inexactInput ? { mark: "≈" } : info;

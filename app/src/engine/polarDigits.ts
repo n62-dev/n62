@@ -54,9 +54,16 @@ function digitsWithin(c: DecimalValue, half: Term[], cap: number): number {
  * u, one unit in its n-th digit (a zero part counts as exact, as the point form shows it). Then r moves by at most
  * u_x + u_y, and θ (mean value theorem on dθ = (x dy − y dx) / r², along the segment to the true value) by at most
  * ((|x| + u_x)·u_y + (|y| + u_y)·u_x) / (r − u_x − u_y)², which keeps θ's relative precision when θ is small. r and θ
- * are kept to DECIMAL_KEEP digits: one unit there is added.
+ * are kept to DECIMAL_KEEP digits: one unit there is added. `angle`: the unit θ is in (computePolar divides arg by
+ * pasdeg); in degrees the bound, worked out in radians, is multiplied by 573/10 ≥ 180/π.
  */
-export function polarDigits(value: ComplexValue, n: number, r: DecimalValue, theta: DecimalValue): { r: number; theta: number } {
+export function polarDigits(
+  value: ComplexValue,
+  n: number,
+  r: DecimalValue,
+  theta: DecimalValue,
+  angle: "rad" | "deg",
+): { r: number; theta: number } {
   const cap = Math.min(Math.max(n, 0), DECIMAL_KEEP);
   const parts = [value.re, value.im].filter((v) => !isZero(v));
   // r ≥ the larger part and r < 10 times it: anything else is no polar form of `value` (nothing confirmed)
@@ -85,5 +92,7 @@ export function polarDigits(value: ComplexValue, n: number, r: DecimalValue, the
   const L2 = Lm * Lm;
   const S = L2.toString().length + DECIMAL_KEEP + 4;
   const half = num.map(([m, e]): Term => [(m * pow10(S) + L2 - 1n) / L2, e - 2 * e0 - S]);
-  return { r: rDigits, theta: digitsWithin(theta, [...half, [1n, theta.exp + 1 - DECIMAL_KEEP]], cap) };
+  // DEG: θ is in degrees, so its error is 180/π times the bound in radians; 573/10 is above 180/π = 57.2957…
+  const unit = (t: Term): Term => (angle === "deg" ? [t[0] * 573n, t[1] - 1] : t);
+  return { r: rDigits, theta: digitsWithin(theta, [...half.map(unit), [1n, theta.exp + 1 - DECIMAL_KEEP]], cap) };
 }

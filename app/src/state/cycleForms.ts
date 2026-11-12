@@ -53,7 +53,7 @@ export function nextMode(
 export function polarOf(item: NumericResult, v: ComplexValue, r: DecimalValue, theta: DecimalValue, angle: Polar["angle"]): Polar {
   const n = item.facts?.reliableDigits ?? null;
   if (n === null) return { r, theta, angle, confirmed: null };
-  const k = polarDigits(v, n, r, theta);
+  const k = polarDigits(v, n, r, theta, angle);
   return { r, theta, angle, confirmed: Math.min(k.r, k.theta) };
 }
 
