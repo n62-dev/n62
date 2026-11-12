@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { issueUrl, reportText, REPORT_CAP } from "./report.ts";
+import { issueUrl, openIssueForm, reportText, REPORT_CAP } from "./report.ts";
 
 const form = parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../.github/ISSUE_TEMPLATE/bug.yml"), "utf8")) as {
   body: { id?: string }[];
@@ -50,5 +50,41 @@ describe("reportText", () => {
     expect(m).not.toBeNull();
     const kept = t.split("\n").filter((l) => l.startsWith("row")).length;
     expect(Number(m?.[1]) + kept).toBe(3000);
+  });
+});
+
+// A95: on Android the form opens by navigating the WebView's own window (Capacitor hands a foreign https address to the
+// browser: ACTION_VIEW, no new permission); window.open has no handler there. On the web it stays a new tab.
+describe("openIssueForm", () => {
+  const url = issueUrl({ version: "0.1.0", device: "Android 14; Tab" });
+  const env = (native: boolean, over: { navigate?: (u: string) => void; open?: (u: string) => { opener: unknown } | null } = {}) => {
+    const calls = { navigate: [] as string[], open: [] as string[] };
+    const w = { opener: "app" as unknown };
+    return {
+      calls,
+      w,
+      env: {
+        native,
+        navigate: over.navigate ?? ((u: string) => void calls.navigate.push(u)),
+        open: over.open ?? ((u: string) => (calls.open.push(u), w)),
+      },
+    };
+  };
+  it("on a native platform navigates once to the form's address and opens no window", () => {
+    const e = env(true);
+    expect(openIssueForm(url, e.env)).toBe(true);
+    expect(e.calls.navigate).toEqual([url]);
+    expect(e.calls.open).toEqual([]);
+  });
+  it("on the web opens a new tab, cuts its opener, and does not navigate", () => {
+    const e = env(false);
+    expect(openIssueForm(url, e.env)).toBe(true);
+    expect(e.calls.open).toEqual([url]);
+    expect(e.calls.navigate).toEqual([]);
+    expect(e.w.opener).toBeNull();
+  });
+  it("says it did not open when the navigation throws or the popup is blocked", () => {
+    expect(openIssueForm(url, env(true, { navigate: () => { throw new Error("no"); } }).env)).toBe(false);
+    expect(openIssueForm(url, env(false, { open: () => null }).env)).toBe(false);
   });
 });

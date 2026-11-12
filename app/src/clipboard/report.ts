@@ -40,3 +40,29 @@ export function reportText(version: string, device: string, session: string): st
   }
   return `${head}${leftOut(from)}\n${rows.slice(from).join("\n")}`;
 }
+
+/** What opening the form needs from the page: tests give their own. */
+export interface OpenEnv {
+  /** Android's WebView (Capacitor): a window.open has no handler there. */
+  native: boolean;
+  navigate(url: string): void;
+  open(url: string): { opener: unknown } | null;
+}
+
+/** Open the issue form; false when nothing opened (a blocked popup, a refused navigation). On a native platform the
+ *  WebView's own window navigates: Capacitor hands a foreign https address to the browser (ACTION_VIEW, no permission)
+ *  and the page stays (A95). On the web it is a new tab; not the `noopener` feature, with which window.open returns null
+ *  even when the form opened. */
+export function openIssueForm(url: string, env: OpenEnv): boolean {
+  if (env.native) {
+    try {
+      env.navigate(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  const w = env.open(url);
+  if (w) w.opener = null;
+  return w !== null;
+}

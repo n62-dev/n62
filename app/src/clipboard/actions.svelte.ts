@@ -218,29 +218,27 @@ export class ClipActions {
   }
 
   /** Settings › Help and about › Report a problem (R173): the report (version, device, the session) on the clipboard, then
-   *  the issue form in a new tab. The session travels on the clipboard, only the short fields in the link (report.ts). */
+   *  the issue form in a new tab (on Android in the browser, A95). The session travels on the clipboard, only the short fields in the link (report.ts). */
   reportProblem(): Promise<void> {
     return this.serial(() => this.reportNow());
   }
   private async reportNow(): Promise<void> {
     const m = await impl();
-    const { reportText, issueUrl } = await import("./report.ts");
+    const { reportText, issueUrl, openIssueForm } = await import("./report.ts");
     const { aboutText } = await import("../i18n/enAbout.ts");
     const version = (await import("virtual:about")).default.version;
     const device = navigator.userAgent;
     const session = m.sessionText(this.session.items.map(source), this.opts, this.session.displayContext());
     const text = reportText(version, device, session);
     const { Capacitor } = await import("@capacitor/core");
-    // A95 opens the form on a native platform; until then the address is said and the user opens it
-    if (Capacitor.isNativePlatform()) {
-      await this.put(text, aboutText("report.openBy"));
-      return;
-    }
     if (!(await this.put(text, aboutText("report.copied")))) return;
-    // not the `noopener` feature: with it window.open returns null even when the form opened
-    const w = window.open(issueUrl({ version, device }), "_blank");
-    if (w) w.opener = null;
-    else this.say(aboutText("report.openBy"));
+    const url = issueUrl({ version, device });
+    const opened = openIssueForm(url, {
+      native: Capacitor.isNativePlatform(),
+      navigate: (u) => location.assign(u),
+      open: (u) => window.open(u, "_blank"),
+    });
+    if (!opened) this.say(aboutText("report.openBy"));
   }
 
   /** The row an action means: the picked one, else the newest finished result. Recall also takes an error or a
