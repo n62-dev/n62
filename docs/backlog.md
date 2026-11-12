@@ -35,6 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
+- **r20-N1 ([r20](research/r20-decompose.md) 4).** Home, CAS: `normal(sqrt(1+sqrt(1+2^(1/3))))` ≈ 0.00732288514727 (right 1.58218310546); `node tools/probes/decompose/run.ts --set forms`. Family 5.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
@@ -69,7 +70,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F200 (A120, A123 built).** Core c29 red once (device 100); a second red is a FIX.
 - **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 ms of 400 in run 307, 417 in run 909; two sightings, so it is due in `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, 87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; golden `steps`: 4 G325 rows stopped at ×8 (run 1032).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
-- **F214, research S54 (G187; G183 restarts the engine).** `simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))` kills the engine: simplify recurses ~7,800 deep in `subst.cc` `decompose` (from `tsimplify_common`) to a stack overflow; cause not found. G183's crash tests use it.
+- **F214, S54 done: fix r20-P1 ([r20](research/r20-decompose.md)), after the tag.** `simplify` overflows or loops: `alg_lvar` drops `ln(rootof)`.
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
