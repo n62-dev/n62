@@ -332,6 +332,11 @@ for f in app/scripts/golden.ts app/scripts/golden/lib.ts app/scripts/golden/home
 done
 printf '%s\n' app/src/ui/foo.ts app/scripts/gate.ts docs/backlog.md | golden_selected && fail "A25: an unrelated diff plans the golden check"
 grep -q 'golden_selected' "$here/pipeline.sh" || fail "A25: pipeline.sh does not use golden_selected for the golden check"
+# A136: every module the golden gate runs (the value-import closure of app/scripts/golden.ts) is selected; a file outside it is not
+miss="$(node "$here/../tools/golden-closure.mjs" | while IFS= read -r f; do printf '%s\n' "$f" | golden_selected || printf '%s ' "$f"; done)"
+[[ -z "$miss" ]] || fail "A136: modules the golden gate runs are not in GOLDEN_RE: $miss"
+[[ "$(node "$here/../tools/golden-closure.mjs" | wc -l)" -gt 50 ]] || fail "A136: the golden closure walk found fewer than 50 modules"
+printf '%s\n' app/src/keyboard/Keypad.svelte | golden_selected && fail "A136: a file outside the golden closure (Keypad.svelte) plans the golden check"
 # A25 item 5: a stage line NEW / NOW PASSING / CHANGED / GONE fails the engine stages even at exit 0
 printf 'x\n  sweep NOW PASSING a1: remove it\nSWEEP PASSED: 1\n' > "$tmp/st1.log"; printf '  seq known y\nSEQ PASSED: 1\n' > "$tmp/st2.log"
 stage_findings "$tmp/st1.log" >/dev/null || fail "A25: a NOW PASSING stage line is not a finding"
