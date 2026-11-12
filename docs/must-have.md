@@ -7,7 +7,7 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 **2026-11-12, evening (owner):** sections B to D no longer wait for v0.1.0. The lanes build them to Tue 11-17 (Ultra ends after it) in the brief's order: what changes how today's calculator is used, then the critical bugs, then new features; what is merged by that freeze ships in v0.1.0. The version labels below (v0.2 to v1) are the order of the work, not the release it lands in.
 
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
-- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only). On 2026-11-12, each as recommended: B2 to B7, B9, C1 to C6, C8; RPN stays after the tag.
+- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only). On 2026-11-12, each as recommended: B2 to B7, B9, C1 to C6, C8; RPN stays after the tag. The same evening, from two analyses: the final layout (docs/06 section 3b: ☰ on row 0 col 4, Shift + Deselect reserved, folding by the swipe only, removals after the tag only blank a cell) and what v0.1.0 keeps for good ([release-0.1.0.md](release-0.1.0.md) point 7: the exports are a preview with `v:0`, the sync files are named per device, the prefix `pas` is ours, G273 and G274 wait for the tag).
 - The freeze (Tue 11-17), for A91: A8, and G2 item 70 with it.
 - The release candidate (Sat 11-21), for the video: A4, A5.
 - The tag (target Mon 11-23, owner 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.

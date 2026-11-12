@@ -58,7 +58,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Background stream (extreme inputs; at night, by reach)
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
 - **F195, G220 to G221f2 built.** Left (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf` (error).
-- **F210, no package (G303f1; pass 125).** Our global stores take typable names (only `pasdeg` is refused): a free `pasx` in Solve reads solve1.ts's `pasx` (raw Giac: `subst` gives -1.0). Fix: refuse a typed `pas`. Family 9.
+- **F210, package G341 (G303f1; pass 125).** Our global stores take typable names (only `pasdeg` is refused): a free `pasx` in Solve reads solve1.ts's `pasx` (raw Giac: `subst` gives -1.0). Fix: refuse a typed `pas`. Family 9.
 - **F211, no package (pass 125).** Bound names outside G303's form, no capture (probed): `v` in nonsquare.ts shapeCodes, `a_`, `b_`, `d_` in emit.ts equalityTest; statenames.test.ts parses neither. Family 8.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
@@ -90,7 +90,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R155f1's device check** (annabell, by day, the Tab One): the run dash in Home on a cold start is above 0 px high.
 - **R41's device check** (annabell, the next device run): TalkBack for a minute on the keypad and a sheet, and the status line at font scale 2.0 (decisions.md "R41"). Same run, R53: the swipe on a real WebView, TalkBack on the handle and slice.
 - Plots of user functions after v0.1.0 (owner, 2026-11-02; R56b covers Solve); **R58b** Alpha letters are always names in CAS (G2 item 62 can reverse it).
-- **G9. Number formats against the G2** (item 15): decide in the settings and help pass. **K1:** a pending one-shot Shift is used up by the first drag step. **K5:** the gestures in the help texts.
+- **G9. Number formats against the G2** (item 15): decide in the settings and help pass. **K5:** package R290.
 - **docs/05 section 5's five UI tasks** are not in `tests/tasks/tasks.yaml` (budget 2 presses or 1 tap, docs/05 section 2 rule 5).
 - **R59's follow-up (owner, 2026-11-07):** an imported function is listed in the Math key's Find too, not only in Vars' Find; a small package after v0.1.0.
 - **A9's leftover:** the strength slider does nothing on a motor without amplitude control (Fairphone 6); a composition of ticks would give it (owner, 2026-11-02: a package later).

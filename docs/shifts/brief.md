@@ -34,6 +34,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 | [A143](packages/A143.md) | night.sh picks the plain step; henri the rest | annabell, Opus | day, no lane running | A142 | ~1 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, on the release candidate (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
+| [R292](packages/R292.md) | The v0.1.0 data fixtures and the rule they pin | ron, Sonnet | day, the freeze day (Tue 11-17), after the last merge that changes a stored shape | the freeze | ~0.5 d |
 
 **Why these models:** Opus where a slip breaks entry, the unit chain or stored data for every later package, or gives a wrong number (P17: the engine, input and units); sandra and sofia run Opus; Sonnet elsewhere (an existing pattern, pinned by tests); the audit model follows P17.
 
@@ -67,6 +68,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 | 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, R279 |
 | 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | R278 (owner 11-12: in v0.1.0) |
 | 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R278, R279, R283 |
+| 753 | [R290](packages/R290.md) the six tips teach the final handling (K5) | ron, Sonnet | `p1/ron-tipsfinal` | R278, R283 |
 | 630 | [R280](packages/R280.md) Store ▶ acts on the picked row (sd-2) | ron, Opus | `p1/ron-storepick` | – |
 | 631 | [R281](packages/R281.md) the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
 | 632 | [R282](packages/R282.md) Vars in the store sheet's look (sd-4) | ron, Sonnet | `p1/ron-varsgrid` | R281 |
@@ -78,6 +80,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 | 666 | [R131](packages/R131.md) a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | R278, R283, R185, R187, R193, R197 |
 | 730 | [R198](packages/R198.md) typed function names on a hardware keyboard | ron, Opus | `p1/ron-typednames` | R131 |
 | 731 | [R224](packages/R224.md) the wide layout on a tablet and a desktop | ron, Opus | `p1/ron-widelayout` | – |
+| 754 | [R291](packages/R291.md) the layout lock: no live key layer or fixed row moves unnoticed | ron, Sonnet | `p1/ron-layoutlock` | R278, R283, R185, R187, R193, R197, R131 |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
 | 669 | [R190](packages/R190.md) a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
@@ -106,6 +109,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 737 | [G224](packages/G224.md) SI-prefix display drops trailing zeros | gorge, Sonnet | `p1/gorge-pfxtrim` | – |
 | 738 | [G340](packages/G340.md) normal and simplify of a nested root give a wrong number (F228) | gorge, Opus | `p1/gorge-normalroot` | – |
 | 739 | [G226](packages/G226.md) integer shift: negative counts and big integers (F193) | gorge, Opus | `p1/gorge-intshift` | – |
+| 755 | [G341](packages/G341.md) names that start with pas are N62's (F210) | gorge, Opus | `p1/gorge-pasnames` | – |
+| 756 | [G342](packages/G342.md) a library file's version is the last one that changed library text | gorge, Sonnet | `p1/gorge-libversion` | – |
 | 683 | [R199](packages/R199.md) templates in the plain-text session (F180) | ron, Sonnet | `p1/ron-plaintemplates` | – |
 | 699 | [G331](packages/G331.md) patch 0045: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
 | 698 | [G330](packages/G330.md) the Slope shows a cancelled 0 as a number (F227) | gorge, Opus | `p1/gorge-slopezero` | – |
@@ -116,7 +121,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 696 | [S52](packages/S52.md) can a chunk option give the start chunk room (1.8 kB left for the UI rows) | sandra, Opus | `p1/sandra-chunkspike` | – |
 | 680 | [R194](packages/R194.md) word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
 | 682 | [R184](packages/R184.md) a labelled result sheet for linreg and stats1 | ron, Sonnet | `p1/ron-statsheet` | – |
-| 684 | [G210](packages/G210.md) one result as one JSON line (session format v1) | gorge, Opus | `p1/gorge-sessionline` | – |
+| 684 | [G210](packages/G210.md) one result as one JSON line (session format v0, a preview) | gorge, Opus | `p1/gorge-sessionline` | – |
 | 685 | [G211](packages/G211.md) a history row keeps its Giac text, angle and digits | gorge, Opus | `p1/gorge-rowfacts` | G210 |
 | 686 | [G212](packages/G212.md) Home rows list the stored values they read | gorge, Opus | `p1/gorge-homeuses` | G210 |
 | 687 | [G232](packages/G232.md) the history as CSV and as LaTeX | gorge, Sonnet | `p1/gorge-exportrows` | G210 |
@@ -142,7 +147,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 695 | [S51](packages/S51.md) who holds the rights an App Store build would need | sandra, Opus | `p1/sandra-iosrights` | – |
 | 697 | [A145](packages/A145.md) F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A141 to A143, A76, G314, G315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, S33. After the freeze, by day: A91, A82.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A141 to A143, A76, G314, G315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, S33. After the freeze, by day: A91, A82, R292.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
