@@ -5,6 +5,7 @@
 // tmplSheet.ts) comes in the same load, so the start chunk does not carry it. R151: the sheet's model (sheet.svelte.ts)
 // is a lazy chunk too; the shell waits for it when a sheet opens before it is in (loadSheetModel).
 
+import { lazyOnce } from "../lazyOnce.ts";
 import type { UnitPad } from "../units/pad.ts";
 
 type SheetComponent = (typeof import("./Sheet.svelte"))["default"];
@@ -23,31 +24,15 @@ export const sheetChunk: { C: SheetComponent | null; model: SheetModel | null; k
   pad: null,
 });
 
-let modelLoading: Promise<SheetModel> | null = null;
-/** The sheet's model alone (R151): what the shell needs to open a sheet; the view draws it once loadSheetView is in. */
-export function loadSheetModel(): Promise<SheetModel> {
-  modelLoading ??= import("./sheet.svelte.ts").then(
-    (m) => (sheetChunk.model = m),
-    (e: unknown) => {
-      modelLoading = null; // a later open tries again
-      throw e;
-    },
-  );
-  return modelLoading;
-}
+/** The sheet's model alone (R151): what the shell needs to open a sheet; the view draws it once loadSheetView is in.
+ *  A failed load is tried again by a later open (lazyOnce). */
+export const loadSheetModel: () => Promise<SheetModel> = lazyOnce(() => import("./sheet.svelte.ts").then((m) => (sheetChunk.model = m)));
 
-let loading: Promise<void> | null = null;
-export function loadSheetView(): Promise<void> {
-  loading ??= Promise.all([import("./Sheet.svelte"), import("./sheetKeys.ts"), import("./tmplSheet.ts"), loadSheetModel()]).then(
-    ([m, keys, palette]) => {
-      sheetChunk.keys = keys;
-      sheetChunk.palette = palette;
-      sheetChunk.C = m.default;
-    },
-    (e: unknown) => {
-      loading = null; // a later open tries again
-      throw e;
-    },
-  );
-  return loading;
-}
+/** The view, the sheet's keys and the palette cells, with the model; a failed load is tried again by a later open. */
+export const loadSheetView: () => Promise<void> = lazyOnce(() =>
+  Promise.all([import("./Sheet.svelte"), import("./sheetKeys.ts"), import("./tmplSheet.ts"), loadSheetModel()]).then(([m, keys, palette]) => {
+    sheetChunk.keys = keys;
+    sheetChunk.palette = palette;
+    sheetChunk.C = m.default;
+  }),
+);
