@@ -166,7 +166,7 @@ describe("unit view builder (G16)", () => {
   });
   it("an absolute temperature or a logarithmic unit alone is its kelvin or ratio value; at the end, offset or level", () => {
     const one = (u: string, formula = "20*pasu1") => buildJob({ formula, slots: [{ tokens: [{ unit: u }] }] }, table);
-    expect(one("oC")).toEqual({ expr: "(((1)*(20)+(5463/20))*pasdimK^(1))", number: "(((1)*(20)+(5463/20)))", inexact: false, absTemp: true });
+    expect(one("oC")).toEqual({ expr: "(((1)*(20)+(5463/20))*pasdimK^(1))", number: "(((1)*(20)+(5463/20)))", inexact: false, absTemp: true, sourceDim: "K1" });
     expect(one("oC", "-(1+2)*3*pasu1")).toMatchObject({ expr: "(((1)*(-(1+2)*3)+(5463/20))*pasdimK^(1))" });
     expect(one("dB", "pasu1")).toEqual({ error: "logarithmic", unit: "dB" });
     expect(one("Np", "3*pasu1")).toEqual({ error: "logarithmic", unit: "Np" });
