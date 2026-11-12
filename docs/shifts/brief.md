@@ -65,7 +65,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 635 | [R263](packages/R263.md) lazy chunk retry | ron, Opus | `p1/ron-lazydoors` | – |
+| 635 | R263 lazy chunk retry | ron, Opus | `p1/ron-lazydoors` | – |
 | 636 | [R262](packages/R262.md) To Home with marks | ron, Opus | `p1/ron-tohome` | – |
 | 637 | [R266](packages/R266.md) no tips while typing | ron, Sonnet | `p1/ron-tipspress` | – |
 | 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
