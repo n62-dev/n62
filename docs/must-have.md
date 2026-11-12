@@ -12,8 +12,8 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 - The release candidate (Sat 11-21, proposed), for the video: A4, A5.
 - The tag (target Mon 11-23, proposed 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
 - Before any forum post: D8.
-- Before v0.2 starts: B2, B4, B5, B6, B7, B9. Before v0.3: B3, B8.
-- Before section C's packages: C1 to C8. Before RPN: D1 to D4.
+- Now (their rows are next in the lanes; brief 0c lists them under lane B's table): B2 to B7, B9. B8 is answered (R199).
+- Now, for section C's rows: C1 to C6, C8 (C7 is answered). Before RPN: D1 to D4.
 - No date: D5, D6, E1 to E4. D6 runs as written unless you say otherwise.
 
 Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
