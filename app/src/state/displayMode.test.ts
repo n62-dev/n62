@@ -15,7 +15,8 @@ import {
   type FmtMode,
   type NumericResult,
 } from "./displayMode.ts";
-import { isApplicable, nextForm, nextMode, polarOf } from "./cycleForms.ts";
+import { baseDrawn, baseMark, isApplicable, nextForm, nextMode, polarOf } from "./cycleForms.ts";
+import { copyFull } from "../clipboard/text.ts";
 
 const q = (p: bigint, d = 1n) => decimalFromRational(p, d);
 const real = (p: bigint, d = 1n): ComplexValue => ({ re: q(p, d), im: q(0n) });
@@ -335,5 +336,63 @@ describe("renderNumeric wrap (R158)", () => {
   });
   it("the decimal comma is drawn in the pieces", () => {
     expect(renderNumeric(big, "std", { ...wide, decimalComma: true }, true)?.wrap?.[5]).toBe("743{,}999");
+  });
+});
+
+// R192: HEX, BIN, OCT are display forms of an integer result (docs/04 5.4), drawn by G228's formatBase from the lazy
+// forms chunk. Expected texts are `derived` (255 = 0xFF = 0b11111111 = 0o377; 2^64 − 1 = 0xFFFFFFFFFFFFFFFF by hand).
+describe("base forms (R192)", () => {
+  const exactInt = (n: bigint): NumericResult => ({ value: real(n), rational: { n: String(n), d: "1" }, facts: { exact: true, reliableDigits: null } });
+  const n255 = exactInt(255n);
+  const big = exactInt(18446744073709551615n);
+
+  it("an integer item with fmt hex, bin, oct draws formatBase's text, unpadded, in a 64-bit unsigned word", () => {
+    expect(baseDrawn({ ...n255, fmt: "hex" }, "hex")).toEqual({ text: "0xFF", latex: "\\mathrm{0xFF}" });
+    expect(baseDrawn(n255, "bin")?.text).toBe("0b11111111");
+    expect(baseDrawn(n255, "oct")?.text).toBe("0o377");
+    expect(baseDrawn(exactInt(10n), "hex")?.text).toBe("0xA"); // not padded to the word (Opus pass 121)
+    expect(baseDrawn(big, "hex")?.text).toBe("0xFFFFFFFFFFFFFFFF");
+    expect(baseDrawn(n255, "hex", { bits: 8, signed: false })?.text).toBe("0xFF");
+    expect(baseDrawn(exactInt(-1n), "hex", { bits: 8, signed: true })?.text).toBe("0xFF");
+  });
+  it("the modes are drawn by no notation: not a ticked cycle mode, not a Settings row", () => {
+    expect(DEFAULT_FMT_CYCLE).toEqual(["std", "sci", "eng"]);
+    expect(normalizeCycle(["hex", "bin", "oct"])).toEqual(["std", "sci", "eng"]);
+    expect(normalizeCycle(["sci", "hex"])).toEqual(["sci"]);
+    expect(baseDrawn(n255, "std")).toBeUndefined();
+    expect(baseDrawn(n255, undefined)).toBeUndefined();
+  });
+  it("a non-integer is not applicable and keeps its form", () => {
+    const f = factsOf(third);
+    for (const m of ["hex", "bin", "oct"] as const) {
+      expect(isApplicable(m, f)).toBe(false);
+      expect(isApplicable(m, factsOf(n255))).toBe(true);
+      expect(baseDrawn({ ...third, fmt: m }, m)).toBeUndefined();
+      expect(renderNumeric(third, m, ctx)?.text).toBe("0.333333333333");
+    }
+    const z: NumericResult = { value: { re: q(3n), im: q(1n) } };
+    expect(isApplicable("hex", factsOf(z))).toBe(false);
+    expect(isApplicable("hex", factsOf({ value: real(255n) }))).toBe(false); // a float: no exact integer
+    // the Format key leaves a base form for the first notation, never cycles into one
+    expect(nextMode("hex", ["std", "sci", "eng"], factsOf(n255), false)).toEqual({ mode: "std" });
+    expect(nextMode("std", ["std", "sci", "eng", "hex"] as FmtMode[], factsOf(n255), false)).toEqual({ mode: "sci" });
+  });
+  it("a value outside the word, a negative one in an unsigned word, keeps its form (wordTooSmall, no error of its own)", () => {
+    expect(baseDrawn(exactInt(-1n), "hex")).toBeUndefined();
+    expect(baseDrawn(exactInt(256n), "hex", { bits: 8, signed: false })).toBeUndefined();
+    expect(baseMark(exactInt(-1n), "hex", ctx)).toEqual(markFor(exactInt(-1n), undefined, ctx));
+  });
+  it("the mark stays the value's: = for an exact integer drawn whole, ≈ from an inexact chip, ⚠ kept", () => {
+    expect(baseMark(n255, "hex", ctx)).toEqual({ mark: "=" });
+    expect(baseMark(big, "hex", ctx)).toEqual({ mark: "=" }); // every digit drawn, as a fraction is (its decimal is ≈)
+    expect(baseMark({ ...n255, inexactInput: true }, "bin", ctx)).toEqual({ mark: "≈" });
+    const unchecked: NumericResult = { ...n255, facts: { exact: true, reliableDigits: null, warn: "unchecked" } };
+    expect(baseMark(unchecked, "oct", ctx)?.mark).toBe("⚠");
+    expect(baseMark(third, "hex", ctx)).toEqual(markFor(third, undefined, ctx));
+    expect(baseMark(n255, "sci", ctx)).toEqual(markFor(n255, "sci", ctx));
+  });
+  it("Copy gives the integer's full value, not the hex text", () => {
+    const item = { ...big, fmt: "hex" as const, latex: "2^{64}-1", status: "done", text: "18446744073709551615", full: "18446744073709551615", fullExact: true };
+    expect(copyFull(item)).toBe("18446744073709551615");
   });
 });

@@ -6,7 +6,7 @@ import type { Calc, CasOutcome, HomeOutcome } from "../calc/port.ts";
 import { EngineHost } from "../engine/host.ts";
 import { defaultHomeSettings, safePrecision } from "../engine/homeEval.ts";
 import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";
-import { Session } from "./session.svelte.ts";
+import { loadForms, Session } from "./session.svelte.ts";
 import { fakeKv } from "./fakeKv.ts";
 
 
@@ -129,6 +129,36 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     await b.restore();
     expect(b.settings.fmtCycle).toEqual(["std", "sci"]);
     expect(text(b)).toBe("3.33333333333E-1");
+  });
+
+  it("R192: an integer in a base form draws formatBase's text with the value's mark, survives a reload, and the Format key leaves it", async () => {
+    await loadForms(); // the lazy forms chunk draws the base forms (main.ts fetches it when idle)
+    const kv = fakeKv();
+    const a = new Session(await engineCalc(), kv);
+    await a.restoreHistory();
+    await a.submit("2^{64}-1");
+    const item = a.home.at(-1)!;
+    expect(text(a)).toBe("1.84467440737E19");
+    item.fmt = "hex"; // R193's Base menu sets it
+    expect(a.display(item)).toEqual({ text: "0xFFFFFFFFFFFFFFFF", latex: "\\mathrm{0xFFFFFFFFFFFFFFFF}" });
+    expect(a.mark(item)).toEqual(a.mark({ ...item, fmt: "frac" })); // the integer drawn whole (this stub's facts are the display's)
+    await a.submit("255");
+    const n = a.home.at(-1)!;
+    const before = a.mark(n);
+    n.fmt = "oct";
+    expect(text(a)).toBe("0o377");
+    expect(a.mark(n)).toEqual(before); // the value's mark (this stub engine carries no exact facts)
+    a.saveHistory();
+    a.flushHistory();
+    const b = new Session(await engineCalc(), kv);
+    await b.restore();
+    expect(text(b, -2)).toBe("0xFFFFFFFFFFFFFFFF");
+    expect(text(b)).toBe("0o377");
+    expect(await b.cycleFormat()).toBe(true);
+    expect(text(b)).toBe("255");
+    await b.submit("-1");
+    b.home.at(-1)!.fmt = "bin"; // outside the unsigned word: the number keeps its form
+    expect(text(b)).toBe("-1");
   });
 });
 
