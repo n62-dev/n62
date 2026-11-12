@@ -35,6 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
+- **r20-N1, no package (S54's note, base `56880204`).** `normal` and `simplify` of a square root over a cube root's field drop the numerator: Home `normal(sqrt(1+sqrt(1+2^(1/3))))` shows ≈ 0.00732288514727 with no ⚠ (Giac `rootof([[1,0],[…12 coefficients…]])/227`; mpmath 1.58218310546), also `sqrt(2+sqrt(1+2^(1/3)))`, `sqrt(1+sqrt(2+3^(1/3)))`, `sqrt(1+(1+2^(1/3))^(1/3))`; rerun `node tools/probes/decompose/run.ts --set forms`. Reach: a typed `normal` or `simplify` in Home or CAS. Family 5.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
