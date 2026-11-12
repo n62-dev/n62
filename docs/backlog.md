@@ -83,7 +83,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
-- **Milestone 6, Structure** (not packaged): EN5 matrices with Shift + 5 and the editor on Shift + 4 (§5.3; the Tmpl matrices work today), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu and word size open), EN7 everyday functions, Help as context help; EN4, copying one element of a list or matrix.
+- **Milestone 6, Structure** (not packaged): EN5 matrices with Shift + 5 and the editor on Shift + 4 (§5.3; the Tmpl matrices work today), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu, R193; the word size open), EN7 everyday functions, Help as context help; EN4, copying one element of a list or matrix.
 
 ### Without a package yet
 - **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, sounding only when Key click is on, and its latency against the pulse from a screen recording. Removal test: nobody (owner or an outside tester) turns it on in the four weeks after it ships, and the switch and its code go.
@@ -98,6 +98,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
 - **A144's leftover (pass 142; after the tag):** the core list in Firefox and WebKit stops at our helpers: `touch()`, `flick()` use CDP (c38, c39, c67–c69), c53 reads the clipboard unpermitted, WebKit's `tap()` sends no click. Fix: touch events in the page, the clipboard through the app, a click after a WebKit tap. Once Firefox passes the core list, `gecko` joins TESTED (`state/browser.ts`) and the note's words (`enBrowser.ts`) name it (R285).
 - **R263's leftover (pass 150):** `Session.uses()` (state/session.svelte.ts:258) keeps a failed load (no counts that start); `lazyOnce` with the next package there.
+- **R192 (pass 158):** Copy marks a whole exact integer by its notation (`≈` past the digits).
 - **G313's leftover (pass 154):** find-queries.yaml's `dot product` and `bitand` rows are curated but still pending.
 - **G223f1's finds (pass 146):** stats1 of a stored float list shows [..], of a typed one {..}; a stored catch(e) prints as catch(exp(1)).
 - **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.

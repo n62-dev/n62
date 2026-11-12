@@ -83,6 +83,7 @@ export const enKeyNames = {
   "d3.shift": "Pi",
   "d3.alpha": "Number sign",
   sub: "Minus",
+  "sub.shift": "Base",
   "sub.alpha": "Colon",
   fmt: "Format",
   "fmt.shift": "Mode",

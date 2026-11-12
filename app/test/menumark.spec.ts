@@ -14,7 +14,7 @@ interface Act { special?: string }
 interface SpecKey { id: string; label?: { primary?: string; shift?: string }; primary?: Act; shift?: Act }
 const spec = (parse(readFileSync(join(here, "../../spec/keyboard.yaml"), "utf8")) as { keys: SpecKey[] }).keys;
 // the specials that open a sheet (opens.ts), spelled out here on purpose: the test is the owner's list
-const SHEET = new Set(["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu"]);
+const SHEET = new Set(["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "base"]);
 const opens = (a: Act | undefined): boolean => a?.special !== undefined && SHEET.has(a.special);
 
 const look = (page: Page, brightness: string, contrast: string, keys: string): Promise<void> =>
@@ -72,8 +72,8 @@ for (const [brightness, contrast, keys] of LOOKS)
       // the tap layer: Vars, Math, Tmpl; the Shift legends: Settings (Help), Memory (Math), ≤≠, α∞, Mode (Fmt); Shift armed: those as faces
       expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
         shift
-          ? ["d6/main", "d9/main", "fmt/main", "help/main", "math/main"]
-          : ["d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "help/shiftlegend", "math/main", "math/shiftlegend", "tmpl/main", "vars/main"],
+          ? ["d6/main", "d9/main", "fmt/main", "help/main", "math/main", "sub/main"]
+          : ["d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "help/shiftlegend", "math/main", "math/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
       );
     }
   });

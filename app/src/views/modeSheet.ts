@@ -105,14 +105,14 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
       adjust: (by) => session.setEntry(cycle(ENTRIES, s.entry, by)),
     },
     presetRow(session, env), // R89: row 5, the active preset; Settings is row 6
-    { id: "settings", label: t("mode.settings"), submenu: settingsMenu(session, env) },
+    { id: "settings", label: t("key.settings"), submenu: settingsMenu(session, env) },
   ];
 }
 
 /** Settings (R49, docs/05 3.4): the next level of the pick sheet, from Mode's last row and the ⚙ in every ☰
  *  menu's title row (AppShell.toSettings, R145). Its title joins the path (`Mode › Settings › Numbers`); each section opens on its first row. */
 export function settingsMenu(session: Session, env: SettingsEnv = {}): SubMenu {
-  return { title: t("mode.settings"), items: settingsSections(session, env), remember: false };
+  return { title: t("key.settings"), items: settingsSections(session, env), remember: false };
 }
 
 /** A section: a row with › that opens its own level (on row `at` when given). */

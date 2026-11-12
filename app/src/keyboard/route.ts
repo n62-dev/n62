@@ -13,7 +13,7 @@ import { ANS_CHIP } from "../entry/macros.ts";
 import { canPick, pickAfter, pickAtOrBefore } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
 import { sheetChunk, loadSheetView } from "../views/sheetView.svelte.ts";
-import { actionFor, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
+import { actionFor, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
 
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
 export type Mods = { shift: boolean; alpha: boolean };
@@ -136,6 +136,9 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "units":
       units(c);
+      break;
+    case "base":
+      sheetChunk.palette?.showBase(c); // R193 (its sheet chunk is in: "base" is a SHEET_KEY, so the press waited for it)
       break;
     case "relations":
       c.openShiftPalette("rel");
@@ -344,7 +347,7 @@ function replay(c: RouteCtx): void {
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
 
-const SHEET_KEYS: readonly string[] = ["apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory"];
+const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(2); // all but settings and mode (OPENS_SHEET lists those two first)
 /** The open sheet is Find (R4a): its keys follow docs/04 3.7 (sheetKeys.ts findKey). */
 const FIND_SHEET = "find";
 /** Does this key open a sheet? (Mode and Settings load the view with their lists.) */

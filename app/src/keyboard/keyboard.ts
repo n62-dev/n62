@@ -20,10 +20,12 @@ export type Special =
   | "units"
   /** Select and Deselect (R279): grow the entry line's selection by the box model, or walk it back (entry/grow.ts). */
   | "selectGrow" | "selectShrink"
+  /** Shift + − (R193): the Base menu for the last result (HEX, BIN, OCT, DEC); dead with text on the line. */
+  | "base"
   /** A key whose function we don't have yet (it keeps its alpha letter): does nothing. */
   | "none";
 /** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
-export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory"];
+export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base"];
 export const SPECIALS: readonly Special[] = [
   "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "copy", "paste", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none", ...OPENS_SHEET,
 ];
@@ -126,8 +128,6 @@ export interface Keyboard {
 
 export class KeyboardSpecError extends Error {}
 
-const CLASSES: readonly KeyClass[] = ["num", "op", "fn", "ctl", "enter", "nav"];
-const SOURCES: readonly Source[] = ["assumed", "device", "virtual-calc", "derived"];
 const LAYERS: readonly Layer[] = ["primary", "shift", "alpha"];
 
 type Obj = Record<string, unknown>;
@@ -227,9 +227,7 @@ export function loadKeyboard(doc: unknown): Keyboard {
       cells.add(`${row},${c}`);
     }
     const cls = str(item, "cls", where) as KeyClass;
-    if (!CLASSES.includes(cls)) throw new KeyboardSpecError(`${where}: unknown cls '${cls}'`);
     const source = shipped ? undefined : (str(item, "source", where) as Source);
-    if (source !== undefined && !SOURCES.includes(source)) throw new KeyboardSpecError(`${where}: unknown source '${source}'`);
     const labelRaw = item["label"];
     if (!isObj(labelRaw)) throw new KeyboardSpecError(`${where}: label not a mapping`);
     const label: Partial<Record<Layer, string>> = {};

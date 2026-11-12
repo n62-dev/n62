@@ -251,7 +251,7 @@
         {#if sheet.icon}<span class="ticon" aria-hidden="true">{@html icon(sheet.icon)}</span>{/if}<span class="title" data-testid="sheet-title">{sheet.path}</span>
         {#if level.filter !== ""}<span class="filter" data-testid="sheet-filter">{level.filter}</span>{/if}
         {#if (cutTop || cutBottom) && level.text === undefined}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
-        {#if sheet.hasSettings}<button type="button" class="icon gear" data-testid="sheet-gear" aria-label={t("mode.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
+        {#if sheet.hasSettings}<button type="button" class="icon gear" data-testid="sheet-gear" aria-label={t("key.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
         <button type="button" class="icon" aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
       {#if level.credits !== undefined}

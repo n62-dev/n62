@@ -74,6 +74,10 @@ describe("keyboard spec", () => {
     // R85: Fmt's free Shift cell opens Mode
     expect(k("fmt").actions.shift).toEqual({ kind: "special", name: "mode" });
     expect(k("fmt").label.shift).toBe("$key.mode");
+    // R193 (docs/04 5.4): Shift + − opens the Base menu for the last result (route.ts: dead with text on the line)
+    expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
+    expect(k("sub").label.shift).toBe("$key.base");
+    expect(k("sub").actions.primary).toEqual({ kind: "type", text: "-" });
     // the cluster keeps no alpha letters, so no key in it draws the letter line (vertical space, docs/03 rule 9)
     for (const key of keyboard.keys.filter((x) => x.row < MATHS_ROW)) expect(key.label.alpha ?? key.actions.alpha, key.id).toBeUndefined();
     // Help and Esc keep their G2 cells (r1c4, r1c5), as does the pad; every other key of the cluster is our choice
@@ -87,6 +91,11 @@ describe("keyboard spec", () => {
   it("every legend is in the i18n table (a $ label names a message)", () => {
     for (const k of keyboard.keys)
       for (const l of Object.values(k.label)) if (l.startsWith("$")) expect(l.slice(1) in en, `${k.id}: ${l}`).toBe(true);
+  });
+
+  // (the loader no longer checks `cls` and `source` against their lists: the shipped app carries no such lists, R193)
+  it("every key has a known class", () => {
+    for (const k of keyboard.keys) expect(["num", "op", "fn", "ctl", "enter", "nav"], k.id).toContain(k.cls);
   });
 
   it("every key says where it comes from", () => {
@@ -138,7 +147,7 @@ describe("keyboard spec", () => {
     expect(actionFor(vars, true, true)).toEqual({ kind: "type", text: "a" });
     expect(actionFor(d3, true, true)).toEqual({ kind: "type", text: "#" });
     expect(actionFor(keyboard.byId.get("enter") as Key, false, true)).toEqual({ kind: "special", name: "enter" });
-    expect(actionFor(minus, true, false)).toBeUndefined(); // shift − (Base) comes with EN6
+    expect(actionFor(minus, true, false)).toEqual({ kind: "special", name: "base" }); // shift − is the Base menu (R193)
     expect(actionFor(plus, true, false)).toEqual({ kind: "insert", latex: "\\ans", sample: ["\\ans", "7"] }); // docs/04 2.8
     expect(labelFor(sin, true, false)).toBe("sin⁻¹");
   });
@@ -366,8 +375,7 @@ describe("keyboard spec", () => {
     expect(loadKeyboard(doc([key], { row_columns: { 1: 3 } })).units).toBe(6);
     expect(() => loadKeyboard(doc([{ ...key, primary: { type: "1", cmd: "x" } }]))).toThrow(/exactly one/);
     expect(() => loadKeyboard(doc([{ ...key, primary: { special: "nope" } }]))).toThrow(/special/);
-    expect(() => loadKeyboard(doc([{ ...key, cls: "huge" }]))).toThrow(/cls/);
-    expect(() => loadKeyboard(doc([{ ...key, source: "guess" }]))).toThrow(/source/);
+    // (an unknown `cls` or `source` is caught by the shipped spec tests above, no longer by the loader: R193 freed its start-chunk bytes)
     expect(() => loadKeyboard(doc([{ ...key, shift: { type: "2" } }]))).toThrow(/shift needs both/);
   });
 });

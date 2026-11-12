@@ -298,7 +298,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Help (context help) | the Find preview of the function before the cursor; with none there, Find (milestone 6) | ours; P8 left Help free |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
-| Shift + `−` [r9c5] | Base: the last result in HEX, BIN, OCT, DEC; word size (EN6) | reference: Base |
+| Shift + `−` [r9c5] | the Base menu (built, R193; 5.4) | reference: Base |
 | Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list (built, R54) | reference |
 | Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix editor (EN5); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. Until R24c, `spec/keyboard.yaml` `unit_slot:` holds S1's letters | P11, S1, P14 |
@@ -316,9 +316,9 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 - **Display in Home:** every element through our formatter, one mark for the whole (2.4) (`4d80167f`).
 
 ### 5.4 Decision: number bases (EN6)
-- **A base is a display mode of an integer result**, like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result). Word size (8, 16, 32, 64) and signed (two's complement) or unsigned are settings. A non-integer gives a message.
-- **Entry:** `0x…`, `0b…`, `0o…` become one literal token in the parser (Giac reads `0xFF` as 255: probe); hex digits A–F are the Alpha letters. Read as one whole number since R191, written in decimal: A–F in either case, the digit run greedy (`0xFFx` is 255·x); a digit outside the base, a point, an ᴇ, spacing inside it (R191f1) or a prefix at the line's end is refused; `0x+1` stays 0·x+1.
-- **Bitwise:** `bitand`, `bitor`, `bitxor` work (probe); shifts and rotations as EN7 definitions that respect the word size.
+- **A base is a display mode of an integer result** (R192), like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result, R193). Word size (8, 16, 32, 64) and signed (two's complement) or unsigned are settings (R194; 64 unsigned now). Drawn whole, unpadded (`0xA`), marked as a fraction (`=` if exact); a non-integer or a value outside the word (negative, if unsigned) keeps its notation.
+- **Entry:** `0x…`, `0b…`, `0o…` are one whole number (R191), written in decimal; hex digits A–F (either case) are the Alpha letters, the run greedy (`0xFFx` is 255·x); a digit outside the base, a point, an ᴇ, spacing inside it (R191f1) or a prefix at the line's end is refused; `0x+1` stays 0·x+1.
+- **Bitwise:** `bitand`, `bitor`, `bitxor` work; shifts and rotations are EN7 definitions in the word size.
 
 ### 5.5 Decision: the entry line, one key path and one box model
 

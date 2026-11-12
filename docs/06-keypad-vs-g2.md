@@ -11,7 +11,6 @@ The layer is dead only because the feature is not built: the key is dimmed in th
 | Help (row 0, col 4, the G2's r1c4) | context help from the Find index (milestone 6); the owner may veto | docs/04 5.1, R15c, R146 |
 | Shift + 4, 5 | matrix editor, `[ ]` (EN5, milestone 6) | docs/04 5.1 |
 | Shift + 7 (List) | deferred with Statistics | docs/04 5.1 |
-| Shift + − (Base) | Base menu (EN6, milestone 6) | docs/04 5.4 |
 
 ## 2. Different on purpose, with a written reason
 | Difference | Reason |
@@ -108,5 +107,5 @@ The owner's rule: "the layout should stay the same from start of release". From 
 
 ## 5. About the comparison file this was built from
 An outside review produced a YAML list of differences (`gemini-code-1791904688276.yaml`, not kept in the repo). Read it with two caveats:
-1. **It lists planned keys as removed or omitted.** Help, Matrix, `[ ]` and Base are planned (section 1); the Math and Tmpl keys, Memory, Units and `{ }` (R54) are built; none was dropped. Two small errors: it says the clone's `(−)` replaced a `+/−` toggle (the G2 key does not toggle), and that Alpha + 0 inserts a single quote mark (it types one double-quote character; now removed).
+1. **It lists planned keys as removed or omitted.** Help, Matrix and `[ ]` are planned (section 1); the Math and Tmpl keys, Memory, Units, `{ }` (R54) and Base (R193) are built; none was dropped. Two small errors: it says the clone's `(−)` replaced a `+/−` toggle (the G2 key does not toggle), and that Alpha + 0 inserts a single quote mark (it types one double-quote character; now removed).
 2. **It misses differences that are already documented:** ☰'s contents (Home/CAS actions: copy, paste, share, clear history, P8), the Paste key (a number from the clipboard, where the G2 lists past entries; docs/04 2.6), and the unit-slot overrides (µ on `(−)`, Ω on the comma, ° on a b/c, flick letters; `unit_slot:` in `spec/keyboard.yaml`).
