@@ -125,7 +125,7 @@ describe("renderNumeric, grouped", () => {
   it("r and theta of a polar", () => {
     const z: NumericResult = {
       value: { re: q(3n), im: q(1n) },
-      polar: { r: q(1n, 3n), theta: q(12345n), angle: "rad" },
+      polar: { r: q(1n, 3n), theta: q(12345n), angle: "rad", confirmed: null },
     };
     expect(latexOf(z, "polar")).toBe("0.333\\,333\\,333\\,333\\mathbin{\\measuredangle}12\\,345");
   });

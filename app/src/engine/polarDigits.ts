@@ -2,12 +2,12 @@
 // G312: how many digits of a polar form r∡θ the confirmed digits of the value it was computed from confirm. Out of the
 // start chunk: cycleForms.ts (fetched when idle) runs it once, where the engine computes r and θ, and the history item
 // keeps the counts (Polar.confirmed), which displayMode.ts draws. Our own decimal arithmetic, never JS Number.
-import { DECIMAL_KEEP, isZero, roundSignificant, ZERO_VALUE, type ComplexValue, type DecimalValue } from "./format.ts";
+import { DECIMAL_KEEP, decimalFromRational, isZero, roundSignificant, type ComplexValue, type DecimalValue } from "./format.ts";
 
 const pow10 = (k: number): bigint => 10n ** BigInt(k);
 
-// scaled and fromScaled as format.ts has them for confirmedDigits (which runs in the Worker): kept here, so that the
-// start chunk, which holds format.ts, does not carry them for this lazy module
+// scaled as format.ts has it for confirmedDigits (which runs in the Worker): kept here, so that the start chunk, which
+// holds format.ts, does not carry it for this lazy module; fromScaled reads decimalFromRational, which the start has
 /** v as m·10^e (m a signed BigInt). */
 function scaled(v: DecimalValue): { m: bigint; e: number } {
   if (isZero(v)) return { m: 0n, e: 0 };
@@ -15,13 +15,10 @@ function scaled(v: DecimalValue): { m: bigint; e: number } {
   return { m: v.neg ? -m : m, e: v.exp + 1 - v.digits.length };
 }
 
-/** m·10^e as a DecimalValue, its first `keep` digits. */
+/** m·10^e as a DecimalValue, its first `keep` digits (exact: format.ts's long division, no text pattern, G88). */
 function fromScaled(m: bigint, e: number, keep: number): DecimalValue {
-  if (m === 0n) return ZERO_VALUE;
-  const neg = m < 0n;
-  const all = (neg ? -m : m).toString();
-  const sig = all.replace(/0+$/, "");
-  return { neg, digits: sig.slice(0, keep), exp: all.length - 1 + e, sticky: /[1-9]/.test(sig.slice(keep)) };
+  const v = decimalFromRational(m, 1n, keep); // m's own digits; the power of ten only moves the exponent (no 10^e, G58)
+  return { ...v, exp: v.exp + e };
 }
 
 /** m·10^e: a bound on an error. */

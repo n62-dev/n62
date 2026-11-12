@@ -162,12 +162,11 @@ function precisionOf(r: NumericResult): (PrecisionFacts & { shape?: [number, num
 }
 
 /** The polar form drawn: computed in the angle unit set now, with its counts (G312; one stored before them is not). */
-function polarShown(r: NumericResult, ctx: DisplayContext): Counted | undefined {
+function polarShown(r: NumericResult, ctx: DisplayContext): (Polar & { confirmed: number | null }) | undefined {
   const p = r.polar;
-  return p?.angle === ctx.angle && counted(p) ? p : undefined;
+  // the check is the narrowing TypeScript cannot draw on `p` itself
+  if (p?.angle === ctx.angle && p.confirmed !== undefined) return p as Polar & { confirmed: number | null };
 }
-type Counted = Polar & { confirmed: number | null };
-const counted = (p: Polar): p is Counted => p.confirmed !== undefined;
 
 /** The mode a result is drawn in, once the global setting stands in for none. */
 function baseMode(mode: FmtMode | undefined, ctx: DisplayContext): "std" | "sci" | "eng" | "pfx" | "fix" {
@@ -259,7 +258,7 @@ export function markFor(r: NumericResult, mode: FmtMode | undefined, ctx: Displa
     const polar = m === "polar" ? polarShown(r, ctx) : undefined;
     // G312: r and θ drawn, so their confirmed digits count, not the point form's (the format is a notation, never FIX:
     // markOf reads of the value's parts only that they are non-zero, so the point value stands for r and θ)
-    info = markOf({ ...p, reliableDigits: polar ? polar.confirmed : p.reliableDigits }, o);
+    info = markOf(polar ? { ...p, reliableDigits: polar.confirmed } : p, o);
     if (info?.mark === "=" && polar) info = { mark: "≈" };
   }
   return info?.mark === "=" && r.inexactInput ? { mark: "≈" } : info;
