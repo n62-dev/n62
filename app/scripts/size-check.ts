@@ -407,8 +407,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  60,850 → 60,980 B (R260): a stored name is shown as typed (render/home.ts typedName: β for beta_, e for e_; the Greek
  *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
  *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
- *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 60_980;
+ *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  60,980 → 61,210 B (R276): a history row's hold copies and its swipe deletes. Their code (views/rowSwipe.ts and
+ *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
+ *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
+ *  measures 60.92 kB gzip (172.11 kB raw), the branch 61,155 B (172,810 B raw, +0.23 kB): 61,155 B + 0.05 kB, rounded up
+ *  to the next 0.01 kB. */
+export const START_PIN_GZIP = 61_210;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

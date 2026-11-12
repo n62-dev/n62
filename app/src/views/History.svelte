@@ -10,8 +10,7 @@
   import { markText, noDigit as hasNoDigit } from "../state/displayMode.ts";
   import { rowTap } from "../state/pickRows.ts";
   import { edgeFade } from "./edgeFade.ts";
-  import { longpress } from "../apps/longpress.ts";
-  import { rowSwipe } from "./rowSwipe.ts";
+  import { rowHold, rowSwipe } from "./rowGestures.ts";
   import type { MarkInfo } from "../engine/format.ts";
   import type { Drawn } from "../state/displayMode.ts";
   import type { HistoryItem, MarkStyle, UsedValue } from "../state/session.svelte.ts";
@@ -76,7 +75,7 @@
   } = $props();
 
   // R276: a hold on the input or the result copies it (apps/longpress.ts swallows the click after the lift, so a hold
-  // never picks); a swipe deletes the row (rowSwipe.ts, which swallows a drag's click too).
+  // never picks); a swipe deletes the row (rowSwipe.ts, which swallows a drag's click too). Both come lazily (rowGestures.ts).
   /** The input's hold: a finished row's (a running one has nothing to copy yet). */
   const holdInput = (item: HistoryItem): (() => void) | undefined =>
     onhold && item.status !== "pending" ? () => onhold(item, "input", drawnInput(item)) : undefined;
@@ -208,7 +207,7 @@
       onclick={(e) => toggleSigma(e, item)}
       oncontextmenu={(e) => e.preventDefault()}
       data-selected={at === selected ? "true" : undefined}>
-      <button type="button" class="in" title={t("history.recall")} use:edgeFade use:longpress={holdInput(item)} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => onrecall(item))}>
+      <button type="button" class="in" title={t("history.recall")} use:edgeFade use:rowHold={holdInput(item)} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => onrecall(item))}>
         <Math latex={drawnInput(item)} />
       </button>
       <div class="out" data-testid="result" use:edgeFade={item.status}>
@@ -230,12 +229,12 @@
           {#if d.wrap && !noDigit && d.latex.length <= MAX_DRAWN_LATEX}
             <!-- R158: a plain number: its groups, each unbreakable, wrap at a gap when the row is too narrow for the whole; the mark stays beside the first line -->
             <button type="button" class="result wrapped" data-text={d.text} title={t("history.insert")}
-              use:longpress={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
+              use:rowHold={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
               <Math latex={d.latex} pieces={d.wrap} gap={d.gap === true} size={d.text.length} />
             </button>
           {:else}
             <button type="button" class="result" data-text={d.latex.length > MAX_DRAWN_LATEX ? "" : d.text} title={t("history.insert")}
-              use:longpress={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
+              use:rowHold={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
               {#if !noDigit}<Math latex={d.latex} size={d.text.length} />{/if}
             </button>
           {/if}
