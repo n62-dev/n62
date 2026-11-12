@@ -66,7 +66,7 @@ export function isChipName(name: string): boolean {
  *  is read through the binding: a bound `k` answered `k` for the user's stored k, which was then purged. Every name our
  *  Giac text binds is therefore written `pas<name>_` (the definitions in homeEval.ts, complex.ts, icdf.ts, eseries.ts,
  *  polyvec.ts, matrixType.ts, units/evaluate.ts): no parser table gives such a name (`e_`, `i_`, `beta_`… are the
- *  parser's own, input/parseTables.ts), the parser refuses a typed trailing `_` (`expected subscript`), a library
+ *  parser's own, engine/standIns.ts), the parser refuses a typed trailing `_` (`expected subscript`), a library
  *  may not define one (library.ts), and the state read takes the `pas` prefix for ours. statenames.test.ts checks
  *  each definition with Giac's own tree (bridge-2's `bound`). */
 export const OUR_BOUND = "pask_";
