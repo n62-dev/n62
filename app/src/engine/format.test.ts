@@ -229,8 +229,8 @@ describe("PFX: SI prefix display (docs/04 2.7)", () => {
     ["-4.7e3", "-4.7 k"],
     ["0", "0"],
   ])("%s → %s", (x, want) => expect(p(x)).toBe(want));
-  it("rounding moves into the next prefix: 999.96 k at 4 digits is 1.000 M", () => expect(p("999.96e3")).toBe("1 M"));
-  it("rounding moves into the range: 9.9996E-16 at 4 digits is 1.000 f", () => expect(p("9.9996e-16")).toBe("1 f"));
+  it("rounding moves into the next prefix: 999.96 k at 4 digits is 1 M", () => expect(p("999.96e3")).toBe("1 M"));
+  it("rounding moves into the range: 9.9996E-16 at 4 digits is 1 f", () => expect(p("9.9996e-16")).toBe("1 f"));
   it("999.94 k stays 999.9 k", () => expect(p("999.94e3")).toBe("999.9 k"));
   it("outside f … P it is ENG", () => {
     expect(p("1e18")).toBe("1.000E18");
@@ -273,7 +273,7 @@ describe("PFX drops the mantissa's trailing zeros (G224); ENG keeps them", () =>
     expect(markOf({ value: { re: decimalFromString("4700")!, im: ZERO_VALUE }, exact: true, reliableDigits: null }, o)).toEqual({ mark: "=" });
     expect(markOf({ value: { re: decimalFromRational(10000n, 3n), im: ZERO_VALUE }, exact: true, reliableDigits: null }, o)).toEqual({ mark: "≈" });
   });
-  it("the value behind the text is whole: the same DecimalValue formats to the full digits in STD (Copy never takes the prefix)", () => {
+  it("the same DecimalValue formats to its full digits in STD, and to 4.7 k in PFX (the digits are whole; the Copy path itself is in clipboard/text.test.ts)", () => {
     const v = decimalFromString("4700")!;
     expect(toText(formatReal(v, { format: "PFX", digits: 12 }))).toBe("4.7\u2009k");
     expect(toText(formatReal(v, { format: "STD", digits: 12 }))).toBe("4700");

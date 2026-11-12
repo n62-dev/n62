@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
-import { markFor, modeOf, type DisplayContext } from "../state/displayMode.ts";
+import { markFor, modeOf, renderNumeric, type DisplayContext } from "../state/displayMode.ts";
 
 const CTX: DisplayContext = { format: "std", digits: 12, fixDecimals: 4, angle: "rad" };
 
@@ -77,6 +77,23 @@ describe("copyFull", () => {
   it("copies nothing from a pending or failed entry", () => {
     expect(copyFull(done({ status: "pending", text: "" }))).toBeUndefined();
     expect(copyFull(done({ status: "error", text: "Syntax error" }))).toBeUndefined();
+  });
+});
+
+describe("copyFull in PFX: Copy never takes the prefix (G224f1)", () => {
+  const PFX: DisplayContext = { ...CTX, format: "pfx" };
+  // 4700 and 0.000022 are exact decimals (derived): 4.7 k and 22 µ are what the screen draws, the digits are the copy's.
+  it("4700 is drawn as 4.7 k and copies as 4700", () => {
+    const item = done({ full: "4700", fullExact: true, text: "4700", value: re("4700"), facts: { exact: true, reliableDigits: null }, fmt: "pfx" });
+    const shown = renderNumeric({ value: item.value!, facts: item.facts! }, "pfx", PFX);
+    expect(shown?.text).toBe("4.7\u2009k");
+    expect(copyFull(item)).toBe("4700");
+  });
+  it("0.000022 is drawn as 22 µ and copies as 2.2E-5: every digit, no prefix, E form below 1E-4 (docs/04 2.6)", () => {
+    const item = done({ full: "0.000022", fullExact: true, text: "0.000022", value: re("0.000022"), facts: { exact: true, reliableDigits: null }, fmt: "pfx" });
+    const shown = renderNumeric({ value: item.value!, facts: item.facts! }, "pfx", PFX);
+    expect(shown?.text).toBe("22\u2009\u00b5");
+    expect(copyFull(item)).toBe("2.2E-5");
   });
 });
 
