@@ -175,6 +175,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G325, patch 0044: sqrt's exact complex branch normalizes the imaginary part only, so re(1-x*x) for x = sqrt(-2)-10^35 kept
   // sqrt(2)*sqrt(2) and normalize_sqrt took the sign of a nested root at Digits (asin(sqrt(-2)-10^35) the conjugate at Digits 40)
   ["0044-sqrt-complex-real-part-normal.patch", "giac-2.1.0/src/usual.cc", /a=re\(e,contextptr\);b=ratnormal\(im\(e,contextptr\),contextptr\);/, "// sqrt of an exact complex number"],
+  // G340, patch 0045: algnum_convert rewrites only the rootofs lvar lists at the top level, so one inside a power kept its place and
+  // the power's base was written with the generator's variable (normal(sqrt(1+sqrt(1+2^(1/3)))) = 0.00732, right 1.58218)
+  ["0045-algnum-convert-nested-rootof.patch", "giac-2.1.0/src/sym2poly.cc", /v=lvar\(e\);\s*vecteur vr,wr;\s*\/\/ rewrite rootofs inside e\s*for \(int i=0;i<v\.size\(\);\+\+i\)\{\s*if \(v\[i\]\.is_symb_of_sommet\(at_rootof\)\)\{/, "int algnum_convert(const gen & e_,gen & E,gen & G,vecteur & syst,vecteur & vars,vecteur & v,vecteur & varapprox,ext_param_t & extpar,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);

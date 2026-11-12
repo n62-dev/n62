@@ -215,6 +215,14 @@ Digits:=40:; pc("g325f2-keep-evalf-asin-half-tiny-i",'(evalf(asin(1/2+i/10^20)))
 Digits:=40:; pc("g325f2-keep-evalf-acos-half-tiny-i",'(evalf(acos(1/2+i/10^20)))',(10471975512/10^10)-(115470053838/10^31)*i,5/10^12+5/10^32);
 // g325f2-keep-evalf-asin-neg1-tiny (home.yaml, oracle)
 Digits:=40:; pc("g325f2-keep-evalf-asin-neg1-tiny",'(evalf(asin(-1-10^-30+i/10^40)))',-(157079632679/10^11)+(141421356237/10^26)*i,5/10^12+5/10^27);
+// g340-keep-normal-sqrt-1-sqrt2 (home.yaml, oracle)
+Digits:=40:; pc("g340-keep-normal-sqrt-1-sqrt2",'(normal(sqrt(1+sqrt(2))))',(155377397403/10^11),5/10^12);
+// g340-keep-normal-sqrt-1-cbrt2 (home.yaml, oracle)
+Digits:=40:; pc("g340-keep-normal-sqrt-1-cbrt2",'(normal(sqrt(1+2^(1/3))))',(150330337919/10^11),5/10^12);
+// g340-keep-normal-1-sqrt-1-cbrt2 (home.yaml, oracle)
+Digits:=40:; pc("g340-keep-normal-1-sqrt-1-cbrt2",'(normal(1+sqrt(1+2^(1/3))))',(250330337919/10^11),5/10^12);
+// g340-keep-normal-sqrt-1-sqrt-1-sqrt2 (home.yaml, oracle)
+Digits:=40:; pc("g340-keep-normal-sqrt-1-sqrt-1-sqrt2",'(normal(sqrt(1+sqrt(1+sqrt(2)))))',(159805318248/10^11),5/10^12);
 // int-floor2.5 (home.yaml, derived)
 Digits:=40:; pc("int-floor2.5",'(floor((25/10^1)))',2,5/10^12);
 // int-ceil-2.5 (home.yaml, derived)

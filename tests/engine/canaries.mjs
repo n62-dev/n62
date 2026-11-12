@@ -64,7 +64,7 @@ const ROWS = [
     ["1-0.9-0.1"], ([a]) => a === "1.7763568394e-15"],
 ];
 
-// G322, G325 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
+// G322, G325, G340 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
 // its patch (a stock pin, or a build that lost it), never when upstream fixes the cause (patch-canary.ts says that).
 // [patch, what it fixes, [Digits, input, the output our build gives]…]
 const PATCHED = [
@@ -72,6 +72,8 @@ const PATCHED = [
     [[60, "size(solve(x^3-2*x-5=0,x))", "1"], [40, "size(solve(x^3-x-1=0,x))", "1"]]],
   ["0044-sqrt-complex-real-part-normal.patch", "asin of a non-real argument whose imaginary part is small beside its real part is the principal value at Digits 40 (a build without the patch makes its exact text with another root, whose imaginary part is 12.86 or, for -10^45, 81; mpmath asin(sqrt(-2)-10^35) = -1.5707963268+81.2836254354*i, asin(sqrt(-2)-10^45) = -1.5707963268+104.309476365*i)",
     [[40, "round(im(evalf(asin(sqrt(-2)-10^35),100)))", "81"], [40, "round(im(evalf(asin(sqrt(-2)-10^45),100)))", "104"]]],
+  ["0045-algnum-convert-nested-rootof.patch", "normal and simplify of a square root over a field Giac writes as a rootof keep the root's argument (a build without the patch gives the root of the field's generator, 0.00732; mpmath sqrt(1+sqrt(1+2^(1/3))) = 1.58218310546)",
+    [[12, "round(evalf(normal(sqrt(1+sqrt(1+2^(1/3)))))*10^6)", "1582183"], [12, "round(evalf(simplify(sqrt(1+sqrt(1+2^(1/3)))))*10^6)", "1582183"]]],
 ];
 
 const { giac } = await loadNodeGiac();
