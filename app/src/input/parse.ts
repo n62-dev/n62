@@ -597,8 +597,13 @@ class Parser implements CalcParser {
     let k = this.pos + 2;
     if (k === this.toks.length) throw parseError("parse.baseNeedsDigits", { v: p.v });
     if (this.toks[k]?.t !== "num" && !hexLetter(this.toks[k])) return undefined;
+    // R191f1: the line draws spacing between the 0 and the prefix, after the prefix or inside the digits: not one number
+    if (p.t === "ch" && p.sp) throw parseError("parse.baseSpace");
     let digits = "";
-    for (let t = this.toks[k]; t && ((t.t === "num" && !t.gap) || hexLetter(t)); t = this.toks[++k]) digits += t.v;
+    for (let t = this.toks[k]; t && (t.t === "num" || hexLetter(t)); t = this.toks[++k]) {
+      if ((t.t === "num" || t.t === "ch") && t.sp) throw parseError("parse.baseSpace");
+      digits += t.v;
+    }
     if (!/^[0-9A-Za-z]+$/.test(digits)) throw parseError("parse.baseWhole");
     const bad = [...digits].find((d) => parseInt(d, 16) >= base);
     if (bad !== undefined) throw parseError("parse.baseDigit", { d: bad, base: String(base) });

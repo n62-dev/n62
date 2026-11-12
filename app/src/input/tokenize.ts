@@ -4,8 +4,9 @@ import { parseError } from "../i18n/enParser.ts";
 
 export type Tok =
   /** gap (F43, R51): spacing (a space or a spacing command) separates this number from a number just before it. */
-  | { t: "num"; v: string; gap?: true }
-  | { t: "ch"; v: string }
+  | { t: "num"; v: string; gap?: true; sp?: true }
+  /** sp (R191f1): spacing sits right before this token (a number or a letter), whatever precedes it. */
+  | { t: "ch"; v: string; sp?: true }
   /** id: a MathLive prompt `\placeholder[id]{…}` (R28), whose v is "placeholder". */
   | { t: "cmd"; v: string; id?: string }
   | { t: "open"; v: string }
@@ -164,7 +165,8 @@ export function tokenize(src: string): Tok[] {
         if (c2 && isDigit(src[j + c2])) throw parseError("parse.oneComma");
       }
       // F43 (R51): the parser refuses a number after a number and spacing (2 3, 1\,000), never a silent product
-      out.push(gapAt === out.length && out[out.length - 1]?.t === "num" ? { t: "num", v, gap: true } : { t: "num", v });
+      const sp = gapAt === out.length && out.length > 0;
+      out.push(sp && out[out.length - 1]?.t === "num" ? { t: "num", v, gap: true, sp: true } : sp ? { t: "num", v, sp: true } : { t: "num", v });
       i = j;
     } else if (c === "\u1D07") {
       out.push({ t: "cmd", v: EMARK });
@@ -179,7 +181,7 @@ export function tokenize(src: string): Tok[] {
       out.push({ t: "close", v: ")" });
       i++;
     } else {
-      out.push({ t: "ch", v: c });
+      out.push(gapAt === out.length && out.length > 0 ? { t: "ch", v: c, sp: true } : { t: "ch", v: c });
       i++;
     }
   }
