@@ -84,7 +84,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 641 | [G312](packages/G312.md) polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
+| 641 | G312 polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
 | 642 | [G313](packages/G313.md) `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
 | 652 | [G323](packages/G323.md) each giac-regress file in a fresh engine (F223) | gorge, Sonnet | `p1/gorge-regressfresh` | – |
 | 659 | [G326](packages/G326.md) the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
