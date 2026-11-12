@@ -42,7 +42,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F206, no package (G172's report; id: Opus pass 122).** Numbers rounded inside a string: when a non-number also holds a real float, `floatsAtDigits` (numeric.ts) rounds a string's decimals: `list[x,"0.1234567890123456789",evalf(1/3)]` shows the string as `"0.123456789012"`, Home and CAS. Family 1.
 - **F207, no package (G173's Not done).** A matrix inside a set, a coefficient vector or an equation keeps Giac's word (`set[matrix…]`, `poly1[matrix…]`, `matrix[[1,0],[0,1]]=x`). Family 1.
 - **F208, no package (Opus pass 124).** A stored float list read back shows vector brackets: `J:=list[evalf(1/3),evalf(2/3)]` shows `{…}`, then `J` and `J*J` show `[…]` (copy text `list[…]`); the read's rebuild (facts.ts `inherited`) drops Giac's list type. Family 1.
-- **F215, fixed by G328 (run 1033).** A name set beside the result took its facts: `(A:=5)*approx(1)` gave the exact A a ⚠. Family 1.
+- **F215, no package (G328's rest, run 1033).** A name set beside the result keeps the line's ⚠ after a decision or inexact chip: `(A:=5)*floor(sin(10^100)*10^12)`. Family 1.
 - **F218, package R286 (R271f1; pass 139).** σ's confirmed digits cut the exact value's, in Home and the unit view. Family 1.
 - **F220, fixed by G324f1 (run 995).** A rootof's ≈ was stored with Giac's `+1.6E-40·i` (`W:=evalf(solve(x^3-x-1=0,x))`, then `W`); the unaudited check stores each element without the part it shows as 0. Family 1.
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.

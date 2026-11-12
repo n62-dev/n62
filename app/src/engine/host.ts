@@ -42,7 +42,7 @@ import { assignmentIn, clearingCall, formIn, formOf, mayStore, NOT_HERE_HEADS, p
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
 import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
-import { resultFacts, sideShown, storedMark } from "./storedMark.ts";
+import { aloneFacts, resultFacts, sideShown, storedMark } from "./storedMark.ts";
 import { SOLVE_HARD_TIMEOUT_S, solveRequest, unknownsOf } from "./solve.ts";
 import { analyze, table } from "./analysis.ts";
 import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
@@ -738,7 +738,7 @@ export class EngineHost implements FactsHost {
    * that went, or that `purge(…)` names, is purged. `facts`: what a variable takes (storedFacts' rule), `fn`: what the
    * function takes; `angle`: the mode a variable was stored in (G34), recorded with it when known.
    */
-  private defsAfter(input: string, ran: string[], preview: string, facts: NameFacts | null, fn: NameFacts | null, view: "home" | "cas", digits: number, angle: "rad" | "deg" | undefined, post: AfterInput, home?: { r: HomeResult; s: HomeSettings; lent: NameFacts | null }): DefChange[] {
+  private defsAfter(input: string, ran: string[], preview: string, facts: NameFacts | null, fn: NameFacts | null, view: "home" | "cas", digits: number, angle: "rad" | "deg" | undefined, post: AfterInput, home?: { r: HomeResult; s: HomeSettings; lent: readonly NameFacts[] }): DefChange[] {
     const base = { preview: dropAngleFactor(preview.trim(), "printed").slice(0, PREVIEW_MAX), view, time: Date.now() };
     const purged = (wholeCall(input, "purge", "typed") ?? []).filter((n) => isName(n, true));
     const gone = [...new Set([...purged, ...(post.changes?.removed ?? [])])];
@@ -768,7 +768,7 @@ export class EngineHost implements FactsHost {
       }
       const snap = this.snapshot(name, digits);
       // G328: a name beside the result stores its own facts (Home), the target the result's
-      const side = snap && name !== target ? this.side(name, view, home && { ...home, float: snap.float, heads: tree.heads }, digits, angle) : null;
+      const side = snap && name !== target ? this.side(name, view, home && { s: home.s, float: snap.float, alone: aloneFacts(this, tree, name, home.r, home.lent) }, digits, angle) : null;
       changes.push(
         snap
           ? { set: { name, kind: "var", cmds: [snap.cmd], ...storedFacts(side && side.facts !== undefined ? side.facts : facts, snap.float), ...(kept && def?.name === name ? { stores: kept } : {}), ...base, ...(side ? side.shown : home ? storedMark(home.r, digits) : {}), ...(snap.early ? { early: true } : {}), ...(angle ? { angle } : {}) } }
@@ -791,7 +791,7 @@ export class EngineHost implements FactsHost {
   }
 
   /** G317, G328 (storedMark.ts sideShown): the preview, mark and Home facts of a name set beside the result. The input's tree is kept. */
-  private side(name: string, view: "home" | "cas", home: { s: HomeSettings; lent: NameFacts | null; float: boolean; heads: readonly string[] } | undefined, digits: number, angle: "rad" | "deg" | undefined): { shown: { preview: string; mark?: StoredMark }; facts?: NameFacts | null } {
+  private side(name: string, view: "home" | "cas", home: { s: HomeSettings; float: boolean; alone: { lent: NameFacts | null } | null } | undefined, digits: number, angle: "rad" | "deg" | undefined): { shown: { preview: string; mark?: StoredMark }; facts?: NameFacts | null } {
     const parsed = this.parsed;
     const { facts, ...own } = sideShown(this.watched, name, view === "home" && home ? { ...home, bodies: this.bodiesFor(name), logged: this.byName } : null, digits, angle);
     this.parsed = parsed;
@@ -922,7 +922,7 @@ export class EngineHost implements FactsHost {
       const inexact = !fn && facts !== null && (inexactIn || result.facts.warn !== undefined);
       // G48: a symbolic value's facts count only when they say it is not exact (a float in it, a ⚠).
       const own = inexact ? { ...facts, inexact: true as const } : result.value || result.items ? facts : null;
-      defs = this.defsAfter(input, ran, result.display, storeFacts(own, lent, read), fn ? facts : null, "home", digits, s.angle, post, { r: result, s, lent: storeFacts(null, lent, read) }); // S53f1, G317, G328
+      defs = this.defsAfter(input, ran, result.display, storeFacts(own, lent, read), fn ? facts : null, "home", digits, s.angle, post, { r: result, s, lent }); // S53f1, G317, G328
     }
     return { result, defs };
   }

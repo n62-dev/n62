@@ -120,9 +120,40 @@ describe.skipIf(!giacAvailable())("G328: a name set beside the result stores its
     const r = twice(host);
     expect([r.display, r.facts.exact, r.facts.warn]).toEqual(["0.666666666667", true, undefined]);
   });
-  it("(A:=approx(1/3))*(B:=5): A keeps its own unchecked facts, those of approx(1/3) => A; B stores none", async () => {
+  // Fix round 1 (audit): the rest of the line does not count, only what sets A (bridge-2's sides).
+  it("A,B:=5,sqrt(approx(2)) and (A:=5)*sin(approx(1)): A stores no facts; A*2 is 10 exact", async () => {
+    for (const line of ["A,B:=5,sqrt(approx(2))", "(A:=5)*sin(approx(1))"]) {
+      const { host, get } = await run(line);
+      expect(get("A")?.facts, line).toBeUndefined();
+      const r = twice(host);
+      expect([r.display, r.facts.exact, r.facts.warn], line).toEqual(["10", true, undefined]);
+    }
+  });
+  // A takes the facts of the names its own value reads (G48 rule 2), not of every name the line reads.
+  it("(A:=5)*B with B a stored float: A stores no facts; (A:=B)*2 takes B's", async () => {
+    const host = await nodeHost();
+    host.home("B:=approx(2)", defaultHomeSettings);
+    const set = (line: string) => host.home(line, defaultHomeSettings).defs.flatMap((c) => ("set" in c && c.set.name === "A" ? [c.set] : []))[0];
+    expect(set("(A:=5)*B")?.facts).toBeUndefined();
+    expect(set("(A:=B)*2")?.facts?.warn).toBe("unchecked");
+  });
+  // A float beside the result keeps the facts its own store gives, those of `approx(1/3) => A` (its value run once).
+  it("(A:=approx(1/3))*2: A keeps its own unchecked facts, those of approx(1/3) => A", async () => {
     const own = (await run("approx(1/3) => A")).get("A")?.facts;
     expect(own?.warn).toBe("unchecked");
+    expect((await run("(A:=approx(1/3))*2")).get("A")?.facts).toEqual(own);
+  });
+  // The result's facts differ from A's own: a symbolic result has no confirmed digits (reliableDigits null), A has its
+  // own (those of approx(1/3) => A); the line's facts would let A*2 claim P's digits.
+  it("(A:=approx(1/3))*y: A keeps its own digits, not the symbolic result's none", async () => {
+    const own = (await run("approx(1/3) => A")).get("A")?.facts;
+    const sym = await run("(A:=approx(1/3))*y");
+    expect(sym.out.result.facts.reliableDigits).toBeNull();
+    expect(own?.reliableDigits).not.toBeNull();
+    expect(sym.get("A")?.facts).toEqual(own);
+  });
+  it("(A:=approx(1/3))*(B:=5): A keeps its own facts; B stores none", async () => {
+    const own = (await run("approx(1/3) => A")).get("A")?.facts;
     const both = await run("(A:=approx(1/3))*(B:=5)");
     expect(both.get("A")?.facts).toEqual(own);
     expect(both.get("B")?.facts).toBeUndefined();
@@ -139,6 +170,9 @@ describe.skipIf(!giacAvailable())("G328: a name set beside the result stores its
     expect(twice(half.host).facts.exact).toBe(true);
     // an exact-looking value made by a decision or from a float keeps the line's ⚠ (G48's [q1,q2]:=[F,1] in host.test.ts)
     expect((await run("(A:=round(approx(5/2)))*approx(1)")).get("A")?.facts?.warn).toBe("unchecked");
+    expect((await run("A,B:=round(approx(5/2)),5")).get("A")?.facts?.warn).toBe("unchecked");
+    // a branch on the way to the store decides which value A gets
+    expect((await run("when(approx(1/3)*3>0,(A:=5),0)*approx(1)")).get("A")?.facts?.warn).toBe("unchecked");
     const cas = await run("(A:=5)*approx(1)", true);
     expect(cas.get("A")?.facts).toBeUndefined();
     expect(twice(cas.host).facts.exact).toBe(true);
