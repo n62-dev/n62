@@ -5,6 +5,32 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-12, evening (day session, the owner's yes) to make room, as they stood
+- **Owner answers of 2026-11-08:** a patch's worker writes its README row (A83); a stray file is logged, warn only (A88); a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "Opus pass 150". Would change if: a stray file does harm before anyone reads the log.
+- **Owner answers of 2026-11-05 (morning).** The weekly fuzz runs in 10-minute slices from Wed 11-11 (G167, Opus pass 69); red-first may test the stock engine for a G125 package (A71). Archived, "Opus pass 96". Would change if: the fuzz count is cut to fit one slice.
+- **Owner answers of 2026-11-02, evening:** red-first counts only added or tightened tests (A67). Archived, "Opus pass 96". Would change if: a fix needs a test loosened.
+- **Owner answers of 2026-10-25, afternoon (verification check).** A wall-clock test that fails only under load is a timing case, not a bug (`isTiming`); the gate gets the pipeline's retry list (A39). Would change if: a timing case fails without load. Archived.
+- **Touch, keys and Store (owner, 2026-11-10):** a history row: tap picks, a second tap puts it on the line, hold copies, swipe deletes (Undo note); the entry line (touch): drag scrolls, tap places the caret, hold selects the term; the row bar keeps Store ▶ and Copy as ›. Keys (moved by the owner's choice): Copy, Paste, ⇤□, □⇥ go; r2c4 Select (Shift: Help), r2c5 Deselect (Shift open: Mode or ☰); r0c4's tap empty. The fold bar goes, the line's swipe stays; no Fold key (open). Store: S53's design A. R274–R283, S53, A139. Would change if: A139 shows the gestures clash on a real WebView.
+- **R151's start time comes from A73f1 (Opus pass 92),** no measurement package. Archived, "Opus pass 96". Would change if: either is over its before by more than 50 ms.
+- **Owner answers of 2026-11-06 (UI, before v0.1.0):** R140–R150 and R53 as written (families: R50); a colour-blindness test, no picker (R140). Archived, "Opus pass 96".
+- **Owner answers of 2026-10-31 and 2026-11-01 (stored data, the comma, `%`):** built (R95, R100, R94, R110). Archived. Would change if: two tabs side by side are wanted on purpose.
+- **S12 (owner, 2026-10-19; built by R66, R67, R68, G45):** dropped R39's power form in Home, the half-even option and G42's wait for items 66–67; kept `mod` Euclidean. Archived.
+- **Owner answers of 2026-10-19 (feel).** R34: one shared entry line, as on the G2 (an unentered line follows you between views; after Enter it clears); R43, R7's defaults and A4a points 3 and 4 as built. Archived.
+- **G78f1, G68, G84, G70, G71, G67, G65 (Opus passes 46–49):** an underflow is refused with its reason; Solve confirms only the digits every solve agrees on; Area applies Home's refusals. Archived.
+- **A20 (owner, 2026-10-20): Home's budget counts steps, not milliseconds** (G82); CAS and Solve keep clocks. Archived.
+- **A12 (2026-10-20): the user's functions load on first use (G83) before R59; A62 (owner, 2026-11-05): R59 goes ahead.** Archived.
+- **A16 after G53 (owner, 2026-10-20): Enter p95 on the Tab One is under the 150 ms bar** (145–147 ms, 2026-10-27). Archived; [archive/shifts/A16-enter-p95.md](shifts/A16-enter-p95.md).
+- **F50, F51 (2026-10-20, owner; built by G78):** a value through a division by zero, an overflow or a lost answer is refused with its reason, never Giac's text. Archived.
+- **G33 and R56 (owner, 2026-10-19; built by A12, G83, R56b):** lazy definitions before R59; Solve knows the user's functions; plots of user functions wait for the owner. Archived.
+- **A4a point 1, the cost of Enter (2026-10-19; G53):** keep the agreement check and G38's second decision at 1.35× of `36cfbd9`; G52 counts Giac calls per Enter in the gate; the Tab One decides ("A16 after G53"). Archived.
+- **G20 (2026-10-16): a CAS result lists the stored values it used, not the names the input binds** (G28; `tools/probes/bound.ts`). Archived, "Opus pass 96".
+- **G81 (Opus pass 24):** a result whose every leaf cancels (`μ₀·ε₀·c²` = 1, σ 0) keeps `≈`. Archived, "Opus pass 96". Would change if: the owner wants `=` for a σ of exactly 0.
+- **R24d (Opus pass 23):** an empty user cell's Find pick sets that leg and lands in the slot (one trip does both); the six off-pad units and the units menu's Tools and Const tabs: archive.
+- **R24b and R24c (Opus pass 22): the unit pad and the unit view's entry, as built.** Archived, "Opus pass 106". Would change if: the Tab One's first unit result passes 1 s.
+- **G37 (owner, 2026-10-19; built): °C and °F inside a compound unit are a temperature interval** (1 °C = 1 K); alone they keep their offset. Archived.
+- **G15 and G25 (2026-10-18): rpm and rev.** `rpm` counts turns (1/60 Hz); `rpm → rad/s` is refused (G32). Archived, "Opus pass 96". Would change if: a user needs angular speed from rpm in one step.
+- **The units menu (2026-10-13): the G2's flow, our data** ([spec/units-menu.yaml](../../spec/units-menu.yaml)); the grids from the Find index by dimension. Archived, "Opus pass 96". Would change if: the owner misses a G2 unit in a grid.
+
 ### Shortened 2026-11-12 (Opus pass 155) to make room for R276's and R277's defaults, as they stood
 - **The angle mode, route R (S14, R64, G46; Opus pass 31):** docs/04 2.12 (the ° template, the coordinate commands). `sinc` takes no factor (a function of a number, F29): sin(x)/x in radians in both modes; `polar_point`'s angle takes the factor (R64f2). Would change if: the G2 reads sinc in degrees.
 - **R50 (2026-10-18; owner 2026-11-07): themes N62 (teal, #529997's hue), Black & White (the old N62), Solarized**; entry outline, busy dash, key shadows, Home logo (R153–R157; `docs/mockups/n62-teal-2026-11-07.html`). Rule: docs/05 3.10. Would change if: a family goes unused for 4 weeks.
