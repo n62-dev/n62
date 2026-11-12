@@ -82,9 +82,9 @@ describe("chips in the parser", () => {
     expect(() => latexToGiac("\\ans")).toThrow(/Ans/);
     expect(() => latexToGiac("\\const{c}{c}")).toThrow(SerializeError);
   });
-  it("rejects 0x, 0b and 0o followed by digits (docs/04 2.3 #1)", () => {
-    expect(() => latexToGiac("0xFF")).toThrow(/other bases/);
-    expect(() => latexToGiac("0b101")).toThrow(SerializeError);
+  it("reads 0x, 0b and 0o literals as numbers, so one beside a result chip is refused as a number is (R191, F25)", () => {
+    expect(latexToGiac("0xFF")).toBe("255");
+    expect(() => latexToGiac("0xFF\\res{1}{0.5}", { chips: { "res:1": { value: "1/2", exact: true } } })).toThrow(/between a result and a number/);
     expect(latexToGiac("0x+1")).toBe("0*x+1");
   });
 });

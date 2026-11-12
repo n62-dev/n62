@@ -13,7 +13,7 @@ The one place for "where are we and what's left", one or two lines per open item
 | Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: A4b 31.9 ms, after R132 (A74, 11-05) p95 14.1 ms ≤ 16, E3 met; the gate is not complete |
 | Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), a result chip as σ (R271), menu Constants and Tools (R92) |
 | Milestone 6: Structure | Not started (EN5–EN7, Help) |
-| MVP release | v0.1.0, the APK and the website from one tag, on Sun 11-15 if the bar is met: [release-0.1.0.md](release-0.1.0.md) |
+| MVP release | v0.1.0, the APK and the website from one tag, after the 11-17 freeze, at the bar: [release-0.1.0.md](release-0.1.0.md) |
 
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
 
@@ -24,9 +24,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
-6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): on Sun 11-15. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); Sat 11-14 the showcase video; after the push, the issue forms on GitHub's New issue page (A81).
+6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by Thu 11-12; R269 round trip; the Store design (S53).
+8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by Thu 11-12; R269 round trip; must-have B2–B7, C1–C6, C8.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75; M6 (no public sideways scroll; text in R277's package file) drafted by R277.
@@ -35,6 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
+- **r20-N1 ([r20](research/r20-decompose.md) 4).** Home, CAS: `normal(sqrt(1+sqrt(1+2^(1/3))))` ≈ 0.00732288514727 (right 1.58218310546); `node tools/probes/decompose/run.ts --set forms`. Family 5.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
@@ -69,7 +70,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F200 (A120, A123 built).** Core c29 red once (device 100); a second red is a FIX.
 - **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 ms of 400 in run 307, 417 in run 909; two sightings, so it is due in `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, 87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; golden `steps`: 4 G325 rows stopped at ×8 (run 1032).
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
-- **F214, research S54 (G187; G183 restarts the engine).** `simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))` kills the engine: simplify recurses ~7,800 deep in `subst.cc` `decompose` (from `tsimplify_common`) to a stack overflow; cause not found. G183's crash tests use it.
+- **F214, S54 done: fix r20-P1 ([r20](research/r20-decompose.md)), after the tag.** `simplify` overflows or loops: `alg_lvar` drops `ln(rootof)`.
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).

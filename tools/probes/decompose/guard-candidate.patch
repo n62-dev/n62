@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# S54: the candidate guard of docs/research/r20-decompose.md, as tested on a scratch build (trace.ts header); not a patch of engine/giac/patches/ (its package writes that, with its header).
+--- a/src/subst.cc
++++ b/src/subst.cc
+@@ -1985,8 +1985,13 @@
+       // Initialization
+       vecteur vars(alg_lvar(argln)); 
+       // FIXME alg_lvar for alg ext but requires decompose to work!
+-      for (int i=0;i<s;++i)
++      for (int i=0;i<s;++i){
+ 	argln[i]=e2r(argln[i],vars,contextptr);
++	// alg_lvar can miss a variable (ln(rootof(...)) when the same rootof is also an argument: alg_lvar substitutes it inside
++	// the ln too), then e2r gives undef, and undef in primeargs makes decompose recurse and expanded_ln loop without end
++	if (is_undef(argln[i]))
++	  return e;
++      }
+       // extensions must be treated separately
+       gen num,den;
+       vecteur primeargs,extargs;

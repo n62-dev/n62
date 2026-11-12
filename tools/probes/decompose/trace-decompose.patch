@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# S54: trace lines in Giac's subst.cc (decompose, tsimplify_common) for a scratch build only (tools/probes/decompose/trace.ts); never in engine/giac/patches/.
+--- a/src/subst.cc
++++ b/src/subst.cc
+@@ -1519,7 +1519,12 @@
+ 
+   // Complete a list of prime together factors primeargs such that
+   // a is a product of these factors
++  static int n62_depth=0; static long n62_calls=0;
++  struct n62_guard { n62_guard(){++n62_depth;} ~n62_guard(){--n62_depth;} };
++  static bool n62_show(){ return n62_depth<=8 || n62_depth%1000==0; }
+   static void decompose(const gen &a_orig,vecteur & primeargs,vecteur & extargs,int begin,const vecteur & vars,GIAC_CONTEXT){
++    n62_guard n62_g; ++n62_calls;
++    if (n62_show()) fprintf(stderr,"N62 decompose depth %d call %ld begin %d primes %d a=%s | %s\n",n62_depth,n62_calls,begin,int(primeargs.size()),a_orig.print(contextptr).c_str(),r2e(a_orig,vars,contextptr).print(contextptr).c_str());
+     if (is_unit(a_orig))
+       return;
+     if (is_algebraic_extension(a_orig)){
+@@ -1551,6 +1556,7 @@
+ 	primeargs[i]=g;
+ 	continue;
+       }
++      if (n62_show()) fprintf(stderr,"N62   i %d g=%s | %s ; p[i]=%s | %s ; a=%s\n",i,g.print(contextptr).c_str(),r2e(g,vars,contextptr).print(contextptr).c_str(),primeargs[i].print(contextptr).c_str(),r2e(primeargs[i],vars,contextptr).print(contextptr).c_str(),r2e(a,vars,contextptr).print(contextptr).c_str());
+       decompose(g,primeargs,extargs,i,vars,contextptr);
+     }
+     if (!is_unit(a))
+@@ -1983,13 +1989,16 @@
+       // each arg as a product of these values + a multiple of 2*pi*i
+       // arg <--> [ powers multiple_2*pi ]
+       // Initialization
++      fprintf(stderr,"N62 argln=%s\n",gen(argln).print(contextptr).c_str());
+       vecteur vars(alg_lvar(argln)); 
++      fprintf(stderr,"N62 alg_lvar=%s lvar=%s\n",gen(vars).print(contextptr).c_str(),gen(lvar(argln)).print(contextptr).c_str());
+       // FIXME alg_lvar for alg ext but requires decompose to work!
+       for (int i=0;i<s;++i)
+ 	argln[i]=e2r(argln[i],vars,contextptr);
+       // extensions must be treated separately
+       gen num,den;
+       vecteur primeargs,extargs;
++      fprintf(stderr,"N62 tsimplify_common vars=%s ln=%s\n",gen(vars).print(contextptr).c_str(),gen(l).print(contextptr).c_str());
+       for (int i=0;i<s;++i){
+ 	// check for common factors between argln[i] and primeargs
+ 	fxnd(argln[i],num,den);

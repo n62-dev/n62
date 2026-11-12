@@ -4,19 +4,21 @@ The owner's list of 2026-11-08, checked against the code and the engine, and tur
 
 A package starts only through `scripts/pipeline.sh`, and only when a lane row or a day's plan names it (brief section 0c); section A's have rows (2026-11-09), a few of section B's as the lanes' tail; the others have none yet. An item marked "stub" has no package: it says what must exist before it can be split. Line numbers in packages for v0.3 and later are as of de659c02; recheck at start.
 
+**2026-11-12, evening (owner):** sections B to D no longer wait for v0.1.0. The lanes build them to Tue 11-17 (Ultra ends after it) in the brief's order: what changes how today's calculator is used, then the critical bugs, then new features; what is merged by that freeze ships in v0.1.0. The version labels below (v0.2 to v1) are the order of the work, not the release it lands in.
+
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
 - Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only).
-- Fri 11-13, for A91: A8, and G2 item 70 with it.
-- Sun 11-15, for the video: A4, A5.
-- The tag (target Mon 11-16, owner 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
+- The freeze (Tue 11-17, proposed), for A91: A8, and G2 item 70 with it.
+- The release candidate (Sat 11-21, proposed), for the video: A4, A5.
+- The tag (target Mon 11-23, proposed 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
 - Before any forum post: D8.
-- Before v0.2 starts: B2, B4, B5, B6, B7, B9. Before v0.3: B3, B8.
-- Before section C's packages: C1 to C8. Before RPN: D1 to D4.
+- Now (their rows are next in the lanes; brief 0c lists them under lane B's table): B2 to B7, B9. B8 is answered (R199).
+- Now, for section C's rows: C1 to C6, C8 (C7 is answered). Before RPN: D1 to D4.
 - No date: D5, D6, E1 to E4. D6 runs as written unless you say otherwise.
 
 Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
 
-## A. Before you tell anyone (v0.1.0, target tag Mon 11-16, freeze Fri 11-13 after A139)
+## A. Before you tell anyone (v0.1.0; the freeze Tue 11-17, the tag after it)
 
 - **No known silent wrong number** [have]. No open bug line shows a wrong value unmarked (F192, phasor entry, closed by R180). The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
 - **Units and ± in the core list** [miss]. 66 cases, none with a unit or ±; the harness has no unit check. R170.
