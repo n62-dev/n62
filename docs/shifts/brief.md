@@ -99,7 +99,7 @@ The order (owner, 2026-11-12): ron's rows that keep clear of the entry line and 
 | 659 | G326 the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
 | 660 | S54 why `decompose` recurses without end (F214) | sandra, Opus | `p1/sandra-decompose` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
-| 677 | [R191](packages/R191.md) 0x, 0b and 0o literals in the parser | ron, Opus | `p1/ron-baseliteral` | – |
+| 677 | R191 0x, 0b and 0o literals in the parser | ron, Opus | `p1/ron-baseliteral` | – |
 | 678 | [R192](packages/R192.md) HEX, BIN, OCT as a display form of a result | ron, Opus | `p1/ron-baseform` | – |
 | 679 | [R193](packages/R193.md) Shift + − opens the Base menu for the last result | ron, Sonnet | `p1/ron-basemenu` | R192 |
 | 680 | [R194](packages/R194.md) word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
