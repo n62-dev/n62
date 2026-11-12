@@ -4,7 +4,7 @@
 // and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
-import { finger } from "./core-lib.ts";
+import { finger, STILL_MS } from "./core-lib.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 useClipboardLock(); // Copy writes the clipboard: first hook, so the lock is held before the page opens
@@ -35,8 +35,9 @@ const clearLine = (p: Page): Promise<void> => p.evaluate(() => window.n62.entry.
 const holdLast = (p: Page): Promise<void> => finger(p, "result:last", { ms: 700 });
 async function swipeLast(p: Page): Promise<void> {
   const w = (await box(p, "article.item:last-of-type")).width;
-  await finger(p, "row:last", { dx: -0.6 * w, steps: 10 });
-  await p.waitForTimeout(250); // (Chrome takes a touch right after a drag as the stop of its fling)
+  const n = await p.locator("article.item").count();
+  await finger(p, "row:last", { dx: -0.6 * w, steps: 10, still: STILL_MS }); // lifted at rest: no fling to eat the next tap
+  await expect(p.locator("article.item")).toHaveCount(n - 1); // (it slides out, then goes)
 }
 /** n finished Home rows (the fake engine echoes): 1, 2, … */
 async function rows(p: Page, n = 3): Promise<void> {

@@ -416,8 +416,14 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
  *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
  *  measures 60.92 kB gzip (172.11 kB raw), the branch 61,155 B (172,810 B raw, +0.23 kB): 61,155 B + 0.05 kB, rounded up
- *  to the next 0.01 kB. */
-export const START_PIN_GZIP = 61_210;
+ *  to the next 0.01 kB.
+ *  61,210 → 61,400 B (R279): Select and Deselect. The chain itself (entry/grow.ts, SelectChain) rides in the field's lazy
+ *  chunk; what stays is the two specials' names, their case in route.ts special(), the guards that keep them off a picked row
+ *  and a sheet, the end of the chain on any other key (route.ts run, EntryController.run) and the controller's two
+ *  one-line methods. The merge base 5bfdb4c1 measures 61.18 kB gzip (172.85 kB raw), the branch 61.34 kB (173.25 kB raw,
+ *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk; 61.35 kB after merging phase-1 31b97787): 61.35 kB
+ *  + 0.05 kB. */
+export const START_PIN_GZIP = 61_400;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

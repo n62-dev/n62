@@ -4,7 +4,7 @@
 // the history's vertical scroll wins; a long input scrolls sideways first; a running row does not slide. The picked
 // row's bar keeps Store ▶ and Copy as ›. Values are derived (2+3 = 5).
 import { expect, test, type Page } from "@playwright/test";
-import { finger } from "./core-lib.ts";
+import { finger, STILL_MS } from "./core-lib.ts";
 import { entryValue, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
@@ -27,10 +27,10 @@ async function enter(page: Page, ...lines: string[][]): Promise<void> {
   for (const keys of lines) await tap(page, [...keys, "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(lines.length);
 }
-/** A swipe across `share` of the last row's width, slowly (no fling). */
+/** A swipe across `share` of the last row's width, slowly and lifted at rest (no fling); two steps is a fling. */
 async function swipe(page: Page, share: number, steps = 12): Promise<void> {
   const width = (await rows(page).last().boundingBox())?.width ?? 0;
-  await finger(page, "row:last", { dx: share * width, steps });
+  await finger(page, "row:last", { dx: share * width, steps, ...(steps > 2 && { still: STILL_MS }) });
 }
 
 test("a hold on a result copies its full value and says so; no menu opens, the row is not picked", async ({ page }) => {
