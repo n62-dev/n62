@@ -93,6 +93,11 @@ describe("keyboard spec", () => {
       for (const l of Object.values(k.label)) if (l.startsWith("$")) expect(l.slice(1) in en, `${k.id}: ${l}`).toBe(true);
   });
 
+  // (the loader no longer checks `cls` and `source` against their lists: the shipped app carries no such lists, R193)
+  it("every key has a known class", () => {
+    for (const k of keyboard.keys) expect(["num", "op", "fn", "ctl", "enter", "nav"], k.id).toContain(k.cls);
+  });
+
   it("every key says where it comes from", () => {
     for (const k of keyboard.keys) expect(["virtual-calc", "assumed", "device"], k.id).toContain(k.source);
     // 37 since R15c2 (42 before): Apps, Symb, Plot, Num and Help left the cluster (their G2 functions are on the status
@@ -142,7 +147,7 @@ describe("keyboard spec", () => {
     expect(actionFor(vars, true, true)).toEqual({ kind: "type", text: "a" });
     expect(actionFor(d3, true, true)).toEqual({ kind: "type", text: "#" });
     expect(actionFor(keyboard.byId.get("enter") as Key, false, true)).toEqual({ kind: "special", name: "enter" });
-    expect(actionFor(minus, true, false)).toBeUndefined(); // shift − (Base) comes with EN6
+    expect(actionFor(minus, true, false)).toEqual({ kind: "special", name: "base" }); // shift − is the Base menu (R193)
     expect(actionFor(plus, true, false)).toEqual({ kind: "insert", latex: "\\ans", sample: ["\\ans", "7"] }); // docs/04 2.8
     expect(labelFor(sin, true, false)).toBe("sin⁻¹");
   });
@@ -370,8 +375,7 @@ describe("keyboard spec", () => {
     expect(loadKeyboard(doc([key], { row_columns: { 1: 3 } })).units).toBe(6);
     expect(() => loadKeyboard(doc([{ ...key, primary: { type: "1", cmd: "x" } }]))).toThrow(/exactly one/);
     expect(() => loadKeyboard(doc([{ ...key, primary: { special: "nope" } }]))).toThrow(/special/);
-    expect(() => loadKeyboard(doc([{ ...key, cls: "huge" }]))).toThrow(/cls/);
-    expect(() => loadKeyboard(doc([{ ...key, source: "guess" }]))).toThrow(/source/);
+    // (an unknown `cls` or `source` is caught by the shipped spec tests above, no longer by the loader: R193 freed its start-chunk bytes)
     expect(() => loadKeyboard(doc([{ ...key, shift: { type: "2" } }]))).toThrow(/shift needs both/);
   });
 });

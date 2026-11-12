@@ -93,6 +93,10 @@ export const enData = {
   "library.left": "{n} left out (assumptions, and decimals in the backup only): {list}",
   "library.formatCopied": "Format copied: paste it into your AI chat",
   "library.copyFailed": "Could not copy the format",
+  // R193: Shift + −, the Base menu (views/baseSheet.ts)
+  "base.title": "Base",
+  "base.notInteger": "Only integers can be shown in a base",
+  "base.noFit": "Does not fit the 64-bit word",
 } as const;
 
 export type DataKey = keyof typeof enData;

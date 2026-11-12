@@ -58,10 +58,10 @@ test("text on the line: no menu, the line and the result stay, and the press is 
   await recordVibrations(page);
   await calc(page, ["d2", "d5", "d5"]);
   await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
-  await tap(page, ["d1"]);
+  await tap(page, ["d1", "shift"]);
   const before = (await vibrations(page)).length;
-  await tap(page, ["shift", "sub"]);
-  await expect.poll(async () => (await vibrations(page)).length - before).toBe(2); // the double pulse
+  await tap(page, ["sub"]);
+  await expect.poll(async () => (await vibrations(page)).length - before).toBe(3); // the touch, then the double (onepulse.spec.ts)
   await expect(sheet(page)).toBeHidden();
   expect(await entryValue(page)).toBe("1");
   await expect(last(page)).toHaveAttribute("data-text", "255");
