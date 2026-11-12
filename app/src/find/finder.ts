@@ -105,6 +105,7 @@ export function preview(it: FindItem): string {
   if (it.kind === "fn" || it.kind === "tmpl") parts.push(it.syntax ?? `${name}(…)`, it.desc ?? it.title);
   else if (it.kind === "const") parts.push(`${name} = ${it.value ?? "?"}${it.unit ? ` ${it.unit}` : ""}`, it.unc ? `± ${it.unc}` : t("exact"));
   else parts.push(it.title, it.si !== undefined ? t("factor", { si: it.si }) : (unitNote(it) ?? ""));
+  if (it.where) parts.push(it.where); // R195: the key (or palette cell) that inserts it, as G230 writes it
   if (it.tier === 1) parts.push(t("notChecked"));
   return parts.filter(Boolean).join(" · ");
 }

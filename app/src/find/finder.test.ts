@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it, vi } from "vitest";
 import { CATEGORIES, categoryItems } from "./categories.ts";
-import { constChipOf, findMenu, itemRow, makeIndexIdle, pauseWhile, unitNote, warmFirstKeys } from "./finder.ts";
+import { constChipOf, findMenu, itemRow, makeIndexIdle, pauseWhile, preview, unitNote, warmFirstKeys } from "./finder.ts";
 import { FIRST_KEYS, forgetLastSearch, search } from "./rank.ts";
 import { makeIndex } from "./testIndex.ts";
 import type { FindItem, IndexItem } from "./types.ts";
@@ -112,6 +112,17 @@ describe.skipIf(!full)("Find on the generated index", () => {
     expect(itemRow(g, () => {}).preview).toContain(`± ${g.unc}`);
     const tier1 = index.items.find((it) => it.tier === 1) as FindItem;
     expect(itemRow(tier1, () => {}).preview).toContain("not checked");
+  });
+
+  // R195: the preview ends with where the key is (G230's `where`), and says nothing of it for a function with no key
+  it("the preview of a keyed function ends with its key, and a function with none has no such part", () => {
+    const asin = index.byId.get("fn:asin") as FindItem;
+    expect(asin.where).toBe("Shift sin");
+    expect(itemRow(asin, () => {}).preview).toMatch(/ · Shift sin$/);
+    expect(itemRow(index.byId.get("fn:abs") as FindItem, () => {}).preview).toMatch(/ · Shift \(−\), Tmpl$/);
+    const solve = index.byId.get("fn:solve") as FindItem;
+    expect(solve.where).toBeUndefined();
+    expect(itemRow(solve, () => {}).preview).toBe("solve(eq, x) · " + solve.desc);
   });
 
   it("a constant goes on the line as a chip with its value; an uncertain one is not exact", () => {
