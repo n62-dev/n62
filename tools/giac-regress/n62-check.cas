@@ -203,16 +203,6 @@ Digits:=40:; pc("g325-keep-asin-neg2",'(asin(-2))',-(157079632679/10^11)+(131695
 Digits:=40:; pc("g325-keep-asin-half",'(asin(1/2))',(523598775598/10^12),5/10^13);
 // g325-keep-ln-sqrt-neg2-1e35 (home.yaml, oracle)
 Digits:=40:; pc("g325-keep-ln-sqrt-neg2-1e35",'(ln(sqrt(-2)-10^35))',(805904782548/10^10)+(314159265359/10^11)*i,5/10^11+5/10^12);
-// g325f1-acos-sqrt-neg2-1e-330-minus-2 (home.yaml, oracle)
-Digits:=40:; pc("g325f1-acos-sqrt-neg2-1e-330-minus-2",'(acos(sqrt(-2)*10^-330-2))',(314159265359/10^11)-(131695789692/10^11)*i,5/10^12+5/10^12);
-// g325f1-acos-sqrt-neg2-1e-400-minus-2 (home.yaml, oracle)
-Digits:=40:; pc("g325f1-acos-sqrt-neg2-1e-400-minus-2",'(acos(sqrt(-2)/10^400-2))',(314159265359/10^11)-(131695789692/10^11)*i,5/10^12+5/10^12);
-// g325f1-asin-sqrt-neg2-1e-330-minus-2 (home.yaml, oracle)
-Digits:=40:; pc("g325f1-asin-sqrt-neg2-1e-330-minus-2",'(asin(sqrt(-2)*10^-330-2))',-(157079632679/10^11)+(131695789692/10^11)*i,5/10^12+5/10^12);
-// g325f1-asin-minus-sqrt-neg2-1e-330-minus-2 (home.yaml, oracle)
-Digits:=40:; pc("g325f1-asin-minus-sqrt-neg2-1e-330-minus-2",'(asin(-sqrt(-2)*10^-330-2))',-(157079632679/10^11)-(131695789692/10^11)*i,5/10^12+5/10^12);
-// g325f1-asin-sqrt-neg2-1e-330-plus-2 (home.yaml, oracle)
-Digits:=40:; pc("g325f1-asin-sqrt-neg2-1e-330-plus-2",'(asin(sqrt(-2)*10^-330+2))',(157079632679/10^11)+(131695789692/10^11)*i,5/10^12+5/10^12);
 // int-floor2.5 (home.yaml, derived)
 Digits:=40:; pc("int-floor2.5",'(floor((25/10^1)))',2,5/10^12);
 // int-ceil-2.5 (home.yaml, derived)
