@@ -19,6 +19,7 @@ test.describe("core list file", () => {
     const m = morningIds();
     expect(run([{ ...ok(), keys: ["zz"] }]).join()).toContain('no key "zz"');
     expect(run([{ ...ok(), keys: [{ tmpl: "nope" }] }]).join()).toContain('no template cell "nope"');
+    expect(run([{ ...ok(), keys: [{ swipe: "row:last", dir: "up" as "left" }] }]).join()).toContain("swipe dir is up");
     expect(run([{ ...ok(), source: "memory" }]).join()).toContain("source is memory");
     expect(run([{ ...ok(), expect: {} }]).join()).toContain("empty expect");
     expect(run([ok(), ok()]).join()).toContain("id repeated");
@@ -35,7 +36,8 @@ test.describe("core list file", () => {
 
 /** A case that writes or reads the clipboard (Copy, Paste, Share session): the clipboard is one for every worker (run
  *  173: c53's √2 landed in c49's Paste), so these run one after another, not in parallel with each other. */
-const usesClipboard = (c: CoreCase): boolean => c.expect.clipboard !== undefined || c.keys.some((k) => k === "copy" || k === "paste");
+const usesClipboard = (c: CoreCase): boolean =>
+  c.expect.clipboard !== undefined || c.keys.some((k) => k === "copy" || k === "paste" || (typeof k === "object" && "hold" in k)); // (R276: a hold copies)
 
 function caseTest(c: CoreCase): void {
   const title = `${c.id} ${c.title}${c.known ? ` [known ${c.known}]` : ""}${c.needs ? ` [needs ${c.needs}]` : ""}`;

@@ -12,6 +12,8 @@ export type CoreStep =
   | { up: string }
   | { down: string }
   | { tap: string }
+  | { hold: string }
+  | { swipe: string; dir: "left" | "right" }
   | { back: true }
   | { wait: number }
   | { relaunch: true };
@@ -114,6 +116,8 @@ export function validate(
         if (!s.startsWith("@") && !keys.has(s)) at(`no key "${s}" in spec/keyboard.yaml`);
       } else if ("tmpl" in s) {
         if (!templates.has(s.tmpl)) at(`no template cell "${s.tmpl}" in spec/keyboard.yaml`);
+      } else if ("swipe" in s) {
+        if (s.dir !== "left" && s.dir !== "right") at(`swipe dir is ${String(s.dir)}, not left or right`);
       } else if ("up" in s || "down" in s) {
         const id = "up" in s ? s.up : s.down;
         if (!keys.has(id)) at(`no key "${id}" in spec/keyboard.yaml`);
@@ -129,6 +133,45 @@ export function validate(
 
 const rowsOf = (page: Page) => page.locator("article.item[data-status]");
 const lastRow = (page: Page) => page.locator('[data-testid="result"]').last();
+
+/** R276: what a hold or a swipe step names: `result:last` (the last row's result), `input:last` (its input), `row:last`
+ *  (the row), or a CSS selector (its first match). */
+function target(page: Page, name: string): import("@playwright/test").Locator {
+  if (name === "result:last") return lastRow(page).locator(".result");
+  if (name === "input:last") return rowsOf(page).last().locator(".in");
+  if (name === "row:last") return rowsOf(page).last();
+  return page.locator(name).first();
+}
+
+/** R276: one finger on the target's centre by CDP touch events (the browser's own touch path, touch-action included),
+ *  for a hold (`ms` down, no move) or a swipe (`dx` across in `steps` moves, then lift). */
+export async function finger(page: Page, name: string, how: { ms?: number; dx?: number; dy?: number; steps?: number }): Promise<void> {
+  const loc = target(page, name);
+  await loc.scrollIntoViewIfNeeded();
+  const box = await loc.boundingBox();
+  if (!box) throw new Error(`${name} is not visible`);
+  const x0 = box.x + box.width / 2;
+  const y0 = box.y + box.height / 2;
+  const at = (x: number, y: number) => [{ x: Math.round(x0 + x), y: Math.round(y0 + y), id: 1 }];
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: at(0, 0) });
+  if (how.ms) await page.waitForTimeout(how.ms);
+  const steps = how.steps ?? 8;
+  if (how.dx || how.dy)
+    for (let i = 1; i <= steps; i++) {
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: at(((how.dx ?? 0) * i) / steps, ((how.dy ?? 0) * i) / steps) });
+      await page.waitForTimeout(16);
+    }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await cdp.detach();
+}
+
+/** R276: a swipe across 60 % of the row's width (past the 40 % that deletes), slowly enough to be no fling. */
+async function swipeRow(page: Page, name: string, dir: "left" | "right"): Promise<void> {
+  const row = name === "row:last" ? rowsOf(page).last() : target(page, name).locator("xpath=ancestor-or-self::article[1]");
+  const width = (await row.boundingBox())?.width ?? 0;
+  await finger(page, name, { dx: (dir === "left" ? -0.6 : 0.6) * width, steps: 10 });
+}
 
 /** Every row's status is settled (nothing pending). */
 async function settled(page: Page): Promise<void> {
@@ -187,6 +230,14 @@ export async function replay(page: Page, steps: readonly CoreStep[], hooks: Repl
     else if ("tap" in s) {
       if (s.tap === "result:last") await lastRow(page).locator(".result").tap();
       else await page.locator(s.tap).first().tap();
+    } else if ("hold" in s) await finger(page, s.hold, { ms: 700 }); // past the 500 ms hold
+    else if ("swipe" in s) {
+      const n = await rowsOf(page).count();
+      await swipeRow(page, s.swipe, s.dir);
+      await expect(rowsOf(page), "the swiped row is gone").toHaveCount(n - 1); // (it slides out, then goes)
+      // Chrome takes a touch within about 100 ms of a drag's lift as the stop of its fling, with no click (a tap on the
+      // Undo note right after the swipe was lost): the next step waits as a person does
+      await page.waitForTimeout(250);
     } else if ("back" in s) await (hooks.back ? hooks.back() : page.evaluate(() => history.back()));
     else if ("wait" in s) await page.waitForTimeout(s.wait);
     else {

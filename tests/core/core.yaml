@@ -8,6 +8,8 @@
 #                     a status-line control (@home @cas @symb @plot @num @menu @mode @place), or
 #                     {tmpl: <cell id of keyboard.yaml templates>}, {up: <key>} / {down: <key>} (a flick),
 #                     {tap: "result:last"} (the last history result), {tap: "<css selector>"}, {relaunch: true},
+#                     {hold: <target>} (a 700 ms touch: a hold), {swipe: <target>, dir: left|right} (a touch drag across
+#                     60 % of the row; R276), the target result:last, input:last, row:last or a css selector,
 #                     {wait: <ms>} (a pause, for a job to be running)
 #   expect            one or more of: result (the last result's data-text), mark (= ≈ ⚠ of the last result),
 #                     rows: [{result, mark, status}, …] (every history row of the view, oldest first; status as data-status),
@@ -445,6 +447,22 @@ cases:
     title: "▲ picks an earlier row; Copy takes that row, the Paste key puts it on the line (owner 2026-11-06)"
     keys: [d2, enter, d3, enter, up, up, copy, paste, add, d1, enter]
     expect: { result: "3", mark: "=" }
+    value: "3"
+    source: derived
+
+  - id: c71
+    area: entry
+    title: "a hold on the last result copies it; ☰ Paste (7) puts it on the line (R276, owner 2026-11-10)"
+    keys: [d4, mul, d5, enter, {hold: "result:last"}, "@menu", d7, add, d1, enter]
+    expect: { result: "21", mark: "=" }
+    value: "21"
+    source: derived
+
+  - id: c72
+    area: entry
+    title: "a swipe deletes the last row; its Undo note brings it back (R276, owner 2026-11-10)"
+    keys: [d2, enter, d3, enter, {swipe: "row:last", dir: left}, {tap: '[data-testid="undo-note"]'}]
+    expect: { rows: [{ result: "2", status: done }, { result: "3", status: done }] }
     value: "3"
     source: derived
 
