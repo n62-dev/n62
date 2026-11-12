@@ -78,12 +78,12 @@ keys:
   # ---- rows 0-2: the upper cluster, R3 (decisions.md "R15c", chosen by the owner 2026-10-17; built in R15c2). Three bands
   # of two columns: the free keys U1-U6 (`user: true`, all empty, set from Find, R4b), the round pad (a circle, no drawn hub, no OK; a drag from
   # anywhere on it, the centre too, steps the cursor, a tap at the centre does nothing; Keypad.svelte) and the editing wing, read in pairs level with the pad, each pair on one layer
-  # (R146, S25's K1, owner 2026-11-06): Help | Esc, Undo | Redo, Copy | Paste on the tap; Settings | Clear, ⇤ | ⇥
-  # on Shift (a flick up reaches each). Apps, Menu and the views are on the status line (R15c1); Mode is on its chips;
-  # results mode is R53's handle and the swipe on the entry line, so there is no View key. There is no Cancel key: Esc
-  # stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line. Help (r1c4),
-  # Esc (r1c5) and the pad keep their G2 cells; every other key here is ours (`assumed`). After R15c the cluster is fixed
-  # like the maths keys (docs/03 rule 8).
+  # (R146, S25's K1, owner 2026-11-06; R278): ☰ | Esc, Undo | Redo, Select | Deselect on the tap; Settings | Clear, ⇤ | ⇥,
+  # Help (dead until built) | reserved on Shift (a flick up reaches each). ☰ is the status line's ☰ as a key. Apps and the
+  # views are on the status line (R15c1); Mode is on its chips; results mode is the swipe on the entry line, so there is no
+  # View key. There is no Cancel key: Esc stops a running job, closes Settings, goes back one sheet level, drops a picked
+  # row, else clears the line. Copy is ☰ 3 and a hold on a row, Paste ☰ 7: no keys. Only Esc (r1c5) and the pad keep their
+  # G2 cells; every other key here is ours (`assumed`). From the v0.1.0 tag the cluster is fixed like the maths keys (docs/06 3b).
   - { id: u1, row: 0, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: u2, row: 0, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: up, row: 0, col: 2, span: 2, cls: ctl, label: { primary: "▲" }, primary: { cmd: moveUp }, source: virtual-calc }  # pad up; on an empty entry line it selects the last history row (App.svelte)
