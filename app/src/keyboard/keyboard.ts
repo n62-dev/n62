@@ -4,7 +4,7 @@ import raw from "../../../spec/keyboard.yaml";
 import type { Chip } from "../input/chips.ts";
 
 export type Special =
-  | "shift" | "alpha" | "enter" | "clear" | "esc" | "settings" | "mode" | "fmt" | "copy" | "paste" | "tmpl"
+  | "shift" | "alpha" | "enter" | "clear" | "esc" | "settings" | "mode" | "fmt" | "tmpl"
   /** The status line's controls (R15c1; no key since R15c2), and what a user key may hold: the Apps sheet, the views
    *  of the current app, the view's or the picked row's menu. */
   | "apps" | "symb" | "plot" | "num" | "menu"
@@ -27,7 +27,7 @@ export type Special =
 /** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
 export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base"];
 export const SPECIALS: readonly Special[] = [
-  "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "copy", "paste", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none", ...OPENS_SHEET,
+  "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none", ...OPENS_SHEET,
 ];
 
 /** The first of the maths rows (3–9): a pick sheet is drawn over them, never over the top cluster (rows 0–2), whose

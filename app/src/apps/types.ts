@@ -137,8 +137,6 @@ export interface AppInstance {
   /** R261: Undo on a line the app left as it put it: bring back what the view's Menu › Clear took. False: nothing to
    *  bring back (the line's own undo runs). */
   undo?(view: ViewId): boolean;
-  /** What the Copy key copies in this view (the Num table as CSV); undefined: nothing to copy. */
-  copyText?(view: ViewId): Promise<string | undefined> | string | undefined;
   /** The view's menu (Menu key), shown on the sheet (docs/05 3.1). */
   menu?(view: ViewId): MenuItem[];
   /** Cancel key while busy: stop the app's own job (default: the math engine's). */

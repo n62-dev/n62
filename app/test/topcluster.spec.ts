@@ -3,7 +3,7 @@
 // table, by touch and by keys; the place name and its hit area; the free keys U1–U6. The editing wing's own jobs are in
 // editwing.spec.ts. Fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, open, recordVibrations, setClipboard, sheet, sheetKey, tap, touch, useClipboardLock, vibrations } from "./helpers.ts";
+import { PASTE, entryValue, flick, open, recordVibrations, setClipboard, sheet, sheetKey, tap, touch, useClipboardLock, vibrations } from "./helpers.ts";
 
 const place = (page: Page) => page.getByTestId("place");
 const view = (page: Page) => page.evaluate(() => window.n62.session.view);
@@ -17,8 +17,8 @@ test.beforeEach(async ({ page }) => {
   await open(page);
 });
 
-test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, Help | Esc, Undo | Redo, Copy | Paste; Help dimmed (R146)", async ({ page }) => {
-  const ids = ["u1", "u2", "up", "help", "esc", "u3", "u4", "left", "right", "undo", "redo", "u5", "u6", "down", "copy", "paste"];
+test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ☰ | Esc, Undo | Redo, Select | Deselect; Shift + Select dimmed (R146, R278)", async ({ page }) => {
+  const ids = ["u1", "u2", "up", "menu", "esc", "u3", "u4", "left", "right", "undo", "redo", "u5", "u6", "down", "select", "deselect"];
   const boxes = await page.evaluate(
     (ids) =>
       Object.fromEntries(
@@ -31,46 +31,113 @@ test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, Help | Esc, 
   );
   const rowOf = (ids: string[]) => new Set(ids.map((id) => boxes[id]?.y)).size;
   const colOf = (ids: string[]) => new Set(ids.map((id) => boxes[id]?.x)).size;
-  expect(rowOf(["u1", "u2", "up", "help", "esc"])).toBe(1);
+  expect(rowOf(["u1", "u2", "up", "menu", "esc"])).toBe(1);
   expect(rowOf(["u3", "u4", "left", "right", "undo", "redo"])).toBe(1);
-  expect(rowOf(["u5", "u6", "down", "copy", "paste"])).toBe(1);
+  expect(rowOf(["u5", "u6", "down", "select", "deselect"])).toBe(1);
   expect(colOf(["u1", "u3", "u5"])).toBe(1);
   expect(colOf(["u2", "u4", "u6"])).toBe(1);
-  expect(colOf(["help", "undo", "copy"])).toBe(1);
-  expect(colOf(["esc", "redo", "paste"])).toBe(1);
+  expect(colOf(["menu", "undo", "select"])).toBe(1);
+  expect(colOf(["esc", "redo", "deselect"])).toBe(1);
   for (const u of ["u1", "u2", "u3", "u4", "u5", "u6"]) await expect(page.locator(`[data-key="${u}"]`)).toHaveAttribute("data-user", "empty");
-  await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
-  const faces = { help: "Help", esc: "Esc", undo: "Undo", redo: "Redo", copy: "Copy", paste: "Paste" };
+  for (const id of ["menu", "select", "deselect"]) await expect(page.locator(`[data-key="${id}"]`)).not.toHaveAttribute("data-dead", "true"); // (the taps are live)
+  const faces = { menu: "☰", esc: "Esc", undo: "Undo", redo: "Redo", select: "Select", deselect: "Deselect" };
   for (const [id, l] of Object.entries(faces)) await expect(page.locator(`[data-key="${id}"] .main`), id).toHaveText(l);
-  const legends = { help: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", copy: "", paste: "" };
+  const legends = { menu: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", select: "Help", deselect: "" };
   for (const [id, l] of Object.entries(legends)) await expect(page.locator(`[data-key="${id}"] .shiftlegend`), id).toHaveText(l);
   // no letter line in the cluster (vertical space)
   await expect(page.locator('[data-key="esc"] .alphalegend, [data-key="u1"] .alphalegend')).toHaveCount(0);
-  const gone = ["apps", "symb", "plot", "num", "menu", "cancel", "app", "cas", "view", "lstart", "lend"];
+  const gone = ["apps", "symb", "plot", "num", "cancel", "app", "cas", "view", "lstart", "lend", "help", "copy", "paste"];
   await expect(page.locator(gone.map((id) => `[data-key="${id}"]`).join(", "))).toHaveCount(0);
+  // Shift on: Help (Select's layer) and the reserved Shift + Deselect are drawn dimmed, in that layer only (R278)
+  await tap(page, ["shift"]);
+  await expect(page.locator('[data-key="select"]')).toHaveAttribute("data-dead", "true");
+  await expect(page.locator('[data-key="deselect"]')).toHaveAttribute("data-dead", "true");
+  await expect(page.locator('[data-key="menu"]')).not.toHaveAttribute("data-dead", "true");
 });
 
-test("R146: one press for Redo; Shift + Help opens Settings, and so does a flick up on Help", async ({ page }) => {
+test("R146, R278: one press for Redo; Shift + ☰ opens Settings, and so does a flick up on ☰", async ({ page }) => {
   await tap(page, ["d7", "mul", "d8", "undo"]);
   expect(await entryValue(page)).toBe("7\\times");
   await tap(page, ["redo"]);
   expect(await entryValue(page)).toBe("7\\times8");
-  await tap(page, ["shift", "help"]);
+  await tap(page, ["shift", "menu"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
   await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
   await expect(sheet(page)).toBeHidden();
-  await flick(page, "help", "up");
+  await flick(page, "menu", "up");
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
 });
 
-test.describe("R146: Paste is one press", () => {
+test.describe("R278: ☰ → Paste is how a number comes in from another app", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   useClipboardLock();
-  test("Paste puts the clipboard's number on the line", async ({ page }) => {
+  test("☰ → Paste puts the clipboard's number on the line", async ({ page }) => {
     await setClipboard(page, "42");
-    await tap(page, ["paste"]);
+    await tap(page, PASTE);
     await expect.poll(() => entryValue(page)).toBe("42");
   });
+});
+
+/** The ☰ key opens and closes the view's menu, as the status line's ☰ does; Shift + ☰ is Settings (R278). */
+test("the ☰ key: the Home menu opens and a second tap closes it; Shift + ☰ is Settings", async ({ page }) => {
+  await tap(page, ["menu"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Home menu");
+  await tap(page, ["menu"]);
+  await expect(sheet(page)).toBeHidden();
+  await tap(page, ["shift", "menu"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+});
+
+test("the ☰ key opens the sheet the status line's ☰ opens, in CAS and in each view of Function and Solve", async ({ page }) => {
+  const title = async (how: "key" | "status"): Promise<string> => {
+    await tap(page, [how === "key" ? "menu" : "@menu"]);
+    await expect(sheet(page)).toBeVisible();
+    const t = (await page.getByTestId("sheet-title").textContent()) ?? "";
+    await tap(page, ["esc"]);
+    await expect(sheet(page)).toBeHidden();
+    return t;
+  };
+  const same = async (where: string): Promise<void> => {
+    const status = await title("status");
+    expect(await title("key"), where).toBe(status);
+  };
+  await same("Home");
+  await tap(page, ["@cas"]);
+  await same("CAS");
+  await tap(page, ["@place", "d4"]); // Solve
+  for (const v of ["@symb", "@num"]) {
+    await tap(page, [v]);
+    await same(`Solve ${v}`);
+  }
+  await tap(page, ["@place", "d3"]); // Function
+  for (const v of ["@symb", "@plot", "@num"]) {
+    await tap(page, [v]);
+    await same(`Function ${v}`);
+  }
+});
+
+test("Shift + Select is dead, and so is Shift + Deselect, a tap or a flick up: nothing changes, and each press is counted under its layer", async ({ page }) => {
+  await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+  await tap(page, ["d1", "add", "d2"]);
+  const keys = (): Promise<Record<string, number>> => page.evaluate(() => ({ ...window.n62.session.taps.counts.keys }));
+  const base = await keys();
+  await tap(page, ["shift"]);
+  const v0 = (await vibrations(page)).length;
+  await tap(page, ["select"]); // Shift + Select: Help, not built
+  await expect.poll(async () => (await vibrations(page)).length - v0).toBe(3); // key down + the double
+  await tap(page, ["shift"]);
+  const v1 = (await vibrations(page)).length;
+  await tap(page, ["deselect"]); // Shift + Deselect: reserved
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3);
+  await flick(page, "deselect", "up");
+  await expect.poll(async () => (await keys())["deselect:up"] ?? 0).toBe(1);
+  const now = await keys();
+  expect(now["select:shift"]).toBe(1);
+  expect(now["deselect:shift"]).toBe(1);
+  expect(now["deselect:up"]).toBe(1);
+  expect(base["deselect:shift"]).toBeUndefined();
+  expect(await entryValue(page)).toBe("1+2");
+  expect(await page.evaluate(() => window.n62.session.items.length)).toBe(0);
 });
 
 test("Home ↔ CAS: the place name and its sheet, by touch and by keys (the sheet's rows 1 and 2)", async ({ page }) => {
@@ -218,9 +285,9 @@ test("a free key's Alpha slot: a flick down and Alpha + tap fire it, the face an
   expect(await entryValue(page)).toBe(wanted);
 });
 
-test("an empty free key and Help give the dead-key haptic and type nothing", async ({ page }) => {
+test("an empty free key gives the dead-key haptic and types nothing", async ({ page }) => {
   await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
-  for (const id of ["u1", "u6", "help"]) {
+  for (const id of ["u1", "u6"]) {
     const before = (await vibrations(page)).length;
     await tap(page, [id]);
     await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(3); // key down + the double

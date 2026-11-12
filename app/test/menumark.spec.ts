@@ -69,11 +69,11 @@ for (const [brightness, contrast, keys] of LOOKS)
           expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
         } else expect(["none", "normal"], where).toContain(s.after);
       }
-      // the tap layer: Vars, Math, Tmpl; the Shift legends: Settings (Help), Memory (Math), ≤≠, α∞, Mode (Fmt); Shift armed: those as faces
+      // the tap layer: Vars, Math, Tmpl; ☰ and its Shift legend Settings (r0c4, R278), the Shift legends: Memory (Math), ≤≠, α∞, Mode (Fmt); Shift armed: those as faces
       expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
         shift
-          ? ["d6/main", "d9/main", "fmt/main", "help/main", "math/main", "sub/main"]
-          : ["d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "help/shiftlegend", "math/main", "math/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
+          ? ["d6/main", "d9/main", "fmt/main", "math/main", "menu/main", "sub/main"]
+          : ["d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "math/main", "math/shiftlegend", "menu/main", "menu/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
       );
     }
   });

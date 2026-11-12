@@ -82,6 +82,32 @@ export async function tapTwice(l: Locator, how: "tap" | "click" = "tap"): Promis
 }
 /** The open pick sheet (the `menu` test id). */
 export const sheet = (page: Page): Locator => page.getByTestId("menu");
+/** ☰ → Copy and ☰ → Paste on Home and CAS (R278: the Copy and Paste keys are gone; the Menu's items 3 and 7). Copy takes the
+ *  picked row, else the last result; Paste puts the clipboard's number on the line, and the keys after it wait for it. */
+export const COPY: string[] = ["@menu", "d3"];
+export const PASTE: string[] = ["@menu", "d7"];
+
+/** ☰ and the view's own item `id` (an app's Copy or CSV: the app menus have no numbers a test can rely on). */
+export async function menuItem(page: Page, id: string): Promise<void> {
+  await tap(page, ["@menu"]);
+  await sheet(page).locator(`[data-id="${id}"]`).tap();
+}
+
+/** A system paste into the entry field (the `paste` event the context menu and Shift+Insert deliver, R114, with the clipboard's
+ *  text), for the views whose ☰ has no Paste item (Solve, Function). The clipboard permissions are the spec's. */
+export async function systemPaste(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const text = await navigator.clipboard.readText();
+    const mf = window.n62.entry.field;
+    if (!mf) throw new Error("no field");
+    mf.focus();
+    const target = mf.shadowRoot?.activeElement ?? mf.shadowRoot?.querySelector("textarea") ?? mf;
+    const data = new DataTransfer();
+    data.setData("text/plain", text);
+    target.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true, composed: true }));
+  });
+}
+
 /** Put text on the system clipboard (a spec that does holds the clipboard lock: useClipboardLock). */
 export const setClipboard = (page: Page, text: string): Promise<void> => page.evaluate((s) => navigator.clipboard.writeText(s), text);
 /** Press ⌫ once and return the line. */

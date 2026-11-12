@@ -4,7 +4,7 @@
 // chips (find/finder.ts putOnLine, as a pick puts them). Expected values are derived: G·5.972ᴇ24 = 3.98589196ᴇ14
 // with σ = 1.5ᴇ-15·5.972ᴇ24 = 8.958ᴇ9, so five digits hold (host.test.ts G26); μ₀·ε₀·c² = 1 exactly, σ 0 (G81).
 import { expect, test, type Page } from "@playwright/test";
-import { lastResult, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, lastResult, open, tap, useClipboardLock } from "./helpers.ts";
 import type * as Finder from "../src/find/finder.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
@@ -56,7 +56,7 @@ test("G × 5.972ᴇ24: the digits past uncDigits are muted, the mark is ≈, Cop
     return c;
   });
   expect(await color('[data-testid="result"] .result .unc')).toBe(mutedColor);
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await expect.poll(async () => digitsOf(await page.evaluate(() => navigator.clipboard.readText()))).toMatch(/^398589196/);
   await page.evaluate(() => window.n62.session.setDigits(30));

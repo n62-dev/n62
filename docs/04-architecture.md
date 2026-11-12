@@ -121,7 +121,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 ### 2.6 Decision: copy and paste
 
-| What | Copy (the Copy key; Menu 3; a hold on a history row's result) | Menu 6, Copy as › As shown | Copy as › Exact | Copy as › LaTeX |
+| What | Copy (☰ 3; a hold on a history row's result) | Menu 6, Copy as › As shown | Copy as › Exact | Copy as › LaTeX |
 |---|---|---|---|---|
 | Home or CAS number | full value: every confirmed digit up to P (40), trailing zeros dropped, `.` (`,` with the decimal-comma setting), plain for 1E-4 ≤ \|x\| < 1E21, else `d.ddd…E±k` | display text, without the mark | Giac's exact text when it exists (`1/3`, `sqrt(2)`) | the result LaTeX |
 | Complex | `a+b*i`, each part as above | yes | yes | yes |
@@ -133,7 +133,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes (the table's first column).
 
-**Paste** (the Paste key, ☰ → Paste, any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3`, `1.5E-3`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused); it enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else gives "Paste: not a number". Pasting a result copied from N62 gives the same value back (P5; with decimal comma not a list of one decimal).
+**Paste** (☰ 7; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3`, `1.5E-3`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused); it enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else gives "Paste: not a number". Pasting a result copied from N62 gives the same value back (P5; with decimal comma not a list of one decimal).
 **Mechanics:** the APK uses `@capacitor/clipboard` and `@capacitor/share`; the PWA `navigator.clipboard`, and `navigator.share` where it exists, else copy. Files go out through the native `save` (`ACTION_CREATE_DOCUMENT`) in the APK and `<a download>` in the PWA, and come in through `<input type="file">`.
 
 ### 2.7 Decision: SI prefix display, and prefix entry
@@ -287,12 +287,12 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Alpha key [r8c1] | one-shot Alpha with lock flicks; stays its own key (P7 point 4, owner 2026-10-19; reopens if Alpha taps fall near zero) | P7 |
 | a b/c (row 3, col 4) [r4c5] | toggles the last result's form: decimal ↔ fraction, polar ↔ rectangular (built, R10) | G2 item 29, P12 |
 | Exponent key (row 6, col 0) [r7c1] | types the mark `ᴇ` (`\emark`, one token); Shift = Sto ▶ (built, R14) | P12 |
-| Rows 0–2 | R3 (built, R15c2; the pairs R146): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; Help \| Esc, Undo \| Redo, Copy \| Paste in columns 4–5, with Settings \| Clear, ⇤ \| ⇥ on Shift. Apps, Mode, the views, Menu: the status line (R15c1); results mode: R53's handle and swipe | P12, S2, R15c, R146 |
+| Rows 0–2 | R3 (built, R15c2; the pairs R146; R278): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; ☰ \| Esc, Undo \| Redo, Select \| Deselect in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, Help (dead) \| reserved on Shift. Apps, Mode and the views: the status line (R15c1); results mode: the swipe on the entry line (R53). The cells at the tag: docs/06 3b | P12, S2, R15c, R146, R278 |
 | Shift + 6, Shift + 9 | the G2's palettes: relations and logic; symbols and Greek with `!` and ∞ (built, R18) | P12 |
-| Help (row 0, col 4) [r1c4] | context help (milestone 6), dead and dimmed until built; Shift = Settings (R146; the G2's User is omitted) | reference; R15c, R146 |
+| ☰ (row 0, col 4, id `menu`) [the G2's Menu key, r3c4] | the status line's ☰ as a key (R278): it opens the view's menu and closes the one it opened; with another sheet open it only closes that sheet; Shift = Settings (R146); a dead press where the view has no menu | R278; docs/06 3b |
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
-| Copy \| Paste (row 2, cols 4–5) | Copy, Paste (built, A3; on their own keys since R146): the picked row's or the last result's full value; no Shift layer (the jumps to the ends of a box were removed, R275) | reference; R15c, R146 |
+| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (dead and dimmed until R197); Shift + Deselect is reserved. Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
 | ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of nine on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
 | Help (context help) | the Find preview of the function before the cursor; with none there, Find (milestone 6) | ours; P8 left Help free |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
@@ -302,7 +302,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix editor (EN5); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. Until R24c, `spec/keyboard.yaml` `unit_slot:` holds S1's letters | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift (and a flick up) opens Mode on Angle (built, R85) | ours; decisions.md "Settings in the Mode sheet, and presets" |
-| Unassigned Shift cells (Vars, a b/c, `( )`, 1, 0; `,` is ± since R71; the pad has no Shift layer, P12 point 7) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
+| Unassigned Shift cells (Vars, a b/c, `( )`, 1, 0, Deselect; `,` is ± since R71; the pad has no Shift layer, P12 point 7) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 
 ### 5.2 Decision: how key presses are counted (EN0)

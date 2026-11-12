@@ -44,7 +44,7 @@ export interface Mark {
 }
 export interface Readout {
   /** Label and value pairs, already formatted. */
-  lines: { label: string; value: string; /** ⚠: the value behind the line is warned (M4-10) */ warn?: boolean; /** The engine number behind the line, for Copy. */ cell?: Cell; /** The line the Copy key copies. */ primary?: boolean }[];
+  lines: { label: string; value: string; /** ⚠: the value behind the line is warned (M4-10) */ warn?: boolean; /** The engine number behind the line, for Copy. */ cell?: Cell; /** The line ☰ → Copy copies. */ primary?: boolean }[];
   info: string;
   warn: boolean;
 }
@@ -250,14 +250,7 @@ export class FunctionApp implements AppInstance {
   }
 
   // ---- Copy (docs/04 section 2.6): the Num table as CSV, full values
-  copyText(view: ViewId): Promise<string | undefined> | undefined {
-    if (view === "plot") {
-      const l = this.copyLine();
-      return l ? this.readoutFull(l) : undefined;
-    }
-    return view === "num" ? this.numCsv() : undefined;
-  }
-  /** The readout line the Copy key copies: the answer of the last analysis. */
+  /** The readout line ☰ → Copy copies: the answer of the last analysis. */
   copyLine(): Readout["lines"][number] | undefined {
     return this.readout?.lines.find((l) => l.primary && l.cell?.ok);
   }
