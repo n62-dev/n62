@@ -37,7 +37,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 Order (all v0.1.0):
 - Lane A: R170 and R172 first, with no wait (R170 has no app code and is the net for the keypad rows); after R53 and R148: R171, R173.
 - Lane B: R180 (first), G200, G201, G300, G202, A90, A92, A93, A94, G301, A96, A97, A98.
-- By day, by Thu 11-12: R174 (after A94) and A95 (the device, after R173). Each waits on the other lane, and a lane skips a row whose After is not merged and never repeats it.
+- By day on Thu 11-12: A95 (the device, after R173). R174 dropped from v0.1.0 (owner, 11-12).
 - By day after the freeze: A91, refreshed Sun morning; `npm run trust:refresh` first each time.
 - Must land before the freeze: R180 (the phasor fix, section B). Should land: G300 and G301 (section D); if G301 misses it, F196 joins the known limits.
 - If it gets tight, drop in this order (in `docs/release-0.1.0.md`): R174 and A94; A96, A97 and A98 to Mon 11-16; if A95 fails, Android stays copy-only.
