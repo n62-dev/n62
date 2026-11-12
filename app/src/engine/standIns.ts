@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G311: the parser's names for letters (input/parseTables.ts re-exports them for the parser, input/ -> engine/ being the
-// allowed direction): the library reader (library.ts) takes the stand-ins among them as the user's names. No imports;
-// the start chunk reads it through the parser.
+// allowed direction): the library reader (library.ts) takes the stand-ins among them as the user's names. R260f1: with
+// the Greek names in Unicode's order and typedName, which render/home.ts draws with and library.ts writes descriptions
+// with (engine/ imports nothing from render/). No imports; the start chunk reads it through render/home.ts.
 
 /**
  * Greek letters are variable names (R18), never units (μ, Ω) or Giac's own names. Giac reads most of them as plain
@@ -28,4 +29,19 @@ export const LETTER_NAMES: Readonly<Record<string, string>> = { e: "e_", i: "i_"
 /** G311: whether `name` is one of the parser's stand-ins (`beta_`, `e_`, …): the user's name, though it ends in `_`. */
 export function isStandIn(name: string): boolean {
   return name.endsWith("_") && (Object.values(GREEK).includes(name) || Object.values(LETTER_NAMES).includes(name));
+}
+
+/** The Greek variable names as Giac prints them (the values of GREEK), in Unicode's order (R260): the small letters
+ *  (α U+03B1 … ω), then the capitals (Α U+0391 … Ω), `-` for a letter that is no variable (ο, π, ς, υ, …): a name's
+ *  place gives its letter. */
+export const GREEK_NAMES: readonly string[] = ("alpha beta_ gamma_ delta epsilon_ zeta eta theta iota kappa lambda mu nu xi - - rho - sigma tau - phi chi psi omega " +
+  "- - Gamma_ Delta - - - Theta - - Lambda - - - - - - - Sigma - - Phi_ - Psi_ Omega").split(" ");
+
+/** R260 (vr-2): a stored name as the user typed it, for the text that names it (Vars, the unit note, the uses line, a
+ *  library's descriptions): a Greek name as its letter (`beta_` β, `Omega` Ω), the letter stand-ins `e_`, `i_`
+ *  (LETTER_NAMES, R67) as e, i; any other name as stored. */
+export function typedName(name: string): string {
+  const k = GREEK_NAMES.indexOf(name);
+  const letter = Object.keys(LETTER_NAMES).find((l) => LETTER_NAMES[l] === name);
+  return letter ?? (k < 0 ? name : String.fromCharCode(k < 25 ? 945 + k : 888 + k));
 }

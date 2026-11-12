@@ -13,8 +13,8 @@ import { defaultCasSettings, type CasResult } from "./types.ts";
 import { renameOurCalls, writeUserNames } from "./ourNames.ts";
 import { dropAngleFactor, PASDEG, rewriteAngles } from "./angles.ts";
 import { isFlagName } from "./flags.ts";
-import { isStandIn } from "./standIns.ts";
-import { callsOf, isName, names, noneOpen, typedFromPrinted, walk, wordsOf } from "./giacPrint.ts";
+import { isStandIn, typedName } from "./standIns.ts";
+import { callsOf, isName, mapNames, names, noneOpen, typedFromPrinted, walk, wordsOf } from "./giacPrint.ts";
 
 import { HEADER, LIB_MAX_BYTES } from "./libraryHeader.ts";
 export { LIB_MAX_BYTES } from "./libraryHeader.ts";
@@ -364,10 +364,13 @@ function sameDefinition(engine: LibraryEngine, d: LibDef, old: DefEntry): boolea
   return v.ok && !wordsOf(v.output).includes("undef") && old.cmds.length === 1 && old.cmds[0] === `${d.name}:=(${typedFromPrinted(v.output.trim())})`;
 }
 
-/** A function typed on the phone has no description: its name and arguments stand for it. */
+/** A function typed on the phone has no description: its name and arguments stand for it. R260f1: written as typed
+ *  (`beta_` β, `e_` e: typedName), as the user reads them; the definition under it keeps the stored names. */
 function describe(e: DefEntry): string {
-  const text = e.desc ?? (e.kind === "fn" ? (fnHead(e.cmds[0]!) ?? e.name) : e.preview ? `${e.name} = ${e.preview}` : e.name);
-  return text.replace(/\s+/g, " ").trim().slice(0, DESC_MAX) || e.name;
+  const name = typedName(e.name);
+  const head = e.kind === "fn" ? fnHead(e.cmds[0]!) : null;
+  const text = e.desc ?? (head !== null ? mapNames(head, (n) => typedName(n.name), "typed") : e.kind === "fn" ? name : e.preview ? `${name} = ${e.preview}` : name);
+  return text.replace(/\s+/g, " ").trim().slice(0, DESC_MAX) || name;
 }
 
 /** The log's functions and exact values as a library file (the same text `parseLibrary` reads). Left out, with the
