@@ -1,0 +1,24 @@
+# Upstream: giac 2.1.0 sym2poly.cc algnum_convert (normal, simplify and factor of an expression with algebraic numbers): it rewrites each rootof(p,pmin) as p evaluated at the generator rootof(pmin), but only the rootofs that lvar(e) lists at the top level (sym2poly.cc:4581-4587). A rootof inside a power, sqrt(rootof([1,1],P)), stays, and the loop below writes the base of the power with V -> VARS (sym2poly.cc:4685, "DOIT base should be reduced wrt syst"), where the rootof's variable stands for the generator (sym2poly.cc:4668 adds the numerator p to E only): the base lost its numerator polynomial, so normal(sqrt(rootof([1,1],P))) was the square root of the generator. normal and simplify reach it for any square root over a field Giac writes as a rootof: normal(sqrt(1+sqrt(1+2^(1/3)))) was rootof([[1,0],[-1,0,0,0,3,0,4,0,15,0,24,0,5]])/227 = 0.00732288514727 (mpmath 1.58218310546), the same rootof for sqrt(2+sqrt(1+2^(1/3))) and sqrt(2*sqrt(1+2^(1/3))), also with 3^(1/3) and 2^(1/4) inside (backlog F228). Now every rootof of e is rewritten (lop, which also finds those inside a power or a function), so the base holds p(generator). The answer is still a rootof (of the root's primitive element, with larger coefficients), now with the right value.
+# Changed by Pascaline contributors, 2026-11-12
+--- a/src/sym2poly.cc
++++ b/src/sym2poly.cc
+@@ -4581,11 +4581,15 @@
+     v=lvar(e);
+     vecteur vr,wr;
+     // rewrite rootofs inside e
+-    for (int i=0;i<v.size();++i){
+-      if (v[i].is_symb_of_sommet(at_rootof)){
+-        gen f=v[i]._SYMBptr->feuille;
++    // N62 patch 0045 (G340): every rootof of e, also one inside a power or a function (lop, where lvar lists the power
++    // itself): the base of a power is written below in terms of the generator's variable, so a rootof left inside it
++    // lost its numerator polynomial (normal(sqrt(rootof([1,1],P))) was the root of the generator)
++    vecteur lr=lop(e,at_rootof);
++    for (int i=0;i<lr.size();++i){
++      if (lr[i].is_symb_of_sommet(at_rootof)){
++        gen f=lr[i]._SYMBptr->feuille;
+         if (f.type==_VECT && f._VECTptr->size()==2){
+-          vr.push_back(v[i]);
++          vr.push_back(lr[i]);
+           gen p=f._VECTptr->front(),pmin=f._VECTptr->back();
+           if (p.type==_VECT && pmin.type==_VECT && p._VECTptr->size()>=pmin._VECTptr->size())
+             p=p%pmin;
