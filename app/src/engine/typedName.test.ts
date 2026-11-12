@@ -3,7 +3,8 @@
 // typedName, the one function the readers of a name use (Vars, the unit note, the uses line, a library's descriptions);
 // R260f1: here, beside the tables it reads (render/home.ts takes it from here).
 import { describe, expect, it } from "vitest";
-import { GREEK, LETTER_NAMES, typedName } from "./standIns.ts";
+import { LETTER_NAMES, typedName } from "./standIns.ts";
+import { GREEK } from "../input/parseTables.ts";
 
 describe("typedName: the Giac name as typed (R260)", () => {
   it.each([
