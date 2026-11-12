@@ -5,6 +5,11 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-12 (Opus pass 150) to make room for R262's default, as they stood
+- **Owner answers of 2026-11-08:** a Giac patch's worker writes its own patches README row (A83); a stray file outside a worktree is logged, warn only (A64 lo-11; A88); a CAS-last cold start of 1507 ms does not hold v0.1.0; the c29 red (F200, A123). Archived, "Opus pass 117". Would change if: a stray file does harm before anyone reads the log.
+- **A stored name's mark in Vars (S53f1, Opus pass 132):** from its facts by History's rule; a name without facts takes the `=` or `≈` noted when Home stored it (`DefEntry.mark`); a name with neither (stored before S53f1) shows no mark, never `=`. Would change if: the owner wants old names marked.
+- **R258 (Opus pass 132): a stored value of more than one letter is `\operatorname{name}`** on the line (Vars, Find, Your keys), read from the session's stored names in Home, CAS and the unit view; a bracket after it multiplies, as after a one-letter value; Function and Solve refuse it. Would change if: plots read user names.
+
 ### Shortened 2026-11-10 (Opus pass 135) to make room for R261's default, as they stood
 - **R153–R155 (Opus pass 96):** the generator's moves stand; N62 Dark's first frame is #092726 everywhere; the ring keeps 0.12 from --error in normal vision only; the error outline follows a row whose status is error. Archived, "Opus pass 97". Would change if: the owner's look after R24d.
 - **A66, the key click (Opus pass 97):** with the system's touch sounds off the plugin plays its own click: the app's switch alone decides (R112). Archived, "Opus pass 106". Would change if: its device check, or the owner wants the system's setting to win.
