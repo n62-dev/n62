@@ -1,20 +1,64 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key and the a b/c key on the last result (R10, Session.cycleFormat and cycleForm). Out of the start
 // chunk (R135: its room was spent): main.ts fetches it when idle, the first press waits for it otherwise. The choice of
-// the next mode and form (nextMode, nextForm, isApplicable) is here too.
+// the next mode and form (nextMode, nextForm, isApplicable) is here too, and the base forms' drawing (R192).
 import type { Calc, CalcSettings } from "../calc/port.ts";
+import type { MarkInfo } from "../engine/format.ts";
+import { formatBase, type Base } from "../engine/formatBase.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
 import { decimalToString, type ComplexValue, type DecimalValue } from "../engine/format.ts";
 import { polarDigits } from "../engine/polarDigits.ts";
-import { type Facts, factsOf, FMT_MODES, type FmtMode, type FormStep, type NumericResult, type Polar } from "./displayMode.ts";
+import {
+  type DisplayContext,
+  type Drawn,
+  type Facts,
+  factsOf,
+  FMT_MODES,
+  type FmtMode,
+  type FormStep,
+  markFor,
+  type NumericResult,
+  renderNumeric,
+  type Polar,
+} from "./displayMode.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
 
-/** Fraction modes need an exact rational; polar needs a complex result (and the engine). */
+const isBase = (m: FmtMode | undefined): m is Base => m === "hex" || m === "bin" || m === "oct";
+
+/** Fraction modes need an exact rational, a base an exact integer; polar needs a complex result (and the engine). */
 export function isApplicable(mode: FmtMode, f: Facts): boolean {
   if (!f.numeric) return false;
   if (mode === "frac" || mode === "mixed") return f.rational;
+  if (isBase(mode)) return f.rational && !f.properFraction;
   if (mode === "polar") return f.complex;
   return true;
+}
+
+/** The word a base form is drawn in: 64 bits, unsigned, as G229's word ops, until R194's setting. */
+export interface Word {
+  bits: number;
+  signed: boolean;
+}
+const WORD: Word = { bits: 64, signed: false };
+
+/** R192: `r` drawn in the base `mode` (formatBase, G228), not padded to the word: `0xFF`. Undefined when `mode` is no
+ *  base, the result no exact integer, or the value outside the word (a negative one in an unsigned word too): the
+ *  result then keeps its form, the number in its notation (Session.display). */
+export function baseDrawn(r: NumericResult, mode: FmtMode | undefined, word: Word = WORD): Drawn | undefined {
+  if (!isBase(mode) || !r.rational || !isApplicable(mode, factsOf(r))) return undefined;
+  const s = formatBase(r.rational.n, mode, word.bits, word.signed);
+  return typeof s === "string" ? { text: s, latex: `\\mathrm{${s}}` } : undefined;
+}
+
+/** R192: `r` drawn in `mode` (Session.display): a base form when it applies (baseDrawn), else as renderNumeric draws it. */
+export function drawnIn(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, grouped?: boolean): Drawn | undefined {
+  return baseDrawn(r, mode) ?? renderNumeric(r, mode, ctx, grouped);
+}
+
+/** R192: the mark of `r` drawn in `mode` (Session.mark). A base form draws the integer whole, as a fraction does, so it
+ *  is marked as the fraction is: `=` when exact (`≈` from an inexact chip, `⚠` kept); every other drawing as markFor. */
+export function baseMark(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, word: Word = WORD): MarkInfo | null {
+  return markFor(r, baseDrawn(r, mode, word) ? "frac" : mode, ctx);
 }
 
 /**

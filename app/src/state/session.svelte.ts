@@ -153,7 +153,7 @@ let removedCode: typeof import("./removedRows.ts") | undefined;
 let sigmaCode = $state.raw<typeof import("../render/tidy.ts")>();
 onTidy((m) => (sigmaCode = m));
 /** R135: the Format and a b/c keys' code (cycleForms.ts), out of the start chunk the same way. */
-let formsCode: typeof import("./cycleForms.ts") | undefined;
+let formsCode = $state.raw<typeof import("./cycleForms.ts")>(); // R192: a base form is drawn by it, once in
 export const loadForms = (): Promise<typeof import("./cycleForms.ts") | undefined> =>
   import("./cycleForms.ts").then((m) => (formsCode = m), () => undefined);
 export const loadRemoved = (): Promise<typeof import("./removedRows.ts") | undefined> =>
@@ -605,18 +605,13 @@ export class Session {
   display(item: HistoryItem, grouped = false): Drawn {
     const shown = item.view === "home" || item.fmt !== undefined || item.form !== undefined || item.facts !== undefined;
     if (item.status === "done" && shown) {
-      const r = renderNumeric(item, this.modeOf(item), this.displayContext(), grouped);
+      const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(), grouped); // R192: a base form, lazy
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
       if (r) return item.units ? withUnit(r, item.units, this.decimalComma ? commaResult : undefined) : r;
     }
     // (R57) what the engine wrote, with the decimal comma, is drawn as the numbers above
     if (item.status === "done" && this.decimalComma) return { text: commaResult(item.text, false), latex: commaResult(item.resultLatex, true) };
     return { text: item.text, latex: item.resultLatex };
-  }
-
-  /** The mode an item is drawn in: the a b/c form when one is chosen, else the Format key's notation. */
-  private modeOf(item: HistoryItem): FmtMode | undefined {
-    return modeOf(item, this.settings);
   }
 
   /** R40: the σ line a tap on the row shows (Settings › Numbers › Uncertainty), in the row's notation; null: none;
@@ -633,7 +628,7 @@ export class Session {
   /** The mark before a finished result (docs/04 2.4), for the form it is drawn in; null: a non-number, or none known. */
   mark(item: HistoryItem): MarkInfo | null {
     if (item.status !== "done") return null;
-    return markFor(item, this.modeOf(item), this.displayContext());
+    return (formsCode?.baseMark ?? markFor)(item, modeOf(item, this.settings), this.displayContext()); // R192: a base form's, lazy
   }
 
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
@@ -643,25 +638,22 @@ export class Session {
   }
 
   /** The Format key (cycleForms.ts): the last result of the open view in the next ticked mode. Resolves true when the display changed. */
-  async cycleFormat(): Promise<boolean> {
-    const item = this.lastForKey(); // at the press, before any await: a later row must not take the act (R135f1)
-    if (!item) return false;
-    const m = formsCode ?? (await loadForms()); // (loaded: no await, the act is done before the next key)
-    return m ? m.cycleFormat(this, this.calc, item) : false;
-  }
-
-  /** The row the Format and a b/c keys act on: the open view's last row, when it is done and nothing runs. */
-  private lastForKey(): HistoryItem | undefined {
-    const item = this.items.at(-1);
-    return item && item.status === "done" && !this.busy ? item : undefined;
+  cycleFormat(): Promise<boolean> {
+    return this.formKey("cycleFormat");
   }
 
   /** The a b/c key on an empty line (R10, cycleForms.ts): the last result in its other form. Resolves true when the display changed. */
-  async cycleForm(): Promise<boolean> {
-    const item = this.lastForKey();
-    if (!item) return false;
+  cycleForm(): Promise<boolean> {
+    return this.formKey("cycleForm");
+  }
+
+  /** Either key on the open view's last row, when it is done and nothing runs, taken at the press before any await: a
+   *  later row must not take the act (R135f1). The code loaded: no await, the act is done before the next key. */
+  private async formKey(key: "cycleFormat" | "cycleForm"): Promise<boolean> {
+    const item = this.items.at(-1);
+    if (!item || item.status !== "done" || this.busy) return false;
     const m = formsCode ?? (await loadForms());
-    return m ? m.cycleForm(this, this.calc, item) : false;
+    return m ? m[key](this, this.calc, item) : false;
   }
 
   /** Delete one row of the open view (R11). A running row is not deleted: Cancel stops it first. Undo brings it back (R98).
