@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G312 (be-10): the polar form through the real engine, on the path of cycleForms.computePolar (abs and arg of the
 // point value as the engine kept it). Home at 30 digits gives Gamma(0.5+i) and erf(1+i) with 14 and 13 confirmed digits;
-// the polar form drew 30 (0.520590963616751249785481260734∡-0.955007724342558318998097965064, wrong from the 15th digit
+// the polar form drew 30 (0.520590963616751249785481260734∡-0.955007724342558318998097965064, wrong from the 16th digit
 // of r and the 14th of θ). Each number drawn must be the oracle's, rounded to the digits it shows. Oracle: mpmath at 60
 // and 90 digits, agreeing (abs and arg of gamma(mpc(1/2, 1)) and erf(mpc(1, 1))).
 import { beforeAll, describe, expect, it } from "vitest";
@@ -50,7 +50,7 @@ describe.skipIf(!giacAvailable())("G312: the polar form of a ⚠ complex result 
       const [r, t] = text.split(POLAR_SIGN);
       const [ar, at] = [agrees(r ?? "", r0), agrees(t ?? "", t0)];
       expect({ text, r: ar.ok, theta: at.ok }).toEqual({ text, r: true, theta: true });
-      // the bound keeps most of the confirmed digits: at least 11 (12 for Gamma, 11 for erf)
+      // the bound keeps most of the confirmed digits: at least 11 (12 for both today)
       expect(Math.min(ar.digits, at.digits)).toBeGreaterThanOrEqual(11);
       expect(markFor(item, "polar", ctx)?.mark).toBe("⚠");
     });

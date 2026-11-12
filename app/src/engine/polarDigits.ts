@@ -52,27 +52,41 @@ function digitsWithin(c: DecimalValue, half: Term[], cap: number): number {
 }
 
 /**
- * G312: the significant digits of r and θ (the polar form the engine computed from `value`) that `value`'s n confirmed
- * digits confirm. The kept part and the true one round alike to n digits, so each part is off by less than one unit in
- * its n-th digit, and z by less than d = u_re + u_im: r moves by at most d, θ by at most d / (r − d). r and θ are kept
- * to DECIMAL_KEEP digits (one unit there is added). A zero part counts as confirmed exactly, as the point form shows it.
+ * G312: the significant digits of r and θ (the polar form the engine computed from `value` = x + y·i) that `value`'s n
+ * confirmed digits confirm. The kept part and the true one round alike to n digits, so each part is off by less than
+ * u, one unit in its n-th digit (a zero part counts as exact, as the point form shows it). Then r moves by at most
+ * u_x + u_y, and θ (mean value theorem on dθ = (x dy − y dx) / r², along the segment to the true value) by at most
+ * ((|x| + u_x)·u_y + (|y| + u_y)·u_x) / (r − u_x − u_y)², which keeps θ's relative precision when θ is small. r and θ
+ * are kept to DECIMAL_KEEP digits: one unit there is added.
  */
 export function polarDigits(value: ComplexValue, n: number, r: DecimalValue, theta: DecimalValue): { r: number; theta: number } {
   const cap = Math.min(Math.max(n, 0), DECIMAL_KEEP);
   const parts = [value.re, value.im].filter((v) => !isZero(v));
   // r ≥ the larger part and r < 10 times it: anything else is no polar form of `value` (nothing confirmed)
   if (cap < 1 || parts.length === 0 || isZero(r) || r.exp > Math.max(...parts.map((v) => v.exp)) + 1) return { r: 0, theta: 0 };
-  const ue = parts.map((v) => v.exp + 1 - cap);
-  const top = Math.max(...ue);
-  const d = ue.map((x) => Math.max(x, top - DECIMAL_KEEP)); // a part 40 decades below the other: bounded above
-  const rDigits = digitsWithin(r, [...d.map((x): Term => [1n, x]), [1n, r.exp + 1 - DECIMAL_KEEP]], cap);
-  if (top >= r.exp) return { r: rDigits, theta: 0 };
-  // d / (r − d) rounded up, as q·10^-S: r − d > 0, every term of d being below r's first digit
+  const u = (v: DecimalValue): number | null => (isZero(v) ? null : v.exp + 1 - cap);
+  const [ux, uy] = [u(value.re), u(value.im)];
+  const us = [ux, uy].filter((x): x is number => x !== null);
+  const rDigits = digitsWithin(r, [...us.map((x): Term => [1n, x]), [1n, r.exp + 1 - DECIMAL_KEEP]], cap);
+  if (Math.max(...us) >= r.exp) return { r: rDigits, theta: 0 };
+  // L = r − u_x − u_y > 0 (each u is below r's first digit), a u rounded up to one unit in r's (cap + 45)-th digit (G58)
   const R = scaled(r);
-  const e0 = Math.min(R.e, ...d);
-  const dm = d.reduce((s, x) => s + pow10(x - e0), 0n);
-  const low = R.m * pow10(R.e - e0) - dm;
-  const S = low.toString().length + DECIMAL_KEEP + 4;
-  const q = (dm * pow10(S) + low - 1n) / low;
-  return { r: rDigits, theta: digitsWithin(theta, [[q, -S], [1n, theta.exp + 1 - DECIMAL_KEEP]], cap) };
+  const lowU = us.map((x) => Math.max(x, r.exp - cap - 45));
+  const e0 = Math.min(R.e, ...lowU);
+  const Lm = R.m * pow10(R.e - e0) - lowU.reduce((s, x) => s + pow10(x - e0), 0n);
+  // the numerator's terms: |x|·u_y, u_x·u_y, |y|·u_x, u_y·u_x
+  const num: Term[] = [];
+  const add = (v: DecimalValue, uv: number | null, uo: number | null): void => {
+    if (uo === null) return;
+    const V = scaled(v);
+    if (!isZero(v)) num.push([V.m < 0n ? -V.m : V.m, V.e + uo]);
+    if (uv !== null) num.push([1n, uv + uo]);
+  };
+  add(value.re, ux, uy);
+  add(value.im, uy, ux);
+  // each over L² = Lm²·10^(2·e0), rounded up, with S more digits
+  const L2 = Lm * Lm;
+  const S = L2.toString().length + DECIMAL_KEEP + 4;
+  const half = num.map(([m, e]): Term => [(m * pow10(S) + L2 - 1n) / L2, e - 2 * e0 - S]);
+  return { r: rDigits, theta: digitsWithin(theta, [...half, [1n, theta.exp + 1 - DECIMAL_KEEP]], cap) };
 }
