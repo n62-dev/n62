@@ -33,7 +33,7 @@ import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
 import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
-import { decidedAtDouble, decideTwice, decidingStored, nonRealArg, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decidingStored, nonRealArg, pastCapFloats, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
@@ -528,7 +528,7 @@ export function homeEval(
   let undecided = once && !inexactTest && onceUndecided(giac, form, exactBody, exactOut);
   // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused (any value would be a guess).
   let refusedCut: boolean | "branch" = false;
-  if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac), nonRealArg(giac))) {
+  if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac), nonRealArg(giac, P))) {
     const d = decideTwice(giac, exactBody, exactOut, s.digits, s.digits);
     if ("undecided" in d) undecided = true;
     if ("undecided" in d && d.refused) refusedCut = d.branch ? "branch" : true;
@@ -588,8 +588,8 @@ export function homeEval(
   };
   const refuse = (code: Refusal, path: HomePath): HomeResult => ({ ...failed(enEngine[`error.${code}`], path), error: code, approximate: false });
 
-  const viaFloat = (path: HomePath, exact?: string): HomeResult => {
-    const f = floatPathFacts(giac, ans, asg ? asg.rhs : input, once, W, s.digits);
+  const viaFloat = (path: HomePath, exact?: string, text = body): HomeResult => {
+    const f = floatPathFacts(giac, ans, text, once, W, s.digits);
     // G78 (F50): undef or an infinity where a number was asked for (no free name) is refused with its reason.
     const lost = "error" in f && !once ? lostFloat(giac, exactBody, f.error) : null;
     if ("error" in f && lost) return refuse(lost, path);
@@ -658,6 +658,9 @@ export function homeEval(
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
+  // G325f1: asin or acos of a non-real argument whose exact text is past the cap: from the argument's float (decisions.ts)
+  const asFloats = once || undecided ? null : pastCapFloats(giac, body, exactOut, P);
+  if (asFloats !== null) return viaFloat("float-big", undefined, asFloats);
   if (seq.empty) return refuse("noValue", "exact");
   // G39: Giac's [exact, numeric] pair of a definite integral is never a list. The two answers differ, so neither is
   // confirmed: the float is the value, with no digit confirmed (⚠, docs/04 2.4), and the why-line says the pair differs.

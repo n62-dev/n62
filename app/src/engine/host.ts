@@ -1050,7 +1050,7 @@ export class EngineHost implements FactsHost {
     const decisionExpr = asg ? toExactLiterals(asg.rhs) : exactInput;
     // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
     let refusedCut = false;
-    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), nonRealArg(this.giac))) {
+    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), nonRealArg(this.giac, valuePrecision(digitsSet)))) {
       const d = decideTwice(this.giac, decisionExpr, text, digitsSet, digitsSet);
       if ("undecided" in d) undecided = true;
       if ("undecided" in d && d.refused) refusedCut = true;
