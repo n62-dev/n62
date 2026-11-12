@@ -95,7 +95,7 @@ The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10
 
 **Finding things and help**
 - `[part]` Help for the function at the cursor. Help key dead; no examples in tier 0. G231, R196, R197.
-- `[check: FAIL]` Find shows where a function sits. Preview has no key field. G230, R195.
+- `[have]` Find shows where a function sits: the preview ends with its key (`asin` … · Shift sin; G230, R195 merged 3adeda3c).
 
 **Everywhere**
 - `[check: FAIL]` Desktop browser with a keyboard: typed `sin(1)` is `s*i_*n*(1)` (F199, a named limit of v0.1.0). R131 (existing, keys only), then R198, which reaches every function Find has. Both open v0.2.
