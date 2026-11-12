@@ -13,7 +13,7 @@ import { PASDEG } from "../engine/angles.ts";
 import { decimalToString, roundSignificant } from "../engine/format.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
-import { worseFacts } from "./sigmaFacts.ts";
+import { limitDigits, worseFacts } from "./sigmaFacts.ts";
 import { shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
@@ -551,11 +551,15 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   // The end slot as shown: the one given, or the unit chosen for the result (σ is scaled by this one, like the value).
   const shownDst = dst;
   const done = (value: HomeResult, valueExpr: string): Quantity | UnitError => {
-    const unc = job.unc ? uncertainty(giac, job, src, shownDst, valueExpr, value.display, dimension, s) : null;
+    let unc = job.unc ? uncertainty(giac, job, src, shownDst, valueExpr, value.display, dimension, s) : null;
     if (unc && isUnitError(unc)) return unc;
     // R271f1: σ's mark decided once: a σ from a result chip limits the value's facts (its confirmed digits, its ⚠), so
-    // the view, the Home row, Copy and the chip read one fact (units/sigmaFacts.ts)
-    if (unc?.chip) value = { ...value, facts: worseFacts(value.facts, unc.chip) };
+    // the view, the Home row, Copy and the chip read one fact (units/sigmaFacts.ts); R286: at σ's last confirmed decade
+    if (unc?.chip) {
+      const at = { value: value.value?.re, sigma: unc.value.value?.re };
+      value = { ...value, facts: worseFacts(value.facts, unc.chip, at) };
+      unc = { ...unc, limit: limitDigits(unc.chip, at) };
+    }
     // G319: a convergence check that could not finish: the value stands with ⚠, as in Home (nothing confirmed it exists).
     if (unverified) value = { ...value, facts: { ...value.facts, warn: value.facts.warn ?? "unchecked", why: { ...value.facts.why, existsUnchecked: true } }, approximate: true };
     return { value, dimension, dimensionText: dimension === null ? null : dimensionText(dimension), unit, ...(shownSlot ? { shownSlot } : {}), siPrefixed: sp?.text ?? "", ...si, ...(unc ? { unc } : {}), ...(note ? { note } : {}), ms: performance.now() - t0 };

@@ -182,6 +182,9 @@ export interface Uncertainty {
   /** R271: σ took a result chip's facts; the result's mark is then the worse of the value's and σ's. R271f1: σ's facts
    *  (its confirmed digits, its ⚠ reason), decided once here; the value's facts hold them (units/sigmaFacts.ts). */
   chip?: SigmaFacts;
+  /** R286: with `chip`, the value's confirmed digits σ's limit gives (sigmaFacts.ts limitDigits): the view's ⚠ sits before
+   *  σ when the value's facts hold this one. */
+  limit?: number | null;
 }
 
 /** A refusal. The message is built by messages.ts from the i18n table. */

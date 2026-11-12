@@ -4,6 +4,8 @@
 // shown with 3 confirmed digits, in m (audit round 3 of R271). The chain is the unit view's own: the parser in units mode,
 // the request (view.ts request), the builder and the evaluator (real Giac; skipped without a build, see nodeGiac.ts) on a
 // hand-made slice of Find's factor table. Expected values derived: 2 × 0.0707 = 0.1414 (σ cut to its 3 digits).
+// R286: σ's n confirmed digits end at the decade σ.exp − n + 1 (0.0707 with 3: 10^-4), and the value is known to that
+// decade: n + value.exp − σ.exp significant digits (sigmaFacts.ts limitDigits), never more than the value's own.
 import { beforeAll, describe, expect, it } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
 import type { NumberFormat } from "../calc/port.ts";
@@ -97,22 +99,24 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
     return s;
   };
 
-  it("⚠ 3 in the unit view, the value's facts holding σ's limit", () => {
+  it("⚠ 6 in the unit view, the value's facts holding σ's limit at σ's decade", () => {
+    // R286: 10.1 (exp 1) ± 0.0707 (exp -2) with 3: 3 + 1 + 2 = 6 digits, to 10^-4; STD 12 shows 12 > 6: ⚠ 6
     const q = units(LINE, { "res:3": FEW });
-    expect(q.value.facts.reliableDigits).toBe(3);
+    expect(q.value.facts.reliableDigits).toBe(6);
     const s = shown(q);
-    expect([s.mark, s.markText, s.text, s.warn]).toEqual(["⚠", "⚠ 3", "10.100 ± 0.071", true]);
+    expect([s.mark, s.markText, s.text, s.warn]).toEqual(["⚠", "⚠ 6", "10.100 ± 0.071", true]);
   });
 
   it("⚠ in its history row, and after the row is saved and read back, the same mark as the view under every setting", async () => {
     const q = units(LINE, { "res:3": FEW });
     const r = row(q, LINE, { "res:3": FEW });
-    expect(r.facts?.reliableDigits).toBe(3);
+    expect(r.facts?.reliableDigits).toBe(6);
+    // σ's own facts stay its 3 digits (a σ chip used again scales them anew)
     expect(r.units?.unc).toEqual({ text: "0.071", shown: "10.100 ± 0.071", reliableDigits: 3 });
     const kv = fakeKv([], { cloneReads: true });
     const s = await session(kv);
     putRow(s, r);
-    expect(s.mark(s.home[0] as HistoryItem)).toEqual({ mark: "⚠", n: 3 });
+    expect(s.mark(s.home[0] as HistoryItem)).toEqual({ mark: "⚠", n: 6 });
     s.flushHistory();
     const back = await session(kv);
     const item = back.home[0] as HistoryItem;
@@ -123,8 +127,9 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
       return [t.format, t.digits, back.mark(item)?.mark];
     });
     expect(marks).toEqual(SETTINGS.map((t) => [t.format, t.digits, shown(q, t.o).mark]));
-    // ⚠ where more digits are shown than σ's 3 confirmed, ≈ at 3 digits or fewer, in the row as in the view
-    expect(marks.map((m) => m[2])).toEqual(["⚠", "≈", "≈", "⚠", "≈"]);
+    // R286: ⚠ where more digits are shown than the 6 σ's limit gives (STD 12), ≈ at 6 digits or fewer (STD 3, STD 2,
+    // SCI 5, ENG 3; SCI 5 was ⚠ under the count of 3), in the row as in the view
+    expect(marks.map((m) => m[2])).toEqual(["⚠", "≈", "≈", "≈", "≈"]);
     back.setFormat("std");
     back.setDigits(12);
     expect(back.mark(item)?.mark).toBe("⚠");
@@ -134,17 +139,70 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
   it("its chip keeps σ's limit and σ cut to its 3 digits; used again it is ⚠ in Home and in the unit view, σ 0.1414", () => {
     const q = units(LINE, { "res:3": FEW });
     const chip = quantityChip(q);
-    expect(chip).toMatchObject({ exact: false, reliableDigits: 3, unc: "0.707e-1", uncFacts: { reliableDigits: 3 } });
-    // Home: the chip times 2
+    expect(chip).toMatchObject({ exact: false, reliableDigits: 6, unc: "0.707e-1", uncFacts: { reliableDigits: 3 } });
+    // Home: the chip times 2 (the chip's 6 digits; 20.2 is Giac's exact 101/5)
     const home = host.home("pasr_7*2", defaultHomeSettings, undefined, chipFactsOf({ "7": chip! })).result;
-    expect(markOf(precisionFacts(home), SETTINGS[0]!.o)).toEqual({ mark: "⚠", n: 3 });
+    expect(markOf(precisionFacts(home), SETTINGS[0]!.o)).toEqual({ mark: "⚠", n: 6 });
     expect(decimalFromString(home.facts.uncSigma ?? "")).toEqual(decimalFromString("0.1414"));
     // the unit view: 2 × the chip, in m
     const again = units("2\\times\\res{7}{10.1}\\placeholder[u1]{}", { "res:7": chip! });
     expect(again.unc?.text).toBe("0.14");
     expect(again.unc?.value.display).toBe("0.1414");
+    // σ 0.1414 (exp -1) with the chip's σ's 3 digits, 20.2 (exp 1): 3 + 1 + 1 = 5
     const s = shown(again);
-    expect([s.mark, s.markText, s.warn]).toEqual(["⚠", "⚠ 3", true]);
+    expect([s.mark, s.markText, s.warn]).toEqual(["⚠", "⚠ 5", true]);
+  });
+
+  it("R286: 1000.5 ± a 3-digit σ chip is known to σ's 10^-4: 8 digits, in the view, its chip and the chip used again", () => {
+    // 1000.5 (exp 3) ± 0.0707 (exp -2) with 3: 3 + 3 + 2 = 8 (phase-1 held 3: `2E3` in Home)
+    const line = "1000.5\\pm\\res{3}{0.0707}\\placeholder[u1]{}";
+    const q = units(line, { "res:3": FEW });
+    expect(q.value.facts.reliableDigits).toBe(8);
+    expect(q.unc?.limit).toBe(8);
+    // STD 12 shows 12 digits (format.ts digitsShown), 8 confirmed: ⚠ 8 before σ; STD 8 shows 8: ≈
+    const s = shown(q);
+    expect([s.mark, s.markText, s.text, s.warn]).toEqual(["⚠", "⚠ 8", "1000.500 ± 0.071", true]);
+    expect(shown(q, { format: "STD", digits: 8 }).mark).toBe("≈");
+    const chip = quantityChip(q);
+    expect(chip).toMatchObject({ value: "2001/2", reliableDigits: 8, unc: "0.707e-1", uncFacts: { reliableDigits: 3 } });
+    // Home: 2 × 2001/2 = 2001 to 8 digits, σ 2 × 0.0707 = 0.1414
+    const home = host.home("pasr_7*2", defaultHomeSettings, undefined, chipFactsOf({ "7": chip! })).result;
+    expect(home.display).toBe("2001");
+    expect(decimalFromString(home.facts.uncSigma ?? "")).toEqual(decimalFromString("0.1414"));
+    expect(markOf(precisionFacts(home), SETTINGS[0]!.o)).toEqual({ mark: "⚠", n: 8 });
+    expect(markOf(precisionFacts(home), { format: "STD", digits: 8 })?.mark).toBe("≈");
+    // the unit view: 2 × the chip in m; σ 0.1414 (exp -1) with 3, 2001 (exp 3): 3 + 3 + 1 = 7, 2001.00 shows 6 of them
+    const again = units("2\\times\\res{7}{1000.5}\\placeholder[u1]{}", { "res:7": chip! });
+    expect(again.value.facts.reliableDigits).toBe(7);
+    expect(shown(again).text).toBe("2001.00 ± 0.14");
+    expect(shown(again, { format: "STD", digits: 7 }).mark).toBe("≈");
+  });
+
+  it("R286: 123456.25 ± a 3-digit σ chip, its chip × 2 in Home is 246912.5 (phase-1: 2.47E5)", () => {
+    // 123456.25 (exp 5) ± 0.0707 (exp -2) with 3: 3 + 5 + 2 = 10 digits; 2 × 493825/4 = 246912.5, 7 digits
+    const q = units("123456.25\\pm\\res{3}{0.0707}\\placeholder[u1]{}", { "res:3": FEW });
+    const chip = quantityChip(q);
+    expect(chip?.reliableDigits).toBe(10);
+    const home = host.home("pasr_7*2", defaultHomeSettings, undefined, chipFactsOf({ "7": chip! })).result;
+    expect(home.display).toBe("246912.5");
+    expect(markOf(precisionFacts(home), { format: "STD", digits: 10 })?.mark).toBe("≈");
+  });
+
+  it("R286: a σ chip with 1 confirmed digit on a value shown past σ's decade keeps the ⚠ before σ, at the scaled count", () => {
+    // 10.123456 (exp 1) ± 0.0707 (exp -2) with 1: 1 + 1 + 2 = 4 digits, to 10^-2; `10.123 ± 0.071` shows 5: ⚠ 4
+    const one: Chip = { ...FEW, reliableDigits: 1 };
+    const q = units("10.123456\\pm\\res{3}{0.0707}\\placeholder[u1]{}", { "res:3": one });
+    expect(q.value.facts.reliableDigits).toBe(4);
+    const s = shown(q, { format: "STD", digits: 5 });
+    expect([s.mark, s.markText, s.warn]).toEqual(["⚠", "⚠ 4", true]);
+    expect(s.sigma?.tail).toBe("0.071");
+  });
+
+  it("a σ chip with a ⚠ reason carries it to the value, whatever the digits (control)", () => {
+    const q = units(LINE, { "res:3": { ...FEW, warn: "unchecked" } });
+    expect(q.value.facts.warn).toBe("unchecked");
+    const s = shown(q, { format: "STD", digits: 3 });
+    expect([s.mark, s.warn]).toEqual(["⚠", true]);
   });
 
   it("a typed σ stays ≈: no σ facts on the row or the chip, the view and the row ≈", async () => {
