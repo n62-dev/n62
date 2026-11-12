@@ -191,7 +191,9 @@ function pfx(v: DecimalValue, n: number): FormattedNumber {
   const p = e.exponent === null ? undefined : PREFIXES[e.exponent];
   if (p === undefined) return e;
   // G224: a prefix with zeros reads as false precision (4.7 k, not 4.70000000000 k); ENG keeps them. Only the fraction's zeros go.
-  const mantissa = e.mantissa.includes(".") ? e.mantissa.replace(/\.?0+$/, "") : e.mantissa;
+  const [ip = "", fp = ""] = e.mantissa.split(".");
+  const kept = trimZeros(fp);
+  const mantissa = kept === "" ? ip : `${ip}.${kept}`;
   return { neg: e.neg, mantissa, exponent: null, prefix: p };
 }
 
