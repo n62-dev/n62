@@ -86,3 +86,39 @@ describe("ClipActions paste of a given text", () => {
     expect(m.reads()).toBe(0);
   });
 });
+
+// R276: the picked row's buttons are Store ▶ and Copy as › (its three on a sheet); a hold copies the input as plain text
+// or the result as Copy does, each a row action (R53's count).
+describe("ClipActions row buttons and the hold", () => {
+  const make = () => {
+    let clip = "";
+    const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
+    const item = { id: 1, status: "done", latex: "\\frac{1}{3}", full: "1/3", fullExact: true, rational: { n: "1", d: "3" } };
+    const session = { items: [item], display: () => ({ text: "0.333333333333", latex: "0.333333333333" }) } as unknown as Session;
+    const menus: { title: string; ids: string[] }[] = [];
+    const shell = { app: null, showsEntry: true, showMenu: (title: string, items: { id: string }[]) => void menus.push({ title, ids: items.map((i) => i.id) }) } as unknown as AppShell;
+    const entry = { insert() {} } as unknown as EntryController;
+    const acted: string[] = [];
+    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {}, acted: (id) => void acted.push(id) }, port);
+    return { c, item: item as never, menus, acted, clip: () => clip };
+  };
+  it("the bar holds Store ▶ and Copy as ›; Copy as opens As shown, Exact, LaTeX", () => {
+    const { c, item, menus } = make();
+    const buttons = c.rowButtons(item);
+    expect(buttons.map((b) => [b.id, b.label])).toEqual([["store", "Store ▶"], ["copyAs", "Copy as ›"]]);
+    buttons[1]?.run?.();
+    expect(menus).toEqual([{ title: "Copy as", ids: ["shown", "exact", "latex"] }]);
+  });
+  it("☰ keeps its nine in the same order", () => {
+    const { c, item } = make();
+    expect(c.menu(item).map((m) => m.id)).toEqual(["insert", "recall", "copy", "store", "delete", "copyAs", "paste", "share", "clear"]);
+  });
+  it("a hold on the input copies the entry as plain text, on the result Copy's full value; each counts as copy", async () => {
+    const { c, item, acted, clip } = make();
+    await c.holdCopy(item, "input", "\\sqrt{2}+3"); // (the input as drawn, given by History)
+    expect(clip()).toBe("sqrt(2)+3"); // (entryText, as Share session writes an entry)
+    await c.holdCopy(item, "result", "");
+    expect(clip()).toBe("1/3");
+    expect(acted).toEqual(["copy", "copy"]);
+  });
+});

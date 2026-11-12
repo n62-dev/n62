@@ -133,6 +133,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45): docs/04 5.5 point 1; `e` after digits is ᴇ; characters no key types do nothing.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
+- **Row gestures** (R276): a hold copies after 500 ms unless the finger moves 8 px; a swipe decides at 10 px (across beats down only when |dx| > |dy|) and goes at 40 % of the row or a fling (0.5 px/ms, the row out 24 px); a mouse drag swipes too. Would change if: A139 on the Tab One finds them too eager or too stiff.
 - **Flicks** (R9): arm at 20 px, cancel within 12 px; **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Archived, "Opus pass 132".
 - **R58 (Opus pass 18): in the CAS view Alpha types lower case and Shift + Alpha the capital;** the lock flicks swap with it; Home, the apps, Find and the unit slots keep Alpha = capital. Would change if: the rest of G2 item 45 differs.
 - **A selection is the argument of the key** (R17); **powers bracket a compound term before the cursor** (L8). Archived, "Opus pass 122".
