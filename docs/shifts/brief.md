@@ -82,9 +82,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 641 | G312 polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
-| 642 | G313 `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
-| 652 | G323 each giac-regress file in a fresh engine (F223) | gorge, Sonnet | `p1/gorge-regressfresh` | – |
 | 659 | [G326](packages/G326.md) the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
 | 660 | [S54](packages/S54.md) why `decompose` recurses without end (F214) | sandra, Opus | `p1/sandra-decompose` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
