@@ -15,6 +15,7 @@ import type { Key } from "../keyboard/keyboard.ts";
 import type { Mods, RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { engineFormat } from "../calc/port.ts";
+import { ANS_KEY, chipKeysIn, type ChipTable } from "../input/chips.ts";
 import { userValuesOf } from "../input/latex-to-giac.ts";
 import { idbKv } from "../state/storage.ts";
 import { loadSheetView } from "../views/sheetView.svelte.ts";
@@ -65,6 +66,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   if (row) c.entry.set(c.session.input(row), row.chips); // R100: in comma mode its argument commas as `;`
   const line = c.entry.value;
   const chips = c.entry.chips;
+  // R259: Ans is the view's last result (Home's or CAS's, as Enter there reads it, session.submit), read once here: the
+  // view's own rows never feed it. Only the parse gets it; the Home row keeps the line's chips (Ans is never stored)
+  const ans = chipKeysIn(line).has(ANS_KEY) ? c.session.lastChip() : undefined;
+  const parseChips: ChipTable = ans ? { ...chips, [ANS_KEY]: ans } : chips;
   void unitFind().catch(() => undefined);
   // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
   const [, { finder, index }, hw] = await Promise.all([c.entry.ready, import("../find/finder.ts").then(async (m) => ({ finder: m, index: await m.loadIndex(true) })), import("../entry/hwkeys.ts"), unitCells.restore()]);
@@ -118,7 +123,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const panel = makePanel(() => made, () => c.session.settings.marks);
   const cat = slotCatalogue(index.items);
   const table = factorTable(index.items);
-  const view = new UnitView(cat, line, chips, host, seed);
+  const view = new UnitView(cat, line, parseChips, host, seed);
   made = view;
   entryEl.insertBefore(panel.element, fieldEl);
   fieldEl.style.display = "none";

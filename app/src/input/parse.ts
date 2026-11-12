@@ -661,6 +661,7 @@ class Parser implements CalcParser {
         return this.resultChip(this.resChipKey());
       case "ans":
         this.pos++;
+        if (this.units && this.chips[ANS_KEY]?.unit) throw parseError("parse.ansHasUnit"); // R259: no slot of its own (unitFormula.ts) to keep its unit
         return this.chip(ANS_KEY, "Ans");
       case "const": {
         // \const{ID}{symbol}: a constant inserted from Find (docs/04 3.6)

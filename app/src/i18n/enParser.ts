@@ -84,6 +84,7 @@ export const enParser = {
   "parse.atToken": "{msg} at '{tok}'",
   "parse.atEnd": "{msg} at end of input",
   "parse.ansNone": "Ans: no result to use in this view yet",
+  "parse.ansHasUnit": "Ans has a unit here: use its row's chip",
   "parse.valueMissing": "{what}: its value is missing",
   "parse.slotNeedsNumber": "a unit slot goes right after a number",
   "parse.slotTwice": "unit slot {id} appears twice",
