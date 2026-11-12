@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key: cycle logic and the display modes. Expected values are `derived` (decimal arithmetic by hand).
 import { describe, expect, it } from "vitest";
-import { decimalFromRational, type ComplexValue } from "../engine/format.ts";
+import { decimalFromRational, decimalFromString, type ComplexValue, type DecimalValue } from "../engine/format.ts";
 import {
   DEFAULT_FMT_CYCLE,
   factsOf,
   normalizeCycle,
   markFor,
   markText,
+  noDigit,
   renderNumeric,
   commaResult,
   type DisplayContext,
@@ -124,6 +125,42 @@ describe("renderNumeric", () => {
     });
     // an angle computed for the other unit is not shown
     expect(renderNumeric(polar, "polar", { ...ctx, angle: "deg" })?.text).toBe("3+i");
+  });
+});
+
+// G312 (be-10): the polar form of a value with n confirmed digits draws only the digits of r and θ that those confirm.
+// z = 1+i, r = √2 and θ = π/4 (oracle, mpmath at 50 digits). Derived by hand: each part is off by less than one unit in
+// its 14th digit, so |Δz| < 2E-13: r = 1.41421356237309… ± 2E-13 rounds alike to 13 digits (1.414213562373), not 14;
+// θ moves by at most 2E-13 / (√2 − 2E-13) = 1.4142E-13: 0.785398163397307… to 0.785398163397590… round alike to 11.
+describe("G312: the polar form draws the confirmed digits only", () => {
+  const dec = (s: string): DecimalValue => decimalFromString(s) as DecimalValue;
+  const polar = { r: dec("1.4142135623730950488016887242097"), theta: dec("0.78539816339744830961566084581988"), angle: "rad" as const };
+  const z = (reliableDigits: number | null, exact = false): NumericResult => ({
+    value: { re: q(1n), im: q(1n) },
+    polar,
+    facts: { exact, reliableDigits },
+  });
+  const c30: DisplayContext = { ...ctx, digits: 30 };
+  it("14 confirmed digits at digits 30: r and θ to the digits the 14 confirm, the mark says how many", () => {
+    expect(renderNumeric(z(14), "polar", c30)?.text).toBe("1.414213562373∡0.7853981634");
+    expect(markFor(z(14), "polar", c30)).toEqual({ mark: "⚠", n: 11 });
+    expect(renderNumeric(z(14), undefined, c30)?.text).toBe("1+i"); // the point form as before
+  });
+  it("Fixed: r and θ each to their own decimals", () => {
+    const fix: DisplayContext = { ...c30, format: "fix", fixDecimals: 20 };
+    expect(renderNumeric(z(14), "polar", fix)?.text).toBe("1.414213562373∡0.78539816340");
+    expect(markFor(z(14), "polar", fix)).toEqual({ mark: "⚠", n: 11 });
+  });
+  it("an exact value, no count, or more confirmed digits than shown: today's 30 digits", () => {
+    const all = "1.41421356237309504880168872421∡0.78539816339744830961566084582";
+    expect(renderNumeric(z(null, true), "polar", c30)?.text).toBe(all);
+    expect(renderNumeric(z(null), "polar", c30)?.text).toBe(all);
+    expect(renderNumeric(z(40), "polar", c30)?.text).toBe(all);
+    expect(markFor(z(40), "polar", c30)).toEqual({ mark: "≈" });
+  });
+  it("⚠ 0 draws no number, as the point form", () => {
+    expect(noDigit(markFor(z(0), "polar", c30))).toBe(true);
+    expect(noDigit(markFor(z(0), undefined, c30))).toBe(true);
   });
 });
 
