@@ -416,8 +416,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
  *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
  *  measures 60.92 kB gzip (172.11 kB raw), the branch 61,155 B (172,810 B raw, +0.23 kB): 61,155 B + 0.05 kB, rounded up
- *  to the next 0.01 kB. */
-export const START_PIN_GZIP = 61_210;
+ *  to the next 0.01 kB.
+ *  61,210 → 61,280 B (G224): PFX drops the mantissa's trailing zeros (engine/format.ts pfx, 4.7 k not 4.70000000000 k): one
+ *  more line in the start chunk's formatter, which draws every result. The branch (on phase-1 3adeda3c) measures 61,224 B gzip
+ *  (172,740 B raw): 61,224 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 61_280;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
