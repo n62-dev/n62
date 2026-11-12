@@ -64,7 +64,8 @@ describe("R83 the Menu says whose it is", () => {
       expect(s.sheet?.level.items[2]?.label).toBe("Root, extremum … in Plot");
       if (pick === "digit") expect(s.pick(3)).toBe(true);
       else {
-        s.sheet!.level.move(2);
+        s.sheet!.level.move(1);
+        s.sheet!.level.move(1);
         s.picked(s.sheet!.enter());
       }
       await Promise.resolve();
