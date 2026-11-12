@@ -132,14 +132,17 @@ test("a swipe down on the line folds and leaves its text, caret and selection; a
   await f.move(-60, 30, 3);
   await f.end();
   await isFolded(page, false);
-  // a sideways drag selects, by the mouse and by a finger (past `touch-action: pan-x` and the swipe's recognizer)
+  // a sideways drag by a finger reaches the line (past `touch-action: pan-x` and the swipe's recognizer) and selects
+  // nothing (R277: it scrolls a long line, linetouch.spec.ts); by the mouse it selects
   const collapsed = () => page.evaluate(() => window.n62.entry.field?.selectionIsCollapsed);
   await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
   expect(await collapsed()).toBe(true);
   const drag = await touch(page, '[data-testid="entry"] math-field');
   await drag.move(-70, 0, 20);
   await drag.end();
-  await expect.poll(collapsed).toBe(false);
+  await page.waitForTimeout(100);
+  expect(await collapsed()).toBe(true);
+  expect(await page.evaluate(() => window.n62.entry.field?.position)).toBe(6);
   await isFolded(page, false);
   await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
   expect(await collapsed()).toBe(true);

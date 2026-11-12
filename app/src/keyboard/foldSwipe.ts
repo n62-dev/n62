@@ -2,10 +2,11 @@
 // R53 (P16): the swipe on the entry line that folds the keypad into results mode, and back. A pointer that starts on the
 // line and moves at least FOLD_PX down (up: unfold), mostly vertical (|dy| > 2 |dx|) and within SWIPE_MS, is the
 // swipe, whichever way the keypad is (down on a folded keypad does nothing, and changes nothing on the line either);
-// every other pointer stays MathLive's (a tap places the caret, a horizontal drag selects). MathLive sees the
-// pointerdown first-hand, so the caret it placed there, and any selection the drag made before it was recognized, are
-// put back from the snapshot taken at the pointerdown: the swipe changes nothing on the line. Listeners in the capture
-// phase on the line's box, so they run before the field's own. No dependency.
+// every other pointer stays the line's (a finger: entry/lineTouch.ts, R277, a tap places the caret, a sideways drag
+// scrolls, a hold selects; a mouse: MathLive's, a drag selects). A mouse's pointerdown reaches MathLive, so the caret it
+// placed there, and any selection the drag made before it was recognized, are put back from the snapshot taken at the
+// pointerdown: the swipe changes nothing on the line. Listeners in the capture phase on the line's box, so they run
+// before the field's own. No dependency.
 
 export const FOLD_PX = 24;
 export const SWIPE_MS = 400;
@@ -16,7 +17,7 @@ export type Swipe = "down" | "up";
 export function swipeOf(dx: number, dy: number, ms: number): Swipe | "drop" | undefined {
   const vertical = Math.abs(dy) > 2 * Math.abs(dx);
   if (vertical && Math.abs(dy) >= FOLD_PX && ms <= SWIPE_MS) return dy > 0 ? "down" : "up";
-  if (ms > SWIPE_MS || (!vertical && Math.abs(dx) >= FOLD_PX / 2)) return "drop"; // too slow, or sideways: a selection or a scroll of the line
+  if (ms > SWIPE_MS || (!vertical && Math.abs(dx) >= FOLD_PX / 2)) return "drop"; // too slow, or sideways: a hold, a scroll of the line or a mouse's selection
   return undefined;
 }
 

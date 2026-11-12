@@ -7,7 +7,8 @@ import type { ActionBody } from "../keyboard/keyboard.ts";
 import { deleteAtTemplate } from "./delete.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
-import { numberRunStart } from "./numberRun.ts";
+import { lineTouch } from "./lineTouch.ts";
+import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */
@@ -146,45 +147,45 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
       on.escape(ev.repeat);
     }
   });
-  keepTouchCaret(mf);
+  settleClick(mf);
+  lineTouch(mf, mf.parentElement ?? mf, (dx) => scrollLine(mf, dx));
   return mf;
 }
 
 /**
- * R42 (F33): MathLive places the caret on pointerdown and, for touch only, a second time on pointerup from atom bounds
- * that the first placement made stale (right of a fraction, root, power or bracket pair the second hit lands at the
- * start of the line or box). Remember the first (right) caret and put it back after the second. A mouse click never
- * needed this. R47 (F39): then, for touch and mouse alike, a caret where ◀ ▶ cannot stop (between a function's name
- * and its bracket, inside a name) moves forward to the next stop, as ▶ would settle (stops.ts). A selection (drag,
- * double tap) is left alone.
+ * R47 (F39): after a mouse click, a caret where ◀ ▶ cannot stop (between a function's name and its bracket, inside a
+ * name) moves forward to the next stop, as ▶ would settle (stops.ts). A selection (drag, double click) is left alone.
+ * A finger or a pen is lineTouch.ts's (R277), which settles its tap itself; R42's (F33) second caret placement on a
+ * touch's lift, from stale atom bounds, went with MathLive's touch handling.
  */
-function keepTouchCaret(mf: MathfieldElement): void {
-  let down: number | undefined;
+function settleClick(mf: MathfieldElement): void {
   let onField = false;
   mf.addEventListener("pointerdown", (ev) => {
-    down = undefined;
-    onField = true;
-    if (ev.pointerType !== "touch") return;
-    // A microtask runs after MathLive's own pointerdown handler (inside the shadow root) has placed the caret.
-    queueMicrotask(() => {
-      if (mf.selectionIsCollapsed) down = mf.position;
-    });
+    onField = ev.pointerType === "mouse";
   });
   window.addEventListener("pointercancel", () => {
     onField = false;
-    down = undefined;
   });
-  window.addEventListener("pointerup", (ev) => {
-    const want = down;
-    down = undefined;
+  window.addEventListener("pointerup", () => {
     if (!onField) return;
     onField = false;
     setTimeout(() => {
-      if (!mf.selectionIsCollapsed) return;
-      if (want !== undefined && ev.pointerType === "touch" && mf.position !== want) mf.position = want;
-      settle(mf, "moveToNextChar");
+      if (mf.selectionIsCollapsed) settle(mf, "moveToNextChar");
     }, 0);
   });
+}
+
+/**
+ * R277: scroll the line's content sideways by `dx` px (a finger's drag, lineTouch.ts). MathLive 0.111 has no public
+ * sideways scroll (M6 asks for one): its scroller is the shadow `[part=content]`, whose scrollLeft it sets itself only to
+ * follow the caret. Our one write into MathLive's shadow DOM; without the part the drag does nothing (false). The e2e
+ * test linetouch.spec.ts fails when the part is gone or its scrollLeft no longer moves the drawn line.
+ */
+export function scrollLine(mf: Pick<MathfieldElement, "shadowRoot">, dx: number): boolean {
+  const el = mf.shadowRoot?.querySelector<HTMLElement>("[part=content]");
+  if (!el) return false;
+  el.scrollLeft += dx;
+  return true;
 }
 
 /** The field's hidden textarea must never summon the system keyboard (inputmode=none, again after upgrade). */
@@ -275,7 +276,7 @@ function noNumberBefore(mf: MathfieldElement): boolean {
 function afterDigit(mf: MathfieldElement): boolean {
   const [a, b] = mf.selection.ranges[0] ?? [mf.position, mf.position];
   const o = Math.min(a, b);
-  return o > 0 && /^(?:[\d.]|\{,\})$/.test(mf.getElementInfo(o)?.latex ?? "");
+  return o > 0 && isNumberLatex(mf.getElementInfo(o)?.latex ?? "");
 }
 
 /**
@@ -283,21 +284,11 @@ function afterDigit(mf: MathfieldElement): boolean {
  * of it and return true. MathLive's own #@ would take only the digits after the mark. Offsets list an atom's parts
  * before the atom itself, so the mark's drawing (depth below the cursor's) is skipped on the way back.
  */
-function selectENumber(mf: MathfieldElement): boolean {
+export function selectENumber(mf: MathfieldElement): boolean {
   if (!mf.selectionIsCollapsed) return false;
   const end = mf.position;
-  const d = mf.getElementInfo(end)?.depth ?? 0;
-  const at = (o: number, re: RegExp): boolean => o > 0 && (mf.getElementInfo(o)?.depth ?? 0) === d && re.test(mf.getElementInfo(o)?.latex ?? "");
-  let k = end;
-  while (at(k, /^\d$/)) k--;
-  if (k === end) return false;
-  if (at(k, /^[+-]$/)) k--;
-  if (!at(k, /^\\emark$/)) return false;
-  k--;
-  while (k > 0 && (mf.getElementInfo(k)?.depth ?? 0) > d) k--;
-  const mantissa = k;
-  k = numberRunStart(mf, k, d); // digits, a point or the decimal comma `{,}` (R57)
-  if (k === mantissa) return false;
+  const k = eNumberStart(mf, end, mf.getElementInfo(end)?.depth ?? 0); // numberRun.ts: the one number rule (R57, R256, R277)
+  if (k === undefined) return false;
   mf.selection = { ranges: [[k, end]] };
   return true;
 }
@@ -334,7 +325,7 @@ function selectMatrix(mf: MathfieldElement): boolean {
  * the whole number; inside a fraction's part the key raises the last term of that part (user, 2026-10-12).
  * MathLive offsets list an atom's parts before the atom itself, and getElementInfo gives each one's depth.
  */
-function selectCompound(mf: MathfieldElement): boolean {
+export function selectCompound(mf: MathfieldElement): boolean {
   if (!mf.selectionIsCollapsed) return false;
   const latexAt = (o: number): string => mf.getElementInfo(o)?.latex ?? "";
   const depthAt = (o: number): number => mf.getElementInfo(o)?.depth ?? 0;
