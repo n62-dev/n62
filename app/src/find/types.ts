@@ -21,6 +21,8 @@ export interface FindItem {
   example?: string;
   /** fn, tier 0: the result Home shows for `example`. */
   exampleResult?: string;
+  /** fn, tier 0: the mark Home puts before `exampleResult`: "=" (exact), "≈" (rounded), "" (none: a symbolic result), as the engine reports it (checked by examples.test.ts). */
+  exampleMark?: "=" | "≈" | "";
   /** fn, tier 0: "rad" or "deg" when the result depends on the angle mode (an inverse trigonometric function); absent when it does not. */
   exampleAngle?: "rad" | "deg";
   /** const: exact decimal text with every digit (or an exact Giac expression with pi). */

@@ -100,7 +100,7 @@ function giacFunctions(aide, curated, exclude, notes) {
     const syntax = f.syntax ?? (e?.args ? `${f.giac}(${e.args})` : undefined);
     items.set(f.id, {
       id: f.id, kind: f.id.startsWith("tmpl:") ? "tmpl" : "fn", names: uniq(names), title: f.title, desc: f.desc,
-      syntax, example: f.example?.input, exampleResult: f.example?.expect, exampleAngle: f.example?.angle, tier: 0, insert: f.insert ?? opInsert(f.giac),
+      syntax, example: f.example?.input, exampleResult: f.example?.expect, exampleMark: f.example?.mark, exampleAngle: f.example?.angle, tier: 0, insert: f.insert ?? opInsert(f.giac),
     });
   }
   for (const e of entries) {
@@ -142,7 +142,8 @@ for (const f of curated) {
   if (!f.id || !f.giac || !f.title || !f.desc) fail(`find/functions.yaml: ${f.id ?? "?"} needs id, giac, title, desc`);
   if (!f.golden || !goldenIds.has(f.golden)) fail(`find/functions.yaml ${f.id}: golden case "${f.golden}" not found in tests/golden/`);
   // G231: one example per tier-0 function, checked on the engine by app/src/find/examples.test.ts
-  if (!f.example?.input || !f.example.expect) fail(`find/functions.yaml ${f.id}: needs example: { input, expect }`);
+  if (!f.example?.input || !f.example.expect || f.example.mark === undefined) fail(`find/functions.yaml ${f.id}: needs example: { input, expect, mark }`);
+  else if (!["=", "≈", ""].includes(f.example.mark)) fail(`find/functions.yaml ${f.id}: example.mark is "=", "≈" or "" (a symbolic result)`);
   else if (f.example.angle !== undefined && f.example.angle !== "rad" && f.example.angle !== "deg") fail(`find/functions.yaml ${f.id}: example angle is "rad" or "deg"`);
 }
 
@@ -194,7 +195,7 @@ for (const it of items) {
 if (new Set(items.map((i) => i.id)).size !== items.length) fail("duplicate ids");
 
 // field order of the schema (docs/04 3.3)
-const ORDER = ["id", "kind", "names", "title", "desc", "syntax", "example", "exampleResult", "exampleAngle", "value", "unc", "unit", "dim", "basis", "basisLeaves", "si", "tier", "insert", "where"];
+const ORDER = ["id", "kind", "names", "title", "desc", "syntax", "example", "exampleResult", "exampleMark", "exampleAngle", "value", "unc", "unit", "dim", "basis", "basisLeaves", "si", "tier", "insert", "where"];
 items = items.map((it) => Object.fromEntries(ORDER.filter((k) => it[k] !== undefined).map((k) => [k, it[k]])));
 
 if (problems.length) {

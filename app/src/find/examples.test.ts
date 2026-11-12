@@ -9,17 +9,21 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";
-import { runHomeCase } from "../goldenRun.ts";
+import { markText, runHomeCase, seqMark } from "../goldenRun.ts";
 import type { IndexItem } from "./types.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
-interface Example { input?: string; expect?: string; angle?: "rad" | "deg" }
+interface Example { input?: string; expect?: string; mark?: string; angle?: "rad" | "deg" }
 interface Curated { id: string; example?: Example }
 const curated = (parse(readFileSync(join(here, "../../../find/functions.yaml"), "utf8")) as { functions: Curated[] }).functions;
 
 describe("the tier-0 examples (find/functions.yaml)", () => {
   it("every tier-0 function has an example with an input and an expected result", () => {
     expect(curated.filter((f) => !f.example?.input || !f.example.expect).map((f) => f.id)).toEqual([]);
+  });
+
+  it("every example states its mark: = exact, ≈ rounded, \"\" none for a symbolic result (principle 3)", () => {
+    expect(curated.filter((f) => !["=", "≈", ""].includes(f.example?.mark ?? "?")).map((f) => f.id)).toEqual([]);
   });
 
   it("no two functions share an example input", () => {
@@ -37,6 +41,9 @@ describe("the tier-0 examples (find/functions.yaml)", () => {
         const r = await runHomeCase({ id: f.id, latex: f.example.input, settings: { angle } }, host, fresh);
         const shown = r.ok ? r.display : `error: ${r.display}`;
         if (shown !== f.example.expect) wrong.push(`${f.id} (${angle}): ${f.example.input} gave ${shown}, expected ${f.example.expect}`);
+        // the mark Home puts before the result, as the golden home stage reads it (goldenRun.ts records, 12 digits)
+        const mark = markText(seqMark(r, 12)) ?? "";
+        if (mark !== f.example.mark) wrong.push(`${f.id} (${angle}): ${f.example.input} has mark ${mark}, expected ${f.example.mark}`);
       }
     }
     expect(wrong).toEqual([]);
@@ -52,8 +59,9 @@ describe.skipIf(!items.some((it) => it.kind === "unit"))("the generated index ca
     for (const f of curated) {
       expect(byId.get(f.id)?.example, f.id).toBe(f.example?.input);
       expect(byId.get(f.id)?.exampleResult, f.id).toBe(f.example?.expect);
+      expect(byId.get(f.id)?.exampleMark, f.id).toBe(f.example?.mark);
       expect(byId.get(f.id)?.exampleAngle, f.id).toBe(f.example?.angle);
     }
-    expect(items.filter((i) => i.tier === 1 && (i.example || i.exampleResult || i.exampleAngle)).length).toBe(0);
+    expect(items.filter((i) => i.tier === 1 && (i.example || i.exampleResult || i.exampleMark || i.exampleAngle)).length).toBe(0);
   });
 });
