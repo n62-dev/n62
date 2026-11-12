@@ -13,8 +13,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
 
-**Copy and Paste in the apps after R278** (Solve, Function: ☰ has their own items, no Paste): Copy is each app's ☰ item (Solve's root, Function's readout, the Num CSV; the Copy key's old app path is gone). A number from another app comes in there only by a system paste (Ctrl+V, the field's context menu: R114). Recommended: leave it (the field's context menu is one long press). Else a Paste item in each app's ☰ (≈0.5 d). Cost of leaving: no ☰ Paste in an app view.
-
 ## Decided proposals
 
 ### Pipeline and process
@@ -115,7 +113,9 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
 - **R261 (Opus pass 135):** Symb's ☰ lists Clear, then R83's pointer row; Esc on Solve's Num value line puts the value back; a new value takes Clear or ⌫ first (docs/05 3.5). Would change if: the owner wants type-to-replace.
 - **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms unless the finger moves 8 px; a swipe decides at 10 px (vertical wins), goes at 40 % of the row or a fling (0.5 px/ms, 24 px out); a mouse drag swipes too. Would change if: A139 finds them too eager or stiff.
-- **R277's line scroll (Opus pass 155):** a touch drag sets `scrollLeft` on MathLive's shadow `[part=content]` (0.111.4 has no public one; our one write there, pinned by a test; M6 asks for it). Would change if: MathLive ships a public scroll.
+- **R277's line scroll (Opus pass 155; run 1053):** a finger or pen on the entry line is ours, a mouse MathLive's. Past 8 px a sideways drag scrolls: `scrollLeft` on MathLive's shadow `[part=content]` (0.111.4 has no public one; our one write there, pinned by linetouch.spec.ts; M6 asks for it). A tap places the caret; a hold (500 ms) selects the innermost term under the finger (a numerator's number; R279's Select goes on to the fraction); no double-tap word selection, and no long-press context menu on the line. Would change if: MathLive ships a public scroll, or A139 finds the term too small.
+- **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; an implicit product binds tighter than × and a sign tighter than every operator (2+5·-3 from the 3: 3, -3, 5·-3, the line); at the whole line Select is a silent press, on an empty line Select and with no chain Deselect are dead; a finger's selection (R277's hold) grows from itself and Deselect goes back to it. Would change if: A139 finds a step surprising.
+- **Paste in the apps (Opus pass 159, after R278):** Solve's and Function's ☰ get Paste wherever the entry line shows (R278f1): R278 took the Paste key on the premise that ☰ pastes, and R277's hold takes the line's long press, so a phone had no other way in. Would change if: the owner drops paste in the apps.
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45): docs/04 5.5 point 1; `e` after digits is ᴇ; characters no key types do nothing.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
