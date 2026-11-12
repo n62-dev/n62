@@ -82,7 +82,8 @@ class Parser implements CalcParser {
     return e;
   }
 
-  /** L6: `p(x):=...` (one letter, parentheses, then :=) defines a function p, whatever the letter. */
+  /** L6: `p(x):=...` (one letter, parentheses, then :=) defines a function p, whatever the letter; R260: by the letter's
+   *  name, so e and i define the stand-ins e_ and i_ (R58b: a letter typed with Alpha is always a name). */
   private definitionName(): string | undefined {
     const a = this.peek();
     const b = this.peek(1);
@@ -94,7 +95,7 @@ class Parser implements CalcParser {
       else if (t.t === "close" && --depth === 0) {
         const c1 = this.toks[k + 1];
         const c2 = this.toks[k + 2];
-        return c1?.t === "ch" && c1.v === ":" && c2?.t === "ch" && c2.v === "=" ? a.v : undefined;
+        return c1?.t === "ch" && c1.v === ":" && c2?.t === "ch" && c2.v === "=" ? letterName(a.v) : undefined;
       }
     }
     return undefined;
@@ -626,9 +627,10 @@ class Parser implements CalcParser {
       if (!/^[A-Za-z0-9]+$/.test(sub)) throw parseError("parse.unsupportedSubscript", { sub });
       name = `${letter}_${sub}`;
     }
-    if (this.peek()?.t === "open" && (this.peek() as Tok).v === "(" && this.user.has(letter) && name === letter) {
+    // R260: the user's functions are listed by the engine's name (e_ for e, userFunctionsOf)
+    if (this.peek()?.t === "open" && (this.peek() as Tok).v === "(" && this.user.has(letterName(letter)) && name === letter) {
       this.pos++;
-      return ["Call", name, ...this.list(")")];
+      return ["Call", letterName(letter), ...this.list(")")];
     }
     return name === letter ? letterName(letter) : name;
   }

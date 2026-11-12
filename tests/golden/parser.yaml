@@ -359,6 +359,10 @@ cases:
   - { id: "r67-letter-e-power", latex: "e^{2}", expect: "e_^2", source: "derived", group: "complex", note: "the letter's power is not exp(2) any more" }
   - { id: "r67-key-e", latex: "\\exponentialE^{2}", expect: "exp(2)", source: "derived", group: "complex", note: "the eˣ key" }
   - { id: "r67-drawn-e", latex: "\\mathrm{e}^{2}", expect: "exp(2)", source: "derived", group: "complex" }
+  - { id: "r260-define-e", latex: "e\\left(x\\right):=x+1", expect: "e_(x):=x+1", source: "derived", group: "complex", note: "R260 (vvr-1): a function named with the letter e is the stand-in e_, as the letter is everywhere else (R58b); e(x):=x+1 was refused by Giac (sto exp(1))" }
+  - { id: "r260-define-i", latex: "i\\left(x\\right):=x+1", expect: "i_(x):=x+1", source: "derived", group: "complex", note: "R260: the same for i" }
+  - { id: "r260-call-e", before: ["e\\left(x\\right):=x+1"], latex: "e\\left(2\\right)", expect: "e_(2)", source: "derived", group: "complex", note: "R260: once e is a stored function (the session lists e_), e(2) is its call" }
+  - { id: "r260-call-i", before: ["i\\left(x\\right):=x+1"], latex: "3i\\left(2\\right)+\\imaginaryI", expect: "3*i_(2)+i", source: "derived", group: "complex", note: "R260: the call of i beside the constant i of Shift + 2" }
   - { id: "r180-plus", latex: "10\\mathbin{\\measuredangle}30+5", expect: "10*(cos(pasdeg*30)+i*sin(pasdeg*30))+5", source: "derived", group: "complex", note: "F192: the angle is one signed factor" }
   - { id: "r180-radius", latex: "3+4\\mathbin{\\measuredangle}30", expect: "3+4*(cos(pasdeg*30)+i*sin(pasdeg*30))", source: "derived", group: "complex", note: "the radius is one factor" }
   - { id: "r180-two", latex: "10\\mathbin{\\measuredangle}30+5\\mathbin{\\measuredangle}-45", expect: "10*(cos(pasdeg*30)+i*sin(pasdeg*30))+5*(cos(pasdeg*(-45))+i*sin(pasdeg*(-45)))", source: "derived", group: "complex", note: "the owner's case: two phasors" }

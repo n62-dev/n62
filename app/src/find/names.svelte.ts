@@ -8,7 +8,7 @@ import type { UserName } from "../engine/defs.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { decimalFromString, ZERO_VALUE } from "../engine/format.ts";
-import { homeResultToLatex } from "../render/home.ts";
+import { homeResultToLatex, typedName } from "../render/home.ts";
 import { markFor, markText, type DisplayContext, type NumericResult } from "../state/displayMode.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
@@ -28,10 +28,13 @@ function insertOf(n: UserName): string {
   return /^[A-Za-z](_[A-Za-z0-9]*)?$/.test(n.name) || drawn.startsWith("\\") ? drawn : `\\operatorname{${n.name.replace(/_/g, "\\_")}}`;
 }
 
-/** A name as a Find live item (types.ts: kind `var` or `userfn`). Its value text is searched too (`desc`). */
+/** A name as a Find live item (types.ts: kind `var` or `userfn`). Its value text is searched too (`desc`). R260: titled
+ *  as typed (`beta_` β, render/home.ts typedName), found by both; the stored name stays first, which a pick reads. */
 export function liveItem(n: UserName): FindItem {
   const desc = n.desc ?? n.preview;
-  return { id: `${n.kind === "fn" ? "userfn" : "var"}:${n.name}`, kind: n.kind === "fn" ? "userfn" : "var", names: [n.name], title: n.name, ...(desc ? { desc } : {}), tier: 0, insert: insertOf(n) };
+  const typed = typedName(n.name);
+  const names = typed === n.name ? [n.name] : [n.name, typed];
+  return { id: `${n.kind === "fn" ? "userfn" : "var"}:${n.name}`, kind: n.kind === "fn" ? "userfn" : "var", names, title: typed, ...(desc ? { desc } : {}), tier: 0, insert: insertOf(n) };
 }
 
 /** A stored value's mark (S53f1): the one rule the history uses (displayMode.ts markFor), worked out for the text that is
@@ -57,7 +60,8 @@ function valueOf(n: UserName, ctx: DisplayContext): string {
 
 /** Details under the list: `A = 5`, `A ≈ 0.333333333333`, or a function with its comment. */
 function previewOf(n: UserName, ctx: DisplayContext): string {
-  return n.kind === "fn" ? `${n.name}(…)${n.desc ? ` · ${n.desc}` : ""}` : `${n.name} ${valueOf(n, ctx)}${n.desc ? ` · ${n.desc}` : ""}`;
+  const typed = typedName(n.name);
+  return n.kind === "fn" ? `${typed}(…)${n.desc ? ` · ${n.desc}` : ""}` : `${typed} ${valueOf(n, ctx)}${n.desc ? ` · ${n.desc}` : ""}`;
 }
 
 /** Whether the clear-all row was pressed once (it clears on the second Enter). Reactive, so the row redraws. */
@@ -83,7 +87,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   };
   const row = (n: UserName): MenuItem => ({
     id: liveItem(n).id,
-    label: n.name,
+    label: typedName(n.name),
     value: n.kind === "fn" ? t("memory.fn") : valueOf(n, session.displayContext()),
     preview: previewOf(n, session.displayContext()),
     ...(memory ? { keep: true } : {}),
