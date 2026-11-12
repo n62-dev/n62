@@ -173,3 +173,46 @@ test("it follows prefers-reduced-motion", async ({ page }) => {
   await expect(tips(page)).toBeVisible();
   expect(await tips(page).evaluate((e) => getComputedStyle(e).animationName)).toBe("none");
 });
+
+// R266: the tips are skipped for a start in which a key was pressed (R8: nothing typed is lost). The idle callbacks are
+// held back 1.5 s here, so the keys land inside the window before the tips would show.
+const slowIdle = (page: Page) =>
+  page.addInitScript(() => {
+    const idle = window.requestIdleCallback.bind(window);
+    window.requestIdleCallback = (cb, o) => setTimeout(() => idle(cb, o), 1500) as unknown as number;
+  });
+
+test("R266: keys pressed before the tips would show: no tips, the line holds them, the flag is not set", async ({ page }) => {
+  await slowIdle(page);
+  await page.goto("/?engine=fake&tips=on");
+  await page.locator('[data-key="d2"]').waitFor();
+  await tap(page, ["d2", "d3"]);
+  await page.waitForFunction(() => window.n62.entry.field !== undefined, undefined, { timeout: 20_000 });
+  await page.evaluate(() => window.n62.entry.ready);
+  await page.waitForTimeout(3500); // past the held idle window and the 2 s cap
+  await expect(tips(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("23");
+  expect(await stored(page)).toBeNull();
+});
+
+test("R266 control: a first start with no key pressed shows the tips", async ({ page }) => {
+  await slowIdle(page);
+  await page.goto("/?engine=fake&tips=on");
+  await expect(tips(page)).toBeVisible({ timeout: 8000 });
+  await expect.poll(() => stored(page)).not.toBeNull();
+});
+
+test("R266: a relaunch with stored presses and no typing shows the tips", async ({ page }) => {
+  await slowIdle(page);
+  await page.goto("/?engine=fake&tips=on");
+  await page.locator('[data-key="d2"]').waitFor();
+  await tap(page, ["d2"]);
+  await page.evaluate(() => window.n62.entry.ready);
+  await page.evaluate(() => window.n62.session.taps.flush());
+  await page.evaluate(() => window.n62.yieldWriter());
+  const next = await page.context().newPage();
+  await slowIdle(next);
+  await next.goto("/?engine=fake&tips=on");
+  await next.waitForFunction(() => window.n62?.session.taps.counts.presses > 0, undefined, { timeout: 10_000 }); // the stored count is in
+  await expect(tips(next)).toBeVisible({ timeout: 8000 });
+});
