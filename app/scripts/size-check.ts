@@ -126,8 +126,12 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
  *  28,361): the builder writes the formula's number part beside it (build.ts numberDims, UnitJob.number: each slot and
  *  constant as its factor), which the worker asks Home's refusals of (a text read of the job in the worker is what the
  *  text-rules ratchet counts), and messages.ts words Home's refusal with the app's table (t, not enEngine: that import made
- *  enEngine a chunk of its own, +0.14 kB gzip at start). 69,790 B + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 69_840;
+ *  enEngine a chunk of its own, +0.14 kB gzip at start). 69,790 B + 0.05 kB.
+ *  69.84 → 69.95 kB (R264, no unit code changed): phase-1 eaff256f measures 69,820 B, the branch 69,894 B (open 28,361 →
+ *  28,398, factors 16,840 → 16,877): giacPrint.ts left the start chunk for a shared lazy chunk of its own (its start part
+ *  is giacPrintStart.ts), so the unit view's two chunks that read it import that chunk by name. 69,894 B + 0.05 kB,
+ *  rounded up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 69_950;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -174,8 +178,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  note's button and style (views/UpdateNote.svelte), which show only when an update waits. R103: the stored data's
  *  migration steps (state/migrations.ts, with the angle rewrite), loaded only for a record that has a step to run. R151:
  *  the sheet's model (views/sheet.svelte.ts), loaded with the sheet's view or by the first sheet that opens before it. A66f1: the key click's code (input/click.ts), loaded only
- *  when the Key click setting is on. */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts"];
+ *  when the Key click setting is on. R264: the stored rows' reader (state/storedItem.ts), loaded beside the history's start
+ *  read, and engine/giacPrint.ts, a shared lazy chunk (the start reads its part engine/giacPrintStart.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -388,8 +393,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  `engine.reload` string, one rule; it must not depend on a chunk fetched over a network that may be down), and the idle import
  *  of the lazy views/EngineFailed.svelte (the effect, its state, the preload entry); the words (i18n/enFail.ts) and the button's
  *  look stay in the lazy chunk. phase-1 43cb1a7d (G174 and R285) is 61,303 B gzip (172,954 B raw) at its last pin measure; the
- *  branch merged with it measures 61,537 B gzip (173,844 B raw): 61,537 B + 0.05 kB, rounded up to the next 50 B. */
-export const START_PIN_GZIP = 61_600;
+ *  branch merged with it measures 61,537 B gzip (173,844 B raw): 61,537 B + 0.05 kB, rounded up to the next 50 B.
+ *  61,600 → 60,790 B (R264, a cut that buys room for the queue): phase-1 eaff256f measures 61,535 B gzip (173,894 B raw), the
+ *  branch 60,733 B (171,507 B raw, −802 B): the part of engine/giacPrint.ts the start reads (the string skip, the walk, the
+ *  name pattern, balanced, isName, names, mapNames, RATIONAL) is engine/giacPrintStart.ts, and the rest, which the lazy
+ *  chunks' imports kept in the entry, is a shared lazy chunk (−514 B); the stored rows' reader (state/storedItem.ts) loads
+ *  beside the history's start read (state/storedLoad.ts, −288 B). 60,733 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 60_790;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
