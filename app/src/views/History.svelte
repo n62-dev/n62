@@ -10,6 +10,8 @@
   import { markText, noDigit as hasNoDigit } from "../state/displayMode.ts";
   import { rowTap } from "../state/pickRows.ts";
   import { edgeFade } from "./edgeFade.ts";
+  import { longpress } from "../apps/longpress.ts";
+  import { rowSwipe } from "./rowSwipe.ts";
   import type { MarkInfo } from "../engine/format.ts";
   import type { Drawn } from "../state/displayMode.ts";
   import type { HistoryItem, MarkStyle, UsedValue } from "../state/session.svelte.ts";
@@ -26,7 +28,8 @@
     oninsert,
     onpick,
     oncancel,
-    onlongpress,
+    onhold,
+    onswipe,
     undo = null,
     onundo,
     selected = null,
@@ -62,40 +65,26 @@
      *  on the history's empty part drops the pick (null). */
     onpick: (index: number | null) => void;
     oncancel: () => void;
-    /** A long press on a finished row: its copy actions (docs/04 2.6). */
-    onlongpress?: (item: HistoryItem) => void;
+    /** R276: a hold (500 ms) on a finished row's input (`latex`: as drawn) or result copies that part (docs/04 2.6). */
+    onhold?: (item: HistoryItem, part: "input" | "result", latex: string) => void;
+    /** R276: a swipe left or right slid the row out: delete it (R98's path, so the Undo note row comes); false: nothing
+     *  was deleted, the row comes back. */
+    onswipe?: (item: HistoryItem) => Promise<boolean>;
     /** R98: what the last Clear history or Delete took, while Undo can bring it back: one note row, a tap on it undoes. */
     undo?: "clear" | "delete" | null;
     onundo?: () => void;
   } = $props();
 
-  // A long press (500 ms; the browser cancels the pointer when the finger starts a scroll) opens the row's actions; the tap that follows the lift is not a tap.
-  const LONG_PRESS_MS = 500;
-  let press: ReturnType<typeof setTimeout> | undefined;
-  let longPressed = false;
-  function endPress(): void {
-    clearTimeout(press);
-    press = undefined;
-  }
-  function pressStart(e: PointerEvent, item: HistoryItem): void {
-    endPress();
-    longPressed = false;
-    if (!onlongpress || item.status !== "done" || e.button > 0) return;
-    press = setTimeout(() => {
-      press = undefined;
-      longPressed = true;
-      onlongpress(item);
-    }, LONG_PRESS_MS);
-  }
-  /** Run a tap action unless this click ends a long press. */
-  function tapped(act: () => void): void {
-    if (longPressed) longPressed = false;
-    else act();
-  }
+  // R276: a hold on the input or the result copies it (apps/longpress.ts swallows the click after the lift, so a hold
+  // never picks); a swipe deletes the row (rowSwipe.ts, which swallows a drag's click too).
+  /** The input's hold: a finished row's (a running one has nothing to copy yet). */
+  const holdInput = (item: HistoryItem): (() => void) | undefined =>
+    onhold && item.status !== "pending" ? () => onhold(item, "input", drawnInput(item)) : undefined;
   /** R147: a tap on a row's entry or result picks the row; on the picked row it recalls or inserts (`act`). A scroll
    *  drag never reaches here: the browser cancels the pointer and sends no click. */
   function tapRow(index: number, act: () => void): void {
-    tapped(() => (rowTap(selected, index) === "act" ? act() : onpick(index)));
+    if (rowTap(selected, index) === "act") act();
+    else onpick(index);
   }
   /** R147: a tap on the history outside every row (its empty part) drops the pick. */
   function tapHistory(e: MouseEvent): void {
@@ -108,8 +97,8 @@
   let reasonOpen = $state<number | null>(null);
   function toggleSigma(e: MouseEvent, item: HistoryItem): void {
     const at = e.target as Element;
-    if (at.closest(".reason")) tapped(() => (reasonOpen = reasonOpen === item.id ? null : item.id));
-    else if (!at.closest("button") && sigma(item)) tapped(() => (sigmaOpen = sigmaOpen === item.id ? null : item.id));
+    if (at.closest(".reason")) reasonOpen = reasonOpen === item.id ? null : item.id;
+    else if (!at.closest("button") && sigma(item)) sigmaOpen = sigmaOpen === item.id ? null : item.id;
   }
 
   /** R63: a unit row draws its request with the units in it (the line itself, recalled, has none: Home has no units). */
@@ -215,10 +204,11 @@
     {@const at = k + items.length - shown.length}
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (R40: the σ line is a touch extra; a picked row's why-line, R36, serves the keys) -->
     <article class="item" data-status={item.status}
-      onpointerdown={(e) => pressStart(e, item)} onpointerup={endPress} onpointercancel={endPress} onclick={(e) => toggleSigma(e, item)}
+      use:rowSwipe={{ enabled: onswipe !== undefined && item.status !== "pending", onswipe: () => onswipe?.(item) ?? false }}
+      onclick={(e) => toggleSigma(e, item)}
       oncontextmenu={(e) => e.preventDefault()}
       data-selected={at === selected ? "true" : undefined}>
-      <button type="button" class="in" title={t("history.recall")} use:edgeFade onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => onrecall(item))}>
+      <button type="button" class="in" title={t("history.recall")} use:edgeFade use:longpress={holdInput(item)} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => onrecall(item))}>
         <Math latex={drawnInput(item)} />
       </button>
       <div class="out" data-testid="result" use:edgeFade={item.status}>
@@ -240,12 +230,12 @@
           {#if d.wrap && !noDigit && d.latex.length <= MAX_DRAWN_LATEX}
             <!-- R158: a plain number: its groups, each unbreakable, wrap at a gap when the row is too narrow for the whole; the mark stays beside the first line -->
             <button type="button" class="result wrapped" data-text={d.text} title={t("history.insert")}
-              onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
+              use:longpress={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
               <Math latex={d.latex} pieces={d.wrap} gap={d.gap === true} size={d.text.length} />
             </button>
           {:else}
             <button type="button" class="result" data-text={d.latex.length > MAX_DRAWN_LATEX ? "" : d.text} title={t("history.insert")}
-              onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
+              use:longpress={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
               {#if !noDigit}<Math latex={d.latex} size={d.text.length} />{/if}
             </button>
           {/if}
@@ -317,13 +307,21 @@
     flex-direction: column;
     gap: var(--sp-05);
     margin-top: auto;
-    /* a long press opens the row's actions, not the system's text selection */
+    /* a hold copies (R276), not the system's text selection */
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+    /* R276: a drag across is the row's swipe (rowSwipe.ts), a drag down or up the history's scroll */
+    touch-action: pan-y;
   }
   .item + .item {
     margin-top: 0;
+  }
+  /* a running row does not slide (R276): its long input scrolls by touch as the browser does it */
+  .item[data-status="pending"],
+  .item[data-status="pending"] .in,
+  .item[data-status="pending"] .out {
+    touch-action: auto;
   }
   .item {
     position: relative;
@@ -350,6 +348,7 @@
     align-self: flex-start;
     max-width: 100%;
     overflow-x: auto;
+    touch-action: pan-y; /* (a scroller: its sideways scroll by touch is the swipe's, rowSwipe.ts) */
   }
   .out {
     align-self: flex-end;
@@ -359,6 +358,7 @@
     align-items: baseline;
     max-width: 100%;
     overflow-x: auto;
+    touch-action: pan-y;
   }
   /* a long input or result scrolls sideways; the edge with more behind it fades (edgeFade.ts), never cut without a sign */
   .in:global([data-cut="end"]),

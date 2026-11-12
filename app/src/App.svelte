@@ -271,7 +271,7 @@
 
   /** What Settings › Your keys needs (R4b): the slots, and Find to pick a slot's content from. */
   // svelte-ignore state_referenced_locally (main.ts mounts App once; shell and entry are never replaced)
-  const settingsEnv = { get userKeys() { return userKeys; }, shell, entry, tips: showTips, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a long press on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
+  const settingsEnv = { get userKeys() { return userKeys; }, shell, entry, tips: showTips, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a hold on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
   /** Settings as the ☰ menus' last row opens it (R49): one per session, its rows read the settings on every draw. */
   let settingsMenu: SubMenu | undefined;
   /** A user key that holds Settings, or a ☰ menu's last row before the Mode code is in: Mode › Settings, on its first
@@ -391,6 +391,13 @@
     shell.prompt?.cancel();
     if (entry.value === "") onLine(item, true);
   }
+  /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
+   *  as Delete while folded (R53). */
+  function swiped(item: HistoryItem): Promise<boolean> {
+    picked = null;
+    if (folded) countUse("delete");
+    return session.removeItem(item);
+  }
   /** The key routing (keyboard/route.ts, R15c2) works on this: the models, this component's state and its actions. */
   const ctx: RouteCtx = {
     get session() { return session; },
@@ -469,7 +476,8 @@
           onrecall={recallTapped}
           oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, false); }}
           oncancel={() => void cancel()}
-          onlongpress={(item) => withClip((c) => c.openRowMenu(item))}
+          onhold={(item, part, latex) => withClip((c) => void c.holdCopy(item, part, latex))}
+          onswipe={swiped}
           undo={session.undoCopy?.kind ?? null}
           onundo={() => { picked = null; session.undoRemoved(); }}
         />
@@ -483,7 +491,7 @@
 
     {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>{/if}
 
-    <!-- R11: the picked row's actions, items 1-5 of the Menu (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
+    <!-- R11, R276: the picked row's actions, Store ▶ and Copy as › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
       {@const Bar = rowBar}
       <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />
