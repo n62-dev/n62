@@ -56,7 +56,7 @@ test("a tap on a result picks its row; a second tap inserts it and ends the pick
   await results(page).last().tap();
   await expect(selected(page)).toHaveCount(1);
   await expect(rows(page).last()).toHaveAttribute("data-selected", "true");
-  await expect(bar(page).getByRole("button")).toHaveText(["Insert", "Recall", "Copy", "Store ▶", "Delete"]);
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]); // (R276)
   expect(await entryValue(page)).toBe(""); // the line is as it was
   await results(page).last().tap();
   expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{8\}$/);
@@ -120,15 +120,15 @@ test("Enter on a tapped pick inserts, as after ▲", async ({ page }) => {
   await expect(bar(page)).toHaveCount(0);
 });
 
-test("a scroll drag neither picks nor inserts; a long press still opens the row menu", async ({ page }) => {
+test("a scroll drag neither picks nor inserts; a hold copies and opens no menu (R276)", async ({ page }) => {
   for (let i = 1; i <= 6; i++) await tap(page, [`d${i}`, "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(6);
   await finger(page, results(page).last(), 0, 700);
-  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(9);
+  await expect(page.getByTestId("notice")).toBeVisible(); // "Copied" (or the clipboard's refusal: this spec asks no permission)
+  await page.waitForTimeout(200);
+  await expect(page.getByTestId("menu")).toHaveCount(0);
   expect(await entryValue(page)).toBe("");
   await expect(selected(page)).toHaveCount(0);
-  await tap(page, ["esc"]);
-  await expect(page.getByTestId("menu")).toHaveCount(0);
   await finger(page, results(page).last(), -40);
   await finger(page, inputs(page).last(), 40);
   await page.waitForTimeout(300);

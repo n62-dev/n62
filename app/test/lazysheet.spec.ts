@@ -73,7 +73,7 @@ test("Esc while the chunk waits closes nothing that is not open and leaves the l
   await expect(page.locator('[data-testid="result"]')).toHaveCount(0);
 });
 
-/** A finger held on the first history row for 700 ms (the long press is 500 ms), then lifted. */
+/** A finger held on the first history row's result for 700 ms (the hold is 500 ms, R276), then lifted. */
 async function longPressFirstRow(page: Page): Promise<void> {
   const box = await page.locator('[data-testid="result"] .result').first().boundingBox();
   if (!box) throw new Error("no result row");
@@ -93,30 +93,19 @@ async function twoRows(page: Page): Promise<void> {
 }
 const texts = (page: Page) => page.locator('[data-testid="result"] .result').evaluateAll((els) => els.map((e) => e.getAttribute("data-text")));
 
-test("F42: a long press on a row before the chunk is in, then 5, picks nothing of the hidden list; the 5 runs once it is", async ({ page }) => {
+test("F42 (R276): a hold on a row before the chunk is in opens no list: it copies, and a 5 pressed then types", async ({ page }) => {
   const release = await hold(page);
   await twoRows(page);
   await tap(page, ["d3"]); // a line to keep
   await longPressFirstRow(page);
-  await sheetKey(page, ["d5"]); // (typed: a tap on the open but undrawn sheet would close it once drawn, R144)
-  await expect(sheet(page)).toHaveCount(0); // nothing is drawn yet
-  expect(await texts(page)).toEqual(["1", "2"]); // Delete did not run on the hidden list
-  expect(await entryValue(page)).toBe("3"); // and the 5 was not typed into the line
+  await expect(page.getByTestId("notice")).toBeVisible(); // the copy needs no sheet ("Copied", or the clipboard's refusal)
+  await tap(page, ["d5"]);
+  await expect.poll(() => entryValue(page)).toBe("35");
   release();
-  await expect.poll(() => texts(page)).toEqual(["2"]); // the queued 5 is Delete on the pressed row, once
-  await expect(sheet(page)).toBeHidden();
-  expect(await entryValue(page)).toBe("3");
-});
-
-test("F42: a long press on a row before the chunk is in shows the menu once it is", async ({ page }) => {
-  const release = await hold(page);
-  await twoRows(page);
-  await longPressFirstRow(page);
+  await page.waitForTimeout(300);
   await expect(sheet(page)).toHaveCount(0);
-  expect(await texts(page)).toEqual(["1", "2"]);
-  release();
-  await expect(sheet(page).getByRole("menuitem")).toHaveCount(9);
-  expect(await texts(page)).toEqual(["1", "2"]);
+  expect(await texts(page)).toEqual(["1", "2"]); // nothing deleted
+  expect(await entryValue(page)).toBe("35");
 });
 
 // R91: the sheet's keys and the palette cells, the palettes with their names (Tmpl too) and the result tidy-up are chunks

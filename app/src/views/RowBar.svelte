@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
-<!-- R11: the picked history row's actions, items 1-5 of the Menu (docs/05 3.3), with R36's why line above them. It is
+<!-- R11, R276: the picked history row's actions, Store ▶ and Copy as › of the Menu (docs/05 3.3), with R36's why line above them. It is
      drawn only while a row is picked, so it loads with the clipboard code (appLoaders.ts), not in the start chunk (R147).
      R3 (r19 section 3, R147): on an empty line it lies over the entry line's box, with that box's bottom edge and height,
      so neither the history nor the keypad moves; with text on the line it stands above the line in the flow. -->
@@ -18,7 +18,7 @@
     /** The keypad is folded (R53): the buttons sit on the slice's top edge, over the line, whatever it holds (a key
      *  that types drops the pick, so nothing typed is hidden). */
     folded?: boolean;
-    /** A button was pressed (its id: insert, recall, copy, store, delete): the pick ends before the action runs. */
+    /** A button was pressed (its id: store, copyAs): the pick ends before the action runs. */
     onaction: (id: string) => void;
   } = $props();
 

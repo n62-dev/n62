@@ -264,8 +264,7 @@ test("max(1,5) in point mode gives 5; after Settings › Numbers › Decimal mar
   // R100 (owner, 2026-10-31): the row and the recalled line draw the argument comma as ;
   const row = page.locator('.item[data-status="done"]').first().locator("button.in .math");
   await expect(row).toHaveAttribute("data-latex", /1;5/);
-  await tap(page, ["up"]);
-  await page.getByTestId("row-actions").getByRole("button", { name: "Recall" }).tap();
+  await tap(page, ["up", "@menu", "d2"]); // ☰ 2 Recall on the pick (R276: no Recall button)
   expect(await entryValue(page)).toMatch(/1;5/);
   await tap(page, ["enter"]);
   await resultIs(page, "5", 2);

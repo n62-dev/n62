@@ -121,7 +121,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 ### 2.6 Decision: copy and paste
 
-| What | Copy (the Copy key; Menu 3) | Menu 6, Copy as › As shown | Copy as › Exact | Copy as › LaTeX |
+| What | Copy (the Copy key; Menu 3; a hold on a history row's result) | Menu 6, Copy as › As shown | Copy as › Exact | Copy as › LaTeX |
 |---|---|---|---|---|
 | Home or CAS number | full value: every confirmed digit up to P (40), trailing zeros dropped, `.` (`,` with the decimal-comma setting), plain for 1E-4 ≤ \|x\| < 1E21, else `d.ddd…E±k` | display text, without the mark | Giac's exact text when it exists (`1/3`, `sqrt(2)`) | the result LaTeX |
 | Complex | `a+b*i`, each part as above | yes | yes | yes |
@@ -130,6 +130,8 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Num table | CSV (Menu, Export): header row with the function names, full values, `.` and `,` as separator (`;` with decimal comma) | — | — | — |
 | Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
+
+**Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes (the table's first column).
 
 **Paste** (the Paste key, ☰ → Paste, any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3`, `1.5E-3`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused); it enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else gives "Paste: not a number". Pasting a result copied from N62 gives the same value back (P5; with decimal comma not a list of one decimal).
 **Mechanics:** the APK uses `@capacitor/clipboard` and `@capacitor/share`; the PWA `navigator.clipboard`, and `navigator.share` where it exists, else copy. Files go out through the native `save` (`ACTION_CREATE_DOCUMENT`) in the APK and `<a download>` in the PWA, and come in through `<input type="file">` (`4d80167f`).

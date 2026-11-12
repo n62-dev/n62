@@ -4,6 +4,7 @@
 // and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
+import { finger } from "./core-lib.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 useClipboardLock(); // Copy writes the clipboard: first hook, so the lock is held before the page opens
@@ -30,6 +31,13 @@ async function swipe(p: Page, sel: string, dy: number): Promise<void> {
   await f.end();
 }
 const clearLine = (p: Page): Promise<void> => p.evaluate(() => window.n62.entry.clear());
+/** R276: a hold on the last result (it copies) and a swipe of the last row (it deletes). */
+const holdLast = (p: Page): Promise<void> => finger(p, "result:last", { ms: 700 });
+async function swipeLast(p: Page): Promise<void> {
+  const w = (await box(p, "article.item:last-of-type")).width;
+  await finger(p, "row:last", { dx: -0.6 * w, steps: 10 });
+  await p.waitForTimeout(250); // (Chrome takes a touch right after a drag as the stop of its fling)
+}
 /** n finished Home rows (the fake engine echoes): 1, 2, … */
 async function rows(p: Page, n = 3): Promise<void> {
   for (let i = 1; i <= n; i++) await tap(p, [`d${i}`, "enter"]);
@@ -200,21 +208,21 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
   await expect(page.locator(HANDLE)).toBeVisible();
 });
 
-test("folded: a tap picks, the second inserts and unfolds; Copy and Delete stay down, Recall and Store ▶ unfold; a letter types; ☰ rises over the history", async ({ page }) => {
+test("folded: a tap picks, the second inserts and unfolds; a hold copies and a swipe deletes with the keys down, a recall and Store ▶ unfold; a letter types; ☰ rises over the history", async ({ page }) => {
   await rows(page);
   await page.locator(HANDLE).tap();
   const slice = await box(page, SLICE);
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
-  await expect(bar(page).getByRole("button")).toHaveText(["Insert", "Recall", "Copy", "Store ▶", "Delete"]);
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]);
   const b = await box(page, '[data-testid="row-actions"]');
   expect(Math.abs(b.y + b.height - slice.y)).toBeLessThanOrEqual(1); // on the slice's top edge
-  await bar(page).getByRole("button", { name: "Copy" }).tap();
-  await expect(bar(page)).toHaveCount(0);
+  await holdLast(page); // on the picked row: it copies, the pick stays
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
   await isFolded(page, true);
-  await results(page).last().tap();
-  await bar(page).getByRole("button", { name: "Delete" }).tap();
+  await swipeLast(page);
   await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(bar(page)).toHaveCount(0); // the swipe drops the pick
   await isFolded(page, true);
   await results(page).last().tap();
   await results(page).last().tap(); // the second tap inserts
@@ -223,8 +231,8 @@ test("folded: a tap picks, the second inserts and unfolds; Copy and Delete stay 
 
   await clearLine(page);
   await page.locator(HANDLE).tap();
-  await results(page).first().tap();
-  await bar(page).getByRole("button", { name: "Recall" }).tap();
+  await page.locator("article.item .in").first().tap();
+  await page.locator("article.item .in").first().tap(); // the second tap recalls
   await isFolded(page, false);
   expect(await entryValue(page)).toBe("1");
   await clearLine(page);
@@ -365,14 +373,26 @@ for (const [width, height] of [[412, 839], [360, 740]] as const) {
 
 test("every counter counts (uses: folds by the handle and by a swipe, picks, each action while folded), and Counters shows them", async ({ page }) => {
   await rows(page, 4);
-  const act = async (name: string): Promise<void> => {
-    await page.locator(HANDLE).tap();
-    await results(page).first().tap();
-    await bar(page).getByRole("button", { name }).tap();
-    if (name === "Copy" || name === "Delete") await page.locator(SLICE).tap(); // these leave the keys down
-    else await clearLine(page);
-  };
-  for (const name of ["Insert", "Recall", "Copy", "Store ▶", "Delete"]) await act(name); // 5 folds by the handle, 5 picks
+  const firstIn = page.locator("article.item .in").first();
+  // 5 folds by the handle, 3 picks: each row action while folded (R276: a second tap, a hold, Store ▶, a swipe)
+  await page.locator(HANDLE).tap();
+  await results(page).first().tap();
+  await results(page).first().tap(); // insert
+  await clearLine(page);
+  await page.locator(HANDLE).tap();
+  await firstIn.tap();
+  await firstIn.tap(); // recall
+  await clearLine(page);
+  await page.locator(HANDLE).tap();
+  await holdLast(page); // copy: the keys stay down
+  await page.locator(SLICE).tap();
+  await page.locator(HANDLE).tap();
+  await results(page).first().tap();
+  await bar(page).getByRole("button", { name: "Store ▶" }).tap(); // store
+  await clearLine(page);
+  await page.locator(HANDLE).tap();
+  await swipeLast(page); // delete: the keys stay down
+  await page.locator(SLICE).tap();
   await isFolded(page, false);
   await swipe(page, LINE, 40);
   await isFolded(page, true);
@@ -381,11 +401,11 @@ test("every counter counts (uses: folds by the handle and by a swipe, picks, eac
   await results(page).first().tap(); // the second tap: insert
   await isFolded(page, false);
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
-  expect(counts).toEqual({ "fold.handle": 5, "fold.swipe": 1, pick: 6, insert: 2, recall: 1, copy: 1, store: 1, delete: 1 });
-  // the keys up: a tap picks and its actions run, uncounted
+  expect(counts).toEqual({ "fold.handle": 5, "fold.swipe": 1, pick: 4, insert: 2, recall: 1, copy: 1, store: 1, delete: 1 });
+  // the keys up: a hold copies, uncounted
   await clearLine(page);
-  await results(page).first().tap();
-  await bar(page).getByRole("button", { name: "Copy" }).tap();
+  await holdLast(page);
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
   expect(await page.evaluate(async () => (await window.n62.session.uses()).state.counts["copy"])).toBe(1);
 
   await tap(page, ["@mode", "d6"]); // Mode › Settings
@@ -396,38 +416,19 @@ test("every counter counts (uses: folds by the handle and by a swipe, picks, eac
   await row.tap();
   await expect(page.getByTestId("sheet-title")).toContainText("Results mode");
   await expect(sheet(page).locator('[data-id="actions"]')).toContainText("6");
-  await expect(sheet(page).locator('[data-id="pick"]')).toContainText("6");
+  await expect(sheet(page).locator('[data-id="pick"]')).toContainText("4");
 });
 
-test("the long press's list and ☰ count each action once, as the row buttons do", async ({ page }) => {
+test("a hold, a swipe and ☰'s list each count their action once while folded (R276)", async ({ page }) => {
   await rows(page, 4);
-  const longPress = async (id: string): Promise<void> => {
-    await page.locator(HANDLE).tap();
-    const f = await touch(page, '[data-testid="result"] .result[data-text="1"]');
-    await page.waitForTimeout(700); // past the long press
-    await f.end();
-    await sheet(page).locator(`[data-id="${id}"]`).tap();
-    await expect(sheet(page)).toBeHidden();
-  };
-  await longPress("copy");
-  await isFolded(page, true);
-  await page.locator(SLICE).tap();
-  await longPress("insert");
-  await isFolded(page, false);
-  await clearLine(page);
-  await longPress("recall");
-  await isFolded(page, false);
-  await clearLine(page);
-  await longPress("store");
-  await isFolded(page, false);
-  await clearLine(page);
-  await longPress("delete");
+  await page.locator(HANDLE).tap();
+  await holdLast(page);
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await swipeLast(page);
   await expect(page.locator('[data-status="done"]')).toHaveCount(3);
-  await page.locator(SLICE).tap();
-  await page.locator(HANDLE).tap(); // ☰ with no row: the same list, on the last result
-  await page.getByTestId("menu-button").tap();
+  await page.getByTestId("menu-button").tap(); // ☰ with no row: the list, on the last result
   await sheet(page).locator('[data-id="copy"]').tap();
   await expect(sheet(page)).toBeHidden();
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
-  expect(counts).toEqual({ "fold.handle": 6, insert: 1, recall: 1, copy: 2, store: 1, delete: 1 });
+  expect(counts).toEqual({ "fold.handle": 1, copy: 2, delete: 1 });
 });

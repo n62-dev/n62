@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R11: the actions of a history row (Home and CAS), from keys and from touch. One list of nine (S2 rules M1, M2): the
-// row buttons are items 1-5, the Menu and the long press show all nine, and they act on the picked row, else the last
-// result (Delete: the last row). Expected values are derived: 1/3 and 2/3 as 12 shown digits.
+// R11: the actions of a history row (Home and CAS), from keys and from touch. One list of nine (S2 rules M1, M2) on ☰,
+// acting on the picked row, else the last result (Delete: the last row); the picked row's buttons are Store ▶ and
+// Copy as › (R276: a hold copies, a swipe deletes, rowgestures.spec.ts). Expected values are derived: 1/3 and 2/3 as 12 shown digits.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, tap, useClipboardLock } from "./helpers.ts";
 
@@ -32,27 +32,28 @@ test("Up on an empty line shows the row buttons; typing hides them", async ({ pa
   await three(page);
   await expect(bar(page)).toHaveCount(0);
   await tap(page, ["up"]);
-  await expect(bar(page).getByRole("button")).toHaveText(["Insert", "Recall", "Copy", "Store ▶", "Delete"]);
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]);
   await tap(page, ["d5"]);
   await expect(bar(page)).toHaveCount(0);
   expect(await entryValue(page)).toBe("5");
 });
 
-test("the row buttons act on the picked row (touch)", async ({ page }) => {
+test("the row buttons and ☰ act on the picked row (touch)", async ({ page }) => {
   await three(page);
   await tap(page, ["up", "up"]); // 2/3
-  await bar(page).getByRole("button", { name: "Copy" }).tap();
-  await expect.poll(() => clipboard(page)).toBe("0." + "6".repeat(39) + "7");
+  await bar(page).getByRole("button", { name: "Copy as ›" }).tap();
+  await item(page, /Exact/).tap();
+  await expect.poll(() => clipboard(page)).toBe("2/3");
   await expect(bar(page)).toHaveCount(0); // an action ends the pick
-  await tap(page, ["up", "up"]);
-  await bar(page).getByRole("button", { name: "Insert" }).tap();
+  await tap(page, ["up", "up", "copy"]); // the Copy key on a pick
+  await expect.poll(() => clipboard(page)).toBe("0." + "6".repeat(39) + "7");
+  await tap(page, ["up", "up", "@menu", "d1"]); // ☰ 1 Insert
   expect(await entryValue(page)).toContain("\\res");
 });
 
-test("Recall puts the entry back on the line", async ({ page }) => {
+test("Recall (☰ 2 on a pick) puts the entry back on the line", async ({ page }) => {
   await three(page);
-  await tap(page, ["up", "up"]);
-  await bar(page).getByRole("button", { name: "Recall" }).tap();
+  await tap(page, ["up", "up", "@menu", "d2"]);
   expect(await entryValue(page)).toBe("\\frac23");
 });
 
@@ -67,15 +68,6 @@ test("Store ▶ puts the result and the store arrow on the line, ready for the n
   await done(page, 4);
   await tap(page, ["alpha", "vars", "enter"]);
   await expect(page.locator('[data-testid="result"] .result').last()).toHaveAttribute("data-text", "0.25");
-});
-
-test("Delete removes the picked row and only that one", async ({ page }) => {
-  await three(page);
-  await tap(page, ["up", "up"]);
-  await bar(page).getByRole("button", { name: "Delete" }).tap();
-  await done(page, 2);
-  const texts = await page.locator('[data-testid="result"] .result').evaluateAll((els) => els.map((e) => e.getAttribute("data-text")));
-  expect(texts).toEqual(["0.333333333333", "0.25"]);
 });
 
 test("Menu is one list of nine (R145: Settings is the ⚙, not a row), the same with or without a picked row", async ({ page }) => {
@@ -97,6 +89,7 @@ test("Menu 5 deletes the last row when none is picked, and 2 recalls its entry",
 
 test("Menu 5 on a picked row deletes that row, not the last", async ({ page }) => {
   await three(page);
+  // the middle of three: the keys' Delete on a pick (R276: the bar has none; TalkBack cannot swipe)
   await tap(page, ["up", "up", "@menu", "d5"]);
   await done(page, 2);
   const texts = await page.locator('[data-testid="result"] .result').evaluateAll((els) => els.map((e) => e.getAttribute("data-text")));
@@ -112,7 +105,7 @@ test("Menu 6 opens Copy as: as shown, exact, LaTeX", async ({ page }) => {
   await expect.poll(() => clipboard(page)).toBe("1/3");
 });
 
-test("a long press opens the same nine on that row", async ({ page }) => {
+test("a long press (a mouse held) copies that row's result and opens no menu (R276)", async ({ page }) => {
   await three(page);
   const first = page.locator('[data-testid="result"] .result').first();
   const box = await first.boundingBox();
@@ -121,11 +114,11 @@ test("a long press opens the same nine on that row", async ({ page }) => {
   await page.mouse.down();
   await page.waitForTimeout(700);
   await page.mouse.up();
-  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(9);
-  await item(page, /^5 ?Delete$/).click();
-  await done(page, 2);
-  const texts = await page.locator('[data-testid="result"] .result').evaluateAll((els) => els.map((e) => e.getAttribute("data-text")));
-  expect(texts).toEqual(["0.666666666667", "0.25"]);
+  await expect.poll(() => clipboard(page)).toBe("0." + "3".repeat(40));
+  await page.waitForTimeout(200);
+  await expect(page.getByTestId("menu")).toHaveCount(0);
+  await expect(bar(page)).toHaveCount(0); // the click after the lift picks nothing
+  await done(page, 3);
 });
 
 test("with an empty history the actions are disabled; with only an error row they say why", async ({ page }) => {
@@ -162,8 +155,8 @@ test("CAS has the same buttons and its own rows", async ({ page }) => {
   await tap(page, ["@cas", "d3", "d4", "enter"]);
   await done(page, 1); // the CAS history is separate
   await tap(page, ["up"]);
-  await expect(bar(page).getByRole("button")).toHaveText(["Insert", "Recall", "Copy", "Store ▶", "Delete"]);
-  await bar(page).getByRole("button", { name: "Delete" }).tap();
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]);
+  await tap(page, ["@menu", "d5"]); // ☰ 5 Delete on the pick
   await expect(page.locator('[data-status="done"]')).toHaveCount(0);
   await tap(page, ["@home"]);
   await done(page, 1); // Home still has its row

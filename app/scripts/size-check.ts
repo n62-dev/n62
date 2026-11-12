@@ -179,8 +179,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  migration steps (state/migrations.ts, with the angle rewrite), loaded only for a record that has a step to run. R151:
  *  the sheet's model (views/sheet.svelte.ts), loaded with the sheet's view or by the first sheet that opens before it. A66f1: the key click's code (input/click.ts), loaded only
  *  when the Key click setting is on. R264: the stored rows' reader (state/storedItem.ts), loaded beside the history's start
- *  read, and engine/giacPrint.ts, a shared lazy chunk (the start reads its part engine/giacPrintStart.ts). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts"];
+ *  read, and engine/giacPrint.ts, a shared lazy chunk (the start reads its part engine/giacPrintStart.ts). R276: a history
+ *  row's swipe and hold (views/rowGesturesCode.ts: rowSwipe.ts, apps/longpress.ts), fetched when idle (views/rowGestures.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -408,10 +409,15 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
  *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
  *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  G313f1 (no start-chunk file changed, the pin stays 60,980 B): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
+ *  G313f1 (no start-chunk file changed, the R260 pin of 60,980 B stayed): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
  *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
- *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stays inside the R260 pin. */
-export const START_PIN_GZIP = 60_980;
+ *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stayed inside the R260 pin.
+ *  60,980 → 61,210 B (R276): a history row's hold copies and its swipe deletes. Their code (views/rowSwipe.ts and
+ *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
+ *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
+ *  measures 60.92 kB gzip (172.11 kB raw), the branch 61,155 B (172,810 B raw, +0.23 kB): 61,155 B + 0.05 kB, rounded up
+ *  to the next 0.01 kB. */
+export const START_PIN_GZIP = 61_210;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

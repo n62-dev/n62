@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copy, paste and share as the keys and menus use them (docs/04 section 2.6): the Copy and Paste keys, the Home/CAS
-// ☰ menu, a long press on a history row, and the Num table. The texts come from text.ts and paste.ts; the delivery is the
+// ☰ menu, the picked row's buttons, a hold on a history row's input or result (R276), and the Num table. The texts come from text.ts and paste.ts; the delivery is the
 // ClipboardPort. Every action ends in a short notice, so a refusal is never silent.
 import type { EntryController } from "../entry/controller.ts";
 import { tc } from "./strings.ts";
@@ -11,6 +11,7 @@ import type { TapCounts } from "../state/taps.svelte.ts";
 import { commaResult } from "../state/displayMode.ts";
 import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
+import { entryText } from "./plaintext.ts";
 import type { ClipboardPort } from "./port.ts";
 import type { CopySource, TextOptions } from "./text.ts";
 import type { LibrarySource } from "../views/libraryJobs.ts";
@@ -31,7 +32,7 @@ export interface RowOps {
   insert(item: HistoryItem): void;
   /** Put the entry back on the line, with its chips (a tap on it). */
   recall(item: HistoryItem): void;
-  /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button or a list (R53's count). */
+  /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
 }
 
@@ -143,6 +144,16 @@ export class ClipActions {
   copyPicked(item: HistoryItem): Promise<boolean> {
     if (item.status === "done") this.ops.acted?.("copy");
     return this.copyKey(item);
+  }
+  /** R276: a hold on a history row's input (`latex`, as drawn: its plain text) or result (Copy's full value) copies
+   *  it; a row action, as the Copy key on a pick is. */
+  holdCopy(item: HistoryItem, part: "input" | "result", latex: string): Promise<boolean> {
+    if (part === "result") {
+      if (item.status === "done") this.ops.acted?.("copy");
+      return this.copy(item);
+    }
+    this.ops.acted?.("copy");
+    return this.copyRaw(entryText(latex));
   }
   copy(item?: HistoryItem): Promise<boolean> {
     return this.serial(() => this.copyNow(item));
@@ -280,7 +291,7 @@ export class ClipActions {
   }
 
   /** The Home/CAS Menu (docs/05 3.3, S2 rule M2): one fixed list of nine, the same numbers with or without a picked
-   *  row, acting on that row, else on the last result. The row buttons are items 1-5, the long press shows all nine. */
+   *  row, acting on that row, else on the last result. The picked row's buttons are items 4 and 6 (R276). */
   menu(row?: HistoryItem): MenuItem[] {
     const i = this.target(row);
     const none = i === undefined;
@@ -326,9 +337,18 @@ export class ClipActions {
     ];
   }
 
-  /** The row buttons above the entry line: items 1-5 of the list, for the picked row. */
+  /** The row buttons above the entry line (R276): Store ▶ and Copy as › of the list, for the picked row; Copy as opens
+   *  its three on the sheet. The second tap inserts or recalls, a hold copies, a swipe deletes (History.svelte). */
   rowButtons(row: HistoryItem): MenuItem[] {
-    return this.menu(row).slice(0, 5);
+    const all = this.menu(row);
+    const store = all.find((b) => b.id === "store");
+    const as = all.find((b) => b.id === "copyAs");
+    const buttons: MenuItem[] = store ? [store] : [];
+    if (as?.submenu) {
+      const { submenu: sub, ...button } = as;
+      buttons.push({ ...button, label: `${as.label} ›`, run: () => this.shell.showMenu(sub.title, sub.items, { remember: false }) });
+    }
+    return buttons;
   }
 
   /** R36: the picked row's reason for its mark, one line; null when it has no mark. R40f1: a row with a σ (Settings ›
@@ -343,15 +363,8 @@ export class ClipActions {
   }
 
   /** Menu with a picked row (R13): the whole list, acting on that row; ☰ and Menu add the ⚙ for Settings to its title row
-   *  (R145), a long press (`settings` false) has none. */
-  openMenu(item: HistoryItem, settings = true): void {
-    const items = this.menu(item);
-    this.shell.showMenu(tc("clip.title"), items, { remember: false, settings });
-  }
-
-  /** A long press on a history row: the same list, on that row, over the history. */
-  openRowMenu(item: HistoryItem): void {
-    if (item.status !== "done") return;
-    this.openMenu(item, false);
+   *  (R145). */
+  openMenu(item: HistoryItem): void {
+    this.shell.showMenu(tc("clip.title"), this.menu(item), { remember: false, settings: true });
   }
 }

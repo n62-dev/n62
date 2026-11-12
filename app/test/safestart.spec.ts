@@ -22,9 +22,9 @@ test("Up picks the last real row and stays on it; the note is never picked", asy
   await tap(page, ["d1", "div", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["up"]);
-  await expect(bar(page).getByRole("button")).toHaveCount(5);
+  await expect(bar(page).getByRole("button")).toHaveCount(2); // Store ▶, Copy as › (R276)
   await tap(page, ["up"]); // the row above is the note: the pick stays
-  await expect(bar(page).getByRole("button")).toHaveCount(5);
+  await expect(bar(page).getByRole("button")).toHaveCount(2); // Store ▶, Copy as › (R276)
   await tap(page, ["enter"]); // Enter puts the picked result on the line
   await expect(bar(page)).toHaveCount(0);
   expect(await page.evaluate(() => window.n62.entry.value)).toContain("\\res");

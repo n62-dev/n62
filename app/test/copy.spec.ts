@@ -155,19 +155,19 @@ test("Menu: Clear history empties the view", async ({ page }) => {
   await expect(page.locator('[data-status="done"]')).toHaveCount(0);
 });
 
-test("a long press on a history row opens the Menu list on that row, and the lift does not insert the result", async ({ page }) => {
+test("a long press on a history row copies that row's result (R276), opens no menu, and the lift does not insert or pick", async ({ page }) => {
   await thirds(page);
+  await setClipboard(page, "");
   const first = page.locator('[data-testid="result"] .result').first();
   const box = await first.boundingBox();
   if (!box) throw new Error("no result row");
   await page.mouse.move(box.x + 4, box.y + 4);
   await page.mouse.down();
   await page.waitForTimeout(700);
-  await expect(page.getByTestId("menu")).toBeVisible();
   await page.mouse.up();
-  await expect(page.getByRole("menuitem")).toHaveCount(9);
-  await page.getByRole("menuitem", { name: /^\d Copy$/ }).click();
   await expect.poll(() => clipboard(page)).toBe(THIRD); // the first row, not the last
+  await expect(page.getByTestId("menu")).toHaveCount(0);
+  await expect(page.getByTestId("row-actions")).toHaveCount(0);
   expect(await entryValue(page)).toBe("");
 });
 
