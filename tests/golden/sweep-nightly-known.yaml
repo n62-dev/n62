@@ -8,19 +8,11 @@ known:
   # F144 (G152): the imaginary part of acosh/asinh of a huge argument halved (G138: asinh(1ᴇ1000+…+atanh(10)); mpmath keeps the right im there)
   - { id: 'rad 30 \operatorname{asinh}\left(\left(\left(1ᴇ1000\right)+\sin\left(\frac{\pi}{2}-\frac{\pi}{10^{4}}\right)\right)+\operatorname{atanh}\left(10\right)\right)', check: "≈", package: F144 }
   # F155 (G141 closes F151): the cancellation families of G162, (1±10^-k)^(c·10^k), (f(a+10^-k)-f(a))·10^k+b and (1-cos 10^-k)·10^(2k)+b, and trees
-  # over them: P and P+20 share the lost 10^-k term (G138, seed 1793847163); 14 rows still fail (G189 dropped the 685 that pass); they are past MAX_EVAL_DIGITS (S20 the cure)
+  # over them: P and P+20 share the lost 10^-k term (G138, seed 1793847163); 6 rows still fail (G189 dropped the 685 that pass; G326 the 8 of 9 with an e^{0.5+10^-k} term, which pass once e is written as the keys write it); they are past MAX_EVAL_DIGITS (S20 the cure)
   - { id: 'rad 30 \sqrt[3]{\left(\ln\left(3+10^{-249}\right)-\ln\left(3\right)\right)\times 10^{249}+1}', check: "≈", package: F155 }
   - { id: 'rad 12 \operatorname{asinh}\left(\arcsin\left(\operatorname{acosh}\left(\left(\sqrt{0.5+10^{-261}}-\sqrt{0.5}\right)\times 10^{261}+2\right)\right)\right)', check: "≈", package: F155 }
-  - { id: 'rad 12 \sqrt[3]{\ln\left(\left(e^{0.5+10^{-91}}-e^{0.5}\right)\times 10^{91}+1\right)}+\left(\left(0.9999999999999999999999999999999999999999999999999999999999999999999\right)^{2\times 10^{67}}\right)', check: "≈", package: F155 }
-  - { id: 'rad 12 \cosh\left(\log\left(\sqrt[3]{\left(e^{0.5+10^{-45}}-e^{0.5}\right)\times 10^{45}+0.5}\right)\right)', check: "≈", package: F155 }
-  - { id: 'deg 12 \left(-10^{-15}\right)+\arctan\left(\left(\left(e^{0.5+10^{-74}}-e^{0.5}\right)\times 10^{74}+1\right)^{2147483648}\right)', check: "≈", package: F155 }
-  - { id: 'deg 30 \frac{\left(e^{0.5+10^{-224}}-e^{0.5}\right)\times 10^{224}+0.5}{\tan\left(\left(1-\cos\left(10^{-168}\right)\right)\times 10^{336}+2\right)}\times \tanh\left(\left(90-10^{-3}\right)-2\right)', check: "≈", package: F155 }
-  - { id: 'rad 30 \left(e^{0.5+10^{-278}}-e^{0.5}\right)\times 10^{278}+2', check: "≈", package: F155 }
-  - { id: 'rad 12 \left(-10^{-15}\right)+\arctan\left(\left(\left(e^{0.5+10^{-74}}-e^{0.5}\right)\times 10^{74}+1\right)^{2147483648}\right)', check: "≈", package: F155 }
+  - { id: 'rad 12 \sqrt[3]{\ln\left(\left(\exponentialE^{0.5+10^{-91}}-\exponentialE^{0.5}\right)\times 10^{91}+1\right)}+\left(\left(0.9999999999999999999999999999999999999999999999999999999999999999999\right)^{2\times 10^{67}}\right)', check: "≈", package: F155 }
   - { id: 'rad 30 \operatorname{atanh}\left(\sqrt[3]{\left(0.9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\right)^{-1\times 10^{265}}}\times 0.999999999\right)', check: "≈", package: F155 }
-  - { id: 'rad 30 \frac{\left(e^{0.5+10^{-224}}-e^{0.5}\right)\times 10^{224}+0.5}{\tan\left(\left(1-\cos\left(10^{-168}\right)\right)\times 10^{336}+2\right)}\times \tanh\left(\left(90-10^{-3}\right)-2\right)', check: "≈", package: F155 }
-  - { id: 'rad 12 \tanh\left(\operatorname{acosh}\left(\frac{\left(e^{0.5+10^{-42}}-e^{0.5}\right)\times 10^{42}+1}{\ln\left(-0.5\right)}\right)\right)', check: "≈", package: F155 }
   - { id: 'rad 12 \ln\left(\left(\operatorname{acosh}\left(\frac{\pi}{2}-10^{-6}\right)\right)^{\sqrt[3]{\left(\ln\left(0.5+10^{-250}\right)-\ln\left(0.5\right)\right)\times 10^{250}+0.5}}\right)', check: "≈", package: F155 }
-  - { id: 'rad 12 \left(\operatorname{acosh}\left(\sqrt{-0.5}\right)-\left(90+10^{-9}\right)\right)+\left(\left|\left(1+10^{-275}\right)^{3\times 10^{275}}\right|-\left(\left(e^{0.5+10^{-133}}-e^{0.5}\right)\times 10^{133}+0.5\right)\right)', check: "≈", package: F155 }
   # F155 (G141): a trig function of an argument past MAX_EVAL_DIGITS (1ᴇ1000, x/1ᴇ-1000) shows ⚠ 1 with a wrong digit (G138, seed 1793847163; G141’s decision: ⚠ unchecked)
   - { id: 'deg 30 \tan\left(\sin\left(-1ᴇ-3\right)+\left(\left(1ᴇ1000\right)-\left(1ᴇ-1000\right)\right)\right)', check: "⚠n", package: F155 }

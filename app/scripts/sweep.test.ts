@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { decimalFromString, ZERO_VALUE, type ComplexValue } from "../src/engine/format.ts";
 import { judge, parseDec, type Oracle, type Shown } from "../../tools/probes/sweep/judge.ts";
-import { generate } from "../../tools/probes/sweep/gen.ts";
+import { generate, PINNED } from "../../tools/probes/sweep/gen.ts";
 import { CANCEL_K, childrenOf, EDGE_CLASSES, generateEdges } from "../../tools/probes/sweep/edges.ts";
 import { oracleFor, pythonFor, runsOf } from "../../tools/probes/sweep/run.ts";
 import { latexToGiac } from "../src/input/latex-to-giac.ts";
@@ -11,6 +11,8 @@ import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const mainCheckout = resolve(spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd: repo, encoding: "utf8" }).stdout.trim() || resolve(repo, ".git"), "..");
@@ -168,9 +170,66 @@ describe("sweep edge generator (G116)", () => {
     for (const o of out) if (o.kind === "skip") expect(o.reason).not.toMatch(/digits|cap|oracle error/);
     expect(out.filter((o) => o.kind === "value").length).toBeGreaterThan(10);
   }, 120_000);
-  it("leaves the gate's trees for seed 20261021 byte-identical", () => {
+  it("leaves the gate's trees for seed 20261021 byte-identical (G326 wrote e as \\exponentialE; its control below holds the trees before)", () => {
     const h = (x: unknown): string => createHash("sha256").update(JSON.stringify(x)).digest("hex");
-    expect(h(generate(20261021, 1000))).toBe("417322a084096c09b9d053acc87d7a8894917157decd3214a92adbb3dd87b5c7");
-    expect(h(runsOf(20261021, 1000))).toBe("83330d8832e56c7f5f990ac3375bae90b13eb3cf4b27bacec094eecbd769cfba");
+    expect(h(generate(20261021, 1000))).toBe("1452a2fcc5896d979f067fef991adc9dab127ccb81c908545927bdcd25406d39");
+    expect(h(runsOf(20261021, 1000))).toBe("df26d42fcff7a461f9eb349d30e2a2c8f5b9f7247e3ae2fad67a9c5d5499ddca");
+  });
+});
+
+// G326 (F213): since R67 the parser reads the letter e as the name e_, so a tree that wrote e as the letter was no number and never judged.
+// The generators write e as the keys insert it (spec/keyboard.yaml, the eˣ key and the constant \exponentialE).
+describe("sweep trees write e as the keys do (G326)", () => {
+  const sha = (x: unknown): string => createHash("sha256").update(JSON.stringify(x)).digest("hex");
+  /** A free name e_ in our parser's Giac text (Home mode); a refused tree has none. */
+  const freeE = (latex: string): boolean => {
+    try {
+      return /\be_\b/.test(latexToGiac(latex));
+    } catch {
+      return false;
+    }
+  };
+  /** The letter e outside a command name: what the parser reads as e_. */
+  const letterE = /(^|[^\\a-zA-Z])e(?![a-zA-Z])/;
+  const asLetter = <T extends { latex: string }>(cs: readonly T[]): T[] => cs.map((c) => ({ ...c, latex: c.latex.replaceAll("\\exponentialE", "e") }));
+  const gateRuns = runsOf(20261021, 1000);
+  const trees = {
+    gate: gateRuns,
+    view: generate(20261022, 100, { x: true, depth: 2 }),
+    casback: generate(20261024, 30, { x: true, depth: 2 }),
+    edges: generateEdges(20261028, 2000),
+  };
+  it("every tree of the gate's, the view sweep's, casback's and the edges' seeds parses without a free e_", () => {
+    for (const [name, cs] of Object.entries(trees)) {
+      expect([name, cs.filter((c) => freeE(c.latex)).map((c) => c.latex).slice(0, 3)]).toEqual([name, []]);
+      expect([name, cs.filter((c) => letterE.test(c.latex)).map((c) => c.latex).slice(0, 3)]).toEqual([name, []]);
+    }
+  });
+  it("writes exp as the eˣ key inserts it and the constant as \\exponentialE", () => {
+    const spec = parseYaml(readFileSync(resolve(repo, "spec/keyboard.yaml"), "utf8")) as { keys: { id: string; shift?: { insert?: string } }[] };
+    const key = spec.keys.find((k) => k.id === "ln")!.shift!.insert!;
+    expect(key).toBe("\\exponentialE^{#0}");
+    expect(PINNED[0]!.latex).toBe(key.replace("#0", "1.5ᴇ8"));
+    expect(latexToGiac("\\exponentialE")).toBe("exp(1)");
+    const all = Object.values(trees).flat();
+    expect(all.some((c) => c.latex.includes(key.replace("#0}", "")))).toBe(true);
+    expect(all.some((c) => /\\exponentialE(?!\^)/.test(c.latex) && c.mp.includes("E"))).toBe(true);
+    // every exp( and every constant E of the mpmath side is an \exponentialE (the constant as a power base too)
+    const count = (t: string, re: RegExp): number => [...t.matchAll(re)].length;
+    for (const c of all) expect(count(c.latex, /\\exponentialE/g), c.latex).toBe(count(c.mp, /\bexp\(/g) + count(c.mp, /\bE\b/g));
+  });
+  it("the gate seed's runs that held e (313 of 1187, the 262 nonnumber verdicts among them) now parse as numbers", () => {
+    expect(gateRuns).toHaveLength(1187);
+    const withE = gateRuns.filter((r) => r.latex.includes("\\exponentialE"));
+    expect(withE).toHaveLength(313);
+    expect(withE.filter((r) => freeE(r.latex))).toHaveLength(0);
+    expect(asLetter(withE).filter((r) => freeE(r.latex))).toHaveLength(313);
+  });
+  it("control: every other tree is byte-identical; with e written back as the letter the seeds give phase-1's trees", () => {
+    expect(sha(asLetter(generate(20261021, 1000)))).toBe("417322a084096c09b9d053acc87d7a8894917157decd3214a92adbb3dd87b5c7");
+    expect(sha(asLetter(runsOf(20261021, 1000)))).toBe("83330d8832e56c7f5f990ac3375bae90b13eb3cf4b27bacec094eecbd769cfba");
+    expect(sha(asLetter(trees.view))).toBe("96781df693eff0101ca3a363c5885f3e55b93e905488f0ccc3721b10421efce3");
+    expect(sha(asLetter(trees.casback))).toBe("4e6a9dc2cb06cefb7b8dda4728114ecabddb07ca791c3feb8f52d351bcdb12b5");
+    expect(sha(asLetter(trees.edges))).toBe("98c31a1d6f5cef7a4f1a13397ad18f19d9cb6858b26fcbe640271dcdbdfae655");
   });
 });

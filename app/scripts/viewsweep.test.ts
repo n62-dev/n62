@@ -24,6 +24,11 @@ describe("compareViews", () => {
     expect(compareViews(num(5, null), num(1))).toBeNull();
     expect(compareViews(num(0), num(3e-30))).not.toBeNull();
   });
+  it("G326: prints an exponent whole (6.31e-30 was printed 6.31e-3) and still drops a mantissa's trailing zeros", () => {
+    expect(compareViews(num(0), num(6.3108872417681e-30))).toBe("0 against 6.3108872417681e-30 (claims 12 digits)");
+    expect(compareViews(num(2.5e10), num(1e20))).toBe("25000000000 against 1e+20 (claims 12 digits)");
+    expect(compareViews(num(1.5), num(2))).toBe("1.5 against 2 (claims 12 digits)");
+  });
 });
 
 describe("comparePlot", () => {

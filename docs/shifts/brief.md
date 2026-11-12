@@ -79,7 +79,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 659 | [G326](packages/G326.md) the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
+| 659 | G326 the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
 | 660 | [S54](packages/S54.md) why `decompose` recurses without end (F214) | sandra, Opus | `p1/sandra-decompose` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | the weekly night |
