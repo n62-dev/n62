@@ -130,6 +130,8 @@ queries:
   - { query: "stats1", expect: "fn:stats1", note: "G223" }
   - { query: "variance", expect: "fn:variance" }
   - { query: "normal cdf", expect: "fn:normald_cdf" }
+  - { query: "t test", expect: "fn:student", note: "G222: Student t density; the t distribution by its plain name" }
+  - { query: "normal inverse", expect: "fn:normald_icdf", note: "G222" }
   - { query: "integral", expect: "fn:int" }
   - { query: "derivative", expect: "fn:diff" }
   - { query: "limit", expect: "fn:limit" }
