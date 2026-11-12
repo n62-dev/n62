@@ -423,8 +423,11 @@ export function markOf(f: PrecisionFacts, o: FormatOptions): MarkInfo | null {
   // No value: an == or ≠ test resting on a float (R18f1); ⚠ when a side has an unaudited function (R18f2).
   if (!v) return f.approximate === true ? (f.warn ? { mark: "⚠", warn: f.warn } : { mark: "≈" }) : null;
   const parts = [v.re, v.im].filter((p) => !isZero(p));
-  if (f.reliableDigits !== null && parts.some((p) => digitsShown(p, o) > Math.max(1, f.reliableDigits!))) {
-    return { mark: "⚠", n: Math.max(0, f.reliableDigits), ...(f.warn ? { warn: f.warn } : {}) };
+  // G325f1: compared with reliableDigits itself: a value with none confirmed is drawn with one digit (confirmedOptions),
+  // which is not confirmed either, so ⚠ 0, never ≈ (acos(sqrt(-2)*10^-330-2) showed ≈ 5-7E2*i); a zero shown too
+  const rd = f.reliableDigits;
+  if (rd !== null && (rd < 1 || parts.some((p) => digitsShown(p, o) > rd))) {
+    return { mark: "⚠", n: Math.max(0, rd), ...(f.warn ? { warn: f.warn } : {}) };
   }
   if (f.warn) return { mark: "⚠", warn: f.warn };
   if (f.exact && parts.every((p) => shownExactly(p, o))) return { mark: "=" };

@@ -8,6 +8,7 @@ import {
   decimalFromString,
   formatComplex,
   formatConfirmed,
+  confirmedOptions,
   markOf,
   ZERO_VALUE,
   type ComplexValue,
@@ -264,6 +265,15 @@ describe("markOf: the mark per format (docs/04 2.4)", () => {
     expect(markOf(f, { format: "STD", digits: 30 })).toEqual({ mark: "⚠", n: 20 });
     expect(markOf(f, { format: "FIX", digits: 12, fixed: 25 })).toEqual({ mark: "⚠", n: 20 });
     expect(markOf(f, { format: "FIX", digits: 12, fixed: 4 })).toEqual({ mark: "≈" });
+  });
+  it("a value with no digit confirmed is ⚠ 0 in every format, never ≈, though it is drawn with one digit (G325f1)", () => {
+    // acos(sqrt(-2)*10^-330-2) showed ≈ 5-7E2*i: reliableDigits 0, drawn at one digit, compared with max(1, 0)
+    const none = { value: { re: v("5.2"), im: v("-7.1e2") }, exact: false, reliableDigits: 0 };
+    for (const format of ["STD", "SCI", "ENG", "PFX"] as const) expect(markOf(none, { format, digits: 12 })).toEqual({ mark: "⚠", n: 0 });
+    expect(markOf(none, { format: "FIX", digits: 12, fixed: 4 })).toEqual({ mark: "⚠", n: 0 });
+    expect(markOf(none, confirmedOptions(none.value, 0, STD))).toEqual({ mark: "⚠", n: 0 });
+    expect(markOf({ value: real("0"), exact: false, reliableDigits: 0 }, STD)).toEqual({ mark: "⚠", n: 0 });
+    expect(markOf({ value: real("5.2"), exact: false, reliableDigits: 1 }, { format: "STD", digits: 1 })).toEqual({ mark: "≈" });
   });
   it("an un-audited float is ⚠ even when its digits agree", () => {
     expect(markOf({ value: real("0.576724807757"), exact: false, reliableDigits: 12, warn: "unaudited" }, STD)).toEqual({ mark: "⚠", warn: "unaudited" });

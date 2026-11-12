@@ -45,17 +45,38 @@ function complexDecision(input: string, q: Quoting, result: string, complexArg: 
   return callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).some((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
 }
 
-/** G325: whether an argument (typed Giac text) is not real: Giac's evalf of it at the current Digits has an imaginary part,
- *  or no imaginary part can be had (an error decides, as the safe side; complex.ts nonReal). One Giac call per argument, kept for the input. */
-export function nonRealArg(giac: Giac): (arg: string) => boolean {
+/** G325: whether an argument (typed Giac text) is not real: Giac's evalf of it at P digits (MPFR) has an imaginary part,
+ *  or no imaginary part can be had (an error decides, as the safe side; complex.ts nonReal). One Giac call per argument,
+ *  kept for the input. G325f1: never at the current Digits, a double below 15: an imaginary part under the double's range
+ *  (sqrt(-2)*10^-330-2) read as 0 there, so asin and acos of it were no decision and kept the exact text's wrong sign;
+ *  MPFR's exponent range holds it at any P. A noise imaginary part of a real argument only costs the second run. */
+export function nonRealArg(giac: Giac, P: number): (arg: string) => boolean {
   const known = new Map<string, boolean>();
   return (arg) => {
     const k = known.get(arg);
     if (k !== undefined) return k;
-    const r = nonReal(giac, `evalf(${arg})`);
+    const r = nonReal(giac, `evalf(${arg},${P})`);
     known.set(arg, r);
     return r;
   };
+}
+
+/**
+ * G325f1: `input` with the argument of every asin or acos call that decides (complexDecision) read as its float,
+ * `asin(evalf(z))`: MPFR's principal value of a complex float (patch 0005), never Giac's exact text of it. That text
+ * nests roots of the argument's squared parts, which cancel: for asin(sqrt(-2)*10^-330-2) its integers pass
+ * MAX_EVAL_DIGITS, so no precision we run evaluates it (at 40 and 60 digits it gave ln 2 for 1.31695789692; at 700, 35
+ * right digits). Each evalf runs at the Digits of the evaluation it is in, so the agreement check still compares two.
+ * Inner calls are read so too. Null when no call decides.
+ */
+export function argumentsAsFloats(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): string | null {
+  if (!nonRealText(result)) return null;
+  const calls = callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
+  if (!calls.length) return null;
+  const marks = calls.flatMap((c) => [{ at: c.open + 1, s: "evalf(" }, { at: c.close, s: ")" }]).sort((a, b) => b.at - a.at);
+  let out = input;
+  for (const m of marks) out = out.slice(0, m.at) + m.s + out.slice(m.at);
+  return out;
 }
 
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.
@@ -427,7 +448,7 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const P0 = valuePrecision(digits);
   const typed = literalStart(expr, P0, MAX_EVAL_DIGITS, "typed");
   const pastCap = (a: string): boolean => literalStart(a, P0, MAX_EVAL_DIGITS, "typed").unchecked;
-  const complexArg = nonRealArg(giac);
+  const complexArg = nonRealArg(giac, P0);
   if (typed.unchecked && decisionArgs(expr, text, decidingStored(giac), complexArg).some(pastCap)) {
     const argOf = (c: { open: number; close: number }): string => expr.slice(c.open + 1, c.close);
     const calls = callsOf(expr, COMPLEX_DECISION_FUNCTIONS, "typed").filter((c) => c.close >= 0);
