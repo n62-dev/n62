@@ -398,13 +398,12 @@ test("÷ after a plain number or a sum is unchanged", async ({ page }) => {
   await resultIs(page, "3", 1);
 });
 
-// docs/04 2.3 #1: 0 x F F typed with the keys was read as 0·x·F·F = 0 and shown as an exact result.
-test("0xFF typed with the keys is an error, not 0", async ({ page }) => {
+// docs/04 2.3 #1, 5.4 (R191): 0 x F F typed with the keys was read as 0·x·F·F = 0; it is the hex literal 255.
+test("0xFF typed with the keys is 255, not 0", async ({ page }) => {
   await tap(page, ["d0", "x", "alpha", "pow", "alpha", "pow"]);
   expect(await entryValue(page)).toBe("0xFF");
   await tap(page, ["enter"]);
-  await expect(page.locator('[data-status="error"]')).toHaveCount(1);
-  await expect(page.locator('[data-status="error"] .error')).toContainText("0x");
+  await resultIs(page, "255", 1);
 });
 
 // docs/04 2.3 #8: a tapped result carries its full value, so 1/3 tapped and ×3 is 1, not 0.999999999999.
