@@ -46,7 +46,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F218, package R286 (R271f1; pass 139).** σ's confirmed digits cut the exact value's, in Home and the unit view. Family 1.
 - **F220, fixed by G324f1 (run 995).** A rootof's ≈ was stored with Giac's `+1.6E-40·i` (`W:=evalf(solve(x^3-x-1=0,x))`, then `W`); the unaudited check stores each element without the part it shows as 0. Family 1.
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.
-- **F222, package G327 (G318's report; pass 141).** Two failed loads with a stored log raise G19's count: the next launch leaves the log out (kept, listed). Count replay crashes only. Family 2.
+- **F222, fixed by G327 (run 1031).** Two failed loads with a stored log raised G19's count, so the next launch left the log out; a load failure (or a start with no log) now counts toward G318's stop only. Family 2.
 - **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F172, A73 measured.** Stored history costs nothing; the rows drawn at start do (bar 1.5 s; R133 draws 5 rows until engine ready). A CAS-last cold start is 1507 ms against Home's 1323; A73f2 after the tag says where.
