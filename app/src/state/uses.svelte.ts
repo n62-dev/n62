@@ -2,9 +2,9 @@
 // The results mode's counter (R53; decisions.md P16's removal test): named counts plus a `since` date, after R9's tap
 // counter (taps.svelte.ts), under its own IndexedDB key `uses`. Counted on the device only, never sent, and not in a
 // backup (backup.ts LEFT_OUT: it judges this install's use). Its own chunk: App.svelte loads it on the first fold, and
-// Settings › Counters › Results mode reads it. Counted names: `fold.handle` and `fold.swipe` (each fold), `pick` (a row
+// Settings › Counters › Results mode reads it. Counted names: `fold.swipe` (each fold), `pick` (a row
 // picked by a tap while folded) and each row action run while folded (`insert`, `recall`, `copy`, `store`, `delete`).
-// P16's test reads `fold` = fold.handle + fold.swipe and the actions' sum after 14 days from `since`.
+// P16's test reads the folds (`fold.swipe`, plus `fold.handle`: counts stored before R283 removed the handle stay in the total) and the actions' sum after 14 days from `since`.
 import type { Kv } from "./storage.ts";
 
 export const USES_KEY = "uses";
@@ -47,7 +47,7 @@ export class UseCounter {
     return this.state.counts[name] ?? 0;
   }
 
-  /** The folds, by the handle and by a swipe. */
+  /** The folds: swipes, and the stored counts of the handle R283 removed. */
   get folds(): number {
     return this.get("fold.handle") + this.get("fold.swipe");
   }
