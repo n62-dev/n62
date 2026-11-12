@@ -5,6 +5,11 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-12 (Opus pass 155) to make room for R276's and R277's defaults, as they stood
+- **The angle mode, route R (S14, R64, G46; Opus pass 31):** docs/04 2.12 (the ° template, the coordinate commands). `sinc` takes no factor (a function of a number, F29): sin(x)/x in radians in both modes; `polar_point`'s angle takes the factor (R64f2). Would change if: the G2 reads sinc in degrees.
+- **R50 (2026-10-18; owner 2026-11-07): themes N62 (teal, #529997's hue), Black & White (the old N62), Solarized**; entry outline, busy dash, key shadows, Home logo (R153–R157; `docs/mockups/n62-teal-2026-11-07.html`). Rule: docs/05 3.10. Would change if: a family goes unused for 4 weeks.
+- **The check of 2026-10-19:** a Home value that leaves its evaluation (stored, Ans, a `\res` chip, an export) is the value shown, whatever the angle mode is later; a CAS value stays symbolic (G34). Would change if: the G2 is found to re-read a stored Home value in the new mode.
+
 ### Shortened 2026-11-12 (Opus pass 153) to make room for R286's and G328's defaults, as it stood
 - **An app's line stays with the app** (R76, Opus pass 60; R76f1): cleared on the way back to Home or CAS, only your typing follows (R34); Enter in Solve's Num empties it. Archived. **R262 (Opus pass 150):** Menu › To Home (Solve's Num, Plot) puts the answer on Home's line as a chip with its facts; the app's line stays behind, typing too; Plot's row needs a readout (R145). Would change if: the owner wants typing to follow.
 
