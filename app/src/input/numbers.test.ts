@@ -165,3 +165,35 @@ describe("a bare comma is the argument comma in either mode (R57, R57f1)", () =>
     expect(giac("3{,}\\emark3", true)).toBe(giac("3.\\emark3"));
   });
 });
+
+describe("a number in another base (docs/04 5.4, R191)", () => {
+  it.each([
+    ["0xFF", "255"],
+    ["0x1F", "31"],
+    ["0xff", "255"],
+    ["0b101", "5"],
+    ["0o17", "15"],
+    ["0xFFFFFFFFFFFFFFFF", "18446744073709551615"],
+    ["0b101+1", "5+1"],
+    ["2\\times0x10", "2*16"],
+  ])("%s is the decimal integer in %s", (latex, out) => {
+    expect(giac(latex)).toBe(out);
+  });
+  it.each([
+    ["0x+1", "0*x+1"],
+    ["0xy", "0*x*y"],
+    ["20xF", "20*x*F"],
+  ])("%s is no prefix form and stays %s", (latex, out) => {
+    expect(giac(latex)).toBe(out);
+  });
+  it.each(["0x", "0b", "0o"])("%s alone names the missing digits", (latex) => {
+    expect(message(latex)).toMatch(new RegExp(`^${latex} needs`));
+  });
+  it.each([
+    ["0b102", "2 is not a digit in base 2"],
+    ["0o18", "8 is not a digit in base 8"],
+    ["0b1.1", "a number in another base is a whole number"],
+  ])("%s is refused: %s", (latex, msg) => {
+    expect(message(latex)).toMatch(new RegExp(`^${msg}`));
+  });
+});
