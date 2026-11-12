@@ -6,7 +6,7 @@
 import type { ChipFactsTable } from "../engine/chipFacts.ts";
 import type { ComplexValue } from "../engine/format.ts";
 import type { ValueFacts } from "../engine/types.ts";
-import { RATIONAL } from "../engine/giacPrint.ts";
+import { RATIONAL } from "../engine/giacPrintStart.ts";
 import type { Chip, ChipTable } from "../input/chips.ts";
 import type { Rational, ResultFacts } from "./displayMode.ts";
 

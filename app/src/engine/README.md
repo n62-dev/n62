@@ -3,7 +3,7 @@
 
 The UI talks to maths only through `MathEngine` (`types.ts`); `WorkerEngine` is the implementation.
 
-**Import direction (G147, checked by the gate's `rules` stage, `app/scripts/import-rules.ts`).** What the start chunk reaches imports from here only `types`, `format`, `defs`, `giacPrint`, `workerEngine`, `protocol`, `homeDefaults` and `pasdeg`; everything else loads in the Worker or in a lazy chunk. Nothing here imports from `views/`, `state/`, `keyboard/`, `entry/`, `apps/`, `render/` or `input/` (those import from here); the only edges into `units/` are named in the check (`units/types.ts` for the unit job's types, `units/evaluate.ts` for the unit evaluator that runs in the Worker). Stored data (the library's version and migration) is passed in, not imported.
+**Import direction (G147, checked by the gate's `rules` stage, `app/scripts/import-rules.ts`).** What the start chunk reaches imports from here only `types`, `format`, `defs`, `giacPrintStart`, `workerEngine`, `protocol`, `homeDefaults` and `pasdeg`; everything else loads in the Worker or in a lazy chunk. Nothing here imports from `views/`, `state/`, `keyboard/`, `entry/`, `apps/`, `render/` or `input/` (those import from here); the only edges into `units/` are named in the check (`units/types.ts` for the unit job's types, `units/evaluate.ts` for the unit evaluator that runs in the Worker). Stored data (the library's version and migration) is passed in, not imported.
 
 One line per module: what it owns, who calls it. Groups as in docs/04 section 6.1.
 
@@ -21,7 +21,8 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `format.ts` | Home number formatter (D5): STD/SCI/ENG/FIX/PFX from a BigInt-derived `DecimalValue`, no engine round trip; `markOf()` and `formatConfirmed()` turn the engine's facts into the mark and the digits shown; called by `state/`, `render/`, `apps/`, `clipboard/` |
 | `formatBase.ts` | G228: `formatBase()` writes an integer text as `0x…`, `0b…` or `0o…` in a word of n bits (BigInt on the digits, never `Number`; an error value for a non-integer or a value outside the word); pure, loaded lazily by the base display |
 | `defs.ts` | the definitions log (docs/04 6.2): plain data and pure functions used on both sides; called by `workerEngine.ts`, `host.ts`, `find/`, `state/backup.ts` |
-| `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists); no imports of its own; used by nearly every module here and by `render/`, `state/results.ts`, `units/` |
+| `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists); imports only `giacPrintStart.ts`, its own part; used by nearly every module here and by `state/resultItem.ts`, `units/` |
+| `giacPrintStart.ts` | R264: `giacPrint.ts`'s part the start chunk reads (the string skip, the walk, the name pattern, `balanced`, `isName`, `names`, `mapNames`, `RATIONAL`), re-exported by `giacPrint.ts`; no imports; used at start by `defs.ts`, `render/home.ts`, `state/results.ts` |
 
 **Worker side: the host and the Home pipeline**
 

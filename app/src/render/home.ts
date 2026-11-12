@@ -3,7 +3,7 @@
 // formatted string into LaTeX for the 2D renderer: an exponent part becomes a raised power of ten.
 
 import type { FormattedComplex, FormattedFraction, FormattedNumber, FormattedPolar } from "../engine/format.ts";
-import { balanced, mapNames } from "../engine/giacPrint.ts";
+import { balanced, mapNames } from "../engine/giacPrintStart.ts";
 
 /** R125, Settings › Numbers › Digit groups: the thin space (R55's, the default), the apostrophe or the comma. */
 export type GroupSep = "thin" | "apos" | "comma";
