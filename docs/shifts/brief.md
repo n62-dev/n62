@@ -66,7 +66,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
-| 656 | [R286](packages/R286.md) σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
+| 656 | R286 σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
 | 657 | [G327](packages/G327.md) a failed load never counts against the stored definitions (F222) | gorge, Opus | `p1/gorge-loadcount` | R284 |
 | 658 | [G328](packages/G328.md) a name set beside the result stores its own facts (F215) | gorge, Opus | `p1/gorge-sidefacts` | G174 |
 | 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
