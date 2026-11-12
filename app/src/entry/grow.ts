@@ -12,6 +12,7 @@ import { inNumber } from "./numberRun.ts";
 import { level, parentOf, termRange } from "./term.ts";
 
 type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
+type LiveField = Field & Pick<MathfieldElement, "selection" | "position" | "focus">;
 /** A selection range as MathLive keeps it: the position before its first atom, the offset of its last atom. */
 export type Range = [number, number];
 
@@ -147,6 +148,21 @@ export class SelectChain {
     const back = this.steps[this.steps.length - 1] ?? origin;
     if (this.steps.length === 0) this.end();
     return back;
+  }
+
+  /**
+   * A press of Select (`grow`) or Deselect on the field: false where it does nothing (an empty line, no chain to walk
+   * back); at the whole line Select stays, a press all the same.
+   */
+  step(mf: LiveField, grow: boolean): boolean {
+    const [a, b] = mf.selection.ranges[0] ?? [mf.position, mf.position];
+    const now: Range = [Math.min(a, b), Math.max(a, b)];
+    const to = grow ? this.grow(mf, now) : this.shrink(now);
+    if (!to) return grow && a !== b;
+    if (to[0] === to[1]) mf.position = to[0];
+    else mf.selection = { ranges: [to] };
+    mf.focus();
+    return true;
   }
 
   end(): void {

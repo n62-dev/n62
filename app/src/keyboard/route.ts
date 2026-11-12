@@ -57,7 +57,7 @@ export interface RouteCtx {
 }
 
 /** Select or Deselect (R279): they act on the entry line only. */
-const isSelect = (a: ActionBody | undefined): boolean => a?.kind === "special" && (a.name === "selectGrow" || a.name === "selectShrink");
+const isSelect = (a?: ActionBody): boolean => a?.kind === "special" && a.name.startsWith("select");
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
   layer === undefined ? { shift: c.session.shift, alpha: c.session.alpha } : { shift: layer === "shift", alpha: layer === "alpha" };
 const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");

@@ -236,22 +236,9 @@ export class EntryController {
     this.onField?.(this.mf, a);
   }
 
-  /**
-   * R279: Select (`grow`) takes the term before the cursor, then each enclosing step up to the whole line, where it
-   * stays; Deselect walks the same chain back, from its first step to the cursor where it was. False where the key does
-   * nothing: no field yet, an empty line, no chain to walk back.
-   */
+  /** R279: Select (`grow`) or Deselect on the line (entry/grow.ts); false where the key does nothing. */
   select(grow: boolean): boolean {
-    const mf = this.mf;
-    if (!mf || !this.chain) return false;
-    const [a, b] = mf.selection.ranges[0] ?? [mf.position, mf.position];
-    const now: [number, number] = [Math.min(a, b), Math.max(a, b)];
-    const to = grow ? this.chain.grow(mf, now) : this.chain.shrink(now);
-    if (!to) return grow && a !== b; // the whole line: it stays
-    if (to[0] === to[1]) mf.position = to[0];
-    else mf.selection = { ranges: [to] };
-    mf.focus();
-    return true;
+    return !!this.mf && !!this.chain?.step(this.mf, grow);
   }
   /** Any other key ends the chain of Select presses (R279; a tap does by changing the selection). */
   endSelect(): void {
