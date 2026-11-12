@@ -83,6 +83,23 @@ export async function tapTwice(l: Locator, how: "tap" | "click" = "tap"): Promis
 /** The open pick sheet (the `menu` test id). */
 export const sheet = (page: Page): Locator => page.getByTestId("menu");
 /** Put text on the system clipboard (a spec that does holds the clipboard lock: useClipboardLock). */
+/** ☰ → Copy and ☰ → Paste on Home and CAS (R278: the Copy and Paste keys are gone; the Menu's items 3 and 7). Copy takes the
+ *  picked row, else the last result; Paste puts the clipboard's number on the line, and the keys after it wait for it. */
+export const COPY: string[] = ["@menu", "d3"];
+export const PASTE: string[] = ["@menu", "d7"];
+
+/** ☰ and the view's own item `id` (an app's Copy or CSV: the app menus have no numbers a test can rely on). */
+export async function menuItem(page: Page, id: string): Promise<void> {
+  await tap(page, ["@menu"]);
+  await sheet(page).locator(`[data-id="${id}"]`).tap();
+}
+
+/** A system paste (Ctrl+V into the entry field), for the views whose ☰ has no Paste item (Solve, Function: R114). */
+export async function systemPaste(page: Page): Promise<void> {
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.press("ControlOrMeta+V");
+}
+
 export const setClipboard = (page: Page, text: string): Promise<void> => page.evaluate((s) => navigator.clipboard.writeText(s), text);
 /** Press ⌫ once and return the line. */
 export async function bksp(page: Page): Promise<string> {

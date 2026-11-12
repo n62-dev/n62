@@ -7,7 +7,7 @@
 // chip's unit. Expected values: oracle (mpmath, tasks.yaml t04: 2π·0.025 = 0.1570796326794896619…, so 4π·0.025 =
 // 0.3141592653589793238…) and derived (t10: 12.34·3.2 = 39.488, σ² = 1.548381 by G41, decisions.md R61).
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, flick, open, tap, useClipboardLock } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -270,11 +270,11 @@ test.describe("Copy as shown on a unit row (R63f1)", () => {
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");
   });
 
-  // R269: the Copy key gives the value, ± σ and the unit (docs/04 2.6), never the number alone
-  test("the Copy key on t10's row copies 39.488 ± 1.2 m², as Copy as shown", async ({ page }) => {
+  // R269: ☰ → Copy gives the value, ± σ and the unit (docs/04 2.6), never the number alone (R278: the Copy key is gone)
+  test("☰ → Copy on t10's row copies 39.488 ± 1.2 m², as Copy as shown", async ({ page }) => {
     await t10(page);
     await leaveView(page);
-    await tap(page, ["copy"]);
+    await tap(page, COPY);
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");
   });
 

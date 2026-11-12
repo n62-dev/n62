@@ -310,7 +310,7 @@ export function pasteText(c: RouteCtx, text: string): void {
  *  Paste then ÷ divides the pasted number; at most HOLD_MS, so a clipboard that never answers cannot stop the keypad.
  *  Returns the hold for withClip, whose load (when the code is not in yet) waits for it. */
 const HOLD_MS = 2000;
-function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
+export function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
   const late = new Promise<void>((done) => setTimeout(done, HOLD_MS));
   const capped = Promise.race([job.then(() => {}, () => {}), late]);
   if (c.sheetLoad === null) {

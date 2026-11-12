@@ -47,6 +47,7 @@
     insertResult: (item) => onLine(item, false, false), // (the Menu's list counts its own)
     recall: (item) => onLine(item, true, false),
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
+    hold: (job) => void route.holdKeys(ctx, job),
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -101,7 +102,7 @@
     entry.onPaste = (text) => {
       edited = true;
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
-      route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take the Paste key's path
+      route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take ☰ → Paste's path
     };
     const loadFold = (): void => {
       void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}); // R53

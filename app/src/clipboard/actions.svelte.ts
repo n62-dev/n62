@@ -34,6 +34,8 @@ export interface RowOps {
   recall(item: HistoryItem): void;
   /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
+  /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
+  hold?(job: Promise<unknown>): void;
 }
 
 export class ClipActions {
@@ -318,7 +320,14 @@ export class ClipActions {
         run: act("delete", () => this.deleteRow(row)),
       },
       { id: "copyAs", label: tc("clip.copyAs"), disabled: none, reason: why, submenu: { title: tc("clip.copyAs"), items: copies } },
-      { id: "paste", label: tc("clip.paste"), run: () => void this.paste() },
+      {
+        id: "paste",
+        label: tc("clip.paste"),
+        run: () => {
+          const job = this.paste();
+          this.ops.hold?.(job);
+        },
+      },
       { id: "share", label: tc("clip.share"), disabled: !finished, reason: why, run: () => void this.shareSession() },
       { id: "clear", label: tc("clip.clear"), disabled: empty, run: () => void this.session.clearHistory() },
     ];

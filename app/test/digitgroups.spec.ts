@@ -4,7 +4,7 @@
 // decimal comma the comma is never one (its button is off, a stored comma draws as the thin space).
 // Expected values are derived (1/3 to 12 digits; C(49,6) = 13983816; 123456789 and 1234567.5 as typed).
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, lastResult, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, flick, lastResult, menuItem, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
@@ -44,7 +44,7 @@ test("a long integer is grouped from the right; a short one and a small exponent
 test("Copy gives the plain digits of a grouped result", async ({ page }) => {
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 1);
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("0." + "3".repeat(40));
 });
 
@@ -70,7 +70,7 @@ test("Settings › Numbers › Digit groups › ’: 123456789 is drawn 123’45
   await expect(lastResult(page)).toHaveAttribute("data-text", "123456789");
   await expect(lastResult(page).locator(".math")).toHaveAttribute("data-latex", "123\\text{'}456\\text{'}789");
   await expect(lastResult(page).locator(".math")).toHaveText("123’456’789");
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("123456789");
   await tapTwice(lastResult(page));
   const v = await entryValue(page);
@@ -178,7 +178,7 @@ test("Solve's Num view draws the separator: the root of x=123456789 is 123’456
   await tap(page, ["@menu", "d1"]); // Solve
   await expect(x).toHaveAttribute("data-value", "123456789");
   await expect(x).toHaveText("123’456’789");
-  await tap(page, ["copy"]);
+  await menuItem(page, "copy");
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("123456789");
   await page.evaluate(() => (window.n62.session.settings.groupSep = "thin")); // the default: a gap, not a character
   await expect(x).toHaveText("123456789");

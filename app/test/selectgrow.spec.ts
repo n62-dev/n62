@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R279: Select grows the entry line's selection by the box model, Deselect walks it back (entry/grow.ts). R278 puts the
-// two actions on r2c4 and r2c5; until then a free key holds them (U1 Select, U2 Deselect), through the same route.
+// R279: Select grows the entry line's selection by the box model, Deselect walks it back (entry/grow.ts), on the keys at
+// r2c4 and r2c5 (R278).
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, tap } from "./helpers.ts";
 
-const GROW = ["u1"];
-const SHRINK = ["u2"];
+const GROW = ["select"];
+const SHRINK = ["deselect"];
 
 test.beforeEach(async ({ page }) => {
   await open(page);
-  await page.evaluate(() => {
-    window.n62.userKeys.set("u1", "primary", { label: "Select", action: { special: "selectGrow" } });
-    window.n62.userKeys.set("u2", "primary", { label: "Deselect", action: { special: "selectShrink" } });
-  });
 });
 
 /** The line `latex` with the cursor at offset `at` (the end when undefined). */

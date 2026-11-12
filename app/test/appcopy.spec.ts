@@ -3,7 +3,7 @@
 // copy is the full value (every confirmed digit), the Menu has "as shown", and what was copied pastes back as the same
 // value. From keys (Copy) and from touch (a long press). Expected values: oracle = mpmath 1.3.0 at 40 digits.
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { entryValue, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, menuItem, open, setClipboard, systemPaste, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 // The system clipboard is one for the whole browser: these tests run one after another.
@@ -47,14 +47,16 @@ async function solved(page: Page): Promise<void> {
   await expect(row.locator("td")).toHaveText("1.32672466524");
 }
 
-test("Solve: Copy copies the full root, and it pastes back as the same value (P5)", async ({ page }) => {
+test("Solve: ☰ → Copy copies the full root, and it pastes back as the same value (P5)", async ({ page }) => {
   await solved(page);
-  await tap(page, ["copy"]);
+  await menuItem(page, "copy");
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   const text = await clipboard(page);
   expect(text.startsWith(LAMBERT5.slice(0, 26))).toBe(true);
   expect(digits(text)).toBeGreaterThan(25);
-  await tap(page, ["shift", "esc", "paste", "enter"]); // Clear: Esc puts the value back (R261)
+  await tap(page, ["shift", "esc"]); // Clear: Esc puts the value back (R261)
+  await systemPaste(page); // (R278: ☰ in an app has no Paste; Ctrl+V is R114's path)
+  await tap(page, ["enter"]);
   await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"] td')).toHaveAttribute("data-value", text);
 });
 
@@ -77,9 +79,10 @@ test("Solve: the full root survives a reload; an edit drops it", async ({ page }
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   await tap(page, ["@place", "d4", "@num"]);
   await expect(page.locator('[data-testid="solve-table"] tr[data-name="x"] td')).toHaveText("1.32672466524");
-  await tap(page, ["copy"]);
+  await menuItem(page, "copy");
   await expect.poll(async () => digits(await clipboard(page))).toBeGreaterThan(25);
-  await tap(page, ["shift", "esc", "d2", "enter", "copy"]);
+  await tap(page, ["shift", "esc", "d2", "enter"]);
+  await menuItem(page, "copy");
   await expect.poll(() => clipboard(page)).toBe("2");
 });
 
@@ -95,14 +98,15 @@ async function root(page: Page): Promise<void> {
   await expect(page.getByTestId("readout-x")).toHaveText("1.41421356237");
 }
 
-test("Function: Copy copies the full root x from the readout", async ({ page }) => {
+test("Function: ☰ → Copy copies the full root x from the readout", async ({ page }) => {
   await root(page);
-  await tap(page, ["copy"]);
+  await menuItem(page, "copy");
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   const text = await clipboard(page);
   expect(text.startsWith(SQRT2.slice(0, 26))).toBe(true);
   expect(digits(text)).toBeGreaterThan(25);
-  await tap(page, ["@num", "esc", "paste"]); // paste on the Num start line
+  await tap(page, ["@num", "esc"]);
+  await systemPaste(page); // paste on the Num start line (R278: a system paste, ☰ has no Paste here)
   await expect.poll(() => entryValue(page)).toBe(text);
 });
 
