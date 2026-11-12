@@ -35,7 +35,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 | [A141](packages/A141.md) | The device step runs beside the lane | annabell, Sonnet | day, no lane running (owner, 11-12: moved from the freeze day) | the v0.1.0 tag | ~0.5 d |
 | [A142](packages/A142.md) | The lane queues in a file of their own | annabell, Sonnet | day, no lane running | the v0.1.0 tag | ~0.5 d |
 | [A143](packages/A143.md) | night.sh picks the plain step; henri the rest | annabell, Opus | day, no lane running | A142 | ~1 d |
-| [A136](packages/A136.md) | Golden gate on a module change | annabell, Sonnet | day, Thu 11-12 after the lanes (owner) | – | ~0.3 d |
+| A136 | Golden gate on a module change | annabell, Sonnet | day, Thu 11-12 after the lanes (owner) | – | ~0.3 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, by Sat 11-14 (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
 
