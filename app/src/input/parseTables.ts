@@ -53,8 +53,8 @@ export const FACTOR_CMDS = new Set([
   "operatorname", "mathrm", "mathit", "res", "ans", "const",
 ]);
 
-/** Letters that start a base prefix after a lone 0 (0x, 0b, 0o), and what may follow them. */
-export const BASE_PREFIX: Record<string, RegExp> = { x: /^[0-9A-Fa-f]/, b: /^[0-9]/, o: /^[0-9]/ };
+/** Letters that start a base prefix after a lone 0 (0x, 0b, 0o, docs/04 5.4), and their base. */
+export const BASE_PREFIX: Readonly<Record<string, number>> = { x: 16, b: 2, o: 8 };
 
 export interface ParseOptions {
   /** Single letters that name functions when followed by parentheses. Default f, g, h. */

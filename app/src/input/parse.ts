@@ -426,7 +426,12 @@ class Parser implements CalcParser {
       case "num": {
         // F43 (R51): the line shows two numbers with a gap and no ×; checked here, so a chip's drawn digits are skipped
         if (tok.gap) throw parseError("parse.timesBetweenNumbers");
-        this.basePrefix(tok);
+        const lit = this.baseLiteral(tok);
+        if (lit) {
+          const e = this.unitsAfter(lit);
+          this.numEnd = this.pos;
+          return e;
+        }
         this.pos++;
         if (this.isCmd(EMARK)) {
           const e = this.unitsAfter(this.eNumber(tok.v));
@@ -579,16 +584,27 @@ class Parser implements CalcParser {
   }
 
   /**
-   * docs/04 2.3 #1: a lone 0 followed by x, b or o and a digit (0xFF, 0b101, 0o17) is a number in another base,
-   * which the keys type as 0·x·F·F = 0 today. Refuse it with a message until EN6 (milestone 6) reads it.
+   * docs/04 5.4 (R191; 2.3 #1): a lone 0, x, b or o, then a digit run (numbers, for hex the letters A-F too: 0xFF, 0b101,
+   * 0o17) is one whole number, written in decimal (BigInt: 2^64-1 stays exact). A digit outside the base, a point, an ᴇ
+   * after it, or a prefix at the end of the line is refused; `0x+1`, `0xy` stay 0 times x. The cursor goes past the run.
    */
-  private basePrefix(tok: Tok): void {
-    if (tok.v !== "0") return;
+  private baseLiteral(tok: Tok): Json | undefined {
+    if (tok.v !== "0") return undefined;
     const p = this.peek(1);
-    const q = this.peek(2);
-    const after = p?.t === "ch" ? BASE_PREFIX[p.v] : undefined;
-    if (!after || !q || (q.t !== "num" && q.t !== "ch") || !after.test(q.v)) return;
-    throw parseError("parse.numbersInOther", { v: (p as Tok).v });
+    const base = p?.t === "ch" ? BASE_PREFIX[p.v] : undefined;
+    if (!p || !base) return undefined;
+    const hexLetter = (t: Tok | undefined): boolean => base === 16 && t?.t === "ch" && /^[A-Fa-f]$/.test(t.v);
+    let k = this.pos + 2;
+    if (k === this.toks.length) throw parseError("parse.baseNeedsDigits", { v: p.v });
+    if (this.toks[k]?.t !== "num" && !hexLetter(this.toks[k])) return undefined;
+    let digits = "";
+    for (let t = this.toks[k]; t && ((t.t === "num" && !t.gap) || hexLetter(t)); t = this.toks[++k]) digits += t.v;
+    if (!/^[0-9A-Za-z]+$/.test(digits)) throw parseError("parse.baseWhole");
+    const bad = [...digits].find((d) => parseInt(d, 16) >= base);
+    if (bad !== undefined) throw parseError("parse.baseDigit", { d: bad, base: String(base) });
+    this.pos = k;
+    if (this.isCmd(EMARK) || this.isCmd("tfrac")) throw parseError("parse.baseWhole");
+    return { num: BigInt(`0${p.v}${digits}`).toString() };
   }
 
   /** The value of a chip from the table, as one factor; a missing chip is an error, never a guess. */
