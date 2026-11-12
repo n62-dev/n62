@@ -63,8 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 628 | R279 Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
-| 626 | R278 Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, R279 |
 | 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | R278 (owner 11-12: in v0.1.0) |
 | 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R278, R279, R283 |
 | 753 | [R290](packages/R290.md) the six tips teach the final handling (K5) | ron, Sonnet | `p1/ron-tipsfinal` | R278, R283 |
