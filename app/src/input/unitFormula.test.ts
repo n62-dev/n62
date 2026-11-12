@@ -2,6 +2,7 @@
 // R24c: the unit view's formula, a slot after every number (docs/04 4.3), read back by the parser's units mode (R28).
 import { describe, expect, it } from "vitest";
 import { latexToGiacInfo } from "./latex-to-giac.ts";
+import { ANS_KEY, type Chip } from "./chips.ts";
 import { slotFormula } from "./unitFormula.ts";
 
 const giac = (latex: string): string => latexToGiacInfo(slotFormula(latex).latex, { units: true }).giac;
@@ -65,8 +66,29 @@ describe("slotFormula (R24c)", () => {
     expect(slotFormula("\\res{1}{0.1\\htmlStyle{color:var(--muted)}{\\,\\text{m}}}^{2}").latex).toBe(
       "\\res{1}{0.1\\htmlStyle{color:var(--muted)}{\\,\\text{m}}}\\placeholder[u1]{}^{2}\\to\\placeholder[end]{}",
     );
-    expect(slotFormula("\\ans\\times2").slots).toEqual(["u1"]); // Ans is no result chip here: the unit view has no Ans value
+    // R259: the view has an Ans (units/open.ts reads the view's last result once, when it opens), with no slot of its own
+    expect(slotFormula("\\ans\\times2").slots).toEqual(["u1"]);
     const chips = { "res:3": { value: "42", exact: true } };
     expect(latexToGiacInfo(slotFormula("\\res{3}{42}\\times2").latex, { units: true, chips }).giac).toBe("((42)*pasu1)*(2*pasu2)");
+  });
+
+  // R259 (bu-7): Ans is a number in the unit view, from the table units/open.ts gives; an Ans with a unit has no slot to
+  // keep it, so it is refused rather than read as a bare number (derived: 7 × 2 = 14)
+  const ansGiac = (latex: string, ans?: Chip): string => latexToGiacInfo(slotFormula(latex).latex.replace("\\to\\placeholder[end]{}", ""), { units: true, chips: ans ? { [ANS_KEY]: ans } : {} }).giac;
+  it("R259: Ans from the view's table is a number; with no result the honest message stays; with a unit it is refused", () => {
+    expect(ansGiac("\\ans\\times2", { value: "7", exact: true })).toBe("(7)*(2*pasu1)");
+    expect(() => ansGiac("\\ans\\times2")).toThrow("Ans: no result to use in this view yet");
+    const unit = { text: "m", dim: "m1", slot: { tokens: [{ unit: "m" }] } };
+    expect(() => ansGiac("\\ans\\times2", { value: "3", exact: true, unit })).toThrow("Ans has a unit here: use its row's chip");
+    // fix round 1: a dimensionless unit row (10 ± 0.5 m ÷ 2 m = 5 ± 0.25) gives a chip with σ and no unit: refused, σ never dropped
+    expect(() => ansGiac("\\ans\\times2", { value: "5", exact: false, unc: "0.25" })).toThrow("Ans has a σ here: use its row's chip");
+    expect(latexToGiacInfo("\\ans\\times2", { chips: { [ANS_KEY]: { value: "3", exact: true, unit } } }).giac).toBe("(3)*2"); // Home: the unit dropped, as R63
+  });
+  // vfh-1 (R271 made the parser's side): a σ that is no number keeps its slot before ±, and the parser says σ is the fault
+  it("R259: ± followed by no plain number, through slotFormula, is parse.pmNeedsSigma; a typed σ and a result chip stay valid", () => {
+    for (const l of ["10\\pm\\left(0.5\\right)", "10\\pm x", "10\\pm\\sqrt{2}"]) expect(() => giac(l)).toThrow("± needs a plain number after it");
+    expect(giac("10\\pm0.5")).toBe("pasupm(10,0.5)*pasu1");
+    const chips = { "res:7": { value: "0.5", exact: true } };
+    expect(latexToGiacInfo(slotFormula("10\\pm\\res{7}{0.5}").latex, { units: true, chips }).giac).toBe("pasupm(10,(5/10^1),pasws1)*pasu1"); // R271: the chip is σ
   });
 });

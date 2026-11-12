@@ -425,3 +425,67 @@ test.describe("the row at phone widths", () => {
     });
   }
 });
+
+// R259 (bu-7): × on an empty line starts with Ans (docs/04 2.8), and the unit view reads it: the view's last result (Home's
+// or CAS's, as Enter there reads it), once, when the view opens. Expected values derived: 7 × 2 = 14, 5 × 2 = 10.
+test.describe("Ans in the unit view (R259)", () => {
+  test.beforeEach(async ({ page }) => {
+    await open(page, "");
+    await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  });
+  const line = (page: Page): Promise<string> => page.evaluate(() => window.n62.entry.field?.value ?? "");
+  /** `× 2` on the empty line (Ans × 2), the units key, m in the first slot, Enter to the end slot, Enter. */
+  const ansTimes2InM = async (page: Page): Promise<void> => {
+    await tap(page, ["mul", "d2"]);
+    await expect.poll(() => line(page)).toMatch(/^\\ans\\times2$/);
+    await unitsKey(page);
+    await plan(page, "d9 enter enter");
+  };
+
+  test("Home 7, then Ans × 2 in m shows = 14 m; a second Enter in the view still 14 m (its own row is not Ans)", async ({ page }) => {
+    await tap(page, ["d7", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await ansTimes2InM(page);
+    await expect(result(page)).toHaveAttribute("data-text", "14");
+    await expect(result(page)).toHaveAttribute("data-unit", "m");
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2); // the view's Home row, now the last result
+    await page.evaluate(() => window.n62.unitView?.view.evaluate()); // what the second Enter in the end slot does, awaited
+    await tap(page, ["enter"]);
+    await expect(page.getByTestId("unit-message")).toHaveCount(0);
+    await expect(result(page)).toHaveAttribute("data-text", "14");
+    await expect(result(page)).toHaveAttribute("data-unit", "m");
+  });
+
+  test("from CAS (Home holds 7): CAS 5, then Ans × 2 in m shows = 10 m, the line's view's Ans", async ({ page }) => {
+    await tap(page, ["d7", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await page.evaluate(() => window.n62.session.setView("cas"));
+    await tap(page, ["d5", "enter"]);
+    await expect.poll(() => page.evaluate(() => window.n62.session.cas.filter((i) => i.status === "done").length)).toBe(1);
+    await ansTimes2InM(page);
+    await expect(result(page)).toHaveAttribute("data-text", "10");
+    await expect(result(page)).toHaveAttribute("data-unit", "m");
+  });
+
+  test("control: with no result yet, Ans in the view still says there is none", async ({ page }) => {
+    await page.evaluate(() => window.n62.entry.run({ kind: "insert", latex: "\\ans\\times2" }));
+    await expect.poll(() => line(page)).toMatch(/^\\ans\\times2$/);
+    await unitsKey(page);
+    await plan(page, "d9 enter enter");
+    await expect(page.getByTestId("unit-message")).toHaveText("Ans: no result to use in this view yet");
+    await expect(result(page)).toHaveCount(0);
+  });
+
+  test("a 3 m unit row as Ans: Ans × 2 in m is refused with its own line, no number", async ({ page }) => {
+    await tap(page, ["d3"]);
+    await unitsKey(page);
+    await plan(page, "d9 enter enter");
+    await expect(result(page)).toHaveAttribute("data-unit", "m");
+    await tap(page, ["esc"]);
+    await page.waitForFunction(() => window.n62.unitView === undefined);
+    await page.evaluate(() => window.n62.entry.clear());
+    await ansTimes2InM(page);
+    await expect(page.getByTestId("unit-message")).toHaveText("Ans has a unit here: use its row's chip");
+    await expect(result(page)).toHaveCount(0);
+  });
+});
