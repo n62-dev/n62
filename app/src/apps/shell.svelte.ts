@@ -299,10 +299,6 @@ export class AppShell {
   }
   /** R145: where a ☰ sheet's ⚙ goes: Settings as a level of the sheet (R49), else, before the Mode code is in, Mode › Settings. */
   private readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
-  /** What the Copy key takes from the open app view; undefined when it has nothing to copy. */
-  copyText(): Promise<string | undefined> | string | undefined {
-    return this.instance?.copyText?.(this.view);
-  }
 
   // ---- sheets (docs/05 3.1)
   get switcherOpen(): boolean {

@@ -2,7 +2,7 @@
 // Copy, paste, share and export (docs/04 section 2.6, backlog step 9, P5): one test per action and a copy → paste round
 // trip, by key sequences on the real engine. Expected values are derived: the decimal expansion of 1/3 and 2/3.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, lastResult, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, PASTE, entryValue, lastResult, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 // The system clipboard is one for the whole browser: these tests run one after another.
@@ -42,17 +42,17 @@ const pickCopyAs = async (page: Page, label: string): Promise<void> => {
   await page.getByRole("menuitem", { name: new RegExp(`^\\d ${label}$`) }).click();
 };
 
-test("Copy: copies the full value of the last result, not the 12 shown digits", async ({ page }) => {
+test("☰ → Copy copies the full value of the last result, not the 12 shown digits", async ({ page }) => {
   await thirds(page);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.666666666667");
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
 
-test("Copy: copies the picked row (Up on an empty line)", async ({ page }) => {
+test("☰ → Copy copies the picked row (Up on an empty line)", async ({ page }) => {
   await thirds(page);
-  await tap(page, ["up", "up", "copy"]);
+  await tap(page, ["up", "up", ...COPY]);
   await expect.poll(() => clipboard(page)).toBe(THIRD);
 });
 
@@ -69,34 +69,34 @@ test("Menu with a picked row copies that row, not the last result (R13, S2 I1)",
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
 
-test("Paste (one press, R146) pastes a number as the keyboard's own LaTeX", async ({ page }) => {
+test("☰ → Paste pastes a number as the keyboard's own LaTeX", async ({ page }) => {
   await setClipboard(page, "1.5E-3");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("1.5\\emark-3"); // drawn 1.5ᴇ-3, as the exponent key types it (R14)
   await tap(page, ["esc"]);
   await setClipboard(page, "1.5-2*i");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("1.5-2\\imaginaryI");
 });
 
 test("Paste refuses what is not a number, and says so", async ({ page }) => {
   await setClipboard(page, "hello");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect(page.getByTestId("notice")).toHaveText("Paste: not a number");
   expect(await entryValue(page)).toBe("");
 });
 
 test("copy → paste gives the value back (P5)", async ({ page }) => {
   await thirds(page);
-  await tap(page, ["copy"]); // 2/3, 40 digits
-  await tap(page, ["paste"]);
+  await tap(page, COPY); // 2/3, 40 digits
+  await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe(TWO_THIRDS);
   await tap(page, ["enter"]);
   await done(page, 3);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.666666666667");
   // and a number with an exponent, through the E key of the clipboard text
   await setClipboard(page, "2.5E-4");
-  await tap(page, ["paste", "mul", "d4", "enter"]);
+  await tap(page, [...PASTE, "mul", "d4", "enter"]);
   await done(page, 4);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.001"); // 2.5E-4 × 4
 });
@@ -182,28 +182,24 @@ test("two short taps on a history row put the result on the line (R147: the firs
   expect(await entryValue(page)).toContain("\\res");
 });
 
-test("Num: the table as CSV with full values, from Copy and from the Menu", async ({ page }) => {
+test("Num: the table as CSV with full values, from ☰ → Copy table as CSV (R278: the Copy key is gone)", async ({ page }) => {
   await tap(page, ["@symb", "d1", "div", "x", "enter", "@num"]);
   const td = page.locator('[data-testid="num-table"] tr:has(td[data-x="0.1"]) td').nth(1);
   await expect(td).toHaveAttribute("data-text", "10");
-  await tap(page, ["copy"]);
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
-  const csv = (await clipboard(page)).split("\r\n");
-  expect(csv.slice(0, 4)).toEqual(["x,F1", "0,NaN", "0.1,10", "0.2,5"]);
-  await setClipboard(page, "");
   await pickMenu(page, "Copy table as CSV");
   await expect(page.getByTestId("notice")).toHaveText("Copied the table as CSV");
-  expect((await clipboard(page)).startsWith("x,F1\r\n")).toBe(true);
+  const csv = (await clipboard(page)).split("\r\n");
+  expect(csv.slice(0, 4)).toEqual(["x,F1", "0,NaN", "0.1,10", "0.2,5"]);
 });
 
-test("a key right after Paste waits for the pasted number: Paste, ÷ with a slow clipboard divides 1.5 (R8, R57f1)", async ({ page }) => {
+test("a key right after ☰ → Paste waits for the pasted number: ÷ with a slow clipboard divides 1.5 (R8, R57f1)", async ({ page }) => {
   await setClipboard(page, "1.5");
   // the clipboard answers late, as on a loaded phone: ÷ is pressed before the read is back
   await page.evaluate(() => {
     const read = navigator.clipboard.readText.bind(navigator.clipboard);
     navigator.clipboard.readText = () => new Promise((ok) => setTimeout(() => ok(read()), 400));
   });
-  await tap(page, ["paste", "div", "d3"]);
+  await tap(page, [...PASTE, "div", "d3"]);
   await expect.poll(() => entryValue(page)).toBe("\\frac{1.5}{3}");
   await tap(page, ["enter"]);
   await done(page, 1);

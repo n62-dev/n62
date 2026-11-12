@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copy, paste and share as the keys and menus use them (docs/04 section 2.6): the Copy and Paste keys, the Home/CAS
-// ☰ menu, the picked row's buttons, a hold on a history row's input or result (R276), and the Num table. The texts come from text.ts and paste.ts; the delivery is the
+// Copy, paste and share as the menus and gestures use them (docs/04 section 2.6): the Home/CAS ☰ menu (Copy and Paste
+// are items of it since R278 took their keys away), the picked row's buttons, a hold on a history row's input or result (R276), and the Num table. The texts come from text.ts and paste.ts; the delivery is the
 // ClipboardPort. Every action ends in a short notice, so a refusal is never silent.
 import type { EntryController } from "../entry/controller.ts";
 import { tc } from "./strings.ts";
@@ -34,6 +34,8 @@ export interface RowOps {
   recall(item: HistoryItem): void;
   /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
+  /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
+  hold?(job: Promise<unknown>): void;
 }
 
 export class ClipActions {
@@ -64,7 +66,7 @@ export class ClipActions {
   }
 
   /** The tail of the chain: every clipboard operation starts when the one before it has finished, ok or not, so a quick
-   *  Copy then Paste (both fire-and-forget on the keys) cannot read the clipboard before the Copy has written it (F100). */
+   *  Copy then Paste (both fire-and-forget) cannot read the clipboard before the Copy has written it (F100). */
   private tail: Promise<unknown> = Promise.resolve();
   private serial<T>(run: () => Promise<T>): Promise<T> {
     const next = this.tail.then(run, run);
@@ -132,21 +134,8 @@ export class ClipActions {
     return ok;
   }
 
-  /** The Copy key: the full value of the picked or last result; in an app, what the open view offers (the Num table as CSV). */
-  copyKey(item?: HistoryItem): Promise<boolean> {
-    return this.serial(async () => {
-      if (this.shell.app !== null) return this.put(await this.shell.copyText());
-      return this.copyNow(item);
-    });
-  }
-  /** The Copy key on a picked row: outside the Menu's list, so it tells the app itself (a row without a result copies
-   *  nothing: only the notice). */
-  copyPicked(item: HistoryItem): Promise<boolean> {
-    if (item.status === "done") this.ops.acted?.("copy");
-    return this.copyKey(item);
-  }
   /** R276: a hold on a history row's input (`latex`, as drawn: its plain text) or result (Copy's full value) copies
-   *  it; a row action, as the Copy key on a pick is. */
+   *  it; a row action (counted as Menu's Copy is). */
   holdCopy(item: HistoryItem, part: "input" | "result", latex: string): Promise<boolean> {
     if (part === "result") {
       if (item.status === "done") this.ops.acted?.("copy");
@@ -187,7 +176,7 @@ export class ClipActions {
     });
   }
 
-  /** The Paste key, ☰ → Paste: the clipboard as one number, onto the entry line. `text`: a system paste's own text
+  /** ☰ → Paste: the clipboard as one number, onto the entry line. `text`: a system paste's own text
    *  (Ctrl+V, Shift+Insert, the context menu; R114), which takes the same path without reading the clipboard. */
   paste(text?: string): Promise<boolean> {
     return this.serial(() => this.pasteNow(text));
@@ -331,7 +320,14 @@ export class ClipActions {
         run: act("delete", () => this.deleteRow(row)),
       },
       { id: "copyAs", label: tc("clip.copyAs"), disabled: none, reason: why, submenu: { title: tc("clip.copyAs"), items: copies } },
-      { id: "paste", label: tc("clip.paste"), run: () => void this.paste() },
+      {
+        id: "paste",
+        label: tc("clip.paste"),
+        run: () => {
+          const job = this.paste();
+          this.ops.hold?.(job);
+        },
+      },
       { id: "share", label: tc("clip.share"), disabled: !finished, reason: why, run: () => void this.shareSession() },
       { id: "clear", label: tc("clip.clear"), disabled: empty, run: () => void this.session.clearHistory() },
     ];

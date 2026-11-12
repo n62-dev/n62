@@ -13,6 +13,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
 
+**Copy and Paste in the apps after R278** (Solve, Function: ☰ has their own items, no Paste): Copy is each app's ☰ item (Solve's root, Function's readout, the Num CSV; the Copy key's old app path is gone). A number from another app comes in there only by a system paste (Ctrl+V, the field's context menu: R114). Recommended: leave it (the field's context menu is one long press). Else a Paste item in each app's ☰ (≈0.5 d). Cost of leaving: no ☰ Paste in an app view.
+
 ## Decided proposals
 
 ### Pipeline and process

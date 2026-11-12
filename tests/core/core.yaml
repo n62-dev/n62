@@ -436,16 +436,16 @@ cases:
 
   - id: c49
     area: entry
-    title: "Copy the last result, Paste it into the line (the Paste key, owner 2026-11-06)"
-    keys: [d7, enter, copy, paste, add, d1, enter]
+    title: "A hold copies the result, ☰ Paste (7) puts it on the line (R278: the Copy and Paste keys left the keypad; before, the Copy and Paste keys, owner 2026-11-06)"
+    keys: [d7, enter, {hold: "result:last"}, "@menu", d7, add, d1, enter]
     expect: { result: "8", mark: "=" }
     value: "8"
     source: derived
 
   - id: c50
     area: entry
-    title: "▲ picks an earlier row; Copy takes that row, the Paste key puts it on the line (owner 2026-11-06)"
-    keys: [d2, enter, d3, enter, up, up, copy, paste, add, d1, enter]
+    title: "A hold on an earlier row's result copies that row (not the last), ☰ Paste (7) puts it on the line (R278: the Copy and Paste keys left the keypad; before, ▲ picked the row and the Copy key took it, owner 2026-11-06)"
+    keys: [d2, enter, d3, enter, {hold: '[data-testid="result"] .result'}, "@menu", d7, add, d1, enter]
     expect: { result: "3", mark: "=" }
     value: "3"
     source: derived

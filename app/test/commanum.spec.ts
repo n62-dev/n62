@@ -3,7 +3,7 @@
 // the comma (R57 had done Home, CAS, Copy and Paste). Expected values are the oracle's (mpmath 30 digits, 12 shown):
 // sqrt(2) = 1.41421356237, lambertw(5) = 1.32672466524, sin(1) = 0.841470984808; sin(0.1) = 0.0998334166468.
 import { expect, test, type Page } from "@playwright/test";
-import { open, tap, useClipboardLock } from "./helpers.ts";
+import { menuItem, open, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
@@ -27,14 +27,14 @@ test("Solve: the roots of x²-2 read 1,41421356237 (Polynomial roots)", async ({
   await expect(page.locator('[data-testid="solve-roots"] li')).toHaveText(["x = -1,41421356237", "x = 1,41421356237"]);
 });
 
-test("Solve: Num shows x·eˣ=5 as 1,32672466524, Copy gives the comma, point mode still the point", async ({ page }) => {
+test("Solve: Num shows x·eˣ=5 as 1,32672466524, ☰ → Copy gives the comma, point mode still the point", async ({ page }) => {
   await tap(page, ["@place", "d4", "@symb"]);
   await tap(page, ["x", "shift", "ln", "x", "right", "shift", "dot", "d5", "enter", "@num"]);
   await row(page, "x").locator("th button").tap();
   await tap(page, ["shift", "esc", "d1", "enter", "@menu", "d1"]); // Clear (R261: Esc puts the value back), guess 1, Menu → Solve
   await expect(row(page, "x").locator("td")).toHaveText("1,32672466524");
   await expect(row(page, "x").locator("td")).toHaveAttribute("data-value", /^1\.3267246652/); // the stored value keeps the point
-  await tap(page, ["copy"]);
+  await menuItem(page, "copy");
   await expect.poll(() => clipboard(page)).toMatch(/^1,3267246652\d{10,}$/);
   await page.evaluate(() => window.n62.session.setDecimalMark("point"));
   await expect(row(page, "x").locator("td")).toHaveText("1.32672466524");
@@ -48,7 +48,7 @@ test("Function: a Num row shows sin(0,1) and sin(1) with the comma; the CSV is ;
   await expect(cell("0.1").nth(1)).toHaveAttribute("data-text", "0,0998334166468"); // oracle sin(0.1)
   await tap(page, ["@menu", "d2", "d1", "enter"]); // step 1
   await expect(cell("1").nth(1)).toHaveAttribute("data-text", "0,841470984808"); // oracle sin(1)
-  await tap(page, ["copy"]);
+  await menuItem(page, "csv");
   await expect.poll(() => clipboard(page)).toMatch(/^x;F1\r\n0;0\r\n1;0,84147098480\d*\r\n/);
   await page.evaluate(() => window.n62.session.setDecimalMark("point"));
   await expect(cell("1").nth(1)).toHaveAttribute("data-text", "0.841470984808");

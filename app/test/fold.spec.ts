@@ -270,15 +270,13 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
   expect(await entryValue(page)).toMatch(/^\\res/);
   await expect.poll(async () => (await counts())["insert"]).toBe(1);
 
-  // the Copy key on a pick: the pad is inert while folded, so its press comes as the pad's own events
+  // ☰ → Copy on a pick (R278: the Copy key is gone; the status line's ☰ is on screen while the pad is folded)
   await clearLine(page);
   await page.locator(HANDLE).tap();
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
-  await page.evaluate(() => {
-    const k = document.querySelector('[data-key="copy"]');
-    for (const type of ["pointerdown", "pointerup"]) k?.dispatchEvent(new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 9, button: 0, pointerType: "touch" }));
-  });
+  await page.getByTestId("menu-button").tap();
+  await sheet(page).locator('[data-id="copy"]').tap();
   await expect(picked(page)).toHaveCount(0);
   await expect.poll(async () => (await counts())["copy"]).toBe(1);
   await isFolded(page, true);
