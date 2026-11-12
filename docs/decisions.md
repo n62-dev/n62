@@ -11,8 +11,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row writes `39.488 ± 1.2 m²`, but Paste reads one number ("Paste: not a number") and the unit view takes no paste. Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
 
-**Ans in the unit view (R259):** recommended, no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. A slot ≈0.5 d.
-
 **Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
 
 ## Decided proposals
@@ -109,6 +107,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **User requests (2026-10-11):** the Format key, ∡ polar entry, key vibration, a tap places the cursor, E-notation formats.
 
 ### Units (milestone 5)
+- **Ans in the unit view (R259; owner, 2026-11-12):** no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. Would change if: daily use asks (≈0.5 d).
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none; a prefix goes in the unit view's prefix cells (P11, docs/05 §7.2), and docs/04 2.7's prefix chip is dropped.
 - **G81 (Opus pass 24):** a result whose every leaf cancels (`μ₀·ε₀·c²` = 1, σ 0) keeps `≈`. Archived, "Opus pass 96". Would change if: the owner wants `=` for a σ of exactly 0.
 - **R24d (Opus pass 23):** an empty user cell's Find pick sets that leg and lands in the slot (one trip does both); the six off-pad units and the units menu's Tools and Const tabs: archive.
