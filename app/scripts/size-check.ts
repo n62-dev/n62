@@ -407,7 +407,10 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  60,850 → 60,980 B (R260): a stored name is shown as typed (render/home.ts typedName: β for beta_, e for e_; the Greek
  *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
  *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
- *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB. */
+ *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  G313f1 (no start-chunk file changed, the pin stays 60,980 B): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
+ *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
+ *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stays inside the R260 pin. */
 export const START_PIN_GZIP = 60_980;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

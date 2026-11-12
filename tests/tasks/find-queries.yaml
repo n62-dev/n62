@@ -142,11 +142,15 @@ queries:
   - { query: "cross product", expect: "fn:cross" }
   - { query: "parallel", expect: "fn:par", note: "resistors in parallel (G30)" }
   - { query: "e24", expect: "fn:eseries", note: "E-series rounding (G30)" }
+  - { query: "sigfig", expect: "fn:sigfig", note: "G313: our own sigfig(x, n)" }
+  - { query: "significant figures", expect: "fn:sigfig", note: "G313" }
+  - { query: "sig figs", expect: "fn:sigfig", note: "G313" }
+  - { query: "interpolate", expect: "fn:lagrange", note: "G313: Giac's lagrange, tier 1 (alias)" }
+  - { query: "interpolation", expect: "fn:lagrange", note: "G313" }
+  - { query: "rms", expect: "fn:rms", note: "tier 1" }
   # Milestone 6 (pending)
   - { query: "hex", expect: "tmpl:base", note: "number bases, EN6", status: pending }
   - { query: "dot product", expect: "fn:dot", note: "curated in EN5", status: pending }
-  - { query: "rms", expect: "fn:rms", note: "EN7", status: pending }
-  - { query: "interpolate", expect: "fn:interp", note: "EN7", status: pending }
   - { query: "polar to rectangular", expect: "tmpl:rect", note: "rectangular form", status: pending }
   - { query: "dms", expect: "tmpl:dms", note: "degrees-minutes-seconds", status: pending }
   - { query: "db", expect: "fn:db", note: "the dB function in Home, the dB unit in the unit view (context decides)", status: pending }
