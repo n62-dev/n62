@@ -421,7 +421,8 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  chunk; what stays is the two specials' names, their case in route.ts special(), the guards that keep them off a picked row
  *  and a sheet, the end of the chain on any other key (route.ts run, EntryController.run) and the controller's two
  *  one-line methods. The merge base 5bfdb4c1 measures 61.18 kB gzip (172.85 kB raw), the branch 61.34 kB (173.25 kB raw,
- *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk): 61.34 kB + 0.05 kB, rounded up. */
+ *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk; 61.35 kB after merging phase-1 31b97787): 61.35 kB
+ *  + 0.05 kB. */
 export const START_PIN_GZIP = 61_400;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
