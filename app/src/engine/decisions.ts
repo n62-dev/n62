@@ -70,11 +70,17 @@ export function nonRealArg(giac: Giac, P: number): (arg: string) => boolean {
  * nests roots of the argument's squared parts, which cancel: for asin(sqrt(-2)*10^-330-2) its integers pass
  * MAX_EVAL_DIGITS, so no precision we run evaluates it (at 40 and 60 digits it gave ln 2 for 1.31695789692; at 700, 35
  * right digits). Each evalf runs at the Digits of the evaluation it is in, so the agreement check still compares two.
- * Inner calls are read so too. Null when no call decides.
+ * Inner calls are read so too; `swap` (a call's name and typed argument) picks which (G325f2: contradictedCall). Null when none is.
  */
-export function argumentsAsFloats(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): string | null {
+export function argumentsAsFloats(
+  input: string,
+  q: Quoting,
+  result: string,
+  complexArg: (arg: string) => boolean,
+  swap: (name: string, arg: string) => boolean = () => true,
+): string | null {
   if (!nonRealText(result)) return null;
-  const calls = callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
+  const calls = callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)) && swap(c.name, input.slice(c.open + 1, c.close)));
   if (!calls.length) return null;
   const marks = calls.flatMap((c) => [{ at: c.open + 1, s: "evalf(" }, { at: c.close, s: ")" }]).sort((a, b) => b.at - a.at);
   let out = input;
@@ -91,41 +97,52 @@ export function pastCapFloats(giac: Giac, input: string, result: string, P: numb
 }
 
 /** G325f2: Giac's text of a result holds a float and a free name (x+evalf(asin(z))): not a number, so Home runs the
- *  floatResultFloats input again for its text instead of taking the float path. */
+ *  contradictedFloats input again for its text instead of taking the float path. */
 export const floatsBesideName = (result: string): boolean => hasFloat(result) && namesIn(result, "printed").some((n) => n !== "i");
 
-/** G325f2: argumentsAsFloats of `input` when Giac's text of it (`result`) holds a float: Giac's evalf of its own exact
- *  text of the call (evalf, approx), whose nested roots cancel to the same wrong value at both precisions, so the
- *  agreement check confirmed it (evalf(asin(sqrt(-2)*10^-330-2)) showed ln 2 for 1.31695789692 with 40 digits). Home
- *  and CAS then take MPFR's function of the argument's float when floatsContradict finds Giac's value wrong. One call
- *  per argument (complexArg). */
-export function floatResultFloats(input: string, result: string, complexArg: (arg: string) => boolean): string | null {
-  return hasFloat(result) ? argumentsAsFloats(input, "typed", result, complexArg) : null;
-}
-
 /**
- * G325f2 fix round 1: Giac's value of the input (stored in `name`, its evalf at P) is contradicted by MPFR's function of
- * the argument's float (`floats`, floatResultFloats): a part of it differs from that route's value at P + 20 by more
- * than ten times the route's own change from P to P + 20, plus 10^(3-P) of its size. Only then is the exact text the
- * wrong one. Near ±1 the argument's float loses digits instead (acosh(1/2+i/10^20) kept 9 of its tiny real part, which
- * Giac's ln form has whole; asin(-1-10^-30+i/10^40) none), so a route that changes much contradicts nothing. One
- * evaluation; a text that stores, a list (whose comparison is no truth value) or an error takes the float route.
+ * G325f2 fix rounds 1 and 2: whether Giac's value of one decided call (its name and typed argument: asin, z) is
+ * contradicted by MPFR's function of the argument's float: a part of evalf(asin(z)) at P differs from asin(evalf(z)) at
+ * P + 20 by more than ten times that route's own change from P to P + 20, plus 10^(3-P) of its size. Giac's evalf of
+ * its exact text of the call nests roots that cancel to the same wrong value at both precisions
+ * (evalf(asin(sqrt(-2)*10^-330-2)) showed ln 2 for 1.31695789692 with 40 digits): then the float is the value. Near ±1
+ * the argument's float loses digits instead (acosh(1/2+i/10^20) kept 9 of its tiny real part, which Giac's ln form has
+ * whole; asin(-1-10^-30+i/10^40) none), so a route that changes much contradicts nothing. Per call, never on the whole
+ * result: a non-number (x+evalf(asin(z))) or a list compares no truth value. A call that stores is not run (true); a
+ * check with no truth value (a free name in the argument) keeps Giac's value; an error takes the float. One evaluation
+ * per call, kept for the input.
  */
-export function floatsContradict(giac: Giac, name: string, floats: string, P: number, restore: number): boolean {
-  if (mayStore(floats)) return true;
-  const e = toExactLiterals(floats);
-  const part = (f: string): string => `abs(${f}(${name})-${f}(pasfb))<=10*abs(${f}(pasfa)-${f}(pasfb))+10^(${3 - P})*abs(pasfb)`;
-  const run = `Digits:=${P}:;pasfa:=evalf(${e}):;Digits:=${P + 20}:;pasfb:=evalf(${e}):;[${part("re")} and ${part("im")},purge(pasfa,pasfb)][0]`;
-  const kept = withDigits(giac, P + 20, restore, () => giac.eval(run));
-  if (isError(kept)) giac.eval("purge(pasfa,pasfb)");
-  return !kept.endsWith(",true");
+export function contradictedCall(giac: Giac, P: number, restore: number): (name: string, arg: string) => boolean {
+  const known = new Map<string, boolean>();
+  return (name, arg) => {
+    const call = `${name}(${arg})`;
+    const k = known.get(call);
+    if (k !== undefined) return k;
+    const e = toExactLiterals(call);
+    const f = toExactLiterals(`${name}(evalf(${arg}))`);
+    const part = (p: string): string => `abs(${p}(pasfg)-${p}(pasfb))<=10*abs(${p}(pasfa)-${p}(pasfb))+10^(${3 - P})*abs(pasfb)`;
+    const run = `Digits:=${P}:;pasfg:=evalf(${e}):;pasfa:=evalf(${f}):;Digits:=${P + 20}:;pasfb:=evalf(${f}):;[${part("re")} and ${part("im")},purge(pasfg,pasfa,pasfb)][0]`;
+    const kept = mayStore(call) ? null : withDigits(giac, P + 20, restore, () => giac.eval(run));
+    if (kept !== null && !kept.endsWith(",true") && !kept.endsWith(",false")) giac.eval("purge(pasfg,pasfa,pasfb)");
+    const r = kept === null || kept.endsWith(",false") || isError(kept);
+    known.set(call, r);
+    return r;
+  };
 }
 
-/** G325f2: floatResultFloats of `input` (Giac's value of it in `name`, printed `result`) when floatsContradict finds
- *  Giac's value wrong; null otherwise. */
-export function contradictedFloats(giac: Giac, input: string, result: string, name: string, P: number, restore: number): string | null {
-  const floats = floatResultFloats(input, result, nonRealArg(giac, P));
-  return floats !== null && floatsContradict(giac, name, floats, P, restore) ? floats : null;
+/** G325f2: argumentsAsFloats of `input` (typed) for the calls whose Giac value contradictedCall finds wrong, when Giac's
+ *  text of it (`result`) holds a float (evalf, approx); null when none is. One call per asin, acos or acosh argument
+ *  (nonRealArg), then one per decided call (contradictedCall; pass both to share them between inputs). */
+export function contradictedFloats(
+  giac: Giac,
+  input: string,
+  result: string,
+  P: number,
+  restore: number,
+  complexArg = nonRealArg(giac, P),
+  contradicted = contradictedCall(giac, P, restore),
+): string | null {
+  return hasFloat(result) ? argumentsAsFloats(input, "typed", result, complexArg, contradicted) : null;
 }
 
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.

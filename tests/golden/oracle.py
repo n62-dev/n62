@@ -100,6 +100,7 @@ def namespace(digits=None):
     ns["S"] = lambda label: Label(label)
     ns["Braces"] = lambda *xs: Label("{" + ",".join(display(x, digits) for x in xs) + "}")  # G169: a `{ }` list as the app shows it (the case's digits, G322)
     ns["Bracket"] = lambda *xs: Label("[" + ",".join(display(x, digits) for x in xs) + "]")  # G172: a `[ ]` list or matrix row as the app shows it
+    ns["Beside"] = lambda name, x: Label(name + ("" if display(x, digits).startswith("-") else "+") + display(x, digits).replace("E", "e"))  # G325f2: name+x, Giac's text of a free name plus a number (its floats print a lowercase e)
     return ns
 
 

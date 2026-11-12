@@ -658,8 +658,8 @@ export function homeEval(
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
-  // G325f1, G325f2: asin, acos or acosh of a non-real argument whose exact text is past the cap, or under evalf when the argument's float contradicts it
-  const asFloats = once || undecided ? null : (pastCapFloats(giac, body, exactOut, P) ?? contradictedFloats(giac, body, exactOut, ans, P, s.digits));
+  // G325f1, G325f2: asin, acos or acosh of a non-real argument whose exact text is past the cap, or under evalf each call the argument's float contradicts
+  const asFloats = once || undecided ? null : (pastCapFloats(giac, body, exactOut, P) ?? contradictedFloats(giac, body, exactOut, P, s.digits));
   if (asFloats !== null && !floatsBesideName(exactOut)) return viaFloat("float-big", undefined, asFloats);
   if (asFloats !== null) exactOut = exactRun(toExactLiterals(asFloats)); // G325f2: a non-number keeps Giac's text of it
   if (seq.empty) return refuse("noValue", "exact");

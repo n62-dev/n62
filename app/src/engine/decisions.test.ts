@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { argumentsAsFloats, decidedAtDouble, floatResultFloats, floatsBesideName, floatsContradict, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
+import { argumentsAsFloats, contradictedCall, contradictedFloats, decidedAtDouble, floatsBesideName, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -180,25 +180,35 @@ describe.skipIf(!giacAvailable())("nonRealArg at MPFR precision (G325f1; real Gi
     expect(nonRealArg(giac, P)("2")).toBe(false);
   });
 
-  it("finds Giac's evalf contradicted only where its exact text cancels (G325f2 fix round 1)", () => {
+  it("finds Giac's evalf of a call contradicted only where its exact text cancels (G325f2 fix rounds 1 and 2)", () => {
     const P = valuePrecision(12);
-    const contradicted = (input: string, floats: string): boolean => {
-      withDigits(giac, P, 12, () => giac.eval(`pasg325:=${input}`));
-      try {
-        return floatsContradict(giac, "pasg325", floats, P, 12);
-      } finally {
-        giac.eval("purge(pasg325)");
-      }
-    };
-    expect(contradicted("evalf(asin(sqrt(-2)*10^-330-2))", "evalf(asin(evalf(sqrt(-2)*10^-330-2)))")).toBe(true);
-    expect(contradicted("evalf(acosh(sqrt(-2)*10^-330-2))", "evalf(acosh(evalf(sqrt(-2)*10^-330-2)))")).toBe(true);
+    const contradicted = contradictedCall(giac, P, 12);
+    expect(contradicted("asin", "sqrt(-2)*10^-330-2")).toBe(true);
+    expect(contradicted("acosh", "sqrt(-2)*10^-330-2")).toBe(true);
+    expect(contradicted("acos", "sqrt(-2)/10^400-2")).toBe(true);
     // the argument's float loses the tiny part's digits near 1 (MPFR's ln), Giac's ln form keeps them
-    expect(contradicted("evalf(acosh(1/2+i/10^20))", "evalf(acosh(evalf(1/2+i/10^20)))")).toBe(false);
-    expect(contradicted("evalf(asin(1/2+i/10^20))", "evalf(asin(evalf(1/2+i/10^20)))")).toBe(false);
-    expect(contradicted("evalf(asin(-1-10^-30+i/10^40))", "evalf(asin(evalf(-1-10^-30+i/10^40)))")).toBe(false);
+    expect(contradicted("acosh", "1/2+i/10^20")).toBe(false);
+    expect(contradicted("asin", "1/2+i/10^20")).toBe(false);
+    expect(contradicted("asin", "-1-10^-30+i/10^40")).toBe(false);
+    // a free name in the argument compares no truth value: Giac's text stands
+    expect(contradicted("asin", "x+i")).toBe(false);
     // a text that stores is never run for the check
-    expect(contradicted("evalf(asin(2*i))", "pq:=evalf(asin(evalf(2*i)))")).toBe(true);
+    expect(contradicted("asin", "pq:=2*i")).toBe(true);
     expect(giac.eval("pq")).toBe("pq");
+    expect(giac.eval("pasfg")).toBe("pasfg");
+    expect(giac.eval("Digits")).toBe("12");
+  });
+
+  it("swaps in the argument's float per call, never for a whole non-number or list (G325f2 fix round 2)", () => {
+    const P = valuePrecision(12);
+    const floats = (input: string, result: string): string | null => contradictedFloats(giac, input, result, P, 12);
+    // x+… and a list compare no truth value as a whole; the call inside is checked alone
+    expect(floats("x+evalf(asin(sqrt(-2)*10^-330-2))", "x-1.57079632679+0.69314718056*i")).toBe("x+evalf(asin(evalf(sqrt(-2)*10^-330-2)))");
+    expect(floats("x+evalf(acosh(1/2+i/10^20))", "x+1.15470053838e-20+1.0471975512*i")).toBeNull();
+    expect(floats("evalf([acosh(1/2+i/10^20),1])", "[1.15470053838e-20+1.0471975512*i,1]")).toBeNull();
+    expect(floats("evalf([asin(sqrt(-2)*10^-330-2),acosh(1/2+i/10^20)])", "[-1.57+0.69*i,1.15e-20+1.05*i]")).toBe("evalf([asin(evalf(sqrt(-2)*10^-330-2)),acosh(1/2+i/10^20)])");
+    // an exact text is pastCapFloats' or decideTwice's
+    expect(floats("asin(sqrt(-2)-10^35)", "i*ln(2)")).toBeNull();
   });
 });
 
@@ -297,9 +307,10 @@ describe("asin and acos of a non-real argument decide (G325)", () => {
 
   it("reads acosh's argument as its float too, and Giac's float text of the call (G325f2)", () => {
     expect(argumentsAsFloats("evalf(acosh(sqrt(-2)*10^-330-2))", "typed", "0.69+3.14*i", nonReal)).toBe("evalf(acosh(evalf(sqrt(-2)*10^-330-2)))");
-    expect(floatResultFloats("approx(acos(sqrt(-2)/10^400-2))", "4.71-878.4*i", nonReal)).toBe("approx(acos(evalf(sqrt(-2)/10^400-2)))");
-    // an exact text is pastCapFloats' or decideTwice's, not this one's
-    expect(floatResultFloats("asin(sqrt(-2)-10^35)", "i*ln(2)", nonReal)).toBeNull();
+    expect(argumentsAsFloats("approx(acos(sqrt(-2)/10^400-2))", "typed", "4.71-878.4*i", nonReal)).toBe("approx(acos(evalf(sqrt(-2)/10^400-2)))");
+    // fix round 2: only the calls `swap` picks
+    const only = (name: string): boolean => name === "asin";
+    expect(argumentsAsFloats("x+acosh(sqrt(-2)-1)+asin(sqrt(-2)-1)", "typed", "x+i", nonReal, only)).toBe("x+acosh(sqrt(-2)-1)+asin(evalf(sqrt(-2)-1))");
     expect(floatsBesideName("x-1.57+0.69*i")).toBe(true);
     expect(floatsBesideName("-1.57+0.69*i")).toBe(false);
     expect(floatsBesideName("x+i")).toBe(false);

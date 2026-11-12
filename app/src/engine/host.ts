@@ -37,7 +37,7 @@ import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
-import { decidedAtDouble, decideTwice, floatResultFloats, floatsContradict, nonRealArg, restsOnDecision } from "./decisions.ts";
+import { contradictedCall, contradictedFloats, decidedAtDouble, decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, clearingCall, formIn, formOf, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
@@ -1040,10 +1040,10 @@ export class EngineHost implements FactsHost {
       this.giac.eval(`purge(${EQ_VERDICT})`);
     }
     // G325f2: Giac's evalf of its exact text of asin, acos or acosh of a non-real argument cancels: run from the argument's float, as Home
-    const complexArg = nonRealArg(this.giac, valuePrecision(digitsSet));
-    const asFloats = (single && !guarded) || isError(text) ? null : floatResultFloats(exactInput, text, complexArg);
-    const bodyFloats = asFloats !== null && guarded ? (floatResultFloats(guarded.rhs, text, complexArg) ?? body) : asFloats; // fix round 1: unless Giac's value stands
-    const floatInput = bodyFloats !== null && floatsContradict(this.giac, "pcasans", bodyFloats, valuePrecision(digitsSet), digitsSet) ? asFloats : null;
+    const [complexArg, contradicted] = [nonRealArg(this.giac, valuePrecision(digitsSet)), contradictedCall(this.giac, valuePrecision(digitsSet), digitsSet)]; // per call (fix round 2)
+    const floatsOf = (e: string): string | null => contradictedFloats(this.giac, e, text, valuePrecision(digitsSet), digitsSet, complexArg, contradicted);
+    const floatInput = (single && !guarded) || isError(text) ? null : floatsOf(exactInput);
+    const bodyFloats = floatInput !== null && guarded ? (floatsOf(guarded.rhs) ?? body) : floatInput;
     if (floatInput !== null) text = run(bodyFloats!);
     // G38: a result that rests on a numeric decision is decided again at P + 20 (and P + 40), as in Home; an exact
     // == or ≠ test too, only one with a float side is decideFloatTest's.
