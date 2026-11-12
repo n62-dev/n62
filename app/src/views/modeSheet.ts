@@ -428,7 +428,7 @@ function tapsItems(session: Session, env: SettingsEnv): MenuItem[] {
 }
 
 /** R53 (decisions.md P16's removal test): "Results mode ›", the counts under the IndexedDB key `uses` (state/uses.svelte.ts),
- *  loaded when Counters is drawn: folds by the handle and by a swipe, rows picked while folded, row actions while folded,
+ *  loaded when Counters is drawn: folds by a swipe, rows picked while folded, row actions while folded,
  *  since, reset. */
 function usesRow(session: Session): MenuItem {
   const u = () => session.usesCounter;
@@ -445,7 +445,6 @@ function usesRow(session: Session): MenuItem {
       title: keyFeelText("settings.uses"),
       remember: false,
       items: [
-        row("handle", keyFeelText("settings.uses.handle"), n((c) => c.get("fold.handle"))),
         row("swipe", keyFeelText("settings.uses.swipe"), n((c) => c.get("fold.swipe"))),
         row("pick", keyFeelText("settings.uses.pick"), n((c) => c.get("pick"))),
         row("actions", keyFeelText("settings.uses.actions"), n((c) => c.actions)),

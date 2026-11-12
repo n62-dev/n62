@@ -610,3 +610,19 @@ describe("Settings › Counters › Export the counts (R127)", () => {
     expect(JSON.parse(saved[0] ?? "")).toMatchObject({ presses: 1, keys: { "d7:primary": 1 } });
   });
 });
+
+describe("Settings › Counters › Results mode (R53, R283: the handle is gone)", () => {
+  it("has no row for the handle, and a handle count stored earlier stays in the folds total", async () => {
+    session = new Session(new FakeCalc(), fakeKv([["uses", { counts: { "fold.handle": 5, "fold.swipe": 2 }, since: "2026-11-01" }]]));
+    const c = await session.uses();
+    await c.ready;
+    const s = settings(4);
+    expect(byId(s, "uses")?.value).toBe("7 folds");
+    s.level.highlight = at(s, "uses");
+    expect(s.enter()).toEqual({ kind: "stay" });
+    expect(s.level.items.map((x) => x.id)).toEqual(["swipe", "pick", "actions", "since", "reset"]);
+    expect(byId(s, "swipe")?.value).toBe("2");
+    c.count("fold.swipe");
+    expect(c.folds).toBe(8);
+  });
+});

@@ -356,10 +356,10 @@
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
-  function fold(how: "handle" | "swipe"): void {
+  function fold(): void {
     if (folded || !canFold) return;
     folded = true;
-    countUse(`fold.${how}`);
+    countUse("fold.swipe");
   }
   /** The keys come back; false when they were up. */
   function unfold(): boolean {
@@ -379,7 +379,7 @@
   $effect(() => {
     if (folded) return openLayer(() => (folded = false));
   });
-  /** The handle, the slice and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
+  /** The slice and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
   let Fold = $state.raw<typeof import("./keyboard/Fold.svelte").default | undefined>();
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
@@ -522,10 +522,9 @@
     {/if}
   </div>
 
-  <div class="keys" class:folded data-testid="keys" data-folded={folded} bind:this={keysEl}>
-    <!-- R53: the handle on the keypad's top edge, and folded the 44 px slice over the keypad, drawn as it was (no key
-         reflows) and hidden (keyboard/Fold.svelte) -->
-    {#if Fold}<Fold {folded} handle={canFold && !shell.sheet} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
+  <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
+    <!-- R53: folded, the 44 px slice over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
+    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
     <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}

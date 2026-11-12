@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R53 (decisions.md P16, owner 2026-11-06): results mode. The handle on the keypad's top edge, or a swipe down on the
-// entry line, folds the keypad into a 44 px slice, and the history gets the screen; the slice, a swipe up, Android back
-// and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
+// R53 (decisions.md P16, owner 2026-11-06), R283: results mode. A swipe down on the entry line (the only way to fold:
+// the handle on the keypad's top edge is gone) folds the keypad into a 44 px slice, and the history gets the screen; the
+// slice, a swipe up, Android back and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
 import { finger, STILL_MS } from "./core-lib.ts";
@@ -9,7 +9,7 @@ import { finger, STILL_MS } from "./core-lib.ts";
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 useClipboardLock(); // Copy writes the clipboard: first hook, so the lock is held before the page opens
 
-const HANDLE = '[data-testid="fold-handle"]';
+const HANDLE = '[data-testid="fold-handle"]'; // R283: it is no longer drawn; one test asserts that
 const SLICE = '[data-testid="fold-slice"]';
 const LINE = '[data-testid="entry"]';
 const keys = (p: Page) => p.getByTestId("keys");
@@ -30,6 +30,11 @@ async function swipe(p: Page, sel: string, dy: number): Promise<void> {
   await f.move(0, dy, 4);
   await f.end();
 }
+/** Fold by the entry line's swipe (R283). */
+const fold = async (p: Page): Promise<void> => {
+  await swipe(p, LINE, 40);
+  await isFolded(p, true);
+};
 const clearLine = (p: Page): Promise<void> => p.evaluate(() => window.n62.entry.clear());
 /** R276: a hold on the last result (it copies) and a swipe of the last row (it deletes). */
 const holdLast = (p: Page): Promise<void> => finger(p, "result:last", { ms: 700 });
@@ -47,27 +52,13 @@ async function rows(p: Page, n = 3): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await open(page);
-  await page.locator(HANDLE).waitFor(); // the controls' chunk is in (loaded when idle after the start)
+  await expect(keys(page)).toHaveAttribute("data-fold-ready", "true"); // the controls' chunk is in (loaded when idle after the start)
 });
 
-test("the handle: a 48 × 24 px button on the keypad's top edge over no key; a tap folds to the 44 px slice, a tap on the slice brings the keys back", async ({ page }) => {
-  const h = await box(page, HANDLE);
-  expect(h.width).toBeGreaterThanOrEqual(48);
-  expect(h.height).toBeGreaterThanOrEqual(24);
-  await expect(page.locator(HANDLE)).toHaveAccessibleName("Show history");
-  // no key's hit area shrinks: no point of any key's box (a 2 px grid) is the handle's
-  const lost = await page.evaluate(() => {
-    const handle = document.querySelector('[data-testid="fold-handle"]');
-    return [...document.querySelectorAll<HTMLElement>("[data-key]")].filter((k) => {
-      const r = k.getBoundingClientRect();
-      for (let y = r.top; y < r.bottom; y += 2) for (let x = r.left; x < r.right; x += 2) if (handle?.contains(document.elementFromPoint(x, y))) return true;
-      return false;
-    }).map((k) => k.dataset["key"]);
-  });
-  expect(lost).toEqual([]);
+test("no handle is drawn; a swipe down on the line folds to the 44 px slice, a tap on the slice brings the keys back", async ({ page }) => {
+  await expect(page.locator(HANDLE)).toHaveCount(0);
   const up = await screenHeight(page);
-  await page.locator(HANDLE).tap();
-  await isFolded(page, true);
+  await fold(page);
   expect((await box(page, ".keys")).height).toBe(44);
   await expect(page.locator(SLICE)).toHaveAccessibleName("Show keypad");
   await expect(page.locator(SLICE)).toHaveText("Keys");
@@ -78,29 +69,21 @@ test("the handle: a 48 × 24 px button on the keypad's top edge over no key; a t
   expect(await screenHeight(page)).toBe(up); // the keys as they were: the viewport has its old share
 });
 
-test("the handle's 24 px lie on the pad's 4 px padding and the gap above it: the Up key is not covered, a tap just above the handle is the entry line's", async ({ page }) => {
-  const [h, pad, line, up] = await Promise.all([box(page, HANDLE), box(page, ".pad"), box(page, LINE), box(page, '[data-key="up"]')]);
-  expect(h.height).toBe(24);
-  expect(h.y + h.height).toBeLessThanOrEqual(pad.y + 4 + 0.5); // ends at the pad's padding
-  expect(h.y + h.height).toBeLessThanOrEqual(up.y + 0.5);
-  const x = h.x + h.width / 2;
-  const hit = await page.evaluate(([px, py]) => {
-    const el = document.elementFromPoint(px as number, py as number);
-    return { handle: !!el?.closest('[data-testid="fold-handle"]'), line: !!el?.closest('[data-testid="entry"]') };
-  }, [x, h.y - 1]);
-  expect(hit).toEqual({ handle: false, line: true });
-  // the tap just above the handle is the line's: it focuses the field and does not fold
-  await page.touchscreen.tap(x, h.y - 1);
+test("the keypad's top edge folds nothing: a tap where the handle was is the entry line's, the Up key is the key's", async ({ page }) => {
+  const [pad, up] = await Promise.all([box(page, ".pad"), box(page, '[data-key="up"]')]);
+  const x = up.x + up.width / 2;
+  await page.touchscreen.tap(x, pad.y - 6); // the gap above the pad, where the handle lay
   await isFolded(page, false);
-  expect(await inLine(page)).toBe(true);
+  await page.touchscreen.tap(x, up.y + 2); // the top of the Up key: it presses
+  await isFolded(page, false);
+  await expect(page.locator(HANDLE)).toHaveCount(0);
 });
 
-test("a drag of 24 px down on the handle folds, a swipe up on the slice unfolds; a short drag does neither", async ({ page }) => {
-  let f = await touch(page, HANDLE);
-  await f.move(0, 12, 3);
+test("a drag up on the slice unfolds at once; a short drag does not", async ({ page }) => {
+  await fold(page);
+  let f = await touch(page, SLICE);
+  await f.move(0, -12, 3);
   await f.cancel(); // a drag that stops short, taken away: nothing
-  await isFolded(page, false);
-  await swipe(page, HANDLE, 30);
   await isFolded(page, true);
   f = await touch(page, SLICE);
   await f.move(0, -30, 4);
@@ -161,12 +144,11 @@ test("a swipe down on the line folds and leaves its text, caret and selection; a
   await isFolded(page, false);
 });
 
-test("the history's own vertical drag is no fold, and an app draws no handle; CAS has it", async ({ page }) => {
+test("the history's own vertical drag is no fold, and an app has no results mode", async ({ page }) => {
   await rows(page, 2);
   await swipe(page, '[aria-label="History"]', 40);
   await isFolded(page, false);
   await tap(page, ["@cas"]);
-  await expect(page.locator(HANDLE)).toHaveCount(1);
   await tap(page, ["@plot"]);
   await page.waitForFunction(() => window.n62.shell.app === "function" && window.n62.shell.loading === null);
   await expect(page.locator(HANDLE)).toHaveCount(0);
@@ -175,7 +157,7 @@ test("the history's own vertical drag is no fold, and an app draws no handle; CA
 test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload bring the keys back; the line stays", async ({ page }) => {
   await rows(page);
   await tap(page, ["d7", "d8"]);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await isFolded(page, true);
   await page.keyboard.press("Escape"); // nothing else to do: the keys come back, the line is not cleared
   await isFolded(page, false);
@@ -183,7 +165,7 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
   await tap(page, ["esc"]); // the keys are up: Esc clears as before
   expect(await entryValue(page)).toBe("");
 
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await results(page).last().tap(); // a pick
   await expect(picked(page)).toHaveCount(1);
   await page.keyboard.press("Escape");
@@ -197,7 +179,7 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
   await page.keyboard.press("Escape");
   await isFolded(page, false);
 
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await page.getByTestId("menu-button").tap();
   await page.evaluate(() => history.back()); // Android back: the sheet first
   await expect(sheet(page)).toBeHidden();
@@ -205,16 +187,16 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
   await page.evaluate(() => history.back());
   await isFolded(page, false);
 
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await isFolded(page, true);
   await open(page); // a reload
   await isFolded(page, false);
-  await expect(page.locator(HANDLE)).toBeVisible();
+  await expect(keys(page)).toHaveAttribute("data-fold-ready", "true");
 });
 
 test("folded: a tap picks, the second inserts and unfolds; a hold copies and a swipe deletes with the keys down, a recall and Store ▶ unfold; a letter types; ☰ rises over the history", async ({ page }) => {
   await rows(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   const slice = await box(page, SLICE);
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
@@ -234,20 +216,20 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   expect(await entryValue(page)).toMatch(/^\\res/);
 
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await page.locator("article.item .in").first().tap();
   await page.locator("article.item .in").first().tap(); // the second tap recalls
   await isFolded(page, false);
   expect(await entryValue(page)).toBe("1");
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await results(page).first().tap();
   await bar(page).getByRole("button", { name: "Store ▶" }).tap();
   await isFolded(page, false);
   expect(await entryValue(page)).toContain("\\blacktriangleright");
 
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await page.keyboard.type("x"); // a hardware keyboard types; it needs no keypad
   await isFolded(page, true);
   expect(await entryValue(page)).toBe("x");
@@ -262,7 +244,7 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
 test("by keys: Enter on a pick inserts, or recalls a row without a result, brings the keys back and counts; the Copy key counts and stays down", async ({ page }) => {
   const counts = () => page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
   await rows(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
   await page.keyboard.press("Enter");
@@ -272,7 +254,7 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
 
   // ☰ → Copy on a pick (R278: the Copy key is gone; the status line's ☰ is on screen while the pad is folded)
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
   await page.getByTestId("menu-button").tap();
@@ -285,7 +267,7 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
   // a row without a result: Enter brings its entry back (1ᴇ2.5 fails to parse)
   await tap(page, ["d1", "emark", "d2", "dot", "d5", "enter"]);
   await expect(page.locator('[data-status="error"]')).toHaveCount(1);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await clearLine(page);
   await page.keyboard.press("ArrowUp"); // Up on an empty line picks the newest row
   await expect(picked(page)).toHaveCount(1);
@@ -299,7 +281,7 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   const layer = () => page.evaluate(() => (history.state as { n62Layer?: number } | null)?.n62Layer);
   await rows(page);
   // the slice under an open sheet, then Esc
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await page.getByTestId("menu-button").tap();
   await expect(sheet(page)).toBeVisible();
   await page.locator(SLICE).tap();
@@ -309,7 +291,7 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await expect(sheet(page)).toBeHidden();
   await expect.poll(layer).toBeUndefined();
   // a swipe up on the slice with ☰ open (the sheet covers the line), then Android back: the sheet, and the entry under it with it
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await page.getByTestId("menu-button").tap();
   await swipe(page, SLICE, -40);
   await isFolded(page, false);
@@ -317,46 +299,43 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await expect(sheet(page)).toBeHidden();
   await expect.poll(layer).toBeUndefined();
   // Insert from the list over the fold: the sheet and the fold close in one update
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await page.getByTestId("menu-button").tap();
   await sheet(page).locator('[data-id="insert"]').tap();
   await isFolded(page, false);
   await expect.poll(layer).toBeUndefined();
   // the count is even: a new fold takes one entry, and back closes it
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await expect.poll(layer).toBe(0);
   await page.evaluate(() => history.back());
   await isFolded(page, false);
   await expect.poll(layer).toBeUndefined();
 });
 
-test("Tab reaches the handle, and Enter on it folds", async ({ page }) => {
+test("Tab reaches the slice, and Enter on it unfolds; a hardware letter types while folded and Esc brings the keys back", async ({ page }) => {
   await page.evaluate(() => window.n62.entry.focus());
-  let at = "";
-  for (let i = 0; i < 6 && at !== "fold-handle"; i++) {
-    await page.keyboard.press("Tab");
-    at = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset["testid"] ?? "");
-  }
-  expect(at).toBe("fold-handle");
-  await page.keyboard.press("Enter");
-  await isFolded(page, true);
-  // the focused button is gone: focus went back to the line, so a hardware letter types while folded
+  await fold(page);
+  await expect(page.locator(HANDLE)).toHaveCount(0);
   await expect.poll(() => inLine(page)).toBe(true);
   await page.keyboard.press("x");
   await expect.poll(() => entryValue(page)).toContain("x");
   await isFolded(page, true);
-  // Enter on the slice unfolds and typing goes on
-  await page.locator(SLICE).focus();
+  // Tab from the line reaches the slice (the only control the fold has), Enter on it unfolds and typing goes on
+  let at = "";
+  for (let i = 0; i < 6 && at !== "fold-slice"; i++) {
+    await page.keyboard.press("Tab");
+    at = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset["testid"] ?? "");
+  }
+  expect(at).toBe("fold-slice");
   await page.keyboard.press("Enter");
   await isFolded(page, false);
+  // the focused button is gone: focus went back to the line, so a hardware letter types
   await expect.poll(() => inLine(page)).toBe(true);
   await page.keyboard.press("y");
   await expect.poll(() => entryValue(page)).toContain("xy");
-  // folded again by Enter on the handle, Esc is heard and brings the keys back
-  await page.locator(HANDLE).focus();
-  await page.keyboard.press("Enter");
-  await isFolded(page, true);
+  // folded again by the swipe, Esc is heard and brings the keys back
+  await fold(page);
   await expect.poll(() => inLine(page)).toBe(true);
   await page.keyboard.press("Escape");
   await isFolded(page, false);
@@ -365,7 +344,7 @@ test("Tab reaches the handle, and Enter on it folds", async ({ page }) => {
 for (const [width, height] of [[412, 839], [360, 740]] as const) {
   test(`the folded share of the viewport is at least 0.9 at ${width} × ${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await page.locator(HANDLE).tap();
+    await fold(page);
     await isFolded(page, true);
     const share = (await screenHeight(page)) / height;
     console.log(`folded viewport share at ${width} × ${height}: ${share.toFixed(4)}`);
@@ -373,26 +352,26 @@ for (const [width, height] of [[412, 839], [360, 740]] as const) {
   });
 }
 
-test("every counter counts (uses: folds by the handle and by a swipe, picks, each action while folded), and Counters shows them", async ({ page }) => {
+test("every counter counts (uses: folds by a swipe, picks, each action while folded), and Counters shows them", async ({ page }) => {
   await rows(page, 4);
   const firstIn = page.locator("article.item .in").first();
-  // 5 folds by the handle, 3 picks: each row action while folded (R276: a second tap, a hold, Store ▶, a swipe)
-  await page.locator(HANDLE).tap();
+  // 5 folds, 3 picks: each row action while folded (R276: a second tap, a hold, Store ▶, a swipe)
+  await fold(page);
   await results(page).first().tap();
   await results(page).first().tap(); // insert
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await firstIn.tap();
   await firstIn.tap(); // recall
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await holdLast(page); // copy: the keys stay down
   await page.locator(SLICE).tap();
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await results(page).first().tap();
   await bar(page).getByRole("button", { name: "Store ▶" }).tap(); // store
   await clearLine(page);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await swipeLast(page); // delete: the keys stay down
   await page.locator(SLICE).tap();
   await isFolded(page, false);
@@ -403,7 +382,7 @@ test("every counter counts (uses: folds by the handle and by a swipe, picks, eac
   await results(page).first().tap(); // the second tap: insert
   await isFolded(page, false);
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
-  expect(counts).toEqual({ "fold.handle": 5, "fold.swipe": 1, pick: 4, insert: 2, recall: 1, copy: 1, store: 1, delete: 1 });
+  expect(counts).toEqual({ "fold.swipe": 6, pick: 4, insert: 2, recall: 1, copy: 1, store: 1, delete: 1 });
   // the keys up: a hold copies, uncounted
   await clearLine(page);
   await holdLast(page);
@@ -419,11 +398,12 @@ test("every counter counts (uses: folds by the handle and by a swipe, picks, eac
   await expect(page.getByTestId("sheet-title")).toContainText("Results mode");
   await expect(sheet(page).locator('[data-id="actions"]')).toContainText("6");
   await expect(sheet(page).locator('[data-id="pick"]')).toContainText("4");
+  await expect(sheet(page).locator('[data-id="handle"]')).toHaveCount(0); // R283: no row for the handle
 });
 
 test("a hold, a swipe and ☰'s list each count their action once while folded (R276)", async ({ page }) => {
   await rows(page, 4);
-  await page.locator(HANDLE).tap();
+  await fold(page);
   await holdLast(page);
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await swipeLast(page);
@@ -432,5 +412,5 @@ test("a hold, a swipe and ☰'s list each count their action once while folded (
   await sheet(page).locator('[data-id="copy"]').tap();
   await expect(sheet(page)).toBeHidden();
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
-  expect(counts).toEqual({ "fold.handle": 1, copy: 2, delete: 1 });
+  expect(counts).toEqual({ "fold.swipe": 1, copy: 2, delete: 1 });
 });
