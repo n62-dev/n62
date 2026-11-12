@@ -94,10 +94,19 @@ export async function menuItem(page: Page, id: string): Promise<void> {
   await sheet(page).locator(`[data-id="${id}"]`).tap();
 }
 
-/** A system paste (Ctrl+V into the entry field), for the views whose ☰ has no Paste item (Solve, Function: R114). */
+/** A system paste into the entry field (the `paste` event the context menu and Shift+Insert deliver, R114, with the clipboard's
+ *  text), for the views whose ☰ has no Paste item (Solve, Function). The clipboard permissions are the spec's. */
 export async function systemPaste(page: Page): Promise<void> {
-  await page.evaluate(() => window.n62.entry.focus());
-  await page.keyboard.press("ControlOrMeta+V");
+  await page.evaluate(async () => {
+    const text = await navigator.clipboard.readText();
+    const mf = window.n62.entry.field;
+    if (!mf) throw new Error("no field");
+    mf.focus();
+    const target = mf.shadowRoot?.activeElement ?? mf.shadowRoot?.querySelector("textarea") ?? mf;
+    const data = new DataTransfer();
+    data.setData("text/plain", text);
+    target.dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true, composed: true }));
+  });
 }
 
 export const setClipboard = (page: Page, text: string): Promise<void> => page.evaluate((s) => navigator.clipboard.writeText(s), text);
