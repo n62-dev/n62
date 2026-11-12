@@ -70,12 +70,12 @@ One row of up to 6 touch buttons directly above the entry line. Its content foll
 | Context | Soft keys |
 |---|---|
 | Home/CAS, entry line has text | none, the row is hidden (no clutter while typing) |
-| Home/CAS, a history row picked (▲ on an empty line, or a tap on the row) | Insert · Recall · Copy · Store ▶ · Delete |
-| Home/CAS, keypad folded (results mode, R53) | the same five, on the slice's top edge; Insert, Recall and Store ▶ bring the keys back, Copy and Delete leave them down |
+| Home/CAS, a history row picked (▲ on an empty line, or a tap on the row) | Store ▶ · Copy as › |
+| Home/CAS, keypad folded (results mode, R53) | the same two, on the slice's top edge; Store ▶ brings the keys back, Copy as leaves them down |
 
 - **Home and CAS history rows only** (owner, 2026-10-13): Function and Solve are frozen, the Python app is removed, and the unit slots (P11) replace the prefix row, so the unit view's prefix cells are the only prefix entry (docs/04 2.7). The row appears only when a row is picked, never while typing; results mode (P16, R53) shows them on the folded keypad's slice.
 - Tap targets at least 44 px high; a label of at most 8 characters; an item with a submenu shows `›`.
-- Home/CAS (R11): the picked row's buttons are items 1–5 of the Menu's list of nine (S2), so ☰ + 1 is the same as a tap on Insert. A long press on a row opens the same nine on that row.
+- Home/CAS (R11, R276): the picked row's buttons are Store ▶ and Copy as › (items 4 and 6 of the Menu's list of nine, S2); Copy as opens its three (As shown, Exact, LaTeX) for that row. ☰ keeps all nine, numbered as before: 1 Insert and 2 Recall do what the second tap does, 3 Copy what a hold does, 5 Delete what a swipe does (kept for TalkBack, which cannot swipe). A hold on a row opens no menu (3.5).
 
 ### 3.4 The Mode sheet and Settings
 
@@ -95,6 +95,7 @@ One sheet, split by how often a thing changes (owner, 2026-10-27; the picture: [
 - A thin divider between entries (R12b; the 8 px more space is S25 part 3's); input muted and left-aligned, result right-aligned (as now).
 - A plain number (a real drawn with its digit groups; R158) too wide for the row wraps at a digit-group gap onto a further line, full size and right-aligned; the mark and the sign stay with the first group, the exponent with the last. With the apostrophe or the comma only the digits before the point are grouped (R125f1), so a number with three or fewer of them (√2) has no gap and scrolls. A long input, and every other long result (an expression, a list, a matrix, a number with a unit), scrolls sideways with a fade at the edge that shows there is more; never cut without a sign.
 - A tap on a row's result or input picks it, as ▲ from an empty line does; a second tap inserts the result or recalls the input (R147, the G2's way). The picked row gets the context bar from 3.3, laid over the empty entry line (R3), so the history does not move; with text on the line (a tap can pick there) the bar stands above the line.
+- A hold (500 ms) on a finished row's input or result copies that part, the input as its plain entry text and the result as Copy does (docs/04 2.6), with the "Copied" notice; it opens no menu and picks nothing (R276; the one long-press code, as in Solve and Function). A swipe left or right on a row (40 % of its width, or a fling) slides it out and deletes it as Delete does, with the "Row deleted · Undo" note (R98); a drag that goes more down than across scrolls the history and never deletes; a long input or result (`.in`, `.out`) scrolls sideways first, and the row slides only from the end of that scroll; a running row does not slide.
 - Results mode (P16, R53): the handle on the keypad's top edge (a tap or a 24 px drag down) or a swipe down on the entry line (≥ 24 px, |dy| > 2 |dx|, within 400 ms; the line keeps its text, caret and selection) folds the keypad at once to a 44 px slice ("Keys"), and the history gets the screen (share 0.91 at 412 × 839, 0.90 at 360 × 740). A tap picks, the second tap inserts or recalls and brings the keys back; a sheet rises from the slice's top edge over the history. The slice, a swipe up, Android back and Esc (after a job, a sheet level, a pick) bring the keys back; a hardware keyboard types with the keys down; a reload has them up. Home and CAS only.
 - The keypad is 488 px at 412 × 839 and taller (rows 36 and 48 px, gap and padding 4 px) and 434 px below 760 px tall (short rows 32 and 42 px, R82, R148); the history shows 2.80 rows of 1/3 at 412 × 839 and 2.28 at 360 × 740.
 - An error row shows the message on one line. Not built: the part of the input that failed underlined when the parser knows its position (`History.svelte` draws the message only).

@@ -89,6 +89,7 @@ test("Menu 5 deletes the last row when none is picked, and 2 recalls its entry",
 
 test("Menu 5 on a picked row deletes that row, not the last", async ({ page }) => {
   await three(page);
+  // the middle of three: the keys' Delete on a pick (R276: the bar has none; TalkBack cannot swipe)
   await tap(page, ["up", "up", "@menu", "d5"]);
   await done(page, 2);
   const texts = await page.locator('[data-testid="result"] .result').evaluateAll((els) => els.map((e) => e.getAttribute("data-text")));
