@@ -6,31 +6,30 @@
 
 /** The names, in the probe's order, but those of PROBED_LIST_FORMS. */
 export const PROBED_LIST_AS_ARGUMENTS: readonly string[] = [
-  "surd", "root", "exponential", "irem", "remain", "comb", "nCr", "normald_cdf", "normal_cdf", "int", "integrate",
-  "integrer", "diff", "derive", "deriver", "limit", "limite", "lim", "roots", "znorder", "linspace", "besselY",
-  "BesselY", "besselJ", "BesselJ", "uniform", "uniform_cdf", "uniformd_cdf", "uniform_icdf", "uniformd_icdf",
-  "exponentiald", "exponential_cdf", "exponentiald_cdf", "exponential_icdf", "exponentiald_icdf", "geometric",
-  "geometric_cdf", "geometric_icdf", "weibull", "weibulld", "weibull_cdf", "weibulld_cdf", "weibull_icdf",
-  "weibulld_icdf", "cauchy", "cauchyd", "cauchy_cdf", "cauchyd_cdf", "cauchy_icdf", "cauchyd_icdf", "gammad",
-  "gammad_cdf", "gammad_icdf", "betad", "betad_cdf", "betad_icdf", "hamdist", "companion", "pour", "powerpc",
-  "is_isosceles", "JordanBlock", "frenet", "zip", "rdiv", "unapply", "fMax", "fMin", "fracmod", "iratrecon", "Beta",
-  "compare", "range", "seq", "mult_c_conjugate", "multiplier_conjugue_complexe", "mult_conjugate",
-  "multiplier_conjugue", "comDenom", "Int", "dfc", "risch", "subs", "binomial", "binomial_cdf", "binomial_icdf",
-  "negbinomial", "negbinomial_cdf", "negbinomial_icdf", "poisson_cdf", "poisson_icdf", "poisson", "convert",
-  "convertir", "homogeneize", "chisquare", "chisquared", "chisquare_cdf", "chisquared_cdf", "chisquare_icdf",
-  "chisquared_icdf", "fisher", "snedecor", "fisherd", "snedecord", "fisher_cdf", "snedecor_cdf", "fisherd_cdf",
-  "snedecord_cdf", "normald", "normal_icdf", "normald_icdf", "student", "studentd", "student_cdf", "student_icdf",
-  "UTPC", "UTPF", "UTPN", "UTPT", "genpoly", "coeff", "coeffs", "taylor", "atan2", "canonical_form", "cyclotomic",
-  "divpc", "symb2poly", "e2r", "equal", "froot", "fsolve", "cfsolve", "nSolve", "ugamma", "igamma", "LambertW", "gauss",
-  "has", "hermite", "grad", "ibpdv", "ibpu", "ecm_factor", "iquo", "intDiv", "iquorem", "divmod", "jacobi_symbol",
-  "laguerre", "laplace", "legendre", "legendre_symbol", "logb", "makelist", "newton", "of", "parameq", "partfrac",
-  "cpartfrac", "perm", "nPr", "powmod", "powermod", "pow", "Psi", "ptayl", "rand", "random", "randint", "hasard",
-  "randfisher", "randnorm", "randNorm", "normalvariate", "randgammad", "gammavariate", "randweibulld", "weibullvariate",
-  "randbetad", "betavariate", "randpoly", "randPoly", "randvector", "ranv", "reorder", "resultant", "sylvester", "same",
-  "series", "smod", "mods", "piecewise", "tchebyshev1", "tchebyshev2", "truncate", "abcuv", "iabcuv", "bezoutian",
-  "fourier_an", "fourier_cn", "gbasis_simult_primes", "horner", "when", "makemat", "display", "color", "propfrac",
-  "propFrac", "romberg", "gaussquad", "Zeta", "soundsec", "ztrans", "in_ideal", "dayofweek", "trail2edges",
-  "geodetic2ecef", "brownian", "mathml", "evolute",
+  "surd", "root", "exponential", "irem", "remain", "comb", "nCr", "normald_cdf", "normal_cdf", "normald",
+  "normald_icdf", "normal_icdf", "student", "studentd", "student_cdf", "student_icdf", "int", "integrate", "integrer",
+  "diff", "derive", "deriver", "limit", "limite", "lim", "roots", "znorder", "linspace", "besselY", "BesselY",
+  "besselJ", "BesselJ", "uniform", "uniform_cdf", "uniformd_cdf", "uniform_icdf", "uniformd_icdf", "exponentiald",
+  "exponential_cdf", "exponentiald_cdf", "exponential_icdf", "exponentiald_icdf", "geometric", "geometric_cdf",
+  "geometric_icdf", "weibull", "weibulld", "weibull_cdf", "weibulld_cdf", "weibull_icdf", "weibulld_icdf", "cauchy",
+  "cauchyd", "cauchy_cdf", "cauchyd_cdf", "cauchy_icdf", "cauchyd_icdf", "gammad", "gammad_cdf", "gammad_icdf", "betad",
+  "betad_cdf", "betad_icdf", "hamdist", "companion", "pour", "powerpc", "is_isosceles", "JordanBlock", "frenet", "zip",
+  "rdiv", "unapply", "fMax", "fMin", "fracmod", "iratrecon", "Beta", "compare", "range", "seq", "mult_c_conjugate",
+  "multiplier_conjugue_complexe", "mult_conjugate", "multiplier_conjugue", "comDenom", "Int", "dfc", "risch", "subs",
+  "binomial", "binomial_cdf", "binomial_icdf", "negbinomial", "negbinomial_cdf", "negbinomial_icdf", "poisson_cdf",
+  "poisson_icdf", "poisson", "convert", "convertir", "homogeneize", "chisquare", "chisquared", "chisquare_cdf",
+  "chisquared_cdf", "chisquare_icdf", "chisquared_icdf", "fisher", "snedecor", "fisherd", "snedecord", "fisher_cdf",
+  "snedecor_cdf", "fisherd_cdf", "snedecord_cdf", "UTPC", "UTPF", "UTPN", "UTPT", "genpoly", "coeff", "coeffs",
+  "taylor", "atan2", "canonical_form", "cyclotomic", "divpc", "symb2poly", "e2r", "equal", "froot", "fsolve", "cfsolve",
+  "nSolve", "ugamma", "igamma", "LambertW", "gauss", "has", "hermite", "grad", "ibpdv", "ibpu", "ecm_factor", "iquo",
+  "intDiv", "iquorem", "divmod", "jacobi_symbol", "laguerre", "laplace", "legendre", "legendre_symbol", "logb",
+  "makelist", "newton", "of", "parameq", "partfrac", "cpartfrac", "perm", "nPr", "powmod", "powermod", "pow", "Psi",
+  "ptayl", "rand", "random", "randint", "hasard", "randfisher", "randnorm", "randNorm", "normalvariate", "randgammad",
+  "gammavariate", "randweibulld", "weibullvariate", "randbetad", "betavariate", "randpoly", "randPoly", "randvector",
+  "ranv", "reorder", "resultant", "sylvester", "same", "series", "smod", "mods", "piecewise", "tchebyshev1",
+  "tchebyshev2", "truncate", "abcuv", "iabcuv", "bezoutian", "fourier_an", "fourier_cn", "gbasis_simult_primes",
+  "horner", "when", "makemat", "display", "color", "propfrac", "propFrac", "romberg", "gaussquad", "Zeta", "soundsec",
+  "ztrans", "in_ideal", "dayofweek", "trail2edges", "geodetic2ecef", "brownian", "mathml", "evolute",
 ];
 
 /** G124 (backlog F107): the names whose one list Giac reads as their arguments by documented intent, with the list's form
@@ -51,4 +50,4 @@ export const PROBED_LIST_FORMS: Readonly<Record<string, "any" | "integers" | "ro
 };
 
 /** How many names the probe asked (the index's and the census's, the skipped ones included). */
-export const PROBED_NAMES = 1604; // G235: + the names the eight bit-function rows add
+export const PROBED_NAMES = 1609; // G222: + the names the five distribution rows add; G235: the bit-function rows
