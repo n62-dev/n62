@@ -104,7 +104,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 | 681 | R195 Find's preview says where the key is | ron, Sonnet | `p1/ron-findwhere` | – |
 | 737 | [G224](packages/G224.md) SI-prefix display drops trailing zeros | gorge, Sonnet | `p1/gorge-pfxtrim` | – |
-| 738 | [G340](packages/G340.md) normal and simplify of a nested root give a wrong number (F228) | gorge, Opus | `p1/gorge-normalroot` | – |
+| 738 | G340 normal and simplify of a nested root give a wrong number (F228) | gorge, Opus | `p1/gorge-normalroot` | – |
 | 739 | [G226](packages/G226.md) integer shift: negative counts and big integers (F193) | gorge, Opus | `p1/gorge-intshift` | – |
 | 755 | [G341](packages/G341.md) names that start with pas are N62's (F210) | gorge, Opus | `p1/gorge-pasnames` | – |
 | 756 | [G342](packages/G342.md) a library file's version is the last one that changed library text | gorge, Sonnet | `p1/gorge-libversion` | – |
