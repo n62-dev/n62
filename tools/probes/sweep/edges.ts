@@ -65,7 +65,7 @@ const DERIV: { latex: (a: string) => string; mp: (a: string) => string; angle: b
   { latex: (a) => `\\sin\\left(${a}\\right)`, mp: (a) => `SIN(${a})`, angle: true },
   { latex: (a) => `\\cos\\left(${a}\\right)`, mp: (a) => `COS(${a})`, angle: true },
   { latex: (a) => `\\arctan\\left(${a}\\right)`, mp: (a) => `ATAN(${a})`, angle: true },
-  { latex: (a) => `e^{${a}}`, mp: (a) => `exp(${a})`, angle: false },
+  { latex: (a) => `\\exponentialE^{${a}}`, mp: (a) => `exp(${a})`, angle: false },
   { latex: (a) => `\\ln\\left(${a}\\right)`, mp: (a) => `LN(${a})`, angle: false },
   { latex: (a) => `\\sqrt{${a}}`, mp: (a) => `sqrt(${a})`, angle: false },
   { latex: (a) => `\\sinh\\left(${a}\\right)`, mp: (a) => `sinh(${a})`, angle: false },
@@ -216,7 +216,7 @@ function build(r: () => number, depth: number, seen?: Map<string, number>): Node
   }
   if (x < 0.48) {
     const a = sub();
-    return node(`e^{${a.latex}}`, `exp(${a.mp})`, [a], false, false);
+    return node(`\\exponentialE^{${a.latex}}`, `exp(${a.mp})`, [a], false, false);
   }
   if (x < 0.52) {
     const a = sub();

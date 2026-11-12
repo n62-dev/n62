@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G61: the generator of the oracle sweep (r16 Appendix B). A seeded LCG builds a tree of depth up to 3; each tree prints as keyboard
-// LaTeX (what the keys write, through our parser) and as an mpmath expression for oracle.py. Pure.
+// LaTeX (what the keys write, through our parser) and as an mpmath expression for oracle.py. Pure. G326: e is written as the keys insert it,
+// \exponentialE (the eˣ key's \exponentialE^{…}, spec/keyboard.yaml): the letter e is the name e_ since R67, no number.
 
 export interface Case {
   /** Keyboard LaTeX. */
@@ -60,7 +61,7 @@ function leaf(r: () => number, withX = false): Node {
     return { latex: d, mp: `mpf('${d}')`, angle: false, atom: true, plain: true };
   }
   if (x < 0.8) return { latex: "\\pi", mp: "PI", angle: false, atom: true, plain: true };
-  if (x < 0.85) return { latex: "e", mp: "E", angle: false, atom: true, plain: true };
+  if (x < 0.85) return { latex: "\\exponentialE", mp: "E", angle: false, atom: true, plain: true };
   if (x < 0.92) {
     const m = pick(r, EMANT);
     const k = pick(r, EEXP);
@@ -87,7 +88,7 @@ function build(r: () => number, depth: number, withX = false): Node {
   }
   if (x < 0.47) {
     const a = sub();
-    return { latex: `e^{${a.latex}}`, mp: `exp(${a.mp})`, angle: a.angle, atom: false, plain: false };
+    return { latex: `\\exponentialE^{${a.latex}}`, mp: `exp(${a.mp})`, angle: a.angle, atom: false, plain: false };
   }
   if (x < 0.5) {
     const a = sub();
@@ -116,9 +117,9 @@ export function generate(seed: number, count: number, opts: { x?: boolean; depth
 
 /** Inputs that were found wrong or hanging and stay in every run at 12 digits in RAD (backlog F44, G58: they hung Home). */
 export const PINNED: Case[] = [
-  { latex: "e^{1.5ᴇ8}", mp: "exp(mpf('1.5e8'))", angle: false },
-  { latex: "\\sqrt{e^{2ᴇ8}}", mp: "sqrt(exp(mpf('2e8')))", angle: false },
-  { latex: "3+\\frac{e^{1.5ᴇ8}}{\\arcsin\\left(3\\right)}", mp: "(mpf('3'))+DIV(exp(mpf('1.5e8')),ASIN(mpf('3')))", angle: false },
+  { latex: "\\exponentialE^{1.5ᴇ8}", mp: "exp(mpf('1.5e8'))", angle: false },
+  { latex: "\\sqrt{\\exponentialE^{2ᴇ8}}", mp: "sqrt(exp(mpf('2e8')))", angle: false },
+  { latex: "3+\\frac{\\exponentialE^{1.5ᴇ8}}{\\arcsin\\left(3\\right)}", mp: "(mpf('3'))+DIV(exp(mpf('1.5e8')),ASIN(mpf('3')))", angle: false },
   { latex: "\\arccos\\left(\\left(5!\\right)^{2.5+5!}\\right)", mp: "ACOS(POW(FACT(5),(mpf('2.5'))+FACT(5)))", angle: false },
-  { latex: "e^{10^{7}}", mp: "exp(POW(mpf('10'),mpf('7')))", angle: false },
+  { latex: "\\exponentialE^{10^{7}}", mp: "exp(POW(mpf('10'),mpf('7')))", angle: false },
 ];
