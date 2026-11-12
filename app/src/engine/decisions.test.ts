@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { argumentsAsFloats, decidedAtDouble, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
+import { argumentsAsFloats, decidedAtDouble, floatResultFloats, floatsBesideName, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -272,5 +272,15 @@ describe("asin and acos of a non-real argument decide (G325)", () => {
     // a real result, or no argument that is not real: none
     expect(argumentsAsFloats("asin(sqrt(-2)-1)", "typed", "pi/6", nonReal)).toBeNull();
     expect(argumentsAsFloats("asin(2)", "typed", "i*ln(2)", nonReal)).toBeNull();
+  });
+
+  it("reads acosh's argument as its float too, and Giac's float text of the call (G325f2)", () => {
+    expect(argumentsAsFloats("evalf(acosh(sqrt(-2)*10^-330-2))", "typed", "0.69+3.14*i", nonReal)).toBe("evalf(acosh(evalf(sqrt(-2)*10^-330-2)))");
+    expect(floatResultFloats("approx(acos(sqrt(-2)/10^400-2))", "4.71-878.4*i", nonReal)).toBe("approx(acos(evalf(sqrt(-2)/10^400-2)))");
+    // an exact text is pastCapFloats' or decideTwice's, not this one's
+    expect(floatResultFloats("asin(sqrt(-2)-10^35)", "i*ln(2)", nonReal)).toBeNull();
+    expect(floatsBesideName("x-1.57+0.69*i")).toBe(true);
+    expect(floatsBesideName("-1.57+0.69*i")).toBe(false);
+    expect(floatsBesideName("x+i")).toBe(false);
   });
 });

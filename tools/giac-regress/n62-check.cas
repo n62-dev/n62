@@ -203,6 +203,10 @@ Digits:=40:; pc("g325-keep-asin-neg2",'(asin(-2))',-(157079632679/10^11)+(131695
 Digits:=40:; pc("g325-keep-asin-half",'(asin(1/2))',(523598775598/10^12),5/10^13);
 // g325-keep-ln-sqrt-neg2-1e35 (home.yaml, oracle)
 Digits:=40:; pc("g325-keep-ln-sqrt-neg2-1e35",'(ln(sqrt(-2)-10^35))',(805904782548/10^10)+(314159265359/10^11)*i,5/10^11+5/10^12);
+// g325f2-keep-evalf-acosh-sqrt-neg2-1e35 (home.yaml, oracle)
+Digits:=40:; pc("g325f2-keep-evalf-acosh-sqrt-neg2-1e35",'(evalf(acosh(sqrt(-2)-10^35)))',(812836254354/10^10)+(314159265359/10^11)*i,5/10^11+5/10^12);
+// g325f2-keep-evalf-asin-half (home.yaml, oracle)
+Digits:=40:; pc("g325f2-keep-evalf-asin-half",'(evalf(asin(1/2)))',(523598775598/10^12),5/10^13);
 // int-floor2.5 (home.yaml, derived)
 Digits:=40:; pc("int-floor2.5",'(floor((25/10^1)))',2,5/10^12);
 // int-ceil-2.5 (home.yaml, derived)

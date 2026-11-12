@@ -32,14 +32,15 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
  * sign was decided numerically and cancels (asin(sqrt(-2)-10^35): 10^70 against 2; patch 0044 fixes the cause in
  * sqrt), so the text made at Digits 40 was the conjugate of the principal value. They decide only for a non-real
  * argument (nonRealArg), asked only when Giac's text of the result holds i: asin(1/2) = pi/6 costs no call, asin(2)
- * one, and neither is made again.
+ * one, and neither is made again. G325f2: acosh too, whose exact text nests the same roots (acosh(sqrt(-2)/10^2000-2)
+ * showed = 0.69314718056+3.14159265359*i for 1.31695789692+3.14159265359*i).
  */
-const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "arcsin", "arccos"]);
+const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "arcsin", "arccos", "acosh", "arccosh"]);
 
 /** G325: Giac's text of the result (`text`) is not real, so a COMPLEX_DECISION_FUNCTIONS call in the input may decide. */
 const nonRealText = (text: string): boolean => namesIn(text, "printed").includes("i");
 
-/** G325: `input` calls asin or acos on an argument `complexArg` finds not real, and `result` is not real. */
+/** G325: `input` calls asin, acos or acosh on an argument `complexArg` finds not real, and `result` is not real. */
 function complexDecision(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): boolean {
   if (!nonRealText(result)) return false;
   return callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).some((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
@@ -62,7 +63,7 @@ export function nonRealArg(giac: Giac, P: number): (arg: string) => boolean {
 }
 
 /**
- * G325f1: `input` with the argument of every asin or acos call that decides (complexDecision) read as its float,
+ * G325f1: `input` with the argument of every asin, acos or acosh call that decides (complexDecision) read as its float,
  * `asin(evalf(z))`: MPFR's principal value of a complex float (patch 0005), never Giac's exact text of it. That text
  * nests roots of the argument's squared parts, which cancel: for asin(sqrt(-2)*10^-330-2) its integers pass
  * MAX_EVAL_DIGITS, so no precision we run evaluates it (at 40 and 60 digits it gave ln 2 for 1.31695789692; at 700, 35
@@ -81,10 +82,22 @@ export function argumentsAsFloats(input: string, q: Quoting, result: string, com
 
 /** G325f1: argumentsAsFloats of `input` when Giac's exact text of it (`result`, made at P) holds an integer past
  *  MAX_EVAL_DIGITS, which no precision we run evaluates (Home then takes the value on the float path); null otherwise.
- *  Giac's text costs no call; then one per asin or acos argument. */
+ *  Giac's text costs no call; then one per asin, acos or acosh argument. */
 export function pastCapFloats(giac: Giac, input: string, result: string, P: number): string | null {
   if (!literalStart(result, P, MAX_EVAL_DIGITS, "printed").unchecked) return null;
   return argumentsAsFloats(input, "typed", result, nonRealArg(giac, P));
+}
+
+/** G325f2: argumentsAsFloats of `input` when Giac's text of it (`result`) holds a float: Giac's evalf of its own exact
+ *  text of the call (evalf, approx), whose nested roots cancel to the same wrong value at both precisions, so the
+ *  agreement check confirmed it (evalf(asin(sqrt(-2)*10^-330-2)) showed ln 2 for 1.31695789692 with 40 digits). Home
+ *  and CAS then take MPFR's function of the argument's float. One call per argument (complexArg). */
+/** G325f2: Giac's text of a result holds a float and a free name (x+evalf(asin(z))): not a number, so Home runs the
+ *  floatResultFloats input again for its text instead of taking the float path. */
+export const floatsBesideName = (result: string): boolean => hasFloat(result) && namesIn(result, "printed").some((n) => n !== "i");
+
+export function floatResultFloats(input: string, result: string, complexArg: (arg: string) => boolean): string | null {
+  return hasFloat(result) ? argumentsAsFloats(input, "typed", result, complexArg) : null;
 }
 
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.
@@ -158,7 +171,7 @@ export function decidingStored(giac: Giac): (name: string) => boolean {
 /** The result of `input` (printed as `result`) may rest on a decision Giac made at `Digits`: the input calls a
  *  decision function, or a name that is not a Giac built-in (`stored`: a stored function's body may decide,
  *  `f(x):=floor(x*10^12)` then `f(sin(10^60))`), or holds a comparison, or the result holds `abs(` (sqrt of an even
- *  power comes back as one), or a root of an even power (evenPowerRoot), or calls asin or acos on an argument that
+ *  power comes back as one), or a root of an even power (evenPowerRoot), or calls asin, acos or acosh on an argument that
  *  `complexArg` finds not real (G325, nonRealArg; none without it). An input of rationals only (rationalOnly) decides
  *  exactly. */
 export function restsOnDecision(

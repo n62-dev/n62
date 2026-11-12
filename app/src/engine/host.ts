@@ -37,7 +37,7 @@ import { enEngine } from "../i18n/enEngine.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
-import { decidedAtDouble, decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, floatResultFloats, nonRealArg, restsOnDecision } from "./decisions.ts";
 import { assignmentIn, clearingCall, formIn, formOf, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
@@ -997,7 +997,7 @@ export class EngineHost implements FactsHost {
     // mode's Digits stays the setting, which prints the floats of a non-number.
     const digitsSet = Math.trunc(s.digits);
     const body = guarded ? guarded.rhs : exactInput;
-    const run = (): string => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, () => this.strict.eval(`pcasans:=(${body})`));
+    const run = (e = body): string => withDigits(this.giac, valuePrecision(digitsSet), digitsSet, () => this.strict.eval(`pcasans:=(${e})`));
     let text: string;
     let ambiguous: boolean;
     try {
@@ -1039,6 +1039,10 @@ export class EngineHost implements FactsHost {
       ambiguous = this.strict.ambiguousPower();
       this.giac.eval(`purge(${EQ_VERDICT})`);
     }
+    // G325f2: Giac's evalf of its exact text of asin, acos or acosh of a non-real argument cancels: run from the argument's float, as Home
+    const complexArg = nonRealArg(this.giac, valuePrecision(digitsSet));
+    const floatInput = (single && !guarded) || isError(text) ? null : floatResultFloats(exactInput, text, complexArg);
+    if (floatInput !== null) text = run(guarded ? (floatResultFloats(guarded.rhs, text, complexArg) ?? body) : floatInput);
     // G38: a result that rests on a numeric decision is decided again at P + 20 (and P + 40), as in Home; an exact
     // == or ≠ test too, only one with a float side is decideFloatTest's.
     // A plain name:=value decides its value (the right-hand side) and stores the agreed one, as Home does; other
@@ -1050,7 +1054,7 @@ export class EngineHost implements FactsHost {
     const decisionExpr = asg ? toExactLiterals(asg.rhs) : exactInput;
     // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused as in Home (nothing is stored).
     let refusedCut = false;
-    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), nonRealArg(this.giac, valuePrecision(digitsSet)))) {
+    if (!once && !inexactTest && !hasFloat(text) && restsOnDecision(decisionExpr, "typed", text, notBuiltin(this.giac), complexArg)) {
       const d = decideTwice(this.giac, decisionExpr, text, digitsSet, digitsSet);
       if ("undecided" in d) undecided = true;
       if ("undecided" in d && d.refused) refusedCut = true;
@@ -1128,7 +1132,7 @@ export class EngineHost implements FactsHost {
       // G90: evalf of an integral whose exact answer keeps Giac's integrate(…) is its numeric integration of the typed
       // integrand (float bounds), ⚠ without a count, as in Home.
       const integrated = !single && integratedNumerically(this.giac, exactInput, text);
-      const read = floatFacts(this.giac, "pcasans", single ? null : integrated ? floatBounds(exactInput) : exactInput, shape, digits, Math.trunc(s.digits), exactInput);
+      const read = floatFacts(this.giac, "pcasans", single ? null : integrated ? floatBounds(exactInput) : (floatInput ?? exactInput), shape, digits, Math.trunc(s.digits), exactInput);
       const facts = read && integrated ? integratedFacts(read) : read;
       if (facts) {
         let numeric = resultFromFacts(facts, shape, digits, "numeric", true, performance.now() - t0);

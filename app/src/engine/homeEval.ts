@@ -33,7 +33,7 @@ import { exactRational, rewriteDecimals, toExactLiterals } from "./exactLiterals
 import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matrixType.ts";
 import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
-import { decidedAtDouble, decideTwice, decidingStored, nonRealArg, pastCapFloats, restsOnDecision } from "./decisions.ts";
+import { decidedAtDouble, decideTwice, decidingStored, floatResultFloats, floatsBesideName, nonRealArg, pastCapFloats, restsOnDecision } from "./decisions.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
@@ -503,9 +503,9 @@ export function homeEval(
   // at P and P + 20 in the same call (exactFacts reads them); any other input asks when they are needed.
   const at = isAudited(exactBody, "typed") && complexSafe(exactBody, "typed") === exactBody ? [P, P + 20] : [];
   // G130 (F125): Giac's matrix type becomes plain rows in Ans (matrixType.ts), in the run's Digits
-  const exactRun = (): string =>
+  const exactRun = (e = exactBody): string =>
     withDigits(giac, P, s.digits, () => {
-      const first = giac.value(`${ans}:=(${exactBody})`, at, true); // G187: with its tree (powerPastRange)
+      const first = giac.value(`${ans}:=(${e})`, at, true); // G187: with its tree (powerPastRange)
       ambiguous = giac.ambiguousPower?.();
       const v = plainRows(giac, ans, first, at);
       value = v;
@@ -658,9 +658,10 @@ export function homeEval(
   if (pastRange) return refuse(pastRange, "exact");
   // G57: after G39's refusals, whose message says more (Giac's bounded_function of limit(sin(x),x,inf) decides too).
   if (refusedCut) return refuse("undecided", "exact");
-  // G325f1: asin or acos of a non-real argument whose exact text is past the cap: from the argument's float (decisions.ts)
-  const asFloats = once || undecided ? null : pastCapFloats(giac, body, exactOut, P);
-  if (asFloats !== null) return viaFloat("float-big", undefined, asFloats);
+  // G325f1, G325f2: asin, acos or acosh of a non-real argument whose exact text is past the cap, or under evalf: from the argument's float
+  const asFloats = once || undecided ? null : (pastCapFloats(giac, body, exactOut, P) ?? floatResultFloats(body, exactOut, nonRealArg(giac, P)));
+  if (asFloats !== null && !floatsBesideName(exactOut)) return viaFloat("float-big", undefined, asFloats);
+  if (asFloats !== null) exactOut = exactRun(toExactLiterals(asFloats)); // G325f2: a non-number keeps Giac's text of it
   if (seq.empty) return refuse("noValue", "exact");
   // G39: Giac's [exact, numeric] pair of a definite integral is never a list. The two answers differ, so neither is
   // confirmed: the float is the value, with no digit confirmed (⚠, docs/04 2.4), and the why-line says the pair differs.
