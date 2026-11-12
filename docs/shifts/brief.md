@@ -91,7 +91,7 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 585 | G231 Find: examples | gorge, Sonnet | `p1/gorge-examples` | – |
-| 586 | [G222](packages/G222.md) distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
+| 586 | G222 distributions in Find | gorge, Sonnet | `p1/gorge-distfind` | G220, G221f2 |
 | 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
 | 639 | [G316](packages/G316.md) absolute zero's unit | gorge, Opus | `p1/gorge-abszero` | – |
 | 640 | [G311](packages/G311.md) library round trip | gorge, Opus | `p1/gorge-libstandins` | – |
