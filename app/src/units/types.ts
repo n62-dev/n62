@@ -71,6 +71,9 @@ export interface UnitJob {
   endLog?: string;
   /** The source is an absolute temperature (°C, °F), already in K: a value below 0 K is refused. */
   absTemp?: true;
+  /** G316: the dimension key of an absolute temperature source (K1). Its job has no `check`, and at absolute zero its
+   *  value is an exact 0, which holds no dimension symbol: the 0 has this dimension, not a pure number's. */
+  sourceDim?: string;
   /** The end slot as text ("m/s", "cm²"), the unit of the result then. */
   endUnit?: string;
   /** R60: the end slot's tokens, the unit the result is in (Quantity.shownSlot). */
