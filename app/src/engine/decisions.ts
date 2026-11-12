@@ -79,6 +79,14 @@ export function argumentsAsFloats(input: string, q: Quoting, result: string, com
   return out;
 }
 
+/** G325f1: argumentsAsFloats of `input` when Giac's exact text of it (`result`, made at P) holds an integer past
+ *  MAX_EVAL_DIGITS, which no precision we run evaluates (Home then takes the value on the float path); null otherwise.
+ *  Giac's text costs no call; then one per asin or acos argument. */
+export function pastCapFloats(giac: Giac, input: string, result: string, P: number): string | null {
+  if (!literalStart(result, P, MAX_EVAL_DIGITS, "printed").unchecked) return null;
+  return argumentsAsFloats(input, "typed", result, nonRealArg(giac, P));
+}
+
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.
  *  `->` and `=>` are not comparisons. */
 function comparisonAt(s: string, k: number): number {
