@@ -31,12 +31,12 @@ const SLOT: FindContext = { filter: ["unit", "pfx"], prefer: ["unit"] };
 const ctxOf = (q: Query): FindContext => (q.where === "slot" ? SLOT : {});
 
 describe("find-queries.yaml", () => {
-  it("has 124 active phrases (3 that find no unit) and 8 pending ones, no duplicates", () => {
+  it("has 130 active phrases (3 that find no unit) and 6 pending ones, no duplicates", () => {
     expect(doc.schema).toBe(1);
-    expect(active.length).toBe(124);
+    expect(active.length).toBe(130);
     expect(absent.length).toBe(3);
     for (const q of doc.queries) expect([undefined, "slot"], q.query).toContain(q.where);
-    expect(doc.queries.length - active.length).toBe(8);
+    expect(doc.queries.length - active.length).toBe(6);
     expect(new Set(doc.queries.map((q) => q.query)).size).toBe(doc.queries.length);
     for (const q of doc.queries) expect(q.query, q.query).toBe(q.query.toLowerCase()); // Find types lower case only
   });

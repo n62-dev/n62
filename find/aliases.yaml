@@ -45,6 +45,7 @@ aliases:
   "fn:asin": ["arcsin"]
   "fn:acos": ["arccos"]
   "fn:atan": ["arctan"]
+  "fn:lagrange": ["interpolate", "interpolation"]   # G313: Giac's lagrange(xlist, ylist, x) is the interpolation
 
 symbols:
   "const:StdT": "T_std"

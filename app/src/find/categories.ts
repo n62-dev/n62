@@ -17,7 +17,7 @@ export interface Category {
 const fn = (...names: string[]): string[] => names.map((n) => `fn:${n}`);
 
 export const CATEGORIES: readonly Category[] = [
-  { id: "arith", title: "cat.arith", ids: fn("abs", "floor", "ceil", "frac", "irem", "gcd", "lcm", "factorial", "comb") },
+  { id: "arith", title: "cat.arith", ids: fn("abs", "floor", "ceil", "frac", "irem", "gcd", "lcm", "factorial", "comb", "sigfig") },
   { id: "powers", title: "cat.powers", ids: [...fn("sqrt", "surd"), "tmpl:cbrt", ...fn("exp", "ln", "log10")] },
   { id: "trig", title: "cat.trig", ids: fn("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh") },
   { id: "calculus", title: "cat.calculus", ids: fn("int", "diff", "limit") },

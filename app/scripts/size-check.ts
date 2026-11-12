@@ -409,6 +409,9 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
  *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
  *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  G313f1 (no start-chunk file changed, the R260 pin of 60,980 B stayed): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
+ *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
+ *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stayed inside the R260 pin.
  *  60,980 → 61,210 B (R276): a history row's hold copies and its swipe deletes. Their code (views/rowSwipe.ts and
  *  apps/longpress.ts, +1.22 kB gzip in the start chunk) is a lazy chunk fetched when idle (views/rowGesturesCode.ts); what
  *  stays is the loader (views/rowGestures.ts), the row's touch-action and App's delete on a swipe. phase-1 f2e29dd6
