@@ -263,6 +263,10 @@ Digits:=40:; pc("stat-stddev-population",'(stddev([2,4,4,4,5,5,7,9]))',2,5/10^12
 Digits:=40:; pc("stat-variance",'(variance([2,4,4,4,5,5,7,9]))',4,5/10^12);
 // stat-normald_cdf1.96 (home.yaml, oracle)
 Digits:=40:; pc("stat-normald_cdf1.96",'(normald_cdf((196/10^2)))',(975002104852/10^12),5/10^13);
+// g222-normald-10-2-12 (home.yaml, oracle)
+Digits:=40:; pc("g222-normald-10-2-12",'(normald(10,2,12))',(12098536226/10^11),5/10^13);
+// g222-student-5-2 (home.yaml, oracle)
+Digits:=40:; pc("g222-student-5-2",'(student(5,2))',(650903103262/10^13),5/10^14);
 // stat-normald_cdf-10 (home.yaml, oracle)
 Digits:=40:; pc("stat-normald_cdf-10",'(normald_cdf(-10))',(761985302416/10^35),5/10^36);
 // cas-diff-at (home.yaml, derived)

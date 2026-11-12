@@ -4,6 +4,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 import { describe, expect, it, vi } from "vitest";
 import { CATEGORIES, categoryItems } from "./categories.ts";
 import { constChipOf, findMenu, itemRow, makeIndexIdle, pauseWhile, unitNote, warmFirstKeys } from "./finder.ts";
@@ -40,6 +41,22 @@ describe.skipIf(!full)("Find on the generated index", () => {
     }
     const bits = menu.categories.find((c) => c.id === "cat:bits")?.submenu;
     expect(bits?.items.map((it) => it.id).sort()).toEqual([...eight].sort());
+  });
+
+  // G222: the normal and t distributions (density, cumulative, inverse) are curated, each with a golden case that exists
+  it("the normal and Student t functions are tier 0, with a plain title and a golden case that exists", () => {
+    const ids = ["fn:normald", "fn:normald_cdf", "fn:normald_icdf", "fn:student", "fn:student_cdf", "fn:student_icdf"];
+    const here = dirname(fileURLToPath(import.meta.url));
+    const golden = new Set(["home", "precision"].flatMap((f) => [...readFileSync(join(here, `../../../tests/golden/${f}.yaml`), "utf8").matchAll(/\bid: "([^"]+)"/g)].map((m) => m[1])));
+    const curated = (parse(readFileSync(join(here, "../../../find/functions.yaml"), "utf8")) as { functions: { id: string; golden?: string }[] }).functions;
+    for (const id of ids) {
+      expect(index.byId.get(id)?.tier, id).toBe(0);
+      const g = curated.find((f) => f.id === id)?.golden;
+      expect(g !== undefined && golden.has(g), `${id}: golden ${g}`).toBe(true);
+    }
+    expect(["fn:normald", "fn:normald_icdf", "fn:student", "fn:student_cdf", "fn:student_icdf"].map((id) => index.byId.get(id)?.title)).toEqual([
+      "Normal density", "Inverse normal", "Student t density", "Student t cumulative", "Inverse t",
+    ]);
   });
 
   it("every audited function and template is in exactly one category, and every category id is in the index", () => {
