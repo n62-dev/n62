@@ -9,7 +9,7 @@
 // when it is defined, so order does not matter). Inputs whose effect has no single name are kept as typed, in order.
 import { readValueFacts, type ValueFacts } from "./types.ts";
 import type { ProgramStores } from "./stores.ts";
-import { isName } from "./giacPrint.ts";
+import { isName } from "./giacPrintStart.ts";
 
 /** How far a variable that holds a float can be trusted (decisions M4-7): the facts of the result it was stored from
  *  (never `exact`: an exact value stores none). */

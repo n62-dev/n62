@@ -3,23 +3,10 @@
 // what is left to read as text is here: Giac's print for display and copy, and the input text of a few checks that
 // run before Giac sees it. One string skip, one bracket walk, one name pattern; nothing else in src/engine reads
 // brackets or names out of Giac text. Synchronous, UI-free, no engine; only erasable TypeScript syntax.
-
-/**
- * How a string is written. "typed": Giac's language (our parser's output, a library file): `\` escapes the next
- * character, so `"a\"b"` is one string (text-9). "printed": Giac's print: a quote inside a string is doubled (`"a""b"`,
- * read as two strings side by side, which skips the same text) and `\` is itself (`g(x):="q,(\\"` prints `"q,(\"`).
- */
-export type Quoting = "typed" | "printed";
-
-/** The index of the quote that closes the string whose opening quote is at `open`; -1 when none does. */
-export function stringEnd(s: string, open: number, q: Quoting): number {
-  for (let k = open + 1; k < s.length; k++) {
-    const c = s.charAt(k);
-    if (c === '"') return k;
-    if (c === "\\" && q === "typed") k++;
-  }
-  return -1;
-}
+// R264: the string skip, the walk, the name pattern and the few reads the start chunk needs are giacPrintStart.ts, this
+// file's own part, re-exported here; the start imports that file, the rest imports this one.
+import { balanced, CLOSERS, isName, mapNames, NAME, names, OPENERS, RATIONAL, stringEnd, UNCLOSED, walk, withoutStrings, type Quoting } from "./giacPrintStart.ts";
+export { balanced, isName, mapNames, NAME, names, RATIONAL, stringEnd, UNCLOSED, walk, withoutStrings, type Quoting };
 
 /**
  * G105f2: a value as Giac printed it, as typed text (the log's commands are all typed). Only strings differ: a doubled
@@ -40,47 +27,6 @@ export function typedFromPrinted(text: string): string {
     i = end + 1;
   }
   return out + text.slice(i);
-}
-
-/** `s` with every string (its quotes included; an unclosed one runs to the end) replaced by `by`, or by `by` of it. */
-export function withoutStrings(s: string, by: string | ((str: string) => string), q: Quoting): string {
-  let out = "";
-  let i = 0;
-  for (let k = s.indexOf('"'); k >= 0; k = s.indexOf('"', i)) {
-    const end = stringEnd(s, k, q);
-    const stop = end < 0 ? s.length : end + 1;
-    out += s.slice(i, k) + (typeof by === "string" ? by : by(s.slice(k, stop)));
-    i = stop;
-  }
-  return out + s.slice(i);
-}
-
-const OPENERS = "([{";
-const CLOSERS = ")]}";
-
-/** walk's answer when a string does not close. */
-export const UNCLOSED = -2;
-
-/**
- * The one bracket walk: each character of `s` from `from` that is outside strings, in order, with the depth of the
- * brackets `(`, `[`, `{` open around it (an opener counts itself, a closer does not: `f(x)` walks f 0, ( 1, x 1, ) 0).
- * Stops where `visit` returns true and gives that index; -1 at the end; UNCLOSED at a string that does not close.
- */
-export function walk(s: string, from: number, visit: (k: number, depth: number, ch: string) => boolean | void, q: Quoting): number {
-  let depth = 0;
-  for (let k = from; k < s.length; k++) {
-    const ch = s.charAt(k);
-    if (ch === '"') {
-      const end = stringEnd(s, k, q);
-      if (end < 0) return UNCLOSED;
-      k = end;
-      continue;
-    }
-    if (OPENERS.includes(ch)) depth++;
-    else if (CLOSERS.includes(ch)) depth--;
-    if (visit(k, depth, ch)) return k;
-  }
-  return -1;
 }
 
 /** Index of the bracket that closes the one at `open` (`(`, `[` or `{`), skipping strings; -1 when there is none. */
@@ -111,16 +57,6 @@ export function topLevelArgs(s: string, q: Quoting): string[] {
   }, q);
   out.push(s.slice(start));
   return out;
-}
-
-/** Every bracket closes, none below depth 0, and every string closes. */
-export function balanced(s: string, q: Quoting): boolean {
-  let last = 0;
-  const end = walk(s, 0, (_k, d) => {
-    last = d;
-    return d < 0;
-  }, q);
-  return end === -1 && last === 0;
 }
 
 /** No bracket stays open (a closer too many is allowed): a block of lines read so far may end here. */
@@ -356,18 +292,9 @@ export const KEYWORDS: ReadonlySet<string> = new Set([
  *  bundler keeps a module-level spread in the start chunk (giacPrint.ts is in it), +0.10 kB gzip (R91 pin). */
 export const isProgramWord = (w: string): boolean => KEYWORDS.has(w) || w === "for" || w === "return";
 
-/** A name as Giac's language writes one. */
-export const NAME = "[A-Za-z_][A-Za-z0-9_]*";
-const WHOLE_NAME = new RegExp(`^${NAME}$`);
-
 /** `c` (one character) can be part of a name. */
 export function isNameChar(c: string): boolean {
   return (c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c === "_";
-}
-
-/** `s` is one name (a user name starts with a letter: `letterFirst`). */
-export function isName(s: string, letterFirst = false): boolean {
-  return WHOLE_NAME.test(s) && (!letterFirst || s.charAt(0) !== "_");
 }
 
 /** The name `s` starts with (after spaces), a user's name (letter first) unless `letterFirst` is false; null when
@@ -383,18 +310,6 @@ export function wordsOf(text: string): string[] {
   return [...new Set(text.match(ANY_NAME) ?? [])];
 }
 const ANY_NAME = new RegExp(NAME, "g");
-
-/** Every name in `s` in order (strings and the exponents of number literals are skipped), with whether it is called
- *  (`(` follows it) and where it starts. */
-export function* names(s: string, q: Quoting): Generator<{ name: string; at: number; call: boolean; open: number }> {
-  const t = withoutStrings(s, (x) => " ".repeat(x.length), q);
-  // Number literals first, so the exponent of 2e5 is not read as a name.
-  const re = new RegExp(`(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?|(${NAME})(\\s*\\()?`, "g");
-  for (let m = re.exec(t); m; m = re.exec(t)) {
-    if (m[1] === undefined) continue;
-    yield { name: m[1], at: m.index, call: m[2] !== undefined, open: m[2] !== undefined ? m.index + m[0].length - 1 : -1 };
-  }
-}
 
 /** The first name of `set` in `s` (called or not; strings skipped), or null. */
 export function firstNameIn(s: string, set: ReadonlySet<string>, q: Quoting): string | null {
@@ -412,19 +327,6 @@ export function callsOf(s: string, only: ReadonlySet<string> | readonly string[]
     out.push({ name: n.name, at: n.at, open: n.open, close: closing(s, n.open, q) });
   }
   return out;
-}
-
-/** `text` with every name replaced by `f` of it where `f` gives a text (strings skipped). */
-export function mapNames(text: string, f: (n: { name: string; at: number; call: boolean }) => string | null, q: Quoting): string {
-  let out = "";
-  let i = 0;
-  for (const n of names(text, q)) {
-    const to = f(n);
-    if (to === null) continue;
-    out += text.slice(i, n.at) + to;
-    i = n.at + n.name.length;
-  }
-  return out + text.slice(i);
 }
 
 /** `text` with the name of every call of a key of `to` replaced by its value (`erf(` → `paserf(`). */
@@ -539,6 +441,3 @@ export function isError(out: string): boolean {
 export function isTimeout(out: string): boolean {
   return isError(out) && /interrupt/i.test(out);
 }
-
-/** A printed integer or rational (`-7/3`, `12`): groups 1 and 2 are the numerator and the denominator (if any). */
-export const RATIONAL = /^(-?\d+)(?:\/(\d+))?$/;
