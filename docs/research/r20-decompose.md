@@ -60,8 +60,8 @@ Alternatives, one line each:
 
 ## 4. Package draft `r20-P1` (gorge, Opus; after the tag)
 
-**r20-P1: patch 0045, `tsimplify_common` gives up on an `ln` argument that does not convert (F214).**
-1. Write `engine/giac/patches/0045-tsimplify-ln-undef-arg.patch` from `tools/probes/decompose/guard-candidate.patch`, with the header line `# Changed by Pascaline contributors, <date>`. Add its row in `engine/giac/patches/README.md` (status `not sent`) and set "Next" to `0046`.
+**r20-P1: patch 0046, `tsimplify_common` gives up on an `ln` argument that does not convert (F214).**
+1. Write `engine/giac/patches/0046-tsimplify-ln-undef-arg.patch` from `tools/probes/decompose/guard-candidate.patch`, with the header line `# Changed by Pascaline contributors, <date>`. Add its row in `engine/giac/patches/README.md` (status `not sent`) and set "Next" to `0047`.
 2. Canary in `tests/engine/patch-canary.ts`: the stock pair at subst.cc:1988-1989, `for (int i=0;i<s;++i)` followed by `argln[i]=e2r(argln[i],vars,contextptr);` with no `is_undef` after it.
 3. Regression lines, written in `tools/giac-regress/n62-patched.cas` (on stock they overflow or hang, which counts as failed; the red-first run on stock confirms this, the (to verify) of section 1):
    - `evalf(simplify(sqrt(ln(1+sqrt(1+2^(1/3))))),30)` = 0.957920253118554998403493714904 (oracle);
@@ -69,9 +69,9 @@ Alternatives, one line each:
    - `size(string(simplify(F214)))>0` (it answers).
 4. Golden cases (precision.yaml, CAS at 30 digits, `source: oracle`): the first two lines as typed in the CAS view. A Home case for F214's typed `simplify`: the value underflows, so the expected answer is Home's refusal or ⚠ under G84 (derived; check what Home shows).
 5. `app/src/engine/host.trap.test.ts:76-84` needs another real stack overflow, because F214's input then answers. One candidate: on the raw engine, `ww:=x; for k from 1 to 20000 do ww:=sin(ww); od; subst(ww,x=1)` overflows the stack (from 5,000 deep on), with no Giac bug involved (a deep tree built in a loop skips the parser's "Too many embeddings" guard). But Home's request wraps the input in `pasans:=(…)`, which refuses the `;` sequence, and the CAS view answers it `undef("0")`. So the package finds the request form that reaches it (for example the tree stored by a CAS request, then `subst` in Home) (to verify, gorge). If none reaches it, keep the trapping stand-in case only and say so in the report.
-6. Backlog: F214 is fixed by this patch. The "Upstream reports" line moves `decompose`'s recursion from "no patch" to patch 0045, with `alg_lvar` (sym2poly.cc:405) named as its cause for B. Parisse.
+6. Backlog: F214 is fixed by this patch. The "Upstream reports" line moves `decompose`'s recursion from "no patch" to patch 0046, with `alg_lvar` (sym2poly.cc:405) named as its cause for B. Parisse.
 
-`r20-N1` (backlog "Open bugs") is not part of this package. `normal(sqrt(1+sqrt(1+2^(1/3))))` returns `rootof([[1,0],[…]])/227`, ≈ 0.00732288514727, where mpmath gives 1.58218310546: the square root of an algebraic number keeps the new extension's generator and drops the numerator polynomial (`--set forms`). Its cause is not looked for here. It probably sits in the same extension code (`sym2poly.cc`, the `rootof` side), so its research belongs with the next Giac email.
+`r20-N1` (backlog "Open bugs") is not part of this package. `normal(sqrt(1+sqrt(1+2^(1/3))))` returns `rootof([[1,0],[…]])/227`, ≈ 0.00732288514727, where mpmath gives 1.58218310546: the square root of an algebraic number keeps the new extension's generator and drops the numerator polynomial (`--set forms`). G340 found its cause: `algnum_convert` rewrites only the rootofs `lvar` lists at the top level (sym2poly.cc:4581-4587), so the base of a power is written with the generator's variable (sym2poly.cc:4685), its numerator lost; patch 0045.
 
 ## 5. Top risks
 

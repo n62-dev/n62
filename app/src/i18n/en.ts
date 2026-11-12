@@ -13,10 +13,12 @@ export const en = {
   "key.settings": "Settings",
   /** An empty user key (U1–U6, R15c): nothing set yet. */
   "key.user": "＋",
-  "key.copy": "Copy",
+  "key.select": "Select",
+  "key.deselect": "Deselect",
+  /** The Menu key (R278): the status line's ☰ on the cluster. */
+  "key.menu": "☰",
   "key.undo": "Undo",
   "key.redo": "Redo",
-  "key.paste": "Paste",
   "key.fmt": "Fmt",
   "key.mode": "Mode",
   "key.clear": "Clear",

@@ -193,9 +193,6 @@ export class SolveApp implements AppInstance {
   }
 
   // ---- Copy (docs/04 section 2.6): the full value of a root; Menu: as shown
-  copyText(view: ViewId): Promise<string | undefined> | undefined {
-    return view === "num" && this.selected ? this.fullOf(this.selected).then((s) => this.mark(s)) : undefined;
-  }
   /** Every confirmed digit of the unknown's value (the engine's, when a solve gave it), else the stored value. */
   async fullOf(name: string): Promise<string> {
     await this.settling; // the answer's full text is still being made (the copy code loads on first use)

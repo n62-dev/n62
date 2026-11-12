@@ -3,7 +3,7 @@
 // 1,749,440 characters, LaTeX 1,773,448 on the engine build of 2026-11-05). MathLive cannot draw it (its SSR build took 2.5 s
 // and overflowed the stack), and the row showed the LaTeX source. Now the row is a drawn note, and Copy holds the whole text.
 import { expect, test } from "@playwright/test";
-import { clipboardBudget, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { COPY, clipboardBudget, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
@@ -24,7 +24,7 @@ test("CAS Σ cos(k)/k to 2000: a drawn note, no LaTeX source, and Copy still hol
   expect(html.length).toBeLessThan(2000);
   await expect(row.locator(".math")).toHaveAttribute("role", "math");
   await expect(row.locator(".math")).not.toHaveAttribute("data-latex", /.+/);
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect(page.getByTestId("notice")).toBeVisible({ timeout: 10_000 });
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText().then((s) => s.length)), { timeout: 10_000 }).toBeGreaterThan(0);
   const text = await page.evaluate(() => navigator.clipboard.readText());

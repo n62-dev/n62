@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Key routing (R15c2, split out of App.svelte): what a key press does in the place it lands in. An open sheet (Settings
-// too, a level of it since R49) takes its keys first (docs/05 3.1), a picked history row takes the arrows, Enter, Esc, Copy and Menu (P4, R11),
+// too, a level of it since R49) takes its keys first (docs/05 3.1), a picked history row takes the arrows, Enter, Esc and Menu (P4, R11),
 // a key pressed while an app's or a sheet's code loads waits in the queue (decisions.md R8), and every other key runs
 // its action on the entry line, the app or the app shell. Plain functions over a context object (RouteCtx) that
 // App.svelte gives them; this module draws nothing and holds no state of its own.
@@ -56,6 +56,8 @@ export interface RouteCtx {
   unfold(): boolean;
 }
 
+/** Select or Deselect (R279): they act on the entry line only. */
+const isSelect = (a?: ActionBody): boolean => a?.kind === "special" && a.name.startsWith("select");
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
   layer === undefined ? { shift: c.session.shift, alpha: c.session.alpha } : { shift: layer === "shift", alpha: layer === "alpha" };
 const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");
@@ -118,12 +120,6 @@ export function special(c: RouteCtx, name: Special): void {
         if (!c.shell.toggleMenu()) c.dead(); // the view has no menu
       }); // the Home/CAS menu comes with the clipboard code
       break;
-    case "copy":
-      c.withClip((x) => void x.copyKey());
-      break;
-    case "paste":
-      c.withClip((x) => holdKeys(c, x.paste()));
-      break;
     case "fmt":
       // Format key: Home and CAS show the last result in the next mode; the apps have no such result.
       if (c.shell.app === null) void c.session.cycleFormat();
@@ -146,6 +142,11 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "find":
       c.openFind();
+      break;
+    case "selectGrow":
+    case "selectShrink":
+      // R279: the entry line only; a view without one (Plot) has nothing to select
+      if ((c.shell.app !== null && !c.shell.showsEntry) || !c.entry.select(name === "selectGrow")) c.dead();
       break;
     case "vars":
     case "memory":
@@ -170,7 +171,7 @@ function units(c: RouteCtx, row?: HistoryItem): void {
 }
 
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
- *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Copy and Menu act
+ *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Menu acts
  *  on the picked row. Any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
@@ -194,6 +195,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     c.picked = pickAfter(items, picked);
     return true;
   }
+  if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
   const item = items[picked];
   c.picked = null;
   if (action.kind !== "special") return false;
@@ -204,10 +206,6 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   }
   if (action.name === "menu" && item) {
     c.withClip((x) => x.openMenu(item)); // ☰ acts on the picked row (R13)
-    return true;
-  }
-  if (action.name === "copy" && item) {
-    c.withClip((x) => void x.copyPicked(item)); // the Copy key copies the picked row
     return true;
   }
   if (action.name === "enter" && item) {
@@ -283,7 +281,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       // read by what the key is, not by the layer: ☰, the place name and Tmpl toggle their sheet, a control that
       // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
       const p = key.actions.primary;
-      if (p?.kind !== "special") return true;
+      if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
       if (p.name !== "menu" && p.name !== "apps" && p.name !== "tmpl") shell.closeSheet();
       special(c, p.name);
       return true;
@@ -302,7 +300,7 @@ const VIEW_KEYS: readonly string[] = ["symb", "plot", "num"];
 /** During a load: does this action run at once? (AT_ONCE; a view key only when no key is waiting.) */
 const runsAtOnce = (c: RouteCtx, name: string): boolean => AT_ONCE.includes(name) && (c.waiting.length === 0 || !VIEW_KEYS.includes(name));
 
-/** R114: a system paste's text (Ctrl+V, Shift+Insert, the context menu) takes the Paste key's path, and the keys
+/** R114: a system paste's text (Ctrl+V, Shift+Insert, the context menu) takes ☰ → Paste's path (R278: the Paste key is gone), and the keys
  *  pressed meanwhile wait for it as they do after Paste. */
 export function pasteText(c: RouteCtx, text: string): void {
   c.withClip((x) => holdKeys(c, x.paste(text)));
@@ -312,7 +310,7 @@ export function pasteText(c: RouteCtx, text: string): void {
  *  Paste then ÷ divides the pasted number; at most HOLD_MS, so a clipboard that never answers cannot stop the keypad.
  *  Returns the hold for withClip, whose load (when the code is not in yet) waits for it. */
 const HOLD_MS = 2000;
-function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
+export function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
   const late = new Promise<void>((done) => setTimeout(done, HOLD_MS));
   const capped = Promise.race([job.then(() => {}, () => {}), late]);
   if (c.sheetLoad === null) {
@@ -427,6 +425,7 @@ function modifier(c: RouteCtx, name: "shift" | "alpha", layer: Layer | undefined
 export function run(c: RouteCtx, key: Key, mods: Mods): void {
   const { session, shell, entry } = c;
   const action = actionFor(key, mods.shift, mods.alpha, session.settings.entry === "line", c.casKeys);
+  if (!isSelect(action)) entry.endSelect(); // R279: any other key ends the chain of Select presses
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
   if (shell.app === null && historyKey(c, action)) return;

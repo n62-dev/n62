@@ -32,11 +32,11 @@ describe("keyboard spec", () => {
     expect(gridPlace(keyboard, keyboard.byId.get("div") as Key)).toEqual({ start: 25, span: 6 });
   });
 
-  it("the upper cluster is R3 (decisions.md R15c): six user keys, the round pad, the editing wing; no letter line", () => {
+  it("the upper cluster is R3 (decisions.md R15c, R278): six user keys, the round pad, the editing wing; no letter line", () => {
     const at = (r: number) => keyboard.keys.filter((k) => k.row === r).sort((a, b) => a.col - b.col).map((k) => k.id);
-    expect(at(0)).toEqual(["u1", "u2", "up", "help", "esc"]);
+    expect(at(0)).toEqual(["u1", "u2", "up", "menu", "esc"]);
     expect(at(1)).toEqual(["u3", "u4", "left", "right", "undo", "redo"]);
-    expect(at(2)).toEqual(["u5", "u6", "down", "copy", "paste"]);
+    expect(at(2)).toEqual(["u5", "u6", "down", "select", "deselect"]);
     const k = (id: string) => keyboard.byId.get(id) as Key;
     expect([k("up").col, k("up").span, k("down").col, k("down").span, k("left").col, k("right").col]).toEqual([2, 2, 2, 2, 2, 3]);
     // six user keys in columns 0-1, all empty (D's Home and CAS defaults on U2 and U3 are gone)
@@ -48,8 +48,9 @@ describe("keyboard spec", () => {
       expect(u.label.primary, u.id).toBe("$key.user");
     }
     // the keys that went to the status line (R15c1) and Cancel (now Esc) are no keys any more
-    // and View (R146: results mode is R53's handle and swipe), ⇤ and ⇥ (now Undo's and Redo's Shift layers)
-    for (const id of ["apps", "symb", "plot", "num", "menu", "cancel", "view", "lstart", "lend"]) expect(keyboard.byId.has(id), id).toBe(false);
+    // and View (R146: results mode is R53's handle and swipe), ⇤ and ⇥ (now Undo's and Redo's Shift layers); R278: Copy and Paste
+    // left (a hold on a row, ☰ → Copy and ☰ → Paste), and `help` left r0c4 with its function: an id is never reused (docs/06 3b)
+    for (const id of ["apps", "symb", "plot", "num", "cancel", "view", "lstart", "lend", "copy", "paste", "help"]) expect(keyboard.byId.has(id), id).toBe(false);
     expect(keyboard.byId.has("app") || keyboard.byId.has("cas")).toBe(false);
     // the wing's layers (point 2)
     expect(actionFor(k("esc"), false, false)).toEqual({ kind: "special", name: "esc" });
@@ -59,18 +60,23 @@ describe("keyboard spec", () => {
     expect(actionFor(k("undo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldStart" });
     expect(actionFor(k("redo"), false, false)).toEqual({ kind: "cmd", name: "redo" });
     expect(actionFor(k("redo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldEnd" });
-    expect(actionFor(k("copy"), false, false)).toEqual({ kind: "special", name: "copy" });
-    expect(actionFor(k("copy"), true, false)).toBeUndefined(); // R275: no box jumps
-    expect(actionFor(k("paste"), false, false)).toEqual({ kind: "special", name: "paste" });
-    expect(actionFor(k("paste"), true, false)).toBeUndefined();
-    expect([k("undo"), k("redo"), k("copy"), k("paste")].map((x) => [x.label.primary, x.label.shift])).toEqual([
-      ["$key.undo", "⇤"], ["$key.redo", "⇥"], ["$key.copy", undefined], ["$key.paste", undefined],
-    ]);
-    // Help at the G2's r1c4: not built (milestone 6), so dead and drawn dimmed; Shift + Help (the G2's User, omitted) is Settings
-    expect(actionFor(k("help"), false, false)).toEqual({ kind: "special", name: "none" });
-    expect(actionFor(k("help"), true, false)).toEqual({ kind: "special", name: "settings" });
-    expect(k("help").label).toEqual({ primary: "$key.help", shift: "$key.settings" });
-    for (const id of ["help", "esc", "undo", "redo", "copy", "paste"]) expect(k(id).cls, id).toBe("nav");
+    // R278: ☰ at r0c4 (the status line's ☰ on the cluster; Shift stays Settings), Select | Deselect at r2c4 and r2c5 (R279)
+    expect(actionFor(k("menu"), false, false)).toEqual({ kind: "special", name: "menu" });
+    expect(actionFor(k("menu"), true, false)).toEqual({ kind: "special", name: "settings" });
+    expect(k("menu").label).toEqual({ primary: "$key.menu", shift: "$key.settings" });
+    expect(actionFor(k("select"), false, false)).toEqual({ kind: "special", name: "selectGrow" });
+    expect(actionFor(k("deselect"), false, false)).toEqual({ kind: "special", name: "selectShrink" });
+    // Shift + Select is Help, not built (R197): dead, its legend drawn; Shift + Deselect is RESERVED: no action, no legend
+    expect(actionFor(k("select"), true, false)).toEqual({ kind: "special", name: "none" });
+    expect(k("select").label).toEqual({ primary: "$key.select", shift: "$key.help" });
+    expect(actionFor(k("deselect"), true, false)).toBeUndefined();
+    expect(k("deselect").actions.shift).toBeUndefined();
+    expect(k("deselect").label).toEqual({ primary: "$key.deselect" });
+    expect([k("undo"), k("redo")].map((x) => [x.label.primary, x.label.shift])).toEqual([["$key.undo", "⇤"], ["$key.redo", "⇥"]]);
+    for (const id of ["menu", "esc", "undo", "redo", "select", "deselect"]) expect(k(id).cls, id).toBe("nav");
+    // no keypad cell runs the Copy or Paste special any more
+    for (const key of keyboard.keys)
+      for (const a of Object.values(key.actions)) expect(a.kind === "special" && ["copy", "paste"].includes(a.name), key.id).toBe(false);
     // R85: Fmt's free Shift cell opens Mode
     expect(k("fmt").actions.shift).toEqual({ kind: "special", name: "mode" });
     expect(k("fmt").label.shift).toBe("$key.mode");
@@ -80,9 +86,10 @@ describe("keyboard spec", () => {
     expect(k("sub").actions.primary).toEqual({ kind: "type", text: "-" });
     // the cluster keeps no alpha letters, so no key in it draws the letter line (vertical space, docs/03 rule 9)
     for (const key of keyboard.keys.filter((x) => x.row < MATHS_ROW)) expect(key.label.alpha ?? key.actions.alpha, key.id).toBeUndefined();
-    // Help and Esc keep their G2 cells (r1c4, r1c5), as does the pad; every other key of the cluster is our choice
-    expect([k("help").source, k("esc").source]).toEqual(["virtual-calc", "virtual-calc"]);
-    for (const id of ["u1", "u2", "u3", "u4", "u5", "u6", "undo", "redo", "copy", "paste"]) expect(k(id).source, id).toBe("assumed");
+    // Esc keeps its G2 cell (r1c5), as does the pad; every other key of the cluster is our choice (☰, Select and Deselect are
+    // not the G2's function in their G2 cell)
+    expect(k("esc").source).toBe("virtual-calc");
+    for (const id of ["u1", "u2", "u3", "u4", "u5", "u6", "menu", "undo", "redo", "select", "deselect"]) expect(k(id).source, id).toBe("assumed");
     // a user key may take an Alpha layer (R15c3, the loader test is in userKeys.test.ts) but needs both its legend and action
     const bad = (extra: string) => () => loadKeyboard(parse(spec.replace("{ id: u1, row: 0, col: 0, cls: nav, user: true,", `{ id: u1, row: 0, col: 0, cls: nav, user: true, ${extra}`)));
     expect(bad("alpha: { type: Q },")).toThrow(KeyboardSpecError);
@@ -101,7 +108,7 @@ describe("keyboard spec", () => {
   it("every key says where it comes from", () => {
     for (const k of keyboard.keys) expect(["virtual-calc", "assumed", "device"], k.id).toContain(k.source);
     // 37 since R15c2 (42 before): Apps, Symb, Plot, Num and Help left the cluster (their G2 functions are on the status
-    // line); 38 since R146: Help is back at its G2 cell (row 0 column 4, r1c4) in place of View
+    // line); R146 brought Help back at its G2 cell (r1c4) in place of View (38); R278 gave that cell to ☰, which is ours (37)
     expect(spec.match(/source: virtual-calc/g)?.length ?? 0).toBeGreaterThanOrEqual(37);
   });
 

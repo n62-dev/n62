@@ -4,7 +4,7 @@
 // are drawn and copied with the comma, and a pasted 1,5e-3 is a number. Key sequences on the real engine. Expected values
 // are derived: 3,5 × 2 = 7, 1,5 ÷ 2 = 0,75, 1,5ᴇ-3 = 0,0015, 3,ᴇ3 = 3.ᴇ3 = 3000.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, lastResult, open, setClipboard, sheetKey, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, PASTE, entryValue, lastResult, menuItem, open, setClipboard, sheetKey, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 // The system clipboard is one for the whole browser: these tests run one after another.
@@ -181,9 +181,9 @@ test("max(1;2) typed with letters and the , key (;) gives 2; a list element is n
 test("a copied result reads 0,75, and copy → paste gives the value back", async ({ page }) => {
   await tap(page, ["d1", "dot", "d5", "div", "d2", "enter"]);
   await resultIs(page, "0,75", 1);
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect.poll(() => clipboard(page)).toBe("0,75");
-  await tap(page, ["esc", "paste"]);
+  await tap(page, ["esc", ...PASTE]);
   await expect.poll(() => entryValue(page)).toBe("0{,}75");
   await tap(page, ["mul", "d4", "enter"]);
   await resultIs(page, "3", 2);
@@ -191,18 +191,18 @@ test("a copied result reads 0,75, and copy → paste gives the value back", asyn
 
 test("a pasted 1,5e-3 evaluates to 0,0015; a pasted 1.5 is refused", async ({ page }) => {
   await setClipboard(page, "1,5e-3");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("1{,}5\\emark-3");
   await tap(page, ["enter"]);
   await resultIs(page, "0,0015", 1);
   await setClipboard(page, "1.5");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect(page.getByTestId("notice")).toHaveText("Paste: not a number");
 });
 
 test("selectENumber reads the comma: after a pasted 1,5ᴇ-3, ÷ takes the whole number", async ({ page }) => {
   await setClipboard(page, "1,5e-3");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("1{,}5\\emark-3"); // the paste is async: wait for the number before ÷ takes it
   await tap(page, ["div"]);
   await expect.poll(() => entryValue(page)).toBe("\\frac{1{,}5\\emark-3}{\\placeholder{}}");
@@ -288,7 +288,7 @@ test("the units key on the row max(1,5), typed in point mode, puts max(1;5) on t
 
 // R100 (vr-1, P5): a root copied from an app in comma mode pastes into Home as the same value. Expected: the readout
 // itself (the oracle's sqrt(2) = 1.41421356237309504880… is appcopy.spec's).
-test("Function: Plot › ☰ Root, Copy, then Home, Shift+Copy, Enter gives the same root", async ({ page }) => {
+test("Function: Plot › ☰ Root, ☰ → Copy, then Home, ☰ → Paste, Enter gives the same root", async ({ page }) => {
   await tap(page, ["@symb"]);
   await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
   await tap(page, ["x", "pow", "d2", "right", "sub", "d2", "enter", "@plot"]);
@@ -296,10 +296,10 @@ test("Function: Plot › ☰ Root, Copy, then Home, Shift+Copy, Enter gives the 
   await tap(page, Array<string>(10).fill("right")); // x = 1
   await tap(page, ["@menu", "d1"]); // Root
   await expect(page.getByTestId("readout-x")).toHaveText("1,41421356237");
-  await tap(page, ["copy"]);
+  await menuItem(page, "copy");
   await expect.poll(() => clipboard(page)).toMatch(/^1,414213562373095048801/);
   const text = await clipboard(page);
-  await tap(page, ["@home", "paste"]);
+  await tap(page, ["@home", ...PASTE]);
   await expect.poll(() => entryValue(page)).toBe(text.replace(",", "{,}"));
   await tap(page, ["enter"]);
   await resultIs(page, "1,41421356237", 1);
@@ -308,14 +308,14 @@ test("Function: Plot › ☰ Root, Copy, then Home, Shift+Copy, Enter gives the 
 // R100 (fh-6): a list as comma-mode Copy writes it pastes back (derived: 1,5 = 3/2, 2,25 = 9/4)
 test("a pasted {1,5;2,25} is the list 1,5 and 2,25; a pasted {1,5} is refused", async ({ page }) => {
   await setClipboard(page, "{1,5;2,25}");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("\\left\\{1{,}5;2{,}25\\right\\}");
   await tap(page, ["enter"]);
   await resultIs(page, "{1,5;2,25}", 1);
-  await tap(page, ["copy"]);
+  await tap(page, COPY);
   await expect.poll(() => clipboard(page)).toBe("{3/2;9/4}");
   await setClipboard(page, "{1,5}");
-  await tap(page, ["paste"]);
+  await tap(page, PASTE);
   await expect(page.getByTestId("notice")).toHaveText("Paste: not a number");
 });
 

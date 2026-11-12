@@ -63,8 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
-| 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, R279 |
 | 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | R278 (owner 11-12: in v0.1.0) |
 | 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R278, R279, R283 |
 | 753 | [R290](packages/R290.md) the six tips teach the final handling (K5) | ron, Sonnet | `p1/ron-tipsfinal` | R278, R283 |
@@ -102,14 +100,12 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
-| 681 | R195 Find's preview says where the key is | ron, Sonnet | `p1/ron-findwhere` | – |
 | 737 | G224 SI-prefix display drops trailing zeros | gorge, Sonnet | `p1/gorge-pfxtrim` | – |
-| 738 | [G340](packages/G340.md) normal and simplify of a nested root give a wrong number (F228) | gorge, Opus | `p1/gorge-normalroot` | – |
 | 739 | [G226](packages/G226.md) integer shift: negative counts and big integers (F193) | gorge, Opus | `p1/gorge-intshift` | – |
 | 755 | [G341](packages/G341.md) names that start with pas are N62's (F210) | gorge, Opus | `p1/gorge-pasnames` | – |
 | 756 | [G342](packages/G342.md) a library file's version is the last one that changed library text | gorge, Sonnet | `p1/gorge-libversion` | – |
 | 683 | [R199](packages/R199.md) templates in the plain-text session (F180) | ron, Sonnet | `p1/ron-plaintemplates` | – |
-| 699 | [G331](packages/G331.md) patch 0045: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
+| 699 | [G331](packages/G331.md) patch 0046: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
 | 698 | [G330](packages/G330.md) the Slope shows a cancelled 0 as a number (F227) | gorge, Opus | `p1/gorge-slopezero` | – |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |

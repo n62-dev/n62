@@ -3,7 +3,7 @@
 // acting on the picked row, else the last result (Delete: the last row); the picked row's buttons are Store ▶ and
 // Copy as › (R276: a hold copies, a swipe deletes, rowgestures.spec.ts). Expected values are derived: 1/3 and 2/3 as 12 shown digits.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, open, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
@@ -45,7 +45,7 @@ test("the row buttons and ☰ act on the picked row (touch)", async ({ page }) =
   await item(page, /Exact/).tap();
   await expect.poll(() => clipboard(page)).toBe("2/3");
   await expect(bar(page)).toHaveCount(0); // an action ends the pick
-  await tap(page, ["up", "up", "copy"]); // the Copy key on a pick
+  await tap(page, ["up", "up", ...COPY]); // ☰ 3 Copy on a pick (R278: the Copy key is gone)
   await expect.poll(() => clipboard(page)).toBe("0." + "6".repeat(39) + "7");
   await tap(page, ["up", "up", "@menu", "d1"]); // ☰ 1 Insert
   expect(await entryValue(page)).toContain("\\res");
