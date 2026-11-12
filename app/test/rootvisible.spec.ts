@@ -78,3 +78,32 @@ for (const [name, width, height, all] of MENU_SIZES)
       await ctx.close();
     }
   });
+
+// R262: after a Root, Plot's Menu has its ninth row (To Home, shown only with an answer): all nine rows are on screen
+// without the scroll cue at the Fairphone's sizes and the Pixel 7's (no reason line then: every row is live).
+const ANSWER_SIZES = [
+  ["Fairphone 6", 372, 828],
+  ["Fairphone 6 WebView", 372, 767],
+  ["Pixel 7", 412, 915],
+] as const;
+for (const [name, width, height] of ANSWER_SIZES)
+  test(`Plot's Menu after a Root shows its nine rows, To Home last, on screen at ${name} (${width}×${height})`, async ({ browser }) => {
+    if (!c46) throw new Error("c46 is not in core.yaml");
+    const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    try {
+      await start(page);
+      await replay(page, c46.keys);
+      await expect(page.locator('[data-testid="readout-x"]')).toHaveText("1.41421356237");
+      await replay(page, ["@menu"]);
+      const rows = page.locator('[data-testid="menu"] .row[data-id]');
+      await expect(rows).toHaveCount(9);
+      const ids = await rows.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["id"] ?? ""));
+      expect(ids.at(-1)).toBe("tohome");
+      await expect(page.getByTestId("sheet-count"), `no scroll cue at ${width}×${height}`).toHaveCount(0);
+      for (const id of ids)
+        await expect.poll(() => seen(page, `[data-testid="menu"] .row[data-id="${id}"]`), { message: `Menu row ${id} at ${width}×${height}`, timeout: 2000 }).toBe("");
+    } finally {
+      await ctx.close();
+    }
+  });

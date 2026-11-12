@@ -371,10 +371,10 @@ test("Function: a Root readout, Menu › To Home: one chip on Home's line; ×2 g
   await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
   await tap(page, ["x", "pow", "d2", "right", "sub", "d2", "enter", "@plot"]);
   await page.waitForFunction(() => window.n62.plot.board !== undefined);
-  // no analysis yet: the row is there, disabled, with its reason
+  // no analysis yet: no row (Plot's eight rows and their reasons fill the room at the floor; the last row moves no number)
   await tap(page, ["@menu"]);
-  await expect(menuRow(page, "tohome")).toHaveAttribute("aria-disabled", "true");
-  await expect(menuRow(page, "tohome").locator(".reason")).toHaveText("No answer yet: run an analysis first");
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(8);
+  await expect(menuRow(page, "tohome")).toHaveCount(0);
   await tap(page, ["esc"]);
   await tap(page, Array<string>(10).fill("right")); // x = 1
   await expect(page.getByTestId("trace-x")).toHaveText("1");

@@ -27,7 +27,6 @@ export const enNum = {
   /** R262: the Menu row that takes the answer to Home's line as a chip, and why it is greyed (Solve, then Plot) */
   "app.toHome": "To Home",
   "why.noAnswerSolve": "No answer yet: solve first",
-  "why.noAnswerPlot": "No answer yet: run an analysis first",
   /** R261: Symb's Menu row that empties the selected slot (Undo brings it back), and why it is greyed */
   "slot.clear": "Clear",
   "why.emptySlot": "This one is empty",
