@@ -59,6 +59,21 @@ describe.skipIf(!full)("Find on the generated index", () => {
     ]);
   });
 
+  // G227: the matrix and vector functions beside det, inv, tran and cross, each with a golden case that exists
+  it("dot, norm, rref, trn, eigenvals and egv are tier 0 in the Matrix category, with a golden case that exists", () => {
+    const ids = ["fn:dot", "fn:norm", "fn:rref", "fn:trn", "fn:eigenvals", "fn:egv"];
+    const here = dirname(fileURLToPath(import.meta.url));
+    const golden = new Set(["home", "precision"].flatMap((f) => [...readFileSync(join(here, `../../../tests/golden/${f}.yaml`), "utf8").matchAll(/\bid: "([^"]+)"/g)].map((m) => m[1])));
+    const curated = (parse(readFileSync(join(here, "../../../find/functions.yaml"), "utf8")) as { functions: { id: string; golden?: string }[] }).functions;
+    const matrix = CATEGORIES.find((c) => c.id === "matrix");
+    for (const id of ids) {
+      expect(index.byId.get(id)?.tier, id).toBe(0);
+      const g = curated.find((f) => f.id === id)?.golden;
+      expect(g !== undefined && golden.has(g), `${id}: golden ${g}`).toBe(true);
+      expect(matrix?.ids, id).toContain(id);
+    }
+  });
+
   it("every audited function and template is in exactly one category, and every category id is in the index", () => {
     const seen = CATEGORIES.flatMap((c) => categoryItems(c, index.items, index.byId).filter((it) => it.kind === "fn" || it.kind === "tmpl").map((it) => it.id));
     const tier0 = index.items.filter((it) => (it.kind === "fn" || it.kind === "tmpl") && it.tier === 0).map((it) => it.id);
