@@ -74,6 +74,10 @@ describe("keyboard spec", () => {
     // R85: Fmt's free Shift cell opens Mode
     expect(k("fmt").actions.shift).toEqual({ kind: "special", name: "mode" });
     expect(k("fmt").label.shift).toBe("$key.mode");
+    // R193 (docs/04 5.4): Shift + − opens the Base menu for the last result (route.ts: dead with text on the line)
+    expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
+    expect(k("sub").label.shift).toBe("$key.base");
+    expect(k("sub").actions.primary).toEqual({ kind: "type", text: "-" });
     // the cluster keeps no alpha letters, so no key in it draws the letter line (vertical space, docs/03 rule 9)
     for (const key of keyboard.keys.filter((x) => x.row < MATHS_ROW)) expect(key.label.alpha ?? key.actions.alpha, key.id).toBeUndefined();
     // Help and Esc keep their G2 cells (r1c4, r1c5), as does the pad; every other key of the cluster is our choice
