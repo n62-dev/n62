@@ -153,7 +153,7 @@ let removedCode: typeof import("./removedRows.ts") | undefined;
 let sigmaCode = $state.raw<typeof import("../render/tidy.ts")>();
 onTidy((m) => (sigmaCode = m));
 /** R135: the Format and a b/c keys' code (cycleForms.ts), out of the start chunk the same way. */
-let formsCode: typeof import("./cycleForms.ts") | undefined;
+let formsCode = $state.raw<typeof import("./cycleForms.ts")>(); // R192: a base form is drawn by it, once in
 export const loadForms = (): Promise<typeof import("./cycleForms.ts") | undefined> =>
   import("./cycleForms.ts").then((m) => (formsCode = m), () => undefined);
 export const loadRemoved = (): Promise<typeof import("./removedRows.ts") | undefined> =>
@@ -605,7 +605,7 @@ export class Session {
   display(item: HistoryItem, grouped = false): Drawn {
     const shown = item.view === "home" || item.fmt !== undefined || item.form !== undefined || item.facts !== undefined;
     if (item.status === "done" && shown) {
-      const r = renderNumeric(item, this.modeOf(item), this.displayContext(), grouped);
+      const r = formsCode?.baseDrawn(item, this.modeOf(item)) ?? renderNumeric(item, this.modeOf(item), this.displayContext(), grouped); // R192
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
       if (r) return item.units ? withUnit(r, item.units, this.decimalComma ? commaResult : undefined) : r;
     }
@@ -633,7 +633,7 @@ export class Session {
   /** The mark before a finished result (docs/04 2.4), for the form it is drawn in; null: a non-number, or none known. */
   mark(item: HistoryItem): MarkInfo | null {
     if (item.status !== "done") return null;
-    return markFor(item, this.modeOf(item), this.displayContext());
+    return (formsCode?.baseMark ?? markFor)(item, this.modeOf(item), this.displayContext()); // R192: a base form's, lazy
   }
 
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */

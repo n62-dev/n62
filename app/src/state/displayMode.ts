@@ -24,11 +24,12 @@ import {
 import type { NumberFormat } from "../calc/port.ts";
 import { complexToLatex, fractionToLatex, GROUP_LATEX, groupSepFor, homeResultToLatex, polarToLatex, type GroupSep, type Mute } from "../render/home.ts";
 
-export type FmtMode = "std" | "sci" | "eng" | "pfx" | "fix" | "frac" | "mixed" | "polar";
+export type FmtMode = "std" | "sci" | "eng" | "pfx" | "fix" | "frac" | "mixed" | "polar" | "hex" | "bin" | "oct";
 
 /** Every mode a result can be drawn in, in canonical order. "mixed" is reached by neither key since R10 (the mixed
- *  number is a Tmpl template); it stays so a stored result drawn mixed before keeps its drawing. */
-export const FMT_MODES: readonly FmtMode[] = ["std", "sci", "eng", "pfx", "fix", "frac", "mixed", "polar"];
+ *  number is a Tmpl template); it stays so a stored result drawn mixed before keeps its drawing. The bases (R192) are
+ *  drawn by cycleForms.ts (baseDrawn), set by the Base menu, in no cycle. */
+export const FMT_MODES: readonly FmtMode[] = ["std", "sci", "eng", "pfx", "fix", "frac", "mixed", "polar", "hex", "bin", "oct"];
 /** The Format key's modes (the order of its Settings ticks): the notations. */
 export const NOTATION_MODES: readonly FmtMode[] = ["std", "sci", "eng", "pfx", "fix"];
 export const DEFAULT_FMT_CYCLE: readonly FmtMode[] = ["std", "sci", "eng"];
