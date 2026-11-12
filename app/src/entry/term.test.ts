@@ -2,6 +2,8 @@
 // R277: the term of an atom and the term under a point, on lines as MathLive 0.111.1 numbers them (each fixture is what
 // getElementInfo gave for offsets 0…lastOffset, read in the browser: latex and depth; bounds where the test needs them).
 import { describe, expect, test } from "vitest";
+import { selectCompound, selectENumber } from "./field.ts";
+import { inNumber, numberRunStart } from "./numberRun.ts";
 import { termAt, termRange } from "./term.ts";
 
 type Atom = [latex: string, depth: number, bounds?: [left: number, right: number]];
@@ -35,6 +37,8 @@ const SIN: Atom[] = [["", 0], ["5", 0], ["\\sin", 0], ["", 1], ["2", 1], ["3", 1
 const FRAC: Atom[] = [["", 0], ["", 1], ["1", 1], ["2", 1], ["", 1], ["3", 1], ["4", 1], ["\\frac{12}{34}", 0]];
 const PAIR_POWER: Atom[] = [["", 0], ["", 1], ["1", 1], ["+", 1], ["2", 1], ["\\left(1+2\\right)", 0], ["", 1], ["2", 1], ["^2", 0]];
 const COMMA: Atom[] = [["", 0], ["1", 0], ["", 1], [",", 1], ["{,}", 0], ["5", 0]];
+/** 1ᴇ3.5: the ᴇ part is digits only, so the number ends at the 3 and .5 after it is a number of its own. */
+const EXP_POINT: Atom[] = [["", 0], ["1", 0], ["", 1], ["", 2], ["ᴇ", 2], ["\\mathopen{ᴇ}", 1], ["\\emark", 0], ["3", 0], [".", 0], ["5", 0]];
 
 describe("termRange", () => {
   test("a number with its ᴇ part, from any of its atoms; the operators around it are no term", () => {
@@ -76,6 +80,43 @@ describe("termRange", () => {
   test("a number with the decimal comma (R57) is one term", () => {
     const f = field(COMMA);
     for (const o of [1, 4, 5]) expect(termRange(f, o), `offset ${o}`).toEqual([0, 5]);
+  });
+});
+
+/** The field with the cursor at `position`, as x² finds it after ◀ ▶ (selectENumber, selectCompound set `selection`). */
+function cursorAt(atoms: Atom[], position: number) {
+  const f = field(atoms) as unknown as Record<string, unknown>;
+  const mf = { ...f, position, selectionIsCollapsed: true, selection: { ranges: [[position, position]] } };
+  return mf as unknown as Parameters<typeof selectCompound>[0];
+}
+
+describe("one number rule (numberRun.ts): a hold selects the number x² takes from the cursor after it", () => {
+  for (const [name, atoms] of Object.entries({ ENUM, POWER_CHIP, COMMA, EXP_POINT, FRAC, SIN })) {
+    test(name, () => {
+      const f = field(atoms);
+      let checked = 0;
+      for (let o = 1; o < atoms.length; o++) {
+        const d = (atoms[o] as Atom)[1];
+        if (!inNumber(f, o, d)) continue;
+        const [s, e] = termRange(f, o) ?? [-1, -1];
+        expect(s <= o && o <= e, `offset ${o} in its term`).toBe(true);
+        const mf = cursorAt(atoms, e);
+        // a power: x² brackets the term with its power (selectCompound); an ᴇ number: selectENumber; else the digits' run
+        const start = (atoms[e] as Atom)[0].startsWith("^")
+          ? selectCompound(mf) && mf.selection.ranges[0]?.[0]
+          : selectENumber(mf)
+            ? mf.selection.ranges[0]?.[0]
+            : numberRunStart(f, e, d);
+        expect(start, `offset ${o}`).toBe(s);
+        checked++;
+      }
+      expect(checked).toBeGreaterThan(0);
+    });
+  }
+  test("1ᴇ3.5: the ᴇ part ends at its last digit", () => {
+    const f = field(EXP_POINT);
+    for (const o of [1, 6, 7]) expect(termRange(f, o), `offset ${o}`).toEqual([0, 7]);
+    for (const o of [8, 9]) expect(termRange(f, o), `offset ${o}`).toEqual([6, 9]);
   });
 });
 

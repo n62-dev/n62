@@ -7,14 +7,11 @@
 // `getOffsetFromPoint`. Loaded with MathLive, outside the start chunk.
 import type { MathfieldElement } from "mathlive";
 import { atomAfter, atomStart, depthAt, isName, isPair, latexAt } from "./boxes.ts";
-import { EMARK } from "./macros.ts";
+import { inNumber, numberAround } from "./numberRun.ts";
 
 type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
 type PointField = Field & Pick<MathfieldElement, "getOffsetFromPoint">;
 
-/** A number's parts: a digit, a point, the decimal comma `{,}` (R57). */
-const NUMBER = /^(?:[\d.]|\{,\})$/;
-const SIGN = /^[+-]$/;
 /** No term: a box's start, an operator, a relation, a separator, a mark between boxes, AND, OR, XOR (R117). */
 const NO_TERM =
   /^(?:|[-+=<>,;:]|\\(?:times|div|cdot|pm|mp|lt|gt|le|leq|ge|geq|ne|neq|to|,|mathrm\{d\})|\\operatorname\{(?:\\mathrm\{)?(?:AND|OR|XOR)\}?\})$/;
@@ -50,14 +47,12 @@ export function termRange(mf: Field, o: number): [number, number] | undefined {
     if (at(b + 1).startsWith("^")) b++; // its power
     return [atomStart(mf, row[a] as number), row[b] as number];
   };
-  // a number with its ᴇ part: digits, points, decimal commas, the mark, a sign right after the mark
-  const inNumber = (k: number): boolean => NUMBER.test(at(k)) || at(k) === EMARK || (SIGN.test(at(k)) && at(k - 1) === EMARK);
-  if (inNumber(i)) {
-    let a = i;
-    let b = i;
-    while (a > 0 && inNumber(a - 1)) a--;
-    while (b + 1 < row.length && inNumber(b + 1)) b++;
-    return range(a, b);
+  // a number with its ᴇ part, read as selectENumber and selectCompound read it (numberRun.ts, the one rule)
+  const d = depthAt(mf, o);
+  if (inNumber(mf, o, d)) {
+    const [s, e] = numberAround(mf, o, d);
+    const p = atomAfter(mf, e);
+    return [s, p > 0 && latexAt(mf, p).startsWith("^") ? p : e]; // its power
   }
   const l = at(i);
   if (NO_TERM.test(l)) return undefined;

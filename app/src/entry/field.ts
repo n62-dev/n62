@@ -8,7 +8,7 @@ import { deleteAtTemplate } from "./delete.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
 import { lineTouch } from "./lineTouch.ts";
-import { numberRunStart } from "./numberRun.ts";
+import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */
@@ -276,7 +276,7 @@ function noNumberBefore(mf: MathfieldElement): boolean {
 function afterDigit(mf: MathfieldElement): boolean {
   const [a, b] = mf.selection.ranges[0] ?? [mf.position, mf.position];
   const o = Math.min(a, b);
-  return o > 0 && /^(?:[\d.]|\{,\})$/.test(mf.getElementInfo(o)?.latex ?? "");
+  return o > 0 && isNumberLatex(mf.getElementInfo(o)?.latex ?? "");
 }
 
 /**
@@ -284,21 +284,11 @@ function afterDigit(mf: MathfieldElement): boolean {
  * of it and return true. MathLive's own #@ would take only the digits after the mark. Offsets list an atom's parts
  * before the atom itself, so the mark's drawing (depth below the cursor's) is skipped on the way back.
  */
-function selectENumber(mf: MathfieldElement): boolean {
+export function selectENumber(mf: MathfieldElement): boolean {
   if (!mf.selectionIsCollapsed) return false;
   const end = mf.position;
-  const d = mf.getElementInfo(end)?.depth ?? 0;
-  const at = (o: number, re: RegExp): boolean => o > 0 && (mf.getElementInfo(o)?.depth ?? 0) === d && re.test(mf.getElementInfo(o)?.latex ?? "");
-  let k = end;
-  while (at(k, /^\d$/)) k--;
-  if (k === end) return false;
-  if (at(k, /^[+-]$/)) k--;
-  if (!at(k, /^\\emark$/)) return false;
-  k--;
-  while (k > 0 && (mf.getElementInfo(k)?.depth ?? 0) > d) k--;
-  const mantissa = k;
-  k = numberRunStart(mf, k, d); // digits, a point or the decimal comma `{,}` (R57)
-  if (k === mantissa) return false;
+  const k = eNumberStart(mf, end, mf.getElementInfo(end)?.depth ?? 0); // numberRun.ts: the one number rule (R57, R256, R277)
+  if (k === undefined) return false;
   mf.selection = { ranges: [[k, end]] };
   return true;
 }
@@ -335,7 +325,7 @@ function selectMatrix(mf: MathfieldElement): boolean {
  * the whole number; inside a fraction's part the key raises the last term of that part (user, 2026-10-12).
  * MathLive offsets list an atom's parts before the atom itself, and getElementInfo gives each one's depth.
  */
-function selectCompound(mf: MathfieldElement): boolean {
+export function selectCompound(mf: MathfieldElement): boolean {
   if (!mf.selectionIsCollapsed) return false;
   const latexAt = (o: number): string => mf.getElementInfo(o)?.latex ?? "";
   const depthAt = (o: number): number => mf.getElementInfo(o)?.depth ?? 0;
