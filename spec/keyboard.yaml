@@ -32,10 +32,11 @@
 #                                  Any action may carry `line: <action>`, used instead of it when the
 #                                  one-line entry mode is on (a linear form of the same key).
 #   { cmd: "moveToNextChar" }      a MathLive editing command
-#   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|units|none }
+#   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|units|selectGrow|selectShrink|none }
 #                                  handled by the app (home, cas: go to that view, from an app too; switch: Home <-> CAS,
 #                                  or back to Home/CAS from an app; apps, symb, plot, num, menu: the status line's
-#                                  controls, R15c1, and what a user key may hold)
+#                                  controls, R15c1, and what a user key may hold; selectGrow, selectShrink: Select grows
+#                                  the entry line's selection by the box model, Deselect walks it back, R279, entry/grow.ts)
 # User keys (R15b, R15c): a key with `user: true` is a free key (U1-U6). Its layers here are only its defaults: the
 # user's own action for a layer (Settings > User keys, from Find, R4b) replaces the default, stored with a stamp in
 # IndexedDB (app/src/keyboard/userKeys.svelte.ts). A user key has three slots, tap, Shift and Alpha (R15c3), all empty

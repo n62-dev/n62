@@ -16,6 +16,8 @@ export class EntryController {
   private onField: typeof import("./field.ts").runOnField | undefined;
   /** Backspace, Delete and the printable keys of a hardware keyboard (entry/hwkeys.ts, R26b, R31): loaded with MathLive. */
   private hwKey: typeof import("./hwkeys.ts").hardwareKey | undefined;
+  /** R279: the chain of Select presses that Deselect walks back (entry/grow.ts): loaded with MathLive. */
+  private chain: import("./grow.ts").SelectChain | undefined;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
   private stored: string[] = [];
@@ -82,6 +84,7 @@ export class EntryController {
     void line.then((l) => (this.kept = l?.latex ? 2 : 0));
     this.ready = Promise.all([mathlive.load(), import("./field.ts"), import("./hwkeys.ts"), line]).then(([m, f, h, l]) => {
       this.onField = f.runOnField;
+      this.chain = new f.SelectChain();
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips) + (this.pendingValue ?? "");
@@ -223,6 +226,7 @@ export class EntryController {
    */
   run(a: ActionBody): void {
     if (a.kind === "special") return;
+    this.endSelect();
     if (a.kind === "insert" && a.chip) this.table[a.chip.key] = a.chip.chip; // a constant on a free key (R4b)
     this.touched = true;
     if (!this.mf) {
@@ -230,5 +234,27 @@ export class EntryController {
       return;
     }
     this.onField?.(this.mf, a);
+  }
+
+  /**
+   * R279: Select (`grow`) takes the term before the cursor, then each enclosing step up to the whole line, where it
+   * stays; Deselect walks the same chain back, from its first step to the cursor where it was. False where the key does
+   * nothing: no field yet, an empty line, no chain to walk back.
+   */
+  select(grow: boolean): boolean {
+    const mf = this.mf;
+    if (!mf || !this.chain) return false;
+    const [a, b] = mf.selection.ranges[0] ?? [mf.position, mf.position];
+    const now: [number, number] = [Math.min(a, b), Math.max(a, b)];
+    const to = grow ? this.chain.grow(mf, now) : this.chain.shrink(now);
+    if (!to) return grow && a !== b; // the whole line: it stays
+    if (to[0] === to[1]) mf.position = to[0];
+    else mf.selection = { ranges: [to] };
+    mf.focus();
+    return true;
+  }
+  /** Any other key ends the chain of Select presses (R279; a tap does by changing the selection). */
+  endSelect(): void {
+    this.chain?.end();
   }
 }

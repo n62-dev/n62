@@ -79,7 +79,8 @@ function stepsOnLevel(mf: Field, o: number, r: Range): Range[] {
   const row = level(mf, o);
   const list = items(mf, row);
   const i = list.findIndex((it) => it.e > r[0]);
-  const j = list.findLastIndex((it) => it.s < r[1]);
+  let j = list.length - 1;
+  while (j >= 0 && (list[j] as Item).s >= r[1]) j--;
   const out: Range[] = [];
   if (i >= 0 && j >= i)
     for (let k = 1; k <= LOOSEST; k++) {

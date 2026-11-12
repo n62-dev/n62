@@ -56,6 +56,8 @@ export interface RouteCtx {
   unfold(): boolean;
 }
 
+/** Select or Deselect (R279): they act on the entry line only. */
+const isSelect = (a: ActionBody | undefined): boolean => a?.kind === "special" && (a.name === "selectGrow" || a.name === "selectShrink");
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
   layer === undefined ? { shift: c.session.shift, alpha: c.session.alpha } : { shift: layer === "shift", alpha: layer === "alpha" };
 const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");
@@ -144,6 +146,11 @@ export function special(c: RouteCtx, name: Special): void {
     case "find":
       c.openFind();
       break;
+    case "selectGrow":
+    case "selectShrink":
+      // R279: the entry line only; a view without one (Plot) has nothing to select
+      if ((c.shell.app !== null && !c.shell.showsEntry) || !c.entry.select(name === "selectGrow")) c.dead();
+      break;
     case "vars":
     case "memory":
       c.openNames(name === "memory");
@@ -191,6 +198,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     c.picked = pickAfter(items, picked);
     return true;
   }
+  if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
   const item = items[picked];
   c.picked = null;
   if (action.kind !== "special") return false;
@@ -280,7 +288,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       // read by what the key is, not by the layer: ☰, the place name and Tmpl toggle their sheet, a control that
       // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
       const p = key.actions.primary;
-      if (p?.kind !== "special") return true;
+      if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
       if (p.name !== "menu" && p.name !== "apps" && p.name !== "tmpl") shell.closeSheet();
       special(c, p.name);
       return true;
@@ -424,6 +432,7 @@ function modifier(c: RouteCtx, name: "shift" | "alpha", layer: Layer | undefined
 export function run(c: RouteCtx, key: Key, mods: Mods): void {
   const { session, shell, entry } = c;
   const action = actionFor(key, mods.shift, mods.alpha, session.settings.entry === "line", c.casKeys);
+  if (!isSelect(action)) entry.endSelect(); // R279: any other key ends the chain of Select presses
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
   if (shell.app === null && historyKey(c, action)) return;

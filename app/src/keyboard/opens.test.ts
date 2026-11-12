@@ -11,7 +11,7 @@ import { opensSheet } from "./opens.ts";
 /** Every other special: it does something else (a modifier, an edit, a place, a view, the unit view, nothing). A new
  *  special must be added here or to OPENS_SHEET (keyboard.ts), so someone decides. */
 const OPENS_NOTHING: ReadonlySet<Special> = new Set<Special>([
-  "shift", "alpha", "enter", "clear", "esc", "fmt", "copy", "paste", "symb", "plot", "num", "home", "cas", "switch", "units", "none",
+  "shift", "alpha", "enter", "clear", "esc", "fmt", "copy", "paste", "symb", "plot", "num", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none",
 ]);
 
 const spec = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../spec/keyboard.yaml"), "utf8");
