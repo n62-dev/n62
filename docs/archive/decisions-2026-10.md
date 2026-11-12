@@ -5,6 +5,9 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened 2026-11-12 (Opus pass 153) to make room for R286's and G328's defaults, as it stood
+- **An app's line stays with the app** (R76, Opus pass 60; R76f1): cleared on the way back to Home or CAS, only your typing follows (R34); Enter in Solve's Num empties it. Archived. **R262 (Opus pass 150):** Menu › To Home (Solve's Num, Plot) puts the answer on Home's line as a chip with its facts; the app's line stays behind, typing too; Plot's row needs a readout (R145). Would change if: the owner wants typing to follow.
+
 ### Shortened 2026-11-12 (Opus pass 150) to make room for R262's default, as they stood
 - **Owner answers of 2026-11-08:** a Giac patch's worker writes its own patches README row (A83); a stray file outside a worktree is logged, warn only (A64 lo-11; A88); a CAS-last cold start of 1507 ms does not hold v0.1.0; the c29 red (F200, A123). Archived, "Opus pass 117". Would change if: a stray file does harm before anyone reads the log.
 - **A stored name's mark in Vars (S53f1, Opus pass 132):** from its facts by History's rule; a name without facts takes the `=` or `≈` noted when Home stored it (`DefEntry.mark`); a name with neither (stored before S53f1) shows no mark, never `=`. Would change if: the owner wants old names marked.
