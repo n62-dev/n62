@@ -80,6 +80,8 @@ describe("slotFormula (R24c)", () => {
     expect(() => ansGiac("\\ans\\times2")).toThrow("Ans: no result to use in this view yet");
     const unit = { text: "m", dim: "m1", slot: { tokens: [{ unit: "m" }] } };
     expect(() => ansGiac("\\ans\\times2", { value: "3", exact: true, unit })).toThrow("Ans has a unit here: use its row's chip");
+    // fix round 1: a dimensionless unit row (10 ± 0.5 m ÷ 2 m = 5 ± 0.25) gives a chip with σ and no unit: refused, σ never dropped
+    expect(() => ansGiac("\\ans\\times2", { value: "5", exact: false, unc: "0.25" })).toThrow("Ans has a σ here: use its row's chip");
     expect(latexToGiacInfo("\\ans\\times2", { chips: { [ANS_KEY]: { value: "3", exact: true, unit } } }).giac).toBe("(3)*2"); // Home: the unit dropped, as R63
   });
   // vfh-1 (R271 made the parser's side): a σ that is no number keeps its slot before ±, and the parser says σ is the fault
