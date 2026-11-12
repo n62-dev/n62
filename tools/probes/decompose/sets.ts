@@ -32,7 +32,13 @@ export const SETS: Record<string, [string, string][]> = {
     [`simplify(${MIN})`, "Digits:=40"],
     [`tsimplify(${F214})`, ""],
     [`tsimplify(${MIN})`, ""],
-    [`simplify(${MIN})`, "timeout 1;ckevery 10"], // Giac's own clock (patch 0002) never fires: decompose calls no control_c
+    [`simplify(${MIN})`, "timeout 1;ckevery 10"], // Giac's own clock (patch 0002) stops it after 1 s: the loop's gcd calls control_c (Home's clock does the same; CAS waits 600 s)
+  ],
+  // the cause's last step on the dev engine: e2r with a variable list that lacks ln(rootof(...)) is undef (with lvar's list it is not)
+  cause: [
+    ["e2r(-ln(2)+ln(rootof([[1,0],[1,0,-12,-32,48,0,-64]])),[ln(2),pi])", ""],
+    ["e2r(-ln(2)+ln(rootof([[1,0],[1,0,-12,-32,48,0,-64]])),lvar(-ln(2)+ln(rootof([[1,0],[1,0,-12,-32,48,0,-64]]))))", ""],
+    ["evalf(rootof([[1,0],[1,0,-12,-32,48,0,-64]]),20)", ""], // (4^(1/3)+sqrt(4^(2/3)+4)), the root of asinh(surd(1/2,3))'s ln form
   ],
   // a wrong answer met on the way (not F214): simplify's square root of an algebraic number drops the numerator
   forms: [
