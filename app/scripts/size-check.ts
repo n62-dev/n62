@@ -404,10 +404,14 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  the client keeps G19's stored count (workerEngine.ts logFails) beside G318's count of every failed start (attempts),
  *  two numbers one cannot hold, and the gate counts no replay once two starts failed before the store answered.
  *  60,794 B + 0.05 kB, rounded up to the next 0.01 kB.
- *  60,850 → 60,910 B (G313f1, no start-chunk file changed): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
+ *  60,850 → 60,980 B (R260): a stored name is shown as typed (render/home.ts typedName: β for beta_, e for e_; the Greek
+ *  names in Unicode's order, so one table gives both the LaTeX and the letter), in the history's uses line; and the letter
+ *  stand-ins e_, i_ as user functions (parse.ts, latex-to-giac.ts). phase-1 3b8ab8e7 measures 60,843 B gzip (171,945 B raw),
+ *  the branch merged with it 60,922 B (172,108 B raw, +79 B): 60,922 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  G313f1 (no start-chunk file changed, the pin stays 60,980 B): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
  *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
- *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 60_910;
+ *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB; the merged branch stays inside the R260 pin. */
+export const START_PIN_GZIP = 60_980;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

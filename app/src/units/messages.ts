@@ -2,6 +2,7 @@
 // The message for a unit-view refusal (docs/04 4.3), from the i18n table. Plain TS.
 import { unitText } from "../i18n/enUnits.ts";
 import { t } from "../i18n/index.ts";
+import { typedName } from "../render/home.ts";
 import { dimensionText } from "./dims.ts";
 import type { UncWhy, UnitError, UnitNote } from "./types.ts";
 
@@ -50,9 +51,9 @@ export function unitNoteText(n: UnitNote): string {
   return n.note === "radDropped" ? unitText("units.note.radDropped") : unitText("units.note.cycle", { unit: n.unit });
 }
 
-/** R121: the note on the names a result read as pure numbers: at most three, then …. */
+/** R121: the note on the names a result read as pure numbers: at most three, then …; each as typed (R260: β, not beta_). */
 export function unitNamesText(names: readonly string[]): string {
-  const list = names.slice(0, 3).join(", ") + (names.length > 3 ? ", …" : "");
+  const list = names.slice(0, 3).map(typedName).join(", ") + (names.length > 3 ? ", …" : "");
   return unitText(names.length === 1 ? "units.note.name" : "units.note.names", { names: list });
 }
 

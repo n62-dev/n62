@@ -65,7 +65,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
+| 638 | R260 letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
 | 656 | R286 σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
 | 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | – (owner 11-12: in v0.1.0) |
 | 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
