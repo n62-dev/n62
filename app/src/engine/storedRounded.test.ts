@@ -137,6 +137,8 @@ describe.skipIf(!giacAvailable())("G328: a name set beside the result stores its
     const half = await run("(A:=5)*0.5");
     expect(half.get("A")?.facts).toBeUndefined();
     expect(twice(half.host).facts.exact).toBe(true);
+    // an exact-looking value made by a decision or from a float keeps the line's ⚠ (G48's [q1,q2]:=[F,1] in host.test.ts)
+    expect((await run("(A:=round(approx(5/2)))*approx(1)")).get("A")?.facts?.warn).toBe("unchecked");
     const cas = await run("(A:=5)*approx(1)", true);
     expect(cas.get("A")?.facts).toBeUndefined();
     expect(twice(cas.host).facts.exact).toBe(true);
