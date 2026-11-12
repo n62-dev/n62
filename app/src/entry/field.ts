@@ -7,6 +7,7 @@ import type { ActionBody } from "../keyboard/keyboard.ts";
 import { deleteAtTemplate } from "./delete.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
+import { lineTouch } from "./lineTouch.ts";
 import { numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 
@@ -146,45 +147,45 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
       on.escape(ev.repeat);
     }
   });
-  keepTouchCaret(mf);
+  settleClick(mf);
+  lineTouch(mf, mf.parentElement ?? mf, (dx) => scrollLine(mf, dx));
   return mf;
 }
 
 /**
- * R42 (F33): MathLive places the caret on pointerdown and, for touch only, a second time on pointerup from atom bounds
- * that the first placement made stale (right of a fraction, root, power or bracket pair the second hit lands at the
- * start of the line or box). Remember the first (right) caret and put it back after the second. A mouse click never
- * needed this. R47 (F39): then, for touch and mouse alike, a caret where ◀ ▶ cannot stop (between a function's name
- * and its bracket, inside a name) moves forward to the next stop, as ▶ would settle (stops.ts). A selection (drag,
- * double tap) is left alone.
+ * R47 (F39): after a mouse click, a caret where ◀ ▶ cannot stop (between a function's name and its bracket, inside a
+ * name) moves forward to the next stop, as ▶ would settle (stops.ts). A selection (drag, double click) is left alone.
+ * A finger or a pen is lineTouch.ts's (R277), which settles its tap itself; R42's (F33) second caret placement on a
+ * touch's lift, from stale atom bounds, went with MathLive's touch handling.
  */
-function keepTouchCaret(mf: MathfieldElement): void {
-  let down: number | undefined;
+function settleClick(mf: MathfieldElement): void {
   let onField = false;
   mf.addEventListener("pointerdown", (ev) => {
-    down = undefined;
-    onField = true;
-    if (ev.pointerType !== "touch") return;
-    // A microtask runs after MathLive's own pointerdown handler (inside the shadow root) has placed the caret.
-    queueMicrotask(() => {
-      if (mf.selectionIsCollapsed) down = mf.position;
-    });
+    onField = ev.pointerType === "mouse";
   });
   window.addEventListener("pointercancel", () => {
     onField = false;
-    down = undefined;
   });
-  window.addEventListener("pointerup", (ev) => {
-    const want = down;
-    down = undefined;
+  window.addEventListener("pointerup", () => {
     if (!onField) return;
     onField = false;
     setTimeout(() => {
-      if (!mf.selectionIsCollapsed) return;
-      if (want !== undefined && ev.pointerType === "touch" && mf.position !== want) mf.position = want;
-      settle(mf, "moveToNextChar");
+      if (mf.selectionIsCollapsed) settle(mf, "moveToNextChar");
     }, 0);
   });
+}
+
+/**
+ * R277: scroll the line's content sideways by `dx` px (a finger's drag, lineTouch.ts). MathLive 0.111 has no public
+ * sideways scroll (M6 asks for one): its scroller is the shadow `[part=content]`, whose scrollLeft it sets itself only to
+ * follow the caret. Our one write into MathLive's shadow DOM; without the part the drag does nothing (false). The e2e
+ * test linetouch.spec.ts fails when the part is gone or its scrollLeft no longer moves the drawn line.
+ */
+export function scrollLine(mf: Pick<MathfieldElement, "shadowRoot">, dx: number): boolean {
+  const el = mf.shadowRoot?.querySelector<HTMLElement>("[part=content]");
+  if (!el) return false;
+  el.scrollLeft += dx;
+  return true;
 }
 
 /** The field's hidden textarea must never summon the system keyboard (inputmode=none, again after upgrade). */
