@@ -50,4 +50,4 @@ export const PROBED_LIST_FORMS: Readonly<Record<string, "any" | "integers" | "ro
 };
 
 /** How many names the probe asked (the index's and the census's, the skipped ones included). */
-export const PROBED_NAMES = 1609; // G222: + the names the five distribution rows add; G235: the bit-function rows
+export const PROBED_NAMES = 1613;
