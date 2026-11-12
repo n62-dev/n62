@@ -10,6 +10,7 @@ import { engineGiac, giacAvailable, loadNodeGiac } from "../engine/nodeGiac.ts";
 import { defaultHomeSettings } from "../engine/homeEval.ts";
 import { decimalFromString, decimalToString, formatReal, POLAR_SIGN, toText, type DecimalValue } from "../engine/format.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
+import { polarOf } from "./cycleForms.ts";
 import { markFor, renderNumeric, type DisplayContext, type NumericResult } from "./displayMode.ts";
 
 const ORACLE: Record<string, [string, string]> = {
@@ -42,13 +43,14 @@ describe.skipIf(!giacAvailable())("G312: the polar form of a ⚠ complex result 
       const a = host.home(`abs(${z})`, s).result;
       const th = host.home(`(arg(${z})/${PASDEG})`, s).result;
       if (!a.ok || !th.ok || !a.value || !th.value) throw new Error("no abs or arg");
-      const item: NumericResult = { value: res.value, facts: res.facts, polar: { r: a.value.re, theta: th.value.re, angle: "rad" } };
+      const point: NumericResult = { value: res.value, facts: res.facts };
+      const item: NumericResult = { ...point, polar: polarOf(point, res.value, a.value.re, th.value.re, "rad") };
       const ctx: DisplayContext = { format: "std", digits: 30, fixDecimals: 4, angle: "rad" };
       const text = renderNumeric(item, "polar", ctx)?.text ?? "";
       const [r, t] = text.split(POLAR_SIGN);
       const [ar, at] = [agrees(r ?? "", r0), agrees(t ?? "", t0)];
       expect({ text, r: ar.ok, theta: at.ok }).toEqual({ text, r: true, theta: true });
-      // the bound keeps most of the confirmed digits: at least 11 of each (r and θ: 12 and 12 of Gamma, 12 and 11 of erf)
+      // the bound keeps most of the confirmed digits: at least 11 (12 for Gamma, 11 for erf)
       expect(Math.min(ar.digits, at.digits)).toBeGreaterThanOrEqual(11);
       expect(markFor(item, "polar", ctx)?.mark).toBe("⚠");
     });

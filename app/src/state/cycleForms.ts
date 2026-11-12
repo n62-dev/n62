@@ -4,8 +4,9 @@
 // the next mode and form (nextMode, nextForm, isApplicable) is here too.
 import type { Calc, CalcSettings } from "../calc/port.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
-import { decimalToString, type ComplexValue } from "../engine/format.ts";
-import { type Facts, factsOf, FMT_MODES, type FmtMode, type FormStep } from "./displayMode.ts";
+import { decimalToString, type ComplexValue, type DecimalValue } from "../engine/format.ts";
+import { polarDigits } from "../engine/polarDigits.ts";
+import { type Facts, factsOf, FMT_MODES, type FmtMode, type FormStep, type NumericResult, type Polar } from "./displayMode.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
 
 /** Fraction modes need an exact rational; polar needs a complex result (and the engine). */
@@ -47,6 +48,18 @@ export function nextMode(
   return { mode: seq[(i + 1) % seq.length] };
 }
 
+/** The polar form of `item` from the engine's r and θ, with the digits of each that the value's confirmed digits
+ *  confirm (G312; none for a value with no count, an exact one). */
+export function polarOf(item: NumericResult, v: ComplexValue, r: DecimalValue, theta: DecimalValue, angle: Polar["angle"]): Polar {
+  const n = item.facts?.reliableDigits ?? null;
+  if (n === null) return { r, theta, angle, confirmed: null };
+  const k = polarDigits(v, n, r, theta);
+  return { r, theta, angle, confirmed: Math.min(k.r, k.theta) };
+}
+
+/** The item needs r and θ computed (again): none yet, another angle unit, or stored before G312 (no counts). */
+const polarStale = (item: HistoryItem, angle: Polar["angle"]): boolean => item.polar?.angle !== angle || item.polar.confirmed === undefined;
+
 /** abs and arg of the value, from the engine (arg follows the angle unit setting). */
 async function computePolar(s: Session, calc: Calc, item: HistoryItem, v: ComplexValue): Promise<boolean> {
   const z = `((${decimalToString(v.re)})+(${decimalToString(v.im)})*i)`;
@@ -54,7 +67,7 @@ async function computePolar(s: Session, calc: Calc, item: HistoryItem, v: Comple
   try {
     const [r, th] = [await calc.home(`abs(${z})`, set), await calc.home(`(arg(${z})/${PASDEG})`, set)]; // G46: Giac answers in radians; the factor gives the mode's unit
     if (!r.ok || !th.ok || !r.value || !th.value) return false;
-    item.polar = { r: r.value.re, theta: th.value.re, angle: s.settings.angle };
+    item.polar = polarOf(item, v, r.value.re, th.value.re, s.settings.angle);
     return true;
   } catch {
     return false;
@@ -73,7 +86,7 @@ export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Pr
   const exactBase = item.view === "cas";
   const next = nextMode(item.fmt ?? (exactBase ? undefined : s.settings.format), s.settings.fmtCycle, factsOf(item), exactBase);
   if (!next) return false;
-  if (next.mode === "polar" && item.value && item.polar?.angle !== s.settings.angle && !(await computePolar(s, calc, item, item.value)))
+  if (next.mode === "polar" && item.value && polarStale(item, s.settings.angle) && !(await computePolar(s, calc, item, item.value)))
     return false;
   item.fmt = next.mode;
   s.saveHistory();
@@ -85,7 +98,7 @@ export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Pr
 export async function cycleForm(s: Session, calc: Calc, item: HistoryItem): Promise<boolean> {
   const next = nextForm(item.form, factsOf(item), item.view === "cas");
   if (!next) return false;
-  if (next.form === "polar" && item.value && item.polar?.angle !== s.settings.angle && !(await computePolar(s, calc, item, item.value)))
+  if (next.form === "polar" && item.value && polarStale(item, s.settings.angle) && !(await computePolar(s, calc, item, item.value)))
     return false;
   if (next.form === undefined) delete item.form;
   else item.form = next.form;
