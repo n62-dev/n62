@@ -7,13 +7,12 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 **2026-11-12, evening (owner):** sections B to D no longer wait for v0.1.0. The lanes build them to Tue 11-17 (Ultra ends after it) in the brief's order: what changes how today's calculator is used, then the critical bugs, then new features; what is merged by that freeze ships in v0.1.0. The version labels below (v0.2 to v1) are the order of the work, not the release it lands in.
 
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
-- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only).
-- The freeze (Tue 11-17, proposed), for A91: A8, and G2 item 70 with it.
-- The release candidate (Sat 11-21, proposed), for the video: A4, A5.
-- The tag (target Mon 11-23, proposed 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
+- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only). On 2026-11-12, each as recommended: B2 to B7, B9, C1 to C6, C8; RPN stays after the tag.
+- The freeze (Tue 11-17), for A91: A8, and G2 item 70 with it.
+- The release candidate (Sat 11-21), for the video: A4, A5.
+- The tag (target Mon 11-23, owner 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
 - Before any forum post: D8.
-- Now (their rows are next in the lanes; brief 0c lists them under lane B's table): B2 to B7, B9. B8 is answered (R199).
-- Now, for section C's rows: C1 to C6, C8 (C7 is answered). Before RPN: D1 to D4.
+- Before RPN (after the tag): D1 to D4.
 - No date: D5, D6, E1 to E4. D6 runs as written unless you say otherwise.
 
 Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
@@ -39,7 +38,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 Order (all v0.1.0):
 - Lane A: R170 and R172 first, with no wait (R170 has no app code and is the net for the keypad rows); after R53 and R148: R171, R173.
 - Lane B: R180 (first), G200, G201, G300, G202, A90, A92, A93, A94, G301, A96, A97, A98.
-- By day on Thu 11-12: A95 (the device, after R173). R174 dropped from v0.1.0 (owner, 11-12).
+- By day on Thu 11-12: A95 (the device, after R173). R174 dropped that morning, back as a feature row in the evening (owner, 11-12).
 - By day after the freeze: A91, refreshed Sun morning; `npm run trust:refresh` first each time.
 - Must land before the freeze: R180 (the phasor fix, section B). Should land: G300 and G301 (section D); if G301 misses it, F196 joins the known limits.
 - If it gets tight, drop in this order (in `docs/release-0.1.0.md`): R174 and A94; A96, A97 and A98 to Mon 11-16; if A95 fails, Android stays copy-only.

@@ -19,7 +19,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 
 **S20** (the MPFI spike) hands-on. No package yet: the backlog lines that say so.
 
-**The night review** (owner, 2026-11-01; `/night-review`, `.claude/skills/night-review/`): beside the lanes on Mon 11-09 and Fri 11-13, each ending at a daily stop; after the release as the owner sets (on Max each run costs a lot); its packages wait in its open note (`docs/research/night-review-<date>`, section 2), and section 0c takes them a few rows at a time.
+**The night review** (owner, 2026-11-01; `/night-review`, `.claude/skills/night-review/`): beside the lanes on Mon 11-09 and Sat 11-14 (owner, 2026-11-12: moved from Fri 11-13 to after the weekly reset at 09:00), each ending at a daily stop, and on Tue 11-17 on the frozen code; after the release as the owner sets (on Max each run costs a lot); its packages wait in its open note (`docs/research/night-review-<date>`, section 2), and section 0c takes them a few rows at a time.
 
 **Why this order:** silent wrong numbers by reach first; the units right after the Settings base (owner, 2026-10-29).
 
@@ -29,12 +29,9 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 |---|---|---|---|---|---|
 | [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
 | [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
-| A140 | No dead package links after a merge of phase-1 | annabell, Sonnet | day, no lane running, before Thu 11-12's restart (owner) | – | ~0.3 d |
-| A147 | A worker's limit is 4 h; a heartbeat line in the log | annabell, Sonnet | day, no lane running, Wed 11-11 after A140 (owner) | A140 | ~0.2 d |
 | [A141](packages/A141.md) | The device step runs beside the lane | annabell, Sonnet | day, no lane running (owner, 11-12: moved from the freeze day) | the v0.1.0 tag | ~0.5 d |
 | [A142](packages/A142.md) | The lane queues in a file of their own | annabell, Sonnet | day, no lane running | the v0.1.0 tag | ~0.5 d |
 | [A143](packages/A143.md) | night.sh picks the plain step; henri the rest | annabell, Opus | day, no lane running | A142 | ~1 d |
-| A136 | Golden gate on a module change | annabell, Sonnet | day, Thu 11-12 after the lanes (owner) | – | ~0.3 d |
 | [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
 | [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, on the release candidate (the Fairphone) | R140, R146, R147, R53, R153–R157 | ~0.2 d |
 
@@ -61,7 +58,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, then engine rows)
-The order (owner, 2026-11-12): the rows to step 666 change how today's calculator is used (the touch rules, Store, the Help key, matrices on their keys, the desktop keys); the rows after them are new features. A package whose file says day runs here by rule 10.
+The order (owner, 2026-11-12): the rows down to R224 change how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows after it are new features. A package whose file says day runs here by rule 10.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
@@ -78,28 +75,39 @@ The order (owner, 2026-11-12): the rows to step 666 change how today's calculato
 | 663 | [R185](packages/R185.md) Shift + 5: a matrix that grows as you type | ron, Opus | `p1/ron-matgrow` | – |
 | 664 | [R186](packages/R186.md) ⌫ takes an empty last row or column back | ron, Sonnet | `p1/ron-matshrink` | R185 |
 | 665 | [R187](packages/R187.md) Shift + 4: the matrix sheet and its functions | ron, Sonnet | `p1/ron-matsheet` | – |
-| 666 | [R131](packages/R131.md) a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | – |
+| 666 | [R131](packages/R131.md) a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | R278, R283, R185, R187, R193, R197 |
+| 730 | [R198](packages/R198.md) typed function names on a hardware keyboard | ron, Opus | `p1/ron-typednames` | R131 |
+| 731 | [R224](packages/R224.md) the wide layout on a tablet and a desktop | ron, Opus | `p1/ron-widelayout` | – |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
 | 669 | [R190](packages/R190.md) a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
+| 732 | [R130](packages/R130.md) the work as a readable report | ron, Opus | `p1/ron-workreport` | – |
 | 671 | [R221](packages/R221.md) t08 and t09 replay what works today | ron, Sonnet | `p1/ron-taskbaselines` | – |
 | 672 | [R220](packages/R220.md) the uncertainty sheet's mockup (the owner picks) | ron, Opus | `p1/ron-uncsheetmock` | – |
+| 670 | [R174](packages/R174.md) Help and about: Why trust it | ron, Sonnet | `p1/ron-trustpage` | – |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232 |
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
-| 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | A137 |
+| 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | A137, A100 |
+| 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | G214 |
+| 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
+| 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
+| 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 
 ### Lane B queue (the release, then the engine)
-The order (owner, 2026-11-12): ron's rows that keep clear of the entry line and change what a key or a result shows (the bases and Find's preview: steps 678 to 681); then the critical bugs (683, 698, and 610 to 613, this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order. A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
+The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order. A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
-| 699 | [G331](packages/G331.md) patch 0045: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | the v0.1.0 tag |
 | 678 | [R192](packages/R192.md) HEX, BIN, OCT as a display form of a result | ron, Opus | `p1/ron-baseform` | – |
 | 679 | [R193](packages/R193.md) Shift + − opens the Base menu for the last result | ron, Sonnet | `p1/ron-basemenu` | R192 |
 | 681 | [R195](packages/R195.md) Find's preview says where the key is | ron, Sonnet | `p1/ron-findwhere` | – |
+| 737 | [G224](packages/G224.md) SI-prefix display drops trailing zeros | gorge, Sonnet | `p1/gorge-pfxtrim` | – |
+| 738 | [G340](packages/G340.md) normal and simplify of a nested root give a wrong number (F228) | gorge, Opus | `p1/gorge-normalroot` | – |
+| 739 | [G226](packages/G226.md) integer shift: negative counts and big integers (F193) | gorge, Opus | `p1/gorge-intshift` | – |
 | 683 | [R199](packages/R199.md) templates in the plain-text session (F180) | ron, Sonnet | `p1/ron-plaintemplates` | – |
+| 699 | [G331](packages/G331.md) patch 0045: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
 | 698 | [G330](packages/G330.md) the Slope shows a cancelled 0 as a number (F227) | gorge, Opus | `p1/gorge-slopezero` | – |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |
@@ -112,17 +120,29 @@ The order (owner, 2026-11-12): ron's rows that keep clear of the entry line and 
 | 685 | [G211](packages/G211.md) a history row keeps its Giac text, angle and digits | gorge, Opus | `p1/gorge-rowfacts` | G210 |
 | 686 | [G212](packages/G212.md) Home rows list the stored values they read | gorge, Opus | `p1/gorge-homeuses` | G210 |
 | 687 | [G232](packages/G232.md) the history as CSV and as LaTeX | gorge, Sonnet | `p1/gorge-exportrows` | G210 |
+| 740 | [G213](packages/G213.md) Copy as Python, the core | gorge, Opus | `p1/gorge-pycore` | G210 |
+| 741 | [G214](packages/G214.md) Copy as Python: functions and the angle mode | gorge, Opus | `p1/gorge-pyfuncs` | G211, G213 |
+| 742 | [G215](packages/G215.md) the generated Python runs and agrees with N62 | gorge, Opus | `p1/gorge-pydiff` | G214 |
+| 743 | [G216](packages/G216.md) Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
+| 744 | [G217](packages/G217.md) Copy as Python: ± through uncertainties | gorge, Opus | `p1/gorge-pysigma` | G216 |
 | 688 | [A100](packages/A100.md) append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
 | 689 | [A137](packages/A137.md) the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
+| 745 | [A101](packages/A101.md) a checked append, never a mode switch (the Tab One) | annabell, Opus | `p1/annabell-appendcheck` | A100 |
+| 746 | [G218](packages/G218.md) what the sync folder receives | gorge, Opus | `p1/gorge-syncfiles` | G211, G212, G213 |
+| 747 | [G219](packages/G219.md) the sync queue: at least once, in order | gorge, Opus | `p1/gorge-syncqueue` | A101, G218 |
 | 690 | [G233](packages/G233.md) your own unit: a definition the unit evaluator can read | gorge, Opus | `p1/gorge-userunit` | – |
 | 691 | [G234](packages/G234.md) your own units are stored, backed up and found | gorge, Sonnet | `p1/gorge-userunitstore` | G233 |
 | 692 | [G271](packages/G271.md) σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
-| 693 | [G274](packages/G274.md) a Home result from two or more uncertain inputs keeps its terms | gorge, Sonnet | `p1/gorge-homeuncterms` | G271 |
+| 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
+| 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
+| 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
+| 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
 | 694 | [S45](packages/S45.md) units inside Solve: the design note | sandra, Opus | `p1/sandra-solveunits` | – |
+| 752 | [S50](packages/S50.md) the benchmark's protocol | sandra, Opus | `p1/sandra-benchmarknote` | – |
 | 695 | [S51](packages/S51.md) who holds the rights an App Store build would need | sandra, Opus | `p1/sandra-iosrights` | – |
 | 697 | [A145](packages/A145.md) F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
 
-**Not queue rows: they wait for the owner's yes** (henri never starts them; a session moves a row into a table when the owner has answered; the decision numbers are the must-have list's). Lane A: R198 typed function names on a hardware keyboard (B7, after R131); R224 the wide layout on a tablet and a desktop (C5); R130 the work as a report (C8); R225 (the owner's iPhone check); R174 the Why trust it page (dropped from v0.1.0 on 11-12: back on the owner's word). Lane B: G224 PFX trims zeros (B5); G226 `shift` (B3, an exact wrong answer, so first among the bugs); G213 to G217 and R181, Copy as Python (B4); A101, G218, G219, R182, R183, the sync folder's queue (B2, B6); G270, G272, G273, the budget's text and model (C1, C2); G275, G276, formula sets (C6); S50, R222, the benchmark (C3, C4); R250 to R254 and G302, RPN (D1 to D4 and the owner's Virtual Calculator session). After the tag, as their files say: A141 to A143, A76, G314, G315, R267, R268. With no lane running (a stop the owner calls): A133 to A135, S33. After the freeze, by day: A91, A82. After the owner's measurements: R223.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A141 to A143, A76, G314, G315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, S33. After the freeze, by day: A91, A82.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
