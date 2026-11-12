@@ -20,10 +20,26 @@ describe.skipIf(!full)("Find on the generated index", () => {
   const picked: FindItem[] = [];
   const menu = findMenu(index, (it) => void picked.push(it));
 
-  it("the empty query shows ten fixed categories, constants and units last", () => {
+  it("the empty query shows eleven fixed categories, the bit functions last", () => {
     expect(menu.categories.map((c) => c.id)).toEqual(CATEGORIES.map((c) => `cat:${c.id}`));
-    expect(menu.categories).toHaveLength(10);
-    expect(menu.categories.at(-2)?.submenu?.items).toHaveLength(raw.filter((it) => it.kind === "const").length);
+    expect(menu.categories).toHaveLength(11);
+    expect(menu.categories.at(-3)?.submenu?.items).toHaveLength(raw.filter((it) => it.kind === "const").length);
+  });
+
+  // G235: the word operations (G229) and Giac's bit functions, found by name and by the word a user types, in one category
+  it("the eight bit functions are found by name and by and, or, xor, not, shift, rotate, and the Bits category lists all eight", () => {
+    const eight = ["bitand", "bitor", "bitxor", "bnot", "shl", "shr", "rotl", "rotr"].map((n) => `fn:${n}`);
+    for (const id of eight) expect(menu.search(id.slice(3))[0]?.id, id).toBe(id);
+    const words: Record<string, string[]> = {
+      and: ["fn:bitand"], or: ["fn:bitor"], xor: ["fn:bitxor"], not: ["fn:bnot"],
+      shift: ["fn:shl", "fn:shr"], rotate: ["fn:rotl", "fn:rotr"],
+    };
+    for (const [w, ids] of Object.entries(words)) {
+      const hits = menu.search(w).slice(0, 12).map((it) => it.id);
+      for (const id of ids) expect(hits, `${w}: ${id}`).toContain(id);
+    }
+    const bits = menu.categories.find((c) => c.id === "cat:bits")?.submenu;
+    expect(bits?.items.map((it) => it.id).sort()).toEqual([...eight].sort());
   });
 
   it("every audited function and template is in exactly one category, and every category id is in the index", () => {

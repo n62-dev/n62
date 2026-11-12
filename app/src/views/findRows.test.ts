@@ -58,7 +58,7 @@ describe.skipIf(!full)("Find's rows per key (R132)", () => {
   it("builds only the rows the sheet's room shows plus a margin, the first key of a query too", () => {
     const s = open();
     let d = draw(new Map(), s.level.rows, s.level.searching, s.level.highlight);
-    expect(d.built).toBe(10); // the categories
+    expect(d.built).toBe(11); // the categories
     for (const ch of "pres") {
       s.level.type(ch);
       const hits = s.level.rows.length;

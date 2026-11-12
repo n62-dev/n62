@@ -13,6 +13,7 @@ export const enFind = {
   "cat.eng": "Engineering",
   "cat.const": "Constants",
   "cat.units": "Units and prefixes",
+  "cat.bits": "Bits and words",
   "vars.title": "Vars",
   "memory.title": "Memory",
   "memory.clear": "Clear all",
