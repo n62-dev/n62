@@ -60,32 +60,26 @@ export function polarToLatex(p: FormattedPolar, group?: string): string {
 
 /** The Greek variable names as Giac prints them (input/parse.ts GREEK, R18; beta_, gamma_, Gamma_, epsilon_, Phi_,
  *  Psi_ stand in for names Giac keeps), and the letter each one is drawn as. Kept here, not imported, so the parser
- *  stays lazy. */
-const GREEK_NAMES: ReadonlySet<string> = new Set([
-  "alpha", "beta_", "gamma_", "delta", "epsilon_", "zeta", "eta", "theta", "iota", "kappa", "lambda", "mu", "nu", "xi", "rho", "sigma",
-  "tau", "phi", "chi", "psi", "omega", "Gamma_", "Delta", "Theta", "Lambda", "Sigma", "Phi_", "Psi_", "Omega",
-]);
+ *  stays lazy. R260: in Unicode's order, the small letters (α U+03B1 … ω) then the capitals (Α U+0391 … Ω), `-` for a
+ *  letter that is no variable (ο, π, ς, υ, …): a name's place gives its letter. */
+const GREEK_NAMES = ("alpha beta_ gamma_ delta epsilon_ zeta eta theta iota kappa lambda mu nu xi - - rho - sigma tau - phi chi psi omega " +
+  "- - Gamma_ Delta - - - Theta - - Lambda - - - - - - - Sigma - - Phi_ - Psi_ Omega").split(" ");
 const greekLetter = (name: string): string => {
   const n = name.replace(/_$/, "");
   return `\\${n === "epsilon" ? "varepsilon" : n === "phi" ? "varphi" : n} `;
 };
-/** R260: the Greek alphabet in Unicode's order (α U+03B1 … ω, Α U+0391 … Ω; `_` holds the place of the final ς, which
- *  has no capital), so a name's letter is its place plus α or Α. */
-const GREEK_ORDER = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho _ sigma tau upsilon phi chi psi omega".split(" ");
 
 /** R260 (vr-2): a stored name as the user typed it, for the text that names it (Vars, the unit note, the uses line): a
  *  Greek name as its letter (`beta_` β, `Omega` Ω), the letter stand-ins `e_`, `i_` (input/parse.ts LETTER_NAMES, R67)
  *  as e, i; any other name as stored. */
 export function typedName(name: string): string {
-  if (name === "e_" || name === "i_") return name.charAt(0);
-  if (!GREEK_NAMES.has(name)) return name;
-  const n = name.replace(/_$/, "");
-  return String.fromCharCode((n < "a" ? 0x391 : 0x3b1) + GREEK_ORDER.indexOf(n.toLowerCase()));
+  const k = GREEK_NAMES.indexOf(name);
+  return /^[ei]_$/.test(name) ? name[0]! : k < 0 ? name : String.fromCharCode(k < 25 ? 945 + k : 888 + k);
 }
 /** G105f1: the names of Giac's print drawn as LaTeX (giacPrint.ts names: whole names, strings skipped): a Greek name
  *  as its letter, `x_1` with its subscript, `inf` and `infinity` (Giac prints ∞, R18: Shift + 9, as +infinity) as ∞. */
 const nameLatex = ({ name }: { name: string }): string | null => {
-  if (GREEK_NAMES.has(name)) return greekLetter(name);
+  if (GREEK_NAMES.includes(name)) return greekLetter(name);
   if (name === "inf" || name === "infinity") return "\\infty";
   const sub = name.charAt(0) !== "_" && name.charAt(1) === "_" && name.length > 2 && !name.slice(2).includes("_") ? name : "";
   return sub ? `${sub.charAt(0)}_{${sub.slice(2)}}` : null;
