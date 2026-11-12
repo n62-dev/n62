@@ -16,8 +16,13 @@ export interface FindItem {
   desc?: string;
   /** fn: "stddev(list)". */
   syntax?: string;
-  /** fn: from Giac's aide_cas. */
+  /** fn, tier 0 only (G231): one example, the LaTeX the entry line holds; our own, checked on the engine
+   *  (find/functions.yaml, app/src/find/examples.test.ts). Tier 1 has none: Giac's help stays Giac's. */
   example?: string;
+  /** fn, tier 0: the result Home shows for `example`. */
+  exampleResult?: string;
+  /** fn, tier 0: "rad" or "deg" when the result depends on the angle mode (an inverse trigonometric function); absent when it does not. */
+  exampleAngle?: "rad" | "deg";
   /** const: exact decimal text with every digit (or an exact Giac expression with pi). */
   value?: string;
   /** const: standard uncertainty (CODATA); absent when the value is exact. */
