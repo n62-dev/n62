@@ -146,10 +146,10 @@ describe("G312: the polar form draws the confirmed digits only", () => {
     expect(markFor(z(14), "polar", c30)).toEqual({ mark: "⚠", n: 11 });
     expect(renderNumeric(z(14), undefined, c30)?.text).toBe("1+i"); // the point form as before
   });
-  it("Fixed: r and θ each to their own decimals", () => {
-    const fix: DisplayContext = { ...c30, format: "fix", fixDecimals: 20 };
-    expect(renderNumeric(z(14), "polar", fix)?.text).toBe("1.414213562373∡0.78539816340");
-    expect(markFor(z(14), "polar", fix)).toEqual({ mark: "⚠", n: 11 });
+  it("Scientific: r and θ each to their own digits", () => {
+    const sci: DisplayContext = { ...c30, format: "sci" };
+    expect(renderNumeric(z(14), "polar", sci)?.text).toBe("1.414213562373E0∡7.8539816340E-1");
+    expect(markFor(z(14), "polar", sci)).toEqual({ mark: "⚠", n: 11 });
   });
   it("an exact value, no count, or more confirmed digits than shown: today's 30 digits", () => {
     const all = "1.41421356237309504880168872421∡0.78539816339744830961566084582";
