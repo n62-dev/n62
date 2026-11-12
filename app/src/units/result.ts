@@ -70,9 +70,10 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   const facts = precisionFacts(q.value);
   // R271f1: the value's facts already hold σ's limit (evaluate.ts done, sigmaFacts.ts), as the Home row and the chip do
   const m = markOf(facts, o);
-  // the ⚠ sits before σ when σ's facts are the limit the value carries (its ⚠ reason, or its confirmed digits)
+  // the ⚠ sits before σ when σ's facts are the limit the value carries (its ⚠ reason, or the digits σ's limit gives it at
+  // σ's decade, R286: evaluate.ts done works them out)
   const limit = q.unc?.chip;
-  const sigmaWarn = m?.mark === "⚠" && !!limit && (!!limit.warn || (limit.reliableDigits ?? -1) === facts.reliableDigits);
+  const sigmaWarn = m?.mark === "⚠" && !!limit && (!!limit.warn || (q.unc?.limit ?? -1) === facts.reliableDigits);
   const mark: Mark = m?.mark === "⚠" ? "⚠" : q.unc ? "≈" : (m?.mark ?? "≈");
   const number = (v: Quantity["value"]): string => (v.value ? formatComplex(v.value, confirmedOptions(v.value, v.facts.reliableDigits, o)).text : v.display);
   const value = number(q.value);
