@@ -18,6 +18,7 @@ import {
   type FormStep,
   markFor,
   type NumericResult,
+  renderNumeric,
   type Polar,
 } from "./displayMode.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
@@ -47,6 +48,11 @@ export function baseDrawn(r: NumericResult, mode: FmtMode | undefined, word: Wor
   if (!isBase(mode) || !r.rational || !isApplicable(mode, factsOf(r))) return undefined;
   const s = formatBase(r.rational.n, mode, word.bits, word.signed);
   return typeof s === "string" ? { text: s, latex: `\\mathrm{${s}}` } : undefined;
+}
+
+/** R192: `r` drawn in `mode` (Session.display): a base form when it applies (baseDrawn), else as renderNumeric draws it. */
+export function drawnIn(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, grouped?: boolean): Drawn | undefined {
+  return baseDrawn(r, mode) ?? renderNumeric(r, mode, ctx, grouped);
 }
 
 /** R192: the mark of `r` drawn in `mode` (Session.mark). A base form draws the integer whole, as a fraction does, so it
