@@ -71,7 +71,7 @@ describe("the σ line (R40)", () => {
   it("σ with two significant digits and U = 2σ (k = 2), in the row's notation", () => {
     expect(sigmaLine(facts, "std")).toBe("σ = 9.0ᴇ9 · U = 2σ = 1.8ᴇ10 (k = 2)"); // 2 × 8.958ᴇ9 = 1.7916ᴇ10
     expect(sigmaLine(facts, "eng")).toBe("σ = 9.0ᴇ9 · U = 2σ = 18ᴇ9 (k = 2)");
-    expect(sigmaLine(facts, "pfx")).toBe("σ = 9 G · U = 2σ = 18 G (k = 2)");
+    expect(sigmaLine(facts, "pfx")).toBe("σ = 9.0 G · U = 2σ = 18 G (k = 2)");
     expect(sigmaLine({ ...facts, uncSigma: "0.15e-14" }, "fix", true)).toBe("σ = 1,5ᴇ-15 · U = 2σ = 3,0ᴇ-15 (k = 2)");
   });
   it("none without σ", () => {

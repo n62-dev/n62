@@ -239,6 +239,15 @@ describe("PFX: SI prefix display (docs/04 2.7)", () => {
   });
 });
 
+describe("PFX keepZeros: the σ line keeps its two digits (G224)", () => {
+  it("9.0 G with keepZeros, 9 G without; 1.0 M after rounding into the next prefix", () => {
+    const v = decimalFromString("8.958e9")!;
+    expect(toText(formatReal(v, { format: "PFX", digits: 2, keepZeros: true }))).toBe("9.0\u2009G");
+    expect(toText(formatReal(v, { format: "PFX", digits: 2 }))).toBe("9\u2009G");
+    expect(toText(formatReal(decimalFromString("999.96e3")!, { format: "PFX", digits: 2, keepZeros: true }))).toBe("1.0\u2009M");
+  });
+});
+
 describe("PFX drops the mantissa's trailing zeros (G224); ENG keeps them", () => {
   const p = (s: string, digits: number) => toText(formatReal(decimalFromString(s)!, { format: "PFX", digits }));
   const e = (s: string, digits: number) => toText(formatReal(decimalFromString(s)!, { format: "ENG", digits }));

@@ -138,7 +138,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 ### 2.7 Decision: SI prefix display, and prefix entry
 
-- **Display:** a format `PFX` beside ENG: `n` significant digits as in ENG, the exponent replaced by f p n µ m (none) k M G T P (10⁻¹⁵ to 10¹⁵); `µ` is U+00B5. Outside that range, ENG E notation. Built: mantissa, thin space, the prefix as `\class{pfx}{\mathrm{k}}` in the accent colour, so `1.5 m` (milli) does not read as metres; ENG and PFX keep trailing zeros to n digits (`2.500 k`); in Settings and the Format key cycle; copy gives the full value, never the prefix text; unit tests per prefix boundary and rounding into the next prefix (999.96 k at 4 digits → 1.000 M).
+- **Display:** a format `PFX` beside ENG: `n` significant digits as in ENG, the exponent replaced by f p n µ m (none) k M G T P (10⁻¹⁵ to 10¹⁵); `µ` is U+00B5. Outside that range, ENG E notation. Built: mantissa, thin space, the prefix as `\class{pfx}{\mathrm{k}}` in the accent colour, so `1.5 m` (milli) does not read as metres; ENG keeps trailing zeros to n digits (`2.500 k`); PFX drops the mantissa's trailing zeros and its point after rounding (`4.7 k`, `1 M`), but the σ line keeps its two digits (`9.0 G`); in Settings and the Format key cycle; copy gives the full value, never the prefix text; unit tests per prefix boundary and rounding into the next prefix (999.96 k at 4 digits → 1.000 M).
 - **Entry:** none in Home: a prefix is entered in the unit view's prefix cells (P11, docs/05 §7.2), and Enter in Home refuses a prefix picked in Find. Letters typed with Alpha stay variables (`4.7k` parses as `4.7*k`), so a variable `k` and the prefix k never collide (`4d80167f`).
 
 ### 2.8 Decision: reuse through chips and Ans
