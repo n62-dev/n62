@@ -377,6 +377,8 @@ test("Solve: To Home is disabled with its reason while x has no answer; a typed 
   await tap(page, ["@menu"]);
   await expect(menuRow(page, "tohome")).toHaveAttribute("aria-disabled", "true");
   await expect(menuRow(page, "tohome").locator(".reason")).toHaveText("No answer yet: solve first");
-  await menuRow(page, "tohome").click();
+  await tap(page, ["d5"]); // its number: a disabled row does nothing
+  await expect(page.getByTestId("menu")).toBeVisible();
   await expect(page.locator('[data-app="solve"]')).toBeVisible();
+  expect(await lineChips(page)).toBe(0);
 });
