@@ -102,8 +102,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
-| 678 | R192 HEX, BIN, OCT as a display form of a result | ron, Opus | `p1/ron-baseform` | – |
-| 679 | R193 Shift + − opens the Base menu for the last result | ron, Sonnet | `p1/ron-basemenu` | R192 |
 | 681 | [R195](packages/R195.md) Find's preview says where the key is | ron, Sonnet | `p1/ron-findwhere` | – |
 | 737 | [G224](packages/G224.md) SI-prefix display drops trailing zeros | gorge, Sonnet | `p1/gorge-pfxtrim` | – |
 | 738 | [G340](packages/G340.md) normal and simplify of a nested root give a wrong number (F228) | gorge, Opus | `p1/gorge-normalroot` | – |
