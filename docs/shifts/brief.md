@@ -67,11 +67,11 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
 | 656 | R286 σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
-| 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
+| 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | – (owner 11-12: in v0.1.0) |
 | 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
 | 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
 | 626 | [R278](packages/R278.md) Copy and Paste keys leave the keypad | ron, Sonnet | `p1/ron-noclipkeys` | R276, R279 |
-| 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | the v0.1.0 tag |
+| 629 | [R283](packages/R283.md) the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | R278 (owner 11-12: in v0.1.0) |
 | 627 | [A139](packages/A139.md) the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R278, R279, R283 |
 | 630 | [R280](packages/R280.md) Store ▶ acts on the picked row (sd-2) | ron, Opus | `p1/ron-storepick` | the v0.1.0 tag |
 | 631 | [R281](packages/R281.md) the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
