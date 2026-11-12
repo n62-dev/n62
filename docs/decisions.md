@@ -13,6 +13,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
 
+**A139 (touch on the Tab One, 2026-11-13):** two findings, each one backlog line if you agree. (1) A fast drag on a long row that reaches its scroll's end goes on into the slide and deletes the row in one gesture (a 400 px fling at 1.3 px/ms did, as rowSwipe.ts says it should): recommended, the slide starts only with a new drag, ≈½ d, Sonnet. Else as built. (2) Dead keys (Shift + Select, Shift + Deselect) carry no `aria-disabled`, so TalkBack likely says only "Deselect": recommended, set it on a dead key (one line, R41's family). Both wait for your TalkBack hand check.
+
 ## Decided proposals
 
 ### Pipeline and process
