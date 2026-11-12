@@ -3,6 +3,7 @@
 // getElementInfo gave for offsets 0…lastOffset, read in the browser: latex and depth; bounds where the test needs them).
 import { describe, expect, test } from "vitest";
 import { selectCompound, selectENumber } from "./field.ts";
+import { isInfixWord, isOperator } from "./boxes.ts";
 import { inNumber, numberRunStart } from "./numberRun.ts";
 import { termAt, termRange } from "./term.ts";
 
@@ -41,6 +42,15 @@ const COMMA: Atom[] = [["", 0], ["1", 0], ["", 1], [",", 1], ["{,}", 0], ["5", 0
 const EXP_POINT: Atom[] = [["", 0], ["1", 0], ["", 1], ["", 2], ["ᴇ", 2], ["\\mathopen{ᴇ}", 1], ["\\emark", 0], ["3", 0], [".", 0], ["5", 0]];
 
 describe("termRange", () => {
+  test("every atom boxes.ts reads as an operator or an infix word is no term (one list, R277)", () => {
+    const words = ["AND", "OR", "XOR"].flatMap((w) => [`\\operatorname{${w}}`, `\\operatorname{\\mathrm{${w}}}`]);
+    const ops = ["+", "-", "=", "<", ">", ",", ";", ":", "\\times", "\\div", "\\cdot", "\\pm", "\\mp", "\\lt", "\\gt", "\\le", "\\leq", "\\ge", "\\geq", "\\ne", "\\neq", "\\to", "\\,", "\\mathrm{d}"];
+    for (const l of [...words, ...ops]) {
+      expect(isOperator(l) || isInfixWord(l) || l === "\\," || l === "\\mathrm{d}", l).toBe(true);
+      expect(termRange(field([["", 0], ["1", 0], [l, 0], ["2", 0]]), 2), l).toBeUndefined();
+    }
+    expect(termRange(field([["", 0], ["1", 0], ["\\operatorname{NOT}", 0], ["2", 0]]), 2)).toBeDefined();
+  });
   test("a number with its ᴇ part, from any of its atoms; the operators around it are no term", () => {
     const f = field(ENUM);
     for (const o of [3, 5, 10, 11, 12]) expect(termRange(f, o), `offset ${o}`).toEqual([2, 12]);

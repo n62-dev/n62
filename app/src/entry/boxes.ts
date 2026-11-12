@@ -45,6 +45,10 @@ const EQ_NAME = /^\\operatorname\{(?:\\mathrm\{EQ\}|EQ)\}$/;
  */
 const INFIX = ["AND", "OR", "XOR"];
 const INFIX_WORD = new RegExp(`^\\\\operatorname\\{(?:\\\\mathrm\\{(?:${INFIX.join("|")})\\}|(?:${INFIX.join("|")}))\\}$`);
+/** True if the atom's latex `l` is AND, OR or XOR (R117). */
+export const isInfixWord = (l: string): boolean => INFIX_WORD.test(l);
+/** True if the atom's latex `l` is an operator, a relation or an argument separator, or a box's start (""): it ends a term (R277). */
+export const isOperator = (l: string): boolean => /^(?:|[-+=<>,;:]|\\(?:times|div|cdot|pm|mp|lt|gt|le|leq|ge|geq|ne|neq|to))$/.test(l);
 /** True if the atom's latex `l` is a function name that owns the pair after it: no infix word (R117). */
 export const isName = (l: string): boolean => NAME.test(l) && !INFIX_WORD.test(l);
 /** DMS's marks: degrees ° minutes ′ seconds ″ (R26h). */
@@ -52,7 +56,7 @@ const DEG = "\\degree";
 const MIN = "\\prime";
 const SEC = "\\doubleprime";
 /** What stands before a ° without being its degrees: a box's start, an operator, a relation, another mark. */
-const NOT_DEGREES = /^(?:|[+\-=,<>:]|\\(?:times|div|cdot|pm|mp|le|ge|ne|leq|geq|neq|to|degree|prime|doubleprime))$/;
+const NOT_DEGREES = (l: string): boolean => isOperator(l) || /^\\(?:degree|prime|doubleprime)$/.test(l);
 
 /**
  * A single digit or point atom: part of a number. A decimal comma is a group atom with parts of its own, so a walk back
@@ -483,7 +487,7 @@ function degreesOf(mf: Field, x: number): Box {
   const l = latexAt(mf, b);
   const inner = l === SEC ? dmsEndingAt(mf, b) : undefined;
   if (inner) return { from: inner.start, s: inner.start, e: b };
-  if (b < 1 || NOT_DEGREES.test(l)) return { from: b, s: b, e: b };
+  if (b < 1 || NOT_DEGREES(l)) return { from: b, s: b, e: b };
   if (l === PLACEHOLDER) return { from: b - 1, s: b - 1, e: b };
   const d = depthAt(mf, x);
   // the digits, points and decimal commas before the ° (R256f1: 3,5° takes 3,5 whole, as 3.5°)

@@ -36,7 +36,7 @@ Opus pass merges: 01db1c06 (152), 703a55db (153), 8dfa530e (154), 6477b31e (155)
 - 157 (R260f1, R277 unmerged): R260f1 ok (`β(x):=x+1` typed gives the product `beta_*(x):=x+1`, so a function stored under `beta_` can only come from an imported library: narrow, left open). R277 fix: rerun review-only; one more watch item, the worktree-clean race at the merge step (explained above, the day session's script). Docs 8481810a.
 
 ## What the owner must do
-1. **File MathLive issue M6** (the scroll position of the hidden content element; the draft text was in the R277 package file, now deleted with the merge; it is noted in backlog.md).
+1. **File MathLive issue M6** (the scroll position of the hidden content element; the draft text is in `../outreach/upstream-reports.md`, M6; noted in backlog.md).
 2. **Parisse:** the decompose recursion's cause (S54, F214, now G331) is in the upstream-reports list; F227 and F228 are engine bugs without a patch. Patches 0037 to 0044 stay unsent from the last report.
 3. **A139 and the device run** must show the R276 core cases c71 and c72 (hold and swipe on history rows) and R277's line scroll on the Tab One; the R277 defaults (a hold picks the smallest term, the number in a numerator) are checked there.
 4. **Docs room:** backlog.md and decisions.md are both full (20.0/20 and 40.0/40 kB); the next pass that adds lines must first remove done items. docs/04 will be about 105 B over after R277.

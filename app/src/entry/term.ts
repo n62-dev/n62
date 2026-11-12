@@ -6,15 +6,14 @@
 // atom of its own after its base). Public MathLive API only: offsets, `getElementInfo` (its latex, depth and bounds) and
 // `getOffsetFromPoint`. Loaded with MathLive, outside the start chunk.
 import type { MathfieldElement } from "mathlive";
-import { atomAfter, atomStart, depthAt, isName, isPair, latexAt } from "./boxes.ts";
+import { DIFF, THIN, atomAfter, atomStart, depthAt, isInfixWord, isName, isOperator, isPair, latexAt } from "./boxes.ts";
 import { inNumber, numberAround } from "./numberRun.ts";
 
 type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
 type PointField = Field & Pick<MathfieldElement, "getOffsetFromPoint">;
 
-/** No term: a box's start, an operator, a relation, a separator, a mark between boxes, AND, OR, XOR (R117). */
-const NO_TERM =
-  /^(?:|[-+=<>,;:]|\\(?:times|div|cdot|pm|mp|lt|gt|le|leq|ge|geq|ne|neq|to|,|mathrm\{d\})|\\operatorname\{(?:\\mathrm\{)?(?:AND|OR|XOR)\}?\})$/;
+/** No term: a box's start, an operator, a relation, a separator, a mark between boxes (boxes.ts: the same lists ⌫, x² and the grids read), AND, OR, XOR (R117). */
+const noTerm = (l: string): boolean => isOperator(l) || isInfixWord(l) || l === THIN || l === DIFF;
 /** How far (CSS px) beside an atom's box a finger still counts as on it. */
 const SLACK_PX = 3;
 
@@ -55,7 +54,7 @@ export function termRange(mf: Field, o: number): [number, number] | undefined {
     return [s, p > 0 && latexAt(mf, p).startsWith("^") ? p : e]; // its power
   }
   const l = at(i);
-  if (NO_TERM.test(l)) return undefined;
+  if (noTerm(l)) return undefined;
   if (l.startsWith("^")) {
     // a power: with its base
     const base = i > 0 ? termRange(mf, row[i - 1] as number) : undefined;
