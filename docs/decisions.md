@@ -51,7 +51,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
 - **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived, "Opus pass 96".
 - **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
-- **R50 (2026-10-18; owner 2026-11-07): themes N62 (teal, #529997's hue), Black & White (the old N62), Solarized**; entry outline, busy dash, key shadows, Home logo (R153–R157; `docs/mockups/n62-teal-2026-11-07.html`). Rule: docs/05 3.10. Would change if: a family goes unused for 4 weeks.
+- **R50 (owner 2026-11-07): three themes;** docs/05 3.10. Archived, "Opus pass 155".
 - **Redo after ⌫ (Opus pass 44; R15c2):** Redo does not delete again (MathLive [#3125](https://github.com/arnog/mathlive/issues/3125)); no workaround of ours. Archived.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
 - **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line.** Rule: docs/04 5.1, docs/05 3.2. Archived.
@@ -130,6 +130,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
 - **R261 (Opus pass 135):** Symb's ☰ lists Clear, then R83's pointer row; Esc on Solve's Num value line puts the value back; a new value takes Clear or ⌫ first (docs/05 3.5). Would change if: the owner wants type-to-replace.
+- **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms unless the finger moves 8 px; a swipe decides at 10 px (vertical wins), goes at 40 % of the row or a fling (0.5 px/ms, 24 px out); a mouse drag swipes too. Would change if: A139 finds them too eager or stiff.
+- **R277's line scroll (Opus pass 155):** a touch drag sets `scrollLeft` on MathLive's shadow `[part=content]` (0.111.4 has no public one; our one write there, pinned by a test; M6 asks for it). Would change if: MathLive ships a public scroll.
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45): docs/04 5.5 point 1; `e` after digits is ᴇ; characters no key types do nothing.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
@@ -164,7 +166,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
-- **The angle mode, route R (S14, R64, G46; Opus pass 31):** docs/04 2.12 (the ° template, the coordinate commands). `sinc` takes no factor (a function of a number, F29): sin(x)/x in radians in both modes; `polar_point`'s angle takes the factor (R64f2). Would change if: the G2 reads sinc in degrees.
+- **The angle mode, route R (S14, R64, G46):** docs/04 2.12; `sinc` takes no factor. Archived, "Opus pass 155".
 - **R39 (Function, Solve; S12):** a literal fraction exponent is reduced first (`(-8)^(2/6)` = −2); the root template stays the real root in every view.
 - **R18:** Greek names with Giac stand-ins; `&` refused until G2 item 41; `==` never answers on undecidable sides; Home draws a non-number from `latex()` (R18f3). Archived, "Opus pass 97".
 - **R52:** `SerializeError` carries the English text plus key and values; `parseError(key, vars)` in `app/src/i18n/enParser.ts`.
@@ -205,7 +207,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G143 (Opus pass 36): σ through a step function** stays the GUM σ, with ⚠ "the interval reaches a jump" when an input's x ± 2σ reaches one. Archived. Would change if: S16's sweep finds a missed jump.
 
 **Library, release and process**
-- **The check of 2026-10-19:** a Home value that leaves its evaluation (stored, Ans, a `\res` chip, an export) is the value shown, whatever the angle mode is later; a CAS value stays symbolic (G34). Would change if: the G2 is found to re-read a stored Home value in the new mode.
+- **The check of 2026-10-19:** a Home value that leaves its evaluation is the value shown in any later angle mode (G34). Archived, "Opus pass 155".
 - **G33:** a definition's description is the comment line above it; G30's E-series tables are checked against round(10^(2+k/n)) with the one published exception (9.20 at E192).
 - **R59, R59f1 (Opus passes 72, 73):** the clash sheet stays; the library stays out of the start chunk. Archived, "Opus pass 97".
 - **The release path (A7, A8, A45, A48):** v0.1.0, APK and website from one tag (A48); golden on the release engine before signing; the web names (`sw.js`, IndexedDB, manifest `id`) frozen. The test tag is `vX.Y.Z-test`; `master` follows phase-1 from 2026-11-03 (owner). Archived.
