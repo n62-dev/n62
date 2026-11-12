@@ -87,7 +87,7 @@ the page in another family than N62. 2026-11-07 on R153 (`p1/ron-tealn62`, the N
    every press 0–1 frames off; stretch at most 17 % (A); U's result 249 ms after beat 7 (the unit view's "Working…"
    line). The take `~/.cache/n62/showcase/take-2026-11-07-sellpoints/` is `input/screen.mp4`. Both locks matter:
    `record.sh` and `stitch.py` take `host-cpu` themselves, and the phone (a PIN) must stay awake while they wait.
-2. **Final take** Sat 11-14 on the release candidate of v0.1.0 (release Sun 11-15), after the UI rows (R140–R150,
+2. **Final take** on the release candidate of v0.1.0 (its day: docs/release-0.1.0.md), after the UI rows (R140–R150,
    R53) and the queue have merged; a take in N62 needs a test build with R153 on the phone.
 3. **Blender** (owner): the screen plane, the camera keys, the song in the Video Editor from 17 s.
 

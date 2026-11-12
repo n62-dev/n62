@@ -79,6 +79,25 @@ test.describe("Vars", () => {
     expect(await entryValue(page)).toBe("\\operatorname{\\mathrm{p}}\\left(\\placeholder{}\\right)"); // the call form (R117)
   });
 
+  test("R260f1: a function typed as e is picked as e, not its stand-in e_, and the call gives its value", async ({ page }) => {
+    await start(page);
+    await tap(page, ["shift", "alpha", "frac", "paren", "x", "right", "alpha", "sub", "shift", "dot", "x", "add", "d1", "enter"]); // e(x):=x+1
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    expect(await names(page)).toEqual(["e_"]);
+    await tap(page, ["vars"]);
+    await expect(rows(page).first()).toHaveAttribute("data-id", "userfn:e_");
+    await expect(rows(page).first()).toContainText("e");
+    await expect(rows(page).first()).not.toContainText("e_");
+    await tap(page, ["enter"]);
+    await expect(find(page)).toBeHidden();
+    const line = await entryValue(page);
+    expect(line).not.toContain("\\_");
+    expect(line).toBe("\\operatorname{\\mathrm{e}}\\left(\\placeholder{}\\right)"); // the call form a one-letter p has (R117)
+    await tap(page, ["d2", "enter"]); // e(2)
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "3");
+  });
+
   test("by touch: a tap on a row inserts the name", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);

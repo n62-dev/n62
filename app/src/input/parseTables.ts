@@ -3,9 +3,23 @@
 // of parse.ts).
 import type { ChipTable } from "./chips.ts";
 import type { Json } from "./emit.ts";
-import { LETTER_NAMES } from "../engine/standIns.ts";
+import { GREEK_NAMES, LETTER_NAMES } from "../engine/standIns.ts";
 // G311: the letter tables live in engine/ (the library reader takes their stand-ins as the user's names)
-export { GREEK, LETTER_NAMES } from "../engine/standIns.ts";
+export { LETTER_NAMES } from "../engine/standIns.ts";
+/**
+ * Greek letters are variable names (R18), never units (μ, Ω) or Giac's own names. Giac reads most of them as plain
+ * names, but some are taken: `epsilon` is a setting (it evaluates to 1e-12), `Gamma` is the Gamma function and cannot
+ * be stored, `beta`, `gamma` stay clear of the Beta and Euler names, and `Phi`, `Psi` are reserved (`Psi:=3` is
+ * refused, R18f1). Those get a trailing `_`, which Giac's latex()
+ * draws as the letter and a stray `_` (render/tidy.ts removes it). One letter is one name: \epsilon and \varepsilon,
+ * \phi and \varphi, \theta and \vartheta are the same variable.
+ */
+export const GREEK: Readonly<Record<string, string>> = Object.fromEntries([
+  // R260f1: read off engine/standIns.ts GREEK_NAMES, one table (the start chunk holds that file, not this map): each
+  // name's command is the name without its `_`, and the three var forms are the same letters
+  ...GREEK_NAMES.filter((n) => n !== "-").map((n) => [n.replace(/_$/, ""), n]),
+  ["varepsilon", "epsilon_"], ["vartheta", "theta"], ["varphi", "phi"],
+]);
 export const letterName = (v: string): string => LETTER_NAMES[v] ?? v;
 export const CONSTS: Record<string, string> = {
   pi: "Pi", exponentialE: "ExponentialE", imaginaryI: "ImaginaryUnit", infty: "PositiveInfinity",

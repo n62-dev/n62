@@ -8,6 +8,7 @@ import type { UserName } from "../engine/defs.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { decimalFromString, ZERO_VALUE } from "../engine/format.ts";
+import { LETTER_NAMES } from "../engine/standIns.ts";
 import { homeResultToLatex, typedName } from "../render/home.ts";
 import { markFor, markText, type DisplayContext, type NumericResult } from "../state/displayMode.ts";
 import type { Session } from "../state/session.svelte.ts";
@@ -23,7 +24,9 @@ const NO_INDEX = { items: [] };
  *  value is drawn as one letter when the keys type it so (`A`, `x_1`, `k_B`, a Greek letter, which home.ts draws with a
  *  command); any other name (`rate`, `g0`, `beam_w`) goes in as `\operatorname{rate}`, one name, never r·a·t·e. */
 function insertOf(n: UserName): string {
-  if (n.kind !== "var") return functionInsert(`fn:${n.name}`);
+  // R260f1: a function e_ or i_ (the letters' stand-ins, R67) goes in as the letter typed, `\operatorname{e}` as a
+  // one-letter p; the parser reads it back as e_'s call while the session lists e_ as a function
+  if (n.kind !== "var") return functionInsert(`fn:${Object.values(LETTER_NAMES).includes(n.name) ? typedName(n.name) : n.name}`);
   const drawn = homeResultToLatex(n.name);
   return /^[A-Za-z](_[A-Za-z0-9]*)?$/.test(n.name) || drawn.startsWith("\\") ? drawn : `\\operatorname{${n.name.replace(/_/g, "\\_")}}`;
 }
