@@ -90,18 +90,17 @@ The order (owner, 2026-11-12): the rows to step 666 change how today's calculato
 | 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | A137 |
 
 ### Lane B queue (the release, then the engine)
-The order (owner, 2026-11-12): ron's rows that keep clear of the entry line and change what a key or a result shows (the bases and Find's preview: steps 677 to 681); then the critical bugs (683, and 610 to 613, this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order. A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
+The order (owner, 2026-11-12): ron's rows that keep clear of the entry line and change what a key or a result shows (the bases and Find's preview: steps 678 to 681); then the critical bugs (683, 698, and 610 to 613, this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order. A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 659 | G326 the sweeps write e as the keys do; triage (F213) | gorge, Opus | `p1/gorge-sweepexp` | G325 |
-| 660 | S54 why `decompose` recurses without end (F214) | sandra, Opus | `p1/sandra-decompose` | – |
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
-| 677 | R191 0x, 0b and 0o literals in the parser | ron, Opus | `p1/ron-baseliteral` | – |
+| 699 | [G331](packages/G331.md) patch 0045: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | the v0.1.0 tag |
 | 678 | [R192](packages/R192.md) HEX, BIN, OCT as a display form of a result | ron, Opus | `p1/ron-baseform` | – |
 | 679 | [R193](packages/R193.md) Shift + − opens the Base menu for the last result | ron, Sonnet | `p1/ron-basemenu` | R192 |
 | 681 | [R195](packages/R195.md) Find's preview says where the key is | ron, Sonnet | `p1/ron-findwhere` | – |
 | 683 | [R199](packages/R199.md) templates in the plain-text session (F180) | ron, Sonnet | `p1/ron-plaintemplates` | – |
+| 698 | [G330](packages/G330.md) the Slope shows a cancelled 0 as a number (F227) | gorge, Opus | `p1/gorge-slopezero` | – |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |
 | 612 | [G308](packages/G308.md) (1+εi)^p (be-2) | gorge, Opus | `p1/gorge-powbase1` | – |

@@ -176,7 +176,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Time limits:** CAS 10 s soft budget, Giac's 600 s net; Solve and analysis 30 s; Home and units a 4 s watchdog from engine-ready (G185); Cancel replays the definitions only. Archived, "Opus pass 132".
 - **Solve and Plot:** a root is accepted at relative residual ≤ 1e-15 at 30 digits, else ⚠ (systems: < 1e-6 with ⚠); Plot searches only the visible window; the signed area by Romberg, `int`, then `gaussquad` with ⚠. Archived.
 - **Function app:** window x ∈ [-10, 10] square; trace step 0.1 (1-2-5 rule); Num from 0 by 0.1, `NaN` at a pole; a refused Num value gets a notice (R99). Archived.
-- **Parser (L6):** odd root templates are real roots; `{…}` is a list; the decimal comma is MathLive's `3{,}5` in either mode, and `{,}5` is 0.5 as `.5` is (R99); a bare comma, like `;`, separates arguments (R57); `p(x):=…` makes p a function (R56).
+- **Parser (L6):** odd root templates are real roots; `{…}` is a list; the decimal comma is MathLive's `3{,}5` in either mode, and `{,}5` is 0.5 as `.5` is (R99); a bare comma, like `;`, separates arguments (R57); `p(x):=…` makes p a function (R56); 0xFF: docs/04 5.4 (R191).
 - **R258 (Opus pass 132): a stored value of more than one letter is `\operatorname{name}`** on the line; a bracket after it multiplies; Function and Solve refuse it. Archived, "Opus pass 150". Would change if: plots read user names.
 - **Discrete distributions (G113, G113f1; patches 0009, 0010):** off the integers or below the support a pmf is an exact 0 and a cdf takes floor(k). Archived.
 - **G140 (Opus pass 34): a value Giac holds only as a double** is an unaudited double: ⚠, at most 14 digits, never ≈. Archived. Would change if: Giac gets an MPFR path for them.

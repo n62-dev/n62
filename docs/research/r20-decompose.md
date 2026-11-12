@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # R20: why `simplify` recurses without end in `decompose` (F214)
 
-**Status: open.** The cause is found and a fix is tested on a scratch build. The owner has nothing to decide: P19 already settles it, since the cause is local in Giac's source, so the fix is a patch. The next Opus pass turns the package draft (section 4, label `r20-P1`) into a package after the tag. One side finding, `r20-N1` (a wrong value from `normal`), is in backlog "Open bugs". Labels `r20-*` belong to this note. Base: `phase-1` `56880204`, dev engine `GIAC_OUT=…/_out/key-28c823f8c6dc9b96`. Giac line numbers are those of the pinned `giac_2.1.0-1.tar.gz` (SHA-256 `cdec2989…`, checked). None of our patches 0001–0044 touches `subst.cc`, and 0033 touches `sym2poly.cc` only in `in_normalize_sqrt` and `sym2rxroot`.
+**Status: open.** The cause is found and a fix is tested on a scratch build. The owner has nothing to decide: P19 already settles it, since the cause is local in Giac's source, so the fix is a patch. Opus pass 156 made the package draft (section 4, label `r20-P1`) package G331, after the tag; the side finding `r20-N1` (a wrong value from `normal`) is backlog F228. Labels `r20-*` belong to this note. Base: `phase-1` `56880204`, dev engine `GIAC_OUT=…/_out/key-28c823f8c6dc9b96`. Giac line numbers are those of the pinned `giac_2.1.0-1.tar.gz` (SHA-256 `cdec2989…`, checked). None of our patches 0001–0044 touches `subst.cc`, and 0033 touches `sym2poly.cc` only in `in_normalize_sqrt` and `sym2rxroot`.
 
 *Written 2026-11-12 by sandra (Opus), S54, pipeline run 1052. Probes: `tools/probes/decompose/` (README row).*
 
