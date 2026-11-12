@@ -30,7 +30,7 @@ const PLACES: readonly { name: Special; label: () => string }[] = [
   { name: "apps", label: () => tr("apps.title") },
   { name: "menu", label: () => t("keys.menu") },
   { name: "mode", label: () => tr("mode.title") },
-  { name: "settings", label: () => tr("mode.settings") },
+  { name: "settings", label: () => tr("key.settings") },
 ];
 const MARK: Record<Layer, string> = { primary: "", shift: " ⇧", alpha: " α" };
 

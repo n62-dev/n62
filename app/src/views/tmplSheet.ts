@@ -6,6 +6,7 @@
 import type { MenuItem } from "../apps/types.ts";
 import { legend } from "../i18n/index.ts";
 import { keyboard, type ActionBody, type PaletteItem } from "../keyboard/keyboard.ts";
+export { showBase } from "./baseSheet.ts"; // R193: the Base menu comes with the sheet's code
 
 /** The template drawn with an empty box for every slot (#? a placeholder, #@ and #0 what the cursor would take).
  *  A box, not \placeholder: MathLive's static renderer draws a placeholder as nothing. */

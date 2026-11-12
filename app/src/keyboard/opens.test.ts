@@ -51,6 +51,6 @@ describe("opensSheet (R143)", () => {
     const seen: string[] = [];
     for (const k of keyboard.keys)
       for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) seen.push(`${k.id}/${layer}`);
-    expect(seen.sort()).toEqual(["d6/shift", "d9/shift", "fmt/shift", "help/shift", "math/primary", "math/shift", "tmpl/primary", "vars/primary"]);
+    expect(seen.sort()).toEqual(["d6/shift", "d9/shift", "fmt/shift", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary"]);
   });
 });
