@@ -2,7 +2,7 @@
 // G89: runs n62-check.cas, n62-known.cas and n62-patched.cas line by line on a Giac build (nodeGiac) and counts.
 //   GIAC_OUT=<dir> node tools/giac-regress/run.mjs [file.cas …]     exit 1 when a check line fails, a known line passes, or a patched line fails on the patched build
 // (on a stock build a patched line is expected to fail; one that passes there is reported: patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0042/0043/0044 may no longer be needed)
-// A line passes when pc() returns 1; a line that errors (or is stopped by the timeout) counts as failed. A line that traps the engine
+// Each file runs in its own fresh engine (G323: Digits and other settings of one file never reach the next). A line passes when pc() returns 1; a line that errors (or is stopped by the timeout) counts as failed. A line that traps the engine
 // (stock Giac on the g188-int-* lines, G188f2) counts as failed and the run goes on in a fresh engine with the file's preamble (lines.mjs);
 // in the whole-file pass a trap is "trapped (stock)" for the patched file on a stock build (expected) and a failure otherwise.
 import { readFileSync } from "node:fs";
@@ -14,13 +14,13 @@ const load = async () => {
   g.eval("timeout 120");
   return g;
 };
-let giac = await load();
 const stockOf = {}; // file -> true when it is the patched file and the build is stock (its lines are expected to fail, a trap too)
 const counts = {}; // file -> [pass, fail] of the line-by-line run
 const files = process.argv.slice(2).length ? process.argv.slice(2) : ["n62-check.cas", "n62-known.cas", "n62-patched.cas"];
 let bad = 0;
 let isPatched = true;
 for (const f of files) {
+  const giac = await load(); // G323: a fresh engine for each file, so its result never depends on the files before it
   const known = f.includes("known");
   const patchedFile = f.includes("patched");
   if (patchedFile) {
@@ -42,7 +42,6 @@ for (const f of files) {
   const wrong = [];
   stockOf[f] = patchedFile && !isPatched;
   const run = await runLines(readFileSync(new URL(f, import.meta.url), "utf8"), giac, load);
-  giac = run.engine;
   const trapped = run.results.filter((r) => r.trapped).length;
   for (const { id, ok, out } of run.results) {
     if (ok) pass++;
