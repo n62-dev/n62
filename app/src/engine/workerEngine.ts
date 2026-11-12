@@ -39,14 +39,14 @@ export interface DefsStore {
   load(): Promise<unknown>;
   /** May return the write's promise (A123: `defsWritten` waits for it). */
   save(log: readonly DefEntry[]): void | Promise<unknown>;
-  /** G19: starts that began a replay of the log and never got ready (0 when absent). Written before a replay, cleared
-   *  once ready, so a crash that kills the whole app counts too. */
+  /** G19: starts that ran a replay of the log and never got ready (0 when absent). Written before a replay, cleared
+   *  once ready, so a crash that kills the whole app counts too; a load failure takes its start back (G327). */
   loadStarts?(): Promise<number>;
   saveStarts?(n: number): void;
 }
 
-/** Failed starts after which the stored log is left out of the replay (G19), and, with no log left to leave out, after
- *  which the engine is not started again (G318). */
+/** Failed starts of the log after which the stored log is left out of the replay (G19), and failed starts of any kind
+ *  after which the engine is not started again unless the next one would be the log's (G318, G327). */
 export const MAX_FAILED_STARTS = 2;
 
 export interface WorkerEngineOptions {
@@ -107,8 +107,11 @@ export class WorkerEngine implements MathEngine {
   private stopError: Error = new EngineCancelled();
   /** The replay of the stored definitions on first launch (part of the first ready()). */
   private defined: Promise<number> = Promise.resolve(0);
-  /** G19: replays begun and not finished (mirrors the store's count). */
+  /** G318: failed starts since the last ready, the stored ones included (memory). */
   private attempts = 0;
+  /** G19: those of them that ran the log, not a load failure (G327) nor a start with no log: the stored count, which
+   *  holds one more while a replay runs. */
+  private logFails = 0;
   /** The current worker has finished its replay. */
   private reached = false;
   /** The first launch's replay (the `define` message) is still the one that decides "ready". */
@@ -130,13 +133,14 @@ export class WorkerEngine implements MathEngine {
       // No replay to wait for (nothing stored, or a safe start): the first worker being ready is the whole start.
       const noReplay = () => (this.defined = first.then(() => (this.reach(), 0)));
       if (!stored.length) return void noReplay();
-      if (this.attempts >= MAX_FAILED_STARTS) {
+      if (this.logFails >= MAX_FAILED_STARTS) {
         this.leaveOut(stored);
         noReplay();
         return;
       }
-      this.beginAttempt(stored.length);
       this.log = applyDefChanges(this.log, stored.map((e) => ({ set: e })));
+      // G327: two starts that failed before the store answered stopped the engine (G318): no replay runs, none is counted
+      if (this.attempts - this.logFails < MAX_FAILED_STARTS) this.writeStarts(true);
       this.defined = this.post({ type: "define", defs: stored }).then((r) => {
         if (r.type !== "defined") return 0;
         // G46: stored values the engine read again (angleMigration.ts) are kept and stored in their new form
@@ -164,7 +168,7 @@ export class WorkerEngine implements MathEngine {
       const x = await Promise.race([Promise.all([this.store.load(), this.store.loadStarts?.() ?? 0]), timeout]);
       if (x === "timeout") return [];
       this.storeOk = true;
-      this.attempts = typeof x[1] === "number" && x[1] > 0 ? Math.trunc(x[1]) : 0;
+      this.attempts += this.logFails = typeof x[1] === "number" && x[1] > 0 ? Math.trunc(x[1]) : 0;
       return validDefs(x[0]);
     } catch {
       return [];
@@ -195,20 +199,18 @@ export class WorkerEngine implements MathEngine {
     return this.skipped.length ? applyDefChanges(this.skipped, this.log.map((e) => ({ set: e }))) : this.log;
   }
 
-  private writeAttempts(n: number): void {
-    this.attempts = n;
-    if (this.storeOk) this.store?.saveStarts?.(n);
+  /** G19's count to the store: the log's failed starts, and the replay that begins (`running`), before it runs. */
+  private writeStarts(running: boolean): void {
+    if (this.storeOk) this.store?.saveStarts?.(this.logFails + +running);
   }
 
-  /** A replay of `n` entries begins: count it before it runs. */
-  private beginAttempt(n = this.log.length): void {
-    if (n > 0) this.writeAttempts(this.attempts + 1);
-  }
-
-  /** The replay finished: the engine is ready with its log. */
+  /** The replay finished: the engine is ready with its log. A log was counted as running when it began. */
   private reach(): void {
     this.reached = true;
-    if (this.attempts > 0) this.writeAttempts(0);
+    if (this.attempts || this.log.length) {
+      this.attempts = this.logFails = 0;
+      this.writeStarts(false);
+    }
   }
 
   /** Starts without these entries: they stay in the store and in definitions(), and are said to be skipped. */
@@ -303,18 +305,21 @@ export class WorkerEngine implements MathEngine {
   }
 
   /** A Cancel, or the worker died (`crash`: an error event, or a fatal reply marked dead): a clean worker takes its
-   *  place and replays the log. A Cancel during the start is the same attempt, not a new one. G19: a crash before the
-   *  replay finished is a failed start; the second one leaves the stored log out. G318:
-   *  with no log left to leave out, the second failed start since the last ready starts no worker but a stand-in that
-   *  stops every request with `err`, so ready() and every call reject with it, until a Cancel starts one fresh attempt.
-   *  These starts are counted in `attempts` in memory only: with no log, beginAttempt and the gate write nothing, the
-   *  gate's read replaces the count, and reach() clears it (stored, it stays G19's own). */
+   *  place and replays the log, counted in the store before it runs. A Cancel during the start is the same attempt, not
+   *  a new one. A crash before ready is a failed start (`attempts`). G19: one with the log in it is the log's
+   *  (`logFails`); the second leaves the stored log out. G327: a load failure (a wasm or worker script that did not
+   *  arrive) is never the log's, nor is a start with no log. G318: the second failed start since the last ready that
+   *  is not the log's starts no worker but a stand-in that stops every request with `err`, so ready() and every call
+   *  reject with it, until a Cancel starts one fresh attempt; the store keeps the log's count alone. */
   private restart(err: Error, crash?: boolean): void {
     const failed = crash && !this.reached;
-    const stuck = failed && !this.log.length && ++this.attempts >= MAX_FAILED_STARTS;
+    const logs = failed && !(err instanceof EngineLoadError) && this.log.length > 0;
+    if (failed) this.attempts++;
+    if (logs) this.logFails++;
+    const stuck = failed && !logs && this.attempts >= MAX_FAILED_STARTS;
     this.stop(err);
-    if (failed && this.log.length && this.attempts >= MAX_FAILED_STARTS) this.leaveOut(this.stored());
-    else if (crash || this.reached) this.beginAttempt();
+    if (logs && this.logFails >= MAX_FAILED_STARTS) this.leaveOut(this.stored());
+    if (this.log.length) this.writeStarts(!stuck);
     this.start(stuck ? ({ postMessage: () => this.stop(err), terminate() {} } as unknown as WorkerLike) : undefined);
   }
 

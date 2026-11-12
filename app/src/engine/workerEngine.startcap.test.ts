@@ -6,7 +6,8 @@ import { defaultHomeSettings } from "./homeEval.ts";
 import { deadEngine, startDead } from "./dead.ts";
 import { createRequestHandler } from "./host.ts";
 import { EngineCrashError, EngineLoadError, EngineMemoryError } from "./types.ts";
-import { WorkerEngine, type WorkerLike } from "./workerEngine.ts";
+import { WorkerEngine, type DefsStore, type WorkerLike } from "./workerEngine.ts";
+import type { DefEntry } from "./defs.ts";
 
 /** How a start fails: a fatal reply to init (with `dead` as host.ts marks it, startDead), or a worker error event. */
 type Fail = { fatal: string; dead?: "memory" | "crash" | "load" } | { error?: string };
@@ -18,8 +19,13 @@ class StartWorker implements WorkerLike {
   onmessage: ((ev: { data: Response }) => void) | null = null;
   onerror: ((ev: { message?: string }) => void) | null = null;
   terminated = false;
+  /** The replay each init carried, and the definitions each define message carried (G327). */
+  inits: DefEntry[][] = [];
+  defines: DefEntry[][] = [];
   constructor(private readonly fail: Fail | null) {}
   postMessage(msg: Request): void {
+    if (msg.type === "init") this.inits.push(msg.replay);
+    if (msg.type === "define") this.defines.push(msg.defs);
     setTimeout(() => {
       if (this.terminated) return;
       const f = this.fail;
@@ -38,11 +44,12 @@ class StartWorker implements WorkerLike {
 
 /** An engine whose workers fail their start as `fail` says until `heal()`. Bounded: from the 41st worker on they start,
  *  so a restart loop ends the test with a wrong count and a ready engine instead of hanging it. */
-function failing(fail: Fail | ((n: number) => Fail | null)) {
+function failing(fail: Fail | ((n: number) => Fail | null), defs?: DefsStore) {
   const workers: StartWorker[] = [];
   let healed = false;
   const engine = new WorkerEngine({
     baseUrl: "/",
+    ...(defs ? { defs } : {}),
     createWorker: () => {
       const n = workers.length;
       const f = healed || n >= 40 ? null : typeof fail === "function" ? fail(n) : fail;
@@ -231,6 +238,148 @@ describe("WorkerEngine start-up controls (G318; pass before it too)", () => {
     expect(await outcome(engine.ready())).toHaveProperty("value");
     expect(workers).toHaveLength(3);
     expect((await engine.home("1+1", defaultHomeSettings)).display).toBe("2");
+    engine.dispose();
+  });
+});
+
+// --- G327 (F222): a start that failed to load never counts against the stored definitions ---------------------------
+
+const stored: DefEntry = { name: "A", kind: "var", cmds: ["A:=1"], preview: "1", view: "home", time: 1 };
+
+/** The app's store as the engine sees it (calc/index.ts defsStore): the log and G19's count, which every launch reads. */
+class LogStore implements DefsStore {
+  log: unknown = [stored];
+  starts = 0;
+  load = (): Promise<unknown> => Promise.resolve(structuredClone(this.log));
+  save = (log: readonly DefEntry[]): void => void (this.log = structuredClone(log));
+  loadStarts = (): Promise<number> => Promise.resolve(this.starts);
+  saveStarts = (n: number): void => void (this.starts = n);
+}
+
+/** One launch whose every init fails as `fail` says: it stops (G318), and the store is left as a closed app leaves it. */
+async function failedLaunch(store: LogStore, fail: Fail | ((n: number) => Fail | null)) {
+  const { engine, workers } = failing(fail, store);
+  const got = await outcome(engine.ready());
+  const names = (await engine.definitions()).map((e) => e.name);
+  engine.dispose();
+  return { got, workers, names };
+}
+
+/** A launch whose starts work: what it says and what reached its first worker. */
+async function goodLaunch(store: LogStore) {
+  const { engine, workers } = failing(() => null, store);
+  const t = await engine.ready();
+  engine.dispose();
+  return { safeStart: t.safeStart, defines: workers[0]!.defines, workers };
+}
+
+const LOAD_FAILURES: readonly [string, Fail][] = [
+  ["an init that answers fatal marked load (a wasm that did not arrive)", { fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" }],
+  ["a worker error with no message before ready (a worker script that is gone)", {}],
+];
+
+describe("WorkerEngine: a load failure is not the log's (G327)", () => {
+  for (const [what, fail] of LOAD_FAILURES) {
+    it(`${what}, in two launches: the stored count stays 0, nothing is left out, and the next launch replays the log`, async () => {
+      const store = new LogStore();
+      for (let launch = 0; launch < 2; launch++) {
+        const { got, workers, names } = await failedLaunch(store, fail);
+        expect(got).toBeInstanceOf(EngineLoadError);
+        expect(workers.length).toBeLessThanOrEqual(3);
+        expect(store.starts).toBe(0);
+        // every start that got as far as an init carried the stored definition: none was left out
+        expect(workers.map((w) => w.inits.flat().length + w.defines.flat().length)).toEqual(workers.map(() => 1));
+        expect(names).toEqual(["A"]);
+      }
+      const ok = await goodLaunch(store);
+      expect(ok.safeStart).toBeUndefined();
+      expect(ok.defines).toEqual([[stored]]);
+      expect(store.starts).toBe(0);
+      expect(store.log).toEqual([stored]);
+    });
+  }
+
+  it("G318 kept with the log: two load failures in one launch stop the engine, and a Cancel starts one fresh attempt with the log", async () => {
+    const store = new LogStore();
+    const a = failing({ fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" }, store);
+    expect(await outcome(a.engine.ready())).toBeInstanceOf(EngineLoadError);
+    expect(a.workers.length).toBeLessThanOrEqual(3);
+    expect(store.starts).toBe(0);
+    const made = a.workers.length;
+    a.heal();
+    const t = await a.engine.cancel();
+    expect(a.workers).toHaveLength(made + 1);
+    expect(t.safeStart).toBeUndefined();
+    expect(a.workers.at(-1)!.inits).toEqual([[stored]]);
+    expect((await a.engine.home("1+1", defaultHomeSettings)).display).toBe("2");
+    expect(store.starts).toBe(0);
+    a.engine.dispose();
+
+    const b = failing({}, store);
+    expect(await outcome(b.engine.ready())).toBeInstanceOf(EngineLoadError);
+    const before = b.workers.length;
+    expect(await outcome(b.engine.cancel())).toBeInstanceOf(EngineLoadError);
+    expect(b.workers).toHaveLength(before + 1);
+    expect(b.workers.at(-1)!.inits).toEqual([[stored]]);
+    expect(store.starts).toBe(0);
+    b.engine.dispose();
+  });
+
+  it("two load failures before the store answers stop the engine, and the replay that cannot run is not counted", async () => {
+    const store = new LogStore();
+    const read = store.load;
+    store.load = () => new Promise((r) => setTimeout(() => r(read()), 30)); // a slow store: both starts fail first
+    const a = failing({ fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" }, store);
+    expect(await outcome(a.engine.ready())).toBeInstanceOf(EngineLoadError);
+    expect(a.workers).toHaveLength(2);
+    expect(await a.engine.definitions()).toEqual([stored]); // the store has answered, and the gate has run
+    expect(store.starts).toBe(0);
+    a.heal();
+    expect((await a.engine.cancel()).safeStart).toBeUndefined();
+    expect(a.workers.at(-1)!.inits).toEqual([[stored]]);
+    expect(store.starts).toBe(0);
+    a.engine.dispose();
+  });
+
+  it("a crash in the replay, then a load failure: the store keeps the crash's count (1), not the load's", async () => {
+    const store = new LogStore();
+    const load: Fail = { fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" };
+    const { got, workers } = await failedLaunch(store, (n) => (n === 0 ? { fatal: "unreachable", dead: "crash" } : load));
+    expect(got).toBeInstanceOf(EngineLoadError);
+    expect(workers).toHaveLength(2);
+    expect(store.starts).toBe(1);
+    // one failed start is not two: the next launch replays the log
+    const ok = await goodLaunch(store);
+    expect(ok.safeStart).toBeUndefined();
+    expect(ok.defines).toEqual([[stored]]);
+  });
+});
+
+describe("WorkerEngine: the log's own failures still count (G19 controls; pass before G327 too)", () => {
+  for (const fail of [{ fatal: "unreachable", dead: "crash" }, { fatal: "out of memory", dead: "memory" }] as const) {
+    it(`two inits that fail marked ${fail.dead}: the next launch leaves the log out`, async () => {
+      const store = new LogStore();
+      const { workers } = await failedLaunch(store, fail);
+      expect(workers.length).toBeLessThanOrEqual(3);
+      expect(store.starts).toBe(2);
+      const ok = await goodLaunch(store);
+      expect(ok.safeStart).toEqual({ skipped: 1 });
+      expect(ok.defines).toEqual([]);
+      expect(ok.workers[0]!.inits).toEqual([[]]);
+      expect(store.starts).toBe(0);
+      expect(store.log).toEqual([stored]);
+    });
+  }
+
+  it("a crash after ready restarts and replays the log as before", async () => {
+    const store = new LogStore();
+    const { engine, workers } = failing(() => null, store);
+    await engine.ready();
+    workers[0]!.onerror?.({ message: "out of memory" });
+    expect((await engine.home("1+1", defaultHomeSettings)).display).toBe("2");
+    expect(workers).toHaveLength(2);
+    expect(workers[1]!.inits).toEqual([[stored]]);
+    expect(store.starts).toBe(0);
     engine.dispose();
   });
 });

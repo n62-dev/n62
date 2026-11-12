@@ -398,8 +398,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  branch 60,733 B (171,507 B raw, −802 B): the part of engine/giacPrint.ts the start reads (the string skip, the walk, the
  *  name pattern, balanced, isName, names, mapNames, RATIONAL) is engine/giacPrintStart.ts, and the rest, which the lazy
  *  chunks' imports kept in the entry, is a shared lazy chunk (−514 B); the stored rows' reader (state/storedItem.ts) loads
- *  beside the history's start read (state/storedLoad.ts, −288 B). 60,733 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 60_790;
+ *  beside the history's start read (state/storedLoad.ts, −288 B). 60,733 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  60,790 → 60,850 B (G327): phase-1 424c410b measures 60,766 B gzip (171,731 B raw), the branch 60,794 B (171,806 B raw,
+ *  +28 B; bbbb4c8b's G227 changes no start-chunk file): a load failure never counts against the stored definitions, so
+ *  the client keeps G19's stored count (workerEngine.ts logFails) beside G318's count of every failed start (attempts),
+ *  two numbers one cannot hold, and the gate counts no replay once two starts failed before the store answered.
+ *  60,794 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 60_850;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
