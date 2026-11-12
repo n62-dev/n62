@@ -605,18 +605,13 @@ export class Session {
   display(item: HistoryItem, grouped = false): Drawn {
     const shown = item.view === "home" || item.fmt !== undefined || item.form !== undefined || item.facts !== undefined;
     if (item.status === "done" && shown) {
-      const r = (formsCode?.drawnIn ?? renderNumeric)(item, this.modeOf(item), this.displayContext(), grouped); // R192: a base form, lazy
+      const r = (formsCode?.drawnIn ?? renderNumeric)(item, modeOf(item, this.settings), this.displayContext(), grouped); // R192: a base form, lazy
       // R63: a unit row draws ± σ and its unit, set apart, after the number; its text has them too (Copy as shown)
       if (r) return item.units ? withUnit(r, item.units, this.decimalComma ? commaResult : undefined) : r;
     }
     // (R57) what the engine wrote, with the decimal comma, is drawn as the numbers above
     if (item.status === "done" && this.decimalComma) return { text: commaResult(item.text, false), latex: commaResult(item.resultLatex, true) };
     return { text: item.text, latex: item.resultLatex };
-  }
-
-  /** The mode an item is drawn in: the a b/c form when one is chosen, else the Format key's notation. */
-  private modeOf(item: HistoryItem): FmtMode | undefined {
-    return modeOf(item, this.settings);
   }
 
   /** R40: the σ line a tap on the row shows (Settings › Numbers › Uncertainty), in the row's notation; null: none;
@@ -633,7 +628,7 @@ export class Session {
   /** The mark before a finished result (docs/04 2.4), for the form it is drawn in; null: a non-number, or none known. */
   mark(item: HistoryItem): MarkInfo | null {
     if (item.status !== "done") return null;
-    return (formsCode?.baseMark ?? markFor)(item, this.modeOf(item), this.displayContext()); // R192: a base form's, lazy
+    return (formsCode?.baseMark ?? markFor)(item, modeOf(item, this.settings), this.displayContext()); // R192: a base form's, lazy
   }
 
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
