@@ -535,3 +535,13 @@ describe.skipIf(!giacAvailable())("the parser's letter stand-ins in library file
     expect(() => parseLibrary("// n62 library 1\n// d\nfoo_(x):=x\n", parse, LIBRARY_FORMAT)).toThrow(/foo_ is one of N62's own names/);
   });
 });
+
+describe("the format for your AI names the stand-ins (G311)", () => {
+  it("its name rule lists exactly the eight stand-ins as the exception to the trailing `_` (views/aiFormat.md)", () => {
+    const md = readFileSync(new URL("../views/aiFormat.md", import.meta.url), "utf8");
+    const rule = md.split("\n").find((l) => l.startsWith("- Not one of N62's own names:")) ?? "";
+    const listed = /\(except the letters N62 writes so: ([^)]*)\)/.exec(rule)?.[1]?.match(/`[^`]+`/g)?.map((t) => t.slice(1, -1)) ?? [];
+    const standIns = [...new Set([...Object.values(GREEK), ...Object.values(LETTER_NAMES)].filter((n) => n.endsWith("_")))];
+    expect(listed.sort()).toEqual(standIns.sort());
+  });
+});
