@@ -219,12 +219,17 @@ export class FunctionApp implements AppInstance {
         { id: "start", label: numText("num.setStart"), run: () => this.editNum("start") },
         { id: "step", label: numText("num.setStep"), run: () => this.editNum("step") },
         { id: "csv", label: tc("clip.csv"), disabled: this.numSlots.length === 0, reason: numText("why.noFunction"), run: () => void this.copyNum() },
+        ...this.pasteRow(view),
       ];
     if (view === "symb") {
       const empty = (this.slots.latex[this.slots.selected] ?? "") === "";
-      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }];
+      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }, ...this.pasteRow(view)];
     }
     return [];
+  }
+  /** R278f1: ☰ → Paste where the shell shows the entry line (Symb, Num; Plot has none), last so no other row's number moves. */
+  private pasteRow(view: ViewId): MenuItem[] {
+    return this.entryLabel(view) === undefined ? [] : [{ id: "paste", label: tc("clip.paste"), slotRow: true, run: () => this.host.paste() }];
   }
 
   /** R261: Menu › Clear: the selected function goes, as one step Undo takes back. */

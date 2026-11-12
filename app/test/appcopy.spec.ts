@@ -121,3 +121,35 @@ test("Function: a long press on a readout value copies it in full; Menu → Copy
   await page.getByRole("menuitem", { name: /^\d Copy as shown$/ }).click();
   await expect.poll(() => clipboard(page)).toBe("1.41421356237");
 });
+
+// R278f1: the Paste key is gone and a long press on the line is R277's hold, so ☰ → Paste is the way in for a number from
+// another app, wherever the app view shows the entry line. Point mode pastes 1.5, comma mode 1,5 (a pasted 1.5 is no number there).
+for (const comma of [false, true]) {
+  const mode = comma ? "comma" : "point";
+  const [text, line] = comma ? ["1,5", "1{,}5"] : ["1.5", "1.5"];
+  const pasted = async (page: Page): Promise<void> => {
+    if (comma) await page.evaluate(() => window.n62.session.setDecimalMark("comma"));
+    await setClipboard(page, text);
+    await menuItem(page, "paste");
+    await expect.poll(() => entryValue(page)).toBe(line);
+  };
+
+  test(`Solve Num (${mode} mode): ☰ → Paste puts ${text} on the unknown's line`, async ({ page }) => {
+    await tap(page, ["@place", "d4", "@symb"]);
+    await expect(page.getByTestId("entry-label")).toHaveText("E1:");
+    await tap(page, ["x", "pow", "d2", "right", "shift", "dot", "d2", "enter", "@num"]);
+    await expect(page.getByTestId("entry-label")).toHaveText("x=");
+    await tap(page, ["shift", "esc"]); // Clear: the unknown's value leaves the line
+    expect(await entryValue(page)).toBe("");
+    await pasted(page);
+  });
+
+  test(`Function Symb and Num (${mode} mode): ☰ → Paste puts ${text} on the line`, async ({ page }) => {
+    await tap(page, ["@symb"]);
+    await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+    await pasted(page);
+    await tap(page, ["@num", "shift", "esc"]);
+    expect(await entryValue(page)).toBe("");
+    await pasted(page);
+  });
+}
