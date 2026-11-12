@@ -4,6 +4,9 @@
 
 import type { FormattedComplex, FormattedFraction, FormattedNumber, FormattedPolar } from "../engine/format.ts";
 import { balanced, mapNames } from "../engine/giacPrintStart.ts";
+import { GREEK_NAMES } from "../engine/standIns.ts";
+/** R260: a stored name as typed (engine/standIns.ts, where library.ts reads it too). */
+export { typedName } from "../engine/standIns.ts";
 
 /** R125, Settings › Numbers › Digit groups: the thin space (R55's, the default), the apostrophe or the comma. */
 export type GroupSep = "thin" | "apos" | "comma";
@@ -58,24 +61,11 @@ export function polarToLatex(p: FormattedPolar, group?: string): string {
   return `${n(p.r)}\\mathbin{\\measuredangle}${n(p.theta)}`;
 }
 
-/** The Greek variable names as Giac prints them (input/parse.ts GREEK, R18; beta_, gamma_, Gamma_, epsilon_, Phi_,
- *  Psi_ stand in for names Giac keeps), and the letter each one is drawn as. Kept here, not imported, so the parser
- *  stays lazy. R260: in Unicode's order, the small letters (α U+03B1 … ω) then the capitals (Α U+0391 … Ω), `-` for a
- *  letter that is no variable (ο, π, ς, υ, …): a name's place gives its letter. */
-const GREEK_NAMES = ("alpha beta_ gamma_ delta epsilon_ zeta eta theta iota kappa lambda mu nu xi - - rho - sigma tau - phi chi psi omega " +
-  "- - Gamma_ Delta - - - Theta - - Lambda - - - - - - - Sigma - - Phi_ - Psi_ Omega").split(" ");
 const greekLetter = (name: string): string => {
   const n = name.replace(/_$/, "");
   return `\\${n === "epsilon" ? "varepsilon" : n === "phi" ? "varphi" : n} `;
 };
 
-/** R260 (vr-2): a stored name as the user typed it, for the text that names it (Vars, the unit note, the uses line): a
- *  Greek name as its letter (`beta_` β, `Omega` Ω), the letter stand-ins `e_`, `i_` (input/parse.ts LETTER_NAMES, R67)
- *  as e, i; any other name as stored. */
-export function typedName(name: string): string {
-  const k = GREEK_NAMES.indexOf(name);
-  return /^[ei]_$/.test(name) ? name[0]! : k < 0 ? name : String.fromCharCode(k < 25 ? 945 + k : 888 + k);
-}
 /** G105f1: the names of Giac's print drawn as LaTeX (giacPrint.ts names: whole names, strings skipped): a Greek name
  *  as its letter, `x_1` with its subscript, `inf` and `infinity` (Giac prints ∞, R18: Shift + 9, as +infinity) as ∞. */
 const nameLatex = ({ name }: { name: string }): string | null => {

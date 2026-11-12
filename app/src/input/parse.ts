@@ -741,13 +741,13 @@ class Parser implements CalcParser {
           return [logic.head, ...args];
         }
         // a name of one letter too: Vars inserts a user function as `\operatorname{p}\left(…\right)`, the call form
-        // whatever its length (R117), so the box model keeps the name with its pair
+        // whatever its length (R117); R260f1: a stored function e_ goes in as `\operatorname{e}`, read back as e_'s call
         if (text in ABS_LIKE || NAMED_FUNCS.has(text) || text.length > 0) {
           if (this.peek()?.t === "open" && (this.peek() as Tok).v === "(") {
             this.pos++;
             const args = this.list(")");
             const head = ABS_LIKE[text];
-            return head ? [head, ...args] : ["Call", text, ...args];
+            return head ? [head, ...args] : ["Call", this.user.has(letterName(text)) ? letterName(text) : text, ...args];
           }
         }
         if (name === "operatorname" && /^[A-Za-z]\w*$/.test(text)) throw this.values ? parseError("parse.notStored", { text }) : parseError("parse.storedHomeOnly", { text });

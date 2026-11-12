@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R260 (night review 2026-11-09, vr-2): a stored name as the user typed it, never the engine's stand-in (beta_, e_):
-// render/home.ts typedName, the one function the readers of a name use (Vars, the unit note, the uses line).
+// typedName, the one function the readers of a name use (Vars, the unit note, the uses line, a library's descriptions);
+// R260f1: here, beside the tables it reads (render/home.ts takes it from here).
 import { describe, expect, it } from "vitest";
-import { GREEK, LETTER_NAMES } from "../engine/standIns.ts";
-import { typedName } from "./home.ts";
+import { LETTER_NAMES, typedName } from "./standIns.ts";
+import { GREEK } from "../input/parseTables.ts";
 
 describe("typedName: the Giac name as typed (R260)", () => {
   it.each([

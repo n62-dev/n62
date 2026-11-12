@@ -29,4 +29,17 @@ describe("R260: e and i as function names", () => {
     expect(latexToGiac("e\\left(2\\right)")).toBe("e_*(2)");
     expect(userFunctionsOf([{ name: "e_", kind: "var" }, { name: "beta_", kind: "fn" }]).has("e_")).toBe(false);
   });
+
+  it("R260f1: Vars inserts a stored e_ as \\operatorname{e} with its bracket; the stored stand-in makes it the call of e_", () => {
+    const user = userFunctionsOf([{ name: "e_", kind: "fn" }, { name: "i_", kind: "fn" }]);
+    expect(latexToGiac("\\operatorname{e}\\left(2\\right)", { userFunctions: user })).toBe("e_(2)");
+    expect(latexToGiac("\\operatorname{\\mathrm{e}}\\left(2\\right)", { userFunctions: user })).toBe("e_(2)");
+    expect(latexToGiac("3\\operatorname{i}\\left(2\\right)+\\imaginaryI", { userFunctions: user })).toBe("3*i_(2)+i");
+  });
+
+  it("R260f1 control: without a stored function e_, \\operatorname{e}( is read as before", () => {
+    const before = latexToGiac("\\operatorname{e}\\left(2\\right)");
+    expect(before).not.toContain("e_");
+    expect(latexToGiac("\\operatorname{e}\\left(2\\right)", { userFunctions: userFunctionsOf([{ name: "e_", kind: "var" }]) })).toBe(before);
+  });
 });
