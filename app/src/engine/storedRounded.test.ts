@@ -83,3 +83,62 @@ describe.skipIf(!giacAvailable())("G317: a name set beside the result keeps its 
     expect(s.find((e) => e.name === "B")?.preview).toBe("2");
   });
 });
+
+// G328 (F215): a name set beside the result stores its own facts, not the result's: `(A:=5)*approx(1)` stores an exact 5
+// (no facts), so a later `A*2` is 10 exact. The store target keeps the result's facts (controls). Expected values derived:
+// 5*2 = 10, (1/3)*2 = 2/3 = 0.666666666667 at 12 digits; an inexact side value's facts are those of the same value stored
+// as a target (`approx(1/3) => A`, the facts of A typed alone).
+describe.skipIf(!giacAvailable())("G328: a name set beside the result stores its own facts", () => {
+  const run = async (line: string, cas = false) => {
+    const host = await nodeHost();
+    const out = cas ? host.cas(line, defaultCasSettings) : host.home(line, defaultHomeSettings);
+    const sets = out.defs.flatMap((c) => ("set" in c ? [c.set] : []));
+    return { host, out, sets, get: (n: string) => sets.find((e) => e.name === n) };
+  };
+  const twice = (host: Awaited<ReturnType<typeof nodeHost>>) => host.home("A*2", defaultHomeSettings).result;
+  it("(A:=5)*approx(1): A stores no facts; A*2 is 10 exact, also after a replay", async () => {
+    const { host, sets, get } = await run("(A:=5)*approx(1)");
+    expect(get("A")?.facts).toBeUndefined();
+    const r = twice(host);
+    expect([r.display, r.facts.exact, r.facts.warn]).toEqual(["10", true, undefined]);
+    const fresh = await nodeHost();
+    fresh.restore(sets);
+    const f = twice(fresh);
+    expect([f.display, f.facts.exact, f.facts.warn]).toEqual(["10", true, undefined]);
+  });
+  it("A,B:=5,approx(2): A exact, B keeps its ⚠ facts", async () => {
+    const { host, get } = await run("A,B:=5,approx(2)");
+    expect(get("A")?.facts).toBeUndefined();
+    expect(get("B")?.facts?.warn).toBe("unchecked");
+    const r = twice(host);
+    expect([r.display, r.facts.exact, r.facts.warn]).toEqual(["10", true, undefined]);
+  });
+  it("(A:=1/3)*approx(2): A stores no facts (≈ only); A*2 is 0.666666666667 ≈", async () => {
+    const { host, get } = await run("(A:=1/3)*approx(2)");
+    expect(get("A")?.facts).toBeUndefined();
+    expect(get("A")?.mark).toBe("≈");
+    const r = twice(host);
+    expect([r.display, r.facts.exact, r.facts.warn]).toEqual(["0.666666666667", true, undefined]);
+  });
+  it("(A:=approx(1/3))*(B:=5): A keeps its own unchecked facts, those of approx(1/3) => A; B stores none", async () => {
+    const own = (await run("approx(1/3) => A")).get("A")?.facts;
+    expect(own?.warn).toBe("unchecked");
+    const both = await run("(A:=approx(1/3))*(B:=5)");
+    expect(both.get("A")?.facts).toEqual(own);
+    expect(both.get("B")?.facts).toBeUndefined();
+  });
+  // The store target's facts are the result's (EngineHost.factsOf: exact false, its digits and warn).
+  it("controls: the store target keeps the result's facts; (A:=5)*0.5; CAS (A:=5)*approx(1)", async () => {
+    for (const line of ["A:=approx(5)", "approx(5) => A"]) {
+      const { out, get } = await run(line);
+      const { reliableDigits, warn } = out.result.facts;
+      expect(get("A")?.facts).toEqual({ exact: false, reliableDigits, ...(warn ? { warn } : {}) });
+    }
+    const half = await run("(A:=5)*0.5");
+    expect(half.get("A")?.facts).toBeUndefined();
+    expect(twice(half.host).facts.exact).toBe(true);
+    const cas = await run("(A:=5)*approx(1)", true);
+    expect(cas.get("A")?.facts).toBeUndefined();
+    expect(twice(cas.host).facts.exact).toBe(true);
+  });
+});
