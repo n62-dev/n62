@@ -4,7 +4,7 @@
 Written 2026-10-13 from a key-by-key comparison of the G2 keypad with `spec/keyboard.yaml`, checked against the decision docs, and then reviewed point by point with the owner (decision P12 in [decisions.md](decisions.md)). **One place for this question:** when a key differs from the G2, the reason is here; the layout itself is `spec/keyboard.yaml`, the G2 behaviour is `spec/mapping/vc-2026-10-11/keys.yaml`. The Fmt key (our replacement of the On/Off key) is left out. Rules that decide a difference: [03-feature-analysis.md](03-feature-analysis.md) section 0 (rules 5–9, 11) and CLAUDE.md.
 
 ## 1. Planned, not built yet (not a departure)
-The legend is missing on the keytop only because the feature is not built; the key is dimmed in that layer.
+The layer is dead only because the feature is not built: the key is dimmed in that layer. Its legend is missing until then, except Help's, which is drawn dimmed (`spec/keyboard.yaml`).
 
 | Key and layer | Planned as | Where decided |
 |---|---|---|
@@ -34,7 +34,7 @@ The legend is missing on the keytop only because the feature is not built; the k
 | Shift + `,` (Eval) and Shift + `( )` (tick marks) omitted; Shift + `,` is ± on the Home and CAS line, for the units key to read, dimmed in an app (R71) | the owner put ± there (decisions.md "M4-2"): no free key is nearer the digits, and Shift + − is EN6's Base; "evaluate at" comes with the Tmpl palette; quoting is not used for engineering work |
 | Shift + 0 (Notes) and the G2's User (Shift + Help, Settings here) omitted | no notes feature; the User keyboard is a parked idea (feedback #17) |
 | `(−)` where the G2 prints `+/−` | behaviour is identical: the G2 key inserts a minus sign and does not toggle (keys.yaml r6c2). The label is the honest one |
-| Shift + x = y, where the G2 has Define | kept for now (owner, 2026-10-13). Revisit when typing `f(x):=…` shows up as a friction |
+| Shift + x = y, where the G2 has Define | kept (owner, 2026-10-13). If typing `f(x):=…` shows up as a friction, Define gets a place by section 3b's growth rule; Shift + x itself changes only as section 3b says for a live layer (at a version boundary, with the owner's yes) |
 | Shift + a b/c (DMS) omitted | DMS is in Tmpl (owner, 2026-10-13) |
 | Tmpl's DMS cell takes the number before the cursor as its degrees | as the mixed number takes its whole part: `5`, then the cell, is 5°□′□″, where the typed 5 would otherwise join the degrees with no edge between them (owner, 2026-10-15, R27a) |
 | Shift + LOG (10ˣ) after a digit inserts ×10ˣ | `5`, 10ˣ, `2` is 5×10² = 500; the plain template would read 510² (F22; owner, 2026-10-15, R27a). The G2 types `ALOG(2)` and gives 500 too (item 48, 2026-10-19) |
@@ -63,8 +63,48 @@ The legend is missing on the keytop only because the feature is not built; the k
 ## 3a. Decided by the owner on 2026-10-17 (R15c)
 Built (R15c1–R15c4): the top cluster became R3 (decisions.md "R15c"); its differences are rows of section 2. Text in git at `6550cc93`.
 
+## 3b. The layout at the v0.1.0 tag and how it grows (owner, 2026-11-12)
+The owner's rule: "the layout should stay the same from start of release". From the tag on, nothing that works moves. A key layer, a gesture or a numbered row that does something at the tag keeps doing it. A cell that is blank at the tag may be filled later, because nobody has learned it. **In one line: freeze what works, reserve what is blank, grow only into blank space.** A test holds it: the layout lock (package R291) pins every live key layer and every fixed row, and a change to one fails the gate unless the lock records it.
+
+**Rows 0–2 at the tag** (the maths rows below them do not change):
+
+| Row | Cols 0–1 | Cols 2–3 | Col 4: tap, Shift | Col 5: tap, Shift |
+|---|---|---|---|---|
+| 0 | U1, U2 | ▲ | ☰, Settings | Esc, Clear |
+| 1 | U3, U4 | ◀, ▶ | Undo, ⇤ | Redo, ⇥ |
+| 2 | U5, U6 | ▼ | Select, Help | Deselect, reserved |
+
+**The three cells decided with the rule**
+- **Row 0, col 4: the tap is ☰, the Menu key; Shift stays Settings** (R278). The key does what the status line's ☰ does. Once the Copy and Paste keys are gone, ☰ is the only way to paste from another app, and it holds every app's menu, but the status line's ☰ sits in the corner a thumb reaches worst. The G2 has Menu as a key in this column (its r3c4). The key saves the reach, not a press, and it gives a path by the keys alone (R131's desktop map). Help, the G2's function on this cell, is on Shift + Select (owner, 2026-11-10).
+- **Shift + Deselect (row 2, col 5) is reserved.** Mode already has a chip and Shift + Fmt, and ☰ has its key, so no function is waiting for this cell. It stays blank for a later one, such as RPN's swap or whatever the counts show is pressed most. (The G2's Shift on this cell opens its CAS settings.)
+- **Folding (results mode) is the entry line's swipe, and nothing else.** There is no Fold key and no ☰ row, and the handle on the keypad's top edge goes (R283). A first-start tip teaches the swipe (R290), a hardware keyboard gets a key for it (R131), and a user key may hold it after the tag. The side-by-side layout of a tablet or a desktop has no fold, because the keypad covers no history there (R224).
+
+**A reserved cell** is blank on purpose, so that filling it later is not a move:
+1. It has no legend in that layer, and the key is drawn dimmed in that layer only.
+2. A press does nothing but count: the dead key's double pulse (docs/05 3.7), no key pop, ✕ in the flick bubble, and one count under the key's id and layer (R127). The counts show whether people reach for the cell.
+3. The key's id is stable and names what the key does. An id is never reused for another function, which is why `help` left row 0, col 4 together with Help.
+4. TalkBack reads no such layer.
+5. It is not a user slot. If a user could bind it, a later built-in would take that binding away, which is a move for that user. The user's keys are U1–U6.
+6. It is filled only with the owner's yes, from the counts of the task benchmark (docs/04 5.1), and the layout lock records the fill as an addition.
+
+**Reserved at the tag:** the Shift layers of Vars, a b/c, `( )`, 7, 1, 0 and Deselect. (Shift + 7 is the G2's List; it waits for the list editor that comes with Statistics.) No tap is blank: U1–U6 are empty, but they are the user's. Closed, not reserved: the pad has no Shift layer (section 3 point 8) and Alpha + 0 is dead (section 3 point 7). A planned layer that misses the tag stays dead and dimmed until its package lands, which is a fill and not a move: Help on Shift + Select (R197), Shift + 4 (R187), Shift + 5 (R185), Shift + − (R193).
+
+**The Alpha layers that fall back are final.** The keys of rows 0–2 other than U1–U6, and Enter, ⌫, Fmt, `.` and ␣, have no letter: a flick down on them does the tap. They get no letter later, because a letter there would change what a flick down does.
+
+**K1 is intended behaviour.** A pending one-shot Shift is used up by the first step of a drag on the pad. Shift is one-shot and the next press uses it (`spec/keyboard.yaml`, the gestures); a drag step is a press. Nothing changes.
+
+**The growth rule: where a later feature attaches**
+1. **Keys:** a reserved cell, or a layer that is dead in its own context only (a mode or a slot), as the unit pad does (docs/03 rule 8). Never a layer that is live in that context.
+2. **Numbered lists** (☰ Home/CAS, Mode's rows, Settings' sections, Apps, Tmpl, the Shift palettes, the matrix sheet, Base): a fixed row keeps its digit (docs/05 3.1). A new fixed row is appended after the last fixed row, or goes into a submenu. Rows of stored content (names, matrices) come after the fixed rows, because their order changes anyway. So the exports share one row, Export ›, as item 10 of ☰ Home/CAS (R181, R200, R130), and the matrix sheet has its functions at 1 to 8, New at 9 and the stored matrices after them (R187, R188, R190).
+3. **A feature of one history row:** a further button on the picked row's bar, after Store ▶ and Copy as › (docs/05 3.3 allows six). Never the row's tap, second tap, hold or swipe.
+4. **Gestures:** a new gesture only on a surface that has none, on top of its tap (docs/03 rule 6). The flick on the place name (section 4) would be one.
+5. **Sheets, Find, Settings rows and the places a user key can hold:** always free to grow.
+6. **Hardware keys:** every new key layer brings its desktop key (R131's spec test).
+
+**Removal tests after the tag** (docs/03 rule 11). A removal test, or a "would change if", on a key, a layer, a gesture or a numbered row still counts after the tag. It acts only at a version boundary, with the owner's yes. A removal only blanks the cell, which becomes reserved; the cell is never re-filled in the same version. This holds for the open clauses already written down: Shift + x (section 2), the Alpha key (docs/04 5.1), and the letters, the 36 px rows and results mode (decisions.md).
+
 ## 4. Open points
-- **B. The status-line switch.** Built (R15b, R15c1): the place (the glyph tile and ▾) is a target of at least 48 × 28 px at the left edge (R82f2); since R15c1 it opens Apps, so Home ↔ CAS is 2 taps (name, row), or 1 user key that holds one. Judge on the APK; if 2 taps prove slow, a flick on the name takes the switch (decisions.md R15c).
+- **B. The status-line switch.** Built (R15b, R15c1): the place (the glyph tile and ▾) is a target of at least 48 × 28 px at the left edge (R82f2); since R15c1 it opens Apps, so Home ↔ CAS is 2 taps (name, row), or 1 user key that holds one. Judge on the APK; if 2 taps prove slow, a flick on the name is added for the switch (decisions.md R15c). That is an addition on top of the tap, which keeps opening Apps, so it can come after the tag (section 3b, growth rule 4).
 
 ## 5. About the comparison file this was built from
 An outside review produced a YAML list of differences (`gemini-code-1791904688276.yaml`, not kept in the repo). Read it with two caveats:
