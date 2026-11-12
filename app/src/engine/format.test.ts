@@ -204,9 +204,9 @@ describe("formatFraction", () => {
 describe("formatPolar", () => {
   it("r and theta share the number format", () => {
     // |3+4i| = 5 (derived); the angle is any value here: only the layout is tested
-    expect(formatPolar(q(5n), q(1n, 2n), { format: "STD", digits: 12 }).text).toBe("5\u22210.5");
-    expect(formatPolar(q(5n), q(-1n, 2n), { format: "STD", digits: 12 }).text).toBe("5\u2221-0.5");
-    expect(formatPolar(q(1500n), q(0n), { format: "ENG", digits: 3 }).text).toBe("1.50E3\u22210.00E0");
+    expect(formatPolar({ re: q(5n), im: q(1n, 2n) }, { format: "STD", digits: 12 }).text).toBe("5\u22210.5");
+    expect(formatPolar({ re: q(5n), im: q(-1n, 2n) }, { format: "STD", digits: 12 }).text).toBe("5\u2221-0.5");
+    expect(formatPolar({ re: q(1500n), im: q(0n) }, { format: "ENG", digits: 3 }).text).toBe("1.50E3\u22210.00E0");
   });
 });
 
