@@ -325,6 +325,22 @@ describe("WorkerEngine: a load failure is not the log's (G327)", () => {
     b.engine.dispose();
   });
 
+  it("two load failures before the store answers stop the engine, and the replay that cannot run is not counted", async () => {
+    const store = new LogStore();
+    const read = store.load;
+    store.load = () => new Promise((r) => setTimeout(() => r(read()), 30)); // a slow store: both starts fail first
+    const a = failing({ fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" }, store);
+    expect(await outcome(a.engine.ready())).toBeInstanceOf(EngineLoadError);
+    expect(a.workers).toHaveLength(2);
+    expect(await a.engine.definitions()).toEqual([stored]); // the store has answered, and the gate has run
+    expect(store.starts).toBe(0);
+    a.heal();
+    expect((await a.engine.cancel()).safeStart).toBeUndefined();
+    expect(a.workers.at(-1)!.inits).toEqual([[stored]]);
+    expect(store.starts).toBe(0);
+    a.engine.dispose();
+  });
+
   it("a crash in the replay, then a load failure: the store keeps the crash's count (1), not the load's", async () => {
     const store = new LogStore();
     const load: Fail = { fatal: "Aborted(both async and sync fetching of the wasm failed)", dead: "load" };
