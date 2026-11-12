@@ -29,7 +29,7 @@ describe("muted digits past uncDigits (R40)", () => {
   it("in every notation the cut stays at the same place value", () => {
     expect(renderNumeric(r, "sci", ctx(), true)!.latex).toBe("3.985\\,8\\class{unc}{91\\,960\\,00}\\times10^{14}");
     expect(renderNumeric(r, "eng", ctx(), true)!.latex).toBe("398.58\\class{unc}{9\\,196\\,000}\\times10^{12}");
-    expect(renderNumeric(r, "pfx", ctx(), true)!.latex).toBe("398.58\\class{unc}{9\\,196\\,000}\\,\\class{pfx}{\\mathrm{T}}");
+    expect(renderNumeric(r, "pfx", ctx(), true)!.latex).toBe("398.58\\class{unc}{9\\,196}\\,\\class{pfx}{\\mathrm{T}}");
     expect(renderNumeric(r, "fix", ctx({ fixDecimals: 2 }), true)!.latex).toBe("398\\,58\\class{unc}{9\\,196\\,000\\,000.00}");
     expect(renderNumeric(r, undefined, ctx({ decimalComma: true }), true)!.latex).toBe("3{,}985\\,8\\class{unc}{91\\,96}\\times10^{14}");
   });
@@ -71,7 +71,7 @@ describe("the σ line (R40)", () => {
   it("σ with two significant digits and U = 2σ (k = 2), in the row's notation", () => {
     expect(sigmaLine(facts, "std")).toBe("σ = 9.0ᴇ9 · U = 2σ = 1.8ᴇ10 (k = 2)"); // 2 × 8.958ᴇ9 = 1.7916ᴇ10
     expect(sigmaLine(facts, "eng")).toBe("σ = 9.0ᴇ9 · U = 2σ = 18ᴇ9 (k = 2)");
-    expect(sigmaLine(facts, "pfx")).toBe("σ = 9.0 G · U = 2σ = 18 G (k = 2)");
+    expect(sigmaLine(facts, "pfx")).toBe("σ = 9 G · U = 2σ = 18 G (k = 2)");
     expect(sigmaLine({ ...facts, uncSigma: "0.15e-14" }, "fix", true)).toBe("σ = 1,5ᴇ-15 · U = 2σ = 3,0ᴇ-15 (k = 2)");
   });
   it("none without σ", () => {

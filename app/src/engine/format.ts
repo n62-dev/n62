@@ -13,8 +13,8 @@
 //   SCI n: n significant digits, one before the point, exponent always shown.
 //   ENG n: n significant digits, exponent a multiple of 3, 1 ≤ |mantissa| < 1000.
 //   FIX f: f digits after the point, plain notation (the Format key's optional "Fixed" mode).
-//   PFX n: as ENG, with the exponent shown as an SI prefix (f p n µ m, none, k M G T P; docs/04 section 2.7);
-//          outside 10^-15 … 10^15 it is ENG.
+//   PFX n: as ENG, with the exponent shown as an SI prefix (f p n µ m, none, k M G T P; docs/04 section 2.7), the
+//          mantissa's trailing zeros dropped (4.7 k); outside 10^-15 … 10^15 it is ENG.
 // Marks (docs/04 section 2.4): the engine reports facts (ValueFacts: exact, reliableDigits, warn); markOf() and
 // formatConfirmed() below decide, for the format on screen, which digits may be shown and which mark goes first.
 // Rounding is half away from zero.
@@ -190,7 +190,9 @@ function pfx(v: DecimalValue, n: number): FormattedNumber {
   // Zero and values inside f … P take a prefix; the exponent comes from the rounded value (999.96 k → 1.000 M).
   const p = e.exponent === null ? undefined : PREFIXES[e.exponent];
   if (p === undefined) return e;
-  return { neg: e.neg, mantissa: e.mantissa, exponent: null, prefix: p };
+  // G224: a prefix with zeros reads as false precision (4.7 k, not 4.70000000000 k); ENG keeps them. Only the fraction's zeros go.
+  const mantissa = e.mantissa.includes(".") ? e.mantissa.replace(/\.?0+$/, "") : e.mantissa;
+  return { neg: e.neg, mantissa, exponent: null, prefix: p };
 }
 
 export function formatReal(v: DecimalValue, o: FormatOptions): FormattedNumber {

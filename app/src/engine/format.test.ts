@@ -215,27 +215,59 @@ describe("formatPolar", () => {
 describe("PFX: SI prefix display (docs/04 2.7)", () => {
   const p = (s: string, digits = 4) => toText(formatReal(decimalFromString(s)!, { format: "PFX", digits }));
   it.each([
-    ["1e-15", "1.000 f"],
-    ["1e-12", "1.000 p"],
-    ["4.7e-9", "4.700 n"],
-    ["1e-6", "1.000 µ"],
-    ["0.0015", "1.500 m"],
-    ["1.5", "1.500"],
-    ["4.7e3", "4.700 k"],
-    ["1e6", "1.000 M"],
-    ["2.2e9", "2.200 G"],
-    ["1e12", "1.000 T"],
-    ["1e15", "1.000 P"],
-    ["-4.7e3", "-4.700 k"],
-    ["0", "0.000"],
+    ["1e-15", "1 f"],
+    ["1e-12", "1 p"],
+    ["4.7e-9", "4.7 n"],
+    ["1e-6", "1 µ"],
+    ["0.0015", "1.5 m"],
+    ["1.5", "1.5"],
+    ["4.7e3", "4.7 k"],
+    ["1e6", "1 M"],
+    ["2.2e9", "2.2 G"],
+    ["1e12", "1 T"],
+    ["1e15", "1 P"],
+    ["-4.7e3", "-4.7 k"],
+    ["0", "0"],
   ])("%s → %s", (x, want) => expect(p(x)).toBe(want));
-  it("rounding moves into the next prefix: 999.96 k at 4 digits is 1.000 M", () => expect(p("999.96e3")).toBe("1.000 M"));
-  it("rounding moves into the range: 9.9996E-16 at 4 digits is 1.000 f", () => expect(p("9.9996e-16")).toBe("1.000 f"));
+  it("rounding moves into the next prefix: 999.96 k at 4 digits is 1.000 M", () => expect(p("999.96e3")).toBe("1 M"));
+  it("rounding moves into the range: 9.9996E-16 at 4 digits is 1.000 f", () => expect(p("9.9996e-16")).toBe("1 f"));
   it("999.94 k stays 999.9 k", () => expect(p("999.94e3")).toBe("999.9 k"));
   it("outside f … P it is ENG", () => {
     expect(p("1e18")).toBe("1.000E18");
     expect(p("1e-16")).toBe("100.0E-18");
     expect(p("9.9994e-16")).toBe("999.9E-18");
+  });
+});
+
+describe("PFX drops the mantissa's trailing zeros (G224); ENG keeps them", () => {
+  const p = (s: string, digits: number) => toText(formatReal(decimalFromString(s)!, { format: "PFX", digits }));
+  const e = (s: string, digits: number) => toText(formatReal(decimalFromString(s)!, { format: "ENG", digits }));
+  it.each<[string, number, string]>([
+    ["4700", 12, "4.7\u2009k"],
+    ["0.000022", 12, "22\u2009\u00b5"],
+    ["1500", 4, "1.5\u2009k"],
+    ["999.96e3", 4, "1\u2009M"], // rounding first: 1.000 M
+    ["1234.5", 12, "1.2345\u2009k"],
+    ["-4.7e-9", 6, "-4.7\u2009n"],
+    ["1.5", 4, "1.5"],
+    ["0", 4, "0"],
+    ["100", 1, "100"], // an integer part keeps its zeros
+    ["120e3", 4, "120\u2009k"],
+    ["1e18", 4, "1.000E18"], // outside f … P it is ENG, untouched
+  ])("%s at %s digits → %s", (x, n, want) => expect(p(x, n)).toBe(want));
+  it("ENG keeps its zeros", () => {
+    expect(e("2500", 4)).toBe("2.500E3");
+    expect(e("4700", 12)).toBe("4.70000000000E3");
+  });
+  it("the mark is not changed by the trim: 4.7 k is =, 1/3 stays ≈", () => {
+    const o: FormatOptions = { format: "PFX", digits: 12 };
+    expect(markOf({ value: { re: decimalFromString("4700")!, im: ZERO_VALUE }, exact: true, reliableDigits: null }, o)).toEqual({ mark: "=" });
+    expect(markOf({ value: { re: decimalFromRational(10000n, 3n), im: ZERO_VALUE }, exact: true, reliableDigits: null }, o)).toEqual({ mark: "≈" });
+  });
+  it("the value behind the text is whole: the same DecimalValue formats to the full digits in STD (Copy never takes the prefix)", () => {
+    const v = decimalFromString("4700")!;
+    expect(toText(formatReal(v, { format: "PFX", digits: 12 }))).toBe("4.7\u2009k");
+    expect(toText(formatReal(v, { format: "STD", digits: 12 }))).toBe("4700");
   });
 });
 
