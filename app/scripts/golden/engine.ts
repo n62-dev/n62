@@ -47,7 +47,7 @@ export function stageFlags(): void {
   stageGiacCheck();
 }
 const FLAGS_TIMEOUT_MS = 120_000;
-const FLAGS_TESTS = ["flags-canary.ts", "ctx-canary.ts", "assume-canary.ts", "tanh-test.ts", "mpfr-pi-test.ts", "reim-test.ts", "support-test.ts", "ilaplace-vars-test.ts", "patch-canary.ts", "canaries.mjs", "fetch-test.mjs", "memcap-test.mjs"];
+const FLAGS_TESTS = ["flags-canary.ts", "ctx-canary.ts", "assume-canary.ts", "tanh-test.ts", "mpfr-pi-test.ts", "reim-test.ts", "support-test.ts", "ilaplace-vars-test.ts", "patch-canary.ts", "canaries.mjs", "fetch-test.mjs", "memcap-test.mjs", "regress-order-test.mjs"];
 
 /** A19: Giac's own check/ suite (tools/probes/giac-check.mjs) on this build, against tests/golden/giaccheck-known.yaml.
  *  The release build runs the same stage: GIAC_OUT=engine/giac/_out/release npm run golden. */
