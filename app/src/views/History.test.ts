@@ -51,3 +51,32 @@ describe("History rows drawn", () => {
     expect(draw(3, "starting")).toHaveLength(3);
   });
 });
+
+// R260 (vr-2): the uses line (F28) names a stored value as typed, β and e, never the engine's beta_ and e_.
+describe("the uses line", () => {
+  it("names stand-ins as the letters typed", () => {
+    const item: HistoryItem = {
+      ...items(1)[0]!,
+      uses: [
+        { name: "beta_", preview: "2", view: "home" },
+        { name: "e_", preview: "3", view: "home" },
+        { name: "rate", preview: "4", view: "home" },
+      ],
+    };
+    const { body } = render(History, {
+      props: {
+        items: [item],
+        engineState: "ready",
+        display: (i: HistoryItem) => ({ text: i.text, latex: i.resultLatex }),
+        mark: () => null,
+        onrecall: () => {},
+        oninsert: () => {},
+        oncredits: () => {},
+        onpick: () => {},
+        oncancel: () => {},
+      },
+    });
+    const uses = /data-testid="uses">([^<]*)</.exec(body)?.[1];
+    expect(uses).toMatch(/^β = 2, e = 3, rate = 4 · /);
+  });
+});

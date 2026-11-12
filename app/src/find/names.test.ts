@@ -150,3 +150,25 @@ describe("Memory", () => {
     expect(sheet.level.items.at(-1)?.label).toBe("Clear all");
   });
 });
+
+// R260 (vr-2): the engine's stand-in never reaches the user: Vars' row, its details line and the Find item read the
+// name as typed (render/home.ts typedName), while a pick still inserts and deletes the stored name.
+describe("R260: a stand-in shown as the letter typed", () => {
+  it("beta_ and e_ are drawn β and e in the row, the details line and the live item's title", () => {
+    const session = new Session(new FakeCalc(), kv());
+    session.userNames = [{ ...name("beta_", "var", "2", 1), mark: "=" }, name("e_", "fn", "done", 2)];
+    const shell: { sheet: Sheet | null } = { sheet: null };
+    const entry = { run: () => {} } as unknown as EntryController;
+    showNames(shell, entry, session, false);
+    const rows = (shell.sheet as Sheet).level.items;
+    expect(rows.map((r) => r.label)).toEqual(["e", "β"]);
+    expect(rows.map((r) => r.preview)).toEqual(["e(…)", "β = 2"]);
+    expect(liveItem(name("beta_", "var", "2", 0)).title).toBe("β");
+    expect(liveItem(name("e_", "fn", "", 0)).title).toBe("e");
+  });
+
+  it("control: a name without a stand-in is shown as stored", () => {
+    expect(liveItem(name("rate", "var", "2", 0)).title).toBe("rate");
+    expect(liveItem(name("A", "var", "2", 0)).title).toBe("A");
+  });
+});

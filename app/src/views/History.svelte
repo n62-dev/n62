@@ -6,6 +6,7 @@
   import Math from "../render/Math.svelte";
   import { mathlive } from "../render/mathlive.svelte.ts";
   import { MAX_DRAWN_LATEX } from "../render/longResult.ts";
+  import { typedName } from "../render/home.ts";
   import { markText, noDigit as hasNoDigit } from "../state/displayMode.ts";
   import { rowTap } from "../state/pickRows.ts";
   import { edgeFade } from "./edgeFade.ts";
@@ -117,13 +118,13 @@
     return input(typeof u === "string" ? { ...item, latex: u } : item);
   }
   // F28: the stored values a CAS result read, in one muted line: at most three names, then "+n". When all come from
-  // one view it is said once at the end; otherwise after each name.
+  // one view it is said once at the end; otherwise after each name. Each name as typed (R260: β, not beta_).
   const USES_SHOWN = 3;
   const viewText = (v: UsedValue["view"]): string => t(v === "home" ? "history.usesHome" : "history.usesCas");
   function usesLine(uses: UsedValue[]): string {
     const shown = uses.slice(0, USES_SHOWN);
     const once = uses.every((u) => u.view === uses[0]?.view);
-    const names = shown.map((u) => `${u.name} = ${u.preview}${once ? "" : ` (${viewText(u.view)})`}`).join(", ");
+    const names = shown.map((u) => `${typedName(u.name)} = ${u.preview}${once ? "" : ` (${viewText(u.view)})`}`).join(", ");
     const more = uses.length > shown.length ? ` +${uses.length - shown.length}` : "";
     return `${names}${more}${once ? ` · ${viewText(uses[0]!.view)}` : ""}`;
   }

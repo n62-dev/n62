@@ -3,7 +3,7 @@
 import { parseError } from "../i18n/enParser.ts";
 import { mathJsonToGiac, type Json, type SerializeOptions } from "./emit.ts";
 import type { ChipTable } from "./chips.ts";
-import { parseLatexInfo, type UnitsInfo } from "./parse.ts";
+import { LETTER_NAMES, parseLatexInfo, type UnitsInfo } from "./parse.ts";
 import type { UserName } from "../engine/defs.ts";
 import { CHIP_PREFIX, CONST_PREFIX } from "../engine/ourNames.ts";
 
@@ -28,12 +28,15 @@ export type { UnitsInfo };
 /** f, g and h are always functions; other single letters once the user defines them (L6). */
 export const DEFAULT_USER_FUNCTIONS: ReadonlySet<string> = new Set(["f", "g", "h"]);
 
+/** A function name of one typed letter, as the engine has it: the letter, or its stand-in (`e_`, `i_`, R67, R260). */
+const isLetterName = (name: string): boolean => /^[A-Za-z]$/.test(name) || Object.values(LETTER_NAMES).includes(name);
+
 /** The single letters that are calls before "(" (R56): f, g, h and the user's functions, as the definitions log has
- *  them. The parser keeps no state of its own, so a relaunch, a redefinition as a value or a delete in Memory counts
- *  at once. Longer names are always calls and need no listing (parse.ts). */
+ *  them (by the engine's name: `e_` for e, R260). The parser keeps no state of its own, so a relaunch, a redefinition as
+ *  a value or a delete in Memory counts at once. Longer names are always calls and need no listing (parse.ts). */
 export function userFunctionsOf(names: readonly Pick<UserName, "name" | "kind">[]): ReadonlySet<string> {
   const out = new Set(DEFAULT_USER_FUNCTIONS);
-  for (const u of names) if (u.kind === "fn" && /^[A-Za-z]$/.test(u.name)) out.add(u.name);
+  for (const u of names) if (u.kind === "fn" && isLetterName(u.name)) out.add(u.name);
   return out;
 }
 
@@ -47,7 +50,7 @@ export function userValuesOf(names: readonly Pick<UserName, "name" | "kind">[]):
 function definedFunction(e: Json): string | undefined {
   if (!Array.isArray(e) || e[0] !== "Assign") return undefined;
   const lhs = e[1];
-  return Array.isArray(lhs) && lhs[0] === "Call" && typeof lhs[1] === "string" && /^[A-Za-z]$/.test(lhs[1]) ? lhs[1] : undefined;
+  return Array.isArray(lhs) && lhs[0] === "Call" && typeof lhs[1] === "string" && isLetterName(lhs[1]) ? lhs[1] : undefined;
 }
 
 export function latexToGiac(latex: string, o: LatexToGiacOptions = {}): string {

@@ -36,6 +36,10 @@ describe("unitNamesText (R121)", () => {
     expect(unitNamesText(["R", "C"])).toBe("R, C have no unit: Home values");
     expect(unitNamesText(["a", "b", "c", "d"])).toBe("a, b, c, … have no unit: Home values");
   });
+  it("R260 (vr-2): a stand-in is named as the letter typed, never beta_ or e_", () => {
+    expect(unitNamesText(["beta_"])).toBe("β has no unit: a Home value");
+    expect(unitNamesText(["e_", "R", "Phi_"])).toBe("e, R, Φ have no unit: Home values");
+  });
 });
 
 describe.skipIf(!giacAvailable())("a stored name in the unit view (R121, real Giac)", () => {
