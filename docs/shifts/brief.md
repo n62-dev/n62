@@ -84,9 +84,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 587 | G227 matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
-| 639 | [G316](packages/G316.md) absolute zero's unit | gorge, Opus | `p1/gorge-abszero` | – |
-| 640 | [G311](packages/G311.md) library round trip | gorge, Opus | `p1/gorge-libstandins` | – |
 | 641 | [G312](packages/G312.md) polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
 | 642 | [G313](packages/G313.md) `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
 | 652 | [G323](packages/G323.md) each giac-regress file in a fresh engine (F223) | gorge, Sonnet | `p1/gorge-regressfresh` | – |

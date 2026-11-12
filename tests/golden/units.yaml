@@ -96,6 +96,16 @@ cases:
   - { id: "t12", input: "5*{K}+3*{K}", oracle: "F(8)", expect: "8", mark: "=", exact: "8", dim: "K1", source: "derived", note: "a difference in arithmetic" }
   - { id: "t13", input: "18*{oR}", to: "K", oracle: "F(10)", expect: "10", mark: "=", exact: "10", source: "derived" }
   - { id: "t14", input: "0*{K}", to: "oC", oracle: "-F('273.15')", expect: "-273.15", mark: "=", exact: "-5463/20", source: "derived", note: "an exact 0 K is the absolute zero" }
+  # --- G316: a source at absolute zero keeps its unit (night review 2026-11-09 be-6, S2): 0 K from °C or °F is the value 0, not a pure number ---
+  - { id: "t14b1", input: "-273.15*{oC}", to: "K", oracle: "F('-273.15')+F('273.15')", expect: "0", mark: "=", exact: "0", source: "derived", note: "was Units don't match: 1 vs Θ" }
+  - { id: "t14b2", input: "-273.15*{oC}", to: "oF", oracle: "F('-273.15')*9/5+32", expect: "-459.67", mark: "=", exact: "-45967/100", source: "derived", note: "was Units don't match" }
+  - { id: "t14b3", input: "-273.15*{oC}", oracle: "F('-273.15')+F('273.15')", expect: "0", mark: "=", exact: "0", dim: "K1", unit: "K", source: "derived", note: "without an end slot: 0 K (was 0 with no unit)" }
+  - { id: "t14b4", input: "-459.67*{oF}", to: "K", oracle: "(F('-459.67')-32)*5/9+F('273.15')", expect: "0", mark: "=", exact: "0", source: "derived", note: "was Units don't match" }
+  - { id: "t14b5", input: "-459.67*{oF}", oracle: "(F('-459.67')-32)*5/9+F('273.15')", expect: "0", mark: "=", exact: "0", dim: "K1", unit: "K", source: "derived", note: "was 0 with no unit" }
+  - { id: "t14b6", input: "pasupm(-273.15,0.1)*{oC}", to: "K", oracle: "F('-273.15')+F('273.15')", expect: "0", mark: "≈", exact: "0", unc: "0.10", unc_oracle: "F('0.1')", shown: "0.00 ± 0.10", source: "derived", note: "with ±: 1 °C = 1 K, so σ = 0.1 K (was Units don't match)" }
+  - { id: "t14b7", input: "pasupm(-273.15,0.1)*{oC}", oracle: "F('-273.15')+F('273.15')", expect: "0", mark: "≈", exact: "0", dim: "K1", unit: "K", unc: "0.10", unc_oracle: "F('0.1')", shown: "0.00 ± 0.10", source: "derived", note: "with ±, no end slot (was the engine message, uncertainty of K1 on a pure number)" }
+  - { id: "t14c1", input: "-273*{oC}", to: "K", oracle: "F(-273)+F('273.15')", expect: "0.15", mark: "=", exact: "3/20", source: "derived", note: "control: just above absolute zero" }
+  - { id: "t14c2", input: "-273.16*{oC}", to: "K", message: "Below absolute zero", source: "derived", note: "control: just below absolute zero" }
   - { id: "l01", input: "1*{W}", to: "dBm", oracle: "10*log10(1000)", expect: "30", mark: "=", exact: "30", source: "derived", note: "10·log10(P / 1 mW)" }
   - { id: "l02", input: "1*{Np}", to: "dB", oracle: "20/ln(10)", expect: "8.68588963807", mark: "≈", exact: "20/ln(10)", source: "derived", note: "the field-quantity convention: 1 Np = 20/ln 10 dB" }
   - { id: "l03", input: "30*{dBm}", to: "W", oracle: "F(1)", expect: "1", mark: "=", exact: "1", source: "derived" }

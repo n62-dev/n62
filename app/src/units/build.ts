@@ -536,7 +536,8 @@ function jobOf(req: UnitRequest, table: FactorTable): UnitJob | UnitError {
       }
       // No end slot: °C, °F give K, dBm, dBW give W; a dB, bel or Np ratio has no SI unit (20 dB is not 10).
       if (isLog(x.id, x.u) && !req.end && x.id !== "dBm" && x.id !== "dBW") throw refuseSpecial(x.id, x.u);
-      const abs = isAffine(x.u) ? { absTemp: true as const } : {};
+      // G316: its dimension too, which a value 0 (absolute zero) does not show
+      const abs = isAffine(x.u) ? { absTemp: true as const, sourceDim: x.u.dim ?? "" } : {};
       if (pm) {
         const v = uvars[0]!;
         const sign = minus ? "-" : "";

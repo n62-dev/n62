@@ -11,6 +11,7 @@ import { renameOurCalls, writeUserNames } from "./ourNames.ts";
 import type { GiacParse } from "./bridge.ts";
 import { exportLibrary, importLibrary, importText, LibError, parseLibrary, type ImportResult } from "./library.ts";
 import { LIBRARY_FORMAT } from "../state/libraryFormat.ts";
+import { GREEK, LETTER_NAMES } from "../input/parseTables.ts";
 
 /** G100: Giac's tree of a text, for parseLibrary; set when an engine is found. */
 let parse: (text: string) => GiacParse;
@@ -481,5 +482,66 @@ describe("the worker's reader (no engine)", () => {
     expect(r.result).toMatchObject({ ok: false, line: 1, dirty: false });
     expect(!r.result.ok && r.result.error).toMatch(/^line 1: the app did not bring this file up to date \(version 1; /);
     expect(r.lines).toEqual([]);
+  });
+});
+
+// G311 (night review 2026-11-09, vr-1): the parser's letter stand-ins (input/parseTables.ts GREEK, LETTER_NAMES: beta_,
+// e_, …) are the user's names; a library file that holds one imports back, every other trailing `_` stays ours.
+describe.skipIf(!giacAvailable())("the parser's letter stand-ins in library files (G311, real Giac)", () => {
+  const standIns = [...new Set([...Object.values(GREEK), ...Object.values(LETTER_NAMES)].filter((n) => n.endsWith("_")))];
+  const typed = async (): Promise<DefEntry[]> => {
+    const h = await nodeHost();
+    let log: DefEntry[] = [];
+    for (const s of ["beta_:=2", "e_:=3"]) log = applyDefChanges(log, h.cas(s, defaultCasSettings).defs);
+    return log;
+  };
+
+  it("the eight stand-ins, each accepted as a name (derived: the values of GREEK and LETTER_NAMES that end in _)", () => {
+    expect(standIns.sort()).toEqual(["Gamma_", "Phi_", "Psi_", "beta_", "e_", "epsilon_", "gamma_", "i_"]);
+    for (const n of standIns) expect(parseLibrary(`// n62 library 1\n// d\n${n}:=1\n`, parse, LIBRARY_FORMAT).defs.map((d) => d.name), n).toEqual([n]);
+  });
+
+  it("an export holding beta_:=(2) and e_:=(3) imports back whole, with the same definitions and values (derived)", async () => {
+    const log = await typed();
+    expect(log.map((e) => e.cmds)).toEqual([["beta_:=(2)"], ["e_:=(3)"]]);
+    const { text, skipped } = exportLibrary(log, LIBRARY_FORMAT);
+    expect(skipped).toEqual([]);
+    const lib = parseLibrary(text, parse, LIBRARY_FORMAT);
+    expect(lib.defs.map((d) => `${d.kind} ${d.name}`)).toEqual(["var beta_", "var e_"]);
+    const h = await nodeHost();
+    const back = importLibrary(h, lib, []);
+    if (!back.ok) throw new Error(back.error);
+    expect(back.plan.added).toEqual(["beta_", "e_"]);
+    expect(back.log.map((e) => [e.name, e.cmds])).toEqual(log.map((e) => [e.name, e.cmds]));
+    expect(h.eval("beta_").output).toBe("2");
+    expect(h.eval("e_").output).toBe("3");
+    expect(exportLibrary(back.log, LIBRARY_FORMAT).text).toBe(text);
+  });
+
+  it("the same through importText into an empty engine (the worker's side)", async () => {
+    const { text } = exportLibrary(await typed(), LIBRARY_FORMAT);
+    const h = await nodeHost();
+    const r = importText(h, text, LIBRARY_FORMAT.version, [], false);
+    if (!r.result.ok) throw new Error(r.result.error);
+    expect(r.result.plan.added).toEqual(["beta_", "e_"]);
+    expect(r.lines.map((l) => l.name)).toEqual(["beta_", "e_"]);
+    expect(h.eval("beta_+e_").output).toBe("5");
+  });
+
+  it("a name that stays refused: pasc_x, pasdeg, x_ and foo_ (a trailing _ that is no stand-in)", () => {
+    for (const n of ["pasc_x", "pasdeg", "x_", "foo_"]) {
+      expect(() => parseLibrary(`// n62 library 1\n// d\n${n}:=1\n`, parse, LIBRARY_FORMAT), n).toThrow(new RegExp(`line 3: ${n} is one of N62's own names`));
+    }
+    expect(() => parseLibrary("// n62 library 1\n// d\nfoo_(x):=x\n", parse, LIBRARY_FORMAT)).toThrow(/foo_ is one of N62's own names/);
+  });
+});
+
+describe("the format for your AI names the stand-ins (G311)", () => {
+  it("its name rule lists exactly the eight stand-ins as the exception to the trailing `_` (views/aiFormat.md)", () => {
+    const md = readFileSync(new URL("../views/aiFormat.md", import.meta.url), "utf8");
+    const rule = md.split("\n").find((l) => l.startsWith("- Not one of N62's own names:")) ?? "";
+    const listed = /\(except the letters N62 writes so: ([^)]*)\)/.exec(rule)?.[1]?.match(/`[^`]+`/g)?.map((t) => t.slice(1, -1)) ?? [];
+    const standIns = [...new Set([...Object.values(GREEK), ...Object.values(LETTER_NAMES)].filter((n) => n.endsWith("_")))];
+    expect(listed.sort()).toEqual(standIns.sort());
   });
 });
