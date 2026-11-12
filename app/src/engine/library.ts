@@ -365,11 +365,13 @@ function sameDefinition(engine: LibraryEngine, d: LibDef, old: DefEntry): boolea
 }
 
 /** A function typed on the phone has no description: its name and arguments stand for it. R260f1: written as typed
- *  (`beta_` β, `e_` e: typedName), as the user reads them; the definition under it keeps the stored names. */
+ *  (`beta_` β, `e_` e: typedName), the name, the head and the value's preview (Giac's print, which holds a stand-in it
+ *  has not evaluated: `2*beta_`), as the user reads them; the definition under it keeps the stored names. */
 function describe(e: DefEntry): string {
   const name = typedName(e.name);
   const head = e.kind === "fn" ? fnHead(e.cmds[0]!) : null;
-  const text = e.desc ?? (head !== null ? mapNames(head, (n) => typedName(n.name), "typed") : e.kind === "fn" ? name : e.preview ? `${name} = ${e.preview}` : name);
+  const value = e.preview ? mapNames(e.preview, (n) => typedName(n.name), "printed") : "";
+  const text = e.desc ?? (head !== null ? mapNames(head, (n) => typedName(n.name), "typed") : e.kind === "fn" ? name : value ? `${name} = ${value}` : name);
   return text.replace(/\s+/g, " ").trim().slice(0, DESC_MAX) || name;
 }
 

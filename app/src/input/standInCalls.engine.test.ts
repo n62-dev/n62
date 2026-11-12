@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { applyDefChanges, userNamesOf, type DefEntry } from "../engine/defs.ts";
 import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";
 import { defaultHomeSettings } from "../engine/homeDefaults.ts";
+import { defaultCasSettings } from "../engine/types.ts";
 import { exportLibrary, importText } from "../engine/library.ts";
 import { LIBRARY_FORMAT } from "../state/libraryFormat.ts";
 import { giacOfEntry } from "./entry.ts";
@@ -64,6 +65,28 @@ describe.skipIf(!giacAvailable())("R260: a function named e or i (real Giac)", (
     expect(imported.result.plan.added.sort()).toEqual(["beta_", "e_"]);
     expect(back.home(giacOfEntry("e\\left(2\\right)", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("3");
     expect(back.home(giacOfEntry("\\beta", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("2");
+    expect(exportLibrary(imported.result.log, LIBRARY_FORMAT).text).toBe(text);
+  });
+
+  it("R260f1 fix round 2: a stored value whose preview holds a stand-in not yet stored (y:=2β before β) exports the comment y = 2*β, and the file round-trips (derived)", { timeout: 30_000 }, async () => {
+    const h = await nodeHost();
+    const s = { ...defaultHomeSettings, angle: "rad" as const };
+    let log: DefEntry[] = [];
+    for (const latex of ["y:=2\\beta", "z:=e+1"]) log = applyDefChanges(log, h.cas(giacOfEntry(latex, "cas", { names: userNamesOf(log) }).giac, defaultCasSettings).defs);
+    expect(userNamesOf(log).map((n) => `${n.name} ${n.preview}`).sort()).toEqual(["y 2*beta_", "z e_+1"]);
+    const { text, skipped } = exportLibrary(log, LIBRARY_FORMAT);
+    expect(skipped).toEqual([]);
+    const lines = text.split("\n");
+    expect(lines).toContain("// y = 2*β");
+    expect(lines).toContain("// z = e+1");
+    expect(text).not.toMatch(/\/\/.*(beta_|e_)/);
+    const back = await nodeHost();
+    const imported = importText(back, text, LIBRARY_FORMAT.version, [], false);
+    if (!imported.result.ok) throw new Error(imported.result.error);
+    expect(imported.result.plan.added.sort()).toEqual(["y", "z"]);
+    const names = userNamesOf(imported.result.log);
+    expect(back.cas(giacOfEntry("\\beta:=3", "cas", { names }).giac, defaultCasSettings).result.ok).toBe(true);
+    expect(back.home(giacOfEntry("y", "home", { names }).giac, s).result.display).toBe("6");
     expect(exportLibrary(imported.result.log, LIBRARY_FORMAT).text).toBe(text);
   });
 });
