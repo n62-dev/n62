@@ -10,10 +10,18 @@ describe("the results mode's counter (R53, P16's removal test)", () => {
     const kv = fakeKv();
     const c = new UseCounter(kv, day("2026-11-08"));
     await c.ready;
-    for (const n of ["fold.handle", "fold.handle", "fold.swipe", "pick", "insert", "copy", "delete"]) c.count(n);
-    expect([c.folds, c.actions, c.get("pick"), c.get("store")]).toEqual([3, 3, 1, 0]);
+    for (const n of ["fold.swipe", "fold.swipe", "pick", "insert", "copy", "delete"]) c.count(n);
+    expect([c.folds, c.actions, c.get("pick"), c.get("store")]).toEqual([2, 3, 1, 0]);
     await c.flush();
-    expect(kv.data.get(USES_KEY)).toEqual({ counts: { "fold.handle": 2, "fold.swipe": 1, pick: 1, insert: 1, copy: 1, delete: 1 }, since: "2026-11-08" });
+    expect(kv.data.get(USES_KEY)).toEqual({ counts: { "fold.swipe": 2, pick: 1, insert: 1, copy: 1, delete: 1 }, since: "2026-11-08" });
+  });
+  it("a count stored for the removed handle (R283) stays in the folds total, and new folds add to it", async () => {
+    const kv = fakeKv([[USES_KEY, { counts: { "fold.handle": 5, "fold.swipe": 2 }, since: "2026-11-01" }]]);
+    const c = new UseCounter(kv, day("2026-11-12"));
+    await c.ready;
+    expect(c.folds).toBe(7);
+    c.count("fold.swipe");
+    expect(c.folds).toBe(8);
   });
   it("adds counts made before the stored ones arrived, and ignores what is not a count", async () => {
     const kv = fakeKv([[USES_KEY, { counts: { "fold.swipe": 4, pick: -1, copy: "x" }, since: "2026-11-01" }]]);
