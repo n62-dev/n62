@@ -66,7 +66,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 592 | G235 bit functions in Find | gorge, Sonnet | `p1/gorge-bitsfind` | G229 |
-| 633 | [R264](packages/R264.md) start chunk room | ron, Opus | `p1/ron-chunkroom` | – |
+| 633 | R264 start chunk room | ron, Opus | `p1/ron-chunkroom` | – |
 | 634 | [R259](packages/R259.md) unit view: Ans, σ | ron, Opus | `p1/ron-unitmsgs` | – |
 | 635 | [R263](packages/R263.md) lazy chunk retry | ron, Opus | `p1/ron-lazydoors` | – |
 | 636 | [R262](packages/R262.md) To Home with marks | ron, Opus | `p1/ron-tohome` | – |
