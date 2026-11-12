@@ -179,8 +179,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  migration steps (state/migrations.ts, with the angle rewrite), loaded only for a record that has a step to run. R151:
  *  the sheet's model (views/sheet.svelte.ts), loaded with the sheet's view or by the first sheet that opens before it. A66f1: the key click's code (input/click.ts), loaded only
  *  when the Key click setting is on. R264: the stored rows' reader (state/storedItem.ts), loaded beside the history's start
- *  read, and engine/giacPrint.ts, a shared lazy chunk (the start reads its part engine/giacPrintStart.ts). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts"];
+ *  read, and engine/giacPrint.ts, a shared lazy chunk (the start reads its part engine/giacPrintStart.ts). R276: a history
+ *  row's swipe and hold (views/rowGesturesCode.ts: rowSwipe.ts, apps/longpress.ts), fetched when idle (views/rowGestures.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
