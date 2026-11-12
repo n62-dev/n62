@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -265,6 +266,39 @@ void walk(const gen &g, Walk &w) {
     return;
   }
   walk(f, w);
+}
+
+// G328: what sets each name a store sets: the heads on the way from the root to that store (`path`: a `*` around
+// `(A:=5)*sin(1.)`, a `when` that chose the branch) and the heads and free names of the value it stores. A list target
+// takes the element at its place when the value is a list of the same length (`A,B:=5,sqrt(2.)`: A from 5), else the
+// whole value. A name stored twice takes both.
+using Sides = std::map<std::string, Walk>;
+void sideSet(const gen &t, const gen &value, const std::vector<std::string> &path, Sides &s) {
+  if (t.type == giac::_IDNT) {
+    Walk &w = s[t._IDNTptr->id_name];
+    for (const std::string &h : path) w.add(w.heads, w.seenH, h);
+    walk(value, w);
+    return;
+  }
+  if (t.type != giac::_VECT) return;
+  const giac::vecteur &ts = *t._VECTptr;
+  // `A,B:=5,x` stores copy([5,x]) (Giac's tree): copy changes no element
+  const gen &v = value.type == giac::_SYMB && headOf(value) == "copy" ? value._SYMBptr->feuille : value;
+  const bool paired = v.type == giac::_VECT && v._VECTptr->size() == ts.size();
+  for (size_t k = 0; k < ts.size(); ++k) sideSet(ts[k], paired ? (*v._VECTptr)[k] : value, path, s);
+}
+void sidesOf(const gen &g, std::vector<std::string> &path, Sides &s) {
+  if (g.type == giac::_VECT) {
+    for (const gen &x : *g._VECTptr) sidesOf(x, path, s);
+    return;
+  }
+  if (g.type != giac::_SYMB) return;
+  const std::string h = headOf(g);
+  const gen &f = g._SYMBptr->feuille;
+  path.push_back(h);
+  if (h == "sto" && f.type == giac::_VECT && f._VECTptr->size() == 2) sideSet((*f._VECTptr)[1], (*f._VECTptr)[0], path, s);
+  sidesOf(f, path, s);
+  path.pop_back();
 }
 
 bool isBooleanLeaf(const gen &g) { return g.type == giac::_INT_ && g.subtype == giac::_INT_BOOLEAN; }
@@ -580,18 +614,21 @@ EMSCRIPTEN_KEEPALIVE const char *giac_ctx_set(const char *json) {
 // keeps f there, which targets lists once); form: how that store's target is written: "name" (f:=…, and f(x):=…,
 // which Giac's tree holds as f:=(x)->… and prints so for a block body), "indexed" (L[k]:=…), "list" ([a,b]:=…), "call"
 // (a call that names no new function, Beta(x):= on a built-in; callee: its head), "other", or "" when the text is not
-// one store.
+// one store. G328: sides: by name a store sets, {"heads","reads"} of what sets it (sidesOf).
 EMSCRIPTEN_KEEPALIVE const char *giac_parse(const char *text) {
   const giac::context *c = ctx();
   bool err = false;
   Walk w;
   Walk top;    // the top-level store's targets alone
   Walk value;  // the top-level store's value alone
+  Sides sides;  // G328
   bool program = false;
   std::string form, callee;
   try {
     gen g = parseInput(text, c, err);
     walk(g, w);
+    std::vector<std::string> path;
+    sidesOf(g, path, sides);
     if (g.is_symb_of_sommet(giac::at_sto) && g._SYMBptr->feuille.type == giac::_VECT && g._SYMBptr->feuille._VECTptr->size() == 2) {
       const giac::vecteur &v = *g._SYMBptr->feuille._VECTptr;
       program = v[0].is_symb_of_sommet(giac::at_program);
@@ -627,6 +664,12 @@ EMSCRIPTEN_KEEPALIVE const char *giac_parse(const char *text) {
   jkey(o, "float"), o += w.flt ? "true" : "false";
   jkey(o, "string"), o += w.str ? "true" : "false";
   jkey(o, "nodes"), o += std::to_string(w.nodes);
+  jkey(o, "sides"), o += '{';
+  for (const auto &e : sides) {
+    jkey(o, e.first.c_str()), o += '{';
+    jkey(o, "heads"), jlist(o, e.second.heads), jkey(o, "reads"), jlist(o, e.second.reads), o += '}';
+  }
+  o += '}';
   o += '}';
   g_last = o;
   return g_last.c_str();

@@ -55,6 +55,9 @@ export interface GiacParse {
   float: boolean;
   string: boolean;
   nodes: number;
+  /** G328: by name a store sets, the heads on the way from the root to that store and the heads and free names of the
+   *  value it stores (a list target's element at its place). Absent on an engine before G328. */
+  sides?: Record<string, { heads: string[]; reads: string[] }>;
 }
 
 /** G103: a node of a value's tree (bridge-3, api.cc treeOf): [1, head, source, children] a call or operator (source 0: a power whose exponent
