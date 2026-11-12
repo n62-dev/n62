@@ -22,7 +22,7 @@ export const CATEGORIES: readonly Category[] = [
   { id: "trig", title: "cat.trig", ids: fn("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh") },
   { id: "calculus", title: "cat.calculus", ids: fn("int", "diff", "limit") },
   { id: "algebra", title: "cat.algebra", ids: fn("solve") },
-  { id: "matrix", title: "cat.matrix", ids: fn("det", "inv", "tran", "cross") },
+  { id: "matrix", title: "cat.matrix", ids: fn("det", "inv", "tran", "trn", "cross", "dot", "norm", "rref", "eigenvals", "egv") },
   { id: "stats", title: "cat.stats", ids: fn("mean", "median", "percentile", "variance", "stddev", "stddevp", "sem", "stats1", "linreg", "normald", "normald_cdf", "normald_icdf", "student", "student_cdf", "student_icdf", "erf", "Gamma") },
   { id: "eng", title: "cat.eng", ids: fn("par", "eseries") },
   { id: "const", title: "cat.const", kinds: ["const"] },

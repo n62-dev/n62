@@ -3,7 +3,7 @@
 
 The UI talks to maths only through `MathEngine` (`types.ts`); `WorkerEngine` is the implementation.
 
-**Import direction (G147, checked by the gate's `rules` stage, `app/scripts/import-rules.ts`).** What the start chunk reaches imports from here only `types`, `format`, `defs`, `giacPrintStart`, `workerEngine`, `protocol`, `homeDefaults` and `pasdeg`; everything else loads in the Worker or in a lazy chunk. Nothing here imports from `views/`, `state/`, `keyboard/`, `entry/`, `apps/`, `render/` or `input/` (those import from here); the only edges into `units/` are named in the check (`units/types.ts` for the unit job's types, `units/evaluate.ts` for the unit evaluator that runs in the Worker). Stored data (the library's version and migration) is passed in, not imported.
+**Import direction (G147, checked by the gate's `rules` stage, `app/scripts/import-rules.ts`).** What the start chunk reaches imports from here only `types`, `format`, `defs`, `giacPrintStart`, `workerEngine`, `protocol`, `homeDefaults`, `pasdeg` and `standIns`; everything else loads in the Worker or in a lazy chunk. Nothing here imports from `views/`, `state/`, `keyboard/`, `entry/`, `apps/`, `render/` or `input/` (those import from here); the only edges into `units/` are named in the check (`units/types.ts` for the unit job's types, `units/evaluate.ts` for the unit evaluator that runs in the Worker). Stored data (the library's version and migration) is passed in, not imported.
 
 One line per module: what it owns, who calls it. Groups as in docs/04 section 6.1.
 
@@ -16,6 +16,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `protocol.ts` | messages between `workerEngine.ts` and `host.ts` (via `giac.worker.ts`) |
 | `homeDefaults.ts` | Home's default settings, `HOME_BUDGET_STEPS`, `safePrecision` (R103): what `calc/` reads without `homeEval.ts`'s graph |
 | `pasdeg.ts` | the name of the degree factor alone; read by `state/session.svelte.ts` and `angles.ts` |
+| `standIns.ts` | G311: the parser's letter tables (`GREEK`, `LETTER_NAMES`, re-exported by `input/parseTables.ts`) and `isStandIn`, by which `library.ts` takes `beta_`, `e_`, … as the user's names |
 | `exactLiterals.ts` | G163: decimal literals as exact rationals (`toExactLiterals`), pure text with no engine; `homeEval.ts` re-exports it, the unit view's chunks read it from here |
 | `precisionFacts.ts` | G163: `precisionFacts()` maps a Home result to the facts `format.ts` reads; pure, a module of its own so the start chunk does not carry it; `homeEval.ts` re-exports it |
 | `format.ts` | Home number formatter (D5): STD/SCI/ENG/FIX/PFX from a BigInt-derived `DecimalValue`, no engine round trip; `markOf()` and `formatConfirmed()` turn the engine's facts into the mark and the digits shown; called by `state/`, `render/`, `apps/`, `clipboard/` |

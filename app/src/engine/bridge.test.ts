@@ -126,6 +126,16 @@ describe.skipIf(!giacAvailable())("the engine loaders with the wrappers", () => 
     expect(bridge.parse("int(x^2,x)").reads).toEqual(["x"]);
   }, 60_000);
 
+  // G328: what sets each name: the heads on the way to its store, and its value's heads and reads (a list's at its place)
+  it("gives, by name a store sets, the heads and reads of what sets it", async () => {
+    const { bridge } = await loadNodeGiac();
+    expect(bridge.parse("(A:=5)*sin(approx(1))").sides).toEqual({ A: { heads: ["*", "sto"], reads: [] } });
+    // a list assignment stores copy([…]) (Giac's tree); each name takes its element
+    expect(bridge.parse("A,B:=5,sqrt(approx(C))").sides).toEqual({ A: { heads: ["sto"], reads: [] }, B: { heads: ["sto", "sqrt", "approx"], reads: ["C"] } });
+    expect(bridge.parse("[A,B]:=sqrt(2)").sides).toEqual({ A: { heads: ["sto", "sqrt"], reads: [] }, B: { heads: ["sto", "sqrt"], reads: [] } });
+    expect(bridge.parse("when(x>0,(A:=1),(A:=B))").sides).toEqual({ A: { heads: ["when", "sto"], reads: ["B"] } });
+  });
+
   it("names the top-level store's targets and whether it stores a program", async () => {
     const { bridge } = await loadNodeGiac();
     expect(bridge.parse("f(x):={n:=n+1;return x;}")).toMatchObject({ targets: ["n", "f"], top: ["f"], program: true, reads: ["n"] });

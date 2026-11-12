@@ -513,9 +513,10 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const bad = refusal(src, job) ?? refusal(dst, job);
   if (bad) return bad;
   if (dst.kind !== "term") return { error: "engine", detail: "an end slot of 0" };
-  // A result 0 keeps the dimension of its terms (the check's), so `0 m → s` is refused and `0 m` shows m; G159: with no
-  // slot and no constant (no check) nothing holds a dimension, so a 0 is a pure number, as any other value there.
-  const dimension = src.kind === "term" ? dimKeyOf(src.exps) : per?.kind === "term" ? dimKeyOf(per.exps) : job.check === undefined ? "" : null;
+  // A result 0 keeps the dimension of its terms (the check's), so `0 m → s` is refused and `0 m` shows m; G316: an
+  // absolute temperature at absolute zero has the source's; G159: with no slot and no constant (no check) nothing holds
+  // a dimension, so a 0 is a pure number, as any other value there.
+  const dimension = src.kind === "term" ? dimKeyOf(src.exps) : per?.kind === "term" ? dimKeyOf(per.exps) : job.sourceDim ?? (job.check === undefined ? "" : null);
   let note: UnitNote | undefined;
   if (dimension !== null && job.end && dimension !== dimKeyOf(dst.exps)) {
     // G40: one rad more or less than the end slot is dropped (rad = 1: ω·r → m/s, τ·θ → J), unless a cycle unit is in.

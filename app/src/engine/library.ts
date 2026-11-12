@@ -13,6 +13,7 @@ import { defaultCasSettings, type CasResult } from "./types.ts";
 import { renameOurCalls, writeUserNames } from "./ourNames.ts";
 import { dropAngleFactor, PASDEG, rewriteAngles } from "./angles.ts";
 import { isFlagName } from "./flags.ts";
+import { isStandIn } from "./standIns.ts";
 import { callsOf, isName, names, noneOpen, typedFromPrinted, walk, wordsOf } from "./giacPrint.ts";
 
 import { HEADER, LIB_MAX_BYTES } from "./libraryHeader.ts";
@@ -177,7 +178,8 @@ export function parseLibrary(input: Uint8Array | string, parse: (text: string) =
     const value = def.kind === "var" ? assignmentIn(block, tree)?.rhs : undefined;
     if (!isName(def.name, true)) throw new LibError(at, "a name is letters, digits and _ (ASCII), starting with a letter");
     if (isFlagName(def.name)) throw new LibError(at, `${def.name} is one of the engine's settings, which a library may not change`);
-    if (def.name in ENGINE_DEFINITIONS || def.name in COMPLEX_DEFINITIONS || WORKER_DEFINITION_NAMES.includes(def.name) || def.name.startsWith("pasc_") || def.name === PASDEG || def.name.endsWith("_")) throw new LibError(at, `${def.name} is one of N62's own names`);
+    // a trailing `_` is ours (OUR_BOUND, ourNames.ts), except the parser's letter stand-ins (`beta_`, `e_`: G311), the user's names
+    if (def.name in ENGINE_DEFINITIONS || def.name in COMPLEX_DEFINITIONS || WORKER_DEFINITION_NAMES.includes(def.name) || def.name.startsWith("pasc_") || def.name === PASDEG || (def.name.endsWith("_") && !isStandIn(def.name))) throw new LibError(at, `${def.name} is one of N62's own names`);
     // R64: the degree factor is ours; a body that names it (a `local pasdeg`, say) would change every angle in it
     if ([...names(block, "typed")].some((n) => n.name === PASDEG)) throw new LibError(at, `${PASDEG} is one of N62's own names`);
     if (defs.some((d) => d.name === def.name)) throw new LibError(at, `${def.name} is defined twice in this file`);

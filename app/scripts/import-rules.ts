@@ -34,7 +34,7 @@ export function importsOf(source: string): Import[] {
  *  their own into the worker side: types.ts, format.ts, defs.ts, giacPrintStart.ts (giacPrint.ts's part the start reads,
  *  Giac text, no imports; R264: giacPrint.ts itself is the lazy parts'), workerEngine.ts and protocol.ts (the main-thread
  *  client), homeDefaults.ts (Home's defaults, R103) and pasdeg.ts (the degree factor's name, R103). */
-export const START_ENGINE: ReadonlySet<string> = new Set(["types", "format", "defs", "giacPrintStart", "workerEngine", "protocol", "homeDefaults", "pasdeg"].map((n) => `src/engine/${n}.ts`));
+export const START_ENGINE: ReadonlySet<string> = new Set(["types", "format", "defs", "giacPrintStart", "workerEngine", "protocol", "homeDefaults", "pasdeg", "standIns"].map((n) => `src/engine/${n}.ts`));
 
 /** Rule 2: folders src/engine/ may not import from. */
 export const ENGINE_FORBIDDEN = ["views", "state", "keyboard", "entry", "apps", "render", "input", "units"] as const;

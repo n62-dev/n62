@@ -67,8 +67,6 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
 | 656 | R286 σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
-| 657 | [G327](packages/G327.md) a failed load never counts against the stored definitions (F222) | gorge, Opus | `p1/gorge-loadcount` | R284 |
-| 658 | [G328](packages/G328.md) a name set beside the result stores its own facts (F215) | gorge, Opus | `p1/gorge-sidefacts` | G174 |
 | 624 | [R276](packages/R276.md) a history row: hold copies, swipe deletes (owner) | ron, Opus | `p1/ron-rowgestures` | the v0.1.0 tag |
 | 625 | [R277](packages/R277.md) the entry line: drag scrolls, hold selects (owner) | ron, Opus | `p1/ron-linetouch` | R276 |
 | 628 | [R279](packages/R279.md) Select grows, Deselect shrinks (owner) | ron, Opus | `p1/ron-selectgrow` | R277 |
@@ -84,9 +82,6 @@ The night review's queue goes on in [its note](../research/night-review-2026-11-
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 587 | [G227](packages/G227.md) matrix functions in Find | gorge, Sonnet | `p1/gorge-matfind` | G225 |
-| 639 | [G316](packages/G316.md) absolute zero's unit | gorge, Opus | `p1/gorge-abszero` | – |
-| 640 | [G311](packages/G311.md) library round trip | gorge, Opus | `p1/gorge-libstandins` | – |
 | 641 | [G312](packages/G312.md) polar digits | gorge, Opus | `p1/gorge-polardigits` | – |
 | 642 | [G313](packages/G313.md) `sigfig`, interpolation | gorge, Sonnet | `p1/gorge-findsigfig` | – |
 | 652 | [G323](packages/G323.md) each giac-regress file in a fresh engine (F223) | gorge, Sonnet | `p1/gorge-regressfresh` | – |

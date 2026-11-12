@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Decision log
 
-Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This file holds what binds from Phase 1 on, as Choice and Would change if; "Rule:" names where a rule is stated in full. "Archived" means the full text is in [archive/decisions-2026-10.md](archive/decisions-2026-10.md) under the same name, or under the section named after it: read it only when a decision is questioned. A decision changes in place (rules section 9).
+Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This file holds what binds from Phase 1 on, as Choice and Would change if; "Rule:" names where a rule is stated in full. "Archived" means the full text is in [archive/decisions-2026-10.md](archive/decisions-2026-10.md) under the same name, or the section named after it: read it when a decision is questioned. A decision changes in place (rules section 9).
 
 ## Needs the user
 
@@ -84,7 +84,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P19 (2026-10-20): a Giac bug is fixed at its cause** (patch, canary, link to Parisse; a TypeScript workaround only for a cause that is not local, registered in S17). Rule: `docs/rules-core.md`. Archived.
 - **P20 (2026-10-20; narrowed by G85's GO, 2026-10-22): Giac's tree, not its text.** Names, stores, bound names, settings and a value's kind come from the bridge (`bridge.ts`; G99–G103); only Giac's print is read as text, in one module (G105, before R59); new code adds no bracket loop or name regex (the text baseline, G88). Would change if: a question the bridge cannot answer.
 - **P21 (2026-10-20): Giac is pinned to Parisse's numbered Debian archive** (SHA-256 from its `.dsc`); a re-pin passes the golden gate. Archived, "Opus pass 96". Would change if: a fix we need is only in a snapshot.
-- **P24 (2026-11-08): commercial reuse of our Giac fixes.** Written permission to B. Parisse (email 13) for patches 0001–0037, later fixes and the regression `.cas` files, not revocable; N62 stays GPL-3.0-or-later; a fix from outside code or another contributor is flagged before it is sent. Archived, "Opus pass 106". Would change if: a contributor other than the owner writes a Giac fix.
+- **P24 (2026-11-08): commercial reuse of our Giac fixes.** Written permission to B. Parisse (email 13), not revocable; N62 stays GPL-3.0-or-later; a fix from outside code or another contributor is flagged before it is sent. Archived, "Opus pass 106". Would change if: a contributor other than the owner writes a Giac fix.
 - **F50, F51 (2026-10-20, owner; built by G78):** a value through a division by zero, an overflow or a lost answer is refused with its reason, never Giac's text. Archived.
 - **G33 and R56 (owner, 2026-10-19; built by A12, G83, R56b):** lazy definitions before R59; Solve knows the user's functions; plots of user functions wait for the owner. Archived.
 - **R58b (2026-10-19; built by R67): a letter typed with Alpha is always a name,** in CAS too; e and i come only from their keys. Archived.
@@ -143,7 +143,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **User keys** (R15b): a slot is `{ label, action }` in keyboard.yaml's action form, null empties it, the user's choice wins over a default.
 - **Keypad legends** (R6): a key is dimmed when its layer gives nothing; 4.5:1 contrast. Archived, "Opus pass 132".
 - **The kept line** (R34): `{ view, latex, chips }` under `entry`, written on hide once settled, restored only into its view.
-- **An app's line stays with the app** (R76, Opus pass 60; R76f1): cleared on the way back to Home or CAS, only your typing follows (R34); Enter in Solve's Num empties it. Archived. **R262 (Opus pass 150):** Menu › To Home (Solve's Num, Plot) puts the answer on Home's line as a chip with its facts; the app's line stays behind, typing too; Plot's row needs a readout (R145). Would change if: the owner wants typing to follow.
+- **An app's line stays with the app** (R76, R76f1, R262): cleared on the way back to Home or CAS, only your typing follows; Menu › To Home puts the answer on Home's line as a chip. Archived, "Opus pass 153". Would change if: the owner wants typing to follow.
 - **Working… after 150 ms** (F8): the busy line and Cancel are drawn late; Cancel works from 0 ms.
 - **One-line mode:** `^` is literal and the exponent is the next signed factor. **Results are insertable**, bracketed when a sum. **Default angle mode: radians.**
 - **R98, Clear and Delete (Opus pass 50):** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
@@ -180,10 +180,10 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G140 (Opus pass 34): a value Giac holds only as a double** is an unaudited double: ⚠, at most 14 digits, never ≈. Archived. Would change if: Giac gets an MPFR path for them.
 - **R55: digit groups** in a drawn Home or CAS numeric result: the mantissa in threes from the point with a thin space, on a side of five or more digits; not in the entry line, a chip, Copy or the status line. Archived.
 
-- **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Archived, "Opus pass 122".
+- **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Archived, "Opus pass 122". **G328 (pass 153):** a name set beside the result takes the facts of what sets it; after a decision on the line, the line's (G48).
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Archived, "Opus pass 97".
-- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. A result with no list and no dimension error is not walked (pass 123): `col(idn(2),0)*col(zeros(3,3),0)` stays 0 with ⚠. Would change if: the owner says.
+- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. A result with no list and no dimension error is not walked (pass 123): `col(idn(2),0)*col(zeros(3,3),0)` stays 0 with ⚠. `dot` conjugates its first vector (G227).
 - **Our Giac text binds only `pas…_` names (pass 123; G303, F205):** no user can type one; a free name in a cdf or icdf call gives no number, the inverse ones too (G221f1). Would change if: the parser takes a trailing `_`.
 
 **Units**
@@ -195,6 +195,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not. Archived. Would change if: a power-triangle rule is packaged.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
 - **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ. Archived, "Opus pass 122". Would change if: a chip keeps its inputs' basis (G81).
+- **R286 (pass 153):** a σ chip limits the value at σ's last confirmed decade, then markOf (`1000.5 ± 0.0707`, 3 digits: ⚠ 8 at STD 12).
 - **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Archived, "Opus pass 97". Would change if: the owner wants a chip's σ dropped there.
 - **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is disabled until built. Archived.
 
@@ -207,7 +208,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The check of 2026-10-19:** a Home value that leaves its evaluation (stored, Ans, a `\res` chip, an export) is the value shown, whatever the angle mode is later; a CAS value stays symbolic (G34). Would change if: the G2 is found to re-read a stored Home value in the new mode.
 - **G33:** a definition's description is the comment line above it; G30's E-series tables are checked against round(10^(2+k/n)) with the one published exception (9.20 at E192).
 - **R59, R59f1 (Opus passes 72, 73):** the clash sheet stays; the library stays out of the start chunk. Archived, "Opus pass 97".
-- **The release path (A7, A8, A45, A48; 2026-10-15, owner 2026-10-29 and 2026-11-03):** v0.1.0, APK and website from one tag (A48); golden on the release engine before signing; the web names (`sw.js`, IndexedDB, manifest `id`) frozen. The test tag is `vX.Y.Z-test`; `master` follows phase-1 from 2026-11-03 (owner). Archived.
+- **The release path (A7, A8, A45, A48):** v0.1.0, APK and website from one tag (A48); golden on the release engine before signing; the web names (`sw.js`, IndexedDB, manifest `id`) frozen. The test tag is `vX.Y.Z-test`; `master` follows phase-1 from 2026-11-03 (owner). Archived.
 - **Releases:** the engine is built in the pinned container (P2), under `setarch -R` so `giac.wasm` is bit-reproducible. **Minimum WebView:** Chrome 111 (owner, 2026-11-07; `color-mix`), with an inline "update" notice below it (R160; minSdk 24).
 - **Tests:** the golden gate as docs/04 7.3; a pending task's budget is its planned press count, values `derived` or `oracle`; timing tests skip their assertion when the load average exceeds the cores; Vitest has no DOM, a DOM count is a Playwright test (R132, Opus pass 72). Archived.
 - **A47b, a start does not wait for the queue (Opus pass 13):** a run's start copies node_modules under its own `nodemods` lock, not under `integ`. Archived. Would change if: a copy is ever seen half-refreshed.
