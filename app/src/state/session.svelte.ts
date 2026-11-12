@@ -518,8 +518,15 @@ export class Session {
     try {
       if (giacOverride !== undefined) giac = giacOverride;
       else {
-        const [entry] = await Promise.all([loadEntry(), this.namesRead]);
+        // R263: a parser chunk that will not load ends as our own line (G183), as the item chunk's does; the next Enter
+        // runs a new import (lazyOnce). parseFailText below keeps its job: the parse's own errors.
+        const entry = await Promise.all([loadEntry(), this.namesRead]).then(([m]) => m, () => undefined);
         if (live.status !== "pending") return; // Cancel came while the parser chunk or the names were loading
+        if (!entry) {
+          live.status = "error";
+          live.text = t("error.engine");
+          return;
+        }
         // R56, R258: the user's names (Home and CAS share them) make their functions calls and spell out their values.
         // R65: Home sends a chip that is not exact by name. A power keeps Giac's principal root here, as in CAS (R66)
         const p = entry.giacOfEntry(latex, view, { chips, names: this.userNames });

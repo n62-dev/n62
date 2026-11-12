@@ -8,6 +8,7 @@ import type { ClipActions } from "./clipboard/actions.svelte.ts";
 import type RowBar from "./views/RowBar.svelte";
 import type { EntryController } from "./entry/controller.ts";
 import type { HistoryItem, Session } from "./state/session.svelte.ts";
+import { lazyOnce } from "./lazyOnce.ts";
 
 export type ModeSheetCode = typeof import("./views/modeSheet.ts");
 export type FindCode = { m: typeof import("./find/finder.ts"); index: import("./find/finder.ts").FindIndex };
@@ -32,7 +33,6 @@ export interface LoaderDeps {
 export type RowBarView = typeof RowBar;
 
 export function createLoaders(d: LoaderDeps) {
-  let clipLoading: Promise<ClipActions> | undefined;
   /** The loaded code, read by App.svelte at each key (null until it is in). */
   const l = {
     modeSheet: null as ModeSheetCode | null,
@@ -51,15 +51,18 @@ export function createLoaders(d: LoaderDeps) {
           l.findLoading = null; // a later Math press tries again
           throw e;
         })),
-    /** Copy, paste and share: the shell reaches them for the apps (AppHost.copy) and for the Home/CAS Menu. */
-    loadClip: (): Promise<ClipActions> =>
-      (clipLoading ??= import("./clipboard/actions.svelte.ts").then((m) => {
-        const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall, acted: d.acted });
-        d.shell.clip = c;
-        d.shell.homeMenu = () => c.menu();
-        d.onClip(c, m.RowBar);
-        return c;
-      })),
+    /** Copy, paste and share: the shell reaches them for the apps (AppHost.copy) and for the Home/CAS Menu. A failed
+     *  load is tried again by the next use (R263). */
+    loadClip: lazyOnce(
+      (): Promise<ClipActions> =>
+        import("./clipboard/actions.svelte.ts").then((m) => {
+          const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall, acted: d.acted });
+          d.shell.clip = c;
+          d.shell.homeMenu = () => c.menu();
+          d.onClip(c, m.RowBar);
+          return c;
+        }),
+    ),
   };
   return l;
 }
