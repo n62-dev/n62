@@ -15,6 +15,7 @@ import type { Key } from "../keyboard/keyboard.ts";
 import type { Mods, RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { engineFormat } from "../calc/port.ts";
+import { ANS_KEY, type ChipTable } from "../input/chips.ts";
 import { userValuesOf } from "../input/latex-to-giac.ts";
 import { idbKv } from "../state/storage.ts";
 import { loadSheetView } from "../views/sheetView.svelte.ts";
@@ -65,6 +66,11 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   if (row) c.entry.set(c.session.input(row), row.chips); // R100: in comma mode its argument commas as `;`
   const line = c.entry.value;
   const chips = c.entry.chips;
+  // R259: Ans is the view's last result (Home's or CAS's, as Enter there reads it, session.submit), read once here: the
+  // view's own rows never feed it. Only the parse gets it (unread unless the line holds \ans); the Home row keeps the
+  // line's chips (Ans is never stored)
+  const ans = c.session.lastChip();
+  const parseChips: ChipTable = ans ? { ...chips, [ANS_KEY]: ans } : chips;
   void unitFind().catch(() => undefined);
   // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
   const [, { finder, index }, hw] = await Promise.all([c.entry.ready, import("../find/finder.ts").then(async (m) => ({ finder: m, index: await m.loadIndex(true) })), import("../entry/hwkeys.ts"), unitCells.restore()]);
@@ -118,7 +124,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const panel = makePanel(() => made, () => c.session.settings.marks);
   const cat = slotCatalogue(index.items);
   const table = factorTable(index.items);
-  const view = new UnitView(cat, line, chips, host, seed);
+  const view = new UnitView(cat, line, parseChips, host, seed);
   made = view;
   entryEl.insertBefore(panel.element, fieldEl);
   fieldEl.style.display = "none";
@@ -165,10 +171,11 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
       return false; // the key does its job
     }
     c2.session.clearModifiers();
-    if (a?.kind === "cmd" && a.name === "moveToPreviousChar") view.move(-1);
-    else if (a?.kind === "cmd" && a.name === "moveToNextChar") view.move(1);
-    else if (a?.kind === "cmd" && a.name === "moveDown") view.down();
-    else if (a?.kind === "cmd" && a.name === "moveUp") view.up();
+    const cmd = a?.kind === "cmd" ? a.name : undefined;
+    if (cmd === "moveToPreviousChar") view.move(-1);
+    else if (cmd === "moveToNextChar") view.move(1);
+    else if (cmd === "moveDown") view.down();
+    else if (cmd === "moveUp") view.up();
     else if (a?.kind === "special" && a.name === "esc") {
       if (!view.escape()) close();
     }
@@ -223,7 +230,7 @@ function hardwareKey(ev: KeyboardEvent, c: RouteCtx, hw: Hw): void {
   if (ev.isComposing) return;
   const mod = (ev.ctrlKey || ev.metaKey || ev.altKey) && !ev.getModifierState("AltGraph");
   if (mod && (ev.key === "c" || ev.key === "a")) return;
-  if (ev.key === "Tab" || ev.key === "Shift" || ev.key === "Control" || ev.key === "Alt" || ev.key === "Meta") return;
+  if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(ev.key)) return;
   ev.preventDefault();
   ev.stopPropagation();
   if (mod) return c.dead();
