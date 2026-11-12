@@ -45,4 +45,9 @@ export function comparePlot(plot: number, giac: number): string | null {
   return Math.abs(plot - giac) <= 1e-9 * Math.abs(giac) + 1e-15 ? null : `plot evaluator ${fmt(plot)} against Giac ${fmt(giac)}`;
 }
 
-const fmt = (v: number): string => v.toPrecision(14).replace(/\.?0+(e|$)/, "$1");
+/** 14 significant digits, a mantissa's trailing zeros dropped; the exponent stays whole (G326: the old pattern cut 6.31e-30 to 6.31e-3). */
+const fmt = (v: number): string => {
+  const [m, e] = v.toPrecision(14).split("e") as [string, string?];
+  const t = m.includes(".") ? m.replace(/\.?0+$/, "") : m;
+  return e === undefined ? t : `${t}e${e}`;
+};

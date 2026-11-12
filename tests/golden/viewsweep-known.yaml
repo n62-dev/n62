@@ -9,3 +9,5 @@ known:
   - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: plot, package: F66 }
   - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: num, package: F66 }
   - { id: "rad 0 \\left(x-\\pi\\right)-\\frac{x}{x}", check: cas, package: F66 }
+  # F227 (G326): the Slope evaluates Giac's unsimplified derivative in floats; for x/e·3!/x (constant 6/e) the exact 0 cancels to 6.31e-30, shown with 12 digits claimed
+  - { id: "rad 0.3 \\frac{x}{\\exponentialE}\\times \\frac{3!}{x}", check: slope, package: F227 }

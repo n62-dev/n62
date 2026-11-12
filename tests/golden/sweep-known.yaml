@@ -3,5 +3,5 @@
 # judge's check (=, ≈, ⚠n, part, novalue, hang), package = the package whose fix removes the entry. The stage passes when its failures are exactly
 # these; remove an entry when its fix lands. F62 (proposed in decisions.md): sin of a 1.5-million-digit float takes 11 s.
 known:
-  - { id: "rad 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(e^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
-  - { id: "deg 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(e^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
+  - { id: "rad 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
+  - { id: "deg 30 \\sin\\left(\\cosh\\left(10!\\right)\\right)+\\left(\\exponentialE^{\\cos\\left(7\\right)}\\right)", check: "hang", package: F62 }
