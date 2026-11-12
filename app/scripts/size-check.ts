@@ -403,8 +403,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  +28 B; bbbb4c8b's G227 changes no start-chunk file): a load failure never counts against the stored definitions, so
  *  the client keeps G19's stored count (workerEngine.ts logFails) beside G318's count of every failed start (attempts),
  *  two numbers one cannot hold, and the gate counts no replay once two starts failed before the store answered.
- *  60,794 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 60_850;
+ *  60,794 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  60,850 → 60,910 B (G313f1, no start-chunk file changed): phase-1 33f50c78 measures 60,844 B gzip (171,945 B raw), the branch
+ *  60,853 B (171,945 B raw, the same): the start chunk names the Find index asset, whose hashed file name changed with the new
+ *  sigfig row, and the hash's characters gzip 9 B differently. 60,853 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 60_910;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
