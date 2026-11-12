@@ -543,6 +543,11 @@ cases:
   - { id: "p231-10", latex: "0b102", error: true, source: "derived", group: "p231", note: "2 is no binary digit" }
   - { id: "p231-11", latex: "0b101+1", expect: "5+1", source: "derived", group: "p231" }
   - { id: "p231-12", latex: "0o18", error: true, source: "derived", group: "p231", note: "8 is no octal digit" }
+  - { id: "p231-20", latex: "0\\,xFF", error: true, source: "derived", group: "p231", note: "R191f1: the line draws a space between the 0 and the x" }
+  - { id: "p231-21", latex: "0x\\,FF", error: true, source: "derived", group: "p231", note: "R191f1: a space after the prefix" }
+  - { id: "p231-22", latex: "0xF\\,F", error: true, source: "derived", group: "p231", note: "R191f1: a space inside the hex digits" }
+  - { id: "p231-23", latex: "0x1\\,F", error: true, source: "derived", group: "p231", note: "R191f1: a space between a digit and a letter digit" }
+  - { id: "p231-24", latex: "0\\,x+1", expect: "0*x+1", source: "derived", group: "p231", note: "R191f1: no literal, so spacing changes nothing" }
   - { id: "p231-13", latex: "0xff", expect: "255", source: "derived", group: "p231", note: "lower-case hex digits too, as Giac reads them" }
   - { id: "p231-14", latex: "2\\times0x10", expect: "32", source: "derived", group: "p231", note: "the literal is one factor: 2*16" }
   - { id: "p231-15", latex: "0b1.1", error: true, source: "derived", group: "p231", note: "a literal in another base is a whole number" }

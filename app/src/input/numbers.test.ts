@@ -197,3 +197,20 @@ describe("a number in another base (docs/04 5.4, R191)", () => {
     expect(message(latex)).toMatch(new RegExp(`^${msg}`));
   });
 });
+
+describe("a number in another base across spacing (R191f1)", () => {
+  it.each(["0\\,xFF", "0x\\,FF", "0xF\\,F", "0x1\\,F", "0x1\\,0", "0b1\\,0", "0o1\\ 7", "0\\ b101", "0xFF\\,F"])(
+    "%s is refused with a message of its own",
+    (latex) => {
+      expect(message(latex)).toBe("a number in another base has no space inside (0xFF)");
+    },
+  );
+  it.each([
+    ["0\\,x+1", "0*x+1"],
+    ["2\\,x", "2*x"],
+    ["0xFF\\,x", "255*x"],
+    ["0b1\\,F", "1*F"],
+  ])("%s stays %s", (latex, out) => {
+    expect(giac(latex)).toBe(out);
+  });
+});

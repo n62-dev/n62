@@ -30,6 +30,7 @@ export const enParser = {
   "parse.putTheNumber": "put the ᴇ number in brackets before raising it to a power",
   "parse.baseNeedsDigits": "0{v} needs digits after it (0xFF, 0b101, 0o17)",
   "parse.baseDigit": "{d} is not a digit in base {base}",
+  "parse.baseSpace": "a number in another base has no space inside (0xFF)",
   "parse.baseWhole": "a number in another base is a whole number",
   "parse.unsupportedSubscript": "unsupported subscript {sub}",
   "parse.expectedSubscript": "expected subscript",
