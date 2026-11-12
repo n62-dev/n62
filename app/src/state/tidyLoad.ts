@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The tidy chunk's load for the session (split from state/session.svelte.ts, R40): load, prefetch and a tidy that never
 // fails a finished result.
+import { lazyOnce } from "../lazyOnce.ts";
+
 /** R91: the tidy-up of Giac's latex (render/tidy.ts) is only needed once a result is in, so it is a chunk of its own: it
  *  loads beside the first job (and when idle, main.ts), and a failed load is tried again by the next job. */
-let tidyChunk: Promise<typeof import("../render/tidy.ts")> | undefined;
 /** R40: told the chunk once it is in (the session: the row's muted digits and σ line ride in it, render/tidy.ts). */
 let loaded: (m: typeof import("../render/tidy.ts")) => void = () => {};
 export const onTidy = (f: typeof loaded): void => void (loaded = f);
-export const loadTidy = (): Promise<typeof import("../render/tidy.ts")> =>
-  (tidyChunk ??= import("../render/tidy.ts").then(
-    (m) => (loaded(m), m),
-    (e: unknown) => {
-      tidyChunk = undefined;
-      throw e;
-    },
-  ));
+export const loadTidy: () => Promise<typeof import("../render/tidy.ts")> = lazyOnce(() => import("../render/tidy.ts").then((m) => (loaded(m), m)));
 /** Start the tidy chunk's load beside a job; a failure here is dealt with where the result is drawn (tidyOr). */
 export const prefetchTidy = (): Promise<typeof import("../render/tidy.ts")> => {
   const p = loadTidy();

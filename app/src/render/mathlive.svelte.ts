@@ -4,21 +4,23 @@
 import type * as MathLive from "mathlive";
 import { loadParser } from "../input/parser.ts";
 import { loadShiftPalettes } from "../keyboard/palettes.ts";
+import { lazyOnce } from "../lazyOnce.ts";
 
 class Lazy {
   mod = $state<typeof MathLive | undefined>(undefined);
-  private promise: Promise<typeof MathLive> | undefined;
+  /** R263: a failed load is tried again by the next call. */
+  private readonly loadMod = lazyOnce(() =>
+    import("mathlive").then((m) => {
+      this.mod = m;
+      return m;
+    }),
+  );
 
   load(): Promise<typeof MathLive> {
     // The parser chunk comes with MathLive (decisions M4-3): both are needed only once something can be entered.
     void loadParser().catch(() => undefined);
     void loadShiftPalettes().catch(() => undefined); // R18: the Shift palettes, needed only to enter something
-
-    this.promise ??= import("mathlive").then((m) => {
-      this.mod = m;
-      return m;
-    });
-    return this.promise;
+    return this.loadMod();
   }
 }
 
