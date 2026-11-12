@@ -23,6 +23,7 @@ import { numText } from "../../i18n/enNum.ts";
 import { parseDec, plainNumber, showDecimal } from "../decimal.ts";
 import { decimalFromString } from "../../engine/format.ts";
 import { slotNames, SlotsState, type SlotsJson } from "../slots.svelte.ts";
+import { answerChip, answerShown } from "../toHome.ts";
 import type { AppHost, AppInstance, MenuItem, NavDir, ViewId } from "../types.ts";
 
 export interface SolveReport {
@@ -254,7 +255,18 @@ export class SolveApp implements AppInstance {
       },
       { id: "copy", label: tc("clip.copy"), disabled: noValue, reason: numText("why.noEquation"), run: () => void this.copyValue(this.selected) },
       { id: "shown", label: tc("clip.asShown"), disabled: noValue, reason: numText("why.noEquation"), run: () => void this.copyValue(this.selected, true) },
+      // R262: only an answer (its full value kept): a typed value does not go (R76, c56)
+      { id: "tohome", count: "tohome", label: numText("app.toHome"), disabled: !(this.selected in this.copies), reason: numText("why.noAnswerSolve"), run: () => void this.toHome(this.selected) },
     ];
+  }
+  /** R262: the answer to Home's line as a chip: the value and facts the next solve would carry (known(), the ⚠ kept). */
+  async toHome(name: string): Promise<void> {
+    await this.settled();
+    if (!(name in this.copies)) return;
+    const k = this.known(name);
+    const s = this.host.settings;
+    const plain = showDecimal(this.value(name), s.digits, engineFormat(s.format));
+    this.host.toHome(answerShown(plain, k.facts, s.decimalMark === "comma"), answerChip(k.value, k.facts));
   }
 
   // ---- Symb
