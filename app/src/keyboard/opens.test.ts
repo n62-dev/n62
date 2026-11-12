@@ -11,7 +11,7 @@ import { opensSheet } from "./opens.ts";
 /** Every other special: it does something else (a modifier, an edit, a place, a view, the unit view, nothing). A new
  *  special must be added here or to OPENS_SHEET (keyboard.ts), so someone decides. */
 const OPENS_NOTHING: ReadonlySet<Special> = new Set<Special>([
-  "shift", "alpha", "enter", "clear", "esc", "fmt", "copy", "paste", "symb", "plot", "num", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none",
+  "shift", "alpha", "enter", "clear", "esc", "fmt", "symb", "plot", "num", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none",
 ]);
 
 const spec = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../spec/keyboard.yaml"), "utf8");
@@ -20,7 +20,7 @@ describe("opensSheet (R143)", () => {
   it("is true for exactly the specials that open a sheet", () => {
     for (const name of ["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(true);
-    for (const name of ["esc", "clear", "copy", "paste", "fmt", "units", "enter", "shift", "alpha", "none", "home", "cas", "switch", "symb", "plot", "num"] as const)
+    for (const name of ["esc", "clear", "selectGrow", "selectShrink", "fmt", "units", "enter", "shift", "alpha", "none", "home", "cas", "switch", "symb", "plot", "num"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(false);
   });
 
@@ -47,10 +47,10 @@ describe("opensSheet (R143)", () => {
     for (const s of used) expect(OPENS_SHEET.includes(s as never) || OPENS_NOTHING.has(s as never), s).toBe(true);
   });
 
-  it("the shipped layers that open a sheet are the ones the owner named (R143)", () => {
+  it("the shipped layers that open a sheet are the ones the owner named (R143; ☰ and Settings on r0c4, R278)", () => {
     const seen: string[] = [];
     for (const k of keyboard.keys)
       for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) seen.push(`${k.id}/${layer}`);
-    expect(seen.sort()).toEqual(["d6/shift", "d9/shift", "fmt/shift", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary"]);
+    expect(seen.sort()).toEqual(["d6/shift", "d9/shift", "fmt/shift", "math/primary", "math/shift", "menu/primary", "menu/shift", "sub/shift", "tmpl/primary", "vars/primary"]);
   });
 });
