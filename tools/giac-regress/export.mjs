@@ -607,7 +607,7 @@ export const CANCELS_IDS = new Set([
   "g126-asin-sin-1e100-30",
   "prec-zero-cancel",
   "g126-asinh-neg-1e-20-30",
-  ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), // G325f1: nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
+  ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), ...["evalf-asin", "evalf-acos", "evalf-acosh", "approx-acos"].map((k) => `g325f2-${k}-sqrt-neg2-1e-${k === "approx-acos" ? "400" : "330"}-minus-2`), // G325f1, G325f2 (evalf of the call): nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
 ]);
 export const knownReason = (id) => (KNOWN_IDS.has(id) ? KNOWN_RULES.find(([re]) => re.test(id))?.[1] : undefined);
 

@@ -6,6 +6,8 @@ import { literalStart } from "./literalPrec.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { callsOf, closing, functionsIn, isError, isName, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
+import { toExactLiterals } from "./exactLiterals.ts";
+import { mayStore } from "./stores.ts";
 import type { GiacValue } from "./bridge.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { nonReal } from "./complex.ts";
@@ -32,14 +34,15 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
  * sign was decided numerically and cancels (asin(sqrt(-2)-10^35): 10^70 against 2; patch 0044 fixes the cause in
  * sqrt), so the text made at Digits 40 was the conjugate of the principal value. They decide only for a non-real
  * argument (nonRealArg), asked only when Giac's text of the result holds i: asin(1/2) = pi/6 costs no call, asin(2)
- * one, and neither is made again.
+ * one, and neither is made again. G325f2: acosh too, whose exact text nests the same roots (acosh(sqrt(-2)/10^2000-2)
+ * showed = 0.69314718056+3.14159265359*i for 1.31695789692+3.14159265359*i).
  */
-const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "arcsin", "arccos"]);
+const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "arcsin", "arccos", "acosh", "arccosh"]);
 
 /** G325: Giac's text of the result (`text`) is not real, so a COMPLEX_DECISION_FUNCTIONS call in the input may decide. */
 const nonRealText = (text: string): boolean => namesIn(text, "printed").includes("i");
 
-/** G325: `input` calls asin or acos on an argument `complexArg` finds not real, and `result` is not real. */
+/** G325: `input` calls asin, acos or acosh on an argument `complexArg` finds not real, and `result` is not real. */
 function complexDecision(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): boolean {
   if (!nonRealText(result)) return false;
   return callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).some((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
@@ -62,16 +65,22 @@ export function nonRealArg(giac: Giac, P: number): (arg: string) => boolean {
 }
 
 /**
- * G325f1: `input` with the argument of every asin or acos call that decides (complexDecision) read as its float,
+ * G325f1: `input` with the argument of every asin, acos or acosh call that decides (complexDecision) read as its float,
  * `asin(evalf(z))`: MPFR's principal value of a complex float (patch 0005), never Giac's exact text of it. That text
  * nests roots of the argument's squared parts, which cancel: for asin(sqrt(-2)*10^-330-2) its integers pass
  * MAX_EVAL_DIGITS, so no precision we run evaluates it (at 40 and 60 digits it gave ln 2 for 1.31695789692; at 700, 35
  * right digits). Each evalf runs at the Digits of the evaluation it is in, so the agreement check still compares two.
- * Inner calls are read so too. Null when no call decides.
+ * Inner calls are read so too; `swap` (a call's name and typed argument) picks which (G325f2: contradictedCall). Null when none is.
  */
-export function argumentsAsFloats(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): string | null {
+export function argumentsAsFloats(
+  input: string,
+  q: Quoting,
+  result: string,
+  complexArg: (arg: string) => boolean,
+  swap: (name: string, arg: string) => boolean = () => true,
+): string | null {
   if (!nonRealText(result)) return null;
-  const calls = callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
+  const calls = callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)) && swap(c.name, input.slice(c.open + 1, c.close)));
   if (!calls.length) return null;
   const marks = calls.flatMap((c) => [{ at: c.open + 1, s: "evalf(" }, { at: c.close, s: ")" }]).sort((a, b) => b.at - a.at);
   let out = input;
@@ -81,10 +90,59 @@ export function argumentsAsFloats(input: string, q: Quoting, result: string, com
 
 /** G325f1: argumentsAsFloats of `input` when Giac's exact text of it (`result`, made at P) holds an integer past
  *  MAX_EVAL_DIGITS, which no precision we run evaluates (Home then takes the value on the float path); null otherwise.
- *  Giac's text costs no call; then one per asin or acos argument. */
+ *  Giac's text costs no call; then one per asin, acos or acosh argument. */
 export function pastCapFloats(giac: Giac, input: string, result: string, P: number): string | null {
   if (!literalStart(result, P, MAX_EVAL_DIGITS, "printed").unchecked) return null;
   return argumentsAsFloats(input, "typed", result, nonRealArg(giac, P));
+}
+
+/** G325f2: Giac's text of a result holds a float and a free name (x+evalf(asin(z))): not a number, so Home runs the
+ *  contradictedFloats input again for its text instead of taking the float path. */
+export const floatsBesideName = (result: string): boolean => hasFloat(result) && namesIn(result, "printed").some((n) => n !== "i");
+
+/**
+ * G325f2 fix rounds 1 and 2: whether Giac's value of one decided call (its name and typed argument: asin, z) is
+ * contradicted by MPFR's function of the argument's float: a part of evalf(asin(z)) at P differs from asin(evalf(z)) at
+ * P + 20 by more than ten times that route's own change from P to P + 20, plus 10^(3-P) of its size. Giac's evalf of
+ * its exact text of the call nests roots that cancel to the same wrong value at both precisions
+ * (evalf(asin(sqrt(-2)*10^-330-2)) showed ln 2 for 1.31695789692 with 40 digits): then the float is the value. Near ±1
+ * the argument's float loses digits instead (acosh(1/2+i/10^20) kept 9 of its tiny real part, which Giac's ln form has
+ * whole; asin(-1-10^-30+i/10^40) none), so a route that changes much contradicts nothing. Per call, never on the whole
+ * result: a non-number (x+evalf(asin(z))) or a list compares no truth value. A call that stores is not run (true); a
+ * check with no truth value (a free name in the argument) keeps Giac's value; an error takes the float. One evaluation
+ * per call, kept for the input.
+ */
+export function contradictedCall(giac: Giac, P: number, restore: number): (name: string, arg: string) => boolean {
+  const known = new Map<string, boolean>();
+  return (name, arg) => {
+    const call = `${name}(${arg})`;
+    const k = known.get(call);
+    if (k !== undefined) return k;
+    const e = toExactLiterals(call);
+    const f = toExactLiterals(`${name}(evalf(${arg}))`);
+    const part = (p: string): string => `abs(${p}(pasfg)-${p}(pasfb))<=10*abs(${p}(pasfa)-${p}(pasfb))+10^(${3 - P})*abs(pasfb)`;
+    const run = `Digits:=${P}:;pasfg:=evalf(${e}):;pasfa:=evalf(${f}):;Digits:=${P + 20}:;pasfb:=evalf(${f}):;[${part("re")} and ${part("im")},purge(pasfg,pasfa,pasfb)][0]`;
+    const kept = mayStore(call) ? null : withDigits(giac, P + 20, restore, () => giac.eval(run));
+    if (kept !== null && !kept.endsWith(",true") && !kept.endsWith(",false")) giac.eval("purge(pasfg,pasfa,pasfb)");
+    const r = kept === null || kept.endsWith(",false") || isError(kept);
+    known.set(call, r);
+    return r;
+  };
+}
+
+/** G325f2: argumentsAsFloats of `input` (typed) for the calls whose Giac value contradictedCall finds wrong, when Giac's
+ *  text of it (`result`) holds a float (evalf, approx); null when none is. One call per asin, acos or acosh argument
+ *  (nonRealArg), then one per decided call (contradictedCall; pass both to share them between inputs). */
+export function contradictedFloats(
+  giac: Giac,
+  input: string,
+  result: string,
+  P: number,
+  restore: number,
+  complexArg = nonRealArg(giac, P),
+  contradicted = contradictedCall(giac, P, restore),
+): string | null {
+  return hasFloat(result) ? argumentsAsFloats(input, "typed", result, complexArg, contradicted) : null;
 }
 
 /** A comparison operator (`<`, `>`, `<=`, `>=`, `==`, `!=`, `<>`) at `k` in `s`, with its length; 0 when there is none.
@@ -158,7 +216,7 @@ export function decidingStored(giac: Giac): (name: string) => boolean {
 /** The result of `input` (printed as `result`) may rest on a decision Giac made at `Digits`: the input calls a
  *  decision function, or a name that is not a Giac built-in (`stored`: a stored function's body may decide,
  *  `f(x):=floor(x*10^12)` then `f(sin(10^60))`), or holds a comparison, or the result holds `abs(` (sqrt of an even
- *  power comes back as one), or a root of an even power (evenPowerRoot), or calls asin or acos on an argument that
+ *  power comes back as one), or a root of an even power (evenPowerRoot), or calls asin, acos or acosh on an argument that
  *  `complexArg` finds not real (G325, nonRealArg; none without it). An input of rationals only (rationalOnly) decides
  *  exactly. */
 export function restsOnDecision(
