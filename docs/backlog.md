@@ -80,7 +80,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F226, no package (pass 152).** At the steps stage's ×8 clock (run 1032) `evalf(acos(sqrt(-2)*10^-330-2))` showed ⚠ 3.14159265359-728.156455628·i (right imaginary part -1.31695789692), not a stop. Family 5.
 - **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. Its nightly rows: 14 stay (685 of 699 passed and went, G189), 9 with an `(e^{0.5+10^-k}-e^{0.5})·10^k` term, the others `ln`, `√` and a power of 0.99…9, and the `tan(1ᴇ1000)` one.
 - **F145, G183 (G120, G137, G138).** Nightly sweep hangs. G186 fixed G120's 20 and G137's 6; left: G138's 9 (mostly (√(a+10^-k)-√a)·10^k+b) and 4 wasm "unreachable" traps in arctan, arccos. The sweep oracle (`tools/probes/sweep/oracle.py`) drops a part of mpmath's acosh and acos of a tiny complex (G137's 2 oracle rows).
-- **F213, package G326 (G186; id: pass 126).** The sweep writes exp as `e^{…}` and the constant as `e`, which the parser reads as the name `e_` since R67: such trees are not numbers and never judged. Fix: `\exponentialE`, then triage what it unmasks. Family 14.
+- **F213, fixed by G326 (run 1049).** The sweep wrote e as the letter `e` (the name `e_` since R67), so 262 of 1187 gate runs were never judged; it writes `\exponentialE` now. Unmasked: F227. Family 14.
 - **The hardening without a bug line:** r16's end mark, a 50,000-input sweep with no new false mark, is not met (Opus pass 82); A44: `tests/golden/sweep-nightly-known.yaml` holds the nightly sweep's open rows (F145, F155); the gate never reads it.
 
 ### Next (packages and order: brief section 0)
