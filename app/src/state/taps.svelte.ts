@@ -37,6 +37,8 @@ export class TapCounter {
   private timer: ReturnType<typeof setTimeout> | undefined;
   /** A reset before the stored counts arrived: they are dropped. */
   private wasReset = false;
+  /** A press happened in this start (R266). In memory only, never stored: `counts.presses` holds the stored count too. */
+  pressedThisStart = false;
   private readonly kv: Kv;
   private readonly now: () => Date;
   /** Loaded from the store; taps made before it arrive are added to what is stored. */
@@ -67,6 +69,7 @@ export class TapCounter {
 
   /** One press of any kind (docs/04 5.2); `key`: which one (R127), counted in `keys` too. */
   press(key?: string): void {
+    this.pressedThisStart = true;
     const c = this.counts;
     const keys = key === undefined ? c.keys : { ...c.keys, [key]: (c.keys[key] ?? 0) + 1 };
     this.counts = { ...c, presses: c.presses + 1, keys, since: c.since || this.today() };

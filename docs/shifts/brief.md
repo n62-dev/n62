@@ -67,7 +67,7 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 |---|---|---|---|---|
 | 635 | R263 lazy chunk retry | ron, Opus | `p1/ron-lazydoors` | – |
 | 636 | R262 To Home with marks | ron, Opus | `p1/ron-tohome` | – |
-| 637 | [R266](packages/R266.md) no tips while typing | ron, Sonnet | `p1/ron-tipspress` | – |
+| 637 | R266 no tips while typing | ron, Sonnet | `p1/ron-tipspress` | – |
 | 638 | [R260](packages/R260.md) letter stand-ins | ron, Opus | `p1/ron-standins` | G311 |
 | 656 | [R286](packages/R286.md) σ's digits limit the value at σ's decade (F218) | ron, Opus | `p1/ron-sigmascale` | G319 |
 | 657 | [G327](packages/G327.md) a failed load never counts against the stored definitions (F222) | gorge, Opus | `p1/gorge-loadcount` | R284 |

@@ -56,6 +56,8 @@
 
   // R15c4: the first-start tips, a lazy chunk (views/tipsHost.ts) shown once on a fresh profile and again from Settings › Help and about.
   const showTips = (): void => void import("./views/tipsHost.ts").then((m) => m.showTips(), () => {});
+  // R266: the first start's tips wait for no press in this start (R8: a typed key is never taken by the overlay); checked again once the chunk is in
+  const firstTips = (): void => void (!session.taps.pressedThisStart && import("./views/tipsHost.ts").then((m) => session.taps.pressedThisStart || m.showTips(), () => {}));
 
   const sheetOpen = $derived(shell.sheet !== null);
   $effect(() => entry.setNames(session.userNames)); // R33: the stored names are drawn in their colour on the line
@@ -108,7 +110,7 @@
     if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
     else setTimeout(loadFold, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
-    void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(showTips, { timeout: 2000 }) : setTimeout(showTips, 500)));
+    void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(firstTips, { timeout: 2000 }) : setTimeout(firstTips, 500)));
     return countScreenTaps((kind) => session.taps.press(kind));
   });
   /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
