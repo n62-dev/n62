@@ -38,7 +38,6 @@ function inBand(mf: MathfieldElement, y: number): number {
   return top > bottom ? y : Math.min(bottom, Math.max(top, y));
 }
 
-/** After the caret or the selection is set: MathLive's focus scrolls the line to its caret, now where the finger is. */
 /**
  * MathLive keeps its atoms' bounds from a render to the next pointerdown of its own, which a touch no longer reaches:
  * after a scroll (ours, or its own to follow the caret) they lag the drawn line, and so would a tap's caret. Setting an
@@ -49,6 +48,7 @@ function rerender(mf: MathfieldElement): void {
   mf.minFontScale = mf.minFontScale;
 }
 
+/** After the caret or the selection is set: MathLive's focus scrolls the line to its caret, now where the finger is. */
 function focus(mf: MathfieldElement): void {
   if (!mf.hasFocus()) mf.focus();
 }
