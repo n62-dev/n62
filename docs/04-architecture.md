@@ -317,7 +317,7 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 
 ### 5.4 Decision: number bases (EN6)
 - **A base is a display mode of an integer result**, like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result). Word size (8, 16, 32, 64) and signed (two's complement) or unsigned are settings. A non-integer gives a message.
-- **Entry:** `0x…`, `0b…`, `0o…` become one literal token in the parser (Giac reads `0xFF` as 255: probe); hex digits A–F are the Alpha letters. The same keys are an error since R2 (2.3 #1); milestone 6 makes them a literal.
+- **Entry:** `0x…`, `0b…`, `0o…` become one literal token in the parser (Giac reads `0xFF` as 255: probe); hex digits A–F are the Alpha letters. Read as one whole number since R191, written in decimal: A–F in either case, the digit run greedy (`0xFFx` is 255·x); a digit outside the base, a point, an ᴇ, spacing inside it (R191f1) or a prefix at the line's end is refused; `0x+1` stays 0·x+1.
 - **Bitwise:** `bitand`, `bitor`, `bitxor` work (probe); shifts and rotations as EN7 definitions that respect the word size.
 
 ### 5.5 Decision: the entry line, one key path and one box model
