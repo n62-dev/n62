@@ -55,7 +55,7 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await open(page);
   await tap(page, ["math"]);
-  await expect(rows(page)).toHaveCount(10);
+  await expect(rows(page)).toHaveCount(11);
 });
 
 test("a Find key builds only the rows in view plus a margin, and a hit that stays keeps its row", async ({ page }) => {

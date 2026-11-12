@@ -16,12 +16,13 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("by keys", () => {
-  test("open: Math shows the Math menu, ten categories numbered 1…9, 0, above the keypad", async ({ page }) => {
+  test("open: Math shows the Math menu, eleven categories, the first ten numbered 1…9, 0, above the keypad", async ({ page }) => {
     await tap(page, ["math"]);
     await expect(find(page)).toBeVisible();
-    await expect(rows(page)).toHaveCount(10);
+    await expect(rows(page)).toHaveCount(11);
     await expect(rows(page).first()).toHaveAttribute("aria-label", "1 Arithmetic");
-    await expect(rows(page).last()).toHaveAttribute("aria-label", "0 Units and prefixes");
+    await expect(rows(page).nth(9)).toHaveAttribute("aria-label", "0 Units and prefixes");
+    await expect(rows(page).last()).toHaveAttribute("aria-label", "Bits and words"); // the eleventh: no digit
     // a list that takes letters is not drawn over the keypad: the keys stay where they are and visible
     const sheetBottom = await find(page).locator('[role="menu"]').evaluate((e) => e.getBoundingClientRect().bottom);
     const keypadTop = await page.locator('[data-key="vars"]').evaluate((e) => e.getBoundingClientRect().top);
@@ -70,14 +71,21 @@ test.describe("by keys", () => {
     await tap(page, ["shift", "d5"]);
     await expect(find(page).getByTestId("sheet-filter")).toHaveText("s5");
     await tap(page, ["bksp", "bksp"]);
-    await expect(rows(page)).toHaveCount(10);
+    await expect(rows(page)).toHaveCount(11);
   });
 
   test("Esc goes back from a category, then closes; nothing reaches the line", async ({ page }) => {
     await tap(page, ["math", "d1"]);
     await expect(find(page).getByTestId("sheet-title")).toHaveText("Find › Arithmetic");
     await tap(page, ["esc"]);
-    await expect(rows(page)).toHaveCount(10);
+    await expect(rows(page)).toHaveCount(11);
+    // the eleventh category has no digit: Down ten times, then Enter opens it with its eight rows
+    await tap(page, Array<string>(10).fill("down"));
+    await tap(page, ["enter"]);
+    await expect(find(page).getByTestId("sheet-title")).toHaveText("Find › Bits and words");
+    await expect(rows(page)).toHaveCount(8);
+    await tap(page, ["esc"]);
+    await expect(rows(page)).toHaveCount(11);
     await tap(page, ["tmpl", "esc"]);
     await expect(find(page)).toBeHidden();
     expect(await entryValue(page)).toBe("");
@@ -123,7 +131,7 @@ test.describe("by touch", () => {
     await rows(page).nth(8).tap(); // Constants
     await expect(find(page).getByTestId("sheet-title")).toHaveText("Find › Constants");
     await find(page).getByRole("button", { name: "Back" }).tap();
-    await expect(rows(page)).toHaveCount(10);
+    await expect(rows(page)).toHaveCount(11);
     await find(page).getByRole("button", { name: "Close" }).tap();
     await expect(find(page)).toBeHidden();
     await page.locator('[data-key="math"]').tap();

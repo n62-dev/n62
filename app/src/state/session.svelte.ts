@@ -34,9 +34,9 @@ import { commaInput } from "../entry/commaInput.ts";
 import { chipFactsOf, chipOf, HISTORY_LIMIT, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
+import { storedReader } from "./storedLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
-import { restoredItem } from "./storedItem.ts";
 import type { UnitRow } from "../units/types.ts";
 
 export type View = "home" | "cas";
@@ -764,10 +764,14 @@ export class Session {
   }
   /** The stored history (up to HISTORY_LIMIT entries per view); the app reads it after the keypad is drawn. */
   async restoreHistory(): Promise<void> {
-    // A read that never settles leaves the history unread: nothing then writes over the stored rows. A read that fails
-    // reads as nothing stored here, and the store drops every write of `history` for the session (R93, storage.ts).
+    // A read that never settles leaves the history unread: nothing then writes over the stored rows; so does a stored rows'
+    // reader that will not load (R264: a lazy chunk, fetched beside the read). A read that fails reads as nothing stored
+    // here, and the store drops every write of `history` for the session (R93, storage.ts).
+    const reader = storedReader();
     const hist = await this.kv.get<{ home?: HistoryItem[]; cas?: HistoryItem[]; undo?: unknown }>("history");
     if (hist) {
+      const restoredItem = await reader;
+      if (!restoredItem) return;
       // Entries typed before the store answered stay after the restored ones.
       // Fresh ids: entries typed before the store answered already use the low numbers (ids key the list).
       const keep = (xs: HistoryItem[] | undefined): HistoryItem[] =>
