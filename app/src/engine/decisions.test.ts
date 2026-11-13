@@ -7,7 +7,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, toExactLiterals } from "./homeEval.ts";
-import { argumentsAsFloats, contradictedCall, contradictedFloats, decidedAtDouble, floatsBesideName, decideTwice, decisionArgs, evenPowerRoot, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
+import { argumentsAsFloats, contradictedCall, contradictedFloats, decidedAtDouble, floatsBesideName, decideTwice, decisionArgs, evenPowerRoot, logOfPower, nonRealArg, restsOnDecision, type Decision } from "./decisions.ts";
 import { notBuiltin, valuePrecision, withDigits } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, type EngineGiac } from "./nodeGiac.ts";
@@ -257,6 +257,56 @@ describe("evenPowerRoot (G156)", () => {
     ["x^2+x^(1/3)", false],
     ['sqrt("a^2")', false],
   ])("%s → %s", (input, want) => expect(evenPowerRoot(input, "typed")).toBe(want));
+});
+
+describe("logOfPower (G306)", () => {
+  it.each([
+    ["ln(sin(10^70)^2)", true],
+    ["ln(sin(10^70)^3)", true],
+    ["ln(sin(10^70)^(-1))", true],
+    ["ln(x^-1)", true],
+    ["log10(sin(10^70)^2)", true],
+    ["ln(sin(10^70)^2)/ln(2)", true],
+    ["log(x^4)", true],
+    ["logb(sin(10^70)^2,2)", true],
+    ["ln(w2^3)", true],
+    ["logb(x,2^3)", false],
+    ["ln(atanh(89999/1000/10^1000))", false],
+    ["ln(2.5^3)", false],
+    ["ln(10^(-3))", false],
+    ["ln(10^-3)", false],
+    ["ln(w2^(-3))", true],
+    ["ln(w2^-3)", true],
+    ["ln(x^1)", false],
+    ["ln(x^0)", false],
+    ["ln(x^(1/2))", false],
+    ["ln(x)^2", false],
+    ["exp(x^2)", false],
+    ['ln("a^2")', false],
+  ])("%s → %s", (input, want) => expect(logOfPower(input, "typed")).toBe(want));
+});
+
+describe("surd, atan2, sort and a logarithm of a power rest on a decision (G306)", () => {
+  it.each([
+    ["surd(sin(10^70),3)", true],
+    ["atan2(sin(10^70),-1)", true],
+    ["sort(list[sin(10^70),0,cos(10^70)])", true],
+    ["SortD(list[sin(10^70),0])", true],
+    ["sortperm(list[sin(10^70),0])", true],
+    ["ln(sin(10^70)^2)", true],
+    // rationals decide exactly: no second run
+    ["sort(list[3,1,2])", false],
+    ["SortA(list[1/3,1/4])", false],
+    ["sort(list[1,2])+sort(list[3])", false],
+    ["ln(4)", false],
+    ["ln(2^3)", false],
+    ["list+sort(list[1,2])", true],
+    // an odd root or a quadrant of rationals is irrational: made again, the text stands
+    ["surd(2,3)", true],
+    ["atan2(1,2)", true],
+  ])("%s → %s", (input, want) => expect(restsOnDecision(input, "typed", "")).toBe(want));
+  it("the argument of a logarithm over a power is one a decision is made on (decisionArgs)", () =>
+    expect(decisionArgs("ln(sin(10^70)^2)+1", "", () => false)).toContain("sin(10^70)^2"));
 });
 
 describe("asin and acos of a non-real argument decide (G325)", () => {
