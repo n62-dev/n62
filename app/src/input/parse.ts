@@ -6,6 +6,7 @@ import { parseError, parseText, type ParseKey, type ParseVars } from "../i18n/en
 import { ANS_KEY, constKey, resKey, type ChipTable } from "./chips.ts";
 import { chipName, chipToGiac } from "./chip-giac.ts";
 import type { Json } from "./emit.ts";
+import { CAS_ANS, isOurName } from "../engine/ourNames.ts";
 import { bigOp, integral, limit, matrix, tryDerivative, tryPartial, type CalcParser } from "./parseCalculus.ts";
 import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName,
   type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
@@ -749,6 +750,7 @@ class Parser implements CalcParser {
           text = this.groupText();
           this.expectCh("}");
         } else text = this.groupText();
+        if (isOurName(text)) throw text === CAS_ANS ? parseError("parse.ourName", { name: text }) : parseError("parse.reservedName", { name: text }); // G341: where a typed name is read
         if (name === "mathrm" && text === "e") return "ExponentialE";
         if (name === "mathrm" && text === "i") return "ImaginaryUnit";
         if (name === "operatorname" && this.values?.has(text)) return text; // R258: a stored value; a bracket after it multiplies

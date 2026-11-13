@@ -38,22 +38,21 @@ describe.skipIf(!giacAvailable())("readsFrom: the reads from Giac's tree (G99)",
 });
 
 describe("tableOf and changesOf", () => {
-  const user = (n: string) => n === "pass";
-  const t = (printed: string) => tableOf(parsePrinted(printed)!, user)!;
+  const t = (printed: string) => tableOf(parsePrinted(printed)!)!;
   it("keeps user names with a value, a program's parameters left out of its names", () => {
-    const a = t(`[14,[[S,"y+pA0",[y,pA0]],[f," (x)->x+a",[x,a]],[m,"m",[m]],[pasdeg,"1",[]],[pass,"2",[]],[pasr_1,"3",[]]],12]`);
+    // G341: `pass` is ours as every `pas` name (the parser and the library refuse it as a user's), `Pass` the user's
+    const a = t(`[14,[[S,"y+pA0",[y,pA0]],[f," (x)->x+a",[x,a]],[m,"m",[m]],[pasdeg,"1",[]],[pass,"2",[]],[Pass,"2",[]],[pasr_1,"3",[]]],12]`);
     expect([...a]).toEqual([
       ["S", { text: "y+pA0", names: ["y", "pA0"], fn: false }],
       ["f", { text: " (x)->x+a", names: ["a"], fn: true }],
-      ["pass", { text: "2", names: [], fn: false }],
+      ["Pass", { text: "2", names: [], fn: false }],
     ]);
     const b = t(`[14,[[S,"y+pA0",[y,pA0]],[pA0,"5",[]]],12]`);
-    expect(changesOf(a, b)).toEqual({ changed: ["pA0"], removed: ["f", "pass"] });
+    expect(changesOf(a, b)).toEqual({ changed: ["pA0"], removed: ["f", "Pass"] });
   });
-  it("names our own engine state as ours", () => {
-    for (const n of ["pasr_1", "pasc_G", "pcasans", "pasdeg", "sigfig", "pasmedian", "pasinexact", "pasq0"]) expect(isOurs(n, user), n).toBe(true);
-    expect(isOurs("pass", user)).toBe(false);
-    expect(isOurs("S", user)).toBe(false);
+  it("names our own engine state as ours: G341, every name that starts with pas (lower case) and pcasans", () => {
+    for (const n of ["pasr_1", "pasc_G", "pcasans", "pasdeg", "sigfig", "pasmedian", "pasinexact", "pasq0", "pass", "pasnew"]) expect(isOurs(n), n).toBe(true);
+    for (const n of ["S", "Pass", "spas", "pa"]) expect(isOurs(n), n).toBe(false);
   });
 });
 
@@ -61,7 +60,7 @@ describe.skipIf(!giacAvailable())("the state part on Giac (Opus pass 49's probe)
   it("reads a stored value one level deep, calls nothing and evaluates no further", async () => {
     const { giac } = await loadNodeGiac();
     for (const t of ["n:=0", "c:=g(y)", "g(t):={n:=n+1;return t;}", "y:=2", "a:=b", "b:=3"]) giac.eval(t);
-    const table = tableOf(parsePrinted(giac.eval(statePart(12)))!, () => false)!;
+    const table = tableOf(parsePrinted(giac.eval(statePart(12)))!)!;
     expect(table.get("c")?.text).toBe("g(y)");
     expect([...table.get("c")!.names].sort()).toEqual(["g", "y"]);
     expect(table.get("a")?.text).toBe("b");

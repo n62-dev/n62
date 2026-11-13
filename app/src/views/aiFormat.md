@@ -18,7 +18,7 @@ You are writing a file for N62, a calculator app for engineers whose engine is G
 ### Names
 - ASCII letters, digits and `_`, starting with a letter; each name once per file.
 - Not a Giac built-in (`sq`, `Beta`, `median`, …): the app refuses it and says which.
-- Not one of N62's own names: the `pasc_` prefix, a name that ends in `_` (except the letters N62 writes so: `beta_`, `gamma_`, `epsilon_`, `Gamma_`, `Phi_`, `Psi_`, `e_`, `i_`), and its helpers such as `pasmod`, `sigfig` and `pasdeg`.
+- Not one of N62's own names: a name that starts with `pas` (lower case), a name that ends in `_` (except the letters N62 writes so: `beta_`, `gamma_`, `epsilon_`, `Gamma_`, `Phi_`, `Psi_`, `e_`, `i_`), and its helpers such as `sigfig` and `pcasans`.
 - A name the user already defined differently is listed, and replaced only once the user agrees.
 
 ### The description
