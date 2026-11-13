@@ -81,6 +81,7 @@ export const enParser = {
   "parse.unknownName": "unknown name {e}",
   "parse.reservedName": "{name} starts with pas, which N62 keeps for its own names",
   "parse.ourName": "{name} is one of N62's own names",
+  "parse.builtInName": "{name} is a built-in name: store into another name",
   "parse.unsupportedNode2": "unsupported node",
   "parse.unsupported": "unsupported {h}",
   "parse.cannotPlot": "cannot plot: {msg}",

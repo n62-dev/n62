@@ -57,9 +57,16 @@ describe("the store sheet (R281)", () => {
     tap("name:A");
     expect(stored).toEqual([]);
     expect(sheet.armed).toBe("name:A");
-    expect(sheet.level.items[0]?.confirm).toEqual({ cell: "5 · again?", note: "A holds 5. Tap A again to replace it with ≈ 0.333333333333" });
+    expect(sheet.level.items[0]?.confirm).toEqual({ cell: "= 5 · again?", note: "A = 5. Tap A again to replace it with ≈ 0.333333333333" });
     tap("name:A");
     expect(stored).toEqual(["A"]);
+  });
+
+  it("an inexact value keeps its mark in the question (principle 3): ≈ in the cell and in the line under the grid", () => {
+    const { sheet, tap } = setup([{ ...name("A", "0.333333333333", 1), mark: "≈" }, { ...name("f", "", 2, "fn") }]);
+    tap("name:A");
+    expect(sheet.level.items[0]?.confirm).toEqual({ cell: "≈ 0.333333333333 · again?", note: "A ≈ 0.333333333333. Tap A again to replace it with ≈ 0.333333333333" });
+    expect(sheet.level.items[26]?.confirm?.note).toBe("f(…). Tap f again to replace it with ≈ 0.333333333333"); // a function: no value
   });
 
   it("any other press disarms: a tap on another filled name arms that one, a key disarms", () => {
@@ -159,6 +166,6 @@ describe("the title's value (R281)", () => {
     sheet.activate(0); // A, filled: armed before the text came
     await text;
     expect(shell.sheet?.path).toBe("Store 2+3 in");
-    expect(sheet.level.items[0]?.confirm?.note).toBe("A holds 5. Tap A again to replace it with 2+3"); // the question has it too
+    expect(sheet.level.items[0]?.confirm?.note).toBe("A = 5. Tap A again to replace it with 2+3"); // the question has it too
   });
 });

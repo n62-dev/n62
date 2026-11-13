@@ -6,8 +6,8 @@ export const enStore = {
   "store.titleBare": "Store in",
   "store.free": "{name} is free",
   "store.again": "{value} · again?",
-  "store.holds": "{name} holds {value}. Tap {name} again to replace it",
-  "store.holdsWith": "{name} holds {value}. Tap {name} again to replace it with {with}",
+  "store.holds": "{what}. Tap {name} again to replace it",
+  "store.holdsWith": "{what}. Tap {name} again to replace it with {with}",
   "store.typed": "Enter stores {name}",
 } as const;
 

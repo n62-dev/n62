@@ -401,6 +401,9 @@ cases:
   - { id: "values-07", latex: "3\\blacktriangleright\\operatorname{rate}", expect: "rate:=3", source: "derived", group: "values", note: "R281: the store sheet types a typed name of more than one letter after ▶ as one name, a new one too" }
   - { id: "values-08", latex: "3\\blacktriangleright\\operatorname{\\mathrm{A1}}", expect: "A1:=3", source: "derived", group: "values", note: "R281: digits after a letter belong to the name (the store sheet), as MathLive writes the name back" }
   - { id: "values-09", latex: "3\\blacktriangleright\\operatorname{rate}+1", error: true, source: "derived", group: "values", note: "R281 control: the name is the store's last part; anything after it is refused, as after a letter" }
+  - { id: "values-10", latex: "3\\blacktriangleright\\operatorname{sigfig}", error: true, source: "derived", group: "values", note: "R281: one of N62's own definitions is no name to store into (sigfig:=3 would replace it)" }
+  - { id: "values-11", latex: "3\\blacktriangleright\\operatorname{pi}", error: true, source: "derived", group: "values", note: "R281: nor a constant or function the parser knows (pi, sin)" }
+  - { id: "values-12", latex: "3\\blacktriangleright\\operatorname{\\mathrm{sin}}", error: true, source: "derived", group: "values", note: "R281: the same as MathLive writes the name back" }
   # --- decimals
   - { id: "decimals-01", latex: "1.5", expect: "3/2", source: "derived", group: "decimals" }
   - { id: "decimals-02", latex: "0.1+0.2", expect: "3/10", source: "derived", group: "decimals" }

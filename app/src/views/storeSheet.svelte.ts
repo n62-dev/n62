@@ -65,14 +65,16 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
   /** A stored name: its value with its mark, and the question before it is replaced. */
   const filled = (n: UserName, cell: boolean): MenuItem => {
     const name = typedName(n.name);
+    // the value as the cell shows it, its mark kept (principle 3: an ≈ value never reads as exact in the question)
     const held = n.kind === "fn" ? findText("memory.fn") : valueOf(n, ctx());
-    const bare = n.kind === "fn" ? findText("memory.fn") : n.preview;
+    /** What it holds, as Vars' line under the list writes it: `A = 5`, `A ≈ 0.333333333333`, `f(…)`. */
+    const what = n.kind === "fn" ? `${name}(…)` : `${name} ${held}`;
     return {
       id: `name:${n.name}`,
       label: name,
       value: held,
       preview: previewOf(n, ctx()),
-      confirm: { cell: t("store.again", { value: bare }), note: shown.value ? t("store.holdsWith", { name, value: bare, with: shown.value }) : t("store.holds", { name, value: bare }) },
+      confirm: { cell: t("store.again", { value: held }), note: shown.value ? t("store.holdsWith", { name, what, with: shown.value }) : t("store.holds", { name, what }) },
       ...(cell ? { cell: true as const } : {}),
       run: () => env.store(typedLatex(name, [n])),
     };

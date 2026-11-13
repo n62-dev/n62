@@ -8,7 +8,7 @@ import { chipName, chipToGiac } from "./chip-giac.ts";
 import type { Json } from "./emit.ts";
 import { CAS_ANS, isOurName } from "../engine/ourNames.ts";
 import { bigOp, integral, limit, matrix, tryDerivative, tryPartial, type CalcParser } from "./parseCalculus.ts";
-import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName,
+import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName, refuseStore,
   type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 import { negateUncertain, percentSigma } from "./pmPercent.ts";
 import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./tokenize.ts";
@@ -410,7 +410,7 @@ class Parser implements CalcParser {
     if (wrapped) this.pos += 2;
     const text = this.isCh("{") ? this.groupText() : "";
     refuseOurs(text); // G341: a name the sheet or Vars put after ▶ is read here, not in atom()
-    if (/^[A-Za-z][A-Za-z0-9_]*$/.test(text) && (!wrapped || this.isCh("}"))) return (this.pos += wrapped ? 1 : 0), text;
+    if (/^[A-Za-z][A-Za-z0-9_]*$/.test(text) && (!wrapped || this.isCh("}"))) return refuseStore(text), (this.pos += wrapped ? 1 : 0), text;
     this.pos = at;
     return undefined;
   }

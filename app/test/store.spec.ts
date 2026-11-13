@@ -42,8 +42,8 @@ test("a filled letter asks first: the first tap arms it (5 · again?), the secon
   await tap(page, ["d9", "shift", "emark"]);
   await cell(page, "A").tap();
   await expect(cell(page, "A")).toHaveAttribute("data-armed", "true");
-  await expect(cell(page, "A")).toContainText("5 · again?");
-  await expect(store(page).getByTestId("find-preview")).toHaveText("A holds 5. Tap A again to replace it with 9");
+  await expect(cell(page, "A")).toContainText("= 5 · again?"); // with its mark, as the cell's value line (principle 3)
+  await expect(store(page).getByTestId("find-preview")).toHaveText("A = 5. Tap A again to replace it with 9");
   await expect(done(page)).toHaveCount(1); // nothing stored yet
   await tap(page, ["right"]); // another press: disarmed
   await expect(cell(page, "A")).toHaveAttribute("data-armed", "false");
@@ -78,4 +78,14 @@ test("typed letters filter and Enter stores the typed name, digits after a lette
   await tap(page, ["enter"]);
   await expect(done(page)).toHaveCount(1);
   expect(await names(page)).toEqual(["A1"]);
+});
+
+test("one of N62's own names typed in the sheet is refused: 7 ▶ sigfig says why and stores nothing (our sigfig stays)", async ({ page }) => {
+  await tap(page, ["d7", "shift", "emark"]);
+  await page.evaluate(() => window.n62.entry.focus()); // the field keeps focus while a sheet is open (hardware letters)
+  await page.keyboard.type("sigfig");
+  await expect(store(page).getByTestId("sheet-filter")).toHaveText("sigfig");
+  await tap(page, ["enter"]);
+  await expect(page.getByText("sigfig is one of N62's own names")).toBeVisible();
+  expect(await names(page)).toEqual([]); // nothing reached the engine: sigfig:=7 would replace our definition
 });
