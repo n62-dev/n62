@@ -86,6 +86,17 @@ export function parseLock(text: string, where = "layout-lock.yaml"): Lock {
   return { pins, moves };
 }
 
+/** Whether a line of decisions.md opens with the bold title `decision` as a whole: after the two asterisks the title ends
+ *  at `**` or `:**` or at the space before an opening bracket, never partway through a word. */
+function isTitle(line: string, decision: string): boolean {
+  const open = `**${decision}`;
+  for (let i = line.indexOf(open); i >= 0; i = line.indexOf(open, i + 1)) {
+    const rest = line.slice(i + open.length);
+    if (rest.startsWith("**") || rest.startsWith(":**") || rest.startsWith(" (")) return true;
+  }
+  return false;
+}
+
 /** The lock's lines with its moves applied, in order. Problems: a move that does not fit the line it moves, or whose
  *  decision is not an entry of decisions.md. */
 export function applyMoves(lock: Lock, decisions: string): { pins: Pins; problems: string[] } {
@@ -100,7 +111,7 @@ export function applyMoves(lock: Lock, decisions: string): { pins: Pins; problem
     else if (now !== m.from) problems.push(`move ${m.entry}: the line is "${now}", the move says "${m.from}"`);
     else section[slot] = m.to;
     if (!/^v?\d+\.\d+/.test(m.version)) problems.push(`move ${m.entry}: version "${m.version}" is no version`);
-    const known = decisions.split("\n").some((l) => l.includes(`**${m.decision}`) || (/^#+ /.test(l) && l.includes(m.decision)));
+    const known = decisions.split("\n").some((l) => isTitle(l, m.decision) || (/^#+ /.test(l) && l.includes(m.decision)));
     if (!known) problems.push(`move ${m.entry}: decisions.md has no entry titled "${m.decision}"`);
   }
   return { pins, problems };

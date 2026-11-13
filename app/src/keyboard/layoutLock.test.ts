@@ -223,36 +223,50 @@ describe("growth passes whatever the lock held before", () => {
 });
 
 describe("a move is a line the owner's decision backs", () => {
-  const title = "No freeze until Tue 11-17"; // an entry of decisions.md
+  // a decisions text of its own, in the bold-title form of decisions.md: the real file is trimmed and rewritten
+  const title = "Fixture layout move";
+  const fixture = `# Decisions\n\n- **${title} (owner, 2026-01-01):** the owner moved Menu to Esc.\n- **Fixture colon title:** another entry.\n`;
   const edited = (): Pins => spec((k) => (key(k, "menu")["primary"] = { special: "esc" }));
   const move = { entry: "layers/menu.primary", from: "special menu", to: "special esc", version: "0.2.0", decision: title };
+  const check = (decision: string): string[] => compareLayout(edited(), { ...lock, moves: [{ ...move, decision }] }, fixture);
   it("is applied on top of the pinned line, which stays as it was", () => {
-    expect(problems(edited(), { ...lock, moves: [move] })).toEqual([]);
+    expect(check(title)).toEqual([]);
     expect(lock.pins["layers"]?.["menu.primary"]).toBe("special menu");
   });
   it("a removal moves the line to reserved: the layer must be gone", () => {
     const gone = spec((k) => drop(k, "select", "shift"));
     const m = { ...move, entry: "layers/select.shift", from: "special help", to: "reserved" };
-    expect(problems(gone, { ...lock, moves: [m] })).toEqual([]);
+    expect(compareLayout(gone, { ...lock, moves: [m] }, fixture)).toEqual([]);
   });
   it("a later fill of the removed cell is a move from reserved", () => {
     const m1 = { ...move, entry: "layers/select.shift", from: "special help", to: "reserved" };
     const m2 = { ...m1, from: "reserved", to: "special find" };
     const a = spec((k) => (key(k, "select")["shift"] = { special: "find" }));
-    expect(problems(a, { ...lock, moves: [m1, m2] })).toEqual([]);
+    expect(compareLayout(a, { ...lock, moves: [m1, m2] }, fixture)).toEqual([]);
   });
   it("must start from the line as it is", () => {
-    expect(problems(edited(), { ...lock, moves: [{ ...move, from: "special esc" }] })[0]).toBe('move layers/menu.primary: the line is "special menu", the move says "special esc"');
+    expect(compareLayout(edited(), { ...lock, moves: [{ ...move, from: "special esc" }] }, fixture)[0]).toBe('move layers/menu.primary: the line is "special menu", the move says "special esc"');
   });
   it("needs a decisions.md entry of that title", () => {
-    expect(problems(edited(), { ...lock, moves: [{ ...move, decision: "Nobody decided this" }] })).toEqual(['move layers/menu.primary: decisions.md has no entry titled "Nobody decided this"']);
+    expect(check("Nobody decided this")).toEqual(['move layers/menu.primary: decisions.md has no entry titled "Nobody decided this"']);
+  });
+  it("takes a whole title only: the title ends at the colon or the bracket, so a prefix of it is no decision", () => {
+    const refused = (d: string): string[] => [`move layers/menu.primary: decisions.md has no entry titled "${d}"`];
+    expect(check("Fi")).toEqual(refused("Fi"));
+    expect(check("Fixture layout")).toEqual(refused("Fixture layout"));
+    expect(check("Fixture layout move (owner")).toEqual(refused("Fixture layout move (owner"));
+    expect(check("Fixture colon title")).toEqual([]);
+    expect(check("Fixture colon")).toEqual(refused("Fixture colon"));
+  });
+  it("the real lock's moves (if any) name entries of the real decisions.md", () => {
+    expect(problems().filter((p) => p.startsWith("move "))).toEqual([]);
   });
   it("needs a version and an existing line", () => {
-    expect(problems(edited(), { ...lock, moves: [{ ...move, version: "soon" }] })[0]).toContain('version "soon" is no version');
-    expect(problems(actual, { ...lock, moves: [{ ...move, entry: "layers/nokey.shift" }] })[0]).toBe("move layers/nokey.shift: no such line in the lock");
+    expect(compareLayout(edited(), { ...lock, moves: [{ ...move, version: "soon" }] }, fixture)[0]).toContain('version "soon" is no version');
+    expect(compareLayout(actual, { ...lock, moves: [{ ...move, entry: "layers/nokey.shift" }] }, fixture)[0]).toBe("move layers/nokey.shift: no such line in the lock");
   });
   it("a move that the layout does not show is still a pinned line that is gone or changed", () => {
-    expect(problems(actual, { ...lock, moves: [move] })).toEqual(['layers/menu.primary: pinned "special esc", now "special menu"']);
+    expect(compareLayout(actual, { ...lock, moves: [move] }, fixture)).toEqual(['layers/menu.primary: pinned "special esc", now "special menu"']);
   });
 });
 
