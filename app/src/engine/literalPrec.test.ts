@@ -21,6 +21,21 @@ describe("literalDigits", () => {
     expect(literalDigits("x^100+1^500", "typed")).toBe(3);
     expect(literalDigits("3^(200)+10^-70", "typed")).toBe(96);
   });
+  it("reads a power of pi and exp of an integer literal as a magnitude (G307)", () => {
+    // ⌈200·log10 π⌉ = ⌈99.43⌉ = 100, ⌈200·log10 e⌉ = ⌈86.86⌉ = 87, ⌈2200·log10 π⌉ = ⌈1093.7⌉ = 1094
+    expect(literalDigits("(1+pi^(-200))^(pi^200)", "typed")).toBe(100);
+    expect(literalDigits("(1+pi^-200)^pi^200", "typed")).toBe(100);
+    expect(literalDigits("(1+exp(-200))^exp(200)", "typed")).toBe(87);
+    expect(literalDigits("(exp(-200)+1)^exp(200)", "printed")).toBe(87);
+    expect(literalDigits("pi^(2200)", "typed")).toBe(1094);
+    expect(literalDigits("pi^2+exp(5)", "typed")).toBe(3);
+  });
+  it("reads no other name, no non-literal exponent and no call of another name (G307)", () => {
+    expect(literalDigits("api^200+e^200+x^200", "typed")).toBe(3);
+    expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)+exp(200.5)", "typed")).toBe(3);
+    expect(literalDigits("pi^(200*x)+pi^200.5+pi^2e3", "typed")).toBe(3);
+    expect(literalDigits(`"exp(200)"+pi^("200")`, "typed")).toBe(1);
+  });
 });
 
 describe("literalStart", () => {
@@ -32,12 +47,17 @@ describe("literalStart", () => {
     expect(literalStart("exp(10^-70)-1", 50, 1000, "typed")).toEqual({ at: 121, unchecked: false });
     expect(literalStart("2^66+1", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
     expect(literalStart("2^67+1", 40, 1000, "typed")).toEqual({ at: 61, unchecked: false });
+    expect(literalStart("(1+pi^(-200))^(pi^200)", 40, 1000, "typed")).toEqual({ at: 140, unchecked: false });
+    expect(literalStart("(1+exp(-200))^exp(200)", 40, 1000, "typed")).toEqual({ at: 127, unchecked: false });
+    expect(literalStart("2*exp(-3)+1/3", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
   });
   it("past the cap is P unchecked, a power of ten too (G141f1)", () => {
     expect(literalStart("1" + "0".repeat(1249) + "1", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
     expect(literalStart("1" + "0".repeat(1250), 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
     expect(literalStart("(1-cos(10^-600))*10^1200+1", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
     expect(literalStart("asinh(-10^1250)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+pi^(-2200))^(pi^2200)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+exp(-2400))^exp(2400)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
   });
   it("is the digit count plus P up to the cap", () => {
     expect(literalStart("10^919", 40, 1000, "typed")).toEqual({ at: 960, unchecked: false });
