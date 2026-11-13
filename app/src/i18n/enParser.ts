@@ -66,6 +66,7 @@ export const enParser = {
   "parse.badChip": "bad chip",
   "parse.parseError": "parse error {json}",
   "parse.emptyParentheses": "empty parentheses",
+  "parse.emptyMatrixCell": "A matrix cell is empty",
   "parse.emptyList": "empty list: put its elements between the braces, separated by commas",
   "parse.unsupportedApply": "unsupported Apply {json}",
   "parse.needsLimits": "{head} needs limits",

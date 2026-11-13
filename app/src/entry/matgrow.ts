@@ -11,7 +11,7 @@
 import type { MathfieldElement } from "mathlive";
 import { PLACEHOLDER, atomStart, depthAt, latexAt } from "./boxes.ts";
 
-type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset" | "position" | "selection" | "selectionIsCollapsed" | "executeCommand" | "getValue">;
+type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset" | "position" | "selection" | "selectionIsCollapsed" | "executeCommand" | "getValue" | "insert">;
 
 /** Shift + 5's insert (spec/keyboard.yaml, d5): a 1×1 matrix, the selection or a □ in its cell. */
 export const GROW_MATRIX = "\\begin{pmatrix}#0\\end{pmatrix}";
@@ -89,9 +89,9 @@ function cellAt(mf: Field): { pos: number; q: number; d: number } | undefined {
 
 /** The geometry of the matrix whose cell the cursor is in (`anchors`: the grown ones): `s` the position before it, `cells`
  *  the offset of each cell's start (reading order), `k` the cursor's cell, `end(i)` the offset of cell i's end, `empty(i)`. */
-function gridOf(mf: Field, anchors: readonly Anchor[]) {
+function gridOf(mf: Field, anchors: readonly Anchor[] | ((q: number) => boolean)) {
   const at = cellAt(mf);
-  if (!at || !anchors.some((a) => a.q === at.q)) return undefined;
+  if (!at || !(typeof anchors === "function" ? anchors(at.q) : anchors.some((a) => a.q === at.q))) return undefined;
   const { pos, q, d } = at;
   const s = atomStart(mf, q);
   const cells: number[] = [];
@@ -114,6 +114,28 @@ function lastLineEmpty(g: Grid, right: boolean): boolean {
   const { rows, cols, row, col, empty } = g;
   const line = right ? Array.from({ length: rows }, (_, r) => r * cols + col) : Array.from({ length: cols }, (_, c) => row * cols + c);
   return line.every(empty);
+}
+
+/**
+ * R185f1: addColumnAfter leaves the new cells of the rows the cursor is not in empty, drawn as nothing (and a row that
+ * reads as a command in the parser). Each gets a □ as addRowAfter's cells have; the cursor stays in its new cell.
+ */
+function markNewColumn(mf: Field): void {
+  const g = gridOf(mf, () => true);
+  if (!g || g.cols < 2) return;
+  const { cols, rows, row, k } = g;
+  // from the last row up, so the offsets of the cells above stay as they are
+  for (let r = rows - 1; r >= 0; r--) {
+    if (r === row) continue;
+    const h = gridOf(mf, () => true);
+    if (!h) return;
+    const i = r * cols + cols - 1;
+    if (!h.empty(i)) continue;
+    mf.position = h.cells[i] ?? h.pos;
+    mf.insert(PLACEHOLDER, { selectionMode: "after", format: "latex" });
+  }
+  const h = gridOf(mf, () => true);
+  if (h) mf.position = h.end(k); // the end of the cursor's cell
 }
 
 /** The matrices Shift + 5 made on the line (EntryController holds one, made with the field). */
@@ -169,6 +191,7 @@ export class Grown {
     }
     if (empty(k)) return false; // a column (row) grows from a filled cell only
     mf.executeCommand(right ? "addColumnAfter" : "addRowAfter");
+    if (right) markNewColumn(mf);
     return true;
   }
 
