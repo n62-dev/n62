@@ -72,24 +72,34 @@ const DERIV: { latex: (a: string) => string; mp: (a: string) => string; angle: b
   { latex: (a) => `\\sinh\\left(${a}\\right)`, mp: (a) => `sinh(${a})`, angle: false },
 ];
 
-/** G162: one cancellation family at a k from CANCEL_K; `family` (0 to 3) counts which one was drawn. */
+/** G162: one cancellation family at a k from CANCEL_K; `family` counts which one was drawn: `cancel0` to `cancel2`, and
+ *  `cancel3` for family 0 with its tiny term a power of π or e (G307). G307 draws nothing more than G162 did, so every other
+ *  tree of a seed stays as it was (the weekly night's seed of G138 keeps its failures, sweep-parts.test.ts). */
 function cancel(r: () => number, family?: Map<string, number>): Node {
   const k = CANCEL_K.lo + Math.min(CANCEL_K.hi - CANCEL_K.lo, Math.floor(r() * (CANCEL_K.hi - CANCEL_K.lo + 1)));
-  const f = Math.min(3, Math.floor(r() * 4));
-  family?.set(`cancel${f}`, (family.get(`cancel${f}`) ?? 0) + 1);
+  const f = Math.min(2, Math.floor(r() * 3));
   const small = tenTo(-k);
   const big = tenTo(k);
   const b = pick(r, ["1", "2", "0.5"]);
   if (f === 0) {
     const plus = r() < 0.5;
     const c = pick(r, ["1", "2", "-1", "3"]);
-    const typed = r() < 0.5;
-    const base = typed
+    // the base: the long decimal 1.000…01 (below 1/2), 1 ± 10^-k (to 3/4), or, G307, 1 ± π^-2k (k even) or 1 ± e^-2k (k odd),
+    // about 0.99k or 0.87k digits, as the keys write it
+    const form = r();
+    const name = form < 0.75 ? "cancel0" : "cancel3";
+    family?.set(name, (family.get(name) ?? 0) + 1);
+    const pow = (n: string): { latex: string; mp: string } =>
+      k % 2 === 0 ? { latex: `\\pi^{${n}}`, mp: `POW(PI,mpf('${n}'))` } : { latex: `\\exponentialE^{${n}}`, mp: `exp(mpf('${n}'))` };
+    const tiny = form < 0.75 ? small : pow(`-${2 * k}`);
+    const huge = form < 0.75 ? big : pow(`${2 * k}`);
+    const base = form < 0.5
       ? (plus ? { latex: `1.${"0".repeat(k - 1)}1`, mp: `mpf('1.${"0".repeat(k - 1)}1')` } : { latex: `0.${"9".repeat(k)}`, mp: `mpf('0.${"9".repeat(k)}')` })
-      : { latex: `1${plus ? "+" : "-"}${small.latex}`, mp: `(mpf('1'))${plus ? "+" : "-"}(${small.mp})` };
-    const ex = c === "1" ? big : { latex: `${c}\\times ${big.latex}`, mp: `(mpf('${c}'))*(${big.mp})` };
+      : { latex: `1${plus ? "+" : "-"}${tiny.latex}`, mp: `(mpf('1'))${plus ? "+" : "-"}(${tiny.mp})` };
+    const ex = c === "1" ? huge : { latex: `${c}\\times ${huge.latex}`, mp: `(mpf('${c}'))*(${huge.mp})` };
     return lf(`\\left(${base.latex}\\right)^{${ex.latex}}`, `POW(${base.mp},${ex.mp})`, false, false);
   }
+  family?.set(`cancel${f}`, (family.get(`cancel${f}`) ?? 0) + 1);
   if (f === 1) {
     const g = pick(r, DERIV);
     const a = pick(r, [
@@ -105,18 +115,6 @@ function cancel(r: () => number, family?: Map<string, number>): Node {
       false,
       g.angle,
     );
-  }
-  if (f === 3) {
-    // G307: the tiny term as a power of π or e with an integer exponent 2k (about 0.99k or 0.87k digits), as the keys write it
-    const pi = r() < 0.5;
-    const plus = r() < 0.5;
-    const c = pick(r, ["1", "2", "-1"]);
-    const pow = (n: string): { latex: string; mp: string } =>
-      pi ? { latex: `\\pi^{${n}}`, mp: `POW(PI,mpf('${n}'))` } : { latex: `\\exponentialE^{${n}}`, mp: `exp(mpf('${n}'))` };
-    const tiny = pow(`-${2 * k}`);
-    const huge = pow(`${2 * k}`);
-    const ex = c === "1" ? huge : { latex: `${c}\\times ${huge.latex}`, mp: `(mpf('${c}'))*(${huge.mp})` };
-    return lf(`\\left(1${plus ? "+" : "-"}${tiny.latex}\\right)^{${ex.latex}}`, `POW((mpf('1'))${plus ? "+" : "-"}(${tiny.mp}),${ex.mp})`, false, false);
   }
   const big2 = tenTo(2 * k);
   return lf(

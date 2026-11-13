@@ -248,8 +248,8 @@ describe("sweep trees write e as the keys do (G326)", () => {
     expect(sha(asLetter(runsOf(20261021, 1000)))).toBe("83330d8832e56c7f5f990ac3375bae90b13eb3cf4b27bacec094eecbd769cfba");
     expect(sha(asLetter(trees.view))).toBe("96781df693eff0101ca3a363c5885f3e55b93e905488f0ccc3721b10421efce3");
     expect(sha(asLetter(trees.casback))).toBe("4e6a9dc2cb06cefb7b8dda4728114ecabddb07ca791c3feb8f52d351bcdb12b5");
-    // G307's fourth cancellation family (π^-2k, e^-2k) moves the edges trees from its first draw; with three families drawn they
-    // give G326's 98c31a1d6f5cef7a4f1a13397ad18f19d9cb6858b26fcbe640271dcdbdfae655 again (checked when G307 changed the pin)
-    expect(sha(asLetter(trees.edges))).toBe("6635f96d03fe5790dd656d937f17fb111142d0d16d4fb18b7eb7f76d0d743458");
+    // G307: family 0 takes its base as a power of π or e when its base draw is 3/4 or more, with no extra draw, so only those 35
+    // trees move; with that form left out the seed gives G326's 98c31a1d6f5cef7a4f1a13397ad18f19d9cb6858b26fcbe640271dcdbdfae655 (checked by hand)
+    expect(sha(asLetter(trees.edges))).toBe("cf3ac88774a14c012cc4d7b532dfbc846c940367e52c9e01013d0207fb994c00");
   });
 });
