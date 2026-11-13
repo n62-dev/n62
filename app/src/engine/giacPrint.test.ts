@@ -12,8 +12,10 @@ import {
   functionsIn,
   mapNumbers,
   namesIn,
+  negated,
   noneOpen,
   opening,
+  powersIn,
   programParams,
   renameCalls,
   replaceLiteral,
@@ -110,5 +112,29 @@ describe("numbers", () => {
     expect(typedFromPrinted('"a""b"+"x\\y\\"')).toBe('"a""b"+("x"+char(92)+"y"+char(92))');
     expect(typedFromPrinted('"q""\\"')).toBe('("q"""+char(92))');
     expect(typedFromPrinted("[1,2]")).toBe("[1,2]");
+  });
+});
+
+describe("powersIn and negated (G348)", () => {
+  const exps = (s: string): string[] => powersIn(s, "typed").map((p) => s.slice(...p.exponent));
+  it("reads each power's base and exponent, a call and a right-associative chain included", () => {
+    expect(powersIn("(-1)^(pi^2206)", "typed").map((p) => p.base)).toEqual(["(-1)", "pi"]);
+    expect(exps("(-1)^(pi^2206)")).toEqual(["(pi^2206)", "2206"]);
+    expect(exps("(-1)^pi^2206*2")).toEqual(["pi^2206", "2206"]);
+    expect(powersIn("sqrt(2)^x+i^ 2.5", "typed").map((p) => p.base)).toEqual(["sqrt(2)", "i"]);
+    expect(exps("a^-f(x)+1")).toEqual(["-f(x)"]);
+    expect(exps("(-1)^pi*pi^3000")).toEqual(["pi", "3000"]);
+  });
+  it("skips a caret in a string", () => {
+    expect(powersIn('"2^3"+x', "typed")).toEqual([]);
+    expect(powersIn('"a"""+x^2', "printed")).toEqual([{ base: "x", exponent: [8, 9] }]);
+  });
+  it("negated: a minus first inside the brackets that hold the whole operand", () => {
+    expect(negated("(-1)", "typed")).toBe(true);
+    expect(negated("((-2))", "typed")).toBe(true);
+    expect(negated("-x", "typed")).toBe(true);
+    expect(negated("(1-2)", "typed")).toBe(false);
+    expect(negated("(-1)*(2)", "typed")).toBe(false);
+    expect(negated("pi", "typed")).toBe(false);
   });
 });
