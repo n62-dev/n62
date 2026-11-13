@@ -100,6 +100,37 @@ describe("literalStart", () => {
     // a periodic call below the cap starts at the literal's digits plus P, as before
     expect(literalStart("sin(pi^200)", 40, 1000, "typed")).toEqual({ at: 140, unchecked: false });
   });
+  // G348 (Opus pass 175): exp of an i argument and a power of a negative or i base read their argument modulo 2π as a
+  // periodic call does; as the keys type them and as Giac prints them (`(-2)^(pi^2200)` prints as
+  // (-1)^(pi^2200)*2^(pi^2200), `i^(pi^2200)` as exp(i/2*pi^2201), `2*exp(-i*pi^2200)` as 2*exp((-i)*pi^2200))
+  it.each([
+    ["exp(i*pi^2207)", "exp(i*pi^2207)"],
+    ["2*exp(-i*pi^2200)", "2*exp((-i)*pi^2200)"],
+    ["(-1)^(pi^2206)", "(-1)^(pi^2206)"],
+    ["(-2)^(pi^2200)", "(-1)^(pi^2200)*2^(pi^2200)"],
+    ["i^(pi^2200)", "exp(i/2*pi^2201)"],
+  ])("past the cap counts a huge power read modulo a period in %s (G348)", (typed, printed) => {
+    expect(literalStart(typed, 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart(printed, 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+  });
+  it("reads the place of a huge power, not the text's calls (G348)", () => {
+    // as before G307f2: a periodic call elsewhere leaves the huge power out
+    expect(literalStart("sin(1)+pi^3000", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("sin(1)+pi^3000", 40, 1000, "printed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("pi^3000*cos(0)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    // a positive real base and an exp with no i read nothing modulo a period; a power after the exponent is outside it
+    expect(literalStart("2^(pi^3000)+exp(pi^3000)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("(-1)^pi*pi^3000", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    // a right-associative exponent, e^ of an i argument, i in a base's bracket, nested calls
+    expect(literalStart("(-1)^pi^2206", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("e^(i*pi^2207)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+i)^(pi^2200)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("exp(i*sqrt(exp(2400)))", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    // an i in a string names nothing
+    expect(literalStart(`exp(pi^3000)+"i"`, 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    // below the cap: the literal's digits plus P, as before
+    expect(literalStart("exp(i*pi^200)", 40, 1000, "typed")).toEqual({ at: 140, unchecked: false });
+  });
   it("is the digit count plus P up to the cap", () => {
     expect(literalStart("10^919", 40, 1000, "typed")).toEqual({ at: 960, unchecked: false });
     expect(literalStart("10^920", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });

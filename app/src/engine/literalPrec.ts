@@ -7,7 +7,7 @@
 // general cure). The literals are read by giacPrint's number reader. Only erasable TypeScript syntax, so Node runs this
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
-import { callsOf, isNameChar, numbers, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { callsOf, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
@@ -49,11 +49,30 @@ function constantPower(text: string, at: number, end: number, mant: string): num
   return null;
 }
 
-/** literalDigits, and the same count without the powers of pi or exp (constantPower). */
+/** G348 (Opus pass 175): the places of `text` whose value is read modulo a period, each [from, to): the brackets of a
+ *  periodic call (converge.ts PERIODIC, G307f2), of an exp call whose argument names the imaginary unit `i`, and the
+ *  exponent of a power whose base is negative or names `i` (its principal value exp(b·ln a), ln a not real) or whose
+ *  exponent names `i` (`e^(i*x)` is exp(i*x)). Such a value needs its argument to an absolute precision: at P0 + 40
+ *  pi^2200 is off by about 10^1054, so sin(pi^2200) showed ≈ 0.9 (it is 0.844846014387) and exp(i*pi^2207) ≈ -0.4-0.9*i
+ *  (it is 0.423070018226+0.906096992423*i). An unclosed call runs to the end. */
+function periodicPlaces(text: string, q: Quoting): [number, number][] {
+  const out: [number, number][] = [];
+  const namesI = (from: number, to: number): boolean => namesIn(text.slice(from, to), q).includes("i");
+  for (const c of callsOf(text, [...PERIODIC, "exp"], q)) {
+    const to = c.close < 0 ? text.length : c.close;
+    if (c.name !== "exp" || namesI(c.open + 1, to)) out.push([c.open + 1, to]);
+  }
+  for (const p of powersIn(text, q)) if (negated(p.base, q) || namesIn(p.base, q).includes("i") || namesI(...p.exponent)) out.push(p.exponent);
+  return out;
+}
+
+/** literalDigits, and the same count without the powers of pi or exp (constantPower) that stand outside every place read
+ *  modulo a period (periodicPlaces, G348). */
 function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number } {
   const ints = [...numbers(text, q)].filter((n) => n.exp === undefined && !n.mant.includes("."));
   let total = 0;
   let withoutHuge = 0;
+  let places: [number, number][] | null = null;
   const count = (d: number, constant = false): void => {
     total = Math.max(total, d);
     if (!constant) withoutHuge = Math.max(withoutHuge, d);
@@ -61,7 +80,7 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
   ints.forEach((n, k) => {
     count(noLeadingZeros(n.mant).length);
     const c = constantPower(text, n.at, n.end, n.mant);
-    if (c !== null) count(c, true);
+    if (c !== null) count(c, !(places ??= periodicPlaces(text, q)).some(([from, to]) => n.at >= from && n.at < to));
     // a power of two integer literals
     const e = ints[k + 1];
     if (!e || text.charAt(n.end) !== "^" || text.charAt(n.at - 1) === ".") return;
@@ -76,17 +95,15 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
 }
 
 /**
- * Whether a huge power of pi or exp in `text` needs its digits for the value. G307f1 (decisions.md "G307 past the cap",
- * Opus pass 171): the text can form a small value, which the huge power then makes tiny: a division, a negative exponent
- * (a minus after a caret, after a caret and bracket, or after exp's bracket) or an inv call. `(1+1/(3*pi^2200))^(pi^2200)`
- * is e^(1/3), and at P and P + 20 both round the 1/(3*pi^2200) away. G307f2 (Opus pass 173): the text calls a periodic
- * function (converge.ts PERIODIC), whose value needs its argument to an absolute precision: at P0 + 40 pi^2200 is off by
- * about 10^1054, and sin(pi^2200) showed ≈ 0.9 where it is 0.844846014387. A name or sign in a string counts nothing.
+ * Whether a huge power of pi or exp in `text` needs its digits for the value because the text can form a small value,
+ * which the huge power then makes tiny (G307f1, decisions.md "G307 past the cap", Opus pass 171): a division, a negative
+ * exponent (a minus after a caret, after a caret and bracket, or after exp's bracket) or an inv call.
+ * `(1+1/(3*pi^2200))^(pi^2200)` is e^(1/3), and at P and P + 20 both round the 1/(3*pi^2200) away. A name or sign in a
+ * string counts nothing. A huge power read modulo a period counts where it stands (literalCounts, G348).
  */
-function needsHuge(text: string, q: Quoting): boolean {
+function formsSmall(text: string, q: Quoting): boolean {
   const s = withoutStrings(text, "", q);
   if (s.includes("/") || s.includes("^-") || s.includes("^(-")) return true;
-  if (callsOf(s, PERIODIC, q).length) return true;
   return callsOf(s, ["inv", "exp"], q).some((c) => c.name === "inv" || s.charAt(c.open + 1) === "-");
 }
 
@@ -105,8 +122,9 @@ export function literalDigits(text: string, q: Quoting): number {
  * digits with n + LITERAL_MARGIN > P, at n + P. When those levels pass `cap` (MAX_EVAL_DIGITS), at P, and the value is
  * `unchecked` (⚠, never ≈): a power of ten too (G141f1, Opus pass 68: `(1-cos(10^-600))*10^1200+1` is 1.5, and at P and
  * P + 20 both round the 10^-600 away; S20's intervals are the cure), and a power of pi or exp (G307,
- * `(1+pi^(-2200))^(pi^2200)`). A power of pi or exp past the cap counts nothing in a text that neither forms a small value
- * nor calls a periodic function (needsHuge, G307f1, G307f2): alone it rounds no term away, and MPFR evaluates
+ * `(1+pi^(-2200))^(pi^2200)`). A power of pi or exp past the cap counts nothing in a text that forms no small value
+ * (formsSmall, G307f1) when it stands outside every place read modulo a period (periodicPlaces; G307f2, G348): alone it
+ * rounds no term away, and MPFR evaluates
  * exp(10000000) (`exp(10^7)` as Giac prints it) right at every level, which ≈ said before G307 (g58-exp-1e7-12). A
  * decision taken on it reads literalPastCap, which counts it.
  */
@@ -114,7 +132,7 @@ export function literalStart(text: string, P: number, cap: number, q: Quoting): 
   const { digits, withoutHuge } = literalCounts(text, q);
   const start = (n: number): { at: number; unchecked: false } | null =>
     n + LITERAL_MARGIN <= P ? { at: P, unchecked: false } : n + P + LEVELS_ABOVE <= cap ? { at: n + P, unchecked: false } : null;
-  return start(digits) ?? (needsHuge(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
+  return start(digits) ?? (formsSmall(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
 }
 
 /**
