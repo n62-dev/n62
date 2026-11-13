@@ -35,7 +35,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F227, fixed by G330 (run 1110).** The Function app's Slope showed a cancelled exact 0 as a number with 12 digits (`x^3/3-0.09*x` at 0.3: 9.86E-32); f' and f at x0 take Home's road now (= 0). Family 3.
 - **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
 - **F238 (A139; ron).** Dead keys (Shift + Select, Shift + Deselect) have no `aria-disabled`: TalkBack does not say they do nothing.
@@ -69,6 +68,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 and 417 ms of 400, runs 307, 909; due in `isTiming`); `units` (p95 7.93 ms, limit 5; reruns once, A51) and `invariants` (87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; `steps` at ×8: G325 rows stopped (runs 1032, 1054); due in `isTiming`.
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
 - **F214, fixed by G331 (runs 1100, 1106 G331f1; patch 0047, [r20](research/r20-decompose.md)).** Left: `alg_lvar` still drops `ln(rootof)` (sym2poly.cc:405, r20 risk 1); `simplify` gives such an input back with its `ln`s not combined.
+- **F243, no package (pass 168; run 1106).** Home `normal(sqrt(2^(1/3)+3^(2/3)))` and its `simplify`: one Giac call of 171–225 ms on the desktop (patch 0045's degree-18 rootof), about 8× that on the Tab One, past Home's 1.5 s clock (Stopped, or the input back). In golden-speed.ts SPEED_KNOWN.
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
