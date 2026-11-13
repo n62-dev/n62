@@ -56,6 +56,65 @@ test.describe("Shift + 5 (fake engine)", () => {
     expect(await entryValue(page)).toBe("\\begin{pmatrix}1\\end{pmatrix}+");
   });
 
+  // R186 (docs/04 5.3): ⌫ in an empty last row or column takes it back; every other ⌫ is as before. A hardware Backspace
+  // is the same key (R45). The cursor goes to the end of the cell before it (above it for a row).
+  const M1 = "\\begin{pmatrix}1\\end{pmatrix}";
+  const grown22 = ["shift", "d5", "d1", "right", "d2", "down", "d3", "right", "d4"];
+
+  test("⌫ in the row ▼ just added takes it back: the 2×2 again, the cursor after the 4", async ({ page }) => {
+    await tap(page, [...grown22, "down"]);
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2\\\\ 3 & 4\\\\ \\placeholder{} & \\placeholder{}\\end{pmatrix}");
+    await tap(page, ["right"]); // to the last row's second cell: still the row's empty cell
+    await tap(page, ["bksp"]);
+    expect(await entryValue(page)).toBe(M22);
+    await tap(page, ["d5"]); // the cursor is in the 4's cell
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2\\\\ 3 & 45\\end{pmatrix}");
+  });
+
+  test("⌫ in the column ▶ just added takes it back: the 2×2 again", async ({ page }) => {
+    await tap(page, [...grown22, "right", "bksp"]);
+    expect(await entryValue(page)).toBe(M22);
+    await tap(page, ["d5"]);
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2\\\\ 3 & 45\\end{pmatrix}");
+  });
+
+  test("a hardware Backspace takes the added row and the added column back", async ({ page }) => {
+    await tap(page, [...grown22, "right"]);
+    await page.keyboard.press("Backspace");
+    expect(await entryValue(page)).toBe(M22);
+    await tap(page, ["down"]);
+    await page.keyboard.press("Backspace");
+    expect(await entryValue(page)).toBe(M22);
+  });
+
+  test("⌫ in a filled cell deletes a digit; the emptied last column then goes on the next ⌫", async ({ page }) => {
+    await tap(page, ["shift", "d5", "d1", "right", "d2", "d3", "bksp"]);
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2\\end{pmatrix}");
+    await tap(page, ["bksp"]); // the 2 goes: its cell is empty but the column is the matrix's last and holds nothing else
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & \\placeholder{}\\end{pmatrix}");
+    await tap(page, ["bksp"]);
+    expect(await entryValue(page)).toBe(M1);
+  });
+
+  test("⌫ takes back the added row of a 1×2, and a row whose typed number was deleted again", async ({ page }) => {
+    await tap(page, ["shift", "d5", "d1", "right", "d2", "down"]); // row 2 added under 1 & 2, its first cell
+    await tap(page, ["bksp"]);
+    expect(await entryValue(page)).toBe(M1.replace("1", "1 & 2"));
+    await tap(page, ["down", "d3", "bksp", "bksp"]); // a row again, 3 typed and deleted (the cell is empty, its row too): the row goes
+    expect(await entryValue(page)).toBe(M1.replace("1", "1 & 2"));
+  });
+
+  test("⌫ in a 1×1 empty matrix removes the matrix", async ({ page }) => {
+    await tap(page, ["d7", "shift", "d5", "bksp"]);
+    expect(await entryValue(page)).toBe("7");
+  });
+
+  test("a hardware Backspace in a 1×1 empty matrix removes the matrix", async ({ page }) => {
+    await tap(page, ["shift", "d5"]);
+    await page.keyboard.press("Backspace");
+    expect(await entryValue(page)).toBe("");
+  });
+
   // One drag step at the edge (12–23 px): a tap there would add a column (a row), so a lost `drag` mark fails here. A longer
   // drag cannot tell: its next step takes the empty column (row) back again.
   test("one drag step ▶ at the end of the row moves out of the matrix and adds no column", async ({ page }) => {
