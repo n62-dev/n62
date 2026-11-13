@@ -81,6 +81,11 @@ const spec = (edit: (keys: Record<string, unknown>[]) => void): Pins => {
   edit(doc.keys);
   return { ...actual, layers: layerPins(loadKeyboard(doc)) };
 };
+/** A layer taken away: its action and its legend. */
+const drop = (keys: Record<string, unknown>[], id: string, layer: string): void => {
+  delete key(keys, id)[layer];
+  delete (key(keys, id)["label"] as Record<string, string>)[layer];
+};
 const key = (keys: Record<string, unknown>[], id: string): Record<string, unknown> => keys.find((k) => k.id === id) as Record<string, unknown>;
 
 describe("the layout lock holds the layout as merged", () => {
@@ -90,7 +95,7 @@ describe("the layout lock holds the layout as merged", () => {
   it("the lock pins what the app has: keys in the spec, the lists, Settings' sections and the reserved cells", () => {
     expect(Object.keys(lock.pins).sort()).toEqual(Object.keys(actual).sort());
     expect(Object.entries(lock.pins["layers"] ?? {}).filter(([, v]) => v === "reserved").map(([k]) => k)).toEqual([
-      "vars.shift", "frac.shift", "paren.shift", "d7.shift", "d1.shift", "d0.shift", "deselect.shift",
+      "deselect.shift", "vars.shift", "frac.shift", "paren.shift", "d7.shift", "d1.shift", "d0.shift",
     ]);
     expect(Object.values(lock.pins["settings"] ?? {})).toEqual(["appearance", "numbers", "vibration", "keys", "data", "counters", "help"]);
   });
@@ -107,7 +112,7 @@ describe("a pinned key layer cannot change unnoticed (altered copies of the spec
     expect(p).toEqual(['layers/menu.primary: pinned "special menu", now "special esc"']);
   });
   it("a layer taken away names the entry", () => {
-    const p = problems(spec((k) => delete key(k, "select")["shift"]));
+    const p = problems(spec((k) => drop(k, "select", "shift")));
     expect(p.join("\n")).toContain('layers/select.shift: pinned "special help" is gone');
   });
   it("a layer copied into a reserved cell names that cell", () => {
@@ -213,7 +218,7 @@ describe("a move is a line the owner's decision backs", () => {
     expect(lock.pins["layers"]?.["menu.primary"]).toBe("special menu");
   });
   it("a removal moves the line to reserved: the layer must be gone", () => {
-    const gone = spec((k) => delete key(k, "select")["shift"]);
+    const gone = spec((k) => drop(k, "select", "shift"));
     const m = { ...move, entry: "layers/select.shift", from: "special help", to: "reserved" };
     expect(problems(gone, { ...lock, moves: [m] })).toEqual([]);
   });

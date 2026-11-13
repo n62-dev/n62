@@ -119,7 +119,8 @@ export function compareLayout(actual: Pins, lock: Lock, decisions: string): stri
         continue;
       }
       if (now === value) continue;
-      const elsewhere = Object.entries(have).find(([, v]) => v === value)?.[0];
+      // where a list row went (its id is unique; many layers share an action, so a layer gets no hint)
+      const elsewhere = name === "layers" ? undefined : Object.entries(have).find(([, v]) => v === value)?.[0];
       if (now === undefined) problems.push(`${name}/${slot}: pinned "${value}" is gone${elsewhere ? ` (it has moved to ${elsewhere})` : ""}`);
       else problems.push(`${name}/${slot}: pinned "${value}", now "${now}"${elsewhere ? ` ("${value}" is at ${elsewhere})` : ""}`);
     }
