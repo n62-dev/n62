@@ -13,7 +13,6 @@ import type { UserBinding, UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { CATEGORIES, categoryItems } from "./categories.ts";
 import { FIRST_KEYS, prepare, search, warmSearch, type PreparedIndex } from "./rank.ts";
 import type { FindItem, IndexItem } from "./types.ts";
-import { matrixItems } from "../views/matrixSheet.ts";
 
 export interface FindIndex {
   readonly prepared: PreparedIndex;
@@ -188,9 +187,24 @@ export function showFind(shell: AppShell, entry: EntryController, index: FindInd
   shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
 }
 
-/** R187: Shift + 4's sheet: the eight matrix functions as rows 1 to 8; a pick goes in by `putOnLine`, as Find's does. */
+/** R187, R188: Shift + 4's sheet, a chunk of its own (views/matrixSheet.ts, which lists the stored matrices too). Until
+ *  its code is in and the sheet is whole, an empty sheet of that title holds the keys (Level.loading; one hold: a key
+ *  replayed after it is not held again), so a digit typed at once picks there. */
+let matrixCode: typeof import("../views/matrixSheet.ts") | null = null;
 export function showMatrix(shell: AppShell, entry: EntryController, index: FindIndex): void {
-  shell.showMenu(t("matrix.title"), matrixItems(index.byId, (it) => itemRow(it, (p) => putOnLine(entry, p))), { remember: false });
+  if (matrixCode) return void matrixCode.showMatrix(shell, entry, index);
+  let load: Promise<void> | null = null;
+  shell.showMenu(t("matrix.title"), [], { remember: false, loading: () => load });
+  const first = shell.sheet;
+  load = import("../views/matrixSheet.ts")
+    .then((m) => {
+      matrixCode = m;
+      return shell.sheet === first ? m.showMatrix(shell, entry, index) : undefined; // (not when Esc closed it meanwhile)
+    })
+    .then(
+      () => void (load = null),
+      () => void (load = null),
+    );
 }
 
 export { showNames } from "./names.svelte.ts";

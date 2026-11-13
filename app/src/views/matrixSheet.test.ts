@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { itemRow } from "../find/finder.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { FindItem, IndexItem } from "../find/types.ts";
-import { matrixItems } from "./matrixSheet.ts";
+import { MATRIX_NEW, matrixItems, matrixRows, type StoredMatrix } from "./matrixSheet.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 const file = join(dirname(fileURLToPath(import.meta.url)), "../find/_gen/find-index.json");
@@ -40,4 +40,31 @@ describe.skipIf(!raw.some((it) => it.kind === "unit"))("the matrix sheet (R187)"
     if (p.kind === "run") p.item.run?.();
     expect(picked.map((x) => x.id)).toEqual(["fn:tran"]);
   });
+});
+
+describe.skipIf(!raw.some((it) => it.kind === "unit"))("the matrix sheet's order (R188)", () => {
+  const index = makeIndex(raw);
+  const FNS = ["fn:tran", "fn:dot", "fn:cross", "fn:norm", "fn:rref", "fn:eigenvals", "fn:det", "fn:inv"];
+  const opened: string[] = [];
+  const sheetOf = (stored: StoredMatrix[]): Sheet =>
+    new Sheet("matrix", "Matrix", () => matrixRows(index.byId, (it) => itemRow(it, () => {}), stored, (m) => (opened.push(m.name), { title: m.name, items: [] })), { remember: false });
+
+  for (const stored of [[], [{ name: "M", rows: 2, cols: 2 }], [{ name: "M", rows: 2, cols: 2 }, { name: "A", rows: 1, cols: 3 }, { name: "rot", rows: 3, cols: 3 }]] as StoredMatrix[][]) {
+    it(`${stored.length} stored: the functions at rows 1 to 8, New at 9, the matrices from row 10`, () => {
+      const sheet = sheetOf(stored);
+      const rows = sheet.level.rows;
+      expect(rows.slice(0, 8).map((r) => [r.n, r.item.id])).toEqual(FNS.map((id, i) => [i + 1, id]));
+      expect([rows[8]?.n, rows[8]?.item.id, rows[8]?.item.label, rows[8]?.item.disabled]).toEqual([9, MATRIX_NEW, "New", true]);
+      expect(rows[8]?.item.reason).toBeTruthy();
+      expect(rows.slice(9).map((r) => [r.item.id, r.item.label, r.item.value])).toEqual(stored.map((m) => [`matrix:${m.name}`, m.name, `${m.rows}×${m.cols}`]));
+      expect(rows.slice(9).map((r) => r.n)).toEqual(stored.map((_, i) => (i === 0 ? 10 : undefined)));
+      // key 9 (New) does nothing yet; key 0 opens the first matrix's grid
+      expect(sheet.pickNumber(9).kind).toBe("stay");
+      expect(sheet.depth).toBe(1);
+      opened.length = 0;
+      sheet.pickNumber(10);
+      expect(sheet.depth).toBe(stored.length > 0 ? 2 : 1);
+      if (stored[0]) expect(sheet.level.title).toBe(stored[0].name);
+    });
+  }
 });
