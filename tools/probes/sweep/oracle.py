@@ -7,7 +7,7 @@
 #     G307: a power of π or e with a negative integer exponent (POW(PI,mpf('-400')), exp(mpf('-400'))) counts as 10^-d, d its digit
 #     count: the tiny term a rung rounds away (a huge one alone loses nothing, and exp of an int leaf such as 2^31 stays judged).
 #   {"kind": "novalue"}   a pole, a non-finite result
-#   {"kind": "skip", "reason": "..."}   unstable, a convention (negative base to a non-integer power, 0^0), complex in DEG, too slow
+#   {"kind": "skip", "reason": "..."}   unstable, an infinite intermediate under a finite value (G345), a convention (negative base to a non-integer power, 0^0), complex in DEG, too slow
 # Run: tests/golden/.venv/bin/python -I tools/probes/sweep/oracle.py < requests.json   (mpmath 1.3.0)
 import json, math, re as _re, signal, sys
 from decimal import Decimal, InvalidOperation
@@ -137,8 +137,28 @@ for _k, _on in (("sqrt", lambda r: r < 0), ("LN", lambda r: r < 0), ("LOG10", la
     NS[_k] = _cut(_on)(NS[_k])
 
 
+# G345: a function of the namespace whose result is infinite or nan sets this flag. A finite final value built on such a step (mpmath's
+# tanh(10^50) is exactly 1, so atanh is infinite and x/inf is 0) is no value, the true one lies past what a rung shows: a skip. A final
+# value that is itself non-finite stays a pole (novalue), as before.
+INF_STEP = [False]
+
+
+def _finite_or_flag(f):
+    def g(*a):
+        r = f(*a)
+        if isinstance(r, (mpf, mpc)) and not isfinite(r):
+            INF_STEP[0] = True
+        return r
+    return g
+
+
+for _k in [k for k, v in NS.items() if callable(v) and k != "mpf"]:
+    NS[_k] = _finite_or_flag(NS[_k])
+
+
 def at(expr, dps):
     mp.dps = dps
+    INF_STEP[0] = False
     ns = dict(NS, PI=+pi, E=+e)
     v = eval(expr, {"__builtins__": {}}, ns)
     if isinstance(v, mpc):
@@ -147,6 +167,8 @@ def at(expr, dps):
         re, im = mpf(v), mpf(0)
     if not (isfinite(re) and isfinite(im)):
         raise ZeroDivisionError
+    if INF_STEP[0]:
+        raise Skip("an infinite intermediate")
     if DEG and im != 0:
         raise Skip("complex in DEG")
     return re, im
