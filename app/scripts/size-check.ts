@@ -444,15 +444,9 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (`drag`, so a drag never grows the matrix) and the entry holding the field chunk's `Grown` (made with the field,
  *  passed to runOnField, cleared when a line is set). The merge base 68e296cf measures 61.77 kB gzip (174.36 kB raw), the
  *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB.
- *  61,900 → 61,960 B (G307 fix round 3): no source byte. The merge base eac413f1 measures 61,900 B gzip (174,781 B raw),
- *  exactly the pin; G307's branch has the same raw bytes and the same text once the lazy chunks' hash names are taken out
- *  (G307 changes literalPrec.ts, decisions.ts and edges.ts, none in the start chunk), but the 44 names it imports hash
- *  differently, and gzip took 61,912 B for them (61,902 B for another set). A pin at the base's exact size fails on any
- *  lazy chunk's change: 61,912 B + 0.05 kB.
- *  61,960 → 61,970 B (G308, as G322): no app file changed; Giac patch 0048 changes the engine build, so the engine worker's
+ *  61,900 → 61,970 B (G308, as G322): no app file changed; Giac patch 0048 changes the engine build, so the engine worker's
  *  hashed name and the chunk names that follow it gzip differently. The same tree measures 61,899 B gzip with phase-1's
- *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB. Merged with G307's lazy names, the
- *  higher of the two pins; the merged tree is measured by its checks. */
+ *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB. */
 export const START_PIN_GZIP = 61_970;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
