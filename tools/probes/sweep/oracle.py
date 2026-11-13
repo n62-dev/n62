@@ -4,10 +4,12 @@
 #     G162: an input whose exact literals hold a power 10^±k (1ᴇ-300, 10^{300}, a typed 1.000…01) starts both rungs 2k digits higher
 #     (60+2k and 100+2k, then 150+2k and 250+2k): (1-cos 10^-k)·10^(2k) cancels 2k digits, and below that every rung gives the same wrong
 #     value, so the agreement test would pass it. Past DPS_CAP digits the case is skipped with its reason, never judged at fewer.
+#     G307: a power of π or e with a negative integer exponent (POW(PI,mpf('-400')), exp(mpf('-400'))) counts as 10^-d, d its digit
+#     count: the tiny term a rung rounds away (a huge one alone loses nothing, and exp of an int leaf such as 2^31 stays judged).
 #   {"kind": "novalue"}   a pole, a non-finite result
 #   {"kind": "skip", "reason": "..."}   unstable, a convention (negative base to a non-integer power, 0^0), complex in DEG, too slow
 # Run: tests/golden/.venv/bin/python -I tools/probes/sweep/oracle.py < requests.json   (mpmath 1.3.0)
-import json, re as _re, signal, sys
+import json, math, re as _re, signal, sys
 from decimal import Decimal, InvalidOperation
 from mpmath import mp, mpf, mpc, sqrt, exp, sinh, cosh, tanh, asinh, acosh, atanh, cbrt, sign, log, pi, e, factorial, fabs, sin, cos, tan, asin, acos, atan, isfinite
 
@@ -162,12 +164,17 @@ def agree(a, b):
 DPS_CAP = 2250
 _POW10 = _re.compile(r"POW\(mpf\('10'\),mpf\('(-?\d+)'\)\)")
 _LIT = _re.compile(r"mpf\('([^']*)'\)")
+_POWC = _re.compile(r"(POW\(PI,|exp\()mpf\('-(\d+)'\)\)")
+_LOG10 = {"POW(PI,": math.log10(math.pi), "exp(": math.log10(math.e)}
 
 
 def tens(expr):
     """G162: the largest k such that an exact literal of the input holds 10^±k: 10^{k} typed as a power, the exponent of 1ᴇ-k, or the
-    first and last digit of a typed decimal (1.000…01 holds 10^-k, 100…001 holds 10^k)."""
+    first and last digit of a typed decimal (1.000…01 holds 10^-k, 100…001 holds 10^k); G307: π^-n and e^-n with an integer n hold
+    10^-k for k their digit count, ceil(n·log10 π) and ceil(n·log10 e)."""
     k = 0
+    for m in _POWC.finditer(expr):
+        k = max(k, math.ceil(abs(int(m.group(2))) * _LOG10[m.group(1)]))
     for m in _POW10.finditer(expr):
         k = max(k, abs(int(m.group(1))))
     for m in _LIT.finditer(expr):
@@ -209,7 +216,7 @@ def main():
             out.append({"kind": "novalue"})
         except Slow:
             out.append({"kind": "skip", "reason": "oracle too slow (3 s)"})
-        except (OverflowError, MemoryError):
+        except (OverflowError, MemoryError, RecursionError):  # G307: mpmath recurses on exp(1ᴇ300 - …) at 1000 digits, an overflow
             out.append({"kind": "skip", "reason": "oracle overflow"})
         except Exception as x:  # G116: an edge input mpmath cannot take (NoConvergence, …) is a skip, never the end of the run
             out.append({"kind": "skip", "reason": f"oracle error: {type(x).__name__}"})

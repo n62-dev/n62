@@ -2,7 +2,7 @@
 // G38 (docs/04 2.4 rule 2): the decisions Giac makes inside an exact evaluation at `Digits` (a sign, a place between two
 // integers, a branch), and their second run at P + 20 and P + 40. Split out of numeric.ts (G71). Synchronous, UI-free;
 // only erasable TypeScript syntax.
-import { literalStart } from "./literalPrec.ts";
+import { literalPastCap, literalStart } from "./literalPrec.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
 import { callsOf, closing, functionsIn, isError, isName, isNameChar, LIST_TYPE, names, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
@@ -544,9 +544,10 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   // there may be the value itself (sign(…)*factorial(500)).
   const P0 = valuePrecision(digits);
   const typed = literalStart(expr, P0, MAX_EVAL_DIGITS, "typed");
-  const pastCap = (a: string): boolean => literalStart(a, P0, MAX_EVAL_DIGITS, "typed").unchecked;
+  // G307 fix round 2: a huge power of pi or exp counts here (literalPastCap), though the value's start leaves it out
+  const pastCap = (a: string): boolean => literalPastCap(a, P0, MAX_EVAL_DIGITS, "typed");
   const complexArg = nonRealArg(giac, P0);
-  if (typed.unchecked && decisionArgs(expr, text, decidingStored(giac), complexArg).some(pastCap)) {
+  if (pastCap(expr) && decisionArgs(expr, text, decidingStored(giac), complexArg).some(pastCap)) {
     const argOf = (c: { open: number; close: number }): string => expr.slice(c.open + 1, c.close);
     const calls = callsOf(expr, COMPLEX_DECISION_FUNCTIONS, "typed").filter((c) => c.close >= 0);
     const branch = nonRealText(text) && calls.some((c) => pastCap(argOf(c)) && complexArg(argOf(c)));

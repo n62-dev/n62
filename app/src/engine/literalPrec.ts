@@ -7,7 +7,7 @@
 // general cure). The literals are read by giacPrint's number reader. Only erasable TypeScript syntax, so Node runs this
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
-import { numbers, type Quoting } from "./giacPrint.ts";
+import { callsOf, isNameChar, numbers, withoutStrings, type Quoting } from "./giacPrint.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
  *  fewer than this many digits after its cancellation. */
@@ -25,16 +25,42 @@ function noLeadingZeros(d: string): string {
 /** Gaps a typed power's exponent may stand behind: `10^100`, `10^-100`, `10^(100)`, `10^(-100)`. */
 const EXPONENT_GAPS: readonly string[] = ["", "-", "(", "(-"];
 
-/**
- * The digit count of the longest exact integer in `text`: an integer as Giac prints it, or, in a text as typed, a power
- * of two integer literals (`10^(-100)` stands for a 101-digit denominator). 0 when there is none. Strings, names and
- * decimals count nothing.
- */
-export function literalDigits(text: string, q: Quoting): number {
+/** G307: the constants whose power with an integer literal exponent is read as a magnitude, by how the text writes it:
+ *  `pi^200`, `pi^(-200)` (a power of pi), `exp(200)`, `exp(-200)` (the eˣ key's form, emit.ts), each with log10 of the
+ *  constant. No other name: a named constant has its own checks. */
+const CONSTANT_POWERS: readonly { before: string; gaps: readonly string[]; closes: boolean; log10: number }[] = [
+  { before: "pi^", gaps: EXPONENT_GAPS, closes: false, log10: Math.log10(Math.PI) },
+  { before: "exp(", gaps: ["", "-"], closes: true, log10: Math.LOG10E },
+];
+
+/** The digit count ⌈|n|·log10 c⌉ of the power of pi or exp (CONSTANT_POWERS) whose integer literal exponent is `mant` at
+ *  `at`..`end` of `text`; null when the literal is no such exponent. */
+function constantPower(text: string, at: number, end: number, mant: string): number | null {
+  for (const c of CONSTANT_POWERS) {
+    for (const gap of c.gaps) {
+      const k = at - gap.length - c.before.length;
+      const b = text.charAt(k - 1);
+      if (k < 0 || !text.startsWith(c.before + gap, k) || isNameChar(b) || b === ".") continue;
+      if ((c.closes || gap.startsWith("(")) && !text.startsWith(")", end)) continue;
+      return Math.ceil(Number(mant) * c.log10);
+    }
+  }
+  return null;
+}
+
+/** literalDigits, and the same count without the powers of pi or exp (constantPower). */
+function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge: number } {
   const ints = [...numbers(text, q)].filter((n) => n.exp === undefined && !n.mant.includes("."));
   let total = 0;
+  let withoutHuge = 0;
+  const count = (d: number, constant = false): void => {
+    total = Math.max(total, d);
+    if (!constant) withoutHuge = Math.max(withoutHuge, d);
+  };
   ints.forEach((n, k) => {
-    total = Math.max(total, noLeadingZeros(n.mant).length);
+    count(noLeadingZeros(n.mant).length);
+    const c = constantPower(text, n.at, n.end, n.mant);
+    if (c !== null) count(c, true);
     // a power of two integer literals
     const e = ints[k + 1];
     if (!e || text.charAt(n.end) !== "^" || text.charAt(n.at - 1) === ".") return;
@@ -43,22 +69,59 @@ export function literalDigits(text: string, q: Quoting): number {
     const a = Number(n.mant);
     const b = Number(e.mant);
     if (a < 2 || b === 0) return;
-    total = Math.max(total, Math.floor(b * Math.log10(a)) + 1);
+    count(Math.floor(b * Math.log10(a)) + 1);
   });
-  return total;
+  return { digits: total, withoutHuge };
+}
+
+/**
+ * G307f1 (decisions.md "G307 past the cap", Opus pass 171): whether `text` can form a small value, which a huge power of
+ * pi or exp then makes tiny: a division, a negative exponent (a minus after a caret, after a caret and bracket, or after
+ * exp's bracket) or an inv call. A `-` or `/` in a string forms nothing. `(1+1/(3*pi^2200))^(pi^2200)` is e^(1/3), and at
+ * P and P + 20 both round the 1/(3*pi^2200) away.
+ */
+function formsSmall(text: string, q: Quoting): boolean {
+  const s = withoutStrings(text, "", q);
+  if (s.includes("/") || s.includes("^-") || s.includes("^(-")) return true;
+  return callsOf(s, ["inv", "exp"], q).some((c) => c.name === "inv" || s.charAt(c.open + 1) === "-");
+}
+
+/**
+ * The digit count of the longest exact integer in `text`: an integer as Giac prints it, or, in a text as typed, a power
+ * of two integer literals (`10^(-100)` stands for a 101-digit denominator); and, G307, a power of pi or exp of an integer
+ * literal (`pi^(-200)` stands for a 100-digit magnitude, `exp(-200)` for an 87-digit one; Giac prints them as
+ * `1/pi^200`, `1/exp(200)`). 0 when there is none. Strings, other names and decimals count nothing.
+ */
+export function literalDigits(text: string, q: Quoting): number {
+  return literalCounts(text, q).digits;
 }
 
 /**
  * Where the agreement check of `text` starts when the value precision is P (G141): at P, or, for an exact integer of n
  * digits with n + LITERAL_MARGIN > P, at n + P. When those levels pass `cap` (MAX_EVAL_DIGITS), at P, and the value is
  * `unchecked` (⚠, never ≈): a power of ten too (G141f1, Opus pass 68: `(1-cos(10^-600))*10^1200+1` is 1.5, and at P and
- * P + 20 both round the 10^-600 away; S20's intervals are the cure).
+ * P + 20 both round the 10^-600 away; S20's intervals are the cure), and a power of pi or exp (G307,
+ * `(1+pi^(-2200))^(pi^2200)`). A power of pi or exp past the cap counts nothing in a text that forms no small value
+ * (formsSmall, G307f1): alone it rounds no term away, and MPFR evaluates exp(10000000) (`exp(10^7)` as Giac prints it)
+ * right at every level, which ≈ said before G307 (g58-exp-1e7-12). A decision taken on it reads literalPastCap, which
+ * counts it.
  */
 export function literalStart(text: string, P: number, cap: number, q: Quoting): { at: number; unchecked: boolean } {
+  const { digits, withoutHuge } = literalCounts(text, q);
+  const start = (n: number): { at: number; unchecked: false } | null =>
+    n + LITERAL_MARGIN <= P ? { at: P, unchecked: false } : n + P + LEVELS_ABOVE <= cap ? { at: n + P, unchecked: false } : null;
+  return start(digits) ?? (formsSmall(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
+}
+
+/**
+ * G307 fix round 2: `text` holds an exact magnitude that no precision we run holds, a huge power of pi or exp included
+ * (the full literalDigits count, which literalStart leaves out for the value). The decisions read this (decideTwice): a
+ * value is right at every level when alone it rounds no term away, but a sign or a branch taken on it is not, as at
+ * P0 + 40 pi^2200 is off by about 10^1054 and the sign of sin(pi^2200) is a coin toss, as for sin(10^2000) (G156).
+ */
+export function literalPastCap(text: string, P: number, cap: number, q: Quoting): boolean {
   const n = literalDigits(text, q);
-  if (n + LITERAL_MARGIN <= P) return { at: P, unchecked: false };
-  if (n + P + LEVELS_ABOVE <= cap) return { at: n + P, unchecked: false };
-  return { at: P, unchecked: true };
+  return n + LITERAL_MARGIN > P && n + P + LEVELS_ABOVE > cap;
 }
 
 /**
