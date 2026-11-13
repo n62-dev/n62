@@ -11,6 +11,9 @@
 # and file any new finding. `deadline`: the inputs whose class came from a clock (a hang past the census's 6 s, or a time-out refusal,
 # Home's after 2 s); a faster or a loaded machine moves them. An input that is on this list or hits a deadline in this run and whose
 # class moved runs once more alone (no other worker running); if it still differs, the stage reports a TIMING change and does not fail.
+# `layout`: the inputs whose class follows the engine's heap layout, so the inputs run before them in the same engine; their class
+# is the one they get alone, which the stage runs once more when they moved and `--update` always (G226, F240: `convert(129,2,1/2)` takes
+# the list's subtype from the fraction's pointer bits, prog.cc:9345 `g.subtype=v.back().val`: `pnt[129,1/2]` or `[129,1/2]` by engine).
 # G111: the functions find/functions.yaml's `census` names (exclude groups graphics, graphs, strings, debugger) are left out of Find's
 # index and run here all the same, in their place in Giac's help, so an upstream fix shows; their findings stay under their lines.
 findings:
@@ -21,6 +24,7 @@ findings:
   F96: ["home GF/0", "cas GF/0", "home harmonic_division/0", "home interactive_plotode/0", "cas interactive_plotode/0"]
   F97: ["cas ellipse/0", "cas hyperbola/0", "cas ecm_factor/0"]
 deadline: ["home ellipse/0", "cas ellipse/0", "home hyperbola/0", "cas hyperbola/0", "home ecm_factor/0", "cas ecm_factor/0"]
+layout: ["home convert/1", "cas convert/1"]
 classes:
   "Airy_Ai": "cccc|cccc"
   "Airy_Bi": "cccc|cccc"

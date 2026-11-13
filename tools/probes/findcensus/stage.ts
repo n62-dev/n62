@@ -2,7 +2,10 @@
 // G110: the census gate's comparison (app/scripts/findcensus.ts), pure. The known file holds every input's class, one string per
 // function (Home's letters, `|`, CAS's letters, in sample order; `-` for a function without a sample), and the findings, each id
 // under the backlog line that holds it (`unfiled` for one that has none yet: the stage fails on it), and `deadline`: the inputs whose
-// known class came from a deadline (a hang past the census's 6 s, or a time-out refusal), which a faster or a busier machine moves.
+// known class came from a deadline (a hang past the census's 6 s, or a time-out refusal), which a faster or a busier machine moves, and
+// `layout`: the inputs whose class follows the engine's heap layout, so the inputs run before them in the same engine (G226, F240: Giac's
+// `convert(n,b,x)` sets the list's subtype from x's `val`, prog.cc:9345, the pointer bits of a fraction); their known class is the
+// one they get alone, and the stage and `--update` run them once more alone.
 import { CLASS_OF_LETTER, FINDINGS, LETTER } from "./classify.ts";
 import type { Row } from "./run.ts";
 
@@ -11,6 +14,8 @@ export interface CensusKnown {
   classes?: Record<string, string>;
   /** The inputs whose known class came from a deadline (hitDeadline). */
   deadline?: string[];
+  /** The inputs whose class follows the heap layout; the known class is the one they get run alone (written by hand, kept). */
+  layout?: string[];
 }
 
 /** The input's class came from a clock: no answer before the census's deadline, or the view's own time-out refusal (Home's 2 s). */
@@ -38,10 +43,10 @@ function knownLetters(rows: readonly Row[], known: CensusKnown): Map<string, str
 }
 
 /** The inputs to run again alone (no other worker running) before a change counts: their class moved, and the known class or this
- *  run's came from a deadline. */
+ *  run's came from a deadline, or the input is on the `layout` list (a class that still differs alone is a class change). */
 export function timingSuspects(rows: readonly Row[], known: CensusKnown): Row[] {
   const was = knownLetters(rows, known);
-  const dl = new Set(known.deadline ?? []);
+  const dl = new Set([...(known.deadline ?? []), ...(known.layout ?? [])]);
   return rows.filter((r) => {
     const w = was.get(r.id);
     return w !== undefined && w !== LETTER[r.cls] && (dl.has(r.id) || hitDeadline(r));
@@ -135,7 +140,7 @@ export function censusStage(rows: readonly Row[], none: readonly string[], known
 }
 
 /** The known file rewritten from a run: its header kept, the findings kept (ids that are no longer findings dropped, new ones
- *  under `unfiled`), the inputs that hit a deadline, the classes from the run. */
+ *  under `unfiled`), the inputs that hit a deadline, the `layout` list kept (ids no longer run dropped), the classes from the run. */
 export function knownText(old: string, rows: readonly Row[], none: readonly string[], known: CensusKnown): string {
   const header = old.split("\n").filter((l, i, all) => l.startsWith("#") && all.slice(0, i).every((x) => x.startsWith("#"))).join("\n");
   const findingIds = new Set(rows.filter((r) => FINDINGS.has(r.cls)).map((r) => r.id));
@@ -154,6 +159,9 @@ export function knownText(old: string, rows: readonly Row[], none: readonly stri
   for (const [line, ids] of groups) out.push(`  ${line}: [${ids.map(q).join(", ")}]`);
   const dl = rows.filter(hitDeadline).map((r) => r.id);
   if (dl.length) out.push(`deadline: [${dl.map(q).join(", ")}]`);
+  const ran = new Set(rows.map((r) => r.id));
+  const layout = (known.layout ?? []).filter((id) => ran.has(id));
+  if (layout.length) out.push(`layout: [${layout.map(q).join(", ")}]`);
   out.push("classes:");
   for (const [n, s] of [...classStrings(rows, none)].sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))) out.push(`  ${q(n)}: ${q(s)}`);
   return `${out.join("\n")}\n`;
