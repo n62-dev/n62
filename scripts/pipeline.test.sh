@@ -1268,7 +1268,7 @@ out="$(sb10run annabell "task text" --id probe-h1 --branch p1/annabell-h1 --chec
 unset SB_SLEEP N62_HEARTBEAT_SECONDS
 hb="$(grep -E 'pipeline #[0-9]+ probe-h1: worker alive ' "$sb10/.coord/log.md")"
 [[ "$(wc -l <<<"$hb")" -ge 2 && -n "$hb" ]] || fail "A147: a worker running 6 s with a 2 s heartbeat logs fewer than 2 'worker alive' lines: $hb"
-grep -qvE '^- [0-9:]+ pipeline #[0-9]+ probe-h1: worker alive [0-9]+ min; last commit ([0-9a-f]+ [0-9]+ min ago|none); reply [0-9]+ kB$' <<<"$hb" && fail "A147: a 'worker alive' line has the wrong form: $hb"
+grep -qvE '^- [0-9:]+ (\[[AB]\] )?pipeline #[0-9]+ probe-h1: worker alive [0-9]+ min; last commit ([0-9a-f]+ [0-9]+ min ago|none); reply [0-9]+ kB$' <<<"$hb" && fail "A147: a 'worker alive' line has the wrong form: $hb"
 echo "$hb" | head -n1 | sed 's/^/    heartbeat line from the sandbox: /' >&2
 ha="$(grep -n 'probe-h1: worker alive ' "$sb10/.coord/log.md" | tail -n1 | cut -d: -f1)"; hd="$(grep -n 'probe-h1: worker done' "$sb10/.coord/log.md" | cut -d: -f1)"
 [[ -n "$ha" && -n "$hd" && "$ha" -lt "$hd" ]] || fail "A147: a 'worker alive' line comes after the worker ended ($ha, done $hd)"
