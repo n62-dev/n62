@@ -50,6 +50,8 @@ export interface RouteCtx {
   openNames(memory: boolean): void;
   /** Help (R197, Shift + Select): the help sheet of the function at the cursor, else Find. */
   openHelp(): void;
+  /** Shift + 4 (R187): the matrix sheet (Find's items for its rows, picked by Find's route). */
+  openMatrix(): void;
   /** Store ▶ (R281): the store sheet; `row`, the result Store ▶ put on the line (Ans on an empty line). */
   openStore(row?: HistoryItem): void;
   /** Run with the clipboard code, now or once it has loaded (a returned promise holds the keys queued for the load). */
@@ -152,6 +154,9 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "help":
       c.openHelp();
+      break;
+    case "matrix":
+      c.openMatrix();
       break;
     case "selectGrow":
     case "selectShrink":

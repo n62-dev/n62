@@ -298,7 +298,8 @@ keys:
     source: device  # stacked fraction seen on a G2; r7c5 (virtual-calc) for the position and shift x⁻¹
 
   - { id: alpha, row: 7, col: 0, cls: ctl, label: { primary: "$key.alpha" }, primary: { special: alpha }, source: virtual-calc }  # r8c1 (twice locks it, L3: ours)
-  - { id: d4, row: 7, col: 1, cls: num, label: { primary: "4", alpha: U }, primary: { type: "4" }, alpha: { type: U }, source: virtual-calc }  # r8c2 (shift Matrix not ours)
+  # Shift + 4 (R187, docs/04 5.3): the matrix sheet, the eight functions as its fixed rows 1 to 8 (views/matrixSheet.ts); R188 adds the stored matrices
+  - { id: d4, row: 7, col: 1, cls: num, label: { primary: "4", shift: "$key.matrix", alpha: U }, primary: { type: "4" }, shift: { special: matrix }, alpha: { type: U }, source: virtual-calc }  # r8c2 (shift Matrix, the reference's matrix editor: here a sheet of the matrix functions)
   # Shift + 5: a matrix that grows as you type (R185, docs/04 5.3): a 1×1 whose tapped ▶ at a row's end adds a column and
   # ▼ in its last row a row (app/src/entry/matgrow.ts); a drag on the pad never grows it, and the Tmpl matrices keep their size
   - id: d5

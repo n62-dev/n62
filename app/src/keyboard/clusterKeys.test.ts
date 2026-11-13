@@ -30,7 +30,7 @@ function ctx(menu: boolean) {
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, toggleMenu: () => (log.push("toggleMenu"), menu) };
   const c = {
     session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false,
-    enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings: () => void log.push("settings"), openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openHelp: () => void log.push("help"), openNames() {}, openStore() {},
+    enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings: () => void log.push("settings"), openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openHelp: () => void log.push("help"), openMatrix() {}, openNames() {}, openStore() {},
     withClip: (run: (x: never) => void) => run({} as never),
     loadClip() {}, dead: () => void log.push("dead"), unfold: () => false,
   };

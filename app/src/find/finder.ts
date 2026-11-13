@@ -13,6 +13,7 @@ import type { UserBinding, UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { CATEGORIES, categoryItems } from "./categories.ts";
 import { FIRST_KEYS, prepare, search, warmSearch, type PreparedIndex } from "./rank.ts";
 import type { FindItem, IndexItem } from "./types.ts";
+import { matrixItems } from "../views/matrixSheet.ts";
 
 export interface FindIndex {
   readonly prepared: PreparedIndex;
@@ -185,6 +186,11 @@ export function showFind(shell: AppShell, entry: EntryController, index: FindInd
   };
   const { categories, search } = findMenu(index, pick);
   shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
+}
+
+/** R187: Shift + 4's sheet: the eight matrix functions as rows 1 to 8; a pick goes in by `putOnLine`, as Find's does. */
+export function showMatrix(shell: AppShell, entry: EntryController, index: FindIndex): void {
+  shell.showMenu(t("matrix.title"), matrixItems(index.byId, (it) => itemRow(it, (p) => putOnLine(entry, p))), { remember: false });
 }
 
 export { showNames } from "./names.svelte.ts";

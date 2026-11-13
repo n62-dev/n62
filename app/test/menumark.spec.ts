@@ -14,7 +14,7 @@ interface Act { special?: string }
 interface SpecKey { id: string; label?: { primary?: string; shift?: string }; primary?: Act; shift?: Act }
 const spec = (parse(readFileSync(join(here, "../../spec/keyboard.yaml"), "utf8")) as { keys: SpecKey[] }).keys;
 // the specials that open a sheet (opens.ts), spelled out here on purpose: the test is the owner's list
-const SHEET = new Set(["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "base", "help"]);
+const SHEET = new Set(["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "base", "help", "matrix"]);
 const opens = (a: Act | undefined): boolean => a?.special !== undefined && SHEET.has(a.special);
 
 const look = (page: Page, brightness: string, contrast: string, keys: string): Promise<void> =>
@@ -69,11 +69,11 @@ for (const [brightness, contrast, keys] of LOOKS)
           expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
         } else expect(["none", "normal"], where).toContain(s.after);
       }
-      // the tap layer: Vars, Math, Tmpl; ☰ and its Shift legend Settings (r0c4, R278), the Shift legends: Memory (Math), ≤≠, α∞, Mode (Fmt), Help (Select, R197); Shift armed: those as faces
+      // the tap layer: Vars, Math, Tmpl; ☰ and its Shift legend Settings (r0c4, R278), the Shift legends: Memory (Math), ≤≠, α∞, Mode (Fmt), Help (Select, R197), Matrix (Shift + 4, R187); Shift armed: those as faces
       expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
         shift
-          ? ["d6/main", "d9/main", "fmt/main", "math/main", "menu/main", "select/main", "sub/main"]
-          : ["d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "math/main", "math/shiftlegend", "menu/main", "menu/shiftlegend", "select/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
+          ? ["d4/main", "d6/main", "d9/main", "fmt/main", "math/main", "menu/main", "select/main", "sub/main"]
+          : ["d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "math/main", "math/shiftlegend", "menu/main", "menu/shiftlegend", "select/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
       );
     }
   });
