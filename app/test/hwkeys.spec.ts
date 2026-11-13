@@ -214,8 +214,14 @@ test.describe("on the engine", () => {
 
   // R198 (the owner, 2026-11-12): a function's name typed before ( is the function, as its key or Find's pick puts it
   test("R198: sin(1)*2 typed is the sin key's line (it was s·i·n·(1)·2)", async ({ page }) => {
-    await page.keyboard.type("sin(");
-    expect(await entryValue(page)).toBe("\\sin\\left(\\placeholder{}\\right)"); // the cursor in the bracket
+    // the first letter loads the names (the parser's FUNCS, then Find's index); a `(` before they are in is the bracket pair
+    await expect
+      .poll(async () => {
+        await page.evaluate(() => window.n62.entry.clear());
+        await page.keyboard.type("sin(");
+        return entryValue(page);
+      })
+      .toBe("\\sin\\left(\\placeholder{}\\right)"); // the cursor in the bracket
     await page.keyboard.type("1)*2");
     const hw = await entryValue(page);
     await page.evaluate(() => window.n62.entry.clear());
