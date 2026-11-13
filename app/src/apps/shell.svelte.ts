@@ -72,7 +72,7 @@ export class AppShell {
   prompt = $state.raw<EntryPrompt | null>(null);
 
   /** Copy, paste and share (set by App.svelte); apps reach it through AppHost.copy. */
-  clip: { copyRaw(text: string | undefined, notice?: string): Promise<boolean>; say(message: string): void } | undefined;
+  clip: { copyRaw(text: string | undefined, notice?: string): Promise<boolean>; say(message: string): void; pasteHeld(): void } | undefined;
   /** The Menu of Home and CAS (set by App.svelte); the apps bring their own. */
   homeMenu: (() => MenuItem[]) | undefined;
   /** Settings as a level of the sheet (set by App.svelte once the Mode code is in; R49): the ⚙ in every Menu's title
@@ -146,6 +146,7 @@ export class AppShell {
       copy: (text: string, notice?: string) => void this.clip?.copyRaw(text, notice),
       notice: (text: string) => this.clip?.say(text),
       toHome: (shown: string, chip: Chip) => this.toHome(shown, chip),
+      paste: () => this.clip?.pasteHeld(),
     };
   }
 

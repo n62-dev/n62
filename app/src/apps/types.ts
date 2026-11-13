@@ -30,6 +30,8 @@ export interface AppHost {
   /** R262: Menu › To Home: leave the app and put the answer on Home's line as a chip (`shown` its LaTeX, `chip` its value
    *  and facts), as a tapped history result goes on the line. */
   toHome(shown: string, chip: Chip): void;
+  /** R278f1: ☰ → Paste on the entry line, the path of Home's ☰ → Paste (the keys pressed meanwhile wait for the clipboard). */
+  paste(): void;
 }
 
 /** A place's glyph on the status line's tile (R82f2) and in the apps list (R84): maths-font text, or a drawn icon (Home's house). */
@@ -74,7 +76,7 @@ export interface MenuItem {
   readonly options?: readonly ValueOption[];
   /** Picking the item runs it and the sheet stays open (a switch in a list of switches). */
   readonly keep?: boolean;
-  /** A row that acts on the selected slot alone (R261: Symb's Clear): a view whose rows are all such rows still gets the
+  /** A row that acts on the selected slot or the entry line alone (R261: Symb's Clear; R278f1: Paste): a view whose rows are all such rows still gets the
    *  row pointing to the view with the analysis rows (R83, shell.svelte.ts). */
   readonly slotRow?: boolean;
   /** Picking the item runs it, or opens this follow-up list in place of the menu (e.g. Intersection: with which?). */
