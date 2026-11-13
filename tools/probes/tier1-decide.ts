@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Probe (G71, bug hunt N8): which Find tier-1 functions make a numeric decision inside the exact evaluation. Each one
-// is called on x = sin(10^70) and on x·10^12 in raw Giac at Digits P = 40 and at P + 40 = 80. At P the MPFR argument
+// is called on x = sin(10^70), on x·10^12, and (G306) on x^2, on (x,3) and (x,-1), and on the list [x,0,cos(10^70)]
+// (surd, atan2, ln of a power and sort decide only so) in raw Giac at Digits P = 40 and at P + 40 = 80. At P the MPFR argument
 // 10^70 is not exact (5^70 needs 163 bits), so sin(10^70) is wrong there (-0.5387…, right -0.1481…): a function whose
 // exact text (no float in it, no error) differs between the two precisions decided on the wrong value at P. Texts
 // that differ between two runs at P (random functions) are left out. Each deciding function is then marked as covered
-// when Home's G38 second decision runs for that input (restsOnDecision: a DECISION_FUNCTIONS name, a comparison, or
-// abs( in the result), and Home's display is shown next to the P + 40 text.
+// when Home's G38 second decision runs for that input (restsOnDecision: a DECISION_FUNCTIONS name, a comparison, abs(
+// in the result, a root of an even power or a logarithm of an integer power), and Home's display is shown next to the P + 40 text.
 //   node tools/probes/tier1-decide.ts            # every tier-1 function of app/src/find/_gen/find-index.json (npm run index)
 //   node tools/probes/tier1-decide.ts trunc sign # these names only
 // Engine: as tools/probes/engine.ts. Functions run in child processes in batches; a batch that does not answer within
@@ -16,7 +17,7 @@ import { fileURLToPath } from "node:url";
 import { loadNodeGiac } from "../../app/src/engine/nodeGiac.ts";
 
 const P = 40;
-const ARGS = ["sin(10^70)", "sin(10^70)*10^12"];
+const ARGS = ["sin(10^70)", "sin(10^70)*10^12", "sin(10^70)^2", "sin(10^70),3", "sin(10^70),-1", "[sin(10^70),0,cos(10^70)]"];
 const BATCH = 40;
 const BATCH_MS = 60_000;
 // Commands that change the session (settings, names, the random seed) or wait: they would spoil the calls after them.
@@ -107,7 +108,7 @@ console.log("| function | input | at P | at P + 40 | G38 runs | Home shows |");
 console.log("|---|---|---|---|---|---|");
 for (const row of rows) {
   const input = `${row.name}(${row.arg})`;
-  const covered = restsOnDecision(input, row.atP);
+  const covered = restsOnDecision(input, "typed", row.atP);
   const r = host.home(input, defaultHomeSettings).result;
   const m = r.ok ? markOf(precisionFacts(r), { format: "STD", digits: defaultHomeSettings.digits }) : null;
   const shown = r.ok ? `${m ? `${m.mark}${m.n !== undefined ? ` ${m.n}` : ""} ` : ""}${r.display}` : `error ${r.error ?? ""}`;

@@ -26,6 +26,9 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
   "arg", "angle", "instphase", "norm", "normalize", "polar", "polar_coordinates", "tri", "dfc", "classes", "Psi",
   // G139: our definitions (homeEval.ts ENGINE_DEFINITIONS, eseries.ts) that compare and floor an exact x inside
   "eseries", "sigfig",
+  // G306: an odd root by the sign of its argument (∛ is surd), a quadrant by the signs of y and x, an order by
+  // comparisons; surd(sin(10^70),3) is sin(10^70)^(1/3) at Digits 40 and -(-sin(10^70))^(1/3) at 80 (tier1-decide.ts)
+  "surd", "atan2", "sort", "SortA", "SortD", "sorta", "sortd", "sortperm",
 ]);
 
 /**
@@ -167,6 +170,7 @@ function hasComparison(input: string, q: Quoting): boolean {
 const RATIONAL_FUNCTIONS: ReadonlySet<string> = new Set([
   "sum", "product", "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "sign", "abs", "max", "min", "piecewise", "when",
   "ifte", "irem", "iquo", "gcd", "lcm", "comb", "factorial", "pasmod", "eseries", "sigfig",
+  "sort", "SortA", "SortD", "sorta", "sortd", "sortperm", // G306: an order of rationals, decided exactly
 ]);
 
 /**
@@ -186,7 +190,9 @@ export function rationalOnly(expr: string, q: Quoting): boolean {
     if (!INTEGER.test(args[2]!.replace(/^\s*-/, "")) || !INTEGER.test(args[3]!.replace(/^\s*-/, ""))) return false;
     bound.add(args[1]!.trim());
   }
-  if (!namesIn(expr, q).every((n) => bound.has(n))) return false;
+  // G306: `list[` is Giac's list type (the keys' braces), no name
+  const listType = !/(?<![A-Za-z0-9_])list(?!\[)/.test(expr);
+  if (!namesIn(expr, q).every((n) => bound.has(n) || (n === "list" && listType))) return false;
   // A power's exponent: a parenthesised one holding `/`, or a name that is not a bound variable, can be irrational.
   for (let at = expr.indexOf("^"); at >= 0; at = expr.indexOf("^", at + 1)) {
     const open = at + 1 + (expr.slice(at + 1).length - expr.slice(at + 1).trimStart().length);
@@ -216,7 +222,7 @@ export function decidingStored(giac: Giac): (name: string) => boolean {
 /** The result of `input` (printed as `result`) may rest on a decision Giac made at `Digits`: the input calls a
  *  decision function, or a name that is not a Giac built-in (`stored`: a stored function's body may decide,
  *  `f(x):=floor(x*10^12)` then `f(sin(10^60))`), or holds a comparison, or the result holds `abs(` (sqrt of an even
- *  power comes back as one), or a root of an even power (evenPowerRoot), or calls asin, acos or acosh on an argument that
+ *  power comes back as one), or a root of an even power (evenPowerRoot), or a logarithm of an integer power (logOfPower), or calls asin, acos or acosh on an argument that
  *  `complexArg` finds not real (G325, nonRealArg; none without it). An input of rationals only (rationalOnly) decides
  *  exactly. */
 export function restsOnDecision(
@@ -228,22 +234,47 @@ export function restsOnDecision(
 ): boolean {
   if (rationalOnly(input, q)) return false;
   const calls = functionsIn(input, q);
-  if (calls.some((f) => DECISION_FUNCTIONS.has(f)) || hasComparison(input, q) || result.includes("abs(") || evenPowerRoot(input, q)) return true;
+  if (calls.some((f) => DECISION_FUNCTIONS.has(f)) || hasComparison(input, q) || result.includes("abs(") || evenPowerRoot(input, q) || logOfPower(input, q)) return true;
   return calls.some(stored) || complexDecision(input, q, result, complexArg);
 }
 
 /** `s` holds a power with an even integer exponent (`^2`, `^(4)`, `^-2`, `^(-2)`; not `^0`, `^(2/3)`, `^2.5`), by the
- *  number reader (which reads the number without its sign). */
-function holdsEvenPower(s: string, q: Quoting): boolean {
+ *  number reader (which reads the number without its sign). `any` (G306): an integer exponent but 0 and 1 (`^3`, `^-1`)
+ *  over a base that is no number literal (10^1000 has an exact sign). */
+function holdsEvenPower(s: string, q: Quoting, any = false): boolean {
   for (const n of numbers(s, q)) {
     if (n.exp !== undefined || n.mant.includes(".")) continue;
     const lead = s.slice(Math.max(0, n.at - 3), n.at);
     const bracketed = lead.endsWith("^(") || lead.endsWith("^(-");
     if (bracketed ? !s.startsWith(")", n.end) : !lead.endsWith("^") && !lead.endsWith("^-")) continue;
     const v = BigInt(n.mant);
-    if (v > 0n && v % 2n === 0n) return true;
+    if (any ? (v > 1n || (v === 1n && lead.endsWith("-"))) && !numberBase(s, s.lastIndexOf("^", n.at)) : v > 0n && v % 2n === 0n) return true;
   }
   return false;
+}
+
+/** G306: the base of the power whose `^` is at `caret` in `s` is a number literal (`10^1000`, `2.5^3`), not a name
+ *  that ends in digits (`w2^3`). */
+function numberBase(s: string, caret: number): boolean {
+  let k = caret;
+  while (k > 0 && /[0-9.]/.test(s.charAt(k - 1))) k--;
+  return k < caret && !/[A-Za-z_]/.test(s.charAt(k - 1));
+}
+
+/** G306: the logarithms whose argument Giac splits by a sign it decides at Digits: ln(x^2) is 2*ln(x) when x looks
+ *  positive at 40 digits (ln(sin(10^70)^2) showed ≈ -3.81974684575+6.28318530718*i), log10 and logb the same (`\log_{2}`
+ *  is ln(…)/ln(2)). */
+const LOGS = ["ln", "log", "log10", "logb"];
+
+/** G306: a logarithm (LOGS) whose argument holds a power with an integer exponent but 0 and 1, odd or even
+ *  (ln(x^3) is 3*ln(x), on the other side of the cut for a negative x). */
+export function logOfPower(input: string, q: Quoting): boolean {
+  return callsOf(input, LOGS, q).some((c) => c.close >= 0 && holdsEvenPower(logArg(input.slice(c.open + 1, c.close), q), q, true));
+}
+
+/** The argument of a logarithm's call text: logb's first, the whole text otherwise. */
+function logArg(inner: string, q: Quoting): string {
+  return topLevelArgs(inner, q)[0] ?? inner;
 }
 
 /** G156: a `sqrt(` whose argument holds an even power, or a `^(1/2)` in an input that holds one. Giac takes the root
@@ -267,7 +298,7 @@ function topComparison(seg: string): boolean {
 /**
  * G156: the texts the decisions of `expr` are made on: the arguments of a decision function (abs included; asin and
  * acos of an argument `complexArg` finds not real when `text` is not real, G325) and of a stored function that decides (`stored`, decidingStored), each argument
- * or bracket (and `expr` itself) with a comparison at its top, the argument of a sqrt over an even power, and all of `expr` for a ^(1/2) over one or for an abs( Giac
+ * or bracket (and `expr` itself) with a comparison at its top, the argument of a sqrt over an even power and of a logarithm over an integer power (G306, logOfPower), and all of `expr` for a ^(1/2) over one or for an abs( Giac
  * printed (`text`) that `expr` does not call. A literal outside them (`sign(x)+10^2000`) is no decision's.
  */
 export function decisionArgs(expr: string, text: string, stored: (name: string) => boolean, complexArg: (arg: string) => boolean = () => false): string[] {
@@ -281,7 +312,7 @@ export function decisionArgs(expr: string, text: string, stored: (name: string) 
     const inner = expr.slice(open + 1, close);
     const args = topLevelArgs(inner, "typed");
     const name = named.get(open);
-    const decides = name !== undefined && (DECISION_FUNCTIONS.has(name) || (COMPLEX_DECISION_FUNCTIONS.has(name) && nonRealText(text) && complexArg(inner)) || (name === "sqrt" && holdsEvenPower(inner, "typed")) || stored(name));
+    const decides = name !== undefined && (DECISION_FUNCTIONS.has(name) || (COMPLEX_DECISION_FUNCTIONS.has(name) && nonRealText(text) && complexArg(inner)) || (name === "sqrt" && holdsEvenPower(inner, "typed")) || (LOGS.includes(name) && holdsEvenPower(logArg(inner, "typed"), "typed", true)) || stored(name));
     out.push(...(decides ? args : args.filter(topComparison)));
   }
   if (halfOfEvenPower(expr, "typed") || (text.includes("abs(") && ![...named.values()].includes("abs"))) out.push(expr);
