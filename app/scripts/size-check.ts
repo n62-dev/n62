@@ -3,6 +3,7 @@
 // build output, and exits 1 when a chunk is over its budget. Run by `npm run build` (so by build.sh) and as `npm run size`.
 //   node scripts/size-check.ts [distDir]        # default: app/dist
 // The Start chunk is the entry plus every chunk it imports statically (manifest `imports`, transitively), because all of it loads at start.
+// It must be one JS file, the entry (R294).
 // Units are Vite's: 1 kB = 1000 B, 1 MB = 1,000,000 B (so today's 142.62 kB start chunk is 142,626 B). Gzip is zlib's
 // default level, which is what `vite build` reports. Budgets for chunks that don't exist yet (Find, Units, qalc) apply
 // as soon as they appear in the build; until then they print as "not built". To change a budget, change docs/04 8.3 too.
@@ -97,6 +98,13 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
   };
   for (const [key, chunk] of Object.entries(manifest)) if (chunk.isEntry) visit(key);
   return [...files];
+}
+
+/** R294 (research/r21-chunks.md): the start is one JS file, the entry. Another JS file in `startFiles` means Rolldown cut a start
+ *  module out of the entry (a lazy chunk imports a value from it); vite.config.ts's `$initial` group forbids that cut. Returns the extra files. */
+export function extraStartFiles(manifest: Record<string, ManifestChunk>): string[] {
+  const entries = new Set(Object.values(manifest).filter((c) => c.isEntry).map((c) => c.file));
+  return startFiles(manifest).filter((f) => /\.m?js$/.test(f) && !entries.has(f));
 }
 
 /** G163: the unit view's entries plus the shared chunks that hold its modules, raw: 66.26 kB measured (open 26.91, find 9.05,
@@ -562,6 +570,9 @@ export function checkSizes(dist: string): Report {
   const inline = inlineRow(dist);
   if (inline !== null) rows.splice(1, 0, inline);
   else absent.unshift("Inline scripts");
+  const extra = extraStartFiles(readManifest(dist));
+  const startRow = rows.find((r) => r.rule === "Start chunk");
+  if (startRow !== undefined && extra.length > 0) startRow.failures.push(`Start chunk: the start is one JS file, but the build splits it: ${extra.join(", ")} (a lazy chunk imports a value from a start module; the $initial group in vite.config.ts should prevent that, research/r21-chunks.md)`);
   const missingFailures = missing.map((rule) => `${rule}: no chunk holds src/find/finder.ts (neither a dynamic entry nor a shared chunk named "finder"); the rule measures nothing`);
   return { rows, notBuilt: absent, failures: [...rows.flatMap((r) => r.failures), ...missingFailures] };
 }

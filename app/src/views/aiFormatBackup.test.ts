@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
 import { KeyboardSpecError, parseAction } from "../keyboard/keyboard.ts";
 import { USER_KEY_IDS, USER_LAYERS, UserKeys } from "../keyboard/userKeys.svelte.ts";
-import { BACKUP_FORMAT, BACKUP_KEYS, checkBackup, KEY_LAYERS, MAX_BACKUP_BYTES, SETTING_RULES, VALIDATORS, type CheckedBackup } from "../state/backup.ts";
+import { BACKUP_FORMAT, BACKUP_KEYS, checkBackup, MAX_BACKUP_BYTES, SETTING_RULES, VALIDATORS, type CheckedBackup } from "../state/backup.ts";
 import { fakeIndexedDb, type FakeIdb } from "../state/fakeIdb.ts";
 import { GROUP_FIELDS, PRESET_GROUPS } from "../state/presetRecord.ts";
 import { idbPresetStore, Presets } from "../state/presets.svelte.ts";
@@ -110,8 +110,7 @@ describe("the format's backup part: every rule it states is the code's (R126)", 
     expect(USER_KEY_IDS).toEqual(["u1", "u2", "u3", "u4", "u5", "u6"]);
     expect(s).toContain("`u1` … `u6`");
     expect([...s.matchAll(/`(primary|shift|alpha)`/g)].map((m) => m[1])).toEqual(["primary", "shift", "alpha"]);
-    expect(KEY_LAYERS).toEqual(["primary", "shift", "alpha"]);
-    expect(USER_LAYERS).toEqual(KEY_LAYERS);
+    expect(USER_LAYERS).toEqual(["primary", "shift", "alpha"]);
     const slot = (b: unknown): boolean => VALIDATORS["userKeys"]?.({ u1: { primary: b } }) === true;
     expect(slot(null)).toBe(true);
     expect(slot({ label: "x", action: { type: "x" } })).toBe(true);

@@ -12,7 +12,8 @@ export default defineConfig(({ command }) => ({
   define: { __GIAC_MJS__: JSON.stringify((command === "build" && engineFiles("public/engine")?.mjs) || "giac.mjs") },
   base: "./",
   plugins: [yamlPlugin(), aboutPlugin(), svelte(), themeCssPlugin(), chunkModulesPlugin(), pwaLite()],
-  build: { target: "es2022", manifest: true },
+  // R294 (research/r21-chunks.md): every module an entry imports statically stays in the one start chunk, so a lazy chunk that imports a start value no longer makes Rolldown cut it out into shared files.
+  build: { target: "es2022", manifest: true, rolldownOptions: { output: { codeSplitting: { groups: [{ name: "start", tags: ["$initial"], priority: 100 }] } } } },
   worker: { plugins: () => [yamlPlugin()] }, // golden.worker.ts reads the golden YAML files (A20)
   // spec/keyboard.yaml lives one level above app/
   server: { host: true, fs: { allow: [".."] } },

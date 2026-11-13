@@ -4,11 +4,12 @@
 // Undo write in one transaction.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dataText } from "../i18n/enData.ts";
-import { BACKUP_KEYS, checkBackup, HISTORY_ROWS, KEY_LAYERS, MAX_BACKUP_BYTES, VALIDATORS, type CheckedBackup, type RefusedBackup } from "./backup.ts";
+import { BACKUP_KEYS, checkBackup, MAX_BACKUP_BYTES, VALIDATORS, type CheckedBackup, type RefusedBackup } from "./backup.ts";
 import { fakeIndexedDb, type FakeIdb } from "./fakeIdb.ts";
 import { holdWrites, readUndo, restoreParts, UNDO_KEY, undoRestore } from "./restore.ts";
 import { FakeCalc } from "../calc/fake.ts";
-import { USER_KEY_IDS, USER_LAYERS, UserKeys } from "../keyboard/userKeys.svelte.ts";
+import { USER_KEY_IDS, UserKeys } from "../keyboard/userKeys.svelte.ts";
+import { HISTORY_LIMIT } from "./results.ts";
 import { defaultLook } from "../theme/look.ts";
 import { migrateSettings, Session, SETTINGS_SCHEMA } from "./session.svelte.ts";
 import { DATA_VERSION, idbKv } from "./storage.ts";
@@ -243,8 +244,8 @@ describe("the repeated rules agree with the start's readers", () => {
       [{ status: "done" }],
       [{ status: "done", latex: 3 }],
       [null],
-      many(HISTORY_ROWS),
-      many(HISTORY_ROWS + 1),
+      many(HISTORY_LIMIT),
+      many(HISTORY_LIMIT + 1),
     ];
     for (const rows of cases) {
       const n = await restored({ home: rows });
@@ -252,7 +253,6 @@ describe("the repeated rules agree with the start's readers", () => {
     }
   });
   it("your keys: the same key ids and layers as UserKeys", () => {
-    expect(KEY_LAYERS).toEqual(USER_LAYERS);
     for (const id of USER_KEY_IDS) expect(VALIDATORS["userKeys"]?.({ [id]: { primary: null } }), id).toBe(true);
     for (const id of ["u0", "u99", "sin", "U1"]) expect(VALIDATORS["userKeys"]?.({ [id]: {} }), id).toBe(false);
   });

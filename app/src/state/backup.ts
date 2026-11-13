@@ -5,12 +5,15 @@
 import { validDefs } from "../engine/defs.ts";
 import { dataText, enData, type DataKey } from "../i18n/enData.ts";
 import { KeyboardSpecError, keyboard, parseAction } from "../keyboard/keyboard.ts";
+import { USER_LAYERS } from "../keyboard/userKeys.svelte.ts";
 import { defaultLook, validLook } from "../theme/look.ts";
 import { CELL_KEYS } from "../units/userCells.svelte.ts";
 import { isFmtMode, normalizeCycle } from "./displayMode.ts";
 import { migratePresetKeys, PRESETS_KEY, renamedLook, renamedLooks } from "./presetRecord.ts";
 import { DATA_VERSION, kvSet, unstamp, type Migrations } from "./storage.ts";
 import { MIGRATIONS } from "./migrations.ts";
+import { HISTORY_LIMIT } from "./results.ts";
+import { HAPTIC_MS_RANGE, MAX_DIGITS } from "./session.svelte.ts";
 import { kvGetRaw, type RawRecord } from "./storageRaw.ts";
 
 /** The keys a backup holds (docs/04 6.2). A new key joins by being added here; the unit test fails until it is here or
@@ -142,16 +145,6 @@ const whole = (x: unknown, lo: number, hi: number): boolean => typeof x === "num
 const fields = (x: unknown, rules: Readonly<Record<string, (v: unknown) => boolean>>): boolean =>
   isObject(x) && Object.entries(x).every(([k, v]) => Object.hasOwn(rules, k) && rules[k]?.(v) === true);
 
-// The start's readers live in the start chunk (session.svelte.ts, keyboard/userKeys.svelte.ts). An import of them from
-// this lazy chunk makes the bundler split the start chunk into six files (59.09 → 60.62 kB gzip, measured in R38b), so
-// the rules they apply are repeated here, as storageRaw.ts repeats storage.ts's constants, and restore.test.ts runs both
-// on the same values and fails when they disagree. What needs no such import is used as it is (validLook,
-// normalizeCycle, validDefs, the keyboard spec, CELL_KEYS).
-
-/** session.svelte.ts HISTORY_LIMIT: rows kept per view. */
-export const HISTORY_ROWS = 200;
-/** keyboard/userKeys.svelte.ts USER_LAYERS. */
-export const KEY_LAYERS: readonly string[] = ["primary", "shift", "alpha"];
 /** The settings fields `migrateSettings` reads and the values it keeps as they are; any other value it resets. A
  *  preset's apply checks each field it holds with them too (R88, state/presets.svelte.ts). */
 export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = {
@@ -159,7 +152,7 @@ export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = 
   format: (x) => x === "std" || x === "sci" || x === "eng" || x === "pfx",
   entry: (x) => x === "textbook" || x === "line",
   decimalMark: (x) => x === "point" || x === "comma",
-  digits: (x) => whole(x, 1, 30), // MAX_DIGITS
+  digits: (x) => whole(x, 1, MAX_DIGITS),
   fixDecimals: (x) => whole(x, 0, 12),
   uncertainty: (x) => x === "sigma" || x === "muted", // R40
   marks: (x) => x === "muted" || x === "colour" || x === "reason", // R124
@@ -167,7 +160,7 @@ export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = 
   fmtCycle: (x) => Array.isArray(x) && canon(normalizeCycle(x.filter(isFmtMode))) === canon(x),
   // R122: the nested groups check the fields they hold; a field missing (an older file) is filled by migrateSettings
   // at the next start, as it fills one missing from a stored record. A field this version does not know is a fault.
-  haptics: (x) => fields(x, { on: bool, strength: (v) => whole(v, 0, 100), ms: (v) => whole(v, 5, 100), click: bool }), // HAPTIC_MS_RANGE
+  haptics: (x) => fields(x, { on: bool, strength: (v) => whole(v, 0, 100), ms: (v) => whole(v, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max), click: bool }),
   look: (x) => isObject(x) && Object.entries(validLook(x, defaultLook())).every(([k, v]) => !(k in x) || x[k] === v) && Object.keys(x).every((k) => Object.hasOwn(defaultLook(), k)),
 };
 
@@ -215,7 +208,7 @@ export const VALIDATORS: Validators = {
       return (
         xs === undefined ||
         (Array.isArray(xs) &&
-          xs.length <= HISTORY_ROWS &&
+          xs.length <= HISTORY_LIMIT &&
           xs.every((i: unknown) => isObject(i) && (i["status"] === "done" || i["status"] === "error") && typeof i["latex"] === "string"))
       );
     }),
@@ -224,7 +217,7 @@ export const VALIDATORS: Validators = {
     slotsOk(
       v,
       keyboard.keys.filter((k) => k.user).map((k) => k.id), // USER_KEY_IDS
-      KEY_LAYERS,
+      USER_LAYERS,
       (b) => text(b["label"]) && actionOk(b["action"]),
     ),
   unitPadCells: (v) =>
