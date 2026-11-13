@@ -82,7 +82,7 @@ function usedBy(host: FactsHost, reads: InputReads): Used[] {
 /** R36f1: the user's names among `used` whose facts are not exact and that are not `causes` (why.rounded); never ours
  *  (a chip `pasr_<k>`, a `pas` helper). */
 function roundedOf(host: FactsHost, used: readonly Used[], causes: readonly string[]): string[] {
-  return used.filter((u) => !u.facts.exact && !causes.includes(u.name) && !isOurs(u.name, (n) => host.byName.has(n))).map((u) => u.name);
+  return used.filter((u) => !u.facts.exact && !causes.includes(u.name) && !isOurs(u.name)).map((u) => u.name);
 }
 
 /** The merged facts of the names an input read, and the names that lent them. */

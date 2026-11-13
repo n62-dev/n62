@@ -423,7 +423,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  one-line methods. The merge base 5bfdb4c1 measures 61.18 kB gzip (172.85 kB raw), the branch 61.34 kB (173.25 kB raw,
  *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk; 61.35 kB after merging phase-1 31b97787): 61.35 kB
  *  + 0.05 kB.
- *  61,400 → 61,700 B (R281): the store sheet. Its model, view, words and key reading ride in lazy chunks (views/storeSheet.svelte.ts
+ *  61,400 → 61,460 B (G341, no start-chunk source changed): phase-1 8214eddf measures 61,400 B gzip, the branch 61,403 B,
+ *  both 173,248 B raw: the start chunk names the lazy chunks and the Find index by their hashed file names, which the
+ *  parser's and the index's changes renamed, and the new names gzip 3 B differently (as G313f1). 61,403 B + 0.05 kB,
+ *  rounded up to the next 0.01 kB.
+ *  61,460 → 61,700 B (R281): the store sheet. Its model, view, words and key reading ride in lazy chunks (views/storeSheet.svelte.ts
  *  in Vars' chunk, SheetCells.svelte with the sheet's view, sheetKeys.ts storeKey, i18n/enStore.ts); what stays is Store ▶
  *  opening it (route.ts run, App.svelte openStore and the row actions' `stored`), the sheet's disarm on a key, the store
  *  sheet's case in sheetPress (a key that types no name goes on to the line, ⌫ on an empty name) and the keypad drawing no

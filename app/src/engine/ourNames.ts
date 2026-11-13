@@ -71,6 +71,28 @@ export function isChipName(name: string): boolean {
  *  each definition with Giac's own tree (bridge-2's `bound`). */
 export const OUR_BOUND = "pask_";
 
+/** G341 (F210): every name N62's Giac text defines, stores or binds starts with this (the user's names never do: the
+ *  parser refuses a typed one, input/parse.ts; the library reader too, library.ts; the state read takes one for ours,
+ *  stateRead.ts isOurs). A helper added later can take any such name without meeting a name a user stored. */
+export const OUR_PREFIX = "pas";
+/** CAS's answer slot (host.ts), the one stored name of ours outside OUR_PREFIX (step 1 of G341: a typed call reached it). */
+export const CAS_ANS = "pcasans";
+/** G341: the names our Giac text defines that do not start with OUR_PREFIX, by kind: the functions a user calls by
+ *  their name (homeEval.ts ENGINE_DEFINITIONS, eseries), the Giac names icdf.ts replaces by ours (ICDF_REPLACED; their
+ *  meaning is ours too), and CAS_ANS. A user may call these; ourNames.test.ts fails on a new name outside both. */
+export const OUR_OTHER_NAMES: readonly string[] = [
+  "sigfig", "par", "linreg", "stats1", "shl", "shr", "rotl", "rotr", "bnot", "eseries",
+  "normald_icdf", "student_icdf", "chisquare_icdf", "fisher_icdf", "normal_icdf", "erf", "erfc",
+  "student_cdf", "studentd_cdf", "chisquare_cdf", "chisquared_cdf", "normald_cdf", "normal_cdf", "UTPN",
+  CAS_ANS,
+];
+
+/** G341: a name the user may not write (the parser and the library reader refuse it): one that starts with OUR_PREFIX
+ *  (lower case: `Pas` and `spas` are the user's), and CAS_ANS. */
+export function isOurName(name: string): boolean {
+  return name.startsWith(OUR_PREFIX) || name === CAS_ANS;
+}
+
 /** G100: the names our own test helper stores into (input/emit.ts equalityTest: the float flag, the difference and
  *  the verdict): a store into one is not the user's. */
 export const OUR_STORES: readonly string[] = [EQ_INEXACT_FLAG, EQ_DIFF, EQ_VERDICT];

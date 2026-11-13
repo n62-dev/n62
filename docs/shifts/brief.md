@@ -98,7 +98,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 559 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time | annabell, Sonnet | `p1/annabell-casstart2` | the v0.1.0 tag |
 | 737 | G224 SI-prefix display drops trailing zeros | gorge, Sonnet | `p1/gorge-pfxtrim` | – |
 | 739 | [G226](packages/G226.md) integer shift: negative counts and big integers (F193) | gorge, Opus | `p1/gorge-intshift` | – |
-| 755 | [G341](packages/G341.md) names that start with pas are N62's (F210) | gorge, Opus | `p1/gorge-pasnames` | – |
+| 755 | G341 names that start with pas are N62's (F210) | gorge, Opus | `p1/gorge-pasnames` | – |
 | 756 | [G342](packages/G342.md) a library file's version is the last one that changed library text | gorge, Sonnet | `p1/gorge-libversion` | – |
 | 683 | [R199](packages/R199.md) templates in the plain-text session (F180) | ron, Sonnet | `p1/ron-plaintemplates` | – |
 | 699 | [G331](packages/G331.md) patch 0046: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |

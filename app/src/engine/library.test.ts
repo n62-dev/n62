@@ -55,21 +55,50 @@ describe.skipIf(!giacAvailable())("parseLibrary (Giac's tree, no evaluation)", (
   }
   it("refuses G50's complex helper as N62's own name (derived: the audit's pastanh(z):=0 case; pastanh went with G75, pasasin, pasacos and pasacosh with G60)", () => {
     for (const name of ["pasatan"]) {
-      expect(() => parseLibrary(`// n62 library 1\n// d\n${name}(z):=0\n`, parse, LIBRARY_FORMAT), name).toThrow(/pas\w+ is one of N62's own names/);
+      expect(() => parseLibrary(`// n62 library 1\n// d\n${name}(z):=0\n`, parse, LIBRARY_FORMAT), name).toThrow(/pas\w+ starts with pas, which N62 keeps for its own names/);
     }
   });
   it("refuses paspoly1, G106f1's helper, as N62's own name", () => {
-    expect(() => parseLibrary("// n62 library 1\n// d\npaspoly1(v):=5\n", parse, LIBRARY_FORMAT)).toThrow(/paspoly1 is one of N62's own names/);
-    expect(() => parseLibrary("// n62 library 1\n// d\npaspoly1:=5\n", parse, LIBRARY_FORMAT)).toThrow(/paspoly1 is one of N62's own names/);
+    expect(() => parseLibrary("// n62 library 1\n// d\npaspoly1(v):=5\n", parse, LIBRARY_FORMAT)).toThrow(/paspoly1 starts with pas, which N62 keeps for its own names/);
+    expect(() => parseLibrary("// n62 library 1\n// d\npaspoly1:=5\n", parse, LIBRARY_FORMAT)).toThrow(/paspoly1 starts with pas, which N62 keeps for its own names/);
   });
   it("G139: refuses pasesb, eseries's helper, as N62's own name (a library pasesb loaded over ours gave eseries(6,4.6) = 0)", () => {
-    expect(() => parseLibrary("// n62 library 1\n// d\npasesb(n,x):=[0,0,1,0,-1]\n", parse, LIBRARY_FORMAT)).toThrow(/pasesb is one of N62's own names/);
-    expect(() => parseLibrary("// n62 library 1\n// d\npasesb:=5\n", parse, LIBRARY_FORMAT)).toThrow(/pasesb is one of N62's own names/);
+    expect(() => parseLibrary("// n62 library 1\n// d\npasesb(n,x):=[0,0,1,0,-1]\n", parse, LIBRARY_FORMAT)).toThrow(/pasesb starts with pas, which N62 keeps for its own names/);
+    expect(() => parseLibrary("// n62 library 1\n// d\npasesb:=5\n", parse, LIBRARY_FORMAT)).toThrow(/pasesb starts with pas, which N62 keeps for its own names/);
   });
   it("refuses pasdeg, the degree factor (R64), as a name and in a body", () => {
-    expect(() => parseLibrary("// n62 library 1\n// d\npasdeg:=5\n", parse, LIBRARY_FORMAT)).toThrow(/pasdeg is one of N62's own names/);
-    expect(() => parseLibrary("// n62 library 1\n// d\nf(x):={local pasdeg; pasdeg:=2; return sin(x);}\n", parse, LIBRARY_FORMAT)).toThrow(/pasdeg is one of N62's own names/);
-    expect(() => parseLibrary("// n62 library 1\n// d\nf(x):=x*pasdegree\n", parse, LIBRARY_FORMAT)).not.toThrow();
+    expect(() => parseLibrary("// n62 library 1\n// d\npasdeg:=5\n", parse, LIBRARY_FORMAT)).toThrow(/pasdeg starts with pas, which N62 keeps for its own names/);
+    expect(() => parseLibrary("// n62 library 1\n// d\nf(x):={local pasdeg; pasdeg:=2; return sin(x);}\n", parse, LIBRARY_FORMAT)).toThrow(/pasdeg starts with pas, which N62 keeps for its own names/);
+    // G341: pasdegree starts with pas too; Pasdeg is the user's
+    expect(() => parseLibrary("// n62 library 1\n// d\nf(x):=x*pasdegree\n", parse, LIBRARY_FORMAT)).toThrow(/pasdegree starts with pas/);
+    expect(() => parseLibrary("// n62 library 1\n// d\nf(x):=x*Pasdeg\n", parse, LIBRARY_FORMAT)).not.toThrow();
+  });
+  it("G341 (F210): refuses a definition named pasx, pass or pasnew, with the parser's reason; pcasans too", () => {
+    const lib = (d: string): string => `// n62 library 1\n// d\n${d}\n`;
+    for (const n of ["pasx", "pass", "pasnew", "pascal", "pasr_7"]) {
+      const why = new RegExp(`line 3: ${n} starts with pas, which N62 keeps for its own names`);
+      expect(() => parseLibrary(lib(`${n}:=5`), parse, LIBRARY_FORMAT), n).toThrow(why);
+      expect(() => parseLibrary(lib(`${n}(x):=x+1`), parse, LIBRARY_FORMAT), n).toThrow(why);
+      expect(() => parseLibrary(lib(`${n}:=x->x+1`), parse, LIBRARY_FORMAT), n).toThrow(why);
+    }
+    expect(() => parseLibrary(lib("pcasans:=5"), parse, LIBRARY_FORMAT)).toThrow(/line 3: pcasans is one of N62's own names/);
+    // the user's: another case, another place
+    expect(parseLibrary(lib("Pass:=5"), parse, LIBRARY_FORMAT).defs[0]!.name).toBe("Pass");
+    expect(parseLibrary(lib("spas(x):=x+1"), parse, LIBRARY_FORMAT).defs[0]!.name).toBe("spas");
+  });
+  it("G341 (F210): refuses a body or a test line that names pasx, pass or pasnew (a free pasx read Solve's root)", () => {
+    const lib = (d: string, t?: string): string => `// n62 library 1\n// d\n${d}\n${t !== undefined ? `// test: ${t}\n` : ""}`;
+    for (const n of ["pasx", "pass", "pasnew"]) {
+      const why = (line: number) => new RegExp(`line ${line}: ${n} starts with pas, which N62 keeps for its own names`);
+      expect(() => parseLibrary(lib(`f(x):=x+${n}`), parse, LIBRARY_FORMAT), n).toThrow(why(3));
+      expect(() => parseLibrary(lib(`g:=2*${n}`), parse, LIBRARY_FORMAT), n).toThrow(why(3));
+      expect(() => parseLibrary(lib(`f(x):={ local ${n}; ${n}:=x; return ${n}; }`), parse, LIBRARY_FORMAT), n).toThrow(why(3));
+      expect(() => parseLibrary(lib(`f(x):=${n}(x)`), parse, LIBRARY_FORMAT), n).toThrow(why(3));
+      expect(() => parseLibrary(lib("f(x):=x", `f(${n})==${n}`), parse, LIBRARY_FORMAT), n).toThrow(why(4));
+    }
+    // a string that holds one names nothing; the user's mod is written mod (the export writes pasmod back so: step 1)
+    expect(parseLibrary(lib('f(x):="pasx"', 'f(1)=="pasx"'), parse, LIBRARY_FORMAT).defs[0]!.tests).toHaveLength(1);
+    expect(parseLibrary(lib("f(x):=mod(x,3)", "f(7)==1"), parse, LIBRARY_FORMAT).defs).toHaveLength(1);
   });
   it("G93: refuses a body that clears names (rm_a_z, restart, restart_vars, restart_modes, rm_all_vars), as a value too (derived)", () => {
     for (const c of ["rm_a_z(1)", "restart(0)", "restart_vars(0)", "restart_modes()", "rm_all_vars()"]) {
@@ -530,7 +559,8 @@ describe.skipIf(!giacAvailable())("the parser's letter stand-ins in library file
 
   it("a name that stays refused: pasc_x, pasdeg, x_ and foo_ (a trailing _ that is no stand-in)", () => {
     for (const n of ["pasc_x", "pasdeg", "x_", "foo_"]) {
-      expect(() => parseLibrary(`// n62 library 1\n// d\n${n}:=1\n`, parse, LIBRARY_FORMAT), n).toThrow(new RegExp(`line 3: ${n} is one of N62's own names`));
+      const why = n.startsWith("pas") ? "starts with pas, which N62 keeps for its own names" : "is one of N62's own names"; // G341
+      expect(() => parseLibrary(`// n62 library 1\n// d\n${n}:=1\n`, parse, LIBRARY_FORMAT), n).toThrow(new RegExp(`line 3: ${n} ${why}`));
     }
     expect(() => parseLibrary("// n62 library 1\n// d\nfoo_(x):=x\n", parse, LIBRARY_FORMAT)).toThrow(/foo_ is one of N62's own names/);
   });

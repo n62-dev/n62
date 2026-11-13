@@ -13,7 +13,7 @@ import { ENGINE_DEFINITIONS, WORKER_DEFINITION_NAMES } from "./homeEval.ts";
 import { DOUBLE_DIGITS } from "./numeric.ts";
 import { definedName, isName, programParams, type PrintedNode } from "./giacPrint.ts";
 import { COMPLEX_DEFINITIONS } from "./complex.ts";
-import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT, OUR_BOUND as K } from "./ourNames.ts";
+import { isOurName, OUR_BOUND as K } from "./ourNames.ts";
 import { UNIT_DEFINITIONS } from "../units/evaluate.ts";
 import { aboutsPart } from "./assumed.ts";
 
@@ -68,8 +68,8 @@ export function changedPart(digits: number, known: readonly string[], assumed: r
 /** The names in a list of the state part's print (an element of `lname`). */
 const idents = (n: PrintedNode | undefined): string[] => (n?.items ?? []).map((x) => x.raw).filter((x) => isName(x));
 
-/** Our own engine names (definitions, slots, chips, constants, the degree factor): not user state. A name that starts
- *  with `pas` is ours unless `user` holds it (the log, or the input's text names it). */
+/** Our own engine names (definitions, slots, chips, constants, the degree factor): not user state. G341: every name that
+ *  starts with `pas` is ours (ourNames.ts isOurName: the parser and the library reader refuse one as the user's). */
 const OURS = new Set<string>([
   ...Object.keys(ENGINE_DEFINITIONS),
   ...WORKER_DEFINITION_NAMES,
@@ -78,21 +78,15 @@ const OURS = new Set<string>([
     const name = definedName(d);
     return name !== null ? [name] : [];
   }),
-  "pcasans",
-  "pasdeg",
-  EQ_INEXACT_FLAG,
-  EQ_DIFF,
-  EQ_VERDICT,
 ]);
 
-export function isOurs(name: string, user: (name: string) => boolean): boolean {
-  if (OURS.has(name) || name.startsWith(CHIP_PREFIX) || name.startsWith("pasc_")) return true;
-  return name.startsWith("pas") && !user(name);
+export function isOurs(name: string): boolean {
+  return OURS.has(name) || isOurName(name);
 }
 
 /** The table from a state part: user names with a stored value (an assumed name alone holds itself: left out). Null
  *  when it is not the list statePart builds. */
-export function tableOf(n: PrintedNode, user: (name: string) => boolean, kept?: ReadonlyMap<string, StoredName>): Map<string, StoredName> | null {
+export function tableOf(n: PrintedNode, kept?: ReadonlyMap<string, StoredName>): Map<string, StoredName> | null {
   const list = n.items?.[1]?.items;
   if (!n.items || (n.items.length !== 3 && n.items.length !== 4) || !list) return null;
   const out = new Map<string, StoredName>();
@@ -104,7 +98,7 @@ export function tableOf(n: PrintedNode, user: (name: string) => boolean, kept?: 
       continue;
     }
     const [k, v, ns] = e.items;
-    if (!k || v?.str === undefined || !isName(k.raw) || isOurs(k.raw, user) || v.str === k.raw) continue;
+    if (!k || v?.str === undefined || !isName(k.raw) || isOurs(k.raw) || v.str === k.raw) continue;
     const head = programParams(v.str);
     const params = new Set(head ?? []);
     out.set(k.raw, { text: v.str, names: idents(ns).filter((x) => !params.has(x) && x !== k.raw), fn: head !== null });
