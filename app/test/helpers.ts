@@ -94,7 +94,7 @@ export async function menuItem(page: Page, id: string): Promise<void> {
 }
 
 /** A system paste into the entry field (the `paste` event the context menu and Shift+Insert deliver, R114, with the clipboard's
- *  text), for a test of the system paste in an app view (☰ → Paste is the other way in, R278f1). The clipboard permissions are the spec's. */
+ *  text), for the views whose ☰ has no Paste item (Solve, Function). The clipboard permissions are the spec's. */
 export async function systemPaste(page: Page): Promise<void> {
   await page.evaluate(async () => {
     const text = await navigator.clipboard.readText();

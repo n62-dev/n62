@@ -452,8 +452,8 @@ cases:
 
   - id: c71
     area: entry
-    title: "a hold on the last result copies it; ☰ Paste (7) puts it on the line (R276, owner 2026-11-10)"
-    keys: [d4, mul, d5, enter, {hold: "result:last"}, "@menu", d7, add, d1, enter]
+    title: "a hold on the last result copies it; ☰ Paste (7) puts it on the line: 20 is copied and a second result 3 is on screen, so a failed hold or paste gives 4 and a ☰ that does not open gives 8, not 21 (R276, owner 2026-11-10; R278f2)"
+    keys: [d4, mul, d5, enter, {hold: "result:last"}, d3, enter, "@menu", d7, add, d1, enter]
     expect: { result: "21", mark: "=" }
     value: "21"
     source: derived
