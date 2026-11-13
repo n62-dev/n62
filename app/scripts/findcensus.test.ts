@@ -252,4 +252,16 @@ describe("findcensus stage", () => {
     const hang = row("ecm_factor", "cas", 0, "hang");
     expect(knownText("# h\n", [hang], [], {})).toBe('# h\nfindings:\n  unfiled: ["cas ecm_factor/0"]\ndeadline: ["cas ecm_factor/0"]\nclasses:\n  "ecm_factor": "|h"\n');
   });
+  it("runs a `layout` input that moved again alone, and fails when it still differs (G226)", () => {
+    const known = { classes: { convert: "u|u", erfc: "c|" }, layout: ["cas convert/1", "home gone/0"] };
+    const moved = row("convert", "cas", 1, "symbolic");
+    const now = [moved, row("erfc", "home", 0, "wrong")];
+    // convert is on the layout list, erfc is not: only convert runs again alone
+    expect(timingSuspects(now, known).map((r) => r.id)).toEqual(["cas convert/1"]);
+    // alone it still differs: a class change, not timing
+    expect([...timingChanges(now, new Set(["cas convert/1"]), known)]).toEqual([]);
+    expect(censusStage([moved], [], { classes: { convert: "|u" }, layout: ["cas convert/1"] }).summary).toBe("0 findings filed, 1 class changes, 0 new findings, 0 now passing");
+    // the known file keeps the list, without the ids no longer run
+    expect(knownText("# h\n", [moved], [], known)).toBe('# h\nfindings:\nlayout: ["cas convert/1"]\nclasses:\n  "convert": "|s"\n');
+  });
 });

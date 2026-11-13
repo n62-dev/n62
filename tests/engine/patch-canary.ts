@@ -178,6 +178,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G340, patch 0045: algnum_convert rewrites only the rootofs lvar lists at the top level, so one inside a power kept its place and
   // the power's base was written with the generator's variable (normal(sqrt(1+sqrt(1+2^(1/3)))) = 0.00732, right 1.58218)
   ["0045-algnum-convert-nested-rootof.patch", "giac-2.1.0/src/sym2poly.cc", /v=lvar\(e\);\s*vecteur vr,wr;\s*\/\/ rewrite rootofs inside e\s*for \(int i=0;i<v\.size\(\);\+\+i\)\{\s*if \(v\[i\]\.is_symb_of_sommet\(at_rootof\)\)\{/, "int algnum_convert(const gen & e_,gen & E,gen & G,vecteur & syst,vecteur & vars,vecteur & v,vecteur & varapprox,ext_param_t & extpar,GIAC_CONTEXT){"],
+  // G226, patch 0046: shiftrotate shifts an _INT_ with the C >> and << (the count read mod 32, a left shift wrapping into the sign bit)
+  // and returns a _ZINT unchanged (shift(1,-70) = 64, shift(2^70,1) = 2^70)
+  ["0046-shift-integer-exact.patch", "giac-2.1.0/src/ti89.cc", /if \(a\.type==_INT_\)\{\s*if \(right\)\s*return a\.val >> nbre;\s*else\s*return a\.val << nbre;/, "static gen shiftrotate(const gen & g,bool right){"],
 ];
 
 const tar = tarball(SOURCES.giac);
