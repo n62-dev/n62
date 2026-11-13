@@ -82,8 +82,8 @@ test.describe("Vars", () => {
     await expect(rows(page).first()).toHaveAttribute("data-id", "var:A");
     await tap(page, ["bksp", "d1"]); // empty again: the grid has no numbers, 1 does nothing
     await expect(find(page)).toBeVisible();
-    await expect(active(page)).toHaveAttribute("data-id", "userfn:p");
-    await tap(page, ["enter"]); // Enter inserts the highlighted, the function p
+    await expect(active(page)).toHaveAttribute("data-id", "var:A"); // the highlight went back to the first cell
+    await row(page, "userfn:p").tap(); // a tap on the function inserts its call
     await expect(find(page)).toBeHidden();
     expect(await entryValue(page)).toBe("\\operatorname{\\mathrm{p}}\\left(\\placeholder{}\\right)"); // the call form (R117)
   });

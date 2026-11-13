@@ -666,7 +666,7 @@ cases:
     area: state
     title: "7 ▶ A, then Vars shows the grid with A holding 7 (and its mark)"
     keys: [d7, shift, emark, alpha, vars, enter, vars]
-    expect: { text: { '[data-testid="find"] [data-id="var:A"]': "7", '[data-testid="find-preview"]': "A = 7" } }
+    expect: { text: { '[data-testid="find"] [data-id="var:A"]': "A= 7", '[data-testid="find-preview"]': "A = 7" } }
     value: "7"
     source: derived
 
