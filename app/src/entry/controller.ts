@@ -23,7 +23,8 @@ export class EntryController {
   private grown: import("./matgrow.ts").Grown | undefined;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
-  private stored: string[] = [];
+  /** The user's names (setNames); hwkeys.ts reads them (R198: a typed name of the user's stays the user's). */
+  stored: string[] = [];
   private pendingValue: string | undefined;
   /** R34: the line was set or cleared before the field was up, so a line kept from before a kill no longer applies. */
   private keptStale = false;

@@ -52,7 +52,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F172, A73f2 (after the tag).** Stored history costs nothing, the rows drawn at start do (bar 1.5 s): a CAS-last cold start is 1507 ms against Home's 1323; A73f2 says where.
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
-- **F199, R131 built, R198 (named limit).** Hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error.
+- **F199, R131 and R198 built.** Hardware keyboard: typed `sin(1)` is the function (was `s*i_*n*(1)`).
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **Night review 2026-11-09:** the rest in [research/night-review-2026-11-09.md](research/night-review-2026-11-09.md).
 

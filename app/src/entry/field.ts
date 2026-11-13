@@ -3,7 +3,7 @@
 // here needs the field, so it loads with MathLive (EntryController.load), outside the start chunk; keys pressed before
 // it is there are queued by the controller and replayed through runOnField.
 import type { MathfieldElement } from "mathlive";
-import type { ActionBody } from "../keyboard/keyboard.ts";
+import type { ActionBody, TypedCall } from "../keyboard/keyboard.ts";
 import { deleteAtTemplate } from "./delete.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
@@ -237,6 +237,11 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
   }
   // R27b (F23): right after piecewise's `if ` MathLive would type text; our keys only ever type maths
   if (a.kind !== "cmd" && mf.mode === "text") mf.mode = "math";
+  if (a.kind === "insert" && a.call) {
+    typedCall(mf, a.latex, a.call);
+    mf.focus();
+    return;
+  }
   if (isEMark(a) && noNumberBefore(mf)) {
     // where no number can come before the mark it gets a leading 1, as on the reference: on an empty line (1ᴇ;
     // spec/mapping/vc-2026-10-11/keys.yaml r7c1) and after an operator (2×1ᴇ; G2 item 40, R68)
@@ -278,6 +283,17 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
   if (a.kind === "insert" && a.latex === GROW_MATRIX) grown?.add(mf); // R185: this matrix grows
   if (a.kind === "cmd") settle(mf, a.name); // R27b (F23): ◀ ▶ ▲ ▼ and the trackpad stop only at a box
   mf.focus();
+}
+
+/** R198: a function's name typed on a hardware keyboard, then `(` (hwkeys.ts): the name's letters give way to the
+ *  function, the cursor in its argument (a box: #0 and #@ would take the selected letters in). The letters are read
+ *  again here; a line that no longer ends in them (it changed while the key waited for a load) gets the bracket pair. */
+function typedCall(mf: MathfieldElement, latex: string, call: TypedCall): void {
+  const end = mf.position;
+  const start = end - call.name.length; // one atom per letter or digit
+  if (!mf.selectionIsCollapsed || start < 0 || mf.getValue(start, end, "latex") !== call.name) return apply(mf, call.paren);
+  mf.selection = { ranges: [[start, end]] };
+  apply(mf, { kind: "insert", latex: latex.replace(/#[0@]/g, "#?") });
 }
 
 /** True if the selection is followed by a ° (it is the degrees box of a DMS). */
