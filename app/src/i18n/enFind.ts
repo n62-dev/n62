@@ -15,6 +15,7 @@ export const enFind = {
   "cat.units": "Units and prefixes",
   "cat.bits": "Bits and words",
   "vars.title": "Vars",
+  "vars.free": "{name} is free; a tap puts it on the line",
   "memory.title": "Memory",
   "memory.clear": "Clear all",
   "memory.sure": "Enter again clears {n}",

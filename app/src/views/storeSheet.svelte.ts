@@ -8,8 +8,7 @@
 // In the chunk of Vars' code (find/finder.ts re-exports it; App.svelte openStore).
 import type { MenuItem } from "../apps/types.ts";
 import type { UserName } from "../engine/defs.ts";
-import { nameLatex, previewOf, valueOf } from "../find/names.svelte.ts";
-import { findText } from "../i18n/enFind.ts";
+import { NAME_COLUMNS, NAME_LETTERS, nameItems, nameLatex, nameRow } from "../find/names.svelte.ts";
 import { storeText as t } from "../i18n/enStore.ts";
 import { typedName } from "../render/home.ts";
 import { markText, noDigit } from "../state/displayMode.ts";
@@ -18,10 +17,7 @@ import { Sheet, type Level } from "./sheet.svelte.ts";
 
 /** The store sheet's id (route.ts reads its keys by it). */
 export const STORE_SHEET = "store";
-/** The letter grid's columns: 26 letters in four rows (the mockup's six columns take five, which do not fit above the
- *  keypad at 360 × 740 with the title and the line under the grid; fit.spec.ts). */
-export const STORE_COLUMNS = 7;
-const LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
 const STORE_ARROW = "\\blacktriangleright";
 
 /** What the sheet needs from App: the session's names, and the one store path (the name after ▶, then Enter). */
@@ -62,37 +58,25 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
   const shown = $state({ value: typeof stored === "string" ? stored : "" });
   const ctx = () => session.displayContext();
   const store = (latex: string): MenuItem => ({ id: "typed", label: "", run: () => env.store(latex) });
-  /** A stored name: its value with its mark, and the question before it is replaced. */
+  /** A stored name: its value with its mark (Vars' look, nameRow), and the question before it is replaced. */
   const filled = (n: UserName, cell: boolean): MenuItem => {
     const name = typedName(n.name);
+    const row = nameRow(n, ctx(), `name:${n.name}`, cell);
     // the value as the cell shows it, its mark kept (principle 3: an ≈ value never reads as exact in the question)
-    const held = n.kind === "fn" ? findText("memory.fn") : valueOf(n, ctx());
+    const held = row.value ?? "";
     /** What it holds, as Vars' line under the list writes it: `A = 5`, `A ≈ 0.333333333333`, `f(…)`. */
     const what = n.kind === "fn" ? `${name}(…)` : `${name} ${held}`;
     return {
-      id: `name:${n.name}`,
-      label: name,
-      value: held,
-      preview: previewOf(n, ctx()),
+      ...row,
       confirm: { cell: t("store.again", { value: held }), note: shown.value ? t("store.holdsWith", { name, what, with: shown.value }) : t("store.holds", { name, what }) },
-      ...(cell ? { cell: true as const } : {}),
       run: () => env.store(typedLatex(name, [n])),
     };
   };
   const free = (letter: string): MenuItem => ({ id: `name:${letter}`, label: letter, cell: true, preview: t("store.free", { name: letter }), run: () => env.store(letter) });
-  const items = (): MenuItem[] => {
-    const names = session.userNames;
-    const byName = new Map(names.map((n) => [n.name, n]));
-    const cells = LETTERS.map((l) => {
-      const n = byName.get(l);
-      return n ? filled(n, true) : free(l);
-    });
-    const rest = [...names].filter((n) => !LETTERS.includes(n.name)).sort((a, b) => b.time - a.time);
-    return [...cells, ...rest.map((n) => filled(n, false))];
-  };
-  const firstFree = LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
+  const items = (): MenuItem[] => nameItems(session.userNames, filled, free);
+  const firstFree = NAME_LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
   const sheet = new Sheet(STORE_SHEET, shown.value ? t("store.title", { value: shown.value }) : t("store.titleBare"), items, {
-    cells: STORE_COLUMNS,
+    cells: NAME_COLUMNS,
     filterable: true,
     remember: false,
     at: `name:${firstFree ?? "A"}`,

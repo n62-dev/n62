@@ -72,6 +72,30 @@ export function previewOf(n: UserName, ctx: DisplayContext): string {
   return n.kind === "fn" ? `${typed}(…)${n.desc ? ` · ${n.desc}` : ""}` : `${typed} ${valueOf(n, ctx)}${n.desc ? ` · ${n.desc}` : ""}`;
 }
 
+/** The letter grid's columns (Vars and the store sheet, R282): 26 letters in four rows (the mockup's six columns take five,
+ *  which do not fit above the keypad at 360 × 740 with the title and the line under the grid; fit.spec.ts). */
+export const NAME_COLUMNS = 7;
+/** The letters the grid holds, in order: a stored name of one of them is a cell, any other name a row after the grid. */
+export const NAME_LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+
+/** The row or cell of a stored name as Vars and the store sheet draw it (R282, one look): the name as typed, its value
+ *  with its mark, the details line; `cell`: a cell of the grid. Each sheet adds what a tap does. */
+export function nameRow(n: UserName, ctx: DisplayContext, id: string, cell: boolean): MenuItem {
+  return { id, label: typedName(n.name), value: n.kind === "fn" ? t("memory.fn") : valueOf(n, ctx), preview: previewOf(n, ctx), ...(cell ? { cell: true as const } : {}), run: () => {} };
+}
+
+/** The names as a sheet's items (R282): the letters A–Z as the grid, a stored one drawn by `row` (with its value and mark),
+ *  a free one by `free`; then the other names, newest first. */
+export function nameItems(names: readonly UserName[], row: (n: UserName, cell: boolean) => MenuItem, free: (letter: string) => MenuItem): MenuItem[] {
+  const byName = new Map(names.map((n) => [n.name, n]));
+  const cells = NAME_LETTERS.map((l) => {
+    const n = byName.get(l);
+    return n ? row(n, true) : free(l);
+  });
+  const rest = names.filter((n) => !NAME_LETTERS.includes(n.name)).sort((a, b) => b.time - a.time);
+  return [...cells, ...rest.map((n) => row(n, false))];
+}
+
 /** Whether the clear-all row was pressed once (it clears on the second Enter). Reactive, so the row redraws. */
 const ui = $state({ armed: false });
 
@@ -93,14 +117,25 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
       settle();
     } else entry.run({ kind: "insert", latex: insertOf(n) });
   };
-  const row = (n: UserName): MenuItem => ({
-    id: liveItem(n).id,
-    label: typedName(n.name),
-    value: n.kind === "fn" ? t("memory.fn") : valueOf(n, session.displayContext()),
-    preview: previewOf(n, session.displayContext()),
+  const row = (n: UserName, cell = false): MenuItem => ({
+    ...nameRow(n, session.displayContext(), liveItem(n).id, cell),
     ...(memory ? { keep: true } : {}),
     run: () => run(n),
   });
+  /** Vars' grid (R282): a free letter is not a name, but a tap on it puts the letter on the line, as typing it would. */
+  const free = (letter: string): MenuItem => ({
+    id: `name:${letter}`,
+    label: letter,
+    cell: true,
+    preview: t("vars.free", { name: letter }),
+    run: () => entry.run({ kind: "insert", latex: letter }),
+  });
+  /** Vars: the grid of letters with their values, then the other names; Memory: every name newest first, then Clear all. */
+  const listed = (): MenuItem[] => (memory ? all() : nameItems(names(), row, free));
+  const newest = (): string | undefined => {
+    const last = [...names()].sort((a, b) => b.time - a.time)[0];
+    return last && liveItem(last).id;
+  };
   const clearAll: MenuItem = {
     id: "clearall",
     get label() {
@@ -117,7 +152,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
     },
   };
   /** Newest definition first (the empty query shows what was just stored). */
-  const all = (): MenuItem[] => [...names()].sort((a, b) => b.time - a.time).map(row);
+  const all = (): MenuItem[] => [...names()].sort((a, b) => b.time - a.time).map((n) => row(n));
   const found = (q: string): MenuItem[] => {
     const by = new Map(names().map((n) => [n.name, n]));
     return search(NO_INDEX, q, { live: names().map(liveItem) }).flatMap((h) => {
@@ -125,5 +160,10 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
       return n ? [row(n)] : [];
     });
   };
-  shell.sheet = new Sheet("find", t(memory ? "memory.title" : "vars.title"), () => (memory && names().length ? [...all(), clearAll] : all()), { search: found, remember: false });
+  // Vars opens on the newest name, as before; its filter is Find's search over the names (the hits are rows, the grid is for the empty query)
+  shell.sheet = new Sheet("find", t(memory ? "memory.title" : "vars.title"), () => (memory && names().length ? [...all(), clearAll] : listed()), {
+    search: found,
+    remember: false,
+    ...(memory ? {} : { cells: NAME_COLUMNS, ...(newest() ? { at: newest() as string } : {}) }),
+  });
 }
