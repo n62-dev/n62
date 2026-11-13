@@ -62,7 +62,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F231, no package (G340's reach, pass 160).** `normal((1+sqrt(1+2^(1/3)))^(1/3))` runs past Giac's clock, stock and patched: Home stops it, the CAS view waits its 600 s clock (r20 risk 2).
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
 - **F195, G220 to G221f2 built.** Left (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf` (error).
-- **F210, package G341 (G303f1; pass 125).** Our global stores take typable names (only `pasdeg` is refused): a free `pasx` in Solve reads solve1.ts's `pasx` (raw Giac: `subst` gives -1.0). Fix: refuse a typed `pas`. Family 9.
+- **F210, fixed by G341 (run 1088).** A typed `pas` name read or replaced ours (a free `pasx` in Solve read solve1.ts's root); the parser and the library refuse the prefix now. Family 9.
 - **F211, no package (pass 125).** Bound names outside G303's form, no capture (probed): `v` in nonsquare.ts shapeCodes, `a_`, `b_`, `d_` in emit.ts equalityTest; statenames.test.ts parses neither. Family 8.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
