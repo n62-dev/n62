@@ -236,7 +236,7 @@ export class SolveApp implements AppInstance {
   menu(view: ViewId): MenuItem[] {
     if (view === "symb") {
       const empty = (this.slots.latex[this.slots.selected] ?? "") === "";
-      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }];
+      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }, ...this.pasteRow(view)];
     }
     if (view !== "num") return [];
     const none = !this.selected || this.active.length === 0;
@@ -254,7 +254,12 @@ export class SolveApp implements AppInstance {
       { id: "shown", label: tc("clip.asShown"), disabled: noValue, reason: numText("why.noEquation"), run: () => void this.copyValue(this.selected, true) },
       // R262: only an answer (its full value kept): a typed value does not go (R76, c56)
       { id: "tohome", count: "tohome", label: numText("app.toHome"), disabled: !(this.selected in this.copies), reason: numText("why.noAnswerSolve"), run: () => void this.toHome(this.selected) },
+      ...this.pasteRow(view),
     ];
+  }
+  /** R278f1: ☰ → Paste where the shell shows the entry line (the Paste key is gone, and the line's long press is R277's hold); last, so no other row's number moves. */
+  private pasteRow(view: ViewId): MenuItem[] {
+    return this.entryLabel(view) === undefined ? [] : [{ id: "paste", label: tc("clip.paste"), slotRow: true, run: () => this.host.paste() }];
   }
   /** R262: the answer to Home's line as a chip: the value and facts the next solve would carry (known(), the ⚠ kept). */
   async toHome(name: string): Promise<void> {

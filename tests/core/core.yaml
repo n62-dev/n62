@@ -436,10 +436,10 @@ cases:
 
   - id: c49
     area: entry
-    title: "A hold copies the result, ☰ Paste (7) puts it on the line (R278: the Copy and Paste keys left the keypad; before, the Copy and Paste keys, owner 2026-11-06)"
-    keys: [d7, enter, {hold: "result:last"}, "@menu", d7, add, d1, enter]
-    expect: { result: "8", mark: "=" }
-    value: "8"
+    title: "A hold copies the result, ☰ Paste (7) puts it on the line: d9 and a second result 5 are on screen, so a failed hold or paste gives 6 and a ☰ that does not open gives 8, not 10 (R278f1; R278: the Copy and Paste keys left the keypad)"
+    keys: [d9, enter, {hold: "result:last"}, d5, enter, "@menu", d7, add, d1, enter]
+    expect: { result: "10", mark: "=" }
+    value: "10"
     source: derived
 
   - id: c50
@@ -452,8 +452,8 @@ cases:
 
   - id: c71
     area: entry
-    title: "a hold on the last result copies it; ☰ Paste (7) puts it on the line (R276, owner 2026-11-10)"
-    keys: [d4, mul, d5, enter, {hold: "result:last"}, "@menu", d7, add, d1, enter]
+    title: "a hold on the last result copies it; ☰ Paste (7) puts it on the line: 20 is copied and a second result 3 is on screen, so a failed hold or paste gives 4 and a ☰ that does not open gives 8, not 21 (R276, owner 2026-11-10; R278f2)"
+    keys: [d4, mul, d5, enter, {hold: "result:last"}, d3, enter, "@menu", d7, add, d1, enter]
     expect: { result: "21", mark: "=" }
     value: "21"
     source: derived

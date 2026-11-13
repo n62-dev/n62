@@ -181,6 +181,10 @@ export class ClipActions {
   paste(text?: string): Promise<boolean> {
     return this.serial(() => this.pasteNow(text));
   }
+  /** ☰ → Paste, Home's and the apps' (R278f1): the paste, and the keys pressed meanwhile wait for it. */
+  pasteHeld(): void {
+    this.ops.hold?.(this.paste());
+  }
   private async pasteNow(text?: string): Promise<boolean> {
     const clip = text ?? (await (await this.port()).readText());
     if (clip === null) {
@@ -320,14 +324,7 @@ export class ClipActions {
         run: act("delete", () => this.deleteRow(row)),
       },
       { id: "copyAs", label: tc("clip.copyAs"), disabled: none, reason: why, submenu: { title: tc("clip.copyAs"), items: copies } },
-      {
-        id: "paste",
-        label: tc("clip.paste"),
-        run: () => {
-          const job = this.paste();
-          this.ops.hold?.(job);
-        },
-      },
+      { id: "paste", label: tc("clip.paste"), run: () => this.pasteHeld() },
       { id: "share", label: tc("clip.share"), disabled: !finished, reason: why, run: () => void this.shareSession() },
       { id: "clear", label: tc("clip.clear"), disabled: empty, run: () => void this.session.clearHistory() },
     ];
