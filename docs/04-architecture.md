@@ -315,7 +315,7 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 - **Display in Home:** every element through our formatter, one mark for the whole (2.4).
 
 ### 5.4 Decision: number bases (EN6)
-- **A base is a display mode of an integer result** (R192), like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result, R193). Word size (8, 16, 32, 64) and signed (two's complement) or unsigned are settings (R194; 64 unsigned now). Drawn whole, unpadded (`0xA`), marked as a fraction (`=` if exact); a non-integer or a value outside the word (negative, if unsigned) keeps its notation.
+- **A base is a display mode of an integer result** (R192), like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result, R193). Word size (8, 16, 32, 64) and signed (two's complement) or unsigned are settings (R194). Drawn whole, unpadded (`0xA`), marked as a fraction (`=` if exact); a non-integer or a value outside the word (negative, if unsigned) keeps its notation.
 - **Entry:** `0x…`, `0b…`, `0o…` are one whole number (R191), written in decimal; hex digits A–F (either case) are the Alpha letters, the run greedy (`0xFFx` is 255·x); a digit outside the base, a point, an ᴇ, spacing inside it (R191f1) or a prefix at the line's end is refused; `0x+1` stays 0·x+1.
 - **Bitwise:** `bitand`, `bitor`, `bitxor` work; shifts and rotations are EN7 definitions in the word size.
 
@@ -356,7 +356,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `userKeys`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets` | the last target per dimension |
-| `word` | `state/wordSetting.ts`: `{ bits: 8 \| 16 \| 32 \| 64, signed: boolean }` (R194), absent until Settings › Numbers › Word sets it (then 64 bits, unsigned); the base forms and the word ops' short forms read it; a field of its own, not of `settings` |
+| `word` | `{ bits, signed }` (R194) |
 | `uses` | the results mode's counts (R53, `state/uses.svelte.ts`), for decisions.md P16's removal test; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo` | not backed up |
 

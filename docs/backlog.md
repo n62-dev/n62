@@ -86,7 +86,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
-- **Milestone 6, Structure** (not packaged): EN5 matrices with Shift + 5 (done, R185) and the editor on Shift + 4 (§5.3), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu, R193; the word size open), EN7 everyday functions, Help as context help (done, R197); EN4, copying one element of a list or matrix.
+- **Milestone 6, Structure** (not packaged): EN5 matrices with Shift + 5 (done, R185) and the editor on Shift + 4 (§5.3), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu, R193; the word size, R194), EN7 everyday functions, Help as context help (done, R197); EN4, copying one element of a list or matrix.
 
 ### Without a package yet
 - **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, sounding only when Key click is on, and its latency against the pulse from a screen recording. Removal test: nobody (owner or an outside tester) turns it on in the four weeks after it ships, and the switch and its code go.
