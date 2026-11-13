@@ -37,13 +37,19 @@ test.describe("Shift + 5 (fake engine)", () => {
 
   test("a third column from either row's end; a third row from the last row", async ({ page }) => {
     await tap(page, ["shift", "d5", "d1", "right", "d2", "down", "d3", "right", "d4", "right", "d6"]);
-    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2 & \\\\ 3 & 4 & 6\\end{pmatrix}");
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2 & \\placeholder{}\\\\ 3 & 4 & 6\\end{pmatrix}");
     await tap(page, ["esc", "shift", "d5", "d1", "right", "d2", "down", "d3", "right", "d4"]);
     await at(page, 4); // after the 2: the end of row 1
     await tap(page, ["right", "d5"]);
-    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2 & 5\\\\ 3 & 4 & \\end{pmatrix}");
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2 & 5\\\\ 3 & 4 & \\placeholder{}\\end{pmatrix}");
     await tap(page, ["esc", "shift", "d5", "d1", "right", "d2", "down", "d3", "right", "d4", "down", "d7"]);
     expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & 2\\\\ 3 & 4\\\\ 7 & \\placeholder{}\\end{pmatrix}");
+  });
+
+  // R185f1: the new column's cells in the other rows hold a placeholder, so no cell is drawn as nothing
+  test("▶ at the end of the last column puts a placeholder in the other rows' new cells", async ({ page }) => {
+    await tap(page, ["shift", "d5", "d1", "down", "d3", "right", "d4"]);
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1 & \\placeholder{}\\\\ 3 & 4\\end{pmatrix}");
   });
 
   test("leaving: ▶ on the column just added and still empty takes it back and goes after the matrix", async ({ page }) => {
@@ -221,6 +227,13 @@ test.describe("Shift + 5 (real engine)", () => {
 
   test("the grown 2×2 is [[1,2],[3,4]]", async ({ page }) => {
     await tap(page, ["shift", "d5", "d1", "right", "d2", "down", "d3", "right", "d4", "enter"]);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "[[1,2],[3,4]]");
+  });
+
+  test("the cell ▶ left as a placeholder, filled, gives [[1,2],[3,4]]", async ({ page }) => {
+    await tap(page, ["shift", "d5", "d1", "down", "d3", "right", "d4"]);
+    await at(page, 4); // the top-right cell
+    await tap(page, ["d2", "enter"]);
     await expect(lastResult(page)).toHaveAttribute("data-text", "[[1,2],[3,4]]");
   });
 
