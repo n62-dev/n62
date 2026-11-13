@@ -88,3 +88,16 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
   if (layer === "primary" && own && !/^\p{L}$/u.test(own)) return { kind: "letter", ch: own };
   return letter ? { kind: "letter", ch: letter } : { kind: "none" };
 }
+
+/**
+ * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. A digit
+ * picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing. `typed`: the letter the
+ * key types in the layer it was pressed in (Alpha's case kept: lower case in CAS, R58), else its own letter as in every
+ * sheet; `empty`: nothing typed yet. The other keys are those of every sheet.
+ */
+export function storeKey(key: Key, typed: string | undefined, empty: boolean): SheetKey {
+  const d = DIGIT.exec(key.id);
+  if (d) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
+  const k = sheetKey(key, true);
+  return k.kind === "letter" && typed ? { kind: "letter", ch: typed } : k;
+}

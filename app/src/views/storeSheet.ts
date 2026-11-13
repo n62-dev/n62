@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// The store sheet (R281, sd-3 of docs/research/store-design.md, design A): Store ▶ puts `value ▶` on the line and opens
+// "Store in": the letters A–Z as a grid, a filled one with its value and mark, then the user's other names, newest
+// first. A tap on a free letter types its name after the ▶ and presses Enter (the one store path: parser, engine, a
+// history row); a tap on a filled name arms it (`5 · again?`) and a second tap stores; any other press disarms
+// (route.ts). Letters typed filter, and Enter stores the typed name, a new one too; Esc leaves `value ▶` on the line.
+// It takes letters, so it stays above the keypad (docs/05 3.1): Alpha and a letter key still type as on the G2.
+// A lazy chunk with Vars' code (App.svelte openStore).
+import type { MenuItem } from "../apps/types.ts";
+import { entryText } from "../clipboard/plaintext.ts";
+import type { UserName } from "../engine/defs.ts";
+import { nameLatex, previewOf, valueOf } from "../find/names.svelte.ts";
+import { findText as t } from "../i18n/enFind.ts";
+import { typedName } from "../render/home.ts";
+import { markText, noDigit } from "../state/displayMode.ts";
+import type { HistoryItem, Session } from "../state/session.svelte.ts";
+import { Sheet } from "./sheet.svelte.ts";
+
+/** The store sheet's id (route.ts reads its keys by it). */
+export const STORE_SHEET = "store";
+/** The letter grid's columns: 26 letters in five rows (the mockup's six). */
+export const STORE_COLUMNS = 6;
+const LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+const STORE_ARROW = "\\blacktriangleright";
+
+/** What the sheet needs from App: the session's names, and the one store path (the name after ▶, then Enter). */
+export interface StoreEnv {
+  readonly shell: { sheet: Sheet | null };
+  readonly session: Session;
+  /** Types `latex` (a name) at the cursor, after the ▶, and presses Enter. */
+  store(latex: string): void;
+}
+
+/** What is stored, as the title shows it: a row's result with its mark (`≈ 0.333333333333`), else the line's text
+ *  before the ▶ (`7`, not worked out yet: no mark). Empty: nothing to show. */
+export function storedText(session: Session, row: HistoryItem | undefined, line: string): string {
+  if (row?.status === "done") {
+    const mark = session.mark(row);
+    if (noDigit(mark)) return "⚠";
+    const text = session.display(row).text;
+    return mark ? `${markText(mark)} ${text}` : text;
+  }
+  const at = line.lastIndexOf(STORE_ARROW);
+  return entryText(at < 0 ? line : line.slice(0, at)).trim();
+}
+
+/** The name the store types for `typed` (letters and digits from the filter): a stored name as Vars inserts it, else
+ *  one letter as its key types it (e and i become e_ and i_ in the parser, as typed), else one name (`rate`, `A1`). */
+export function typedLatex(typed: string, names: readonly UserName[]): string {
+  const n = names.find((u) => u.kind === "var" && (u.name === typed || typedName(u.name) === typed));
+  if (n) return nameLatex(n.name);
+  return /^\p{L}$/u.test(typed) ? typed : `\\operatorname{${typed}}`;
+}
+
+/** Opens "Store in" for `value` (storedText). */
+export function showStore(env: StoreEnv, value: string): void {
+  const { session } = env;
+  const ctx = () => session.displayContext();
+  const store = (latex: string): MenuItem => ({ id: "typed", label: "", run: () => env.store(latex) });
+  /** A stored name: its value with its mark, and the question before it is replaced. */
+  const filled = (n: UserName, cell: boolean): MenuItem => {
+    const name = typedName(n.name);
+    const shown = n.kind === "fn" ? t("memory.fn") : valueOf(n, ctx());
+    const bare = n.kind === "fn" ? t("memory.fn") : n.preview;
+    return {
+      id: `name:${n.name}`,
+      label: name,
+      value: shown,
+      preview: previewOf(n, ctx()),
+      confirm: { cell: t("store.again", { value: bare }), note: value ? t("store.holdsWith", { name, value: bare, with: value }) : t("store.holds", { name, value: bare }) },
+      ...(cell ? { cell: true as const } : {}),
+      run: () => env.store(n.kind === "var" ? nameLatex(n.name) : typedLatex(name, [])),
+    };
+  };
+  const free = (letter: string): MenuItem => ({ id: `name:${letter}`, label: letter, cell: true, preview: t("store.free", { name: letter }), run: () => env.store(letter) });
+  const items = (): MenuItem[] => {
+    const names = session.userNames;
+    const byName = new Map(names.map((n) => [n.name, n]));
+    const cells = LETTERS.map((l) => {
+      const n = byName.get(l);
+      return n ? filled(n, true) : free(l);
+    });
+    const rest = [...names].filter((n) => !LETTERS.includes(n.name)).sort((a, b) => b.time - a.time);
+    return [...cells, ...rest.map((n) => filled(n, false))];
+  };
+  const firstFree = LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
+  env.shell.sheet = new Sheet(STORE_SHEET, value ? t("store.title", { value }) : t("store.titleBare"), items, {
+    cells: STORE_COLUMNS,
+    filterable: true,
+    remember: false,
+    at: `name:${firstFree ?? "A"}`,
+    typed: (name) => store(typedLatex(name, session.userNames)),
+    note: () => {
+      const f = env.shell.sheet?.level.filter ?? "";
+      return f === "" ? undefined : t("store.typed", { name: f });
+    },
+  });
+}
