@@ -299,7 +299,17 @@ keys:
 
   - { id: alpha, row: 7, col: 0, cls: ctl, label: { primary: "$key.alpha" }, primary: { special: alpha }, source: virtual-calc }  # r8c1 (twice locks it, L3: ours)
   - { id: d4, row: 7, col: 1, cls: num, label: { primary: "4", alpha: U }, primary: { type: "4" }, alpha: { type: U }, source: virtual-calc }  # r8c2 (shift Matrix not ours)
-  - { id: d5, row: 7, col: 2, cls: num, label: { primary: "5", alpha: V }, primary: { type: "5" }, alpha: { type: V }, source: virtual-calc }  # r8c3 (shift [ ] not ours yet)
+  # Shift + 5: a matrix that grows as you type (R185, docs/04 5.3): a 1×1 whose tapped ▶ at a row's end adds a column and
+  # ▼ in its last row a row (app/src/entry/matgrow.ts); a drag on the pad never grows it, and the Tmpl matrices keep their size
+  - id: d5
+    row: 7
+    col: 2
+    cls: num
+    label: { primary: "5", shift: "[ ]", alpha: V }
+    primary: { type: "5" }
+    shift: { insert: "\\begin{pmatrix}#0\\end{pmatrix}", sample: ["\\begin{pmatrix}5\\end{pmatrix}", "[[5]]"] }
+    alpha: { type: V }
+    source: virtual-calc  # r8c3 (shift [ ], the reference's vector and matrix template; the growing entry is ours, assumed)
   - { id: d6, row: 7, col: 3, cls: num, label: { primary: "6", shift: "≤≠", alpha: W }, primary: { type: "6" },
       shift: { special: relations }, alpha: { type: W }, source: device }  # r8c4; shift opens the relations and logic palette (`relations:` below; the owner's G2, 2026-10-13, R18)
   - id: mul

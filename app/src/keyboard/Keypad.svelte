@@ -48,8 +48,9 @@
     pops?: boolean;
     /** A key fires; `layer` overrides the Shift/Alpha state: "primary" for a trackpad step, "shift" for a flick up,
      *  "alpha" for a flick down (on Shift and Alpha themselves: the lock flicks). A press that closes an open sheet
-     *  (R144) is the gesture's last: a drag steps nothing more and a held ⌫ does not repeat until the finger lifts. */
-    onpress: (key: Key, layer?: Layer) => void;
+     *  (R144) is the gesture's last: a drag steps nothing more and a held ⌫ does not repeat until the finger lifts.
+     *  `drag`: a step of a drag on the trackpad, not a tap on its zone (R185: a drag never grows Shift + 5's matrix). */
+    onpress: (key: Key, layer?: Layer, drag?: boolean) => void;
     /** One press was made, as docs/04 5.2 counts them (R70): a tap, a flick, a drag, a held ⌫ once. `key`: which one,
      *  "<key id>:<layer>" (R127, state/pressCount.ts). */
     oncount?: (key?: string) => void;
@@ -299,7 +300,7 @@
   function step(dir: PadDir): void {
     const key = keyboard.byId.get(dir);
     if (!key) return;
-    onpress(key, "primary");
+    onpress(key, "primary", true);
   }
 
   function up(ev: PointerEvent): void {
