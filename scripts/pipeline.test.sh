@@ -462,6 +462,13 @@ grep -q "GIAC_OUT=$tmp/stock-eng" "$tmp/vitest-ran" || fail "A71: vitest ran wit
 # A71f2: a file that imports nodeGiac (the module that reads GIAC_OUT) without naming it also runs, on the stock engine
 rm -f "$tmp/vitest-ran"; w="$(rfwt p1/vnode)"; red_first "$w" "$tmp/spec-stock" "$tmp/patched-eng" "$tmp/rf.log" "$tmp/stock-eng" >/dev/null || fail "A71f2: a vitest file that imports nodeGiac and fails on the stock engine is refused"
 grep -q "GIAC_OUT=$tmp/stock-eng" "$tmp/vitest-ran" 2>/dev/null || fail "A71f2: the nodeGiac file did not run with GIAC_OUT on the stock engine: $(cat "$tmp/vitest-ran" 2>&1)"; noscratch stock-vitest-nodegiac
+# A150: a phase-1 spec runs its vitest files on phase-1's engine (the eng argument), not on the caller's GIAC_OUT (the branch's own build)
+rm -f "$tmp/vitest-ran"; w="$(rfwt p1/vgiac)"
+GIAC_OUT="$tmp/caller-eng" red_first "$w" "$tmp/spec-red" "$tmp/patched-eng" "$tmp/rf.log" "$tmp/stock-eng" >/dev/null || fail "A150: a vitest file that reads GIAC_OUT and fails on phase-1's engine is refused"
+grep -qx "GIAC_OUT=$tmp/patched-eng" "$tmp/vitest-ran" 2>/dev/null || fail "A150: a phase-1 spec's vitest run did not get phase-1's engine as GIAC_OUT: $(cat "$tmp/vitest-ran" 2>&1)"; noscratch p1-vitest-engine
+rm -f "$tmp/vitest-ran"; w="$(rfwt p1/fail)"
+GIAC_OUT="$tmp/caller-eng" red_first "$w" "$tmp/spec-red" "$tmp/patched-eng" "$tmp/rf.log" "$tmp/stock-eng" >/dev/null || fail "A150: a vitest file that does not read the engine, failing on phase-1, is refused"
+[[ -e "$tmp/vitest-ran" ]] || fail "A150: a vitest file that does not read the engine did not run"; noscratch p1-vitest-noeng
 unset N62_REDFIRST_VITEST N62_REDFIRST_GOLDEN
 # the stock engine: built once per key by build-wasm.sh with GIAC_PATCHES=none, reused after, stamped
 sk="$tmp/sk"; mkdir -p "$sk/tools" "$sk/engine/giac"; cp "$sb/tools/devlock.sh" "$sk/tools/"
@@ -1261,7 +1268,7 @@ out="$(sb10run annabell "task text" --id probe-h1 --branch p1/annabell-h1 --chec
 unset SB_SLEEP N62_HEARTBEAT_SECONDS
 hb="$(grep -E 'pipeline #[0-9]+ probe-h1: worker alive ' "$sb10/.coord/log.md")"
 [[ "$(wc -l <<<"$hb")" -ge 2 && -n "$hb" ]] || fail "A147: a worker running 6 s with a 2 s heartbeat logs fewer than 2 'worker alive' lines: $hb"
-grep -qvE '^- [0-9:]+ pipeline #[0-9]+ probe-h1: worker alive [0-9]+ min; last commit ([0-9a-f]+ [0-9]+ min ago|none); reply [0-9]+ kB$' <<<"$hb" && fail "A147: a 'worker alive' line has the wrong form: $hb"
+grep -qvE '^- [0-9:]+ (\[[AB]\] )?pipeline #[0-9]+ probe-h1: worker alive [0-9]+ min; last commit ([0-9a-f]+ [0-9]+ min ago|none); reply [0-9]+ kB$' <<<"$hb" && fail "A147: a 'worker alive' line has the wrong form: $hb"
 echo "$hb" | head -n1 | sed 's/^/    heartbeat line from the sandbox: /' >&2
 ha="$(grep -n 'probe-h1: worker alive ' "$sb10/.coord/log.md" | tail -n1 | cut -d: -f1)"; hd="$(grep -n 'probe-h1: worker done' "$sb10/.coord/log.md" | cut -d: -f1)"
 [[ -n "$ha" && -n "$hd" && "$ha" -lt "$hd" ]] || fail "A147: a 'worker alive' line comes after the worker ended ($ha, done $hd)"
