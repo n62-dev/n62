@@ -4,7 +4,7 @@
 // only erasable TypeScript syntax.
 import { literalStart } from "./literalPrec.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
-import { callsOf, closing, functionsIn, isError, isName, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
+import { callsOf, closing, functionsIn, isError, isName, isNameChar, LIST_TYPE, names, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import { toExactLiterals } from "./exactLiterals.ts";
 import { mayStore } from "./stores.ts";
@@ -191,8 +191,7 @@ export function rationalOnly(expr: string, q: Quoting): boolean {
     bound.add(args[1]!.trim());
   }
   // G306: `list[` is Giac's list type (the keys' braces), no name
-  const listType = !/(?<![A-Za-z0-9_])list(?!\[)/.test(expr);
-  if (!namesIn(expr, q).every((n) => bound.has(n) || (n === "list" && listType))) return false;
+  for (const n of names(expr, q)) if (!n.call && !bound.has(n.name) && !expr.startsWith(LIST_TYPE, n.at)) return false;
   // A power's exponent: a parenthesised one holding `/`, or a name that is not a bound variable, can be irrational.
   for (let at = expr.indexOf("^"); at >= 0; at = expr.indexOf("^", at + 1)) {
     const open = at + 1 + (expr.slice(at + 1).length - expr.slice(at + 1).trimStart().length);
@@ -248,7 +247,8 @@ function holdsEvenPower(s: string, q: Quoting, any = false): boolean {
     const bracketed = lead.endsWith("^(") || lead.endsWith("^(-");
     if (bracketed ? !s.startsWith(")", n.end) : !lead.endsWith("^") && !lead.endsWith("^-")) continue;
     const v = BigInt(n.mant);
-    if (any ? (v > 1n || (v === 1n && lead.endsWith("-"))) && !numberBase(s, s.lastIndexOf("^", n.at)) : v > 0n && v % 2n === 0n) return true;
+    const caret = n.at - (bracketed ? (lead.endsWith("^(-") ? 3 : 2) : lead.endsWith("^-") ? 2 : 1);
+    if (any ? (v > 1n || (v === 1n && lead.endsWith("-"))) && !numberBase(s, caret) : v > 0n && v % 2n === 0n) return true;
   }
   return false;
 }
@@ -257,8 +257,8 @@ function holdsEvenPower(s: string, q: Quoting, any = false): boolean {
  *  that ends in digits (`w2^3`). */
 function numberBase(s: string, caret: number): boolean {
   let k = caret;
-  while (k > 0 && /[0-9.]/.test(s.charAt(k - 1))) k--;
-  return k < caret && !/[A-Za-z_]/.test(s.charAt(k - 1));
+  while (k > 0 && ((s.charAt(k - 1) >= "0" && s.charAt(k - 1) <= "9") || s.charAt(k - 1) === ".")) k--;
+  return k < caret && !isNameChar(s.charAt(k - 1));
 }
 
 /** G306: the logarithms whose argument Giac splits by a sign it decides at Digits: ln(x^2) is 2*ln(x) when x looks

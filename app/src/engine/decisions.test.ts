@@ -273,6 +273,10 @@ describe("logOfPower (G306)", () => {
     ["logb(x,2^3)", false],
     ["ln(atanh(89999/1000/10^1000))", false],
     ["ln(2.5^3)", false],
+    ["ln(10^(-3))", false],
+    ["ln(10^-3)", false],
+    ["ln(w2^(-3))", true],
+    ["ln(w2^-3)", true],
     ["ln(x^1)", false],
     ["ln(x^0)", false],
     ["ln(x^(1/2))", false],
@@ -293,6 +297,7 @@ describe("surd, atan2, sort and a logarithm of a power rest on a decision (G306)
     // rationals decide exactly: no second run
     ["sort(list[3,1,2])", false],
     ["SortA(list[1/3,1/4])", false],
+    ["sort(list[1,2])+sort(list[3])", false],
     ["ln(4)", false],
     ["ln(2^3)", false],
     ["list+sort(list[1,2])", true],
