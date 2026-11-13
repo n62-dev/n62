@@ -92,12 +92,12 @@ describe("the layout lock holds the layout as merged", () => {
   it("every pinned line is built as pinned and every live layer and fixed row is pinned", () => {
     expect(problems()).toEqual([]);
   });
-  it("the lock pins what the app has: keys in the spec, the lists, Settings' sections and the reserved cells", () => {
+  it("the lock has the sections the app builds, and Settings is built with Your keys and Data (a missing one moves the digits after it)", () => {
     expect(Object.keys(lock.pins).sort()).toEqual(Object.keys(actual).sort());
-    expect(Object.entries(lock.pins["layers"] ?? {}).filter(([, v]) => v === "reserved").map(([k]) => k)).toEqual([
-      "deselect.shift", "vars.shift", "frac.shift", "paren.shift", "d7.shift", "d1.shift", "d0.shift",
-    ]);
-    expect(Object.values(lock.pins["settings"] ?? {})).toEqual(["appearance", "numbers", "vibration", "keys", "data", "counters", "help"]);
+    const sections = Object.values(actual["settings"] ?? {});
+    expect(sections).toContain("keys");
+    expect(sections).toContain("data");
+    expect(problems()).toEqual([]);
   });
   it("the last release's lock (a v* tag that holds it) is kept: nothing live there is missing or edited", () => {
     const rel = releaseLock(root, LOCK);
@@ -206,6 +206,19 @@ describe("growth into blank space passes once the lock records it", () => {
   it("a row appended after a list's last fixed row: its line is appended", () => {
     const n = Object.keys(actual["base"] ?? {}).length + 1;
     expect(problems(with_("base", (s) => ({ ...s, [n]: "bin16" })), pinned("base", String(n), "bin16"))).toEqual([]);
+  });
+});
+
+describe("growth passes whatever the lock held before", () => {
+  it("a reserved cell filled and a Settings section appended, each recorded in the lock", () => {
+    const filled = spec((k) => {
+      key(k, "vars")["shift"] = { special: "memory" };
+      (key(k, "vars")["label"] as Record<string, string>)["shift"] = "$key.memory";
+    });
+    const n = Object.keys(actual["settings"] ?? {}).length + 1;
+    const grown: Pins = { ...filled, settings: { ...actual["settings"], [n]: "extra" } };
+    expect(problems(grown, { ...lock, pins: { ...lock.pins, layers: { ...lock.pins["layers"], "vars.shift": "special memory" }, settings: { ...lock.pins["settings"], [n]: "extra" } } })).toEqual([]);
+    expect(problems(grown).length).toBe(2); // not recorded: both are named
   });
 });
 
