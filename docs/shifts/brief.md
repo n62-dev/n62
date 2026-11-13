@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 662 | [R197](packages/R197.md) the Help key: syntax and example of the function at the cursor | ron, Opus | `p1/ron-helpkey` | R196, R278 |
+| 662 | R197 the Help key: syntax and example of the function at the cursor | ron, Opus | `p1/ron-helpkey` | R196, R278 |
 | 663 | [R185](packages/R185.md) Shift + 5: a matrix that grows as you type | ron, Opus | `p1/ron-matgrow` | – |
 | 664 | [R186](packages/R186.md) ⌫ takes an empty last row or column back | ron, Sonnet | `p1/ron-matshrink` | R185 |
 | 665 | [R187](packages/R187.md) Shift + 4: the matrix sheet and its functions | ron, Sonnet | `p1/ron-matsheet` | – |
