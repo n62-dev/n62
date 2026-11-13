@@ -5,6 +5,11 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 172 (2026-11-13) to make room, as they stood
+- **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms unless the finger moves 8 px; a swipe decides at 10 px (vertical wins), goes at 40 % of the row or a fling (0.5 px/ms, 24 px out); a mouse drag swipes too. A long row's drag that scrolls it to its end stops there: only a new drag slides it (Opus pass 161: A139 saw one fast drag scroll a long row and delete it, F237). Dead keys carry `aria-disabled` (A139, F238). Would change if: A139's owner check finds them too eager or stiff.
+- **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; an implicit product binds tighter than × and a sign tighter than every operator (2+5·-3 from the 3: 3, -3, 5·-3, the line); at the whole line Select is a silent press, on an empty line Select and with no chain Deselect are dead; a finger's selection (R277's hold) grows from itself and Deselect goes back to it. Would change if: A139 finds a step surprising.
+- **Paste in the apps (Opus pass 159, after R278):** Solve's and Function's ☰ get Paste wherever the entry line shows (R278f1): R278 took the Paste key on the premise that ☰ pastes, and R277's hold takes the line's long press, so a phone had no other way in. Paste is the view's last own row, so Symb's R83 pointer row moves from 2 to 3 (Opus pass 161: no core case presses it). Would change if: the owner drops paste in the apps.
+
 ### Shortened by Opus pass 169 (2026-11-13) to make room, as they stood
 - **R277's line scroll (Opus pass 155; run 1053):** a finger or pen on the entry line is ours, a mouse MathLive's. Past 8 px a sideways drag scrolls: `scrollLeft` on MathLive's shadow `[part=content]` (0.111.4 has no public one; our one write there, pinned by linetouch.spec.ts; M6 asks for it). A tap places the caret; a hold (500 ms) selects the innermost term under the finger (a numerator's number; R279's Select goes on to the fraction); no double-tap word selection, and no long-press context menu on the line. Would change if: MathLive ships a public scroll, or A139 finds the term too small.
 
