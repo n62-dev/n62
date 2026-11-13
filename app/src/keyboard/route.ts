@@ -294,6 +294,9 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       if (sheet.id !== STORE_SHEET) return true;
       shell.closeSheet();
       return false;
+    case "line":
+      shell.closeSheet(); // R281: a key that types no name, after ▶: its job on the line
+      return false;
     case "none":
       return true;
     case "pass": {
@@ -358,14 +361,14 @@ function replay(c: RouteCtx): void {
 
 /** R281: a key in the store sheet (sheetKeys.ts storeKey). A key that types a letter on the line types the same letter
  *  into the name (x alone, Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as
- *  before; a one-shot Shift or Alpha is used up by the key, as on the line; a flick up that types no letter does
- *  nothing. `m`: the modifiers the key was pressed with (a queued key's, R8). */
+ *  before; a key that types no name goes on to the line (`line`) with its Shift or Alpha, and one the sheet takes uses a
+ *  one-shot Shift or Alpha up, as on the line. `m`: the modifiers the key was pressed with (a queued key's, R8). */
 function storeKey(c: RouteCtx, keys: NonNullable<typeof sheetChunk.keys>, key: Key, layer: Layer | undefined, m: Mods): SheetKey {
   const a = actionFor(key, m.shift, m.alpha, false, c.casKeys);
-  if (layer === undefined) c.session.clearModifiers();
   const typed = a?.kind === "type" && /^\p{L}$/u.test(a.text) ? a.text : undefined;
-  if (!typed && layer === "shift") return { kind: "none" };
-  return keys.storeKey(key, typed, c.shell.sheet?.level.filter === "");
+  const k = keys.storeKey(key, typed, m.shift || m.alpha, c.shell.sheet?.level.filter === "");
+  if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
+  return k;
 }
 /** The store sheet's id (views/storeSheet.ts STORE_SHEET; not imported: that module is a lazy chunk). */
 const STORE_SHEET = "store";

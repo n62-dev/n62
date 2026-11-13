@@ -22,7 +22,10 @@ export type SheetKey =
    *  CAS, Apps, Menu or a view close it and go there). A user key that holds anything else does nothing in a sheet. */
   | { kind: "pass" }
   /** Does nothing in a sheet. */
-  | { kind: "none" };
+  | { kind: "none" }
+  /** R281, the store sheet: the key types no name; the sheet closes and the key does its job on the line (Shift + 9's
+   *  Greek palette, an operator, ⌫ with nothing typed), as it did after ▶ before the sheet. */
+  | { kind: "line" };
 
 const DIGIT = /^d([0-9])$/;
 const BY_ID: Readonly<Record<string, SheetKey>> = {
@@ -92,13 +95,18 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
 /**
  * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. `typed`: the
  * letter the key types on the line in the layer it was pressed in (x alone, Alpha + Vars A; lower case in CAS, R58),
- * typed as it is. A digit picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing.
- * Every other key does what it does in every sheet (a key that types no letter types its Alpha letter); `empty`: nothing
- * typed yet.
+ * typed as it is; `layered`: Shift or Alpha is on (or a flick). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job. A plain
+ * digit picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing. A plain key that
+ * types no letter types its Alpha letter, as in every sheet, and the place keys keep theirs. Any other key types no name
+ * (`line`): it does its job on the line, so every press after ▶ that did not type a name does what it did before.
+ * `empty`: nothing typed yet.
  */
-export function storeKey(key: Key, typed: string | undefined, empty: boolean): SheetKey {
+export function storeKey(key: Key, typed: string | undefined, layered: boolean, empty: boolean): SheetKey {
   if (typed) return { kind: "letter", ch: typed };
+  const fixed = BY_ID[key.id];
+  if (fixed) return fixed;
   const d = DIGIT.exec(key.id);
-  if (d) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
-  return sheetKey(key, true);
+  if (d && !layered) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
+  const k = layered ? undefined : sheetKey(key, true);
+  return k && k.kind !== "none" ? k : { kind: "line" };
 }

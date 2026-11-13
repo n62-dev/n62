@@ -94,6 +94,16 @@ describe("the store sheet's keys (R281)", () => {
     expect(route.sheetPress(c as never, key("bksp"), undefined)).toBe(false); // press() then runs ⌫ on the line
     expect(shell.sheet).toBeNull();
   });
+  test("a key that types no name closes the sheet and does its job on the line, Shift kept: Shift + 9 (Greek), +", () => {
+    const { c, key, session, shell } = ctx();
+    session.shift = true;
+    expect(route.sheetPress(c as never, key("d9"), undefined)).toBe(false); // press() then opens the Greek palette
+    expect(shell.sheet).toBeNull();
+    expect(session.shift).toBe(true);
+    const plus = ctx();
+    expect(route.sheetPress(plus.c as never, plus.key("add"), undefined)).toBe(false);
+    expect(plus.shell.sheet).toBeNull();
+  });
   test("Esc closes the sheet and stores nothing (the line keeps value ▶)", () => {
     const { shell, stored, press } = ctx();
     press("esc");

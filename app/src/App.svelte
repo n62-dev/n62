@@ -542,7 +542,7 @@
       capsLock={session.capsLock}
       shiftLock={session.shiftLock}
       cas={casKeys} app={shell.app !== null}
-      sheet={shell.sheet ? { filter: shell.sheet.level.filterable } : undefined}
+      sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store" } : undefined}
       pops={session.settings.look.pops}
       onpress={(key, layer) => press(key, layer, true)}
       oncount={(key) => session.taps.press(key)}

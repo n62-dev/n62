@@ -42,7 +42,7 @@
     app?: boolean;
     /** A sheet is open (docs/05 3.1): keys are read by sheetKeys.ts, and the ones that do nothing there look dead.
      *  `filter`: the open list takes letters. */
-    sheet?: { filter: boolean } | undefined;
+    sheet?: { filter: boolean; store?: boolean } | undefined;
     /** Key pop-ups (R163, Appearance): false draws no bubble over the pad, neither the key pop nor the flick bubble; the
      *  flicks still fire. */
     pops?: boolean;
@@ -79,7 +79,8 @@
   const act = (k: Key) => actionFor(k, shift, alpha, false, cas);
   /** A key that does nothing in the current layer (a key we don't have yet, or a layer it has no function in). */
   const dead = (k: Key): boolean => {
-    if (sheet) return sheetChunk.keys?.sheetKey(k, sheet.filter).kind === "none"; // (not drawn dead before the sheet's code is in)
+    // (not drawn dead before the sheet's code is in; R281: in the store sheet a key that types no name acts on the line)
+    if (sheet) return !sheet.store && sheetChunk.keys?.sheetKey(k, sheet.filter).kind === "none";
     const p = k.actions.primary;
     if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return false; // the modifiers work in every layer
     const a = act(k);
