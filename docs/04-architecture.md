@@ -456,7 +456,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | Key presses | each task within its budget; a unit ≤ 4 at the median | — | task benchmark |
 | Find quality | 100 % top 3, ≥ 90 % first | 100/100 first at G4 | query test |
 
-"Start chunk" is the entry's JavaScript plus every chunk it imports statically (Vite manifest `imports`, transitively), as `app/scripts/size-check.ts` measures it. The entry's CSS is not counted; it gets its own line if it passes 40 kB raw.
+"Start chunk" is the entry's JavaScript plus every chunk it imports statically, as `size-check.ts` measures it. The start graph is one chunk; a Rolldown $initial chunk group keeps it so (research/r21-chunks.md). Its CSS is not counted (own line past 40 kB).
 
 
 ---
