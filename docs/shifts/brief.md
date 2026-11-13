@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 754 | [R291](packages/R291.md) the layout lock: no live key layer or fixed row moves unnoticed | ron, Sonnet | `p1/ron-layoutlock` | R278, R283, R185, R187, R193, R197, R131 |
+| 754 | R291 the layout lock: no live key layer or fixed row moves unnoticed | ron, Sonnet | `p1/ron-layoutlock` | R278, R283, R185, R187, R193, R197, R131 |
 | 755 | [R294](packages/R294.md) one chunk group keeps the start whole, then the hand copies go (S52) | ron, Sonnet | `p1/ron-startgroup` | – |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
