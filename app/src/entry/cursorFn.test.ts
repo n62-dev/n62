@@ -1,7 +1,38 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R196: which function the cursor is in, on the entry's LaTeX alone. `|` marks the cursor in each case.
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import { functionAt } from "./cursorFn.ts";
+import { CHIP_MACROS } from "./macros.ts";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
+const yaml = <T>(f: string): T => parse(readFileSync(join(root, f), "utf8")) as T;
+/** find/where.yaml: the key templates of Find's functions (id → the insert, `#0` and `#?` its slots). */
+const links = yaml<{ links: Record<string, string> }>("find/where.yaml").links;
+/** find/functions.yaml: the curated functions; no `insert` means `\operatorname{<giac>}\left(#0\right)`. */
+const curated = yaml<{ functions: { id: string; giac: string; insert?: string }[] }>("find/functions.yaml").functions;
+/** Templates the cursor is never inside, each with its reason. */
+const NOT_A_TEMPLATE: Readonly<Record<string, string>> = {
+  "fn:factorial": "! is a postfix mark with no box: its operand is what stands before it, on the line",
+};
+
+/** Each slot of `template` filled as a key leaves it (□ for `#?`, nothing for `#0`), with the offset of that slot. */
+function slots(template: string): { latex: string; offset: number }[] {
+  const parts = template.split(/(#0|#\?)/);
+  const fill = (k: number): { latex: string; offset: number } => {
+    let latex = "";
+    let offset = -1;
+    parts.forEach((p, i) => {
+      if (i === k) offset = latex.length;
+      latex += p === "#?" ? (i === k ? "" : "\\placeholder{}") : p === "#0" ? "" : p;
+    });
+    return { latex, offset };
+  };
+  return parts.flatMap((p, i) => (p === "#0" || p === "#?" ? [fill(i)] : []));
+}
 
 /** The Find id at the `|` of `marked` (the bar is taken out first). */
 const at = (marked: string): string | null => {
@@ -74,6 +105,44 @@ describe("functionAt (R196)", () => {
     expect(at("\\const{c}{|c}")).toBeNull();
     expect(at("\\sin\\left(\\res{1}{\\cos\\left(1\\right)}|\\right)")).toBe("fn:sin");
     expect(at("\\sin\\left(\\ans|\\right)")).toBe("fn:sin");
+  });
+
+  it.each(Object.entries(links))("finds %s in each slot of its key's template (find/where.yaml)", (id, template) => {
+    const all = slots(template);
+    if (NOT_A_TEMPLATE[id] !== undefined) return expect(all).toEqual([]);
+    expect(all.length).toBeGreaterThan(0);
+    for (const { latex, offset } of all) expect(functionAt(latex, offset), `${latex} at ${offset}`).toBe(id);
+  });
+
+  it("lists no exception that where.yaml does not hold", () => {
+    for (const id of Object.keys(NOT_A_TEMPLATE)) expect(links[id], id).toBeDefined();
+  });
+
+  it.each(curated.map((f) => [f.id, f] as const))("finds %s at #0 of its Find insert (find/functions.yaml)", (id, f) => {
+    const insert = f.insert ?? `\\operatorname{${f.giac.replace(/_/g, "\\_")}}\\left(#0\\right)`;
+    for (const { latex, offset } of slots(insert)) expect(functionAt(latex, offset), `${latex} at ${offset}`).toBe(id);
+  });
+
+  it("finds the templates inside other content", () => {
+    // ∫ with a ∫ in its integrand: the inner one takes the first d
+    const outer = "\\int_{0}^{1}\\int_{0}^{2}y\\,\\mathrm{d}y\\,\\mathrm{d}x";
+    expect(functionAt(outer, outer.length)).toBe("fn:int");
+    expect(functionAt(`${outer}+1`, outer.length)).toBe("fn:int");
+    expect(at("\\int_{0}^{1}x\\,\\mathrm{d}\\theta|")).toBe("fn:int");
+    expect(functionAt(outer, outer.indexOf("y\\,"))).toBe("fn:int");
+    expect(functionAt(`${outer}+1`, outer.length + 1)).toBeNull();
+    expect(at("\\int_{0}^{1}\\sin\\left(|x\\right)\\,\\mathrm{d}x")).toBe("fn:sin");
+    expect(at("\\exponentialE^{|2}")).toBe("fn:exp");
+    expect(at("\\exponentialE^{2}+|1")).toBeNull();
+    expect(at("\\exponentialE+|1")).toBeNull();
+    expect(at("\\frac{\\partial\\sin\\left(|x\\right)}{\\partial x}")).toBe("fn:sin");
+    expect(at("\\frac{\\partial x^2}{\\partial |x}")).toBe("fn:diff");
+    expect(at("\\operatorname{normald\\_cdf}\\left(|\\right)")).toBe("fn:normald_cdf");
+  });
+
+  it.each(Object.entries(CHIP_MACROS))("never reads what the \\%s chip shows (entry/macros.ts)", (name, m) => {
+    const chip = `\\${name}${"{\\sin\\left(1\\right)}".repeat(m.args)}`;
+    for (let o = 1; o < chip.length; o++) expect(functionAt(chip, o), `${chip} at ${o}`).toBeNull();
   });
 
   it("is null for an offset off the line", () => {
