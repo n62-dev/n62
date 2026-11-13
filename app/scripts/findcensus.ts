@@ -5,7 +5,8 @@
 // finding (raw, wrong, state, hang, crash) sits under the backlog line that holds it. A class change, a new input, a lost input or a
 // finding without its line fails it, so Find never opens a command whose kind of answer moved unseen. An input whose known class or
 // this run's came from a deadline (the known file's `deadline` list) and moved is run once more alone; if it still differs it is a
-// timing change, reported and not failed.
+// timing change, reported and not failed. An input on the `layout` list (a class that follows the engine's heap layout) runs once more
+// alone when it moved, and in `--update` always, so its known class is the one it gets alone; if it still differs it is a class change.
 //   node scripts/findcensus.ts             # the gate stage (about 45 s on 4 workers; fails over 5 minutes)
 //   node scripts/findcensus.ts --update    # rewrite the known file's classes from this run (the findings lists are kept; new ones are listed)
 // Environment: GIAC_OUT as for the golden gate; N62_DL_DIR (Giac's tarball, default the main checkout's cache); the Find index
@@ -39,7 +40,8 @@ const known = (parse(readFileSync(KNOWN, "utf8")) ?? {}) as CensusKnown;
 
 // A class that comes from a clock (a hang past DEADLINE_MS, Home's time-out refusal after 2 s) moves on a faster or a busier machine:
 // such an input whose class moved runs once more alone, with no other worker running; if it still differs, it is a timing change.
-const suspects = update ? [] : timingSuspects(rows, known);
+const layout = new Set(known.layout ?? []);
+const suspects = update ? rows.filter((x) => layout.has(x.id)) : timingSuspects(rows, known);
 const retried = new Set(suspects.map((s) => s.id));
 if (suspects.length) {
   const idx = p.samples.flatMap((s, i) => (suspects.some((x) => x.name === s.name && x.id.endsWith(`/${s.k}`)) ? [i] : []));
