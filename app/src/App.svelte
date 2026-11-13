@@ -11,9 +11,8 @@
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
-  import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem, type Special, specialKey } from "./keyboard/keyboard.ts";
+  import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
-  import type { DeskTarget } from "./keyboard/desktopKeys.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
   import { ringState } from "./entry/ringState.ts";
@@ -70,25 +69,14 @@
   onMount(() => {
     if (host) entry.setHost(host);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
-    const hw = (name: string) => (): void => session.taps.press(`${name}:hw`); // R127: a hardware key that runs a keypad key is "<key id>:hw"
-    const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // ... else "hw:<kind>" (state/pressCount.ts)
-    // R45: a hardware Enter is the Enter key (a picked row, an open sheet), not a bare submit
-    entry.onEnter = counted(hw("enter"), () => {
-      const key = keyboard.byId.get("enter");
-      if (key) press(key, "primary");
-      else enter();
-    });
-    // R15c2: a hardware Escape is the Esc key (an open sheet or pick takes it first)
-    entry.onEscape = counted(hw("esc"), () => {
-      const key = keyboard.byId.get("esc");
-      if (key) press(key, "primary");
-    });
-    // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character
-    const hwKey = (id: string, layer: Layer): void => {
+    const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts)
+    // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
+    // "<key id>:hw" (R127); Enter and Escape too (R45: Enter is the Enter key, a picked row's or an open sheet's, not a
+    // bare submit; R15c2: Escape is the Esc key; R131: both through this hook, entry/controller.ts)
+    entry.onKey = counted((...[id]: [string, Layer]) => session.taps.press(`${id}:hw`), (id: string, layer: Layer) => {
       const key = keyboard.byId.get(id);
       if (key) press(userKeys.resolve(key), layer);
-    };
-    entry.onKey = counted((...[id]: [string, Layer]) => session.taps.press(`${id}:hw`), hwKey);
+    });
     entry.onLetter = counted(hwOther("letter"), typeLetter);
     shell.goTo = goTo; // the Apps sheet's Home and CAS rows
     shell.openSettings = openSettings;
@@ -101,10 +89,9 @@
     });
     entry.onEdit = () => (edited = true); // R154: MathLive's own typing (é, µ, π), a row menu's recall or insert
     entry.onDead = counted(hwOther("dead"), dead);
-    // R131: a desktop key the table adds presses its key, or a status-line control as its tap does; Alt+K folds and
-    // unfolds the keypad (in an app or over a sheet, a dead press); counted "hw:<desktop name>" (R131's removal test)
-    entry.onDesk = counted((...[desk]: [string, DeskTarget]) => session.taps.press(`hw:${desk}`), (_: string, t: DeskTarget) =>
-      "key" in t ? hwKey(t.key, t.layer) : t.action !== "fold" ? press(specialKey(t.action, t.action as Special), "primary") : unfold() || (canFold && !shell.sheet ? fold("hw") : dead()));
+    // R131: a desktop key the table adds (hwkeys.ts resolves it): its key, else the fold (a dead press in an app or a sheet)
+    entry.onDesk = counted((...[as]: [string, Key?, Layer?]) => session.taps.press(as), (_: string, key?: Key, layer?: Layer) =>
+      key ? press(userKeys.resolve(key), layer) : unfold() || (canFold && !shell.sheet ? fold("hw") : dead()));
     entry.onPress = counted(hwOther("other"), () => {}); // R107f1: a leaving ) or | is a press that needs nothing more
     entry.onPaste = (text) => {
       edited = true;

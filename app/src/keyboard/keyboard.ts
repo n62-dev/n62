@@ -330,10 +330,6 @@ export function gridPlace(kb: Keyboard, key: Key): { start: number; span: number
 /** The shipped layout. */
 export const keyboard: Keyboard = loadKeyboard(raw);
 
-/** A control no keypad key holds as a key (R15b, R15c1; R131's desktop keys): its press takes a key's path (an open sheet
- *  gives way, it runs at once while an app loads, and waits while a sheet's code loads). */
-export const specialKey = (id: string, name: Special): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
-
 /** The action a key triggers in the given modifier state (alpha falls back to primary; shift never does).
  *  Alpha types the capital letter, shift + alpha its lower case (as on the reference, P4). */
 export function actionFor(key: Key, shift: boolean, alpha: boolean, oneLine = false, cas = false): ActionBody | undefined {

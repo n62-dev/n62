@@ -2,6 +2,7 @@
 // R24c: one map from a hardware control key to the keypad key and layer it presses, for the entry line and the unit
 // view's field (units/open.ts), so Delete is Shift + ⌫ (Del) in both (it was plain ⌫ on the unit view).
 import { describe, expect, it } from "vitest";
+import { keyboard } from "../keyboard/keyboard.ts";
 import { controlKey, hardwareKey, keypadKeyOf, undoKey, type HwTarget } from "./hwkeys.ts";
 
 const k = (key: string, shiftKey = false) => controlKey({ key, shiftKey });
@@ -41,6 +42,38 @@ describe("undoKey (R119): Ctrl+Z is the Undo key, Ctrl+Y and Ctrl+Shift+Z the Re
     expect(u("Y", { ctrl: true, shift: true })).toBeUndefined();
     expect(u("a")).toBeUndefined();
     expect(u("c")).toBeUndefined();
+  });
+  it("reads a real KeyboardEvent, whose key and modifiers are getters on its prototype (a spread copies none of them)", () => {
+    class Ev {
+      readonly #k: string;
+      readonly #shift: boolean;
+      constructor(k: string, shift = false) {
+        this.#k = k;
+        this.#shift = shift;
+      }
+      get key(): string {
+        return this.#k;
+      }
+      get code(): string {
+        return `Key${this.#k.toUpperCase()}`;
+      }
+      get ctrlKey(): boolean {
+        return true;
+      }
+      get metaKey(): boolean {
+        return false;
+      }
+      get altKey(): boolean {
+        return false;
+      }
+      get shiftKey(): boolean {
+        return this.#shift;
+      }
+    }
+    expect(undoKey(new Ev("z"))).toBe("undo");
+    expect(undoKey(new Ev("Z", true))).toBe("redo");
+    expect(undoKey(new Ev("y"))).toBe("redo");
+    expect(undoKey(new Ev("c"))).toBeUndefined();
   });
 });
 
@@ -128,7 +161,9 @@ describe("R131: % and the desktop keys", () => {
       onLetter: (ch) => void got.push(`letter ${ch}`),
       onDead: () => void got.push("dead"),
       onPress: () => void got.push("press"),
-      onDesk: (desk, tg) => void (got.push("key" in tg ? `${tg.key}:${tg.layer}` : `action ${tg.action}`), counts.push(`hw:${desk}`)),
+      // a keypad key as "<id>:<layer>"; a status-line control (keyboard.ts specialKey, no keypad key) and the fold (no key) as actions
+      onDesk: (as, key, layer) =>
+        void (got.push(!key ? "action fold" : keyboard.byId.has(key.id) ? `${key.id}:${layer}` : `action ${key.id}`), counts.push(as)),
     };
     return { t, got, counts };
   };

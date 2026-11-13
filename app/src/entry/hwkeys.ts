@@ -26,7 +26,7 @@
 // paste listener (R114). AltGr characters count as typed.
 import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
-import type { Layer } from "../keyboard/keyboard.ts";
+import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
 import { chordOf, desktop, type DeskTarget } from "../keyboard/desktopKeys.ts";
 
 /** The desktop key map (R131), for the help text: it reaches it through this chunk, so the map stays in it and no
@@ -49,10 +49,11 @@ export interface HwTarget {
   onDead(repeat: boolean): void;
   /** A key the handler acts on itself (a `)` or `|` that leaves its pair): a press all the same (R107f1). */
   onPress(repeat: boolean): void;
-  /** R131: a desktop key the table adds (`desk`, its name there, counted apart from the keypad's taps): a keypad key in a
-   *  layer, or a control no keypad key holds (`desktop.actions`: the status line's Apps, the place switch, Symb, Plot,
-   *  Num, and results mode's fold). */
-  onDesk(desk: string, target: DeskTarget, repeat: boolean): void;
+  /** R131: a desktop key the table adds, resolved here (this chunk), so the start chunk only presses it: `as`, its count
+   *  name (`hw:<desktop name>`, apart from the keypad's taps); `key`, a keypad key pressed in `layer`, or a control no
+   *  keypad key holds as a key (controlAsKey) (`desktop.actions`: the status line's Apps, the place switch, Symb, Plot,
+   *  Num); no key: results mode's fold, which the shell folds or unfolds. */
+  onDesk?(as: string, key: Key | undefined, layer: Layer | undefined, repeat: boolean): void;
 }
 
 /** The keypad key that each character types, and its layer: the table's one-character names that are no letter
@@ -92,7 +93,8 @@ export function controlKey(ev: Pick<KeyboardEvent, "key" | "shiftKey">): readonl
  *  tap layer (Cmd for Ctrl on a Mac); undefined for every other key. From the table (R131). */
 export function undoKey(ev: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey"> & { code?: string }): "undo" | "redo" | undefined {
   if (!(ev.ctrlKey || ev.metaKey) || ev.altKey) return undefined;
-  const name = chordOf({ code: "", ...ev });
+  // field by field: a real KeyboardEvent keeps key, ctrlKey and the rest as getters on its prototype, which a spread skips
+  const name = chordOf({ key: ev.key, code: ev.code ?? "", ctrlKey: ev.ctrlKey, metaKey: ev.metaKey, altKey: ev.altKey, shiftKey: ev.shiftKey });
   const t = name === undefined ? undefined : desktop.byName.get(name);
   return t && "key" in t && t.layer === "primary" && (t.key === "undo" || t.key === "redo") ? t.key : undefined;
 }
@@ -117,7 +119,7 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
     return true;
   }
   if (ch.length !== 1) {
-    // a plain Enter or Escape: the controller's own listener (onEnter, onEscape) presses the same keys
+    // a plain Enter or Escape: the field's own listener presses the same keys (EntryController: onKey, R45)
     if ((ch === "Enter" || ch === "Escape") && !ev.shiftKey) return false;
     // R131: a named key the table holds (Backspace, Delete, the arrows, Home, End, F1 to F4, Shift+Enter); else R45's
     // (F38) controlKey (Shift + Backspace is ⌫ too); the rest (Shift + an arrow, Tab, Shift + Escape) stays as it was
@@ -147,7 +149,7 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   // R57: with the decimal comma both `.` and `,` type the decimal mark (the keypad's `.` key); `;` stays the separator
   const k = KEYS.get(tg.decimalComma && ch === "," ? "." : ch);
   const sym = PALETTE[ch];
-  if (k && DESK_CHARS.has(ch)) tg.onDesk(ch, { key: k[0], layer: k[1] }, ev.repeat);
+  if (k && DESK_CHARS.has(ch)) desk({ key: k[0], layer: k[1] }, ch, ev, tg);
   else if (k) tg.onKey(k[0], k[1], ev.repeat);
   else if (sym !== undefined) tg.onSymbol(sym, ev.repeat);
   else if (/^[A-Za-z]$/.test(ch)) tg.onLetter(ch, ev.repeat);
@@ -158,7 +160,21 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
 /** Press what the table names under `name`: a key R45 or R119 had before it as before (onKey), else through onDesk. */
 function act(t: DeskTarget, name: string, ev: KeyboardEvent, tg: HwTarget): void {
   if ("key" in t && BEFORE.has(name)) tg.onKey(t.key, t.layer, ev.repeat);
-  else tg.onDesk(name, t, ev.repeat);
+  else desk(t, name, ev, tg);
+}
+
+/** A status-line control as a key (as StatusLine.svelte's statusKey): its press takes a key's path (an open sheet gives
+ *  way, it runs at once while an app loads, and waits while a sheet's code loads). Built here, outside the start chunk. */
+const controlAsKey = (name: Special): Key => ({ id: name, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
+
+/** R131: a table key through onDesk, counted `hw:<name>`: a keypad key in its layer, a status-line control as its tap
+ *  (controlAsKey), or the fold (no key). */
+function desk(t: DeskTarget, name: string, ev: KeyboardEvent, tg: HwTarget): void {
+  const as = `hw:${name}`;
+  if ("key" in t) {
+    const key = keyboard.byId.get(t.key); // (the spec test holds every table key to a keypad key)
+    if (key) tg.onDesk?.(as, key, t.layer, ev.repeat);
+  } else tg.onDesk?.(as, t.action === "fold" ? undefined : controlAsKey(t.action as Special), "primary", ev.repeat);
 }
 
 /** The cursor stands right after a number's digits or its point (not after a name such as x2). */

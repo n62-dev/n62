@@ -4,7 +4,7 @@
 // field itself (its set-up, and how a key changes it) is entry/field.ts, loaded with MathLive (R70f1).
 import type { MathfieldElement } from "mathlive";
 import { constKey, pruneChips, resKey, type Chip, type ChipTable } from "../input/chips.ts";
-import type { ActionBody, Layer } from "../keyboard/keyboard.ts";
+import type { ActionBody, Key, Layer } from "../keyboard/keyboard.ts";
 import { mathlive } from "../render/mathlive.svelte.ts";
 import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 
@@ -37,18 +37,17 @@ export class EntryController {
   private nextRes = 1;
   /** R57: the decimal comma is on; a hardware `,` or `.` types the decimal mark, and ᴇ reads `{,}` as part of a number. */
   decimalComma = false;
-  /** Called for a physical Enter / Escape (desktop convenience). The hardware hooks' last argument is
-   *  KeyboardEvent.repeat: a held key's auto-repeat acts again but is no new press (docs/04 5.2, R70f1). */
-  onEnter: (repeat: boolean) => void = () => {};
-  onEscape: (repeat: boolean) => void = () => {};
-  /** A keypad key pressed from a hardware keyboard (R31): the shell runs it as a tap in that layer. */
+  /** A keypad key pressed from a hardware keyboard (R31): the shell runs it as a tap in that layer; a physical Enter and
+   *  Escape are the Enter and Esc keys (R45, R15c2). The hardware hooks' last argument is KeyboardEvent.repeat: a held
+   *  key's auto-repeat acts again but is no new press (docs/04 5.2, R70f1). */
   onKey: (id: string, layer: Layer, repeat: boolean) => void = () => {};
   /** A letter typed on a hardware keyboard (R45): the shell's checks first, then the line. */
   onLetter: (ch: string, repeat: boolean) => void = () => {};
   /** A hardware `<`, `>`, `!` or `%` (R107, R131): the palette's insert goes on the line; App.svelte counts it as a press. */
   onSymbol: (latex: string, repeat: boolean) => void = (latex) => this.run({ kind: "insert", latex });
-  /** A desktop key the table adds (R131, hwkeys.ts onDesk): a keypad key, or Apps, the place switch, a view, the fold. */
-  onDesk: (desk: string, target: import("../keyboard/desktopKeys.ts").DeskTarget, repeat: boolean) => void = () => {};
+  /** A desktop key the table adds (R131, hwkeys.ts onDesk): `as`, its count name; the key it presses (a keypad key, a
+   *  status-line control as a key), or none for the fold. */
+  declare onDesk?: (as: string, key: Key | undefined, layer: Layer | undefined, repeat: boolean) => void;
   /** A hardware key that does nothing (R31): the shell's dead-key feedback (a press all the same, R107). */
   onDead: (repeat: boolean) => void = () => {};
   /** A hardware `)` or `|` that leaves its pair (R107f1): the cursor moves, App.svelte counts the press. */
@@ -106,8 +105,8 @@ export class EntryController {
   private async create(make: typeof import("./field.ts").makeField, Field: typeof MathfieldElement): Promise<void> {
     const mf = await make(Field, this.host, {
       key: (ev) => this.hwKey?.(ev, this) ?? false,
-      enter: (repeat) => this.onEnter(repeat),
-      escape: (repeat) => this.onEscape(repeat),
+      enter: (repeat) => this.onKey("enter", "primary", repeat),
+      escape: (repeat) => this.onKey("esc", "primary", repeat),
       paste: (text) => this.onPaste(text),
     });
     this.mf = mf;
