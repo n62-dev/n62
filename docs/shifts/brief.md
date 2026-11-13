@@ -63,7 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 665 | R187 Shift + 4: the matrix sheet and its functions | ron, Sonnet | `p1/ron-matsheet` | – |
 | 666 | R131 a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | R278, R283, R185, R187, R193, R197 |
 | 730 | [R198](packages/R198.md) typed function names on a hardware keyboard | ron, Opus | `p1/ron-typednames` | R131 |
 | 731 | [R224](packages/R224.md) the wide layout on a tablet and a desktop | ron, Opus | `p1/ron-widelayout` | – |
