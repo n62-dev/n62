@@ -14,7 +14,11 @@
 // - `e` or `E` right after a number's digits (or its point) is the exponent key ᴇ.
 // - `<`, `>`, `!` and `%` insert the Shift palettes' own symbols (Shift + 6, Shift + 9; `%` as `\%`, R131: a bare `%`
 //   is a LaTeX comment).
-// - Other letters stay name letters. A function's name is reached through Find (R4a), as on the phone.
+// - Other letters stay name letters. R198 (the owner, 2026-11-12; R31 had them stay letters): a function's name typed
+//   before `(` becomes the function, as Find's pick of it puts it on the line (`sin(` is \sin with the cursor in its
+//   bracket): a name of the parser's FUNCS, or of a function or template of Find's index (tier 1 too), which the first
+//   letter loads (finder.ts loadIndex; until it is in, FUNCS alone). One letter (`f(`), pi and the user's own names stay
+//   as before. The keypad's letters and ( ) key are untouched.
 // - Every other character (`\ ' " $ & ? @ ~` and the backtick) does nothing: no key types it (a dead press, R107).
 // - Alt + a letter (or a digit, F1 to F4, Home, End, Shift+Enter, …) presses the key or the action the table names;
 //   Ctrl+Z is the Undo key, Ctrl+Y and Ctrl+Shift+Z the Redo key (R119; Cmd on a Mac): on an empty line Undo brings
@@ -29,6 +33,9 @@ import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
 import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
 import { chordOf, desktop, type DeskTarget } from "../keyboard/desktopKeys.ts";
+import type { FindItem } from "../find/types.ts";
+import { FUNCS } from "../input/parseTables.ts";
+import { nameBefore } from "./nameRun.ts";
 
 /** The desktop key map (R131), for the help text: it reaches it through this chunk, so the map stays in it and no
  *  dynamic import of hwkeys lists a chunk more. */
@@ -39,6 +46,8 @@ export interface HwTarget {
   readonly field: MathfieldElement | undefined;
   /** R57: the decimal comma is on. */
   readonly decimalComma: boolean;
+  /** R198: the user's names (session.userNames): typed before `(`, they stay the user's. */
+  readonly stored?: readonly string[];
   /** A palette symbol typed on the hardware keyboard (`<`, `>`, `!`, `%`): `latex`, the Shift palettes' own insert. */
   onSymbol(latex: string, repeat: boolean): void;
   /** Press a keypad key in a layer, as a tap would (the shell's path: Ans first, one-line forms, open sheets). `repeat`
@@ -150,12 +159,54 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   // R57: with the decimal comma both `.` and `,` type the decimal mark (the keypad's `.` key); `;` stays the separator
   const k = KEYS.get(tg.decimalComma && ch === "," ? "." : ch);
   const sym = PALETTE[ch];
-  if (k && DESK_CHARS.has(ch)) desk({ key: k[0], layer: k[1] }, ch, ev, tg);
+  const call = ch === "(" && tg.onDesk ? callKey(mf, tg) : undefined;
+  if (call) tg.onDesk?.("hw:name", call, "primary", ev.repeat); // R198: counted apart from the ( ) key's `paren:hw`
+  else if (k && DESK_CHARS.has(ch)) desk({ key: k[0], layer: k[1] }, ch, ev, tg);
   else if (k) tg.onKey(k[0], k[1], ev.repeat);
   else if (sym !== undefined) tg.onSymbol(sym, ev.repeat);
-  else if (/^[A-Za-z]$/.test(ch)) tg.onLetter(ch, ev.repeat);
-  else tg.onDead(ev.repeat);
+  else if (/^[A-Za-z]$/.test(ch)) {
+    askIndex();
+    tg.onLetter(ch, ev.repeat);
+  } else tg.onDead(ev.repeat);
   return true;
+}
+
+/** R198: a name of one letter is a variable's or a user function's (`f(`); pi is π, which Giac's help lists as a function. */
+const NO_CALL = new Set(["pi", "Pi"]);
+/** A name the hardware letters type as one run (nameRun.ts): letters, then digits. */
+const TYPED = /^[A-Za-z]{2,}\d*$/;
+const FUNC_CALLS: ReadonlyMap<string, string> = new Map(Object.keys(FUNCS).map((n) => [n, `\\${n}\\left(#0\\right)`]));
+/** R198: each typed name's insert; FUNCS until Find's index is in. */
+let calls = FUNC_CALLS;
+let asked = false;
+
+/** R198: Find's index, asked for by the first hardware letter (finder.ts loadIndex); a failed load is asked again by the next. */
+function askIndex(): void {
+  if (asked) return;
+  asked = true;
+  void import("../find/finder.ts").then((m) => m.loadIndex()).then((ix) => void (calls = callsOf(ix.items)), () => void (asked = false));
+}
+
+/** The typed names of Find's functions and templates: FUNCS first, then an item's own name (Giac's `and` for `and`, not
+ *  bitand's alias), then the other names, tier 0 before tier 1. */
+function callsOf(items: readonly FindItem[]): ReadonlyMap<string, string> {
+  const m = new Map(FUNC_CALLS);
+  const add = (name: string, insert: string): void => void (TYPED.test(name) && !NO_CALL.has(name) && !m.has(name) && m.set(name, insert));
+  const fns = items.filter((it) => it.kind === "fn" || it.kind === "tmpl");
+  for (const it of fns) add(it.id.slice(it.id.indexOf(":") + 1), it.insert);
+  for (const tier of [0, 1]) for (const it of fns) if (it.tier === tier) for (const n of it.names) add(n, it.insert);
+  return m;
+}
+
+/** R198: the key a `(` presses after a typed function name: the ( ) key with the function's insert (field.ts puts it in
+ *  place of the letters); none where the letters before the cursor name no function, or a name of the user's. */
+function callKey(mf: MathfieldElement, tg: HwTarget): Key | undefined {
+  const run = nameBefore(mf);
+  const latex = run && !tg.stored?.includes(run.name) ? calls.get(run.name) : undefined;
+  const key = keyboard.byId.get("paren");
+  const paren = key?.actions.primary;
+  if (!run || latex === undefined || !key || !paren) return undefined;
+  return { ...key, actions: { primary: { kind: "insert", latex, call: { name: run.name, paren } } } };
 }
 
 /** R131f1: a Mac's Option is Alt with no AltGraph, so its characters (German Mac: Option + 5 is `[`, Option + L is `@`)

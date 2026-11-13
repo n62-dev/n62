@@ -47,11 +47,18 @@ export type ActionBody =
   /** Type characters as a physical keyboard would (smart fences, auto-subscript rules apply). */
   | { kind: "type"; text: string }
   /** Insert a LaTeX template; #? marks a placeholder, #@ the selection or what is before the cursor. */
-  | { kind: "insert"; latex: string; sample?: readonly [string, string]; chip?: ConstChip; units?: true }
+  | { kind: "insert"; latex: string; sample?: readonly [string, string]; chip?: ConstChip; units?: true; call?: TypedCall }
   /** A MathLive editing command. */
   | { kind: "cmd"; name: string }
   /** Handled by the app (shift, alpha, enter, clear, esc, Home/CAS, settings, mode, apps and their views, menu). */
   | { kind: "special"; name: Special };
+
+/** R198: a function's insert for a name typed on a hardware keyboard before `(` (entry/hwkeys.ts): its letters on the
+ *  line give way to it (entry/field.ts); `paren`, the bracket pair's action, for a line that no longer ends in them. */
+export interface TypedCall {
+  readonly name: string;
+  readonly paren: ActionBody;
+}
 
 /** A constant put on a free key (R4b): the chip table entry its `\const{ID}{symbol}` needs, set when the key inserts it. */
 export interface ConstChip {
