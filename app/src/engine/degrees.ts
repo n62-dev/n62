@@ -8,8 +8,8 @@
 import { hasAngleFactor } from "./angles.ts";
 import type { Giac } from "./numeric.ts";
 import { callsOf, isError } from "./giacPrint.ts";
+import { PERIODIC as TRIG } from "./converge.ts";
 
-const TRIG = ["sin", "cos", "tan", "sec", "csc", "cot"];
 const INVERSE = ["asin", "acos", "atan", "asec", "acsc", "acot"];
 /** Inert names Giac keeps as they are while it simplifies the arguments. */
 const INERT = "pasdg_";
@@ -36,7 +36,7 @@ export function backInDegrees(giac: Giac, text: string): string | null {
       if (c.at < i || c.close <= 0) continue;
       const arg = walk(t.slice(c.open + 1, c.close));
       out += t.slice(i, c.at);
-      if (TRIG.includes(c.name)) out += `${INERT}${c.name}(normal(180/pi*(${arg})))`;
+      if (TRIG.has(c.name)) out += `${INERT}${c.name}(normal(180/pi*(${arg})))`;
       else {
         inverse = true;
         out += `(pi/180*${INERT}${c.name}(${arg}))`;
