@@ -90,7 +90,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 |---|---|---|---|---|
 | 611 | G307 powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |
 | 613 | G309 the weekly fuzz, week of 11-11 | gorge, Opus | `p1/gorge-nightfuzz-1111` | – |
-| 696 | [S52](packages/S52.md) can a chunk option give the start chunk room (1.8 kB left for the UI rows) | sandra, Opus | `p1/sandra-chunkspike` | – |
+| 696 | S52 can a chunk option give the start chunk room (1.8 kB left for the UI rows) | sandra, Opus | `p1/sandra-chunkspike` | – |
 | 752 | [S50](packages/S50.md) the benchmark's protocol | sandra, Opus | `p1/sandra-benchmarknote` | – |
 | 680 | [R194](packages/R194.md) word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
 | 682 | [R184](packages/R184.md) a labelled result sheet for linreg and stats1 | ron, Sonnet | `p1/ron-statsheet` | – |
