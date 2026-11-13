@@ -5,8 +5,6 @@
 # "now passing" and the next fix removes it. The nightly fuzz adds rows here, not to sweep-known.yaml; a row of a cause with no open backlog
 # line stays out (its finding is in the run's report).
 known:
-  # F144 (G152): the imaginary part of acosh/asinh of a huge argument halved (G138: asinh(1ᴇ1000+…+atanh(10)); mpmath keeps the right im there)
-  - { id: 'rad 30 \operatorname{asinh}\left(\left(\left(1ᴇ1000\right)+\sin\left(\frac{\pi}{2}-\frac{\pi}{10^{4}}\right)\right)+\operatorname{atanh}\left(10\right)\right)', check: "≈", package: F144 }
   # F155 (G141 closes F151): the cancellation families of G162, (1±10^-k)^(c·10^k), (f(a+10^-k)-f(a))·10^k+b and (1-cos 10^-k)·10^(2k)+b, and trees
   # over them: P and P+20 share the lost 10^-k term (G138, seed 1793847163); 6 rows still fail (G189 dropped the 685 that pass; G326 the 8 of 9 with an e^{0.5+10^-k} term, which pass once e is written as the keys write it); they are past MAX_EVAL_DIGITS (S20 the cure)
   - { id: 'rad 30 \sqrt[3]{\left(\ln\left(3+10^{-249}\right)-\ln\left(3\right)\right)\times 10^{249}+1}', check: "≈", package: F155 }
@@ -16,3 +14,15 @@ known:
   - { id: 'rad 12 \ln\left(\left(\operatorname{acosh}\left(\frac{\pi}{2}-10^{-6}\right)\right)^{\sqrt[3]{\left(\ln\left(0.5+10^{-250}\right)-\ln\left(0.5\right)\right)\times 10^{250}+0.5}}\right)', check: "≈", package: F155 }
   # F155 (G141): a trig function of an argument past MAX_EVAL_DIGITS (1ᴇ1000, x/1ᴇ-1000) shows ⚠ 1 with a wrong digit (G138, seed 1793847163; G141’s decision: ⚠ unchecked)
   - { id: 'deg 30 \tan\left(\sin\left(-1ᴇ-3\right)+\left(\left(1ᴇ1000\right)-\left(1ᴇ-1000\right)\right)\right)', check: "⚠n", package: F155 }
+  # F155 (G309, seed 1794594001): past MAX_EVAL_DIGITS (a 1ᴇ1000 or 1ᴇ-1000 literal): DEG tan(…+1ᴇ1000) ⚠ 1 with a wrong digit (3 rows), and a
+  # 10^-k cancellation term lost under a ⚠ n or ≈ mark (5 rows: (1-cos 10^-k)·10^2k, ln and sinh difference quotients)
+  - { id: 'deg 30 \tan\left(\left(\left(90-10^{-3}\right)\times \left(90-10^{-3}\right)\right)-\left(\left(-1\right)-\left(1ᴇ1000\right)\right)\right)', check: "⚠n", package: F155 }
+  - { id: 'rad 30 \frac{\log\left(1-1ᴇ-12\imaginaryI\right)}{\frac{\left(1ᴇ1000\right)+\left(90+10^{-6}\right)}{\operatorname{asinh}\left(\left(1-\cos\left(10^{-167}\right)\right)\times 10^{334}+2\right)}}', check: "⚠n", package: F155 }
+  - { id: 'rad 12 \left(\arccos\left(\sin\left(\frac{\pi}{2}-\frac{\pi}{10^{4}}\right)\right)-\frac{1ᴇ-1000}{\left(0.9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\right)^{2\times 10^{250}}}\right)^{\sin\left(\left(1-\cos\left(10^{-97}\right)\right)\times 10^{194}+0.5\right)}', check: "≈", package: F155 }
+  - { id: 'deg 12 \left(\arccos\left(\sin\left(\frac{\pi}{2}-\frac{\pi}{10^{4}}\right)\right)-\frac{1ᴇ-1000}{\left(0.9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999\right)^{2\times 10^{250}}}\right)^{\sin\left(\left(1-\cos\left(10^{-97}\right)\right)\times 10^{194}+0.5\right)}', check: "≈", package: F155 }
+  - { id: 'rad 30 \frac{\sqrt{\ln\left(-\pi\right)}}{\left(90-10^{-9}\right)^{1ᴇ-1000}}\times \cos\left(\left(\left(\ln\left(0.5+10^{-130}\right)-\ln\left(0.5\right)\right)\times 10^{130}+1\right)^{90+10^{-3}}\right)', check: "⚠n", package: F155 }
+  - { id: 'rad 30 \sin\left(\frac{\left(\sinh\left(0.5+10^{-217}\right)-\sinh\left(0.5\right)\right)\times 10^{217}+1}{\operatorname{asinh}\left(1ᴇ-1000\right)}\right)', check: "⚠n", package: F155 }
+  - { id: 'deg 30 \tan\left(\left(100000000000000000001-\left(1ᴇ-300\right)\right)+\left(\left(1ᴇ300\right)+\left(1ᴇ1000\right)\right)\right)', check: "⚠n", package: F155 }
+  - { id: 'deg 12 \tan\left(\left(1ᴇ-300\right)-\left(1ᴇ1000\right)\right)-\sqrt[3]{\left|-1.000001\right|}', check: "⚠n", package: F155 }
+  # F145 (G309, seed 1794594001): a hang, DEG tan(cosh(tan(90+10^-6))): tan of e^(5.7·10^7), F62's sin(cosh(10!)) shape
+  - { id: 'deg 30 \tan\left(\cosh\left(\tan\left(90+10^{-6}\right)\right)\right)', check: "hang", package: F145 }
