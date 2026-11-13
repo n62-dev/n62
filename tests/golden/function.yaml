@@ -25,6 +25,11 @@ cases:
   - { id: "slope-cubic", kind: "slope", f: "x^3-2*x", x0: "2", oracle: "F(10)", expect: "10", source: "derived" }
   - { id: "slope-sin", kind: "slope", f: "sin(x)", x0: "0.5", oracle: "cos(F(1,2))", expect: "0.87758256189", source: "oracle" }
   - { id: "slope-exp", kind: "slope", f: "exp(x)", x0: "1", oracle: "e", expect: "2.71828182846", source: "oracle" }
+  - { id: "slope-zero-cubic-min", kind: "slope", f: "x^3/3-0.09*x", x0: "0.3", oracle: "F(0)", expect: "0", source: "derived", note: "G330 (F227): f' = x^2-9/100 = 0 at x = 3/10 (the minimum); an exact 0 as Home shows it, never 9.86E-32 from the floats at work digits" }
+  - { id: "slope-zero-identity", kind: "slope", f: "sin(x)*cos(x)-sin(2*x)/2", x0: "0.7", oracle: "F(0)", expect: "0", source: "derived", note: "G330 (F227): sin(2x) = 2 sin(x)cos(x), so f is 0 for every x and f' = 0; never 3.94E-31" }
+  - { id: "slope-zero-constant", kind: "slope", f: "x/e*3!/x", x0: "0.3", oracle: "F(0)", expect: "0", source: "derived", note: "G330 (F227, the view sweep's row): f = 6/e for x != 0, a constant, so f' = 0 at 3/10; never 6.31E-30" }
+  - { id: "slope-square", kind: "slope", f: "x^2", x0: "0.3", oracle: "F(3,5)", expect: "0.6", source: "derived", note: "G330 control: f' = 2x = 3/5 at x = 3/10" }
+  - { id: "slope-sin-1", kind: "slope", f: "sin(x)", x0: "1", oracle: "cos(F(1))", expect: "0.540302305868", source: "oracle", note: "G330 control" }
   - { id: "area-sin", kind: "area", f: "sin(x)", a: "0", b: "pi", oracle: "F(2)", expect: "2", source: "derived" }
   - { id: "area-between", kind: "area", f: "sin(x)", g: "x^3-2*x", a: "0", b: "1", oracle: "M(F(7,4))-cos(1)", expect: "1.20969769413", source: "oracle" }
   - { id: "area-gauss", kind: "area", f: "exp(-x^2)", a: "0", b: "3", oracle: "quad(lambda t: mp.exp(-t**2), [0, 3])", expect: "0.88620734826", source: "oracle" }
