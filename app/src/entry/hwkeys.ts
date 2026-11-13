@@ -169,8 +169,14 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   return true;
 }
 
-/** R198: a name of one letter is a variable's or a user function's (`f(`); pi is π, which Giac's help lists as a function. */
-const NO_CALL = new Set(["pi", "Pi"]);
+/** R198: a name of one letter is a variable's or a user function's (`f(`); pi is π, which Giac's help lists as a function;
+ *  R198f1: Giac's program words (do od fi si by in of) and its French operator words (et ou) are syntax, not functions
+ *  (Find lists them at tier 1 for its own search; `at` stays the function). */
+const NO_CALL = new Set(["pi", "Pi", "do", "od", "fi", "si", "by", "in", "of", "et", "ou"]);
+/** R198f1: the names of FUNCS that MathLive has no command for (a typed `\lcm` is an error element, the history row then
+ *  reads the raw text): they get Find's own insert (callsOf), not a command. Every other FUNCS name has its command
+ *  (the e2e case in hwkeys.spec.ts types each one and looks for an error element). */
+const NO_COMMAND = new Set(["lcm"]);
 /** A name the hardware letters type as one run (nameBefore): letters, then digits. */
 const TYPED = /^[A-Za-z]{2,}\d*$/;
 /** R198: each typed name's insert: none until the parser's FUNCS is in, FUNCS until Find's index is. */
@@ -183,7 +189,7 @@ let asked = false;
 function askIndex(): void {
   if (asked) return;
   asked = true;
-  const funcs = import("../input/parse.ts").then((m) => new Map(Object.keys(m.FUNCS).map((n) => [n, `\\${n}\\left(#0\\right)`])));
+  const funcs = import("../input/parse.ts").then((m) => new Map(Object.keys(m.FUNCS).filter((n) => !NO_COMMAND.has(n)).map((n) => [n, `\\${n}\\left(#0\\right)`])));
   void funcs.then((f) => void (calls.size || (calls = f)), () => {});
   const index = import("../find/finder.ts").then((m) => m.loadIndex());
   void Promise.all([funcs, index]).then(([f, ix]) => void (calls = callsOf(f, ix.items)), () => void (asked = false));
