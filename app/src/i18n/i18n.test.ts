@@ -36,6 +36,7 @@ const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; 
   { prefix: "view.", suffixes: ["home", "cas", "symb", "plot", "num"], file: "apps/shell.svelte.ts" },
   { prefix: "angle.", suffixes: ["rad", "deg"], file: "views/StatusLine.svelte" },
   { prefix: "engine.", suffixes: ["blink", "gecko", "webkit", "other"], file: "views/aboutItems.ts" }, // R285
+  { prefix: "keys.action.", suffixes: ["apps", "switch", "symb", "plot", "num", "fold"], file: "keyboard/desktopHelp.ts" }, // R131
   { prefix: "format.", suffixes: ["std", "sci", "eng", "pfx"], file: "views/StatusLine.svelte" },
   { prefix: "entry.", suffixes: ["textbook", "line"], file: "views/modeSheet.ts" },
   { prefix: "settings.fmt.", suffixes: ["std", "sci", "eng", "pfx", "fix"], file: "views/modeSheet.ts" },

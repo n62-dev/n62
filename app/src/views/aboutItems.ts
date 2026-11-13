@@ -7,6 +7,12 @@ import { aboutText as t } from "../i18n/enAbout.ts";
 import { aboutData, aboutLoading, type AboutData } from "./aboutData.svelte.ts";
 import { currentEngine, isTested } from "../state/browser.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
+import { desktopHelpText } from "../keyboard/desktopHelp.ts";
+import type { DesktopMap } from "../keyboard/desktopKeys.ts";
+
+/** R131: the desktop key map, from hwkeys.ts's chunk (loaded with MathLive at start, so in by the time Settings opens). */
+let desktopMap: DesktopMap | undefined;
+const desktopLoad = (): Promise<void> => import("../entry/hwkeys.ts").then((m) => void (desktopMap = m.desktop));
 
 export const REPO_URL = "https://github.com/n62-dev/n62";
 const LICENCE = "GPL-3.0-or-later";
@@ -71,13 +77,23 @@ function aboutRows(d: AboutData): MenuItem[] {
   ];
 }
 
-/** The rows of the Help and about section: "Show the first-start tips" (R15c4; only where the app gives it) above About and Parts. */
+/** The rows of the Help and about section: "Show the first-start tips" (R15c4; only where the app gives it) above About and
+ *  Parts; then the desktop keys (R131), a text built from the spec. */
 export function helpItems(env: SettingsEnv = {}): MenuItem[] {
   const tips = env.tips;
+  if (!desktopMap) void desktopLoad();
   return [
     ...(tips ? [{ id: "tips", label: t("tips.row"), run: () => tips() }] : []),
     { id: "report", label: t("report.row"), run: () => env.data?.((c) => c.reportProblem()) },
     { id: "about", label: t("title"), hint: t("hint"), submenu: lazy(t("aboutTitle"), aboutRows) },
     { id: "parts", label: t("parts"), hint: t("partsHint"), submenu: lazy(t("partsTitle"), partRows, { longPreview: true }) },
+    {
+      id: "keys",
+      label: t("keys"),
+      hint: t("keys.hint"),
+      get submenu() {
+        return { ...textLevel(t("keys"), desktopMap ? desktopHelpText(desktopMap) : t("loading")), loading: () => (desktopMap ? null : desktopLoad()) };
+      },
+    },
   ];
 }

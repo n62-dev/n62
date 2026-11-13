@@ -69,24 +69,17 @@
   onMount(() => {
     if (host) entry.setHost(host);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
-    const hw = (name: string) => (): void => session.taps.press(`${name}:hw`); // R127: a hardware key that runs a keypad key is "<key id>:hw"
-    const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // ... else "hw:<kind>" (state/pressCount.ts)
-    // R45: a hardware Enter is the Enter key (a picked row, an open sheet), not a bare submit
-    entry.onEnter = counted(hw("enter"), () => {
-      const key = keyboard.byId.get("enter");
-      if (key) press(key, "primary");
-      else enter();
-    });
-    // R15c2: a hardware Escape is the Esc key (an open sheet or pick takes it first)
-    entry.onEscape = counted(hw("esc"), () => {
-      const key = keyboard.byId.get("esc");
-      if (key) press(key, "primary");
-    });
-    // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character
+    const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts)
+    // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
+    // "<key id>:hw" (R127); Enter and Escape too (R45: Enter is the Enter key, a picked row's or an open sheet's, not a
+    // bare submit; R15c2: Escape is the Esc key; R131: both through this hook, entry/controller.ts)
     entry.onKey = counted((...[id]: [string, Layer]) => session.taps.press(`${id}:hw`), (id: string, layer: Layer) => {
       const key = keyboard.byId.get(id);
       if (key) press(userKeys.resolve(key), layer);
     });
+    // R131: a desktop key the table adds (hwkeys.ts resolves it): its key, else the fold (a dead press in an app or a sheet)
+    entry.onDesk = counted((...[as]: [string, Key?, Layer?]) => session.taps.press(as), (_: string, key?: Key, layer?: Layer) =>
+      key ? press(userKeys.resolve(key), layer) : unfold() || (canFold && !shell.sheet ? fold("fold.hw") : dead()));
     entry.onLetter = counted(hwOther("letter"), typeLetter);
     shell.goTo = goTo; // the Apps sheet's Home and CAS rows
     shell.openSettings = openSettings;
@@ -377,10 +370,11 @@
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
-  function fold(): void {
+  /** Fold the keypad: by the line's swipe, or (R131) by the desktop key, counted apart (`fold.swipe`, `fold.hw`). */
+  function fold(as: "fold.swipe" | "fold.hw" = "fold.swipe"): void {
     if (folded || !canFold) return;
     folded = true;
-    countUse("fold.swipe");
+    countUse(as);
   }
   /** The keys come back; false when they were up. */
   function unfold(): boolean {
