@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 |---|---|---|---|---|
 | 631 | R281 the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
 | 632 | R282 Vars in the store sheet's look (sd-4) | ron, Sonnet | `p1/ron-varsgrid` | R281 |
-| 661 | [R196](packages/R196.md) which function the cursor is in | ron, Opus | `p1/ron-cursorfn` | – |
+| 661 | R196 which function the cursor is in | ron, Opus | `p1/ron-cursorfn` | – |
 | 662 | [R197](packages/R197.md) the Help key: syntax and example of the function at the cursor | ron, Opus | `p1/ron-helpkey` | R196, R278 |
 | 663 | [R185](packages/R185.md) Shift + 5: a matrix that grows as you type | ron, Opus | `p1/ron-matgrow` | – |
 | 664 | [R186](packages/R186.md) ⌫ takes an empty last row or column back | ron, Sonnet | `p1/ron-matshrink` | R185 |
@@ -98,9 +98,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 756 | G342 a library file's version is the last one that changed library text | gorge, Sonnet | `p1/gorge-libversion` | – |
-| 683 | R199 templates in the plain-text session (F180) | ron, Sonnet | `p1/ron-plaintemplates` | – |
 | 699 | G331 patch 0047: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
+| 757 | [A150](packages/A150.md) red-first runs an engine-reading vitest file on phase-1's engine | annabell, Sonnet | `p1/annabell-redfirsteng` | – |
 | 698 | [G330](packages/G330.md) the Slope shows a cancelled 0 as a number (F227) | gorge, Opus | `p1/gorge-slopezero` | – |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |

@@ -123,6 +123,7 @@ test("Enter on a tapped pick inserts, as after ▲", async ({ page }) => {
 test("a scroll drag neither picks nor inserts; a hold copies and opens no menu (R276)", async ({ page }) => {
   for (let i = 1; i <= 6; i++) await tap(page, [`d${i}`, "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(6);
+  await expect(results(page).last()).toHaveAttribute("data-gestures", "", { timeout: 15_000 }); // the hold's lazy chunk is in
   await finger(page, results(page).last(), 0, 700);
   await expect(page.getByTestId("notice")).toBeVisible(); // "Copied" (or the clipboard's refusal: this spec asks no permission)
   await page.waitForTimeout(200);
