@@ -446,8 +446,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB.
  *  61,900 → 61,970 B (G308, as G322): no app file changed; Giac patch 0048 changes the engine build, so the engine worker's
  *  hashed name and the chunk names that follow it gzip differently. The same tree measures 61,899 B gzip with phase-1's
- *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB. */
-export const START_PIN_GZIP = 61_970;
+ *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB.
+ *  61,970 → 62,040 B (R224): the wide layout. Its look is CSS (App.svelte's `@media` block, outside the JS); what stays in
+ *  the chunk is the condition (views/wide.ts), its matchMedia in App.svelte's onMount and `canFold` reading it (no results
+ *  mode side by side). svelte/reactivity's MediaQuery cost 0.17 kB more, so a plain matchMedia. The merge base 4ee33b66
+ *  measures 61.89 kB gzip (174.71 kB raw), the branch 61.99 kB (174.87 kB raw): 61.99 kB + 0.05 kB. */
+export const START_PIN_GZIP = 62_040;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
