@@ -25,17 +25,15 @@
 //   back what Clear or Delete took first (R98), which MathLive's own undo never did.
 // - Counting (R127, R131's removal test): a key the table adds (an Alt chord, Home, F1, Shift+Enter, `{`, `[`) goes to
 //   onDesk with its desktop name, counted `hw:<name>`; the keys R31, R45 and R119 had before it keep onKey (`<key id>:hw`).
-// Loaded with MathLive (EntryController.load), outside the start chunk. The Ctrl, Alt and Meta combinations the table
-// does not name stay with MathLive and the browser (copy, cut, select all); a paste, Ctrl+V included, is field.ts's
-// paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
+// Loaded with MathLive (EntryController.load), outside the start chunk; R198's names load on the first letter (askIndex).
+// The Ctrl, Alt and Meta combinations the table does not name stay with MathLive and the browser (copy, cut, select
+// all); a paste, Ctrl+V included, is field.ts's paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
 // (Option + 5 is `[` on a German Mac; R131f1, optionChar).
 import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
 import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
 import { chordOf, desktop, type DeskTarget } from "../keyboard/desktopKeys.ts";
 import type { FindItem } from "../find/types.ts";
-import { FUNCS } from "../input/parseTables.ts";
-import { nameBefore } from "./nameRun.ts";
 
 /** The desktop key map (R131), for the help text: it reaches it through this chunk, so the map stays in it and no
  *  dynamic import of hwkeys lists a chunk more. */
@@ -173,24 +171,28 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
 
 /** R198: a name of one letter is a variable's or a user function's (`f(`); pi is π, which Giac's help lists as a function. */
 const NO_CALL = new Set(["pi", "Pi"]);
-/** A name the hardware letters type as one run (nameRun.ts): letters, then digits. */
+/** A name the hardware letters type as one run (nameBefore): letters, then digits. */
 const TYPED = /^[A-Za-z]{2,}\d*$/;
-const FUNC_CALLS: ReadonlyMap<string, string> = new Map(Object.keys(FUNCS).map((n) => [n, `\\${n}\\left(#0\\right)`]));
-/** R198: each typed name's insert; FUNCS until Find's index is in. */
-let calls = FUNC_CALLS;
+/** R198: each typed name's insert: none until the parser's FUNCS is in, FUNCS until Find's index is. */
+let calls: ReadonlyMap<string, string> = new Map();
 let asked = false;
 
-/** R198: Find's index, asked for by the first hardware letter (finder.ts loadIndex); a failed load is asked again by the next. */
+/** R198: the first hardware letter loads the names: the parser's function commands (input/parseTables.ts FUNCS, through
+ *  parse.ts, the parser's own chunk: a chunk of the tables alone would join the start chunk's preload list) as calls, then
+ *  Find's index (finder.ts loadIndex). A failed load is asked again by the next letter. */
 function askIndex(): void {
   if (asked) return;
   asked = true;
-  void import("../find/finder.ts").then((m) => m.loadIndex()).then((ix) => void (calls = callsOf(ix.items)), () => void (asked = false));
+  const funcs = import("../input/parse.ts").then((m) => new Map(Object.keys(m.FUNCS).map((n) => [n, `\\${n}\\left(#0\\right)`])));
+  void funcs.then((f) => void (calls.size || (calls = f)), () => {});
+  const index = import("../find/finder.ts").then((m) => m.loadIndex());
+  void Promise.all([funcs, index]).then(([f, ix]) => void (calls = callsOf(f, ix.items)), () => void (asked = false));
 }
 
 /** The typed names of Find's functions and templates: FUNCS first, then an item's own name (Giac's `and` for `and`, not
  *  bitand's alias), then the other names, tier 0 before tier 1. */
-function callsOf(items: readonly FindItem[]): ReadonlyMap<string, string> {
-  const m = new Map(FUNC_CALLS);
+function callsOf(funcs: ReadonlyMap<string, string>, items: readonly FindItem[]): ReadonlyMap<string, string> {
+  const m = new Map(funcs);
   const add = (name: string, insert: string): void => void (TYPED.test(name) && !NO_CALL.has(name) && !m.has(name) && m.set(name, insert));
   const fns = items.filter((it) => it.kind === "fn" || it.kind === "tmpl");
   for (const it of fns) add(it.id.slice(it.id.indexOf(":") + 1), it.insert);
@@ -198,15 +200,29 @@ function callsOf(items: readonly FindItem[]): ReadonlyMap<string, string> {
   return m;
 }
 
+/** R198: the name typed right before the cursor: a run of letters, then digits (`log10`), each an atom of its own at the
+ *  cursor's depth; none with a selection or with no letter there. */
+function nameBefore(mf: MathfieldElement): string | undefined {
+  if (!mf.selectionIsCollapsed) return undefined;
+  const d = mf.getElementInfo(mf.position)?.depth ?? 0;
+  const at = (o: number): string => (o > 0 && (mf.getElementInfo(o)?.depth ?? 0) === d ? (mf.getElementInfo(o)?.latex ?? "") : "");
+  let name = "";
+  let k = mf.position;
+  for (; /^\d$/.test(at(k)); k--) name = at(k) + name;
+  const digits = name.length;
+  for (; /^[A-Za-z]$/.test(at(k)); k--) name = at(k) + name;
+  return name.length > digits ? name : undefined;
+}
+
 /** R198: the key a `(` presses after a typed function name: the ( ) key with the function's insert (field.ts puts it in
  *  place of the letters); none where the letters before the cursor name no function, or a name of the user's. */
 function callKey(mf: MathfieldElement, tg: HwTarget): Key | undefined {
-  const run = nameBefore(mf);
-  const latex = run && !tg.stored?.includes(run.name) ? calls.get(run.name) : undefined;
+  const name = nameBefore(mf);
+  const latex = name && !tg.stored?.includes(name) ? calls.get(name) : undefined;
   const key = keyboard.byId.get("paren");
   const paren = key?.actions.primary;
-  if (!run || latex === undefined || !key || !paren) return undefined;
-  return { ...key, actions: { primary: { kind: "insert", latex, call: { name: run.name, paren } } } };
+  if (!name || latex === undefined || !key || !paren) return undefined;
+  return { ...key, actions: { primary: { kind: "insert", latex, call: { name, paren } } } };
 }
 
 /** R131f1: a Mac's Option is Alt with no AltGraph, so its characters (German Mac: Option + 5 is `[`, Option + L is `@`)

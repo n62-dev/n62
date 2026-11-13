@@ -312,7 +312,9 @@ describe("R198: a typed function name and ( give the function", () => {
   };
   const letter = (ch: string): void => void hardwareKey(ev(ch), { field: line([]), decimalComma: false, onSymbol: () => {}, onKey: () => {}, onLetter: () => {}, onDead: () => {}, onPress: () => {} });
 
-  it("before the index arrives: a name of the parser's FUNCS is the function, with the cursor in its bracket (sin( is \\sin\\left()", () => {
+  it("before the index arrives: a name of the parser's FUNCS is the function, with the cursor in its bracket (sin( is \\sin\\left()", async () => {
+    letter("s"); // the first letter loads the names: the parser's FUNCS, then the index
+    await vi.waitFor(() => expect(paren("sin").got).not.toBe("paren:primary"));
     expect(paren("sin")).toEqual({ got: "paren:primary \\sin\\left(#0\\right) (sin)", count: "hw:name" });
     expect(paren("2sin").got).toBe("paren:primary \\sin\\left(#0\\right) (sin)"); // a number before the name stays
     expect(paren("arcsin").got).toBe("paren:primary \\arcsin\\left(#0\\right) (arcsin)");
@@ -320,7 +322,7 @@ describe("R198: a typed function name and ( give the function", () => {
     expect(paren("stddev")).toEqual({ got: "paren:primary", count: "paren:hw" }); // the index is not in yet
   });
   it("a hardware letter asks for the index, once (the tests above typed letters too)", () => {
-    letter("s");
+    letter("x");
     letter("t");
     expect(index.asked).toBe(1);
   });

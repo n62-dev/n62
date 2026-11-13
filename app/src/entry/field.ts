@@ -8,7 +8,6 @@ import { deleteAtTemplate } from "./delete.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
 import { lineTouch } from "./lineTouch.ts";
-import { nameBefore } from "./nameRun.ts";
 import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 import { GROW_MATRIX, type Grown } from "./matgrow.ts";
@@ -290,9 +289,10 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
  *  function, the cursor in its argument (a box: #0 and #@ would take the selected letters in). The letters are read
  *  again here; a line that no longer ends in them (it changed while the key waited for a load) gets the bracket pair. */
 function typedCall(mf: MathfieldElement, latex: string, call: TypedCall): void {
-  const run = nameBefore(mf);
-  if (run?.name !== call.name) return apply(mf, call.paren);
-  mf.selection = { ranges: [[run.start, mf.position]] };
+  const end = mf.position;
+  const start = end - call.name.length; // one atom per letter or digit
+  if (!mf.selectionIsCollapsed || start < 0 || mf.getValue(start, end, "latex") !== call.name) return apply(mf, call.paren);
+  mf.selection = { ranges: [[start, end]] };
   apply(mf, { kind: "insert", latex: latex.replace(/#[0@]/g, "#?") });
 }
 
