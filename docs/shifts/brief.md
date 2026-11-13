@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 |---|---|---|---|---|
 | 666 | R131 a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | R278, R283, R185, R187, R193, R197 |
 | 730 | R198 typed function names on a hardware keyboard | ron, Opus | `p1/ron-typednames` | R131 |
-| 731 | [R224](packages/R224.md) the wide layout on a tablet and a desktop | ron, Opus | `p1/ron-widelayout` | – |
+| 731 | R224 the wide layout on a tablet and a desktop | ron, Opus | `p1/ron-widelayout` | – |
 | 754 | [R291](packages/R291.md) the layout lock: no live key layer or fixed row moves unnoticed | ron, Sonnet | `p1/ron-layoutlock` | R278, R283, R185, R187, R193, R197, R131 |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
