@@ -5,6 +5,9 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 169 (2026-11-13) to make room, as they stood
+- **R277's line scroll (Opus pass 155; run 1053):** a finger or pen on the entry line is ours, a mouse MathLive's. Past 8 px a sideways drag scrolls: `scrollLeft` on MathLive's shadow `[part=content]` (0.111.4 has no public one; our one write there, pinned by linetouch.spec.ts; M6 asks for it). A tap places the caret; a hold (500 ms) selects the innermost term under the finger (a numerator's number; R279's Select goes on to the fraction); no double-tap word selection, and no long-press context menu on the line. Would change if: MathLive ships a public scroll, or A139 finds the term too small.
+
 ### Shortened 2026-11-12, evening (day session, the owner's yes) to make room, as they stood
 - **Owner answers of 2026-11-08:** a patch's worker writes its README row (A83); a stray file is logged, warn only (A88); a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "Opus pass 150". Would change if: a stray file does harm before anyone reads the log.
 - **Owner answers of 2026-11-05 (morning).** The weekly fuzz runs in 10-minute slices from Wed 11-11 (G167, Opus pass 69); red-first may test the stock engine for a G125 package (A71). Archived, "Opus pass 96". Would change if: the fuzz count is cut to fit one slice.

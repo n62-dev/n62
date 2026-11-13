@@ -12,7 +12,7 @@ The one place for "where are we and what's left", one or two lines per open item
 | Milestone 4a: feel (P11) | Built (the entry work, sheets, flicks, Settings, history-row actions, the visual pass, themes, results mode; the list: git). Waiting: the trust features |
 | Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: p95 14.1 ms ≤ 16 (A74), E3 met; the gate is not complete |
 | Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), a result chip as σ (R271), menu Constants and Tools (R92) |
-| Milestone 6: Structure | Not started (EN5–EN7, Help) |
+| Milestone 6: Structure | Started (Help R197, Shift + 5 R185) |
 | MVP release | v0.1.0, the APK and the website from one tag, after the 11-17 freeze, at the bar: [release-0.1.0.md](release-0.1.0.md) |
 
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
@@ -26,7 +26,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by the freeze (11-17); R269 round trip.
+8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by the freeze (11-17); R269 round trip; R197's Insert.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -37,7 +37,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
 - **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
-- **F238 (A139; ron).** Dead keys (Shift + Select, Shift + Deselect) have no `aria-disabled`: TalkBack does not say they do nothing.
+- **F238 (A139; ron).** Shift + Deselect, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
 - **F239 (G341's step 1).** A body with a float == or ≠ test (`f(x):=x==0.5`) exports with our `pasinexact`, `pasdiff`, `pasverdict`, `a_`, `b_`, `d_`; the import refuses it: no round trip through a library file. Family 8.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
@@ -84,7 +84,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
-- **Milestone 6, Structure** (not packaged): EN5 matrices with Shift + 5 and the editor on Shift + 4 (§5.3; the Tmpl matrices work today), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu, R193; the word size open), EN7 everyday functions, Help as context help (done, R197); EN4, copying one element of a list or matrix.
+- **Milestone 6, Structure** (not packaged): EN5 matrices with Shift + 5 (done, R185) and the editor on Shift + 4 (§5.3), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu, R193; the word size open), EN7 everyday functions, Help as context help (done, R197); EN4, copying one element of a list or matrix.
 
 ### Without a package yet
 - **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, sounding only when Key click is on, and its latency against the pulse from a screen recording. Removal test: nobody (owner or an outside tester) turns it on in the four weeks after it ships, and the switch and its code go.
