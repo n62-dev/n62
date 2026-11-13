@@ -393,10 +393,21 @@ describe("Settings, a level of the sheet (R49)", () => {
 describe("Help and about (R87)", () => {
   const loaded = (s: Sheet) => vi.waitFor(() => expect(s.level.items[0]?.id).not.toBe("loading"));
 
-  it("is the fourth section; it holds Report a problem (R173), About and Parts; About and Parts open a level", () => {
+  it("Desktop keys (R131) is a text built from spec/keyboard.yaml `desktop:`: every key that is not its own legend, and the actions", () => {
+    const s = settings(5);
+    expect(s.activate(at(s, "keys"))).toEqual({ kind: "stay" });
+    expect(s.path).toBe("Settings › Help and about › Desktop keys");
+    const text = s.level.text ?? "";
+    expect(text.split("\n")[0]).toMatch(/^A character types its own key/);
+    for (const line of ["Alt+S   sin", "Alt+Shift+S   sin⁻¹", "Alt+U   Units", "Alt+Shift+M   Settings", "Ctrl+Y or Ctrl+Shift+Z   Redo", "Alt+1   User key U1", "Alt+Shift+1   User key U1, Shift", "Alt+K   Fold or unfold the keypad (results mode)", "F2   Symb", "{   { }", "*   ×"])
+      expect(text.split("\n"), line).toContain(line);
+    expect(text).not.toMatch(/^7 {3}7$/m); // a character that types its own legend is not listed
+  });
+
+  it("is the fourth section; it holds Report a problem (R173), About, Parts and Desktop keys (R131); those three open a level", () => {
     const s = settings(5);
     expect(s.path).toBe("Mode › Settings › Help and about");
-    expect(s.level.items.map((x) => x.id)).toEqual(["report", "about", "parts"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["report", "about", "parts", "keys"]);
     expect(byId(s, "report")?.label).toBe("Report a problem");
     expect(s.level.items.filter((x) => x.id !== "report").every((x) => x.submenu)).toBe(true);
   });
@@ -418,7 +429,7 @@ describe("Help and about (R87)", () => {
     const s = new Sheet("mode", "Mode", () => modeItems(session, { tips: shown }), { remember: false });
     s.pickNumber(6);
     s.pickNumber(5); // (no Your keys or Data here: Help and about is the fifth section)
-    expect(s.level.items.map((x) => x.id)).toEqual(["tips", "report", "about", "parts"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["tips", "report", "about", "parts", "keys"]);
     expect(s.level.items[0]?.label).toBe("Show the first-start tips");
     const p = s.activate(0);
     expect(p.kind).toBe("run"); // the shell closes the sheet, then runs it
