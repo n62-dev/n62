@@ -192,6 +192,8 @@ export function matrix(pr: CalcParser): Json {
       pr.pos++;
       if (pr.groupText().trim() !== "if") pr.fail("parse.piecewiseExpectedIf");
     }
+    // R185f1: a cell with nothing in it (an unfilled cell of a grown matrix), not a command to read
+    if (pr.isCh("&") || pr.isCmd("\\") || pr.isCmd("end")) throw parseError("parse.emptyMatrixCell");
     row.push(pr.relation());
     if (pr.isCh("&")) {
       pr.pos++;

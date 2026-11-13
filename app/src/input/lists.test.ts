@@ -35,6 +35,35 @@ describe("the list braces (R54)", () => {
   });
 });
 
+// R185f1: a matrix cell that holds nothing (an unfilled cell of a grown matrix) is refused in plain words, not read as `\\`.
+describe("an empty matrix cell (R185f1)", () => {
+  const refused = (latex: string): SerializeError => {
+    let err: unknown;
+    try {
+      latexToGiac(latex);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(SerializeError);
+    return err as SerializeError;
+  };
+  it("is refused with a message from the table, in any place of the matrix", () => {
+    for (const l of [
+      "\\begin{pmatrix}1 & \\\\ 3 & 4\\end{pmatrix}",
+      "\\begin{pmatrix}1 & 2\\\\ 3 & \\end{pmatrix}",
+      "\\begin{pmatrix} & 2\\\\ 3 & 4\\end{pmatrix}",
+      "\\begin{pmatrix}\\end{pmatrix}",
+    ]) {
+      const e = refused(l);
+      expect(e.key).toBe("parse.emptyMatrixCell");
+      expect(e.message).toBe("A matrix cell is empty");
+    }
+  });
+  it("a full matrix is read as before", () => {
+    expect(latexToGiac("\\begin{pmatrix}1 & 2\\\\ 3 & 4\\end{pmatrix}")).toBe("[[1,2],[3,4]]");
+  });
+});
+
 // R77 (backlog F76): x² and xʸ on a { } list go elementwise; Giac's `^` on a vector is the dot product ([1,2]^2 = 5),
 // on its list type elementwise (R80). Derived: {1,2}² = {1,4}, {1,2}³ = {1,8}, {4,9}^0.5 = {2,3}. The values run through Giac in group
 // "lists-matrices" of tests/golden/parser.yaml (lists-matrices-10 to -16).
