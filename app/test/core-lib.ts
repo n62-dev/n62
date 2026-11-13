@@ -235,6 +235,9 @@ export async function replay(page: Page, steps: readonly CoreStep[], hooks: Repl
     else if ("tap" in s) {
       if (s.tap === "result:last") await lastRow(page).locator(".result").tap();
       else await page.locator(s.tap).first().tap();
+      // R281: a tap on a store sheet's letter stores (the name, then Enter): wait for its row as after Enter
+      await page.waitForTimeout(60);
+      await settled(page);
     } else if ("hold" in s) await finger(page, s.hold, { ms: 700 }); // past the 500 ms hold
     else if ("swipe" in s) {
       const n = await rowsOf(page).count();

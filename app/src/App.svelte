@@ -48,6 +48,7 @@
     recall: (item) => onLine(item, true, false),
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
+    stored: (item) => openStore(item),
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -261,6 +262,12 @@
     if (!memory && !shell.showsEntry) return dead();
     onFind(finder(), (m) => { picked = null; m.showNames(shell, entry, session, memory); });
   }
+  /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.svelte.ts, in Vars' chunk); `row`: the result on the line. */
+  function openStore(row?: HistoryItem): void {
+    if (shell.app !== null) return;
+    const store = (latex: string): void => { entry.insert(latex); enter(); }; // the name after ▶, then Enter: the one store path
+    onFind(finder(), (m) => { picked = null; m.showStore({ shell, session, store }, m.storedText(session, row, entry.value)); });
+  }
   const finder = (): Promise<typeof import("./find/finder.ts")> => import("./find/finder.ts"); // (one import() site: each carries its own preload list)
   function onFind<T>(load: Promise<T>, show: (t: T) => void): void {
     sheetLoad = Promise.all([load, loadSheetView()]).then(([t]) => { sheetLoad = null; show(t); }, () => { sheetLoad = null; dead(); }); // (a load that fails: the queued keys run without the sheet)
@@ -421,6 +428,7 @@
     openShiftPalette,
     openFind,
     openNames,
+    openStore,
     withClip,
     loadClip: () => void loadClip(),
     dead,
@@ -534,7 +542,7 @@
       capsLock={session.capsLock}
       shiftLock={session.shiftLock}
       cas={casKeys} app={shell.app !== null}
-      sheet={shell.sheet ? { filter: shell.sheet.level.filterable } : undefined}
+      sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store" } : undefined}
       pops={session.settings.look.pops}
       onpress={(key, layer) => press(key, layer, true)}
       oncount={(key) => session.taps.press(key)}
@@ -555,7 +563,7 @@
   <sheetChunk.C
     {sheet}
     {over}
-    testid={shell.switcherOpen ? "apps" : sheet.id === "find" ? "find" : "menu"}
+    testid={shell.switcherOpen ? "apps" : sheet.id === "find" || sheet.id === "store" ? sheet.id : "menu"}
     {below}
     {keyBox}
     ontap={(i) => shell.picked(sheet.activate(i))}

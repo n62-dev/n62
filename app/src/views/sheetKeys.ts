@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // What a key does while a sheet is open (docs/05 3.1 with section 7). Shift and Alpha are ignored for picking: a key
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
-import type { Key, Layer } from "../keyboard/keyboard.ts";
+import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -22,7 +22,10 @@ export type SheetKey =
    *  CAS, Apps, Menu or a view close it and go there). A user key that holds anything else does nothing in a sheet. */
   | { kind: "pass" }
   /** Does nothing in a sheet. */
-  | { kind: "none" };
+  | { kind: "none" }
+  /** R281, the store sheet: the key types no name; the sheet closes and the key does its job on the line (Shift + 9's
+   *  Greek palette, an operator, ⌫ with nothing typed), as it did after ▶ before the sheet. */
+  | { kind: "line" };
 
 const DIGIT = /^d([0-9])$/;
 const BY_ID: Readonly<Record<string, SheetKey>> = {
@@ -87,4 +90,26 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
   // a hardware key's own character (R31 hands it on as the primary layer): `.` and `/` type themselves
   if (layer === "primary" && own && !/^\p{L}$/u.test(own)) return { kind: "letter", ch: own };
   return letter ? { kind: "letter", ch: letter } : { kind: "none" };
+}
+
+/**
+ * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. A key that
+ * types a letter on the line types it, in the layer it was pressed in (`shift`, `alpha`: a tap before it or a flick; x
+ * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job (⌫ with
+ * nothing typed goes on to the line, R281f1). A plain
+ * digit picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing. A plain key that
+ * types no letter types its Alpha letter, as in every sheet, and the place keys keep theirs. Any other key types no name
+ * (`line`): it does its job on the line, so every press after ▶ that did not type a name does what it did before.
+ * `empty`: nothing typed yet.
+ */
+export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean, empty: boolean): SheetKey {
+  const a = actionFor(key, shift, alpha, false, cas);
+  if (a?.kind === "type" && /^\p{L}$/u.test(a.text)) return { kind: "letter", ch: a.text };
+  const layered = shift || alpha;
+  const fixed = BY_ID[key.id];
+  if (fixed) return fixed.kind === "backspace" && empty ? { kind: "line" } : fixed; // ⌫ with nothing typed: the ▶ goes
+  const d = DIGIT.exec(key.id);
+  if (d && !layered) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
+  const k = layered ? undefined : sheetKey(key, true);
+  return k && k.kind !== "none" ? k : { kind: "line" };
 }

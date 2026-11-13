@@ -51,11 +51,14 @@ describe("G341: a typed name that starts with pas is refused with the reason", (
     expect(() => latexToGiac(op("pcasans"), holding("pcasans"))).toThrow(/^pcasans is one of N62's own names/);
   });
 
-  it("the store line refuses `7 ▶ pasx` and stores nothing (R281's sheet is not merged: the line's one store path)", () => {
+  it("the store line refuses `7 ▶ pasx` and stores nothing (the line's one store path, the store sheet's too)", () => {
     // the session holds pasx (an old library's), so Vars can put it after ▶
     const names = [{ name: "pasx", kind: "var" as const }];
     expect(() => giacOfEntry(`7\\blacktriangleright${op("pasx")}`, "home", { names })).toThrow(/^pasx starts with pas/);
     expect(() => giacOfEntry(`7\\blacktriangleright${op("pasx")}`, "cas", { names })).toThrow(/^pasx starts with pas/);
+    // R281: the store sheet's name after ▶, as MathLive writes it back (\operatorname{\mathrm{…}}), a new name too
+    expect(() => giacOfEntry(`7\\blacktriangleright\\operatorname{\\mathrm{pasx}}`, "home")).toThrow(/^pasx starts with pas/);
+    expect(() => giacOfEntry(`7\\blacktriangleright${op("pascal")}`, "home")).toThrow(/^pascal starts with pas/);
     // typed letter by letter it is a product, never a name: refused as before
     expect(() => giacOfEntry("7\\blacktriangleright pasx", "home")).toThrow(/expected a name after ▶/);
   });

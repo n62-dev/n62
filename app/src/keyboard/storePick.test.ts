@@ -58,6 +58,7 @@ function ctx(statuses: string[] = ["done", "done", "done"]) {
     openShiftPalette() {},
     openFind() {},
     openNames() {},
+    openStore: (row?: HistoryItem) => void log.push(`openStore ${row?.id}`),
     withClip: (run: (x: typeof clip) => void) => run(clip),
     loadClip() {},
     dead: () => void log.push("dead"),
@@ -108,7 +109,7 @@ describe("Store ▶ on a picked row (R280)", () => {
   test("without a pick: unchanged, Ans ▶ on the empty line", () => {
     const { log, shiftStore, line } = ctx();
     shiftStore();
-    expect(log).toEqual(["ans", "run \\blacktriangleright"]);
+    expect(log).toEqual(["ans", "run \\blacktriangleright", "openStore 3"]); // R281: "Store in" for Ans's row
     expect(line()).toBe("Ans\\blacktriangleright");
   });
   test("ᴇ alone on a picked row keeps its job (drops the pick, types E)", () => {

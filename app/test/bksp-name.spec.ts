@@ -321,16 +321,17 @@ test.describe("AND, OR and XOR own no bracket", () => {
 // R117: a user function from Vars owns its pair whatever its length. Before, a one-letter name went in as a letter and a
 // plain pair (`p\left(#0\right)`), so ⌫ at the start of its argument left p3, read as p·3; it now goes in as the call
 // form a longer name has (`\operatorname{p}`), and ⌫ there removes the call and keeps 3. The real engine: p(3) = 9
+// R282: Vars is the grid now, which has no numbers: Enter inserts the highlighted, the newest name, the function p.
 // (derived from p(x) := x²).
 test("a one-letter Vars function owns its pair: p(‸3) ⌫ gives 3, and p(3) Enter calls p", async ({ page }) => {
   await open(page, "");
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   await tap(page, ["shift", "alpha", "emark", "paren", "x", "right", "alpha", "sub", "shift", "dot", "x", "sq", "enter"]); // p(x):=x²
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
-  await tap(page, ["vars", "d1", "d3"]);
+  await tap(page, ["vars", "enter", "d3"]);
   expect(await entryValue(page)).toMatch(/^\\operatorname\{(?:\\mathrm\{p\}|p)\}\\left\(3\\right\)$/);
   await tap(page, ["left", "bksp"]);
   expect(await entryValue(page)).toBe("3");
-  await tap(page, ["esc", "vars", "d1", "d3", "enter"]); // Esc clears the line
+  await tap(page, ["esc", "vars", "enter", "d3", "enter"]); // Esc clears the line
   await expect(page.locator('[data-testid="result"]').last().locator(".result")).toHaveAttribute("data-text", "9");
 });

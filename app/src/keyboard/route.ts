@@ -14,6 +14,7 @@ import { canPick, pickAfter, pickAtOrBefore } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
 import { sheetChunk, loadSheetView } from "../views/sheetView.svelte.ts";
 import { actionFor, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
+import type { SheetKey } from "../views/sheetKeys.ts";
 
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
 export type Mods = { shift: boolean; alpha: boolean };
@@ -47,6 +48,8 @@ export interface RouteCtx {
   openFind(slot?: { id: string; layer: Layer }): void;
   /** Vars (R4b): Find on the user's variables and functions; Shift + Math, Memory: the same list with delete and clear all. */
   openNames(memory: boolean): void;
+  /** Store ▶ (R281): the store sheet; `row`, the result Store ▶ put on the line (Ans on an empty line). */
+  openStore(row?: HistoryItem): void;
   /** Run with the clipboard code, now or once it has loaded (a returned promise holds the keys queued for the load). */
   withClip(run: (c: ClipActions) => void | Promise<void>): void;
   loadClip(): void;
@@ -229,11 +232,12 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
 /** A key while a sheet is open (docs/05 3.1); `screen`: a tap on the on-screen keypad (R144). Shift and Alpha are
  *  ignored, and the sheet leaves them as they are; no key goes through to the entry line. A flick down types the key's letter into the filter, on any key (digits
  *  too; docs/05 section 7 point 6); a flick up does nothing there. False: no sheet is open. */
-export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, screen?: boolean): boolean {
+export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, screen?: boolean, mods?: Mods): boolean {
   const shell = c.shell;
   const sheet = shell.sheet;
   if (!sheet) return false;
   const level = sheet.level;
+  if (key.id !== "enter") sheet.disarm(); // R281: any press but Enter (the armed item's second pick) disarms
   // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
   if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
   // R144 (owner, 2026-11-06): any other tap on the on-screen keypad outside a pick sheet closes it and does nothing
@@ -253,7 +257,9 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
   if (!keys) return false;
   const k = find
     ? keys.findKey(key, layer, c.session.shift, level.filter === "")
-    : layer === "alpha" || layer === "shift"
+    : sheet.id === STORE_SHEET
+      ? storeKey(c, keys, key, layer, mods ?? modsFor(c, layer))
+      : layer === "alpha" || layer === "shift"
       ? keys.sheetFlick(key, layer === "alpha", level.filterable)
       : keys.sheetKey(key, level.filterable);
   // in Find a one-shot Shift is used up by the key it types (its lock stays); elsewhere a sheet leaves it as it is
@@ -284,6 +290,13 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       // in Find ⌫ on an empty query goes back from a category to the list of categories
       if (!level.backspace() && find) sheet.back();
       return true;
+    case "line":
+      // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
+      // R281f1: what was typed into the filter goes on the line first, one character at a time as typeLetter types it
+      // (digits too), so the key meets the line it met before the sheet (x, Shift + space is x_)
+      for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
+      shell.closeSheet();
+      return false;
     case "none":
       return true;
     case "pass": {
@@ -343,8 +356,20 @@ function replay(c: RouteCtx): void {
   for (const w of keys)
     if (c.waiting.length > 0 || c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null || forLine(c, w)) wait(c, w); // another app or sheet started loading meanwhile (or the field is still to come), and all after it
     else if ("letter" in w) typeLetter(c, w.letter);
-    else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
+    else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
+
+/** R281: a key in the store sheet (sheetKeys.ts storeKey). A key that types a letter on the line types the same letter
+ *  into the name (x alone, Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as
+ *  before; a key that types no name goes on to the line (`line`) with its Shift or Alpha, and one the sheet takes uses a
+ *  one-shot Shift or Alpha up, as on the line. `m`: the modifiers the key was pressed with (a queued key's, R8). */
+function storeKey(c: RouteCtx, keys: NonNullable<typeof sheetChunk.keys>, key: Key, layer: Layer | undefined, m: Mods): SheetKey {
+  const k = keys.storeKey(key, m.shift, m.alpha, c.casKeys, c.shell.sheet?.level.filter === "");
+  if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
+  return k;
+}
+/** The store sheet's id (views/storeSheet.svelte.ts STORE_SHEET; not imported: that module is a lazy chunk). */
+const STORE_SHEET = "store";
 
 const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(2); // all but settings and mode (OPENS_SHEET lists those two first)
 /** The open sheet is Find (R4a): its keys follow docs/04 3.7 (sheetKeys.ts findKey). */
@@ -408,6 +433,7 @@ export function typeLetter(c: RouteCtx, ch: string): void {
   if (sheetUndrawn(c)) return wait(c, { letter: ch });
   const sheet = c.shell.sheet;
   if (sheet) {
+    sheet.disarm(); // R281
     if (sheet.level.filterable) sheet.level.type(sheet.id === FIND_SHEET ? ch.toLowerCase() : ch);
     return;
   }
@@ -453,8 +479,10 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     // G2; while typing it is the stacked fraction below
     void session.cycleForm();
     return;
-  } else if (entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult()) {
-    entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   }
+  const ans = shell.app === null && entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult();
+  if (ans) entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   entry.run(action);
+  // R281: Store ▶ in Home or CAS opens "Store in" (the value on the line, Ans's row when it put Ans there)
+  if (shell.app === null && action.kind === "insert" && action.latex === STORE_ARROW) c.openStore(ans ? [...session.items].reverse().find((x) => x.status === "done") : undefined);
 }

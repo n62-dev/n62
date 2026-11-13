@@ -36,6 +36,8 @@ export interface RowOps {
   acted?(id: string): void;
   /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
   hold?(job: Promise<unknown>): void;
+  /** Store ▶ put this row's result and ▶ on the line: the store sheet opens (R281). */
+  stored?(item: HistoryItem): void;
 }
 
 export class ClipActions {
@@ -267,8 +269,10 @@ export class ClipActions {
   }
   /** Store ▶: the result and the store arrow on the line, the cursor ready for the variable's name (value ▶ name). */
   storeRow(row?: HistoryItem): boolean {
-    if (!this.insertRow(row)) return false;
+    const i = this.target(row);
+    if (!i || !this.insertRow(row)) return false;
     this.entry.insert("\\blacktriangleright");
+    this.ops.stored?.(i); // R281: "Store in" opens
     return true;
   }
   /** Delete: the picked row, else the last row of the view. A running row is not deleted; when the Undo code does not

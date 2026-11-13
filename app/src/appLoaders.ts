@@ -27,6 +27,8 @@ export interface LoaderDeps {
   readonly acted: (id: string) => void;
   /** ☰ → Paste runs: the keys pressed while it reads the clipboard wait for it (route.holdKeys). */
   readonly hold: (job: Promise<unknown>) => void;
+  /** Store ▶ on a row put its result and ▶ on the line (R281: the store sheet opens). */
+  readonly stored: (item: HistoryItem) => void;
   /** The clipboard code is in, with the picked row's buttons (R147: they load with it). */
   readonly onClip: (clip: ClipActions, rowBar: RowBarView) => void;
 }
@@ -58,7 +60,7 @@ export function createLoaders(d: LoaderDeps) {
     loadClip: lazyOnce(
       (): Promise<ClipActions> =>
         import("./clipboard/actions.svelte.ts").then((m) => {
-          const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall, acted: d.acted, hold: d.hold });
+          const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall, acted: d.acted, hold: d.hold, stored: d.stored });
           d.shell.clip = c;
           d.shell.homeMenu = () => c.menu();
           d.onClip(c, m.RowBar);

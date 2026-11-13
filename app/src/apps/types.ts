@@ -102,6 +102,12 @@ export interface MenuItem {
   /** Find in a unit slot (R24d): a second job of the row beside picking it ("Put on the unit pad"), a button under the list
    *  while the row is highlighted, and ▶ on the row. */
   readonly put?: { readonly label: string; run(): void };
+  /** A letter cell drawn in the grid above the level's list (the store sheet, R281; SheetOptions.cells): `label` is its
+   *  letter, `value` the line under it. */
+  readonly cell?: true;
+  /** R281: picking the item arms it first and a second pick runs it; any other press disarms (Sheet.armed). `cell`
+   *  stands in the cell's value line while armed (`5 · again?`), `note` under the list (already translated). */
+  readonly confirm?: { readonly cell: string; readonly note: string };
 }
 
 export interface SubMenu {

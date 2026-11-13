@@ -227,6 +227,8 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   await bar(page).getByRole("button", { name: "Store ▶" }).tap();
   await isFolded(page, false);
   expect(await entryValue(page)).toContain("\\blacktriangleright");
+  await expect(page.getByTestId("store")).toBeVisible(); // R281: Store ▶ opens the store sheet; Esc closes it
+  await tap(page, ["esc"]);
 
   await clearLine(page);
   await fold(page);
@@ -370,6 +372,8 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await fold(page);
   await results(page).first().tap();
   await bar(page).getByRole("button", { name: "Store ▶" }).tap(); // store
+  await expect(page.getByTestId("store")).toBeVisible(); // R281: the store sheet; Esc closes it
+  await tap(page, ["esc"]);
   await clearLine(page);
   await fold(page);
   await swipeLast(page); // delete: the keys stay down
