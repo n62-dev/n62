@@ -55,6 +55,7 @@ import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
 import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
+import { readMatrices, type MatrixRead } from "./matrixRead.ts";
 import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine, startDead } from "./dead.ts";
@@ -1237,6 +1238,13 @@ export class EngineHost implements FactsHost {
     return table(this.watched, req, s, (cell) => this.formFor(cell));
   }
 
+  /** R188: the names that hold a matrix, with their elements when `cells` (matrixRead.ts), read in Home's mode. */
+  matrices(names: readonly string[], s: HomeSettings, cells: boolean): MatrixRead[] {
+    this.need(names.join("\n"));
+    this.useHomeMode(s);
+    return readMatrices(this.giac, names, s.digits, cells);
+  }
+
   private useCasMode(s: CasSettings): void {
     this.useWord(s);
     this.useMode(`cas${JSON.stringify(s)}`, s.digits, s.angle, () => {
@@ -1343,6 +1351,9 @@ export function createRequestHandler(load: GiacLoader, post: (r: Response) => vo
           break;
         case "table":
           post({ id: req.id, type: "table", result: host.table(req.req, req.settings) });
+          break;
+        case "matrices":
+          post({ id: req.id, type: "matrices", result: host.matrices(req.names, req.settings, req.cells) });
           break;
         case "units":
           post({ id: req.id, type: "units", result: host.units(req.job, req.settings) });

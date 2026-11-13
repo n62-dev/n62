@@ -253,11 +253,15 @@
         {#if sheet.depth > 1}<button type="button" class="icon" aria-label={sheetText("sheet.back")} onclick={onback}>‹</button>{/if}
         {#if sheet.icon}<span class="ticon" aria-hidden="true">{@html icon(sheet.icon)}</span>{/if}<span class="title" data-testid="sheet-title">{sheet.path}</span>
         {#if level.filter !== ""}<span class="filter" data-testid="sheet-filter">{level.filter}</span>{/if}
-        {#if (cutTop || cutBottom) && level.text === undefined}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
+        {#if (cutTop || cutBottom) && level.text === undefined && !level.grid}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
         {#if sheet.hasSettings}<button type="button" class="icon gear" data-testid="sheet-gear" aria-label={t("key.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
         <button type="button" class="icon" aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
-      {#if level.credits !== undefined}
+      {#if level.grid}
+        <!-- R188: a stored matrix's grid (matrixGrid.svelte.ts), its view a chunk of its own -->
+        {@const G = level.grid.C}
+        {#if G}<G grid={level.grid} />{/if}
+      {:else if level.credits !== undefined}
         <Credits blocks={level.credits} {level} />
       {:else if level.text !== undefined}
         <!-- a text to read (R87, a licence): the list's scroll and fade, no rows; ▲ ▼ page through it -->

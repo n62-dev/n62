@@ -6,6 +6,7 @@ import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import type { ConstTable } from "./constUnc.ts";
 import type { ChipFactsTable } from "./chipFacts.ts";
 import type { LibraryReply } from "./library.ts";
+import type { MatrixRead } from "./matrixRead.ts";
 
 export type Request =
   | { id: number; type: "init"; baseUrl: string; replay: DefEntry[] }
@@ -20,6 +21,8 @@ export type Request =
   | { id: number; type: "table"; req: TableRequest; settings: HomeSettings }
   /** The unit view (G16): a job built from the Find index's factors (units/build.ts), evaluated in Home's mode. */
   | { id: number; type: "units"; job: UnitJob; settings: HomeSettings }
+  /** R188: which of `names` hold a matrix, with their elements when `cells` (matrixRead.ts; calc/matrices.ts posts it). */
+  | { id: number; type: "matrices"; names: string[]; settings: HomeSettings; cells: boolean }
   /** R59: a library file's text at `version`, imported against the client's log (library.ts importText). */
   | { id: number; type: "library"; input: Uint8Array | string; version: number; written: number; log: DefEntry[]; replace: boolean }
   | { id: number; type: "libraryExport"; version: number; written: number; log: DefEntry[] };
@@ -37,6 +40,7 @@ export type Response =
   | { id: number; type: "analyze"; result: AnalysisResult }
   | { id: number; type: "table"; result: HomeResult[][] }
   | { id: number; type: "units"; result: Quantity | UnitError }
+  | { id: number; type: "matrices"; result: MatrixRead[] }
   | ({ id: number; type: "library" } & LibraryReply)
   | { id: number; type: "libraryExport"; text: string; skipped: { name: string; why: string }[] }
   /** `dead` (G24, G183): the engine is not trusted after this throw (out of memory, a wasm trap, a stack overflow); the
