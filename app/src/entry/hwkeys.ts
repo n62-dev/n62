@@ -23,7 +23,8 @@
 //   onDesk with its desktop name, counted `hw:<name>`; the keys R31, R45 and R119 had before it keep onKey (`<key id>:hw`).
 // Loaded with MathLive (EntryController.load), outside the start chunk. The Ctrl, Alt and Meta combinations the table
 // does not name stay with MathLive and the browser (copy, cut, select all); a paste, Ctrl+V included, is field.ts's
-// paste listener (R114). AltGr characters count as typed.
+// paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
+// (Option + 5 is `[` on a German Mac; R131f1, optionChar).
 import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
 import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
@@ -110,7 +111,7 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   const mf = tg.field;
   if (!mf || ev.isComposing) return false;
   const altGr = ev.getModifierState("AltGraph");
-  if ((ev.ctrlKey || ev.metaKey || ev.altKey) && !altGr) {
+  if ((ev.ctrlKey || ev.metaKey || ev.altKey) && !altGr && !optionChar(ev)) {
     // R119, R131: a chord the table names presses its key (Ctrl+Z, Alt+S); every other one stays MathLive's (copy, select all)
     const name = chordOf(ev);
     const t = name === undefined ? undefined : desktop.byName.get(name);
@@ -155,6 +156,16 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   else if (/^[A-Za-z]$/.test(ch)) tg.onLetter(ch, ev.repeat);
   else tg.onDead(ev.repeat);
   return true;
+}
+
+/** R131f1: a Mac's Option is Alt with no AltGraph, so its characters (German Mac: Option + 5 is `[`, Option + L is `@`)
+ *  would read as Alt chords. With Alt alone (no Ctrl, no Meta), a key that is one printable ASCII character, neither a
+ *  letter nor a digit, is typed, as AltGr's characters are. Alt + Shift on a digit's place stays the chord (Windows and
+ *  Linux give `!` for Alt + Shift + 1: the user key's Shift slot); Option's other characters (ß) stay chords by place. */
+function optionChar(ev: KeyboardEvent): boolean {
+  const k = ev.key;
+  if (!ev.altKey || ev.ctrlKey || ev.metaKey || k.length !== 1 || k < " " || k > "~" || /^[A-Za-z0-9]$/.test(k)) return false;
+  return !(ev.shiftKey && /^Digit\d$/.test(ev.code));
 }
 
 /** Press what the table names under `name`: a key R45 or R119 had before it as before (onKey), else through onDesk. */

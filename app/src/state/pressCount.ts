@@ -30,8 +30,10 @@ export function touchKey(
   return g.key && st !== "cancelled" ? `${g.key.id}:${st === "tap" ? (layer.alpha ? "alpha" : layer.shift ? "shift" : "primary") : st}` : undefined;
 }
 
-/** The count name of a hardware key that is no keypad key (R127): `hw:letter`, `hw:symbol`, `hw:dead`, `hw:other`. (A hardware
- *  key that runs a keypad key, Enter and Esc included, is "<key id>:hw".) */
+/** The count name of a hardware key that is no keypad key (R127): `hw:letter`, `hw:symbol`, `hw:dead`, `hw:other`. A key the
+ *  desktop table adds (R131: an Alt chord, Home, F1, `{`) counts apart from these four as `hw:<desktop name>` (hw:Alt+S,
+ *  hw:Home), so the removal test reads the table's own presses; a hardware key R31, R45 or R119 had before the table and
+ *  that runs a keypad key, Enter and Esc included, is "<key id>:hw". (desktopKeys.test.ts: no desktop name is a kind.) */
 export const HW_KINDS = ["letter", "symbol", "dead", "other"] as const;
 export const hwKind = (kind: (typeof HW_KINDS)[number]): string => `hw:${kind}`;
 

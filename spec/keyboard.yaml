@@ -357,8 +357,9 @@ keys:
 # Settings › Help and about › Desktop keys. A layer is a key name or a list of them, or `{ why: … }` when it has none.
 #   - a single character is typed (a letter types itself as a name letter, R45); `Space` is the space bar
 #   - `Alt+…` and `Ctrl+…` are chords: Alt + a letter for a key's tap, Alt + Shift + the same letter for its Shift layer
-#     where the pair shares one; Ctrl is Cmd on a Mac (R119), Alt is Option (the key's place, so Option's own character
-#     gives way); AltGr types its character as before
+#     where the pair shares one; Ctrl is Cmd on a Mac (R119), Alt is Option. AltGr types its character as before, and so
+#     does Option when its character is ASCII and neither a letter nor a digit (German Mac: Option + 5 is `[`, Option + L
+#     `@`); else Option is read by the key's place (Option + S, ß, is Alt+S). Alt + Shift + a digit stays the chord (R131f1)
 #   - every other name is KeyboardEvent.key (Enter, Escape, Home, F1, ArrowUp)
 #   - `e` or `E` right after a number's digits is ᴇ too, and `)` and a second `|` leave their pair (hwkeys.ts)
 # app/src/keyboard/desktopKeys.test.ts checks that every key and layer of `keys:` has an entry here (a user key's three slots too), and that no

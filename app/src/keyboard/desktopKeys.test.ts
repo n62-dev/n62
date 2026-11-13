@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import { chordOf, desktop, LAYERS, readDesktop } from "./desktopKeys.ts";
 import { keyboard, type Layer } from "./keyboard.ts";
+import { HW_KINDS } from "../state/pressCount.ts";
 import { shippedDesktop, shippedKeyboard } from "./shipped.ts";
 
 const doc = parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../spec/keyboard.yaml"), "utf8")) as Record<string, unknown>;
@@ -60,6 +61,10 @@ describe("the desktop key map (R131)", () => {
     const named = /^(Shift\+)?(Enter|Escape|Backspace|Delete|Home|End|Arrow(Up|Down|Left|Right)|F\d{1,2})$/;
     const chord = /^(Ctrl|Alt)\+(Shift\+)?([A-Z0-9]|Backspace|Arrow(Up|Down|Left|Right))$/;
     for (const n of desktop.entries.flatMap((e) => e.names)) expect(n.length === 1 || n === "Space" || named.test(n) || chord.test(n), n).toBe(true);
+  });
+  it("no desktop name is one of R127's hardware kinds, so hw:<desktop name> never shares a count with them (R131f1)", () => {
+    const kinds = new Set<string>(HW_KINDS);
+    expect([...desktop.byName.keys()].filter((n) => kinds.has(n))).toEqual([]);
   });
   it("reads a keydown as the table writes it", () => {
     const ev = (key: string, code: string, m: { ctrl?: boolean; meta?: boolean; alt?: boolean; shift?: boolean } = {}) =>

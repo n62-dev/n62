@@ -244,6 +244,15 @@ describe("R131: % and the desktop keys", () => {
     ]);
     expect(countsOf(ev("k", "KeyK", { alt: true }), ev("F2", "F2"))).toEqual(["hw:Alt+K", "hw:F2"]);
   });
+  it("R131f1: a Mac's Option character that is ASCII punctuation is typed, as AltGr's are (German Mac: Option + 5 is [, Option + L is @)", () => {
+    expect(run(ev("[", "Digit5", { alt: true })).got).toEqual(["d5:shift"]);
+    expect(run(ev("@", "KeyL", { alt: true })).got).toEqual(["dead"]);
+    expect(run(ev("~", "KeyN", { alt: true })).got).toEqual(["dead"]);
+    expect(countsOf(ev("[", "Digit5", { alt: true }))).toEqual(["hw:["]);
+  });
+  it("R131f1: Alt + Shift + a digit stays the user key's Shift slot (Windows, Linux: the key is !), and Option's ß stays Alt+S", () => {
+    expect(run(ev("!", "Digit1", { alt: true, shift: true }), ev("ß", "KeyS", { alt: true })).got).toEqual(["u1:shift", "sin:primary"]);
+  });
   it("AltGr's characters count as typed (Windows: Ctrl + Alt with AltGraph)", () => {
     expect(run(ev("{", "Digit7", { ctrl: true, alt: true, altGraph: true })).got).toEqual(["d8:shift"]);
   });

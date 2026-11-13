@@ -5,7 +5,8 @@
 // (`presses`, docs/04 section 5.2: key taps, flicks, screen taps; src/state/pressCount.ts), the measure of the task benchmark.
 // Since R127 a press also says which one it was: `keys` maps "<key id>:<layer>" (layer: primary, shift, alpha for a tap in
 // that layer; up, down for a flick; hw for a hardware key that ran the keypad key, Enter and Esc included), "trackpad:drag",
-// "hw:<kind>" (a hardware key that is no keypad key: letter, symbol, dead, other), or "screen:<kind>"
+// "hw:<kind>" (a hardware key that is no keypad key: letter, symbol, dead, other), "hw:<desktop name>" (a key the desktop
+// table adds, R131: hw:Alt+S, hw:Home; apart from the four kinds), or "screen:<kind>"
 // (a tap outside the keypad: row, button, or a row's own kind such as units-const) to its count; the total is the
 // sum. A stored record without `keys` loads with an empty map. The export (state/countsFile.ts: Settings › Counters ›
 // Export the counts, and R128's sync folder as counters.json) is one JSON object, `{ "format": "n62-counts/1",
