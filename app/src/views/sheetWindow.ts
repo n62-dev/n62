@@ -46,4 +46,4 @@ export const rowKey = (r: Row, byId: boolean): string | number => (byId ? r.item
 /** A row with a label and at most a note and a value (Find's hits): the sheet draws it with the light row, the same
  *  markup without the blocks for what it does not have (a row is built for less, R132). */
 export const plainRow = (it: MenuItem): boolean =>
-  !it.disabled && it.reason === undefined && it.hint === undefined && it.selected === undefined && it.options === undefined && it.submenu === undefined && it.glyph === undefined && it.dots === undefined && it.adjust === undefined;
+  !it.disabled && it.reason === undefined && it.hint === undefined && it.selected === undefined && it.options === undefined && it.submenu === undefined && it.glyph === undefined && it.dots === undefined && it.adjust === undefined && it.latex === undefined;

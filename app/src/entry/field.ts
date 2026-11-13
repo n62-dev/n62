@@ -11,6 +11,8 @@ import { lineTouch } from "./lineTouch.ts";
 import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 
+export { isInfixWord } from "./boxes.ts"; // R197: for the Help key's chunk (cursorFn.ts FnWords), from the chunk that holds boxes.ts
+
 export { SelectChain } from "./grow.ts"; // R279: Select and Deselect, loaded with the field
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */

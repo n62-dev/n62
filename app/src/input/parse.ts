@@ -13,7 +13,7 @@ import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGI
 import { negateUncertain, percentSigma } from "./pmPercent.ts";
 import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./tokenize.ts";
 
-export { GREEK, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
+export { FUNCS, GREEK, INVERSE, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 
 /** G341: a typed name that is N62's own (`pas…`, CAS's answer slot) is refused with the reason. */
 function refuseOurs(text: string): void {

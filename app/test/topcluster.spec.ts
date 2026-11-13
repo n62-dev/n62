@@ -48,9 +48,9 @@ test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ☰ | Esc, U
   await expect(page.locator('[data-key="esc"] .alphalegend, [data-key="u1"] .alphalegend')).toHaveCount(0);
   const gone = ["apps", "symb", "plot", "num", "cancel", "app", "cas", "view", "lstart", "lend", "help", "copy", "paste"];
   await expect(page.locator(gone.map((id) => `[data-key="${id}"]`).join(", "))).toHaveCount(0);
-  // Shift on: Help (Select's layer) and the reserved Shift + Deselect are drawn dimmed, in that layer only (R278)
+  // Shift on: the reserved Shift + Deselect is drawn dimmed, in that layer only (R278); Help (Select's layer) is live (R197)
   await tap(page, ["shift"]);
-  await expect(page.locator('[data-key="select"]')).toHaveAttribute("data-dead", "true");
+  await expect(page.locator('[data-key="select"]')).not.toHaveAttribute("data-dead", "true");
   await expect(page.locator('[data-key="deselect"]')).toHaveAttribute("data-dead", "true");
   await expect(page.locator('[data-key="menu"]')).not.toHaveAttribute("data-dead", "true");
 });
@@ -116,15 +116,11 @@ test("the ☰ key opens the sheet the status line's ☰ opens, in CAS and in eac
   }
 });
 
-test("Shift + Select is dead, and so is Shift + Deselect, a tap or a flick up: nothing changes, and each press is counted under its layer", async ({ page }) => {
+test("Shift + Deselect is dead, a tap or a flick up: nothing changes, and each press is counted under its layer", async ({ page }) => {
   await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
   await tap(page, ["d1", "add", "d2"]);
   const keys = (): Promise<Record<string, number>> => page.evaluate(() => ({ ...window.n62.session.taps.counts.keys }));
   const base = await keys();
-  await tap(page, ["shift"]);
-  const v0 = (await vibrations(page)).length;
-  await tap(page, ["select"]); // Shift + Select: Help, not built
-  await expect.poll(async () => (await vibrations(page)).length - v0).toBe(3); // key down + the double
   await tap(page, ["shift"]);
   const v1 = (await vibrations(page)).length;
   await tap(page, ["deselect"]); // Shift + Deselect: reserved
@@ -132,7 +128,6 @@ test("Shift + Select is dead, and so is Shift + Deselect, a tap or a flick up: n
   await flick(page, "deselect", "up");
   await expect.poll(async () => (await keys())["deselect:up"] ?? 0).toBe(1);
   const now = await keys();
-  expect(now["select:shift"]).toBe(1);
   expect(now["deselect:shift"]).toBe(1);
   expect(now["deselect:up"]).toBe(1);
   expect(base["deselect:shift"]).toBeUndefined();

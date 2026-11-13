@@ -432,8 +432,14 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  opening it (route.ts run, App.svelte openStore and the row actions' `stored`), the sheet's disarm on a key, the store
  *  sheet's case in sheetPress (a key that types no name goes on to the line, ⌫ on an empty name) and the keypad drawing no
  *  key dead under it. The merge base 8214eddf measures 61.40 kB gzip (173.25 kB raw), the branch 61.65 kB (174.03 kB raw;
- *  much of it the minifier's longer names): 61.65 kB + 0.05 kB. */
-export const START_PIN_GZIP = 61_700;
+ *  much of it the minifier's longer names): 61.65 kB + 0.05 kB.
+ *  61,700 → 61,810 B (R197): the Help key. Its sheet, its words, the cursor's offset (entry/cursorAt.ts) and R196's scan
+ *  ride in a chunk of their own, loaded from Find's (views/helpSheet.ts; the scan takes the parser's tables and the box
+ *  model's infix words from the chunks that hold them, so no chunk splits off and no preload list grows); what stays is
+ *  the key's route (route.ts `help`, App.svelte openHelp and findNow, shared with openFind) and `help` in the keyboard's
+ *  lists. The merge base d66f7f94 measures 61.69 kB gzip (174.15 kB raw), the branch 61.76 kB (174.36 kB raw):
+ *  61.76 kB + 0.05 kB. */
+export const START_PIN_GZIP = 61_810;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

@@ -84,7 +84,8 @@ export interface MenuItem {
   readonly submenu?: SubMenu;
   /** In the apps list: the place's glyph tile, drawn between the row's number and its name (R84). */
   readonly glyph?: Glyph;
-  /** In a grid sheet (the Tmpl palette): the cell drawn as math; `label` is then its spoken name. */
+  /** In a grid sheet (the Tmpl palette): the cell drawn as math; `label` is then its spoken name. In a list (R197, the
+   *  help sheet's example): the row's label drawn as math. */
   readonly latex?: string;
   /** In a grid sheet: the key that picks this cell (its id) and its legend, shown on the cell (Shift + 6, R18). */
   readonly pick?: { readonly key: string; readonly legend: string };

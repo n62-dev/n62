@@ -11,13 +11,26 @@
 // chip shows (a history result's `\sin…`) is never read as a function.
 // What it reads as a function, by the LaTeX a key or Find puts on the line: FUNCS' commands, `\operatorname{…}`, and the
 // templates of find/where.yaml `links` (each slot checked by cursorFn.test.ts against that file and find/functions.yaml).
-import { FUNCS, GREEK } from "../input/parseTables.ts";
-import { isInfixWord } from "./boxes.ts";
 import { CHIP_MACROS } from "./macros.ts";
+
+/** What the scan reads from the parser and the box model: FUNCS, INVERSE and GREEK (input/parseTables.ts) and
+ *  isInfixWord (boxes.ts). R197: the caller gives them, so the Help key's chunk takes them from the chunks that hold them
+ *  (input/parse.ts, entry/field.ts) and the build splits no chunk off for this module's imports. */
+export interface FnWords {
+  readonly funcs: Readonly<Record<string, string>>;
+  /** The parser's `\sin^{-1}` rule (parse.ts func): a head here with the superscript -1 is its inverse. */
+  readonly inverse: Readonly<Record<string, string>>;
+  readonly greek: Readonly<Record<string, string>>;
+  readonly isInfixWord: (latex: string) => boolean;
+}
 
 /** The parser's function commands whose Find id is not `fn:<command>` (Giac's names, find/functions.yaml). */
 const ID_OF: Readonly<Record<string, string>> = {
   arcsin: "fn:asin", arccos: "fn:acos", arctan: "fn:atan", log: "fn:log10", lg: "fn:log10", Re: "fn:re", Im: "fn:im",
+};
+/** The Find id of each inverse head the parser reads from `\sin^{-1}` (INVERSE's values; Giac's names, emit.ts FN). */
+const INVERSE_ID: Readonly<Record<string, string>> = {
+  Arcsin: "fn:asin", Arccos: "fn:acos", Arctan: "fn:atan", Arsinh: "fn:asinh", Arcosh: "fn:acosh", Artanh: "fn:atanh",
 };
 /** The operators whose bounds are their scripts and whose body is the bracket after them (boxes.ts BIGOP but ∫). */
 const BIG_OP: Readonly<Record<string, string>> = { lim: "fn:limit", sum: "fn:sum", prod: "fn:product" };
@@ -100,11 +113,11 @@ const isInt = (s: string, j: number): boolean => s.startsWith("\\int", j) && com
  * After ∫'s variable at `j` (boxes.ts bigOp: the one atom after d, □ or a letter), or `j` when there is none. Its box
  * ends on the line with nothing to close it, so the position right after the variable is still in it.
  */
-function variableEnd(s: string, j: number): number {
+function variableEnd(s: string, j: number, greek: FnWords["greek"]): number {
   if (/[A-Za-z]/.test(s[j] ?? "")) return j + 1;
   if (s[j] !== "\\") return j;
   const e = commandEnd(s, j);
-  return s.startsWith(PLACEHOLDER, j) || Object.hasOwn(GREEK, s.slice(j + 1, e)) ? argEnd(s, j) : j;
+  return s.startsWith(PLACEHOLDER, j) || Object.hasOwn(greek, s.slice(j + 1, e)) ? argEnd(s, j) : j;
 }
 
 /**
@@ -112,7 +125,7 @@ function variableEnd(s: string, j: number): number {
  * diffOf: the first d on its level that no ∫ inside the integrand takes) and one more, as its variable's box holds
  * the position right after it; -1 when the integrand's box ends first.
  */
-function intEnd(s: string, h: number): number {
+function intEnd(s: string, h: number, greek: FnWords["greek"]): number {
   let open = 0;
   for (let j = h; j < s.length; ) {
     const c = s[j];
@@ -127,7 +140,7 @@ function intEnd(s: string, h: number): number {
       if (j < 0) return -1;
     } else if (s.startsWith(DIFF, j)) {
       j += DIFF.length;
-      if (open-- === 0) return variableEnd(s, j) + 1;
+      if (open-- === 0) return variableEnd(s, j, greek) + 1;
     } else {
       if (isInt(s, j)) open++;
       j = commandEnd(s, j);
@@ -157,7 +170,7 @@ function operatorName(group: string): string | undefined {
 }
 
 /** Every call on the line and every chip, in order of their start. */
-function scan(s: string): { calls: Call[]; chips: Span[] } {
+function scan(s: string, w: FnWords): { calls: Call[]; chips: Span[] } {
   const calls: Call[] = [];
   const chips: Span[] = [];
   /** The call named from `start` to `head` (its scripts included), with its bracket if one follows. */
@@ -183,13 +196,18 @@ function scan(s: string): { calls: Call[]; chips: Span[] } {
     if (cmd === "operatorname" && s[e] === "{") {
       const g = groupEnd(s, e);
       const name = g < 0 ? undefined : operatorName(s.slice(e + 1, g - 1));
-      if (name !== undefined && !isInfixWord(s.slice(i, g))) named(`fn:${/^[A-Z]+$/.test(name) ? name.toLowerCase() : name}`, i, scriptsEnd(s, g));
+      if (name !== undefined && !w.isInfixWord(s.slice(i, g))) named(`fn:${/^[A-Z]+$/.test(name) ? name.toLowerCase() : name}`, i, scriptsEnd(s, g));
       if (g > 0) i = g - 1;
       continue;
     }
-    if (Object.hasOwn(FUNCS, cmd) || Object.hasOwn(BIG_OP, cmd)) {
+    if (Object.hasOwn(w.funcs, cmd) || Object.hasOwn(BIG_OP, cmd)) {
       // a log with a base (boxes.ts LOG_BASE): the base is its first box
-      const id = (cmd === "log" || cmd === "ln") && s[e] === "_" ? "fn:logb" : (BIG_OP[cmd] ?? ID_OF[cmd] ?? `fn:${cmd}`);
+      // `\sin^{-1}` (a paste, a recalled row, ^ typed after \sin): the parser reads the inverse (parse.ts func), so does Help
+      const inv = s.startsWith("^{-1}", e) ? w.inverse[w.funcs[cmd] ?? ""] : undefined;
+      const id =
+        (cmd === "log" || cmd === "ln") && s[e] === "_"
+          ? "fn:logb"
+          : ((inv === undefined ? undefined : INVERSE_ID[inv]) ?? BIG_OP[cmd] ?? ID_OF[cmd] ?? `fn:${cmd}`);
       named(id, i, scriptsEnd(s, e));
     } else if (cmd === "sqrt") {
       let j = e;
@@ -205,7 +223,7 @@ function scan(s: string): { calls: Call[]; chips: Span[] } {
     } else if (cmd === "int") {
       // ∫ (find/where.yaml): its bounds, its integrand, its d and the variable after it
       const h = scriptsEnd(s, e);
-      const k = intEnd(s, h);
+      const k = intEnd(s, h, w.greek);
       calls.push({ id: "fn:int", start: i, end: k > 0 ? k : h + 1 });
     } else if (cmd === "exponentialE" && s[e] === "^") {
       // eˣ (Shift + ln, find/where.yaml): e with its exponent
@@ -235,11 +253,11 @@ function scan(s: string): { calls: Call[]; chips: Span[] } {
 
 /**
  * The Find id of the innermost function that holds `offset`, a position in `latex` (0 before its first character,
- * `latex.length` after its last), or null: outside every function, inside a chip, or off the line.
+ * `latex.length` after its last), or null: outside every function, inside a chip, or off the line. `words`: FnWords.
  */
-export function functionAt(latex: string, offset: number): string | null {
+export function functionAt(latex: string, offset: number, words: FnWords): string | null {
   if (!Number.isInteger(offset) || offset < 0 || offset > latex.length) return null;
-  const { calls, chips } = scan(latex);
+  const { calls, chips } = scan(latex, words);
   if (chips.some((c) => c.start < offset && offset < c.end)) return null;
   let best: Call | undefined;
   for (const c of calls) if (c.start < offset && offset < c.end && (!best || c.start > best.start)) best = c;

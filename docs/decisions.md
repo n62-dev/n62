@@ -11,6 +11,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row writes `39.488 ± 1.2 m²`, but Paste reads one number ("Paste: not a number") and the unit view takes no paste. Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
 
+**R197 Help's Insert row**: the example goes on the line at the cursor, as a Find pick does, so inside `sin(` it nests (sin(sin(30°)); Undo takes it back). Or: it replaces the call the cursor is in. The first stays until the owner says.
+
 ## Decided proposals
 
 ### Pipeline and process
