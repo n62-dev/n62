@@ -84,6 +84,10 @@ describe("keyboard spec", () => {
     expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
     expect(k("sub").label.shift).toBe("$key.base");
     expect(k("sub").actions.primary).toEqual({ kind: "type", text: "-" });
+    // R187 (docs/04 5.3): Shift + 4 is the matrix sheet (its functions; R188 adds the stored matrices)
+    expect(k("d4").actions.shift).toEqual({ kind: "special", name: "matrix" });
+    expect(k("d4").label.shift).toBe("$key.matrix");
+    expect(k("d4").actions.primary).toEqual({ kind: "type", text: "4" });
     // the cluster keeps no alpha letters, so no key in it draws the letter line (vertical space, docs/03 rule 9)
     for (const key of keyboard.keys.filter((x) => x.row < MATHS_ROW)) expect(key.label.alpha ?? key.actions.alpha, key.id).toBeUndefined();
     // Esc keeps its G2 cell (r1c5), as does the pad; every other key of the cluster is our choice (☰, Select and Deselect are

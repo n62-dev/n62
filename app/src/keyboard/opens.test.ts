@@ -18,7 +18,7 @@ const spec = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../.
 
 describe("opensSheet (R143)", () => {
   it("is true for exactly the specials that open a sheet", () => {
-    for (const name of ["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "help"] as const)
+    for (const name of ["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "help", "matrix"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(true);
     for (const name of ["esc", "clear", "selectGrow", "selectShrink", "fmt", "units", "enter", "shift", "alpha", "none", "home", "cas", "switch", "symb", "plot", "num"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(false);
