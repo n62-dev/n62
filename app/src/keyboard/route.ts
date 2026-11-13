@@ -287,17 +287,13 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       level.type(k.ch);
       return true;
     case "backspace":
-      // in Find ⌫ on an empty query goes back from a category to the list of categories; in the store sheet with
-      // nothing typed it closes the sheet and does its job on the line (the ▶ goes, as before R281)
-      if (level.backspace()) return true;
-      if (find) sheet.back();
-      if (sheet.id !== STORE_SHEET) return true;
-      shell.closeSheet();
-      return false;
+      // in Find ⌫ on an empty query goes back from a category to the list of categories
+      if (!level.backspace() && find) sheet.back();
+      return true;
     case "line":
-      // R281: a key that types no name, after ▶: its job on the line. R281f1: what was typed into the filter goes on
-      // the line first, one character at a time as typeLetter types it (digits too), so the key meets the line it met
-      // before the sheet (x, Shift + space is x_)
+      // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
+      // R281f1: what was typed into the filter goes on the line first, one character at a time as typeLetter types it
+      // (digits too), so the key meets the line it met before the sheet (x, Shift + space is x_)
       for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
       shell.closeSheet();
       return false;

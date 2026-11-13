@@ -95,7 +95,8 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
 /**
  * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. A key that
  * types a letter on the line types it, in the layer it was pressed in (`shift`, `alpha`: a tap before it or a flick; x
- * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job. A plain
+ * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job (⌫ with
+ * nothing typed goes on to the line, R281f1). A plain
  * digit picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing. A plain key that
  * types no letter types its Alpha letter, as in every sheet, and the place keys keep theirs. Any other key types no name
  * (`line`): it does its job on the line, so every press after ▶ that did not type a name does what it did before.
@@ -106,7 +107,7 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
   if (a?.kind === "type" && /^\p{L}$/u.test(a.text)) return { kind: "letter", ch: a.text };
   const layered = shift || alpha;
   const fixed = BY_ID[key.id];
-  if (fixed) return fixed;
+  if (fixed) return fixed.kind === "backspace" && empty ? { kind: "line" } : fixed; // ⌫ with nothing typed: the ▶ goes
   const d = DIGIT.exec(key.id);
   if (d && !layered) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
   const k = layered ? undefined : sheetKey(key, true);
