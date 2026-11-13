@@ -35,7 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F227, package G330 (G326's view sweep, run 1049).** The Function app's Slope shows a cancelled exact 0 as a number with 12 digits, no ⚠: `x^3/3-0.09*x` at 0.3 gives 9.86E-32 (Giac's diff at the binary 0.3); Home's `subst(diff(…),x=0.3)` is = 0. Family 3.
+- **F227, fixed by G330 (run 1110).** The Function app's Slope showed a cancelled exact 0 as a number with 12 digits (`x^3/3-0.09*x` at 0.3: 9.86E-32); f' and f at x0 take Home's road now (= 0). Family 3.
 - **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
 - **F238 (A139; ron).** Dead keys (Shift + Select, Shift + Deselect) have no `aria-disabled`: TalkBack does not say they do nothing.
