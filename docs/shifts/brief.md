@@ -63,8 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 753 | R290 the six tips teach the final handling (K5) | ron, Sonnet | `p1/ron-tipsfinal` | R278, R283 |
-| 630 | [R280](packages/R280.md) Store ▶ acts on the picked row (sd-2) | ron, Opus | `p1/ron-storepick` | – |
 | 631 | [R281](packages/R281.md) the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
 | 632 | [R282](packages/R282.md) Vars in the store sheet's look (sd-4) | ron, Sonnet | `p1/ron-varsgrid` | R281 |
 | 661 | [R196](packages/R196.md) which function the cursor is in | ron, Opus | `p1/ron-cursorfn` | – |
