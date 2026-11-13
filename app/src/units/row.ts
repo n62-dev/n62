@@ -10,8 +10,6 @@ import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import { homeItem } from "../state/resultItem.ts";
 import { uncDigitsOf } from "../engine/constUnc.ts";
-// (types only from the session: a value import of it from this lazy chunk makes Rolldown split modules out of the
-// start chunk, +0.8 kB gzip there)
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { quantityChip } from "./chip.ts";
 import { unitNamesText } from "./messages.ts";
