@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { CAS_ANS, isOurName, OUR_OTHER_NAMES, OUR_PREFIX, OUR_STORES } from "./ourNames.ts";
+import { CAS_ANS, isOurName, isOwnName, OUR_OTHER_NAMES, OUR_PREFIX, OUR_STORES } from "./ourNames.ts";
 import { ENGINE_DEFINITIONS, WORKER_DEFINITION_NAMES, defaultHomeSettings } from "./homeEval.ts";
 import { COMPLEX_DEFINITIONS } from "./complex.ts";
 import { ICDF_DEFINITIONS, ICDF_DIGITS, ICDF_FAILED, ICDF_REPLACED } from "./icdf.ts";
@@ -30,6 +30,11 @@ const DEFINED = [
 ];
 
 describe("G341: our names are ours (static)", () => {
+  it("R281: isOwnName, the one test the store after ▶ and the library reader use, holds every name a definition defines", () => {
+    expect(DEFINED.filter((n) => !isOwnName(n))).toEqual([]);
+    expect(["sigfig", "par", "eseries", "pcasans", "pasmod", "foo_"].filter((n) => !isOwnName(n))).toEqual([]);
+    expect(["rate", "A1", "beta_", "e_", "Pas", "sig"].filter((n) => isOwnName(n))).toEqual([]); // the user's names
+  });
   it("every name a definition table defines, and every store of ours, starts with pas or is in OUR_OTHER_NAMES", () => {
     expect(DEFINED.length).toBeGreaterThan(70);
     const stores = [...OUR_STORES, PASDEG, ICDF_FAILED, ICDF_DIGITS, CAS_ANS];

@@ -27,8 +27,13 @@ function insertOf(n: UserName): string {
   // R260f1: a function e_ or i_ (the letters' stand-ins, R67) goes in as the letter typed, `\operatorname{e}` as a
   // one-letter p; the parser reads it back as e_'s call while the session lists e_ as a function
   if (n.kind !== "var") return functionInsert(`fn:${Object.values(LETTER_NAMES).includes(n.name) ? typedName(n.name) : n.name}`);
-  const drawn = homeResultToLatex(n.name);
-  return /^[A-Za-z](_[A-Za-z0-9]*)?$/.test(n.name) || drawn.startsWith("\\") ? drawn : `\\operatorname{${n.name.replace(/_/g, "\\_")}}`;
+  return nameLatex(n.name);
+}
+
+/** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). */
+export function nameLatex(name: string): string {
+  const drawn = homeResultToLatex(name);
+  return /^[A-Za-z](_[A-Za-z0-9]*)?$/.test(name) || drawn.startsWith("\\") ? drawn : `\\operatorname{${name.replace(/_/g, "\\_")}}`;
 }
 
 /** A name as a Find live item (types.ts: kind `var` or `userfn`). Its value text is searched too (`desc`). R260: titled
@@ -56,13 +61,13 @@ function markOfName(n: UserName, ctx: DisplayContext): string {
 }
 
 /** The value of a variable with its mark, as the history draws a result (`≈ 0.333333333333`). */
-function valueOf(n: UserName, ctx: DisplayContext): string {
+export function valueOf(n: UserName, ctx: DisplayContext): string {
   const mark = markOfName(n, ctx);
   return mark ? `${mark} ${n.preview}` : n.preview;
 }
 
 /** Details under the list: `A = 5`, `A ≈ 0.333333333333`, or a function with its comment. */
-function previewOf(n: UserName, ctx: DisplayContext): string {
+export function previewOf(n: UserName, ctx: DisplayContext): string {
   const typed = typedName(n.name);
   return n.kind === "fn" ? `${typed}(…)${n.desc ? ` · ${n.desc}` : ""}` : `${typed} ${valueOf(n, ctx)}${n.desc ? ` · ${n.desc}` : ""}`;
 }

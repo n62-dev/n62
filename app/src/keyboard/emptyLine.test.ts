@@ -36,7 +36,7 @@ function ctx(stored = true) {
     cycleForm: async () => (log.push("cycleForm"), true),
   };
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true };
-  const c = { session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false, enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings() {}, openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openNames() {}, withClip() {}, loadClip() {}, dead: () => void log.push("dead"), unfold: () => false };
+  const c = { session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false, enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings() {}, openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openNames() {}, openStore() {}, withClip() {}, loadClip() {}, dead: () => void log.push("dead"), unfold: () => false };
   const press = (...ids: string[]): void => {
     for (const id of ids) {
       const key = keyboard.byId.get(id);

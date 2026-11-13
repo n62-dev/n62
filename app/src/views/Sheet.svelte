@@ -12,6 +12,7 @@
   import { ICONS, type IconId } from "./icons.ts";
   import MathView from "../render/Math.svelte";
   import Credits from "./Credits.svelte";
+  import SheetCells from "./SheetCells.svelte";
   import type { MenuItem } from "../apps/types.ts";
   import type { Row, Sheet } from "./sheet.svelte.ts";
   import { fitCell, fitRow, hasOptions, hasSteps, ROW, rowHeight, showsReason, twoLines } from "./sheetFit.ts";
@@ -64,6 +65,8 @@
   const rows = $derived(sameRows(made, level.rows));
   const items = $derived(rows.map((r) => r.item));
   const columns = $derived(level.columns);
+  /** The line under the list: an armed item's question (R281), the level's own note, else the highlighted item's details. */
+  const note = $derived(items.find((x) => x.id === sheet.armed)?.confirm?.note ?? level.note?.() ?? level.current?.preview);
   /** The palettes' normal cell height: Tmpl's templates need more than the Shift palettes' one symbol or word. */
   const normalCell = $derived(sheet.id === "rel" || sheet.id === "sym" ? 46 : 58);
 
@@ -261,6 +264,7 @@
         <div class="list doc" class:cut-top={cutTop} class:cut-bottom={cutBottom} data-testid="sheet-text" bind:this={list} onscroll={measure}>{level.text}</div>
       {:else}
       <div class="list" class:cut-top={cutTop} class:cut-bottom={cutBottom} style:--row={px(row)} bind:this={list} onscroll={onListScroll}>
+        {#if level.cells !== undefined}<SheetCells rows={shown.filter((r) => r.item.cell)} columns={level.cells} highlight={level.highlight} armed={sheet.armed} {ontap} />{/if}
         {#if plain}
         {#each shown as r (rowKey(r, byId))}
           <!-- svelte-ignore a11y_click_events_have_key_events, a11y_interactive_supports_focus (the keypad drives the rows; nothing in a sheet takes focus) -->
@@ -272,6 +276,7 @@
           {@const options = r.item.options}
           {@const reason = showsReason(items, i)}
           {@const second = twoLines(items, i)}
+          {#if !r.item.cell}
           <!-- svelte-ignore a11y_click_events_have_key_events, a11y_interactive_supports_focus (the keypad drives the rows; nothing in a sheet takes focus) -->
           <div
             role="menuitem"
@@ -287,14 +292,15 @@
           >
             <span class="n">{r.n === undefined ? "" : r.n % 10}</span>{#if r.item.glyph}<span class="tile math" class:small={"text" in r.item.glyph && r.item.glyph.text.length > 1} data-testid="row-glyph" aria-hidden="true">{@html "icon" in r.item.glyph ? HOME : r.item.glyph.text}</span>{/if}<span class="text"><span class="label">{r.item.label}</span>{#if reason}<span class="reason">{r.item.reason}</span>{:else if r.item.hint}<span class="reason" data-testid="row-hint">{r.item.hint}</span>{:else if r.item.dots && steps}<span class="dots under" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}</span>{#if r.item.dots && !steps}<span class="dots" data-testid="row-dots" aria-hidden="true">{#each r.item.dots as c}<i style:background={c}></i>{/each}</span>{/if}{#if r.item.note}<span class="note" data-testid="row-note">{r.item.note}</span>{/if}{#if options}<span class="seg" data-testid="row-options">{#each options as o (o.id)}<button type="button" class="opt" use:pressFlag data-option={o.id} aria-label={o.spoken} aria-pressed={o.selected} disabled={r.item.disabled || o.disabled} onclick={(e) => { e.stopPropagation(); onoption(r.index, o.id); }}>{o.label}</button>{/each}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-down" aria-label={sheetText("sheet.stepDown")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, -1); }}>◀</button>{/if}{#if r.item.value !== undefined}<span class="value" data-testid="sheet-value">{r.item.value}</span>{/if}{#if steps}<button type="button" class="step" use:pressFlag data-testid="step-up" aria-label={sheetText("sheet.stepUp")} disabled={r.item.disabled} onclick={(e) => { e.stopPropagation(); sheet.adjustAt(r.index, 1); }}>▶</button>{/if}{#if r.item.selected !== undefined}<span class="tick" aria-hidden="true">{r.item.selected ? "✓" : ""}</span>{/if}{#if r.item.submenu}<span class="more" aria-hidden="true">›</span>{/if}
           </div>
+          {/if}
         {/each}
         {/if}
         {#if built < rows.length}<div class="rest" data-testid="sheet-rest" aria-hidden="true" style:height={px(rest)}></div>{/if}
-        {#if rows.length === 0}<p class="empty" data-testid="sheet-empty">{sheetText("sheet.noMatch")}</p>{/if}
+        {#if rows.length === 0 && !level.typed}<p class="empty" data-testid="sheet-empty">{sheetText("sheet.noMatch")}</p>{/if}
       </div>
       {/if}
       <!-- Find (R4a): the highlighted item's details (docs/04 3.6) -->
-      {#if level.current?.preview}<div class="preview" class:long={level.longPreview} data-testid="find-preview">{level.current.preview}</div>{/if}
+      {#if note}<div class="preview" class:long={level.longPreview} data-testid="find-preview">{note}</div>{/if}
       {#if level.current?.put}<button type="button" class="put" data-testid="find-put" onclick={() => level.current?.put?.run()}>{level.current.put.label} ▶</button>{/if}
     {/if}
   </div>

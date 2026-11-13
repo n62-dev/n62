@@ -218,6 +218,31 @@ test.describe("at 360 × 740", () => {
     });
 });
 
+// R281: the store sheet takes letters, so it stays above the keypad (Alpha and a letter key type a name as on the G2). At
+// 360 × 740 its title, the whole A–Z grid and the line under it fit there, inside the viewport (the names below the grid
+// scroll with it); at 412 × 915 two names fit too, without a scroll.
+for (const [width, height, all] of [[360, 740, false], [412, 915, true]] as const)
+  test(`R281: the store sheet fits above the keypad at ${width} × ${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page);
+    await page.evaluate(() => {
+      const n = (name: string, preview: string, time: number) => ({ name, kind: "var" as const, preview, view: "home" as const, time, mark: "=" as const });
+      window.n62.session.userNames = [n("A", "5", 1), n("rate", "0.0425", 2), n("R2", "10000", 3)];
+    });
+    await tap(page, ["d7", "shift", "emark"]);
+    const store = page.getByTestId("store");
+    await expect(store.locator('[data-id="name:Z"]')).toBeVisible();
+    const [s, pad, cells, list, note] = await Promise.all([boxOf(page, '[data-testid="store"] [role="menu"]'), boxOf(page, ".pad"), boxOf(page, '[data-testid="sheet-cells"]'), boxOf(page, '[data-testid="store"] .list'), boxOf(page, '[data-testid="store"] [data-testid="find-preview"]')]);
+    expect(s.y).toBeGreaterThanOrEqual(0);
+    expect(s.y + s.height).toBeLessThanOrEqual(pad.y + 1); // above the keypad: no key is covered
+    expect(cells.y + cells.height).toBeLessThanOrEqual(list.y + list.height + 1); // every letter on screen, none cut
+    expect(note.y + note.height).toBeLessThanOrEqual(s.y + s.height);
+    if (all) {
+      const m = await store.locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+      expect(m.scroll).toBeLessThanOrEqual(m.client);
+    }
+  });
+
 // R146, R278: Shift + ☰'s legend ("Settings", on r0c4 since R278) fits its cluster key at the legend size at 360 and 412 px wide; R143: with the
 // menu mark ▾ after it (out of the flow, inside the key's width: a cluster key has no padding to spare) it shrinks by at most a pixel (10 px at 360, the legend's 11 px
 // at 412) and the mark ends inside the key. With Shift on the face "Settings" is shrunk to fit (measured 11.5 px at 360,

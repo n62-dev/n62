@@ -643,3 +643,20 @@ cases:
     expect: { result: "7", mark: "=" }
     value: "7"
     source: derived
+
+  # ---- state: the store sheet (R281, store-design sd-3) ----
+  - id: c74
+    area: state
+    title: "the store sheet: 7, Shift + ᴇ, a tap on the free A stores it; then A + 1 is 8"
+    keys: [d7, shift, emark, {tap: '[data-testid="store"] [data-id="name:A"]'}, alpha, vars, add, d1, enter]
+    expect: { result: "8", mark: "=" }
+    value: "8"
+    source: derived
+
+  - id: c75
+    area: state
+    title: "a filled A asks first: 5 ▶ A; 9, Shift + ᴇ, one tap on A, Esc, Esc: A is still 5; 8, Shift + ᴇ, two taps on A: A is 8"
+    keys: [d5, shift, emark, alpha, vars, enter, d9, shift, emark, {tap: '[data-testid="store"] [data-id="name:A"]'}, esc, esc, alpha, vars, enter, d8, shift, emark, {tap: '[data-testid="store"] [data-id="name:A"]'}, {tap: '[data-testid="store"] [data-id="name:A"]'}, alpha, vars, enter]
+    expect: { rows: [{ result: "5", status: done }, { result: "5", status: done }, { result: "8", status: done }, { result: "8", status: done }] }
+    value: "8"
+    source: derived

@@ -8,12 +8,17 @@ import { chipName, chipToGiac } from "./chip-giac.ts";
 import type { Json } from "./emit.ts";
 import { CAS_ANS, isOurName } from "../engine/ourNames.ts";
 import { bigOp, integral, limit, matrix, tryDerivative, tryPartial, type CalcParser } from "./parseCalculus.ts";
-import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName,
+import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName, refuseStore,
   type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 import { negateUncertain, percentSigma } from "./pmPercent.ts";
 import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./tokenize.ts";
 
 export { GREEK, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
+
+/** G341: a typed name that is N62's own (`pas…`, CAS's answer slot) is refused with the reason. */
+function refuseOurs(text: string): void {
+  if (isOurName(text)) throw text === CAS_ANS ? parseError("parse.ourName", { name: text }) : parseError("parse.reservedName", { name: text });
+}
 
 class Parser implements CalcParser {
   pos = 0;
@@ -117,7 +122,7 @@ class Parser implements CalcParser {
     // P4: store, value ▶ name (shift of the exponent key); the same as name := value.
     if (this.isCmd("blacktriangleright")) {
       this.pos++;
-      const name = this.additive();
+      const name = this.storeName() ?? this.additive();
       if (typeof name !== "string") this.fail("parse.expectedAName");
       return ["Assign", name, left];
     }
@@ -395,6 +400,20 @@ class Parser implements CalcParser {
     return this.arg();
   }
 
+  /** R281: after ▶, the store sheet types a name of more than one letter as `\operatorname{rate}` (MathLive writes it back
+   *  as `\operatorname{\mathrm{rate}}`): that name, a new one too (`A1`); undefined, nothing read, for anything else. */
+  private storeName(): string | undefined {
+    const at = this.pos;
+    if (!this.isCmd("operatorname")) return undefined;
+    this.pos++;
+    const wrapped = this.isCh("{") && this.isCmd("mathrm", 1) && this.isCh("{", 2);
+    if (wrapped) this.pos += 2;
+    const text = this.isCh("{") ? this.groupText() : "";
+    refuseOurs(text); // G341: a name the sheet or Vars put after ▶ is read here, not in atom()
+    if (/^[A-Za-z][A-Za-z0-9_]*$/.test(text) && (!wrapped || this.isCh("}"))) return refuseStore(text), (this.pos += wrapped ? 1 : 0), text;
+    this.pos = at;
+    return undefined;
+  }
   groupText(): string {
     this.expectCh("{");
     let s = "";
@@ -750,7 +769,7 @@ class Parser implements CalcParser {
           text = this.groupText();
           this.expectCh("}");
         } else text = this.groupText();
-        if (isOurName(text)) throw text === CAS_ANS ? parseError("parse.ourName", { name: text }) : parseError("parse.reservedName", { name: text }); // G341: where a typed name is read
+        refuseOurs(text); // G341: where a typed name is read
         if (name === "mathrm" && text === "e") return "ExponentialE";
         if (name === "mathrm" && text === "i") return "ImaginaryUnit";
         if (name === "operatorname" && this.values?.has(text)) return text; // R258: a stored value; a bracket after it multiplies

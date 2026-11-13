@@ -4,6 +4,8 @@
 import type { ChipTable } from "./chips.ts";
 import type { Json } from "./emit.ts";
 import { GREEK_NAMES, LETTER_NAMES } from "../engine/standIns.ts";
+import { CALL_NAME, isOwnName } from "../engine/ourNames.ts";
+import { parseError } from "../i18n/enParser.ts";
 // G311: the letter tables live in engine/ (the library reader takes their stand-ins as the user's names)
 export { LETTER_NAMES } from "../engine/standIns.ts";
 /**
@@ -52,6 +54,14 @@ export const FACTOR_CMDS = new Set([
   "frac", "dfrac", "tfrac", "sqrt", "binom", "overline", "int", "sum", "prod", "lim", "begin",
   "operatorname", "mathrm", "mathit", "res", "ans", "const",
 ]);
+
+/** R281: a name after ▶ (the store sheet's `\operatorname{rate}`) that is one of N62's own (`sigfig:=7` would replace our
+ *  definition, ourNames.ts isOwnName: the library reader's test too) or a word of these tables (`sin`, `pi`; Giac refuses
+ *  a store into a built-in only with a printed warning) is refused with the reason. */
+export function refuseStore(name: string): void {
+  if (isOwnName(name)) throw parseError("parse.ourName", { name });
+  if ([FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) throw parseError("parse.builtInName", { name });
+}
 
 /** Letters that start a base prefix after a lone 0 (0x, 0b, 0o, docs/04 5.4), and their base. */
 export const BASE_PREFIX: Readonly<Record<string, number>> = { x: 16, b: 2, o: 8 };

@@ -38,7 +38,8 @@ export class Level {
   highlight = $state(-1);
   filter = $state("");
 
-  readonly title: string;
+  /** R281: a state, so a title whose text comes later (the store sheet's value) is drawn when it comes. */
+  title = $state("");
   /** Read on every draw, so a menu whose items change while it is open (a result arrives) stays current. */
   private readonly source: () => readonly MenuItem[];
   /** Key of the remembered pick of this level. */
@@ -66,6 +67,13 @@ export class Level {
   /** A grid of this many columns (the Tmpl palette, R10): ▲ ▼ ◀ ▶ move in two dimensions, no numbers, no filter.
    *  Undefined: a list. */
   readonly columns: number | undefined;
+  /** R281: the items marked `cell` are drawn as a grid of this many columns above the list (the store sheet's letters);
+   *  ▲ ▼ move a row of the grid, ◀ ▶ one cell, and no row has a number (a digit types into the name). */
+  readonly cells: number | undefined;
+  /** R281: Enter with letters typed runs this item for them (the store sheet stores the typed name, a new one too). */
+  readonly typed: ((name: string) => MenuItem) | undefined;
+  /** R281: the line under the list, read on every draw, before the highlighted item's preview. */
+  readonly note: (() => string | undefined) | undefined;
 
   constructor(title: string, source: () => readonly MenuItem[], memo: string, opts?: SheetOptions) {
     this.title = title;
@@ -73,6 +81,9 @@ export class Level {
     this.memo = memo;
     this.remember = opts?.remember ?? true;
     this.columns = opts?.columns;
+    this.cells = opts?.cells;
+    this.typed = opts?.typed;
+    this.note = opts?.note;
     this.search = opts?.search;
     this.text = opts?.text;
     this.credits = opts?.credits;
@@ -103,7 +114,7 @@ export class Level {
     this.items.forEach((item, index) => {
       if (!matches(item.label, this.filter)) return;
       const k = out.length + 1;
-      out.push({ item, index, n: k <= 10 ? k : undefined });
+      out.push({ item, index, n: k <= 10 && this.cells === undefined ? k : undefined });
     });
     return out;
   }
@@ -142,8 +153,25 @@ export class Level {
     const rows = this.rows;
     if (rows.length === 0) return;
     const at = rows.findIndex((r) => r.index === this.highlight);
-    const next = at < 0 ? (by > 0 ? 0 : rows.length - 1) : (at + by + rows.length) % rows.length;
+    let next = at < 0 ? (by > 0 ? 0 : rows.length - 1) : (at + by + rows.length) % rows.length;
+    // R281: in the letter grid (its cells come first) ▲ ▼ go a row of cells; past the grid's last row ▼ goes on to the
+    // list below it (none: round to the column's top), above its first ▲ to the list's end
+    const cols = this.cells;
+    if (cols !== undefined && at >= 0 && rows[at]?.item.cell) {
+      const cells = rows.filter((r) => r.item.cell).length;
+      next = at + by * cols;
+      if (next < 0) next = rows.length - 1;
+      else if (next >= cells) next = cells < rows.length ? cells : at % cols;
+    }
     this.highlight = (rows[next] as Row).index;
+  }
+
+  /** ◀ ▶ in a level with a letter grid (R281): the row before or after, round the ends. */
+  stepRow(by: 1 | -1): void {
+    const rows = this.rows;
+    if (rows.length === 0) return;
+    const at = rows.findIndex((r) => r.index === this.highlight);
+    this.highlight = (rows[at < 0 ? 0 : (at + by + rows.length) % rows.length] as Row).index;
   }
 
   /** ◀ ▶ in a grid: the cell before or after in reading order, round the ends of the grid. */
@@ -209,6 +237,12 @@ export interface SheetOptions {
   credits?: readonly CreditBlock[];
   /** Several lines for the preview (see Level.longPreview). */
   longPreview?: boolean;
+  /** A letter grid above the list, of this many columns (see Level.cells). */
+  cells?: number;
+  /** What Enter runs for the letters typed (see Level.typed). */
+  typed?: (name: string) => MenuItem;
+  /** The line under the list (see Level.note). */
+  note?: () => string | undefined;
   /** The rows' load while they are not in (see Level.loading). */
   loading?: () => Promise<void> | null;
   /** R145: where the ⚙ in the title row goes, read when it is tapped: Settings as a level of this sheet, or (before its
@@ -230,6 +264,8 @@ export class Sheet {
   /** The icon before the title, if any. */
   readonly icon: IconId | undefined;
   private readonly settings: SheetOptions["settings"];
+  /** R281: the id of the item armed by a first pick (MenuItem.confirm), else null: a second pick of it runs it. */
+  armed = $state<string | null>(null);
 
   constructor(id: string, title: string, items: () => readonly MenuItem[], opts?: SheetOptions) {
     this.id = id;
@@ -289,11 +325,22 @@ export class Sheet {
 
   /** Enter: the highlighted item. A setting changed in place (`adjust`) is picked as it stands: the sheet closes. */
   enter(): Picked {
+    const typed = this.level.typed;
+    if (typed && this.level.filter !== "") return { kind: "run", item: typed(this.level.filter) };
     return this.activate(this.level.highlight, true);
+  }
+
+  /** Any press but the armed item's second pick (R281): the armed item goes back to its plain state. */
+  disarm(): void {
+    this.armed = null;
   }
 
   /** ▶: step the highlighted setting up, else open the highlighted item's submenu (only an item that has one). */
   right(): Picked {
+    if (this.level.cells !== undefined) {
+      this.level.stepRow(1);
+      return STAY;
+    }
     if (this.level.columns !== undefined) {
       this.level.step(1);
       return STAY;
@@ -312,6 +359,10 @@ export class Sheet {
 
   /** ◀ on a setting changed in place: step it down. False when the highlighted item is not one (◀ then goes back). */
   left(): boolean {
+    if (this.level.cells !== undefined) {
+      this.level.stepRow(-1);
+      return true;
+    }
     if (this.level.columns !== undefined) {
       this.level.step(-1);
       return true;
@@ -355,6 +406,10 @@ export class Sheet {
     if (!item || item.disabled) return STAY;
     level.highlight = index;
     lastPicks.set(level.memo, item.id);
+    // R281: an item that asks first arms on its first pick; the second pick of it runs it
+    const armed = this.armed === item.id;
+    this.armed = item.confirm && !armed ? item.id : null;
+    if (item.confirm && !armed) return STAY;
     if (!item.submenu && item.adjust && !confirm) {
       item.adjust(1);
       return STAY;

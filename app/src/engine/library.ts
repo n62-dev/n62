@@ -5,16 +5,14 @@
 // Loaded lazily by whoever imports (dynamic import); nothing in the start chunk imports it. The engine is reached through
 // the small LibraryEngine interface, so this file runs in the Worker, in Node and in tests alike. Only erasable syntax.
 import { applyDefChanges, DESC_MAX, MAX_DEFS, replayOrder, type DefChange, type DefEntry } from "./defs.ts";
-import { ENGINE_DEFINITIONS, WORKER_DEFINITION_NAMES } from "./homeEval.ts";
 import type { GiacParse } from "./bridge.ts";
 import { assignmentIn, stateHeads, valueTargets } from "./stores.ts";
-import { COMPLEX_DEFINITIONS } from "./complex.ts";
 import { defaultCasSettings, type CasResult } from "./types.ts";
-import { CAS_ANS, isOurName, renameOurCalls, writeUserNames } from "./ourNames.ts";
+import { CAS_ANS, isOurName, isOwnName, renameOurCalls, writeUserNames } from "./ourNames.ts";
 import { parseText } from "../i18n/enParser.ts";
 import { dropAngleFactor, PASDEG, rewriteAngles } from "./angles.ts";
 import { isFlagName } from "./flags.ts";
-import { isStandIn, typedName } from "./standIns.ts";
+import { typedName } from "./standIns.ts";
 import { callsOf, isName, mapNames, names, noneOpen, typedFromPrinted, walk, wordsOf } from "./giacPrint.ts";
 
 import { HEADER, LIB_MAX_BYTES } from "./libraryHeader.ts";
@@ -195,7 +193,7 @@ export function parseLibrary(input: Uint8Array | string, parse: (text: string) =
     // G341: a `pas` name (and pcasans) is ours, in the parser's words; a trailing `_` too (OUR_BOUND, ourNames.ts), except
     // the parser's letter stand-ins (`beta_`, `e_`: G311), the user's names
     if (isOurName(def.name)) throw new LibError(at, ourWhy(def.name));
-    if (def.name in ENGINE_DEFINITIONS || def.name in COMPLEX_DEFINITIONS || WORKER_DEFINITION_NAMES.includes(def.name) || (def.name.endsWith("_") && !isStandIn(def.name))) throw new LibError(at, `${def.name} is one of N62's own names`);
+    if (isOwnName(def.name)) throw new LibError(at, `${def.name} is one of N62's own names`);
     // R64, G341: a body that names one of ours (a `local pasdeg` would change every angle in it; a free `pasx` reads
     // Solve's root) is refused as a typed one is
     const ours = namedOurs(block);

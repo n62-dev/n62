@@ -3,6 +3,7 @@
 // every path that sends Giac text without the parser (the library import and its `// test:` lines, the export back).
 // No UI imports; only erasable TypeScript syntax.
 import { mapNames, type Quoting } from "./giacPrint.ts";
+import { isStandIn } from "./standIns.ts";
 
 /** Giac's own `mod` is the modular-number constructor (an error as a call); Find's `mod` is irem (Euclidean,
  *  never negative: irem(-7,3) = 2), so the written word is renamed to our pasmod (homeEval.ts ENGINE_DEFINITIONS:
@@ -91,6 +92,13 @@ export const OUR_OTHER_NAMES: readonly string[] = [
  *  (lower case: `Pas` and `spas` are the user's), and CAS_ANS. */
 export function isOurName(name: string): boolean {
   return name.startsWith(OUR_PREFIX) || name === CAS_ANS;
+}
+
+/** R281: a name the user may not give a value or a definition (a store after ▶, the library reader): isOurName, one of
+ *  OUR_OTHER_NAMES (`sigfig:=7` would replace our definition, and the state read hides it as ours), and a name that ends
+ *  in `_` other than the parser's stand-ins (`beta_`, `e_`: G311, the user's names). The one test for both. */
+export function isOwnName(name: string): boolean {
+  return isOurName(name) || OUR_OTHER_NAMES.includes(name) || (name.endsWith("_") && !isStandIn(name));
 }
 
 /** G100: the names our own test helper stores into (input/emit.ts equalityTest: the float flag, the difference and
