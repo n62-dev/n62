@@ -3,7 +3,7 @@
 // function (Home's letters, `|`, CAS's letters, in sample order; `-` for a function without a sample), and the findings, each id
 // under the backlog line that holds it (`unfiled` for one that has none yet: the stage fails on it), and `deadline`: the inputs whose
 // known class came from a deadline (a hang past the census's 6 s, or a time-out refusal), which a faster or a busier machine moves, and
-// `layout`: the inputs whose class follows the engine's heap layout, so the inputs run before them in the same engine (G226: Giac's
+// `layout`: the inputs whose class follows the engine's heap layout, so the inputs run before them in the same engine (G226, F240: Giac's
 // `convert(n,b,x)` sets the list's subtype from x's `val`, prog.cc:9345, the pointer bits of a fraction); their known class is the
 // one they get alone, and the stage and `--update` run them once more alone.
 import { CLASS_OF_LETTER, FINDINGS, LETTER } from "./classify.ts";
