@@ -65,8 +65,23 @@ describe("literalStart", () => {
   it("past the cap counts no huge power of pi or exp, which rounds no term away (G307)", () => {
     expect(literalStart("exp(10000000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: false });
     expect(literalStart("pi^3000*sqrt(2)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
-    expect(literalStart("exp(3000)*(1+pi^(-200))", 40, 1000, "typed")).toEqual({ at: 140, unchecked: false });
     expect(literalStart("exp(3000)+10^1250", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+  });
+  // G307f1: the four inputs of the G307 round 3 audit as the keys type them (latexToGiac); each showed ≈ 1
+  it.each(["(1+1/(3*pi^2200))^(pi^2200)", "(1+1/(2*exp(2400)))^exp(2400)", "(1+(pi^2200)^(-1))^(pi^2200)", "(1+1/(pi^2200+1))^(pi^2200)"])(
+    "past the cap counts a huge power in %s, which forms a small value (G307f1)",
+    (text) => expect(literalStart(text, 40, 1000, "typed")).toEqual({ at: 40, unchecked: true }),
+  );
+  it("past the cap counts a huge power in a text with a division, a negative exponent or inv (G307f1)", () => {
+    // a negative exponent anywhere, after a caret or exp's bracket, and inv
+    expect(literalStart("(1+pi^-3)*pi^2200", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+exp(-1))^exp(2400)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+inv(pi^2200))^(pi^2200)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    // was { at: 140, unchecked: false } before G307f1: the text forms a small value (pi^(-200)), so exp(3000)'s 1303 digits count
+    expect(literalStart("exp(3000)*(1+pi^(-200))", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    // a slash, a minus or inv inside a string forms no value; a subtraction is no negative exponent
+    expect(literalStart(`pi^3000-1+"1/2^-3"`, 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("myinv(2)+pi^3000", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
   });
   it("is the digit count plus P up to the cap", () => {
     expect(literalStart("10^919", 40, 1000, "typed")).toEqual({ at: 960, unchecked: false });
