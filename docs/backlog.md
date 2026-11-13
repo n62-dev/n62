@@ -36,10 +36,10 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
 - **F227, package G330 (G326's view sweep, run 1049).** The Function app's Slope shows a cancelled exact 0 as a number with 12 digits, no ⚠: `x^3/3-0.09*x` at 0.3 gives 9.86E-32 (Giac's diff at the binary 0.3); Home's `subst(diff(…),x=0.3)` is = 0. Family 3.
-- **F228, fixed by G340 (run 1069, patch 0045).** `normal`/`simplify(sqrt(1+sqrt(1+2^(1/3))))` was ≈ 0.00732288514727 (right 1.58218310546). Family 5.
-- **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix.
+- **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
 - **F238 (A139; ron).** Dead keys (Shift + Select, Shift + Deselect) have no `aria-disabled`: TalkBack does not say they do nothing.
+- **F239 (G341's step 1).** A body with a float == or ≠ test (`f(x):=x==0.5`) exports with our `pasinexact`, `pasdiff`, `pasverdict`, `a_`, `b_`, `d_`; the import refuses it: no round trip through a library file. Family 8.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
@@ -51,7 +51,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.
 - **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
 - **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
-- **F172, A73 measured.** Stored history costs nothing; the rows drawn at start do (bar 1.5 s; R133 draws 5 rows until engine ready). A CAS-last cold start is 1507 ms against Home's 1323; A73f2 after the tag says where.
+- **F172, A73f2 (after the tag).** Stored history costs nothing, the rows drawn at start do (bar 1.5 s): a CAS-last cold start is 1507 ms against Home's 1323; A73f2 says where.
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
 - **F199, packages R131, R198 (named limit).** Hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error.
@@ -62,14 +62,13 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F231, no package (G340's reach, pass 160).** `normal((1+sqrt(1+2^(1/3)))^(1/3))` runs past Giac's clock, stock and patched: Home stops it, the CAS view waits its 600 s clock (r20 risk 2).
 - **F193, package G226.** `shift` is wrong on negative counts and big integers, exact, no ⚠.
 - **F195, G220 to G221f2 built.** Left (honest): a non-integer ν in Home `chisquare_cdf`, CAS `student_cdf` (error).
-- **F210, fixed by G341 (run 1088).** A typed `pas` name read or replaced ours (a free `pasx` in Solve read solve1.ts's root); the parser and the library refuse the prefix now. Family 9.
+- **F210, fixed by G341 (run 1088).** Left: an e2e of `pasx` typed in R281's store sheet. Family 9.
 - **F211, no package (pass 125).** Bound names outside G303's form, no capture (probed): `v` in nonsquare.ts shapeCodes, `a_`, `b_`, `d_` in emit.ts equalityTest; statenames.test.ts parses neither. Family 8.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
 - **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93 is G168; F96 and F97 are G174 (the rest: G111, G113, G113f1, R80f1). Family 5.
 - **F96.** G174 built (run 983). Left: `GF(2,8)`'s K and g hold for the session only (fix after the tag: log the three-argument `GF(p,P,[k,K,g])`, quater.cc:336–374); a log from before G174 may keep `lastgb`, `lastv` (Vars lists them, Delete removes; no migration, pass 143); `interactive_plotode` throws `prompt is not defined` (left out of Find, G111).
-- **F200 (A120, A123 built).** Core c29 red once (device 100); a second red is a FIX.
-- **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 ms of 400 in run 307, 417 in run 909; two sightings, so it is due in `isTiming`); golden `units` (p95 5.82, 7.93 ms, limit 5; reruns once, A51) and `invariants` (65.5 s, 87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; golden `steps` at ×8: G325 rows stopped (run 1032: 4; run 1054: 2, and g186-cos-tanh-acosh-1e-1000-12 gave No value found); two sightings, so due in `isTiming`.
+- **Flaky under load.** Golden `interrupt` (F128, `tests/engine/interrupt-test.mjs`: 406 and 417 ms of 400, runs 307, 909; due in `isTiming`); `units` (p95 7.93 ms, limit 5; reruns once, A51) and `invariants` (87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; `steps` at ×8: G325 rows stopped (runs 1032, 1054); due in `isTiming`.
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
 - **F214, package G331 (S54, [r20](research/r20-decompose.md)).** `simplify` overflows or loops: `alg_lvar` drops `ln(rootof)`.
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
@@ -77,12 +76,13 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
 - **F181 (G175's probe).** Home `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i (CAS right): `sym2poly.cc` sym2rxrootnum picks the root by the arg of evalf(z²), which lies on the cut with a rounding imaginary part. Family 3.
 - **F138 (G177).** CAS DEG `evalf(cos(atan(2*i)))` shows -1.37121078136E-60-0.57735026919·i in the golden precision stage after earlier cases (right -0.57735026919·i; a fresh engine is right since patch 0019): state leaks between cases. Row `g177-cas-deg-evalf-cos-atan-2i` (pending). Family 2.
+- **F240 (G226's census; G226f1 files it).** Find's `convert(129,2,1/2)` is `pnt[129,1/2]` or `[129,1/2]` by what ran before: prog.cc:9345 takes the subtype from the fraction's pointer bits. Family 2.
 - **F161, fixed by G154 (left, no package).** An underflow whose size Giac cannot state (`exp(-10^30)+exp(-10^31)`: no finite re(lnexpand(ln(e))), e^(10^-1000) is 0) shows ⚠ 0 again, as before G84; was "Underflow". Family 3.
 - **F225, no package (pass 151).** `evalf(sqrt(-2+i/10^330))`, Home and CAS, is ⚠ 0 2E-126+3E-205·i (right 3.53553390593E-331+1.41421356237·i; plain `sqrt` is right): Giac's evalf of its exact sqrt text cancels as in F224, past the double range. Flagged (the two precisions differ); likely fix: sqrt in contradictedCall (G325f2). Family 4.
 - **F226, no package (pass 152).** At the steps stage's ×8 clock (run 1032) `evalf(acos(sqrt(-2)*10^-330-2))` showed ⚠ 3.14159265359-728.156455628·i (right imaginary part -1.31695789692), not a stop. Family 5.
-- **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. Its nightly rows: 6 stay: 1 with an `(e^{0.5+10^-k}-e^{0.5})·10^k` term, the others `ln`, `√` and a power of 0.99…9, and the `tan(1ᴇ1000)` one.
+- **F155, G141 (G137, G138).** Past `MAX_EVAL_DIGITS` (S20 the cure): `tan(1ᴇ1000)` ⚠ 1 with a wrong digit, right -0.863036686363. 6 nightly rows stay: `ln`, `√`, a power of 0.99…9, an `(e^{0.5+10^-k}-e^{0.5})·10^k` term, `tan(1ᴇ1000)`.
 - **F145, G183 (G120, G137, G138).** Nightly sweep hangs. Left: G138's 9 (mostly (√(a+10^-k)-√a)·10^k+b) and 4 wasm "unreachable" traps in arctan, arccos. The sweep oracle (`tools/probes/sweep/oracle.py`) drops a part of mpmath's acosh and acos of a tiny complex (G137's 2 oracle rows).
-- **The hardening without a bug line:** r16's end mark, a 50,000-input sweep with no new false mark, is not met (Opus pass 82); A44: `tests/golden/sweep-nightly-known.yaml` holds the nightly sweep's open rows (F145, F155); the gate never reads it.
+- **The hardening without a bug line:** r16's end mark (a 50,000-input sweep with no new false mark) is not met (pass 82); `tests/golden/sweep-nightly-known.yaml` (A44) holds the nightly sweep's open rows (F145, F155); the gate never reads it.
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
