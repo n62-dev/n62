@@ -1,0 +1,89 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// R194 (docs/04 5.4): Settings › Numbers › Word size (8, 16, 32, 64) and Signed (two's complement). They re-draw a base
+// form on screen (R192) and change the short forms of the word ops (G229: shl(3,7)), and both survive a relaunch.
+// Expected values are derived: 300 = 0x12C needs 9 bits, so it fits no byte but a 16-bit word; shl(3,7) = 384 in 64
+// bits, 384 mod 256 = 128 in an unsigned byte, and bit 7 set is −128 in a signed one. The real engine (GIAC_OUT).
+import { expect, test, type Page } from "@playwright/test";
+import { lastResult, open, sheet, tap } from "./helpers.ts";
+
+const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+const done = (page: Page, n: number) => expect(page.locator('[data-status="done"]')).toHaveCount(n);
+const row = (page: Page, id: string) => sheet(page).locator(`[data-id="${id}"]`);
+/** Settings › Numbers (Mode's row 6, then section 2), as a user opens it. */
+async function numbers(page: Page): Promise<void> {
+  await tap(page, ["@mode", "d6", "d2"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
+}
+async function reload(page: Page): Promise<void> {
+  await page.waitForTimeout(300); // the store writes behind the change
+  await page.reload();
+  await page.waitForFunction(() => customElements.get("math-field") !== undefined && window.n62 !== undefined);
+  await page.evaluate(() => window.n62.entry.ready);
+  await ready(page);
+}
+const SHL = "\\operatorname{shl}\\left(3,7\\right)";
+
+test.beforeEach(async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+});
+
+test("Settings › Numbers shows Word size (8 16 32 64, 64 picked) and Signed (off)", async ({ page }) => {
+  await numbers(page);
+  await expect(row(page, "word")).toContainText(/Word size/i);
+  await expect(row(page, "word").locator(".opt")).toHaveText(["8", "16", "32", "64"]);
+  await expect(row(page, "word").locator('[data-option="64"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(row(page, "signed")).toContainText(/Signed/i);
+  await expect(row(page, "signed")).toHaveAttribute("data-selected", "false");
+});
+
+test("a change re-draws a base form: 300 in HEX is 0x12C, and stays 300 in a byte", async ({ page }) => {
+  await tap(page, ["d3", "d0", "d0", "enter"]);
+  await done(page, 1);
+  await tap(page, ["shift", "sub"]);
+  await row(page, "hex").tap();
+  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C");
+  await numbers(page);
+  await row(page, "word").locator('[data-option="8"]').tap();
+  await expect(sheet(page)).toBeHidden();
+  await expect(lastResult(page)).toHaveAttribute("data-text", "300"); // outside an unsigned byte: the number in its notation
+  await numbers(page);
+  await row(page, "word").locator('[data-option="16"]').tap();
+  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C");
+});
+
+test("a change moves shl(3,7): 384, then 128 in a byte, then −128 in a signed byte; a relaunch keeps it", async ({ page }) => {
+  await page.evaluate((s) => window.n62.session.submit(s), SHL);
+  await done(page, 1);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "384");
+  await numbers(page);
+  await row(page, "word").locator('[data-option="8"]').tap();
+  await page.evaluate((s) => window.n62.session.submit(s), SHL);
+  await done(page, 2);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "128");
+  await numbers(page);
+  await row(page, "signed").tap();
+  await expect(row(page, "signed")).toHaveAttribute("data-selected", "true"); // a switch: the sheet stays
+  await tap(page, ["esc", "esc", "esc"]);
+  await page.evaluate((s) => window.n62.session.submit(s), SHL);
+  await done(page, 3);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "-128");
+  await reload(page);
+  await page.evaluate((s) => window.n62.session.submit(s), SHL);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "-128");
+  await numbers(page);
+  await expect(row(page, "word").locator('[data-option="8"]')).toHaveAttribute("aria-pressed", "true");
+  await expect(row(page, "signed")).toHaveAttribute("data-selected", "true");
+});
+
+test("a base form follows the word after a relaunch: 300 is 300 in a byte, 0x12C in 16 bits", async ({ page }) => {
+  await numbers(page);
+  await row(page, "word").locator('[data-option="16"]').tap();
+  await tap(page, ["d3", "d0", "d0", "enter"]);
+  await done(page, 1);
+  await tap(page, ["shift", "sub"]);
+  await row(page, "hex").tap();
+  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C");
+  await reload(page);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C");
+});
