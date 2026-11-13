@@ -223,6 +223,11 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
     mf.focus();
     return;
   }
+  if (a.kind === "cmd" && a.name === "deleteBackward" && grown?.back(mf)) {
+    // R186: ⌫ in an empty last row or column of Shift + 5's matrix takes it back
+    mf.focus();
+    return;
+  }
   if (a.kind === "cmd" && (a.name === "deleteBackward" || a.name === "deleteForward")) {
     // R23 (F10): ⌫ and Del at a bracket keep the template whole (entry/delete.ts); else MathLive's own delete
     if (deleteAtTemplate(mf, a.name === "deleteBackward" ? -1 : 1)) {
