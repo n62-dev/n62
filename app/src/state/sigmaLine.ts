@@ -15,7 +15,7 @@ const SIGMA_FORMAT: Readonly<Record<string, FormatOptions["format"]>> = { eng: "
 function shown(text: string, mode: FmtMode, comma: boolean): string | null {
   const v = decimalFromString(text);
   if (!v) return null;
-  const s = toText(formatReal(v, { format: SIGMA_FORMAT[mode] ?? "SCI", digits: 2 })).replace("E", "ᴇ");
+  const s = toText(formatReal(v, { format: SIGMA_FORMAT[mode] ?? "SCI", digits: 2, keepZeros: true })).replace("E", "ᴇ");
   return comma ? commaResult(s, false) : s;
 }
 
