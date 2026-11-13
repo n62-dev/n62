@@ -13,11 +13,13 @@
 // templates of find/where.yaml `links` (each slot checked by cursorFn.test.ts against that file and find/functions.yaml).
 import { CHIP_MACROS } from "./macros.ts";
 
-/** What the scan reads from the parser and the box model: FUNCS and GREEK (input/parseTables.ts) and isInfixWord
- *  (boxes.ts). R197: the caller gives them, so the Help key's chunk takes them from the chunks that hold them
+/** What the scan reads from the parser and the box model: FUNCS, INVERSE and GREEK (input/parseTables.ts) and
+ *  isInfixWord (boxes.ts). R197: the caller gives them, so the Help key's chunk takes them from the chunks that hold them
  *  (input/parse.ts, entry/field.ts) and the build splits no chunk off for this module's imports. */
 export interface FnWords {
   readonly funcs: Readonly<Record<string, string>>;
+  /** The parser's `\sin^{-1}` rule (parse.ts func): a head here with the superscript -1 is its inverse. */
+  readonly inverse: Readonly<Record<string, string>>;
   readonly greek: Readonly<Record<string, string>>;
   readonly isInfixWord: (latex: string) => boolean;
 }
@@ -25,6 +27,10 @@ export interface FnWords {
 /** The parser's function commands whose Find id is not `fn:<command>` (Giac's names, find/functions.yaml). */
 const ID_OF: Readonly<Record<string, string>> = {
   arcsin: "fn:asin", arccos: "fn:acos", arctan: "fn:atan", log: "fn:log10", lg: "fn:log10", Re: "fn:re", Im: "fn:im",
+};
+/** The Find id of each inverse head the parser reads from `\sin^{-1}` (INVERSE's values; Giac's names, emit.ts FN). */
+const INVERSE_ID: Readonly<Record<string, string>> = {
+  Arcsin: "fn:asin", Arccos: "fn:acos", Arctan: "fn:atan", Arsinh: "fn:asinh", Arcosh: "fn:acosh", Artanh: "fn:atanh",
 };
 /** The operators whose bounds are their scripts and whose body is the bracket after them (boxes.ts BIGOP but ∫). */
 const BIG_OP: Readonly<Record<string, string>> = { lim: "fn:limit", sum: "fn:sum", prod: "fn:product" };
@@ -196,7 +202,12 @@ function scan(s: string, w: FnWords): { calls: Call[]; chips: Span[] } {
     }
     if (Object.hasOwn(w.funcs, cmd) || Object.hasOwn(BIG_OP, cmd)) {
       // a log with a base (boxes.ts LOG_BASE): the base is its first box
-      const id = (cmd === "log" || cmd === "ln") && s[e] === "_" ? "fn:logb" : (BIG_OP[cmd] ?? ID_OF[cmd] ?? `fn:${cmd}`);
+      // `\sin^{-1}` (a paste, a recalled row, ^ typed after \sin): the parser reads the inverse (parse.ts func), so does Help
+      const inv = s.startsWith("^{-1}", e) ? w.inverse[w.funcs[cmd] ?? ""] : undefined;
+      const id =
+        (cmd === "log" || cmd === "ln") && s[e] === "_"
+          ? "fn:logb"
+          : ((inv === undefined ? undefined : INVERSE_ID[inv]) ?? BIG_OP[cmd] ?? ID_OF[cmd] ?? `fn:${cmd}`);
       named(id, i, scriptsEnd(s, e));
     } else if (cmd === "sqrt") {
       let j = e;

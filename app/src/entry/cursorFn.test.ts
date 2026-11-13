@@ -5,13 +5,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { FUNCS, GREEK } from "../input/parseTables.ts";
+import { FN } from "../input/emit.ts";
+import { parseLatex } from "../input/parse.ts";
+import { FUNCS, GREEK, INVERSE } from "../input/parseTables.ts";
 import { isInfixWord } from "./boxes.ts";
 import { functionAt as scanAt } from "./cursorFn.ts";
 import { CHIP_MACROS } from "./macros.ts";
 
 /** R197: the words the scan reads, from their source (cursorFn.ts FnWords). */
-const functionAt = (latex: string, offset: number): string | null => scanAt(latex, offset, { funcs: FUNCS, greek: GREEK, isInfixWord });
+const functionAt = (latex: string, offset: number): string | null => scanAt(latex, offset, { funcs: FUNCS, inverse: INVERSE, greek: GREEK, isInfixWord });
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const yaml = <T>(f: string): T => parse(readFileSync(join(root, f), "utf8")) as T;
@@ -149,6 +151,24 @@ describe("functionAt (R196)", () => {
     const chip = `\\${name}${"{\\sin\\left(1\\right)}".repeat(m.args)}`;
     for (let o = 1; o < chip.length; o++) expect(functionAt(chip, o), `${chip} at ${o}`).toBeNull();
   });
+
+  // R197 fix: `\sin^{-1}` is what the parser reads (parse.ts func, INVERSE), so Help names what the line computes; each
+  // head's id is checked against the parser's own reading, so the two rules cannot drift (family 8)
+  const inverseHeads = Object.entries(FUNCS).filter(([, head]) => Object.hasOwn(INVERSE, head));
+  it.each(inverseHeads)("reads \\%s^{-1} as the parser does: its inverse", (cmd) => {
+    const latex = `\\${cmd}^{-1}\\left(0.5\\right)`;
+    const json = parseLatex(latex);
+    expect(Array.isArray(json)).toBe(true);
+    const giac = FN[(json as unknown[])[0] as string];
+    expect(giac, latex).toBeDefined();
+    const id = `fn:${giac}`;
+    expect(id).not.toBe(`fn:${cmd}`);
+    for (const o of [1, cmd.length + 2, latex.indexOf("0.5"), latex.indexOf("\\right")]) expect(functionAt(latex, o), `${latex} at ${o}`).toBe(id);
+    // any other superscript is a power of the function itself, for the parser and for the scan
+    expect(functionAt(`\\${cmd}^{2}\\left(0.5\\right)`, latex.indexOf("0.5") - 1)).toBe(`fn:${cmd}`);
+    expect(functionAt(`\\${cmd}^{-2}\\left(0.5\\right)`, latex.indexOf("0.5"))).toBe(`fn:${cmd}`);
+  });
+  it("covers the six inverse heads", () => expect(inverseHeads.map(([c]) => c).sort()).toEqual(["cos", "cosh", "sin", "sinh", "tan", "tanh"]));
 
   it("is null for an offset off the line", () => {
     expect(functionAt("\\sin\\left(1\\right)", -1)).toBeNull();

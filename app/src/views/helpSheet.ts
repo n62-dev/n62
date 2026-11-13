@@ -40,7 +40,7 @@ export function helpRows(it: FindItem, insert: (latex: string) => void): MenuIte
 /** The words R196's scan reads, from the chunks that hold them: the parser's and the field's (no chunk of their own). */
 async function words(): Promise<FnWords> {
   const [p, f] = await Promise.all([import("../input/parse.ts"), import("../entry/field.ts")]);
-  return { funcs: p.FUNCS, greek: p.GREEK, isInfixWord: f.isInfixWord };
+  return { funcs: p.FUNCS, inverse: p.INVERSE, greek: p.GREEK, isInfixWord: f.isInfixWord };
 }
 
 /** The Find item of the function at the line's cursor, or undefined (none there, or not in Find). */
