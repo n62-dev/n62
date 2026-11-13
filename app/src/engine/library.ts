@@ -46,6 +46,9 @@ export interface LibFile {
  *  has the app's): the newest version it accepts (DATA_VERSION, state/storage.ts) and the migration steps for a file's text. */
 export interface LibraryFormat {
   version: number;
+  /** G342: the version a file this app writes is stamped with (`exportLibrary`): the last one whose step rewrote library
+   *  text, at most `version`; the reader's first-line message names it too. */
+  written: number;
   /** The text below the stamp line, written in version `from`, brought up to `version`. */
   migrate(text: string, from: number): string;
 }
@@ -127,7 +130,7 @@ function decodeLibrary(input: Uint8Array | string): string {
 export function parseLibrary(input: Uint8Array | string, parse: (text: string) => GiacParse, format: LibraryFormat): LibFile {
   const lines = decodeLibrary(input).split("\n");
   const h = HEADER.exec(lines[0]!.trim());
-  if (!h) throw new LibError(1, `the first line must be \`// n62 library ${format.version}\``);
+  if (!h) throw new LibError(1, `the first line must be \`// n62 library ${format.written}\``);
   const version = Number(h[1]);
   if (version > format.version) throw new LibError(1, `made by a newer N62 (version ${version}; this one reads up to ${format.version})`);
   // The same migration steps as the stored defs (state/storage.ts), on the text below the stamp.
@@ -333,20 +336,21 @@ export interface LibraryReply {
 /** R59: the format as the worker has it: the version alone. The app brings an older stamp up to date before it sends
  *  a file (state/libraryFormat.ts upToDate: the migration steps are state/'s, G147), so no migration runs here; an
  *  older stamp that still arrives is refused, never read as if it were up to date (principle 3). */
-const inWorker = (version: number): LibraryFormat => ({
+const inWorker = ({ version, written }: Pick<LibraryFormat, "version" | "written">): LibraryFormat => ({
   version,
+  written,
   migrate: (t, from) => {
     if (from < version) throw new LibError(1, `the app did not bring this file up to date (version ${from}; this one reads ${version})`);
     return t;
   },
 });
 
-/** R59, the worker's side of an import: a file (bytes, or a decoded text) at `version` read and checked as a whole,
+/** R59, the worker's side of an import: a file (bytes, or a decoded text) read at `format.version` and checked as a whole,
  *  then imported into `engine`. A refusal of the reader is a result like the import's own, with its line. */
-export function importText(engine: LibraryEngine & { parse(text: string): GiacParse }, input: Uint8Array | string, version: number, log: readonly DefEntry[], replace: boolean): LibraryReply {
+export function importText(engine: LibraryEngine & { parse(text: string): GiacParse }, input: Uint8Array | string, format: Pick<LibraryFormat, "version" | "written">, log: readonly DefEntry[], replace: boolean): LibraryReply {
   let lib: LibFile;
   try {
-    lib = parseLibrary(input, engine.parse, inWorker(version));
+    lib = parseLibrary(input, engine.parse, inWorker(format));
   } catch (e) {
     if (e instanceof LibError) return { result: fail(e.message, e.line), lines: [] };
     throw e;
@@ -392,7 +396,7 @@ function describe(e: DefEntry): string {
  *  reason: assumptions and inputs kept as typed (no single name), and values that hold a float (their mark facts have no
  *  place in a library; the backup carries them). Tests are not kept on the phone. */
 export function exportLibrary(log: readonly DefEntry[], format: LibraryFormat): { text: string; skipped: { name: string; why: string }[] } {
-  const out = [`// n62 library ${format.version}`];
+  const out = [`// n62 library ${format.written}`];
   const skipped: { name: string; why: string }[] = [];
   for (const e of replayOrder(log)) {
     if (e.kind === "assume" || e.kind === "other") {
@@ -409,7 +413,7 @@ export function exportLibrary(log: readonly DefEntry[], format: LibraryFormat): 
   return { text: out.join("\n") + "\n", skipped };
 }
 
-/** R59, the worker's side of an export: `exportLibrary` of the client's log, at `version`. */
-export function exportText(log: readonly DefEntry[], version: number): ReturnType<typeof exportLibrary> {
-  return exportLibrary(log, inWorker(version));
+/** R59, the worker's side of an export: `exportLibrary` of the client's log, stamped `format.written`. */
+export function exportText(log: readonly DefEntry[], format: Pick<LibraryFormat, "version" | "written">): ReturnType<typeof exportLibrary> {
+  return exportLibrary(log, inWorker(format));
 }

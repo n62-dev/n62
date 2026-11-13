@@ -7,5 +7,7 @@
 export const LIB_MAX_BYTES = 256 * 1024;
 
 /** The stamp line, `// n62 library <version>` (trimmed); its group is the version. A file whose first line has the name
- *  before N62, `// pascaline library <version>` (R138), reads the same; the app writes only the new line. */
+ *  before N62, `// pascaline library <version>` (R138), reads the same; the app writes only the new line. The number in it is
+ *  the last store version whose step rewrote library text (LibraryFormat.written, G342), not DATA_VERSION; the reader
+ *  takes any number up to DATA_VERSION (LibraryFormat.version). */
 export const HEADER = /^\/\/ (?:n62|pascaline) library (\d+)$/;

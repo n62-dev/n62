@@ -1,15 +1,16 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- R59: the text Settings › Data › Library › Copy the format for your AI copies whole (views/libraryJobs.ts aiFormat):
-     `{version}` becomes DATA_VERSION, and these comment lines are left out. views/aiFormat.test.ts imports the worked
+     `{version}` becomes DATA_VERSION, `{libraryVersion}` the version a library file is stamped with
+     (LIBRARY_FORMAT.written, G342), and these comment lines are left out. views/aiFormat.test.ts imports the worked
      example on the real engine, so the copied text never lies. Rules: engine/library.ts, docs/archive/r10-connector.md 1. -->
-# N62 file formats (text 1, for files of version {version})
+# N62 file formats (text 1: a library file is stamped {libraryVersion}, a backup's records {version})
 
 You are writing a file for N62, a calculator app for engineers whose engine is Giac (the CAS of Xcas). Write only what this text allows. The app checks the whole file before it changes anything, and refuses all of it at the first problem, with the line number.
 
 ## Part 1: a library of functions and values
 
 ### The lines
-- Line 1 is exactly `// n62 library {version}`.
+- Line 1 is exactly `// n62 library {libraryVersion}`.
 - A definition starts at column 0 and is `name(args):=body` (a function) or `name:=value` (a named value).
 - A definition goes on over the next lines while a bracket is still open, or while the next line is indented or starts with a closing bracket. So a program in `{ … }` with `local`, `for`, `if` and `return` works.
 - One definition per block: nothing may follow a top-level `;`.
@@ -48,7 +49,7 @@ You are writing a file for N62, a calculator app for engineers whose engine is G
 
 ### Worked example
 ```text
-// n62 library {version}
+// n62 library {libraryVersion}
 // Maximum bending moment of a simply supported beam under a uniform load q over span L: q·L²/8
 beam_M(q,L):=q*L^2/8
 // test: beam_M(2,4) == 4

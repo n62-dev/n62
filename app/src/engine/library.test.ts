@@ -10,7 +10,8 @@ import { defaultHomeSettings } from "./homeEval.ts";
 import { renameOurCalls, writeUserNames } from "./ourNames.ts";
 import type { GiacParse } from "./bridge.ts";
 import { exportLibrary, importLibrary, importText, LibError, parseLibrary, type ImportResult } from "./library.ts";
-import { LIBRARY_FORMAT } from "../state/libraryFormat.ts";
+import { LIBRARY_FORMAT, libraryFormatOf, upToDate } from "../state/libraryFormat.ts";
+import { DATA_VERSION, STEP_KEYS } from "../state/storage.ts";
 import { GREEK, LETTER_NAMES } from "../input/parseTables.ts";
 
 /** G100: Giac's tree of a text, for parseLibrary; set when an engine is found. */
@@ -507,7 +508,7 @@ describe("the worker's reader (no engine)", () => {
     },
   };
   it("R59: an older stamp sent straight to importText is refused at line 1, not read as if up to date (principle 3)", () => {
-    const r = importText(noEngine, "// n62 library 1\n// phasor\nph(w):=pasexp(i*w)\n", LIBRARY_FORMAT.version, [], false);
+    const r = importText(noEngine, "// n62 library 1\n// phasor\nph(w):=pasexp(i*w)\n", LIBRARY_FORMAT, [], false);
     expect(r.result).toMatchObject({ ok: false, line: 1, dirty: false });
     expect(!r.result.ok && r.result.error).toMatch(/^line 1: the app did not bring this file up to date \(version 1; /);
     expect(r.lines).toEqual([]);
@@ -550,7 +551,7 @@ describe.skipIf(!giacAvailable())("the parser's letter stand-ins in library file
   it("the same through importText into an empty engine (the worker's side)", async () => {
     const { text } = exportLibrary(await typed(), LIBRARY_FORMAT);
     const h = await nodeHost();
-    const r = importText(h, text, LIBRARY_FORMAT.version, [], false);
+    const r = importText(h, upToDate(text), LIBRARY_FORMAT, [], false);
     if (!r.result.ok) throw new Error(r.result.error);
     expect(r.result.plan.added).toEqual(["beta_", "e_"]);
     expect(r.lines.map((l) => l.name)).toEqual(["beta_", "e_"]);
@@ -573,5 +574,48 @@ describe("the format for your AI names the stand-ins (G311)", () => {
     const listed = /\(except the letters N62 writes so: ([^)]*)\)/.exec(rule)?.[1]?.match(/`[^`]+`/g)?.map((t) => t.slice(1, -1)) ?? [];
     const standIns = [...new Set([...Object.values(GREEK), ...Object.values(LETTER_NAMES)].filter((n) => n.endsWith("_")))];
     expect(listed.sort()).toEqual(standIns.sort());
+  });
+});
+
+// G342: the first line of an exported file is the last version whose step rewrote library text, not DATA_VERSION.
+describe("the version an export writes (G342)", () => {
+  const firstLine = (t: string): string => t.split("\n")[0]!;
+  const log: DefEntry[] = [{ name: "f", kind: "fn", cmds: ["f(x):=x+1"], preview: "", view: "home", time: 0, desc: "add one" }];
+  // a store one step further on (an empty step 4 → 5), the reader reading up to 5
+  const later = libraryFormatOf(DATA_VERSION + 1, { ...STEP_KEYS, [DATA_VERSION]: [] });
+
+  it("is 3 while DATA_VERSION is past it (derived: the only library step is 2 → 3)", () => {
+    expect(DATA_VERSION).toBeGreaterThan(3);
+    expect(firstLine(exportLibrary(log, LIBRARY_FORMAT).text)).toBe("// n62 library 3");
+  });
+  it("is unchanged when DATA_VERSION is raised by an empty step", () => {
+    expect(later.version).toBe(DATA_VERSION + 1);
+    expect(firstLine(exportLibrary(log, later).text)).toBe("// n62 library 3");
+    expect(exportLibrary(log, later).text).toBe(exportLibrary(log, LIBRARY_FORMAT).text);
+  });
+  it("the reader names the written version in its first-line message", () => {
+    expect(() => parseLibrary("no stamp\n", () => { throw new Error("parsed"); }, LIBRARY_FORMAT)).toThrow(/first line must be `\/\/ n62 library 3`/);
+  });
+  it("the worker's reader takes up to the newest version: 3 and DATA_VERSION read, one more is refused in today's words", () => {
+    const parse = (): GiacParse => ({ ok: true }) as unknown as GiacParse;
+    const stamp = (n: number): string => `// n62 library ${n}\n`;
+    expect(parseLibrary(stamp(3), parse, LIBRARY_FORMAT).version).toBe(3);
+    expect(parseLibrary(stamp(DATA_VERSION), parse, LIBRARY_FORMAT).version).toBe(DATA_VERSION);
+    expect(() => parseLibrary(stamp(DATA_VERSION + 1), parse, LIBRARY_FORMAT)).toThrow(`line 1: made by a newer N62 (version ${DATA_VERSION + 1}; this one reads up to ${DATA_VERSION})`);
+  });
+  it("a version-2 file's text is migrated as before (pasexp goes)", () => {
+    expect(LIBRARY_FORMAT.migrate("f(x):=pasexp(x)\n", 2)).toBe("f(x):=exp(x)\n");
+  });
+  it.skipIf(!giacAvailable())("an export reads back through upToDate and the worker's import, each definition as it was (real Giac)", async () => {
+    const h = await nodeHost();
+    let mine: DefEntry[] = [];
+    for (const s of ["beam(q,L):=q*L^2/8", "A:=5"]) mine = applyDefChanges(mine, h.cas(s, defaultCasSettings).defs);
+    const { text } = exportLibrary(mine, LIBRARY_FORMAT);
+    expect(firstLine(text)).toBe("// n62 library 3");
+    const r = importText(await nodeHost(), upToDate(text), LIBRARY_FORMAT, [], false);
+    if (!r.result.ok) throw new Error(r.result.error);
+    const core = (l: readonly DefEntry[]) => l.map((e) => ({ name: e.name, kind: e.kind, cmds: e.cmds, desc: e.desc }));
+    expect(core(r.result.log)).toEqual(core(mine).map((e) => ({ ...e, desc: expect.any(String) })));
+    expect(exportLibrary(r.result.log, LIBRARY_FORMAT).text).toBe(text);
   });
 });

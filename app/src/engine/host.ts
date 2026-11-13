@@ -1332,10 +1332,10 @@ export function createRequestHandler(load: GiacLoader, post: (r: Response) => vo
           post({ id: req.id, type: "units", result: host.units(req.job, req.settings) });
           break;
         case "library":
-          post({ id: req.id, type: "library", ...importText(host, req.input, req.version, req.log, req.replace) });
+          post({ id: req.id, type: "library", ...importText(host, req.input, req, req.log, req.replace) });
           break;
         case "libraryExport":
-          post({ id: req.id, type: "libraryExport", ...exportText(req.log, req.version) });
+          post({ id: req.id, type: "libraryExport", ...exportText(req.log, req) });
           break;
       }
     } catch (e) {

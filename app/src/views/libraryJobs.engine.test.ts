@@ -15,6 +15,7 @@ import type { Request, Response } from "../engine/protocol.ts";
 import { WorkerEngine, type WorkerLike } from "../engine/workerEngine.ts";
 import { LIB_MAX_BYTES, type ImportResult } from "../engine/library.ts";
 import { defaultCasSettings } from "../engine/types.ts";
+import { LIBRARY_FORMAT } from "../state/libraryFormat.ts";
 import { DATA_VERSION } from "../state/storage.ts";
 import { aiFormat, formatExample, importFile, READ_CAP, type LibraryHost } from "./libraryJobs.ts";
 
@@ -70,10 +71,10 @@ const beams = readFileSync(new URL("../../../tools/probes/library/beams.txt", im
 describe.skipIf(!giacAvailable())("the library through the Calc port (real Giac)", () => {
   it("the format for your AI: its worked example imports, its five tests pass, and it names this version (derived)", { timeout: 30_000 }, async () => {
     const format = aiFormat();
-    expect(format.split("\n")[0]).toBe(`# N62 file formats (text 1, for files of version ${DATA_VERSION})`);
+    expect(format.split("\n")[0]).toBe(`# N62 file formats (text 1: a library file is stamped ${LIBRARY_FORMAT.written}, a backup's records ${DATA_VERSION})`);
     expect(format).not.toMatch(/SPDX|<!--|\{version\}/);
     const example = formatExample(format);
-    expect(example.split("\n")[0]).toBe(`// n62 library ${DATA_VERSION}`);
+    expect(example.split("\n")[0]).toBe(`// n62 library ${LIBRARY_FORMAT.written}`);
     const { calc } = fresh();
     const r = ok((await calc.importLibrary(example, false)).result);
     expect(r.plan.added).toEqual(["beam_M", "sumpow", "middle", "g0"]);
@@ -167,7 +168,7 @@ describe.skipIf(!giacAvailable())("the library through the Calc port (real Giac)
     const a = fresh();
     ok((await a.calc.importLibrary(new Uint8Array(beams), false)).result);
     const out = await a.calc.exportLibrary();
-    expect(out.text.startsWith(`// n62 library ${DATA_VERSION}\n`)).toBe(true);
+    expect(out.text.startsWith(`// n62 library ${LIBRARY_FORMAT.written}\n`)).toBe(true);
     expect(out.skipped).toEqual([]);
     const same = ok((await a.calc.importLibrary(out.text, false)).result);
     expect(same.plan).toEqual({ added: [], same: ["beam_M", "beam_w", "sumpow", "g0"], replaced: [] });

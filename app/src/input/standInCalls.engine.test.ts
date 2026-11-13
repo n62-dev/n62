@@ -8,7 +8,7 @@ import { giacAvailable, nodeHost } from "../engine/nodeGiac.ts";
 import { defaultHomeSettings } from "../engine/homeDefaults.ts";
 import { defaultCasSettings } from "../engine/types.ts";
 import { exportLibrary, importText } from "../engine/library.ts";
-import { LIBRARY_FORMAT } from "../state/libraryFormat.ts";
+import { LIBRARY_FORMAT, upToDate } from "../state/libraryFormat.ts";
 import { giacOfEntry } from "./entry.ts";
 
 describe.skipIf(!giacAvailable())("R260: a function named e or i (real Giac)", () => {
@@ -39,7 +39,7 @@ describe.skipIf(!giacAvailable())("R260: a function named e or i (real Giac)", (
     expect(skipped).toEqual([]);
     expect(text).toContain("e_(x):=x+1");
     const back = await nodeHost();
-    const imported = importText(back, text, LIBRARY_FORMAT.version, [], false);
+    const imported = importText(back, upToDate(text), LIBRARY_FORMAT, [], false);
     if (!imported.result.ok) throw new Error(imported.result.error);
     expect(imported.result.plan.added).toEqual(["e_"]);
     expect(back.home(giacOfEntry("e\\left(2\\right)", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("3");
@@ -60,7 +60,7 @@ describe.skipIf(!giacAvailable())("R260: a function named e or i (real Giac)", (
     expect(lines).toContain("beta_:=(2)");
     expect(lines).toContain("e_(x):=x+1");
     const back = await nodeHost();
-    const imported = importText(back, text, LIBRARY_FORMAT.version, [], false);
+    const imported = importText(back, upToDate(text), LIBRARY_FORMAT, [], false);
     if (!imported.result.ok) throw new Error(imported.result.error);
     expect(imported.result.plan.added.sort()).toEqual(["beta_", "e_"]);
     expect(back.home(giacOfEntry("e\\left(2\\right)", "home", { names: userNamesOf(imported.result.log) }).giac, s).result.display).toBe("3");
@@ -81,7 +81,7 @@ describe.skipIf(!giacAvailable())("R260: a function named e or i (real Giac)", (
     expect(lines).toContain("// z = e+1");
     expect(text).not.toMatch(/\/\/.*(beta_|e_)/);
     const back = await nodeHost();
-    const imported = importText(back, text, LIBRARY_FORMAT.version, [], false);
+    const imported = importText(back, upToDate(text), LIBRARY_FORMAT, [], false);
     if (!imported.result.ok) throw new Error(imported.result.error);
     expect(imported.result.plan.added.sort()).toEqual(["y", "z"]);
     const names = userNamesOf(imported.result.log);
