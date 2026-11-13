@@ -5,8 +5,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
-import { functionAt } from "./cursorFn.ts";
+import { FUNCS, GREEK } from "../input/parseTables.ts";
+import { isInfixWord } from "./boxes.ts";
+import { functionAt as scanAt } from "./cursorFn.ts";
 import { CHIP_MACROS } from "./macros.ts";
+
+/** R197: the words the scan reads, from their source (cursorFn.ts FnWords). */
+const functionAt = (latex: string, offset: number): string | null => scanAt(latex, offset, { funcs: FUNCS, greek: GREEK, isInfixWord });
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const yaml = <T>(f: string): T => parse(readFileSync(join(root, f), "utf8")) as T;

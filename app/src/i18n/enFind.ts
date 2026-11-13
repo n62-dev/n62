@@ -37,12 +37,6 @@ export const enFind = {
   "notChecked": "not checked",
   "exact": "exact",
   "factor": "× {si} SI",
-  // R197: the Help key's sheet (views/helpSheet.ts)
-  "help.title": "Help: {name}",
-  "help.example": "Example",
-  "help.insert": "Insert the example",
-  "help.rad": "(radians)",
-  "help.deg": "(degrees)",
 } as const;
 
 export type FindMessageKey = keyof typeof enFind;

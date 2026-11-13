@@ -190,7 +190,9 @@ export function showFind(shell: AppShell, entry: EntryController, index: FindInd
 export { showNames } from "./names.svelte.ts";
 // R281: the store sheet comes with Vars' code (one chunk: the names' values and marks are shared, no chunk of their own)
 export { showStore, storedText } from "../views/storeSheet.svelte.ts";
-// R197: the Help key's sheet comes with Find's code (it reads the index)
-export { helpAt, showHelp } from "../views/helpSheet.ts";
+/** R197: the Help key's sheet (it reads the index), a chunk of its own: R196's functionAt brings the parser's tables, which
+ *  Find and the unit view need not preload. */
+export const showHelpAt = (...a: Parameters<typeof import("../views/helpSheet.ts").showHelpAt>): Promise<boolean> =>
+  import("../views/helpSheet.ts").then((m) => m.showHelpAt(...a));
 /** R149: the credits sheet's code, loaded here so the start chunk has no import of its own for it. */
 export const loadCredits = (): Promise<typeof import("../views/creditsSheet.ts")> => import("../views/creditsSheet.ts");

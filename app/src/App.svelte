@@ -262,7 +262,7 @@
   /** Help (R197, Shift + Select): the help sheet of the function at the cursor (views/helpSheet.ts); none there: Find. */
   function openHelp(): void {
     if (!shell.showsEntry) return dead();
-    onFind(findNow().then(async (f) => ({ f, it: await f.m.helpAt(entry, f.index.byId) })), ({ f, it }) => (it ? ((picked = null), f.m.showHelp(shell, entry, it)) : showFind(f)));
+    onFind(findNow().then(async (f) => ((await f.m.showHelpAt(shell, entry, f.index.byId)) ? null : f)), (f) => f && showFind(f)); // (the route dropped a pick)
   }
   type FindSlot = { id: string; layer: Layer };
   const showFind = (f: FindCode, slot?: FindSlot): void => { picked = null; f.m.showFind(shell, entry, f.index, slot && { ...slot, userKeys }); };
