@@ -99,6 +99,15 @@ describe("giac-regress exporter", () => {
     expect(lines.slice(angled.at(-1)! + 1).some((l) => l.includes('pc("'))).toBe(false);
   });
 
+  it("G331f1: the two g331-evalf-* Home rows rest on patch 0047 and stay out of the check file", () => {
+    const ids = ["g331-evalf-simplify-sqrt-ln-nested-root-30", "g331-evalf-simplify-asinh-cbrt2-pow-pi-30"];
+    for (const id of ids) expect(PATCHED_IDS.get(id)).toBe("0047-tsimplify-ln-undef-arg.patch");
+    const c = { id: ids[0]!, input: "evalf(simplify(sqrt(ln(1+sqrt(1+2^(1/3))))))", settings: { digits: 30 }, expect: "0.957920253118554998403493714904", mark: "⚠", source: "oracle" };
+    const r = build([["precision.yaml", c]]) as { check: string; patched: string };
+    expect(r.check).not.toContain("g331");
+    expect(r.patched).toContain(`// patch 0047-tsimplify-ln-undef-arg.patch\n// ${ids[0]} (precision.yaml, oracle)`);
+  });
+
   it("explicitPrecision: only a second argument of approx or evalf", () => {
     expect(explicitPrecision("approx(x)")).toBe(false);
     expect(explicitPrecision("evalf([1,2])")).toBe(false);
