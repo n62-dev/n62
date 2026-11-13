@@ -4,7 +4,8 @@
 // cos(π/N), sin(π/2 − π/N), 0 ± 10^-k, π/2 ± 10^-k, 90 ± 10^-k for DEG, negative reals under √, ln and acosh), integers past the
 // double (2^31, 2^53 ± 1, 10^20 + 1, 30!), and huge and tiny magnitudes (1ᴇ±300, 1ᴇ±1000, 10^50). G162: cancellation families, k from
 // 40 to 300: (1 ± 10^-k)^(c·10^k) (the base typed as a power or as the long decimal 1.000…01), (f(a + 10^-k) − f(a))·10^k + b and
-// (1 − cos 10^-k)·10^(2k) + b (the oracle raises its digits by 2k for them, oracle.py `tens`). The functions add acosh, atanh and
+// (1 − cos 10^-k)·10^(2k) + b (the oracle raises its digits by 2k for them, oracle.py `tens`). G308: 1 ± 10^-k·i, real part exactly 1,
+// alone or to a power that is no integer (Giac took it for one and returned the base, patch 0048). The functions add acosh, atanh and
 // the cube root to gen.ts's. Pure; `childrenOf` gives a generated tree's operands, for the smallest subtree that still fails.
 import { lcg, type Case } from "./gen.ts";
 
@@ -15,7 +16,7 @@ interface Node extends Case {
 }
 
 /** Every leaf class; 2,000 trees of one seed hold each at least once (sweep.test.ts). */
-export const EDGE_CLASSES = ["cut", "cospi", "sinpi", "zero", "halfpi", "deg90", "neg", "int", "huge", "tiny", "plain", "cancel"] as const;
+export const EDGE_CLASSES = ["cut", "cospi", "sinpi", "zero", "halfpi", "deg90", "neg", "int", "huge", "tiny", "plain", "cancel", "nearone"] as const;
 export type EdgeClass = (typeof EDGE_CLASSES)[number];
 
 const KS = [3, 6, 9, 15];
@@ -180,6 +181,21 @@ function leaf(r: () => number, seen?: Map<string, number>): Node {
     }
     case "cancel":
       return cancel(r, seen);
+    case "nearone": {
+      // G308: real part exactly 1, |im| on both sides of Giac's epsilon (1e-12)
+      const k = pick(r, [9, 12, 15, 20]);
+      const s = r() < 0.5 ? "+" : "-";
+      // typed with ᴇ, as the keys do (a 10^{-k} here would read as a cancellation family's k in sweep.test.ts)
+      const base = { latex: `1${s}1ᴇ-${k}\\imaginaryI`, mp: `(mpf('1'))${s}(mpf('1e-${k}'))*(sqrt(mpf('-1')))` };
+      if (r() < 0.5) return lf(base.latex, base.mp, false, false);
+      const e = pick(r, [
+        { latex: "\\frac{1}{3}", mp: "DIV(mpf('1'),mpf('3'))" },
+        { latex: "\\pi", mp: "PI" },
+        { latex: "1.5", mp: "mpf('1.5')" },
+        { latex: "-\\frac{2}{3}", mp: "-(DIV(mpf('2'),mpf('3')))" },
+      ]);
+      return lf(`\\left(${base.latex}\\right)^{${e.latex}}`, `POW(${base.mp},${e.mp})`, false, false);
+    }
     case "plain": {
       const n = pick(r, ["2", "3", "0.5", "10", "\\pi"]);
       return lf(n, n === "\\pi" ? "PI" : `mpf('${n}')`, true, true);

@@ -116,6 +116,16 @@ describe("sweep edge generator (G116)", () => {
     expect(out.filter((o) => o.kind === "value").length).toBeGreaterThan(5);
     for (const o of out) if (o.kind === "skip") expect(o.reason).not.toMatch(/oracle error/);
   }, 120_000);
+  it("G308: draws 1 ± 1ᴇ-k·i to a power that is no integer, which the parser and the oracle take", () => {
+    // whole trees that are the leaf: (1 ± 1ᴇ-k·i)^e
+    const leaf = /^\\left\(1[+-]1ᴇ-\d+\\imaginaryI\\right\)\^\{(\\frac\{\d\}\{\d\}|\\pi|1\.5|-\\frac\{2\}\{3\})\}$/;
+    const pows = generateEdges(20261028, 2000).filter((c) => leaf.test(c.latex));
+    expect(pows.length).toBeGreaterThan(3);
+    for (const c of pows) expect(latexToGiac(c.latex), c.latex).toMatch(/^\(1[+-]1e-\d+\*i\)\^/);
+    const sample = pows.slice(0, 4).map((c) => ({ latex: c.latex, mp: c.mp, angle: "rad" as const, digits: 12 as const }));
+    const out = oracleFor(sample, pythonFor(repo, mainCheckout), resolve(repo, "tools/probes/sweep/oracle.py"));
+    for (const o of out) expect(o.kind).toBe("value");
+  }, 120_000);
   it("G162: draws each cancellation family with k from 40 to 300", () => {
     const seen = new Map<string, number>();
     const cs = generateEdges(20261103, 2000, seen);
@@ -230,6 +240,7 @@ describe("sweep trees write e as the keys do (G326)", () => {
     expect(sha(asLetter(runsOf(20261021, 1000)))).toBe("83330d8832e56c7f5f990ac3375bae90b13eb3cf4b27bacec094eecbd769cfba");
     expect(sha(asLetter(trees.view))).toBe("96781df693eff0101ca3a363c5885f3e55b93e905488f0ccc3721b10421efce3");
     expect(sha(asLetter(trees.casback))).toBe("4e6a9dc2cb06cefb7b8dda4728114ecabddb07ca791c3feb8f52d351bcdb12b5");
-    expect(sha(asLetter(trees.edges))).toBe("98c31a1d6f5cef7a4f1a13397ad18f19d9cb6858b26fcbe640271dcdbdfae655");
+    // G308 added the edge class nearone (1 ± 1ᴇ-k·i), so the edge trees differ from G326's on purpose
+    expect(sha(asLetter(trees.edges))).toBe("6979cf1535d783a4ac2a49bbedf36010a33e43823b4c029d48438bbc23dd3ec3");
   });
 });
