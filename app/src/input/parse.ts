@@ -15,6 +15,11 @@ import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./toke
 
 export { GREEK, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 
+/** G341: a typed name that is N62's own (`pas…`, CAS's answer slot) is refused with the reason. */
+function refuseOurs(text: string): void {
+  if (isOurName(text)) throw text === CAS_ANS ? parseError("parse.ourName", { name: text }) : parseError("parse.reservedName", { name: text });
+}
+
 class Parser implements CalcParser {
   pos = 0;
   noDiff = 0;
@@ -404,6 +409,7 @@ class Parser implements CalcParser {
     const wrapped = this.isCh("{") && this.isCmd("mathrm", 1) && this.isCh("{", 2);
     if (wrapped) this.pos += 2;
     const text = this.isCh("{") ? this.groupText() : "";
+    refuseOurs(text); // G341: a name the sheet or Vars put after ▶ is read here, not in atom()
     if (/^[A-Za-z][A-Za-z0-9_]*$/.test(text) && (!wrapped || this.isCh("}"))) return (this.pos += wrapped ? 1 : 0), text;
     this.pos = at;
     return undefined;
@@ -763,7 +769,7 @@ class Parser implements CalcParser {
           text = this.groupText();
           this.expectCh("}");
         } else text = this.groupText();
-        if (isOurName(text)) throw text === CAS_ANS ? parseError("parse.ourName", { name: text }) : parseError("parse.reservedName", { name: text }); // G341: where a typed name is read
+        refuseOurs(text); // G341: where a typed name is read
         if (name === "mathrm" && text === "e") return "ExponentialE";
         if (name === "mathrm" && text === "i") return "ImaginaryUnit";
         if (name === "operatorname" && this.values?.has(text)) return text; // R258: a stored value; a bracket after it multiplies
