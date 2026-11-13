@@ -7,7 +7,9 @@
 // Values: mpmath (r20; sqrt(log(1+sqrt(1+cbrt(2)))), power(asinh(cbrt(2)),pi)). F214's value, 2.506E-24702789107 (mpmath),
 // is past MPFR's exponent range, so its case asks only for an answer.
 import { describe, expect, it } from "vitest";
+import { EngineHost } from "./host.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
+import { defaultCasSettings } from "./types.ts";
 
 const F214 = "simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))";
 const CASES: [string, string | null][] = [
@@ -30,6 +32,28 @@ describe.skipIf(!giacAvailable())("G331: simplify of a power of an ln over neste
       expect(ms, `${input} took ${Math.round(ms)} ms: stopped by Giac's clock (10 s), not answered`).toBeLessThan(8000);
       expect(out.length).toBeGreaterThan(0);
       if (value !== null) expect(giac.eval(`when(abs(evalf((${out})-${value}))<10^-29,1,0)`), `${input} = ${out}`).toBe("1");
+    }, 60_000);
+  }
+});
+
+// The CAS view as typed at 30 digits, through the engine host; it shows the 12 digits its check confirms (simplify is
+// not audited, docs/04 2.4 rule 3; evalf(…,30) the same), the oracle's rounded (the raw cases above check 29 digits).
+// Its clock is 600 s in the app (defaultCasSettings), where a build without patch 0047 waited it out; here 20 s, so such
+// a build fails in 20 s (G331 fix round 1: golden's CAS form took 600 s a case on phase-1, past red-first's 900 s, so
+// these two live here and golden has their Home form).
+const CAS: [string, string][] = [
+  ["evalf(simplify(sqrt(ln(1+sqrt(1+2^(1/3))))))", "0.957920253119"],
+  ["evalf(simplify(asinh(2^(1/3))^pi))", "1.17886883625"],
+];
+
+describe.skipIf(!giacAvailable())("G331: the CAS view answers simplify of a power of an ln over nested roots (patch 0047)", () => {
+  for (const [input, value] of CAS) {
+    it(input, async () => {
+      const L = await loadNodeGiac();
+      const host = new EngineHost(L.giac, L.bridge); // as the golden gate builds it (scripts/golden/lib.ts freshHost)
+      const r = host.cas(input, { ...defaultCasSettings, digits: 30, hardTimeoutS: 20 }).result;
+      expect(r.ok, `${input}: ${r.text} (${r.error ?? ""})`).toBe(true);
+      expect(r.text).toBe(value);
     }, 60_000);
   }
 });
