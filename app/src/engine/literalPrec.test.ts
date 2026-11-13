@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G141: the precision a long exact literal needs (literalPrec.ts). Engine-free; the values are counted by hand.
 import { describe, expect, it } from "vitest";
-import { literalDigits, literalStart, uncheckedPastCap } from "./literalPrec.ts";
+import { literalDigits, literalPastCap, literalStart, uncheckedPastCap } from "./literalPrec.ts";
 
 const ONE_E100 = "1" + "0".repeat(100);
 
@@ -71,6 +71,25 @@ describe("literalStart", () => {
   it("is the digit count plus P up to the cap", () => {
     expect(literalStart("10^919", 40, 1000, "typed")).toEqual({ at: 960, unchecked: false });
     expect(literalStart("10^920", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+  });
+});
+
+describe("literalPastCap (G307 fix round 2)", () => {
+  it("counts a huge power of pi or exp, which a decision on it cannot hold, as a power of ten", () => {
+    expect(literalPastCap("sin(10^2000)>0", 40, 1000, "typed")).toBe(true);
+    expect(literalPastCap("sin(pi^2200)>0", 40, 1000, "typed")).toBe(true);
+    expect(literalPastCap("sin(exp(2400))>0", 40, 1000, "typed")).toBe(true);
+    expect(literalPastCap("sign(sin(exp(3000)))", 40, 1000, "typed")).toBe(true);
+    // the value's start leaves the same powers out (g58-exp-1e7-12 stays ≈)
+    expect(literalStart("sin(pi^2200)", 40, 1000, "typed").unchecked).toBe(false);
+    expect(literalStart("exp(10000000)", 40, 1000, "printed").unchecked).toBe(false);
+    expect(literalPastCap("exp(10000000)", 40, 1000, "printed")).toBe(true);
+  });
+  it("is false below the cap", () => {
+    expect(literalPastCap("sin(pi^200)>0", 40, 1000, "typed")).toBe(false);
+    expect(literalPastCap("sin(exp(5))>0", 40, 1000, "typed")).toBe(false);
+    expect(literalPastCap("10^919", 40, 1000, "typed")).toBe(false);
+    expect(literalPastCap("10^920", 40, 1000, "typed")).toBe(true);
   });
 });
 

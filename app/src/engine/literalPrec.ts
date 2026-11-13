@@ -91,13 +91,24 @@ export function literalDigits(text: string, q: Quoting): number {
  * `unchecked` (⚠, never ≈): a power of ten too (G141f1, Opus pass 68: `(1-cos(10^-600))*10^1200+1` is 1.5, and at P and
  * P + 20 both round the 10^-600 away; S20's intervals are the cure), and a tiny power of pi or exp (G307,
  * `(1+pi^(-2200))^(pi^2200)`). A huge one past the cap counts nothing: alone it rounds no term away, and MPFR evaluates
- * exp(10000000) (`exp(10^7)` as Giac prints it) right at every level, which ≈ said before G307 (g58-exp-1e7-12).
+ * exp(10000000) (`exp(10^7)` as Giac prints it) right at every level, which ≈ said before G307 (g58-exp-1e7-12). A decision taken on it reads literalPastCap, which counts it.
  */
 export function literalStart(text: string, P: number, cap: number, q: Quoting): { at: number; unchecked: boolean } {
   const { digits, withoutHuge } = literalCounts(text, q);
   const start = (n: number): { at: number; unchecked: false } | null =>
     n + LITERAL_MARGIN <= P ? { at: P, unchecked: false } : n + P + LEVELS_ABOVE <= cap ? { at: n + P, unchecked: false } : null;
   return start(digits) ?? start(withoutHuge) ?? { at: P, unchecked: true };
+}
+
+/**
+ * G307 fix round 2: `text` holds an exact magnitude that no precision we run holds, a huge power of pi or exp included
+ * (the full literalDigits count, which literalStart leaves out for the value). The decisions read this (decideTwice): a
+ * value is right at every level when alone it rounds no term away, but a sign or a branch taken on it is not, as at
+ * P0 + 40 pi^2200 is off by about 10^1054 and the sign of sin(pi^2200) is a coin toss, as for sin(10^2000) (G156).
+ */
+export function literalPastCap(text: string, P: number, cap: number, q: Quoting): boolean {
+  const n = literalDigits(text, q);
+  return n + LITERAL_MARGIN > P && n + P + LEVELS_ABOVE > cap;
 }
 
 /**
