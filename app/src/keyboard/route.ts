@@ -19,7 +19,7 @@ import type { SheetKey } from "../views/sheetKeys.ts";
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
 export type Mods = { shift: boolean; alpha: boolean };
 /** A key (or a hardware letter, R45) waiting for an app's or a sheet's code. */
-export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean; line?: boolean; drag?: boolean } | { letter: string };
+export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean; line?: boolean } | { letter: string };
 
 /** What the routing reads and calls: the models, the App-owned state (as accessors) and the App-owned actions. */
 export interface RouteCtx {
@@ -361,7 +361,7 @@ function replay(c: RouteCtx): void {
   for (const w of keys)
     if (c.waiting.length > 0 || c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null || forLine(c, w)) wait(c, w); // another app or sheet started loading meanwhile (or the field is still to come), and all after it
     else if ("letter" in w) typeLetter(c, w.letter);
-    else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods, w.drag); // a sheet or the unit pad opened meanwhile takes its keys
+    else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
 
 /** R281: a key in the store sheet (sheetKeys.ts storeKey). A key that types a letter on the line types the same letter
@@ -408,14 +408,13 @@ function rowsLoading(c: RouteCtx, key: Key): boolean {
 }
 
 /** A key fires. `layer` overrides the Shift/Alpha state for this key only: a trackpad step ("primary"), a flick up
- *  ("shift") or down ("alpha"). `screen`: a press of the on-screen keypad (R144: it closes an open pick sheet). `drag`:
- *  a drag step on the pad, not a tap (R185: it never grows Shift + 5's matrix). */
-export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean, drag?: boolean): void {
+ *  ("shift") or down ("alpha"). `screen`: a press of the on-screen keypad (R144: it closes an open pick sheet). */
+export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): void {
   const p = key.actions.primary;
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return modifier(c, p.name, layer);
   // (F42: a tap on a sheet that is open but not drawn yet keeps its flag and closes it once drawn; a key pressed before a
   // sheet opens waits as typed, R8)
-  if (sheetUndrawn(c) || rowsLoading(c, key)) return wait(c, { key, mods: modsFor(c, layer), layer, screen, drag });
+  if (sheetUndrawn(c) || rowsLoading(c, key)) return wait(c, { key, mods: modsFor(c, layer), layer, screen });
   if (c.shell.sheet && sheetPress(c, key, layer, screen)) return;
   const mods = modsFor(c, layer);
   if (sheetChunk.pad?.route(c, key, mods)) return; // the unit pad's cell (R24b)
@@ -425,13 +424,13 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean, dr
       .catch(() => {})
       .finally(() => (c.sheetLoad = null)); // if it fails, the queued keys run without a sheet
   }
-  if (c.sheetLoad !== null) return wait(c, { key, mods, layer, drag });
+  if (c.sheetLoad !== null) return wait(c, { key, mods, layer });
   const a = actionFor(key, mods.shift, mods.alpha);
   // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
   // typed, and a key after it meets the empty line as live; so does the units key, which reads the line (R255f1)
-  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && (a.name === "enter" || a.name === "units")))) return wait(c, { key, mods, layer, line: true, drag });
-  if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer, drag });
-  run(c, key, mods, drag);
+  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && (a.name === "enter" || a.name === "units")))) return wait(c, { key, mods, layer, line: true });
+  if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
+  run(c, key, mods);
 }
 
 /** A letter from a hardware keyboard (R45, F38): what the keypad's letter key does in this place. */
@@ -462,8 +461,8 @@ function modifier(c: RouteCtx, name: "shift" | "alpha", layer: Layer | undefined
   else if (layer === "shift") s.flickShiftLock();
 }
 
-/** The key's action in the layer it was pressed in; `drag`: a drag step on the pad (R185). */
-export function run(c: RouteCtx, key: Key, mods: Mods, drag?: boolean): void {
+/** The key's action in the layer it was pressed in. */
+export function run(c: RouteCtx, key: Key, mods: Mods): void {
   const { session, shell, entry } = c;
   const action = actionFor(key, mods.shift, mods.alpha, session.settings.entry === "line", c.casKeys);
   if (!isSelect(action)) entry.endSelect(); // R279: any other key ends the chain of Select presses
@@ -488,7 +487,7 @@ export function run(c: RouteCtx, key: Key, mods: Mods, drag?: boolean): void {
   }
   const ans = shell.app === null && entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult();
   if (ans) entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
-  entry.run(action, drag);
+  entry.run(action);
   // R281: Store ▶ in Home or CAS opens "Store in" (the value on the line, Ans's row when it put Ans there)
   if (shell.app === null && action.kind === "insert" && action.latex === STORE_ARROW) c.openStore(ans ? [...session.items].reverse().find((x) => x.status === "done") : undefined);
 }

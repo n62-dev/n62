@@ -438,8 +438,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  model's infix words from the chunks that hold them, so no chunk splits off and no preload list grows); what stays is
  *  the key's route (route.ts `help`, App.svelte openHelp and findNow, shared with openFind) and `help` in the keyboard's
  *  lists. The merge base d66f7f94 measures 61.69 kB gzip (174.15 kB raw), the branch 61.76 kB (174.36 kB raw):
- *  61.76 kB + 0.05 kB. */
-export const START_PIN_GZIP = 61_810;
+ *  61.76 kB + 0.05 kB.
+ *  61,810 → 61,900 B (R185): Shift + 5's growing matrix. The growth (entry/matgrow.ts) rides with MathLive; what stays is
+ *  the key itself in spec/keyboard.yaml (alone 61.81 kB, the pin's edge), the Keypad marking a drag step's action
+ *  (`drag`, so a drag never grows the matrix) and the entry holding the field chunk's `Grown` (made with the field,
+ *  passed to runOnField, cleared when a line is set). The merge base 68e296cf measures 61.77 kB gzip (174.36 kB raw), the
+ *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB. */
+export const START_PIN_GZIP = 61_900;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

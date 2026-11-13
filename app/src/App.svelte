@@ -444,9 +444,9 @@
     dead,
     unfold,
   };
-  const press = (key: Key, layer?: Layer, screen?: boolean, drag?: boolean): void => {
+  const press = (key: Key, layer?: Layer, screen?: boolean): void => {
     edited = true;
-    route.press(ctx, key, layer, screen, drag);
+    route.press(ctx, key, layer, screen);
   };
   const typeLetter = (ch: string): void => {
     edited = true;
@@ -554,7 +554,7 @@
       cas={casKeys} app={shell.app !== null}
       sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store" } : undefined}
       pops={session.settings.look.pops}
-      onpress={(key, layer, drag) => press(key, layer, true, drag)}
+      onpress={(key, layer) => press(key, layer, true)}
       oncount={(key) => session.taps.press(key)}
       ontouch={touched}
     />

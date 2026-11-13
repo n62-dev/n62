@@ -203,10 +203,19 @@ function forceNoSystemKeyboard(mf: MathfieldElement): void {
 }
 
 /** A type / insert / cmd action on the field (EntryController.run once the field is up). `grown`: the line's Shift + 5
- *  matrices (R185); `drag`: the press was a drag step on the pad, which never grows one. */
-export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown, drag = false): void {
-  // R185: a tapped ▶ or ▼ (or a hardware arrow) at the edge of Shift + 5's matrix adds a column or row, or takes back an empty one
-  if (a.kind === "cmd" && !drag && grown?.key(mf, a.name)) {
+ *  matrices (R185). */
+export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown): void {
+  // R185: the matrices are found again after what changed the line since the last key (a result put on it, a character
+  // MathLive typed itself) and after this key
+  grown?.refresh(mf);
+  onField(mf, a, grown);
+  grown?.refresh(mf);
+}
+
+function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined): void {
+  // R185: a tapped ▶ or ▼ (or a hardware arrow) at the edge of Shift + 5's matrix adds a column or row, or takes back an
+  // empty one; a drag step on the pad (its action marked `drag` by the Keypad) only moves
+  if (a.kind === "cmd" && !("drag" in a) && grown?.key(mf, a.name)) {
     mf.focus();
     return;
   }

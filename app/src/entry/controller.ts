@@ -12,15 +12,14 @@ export class EntryController {
   private mf: MathfieldElement | undefined;
   private host: HTMLElement | undefined;
   private queue: ActionBody[] = [];
-  /** R185: the queued keys that were drag steps on the pad (each queued as its own copy). */
-  private dragged = new WeakSet<ActionBody>();
   /** How a key acts on the field (entry/field.ts: ⌫ and Del at a template, ᴇ, 10ˣ, a power's base, the stops): loaded with MathLive. */
   private onField: typeof import("./field.ts").runOnField | undefined;
   /** Backspace, Delete and the printable keys of a hardware keyboard (entry/hwkeys.ts, R26b, R31): loaded with MathLive. */
   private hwKey: typeof import("./hwkeys.ts").hardwareKey | undefined;
   /** R279: the chain of Select presses that Deselect walks back (entry/grow.ts): loaded with MathLive. */
   private chain: import("./grow.ts").SelectChain | undefined;
-  /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts): loaded with MathLive. */
+  /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts; runOnField keeps it up to
+   *  date): loaded with MathLive. */
   private grown: import("./matgrow.ts").Grown | undefined;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
@@ -117,10 +116,9 @@ export class EntryController {
     // we replay (this.mf is set now) go straight in, so drain until the queue is empty.
     mf.focus();
     mf.executeCommand("moveToMathfieldEnd");
-    for (let a = this.queue.shift(); a; a = this.queue.shift()) this.run(a, this.dragged.has(a));
+    while (this.queue.length > 0) this.run(this.queue.shift() as ActionBody);
     // what MathLive edits itself (a character outside ASCII); a set of the value is silent
     mf.addEventListener("input", () => {
-      this.grown?.refresh(mf);
       this.touched = true;
       this.onEdit();
     });
@@ -160,7 +158,6 @@ export class EntryController {
     this.pendingValue = undefined;
     this.keptStale = true;
     this.onClear();
-    this.grown?.clear();
     // The chip table and the counter stay (R16): Shift + Cancel undoes Esc and Enter, and the chips it brings back must
     // still be worth what they were. The `chips` getter only hands out the chips on the line.
     if (this.mf) this.mf.value = "";
@@ -170,7 +167,7 @@ export class EntryController {
     this.touched = true;
     this.onEdit();
     latex = this.adopt(latex, chips);
-    this.grown?.clear(); // R185: a recalled line's matrix does not grow (the default)
+    this.grown?.clear(); // R185: a recalled line's matrix does not grow (the default; a cleared line has none to find)
     if (!this.mf) {
       this.pendingValue = latex;
       this.queue = [];
@@ -207,7 +204,6 @@ export class EntryController {
       return;
     }
     this.mf.insert(latex, { format: "latex", selectionMode: "after" });
-    this.grown?.refresh(this.mf);
     this.mf.focus();
   }
   /** A history result as a chip (docs/04 2.8): drawn as `shown` (its display LaTeX), worth `chip.value`. */
@@ -232,21 +228,17 @@ export class EntryController {
   /**
    * Run a type / insert / cmd action. Specials belong to the app and are not handled here. (The a b/c key's
    * empty-line cycle is the app's: here it is the stacked fraction. The mixed number is in the Tmpl palette, R10.)
-   * `drag`: a drag step on the pad, which moves the cursor but never grows Shift + 5's matrix (R185).
    */
-  run(a: ActionBody, drag = false): void {
+  run(a: ActionBody): void {
     if (a.kind === "special") return;
     this.endSelect();
     if (a.kind === "insert" && a.chip) this.table[a.chip.key] = a.chip.chip; // a constant on a free key (R4b)
     this.touched = true;
     if (!this.mf) {
-      const q = drag ? { ...a } : a;
-      if (drag) this.dragged.add(q);
-      this.queue.push(q);
+      this.queue.push(a);
       return;
     }
-    this.onField?.(this.mf, a, this.grown, drag);
-    this.grown?.refresh(this.mf);
+    this.onField?.(this.mf, a, this.grown);
   }
 
   /** R279: Select (`grow`) or Deselect on the line (entry/grow.ts); false where the key does nothing. */
