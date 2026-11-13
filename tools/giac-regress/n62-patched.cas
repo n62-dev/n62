@@ -1035,7 +1035,7 @@ Digits:=40:; pc("g331-simplify-sqrt-ln-nested-root",'simplify(sqrt(ln(1+sqrt(1+2
 // g331-simplify-asinh-cbrt2-pow-pi (oracle: mpmath, r20)
 Digits:=40:; pc("g331-simplify-asinh-cbrt2-pow-pi",'simplify(asinh(2^(1/3))^pi)',117886883625147806170303369803/10^29,1/10^29);
 // patch 0047-tsimplify-ln-undef-arg.patch
-// g331-simplify-f214-answers (derived: simplify gives an expression back, where it overflowed the stack)
+// g331-simplify-f214-answers (derived: it answers)
 Digits:=40:; pc("g331-simplify-f214-answers",'when(size(string(simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))))>0,1,0)',1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
