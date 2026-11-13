@@ -1,7 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
   import { onMount } from "svelte";
-  import { MediaQuery } from "svelte/reactivity";
   import type { AppShell, PaletteId } from "./apps/shell.svelte.ts";
   import type { SubMenu } from "./apps/types.ts";
   import type { ClipActions } from "./clipboard/actions.svelte.ts";
@@ -70,6 +69,9 @@
   // The shell paints first; main.ts then loads MathLive, which puts the field into this element.
   onMount(() => {
     if (host) entry.setHost(host);
+    const mq = matchMedia(WIDE_QUERY); // R224: a rotation or a resized window turns the wide layout on or off
+    wide = mq.matches;
+    mq.onchange = (e) => (wide = e.matches);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
     const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts)
     // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
@@ -367,8 +369,8 @@
    *  CAS only; never stored, so a reload has the keys up. */
   let folded = $state(false);
   /** R224: the wide layout (stage and keypad side by side, the `@media` block below) is on; it has no results mode. */
-  const wide = new MediaQuery(WIDE_QUERY, false);
-  const canFold = $derived(shell.app === null && !wide.current);
+  let wide = $state(false);
+  const canFold = $derived(shell.app === null && !wide);
   $effect(() => {
     if (!canFold) folded = false; // an app opened, or the screen turned wide: no results mode there
   });
