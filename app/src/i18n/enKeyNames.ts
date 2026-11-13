@@ -72,6 +72,7 @@ export const enKeyNames = {
   alpha: "Alpha",
   d4: "4",
   d5: "5",
+  "d5.shift": "Matrix",
   d6: "6",
   "d6.shift": "Relations and logic",
   mul: "Multiply",

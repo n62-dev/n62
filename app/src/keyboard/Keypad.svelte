@@ -296,10 +296,11 @@
     }
   }
 
+  /** A drag step presses its arrow with a copy of the action marked `drag`, so the line tells it from a tap: a drag never
+   *  grows Shift + 5's matrix (R185, entry/matgrow.ts). */
   function step(dir: PadDir): void {
     const key = keyboard.byId.get(dir);
-    if (!key) return;
-    onpress(key, "primary");
+    if (key) onpress({ ...key, actions: { primary: Object.assign({ drag: true }, key.actions.primary) } }, "primary");
   }
 
   function up(ev: PointerEvent): void {
