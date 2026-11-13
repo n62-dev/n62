@@ -14,7 +14,6 @@ const row = (page: Page, id: string) => sheet(page).locator(`[data-id="${id}"]`)
 async function numbers(page: Page): Promise<void> {
   await tap(page, ["@mode", "d6", "d2"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
-  await expect(row(page, "word")).toContainText("64 · unsigned");
   await tap(page, ["d7"]);
   await expect(page.getByTestId("sheet-title")).toContainText("Word");
 }
@@ -32,8 +31,10 @@ test.beforeEach(async ({ page }) => {
   await ready(page);
 });
 
-test("Settings › Numbers shows Word size (8 16 32 64, 64 picked) and Signed (off)", async ({ page }) => {
-  await numbers(page);
+test("Settings › Numbers › Word shows Word size (8 16 32 64, 64 picked) and Signed (off)", async ({ page }) => {
+  await tap(page, ["@mode", "d6", "d2"]);
+  await expect(row(page, "word")).toContainText("64 · unsigned"); // the Numbers row says it
+  await tap(page, ["d7"]);
   await expect(row(page, "bits")).toContainText(/Word size/i);
   await expect(row(page, "bits").locator(".opt")).toHaveText(["8", "16", "32", "64"]);
   await expect(row(page, "bits").locator('[data-option="64"]')).toHaveAttribute("aria-pressed", "true");
