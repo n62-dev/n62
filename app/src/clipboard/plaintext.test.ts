@@ -79,4 +79,25 @@ describe("plain text of what is shared (R134)", () => {
       expect(clean(t), `${l} → ${t}`).toBe(true);
     }
   });
+  it("templates, functions, relations and the mixed number read as people write them (R199, F180)", () => {
+    const cases: [string, string][] = [
+      ["\\sum_{k=1}^{10}k", "sum(k=1..10) k"],
+      ["\\prod_{k=1}^{3}k", "prod(k=1..3) k"],
+      ["\\sqrt[3]{8}", "root(3, 8)"],
+      ["\\lim_{x\\to0}x", "lim(x→0) x"],
+      ["\\sin\\left(x\\right)", "sin(x)"],
+      ["2\\mathbin{\\measuredangle}30", "2∡30"],
+      ["a\\leq b", "a ≤ b"],
+      ["a\\rightarrow b", "a → b"],
+      ["\\leq", "≤"],
+      ["2\\tfrac12", "2 1/2"],
+      ["2\\tfrac{11}{13}", "2 11/13"],
+      ["\\frac12", "1/2"],
+      ["1.5\\emark-3", "1.5E-3"],
+      ["\\log_{16}\\left(256\\right)", "log_16(256)"],
+      ["\\sum_{k=1}^{n+1}\\left(k^{2}\\right)", "sum(k=1..(n+1)) (k^2)"],
+      ["\\sqrt[3]{x+1}+\\sqrt{4}", "root(3, x+1)+sqrt(4)"],
+    ];
+    for (const [latex, text] of cases) expect(entryText(latex), latex).toBe(text);
+  });
 });
