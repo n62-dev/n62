@@ -591,14 +591,15 @@ red_first_test_files() {
     END { flush() }'
 }
 # red_first <worktree> <spec file> <phase-1 engine dir> <log> [<stock engine dir>]: for a package that says its tests fail on phase-1, runs the vitest files and
-# golden cases the branch adds or changes on phase-1's code (a scratch worktree with those files laid over it). A package that says its
+# golden cases the branch adds or changes on phase-1's code (a scratch worktree with those files laid over it). Its vitest and golden runs
+# both get GIAC_OUT=<phase-1's engine dir> (A150: never the caller's). A package that says its
 # tests fail on the stock build (A71) runs the golden cases, and the vitest files that read GIAC_OUT, on phase-1's code with GIAC_OUT
 # set to the stock engine dir (stock_engine_ensure); no other vitest file runs, it would test phase-1's code, not the stock engine. The log's first line names the engine. Succeeds when the
 # stage is skipped (also when the branch adds no vitest file or golden case) or at least one of them fails there; otherwise prints the reason on stdout and fails. N62_REDFIRST_VITEST
 # (default "npx vitest run") is called with the files, N62_REDFIRST_GOLDEN (default "node scripts/golden.ts") with ONLY set.
 red_first() {
   local wt="$1" spec="$2" eng="$3" log="$4" stock="${5:-}" f ids="" stages="" scratch rc red=0 ran=0 err="" stage
-  local where="phase-1" label="phase-1" vitest_out=""  # where: the words of the reason; vitest_out: GIAC_OUT of the vitest run ("" = the caller's)
+  local where="phase-1" label="phase-1" vitest_out="$eng"  # where: the words of the reason; vitest_out: GIAC_OUT of the vitest run (the engine of the claim; A150: never the caller's, which for an engine package is the branch's own build)
   red_first_wanted "$spec" || { echo "red-first: skipped (the package does not say its tests fail on phase-1 or on the stock build)" > "$log"; return 0; }
   if red_first_stock_wanted "$spec"; then
     where="the stock build"; label="stock"
