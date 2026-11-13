@@ -56,6 +56,22 @@ test.describe("Shift + 5 (fake engine)", () => {
     expect(await entryValue(page)).toBe("\\begin{pmatrix}1\\end{pmatrix}+");
   });
 
+  // One drag step at the edge (12–23 px): a tap there would add a column (a row), so a lost `drag` mark fails here. A longer
+  // drag cannot tell: its next step takes the empty column (row) back again.
+  test("one drag step ▶ at the end of the row moves out of the matrix and adds no column", async ({ page }) => {
+    await tap(page, ["shift", "d5", "d1"]);
+    await drag(page, "right", 18, 0);
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1\\end{pmatrix}");
+    const c = await cursor(page);
+    expect(c.pos).toBe(c.last);
+  });
+
+  test("one drag step ▼ in the last row adds no row", async ({ page }) => {
+    await tap(page, ["shift", "d5", "d1"]);
+    await drag(page, "down", 0, 18);
+    expect(await entryValue(page)).toBe("\\begin{pmatrix}1\\end{pmatrix}");
+  });
+
   test("a drag on the pad through the matrix and out of it adds no column and no row", async ({ page }) => {
     await tap(page, ["shift", "d5", "d1"]);
     await drag(page, "right", 70, 0); // five steps right: out of the matrix, then the line's end

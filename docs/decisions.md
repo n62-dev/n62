@@ -13,7 +13,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R197 Help's Insert row**: the example goes on the line at the cursor, as a Find pick does, so inside `sin(` it nests (sin(sin(30°)); Undo takes it back). Or: it replaces the call the cursor is in. The first stays until the owner says.
 
-**R185**: a recalled matrix does not grow, only Shift + 5's own. Should it?
+**R185**: recommended, a recalled matrix stays fixed (docs/03 rule 6). Or: it grows.
 
 ## Decided proposals
 
