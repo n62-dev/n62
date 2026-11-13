@@ -59,13 +59,10 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, with rows from lane B)
-The order (owner, 2026-11-12): the rows down to R224 change how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows after it are new features. S45, S51 and A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10.
+The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. S45, S51 and A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 666 | R131 a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | R278, R283, R185, R187, R193, R197 |
-| 730 | R198 typed function names on a hardware keyboard | ron, Opus | `p1/ron-typednames` | R131 |
-| 731 | R224 the wide layout on a tablet and a desktop | ron, Opus | `p1/ron-widelayout` | – |
 | 754 | [R291](packages/R291.md) the layout lock: no live key layer or fixed row moves unnoticed | ron, Sonnet | `p1/ron-layoutlock` | R278, R283, R185, R187, R193, R197, R131 |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |

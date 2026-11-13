@@ -24,7 +24,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
-6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
+6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (R224's wide layout turned sideways; N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 8. **decisions.md "Needs the user":** sign S36's list of G164's 16 sample sources by the freeze (11-17); R269 round trip; R197's Insert.
 
@@ -52,7 +52,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F172, A73f2 (after the tag).** Stored history costs nothing, the rows drawn at start do (bar 1.5 s): a CAS-last cold start is 1507 ms against Home's 1323; A73f2 says where.
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
-- **F199, R131 and R198 built.** Hardware keyboard: typed `sin(1)` is the function (was `s*i_*n*(1)`).
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **Night review 2026-11-09:** the rest in [research/night-review-2026-11-09.md](research/night-review-2026-11-09.md).
 
