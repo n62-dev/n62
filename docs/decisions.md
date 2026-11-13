@@ -13,6 +13,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R197 Help's Insert row**: recommended, a package (≈½ d): Insert replaces the call the cursor is in (Undo brings it back). Help opens only inside a call, so at the cursor the example always nests: `\sin(` gives sin(sin(30°)). Or: the cursor, as a Find pick (today).
 
+**S50's G2 column** ([benchmark-protocol.md](research/benchmark-protocol.md) section 7): recommended, your own G2 (`source: device`), presses and seconds: it gives seconds and no licence question. Or the Virtual Calculator, presses only, if its licence allows publishing (not verified). Would change if: no G2 at hand.
+
 ## Decided proposals
 
 ### Pipeline and process
@@ -36,7 +38,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 ### Feel, keys and screen (milestone 4a)
 - **Touch, keys and Store (owner, 2026-11-10; the keys 2026-11-12):** the row and line gestures as built (docs/05 3.5; docs/04 5.5; R274–R277); the keys, the layout at the tag and how it grows: [06-keypad-vs-g2.md](06-keypad-vs-g2.md) section 3b; the fold bar goes, the line's swipe stays (R283); Store: S53's design A (R274–R283, S53, A139); its sheet takes letters, so it sits above the keypad like Find (docs/05 3.1), not over rows 3–9 as the mockup drew it (Opus pass 165, R281); Vars draws its grid, and a tap on a free letter inserts it as typing would (Opus pass 167, R282). Archived, "2026-11-12, evening". Would change if: A139 shows the gestures clash on a real WebView.
-- **Built, archived as they stood ("2026-11-12, evening"):** R151's start time from A73f1; the UI answers of 2026-11-06 (R140–R150, R53; families: R50); stored data, the comma and `%` (R95, R100, R94, R110); S12 (R66–R68, G45; `mod` Euclidean); the feel answers of 2026-10-19 (R34: one shared entry line; R43, R7, A4a points 3 and 4).
+- **Built, archived as they stood ("2026-11-12, evening"):** R151's start time (A73f1); the UI answers of 2026-11-06 (R140–R150, R53); R95, R100, R94, R110; S12 (R66–R68, G45; `mod` Euclidean); the feel answers of 2026-10-19 (R34: one shared entry line; R43, R7, A4a points 3 and 4).
 - **R41's status line at font scale 2.0 waits for a device (Opus pass 61):** annabell's next device run checks it with TalkBack. Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); Android's splash and bars Dark (A59). Archived. Would change if: users want the system switch to mute the keys.
@@ -96,7 +98,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ### Units (milestone 5)
 - **Ans in the unit view (R259; owner, 2026-11-12):** no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. Would change if: daily use asks (≈0.5 d).
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none; a prefix goes in the unit view's prefix cells (P11, docs/05 §7.2), and docs/04 2.7's prefix chip is dropped.
-- **Built, archived as they stood ("2026-11-12, evening"):** G81 (a result whose every leaf cancels, `μ₀·ε₀·c²` = 1 with σ 0, keeps `≈`); R24d (an empty user cell's Find pick sets that leg and lands in the slot); R24b and R24c (the unit pad and the unit view's entry); G37 (°C and °F inside a compound unit are a temperature interval, 1 °C = 1 K; alone they keep their offset); G15 and G25 (`rpm` counts turns, 1/60 Hz; `rpm → rad/s` is refused, G32); the units menu (the G2's flow, our data: [spec/units-menu.yaml](../spec/units-menu.yaml)).
+- **Built, archived as they stood ("2026-11-12, evening"):** G81, R24d, R24b and R24c, G37, G15 and G25, the units menu ([spec/units-menu.yaml](../spec/units-menu.yaml)).
 - **P22 (2026-10-20): libqalculate leaves the build;** its numbers are checked in (`find/factors.yaml`), refreshed by a developer tool (A21, A60). Archived, "Opus pass 96". Would change if: the unit view needs qalc at run time.
 - **Angles in the unit view (owner, 2026-10-19; built by G40):** an angle is a quantity both ways; the rad drop and the 2π·r·n note as built. Archived. Would change if: G2 item 68 shows the G2 refusing both.
 - **P15 (2026-10-14): the unit view computes on Giac** with the Find index's exact SI factors; libqalculate never runs in the app (P22). Archived. Would change if: a unit need has no clean exact form; the unit view feels slow on the Tab One.
@@ -152,7 +154,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
 - **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Archived. Would change if: Giac can size such a sum.
 - **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Archived. Would change if: a cheaper test tells exp(-10^20) from 0.
-- **G307 past the cap (Opus passes 171, 173):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts nothing for the value only in a text with no `/`, negative exponent, `inv` or sin…cot (`exp(10^7)` keeps ≈; `sin(pi^2200)` showed ≈ 0.9, is 0.84); else ⚠; a decision always counts it. Would change if: S20.
+- **G307 past the cap (Opus passes 171, 173, 175):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts nothing for the value unless the text forms a small value (`/`, negative exponent, `inv`) or the power sits in an argument read modulo 2π (sin…cot, `exp` of an `i` argument, a negative or `i` base: G348) (`exp(10^7)` keeps ≈; `sin(pi^2200)` showed ≈ 0.9, is 0.84); then ⚠; a decision always counts it. Would change if: S20.
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.

@@ -169,7 +169,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 - Which constants have no basis (the index is build output).
 - Whether CSS alone resizes the Plot (R224 checks first).
 - Phone-landscape overflow, and whether WebKit runs on this host (A144: only in the Playwright container).
-- The ± path in Qalculate! (S50), and the Virtual Calculator's licence for publishing timings.
+- The Virtual Calculator's licence for publishing timings.
 - Current Apple terms and EU routes; whether LGPL alone blocks the store (opinion, S51).
 - Whether the owner has an iPhone (R225 waits on the owner's check).
 - Whether `namesIn` keeps a multi-letter name whole (G275 checks first).
