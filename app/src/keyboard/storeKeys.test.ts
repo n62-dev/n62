@@ -28,7 +28,10 @@ function ctx(cas = false) {
   const stored: string[] = [];
   const shell = { app: null, sheet: null as Sheet | null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, closeSheet: () => void (shell.sheet = null), picked: (p: { kind: string; item?: { run?: () => void } }) => void (p.kind === "run" && ((shell.sheet = null), p.item?.run?.())) };
   showStore({ shell, session, store: (latex) => void stored.push(latex) }, "7");
-  const c = { session, shell, entry: {}, picked: null, sheetLoad: null, waiting: [], casKeys: cas, dead() {} };
+  // the entry line, as far as these keys reach it: what was typed on it, one action at a time
+  const line: string[] = [];
+  const entry = { empty: false, endSelect() {}, run: (a: { kind: string; text?: string }) => void line.push(a.kind === "type" ? (a.text ?? "") : `<${a.kind}>`) };
+  const c = { session, shell, entry, picked: null, sheetLoad: null, waiting: [], casKeys: cas, dead() {} };
   const key = (id: string) => {
     const k = keyboard.byId.get(id);
     if (!k) throw new Error(`no key ${id}`);
@@ -40,7 +43,7 @@ function ctx(cas = false) {
     press(id);
   };
   const sheet = (): Sheet => shell.sheet as Sheet;
-  return { c, key, session, shell, sheet, stored, press, alpha };
+  return { c, key, session, shell, sheet, stored, line, press, alpha };
 }
 
 describe("the store sheet's keys (R281)", () => {
@@ -103,6 +106,23 @@ describe("the store sheet's keys (R281)", () => {
     const plus = ctx();
     expect(route.sheetPress(plus.c as never, plus.key("add"), undefined)).toBe(false);
     expect(plus.shell.sheet).toBeNull();
+  });
+  test("R281f1: x typed, then Shift + space: x and the underscore on the line, as before the sheet (x_)", () => {
+    const { session, shell, stored, line, press } = ctx();
+    press("x");
+    expect(shell.sheet?.level.filter).toBe("x");
+    session.shift = true;
+    press("space");
+    expect(shell.sheet).toBeNull();
+    expect(line).toEqual(["x", "_"]);
+    expect(stored).toEqual([]);
+  });
+  test("R281f1: a name with a digit, then +: every typed character goes on the line before the +", () => {
+    const { line, alpha, press } = ctx();
+    alpha("vars");
+    press("d1");
+    press("add");
+    expect(line).toEqual(["A", "1", "+"]);
   });
   test("Esc closes the sheet and stores nothing (the line keeps value ▶)", () => {
     const { shell, stored, press } = ctx();

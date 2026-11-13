@@ -295,7 +295,11 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       shell.closeSheet();
       return false;
     case "line":
-      shell.closeSheet(); // R281: a key that types no name, after ▶: its job on the line
+      // R281: a key that types no name, after ▶: its job on the line. R281f1: what was typed into the filter goes on
+      // the line first, one character at a time as typeLetter types it (digits too), so the key meets the line it met
+      // before the sheet (x, Shift + space is x_)
+      for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
+      shell.closeSheet();
       return false;
     case "none":
       return true;

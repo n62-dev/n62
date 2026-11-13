@@ -89,3 +89,17 @@ test("one of N62's own names typed in the sheet is refused: 7 ▶ sigfig says wh
   await expect(page.getByText("sigfig is one of N62's own names")).toBeVisible();
   expect(await names(page)).toEqual([]); // nothing reached the engine: sigfig:=7 would replace our definition
 });
+
+test("R281f1: a key that types no name after typed letters keeps them: 7 ▶ x, Shift + ␣, 0, Enter stores x_0 as before the sheet", async ({ page }) => {
+  await tap(page, ["d7", "shift", "emark", "x"]);
+  await expect(store(page).getByTestId("sheet-filter")).toHaveText("x");
+  await tap(page, ["shift", "space"]); // _ types no name: the sheet closes, x goes on the line, then the _
+  await expect(store(page)).toBeHidden();
+  await tap(page, ["d0"]);
+  expect(await entryValue(page)).toMatch(/x_\{?0\}?$/);
+  await tap(page, ["enter"]);
+  await expect(done(page)).toHaveCount(1);
+  await tap(page, ["x", "shift", "space", "d0", "right", "add", "d1", "enter"]);
+  await expect(done(page)).toHaveCount(2);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "8");
+});
