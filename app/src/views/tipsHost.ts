@@ -50,8 +50,8 @@ export function showTips(): void {
     el("span", "n", String(i + 1), p).setAttribute("aria-hidden", "true");
     p.append(line);
   });
-  // R171: what the ringed controls do not say; no ring, no number
-  for (const key of ["tips.flicks", "tips.pad", "tips.find", "tips.marks"] as const) el("p", "tip", tr(key), cards);
+  // R171, R290: the handling no control shows (rows, the fold, the line) and the marks; no ring, no number
+  for (const key of ["tips.rows", "tips.fold", "tips.line", "tips.marks"] as const) el("p", "tip", tr(key), cards);
   const gotIt = el("button", "gotit", tr("tips.gotIt"), cards);
   gotIt.type = "button";
   gotIt.dataset["testid"] = "tips-got-it";
