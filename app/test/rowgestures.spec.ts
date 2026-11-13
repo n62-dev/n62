@@ -57,6 +57,25 @@ test("a hold on an input copies the entry text", async ({ page }) => {
   expect(await entryValue(page)).toBe(""); // not recalled either
 });
 
+test("before the gestures' chunk is in a hold is a tap; the row is marked once it is, and the hold then copies", async ({ page }) => {
+  // R196 fix round 2: the chunk held back 3 s, as a loaded host does (the e2e hold on an input lost that race once)
+  await page.route(/rowGesturesCode/, async (r) => {
+    await new Promise((done) => setTimeout(done, 3000));
+    await r.continue();
+  });
+  await ready(page);
+  await enter(page, ["d2", "add", "d3"]);
+  await setClipboard(page, "before");
+  const input = "article.item[data-status] .in"; // a CSS name: finger does not wait for the chunk
+  await finger(page, input, { ms: 700 });
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(1); // the tap's pick (rowGestures.ts)
+  await expect(page.getByTestId("notice")).toHaveCount(0);
+  await expect(page.locator(input)).toHaveAttribute("data-gestures", "", { timeout: 15_000 });
+  await finger(page, "input:last", { ms: 700 });
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect.poll(() => clipboard(page)).toBe("2+3");
+});
+
 test("a short hold or a tap is still a tap: the first picks, the second inserts", async ({ page }) => {
   await ready(page);
   await enter(page, ["d2", "add", "d3"]);
