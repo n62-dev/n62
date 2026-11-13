@@ -19,11 +19,11 @@ test.beforeEach(async ({ page }) => {
 /** The help sheet of sin: its syntax, its example drawn as LaTeX, the mark and the result. */
 async function sineHelp(page: Page): Promise<void> {
   await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
-  await expect(row(page, "syntax")).toHaveAttribute("aria-label", "sin(x)");
+  await expect(row(page, "syntax")).toHaveAttribute("aria-label", "1 sin(x)");
   await expect(row(page, "syntax")).toContainText("Sine, in the angle unit of the settings.");
   await expect(row(page, "example").locator('[role="math"]')).toHaveAttribute("data-latex", "\\sin\\left(30\\degree\\right)");
-  await expect(row(page, "example").getByTestId("sheet-value")).toHaveText("= 0.5");
-  await expect(row(page, "insert")).toHaveCount(1);
+  await expect(row(page, "example").getByTestId("row-hint")).toHaveText("= 0.5");
+  await expect(row(page, "insert")).toHaveAttribute("aria-label", "3 Insert the example");
 }
 
 test("\\sin( with the cursor inside: Shift + Select shows sin's syntax and example; the line stays", async ({ page }) => {
@@ -52,7 +52,7 @@ test("the innermost function wins: cos inside sin", async ({ page }) => {
   await tap(page, ["sin", "d2", "mul", "cos"]);
   await tap(page, ["shift", "select"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Help: Cosine");
-  await expect(row(page, "example").getByTestId("sheet-value")).toHaveText("= -1");
+  await expect(row(page, "example").getByTestId("row-hint")).toHaveText("= -1");
 });
 
 test("the example's Insert row puts it on the line at the cursor and closes the sheet", async ({ page }) => {
@@ -63,11 +63,22 @@ test("the example's Insert row puts it on the line at the cursor and closes the 
   expect(await entryValue(page)).toBe("\\sin\\left(\\sin\\left(30\\degree\\right)\\right)");
 });
 
+test("by keys: 3 picks the Insert row; 1 and 2 only inform, the sheet stays", async ({ page }) => {
+  await tap(page, ["sin"]);
+  await tap(page, ["shift", "select"]);
+  await sineHelp(page);
+  await tap(page, ["d1", "d2"]);
+  await sineHelp(page);
+  await tap(page, ["d3"]);
+  await expect(help(page)).toBeHidden();
+  expect(await entryValue(page)).toBe("\\sin\\left(\\sin\\left(30\\degree\\right)\\right)");
+});
+
 test("an inverse function's example says the angle unit of its result: (radians)", async ({ page }) => {
   await tap(page, ["shift", "sin"]);
   await tap(page, ["shift", "select"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Help: Arcsine (sin⁻¹)");
-  await expect(row(page, "example").getByTestId("sheet-value")).toHaveText("≈ 0.523598775598 (radians)");
+  await expect(row(page, "example").getByTestId("row-hint")).toHaveText("≈ 0.523598775598 (radians)");
 });
 
 test("no function at the cursor: Help opens Find, on an empty line and outside a call", async ({ page }) => {

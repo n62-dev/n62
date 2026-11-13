@@ -14,7 +14,7 @@ describe("helpRows (R197)", () => {
     const rows = helpRows(fn({ syntax: "sin(x)", desc: "Sine.", example: "\\sin\\left(30\\degree\\right)", exampleResult: "0.5", exampleMark: "=" }), (l) => put.push(l));
     expect(rows.map((r) => r.id)).toEqual(["syntax", "example", "insert"]);
     expect(rows[0]).toMatchObject({ label: "sin(x)", hint: "Sine.", keep: true });
-    expect(rows[1]).toMatchObject({ latex: "\\sin\\left(30\\degree\\right)", value: "= 0.5", keep: true });
+    expect(rows[1]).toMatchObject({ latex: "\\sin\\left(30\\degree\\right)", hint: "= 0.5", keep: true });
     rows[2]?.run?.();
     expect(put).toEqual(["\\sin\\left(30\\degree\\right)"]);
     expect(helpTitle(fn({}))).toBe("Help: Sine");
@@ -22,11 +22,11 @@ describe("helpRows (R197)", () => {
 
   it("an angle-mode result says its unit; a symbolic result has no mark", () => {
     const asin = helpRows(fn({ syntax: "asin(x)", example: "\\arcsin\\left(0.5\\right)", exampleResult: "0.523598775598", exampleMark: "≈", exampleAngle: "rad" }), () => {});
-    expect(asin[1]?.value).toBe("≈ 0.523598775598 (radians)");
+    expect(asin[1]?.hint).toBe("≈ 0.523598775598 (radians)");
     const deg = helpRows(fn({ syntax: "asin(x)", example: "x", exampleResult: "30", exampleMark: "=", exampleAngle: "deg" }), () => {});
-    expect(deg[1]?.value).toBe("= 30 (degrees)");
+    expect(deg[1]?.hint).toBe("= 30 (degrees)");
     const sym = helpRows(fn({ syntax: "diff(f,x)", example: "x", exampleResult: "2*x", exampleMark: "" }), () => {});
-    expect(sym[1]?.value).toBe("2*x");
+    expect(sym[1]?.hint).toBe("2*x");
   });
 
   it("no example (tier 1): the syntax alone; no syntax: the name with (…)", () => {

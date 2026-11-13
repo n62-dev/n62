@@ -2,7 +2,7 @@
 // R197: the Help key (Shift + Select, docs/06 section 1, milestone 6): the syntax and example of the function at the
 // cursor, from the Find index. R196's functionAt names the function (entry/cursorFn.ts; the cursor's offset from
 // entry/cursorAt.ts); its Find item gives the rows: the syntax with the description, G231's example drawn as LaTeX with
-// its mark and result (an inverse function's result says its angle unit), and an Insert row that puts the example on
+// its mark and result under it (an inverse function's result says its angle unit), and an Insert row that puts the example on
 // the line at the cursor, as a Find pick puts an item. No function at the cursor, or one Find does not hold: the caller
 // opens Find. Comes with Find's chunk (find/finder.ts re-exports it), so the start chunk has none of it.
 import type { AppShell } from "../apps/shell.svelte.ts";
@@ -29,9 +29,10 @@ export function helpRows(it: FindItem, insert: (latex: string) => void): MenuIte
   const syntax: MenuItem = { id: "syntax", label: it.syntax ?? `${name}(…)`, keep: true, ...(it.desc ? { hint: it.desc } : {}) };
   const example = it.example;
   if (example === undefined) return [syntax];
+  const result = resultText(it);
   return [
     syntax,
-    { id: "example", label: t("help.example"), latex: example, value: resultText(it), keep: true },
+    { id: "example", label: t("help.example"), latex: example, keep: true, ...(result ? { hint: result } : {}) }, // (under it: beside it a long result cut the example at 360 px)
     { id: "insert", label: t("help.insert"), run: () => insert(example) },
   ];
 }
