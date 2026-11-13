@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 755 | [R294](packages/R294.md) one chunk group keeps the start whole, then the hand copies go (S52) | ron, Sonnet | `p1/ron-startgroup` | – |
+| 755 | R294 one chunk group keeps the start whole, then the hand copies go (S52) | ron, Sonnet | `p1/ron-startgroup` | – |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
 | 669 | [R190](packages/R190.md) a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
