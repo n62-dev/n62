@@ -1,9 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: one map from a hardware control key to the keypad key and layer it presses, for the entry line and the unit
 // view's field (units/open.ts), so Delete is Shift + ⌫ (Del) in both (it was plain ⌫ on the unit view).
-import { describe, expect, it } from "vitest";
-import { keyboard } from "../keyboard/keyboard.ts";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { describe, expect, it, vi } from "vitest";
+import type { FindIndex } from "../find/finder.ts";
+import { makeIndex } from "../find/testIndex.ts";
+import type { IndexItem } from "../find/types.ts";
+import { FUNCS } from "../input/parseTables.ts";
+import { keyboard, type ActionBody } from "../keyboard/keyboard.ts";
 import { controlKey, hardwareKey, keypadKeyOf, undoKey, type HwTarget } from "./hwkeys.ts";
+
+// R198: the Find index arrives when the test says so (the app fetches it, finder.ts loadIndex)
+const index = vi.hoisted(() => {
+  let give: (ix: FindIndex) => void = () => {};
+  const promise = new Promise<FindIndex>((r) => (give = r));
+  return { promise, give: (ix: FindIndex) => give(ix), asked: 0 };
+});
+vi.mock("../find/finder.ts", () => ({ loadIndex: () => (index.asked++, index.promise) }));
 
 const k = (key: string, shiftKey = false) => controlKey({ key, shiftKey });
 
@@ -255,5 +270,90 @@ describe("R131: % and the desktop keys", () => {
   });
   it("AltGr's characters count as typed (Windows: Ctrl + Alt with AltGraph)", () => {
     expect(run(ev("{", "Digit7", { ctrl: true, alt: true, altGraph: true })).got).toEqual(["d8:shift"]);
+  });
+});
+
+// R198: a function name typed on a hardware keyboard, then `(`, becomes the function (the owner, 2026-11-12; it reverses
+// R31's "letters stay letters" for this path only). The line before the cursor is a fake field of one-character atoms.
+describe("R198: a typed function name and ( give the function", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const indexFile = join(here, "../find/_gen/find-index.json");
+  const ev = (key: string) =>
+    ({ key, code: "", repeat: false, isComposing: false, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, getModifierState: () => false }) as unknown as KeyboardEvent;
+  /** A line of atoms at depth 0 with the cursor at its end (MathLive: the atom at offset o ends there). */
+  const line = (atoms: readonly string[], collapsed = true) =>
+    ({
+      position: atoms.length,
+      lastOffset: atoms.length,
+      selectionIsCollapsed: collapsed,
+      getElementInfo: (o: number) => (o > 0 && o <= atoms.length ? { depth: 0, latex: atoms[o - 1] } : undefined),
+    }) as unknown as HwTarget["field"];
+  /** `(` typed after `typed` (one atom per character): what ran (the bracket pair `paren`, or the insert's LaTeX) and
+   *  the count name; `stored`, the user's names. */
+  const paren = (typed: string, stored: readonly string[] = [], collapsed = true): { got: string; count: string } => {
+    const out = { got: "", count: "" };
+    const t: HwTarget = {
+      field: line([...typed], collapsed),
+      decimalComma: false,
+      stored,
+      onSymbol: () => {},
+      onKey: (id, layer) => void ((out.got = `${id}:${layer}`), (out.count = `${id}:hw`)),
+      onLetter: () => {},
+      onDead: () => {},
+      onPress: () => {},
+      onDesk: (as, key, layer) => {
+        const a = key?.actions.primary as (ActionBody & { call?: { name: string } }) | undefined;
+        out.got = a?.kind === "insert" ? `${key?.id}:${layer} ${a.latex} (${a.call?.name})` : "?";
+        out.count = as;
+      },
+    };
+    hardwareKey(ev("("), t);
+    return out;
+  };
+  const letter = (ch: string): void => void hardwareKey(ev(ch), { field: line([]), decimalComma: false, onSymbol: () => {}, onKey: () => {}, onLetter: () => {}, onDead: () => {}, onPress: () => {} });
+
+  it("before the index arrives: a name of the parser's FUNCS is the function, with the cursor in its bracket (sin( is \\sin\\left()", async () => {
+    letter("s"); // the first letter loads the names: the parser's FUNCS, then the index
+    await vi.waitFor(() => expect(paren("sin").got).not.toBe("paren:primary"));
+    expect(paren("sin")).toEqual({ got: "paren:primary \\sin\\left(#0\\right) (sin)", count: "hw:name" });
+    expect(paren("2sin").got).toBe("paren:primary \\sin\\left(#0\\right) (sin)"); // a number before the name stays
+    expect(paren("arcsin").got).toBe("paren:primary \\arcsin\\left(#0\\right) (arcsin)");
+    for (const name of Object.keys(FUNCS)) expect(paren(name).got, name).toBe(`paren:primary \\${name}\\left(#0\\right) (${name})`);
+    expect(paren("stddev")).toEqual({ got: "paren:primary", count: "paren:hw" }); // the index is not in yet
+  });
+  it("a hardware letter asks for the index, once (the tests above typed letters too)", () => {
+    letter("x");
+    letter("t");
+    expect(index.asked).toBe(1);
+  });
+  it("a letter run that is no name, one letter (a user function f( as today), pi and a selection stay the bracket pair", () => {
+    for (const typed of ["abc", "xsin", "f", "x", "e", "pi", "Pi", "2", "", "SIN"]) expect(paren(typed).got, typed).toBe("paren:primary");
+    expect(paren("sin", [], false).got).toBe("paren:primary");
+  });
+  it("a name the user has defined stays the user's", () => {
+    expect(paren("sin", ["sin"]).got).toBe("paren:primary");
+  });
+
+  it("once the index is in: a Find function (stddev, a tier-1 name, log10) is its insert, the user's own names stay theirs", async () => {
+    if (!existsSync(indexFile)) {
+      if (process.env["FIND_INDEX"] === "required") expect.fail("app/src/find/_gen/find-index.json is missing; run npm run index");
+      return;
+    }
+    const ix = makeIndex(JSON.parse(readFileSync(indexFile, "utf8")) as IndexItem[]);
+    index.give(ix);
+    await index.promise;
+    await new Promise((r) => setTimeout(r, 0));
+    const insertOf = (id: string): string => ix.byId.get(id)?.insert ?? "none";
+    expect(paren("stddev").got).toBe(`paren:primary ${insertOf("fn:stddev")} (stddev)`);
+    expect(paren("stdevp").got).toBe(`paren:primary ${insertOf("fn:stddev")} (stdevp)`); // an alias of it
+    expect(paren("log10").got).toBe(`paren:primary ${insertOf("fn:log10")} (log10)`); // digits after the letters
+    expect(paren("sin").got).toBe("paren:primary \\sin\\left(#0\\right) (sin)"); // FUNCS first
+    const tier1 = ix.items.find((it) => it.kind === "fn" && it.tier === 1 && /^[a-z]{5,}$/.test(it.id.slice(3)) && !(it.id.slice(3) in FUNCS));
+    if (!tier1) return expect.fail("no tier-1 function in the index");
+    const name = tier1.id.slice(3);
+    expect(tier1.insert).toBe(`\\operatorname{${name}}\\left(#0\\right)`);
+    expect(paren(name).got).toBe(`paren:primary ${tier1.insert} (${name})`);
+    expect(paren(name, [name]).got).toBe("paren:primary"); // the user's function of that name
+    for (const typed of ["pi", "e", "i", "f", "abc"]) expect(paren(typed).got, typed).toBe("paren:primary");
   });
 });

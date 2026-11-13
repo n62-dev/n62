@@ -14,21 +14,26 @@
 // - `e` or `E` right after a number's digits (or its point) is the exponent key ᴇ.
 // - `<`, `>`, `!` and `%` insert the Shift palettes' own symbols (Shift + 6, Shift + 9; `%` as `\%`, R131: a bare `%`
 //   is a LaTeX comment).
-// - Other letters stay name letters. A function's name is reached through Find (R4a), as on the phone.
+// - Other letters stay name letters. R198 (the owner, 2026-11-12; R31 had them stay letters): a function's name typed
+//   before `(` becomes the function, as Find's pick of it puts it on the line (`sin(` is \sin with the cursor in its
+//   bracket): a name of the parser's FUNCS, or of a function or template of Find's index (tier 1 too), which the first
+//   letter loads (finder.ts loadIndex; until it is in, FUNCS alone). One letter (`f(`), pi and the user's own names stay
+//   as before. The keypad's letters and ( ) key are untouched.
 // - Every other character (`\ ' " $ & ? @ ~` and the backtick) does nothing: no key types it (a dead press, R107).
 // - Alt + a letter (or a digit, F1 to F4, Home, End, Shift+Enter, …) presses the key or the action the table names;
 //   Ctrl+Z is the Undo key, Ctrl+Y and Ctrl+Shift+Z the Redo key (R119; Cmd on a Mac): on an empty line Undo brings
 //   back what Clear or Delete took first (R98), which MathLive's own undo never did.
 // - Counting (R127, R131's removal test): a key the table adds (an Alt chord, Home, F1, Shift+Enter, `{`, `[`) goes to
 //   onDesk with its desktop name, counted `hw:<name>`; the keys R31, R45 and R119 had before it keep onKey (`<key id>:hw`).
-// Loaded with MathLive (EntryController.load), outside the start chunk. The Ctrl, Alt and Meta combinations the table
-// does not name stay with MathLive and the browser (copy, cut, select all); a paste, Ctrl+V included, is field.ts's
-// paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
+// Loaded with MathLive (EntryController.load), outside the start chunk; R198's names load on the first letter (askIndex).
+// The Ctrl, Alt and Meta combinations the table does not name stay with MathLive and the browser (copy, cut, select
+// all); a paste, Ctrl+V included, is field.ts's paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
 // (Option + 5 is `[` on a German Mac; R131f1, optionChar).
 import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
 import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
 import { chordOf, desktop, type DeskTarget } from "../keyboard/desktopKeys.ts";
+import type { FindItem } from "../find/types.ts";
 
 /** The desktop key map (R131), for the help text: it reaches it through this chunk, so the map stays in it and no
  *  dynamic import of hwkeys lists a chunk more. */
@@ -39,6 +44,8 @@ export interface HwTarget {
   readonly field: MathfieldElement | undefined;
   /** R57: the decimal comma is on. */
   readonly decimalComma: boolean;
+  /** R198: the user's names (session.userNames): typed before `(`, they stay the user's. */
+  readonly stored?: readonly string[];
   /** A palette symbol typed on the hardware keyboard (`<`, `>`, `!`, `%`): `latex`, the Shift palettes' own insert. */
   onSymbol(latex: string, repeat: boolean): void;
   /** Press a keypad key in a layer, as a tap would (the shell's path: Ans first, one-line forms, open sheets). `repeat`
@@ -150,12 +157,72 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   // R57: with the decimal comma both `.` and `,` type the decimal mark (the keypad's `.` key); `;` stays the separator
   const k = KEYS.get(tg.decimalComma && ch === "," ? "." : ch);
   const sym = PALETTE[ch];
-  if (k && DESK_CHARS.has(ch)) desk({ key: k[0], layer: k[1] }, ch, ev, tg);
+  const call = ch === "(" && tg.onDesk ? callKey(mf, tg) : undefined;
+  if (call) tg.onDesk?.("hw:name", call, "primary", ev.repeat); // R198: counted apart from the ( ) key's `paren:hw`
+  else if (k && DESK_CHARS.has(ch)) desk({ key: k[0], layer: k[1] }, ch, ev, tg);
   else if (k) tg.onKey(k[0], k[1], ev.repeat);
   else if (sym !== undefined) tg.onSymbol(sym, ev.repeat);
-  else if (/^[A-Za-z]$/.test(ch)) tg.onLetter(ch, ev.repeat);
-  else tg.onDead(ev.repeat);
+  else if (/^[A-Za-z]$/.test(ch)) {
+    askIndex();
+    tg.onLetter(ch, ev.repeat);
+  } else tg.onDead(ev.repeat);
   return true;
+}
+
+/** R198: a name of one letter is a variable's or a user function's (`f(`); pi is π, which Giac's help lists as a function. */
+const NO_CALL = new Set(["pi", "Pi"]);
+/** A name the hardware letters type as one run (nameBefore): letters, then digits. */
+const TYPED = /^[A-Za-z]{2,}\d*$/;
+/** R198: each typed name's insert: none until the parser's FUNCS is in, FUNCS until Find's index is. */
+let calls: ReadonlyMap<string, string> = new Map();
+let asked = false;
+
+/** R198: the first hardware letter loads the names: the parser's function commands (input/parseTables.ts FUNCS, through
+ *  parse.ts, the parser's own chunk: a chunk of the tables alone would join the start chunk's preload list) as calls, then
+ *  Find's index (finder.ts loadIndex). A failed load is asked again by the next letter. */
+function askIndex(): void {
+  if (asked) return;
+  asked = true;
+  const funcs = import("../input/parse.ts").then((m) => new Map(Object.keys(m.FUNCS).map((n) => [n, `\\${n}\\left(#0\\right)`])));
+  void funcs.then((f) => void (calls.size || (calls = f)), () => {});
+  const index = import("../find/finder.ts").then((m) => m.loadIndex());
+  void Promise.all([funcs, index]).then(([f, ix]) => void (calls = callsOf(f, ix.items)), () => void (asked = false));
+}
+
+/** The typed names of Find's functions and templates: FUNCS first, then an item's own name (Giac's `and` for `and`, not
+ *  bitand's alias), then the other names, tier 0 before tier 1. */
+function callsOf(funcs: ReadonlyMap<string, string>, items: readonly FindItem[]): ReadonlyMap<string, string> {
+  const m = new Map(funcs);
+  const add = (name: string, insert: string): void => void (TYPED.test(name) && !NO_CALL.has(name) && !m.has(name) && m.set(name, insert));
+  const fns = items.filter((it) => it.kind === "fn" || it.kind === "tmpl");
+  for (const it of fns) add(it.id.slice(it.id.indexOf(":") + 1), it.insert);
+  for (const tier of [0, 1]) for (const it of fns) if (it.tier === tier) for (const n of it.names) add(n, it.insert);
+  return m;
+}
+
+/** R198: the name typed right before the cursor: a run of letters, then digits (`log10`), each an atom of its own at the
+ *  cursor's depth; none with a selection or with no letter there. */
+function nameBefore(mf: MathfieldElement): string | undefined {
+  if (!mf.selectionIsCollapsed) return undefined;
+  const d = mf.getElementInfo(mf.position)?.depth ?? 0;
+  const at = (o: number): string => (o > 0 && (mf.getElementInfo(o)?.depth ?? 0) === d ? (mf.getElementInfo(o)?.latex ?? "") : "");
+  let name = "";
+  let k = mf.position;
+  for (; /^\d$/.test(at(k)); k--) name = at(k) + name;
+  const digits = name.length;
+  for (; /^[A-Za-z]$/.test(at(k)); k--) name = at(k) + name;
+  return name.length > digits ? name : undefined;
+}
+
+/** R198: the key a `(` presses after a typed function name: the ( ) key with the function's insert (field.ts puts it in
+ *  place of the letters); none where the letters before the cursor name no function, or a name of the user's. */
+function callKey(mf: MathfieldElement, tg: HwTarget): Key | undefined {
+  const name = nameBefore(mf);
+  const latex = name && !tg.stored?.includes(name) ? calls.get(name) : undefined;
+  const key = keyboard.byId.get("paren");
+  const paren = key?.actions.primary;
+  if (!name || latex === undefined || !key || !paren) return undefined;
+  return { ...key, actions: { primary: { kind: "insert", latex, call: { name, paren } } } };
 }
 
 /** R131f1: a Mac's Option is Alt with no AltGraph, so its characters (German Mac: Option + 5 is `[`, Option + L is `@`)
