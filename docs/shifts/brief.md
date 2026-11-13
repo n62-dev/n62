@@ -64,6 +64,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 754 | [R291](packages/R291.md) the layout lock: no live key layer or fixed row moves unnoticed | ron, Sonnet | `p1/ron-layoutlock` | R278, R283, R185, R187, R193, R197, R131 |
+| 755 | [R294](packages/R294.md) one chunk group keeps the start whole, then the hand copies go (S52) | ron, Sonnet | `p1/ron-startgroup` | – |
 | 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
 | 669 | [R190](packages/R190.md) a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
@@ -88,10 +89,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 611 | G307 powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |
-| 613 | G309 the weekly fuzz, week of 11-11 | gorge, Opus | `p1/gorge-nightfuzz-1111` | – |
-| 696 | S52 can a chunk option give the start chunk room (1.8 kB left for the UI rows) | sandra, Opus | `p1/sandra-chunkspike` | – |
 | 752 | [S50](packages/S50.md) the benchmark's protocol | sandra, Opus | `p1/sandra-benchmarknote` | – |
+| 756 | [G345](packages/G345.md) the sweep oracle skips a value built on an infinite intermediate (G309) | gorge, Sonnet | `p1/gorge-oracleinf` | – |
 | 680 | [R194](packages/R194.md) word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
 | 682 | [R184](packages/R184.md) a labelled result sheet for linreg and stats1 | ron, Sonnet | `p1/ron-statsheet` | – |
 | 684 | [G210](packages/G210.md) one result as one JSON line (session format v0, a preview) | gorge, Opus | `p1/gorge-sessionline` | – |

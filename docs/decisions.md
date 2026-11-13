@@ -152,7 +152,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
 - **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Archived. Would change if: Giac can size such a sum.
 - **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Archived. Would change if: a cheaper test tells exp(-10^20) from 0.
-- **G307 past the cap (Opus pass 171):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` leaves the value's start alone only in a text with no `/`, negative exponent or `inv` (`exp(10^7)` keeps ≈); else it counts (⚠ unchecked); a decision always counts it. Would change if: S20.
+- **G307 past the cap (Opus passes 171, 173):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts nothing for the value only in a text with no `/`, negative exponent, `inv` or sin…cot (`exp(10^7)` keeps ≈; `sin(pi^2200)` showed ≈ 0.9, is 0.84); else ⚠; a decision always counts it. Would change if: S20.
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
