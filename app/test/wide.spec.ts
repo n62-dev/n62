@@ -153,13 +153,18 @@ test("Plot: turned from 800 × 1340 to 1340 × 800, the board fills its new box"
   await page.waitForFunction(() => window.n62.shell.loading === null);
   const canvas = page.locator(".plot .board canvas");
   await expect(canvas).toHaveCount(1);
+  // the canvas's box, and the board's own idea of its size (JSXGraph's canvasWidth and canvasHeight, which map its
+  // coordinates to pixels), against the board's box
   const fills = (): Promise<{ board: Box; canvas: Box }> =>
     page.evaluate(() => {
       const r = (el: Element | null): Box => {
         const b = el?.getBoundingClientRect();
         return b ? [b.x, b.y, b.width, b.height] : [NaN, NaN, NaN, NaN];
       };
-      return { board: r(document.querySelector(".plot .board")), canvas: r(document.querySelector(".plot .board canvas")) };
+      const board = r(document.querySelector(".plot .board"));
+      const own = window.n62.plot.board as unknown as { canvasWidth: number; canvasHeight: number } | undefined;
+      const c = r(document.querySelector(".plot .board canvas"));
+      return { board, canvas: [c[0], c[1], Math.min(c[2], own?.canvasWidth ?? NaN), Math.min(c[3], own?.canvasHeight ?? NaN)] as Box };
     });
   const tall = await fills();
   near(tall.canvas, tall.board);
