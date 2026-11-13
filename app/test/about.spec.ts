@@ -36,10 +36,11 @@ test.describe("by keys", () => {
     await tap(page, ["@mode", "d6", "d7"]);
   });
 
-  test("Help and about: About N62 and Parts we use; digit 1 shows the name, the version, GPL-3.0-or-later and the source URL", async ({ page }) => {
-    await expect(rows(page)).toHaveCount(4);
+  test("Help and about: About N62, Parts we use and (R131) Desktop keys; digit 1 shows the name, the version, GPL-3.0-or-later and the source URL", async ({ page }) => {
+    await expect(rows(page)).toHaveCount(5);
     await expect(row(page, "about")).toContainText("About N62");
     await expect(row(page, "parts")).toContainText("Parts we use and their licences");
+    await expect(row(page, "keys")).toContainText("Desktop keys");
     await tap(page, ["d3"]);
     await expect(title(page)).toHaveText("Settings › Help and about › About");
     await expect(row(page, "version")).toContainText(version);
