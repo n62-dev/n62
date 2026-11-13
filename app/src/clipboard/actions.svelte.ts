@@ -260,6 +260,11 @@ export class ClipActions {
     this.ops.insert(i);
     return true;
   }
+  /** R184: the labelled sheet of a linreg or stats1 row (views/statSheet.ts, a lazy module), which inserts a value as a chip;
+   *  false: the row has none, so the caller inserts its result whole. */
+  async showStats(row: HistoryItem): Promise<boolean> {
+    return (await import("../views/statSheet.ts")).showStats(this.shell, this.session, row, this.entry);
+  }
   /** Recall: the entry back on the line. */
   recallRow(row?: HistoryItem): boolean {
     const i = this.recallable(row);
