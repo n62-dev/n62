@@ -95,7 +95,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 699 | [G331](packages/G331.md) patch 0047: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
+| 699 | G331 patch 0047: `simplify` gives up on an `ln` that does not convert (F214) | gorge, Opus | `p1/gorge-lnundef` | – |
 | 757 | [A150](packages/A150.md) red-first runs an engine-reading vitest file on phase-1's engine | annabell, Sonnet | `p1/annabell-redfirsteng` | – |
 | 698 | [G330](packages/G330.md) the Slope shows a cancelled 0 as a number (F227) | gorge, Opus | `p1/gorge-slopezero` | – |
 | 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |

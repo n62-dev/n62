@@ -36,10 +36,14 @@ describe.skipIf(!giacAvailable())("a stack overflow inside Giac in the app (G183
     await s.submit("a:=5", "a:=5");
     expect(s.home.at(-1)).toMatchObject({ status: "done", text: "5" });
     // RangeError: Maximum call stack size exceeded inside Giac's wasm. F122's input (sandra's probe 2026-11-05) is refused
-    // Underflow since G187; simplify of G120's power still recurses in subst.cc decompose (backlog F214)
-    const crash = "simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))";
+    // Underflow since G187, and F214's simplify answers since G331 (patch 0047; Home refuses its value, Underflow); a tree
+    // 20000 deep, built by Giac's repeated composition, overflows the stack with no Giac bug involved (host.trap.test.ts).
+    // In the CAS view: Home's 1.5 s clock races the build (Stopped at 10000 deep, the crash at 8000), the CAS clock does not.
+    const crash = "(sin@@20000)(x)";
+    s.setView("cas");
     await s.submit(crash, crash);
-    expect(s.home.at(-1)).toMatchObject({ status: "error", text: t("error.crashed") });
+    expect(s.cas.at(-1)).toMatchObject({ status: "error", text: t("error.crashed") });
+    s.setView("home");
     expect(workers).toHaveLength(2);
     expect(workers[0]!.terminated).toBe(true);
     await s.submit("1+1", "1+1");
