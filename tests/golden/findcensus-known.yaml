@@ -266,7 +266,7 @@ classes:
   "content": "u|u"
   "contract_edge": "t|t"
   "contract_subgraph": "-"
-  "convert": "uuus|uuus"
+  "convert": "uuus|usus"
   "convex": "-"
   "convexhull": "-"
   "convolution": "u|u"

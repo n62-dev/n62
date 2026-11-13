@@ -6,7 +6,7 @@
      vecteur v(1,g);
      if (g.type==_VECT && g.subtype==_SEQ__VECT)
        v=*g._VECTptr;
-+    // Pascaline patch 0046 (G226): an integer shift is exact at any size: n > 0 floor-divides by 2^n, n < 0 multiplies by 2^-n
++    // N62 patch 0046 (G226): an integer shift is exact at any size: n > 0 floor-divides by 2^n, n < 0 multiplies by 2^-n
 +    // (Giac's convention, kept), one argument multiplies by 2. The C >> and << below took the count mod 32 (shift(1,-70) = 64),
 +    // wrapped into the sign bit (shift(1,-31) = -2147483648) and returned a _ZINT unchanged (shift(2^70,1) = 2^70); a count
 +    // that is no int was read as the default (shift(1,2^40) = 2, shift(1,1.5) = 2).
