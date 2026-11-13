@@ -61,7 +61,8 @@ describe("the session and the word (R194)", () => {
     await s.restore();
     await s.submit("1+1");
     expect(seen.length).toBe(1);
-    expect("word" in seen[0]! || "signed" in seen[0]!).toBe(false);
+    expect(seen[0]?.word).toBeUndefined(); // as if absent: the engine uses its own word
+    expect(seen[0]?.signed).toBeUndefined();
     expect(s.word).toBeUndefined();
   });
 

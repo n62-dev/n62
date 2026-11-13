@@ -37,8 +37,8 @@ export interface CalcSettings {
   format: NumberFormat;
   /** R194: the word size and sign of the short forms (shl, bnot…), sent only once Settings › Numbers has set them; absent:
    *  the engine's own, 64 bits unsigned (engine/wordOps.ts). */
-  word?: number;
-  signed?: boolean;
+  word?: number | undefined;
+  signed?: boolean | undefined;
 }
 
 export type CalcError = "syntax" | "timeout" | "engine" | Refusal;

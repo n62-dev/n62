@@ -61,8 +61,8 @@ export interface HomeSettings {
    *  1e5 ≈ results up to ~43,000 digits. */
   powLimit: number;
   /** R194: the word size and sign of the short forms of the word ops (wordOps.ts); absent: 64 bits, unsigned. */
-  word?: number;
-  signed?: boolean;
+  word?: number | undefined;
+  signed?: boolean | undefined;
 }
 
 /** G82: Giac's clock in Home, a safety net behind the step budget: a call whose checks are far apart (big-integer work

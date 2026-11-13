@@ -28,7 +28,7 @@ import {
 } from "./displayMode.ts";
 import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
-import { validWord, WORD_KEY, type WordSetting } from "./wordSetting.ts";
+import type { WordSetting } from "./wordSetting.ts";
 import { TapCounter } from "./taps.svelte.ts";
 import type { UseCounter } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
@@ -549,8 +549,7 @@ export class Session {
       return;
     }
     if (live.status !== "pending") return;
-    const w = this.word; // R194: sent only once the rows are set
-    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format, ...(w ? { word: w.bits, signed: w.signed } : {}) };
+    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format, word: this.word?.bits, signed: this.word?.signed }; // R194: undefined until the rows are set
     try {
       if (view === "home") {
         const tidy = prefetchTidy();
@@ -731,12 +730,13 @@ export class Session {
     this.onLook?.($state.snapshot(this.settings.look));
     const view = await this.kv.get<View>("view");
     if (view === "home" || view === "cas") this.view = view;
-    this.word = validWord(await this.kv.get<unknown>(WORD_KEY)); // R194: its own record, not a field of the settings
+    const word = await this.kv.get<unknown>("word"); // R194: its own record, not a field of the settings; its check loads only with one
+    if (word !== undefined) this.word = (await import("./wordSetting.ts")).validWord(word);
   }
   /** R194: set the word (Settings › Numbers). */
   setWord(w: WordSetting): void {
     this.word = w;
-    void this.kv.set(WORD_KEY, w);
+    void this.kv.set("word", w); // wordSetting.ts WORD_KEY
   }
   /** Entry LaTeX, result LaTeX and the Home numeric value of finished entries; nothing that needs the engine. */
   saveHistory(): void {

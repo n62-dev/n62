@@ -112,7 +112,7 @@ export class EngineCalc implements Calc {
   }
 
   cas(giac: string, s: CalcSettings): Promise<CasOutcome> {
-    return mapCancel(this.engine.cas(giac, { ...defaultCasSettings, digits: s.digits, angle: s.angle, ...wordOf(s) }).then((r) => passed(r, CAS_KEYS)));
+    return mapCancel(this.engine.cas(giac, { ...defaultCasSettings, digits: s.digits, angle: s.angle, word: s.word, signed: s.signed }).then((r) => passed(r, CAS_KEYS)));
   }
 
   solve(req: SolveRequest, s: CalcSettings): Promise<SolveOutcome> {
@@ -145,11 +145,8 @@ export class EngineCalc implements Calc {
   }
 }
 
-/** R194: the word reaches the engine only when it was set. */
-const wordOf = (s: CalcSettings): { word?: number; signed?: boolean } => (s.word === undefined ? {} : { word: s.word, signed: s.signed === true });
-
 function homeSettings(s: CalcSettings): HomeSettings {
-  return { ...defaultHomeSettings, digits: s.digits, angle: s.angle, ...wordOf(s) };
+  return { ...defaultHomeSettings, digits: s.digits, angle: s.angle, word: s.word, signed: s.signed }; // R194: undefined until set
 }
 
 async function mapCancel<T>(p: Promise<T>): Promise<T> {
