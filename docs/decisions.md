@@ -13,6 +13,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **Store (S53):** recommended, the store sheet ([store-design.md](research/store-design.md) 4): T1 5→3 presses, asks before it overwrites, the G2's typed path kept. Cost: sd-1–sd-4, ≈2.5 d after v0.1.0. Else Vars stores (B) or names on the row bar (C). Changes if the sheet slows typing.
 
+**R281, where the store sheet sits:** above the keypad, as every list that takes letters (docs/05 3.1), not over rows 3–9: Alpha and a letter key still type a name by touch (the G2's path); 7 columns to fit 360 × 740. Changes if wanted over the keys.
+
 ## Decided proposals
 
 ### Pipeline and process
