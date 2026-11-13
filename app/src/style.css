@@ -74,6 +74,9 @@
   --mask-on: #000;
   /* the parts' own sizes */
   --app-max: 720px;
+  /* R224: the wide layout (App.svelte, a landscape screen at least 1000 × 600): the app's width, and the keypad's column */
+  --app-max-wide: 1600px;
+  --keys-wide: clamp(400px, 42vw, 560px);
   --sheet-max: 420px;
   --status-h: 28px;
   --touch: 44px;

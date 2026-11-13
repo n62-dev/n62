@@ -26,6 +26,7 @@
   import { tipsDue } from "./state/tips.ts";
   import History from "./views/History.svelte";
   import StatusLine from "./views/StatusLine.svelte";
+  import { WIDE_QUERY } from "./views/wide.ts";
   /** Set while the first Mode or Settings open waits for that code. */
   let sheetLoad: Promise<void> | null = null;
   // The sheet's view (Sheet.svelte with sheetFit.ts) is its own chunk, fetched when idle after the keypad is drawn (R46);
@@ -68,6 +69,9 @@
   // The shell paints first; main.ts then loads MathLive, which puts the field into this element.
   onMount(() => {
     if (host) entry.setHost(host);
+    const mq = matchMedia(WIDE_QUERY); // R224: a rotation or a resized window turns the wide layout on or off
+    wide = mq.matches;
+    mq.onchange = (e) => (wide = e.matches);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
     const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts)
     // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
@@ -364,9 +368,11 @@
   /** Results mode (R53, decisions.md P16): the keypad folded to its 44 px slice, the history over the screen. Home and
    *  CAS only; never stored, so a reload has the keys up. */
   let folded = $state(false);
-  const canFold = $derived(shell.app === null);
+  /** R224: the wide layout (stage and keypad side by side, the `@media` block below) is on; it has no results mode. */
+  let wide = $state(false);
+  const canFold = $derived(shell.app === null && !wide);
   $effect(() => {
-    if (!canFold) folded = false; // an app opened: it has no results mode
+    if (!canFold) folded = false; // an app opened, or the screen turned wide: no results mode there
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
@@ -592,6 +598,38 @@
     height: 100%;
     max-width: var(--app-max);
     margin: 0 auto;
+  }
+  /* R224 (docs/05 3.9): the wide layout, on a landscape screen at least 1000 × 600 (views/wide.ts says the same; change
+     both): the status line across the top, the stage with the entry line on the left, the keypad in its own column on the
+     right at full height (its rows share the height; the grid is the phone's, docs/03 rule 8). No results mode here
+     (canFold): the keypad covers no history. */
+  @media (min-width: 1000px) and (min-height: 600px) and (orientation: landscape) {
+    .app {
+      --app-max: var(--app-max-wide);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) var(--keys-wide);
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .app > :global(header) {
+      grid-column: 1 / -1;
+    }
+    .screen {
+      grid-column: 1;
+    }
+    .keys {
+      grid-column: 2;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .pad-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .pad-wrap > :global(.pad) {
+      flex: 1;
+    }
   }
   /* the engine's start and failure notes, in the stage (R82f2: not in the status line) */
   .enginenote {
