@@ -152,9 +152,16 @@ export class Level {
     const rows = this.rows;
     if (rows.length === 0) return;
     const at = rows.findIndex((r) => r.index === this.highlight);
-    // R281: in the letter grid ▲ ▼ go a row of cells; from the grid's last row ▼ goes on to the list below it
-    const step = this.cells !== undefined && rows[at]?.item.cell ? by * this.cells : by;
-    const next = at < 0 ? (by > 0 ? 0 : rows.length - 1) : (at + step + rows.length) % rows.length;
+    let next = at < 0 ? (by > 0 ? 0 : rows.length - 1) : (at + by + rows.length) % rows.length;
+    // R281: in the letter grid (its cells come first) ▲ ▼ go a row of cells; past the grid's last row ▼ goes on to the
+    // list below it (none: round to the column's top), above its first ▲ to the list's end
+    const cols = this.cells;
+    if (cols !== undefined && at >= 0 && rows[at]?.item.cell) {
+      const cells = rows.filter((r) => r.item.cell).length;
+      next = at + by * cols;
+      if (next < 0) next = rows.length - 1;
+      else if (next >= cells) next = cells < rows.length ? cells : at % cols;
+    }
     this.highlight = (rows[next] as Row).index;
   }
 

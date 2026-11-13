@@ -44,12 +44,13 @@ export function storedText(session: Session, row: HistoryItem | undefined, line:
   return entryText(at < 0 ? line : line.slice(0, at)).trim();
 }
 
-/** The name the store types for `typed` (letters and digits from the filter): a stored name as Vars inserts it, else
- *  one letter as its key types it (e and i become e_ and i_ in the parser, as typed), else one name (`rate`, `A1`). */
+/** The name the store types for `typed` (letters and digits from the filter, or a stored name as drawn): one letter as
+ *  its key types it (e and i become e_ and i_ in the parser, as typed), a stored name as Vars inserts it, else one name
+ *  (`rate`, `A1`). */
 export function typedLatex(typed: string, names: readonly UserName[]): string {
-  const n = names.find((u) => u.kind === "var" && (u.name === typed || typedName(u.name) === typed));
-  if (n) return nameLatex(n.name);
-  return /^\p{L}$/u.test(typed) ? typed : `\\operatorname{${typed}}`;
+  if (/^\p{L}$/u.test(typed)) return typed;
+  const n = names.find((u) => u.name === typed || typedName(u.name) === typed);
+  return n ? nameLatex(n.name) : `\\operatorname{${typed}}`;
 }
 
 /** Opens "Store in" for `value` (storedText). */
@@ -69,7 +70,7 @@ export function showStore(env: StoreEnv, value: string): void {
       preview: previewOf(n, ctx()),
       confirm: { cell: t("store.again", { value: bare }), note: value ? t("store.holdsWith", { name, value: bare, with: value }) : t("store.holds", { name, value: bare }) },
       ...(cell ? { cell: true as const } : {}),
-      run: () => env.store(n.kind === "var" ? nameLatex(n.name) : typedLatex(name, [])),
+      run: () => env.store(typedLatex(name, [n])),
     };
   };
   const free = (letter: string): MenuItem => ({ id: `name:${letter}`, label: letter, cell: true, preview: t("store.free", { name: letter }), run: () => env.store(letter) });
