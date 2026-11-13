@@ -103,14 +103,23 @@ describe("size-check", () => {
     expect(r.failures.some((f) => f.includes("raw"))).toBe(true);
   });
 
-  it("passes a start split into imported chunks when their sum is inside the budget", () => {
+  it("fails a start of two JS files, even inside the budgets, and names the extra file (R294, r21)", () => {
     const manifest = {
       ...FINDER,
       "index.html": { file: "assets/index.js", src: "index.html", isEntry: true, imports: ["_a.js"] },
-      "_a.js": { file: "assets/a.js" },
+      "_a.js": { file: "assets/a.js", name: "a" },
     };
-    const r = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": 70_000, "assets/a.js": 70_000 }));
-    expect(r.failures).toEqual([]);
+    const r = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": 70_000, "assets/a.js": 10_000 }));
+    expect(r.failures).toHaveLength(1);
+    expect(r.failures[0]).toContain("Start chunk");
+    expect(r.failures[0]).toContain("one JS file");
+    expect(r.failures[0]).toContain("assets/a.js");
+    expect(r.failures[0]).not.toContain("assets/index.js");
+  });
+
+  it("passes a start of one JS file", () => {
+    const manifest = { ...FINDER, "index.html": { file: "assets/index.js", src: "index.html", isEntry: true } };
+    expect(checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": 70_000 })).failures).toEqual([]);
   });
 
   it("reports an import the manifest does not list instead of ignoring it", () => {
@@ -203,7 +212,8 @@ describe("size-check", () => {
     const dist = fakeDist(units, { ...files, "assets/open.js": 30_000, "assets/other.js": 9_000, "assets/atstart.js": 7_000 });
     writeFileSync(join(dist, ".vite/chunk-modules.json"), JSON.stringify({ "assets/other.js": ["src/engine/format.ts"], "assets/atstart.js": ["src/units/types.ts"] }));
     const r = checkSizes(dist);
-    expect(r.failures).toEqual([]);
+    expect(r.failures).toHaveLength(1); // the shared chunk at start is a second start file (R294); nothing else fails
+    expect(r.failures[0]).toContain("assets/atstart.js");
     expect(r.rows.find((x) => x.rule === "Unit view chunk")?.files).toEqual(["assets/open.js"]);
     expect(r.rows.find((x) => x.rule === "Unit view + shared")?.files).toEqual(["assets/open.js"]);
     expect(r.rows.find((x) => x.rule === "Start chunk")?.files).toContain("assets/atstart.js");
