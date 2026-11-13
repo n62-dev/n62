@@ -40,7 +40,7 @@ function ctx(cas = false) {
     press(id);
   };
   const sheet = (): Sheet => shell.sheet as Sheet;
-  return { session, shell, sheet, stored, press, alpha };
+  return { c, key, session, shell, sheet, stored, press, alpha };
 }
 
 describe("the store sheet's keys (R281)", () => {
@@ -68,10 +68,31 @@ describe("the store sheet's keys (R281)", () => {
     alpha("vars");
     expect(sheet().level.filter).toBe("a");
   });
+  test("a key that types a letter on the line types it here too: x, Shift + x is y (the typed path as before)", () => {
+    const { session, sheet, press } = ctx();
+    press("x");
+    session.shift = true;
+    press("x");
+    expect(sheet().level.filter).toBe("xy");
+    expect(session.shift).toBe(false);
+  });
+  test("Alpha + x² types L (core c58)", () => {
+    const { sheet, alpha } = ctx();
+    alpha("sq");
+    expect(sheet().level.filter).toBe("L");
+  });
   test("a flick down types the key's letter in one press", () => {
     const { sheet, press } = ctx();
     press("sq", "alpha");
     expect(sheet().level.filter).toBe("L");
+  });
+  test("⌫ deletes a typed letter; with nothing typed it closes the sheet and goes on to the line (the ▶ goes)", () => {
+    const { c, key, shell, alpha, press } = ctx();
+    alpha("vars");
+    press("bksp");
+    expect(shell.sheet?.level.filter).toBe("");
+    expect(route.sheetPress(c as never, key("bksp"), undefined)).toBe(false); // press() then runs ⌫ on the line
+    expect(shell.sheet).toBeNull();
   });
   test("Esc closes the sheet and stores nothing (the line keeps value ▶)", () => {
     const { shell, stored, press } = ctx();

@@ -563,7 +563,7 @@
   <sheetChunk.C
     {sheet}
     {over}
-    testid={shell.switcherOpen ? "apps" : sheet.id === "find" ? "find" : "menu"}
+    testid={shell.switcherOpen ? "apps" : sheet.id === "find" || sheet.id === "store" ? sheet.id : "menu"}
     {below}
     {keyBox}
     ontap={(i) => shell.picked(sheet.activate(i))}

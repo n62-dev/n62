@@ -287,9 +287,13 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       level.type(k.ch);
       return true;
     case "backspace":
-      // in Find ⌫ on an empty query goes back from a category to the list of categories
-      if (!level.backspace() && find) sheet.back();
-      return true;
+      // in Find ⌫ on an empty query goes back from a category to the list of categories; in the store sheet with
+      // nothing typed it closes the sheet and does its job on the line (the ▶ goes, as before R281)
+      if (level.backspace()) return true;
+      if (find) sheet.back();
+      if (sheet.id !== STORE_SHEET) return true;
+      shell.closeSheet();
+      return false;
     case "none":
       return true;
     case "pass": {
@@ -352,14 +356,15 @@ function replay(c: RouteCtx): void {
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
 
-/** R281: a key in the store sheet (sheetKeys.ts storeKey). Alpha, a tap before the key or a flick down, types the letter
- *  the line would (its case too: lower case in CAS, R58), and a one-shot Shift or Alpha is used up by the key, as on the
- *  line; a flick up does nothing. `m`: the modifiers the key was pressed with (a queued key's, R8). */
+/** R281: a key in the store sheet (sheetKeys.ts storeKey). A key that types a letter on the line types the same letter
+ *  into the name (x alone, Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as
+ *  before; a one-shot Shift or Alpha is used up by the key, as on the line; a flick up that types no letter does
+ *  nothing. `m`: the modifiers the key was pressed with (a queued key's, R8). */
 function storeKey(c: RouteCtx, keys: NonNullable<typeof sheetChunk.keys>, key: Key, layer: Layer | undefined, m: Mods): SheetKey {
-  if (layer === "shift") return { kind: "none" };
-  const a = m.alpha ? actionFor(key, m.shift, true, false, c.casKeys) : undefined;
+  const a = actionFor(key, m.shift, m.alpha, false, c.casKeys);
   if (layer === undefined) c.session.clearModifiers();
   const typed = a?.kind === "type" && /^\p{L}$/u.test(a.text) ? a.text : undefined;
+  if (!typed && layer === "shift") return { kind: "none" };
   return keys.storeKey(key, typed, c.shell.sheet?.level.filter === "");
 }
 /** The store sheet's id (views/storeSheet.ts STORE_SHEET; not imported: that module is a lazy chunk). */
