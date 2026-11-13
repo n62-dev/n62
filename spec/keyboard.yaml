@@ -361,7 +361,7 @@ keys:
 #     gives way); AltGr types its character as before
 #   - every other name is KeyboardEvent.key (Enter, Escape, Home, F1, ArrowUp)
 #   - `e` or `E` right after a number's digits is ᴇ too, and `)` and a second `|` leave their pair (hwkeys.ts)
-# keyboard.test.ts checks that every key and layer of `keys:` has an entry here (a user key's three slots too), and that no
+# app/src/keyboard/desktopKeys.test.ts checks that every key and layer of `keys:` has an entry here (a user key's three slots too), and that no
 # two share a key: a key or layer added later brings its desktop key in the same change. A missing layer (a reserved or a
 # closed cell, docs/06 3b) needs neither. `actions:` are the status line's controls and results mode, which no key holds.
 desktop:

@@ -57,7 +57,7 @@ describe("hardwareKey passes KeyboardEvent.repeat on (R70f1: a held key counts o
       onLetter: () => {},
       onDead: () => {},
       onPress: () => {},
-      onAction: () => {},
+      onDesk: () => {},
     };
     return { t, keys };
   };
@@ -116,23 +116,30 @@ describe("R131: % and the desktop keys", () => {
       shiftKey: m.shift ?? false,
       getModifierState: (s: string) => s === "AltGraph" && (m.altGraph ?? false),
     }) as unknown as KeyboardEvent;
+  /** `got`: what ran; `counts`: the count name App.svelte gives each press (onKey "<key id>:hw", onDesk "hw:<desktop name>"). */
   const target = () => {
     const got: string[] = [];
+    const counts: string[] = [];
     const t: HwTarget = {
       field: {} as HwTarget["field"],
       decimalComma: false,
       onSymbol: (latex) => void got.push(`symbol ${latex}`),
-      onKey: (id, layer) => void got.push(`${id}:${layer}`),
+      onKey: (id, layer) => void (got.push(`${id}:${layer}`), counts.push(`${id}:hw`)),
       onLetter: (ch) => void got.push(`letter ${ch}`),
       onDead: () => void got.push("dead"),
       onPress: () => void got.push("press"),
-      onAction: (name) => void got.push(`action ${name}`),
+      onDesk: (desk, tg) => void (got.push("key" in tg ? `${tg.key}:${tg.layer}` : `action ${tg.action}`), counts.push(`hw:${desk}`)),
     };
-    return { t, got };
+    return { t, got, counts };
   };
   const run = (...evs: KeyboardEvent[]): { handled: boolean[]; got: string[] } => {
     const { t, got } = target();
     return { handled: evs.map((e) => hardwareKey(e, t)), got };
+  };
+  const countsOf = (...evs: KeyboardEvent[]): string[] => {
+    const { t, counts } = target();
+    for (const e of evs) hardwareKey(e, t);
+    return counts;
   };
 
   it("% inserts the percent sign as the Shift + 9 palette's % cell does (\\%; a bare % is a LaTeX comment), not a dead press", () => {
@@ -176,6 +183,31 @@ describe("R131: % and the desktop keys", () => {
       handled: [false, false, false, false, false],
       got: [],
     });
+  });
+  it("a key the table adds counts under its desktop name, apart from the key's tap and from R45's and R119's keys", () => {
+    // Home and Ctrl+Z, Shift+Enter and Enter's key, Alt+Shift+Backspace and Backspace, { and 8, Alt+E and ᴇ's key: each
+    // pair presses one keypad key, and the removal test (docs/03 rule 11) reads the table's own presses apart
+    expect(countsOf(ev("Home", "Home"), ev("z", "KeyZ", { ctrl: true }), ev("y", "KeyY", { ctrl: true }), ev("Z", "KeyZ", { ctrl: true, shift: true }))).toEqual([
+      "hw:Home",
+      "undo:hw",
+      "redo:hw",
+      "redo:hw",
+    ]);
+    expect(countsOf(ev("Enter", "Enter", { shift: true }), ev("Backspace", "Backspace", { alt: true, shift: true }), ev("Backspace", "Backspace"), ev("Delete", "Delete"))).toEqual([
+      "hw:Shift+Enter",
+      "hw:Alt+Shift+Backspace",
+      "bksp:hw",
+      "bksp:hw",
+    ]);
+    expect(countsOf(ev("{"), ev("8"), ev("["), ev("e", "KeyE", { alt: true }), ev("ArrowLeft", "ArrowLeft"), ev("ArrowUp", "ArrowUp", { alt: true }))).toEqual([
+      "hw:{",
+      "d8:hw",
+      "hw:[",
+      "hw:Alt+E",
+      "left:hw",
+      "hw:Alt+ArrowUp",
+    ]);
+    expect(countsOf(ev("k", "KeyK", { alt: true }), ev("F2", "F2"))).toEqual(["hw:Alt+K", "hw:F2"]);
   });
   it("AltGr's characters count as typed (Windows: Ctrl + Alt with AltGraph)", () => {
     expect(run(ev("{", "Digit7", { ctrl: true, alt: true, altGraph: true })).got).toEqual(["d8:shift"]);

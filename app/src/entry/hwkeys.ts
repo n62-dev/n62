@@ -9,22 +9,25 @@
 // - A character a keypad key types runs that key (in that layer) through the shell, as a tap would: digits, `.`, `+`,
 //   `-` (the − key: on an empty line it starts with Ans), `,`, space, and `=` `_` (Shift) and `#` `:` `;` (Alpha).
 // - `*` is ×, `/` is ÷ (a stacked fraction in textbook entry), `^` is xʸ, `(` is the bracket pair ( ), `|` the absolute
-//   value |x|, `{` the list braces { } and `[` the matrix [ ] (R131); `)` and a second `|` leave the pair they close.
+//   value |x|, `{` the list braces { } and `[` the matrix [ ] (R131); `)`, a second `|`, `}` and `]` leave the pair they
+//   close (with no such pair, a dead press).
 // - `e` or `E` right after a number's digits (or its point) is the exponent key ᴇ.
 // - `<`, `>`, `!` and `%` insert the Shift palettes' own symbols (Shift + 6, Shift + 9; `%` as `\%`, R131: a bare `%`
 //   is a LaTeX comment).
 // - Other letters stay name letters. A function's name is reached through Find (R4a), as on the phone.
-// - Every other character (`\ ] } ' " $ & ? @ ~` and the backtick) does nothing: no key types it (a dead press, R107).
+// - Every other character (`\ ' " $ & ? @ ~` and the backtick) does nothing: no key types it (a dead press, R107).
 // - Alt + a letter (or a digit, F1 to F4, Home, End, Shift+Enter, …) presses the key or the action the table names;
 //   Ctrl+Z is the Undo key, Ctrl+Y and Ctrl+Shift+Z the Redo key (R119; Cmd on a Mac): on an empty line Undo brings
 //   back what Clear or Delete took first (R98), which MathLive's own undo never did.
+// - Counting (R127, R131's removal test): a key the table adds (an Alt chord, Home, F1, Shift+Enter, `{`, `[`) goes to
+//   onDesk with its desktop name, counted `hw:<name>`; the keys R31, R45 and R119 had before it keep onKey (`<key id>:hw`).
 // Loaded with MathLive (EntryController.load), outside the start chunk. The Ctrl, Alt and Meta combinations the table
 // does not name stay with MathLive and the browser (copy, cut, select all); a paste, Ctrl+V included, is field.ts's
 // paste listener (R114). AltGr characters count as typed.
 import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
 import type { Layer } from "../keyboard/keyboard.ts";
-import { chordOf, desktop } from "../keyboard/desktopKeys.ts";
+import { chordOf, desktop, type DeskTarget } from "../keyboard/desktopKeys.ts";
 
 /** The desktop key map (R131), for the help text: it reaches it through this chunk, so the map stays in it and no
  *  dynamic import of hwkeys lists a chunk more. */
@@ -46,9 +49,10 @@ export interface HwTarget {
   onDead(repeat: boolean): void;
   /** A key the handler acts on itself (a `)` or `|` that leaves its pair): a press all the same (R107f1). */
   onPress(repeat: boolean): void;
-  /** A control no keypad key holds (R131, spec/keyboard.yaml `desktop.actions`): the status line's Apps, the place
-   *  switch, Symb, Plot, Num, and results mode's fold. */
-  onAction(name: string, repeat: boolean): void;
+  /** R131: a desktop key the table adds (`desk`, its name there, counted apart from the keypad's taps): a keypad key in a
+   *  layer, or a control no keypad key holds (`desktop.actions`: the status line's Apps, the place switch, Symb, Plot,
+   *  Num, and results mode's fold). */
+  onDesk(desk: string, target: DeskTarget, repeat: boolean): void;
 }
 
 /** The keypad key that each character types, and its layer: the table's one-character names that are no letter
@@ -58,8 +62,14 @@ const KEYS: ReadonlyMap<string, readonly [string, Layer]> = new Map(
     "key" in t && (name.length === 1 || name === "Space") && !/^[A-Za-z]$/.test(name) ? [[name === "Space" ? " " : name, [t.key, t.layer] as const]] : [],
   ),
 );
-/** R131's characters that the unit view's field does not take (units/open.ts: it keeps R24c's set). */
-const LINE_ONLY = new Set(["{", "[", "|"]);
+/** R131's characters (onDesk). */
+const DESK_CHARS = new Set(["{", "["]);
+/** The keys the handler pressed before the table (R45, R119): still onKey, counted `<key id>:hw` as before. */
+const BEFORE = new Set(["Ctrl+Z", "Ctrl+Y", "Ctrl+Shift+Z", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
+/** The characters that the unit view's field does not take (units/open.ts: it keeps R24c's set). */
+const LINE_ONLY = new Set([...DESK_CHARS, "|"]);
+/** The pairs a closing character leaves (`leave`): the LaTeX its opening atom starts with. */
+const CLOSES: Readonly<Record<string, RegExp>> = { ")": /^\\left\(/, "|": /^\\left\|/, "}": /^\\left\\\{/, "]": /^\\begin\{pmatrix\}/ };
 /** The arrow keys and the keypad keys they press (R45, controlKey). */
 const ARROWS: Readonly<Record<string, string>> = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
 /** The Shift palettes' symbols typed by one ASCII character, and their inserts (spec/keyboard.yaml `relations` lt, gt;
@@ -102,8 +112,8 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
     // R119, R131: a chord the table names presses its key (Ctrl+Z, Alt+S); every other one stays MathLive's (copy, select all)
     const name = chordOf(ev);
     const t = name === undefined ? undefined : desktop.byName.get(name);
-    if (!t) return false;
-    act(t, ev, tg);
+    if (!t || name === undefined) return false;
+    act(t, name, ev, tg);
     return true;
   }
   if (ch.length !== 1) {
@@ -111,9 +121,10 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
     if ((ch === "Enter" || ch === "Escape") && !ev.shiftKey) return false;
     // R131: a named key the table holds (Backspace, Delete, the arrows, Home, End, F1 to F4, Shift+Enter); else R45's
     // (F38) controlKey (Shift + Backspace is ⌫ too); the rest (Shift + an arrow, Tab, Shift + Escape) stays as it was
-    const t = desktop.byName.get(chordOf(ev) ?? "");
+    const name = chordOf(ev) ?? "";
+    const t = desktop.byName.get(name);
     const ctl = t || ch === "Enter" || ch === "Escape" ? undefined : controlKey(ev);
-    if (t) act(t, ev, tg);
+    if (t) act(t, name, ev, tg);
     else if (ctl) tg.onKey(ctl[0], ctl[1], ev.repeat);
     else return false;
     return true;
@@ -124,8 +135,9 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
     tg.onKey("emark", "primary", ev.repeat);
     return true;
   }
-  if (ch === ")" || ch === "|") {
-    if (leave(mf, ch === ")" ? "(" : "|")) {
+  const closes = CLOSES[ch];
+  if (closes) {
+    if (leave(mf, closes)) {
       mf.focus();
       tg.onPress(ev.repeat);
     } else if (ch === "|") tg.onKey("neg", "shift", ev.repeat);
@@ -135,17 +147,18 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   // R57: with the decimal comma both `.` and `,` type the decimal mark (the keypad's `.` key); `;` stays the separator
   const k = KEYS.get(tg.decimalComma && ch === "," ? "." : ch);
   const sym = PALETTE[ch];
-  if (k) tg.onKey(k[0], k[1], ev.repeat);
+  if (k && DESK_CHARS.has(ch)) tg.onDesk(ch, { key: k[0], layer: k[1] }, ev.repeat);
+  else if (k) tg.onKey(k[0], k[1], ev.repeat);
   else if (sym !== undefined) tg.onSymbol(sym, ev.repeat);
   else if (/^[A-Za-z]$/.test(ch)) tg.onLetter(ch, ev.repeat);
   else tg.onDead(ev.repeat);
   return true;
 }
 
-/** Press what the table names: a keypad key in its layer, or an action. */
-function act(t: import("../keyboard/desktopKeys.ts").DeskTarget, ev: KeyboardEvent, tg: HwTarget): void {
-  if ("key" in t) tg.onKey(t.key, t.layer, ev.repeat);
-  else tg.onAction(t.action, ev.repeat);
+/** Press what the table names under `name`: a key R45 or R119 had before it as before (onKey), else through onDesk. */
+function act(t: DeskTarget, name: string, ev: KeyboardEvent, tg: HwTarget): void {
+  if ("key" in t && BEFORE.has(name)) tg.onKey(t.key, t.layer, ev.repeat);
+  else tg.onDesk(name, t, ev.repeat);
 }
 
 /** The cursor stands right after a number's digits or its point (not after a name such as x2). */
@@ -159,8 +172,9 @@ function afterNumber(mf: MathfieldElement): boolean {
   return k < p && !at(k, /^\p{L}$/u);
 }
 
-/** `)` or `|`: put the cursor after the innermost pair around it that this character closes. False: none. */
-function leave(mf: MathfieldElement, open: "(" | "|"): boolean {
+/** `)`, `|`, `}` or `]`: put the cursor after the innermost pair around it whose LaTeX `open` matches (CLOSES). False:
+ *  none. */
+function leave(mf: MathfieldElement, open: RegExp): boolean {
   const depthAt = (o: number): number => mf.getElementInfo(o)?.depth ?? 0;
   let pos = mf.position;
   let d = depthAt(pos);
@@ -169,7 +183,7 @@ function leave(mf: MathfieldElement, open: "(" | "|"): boolean {
     let o = pos + 1;
     while (o <= mf.lastOffset && depthAt(o) >= d) o++;
     if (o > mf.lastOffset) return false;
-    if ((mf.getElementInfo(o)?.latex ?? "").startsWith(`\\left${open}`)) {
+    if (open.test(mf.getElementInfo(o)?.latex ?? "")) {
       mf.position = o;
       return true;
     }

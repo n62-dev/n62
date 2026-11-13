@@ -444,11 +444,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (`drag`, so a drag never grows the matrix) and the entry holding the field chunk's `Grown` (made with the field,
  *  passed to runOnField, cleared when a line is set). The merge base 68e296cf measures 61.77 kB gzip (174.36 kB raw), the
  *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB.
- *  61,900 → 62,010 B (R131): the desktop key map. The map and its reader ride with MathLive (hwkeys.ts's chunk holds
- *  spec/keyboard.yaml `desktop:`, which the start chunk's copy leaves out); what stays is the entry line's `onAction`
- *  hook and App.svelte's handler (a status-line control pressed as its tap, Alt+K's fold counted as `fold.hw`). The
- *  merge base eac413f1 measures 61,895 B gzip (174,781 B raw), the branch 61,958 B (174,944 B raw): 61.96 kB + 0.05 kB. */
-export const START_PIN_GZIP = 62_010;
+ *  61,900 → 62,050 B (R131, the owner to approve): the desktop key map. The map and its reader ride with MathLive
+ *  (hwkeys.ts's chunk holds spec/keyboard.yaml `desktop:`, which the start chunk's copy leaves out); what stays is the
+ *  entry line's `onDesk` hook and App.svelte's handler (a table key pressed as its key, a status-line control as its
+ *  tap, Alt+K's fold counted as `fold.hw`; each counted `hw:<desktop name>`, apart from the keypad's taps). The merge
+ *  base eac413f1 measures 61,895 B gzip (174,781 B raw), the branch 61,998 B (175,000 B raw): 62.00 kB + 0.05 kB. */
+export const START_PIN_GZIP = 62_050;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

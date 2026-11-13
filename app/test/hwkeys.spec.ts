@@ -352,6 +352,28 @@ test.describe("R131: the desktop keys", () => {
     expect(await entryValue(page)).toBe(hw);
   });
 
+  // `{` and `[` open their pair (Shift + 8, Shift + 5), so `}` and `]` leave it as `)` does: the rest of the line stays
+  // outside, as ▶ (the matrix: ▶ adds a column, ▶ on the empty column takes it back and leaves, R185) does on the keys
+  for (const [typed, keys, line] of [
+    ["{1,2}+3", ["shift", "d8", "d1", "comma", "d2", "right", "add", "d3"], "\\left\\{1,2\\right\\}+3"],
+    ["[1,2]*3", ["shift", "d5", "d1", "comma", "d2", "right", "right", "mul", "d3"], "\\begin{pmatrix}1,2\\end{pmatrix}\\times3"],
+    ["2*{1}*[3]-4", ["d2", "mul", "shift", "d8", "d1", "right", "mul", "shift", "d5", "d3", "right", "right", "sub", "d4"], undefined],
+  ] as const) {
+    test(`${typed}: the closing bracket leaves its pair, the same line as the keys`, async ({ page }) => {
+      await page.keyboard.type(typed);
+      const hw = await entryValue(page);
+      await page.evaluate(() => window.n62.entry.clear());
+      await tap(page, [...keys]);
+      expect(hw).toBe(await entryValue(page));
+      if (line !== undefined) expect(hw).toBe(line);
+    });
+  }
+
+  test("} and ] with no pair to leave are dead presses: the line is unchanged", async ({ page }) => {
+    await page.keyboard.type("2}]3");
+    expect(await entryValue(page)).toBe("23");
+  });
+
   test("Alt+S and Alt+Shift+S press sin and sin⁻¹ as the keys do; Home is ⇤", async ({ page }) => {
     await page.keyboard.press("Alt+KeyS");
     await page.keyboard.type("1");
