@@ -77,6 +77,9 @@
       const key = keyboard.byId.get(id);
       if (key) press(userKeys.resolve(key), layer);
     });
+    // R131: a desktop key the table adds (hwkeys.ts resolves it): its key, else the fold (a dead press in an app or a sheet)
+    entry.onDesk = counted((...[as]: [string, Key?, Layer?]) => session.taps.press(as), (_: string, key?: Key, layer?: Layer) =>
+      key ? press(userKeys.resolve(key), layer) : unfold() || (canFold && !shell.sheet ? fold("fold.hw") : dead()));
     entry.onLetter = counted(hwOther("letter"), typeLetter);
     shell.goTo = goTo; // the Apps sheet's Home and CAS rows
     shell.openSettings = openSettings;
@@ -89,9 +92,6 @@
     });
     entry.onEdit = () => (edited = true); // R154: MathLive's own typing (é, µ, π), a row menu's recall or insert
     entry.onDead = counted(hwOther("dead"), dead);
-    // R131: a desktop key the table adds (hwkeys.ts resolves it): its key, else the fold (a dead press in an app or a sheet)
-    entry.onDesk = counted((...[as]: [string, Key?, Layer?]) => session.taps.press(as), (_: string, key?: Key, layer?: Layer) =>
-      key ? press(userKeys.resolve(key), layer) : unfold() || (canFold && !shell.sheet ? fold("hw") : dead()));
     entry.onPress = counted(hwOther("other"), () => {}); // R107f1: a leaving ) or | is a press that needs nothing more
     entry.onPaste = (text) => {
       edited = true;
@@ -371,10 +371,10 @@
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
   /** Fold the keypad: by the line's swipe, or (R131) by the desktop key, counted apart (`fold.swipe`, `fold.hw`). */
-  function fold(how: "swipe" | "hw" = "swipe"): void {
+  function fold(as: "fold.swipe" | "fold.hw" = "fold.swipe"): void {
     if (folded || !canFold) return;
     folded = true;
-    countUse(`fold.${how}`);
+    countUse(as);
   }
   /** The keys come back; false when they were up. */
   function unfold(): boolean {
