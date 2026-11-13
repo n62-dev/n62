@@ -129,7 +129,7 @@ describe("sweep edge generator (G116)", () => {
   it("G162: draws each cancellation family with k from 40 to 300", () => {
     const seen = new Map<string, number>();
     const cs = generateEdges(20261103, 2000, seen);
-    for (const f of ["cancel0", "cancel1", "cancel2"]) expect([f, seen.get(f) ?? 0]).not.toEqual([f, 0]);
+    for (const f of ["cancel0", "cancel1", "cancel2", "cancel3"]) expect([f, seen.get(f) ?? 0]).not.toEqual([f, 0]);
     const ks: number[] = [];
     for (const c of cs) {
       // (1 − cos 10^-k)·10^(2k): the two exponents belong together
@@ -166,6 +166,24 @@ describe("sweep edge generator (G116)", () => {
       const diff = d.m * 10n ** BigInt(d.e - e) - w.m * 10n ** BigInt(w.e - e);
       expect((diff < 0n ? -diff : diff) * 10n ** 50n <= 10n ** BigInt(-e), `${cases[i]!.mp}: ${o.re}`).toBe(true);
       expect(o.im).toBe("0.0");
+    });
+  }, 60_000);
+  it("G307: draws the tiny term as a power of π and of e, and the oracle judges it (it gave 1.0 at 60 to 250 digits)", () => {
+    const cs = generateEdges(20261103, 2000).filter((c) => /\\(pi|exponentialE)\^\{-\d+\}/.test(c.latex));
+    expect(cs.some((c) => c.latex.includes("\\pi^{-"))).toBe(true);
+    expect(cs.some((c) => c.latex.includes("\\exponentialE^{-"))).toBe(true);
+    for (const c of cs) expect(() => latexToGiac(c.latex), c.latex).not.toThrow();
+    // derived: lim (1+1/n)^n = e and (1-1/n)^(2n) → e^-2, mpmath at 100 digits (e, exp(-2))
+    const e = "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427";
+    const em2 = "0.1353352832366126918939994949724844034076315459095758814681588726540733741014876899370981224906570488";
+    const cases = [
+      { mp: "POW((mpf('1'))+(POW(PI,mpf('-400'))),POW(PI,mpf('400')))", want: e },
+      { mp: "POW((mpf('1'))-(exp(mpf('-600'))),(mpf('2'))*(exp(mpf('600'))))", want: em2 },
+    ];
+    const out = oracleFor(cases.map((c) => ({ latex: c.mp, mp: c.mp, angle: "rad" as const, digits: 12 as const })), pythonFor(repo, mainCheckout), resolve(repo, "tools/probes/sweep/oracle.py"));
+    out.forEach((o, i) => {
+      expect(o.kind, cases[i]!.mp).toBe("value");
+      if (o.kind === "value") expect(o.re.slice(0, 52), cases[i]!.mp).toBe(cases[i]!.want.slice(0, 52));
     });
   }, 60_000);
   it("G162: skips a case past the oracle's digit cap with its reason, never judges it at fewer digits", () => {
@@ -240,7 +258,8 @@ describe("sweep trees write e as the keys do (G326)", () => {
     expect(sha(asLetter(runsOf(20261021, 1000)))).toBe("83330d8832e56c7f5f990ac3375bae90b13eb3cf4b27bacec094eecbd769cfba");
     expect(sha(asLetter(trees.view))).toBe("96781df693eff0101ca3a363c5885f3e55b93e905488f0ccc3721b10421efce3");
     expect(sha(asLetter(trees.casback))).toBe("4e6a9dc2cb06cefb7b8dda4728114ecabddb07ca791c3feb8f52d351bcdb12b5");
-    // G308 added the edge class nearone (1 ± 1ᴇ-k·i), so the edge trees differ from G326's on purpose
-    expect(sha(asLetter(trees.edges))).toBe("6979cf1535d783a4ac2a49bbedf36010a33e43823b4c029d48438bbc23dd3ec3");
+    // G307: family 0 takes its base as a power of π or e when its base draw is 3/4 or more, with no extra draw; G308 added the edge
+    // class nearone (1 ± 1ᴇ-k·i); both move the edge trees from G326's on purpose (G307 alone: cf3ac887…, G308 alone: 6979cf15…)
+    expect(sha(asLetter(trees.edges))).toBe("c93469ff9980f83ff28e55751b3b9d6cfd9cec244aa658633ca8dff17bfbf5d2");
   });
 });
