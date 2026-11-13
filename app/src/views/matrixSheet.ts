@@ -9,7 +9,8 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem, SubMenu } from "../apps/types.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { itemRow, putOnLine, type FindIndex } from "../find/finder.ts";
-import { MatrixGrid, textsQuery } from "./matrixGrid.svelte.ts";
+import { readMatrices } from "../calc/matrices.ts";
+import { MatrixGrid } from "./matrixGrid.svelte.ts";
 import { findText as t, type FindMessageKey } from "../i18n/enFind.ts";
 import type { FindItem } from "../find/types.ts";
 
@@ -54,29 +55,6 @@ export function matrixRows(byId: ReadonlyMap<string, FindItem>, row: (it: FindIt
   ];
 }
 
-/** One engine call for the variables `names`: the size of each that holds a matrix, else 0. */
-export function shapesQuery(names: readonly string[]): string {
-  return `[${names.map((n) => `when(is_matrix(${n}),dim(${n}),0)`).join(",")}]`;
-}
-
-/** The engine's answer to shapesQuery: the names that hold a matrix, in the order asked. An answer that is not one
- *  entry per name (an error, a fake engine's echo) lists none. */
-export function storedMatrices(names: readonly string[], answer: string): StoredMatrix[] {
-  let read: unknown;
-  try {
-    read = JSON.parse(answer);
-  } catch {
-    return [];
-  }
-  if (!Array.isArray(read) || read.length !== names.length) return [];
-  return names.flatMap((name, i) => {
-    const d: unknown = read[i];
-    if (!Array.isArray(d) || d.length !== 2) return [];
-    const [rows, cols] = d as unknown[];
-    return typeof rows === "number" && typeof cols === "number" && rows > 0 && cols > 0 ? [{ name, rows, cols }] : [];
-  });
-}
-
 /** Shift + 4 (finder.ts showMatrix): the sheet, with the stored matrices the one stored last first: the variables of the
  *  definitions log, of which one engine call keeps those that hold a matrix (none stored: no call). The sheet opens at
  *  once with its fixed rows, and keys wait while the call runs (Level.loading); with matrices, the full sheet then takes
@@ -87,10 +65,7 @@ export function showMatrix(shell: AppShell, entry: EntryController, index: FindI
   const grid = (m: StoredMatrix): SubMenu => ({
     title: m.name,
     items: [],
-    grid: new MatrixGrid(m.name, shell.settings, () => shell.calc.home(m.name, shell.settings()), async () => {
-      const r = await shell.calc.cas(textsQuery(m.name), shell.settings());
-      return r.ok ? r.text : "";
-    }),
+    grid: new MatrixGrid(m.name, shell.settings, () => shell.calc.home(m.name, shell.settings()), async () => (await readMatrices(shell.calc.engine, [m.name], shell.settings(), true))[0] ?? null),
   });
   const open = (stored: readonly StoredMatrix[], loading?: () => Promise<void> | null): void =>
     shell.showMenu(t("matrix.title"), matrixRows(index.byId, row, stored, grid), { remember: false, ...(loading ? { loading } : {}) });
@@ -98,9 +73,8 @@ export function showMatrix(shell: AppShell, entry: EntryController, index: FindI
   let pending: Promise<void> | null = null;
   open([], () => pending);
   const first = shell.sheet;
-  return (pending = shell.calc
-    .cas(shapesQuery(names), shell.settings())
-    .then((r) => (r.ok ? storedMatrices(names, r.text) : []), () => [])
+  return (pending = readMatrices(shell.calc.engine, names, shell.settings(), false)
+    .catch((): StoredMatrix[] => [])
     .then((stored) => {
       pending = null;
       if (stored.length > 0 && shell.sheet === first) open(stored); // (not when Esc closed it meanwhile)

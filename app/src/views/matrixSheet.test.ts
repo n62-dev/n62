@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { itemRow } from "../find/finder.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { FindItem, IndexItem } from "../find/types.ts";
-import { MATRIX_NEW, matrixItems, matrixRows, shapesQuery, storedMatrices, type StoredMatrix } from "./matrixSheet.ts";
+import { MATRIX_NEW, matrixItems, matrixRows, type StoredMatrix } from "./matrixSheet.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 const file = join(dirname(fileURLToPath(import.meta.url)), "../find/_gen/find-index.json");
@@ -67,21 +67,4 @@ describe.skipIf(!raw.some((it) => it.kind === "unit"))("the matrix sheet's order
       if (stored[0]) expect(sheet.level.title).toBe(stored[0].name);
     });
   }
-});
-
-describe("the stored matrices from the engine's answer (R188)", () => {
-  it("asks for each name's size when it holds a matrix", () => {
-    expect(shapesQuery(["M", "k"])).toBe("[when(is_matrix(M),dim(M),0),when(is_matrix(k),dim(k),0)]");
-  });
-  it("keeps the names that hold a matrix, in the order asked", () => {
-    expect(storedMatrices(["M", "k", "A"], "[[2,2],0,[1,3]]")).toEqual([
-      { name: "M", rows: 2, cols: 2 },
-      { name: "A", rows: 1, cols: 3 },
-    ]);
-  });
-  it("an answer it cannot read lists none", () => {
-    expect(storedMatrices(["M"], "[when(is_matrix(M),dim(M),0)]")).toEqual([]);
-    expect(storedMatrices(["M", "k"], "[[2,2]]")).toEqual([]);
-    expect(storedMatrices(["M"], "GIAC_ERROR")).toEqual([]);
-  });
 });

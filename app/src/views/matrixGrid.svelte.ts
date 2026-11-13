@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R188 (docs/04 5.3): a stored matrix in rows and columns, the level the matrix sheet (Shift + 4) opens on a stored
 // matrix's row. The model: the matrix is read through the engine when the level opens (Home's path, so each element
-// comes with its facts and is drawn by the Home formatter; never parsed from the log's preview); ▲ ▼ ◀ ▶ move the
+// comes with its facts and is drawn by the Home formatter with Home's ≈ or ⚠; a matrix that holds a symbol through the
+// bridge, engine/matrixRead.ts, its numbers drawn the same way; never parsed from a printed text); ▲ ▼ ◀ ▶ move the
 // highlight and stop at the edges; Esc goes back to the list (views/sheet.svelte.ts). Its view, MatrixGrid.svelte, is a
 // chunk of its own, loaded when a grid opens. Editing a cell is R189's.
 import type { Component } from "svelte";
 import type { AppHost } from "../apps/types.ts";
 import { engineFormat, type HomeOutcome } from "../calc/port.ts";
-import { confirmedOptions, formatComplex, markOf, type FormatOptions } from "../engine/format.ts";
+import { confirmedOptions, formatComplex, markOf, type ComplexValue, type FormatOptions } from "../engine/format.ts";
+import type { ValueFacts } from "../engine/types.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
+import type { MatrixCell, MatrixRead } from "../calc/matrices.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
 import { commaResult } from "../state/displayMode.ts";
 
-/** A cell: an element as Home computed it, or (a matrix Home gives no elements for: one that holds a symbol) the
- *  engine's text of it. */
-export type GridCell = { readonly result: HomeResult } | { readonly text: string };
+/** A cell: an element as Home computed it, or (a matrix Home gives no elements for: one that holds a symbol) as the
+ *  bridge read it (engine/matrixRead.ts): a number with its facts, or Giac's text of an element that is not one. */
+export type GridCell = { readonly result: HomeResult } | MatrixCell;
 
 type Settings = AppHost["settings"];
 
@@ -32,15 +35,16 @@ export class MatrixGrid {
   C = $state.raw<Component<{ grid: MatrixGrid }> | null>(null);
   readonly settings: () => Settings;
   private readonly home: () => Promise<HomeOutcome>;
-  private readonly texts: () => Promise<string>;
+  private readonly elements: () => Promise<MatrixRead | null>;
   private pending: Promise<void> | null = null;
 
-  /** `home`: the name through Home's path; `texts`: each element's Giac text, `[["a","1"],…]` (a matrix of symbols). */
-  constructor(name: string, settings: () => Settings, home: () => Promise<HomeOutcome>, texts: () => Promise<string>) {
+  /** `home`: the name through Home's path; `elements`: its size and elements through the bridge (a matrix of symbols),
+   *  null when it holds no matrix. */
+  constructor(name: string, settings: () => Settings, home: () => Promise<HomeOutcome>, elements: () => Promise<MatrixRead | null>) {
     this.name = name;
     this.settings = settings;
     this.home = home;
-    this.texts = texts;
+    this.elements = elements;
   }
 
   /** The level opened: read the matrix and load the view (once each; a failed view load is tried at the next open). */
@@ -60,13 +64,12 @@ export class MatrixGrid {
     if (r?.ok && r.shape && r.items && r.items.length === r.shape[0] * r.shape[1] && r.shape[1] > 0) {
       return this.fill(r.shape[0], r.shape[1], r.items.map((result) => ({ result })));
     }
-    const rows = readTexts(await this.texts().catch(() => ""));
-    const cols = rows?.[0]?.length ?? 0;
-    if (!rows || cols === 0 || rows.some((x) => x.length !== cols)) {
+    const m = await this.elements().catch(() => null);
+    if (!m?.cells || m.cells.length !== m.rows * m.cols || m.cols === 0) {
       this.cells = "failed";
       return;
     }
-    this.fill(rows.length, cols, rows.flat().map((text) => ({ text })));
+    this.fill(m.rows, m.cols, [...m.cells]);
   }
 
   private fill(rows: number, cols: number, cells: GridCell[]): void {
@@ -90,8 +93,8 @@ export class MatrixGrid {
    *  data-text, as Copy would take it. */
   text(c: GridCell): string {
     const s = this.settings();
-    const v = "result" in c && c.result.ok ? c.result.value : undefined;
-    const plain = "text" in c ? c.text : v ? formatComplex(v, confirmedOptions(v, c.result.facts.reliableDigits, this.options())).text : c.result.display;
+    const n = numberOf(c);
+    const plain = n ? formatComplex(n.value, confirmedOptions(n.value, n.facts.reliableDigits, this.options())).text : "text" in c ? c.text : "result" in c ? c.result.display : "";
     return s.decimalMark === "comma" ? commaResult(plain, false) : plain;
   }
 
@@ -102,11 +105,13 @@ export class MatrixGrid {
     return groupMarked(text, groupSepFor(s.groupSep, comma), comma);
   }
 
-  /** ⚠: the cell shows fewer confirmed digits than asked, or an unaudited float (as the Num table's cells, which draw no
-   *  = or ≈). */
-  warned(c: GridCell): boolean {
-    const v = "result" in c && c.result.ok ? c.result.value : undefined;
-    return v !== undefined && "result" in c && markOf({ ...c.result.facts, value: v }, this.options())?.mark === "⚠";
+  /** The cell's mark as Home's (markOf): ≈ a value shown rounded, ⚠ fewer confirmed digits than shown or a float nobody
+   *  checked (a float element of a matrix that holds a symbol, as Home marks the whole of it, G27); null for an exact
+   *  value shown in full (no = in every cell) and for a text with no float. */
+  mark(c: GridCell): "≈" | "⚠" | null {
+    const n = numberOf(c);
+    const m = n ? markOf({ ...n.facts, value: n.value }, this.options())?.mark : "text" in c && c.unchecked ? "⚠" : null;
+    return m === "≈" || m === "⚠" ? m : null;
   }
 
   private options(): FormatOptions {
@@ -115,15 +120,8 @@ export class MatrixGrid {
   }
 }
 
-/** The engine's text answer `[["a","1"],["2","b"]]` as rows of texts; null when it is not one. */
-export function readTexts(answer: string): string[][] | null {
-  try {
-    const v: unknown = JSON.parse(answer);
-    return Array.isArray(v) && v.every((r) => Array.isArray(r) && r.every((x) => typeof x === "string")) ? (v as string[][]) : null;
-  } catch {
-    return null;
-  }
+/** A cell's number and its facts: Home's element when it gave a value, or the bridge's number. */
+function numberOf(c: GridCell): { value: ComplexValue; facts: ValueFacts } | null {
+  if ("result" in c) return c.result.ok && c.result.value ? { value: c.result.value, facts: c.result.facts } : null;
+  return "value" in c ? c : null;
 }
-
-/** The Giac input whose answer readTexts reads: each element of `name` as its text. */
-export const textsQuery = (name: string): string => `map(${name},r->map(r,x->string(x)))`;

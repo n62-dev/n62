@@ -66,6 +66,33 @@ test("the grid's numbers go through the Home formatter (the decimal comma)", asy
   expect(await cells.evaluateAll((els) => els.map((e) => e.getAttribute("data-text")))).toEqual(["1,5", "2", "3", "4,25"]);
 });
 
+test("a value shown rounded keeps Home's ≈ (fix round 1: 1/3 showed 0.333333333333 with no mark)", async ({ page }) => {
+  await store(page, "M:=[[1/3,2],[3,4]]", "M");
+  await tap(page, ["shift", "d4"]);
+  await sheetKey(page, ["d0"]);
+  const cells = grid(page).locator("td[data-cell]");
+  await expect(cells).toHaveCount(4);
+  expect(await cells.evaluateAll((els) => els.map((e) => e.getAttribute("data-text")))).toEqual(["0.333333333333", "2", "3", "4"]);
+  await expect(grid(page).locator('td[data-cell="1,1"] [data-testid="mark"]')).toHaveText("≈");
+  await expect(grid(page).locator('td[data-cell="1,2"] [data-testid="mark"]')).toHaveCount(0); // an exact integer: no mark
+});
+
+test("a matrix that holds a symbol: its numbers in the app's digits (Digits 4) with Home's marks, read through the bridge", async ({ page }) => {
+  await store(page, "S:=[[x,1.23456789012],[evalf(sqrt(2)),y]]", "S");
+  await page.evaluate(() => window.n62.session.setDigits(4));
+  await tap(page, ["shift", "d4"]);
+  await sheetKey(page, ["d0"]);
+  const cells = grid(page).locator("td[data-cell]");
+  await expect(cells).toHaveCount(4);
+  // 1.23456789012 is read as the exact rational it typed (≈ when rounded); evalf's float beside a symbol is unchecked (⚠)
+  expect(await cells.evaluateAll((els) => els.map((e) => [e.getAttribute("data-text"), e.querySelector('[data-testid="mark"]')?.textContent?.trim() ?? ""]))).toEqual([
+    ["x", ""],
+    ["1.235", "≈"],
+    ["1.414", "⚠"],
+    ["y", ""],
+  ]);
+});
+
 test("with no matrix stored there is no matrix row", async ({ page }) => {
   await store(page, "k:=5", "k");
   await tap(page, ["shift", "d4"]);

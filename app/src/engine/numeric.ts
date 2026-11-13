@@ -322,7 +322,7 @@ export function isDouble(a: Parts, b: Parts): boolean {
 
 /** A part bridge-3 gave (api.cc partText: an integer or `p/q` in base 10, a float as Giac prints it) as a DecimalValue
  *  of `keep` digits; null if it is not one. */
-function partValue(text: string, keep: number): DecimalValue | null {
+export function partValue(text: string, keep: number): DecimalValue | null {
   const t = text.trim();
   const q = /^(-?\d+)(?:\/(\d+))?$/.exec(t);
   if (q) return decimalFromRational(BigInt(q[1]!), BigInt(q[2] ?? "1"), keep);

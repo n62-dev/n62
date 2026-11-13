@@ -2,9 +2,9 @@
 <script lang="ts">
   // R188: a stored matrix in rows and columns (matrixGrid.svelte.ts), drawn as the Num view's table (FunctionNum.svelte:
   // the same row height, lines, right-aligned tabular digits and muted headers): the column numbers on top, the row
-  // numbers on the left, each element through the Home formatter, the highlighted cell marked. A chunk of its own. The
-  // thin space of a digit group is drawn as a gap (as apps/Grouped.svelte does; not imported: it would split a chunk
-  // shared with the apps, whose preload lists are in the start chunk).
+  // numbers on the left, each element through the Home formatter with Home's ≈ or ⚠, the highlighted cell marked. A
+  // chunk of its own. The thin space of a digit group is drawn as a gap (as apps/Grouped.svelte does; not imported: it
+  // would split a chunk shared with the apps, whose preload lists are in the start chunk).
   import { t } from "../i18n/index.ts";
   import { findText } from "../i18n/enFind.ts";
   import type { MatrixGrid } from "./matrixGrid.svelte.ts";
@@ -35,7 +35,8 @@
             {#each cols as c (c)}
               {@const cell = cells[r * grid.cols + c]}
               {@const text = cell ? grid.text(cell) : ""}
-              <td data-cell="{r + 1},{c + 1}" data-text={text} data-active={r === grid.row && c === grid.col}>{#each grid.drawn(text).split("\u2009") as p, i (i)}{#if i > 0}<span class="gsep" aria-hidden="true"></span>{/if}{p}{/each}{#if cell && grid.warned(cell)}<span class="warn" data-testid="mark" title={t("mark.warn")}> ⚠</span>{/if}</td>
+              {@const mark = cell ? grid.mark(cell) : null}
+              <td data-cell="{r + 1},{c + 1}" data-text={text} data-active={r === grid.row && c === grid.col}>{#each grid.drawn(text).split("\u2009") as p, i (i)}{#if i > 0}<span class="gsep" aria-hidden="true"></span>{/if}{p}{/each}{#if mark === "⚠"}<span class="warn" data-testid="mark" title={t("mark.warn")}> ⚠</span>{:else if mark}<span class="approx" data-testid="mark" title={t("mark.approx")}> ≈</span>{/if}</td>
             {/each}
           </tr>
         {/each}
@@ -86,6 +87,9 @@
   }
   td > .warn {
     color: var(--warn);
+  }
+  td > .approx {
+    color: var(--muted);
   }
   .empty {
     margin: var(--sp-10) auto;
