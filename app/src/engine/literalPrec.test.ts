@@ -34,7 +34,7 @@ describe("literalDigits", () => {
     expect(literalDigits("api^200+e^200+x^200", "typed")).toBe(3);
     expect(literalDigits("myexp(200)+exp(200*x)+exp(x+200)+exp(200.5)", "typed")).toBe(3);
     expect(literalDigits("pi^(200*x)+pi^200.5+pi^2e3", "typed")).toBe(3);
-    expect(literalDigits(`"exp(200)"+pi^("200")`, "typed")).toBe(1);
+    expect(literalDigits(`"exp(200)"+"pi^200"+1`, "typed")).toBe(1);
   });
 });
 
@@ -58,6 +58,15 @@ describe("literalStart", () => {
     expect(literalStart("asinh(-10^1250)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
     expect(literalStart("(1+pi^(-2200))^(pi^2200)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
     expect(literalStart("(1+exp(-2400))^exp(2400)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    // as Giac prints them: the tiny power stands in a denominator
+    expect(literalStart("(1+1/pi^2200)^(pi^2200)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+1/exp(2400))^(exp(2400))", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+  });
+  it("past the cap counts no huge power of pi or exp, which rounds no term away (G307)", () => {
+    expect(literalStart("exp(10000000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("pi^3000*sqrt(2)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("exp(3000)*(1+pi^(-200))", 40, 1000, "typed")).toEqual({ at: 140, unchecked: false });
+    expect(literalStart("exp(3000)+10^1250", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
   });
   it("is the digit count plus P up to the cap", () => {
     expect(literalStart("10^919", 40, 1000, "typed")).toEqual({ at: 960, unchecked: false });
