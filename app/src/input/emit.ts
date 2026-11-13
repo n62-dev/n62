@@ -149,7 +149,6 @@ function symbolText(e: Json): string | undefined {
 }
 
 function call(name: string, args: Json[], o: SerializeOptions): Out {
-  if (name === PASDEG) throw parseError("parse.reservedName", { name });
   const outs = args.map((a) => ser(a, o));
   // G304: Giac's other spellings of an angle command (arcsin, SIN, …) are written by their canonical name, so every
   // later reader of the text (the unit view's inverses, the audited list) meets that one
@@ -224,7 +223,6 @@ function ser(e: Json, o: SerializeOptions): Out {
   const sym = symbolText(e);
   if (sym !== undefined) {
     if (sym === "Nothing") throw parseError("parse.emptyInput");
-    if (sym === PASDEG) throw parseError("parse.reservedName", { name: sym });
     if (sym in CONST) return { s: CONST[sym] as string, p: 5 };
     return { s: sym, p: 5 };
   }

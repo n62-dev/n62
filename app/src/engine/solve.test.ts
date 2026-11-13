@@ -6,6 +6,9 @@ import { EngineHost } from "./host.ts";
 import { defaultHomeSettings, precisionFacts } from "./homeEval.ts";
 import { giacAvailable, nodeHost } from "./nodeGiac.ts";
 import { markOf } from "./format.ts";
+import { mathJsonToGiac } from "../input/emit.ts";
+import { parseLatex } from "../input/parse.ts";
+import { DEFAULT_USER_FUNCTIONS } from "../input/latex-to-giac.ts";
 
 describe.skipIf(!giacAvailable())("Solve and analysis plumbing (real Giac)", () => {
   let host: EngineHost;
@@ -96,6 +99,21 @@ describe.skipIf(!giacAvailable())("Solve and analysis plumbing (real Giac)", () 
     expect(r.roots[0]!.result.value?.im.neg).toBe(true);
     expect(r.residualRel).toBeLessThan(1e-25);
     expect(r.method).toBe("proot");
+  });
+
+  it("G341 (F210): an equation with a free pasx never reaches solve1, whose root is pasx", async () => {
+    // phase-1: the parse passed (`pasx(1)+x=3`) and Solve read its own pasx: no root on a fresh engine, 2 after an
+    // earlier Solve left pasx at 1 (probe 2026-11-13)
+    const h = await nodeHost();
+    const solveTyped = (latex: string) => {
+      // Solve's compile step (apps/solve/app.svelte.ts compileEquation), then the engine's Solve
+      const eq = mathJsonToGiac(parseLatex(latex, { userFunctions: DEFAULT_USER_FUNCTIONS }), { realOddRoots: true, userFunctions: DEFAULT_USER_FUNCTIONS });
+      return h.solve({ kind: "equations", equations: [eq], unknowns: ["x"], guesses: ["1"] }, s);
+    };
+    expect(() => solveTyped("\\operatorname{pasx}\\left(1\\right)+x=3")).toThrow(/pasx starts with pas, which N62 keeps for its own names/);
+    expect(h.eval("pasx").output).toBe("pasx"); // solve1 never ran: its root is unset
+    // the same path still solves (derived: 2+x = 3 at x = 1)
+    expect(solveTyped("2+x=3").roots[0]!.result.display).toBe("1");
   });
 
   it("the pole of 1/X is not a root: no root found, with the reason in the info line", () => {

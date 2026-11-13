@@ -10,7 +10,8 @@ import type { GiacParse } from "./bridge.ts";
 import { assignmentIn, stateHeads, valueTargets } from "./stores.ts";
 import { COMPLEX_DEFINITIONS } from "./complex.ts";
 import { defaultCasSettings, type CasResult } from "./types.ts";
-import { renameOurCalls, writeUserNames } from "./ourNames.ts";
+import { CAS_ANS, isOurName, renameOurCalls, writeUserNames } from "./ourNames.ts";
+import { parseText } from "../i18n/enParser.ts";
 import { dropAngleFactor, PASDEG, rewriteAngles } from "./angles.ts";
 import { isFlagName } from "./flags.ts";
 import { isStandIn, typedName } from "./standIns.ts";
@@ -84,6 +85,14 @@ function changes(tree: GiacParse, targets: readonly string[]): { head?: string; 
   return { ...(head !== undefined ? { head } : {}), ...(targets[0] !== undefined ? { target: targets[0] } : {}) };
 }
 
+/** G341: why a name is refused, in the parser's words (input/parse.ts). */
+const ourWhy = (name: string): string => parseText(name === CAS_ANS ? "parse.ourName" : "parse.reservedName", { name });
+
+/** G341: the first name of ours (isOurName) a definition or a test names as written, outside strings. */
+function namedOurs(text: string): string | undefined {
+  return [...names(text, "typed")].find((n) => isOurName(n.name))?.name;
+}
+
 /** A tree Giac's parser could not read cleanly holds `undef` where it gave up (`++a` is `undef++; a`): no name of the
  *  user's, so no target. */
 function readable(tree: GiacParse): GiacParse {
@@ -148,6 +157,8 @@ export function parseLibrary(input: Uint8Array | string, parse: (text: string) =
         if (c.target) throw new LibError(lineNo, `a test must not assign a name (it assigns ${c.target})`);
         if (!tree.ok) throw new LibError(lineNo, "Giac cannot read the test (a syntax error)");
         if (topLevelSemicolon(expr)) throw new LibError(lineNo, "one expression per test: a second statement follows `;`");
+        const ours = namedOurs(expr);
+        if (ours) throw new LibError(lineNo, ourWhy(ours));
         d.tests.push({ expr, line: lineNo });
       } else lastComment = { text: t.replace(/^\/\/\s*/, ""), line: lineNo };
       continue;
@@ -178,10 +189,14 @@ export function parseLibrary(input: Uint8Array | string, parse: (text: string) =
     const value = def.kind === "var" ? assignmentIn(block, tree)?.rhs : undefined;
     if (!isName(def.name, true)) throw new LibError(at, "a name is letters, digits and _ (ASCII), starting with a letter");
     if (isFlagName(def.name)) throw new LibError(at, `${def.name} is one of the engine's settings, which a library may not change`);
-    // a trailing `_` is ours (OUR_BOUND, ourNames.ts), except the parser's letter stand-ins (`beta_`, `e_`: G311), the user's names
-    if (def.name in ENGINE_DEFINITIONS || def.name in COMPLEX_DEFINITIONS || WORKER_DEFINITION_NAMES.includes(def.name) || def.name.startsWith("pasc_") || def.name === PASDEG || (def.name.endsWith("_") && !isStandIn(def.name))) throw new LibError(at, `${def.name} is one of N62's own names`);
-    // R64: the degree factor is ours; a body that names it (a `local pasdeg`, say) would change every angle in it
-    if ([...names(block, "typed")].some((n) => n.name === PASDEG)) throw new LibError(at, `${PASDEG} is one of N62's own names`);
+    // G341: a `pas` name (and pcasans) is ours, in the parser's words; a trailing `_` too (OUR_BOUND, ourNames.ts), except
+    // the parser's letter stand-ins (`beta_`, `e_`: G311), the user's names
+    if (isOurName(def.name)) throw new LibError(at, ourWhy(def.name));
+    if (def.name in ENGINE_DEFINITIONS || def.name in COMPLEX_DEFINITIONS || WORKER_DEFINITION_NAMES.includes(def.name) || (def.name.endsWith("_") && !isStandIn(def.name))) throw new LibError(at, `${def.name} is one of N62's own names`);
+    // R64, G341: a body that names one of ours (a `local pasdeg` would change every angle in it; a free `pasx` reads
+    // Solve's root) is refused as a typed one is
+    const ours = namedOurs(block);
+    if (ours) throw new LibError(at, ourWhy(ours));
     if (defs.some((d) => d.name === def.name)) throw new LibError(at, `${def.name} is defined twice in this file`);
     if (!lastComment || lastComment.line !== at - 1) throw new LibError(at, `${def.name} needs its one-line description on the line above`);
     if (lastComment.text.length > DESC_MAX) throw new LibError(lastComment.line, `the description is over ${DESC_MAX} characters`);
