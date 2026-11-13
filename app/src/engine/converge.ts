@@ -122,7 +122,8 @@ function limitNonZero(giac: Giac, l: string): boolean {
   return /^[\d.]+(e[+-]?\d+)?$/.test(v) && Number(v) !== 0;
 }
 
-const PERIODIC = new Set(["sin", "cos", "tan", "sec", "csc", "cot"]);
+/** The periodic functions: the trig names, the one list of them (degrees.ts and literalPrec.ts read it too, G307f2). */
+export const PERIODIC: ReadonlySet<string> = new Set(["sin", "cos", "tan", "sec", "csc", "cot"]);
 /** Periods tried for a trig integrand: 2π/n (in radians; a DEG integrand is rewritten first), largest n first, so the
  *  smallest period is found. */
 const PERIOD_DIVISORS = [12, 10, 8, 6, 5, 4, 3, 2, 1];

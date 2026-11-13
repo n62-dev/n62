@@ -8,6 +8,7 @@
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
 import { callsOf, isNameChar, numbers, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { PERIODIC } from "./converge.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
  *  fewer than this many digits after its cancellation. */
@@ -75,14 +76,17 @@ function literalCounts(text: string, q: Quoting): { digits: number; withoutHuge:
 }
 
 /**
- * G307f1 (decisions.md "G307 past the cap", Opus pass 171): whether `text` can form a small value, which a huge power of
- * pi or exp then makes tiny: a division, a negative exponent (a minus after a caret, after a caret and bracket, or after
- * exp's bracket) or an inv call. A `-` or `/` in a string forms nothing. `(1+1/(3*pi^2200))^(pi^2200)` is e^(1/3), and at
- * P and P + 20 both round the 1/(3*pi^2200) away.
+ * Whether a huge power of pi or exp in `text` needs its digits for the value. G307f1 (decisions.md "G307 past the cap",
+ * Opus pass 171): the text can form a small value, which the huge power then makes tiny: a division, a negative exponent
+ * (a minus after a caret, after a caret and bracket, or after exp's bracket) or an inv call. `(1+1/(3*pi^2200))^(pi^2200)`
+ * is e^(1/3), and at P and P + 20 both round the 1/(3*pi^2200) away. G307f2 (Opus pass 173): the text calls a periodic
+ * function (converge.ts PERIODIC), whose value needs its argument to an absolute precision: at P0 + 40 pi^2200 is off by
+ * about 10^1054, and sin(pi^2200) showed ≈ 0.9 where it is 0.844846014387. A name or sign in a string counts nothing.
  */
-function formsSmall(text: string, q: Quoting): boolean {
+function needsHuge(text: string, q: Quoting): boolean {
   const s = withoutStrings(text, "", q);
   if (s.includes("/") || s.includes("^-") || s.includes("^(-")) return true;
+  if (callsOf(s, PERIODIC, q).length) return true;
   return callsOf(s, ["inv", "exp"], q).some((c) => c.name === "inv" || s.charAt(c.open + 1) === "-");
 }
 
@@ -101,16 +105,16 @@ export function literalDigits(text: string, q: Quoting): number {
  * digits with n + LITERAL_MARGIN > P, at n + P. When those levels pass `cap` (MAX_EVAL_DIGITS), at P, and the value is
  * `unchecked` (⚠, never ≈): a power of ten too (G141f1, Opus pass 68: `(1-cos(10^-600))*10^1200+1` is 1.5, and at P and
  * P + 20 both round the 10^-600 away; S20's intervals are the cure), and a power of pi or exp (G307,
- * `(1+pi^(-2200))^(pi^2200)`). A power of pi or exp past the cap counts nothing in a text that forms no small value
- * (formsSmall, G307f1): alone it rounds no term away, and MPFR evaluates exp(10000000) (`exp(10^7)` as Giac prints it)
- * right at every level, which ≈ said before G307 (g58-exp-1e7-12). A decision taken on it reads literalPastCap, which
- * counts it.
+ * `(1+pi^(-2200))^(pi^2200)`). A power of pi or exp past the cap counts nothing in a text that neither forms a small value
+ * nor calls a periodic function (needsHuge, G307f1, G307f2): alone it rounds no term away, and MPFR evaluates
+ * exp(10000000) (`exp(10^7)` as Giac prints it) right at every level, which ≈ said before G307 (g58-exp-1e7-12). A
+ * decision taken on it reads literalPastCap, which counts it.
  */
 export function literalStart(text: string, P: number, cap: number, q: Quoting): { at: number; unchecked: boolean } {
   const { digits, withoutHuge } = literalCounts(text, q);
   const start = (n: number): { at: number; unchecked: false } | null =>
     n + LITERAL_MARGIN <= P ? { at: P, unchecked: false } : n + P + LEVELS_ABOVE <= cap ? { at: n + P, unchecked: false } : null;
-  return start(digits) ?? (formsSmall(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
+  return start(digits) ?? (needsHuge(text, q) ? null : start(withoutHuge)) ?? { at: P, unchecked: true };
 }
 
 /**
