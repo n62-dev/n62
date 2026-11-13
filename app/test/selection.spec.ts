@@ -98,6 +98,11 @@ test("every key and layer, normal and one-line entry: 1+2 selected stays an argu
         await select(page, "1+2");
         await press(page, id, layer);
         const value = await entryValue(page);
+        // R281: Store ▶ opens the store sheet, which would take the next keys; Esc closes it and keeps the line
+        if (a.insert === "\\blacktriangleright") {
+          await expect(page.getByTestId("store")).toBeVisible();
+          await tap(page, ["esc"]);
+        }
         const label = `${id}/${layer}${line ? "/line" : ""}`;
         if (IGNORES.has(label)) continue;
         const replaces = a.type !== undefined || REPLACES.has(label);

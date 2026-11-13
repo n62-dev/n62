@@ -98,12 +98,14 @@ test("Store: Shift + ᴇ on an empty line after a result starts Ans ▶ (G2 item
   // no result yet: Store is bare
   await tap(page, ["shift", "emark"]);
   expect(await entryValue(page)).toBe("\\blacktriangleright");
-  await tap(page, ["esc", "d5", "enter"]);
+  // R281: Store ▶ opens the store sheet; the first Esc closes it (the line keeps value ▶), the second clears the line
+  await tap(page, ["esc", "esc", "d5", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["shift", "emark", "alpha", "d1"]);
-  expect(await entryValue(page)).toBe("\\ans\\blacktriangleright Y");
+  expect(await entryValue(page)).toBe("\\ans\\blacktriangleright");
+  await expect(page.getByTestId("store").getByTestId("sheet-filter")).toHaveText("Y"); // the name is typed into the store sheet (R281)
   // after something typed it follows the value, as before
-  await tap(page, ["esc", "d9", "shift", "emark"]);
+  await tap(page, ["esc", "esc", "d9", "shift", "emark"]);
   expect(await entryValue(page)).toBe("9\\blacktriangleright");
 });
 

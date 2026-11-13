@@ -213,7 +213,8 @@ test("E notation: a non-integer exponent is an error that says so", async ({ pag
 
 test("store: value ▶ name, then the name reads back", async ({ page }) => {
   await tap(page, ["d9", "shift", "emark", "alpha", "d1"]);
-  expect(await entryValue(page)).toBe("9\\blacktriangleright Y");
+  expect(await entryValue(page)).toBe("9\\blacktriangleright");
+  await expect(page.getByTestId("store").getByTestId("sheet-filter")).toHaveText("Y"); // R281: the name is typed into the store sheet; Enter stores it
   await tap(page, ["enter"]);
   await resultIs(page, "9", 1);
   await tap(page, ["alpha", "d1", "mul", "d2", "enter"]);
