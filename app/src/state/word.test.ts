@@ -10,6 +10,7 @@ import { DATA_VERSION } from "./storage.ts";
 import { fakeKv } from "./fakeKv.ts";
 import { Session } from "./session.svelte.ts";
 import { validWord, WORD_KEY } from "./wordSetting.ts";
+import { WordStore, wordStore } from "./wordStore.svelte.ts";
 
 const at = (value: unknown): { "@n62": number; value: unknown } => ({ "@n62": DATA_VERSION, value });
 const file = (word: unknown): Uint8Array =>
@@ -45,7 +46,37 @@ describe("the key `word` (R194)", () => {
   });
 });
 
-describe("the session and the word (R194)", () => {
+describe("the word store (R194)", () => {
+  it("reads the stored record once, and a record that is not whole is as none", async () => {
+    const whole = new WordStore(fakeKv([["word", { bits: 8, signed: true }]]));
+    expect(whole.value).toBeUndefined(); // nothing until it is read
+    await whole.restore();
+    expect(whole.value).toEqual({ bits: 8, signed: true });
+    for (const bad of [{ bits: 12, signed: true }, { bits: 8 }, { bits: 8, signed: true, x: 1 }, 8]) {
+      const s = new WordStore(fakeKv([["word", bad]]));
+      await s.restore();
+      expect(s.value, JSON.stringify(bad)).toBeUndefined();
+    }
+  });
+
+  it("set keeps the record in the store, and a read still running does not undo it", async () => {
+    const kv = fakeKv();
+    const s = new WordStore(kv);
+    s.set({ bits: 32, signed: true });
+    expect(kv.data.get("word")).toEqual({ bits: 32, signed: true });
+    await s.restore();
+    expect(s.value).toEqual({ bits: 32, signed: true });
+  });
+
+  it("gives the engine the word only once it is set", async () => {
+    const s = new WordStore(fakeKv());
+    expect(await s.forEngine()).toEqual({});
+    s.set({ bits: 16, signed: false });
+    expect(await s.forEngine()).toEqual({ word: 16, signed: false });
+  });
+});
+
+describe("the session sends the word (R194)", () => {
   /** A calc that keeps the settings each Home input came with. */
   const spied = (): { calc: FakeCalc; seen: CalcSettings[] } => {
     const calc = new FakeCalc();
@@ -55,29 +86,14 @@ describe("the session and the word (R194)", () => {
     return { calc, seen };
   };
 
-  it("sends no word while none is set", async () => {
+  it("sends no word while none is set, and the word with every input after a row set it", async () => {
     const { calc, seen } = spied();
     const s = new Session(calc, fakeKv());
-    await s.restore();
     await s.submit("1+1");
-    expect(seen.length).toBe(1);
     expect(seen[0]?.word).toBeUndefined(); // as if absent: the engine uses its own word
     expect(seen[0]?.signed).toBeUndefined();
-    expect(s.word).toBeUndefined();
-  });
-
-  it("reads the stored word at the start and sends it with every input", async () => {
-    const { calc, seen } = spied();
-    const s = new Session(calc, fakeKv([["word", { bits: 8, signed: true }]]));
-    await s.restore();
-    expect(s.word).toEqual({ bits: 8, signed: true });
+    wordStore.set({ bits: 8, signed: true });
     await s.submit("1+1");
-    expect(seen.at(-1)).toMatchObject({ word: 8, signed: true });
-  });
-
-  it("ignores a stored word that is not whole", async () => {
-    const s = new Session(new FakeCalc(), fakeKv([["word", { bits: 12, signed: true }]]));
-    await s.restore();
-    expect(s.word).toBeUndefined();
+    expect(seen[1]).toMatchObject({ word: 8, signed: true });
   });
 });

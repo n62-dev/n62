@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Mode sheet and Settings as rows of the one sheet (docs/05 3.4): what each key does to the session.
+import { wordStore } from "../state/wordStore.svelte.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { resetUndoTime } from "./dataSection.svelte.ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -282,10 +283,10 @@ describe("Settings, a level of the sheet (R49)", () => {
     if (pick.kind === "run") pick.item.run?.();
     expect(session.settings.marks).toBe("reason");
   });
-  it("Word (R194): the row says the word and opens its level: the size as four buttons and Signed as a switch, both kept in session.word", () => {
+  it("Word (R194): the row says the word and opens its level: the size as four buttons and Signed as a switch, both kept in wordStore.value", () => {
     const s = settings(2);
     expect(byId(s, "word")?.value).toBe("64 · unsigned");
-    expect(session.word).toBeUndefined(); // nothing set, nothing stored
+    expect(wordStore.value).toBeUndefined(); // nothing set, nothing stored
     s.level.highlight = at(s, "word");
     s.pickNumber(7);
     expect(s.level.items.map((x) => x.id)).toEqual(["bits", "signed"]);
@@ -293,14 +294,14 @@ describe("Settings, a level of the sheet (R49)", () => {
     s.level.highlight = at(s, "bits");
     expect(marked(s)).toBe("64");
     s.right();
-    expect(session.word).toEqual({ bits: 8, signed: false }); // ◀ ▶ step the size, round the end
+    expect(wordStore.value).toEqual({ bits: 8, signed: false }); // ◀ ▶ step the size, round the end
     s.activate(at(s, "signed"));
-    expect(session.word).toEqual({ bits: 8, signed: true });
+    expect(wordStore.value).toEqual({ bits: 8, signed: true });
     expect(byId(s, "signed")?.selected).toBe(true);
     const pick = s.pickOption(at(s, "bits"), "32");
     expect(pick.kind).toBe("run");
     if (pick.kind === "run") pick.item.run?.();
-    expect(session.word).toEqual({ bits: 32, signed: true });
+    expect(wordStore.value).toEqual({ bits: 32, signed: true });
   });
   it("Digit groups (R125): three buttons, the thin space (the default), the apostrophe and the comma; ◀ ▶ step them and the sheet stays", () => {
     const s = settings(2);

@@ -28,7 +28,6 @@ import {
 } from "./displayMode.ts";
 import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
-import type { WordSetting } from "./wordSetting.ts";
 import { TapCounter } from "./taps.svelte.ts";
 import type { UseCounter } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
@@ -36,6 +35,7 @@ import { chipFactsOf, chipOf, HISTORY_LIMIT, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
 import { storedReader } from "./storedLoad.ts";
+import type { WordStore } from "./wordStore.svelte.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
 import type { UnitRow } from "../units/types.ts";
@@ -241,9 +241,6 @@ export class Session {
   private readonly namesRead: Promise<void>;
 
   private readonly kv: Kv;
-  /** R194: the word size and sign (docs/04 5.4), its own record under `word`; undefined until a Settings › Numbers row sets
-   *  it (64 bits, unsigned; the engine gets nothing). Read at the start by restoreSettings. */
-  word = $state<WordSetting | undefined>();
   /** Put a look on the page (main.ts: theme/lookApply.ts); called when it changes and once the settings are read. */
   onLook: ((look: Look) => void) | undefined;
   /** 0 = write the history at once (tests); the app sets a delay so Enter does not wait for the store. */
@@ -539,8 +536,9 @@ export class Session {
       live.text = parseFailText(e);
       return;
     }
+    let word: Awaited<ReturnType<WordStore["forEngine"]>>; // R194: the word, once Settings set it (state/wordStore.svelte.ts, a lazy chunk)
     try {
-      await itemsOr(items); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
+      [, word] = await Promise.all([itemsOr(items), import("./wordStore.svelte.ts").then((m) => m.wordStore.forEngine())]); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
     } catch {
       if (live.status === "pending") {
         live.status = "error";
@@ -549,7 +547,7 @@ export class Session {
       return;
     }
     if (live.status !== "pending") return;
-    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format, word: this.word?.bits, signed: this.word?.signed }; // R194: undefined until the rows are set
+    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format, ...word };
     try {
       if (view === "home") {
         const tidy = prefetchTidy();
@@ -638,7 +636,7 @@ export class Session {
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
   displayContext(): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, ...(this.word ? { word: this.word } : {}) };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
   }
 
   /** The Format key (cycleForms.ts): the last result of the open view in the next ticked mode. Resolves true when the display changed. */
@@ -730,13 +728,6 @@ export class Session {
     this.onLook?.($state.snapshot(this.settings.look));
     const view = await this.kv.get<View>("view");
     if (view === "home" || view === "cas") this.view = view;
-    const word = await this.kv.get<unknown>("word"); // R194: its own record, not a field of the settings; its check loads only with one
-    if (word !== undefined) this.word = (await import("./wordSetting.ts")).validWord(word);
-  }
-  /** R194: set the word (Settings › Numbers). */
-  setWord(w: WordSetting): void {
-    this.word = w;
-    void this.kv.set("word", w); // wordSetting.ts WORD_KEY
   }
   /** Entry LaTeX, result LaTeX and the Home numeric value of finished entries; nothing that needs the engine. */
   saveHistory(): void {

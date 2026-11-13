@@ -1255,7 +1255,6 @@ export class EngineHost implements FactsHost {
   }
 
   private useSolveMode(s: HomeSettings): void {
-    this.useWord(s);
     this.useMode(`solve${JSON.stringify(s)}`, s.digits, s.angle, () => {
       this.giac.eval(angleCommand(s.angle));
       this.giac.eval(`timeout ${SOLVE_HARD_TIMEOUT_S}`);
@@ -1266,7 +1265,8 @@ export class EngineHost implements FactsHost {
     });
   }
 
-  /** R194: the word of the settings, for the short forms of wordOps.ts. When it changes, the word ops already in Giac
+  /** R194: the word of the settings, for the short forms of wordOps.ts. Home and CAS give it with every input (Session);
+   *  the apps' requests do not, so they keep the word the last input set. When it changes, the word ops already in Giac
    *  are defined again at once (a stored function that calls shl would read the old word otherwise). */
   private useWord(s: { word?: number; signed?: boolean }): void {
     const w = wordOfSettings(s);

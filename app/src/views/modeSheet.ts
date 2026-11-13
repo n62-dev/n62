@@ -23,6 +23,7 @@ import { BRIGHTNESS, validLook, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
+import { wordStore } from "../state/wordStore.svelte.ts";
 import { DEFAULT_WORD, WORD_SIZES, type WordBits, type WordSetting } from "../state/wordSetting.ts";
 /** The presets' model (R88) is part of this chunk; R89 draws it in Mode (views/presetsView.svelte.ts). */
 export { presetsFor } from "../state/presets.svelte.ts";
@@ -395,23 +396,23 @@ function numbersItems(session: Session): MenuItem[] {
   // R194: the word of the base forms and of shl, shr, rotl, rotr and bnot (docs/04 5.4); its own record under `word`, set
   // here and read lazily (state/wordSetting.ts), never a field of the settings. One row (Numbers keeps its seven) that
   // opens a level of two: the size (four buttons) and Signed (a switch).
-  const word = (): WordSetting => session.word ?? DEFAULT_WORD;
-  const setWord = (patch: Partial<WordSetting>): void => session.setWord({ ...word(), ...patch });
+  const word = (): WordSetting => wordStore.value ?? DEFAULT_WORD;
+  const setWord = (patch: Partial<WordSetting>): void => wordStore.set({ ...word(), ...patch });
   const WORD_IDS = WORD_SIZES.map(String);
   const sizeOf = (v: string): WordBits => WORD_SIZES.find((n) => String(n) === v) ?? DEFAULT_WORD.bits;
   const wordSize: MenuItem = {
     id: "bits",
-    label: modeText("settings.word"),
+    label: uncText("word.size"),
     keep: true,
     get options() {
-      return buttons(WORD_IDS, () => String(word().bits), (v) => setWord({ bits: sizeOf(v) }), (v) => v, (v) => `${v} ${modeText("settings.word.spoken")}`);
+      return buttons(WORD_IDS, () => String(word().bits), (v) => setWord({ bits: sizeOf(v) }), (v) => v, (v) => `${v} ${uncText("word.size.spoken")}`);
     },
     adjust: (by) => setWord({ bits: cycle(WORD_SIZES, word().bits, by) }),
   };
   const signed: MenuItem = {
     id: "signed",
-    label: modeText("settings.signed"),
-    hint: modeText("settings.signed.hint"),
+    label: uncText("word.signed"),
+    hint: uncText("word.signed.hint"),
     keep: true,
     get selected() {
       return word().signed;
@@ -420,11 +421,11 @@ function numbersItems(session: Session): MenuItem[] {
   };
   const wordRow: MenuItem = {
     id: "word",
-    label: modeText("settings.wordRow"),
+    label: uncText("word.row"),
     get value() {
-      return `${word().bits} · ${modeText(word().signed ? "settings.signed.on" : "settings.signed.off")}`;
+      return `${word().bits} · ${uncText(word().signed ? "word.signed.on" : "word.signed.off")}`;
     },
-    submenu: { title: modeText("settings.wordRow"), items: [wordSize, signed], remember: false },
+    submenu: { title: uncText("word.row"), items: [wordSize, signed], remember: false },
   };
   return [mark, cycleRow, decimals, uncertainty, marks, groups, wordRow];
 }
