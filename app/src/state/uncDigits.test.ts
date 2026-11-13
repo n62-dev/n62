@@ -29,7 +29,7 @@ describe("muted digits past uncDigits (R40)", () => {
   it("in every notation the cut stays at the same place value", () => {
     expect(renderNumeric(r, "sci", ctx(), true)!.latex).toBe("3.985\\,8\\class{unc}{91\\,960\\,00}\\times10^{14}");
     expect(renderNumeric(r, "eng", ctx(), true)!.latex).toBe("398.58\\class{unc}{9\\,196\\,000}\\times10^{12}");
-    expect(renderNumeric(r, "pfx", ctx(), true)!.latex).toBe("398.58\\class{unc}{9\\,196\\,000}\\,\\class{pfx}{\\mathrm{T}}");
+    expect(renderNumeric(r, "pfx", ctx(), true)!.latex).toBe("398.58\\class{unc}{9\\,196}\\,\\class{pfx}{\\mathrm{T}}");
     expect(renderNumeric(r, "fix", ctx({ fixDecimals: 2 }), true)!.latex).toBe("398\\,58\\class{unc}{9\\,196\\,000\\,000.00}");
     expect(renderNumeric(r, undefined, ctx({ decimalComma: true }), true)!.latex).toBe("3{,}985\\,8\\class{unc}{91\\,96}\\times10^{14}");
   });

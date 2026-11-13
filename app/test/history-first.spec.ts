@@ -40,10 +40,11 @@ test("engine not ready: the newest five rows (10 renders); a frame after ready, 
   await held(page);
   expect(await page.evaluate(() => window.n62.session.engineState)).toBe("starting");
   await expect(page.locator("article.item")).toHaveCount(5);
-  // 5 rows, input and result each: 10 renders (a re-format of the five by the settings read may add 5)
+  // 5 rows, input and result each: 10 renders; the settings read may re-draw them once more (a race with MathLive's load,
+  // seen on phase-1 too: 2 of 8 runs drew 20), so the bound is 20, far from 400 for all 200 rows
   const before = await page.evaluate(() => window.n62.renderStats.count);
   expect(before).toBeGreaterThanOrEqual(10);
-  expect(before).toBeLessThanOrEqual(15);
+  expect(before).toBeLessThanOrEqual(20);
   await expect(page.locator("article.item").last()).toContainText(String(N));
   await expect.poll(() => page.evaluate(() => window.n62.session.engineState)).toBe("ready");
   await expect(page.locator("article.item")).toHaveCount(20);
