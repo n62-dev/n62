@@ -6,19 +6,24 @@
 // step rewrote library text (`written`), so a store step that leaves library text alone never makes a file unreadable
 // by an older app.
 import type { LibraryFormat } from "../engine/library.ts";
-import { migratedText } from "./migrations.ts";
-import { DATA_VERSION, STEP_KEYS } from "./storage.ts";
+import { MIGRATIONS, migratedText } from "./migrations.ts";
+import { DATA_VERSION } from "./storage.ts";
 import { HEADER, LIB_MAX_BYTES } from "../engine/libraryHeader.ts";
 
-/** G342: the version a library file's text is written in: one more than the last n whose step n → n+1 (`steps`, STEP_KEYS)
- *  rewrites `library` text; 0 when none does. */
-export function libraryTextVersion(steps: Readonly<Record<number, readonly string[]>> = STEP_KEYS): number {
+/** The keys of each step n → n+1: what STEP_KEYS (state/storage.ts) lists, which storage.test.ts holds equal to MIGRATIONS's
+ *  own keys. Read from MIGRATIONS here, so this lazy chunk takes nothing more from the start chunk's storage.ts (an
+ *  imported STEP_KEYS added a binding to the start chunk, 9 bytes: G342). */
+const APP_STEPS: Readonly<Record<number, readonly string[]>> = Object.fromEntries(Object.entries(MIGRATIONS).map(([n, step]) => [n, Object.keys(step)]));
+
+/** G342: the version a library file's text is written in: one more than the last n whose step n → n+1 (`steps`, as
+ *  STEP_KEYS) rewrites `library` text; 0 when none does. */
+export function libraryTextVersion(steps: Readonly<Record<number, readonly string[]>> = APP_STEPS): number {
   const last = Object.keys(steps).map(Number).filter((n) => steps[n]?.includes("library")).reduce((a, b) => Math.max(a, b), -1);
   return last + 1;
 }
 
-/** The format for a store at `dataVersion` with the steps `steps` (the app's own below; a test passes a table of its own). */
-export function libraryFormatOf(dataVersion: number, steps: Readonly<Record<number, readonly string[]>> = STEP_KEYS): LibraryFormat {
+/** The format for a store at `dataVersion` with the steps `steps` (the app's own by default; a test passes a table of its own). */
+export function libraryFormatOf(dataVersion: number, steps: Readonly<Record<number, readonly string[]>> = APP_STEPS): LibraryFormat {
   return {
     version: dataVersion,
     written: libraryTextVersion(steps),
