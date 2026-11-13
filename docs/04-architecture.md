@@ -346,7 +346,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 
 | Key | Holds |
 |---|---|
-| `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; later the base word size; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
+| `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
 | `view`, `place`, `entry` | the open view and app; the half-typed line |
 | `history` | ≤ 200 items per view, with `full` (≤ 2 kB) and the mark facts |
 | `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. `restore()` replays values, assumptions and typed inputs; a function (one balanced command) stays pending until `need()` loads it: pending names that are words in the input, then, transitively, those in each loaded body or stored value it reads, in one batch; `VARS`, `expr`, `rm_all_vars`, `restart` load all; redefining or purging a pending name drops it. **Variables are kept as their value**, not their command: `B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`; functions and `assume` keep their command; symbolic values replay first; a library function keeps its `desc`; a name a command stores through an argument (`QR(M,Q,R)`, stores.ts ARG_STORE_HEADS) is logged as any value, Giac's own names (`lastgb`, `lastv`) are put back after the input, and `restart`'s answer is the list of the user's names it cleared (G174) |
@@ -356,6 +356,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `userKeys`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets` | the last target per dimension |
+| `word` | `state/wordSetting.ts`: `{ bits: 8 \| 16 \| 32 \| 64, signed: boolean }` (R194), absent until Settings › Numbers › Word sets it (then 64 bits, unsigned); the base forms and the word ops' short forms read it; a field of its own, not of `settings` |
 | `uses` | the results mode's counts (R53, `state/uses.svelte.ts`), for decisions.md P16's removal test; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo` | not backed up |
 

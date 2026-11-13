@@ -94,6 +94,13 @@ describe.skipIf(!giacAvailable())("R194 the word setting in the engine", () => {
     expect(home("shl(300,1)", 8, false)).toMatchObject({ ok: false, error: "wordValue" });
   });
 
+  it("a stored function that calls a short form reads the word it is called in", () => {
+    expect(home("g194(a):=shl(a,7)")).toMatchObject({ ok: true });
+    expect(home("g194(3)")).toMatchObject({ ok: true, display: "384" });
+    expect(home("g194(3)", 8, false)).toMatchObject({ ok: true, display: "128" });
+    expect(home("g194(3)")).toMatchObject({ ok: true, display: "384" });
+  });
+
   it("CAS reads it too", () => {
     expect(host.cas("shl(3,7)", { ...defaultCasSettings, word: 8, signed: true }).result).toMatchObject({ ok: true, text: "-128" });
     expect(host.cas("shl(3,7)", defaultCasSettings).result).toMatchObject({ ok: true, text: "384" });

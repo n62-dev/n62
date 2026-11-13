@@ -23,7 +23,7 @@ export function baseItems(s: Session, item: HistoryItem): MenuItem[] {
   const integer = isApplicable("hex", factsOf(item));
   const base = BASES.find((b) => b === item.fmt && item.form === undefined);
   return ROWS.map(({ id, label }) => {
-    const fits = id === "dec" || baseDrawn(item, id) !== undefined;
+    const fits = id === "dec" || baseDrawn(item, id, s.word) !== undefined;
     return {
       id,
       label,

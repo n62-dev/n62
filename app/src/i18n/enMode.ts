@@ -21,6 +21,13 @@ export const enMode = {
   "settings.decimalMark": "Decimal mark",
   "settings.decimalMark.point": "Point",
   "settings.decimalMark.comma": "Comma",
+  "settings.wordRow": "Word",
+  "settings.word": "Word size (bits)",
+  "settings.word.spoken": "bits",
+  "settings.signed": "Signed",
+  "settings.signed.hint": "Two's complement",
+  "settings.signed.on": "signed",
+  "settings.signed.off": "unsigned",
 } as const;
 
 export type ModeKey = keyof typeof enMode;

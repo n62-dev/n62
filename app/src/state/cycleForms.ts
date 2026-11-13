@@ -34,7 +34,7 @@ export function isApplicable(mode: FmtMode, f: Facts): boolean {
   return true;
 }
 
-/** The word a base form is drawn in: 64 bits, unsigned, as G229's word ops, until R194's setting. */
+/** The word a base form is drawn in: the setting's (R194), else 64 bits unsigned, as G229's word ops. */
 export interface Word {
   bits: number;
   signed: boolean;
@@ -52,12 +52,12 @@ export function baseDrawn(r: NumericResult, mode: FmtMode | undefined, word: Wor
 
 /** R192: `r` drawn in `mode` (Session.display): a base form when it applies (baseDrawn), else as renderNumeric draws it. */
 export function drawnIn(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, grouped?: boolean): Drawn | undefined {
-  return baseDrawn(r, mode) ?? renderNumeric(r, mode, ctx, grouped);
+  return baseDrawn(r, mode, ctx.word) ?? renderNumeric(r, mode, ctx, grouped);
 }
 
 /** R192: the mark of `r` drawn in `mode` (Session.mark). A base form draws the integer whole, as a fraction does, so it
  *  is marked as the fraction is: `=` when exact (`≈` from an inexact chip, `⚠` kept); every other drawing as markFor. */
-export function baseMark(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, word: Word = WORD): MarkInfo | null {
+export function baseMark(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, word: Word | undefined = ctx.word): MarkInfo | null {
   return markFor(r, baseDrawn(r, mode, word) ? "frac" : mode, ctx);
 }
 

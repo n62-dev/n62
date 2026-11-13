@@ -28,6 +28,7 @@ import {
 } from "./displayMode.ts";
 import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
+import { validWord, WORD_KEY, type WordSetting } from "./wordSetting.ts";
 import { TapCounter } from "./taps.svelte.ts";
 import type { UseCounter } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
@@ -240,6 +241,9 @@ export class Session {
   private readonly namesRead: Promise<void>;
 
   private readonly kv: Kv;
+  /** R194: the word size and sign (docs/04 5.4), its own record under `word`; undefined until a Settings › Numbers row sets
+   *  it (64 bits, unsigned; the engine gets nothing). Read at the start by restoreSettings. */
+  word = $state<WordSetting | undefined>();
   /** Put a look on the page (main.ts: theme/lookApply.ts); called when it changes and once the settings are read. */
   onLook: ((look: Look) => void) | undefined;
   /** 0 = write the history at once (tests); the app sets a delay so Enter does not wait for the store. */
@@ -545,7 +549,8 @@ export class Session {
       return;
     }
     if (live.status !== "pending") return;
-    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format };
+    const w = this.word; // R194: sent only once the rows are set
+    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format, ...(w ? { word: w.bits, signed: w.signed } : {}) };
     try {
       if (view === "home") {
         const tidy = prefetchTidy();
@@ -634,7 +639,7 @@ export class Session {
   /** `mute` (R40), `groupSep` (R125): the muted digits' code once in, the separator; only the screen's row uses them. */
   displayContext(): DisplayContext {
     const s = this.settings;
-    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
+    return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter, ...(this.word ? { word: this.word } : {}) };
   }
 
   /** The Format key (cycleForms.ts): the last result of the open view in the next ticked mode. Resolves true when the display changed. */
@@ -726,6 +731,12 @@ export class Session {
     this.onLook?.($state.snapshot(this.settings.look));
     const view = await this.kv.get<View>("view");
     if (view === "home" || view === "cas") this.view = view;
+    this.word = validWord(await this.kv.get<unknown>(WORD_KEY)); // R194: its own record, not a field of the settings
+  }
+  /** R194: set the word (Settings › Numbers). */
+  setWord(w: WordSetting): void {
+    this.word = w;
+    void this.kv.set(WORD_KEY, w);
   }
   /** Entry LaTeX, result LaTeX and the Home numeric value of finished entries; nothing that needs the engine. */
   saveHistory(): void {

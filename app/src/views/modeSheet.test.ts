@@ -210,7 +210,7 @@ describe("Settings, a level of the sheet (R49)", () => {
   });
   it("Numbers: the Decimal mark row first (R57), the Fmt key cycle (R40: its five ticks a level of their own, the hint under the first), Decimals in Fixed stepped in place, and Uncertainty", () => {
     const s = settings(2);
-    expect(s.level.items.map((x) => x.id)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups", "word"]);
     expect(byId(s, "fmtCycle")?.value).toBe("STD SCI ENG");
     s.pickNumber(2);
     expect(s.path).toBe("Settings › Numbers › Fmt key cycle");
@@ -267,7 +267,7 @@ describe("Settings, a level of the sheet (R49)", () => {
   it("Marks (R124): three buttons, Muted, ⚠ coloured and ⚠ + reason (the default); ◀ ▶ step them and the sheet stays; Numbers keeps at most seven rows", () => {
     const s = settings(2);
     expect(s.level.items.length).toBeLessThanOrEqual(7);
-    expect(s.level.items.map((x) => x.id)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups", "word"]);
     expect(byId(s, "marks")?.label).toBe("Marks");
     expect(byId(s, "marks")?.options?.map((o) => o.label)).toEqual(["Muted", "⚠ coloured", "⚠ + reason"]);
     s.level.highlight = at(s, "marks");
@@ -281,6 +281,26 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(pick.kind).toBe("run");
     if (pick.kind === "run") pick.item.run?.();
     expect(session.settings.marks).toBe("reason");
+  });
+  it("Word (R194): the row says the word and opens its level: the size as four buttons and Signed as a switch, both kept in session.word", () => {
+    const s = settings(2);
+    expect(byId(s, "word")?.value).toBe("64 · unsigned");
+    expect(session.word).toBeUndefined(); // nothing set, nothing stored
+    s.level.highlight = at(s, "word");
+    s.pickNumber(7);
+    expect(s.level.items.map((x) => x.id)).toEqual(["bits", "signed"]);
+    expect(byId(s, "bits")?.options?.map((o) => o.label)).toEqual(["8", "16", "32", "64"]);
+    s.level.highlight = at(s, "bits");
+    expect(marked(s)).toBe("64");
+    s.right();
+    expect(session.word).toEqual({ bits: 8, signed: false }); // ◀ ▶ step the size, round the end
+    s.activate(at(s, "signed"));
+    expect(session.word).toEqual({ bits: 8, signed: true });
+    expect(byId(s, "signed")?.selected).toBe(true);
+    const pick = s.pickOption(at(s, "bits"), "32");
+    expect(pick.kind).toBe("run");
+    if (pick.kind === "run") pick.item.run?.();
+    expect(session.word).toEqual({ bits: 32, signed: true });
   });
   it("Digit groups (R125): three buttons, the thin space (the default), the apostrophe and the comma; ◀ ▶ step them and the sheet stays", () => {
     const s = settings(2);

@@ -51,7 +51,7 @@ describe("the session and the word (R194)", () => {
     const calc = new FakeCalc();
     const seen: CalcSettings[] = [];
     const home = calc.home.bind(calc);
-    calc.home = (giac: string, s: CalcSettings) => (seen.push(s), home(giac));
+    (calc as { home: (giac: string, s: CalcSettings) => ReturnType<FakeCalc["home"]> }).home = (giac, s) => (seen.push(s), home(giac));
     return { calc, seen };
   };
 

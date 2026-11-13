@@ -60,6 +60,9 @@ export interface HomeSettings {
    *  the float path. The host applies it with the engine's giac_set_pow_limit(); Giac's default is 1e8.
    *  1e5 ≈ results up to ~43,000 digits. */
   powLimit: number;
+  /** R194: the word size and sign of the short forms of the word ops (wordOps.ts); absent: 64 bits, unsigned. */
+  word?: number;
+  signed?: boolean;
 }
 
 /** G82: Giac's clock in Home, a safety net behind the step budget: a call whose checks are far apart (big-integer work

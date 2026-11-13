@@ -23,6 +23,7 @@ import { BRIGHTNESS, validLook, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
+import { DEFAULT_WORD, WORD_SIZES, type WordBits, type WordSetting } from "../state/wordSetting.ts";
 /** The presets' model (R88) is part of this chunk; R89 draws it in Mode (views/presetsView.svelte.ts). */
 export { presetsFor } from "../state/presets.svelte.ts";
 
@@ -312,7 +313,7 @@ function appearanceItems(session: Session): MenuItem[] {
 /** Numbers (docs/05 3.4, at most seven rows): the decimal mark (R57: a value row, Point or Comma), the Fmt key's cycle
  *  (R40: a row that opens its five ticks, its value the cycle), the decimals Fixed shows (S2 I3), how a result shows
  *  the digits a constant's σ leaves uncertain (R40: a value row), how its mark is drawn (R124: three buttons) and the
- *  separator of its digit groups (R125: three buttons; never the comma while the comma is the decimal mark). */
+ *  separator of its digit groups (R125: three buttons; never the comma while the comma is the decimal mark), and the word (R194: a row that opens its two, the size as four buttons and Signed as a switch). */
 function numbersItems(session: Session): MenuItem[] {
   const s = session.settings;
   const mark: MenuItem = {
@@ -391,7 +392,41 @@ function numbersItems(session: Session): MenuItem[] {
     },
     adjust: (by) => setGroups(cycle(usable(), shownSep(), by)),
   };
-  return [mark, cycleRow, decimals, uncertainty, marks, groups];
+  // R194: the word of the base forms and of shl, shr, rotl, rotr and bnot (docs/04 5.4); its own record under `word`, set
+  // here and read lazily (state/wordSetting.ts), never a field of the settings. One row (Numbers keeps its seven) that
+  // opens a level of two: the size (four buttons) and Signed (a switch).
+  const word = (): WordSetting => session.word ?? DEFAULT_WORD;
+  const setWord = (patch: Partial<WordSetting>): void => session.setWord({ ...word(), ...patch });
+  const WORD_IDS = WORD_SIZES.map(String);
+  const sizeOf = (v: string): WordBits => WORD_SIZES.find((n) => String(n) === v) ?? DEFAULT_WORD.bits;
+  const wordSize: MenuItem = {
+    id: "bits",
+    label: modeText("settings.word"),
+    keep: true,
+    get options() {
+      return buttons(WORD_IDS, () => String(word().bits), (v) => setWord({ bits: sizeOf(v) }), (v) => v, (v) => `${v} ${modeText("settings.word.spoken")}`);
+    },
+    adjust: (by) => setWord({ bits: cycle(WORD_SIZES, word().bits, by) }),
+  };
+  const signed: MenuItem = {
+    id: "signed",
+    label: modeText("settings.signed"),
+    hint: modeText("settings.signed.hint"),
+    keep: true,
+    get selected() {
+      return word().signed;
+    },
+    run: () => setWord({ signed: !word().signed }),
+  };
+  const wordRow: MenuItem = {
+    id: "word",
+    label: modeText("settings.wordRow"),
+    get value() {
+      return `${word().bits} · ${modeText(word().signed ? "settings.signed.on" : "settings.signed.off")}`;
+    },
+    submenu: { title: modeText("settings.wordRow"), items: [wordSize, signed], remember: false },
+  };
+  return [mark, cycleRow, decimals, uncertainty, marks, groups, wordRow];
 }
 
 /** The Fmt key's cycle: a tick per notation, in today's order, the hint a second line under the first. */

@@ -133,6 +133,8 @@ export interface DisplayContext {
   groupSep?: GroupSep;
   /** R40: the muted digits' code (render/uncMute.ts muter), once loaded; absent: every digit drawn plain. */
   mute?: (r: NumericResult) => Mute | undefined;
+  /** R194: the word a base form is drawn in (Settings › Numbers); absent: 64 bits, unsigned. */
+  word?: { bits: number; signed: boolean };
 }
 
 /** The mode an item is drawn in: the a b/c form when one is chosen, else the Format key's notation (`dec`: the notation,

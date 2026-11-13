@@ -34,6 +34,7 @@ import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } f
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
+import { WORD_DEFINITIONS, wordDefinitions, wordOfSettings } from "./wordOps.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
@@ -177,6 +178,8 @@ export class EngineHost implements FactsHost {
 
   /** Our definitions already loaded into this Giac instance (ENGINE_DEFINITIONS, loaded on first use). */
   private readonly loaded = new Set<string>();
+  /** R194: the word size and sign the word ops were last defined for (wordOps.ts). */
+  private word = wordOfSettings({});
   /** UNIT_DEFINITIONS are loaded (the first units request). */
   private unitsLoaded = false;
 
@@ -213,7 +216,7 @@ export class EngineHost implements FactsHost {
   private needOurs(text: string): void {
     for (const name of definitionsUsedBy(text)) {
       if (this.loaded.has(name)) continue;
-      this.giac.eval(ENGINE_DEFINITIONS[name] ?? eseriesDefinition());
+      this.giac.eval(name in WORD_DEFINITIONS ? wordDefinitions(this.word.bits, this.word.signed)[name]! : (ENGINE_DEFINITIONS[name] ?? eseriesDefinition()));
       for (const n of name in ENGINE_DEFINITIONS ? [name] : WORKER_DEFINITION_NAMES) this.loaded.add(n); // eseries + helper
     }
   }
@@ -1235,6 +1238,7 @@ export class EngineHost implements FactsHost {
   }
 
   private useCasMode(s: CasSettings): void {
+    this.useWord(s);
     this.useMode(`cas${JSON.stringify(s)}`, s.digits, s.angle, () => {
       for (const c of casSetupCommands(s)) this.giac.eval(c);
       this.giac.setPowLimit(s.powLimit);
@@ -1242,6 +1246,7 @@ export class EngineHost implements FactsHost {
   }
 
   private useHomeMode(s: HomeSettings): void {
+    this.useWord(s);
     this.useMode(`home${JSON.stringify(s)}`, s.digits, s.angle, () => {
       for (const c of homeSetupCommands(s)) this.giac.eval(c);
       this.giac.eval(`Digits:=${Math.trunc(s.digits)}`);
@@ -1250,6 +1255,7 @@ export class EngineHost implements FactsHost {
   }
 
   private useSolveMode(s: HomeSettings): void {
+    this.useWord(s);
     this.useMode(`solve${JSON.stringify(s)}`, s.digits, s.angle, () => {
       this.giac.eval(angleCommand(s.angle));
       this.giac.eval(`timeout ${SOLVE_HARD_TIMEOUT_S}`);
@@ -1258,6 +1264,16 @@ export class EngineHost implements FactsHost {
       this.giac.eval(`Digits:=${Math.trunc(s.digits)}`);
       this.giac.setPowLimit(s.powLimit);
     });
+  }
+
+  /** R194: the word of the settings, for the short forms of wordOps.ts. When it changes, the word ops already in Giac
+   *  are defined again at once (a stored function that calls shl would read the old word otherwise). */
+  private useWord(s: { word?: number; signed?: boolean }): void {
+    const w = wordOfSettings(s);
+    if (w.bits === this.word.bits && w.signed === this.word.signed) return;
+    this.word = w;
+    const defs = wordDefinitions(w.bits, w.signed);
+    for (const name of Object.keys(defs)) if (this.loaded.has(name)) this.giac.eval(defs[name]!);
   }
 
   private useMode(key: string, digits: number, angle: "rad" | "deg", apply: () => void): void {
