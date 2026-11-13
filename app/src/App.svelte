@@ -262,11 +262,11 @@
     if (!memory && !shell.showsEntry) return dead();
     onFind(finder(), (m) => { picked = null; m.showNames(shell, entry, session, memory); });
   }
-  /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.ts, with Vars' code); `row`: the result on the line. */
+  /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.ts, in Vars' chunk); `row`: the result on the line. */
   function openStore(row?: HistoryItem): void {
     if (shell.app !== null) return;
     const store = (latex: string): void => { entry.insert(latex); enter(); }; // the name after ▶, then Enter: the one store path
-    onFind(import("./views/storeSheet.ts"), (m) => { picked = null; m.showStore({ shell, session, store }, m.storedText(session, row, entry.value)); });
+    onFind(finder(), (m) => { picked = null; m.showStore({ shell, session, store }, m.storedText(session, row, entry.value)); });
   }
   const finder = (): Promise<typeof import("./find/finder.ts")> => import("./find/finder.ts"); // (one import() site: each carries its own preload list)
   function onFind<T>(load: Promise<T>, show: (t: T) => void): void {

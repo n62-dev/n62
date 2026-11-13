@@ -146,9 +146,15 @@ describe("the name typed after ▶ (R281)", () => {
 });
 
 describe("the title's value (R281)", () => {
-  it("the line's text before ▶ when no row is stored (not worked out yet: no mark)", () => {
+  it("the line's text before ▶ when no row is stored (not worked out yet: no mark), put in the title when it comes", async () => {
     const session = new Session(new FakeCalc(), kv());
-    expect(storedText(session, undefined, "7\\blacktriangleright")).toBe("7");
-    expect(storedText(session, undefined, "\\blacktriangleright")).toBe("");
+    expect(await storedText(session, undefined, "7\\blacktriangleright")).toBe("7");
+    expect(await storedText(session, undefined, "\\blacktriangleright")).toBe("");
+    const shell: { sheet: Sheet | null } = { sheet: null };
+    const text = storedText(session, undefined, "2+3\\blacktriangleright");
+    showStore({ shell, session, store() {} }, text);
+    expect(shell.sheet?.path).toBe("Store in");
+    await text;
+    expect(shell.sheet?.path).toBe("Store 2+3 in");
   });
 });

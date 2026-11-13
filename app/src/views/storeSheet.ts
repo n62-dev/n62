@@ -5,9 +5,8 @@
 // history row); a tap on a filled name arms it (`5 · again?`) and a second tap stores; any other press disarms
 // (route.ts). Letters typed filter, and Enter stores the typed name, a new one too; Esc leaves `value ▶` on the line.
 // It takes letters, so it stays above the keypad (docs/05 3.1): Alpha and a letter key still type as on the G2.
-// A lazy chunk with Vars' code (App.svelte openStore).
+// In the chunk of Vars' code (find/finder.ts re-exports it; App.svelte openStore).
 import type { MenuItem } from "../apps/types.ts";
-import { entryText } from "../clipboard/plaintext.ts";
 import type { UserName } from "../engine/defs.ts";
 import { nameLatex, previewOf, valueOf } from "../find/names.svelte.ts";
 import { findText } from "../i18n/enFind.ts";
@@ -15,7 +14,7 @@ import { storeText as t } from "../i18n/enStore.ts";
 import { typedName } from "../render/home.ts";
 import { markText, noDigit } from "../state/displayMode.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
-import { Sheet } from "./sheet.svelte.ts";
+import { Sheet, type Level } from "./sheet.svelte.ts";
 
 /** The store sheet's id (route.ts reads its keys by it). */
 export const STORE_SHEET = "store";
@@ -34,8 +33,9 @@ export interface StoreEnv {
 }
 
 /** What is stored, as the title shows it: a row's result with its mark (`≈ 0.333333333333`), else the line's text
- *  before the ▶ (`7`, not worked out yet: no mark). Empty: nothing to show. */
-export function storedText(session: Session, row: HistoryItem | undefined, line: string): string {
+ *  before the ▶ (`7`, not worked out yet: no mark), which comes with the clipboard's plain-text code (a chunk of its own:
+ *  imported here, the unit view, which loads this chunk too, would name it). Empty: nothing to show. */
+export function storedText(session: Session, row: HistoryItem | undefined, line: string): string | Promise<string> {
   if (row?.status === "done") {
     const mark = session.mark(row);
     if (noDigit(mark)) return "⚠";
@@ -43,7 +43,7 @@ export function storedText(session: Session, row: HistoryItem | undefined, line:
     return mark ? `${markText(mark)} ${text}` : text;
   }
   const at = line.lastIndexOf(STORE_ARROW);
-  return entryText(at < 0 ? line : line.slice(0, at)).trim();
+  return import("../clipboard/plaintext.ts").then((m) => m.entryText(at < 0 ? line : line.slice(0, at)).trim(), () => "");
 }
 
 /** The name the store types for `typed` (letters and digits from the filter, or a stored name as drawn): one letter as
@@ -55,9 +55,10 @@ export function typedLatex(typed: string, names: readonly UserName[]): string {
   return n ? nameLatex(n.name) : `\\operatorname{${typed}}`;
 }
 
-/** Opens "Store in" for `value` (storedText). */
-export function showStore(env: StoreEnv, value: string): void {
+/** Opens "Store in" for `stored` (storedText; a text still to come is put in the title when it comes). */
+export function showStore(env: StoreEnv, stored: string | Promise<string>): void {
   const { session } = env;
+  let value = typeof stored === "string" ? stored : "";
   const ctx = () => session.displayContext();
   const store = (latex: string): MenuItem => ({ id: "typed", label: "", run: () => env.store(latex) });
   /** A stored name: its value with its mark, and the question before it is replaced. */
@@ -87,7 +88,7 @@ export function showStore(env: StoreEnv, value: string): void {
     return [...cells, ...rest.map((n) => filled(n, false))];
   };
   const firstFree = LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
-  env.shell.sheet = new Sheet(STORE_SHEET, value ? t("store.title", { value }) : t("store.titleBare"), items, {
+  const sheet = new Sheet(STORE_SHEET, value ? t("store.title", { value }) : t("store.titleBare"), items, {
     cells: STORE_COLUMNS,
     filterable: true,
     remember: false,
@@ -98,4 +99,10 @@ export function showStore(env: StoreEnv, value: string): void {
       return f === "" ? undefined : t("store.typed", { name: f });
     },
   });
+  env.shell.sheet = sheet;
+  if (typeof stored !== "string")
+    void stored.then((v) => {
+      value = v;
+      if (v) (sheet.levels[0] as Level).title = t("store.title", { value: v });
+    });
 }

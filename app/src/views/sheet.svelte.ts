@@ -38,7 +38,8 @@ export class Level {
   highlight = $state(-1);
   filter = $state("");
 
-  readonly title: string;
+  /** R281: a state, so a title whose text comes later (the store sheet's value) is drawn when it comes. */
+  title = $state("");
   /** Read on every draw, so a menu whose items change while it is open (a result arrives) stays current. */
   private readonly source: () => readonly MenuItem[];
   /** Key of the remembered pick of this level. */
