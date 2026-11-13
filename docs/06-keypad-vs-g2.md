@@ -4,11 +4,11 @@
 Written 2026-10-13 from a key-by-key comparison of the G2 keypad with `spec/keyboard.yaml`, checked against the decision docs, and then reviewed point by point with the owner (decision P12 in [decisions.md](decisions.md)). **One place for this question:** when a key differs from the G2, the reason is here; the layout itself is `spec/keyboard.yaml`, the G2 behaviour is `spec/mapping/vc-2026-10-11/keys.yaml`. The Fmt key (our replacement of the On/Off key) is left out. Rules that decide a difference: [03-feature-analysis.md](03-feature-analysis.md) section 0 (rules 5–9, 11) and CLAUDE.md.
 
 ## 1. Planned, not built yet (not a departure)
-The layer is dead only because the feature is not built: the key is dimmed in that layer. Its legend is missing until then, except Help's, which is drawn dimmed on Shift + Select (`spec/keyboard.yaml`).
+The layer is dead only because the feature is not built: the key is dimmed in that layer. Its legend is missing until then.
 
 | Key and layer | Planned as | Where decided |
 |---|---|---|
-| Shift + Select (row 2, col 4): Help (the G2's function on its r1c4) | context help from the Find index (milestone 6, R197); the owner may veto | docs/04 5.1, R278, section 3b |
+| Shift + Select (row 2, col 4): Help (the G2's function on its r1c4) | context help from the Find index (milestone 6, built in R197: the syntax and example of the function at the cursor, else Find); the owner may veto | docs/04 5.1, R278, section 3b |
 | Shift + 4, 5 | matrix editor, `[ ]` (EN5, milestone 6) | docs/04 5.1 |
 | Shift + 7 (List) | deferred with Statistics | docs/04 5.1 |
 
@@ -87,7 +87,7 @@ The owner's rule: "the layout should stay the same from start of release". From 
 5. It is not a user slot. If a user could bind it, a later built-in would take that binding away, which is a move for that user. The user's keys are U1–U6.
 6. It is filled only with the owner's yes, from the counts of the task benchmark (docs/04 5.1), and the layout lock records the fill as an addition.
 
-**Reserved at the tag:** the Shift layers of Vars, a b/c, `( )`, 7, 1, 0 and Deselect. (Shift + 7 is the G2's List; it waits for the list editor that comes with Statistics.) No tap is blank: U1–U6 are empty, but they are the user's. Closed, not reserved: the pad has no Shift layer (section 3 point 8) and Alpha + 0 is dead (section 3 point 7). A planned layer that misses the tag stays dead and dimmed until its package lands, which is a fill and not a move: Help on Shift + Select (R197), Shift + 4 (R187), Shift + 5 (R185), Shift + − (R193).
+**Reserved at the tag:** the Shift layers of Vars, a b/c, `( )`, 7, 1, 0 and Deselect. (Shift + 7 is the G2's List; it waits for the list editor that comes with Statistics.) No tap is blank: U1–U6 are empty, but they are the user's. Closed, not reserved: the pad has no Shift layer (section 3 point 8) and Alpha + 0 is dead (section 3 point 7). A planned layer that misses the tag stays dead and dimmed until its package lands, which is a fill and not a move: Shift + 4 (R187), Shift + − (R193).
 
 **The Alpha layers that fall back are final.** The keys of rows 0–2 other than U1–U6, and Enter, ⌫, Fmt, `.` and ␣, have no letter: a flick down on them does the tap. They get no letter later, because a letter there would change what a flick down does.
 
