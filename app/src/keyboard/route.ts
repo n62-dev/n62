@@ -48,6 +48,8 @@ export interface RouteCtx {
   openFind(slot?: { id: string; layer: Layer }): void;
   /** Vars (R4b): Find on the user's variables and functions; Shift + Math, Memory: the same list with delete and clear all. */
   openNames(memory: boolean): void;
+  /** Help (R197, Shift + Select): the help sheet of the function at the cursor, else Find. */
+  openHelp(): void;
   /** Store ▶ (R281): the store sheet; `row`, the result Store ▶ put on the line (Ans on an empty line). */
   openStore(row?: HistoryItem): void;
   /** Run with the clipboard code, now or once it has loaded (a returned promise holds the keys queued for the load). */
@@ -147,6 +149,9 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "find":
       c.openFind();
+      break;
+    case "help":
+      c.openHelp();
       break;
     case "selectGrow":
     case "selectShrink":

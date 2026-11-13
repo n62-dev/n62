@@ -252,8 +252,17 @@
   function openFind(slot?: FindSlot): void {
     if (!slot && !shell.showsEntry) return dead();
     if (loaders.findCode && sheetChunk.C) return showFind(loaders.findCode, slot);
+    onFind(findNow(), (f) => showFind(f, slot));
+  }
+  /** Find's code and index now (Math, Help): an idle load under way is hurried. */
+  function findNow(): Promise<FindCode> {
     if (loaders.findLoading) void finder().then((m) => m.loadIndex(true)).catch(() => {}); // hurry the idle load
-    onFind(loadFind(true), (f) => showFind(f, slot));
+    return loadFind(true);
+  }
+  /** Help (R197, Shift + Select): the help sheet of the function at the cursor (views/helpSheet.ts); none there: Find. */
+  function openHelp(): void {
+    if (!shell.showsEntry) return dead();
+    onFind(findNow().then(async (f) => ({ f, it: await f.m.helpAt(entry, f.index.byId) })), ({ f, it }) => (it ? ((picked = null), f.m.showHelp(shell, entry, it)) : showFind(f)));
   }
   type FindSlot = { id: string; layer: Layer };
   const showFind = (f: FindCode, slot?: FindSlot): void => { picked = null; f.m.showFind(shell, entry, f.index, slot && { ...slot, userKeys }); };
@@ -427,6 +436,7 @@
     openTemplates,
     openShiftPalette,
     openFind,
+    openHelp,
     openNames,
     openStore,
     withClip,
