@@ -8,6 +8,11 @@ import { aboutData, aboutLoading, type AboutData } from "./aboutData.svelte.ts";
 import { currentEngine, isTested } from "../state/browser.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
 import { desktopHelpText } from "../keyboard/desktopHelp.ts";
+import type { DesktopMap } from "../keyboard/desktopKeys.ts";
+
+/** R131: the desktop key map, from hwkeys.ts's chunk (loaded with MathLive at start, so in by the time Settings opens). */
+let desktopMap: DesktopMap | undefined;
+const desktopLoad = (): Promise<void> => import("../entry/hwkeys.ts").then((m) => void (desktopMap = m.desktop));
 
 export const REPO_URL = "https://github.com/n62-dev/n62";
 const LICENCE = "GPL-3.0-or-later";
@@ -76,6 +81,7 @@ function aboutRows(d: AboutData): MenuItem[] {
  *  Parts; then the desktop keys (R131), a text built from the spec. */
 export function helpItems(env: SettingsEnv = {}): MenuItem[] {
   const tips = env.tips;
+  if (!desktopMap) void desktopLoad();
   return [
     ...(tips ? [{ id: "tips", label: t("tips.row"), run: () => tips() }] : []),
     { id: "report", label: t("report.row"), run: () => env.data?.((c) => c.reportProblem()) },
@@ -86,7 +92,7 @@ export function helpItems(env: SettingsEnv = {}): MenuItem[] {
       label: t("keys"),
       hint: t("keys.hint"),
       get submenu() {
-        return textLevel(t("keys"), desktopHelpText());
+        return { ...textLevel(t("keys"), desktopMap ? desktopHelpText(desktopMap) : t("loading")), loading: () => (desktopMap ? null : desktopLoad()) };
       },
     },
   ];

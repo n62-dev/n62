@@ -2,7 +2,8 @@
 // R31 (F27): the keys of a hardware keyboard (a desktop, a Bluetooth keyboard on the phone or the Tab One) take the
 // keypad's path. A character some keypad key types does what that key does (digits, `.`, `+ - * / ^ ( ) ,`, and the
 // characters on a Shift or Alpha layer); `e` or `E` right after a number's digits is the exponent key ᴇ; a letter types
-// itself as a name letter; a character no key types does nothing. The grid checks every printable ASCII character
+// itself as a name letter; `%` `{` `[` are the Shift palettes' % and Shift + 8 and Shift + 5 (R131); a character no key
+// types does nothing. The grid checks every printable ASCII character
 // against the same keys pressed on the keypad (taps), in textbook and one-line entry, after a number and at the start
 // of the line. Expected values are derived (mathematically provable).
 import { readFileSync } from "node:fs";
@@ -42,6 +43,9 @@ function keypad(ch: string, afterNumber: boolean): Step[] {
   if (ch === "<") return taps("shift", "d6", "d7");
   if (ch === ">") return taps("shift", "d6", "d9");
   if (ch === "!") return [...taps("shift", "d9"), { item: "fact" }];
+  if (ch === "%") return [...taps("shift", "d9"), { item: "percent" }]; // R131: the % cell (R110), `\%`
+  if (ch === "{") return taps("shift", "d8"); // R131: the list braces { }
+  if (ch === "[") return taps("shift", "d5"); // R131: the matrix [ ]
   const hit = TYPED.get(ch);
   if (hit) return hit[1] === "primary" ? taps(hit[0]) : taps(hit[1], hit[0]);
   if (/^[a-z]$/.test(ch)) return [{ letter: ch }];
@@ -328,5 +332,59 @@ test.describe("R73: a warm app opens", () => {
     await page.keyboard.type("2x");
     await page.waitForFunction(() => window.n62.shell.app === "function" && window.n62.shell.loading === null);
     await expect.poll(() => entryValue(page)).toBe("2x");
+  });
+});
+
+// ---- R131: the desktop key map (spec/keyboard.yaml `desktop:`) ----------------------------------------------------------
+test.describe("R131: the desktop keys", () => {
+  test.beforeEach(async ({ page }) => {
+    await open(page);
+    await page.evaluate(() => window.n62.entry.focus());
+  });
+
+  test("200*5% gives the line the keys give (the % cell's \\%; it was 200 × 5)", async ({ page }) => {
+    await page.keyboard.type("200*5%");
+    const hw = await entryValue(page);
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["d2", "d0", "d0", "mul", "d5", "shift", "d9"]);
+    await page.getByTestId("menu").locator('[data-id="percent"]').tap();
+    expect(hw).toBe("200\\times5\\%");
+    expect(await entryValue(page)).toBe(hw);
+  });
+
+  test("Alt+S and Alt+Shift+S press sin and sin⁻¹ as the keys do; Home is ⇤", async ({ page }) => {
+    await page.keyboard.press("Alt+KeyS");
+    await page.keyboard.type("1");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("Alt+Shift+KeyS");
+    await page.keyboard.type("2");
+    const hw = await entryValue(page);
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["sin", "d1", "right", "shift", "sin", "d2"]);
+    expect(hw).toBe(await entryValue(page));
+    expect(hw).toBe("\\sin\\left(1\\right)\\arcsin\\left(2\\right)");
+    await page.keyboard.press("Home");
+    await page.keyboard.type("3");
+    expect(await entryValue(page)).toBe(`3${hw}`);
+  });
+
+  test("Alt+K folds and unfolds the keypad in Home and CAS, does nothing in an app, and each fold counts as one (fold.hw)", async ({ page }) => {
+    const keys = page.getByTestId("keys");
+    const folds = (): Promise<number> => page.evaluate(async () => (await window.n62.session.uses()).get("fold.hw"));
+    for (const view of ["home", "cas"]) {
+      await expect.poll(() => page.evaluate(() => window.n62.session.view)).toBe(view);
+      await page.keyboard.press("Alt+KeyK");
+      await expect(keys).toHaveAttribute("data-folded", "true");
+      await page.keyboard.press("Alt+KeyK");
+      await expect(keys).toHaveAttribute("data-folded", "false");
+      await page.keyboard.press("Alt+KeyH"); // the place switch: Home ↔ CAS
+    }
+    await expect.poll(folds).toBe(2);
+    await tap(page, ["@symb"]); // an app: no results mode
+    await page.waitForFunction(() => window.n62.shell.app === "function" && window.n62.shell.loading === null);
+    await page.evaluate(() => window.n62.entry.focus());
+    await page.keyboard.press("Alt+KeyK");
+    await expect(keys).toHaveAttribute("data-folded", "false");
+    expect(await folds()).toBe(2);
   });
 });

@@ -26,6 +26,10 @@ import { numberRunStart } from "./numberRun.ts";
 import type { Layer } from "../keyboard/keyboard.ts";
 import { chordOf, desktop } from "../keyboard/desktopKeys.ts";
 
+/** The desktop key map (R131), for the help text: it reaches it through this chunk, so the map stays in it and no
+ *  dynamic import of hwkeys lists a chunk more. */
+export { desktop };
+
 /** What the entry line (EntryController) lets the handler do. */
 export interface HwTarget {
   readonly field: MathfieldElement | undefined;

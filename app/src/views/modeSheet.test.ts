@@ -393,8 +393,10 @@ describe("Settings, a level of the sheet (R49)", () => {
 describe("Help and about (R87)", () => {
   const loaded = (s: Sheet) => vi.waitFor(() => expect(s.level.items[0]?.id).not.toBe("loading"));
 
-  it("Desktop keys (R131) is a text built from spec/keyboard.yaml `desktop:`: every key that is not its own legend, and the actions", () => {
+  it("Desktop keys (R131) is a text built from spec/keyboard.yaml `desktop:`: every key that is not its own legend, and the actions", async () => {
+    await import("../entry/hwkeys.ts"); // (the app loads it with MathLive; the level reads the map from it)
     const s = settings(5);
+    await vi.waitFor(() => expect(s.level.items.length).toBeGreaterThan(0));
     expect(s.activate(at(s, "keys"))).toEqual({ kind: "stay" });
     expect(s.path).toBe("Settings › Help and about › Desktop keys");
     const text = s.level.text ?? "";

@@ -3,7 +3,7 @@
   import { APPS, placeGlyph } from "../apps/registry.ts";
   import type { AppShell } from "../apps/shell.svelte.ts";
   import { t, type MessageKey } from "../i18n/index.ts";
-  import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
+  import { alphaLower, specialKey, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
   import { updateOffer } from "../state/updateOffer.svelte.ts";
@@ -23,8 +23,8 @@
     onmode: (at: string) => void;
   } = $props();
 
-  /** A status-line control as a key (R15b, R15c1): its tap takes the same path as a key press (an open sheet gives way, it runs at once while an app loads, and waits while a sheet's code loads). */
-  const statusKey = (id: string, name: "apps" | "symb" | "plot" | "num" | "menu"): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
+  /** A status-line control as a key (R15b, R15c1: keyboard.ts specialKey): its tap takes the same path as a key press. */
+  const statusKey = specialKey;
   const PLACE_KEY = statusKey("place", "apps"), MENU_KEY = statusKey("menu-status", "menu");
   const TABS = (["symb", "plot", "num"] as const).map((v) => ({ view: v, name: t(`view.${v}`), key: statusKey(`tab-${v}`, v) }));
 
