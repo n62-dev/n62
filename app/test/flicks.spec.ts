@@ -39,7 +39,7 @@ test("flick up types the shift function, flick down the letter (capital); a tap 
 });
 
 test("a flick in a direction with no function does nothing (the bubble says ✕)", async ({ page }) => {
-  const f = await touch(page, "d5"); // 5 has no shift function
+  const f = await touch(page, "d7"); // 7 has no shift function (reserved, docs/06 3b; 5 has Shift + 5 since R185)
   await f.move(0, -35);
   await expect(bubble(page)).toHaveText("✕");
   await expect(bubble(page)).toHaveAttribute("data-none", "true");
@@ -190,7 +190,7 @@ test("two thumbs keep their order: a second finger fires the first one's flick a
   await send(cdp, "touchMove", [{ x: a.x, y: a.y + 30, id: 1 }]); // armed: A
   await send(cdp, "touchStart", [{ x: a.x, y: a.y + 30, id: 1 }, { ...b, id: 2 }]);
   expect(await entryValue(page)).toBe("A");
-  await send(cdp, "touchMove", [{ x: a.x, y: a.y + 30, id: 1 }, { x: b.x, y: b.y - 30, id: 2 }]); // 5 up: nothing (no shift)
+  await send(cdp, "touchMove", [{ x: a.x, y: a.y + 30, id: 1 }, { x: b.x, y: b.y - 30, id: 2 }]); // 5 up: armed, not fired
   await send(cdp, "touchMove", [{ x: a.x, y: a.y + 30, id: 1 }, { x: b.x, y: b.y + 30, id: 2 }]); // 5 down: V
   await send(cdp, "touchEnd", [{ x: a.x, y: a.y + 30, id: 1 }]);
   await send(cdp, "touchEnd", []);

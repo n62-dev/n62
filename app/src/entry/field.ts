@@ -10,10 +10,12 @@ import { EMARK, isChipLatex } from "./macros.ts";
 import { lineTouch } from "./lineTouch.ts";
 import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
+import { GROW_MATRIX, type Grown } from "./matgrow.ts";
 
 export { isInfixWord } from "./boxes.ts"; // R197: for the Help key's chunk (cursorFn.ts FnWords), from the chunk that holds boxes.ts
 
 export { SelectChain } from "./grow.ts"; // R279: Select and Deselect, loaded with the field
+export { Grown } from "./matgrow.ts"; // R185: the matrices Shift + 5 made, loaded with the field
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */
 export const CARET = '\\char"5E ';
@@ -200,9 +202,29 @@ function forceNoSystemKeyboard(mf: MathfieldElement): void {
   }
 }
 
-/** A type / insert / cmd action on the field (EntryController.run once the field is up). */
-export function runOnField(mf: MathfieldElement, a: ActionBody): void {
+/** A type / insert / cmd action on the field (EntryController.run once the field is up). `grown`: the line's Shift + 5
+ *  matrices (R185). */
+export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown): void {
+  // R185: the matrices are found again after what changed the line since the last key (a result put on it, a character
+  // MathLive typed itself) and after this key
+  grown?.refresh(mf);
+  onField(mf, a, grown);
+  grown?.refresh(mf);
+}
+
+function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined): void {
+  // R185: a tapped ▶ or ▼ (or a hardware arrow) at the edge of Shift + 5's matrix adds a column or row, or takes back an
+  // empty one; a drag step on the pad (its action marked `drag` by the Keypad) only moves
+  if (a.kind === "cmd" && !("drag" in a) && grown?.key(mf, a.name)) {
+    mf.focus();
+    return;
+  }
   if (a.kind === "cmd" && a.name === "moveToNextChar" && nextBox(mf)) {
+    mf.focus();
+    return;
+  }
+  if (a.kind === "cmd" && a.name === "deleteBackward" && grown?.back(mf)) {
+    // R186: ⌫ in an empty last row or column of Shift + 5's matrix takes it back
     mf.focus();
     return;
   }
@@ -253,6 +275,7 @@ export function runOnField(mf: MathfieldElement, a: ActionBody): void {
     // L9: with the term selected, #@ takes all of it as the numerator: \frac{\frac12}{□}
     apply(mf, a);
   } else apply(mf, a);
+  if (a.kind === "insert" && a.latex === GROW_MATRIX) grown?.add(mf); // R185: this matrix grows
   if (a.kind === "cmd") settle(mf, a.name); // R27b (F23): ◀ ▶ ▲ ▼ and the trackpad stop only at a box
   mf.focus();
 }

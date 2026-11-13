@@ -18,6 +18,9 @@ export class EntryController {
   private hwKey: typeof import("./hwkeys.ts").hardwareKey | undefined;
   /** R279: the chain of Select presses that Deselect walks back (entry/grow.ts): loaded with MathLive. */
   private chain: import("./grow.ts").SelectChain | undefined;
+  /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts; runOnField keeps it up to
+   *  date): loaded with MathLive. */
+  private grown: import("./matgrow.ts").Grown | undefined;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
   private stored: string[] = [];
@@ -85,6 +88,7 @@ export class EntryController {
     this.ready = Promise.all([mathlive.load(), import("./field.ts"), import("./hwkeys.ts"), line]).then(([m, f, h, l]) => {
       this.onField = f.runOnField;
       this.chain = new f.SelectChain();
+      this.grown = new f.Grown();
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips) + (this.pendingValue ?? "");
@@ -163,6 +167,7 @@ export class EntryController {
     this.touched = true;
     this.onEdit();
     latex = this.adopt(latex, chips);
+    this.grown?.clear(); // R185: a recalled line's matrix does not grow (the default; a cleared line has none to find)
     if (!this.mf) {
       this.pendingValue = latex;
       this.queue = [];
@@ -233,7 +238,7 @@ export class EntryController {
       this.queue.push(a);
       return;
     }
-    this.onField?.(this.mf, a);
+    this.onField?.(this.mf, a, this.grown);
   }
 
   /** R279: Select (`grow`) or Deselect on the line (entry/grow.ts); false where the key does nothing. */
