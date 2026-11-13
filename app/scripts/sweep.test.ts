@@ -186,6 +186,23 @@ describe("sweep edge generator (G116)", () => {
       if (o.kind === "value") expect(o.re.slice(0, 52), cases[i]!.mp).toBe(cases[i]!.want.slice(0, 52));
     });
   }, 60_000);
+  it("G345: skips a finite value built on an infinite intermediate, keeps an everyday quotient and a pole", () => {
+    // derived: tanh(10^50) = 1 - 2e^(-2·10^50) is 1 at every precision the oracle runs, so atanh is infinite and the quotient 0 for mpmath;
+    // the true value of (-1-10^-15)/atanh(tanh(10^50)) is about -1E-50 (G309's report), which no rung can show
+    const cases = [
+      "DIV(((mpf('-1'))-(POW(mpf('10'),mpf('-15')))),ATANH(tanh(POW(mpf('10'),mpf('50')))))",
+      "DIV(mpf('1'),ATANH(mpf('0.5')))",
+      "LN(mpf('0'))",
+    ];
+    const out = oracleFor(cases.map((mp) => ({ latex: mp, mp, angle: "rad" as const, digits: 12 as const })), pythonFor(repo, mainCheckout), resolve(repo, "tools/probes/sweep/oracle.py"));
+    expect(out[0]).toMatchObject({ kind: "skip" });
+    expect(out[0]!.kind === "skip" ? out[0]!.reason : "").toMatch(/infinite intermediate/);
+    expect(out[1]!.kind).toBe("value");
+    // derived: atanh(1/2) = (ln 3)/2, so 1/atanh(1/2) = 2/ln 3 = 2/1.0986122886681098 = 1.82047845325367…
+    if (out[1]!.kind === "value") expect(out[1]!.re.slice(0, 18)).toBe("1.8204784532536747");
+    // an infinite final value stays a pole (F8: Home must refuse it), not a skip
+    expect(out[2]).toEqual({ kind: "novalue" });
+  }, 60_000);
   it("G162: skips a case past the oracle's digit cap with its reason, never judges it at fewer digits", () => {
     const out = oracleFor([{ latex: "x", mp: "((mpf('1'))-(COS(mpf('1e-2000'))))*(mpf('1e4000'))", angle: "rad", digits: 12 }], pythonFor(repo, mainCheckout), resolve(repo, "tools/probes/sweep/oracle.py"));
     expect(out[0]).toMatchObject({ kind: "skip" });
