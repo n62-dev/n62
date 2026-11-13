@@ -58,6 +58,11 @@ export const SPEED_KNOWN: Record<string, string> = {
   // desktop shows Overflow)
   "precision/g186-abs-cos-acosh-1e-300-30": "HOME_CLOCK_S",
   "precision/g186-deg-cos-tanh-acosh-1e-1000-12": "HOME_CLOCK_S",
+  // G340 (F228, patch 0045): normal and simplify of sqrt(2^(1/3)+3^(2/3)) are one Giac call of 171-225 ms (about 98,800
+  // checks, step-budget.ts BUDGET=home, 2026-11-13), the degree-18 rootof of the nested root; 8× slower that is 1.4-1.8 s
+  // against HOME_CLOCK_S (1.5 s), so under load the Tab One shows the time-out (normal) or the input back (simplify)
+  "home/g340-normal-sqrt-cbrt2-plus-cbrt9": "HOME_CLOCK_S",
+  "home/g340-simplify-sqrt-cbrt2-plus-cbrt9": "HOME_CLOCK_S",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));

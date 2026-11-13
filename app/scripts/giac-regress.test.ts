@@ -71,9 +71,11 @@ describe("giac-regress exporter", () => {
     // patch 0030 (G152: the real part of evalf(sqrt(-pi)) and of (-pi)^(3/2) is 0, at Digits 40 and 14) and patch 0038
     // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
     // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power), patch 0042 (G170:
-    // VARS() keeps its size after ilaplace), patch 0043 (G322: solve keeps the real root of a cubic, 6 lines); the check file
-    // gets G149's written line for the CAS view's exact forms
-    expect([r.nCheck, r.nPatched]).toEqual([1, 32]);
+    // VARS() keeps its size after ilaplace), patch 0043 (G322: solve keeps the real root of a cubic, 6 lines), patch 0047 (G331: simplify of an ln
+    // of a nested root, 3 lines); the check file gets G149's written line for the CAS view's exact forms
+    expect([r.nCheck, r.nPatched]).toEqual([1, 35]);
+    expect(r.patched.match(/\/\/ patch 0047-tsimplify-ln-undef-arg\.patch\n/g)).toHaveLength(3);
+    expect(r.patched).toContain("// patch 0047-tsimplify-ln-undef-arg.patch\n// g331-simplify-f214-answers (derived: it answers)");
     expect(r.patched.match(/\/\/ patch 0043-solve-ckrange-imag-noise\.patch\n/g)).toHaveLength(6);
     expect(r.patched).toContain('Digits:=60:; pc("g322-size-solve-x3-2x-5-60",\'size(solve(x^3-2*x-5=0,x))\',1,1/10^30);');
     expect(r.patched).toContain("// patch 0042-ilaplace-assumed-name-purged.patch\n// g170-ilaplace-vars-size");
@@ -95,6 +97,15 @@ describe("giac-regress exporter", () => {
     expect(angled.map((k) => /pc\("([^"]*)"/.exec(lines[k]!)?.[1])).toEqual(["g135-deg-atan-2i", "g135-deg-cos-atan-2i", "g135-grad-atan-2i", "g135-grad-cos-atan-2i"]);
     expect(lines.indexOf("angle_radian:=1:;")).toBe(angled.at(-1)! + 1);
     expect(lines.slice(angled.at(-1)! + 1).some((l) => l.includes('pc("'))).toBe(false);
+  });
+
+  it("G331f1: the two g331-evalf-* Home rows rest on patch 0047 and stay out of the check file", () => {
+    const ids = ["g331-evalf-simplify-sqrt-ln-nested-root-30", "g331-evalf-simplify-asinh-cbrt2-pow-pi-30"];
+    for (const id of ids) expect(PATCHED_IDS.get(id)).toBe("0047-tsimplify-ln-undef-arg.patch");
+    const c = { id: ids[0]!, input: "evalf(simplify(sqrt(ln(1+sqrt(1+2^(1/3))))))", settings: { digits: 30 }, expect: "0.957920253118554998403493714904", mark: "⚠", source: "oracle" };
+    const r = build([["precision.yaml", c]]) as { check: string; patched: string };
+    expect(r.check).not.toContain("g331");
+    expect(r.patched).toContain(`// patch 0047-tsimplify-ln-undef-arg.patch\n// ${ids[0]} (precision.yaml, oracle)`);
   });
 
   it("explicitPrecision: only a second argument of approx or evalf", () => {
