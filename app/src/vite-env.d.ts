@@ -10,6 +10,11 @@ declare module "*.yaml?palettes" {
   const data: unknown;
   export default data;
 }
+/** spec/keyboard.yaml's desktop keys (R131), for hwkeys.ts's chunk (vite-plugin-yaml.ts). */
+declare module "*.yaml?desktop" {
+  const data: unknown;
+  export default data;
+}
 /** The About screen's data, built from package.json, THIRD_PARTY.md, LICENSES/ and the trust facts of tools/trust/facts.mts (vite-plugin-about.ts). */
 declare module "virtual:about" {
   interface AboutPart {

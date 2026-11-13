@@ -352,6 +352,81 @@ keys:
   - { id: add, row: 9, col: 4, cls: op, label: { primary: "+", shift: "Ans", alpha: ";" }, primary: { type: "+" },
       shift: { insert: "\\ans", sample: ["\\ans", "7"] }, alpha: { type: ";" }, source: virtual-calc }  # r10c5 (shift Ans, docs/04 2.8: the view's last result, read at Enter; alpha ;)
 
+# ---- Desktop keys (R131; owner brief 2026-11-02 sections 2.8 and 3): the hardware key for every key and layer, read
+# by app/src/entry/hwkeys.ts (`keyboard.yaml?desktop`, a lazy chunk with MathLive; not in the start chunk) and listed in
+# Settings › Help and about › Desktop keys. A layer is a key name or a list of them, or `{ why: … }` when it has none.
+#   - a single character is typed (a letter types itself as a name letter, R45); `Space` is the space bar
+#   - `Alt+…` and `Ctrl+…` are chords: Alt + a letter for a key's tap, Alt + Shift + the same letter for its Shift layer
+#     where the pair shares one; Ctrl is Cmd on a Mac (R119), Alt is Option (the key's place, so Option's own character
+#     gives way); AltGr types its character as before
+#   - every other name is KeyboardEvent.key (Enter, Escape, Home, F1, ArrowUp)
+#   - `e` or `E` right after a number's digits is ᴇ too, and `)` and a second `|` leave their pair (hwkeys.ts)
+# keyboard.test.ts checks that every key and layer of `keys:` has an entry here (a user key's three slots too), and that no
+# two share a key: a key or layer added later brings its desktop key in the same change. A missing layer (a reserved or a
+# closed cell, docs/06 3b) needs neither. `actions:` are the status line's controls and results mode, which no key holds.
+desktop:
+  keys:
+    u1: { primary: Alt+1, shift: Alt+Shift+1, alpha: { why: "the slot's own text: type it" } }
+    u2: { primary: Alt+2, shift: Alt+Shift+2, alpha: { why: "the slot's own text: type it" } }
+    u3: { primary: Alt+3, shift: Alt+Shift+3, alpha: { why: "the slot's own text: type it" } }
+    u4: { primary: Alt+4, shift: Alt+Shift+4, alpha: { why: "the slot's own text: type it" } }
+    u5: { primary: Alt+5, shift: Alt+Shift+5, alpha: { why: "the slot's own text: type it" } }
+    u6: { primary: Alt+6, shift: Alt+Shift+6, alpha: { why: "the slot's own text: type it" } }
+    up: { primary: ArrowUp }
+    down: { primary: ArrowDown }
+    left: { primary: ArrowLeft }
+    right: { primary: ArrowRight }
+    menu: { primary: Alt+M, shift: Alt+Shift+M }
+    esc: { primary: Escape, shift: Alt+Shift+Backspace }  # Shift+Escape is the browser's task manager on Windows
+    undo: { primary: Ctrl+Z, shift: Home }
+    redo: { primary: [Ctrl+Y, Ctrl+Shift+Z], shift: End }
+    select: { primary: Alt+ArrowUp, shift: F1 }
+    deselect: { primary: Alt+ArrowDown }
+    vars: { primary: Alt+V, alpha: A }
+    math: { primary: Alt+F, shift: Alt+Shift+F, alpha: B }
+    tmpl: { primary: Alt+Shift+U, shift: Alt+U, alpha: C }  # Alt+U, the shorter, for the units key
+    x: { primary: x, shift: y, alpha: D }
+    frac: { primary: Alt+D, alpha: E }
+    bksp: { primary: Backspace, shift: Delete }
+    pow: { primary: "^", shift: Alt+R, alpha: F }
+    sin: { primary: Alt+S, shift: Alt+Shift+S, alpha: G }
+    cos: { primary: Alt+C, shift: Alt+Shift+C, alpha: H }
+    tan: { primary: Alt+T, shift: Alt+Shift+T, alpha: I }
+    ln: { primary: Alt+L, shift: Alt+Shift+L, alpha: J }
+    log: { primary: Alt+G, shift: Alt+Shift+G, alpha: K }
+    sq: { primary: Alt+Q, shift: Alt+Shift+Q, alpha: L }
+    neg: { primary: Alt+N, shift: "|", alpha: M }
+    paren: { primary: "(", alpha: N }
+    comma: { primary: ",", shift: Alt+Shift+N, alpha: O }
+    enter: { primary: Enter, shift: Shift+Enter }
+    emark: { primary: Alt+E, shift: Alt+Shift+E, alpha: P }
+    d7: { primary: "7", alpha: Q }
+    d8: { primary: "8", shift: "{", alpha: R }
+    d9: { primary: "9", shift: Alt+Y, alpha: S }
+    div: { primary: /, shift: Alt+X, alpha: T }
+    alpha: { primary: { why: "letters are typed: Shift + a letter is its capital" } }
+    d4: { primary: "4", shift: Alt+J, alpha: U }
+    d5: { primary: "5", shift: "[", alpha: V }
+    d6: { primary: "6", shift: Alt+W, alpha: W }
+    mul: { primary: "*", shift: Alt+Shift+P, alpha: X }
+    shift: { primary: { why: "a chord names the Shift layer itself (Alt + Shift + its letter)" } }
+    d1: { primary: "1", alpha: Y }
+    d2: { primary: "2", shift: Alt+I, alpha: Z }
+    d3: { primary: "3", shift: Alt+P, alpha: "#" }
+    sub: { primary: "-", shift: Alt+B, alpha: ":" }
+    fmt: { primary: Alt+O, shift: Alt+Shift+O }
+    d0: { primary: "0", alpha: { why: "dead: Alpha + 0 types nothing (docs/06 section 3 point 7)" } }
+    dot: { primary: ".", shift: "=" }
+    space: { primary: Space, shift: _ }
+    add: { primary: "+", shift: Alt+Shift+A, alpha: ";" }
+  actions:
+    apps: Alt+A
+    switch: Alt+H
+    symb: F2
+    plot: F3
+    num: F4
+    fold: Alt+K
+
 # ---- Unit slot (P11 "units after the formula", P14 the unit pad; docs/archive/r9-unit-pad.md, docs/04 4.3). A record
 # for tools/probes/unit-presses.mjs; the app reads the pad from spec/unit-pad.yaml (units/pad.ts) and does not read this
 # section. The app bundles this file whole, so the reasons live in these comments, not in strings.
