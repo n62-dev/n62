@@ -63,7 +63,7 @@ describe.skipIf(!giacAvailable())("G65: stored names from Giac's state", () => {
     host.home("sto(floor(sin(10^100)*10^12),X)", defaultHomeSettings);
     host.home("a:=2.5", defaultHomeSettings);
     const inner = host as unknown as { stored: Map<string, StoredName>; byName: Map<string, unknown> };
-    const held = (): Map<string, StoredName> => tableOf(parsePrinted(ev(statePart(12)))!, (n) => inner.byName.has(n))!;
+    const held = (): Map<string, StoredName> => tableOf(parsePrinted(ev(statePart(12)))!)!;
     const jobs = [
       () => host.solve({ kind: "equations", equations: ["X*exp(X)=5"], unknowns: ["X"], guesses: ["1"] }, defaultHomeSettings),
       () => host.analyze({ kind: "area", f: "x^2+a", a: "0", b: "1" }, defaultHomeSettings),
@@ -131,7 +131,7 @@ describe.skipIf(!giacAvailable())("G104: the state read costs what changed", () 
     host.home("c:=1", defaultHomeSettings);
     expect(setNames(host.home("M[1,1]:=0", defaultHomeSettings).defs)).toEqual(["M"]);
     const inner = host as unknown as { stored: Map<string, StoredName>; byName: Map<string, unknown> };
-    expect([...inner.stored]).toEqual([...tableOf(parsePrinted(ev(statePart(12)))!, (n) => inner.byName.has(n))!]);
+    expect([...inner.stored]).toEqual([...tableOf(parsePrinted(ev(statePart(12)))!)!]);
   });
 
   // audit round 1: Giac's full read prints a's entry as "x+1" after x:=2 too (string(eval(k)) evaluates one level), so
@@ -141,7 +141,7 @@ describe.skipIf(!giacAvailable())("G104: the state read costs what changed", () 
     host.home("a:=x+1", defaultHomeSettings);
     expect(setNames(host.home("x:=2", defaultHomeSettings).defs)).toEqual(["x"]);
     const inner = host as unknown as { stored: Map<string, StoredName>; byName: Map<string, unknown> };
-    expect([...inner.stored]).toEqual([...tableOf(parsePrinted(ev(statePart(12)))!, (n) => inner.byName.has(n))!]);
+    expect([...inner.stored]).toEqual([...tableOf(parsePrinted(ev(statePart(12)))!)!]);
   });
 
   it("guard: g2(1) logs the global n that g, which g2 calls, stores", async () => {

@@ -249,7 +249,7 @@ export class EngineHost implements FactsHost {
     // its stores (G65's changesOf would log them as vars with the input's facts).
     // G104: their entries only
     const node = parsePrinted(this.giac.eval(namesPart(this.modeDigits, todo.map((e) => e.name))));
-    const table = node ? tableOf(node, (n) => this.byName.has(n)) : null;
+    const table = node ? tableOf(node) : null;
     if (table) for (const e of todo) { const t = table.get(e.name); if (t) this.stored.set(e.name, t); }
     // the `// Success` notes and any error of the load are not the input's
     this.giac.clearMessages();
@@ -279,7 +279,7 @@ export class EngineHost implements FactsHost {
     const { giac, bridge } = gated(raw, rawBridge, (text) => {
       if (this.assumeRisk || !namesAssuming(text)) return;
       // the text the hook hears is Giac input, typed
-      this.assumeRisk = namesIn(text, "typed").some((n) => !CONSTANT_NAMES.has(n) && !isOurs(n, (m) => this.byName.has(m)));
+      this.assumeRisk = namesIn(text, "typed").some((n) => !CONSTANT_NAMES.has(n) && !isOurs(n));
     });
     this.giac = giac;
     this.bridge = bridge;
@@ -425,7 +425,7 @@ export class EngineHost implements FactsHost {
       if (lost.length && !stateNode) stateNode = parsePrinted(this.giac.eval(statePart(this.modeDigits)));
     }
     const reset = flagsChanged && (namesFlag(input, "typed") || this.callsDefining(input, (c) => namesFlag(c, "typed")));
-    const table = stateNode ? tableOf(stateNode, (n) => this.byName.has(n) || typed.has(n), this.stored) : null;
+    const table = stateNode ? tableOf(stateNode, this.stored) : null;
     const skipped = table && stateNode ? new Set(namesOf(stateNode).filter((n) => !table.has(n) && !purged.includes(n))) : null;
     this.post = { reads, table, changes: table ? changesOf(this.stored, table) : null, skipped, flagsChanged, reset, lost };
     return this.post;
@@ -438,8 +438,7 @@ export class EngineHost implements FactsHost {
       const e = this.byName.get(w);
       return e?.kind === "fn" ? e.cmds : [];
     });
-    const user = (n: string): boolean => this.byName.has(n);
-    return [input, ...fns].flatMap((t) => namesIn(t, "typed")).filter((n) => !CONSTANT_NAMES.has(n) && !isOurs(n, user));
+    return [input, ...fns].flatMap((t) => namesIn(t, "typed")).filter((n) => !CONSTANT_NAMES.has(n) && !isOurs(n));
   }
 
   /** The text names a log entry whose commands `test` holds (G67's reset rule); `fns`: a stored function only (G92: a
@@ -464,8 +463,7 @@ export class EngineHost implements FactsHost {
     for (const n of this.abouts.keys()) if (!assumed.includes(n)) this.abouts.delete(n);
     // restore() reads with no input: what the log's replay set is the log's
     const keep = input === "" || sets;
-    const user = (n: string): boolean => this.byName.has(n) || typed.has(n);
-    const fresh = keep ? [] : selfHolding(node).filter((n) => !isOurs(n, user) && !this.byName.has(n) && !this.stored.has(n) && !this.skipped.has(n));
+    const fresh = keep ? [] : selfHolding(node).filter((n) => !isOurs(n) && !this.byName.has(n) && !this.stored.has(n) && !this.skipped.has(n));
     const moved: string[] = [];
     assumed.forEach((n, k) => {
       const got = abouts?.[k];
@@ -1222,7 +1220,7 @@ export class EngineHost implements FactsHost {
     }
     this.useHomeMode(s);
     try {
-      return withNames(unitEval(this.strict, job, s), () => readsFrom(this.bridge.parse(job.expr)).names.filter((n) => this.stored.has(n) && !this.chipFacts.has(n) && !isOurs(n, (m) => this.byName.has(m))));
+      return withNames(unitEval(this.strict, job, s), () => readsFrom(this.bridge.parse(job.expr)).names.filter((n) => this.stored.has(n) && !this.chipFacts.has(n) && !isOurs(n)));
     } catch (e) {
       if (e instanceof GiacSyntaxError) return { error: "engine", detail: e.message };
       throw e;

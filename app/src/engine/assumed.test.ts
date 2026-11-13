@@ -34,7 +34,7 @@ describe("assumed.ts", () => {
   it("puts the about()s inside the state part, which tableOf still reads", () => {
     expect(statePart(12, ["x"])).toBe("[(Digits:=14),map(VARS(),pask_->[pask_,string(eval(pask_)),lname(eval(pask_))]),[about(x)],(Digits:=12)]");
     const n = parsePrinted('[14,[[x,"x",[x]],[b,"2",[]]],[assume[integer]],12]')!;
-    expect([...tableOf(n, () => false)!.keys()]).toEqual(["b"]);
+    expect([...tableOf(n)!.keys()]).toEqual(["b"]);
     expect(aboutsOf(n, 1)).toEqual(["assume[integer]"]);
   });
   it("puts back in one text", () => {
