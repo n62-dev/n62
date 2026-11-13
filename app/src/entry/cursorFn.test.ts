@@ -63,7 +63,9 @@ describe("functionAt (R196)", () => {
     expect(at("\\sqrt{|2}")).toBe("fn:sqrt");
     expect(at("\\sqrt[3]{|2}")).toBe("tmpl:cbrt");
     expect(at("\\sqrt[4]{|2}")).toBe("fn:surd");
-    expect(at("\\left|-|2\\right|")).toBe("fn:abs");
+    // |x| draws its own bars: the cursor goes by offset here, after the −
+    expect(functionAt("\\left|-2\\right|", 7)).toBe("fn:abs");
+    expect(functionAt("1+\\left|-2\\right|", 2)).toBeNull();
   });
 
   it("is null on a chip, and never reads what a chip shows", () => {
