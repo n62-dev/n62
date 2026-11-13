@@ -422,8 +422,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  and a sheet, the end of the chain on any other key (route.ts run, EntryController.run) and the controller's two
  *  one-line methods. The merge base 5bfdb4c1 measures 61.18 kB gzip (172.85 kB raw), the branch 61.34 kB (173.25 kB raw,
  *  +0.16 kB; 61.44 kB before the step code moved into the lazy chunk; 61.35 kB after merging phase-1 31b97787): 61.35 kB
- *  + 0.05 kB. */
-export const START_PIN_GZIP = 61_400;
+ *  + 0.05 kB.
+ *  61,400 → 61,460 B (G341, no start-chunk source changed): phase-1 8214eddf measures 61,400 B gzip, the branch 61,403 B,
+ *  both 173,248 B raw: the start chunk names the lazy chunks and the Find index by their hashed file names, which the
+ *  parser's and the index's changes renamed, and the new names gzip 3 B differently (as G313f1). 61,403 B + 0.05 kB,
+ *  rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 61_460;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
