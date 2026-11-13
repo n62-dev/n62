@@ -246,6 +246,36 @@ test.describe("on the engine", () => {
     await resultIs(page, "0.816496580928", 1);
   });
 
+  // R198f1: MathLive has no \lcm: the command drew as an error element and the history row read the raw `lcm(4,6)`
+  test("R198f1: every FUNCS name typed with an argument draws with no MathLive error element, and lcm(4,6) is 12", async ({ page }) => {
+    const names = await page.evaluate(async () => Object.keys(((await (0, eval)('import("/src/input/parse.ts")')) as { FUNCS: Record<string, string> }).FUNCS));
+    expect(names).toContain("lcm");
+    await page.keyboard.type("s"); // the first hardware letter asks for the names
+    await page.evaluate(() => (0, eval)('import("/src/find/finder.ts").then((m) => m.loadIndex(true))') as Promise<unknown>);
+    const errors = (): Promise<number> => page.evaluate(() => window.n62.entry.field?.shadowRoot?.querySelectorAll(".ML__error").length ?? -1);
+    for (const name of names) {
+      // the names are in once the typed `name(` no longer leaves the plain letters before a bracket pair
+      await expect
+        .poll(
+          async () => {
+            await page.evaluate(() => window.n62.entry.clear());
+            await page.keyboard.type(`${name}(`);
+            return (await entryValue(page)).startsWith(name) ? "pair" : "call";
+          },
+          { message: name },
+        )
+        .toBe("call");
+      await page.keyboard.type("4,6)");
+      expect(await errors(), `${name}: ${await entryValue(page)}`).toBe(0);
+    }
+    await page.evaluate(() => window.n62.entry.clear());
+    await page.keyboard.type("lcm(4,6)");
+    expect(await entryValue(page)).toBe("\\operatorname{lcm}\\left(4,6\\right)");
+    await page.keyboard.press("Enter");
+    await resultIs(page, "12", 1);
+    await expect(page.locator(".history .ML__error")).toHaveCount(0);
+  });
+
   test("R198: one letter (a user function f), pi and a letter run that names nothing stay letters before (", async ({ page }) => {
     for (const [typed, line] of [
       ["f(2)", "f\\left(2\\right)"],

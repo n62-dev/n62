@@ -318,7 +318,9 @@ describe("R198: a typed function name and ( give the function", () => {
     expect(paren("sin")).toEqual({ got: "paren:primary \\sin\\left(#0\\right) (sin)", count: "hw:name" });
     expect(paren("2sin").got).toBe("paren:primary \\sin\\left(#0\\right) (sin)"); // a number before the name stays
     expect(paren("arcsin").got).toBe("paren:primary \\arcsin\\left(#0\\right) (arcsin)");
-    for (const name of Object.keys(FUNCS)) expect(paren(name).got, name).toBe(`paren:primary \\${name}\\left(#0\\right) (${name})`);
+    // (R198f1: every FUNCS name has a MathLive command but lcm; the e2e case types each one and looks for an error element)
+    for (const name of Object.keys(FUNCS).filter((n) => n !== "lcm")) expect(paren(name).got, name).toBe(`paren:primary \\${name}\\left(#0\\right) (${name})`);
+    expect(paren("lcm").got).toBe("paren:primary"); // MathLive has no \lcm: Find's insert once the index is in, the bracket pair until then
     expect(paren("stddev")).toEqual({ got: "paren:primary", count: "paren:hw" }); // the index is not in yet
   });
   it("a hardware letter asks for the index, once (the tests above typed letters too)", () => {
@@ -355,5 +357,12 @@ describe("R198: a typed function name and ( give the function", () => {
     expect(paren(name).got).toBe(`paren:primary ${tier1.insert} (${name})`);
     expect(paren(name, [name]).got).toBe("paren:primary"); // the user's function of that name
     for (const typed of ["pi", "e", "i", "f", "abc"]) expect(paren(typed).got, typed).toBe("paren:primary");
+    // R198f1: lcm has no MathLive command, so Find's own insert (the operatorname template) is its call
+    expect(paren("lcm").got).toBe(`paren:primary ${insertOf("fn:lcm")} (lcm)`);
+    expect(insertOf("fn:lcm")).toBe("\\operatorname{lcm}\\left(#?\\right)");
+    // Giac's program words and French operator words are syntax: letters and a bracket pair (tier-1 names of Find, so
+    // the index would make them calls); at( stays the function
+    for (const typed of ["do", "od", "fi", "si", "by", "in", "of", "et", "ou"]) expect(paren(typed).got, typed).toBe("paren:primary");
+    expect(paren("at").got).toBe(`paren:primary ${insertOf("fn:at")} (at)`);
   });
 });
