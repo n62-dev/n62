@@ -37,6 +37,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
 - **F227, package G330 (G326's view sweep, run 1049).** The Function app's Slope shows a cancelled exact 0 as a number with 12 digits, no ⚠: `x^3/3-0.09*x` at 0.3 gives 9.86E-32 (Giac's diff at the binary 0.3); Home's `subst(diff(…),x=0.3)` is = 0. Family 3.
 - **F228, fixed by G340 (run 1069, patch 0045).** `normal`/`simplify(sqrt(1+sqrt(1+2^(1/3))))` was ≈ 0.00732288514727 (right 1.58218310546). Family 5.
+- **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix.
+- **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
+- **F238 (A139; ron).** Dead keys (Shift + Select, Shift + Deselect) have no `aria-disabled`: TalkBack does not say they do nothing.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F180, package R199 (sandra, 2026-11-05).** Share session writes template LaTeX half-read (`\sum_{k=1}^{10}k` → `\sum_k=1^10k`).
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
@@ -88,7 +91,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Without a package yet
 - **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, sounding only when Key click is on, and its latency against the pulse from a screen recording. Removal test: nobody (owner or an outside tester) turns it on in the four weeks after it ships, and the switch and its code go.
 - **R155f1's device check** (annabell, by day, the Tab One): the run dash in Home on a cold start is above 0 px high.
-- **R41's device check** (owner's hand, A139 left it: TalkBack and the font scale are device settings, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys, and the status line at font scale 2.0 (decisions.md "R41"; the DOM names are in A139's report). Same run, R53: TalkBack on the slice.
+- **R41's device check** (owner's hand, A139 left it: TalkBack and the font scale are device settings, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys, and the status line at font scale 2.0 (decisions.md "R41"; the DOM names are in A139's report). Same run, R53: TalkBack on the slice (R283: TalkBack cannot fold).
 - Plots of user functions after v0.1.0 (owner, 2026-11-02; R56b covers Solve); **R58b** Alpha letters are always names in CAS (G2 item 62 can reverse it).
 - **G9. Number formats against the G2** (item 15): decide in the settings and help pass. **K5:** package R290.
 - **docs/05 section 5's five UI tasks** are not in `tests/tasks/tasks.yaml` (budget 2 presses or 1 tap, docs/05 section 2 rule 5).
