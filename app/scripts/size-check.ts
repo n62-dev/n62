@@ -443,8 +443,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  the key itself in spec/keyboard.yaml (alone 61.81 kB, the pin's edge), the Keypad marking a drag step's action
  *  (`drag`, so a drag never grows the matrix) and the entry holding the field chunk's `Grown` (made with the field,
  *  passed to runOnField, cleared when a line is set). The merge base 68e296cf measures 61.77 kB gzip (174.36 kB raw), the
- *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB. */
-export const START_PIN_GZIP = 61_900;
+ *  branch 61.85 kB (174.55 kB raw): 61.85 kB + 0.05 kB.
+ *  61,900 → 61,970 B (G308, as G322): no app file changed; Giac patch 0048 changes the engine build, so the engine worker's
+ *  hashed name and the chunk names that follow it gzip differently. The same tree measures 61,899 B gzip with phase-1's
+ *  engine and 61,917 B with the patched one (174,781 B raw both): 61,917 B + 0.05 kB. */
+export const START_PIN_GZIP = 61_970;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

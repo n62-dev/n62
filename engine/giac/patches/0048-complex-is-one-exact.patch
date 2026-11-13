@@ -1,0 +1,15 @@
+# Upstream: giac 2.1.0 gen.cc is_one: for a _CPLX it tested the imaginary part with is_zero, which compares a float (a double, or the double of an MPFR value) with epsilon (1e-12), while the _DOUBLE_ and _REAL branches of is_one test exactly. So a complex float with real part exactly 1 and an imaginary part of size at most 1e-12 was one: pow returns the base when is_one(base) (gen.cc pow, the default branch), so at Digits 40 evalf((1+i/10^15)^(1/3)) = 1+1e-15*i (right 1+3.333e-16*i), ^pi, ^i, ^x and ^(-1/3) the base or its inverse, ^(2/3) the square; and operator_times returns the other factor when is_one(a): evalf(1+i/10^15)*x = x. Now the imaginary part must be an exact zero (is_exactly_zero), as for the other types.
+# Changed by Pascaline contributors, 2026-11-13
+--- a/src/gen.cc
++++ b/src/gen.cc
+@@ -9638,7 +9638,9 @@
+     case _ZINT: 
+       return mpz_cmp_si(*a._ZINTptr,1)==0;
+     case _CPLX:
+-      return is_one(*a._CPLXptr) && is_zero(*(a._CPLXptr+1));
++      // an exact zero imaginary part, as the _DOUBLE_ and _REAL branches below test exactly: is_zero compares a float with
++      // epsilon (1e-12), so 1+1e-15*i was one and pow returned the base for any exponent, operator_times the other factor
++      return is_one(*a._CPLXptr) && is_exactly_zero(*(a._CPLXptr+1));
+     case _DOUBLE_:
+       return a._DOUBLE_val==1;
+     case _FLOAT_:
