@@ -40,7 +40,7 @@ describe("the store sheet (R281)", () => {
     expect(items[0]).toMatchObject({ label: "A", value: "= 5" });
     expect(items[1]?.value).toBeUndefined(); // B is free
     expect(items.slice(26).map((x) => [x.label, x.value])).toEqual([["R2", "= 10000"], ["rate", "= 0.0425"]]);
-    expect(sheet.level.cells).toBe(6);
+    expect(sheet.level.cells).toBe(7);
     expect(sheet.level.rows.every((r) => r.n === undefined)).toBe(true); // no numbers: a digit types into the name
     expect(sheet.level.current?.label).toBe("B"); // it opens on the first free letter
   });
@@ -126,8 +126,8 @@ describe("the store sheet (R281)", () => {
     expect(sheet.left()).toBe(true); // steps, does not close
     expect(at()).toBe("A");
     sheet.level.move(1);
-    expect(at()).toBe("G");
-    sheet.level.highlight = 24; // Y, the grid's last row (Y Z)
+    expect(at()).toBe("H");
+    sheet.level.highlight = 23; // X, the grid's last row (V W X Y Z)
     sheet.level.move(1);
     expect(at()).toBe("R2"); // past Z: on to the names, the newest first
   });

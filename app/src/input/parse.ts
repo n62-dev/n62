@@ -116,7 +116,7 @@ class Parser implements CalcParser {
     // P4: store, value ▶ name (shift of the exponent key); the same as name := value.
     if (this.isCmd("blacktriangleright")) {
       this.pos++;
-      const name = this.additive();
+      const name = this.storeName() ?? this.additive();
       if (typeof name !== "string") this.fail("parse.expectedAName");
       return ["Assign", name, left];
     }
@@ -394,6 +394,19 @@ class Parser implements CalcParser {
     return this.arg();
   }
 
+  /** R281: after ▶, the store sheet types a name of more than one letter as `\operatorname{rate}` (MathLive writes it back
+   *  as `\operatorname{\mathrm{rate}}`): that name, a new one too (`A1`); undefined, nothing read, for anything else. */
+  private storeName(): string | undefined {
+    const at = this.pos;
+    if (!this.isCmd("operatorname")) return undefined;
+    this.pos++;
+    const wrapped = this.isCh("{") && this.isCmd("mathrm", 1) && this.isCh("{", 2);
+    if (wrapped) this.pos += 2;
+    const text = this.isCh("{") ? this.groupText() : "";
+    if (/^[A-Za-z][A-Za-z0-9_]*$/.test(text) && (!wrapped || this.isCh("}"))) return (this.pos += wrapped ? 1 : 0), text;
+    this.pos = at;
+    return undefined;
+  }
   groupText(): string {
     this.expectCh("{");
     let s = "";

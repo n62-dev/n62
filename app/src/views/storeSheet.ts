@@ -18,8 +18,9 @@ import { Sheet } from "./sheet.svelte.ts";
 
 /** The store sheet's id (route.ts reads its keys by it). */
 export const STORE_SHEET = "store";
-/** The letter grid's columns: 26 letters in five rows (the mockup's six). */
-export const STORE_COLUMNS = 6;
+/** The letter grid's columns: 26 letters in four rows (the mockup's six columns take five, which do not fit above the
+ *  keypad at 360 × 740 with the title and the line under the grid; fit.spec.ts). */
+export const STORE_COLUMNS = 7;
 const LETTERS = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const STORE_ARROW = "\\blacktriangleright";
 
