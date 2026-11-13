@@ -5,14 +5,12 @@
 // as stored. A taken import's changes go into the log; a refusal that came after the engine was changed restarts it
 // from the unchanged log, the path Cancel takes (archive/r10-connector.md 3.1).
 import type { LibraryReply } from "../engine/library.ts";
-import type { MathEngine } from "../engine/types.ts";
+import { EngineCancelled, EngineCrashError, EngineMemoryError, type MathEngine } from "../engine/types.ts";
 import type { Request, Response } from "../engine/protocol.ts";
 import type { WorkerEngine } from "../engine/workerEngine.ts";
 import { LIBRARY_FORMAT, upToDate } from "../state/libraryFormat.ts";
 import type { LibraryJobs } from "./port.ts";
 
-// Only type imports of the start chunk's modules: a value import of one makes Rolldown cut it out of the entry into a
-// shared chunk, which the start chunk then loads as a file of its own (measured: engine/types.ts, +0.23 kB gzip).
 type Body = Request extends infer R ? (R extends { type: "library" | "libraryExport" } ? Omit<R, "id" | "log"> : never) : never;
 type Posting = MathEngine & Pick<WorkerEngine, "call" | "keep">;
 
@@ -34,9 +32,7 @@ export function jobs(engine: MathEngine): LibraryJobs {
         // refusal does. Not after the user's own Cancel (already restarted) nor a dead engine (WorkerEngine.restart, G24,
         // G183). One that could not load
         // (G318, EngineLoadError) is started once more, as a Cancel would.
-        // By name: a value import of engine/types.ts would move it out of the start chunk (see above).
-        const name = e instanceof Error ? e.name : "";
-        if (name !== "EngineCancelled" && name !== "EngineMemoryError" && name !== "EngineCrashError") await worker.cancel();
+        if (!(e instanceof EngineCancelled || e instanceof EngineMemoryError || e instanceof EngineCrashError)) await worker.cancel();
         throw e;
       }
       if (r.type !== "library") throw new Error(`unexpected ${r.type}`);
