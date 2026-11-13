@@ -152,7 +152,7 @@ test("30 digits: the setting takes 30, Home draws 30 digits and 1/3 stays ≈", 
   await expect(markOfLast(page)).toHaveText("≈");
 });
 
-test("PFX: 2500 draws as 2.500 k with a thin space and an accented prefix, from Settings and from the Format key", async ({ page }) => {
+test("PFX: 2500 draws as 2.5 k with a thin space and an accented prefix, from Settings and from the Format key", async ({ page }) => {
   await open(page, "");
   await ready(page);
   await pickDigits(page, "d1");
@@ -163,7 +163,7 @@ test("PFX: 2500 draws as 2.500 k with a thin space and an accented prefix, from 
   await expect(markOfLast(page)).toHaveText("=");
   // std -> sci -> eng -> pfx
   await tap(page, ["fmt", "fmt", "fmt"]);
-  await expect(lastText(page)).toHaveAttribute("data-text", "2.500 k");
+  await expect(lastText(page)).toHaveAttribute("data-text", "2.5 k");
   await expect(lastText(page).locator(".pfx")).toHaveText("k");
   await expect(markOfLast(page)).toHaveText("=");
   // as the global format too
@@ -171,7 +171,7 @@ test("PFX: 2500 draws as 2.500 k with a thin space and an accented prefix, from 
   await sheetKey(page, ["right", "right", "right", "enter"]);
   expect(await page.evaluate(() => window.n62.session.settings.format)).toBe("pfx");
   await tap(page, ["d1", "d2", "d0", "d0", "d0", "d0", "enter"]);
-  await expect(lastText(page)).toHaveAttribute("data-text", "120.0 k");
+  await expect(lastText(page)).toHaveAttribute("data-text", "120 k");
   // tapping the result puts a chip with the full value on the line, never the prefix text
   await tapTwice(lastText(page), "click"); // R147: the first tap picks the row
   const chips = await page.evaluate(() => Object.values(window.n62.entry.chips).map((c) => c.value));

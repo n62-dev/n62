@@ -13,8 +13,8 @@
 //   SCI n: n significant digits, one before the point, exponent always shown.
 //   ENG n: n significant digits, exponent a multiple of 3, 1 ≤ |mantissa| < 1000.
 //   FIX f: f digits after the point, plain notation (the Format key's optional "Fixed" mode).
-//   PFX n: as ENG, with the exponent shown as an SI prefix (f p n µ m, none, k M G T P; docs/04 section 2.7);
-//          outside 10^-15 … 10^15 it is ENG.
+//   PFX n: as ENG, with the exponent shown as an SI prefix (f p n µ m, none, k M G T P; docs/04 section 2.7), the
+//          mantissa's trailing zeros dropped (4.7 k); outside 10^-15 … 10^15 it is ENG.
 // Marks (docs/04 section 2.4): the engine reports facts (ValueFacts: exact, reliableDigits, warn); markOf() and
 // formatConfirmed() below decide, for the format on screen, which digits may be shown and which mark goes first.
 // Rounding is half away from zero.
@@ -45,6 +45,8 @@ export interface FormatOptions {
   fixed?: number;
   /** FIX only: significant digits of the scientific fallback (default fixed + 1); confirmedOptions sets it (G36). */
   sciDigits?: number;
+  /** PFX only: keep the mantissa's trailing zeros as ENG does (the σ line's two digits, 9.0 G). */
+  keepZeros?: boolean;
 }
 
 /** A formatted real number. The view draws it (e.g. the exponent as ×10^k); toText gives the canonical text. */
@@ -185,18 +187,23 @@ function fixPlain(v: DecimalValue, f: number): FormattedNumber {
  *  prefix's power from it (render/uncMute.ts prefixPower). */
 export const PREFIXES: Record<number, string> = { [-15]: "f", [-12]: "p", [-9]: "n", [-6]: "\u00b5", [-3]: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T", 15: "P" };
 
-function pfx(v: DecimalValue, n: number): FormattedNumber {
+function pfx(v: DecimalValue, n: number, keepZeros = false): FormattedNumber {
   const e = eng(v, n);
   // Zero and values inside f … P take a prefix; the exponent comes from the rounded value (999.96 k → 1.000 M).
   const p = e.exponent === null ? undefined : PREFIXES[e.exponent];
   if (p === undefined) return e;
-  return { neg: e.neg, mantissa: e.mantissa, exponent: null, prefix: p };
+  if (keepZeros) return { neg: e.neg, mantissa: e.mantissa, exponent: null, prefix: p };
+  // G224: a prefix with zeros reads as false precision (4.7 k, not 4.70000000000 k); ENG keeps them. Only the fraction's zeros go.
+  const [ip = "", fp = ""] = e.mantissa.split(".");
+  const kept = trimZeros(fp);
+  const mantissa = kept === "" ? ip : `${ip}.${kept}`;
+  return { neg: e.neg, mantissa, exponent: null, prefix: p };
 }
 
 export function formatReal(v: DecimalValue, o: FormatOptions): FormattedNumber {
   switch (o.format) {
     case "PFX":
-      return pfx(v, o.digits);
+      return pfx(v, o.digits, o.keepZeros);
     case "STD":
       return std(v, o.digits);
     case "SCI":

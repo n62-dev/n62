@@ -243,13 +243,13 @@ describe("marks and PFX (docs/04 2.4, 2.7)", () => {
   it("PFX draws the prefix after a thin space; the prefix is accented in the LaTeX", () => {
     const r = exact({ value: real(2500n) });
     const out = renderNumeric(r, "pfx", { ...ctx, digits: 4 });
-    expect(out?.text).toBe("2.500\u2009k");
-    expect(out?.latex).toBe("2.500\\,\\class{pfx}{\\mathrm{k}}");
+    expect(out?.text).toBe("2.5\u2009k");
+    expect(out?.latex).toBe("2.5\\,\\class{pfx}{\\mathrm{k}}");
   });
   it("PFX outside f … P falls back to E notation, and 10^0 has no prefix", () => {
     const c4 = { ...ctx, digits: 4 };
     expect(renderNumeric(exact({ value: real(10n ** 18n) }), "pfx", c4)?.text).toBe("1.000E18");
-    expect(renderNumeric(exact({ value: real(5n) }), "pfx", c4)?.text).toBe("5.000");
+    expect(renderNumeric(exact({ value: real(5n) }), "pfx", c4)?.text).toBe("5");
   });
 });
 
