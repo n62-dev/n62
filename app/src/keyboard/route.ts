@@ -56,6 +56,8 @@ export interface RouteCtx {
   unfold(): boolean;
 }
 
+/** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml). */
+const STORE_ARROW = "\\blacktriangleright";
 /** Select or Deselect (R279): they act on the entry line only. */
 const isSelect = (a?: ActionBody): boolean => a?.kind === "special" && a.name.startsWith("select");
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
@@ -172,7 +174,7 @@ function units(c: RouteCtx, row?: HistoryItem): void {
 
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Menu acts
- *  on the picked row. Any other key drops the pick and does its normal job. True: the key was used up here. */
+ *  on the picked row, Store ▶ stores it (R280). Any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
   const n = items.length;
@@ -198,6 +200,13 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
   const item = items[picked];
   c.picked = null;
+  if (action.kind === "insert" && action.latex === STORE_ARROW && item) {
+    // R280 (sd-2): Store ▶ (Shift + ᴇ, its flick, a user key) stores the picked row as the row bar's Store ▶ does: its
+    // chip and ▶ on the line; a row without a result has nothing to store (the bar's Store ▶ is off there)
+    if (item.status === "done") c.withClip((x) => void x.storeRow(item));
+    else c.dead();
+    return true;
+  }
   if (action.kind !== "special") return false;
   if (action.name === "esc") return true;
   if (action.name === "units" && item) {
