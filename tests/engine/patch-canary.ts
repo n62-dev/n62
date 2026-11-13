@@ -184,6 +184,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G331, patch 0047: tsimplify_common converts each ln argument with alg_lvar's variables and goes on with an undef one (alg_lvar
   // drops ln(rootof(…))), so decompose recursed to a stack overflow (F214) or expanded_ln looped for ever
   ["0047-tsimplify-ln-undef-arg.patch", "giac-2.1.0/src/subst.cc", /vecteur vars\(alg_lvar\(argln\)\);\s*\/\/ FIXME alg_lvar for alg ext but requires decompose to work!\s*for \(int i=0;i<s;\+\+i\)\s*argln\[i\]=e2r\(argln\[i\],vars,contextptr\);\s*\/\/ extensions must be treated separately/, "vecteur vars(alg_lvar(argln));"],
+  // G308, patch 0048: is_one of a complex tests its imaginary part with is_zero, which compares a float with epsilon (1e-12), so
+  // 1+1e-15*i was one: pow returned the base ((1+i/10^15)^(1/3) at Digits 40), operator_times the other factor (evalf(1+i/10^15)*x = x)
+  ["0048-complex-is-one-exact.patch", "giac-2.1.0/src/gen.cc", /case _CPLX:\s*return is_one\(\*a\._CPLXptr\) && is_zero\(\*\(a\._CPLXptr\+1\)\);/, "bool is_one(const gen & a){"],
 ];
 
 const tar = tarball(SOURCES.giac);

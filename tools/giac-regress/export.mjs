@@ -785,6 +785,19 @@ export function build(cases) {
     patched.push("// patch 0047-tsimplify-ln-undef-arg.patch", `// ${id} (${value === "1" ? "derived: it answers" : "oracle: mpmath, r20"})`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0048 (G308), written lines: gen.cc is_one of a complex took an imaginary part within epsilon (1e-12) for 0, so pow
+  // returned the base of 1+eps*i and operator_times the other factor. The golden g308-* Home rows pass on stock here (pc()'s
+  // tolerance is the real part's half unit, 5E-12), so these lines test the imaginary part at Digits 40 (and the double at 12).
+  for (const [id, digits, input, value, tol] of [
+    ["g308-pow-1e-15-third-40", 40, "(1+i/10^15)^(1/3)", "100000000000000000000000000000011111111111/10^41+333333333333333333333333333333271604938/10^54*i", "1/10^38"],
+    ["g308-pow-1e-15-pi-40", 40, "(1+i/10^15)^pi", "999999999999999999999999999996635994126/10^39+314159265358979323846264338327822277607/10^53*i", "1/10^38"],
+    ["g308-pow-1e-20-two-thirds-40", 40, "(1+i/10^20)^(2/3)", "1+666666666666666666666666666666666666667/10^59*i", "1/10^38"],
+    ["g308-pow-1e-12-third-12", 12, "(1+i/10^12)^(1/3)", "1+333333333333333/10^27*i", "1/10^14"],
+    ["g308-times-x-1e-15-40", 40, "subst(evalf(1+i/10^15)*x,x,3)", "3+3/10^15*i", "1/10^35"],
+  ]) {
+    patched.push("// patch 0048-complex-is-one-exact.patch", `// ${id} (${id.startsWith("g308-times") ? "derived: (1+i/10^15)*3" : "oracle: mpmath"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
