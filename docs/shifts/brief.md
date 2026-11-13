@@ -92,7 +92,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 610 | [G306](packages/G306.md) ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
+| 610 | G306 ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |
 | 612 | [G308](packages/G308.md) (1+εi)^p (be-2) | gorge, Opus | `p1/gorge-powbase1` | – |
 | 613 | [G309](packages/G309.md) the weekly fuzz, week of 11-11 | gorge, Opus | `p1/gorge-nightfuzz-1111` | – |
