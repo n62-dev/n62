@@ -212,6 +212,52 @@ test.describe("on the engine", () => {
     expect(await entryValue(page)).toBe("e");
   });
 
+  // R198 (the owner, 2026-11-12): a function's name typed before ( is the function, as its key or Find's pick puts it
+  test("R198: sin(1)*2 typed is the sin key's line (it was s·i·n·(1)·2)", async ({ page }) => {
+    await page.keyboard.type("sin(");
+    expect(await entryValue(page)).toBe("\\sin\\left(\\placeholder{}\\right)"); // the cursor in the bracket
+    await page.keyboard.type("1)*2");
+    const hw = await entryValue(page);
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["sin", "d1", "right", "mul", "d2"]);
+    expect(hw).toBe(await entryValue(page));
+    expect(hw).toBe("\\sin\\left(1\\right)\\times2");
+  });
+
+  test("R198: stddev({1,2,3}) typed is Find's stddev once the index is in: √(2/3) = 0.816496580928…", async ({ page }) => {
+    await page.keyboard.type("s"); // the first hardware letter asks for the index
+    await page.evaluate(() => (0, eval)('import("/src/find/finder.ts").then((m) => m.loadIndex(true))') as Promise<unknown>);
+    await expect
+      .poll(async () => {
+        await page.evaluate(() => window.n62.entry.clear());
+        await page.keyboard.type("stddev(");
+        return entryValue(page);
+      })
+      .toBe("\\operatorname{stddev}\\left(\\placeholder{}\\right)");
+    await page.keyboard.type("{1,2,3})");
+    expect(await entryValue(page)).toBe("\\operatorname{stddev}\\left(\\left\\{1,2,3\\right\\}\\right)");
+    await page.keyboard.press("Enter"); // the population standard deviation sqrt(((1-2)²+0+(3-2)²)/3)
+    await resultIs(page, "0.816496580928", 1);
+  });
+
+  test("R198: one letter (a user function f), pi and a letter run that names nothing stay letters before (", async ({ page }) => {
+    for (const [typed, line] of [
+      ["f(2)", "f\\left(2\\right)"],
+      ["pi(2)", "pi\\left(2\\right)"],
+      ["xsin(2)", "xsin\\left(2\\right)"],
+    ] as const) {
+      await page.evaluate(() => window.n62.entry.clear());
+      await page.keyboard.type(typed);
+      expect(await entryValue(page), typed).toBe(line);
+    }
+  });
+
+  test("R198: the keypad is untouched: the letters s i n and the ( ) key stay letters and a bracket pair", async ({ page }) => {
+    for (const c of "sin") await page.evaluate((ch) => window.n62.entry.run({ kind: "type", text: ch }), c);
+    await tap(page, ["paren", "d1"]);
+    expect(await entryValue(page)).toBe("sin\\left(1\\right)");
+  });
+
   test("Ctrl combinations stay with the field: Ctrl+A then a digit replaces the line", async ({ page }) => {
     await page.keyboard.type("12");
     await page.keyboard.press("Control+A");
