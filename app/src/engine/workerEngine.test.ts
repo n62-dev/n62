@@ -744,7 +744,7 @@ describe("WorkerEngine Home watchdog (G185, F62; stand-in workers, fake timers)"
   it("a home sent 1 s into a 9 s library import counts from when the worker reaches it: both answer, nothing restarts (G185f2)", async () => {
     vi.useFakeTimers();
     const { engine, workers } = await started(() => new SerialWorker((m) => (m.type === "library" ? 9000 : 10)));
-    const lib = watch(engine.call({ type: "library", input: "x", version: 1, log: [], replace: false }));
+    const lib = watch(engine.call({ type: "library", input: "x", version: 1, written: 1, log: [], replace: false }));
     await vi.advanceTimersByTimeAsync(1000);
     const home = watch(engine.home("1+1", defaultHomeSettings));
     await vi.advanceTimersByTimeAsync(8000 + 10); // the import ends at 9 s, the home 10 ms later

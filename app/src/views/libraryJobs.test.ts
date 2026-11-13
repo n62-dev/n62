@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import type { LibraryReply } from "../calc/port.ts";
-import { aiFormat, copyFormat, exportLib, importClipboard, importInput, importNotice, jobsFor, libraryName, type LibraryHost } from "./libraryJobs.ts";
+import { aiFormat, copyFormat, exportLib, formatExample, importClipboard, importInput, importNotice, jobsFor, libraryName, type LibraryHost } from "./libraryJobs.ts";
 import { librarySection } from "./libraryRows.ts";
 
 const plan = { added: ["beam_M", "g0"], same: ["x"], replaced: [] };
@@ -111,10 +111,21 @@ describe("the jobs", () => {
     const t = host([], { writeText: async (s) => (put.push(s), true) });
     await copyFormat(t.h);
     expect(put).toEqual([aiFormat()]);
-    expect(put[0]).toContain("// n62 library 4\n// Maximum bending moment");
+    expect(put[0]).toContain("// n62 library 3\n// Maximum bending moment");
     expect(put[0]).not.toMatch(/SPDX|<!--|R126|\{version\}/);
     expect(t.said).toEqual(["Format copied: paste it into your AI chat"]);
     expect(aiFormat("<!-- a -->\n# T {version}\n<!-- b\n c -->\nx\n", 9)).toBe("# T 9\nx\n");
+  });
+  it("G342: the library's line 1 and its example carry the version its text was last rewritten in; the store's number stays where the store is meant", () => {
+    const f = aiFormat();
+    expect(f).toContain("- Line 1 is exactly `// n62 library 3`.");
+    expect(formatExample(f).split("\n")[0]).toBe("// n62 library 3");
+    expect(f).toContain("or a version newer than 4.");
+    expect(f).toContain('"dataVersion": 4,');
+    expect(f.match(/"@n62": 4/g)).toHaveLength(4);
+    expect(f).not.toMatch(/\{libraryVersion\}|\{version\}/);
+    expect(f).not.toContain("// n62 library 4");
+    expect(aiFormat("a {version} b {libraryVersion}\n", 9, 2)).toBe("a 9 b 2\n");
   });
   it("no engine (the fake one): says so", async () => {
     const t = host([], { jobs: () => jobsFor({}) });

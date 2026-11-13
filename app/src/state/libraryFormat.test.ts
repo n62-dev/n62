@@ -2,8 +2,8 @@
 // R59: upToDate brings an older library file to DATA_VERSION before the worker sees it: the stamp rewritten, the text
 // migrated (2 → 3: pasexp goes, G46), every line where the file had it; anything else goes on as it came.
 import { describe, expect, it } from "vitest";
-import { upToDate } from "./libraryFormat.ts";
-import { DATA_VERSION } from "./storage.ts";
+import { LIBRARY_FORMAT, libraryFormatOf, libraryTextVersion, upToDate } from "./libraryFormat.ts";
+import { DATA_VERSION, STEP_KEYS } from "./storage.ts";
 import { LIB_MAX_BYTES } from "../engine/libraryHeader.ts";
 import { READ_CAP } from "../views/libraryJobs.ts";
 
@@ -41,5 +41,25 @@ describe("upToDate (no engine)", () => {
     expect(new TextEncoder().encode(decoded.replaceAll("pasexp", "exp")).length).toBeLessThanOrEqual(LIB_MAX_BYTES);
     expect(upToDate(cut)).toBe(cut);
     expect(upToDate(decoded)).toBe(decoded);
+  });
+});
+
+describe("the version the library's text is written in (G342)", () => {
+  it("is one more than the last step that rewrote library text: 3 today (derived: the only library step is 2 → 3)", () => {
+    expect(libraryTextVersion(STEP_KEYS)).toBe(3);
+    expect(LIBRARY_FORMAT.written).toBe(3);
+    expect(LIBRARY_FORMAT.version).toBe(DATA_VERSION);
+  });
+  it("stays 3 when a step without library text is added; a later library step moves it on", () => {
+    expect(libraryTextVersion({ ...STEP_KEYS, 4: [] })).toBe(3);
+    expect(libraryTextVersion({ ...STEP_KEYS, 4: ["settings"] })).toBe(3);
+    expect(libraryTextVersion({ ...STEP_KEYS, 4: ["library"] })).toBe(5);
+    expect(libraryTextVersion({ ...STEP_KEYS, 4: [], 5: ["defs", "library"] })).toBe(6);
+  });
+  it("a format made from a table keeps the reader's version beside the written one", () => {
+    const f = libraryFormatOf(5, { ...STEP_KEYS, 4: [] });
+    expect([f.version, f.written]).toEqual([5, 3]);
+    const g = libraryFormatOf(5, { ...STEP_KEYS, 4: ["library"] });
+    expect([g.version, g.written]).toEqual([5, 5]);
   });
 });
