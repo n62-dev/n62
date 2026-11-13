@@ -773,6 +773,23 @@ export function build(cases) {
     patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath findroot" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0047 (G331, F214), written lines (the golden g331-* rows are CAS-view and Home rows, which the export leaves out): subst.cc
+  // tsimplify_common took an ln argument that e2r turned into undef (alg_lvar lost ln(rootof(…))), so decompose recursed until the
+  // stack overflowed (F214's input) or expanded_ln looped until Giac's clock (the two others; run.mjs sets timeout 120). Values by
+  // mpmath (docs/research/r20-decompose.md); F214's value, 2.506E-24702789107, is past MPFR's range, so its line asks for an answer.
+  for (const [id, input, value] of [
+    ["g331-simplify-sqrt-ln-nested-root", "simplify(sqrt(ln(1+sqrt(1+2^(1/3)))))", "957920253118554998403493714904/10^30"],
+    ["g331-simplify-asinh-cbrt2-pow-pi", "simplify(asinh(2^(1/3))^pi)", "117886883625147806170303369803/10^29"],
+  ]) {
+    patched.push("// patch 0047-tsimplify-ln-undef-arg.patch", `// ${id} (oracle: mpmath, r20)`, `Digits:=40:; pc("${id}",'${input}',${value},1/10^29);`);
+    nPatched++;
+  }
+  patched.push(
+    "// patch 0047-tsimplify-ln-undef-arg.patch",
+    "// g331-simplify-f214-answers (derived: simplify gives an expression back, where it overflowed the stack)",
+    `Digits:=40:; pc("g331-simplify-f214-answers",'when(size(string(simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))))>0,1,0)',1,1/10^30);`,
+  );
+  nPatched++;
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],

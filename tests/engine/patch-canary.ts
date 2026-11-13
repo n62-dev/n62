@@ -181,6 +181,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G226, patch 0046: shiftrotate shifts an _INT_ with the C >> and << (the count read mod 32, a left shift wrapping into the sign bit)
   // and returns a _ZINT unchanged (shift(1,-70) = 64, shift(2^70,1) = 2^70)
   ["0046-shift-integer-exact.patch", "giac-2.1.0/src/ti89.cc", /if \(a\.type==_INT_\)\{\s*if \(right\)\s*return a\.val >> nbre;\s*else\s*return a\.val << nbre;/, "static gen shiftrotate(const gen & g,bool right){"],
+  // G331, patch 0047: tsimplify_common converts each ln argument with alg_lvar's variables and goes on with an undef one (alg_lvar
+  // drops ln(rootof(…))), so decompose recursed to a stack overflow (F214) or expanded_ln looped for ever
+  ["0047-tsimplify-ln-undef-arg.patch", "giac-2.1.0/src/subst.cc", /vecteur vars\(alg_lvar\(argln\)\);\s*\/\/ FIXME alg_lvar for alg ext but requires decompose to work!\s*for \(int i=0;i<s;\+\+i\)\s*argln\[i\]=e2r\(argln\[i\],vars,contextptr\);\s*\/\/ extensions must be treated separately/, "vecteur vars(alg_lvar(argln));"],
 ];
 
 const tar = tarball(SOURCES.giac);

@@ -1,0 +1,19 @@
+# Upstream: giac 2.1.0 subst.cc tsimplify_common (simplify, tsimplify): the variables of the ln arguments come from alg_lvar (sym2poly.cc), which replaces each top-level numeric rootof by a number also inside ln(rootof(...)) when the same rootof is an argument of its own, so the variable ln(rootof(...)) is lost and e2r of that argument gives undef. decompose then put undef into primeargs and called itself with the same pair until the stack overflowed (simplify((asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000))))), or expanded_ln looped for ever on simplify3(a,undef), which never gives a unit (simplify(sqrt(ln(1+sqrt(1+2^(1/3)))))). Now tsimplify_common returns its input when an ln argument does not convert, as it does when an extension's ln holds a rootof; simplify then gives such an input back with its ln arguments not combined, the same value. The cause, alg_lvar's substitution inside ln, is left for upstream.
+# Changed by Pascaline contributors, 2026-11-13
+--- a/src/subst.cc
++++ b/src/subst.cc
+@@ -1985,8 +1985,13 @@
+       // Initialization
+       vecteur vars(alg_lvar(argln)); 
+       // FIXME alg_lvar for alg ext but requires decompose to work!
+-      for (int i=0;i<s;++i)
++      for (int i=0;i<s;++i){
+ 	argln[i]=e2r(argln[i],vars,contextptr);
++	// alg_lvar can miss a variable (ln(rootof(...)) when the same rootof is also an argument: alg_lvar substitutes it inside
++	// the ln too), then e2r gives undef, and undef in primeargs makes decompose recurse and expanded_ln loop without end
++	if (is_undef(argln[i]))
++	  return e;
++      }
+       // extensions must be treated separately
+       gen num,den;
+       vecteur primeargs,extargs;
