@@ -189,6 +189,6 @@ export function showFind(shell: AppShell, entry: EntryController, index: FindInd
 
 export { showNames } from "./names.svelte.ts";
 // R281: the store sheet comes with Vars' code (one chunk: the names' values and marks are shared, no chunk of their own)
-export { showStore, storedText } from "../views/storeSheet.ts";
+export { showStore, storedText } from "../views/storeSheet.svelte.ts";
 /** R149: the credits sheet's code, loaded here so the start chunk has no import of its own for it. */
 export const loadCredits = (): Promise<typeof import("../views/creditsSheet.ts")> => import("../views/creditsSheet.ts");

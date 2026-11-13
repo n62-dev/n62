@@ -58,20 +58,21 @@ export function typedLatex(typed: string, names: readonly UserName[]): string {
 /** Opens "Store in" for `stored` (storedText; a text still to come is put in the title when it comes). */
 export function showStore(env: StoreEnv, stored: string | Promise<string>): void {
   const { session } = env;
-  let value = typeof stored === "string" ? stored : "";
+  /** The title's value (a state: a text that comes later is in the question of a filled name too). */
+  const shown = $state({ value: typeof stored === "string" ? stored : "" });
   const ctx = () => session.displayContext();
   const store = (latex: string): MenuItem => ({ id: "typed", label: "", run: () => env.store(latex) });
   /** A stored name: its value with its mark, and the question before it is replaced. */
   const filled = (n: UserName, cell: boolean): MenuItem => {
     const name = typedName(n.name);
-    const shown = n.kind === "fn" ? findText("memory.fn") : valueOf(n, ctx());
+    const held = n.kind === "fn" ? findText("memory.fn") : valueOf(n, ctx());
     const bare = n.kind === "fn" ? findText("memory.fn") : n.preview;
     return {
       id: `name:${n.name}`,
       label: name,
-      value: shown,
+      value: held,
       preview: previewOf(n, ctx()),
-      confirm: { cell: t("store.again", { value: bare }), note: value ? t("store.holdsWith", { name, value: bare, with: value }) : t("store.holds", { name, value: bare }) },
+      confirm: { cell: t("store.again", { value: bare }), note: shown.value ? t("store.holdsWith", { name, value: bare, with: shown.value }) : t("store.holds", { name, value: bare }) },
       ...(cell ? { cell: true as const } : {}),
       run: () => env.store(typedLatex(name, [n])),
     };
@@ -88,7 +89,7 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
     return [...cells, ...rest.map((n) => filled(n, false))];
   };
   const firstFree = LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
-  const sheet = new Sheet(STORE_SHEET, value ? t("store.title", { value }) : t("store.titleBare"), items, {
+  const sheet = new Sheet(STORE_SHEET, shown.value ? t("store.title", { value: shown.value }) : t("store.titleBare"), items, {
     cells: STORE_COLUMNS,
     filterable: true,
     remember: false,
@@ -102,7 +103,7 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
   env.shell.sheet = sheet;
   if (typeof stored !== "string")
     void stored.then((v) => {
-      value = v;
+      shown.value = v;
       if (v) (sheet.levels[0] as Level).title = t("store.title", { value: v });
     });
 }

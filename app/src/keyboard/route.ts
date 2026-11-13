@@ -368,7 +368,7 @@ function storeKey(c: RouteCtx, keys: NonNullable<typeof sheetChunk.keys>, key: K
   if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
   return k;
 }
-/** The store sheet's id (views/storeSheet.ts STORE_SHEET; not imported: that module is a lazy chunk). */
+/** The store sheet's id (views/storeSheet.svelte.ts STORE_SHEET; not imported: that module is a lazy chunk). */
 const STORE_SHEET = "store";
 
 const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(2); // all but settings and mode (OPENS_SHEET lists those two first)

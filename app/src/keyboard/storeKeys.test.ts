@@ -9,7 +9,7 @@ import { Session } from "../state/session.svelte.ts";
 import type { Kv } from "../state/storage.ts";
 import type { Sheet } from "../views/sheet.svelte.ts";
 import { sheetChunk } from "../views/sheetView.svelte.ts";
-import { showStore } from "../views/storeSheet.ts";
+import { showStore } from "../views/storeSheet.svelte.ts";
 import type { Layer } from "./keyboard.ts";
 
 const route = await import("./route.ts");

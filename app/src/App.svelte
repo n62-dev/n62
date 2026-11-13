@@ -262,7 +262,7 @@
     if (!memory && !shell.showsEntry) return dead();
     onFind(finder(), (m) => { picked = null; m.showNames(shell, entry, session, memory); });
   }
-  /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.ts, in Vars' chunk); `row`: the result on the line. */
+  /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.svelte.ts, in Vars' chunk); `row`: the result on the line. */
   function openStore(row?: HistoryItem): void {
     if (shell.app !== null) return;
     const store = (latex: string): void => { entry.insert(latex); enter(); }; // the name after ▶, then Enter: the one store path

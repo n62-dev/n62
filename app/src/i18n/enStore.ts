@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R281: the store sheet's words (views/storeSheet.ts). A table of its own, loaded with that lazy chunk, so neither the
+// R281: the store sheet's words (views/storeSheet.svelte.ts). A table of its own, loaded with that lazy chunk, so neither the
 // start chunk nor Find's (which the unit view loads) carries them. English only so far.
 export const enStore = {
   "store.title": "Store {value} in",

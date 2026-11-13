@@ -9,7 +9,7 @@ import type { UserName } from "../engine/defs.ts";
 import { Session } from "../state/session.svelte.ts";
 import type { Kv } from "../state/storage.ts";
 import type { Sheet } from "./sheet.svelte.ts";
-import { showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.ts";
+import { showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.svelte.ts";
 
 const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promise.resolve() });
 const name = (n: string, preview: string, time: number, kind: UserName["kind"] = "var"): UserName => ({ name: n, kind, preview, view: "home", time, mark: "=" });
@@ -150,11 +150,15 @@ describe("the title's value (R281)", () => {
     const session = new Session(new FakeCalc(), kv());
     expect(await storedText(session, undefined, "7\\blacktriangleright")).toBe("7");
     expect(await storedText(session, undefined, "\\blacktriangleright")).toBe("");
+    session.userNames = [name("A", "5", 1)]; // (after the session's own start has read its names)
     const shell: { sheet: Sheet | null } = { sheet: null };
     const text = storedText(session, undefined, "2+3\\blacktriangleright");
     showStore({ shell, session, store() {} }, text);
     expect(shell.sheet?.path).toBe("Store in");
+    const sheet = shell.sheet as Sheet;
+    sheet.activate(0); // A, filled: armed before the text came
     await text;
     expect(shell.sheet?.path).toBe("Store 2+3 in");
+    expect(sheet.level.items[0]?.confirm?.note).toBe("A holds 5. Tap A again to replace it with 2+3"); // the question has it too
   });
 });

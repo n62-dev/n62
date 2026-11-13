@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  // R281: the letter grid above a list (the store sheet, views/storeSheet.ts): each cell its letter and, when the name
+  // R281: the letter grid above a list (the store sheet, views/storeSheet.svelte.ts): each cell its letter and, when the name
   // holds something, its value with its mark on a small line under it (cut with …; the line under the list shows it in
   // full). A free letter is dim. An armed cell (Sheet.armed: the first tap on a filled one) shows its question there.
   // Drawn by Sheet.svelte inside its list, so it scrolls with the names below it.
