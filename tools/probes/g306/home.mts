@@ -2,6 +2,7 @@
 // G306 probe: Home's display and mark for LaTeX entries (as the keys type them), RAD or DEG, and the median Enter time.
 //   node tools/probes/g306/home.mts            # the G306 rows
 //   TIMES=7 node tools/probes/g306/home.mts    # also the median of 7 Enters each (warm)
+//   node tools/probes/g306/home.mts 'deg:\\sqrt[3]{2}' 'giac:surd(2,3)'   # LaTeX (deg: for DEG) or Giac text (giac:)
 const W = new URL("../../../app/src", import.meta.url).pathname;
 const { nodeHost } = await import(`${W}/engine/nodeGiac.ts`);
 const { giacOfEntry } = await import(`${W}/input/entry.ts`);
@@ -22,7 +23,7 @@ const ROWS: [string, "rad" | "deg"][] = (process.argv.slice(2).length ? process.
 const h = await nodeHost();
 const times = Number(process.env.TIMES ?? 0);
 for (const [latex, angle] of ROWS) {
-  const g = giacOfEntry(latex, "home").giac;
+  const g = latex.startsWith("giac:") ? latex.slice(5) : giacOfEntry(latex, "home").giac;
   const s = { ...defaultHomeSettings, digits: 12, angle };
   const r = h.home(g, s).result;
   const m = r.ok ? markOf(precisionFacts(r), { format: "STD", digits: 12 }) : null;
