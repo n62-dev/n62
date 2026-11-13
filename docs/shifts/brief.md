@@ -63,8 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 629 | R283 the fold bar goes, the line's swipe stays (owner) | ron, Sonnet | `p1/ron-nofoldbar` | R278 (owner 11-12: in v0.1.0) |
-| 627 | A139 the touch rules on the Tab One | annabell, Sonnet | `p1/annabell-touchcheck` | R278, R279, R283 |
 | 753 | [R290](packages/R290.md) the six tips teach the final handling (K5) | ron, Sonnet | `p1/ron-tipsfinal` | R278, R283 |
 | 630 | [R280](packages/R280.md) Store ▶ acts on the picked row (sd-2) | ron, Opus | `p1/ron-storepick` | – |
 | 631 | [R281](packages/R281.md) the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
