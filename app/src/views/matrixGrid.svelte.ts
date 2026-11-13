@@ -6,9 +6,11 @@
 // chunk of its own, loaded when a grid opens. Editing a cell is R189's.
 import type { Component } from "svelte";
 import type { AppHost } from "../apps/types.ts";
-import type { HomeOutcome } from "../calc/port.ts";
-import { confirmedText, isWarned } from "../calc/shown.ts";
+import { engineFormat, type HomeOutcome } from "../calc/port.ts";
+import { confirmedOptions, formatComplex, markOf, type FormatOptions } from "../engine/format.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
+import { groupMarked } from "../render/groupText.ts";
+import { groupSepFor } from "../render/home.ts";
 import { commaResult } from "../state/displayMode.ts";
 
 /** A cell: an element as Home computed it, or (a matrix Home gives no elements for: one that holds a symbol) the
@@ -82,17 +84,34 @@ export class MatrixGrid {
     this.col = Math.max(0, Math.min(this.cols - 1, this.col + dc));
   }
 
-  /** A cell's text as Home shows it: the confirmed digits in the current format, with the decimal comma when that is the
-   *  mark (the cells' data-text; the view draws it in digit groups). */
+  /** A cell's text as Home draws a number (the formatter of engine/format.ts with the confirmed digits only, in the
+   *  current format and digits, as calc/shown.ts confirmedText; that module is not imported: it would split a chunk shared
+   *  with the apps, whose preload lists are in the start chunk), with the decimal comma when that is the mark: the cells'
+   *  data-text, as Copy would take it. */
   text(c: GridCell): string {
     const s = this.settings();
-    const plain = "text" in c ? c.text : c.result.ok ? (confirmedText(c.result, s) ?? c.result.display) : c.result.display;
+    const v = "result" in c && c.result.ok ? c.result.value : undefined;
+    const plain = "text" in c ? c.text : v ? formatComplex(v, confirmedOptions(v, c.result.facts.reliableDigits, this.options())).text : c.result.display;
     return s.decimalMark === "comma" ? commaResult(plain, false) : plain;
   }
 
-  /** ⚠: the cell shows more digits than the engine confirmed (as the Num table's cells). */
+  /** The text as drawn on screen: in digit groups, as Home's row and the Num table draw them (R125). */
+  drawn(text: string): string {
+    const s = this.settings();
+    const comma = s.decimalMark === "comma";
+    return groupMarked(text, groupSepFor(s.groupSep, comma), comma);
+  }
+
+  /** ⚠: the cell shows fewer confirmed digits than asked, or an unaudited float (as the Num table's cells, which draw no
+   *  = or ≈). */
   warned(c: GridCell): boolean {
-    return "result" in c && c.result.ok && isWarned(c.result, this.settings());
+    const v = "result" in c && c.result.ok ? c.result.value : undefined;
+    return v !== undefined && "result" in c && markOf({ ...c.result.facts, value: v }, this.options())?.mark === "⚠";
+  }
+
+  private options(): FormatOptions {
+    const s = this.settings();
+    return { format: engineFormat(s.format), digits: s.digits };
   }
 }
 

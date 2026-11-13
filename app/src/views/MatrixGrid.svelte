@@ -2,11 +2,11 @@
 <script lang="ts">
   // R188: a stored matrix in rows and columns (matrixGrid.svelte.ts), drawn as the Num view's table (FunctionNum.svelte:
   // the same row height, lines, right-aligned tabular digits and muted headers): the column numbers on top, the row
-  // numbers on the left, each element through the Home formatter, the highlighted cell marked. A chunk of its own.
+  // numbers on the left, each element through the Home formatter, the highlighted cell marked. A chunk of its own. The
+  // thin space of a digit group is drawn as a gap (as apps/Grouped.svelte does; not imported: it would split a chunk
+  // shared with the apps, whose preload lists are in the start chunk).
   import { t } from "../i18n/index.ts";
   import { findText } from "../i18n/enFind.ts";
-  import { drawnGroups } from "../apps/grouped.ts";
-  import Grouped from "../apps/Grouped.svelte";
   import type { MatrixGrid } from "./matrixGrid.svelte.ts";
 
   let { grid }: { grid: MatrixGrid } = $props();
@@ -35,7 +35,7 @@
             {#each cols as c (c)}
               {@const cell = cells[r * grid.cols + c]}
               {@const text = cell ? grid.text(cell) : ""}
-              <td data-cell="{r + 1},{c + 1}" data-text={text} data-active={r === grid.row && c === grid.col}><Grouped text={drawnGroups(text, grid.settings())} />{#if cell && grid.warned(cell)}<span class="warn" data-testid="mark" title={t("mark.warn")}> ⚠</span>{/if}</td>
+              <td data-cell="{r + 1},{c + 1}" data-text={text} data-active={r === grid.row && c === grid.col}>{#each grid.drawn(text).split("\u2009") as p, i (i)}{#if i > 0}<span class="gsep" aria-hidden="true"></span>{/if}{p}{/each}{#if cell && grid.warned(cell)}<span class="warn" data-testid="mark" title={t("mark.warn")}> ⚠</span>{/if}</td>
             {/each}
           </tr>
         {/each}
@@ -74,11 +74,15 @@
     background: var(--bg);
   }
   th.r {
-    width: 2.5em;
+    width: var(--row-tile-w);
   }
   td[data-active="true"] {
     background: var(--pick);
     box-shadow: inset 0 calc(-1 * var(--stroke-thick)) 0 var(--focus);
+  }
+  .gsep {
+    display: inline-block;
+    width: var(--group-gap);
   }
   td > .warn {
     color: var(--warn);
