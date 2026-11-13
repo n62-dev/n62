@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 |---|---|---|---|---|
 | 662 | R197 the Help key: syntax and example of the function at the cursor | ron, Opus | `p1/ron-helpkey` | R196, R278 |
 | 663 | R185 Shift + 5: a matrix that grows as you type | ron, Opus | `p1/ron-matgrow` | – |
-| 664 | [R186](packages/R186.md) ⌫ takes an empty last row or column back | ron, Sonnet | `p1/ron-matshrink` | R185 |
+| 664 | R186 ⌫ takes an empty last row or column back | ron, Sonnet | `p1/ron-matshrink` | R185 |
 | 665 | [R187](packages/R187.md) Shift + 4: the matrix sheet and its functions | ron, Sonnet | `p1/ron-matsheet` | – |
 | 666 | [R131](packages/R131.md) a full desktop key map, % included | ron, Opus | `p1/ron-deskkeys` | R278, R283, R185, R187, R193, R197 |
 | 730 | [R198](packages/R198.md) typed function names on a hardware keyboard | ron, Opus | `p1/ron-typednames` | R131 |
