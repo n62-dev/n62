@@ -2,13 +2,14 @@
 // Function app maths: the Num table (Home evaluation per cell) and the Plot analysis menu (root,
 // extremum, intersection, slope, signed area), built on solve1.ts and Giac. Every number shown to the
 // user comes from here (D7), never from the plot evaluator. Synchronous, UI-free.
-import { homeEval, toExactLiterals, type Giac, type HomeResult, type HomeSettings } from "./homeEval.ts";
+import { homeEval, homeSetupCommands, toExactLiterals, type Giac, type HomeResult, type HomeSettings } from "./homeEval.ts";
 import { num, solve1, type SolveSettings } from "./solve1.ts";
 import { numericResult, SECOND_POLISH, SOLVE_HARD_TIMEOUT_S, solveSettingsFor, withUnassigned } from "./solve.ts";
 import { IDENT, type AnalysisRequest, type AnalysisResult, type TableRequest } from "./types.ts";
 import { refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { PLAIN_FORM, type InputForm } from "./stores.ts";
+import { decimalToString, isZero } from "./format.ts";
 
 /** Time Giac may spend on an exact definite integral when Romberg did not converge (seconds). */
 const EXACT_INT_S = 0.5;
@@ -42,6 +43,31 @@ export function table(giac: Giac, req: TableRequest, s: HomeSettings, form: (cel
       ),
     ),
   );
+}
+
+/** G330: Home lines (the Num table's cell road, Giac's undef shows NaN) in Home's clock and budget, from inside the
+ *  analysis (the host's Solve mode, put back after; Digits stays the caller's `work`). Ans is kept. */
+function homeLines(giac: Giac, inputs: readonly [string, string], h: HomeSettings, work: number): [HomeResult, HomeResult] {
+  for (const c of homeSetupCommands(h)) giac.eval(c);
+  giac.eval(`Digits:=${h.digits}`);
+  try {
+    const line = (input: string): HomeResult => {
+      const r = homeEval(giac, input, h, undefined, PLAIN_FORM, undefined, true);
+      return r.ok ? r : { ...r, error: "engine" as const };
+    };
+    return keepingAns(giac, () => [line(inputs[0]), line(inputs[1])]);
+  } finally {
+    giac.eval(`timeout ${SOLVE_HARD_TIMEOUT_S}`);
+    giac.eval("ckbudget 0");
+    giac.eval(`Digits:=${work}`);
+  }
+}
+
+/** A Home line's value as a JS number when it is a real number, else undefined. */
+function realOf(r: HomeResult): number | undefined {
+  if (!r.ok || !r.value || !isZero(r.value.im)) return undefined;
+  const n = Number(decimalToString(r.value.re));
+  return Number.isFinite(n) ? n : undefined;
 }
 
 function failed(error: AnalysisResult["error"], info: string, method: string, t0: number): AnalysisResult {
@@ -122,18 +148,21 @@ function run(giac: Giac, req: AnalysisRequest, v: string, h: HomeSettings, t0: n
       ev(`Digits:=${W}`);
       ev(`pasxr:=evalf(${ex(req.x0)},${W})`);
       if (num(ev("pasxr")) === undefined) return failed("bad-input", "x is not a real number", "none", t0);
-      const d = ev(`pasdv:=evalf(${at(`diff(${f},${v})`, "pasxr")},${W})`);
-      if (num(d) === undefined) return failed("no-root", `f' is not defined here (${d})`, "diff", t0);
+      // G330 (F227): f' and f at x0 take Home's road (homeEval: the typed x0 exact, exact-first, the second precision
+      // and the marks of a Home line). Giac's unsimplified diff in floats at W cancels an exact 0 to 1E-31, shown with
+      // 12 digits.
+      const [value, y] = homeLines(giac, [`subst(diff((${req.f}),${v}),${v}=(${req.x0}))`, `subst((${req.f}),${v}=(${req.x0}))`], h, W);
+      const dv = realOf(value);
+      if (dv === undefined) return failed("no-root", `f' is not defined here (${value.display})`, "diff", t0);
       // Consistency: a central difference at work precision must agree with the exact derivative.
       ev(`pash:=evalf(max(abs(pasxr),1)*10^(-${Math.floor(W / 3)}),${W})`);
       const cd = num(ev(`evalf((${at(`(${f})`, "pasxr+pash")}-${at(`(${f})`, "pasxr-pash")})/(2*pash),${W})`));
-      const dv = num(d)!;
       const agree = cd !== undefined && Math.abs(cd - dv) <= 1e-8 * Math.max(1, Math.abs(dv));
       return {
         ok: true,
         x: numericResult(giac, "pasxr", s.digits, W),
-        y: numericResult(giac, `evalf(${at(`(${f})`, "pasxr")},${W})`, s.digits, W),
-        value: numericResult(giac, "pasdv", s.digits, W),
+        y,
+        value,
         warn: !agree,
         info: agree ? "exact derivative, matches a central difference" : "exact derivative and central difference disagree (kink or jump?)",
         method: "diff",
