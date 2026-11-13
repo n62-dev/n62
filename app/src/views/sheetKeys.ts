@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // What a key does while a sheet is open (docs/05 3.1 with section 7). Shift and Alpha are ignored for picking: a key
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
-import type { Key, Layer } from "../keyboard/keyboard.ts";
+import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -93,16 +93,18 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
 }
 
 /**
- * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. `typed`: the
- * letter the key types on the line in the layer it was pressed in (x alone, Alpha + Vars A; lower case in CAS, R58),
- * typed as it is; `layered`: Shift or Alpha is on (or a flick). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job. A plain
+ * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. A key that
+ * types a letter on the line types it, in the layer it was pressed in (`shift`, `alpha`: a tap before it or a flick; x
+ * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job. A plain
  * digit picks no row there: after a letter it belongs to the name (`A1`), before one it does nothing. A plain key that
  * types no letter types its Alpha letter, as in every sheet, and the place keys keep theirs. Any other key types no name
  * (`line`): it does its job on the line, so every press after ▶ that did not type a name does what it did before.
  * `empty`: nothing typed yet.
  */
-export function storeKey(key: Key, typed: string | undefined, layered: boolean, empty: boolean): SheetKey {
-  if (typed) return { kind: "letter", ch: typed };
+export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean, empty: boolean): SheetKey {
+  const a = actionFor(key, shift, alpha, false, cas);
+  if (a?.kind === "type" && /^\p{L}$/u.test(a.text)) return { kind: "letter", ch: a.text };
+  const layered = shift || alpha;
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
   const d = DIGIT.exec(key.id);

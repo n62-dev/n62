@@ -10,7 +10,8 @@ import type { MenuItem } from "../apps/types.ts";
 import { entryText } from "../clipboard/plaintext.ts";
 import type { UserName } from "../engine/defs.ts";
 import { nameLatex, previewOf, valueOf } from "../find/names.svelte.ts";
-import { findText as t } from "../i18n/enFind.ts";
+import { findText } from "../i18n/enFind.ts";
+import { storeText as t } from "../i18n/enStore.ts";
 import { typedName } from "../render/home.ts";
 import { markText, noDigit } from "../state/displayMode.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
@@ -62,8 +63,8 @@ export function showStore(env: StoreEnv, value: string): void {
   /** A stored name: its value with its mark, and the question before it is replaced. */
   const filled = (n: UserName, cell: boolean): MenuItem => {
     const name = typedName(n.name);
-    const shown = n.kind === "fn" ? t("memory.fn") : valueOf(n, ctx());
-    const bare = n.kind === "fn" ? t("memory.fn") : n.preview;
+    const shown = n.kind === "fn" ? findText("memory.fn") : valueOf(n, ctx());
+    const bare = n.kind === "fn" ? findText("memory.fn") : n.preview;
     return {
       id: `name:${n.name}`,
       label: name,

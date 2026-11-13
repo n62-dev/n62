@@ -364,9 +364,7 @@ function replay(c: RouteCtx): void {
  *  before; a key that types no name goes on to the line (`line`) with its Shift or Alpha, and one the sheet takes uses a
  *  one-shot Shift or Alpha up, as on the line. `m`: the modifiers the key was pressed with (a queued key's, R8). */
 function storeKey(c: RouteCtx, keys: NonNullable<typeof sheetChunk.keys>, key: Key, layer: Layer | undefined, m: Mods): SheetKey {
-  const a = actionFor(key, m.shift, m.alpha, false, c.casKeys);
-  const typed = a?.kind === "type" && /^\p{L}$/u.test(a.text) ? a.text : undefined;
-  const k = keys.storeKey(key, typed, m.shift || m.alpha, c.shell.sheet?.level.filter === "");
+  const k = keys.storeKey(key, m.shift, m.alpha, c.casKeys, c.shell.sheet?.level.filter === "");
   if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
   return k;
 }
