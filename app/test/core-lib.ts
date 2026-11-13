@@ -149,6 +149,8 @@ function target(page: Page, name: string): import("@playwright/test").Locator {
  *  Chrome takes the next tap within it as the fling's stop: no click; under load that lasted past a 250 ms wait, R279). */
 export async function finger(page: Page, name: string, how: { ms?: number; dx?: number; dy?: number; steps?: number; still?: number }): Promise<void> {
   const loc = target(page, name);
+  // a row's hold and swipe come in a lazy chunk (rowGestures.ts): before it is in, a hold is a tap (R196 fix round 2)
+  if (/^(?:result|input|row):last$/.test(name)) await expect(loc).toHaveAttribute("data-gestures", "", { timeout: 15_000 });
   await loc.scrollIntoViewIfNeeded();
   const box = await loc.boundingBox();
   if (!box) throw new Error(`${name} is not visible`);
