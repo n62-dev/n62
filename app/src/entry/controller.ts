@@ -45,8 +45,10 @@ export class EntryController {
   onKey: (id: string, layer: Layer, repeat: boolean) => void = () => {};
   /** A letter typed on a hardware keyboard (R45): the shell's checks first, then the line. */
   onLetter: (ch: string, repeat: boolean) => void = () => {};
-  /** A hardware `<`, `>` or `!` (R107): the symbol goes on the line; App.svelte counts it as a press. */
-  onSymbol: (ch: string, repeat: boolean) => void = (ch) => this.run({ kind: "insert", latex: ch });
+  /** A hardware `<`, `>`, `!` or `%` (R107, R131): the palette's insert goes on the line; App.svelte counts it as a press. */
+  onSymbol: (latex: string, repeat: boolean) => void = (latex) => this.run({ kind: "insert", latex });
+  /** A hardware key for a control no keypad key holds (R131: Apps, the place switch, the views, the fold): App.svelte. */
+  onAction: (name: string, repeat: boolean) => void = () => {};
   /** A hardware key that does nothing (R31): the shell's dead-key feedback (a press all the same, R107). */
   onDead: (repeat: boolean) => void = () => {};
   /** A hardware `)` or `|` that leaves its pair (R107f1): the cursor moves, App.svelte counts the press. */

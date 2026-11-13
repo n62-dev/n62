@@ -11,7 +11,7 @@
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
-  import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
+  import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem, type Special } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
@@ -99,6 +99,12 @@
     });
     entry.onEdit = () => (edited = true); // R154: MathLive's own typing (é, µ, π), a row menu's recall or insert
     entry.onDead = counted(hwOther("dead"), dead);
+    // R131: a desktop key for a control no keypad key holds: the status line's (Apps, the switch, Symb, Plot, Num) as their
+    // tap, and results mode's fold (Alt+K), counted as "<name>:hw"
+    entry.onAction = counted((...[name]: [string]) => session.taps.press(`${name}:hw`), (name: string) => {
+      if (name === "fold") foldKey();
+      else press(actionKey(name as Special), "primary");
+    });
     entry.onPress = counted(hwOther("other"), () => {}); // R107f1: a leaving ) or | is a press that needs nothing more
     entry.onPaste = (text) => {
       edited = true;
@@ -377,11 +383,20 @@
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
-  function fold(): void {
+  /** Fold the keypad: by the line's swipe, or (R131) by the desktop key, counted apart (`fold.swipe`, `fold.hw`). */
+  function fold(how: "swipe" | "hw" = "swipe"): void {
     if (folded || !canFold) return;
     folded = true;
-    countUse("fold.swipe");
+    countUse(`fold.${how}`);
   }
+  /** R131: the desktop key folds and unfolds the keypad (Home and CAS); in an app, or over an open sheet, a dead press. */
+  function foldKey(): void {
+    if (unfold()) return;
+    if (!canFold || shell.sheet) dead();
+    else fold("hw");
+  }
+  /** A status-line control as a key (R131), as StatusLine.svelte presses its own. */
+  const actionKey = (name: Special): Key => ({ id: `hw-${name}`, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
   /** The keys come back; false when they were up. */
   function unfold(): boolean {
     if (!folded) return false;
@@ -548,7 +563,7 @@
 
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
     <!-- R53: folded, the 44 px slice over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
-    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
+    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={() => fold("swipe")} onunfold={unfold} />{/if}
     <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}
