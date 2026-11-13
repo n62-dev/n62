@@ -83,6 +83,23 @@ describe("literalStart", () => {
     expect(literalStart(`pi^3000-1+"1/2^-3"`, 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
     expect(literalStart("myinv(2)+pi^3000", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
   });
+  // G307f2 (Opus pass 173): under a periodic function a huge power of pi or exp counts, as the value needs the argument
+  // to an absolute precision no level we run holds; as the keys type them (latexToGiac) and as Giac prints them
+  it.each(["sin(pi^2200)", "sin(pi^2200)+1", "cos(pi^2200)", "tan(pi^2200)", "sin(exp(2400))", "2*sec(exp(2400))", "csc(pi^2200)+cot(pi^2200)"])(
+    "past the cap counts a huge power under a periodic function in %s (G307f2)",
+    (text) => {
+      expect(literalStart(text, 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+      expect(literalStart(text, 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+    },
+  );
+  it("still leaves a huge power out with no periodic call (G307f2 guards)", () => {
+    expect(literalStart("pi^3000*sqrt(2)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("exp(10000000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: false });
+    // a name that merely ends in a trig name, and a trig name in a string, call nothing
+    expect(literalStart(`mysin(2)+pi^3000+"cos(1)"`, 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    // a periodic call below the cap starts at the literal's digits plus P, as before
+    expect(literalStart("sin(pi^200)", 40, 1000, "typed")).toEqual({ at: 140, unchecked: false });
+  });
   it("is the digit count plus P up to the cap", () => {
     expect(literalStart("10^919", 40, 1000, "typed")).toEqual({ at: 960, unchecked: false });
     expect(literalStart("10^920", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
@@ -95,8 +112,8 @@ describe("literalPastCap (G307 fix round 2)", () => {
     expect(literalPastCap("sin(pi^2200)>0", 40, 1000, "typed")).toBe(true);
     expect(literalPastCap("sin(exp(2400))>0", 40, 1000, "typed")).toBe(true);
     expect(literalPastCap("sign(sin(exp(3000)))", 40, 1000, "typed")).toBe(true);
-    // the value's start leaves the same powers out (g58-exp-1e7-12 stays ≈)
-    expect(literalStart("sin(pi^2200)", 40, 1000, "typed").unchecked).toBe(false);
+    // the value's start leaves the same powers out (g58-exp-1e7-12 stays ≈), but not under a periodic function (G307f2)
+    expect(literalStart("pi^3000*sqrt(2)", 40, 1000, "typed").unchecked).toBe(false);
     expect(literalStart("exp(10000000)", 40, 1000, "printed").unchecked).toBe(false);
     expect(literalPastCap("exp(10000000)", 40, 1000, "printed")).toBe(true);
   });
