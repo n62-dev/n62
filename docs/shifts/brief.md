@@ -94,7 +94,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 |---|---|---|---|---|
 | 610 | G306 ∛, atan2, ln, sort (be-1) | gorge, Opus | `p1/gorge-decideroot` | – |
 | 611 | [G307](packages/G307.md) powers of π and e (be-3) | gorge, Opus | `p1/gorge-literalpow` | – |
-| 612 | [G308](packages/G308.md) (1+εi)^p (be-2) | gorge, Opus | `p1/gorge-powbase1` | – |
+| 612 | G308 (1+εi)^p (be-2) | gorge, Opus | `p1/gorge-powbase1` | – |
 | 613 | [G309](packages/G309.md) the weekly fuzz, week of 11-11 | gorge, Opus | `p1/gorge-nightfuzz-1111` | – |
 | 696 | [S52](packages/S52.md) can a chunk option give the start chunk room (1.8 kB left for the UI rows) | sandra, Opus | `p1/sandra-chunkspike` | – |
 | 752 | [S50](packages/S50.md) the benchmark's protocol | sandra, Opus | `p1/sandra-benchmarknote` | – |
