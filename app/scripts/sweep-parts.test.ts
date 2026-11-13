@@ -55,8 +55,9 @@ describe("sweep parts: slices and files", () => {
 });
 
 describe("sweep parts: a real small run", () => {
-  // seed 1793847163 is the weekly night of G138; 300 edge trees (433 runs, about 13 s) hold two failures (a ≈ and a ⚠n)
-  const seed = 1793847163;
+  // 300 edge trees of seed 1793847172 (452 runs, about 12 s) hold two failures (a part and a ⚠n, neither on G308's nearone leaf).
+  // G308's edge class nearone changed the draw, so G138's weekly night 1793847163 holds none now (it held a ≈ and a ⚠n).
+  const seed = 1793847172;
   const count = 300;
   const runs = runsOf(seed, count, true);
   const key = (f: { id: string; check: string }): string => `${f.id} [${f.check}]`;

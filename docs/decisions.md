@@ -68,7 +68,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **G138 (Opus pass 69): a nightly known row names one tree, not a shape:** a shape would hide a new cause that shrinks to it (F175: ∛ of F151's leaf); G141 removes F151's families. Would change if: one cause fills two weekly reports.
 - **G133f1 (Opus pass 24):** Home's "Underflow" for an exact 0 it cannot prove (`re(asin(i/10))`) is a bug line, F139 (wrong reason, no wrong number), not a plan change.
 - **G78 (Opus pass 45; F50, F51):** `√(asinh(asin 3.7))` stays refused at Home's budget; a series or limit at ±∞ keeps Giac's infinity. Archived, "Opus pass 106". Would change if: the owner wants these refused or computed.
-- **Built, archived as they stood ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65 (an underflow is refused with its reason; Solve confirms only the digits every solve agrees on; Area applies Home's refusals); A20 (Home's budget counts steps, G82; CAS and Solve keep clocks); A12 and A62 (functions load on first use, G83; R59 went ahead); A16 after G53 (Enter p95 on the Tab One 145–147 ms, bar 150; [archive/shifts/A16-enter-p95.md](archive/shifts/A16-enter-p95.md)); F50, F51 (a division by zero, an overflow or a lost answer is refused with its reason, G78); G33 and R56 (Solve knows the user's functions; plots of them wait for the owner); A4a point 1 (the agreement check and G38's second decision stay; G52 counts Giac calls per Enter); G20 (a CAS result lists the stored values it used, G28).
+- **Built, archived as they stood ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65; A20 (G82); A12 and A62 (G83); A16 after G53; F50, F51 (G78); G33 and R56; A4a point 1 (G52); G20 (G28).
 - **G58, G59 (Opus pass 45):** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Archived, "Opus pass 96".
 - **S13, G57 (owner, 2026-10-20; built by G65): names from Giac's state;** an undecided run-once store is refused as `a:=` is. Archived, "Opus pass 106". Would change if: A16's RAD Enter p95 > 150 ms.
 - **P18 (2026-10-20): Giac evaluates, our layer decides** what is shown; no other engine answers at run time. Rule: docs/04 6.1. Archived. Would change if: a feature needs a second engine at run time; the checks push the Tab One's Enter p95 past 150 ms.
@@ -109,7 +109,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 The defaults that bind code and tests, one line each. A default changes when its "would change if" happens or the owner says so.
 
 **Entry and keys**
-- **Shift + 5's matrix (R185, R186; Opus pass 169):** only the one Shift + 5 made on the line grows (a recalled, pasted or Tmpl matrix keeps its size: docs/03 rule 6); a column or row grows from a filled cell; ▼ takes an empty last row back as ▶ an empty column; ⌫ takes the column first. Would change if: the owner re-types recalled matrices.
+- **Shift + 5's matrix (R185, R186; Opus pass 169):** only the one Shift + 5 made on the line grows (a recalled, pasted or Tmpl matrix keeps its size: docs/03 rule 6); a column or row grows from a filled cell; ▼ takes an empty last row back as ▶ an empty column; ⌫ takes the column first; a new column's other cells get □ and an empty cell is refused (R185f1; Undo may take the □ first). Would change if: the owner re-types recalled matrices.
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
 - **Store ▶ on a picked row (R280):** Shift + ᴇ, its flick or a user key holding ▶ stores the picked row as the row bar's Store ▶ does; a picked row without a result (an error, a cancelled entry) gets the double haptic and the line stays, as the bar's Store ▶ is off there. Would change if: the G2 (to verify, store-design.md 1) does otherwise and the owner wants that.
@@ -120,6 +120,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Paste in the apps (Opus pass 159, after R278):** Solve's and Function's ☰ get Paste wherever the entry line shows (R278f1): R278 took the Paste key on the premise that ☰ pastes, and R277's hold takes the line's long press, so a phone had no other way in. Paste is the view's last own row, so Symb's R83 pointer row moves from 2 to 3 (Opus pass 161: no core case presses it). Would change if: the owner drops paste in the apps.
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45): docs/04 5.5 point 1; `e` after digits is ᴇ; characters no key types do nothing.
+- **R131's desktop keys (Opus pass 170):** the worker's table stands (`spec/keyboard.yaml` `desktop:`): Alt + a letter a key's tap, Alt + Shift + it the Shift layer, Alt+1–6 the user keys, F1 Help, F2–F4 the views, Alt+K the fold; counted `hw:<desktop name>`. Alt alone with an ASCII character that is no letter or digit types it (a Mac's Option + 5 is `[` on a German layout). Would change if: a desktop check finds a chord the browser keeps.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
 - **Flicks** (R9): arm at 20 px, cancel within 12 px; **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Archived, "Opus pass 132".
 - **R58 (Opus pass 18): in the CAS view Alpha types lower case and Shift + Alpha the capital;** the lock flicks swap with it; Home, the apps, Find and the unit slots keep Alpha = capital. Would change if: the rest of G2 item 45 differs.
@@ -129,7 +130,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Enter during a job (Opus pass 120):** starts nothing, the line stays (`session.submit`). Would change if: the owner wants it queued.
 - **Sheets** (R7, R8, R21a): the last pick per sheet in memory only; Mode and Settings open on their first row. Archived, "Opus pass 132".
 - **User keys** (R15b): a slot is `{ label, action }` in keyboard.yaml's action form, null empties it, the user's choice wins over a default.
-- **Keypad legends** (R6): a key is dimmed when its layer gives nothing; 4.5:1 contrast. Archived, "Opus pass 132".
+- **Keypad legends** (R6): a key is dimmed when its layer gives nothing; 4.5:1 contrast. Shift + 4 reads Mat (R187, pass 170; as short as Mem). Archived, "Opus pass 132".
 - **The kept line** (R34): `{ view, latex, chips }` under `entry`, written on hide once settled, restored only into its view.
 - **An app's line stays with the app** (R76, R76f1, R262): cleared on the way back to Home or CAS, only your typing follows; Menu › To Home puts the answer on Home's line as a chip. Archived, "Opus pass 153". Would change if: the owner wants typing to follow.
 - **Working… after 150 ms** (F8): the busy line and Cancel are drawn late; Cancel works from 0 ms.
@@ -149,19 +150,20 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
 - **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Archived. Would change if: Giac can size such a sum.
 - **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Archived. Would change if: a cheaper test tells exp(-10^20) from 0.
+- **G307 past the cap (Opus pass 171):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` leaves the value's start alone only in a text with no `/`, negative exponent or `inv` (`exp(10^7)` keeps ≈); else it counts (⚠ unchecked); a decision always counts it. Would change if: S20.
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
 - **The angle mode, route R (S14, R64, G46):** docs/04 2.12; `sinc` takes no factor. Archived, "Opus pass 155".
 - **R39 (Function, Solve; S12):** a literal fraction exponent is reduced first (`(-8)^(2/6)` = −2); the root template stays the real root in every view.
-- **R18:** Greek names with Giac stand-ins; `&` refused until G2 item 41; `==` never answers on undecidable sides; Home draws a non-number from `latex()` (R18f3). Archived, "Opus pass 97".
+- **R18:** Greek names with Giac stand-ins; `&` refused until G2 item 41. Archived, "Opus pass 97".
 - **R52:** `SerializeError` carries the English text plus key and values; `parseError(key, vars)` in `app/src/i18n/enParser.ts`.
 - **Home number formats:** `digits` are significant digits; STD plain for 1E-4 ≤ |x| < 10^digits; rounding half away from zero (G2: half to even, item 8; one rule). Copy rounds once: a tie may paste one ulp off (G324f1; P5 holds). **G31:** Fixed turns to scientific with the same decimals when a nonzero value would show only zeros, with confirmed digits only (in each complex part too, G36).
 - **G5:** a list's mark: docs/04 2.4. **Chips and Ans** (R2): rule: docs/04 2.8; a chip has two arguments (key, shown); an operator on an empty line starts with Ans only when the view has a result.
 - **A stored name's mark in Vars (S53f1, Opus pass 132):** from its facts, else the mark Home stored; never `=` without either. Archived, "Opus pass 150". Would change if: the owner wants old names marked.
 - **Time limits:** CAS 10 s soft budget, Giac's 600 s net; Solve and analysis 30 s; Home and units a 4 s watchdog from engine-ready (G185); Cancel replays the definitions only. Archived, "Opus pass 132".
-- **Solve and Plot:** a root is accepted at relative residual ≤ 1e-15 at 30 digits, else ⚠ (systems: < 1e-6 with ⚠); Plot searches only the visible window; the signed area by Romberg, `int`, then `gaussquad` with ⚠. Archived.
-- **Function app:** window x ∈ [-10, 10] square; trace step 0.1 (1-2-5 rule); Num from 0 by 0.1, `NaN` at a pole; a refused Num value gets a notice (R99). Archived.
+- **Solve and Plot:** a root at relative residual ≤ 1e-15 at 30 digits, else ⚠; Plot searches the visible window. Archived.
+- **Function app:** window x ∈ [-10, 10] square; Num from 0 by 0.1. Archived.
 - **Parser (L6):** odd root templates are real roots; `{…}` is a list; the decimal comma is MathLive's `3{,}5` in either mode, and `{,}5` is 0.5 as `.5` is (R99); a bare comma, like `;`, separates arguments (R57); `p(x):=…` makes p a function (R56); 0xFF: docs/04 5.4 (R191).
 - **R258 (Opus pass 132): a stored value of more than one letter is `\operatorname{name}`** on the line; a bracket after it multiplies; Function and Solve refuse it. Archived, "Opus pass 150". Would change if: plots read user names.
 - **Discrete distributions (G113, G113f1; patches 0009, 0010):** off the integers or below the support a pmf is an exact 0 and a cdf takes floor(k). Archived.

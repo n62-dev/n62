@@ -299,7 +299,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
 | Shift + `−` [r9c5] | the Base menu (built, R193; 5.4) | reference: Base |
 | Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list (built, R54) | reference |
-| Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix editor (EN5); the list editor, deferred with Statistics | reference: Matrix, List |
+| Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix sheet (built, R187: eight functions, rows 1–8; R188 the stored matrices); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. Until R24c, `spec/keyboard.yaml` `unit_slot:` holds S1's letters | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift (and a flick up) opens Mode on Angle (built, R85) | ours; decisions.md "Settings in the Mode sheet, and presets" |
 | Unassigned Shift cells (Vars, a b/c, `( )`, 1, 0, Deselect; `,` is ± since R71; the pad has no Shift layer, P12 point 7) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
