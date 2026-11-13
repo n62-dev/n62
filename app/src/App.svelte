@@ -264,6 +264,11 @@
     if (!shell.showsEntry) return dead();
     onFind(findNow().then(async (f) => ((await f.m.showHelpAt(shell, entry, f.index.byId)) ? null : f)), (f) => f && showFind(f)); // (the route dropped a pick)
   }
+  /** Shift + 4 (R187): the matrix sheet; its rows are Find's items, so it waits for the index as Help does. */
+  function openMatrix(): void {
+    if (!shell.showsEntry) return dead();
+    onFind(findNow(), (f) => { picked = null; f.m.showMatrix(shell, entry, f.index); });
+  }
   type FindSlot = { id: string; layer: Layer };
   const showFind = (f: FindCode, slot?: FindSlot): void => { picked = null; f.m.showFind(shell, entry, f.index, slot && { ...slot, userKeys }); };
   /** Vars and Shift + Math (R4b): Find on the user's variables and functions, or Memory (the code only, not the index). */
@@ -437,6 +442,7 @@
     openShiftPalette,
     openFind,
     openHelp,
+    openMatrix,
     openNames,
     openStore,
     withClip,

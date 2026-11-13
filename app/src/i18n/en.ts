@@ -32,6 +32,7 @@ export const en = {
   "key.tmpl": "Tmpl",
   "key.units": "Units",
   "key.base": "Base",
+  "key.matrix": "Mat",
   "key.enter": "Enter",
   "entry.label": "Entry line",
   "app.function": "Function",

@@ -71,6 +71,7 @@ export const enKeyNames = {
   "div.shift": "x to the minus one",
   alpha: "Alpha",
   d4: "4",
+  "d4.shift": "Matrix functions",
   d5: "5",
   "d5.shift": "Matrix",
   d6: "6",
