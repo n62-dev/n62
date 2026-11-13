@@ -329,6 +329,47 @@ export function callsOf(s: string, only: ReadonlySet<string> | readonly string[]
   return out;
 }
 
+/** G348: every power `a^b` in `s` outside strings, in order: its base's text (a bracket with the name that calls it, or
+ *  a name or number) and where its exponent stands in `s`, [from, to): a sign, then a bracket, or a name or number with
+ *  the bracket that calls it, and any power that raises it (Giac's `^` is right-associative: `(-1)^pi^2206`). */
+export function powersIn(s: string, q: Quoting): { base: string; exponent: [number, number] }[] {
+  const t = withoutStrings(s, (x) => " ".repeat(x.length), q);
+  const out: { base: string; exponent: [number, number] }[] = [];
+  walk(t, 0, (k, _d, ch) => void (ch === "^" && out.push({ base: s.slice(operandStart(t, k), k).trim(), exponent: [k + 1, operandEnd(t, k + 1)] })), q);
+  return out;
+}
+
+/** Where the operand that ends at `end` of `t` (a text without strings) starts. */
+function operandStart(t: string, end: number): number {
+  let k = end;
+  while (k > 0 && t.charAt(k - 1) === " ") k--;
+  if (k > 0 && CLOSERS.includes(t.charAt(k - 1))) k = Math.max(0, opening(t, k - 1));
+  while (k > 0 && (isNameChar(t.charAt(k - 1)) || t.charAt(k - 1) === ".")) k--;
+  return k;
+}
+
+/** Where the operand that starts at `from` of `t` (a text without strings) ends, the powers that raise it included. */
+function operandEnd(t: string, from: number): number {
+  let k = from;
+  while (k < t.length && " -+".includes(t.charAt(k))) k++;
+  while (k < t.length && (isNameChar(t.charAt(k)) || t.charAt(k) === ".")) k++;
+  if (k < t.length && OPENERS.includes(t.charAt(k))) {
+    const close = closing(t, k, "typed");
+    k = close < 0 ? t.length : close + 1;
+  }
+  let j = k;
+  while (j < t.length && t.charAt(j) === " ") j++;
+  return t.charAt(j) === "^" ? operandEnd(t, j + 1) : k;
+}
+
+/** G348: `text`, one operand (powersIn's base), starts with a minus inside any brackets that hold all of it (`(-1)`,
+ *  `((-2))`, `-x`): a negative number or a negated term. */
+export function negated(text: string, q: Quoting): boolean {
+  let t = text.trim();
+  while (t.startsWith("(") && closing(t, 0, q) === t.length - 1) t = t.slice(1, -1).trim();
+  return t.startsWith("-");
+}
+
 /** `text` with the name of every call of a key of `to` replaced by its value (`erf(` → `paserf(`). */
 export function renameCalls(text: string, to: Readonly<Record<string, string>>, q: Quoting): string {
   return mapNames(text, (n) => (n.call && Object.hasOwn(to, n.name) ? to[n.name]! : null), q);
