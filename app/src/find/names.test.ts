@@ -53,17 +53,47 @@ describe("R258: a stored value of more than one letter", () => {
 });
 
 describe("Vars", () => {
-  it("lists the names newest first, searches them by name, and a pick inserts", () => {
-    const { sheet, inserted } = setup(false);
+  const stored = (sheet: Sheet) => sheet.level.items.filter((r) => !r.id.startsWith("name:")).map((r) => r.id);
+  it("draws the store sheet's grid (R282): A–Z as cells with a stored one's value, then the other names newest first; it opens on the newest", () => {
+    const { sheet } = setup(false);
     expect(sheet.id).toBe("find");
-    expect(sheet.level.items.map((r) => r.id)).toEqual(["userfn:area", "userfn:p", "var:b_1", "var:A"]);
+    expect(sheet.level.cells).toBe(7);
+    const cells = sheet.level.items.filter((r) => r.cell);
+    expect(cells.map((r) => r.label).join("")).toBe("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    expect(cells[0]).toMatchObject({ id: "var:A", value: "= 5", preview: "A = 5" });
+    expect(cells[1]).toMatchObject({ id: "name:B", preview: "B is free; a tap puts it on the line" }); // free: no value
+    expect(cells[1]?.value).toBeUndefined();
+    expect(stored(sheet)).toEqual(["var:A", "userfn:area", "userfn:p", "var:b_1"]); // the cell, then the rest newest first
+    expect(sheet.level.rows.every((r) => r.n === undefined)).toBe(true); // a grid has no numbers
+    expect(sheet.level.current?.id).toBe("userfn:area"); // the newest name, as before
+  });
+  it("a tap on a letter inserts its name, a stored one or a free one; the sheet closes, then the name goes in", () => {
+    const { sheet, inserted } = setup(false);
+    for (const id of ["var:A", "name:B", "var:b_1", "userfn:p"]) {
+      const p = sheet.activate(sheet.level.items.findIndex((r) => r.id === id));
+      expect(p.kind).toBe("run");
+      if (p.kind === "run") p.item.run?.();
+    }
+    expect(inserted).toEqual(["A", "B", "b_{1}", "\\operatorname{p}\\left(#0\\right)"]);
+  });
+  it("a typed letter searches the names as before: the hits are rows, without the grid or numbers", () => {
+    const { sheet, inserted } = setup(false);
     sheet.level.type("a");
     expect(sheet.level.items.map((r) => r.id)).toEqual(["var:A", "userfn:area"]);
+    expect(sheet.level.items.some((r) => r.cell)).toBe(false);
     expect(sheet.level.items[0]?.preview).toBe("A = 5");
     const p = sheet.activate(0);
-    expect(p.kind).toBe("run"); // a Vars row closes the sheet, then runs
+    expect(p.kind).toBe("run");
     if (p.kind === "run") p.item.run?.();
     expect(inserted).toEqual(["A"]);
+  });
+  it("with no names every letter is a free cell", () => {
+    const session = new Session(new FakeCalc(), kv());
+    const shell: { sheet: Sheet | null } = { sheet: null };
+    showNames(shell, { run: () => undefined } as unknown as EntryController, session, false);
+    const items = (shell.sheet as Sheet).level.items;
+    expect(items).toHaveLength(26);
+    expect(items.every((r) => r.cell && r.id.startsWith("name:"))).toBe(true);
   });
 });
 
@@ -73,7 +103,7 @@ describe("marks (S53f1, store-bu-1)", () => {
     session.userNames = [n];
     const shell: { sheet: Sheet | null } = { sheet: null };
     showNames(shell, { run: () => undefined } as unknown as EntryController, session, memory);
-    return (shell.sheet as Sheet).level.items[0];
+    return (shell.sheet as Sheet).level.items.find((r) => !r.id.startsWith("name:"));
   };
   const third = { ...name("A", "var", "0.333333333333", 1), facts: { exact: false, reliableDigits: null } };
   it("a name stored from 1/3 reads ≈, in the row and its details line, as History would draw it", () => {
@@ -97,7 +127,7 @@ describe("marks (S53f1, store-bu-1)", () => {
       session.settings.digits = digits;
       const shell: { sheet: Sheet | null } = { sheet: null };
       showNames(shell, { run: () => undefined } as unknown as EntryController, session, false);
-      return (shell.sheet as Sheet).level.items[0];
+      return (shell.sheet as Sheet).level.items.find((r) => !r.id.startsWith("name:"));
     };
     expect(rows(6)?.value).toBe("⚠ 7 0.333333333333");
     expect(rows(6)?.preview).toBe("A ⚠ 7 0.333333333333");
@@ -159,10 +189,12 @@ describe("R260: a stand-in shown as the letter typed", () => {
     session.userNames = [{ ...name("beta_", "var", "2", 1), mark: "=" }, name("e_", "fn", "done", 2)];
     const shell: { sheet: Sheet | null } = { sheet: null };
     const entry = { run: () => {} } as unknown as EntryController;
-    showNames(shell, entry, session, false);
-    const rows = (shell.sheet as Sheet).level.items;
-    expect(rows.map((r) => r.label)).toEqual(["e", "β"]);
-    expect(rows.map((r) => r.preview)).toEqual(["e(…)", "β = 2"]);
+    for (const memory of [false, true]) {
+      showNames(shell, entry, session, memory); // Vars (the grid) and Memory (the list)
+      const rows = (shell.sheet as Sheet).level.items.filter((r) => !r.id.startsWith("name:") && r.id !== "clearall");
+      expect(rows.map((r) => r.label)).toEqual(["e", "β"]);
+      expect(rows.map((r) => r.preview)).toEqual(["e(…)", "β = 2"]);
+    }
     expect(liveItem(name("beta_", "var", "2", 0)).title).toBe("β");
     expect(liveItem(name("e_", "fn", "", 0)).title).toBe("e");
   });

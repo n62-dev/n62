@@ -9,6 +9,8 @@ import { entryValue, flick, lastResult, open, tap } from "./helpers.ts";
 const find = (page: Page) => page.getByTestId("find");
 const menu = (page: Page) => page.getByTestId("menu");
 const rows = (page: Page) => find(page).getByRole("menuitem");
+/** Vars' stored names (R282: the grid also holds a free cell for every letter, `name:B`). */
+const vrows = (page: Page) => find(page).locator('[role="menuitem"]:not([data-id^="name:"])');
 const row = (page: Page, id: string) => find(page).locator(`[role="menuitem"][data-id="${id}"]`);
 const mrow = (page: Page, id: string) => menu(page).locator(`[role="menuitem"][data-id="${id}"]`);
 const active = (page: Page) => find(page).locator('[role="menuitem"][data-active="true"]');
@@ -45,7 +47,10 @@ test.describe("Vars", () => {
     await tap(page, ["vars"]);
     await expect(find(page)).toBeVisible();
     await expect(title(page)).toHaveText("Vars");
-    await expect(rows(page)).toHaveCount(1);
+    await expect(rows(page)).toHaveCount(26); // R282: the store sheet's grid, A–Z, a filled A with its value and the rest free
+    await expect(vrows(page)).toHaveCount(1);
+    await expect(row(page, "var:A")).toContainText("= 5");
+    await expect(row(page, "name:B")).toBeVisible();
     await expect(active(page)).toHaveAttribute("data-id", "var:A");
     await expect(active(page)).toContainText("5");
     await expect(page.getByTestId("find-preview")).toHaveText("A = 5");
@@ -61,20 +66,24 @@ test.describe("Vars", () => {
     await expect(find(page)).toBeHidden();
   });
 
-  test("by keys: a typed letter searches the names, a digit picks the numbered row, a function goes in as a call", async ({ page }) => {
+  test("by keys: a typed letter searches the names, a digit picks no row (the grid has no numbers), a function goes in as a call", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);
     await store(page, "d7", "math", 2);
     await tap(page, ["shift", "alpha", "emark", "paren", "x", "right", "alpha", "sub", "shift", "dot", "x", "sq", "enter"]); // p(x):=x²
     await expect(page.locator('[data-status="done"]')).toHaveCount(3);
     await tap(page, ["vars"]);
-    await expect(rows(page)).toHaveCount(3);
-    await expect(rows(page).first()).toHaveAttribute("data-id", "userfn:p"); // the newest first
+    await expect(vrows(page)).toHaveCount(3);
+    await expect(vrows(page).nth(2)).toHaveAttribute("data-id", "userfn:p"); // after the cells A and B: the rest, newest first (here the one name)
+    await expect(active(page)).toHaveAttribute("data-id", "userfn:p"); // it opens on the newest
     await tap(page, ["vars"]); // inside Find the key types its letter: a
     await expect(find(page).getByTestId("sheet-filter")).toHaveText("a");
     await expect(rows(page)).toHaveCount(1);
     await expect(rows(page).first()).toHaveAttribute("data-id", "var:A");
-    await tap(page, ["bksp", "d1"]); // empty again: 1 picks the first row, the function p
+    await tap(page, ["bksp", "d1"]); // empty again: the grid has no numbers, 1 does nothing
+    await expect(find(page)).toBeVisible();
+    await expect(active(page)).toHaveAttribute("data-id", "var:A"); // the highlight went back to the first cell
+    await row(page, "userfn:p").tap(); // a tap on the function inserts its call
     await expect(find(page)).toBeHidden();
     expect(await entryValue(page)).toBe("\\operatorname{\\mathrm{p}}\\left(\\placeholder{}\\right)"); // the call form (R117)
   });
@@ -85,9 +94,9 @@ test.describe("Vars", () => {
     await expect(page.locator('[data-status="done"]')).toHaveCount(1);
     expect(await names(page)).toEqual(["e_"]);
     await tap(page, ["vars"]);
-    await expect(rows(page).first()).toHaveAttribute("data-id", "userfn:e_");
-    await expect(rows(page).first()).toContainText("e");
-    await expect(rows(page).first()).not.toContainText("e_");
+    await expect(vrows(page).first()).toHaveAttribute("data-id", "userfn:e_");
+    await expect(vrows(page).first()).toContainText("e");
+    await expect(vrows(page).first()).not.toContainText("e_");
     await tap(page, ["enter"]);
     await expect(find(page)).toBeHidden();
     const line = await entryValue(page);

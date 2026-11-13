@@ -64,7 +64,7 @@ The order (owner, 2026-11-12): the rows down to R224 change how today's calculat
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 631 | R281 the store sheet (sd-3) | ron, Opus | `p1/ron-storesheet` | R280 |
-| 632 | [R282](packages/R282.md) Vars in the store sheet's look (sd-4) | ron, Sonnet | `p1/ron-varsgrid` | R281 |
+| 632 | R282 Vars in the store sheet's look (sd-4) | ron, Sonnet | `p1/ron-varsgrid` | R281 |
 | 661 | [R196](packages/R196.md) which function the cursor is in | ron, Opus | `p1/ron-cursorfn` | – |
 | 662 | [R197](packages/R197.md) the Help key: syntax and example of the function at the cursor | ron, Opus | `p1/ron-helpkey` | R196, R278 |
 | 663 | [R185](packages/R185.md) Shift + 5: a matrix that grows as you type | ron, Opus | `p1/ron-matgrow` | – |

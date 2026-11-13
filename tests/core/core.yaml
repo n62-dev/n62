@@ -660,3 +660,20 @@ cases:
     expect: { rows: [{ result: "5", status: done }, { result: "5", status: done }, { result: "8", status: done }, { result: "8", status: done }] }
     value: "8"
     source: derived
+
+  # ---- state: Vars in the store sheet's look (R282, store-design sd-4) ----
+  - id: c76
+    area: state
+    title: "7 ▶ A, then Vars shows the grid with A holding 7 (and its mark)"
+    keys: [d7, shift, emark, alpha, vars, enter, vars]
+    expect: { text: { '[data-testid="find"] [data-id="var:A"]': "A= 7", '[data-testid="find-preview"]': "A = 7" } }
+    value: "7"
+    source: derived
+
+  - id: c77
+    area: state
+    title: "7 ▶ A, Vars, a tap on A puts A on the line"
+    keys: [d7, shift, emark, alpha, vars, enter, vars, {tap: '[data-testid="find"] [data-id="var:A"]'}]
+    expect: { entry: "A" }
+    value: "A"
+    source: derived
