@@ -4,7 +4,7 @@
 // chunk (find-index.<hash>.json), fetched here and prepared once. No usage ranking and nothing stored (P11).
 import indexUrl from "./_gen/find-index.json?url";
 import type { AppShell } from "../apps/shell.svelte.ts";
-import type { MenuItem } from "../apps/types.ts";
+import type { MenuItem, SubMenu } from "../apps/types.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { constKey, type Chip } from "../input/chips.ts";
@@ -13,7 +13,8 @@ import type { UserBinding, UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { CATEGORIES, categoryItems } from "./categories.ts";
 import { FIRST_KEYS, prepare, search, warmSearch, type PreparedIndex } from "./rank.ts";
 import type { FindItem, IndexItem } from "./types.ts";
-import { matrixItems } from "../views/matrixSheet.ts";
+import { matrixRows, shapesQuery, storedMatrices, type StoredMatrix } from "../views/matrixSheet.ts";
+import { MatrixGrid, textsQuery } from "../views/matrixGrid.svelte.ts";
 
 export interface FindIndex {
   readonly prepared: PreparedIndex;
@@ -188,9 +189,35 @@ export function showFind(shell: AppShell, entry: EntryController, index: FindInd
   shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
 }
 
-/** R187: Shift + 4's sheet: the eight matrix functions as rows 1 to 8; a pick goes in by `putOnLine`, as Find's does. */
+/** R187: Shift + 4's sheet: the eight matrix functions as rows 1 to 8; a pick goes in by `putOnLine`, as Find's does.
+ *  R188: New at row 9, then the stored matrices, the one stored last first: the variables of the definitions log, of
+ *  which one engine call keeps those that hold a matrix (none stored: no call). The sheet opens at once with its fixed
+ *  rows, and keys wait while the call runs (Level.loading); with matrices, the full sheet then takes its place. Each
+ *  matrix's row opens its grid (views/matrixGrid.svelte.ts). */
 export function showMatrix(shell: AppShell, entry: EntryController, index: FindIndex): void {
-  shell.showMenu(t("matrix.title"), matrixItems(index.byId, (it) => itemRow(it, (p) => putOnLine(entry, p))), { remember: false });
+  const names = shell.userNames().filter((n) => n.kind === "var").sort((a, b) => b.time - a.time).map((n) => n.name);
+  const row = (it: FindItem): MenuItem => itemRow(it, (p) => putOnLine(entry, p));
+  const grid = (m: StoredMatrix): SubMenu => ({
+    title: m.name,
+    items: [],
+    grid: new MatrixGrid(m.name, shell.settings, () => shell.calc.home(m.name, shell.settings()), async () => {
+      const r = await shell.calc.cas(textsQuery(m.name), shell.settings());
+      return r.ok ? r.text : "";
+    }),
+  });
+  const open = (stored: readonly StoredMatrix[], loading?: () => Promise<void> | null): void =>
+    shell.showMenu(t("matrix.title"), matrixRows(index.byId, row, stored, grid), { remember: false, ...(loading ? { loading } : {}) });
+  if (names.length === 0) return open([]);
+  let pending: Promise<void> | null = null;
+  open([], () => pending);
+  const first = shell.sheet;
+  pending = shell.calc
+    .cas(shapesQuery(names), shell.settings())
+    .then((r) => (r.ok ? storedMatrices(names, r.text) : []), () => [])
+    .then((stored) => {
+      pending = null;
+      if (stored.length > 0 && shell.sheet === first) open(stored); // (not when Esc closed it meanwhile)
+    });
 }
 
 export { showNames } from "./names.svelte.ts";
