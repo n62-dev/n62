@@ -13,6 +13,7 @@ import type { Calc, LibraryJobs, LibraryReply } from "../calc/port.ts";
 import { jobs as engineJobs } from "../calc/library.ts";
 import { dataText, type DataKey } from "../i18n/enData.ts";
 import { LIB_MAX_BYTES } from "../engine/libraryHeader.ts";
+import { LIBRARY_FORMAT } from "../state/libraryFormat.ts";
 import { DATA_VERSION } from "../state/storage.ts";
 import raw from "./aiFormat.md?raw";
 
@@ -51,10 +52,13 @@ export function hostOf(src: LibrarySource): LibraryHost {
   };
 }
 
-/** The format for your AI as copied: `{version}` is DATA_VERSION, the file's own comment lines are left out. */
-export function aiFormat(text: string = raw, version: number = DATA_VERSION): string {
+/** The format for your AI as copied: `{version}` is DATA_VERSION (the store's, which the backup is stamped with),
+ *  `{libraryVersion}` the one a library file is stamped with (LIBRARY_FORMAT.written, G342); the file's own comment lines
+ *  are left out. */
+export function aiFormat(text: string = raw, version: number = DATA_VERSION, libraryVersion: number = LIBRARY_FORMAT.written): string {
   return text
     .replace(/<!--[\s\S]*?-->\n?/g, "")
+    .replaceAll("{libraryVersion}", String(libraryVersion))
     .replaceAll("{version}", String(version))
     .trim()
     .concat("\n");

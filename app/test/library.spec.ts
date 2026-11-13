@@ -71,7 +71,7 @@ test("beams.txt through the picker: beam_M is in Find with its description, and 
   await expect.poll(async () => (await savedText(page))?.text ?? "").toContain("beam_M(q,L):=q*L^2/8");
   const first = (await savedText(page))!;
   expect(first.name).toMatch(/^n62-library-\d{4}-\d{2}-\d{2}\.txt$/);
-  expect(first.text).toMatch(/^\/\/ n62 library \d+\n/);
+  expect(first.text).toMatch(/^\/\/ n62 library 3\n/);
   expect(first.text).toContain("// Maximum bending moment of a simply supported beam under a uniform load q over span L: q·L²/8\nbeam_M(q,L):=q*L^2/8");
   await fromClipboard(page, first.text);
   await expect(notice(page)).toContainText("0 new");
@@ -108,7 +108,7 @@ test("from the clipboard: beams.txt imports; a bad text is refused whole with it
   await putClipboard(page, "");
   await library(page);
   await row(page, "format").tap();
-  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain("// n62 library 4");
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain("// n62 library 3");
   const format = await page.evaluate(() => navigator.clipboard.readText());
   expect(format).toContain("// test:");
   expect(format).not.toContain("SPDX");

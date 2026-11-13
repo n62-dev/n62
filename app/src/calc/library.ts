@@ -27,7 +27,7 @@ export function jobs(engine: MathEngine): LibraryJobs {
     async importLibrary(input, replace): Promise<LibraryReply> {
       let r: Response;
       try {
-        r = await send({ type: "library", input: upToDate(input), version: LIBRARY_FORMAT.version, replace });
+        r = await send({ type: "library", input: upToDate(input), version: LIBRARY_FORMAT.version, written: LIBRARY_FORMAT.written, replace });
       } catch (e) {
         // The worker's import threw partway (a `fatal` reply not marked dead, which does not restart it): the
         // definitions it already ran stay in Giac and in no log entry, so restart from the unchanged log, as a dirty
@@ -45,7 +45,7 @@ export function jobs(engine: MathEngine): LibraryJobs {
       return { result: r.result, lines: r.lines };
     },
     async exportLibrary() {
-      const r = await send({ type: "libraryExport", version: LIBRARY_FORMAT.version });
+      const r = await send({ type: "libraryExport", version: LIBRARY_FORMAT.version, written: LIBRARY_FORMAT.written });
       if (r.type !== "libraryExport") throw new Error(`unexpected ${r.type}`);
       return { text: r.text, skipped: r.skipped };
     },
