@@ -36,10 +36,10 @@ test("a fresh profile shows the tips; a reload does not", async ({ page }) => {
   await open(page, ON);
   await expect(tips(page)).toBeVisible();
   await expect(tips(page)).toContainText("Tap the name for your apps, Home and CAS");
-  await expect(tips(page)).toContainText("Tap ☰ for the menu: copy, paste, settings");
-  await expect(tips(page)).toContainText("Flick a key up for its Shift function, down for its letter");
-  await expect(tips(page)).toContainText("Drag on the round pad to move the cursor");
-  await expect(tips(page)).toContainText("Math opens Find: one search for every function, constant and unit");
+  await expect(tips(page)).toContainText("Tap ☰, on the keys or the status line, for Paste and each app's menu");
+  await expect(tips(page)).toContainText("On a history row, hold to copy and swipe to delete");
+  await expect(tips(page)).toContainText("On the entry line, swipe down to fold the keypad and up to bring it back");
+  await expect(tips(page)).toContainText("On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it");
   await expect(tips(page)).toContainText("= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.");
   await expect(tips(page).locator(".tip .n")).toHaveCount(2); // R171: only the two ringed cards carry a number
   await expect(page.getByTestId("tips-got-it")).toHaveText("Got it");
@@ -95,24 +95,27 @@ test("each ring is centred on its control's content and stays within the status 
   }
 });
 
-// R171: six cards and Got it fit the small phone at the largest font scale: none cut by the screen's edges.
-test("at 360 × 740 and font scale 2.0 every card and Got it lie inside the viewport", async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 740 });
-  await open(page, "engine=fake&tips=off");
-  await setFontScale(page, 2);
-  await tap(page, ["@mode", "d6", "d7"]);
-  await page.getByTestId("menu").locator('[data-id="tips"]').tap();
-  await expect(tips(page)).toBeVisible();
-  const boxes = [...(await page.locator(".tips .tip").all()), page.getByTestId("tips-got-it")];
-  expect(boxes.length).toBe(7);
-  for (const [i, b] of boxes.entries()) {
-    const r = (await b.boundingBox())!;
-    expect(r.x, `box ${i}: left`).toBeGreaterThanOrEqual(0);
-    expect(r.y, `box ${i}: top`).toBeGreaterThanOrEqual(0);
-    expect(r.x + r.width, `box ${i}: right`).toBeLessThanOrEqual(360);
-    expect(r.y + r.height, `box ${i}: bottom`).toBeLessThanOrEqual(740);
-  }
-});
+// R171: six cards and Got it fit the small phone at the largest font scale: none cut by the screen's edges (R290: and the
+// big phone at the same scale).
+for (const [w, h] of [[360, 740], [412, 915]] as const) {
+  test(`at ${w} × ${h} and font scale 2.0 every card and Got it lie inside the viewport`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await open(page, "engine=fake&tips=off");
+    await setFontScale(page, 2);
+    await tap(page, ["@mode", "d6", "d7"]);
+    await page.getByTestId("menu").locator('[data-id="tips"]').tap();
+    await expect(tips(page)).toBeVisible();
+    const boxes = [...(await page.locator(".tips .tip").all()), page.getByTestId("tips-got-it")];
+    expect(boxes.length).toBe(7);
+    for (const [i, b] of boxes.entries()) {
+      const r = (await b.boundingBox())!;
+      expect(r.x, `box ${i}: left`).toBeGreaterThanOrEqual(0);
+      expect(r.y, `box ${i}: top`).toBeGreaterThanOrEqual(0);
+      expect(r.x + r.width, `box ${i}: right`).toBeLessThanOrEqual(w);
+      expect(r.y + r.height, `box ${i}: bottom`).toBeLessThanOrEqual(h);
+    }
+  });
+}
 
 test("a key press only closes the tips; so does a tap on the keypad, and Android back", async ({ page }) => {
   await open(page, ON);
