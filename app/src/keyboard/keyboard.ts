@@ -22,10 +22,12 @@ export type Special =
   | "selectGrow" | "selectShrink"
   /** Shift + − (R193): the Base menu for the last result (HEX, BIN, OCT, DEC); dead with text on the line. */
   | "base"
+  /** Shift + Select (R197): the syntax and example of the function at the cursor, else Find (views/helpSheet.ts). */
+  | "help"
   /** A key whose function we don't have yet (it keeps its alpha letter): does nothing. */
   | "none";
 /** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
-export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base"];
+export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base", "help"];
 export const SPECIALS: readonly Special[] = [
   "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none", ...OPENS_SHEET,
 ];

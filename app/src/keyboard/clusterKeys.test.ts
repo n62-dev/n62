@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R278: the three cluster cells that changed. ☰ (r0c4) does what the status line's ☰ does, and is a dead press where the
-// view has no menu; Shift + Select is dead (Help is not built, R197); Shift + Deselect is a reserved cell: it changes nothing on
+// view has no menu; Shift + Select is Help (R197: the help sheet of the function at the cursor); Shift + Deselect is a reserved cell: it changes nothing on
 // the line or the screen, a tap or a flick up. The real route.press, a stub context (no MathLive, no field).
 import { describe, expect, test, vi } from "vitest";
 
@@ -30,7 +30,7 @@ function ctx(menu: boolean) {
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, toggleMenu: () => (log.push("toggleMenu"), menu) };
   const c = {
     session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false,
-    enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings: () => void log.push("settings"), openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openNames() {}, openStore() {},
+    enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings: () => void log.push("settings"), openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openHelp: () => void log.push("help"), openNames() {}, openStore() {},
     withClip: (run: (x: never) => void) => run({} as never),
     loadClip() {}, dead: () => void log.push("dead"), unfold: () => false,
   };
@@ -58,10 +58,11 @@ describe("the cluster's ☰, Select and Deselect (R278)", () => {
     press("menu", "shift");
     expect(log).toEqual(["settings"]);
   });
-  test("Shift + Select is dead: Help is not built", () => {
+  test("Shift + Select (and a flick up on it) opens Help (R197); the tap is still Select", () => {
     const { press, log } = ctx(true);
     press("select", "shift");
-    expect(log).toEqual(["dead"]);
+    expect(log).toEqual(["help"]);
+    expect(keyboard.byId.get("select")?.actions.primary).toEqual({ kind: "special", name: "selectGrow" });
   });
   test("Shift + Deselect and a flick up on it are dead and change nothing on the line", () => {
     const { press, log, entry } = ctx(true);

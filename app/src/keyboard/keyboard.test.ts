@@ -66,8 +66,8 @@ describe("keyboard spec", () => {
     expect(k("menu").label).toEqual({ primary: "$key.menu", shift: "$key.settings" });
     expect(actionFor(k("select"), false, false)).toEqual({ kind: "special", name: "selectGrow" });
     expect(actionFor(k("deselect"), false, false)).toEqual({ kind: "special", name: "selectShrink" });
-    // Shift + Select is Help, not built (R197): dead, its legend drawn; Shift + Deselect is RESERVED: no action, no legend
-    expect(actionFor(k("select"), true, false)).toEqual({ kind: "special", name: "none" });
+    // Shift + Select is Help (R197): live, the same cell and legend; Shift + Deselect is RESERVED: no action, no legend
+    expect(actionFor(k("select"), true, false)).toEqual({ kind: "special", name: "help" });
     expect(k("select").label).toEqual({ primary: "$key.select", shift: "$key.help" });
     expect(actionFor(k("deselect"), true, false)).toBeUndefined();
     expect(k("deselect").actions.shift).toBeUndefined();

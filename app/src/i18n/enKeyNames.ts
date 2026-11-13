@@ -26,6 +26,7 @@ export const enKeyNames = {
   redo: "Redo",
   "redo.shift": "End of the line",
   select: "Select",
+  "select.shift": "Help",
   deselect: "Deselect",
   // the maths rows
   vars: "Variables",
