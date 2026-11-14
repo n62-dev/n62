@@ -266,7 +266,7 @@
   /** Shift + 4 (R187): the matrix sheet; its rows are Find's items, so it waits for the index as Help does. */
   function openMatrix(): void {
     if (!shell.showsEntry) return dead();
-    onFind(findNow(), (f) => { picked = null; f.m.showMatrix(shell, entry, f.index); });
+    onFind(findNow(), (f) => { picked = null; f.m.showMatrix(ctx, f.index); });
   }
   type FindSlot = { id: string; layer: Layer };
   const showFind = (f: FindCode, slot?: FindSlot): void => { picked = null; f.m.showFind(shell, entry, f.index, slot && { ...slot, userKeys }); };

@@ -462,8 +462,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,040 → 62,110 B (R184): linreg's and stats1's labelled result sheet. What stays in the chunk is the test in insertResult
  *  (a regexp on the row's input and the call into the clipboard chunk, which loads views/statSheet.ts on demand); its rows,
  *  words and chips are lazy, and a second import() site in the start chunk cost 0.1 kB more. The merge base measures
- *  62.01 kB gzip (174.91 kB raw), the branch 62.06 kB (175.01 kB raw): 62.06 kB + 0.05 kB. */
-export const START_PIN_GZIP = 62_110;
+ *  62.01 kB gzip (174.91 kB raw), the branch 62.06 kB (175.01 kB raw): 62.06 kB + 0.05 kB.
+ *  62,110 → 62,180 B (R190): the start chunk got smaller (175,254 B raw on phase-1, 175,249 B on the branch: the matrix
+ *  sheet's call takes the route's context, one argument in place of three); what moved is the gzip of its text, since the
+ *  grid's and the sheet's lazy chunks carry new hashed names (62,110 B on phase-1, 62,123 B measured): 62,123 B + 0.05 kB. */
+export const START_PIN_GZIP = 62_180;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

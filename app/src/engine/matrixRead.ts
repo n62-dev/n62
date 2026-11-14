@@ -44,10 +44,11 @@ export interface ElementTex {
   readonly float?: true;
 }
 
-/** R189: the grid's store checked before it is sent. `ok`: its value's elements as typed text (as `typed`); else why
- *  not: "store" it stores into another name or purges one (a cell `a:=5`), "shape" its value is not a matrix of the
- *  same size (a cell `M` or `[1,2]` makes a ragged list). */
-export type Candidate = { readonly ok: true; readonly typed: readonly string[] } | { readonly ok: false; readonly why: "store" | "shape" };
+/** R189: the grid's store checked before it is sent. `ok`: its value's size and elements as typed text (as `typed`; R190:
+ *  the grid compares the size with the one it meant, as a new row or column changes it); else why not: "store" it stores
+ *  into another name or purges one (a cell `a:=5`), "shape" its value is not a matrix (a cell `M` or `[1,2]` makes a
+ *  ragged list). */
+export type Candidate = { readonly ok: true; readonly rows: number; readonly cols: number; readonly typed: readonly string[] } | { readonly ok: false; readonly why: "store" | "shape" };
 
 /** R189: the store to check (`name:=[[…]]`, the parser's text of the grid's line) and bridge-2's parse. */
 export interface StoreCheck {
@@ -73,7 +74,7 @@ export function readMatrices(giac: Giac, names: readonly string[], digits: numbe
       const p = pv.elements;
       if (!p || p.length !== rows * cols) return [];
       const latex = withDigits(giac, DOUBLE_DIGITS, digits, () => p.map((_, k) => elementTex(giac, pv, k)));
-      const candidate = check ? checkStore(giac, check, name, rows, cols, digits) : undefined;
+      const candidate = check ? checkStore(giac, check, name, digits) : undefined;
       return [{ name, rows, cols, typed: p.map(typedText), latex, ...(candidate ? { candidate } : {}) }];
     }
     const read = cellsOf(giac, v, P, digits);
@@ -105,16 +106,16 @@ export function elementTex(giac: Giac, v: GiacValue, k: number): ElementTex {
   return { tex: unquote(giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`)), giac: true, ...float };
 }
 
-/** R189: the grid's store `check.store` for `name` (rows × cols): no store but into `name` and no purge (bridge-2, not
- *  evaluated), then its value (not stored) a matrix of that size, its elements as typed text. */
-function checkStore(giac: Giac, check: StoreCheck, name: string, rows: number, cols: number, digits: number): Candidate {
+/** R189: the grid's store `check.store` for `name`: no store but into `name` and no purge (bridge-2, not evaluated),
+ *  then its value (not stored) a matrix, its size and elements as typed text. */
+function checkStore(giac: Giac, check: StoreCheck, name: string, digits: number): Candidate {
   const head = `${name}:=`;
   const p = check.parse(check.store);
   if (!check.store.startsWith(head) || !p.ok || p.top.join(",") !== name || p.targets.some((t) => t !== name) || p.heads.includes("purge")) return { ok: false, why: "store" };
   const v = withDigits(giac, DOUBLE_DIGITS, digits, () => giac.value(check.store.slice(head.length), []));
   const [r, c] = v.kind === "matrix" ? (v.shape ?? []) : [];
-  if (r !== rows || c !== cols || v.elements?.length !== rows * cols) return { ok: false, why: "shape" };
-  return { ok: true, typed: v.elements.map(typedText) };
+  if (!r || !c || v.elements?.length !== r * c) return { ok: false, why: "shape" };
+  return { ok: true, rows: r, cols: c, typed: v.elements.map(typedText) };
 }
 
 function cellsOf(giac: Giac, v: GiacValue, P: number, digits: number): MatrixCell[] | null {

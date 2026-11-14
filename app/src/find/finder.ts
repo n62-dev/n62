@@ -187,19 +187,21 @@ export function showFind(shell: AppShell, entry: EntryController, index: FindInd
   shell.showFind(slot ? t("slot.title") : t("title"), categories, search);
 }
 
+type MatrixCtx = Parameters<typeof import("../views/matrixSheet.ts").showMatrix>[0]; // (the route's context: its shell, entry line and session)
 /** R187, R188: Shift + 4's sheet, a chunk of its own (views/matrixSheet.ts, which lists the stored matrices too). Until
  *  its code is in and the sheet is whole, an empty sheet of that title holds the keys (Level.loading; one hold: a key
  *  replayed after it is not held again), so a digit typed at once picks there. */
 let matrixCode: typeof import("../views/matrixSheet.ts") | null = null;
-export function showMatrix(shell: AppShell, entry: EntryController, index: FindIndex): void {
-  if (matrixCode) return void matrixCode.showMatrix(shell, entry, index);
+export function showMatrix(c: MatrixCtx, index: FindIndex): void {
+  const { shell } = c;
+  if (matrixCode) return void matrixCode.showMatrix(c, index);
   let load: Promise<void> | null = null;
   shell.showMenu(t("matrix.title"), [], { remember: false, loading: () => load });
   const first = shell.sheet;
   load = import("../views/matrixSheet.ts")
     .then((m) => {
       matrixCode = m;
-      return shell.sheet === first ? m.showMatrix(shell, entry, index) : undefined; // (not when Esc closed it meanwhile)
+      return shell.sheet === first ? m.showMatrix(c, index) : undefined; // (not when Esc closed it meanwhile)
     })
     .then(
       () => void (load = null),

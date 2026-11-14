@@ -294,13 +294,13 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
 | Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find); Shift + Deselect is reserved. Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
-| ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of nine on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
+| ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
 | Help (context help) | the Find preview of the function before the cursor; with none there, Find (milestone 6) | ours; P8 left Help free |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
 | Shift + `−` [r9c5] | the Base menu (built, R193; 5.4) | reference: Base |
 | Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list (built, R54) | reference |
-| Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix sheet (built, R187: eight functions, rows 1–8; R188 the stored matrices); the list editor, deferred with Statistics | reference: Matrix, List |
+| Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix sheet (built, R187–R190: functions 1–8, New 9, stored matrices, grid); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. Until R24c, `spec/keyboard.yaml` `unit_slot:` holds S1's letters | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift (and a flick up) opens Mode on Angle (built, R85) | ours; decisions.md "Settings in the Mode sheet, and presets" |
 | Unassigned Shift cells (Vars, a b/c, `( )`, 1, 0, Deselect; `,` is ± since R71; the pad has no Shift layer, P12 point 7) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |

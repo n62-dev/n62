@@ -12,6 +12,10 @@
 // reads the grid again. Before that the worker checks the parser's store (matrixRead.ts checkStore): a matrix of the
 // same size, no other store, every other element as it was. A refusal shows under the grid and sends nothing; Esc ends
 // the edit and the old value stays.
+// R190 (docs/04 5.3): ☰ opens the grid's menu (1 Add a row, 2 Add a column at the end, with zeros; 3 Delete the row, 4 the
+// column under the highlight; a matrix keeps one cell at least), and a pick writes the matrix back as a cell does: its
+// elements as LaTeX the line reads back, the store checked by the worker, one history row. `createMatrix` (the sheet's
+// New) stores a 2 × 2 of zeros under the first free letter by the same path.
 import type { Component } from "svelte";
 import type { AppHost } from "../apps/types.ts";
 import { engineFormat, type HomeOutcome } from "../calc/port.ts";
@@ -42,11 +46,22 @@ export interface CellLine {
   readonly entry: Pick<EntryController, "value" | "chips" | "clear" | "set">;
   readonly session: Pick<Session, "shift" | "alpha" | "userNames" | "submit">;
 }
+/** R190: what the sheet's New needs (the session of CellLine less its keys). */
+export type NewLine = Pick<Session, "userNames" | "submit">;
 /** R189: the matrix through the bridge: `cells` true its elements, "typed" its elements as typed text and LaTeX, with
  *  `check` the grid's store checked too (engine/matrixRead.ts); null when the name holds no matrix. */
 export type ReadElements = (cells: true | "typed", check?: string) => Promise<MatrixRead | null>;
 /** The render/tidy.ts function that the elements Giac wrote as LaTeX go through (as a CAS result does). */
 type Tidy = (raw: string) => string;
+/** R190: the grid's menu rows, in the digits 1 to 4 they keep. */
+const MENU: readonly MenuOp[] = ["addRow", "addCol", "delRow", "delCol"];
+type MenuOp = "addRow" | "addCol" | "delRow" | "delCol";
+/** One row of the grid's menu: `reason` when it cannot be picked now. */
+export interface GridMenuRow {
+  readonly op: MenuOp;
+  readonly label: string;
+  readonly reason?: string;
+}
 /** The keys that keep the grid's own job when no cell is edited: ▲ ▼ ◀ ▶ move, Esc goes back (⌫ and Enter do nothing). */
 const GRID_KEYS: readonly string[] = ["up", "down", "left", "right", "enter", "esc", "bksp"];
 /** While a cell is edited, the specials that act on the line; any other (a sheet, a place, Format, units) does nothing,
@@ -72,6 +87,10 @@ export class MatrixGrid {
   editing = $state.raw<{ readonly row: number; readonly col: number } | null>(null);
   /** R189: why the typed cell was not written (the parser's refusal), shown under the grid until the next key. */
   refusal = $state<string | null>(null);
+  /** R190: the highlighted row of the grid's menu while it is open, else null. */
+  menu = $state<number | null>(null);
+  /** R190: the line the menu was opened from (a tap on a row writes through it). */
+  private menuLine: CellLine | null = null;
   /** R189: the line that was on the entry line before the edit, put back when it ends. */
   private saved: { readonly line: CellLine; readonly latex: string; readonly chips: ChipTable } | null = null;
 
@@ -140,7 +159,13 @@ export class MatrixGrid {
     const k = key.actions;
     const a = (layer === undefined ? s.alpha : layer === "alpha") ? (k.alpha ?? k.primary) : (layer === undefined ? s.shift : layer === "shift") ? k.shift : k.primary;
     const special = a?.kind === "special" ? a.name : undefined;
+    if (this.menu !== null) return this.menuKey(key, special);
     if (!this.editing) {
+      if (special === "menu") {
+        this.menuLine = line; // R190: ☰ opens the grid's menu
+        this.menu = 0;
+        return true;
+      }
       if (special !== undefined || GRID_KEYS.includes(key.id)) return undefined;
       this.saved = { line, latex: line.entry.value, chips: line.entry.chips };
       this.editing = { row: this.row, col: this.col };
@@ -166,6 +191,7 @@ export class MatrixGrid {
     this.saved = null;
     this.editing = null;
     this.refusal = null;
+    this.menu = null;
     if (!s) return;
     if (s.latex === "") s.line.entry.clear();
     else s.line.entry.set(s.latex, s.chips);
@@ -178,22 +204,99 @@ export class MatrixGrid {
   private async write(line: CellLine, latex: string, chips: ChipTable): Promise<void> {
     const at = this.editing;
     if (!at) return;
-    const names = line.session.userNames;
-    let entry: typeof import("../input/entry.ts");
     try {
-      entry = await import("../input/entry.ts"); // (input/parser.ts loadEntry's module; not that loader: the start chunk would export it for this chunk)
-      entry.giacOfEntry(latex, "cas", { chips, names }); // the parser's refusal of the cell itself, shown as Home shows it
+      const entry = await import("../input/entry.ts"); // (input/parser.ts loadEntry's module; not that loader: the start chunk would export it for this chunk)
+      entry.giacOfEntry(latex, "cas", { chips, names: line.session.userNames }); // the parser's refusal of the cell itself, shown as Home shows it
     } catch (e) {
       this.refusal = parseFailText(e);
       return;
     }
+    const m = await this.readTyped();
+    if (typeof m === "string") return void (this.refusal = m);
+    const k = at.row * m.cols + at.col;
+    const cells = m.latex.map((e, i) => (i === k ? latex : cellTex(e, m.tidy)));
+    // every element but the typed one is as it was
+    await this.commit(line, chips, m, cells, m.rows, m.cols, (i) => (i === k ? -1 : i));
+  }
+
+  /** R190: a pick of the grid's menu (the digit, Enter, a tap): a row that cannot be picked says why; else the matrix is
+   *  written back with the row or column added at the end (zeros) or the one under the highlight left out. */
+  choose(i: number): void {
+    const row = this.menuRows()[i];
+    const line = this.menuLine;
+    this.menu = null;
+    if (!row || !line || this.editing || !Array.isArray(this.cells) || this.pending) return;
+    if (row.reason) {
+      this.refusal = row.reason;
+      return;
+    }
+    this.pending = this.resize(line, row.op).finally(() => (this.pending = null)); // keys wait for it
+  }
+
+  /** R190: the menu's rows: the delete rows are out of reach when the matrix has one row or one column left. */
+  menuRows(): GridMenuRow[] {
+    const keep = findText("matrix.keepsCell");
+    return [
+      { op: "addRow", label: findText("matrix.addRow") },
+      { op: "addCol", label: findText("matrix.addCol") },
+      { op: "delRow", label: findText("matrix.delRow", { n: String(this.row + 1) }), ...(this.rows <= 1 ? { reason: keep } : {}) },
+      { op: "delCol", label: findText("matrix.delCol", { n: String(this.col + 1) }), ...(this.cols <= 1 ? { reason: keep } : {}) },
+    ];
+  }
+
+  /** R190: a key while the menu is open: ▲ ▼ move, Enter and the digits 1 to 4 pick, Esc and ☰ close it; any other key
+   *  does nothing (it is used up here). */
+  private menuKey(key: Key, special: Special | undefined): boolean {
+    const at = this.menu ?? 0;
+    const digit = /^d([1-4])$/.exec(key.id);
+    if (key.id === "up" || key.id === "down") this.menu = Math.max(0, Math.min(MENU.length - 1, at + (key.id === "up" ? -1 : 1)));
+    else if (key.id === "enter") this.choose(at);
+    else if (digit) this.choose(Number(digit[1]) - 1);
+    else if (key.id === "esc" || special === "menu") this.menu = null;
+    return true;
+  }
+
+  /** R190: the matrix with a row or column added at the end (zeros) or the one under the highlight left out. */
+  private async resize(line: CellLine, op: MenuOp): Promise<void> {
+    const m = await this.readTyped();
+    if (typeof m === "string") return void (this.refusal = m);
+    const { rows: R, cols: C } = m;
+    const rows = op === "addRow" ? R + 1 : op === "delRow" ? R - 1 : R;
+    const cols = op === "addCol" ? C + 1 : op === "delCol" ? C - 1 : C;
+    if (rows < 1 || cols < 1) return void (this.refusal = findText("matrix.keepsCell"));
+    const src = (r: number, c: number): number => {
+      const sr = op === "delRow" && r >= this.row ? r + 1 : r;
+      const sc = op === "delCol" && c >= this.col ? c + 1 : c;
+      return sr < R && sc < C ? sr * C + sc : -1; // (past the old size: a new zero)
+    };
+    const from = Array.from({ length: rows * cols }, (_, i) => src(Math.floor(i / cols), i % cols));
+    await this.commit(line, line.entry.chips, m, from.map((f) => (f < 0 ? "0" : cellTex(m.latex[f] as ElementTex, m.tidy))), rows, cols, (i) => from[i] as number);
+  }
+
+  /** R189: the matrix's elements as typed text and as LaTeX the line reads back, with the tidy path its Giac elements go
+   *  through; or the refusal when they cannot be read, or the matrix is not the size on the grid. */
+  private async readTyped(): Promise<(MatrixRead & { readonly latex: readonly ElementTex[]; readonly tidy: Tidy | undefined }) | string> {
     const m = await this.elements("typed").catch(() => null);
     const tidy = m?.latex?.some((e) => e.giac) ? await import("../render/tidy.ts").then((x) => x.tidyGiacLatex, () => null) : undefined;
-    if (!m?.latex || m.rows !== this.rows || m.cols !== this.cols || tidy === null) return void (this.refusal = findText("matrix.unread"));
-    const k = at.row * m.cols + at.col;
-    const cells = m.latex.map((e, i) => (i === k ? latex : cellTex(e, tidy)));
-    const rows = Array.from({ length: m.rows }, (_, r) => cells.slice(r * m.cols, (r + 1) * m.cols).join("&"));
-    const row = `${nameTex(this.name)}:=\\begin{pmatrix}${rows.join("\\\\")}\\end{pmatrix}`;
+    if (!m?.latex || m.rows !== this.rows || m.cols !== this.cols || tidy === null) return findText("matrix.unread");
+    return { ...m, latex: m.latex, tidy };
+  }
+
+  /** The matrix of `rows` × `cols` elements `tex` (each as LaTeX the line reads back): refused when the parser refuses
+   *  it; else the line of the whole store, checked by the worker (refused when it is not a matrix of that size, as a cell
+   *  of more than one value makes it, stores or purges another name, or changes an element that `from` keeps: the old
+   *  index of the new element i, or -1 for one that is new or typed), sent through the session's normal path, and the
+   *  grid read again. */
+  private async commit(line: CellLine, chips: ChipTable, m: MatrixRead, tex: readonly string[], rows: number, cols: number, from: (i: number) => number): Promise<void> {
+    const names = line.session.userNames;
+    let entry: typeof import("../input/entry.ts");
+    try {
+      entry = await import("../input/entry.ts");
+    } catch {
+      return void (this.refusal = findText("matrix.unread"));
+    }
+    const lines = Array.from({ length: rows }, (_, r) => tex.slice(r * cols, (r + 1) * cols).join("&"));
+    const row = `${nameTex(this.name)}:=\\begin{pmatrix}${lines.join("\\\\")}\\end{pmatrix}`;
     let store: string;
     try {
       store = entry.giacOfEntry(row, "cas", { chips, names }).giac;
@@ -204,8 +307,9 @@ export class MatrixGrid {
     const c = await this.elements("typed", store).catch(() => null);
     if (!c?.candidate || !c.typed) return void (this.refusal = findText("matrix.unread"));
     if (!c.candidate.ok) return void (this.refusal = findText(c.candidate.why === "store" ? "matrix.noStore" : "matrix.oneValue"));
+    if (c.candidate.rows !== rows || c.candidate.cols !== cols) return void (this.refusal = findText("matrix.oneValue"));
     const was = c.typed;
-    if (c.candidate.typed.some((t, i) => i !== k && t !== was[i])) return void (this.refusal = findText("matrix.notKept"));
+    if (c.candidate.typed.some((t, i) => from(i) >= 0 && t !== was[from(i)])) return void (this.refusal = findText("matrix.notKept"));
     const job = line.session.submit(row, undefined, chips);
     if (!job) return void (this.refusal = t("status.busy")); // a job runs: the edit stays, Enter again later
     this.end();
@@ -262,4 +366,26 @@ function nameTex(name: string): string {
 function numberOf(c: GridCell): { value: ComplexValue; facts: ValueFacts } | null {
   if ("result" in c) return c.result.ok && c.result.value ? { value: c.result.value, facts: c.result.facts } : null;
   return "value" in c ? c : null;
+}
+
+/** R190: the sheet's New: the first letter A to Z (but I) that no name of the user's holds (and the parser takes as a name) gets a
+ *  2 × 2 of zeros, stored through the session's normal path as a cell write is (one history row). The name, or null when
+ *  every letter is taken, or a job runs (the press does nothing). */
+export async function createMatrix(line: NewLine): Promise<string | null> {
+  const used = new Set(line.userNames.map((n) => n.name));
+  const entry = await import("../input/entry.ts");
+  for (const name of "ABCDEFGHJKLMNOPQRSTUVWXYZ") { // (not I: the imaginary unit, which Giac cannot store into)
+    if (used.has(name)) continue;
+    const row = `${name}:=\\begin{pmatrix}0&0\\\\0&0\\end{pmatrix}`;
+    try {
+      if (!entry.giacOfEntry(row, "cas", { chips: {}, names: line.userNames }).giac.startsWith(`${name}:=`)) continue; // (a name the parser reads as something else)
+    } catch {
+      continue; // (a name it refuses: i, e, …)
+    }
+    const job = line.submit(row, undefined, {});
+    if (!job) return null;
+    await job;
+    return name;
+  }
+  return null;
 }

@@ -93,10 +93,12 @@ describe.skipIf(!giacAvailable())("R188: the stored matrices through the bridge"
     expect(t[2]).toMatchObject({ giac: true, float: true });
   });
 
-  it("R189: the grid's store is checked, not run: a matrix of the same size passes with its elements typed; a ragged list, another size, a store or purge in a cell do not", () => {
+  it("R189: the grid's store is checked, not run: a matrix passes with its size and elements typed (R190: the grid compares the size); a ragged list, a store or purge in a cell do not", () => {
     const check = (store: string) => host.matrices(["M"], defaultHomeSettings, "typed", store)[0]?.candidate;
-    expect(check("M:=[[1/3,2],[9,4]]")).toEqual({ ok: true, typed: ["1/3", "2", "9", "4"] });
-    for (const store of ["M:=[[1/3,2],[M,4]]", "M:=[[1/3,2],[[1,2],4]]", "M:=[[1,2,3]]", "M:=5"]) expect(check(store), store).toEqual({ ok: false, why: "shape" });
+    expect(check("M:=[[1/3,2],[9,4]]")).toEqual({ ok: true, rows: 2, cols: 2, typed: ["1/3", "2", "9", "4"] });
+    expect(check("M:=[[1/3,2,5],[9,4,0]]")).toEqual({ ok: true, rows: 2, cols: 3, typed: ["1/3", "2", "5", "9", "4", "0"] }); // R190: a new column
+    expect(check("M:=[[1,2,3]]")).toEqual({ ok: true, rows: 1, cols: 3, typed: ["1", "2", "3"] });
+    for (const store of ["M:=[[1/3,2],[M,4]]", "M:=[[1/3,2],[[1,2],4]]", "M:=5"]) expect(check(store), store).toEqual({ ok: false, why: "shape" });
     for (const store of ["M:=[[1/3,2],[a:=5,4]]", "M:=[[1/3,2],[purge(k),4]]", "A:=[[1/3,2],[9,4]]"]) expect(check(store), store).toEqual({ ok: false, why: "store" });
     expect(host.home("a", defaultHomeSettings).result.display).toBe("a"); // nothing was stored
     expect(host.home("k", defaultHomeSettings).result.display).toBe("5"); // nor purged
@@ -104,12 +106,12 @@ describe.skipIf(!giacAvailable())("R188: the stored matrices through the bridge"
   });
 
   // R189f1: a cell that holds a sequence, 1,2 in parentheses, spreads its row: the store's value is a matrix of another
-  // size (2 × 2: the row [1,2,4] makes a ragged list; 1 × 1: [[1,2]] is 1 × 2), so checkStore refuses it as "shape" and
-  // the grid needs no check of its own of the typed text.
+  // size (2 × 2: the row [1,2,4] makes a ragged list, refused as "shape"; 1 × 1: [[1,2]] is 1 × 2, which checkStore
+  // reports with its size, R190, and the grid refuses it as not the size it meant).
   it("R189f1: a sequence in a cell is a matrix of another size: shape, on a 2 × 2 and on a 1 × 1 matrix", () => {
     expect(host.matrices(["M"], defaultHomeSettings, "typed", "M:=[[1/3,2],[(1,2),4]]")[0]?.candidate).toEqual({ ok: false, why: "shape" });
-    expect(host.matrices(["O"], defaultHomeSettings, "typed", "O:=[[(1,2)]]")[0]?.candidate).toEqual({ ok: false, why: "shape" });
-    expect(host.matrices(["O"], defaultHomeSettings, "typed", "O:=[[7]]")[0]?.candidate).toEqual({ ok: true, typed: ["7"] });
+    expect(host.matrices(["O"], defaultHomeSettings, "typed", "O:=[[(1,2)]]")[0]?.candidate).toEqual({ ok: true, rows: 1, cols: 2, typed: ["1", "2"] });
+    expect(host.matrices(["O"], defaultHomeSettings, "typed", "O:=[[7]]")[0]?.candidate).toEqual({ ok: true, rows: 1, cols: 1, typed: ["7"] });
   });
 });
 
