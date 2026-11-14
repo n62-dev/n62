@@ -112,8 +112,11 @@ exclude:
 census: [graphics, graphs, strings, debugger]
 
 # G67: Giac commands that change the engine's state on purpose, kept in Find with our own line saying so (replaces
-# Giac's English line).
+# Giac's English line). G356: { title, desc } replaces the title (Giac's name) as well, where the name misleads.
 notes:
   purge: "Changes the engine's state: forgets a stored value or function, also after a relaunch."
   assume: "Changes the engine's state: an assumption on a variable (x>0), kept until purge(x), also after a relaunch."
   additionally: "Changes the engine's state: adds an assumption to a variable's, kept until purge(x)."
+  lagrange:
+    title: "Lagrange polynomial: the polynomial through every point (not a table lookup)"
+    desc: "The polynomial through every point (not a table lookup): lagrange(xlist, ylist, x), degree n−1 through n points; between them it can swing past every y."

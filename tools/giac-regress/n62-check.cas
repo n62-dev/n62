@@ -313,6 +313,10 @@ Digits:=40:; pc("g227-norm",'(norm([3,4]))',5,5/10^12);
 Digits:=40:; pc("g227-norm-irrational",'(norm([1,1]))',(141421356237/10^11),5/10^12);
 // g353-keep-variance-double (home.yaml, oracle)
 Digits:=40:; pc("g353-keep-variance-double",'(variance([(15/10^1),(25/10^1),4]))',(105555555556/10^11),5/10^12);
+// g356-lagrange-11-points (home.yaml, oracle)
+Digits:=40:; pc("g356-lagrange-11-points",'(lagrange([-1,-(8/10^1),-(6/10^1),-(4/10^1),-(2/10^1),0,(2/10^1),(4/10^1),(6/10^1),(8/10^1),1],[(385/10^4),(588/10^4),(1/10^1),(2/10^1),(5/10^1),1,(5/10^1),(2/10^1),(1/10^1),(588/10^4),(385/10^4)],(9/10^1)))',(157868351364/10^11),5/10^12);
+// g356-lagrange-kink (home.yaml, oracle)
+Digits:=40:; pc("g356-lagrange-kink",'(lagrange([0,1,2,3,4,5],[2,1,0,1,2,3],(25/10^1)))',(3515625/10^7),5/10^13);
 // g226-keep-shift-32-5 (home.yaml, derived)
 Digits:=40:; pc("g226-keep-shift-32-5",'(shift(32,5))',1,5/10^12);
 // g226-keep-shift-1-5 (home.yaml, derived)
