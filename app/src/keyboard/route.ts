@@ -365,8 +365,12 @@ export function enterLine(c: RouteCtx): void {
   c.enter();
 }
 
-/** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. */
-const forLine = (c: RouteCtx, w: Waiting): boolean | undefined => "line" in w && w.line && c.entry.fieldPending;
+/** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. Enter and the
+ *  units key always do, whatever they first waited for (R298: an Enter queued behind ☰'s load, whose Paste ended before
+ *  the field, read the empty line of a field still to come and was dropped). */
+const forLine = (c: RouteCtx, w: Waiting): boolean =>
+  c.entry.fieldPending && "key" in w && (!!w.line || readsLine(actionFor(w.key, w.mods.shift, w.mods.alpha)));
+const readsLine = (a?: ActionBody): boolean => a?.kind === "special" && (a.name === "enter" || a.name === "units");
 function wait(c: RouteCtx, w: Waiting): void {
   c.waiting.push(w);
   if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad, forLine(c, w) && c.entry.fieldUp]).then(() => replay(c));
@@ -444,7 +448,7 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
   const a = actionFor(key, mods.shift, mods.alpha);
   // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
   // typed, and a key after it meets the empty line as live; so does the units key, which reads the line (R255f1)
-  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && (a.name === "enter" || a.name === "units")))) return wait(c, { key, mods, layer, line: true });
+  if (c.entry.fieldPending && (c.waiting.length > 0 || readsLine(a))) return wait(c, { key, mods, layer, line: true });
   if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
   run(c, key, mods);
 }

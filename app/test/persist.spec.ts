@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // History persistence and the lazy-loaded entry line.
 import { expect, test } from "@playwright/test";
-import { entryValue, open, PASTE, setClipboard, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, PASTE, setClipboard, sheet, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 // Not helpers.lastResult: this one is the whole result row, not its `.result` part.
 const lastResult = (page: import("@playwright/test").Page) => page.locator('[data-testid="result"]').last();
@@ -277,7 +277,7 @@ test("a definitions log stamped 2 is migrated at start, its steps loaded on dema
 // in the entry's queue, and the keys with an empty-line job must see them (and a kept line still to come) as text.
 /** A cold start on `page`'s store with MathLive held back until `release()`; `stored` (Home) is typed and sent first,
  *  `kept` typed after it and left on the line for the kill to keep (R34). */
-async function heldStart(page: Page, stored: string[], kept: string[] = []): Promise<{ next: Page; release: () => void }> {
+async function heldStart(page: Page, stored: string[], kept: string[] = [], also?: RegExp): Promise<{ next: Page; release: () => void; releaseAlso: () => void }> {
   await open(page, "");
   await engineReady(page);
   if (stored.length > 0) {
@@ -295,11 +295,19 @@ async function heldStart(page: Page, stored: string[], kept: string[] = []): Pro
     await gate;
     await r.continue();
   });
+  // `also`: another module held back until `releaseAlso()` (R298: the clipboard code, so ☰ waits for it as on a cold phone)
+  let releaseAlso = (): void => {};
+  const second = new Promise<void>((r) => (releaseAlso = r));
+  if (also)
+    await next.route(also, async (r) => {
+      await second;
+      await r.continue();
+    });
   await next.goto("/?tips=off");
   await next.locator('[data-key="d2"]').waitFor();
   const rows = stored.length > 0 ? 1 : 0;
   await next.waitForFunction((n) => window.n62?.session.items.length === n, rows);
-  return { next, release };
+  return { next, release, releaseAlso };
 }
 /** Release MathLive and wait until the field is up with the queued keys replayed, and the new page's engine is ready
  *  (heldStart waits for the first page's only; under the full suite's load a cold engine outlasted a row count's 5 s). */
@@ -395,9 +403,15 @@ test.describe("R298: inserts before the field", () => {
   test.describe.configure({ mode: "serial" }); // (one system clipboard for the whole browser)
   useClipboardLock();
   test("R298: 2, then ☰ Paste of 3 before the field: Enter gives 23", async ({ page }) => {
-    const { next, release } = await heldStart(page, ["d5"]);
+    const { next, release, releaseAlso } = await heldStart(page, ["d5"], [], /\/src\/clipboard\/actions\.svelte\.ts/);
     await setClipboard(next, "3");
     await tap(next, ["d2", ...PASTE, "enter"]);
+    releaseAlso();
+    // ☰ waited for its code with 7 and Enter behind it; the paste has landed in the entry's queue and its hold (route.ts
+    // holdKeys) is over before the field: the queued Enter must still wait for the field (the order run 1195's load gave)
+    await next.waitForFunction(() => (window.n62.entry as unknown as { queue: { kind: string }[] }).queue.some((a) => a.kind === "put"), undefined, { timeout: 20_000 });
+    await expect(sheet(next)).toHaveCount(0);
+    await next.waitForTimeout(500);
     await fieldUp(next, release);
     // (the rows with their status and the line, so a miss says what happened)
     const state = (): Promise<unknown> => next.evaluate(() => [window.n62.session.items.map((i) => `${i.status}:${i.text ?? ""}`), window.n62.entry.value]);

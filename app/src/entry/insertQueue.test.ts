@@ -128,6 +128,22 @@ describe("an insert before the field keeps its place among the keys (R298)", () 
     expect(sent).toEqual(["5\\blacktrianglerightA"]);
     expect(entry.value).toBe("5\\blacktrianglerightA3"); // (the stub's Enter does not clear the line)
   });
+  test("2, Enter queued behind a sheet's load (☰ then Paste of 3), the hold ends before the field: Enter waits for the field and sends 23", async () => {
+    const { c, entry, press, up, sent } = ctx();
+    press("d2");
+    let done = (): void => {};
+    const hold: Promise<void> = new Promise<void>((r) => (done = r)).finally(() => (c.sheetLoad = null as never));
+    (c as { sheetLoad: Promise<void> | null }).sheetLoad = hold; // the paste's hold (route.holdKeys), as after ☰ 7
+    press("enter");
+    entry.insert("3"); // the paste lands
+    done();
+    await hold;
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sent).toEqual([]); // the field is still to come: nothing to send yet
+    await up();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sent).toEqual(["23"]);
+  });
   test("a line with queued keys is not empty, and an insert alone makes it not empty", () => {
     const a = ctx();
     a.press("d2");
