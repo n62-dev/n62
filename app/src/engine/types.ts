@@ -10,6 +10,14 @@ import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 
 export type { ChipEntry, ChipFactsTable, ConstEntry, ConstTable, HomeResult, HomeSettings };
 
+/** G213f1: a stored name an input read, taken before it ran: Giac's full text of its value (radians, as a row's `full`)
+ *  and whether that value is exact (the definitions log keeps no facts for an exact one). Copy as Python reads it. */
+export interface StoredRead {
+  name: string;
+  value: string;
+  exact: boolean;
+}
+
 /**
  * What the engine knows about how far one value can be trusted (docs/04 2.4, 8.2; G76): the one shape every carrier of
  * a value's facts uses, whole (HomeResult and CasResult as `facts`; NameFacts, ChipEntry, Chip, ElementFacts,
@@ -132,6 +140,8 @@ export interface CasResult {
    *  the view they were stored in (F28: a value stored in Home changes a CAS result). Absent when there is none; a
    *  name the input assigns itself and a called function are not listed. */
   uses?: { name: string; preview: string; view: "home" | "cas" }[];
+  /** G213f1: as HomeResult's. */
+  reads?: StoredRead[];
   /** The result as a number, when it is one with a float in it (docs/04 section 2.9): the value the mark, the copy and
    *  the digits setting work on. Exact CAS results (`1/3`, `sqrt(2)`) have none: they get no mark. */
   numeric?: HomeResult;

@@ -3,7 +3,7 @@
 // the UI never talks to Giac directly (CLAUDE.md).
 
 import type { ComplexValue, NumberFormat as EngineFormat } from "../engine/format.ts";
-import type { AnalysisRequest, AnalysisResult, HomeResult, SolveOutcome, SolveRequest, TableRequest, ValueFacts } from "../engine/types.ts";
+import type { AnalysisRequest, AnalysisResult, HomeResult, SolveOutcome, SolveRequest, StoredRead, TableRequest, ValueFacts } from "../engine/types.ts";
 import type { ChipFactsTable } from "../engine/chipFacts.ts";
 import type { ConstTable } from "../engine/constUnc.ts";
 export type { ChipEntry, ChipFactsTable } from "../engine/chipFacts.ts";
@@ -71,6 +71,8 @@ export interface HomeOutcome {
   latex?: string;
   /** G67: the input changed one of the engine's settings, which was put back: the result line says it was not kept. */
   settingReset?: true;
+  /** G213f1: the stored names the input read, with their values (HomeResult.reads). */
+  reads?: StoredRead[];
   /** G211: the word (R194) the request carried, the engine's own (64 bits, unsigned) while none is set; the port gives it. */
   word?: WordSetting;
 }
@@ -93,6 +95,8 @@ export interface CasOutcome {
   facts: ValueFacts;
   /** The stored variables the input read, with the view that stored each (F28); absent when there is none. */
   uses?: { name: string; preview: string; view: "home" | "cas" }[];
+  /** G213f1: as HomeOutcome's. */
+  reads?: StoredRead[];
   /** G67: the input changed one of the engine's settings, which was put back: the result line says it was not kept. */
   settingReset?: true;
   /** G211: as HomeOutcome's. */

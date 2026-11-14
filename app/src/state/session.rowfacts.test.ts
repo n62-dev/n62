@@ -8,6 +8,7 @@ import { FakeCalc } from "../calc/fake.ts";
 import type { CalcSettings, CasOutcome, HomeOutcome } from "../calc/port.ts";
 import { safePrecision } from "../engine/homeEval.ts";
 import type { MathEngine } from "../engine/types.ts";
+import { ANS_KEY } from "../input/chips.ts";
 import { putRow } from "../units/row.ts";
 import { fakeKv, type FakeKv } from "./fakeKv.ts";
 import { FULL_LIMIT } from "./results.ts";
@@ -246,5 +247,45 @@ describe("stored rows keep the six with their shape (storedItem.ts, G211)", () =
     const r = restoredItem({ ...base } as HistoryItem, 4);
     for (const k of ["at", "giac", "angle", "digits", "word"] as const) expect(k in r, k).toBe(false);
     expect(r.uid).toBe(uidAt(T0, 4));
+  });
+});
+
+describe("G213f1: Ans's value at Enter and the stored names read, kept on the row for Copy as Python", () => {
+  it("a row whose input reads Ans keeps the value Ans held at Enter, never in its chips; a row that does not, none", async () => {
+    const s = new Session(new SpyCalc(), fakeKv());
+    await s.submit("7", "7");
+    await s.submit("\\ans+1", "7+1");
+    const [first, second] = s.home as [HistoryItem, HistoryItem];
+    expect(first.full).toBeDefined();
+    expect(second.ans).toEqual({ value: first.full, exact: first.fullExact });
+    expect(Object.keys(second.chips ?? {})).not.toContain(ANS_KEY);
+    expect(first.ans).toBeUndefined();
+  });
+
+  it("the names the engine says the input read reach the row as they came, Home and CAS; none said: none kept", async () => {
+    const calc = new SpyCalc();
+    const read = [{ name: "a", value: "7", exact: true }];
+    calc.home = (giac: string) => Promise.resolve({ ok: true, display: giac, approximate: false, ...safePrecision(giac), reads: read });
+    calc.cas = (giac: string) => Promise.resolve({ ok: true, text: giac, latex: giac, facts: { exact: false, reliableDigits: null }, reads: [] });
+    const s = new Session(calc, fakeKv());
+    await s.submit("a+1", "a+1");
+    expect(s.home[0]?.reads).toEqual(read);
+    s.setView("cas");
+    await s.submit("2", "2");
+    expect(s.cas[0]?.reads).toEqual([]);
+    const plain = new Session(new SpyCalc(), fakeKv());
+    await plain.submit("2", "2");
+    expect(plain.home[0]?.reads).toBeUndefined();
+  });
+
+  it("stored and read back: both kept when whole; a malformed ans, or reads with one bad entry, read as absent", () => {
+    const base = { id: 3, view: "home", latex: "\\ans+a", status: "done", resultLatex: "1", text: "1", approximate: false, startedAt: 0 } as const;
+    const kept = { ans: { value: "1/3", exact: true }, reads: [{ name: "a", value: "0.25", exact: false }] };
+    expect(restoredItem({ ...base, ...kept } as HistoryItem, 1)).toMatchObject(kept);
+    const bad = { ans: { value: 3, exact: true }, reads: [{ name: "a", value: "1", exact: true }, { name: "b", value: "2" }] };
+    const r = restoredItem({ ...base, ...bad } as unknown as HistoryItem, 1);
+    expect(r.ans).toBeUndefined();
+    expect(r.reads).toBeUndefined();
+    expect(restoredItem({ ...base, reads: [] } as HistoryItem, 1).reads).toEqual([]);
   });
 });
