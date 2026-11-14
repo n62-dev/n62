@@ -5,7 +5,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import about from "virtual:about";
 import { aboutPlugin } from "../../vite-plugin-about.ts";
-import { AUTHOR_SOURCE_DATE, goldenFacts, patchFacts } from "../../../tools/trust/facts.mts";
+import { AUTHOR_SOURCE_DATE, aboutTrust, goldenFacts, patchFacts, trapTable, trustFacts, type TrustFacts } from "../../../tools/trust/facts.mts";
+import { trustText } from "../views/trustText.ts";
 import { en } from "../i18n/en.ts";
 import { enAbout } from "../i18n/enAbout.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -126,6 +127,40 @@ describe("About trust facts (A94)", () => {
     for (const f of ["tests/golden/home.yaml", "tests/golden/precision.yaml", "tests/golden/units.yaml", "tests/golden/solve.yaml", "tests/golden/function.yaml", "tests/golden/oracle-counts.json", "engine/giac/patches/README.md"])
       expect(rel, f).toContain(f);
     for (const f of p.files) expect(rel, f).toContain(`engine/giac/patches/${f}`);
+  });
+});
+
+/** The N62 cell of each row of README's trap table, and the N62 line of each trap on the page, in trap order. */
+function n62Cells(f: TrustFacts): { table: string[]; page: string[] } {
+  const table = trapTable(f).split("\n").slice(2).map((l) => (l.split(/ \| /)[1] ?? "").trim());
+  const page = trustText(aboutTrust(f)).split("\n").filter((l) => l.startsWith("N62: ")).map((l) => l.slice(5));
+  return { table, page };
+}
+/** The README's markdown quotes and the page's curly quotes are one style argument: compare without them. */
+const plainQuotes = (s: string): string => s.replace(/[“”"]/g, "'");
+
+describe("About trust page and README (R174f1): one rule for what N62 shows", () => {
+  const facts = trustFacts();
+  /** The facts with every trap's golden mark set by `mark(id)`. */
+  const withMarks = (mark: (id: string) => string): TrustFacts => ({
+    ...facts,
+    golden: { ...facts.golden, traps: Object.fromEntries(Object.entries(facts.golden.traps).map(([id, r]) => [id, { ...r, mark: mark(id) }])) },
+  });
+
+  it("gives the README's N62 cell and the page's N62 line the same mark and value for the five traps", () => {
+    const { table, page } = n62Cells(facts);
+    expect(table).toHaveLength(5);
+    expect(page.map(plainQuotes)).toEqual(table.map(plainQuotes));
+  });
+
+  it("follows the golden mark in both: a mark shows mark and value, no mark is a refusal, whatever the trap", () => {
+    for (const mark of [(id: string) => (id === "g39-int-1/x-pv" ? "≈" : ""), (id: string) => (id === "trust-cos-12" ? "=" : id === "trust-rump-12" ? "" : "≈")]) {
+      const { table, page } = n62Cells(withMarks(mark));
+      expect(page.map(plainQuotes)).toEqual(table.map(plainQuotes));
+    }
+    const { table } = n62Cells(withMarks((id) => (id === "g39-int-1/x-pv" ? "≈" : "")));
+    expect(table[4]).toMatch(/^≈ /);
+    expect(table[0]).toMatch(/^refused: /);
   });
 });
 
