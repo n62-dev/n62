@@ -64,7 +64,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 668 | R189 edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
-| 669 | [R190](packages/R190.md) a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
+| 669 | R190 a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
 | 732 | R130 the work as a readable report | ron, Opus | `p1/ron-workreport` | – |
 | 671 | [R221](packages/R221.md) t08 and t09 replay what works today | ron, Sonnet | `p1/ron-taskbaselines` | – |
 | 672 | [R220](packages/R220.md) the uncertainty sheet's mockup (the owner picks) | ron, Opus | `p1/ron-uncsheetmock` | – |
