@@ -115,11 +115,12 @@ function giacFunctions(aide, curated, exclude, notes) {
     });
   }
   for (const n of excluded) if (!byName.has(n) && !all.some((e) => e.names.includes(n))) fail(`find/functions.yaml exclude: no Giac command ${n}`);
-  // G67: our line for the commands that change the engine's state on purpose
-  for (const [n, desc] of Object.entries(notes ?? {})) {
+  // G67: our line for the commands that change the engine's state on purpose; G356: a title too, where Giac's name misleads
+  for (const [n, note] of Object.entries(notes ?? {})) {
     const it = items.get(`fn:${n}`);
     if (!it) fail(`find/functions.yaml notes: no Find item fn:${n}`);
-    else it.desc = desc;
+    else if (typeof note === "string") it.desc = note;
+    else { it.title = note.title ?? it.title; it.desc = note.desc ?? it.desc; }
   }
   return { items: [...items.values()], entries: all.length, dropped, skipped };
 }
