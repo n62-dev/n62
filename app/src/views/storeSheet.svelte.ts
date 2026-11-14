@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// The store sheet (R281, sd-3 of docs/research/store-design.md, design A): Store ▶ puts `value ▶` on the line and opens
+// The store sheet (R281, sd-3 of docs/archive/store-design.md, design A): Store ▶ puts `value ▶` on the line and opens
 // "Store in": the letters A–Z as a grid, a filled one with its value and mark, then the user's other names, newest
 // first. A tap on a free letter types its name after the ▶ and presses Enter (the one store path: parser, engine, a
 // history row); a tap on a filled name arms it (`5 · again?`) and a second tap stores; any other press disarms
