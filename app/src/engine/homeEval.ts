@@ -34,7 +34,7 @@ import { PLAIN_AT, PLAIN_AT_ANY_DEPTH, plainRows, soleMatrixLatex } from "./matr
 import { homeSequence, NO_LOGGED_NAMES, type LoggedNames } from "./sequences.ts";
 import { complexSafe, readsReplaced } from "./complex.ts";
 import { decidedAtDouble, decideTwice, decidingStored, contradictedFloats, floatsBesideName, nonRealArg, pastCapFloats, restsOnDecision } from "./decisions.ts";
-import { PLAIN_FORM, type InputForm } from "./stores.ts";
+import { PLAIN_FORM, type InputForm, type StoreRefusal } from "./stores.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { STATS_DEFINITIONS } from "./stats.ts";
 import { WORD_DEFINITIONS } from "./wordOps.ts";
@@ -104,7 +104,7 @@ export interface HomeResult {
   /** Set when !ok: "syntax" (Giac could not parse the input), "engine", or a refusal of a number for something that does
    *  not exist (G39, converge.ts: a divergent integral or series, no limit), or "timeout" when Home's own steps ran past
    *  HOME_DEADLINE_MS (G58); the UI shows `error.<code>`. */
-  error?: "syntax" | "engine" | "timeout" | Refusal;
+  error?: "syntax" | "engine" | "timeout" | Refusal | StoreRefusal;
   /** How far the value can be trusted (G76): `exact` with the format decides "=" (docs/04 section 2.4, 8.2). */
   facts: ValueFacts;
   /** The text to copy and the `\res` chip value: the exact text or P digits (docs/04 section 2.6, 3.6). */

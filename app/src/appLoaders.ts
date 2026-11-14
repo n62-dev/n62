@@ -20,15 +20,15 @@ export interface LoaderDeps {
   /** A job runs: the idle preparing of the Find index gives way to it. */
   readonly busy: () => boolean;
   /** A tapped or picked result goes on the entry line (the clipboard code's `insert`). */
-  readonly insertResult: (item: HistoryItem) => void;
+  readonly insertResult: (item: HistoryItem, whole?: boolean) => void;
   /** A row's entry goes back on the line (the clipboard code's `recall`: Recall, Menu 2). */
   readonly recall: (item: HistoryItem) => void;
   /** A row action of the Menu's list runs (the clipboard code's `acted`). */
   readonly acted: (id: string) => void;
   /** ☰ → Paste runs: the keys pressed while it reads the clipboard wait for it (route.holdKeys). */
   readonly hold: (job: Promise<unknown>) => void;
-  /** Store ▶ on a row put its result and ▶ on the line (R281: the store sheet opens). */
-  readonly stored: (item: HistoryItem) => void;
+  /** Store ▶ on a row put its result and ▶ on the line (R281: the store sheet opens; no item: the line is stored, R301). */
+  readonly stored: (item?: HistoryItem) => void;
   /** The clipboard code is in, with the picked row's buttons (R147: they load with it). */
   readonly onClip: (clip: ClipActions, rowBar: RowBarView) => void;
 }
