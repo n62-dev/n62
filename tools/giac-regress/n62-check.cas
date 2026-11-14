@@ -311,6 +311,8 @@ Digits:=40:; pc("g227-dot-complex",'(dot([1,2*i],[3,4]))',3-8*i,5/10^12+5/10^12)
 Digits:=40:; pc("g227-norm",'(norm([3,4]))',5,5/10^12);
 // g227-norm-irrational (home.yaml, oracle)
 Digits:=40:; pc("g227-norm-irrational",'(norm([1,1]))',(141421356237/10^11),5/10^12);
+// g353-keep-variance-double (home.yaml, oracle)
+Digits:=40:; pc("g353-keep-variance-double",'(variance([(15/10^1),(25/10^1),4]))',(105555555556/10^11),5/10^12);
 // g226-keep-shift-32-5 (home.yaml, derived)
 Digits:=40:; pc("g226-keep-shift-32-5",'(shift(32,5))',1,5/10^12);
 // g226-keep-shift-1-5 (home.yaml, derived)
