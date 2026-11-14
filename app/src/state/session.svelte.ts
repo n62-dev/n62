@@ -131,6 +131,8 @@ export interface HistoryItem {
   inexactInput?: boolean;
   /** CAS: the stored values the input read, each with the view that stored it (F28); absent when there is none. */
   uses?: UsedValue[];
+  /** G212, Home: the stored values the input read, as a CAS row's `uses` (the session line's `defs`); never drawn. */
+  defsUsed?: UsedValue[];
   /** G213f1, Copy as Python only (never drawn): Ans's value at Enter when read; each stored name read with its value ([] none). */
   ans?: Pick<Chip, "value" | "exact">;
   reads?: StoredRead[];
