@@ -41,7 +41,7 @@ The owner, 2026-11-01: "I want to release a good version as 0.1.0, I'm in no rus
 **Why this order:** the signing and the workflow ran first (11-02 to 11-05), so release day only repeats them. The owner, 2026-11-06, after moving the tag to 11-07 and 11-08 for the UI rows: "finish all the queue first, then do some test, and I will do the video then" (confirmed 2026-11-07): the whole queue to Thu 11-12, two test nights on final code, the video on the release candidate; the two days after the tag stay for a v0.1.1.
 
 **If it gets tight,** drop in this order:
-1. R174, the in-app "Why trust it" page: dropped on 11-12 for the freeze of 11-13 and back as a feature row that evening (owner), still the first to drop; A94's data, the README section and A93's test stay.
+1. R174, the in-app "Why trust it" page: merged 2026-11-14 (c5a8b211), so nothing is left to drop here; A94's data, the README section and A93's test stay.
 2. A96, A97 and A98 to Mon 11-16: F-Droid's acceptance takes weeks anyway.
 3. If A95's first check or its device test fails, Android ships R173's copy-only row.
 
