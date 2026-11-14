@@ -63,8 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 752 | R298 a paste or a result inserted before the entry field keeps its place among the keys | ron, Opus | `p1/ron-insertqueue` | – |
-| 780 | R312 a hardware `2exp(1)` types exp, and the desktop-keys help names its layouts | ron, Opus | `p1/ron-emarkname` | – |
 | 753 | [S58](packages/S58.md) the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
 | 754 | [R299](packages/R299.md) the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
 | 755 | [R300](packages/R300.md) the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
@@ -77,7 +75,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 761 | [R306](packages/R306.md) a list, a matrix, cases and an integral read right as plain text | ron, Opus | `p1/ron-plainlists` | G232f1 |
 | 762 | [R307](packages/R307.md) the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | R300 |
 | 763 | [R308](packages/R308.md) a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | R300 |
-| 697 | A145 F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
