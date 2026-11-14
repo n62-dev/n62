@@ -1,6 +1,6 @@
 # Who holds the rights an App Store build would need (S51)
 
-**Status: open.** The owner decides; iOS v1 is the web app only (`docs/must-have.md` item 7). Nothing went out; no author was asked.
+**Status: reference.** Behind `docs/must-have.md` item 7 (iOS v1: the web app). Nothing went out; no author was asked.
 
 **Recommendation:** keep iOS on the web app. An exception from Giac's authors alone covers part of the engine: GSL has many holders, the Find index carries libqalculate's names. Check: `node tools/probes/ios-rights-rows.ts` (a row per shipped row of `THIRD_PARTY.md`).
 
