@@ -5,6 +5,16 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 187 (2026-11-14) to make room, as they stood
+- **R300's grid keys (ron, run 1203; Opus pass 187):** the matrix grid reads a key's action in the layer pressed: a type or an insert that types starts a cell's edit (Shift + Enter's approx( ) too); Store ▶, and with no edit Undo, Redo, ⇤ and ⇥, are dead presses; during an edit Clear clears the cell's line only, ≈ inserts approx( ) on it, an operator types itself (no Ans first), and a special that does nothing gives the double haptic. Would change if: G2 item 74 shows Ans − 5 and the owner wants it.
+- **R299's lock (ron, run 1202; Opus pass 187):** the five files of `UNPINNED_LISTS` (credits, the restore checklist, library clashes, help rows, the matrix loading placeholder) hold content, not fixed rows, and stay unpinned; the unit cell sheet (U1 to U6) is pinned; Function's Plot ☰ (To Home with an answer) and Solve's Num ☰ (Paste with an unknown selected) are pinned with their conditional last rows present, and without them the digits before stay. Would change if: one of those lists gets a fixed row.
+- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. A matrix times a list needs one element per row, either order; a pointwise operator refuses a matrix with a flat operand (G352). A result with no list and no dimension error is not walked (pass 123): `col(idn(2),0)*col(zeros(3,3),0)` stays 0 with ⚠. `dot` conjugates its first vector (G227).
+
+### Shortened by Opus pass 186 (2026-11-14) to make room, as they stood
+- **R188's matrix grid (Opus pass 176):** Shift + 4 lists stored matrices from row 10, the newest first; a grid's highlight stops at its edges; Esc goes back to the list; +9 B raw at start, accepted.
+- **R194's word (Opus pass 178):** Settings › Numbers keeps seven rows: Word opens Word size (8–64) and Signed, and Numbers scrolls at 360 × 740 (R148f1); a preset leaves the word as it is. Would change if: the owner wants the two rows in Numbers.
+- **R189's cell edit (Opus pass 179):** Enter writes one row `M:=` as a pmatrix the line reads back (a float in approx(), no evalf), checked in the worker; Enter on an unedited cell is idle. Would change if: the owner wants it to open the cell.
+
 ### Shortened by Opus pass 185 (2026-11-14) to make room, as they stood
 - **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it, and Ans or a name only while its line holds the value it had (G213f1); the comments are English constants (a file format); `3!` and `\binom` are factorial and binomial; an odd root of a literal not below 0 is root(), else real_root(); a row parses with its `defs` as stored values. Would change if: G215 finds sympy disagrees.
 

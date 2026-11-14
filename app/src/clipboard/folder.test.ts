@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// A65: the sync folder's port with @capacitor/core mocked (never a device in unit tests; the device check is in the report).
+// A65, A100: the sync folder's port with @capacitor/core mocked (never a device in unit tests; the device check is in the report).
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { folderList, folderName, folderRead, folderWrite, forgetFolder, pickFolder, validName } from "./folder.ts";
+import { folderAppend, folderList, folderModel, folderName, folderRead, folderWrite, forgetFolder, pickFolder, validName } from "./folder.ts";
 
 const cap = vi.hoisted(() => ({
   native: false,
   available: new Set<string>(),
-  files: { pickFolder: vi.fn(), folder: vi.fn(), forget: vi.fn(), write: vi.fn(), read: vi.fn(), list: vi.fn() },
+  files: {
+    pickFolder: vi.fn(), folder: vi.fn(), forget: vi.fn(), write: vi.fn(), read: vi.fn(), list: vi.fn(), append: vi.fn(), deviceModel: vi.fn(),
+  },
 }));
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => cap.native, isPluginAvailable: (n: string) => cap.available.has(n) },
@@ -33,6 +35,8 @@ describe("on the web (no native plugin)", () => {
     expect(await folderWrite("n62-test.txt", "x")).toBe("unavailable");
     expect(await folderRead("n62-test.txt")).toBe("unavailable");
     expect(await folderList()).toBe("unavailable");
+    expect(await folderAppend("results.txt", "x\n")).toBe("unavailable");
+    expect(await folderModel()).toBe("unavailable");
     await forgetFolder();
     for (const f of Object.values(cap.files)) expect(f).not.toHaveBeenCalled();
   });
@@ -40,7 +44,11 @@ describe("on the web (no native plugin)", () => {
   it("native but an APK without N62Files is unavailable too", async () => {
     cap.native = true;
     expect(await folderWrite("a.txt", "x")).toBe("unavailable");
+    expect(await folderAppend("a.txt", "x")).toBe("unavailable");
+    expect(await folderModel()).toBe("unavailable");
     expect(cap.files.write).not.toHaveBeenCalled();
+    expect(cap.files.append).not.toHaveBeenCalled();
+    expect(cap.files.deviceModel).not.toHaveBeenCalled();
   });
 });
 
@@ -51,6 +59,8 @@ describe("no folder chosen (the plugin answers unavailable)", () => {
     cap.files.write.mockResolvedValue(NONE);
     cap.files.read.mockResolvedValue(NONE);
     cap.files.list.mockResolvedValue(NONE);
+    cap.files.append.mockResolvedValue(NONE);
+    expect(await folderAppend("results.txt", "x\n")).toBe("unavailable");
     expect(await folderName()).toBe("unavailable");
     expect(await folderWrite("n62-test.txt", "x")).toBe("unavailable");
     expect(await folderRead("n62-test.txt")).toBe("unavailable");
@@ -63,6 +73,10 @@ describe("no folder chosen (the plugin answers unavailable)", () => {
     cap.files.write.mockRejectedValue(unimplemented);
     cap.files.read.mockRejectedValue(unimplemented);
     cap.files.pickFolder.mockRejectedValue(unimplemented);
+    cap.files.append.mockRejectedValue(unimplemented);
+    cap.files.deviceModel.mockRejectedValue(unimplemented);
+    expect(await folderAppend("a.txt", "x")).toBe("unavailable");
+    expect(await folderModel()).toBe("unavailable");
     expect(await folderWrite("a.txt", "x")).toBe("unavailable");
     expect(await folderRead("a.txt")).toBe("unavailable");
     expect(await pickFolder()).toBe("unavailable");
@@ -145,6 +159,50 @@ describe("with a folder", () => {
     cap.files.forget.mockRejectedValue(new Error("boom"));
     await expect(forgetFolder()).resolves.toBeUndefined();
     expect(cap.files.forget).toHaveBeenCalledOnce();
+  });
+});
+
+describe("folderAppend (A100: \"wa\", never a rewrite)", () => {
+  it("passes name and text through and reports appended with the sizes before and after", async () => {
+    native();
+    cap.files.append.mockResolvedValue({ result: "appended", before: 2, after: 6 });
+    expect(await folderAppend("n62-results.txt", "∑\n")).toEqual({ result: "appended", before: 2, after: 6 });
+    expect(cap.files.append).toHaveBeenCalledWith({ name: "n62-results.txt", text: "∑\n" });
+    expect(cap.files.write).not.toHaveBeenCalled();
+  });
+
+  it("a size the provider does not give is -1", async () => {
+    native();
+    cap.files.append.mockResolvedValueOnce({ result: "appended", before: -1, after: -1 }).mockResolvedValueOnce({ result: "appended" });
+    expect(await folderAppend("a.txt", "x")).toEqual({ result: "appended", before: -1, after: -1 });
+    expect(await folderAppend("a.txt", "x")).toEqual({ result: "appended", before: -1, after: -1 });
+  });
+
+  it("is failed on an I/O rejection", async () => {
+    native();
+    cap.files.append.mockRejectedValue(new Error("disk full"));
+    expect(await folderAppend("a.txt", "x")).toBe("failed");
+  });
+
+  it("a bad name never reaches the plugin", async () => {
+    native();
+    expect(await folderAppend("../escape.txt", "x")).toBe("failed");
+    expect(await folderAppend("", "x")).toBe("failed");
+    expect(cap.files.append).not.toHaveBeenCalled();
+  });
+});
+
+describe("folderModel (A100)", () => {
+  it("returns the device's model string", async () => {
+    native();
+    cap.files.deviceModel.mockResolvedValue({ result: "ok", model: "TB305FU" });
+    expect(await folderModel()).toBe("TB305FU");
+  });
+  it("unavailable for an answer without a string or a rejection", async () => {
+    native();
+    cap.files.deviceModel.mockResolvedValueOnce({ result: "ok" }).mockRejectedValueOnce(new Error("boom"));
+    expect(await folderModel()).toBe("unavailable");
+    expect(await folderModel()).toBe("unavailable");
   });
 });
 
