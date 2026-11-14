@@ -4,6 +4,7 @@
 // start it again, read the file back and list the folder with no dialog; another writer (adb shell, as Syncthing writes:
 // straight to the file system) changes the file and adds one, the app reads the change; the folder removed → unavailable,
 // never a throw; forget() → unavailable. Also the time of a 2 MB write (the backup's worst case), median of 5.
+// A100: append ("wa") adds to the end byte-exact (a, b, c → "a\nb\nc\n"), never truncating; deviceModel() is Build.MODEL.
 // Run by hand under the device lock (annabell; docs/shifts/rules.md section 5):
 //   tools/devlock.sh acquire HA24BZ2Y <name> 1800 && (cd app && npx playwright test -c playwright.folder.config.ts);
 //   tools/devlock.sh release HA24BZ2Y <name>
@@ -81,7 +82,8 @@ test("A65 sync folder on the device", async () => {
   let page = await launch();
   expect(await call(page, "folder")).toEqual({ result: "unavailable" });
   expect(await call(page, "write", { name: "n62-test.txt", text: "x" })).toEqual({ result: "unavailable" });
-  log("no folder yet: folder, write unavailable");
+  expect(await call(page, "append", { name: "n62-test.txt", text: "x" })).toEqual({ result: "unavailable" });
+  log("no folder yet: folder, write, append unavailable");
 
   // the one pick: the system folder picker, Downloads, the test folder, "Use this folder", "Allow"
   await page.evaluate(() => {
@@ -129,6 +131,21 @@ test("A65 sync folder on the device", async () => {
   expect((await device.shell(`cat ${PATH}/n62-test.txt`)).toString()).toBe("short\n");
   log("replace: one file, truncated to the new text");
 
+  // A100: append opens "wa": the bytes go to the end, nothing before them is rewritten
+  expect(await call(page, "write", { name: "n62-append.txt", text: "a\n" })).toEqual({ result: "written" });
+  expect(await call(page, "append", { name: "n62-append.txt", text: "b\n" })).toEqual({ result: "appended", before: 2, after: 4 });
+  expect(await call(page, "append", { name: "n62-append.txt", text: "c\n" })).toEqual({ result: "appended", before: 4, after: 6 });
+  expect((await device.shell(`cat ${PATH}/n62-append.txt`)).toString()).toBe("a\nb\nc\n");
+  expect(await call(page, "read", { name: "n62-append.txt" })).toEqual({ result: "ok", text: "a\nb\nc\n" });
+  const fresh = await call(page, "append", { name: "n62-append-new.txt", text: "∑ é\n" });
+  expect(fresh).toEqual({ result: "appended", before: 0, after: 7 });
+  expect((await device.shell(`cat ${PATH}/n62-append-new.txt`)).toString()).toBe("∑ é\n");
+  log("A100 append: a, b, c read back a\\nb\\nc\\n byte-exact (sizes 2→4→6); a missing file is created (0→7)");
+  const model = await call(page, "deviceModel");
+  expect(model).toEqual({ result: "ok", model: (await device.shell("getprop ro.product.model")).toString().trim() });
+  log(`A100 deviceModel: ${JSON.stringify(model)}`);
+  await device.shell(`rm -f ${PATH}/n62-append.txt ${PATH}/n62-append-new.txt`);
+
   // another writer changes the file and adds one
   await device.shell(`echo changed-outside > ${PATH}/n62-test.txt; echo other > ${PATH}/from-outside.json; mkdir ${PATH}/sub`);
   expect(await call(page, "read", { name: "n62-test.txt" })).toEqual({ result: "ok", text: "changed-outside\n" });
@@ -161,15 +178,17 @@ test("A65 sync folder on the device", async () => {
 
   // the folder removed: unavailable, never a throw
   await device.shell(`rm -rf ${PATH}`);
-  const gone: { folder: Answer; write: Answer; read: Answer; list: Answer } = {
+  const gone: { folder: Answer; write: Answer; append: Answer; read: Answer; list: Answer } = {
     folder: await call(page, "folder"),
     write: await call(page, "write", { name: "a.txt", text: "x" }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
+    append: await call(page, "append", { name: "a.txt", text: "x" }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
     read: await call(page, "read", { name: "a.txt" }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
     list: await call(page, "list").catch((e: Error) => ({ result: `rejected: ${e.message}` })),
   };
   log(`folder removed: ${JSON.stringify(gone)}`);
   expect(gone.folder.result).toBe("unavailable");
   expect(gone.write.result).toBe("unavailable");
+  expect(gone.append.result).toBe("unavailable");
   expect(gone.read.result).toBe("unavailable");
   expect(gone.list.result).toBe("unavailable");
 

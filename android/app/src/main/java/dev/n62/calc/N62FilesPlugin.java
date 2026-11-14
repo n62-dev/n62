@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.UriPermission;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.DocumentsContract;
 import android.webkit.MimeTypeMap;
 import androidx.activity.result.ActivityResult;
@@ -36,6 +37,8 @@ import java.util.Locale;
  * forget() then work on that folder with no dialog, across restarts. Every answer is {result: ...}; with no folder
  * picked, or a grant the user revoked or a folder that is gone, the result is "unavailable" (never a rejection).
  * Text is UTF-8; names are plain file names in the folder itself (no sub-folders).</li>
+ * <li>append({name, text}) (A100) adds text to the end of a file in that folder ("wa"), creating it when absent; it never
+ * truncates or rewrites, so a crash cannot lose the lines already there. deviceModel() gives Build.MODEL.</li>
  * </ul>
  */
 @CapacitorPlugin(name = "N62Files")
@@ -174,6 +177,55 @@ public class N62FilesPlugin extends Plugin {
         call.resolve(new JSObject().put("result", "written"));
     }
 
+    /**
+     * append({name, text}) (A100): creates the file when absent, then opens it "wa" (write, append) and adds the text; the
+     * earlier content is never rewritten. {result: "appended", before, after} with the provider's COLUMN_SIZE in bytes
+     * before and after (-1 when it does not say) | {result: "unavailable"}; rejects on an I/O error.
+     */
+    @PluginMethod
+    public void append(PluginCall call) {
+        String name = call.getString("name");
+        String text = call.getString("text");
+        if (!FolderNames.valid(name) || text == null) {
+            call.reject("a plain file name and text are required");
+            return;
+        }
+        Uri tree = usableTree();
+        if (tree == null) {
+            unavailable(call);
+            return;
+        }
+        ContentResolver cr = getContext().getContentResolver();
+        Uri doc;
+        long before;
+        try {
+            doc = child(tree, name);
+            if (doc == null) {
+                doc = DocumentsContract.createDocument(cr, rootDoc(tree), mimeOf(name), name);
+                if (doc == null) throw new IOException("could not create " + name);
+            }
+            before = sizeOf(doc);
+            try (OutputStream out = cr.openOutputStream(doc, "wa")) {
+                if (out == null) throw new IOException("no output stream for " + name);
+                out.write(text.getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (SecurityException | IllegalArgumentException e) {
+            // revoked or gone between the check and the append
+            unavailable(call);
+            return;
+        } catch (IOException | RuntimeException e) {
+            call.reject(e.getMessage() != null ? e.getMessage() : "append failed");
+            return;
+        }
+        call.resolve(new JSObject().put("result", "appended").put("before", before).put("after", sizeOf(doc)));
+    }
+
+    /** deviceModel() (A100): {result: "ok", model} with Build.MODEL, the line a result file records its device with. */
+    @PluginMethod
+    public void deviceModel(PluginCall call) {
+        call.resolve(new JSObject().put("result", "ok").put("model", Build.MODEL != null ? Build.MODEL : ""));
+    }
+
     /** read({name}): {result: "ok", text} | {result: "missing"} | {result: "unavailable"}; rejects on an I/O error or a file over READ_MAX. */
     @PluginMethod
     public void read(PluginCall call) {
@@ -296,6 +348,16 @@ public class N62FilesPlugin extends Plugin {
             }
         }
         return null;
+    }
+
+    /** The document's size in bytes as the provider reports it (COLUMN_SIZE), or -1 when it does not say. */
+    private long sizeOf(Uri doc) {
+        String[] cols = {DocumentsContract.Document.COLUMN_SIZE};
+        try (Cursor c = getContext().getContentResolver().query(doc, cols, null, null, null)) {
+            return c != null && c.moveToFirst() && !c.isNull(0) ? c.getLong(0) : -1;
+        } catch (RuntimeException e) {
+            return -1;
+        }
     }
 
     /**
