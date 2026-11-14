@@ -290,10 +290,23 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
  *  again here; a line that no longer ends in them (it changed while the key waited for a load) gets the bracket pair. */
 function typedCall(mf: MathfieldElement, latex: string, call: TypedCall): void {
   const end = mf.position;
-  const start = end - call.name.length; // one atom per letter or digit
-  if (!mf.selectionIsCollapsed || start < 0 || mf.getValue(start, end, "latex") !== call.name) return apply(mf, call.paren);
+  const start = call.typed ? typedStart(mf, call.typed) : end - call.name.length; // one atom per letter or digit
+  if (!mf.selectionIsCollapsed || start < 0 || (!call.typed && mf.getValue(start, end, "latex") !== call.name)) return apply(mf, call.paren);
   mf.selection = { ranges: [[start, end]] };
   apply(mf, { kind: "insert", latex: latex.replace(/#[0@]/g, "#?") });
+}
+
+/** R312: the offset where the atoms `typed` (their LaTeX, in order) start when they end at the cursor, at its depth (the
+ *  ᴇ's own parts, listed deeper before it, skipped); -1 where the line no longer ends in them. */
+function typedStart(mf: MathfieldElement, typed: readonly string[]): number {
+  const depth = (o: number): number => mf.getElementInfo(o)?.depth ?? 0;
+  const d = depth(mf.position);
+  let k = mf.position;
+  for (let i = typed.length - 1; i >= 0; i--) {
+    if (k <= 0 || depth(k) !== d || mf.getElementInfo(k)?.latex !== typed[i]) return -1;
+    for (k--; k > 0 && depth(k) > d; k--);
+  }
+  return k;
 }
 
 /** True if the selection is followed by a ° (it is the degrees box of a DMS). */

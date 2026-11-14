@@ -280,14 +280,18 @@ describe("R198: a typed function name and ( give the function", () => {
   const indexFile = join(here, "../find/_gen/find-index.json");
   const ev = (key: string) =>
     ({ key, code: "", repeat: false, isComposing: false, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, getModifierState: () => false }) as unknown as KeyboardEvent;
-  /** A line of atoms at depth 0 with the cursor at its end (MathLive: the atom at offset o ends there). */
-  const line = (atoms: readonly string[], collapsed = true) =>
-    ({
-      position: atoms.length,
-      lastOffset: atoms.length,
+  /** A line of atoms at depth 0 with the cursor at its end (MathLive: the atom at offset o ends there). R312: the ᴇ's
+   *  parts come before it, one and two levels deeper, as MathLive lists them (`2exp`: 2, four parts, \emark, x, p). */
+  const line = (atoms: readonly string[], collapsed = true) => {
+    const parts: [string, number][] = [["", 1], ["", 2], ["ᴇ", 2], ["\\mathopen{ᴇ}", 1]];
+    const all = atoms.flatMap((a): [string, number][] => (a === "\\emark" ? [...parts, [a, 0]] : [[a, 0]]));
+    return {
+      position: all.length,
+      lastOffset: all.length,
       selectionIsCollapsed: collapsed,
-      getElementInfo: (o: number) => (o > 0 && o <= atoms.length ? { depth: 0, latex: atoms[o - 1] } : undefined),
-    }) as unknown as HwTarget["field"];
+      getElementInfo: (o: number) => (o > 0 && o <= all.length ? { depth: all[o - 1]?.[1], latex: all[o - 1]?.[0] } : undefined),
+    } as unknown as HwTarget["field"];
+  };
   /** `(` typed after `typed` (one atom per character): what ran (the bracket pair `paren`, or the insert's LaTeX) and
    *  the count name; `stored`, the user's names. */
   const paren = (typed: string | readonly string[], stored: readonly string[] = [], collapsed = true): { got: string; count: string } => {
