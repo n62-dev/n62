@@ -1,0 +1,70 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+# Night report 2026-11-14 (lanes A and B, 2026-11-13 06:36 to 2026-11-14 06:34)
+
+Both lanes started at 06:36 (`night.sh --lane A` and `--lane B`, `--until 05:00 on 11-14`). Pipeline runs 1097 to 1165: 42 package runs, 14 Opus passes (166 to 179), 14 device runs (all ran, none skipped). **35 runs merged** (A: 18, B: 17); **7 runs ended NOT MERGED** (G331, G307, R131, R184, R194, R189, R130). Five of those were finished by a follow-up run the same night (G331f1, G307f1, R131f1, R184 review-only, R194f1); **R189 and R130 are still open** (FIX R189f1 and R130f1 are ready), and pass 178's **FIX R184f1** was not run (lane B closed after that pass). Lane B closed at 05:50 (29 steps); lane A closed at 06:34 (29 steps) and started this report. The log shows no push: phase-1 stands at b9ab5857 (pass 179).
+
+**Core list:** desktop CORE 77/77 (known 0, needs 0) at every pass, 166 to 179 (the last on c97a6299 and b9ab5857). **CORE DEVICE 76/76 (known 0, new none) at b9ab5857 (device 179, 06:34)**; devices 166 to 178 were also 76/76 (59d95d02, d66f7f94, 3c81840b, fb03f825, d8f5c8d2, df9777ab, 0a32bed1, 0ed476f9, 14fe91d3, 44a04d71, f664e71f, 678282a5, c97a6299). Gates at pass 178 (on 8cfd2adf): typecheck 0; `FIND_INDEX=required` vitest 5089/5089 (307 files); e2e 2063 passed, 12 skipped; GOLDEN GATE PASSED (parser 696/698, 2 known gaps). Pass 179 did not run the golden gate (no engine or parser code changed since pass 178).
+
+## Merged into phase-1
+Lane A (ron):
+- R281f1 e282025a (finishes R281, the store sheet: letters typed into the sheet go onto the line before a key that types no name, so `7`, Shift + ᴇ, `x`, Shift + ␣, `0`, Enter stores `x_0`).
+- R282 7621b40a (Vars and the store sheet build their grid from one builder). R196 0266b7f7 (`functionAt`, pure, no caller yet). R197 68e296cf (Shift + Select opens the syntax and example of the function at the cursor, else Find).
+- R185 63b3378f (the Shift + 5 matrix grows with ▶ and ▼). R185f1 15cb56f0 (new cells get a placeholder; the parser refuses an empty cell with its own message). R186 af392513 (⌫ in an empty last row or column takes it back). R187 eac413f1 (Shift + 4 opens the eight matrix functions; the legend stays Mat).
+- R131f1 b202e09b (the desktop key map, R131, on its kept branch: a Mac's Option punctuation is typed; the count names are `hw:<desktop name>` and `fold.hw`).
+- R198 4ee33b66 and R198f1 6b5dabe4 (typed function names become their function; `lcm(` gets Find's insert; Giac's program words stay letters). R224 d2656517 and R224f1 10fb514d (the wide layout, side by side from 1000 × 600; a test ties the CSS condition to `WIDE_QUERY`).
+- R291 035e335a, R291f1 95d53f12, R291f2 c73a6176 (the layout lock: a key move needs an owner decision, taken only as a whole title or heading). R294 ef2d3c77 (the `$initial` chunk group and the one-start-file rule). R188 6b1c6cfd (the matrix grid view).
+
+Lane B (gorge, ron, annabell, sandra):
+- G342 490fa901 (the library file is stamped 3 and still reads files to DATA_VERSION 4). R199 9e6d582e (the plain-text session writes `sum(k=1..10) k`, `root(3, 8)`, and so on).
+- G331f1 e3b1f3da (finishes G331: patch 0047, `tsimplify` of a logarithm of an undefined argument; values checked with mpmath at 30 digits; shared engine key 2e3003bd90ebec84). A150 82cf714b (red-first runs its vitest files on phase-1's engine, never the caller's `GIAC_OUT`). G330 6015836a (the Slope's f' and f(x0) take Home's road).
+- G306 a18f8933 (surd, atan2 and the sorts count as decisions). G308 11233246 (patch 0048: `is_one` of a complex needs an imaginary part of exactly zero; 11 oracle rows fixed; shared engine key 571fc1b085cff204).
+- G307f1 c8a1d824, G307f2 a766ec9c, G348 a892dbdc (the G307 chain: a huge power of π or exp is counted when it sits where a value is read modulo a period; G348's one rule replaces f1's and f2's). G309 c3085825 (the nightly fuzz, new seed). G345 cc5dd501 (the sweep oracle skips a value built on an infinite intermediate).
+- S52 a2f804ee (the chunk spike note). S50 c51fda38 (the benchmark note). R184 779e7419 (the stat sheet; merged review-only from the kept branch, with its +70 B start pin accepted). R194f1 3ba7c931 (R194's Word setting reaches every engine request; a set beats a pending read). G210 8cfd2adf (the session line, pure, no caller yet).
+
+Opus pass merges: A: d66f7f94 (167), fb03f825 (169), d8f5c8d2 (170), 0a32bed1 (172), 14fe91d3 (174), f664e71f (176), b9ab5857 (179). B: 59d95d02 (166), 3c81840b (168), df9777ab (171), 0ed476f9 (173), 44a04d71 (175), 678282a5 (177), c97a6299 (178). Their doc commits include 9440a3d7, c3fff27b, f47a534b, 697bb52e, 488b4a3b, 4131217b, 830014ea, ad356599, d3a0ade8, f8d9d347 and 321830dc.
+
+## Unmerged
+- **R189** (ron, Opus, lane A, edit a cell of the grid). Run #1156: round 0 audit FIX (`spreads()` is a new bracket walk), round 1 FIX (Giac text written into the row's LaTeX), round 2 FIX (`matrixRead.ts` `elementTex` reads Giac's printed text with `numberLatex`, a P20 finding that raised `giacPrint.ts` from 17 to 21 in `text-baseline.json`); **NOT MERGED after two fix rounds at 04:48, the branch kept at 4efb0422**. Pass 179 wrote FIX R189f1 (take the kind and the exact pair from the bridge; delete `numberLatex`, `DECIMAL`, `typedSequence` and `callBefore`; the baseline back to 17 or lower). R190 (row 669) waits for it.
+- **R130** (ron, Opus, lane A, the work as a readable report). Run #1162: round 0 e2e failed (`rows.spec.ts` Menu list of nine) and the audit approved, round 1 FIX (a unit row's input written raw), round 2 FIX (the header's Angle line states one mode for every step); **NOT MERGED after two fix rounds at 06:11, kept at 6ed127ff**. Pass 179 wrote FIX R130f1 (the header says the angle mode at export; a step gets its own Angle line when its row's angle differs, or "not recorded").
+- **R184f1** (ron, Sonnet, branch `p1/ron-statsheet-count`; pass 178's FIX): the stat sheet's rows carry no count kind, so a pick is recorded as `screen:row` and the package's removal test has nothing to read. Give each row the count kind `stat-sheet`. Written after lane B closed, so it has not run.
+- Not merged at first, merged later: **G331** #1100 (NOT MERGED at 09:33: the patch was right, but fix round 1 made two CAS rows into Home rows and the exporter wrote them into `n62-check.cas`; finished as G331f1). **G307** #1119 (NOT MERGED at 16:38 after round 3; the audit was right that a huge power under a small value was left out; finished as G307f1, then f2 and G348). **R131** #1121 (NOT MERGED at 17:05: a Mac's Option chords pressed keypad keys; finished as R131f1). **R184** #1151 (NOT MERGED at 23:44: the worker said not done on the +70 B pin, which the audit had allowed; merged review-only by #1159). **R194** #1152 (NOT MERGED at 02:12: the matrix read sent no word and a set during the first read was overwritten; finished as R194f1).
+
+## What went wrong
+- **Free rounds lost to size and docs checks:** R281f1 (size), R197 (backlog.md 20.0 kB), R185 (backlog.md 20.1 kB), G330 (a docs link to its deleted package file), G308 and G307 (size), R224 (the start-chunk pin text), R131f1 (size), R291f2 (no report commit). R194 and R131 each ran out of rounds on real findings.
+- **Load reds:** G331 round 0 (red-first golden timed out on phase-1), G306 round 0 (`text-rules.test.ts` baseline), G307 round 0 and G308 round 1 (`sweep-parts.test.ts`), R188 round 1 (golden `steps`: three cases near the clock limit; Opus pass 176 called it host load, no backlog line), R131 round 0 (`about.spec.ts` and `entrydash.spec.ts`), R194 round 0 (`fit.spec.ts` at 360 × 740). One FLAKE line: `store.spec.ts` (the row bar's Store ▶, in G331f1).
+- **An audit that did not run:** R197 round 0 audit unclear at 11:04 (`403 Attention Required! | Cloudflare`); the run went on to fix rounds and merged at round 3.
+- **Pipeline selftest failed once** (11:35, A147: the "worker alive" line under an inherited `N62_LANE=B`) and passed at 11:44 after A150's fix round.
+- **Merge-queue waits:** integ held up to 2,069 s (R194 round 0, behind pass 176; the pass waited 1,223 s); host-cpu waits ran to 1,136 s (R197), 1,117 s (G308), 1,067 s (R194), 937 s (R291) and 936 s (R131).
+- **Workers over 30 min with no reply file:** G331, R197, R185, G306, R131f1, R189 (30 and 60 min, 49 min after its last commit) and R130.
+- Pass 165's and 166's numbers were taken: lane B's pass became 166, lane A's 167 (after 805 s for the pass lock). gc ran 11 times (reports `.tasks/gc-2026-11-13.md` and `gc-2026-11-14.md`).
+
+## Opus passes (NOTES)
+- 166 (G342, R199, G331): G342 ok, R199 ok, G331 fix → G331f1. CORE 77/77; vitest 4773, e2e 1983, GOLDEN GATE PASSED (home 907/907, precision 1365/1365, parser 693/695). A150 minted: red-first ran its vitest on the branch's own engine in run 1100.
+- 167 (R281f1, R282, R196): all ok. vitest 4866, e2e 1984, golden passed. R282's open question decided: a tap on a free letter in Vars inserts that letter.
+- 168 (G331f1, A150, G330): all ok. vitest 4884, e2e 1993, golden passed (precision 1368/1368, 3 pending). The three G331 values match mpmath. New F243 (normal and simplify of √(2^(1/3)+3^(2/3)) pass Home's 1.5 s clock on the Tab One); F227 removed.
+- 169 (R197, R185, R186): R197 ok, R186 ok, R185 fix → R185f1. vitest 4895, e2e 2023. R197 and R185 each raised the start pin by about 0.07 to 0.08 kB gzip, accepted. R197's Insert went to the owner (below).
+- 170 (R185f1, R187, R131): R131 fix → R131f1. vitest 4936, e2e 2028, golden passed. Decided: Shift + 4's legend stays Mat; R131's chords are the default (Alt + a letter for a key's tap, Alt + Shift for its Shift layer, F1 Help). Not checked: R131's chords on a real desktop browser.
+- 171 (G306, G307, G308): G306 ok, G308 ok, G307 fix → G307f1. vitest 4937, e2e 2028, golden passed (precision 1409/1409, 3 pending). New F245 and F246 (CAS `evalf(1+i/10^15)*x`; at Digits 40, ln near 1 has 10 right digits). Not checked: a device run after patch 0048 (device 171 ran it, 76/76).
+- 172 (R131f1, R198, R224): R131f1 ok, R198 fix → R198f1, R224 ok with one gap → R224f1. vitest 4980, e2e 2048; golden not run. Decided: AZERTY's Alt + 1 types `&`; the wide keypad fills the full height in a column of 42 % of the width, between 400 and 560 px, until the owner's look.
+- 173 (G307f1, G309, S52): G307f1 fix → G307f2, G309 ok, S52 ok. golden passed (precision 1430/1430, 8 pending: G309's five new causes still fail as expected, F248). R294 and G345 minted.
+- 174 (R198f1, R224f1, R291): R291 fix → R291f1 (its move cases leaned on a live decisions.md entry). vitest 5019, e2e 2049.
+- 175 (G307f2, S50, G345): G307f2 fix, as the third case of the chain it went to the new package G348, not a FIX line; S50 ok, G345 ok. vitest 5020, e2e 2049, golden passed (units 265/265, parser 696/698). S50's G2 column went under "Needs the user".
+- 176 (R291f1, R294, R188): R291f1 fix → R291f2, R294 ok, R188 ok. vitest 5043, e2e 2054, golden passed. After R294 and R188 the unit view chunk is at 37.99 of 38.00 kB. R188 keeps its own copy of the confirmed-digits formatting from `calc/shown.ts` (no test compares the two).
+- 177 (G348, R184, R194): G348 ok (one rule for the whole chain; `exp(i*pi^2207)` and `(-1)^(pi^2206)` show ⚠), R184 ok (merge review-only), R194 fix → R194f1. vitest 5044, e2e 2054, golden passed (calls-home 9.14 against 9.86). Candidate for the next R184 package: a picked value's chip carries the whole list's digit count and warning.
+- 178 (R184, R194f1, G210): R184 fix → R184f1, R194f1 ok, G210 ok. vitest 5089, e2e 2063, golden passed. Decided: G210's line keeps the value without a unit row's ± σ and unit; R194's Word is one row; G211 also keeps the word in force at job time.
+- 179 (R291f2, R189, R130): R291f2 ok, R189 fix → R189f1, R130 fix → R130f1. Typecheck 0, vitest 5089/5089, e2e 2063 passed. Defaults recorded: R189's row is a pmatrix the line reads back, floats in `approx()`; R130's tenth row keeps the 36 px floor and scrolls.
+
+## What the owner must do
+1. **Items in "Needs the user"** (decisions.md): **R197's Insert** (recommended: Insert replaces the call the cursor is in, a package of about half a day; today it nests, `sin(sin(30°))`); **S50's G2 column** (recommended: your own G2, `source: device`); S36's list of G164's sample sources by the freeze (11-17); the R269 round trip.
+2. **Looks and hand checks:** the wide layout turned sideways on the Tab One (R224); R188 waits for the owner's phone check; R131's chords on a real desktop browser.
+3. **Docs room:** decisions.md 40.0/40 kB and backlog.md 20.0/20 kB are both full (each pass shortened older defaults to fit); the next pass that adds lines must first remove done items. The unit view chunk is at 37.99/38.00 kB: the next unit package must raise the pin or cut.
+4. **Upstream:** patches 0047 (G331) and 0048 (G308) are new and the log shows no sending; F243, F245, F246 and F248 are engine bugs.
+5. **At the tag:** `trust:refresh` (the trust counts in `tests/golden/README.md` and `README.md` are stale). Freeze Tue 11-17, tag Mon 11-23.
+6. **Push phase-1** when content: this shift's merges and doc commits are local according to the log.
+
+## Queue left for the next run
+The lanes restart by themselves after each close to Tue 11-17.
+- **FIX lines to run first:** R189f1 (ron, Opus, `p1/ron-matedit`, kept at 4efb0422), R130f1 (ron, Opus, `p1/ron-workreport`, kept at 6ed127ff), R184f1 (ron, Sonnet, `p1/ron-statsheet-count`).
+- **Lane A:** R189 (668, the FIX above), R190 (669, after R189), R130 (732, the FIX above), then R221, R220, R174, S45, S51, A145, R222, R265, R200, R181, R128, R182, R183, R201. The rows of the merged packages are out.
+- **Lane B:** G211 (685), G232, G213, G214, A100, A137, A101, G212, G218, G219, G233, G234, G215 to G217, G271, G270, G272, G275, G276. G210's row, S52, S50, G345, G348, R184 and R194 are out (merged).
+- **No package yet:** F243 (a 1.5 s clock case on the Tab One), F245, F246, F248 (G309's five causes with F155 and F145) and the stat sheet's own-chip digits (R184's next package).

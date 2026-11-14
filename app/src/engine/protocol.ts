@@ -21,8 +21,9 @@ export type Request =
   | { id: number; type: "table"; req: TableRequest; settings: HomeSettings }
   /** The unit view (G16): a job built from the Find index's factors (units/build.ts), evaluated in Home's mode. */
   | { id: number; type: "units"; job: UnitJob; settings: HomeSettings }
-  /** R188: which of `names` hold a matrix, with their elements when `cells` (matrixRead.ts; calc/matrices.ts posts it). */
-  | { id: number; type: "matrices"; names: string[]; settings: HomeSettings; cells: boolean }
+  /** R188: which of `names` hold a matrix, with their elements when `cells` (matrixRead.ts; calc/matrices.ts posts it).
+   *  R189: `check`, with "typed": the grid's store to check (matrixRead.ts checkStore). */
+  | { id: number; type: "matrices"; names: string[]; settings: HomeSettings; cells: boolean | "typed"; check?: string }
   /** R59: a library file's text at `version`, imported against the client's log (library.ts importText). */
   | { id: number; type: "library"; input: Uint8Array | string; version: number; written: number; log: DefEntry[]; replace: boolean }
   | { id: number; type: "libraryExport"; version: number; written: number; log: DefEntry[] };

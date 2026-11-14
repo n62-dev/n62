@@ -5,6 +5,11 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 179 (2026-11-14) to make room, as they stood
+- **G307 past the cap (Opus passes 171, 173, 175, 177):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts nothing for the value unless the text forms a small value (`/`, negative exponent, `inv`) or the power sits in an argument read modulo 2π (sin…cot, `exp` of an `i` argument, a negative or `i` base, an `i` exponent: G348) (`exp(10^7)` keeps ≈; `sin(pi^2200)` showed ≈ 0.9, is 0.84); then ⚠; a decision always counts it. Would change if: S20.
+- **R198's typed names (Opus pass 172):** a typed name of FUNCS or of a Find function (tier 1 too) before `(` is the function, drawn by name (`at(1+t)` shows the call `at`, not silent); Giac's program words (`do od fi si by in of et ou`) stay letters (R198f1). Would change if: the owner wants the two-letter tier-1 names as letters too.
+- **R277's line scroll (Opus pass 155):** a finger or pen past 8 px scrolls the entry line (our one write in MathLive's shadow, pinned by linetouch.spec.ts), a tap places the caret, a hold selects the innermost term. Archived, "Opus pass 169". Would change if: MathLive ships a public scroll.
+
 ### Shortened by Opus pass 178 (2026-11-14) to make room, as they stood
 - **Store ▶ on a picked row (R280):** Shift + ᴇ, its flick or a user key holding ▶ stores the picked row as the row bar's Store ▶ does; a picked row without a result (an error, a cancelled entry) gets the double haptic and the line stays, as the bar's Store ▶ is off there. Would change if: the G2 (to verify, store-design.md 1) does otherwise and the owner wants that.
 - **R131's desktop keys (Opus pass 170):** the worker's table stands (`spec/keyboard.yaml` `desktop:`): Alt + a letter a key's tap, Alt + Shift + it the Shift layer, Alt+1–6 the user keys, F1 Help, F2–F4 the views, Alt+K the fold; counted `hw:<desktop name>`. Alt alone with an ASCII character that is no letter or digit types it (a Mac's Option + 5 is `[` on a German layout), so AZERTY's Alt + 1 (`&`) is typed (R131f1, pass 172: no platform guess). Would change if: a desktop check finds a chord the browser keeps.

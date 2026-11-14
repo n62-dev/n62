@@ -49,6 +49,14 @@ describe("the labelled result sheet (R184)", () => {
     ]);
   });
 
+  it("every row of a linreg sheet and of a stats1 sheet has the press count kind stat-sheet (R184f1, R127)", () => {
+    for (const r of [linreg, stats1]) {
+      const items = statItems(r, draw, () => {}) ?? [];
+      expect(items.length).toBeGreaterThan(0);
+      expect(items.map((i) => i.count)).toEqual(items.map(() => "stat-sheet"));
+    }
+  });
+
   it("a pick inserts that value as a chip carrying its exact text", () => {
     const got: [string, Chip][] = [];
     const items = statItems(linreg, draw, (s, c) => void got.push([s, c])) ?? [];
