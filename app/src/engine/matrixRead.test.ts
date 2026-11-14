@@ -9,8 +9,9 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { EngineHost } from "./host.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { formatComplex, markOf, type FormatOptions } from "./format.ts";
-import type { MatrixCell } from "./matrixRead.ts";
-import { giacAvailable, nodeHost } from "./nodeGiac.ts";
+import { elementTex, type MatrixCell } from "./matrixRead.ts";
+import { engineGiac, giacAvailable, loadNodeGiac, nodeHost, type EngineGiac } from "./nodeGiac.ts";
+import { DOUBLE_DIGITS, withDigits } from "./numeric.ts";
 
 const shown = (c: MatrixCell | undefined, o: FormatOptions): [string, string | undefined] =>
   c === undefined ? ["", undefined] : "text" in c ? [c.text, c.unchecked ? "⚠" : undefined] : [formatComplex(c.value, o).text, markOf({ ...c.facts, value: c.value }, o)?.mark];
@@ -19,7 +20,7 @@ describe.skipIf(!giacAvailable())("R188: the stored matrices through the bridge"
   let host: EngineHost;
   beforeAll(async () => {
     host = await nodeHost();
-    for (const input of ["M:=[[1/3,2],[3,4]]", "N:=[[-3,-9/2],[evalf(15/10^21),evalf(-9/2)]]", "k:=5", "S:=[[x,1.23456789012]]", "A:=[[1,2,3]]", "v:=[1,2]", "T:=[[x,evalf(sqrt(2))],[x+evalf(sqrt(2)),y]]"]) host.home(input, defaultHomeSettings);
+    for (const input of ["M:=[[1/3,2],[3,4]]", "N:=[[-3,-9/2],[evalf(15/10^21),evalf(-9/2)]]", "k:=5", "S:=[[x,1.23456789012]]", "A:=[[1,2,3]]", "v:=[1,2]", "T:=[[x,evalf(sqrt(2))],[x+evalf(sqrt(2)),y]]", "O:=[[5]]"]) host.home(input, defaultHomeSettings);
   });
 
   it("lists the names that hold a matrix, in the order asked, with their sizes (a number, a vector: none)", () => {
@@ -100,5 +101,36 @@ describe.skipIf(!giacAvailable())("R188: the stored matrices through the bridge"
     expect(host.home("a", defaultHomeSettings).result.display).toBe("a"); // nothing was stored
     expect(host.home("k", defaultHomeSettings).result.display).toBe("5"); // nor purged
     expect(host.matrices(["M"], defaultHomeSettings, "typed")[0]?.typed).toEqual(["1/3", "2", "3", "4"]); // M as it was
+  });
+
+  // R189f1: a cell that holds a sequence, 1,2 in parentheses, spreads its row: the store's value is a matrix of another
+  // size (2 × 2: the row [1,2,4] makes a ragged list; 1 × 1: [[1,2]] is 1 × 2), so checkStore refuses it as "shape" and
+  // the grid needs no check of its own of the typed text.
+  it("R189f1: a sequence in a cell is a matrix of another size: shape, on a 2 × 2 and on a 1 × 1 matrix", () => {
+    expect(host.matrices(["M"], defaultHomeSettings, "typed", "M:=[[1/3,2],[(1,2),4]]")[0]?.candidate).toEqual({ ok: false, why: "shape" });
+    expect(host.matrices(["O"], defaultHomeSettings, "typed", "O:=[[(1,2)]]")[0]?.candidate).toEqual({ ok: false, why: "shape" });
+    expect(host.matrices(["O"], defaultHomeSettings, "typed", "O:=[[7]]")[0]?.candidate).toEqual({ ok: true, typed: ["7"] });
+  });
+});
+
+// R189f1 (P20): an element's LaTeX takes its kind from the bridge (giac_value's kinds and exact pairs), never from
+// Giac's printed text: an integer or a rational from its exact pair (a frac with its sign before it), a float from kind
+// float, its decimal at DOUBLE_DIGITS with the exponent after the mark ᴇ (the Solve app's rule, entry/macros.ts), any
+// other element through Giac's latex(). By hand: 1.5e-20 is the double Giac prints 1.5e-20.
+describe.skipIf(!giacAvailable())("R189f1: elementTex from the bridge's kinds", () => {
+  let giac: EngineGiac;
+  beforeAll(async () => {
+    giac = engineGiac(await loadNodeGiac());
+  });
+
+  it("-3, -9/2, a float near 1.5e-20 and a symbolic element", () => {
+    const v = withDigits(giac, DOUBLE_DIGITS, 12, () => giac.value("[[-3,-9/2],[1.5e-20,x+1]]", []));
+    expect(v.kinds).toEqual(["integer", "rational", "float", "symbolic"]);
+    expect((v.elements ?? []).map((_, k) => elementTex(giac, v, k))).toEqual([
+      { tex: "-3" },
+      { tex: "-\\frac{9}{2}" },
+      { tex: "1.5\\emark-20", float: true },
+      { tex: "x+1", giac: true },
+    ]);
   });
 });
