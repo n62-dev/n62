@@ -15,6 +15,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **S50's G2 column** ([benchmark-protocol.md](research/benchmark-protocol.md) section 7): recommended, your own G2 (`source: device`), presses and seconds: it gives seconds and no licence question. Or the Virtual Calculator, presses only, if its licence allows publishing (not verified). Would change if: no G2 at hand.
 
+**S45 units inside Solve** ([note](research/r-solveunits.md)): recommended, a layer around today's solver: equations in the typed units, the unknown's unit found or set on its row, the answer by the unit view's rule; Solve leaves P8 (Home stays unit-free). Cost ≈3.5 d, four packages. Or SI numbers with a new residual rule.
+
 **R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
 
 ## Decided proposals
