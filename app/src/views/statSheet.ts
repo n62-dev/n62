@@ -77,7 +77,7 @@ export function statItems(item: HistoryItem, draw: Draw, insert: (shown: string,
     if (!chip) return [];
     const el = element(item, i, full);
     const drawn = el ? draw(el) : { text: full, latex: exactLatex(full) };
-    return [{ id: key, label: dataText(key), value: drawn.text, run: () => insert(drawn.latex, chip) }];
+    return [{ id: key, label: dataText(key), value: drawn.text, count: "stat-sheet", run: () => insert(drawn.latex, chip) }];
   });
 }
 
