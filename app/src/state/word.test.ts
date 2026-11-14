@@ -78,6 +78,16 @@ describe("the word store (R194)", () => {
     expect(s.value).toEqual({ bits: 32, signed: true });
   });
 
+  it("a set that came while the read was pending is not undone by the read finishing", async () => {
+    const s = new WordStore(fakeKv([["word", { bits: 8, signed: true }]]));
+    const read = s.restore();
+    s.set({ bits: 16, signed: true });
+    await read;
+    expect(s.value).toEqual({ bits: 16, signed: true });
+    await s.restore();
+    expect(s.value).toEqual({ bits: 16, signed: true });
+  });
+
   it("gives the engine's settings the word only once it is set", async () => {
     const s = new WordStore(fakeKv());
     const base = { digits: 9, angle: "deg", format: "std" } as const;

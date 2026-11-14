@@ -15,6 +15,8 @@ export class WordStore {
   private current = $state<WordSetting | undefined>();
   private readonly kv: Kv;
   private restoring: Promise<void> | undefined;
+  /** A set ran: a read that finishes after it assigns nothing. */
+  private wasSet = false;
 
   constructor(kv: Kv) {
     this.kv = kv;
@@ -27,7 +29,7 @@ export class WordStore {
   /** Read the stored record (once); a record that is not whole is as none. */
   restore(): Promise<void> {
     this.restoring ??= this.kv.get<unknown>(WORD_KEY).then((v) => {
-      this.current = validWord(v);
+      if (!this.wasSet) this.current = validWord(v);
     });
     return this.restoring;
   }
@@ -35,6 +37,7 @@ export class WordStore {
   /** Set the word (Settings › Numbers › Word); a read still running does not undo it. */
   set(w: WordSetting): void {
     this.restoring ??= Promise.resolve();
+    this.wasSet = true;
     this.current = w;
     void this.kv.set(WORD_KEY, w);
   }
