@@ -9,7 +9,7 @@
 //   - Polynomial roots lists every root (complex too) of the one equation in the selected unknown.
 import { CalcCancelled, engineFormat, IDENT, type Calc, type KnownValue, type SolveOutcome, type ValueFacts } from "../../calc/port.ts";
 import { confirmedText, isWarned } from "../../calc/shown.ts";
-import { decimalLatex } from "../../entry/macros.ts";
+import { decimalLatex } from "../../entry/decimalLatex.ts";
 import { mathJsonToGiac } from "../../input/emit.ts";
 import { DEFAULT_USER_FUNCTIONS, userFunctionsOf } from "../../input/latex-to-giac.ts";
 import { parseFailText } from "../../input/errors.ts";

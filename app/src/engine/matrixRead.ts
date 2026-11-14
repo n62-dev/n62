@@ -14,7 +14,7 @@ import type { GiacParse, GiacValue } from "./bridge.ts";
 import { ZERO_VALUE, type ComplexValue } from "./format.ts";
 import { floatsAsEvalf, unquote } from "./homeEval.ts";
 import { typedFromPrinted } from "./giacPrint.ts";
-import { decimalLatex } from "../entry/macros.ts";
+import { decimalLatex } from "../entry/decimalLatex.ts";
 import { DOUBLE_DIGITS, floatsAtDigits, floatsShown, hasFloat, partValue, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import type { ValueFacts } from "./types.ts";
 
