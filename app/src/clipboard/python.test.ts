@@ -93,10 +93,10 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
   it("a later row that reads its name, or Ans after it, is comment-only too", () => {
     const out = py([
       row("\\operatorname{Zeta}\\left(2\\right)\\blacktriangleright a", { exact: "pi^2/6" }),
-      row("a+1", { exact: "pi^2/6+1" }),
-      row("\\ans\\times2", { exact: "pi^2/3+2" }),
+      row("a+1", { exact: "pi^2/6+1", reads: [{ name: "a", value: "pi^2/6", exact: true }] }),
+      row("\\ans\\times2", { exact: "pi^2/3+2", ans: { value: "pi^2/6+1", exact: true }, reads: [] }),
       row("2^3", { exact: "8" }),
-      row("\\ans+1", { exact: "9" }),
+      row("\\ans+1", { exact: "9", ans: { value: "8", exact: true }, reads: [] }),
     ]);
     expect(out).toBe(
       file(
@@ -126,8 +126,8 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
     const out = py([
       row("5\\blacktriangleright a", { exact: "5" }),
       { view: "home", input: "\\frac{1}{\\blacktriangleright a", ok: false, error: "Syntax" },
-      row("\\ans+1", { exact: "6" }),
-      row("\\res{1}{5}+a", { exact: "10", chips: { "res:1": { value: "5", exact: true } } }),
+      row("\\ans+1", { exact: "6", ans: { value: "5", exact: true }, reads: [] }),
+      row("\\res{1}{5}+a", { exact: "10", chips: { "res:1": { value: "5", exact: true } }, reads: [{ name: "a", value: "5", exact: true }] }),
     ]);
     expect(out).toBe(
       file(
@@ -148,7 +148,7 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
     expect(py([row("2\\times3", { exact: "6", unit: "m" })])).toBe(file("# N62 NOT TRANSLATED (a unit result is not translated): 2\\times3", "# N62: = 6"));
   });
   it("a store that ended in an error leaves its name unknown", () => {
-    const out = py([row("5\\blacktriangleright a", { exact: "5" }), { view: "home", input: "\\frac{1}{0}\\blacktriangleright a", ok: false, error: "Division by 0" }, row("a+1", { exact: "6" })]);
+    const out = py([row("5\\blacktriangleright a", { exact: "5" }), { view: "home", input: "\\frac{1}{0}\\blacktriangleright a", ok: false, error: "Division by 0" }, row("a+1", { exact: "6", reads: [{ name: "a", value: "5", exact: true }] })]);
     expect(out).toBe(
       file(
         "a = 5  # N62: = 5",
@@ -160,7 +160,7 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
     );
   });
   it("a store inside brackets, or in a chain, leaves its name unknown (G213 fix round 2)", () => {
-    const inner = py([row("5\\blacktriangleright a", { exact: "5" }), row("\\left(7\\blacktriangleright a\\right)+1", { exact: "8" }), row("a+1", { exact: "8" })]);
+    const inner = py([row("5\\blacktriangleright a", { exact: "5" }), row("\\left(7\\blacktriangleright a\\right)+1", { exact: "8" }), row("a+1", { exact: "8", reads: [{ name: "a", value: "7", exact: true }] })]);
     expect(inner).toBe(
       file(
         "a = 5  # N62: = 5",
@@ -170,7 +170,7 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
         "# N62: = 8",
       ),
     );
-    const chain = py([row("5\\blacktriangleright a", { exact: "5" }), row("b:=7\\blacktriangleright a", { exact: "7" }), row("a+1", { exact: "8" })]);
+    const chain = py([row("5\\blacktriangleright a", { exact: "5" }), row("b:=7\\blacktriangleright a", { exact: "7" }), row("a+1", { exact: "8", reads: [{ name: "a", value: "7", exact: true }] })]);
     expect(chain).toBe(
       file(
         "a = 5  # N62: = 5",
@@ -185,7 +185,13 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
 
 describe("translateRows: stores and Ans", () => {
   it("5▶a gives a = 5 and a later a+1 reads it; Ans reads the last translated line's name", () => {
-    const out = py([row("5\\blacktriangleright a", { exact: "5" }), row("a+1", { exact: "6" }), row("\\ans\\times2", { exact: "12" }), row("a:=\\ans-2", { exact: "10" }), row("\\ans+a", { exact: "20" })]);
+    const out = py([
+      row("5\\blacktriangleright a", { exact: "5", reads: [] }),
+      row("a+1", { exact: "6", reads: [{ name: "a", value: "5", exact: true }] }),
+      row("\\ans\\times2", { exact: "12", ans: { value: "6", exact: true }, reads: [] }),
+      row("a:=\\ans-2", { exact: "10", ans: { value: "12", exact: true }, reads: [] }),
+      row("\\ans+a", { exact: "20", ans: { value: "10", exact: true }, reads: [{ name: "a", value: "10", exact: true }] }),
+    ]);
     expect(out).toBe(file("a = 5  # N62: = 5", "_2 = a + 1  # N62: = 6", "_3 = _2*2  # N62: = 12", "a = _3 - 2  # N62: = 10", "_5 = a + a  # N62: = 20"));
   });
   it("Ans reads its own view's last result, never an error row's", () => {
@@ -193,23 +199,27 @@ describe("translateRows: stores and Ans", () => {
       row("2", { exact: "2" }),
       { view: "cas", input: "3", ok: true, mark: "=", exact: "3" },
       { view: "home", input: "\\frac{1}{0}", ok: false, error: "Division by 0" },
-      row("\\ans+1", { exact: "3" }),
+      row("\\ans+1", { exact: "3", ans: { value: "2", exact: true }, reads: [] }),
     ]);
     expect(out.split("\n").slice(-2)[0]).toBe("_4 = _1 + 1  # N62: = 3");
   });
-  it("Ans with no earlier row of its view in the file is not translated", () => {
-    expect(py([row("\\ans+1", { exact: "3" })])).toBe(file("# N62 NOT TRANSLATED (Ans: its line is not in this file): \\ans+1", "# N62: = 3"));
+  it("Ans with no earlier row of its view in the file is the value it held at Enter (G213f1)", () => {
+    expect(py([row("\\ans+1", { exact: "3", ans: { value: "2", exact: true }, reads: [] })])).toBe(file("_1 = 2 + 1  # an earlier result  # N62: = 3"));
   });
   it("a name Object.prototype holds (toString) is a stored name like any other (G213 fix round 3)", () => {
-    const out = py([row("5\\blacktriangleright\\operatorname{toString}", { exact: "5" }), row("\\operatorname{toString}+1", { exact: "6" })]);
+    const out = py([row("5\\blacktriangleright\\operatorname{toString}", { exact: "5" }), row("\\operatorname{toString}+1", { exact: "6", reads: [{ name: "toString", value: "5", exact: true }] })]);
     expect(out).toBe(file("toString = 5  # N62: = 5", "_2 = toString + 1  # N62: = 6"));
   });
   it("a name set in the other view is not read", () => {
-    const out = py([{ view: "cas", input: "5\\blacktriangleright a", ok: true, mark: "=", exact: "5" }, row("a+1", { exact: "6" })]);
+    const out = py([{ view: "cas", input: "5\\blacktriangleright a", ok: true, mark: "=", exact: "5" }, row("a+1", { exact: "6", reads: [{ name: "a", value: "5", exact: true }] })]);
     expect(out).toBe(file("a = 5  # N62: = 5", "# N62 NOT TRANSLATED (a is set in the other view): a+1", "# N62: = 6"));
   });
   it("after a gap (lines dropped), names and Ans from before it are not read", () => {
-    const out = py([row("5\\blacktriangleright a", { exact: "5" }), row("a+1", { exact: "6", gap: 2 }), row("\\ans", { exact: "6" })]);
+    const out = py([
+      row("5\\blacktriangleright a", { exact: "5" }),
+      row("a+1", { exact: "6", gap: 2, reads: [{ name: "a", value: "5", exact: true }] }),
+      row("\\ans", { exact: "6", ans: { value: "6", exact: true }, reads: [] }),
+    ]);
     expect(out).toBe(
       file(
         "a = 5  # N62: = 5",
@@ -219,6 +229,49 @@ describe("translateRows: stores and Ans", () => {
         "# N62: = 6",
       ),
     );
+  });
+});
+
+// G213f1: Ans and a stored name are read by the value the row kept at Enter (`ans`, `reads`), never by position alone.
+describe("translateRows: Ans and names by the value the row read (G213f1)", () => {
+  const a5 = row("5\\blacktriangleright a", { exact: "5", reads: [] });
+  it("a store in the other view between a store and its read: the name is not translated (N62 read 7, not 5)", () => {
+    // Home 5▶a, CAS 7▶a (one shared context), Home a+1 = 8: the Home view's file has the first and the last
+    const out = py([a5, row("a+1", { exact: "8", reads: [{ name: "a", value: "7", exact: true }] })]);
+    expect(out).toBe(file("a = 5  # N62: = 5", "# N62 NOT TRANSLATED (a held another value when this line ran): a+1", "# N62: = 8"));
+  });
+  it("a deleted row between a result and its Ans: Ans is the value it held, as an earlier result", () => {
+    // Home 2, Home 3 (deleted since), Home Ans+1 = 4
+    const out = py([row("2", { exact: "2" }), row("\\ans+1", { exact: "4", ans: { value: "3", exact: true }, reads: [] })]);
+    expect(out).toBe(file("_1 = 2  # N62: = 2", "_2 = 3 + 1  # an earlier result  # N62: = 4"));
+    const dec = py([row("2", { exact: "2" }), row("\\ans\\times2", { mark: "≈", value: "0.5", ans: { value: "0.25", exact: false }, reads: [] })]);
+    expect(dec).toBe(file("from sympy import Rational", "_1 = 2  # N62: = 2", "_2 = Rational('0.25')*2  # an earlier result  # N62: ≈ 0.5"));
+  });
+  it("Ans that is not exact is read by the value of its line", () => {
+    const out = py([row("0.25", { mark: "≈", value: "0.25" }), row("\\ans\\times2", { mark: "≈", value: "0.5", ans: { value: "0.25", exact: false }, reads: [] })]);
+    expect(out).toBe(file("from sympy import Rational", "_1 = Rational('0.25')  # N62: ≈ 0.25", "_2 = _1*2  # N62: ≈ 0.5"));
+  });
+  it("a rebound name: read when its last line in the file holds the value read, else not translated", () => {
+    const seen = py([a5, row("7\\blacktriangleright a", { exact: "7", reads: [] }), row("a+1", { exact: "8", reads: [{ name: "a", value: "7", exact: true }] })]);
+    expect(seen).toBe(file("a = 5  # N62: = 5", "a = 7  # N62: = 7", "_3 = a + 1  # N62: = 8"));
+    // 7▶a deleted since
+    const gone = py([a5, row("a+1", { exact: "8", reads: [{ name: "a", value: "7", exact: true }] })]);
+    expect(gone.split("\n")[2]).toBe("# N62 NOT TRANSLATED (a held another value when this line ran): a+1");
+    // the same text, but kept exact against a line that has no exact text
+    const kind = py([row("0.5\\blacktriangleright a", { mark: "≈", value: "0.5", reads: [] }), row("a+1", { exact: "3/2", reads: [{ name: "a", value: "0.5", exact: true }] })]);
+    expect(kind.split("\n")[3]).toBe("# N62 NOT TRANSLATED (a held another value when this line ran): a+1");
+    const same = py([row("0.5\\blacktriangleright a", { mark: "≈", value: "0.5", reads: [] }), row("a+1", { mark: "≈", value: "1.5", reads: [{ name: "a", value: "0.5", exact: false }] })]);
+    expect(same.split("\n").slice(-2)[0]).toBe("_2 = a + 1  # N62: ≈ 1.5");
+  });
+  it("a name the row did not read as a stored value is not read from the file", () => {
+    const out = py([a5, row("a+1", { exact: "a+1", reads: [] })]);
+    expect(out.split("\n")[2]).toBe("# N62 NOT TRANSLATED (a was not a stored value when this line ran): a+1");
+  });
+  it("a line without the new fields (written before G213f1) refuses Ans and names", () => {
+    const ans = py([row("2", { exact: "2" }), row("\\ans+1", { exact: "3" })]);
+    expect(ans).toBe(file("_1 = 2  # N62: = 2", "# N62 NOT TRANSLATED (Ans: this line does not keep its value): \\ans+1", "# N62: = 3"));
+    const name = py([a5, row("a+1", { exact: "6" })]);
+    expect(name).toBe(file("a = 5  # N62: = 5", "# N62 NOT TRANSLATED (this line does not keep the values it read): a+1", "# N62: = 6"));
   });
 });
 
