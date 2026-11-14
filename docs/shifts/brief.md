@@ -71,7 +71,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 697 | [A145](packages/A145.md) F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
-| 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232 |
+| 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
 | 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | G214 |
 | 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | A137, A100 |
 | 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
@@ -83,8 +83,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 685 | G211 a history row keeps its Giac text, angle and digits | gorge, Opus | `p1/gorge-rowfacts` | G210 |
-| 687 | G232 the history as CSV and as LaTeX | gorge, Sonnet | `p1/gorge-exportrows` | G210 |
 | 740 | [G213](packages/G213.md) Copy as Python, the core | gorge, Opus | `p1/gorge-pycore` | G210 |
 | 741 | [G214](packages/G214.md) Copy as Python: functions and the angle mode | gorge, Opus | `p1/gorge-pyfuncs` | G211, G213 |
 | 688 | [A100](packages/A100.md) append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |

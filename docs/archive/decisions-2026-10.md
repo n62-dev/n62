@@ -5,6 +5,12 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 181 (2026-11-14) to make room, as they stood
+- **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms unless the finger moves 8 px; a swipe decides at 10 px and goes at 40 % of the row or a fling; a long row's drag stops at its end (F237). Archived, "Opus pass 172". Would change if: A139's owner check finds them too eager or stiff.
+- **Home number formats:** `digits` are significant digits; STD plain for 1E-4 ≤ |x| < 10^digits; rounding half away from zero (G2: half to even, item 8; one rule). Copy rounds once: a tie may paste one ulp off (G324f1; P5 holds). **G31:** Fixed turns to scientific with the same decimals when a nonzero value would show only zeros, with confirmed digits only (in each complex part too, G36).
+- **Parser (L6):** odd root templates are real roots; `{…}` is a list; the decimal comma is MathLive's `3{,}5` in either mode, and `{,}5` is 0.5 as `.5` is (R99); a bare comma, like `;`, separates arguments (R57); `p(x):=…` makes p a function (R56); 0xFF: docs/04 5.4 (R191).
+- **R58 (Opus pass 18): in the CAS view Alpha types lower case and Shift + Alpha the capital;** the lock flicks swap with it; Home, the apps, Find and the unit slots keep Alpha = capital. Would change if: the rest of G2 item 45 differs.
+
 ### Shortened by Opus pass 179 (2026-11-14) to make room, as they stood
 - **G307 past the cap (Opus passes 171, 173, 175, 177):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts nothing for the value unless the text forms a small value (`/`, negative exponent, `inv`) or the power sits in an argument read modulo 2π (sin…cot, `exp` of an `i` argument, a negative or `i` base, an `i` exponent: G348) (`exp(10^7)` keeps ≈; `sin(pi^2200)` showed ≈ 0.9, is 0.84); then ⚠; a decision always counts it. Would change if: S20.
 - **R198's typed names (Opus pass 172):** a typed name of FUNCS or of a Find function (tier 1 too) before `(` is the function, drawn by name (`at(1+t)` shows the call `at`, not silent); Giac's program words (`do od fi si by in of et ou`) stay letters (R198f1). Would change if: the owner wants the two-letter tier-1 names as letters too.
