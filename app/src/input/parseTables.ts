@@ -56,8 +56,10 @@ export const FACTOR_CMDS = new Set([
 ]);
 
 /** R281: a name after ▶ (the store sheet's `\operatorname{rate}`) that is one of N62's own (`sigfig:=7` would replace our
- *  definition, ourNames.ts isOwnName: the library reader's test too) or a word of these tables (`sin`, `pi`; Giac refuses
- *  a store into a built-in only with a printed warning) is refused with the reason. */
+ *  definition, ourNames.ts isOwnName: the library reader's test too) or a word of these tables (`sin`, `pi`) is refused
+ *  with the reason. Giac's other functions are not listed here: Giac answers `mean:=5` with a value (its warning and 5),
+ *  not an error, and stores nothing, which the engine host refuses with these words (G354, host.ts unstored); a name
+ *  Giac lets take a value (`D`, `E`, `I`, `O`) stores. */
 export function refuseStore(name: string): void {
   if (isOwnName(name)) throw parseError("parse.ourName", { name });
   if ([FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) throw parseError("parse.builtInName", { name });
