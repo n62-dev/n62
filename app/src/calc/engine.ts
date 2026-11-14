@@ -77,8 +77,8 @@ export type SameKeys<A extends PropertyKey, B extends PropertyKey> = [Exclude<A,
 type Check<T extends true> = T;
 /** Every passed key is an outcome key and every outcome key is passed (or, for `exact`, given by the port itself). */
 export type PortChecks = [
-  Check<SameKeys<Passed<HomeResult, typeof HOME_KEYS> | "exact", keyof HomeOutcome>>,
-  Check<SameKeys<Passed<CasResult, typeof CAS_KEYS>, keyof CasOutcome>>,
+  Check<SameKeys<Passed<HomeResult, typeof HOME_KEYS> | "exact" | "word", keyof HomeOutcome>>,
+  Check<SameKeys<Passed<CasResult, typeof CAS_KEYS> | "word", keyof CasOutcome>>,
 ];
 
 export interface EngineCalcOptions {
@@ -105,12 +105,14 @@ export class EngineCalc implements Calc {
 
   home(giac: string, s: CalcSettings, chips?: ChipFactsTable, consts?: ConstTable): Promise<HomeOutcome> {
     // an absent table is not sent (WorkerEngine.home); the session sends `consts` only when the input holds one (R40)
-    const r = this.word().then((w) => this.engine.home(giac, w.home(s), consts, chips && Object.keys(chips).length ? chips : undefined));
-    return mapCancel(r.then((r) => ({ ...passed(r, HOME_KEYS), ...(r.rational && r.exact !== undefined ? { exact: r.exact } : {}) })));
+    // G211: each outcome says the word its request carried (WordStore.stamp, in the lazy chunk)
+    const r = this.word().then((w) => w.stamp(this.engine.home(giac, w.home(s), consts, chips && Object.keys(chips).length ? chips : undefined)
+      .then((r) => ({ ...passed(r, HOME_KEYS), ...(r.rational && r.exact !== undefined ? { exact: r.exact } : {}) }))));
+    return mapCancel(r);
   }
 
   cas(giac: string, s: CalcSettings): Promise<CasOutcome> {
-    return mapCancel(this.word().then((w) => this.engine.cas(giac, w.cas(s))).then((r) => passed(r, CAS_KEYS)));
+    return mapCancel(this.word().then((w) => w.stamp(this.engine.cas(giac, w.cas(s)).then((r) => passed(r, CAS_KEYS)))));
   }
 
   solve(req: SolveRequest, s: CalcSettings): Promise<SolveOutcome> {
