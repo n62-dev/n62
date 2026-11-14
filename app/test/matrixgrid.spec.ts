@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R188 (docs/04 5.3): Shift + 4 lists the stored matrices after its fixed rows (the eight functions, then New at row 9,
-// disabled until R190); picking one shows it in a grid of rows and columns, its values through the Home formatter, read
+// live since R190); picking one shows it in a grid of rows and columns, its values through the Home formatter, read
 // from the engine. ▲ ▼ ◀ ▶ move the highlight, Esc closes the grid. The real engine.
 import { expect, test, type Page } from "@playwright/test";
 import { open, sheet, sheetKey, tap } from "./helpers.ts";
@@ -28,7 +28,7 @@ test("a stored matrix is listed after New, and its grid shows its values; the ar
   const rows = sheet(page).getByRole("menuitem");
   await expect(rows).toHaveCount(10); // the eight functions, New, M (k holds a number: not listed)
   await expect(rows.nth(8)).toHaveAttribute("aria-label", /^9 New/);
-  await expect(rows.nth(8)).toHaveAttribute("aria-disabled", "true");
+  await expect(rows.nth(8)).not.toHaveAttribute("aria-disabled", "true"); // R190: New is live
   await expect(rows.nth(9)).toHaveAttribute("aria-label", /^0 M/);
   await expect(sheet(page).locator('[data-id="matrix:k"]')).toHaveCount(0);
 

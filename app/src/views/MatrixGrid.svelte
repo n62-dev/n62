@@ -7,6 +7,8 @@
   // would split a chunk shared with the apps, whose preload lists are in the start chunk).
   // R189: the cell edited on the entry line is marked; the parser's refusal of it shows under the table; the grid
   // leaving (the sheet closed or replaced) ends an edit, and the line that was there comes back.
+  // R190: ☰ opens the grid's menu above the table, at its right (numbered 1 to 4 as a sheet's rows are; its keys are in
+  // matrixGrid.svelte.ts); a tap on a row picks it.
   import { t } from "../i18n/index.ts";
   import { findText } from "../i18n/enFind.ts";
   import type { MatrixGrid } from "./matrixGrid.svelte.ts";
@@ -25,6 +27,13 @@
 </script>
 
 <div class="grid" data-testid="matrix-grid" role="grid" aria-label={grid.name} bind:this={box}>
+  {#if grid.menu !== null}
+    <div class="menu" data-testid="matrix-menu" role="menu" aria-label={findText("matrix.menu")}>
+      {#each grid.menuRows() as row, i (row.op)}
+        <button type="button" role="menuitem" class="item" data-id={row.op} data-active={i === grid.menu} aria-disabled={row.reason ? "true" : undefined} aria-label="{i + 1} {row.label}" onclick={() => grid.choose(i)}><span class="n">{i + 1}</span>{row.label}</button>
+      {/each}
+    </div>
+  {/if}
   {#if cells === "failed"}
     <p class="empty">{findText("matrix.unread")}</p>
   {:else if cells === null}
@@ -97,6 +106,40 @@
   }
   td[data-editing="true"] {
     box-shadow: inset 0 0 0 var(--stroke-thick) var(--focus);
+  }
+  .menu {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    background: var(--bg);
+    border: var(--stroke-thin) solid var(--line);
+  }
+  .item {
+    display: flex;
+    gap: var(--sp-2);
+    align-items: center;
+    height: var(--line-h);
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--fs-ui);
+    text-align: left;
+  }
+  .item[data-active="true"] {
+    background: var(--pick);
+  }
+  .item[aria-disabled="true"] {
+    color: var(--muted);
+  }
+  .n {
+    color: var(--muted);
+    min-width: 1ch;
   }
   .refusal {
     margin: var(--sp-2) 0;
