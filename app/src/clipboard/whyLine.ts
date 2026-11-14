@@ -3,7 +3,7 @@
 // G38, G39, G50) and the chip table's (a constant's σ); the words are clipboard/strings.ts. It loads with the row
 // actions, never in the start chunk.
 import type { MarkInfo } from "../engine/format.ts";
-import type { HistoryItem } from "../state/session.svelte.ts";
+import type { CopySource } from "./text.ts";
 import { copyExact } from "./exact.ts";
 import { entryText, macroCalls } from "./plaintext.ts";
 import { tc } from "./strings.ts";
@@ -25,7 +25,7 @@ export function uncText(unc: string): string | null {
 }
 
 /** The constants a row's chips hold with an uncertainty, as `G (± 1.5·10⁻¹⁵)`, in the order they stand in the entry. */
-function constantsUsed(item: HistoryItem): string[] {
+function constantsUsed(item: CopySource): string[] {
   const out: string[] = [];
   // brace-aware: a symbol holds braces (`\mu_{0}`, `\mu_{\mathrm{B}}`), and is named as plain text (`μ_0`), never as LaTeX (F171)
   for (const m of macroCalls(item.latex, "const", 2)) {
@@ -45,7 +45,7 @@ const list = (names: readonly string[]): string => names.join(", ");
  * `≈` are the engine's (why.rounded, R36f1: the names that lent inexact facts when the row ran), never read from the
  * entry text. Null when the row has no mark, so no line is drawn.
  */
-export function whyLine(item: HistoryItem, mark: MarkInfo | null, digits: number): string | null {
+export function whyLine(item: CopySource, mark: MarkInfo | null, digits: number): string | null {
   if (!mark) return null;
   if (mark.mark === "=") return `= ${tc("why.exact")}`;
   const why = item.facts?.why;

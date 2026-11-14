@@ -4,4 +4,4 @@ export { parsePastedNumber } from "./paste.ts";
 export { webClipboard, type ClipboardPort } from "./port.ts";
 export { choosePort } from "./native.ts";
 export { saveFile, type SaveResult } from "./files.ts";
-export { copyFull, sessionText, tableCsv, withoutMark } from "./text.ts";
+export { copyFull, sessionCsv, sessionLatex, sessionText, tableCsv, withoutMark } from "./text.ts";

@@ -155,3 +155,23 @@ export function entryText(latex: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/** G232: an entry's LaTeX for a `.tex` file: N62's own macros (entry/macros.ts, MathLive's table) are not LaTeX, so each
+ *  chip keeps the symbol it draws (its second argument; a constant's upright, as the field draws it), `\ans` is `\mathrm{Ans}`,
+ *  and `\exponentialE`, `\imaginaryI`, `\emark` and `\blacktriangleright` are their plain forms. */
+export function exportLatex(latex: string): string {
+  let s = latex;
+  for (const name of ["const", "res", "unit", "pfx"]) {
+    for (let n = 0; n < 8; n++) {
+      const calls = macroCalls(s, name, 2);
+      if (!calls.length) break;
+      for (const c of calls.reverse()) s = s.slice(0, c.start) + (name === "const" ? `\\mathrm{${c.args[1]}}` : (c.args[1] ?? "")) + s.slice(c.end);
+    }
+  }
+  return s
+    .replace(/\\ans(?![A-Za-z])/g, "\\mathrm{Ans}")
+    .replace(/\\exponentialE(?![A-Za-z])/g, "\\mathrm{e}")
+    .replace(/\\imaginaryI(?![A-Za-z])/g, "\\mathrm{i}")
+    .replace(/\\emark(?![A-Za-z])/g, "\\mathrm{E}")
+    .replace(/\\blacktriangleright(?![A-Za-z])/g, "\\rightarrow");
+}
