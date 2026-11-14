@@ -4,10 +4,12 @@
 // MathLive's text) and written through a closed allow-list, head → template. Anything not listed is not translated,
 // by construction: the row becomes `# N62 NOT TRANSLATED (<reason>): <input>` and binds nothing, and a later row that
 // reads what it would have bound is comment-only too (owner, 2026-11-12). Every row ends with N62's own answer as a
-// comment. Functions and the angle mode are G214, units G216, σ G217. Lazy: reached only through clipboard/impl.ts.
+// comment. G214: the tier-0 Find functions with a one-to-one sympy form (FUNCTIONS), each in the row's own angle mode;
+// a row that does not keep its angle mode refuses trig rather than assume radians. Units are G216, σ G217. Lazy: reached only through clipboard/impl.ts.
 import { parseLatex } from "../input/parse.ts";
-import type { Json } from "../input/emit.ts";
+import { FN, oddIndex, type Json } from "../input/emit.ts";
 import { ANS_KEY } from "../input/chips.ts";
+import { angleInSpec, returnsAngle } from "../engine/angles.ts";
 
 /** A chip of a row's table as the session line keeps it. */
 export interface PyChip {
@@ -30,6 +32,10 @@ export interface PyRow {
   sigma?: string | null;
   /** G219: this many earlier lines were dropped before this one. */
   gap?: number | null;
+  /** G211: `rad` or `deg`, the angle mode the row was worked out in; null when the row does not keep it. */
+  angle?: string | null;
+  /** The stored values the input read: a name here was a value when the row ran, so `name(…)` multiplied it. */
+  defs?: readonly { name: string }[] | null;
 }
 
 export interface PyOptions {
@@ -43,7 +49,44 @@ const KEYWORDS = new Set(
     "import in is lambda nonlocal not or pass raise return try while with yield").split(" "),
 );
 /** The sympy names a template may write; a user name equal to one is not bound either (it would shadow it). */
-const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt"]);
+const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt", "rad", "deg", "log", "root", "real_root", "cos", "sin"]);
+
+/** G214, the function table: a Find tier-0 function (find/functions.yaml, by its Giac name) → its sympy function, which
+ *  takes the same arguments in the same order and gives the same value. Closed: a name not here is not translated,
+ *  tier 1 by construction. ln, log10 and surd are written by their own rule below (ROOT_LOG). Left out on purpose
+ *  (G214 report): N62's own definitions (median, percentile, sem, irem, par, eseries, sigfig, the word operations),
+ *  Giac's own conventions (dot conjugates its first argument, stddevp is the sample deviation, frac is not settled for
+ *  a negative number), and what needs a list, a matrix or a free variable (the core translates none). */
+// Which of them takes or gives an angle is never written here: fn() asks angles.ts, the lists emit.ts adds pasdeg by.
+const FUNCTIONS: ReadonlyMap<string, { py: string; args: number }> = new Map([
+  ["sqrt", { py: "sqrt", args: 1 }],
+  ["exp", { py: "exp", args: 1 }],
+  ["sin", { py: "sin", args: 1 }],
+  ["cos", { py: "cos", args: 1 }],
+  ["tan", { py: "tan", args: 1 }],
+  ["asin", { py: "asin", args: 1 }],
+  ["acos", { py: "acos", args: 1 }],
+  ["atan", { py: "atan", args: 1 }],
+  ["sinh", { py: "sinh", args: 1 }],
+  ["cosh", { py: "cosh", args: 1 }],
+  ["tanh", { py: "tanh", args: 1 }],
+  ["abs", { py: "Abs", args: 1 }],
+  ["floor", { py: "floor", args: 1 }],
+  ["ceil", { py: "ceiling", args: 1 }],
+  // sympy's gcd(a, b, c) reads c as a generator, so two arguments only
+  ["gcd", { py: "gcd", args: 2 }],
+  ["lcm", { py: "lcm", args: 2 }],
+  ["factorial", { py: "factorial", args: 1 }],
+  ["comb", { py: "binomial", args: 2 }],
+  // Giac's Gamma(a, x) of two arguments is the incomplete one
+  ["Gamma", { py: "gamma", args: 1 }],
+  ["erf", { py: "erf", args: 1 }],
+]);
+/** The tier-0 functions written by their own rule: ln is sympy's log, log10 is log(x, 10), surd the real root. */
+const ROOT_LOG = ["ln", "log10", "surd"];
+/** Every Giac name the translator reads as a function (the test checks each is a tier-0 Find function). */
+export const PY_FUNCTIONS: ReadonlySet<string> = new Set([...FUNCTIONS.keys(), ...ROOT_LOG]);
+for (const f of FUNCTIONS.values()) SYMPY.add(f.py);
 
 /** Python ints stay exact under + - * and ** n; a division or a negative power of two of them would be a float. */
 type Kind = "int" | "sym";
@@ -173,9 +216,89 @@ class Row {
         return this.ser(one());
       case "Chip":
         return this.chip(one());
-      default:
-        return no(`${head} is not translated`);
+      case "Call": {
+        const [name, ...rest] = args;
+        return typeof name === "string" ? this.fn(name, rest) : no("a call is not translated");
+      }
+      case "Log": {
+        // \log is base 10 (emit.ts Log), \log_b base b; plain sympy has no log10
+        if (args.length === 1) return this.fn("log10", args);
+        const [x, b] = two();
+        return { s: `${this.use("log")}(${this.ser(x).s}, ${this.ser(b).s})`, p: 5, k: "sym" };
+      }
+      case "Root": {
+        const [x, n] = two();
+        return this.root(x, n, false);
+      }
+      case "Degrees": {
+        // u° is u in the mode's own unit (emit.ts Degrees): u itself in DEG, rad(u) in RAD
+        const u = this.ser(one());
+        return this.angle() === "deg" ? u : { s: `${this.use("rad")}(${u.s})`, p: 5, k: "sym" };
+      }
+      case "PolarComplex": {
+        // r∡θ, θ in the mode's unit (emit.ts PolarComplex): r*(cos(θ) + i*sin(θ))
+        const [r, th] = two();
+        const t = this.angleIn(this.ser(th).s);
+        const z = `${this.use("cos")}(${t}) + ${this.use("I")}*${this.use("sin")}(${t})`;
+        return { s: `${wrap(this.ser(r), 3)}*(${z})`, p: 2, k: "sym" };
+      }
+      default: {
+        // the parser's own heads (`\sin`, `\left|x\right|`, `3!`, `\binom`) by emit.ts's own FN, so this writes the
+        // function the app sends Giac; a Giac name outside PY_FUNCTIONS stays not translated
+        const name = Object.hasOwn(FN, head) ? FN[head] : undefined;
+        return name !== undefined && PY_FUNCTIONS.has(name) ? this.fn(name, args) : no(`${head} is not translated`);
+      }
     }
+  }
+
+  /** The row's angle mode; a row that does not keep it refuses rather than assume radians. */
+  private angle(): "rad" | "deg" {
+    const a = this.t.rows[this.i]?.angle;
+    return a === "rad" || a === "deg" ? a : no("angle not known");
+  }
+
+  /** An angle as the mode reads it, in radians for sympy. */
+  private angleIn(s: string): string {
+    return this.angle() === "deg" ? `${this.use("rad")}(${s})` : s;
+  }
+
+  /** A call of the function table, or of the three written by their own rule. */
+  private fn(name: string, args: Json[]): Out {
+    const arity = (n: number): void => {
+      if (args.length !== n) no(`${name} with ${args.length} argument${args.length === 1 ? "" : "s"} is not translated`);
+    };
+    if (name === "ln" || name === "log10") {
+      arity(1);
+      const x = this.ser(args[0] as Json).s;
+      return { s: `${this.use("log")}(${name === "ln" ? x : `${x}, 10`})`, p: 5, k: "sym" };
+    }
+    if (name === "surd") {
+      arity(2);
+      return this.root(args[0] as Json, args[1] as Json, true);
+    }
+    const f = FUNCTIONS.get(name);
+    if (!f) return no(`${name} is not translated`);
+    arity(f.args);
+    // the angle tags are angles.ts's (G214 fix round 2): its first argument an angle in the one form [0, 1] the table
+    // writes, any other form refused; its result an angle when emit.ts divides it by pasdeg
+    const spec = angleInSpec(name);
+    if (spec && (spec[0] !== 0 || spec[1] !== 1)) no(`${name} takes its angle in a form that is not translated`);
+    const outs = args.map((a) => this.ser(a).s);
+    if (spec) outs[0] = this.angleIn(outs[0] as string);
+    const call = `${this.use(f.py)}(${outs.join(", ")})`;
+    return { s: returnsAngle(name) && this.angle() === "deg" ? `${this.use("deg")}(${call})` : call, p: 5, k: "sym" };
+  }
+
+  /** An n-th root as N62 takes it (emit.ts Root): an odd whole index is the real root (sympy's real_root; its plain
+   *  root where the radicand is a number literal not below 0, the same value); any other index the principal root,
+   *  x^(1/n). surd is the real root and nothing else. */
+  private root(x: Json, n: Json, surd: boolean): Out {
+    // emit.ts's own rule decides surd against x^(1/n), so the two never disagree on which index is odd
+    const odd = oddIndex(n);
+    if (surd && !odd) return no("surd with an index that is not an odd whole number is not translated");
+    const xs = this.ser(x).s;
+    const plain = !odd || numText(x) !== undefined;
+    return { s: `${this.use(plain ? "root" : "real_root")}(${xs}, ${this.ser(n).s})`, p: 5, k: "sym" };
   }
 
   /** A symbol: a fixed constant, or a name an earlier line of this file bound. */
@@ -256,6 +379,20 @@ class Translator {
     return n;
   }
 
+  /** Row r's tree as the app read it (G214): `\operatorname{name}` is a stored value when the input read one (`defs`)
+   *  or this file set it, so `\operatorname{name}(2)` multiplies it; any other name before a bracket is the call it was.
+   *  A bare name nothing set does not parse so: read as a value, the translator then says where it is not set (G213). */
+  private parse(r: PyRow, chips: Record<string, PyChip>): Json {
+    const read = new Set((r.defs ?? []).map((d) => d.name));
+    const values = { has: (n: string) => read.has(n) || this.names.has(n) } as unknown as ReadonlySet<string>;
+    try {
+      return parseLatex(r.input, { chips, userValues: values });
+    } catch {
+      const loose = { has: (n: string) => values.has(n) || !PY_FUNCTIONS.has(n) } as unknown as ReadonlySet<string>;
+      return parseLatex(r.input, { chips, userValues: loose });
+    }
+  }
+
   /** The name line j bound still holds line j's value. */
   holds(line: Line, j: number): boolean {
     if (line.name.startsWith("_")) return true;
@@ -298,7 +435,7 @@ class Translator {
       const { table, keys } = markers(r);
       let tree: Json;
       try {
-        tree = parseLatex(r.input, { chips: table, userValues: ANY });
+        tree = this.parse(r, table);
       } catch (err) {
         return no(`not read: ${err instanceof Error ? err.message : String(err)}`);
       }
@@ -323,7 +460,7 @@ class Translator {
   }
 }
 
-/** Every `\operatorname{name}` reads as a stored value: whether this file set it is the translator's question. */
+/** Every `\operatorname{name}` reads as a stored value (a store's target): whether this file set it is the translator's question. */
 const ANY: ReadonlySet<string> = { has: () => true } as unknown as ReadonlySet<string>;
 
 /** The row's chips as markers `pyc<n>` for the parser, so the tree says which chip stands where; Ans always has one. */

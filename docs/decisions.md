@@ -21,15 +21,17 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
 
+**Night review 2026-11-14:** twelve questions in [the note](research/night-review-2026-11-14.md) section 6, each with its recommendation; 1 and 2 before the hardware-key tests of 11-16, 3 before the tag.
+
 ## Decided proposals
 
 ### Pipeline and process
 - **No freeze until Tue 11-17, tag Mon 11-23 (owner, 2026-11-12):** to the freeze the order is use, critical bugs, features (brief section 0); the days, the bar and what v0.1.0 keeps for good (point 7): [release-0.1.0.md](release-0.1.0.md).
-- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](research/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
+- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](archive/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
 - **Owner answers of 2026-11-10 (architecture review):** [the note](research/arch-review-2026-11-10.md) section 3.
 - **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). A145: the recipe's engine build differs from the release engine (`fdroid/README.md`); the whole APK is uncompared. Would change if: the engine cannot be made bit-identical.
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
-- **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** a patch's worker writes its README row (A83); a stray file is logged, warn only (A88); the weekly fuzz runs in 10-minute slices (G167); red-first counts only added or tightened tests (A67) and may test the stock engine for a G125 package (A71); a wall-clock test that fails only under load is a timing case (`isTiming`, A39); a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "2026-11-12, evening".
+- **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** A83, A88, G167, A67, A71, A39; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "Opus pass 184".
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Archived, "Opus pass 97". Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Archived, "Opus pass 96". Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Rule: rules section 10. Archived, "Opus pass 106". Would change if: a deleted file is needed back twice a month.
@@ -45,7 +47,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ### Feel, keys and screen (milestone 4a)
 - **Touch, keys and Store (owner, 2026-11-10; the keys 2026-11-12):** as built (docs/05 3.5; docs/04 5.5); the keys: [06-keypad-vs-g2.md](06-keypad-vs-g2.md) section 3b. Archived, "2026-11-12, evening". Would change if: A139 shows the gestures clash on a real WebView.
 - **Built, archived as they stood ("2026-11-12, evening"):** R151's start time (A73f1); the UI answers of 2026-11-06 (R140–R150, R53); R95, R100, R94, R110; S12 (R66–R68, G45; `mod` Euclidean); the feel answers of 2026-10-19 (R34: one shared entry line; R43, R7, A4a points 3 and 4).
-- **R41's status line at font scale 2.0 waits for a device (Opus pass 61):** annabell's next device run checks it with TalkBack. Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
+- **R41 at font scale 2.0:** the owner's hand check (A139; backlog). Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); Android's splash and bars Dark (A59). Archived. Would change if: users want the system switch to mute the keys.
 - **R4b's four defaults, as built (Opus pass 18):** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
@@ -165,8 +167,9 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Archived. Would change if: Giac can size such a sum.
 - **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Archived. Would change if: a cheaper test tells exp(-10^20) from 0.
 - **G307 past the cap (Opus passes 171–177):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts for the value only in a small value or an argument read modulo 2π (G348); then ⚠; a decision always counts it. Archived, "Opus pass 179". Would change if: S20.
-- **The session line (G210, Opus pass 178):** `value` is Copy's number alone, with `.` (a unit row's σ and unit are in `sigma`, `unit`); `mark` is Copy's glyph at the row's digits, in STD; `exact`, like `giac`, reads in radians. `word` (G211, pass 181) is the word the job ran in, `{"bits":64,"signed":false}` while none is set (the engine's own); null only for a row that keeps none (stored before G211, the fake engine). Would change if: a reader needs Copy's text with its unit, or the owner wants the default word left out.
+- **The session line (G210, G211; Opus passes 178, 181):** `value` is Copy's number alone, with `.`; `exact` reads in radians; `word` is the job's word, 64 bits unsigned while none is set. Archived, "Opus pass 184".
 - **The LaTeX export (G232, Opus pass 181):** only a ⚠ row gets its reason (whyLine) after the result; `\approx` and `=` stand alone, as the CSV's mark column. Would change if: the owner wants the rounding reason in a document.
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it, and Ans or a name only while its line holds the value it had (G213f1); the comments are English constants (a file format); `3!` and `\binom` are factorial and binomial; an odd root of a literal not below 0 is root(), else real_root(); a row parses with its `defs` as stored values. Would change if: G215 finds sympy disagrees.
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.

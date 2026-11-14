@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-# S54: the candidate guard of docs/research/r20-decompose.md, as tested on a scratch build (trace.ts header); not a patch of engine/giac/patches/ (its package writes that, with its header).
+# S54: the candidate guard of docs/archive/r20-decompose.md, as tested on a scratch build (trace.ts header); not a patch of engine/giac/patches/ (its package writes that, with its header).
 --- a/src/subst.cc
 +++ b/src/subst.cc
 @@ -1985,8 +1985,13 @@

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // S54: the input sets of run.ts --set <name>, each row [input, inputs evaluated first (';'-separated)].
-// The note (docs/research/r20-decompose.md) gives each set's answers on the dev engine of its base commit.
+// The note (docs/archive/r20-decompose.md) gives each set's answers on the dev engine of its base commit.
 const F214 = "(asinh(surd(1/2,3)))^((pi/2+1/1000)^(90001/1000/(pi/2+1/1000000)))";
 const MIN = "sqrt(ln(1+sqrt(1+2^(1/3))))";
 

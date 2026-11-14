@@ -11,7 +11,7 @@ Base `phase-1` at `510a098b`, branch `p1/sandra-storedesign`. Docs, a mockup and
 - The mockup opens in headless Chromium without errors; both phones are 839 px with no overflow of the sheet.
 
 ## What I changed
-- New: `docs/research/store-design.md` (open), `docs/mockups/store-2026-11.html`, `tools/probes/store-letters.ts` (+ its row in `tools/probes/README.md`), this report.
+- New: `docs/archive/store-design.md` (open), `docs/mockups/store-2026-11.html`, `tools/probes/store-letters.ts` (+ its row in `tools/probes/README.md`), this report.
 - `docs/README.md`: the note and the mockup linked (the task asks for it; the index check needs it).
 - `docs/backlog.md` Open bugs: the store-bu-1 line. `docs/decisions.md` Needs the user: "Store (S53)".
 

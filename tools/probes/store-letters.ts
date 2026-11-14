@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Probe (S53, docs/research/store-design.md): can every one-letter name a store sheet would offer take a value?
+// Probe (S53, docs/archive/store-design.md): can every one-letter name a store sheet would offer take a value?
 // For each letter, the keys' LaTeX `7/2 ▶ L` goes through our parser (as Store ▶ then the letter types it), then the
 // engine host stores it in Home (or CAS) and reads `L*2` back; a second store over it (`5 ▶ L`) checks the overwrite.
 //   node tools/probes/store-letters.ts            # Home, A-Z and a-z

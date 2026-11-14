@@ -2,7 +2,11 @@
 // G213: Copy as Python, the core. Exact expected code, no engine: the templates are the package's own (G213 block),
 // the `# N62:` answers are the rows' own text as given here, never computed. Whether the code runs and agrees is G215.
 import { describe, expect, it } from "vitest";
-import { translateRows, type PyRow } from "./python.ts";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
+import { PY_FUNCTIONS, translateRows, type PyRow } from "./python.ts";
 
 const HEAD = "# N62 0.1.0 · Copy as Python · preview: the form of this file can change";
 const py = (rows: PyRow[]): string => translateRows(rows, { app: "0.1.0" });
@@ -75,31 +79,33 @@ describe("translateRows: the answer comment", () => {
 
 describe("translateRows: anything else is not translated, and binds nothing", () => {
   it("an unknown head, a chip kind with no mapping, a Sum, a function", () => {
-    expect(py([row("3!", { exact: "6" })])).toBe(file("# N62 NOT TRANSLATED (Factorial is not translated): 3!", "# N62: = 6"));
+    expect(py([row("\\operatorname{Zeta}\\left(2\\right)", { exact: "pi^2/6" })])).toBe(
+      file("# N62 NOT TRANSLATED (Zeta is not translated): \\operatorname{Zeta}\\left(2\\right)", "# N62: = pi^2/6"),
+    );
     expect(py([row("2\\const{c}{c}", { mark: "≈", value: "599584916", chips: { "const:c": { value: "299792458", exact: true } } })])).toBe(
       file("# N62 NOT TRANSLATED (a constant is not translated): 2\\const{c}{c}", "# N62: ≈ 599584916"),
     );
     expect(py([row("\\sum_{k=1}^{3}k", { exact: "6" })])).toBe(file("# N62 NOT TRANSLATED (Sum is not translated): \\sum_{k=1}^{3}k", "# N62: = 6"));
-    expect(py([row("\\sin(1)", { mark: "≈", value: "0.841470984808" })])).toBe(
-      file("# N62 NOT TRANSLATED (Sin is not translated): \\sin(1)", "# N62: ≈ 0.841470984808"),
+    expect(py([row("\\cot(1)", { mark: "≈", value: "0.642092615934", angle: "rad" })])).toBe(
+      file("# N62 NOT TRANSLATED (Cot is not translated): \\cot(1)", "# N62: ≈ 0.642092615934"),
     );
   });
   it("a later row that reads its name, or Ans after it, is comment-only too", () => {
     const out = py([
-      row("3!\\blacktriangleright a", { exact: "6" }),
-      row("a+1", { exact: "7" }),
-      row("\\ans\\times2", { exact: "14" }),
+      row("\\operatorname{Zeta}\\left(2\\right)\\blacktriangleright a", { exact: "pi^2/6" }),
+      row("a+1", { exact: "pi^2/6+1" }),
+      row("\\ans\\times2", { exact: "pi^2/3+2" }),
       row("2^3", { exact: "8" }),
       row("\\ans+1", { exact: "9" }),
     ]);
     expect(out).toBe(
       file(
-        "# N62 NOT TRANSLATED (Factorial is not translated): 3!\\blacktriangleright a",
-        "# N62: = 6",
+        "# N62 NOT TRANSLATED (Zeta is not translated): \\operatorname{Zeta}\\left(2\\right)\\blacktriangleright a",
+        "# N62: = pi^2/6",
         "# N62 NOT TRANSLATED (uses line 1): a+1",
-        "# N62: = 7",
+        "# N62: = pi^2/6+1",
         "# N62 NOT TRANSLATED (uses line 2): \\ans\\times2",
-        "# N62: = 14",
+        "# N62: = pi^2/3+2",
         "_4 = 2**3  # N62: = 8",
         "_5 = _4 + 1  # N62: = 9",
       ),
@@ -244,5 +250,155 @@ describe("translateRows: a result chip, never by its number", () => {
     expect(py([row("\\res{4}{1.41421356237}^2", { exact: "2", chips: { "res:4": { value: "sqrt(2)", exact: true } } })])).toBe(
       file("# N62 NOT TRANSLATED (an earlier result sqrt(2) is not translated): \\res{4}{1.41421356237}^2", "# N62: = 2"),
     );
+  });
+});
+
+// G214: functions and the angle mode. The code expected is the block's own templates (sympy's `rad`, `deg`, `log(x, 10)`,
+// `root`, `real_root`); the `# N62:` answers are the rows' text as given, worked out by hand where one is shown.
+describe("translateRows: the angle mode (G214)", () => {
+  const one = (input: string, angle: string | null | undefined, code: string, imports: string): void => {
+    const r = row(input, { exact: "v", ...(angle === undefined ? {} : { angle }) });
+    expect(py([r])).toBe(file(`from sympy import ${imports}`, `_1 = ${code}  # N62: = v`));
+  };
+  const refused = (input: string, angle: string | null | undefined, reason = "angle not known"): void => {
+    const r = row(input, { exact: "v", ...(angle === undefined ? {} : { angle }) });
+    expect(py([r])).toBe(file(`# N62 NOT TRANSLATED (${reason}): ${input}`, "# N62: = v"));
+  };
+  it("a trig function takes its argument in the row's mode", () => {
+    one("\\sin(30)", "deg", "sin(rad(30))", "rad, sin");
+    one("\\sin(30)", "rad", "sin(30)", "sin");
+    one("\\cos\\left(60\\right)", "deg", "cos(rad(60))", "cos, rad");
+    one("\\tan\\left(45\\right)", "deg", "tan(rad(45))", "rad, tan");
+    one("\\operatorname{sin}\\left(30\\right)", "deg", "sin(rad(30))", "rad, sin");
+    one("\\sin\\left(\\frac{\\pi}{6}\\right)", "rad", "sin(pi/6)", "pi, sin");
+  });
+  it("an inverse gives its result in the row's mode", () => {
+    one("\\arcsin(1)", "deg", "deg(asin(1))", "asin, deg");
+    one("\\arcsin(1)", "rad", "asin(1)", "asin");
+    one("\\arccos\\left(0\\right)", "deg", "deg(acos(0))", "acos, deg");
+    one("\\arctan\\left(1\\right)", "deg", "deg(atan(1))", "atan, deg");
+    one("\\sin^{-1}\\left(1\\right)", "deg", "deg(asin(1))", "asin, deg");
+    one("\\sin\\left(\\arcsin\\left(1\\right)\\right)", "deg", "sin(rad(deg(asin(1))))", "asin, deg, rad, sin");
+  });
+  it("u° is u degrees in either mode", () => {
+    one("\\sin\\left(30\\degree\\right)", "deg", "sin(rad(30))", "rad, sin");
+    one("\\sin\\left(30\\degree\\right)", "rad", "sin(rad(30))", "rad, sin");
+    one("30\\degree", "rad", "rad(30)", "rad");
+  });
+  it("without the row's angle mode, trig, an inverse, ° and the polar form are not translated", () => {
+    refused("\\sin(30)", null);
+    refused("\\sin(30)", undefined);
+    refused("\\sin(30)", "grad");
+    refused("\\arcsin(1)", null);
+    refused("30\\degree", null);
+    refused("2\\measuredangle30", null);
+  });
+  it("the hyperbolic functions take no angle", () => {
+    one("\\sinh\\left(1\\right)", null, "sinh(1)", "sinh");
+    one("\\cosh\\left(1\\right)", null, "cosh(1)", "cosh");
+    one("\\tanh\\left(1\\right)", null, "tanh(1)", "tanh");
+  });
+  it("the polar form r∡θ", () => {
+    one("2\\measuredangle30", "deg", "2*(cos(rad(30)) + I*sin(rad(30)))", "I, cos, rad, sin");
+    one("2\\measuredangle30", "rad", "2*(cos(30) + I*sin(30))", "I, cos, sin");
+  });
+});
+
+describe("translateRows: logarithms and roots (G214)", () => {
+  const one = (input: string, code: string, imports: string): void => {
+    expect(py([row(input, { exact: "v" })])).toBe(file(`from sympy import ${imports}`, `_1 = ${code}  # N62: = v`));
+  };
+  it("ln is sympy's log; log is base 10 (plain sympy has no log10)", () => {
+    one("\\ln(2)", "log(2)", "log");
+    one("\\log(100)", "log(100, 10)", "log");
+    one("\\lg\\left(100\\right)", "log(100, 10)", "log");
+    one("\\log_{2}\\left(8\\right)", "log(8, 2)", "log");
+    one("\\operatorname{ln}\\left(2\\right)", "log(2)", "log");
+    one("\\operatorname{log10}\\left(1000\\right)", "log(1000, 10)", "log");
+    one("\\exp\\left(1\\right)", "exp(1)", "exp");
+  });
+  it("an odd whole index is the real root, as N62 takes it", () => {
+    one("\\sqrt[3]{8}", "root(8, 3)", "root");
+    one("\\sqrt[3]{-8}", "real_root(-8, 3)", "real_root");
+    one("\\sqrt[5]{\\frac{1}{32}}", "real_root(Rational(1, 32), 5)", "Rational, real_root");
+    one("\\operatorname{surd}\\left(-32,5\\right)", "real_root(-32, 5)", "real_root");
+    one("\\operatorname{surd}\\left(8,3\\right)", "root(8, 3)", "root");
+  });
+  it("any other index is the principal root", () => {
+    one("\\sqrt[4]{16}", "root(16, 4)", "root");
+    one("\\sqrt[4]{-16}", "root(-16, 4)", "root");
+    one("\\operatorname{sqrt}\\left(2\\right)", "sqrt(2)", "sqrt");
+  });
+  it("surd with an index that is not an odd whole number is not translated", () => {
+    expect(py([row("\\operatorname{surd}\\left(16,4\\right)", { exact: "2" })])).toBe(
+      file("# N62 NOT TRANSLATED (surd with an index that is not an odd whole number is not translated): \\operatorname{surd}\\left(16,4\\right)", "# N62: = 2"),
+    );
+  });
+});
+
+describe("translateRows: the function table (G214)", () => {
+  const one = (input: string, code: string, imports: string): void => {
+    expect(py([row(input, { exact: "v" })])).toBe(file(`from sympy import ${imports}`, `_1 = ${code}  # N62: = v`));
+  };
+  const refused = (input: string, reason: string): void => {
+    expect(py([row(input, { exact: "v" })])).toBe(file(`# N62 NOT TRANSLATED (${reason}): ${input}`, "# N62: = v"));
+  };
+  it("one row per function, each to its sympy name", () => {
+    one("\\operatorname{abs}\\left(-3\\right)", "Abs(-3)", "Abs");
+    one("\\left|-3\\right|", "Abs(-3)", "Abs");
+    one("\\operatorname{floor}\\left(-2.5\\right)", "floor(-Rational('2.5'))", "Rational, floor");
+    one("\\operatorname{ceil}\\left(2.1\\right)", "ceiling(Rational('2.1'))", "Rational, ceiling");
+    one("\\operatorname{gcd}\\left(12,18\\right)", "gcd(12, 18)", "gcd");
+    one("\\operatorname{lcm}\\left(4,6\\right)", "lcm(4, 6)", "lcm");
+    one("\\operatorname{factorial}\\left(5\\right)", "factorial(5)", "factorial");
+    one("3!", "factorial(3)", "factorial");
+    one("\\operatorname{comb}\\left(5,2\\right)", "binomial(5, 2)", "binomial");
+    one("\\binom{5}{2}", "binomial(5, 2)", "binomial");
+    one("\\operatorname{Gamma}\\left(5\\right)", "gamma(5)", "gamma");
+    one("\\operatorname{erf}\\left(0.5\\right)", "erf(Rational('0.5'))", "Rational, erf");
+    one("2\\times\\operatorname{gcd}\\left(12,18\\right)^2", "2*gcd(12, 18)**2", "gcd");
+  });
+  it("a function's result is sympy's, so a division by it stays exact", () => {
+    one("\\frac{1}{\\operatorname{factorial}\\left(3\\right)}", "1/factorial(3)", "factorial");
+  });
+  it("the wrong number of arguments is not translated", () => {
+    refused("\\operatorname{gcd}\\left(12,18,30\\right)", "gcd with 3 arguments is not translated");
+    refused("\\operatorname{Gamma}\\left(1,2\\right)", "Gamma with 2 arguments is not translated");
+  });
+  it("Giac's and N62's own conventions are not translated", () => {
+    // pasmedian is N62's name, so the parser refuses it as typed; median is N62's (the mean of the two middle values)
+    expect(py([row("\\operatorname{pasmedian}\\left(1\\right)", { exact: "1" })])[0]).toBe("#");
+    expect(py([row("\\operatorname{pasmedian}\\left(1\\right)", { exact: "1" })])).toContain("# N62 NOT TRANSLATED (not read: ");
+    refused("\\operatorname{median}\\left(1\\right)", "median is not translated");
+    // dot conjugates its first argument; stddevp is the sample one; irem is never negative
+    refused("\\operatorname{dot}\\left(1,2\\right)", "dot is not translated");
+    refused("\\operatorname{stddevp}\\left(1\\right)", "stddevp is not translated");
+    refused("\\operatorname{irem}\\left(-7,3\\right)", "irem is not translated");
+    refused("\\operatorname{frac}\\left(2.75\\right)", "frac is not translated");
+    refused("\\operatorname{percentile}\\left(1,2\\right)", "percentile is not translated");
+  });
+  it("a name the input read as a stored value is that value, never the function", () => {
+    const r = row("\\operatorname{erf}\\left(2\\right)", { exact: "v", defs: [{ name: "erf" }] });
+    expect(py([r])).toBe(file("# N62 NOT TRANSLATED (erf is a Python word): \\operatorname{erf}\\left(2\\right)", "# N62: = v"));
+  });
+  it("a user name equal to a sympy name the table writes is not bound", () => {
+    expect(py([row("5\\blacktriangleright\\operatorname{rad}", { exact: "5" })])).toBe(
+      file("# N62 NOT TRANSLATED (rad is a Python word): 5\\blacktriangleright\\operatorname{rad}", "# N62: = 5"),
+    );
+  });
+  it("every function of the table is a tier-0 Find function (find/functions.yaml)", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const yaml = parse(readFileSync(join(here, "../../../find/functions.yaml"), "utf8")) as { functions: { id: string }[] };
+    const tier0 = new Set(yaml.functions.map((f) => f.id.replace(/^fn:/, "")));
+    expect([...PY_FUNCTIONS].filter((n) => !tier0.has(n))).toEqual([]);
+  });
+  const indexFile = join(dirname(fileURLToPath(import.meta.url)), "../find/_gen/find-index.json");
+  const index = existsSync(indexFile) ? (JSON.parse(readFileSync(indexFile, "utf8")) as { id: string; kind: string; tier: number }[]) : [];
+  it.skipIf(!index.some((i) => i.tier === 1) && process.env.FIND_INDEX !== "required")("every Find tier-1 function is not translated", () => {
+    const names = index.filter((i) => i.kind === "fn" && i.tier === 1).map((i) => i.id.replace(/^fn:/, ""));
+    expect(names.length).toBeGreaterThan(100);
+    const out = py(names.map((n) => row(`\\operatorname{${n}}\\left(1\\right)`, { exact: "v", angle: "rad" })));
+    const code = out.split("\n").filter((l) => l !== "" && !l.startsWith("#"));
+    expect(code).toEqual([]);
   });
 });

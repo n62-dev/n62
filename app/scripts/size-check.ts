@@ -100,7 +100,7 @@ export function startFiles(manifest: Record<string, ManifestChunk>): string[] {
   return [...files];
 }
 
-/** R294 (research/r21-chunks.md): the start is one JS file, the entry. Another JS file in `startFiles` means Rolldown cut a start
+/** R294 (archive/r21-chunks.md): the start is one JS file, the entry. Another JS file in `startFiles` means Rolldown cut a start
  *  module out of the entry (a lazy chunk imports a value from it); vite.config.ts's `$initial` group forbids that cut. Returns the extra files. */
 export function extraStartFiles(manifest: Record<string, ManifestChunk>): string[] {
   const entries = new Set(Object.values(manifest).filter((c) => c.isEntry).map((c) => c.file));
@@ -579,7 +579,7 @@ export function checkSizes(dist: string): Report {
   else absent.unshift("Inline scripts");
   const extra = extraStartFiles(readManifest(dist));
   const startRow = rows.find((r) => r.rule === "Start chunk");
-  if (startRow !== undefined && extra.length > 0) startRow.failures.push(`Start chunk: the start is one JS file, but the build splits it: ${extra.join(", ")} (a lazy chunk imports a value from a start module; the $initial group in vite.config.ts should prevent that, research/r21-chunks.md)`);
+  if (startRow !== undefined && extra.length > 0) startRow.failures.push(`Start chunk: the start is one JS file, but the build splits it: ${extra.join(", ")} (a lazy chunk imports a value from a start module; the $initial group in vite.config.ts should prevent that, archive/r21-chunks.md)`);
   const missingFailures = missing.map((rule) => `${rule}: no chunk holds src/find/finder.ts (neither a dynamic entry nor a shared chunk named "finder"); the rule measures nothing`);
   return { rows, notBuilt: absent, failures: [...rows.flatMap((r) => r.failures), ...missingFailures] };
 }

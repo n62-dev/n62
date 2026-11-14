@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R281 (sd-3, docs/research/store-design.md design A): the store sheet's model. The letters A–Z as cells, a filled one
+// R281 (sd-3, docs/archive/store-design.md design A): the store sheet's model. The letters A–Z as cells, a filled one
 // with its value and mark; the other names after them, newest first; a tap on a free letter stores at once, a tap on a
 // filled one arms it and a second tap stores, any other press disarms; letters typed filter and Enter stores the typed
 // name (digits too). A real Session over the fake engine; `store` records the name the sheet types after ▶.

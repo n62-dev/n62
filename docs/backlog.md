@@ -12,7 +12,7 @@ The one place for "where are we and what's left", one or two lines per open item
 | Milestone 4a: feel (P11) | Built (the entry work, sheets, flicks, Settings, history-row actions, the visual pass, themes, results mode; the list: git). Waiting: the trust features |
 | Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: p95 14.1 ms ≤ 16 (A74), E3 met; the gate is not complete |
 | Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), a result chip as σ (R271), menu Constants and Tools (R92) |
-| Milestone 6: Structure | Started (Help R197, Shift + 5 R185) |
+| Milestone 6: Structure | Built: R185, R187–R194, R197 |
 | MVP release | v0.1.0, the APK and the website from one tag, after the 11-17 freeze, at the bar: [release-0.1.0.md](release-0.1.0.md) |
 
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
@@ -30,7 +30,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
-- **Giac**, not filed yet. Regression files: `tools/giac-regress/` (G89; `n62-patched.cas`: fails on stock giac_2.1.0-1, passes with our patches; in the golden gate since G108). 0003–0036 in his archive (email 14, 2026-11-08), 0037–0046 not sent (patches/README.md); the rest as four forum threads; new since: `decompose`'s recursion (F214, patch 0047), `normal` of a nested root (F228: `algnum_convert` skips a rootof inside a power, sym2poly.cc:4581, 4685; patch 0045), `shift` (F193, patch 0046, G226: ti89.cc `shiftrotate` shifts an `_INT_` by C `>>`/`<<` mod 32, a `_ZINT` never; open, F241: `rotate(5)` = 2, `shift(l,1.5)` by 1; `convert(n,b,x)`'s subtype, F240), `proot` leaving epsilon at 10^-Digits (F219; host.ts restores it), `simplify`'s assume leak (G92: subst.cc:2419, 2802), `restart(1)` clearing nothing (G93: VARS(1) lists equations, usual.cc:251), a typed string ending in a backslash refused inside brackets (G105f1), stock `int(ceil(x),x,1/2,3/2)` = [1,1.5] (right 3/2; intg.cc's falling floor split, patch 0029 part 2).
+- **Giac**, not filed yet. Regression files: `tools/giac-regress/` (G89; `n62-patched.cas`: fails on stock giac_2.1.0-1, passes with our patches; in the golden gate since G108). 0003–0036 in his archive (email 14, 2026-11-08), 0037–0048 not sent (patches/README.md); the rest as four forum threads; new since: `decompose`'s recursion (F214, patch 0047), `normal` of a nested root (F228: `algnum_convert` skips a rootof inside a power, sym2poly.cc:4581, 4685; patch 0045), `shift` (F193, patch 0046, G226: ti89.cc `shiftrotate` shifts an `_INT_` by C `>>`/`<<` mod 32, a `_ZINT` never; open, F241: `rotate(5)` = 2, `shift(l,1.5)` by 1; `convert(n,b,x)`'s subtype, F240), `proot` leaving epsilon at 10^-Digits (F219; host.ts restores it), `simplify`'s assume leak (G92: subst.cc:2419, 2802), `restart(1)` clearing nothing (G93: VARS(1) lists equations, usual.cc:251), a typed string ending in a backslash refused inside brackets (G105f1), stock `int(ceil(x),x,1/2,3/2)` = [1,1.5] (right 3/2; intg.cc's falling floor split, patch 0029 part 2).
 
 ## Tasks
 
@@ -48,12 +48,15 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F215, no package (G328's rest, run 1033).** A name set beside the result keeps the line's ⚠ after a decision or inexact chip: `(A:=5)*floor(sin(10^100)*10^12)`. Family 1.
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.
 - **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
-- **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:147) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
+- **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:156) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F172, A73f2 (after the tag).** Stored history costs nothing, the rows drawn at start do (bar 1.5 s): a CAS-last cold start is 1507 ms against Home's 1323; A73f2 says where.
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
-- **Night review 2026-11-09:** the rest in [research/night-review-2026-11-09.md](research/night-review-2026-11-09.md).
+- **nr1114-vg-1 (S1, `1f1a80582`; G352).** By keys: `[[1,2,3],[4,5,6]]*list[1,2,3]` is = [[1,2,3],[8,10,12]] (right: refused). Rerun: `tools/probes/review-1114/rerun.sh vg-1`. Family 5.
+- **nr1114-be-2 (S1, `1f1a80582`; G353).** Home: a stored approx list of equal values, a linreg, then `stats1`: σ ≈ 9.9E-32·i (right 0). Rerun: `tools/probes/review-1114/rerun.sh be-2`. Family 6.
+- **nr1114-vr-1 (S1, `1f1a80582`; R298).** Cold start with a history: `2`, ☰ Paste `3`, Enter before the entry field is up gives 32 (right 23). Rerun: `tools/probes/review-1114/rerun.sh vr-1`. Family 11.
+- **Night review 2026-11-14:** the rest in [research/night-review-2026-11-14.md](research/night-review-2026-11-14.md).
 
 ### Background stream (extreme inputs; at night, by reach)
 - **F231, no package (G340's reach, pass 160).** `normal((1+sqrt(1+2^(1/3)))^(1/3))` runs past Giac's clock, stock and patched: Home stops it, the CAS view waits its 600 s clock (r20 risk 2).
@@ -62,11 +65,11 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F211, no package (pass 125).** Bound names outside G303's form, no capture (probed): `v` in nonsquare.ts shapeCodes, `a_`, `b_`, `d_` in emit.ts equalityTest; statenames.test.ts parses neither. Family 8.
 - **F203 (G220; named limit).** `1-normald_cdf(0,1,20)` is ⚠ 0 (right 2.75E-89): the typed `1-` cancels.
 - **F167's rest, no package (G160).** Not checked: patch 0018's double test for a base past 1E308. Family 3.
-- **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`; `findcensus-known.yaml`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93 is G168; F96 and F97 are G174 (the rest: G111, G113, G113f1, R80f1). Family 5.
+- **F90–F97 (G110's census; rerun `node tools/probes/find-census.ts <name>`).** Find's tier-1 functions on Giac's own examples, in Home and CAS. F93 is G168; F96 and F97 are G174. Family 5.
 - **F96.** G174 built (run 983). Left: `GF(2,8)`'s K and g hold for the session only (after the tag: log the three-argument `GF`, quater.cc:336–374); a pre-G174 log may keep `lastgb`, `lastv`; `interactive_plotode` throws (not in Find, G111).
 - **Flaky under load.** Golden `interrupt` (F128: runs 307, 909; due in `isTiming`); `units` (p95 7.93 ms, limit 5; reruns once, A51) and `invariants` (87.9 s in run 909, limit 60; in `isTiming`) beside the other lane; `steps` at ×8: G325's, G331's rows (runs 1032–1150, pass 181; none alone); due in `isTiming`.
 - **F61.** Two-argument `round`/`trunc` work in a double: patch pending (decisions.md G71). Family 4.
-- **F214, fixed by G331 (patch 0047, [r20](research/r20-decompose.md)).** Left: `alg_lvar` drops `ln(rootof)` (sym2poly.cc:405, r20 risk 1); `simplify` gives such an input back uncombined.
+- **F214, fixed by G331 (patch 0047, [r20](archive/r20-decompose.md)).** Left: `alg_lvar` drops `ln(rootof)` (sym2poly.cc:405, r20 risk 1); `simplify` gives such an input back uncombined.
 - **F243, no package (pass 168; run 1106).** Home `normal(sqrt(2^(1/3)+3^(2/3)))` and its `simplify`: one Giac call of 171–225 ms on the desktop (patch 0045's degree-18 rootof), about 8× that on the Tab One, past Home's 1.5 s clock (Stopped, or the input back). In golden-speed.ts SPEED_KNOWN.
 - **F245, no package (G308; pass 171).** CAS `evalf(1+i/10^15)*x` shows `1.0+1e-15*i*x`: Giac drops a complex double factor's brackets (`(1.0+i)*x` keeps them), no mark; `evalf((1+i/10^15)^x)` too.
 - **F246, no package (G308).** Digits 40 `ln(evalf(1+i/10^15))`: real part 5E-31, 10 right digits (Home's check catches it; CAS ⚠).
@@ -86,27 +89,27 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
-- **Milestone 6, Structure** (not packaged): EN5 matrices on Shift + 5 (done, R185), the editor on Shift + 4 (done, R187–R190), EN6 number bases (the entry's literals done, R191; the display forms, R192; the Base menu, R193; the word size, R194), EN7 everyday functions, Help as context help (done, R197); EN4, copying one element of a list or matrix.
+- **Milestone 6, Structure:** built: matrices (R185, R187–R190), number bases (R191–R194), Help (R197); not packaged: EN7 everyday functions, EN4 copying one element of a list or matrix.
 
 ### Without a package yet
-- **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, sounding only when Key click is on, and its latency against the pulse from a screen recording. Removal test: nobody (owner or an outside tester) turns it on in the four weeks after it ships, and the switch and its code go.
+- **A66's device check** (annabell, by day, the Tab One): the click with the system's touch sounds on and off, only when Key click is on, and its latency against the pulse (a screen recording). Removal test: nobody turns it on in the four weeks after it ships, and the switch and its code go.
 - **R155f1's device check** (annabell, by day, the Tab One): the run dash in Home on a cold start is above 0 px high.
-- **R41's device check** (owner's hand, A139 left it: TalkBack and the font scale are device settings, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys, and the status line at font scale 2.0 (decisions.md "R41"; the DOM names are in A139's report). Same run, R53: TalkBack on the slice (R283: TalkBack cannot fold).
+- **R41's device check** (the owner's hand; A139 left it, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys; the status line at font scale 2.0 (DOM names: A139's report); R53's slice under TalkBack (R283).
 - Plots of user functions after v0.1.0 (owner, 2026-11-02; R56b covers Solve); **R58b** Alpha letters are always names in CAS (G2 item 62 can reverse it).
 - **G9. Number formats against the G2** (item 15): decide in the settings and help pass.
 - **docs/05 section 5's five UI tasks** are not in `tests/tasks/tasks.yaml` (budget 2 presses or 1 tap, docs/05 section 2 rule 5).
-- **R59's follow-up (owner, 2026-11-07):** an imported function is listed in the Math key's Find too, not only in Vars' Find; a small package after v0.1.0.
+- **R59's follow-up (owner, 2026-11-07):** an imported function is listed in the Math key's Find too, not only in Vars'; a package after v0.1.0.
 - **A9's leftover:** the strength slider does nothing on a motor without amplitude control (Fairphone 6); a composition of ticks would give it (owner, 2026-11-02: a package later).
 - **R92's leftover:** UPART (the result's unit alone) is not built; its Tools row is off.
 - **R107's leftover (pass 35):** a dead hardware key on the unit view's field (`units/open.ts`, `c.dead()`) counts no press (docs/04 5.2); its keys go through the counted `onKey`.
-- **A144's leftover (pass 142; after the tag):** the core list in Firefox and WebKit stops at our helpers: `touch()`, `flick()` use CDP (c38, c39, c67–c69), c53 reads the clipboard unpermitted, WebKit's `tap()` sends no click. Fix: touch events in the page, the clipboard through the app, a click after a WebKit tap. Once Firefox passes the core list, `gecko` joins TESTED (`state/browser.ts`) and the note's words (`enBrowser.ts`) name it (R285).
-- **R263's leftover (pass 150):** `Session.uses()` (state/session.svelte.ts:258) keeps a failed load (no counts that start); `lazyOnce` with the next package there.
+- **A144's leftover (pass 142; after the tag):** the core list in Firefox and WebKit stops at our helpers (CDP touch and flick: c38, c39, c67–c69; c53's clipboard; WebKit's tap sends no click). Once Firefox passes it, `gecko` joins TESTED (`state/browser.ts`, R285).
+- **R263's leftover (pass 150):** `Session.uses()` (state/session.svelte.ts:262) keeps a failed load (no counts that start); `lazyOnce` with the next package there.
 - **R192 (pass 158):** Copy marks a whole exact integer by its notation (`≈` past the digits).
 - **G313's leftover (pass 154):** find-queries.yaml's `dot product` and `bitand` rows are curated but still pending.
 - **G223f1's finds (pass 146):** stats1 of a stored float list shows [..], of a typed one {..}; a stored catch(e) prints as catch(exp(1)).
 - **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.
-- **Flaky (R255f2, pass 137):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field: 8, no Ans" gave 3 in about 1 of 64 runs at 16 workers (`--repeat-each 48`). Likely the kept-line read outlasts `EntryController.load`'s 1 s cap (entry/controller.ts:80) under load; a package if it reaches a check.
-- **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS. Red-first (`pipeline-lib.sh`) runs vitest on the branch's engine (G133f1's engine test passes there) and reads ids as `[A-Za-z0-9_.-]` (ids with `/` or `^` are invisible). It counts a changed vitest file on a net added `it(`/`test(` or `expect(`/`assert` line, and runs one that adds any other line (an assertion edited in place, a new `it.each` row) beside them (A67).
+- **Flaky (R255f2, pass 137):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`) under load.
+- **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS; red-first runs vitest on the branch's engine, reads ids as `[A-Za-z0-9_.-]` and counts a vitest file by its added test or assertion lines (A67).
 - **C3. CI** (needs your OK);
 
 ### MVP release (docs/02 section 8)
