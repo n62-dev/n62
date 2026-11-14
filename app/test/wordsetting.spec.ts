@@ -74,8 +74,10 @@ test("a change moves shl(3,7): 384, then 128 in a byte, then −128 in a signed 
   await done(page, 3);
   await expect(lastResult(page)).toHaveAttribute("data-text", "-128");
   await reload(page);
+  const kept = await page.locator('[data-status="done"]').count(); // the rows the relaunch brought back (the store writes behind)
   await page.evaluate((s) => window.n62.session.submit(s), SHL);
-  await expect(lastResult(page)).toHaveAttribute("data-text", "-128");
+  await done(page, kept + 1); // wait for the new row: a restored one must not satisfy the check below
+  await expect(page.locator('[data-testid="result"]').nth(kept).locator(".result")).toHaveAttribute("data-text", "-128");
   await numbers(page);
   await expect(row(page, "bits").locator('[data-option="8"]')).toHaveAttribute("aria-pressed", "true");
   await expect(row(page, "signed")).toHaveAttribute("data-selected", "true");
