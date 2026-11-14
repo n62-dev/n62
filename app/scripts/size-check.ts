@@ -169,8 +169,8 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // is the first unit result < 1 s on the Tab One (decisions.md, Units: G81, R24b and R24c). 39 kB (R313; docs/04 8.3):
   // phase-1 145a2b0e measures 37.64 kB, the branch 38.92 kB: the hardware keyboard's letters in a slot (typed.ts and the
   // view's glue in open's chunk, +1.28 kB; the slot's own part is in the shared row below). Why a raise: the night
-  // report of 2026-11-14 says "the next unit package must raise the pin or cut". Not yet confirmed: the raise waits for
-  // the owner's yes, asked in R313's report under "Needs the user".
+  // report of 2026-11-14 says "the next unit package must raise the pin or cut". The owner kept the raise (2026-11-14):
+  // no split of the typing code, which is +1.28 kB in a lazy chunk, outside the start chunk.
   add("Unit view chunk", dynamic("src/units/"), { rawMax: 39 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit
