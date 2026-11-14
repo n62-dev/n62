@@ -38,6 +38,10 @@ export interface SlotName {
 export interface SlotCatalogue {
   units: ReadonlyMap<string, SlotName>;
   prefixes: ReadonlyMap<string, SlotName>;
+  /** R313: the names of Find's units and prefixes that a keyboard types (letters only, as cased: `km`, `kWh`, `psi`,
+   *  `hour`), each to its id; a name two units share goes to the one Find ranks first (tier, then id). Absent: no
+   *  letters are read (a catalogue built by hand). */
+  symbols?: { units: ReadonlyMap<string, string>; prefixes: ReadonlyMap<string, string> };
 }
 
 export interface ReadingPart {
@@ -141,14 +145,36 @@ export function splitPair(cat: SlotCatalogue, id: string): { prefix: string; uni
 export function slotCatalogue(items: readonly IndexItem[]): SlotCatalogue {
   const units = new Map<string, SlotName>();
   const prefixes = new Map<string, SlotName>();
-  for (const it of items) {
+  const symbols = { units: new Map<string, string>(), prefixes: new Map<string, string>() };
+  const ranked = [...items].sort((a, b) => (a.tier ?? 0) - (b.tier ?? 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  for (const it of ranked) {
     if (it.kind !== "unit" && it.kind !== "pfx") continue;
-    (it.kind === "unit" ? units : prefixes).set(it.id.slice(it.id.indexOf(":") + 1), {
+    const id = it.id.slice(it.id.indexOf(":") + 1);
+    (it.kind === "unit" ? units : prefixes).set(id, {
       latex: symbolLatex(it), words: titleWords(it.title),
       ...(it.si !== undefined ? { si: it.si } : {}), ...(it.dim !== undefined ? { dim: it.dim } : {}),
     });
+    const to = it.kind === "unit" ? symbols.units : symbols.prefixes;
+    for (const n of it.names) if (/^[A-Za-z]+$/.test(n) && !to.has(n)) to.set(n, id);
   }
-  return { units, prefixes };
+  return { units, prefixes, symbols };
+}
+
+/** R313: a run of letters typed on a hardware keyboard as a slot factor, the way Find reads an exact symbol: the whole
+ *  run as a unit's name (`km`, `kWh`, `psi`; a unit that is a prefix and a unit of Find's list as both, as a pick from
+ *  Find gives it: km is k and m), else the longest prefix name and a unit's name for the rest (`mN`, as the pad's prefix
+ *  and unit cells give it). Exact, as cased (`Ms` is no ms); undefined: no unit. */
+export function readSymbol(cat: SlotCatalogue, text: string): { prefix?: string; unit: string } | undefined {
+  const sym = cat.symbols;
+  if (!sym) return undefined;
+  const whole = sym.units.get(text);
+  if (whole !== undefined) return splitPair(cat, whole) ?? { unit: whole };
+  for (let i = text.length - 1; i >= 1; i--) {
+    const prefix = sym.prefixes.get(text.slice(0, i));
+    const unit = sym.units.get(text.slice(i));
+    if (prefix !== undefined && unit !== undefined && !splitPair(cat, unit)) return { prefix, unit };
+  }
+  return undefined;
 }
 
 type Pending = { kind: "prefix"; id: string } | { kind: "sqrt" };
@@ -162,6 +188,10 @@ interface Factor {
   /** The armed presses this unit took, in their order: ⌫ on the unit arms them again. */
   took: Pending[];
 }
+
+/** R313: the letters typed into the slot since the last other key (`text`), with the slot's armed presses when it began
+ *  (`took`) and the factor it reads as, the slot's last (none: the run is no unit, and stays as typed, marked). */
+interface Run { text: string; took: Pending[]; factor?: Factor }
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : Math.abs(a));
 
@@ -184,6 +214,7 @@ export class SlotModel {
   /** Index of the first factor below the ÷; absent: no ÷. Equal to the length: a ÷ with nothing after it yet. */
   #per: number | undefined;
   #pending: Pending[] = [];
+  #run: Run | undefined;
 
   /** A new slot, empty or as `from` (a line keeps its slots, so the units key shows them again). Throws on a slot
    *  the pad cannot make (a power other than an integer or n/2, a ÷ place outside the tokens). */
@@ -202,8 +233,17 @@ export class SlotModel {
     }
   }
 
-  /** One pad press. A refused press leaves the slot as it was; its message is from the i18n table. */
+  /** One pad press. A refused press leaves the slot as it was; its message is from the i18n table. R313: a press ends a
+   *  letter run first (refused while the run is no unit); ⌫ takes the run's last letter. */
   apply(a: PadAction): SlotResult {
+    if (this.#run) {
+      if (a.do === "delete") {
+        this.untype();
+        return OK;
+      }
+      const r = this.endRun();
+      if (!r.ok) return r;
+    }
     switch (a.do) {
       case "prefix": {
         if (!this.#cat.prefixes.has(a.id)) return refuse("units.slot.unknown", { unit: a.id });
@@ -266,8 +306,69 @@ export class SlotModel {
     }
   }
 
-  /** Whether the slot can be left (Enter, ▶, evaluate): not with a prefix or √ alone, nor a ÷ with nothing after it. */
+  /** R313: a letter typed on a hardware keyboard: it starts or extends the slot's letter run, read again as a unit at
+   *  each letter (readSymbol), so the slot and its reading follow every letter. The run's factor takes the armed prefix
+   *  and √ as a unit cell does (a prefix of its own replaces the armed one, as a pair does). */
+  type(ch: string): void {
+    const run = this.#run ?? { text: "", took: this.#pending };
+    this.#unread(run);
+    run.text += ch;
+    this.#run = run;
+    this.#readRun(run);
+  }
+
+  /** R313: ⌫ in a letter run: its last letter (the run's last letter gone, the slot is as before it); false: no run. */
+  untype(): boolean {
+    const run = this.#run;
+    if (!run) return false;
+    this.#unread(run);
+    run.text = run.text.slice(0, -1);
+    if (run.text) this.#readRun(run);
+    else this.#run = undefined;
+    return true;
+  }
+
+  /** R313: the letter run ends (any key but a letter or ⌫): one that reads as a unit is that factor from now on; one
+   *  that does not stays, and is refused with its letters. */
+  endRun(): SlotResult {
+    const run = this.#run;
+    if (!run) return OK;
+    if (!run.factor) return refuse("units.slot.notUnit", { letters: run.text });
+    this.#run = undefined;
+    return OK;
+  }
+
+  /** R313: Esc: the run is dropped, the slot as before it. */
+  dropRun(): void {
+    if (this.#run) this.#unread(this.#run);
+    this.#run = undefined;
+  }
+
+  /** R313: a letter run is open. */
+  get typing(): boolean {
+    return this.#run !== undefined;
+  }
+
+  #unread(run: Run): void {
+    if (!run.factor) return;
+    this.#factors.pop();
+    this.#pending = run.took;
+    delete run.factor;
+  }
+
+  #readRun(run: Run): void {
+    const s = readSymbol(this.#cat, run.text);
+    if (!s) return;
+    const prefix = s.prefix ?? this.#armedPrefix();
+    run.factor = { ...(prefix !== undefined ? { prefix } : {}), unit: s.unit, exp: 1, root: run.took.some((p) => p.kind === "sqrt"), took: run.took };
+    this.#factors.push(run.factor);
+    this.#pending = [];
+  }
+
+  /** Whether the slot can be left (Enter, ▶, evaluate): not with a prefix or √ alone, nor a ÷ with nothing after it,
+   *  nor with letters that are no unit (R313). */
   check(): SlotResult {
+    if (this.#run && !this.#run.factor) return refuse("units.slot.notUnit", { letters: this.#run.text });
     return this.#pendingRefusal() ?? (this.#per !== undefined && this.#per === this.#factors.length ? refuse("units.slot.perEmpty") : OK);
   }
 
@@ -289,7 +390,7 @@ export class SlotModel {
   }
 
   get empty(): boolean {
-    return !this.#factors.length && this.#per === undefined && !this.#pending.length;
+    return !this.#factors.length && this.#per === undefined && !this.#pending.length && !this.#run;
   }
 
   /** The slot as LaTeX (output only): factors joined by ·, the ÷ as a stacked fraction, the armed prefix or √ in
@@ -298,6 +399,8 @@ export class SlotModel {
     const parts = this.#factors.map((f) => this.#factorLatex(f));
     const armed = this.#pending.map((p) =>
       p.kind === "prefix" ? `\\class{pas-armed}{\\mathrm{${this.#cat.prefixes.get(p.id)?.latex ?? p.id}}}` : "\\class{pas-armed}{\\sqrt{\\square}}");
+    // R313: letters that are no unit, as typed and marked (a run that reads as a unit is its factor)
+    if (this.#run && !this.#run.factor) armed.push(`\\class{pas-rare}{\\mathrm{${this.#run.text}}}`);
     if (this.#per === undefined) return [...parts, ...armed].join("\\cdot");
     const num = parts.slice(0, this.#per).join("\\cdot") || "1";
     const den = [...parts.slice(this.#per), ...armed].join("\\cdot") || "\\class{pas-empty}{\\square}";
@@ -325,6 +428,7 @@ export class SlotModel {
       if (f.root) text = unitText("units.read.root", { u: text });
       (exp > 0 ? above : below).push({ text, marked });
     });
+    if (this.#run && !this.#run.factor) (this.#per === undefined ? above : below).push({ text: this.#run.text, marked: true }); // R313
     const parts = below.length ? [...above, { text: unitText("units.read.per"), marked: false }, ...below] : above;
     return { text: parts.map((p) => p.text).join(" "), parts, marked: parts.some((p) => p.marked) };
   }

@@ -157,8 +157,10 @@ export class UnitView {
     return this.#models.get(id);
   }
 
-  /** A pad press (units/pad.ts emits it). */
+  /** A pad press (units/pad.ts emits it). R313: Enter, evaluate and × end a letter run first (a slot press ends it in
+   *  the slot model). */
   apply(e: PadEmit): void {
+    if ((e.do === "next" || e.do === "evaluate" || e.do === "times") && !this.endRun()) return;
     switch (e.do) {
       case "find":
         return this.#host.find(e.into);
@@ -188,6 +190,49 @@ export class UnitView {
         if (this.#more === "picking" && this.activeId === END && m.check().ok) void this.evaluate();
       }
     }
+  }
+
+  /** R313: a letter typed on a hardware keyboard (units/typed.ts): it starts or extends the active slot's letter run,
+   *  read as a unit at every letter, so the slot and the reading follow it. */
+  letter(ch: string): void {
+    this.#retype((m) => m.type(ch));
+  }
+
+  /** R313: ⌫ in a letter run takes its last letter; false: no run is open (⌫ goes the pad's way). */
+  untype(): boolean {
+    if (!this.typing) return false;
+    this.#retype((m) => m.untype());
+    return true;
+  }
+
+  /** R313: the active slot has a letter run open. */
+  get typing(): boolean {
+    return (this.#models.get(this.activeId) as SlotModel).typing;
+  }
+
+  /** R313: a key other than a letter ends the active slot's letter run; false: its letters are no unit, which the
+   *  message names (the key is dead). */
+  endRun(): boolean {
+    const r = (this.#models.get(this.activeId) as SlotModel).endRun();
+    if (r.ok) return true;
+    this.shown = { kind: "message", text: r.message };
+    this.#host.dead();
+    return false;
+  }
+
+  /** R313: Esc drops a letter run (the slot as before it), then leaves as ever. */
+  dropRun(): void {
+    if (this.typing) this.#retype((m) => m.dropRun());
+  }
+
+  /** A change to the active slot that is no pad press (R313's letters): an evaluation still running is dropped. */
+  #retype(f: (m: SlotModel) => void): void {
+    this.#run++;
+    this.#picked = undefined;
+    f(this.#models.get(this.activeId) as SlotModel);
+    this.shown = { kind: "none" };
+    this.#draw(this.activeId);
+    this.#read();
   }
 
   /** Enter: on a chip of the row, pick it; else the next slot; in the end slot, evaluate. */
@@ -319,8 +364,9 @@ export class UnitView {
 
   /** A slot with a prefix or √ alone, or a ÷ with nothing after it, cannot be left: its refusal shows. */
   #leavable(): boolean {
-    const r = (this.#models.get(this.activeId) as SlotModel).check();
-    if (r.ok) return true;
+    const m = this.#models.get(this.activeId) as SlotModel;
+    const r = m.check();
+    if (r.ok) return m.endRun().ok; // (R313: a run that reads as a unit ends with its slot)
     this.shown = { kind: "message", text: r.message };
     this.#host.dead();
     return false;
