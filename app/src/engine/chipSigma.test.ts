@@ -7,6 +7,8 @@ import { defaultHomeSettings, precisionFacts } from "./homeEval.ts";
 import { decimalFromString, markOf, type FormatOptions } from "./format.ts";
 import { uncDigitsOf } from "./constUnc.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
+import { chipOf } from "../state/results.ts";
+import { chipFactsOf, homeItem } from "../state/resultItem.ts";
 
 describe.skipIf(!giacAvailable())("EngineHost (real Giac)", () => {
   let host: EngineHost;
@@ -52,6 +54,22 @@ describe("a chip with σ (R61)", () => {
     expect(same(a)).toEqual(same({ ...b, facts: withoutUnc }));
     // a σ of 0 is no uncertain input, as a constant's (G26)
     expect("uncDigits" in home("pasr_1*2", { "1": { ...t10, unc: "0" } }).facts).toBe(false);
+  });
+
+  // G355 (night review 2026-11-14, lo-1): a Home row's chip by the session's rule (state/results.ts chipOf) keeps the
+  // row's σ. G·5.972ᴇ24·70/6371000² is 687.398139836 with σ 0.015448769; twice it is 1374.79627967 with σ 0.030897539
+  // (oracle, mpmath: tools/probes/review-1114/vlo-oracle.py); uncDigits 5 (uncDigitsOf: exponent 3 minus σ's −2).
+  it("a Home row's chip with σ, × 2: twice its σ, and the digits past it muted", () => {
+    const row = home("pasc_G*5.972E24*70/6371000^2", undefined, { G });
+    expect(row.display).toBe("687.398139836");
+    expect(row.facts.uncDigits).toBe(4);
+    const chip = chipOf({ status: "done", ...homeItem(row, true) })!;
+    expect(chip.exact).toBe(false);
+    const r = home("pasr_1*2", chipFactsOf({ "1": chip }));
+    expect(r.display).toBe("1374.79627967");
+    expect(Number(r.facts.uncSigma).toPrecision(8)).toBe("0.030897539");
+    expect(r.facts.uncDigits).toBe(5);
+    expect(markOf(precisionFacts(r), o)?.mark).toBe("≈");
   });
 
   it("an exact chip that says it has σ is still not exact: never =", () => {

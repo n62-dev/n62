@@ -117,19 +117,35 @@ describe("the matrix grid's cell edit (R189)", () => {
     const latex = [{ tex: "1" }, { tex: "2" }, { tex: "3" }, { tex: "0.1", float: true as const }];
     return Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: TYPED, latex, ...(check === undefined ? {} : { candidate }) } : { name: "M", rows: 2, cols: 2 });
   };
-  async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; session: { shift: boolean }; sent: string[]; dead: { n: number } }> {
+  async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; session: { shift: boolean }; shell: CellLine["shell"]; sent: string[]; dead: { n: number } }> {
     answer = undefined;
     checks.length = 0;
     const sent: string[] = [];
     const dead = { n: 0 };
     const entry = { value: "7", chips: {}, clear: () => void (entry.value = ""), set: (l: string) => void (entry.value = l) };
     const session = { shift: false, alpha: false, userNames: [], submit: (l: string, g?: string) => (sent.push(`${l} | ${g ?? ""}`), Promise.resolve()) };
+    const shell: CellLine["shell"] = { editAside: null };
     const g = new MatrixGrid("M", () => SETTINGS, homeM, typed);
     g.open();
     await g.loading();
     g.move(1, 0);
-    return { g, line: { entry, session, dead: () => void dead.n++ } as unknown as CellLine, entry, session, sent, dead };
+    return { g, line: { entry, session, shell, dead: () => void dead.n++ } as unknown as CellLine, entry, session, shell, sent, dead };
   }
+
+  it("R302: the edit sets the line that was there aside in the shell (the line a hide keeps) until it ends", async () => {
+    const { g, line, entry, shell } = await at21();
+    expect(shell.editAside).toBeNull();
+    g.key(line, key("d9"), undefined);
+    expect(shell.editAside).toEqual({ latex: "7", chips: {} });
+    entry.value = "9";
+    g.key(line, key("esc"), undefined);
+    expect([shell.editAside, entry.value]).toEqual([null, "7"]);
+    g.key(line, key("d9"), undefined);
+    entry.value = "9";
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect([shell.editAside, entry.value]).toEqual([null, "7"]); // a written cell ends the edit too
+  });
 
   it("a key that types starts the edit on a cleared line; the grid's keys and a control keep the sheet's job", async () => {
     const { g, line, entry } = await at21();

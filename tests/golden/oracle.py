@@ -59,7 +59,7 @@ NOT_CASES = {"g2.yaml", "corpus.yaml"}  # corpus.yaml (G55) is inputs with no id
 SOURCES = {"oracle", "derived", "device", "virtual-calc", "reference", "assumed"}
 KEYS = ["id", "kind", "input", "to", "tap", "target", "latex", "eq", "var", "guess", "f", "g", "x0", "lo", "hi", "a", "b", "xs", "settings", "budgetMs", "oracle",
         "options", "formula", "slots", "before", "beforeCas", "beforeHome", "relaunch", "own", "uses", "steps", "consts", "code", "file", "home", "expect", "error", "chips",
-        "deg", "mark", "exact", "dim", "unit", "dimtext", "si", "si_oracle", "unc", "unc_oracle", "shown", "unc_why", "notice", "message", "source", "g2",
+        "deg", "mark", "exact", "dim", "unit", "dimtext", "si", "si_oracle", "unc", "unc_oracle", "uncDigits", "shown", "unc_why", "notice", "message", "source", "g2",
         "status", "group", "cat", "note"]
 CASE_LINE = re.compile(r"^\s*- (\{.*\})\s*$")
 
@@ -377,6 +377,20 @@ def check_unc(case: dict) -> list:
     return out
 
 
+def check_unc_digits(case: dict) -> list:
+    """home.yaml, G355: `uncDigits`, the significant digits shown before σ's first digit (app constUnc.ts uncDigitsOf):
+    the oracle value's exponent once rounded to the case's digits, minus σ's exponent (both from the oracle)."""
+    if "uncDigits" not in case:
+        return []
+    if "oracle" not in case or "unc_oracle" not in case:
+        return ["uncDigits without oracle and unc_oracle"]
+    mp.dps = 70
+    value = round_decimal(to_decimal(mp.mpmathify(M(eval(case["oracle"], namespace())))), case_digits(case))
+    sigma = to_decimal(mp.mpmathify(M(eval(case["unc_oracle"], namespace()))))
+    want = max(0, value.adjusted() - sigma.adjusted())
+    return [] if case["uncDigits"] == want else [f"uncDigits {case['uncDigits']!r} but the oracle gives {want}"]
+
+
 def derived_mark(case: dict):
     """"=" when the oracle value is exactly the shown text, else "≈" (docs/04 section 2.4); None for non-numbers."""
     if "oracle" not in case or parse_shown(case.get("expect"), lambda t: 0) is None:
@@ -518,7 +532,7 @@ def check_file(path: Path, write: bool, g2_items: set, counts=None):
                         problems.append(f"cross-check ({src}): expect {case.get('expect')!r} but oracle {v30!r}")
             if path.name in MARK_FILES:
                 problems += check_mark(case, write)
-            problems += check_exact(case) + check_exact(case, "si", "si_oracle") + check_unc(case)
+            problems += check_exact(case) + check_exact(case, "si", "si_oracle") + check_unc(case) + check_unc_digits(case)
         except Exception as e:  # F197: a row whose oracle expression raises is one PROBLEM for it, and the run goes on
             problems.append(f"oracle expression failed: {type(e).__name__}: {' '.join(str(e).split())}")
         for p in problems:

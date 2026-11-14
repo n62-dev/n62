@@ -68,6 +68,9 @@ export class AppShell {
   /** R270: Home's unentered line while an app is open (the shared Home/CAS line): put back on the line by `close`, stored by
    *  main.ts as the kept line (R34). Null: nothing set aside. */
   aside: { readonly latex: string; readonly chips: ChipTable } | null = null;
+  /** R302: the line an edit on the entry line set aside (a matrix cell's, views/matrixGrid.svelte.ts), while it runs: in
+   *  Home and CAS the one a hide keeps and a clear leaves (R34), as the name prompt's `aside` (R123). Null: no such edit. */
+  editAside: { readonly latex: string; readonly chips: ChipTable } | null = null;
   /** A name typed in the entry line under its label (R89, a preset's name): route.ts gives it each key's action first. */
   prompt = $state.raw<EntryPrompt | null>(null);
 
