@@ -263,7 +263,8 @@ test("with no edit Undo, Redo, ⇤ and ⇥ change nothing; during an edit ≈ ty
   await tap(page, ["shift", "esc"]);
   await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
   expect(await entryValue(page)).toBe("");
-  await tap(page, ["shift", "esc"]); // an empty cell line: the history stays
+  await tap(page, ["shift", "esc"]); // an empty cell line: the history stays (the one-shot Shift was used up)
+  await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
   expect(await rows(page)).toBe(before);
   await tap(page, ["d2", "undo"]); // during an edit Undo acts on the cell's line
   expect(await entryValue(page)).toBe("");
