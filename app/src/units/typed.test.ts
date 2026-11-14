@@ -6,10 +6,10 @@ import { describe, expect, it } from "vitest";
 import type { IndexItem } from "../find/types.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import type { PadEmit } from "./pad.ts";
-import { SlotModel, readSymbol, slotCatalogue } from "./slot.ts";
+import { SlotModel, isLetters, readSymbol, slotCatalogue, type PadAction } from "./slot.ts";
 import { HwTyping, type TypedView } from "./typed.ts";
 
-const unit = (id: string, names: string[], title: string, si: string, dim: string, tier = 0): IndexItem =>
+const unit = (id: string, names: string[], title: string, si: string, dim: string, tier: 0 | 1 = 0): IndexItem =>
   ({ id: `unit:${id}`, kind: "unit", names, title, tier, insert: `\\unit{${id}}{\\mathrm{${id}}}`, si, dim });
 const pfx = (id: string, names: string[], title: string, si: string): IndexItem =>
   ({ id: `pfx:${id}`, kind: "pfx", names, title, tier: 0, insert: `\\pfx{${id}}{\\mathrm{${id}}}`, si });
@@ -56,6 +56,11 @@ describe("readSymbol: a letter run as Find's exact symbols", () => {
     expect(readSymbol(CAT, "kkm")).toBeUndefined(); // (no prefix before a pair)
     expect(readSymbol({ units: CAT.units, prefixes: CAT.prefixes }, "km")).toBeUndefined(); // a catalogue without names reads none
   });
+});
+
+it("isLetters: ASCII letters only, none empty", () => {
+  for (const s of ["k", "kWh", "Z", "psi"]) expect(isLetters(s), s).toBe(true);
+  for (const s of ["", "k2", "W·h", "µ", "@", "[", "`", "{", "deg C"]) expect(isLetters(s), s).toBe(false);
 });
 
 describe("SlotModel: the letter run", () => {
@@ -143,7 +148,7 @@ describe("HwTyping: the unit view's typing keys", () => {
       dropRun: () => s.dropRun(),
       apply: (e) => {
         got.push(e);
-        if (e.do !== "find" && e.do !== "next" && e.do !== "evaluate" && e.do !== "times") s.apply(e);
+        if (e.do !== "find" && e.do !== "next" && e.do !== "evaluate" && e.do !== "times") s.apply(e as PadAction);
       },
     };
     return { v, s, got };

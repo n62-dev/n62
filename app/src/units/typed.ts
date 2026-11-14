@@ -8,6 +8,7 @@
 // and the digit after it (2, 3, 4, or -1) are the power, and any other key ends the run first: a run that reads as no
 // unit refuses the key, and the message names its letters. A chord is never taken here. Loaded with the unit view.
 import type { PadEmit } from "./pad.ts";
+import { isLetters } from "./slot.ts";
 
 /** What the typing needs of the view (units/view.ts UnitView). */
 export interface TypedView {
@@ -45,7 +46,7 @@ export class HwTyping {
     else if (caret === "^" && POWERS[k] !== undefined) v.apply({ do: "power", n: POWERS[k] });
     else if (caret === "^-" && k === "1") v.apply({ do: "power", n: -1 });
     else if (caret && k === "Backspace") return true; // (the `^` taken back)
-    else if (/^[A-Za-z]$/.test(k)) v.letter(k);
+    else if (k.length === 1 && isLetters(k)) v.letter(k);
     else if (v.typing && k === "Backspace") v.untype();
     else if (v.typing && k === "Escape") {
       v.dropRun();

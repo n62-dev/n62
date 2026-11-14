@@ -139,10 +139,11 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  28,398, factors 16,840 → 16,877): giacPrint.ts left the start chunk for a shared lazy chunk of its own (its start part
  *  is giacPrintStart.ts), so the unit view's two chunks that read it import that chunk by name. 69,894 B + 0.05 kB,
  *  rounded up to the next 0.01 kB.
- *  69.95 → 72.44 kB (R313): phase-1 145a2b0e measures 69,559 B, the branch 72,390 B (open 28,026 → 29,305, slot 10,379 →
- *  11,931): letters typed on a hardware keyboard into a slot read as a unit (slot.ts readSymbol and the slot's letter run,
- *  with the catalogue's names; typed.ts, the view's typing keys and `^2`; view.ts, the run's glue). 72,390 B + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 72_440;
+ *  69.95 → 72.55 kB (R313): phase-1 145a2b0e measures 69,559 B, the branch 72,496 B (open 28,026 → 29,312, slot 10,379 →
+ *  12,030): letters typed on a hardware keyboard into a slot read as a unit (slot.ts readSymbol, isLetters and the slot's
+ *  letter run, with the catalogue's names; typed.ts, the view's typing keys and `^2`; view.ts, the run's glue). 72,496 B +
+ *  0.05 kB, rounded up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 72_550;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {

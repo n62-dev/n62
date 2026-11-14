@@ -155,9 +155,18 @@ export function slotCatalogue(items: readonly IndexItem[]): SlotCatalogue {
       ...(it.si !== undefined ? { si: it.si } : {}), ...(it.dim !== undefined ? { dim: it.dim } : {}),
     });
     const to = it.kind === "unit" ? symbols.units : symbols.prefixes;
-    for (const n of it.names) if (/^[A-Za-z]+$/.test(n) && !to.has(n)) to.set(n, id);
+    for (const n of it.names) if (isLetters(n) && !to.has(n)) to.set(n, id);
   }
   return { units, prefixes, symbols };
+}
+
+/** R313: `s` is ASCII letters only, what a keyboard types into a slot's letter run (by char code: no pattern, G88). */
+export function isLetters(s: string): boolean {
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i) | 32; // (A–Z to a–z)
+    if (c < 97 || c > 122) return false;
+  }
+  return s.length > 0;
 }
 
 /** R313: a run of letters typed on a hardware keyboard as a slot factor, the way Find reads an exact symbol: the whole
