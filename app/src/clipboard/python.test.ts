@@ -379,7 +379,7 @@ describe("translateRows: the function table (G214)", () => {
   });
   it("a name the input read as a stored value is that value, never the function", () => {
     const r = row("\\operatorname{erf}\\left(2\\right)", { exact: "v", defs: [{ name: "erf" }] });
-    expect(py([r])).toBe(file("# N62 NOT TRANSLATED (erf is not set in this file): \\operatorname{erf}\\left(2\\right)", "# N62: = v"));
+    expect(py([r])).toBe(file("# N62 NOT TRANSLATED (erf is a Python word): \\operatorname{erf}\\left(2\\right)", "# N62: = v"));
   });
   it("a user name equal to a sympy name the table writes is not bound", () => {
     expect(py([row("5\\blacktriangleright\\operatorname{rad}", { exact: "5" })])).toBe(
