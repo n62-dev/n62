@@ -91,7 +91,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 688 | A100 append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
-| 689 | [A137](packages/A137.md) the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
+| 689 | A137 the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
 | 745 | [A101](packages/A101.md) a checked append, never a mode switch (the Tab One) | annabell, Opus | `p1/annabell-appendcheck` | A100 |
 | 686 | [G212](packages/G212.md) Home rows list the stored values they read | gorge, Opus | `p1/gorge-homeuses` | G210 |
 | 746 | [G218](packages/G218.md) what the sync folder receives | gorge, Opus | `p1/gorge-syncfiles` | G211, G212, G213 |

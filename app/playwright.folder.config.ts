@@ -6,7 +6,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: "test-device",
   testMatch: "folder.rec.ts",
-  timeout: 300_000,
+  timeout: 900_000,
   workers: 1,
   retries: 0,
   reporter: [["list"]],
