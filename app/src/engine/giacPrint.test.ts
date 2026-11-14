@@ -21,6 +21,7 @@ import {
   replaceLiteral,
   splitList,
   typedFromPrinted,
+  typedSequence,
   stringEnd,
   topLevelArgs,
   UNCLOSED,
@@ -60,6 +61,22 @@ describe("brackets", () => {
     expect(balanced('f(")")', "typed")).toBe(true);
     expect(noneOpen("x)", "typed")).toBe(true);
     expect(noneOpen("f(x", "typed")).toBe(false);
+  });
+  it("typedSequence: a comma outside brackets or in bare parentheses only, never in a string or a call (R189)", () => {
+    expect(typedSequence("(1,2)")).toBe(true);
+    expect(typedSequence("((1,2))")).toBe(true);
+    expect(typedSequence("1,2")).toBe(true);
+    expect(typedSequence("1;2")).toBe(true);
+    expect(typedSequence("max(1,2)")).toBe(false);
+    expect(typedSequence("max (1,2)")).toBe(false);
+    expect(typedSequence("f(x)(1,2)")).toBe(false);
+    expect(typedSequence("(max(1,2))")).toBe(false);
+    expect(typedSequence("[1,2]")).toBe(false);
+    expect(typedSequence('"a,b"')).toBe(false);
+    expect(typedSequence('"(a",1')).toBe(true);
+    expect(typedSequence('("a,b")')).toBe(false);
+    expect(typedSequence('"a\\")",2')).toBe(true); // typed: \" escapes, the string ends at the third "
+    expect(typedSequence("1/3")).toBe(false);
   });
   it("splitList reads a printed list, list[…] too, and nothing else", () => {
     expect(splitList("[1,[2,3],f(4,5)]")).toEqual(["1", "[2,3]", "f(4,5)"]);

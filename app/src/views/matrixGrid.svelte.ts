@@ -24,6 +24,7 @@ import { confirmedOptions, formatComplex, markOf, type ComplexValue, type Format
 import type { ValueFacts } from "../engine/types.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
 import type { MatrixCell, MatrixRead } from "../calc/matrices.ts";
+import { typedSequence } from "../engine/giacPrint.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
 import { commaResult } from "../state/displayMode.ts";
@@ -177,7 +178,7 @@ export class MatrixGrid {
       this.refusal = parseFailText(e);
       return;
     }
-    if (spreads(giac)) return void (this.refusal = findText("matrix.oneValue"));
+    if (typedSequence(giac)) return void (this.refusal = findText("matrix.oneValue"));
     const m = await this.elements("typed").catch(() => null);
     const texts = m?.typed ? [...m.typed] : [];
     if (!m || texts.length !== this.rows * this.cols || m.cols !== this.cols) return void (this.refusal = findText("matrix.unread"));
@@ -227,19 +228,4 @@ export class MatrixGrid {
 function numberOf(c: GridCell): { value: ComplexValue; facts: ValueFacts } | null {
   if ("result" in c) return c.result.ok && c.result.value ? { value: c.result.value, facts: c.result.facts } : null;
   return "value" in c ? c : null;
-}
-
-/** R189: the parser's text is a sequence, more than one value, which Giac would spread over the row (`(1,2)` in a list
- *  is two elements): a comma or semicolon outside brackets, or inside bare parentheses only (not a call's arguments). */
-function spreads(giac: string): boolean {
-  const bare: boolean[] = []; // per open bracket: a parenthesis that is no call's
-  let prev = "";
-  for (const ch of giac) {
-    if (ch === "(") bare.push(!/[\w)\]]/.test(prev));
-    else if (ch === "[" || ch === "{") bare.push(false);
-    else if (ch === ")" || ch === "]" || ch === "}") bare.pop();
-    else if ((ch === "," || ch === ";") && bare.every((b) => b)) return true;
-    if (ch !== " ") prev = ch;
-  }
-  return false;
 }
