@@ -474,8 +474,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (175,348 B raw): 62,244 B + 0.05 kB.
  *  62,300 → 62,380 B (G355): a Home row's chip and Ans carry its σ (state/results.ts chipOf sets R61's `unc` from the
  *  row's uncSigma, and a row with σ never gives an exact chip). With phase-1 d3c84b9c merged in, the branch before it
- *  measures 62,301 B (175,648 B raw), after it 62,321 B (175,669 B raw): 62,321 B + 0.05 kB, rounded up to 0.01 kB. */
-export const START_PIN_GZIP = 62_380;
+ *  measures 62,301 B (175,648 B raw), after it 62,321 B (175,669 B raw): 62,321 B + 0.05 kB, rounded up to 0.01 kB.
+ *  62,380 → 62,390 B (R302): a matrix cell's edit sets the user's line aside where a hide keeps it (apps/shell.svelte.ts
+ *  `editAside`, read by main.ts's onClear and flush). Phase-1 d3c84b9c measures 62,297 B gzip (175,648 B raw), the branch
+ *  62,306 B (175,685 B raw); with G355 merged in, 62,332 B (175,706 B raw): 62,332 B + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 62_390;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
