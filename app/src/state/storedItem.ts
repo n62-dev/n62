@@ -5,7 +5,7 @@ import { readValueFacts } from "../engine/types.ts";
 import type { ComplexValue, PrecisionFacts } from "../engine/format.ts";
 import { validChips } from "../input/chips.ts";
 import { isFormStep, type ResultFacts } from "./displayMode.ts";
-import { FULL_LIMIT, ITEMS_LIMIT, rowUid } from "./results.ts";
+import { FULL_LIMIT, HISTORY_LIMIT, ITEMS_LIMIT, rowUid } from "./results.ts";
 import type { HistoryItem, UsedValue } from "./session.svelte.ts";
 
 /** A stored `word` (G211) when whole: the rule of wordSetting.ts validWord, repeated so this chunk does not import that
@@ -80,3 +80,20 @@ export function restoredItem(i: HistoryItem, id: number): HistoryItem {
   return out;
 }
 
+/** The stored history's rows read back (Session.restoreHistory): per view the finished ones with their entry, the last
+ *  HISTORY_LIMIT, each by restoredItem with the next id (`id`; Home's first). `gained`: a row had no uid and got one
+ *  here (G211), so the session writes the history back and the row keeps it. Here, not in the session: the start chunk. */
+export function restoredLists(hist: { home?: HistoryItem[]; cas?: HistoryItem[] }, id: () => number): { home: HistoryItem[]; cas: HistoryItem[]; gained: boolean } {
+  let gained = false;
+  const keep = (xs: HistoryItem[] | undefined): HistoryItem[] =>
+    (xs ?? [])
+      .filter((i) => (i.status === "done" || i.status === "error") && typeof i.latex === "string")
+      .slice(-HISTORY_LIMIT)
+      .map((i) => {
+        const out = restoredItem(i, id());
+        gained ||= out.uid !== i.uid;
+        return out;
+      });
+  const home = keep(hist.home);
+  return { home, cas: keep(hist.cas), gained };
+}

@@ -770,24 +770,19 @@ export class Session {
     const reader = storedReader();
     const hist = await this.kv.get<{ home?: HistoryItem[]; cas?: HistoryItem[]; undo?: unknown }>("history");
     if (hist) {
-      const restoredItem = await reader;
-      if (!restoredItem) return;
+      const r = await reader;
+      if (!r) return;
       // Entries typed before the store answered stay after the restored ones.
       // Fresh ids: entries typed before the store answered already use the low numbers (ids key the list).
-      let gained = false; // G211: a row read without a uid gets one (storedItem.ts), written back below so it keeps it
-      const keep = (xs: HistoryItem[] | undefined): HistoryItem[] =>
-        (xs ?? [])
-          .filter((i) => (i.status === "done" || i.status === "error") && typeof i.latex === "string")
-          .slice(-HISTORY_LIMIT)
-          .map((i) => ((gained ||= i.uid === undefined), restoredItem(i, this.nextId++)));
-      const [home, cas] = [keep(hist.home), keep(hist.cas)];
+      const next = (): number => this.nextId++;
+      const { home, cas, gained } = r.restoredLists(hist, next); // (G211: `gained`, a row given its uid now, is written back below)
       this.home.splice(0, 0, ...home);
       this.cas.splice(0, 0, ...cas);
       // A Clear or Delete before the read kept places in the list without the stored rows, now in front (a copy means its code is in)
       if (removedCode) this.copies = removedCode.front(this.copies, home.length, cas.length);
       // R98: the stored Undo copies (one per view, R119), unless an Enter or a Clear before the read (or meanwhile) changed the history
       const m = hist.undo && !this.savePending ? await loadRemoved() : undefined;
-      if (m && !this.savePending) this.copies = m.withStored(this.copies, hist.undo, (i) => restoredItem(i, this.nextId++), HISTORY_LIMIT);
+      if (m && !this.savePending) this.copies = m.withStored(this.copies, hist.undo, (i) => r.restoredItem(i, next()), HISTORY_LIMIT);
       if (gained) this.savePending = true;
     }
     this.historyRead = true;

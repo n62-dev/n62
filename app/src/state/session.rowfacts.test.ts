@@ -195,6 +195,24 @@ describe("uid and at (G211)", () => {
     await s2.restoreHistory();
     expect(s2.home[0]?.uid).toBe(uid);
   });
+
+  it("a stored uid of the wrong shape is replaced once and kept too; a whole one is not written back (restoredLists)", async () => {
+    const old = { id: 7, view: "cas", latex: "1", status: "done", resultLatex: "1", text: "1", approximate: false, startedAt: 5 };
+    const kv: FakeKv = fakeKv([["history", { cas: [{ ...old, uid: 5 }] }]]);
+    const s1 = new Session(new SpyCalc(), kv);
+    await s1.restoreHistory();
+    const uid = s1.cas[0]?.uid;
+    expect(uid).toBe(uidAt(T0, s1.cas[0]?.id ?? -1));
+    vi.setSystemTime(T0 + 60_000);
+    const s2 = new Session(new SpyCalc(), kv);
+    await s2.restoreHistory();
+    expect(s2.cas[0]?.uid).toBe(uid);
+    const kept = fakeKv([["history", { home: [{ ...old, view: "home", uid: "x-1" }] }]]);
+    const s3 = new Session(new SpyCalc(), kept);
+    await s3.restoreHistory();
+    expect(s3.home[0]?.uid).toBe("x-1");
+    expect(kept.writes).not.toContain("history");
+  });
 });
 
 describe("stored rows keep the six with their shape (storedItem.ts, G211)", () => {

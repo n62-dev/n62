@@ -5,9 +5,9 @@ import { lazyOnce } from "../lazyOnce.ts";
 
 type Stored = typeof import("./storedItem.ts");
 const load = lazyOnce((): Promise<Stored> => import("./storedItem.ts"));
-/** The reader of a stored row, with one more try if the first load failed (a tab open across a redeploy: the old hashed
- *  file is gone); undefined when neither loads. Never rejects. */
-export const storedReader = (): Promise<Stored["restoredItem"] | undefined> =>
+/** The stored rows' reader (restoredLists, restoredItem), with one more try if the first load failed (a tab open across
+ *  a redeploy: the old hashed file is gone); undefined when neither loads. Never rejects. */
+export const storedReader = (): Promise<Stored | undefined> =>
   load()
     .catch(load)
-    .then((m) => m.restoredItem, () => undefined);
+    .catch(() => undefined);
