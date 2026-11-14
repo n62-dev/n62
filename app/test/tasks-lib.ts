@@ -10,7 +10,12 @@ export type Step = string | { tap: string } | { hold: string } | { drag: string 
 export interface Baseline {
   note?: string;
   keys: Step[];
-  text: string;
+  /** What it reads: a string, or a list when expect.value is one (element for element, last Home rows or Solve's table). */
+  text: string | string[];
+  /** Where a list is read: Home's last rows (default) or Solve's Num table (R221). */
+  read?: "solve";
+  /** read: solve, the unknowns whose values make `text`, in this order. */
+  names?: string[];
 }
 
 export interface Task {
@@ -48,9 +53,12 @@ export const countPresses = (steps: readonly Step[]): number => steps.length;
 
 export const withinBudget = (steps: readonly Step[], budget: number): boolean => countPresses(steps) <= budget;
 
+/** The status line's controls a step may name (helpers.ts `tap`); each is one tap on the screen. */
+const CONTROLS = ["@place", "@symb", "@plot", "@num", "@menu", "@home", "@cas"];
+
 /** The step's key id, or null when it is not a key press. */
 export const keyOf = (s: Step): string | null =>
-  typeof s === "string" ? s : "hold" in s ? s.hold : "up" in s ? s.up : "down" in s ? s.down : null;
+  typeof s === "string" ? (s.startsWith("@") ? null : s) : "hold" in s ? s.hold : "up" in s ? s.up : "down" in s ? s.down : null;
 
 /** Problems with the task list itself (empty = fine). Needs no browser. */
 export function validate(tasks: readonly Task[], keys: ReadonlySet<string>): string[] {
@@ -73,14 +81,22 @@ export function validate(tasks: readonly Task[], keys: ReadonlySet<string>): str
       at(`${countPresses(t.keys)} presses in keys, budget ${t.budget}`);
     for (const [what, steps] of [["keys", t.keys], ["baseline", t.baseline?.keys ?? null]] as const) {
       for (const s of steps ?? []) {
+        if (typeof s === "string" && s.startsWith("@") && !CONTROLS.includes(s)) at(`${what}: no status-line control "${s}"`);
         const id = keyOf(s);
         if (id !== null && !keys.has(id)) at(`${what}: no key "${id}" in spec/keyboard.yaml`);
         if (typeof s === "object" && ("tap" in s ? s.tap : "drag" in s ? s.drag : "x") === "") at(`${what}: empty target`);
       }
     }
-    if (t.baseline && typeof t.expect.value === "string") {
-      const rel = Math.abs((Number(t.baseline.text) - Number(t.expect.value)) / Number(t.expect.value));
-      if (!(rel < 1e-11)) at(`baseline text ${t.baseline.text} is not expect.value ${t.expect.value} to 12 digits`);
+    const b = t.baseline;
+    if (b) {
+      const want = t.expect.value;
+      const near = (got: string, exp: string): boolean => Math.abs((Number(got) - Number(exp)) / Number(exp)) < 1e-11;
+      if (Array.isArray(b.text) !== Array.isArray(want)) at(`baseline text is ${Array.isArray(b.text) ? "a list" : "not a list"}, expect.value is ${Array.isArray(want) ? "a list" : "not a list"}`);
+      else if (Array.isArray(b.text) && Array.isArray(want)) {
+        if (b.text.length !== want.length) at(`baseline text has ${b.text.length} elements, expect.value ${want.length}`);
+        else b.text.forEach((x, i) => near(x, want[i] as string) || at(`baseline text[${i}] ${x} is not expect.value[${i}] ${want[i]} to 12 digits`));
+      } else if (!near(b.text as string, want as string)) at(`baseline text ${String(b.text)} is not expect.value ${String(want)} to 12 digits`);
+      if (b.read === "solve" && b.names?.length !== (Array.isArray(b.text) ? b.text.length : 1)) at("baseline read: solve needs one name per element of text");
     }
   }
   return bad;
