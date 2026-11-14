@@ -61,6 +61,7 @@ export const enData = {
   "part.app.function": "Function app",
   "part.app.solve": "Solve app",
   "part.units.targets": "Unit targets",
+  "part.word": "Word size and sign",
   // R59: Settings › Data › Library (decisions.md S4, archive/r10-connector.md)
   "library": "Library",
   "library.value": "Import · Export",

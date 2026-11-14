@@ -9,19 +9,23 @@
 // w-bit pattern of x and reads the result back the same way, so shl(1,7,8,1) = −128. `shr` of a signed word is the
 // arithmetic shift (the sign bit is copied in: shr(−128,1,8,1) = −64), of an unsigned one the logical shift. A count of
 // w or more shifts every bit out (0, or −1 for a negative signed shr); a rotation turns by n mod w.
-// The short forms (shl(x,n), bnot(x); a third argument gives the word alone) take WORD_BITS and WORD_SIGNED. R194 brings
-// the word size and sign as settings; until then these defaults hold.
+// The short forms (shl(x,n), bnot(x); a third argument gives the word alone) take the word size and sign of the settings
+// (R194: HomeSettings and CasSettings `word`, `signed`; engine/wordSettings.ts gives the host the definitions for them and
+// loads them again when they change), and WORD_BITS and WORD_SIGNED while the settings have none.
 // A refusal is a throw of stats.ts REFUSAL_MARK and its code, which wordRefusal reads back from Giac's error text
 // (converge.ts errorRefusal), as G223's are. Only erasable TypeScript syntax: the worker and Node run this file directly.
 import { REFUSAL_MARK } from "./stats.ts";
 
-/** The word size and sign of the short forms (docs/04 5.4); R194 makes them settings. */
+/** The word size and sign of the short forms while the settings give none (docs/04 5.4). */
 export const WORD_BITS = 64;
 export const WORD_SIGNED = 0;
 
 /** The refusals of these definitions (text: enEngine.ts). */
 export const WORD_REFUSALS = ["wordArgs", "wordSize", "wordValue", "wordCount"] as const;
 export type WordRefusal = (typeof WORD_REFUSALS)[number];
+
+/** The text of a definition that sets the word of its short forms (engine/wordSettings.ts swaps it for the setting's). */
+export const wordInit = (bits: number, signed: number): string => `pasw_:=${bits}; pass_:=${signed}; `;
 
 const refuse = (code: WordRefusal): string => `throw("${REFUSAL_MARK}${code}")`;
 
@@ -36,7 +40,7 @@ function wordOp(name: string, count: boolean, op: string): string {
   return (
     `${name}(pasa_):={ local pasl_,pasx_,pasn_,pasw_,pass_,pasm_,pasu_,pasr_,pask_; pasl_:=[pasa_]; ` +
     `if (size(pasl_)<${at + 1} or size(pasl_)>${at + 3}) ${refuse("wordArgs")}; ` +
-    `pasx_:=pasl_[0]; pasw_:=${WORD_BITS}; pass_:=${WORD_SIGNED}; ` +
+    `pasx_:=pasl_[0]; ${wordInit(WORD_BITS, WORD_SIGNED)}` +
     `if (size(pasl_)>${at + 1}) pasw_:=pasl_[${at + 1}]; if (size(pasl_)>${at + 2}) pass_:=pasl_[${at + 2}]; ` +
     `if (type(pasw_)!=integer) ${refuse("wordSize")}; if (pasw_!=8 and pasw_!=16 and pasw_!=32 and pasw_!=64) ${refuse("wordSize")}; ` +
     `if (type(pass_)!=integer) ${refuse("wordSize")}; if (pass_!=0 and pass_!=1) ${refuse("wordSize")}; ` +

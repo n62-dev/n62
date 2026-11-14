@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Calc port on top of gorge's MathEngine (app/src/engine). The only place the views meet it.
-import { defaultHomeSettings } from "../engine/homeDefaults.ts";
 import {
-  defaultCasSettings,
   EngineCancelled,
   type AnalysisRequest,
   type AnalysisResult,
   type CasResult,
   type HomeResult,
-  type HomeSettings,
   type MathEngine,
   type SolveOutcome,
   type SolveRequest,
@@ -19,6 +16,7 @@ import { userNamesOf } from "../engine/defs.ts";
 import { mark } from "../marks.ts";
 import { CalcCancelled, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type CasOutcome, type HomeOutcome, type Quantity, type UnitError, type UnitRequest, type UserName } from "./port.ts";
 import type { IndexItem } from "../find/types.ts";
+import type { WordStore } from "../state/wordStore.svelte.ts";
 
 /**
  * What the port does with each key of an engine result (G76): "pass" gives it to the view as it is (`facts` whole, so
@@ -107,16 +105,16 @@ export class EngineCalc implements Calc {
 
   home(giac: string, s: CalcSettings, chips?: ChipFactsTable, consts?: ConstTable): Promise<HomeOutcome> {
     // an absent table is not sent (WorkerEngine.home); the session sends `consts` only when the input holds one (R40)
-    const r = this.engine.home(giac, homeSettings(s), consts, chips && Object.keys(chips).length ? chips : undefined);
+    const r = this.word().then((w) => this.engine.home(giac, w.home(s), consts, chips && Object.keys(chips).length ? chips : undefined));
     return mapCancel(r.then((r) => ({ ...passed(r, HOME_KEYS), ...(r.rational && r.exact !== undefined ? { exact: r.exact } : {}) })));
   }
 
   cas(giac: string, s: CalcSettings): Promise<CasOutcome> {
-    return mapCancel(this.engine.cas(giac, { ...defaultCasSettings, digits: s.digits, angle: s.angle }).then((r) => passed(r, CAS_KEYS)));
+    return mapCancel(this.word().then((w) => this.engine.cas(giac, w.cas(s))).then((r) => passed(r, CAS_KEYS)));
   }
 
   solve(req: SolveRequest, s: CalcSettings): Promise<SolveOutcome> {
-    return mapCancel(this.engine.solve(req, homeSettings(s)));
+    return mapCancel(this.word().then((w) => this.engine.solve(req, w.home(s))));
   }
 
   unknowns(equations: string[]): Promise<string[]> {
@@ -124,16 +122,23 @@ export class EngineCalc implements Calc {
   }
 
   analyze(req: AnalysisRequest, s: CalcSettings): Promise<AnalysisResult> {
-    return mapCancel(this.engine.analyze(req, homeSettings(s)));
+    return mapCancel(this.word().then((w) => this.engine.analyze(req, w.home(s))));
   }
 
   table(req: TableRequest, s: CalcSettings): Promise<HomeResult[][]> {
-    return mapCancel(this.engine.table(req, homeSettings(s)));
+    return mapCancel(this.word().then((w) => this.engine.table(req, w.home(s))));
   }
 
   units(req: UnitRequest, s: CalcSettings): Promise<Quantity | UnitError> {
     // The builder and the factor table load with the unit view, never in the start chunk (docs/04 4.4).
-    return mapCancel(import("../units/calc.ts").then((m) => m.evaluateUnits(this.engine, this.findIndex, req, homeSettings(s))));
+    return mapCancel(Promise.all([import("../units/calc.ts"), this.word()]).then(([m, w]) => m.evaluateUnits(this.engine, this.findIndex, req, w.home(s))));
+  }
+
+  /** R194: the settings of every request (Home's, CAS's) come from the lazy word store (state/wordStore.svelte.ts, in the
+   *  base forms' chunk, whose name the start chunk lists already): the defaults, the digits and angle, and the word size and
+   *  sign the short forms shl, bnot… read (engine/wordOps.ts), once it was read. Nothing of the defaults stays in the start chunk. */
+  private word(): Promise<WordStore> {
+    return import("../state/cycleForms.ts").then((m) => m.wordStore.restore().then(() => m.wordStore));
   }
 
   async names(): Promise<UserName[]> {
@@ -143,10 +148,6 @@ export class EngineCalc implements Calc {
   async cancel(): Promise<void> {
     await this.engine.cancel();
   }
-}
-
-function homeSettings(s: CalcSettings): HomeSettings {
-  return { ...defaultHomeSettings, digits: s.digits, angle: s.angle };
 }
 
 async function mapCancel<T>(p: Promise<T>): Promise<T> {

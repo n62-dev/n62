@@ -22,6 +22,8 @@ import {
   type Polar,
 } from "./displayMode.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
+import { wordStore } from "./wordStore.svelte.ts";
+export { wordStore };
 
 const isBase = (m: FmtMode | undefined): m is Base => m === "hex" || m === "bin" || m === "oct";
 
@@ -34,17 +36,18 @@ export function isApplicable(mode: FmtMode, f: Facts): boolean {
   return true;
 }
 
-/** The word a base form is drawn in: 64 bits, unsigned, as G229's word ops, until R194's setting. */
+/** The word a base form is drawn in: the setting's (R194, wordStore.ts: read once this code is in), else 64 bits unsigned, as G229's word ops. */
 export interface Word {
   bits: number;
   signed: boolean;
 }
 const WORD: Word = { bits: 64, signed: false };
+void wordStore.restore(); // R194: read when this code loads (main.ts, idle); a base form is drawn in the setting's word once it is in
 
 /** R192: `r` drawn in the base `mode` (formatBase, G228), not padded to the word: `0xFF`. Undefined when `mode` is no
  *  base, the result no exact integer, or the value outside the word (a negative one in an unsigned word too): the
  *  result then keeps its form, the number in its notation (Session.display). */
-export function baseDrawn(r: NumericResult, mode: FmtMode | undefined, word: Word = WORD): Drawn | undefined {
+export function baseDrawn(r: NumericResult, mode: FmtMode | undefined, word: Word = wordStore.value ?? WORD): Drawn | undefined {
   if (!isBase(mode) || !r.rational || !isApplicable(mode, factsOf(r))) return undefined;
   const s = formatBase(r.rational.n, mode, word.bits, word.signed);
   return typeof s === "string" ? { text: s, latex: `\\mathrm{${s}}` } : undefined;
@@ -57,8 +60,8 @@ export function drawnIn(r: NumericResult, mode: FmtMode | undefined, ctx: Displa
 
 /** R192: the mark of `r` drawn in `mode` (Session.mark). A base form draws the integer whole, as a fraction does, so it
  *  is marked as the fraction is: `=` when exact (`≈` from an inexact chip, `⚠` kept); every other drawing as markFor. */
-export function baseMark(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, word: Word = WORD): MarkInfo | null {
-  return markFor(r, baseDrawn(r, mode, word) ? "frac" : mode, ctx);
+export function baseMark(r: NumericResult, mode: FmtMode | undefined, ctx: DisplayContext, word?: Word): MarkInfo | null {
+  return markFor(r, baseDrawn(r, mode, word ?? wordStore.value ?? WORD) ? "frac" : mode, ctx);
 }
 
 /**

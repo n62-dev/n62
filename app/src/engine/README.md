@@ -74,6 +74,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `polyvec.ts` | G106: a list plus or minus a number read as polynomial coefficients; called by `homeEval.ts`, `host.ts` |
 | `stats.ts` | G223: our `linreg` and `stats1` definitions and their refusals in words; read by `homeEval.ts` (ENGINE_DEFINITIONS) and `converge.ts` (errorRefusal) |
 | `wordOps.ts` | G229: our `shl`, `shr`, `rotl`, `rotr`, `bnot` in a word of 8 to 64 bits (docs/04 5.4) and their refusals; read by `homeEval.ts` (ENGINE_DEFINITIONS) and `converge.ts` (errorRefusal) |
+| `wordSettings.ts` | R194: the word ops' definitions for the word of the settings (`word`, `signed` of HomeSettings and CasSettings), swapped into wordOps.ts's defaults; the host only (the worker, not the start chunk) |
 
 **Angles (route R, S14)**
 
