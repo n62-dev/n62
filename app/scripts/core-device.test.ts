@@ -106,3 +106,17 @@ describe("WebView debugging", () => {
     expect(root("fdroid/README.md")).not.toMatch(/--test|WEBVIEW_DEBUG/);
   });
 });
+
+describe("the sync folder's test seams (A137)", () => {
+  it("are on only in the test build: BuildConfig.TEST_SEAMS follows N62_WEBVIEW_DEBUG, which build.sh sets under --test alone", () => {
+    const gradle = root("android/app/build.gradle");
+    expect(gradle).toContain(`buildConfigField "boolean", "TEST_SEAMS", (System.getenv('N62_WEBVIEW_DEBUG') == '1') ? "true" : "false"`);
+    expect(gradle.match(/TEST_SEAMS/g)).toHaveLength(1);
+  });
+  it("every read of a seam in N62FilesPlugin is guarded by BuildConfig.TEST_SEAMS", () => {
+    const java = root("android/app/src/main/java/dev/n62/calc/N62FilesPlugin.java");
+    const reads = java.split("\n").filter((l) => /"(failAfter|stallAfter)"/.test(l));
+    expect(reads).toHaveLength(2);
+    for (const l of reads) expect(l).toMatch(/BuildConfig\.TEST_SEAMS \? call\.getInt\("(failAfter|stallAfter)", -1\) : -1/);
+  });
+});
