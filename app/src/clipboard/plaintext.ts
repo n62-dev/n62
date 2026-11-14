@@ -60,13 +60,13 @@ export function macroCalls(s: string, name: string, argc: number): { start: numb
   return out;
 }
 
-/** `\name{a}{b}` (and the like) written as its argument number `keep`; repeated, so a wrapper inside a wrapper goes too. */
-function unwrap(s: string, name: string, argc: number, keep: number): string {
+/** `\name{a}{b}` (and the like) written as its argument number `keep` (through `wrap`); repeated, so a wrapper inside a wrapper goes too. */
+function unwrap(s: string, name: string, argc: number, keep: number, wrap = (body: string): string => body): string {
   let out = s;
   for (let n = 0; n < 8; n++) {
     const calls = macroCalls(out, name, argc);
     if (!calls.length) break;
-    for (const c of calls.reverse()) out = out.slice(0, c.start) + (c.args[keep] ?? "") + out.slice(c.end);
+    for (const c of calls.reverse()) out = out.slice(0, c.start) + wrap(c.args[keep] ?? "") + out.slice(c.end);
   }
   return out;
 }
@@ -156,19 +156,14 @@ export function entryText(latex: string): string {
     .trim();
 }
 
-/** G232: an entry's LaTeX for a `.tex` file: N62's own macros (entry/macros.ts, MathLive's table) are not LaTeX, so each
- *  chip keeps the symbol it draws (its second argument; a constant's upright, as the field draws it), `\ans` is `\mathrm{Ans}`,
- *  and `\exponentialE`, `\imaginaryI`, `\emark` and `\blacktriangleright` are their plain forms. */
+/** G232: LaTeX for a `.tex` file: N62's own and KaTeX's macros are not LaTeX. `\class` and `\htmlStyle` (the unit label, PFX,
+ *  the muted digits, a rare pair) keep only their body; each chip keeps the symbol it draws (its second argument; a
+ *  constant's upright, as the field draws it); `\ans` is `\mathrm{Ans}`, and `\exponentialE`, `\imaginaryI`, `\emark` and
+ *  `\blacktriangleright` are their plain forms. */
 export function exportLatex(latex: string): string {
-  let s = latex;
-  for (const name of ["const", "res", "unit", "pfx"]) {
-    for (let n = 0; n < 8; n++) {
-      const calls = macroCalls(s, name, 2);
-      if (!calls.length) break;
-      for (const c of calls.reverse()) s = s.slice(0, c.start) + (name === "const" ? `\\mathrm{${c.args[1]}}` : (c.args[1] ?? "")) + s.slice(c.end);
-    }
-  }
-  return s
+  let s = unwrap(unwrap(latex, "class", 2, 1), "htmlStyle", 2, 1);
+  s = unwrap(unwrap(unwrap(s, "res", 2, 1), "unit", 2, 1), "pfx", 2, 1);
+  return unwrap(s, "const", 2, 1, (b) => `\\mathrm{${b}}`)
     .replace(/\\ans(?![A-Za-z])/g, "\\mathrm{Ans}")
     .replace(/\\exponentialE(?![A-Za-z])/g, "\\mathrm{e}")
     .replace(/\\imaginaryI(?![A-Za-z])/g, "\\mathrm{i}")
