@@ -37,11 +37,14 @@ export async function stageHome(): Promise<void> {
     // `unc` and `uncDigits` (G355): σ at 2 significant digits ("none": no σ) and the digits shown before it (R40's facts).
     const uncOk = c.unc === undefined || rs.every((x) => (c.unc === "none" ? x.facts.uncSigma === undefined : x.facts.uncSigma !== undefined && expectAt(x.facts.uncSigma, 2) === expectAt(c.unc!, 2)));
     const uncDigitsOk = c.uncDigits === undefined || rs.every((x) => x.facts.uncDigits === c.uncDigits);
-    const ok = answered && markOk && exactOk && uncOk && uncDigitsOk;
+    // `uses` (G212): the stored variables the result lists as read, in order ([] none), as the precision stage's CAS cases.
+    const usesOf = (x: HomeResult): string => (x.uses ?? []).map((u) => u.name).join(",");
+    const usesOk = c.uses === undefined || rs.every((x) => usesOf(x) === c.uses!.join(","));
+    const ok = answered && markOk && exactOk && uncOk && uncDigitsOk && usesOk;
     const med = median(rs.map((x) => x.totalMs));
     maxMed = Math.max(maxMed, med);
     if (ok) pass++;
-    else console.log(`  home ${c.id}: got ${rs.map((x, k) => `${got[k] ?? "-"} ${x.display}`).join(" / ")}, expect ${c.mark ?? ""} ${c.expect ?? "(mark only)"}${exactOk ? "" : `, copies ${rs[0]!.full}, expect ${c.exact}`}${uncOk && uncDigitsOk ? "" : `, σ ${rs[0]!.facts.uncSigma ?? "none"} uncDigits ${rs[0]!.facts.uncDigits ?? "-"}, expect σ ${c.unc ?? "-"} uncDigits ${c.uncDigits ?? "-"}`}`);
+    else console.log(`  home ${c.id}: got ${rs.map((x, k) => `${got[k] ?? "-"} ${x.display}`).join(" / ")}, expect ${c.mark ?? ""} ${c.expect ?? "(mark only)"}${exactOk ? "" : `, copies ${rs[0]!.full}, expect ${c.exact}`}${uncOk && uncDigitsOk ? "" : `, σ ${rs[0]!.facts.uncSigma ?? "none"} uncDigits ${rs[0]!.facts.uncDigits ?? "-"}, expect σ ${c.unc ?? "-"} uncDigits ${c.uncDigits ?? "-"}`}${usesOk ? "" : `, uses [${usesOf(rs[0]!)}], expect [${c.uses!.join(",")}]`}`);
     // G82: a case whose exact pass Home's step budget or its clock stops, not finishing on any device, may name its own.
     const limit = c.budgetMs ?? HOME_LIMIT_MS;
     if (!(med <= limit)) {

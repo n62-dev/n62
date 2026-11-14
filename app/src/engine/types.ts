@@ -19,6 +19,14 @@ export interface StoredRead {
   exact: boolean;
 }
 
+/** F28, G212: a stored variable (definitions log, kind var) an input read, with the preview it holds and the view that
+ *  stored it; taken before the input ran (EngineHost.usesOf). */
+export interface StoredUse {
+  name: string;
+  preview: string;
+  view: "home" | "cas";
+}
+
 /**
  * What the engine knows about how far one value can be trusted (docs/04 2.4, 8.2; G76): the one shape every carrier of
  * a value's facts uses, whole (HomeResult and CasResult as `facts`; NameFacts, ChipEntry, Chip, ElementFacts,
@@ -140,7 +148,7 @@ export interface CasResult {
   /** The stored variables (definitions log, kind var) whose names appear in the input, with the preview they hold and
    *  the view they were stored in (F28: a value stored in Home changes a CAS result). Absent when there is none; a
    *  name the input assigns itself and a called function are not listed. */
-  uses?: { name: string; preview: string; view: "home" | "cas" }[];
+  uses?: StoredUse[];
   /** G213f1: as HomeResult's. */
   reads?: StoredRead[];
   /** The result as a number, when it is one with a float in it (docs/04 section 2.9): the value the mark, the copy and
