@@ -7,7 +7,7 @@
 // comment. G214: the tier-0 Find functions with a one-to-one sympy form (FUNCTIONS), each in the row's own angle mode;
 // a row that does not keep its angle mode refuses trig rather than assume radians. Units are G216, σ G217. Lazy: reached only through clipboard/impl.ts.
 import { parseLatex } from "../input/parse.ts";
-import type { Json } from "../input/emit.ts";
+import { FN, oddIndex, type Json } from "../input/emit.ts";
 import { ANS_KEY } from "../input/chips.ts";
 
 /** A chip of a row's table as the session line keeps it. */
@@ -87,13 +87,6 @@ const ROOT_LOG = ["ln", "log10", "surd"];
 /** Every Giac name the translator reads as a function (the test checks each is a tier-0 Find function). */
 export const PY_FUNCTIONS: ReadonlySet<string> = new Set([...FUNCTIONS.keys(), ...ROOT_LOG]);
 for (const f of FUNCTIONS.values()) SYMPY.add(f.py);
-/** The parser's own heads for these functions (`\sin`, `\left|x\right|`, `3!`, `\binom`) → their Giac name, as emit.ts FN. */
-const HEADS = new Map([
-  ["Sin", "sin"], ["Cos", "cos"], ["Tan", "tan"], ["Arcsin", "asin"], ["Arccos", "acos"], ["Arctan", "atan"],
-  ["Sinh", "sinh"], ["Cosh", "cosh"], ["Tanh", "tanh"], ["Exp", "exp"], ["Ln", "ln"], ["Lg", "log10"],
-  ["Abs", "abs"], ["Floor", "floor"], ["Ceil", "ceil"], ["Gcd", "gcd"], ["Lcm", "lcm"], ["GCD", "gcd"], ["LCM", "lcm"],
-  ["Binomial", "comb"], ["Factorial", "factorial"], ["Gamma", "Gamma"],
-]);
 
 /** Python ints stay exact under + - * and ** n; a division or a negative power of two of them would be a float. */
 type Kind = "int" | "sym";
@@ -250,8 +243,10 @@ class Row {
         return { s: `${wrap(this.ser(r), 3)}*(${z})`, p: 2, k: "sym" };
       }
       default: {
-        const name = HEADS.get(head);
-        return name !== undefined ? this.fn(name, args) : no(`${head} is not translated`);
+        // the parser's own heads (`\sin`, `\left|x\right|`, `3!`, `\binom`) by emit.ts's own FN, so this writes the
+        // function the app sends Giac; a Giac name outside PY_FUNCTIONS stays not translated
+        const name = Object.hasOwn(FN, head) ? FN[head] : undefined;
+        return name !== undefined && PY_FUNCTIONS.has(name) ? this.fn(name, args) : no(`${head} is not translated`);
       }
     }
   }
@@ -294,8 +289,8 @@ class Row {
    *  root where the radicand is a number literal not below 0, the same value); any other index the principal root,
    *  x^(1/n). surd is the real root and nothing else. */
   private root(x: Json, n: Json, surd: boolean): Out {
-    const idx = numText(n);
-    const odd = idx !== undefined && /^\d+$/.test(idx) && Number(idx) % 2 === 1;
+    // emit.ts's own rule decides surd against x^(1/n), so the two never disagree on which index is odd
+    const odd = oddIndex(n);
     if (surd && !odd) return no("surd with an index that is not an odd whole number is not translated");
     const xs = this.ser(x).s;
     const plain = !odd || numText(x) !== undefined;
