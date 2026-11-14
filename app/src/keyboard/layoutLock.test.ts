@@ -227,11 +227,11 @@ describe("a pinned key layer cannot change unnoticed (altered copies of the spec
   it("a layer copied into a reserved cell names that cell", () => {
     const p = problems(
       spec((k) => {
-        key(k, "deselect")["shift"] = key(k, "select")["shift"];
-        (key(k, "deselect")["label"] as Record<string, string>)["shift"] = "$key.help";
+        key(k, "fmt")["shift"] = key(k, "select")["shift"];
+        (key(k, "fmt")["label"] as Record<string, string>)["shift"] = "$key.help";
       }),
     );
-    expect(p).toEqual(['layers/deselect.shift: reserved in the lock but live ("special help"): record the fill in the lock']);
+    expect(p).toEqual(['layers/fmt.shift: reserved in the lock but live ("special help"): record the fill in the lock']); // (R322: Shift + Fmt is reserved)
   });
   it("a reserved cell turned live is not in the lock yet", () => {
     const p = problems(

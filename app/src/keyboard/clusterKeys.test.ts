@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R278: the three cluster cells that changed. ☰ (r0c4) does what the status line's ☰ does, and is a dead press where the
-// view has no menu; Shift + Select is Help (R197: the help sheet of the function at the cursor); Shift + Deselect is a reserved cell: it changes nothing on
-// the line or the screen, a tap or a flick up. The real route.press, a stub context (no MathLive, no field).
+// view has no menu; Shift + Select is Help (R197: the help sheet of the function at the cursor); Shift + Deselect is Mode
+// (R322, owner 2026-11-14: it opens the Mode sheet on Angle, as Shift + Fmt did), and Shift + Fmt is now the reserved cell:
+// it changes nothing on the line or the screen, a tap or a flick up. The real route.press, a stub context (no MathLive, no field).
 import { describe, expect, test, vi } from "vitest";
 
 vi.mock("../render/mathlive.svelte.ts", () => ({ mathlive: { load: () => new Promise(() => {}) } }));
@@ -26,11 +27,12 @@ function ctx(menu: boolean) {
     taps: { tap() {} },
     clearModifiers() {},
     hasResult: () => false,
+    cycleFormat: async () => void log.push("cycleFormat"),
   };
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, toggleMenu: () => (log.push("toggleMenu"), menu) };
   const c = {
     session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false,
-    enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings: () => void log.push("settings"), openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openHelp: () => void log.push("help"), openMatrix() {}, openNames() {}, openStore() {},
+    enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings: () => void log.push("settings"), openMode: (at?: string) => void log.push(`mode:${at ?? "angle"}`), openTemplates() {}, openShiftPalette() {}, openFind() {}, openHelp: () => void log.push("help"), openMatrix() {}, openNames() {}, openStore() {},
     withClip: (run: (x: never) => void) => run({} as never),
     loadClip() {}, dead: () => void log.push("dead"), unfold: () => false,
   };
@@ -64,13 +66,29 @@ describe("the cluster's ☰, Select and Deselect (R278)", () => {
     expect(log).toEqual(["help"]);
     expect(keyboard.byId.get("select")?.actions.primary).toEqual({ kind: "special", name: "selectGrow" });
   });
-  test("Shift + Deselect and a flick up on it are dead and change nothing on the line", () => {
+  test("Shift + Deselect (and a flick up on it) opens the Mode sheet on Angle (R322); the tap is still Deselect (R279)", () => {
+    const { press, log } = ctx(true);
+    press("deselect", "shift"); // a flick up fires the Shift layer: the same press
+    expect(log).toEqual(["mode:angle"]);
+    expect(keyboard.byId.get("deselect")?.actions.shift).toEqual({ kind: "special", name: "mode" });
+    expect(keyboard.byId.get("deselect")?.label.shift).toBe("$key.mode");
+    expect(keyboard.byId.get("deselect")?.actions.primary).toEqual({ kind: "special", name: "selectShrink" });
+  });
+});
+
+describe("Fmt (R322): the tap cycles the format, Shift + Fmt is reserved", () => {
+  test("Fmt's tap still cycles the last result's format", () => {
+    const { press, log } = ctx(true);
+    press("fmt");
+    expect(log).toEqual(["cycleFormat"]);
+  });
+  test("Shift + Fmt and a flick up on it are dead and change nothing on the line: no action, no legend", () => {
     const { press, log, entry } = ctx(true);
     const before = entry.value;
-    press("deselect", "shift"); // a flick up fires the Shift layer: the same press
+    press("fmt", "shift");
     expect(log).toEqual(["dead"]);
     expect(entry.value).toBe(before);
-    expect(keyboard.byId.get("deselect")?.actions.shift).toBeUndefined(); // reserved: no action, no legend
-    expect(keyboard.byId.get("deselect")?.label.shift).toBeUndefined();
+    expect(keyboard.byId.get("fmt")?.actions.shift).toBeUndefined();
+    expect(keyboard.byId.get("fmt")?.label.shift).toBeUndefined();
   });
 });

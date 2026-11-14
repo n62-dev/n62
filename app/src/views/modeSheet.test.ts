@@ -34,7 +34,7 @@ beforeEach(() => {
 });
 
 describe("Mode sheet", () => {
-  it("opens on Angle, shows its value, and ▶ then Enter switches RAD → DEG and closes (3 keys with Shift + Fmt)", () => {
+  it("opens on Angle, shows its value, and ▶ then Enter switches RAD → DEG and closes (3 keys with Shift + Deselect, R322)", () => {
     const s = mode();
     expect(s.level.current?.id).toBe("angle");
     expect(marked(s)).toBe("rad");
@@ -84,7 +84,7 @@ describe("Mode sheet", () => {
     s.left();
     expect(session.settings.format).toBe("pfx");
   });
-  it("Digits: ◀ ▶ step by one within 1…30; a digit key opens a list that marks the current value; a pick sets it (Shift + Fmt, 3, 7 = 20)", () => {
+  it("Digits: ◀ ▶ step by one within 1…30; a digit key opens a list that marks the current value; a pick sets it (Shift + Deselect, 3, 7 = 20)", () => {
     const s = mode("digits");
     s.right();
     expect(session.settings.digits).toBe(13);
@@ -239,7 +239,7 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(s.activate(at(s, "mark"))).toEqual({ kind: "stay" }); // a tap steps it on
     expect(session.settings.decimalMark).toBe("comma");
   });
-  it("a digit key on the Decimal mark row steps it and stays (Shift Fmt 6 2 1 reaches it by keys)", () => {
+  it("a digit key on the Decimal mark row steps it and stays (Shift Deselect 6 2 1 reaches it by keys)", () => {
     const s = settings(2);
     expect(s.pickNumber(1)).toEqual({ kind: "stay" });
     expect(session.settings.decimalMark).toBe("comma");
