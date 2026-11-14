@@ -26,7 +26,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (R224's wide layout turned sideways; N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-8. **decisions.md "Needs the user":** sign S36's list by 11-17; R269 round trip; R197's Insert; S50's G2 column; R220's key path; S45's units in Solve.
+8. **decisions.md "Needs the user":** A145's Reproducible Builds box (before the F-Droid request); sign S36's list by 11-17; R269 round trip; R197's Insert; S50's G2 column; R220's key path; S45's units in Solve.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -55,7 +55,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **nr1114-vg-1, fixed by G352.** A matrix times a list of another length than its row count, either order, and `.*` `./` `.^` of a matrix and a flat operand are refused. Family 5.
 - **nr1114-be-2, fixed by G353.** A stored float list of equal values: `stats1`, `variance`, `stddev`, `stddevp` give 0 (patch 0049, two passes), `linreg` refuses it, the same in either order. Family 6.
-- **nr1114-vr-1 (S1, `1f1a80582`; R298).** Cold start with a history: `2`, ☰ Paste `3`, Enter before the entry field is up gives 32 (right 23). Rerun: `tools/probes/review-1114/rerun.sh vr-1`. Family 11.
+- **nr1114-vr-1 and vr-5, fixed by R298 (run 1195).** Cold start with a history: `2`, ☰ Paste `3`, Enter before the entry field is up gave 32 (right 23). Rerun: `tools/probes/review-1114/rerun.sh vr-1`. Family 11.
+- **nr1114-bu-9 and vr-10, fixed by R312 (run 1198).** A typed `2exp(1)` was refused (2ᴇ, then xp); the desktop keys' help did not say its chords are for US and UK layouts.
 - **Night review 2026-11-14:** the rest in [research/night-review-2026-11-14.md](research/night-review-2026-11-14.md).
 
 ### Background stream (extreme inputs; at night, by reach)

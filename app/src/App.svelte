@@ -278,7 +278,7 @@
   /** Store ▶ in Home or CAS (R281): "Store in" (views/storeSheet.svelte.ts, in Vars' chunk); `row`: the result on the line. */
   function openStore(row?: HistoryItem): void {
     if (shell.app !== null) return;
-    const store = (latex: string): void => { entry.insert(latex); enter(); }; // the name after ▶, then Enter: the one store path
+    const store = (latex: string): void => { entry.insert(latex); route.enterLine(ctx); }; // the name after ▶, then Enter: the one store path (R298: before the field, Enter waits for it)
     onFind(finder(), (m) => { picked = null; m.showStore({ shell, session, store }, m.storedText(session, row, entry.value)); });
   }
   const finder = (): Promise<typeof import("./find/finder.ts")> => import("./find/finder.ts"); // (one import() site: each carries its own preload list)
@@ -413,7 +413,7 @@
     edited = true;
     picked = null;
     shell.prompt?.cancel();
-    if (entry.value === "") onLine(item, true);
+    if (entry.empty) onLine(item, true); // R298: before the field the queued keys are text too (entry.value is not the line yet)
   }
   /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
    *  as Delete while folded (R53). */

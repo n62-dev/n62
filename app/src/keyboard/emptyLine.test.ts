@@ -105,9 +105,9 @@ describe("a line queued before the field is up is not empty (R255)", () => {
 
 describe("controls: a truly empty line keeps its empty-line jobs before the field is up", () => {
   test("+ starts with Ans", () => {
-    const { press, inner } = ctx();
+    const { press, queued } = ctx();
     press("add");
-    expect(inner.pendingValue).toBe(ANS_CHIP);
+    expect(queued()).toEqual([ANS_CHIP, "+"]); // (R298: the insert waits in the queue, in front of its key)
   });
   test("a b/c cycles the last row's form", () => {
     const { press, log, inner } = ctx();
@@ -126,11 +126,11 @@ describe("controls: a truly empty line keeps its empty-line jobs before the fiel
     expect(log).toContain("undoRemoved");
   });
   test("the kept line answered with nothing: + starts with Ans", async () => {
-    const { entry, press, inner } = ctx();
+    const { entry, press, queued } = ctx();
     void entry.load(Promise.resolve(undefined));
     await tick();
     press("add");
-    expect(inner.pendingValue).toBe(ANS_CHIP);
+    expect(queued()).toEqual([ANS_CHIP, "+"]);
   });
   test("no stored result: + is a bare operator", () => {
     const { press, inner, queued } = ctx(false);

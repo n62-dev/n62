@@ -5,6 +5,9 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 185 (2026-11-14) to make room, as they stood
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it, and Ans or a name only while its line holds the value it had (G213f1); the comments are English constants (a file format); `3!` and `\binom` are factorial and binomial; an odd root of a literal not below 0 is root(), else real_root(); a row parses with its `defs` as stored values. Would change if: G215 finds sympy disagrees.
+
 ### Shortened by Opus pass 184 (2026-11-14) to make room, as they stood
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** a patch's worker writes its README row (A83); a stray file is logged, warn only (A88); the weekly fuzz runs in 10-minute slices (G167); red-first counts only added or tightened tests (A67) and may test the stock engine for a G125 package (A71); a wall-clock test that fails only under load is a timing case (`isTiming`, A39); a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "2026-11-12, evening".
 - **The session line (G210, Opus pass 178):** `value` is Copy's number alone, with `.` (a unit row's σ and unit are in `sigma`, `unit`); `mark` is Copy's glyph at the row's digits, in STD; `exact`, like `giac`, reads in radians. `word` (G211, pass 181) is the word the job ran in, `{"bits":64,"signed":false}` while none is set (the engine's own); null only for a row that keeps none (stored before G211, the fake engine). Would change if: a reader needs Copy's text with its unit, or the owner wants the default word left out.
