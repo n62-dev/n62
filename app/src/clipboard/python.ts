@@ -9,6 +9,7 @@
 import { parseLatex } from "../input/parse.ts";
 import { FN, oddIndex, type Json } from "../input/emit.ts";
 import { ANS_KEY } from "../input/chips.ts";
+import { angleInSpec, returnsAngle } from "../engine/angles.ts";
 
 /** A chip of a row's table as the session line keeps it. */
 export interface PyChip {
@@ -50,23 +51,22 @@ const KEYWORDS = new Set(
 /** The sympy names a template may write; a user name equal to one is not bound either (it would shadow it). */
 const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt", "rad", "deg", "log", "root", "real_root", "cos", "sin"]);
 
-/** G214: an angle function: `in` takes an angle (sin(rad(u)) in DEG), `out` gives one (deg(asin(u)) in DEG). */
-type Angle = "in" | "out";
 /** G214, the function table: a Find tier-0 function (find/functions.yaml, by its Giac name) → its sympy function, which
  *  takes the same arguments in the same order and gives the same value. Closed: a name not here is not translated,
  *  tier 1 by construction. ln, log10 and surd are written by their own rule below (ROOT_LOG). Left out on purpose
  *  (G214 report): N62's own definitions (median, percentile, sem, irem, par, eseries, sigfig, the word operations),
  *  Giac's own conventions (dot conjugates its first argument, stddevp is the sample deviation, frac is not settled for
  *  a negative number), and what needs a list, a matrix or a free variable (the core translates none). */
-const FUNCTIONS: ReadonlyMap<string, { py: string; args: number; angle?: Angle }> = new Map([
+// Which of them takes or gives an angle is never written here: fn() asks angles.ts, the lists emit.ts adds pasdeg by.
+const FUNCTIONS: ReadonlyMap<string, { py: string; args: number }> = new Map([
   ["sqrt", { py: "sqrt", args: 1 }],
   ["exp", { py: "exp", args: 1 }],
-  ["sin", { py: "sin", args: 1, angle: "in" }],
-  ["cos", { py: "cos", args: 1, angle: "in" }],
-  ["tan", { py: "tan", args: 1, angle: "in" }],
-  ["asin", { py: "asin", args: 1, angle: "out" }],
-  ["acos", { py: "acos", args: 1, angle: "out" }],
-  ["atan", { py: "atan", args: 1, angle: "out" }],
+  ["sin", { py: "sin", args: 1 }],
+  ["cos", { py: "cos", args: 1 }],
+  ["tan", { py: "tan", args: 1 }],
+  ["asin", { py: "asin", args: 1 }],
+  ["acos", { py: "acos", args: 1 }],
+  ["atan", { py: "atan", args: 1 }],
   ["sinh", { py: "sinh", args: 1 }],
   ["cosh", { py: "cosh", args: 1 }],
   ["tanh", { py: "tanh", args: 1 }],
@@ -279,10 +279,14 @@ class Row {
     const f = FUNCTIONS.get(name);
     if (!f) return no(`${name} is not translated`);
     arity(f.args);
+    // the angle tags are angles.ts's (G214 fix round 2): its first argument an angle in the one form [0, 1] the table
+    // writes, any other form refused; its result an angle when emit.ts divides it by pasdeg
+    const spec = angleInSpec(name);
+    if (spec && (spec[0] !== 0 || spec[1] !== 1)) no(`${name} takes its angle in a form that is not translated`);
     const outs = args.map((a) => this.ser(a).s);
-    if (f.angle === "in") outs[0] = this.angleIn(outs[0] as string);
+    if (spec) outs[0] = this.angleIn(outs[0] as string);
     const call = `${this.use(f.py)}(${outs.join(", ")})`;
-    return { s: f.angle === "out" && this.angle() === "deg" ? `${this.use("deg")}(${call})` : call, p: 5, k: "sym" };
+    return { s: returnsAngle(name) && this.angle() === "deg" ? `${this.use("deg")}(${call})` : call, p: 5, k: "sym" };
   }
 
   /** An n-th root as N62 takes it (emit.ts Root): an odd whole index is the real root (sympy's real_root; its plain
