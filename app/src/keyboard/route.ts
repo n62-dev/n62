@@ -13,7 +13,7 @@ import { ANS_CHIP } from "../entry/macros.ts";
 import { canPick, pickAfter, pickAtOrBefore } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
 import { sheetChunk, loadSheetView } from "../views/sheetView.svelte.ts";
-import { actionFor, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
+import { actionFor, keyboard, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
 import type { SheetKey } from "../views/sheetKeys.ts";
 
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
@@ -232,7 +232,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   }
   if (action.name === "enter" && item) {
     if (item.status === "done") c.insertResult(item);
-    else if (c.entry.value === "") c.recallRow(item); // an empty line: the entry comes back with its chips
+    else if (c.entry.empty) c.recallRow(item); // an empty line: the entry comes back with its chips
     // (R273: text on the line stays; the pick is dropped above)
     return true;
   }
@@ -356,8 +356,21 @@ export function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
   return capped;
 }
 
-/** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. */
-const forLine = (c: RouteCtx, w: Waiting): boolean | undefined => "line" in w && w.line && c.entry.fieldPending;
+/** R298: Enter from code (the store sheet's tap after it typed the name, R281). Before the field is up, or behind keys
+ *  that wait, it waits as a pressed Enter does (R255), so it sends the line the queued keys and the name typed; a key
+ *  pressed after it waits behind it (R8). */
+export function enterLine(c: RouteCtx): void {
+  const key = keyboard.byId.get("enter");
+  if (key && (c.entry.fieldPending || c.waiting.length > 0)) return wait(c, { key, mods: { shift: false, alpha: false }, line: true });
+  c.enter();
+}
+
+/** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. Enter and the
+ *  units key always do, whatever they first waited for (R298: an Enter queued behind ☰'s load, whose Paste ended before
+ *  the field, read the empty line of a field still to come and was dropped). */
+const forLine = (c: RouteCtx, w: Waiting): boolean =>
+  c.entry.fieldPending && "key" in w && (!!w.line || readsLine(actionFor(w.key, w.mods.shift, w.mods.alpha)));
+const readsLine = (a?: ActionBody): boolean => a?.kind === "special" && (a.name === "enter" || a.name === "units");
 function wait(c: RouteCtx, w: Waiting): void {
   c.waiting.push(w);
   if (c.waiting.length === 1) void Promise.all([c.shell.opening, c.shell.sheetPending, c.sheetLoad, forLine(c, w) && c.entry.fieldUp]).then(() => replay(c));
@@ -435,7 +448,7 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
   const a = actionFor(key, mods.shift, mods.alpha);
   // R255: before the field is up, Enter and every key after it wait for it (R8): Enter then sends what the queued keys
   // typed, and a key after it meets the empty line as live; so does the units key, which reads the line (R255f1)
-  if (c.entry.fieldPending && (c.waiting.length > 0 || (a?.kind === "special" && (a.name === "enter" || a.name === "units")))) return wait(c, { key, mods, layer, line: true });
+  if (c.entry.fieldPending && (c.waiting.length > 0 || readsLine(a))) return wait(c, { key, mods, layer, line: true });
   if (c.shell.loading !== null && !(a?.kind === "special" && runsAtOnce(c, a.name))) return wait(c, { key, mods, layer });
   run(c, key, mods);
 }

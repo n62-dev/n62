@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // History persistence and the lazy-loaded entry line.
 import { expect, test } from "@playwright/test";
-import { entryValue, open, tap, tapTwice } from "./helpers.ts";
+import { entryValue, open, PASTE, setClipboard, sheet, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 // Not helpers.lastResult: this one is the whole result row, not its `.result` part.
 const lastResult = (page: import("@playwright/test").Page) => page.locator('[data-testid="result"]').last();
@@ -277,7 +277,7 @@ test("a definitions log stamped 2 is migrated at start, its steps loaded on dema
 // in the entry's queue, and the keys with an empty-line job must see them (and a kept line still to come) as text.
 /** A cold start on `page`'s store with MathLive held back until `release()`; `stored` (Home) is typed and sent first,
  *  `kept` typed after it and left on the line for the kill to keep (R34). */
-async function heldStart(page: Page, stored: string[], kept: string[] = []): Promise<{ next: Page; release: () => void }> {
+async function heldStart(page: Page, stored: string[], kept: string[] = [], also?: RegExp): Promise<{ next: Page; release: () => void; releaseAlso: () => void }> {
   await open(page, "");
   await engineReady(page);
   if (stored.length > 0) {
@@ -295,11 +295,19 @@ async function heldStart(page: Page, stored: string[], kept: string[] = []): Pro
     await gate;
     await r.continue();
   });
+  // `also`: another module held back until `releaseAlso()` (R298: the clipboard code, so ☰ waits for it as on a cold phone)
+  let releaseAlso = (): void => {};
+  const second = new Promise<void>((r) => (releaseAlso = r));
+  if (also)
+    await next.route(also, async (r) => {
+      await second;
+      await r.continue();
+    });
   await next.goto("/?tips=off");
   await next.locator('[data-key="d2"]').waitFor();
   const rows = stored.length > 0 ? 1 : 0;
   await next.waitForFunction((n) => window.n62?.session.items.length === n, rows);
-  return { next, release };
+  return { next, release, releaseAlso };
 }
 /** Release MathLive and wait until the field is up with the queued keys replayed, and the new page's engine is ready
  *  (heldStart waits for the first page's only; under the full suite's load a cold engine outlasted a row count's 5 s). */
@@ -385,4 +393,76 @@ test("R255f1: 5 then the units key before the field: the unit view opens on the 
   expect(await next.evaluate(() => window.n62.unitView?.view.line)).toBe("5");
   expect(await entryValue(next)).toBe("5");
   expect(await results(next)).toEqual(["7"]);
+});
+
+// R298 (night review 2026-11-14, vr-1, vr-5): an insert made before the field is up (a paste, a result chip, the store
+// sheet's name) takes its place among the queued keys (decisions.md R8: in the order pressed); a second tap on a row's
+// input reads the queued keys as text on the line (R273: text on the line stays, the pick drops).
+test.describe("R298: inserts before the field", () => {
+  test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+  test.describe.configure({ mode: "serial" }); // (one system clipboard for the whole browser)
+  useClipboardLock();
+  test("R298: 2, then ☰ Paste of 3 before the field: Enter gives 23", async ({ page }) => {
+    const { next, release, releaseAlso } = await heldStart(page, ["d5"], [], /\/src\/clipboard\/actions\.svelte\.ts/);
+    await setClipboard(next, "3");
+    await tap(next, ["d2", ...PASTE, "enter"]);
+    releaseAlso();
+    // ☰ waited for its code with 7 and Enter behind it; the paste has landed in the entry's queue and its hold (route.ts
+    // holdKeys) is over before the field: the queued Enter must still wait for the field (the order run 1195's load gave)
+    await next.waitForFunction(() => (window.n62.entry as unknown as { queue: { kind: string }[] }).queue.some((a) => a.kind === "put"), undefined, { timeout: 20_000 });
+    await expect(sheet(next)).toHaveCount(0);
+    await next.waitForTimeout(500);
+    await fieldUp(next, release);
+    // (the rows with their status and the line, so a miss says what happened)
+    const state = (): Promise<unknown> => next.evaluate(() => [window.n62.session.items.map((i) => `${i.status}:${i.text ?? ""}`), window.n62.entry.value]);
+    await expect.poll(state, { timeout: 20_000 }).toEqual([["done:5", "done:23"], ""]); // derived: the digits in the order pressed
+  });
+});
+
+const resultCell = (p: Page) => lastResult(p).locator(".result");
+
+test("R298: 2 ×, a second tap on the result 5, − 1 before the field: Enter gives 9", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d5"]);
+  await tap(next, ["d2", "mul"]);
+  await tapTwice(resultCell(next));
+  await tap(next, ["sub", "d1", "enter"]);
+  await fieldUp(next, release);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
+  expect(await results(next)).toEqual(["5", "9"]); // derived: 2·5 − 1
+});
+
+test("R298: 5, Store ▶, a tap on A in the store sheet before the field: A holds 5", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d5", "shift", "emark"]);
+  await next.getByTestId("store").locator('[data-id="name:A"]').tap();
+  await fieldUp(next, release);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
+  expect(await lastInput(next)).toMatch(/^5\\blacktriangleright ?A$/); // (MathLive puts a space after the command)
+  expect(await results(next)).toEqual(["7", "5"]);
+  expect(await next.evaluate(() => window.n62.session.userNames.map((u) => `${u.name}:${u.kind}`))).toEqual(["A:var"]);
+  expect(await entryValue(next)).toBe("");
+});
+
+test("R298: 2, then two taps on a row's input before the field: the line stays 2 and the pick drops", async ({ page }) => {
+  const { next, release } = await heldStart(page, ["d7"]);
+  await tap(next, ["d2"]);
+  await tapTwice(next.locator("article.item .in").last());
+  await fieldUp(next, release);
+  expect(await entryValue(next)).toBe("2");
+  await expect(next.locator('article.item[data-selected="true"]')).toHaveCount(0);
+  expect(await results(next)).toEqual(["7"]);
+});
+
+test("R298 control: the same keys after the field is up: 2 ×, the result 5, − 1 gives 9", async ({ page }) => {
+  await open(page, "");
+  await engineReady(page);
+  await tap(page, ["d5", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  await tap(page, ["d2", "mul"]);
+  await tapTwice(resultCell(page));
+  await tap(page, ["sub", "d1"]);
+  expect(await entryValue(page)).toBe("2\\times\\res{1}{5}-1");
+  await tap(page, ["enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
+  expect(await results(page)).toEqual(["5", "9"]);
 });

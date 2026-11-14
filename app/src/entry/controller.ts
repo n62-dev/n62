@@ -11,7 +11,8 @@ import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 export class EntryController {
   private mf: MathfieldElement | undefined;
   private host: HTMLElement | undefined;
-  private queue: ActionBody[] = [];
+  /** What waits for the field, in the order made (decisions.md R8): the keys' actions and, as `put`, the inserts (R298). */
+  private queue: (ActionBody | { kind: "put"; latex: string })[] = [];
   /** How a key acts on the field (entry/field.ts: ⌫ and Del at a template, ᴇ, 10ˣ, a power's base, the stops): loaded with MathLive. */
   private onField: typeof import("./field.ts").runOnField | undefined;
   /** Backspace, Delete and the printable keys of a hardware keyboard (entry/hwkeys.ts, R26b, R31): loaded with MathLive. */
@@ -25,6 +26,7 @@ export class EntryController {
   private marks: { setNames(names: string[]): void } | undefined;
   /** The user's names (setNames); hwkeys.ts reads them (R198: a typed name of the user's stays the user's). */
   stored: string[] = [];
+  /** The line set() put before the field was up (a recall, the kept line); what is typed or inserted meanwhile waits in `queue`. */
   private pendingValue: string | undefined;
   /** R34: the line was set or cleared before the field was up, so a line kept from before a kill no longer applies. */
   private keptStale = false;
@@ -93,7 +95,7 @@ export class EntryController {
       this.grown = new f.Grown();
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
-      if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips) + (this.pendingValue ?? "");
+      if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips); // (only set() writes pendingValue, and it marks the kept line stale)
       return this.create(f.makeField, m.MathfieldElement);
     });
     void this.ready.catch(() => {}).then(() => {
@@ -114,11 +116,14 @@ export class EntryController {
     void import("./namemarks.ts").then((n) => (this.marks = new n.NameMarks(mf)).setNames(this.stored));
     if (this.pendingValue !== undefined) mf.value = this.pendingValue;
     this.pendingValue = undefined;
-    // Replay the queued keys one by one through the same path as a live keypress. Keys that arrive while
-    // we replay (this.mf is set now) go straight in, so drain until the queue is empty.
+    // Replay the queued keys and inserts one by one through the same path as a live keypress or insert (R298: in the
+    // order made). Keys that arrive while we replay (this.mf is set now) go straight in, so drain until the queue is empty.
     mf.focus();
     mf.executeCommand("moveToMathfieldEnd");
-    while (this.queue.length > 0) this.run(this.queue.shift() as ActionBody);
+    for (let a = this.queue.shift(); a; a = this.queue.shift()) {
+      if (a.kind === "put") this.put(a.latex);
+      else this.run(a);
+    }
     // what MathLive edits itself (a character outside ASCII); a set of the value is silent
     mf.addEventListener("input", () => {
       this.touched = true;
@@ -201,12 +206,12 @@ export class EntryController {
   insert(latex: string): void {
     this.touched = true;
     this.onEdit();
-    if (!this.mf) {
-      this.pendingValue = (this.pendingValue ?? "") + latex;
-      return;
-    }
-    this.mf.insert(latex, { format: "latex", selectionMode: "after" });
-    this.mf.focus();
+    if (!this.mf) return void this.queue.push({ kind: "put", latex }); // R298: in its place among the queued keys
+    this.put(latex);
+  }
+  private put(latex: string): void {
+    this.mf?.insert(latex, { format: "latex", selectionMode: "after" });
+    this.mf?.focus();
   }
   /** A history result as a chip (docs/04 2.8): drawn as `shown` (its display LaTeX), worth `chip.value`. */
   insertResult(shown: string, chip: Chip): void {

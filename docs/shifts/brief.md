@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 752 | [R298](packages/R298.md) a paste or a result inserted before the entry field keeps its place among the keys | ron, Opus | `p1/ron-insertqueue` | – |
+| 752 | R298 a paste or a result inserted before the entry field keeps its place among the keys | ron, Opus | `p1/ron-insertqueue` | – |
 | 780 | [R312](packages/R312.md) a hardware `2exp(1)` types exp, and the desktop-keys help names its layouts | ron, Opus | `p1/ron-emarkname` | – |
 | 753 | [S58](packages/S58.md) the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
 | 754 | [R299](packages/R299.md) the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
