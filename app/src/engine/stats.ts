@@ -19,9 +19,11 @@ const refuse = (code: StatsRefusal): string => `throw("${REFUSAL_MARK}${code}")`
 const realsOnly = (l: string, k: string): string =>
   `for (${k}:=0;${k}<size(${l});${k}:=${k}+1) { if (type(${l}[${k}])!=integer and type(${l}[${k}])!=rational and type(evalf(${l}[${k}]))!=DOM_FLOAT) ${refuse("notData")}; } `;
 
-/** Giac: sets `flag` to 1 when every element of the list `l` equals its first, compared exactly (the difference is an exact 0
- *  after normal; Giac's `==` of two floats compares them within epsilon, so a difference is tested), else 0. Index `k`. G353:
- *  a sum over a float list is no test, its rounding is not 0 (three floats 0.1 gave Sxx = 1E-62). */
+/** Giac: sets `flag` to 1 when every element of the list `l` equals its first, compared exactly, else 0. Index `k`. Each
+ *  difference is tested against 0 with `!=`, which is exact for a float: Giac's `==` and `!=` of two floats compare them
+ *  within epsilon (1e-12), so `x!=x0` would call 1E-15 and 2E-15, or 1 and 1+1E-14, equal (probed at Digits 12 and 40;
+ *  golden g353f1-*, which fail with `x!=x0`). G353: a sum over a float list is no test, its rounding is not 0 (three
+ *  floats 0.1 gave Sxx = 1E-62). */
 const allEqual = (l: string, k: string, flag: string): string =>
   `${flag}:=1; for (${k}:=1;${k}<size(${l});${k}:=${k}+1) { if (normal(${l}[${k}]-${l}[0])!=0) ${flag}:=0; } `;
 
@@ -50,7 +52,8 @@ export const STATS_DEFINITIONS: Readonly<Record<string, string>> = {
   // their own: stat-mean). One value has no sample deviation (Giac's stddevp([5]) is undef): refused, as sem's is (G155).
   // G353: both deviations from S = Σ(x − x0 − m)², m the mean of x − x0 (two passes about the first value x0): the one-pass
   // Σx² − n·x̄² of Giac's stddev cancels in floats (three stored floats 0.1 gave 1E-31·i). Every value equal to the first
-  // (allEqual, exactly) gives S a zero of the data's type (x0 − x0: 0 for exact data, 0.0 for floats), so both are exactly 0.
+  // (allEqual, exactly) gives S the exact 0, for floats too, so both deviations are the exact 0; a float list's row stays ≈
+// through its other elements (the mean, min and max of three floats 0.1).
   stats1:
     "stats1(pasl_):={ local pasn_,pask_,pasm_,pass_,paseq_; " +
     `if (subtype(pasl_)==1 or type(pasl_)!=DOM_LIST) ${refuse("notData")}; pasn_:=size(pasl_); if (pasn_==0) ${refuse("emptyList")}; ` +
