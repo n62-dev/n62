@@ -561,6 +561,16 @@ cases:
   - { id: "p231-13", latex: "0xff", expect: "255", source: "derived", group: "p231", note: "lower-case hex digits too, as Giac reads them" }
   - { id: "p231-14", latex: "2\\times0x10", expect: "32", source: "derived", group: "p231", note: "the literal is one factor: 2*16" }
   - { id: "p231-15", latex: "0b1.1", error: true, source: "derived", group: "p231", note: "a literal in another base is a whole number" }
+  # R304: Home's Alpha types the capital, so a capital X, B or O after a lone 0 is the prefix (0B101 gave 0*B*101 = 0)
+  - { id: "p231-30", latex: "0B101", expect: "5", source: "derived", group: "p231", note: "keys 0 Alpha-B 1 0 1: 4+1" }
+  - { id: "p231-31", latex: "0O17", expect: "15", source: "derived", group: "p231", note: "8+7" }
+  - { id: "p231-32", latex: "0XFF", expect: "255", source: "derived", group: "p231", note: "15*16+15" }
+  - { id: "p231-33", latex: "0XFF+1", expect: "256", source: "derived", group: "p231", note: "255+1" }
+  - { id: "p231-34", latex: "0X+1", expect: "0*X+1", source: "derived", group: "p231", note: "as 0x+1: no digit follows, a product" }
+  - { id: "p231-35", latex: "0Xy", expect: "0*X*y", source: "derived", group: "p231", note: "as 0xy" }
+  - { id: "p231-36", latex: "0B", error: true, source: "derived", group: "p231", note: "as 0b: a prefix at the line's end" }
+  - { id: "p231-37", latex: "0B2", error: true, source: "derived", group: "p231", note: "as 0b2: 2 is no binary digit" }
+  - { id: "p231-38", latex: "20XFF", expect: "20*X*F*F", source: "derived", group: "p231", note: "no lone 0: a product as before" }
   # --- chips (R2, docs/04 2.8 and 3.6): \res{k}{shown}, \ans and \const{ID}{symbol} stand for the value in the
   # entry's chip table (`chips:`), never for the digits they show. Constants: the exact SI 2019 values (derived:
   # exact by definition), G with its CODATA uncertainty only to test an inexact chip (the value is the table's).
