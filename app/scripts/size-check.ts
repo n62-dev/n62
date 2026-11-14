@@ -471,8 +471,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  measures 62,114 B gzip (175,074 B raw), the branch 62,188 B (175,269 B raw): 62,188 B + 0.05 kB.
  *  62,240 → 62,300 B (R298 fix 2): Enter and the units key wait for the field whatever they first waited for (route.ts
  *  forLine, readsLine). The branch before it measures 62,208 B (175,292 B raw, phase-1 merged in), after it 62,244 B
- *  (175,348 B raw): 62,244 B + 0.05 kB. */
-export const START_PIN_GZIP = 62_300;
+ *  (175,348 B raw): 62,244 B + 0.05 kB.
+ *  62,300 → 62,360 B (R302): a matrix cell's edit sets the user's line aside where a hide keeps it (apps/shell.svelte.ts
+ *  `editAside`, read by main.ts's onClear and flush). Phase-1 d3c84b9c measures 62,297 B gzip (175,648 B raw), the branch
+ *  62,306 B (175,685 B raw): 62,306 B + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 62_360;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
