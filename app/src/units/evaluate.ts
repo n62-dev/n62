@@ -21,8 +21,9 @@ const ANY_DIM = BASES.map((b) => `has(pasy_,${b.symbol})`).join(" or ");
 const ONES = `[${BASES.map(() => "1").join(",")}]`;
 /** G40: the inverse functions that give an angle (the parser's ANGLE_OUT puts `/pasdeg` after each, R64). */
 const INVERSES = ["atan2", "asin", "acos", "atan", "asec", "acsc", "acot"] as const;
-/** G310: functions of a pure number, whose first argument the check reads (a zero of a length too: exp(0 m) is refused). */
-const PURE_FNS = ["exp", "ln", "log10", "logb", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sec", "csc", "cot", "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "Gamma", "erf", "erfc", "surd"] as const;
+/** G310: functions of a pure number, whose first argument the check reads (a zero of a length too: exp(0 m) is refused).
+ *  G357: not surd, a power (∛(27 m³) = 3 m, pasusurd). */
+const PURE_FNS = ["exp", "ln", "log10", "logb", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sec", "csc", "cot", "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "Gamma", "erf", "erfc"] as const;
 /** sin, cos and tan take a pure number or an angle (P15). */
 const TRIG_FNS = ["sin", "cos", "tan"] as const;
 /** G310: the rad dimension alone, as pasuq's exponents. */
@@ -39,7 +40,7 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  * - every dimension symbol is positive, so √(4 m²) is 2 m and not 2·|m|;
  * - pasuq(f): [0, exponents, number] for one term; [1, the terms' exponents] for a sum of terms; [2, pasumx(f)] for
  *   anything else (a function of a quantity with units: also a term whose number part still holds a dimension symbol,
- *   as floor(3/2·m) or Giac's irem of two lengths); [3] when sin, cos or tan met a unit (pasubad); [4] for an exact 0; [5] for Giac's infinity or undef (a division by 0);
+ *   as floor(3/2·m) or Giac's irem of two lengths; G357: [2, the exponents] when f holds the marker pasumd); [3] when sin, cos or tan met a unit (pasubad); [4] for an exact 0; [5] for Giac's infinity or undef (a division by 0);
  * - pasuh(y): whether y holds a dimension symbol;
  * - pasue(f,s): the exponents d·∂f/∂d / f of f, 0 without a diff for a dimension symbol f does not hold (G310: the diff
  *   by an absent symbol cost up to 2 ms on a piecewise); with s = 1 the first exponent that is not a number ends the
@@ -66,15 +67,24 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  *   by pasujk. q = 1 reads e as typed (quote): only the conditions with ==, = or != (Giac's evaluation makes `v==3`
  *   false and `v!=3` true, so the evaluated e has lost them), no step function;
  * - pasujc(x,H): 1 when a node of x has a head in H;
- * - pasumx(x) (G310): 1 when a + node of x has two terms whose dimensions it reads (numbers) and that differ;
- * - pasucg(x,ok) (G310, the check text only): pasubad when pasuq reads x as one term whose exponents are not in ok,
- *   as [2] with pasumx's 1 (a sum of different dimensions inside a function it cannot read), or as a sum with
- *   pasumx's 1 or a term it reads whose exponents are not in ok; x itself when it is 0 or undefined; else the free
+ * - pasumx(x) (G310): when a + node of x has two terms whose dimensions it reads (numbers, the number part without a
+ *   dimension symbol: Giac's irem(7 m, 2 m) holds −2·m²·floor(7/(2·m))) and that differ, the exponents
+ *   of its terms it reads (G357: they name the refusal, √(1 m² + 1 s²) is L² vs T²), else 0;
+ * - pasumd(list) (G357): a free function, the marker the check puts where a sum of different dimensions (or atan2's two
+ *   arguments of different dimensions) was met; pasumf(x) finds its list in x, pasudk(q) is the one dimension of
+ *   pasuq's answer q (a term, or a sum of terms of one dimension), else 0;
+ * - pasusurd(x,n) (G357): Giac's surd (the ∛ template, emit.ts) as a power: a quantity c·d^e is surd(c,n)·d^(e/n), so
+ *   an odd n keeps the real root's sign (∛(−8 m³) = −2 m); a pure number is surd(x,n) itself, anything else x^(1/n);
+ *   pasucsurd(x,n), the check text's, is x^(1/n) (its numbers are names, and normal() leaves surd(pasz1,3)^3/pasz1);
+ * - pasucg(x,ok) (G310, the check text only): pasumd of the exponents when x holds a sum of different dimensions (pasuq's
+ *   [2] with pasumx's list, or a sum whose terms differ); pasubad when pasuq reads x as one term whose exponents are not
+ *   in ok, or as a sum of terms whose exponents are not in ok; x itself when it is 0 or undefined; else the free
  *   symbol pasuw, a pure number the outer function's check reads at once (reading the argument again there cost up to
  *   60 ms). pasucz(x) allows a pure number, pasuca(x) also one rad. The check text calls each function of PURE_FNS as
  *   pasucf(pasucz(first argument), the others), a free function Giac leaves alone (round(pasuw,1) is its error);
  *   pasucsin and the others are pasucf of pasuca, the inverses pasucf of pasucz times rad, pasucatan2(y,x) the rad
- *   dimension when y/x passes pasucz (no atan2 of symbols: Giac's "User interrupt"), else pasubad;
+ *   dimension when y/x passes pasucz (no atan2 of symbols: Giac's "User interrupt"), else pasumd of y's and x's
+ *   dimensions when they differ (G357), else pasubad;
  * - pasujk(c) (G159): a condition c of kind 1 at 0 of lhs − rhs when it is one comparison (<, <=, >, >=, ==, =) of
  *   sides that hold none, else kind 3 with c's names (and, or, not, !=, a nested comparison, a bare name): a jump
  *   wherever c holds the input (a number or true/false has no name, so no jump);
@@ -93,7 +103,7 @@ export const UNIT_DEFINITIONS: readonly string[] = [
   `pasuh(pasy_):=${ANY_DIM}`,
   `pasue(pasf_,pass_):={local pasr_,pask_,pase_; pasr_:=[]; for (pask_:=0;pask_<${BASES.length};pask_++) { pase_:=0; if (has(pasf_,${S}[pask_])) { pase_:=normal(${S}[pask_]*diff(pasf_,${S}[pask_])/pasf_); } ` +
     `pasr_:=append(pasr_,pase_); if (pass_ and lvar(pase_)!=[]) { return concat(pasr_,seq(0,${BASES.length}-size(pasr_))); } } return pasr_; }`,
-  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (type(pasf_)!=DOM_SYMBOLIC and pasf_==0) return [4]; ` +
+  `pasuq(pasf_):={local pasa_,pasb_,pasc_,pasj_,past_; if (has(pasf_,pasumd)) return [2,pasumf(pasf_)]; if (has(pasf_,pasubad)) return [3]; if (has(pasf_,undef) or has(pasf_,infinity)) return [5]; if (type(pasf_)!=DOM_SYMBOLIC and pasf_==0) return [4]; ` +
     `pasa_:=pasue(pasf_,1); ` +
     `if (lvar(pasa_)==[]) { pasc_:=normal(pasf_/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasa_))); if (pasuh(pasc_)) return [2,pasumx(pasf_)]; return [0,pasa_,pasc_]; } ` +
     `if (!pasujc(pasf_,['+'])) return [2,0]; past_:=expand(pasf_); if (sommet(past_)!='+') return [2,pasumx(pasf_)]; past_:=[op(past_)]; ` +
@@ -118,17 +128,26 @@ export const UNIT_DEFINITIONS: readonly string[] = [
   `pasujc(pasx_,pasH_):={local paso_,pasj_; if (type(pasx_)!=DOM_SYMBOLIC) { return 0; } if (member(sommet(pasx_),pasH_)) { return 1; } paso_:=[op(pasx_)]; ` +
     `for (pasj_:=0;pasj_<size(paso_);pasj_++) { if (pasujc(paso_[pasj_],pasH_)) { return 1; } } return 0; }`,
   `pasumx(pasx_):={local paso_,pasj_,pasb_,pasv_; if (type(pasx_)!=DOM_SYMBOLIC) { return 0; } paso_:=[op(pasx_)]; if (sommet(pasx_)=='+') { pasb_:=[]; ` +
-    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { pasv_:=pasue(paso_[pasj_],1); if (lvar(pasv_)==[]) { pasb_:=append(pasb_,pasv_); } } ` +
-    `for (pasj_:=1;pasj_<size(pasb_);pasj_++) { if (pasb_[pasj_]!=pasb_[0]) { return 1; } } } ` +
-    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { if (pasumx(paso_[pasj_])) { return 1; } } return 0; }`,
-  `pasucg(pasx_,pasok_):={local pasn_,pasq_,pasj_; pasn_:=normal(pasx_); pasq_:=pasuq(pasn_); if (pasq_[0]==4 or pasq_[0]==5) return pasx_; ` +
-    `if (pasq_[0]==2) { if (pasq_[1]==1) return pasubad; return pasuw; } if (pasq_[0]==0) { if (member(pasq_[1],pasok_)) return pasuw; return pasubad; } ` +
-    `if (pasq_[0]!=1 or pasumx(pasn_)) return pasubad; for (pasj_:=0;pasj_<size(pasq_[1]);pasj_++) { if (lvar(pasq_[1][pasj_])==[] and !member(pasq_[1][pasj_],pasok_)) return pasubad; } return pasuw; }`,
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { pasv_:=pasue(paso_[pasj_],1); if (lvar(pasv_)==[] and !pasuh(normal(paso_[pasj_]/product(zip((pasx_,pasy_)->pasx_^pasy_,${S},pasv_))))) { pasb_:=append(pasb_,pasv_); } } ` +
+    `for (pasj_:=1;pasj_<size(pasb_);pasj_++) { if (pasb_[pasj_]!=pasb_[0]) { return pasb_; } } } ` +
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { pasv_:=pasumx(paso_[pasj_]); if (pasv_!=0) { return pasv_; } } return 0; }`,
+  `pasumf(pasx_):={local paso_,pasj_,pasr_; if (type(pasx_)!=DOM_SYMBOLIC) { return 0; } paso_:=[op(pasx_)]; if (paso_[0]==pasumd) { return paso_[1]; } ` +
+    `for (pasj_:=0;pasj_<size(paso_);pasj_++) { pasr_:=pasumf(paso_[pasj_]); if (pasr_!=0) { return pasr_; } } return 0; }`,
+  `pasudk(pasq_):={local pasj_; if (pasq_[0]==0) return pasq_[1]; if (pasq_[0]!=1) return 0; if (lvar(pasq_[1][0])!=[]) return 0; ` +
+    `for (pasj_:=1;pasj_<size(pasq_[1]);pasj_++) { if (pasq_[1][pasj_]!=pasq_[1][0]) return 0; } return pasq_[1][0]; }`,
+  `pasucg(pasx_,pasok_):={local pasn_,pasq_,pasj_,pasm_,pasb_; pasn_:=normal(pasx_); pasq_:=pasuq(pasn_); if (pasq_[0]==4 or pasq_[0]==5) return pasx_; ` +
+    `if (pasq_[0]==2) { if (pasq_[1]!=0) return pasumd(pasq_[1]); return pasuw; } if (pasq_[0]==0) { if (member(pasq_[1],pasok_)) return pasuw; return pasubad; } ` +
+    `if (pasq_[0]!=1) return pasubad; pasm_:=pasumx(pasn_); if (pasm_!=0) return pasumd(pasm_); pasb_:=[]; for (pasj_:=0;pasj_<size(pasq_[1]);pasj_++) { if (lvar(pasq_[1][pasj_])==[]) pasb_:=append(pasb_,pasq_[1][pasj_]); } ` +
+    `for (pasj_:=1;pasj_<size(pasb_);pasj_++) { if (pasb_[pasj_]!=pasb_[0]) return pasumd(pasb_); } for (pasj_:=0;pasj_<size(pasb_);pasj_++) { if (!member(pasb_[pasj_],pasok_)) return pasubad; } return pasuw; }`,
   `pasucz(pasx_):=pasucg(pasx_,[${ZERO}])`,
   `pasuca(pasx_):=pasucg(pasx_,[${ZERO},${RAD}])`,
   ...TRIG_FNS.map((f) => `pasuc${f}(pasx_):=pasucf(pasuca(pasx_))`),
   ...INVERSES.filter((f) => f !== "atan2").map((f) => `pasuc${f}(pasx_):=pasucf(pasucz(pasx_))*pasdimA`),
-  `pasucatan2(pasy_,pasx_):={ if (has(pasucz(normal(pasy_/pasx_)),pasubad)) return pasubad; return pasdimA; }`,
+  `pasucatan2(pasy_,pasx_):={local pasr_,pasa_,pasb_; pasr_:=pasucz(normal(pasy_/pasx_)); if (has(pasr_,pasumd)) return pasr_; if (!has(pasr_,pasubad)) return pasdimA; ` +
+    `pasa_:=pasudk(pasuq(normal(pasy_))); pasb_:=pasudk(pasuq(normal(pasx_))); if (pasa_!=0 and pasb_!=0 and pasa_!=pasb_) return pasumd([pasa_,pasb_]); return pasubad; }`,
+  `pasusurd(pasx_,pasn_):={local pasq_,pase_; if (!pasuh(pasx_)) return surd(pasx_,pasn_); pasq_:=pasuq(normal(pasx_)); if (pasq_[0]!=0) return pasx_^(1/pasn_); ` +
+    `pase_:=pasq_[1]/pasn_; return surd(pasq_[2],pasn_)*product(zip((pasc_,pasd_)->pasc_^pasd_,${S},pase_)); }`,
+  `pasucsurd(pasx_,pasn_):=pasx_^(1/pasn_)`,
   `pasujk(pasc_):={local paso_; if (type(pasc_)!=DOM_SYMBOLIC) { return [3,lname(pasc_)]; } paso_:=[op(pasc_)]; ` +
     `if (member(sommet(pasc_),${CMP}) and size(paso_)==2 and !pasujc(paso_[0],${BOOL}) and !pasujc(paso_[1],${BOOL})) { return [1,paso_[0]-paso_[1]]; } ` +
     `return [3,lname(pasc_)]; }`,
@@ -174,7 +193,12 @@ export function withAngles(expr: string): string {
     i = expr.length - rest.length;
     if (rest.startsWith(PASDEG) && !isNameChar(rest.charAt(PASDEG.length)) && after.startsWith("*")) i = expr.length - after.length + 1;
   }
-  return inverses(out + expr.slice(i));
+  return roots(inverses(out + expr.slice(i)));
+}
+
+/** G357: Giac's surd(x, n) (the ∛ template) as pasusurd, which takes a quantity as a power does. */
+function roots(t: string): string {
+  return mapNames(t, (n) => (n.call && n.name === "surd" ? "pasusurd" : null), "typed");
 }
 
 /** Each inverse call as pasu<name>(…), its arguments done the same way, without the `/pasdeg` right after it. */
@@ -207,7 +231,7 @@ const CHECKED_CALLS: ReadonlySet<string> = new Set([...TRIG_FNS, ...INVERSES].ma
  *  cos, tan, the inverses and atan2 as pasuc<name>, each function of PURE_FNS as pasucf(pasucz(first argument), the
  *  others): a pure number when its argument is one. The value's text keeps Giac's own calls. */
 export function checkArgs(t: string): string {
-  return pureArgs(mapNames(t, (n) => (n.call && CHECKED_CALLS.has(n.name) ? `pasuc${n.name.slice(4)}` : null), "typed"));
+  return pureArgs(mapNames(t, (n) => (n.call && (CHECKED_CALLS.has(n.name) || n.name === "pasusurd") ? `pasuc${n.name.slice(4)}` : null), "typed"));
 }
 
 /** G310: whether the check's text (after withAngles) has a dimension symbol inside a call whose argument the check
@@ -230,7 +254,7 @@ function pureArgs(t: string): string {
   return out + t.slice(i);
 }
 
-type Checked = { kind: "term"; exps: string[]; num: string } | { kind: "sum"; terms: string[][] } | { kind: "function"; mixed?: true } | { kind: "trig" } | { kind: "zero" } | { kind: "undefined" };
+type Checked = { kind: "term"; exps: string[]; num: string } | { kind: "sum"; terms: string[][] } | { kind: "function"; mixed?: string[] } | { kind: "trig" } | { kind: "zero" } | { kind: "undefined" };
 
 /** pasuq's printed answer. */
 function checked(text: string): Checked | null {
@@ -249,8 +273,11 @@ function checked(text: string): Checked | null {
       const terms = splitList(parts[1] ?? "")?.map(exps);
       return terms && terms.every((t) => t !== null) ? { kind: "sum", terms: terms as string[][] } : null;
     }
-    case "2":
-      return parts[1]?.trim() === "1" ? { kind: "function", mixed: true } : { kind: "function" };
+    case "2": {
+      // G357: pasumx's or a marker's exponents of the terms that differ (0: none)
+      const mixed = splitList(parts[1] ?? "")?.map(exps);
+      return mixed && mixed.length && mixed.every((e) => e !== null && e.every(isExponent)) ? { kind: "function", mixed: [...new Set((mixed as string[][]).map(dimKeyOf))] } : { kind: "function" };
+    }
     case "3":
       return { kind: "trig" };
     case "4":
@@ -264,19 +291,25 @@ function checked(text: string): Checked | null {
 
 /** Why a checked answer is not one term, or null when it is. */
 function refusal(c: Checked, job: UnitJob): UnitError | null {
+  if (c.kind === "function" && c.mixed) return mixedRefusal(c.mixed, job);
   if (c.kind === "function" || c.kind === "trig") return { error: "function" };
   // Giac's 1/0 is infinity, 0/0 undef: not a number, and not the user's free name.
   if (c.kind === "undefined") return { error: "divzero" };
   if (c.kind === "sum") {
     if (c.terms.some((t) => !t.every(isExponent))) return { error: "function" };
-    const dims = [...new Set(c.terms.map(dimKeyOf))].sort(byDimension);
-    if (dims.length === 2) {
-      const cy = cycleRefusal(job, dims[0]!, dims[1]!);
-      if (cy) return cy;
-    }
-    return dims.length > 1 ? { error: "dimension", dims } : { error: "function" };
+    return mixedRefusal(c.terms.map(dimKeyOf), job);
   }
   return null;
+}
+
+/** Terms of the dimensions `keys` that meet in a sum (G357: also inside a function, or as atan2's two arguments). */
+function mixedRefusal(keys: readonly string[], job: UnitJob): UnitError {
+  const dims = [...new Set(keys)].sort(byDimension);
+  if (dims.length === 2) {
+    const cy = cycleRefusal(job, dims[0]!, dims[1]!);
+    if (cy) return cy;
+  }
+  return dims.length > 1 ? { error: "dimension", dims } : { error: "function" };
 }
 
 /** G32: rpm or rev on one side and the angle on the other (the dimensions differ by rad alone). */
@@ -506,8 +539,9 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
   const third = later !== null ? (isError(later) ? undefined : later) : both?.[2];
   const per = third !== undefined ? checked(third) : null;
   // G310: an argument the check reads with the wrong dimension ([3]), or a sum whose terms differ inside a function
-  // the check cannot read ([2] with pasumx's 1), is refused whatever the value is: exp(0 m) as exp(1 m).
-  if (per?.kind === "trig" || (per?.kind === "function" && per.mixed)) return { error: "function" };
+  // ([2] with their exponents), is refused whatever the value is: exp(0 m) as exp(1 m); G357: the sum by its dimensions.
+  if (per?.kind === "function" && per.mixed) return mixedRefusal(per.mixed, job);
+  if (per?.kind === "trig") return { error: "function" };
   const mixed = per?.kind === "sum" ? refusal(per, job) : null;
   if (mixed && mixed.error !== "function") return mixed;
   const bad = refusal(src, job) ?? refusal(dst, job);
