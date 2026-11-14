@@ -4,7 +4,7 @@
 // about the UI. Only erasable TypeScript syntax, so Node runs this file directly.
 import type { GiacBridge, GiacParse, GiacValue } from "./bridge.ts";
 import type { Request, Response } from "./protocol.ts";
-import type { AnalysisRequest, AnalysisResult, CasResult, CasSettings, HomeResult, HomeSettings, SolveOutcome, SolveRequest, TableRequest } from "./types.ts";
+import type { AnalysisRequest, AnalysisResult, CasResult, CasSettings, HomeResult, HomeSettings, SolveOutcome, SolveRequest, StoredRead, TableRequest } from "./types.ts";
 import {
   definitionsUsedBy,
   ENGINE_DEFINITIONS,
@@ -829,8 +829,10 @@ export class EngineHost implements FactsHost {
     this.assumeRisk = false;
     // G91: a precision with no name in it (`approx(e,2*10)`) is read as the literal it gives
     const input = askedLiterals(this.giac, typed, () => this.useHomeMode(s));
+    const reads = this.valuesOf(this.usesOf(input)); // G213f1: before the input runs (it may store to them)
     const cleared = this.clearing(input, () => this.useHomeMode(s));
     const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips);
+    if (out.result.ok) out.result.reads = reads;
     // G67, G65: the call after the input, if the run did not make it (an error: a syntax error ran nothing)
     const post = cleared?.post ?? this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
     out.defs = this.followLost(post, out.defs);
@@ -947,16 +949,27 @@ export class EngineHost implements FactsHost {
       });
   }
 
+  /** G213f1: usesOf's names with Giac's stored text of each and whether it is exact (no facts kept: DefEntry.facts). */
+  private valuesOf(used: readonly { name: string }[]): StoredRead[] {
+    return used.flatMap(({ name }) => {
+      const value = this.stored.get(name)?.text;
+      const f = this.byName.get(name)?.facts;
+      return value === undefined ? [] : [{ name, value, exact: !f || (f.exact && !f.inexact) }];
+    });
+  }
+
   cas(typed: string, s: CasSettings): { result: CasResult; defs: DefChange[] } {
     this.parsed = null;
     this.assumeRisk = false;
     // G91: as in Home
     const input = askedLiterals(this.giac, typed, () => this.useCasMode(s));
     const used = this.usesOf(input);
+    const reads = this.valuesOf(used); // G213f1
     this.post = null;
     const cleared = this.clearing(input, () => this.useCasMode(s));
     const out = this.casRun(cleared?.answer ?? input, s);
     if (used.length && out.result.ok) out.result.uses = used;
+    if (out.result.ok) out.result.reads = reads;
     // G67, G65: the call after the input, if the run did not make it (an error or a refusal)
     const post = cleared?.post ?? this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
     out.defs = this.followLost(post, out.defs);

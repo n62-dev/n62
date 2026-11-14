@@ -13,7 +13,7 @@
 //
 // Runs synchronously next to the engine (inside the Giac worker, or in Node for tests). Only
 // erasable TypeScript syntax, so Node runs this file directly.
-import { valueFactsOf, type ValueFacts } from "./types.ts";
+import { valueFactsOf, type StoredRead, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -125,6 +125,8 @@ export interface HomeResult {
   /** G67: the input changed one of Giac's settings (`approx_mode:=1`), which the engine put back: the result line says
    *  it was not kept. */
   settingReset?: true;
+  /** G213f1: each stored name the input read, with its value before the input ran; [] for none. Set on a result only. */
+  reads?: StoredRead[];
 }
 
 export { precisionFacts } from "./precisionFacts.ts";

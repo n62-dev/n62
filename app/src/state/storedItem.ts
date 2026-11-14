@@ -24,6 +24,15 @@ function validUses(x: unknown): UsedValue[] | undefined {
   return ok.length ? ok : undefined;
 }
 
+/** G213f1: a stored `ans` or `reads` entry when whole (a value and its exactness; a name for `reads`). */
+const keptValue = (x: unknown): x is { value: string; exact: boolean } =>
+  typeof x === "object" && x !== null && typeof (x as { value?: unknown }).value === "string" && typeof (x as { exact?: unknown }).exact === "boolean";
+/** G213f1: stored `reads`, whole or not at all (one entry dropped would make a name the row read look unread). */
+function validReads(x: unknown): HistoryItem["reads"] {
+  const ok = Array.isArray(x) && x.every((d) => keptValue(d) && typeof (d as { name?: unknown }).name === "string" && d.value.length <= FULL_LIMIT);
+  return ok ? (x as NonNullable<HistoryItem["reads"]>).map(({ name, value, exact }) => ({ name, value, exact })) : undefined;
+}
+
 /** Stored facts read back from IndexedDB, through the one mapping for stored facts (readValueFacts: an item stored
  *  before G76 says `exactRational`): kept when they have the shape, else dropped (the item then shows no mark). */
 function validFacts(x: unknown): ResultFacts | undefined {
@@ -55,7 +64,7 @@ function validFacts(x: unknown): ResultFacts | undefined {
  *  (`giac` as `full`, `angle`, `digits` as the setting allows, `word` as R194's record, `at`); the uid is kept, and a row
  *  stored without one (before G211) is given one here (the session writes it back). */
 export function restoredItem(i: HistoryItem, id: number): HistoryItem {
-  const { chips, full, fullExact, drawn, facts, uses, settingReset, uid, giac, angle, digits, word, at, ...rest } = i as HistoryItem & { form?: unknown };
+  const { chips, full, fullExact, drawn, facts, uses, settingReset, uid, giac, angle, digits, word, at, ans, reads, ...rest } = i as HistoryItem & { form?: unknown };
   const { form, ...base } = rest;
   const out: HistoryItem = { ...base, id, uid: typeof uid === "string" && uid !== "" ? uid : rowUid(id) };
   if (typeof giac === "string" && giac.length <= FULL_LIMIT) out.giac = giac;
@@ -72,6 +81,9 @@ export function restoredItem(i: HistoryItem, id: number): HistoryItem {
   const u = validUses(uses);
   if (u) out.uses = u;
   if (settingReset === true) out.settingReset = true;
+  if (keptValue(ans) && ans.value.length <= FULL_LIMIT) out.ans = { value: ans.value, exact: ans.exact };
+  const rd = validReads(reads);
+  if (rd) out.reads = rd;
   if (typeof full === "string" && full.length <= FULL_LIMIT) {
     out.full = full;
     out.fullExact = fullExact === true;

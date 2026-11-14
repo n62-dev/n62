@@ -36,6 +36,10 @@ export interface PyRow {
   angle?: string | null;
   /** The stored values the input read: a name here was a value when the row ran, so `name(…)` multiplied it. */
   defs?: readonly { name: string }[] | null;
+  /** G213f1: the value Ans held at Enter; absent on a line written before G213f1. */
+  ans?: PyChip | null;
+  /** G213f1: each stored name the input read, with its full value and exactness; absent on a line written before. */
+  reads?: readonly ({ name: string } & PyChip)[] | null;
 }
 
 export interface PyOptions {
@@ -116,6 +120,9 @@ interface Line {
 
 const wrap = (o: Out, min: number): string => (o.p < min ? `(${o.s})` : o.s);
 const isHead = (e: Json, h: string): e is Json[] => Array.isArray(e) && e[0] === h;
+/** Row r's full value in the kind of `c` (exact text against exact, a decimal against a row without one), as a chip
+ *  compares it: undefined when the row has none of that kind. */
+const fullOf = (r: PyRow | undefined, c: PyChip): string | null | undefined => (c.exact ? r?.exact : r?.exact ? undefined : r?.value);
 const numText = (e: Json): string | undefined => (typeof e === "object" && !Array.isArray(e) && "num" in e ? e.num : undefined);
 
 /** A number literal: a whole number as a Python int, a decimal as sympy's exact Rational of its digits. */
@@ -312,6 +319,12 @@ class Row {
     if (b.line < this.t.cut) return no(`lines missing before line ${this.t.cut}`);
     if (b.view !== this.t.view(this.i)) return no(`${n} is set in the other view`);
     if (this.t.allUnknown > b.line) return no(`uses line ${this.t.allUnknown}`);
+    // G213f1: by value, never by position alone: a store in the other view or a deleted row in between changes it
+    const reads = this.t.rows[this.i]?.reads;
+    if (!Array.isArray(reads)) return no("this line does not keep the values it read");
+    const kept = reads.find((d) => d.name === n);
+    if (!kept || typeof kept.value !== "string") return no(`the value ${n} held when this line ran is not kept`);
+    if (fullOf(this.t.rows[b.line - 1], kept) !== kept.value) return no(`${n} held another value when this line ran`);
     return { s: py, p: 5, k: b.k };
   }
 
@@ -325,13 +338,15 @@ class Row {
     return no("a chip is not translated");
   }
 
-  /** Ans: the last row of this view that finished with a result (session.svelte.ts lastChip), when it is in the file. */
+  /** Ans: the last row of this view that finished with a result (session.svelte.ts lastChip), when it is in the file and
+   *  holds the value Ans held at Enter (G213f1: a deleted row in between changes it); else that value itself. */
   private ans(): Out {
+    const kept = this.t.rows[this.i]?.ans;
+    if (!kept || typeof kept.value !== "string") return no("Ans: this line does not keep its value");
     const rows = this.t.rows;
     let j = this.i - 1;
     while (j >= 0 && !(rows[j]?.ok === true && this.t.view(j) === this.t.view(this.i))) j--;
-    if (j < 0) return no("Ans: its line is not in this file");
-    if (j + 1 < this.t.cut) return no(`lines missing before line ${this.t.cut}`);
+    if (j < 0 || j + 1 < this.t.cut || fullOf(rows[j], kept) !== kept.value) return this.earlierValue(kept);
     const line = this.t.lines[j];
     if (!line || !this.t.holds(line, j)) return no(`uses line ${j + 1}`);
     return { s: line.name, p: 5, k: line.k };
@@ -343,10 +358,14 @@ class Row {
     if (!c || typeof c.value !== "string") return no("an earlier result with no value kept");
     for (let j = this.i - 1; j >= 0; j--) {
       const r = this.t.rows[j] as PyRow;
-      const full = c.exact ? r.exact : r.exact ? undefined : r.value;
       const line = this.t.lines[j];
-      if (r.ok && full === c.value && line && this.t.holds(line, j)) return { s: line.name, p: 5, k: line.k };
+      if (r.ok && fullOf(r, c) === c.value && line && this.t.holds(line, j)) return { s: line.name, p: 5, k: line.k };
     }
+    return this.earlierValue(c);
+  }
+
+  /** A value N62 put in as it was (`# an earlier result`): a fraction or a decimal literal; any other text refuses. */
+  private earlierValue(c: PyChip): Out {
     this.earlier = true;
     const v = c.value.trim();
     const q = /^(-?)(\d+)\/(\d+)$/.exec(v);
@@ -383,7 +402,7 @@ class Translator {
    *  or this file set it, so `\operatorname{name}(2)` multiplies it; any other name before a bracket is the call it was.
    *  A bare name nothing set does not parse so: read as a value, the translator then says where it is not set (G213). */
   private parse(r: PyRow, chips: Record<string, PyChip>): Json {
-    const read = new Set((r.defs ?? []).map((d) => d.name));
+    const read = new Set([...(r.defs ?? []), ...(Array.isArray(r.reads) ? r.reads : [])].map((d) => d.name));
     const values = { has: (n: string) => read.has(n) || this.names.has(n) } as unknown as ReadonlySet<string>;
     try {
       return parseLatex(r.input, { chips, userValues: values });

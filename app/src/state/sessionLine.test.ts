@@ -101,6 +101,22 @@ describe("sessionLine (G210)", () => {
     );
   });
 
+  it("G213f1: a row that read Ans keeps the value Ans held at Enter in `ans`, never in its chips (a recall resolves Ans again)", () => {
+    const r = row({ uid: "r-11", latex: String.raw`\ans+1`, giac: "8+1", text: "9", value: re("9"), rational: { n: "9", d: "1" }, full: "9", fullExact: true,
+      ans: { value: "8", exact: true }, reads: [], angle: "rad", digits: 12 });
+    expect(sessionLine(r, O)).toBe(
+      HEAD + String.raw`"id":"r-11",${TS},"view":"home","input":"\\ans+1","giac":"8+1","ok":true,"exact":"9","value":"9","mark":"=","angle":"rad","digits":12,"word":null,"ans":{"value":"8","exact":true},"reads":[]}`,
+    );
+  });
+
+  it("G213f1: a Home row that read a stored name keeps each name with its full value and exactness in `reads`", () => {
+    const r = row({ uid: "r-12", latex: "a+1", giac: "a+1", text: "4", value: re("4"), rational: { n: "4", d: "1" }, full: "4", fullExact: true,
+      reads: [{ name: "a", value: "3", exact: true }], angle: "rad", digits: 12 });
+    expect(sessionLine(r, O)).toBe(
+      HEAD + String.raw`"id":"r-12",${TS},"view":"home","input":"a+1","giac":"a+1","ok":true,"exact":"4","value":"4","mark":"=","angle":"rad","digits":12,"word":null,"reads":[{"name":"a","value":"3","exact":true}]}`,
+    );
+  });
+
   it("what a row does not hold is null (id, giac, angle, digits, word), never a guess", () => {
     const r = row({ id: 4, latex: "2+2", text: "4", value: re("4"), full: "4", fullExact: true, facts: { exact: true, reliableDigits: null } });
     expect(sessionLine(r, O)).toBe(HEAD + String.raw`"id":null,${TS},"view":"home","input":"2+2","giac":null,"ok":true,"exact":"4","value":"4","mark":"=","reliableDigits":null,"angle":null,"digits":null,"word":null}`);

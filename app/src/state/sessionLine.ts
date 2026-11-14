@@ -34,6 +34,11 @@
 //            not keep it. shl, shr, rotl, rotr and bnot read it: `shl(3,7)` is 384 in 64 bits, 128 in 8 bits unsigned,
 //            −128 in 8 bits signed (engine/wordOps.test.ts)
 //   defs     the stored values the input read: name, preview, the view that stored it
+//   ans      G213f1: `{"value":…,"exact":b}`, the value Ans held at Enter, on a line whose input reads `\ans`; kept here, not
+//            in `chips`, so a recalled entry resolves Ans again. Absent on a line written before G213f1
+//   reads    G213f1: `[{"name":…,"value":…,"exact":b}]`, each stored name the input read (Home and CAS) with Giac's full text
+//            of its value before the row ran (radians, as `exact`) and whether it is exact; `[]` when it read none; a
+//            value over 2 kB is left out. Absent on a line written before G213f1: such a line says nothing of its names
 import { DECIMAL_KEEP } from "../engine/format.ts";
 import { copyFull, copyMark, type CopySource } from "../clipboard/text.ts";
 import { markFor, modeOf, type DisplayContext } from "./displayMode.ts";
@@ -100,6 +105,8 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
     digits: item.digits ?? null,
     word: item.word ?? null,
     defs: item.uses?.length ? item.uses.map((d) => ({ name: d.name, preview: d.preview, view: d.view })) : undefined,
+    ans: item.ans ? { value: item.ans.value, exact: item.ans.exact } : undefined,
+    reads: item.reads?.map((d) => ({ name: d.name, value: d.value, exact: d.exact })),
   };
   return JSON.stringify(line);
 }
