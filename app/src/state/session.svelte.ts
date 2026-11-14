@@ -136,6 +136,11 @@ export interface HistoryItem {
   units?: UnitRow;
   /** R63: a unit result's chip (Ans too) went into the input; Home has no units: a line under the result says so. */
   unitDropped?: true;
+  /** G210 (types only; G211 fills them): the row's identity across runs (never `id`), its Giac text, angle and digits. */
+  uid?: string;
+  giac?: string;
+  angle?: AngleUnit;
+  digits?: number;
   startedAt: number;
 }
 

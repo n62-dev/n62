@@ -73,7 +73,7 @@ Not verified:
 The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10∡30+5` from the keys now adds 5 to the phasor.
 
 **Hand-off to the laptop**
-- `[miss]` Session format v1. `HistoryItem` holds no Giac text, angle or digits per row; `uses` is CAS only. G210, G211, G212.
+- `[miss]` Session format v1. G210 merged (format v0, pure, no caller); `HistoryItem` holds no Giac text, angle or digits per row; `uses` is CAS only. G211, G212.
 - `[miss]` Copy as Python. Allow-list on our parser's tree; anything else says NOT TRANSLATED. G213, G214, G215, G216, G217, R181.
 - `[part]` Sync folder. Folder grant works on the Tab One (A65); append is missing, and `"wa"` is untested. A100, A101, G218, G219, then R128 (existing), R182, R183. No rewrite mode: a folder that cannot append says so and keeps the queue.
 
