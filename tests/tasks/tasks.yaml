@@ -14,7 +14,10 @@
 #   expect        value = the true value (string, or a list of strings), `text` = what Home shows (12 digits)
 #   source        oracle | derived | device | virtual-calc | assumed, like a golden case. Never from memory
 #   baseline      today's best sequence found (a short search, not a proof): replayed on every run; its result
-#                 must read `text` and agree with expect.value to 12 digits. null = no way to do it today
+#                 must read `text` and agree with expect.value to 12 digits. null = no way to do it today.
+#                 A string `@place`, `@symb`, `@num`, `@menu` is the status line's control (a tap, 1 press). `text` is a
+#                 list when expect.value is one: the last Home rows, or with `read: solve` the values of `names` in
+#                 Solve's Num table (R221)
 #   compare       hand-measured presses on other tools; null until the owner measures them (README.md)
 #
 # Find letters are written as the key that types them (docs/04 section 3.7): c = tmpl, e = frac, h = cos, k = log,
@@ -107,13 +110,16 @@ tasks:
     title: Nearest E24 value to 3.87k
     milestone: 6
     status: pending
-    needs: "Find (R4a)"
+    needs: "the budget, agreed with the owner when the task goes active; the plan below needs 12, today 13 (Find's first hit after e s is the statC unit, so it takes e s e)"
     budget: 12
     # Math, e s (s a flick down on 9) Enter (eseries(), cursor inside), 2 4 , 3 8 7 0, Enter
     keys: [math, frac, {down: d9}, enter, d2, d4, comma, d3, d8, d7, d0, enter]
     expect: { value: "3900", text: "3900" }
     source: derived   # IEC 60063 E24: …, 3.6, 3.9, 4.3, … ; |3.87 − 3.9| < |3.87 − 3.6|
-    baseline: null    # nothing computes it today; the engineer reads a table
+    baseline:
+      note: "a short search, not a proof: eseries() is in Find; e s first finds the statC unit, so it takes e s e (the first hit after three letters)"
+      keys: [math, frac, {down: d9}, frac, enter, d2, d4, comma, d3, d8, d7, d0, enter]
+      text: "3900"
     compare: { g2_virtual_calc: null, phone_calculator: null }
 
   - id: t07
@@ -132,21 +138,26 @@ tasks:
     title: Solve a 3×3 linear system
     milestone: 6
     status: pending
-    needs: "matrices and lists you can enter (EN5, milestone 6)"
+    needs: "the budget, agreed with the owner when the task goes active; Solve takes the three equations today (Z for z: Alpha letters are capitals)"
     budget: null
     keys: null
     # x + y + z = 6;  2x − y + z = 3;  x + 2y − z = 2   (determinant 7)
     equations: ["x+y+z=6", "2x-y+z=3", "x+2y-z=2"]
     expect: { value: ["1", "2", "3"] }
     source: derived   # substitute (1, 2, 3): 6, 3, 2
-    baseline: null    # no key makes a list or a matrix today
+    baseline:
+      note: "a short search, not a proof: Apps › Solve, the three equations typed with flicks (y = {up: x}, Z = {down: d2}, = = {up: dot}), Num, Menu › Solve; z is Z, the same system, read in Num's table"
+      read: solve
+      names: [x, y, Z]
+      keys: ["@place", d4, x, add, {up: x}, add, {down: d2}, {up: dot}, d6, enter, down, d2, x, sub, {up: x}, add, {down: d2}, {up: dot}, d3, enter, down, x, add, d2, {up: x}, sub, {down: d2}, {up: dot}, d2, enter, "@num", "@menu", d1]
+      text: ["1", "2", "3"]
     compare: { g2_virtual_calc: null, phone_calculator: null }
 
   - id: t09
     title: Mean and standard deviation of ten readings
     milestone: 6
     status: pending
-    needs: "mean() and stddevp() from Find (R4a; the budget comes with it); the list is Shift + 8 (R54)"
+    needs: "the budget, agreed with the owner when the task goes active; the readings are typed twice today"
     budget: null
     keys: null
     data: ["9.81", "9.79", "9.83", "9.80", "9.82", "9.78", "9.84", "9.81", "9.80", "9.82"]
@@ -156,9 +167,9 @@ tasks:
       stdev_population: "0.01732050807568877293527446341505872366943"
     source: oracle    # mean = 981/100 and sum of squares = 3/1000 exactly; roots by mpmath 1.3.0, 40 digits
     baseline:
-      note: "the mean only, as (sum) ÷ 10: Shift + 8 types the list (R54), but mean() and stddevp() need Find (R4a); letters typed with Alpha are a product (m·e·a·n), not a name"
-      keys: [paren, d9, dot, d8, d1, add, d9, dot, d7, d9, add, d9, dot, d8, d3, add, d9, dot, d8, d0, add, d9, dot, d8, d2, add, d9, dot, d7, d8, add, d9, dot, d8, d4, add, d9, dot, d8, d1, add, d9, dot, d8, d0, add, d9, dot, d8, d2, right, div, d1, d0, enter]
-      text: "9.81"
+      note: "a short search, not a proof: the readings in a list (Shift + 8; 9.80 typed 9.8) stored in x once (▶ x), then mean(x) by m e a (Find's first hit after three letters) and stddevp(x) by s (a flick down on 9) t d; Home shows the last two rows"
+      keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, x, enter, x, enter]
+      text: ["9.81", "0.0182574185835"]
     compare: { g2_virtual_calc: null, phone_calculator: null }
 
   - id: t10
