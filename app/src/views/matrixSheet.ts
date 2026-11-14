@@ -75,20 +75,30 @@ export function showMatrix(c: MatrixCtx, index: FindIndex): Promise<void> {
     items: [],
     grid: new MatrixGrid(m.name, shell.settings, () => shell.calc.home(m.name, shell.settings()), async (cells, check) => (await readMatrices(shell.calc.engine, [m.name], shell.settings(), cells, check))[0] ?? null),
   });
-  const open = (stored: readonly StoredMatrix[], loading?: () => Promise<void> | null): void =>
-    shell.showMenu(t("matrix.title"), matrixRows(index.byId, row, stored, grid, make), { remember: false, ...(loading ? { loading } : {}) });
-  // R190: New stores the 2 × 2, then the sheet opens again with it first among the stored matrices and its grid open
+  let pending: Promise<void> | null = null; // (the stored matrices' read)
+  let storing: Promise<void> | null = null; // (New's store and the reopening: keys wait for it as for the read)
+  const open = (stored: readonly StoredMatrix[]): void =>
+    shell.showMenu(t("matrix.title"), matrixRows(index.byId, row, stored, grid, make), { remember: false, loading: () => storing ?? pending });
+  // R190: New stores the 2 × 2, then the sheet opens again with it first among the stored matrices and its grid open;
+  // only while the sheet New was picked on still shows (Esc or another pick meanwhile: nothing reopens), and only the
+  // grid of the matrix just stored (a failed store leaves no such row: nothing opens). A second New waits for the first.
   const make = (): void => {
-    void createMatrix(session).then(async (name) => {
-      if (name === null) return;
-      await showMatrix(c, index);
-      const sheet = shell.sheet;
-      if (sheet) shell.picked(sheet.pickNumber(10));
-    });
+    if (storing) return;
+    const from = shell.sheet;
+    const job: Promise<void> = createMatrix(session)
+      .then(async (name) => {
+        if (name === null || shell.sheet !== from) return;
+        await showMatrix(c, index);
+        const sheet = shell.sheet;
+        const at = sheet?.level.rows.find((r) => r.item.id === `matrix:${name}`);
+        if (sheet && at && sheet.depth === 1) shell.picked(sheet.activate(at.index));
+      })
+      .catch(() => {})
+      .finally(() => void (storing === job && (storing = null)));
+    storing = job;
   };
   if (names.length === 0) return Promise.resolve(open([]));
-  let pending: Promise<void> | null = null;
-  open([], () => pending);
+  open([]);
   const first = shell.sheet;
   return (pending = readMatrices(shell.calc.engine, names, shell.settings(), false)
     .catch((): StoredMatrix[] => [])
