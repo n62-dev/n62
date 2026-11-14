@@ -15,7 +15,7 @@ import type { HomeResult } from "./homeEval.ts";
 
 /** A finished Home row as the session keeps it (homeItem's rule), and its session line read back. */
 const line = (latex: string, r: HomeResult): PyRow => {
-  const item: HistoryItem = { id: 1, view: "home", latex, status: r.ok ? "done" : "error", resultLatex: "", text: r.display, approximate: false, startedAt: 0, ...homeItem(r, false) };
+  const item: HistoryItem = { id: 1, view: "home", latex, status: r.ok ? "done" : "error", resultLatex: "", text: r.display, startedAt: 0, ...homeItem(r, false) };
   return JSON.parse(sessionLine(item, { t: new Date(0), app: "0.1.0" }) ?? "null") as PyRow;
 };
 

@@ -132,7 +132,7 @@ export interface HistoryItem {
   /** CAS: the stored values the input read, each with the view that stored it (F28); absent when there is none. */
   uses?: UsedValue[];
   /** G213f1, Copy as Python only (never drawn): Ans's value at Enter when read; each stored name read with its value ([] none). */
-  ans?: { value: string; exact: boolean };
+  ans?: Pick<Chip, "value" | "exact">;
   reads?: StoredRead[];
   /** G67: the input changed one of the engine's settings, which was put back (a line under the result says so). */
   settingReset?: true;
@@ -480,7 +480,7 @@ export class Session {
       text: "",
       approximate: false,
       ...(Object.keys(kept).length ? { chips: kept } : {}),
-      ...(ans && usesAns ? { ans: { value: ans.value, exact: ans.exact } } : {}), // G213f1: not in `chips` (a recall resolves Ans again)
+      ...(usesAns && ans ? { ans } : {}), // G213f1: not in `chips` (a recall resolves Ans again); the line and the store keep value and exact
       ...(Object.values(kept).some((c) => c.unit) || (ans?.unit && usesAns) ? { unitDropped: true } : {}), // R63: a chip on the line, or Ans used
       startedAt: performance.now(),
     });
