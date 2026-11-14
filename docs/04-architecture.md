@@ -131,9 +131,10 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
-**Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes (the table's first column).
+**Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes.
 
 **Paste** (☰ 7; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3`, `1.5E-3`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused); it enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else gives "Paste: not a number". Pasting a result copied from N62 gives the same value back (P5; with decimal comma not a list of one decimal).
+**Session line** (G210, v0): one JSON line per result; its format: `state/sessionLine.ts`.
 **Mechanics:** the APK uses `@capacitor/clipboard` and `@capacitor/share`; the PWA `navigator.clipboard`, and `navigator.share` where it exists, else copy. Files go out through the native `save` (`ACTION_CREATE_DOCUMENT`) in the APK and `<a download>` in the PWA, and come in through `<input type="file">`.
 
 ### 2.7 Decision: SI prefix display, and prefix entry
@@ -147,7 +148,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 - **A unit result's chip (`units/chip.ts`):** Home's chip rule on the number in the unit shown, with `unc` and `unit` (label and the units key's slot, read through `input/chipUnit.ts`); a σ chip is an independent input of σ, as a constant.
 - **Ans:** `\ans` is the view's last result, inserted by Shift + `+` (the reference's position). Ans is resolved at Enter from the view's last history result (its chip value), not from Giac's `pasans`/`pcasans`, so it survives a Cancel (worker restart) and a relaunch.
 - **Operator on an empty line:** `+ − × ÷ xʸ x² x⁻¹` on an empty entry line insert `\ans` first, as the reference does. `(−)` stays negation.
-- A value that leaves its evaluation (stored, Ans, a chip, an export) is the value shown, independent of the angle mode. Its exact text is radian text, which means the same in every mode, so it stays exact.
+- A value that leaves its evaluation (stored, Ans, a chip, an export) is the value shown, independent of the angle mode. Its exact text is radian text, the same in every mode, so it stays exact.
 - A stored name takes the facts of what its input read, and a run-once result that rests on a decision is ⚠. Names stored and read come from Giac's state and tree; whether an input stores, from its tree (stores.ts): a target, a state or string head, or a stored program that stores; over-reads only.
 - A CAS result without a float that read a stored name, or called a function, with facts takes their mark (`warn`, `why.inherited`); one built from exact names stays unmarked.
 - The rule that turns a result into an item's `full`, facts and chip is plain TypeScript (`state/results.ts`), so the session and the golden gate run the same code; a rune file holds state and calls, not rules.
@@ -315,7 +316,7 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 - **Display in Home:** every element through our formatter, one mark for the whole (2.4).
 
 ### 5.4 Decision: number bases (EN6)
-- **A base is a display mode of an integer result** (R192), like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result, R193). Word size (8, 16, 32, 64) and signed (two's complement) or unsigned are settings (R194). Drawn whole, unpadded (`0xA`), marked as a fraction (`=` if exact); a non-integer or a value outside the word (negative, if unsigned) keeps its notation.
+- **A base is a display mode of an integer result** (R192), like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result, R193). Word size (8 to 64 bits) and signed are settings (R194, key `word`). Drawn whole, unpadded (`0xA`), marked as a fraction (`=` if exact); a non-integer or a value outside the word (negative, if unsigned) keeps its notation.
 - **Entry:** `0x…`, `0b…`, `0o…` are one whole number (R191), written in decimal; hex digits A–F (either case) are the Alpha letters, the run greedy (`0xFFx` is 255·x); a digit outside the base, a point, an ᴇ, spacing inside it (R191f1) or a prefix at the line's end is refused; `0x+1` stays 0·x+1.
 - **Bitwise:** `bitand`, `bitor`, `bitxor` work; shifts and rotations are EN7 definitions in the word size.
 
@@ -440,14 +441,14 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 
 | Item | Budget | State | Enforced by |
 |---|---|---|---|
-| Start chunk | ≤ 180 kB raw, ≤ 63 kB gzip (owner, 2026-11-09); pin `START_PIN_GZIP` | its value and each raise with both sizes: size-check.ts. A package growing the chunk past it raises it to its size after merging phase-1 plus 0.05 kB, with the reason; `LAZY_PARTS` must stay dynamic chunks. `tools/probes/start-chunk.mjs` lists bytes per source | size test (`npm run size`) |
+| Start chunk | ≤ 180 kB raw, ≤ 63 kB gzip; pin `START_PIN_GZIP` | its value and each raise with both sizes: size-check.ts. A package growing the chunk past it raises it to its size after merging phase-1 plus 0.05 kB, with the reason; `LAZY_PARTS` must stay dynamic chunks. `tools/probes/start-chunk.mjs` lists bytes per source | size test (`npm run size`) |
 | Inline scripts of `index.html` (run before the first paint, outside the start chunk) | pin 1.53 kB gzip (`INLINE_PIN_GZIP`; per script, summed) | 1.53 kB | size test |
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB (2026-10-18) | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
 | Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB (2026-10-15) | size test |
 | Unit view chunks | ≤ 38 kB raw (entries); pin 69.95 kB with shared ones (R264) | 37.97; 69.87 kB (R259) | size test |
 | Precache total | ≤ 18 MB | 12.4 MB (2026-10-18) | size test |
-| Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions; nothing stored (A73f1, 11-08, 4cb8e068): Home 790 / 1330 ms, CAS last 795 / 1507 ms (in the worker's wasm instantiate: A73f2) | device runs |
+| Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions; nothing stored (A73f1, 11-08): Home 790 / 1330 ms, CAS last 795 / 1507 ms (in the worker's wasm instantiate: A73f2) | device runs |
 | Enter → result p95 (Tab One) | < 150 ms at 12 digits; at 30 digits ≤ 1.3 × the 12-digit p95 | RAD 147.9 ms at 12, 152.6 at 30; DEG 149.1 and 141.4 | device runs |
 | Find key → list (Tab One) | p95 ≤ 16 ms | 14.1 ms | `?bench=find` (A4b) |
 | Find open | ≤ 100 ms warm, ≤ 300 ms cold | max of 50: 244 ms | device runs |
