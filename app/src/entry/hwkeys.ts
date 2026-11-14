@@ -133,7 +133,8 @@ function pressChord(ev: KeyboardEvent, tg: HwTarget, only?: (t: DeskTarget) => b
  *  the arrows, Enter, Esc and the characters a keypad key types (a digit is its prefix cell) take the keypad's path.
  *  R303: a chord of the table presses its key as on the line (Alt+F is Math, Find on units; the fold stays dead: the pad
  *  lives on the keys), and with a sheet open over the view (`sheet`: Find) a letter types into its query (`onLetter`,
- *  route.ts typeLetter); with none a letter does nothing (P14: no letters in a slot), as does anything else (`dead`).
+ *  route.ts typeLetter); with none a letter does nothing here, as does anything else (`dead`): R313, the view's typing
+ *  (units/typed.ts) takes letters into the slot as a unit's symbol before this runs.
  *  Copy and select all stay MathLive's; Tab and the bare modifiers the browser's. */
 export function unitViewKey(ev: KeyboardEvent, tg: HwTarget, sheet: boolean, dead: () => void): void {
   if (ev.isComposing) return;

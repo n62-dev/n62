@@ -118,13 +118,13 @@ test.describe("the unit view from the keys", () => {
     expect(await page.evaluate(() => window.n62.unitView?.view.formula.slots)).toEqual(["u1", "u2"]);
   });
 
-  test("a hardware key on the field takes the keypad's path: a digit is its prefix cell, a letter does nothing", async ({ page }) => {
+  // (R313: a letter goes into the slot, `kmz` below; with no letter run open a digit is still its prefix cell)
+  test("a hardware key on the field takes the keypad's path: a digit is its prefix cell", async ({ page }) => {
     await tap(page, ["d7", "d2"]);
     await unitsKey(page);
     await expect(shown(page)).toBeVisible();
     await page.keyboard.press("4");
     await page.keyboard.press("9");
-    await page.keyboard.press("x");
     await page.keyboard.press("/");
     expect(meant(await tokens(page, "u1"))).toBe("k:m");
     await expect(reading(page)).toHaveText("kilometer");
@@ -172,13 +172,10 @@ test.describe("the unit view from the keys", () => {
     expect(meant(await tokens(page, "u1"))).toBe("");
   });
 
-  test("R303 controls: with no sheet open a letter does nothing (P14) and Ctrl+C stays the browser's", async ({ page }) => {
+  // (R313: with no sheet open letters now go into the slot, the R313 tests below; R303 had them do nothing, P14)
+  test("R303 control: Ctrl+C stays the browser's", async ({ page }) => {
     await tap(page, ["d7", "d2"]);
     await unitsKey(page);
-    await page.keyboard.press("k");
-    await page.keyboard.press("m");
-    expect(meant(await tokens(page, "u1"))).toBe("");
-    await expect(page.getByTestId("find")).toHaveCount(0);
     const prevented = await page.evaluate(() => {
       const el = window.n62.unitView?.element;
       if (!el) return null;
@@ -237,6 +234,86 @@ test.describe("the unit view from the keys", () => {
     await expect(find).toBeHidden();
     expect(await tokens(page, "u1")).toEqual({ tokens: [{ unit: "m" }] });
     await expect(page.locator('[data-key="d9"][data-pad="unit"]')).toBeVisible();
+  });
+});
+
+// R313 (night review 2026-11-14, the owner's answer 1; decisions.md P14): on a hardware keyboard a run of letters in a
+// slot reads as a unit, the way Find reads an exact symbol (units/slot.ts readSymbol), read live; `*`, `/`, `^` and the
+// digit after `^` end the run, as the pad builds the unit. The touch pad keeps its cells (the tests above and the probe's
+// replay below).
+test.describe("R313: letters typed in a unit slot on a hardware keyboard", () => {
+  test.beforeEach(async ({ page }) => open(page, "engine=fake"));
+  const message = (page: Page) => page.getByTestId("unit-message");
+  const prompt = (page: Page, id: string): Promise<string | undefined> => page.evaluate((id) => window.n62.unitView?.field.getPromptValue(id), id);
+
+  test("72, the units key, km: the slot holds the kilometre, read at every letter", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await unitsKey(page);
+    await page.keyboard.press("k");
+    await expect(reading(page)).toHaveText("k"); // no unit yet: the letter as typed
+    await page.keyboard.press("m");
+    expect(meant(await tokens(page, "u1"))).toBe("k:m");
+    await expect(reading(page)).toHaveText("kilometer");
+    expect(await prompt(page, "u1")).toContain("\\mathrm{km}");
+    await page.keyboard.press("Enter");
+    expect(await activeId(page)).toBe("end");
+    expect(await page.evaluate(() => window.n62.unitView?.field.value)).toMatch(/^72.*\\mathrm\{km\}/);
+    expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
+  });
+
+  test("9.81, the units key, m/s^2: m, ÷, s, ² as the pad builds them", async ({ page }) => {
+    await tap(page, ["d9", "dot", "d8", "d1"]);
+    await unitsKey(page);
+    await page.keyboard.type("m/s^2");
+    expect(meant(await tokens(page, "u1"))).toBe("m s^-2");
+    await expect(reading(page)).toHaveText("meter per second squared");
+    await page.keyboard.type("*4N"); // with no run open 4 is its prefix cell (k), then N: k·N, below the ÷ as on the pad
+    expect(meant(await tokens(page, "u1"))).toBe("k:N^-1 m s^-2");
+  });
+
+  test("kWh is the kilowatt hour (Find's exact symbol), not k·W·h", async ({ page }) => {
+    await unitsKey(page);
+    await page.keyboard.type("kWh");
+    expect(await tokens(page, "u1")).toEqual({ tokens: [{ prefix: "k", unit: "Wh" }] });
+    await expect(reading(page)).toHaveText("kilowatt hour");
+  });
+
+  test("kmz is no unit: it stays as typed and marked, Enter names it and no value comes; ⌫ takes a letter back; Esc drops a run that reads as no unit", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await unitsKey(page);
+    await page.keyboard.type("kmz");
+    expect(meant(await tokens(page, "u1"))).toBe("");
+    await expect(reading(page)).toHaveText("kmz");
+    expect(await prompt(page, "u1")).toContain("kmz");
+    await page.keyboard.press("Enter");
+    await expect(message(page)).toHaveText("kmz is not a unit");
+    expect(await activeId(page)).toBe("u1");
+    await flick(page, "enter", "up"); // evaluate at once: refused the same
+    await expect(message(page)).toHaveText("kmz is not a unit");
+    await expect(page.getByTestId("unit-result")).toHaveCount(0);
+    await page.keyboard.press("Backspace");
+    expect(meant(await tokens(page, "u1"))).toBe("k:m");
+    await expect(reading(page)).toHaveText("kilometer");
+    await page.keyboard.press("z");
+    await page.keyboard.press("Escape"); // a run that reads as no unit is dropped (the slot as before it), the view leaves
+    await expect(shown(page)).toBeHidden();
+    expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
+    await unitsKey(page);
+    expect(meant(await tokens(page, "u1")), "kmz then Esc: the letters gone, the slot as before the run").toBe("");
+  });
+
+  // audit, fix round 2: Esc dropped a run that already read as a unit, so `km` the line showed was gone on the next open
+  test("km then Esc: the run reads as a unit, so it ends and the line keeps its slot (as the pad's k m then Esc)", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await unitsKey(page);
+    await page.keyboard.type("km");
+    await expect(reading(page)).toHaveText("kilometer");
+    await page.keyboard.press("Escape");
+    await expect(shown(page)).toBeHidden();
+    expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
+    await unitsKey(page);
+    expect(meant(await tokens(page, "u1")), "the slot keeps the kilometre").toBe("k:m");
+    await expect(reading(page)).toHaveText("kilometer");
   });
 });
 
