@@ -48,6 +48,36 @@ export function layerPins(kb: Keyboard): Record<string, string> {
   return out;
 }
 
+/** The numbered-list builders: each pinned list section → the source files (under app/src) that build or open it. A list that
+ *  is not here and not in UNPINNED_LISTS fails layoutLock.test.ts, so a new numbered list cannot ship outside the lock. The
+ *  sections `layers`, `tmpl`, `relations` and `symbols` are the keypad's, not lists of this kind. */
+export const LIST_BUILDERS: Readonly<Record<string, readonly string[]>> = {
+  "home-menu": ["clipboard/actions.svelte.ts"],
+  "home-copy-as": ["clipboard/actions.svelte.ts"],
+  mode: ["views/modeSheet.ts", "App.svelte"],
+  settings: ["views/modeSheet.ts"],
+  apps: ["apps/shell.svelte.ts"],
+  base: ["views/baseSheet.ts"],
+  matrix: ["views/matrixSheet.ts"],
+  "function-symb": ["apps/function/app.svelte.ts"],
+  "function-plot": ["apps/function/app.svelte.ts"],
+  "function-num": ["apps/function/app.svelte.ts"],
+  "solve-symb": ["apps/solve/app.svelte.ts"],
+  "solve-num": ["apps/solve/app.svelte.ts"],
+  "stat-linreg": ["views/statSheet.ts"],
+  "stat-stats1": ["views/statSheet.ts"],
+  "units-menu": ["units/menu.ts", "units/find.ts"],
+};
+
+/** The other files that open a sheet (`showMenu`) or an app's ☰ (`menu(view`), each with why its rows have no fixed digit. */
+export const UNPINNED_LISTS: Readonly<Record<string, string>> = {
+  "views/creditsSheet.ts": "no rows: the credit blocks are text",
+  "views/restoreSheet.svelte.ts": "a checklist of the parts of the file the user picked (content, not fixed rows)",
+  "views/libraryJobs.ts": "the names a library import clashes with (stored content)",
+  "views/helpSheet.ts": "the rows of the Find item at the cursor (its syntax and examples, content)",
+  "find/finder.ts": "an empty placeholder while the matrix sheet loads",
+};
+
 /** A palette's cells, `row,col` → id, in reading order. */
 export function paletteSlots(p: Palette): Record<string, string> {
   return Object.fromEntries(p.items.map((i) => [`${i.row},${i.col}`, i.id]));

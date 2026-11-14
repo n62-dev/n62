@@ -4,13 +4,23 @@
 // A change to a pinned line, or a live line the lock does not know, fails and names the entry. Growth into blank space
 // (a reserved line turning live, a row appended after a list's last fixed row) passes once the lock records it.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { parse } from "yaml";
+vi.mock("../theme.svelte.ts", () => ({ brightness: () => "dark", family: () => "n62" })); // (the page's data-brightness: no document in the test)
+import { FunctionApp } from "../apps/function/app.svelte.ts";
+import type { Cell } from "../apps/function/engineApi.ts";
 import { AppShell } from "../apps/shell.svelte.ts";
+import { SolveApp } from "../apps/solve/app.svelte.ts";
+import type { AppHost, MenuItem } from "../apps/types.ts";
+import { decimalFromRational } from "../engine/format.ts";
+import { makeIndex } from "../find/testIndex.ts";
+import type { IndexItem } from "../find/types.ts";
+import { unitsMenu } from "../units/menu.ts";
+import { statItems } from "../views/statSheet.ts";
 import type { Calc } from "../calc/port.ts";
 import { FakeCalc } from "../calc/fake.ts";
 import { ClipActions } from "../clipboard/actions.svelte.ts";
@@ -19,11 +29,11 @@ import type { FindItem } from "../find/types.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import { baseItems } from "../views/baseSheet.ts";
-import { matrixItems, MATRIX_ROWS } from "../views/matrixSheet.ts";
+import { matrixRows, MATRIX_ROWS } from "../views/matrixSheet.ts";
 import { modeItems, settingsSections } from "../views/modeSheet.ts";
 import { loadKeyboard, keyboard } from "./keyboard.ts";
 import { UserKeys } from "./userKeys.svelte.ts";
-import { compareLayout, compareToRelease, layerPins, listSlots, paletteSlots, parseLock, releaseLock, type Lock, type Pins } from "./layoutLock.ts";
+import { compareLayout, compareToRelease, layerPins, LIST_BUILDERS, listSlots, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const LOCK = "spec/layout-lock.yaml";
@@ -32,9 +42,41 @@ const specDoc = (): { keys: Record<string, unknown>[] } => parse(read("spec/keyb
 const decisions = read("docs/decisions.md");
 const ids = (rows: readonly { id: string }[]): Record<string, string> => listSlots(rows.map((r) => r.id));
 
+/** The Find items by id as the shipped app has them: the generated index, so a row whose Find item is missing there
+ *  renumbers the matrix sheet and fails the lock. Without the index (FIND_INDEX not required) the sheet's own ids stand in. */
+function findItems(): ReadonlyMap<string, FindItem> {
+  const file = join(root, "app/src/find/_gen/find-index.json");
+  if (!existsSync(file)) {
+    if (process.env["FIND_INDEX"] === "required") throw new Error("layout lock: FIND_INDEX=required but the generated Find index is missing (npm run index)");
+    console.info("layout lock: no generated Find index, the matrix rows are stubs");
+    return new Map(MATRIX_ROWS.map(({ id }) => [id, { id } as unknown as FindItem]));
+  }
+  return makeIndex(JSON.parse(readFileSync(file, "utf8")) as IndexItem[]).byId;
+}
+
+/** The apps' host, as much as a ☰ reads. */
+const appHost = (): AppHost =>
+  ({
+    settings: { digits: 12, angle: "rad", format: "std", decimalMark: "point" },
+    calc: { ready: async () => undefined },
+    kv: { get: async () => undefined, set: async () => undefined },
+    userNames: [],
+    setEntry: () => undefined,
+    copy: () => undefined,
+    notice: () => undefined,
+    paste: () => undefined,
+  }) as unknown as AppHost;
+
+/** A finished row of `linreg` or `stats1` whose list holds `n` exact values (the sheet's rows follow its call). */
+const statRow = (call: string, n: number, full: string): HistoryItem =>
+  ({
+    id: 1, view: "home", latex: `\\operatorname{${call}}\\left(\\left\\{1,2,3,4\\right\\}\\right)`, status: "done", resultLatex: "", text: "", approximate: true, full, fullExact: true,
+    facts: { exact: false, reliableDigits: null, items: Array.from({ length: n }, (_, i) => ({ exact: true, reliableDigits: null, value: { re: decimalFromRational(BigInt(i + 1), 1n), im: decimalFromRational(0n, 1n) } })) },
+  }) as unknown as HistoryItem;
+
 /** Every pinned list, built by the code that draws it. Settings' sections are the shipped app's (App.svelte's settingsEnv
  *  gives both userKeys and data, so none is left out). */
-async function built(kb = keyboard): Promise<Record<string, Record<string, string>>> {
+async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findItems()): Promise<Record<string, Record<string, string>>> {
   const session = new Session(new FakeCalc(), fakeKv());
   const env = { userKeys: new UserKeys(fakeKv()), data: () => {} };
   const clip = new ClipActions({ items: [] } as unknown as Session, { showsEntry: true } as unknown as AppShell, {} as EntryController, { insert() {}, recall() {} });
@@ -43,7 +85,14 @@ async function built(kb = keyboard): Promise<Record<string, Record<string, strin
   shell.toggleApps();
   await shell.sheetPending;
   const item = { status: "done", value: { re: { sign: 1, digits: "255", exp: 0 }, im: { sign: 1, digits: "0", exp: 0 } }, rational: { n: "255", d: "1" } } as unknown as HistoryItem;
-  const stubs = new Map(MATRIX_ROWS.map(({ id }) => [id, { id } as unknown as FindItem]));
+  // the apps' ☰ as fixed instances: Plot with an answer (its ninth row, To Home, is there), Solve with an unknown selected (Paste is there)
+  const fn = new FunctionApp(appHost());
+  fn.readout = { lines: [{ label: "x", value: "1", primary: true, cell: { ok: true } as Cell }], info: "", warn: false };
+  const solve = new SolveApp(appHost());
+  solve.selected = "x";
+  const draw = (el: HistoryItem) => session.display(el);
+  const stat = (call: string, n: number): Record<string, string> => ids(statItems(statRow(call, n, `list[${Array.from({ length: n }, (_, i) => i + 1).join(",")}]`), draw, () => {}) ?? []);
+  const units = unitsMenu(makeIndex([]), { pick: () => {}, constant: () => {}, tools: [] }).categories;
   return {
     layers: layerPins(kb),
     tmpl: paletteSlots(kb.palette),
@@ -55,7 +104,15 @@ async function built(kb = keyboard): Promise<Record<string, Record<string, strin
     settings: ids(settingsSections(session, env)),
     apps: ids(shell.sheet?.level.items ?? []),
     base: ids(baseItems(session, item)),
-    matrix: ids(matrixItems(stubs, (it) => ({ id: it.id, label: it.id }))),
+    matrix: ids(matrixRows(find, (it): MenuItem => ({ id: it.id, label: it.id }), [], () => ({ title: "", items: [] }))),
+    "function-symb": ids(fn.menu("symb")),
+    "function-plot": ids(fn.menu("plot")),
+    "function-num": ids(fn.menu("num")),
+    "solve-symb": ids(solve.menu("symb")),
+    "solve-num": ids(solve.menu("num")),
+    "stat-linreg": stat("linreg", 3),
+    "stat-stats1": stat("stats1", 6),
+    "units-menu": ids(units),
   };
 }
 
@@ -103,6 +160,46 @@ describe("the layout lock holds the layout as merged", () => {
     const rel = releaseLock(root, LOCK);
     if (!rel) return void console.info("layout lock: not checked against a release (no git or no v* tag holds the lock)");
     expect(compareToRelease(rel.tag, rel.lock, lock)).toEqual([]);
+  });
+});
+
+describe("every numbered list is in the lock (R299)", () => {
+  const src = join(root, "app/src");
+  /** The source files (under app/src, not tests) that open a sheet or an app's ☰. */
+  const openers = (): string[] =>
+    (readdirSync(src, { recursive: true }) as string[])
+      .filter((f) => /\.(ts|svelte)$/.test(f) && !/\.test\.ts$/.test(f) && !f.includes("_gen"))
+      .filter((f) => /\bshowMenu\(|^\s*menu\(view: ViewId\)/m.test(readFileSync(join(src, f), "utf8")))
+      .sort();
+  const KEYPAD = new Set(["layers", "tmpl", "relations", "symbols"]);
+  it("every file that opens a numbered list is in the registry, or is listed with why its rows have no fixed digit", () => {
+    const known = new Set([...Object.values(LIST_BUILDERS).flat(), ...Object.keys(UNPINNED_LISTS)]);
+    expect(openers().filter((f) => !known.has(f))).toEqual([]);
+  });
+  it("every file the registry names exists (a builder or an opener), and every unpinned file opens a list", () => {
+    for (const f of Object.values(LIST_BUILDERS).flat()) expect(existsSync(join(src, f)), f).toBe(true);
+    const open = new Set(openers());
+    for (const f of Object.keys(UNPINNED_LISTS)) expect(open.has(f), f).toBe(true);
+  });
+  it("the registry's sections are the lists the test builds and the lock pins, no more and no fewer", () => {
+    const lists = (o: object): string[] => Object.keys(o).filter((k) => !KEYPAD.has(k)).sort();
+    expect(lists(actual)).toEqual(Object.keys(LIST_BUILDERS).sort());
+    expect(lists(lock.pins)).toEqual(Object.keys(LIST_BUILDERS).sort());
+  });
+  it("the apps' ☰ and the stat sheets are pinned with their rows", () => {
+    expect(Object.values(actual["function-plot"] ?? {})).toEqual(["root", "extremum", "intersection", "slope", "area", "default", "copy", "shown", "tohome"]);
+    expect(Object.values(actual["function-num"] ?? {})).toEqual(["start", "step", "csv", "paste"]);
+    expect(Object.values(actual["solve-num"] ?? {})).toEqual(["solve", "poly", "copy", "shown", "tohome", "paste"]);
+    expect(Object.values(actual["stat-linreg"] ?? {})).toEqual(["stat.slope", "stat.intercept", "stat.r2"]);
+    expect(Object.values(actual["stat-stats1"] ?? {})).toHaveLength(6);
+    expect(Object.values(actual["matrix"] ?? {}).at(-1)).toBe("matrix:new");
+  });
+  it("a matrix row whose Find item is missing from the index renumbers the sheet and fails the lock", async () => {
+    const byId = new Map(findItems());
+    byId.delete("fn:cross");
+    const p = compareLayout(await built(keyboard, byId), lock, decisions);
+    expect(p[0]).toBe('matrix/3: pinned "fn:cross", now "fn:norm" ("fn:cross" is gone)'.replace(' ("fn:cross" is gone)', ""));
+    expect(p.some((l) => l.startsWith("matrix/9:") || l.startsWith("matrix/8:"))).toBe(true);
   });
 });
 
