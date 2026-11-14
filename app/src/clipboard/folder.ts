@@ -3,6 +3,7 @@
 // our local plugin N62Files keeps the grant across restarts, so the app writes and reads files there with no dialog (a
 // folder Syncthing syncs, say). No storage permission. On the web, with no folder picked, or after the user revoked the
 // grant or removed the folder, every call answers "unavailable". Never throws. Load lazily (never in the start chunk).
+// A100: folderAppend adds text to the end of a file ("wa"), never rewriting it, so a crash can't lose its earlier lines.
 
 export type Unavailable = "unavailable";
 export interface FolderFile {
@@ -15,6 +16,8 @@ export interface FolderFile {
 export type PickResult = { name: string } | "cancelled" | Unavailable;
 export type WriteResult = "written" | "failed" | Unavailable;
 export type ReadResult = { text: string } | "missing" | "failed" | Unavailable;
+/** The file's size in bytes before and after the append, as the provider reports it; -1 when it does not say. */
+export type AppendResult = { result: "appended"; before: number; after: number } | "failed" | Unavailable;
 
 type Answer<T extends string, X = object> = Promise<({ result: T } & X) | { result: "unavailable" }>;
 interface N62FolderPlugin {
@@ -24,6 +27,8 @@ interface N62FolderPlugin {
   write(o: { name: string; text: string }): Answer<"written">;
   read(o: { name: string }): Answer<"ok" | "missing", { text?: string }>;
   list(): Answer<"ok", { files: FolderFile[] }>;
+  append(o: { name: string; text: string }): Answer<"appended", { before?: number; after?: number }>;
+  deviceModel(): Answer<"ok", { model?: string }>;
 }
 
 /** A plain file name directly in the folder: the same rule as android/.../FolderNames.java. */
@@ -91,6 +96,32 @@ export async function folderWrite(name: string, text: string): Promise<WriteResu
     return r.result === "written" ? "written" : "unavailable";
   } catch (e) {
     return failure(e);
+  }
+}
+
+/** Appends `text` (UTF-8) to the end of `name`, creating the file when absent; the earlier content is never rewritten. */
+export async function folderAppend(name: string, text: string): Promise<AppendResult> {
+  const p = await plugin();
+  if (!p) return "unavailable";
+  if (!validName(name)) return "failed";
+  const size = (n: unknown): number => (typeof n === "number" && Number.isFinite(n) && n >= 0 ? n : -1);
+  try {
+    const r = await p.append({ name, text });
+    return r.result === "appended" ? { result: "appended", before: size(r.before), after: size(r.after) } : "unavailable";
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+/** The device's model name (Android's Build.MODEL), or "unavailable" on the web or with an older APK. */
+export async function folderModel(): Promise<string | Unavailable> {
+  const p = await plugin();
+  if (!p) return "unavailable";
+  try {
+    const r = await p.deviceModel();
+    return r.result === "ok" && typeof r.model === "string" ? r.model : "unavailable";
+  } catch {
+    return "unavailable";
   }
 }
 
