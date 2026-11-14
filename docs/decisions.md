@@ -9,8 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-17); S36f1 set the two copper values to the sheet's. Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
-**G213 Ans and names in Copy as Python**: recommended, a small package where G210's session line keeps the row's Ans chip and each `defs` entry's full value, so the translator reads Ans or a name only when the line it reads holds that value, else the value with `# an earlier result`. Why: a row deleted between, or a store made outside a row, makes Ans or a name read the wrong line. Would change if: neither can happen.
-
 **R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row writes `39.488 ± 1.2 m²`, but Paste reads one number ("Paste: not a number") and the unit view takes no paste. Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
 
 **R197 Help's Insert row**: recommended, a package (≈½ d): Insert replaces the call the cursor is in (Undo brings it back). Help opens only inside a call, so at the cursor the example always nests: `\sin(` gives sin(sin(30°)). Or: the cursor, as a Find pick (today).
