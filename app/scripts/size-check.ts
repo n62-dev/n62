@@ -142,8 +142,12 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  69.95 → 72.55 kB (R313): phase-1 145a2b0e measures 69,559 B, the branch 72,496 B (open 28,026 → 29,312, slot 10,379 →
  *  12,030): letters typed on a hardware keyboard into a slot read as a unit (slot.ts readSymbol, isLetters and the slot's
  *  letter run, with the catalogue's names; typed.ts, the view's typing keys and `^2`; view.ts, the run's glue). 72,496 B +
- *  0.05 kB, rounded up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 72_550;
+ *  0.05 kB, rounded up to the next 0.01 kB.
+ *  72.55 → 76.02 kB (G233): phase-1 0d8a7e48 measures 72,465 B, the branch 75,969 B (calc 429 → 3,191 with userUnits.ts,
+ *  slot 12,004 → 12,671 with the units.own.* words in the i18n table and exactFactor exported, factors 16,900 → 16,975 with
+ *  build.ts's slotDim, slotFactor and rulesById exported): a unit of your own built from Find's units. 75,969 B + 0.05 kB,
+ *  rounded up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 76_020;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -170,8 +174,12 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // phase-1 145a2b0e measures 37.64 kB, the branch 38.92 kB: the hardware keyboard's letters in a slot (typed.ts and the
   // view's glue in open's chunk, +1.28 kB; the slot's own part is in the shared row below). Why a raise: the night
   // report of 2026-11-14 says "the next unit package must raise the pin or cut". Not yet confirmed: the raise waits for
-  // the owner's yes, asked in R313's report under "Needs the user".
-  add("Unit view chunk", dynamic("src/units/"), { rawMax: 39 * KB });
+  // the owner's yes, asked in R313's report under "Needs the user". 42 kB (G233): phase-1 0d8a7e48 measures 38.92 kB, the
+  // branch 41.68 kB: a unit of your own as a row of the factor table (units/userUnits.ts mergedTable in the builder's
+  // chunk, +2.76 kB: the exact factor of its `of` and the checks a stored definition needs; validateDef, findNames and
+  // factorText are not in it). A cut was tried: nothing of it can wait for a later chunk, since the builder reads every
+  // own unit of a request. Not yet confirmed: the raise waits for the owner's yes, asked in G233's report.
+  add("Unit view chunk", dynamic("src/units/"), { rawMax: 42 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit
   // view's whole code: its entries plus every shared chunk that holds a src/units/ module. Its bar is a pin at today's
