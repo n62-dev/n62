@@ -5,17 +5,17 @@
 //  - every run prints one table: task, status, baseline presses, target presses, budget.
 import { expect, test, type Page } from "@playwright/test";
 import { flick, open, tap } from "./helpers.ts";
-import { countPresses, keyIds, loadTasks, validate, withinBudget, type Step, type Task } from "./tasks-lib.ts";
+import { countPresses, keyIds, loadTasks, validate, withinBudget, type Baseline, type Step, type Task } from "./tasks-lib.ts";
 
 const tasks = loadTasks();
 const rows: string[] = [];
 
 /** Press the steps in order and return the text of the last Home result (in the unit view: its result, then " " and
  *  its unit when `want` names one). Steps that need a later feature throw. */
-async function replay(page: Page, steps: readonly Step[], want?: string): Promise<string> {
+async function play(page: Page, steps: readonly Step[]): Promise<void> {
   for (const s of steps) {
     if (typeof s === "string") {
-      await page.locator(`[data-key="${s}"]`).tap();
+      await tap(page, [s]); // a key id, or `@place`, `@symb`, `@num`, `@menu` (the status line's controls, helpers.ts)
     } else if ("up" in s || "down" in s) {
       await ("up" in s ? flick(page, s.up, "up") : flick(page, s.down, "down"));
     } else if ("tap" in s && s.tap === "result:last") {
@@ -34,6 +34,28 @@ async function replay(page: Page, steps: readonly Step[], want?: string): Promis
       throw new Error(`cannot replay ${JSON.stringify(s)} yet: the feature it taps does not exist`);
     }
   }
+}
+
+/** R221: a baseline that reads a list: the last n Home results, or, with `read: solve`, the values of `names` in Solve's
+ *  Num table once the solve has finished. */
+async function replayMany(page: Page, b: Baseline): Promise<string[]> {
+  await play(page, b.keys);
+  const n = Array.isArray(b.text) ? b.text.length : 1;
+  if (b.read === "solve") {
+    await expect(page.getByTestId("solve-info")).not.toHaveText("Working…"); // the answers are in
+    const out: string[] = [];
+    for (const name of b.names ?? []) out.push(((await page.locator(`[data-testid="solve-table"] tr[data-name="${name}"] td`).textContent()) ?? "").trim());
+    return out;
+  }
+  // every row is done (a step before the last n may add a row of its own: a store)
+  const rowCount = (): Promise<number> => page.locator('[data-testid="result"]').count();
+  await expect.poll(async () => (await page.locator('[data-status="done"]').count()) === (await rowCount()) && (await rowCount()) >= n).toBe(true);
+  const all = await page.locator('[data-testid="result"] .result').evaluateAll((els) => els.map((e) => e.getAttribute("data-text") ?? ""));
+  return all.slice(-n);
+}
+
+async function replay(page: Page, steps: readonly Step[], want?: string): Promise<string> {
+  await play(page, steps);
   // a task in the unit view (R24c): its result as the view shows it, in the unit it names
   if ((await page.getByTestId("unit-view").count()) > 0) {
     const unit = page.getByTestId("unit-result");
@@ -77,8 +99,35 @@ test.describe("task list", () => {
   });
 });
 
+test.describe("task list, lists", () => {
+  const t09 = (): Task => tasks.find((t) => t.id === "t09") as Task;
+  const listTask = (text: string | string[]): Task => ({ ...t09(), id: "t97", baseline: { keys: ["d1"], text } });
+
+  test("validate() accepts a baseline list element for element (12 digits) and rejects a wrong length or element", () => {
+    expect(validate([listTask(["9.81", "0.0182574185835"])], keyIds())).toEqual([]);
+    expect(validate([listTask(["9.81"])], keyIds()).some((m) => m.includes("1 elements"))).toBe(true);
+    expect(validate([listTask(["9.81", "0.0182574185900"])], keyIds()).some((m) => m.includes("baseline text[1]"))).toBe(true);
+    expect(validate([listTask("9.81")], keyIds()).some((m) => m.includes("list"))).toBe(true);
+    // a string expect.value with a list baseline
+    const s: Task = { ...(tasks.find((t) => t.id === "t05") as Task), id: "t96", baseline: { keys: ["d1"], text: ["299792458"] } };
+    expect(validate([s], keyIds()).some((m) => m.includes("not a list"))).toBe(true);
+  });
+});
+
 test.describe("replay", () => {
   test.beforeEach(async ({ page }) => start(page));
+
+  // R221: a list task in Home reads the last n results; a Solve task reads the table in the order of baseline.names.
+  test("replayMany reads the last n Home rows", async ({ page }) => {
+    const b: Baseline = { keys: ["d1", "add", "d1", "enter", "d3", "mul", "d3", "enter"], text: ["2", "9"] };
+    expect(await replayMany(page, b)).toEqual(["2", "9"]);
+  });
+
+  test("replayMany reads Solve's table in the order of baseline.names", async ({ page }) => {
+    // x + y = 3, x − y = 1: x = 2, y = 1; read as y, x
+    const keys: Step[] = ["@place", "d4", "@symb", "x", "add", {up: "x"}, {up: "dot"}, "d3", "enter", "down", "x", "sub", {up: "x"}, {up: "dot"}, "d1", "enter", "@num", "@menu", "d1"];
+    expect(await replayMany(page, { keys, read: "solve", names: ["y", "x"], text: ["1", "2"] })).toEqual(["1", "2"]);
+  });
 
   // The active path, exercised with a stand-in so the harness is proven before the first task goes active:
   // t05's baseline as if it were its key list, within a budget it meets and one it misses.
@@ -155,7 +204,8 @@ test.describe("replay", () => {
     } else if (t.baseline) {
       test(`${t.id} (pending) ${t.title}: baseline today`, async ({ page }) => {
         const steps = t.baseline?.keys ?? [];
-        expect(await replay(page, steps)).toBe(t.baseline?.text);
+        if (t.baseline && Array.isArray(t.baseline.text)) expect(await replayMany(page, t.baseline)).toEqual(t.baseline.text);
+        else expect(await replay(page, steps)).toBe(t.baseline?.text);
         rows.push(`${t.id} | pending | ${countPresses(steps)} | ${t.keys ? countPresses(t.keys) : "-"} | ${t.budget ?? "-"}`);
       });
     } else {
