@@ -34,11 +34,14 @@ export async function stageHome(): Promise<void> {
     const answered = c.expect === undefined ? rs.every((x) => x.ok && !lostAnswer(x.display, dropAngleFactor(c.input ?? "", "typed"))) : rs.every((x, k) => x.display === wantOf(marksOf[k]!));
     // `exact` (G38): the text the result copies (`full`), when the case pins it.
     const exactOk = c.exact === undefined || rs.every((x) => x.full === c.exact);
-    const ok = answered && markOk && exactOk;
+    // `unc` and `uncDigits` (G355): σ at 2 significant digits ("none": no σ) and the digits shown before it (R40's facts).
+    const uncOk = c.unc === undefined || rs.every((x) => (c.unc === "none" ? x.facts.uncSigma === undefined : x.facts.uncSigma !== undefined && expectAt(x.facts.uncSigma, 2) === expectAt(c.unc!, 2)));
+    const uncDigitsOk = c.uncDigits === undefined || rs.every((x) => x.facts.uncDigits === c.uncDigits);
+    const ok = answered && markOk && exactOk && uncOk && uncDigitsOk;
     const med = median(rs.map((x) => x.totalMs));
     maxMed = Math.max(maxMed, med);
     if (ok) pass++;
-    else console.log(`  home ${c.id}: got ${rs.map((x, k) => `${got[k] ?? "-"} ${x.display}`).join(" / ")}, expect ${c.mark ?? ""} ${c.expect ?? "(mark only)"}${exactOk ? "" : `, copies ${rs[0]!.full}, expect ${c.exact}`}`);
+    else console.log(`  home ${c.id}: got ${rs.map((x, k) => `${got[k] ?? "-"} ${x.display}`).join(" / ")}, expect ${c.mark ?? ""} ${c.expect ?? "(mark only)"}${exactOk ? "" : `, copies ${rs[0]!.full}, expect ${c.exact}`}${uncOk && uncDigitsOk ? "" : `, σ ${rs[0]!.facts.uncSigma ?? "none"} uncDigits ${rs[0]!.facts.uncDigits ?? "-"}, expect σ ${c.unc ?? "-"} uncDigits ${c.uncDigits ?? "-"}`}`);
     // G82: a case whose exact pass Home's step budget or its clock stops, not finishing on any device, may name its own.
     const limit = c.budgetMs ?? HOME_LIMIT_MS;
     if (!(med <= limit)) {

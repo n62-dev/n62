@@ -92,10 +92,13 @@ export interface Case {
   si?: string;
   si_oracle?: string;
   /** units.yaml, G18: σ at 2 significant digits ("none" for a result with no uncertainty), the value with it
-   *  ("39.5 ± 1.2") and an oracle expression for σ (oracle.py checks σ against it). */
+   *  ("39.5 ± 1.2") and an oracle expression for σ (oracle.py checks σ against it). home.yaml (G355): `unc` and
+   *  `unc_oracle` alike, for the σ of a result's facts (R40's σ line). */
   unc?: string;
   shown?: string;
   unc_oracle?: string;
+  /** home.yaml (G355): the result's `uncDigits` (constUnc.ts uncDigitsOf; oracle.py derives it from oracle and unc_oracle). */
+  uncDigits?: number;
   /** units.yaml, G41: the why-line of a σ shown with ⚠ (the text the user reads); a σ with one and a case without it
    *  fails, and the other way round. */
   unc_why?: string;

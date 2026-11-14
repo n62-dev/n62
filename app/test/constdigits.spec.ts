@@ -4,7 +4,7 @@
 // chips (find/finder.ts putOnLine, as a pick puts them). Expected values are derived: G·5.972ᴇ24 = 3.98589196ᴇ14
 // with σ = 1.5ᴇ-15·5.972ᴇ24 = 8.958ᴇ9, so five digits hold (host.test.ts G26); μ₀·ε₀·c² = 1 exactly, σ 0 (G81).
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, lastResult, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, lastResult, open, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 import type * as Finder from "../src/find/finder.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
@@ -63,6 +63,22 @@ test("G × 5.972ᴇ24: the digits past uncDigits are muted, the mark is ≈, Cop
   await gTimesEarth(page, 2);
   await expect(lastMark(page)).toHaveAttribute("data-mark", "≈");
   expect(digitsOf(await muted(page).textContent())).toBe("9196000000"); // 398589196000000: the same five digits hold
+});
+
+// G355 (night review 2026-11-14, lo-1): Ans and the row's chip keep its σ. 2·3.98589196E14 = 7.97178392E14 with σ
+// 2·8.958E9 = 1.7916E10 (derived: linear), so four digits hold (exponent 14 minus 10); before G355 nothing was muted.
+test("G × 5.972ᴇ24, then Ans × 2 and the row's chip × 2: twice σ, four digits hold", async ({ page }) => {
+  await gTimesEarth(page, 1);
+  await tap(page, ["mul", "d2", "enter"]);
+  await done(page, 2);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "7.97178392E14");
+  await expect(lastMark(page)).toHaveAttribute("data-mark", "≈");
+  expect(digitsOf(await muted(page).textContent())).toBe("78392");
+  await tapTwice(page.locator('[data-testid="result"]').first().locator(".result"));
+  await tap(page, ["mul", "d2", "enter"]);
+  await done(page, 3);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "7.97178392E14");
+  expect(digitsOf(await muted(page).textContent())).toBe("78392");
 });
 
 test("only exact constants (c): no muted digit; μ₀ × ε₀ × c² from chips is 1, ≈, none either, also beside a user's pasl_fine_structure", async ({ page }) => {
