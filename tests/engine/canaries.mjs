@@ -64,7 +64,7 @@ const ROWS = [
     ["1-0.9-0.1"], ([a]) => a === "1.7763568394e-15"],
 ];
 
-// G322, G325, G340 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
+// G322, G325, G340, G353 (P19): answers our patched build must give, on the raw engine. Not workaround rows: each fails on a build without
 // its patch (a stock pin, or a build that lost it), never when upstream fixes the cause (patch-canary.ts says that).
 // [patch, what it fixes, [Digits, input, the output our build gives]…]
 const PATCHED = [
@@ -74,6 +74,8 @@ const PATCHED = [
     [[40, "round(im(evalf(asin(sqrt(-2)-10^35),100)))", "81"], [40, "round(im(evalf(asin(sqrt(-2)-10^45),100)))", "104"]]],
   ["0045-algnum-convert-nested-rootof.patch", "normal and simplify of a square root over a field Giac writes as a rootof keep the root's argument (a build without the patch gives the root of the field's generator, 0.00732; mpmath sqrt(1+sqrt(1+2^(1/3))) = 1.58218310546)",
     [[12, "round(evalf(normal(sqrt(1+sqrt(1+2^(1/3)))))*10^6)", "1582183"], [12, "round(evalf(simplify(sqrt(1+sqrt(1+2^(1/3)))))*10^6)", "1582183"]]],
+  ["0049-stddev-float-two-pass.patch", "variance, stddev and stddevp of a float list of equal values are exactly 0 (a build without the patch sums x^2 in one pass: variance([1.1,1.1,1.1]) = -7.1054273576e-15 at Digits 12, stddevp([0.7,0.7,0.7]) = 1.03238273118e-07)",
+    [[12, "variance([1.1,1.1,1.1])", "0.0"], [12, "stddevp([0.7,0.7,0.7])", "0.0"]]],
 ];
 
 const { giac } = await loadNodeGiac();

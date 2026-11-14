@@ -1,0 +1,29 @@
+# Upstream: giac 2.1.0 permu.cc stddev (the list and matrix path of stddev, stddevp and variance, column by column) summed x^2 in one pass and subtracted s*mean^2, which cancels in floats: at Digits 12 variance([1.1,1.1,1.1]) = -7.1e-15 (right 0, a variance is never negative), variance([0.3,0.3,0.3]) = 4.4e-16, stddevp([0.7,0.7,0.7]) = 1.03e-07 (right 0), and at higher Digits a stored float list gave a negative variance and an imaginary deviation (N62 Home: variance of approx([1/10,1/10,1/10]) -1e-62, stddevp 1e-31*i). Now a column holding a float (has_num_coeff) takes two passes about its first value x0: m = mean(x-x0), sum((x-x0-m)^2), so equal values give an exact 0 and the sum is a sum of squares; an exact column keeps the one-pass formula (exact anyway). The frequency forms (stddevmean in misc.cc) are not changed.
+# Changed by Pascaline contributors, 2026-11-14
+--- a/src/permu.cc
++++ b/src/permu.cc
+@@ -1553,6 +1553,24 @@
+       const_iterateur jt=v.begin(),jtend=v.end();
+       int s=int(jtend-jt);
+       gen somme(0);
++      if (has_num_coeff(g)){
++	// a column with a float: two passes about its first value x0, sum((x-x0-m)^2) with m the mean of x-x0. The one-pass
++	// sum(x^2)-s*mean^2 cancels in floats: variance([1.1,1.1,1.1]) was -7.1e-15, stddevp([0.7,0.7,0.7]) 1.03e-07; equal values
++	// now give an exact 0 (x-x0 is 0), and the sum is a sum of squares. An exact column keeps the formula below.
++	gen x0(v.front()),m(0);
++	for (;jt!=jtend;++jt)
++	  m = m + (*jt-x0);
++	m = rdiv(m,s,context0);
++	for (jt=v.begin();jt!=jtend;++jt){
++	  gen d(*jt-x0-m);
++	  somme = somme + d*d;
++	}
++	if (variance!=3)
++	  res.push_back(sqrt(rdiv(somme,s-(variance==2),context0),context0));
++	else
++	  res.push_back(rdiv(somme,s,context0));
++	continue;
++      }
+       for (;jt!=jtend;++jt){
+ 	// somme = somme + evalf((*jt)*(*jt));
+ 	somme = somme + (*jt)*(*jt);
