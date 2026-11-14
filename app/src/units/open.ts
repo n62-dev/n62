@@ -7,9 +7,9 @@
 // path through the entry line's own map (entry/hwkeys.ts, `onKey`), so it reaches the pad's actions or does nothing, and
 // does on the field what it does on the line. The view writes a slot only with setPromptValue. What it takes from the
 // start chunk is the route context `c` alone, so the start chunk holds only the units key's import (R24c).
-// A lazy chunk: route.ts imports it on the first press of the units key. units/pad.ts is in it (a static import: as a
-// chunk of its own beside this one, the two imported each other through units/padView, and Rolldown then split Svelte's
-// runtime out of the start chunk, +1.1 kB gzip at start).
+// A lazy chunk: route.ts imports it on the first press of the units key. units/pad.ts is in it (a static import). R303
+// (r21 item 4, tools/probes/chunk-groups.mjs restore:pad): pad.ts behind import() no longer splits the start chunk (one
+// file, −19 B gzip) but costs the first open +0.4 kB gzip and a fetch more, so it stays static.
 import type { MathfieldElement } from "mathlive";
 import type { Key } from "../keyboard/keyboard.ts";
 import type { Mods, RouteCtx } from "../keyboard/route.ts";
@@ -195,7 +195,8 @@ function layerAction(key: Key, mods: Mods): Key["actions"]["primary"] {
 
 /** The field: read-only, never MathLive's keyboard nor the system keyboard (inputmode none, as the entry line), with
  *  the entry line's macros (chips, ᴇ). The view's element holds the focus (tabindex -1, nothing editable in it, so no system
- *  keyboard) and its capture keydown sends a hardware key down the keypad's path, from the field too; a paste, a drop,
+ *  keyboard) and its capture keydown sends a hardware key down the keypad's path (entry/hwkeys.ts unitViewKey), from the
+ *  field too; a paste, a drop,
  *  a cut and the browser's own text input (an IME) are stopped. MathLive's own beforeinput for setPromptValue is not
  *  trusted and goes through (cancelling it would cancel the write). */
 function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw): void {
@@ -212,7 +213,7 @@ function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw):
   };
   enforce();
   mf.addEventListener("focusin", enforce);
-  element.addEventListener("keydown", (ev) => hardwareKey(ev, c, hw), { capture: true });
+  element.addEventListener("keydown", (ev) => hw.unitViewKey(ev, c.entry, c.shell.sheet !== null, () => c.dead()), { capture: true }); // (R303: in hwkeys.ts)
   const stop = (ev: Event): void => {
     if (ev.type === "beforeinput" && !ev.isTrusted) return;
     ev.preventDefault();
@@ -222,23 +223,3 @@ function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw):
 }
 
 type Hw = typeof import("../entry/hwkeys.ts");
-
-/** A hardware key on the unit view's field: the keypad key it stands for, pressed as a tap through the entry line's
- *  own path (`onKey`) and map (entry/hwkeys.ts: ⌫, Del, the arrows, Enter, Esc, and the characters a keypad key types:
- *  a digit is its prefix cell). R303: a chord of the desktop table presses its key as on the line (`onDesk`: Alt+F is
- *  Math, Find on units; the fold stays dead, the pad lives on the keys), and with a sheet open over the view (Find) a
- *  letter types into its query (`onLetter`, route.ts typeLetter); with none a letter does nothing (P14: no letters in a
- *  slot). Anything else does nothing. Copy and select all stay MathLive's. */
-function hardwareKey(ev: KeyboardEvent, c: RouteCtx, hw: Hw): void {
-  if (ev.isComposing) return;
-  const mod = hw.isChord(ev);
-  if (mod && (ev.key === "c" || ev.key === "a")) return;
-  if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(ev.key)) return;
-  ev.preventDefault();
-  ev.stopPropagation();
-  if (mod) return void (hw.pressChord(ev, c.entry, (t) => !("action" in t && t.action === "fold")) || c.dead());
-  if (c.shell.sheet && /^[A-Za-z]$/.test(ev.key)) return c.entry.onLetter(ev.key, ev.repeat);
-  const k = hw.controlKey(ev) ?? (ev.key.length === 1 ? hw.keypadKeyOf(ev.key, c.entry.decimalComma) : undefined);
-  if (k) c.entry.onKey(k[0], k[1], ev.repeat);
-  else c.dead();
-}
