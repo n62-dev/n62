@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Mode sheet and Settings as rows of the one sheet (docs/05 3.4): what each key does to the session.
-import { wordStore } from "../state/wordStore.svelte.ts";
+import { wordStore, WordStore } from "../state/wordStore.svelte.ts";
+import { fakeKv } from "../state/fakeKv.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { resetUndoTime } from "./dataSection.svelte.ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,11 +9,10 @@ import { FakeCalc } from "../calc/fake.ts";
 import { Session } from "../state/session.svelte.ts";
 import { UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { unitCells } from "../units/userCells.svelte.ts";
-import { modeItems } from "./modeSheet.ts";
+import { modeItems, numbersItems } from "./modeSheet.ts";
 import { lastPicks } from "./picks.ts";
 import { Sheet } from "./sheet.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
-import { fakeKv } from "../state/fakeKv.ts";
 
 let session: Session;
 const mode = (at?: string) => new Sheet("mode", "Mode", () => modeItems(session), { remember: false, at });
@@ -302,6 +302,16 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(pick.kind).toBe("run");
     if (pick.kind === "run") pick.item.run?.();
     expect(wordStore.value).toEqual({ bits: 32, signed: true });
+  });
+  it("Word (R194f1): a stored { 8, signed } shows in the row at once after a relaunch, and a tap on 16 keeps the stored sign", async () => {
+    const words = new WordStore(fakeKv([["word", { bits: 8, signed: true }]])); // nothing has asked for it yet: no job, no Format key
+    const items = numbersItems(session, words);
+    const row = items.find((x) => x.id === "word");
+    await new Promise((r) => setTimeout(r));
+    expect(row?.value).toBe("8 · signed");
+    const bits = row?.submenu?.items.find((x) => x.id === "bits");
+    bits?.options?.find((o) => o.id === "16")?.run?.();
+    expect(words.value).toEqual({ bits: 16, signed: true });
   });
   it("Digit groups (R125): three buttons, the thin space (the default), the apostrophe and the comma; ◀ ▶ step them and the sheet stays", () => {
     const s = settings(2);

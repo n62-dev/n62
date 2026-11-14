@@ -34,7 +34,8 @@ import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } f
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
-import { WORD_DEFINITIONS, wordDefinitions, wordOfSettings } from "./wordOps.ts";
+import { WORD_DEFINITIONS } from "./wordOps.ts";
+import { wordDefinitions, wordOfSettings } from "./wordSettings.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
@@ -1263,6 +1264,7 @@ export class EngineHost implements FactsHost {
   }
 
   private useSolveMode(s: HomeSettings): void {
+    this.useWord(s);
     this.useMode(`solve${JSON.stringify(s)}`, s.digits, s.angle, () => {
       this.giac.eval(angleCommand(s.angle));
       this.giac.eval(`timeout ${SOLVE_HARD_TIMEOUT_S}`);
@@ -1273,15 +1275,13 @@ export class EngineHost implements FactsHost {
     });
   }
 
-  /** R194: the word of the settings, for the short forms of wordOps.ts. Home and CAS give it with every input (Session);
-   *  the apps' requests do not, so they keep the word the last input set. When it changes, the word ops already in Giac
-   *  are defined again at once (a stored function that calls shl would read the old word otherwise). */
+  /** R194: the word of the settings for the short forms of wordOps.ts; every request carries it (EngineCalc), absent: 64 bits
+   *  unsigned. When it changes the loaded word ops are defined again (a stored function calling shl reads the new word). */
   private useWord(s: { word?: number; signed?: boolean }): void {
     const w = wordOfSettings(s);
     if (w.bits === this.word.bits && w.signed === this.word.signed) return;
     this.word = w;
-    const defs = wordDefinitions(w.bits, w.signed);
-    for (const name of Object.keys(defs)) if (this.loaded.has(name)) this.giac.eval(defs[name]!);
+    for (const [name, def] of Object.entries(wordDefinitions(w.bits, w.signed))) if (this.loaded.has(name)) this.giac.eval(def);
   }
 
   private useMode(key: string, digits: number, angle: "rad" | "deg", apply: () => void): void {

@@ -35,7 +35,6 @@ import { chipFactsOf, chipOf, HISTORY_LIMIT, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
 import { storedReader } from "./storedLoad.ts";
-import type { WordStore } from "./wordStore.svelte.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
 import type { UnitRow } from "../units/types.ts";
@@ -536,9 +535,8 @@ export class Session {
       live.text = parseFailText(e);
       return;
     }
-    let word: Awaited<ReturnType<WordStore["forEngine"]>>; // R194: the word, once Settings set it (state/wordStore.svelte.ts, a lazy chunk)
     try {
-      [, word] = await Promise.all([itemsOr(items), import("./wordStore.svelte.ts").then((m) => m.wordStore.forEngine())]); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
+      await itemsOr(items); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
     } catch {
       if (live.status === "pending") {
         live.status = "error";
@@ -547,7 +545,7 @@ export class Session {
       return;
     }
     if (live.status !== "pending") return;
-    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format, ...word };
+    const s: CalcSettings = { digits: this.settings.digits, angle: this.settings.angle, format: this.settings.format };
     try {
       if (view === "home") {
         const tidy = prefetchTidy();

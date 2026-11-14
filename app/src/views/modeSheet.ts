@@ -14,6 +14,7 @@ import { MAX_DIGITS, type DecimalMark, type EntryMode, type MarkStyle, type Sess
 import { groupSepFor, type GroupSep } from "../render/home.ts";
 import { aboutText } from "../i18n/enAbout.ts";
 import { uncText } from "../i18n/enUnc.ts";
+import { wordText } from "../i18n/enWord.ts";
 import { keyFeelText } from "../i18n/enKeyFeel.ts";
 import { lookText } from "../i18n/enLook.ts";
 import { helpItems } from "./aboutItems.ts";
@@ -23,7 +24,7 @@ import { BRIGHTNESS, validLook, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
-import { wordStore } from "../state/wordStore.svelte.ts";
+import { wordStore, type WordStore } from "../state/wordStore.svelte.ts";
 import { DEFAULT_WORD, WORD_SIZES, type WordBits, type WordSetting } from "../state/wordSetting.ts";
 /** The presets' model (R88) is part of this chunk; R89 draws it in Mode (views/presetsView.svelte.ts). */
 export { presetsFor } from "../state/presets.svelte.ts";
@@ -315,7 +316,7 @@ function appearanceItems(session: Session): MenuItem[] {
  *  (R40: a row that opens its five ticks, its value the cycle), the decimals Fixed shows (S2 I3), how a result shows
  *  the digits a constant's σ leaves uncertain (R40: a value row), how its mark is drawn (R124: three buttons) and the
  *  separator of its digit groups (R125: three buttons; never the comma while the comma is the decimal mark), and the word (R194: a row that opens its two, the size as four buttons and Signed as a switch). */
-function numbersItems(session: Session): MenuItem[] {
+export function numbersItems(session: Session, words: WordStore = wordStore): MenuItem[] {
   const s = session.settings;
   const mark: MenuItem = {
     id: "mark",
@@ -396,23 +397,24 @@ function numbersItems(session: Session): MenuItem[] {
   // R194: the word of the base forms and of shl, shr, rotl, rotr and bnot (docs/04 5.4); its own record under `word`, set
   // here and read lazily (state/wordSetting.ts), never a field of the settings. One row (Numbers keeps its seven) that
   // opens a level of two: the size (four buttons) and Signed (a switch).
-  const word = (): WordSetting => wordStore.value ?? DEFAULT_WORD;
-  const setWord = (patch: Partial<WordSetting>): void => wordStore.set({ ...word(), ...patch });
+  void words.restore(); // the stored record, before a row shows or sets the word (a set would stamp the store as read)
+  const word = (): WordSetting => words.value ?? DEFAULT_WORD;
+  const setWord = (patch: Partial<WordSetting>): void => words.set({ ...word(), ...patch });
   const WORD_IDS = WORD_SIZES.map(String);
   const sizeOf = (v: string): WordBits => WORD_SIZES.find((n) => String(n) === v) ?? DEFAULT_WORD.bits;
   const wordSize: MenuItem = {
     id: "bits",
-    label: uncText("word.size"),
+    label: wordText("word.size"),
     keep: true,
     get options() {
-      return buttons(WORD_IDS, () => String(word().bits), (v) => setWord({ bits: sizeOf(v) }), (v) => v, (v) => `${v} ${uncText("word.size.spoken")}`);
+      return buttons(WORD_IDS, () => String(word().bits), (v) => setWord({ bits: sizeOf(v) }), (v) => v, (v) => `${v} ${wordText("word.size.spoken")}`);
     },
     adjust: (by) => setWord({ bits: cycle(WORD_SIZES, word().bits, by) }),
   };
   const signed: MenuItem = {
     id: "signed",
-    label: uncText("word.signed"),
-    hint: uncText("word.signed.hint"),
+    label: wordText("word.signed"),
+    hint: wordText("word.signed.hint"),
     keep: true,
     get selected() {
       return word().signed;
@@ -421,11 +423,11 @@ function numbersItems(session: Session): MenuItem[] {
   };
   const wordRow: MenuItem = {
     id: "word",
-    label: uncText("word.row"),
+    label: wordText("word.row"),
     get value() {
-      return `${word().bits} · ${uncText(word().signed ? "word.signed.on" : "word.signed.off")}`;
+      return `${word().bits} · ${wordText(word().signed ? "word.signed.on" : "word.signed.off")}`;
     },
-    submenu: { title: uncText("word.row"), items: [wordSize, signed], remember: false },
+    submenu: { title: wordText("word.row"), items: [wordSize, signed], remember: false },
   };
   return [mark, cycleRow, decimals, uncertainty, marks, groups, wordRow];
 }

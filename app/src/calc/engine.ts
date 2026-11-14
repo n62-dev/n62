@@ -107,16 +107,16 @@ export class EngineCalc implements Calc {
 
   home(giac: string, s: CalcSettings, chips?: ChipFactsTable, consts?: ConstTable): Promise<HomeOutcome> {
     // an absent table is not sent (WorkerEngine.home); the session sends `consts` only when the input holds one (R40)
-    const r = this.engine.home(giac, homeSettings(s), consts, chips && Object.keys(chips).length ? chips : undefined);
+    const r = this.settings(s).then((h) => this.engine.home(giac, h, consts, chips && Object.keys(chips).length ? chips : undefined));
     return mapCancel(r.then((r) => ({ ...passed(r, HOME_KEYS), ...(r.rational && r.exact !== undefined ? { exact: r.exact } : {}) })));
   }
 
   cas(giac: string, s: CalcSettings): Promise<CasOutcome> {
-    return mapCancel(this.engine.cas(giac, { ...defaultCasSettings, digits: s.digits, angle: s.angle, word: s.word, signed: s.signed }).then((r) => passed(r, CAS_KEYS)));
+    return mapCancel(this.word().then((w) => this.engine.cas(giac, { ...defaultCasSettings, digits: s.digits, angle: s.angle, ...w })).then((r) => passed(r, CAS_KEYS)));
   }
 
   solve(req: SolveRequest, s: CalcSettings): Promise<SolveOutcome> {
-    return mapCancel(this.engine.solve(req, homeSettings(s)));
+    return mapCancel(this.settings(s).then((h) => this.engine.solve(req, h)));
   }
 
   unknowns(equations: string[]): Promise<string[]> {
@@ -124,16 +124,26 @@ export class EngineCalc implements Calc {
   }
 
   analyze(req: AnalysisRequest, s: CalcSettings): Promise<AnalysisResult> {
-    return mapCancel(this.engine.analyze(req, homeSettings(s)));
+    return mapCancel(this.settings(s).then((h) => this.engine.analyze(req, h)));
   }
 
   table(req: TableRequest, s: CalcSettings): Promise<HomeResult[][]> {
-    return mapCancel(this.engine.table(req, homeSettings(s)));
+    return mapCancel(this.settings(s).then((h) => this.engine.table(req, h)));
   }
 
   units(req: UnitRequest, s: CalcSettings): Promise<Quantity | UnitError> {
     // The builder and the factor table load with the unit view, never in the start chunk (docs/04 4.4).
-    return mapCancel(import("../units/calc.ts").then((m) => m.evaluateUnits(this.engine, this.findIndex, req, homeSettings(s))));
+    return mapCancel(Promise.all([import("../units/calc.ts"), this.settings(s)]).then(([m, h]) => m.evaluateUnits(this.engine, this.findIndex, req, h)));
+  }
+
+  /** R194: the word size and sign go with every request (the short forms shl, bnot… read them; engine/wordOps.ts) from the
+   *  lazy word store (state/wordStore.svelte.ts: read once, nothing until Settings set the word: the engine's own 64 unsigned). */
+  private word(): Promise<{ word?: number; signed?: boolean }> {
+    return import("../state/wordStore.svelte.ts").then((m) => m.wordStore.forEngine());
+  }
+
+  private settings(s: CalcSettings): Promise<HomeSettings> {
+    return this.word().then((w) => ({ ...defaultHomeSettings, digits: s.digits, angle: s.angle, ...w }));
   }
 
   async names(): Promise<UserName[]> {
@@ -143,10 +153,6 @@ export class EngineCalc implements Calc {
   async cancel(): Promise<void> {
     await this.engine.cancel();
   }
-}
-
-function homeSettings(s: CalcSettings): HomeSettings {
-  return { ...defaultHomeSettings, digits: s.digits, angle: s.angle, word: s.word, signed: s.signed }; // R194: undefined until set
 }
 
 async function mapCancel<T>(p: Promise<T>): Promise<T> {

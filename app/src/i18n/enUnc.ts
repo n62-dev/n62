@@ -24,14 +24,6 @@ export const enUnc = {
   "groups.setting.thin.spoken": "Digit groups: thin space",
   "groups.setting.apos.spoken": "Digit groups: apostrophe",
   "groups.setting.comma.spoken": "Digit groups: comma",
-  // R194: Settings › Numbers › Word (the word of the base forms and the word ops)
-  "word.row": "Word",
-  "word.size": "Word size (bits)",
-  "word.size.spoken": "bits",
-  "word.signed": "Signed",
-  "word.signed.hint": "Two's complement",
-  "word.signed.on": "signed",
-  "word.signed.off": "unsigned",
   "groups.setting.commaOff": "Not the comma: the decimal mark is the comma",
 } as const;
 

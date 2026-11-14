@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R194 (docs/04 5.4, 6.2): the word size and sign are one stamped record under the key `word`, `{ bits, signed }`, in the
-// backup with a validator that takes only those values; the session reads it when it starts, and sends it to the engine
+// backup with a validator that takes only those values; the calc reads it (EngineCalc, lazily) and sends it to the engine
 // only when it was set (the default, 64 bits unsigned, is the engine's own).
 import { describe, expect, it } from "vitest";
 import { BACKUP_KEYS, checkBackup, VALIDATORS, type CheckedBackup, type RefusedBackup } from "./backup.ts";
-import { FakeCalc } from "../calc/fake.ts";
-import type { CalcSettings } from "../calc/port.ts";
+import { EngineCalc } from "../calc/engine.ts";
+import type { HomeSettings, MathEngine } from "../engine/types.ts";
 import { DATA_VERSION } from "./storage.ts";
 import { fakeKv } from "./fakeKv.ts";
-import { Session } from "./session.svelte.ts";
 import { validWord, WORD_KEY } from "./wordSetting.ts";
 import { WordStore, wordStore } from "./wordStore.svelte.ts";
 
@@ -76,24 +75,22 @@ describe("the word store (R194)", () => {
   });
 });
 
-describe("the session sends the word (R194)", () => {
-  /** A calc that keeps the settings each Home input came with. */
-  const spied = (): { calc: FakeCalc; seen: CalcSettings[] } => {
-    const calc = new FakeCalc();
-    const seen: CalcSettings[] = [];
-    const home = calc.home.bind(calc);
-    (calc as { home: (giac: string, s: CalcSettings) => ReturnType<FakeCalc["home"]> }).home = (giac, s) => (seen.push(s), home(giac));
-    return { calc, seen };
+describe("the calc sends the word (R194)", () => {
+  /** A calc over an engine that keeps the settings each Home input came with; its word is the app's store. */
+  const spied = (): { calc: EngineCalc; seen: HomeSettings[] } => {
+    const seen: HomeSettings[] = [];
+    const engine = { home: (_g: string, s: HomeSettings) => (seen.push(s), Promise.resolve({ display: "2" })) } as unknown as MathEngine;
+    return { calc: new EngineCalc(engine), seen };
   };
 
-  it("sends no word while none is set, and the word with every input after a row set it", async () => {
+  it("sends no word while none is set, and the word with every request after a row set it", async () => {
     const { calc, seen } = spied();
-    const s = new Session(calc, fakeKv());
-    await s.submit("1+1");
+    const s = { digits: 12, angle: "rad", format: "std" } as const;
+    await calc.home("1+1", s);
     expect(seen[0]?.word).toBeUndefined(); // as if absent: the engine uses its own word
     expect(seen[0]?.signed).toBeUndefined();
     wordStore.set({ bits: 8, signed: true });
-    await s.submit("1+1");
+    await calc.home("1+1", s);
     expect(seen[1]).toMatchObject({ word: 8, signed: true });
   });
 });

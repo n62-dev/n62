@@ -10,8 +10,8 @@
 // arithmetic shift (the sign bit is copied in: shr(−128,1,8,1) = −64), of an unsigned one the logical shift. A count of
 // w or more shifts every bit out (0, or −1 for a negative signed shr); a rotation turns by n mod w.
 // The short forms (shl(x,n), bnot(x); a third argument gives the word alone) take the word size and sign of the settings
-// (R194: HomeSettings and CasSettings `word`, `signed`; the host loads these definitions again when they change), and
-// WORD_BITS and WORD_SIGNED while the settings have none.
+// (R194: HomeSettings and CasSettings `word`, `signed`; engine/wordSettings.ts gives the host the definitions for them and
+// loads them again when they change), and WORD_BITS and WORD_SIGNED while the settings have none.
 // A refusal is a throw of stats.ts REFUSAL_MARK and its code, which wordRefusal reads back from Giac's error text
 // (converge.ts errorRefusal), as G223's are. Only erasable TypeScript syntax: the worker and Node run this file directly.
 import { REFUSAL_MARK } from "./stats.ts";
@@ -24,6 +24,9 @@ export const WORD_SIGNED = 0;
 export const WORD_REFUSALS = ["wordArgs", "wordSize", "wordValue", "wordCount"] as const;
 export type WordRefusal = (typeof WORD_REFUSALS)[number];
 
+/** The text of a definition that sets the word of its short forms (engine/wordSettings.ts swaps it for the setting's). */
+export const wordInit = (bits: number, signed: number): string => `pasw_:=${bits}; pass_:=${signed}; `;
+
 const refuse = (code: WordRefusal): string => `throw("${REFUSAL_MARK}${code}")`;
 
 /**
@@ -32,12 +35,12 @@ const refuse = (code: WordRefusal): string => `throw("${REFUSAL_MARK}${code}")`;
  * (x as read), pasn_ (the count), pasw_, pass_ and pasm_ = 2^w. Every check is a test on a value already known to be an
  * integer, so Giac never meets an undecidable test.
  */
-function wordOp(name: string, count: boolean, op: string, bits: number, signed: number): string {
+function wordOp(name: string, count: boolean, op: string): string {
   const at = count ? 1 : 0;
   return (
     `${name}(pasa_):={ local pasl_,pasx_,pasn_,pasw_,pass_,pasm_,pasu_,pasr_,pask_; pasl_:=[pasa_]; ` +
     `if (size(pasl_)<${at + 1} or size(pasl_)>${at + 3}) ${refuse("wordArgs")}; ` +
-    `pasx_:=pasl_[0]; pasw_:=${bits}; pass_:=${signed}; ` +
+    `pasx_:=pasl_[0]; ${wordInit(WORD_BITS, WORD_SIGNED)}` +
     `if (size(pasl_)>${at + 1}) pasw_:=pasl_[${at + 1}]; if (size(pasl_)>${at + 2}) pass_:=pasl_[${at + 2}]; ` +
     `if (type(pasw_)!=integer) ${refuse("wordSize")}; if (pasw_!=8 and pasw_!=16 and pasw_!=32 and pasw_!=64) ${refuse("wordSize")}; ` +
     `if (type(pass_)!=integer) ${refuse("wordSize")}; if (pass_!=0 and pass_!=1) ${refuse("wordSize")}; ` +
@@ -53,32 +56,17 @@ function wordOp(name: string, count: boolean, op: string, bits: number, signed: 
 /** pasr_ := pasu_ turned left by pask_ bits (0 ≤ pask_ < w). */
 const TURN_LEFT = "pasr_:=irem(pasu_*2^pask_,pasm_)+iquo(pasu_,2^(pasw_-pask_)); ";
 
-/** The operations: name → whether a count comes second, and the body that sets pasr_. */
-const OPS: Readonly<Record<string, { count: boolean; op: string }>> = {
+export const WORD_DEFINITIONS: Readonly<Record<string, string>> = {
   // n ≥ w leaves no bit; 2^n is only formed below w (shl(1,10^9) must not build a 10^9-bit number).
-  shl: { count: true, op: "if (pasn_>=pasw_) pasr_:=0; else pasr_:=irem(pasu_*2^pasn_,pasm_); " },
+  shl: wordOp("shl", true, "if (pasn_>=pasw_) pasr_:=0; else pasr_:=irem(pasu_*2^pasn_,pasm_); "),
   // Signed: floor(x/2^n), the arithmetic shift (−1 once every bit is the sign); unsigned: the quotient of the pattern.
-  shr: { count: true, op: "pask_:=min(pasn_,pasw_); if (pass_==1) pasr_:=floor(pasx_/2^pask_); else pasr_:=iquo(pasu_,2^pask_); if (pasr_<0) pasr_:=pasr_+pasm_; " },
-  rotl: { count: true, op: "pask_:=irem(pasn_,pasw_); " + TURN_LEFT },
+  shr: wordOp("shr", true, "pask_:=min(pasn_,pasw_); if (pass_==1) pasr_:=floor(pasx_/2^pask_); else pasr_:=iquo(pasu_,2^pask_); if (pasr_<0) pasr_:=pasr_+pasm_; "),
+  rotl: wordOp("rotl", true, "pask_:=irem(pasn_,pasw_); " + TURN_LEFT),
   // Right by k is left by w − k (mod w).
-  rotr: { count: true, op: "pask_:=irem(pasw_-irem(pasn_,pasw_),pasw_); " + TURN_LEFT },
+  rotr: wordOp("rotr", true, "pask_:=irem(pasw_-irem(pasn_,pasw_),pasw_); " + TURN_LEFT),
   // Every bit of the word flipped: 2^w − 1 − pattern (Giac's bitnot flips an unbounded word).
-  bnot: { count: false, op: "pasr_:=pasm_-1-pasu_; " },
+  bnot: wordOp("bnot", false, "pasr_:=pasm_-1-pasu_; "),
 };
-
-/** The definitions with the word of the settings in them (`bits`, `signed`: 0 or 1). */
-export function wordDefinitions(bits: number = WORD_BITS, signed: number = WORD_SIGNED): Record<string, string> {
-  return Object.fromEntries(Object.entries(OPS).map(([name, { count, op }]) => [name, wordOp(name, count, op, bits, signed)]));
-}
-
-/** The definitions of the defaults: 64 bits, unsigned (homeEval.ts ENGINE_DEFINITIONS). */
-export const WORD_DEFINITIONS: Readonly<Record<string, string>> = wordDefinitions();
-
-/** The word as a settings pair gives it: `word` a size of 8, 16, 32 or 64 (else the default), `signed` true for two's complement. */
-export function wordOfSettings(s: { word?: number; signed?: boolean }): { bits: number; signed: number } {
-  const bits = s.word === 8 || s.word === 16 || s.word === 32 || s.word === 64 ? s.word : WORD_BITS;
-  return { bits, signed: s.signed === true ? 1 : WORD_SIGNED };
-}
 
 /** The refusal a definition of this file threw in Giac's error text `output`; null for any other text. */
 export function wordRefusal(output: string): WordRefusal | null {

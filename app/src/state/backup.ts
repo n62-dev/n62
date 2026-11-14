@@ -15,7 +15,6 @@ import { MIGRATIONS } from "./migrations.ts";
 import { HISTORY_LIMIT } from "./results.ts";
 import { HAPTIC_MS_RANGE, MAX_DIGITS } from "./session.svelte.ts";
 import { kvGetRaw, type RawRecord } from "./storageRaw.ts";
-import { validWord } from "./wordSetting.ts";
 
 /** The keys a backup holds (docs/04 6.2). A new key joins by being added here; the unit test fails until it is here or
  *  in LEFT_OUT. */
@@ -229,7 +228,7 @@ export const VALIDATORS: Validators = {
   "app.function": isObject,
   "app.solve": isObject,
   "units.targets": (v) => typeof v === "object" && v !== null,
-  word: (v) => validWord(v) !== undefined, // R194: both fields, a size of 8, 16, 32 or 64, a boolean sign
+  word: (v) => isObject(v) && Object.keys(v).length === 2 && fields(v, { bits: (n) => n === 8 || n === 16 || n === 32 || n === 64, signed: bool }), // R194: both fields, a size of 8, 16, 32 or 64, a boolean sign (wordSetting.ts validWord is the start's check; this file stays off its chunk)
 };
 
 /** A file that passed: its envelope's facts and each part's value, brought up to DATA_VERSION. */
