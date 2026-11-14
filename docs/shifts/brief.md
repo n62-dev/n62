@@ -93,7 +93,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 764 | [G352](packages/G352.md) a matrix times a list of another length is refused, in either order | gorge, Opus | `p1/gorge-matlistshape` | – |
 | 765 | [G353](packages/G353.md) statistics of a float list take two passes, and equal values give exactly 0 | gorge, Opus | `p1/gorge-floatstats` | – |
 | 740 | G213 Copy as Python, the core | gorge, Opus | `p1/gorge-pycore` | G210 |
-| 741 | [G214](packages/G214.md) Copy as Python: functions and the angle mode | gorge, Opus | `p1/gorge-pyfuncs` | G211, G213 |
+| 741 | G214 Copy as Python: functions and the angle mode | gorge, Opus | `p1/gorge-pyfuncs` | G211, G213 |
 | 688 | [A100](packages/A100.md) append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
 | 689 | [A137](packages/A137.md) the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
 | 745 | [A101](packages/A101.md) a checked append, never a mode switch (the Tab One) | annabell, Opus | `p1/annabell-appendcheck` | A100 |
