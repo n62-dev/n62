@@ -80,8 +80,8 @@ keys:
   # of two columns: the free keys U1-U6 (`user: true`, all empty, set from Find, R4b), the round pad (a circle, no drawn hub, no OK; a drag from
   # anywhere on it, the centre too, steps the cursor, a tap at the centre does nothing; Keypad.svelte) and the editing wing, read in pairs level with the pad, each pair on one layer
   # (R146, S25's K1, owner 2026-11-06; R278): ☰ | Esc, Undo | Redo, Select | Deselect on the tap; Settings | Clear, ⇤ | ⇥,
-  # Help | reserved on Shift (a flick up reaches each). ☰ is the status line's ☰ as a key. Apps and the
-  # views are on the status line (R15c1); Mode is on its chips; results mode is the swipe on the entry line, so there is no
+  # Help | Mode on Shift (a flick up reaches each; Mode since R322). ☰ is the status line's ☰ as a key. Apps and the
+  # views are on the status line (R15c1); Mode is on its chips too; results mode is the swipe on the entry line, so there is no
   # View key. There is no Cancel key: Esc stops a running job, closes Settings, goes back one sheet level, drops a picked
   # row, else clears the line. Copy is ☰ 3 and a hold on a row, Paste ☰ 7: no keys. Only Esc (r1c5) and the pad keep their
   # G2 cells; every other key here is ours (`assumed`). From the v0.1.0 tag the cluster is fixed like the maths keys (docs/06 3b).
@@ -112,12 +112,13 @@ keys:
   - { id: down, row: 2, col: 2, span: 2, cls: ctl, label: { primary: "▼" }, primary: { cmd: moveDown }, source: virtual-calc }  # pad down
   # Select | Deselect (R279, docs/04 5.1): Select grows the entry line's selection by the box model, Deselect walks it back.
   # Shift + Select is Help (milestone 6, R197): the syntax and example of the function at the cursor on a sheet, else Find
-  # (views/helpSheet.ts). Shift + Deselect is RESERVED (docs/06 section 3b): no action and no legend, dimmed in that layer
-  # only, counted when pressed.
+  # (views/helpSheet.ts). Shift + Deselect is Mode (R322, owner 2026-11-14; Shift + Fmt from R85 until then): it opens the
+  # Mode sheet on Angle, beside the other sheet keys.
   # Copy and Paste left the keypad (R278): a hold on a history row copies (R276), ☰ → Copy and ☰ → Paste are in the Menu.
   - { id: select, row: 2, col: 4, cls: nav, label: { primary: "$key.select", shift: "$key.help" },
       primary: { special: selectGrow }, shift: { special: help }, source: assumed }
-  - { id: deselect, row: 2, col: 5, cls: nav, label: { primary: "$key.deselect" }, primary: { special: selectShrink }, source: assumed }
+  - { id: deselect, row: 2, col: 5, cls: nav, label: { primary: "$key.deselect", shift: "$key.mode" },
+      primary: { special: selectShrink }, shift: { special: mode }, source: assumed }  # shift Mode is ours too (the G2's CAS settings sit there)
 
   # ---- row 3 (r4). P8, docs/04 section 5.1: Vars = Find on variables (R4b), Math = Find (R4a), shift Math = Memory
   # (R4b); shift Tmpl = the unit view (R24c). The Alpha letters stay. Tmpl opens the template palette (R10,
@@ -345,7 +346,9 @@ keys:
     source: virtual-calc  # r9c4 (shift π; alpha #)
   - { id: sub, row: 8, col: 4, cls: op, label: { primary: "−", shift: "$key.base", alpha: ":" }, primary: { type: "-" }, shift: { special: base }, alpha: { type: ":" }, source: virtual-calc }  # r9c5 (alpha :); shift opens the Base menu for the last result, dead with text on the line (R193, docs/04 5.4)
 
-  - { id: fmt, row: 9, col: 0, cls: ctl, label: { primary: "$key.fmt", shift: "$key.mode" }, primary: { special: fmt }, shift: { special: mode }, source: assumed }  # at the reference's On key (r10c1); ours cycles the display format of the last result (Settings: Format key cycle); Shift opens Mode on Angle (R85, assumed: a free Shift cell, docs/04 5.1)
+  # Shift + Fmt is RESERVED (docs/06 section 3b; R322, owner 2026-11-14: Mode moved to Shift + Deselect): no action and no
+  # legend, dimmed in that layer only, counted when pressed.
+  - { id: fmt, row: 9, col: 0, cls: ctl, label: { primary: "$key.fmt" }, primary: { special: fmt }, source: assumed }  # at the reference's On key (r10c1); ours cycles the display format of the last result (Settings: Format key cycle)
   - { id: d0, row: 9, col: 1, cls: num, label: { primary: "0" }, primary: { type: "0" }, alpha: { special: none }, source: virtual-calc }  # r10c2 (no quote mark, P12 point 8; alpha is dead, not 0; shift Notes not ours)
   - { id: dot, row: 9, col: 2, cls: num, label: { primary: ".", shift: "=" }, primary: { type: "." }, shift: { type: "=" }, source: virtual-calc }  # r10c3 (shift =)
   - { id: space, row: 9, col: 3, cls: num, label: { primary: "␣", shift: "_" }, primary: { type: " " }, shift: { type: "_" }, source: virtual-calc }  # r10c4 (space; shift _)
@@ -382,7 +385,7 @@ desktop:
     undo: { primary: Ctrl+Z, shift: Home }
     redo: { primary: [Ctrl+Y, Ctrl+Shift+Z], shift: End }
     select: { primary: Alt+ArrowUp, shift: F1 }
-    deselect: { primary: Alt+ArrowDown }
+    deselect: { primary: Alt+ArrowDown, shift: Alt+Shift+O }  # Mode: the chord it had on Fmt (R322)
     vars: { primary: Alt+V, alpha: A }
     math: { primary: Alt+F, shift: Alt+Shift+F, alpha: B }
     tmpl: { primary: Alt+Shift+U, shift: Alt+U, alpha: C }  # Alt+U, the shorter, for the units key
@@ -415,7 +418,7 @@ desktop:
     d2: { primary: "2", shift: Alt+I, alpha: Z }
     d3: { primary: "3", shift: Alt+P, alpha: "#" }
     sub: { primary: "-", shift: Alt+B, alpha: ":" }
-    fmt: { primary: Alt+O, shift: Alt+Shift+O }
+    fmt: { primary: Alt+O }
     d0: { primary: "0", alpha: { why: "dead: Alpha + 0 types nothing (docs/06 section 3 point 7)" } }
     dot: { primary: ".", shift: "=" }
     space: { primary: Space, shift: _ }
