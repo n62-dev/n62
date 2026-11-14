@@ -63,9 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 756 | R301 Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
-| 757 | R302 a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | – |
-| 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
 | 781 | [R313](packages/R313.md) on a hardware keyboard letters typed in a unit slot read as a unit | ron, Opus | `p1/ron-slotletters` | R303 |
 | 759 | [R304](packages/R304.md) a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
 | 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
@@ -92,7 +89,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 |---|---|---|---|---|
 | 688 | A100 append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
 | 689 | A137 the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
-| 745 | [A101](packages/A101.md) a checked append, never a mode switch (the Tab One) | annabell, Opus | `p1/annabell-appendcheck` | A100 |
+| 745 | A101 a checked append, never a mode switch (the Tab One) | annabell, Opus | `p1/annabell-appendcheck` | A100 |
 | 686 | [G212](packages/G212.md) Home rows list the stored values they read | gorge, Opus | `p1/gorge-homeuses` | G210 |
 | 746 | [G218](packages/G218.md) what the sync folder receives | gorge, Opus | `p1/gorge-syncfiles` | G211, G212, G213 |
 | 747 | [G219](packages/G219.md) the sync queue: at least once, in order | gorge, Opus | `p1/gorge-syncqueue` | A101, G218 |
