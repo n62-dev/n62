@@ -5,7 +5,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import about from "virtual:about";
 import { aboutPlugin } from "../../vite-plugin-about.ts";
-import { goldenFacts, patchFacts } from "../../../tools/trust/facts.mts";
+import { AUTHOR_SOURCE_DATE, goldenFacts, patchFacts } from "../../../tools/trust/facts.mts";
 import { en } from "../i18n/en.ts";
 import { enAbout } from "../i18n/enAbout.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -87,7 +87,7 @@ describe("About trust facts (A94)", () => {
     expect(about.trust.golden).toEqual({
       answers: g.answers, open: g.open, computed: g.computed, exact: g.exact, mpmath: g.mpmath, crossChecked: g.crossChecked, handOrGuard: g.handOrGuard,
     });
-    expect(about.trust.patches).toEqual({ total: p.total, sent: p.sent, reported: p.reported, applied: p.applied, waiting: p.waiting, notSent: p.notSent });
+    expect(about.trust.patches).toEqual({ total: p.total, sent: p.sent, reported: p.reported, applied: p.applied, waiting: p.waiting, notSent: p.notSent, authorDate: AUTHOR_SOURCE_DATE });
     expect(about.trust.golden.answers).toBeGreaterThan(1000);
     expect(about.trust.patches.total).toBeGreaterThan(5);
   });

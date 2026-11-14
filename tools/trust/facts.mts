@@ -7,6 +7,10 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { AUTHOR_SOURCE_DATE, TRAP_CAPTION, group, trustSentences } from "./wording.mts";
+
+// The wording (the sentences, the caption) has no node import, so the in-app page can load it: wording.mts.
+export { AUTHOR_SOURCE_DATE, TRAP_CAPTION, group, trustSentences };
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** `yaml` lives in app/node_modules; this file sits in tools/, so it is found through app/package.json. */
@@ -22,9 +26,6 @@ export const OTHER_FILES = ["parser.yaml", "bench.yaml"] as const;
 /** The fixed forms of the Status column in engine/giac/patches/README.md. */
 export const PATCH_STATUS_FORMS = ["author says integrated", "applied, with differences", "sent <YYYY-MM-DD>", "not sent"] as const;
 const STATUS_RE = /^(author says integrated|applied, with differences|sent \d{4}-\d{2}-\d{2}|not sent)$/;
-/** The date of the author's source that the sentence names ("his 7 Nov source"); the one constant beside the Status column. */
-export const AUTHOR_SOURCE_DATE = "7 Nov";
-
 export interface FileFacts {
   readonly rows: number;
   /** Rows with `status: pending`. */
@@ -151,34 +152,19 @@ export function trustFacts(root: string = REPO_ROOT): TrustFacts {
  *  its label, true value and double. Keys sorted at every level, so two builds of one commit give the same bytes. */
 export function aboutTrust(f: TrustFacts = trustFacts()): {
   readonly golden: { readonly answers: number; readonly computed: number; readonly crossChecked: number; readonly exact: number; readonly handOrGuard: number; readonly mpmath: number; readonly open: number };
-  readonly patches: { readonly applied: number; readonly notSent: number; readonly reported: number; readonly sent: number; readonly total: number; readonly waiting: number };
+  readonly patches: { readonly applied: number; readonly authorDate: string; readonly notSent: number; readonly reported: number; readonly sent: number; readonly total: number; readonly waiting: number };
   readonly traps: readonly { readonly double: string; readonly expect: string; readonly id: string; readonly input: string; readonly label: string; readonly mark: string; readonly truth: string }[];
 } {
   const g = f.golden, p = f.patches;
   return {
     golden: { answers: g.answers, computed: g.computed, crossChecked: g.crossChecked, exact: g.exact, handOrGuard: g.handOrGuard, mpmath: g.mpmath, open: g.open },
-    patches: { applied: p.applied, notSent: p.notSent, reported: p.reported, sent: p.sent, total: p.total, waiting: p.waiting },
+    patches: { applied: p.applied, authorDate: AUTHOR_SOURCE_DATE, notSent: p.notSent, reported: p.reported, sent: p.sent, total: p.total, waiting: p.waiting },
     traps: TRAPS.map((t) => {
       const row = g.traps[t.id];
       if (!row) throw new Error(`trust: no golden row ${t.id}`);
       return { double: t.double, expect: row.expect, id: t.id, input: row.input, label: t.label, mark: row.mark, truth: trapTruth(t, row.note) };
     }),
   };
-}
-
-/** 1966 → "1,966". */
-export function group(n: number): string {
-  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-/** The three paragraphs of the section's prose, separated by a blank line. */
-export function trustSentences(f: TrustFacts): string {
-  const g = f.golden, p = f.patches;
-  return [
-    `${group(g.answers)} recorded answers, ${group(g.open)} of them open cases. ${group(g.computed)} expected values are computed independently of Giac (${group(g.mpmath)} by mpmath, ${group(g.exact)} by exact arithmetic); ${group(g.crossChecked)} more are hand-derived or reference values cross-checked by machine; the other ${group(g.handOrGuard)} are hand-derived expected results or behaviour guards.`,
-    `${group(p.total)} Giac patches. ${group(p.sent)} sent to the author: he wrote that ${group(p.reported)} should be integrated and applied ${group(p.applied)} in his ${AUTHOR_SOURCE_DATE} source, with differences being resolved; ${group(p.waiting)} more wait for his answer; ${group(p.notSent)} not sent.`,
-    "When the engine, the parser or the units change, the golden gate re-runs the answers; when a golden file changes, the oracle recomputes the expected values.",
-  ].join("\n\n");
 }
 
 /** What an ordinary IEEE double gives for each trap (not measured by the repo's tests; a literal beside the traps). */
@@ -214,8 +200,6 @@ export function trapTable(f: TrustFacts): string {
   }
   return out.join("\n");
 }
-
-export const TRAP_CAPTION = "*The sign of the first double depends on the order the expression is evaluated in; the other doubles are what a plain IEEE double returns.*";
 
 /** The whole generated block of README.md (between its trust markers). */
 export function trustBlock(f: TrustFacts): string {

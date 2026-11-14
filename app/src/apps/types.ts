@@ -122,8 +122,8 @@ export interface SubMenu {
   readonly at?: string;
   /** Find's categories (R4a): letters typed in this level search with this (views/sheet.svelte.ts Level.search). */
   readonly search?: (query: string) => readonly MenuItem[];
-  /** A text to read instead of rows (R87: a licence): it scrolls, ▲ ▼ page through it, ◀ and Esc go back. `items` is empty. */
-  readonly text?: string;
+  /** A text to read instead of rows (R87: a licence): it scrolls, ▲ ▼ page through it, ◀ and Esc go back. `items` is empty. A function is read on every draw, so a text that waits for its data (R174) is drawn when it arrives. */
+  readonly text?: string | (() => string);
   /** The highlighted row's `preview` may take several lines (R87: a part's copyright and source), not one. */
   readonly longPreview?: boolean;
   /** While the rows are still loading (R87's About data), the load: keys pressed meanwhile wait for it (R8). */

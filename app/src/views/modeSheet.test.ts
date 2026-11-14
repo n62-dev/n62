@@ -437,12 +437,39 @@ describe("Help and about (R87)", () => {
     expect(text).not.toMatch(/^7 {3}7$/m); // a character that types its own legend is not listed
   });
 
-  it("is the fourth section; it holds Report a problem (R173), About, Parts and Desktop keys (R131); those three open a level", () => {
+  it("is the fourth section; it holds Report a problem (R173), About, Why trust it (R174), Parts and Desktop keys (R131); those four open a level", () => {
     const s = settings(5);
     expect(s.path).toBe("Mode › Settings › Help and about");
-    expect(s.level.items.map((x) => x.id)).toEqual(["report", "about", "parts", "keys"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["report", "about", "trust", "parts", "keys"]);
     expect(byId(s, "report")?.label).toBe("Report a problem");
     expect(s.level.items.filter((x) => x.id !== "report").every((x) => x.submenu)).toBe(true);
+  });
+
+  it("Why trust it (R174): a text level with A93's three sentences built from the facts virtual:about carries, the five traps without markdown, and the caption", async () => {
+    const { trustFacts } = await import("../../../tools/trust/facts.mts");
+    const { trustSentences } = await import("../../../tools/trust/wording.mts");
+    const f = trustFacts();
+    const s = settings(5);
+    expect(s.level.items.map((x) => x.id)).toContain("trust");
+    expect(byId(s, "trust")?.label).toBe("Why trust it");
+    s.pickNumber(at(s, "trust") + 1);
+    expect(s.path).toBe("Settings › Help and about › Why trust it");
+    await vi.waitFor(() => expect(s.level.text).not.toBe("Loading…"));
+    const text = s.level.text ?? "";
+    expect(s.level.items).toEqual([]);
+    expect(text).toContain(trustSentences(f)); // the same words and numbers, word for word, as README.md's section
+    for (const t of (await import("virtual:about")).default.trust.traps) {
+      expect(t.label.replace(/`/g, "").length).toBeGreaterThan(0);
+      expect(text, t.id).toContain(t.label.replace(/`/g, ""));
+      expect(text, t.id).toContain(t.truth);
+    }
+    expect(text).not.toContain("`");
+    expect(text.match(/^True value: /gm)).toHaveLength(5);
+    expect(text).toContain("Rump's expression at (77617, 33096)\nN62: ≈ -0.827396059947\nTrue value: -54767/66192");
+    expect(text).toContain('N62: refused: “The integral does not converge”');
+    expect(text).toContain("ordinary IEEE double");
+    expect(text).toContain("The second is in RAD.");
+    expect(text).not.toMatch(/proven|proof/i);
   });
 
   it("Report a problem runs the clipboard code's reportProblem through the app's data hook (R173)", () => {
@@ -462,7 +489,7 @@ describe("Help and about (R87)", () => {
     const s = new Sheet("mode", "Mode", () => modeItems(session, { tips: shown }), { remember: false });
     s.pickNumber(6);
     s.pickNumber(5); // (no Your keys or Data here: Help and about is the fifth section)
-    expect(s.level.items.map((x) => x.id)).toEqual(["tips", "report", "about", "parts", "keys"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["tips", "report", "about", "trust", "parts", "keys"]);
     expect(s.level.items[0]?.label).toBe("Show the first-start tips");
     const p = s.activate(0);
     expect(p.kind).toBe("run"); // the shell closes the sheet, then runs it
@@ -486,7 +513,7 @@ describe("Help and about (R87)", () => {
 
   it("Parts: a row per part of THIRD_PARTY.md; a single licence opens its text, a dual one a list of both", async () => {
     const s = settings(5);
-    s.pickNumber(3);
+    s.pickNumber(4);
     await loaded(s);
     const about = (await import("virtual:about")).default;
     expect(s.level.items.length).toBe(about.parts.length);

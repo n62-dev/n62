@@ -52,8 +52,12 @@ export class Level {
   private found: { q: string; items: readonly MenuItem[] } | null = null;
   /** Counts the times the hits were dropped (refresh), so a view that shows them draws again. */
   private dropped = $state(0);
-  /** A text to read in place of rows (R87, a licence). */
-  readonly text: string | undefined;
+  /** A text to read in place of rows (R87, a licence); a function is read on every draw (R174). */
+  private readonly textSource: string | (() => string) | undefined;
+  get text(): string | undefined {
+    const t = this.textSource;
+    return typeof t === "function" ? t() : t;
+  }
   /** R149: the credits, a list of headings and paragraphs that rolls up (Sheet.svelte); ▲ ▼ page through it like a text. */
   readonly credits: readonly CreditBlock[] | undefined;
   /** The preview under the list may take several lines. */
@@ -89,7 +93,7 @@ export class Level {
     this.note = opts?.note;
     this.grid = opts?.grid;
     this.search = opts?.search;
-    this.text = opts?.text;
+    this.textSource = opts?.text;
     this.credits = opts?.credits;
     this.longPreview = opts?.longPreview ?? false;
     this.loading = opts?.loading ?? (this.grid ? () => this.grid?.loading() ?? null : () => null);
@@ -237,7 +241,7 @@ export interface SheetOptions {
   /** Find (R4a): letters search with this instead of filtering the labels (see Level.search). */
   search?: (query: string) => readonly MenuItem[];
   /** A text to read in place of rows (see Level.text). */
-  text?: string;
+  text?: string | (() => string);
   /** The credits (see Level.credits). */
   credits?: readonly CreditBlock[];
   /** Several lines for the preview (see Level.longPreview). */
