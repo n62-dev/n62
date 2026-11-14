@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 |---|---|---|---|---|
 | 753 | S58 the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
 | 754 | R299 the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
-| 755 | [R300](packages/R300.md) the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
+| 755 | R300 the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
 | 756 | [R301](packages/R301.md) Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
 | 757 | [R302](packages/R302.md) a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | R300 |
 | 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
