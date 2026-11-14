@@ -236,7 +236,7 @@ export function finiteLevel(giac: Giac, slot: string, output: string, P: number,
     const t = giac.eval(`string(evalf(${slot},${P + step}))`).trim();
     if (isTimeout(t)) return "timeout";
     // an undef or an error at a level is no number either: the climb goes on
-    if (!infinite(t) && !/undef/.test(t) && !isError(t)) return P + step;
+    if (!infinite(t) && !t.includes("undef") && !isError(t)) return P + step;
   }
   return "overflow";
 }
