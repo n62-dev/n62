@@ -120,8 +120,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 **Entry and keys**
 - **Shift + 5's matrix (R185, R186; Opus pass 169):** only the one Shift + 5 made on the line grows; a new column's other cells get □, an empty cell is refused (R185f1). Archived, "Opus pass 178". Would change if: the owner re-types recalled matrices.
 - **R194's word (Opus pass 178):** Word in Settings › Numbers opens Word size (8–64) and Signed; a preset leaves the word as it is. Archived, "Opus pass 186". Would change if: the owner wants the two rows in Numbers.
-- **R188's matrix grid (Opus pass 176):** Shift + 4 lists stored matrices, the newest first; Esc goes back to the list. Archived, "Opus pass 186".
-- **R189's cell edit (Opus pass 179):** Enter writes one row `M:=` as a pmatrix the line reads back; Enter on an unedited cell is idle. Archived, "Opus pass 186". Would change if: the owner wants it to open the cell.
+- **The matrix grid (R188, R189, R300; Opus passes 176, 179, 187):** Shift + 4 lists stored matrices, newest first; Enter writes one row `M:=`, idle on an unedited cell; a key acts by its action in the layer pressed (Store ▶ dead; in a cell an operator types itself). Archived, "Opus pass 186", "Opus pass 187". Would change if: the owner wants Enter to open the cell, or G2 item 74 shows Ans − 5.
+- **R299's lock (Opus pass 187):** `UNPINNED_LISTS` stands; Plot's and Solve Num's ☰ are pinned with their last rows. Would change if: one of those lists gets a fixed row.
 - **R130's tenth ☰ row (Opus pass 179):** it keeps the 36 px floor and scrolls; rows 1–9 stay, key 0 opens Export › (docs/06 3b rule 2). Would change if: the owner's look on a phone.
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
@@ -192,7 +192,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
 - **t06 and Find (Opus pass 182, R221):** "es" ranks the unit statC (a shorter name) above eseries, as docs/04 3.5 orders prefixes; the ranking stays, and t06's budget (plan 12, today 13) is agreed with the owner when it goes active.
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Archived, "Opus pass 97".
-- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. A matrix times a list needs one element per row, either order; a pointwise operator refuses a matrix with a flat operand (G352). A result with no list and no dimension error is not walked (pass 123): `col(idn(2),0)*col(zeros(3,3),0)` stays 0 with ⚠. `dot` conjugates its first vector (G227).
+- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads; `dot` conjugates its first vector (G227). Archived, "Opus pass 187".
 - **Our Giac text binds only `pas…_` names (pass 123; G303, F205):** no user can type one; a free name in a cdf or icdf call gives no number, the inverse ones too (G221f1). Would change if: the parser takes a trailing `_`.
 
 **Units**

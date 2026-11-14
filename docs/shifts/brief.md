@@ -63,18 +63,16 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 753 | S58 the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
-| 754 | R299 the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
-| 755 | R300 the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
 | 756 | [R301](packages/R301.md) Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
-| 757 | [R302](packages/R302.md) a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | R300 |
+| 757 | [R302](packages/R302.md) a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | – |
 | 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
 | 781 | [R313](packages/R313.md) on a hardware keyboard letters typed in a unit slot read as a unit | ron, Opus | `p1/ron-slotletters` | R303 |
 | 759 | [R304](packages/R304.md) a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
 | 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
 | 761 | [R306](packages/R306.md) a list, a matrix, cases and an integral read right as plain text | ron, Opus | `p1/ron-plainlists` | G232f1 |
-| 762 | [R307](packages/R307.md) the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | R300 |
-| 763 | [R308](packages/R308.md) a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | R300 |
+| 762 | [R307](packages/R307.md) the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | – |
+| 763 | [R308](packages/R308.md) a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | – |
+| 790 | [R320](packages/R320.md) the press counters load when the browser is idle, and the lazy check reads the chunks | ron, Opus | `p1/ron-tapscut` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
