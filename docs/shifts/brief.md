@@ -63,8 +63,10 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 781 | [R313](packages/R313.md) on a hardware keyboard letters typed in a unit slot read as a unit | ron, Opus | `p1/ron-slotletters` | R303 |
-| 759 | [R304](packages/R304.md) a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
+| 781 | R313 on a hardware keyboard letters typed in a unit slot read as a unit | ron, Opus | `p1/ron-slotletters` | R303 |
+| 792 | [R322](packages/R322.md) Mode moves to Shift + Deselect, Shift + Fmt becomes reserved (owner, 11-14; before the freeze) | ron, Opus | `p1/ron-modekey` | – |
+| 793 | [R323](packages/R323.md) Shift + `( )` types ∥ (par), Shift + 0 types % (owner, 11-14; before the freeze) | ron, Opus | `p1/ron-parpercent` | R322 |
+| 759 | R304 a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
 | 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
 | 761 | [R306](packages/R306.md) a list, a matrix, cases and an integral read right as plain text | ron, Opus | `p1/ron-plainlists` | G232f1 |
 | 762 | [R307](packages/R307.md) the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | – |
@@ -87,8 +89,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 746 | [G218](packages/G218.md) what the sync folder receives | gorge, Opus | `p1/gorge-syncfiles` | – |
-| 747 | [G219](packages/G219.md) the sync queue: at least once, in order | gorge, Opus | `p1/gorge-syncqueue` | G218 |
+| 746 | G218 what the sync folder receives | gorge, Opus | `p1/gorge-syncfiles` | – |
+| 747 | G219 the sync queue: at least once, in order | gorge, Opus | `p1/gorge-syncqueue` | G218 |
 | 690 | [G233](packages/G233.md) your own unit: a definition the unit evaluator can read | gorge, Opus | `p1/gorge-userunit` | – |
 | 691 | [G234](packages/G234.md) your own units are stored, backed up and found | gorge, Sonnet | `p1/gorge-userunitstore` | G233 |
 | 742 | [G215](packages/G215.md) the generated Python runs and agrees with N62 | gorge, Opus | `p1/gorge-pydiff` | G214 |
