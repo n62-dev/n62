@@ -40,7 +40,8 @@ function symbolOf(it: IndexItem): string {
   return m && !m[1]!.includes("\\") ? m[1]! : name;
 }
 
-const bare = (id: string): string => id.slice(id.indexOf(":") + 1);
+/** A Find id without its kind ("unit:m" → "m"). */
+export const bare = (id: string): string => id.slice(id.indexOf(":") + 1);
 
 export function factorTable(items: readonly IndexItem[]): FactorTable {
   const units = new Map<string, UnitFactor>();

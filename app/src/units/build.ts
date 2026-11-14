@@ -245,13 +245,13 @@ function sigmaFacts(req: UnitRequest): SigmaFacts | undefined {
 }
 
 /** R271: a slot's factor to SI without its dimension symbols, °C and °F as an interval (a σ has no offset). */
-function slotFactor(slot: UnitSlot, table: FactorTable): string {
+export function slotFactor(slot: UnitSlot, table: FactorTable): string {
   const per = slot.per ?? slot.tokens.length;
   return mapNames(`(${slot.tokens.map((t, i) => tokenGiac(t, i >= per, table, true)).join("*")})`, (n) => (n.name.startsWith("pasdim") ? "1" : null), "typed");
 }
 
 /** R271: a slot's dimension key, from its units' keys and powers (exact fractions). */
-function slotDim(slot: UnitSlot, table: FactorTable): string {
+export function slotDim(slot: UnitSlot, table: FactorTable): string {
   const per = slot.per ?? slot.tokens.length;
   const sum = new Map<string, [bigint, bigint]>();
   const frac = (e: string): [bigint, bigint] => {
@@ -317,6 +317,10 @@ export function powerKinds(slots: readonly UnitSlot[], table: FactorTable): stri
 
 /** G40: whether a slot holds a cycle unit: rpm, rev, Hz or a unit made of them (kHz). */
 const hasCycles = (slots: readonly UnitSlot[]): boolean => slots.some((s) => s.tokens.some((t) => /rpm|rev|Hz/.test(t.unit)));
+
+/** G233: a unit whose rules go by its id (a level, a cycle unit, a kind of power): a unit of your own made of it would
+ *  lose them, so userUnits.ts refuses it. */
+export const rulesById = (id: string): boolean => LOGARITHMIC.has(id) || POWER_KIND[id] !== undefined || hasCycles([{ tokens: [{ unit: id }] }]);
 
 /** The end slot's part of a job. */
 function endJob(req: UnitRequest, table: FactorTable): Pick<UnitJob, "end" | "endOffset" | "endLog" | "endUnit" | "endSlot"> {
