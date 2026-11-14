@@ -17,6 +17,7 @@
 // elements as LaTeX the line reads back, the store checked by the worker, one history row. `createMatrix` (the sheet's
 // New) stores a 2 × 2 of zeros under the first free letter by the same path.
 import type { Component } from "svelte";
+import type { AppShell } from "../apps/shell.svelte.ts";
 import type { AppHost } from "../apps/types.ts";
 import { engineFormat, type HomeOutcome } from "../calc/port.ts";
 import type { EntryController } from "../entry/controller.ts";
@@ -45,6 +46,8 @@ type Settings = AppHost["settings"];
 export interface CellLine {
   readonly entry: Pick<EntryController, "value" | "chips" | "clear" | "set">;
   readonly session: Pick<Session, "shift" | "alpha" | "userNames" | "submit">;
+  /** R302: the shell, where the edit sets the user's line aside (`editAside`): the line a hide keeps (R34). */
+  readonly shell: Pick<AppShell, "editAside">;
   /** R300: a key that does nothing in the grid (docs/05 3.7): the double haptic. */
   dead(): void;
 }
@@ -174,6 +177,7 @@ export class MatrixGrid {
       if (special !== undefined || (a?.kind === "cmd" && GRID_CMDS.includes(a.name))) return undefined;
       if (!a || a.kind === "cmd" || store) return dead(line); // (no action in this layer: a dead press, as on the line)
       this.saved = { line, latex: line.entry.value, chips: line.entry.chips };
+      line.shell.editAside = { latex: this.saved.latex, chips: this.saved.chips }; // R302: before the clear, which leaves it kept
       this.editing = { row: this.row, col: this.col };
       line.entry.clear();
       return false;
@@ -204,6 +208,7 @@ export class MatrixGrid {
     this.refusal = null;
     this.menu = null;
     if (!s) return;
+    s.line.shell.editAside = null; // R302: the line comes back and is kept as typed (an empty one clears the kept line)
     if (s.latex === "") s.line.entry.clear();
     else s.line.entry.set(s.latex, s.chips);
   }

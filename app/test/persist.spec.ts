@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // History persistence and the lazy-loaded entry line.
 import { expect, test } from "@playwright/test";
-import { entryValue, open, PASTE, setClipboard, sheet, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, PASTE, setClipboard, sheet, sheetKey, tap, tapTwice, useClipboardLock } from "./helpers.ts";
 
 // Not helpers.lastResult: this one is the whole result row, not its `.result` part.
 const lastResult = (page: import("@playwright/test").Page) => page.locator('[data-testid="result"]').last();
@@ -465,4 +465,87 @@ test("R298 control: the same keys after the field is up: 2 ×, the result 5, −
   await tap(page, ["enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
   expect(await results(page)).toEqual(["5", "9"]);
+});
+
+// R302 (night review 2026-11-14, bu-2): a matrix cell's edit (R189) is typed on the entry line; the line it set aside is
+// the one a hide keeps (R34), as the name prompt's (R123), not the cell's text. The real engine; values by hand.
+test.describe("R302: a cell edit keeps the user's line through a kill", () => {
+  const grid = (p: Page) => p.getByTestId("matrix-grid");
+  /** The text of the row `giac` gives in Home, sent as the line would. */
+  async function run(p: Page, giac: string): Promise<string> {
+    const n = await p.evaluate(() => window.n62.session.items.length);
+    await p.evaluate((g) => window.n62.session.submit(g, g), giac);
+    await p.waitForFunction((n) => window.n62.session.items.length > n && window.n62.session.items.at(-1)?.status !== "pending", n, { timeout: 20_000 });
+    return p.evaluate(() => window.n62.session.items.at(-1)?.text ?? "");
+  }
+  /** M:=[[1,2],[3,4]] stored, `draft` typed on the line, M's grid open at (2,1). */
+  async function gridOpen(p: Page, draft: string[]): Promise<void> {
+    await p.setViewportSize({ width: 412, height: 915 }); // as matrixedit.spec.ts: the grid and the line in sight
+    await open(p, "");
+    await engineReady(p);
+    await run(p, "M:=[[1,2],[3,4]]");
+    await p.waitForFunction(() => window.n62.session.userNames.some((u) => u.name === "M"), undefined, { timeout: 20_000 });
+    if (draft.length > 0) await tap(p, draft);
+    await tap(p, ["shift", "d4"]);
+    await sheetKey(p, ["d0"]);
+    await expect(grid(p).locator("td[data-cell]")).toHaveCount(4);
+    await tap(p, ["down"]);
+    await expect(grid(p).locator('td[data-cell="2,1"]')).toHaveAttribute("data-active", "true");
+  }
+  /** The kill's next start: its line, and M as Home reads it. */
+  async function after(p: Page): Promise<[string, string]> {
+    const next = await relaunch(p, "");
+    await engineReady(next);
+    const line = await entryValue(next);
+    return [line, await run(next, "M")];
+  }
+
+  test("2+3 on the line, a 9 typed in a cell, a hide and a kill: the line is 2+3, M unchanged", async ({ page }) => {
+    await gridOpen(page, ["d2", "add", "d3"]);
+    await tap(page, ["d9"]);
+    await expect(grid(page).locator('td[data-cell="2,1"]')).toHaveAttribute("data-editing", "true");
+    expect(await entryValue(page)).toBe("9");
+    await hide(page);
+    expect(await after(page)).toEqual(["2+3", "[[1,2],[3,4]]"]);
+  });
+
+  test("an empty line, a 9 typed in a cell, a hide and a kill: the line is empty", async ({ page }) => {
+    await gridOpen(page, []);
+    await tap(page, ["d9"]);
+    expect(await entryValue(page)).toBe("9");
+    await hide(page);
+    expect(await after(page)).toEqual(["", "[[1,2],[3,4]]"]);
+  });
+
+  test("Clear during the edit leaves the kept line: 2+3 after a kill", async ({ page }) => {
+    await gridOpen(page, ["d2", "add", "d3"]);
+    await tap(page, ["d9", "shift", "esc"]);
+    expect(await entryValue(page)).toBe("");
+    await hide(page);
+    expect(await after(page)).toEqual(["2+3", "[[1,2],[3,4]]"]);
+  });
+
+  test("control: Esc ends the edit, 2+3 comes back and a kill keeps it", async ({ page }) => {
+    await gridOpen(page, ["d2", "add", "d3"]);
+    await tap(page, ["d9", "esc"]);
+    expect(await entryValue(page)).toBe("2+3");
+    await hide(page);
+    expect(await after(page)).toEqual(["2+3", "[[1,2],[3,4]]"]);
+  });
+
+  test("control: a written cell puts 2+3 back and a kill keeps it, with M written", async ({ page }) => {
+    await gridOpen(page, ["d2", "add", "d3"]);
+    await tap(page, ["d9", "enter"]);
+    await expect(grid(page).locator('td[data-cell="2,1"]')).toHaveAttribute("data-text", "9");
+    expect(await entryValue(page)).toBe("2+3");
+    await page.waitForTimeout(800); // the definitions log is written asynchronously
+    await hide(page);
+    expect(await after(page)).toEqual(["2+3", "[[1,2],[9,4]]"]);
+  });
+
+  test("control: a hide with the grid open and no edit keeps 2+3", async ({ page }) => {
+    await gridOpen(page, ["d2", "add", "d3"]);
+    await hide(page);
+    expect(await after(page)).toEqual(["2+3", "[[1,2],[3,4]]"]);
+  });
 });
