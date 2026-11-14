@@ -86,8 +86,9 @@ function literal(text: string): Out {
   return m[1] === "-" ? { s: `-${body.s}`, p: 3, k: body.k } : body;
 }
 
-/** The fixed symbols: MathJSON name → sympy name. */
-const CONST: Record<string, string> = { Pi: "pi", ExponentialE: "E", ImaginaryUnit: "I" };
+/** The fixed symbols: MathJSON name → sympy name. A Map, closed: `in` on an object would also find `toString` and the
+ *  rest of Object.prototype (G213 fix round 3). */
+const CONST = new Map([["Pi", "pi"], ["ExponentialE", "E"], ["ImaginaryUnit", "I"]]);
 
 /** The translation of one row; it collects the sympy names it uses. */
 class Row {
@@ -179,7 +180,8 @@ class Row {
 
   /** A symbol: a fixed constant, or a name an earlier line of this file bound. */
   private name(n: string): Out {
-    if (n in CONST) return { s: this.use(CONST[n] as string), p: 5, k: "sym" };
+    const fixed = CONST.get(n);
+    if (fixed !== undefined) return { s: this.use(fixed), p: 5, k: "sym" };
     const b = this.t.names.get(n);
     if (b && "unknown" in b) return no(`uses line ${b.unknown}`);
     const py = this.t.pyName(n);

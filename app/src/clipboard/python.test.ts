@@ -194,6 +194,10 @@ describe("translateRows: stores and Ans", () => {
   it("Ans with no earlier row of its view in the file is not translated", () => {
     expect(py([row("\\ans+1", { exact: "3" })])).toBe(file("# N62 NOT TRANSLATED (Ans: its line is not in this file): \\ans+1", "# N62: = 3"));
   });
+  it("a name Object.prototype holds (toString) is a stored name like any other (G213 fix round 3)", () => {
+    const out = py([row("5\\blacktriangleright\\operatorname{toString}", { exact: "5" }), row("\\operatorname{toString}+1", { exact: "6" })]);
+    expect(out).toBe(file("toString = 5  # N62: = 5", "_2 = toString + 1  # N62: = 6"));
+  });
   it("a name set in the other view is not read", () => {
     const out = py([{ view: "cas", input: "5\\blacktriangleright a", ok: true, mark: "=", exact: "5" }, row("a+1", { exact: "6" })]);
     expect(out).toBe(file("a = 5  # N62: = 5", "# N62 NOT TRANSLATED (a is set in the other view): a+1", "# N62: = 6"));
