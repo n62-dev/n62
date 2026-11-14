@@ -250,6 +250,8 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
   if (key.id !== "enter") sheet.disarm(); // R281: any press but Enter (the armed item's second pick) disarms
   // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
   if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
+  const cell = level.grid?.key(c, key, layer); // R189: a matrix grid's cell is edited on the line (matrixGrid.svelte.ts)
+  if (cell !== undefined) return cell;
   // R144 (owner, 2026-11-06): any other tap on the on-screen keypad outside a pick sheet closes it and does nothing
   // else, the press used up; Esc keeps its job (back one level), and a sheet that takes letters (Find, Vars) its keys
   if (screen && !sheet.letters && key.id !== "esc") {

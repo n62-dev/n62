@@ -9,7 +9,9 @@ import type { MatrixRead } from "../calc/matrices.ts";
 import type { HomeOutcome } from "../calc/port.ts";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
-import { MatrixGrid } from "./matrixGrid.svelte.ts";
+import { keyboard } from "../keyboard/keyboard.ts";
+import { findText } from "../i18n/enFind.ts";
+import { MatrixGrid, type CellLine } from "./matrixGrid.svelte.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 const SETTINGS: AppHost["settings"] = { digits: 12, angle: "rad", format: "std" };
@@ -94,5 +96,114 @@ describe("the matrix grid (R188)", () => {
     expect(sheet.pickNumber(1).kind).toBe("stay");
     expect(sheet.back()).toBe(true);
     expect(sheet.depth).toBe(1);
+  });
+});
+
+// R189: a cell is edited on the entry line and written back through the session's normal path as the line
+// `M:=\begin{pmatrix}…\end{pmatrix}` (fix round 2): the typed cell as typed, the other elements as the bridge's LaTeX
+// (engine/matrixRead.ts ElementTex, a float in approx()), the parser's store checked by the worker first (here a stand-in
+// that answers as told). Expected texts by hand.
+describe("the matrix grid's cell edit (R189)", () => {
+  const key = (id: string) => keyboard.byId.get(id) ?? (() => { throw new Error(`no key ${id}`); })();
+  const homeM = (): Promise<HomeOutcome> =>
+    Promise.resolve({ ok: true, display: "", approximate: false, facts: { exact: true, reliableDigits: null }, full: "", shape: [2, 2], items: [exact(real(1n)), exact(real(2n)), exact(real(3n)), exact(real(4n))] });
+  const TYPED = ["1", "2", "3", "evalf(1/10,15)"];
+  /** The worker's answer to a check (`candidate`): by default a matrix of the same size whose other elements are as they were. */
+  let answer: MatrixRead["candidate"];
+  const checks: string[] = [];
+  const typed = (cells: true | "typed", check?: string): Promise<MatrixRead> => {
+    if (check !== undefined) checks.push(check);
+    const candidate = answer ?? { ok: true as const, typed: ["1", "2", "?", TYPED[3] as string] };
+    const latex = [{ tex: "1" }, { tex: "2" }, { tex: "3" }, { tex: "0.1", float: true as const }];
+    return Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: TYPED, latex, ...(check === undefined ? {} : { candidate }) } : { name: "M", rows: 2, cols: 2 });
+  };
+  async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; sent: string[] }> {
+    answer = undefined;
+    checks.length = 0;
+    const sent: string[] = [];
+    const entry = { value: "7", chips: {}, clear: () => void (entry.value = ""), set: (l: string) => void (entry.value = l) };
+    const session = { shift: false, alpha: false, userNames: [], submit: (l: string, g?: string) => (sent.push(`${l} | ${g ?? ""}`), Promise.resolve()) };
+    const g = new MatrixGrid("M", () => SETTINGS, homeM, typed);
+    g.open();
+    await g.loading();
+    g.move(1, 0);
+    return { g, line: { entry, session } as unknown as CellLine, entry, sent };
+  }
+
+  it("a key that types starts the edit on a cleared line; the grid's keys and a control keep the sheet's job", async () => {
+    const { g, line, entry } = await at21();
+    for (const id of ["up", "down", "left", "right", "enter", "esc", "bksp", "math"]) expect(g.key(line, key(id), undefined)).toBeUndefined();
+    expect(g.editing).toBeNull();
+    expect(g.key(line, key("d9"), undefined)).toBe(false); // route.ts then runs it on the line
+    expect(g.editing).toEqual({ row: 1, col: 0 });
+    expect(entry.value).toBe("");
+  });
+
+  it("Enter writes the cell with the other elements as typed, in one store; the line that was there comes back", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d9"), undefined);
+    entry.value = "9";
+    expect(g.key(line, key("math"), undefined)).toBe(true); // a key that opens a sheet does nothing during the edit
+    expect(g.key(line, key("enter"), undefined)).toBe(true);
+    await g.loading();
+    // the row is LaTeX the line reads back (no override: the session parses it, as a recall does)
+    expect(sent).toEqual(["M:=\\begin{pmatrix}1&2\\\\9&\\operatorname{approx}\\left(0.1\\right)\\end{pmatrix} | "]);
+    expect(checks).toEqual(["M:=[[1,2],[9,approx(0.1)]]"]); // the parser's store, checked before it was sent
+    expect(g.editing).toBeNull();
+    expect(entry.value).toBe("7");
+  });
+
+  it("a refused cell sends nothing and the edit stays; Esc then ends it and the old line comes back", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d1"), undefined);
+    entry.value = "1+";
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect(g.refusal).toBeTruthy();
+    entry.value = "\\left(1,2\\right)"; // two values in one cell (the parser gives the sequence (1,2))
+    answer = { ok: false, why: "shape" }; // the worker's check: its row spreads (engine/matrixRead.test.ts, R189f1)
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect(checks).toEqual(["M:=[[1,2],[(1,2),approx(0.1)]]"]);
+    expect(g.refusal).toBe(findText("matrix.oneValue"));
+    expect(sent).toEqual([]);
+    expect(g.editing).toEqual({ row: 1, col: 0 });
+    expect(g.key(line, key("esc"), undefined)).toBe(true);
+    expect([g.editing, g.refusal, entry.value]).toEqual([null, null, "7"]);
+  });
+
+  it("a call's arguments are one value: f(1,2) is written as typed", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d9"), undefined);
+    entry.value = "\\operatorname{max}\\left(1,2\\right)";
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect([g.refusal, sent.length]).toEqual([null, 1]);
+    expect(sent[0]).toContain("\\\\\\operatorname{max}\\left(1,2\\right)&");
+    expect(checks).toEqual(["M:=[[1,2],[max(1,2),approx(0.1)]]"]);
+  });
+
+  it("the worker's refusals: not a matrix of this size, a store in the cell, another element changed; nothing is sent", async () => {
+    for (const [a, why] of [
+      [{ ok: false, why: "shape" }, "matrix.oneValue"],
+      [{ ok: false, why: "store" }, "matrix.noStore"],
+      [{ ok: true, typed: ["1", "5", "9", "evalf(1/10,15)"] }, "matrix.notKept"],
+    ] as const) {
+      const { g, line, entry, sent } = await at21();
+      answer = a;
+      g.key(line, key("d9"), undefined);
+      entry.value = "9";
+      g.key(line, key("enter"), undefined);
+      await g.loading();
+      expect([g.refusal, sent, g.editing]).toEqual([findText(why), [], { row: 1, col: 0 }]);
+    }
+  });
+
+  it("Enter on an empty line ends the edit and keeps the old value", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d9"), undefined);
+    entry.value = "";
+    g.key(line, key("enter"), undefined);
+    expect([g.editing, entry.value, sent]).toEqual([null, "7", []]);
   });
 });
