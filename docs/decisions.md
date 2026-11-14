@@ -21,14 +21,13 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
 
-**Night review 2026-11-14:** twelve questions in [the note](research/night-review-2026-11-14.md) section 6, each with its recommendation; 1 and 2 before the hardware-key tests of 11-16, 3 before the tag.
-
 ## Decided proposals
 
 ### Pipeline and process
 - **No freeze until Tue 11-17, tag Mon 11-23 (owner, 2026-11-12):** to the freeze the order is use, critical bugs, features (brief section 0); the days, the bar and what v0.1.0 keeps for good (point 7): [release-0.1.0.md](release-0.1.0.md).
 - **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](archive/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
 - **Owner answers of 2026-11-10 (architecture review):** [the note](research/arch-review-2026-11-10.md) section 3.
+- **Owner answers of 2026-11-14 (night review):** [the note](research/night-review-2026-11-14.md) section 6; each package rewrites its decision line here when it lands.
 - **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). A145: the recipe's engine build differs from the release engine (`fdroid/README.md`); the whole APK is uncompared. Would change if: the engine cannot be made bit-identical.
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** A83, A88, G167, A67, A71, A39; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "Opus pass 184".

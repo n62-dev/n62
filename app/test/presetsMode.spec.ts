@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R89 (docs/05 3.4, docs/mockups/settings.html section 4): presets in Mode. Row 5 is Preset (the active one's name, what
+// R89 (docs/05 3.4, docs/archive/mockups/settings.html section 4): presets in Mode. Row 5 is Preset (the active one's name, what
 // it holds on a second line; ◀ ▶ apply the previous or next one with the sheet open; a tap, a digit or Enter lists them),
 // Settings is row 6. `Mode › Presets`: the presets as radio rows, a pick applies and closes, then Save and Edit ›. A
 // preset's page: five ticks, Update, Rename or delete ›. A name is typed in the entry line under the label "Preset name":

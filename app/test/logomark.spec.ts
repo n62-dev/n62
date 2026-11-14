@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R157 (owner, 2026-11-07, docs/mockups/n62-teal-2026-11-07.html): the logo as the app icon draws it on Home's tile (black
+// R157 (owner, 2026-11-07, docs/archive/mockups/n62-teal-2026-11-07.html): the logo as the app icon draws it on Home's tile (black
 // mark on the logo teal #529997, the same in every family and mode), CAS and the apps keep their glyphs; and faint on an
 // empty history (--mark-faint, at most 1.3:1 on --bg), gone after one result, a tap on it opens the credits sheet. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
