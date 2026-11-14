@@ -10,6 +10,7 @@ import android.content.UriPermission;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
+import android.os.ParcelFileDescriptor;
 import android.provider.DocumentsContract;
 import android.webkit.MimeTypeMap;
 import androidx.activity.result.ActivityResult;
@@ -24,7 +25,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -39,6 +43,7 @@ import java.util.Locale;
  * Text is UTF-8; names are plain file names in the folder itself (no sub-folders).</li>
  * <li>append({name, text}) (A100) adds text to the end of a file in that folder ("wa"), creating it when absent; it never
  * truncates or rewrites, so a crash cannot lose the lines already there. deviceModel() gives Build.MODEL.</li>
+ * <li>tail({name, n}) (A101) reads the file's last n bytes, read-only: the app checks an append with it.</li>
  * </ul>
  */
 @CapacitorPlugin(name = "N62Files")
@@ -290,6 +295,93 @@ public class N62FilesPlugin extends Plugin {
             unavailable(call);
         } catch (IOException | RuntimeException e) {
             call.reject(e.getMessage() != null ? e.getMessage() : "read failed");
+        }
+    }
+
+    /**
+     * tail({name, n}) (A101): the last n bytes of the file (1 ≤ n ≤ READ_MAX) as UTF-8, a character cut at their start
+     * reading as U+FFFD: {result: "ok", text} | {result: "missing"} | {result: "unavailable"}; rejects on an I/O error.
+     * Opened "r" only: a seek to the end when the provider gives a regular file, else the stream read through keeping only
+     * the last n bytes (a pipe from a cloud provider). The test build's seam noSeek (BuildConfig.TEST_SEAMS) skips the
+     * seek, so app/test-device/folder.rec.ts reads the stream path on a provider that gives regular files.
+     */
+    @PluginMethod
+    public void tail(PluginCall call) {
+        String name = call.getString("name");
+        Integer n = call.getInt("n");
+        if (!FolderNames.valid(name) || n == null || n < 1 || n > READ_MAX) {
+            call.reject("a plain file name and 1 <= n <= " + READ_MAX + " are required");
+            return;
+        }
+        Uri tree = usableTree();
+        if (tree == null) {
+            unavailable(call);
+            return;
+        }
+        try {
+            Uri doc = child(tree, name);
+            if (doc == null) {
+                call.resolve(new JSObject().put("result", "missing"));
+                return;
+            }
+            boolean noSeek = BuildConfig.TEST_SEAMS ? call.getBoolean("noSeek", false) : false;
+            byte[] last = noSeek ? null : seekTail(doc, n);
+            if (last == null) last = streamTail(doc, n);
+            call.resolve(new JSObject().put("result", "ok").put("text", new String(last, StandardCharsets.UTF_8)));
+        } catch (SecurityException | IllegalArgumentException e) {
+            unavailable(call);
+        } catch (IOException | RuntimeException e) {
+            call.reject(e.getMessage() != null ? e.getMessage() : "tail failed");
+        }
+    }
+
+    /** The last n bytes by a seek; null when the provider gives no regular file (no size, no seek) or a short read. */
+    private byte[] seekTail(Uri doc, int n) {
+        ParcelFileDescriptor pfd;
+        try {
+            pfd = getContext().getContentResolver().openFileDescriptor(doc, "r");
+        } catch (IOException e) {
+            return null;
+        }
+        if (pfd == null) return null;
+        // the stream owns the descriptor and closes it once
+        try (ParcelFileDescriptor.AutoCloseInputStream in = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            long size = pfd.getStatSize();
+            if (size < 0) return null;
+            FileChannel ch = in.getChannel();
+            long from = Math.max(0, size - n);
+            ch.position(from);
+            ByteBuffer buf = ByteBuffer.allocate((int) (size - from));
+            while (buf.hasRemaining() && ch.read(buf) != -1) {
+                // until the n bytes are in
+            }
+            return buf.hasRemaining() ? null : buf.array();
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    /** The last n bytes by reading the whole stream, keeping no more than n of them. */
+    private byte[] streamTail(Uri doc, int n) throws IOException {
+        try (InputStream in = getContext().getContentResolver().openInputStream(doc)) {
+            if (in == null) throw new IOException("no input stream");
+            byte[] keep = new byte[n];
+            byte[] chunk = new byte[64 * 1024];
+            int len = 0;
+            int r;
+            while ((r = in.read(chunk)) != -1) {
+                if (r >= n) {
+                    System.arraycopy(chunk, r - n, keep, 0, n);
+                    len = n;
+                    continue;
+                }
+                int drop = Math.max(0, len + r - n);
+                System.arraycopy(keep, drop, keep, 0, len - drop);
+                len -= drop;
+                System.arraycopy(chunk, 0, keep, len, r);
+                len += r;
+            }
+            return Arrays.copyOf(keep, len);
         }
     }
 

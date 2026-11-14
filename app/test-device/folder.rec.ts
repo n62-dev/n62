@@ -15,8 +15,12 @@
 // also at a sweep of times into a 2 MB write, the file under its real name is the old text or the new one, never a cut
 // file; between the renames it is missing, read() then gives the new text and the next write puts it back; list() never
 // shows the staged names (.n62-new~, .n62-old~) and the next write removes any a kill left.
+// A101: tail() gives a file's last n bytes (by a seek; the noSeek seam reads the stream path), and appendChecked (the
+// app's own code, run here on the device's append and tail) puts a torn last line (no final \n) alone on its line,
+// with both new lines whole after it.
 import { createHash } from "node:crypto";
 import { _android as android, expect, test, type AndroidDevice, type Page } from "@playwright/test";
+import { appendChecked, type AppendPort } from "../src/clipboard/folder.ts";
 
 const PKG = "dev.n62.calc"; // our app only (docs/shifts/rules.md section 3)
 const DIR = "n62-sync-test";
@@ -90,7 +94,8 @@ test("A65 sync folder on the device", async () => {
   expect(await call(page, "folder")).toEqual({ result: "unavailable" });
   expect(await call(page, "write", { name: "n62-test.txt", text: "x" })).toEqual({ result: "unavailable" });
   expect(await call(page, "append", { name: "n62-test.txt", text: "x" })).toEqual({ result: "unavailable" });
-  log("no folder yet: folder, write, append unavailable");
+  expect(await call(page, "tail", { name: "n62-test.txt", n: 1 })).toEqual({ result: "unavailable" });
+  log("no folder yet: folder, write, append, tail unavailable");
 
   // the one pick: the system folder picker, Downloads, the test folder, "Use this folder", "Allow"
   await page.evaluate(() => {
@@ -152,6 +157,7 @@ test("A65 sync folder on the device", async () => {
   expect(model).toEqual({ result: "ok", model: (await device.shell("getprop ro.product.model")).toString().trim() });
   log(`A100 deviceModel: ${JSON.stringify(model)}`);
   await device.shell(`rm -f ${PATH}/n62-append.txt ${PATH}/n62-append-new.txt`);
+  await a101(page);
 
   // another writer changes the file and adds one
   await device.shell(`echo changed-outside > ${PATH}/n62-test.txt; echo other > ${PATH}/from-outside.json; mkdir ${PATH}/sub`);
@@ -188,10 +194,11 @@ test("A65 sync folder on the device", async () => {
 
   // the folder removed: unavailable, never a throw
   await device.shell(`rm -rf ${PATH}`);
-  const gone: { folder: Answer; write: Answer; append: Answer; read: Answer; list: Answer } = {
+  const gone: { folder: Answer; write: Answer; append: Answer; tail: Answer; read: Answer; list: Answer } = {
     folder: await call(page, "folder"),
     write: await call(page, "write", { name: "a.txt", text: "x" }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
     append: await call(page, "append", { name: "a.txt", text: "x" }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
+    tail: await call(page, "tail", { name: "a.txt", n: 1 }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
     read: await call(page, "read", { name: "a.txt" }).catch((e: Error) => ({ result: `rejected: ${e.message}` })),
     list: await call(page, "list").catch((e: Error) => ({ result: `rejected: ${e.message}` })),
   };
@@ -199,6 +206,7 @@ test("A65 sync folder on the device", async () => {
   expect(gone.folder.result).toBe("unavailable");
   expect(gone.write.result).toBe("unavailable");
   expect(gone.append.result).toBe("unavailable");
+  expect(gone.tail.result).toBe("unavailable");
   expect(gone.read.result).toBe("unavailable");
   expect(gone.list.result).toBe("unavailable");
 
@@ -318,4 +326,37 @@ async function a137(start: Page): Promise<void> {
   expect(await call(page, "write", { name: "n62-big.json", text: bigNew })).toEqual({ result: "written" });
   expect.soft(await strays(keepBig)).toEqual([]);
   await device.shell(`rm -f ${PATH}/n62-keep.json ${PATH}/n62-big.json`);
+}
+
+/** A101: the plugin's tail, and appendChecked over a torn last line. */
+async function a101(page: Page): Promise<void> {
+  const name = "n62-torn.txt";
+  const tail = (n: number, more: object = {}): Promise<Answer> => call(page, "tail", { name, n, ...more });
+  // a torn line: the file ends without its final \n (as a crash in the middle of an append leaves it)
+  expect(await call(page, "write", { name, text: "{\"id\":\"a0\"}\n{\"id\":\"a1\",\"v\":\"∑" })).toEqual({ result: "written" });
+  for (const more of [{}, { noSeek: true }]) {
+    expect(await tail(1, more)).toEqual({ result: "ok", text: "\uFFFD" }); // the last byte of ∑
+    expect(await tail(3, more)).toEqual({ result: "ok", text: "∑" });
+    expect(await tail(1000, more)).toEqual({ result: "ok", text: "{\"id\":\"a0\"}\n{\"id\":\"a1\",\"v\":\"∑" });
+  }
+  expect(await call(page, "tail", { name: "none.txt", n: 1 })).toEqual({ result: "missing" });
+  await expect(tail(0)).rejects.toThrow();
+  log("A101 tail: last 1, 3 and 1000 bytes by seek and by stream; missing file: missing; n 0 rejected");
+
+  const sent: Answer[] = [];
+  const port: AppendPort = {
+    append: async (o) => {
+      const r = await call(page, "append", o);
+      sent.push({ ...r, text: o.text });
+      return r as Awaited<ReturnType<AppendPort["append"]>>;
+    },
+    tail: async (o) => (await call(page, "tail", o)) as Awaited<ReturnType<AppendPort["tail"]>>,
+  };
+  expect(await appendChecked(name, "{\"id\":\"b1\"}\n", port)).toBe("appended");
+  expect(await appendChecked(name, "{\"id\":\"b2\",\"v\":\"é\"}\n", port)).toBe("appended");
+  const text = (await device.shell(`cat ${PATH}/${name}`)).toString();
+  expect(text).toBe("{\"id\":\"a0\"}\n{\"id\":\"a1\",\"v\":\"∑\n{\"id\":\"b1\"}\n{\"id\":\"b2\",\"v\":\"é\"}\n");
+  expect(text.split("\n")).toEqual(["{\"id\":\"a0\"}", "{\"id\":\"a1\",\"v\":\"∑", "{\"id\":\"b1\"}", "{\"id\":\"b2\",\"v\":\"é\"}", ""]);
+  log(`A101 appendChecked twice over a torn line: appended, appended; sent ${JSON.stringify(sent)}; the file ${JSON.stringify(text)}`);
+  await device.shell(`rm -f ${PATH}/${name}`);
 }
