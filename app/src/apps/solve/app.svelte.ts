@@ -9,7 +9,7 @@
 //   - Polynomial roots lists every root (complex too) of the one equation in the selected unknown.
 import { CalcCancelled, engineFormat, IDENT, type Calc, type KnownValue, type SolveOutcome, type ValueFacts } from "../../calc/port.ts";
 import { confirmedText, isWarned } from "../../calc/shown.ts";
-import { EMARK } from "../../entry/macros.ts";
+import { decimalLatex } from "../../entry/macros.ts";
 import { mathJsonToGiac } from "../../input/emit.ts";
 import { DEFAULT_USER_FUNCTIONS, userFunctionsOf } from "../../input/latex-to-giac.ts";
 import { parseFailText } from "../../input/errors.ts";
@@ -66,9 +66,6 @@ export function compileEquation(latex: string, userFunctions: ReadonlySet<string
     return { giac: "", error: parseFailText(e) };
   }
 }
-
-/** A plain decimal as LaTeX for the entry line, its exponent as the exponent key types it (R14): 1.5e-3 → 1.5ᴇ-3. */
-const numberLatex = (s: string): string => s.replace(/[eE]\+?(-?\d+)$/, `${EMARK}$1`);
 
 export class SolveApp implements AppInstance {
   readonly id = "solve" as const;
@@ -315,7 +312,7 @@ export class SolveApp implements AppInstance {
   }
   /** R99f1: an unknown's value as it goes on the entry line: with the decimal comma on, the comma the dot key types ({,}). */
   private lineOf(name: string): string {
-    const l = numberLatex(this.value(name));
+    const l = decimalLatex(this.value(name));
     return this.host.settings.decimalMark === "comma" ? commaResult(l, true) : l;
   }
   private loadEntry(): void {

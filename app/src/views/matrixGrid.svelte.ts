@@ -26,7 +26,6 @@ import { confirmedOptions, formatComplex, markOf, type ComplexValue, type Format
 import type { ValueFacts } from "../engine/types.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
 import type { ElementTex, MatrixCell, MatrixRead } from "../calc/matrices.ts";
-import { typedSequence } from "../engine/giacPrint.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
 import { commaResult } from "../state/displayMode.ts";
@@ -172,10 +171,10 @@ export class MatrixGrid {
     else s.line.entry.set(s.latex, s.chips);
   }
 
-  /** R189: the typed cell into the matrix: refused when the parser refuses it or reads more than one value; else the
-   *  line of the whole store (each other element as LaTeX the line reads back), checked by the worker (refused when it
-   *  is not a matrix of this size, stores or purges another name, or changes another element), sent through the
-   *  session's normal path, and the grid read again. */
+  /** R189: the typed cell into the matrix: refused when the parser refuses it; else the line of the whole store (each
+   *  other element as LaTeX the line reads back), checked by the worker (refused when it is not a matrix of this size, as
+   *  a cell of more than one value makes it, stores or purges another name, or changes another element), sent through
+   *  the session's normal path, and the grid read again. */
   private async write(line: CellLine, latex: string, chips: ChipTable): Promise<void> {
     const at = this.editing;
     if (!at) return;
@@ -183,7 +182,7 @@ export class MatrixGrid {
     let entry: typeof import("../input/entry.ts");
     try {
       entry = await import("../input/entry.ts"); // (input/parser.ts loadEntry's module; not that loader: the start chunk would export it for this chunk)
-      if (typedSequence(entry.giacOfEntry(latex, "cas", { chips, names }).giac)) return void (this.refusal = findText("matrix.oneValue"));
+      entry.giacOfEntry(latex, "cas", { chips, names }); // the parser's refusal of the cell itself, shown as Home shows it
     } catch (e) {
       this.refusal = parseFailText(e);
       return;

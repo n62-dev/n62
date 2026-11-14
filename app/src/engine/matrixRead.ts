@@ -13,7 +13,8 @@ import { dropAngleFactor } from "./angles.ts";
 import type { GiacParse, GiacValue } from "./bridge.ts";
 import { ZERO_VALUE, type ComplexValue } from "./format.ts";
 import { floatsAsEvalf, unquote } from "./homeEval.ts";
-import { numberLatex, typedFromPrinted } from "./giacPrint.ts";
+import { typedFromPrinted } from "./giacPrint.ts";
+import { decimalLatex } from "../entry/macros.ts";
 import { DOUBLE_DIGITS, floatsAtDigits, floatsShown, hasFloat, partValue, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import type { ValueFacts } from "./types.ts";
 
@@ -68,9 +69,10 @@ export function readMatrices(giac: Giac, names: readonly string[], digits: numbe
     if (!rows || !cols) return [];
     if (!cells) return [{ name, rows, cols }];
     if (cells === "typed") {
-      const p = printedOf(giac, name, digits);
+      const pv = withDigits(giac, DOUBLE_DIGITS, digits, () => giac.value(name, []));
+      const p = pv.elements;
       if (!p || p.length !== rows * cols) return [];
-      const latex = withDigits(giac, DOUBLE_DIGITS, digits, () => p.map((e) => elementTex(giac, e)));
+      const latex = withDigits(giac, DOUBLE_DIGITS, digits, () => p.map((_, k) => elementTex(giac, pv, k)));
       const candidate = check ? checkStore(giac, check, name, rows, cols, digits) : undefined;
       return [{ name, rows, cols, typed: p.map(typedText), latex, ...(candidate ? { candidate } : {}) }];
     }
@@ -79,24 +81,28 @@ export function readMatrices(giac: Giac, names: readonly string[], digits: numbe
   });
 }
 
-/** R189: the elements of the value of `text` as host.ts snapshot prints a stored value: at DOUBLE_DIGITS. */
-function printedOf(giac: Giac, text: string, digits: number): string[] | null {
-  return withDigits(giac, DOUBLE_DIGITS, digits, () => giac.value(text, [])).elements ?? null;
-}
-
 /** R189: a printed element as host.ts snapshot types it: each float as `evalf(<exact>,k)` (floatsAsEvalf), a string as
  *  typed text (typedFromPrinted). */
 function typedText(t: string): string {
   return typedFromPrinted(hasFloat(t) ? floatsAsEvalf(t) : t);
 }
 
-/** R189: a printed element as the entry line types it: a number as our own LaTeX (giacPrint.ts numberLatex), any other
- *  element through Giac's latex() with the degree factor dropped (as homeEval.ts latexShown draws it). */
-function elementTex(giac: Giac, printed: string): ElementTex {
-  const float = hasFloat(printed) ? { float: true as const } : {};
-  const n = numberLatex(printed);
-  if (n !== null) return { tex: n, ...float };
-  return { tex: unquote(giac.eval(`latex(quote(${dropAngleFactor(printed, "printed")}))`)), giac: true, ...float };
+/** R189: element `k` of `v` (bridge-3's value, printed at DOUBLE_DIGITS as host.ts snapshot prints a stored value) as
+ *  the entry line types it, its kind from the bridge (R189f1, P20: never read from the printed text): an integer or a
+ *  rational from its exact pair (a frac with its sign before it), a float as its decimal with the exponent after the
+ *  mark ᴇ (entry/macros.ts decimalLatex; Giac's latex() writes `\mathrm{-3}` and `1.5e-20`, which the parser does not
+ *  read), any other element through Giac's latex() with the degree factor dropped (as homeEval.ts latexShown draws it). */
+export function elementTex(giac: Giac, v: GiacValue, k: number): ElementTex {
+  const text = v.elements?.[k] ?? "";
+  const q = v.exact?.[k];
+  if (q) {
+    const [num, den] = q;
+    const neg = num.startsWith("-") ? "-" : "";
+    return { tex: den === "1" ? num : `${neg}\\frac{${num.slice(neg.length)}}{${den}}` };
+  }
+  if (v.kinds?.[k] === "float") return { tex: decimalLatex(text), float: true };
+  const float = hasFloat(text) ? { float: true as const } : {};
+  return { tex: unquote(giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`)), giac: true, ...float };
 }
 
 /** R189: the grid's store `check.store` for `name` (rows × cols): no store but into `name` and no purge (bridge-2, not

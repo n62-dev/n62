@@ -161,8 +161,10 @@ describe("the matrix grid's cell edit (R189)", () => {
     await g.loading();
     expect(g.refusal).toBeTruthy();
     entry.value = "\\left(1,2\\right)"; // two values in one cell (the parser gives the sequence (1,2))
+    answer = { ok: false, why: "shape" }; // the worker's check: its row spreads (engine/matrixRead.test.ts, R189f1)
     g.key(line, key("enter"), undefined);
     await g.loading();
+    expect(checks).toEqual(["M:=[[1,2],[(1,2),approx(0.1)]]"]);
     expect(g.refusal).toBe(findText("matrix.oneValue"));
     expect(sent).toEqual([]);
     expect(g.editing).toEqual({ row: 1, col: 0 });

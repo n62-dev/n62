@@ -39,6 +39,10 @@ export const CHIP_MACROS: Record<"res" | "ans" | "const" | "unit" | "pfx", ChipM
 export const EMARK = "\\emark";
 const EMARK_MACRO: ChipMacro = { def: "\\mathopen{\u1D07}", args: 0, captureSelection: true, expand: false };
 
+/** A plain decimal as LaTeX for the entry line, its exponent as the exponent key types it (R14): 1.5e-3 → 1.5ᴇ-3,
+ *  1.5E+20 → 1.5ᴇ20. The Solve app's values and the matrix grid's floats (engine/matrixRead.ts, R189f1). */
+export const decimalLatex = (s: string): string => s.replace(/[eE]\+?(-?\d+)$/, `${EMARK}$1`);
+
 /** Every macro of the entry line, for the field and for the static renderer. */
 export const ENTRY_MACROS: Record<"res" | "ans" | "const" | "unit" | "pfx" | "emark", ChipMacro> = {
   ...CHIP_MACROS,

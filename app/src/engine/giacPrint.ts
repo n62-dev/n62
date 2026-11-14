@@ -179,35 +179,6 @@ export function printsSequence(text: string): boolean {
   return text.startsWith("seq[") || topLevelArgs(text, "printed").length > 1;
 }
 
-/** R189: typed `text` is a sequence, more than one value, which Giac spreads over a list's row (`[(1,2)]` has two
- *  elements): a comma or semicolon (strings skipped) inside no bracket, or inside bare parentheses only, not a call's
- *  (a name, `)` or `]` before the `(`: `max(1,2)`, `f(x)(1,2)`), a list's or a set's. */
-export function typedSequence(text: string): boolean {
-  const bare: boolean[] = []; // per open bracket, by depth: a parenthesis that is no call's
-  return walk(text, 0, (k, d, ch) => {
-    if (OPENERS.includes(ch)) bare[d - 1] = ch === "(" && !callBefore(text, k);
-    return (ch === "," || ch === ";") && bare.slice(0, d).every(Boolean);
-  }, "typed") >= 0;
-}
-
-const DECIMAL = /^(-?(?:\d+\.?\d*|\.\d+))(?:[eE]([-+]?)(\d+))?$/;
-
-/** R189: a printed number as the entry line types it: a whole number as it is, a fraction as `\frac` (its sign before),
- *  a decimal with its exponent after the mark ᴇ (`0.15e-19` → `0.15\emark-19`); null for any other text. Giac's latex()
- *  writes `\mathrm{-3}` and `1.5e-20`, which the parser does not read. */
-export function numberLatex(text: string): string | null {
-  const q = /^(-?)(\d+)\/(\d+)$/.exec(text);
-  if (q) return `${q[1]}\\frac{${q[2]}}{${q[3]}}`;
-  const d = DECIMAL.exec(text);
-  return !d ? null : d[3] === undefined ? (d[1] as string) : `${d[1]}\\emark${d[2] === "-" ? "-" : ""}${d[3]}`;
-}
-
-/** The `(` at `open` opens a call's arguments: a name character, `)` or `]` before it (spaces skipped). */
-function callBefore(text: string, open: number): boolean {
-  const c = text.slice(0, open).trimEnd().slice(-1);
-  return c !== "" && (isNameChar(c) || c === ")" || c === "]");
-}
-
 /** R80f1: the inverse of bracesOf: every brace pair outside strings written as Giac's `list[…]` again
  *  (`{Ci(1),Ci(2)}` → `list[Ci(1),Ci(2)]`), so a value the CAS view shows in braces reads back as the list it came from,
  *  not as a set. `listTypeOf(bracesOf(x)) === x` for every print without a brace of its own. */
