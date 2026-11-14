@@ -14,7 +14,7 @@ export interface Family {
 }
 
 export const FAMILIES: readonly Family[] = [
-  { id: 'n62', name: 'N62', src: 'Ours (owner, 2026-11-07, docs/mockups/n62-teal-2026-11-07.html): every colour the logo\'s teal #529997 (OKLCH hue 193°) at another lightness; only Shift\'s orange, the warning and the error outside it.',
+  { id: 'n62', name: 'N62', src: 'Ours (owner, 2026-11-07, docs/archive/mockups/n62-teal-2026-11-07.html): every colour the logo\'s teal #529997 (OKLCH hue 193°) at another lightness; only Shift\'s orange, the warning and the error outside it.',
     idea: 'One colour family: deep teal (Dark) or pale teal (Light) screen and keys, the number keys a step lighter, Enter the logo\'s teal in both; Shift is orange, Alpha a bright (Dark) or deep (Light) teal.',
     dark: { bg: '#092726', panel: '#0e2f2e', line: '#335b59', 'key-num': '#194241', 'key-op': '#123736', 'key-fn': '#123736', 'key-ctl': '#123736', 'key-nav': '#123736', 'key-enter': '#529997', 'on-enter': '#000000',
       text: '#ebf6f6', 'text-dead': '#749392', muted: '#abccca', shift: '#ffa800', alpha: '#6ae5e2', error: '#ff8a7a', 'chip-bg': '#123736', approx: '#6ae5e2', warn: '#f2c94c', pick: '#134948', focus: '#529997', ring: '#529997', 'key-on': '#529997', 'on-key-on': '#000000' },

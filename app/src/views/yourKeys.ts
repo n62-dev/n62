@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Settings › Your keys (R4b, docs/05 3.4, docs/mockups/settings.html section 3 frame 4): the free keys U1–U6 with their
+// Settings › Your keys (R4b, docs/05 3.4, docs/archive/mockups/settings.html section 3 frame 4): the free keys U1–U6 with their
 // Shift and Alpha layers, eighteen slots. A row per slot opens its level: Find (the pick sets the slot), a place or a
 // sheet (Home, CAS, Apps, Menu, Mode, Settings), or empty. Pressing a free key while the list is open highlights its
 // row (route.ts, Sheet.goKey). The slots are in the stamped store under USER_KEYS (keyboard/userKeys.svelte.ts).

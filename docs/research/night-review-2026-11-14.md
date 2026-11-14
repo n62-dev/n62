@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Night review 2026-11-14
 
-**Status: open** until the owner answers section 6.
+**Status: open** for sections 4 and 5; section 6 answered by the owner on 2026-11-14.
 Written 2026-11-14 by Claude (Opus, the coordinator) on `phase-1` `1f1a80582`; ids minted and docs written on `708566f0a`.
 
 Eight independent hunts (sandra, Opus high) over the 249 merges since the 11-09 review (`f9352ae2a`), each report checked by its own verifier (sofia, Opus high); the packages argued by an author (sandra) and a reviewer (sofia), both Opus xhigh, to AGREED in round 3. Evidence: `.tasks/night-review-2026-11-14/` (outside git); probes in `tools/probes/review-1114/`.
@@ -52,21 +52,22 @@ Written under "Open bugs" (rules section 9; rerun `tools/probes/review-1114/reru
 - **Refs to tidy (lo-7, lo-8):** `git worktree remove .claude/worktrees/pl-1047-r277` and `git branch -D p1/ron-linetouch` (R277 merged from `p1/ron-linetouch2`); the registered `/tmp/…/scratchpad/phone-build` worktree at `5d91e0c4`; `origin/p1/ron-results-fold` (merged); the tag `keep/eve-gestures` (the last ref to `96fcf50b`).
 - **For R292's worker** (dc-16): three tests read fixtures from `tools/probes/library/` (`app/src/engine/library.test.ts:23`, `app/src/views/libraryJobs.engine.test.ts:69`, `app/test/library.spec.ts:14`); they can move to `tests/fixtures/library/` with R292's fixture.
 
-## 6. Questions for the owner
+## 6. The owner's answers (2026-11-14)
 
-Recommendation first; 1 and 2 before the hardware-key tests of 11-16, 3 before the tag.
-1. **Letters typed into a unit slot on a hardware keyboard** (fh-2; P14). Yes, on a hardware keyboard only: a letter run in a slot reads as a unit as Find's exact symbols do; the touch pad keeps P14's cells. R303 builds only the Find path. ≈ 1 d, ron, Opus.
-2. **`2exp(1)` on a hardware keyboard** (bu-9; decisions "Hardware keys"). At `(`, ᴇ after a number followed by letters that with `e` form a known name becomes the function; a digit after ᴇ keeps ᴇ. Today it is refused, never wrong. ≈ ½ d.
-3. **Hex in a signed word, and Copy as shown** (be-5, vr-4). Keep reading `0x…` as a non-negative integer and Copy as shown as docs/04 2.6 defines it; R305 adds the decimal and the word in the work report only. Or: read a based literal in the word when Signed is on; or Copy as shown writes `0xFF (−1, 8-bit signed)`.
-4. **A stored name keeps σ and unit** (lo-1's second half, fh-3; G26, R28, docs/04 4.3; X15, R53c). Yes, after the tag: two packages ≈ 1 d each and a data-version step. G355 fixes chips and Ans now.
-5. **`%`, `‰`, `ppm`, `ppb` as dimensionless units** (fh-5; G161 kept them out for "G7's reason", which no decision line holds). Yes; `± n %` stays σ. ≈ ½ d, gorge.
-6. **A temperature difference** (fh-7; G17). After the tag: exactly `T1 − T2` of one absolute scale gives the difference in K; every other mix stays refused.
-7. **Memory deletes without Undo** (fh-8; R4b). After the tag: R98's one-level Undo row.
-8. **Desktop-keys help** (vr-10; R131's decision). One line in the help: the chords are for US and UK layouts.
-9. **The line and text ratchets** (ca-2; the source-size rule). A file passing 800 lines gets its split package in the same week; a pass lowers stale baselines. This week: 6 → 11 baseline entries, text reads 157 → 163, one split package.
-10. **The arch review's drafts outside git** (lo-2). X15's chip half is G355 now; after the tag `hunt-tasks.yaml` (660 rows) goes into git with one gorge package, and X9–X27 are placed in the arch note's order.
-11. **Mockups a test cites** (11-09 dc-10, dc-6). `git mv` `top-cluster-r15c.html`, `settings.html`, `n62-teal-2026-11-07.html`, `store-2026-11.html` to `docs/archive/mockups/` with their citers' paths.
-12. **Gauge pressure** (fh-4; G161). Keep G161's choice for v0.1.0 (`psig`, `barg` find nothing).
+1. **Letters typed into a unit slot on a hardware keyboard** (fh-2; P14): yes, on a hardware keyboard only; the touch pad keeps P14's cells. R313, after R303, lane A.
+2. **`2exp(1)` on a hardware keyboard** (bu-9): yes, at `(` a ᴇ after a number followed by letters that with `e` form a known name becomes the function. R312, lane A.
+3. **Hex in a signed word, and Copy as shown** (be-5, vr-4): kept as is; `0x…` is a non-negative integer and Copy as shown follows docs/04 2.6; R305 adds the decimal and the word in the work report only.
+4. **A stored name keeps σ and unit** (lo-1, fh-3): yes, after the tag: G371 (the store), then R315 (the unit view). G355 fixes chips and Ans now.
+5. **`%`, `‰`, `ppm`, `ppb` as dimensionless units** (fh-5): yes; `± n %` stays σ. G369, lane B, before the freeze.
+6. **A temperature difference** (fh-7; G17): yes, before the freeze: exactly `T1 − T2` of one absolute scale; every other mix stays refused. G370, lane B.
+7. **Memory deletes without Undo** (fh-8; R4b): yes, before the freeze: a one-level Undo as R98's. R314, lane A.
+8. **Desktop-keys help** (vr-10): yes, one line in the help: the chords are for US and UK layouts. In R312.
+9. **The line and text ratchets** (ca-2): yes. A file past 800 lines gets its split package the same week, and an Opus pass lowers a stale line (brief section 8). This week's five: R316 (`parse.ts`), R317 (`App.svelte`), G372 (`homeEval.ts`), G373 (`api.cc`), G374 (`export.mjs`), last in their lanes; one not started by the freeze waits for the tag.
+10. **The arch review's drafts outside git** (lo-2): in git now, in `docs/archive/arch-review-2026-11-10/` (home paths replaced). X9–X27 are placed after the tag, as the arch note says.
+11. **Mockups a test cites** (dc-10, dc-6): moved to `docs/archive/mockups/`, their citers' paths with them.
+12. **Gauge pressure** (fh-4; G161): G161's choice kept for v0.1.0.
+
+Each package rewrites its decision line in place when it lands (R312: "Hardware keys"; R313: P14; R314: R4b; G369: G161; G370: G17; G371: G26; R315: R28).
 
 Settled here, no question: the capital base prefix is read as the prefix (R304); New takes I (R307); no Ans first in a grid cell (R300, a logged default).
 

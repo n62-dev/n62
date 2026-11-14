@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R153 (owner, 2026-11-07, docs/mockups/n62-teal-2026-11-07.html): N62 is the teal family, one colour family on the
+// R153 (owner, 2026-11-07, docs/archive/mockups/n62-teal-2026-11-07.html): N62 is the teal family, one colour family on the
 // logo's hue; the black-and-white family that was N62 stays as Black & White (`bw`); R150's Teal is gone.
 import { describe, expect, it } from "vitest";
 import { FAMILIES } from "./theme-families.ts";
