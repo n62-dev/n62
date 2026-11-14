@@ -7,6 +7,8 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+**F-Droid's Reproducible Builds box** (A145): the engine bits differ ([measured](../fdroid/README.md)). Recommended: leave it unticked at v0.1.0. Or a deterministic-compile package.
+
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-17); S36f1 set the two copper values to the sheet's. Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
 **R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row writes `39.488 ± 1.2 m²`, but Paste reads one number ("Paste: not a number") and the unit view takes no paste. Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
@@ -25,7 +27,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **No freeze until Tue 11-17, tag Mon 11-23 (owner, 2026-11-12):** to the freeze the order is use, critical bugs, features (brief section 0); the days, the bar and what v0.1.0 keeps for good (point 7): [release-0.1.0.md](release-0.1.0.md).
 - **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](research/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
 - **Owner answers of 2026-11-10 (architecture review):** [the note](research/arch-review-2026-11-10.md) section 3.
-- **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). Bit-identity is untested until the merge request's first CI build, and no package tests it before (Opus pass 130). Would change if: the first build cannot be made bit-identical.
+- **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). A145: the recipe's engine build differs from the release engine (`fdroid/README.md`); the whole APK is uncompared. Would change if: the engine cannot be made bit-identical.
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** a patch's worker writes its README row (A83); a stray file is logged, warn only (A88); the weekly fuzz runs in 10-minute slices (G167); red-first counts only added or tightened tests (A67) and may test the stock engine for a G125 package (A71); a wall-clock test that fails only under load is a timing case (`isTiming`, A39); a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "2026-11-12, evening".
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Archived, "Opus pass 97". Would change if: a finished package ends NOT MERGED on it.
