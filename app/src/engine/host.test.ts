@@ -120,10 +120,11 @@ describe.skipIf(!giacAvailable())("EngineHost (real Giac)", () => {
       expect(r.uses).toBeUndefined();
     });
 
-    it("is absent when no stored variable appears, and Home results have none", () => {
+    it("is absent when no stored variable appears; Home results list theirs too (G212)", () => {
       home("ua:=2");
       expect(cas("1/2+1/6").uses).toBeUndefined();
-      expect("uses" in home("ua+1").result).toBe(false);
+      expect(home("ua+1").result.uses).toEqual([{ name: "ua", preview: "2", view: "home" }]);
+      expect("uses" in home("1/2+1/6").result).toBe(false);
     });
   });
 

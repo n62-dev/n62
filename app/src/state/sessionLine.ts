@@ -81,6 +81,7 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
   const u = item.units as { unit?: unknown; dim?: unknown; unc?: { text?: unknown; why?: unknown } } | undefined; // read back unchecked
   const chips = item.chips ? Object.fromEntries(Object.entries(item.chips).map(([k, c]) => [k, { value: c.value, exact: c.exact }])) : undefined;
   const src: CopySource = { ...item, units: undefined };
+  const used = item.uses ?? item.defsUsed; // G212: a Home row's own field (HistoryItem.defsUsed)
   const line = {
     v: SESSION_LINE_VERSION,
     app: o.app,
@@ -104,7 +105,7 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
     angle: item.angle ?? null,
     digits: item.digits ?? null,
     word: item.word ?? null,
-    defs: item.uses?.length ? item.uses.map((d) => ({ name: d.name, preview: d.preview, view: d.view })) : undefined,
+    defs: used?.length ? used.map((d) => ({ name: d.name, preview: d.preview, view: d.view })) : undefined,
     ans: item.ans ? { value: item.ans.value, exact: item.ans.exact } : undefined,
     reads: item.reads?.map((d) => ({ name: d.name, value: d.value, exact: d.exact })),
   };
