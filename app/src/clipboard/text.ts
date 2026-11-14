@@ -16,7 +16,7 @@ import {
 } from "../engine/format.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { withUnit } from "../state/results.ts";
-import { commaResult, markFor, modeOf, type DisplayContext, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
+import { commaResult, markFor, modeOf, renderNumeric, type DisplayContext, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
 
 /** The part of a history item that Copy reads (HistoryItem in state/session.svelte.ts has all of it). */
 export interface CopySource {
@@ -24,6 +24,8 @@ export interface CopySource {
   status: string;
   /** The result as LaTeX, as the screen draws it (empty unless done); sessionLatex's result, else the value's text. */
   resultLatex?: string;
+  /** The view the row was worked in: a Home row is always drawn through renderNumeric (Session.display). */
+  view?: string;
   /** Plain text of the result (CAS: Giac's text or our formatter's) or of the error. */
   text: string;
   value?: ComplexValue;
@@ -142,7 +144,7 @@ export function copyMark(i: CopySource, ctx: DisplayContext): { mark: Mark; n?: 
 
 const markText = (m: ReturnType<typeof copyMark>): string => (m === undefined ? "=" : m.mark === "⚠" && m.n !== undefined && !m.warn ? `⚠ ${m.n}` : m.mark);
 
-import { entryText } from "./plaintext.ts";
+import { entryText, exportLatex } from "./plaintext.ts";
 import { whyLine } from "./whyLine.ts";
 export { entryText };
 
@@ -169,8 +171,9 @@ export function sessionText(items: readonly CopySource[], o: TextOptions, ctx: D
 
 /** The glyph of a finished row's mark: Copy's for a number (copyMark), else the facts' (a float in a CAS result), else
  *  `≈` when an inexact chip went in, `=` for the rest; the same rule as the session line (state/sessionLine.ts). */
-function rowMark(i: CopySource, ctx: DisplayContext): { mark: Mark; info?: MarkInfo } {
-  const m = i.value ? copyMark(i, ctx) : markFor(i, modeOf(i, ctx), ctx);
+function rowMark(i: CopySource, ctx: DisplayContext, asDrawn = false): { mark: Mark; info?: MarkInfo } {
+  // asDrawn (LaTeX): the result is the screen's form, so the mark is the screen's too (an a b/c fraction is exact: `=`)
+  const m = i.value && !asDrawn ? copyMark(i, ctx) : markFor(i, modeOf(i, ctx), ctx);
   if (m) return { mark: m.mark, info: m };
   return { mark: i.inexactInput ? "≈" : "=" };
 }
@@ -201,6 +204,19 @@ function latexText(s: string): string {
   return s.replace(/[\\&%$#_{}~^]/g, (c) => (c === "\\" ? "\\textbackslash{}" : c === "~" ? "\\textasciitilde{}" : c === "^" ? "\\textasciicircum{}" : `\\${c}`));
 }
 
+/** Session.display draws the row through renderNumeric (not as the engine wrote it). */
+const drawnShown = (i: CopySource): boolean => i.view === "home" || i.fmt !== undefined || i.form !== undefined || i.facts !== undefined;
+
+/** The result of a row as LaTeX the way Session.display draws it: a Home row, or one with a Format-key mode, form or facts,
+ *  through renderNumeric in the row's mode (so a b/c, the digits and the decimal comma follow the screen); else the
+ *  engine's LaTeX (or the value's text) with the decimal comma applied. A unit row's σ and unit are added by the caller. */
+function drawnLatex(i: CopySource, o: TextOptions, ctx: DisplayContext): string {
+  const r = drawnShown(i) ? renderNumeric(i, modeOf(i, ctx), ctx) : undefined; // renderNumeric applies ctx.decimalComma itself
+  if (r) return r.latex;
+  const plain = i.resultLatex || valueFull({ ...i, units: undefined }, { ...o, decimalComma: false }) || i.text;
+  return o.decimalComma || ctx.decimalComma ? commaResult(plain, true) : plain;
+}
+
 /**
  * G232: the history as LaTeX (a preview in v0.1.0; the first line says so, `version` is the app's). One `align*` line per
  * finished entry: the entry's LaTeX, the mark as the relation (`=`, `\approx`, `\triangle` for ⚠ with the reason after the
@@ -208,16 +224,17 @@ function latexText(s: string): string {
  * error row has `\rightarrow` and its message. "" when there is no row to write.
  */
 export function sessionLatex(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext, version: string): string {
+  const comma = !!(o.decimalComma || ctx.decimalComma);
   const lines = exported(items).map((i) => {
-    if (i.status === "error") return `\\begin{align*}${i.latex} &\\rightarrow \\text{${latexText(i.text)}}\\end{align*}`;
+    if (i.status === "error") return `\\begin{align*}${exportLatex(i.latex)} &\\rightarrow \\text{${latexText(i.text)}}\\end{align*}`;
     const { input, unitRow } = rowInput(i);
-    const { mark, info } = rowMark(i, ctx);
+    const { mark, info } = rowMark(i, ctx, drawnShown(i));
     const rel = mark === "=" ? "=" : mark === "≈" ? "\\approx" : "\\mathrel{\\triangle}";
-    let result = i.resultLatex || valueFull({ ...i, units: undefined }, o) || i.text;
-    if (unitRow && typeof i.units?.latex === "string") result += `\\,${i.units.latex}`;
+    let result = drawnLatex(i, o, ctx);
+    if (unitRow && typeof i.units?.latex === "string") result += `\\,${comma ? commaResult(i.units.latex, true) : i.units.latex}`;
     const why = mark === "⚠" && info ? whyLine(i, info, ctx.digits) : null;
     const reason = why ? `\\quad\\text{(${latexText(why.replace(/^⚠\s*/, "").replace(/ · /g, "; "))})}` : "";
-    return `\\begin{align*}${input} &${rel} ${result}${reason}\\end{align*}`;
+    return `\\begin{align*}${exportLatex(input)} &${rel} ${result}${reason}\\end{align*}`;
   });
   return lines.length ? [`% N62 ${version} · preview: the form of this file can change`, ...lines].join("\n") + "\n" : "";
 }
