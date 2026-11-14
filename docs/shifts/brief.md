@@ -78,7 +78,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
-| 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | G213f1 |
+| 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
 | 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | A137, A100 |
 | 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
 | 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
@@ -92,8 +92,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 764 | G352 a matrix times a list of another length is refused, in either order | gorge, Opus | `p1/gorge-matlistshape` | – |
-| 765 | G353 statistics of a float list take two passes, and equal values give exactly 0 | gorge, Opus | `p1/gorge-floatstats` | – |
 | 688 | [A100](packages/A100.md) append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
 | 689 | [A137](packages/A137.md) the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
 | 745 | [A101](packages/A101.md) a checked append, never a mode switch (the Tab One) | annabell, Opus | `p1/annabell-appendcheck` | A100 |

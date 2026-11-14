@@ -5,6 +5,11 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 186 (2026-11-14) to make room, as they stood
+- **R188's matrix grid (Opus pass 176):** Shift + 4 lists stored matrices from row 10, the newest first; a grid's highlight stops at its edges; Esc goes back to the list; +9 B raw at start, accepted.
+- **R194's word (Opus pass 178):** Settings › Numbers keeps seven rows: Word opens Word size (8–64) and Signed, and Numbers scrolls at 360 × 740 (R148f1); a preset leaves the word as it is. Would change if: the owner wants the two rows in Numbers.
+- **R189's cell edit (Opus pass 179):** Enter writes one row `M:=` as a pmatrix the line reads back (a float in approx(), no evalf), checked in the worker; Enter on an unedited cell is idle. Would change if: the owner wants it to open the cell.
+
 ### Shortened by Opus pass 185 (2026-11-14) to make room, as they stood
 - **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it, and Ans or a name only while its line holds the value it had (G213f1); the comments are English constants (a file format); `3!` and `\binom` are factorial and binomial; an odd root of a literal not below 0 is root(), else real_root(); a row parses with its `defs` as stored values. Would change if: G215 finds sympy disagrees.
 
