@@ -11,7 +11,7 @@ import type { MathEngine } from "../engine/types.ts";
 import { putRow } from "../units/row.ts";
 import { fakeKv, type FakeKv } from "./fakeKv.ts";
 import { FULL_LIMIT } from "./results.ts";
-import { Session, type HistoryItem } from "./session.svelte.ts";
+import { MAX_DIGITS, Session, type HistoryItem } from "./session.svelte.ts";
 import { sessionLine } from "./sessionLine.ts";
 import { restoredItem } from "./storedItem.ts";
 import { wordStore } from "./wordStore.svelte.ts";
@@ -233,12 +233,12 @@ describe("stored rows keep the six with their shape (storedItem.ts, G211)", () =
 
   it("each with its shape; a field without it reads as absent", () => {
     expect(restoredItem({ ...base, ...six } as HistoryItem, 1)).toMatchObject(six);
-    const bad = { uid: 5, at: "now", giac: "x".repeat(FULL_LIMIT + 1), angle: "grad", digits: 31, word: { bits: 12, signed: true } };
+    const bad = { uid: 5, at: "now", giac: "x".repeat(FULL_LIMIT + 1), angle: "grad", digits: MAX_DIGITS + 1, word: { bits: 12, signed: true } };
     const r = restoredItem({ ...base, ...bad } as unknown as HistoryItem, 1);
     expect(r.uid).toBe(uidAt(T0, 1)); // a uid of the wrong shape: a new one, as for none
     for (const k of ["at", "giac", "angle", "digits", "word"] as const) expect(r[k], k).toBeUndefined();
     for (const d of [0, 2.5, Number.NaN]) expect(restoredItem({ ...base, digits: d } as HistoryItem, 1).digits).toBeUndefined();
-    expect(restoredItem({ ...base, digits: 30 } as HistoryItem, 1).digits).toBe(30);
+    expect(restoredItem({ ...base, digits: MAX_DIGITS } as HistoryItem, 1).digits).toBe(MAX_DIGITS); // the setting's own bound
     expect(restoredItem({ ...base, word: { bits: 8, signed: true, x: 1 } } as unknown as HistoryItem, 1).word).toBeUndefined();
   });
 

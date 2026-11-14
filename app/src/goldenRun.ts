@@ -155,7 +155,7 @@ export async function runSteps(fresh: () => Promise<EngineHost>, steps: Step[], 
       continue;
     }
     const p = st.latex !== undefined ? homeLatexStep(st.latex, chips) : { giac: st.input!, inexact: false, named: undefined, consts: undefined };
-    // As the session sends it: a `latex` step with a named chip carries that chip's facts (state/results.ts chipFactsOf)
+    // As the session sends it: a `latex` step with a named chip carries that chip's facts (state/resultItem.ts chipFactsOf)
     const lit = st.latex !== undefined && (p.named || p.consts); // R40: a `latex` step's inexact constants go by name too
     const r = (st.latex === undefined && (consts || k > 0) ? host.home(p.giac, s, consts, named) : lit ? host.home(p.giac, s, p.consts, p.named && chipFactsOf(p.named)) : host.home(p.giac, s)).result;
     last = p.inexact ? { ...r, inexactInput: true } : r;

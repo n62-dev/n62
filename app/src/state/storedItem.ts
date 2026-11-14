@@ -6,7 +6,7 @@ import type { ComplexValue, PrecisionFacts } from "../engine/format.ts";
 import { validChips } from "../input/chips.ts";
 import { isFormStep, type ResultFacts } from "./displayMode.ts";
 import { FULL_LIMIT, HISTORY_LIMIT, ITEMS_LIMIT, rowUid } from "./results.ts";
-import type { HistoryItem, UsedValue } from "./session.svelte.ts";
+import { MAX_DIGITS, type HistoryItem, type UsedValue } from "./session.svelte.ts";
 
 /** A stored `word` (G211) when whole: the rule of wordSetting.ts validWord, repeated so this chunk does not import that
  *  module (the shared import hoisted it into the start chunk, +40 B gzip); word.test.ts runs both on one table. */
@@ -60,7 +60,7 @@ export function restoredItem(i: HistoryItem, id: number): HistoryItem {
   const out: HistoryItem = { ...base, id, uid: typeof uid === "string" && uid !== "" ? uid : rowUid(id) };
   if (typeof giac === "string" && giac.length <= FULL_LIMIT) out.giac = giac;
   if (angle === "rad" || angle === "deg") out.angle = angle;
-  if (typeof digits === "number" && Number.isInteger(digits) && digits >= 1 && digits <= 30) out.digits = digits; // (MAX_DIGITS)
+  if (typeof digits === "number" && Number.isInteger(digits) && digits >= 1 && digits <= MAX_DIGITS) out.digits = digits;
   const w = storedWord(word);
   if (w) out.word = w;
   if (typeof at === "number" && Number.isFinite(at)) out.at = at;
