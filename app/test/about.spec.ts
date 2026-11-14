@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R87 (docs/05 3.4, mockups/settings.html frame 7): Settings › Help and about holds About N62 (version, licence,
+// R87 (docs/05 3.4, docs/archive/mockups/settings.html frame 7): Settings › Help and about holds About N62 (version, licence,
 // source) and the parts we use with their licences, each licence's full text a level that scrolls. The data is a lazy
 // chunk: nothing is fetched at start. By keys and by touch. The fake engine.
 import { readFileSync } from "node:fs";

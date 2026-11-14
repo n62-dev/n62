@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R50e (docs/05 3.4, 3.10; mockups/settings.html section 3): Settings › Appearance holds Theme, Brightness, High contrast
+// R50e (docs/05 3.4, 3.10; docs/archive/mockups/settings.html section 3): Settings › Appearance holds Theme, Brightness, High contrast
 // and Plain keys. By touch and by keys; each value survives a reload; the first frame already has the stored theme;
 // `prefers-contrast: more` counts at the first start only; a theme pick keeps the sheet open. The fake engine.
 import { expect, test, type Page } from "@playwright/test";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R89 (docs/05 3.4, docs/mockups/settings.html section 4): the presets in Mode. Mode's row 5 shows the active preset and
+// R89 (docs/05 3.4, docs/archive/mockups/settings.html section 4): the presets in Mode. Mode's row 5 shows the active preset and
 // what it holds; ◀ ▶ apply the previous or next one with the sheet open; a tap, a digit or Enter opens `Mode › Presets`
 // (the presets, Save, Edit ›). A preset's page holds its five ticks, Update and Rename or delete ›. A name is typed in the
 // entry line under the label "Preset name" (AppShell.prompt: route.ts gives it each key first, so Enter and Esc never

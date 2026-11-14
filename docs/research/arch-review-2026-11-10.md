@@ -3,7 +3,7 @@
 
 **Status (2026-11-10): open.** This note holds the findings, the owner's answers and the boundary design for the checking layer. The packages are being placed. Once they all exist, this note is deleted, unless code or a live doc cites it as its spec (rules section 10).
 
-*Written 2026-11-10 by Claude (Opus, the coordinator), from an outside review by Claude Fable 5.2. The review was read-only, on `phase-1` `5d91e0c4`, in three passes: the review, the second pass and a hunt for wrong answers. A check of the before-tag packages by sofia followed.* The evidence is the two reports (about 8,000 words, with `file:line`, counts and probe output) and the package drafts. They are in `.tasks/arch-review-2026-11-10/` in the main checkout and, lasting, in `../drafts/2026-11-10-arch-review/` (`REPORT.md`, `REPORT-2.md`, `HUNT.md`, `HUNT-2.md`, `hunt-tasks.yaml`, `SOFIA-CHECK.md`, `packages/`).
+*Written 2026-11-10 by Claude (Opus, the coordinator), from an outside review by Claude Fable 5.2. The review was read-only, on `phase-1` `5d91e0c4`, in three passes: the review, the second pass and a hunt for wrong answers. A check of the before-tag packages by sofia followed.* The evidence is the two reports (about 8,000 words, with `file:line`, counts and probe output) and the package drafts. They are in git, in [archive/arch-review-2026-11-10/](../archive/arch-review-2026-11-10/REPORT.md) (`REPORT.md`, `REPORT-2.md`, `HUNT.md`, `HUNT-2.md`, `hunt-tasks.yaml`, `SOFIA-CHECK.md`, `packages/`).
 
 ## 1. The verdict
 
@@ -114,4 +114,4 @@ Placed on 2026-11-10 after sofia's check (`SOFIA-CHECK.md`: every claim held, an
 - The small finds H3 to H7 go with X14, X15 and X16. H5, the `x → a·x² ▶ f` arrow store, needs its own package.
 - HUNT-2's rule C (the count of solutions shown equals `nops(realroot(p))`) goes into the shared rule list (X14), as the net behind G322's patch.
 - G319's gap (pass 142) is a row of X14: the unit view's `int(1/x^2,x,-1,1)*{m}` says "The unit view could not evaluate this" where Home says "The integral does not converge" (the exact run stops at the step budget, and refusalOf, given Giac's error, reads Giac's +infinity as no divergence). A refusal, so no wrong value: no id of its own.
-- The hunt's 660 tasks (`hunt-tasks.yaml`, 584 passing, 35 marked `duplicate_of`) become golden rows in a gorge package, with the gate's time checked. The copy that lasts is in `../drafts/2026-11-10-arch-review/`.
+- The hunt's 660 tasks (`hunt-tasks.yaml`, 584 passing, 35 marked `duplicate_of`) become golden rows in a gorge package, with the gate's time checked. The drafts, the hunt reports and `hunt-tasks.yaml` are in git (owner, 2026-11-14): [archive/arch-review-2026-11-10/](../archive/arch-review-2026-11-10/REPORT-2.md).

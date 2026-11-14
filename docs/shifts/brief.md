@@ -59,17 +59,19 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, with rows from lane B)
-The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10.
+The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10. The night review's answers (owner, 2026-11-14): R312 and R313 before the hardware-key tests of 11-16; R314 before the freeze; the splits last.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 752 | R298 a paste or a result inserted before the entry field keeps its place among the keys | ron, Opus | `p1/ron-insertqueue` | – |
+| 780 | [R312](packages/R312.md) a hardware `2exp(1)` types exp, and the desktop-keys help names its layouts | ron, Opus | `p1/ron-emarkname` | – |
 | 753 | [S58](packages/S58.md) the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
 | 754 | [R299](packages/R299.md) the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
 | 755 | [R300](packages/R300.md) the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
 | 756 | [R301](packages/R301.md) Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
 | 757 | [R302](packages/R302.md) a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | R300 |
 | 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
+| 781 | [R313](packages/R313.md) on a hardware keyboard letters typed in a unit slot read as a unit | ron, Opus | `p1/ron-slotletters` | R303 |
 | 759 | [R304](packages/R304.md) a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
 | 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
 | 761 | [R306](packages/R306.md) a list, a matrix, cases and an integral read right as plain text | ron, Opus | `p1/ron-plainlists` | G232f1 |
@@ -84,9 +86,12 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
 | 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
+| 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
+| 783 | [R316](packages/R316.md) split `parse.ts` under 800 lines | ron, Opus | `p1/ron-splitparse` | – |
+| 784 | [R317](packages/R317.md) split `App.svelte` under 800 lines | ron, Opus | `p1/ron-splitapp` | – |
 
 ### Lane B queue (the release, then the engine)
-The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-14.md) section 2. A66's device check is a backlog line.
+The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-14.md) section 2. Its answers (owner, 2026-11-14): G369 and G370 after the lane's features, before the freeze; the splits last. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
@@ -108,6 +113,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
 | 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
 | 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
+| 785 | [G369](packages/G369.md) %, ‰, ppm and ppb are dimensionless units in the unit view | gorge, Opus | `p1/gorge-ratiounits` | – |
+| 786 | [G370](packages/G370.md) the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
 | 766 | [G354](packages/G354.md) a store Giac refuses shows a refusal, not `ok` | gorge, Opus | `p1/gorge-reservedstore` | – |
 | 767 | [G355](packages/G355.md) a Home row's chip and Ans carry its σ | gorge, Opus | `p1/gorge-chipsigma` | – |
 | 768 | [G356](packages/G356.md) "interpolate" in Find no longer leads to the polynomial through every point | gorge, Opus | `p1/gorge-lagrangealias` | – |
@@ -119,8 +126,11 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 774 | [G364](packages/G364.md) a real cubic's only real root never shows a noise imaginary part under ≈ | gorge, Opus | `p1/gorge-cubicpair` | G359 |
 | 775 | [G361](packages/G361.md) a linear interpolation in a table, found as "interpolate" | gorge, Opus | `p1/gorge-tableinterp` | G356 |
 | 776 | [G362](packages/G362.md) Math gets arg, re, im, conj, max, min and atan2 as checked functions | gorge, Sonnet | `p1/gorge-mathmenu` | – |
+| 787 | [G372](packages/G372.md) split `homeEval.ts` under 800 lines | gorge, Opus | `p1/gorge-splithomeeval` | – |
+| 788 | [G373](packages/G373.md) split `api.cc` under 800 lines | gorge, Opus | `p1/gorge-splitapi` | – |
+| 789 | [G374](packages/G374.md) split `export.mjs` under 800 lines | gorge, Opus | `p1/gorge-splitexport` | – |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, G365, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the freeze, by day: A91, A82, R292.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, G365, G371 then R315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the freeze, by day: A91, A82, R292.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
@@ -174,7 +184,7 @@ Then reply as the pipeline's prompt asks (at most five lines). Nobody is waiting
 
 ## 8. Definition of done
 - **Each branch:** typecheck 0; `npm run index` (with `N62_DL_DIR` and `N62_QALC_DL_DIR` pointing at the main checkout's caches, as the pipeline sets them), then `FIND_INDEX=required npm test`, all pass (the Find query test fails rather than skips without the full index); e2e all pass, the core list included: every active case passes except its `known:` ones (the known-flaky `solve.spec.ts` persistence test and the Find 16 ms timing test may be re-run once); the golden gate when engine or parser code changed; by hand, `npm run gate` (from `app/`; `-- --quick` while working) runs all of these, the size test and a docs-size report in one command; SPDX headers; `git commit -s` with the trailer of the model that ran; the report commit; the start chunk size reported for UI packages; every "Done when" line of the block met or listed under "Not done".
-- **Source size** (owner, 2026-10-20; `tools/docs-check.mjs` checks it, A22): no file grows past its line in `tools/line-baseline.yaml` and no new source file passes 800 lines, unless the same diff raises the line with a reason (the `calls-baseline.yaml` rule); a split lowers the line.
+- **Source size** (owner, 2026-10-20; `tools/docs-check.mjs` checks it, A22): no file grows past its line in `tools/line-baseline.yaml` and no new source file passes 800 lines, unless the same diff raises the line with a reason (the `calls-baseline.yaml` rule); a split lowers the line. A file past 800 lines gets its split package the same week, and an Opus pass lowers a line its file fell below (owner, 2026-11-14).
 - **The net (P23):** a merge that turns a core case red is a bug the next Opus pass sends back as a FIX (section 0c, Opus pass step 3).
 
 ## 8a. Review and merge

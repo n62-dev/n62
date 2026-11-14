@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R86 (docs/05 3.4, mockups/settings.html section 1): Mode shows Angle, Format and Entry as buttons, one per value, where
+// R86 (docs/05 3.4, docs/archive/mockups/settings.html section 1): Mode shows Angle, Format and Entry as buttons, one per value, where
 // that saves a press: a tap on a button sets the value and closes the sheet. The digits chip opens the digits list
 // itself. By keys nothing changes: ◀ ▶ move the mark with the sheet open, a digit steps the row, Enter closes. Fake engine.
 import { expect, test, type Page } from "@playwright/test";
