@@ -65,7 +65,9 @@ function ctx(stored = true) {
     cycleForm: async () => true,
   };
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true };
-  const c = { session, shell, entry, picked: null, sheetLoad: null, waiting: [], casKeys: false, enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings() {}, openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openNames() {}, openHelp() {}, openMatrix() {}, openStore() {}, withClip() {}, loadClip() {}, dead() {}, unfold: () => false };
+  /** The line each Enter sent. */
+  const sent: string[] = [];
+  const c = { session, shell, entry, picked: null, sheetLoad: null, waiting: [], casKeys: false, enter: () => void sent.push(entry.value), insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings() {}, openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openNames() {}, openHelp() {}, openMatrix() {}, openStore() {}, withClip() {}, loadClip() {}, dead() {}, unfold: () => false };
   const press = (...ids: string[]): void => {
     for (const id of ids) {
       const key = keyboard.byId.get(id);
@@ -81,7 +83,7 @@ function ctx(stored = true) {
     await ready;
     return entry.value;
   };
-  return { entry, press, up };
+  return { c, entry, press, up, sent };
 }
 
 describe("an insert before the field keeps its place among the keys (R298)", () => {
@@ -114,6 +116,18 @@ describe("an insert before the field keeps its place among the keys (R298)", () 
     entry.insert("A");
     expect(await up()).toBe("5\\blacktrianglerightA");
   });
+  test("5, Store ▶, the store sheet's A, its Enter, then 3: Enter waits for the field and sends 5▶A; the 3 follows it", async () => {
+    const { c, entry, press, up, sent } = ctx();
+    press("d5", "shift", "emark");
+    entry.insert("A");
+    route.enterLine(c as never);
+    press("d3");
+    expect(sent).toEqual([]); // before the field, nothing to send yet
+    await up();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sent).toEqual(["5\\blacktrianglerightA"]);
+    expect(entry.value).toBe("5\\blacktrianglerightA3"); // (the stub's Enter does not clear the line)
+  });
   test("a line with queued keys is not empty, and an insert alone makes it not empty", () => {
     const a = ctx();
     a.press("d2");
@@ -141,6 +155,13 @@ describe("controls", () => {
     entry.insertResult("5", chip);
     press("sub", "d1");
     expect(entry.value).toBe(`23${resChip(1, "5")}-1`);
+  });
+  test("after the field is up, the store sheet's Enter sends at once", async () => {
+    const { c, entry, up, sent } = ctx();
+    await up();
+    entry.insert("A");
+    route.enterLine(c as never);
+    expect(sent).toEqual(["A"]);
   });
   test("a clear before the field drops the queued inserts too", async () => {
     const { entry, press, up } = ctx();

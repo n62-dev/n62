@@ -13,7 +13,7 @@ import { ANS_CHIP } from "../entry/macros.ts";
 import { canPick, pickAfter, pickAtOrBefore } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
 import { sheetChunk, loadSheetView } from "../views/sheetView.svelte.ts";
-import { actionFor, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
+import { actionFor, keyboard, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
 import type { SheetKey } from "../views/sheetKeys.ts";
 
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
@@ -232,7 +232,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   }
   if (action.name === "enter" && item) {
     if (item.status === "done") c.insertResult(item);
-    else if (c.entry.value === "") c.recallRow(item); // an empty line: the entry comes back with its chips
+    else if (c.entry.empty) c.recallRow(item); // an empty line: the entry comes back with its chips
     // (R273: text on the line stays; the pick is dropped above)
     return true;
   }
@@ -354,6 +354,15 @@ export function holdKeys(c: RouteCtx, job: Promise<unknown>): Promise<void> {
     c.sheetLoad = hold;
   }
   return capped;
+}
+
+/** R298: Enter from code (the store sheet's tap after it typed the name, R281). Before the field is up, or behind keys
+ *  that wait, it waits as a pressed Enter does (R255), so it sends the line the queued keys and the name typed; a key
+ *  pressed after it waits behind it (R8). */
+export function enterLine(c: RouteCtx): void {
+  const key = keyboard.byId.get("enter");
+  if (key && (c.entry.fieldPending || c.waiting.length > 0)) return wait(c, { key, mods: { shift: false, alpha: false }, line: true });
+  c.enter();
 }
 
 /** `line` (R255): the key waits for the entry field too, so Enter sends the line the queued keys typed. */
