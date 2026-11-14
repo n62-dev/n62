@@ -77,10 +77,19 @@ describe("sessionLine (G210)", () => {
   });
 
   it("a DEG row", () => {
-    const r = row({ uid: "r-8", latex: String.raw`\sin(30)`, giac: "sin(30*pasdeg)", text: "0.5", value: re("0.5"), rational: { n: "1", d: "2" },
+    const r = row({ uid: "r-8", latex: String.raw`\sin(30)`, giac: "sin(pasdeg*30)", text: "0.5", value: re("0.5"), rational: { n: "1", d: "2" },
       facts: { exact: true, reliableDigits: null, digits: 12 }, full: "1/2", fullExact: true, angle: "deg", digits: 12 });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-8",${TS},"view":"home","input":"\\sin(30)","giac":"sin(30*pasdeg)","ok":true,"exact":"1/2","value":"0.5","mark":"=","reliableDigits":null,"angle":"deg","digits":12}`,
+      HEAD + String.raw`"id":"r-8",${TS},"view":"home","input":"\\sin(30)","giac":"sin(pasdeg*30)","ok":true,"exact":"1/2","value":"0.5","mark":"=","reliableDigits":null,"angle":"deg","digits":12}`,
+    );
+  });
+
+  it("a DEG row whose exact text differs from the drawn one: exact is Giac's radian text, value the degree text", () => {
+    // G46f1 (resultItem.ts homeItem): `full` is the radian text the chips carry, `drawn` the text the screen draws in DEG
+    const r = row({ uid: "r-10", latex: String.raw`\sin(x)`, giac: "sin(pasdeg*x)", text: "sin(x)", full: "sin(pi*x/180)", fullExact: true, drawn: "sin(x)",
+      angle: "deg", digits: 12 });
+    expect(sessionLine(r, O)).toBe(
+      HEAD + String.raw`"id":"r-10",${TS},"view":"home","input":"\\sin(x)","giac":"sin(pasdeg*x)","ok":true,"exact":"sin(pi*x/180)","value":"sin(x)","mark":"=","angle":"deg","digits":12}`,
     );
   });
 

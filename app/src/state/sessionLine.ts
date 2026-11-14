@@ -19,14 +19,16 @@
 //            line. Absent without a table. Ans is not kept (resolved at Enter), so a line with `\ans` has no value for it
 //   ok       the row finished with a result
 //   error    the error's text, when the row ended in one
-//   exact    the exact text (Giac's), when the row has one
+//   exact    the exact text (Giac's), when the row has one. Like `giac` it is Giac's text and always read in radians,
+//            whatever `angle` says: a DEG row `\sin(x)` has `exact` sin(pi*x/180) and `value` sin(x) (G46f1)
 //   value    the value as Copy writes it (every confirmed digit up to 40, docs/04 2.6), always with `.`; the number alone
 //            (a unit row's σ and unit are in their fields)
 //   mark     `=`, `≈` or `⚠`: the mark of the row at its digits, as Copy reads it
 //   warn     `unaudited` or `unchecked`: why a ⚠ although the digits agree
 //   reliableDigits  the digits the agreement check confirmed; null: none in doubt (absent: the row has no facts)
 //   unit, dim, sigma, sigmaWhy  a unit-view row's unit, dimension key, σ (2 digits, in `unit`) and why σ has ⚠
-//   angle    `rad` or `deg`, the angle mode the row was worked out in; null when the row does not keep it
+//   angle    `rad` or `deg`, the angle mode the row was worked out in; null when the row does not keep it. It applies
+//            to `input` and `value` only, never to `giac` or `exact` (radians)
 //   digits   the digits setting of the row; null when the row does not keep it
 //   defs     the stored values the input read: name, preview, the view that stored it
 import { DECIMAL_KEEP } from "../engine/format.ts";
