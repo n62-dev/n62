@@ -270,11 +270,18 @@ class Translator {
       if (/\\blacktriangleright|:=/.test(r.input)) this.allUnknown = line;
       return;
     }
-    if (!isHead(tree, "Assign")) return;
-    const target = tree[1] as Json;
-    const n = typeof target === "string" ? target : isHead(target, "Call") && typeof target[1] === "string" ? target[1] : undefined;
-    if (n === undefined) this.allUnknown = line;
-    else this.names.set(n, { unknown: line });
+    // a store binds at any depth: in brackets, braces, a list or a chain (`(7▶a)+1`, `b:=7▶a`), as the parser builds it
+    const walk = (e: Json): void => {
+      if (!Array.isArray(e)) return;
+      if (isHead(e, "Assign")) {
+        const target = e[1] as Json;
+        const n = typeof target === "string" ? target : isHead(target, "Call") && typeof target[1] === "string" ? target[1] : undefined;
+        if (n === undefined) this.allUnknown = line;
+        else this.names.set(n, { unknown: line });
+      }
+      for (const x of e.slice(1)) walk(x);
+    };
+    walk(tree);
   }
 
   /** One row: its code line, or its NOT TRANSLATED comment; then N62's answer. */

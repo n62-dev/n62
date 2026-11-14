@@ -153,6 +153,28 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
       ),
     );
   });
+  it("a store inside brackets, or in a chain, leaves its name unknown (G213 fix round 2)", () => {
+    const inner = py([row("5\\blacktriangleright a", { exact: "5" }), row("\\left(7\\blacktriangleright a\\right)+1", { exact: "8" }), row("a+1", { exact: "8" })]);
+    expect(inner).toBe(
+      file(
+        "a = 5  # N62: = 5",
+        "# N62 NOT TRANSLATED (Assign is not translated): \\left(7\\blacktriangleright a\\right)+1",
+        "# N62: = 8",
+        "# N62 NOT TRANSLATED (uses line 2): a+1",
+        "# N62: = 8",
+      ),
+    );
+    const chain = py([row("5\\blacktriangleright a", { exact: "5" }), row("b:=7\\blacktriangleright a", { exact: "7" }), row("a+1", { exact: "8" })]);
+    expect(chain).toBe(
+      file(
+        "a = 5  # N62: = 5",
+        "# N62 NOT TRANSLATED (Assign is not translated): b:=7\\blacktriangleright a",
+        "# N62: = 7",
+        "# N62 NOT TRANSLATED (uses line 2): a+1",
+        "# N62: = 8",
+      ),
+    );
+  });
 });
 
 describe("translateRows: stores and Ans", () => {
