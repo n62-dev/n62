@@ -7,6 +7,7 @@ import { aboutText as t } from "../i18n/enAbout.ts";
 import { aboutData, aboutLoading, type AboutData } from "./aboutData.svelte.ts";
 import { currentEngine, isTested } from "../state/browser.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
+import { trustText } from "./trustText.ts";
 import { desktopHelpText } from "../keyboard/desktopHelp.ts";
 import type { DesktopMap } from "../keyboard/desktopKeys.ts";
 
@@ -78,7 +79,7 @@ function aboutRows(d: AboutData): MenuItem[] {
 }
 
 /** The rows of the Help and about section: "Show the first-start tips" (R15c4; only where the app gives it) above About and
- *  Parts; then the desktop keys (R131), a text built from the spec. */
+ *  Parts; Why trust it (R174) after About; then the desktop keys (R131), a text built from the spec. */
 export function helpItems(env: SettingsEnv = {}): MenuItem[] {
   const tips = env.tips;
   if (!desktopMap) void desktopLoad();
@@ -86,6 +87,13 @@ export function helpItems(env: SettingsEnv = {}): MenuItem[] {
     ...(tips ? [{ id: "tips", label: t("tips.row"), run: () => tips() }] : []),
     { id: "report", label: t("report.row"), run: () => env.data?.((c) => c.reportProblem()) },
     { id: "about", label: t("title"), hint: t("hint"), submenu: lazy(t("aboutTitle"), aboutRows) },
+    {
+      id: "trust",
+      label: t("trust.row"),
+      hint: t("trust.hint"),
+      // R174: the text is read when it is drawn, from the data's `trust`: Loading… until the chunk is in
+      submenu: { title: t("trust.title"), items: [], text: () => { const d = aboutData(); return d ? trustText(d.trust) : t("loading"); }, remember: false, loading: aboutLoading },
+    },
     { id: "parts", label: t("parts"), hint: t("partsHint"), submenu: lazy(t("partsTitle"), partRows, { longPreview: true }) },
     {
       id: "keys",

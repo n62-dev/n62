@@ -56,6 +56,8 @@ declare module "virtual:about" {
       readonly applied: number;
       readonly waiting: number;
       readonly notSent: number;
+      /** The date of the author's source the sentence names ("7 Nov"). */
+      readonly authorDate: string;
     };
     readonly traps: readonly AboutTrap[];
   }
