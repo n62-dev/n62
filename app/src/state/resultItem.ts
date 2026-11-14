@@ -22,10 +22,11 @@ export function chipFactsOf(named: ChipTable): ChipFactsTable {
 
 /** G211: what a row keeps of its job: the Giac text sent (none over FULL_LIMIT, as `full`), the angle and digits it ran
  *  in (`s`, the settings at job time), and the word the port says the request carried. Absent ones are not set. */
-function withJob(out: ItemResult, word: ItemResult["word"], giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
+function withJob(out: ItemResult, r: Pick<ItemResult, "word" | "reads">, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
   if (giac !== undefined && giac.length <= FULL_LIMIT) out.giac = giac;
   if (s) Object.assign(out, { angle: s.angle, digits: s.digits });
-  if (word) out.word = word;
+  if (r.word) out.word = r.word;
+  if (Array.isArray(r.reads)) out.reads = r.reads.filter((d) => d.value.length <= FULL_LIMIT); // G213f1: as `full`, a longer one not kept
   return out;
 }
 
@@ -51,7 +52,7 @@ const isTruth = (t: string): boolean => /^(true|false)$/.test(t);
 /** A Home result as a history item keeps it; `inexactInput`: an inexact chip or constant went into the input; `giac`
  *  and `s`: the text sent and the settings of the job (withJob; absent for the golden runner and a unit row's number). */
 export function homeItem(r: HomeIn, inexactInput: boolean, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
-  const out = withJob({ approximate: r.approximate || (inexactInput && isTruth(r.display)) }, r.word, giac, s);
+  const out = withJob({ approximate: r.approximate || (inexactInput && isTruth(r.display)) }, r, giac, s);
   if (r.value) out.value = r.value;
   if (r.ok) {
     const f = factsFrom(r);
@@ -81,7 +82,7 @@ export function homeItem(r: HomeIn, inexactInput: boolean, giac?: string, s?: Pi
 
 /** A CAS result (or error) as a history item keeps it; `inexactInput`, `giac` and `s` as for homeItem. */
 export function casItem(r: CasIn, inexactInput: boolean, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
-  const out = withJob({ approximate: false }, r.word, giac, s);
+  const out = withJob({ approximate: false }, r, giac, s);
   if (!r.ok) return out;
   // A plain number (3/4, 2.5): the Format key can show it in the other forms.
   const q = rationalOf(r.text);

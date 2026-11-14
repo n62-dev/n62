@@ -263,9 +263,9 @@ describe("translateRows: Ans and names by the value the row read (G213f1)", () =
     const same = py([row("0.5\\blacktriangleright a", { mark: "≈", value: "0.5", reads: [] }), row("a+1", { mark: "≈", value: "1.5", reads: [{ name: "a", value: "0.5", exact: false }] })]);
     expect(same.split("\n").slice(-2)[0]).toBe("_2 = a + 1  # N62: ≈ 1.5");
   });
-  it("a name the row did not read as a stored value is not read from the file", () => {
+  it("a name the row did not keep a value of (not a stored value then, or a value over 2 kB) is not read from the file", () => {
     const out = py([a5, row("a+1", { exact: "a+1", reads: [] })]);
-    expect(out.split("\n")[2]).toBe("# N62 NOT TRANSLATED (a was not a stored value when this line ran): a+1");
+    expect(out.split("\n")[2]).toBe("# N62 NOT TRANSLATED (the value a held when this line ran is not kept): a+1");
   });
   it("a line without the new fields (written before G213f1) refuses Ans and names", () => {
     const ans = py([row("2", { exact: "2" }), row("\\ans+1", { exact: "3" })]);

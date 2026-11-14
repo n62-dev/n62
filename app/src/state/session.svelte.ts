@@ -6,7 +6,7 @@ import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../i
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
 import { hasMessage, t, type MessageKey } from "../i18n/index.ts";
-import { EngineCrashError, EngineLoadError, EngineMemoryError } from "../engine/types.ts";
+import { EngineCrashError, EngineLoadError, EngineMemoryError, type StoredRead } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
 import { homeResultToLatex, type GroupSep } from "../render/home.ts";
 import {
@@ -131,6 +131,9 @@ export interface HistoryItem {
   inexactInput?: boolean;
   /** CAS: the stored values the input read, each with the view that stored it (F28); absent when there is none. */
   uses?: UsedValue[];
+  /** G213f1, Copy as Python only (never drawn): Ans's value at Enter when read; each stored name read with its value ([] none). */
+  ans?: { value: string; exact: boolean };
+  reads?: StoredRead[];
   /** G67: the input changed one of the engine's settings, which was put back (a line under the result says so). */
   settingReset?: true;
   /** R63: a unit-view result (units/row.ts): its request, Quantity summary and chip. Read back unchecked (see UnitRow). */
@@ -463,6 +466,7 @@ export class Session {
     const list = view === "home" ? this.home : this.cas;
     // Ans is the view's last result now, at Enter (as on the reference), not when the key was pressed.
     const ans = this.lastChip(view);
+    const usesAns = /\\ans(?![a-zA-Z])/.test(latex);
     const kept = pruneChips(chips, latex);
     const table: ChipTable = ans ? { ...kept, [ANS_KEY]: ans } : kept;
     const id = this.nextId++;
@@ -476,13 +480,14 @@ export class Session {
       text: "",
       approximate: false,
       ...(Object.keys(kept).length ? { chips: kept } : {}),
-      ...(Object.values(kept).some((c) => c.unit) || (ans?.unit && /\\ans(?![a-zA-Z])/.test(latex)) ? { unitDropped: true } : {}), // R63: a chip on the line, or Ans used
+      ...(ans && usesAns ? { ans: { value: ans.value, exact: ans.exact } } : {}), // G213f1: not in `chips` (a recall resolves Ans again)
+      ...(Object.values(kept).some((c) => c.unit) || (ans?.unit && usesAns) ? { unitDropped: true } : {}), // R63: a chip on the line, or Ans used
       startedAt: performance.now(),
     });
     // Read and write through the proxy in the list from here on.
     const live = list[list.length - 1] as HistoryItem;
     if (list.length > HISTORY_LIMIT) this.noteDrop(view, list.splice(0, list.length - HISTORY_LIMIT));
-    if (!ans && this.hasResult(view) && /\\ans(?![a-zA-Z])/.test(latex)) {
+    if (!ans && this.hasResult(view) && usesAns) {
       // A finished result with no chip value (a symbolic text over 2 kB, R44): say why, not "no result yet"
       live.status = "error";
       live.text = t("error.ansTooLong");
