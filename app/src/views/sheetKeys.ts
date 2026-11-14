@@ -93,7 +93,7 @@ export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empt
 }
 
 /**
- * A key in the store sheet (R281, docs/research/store-design.md design A): a name is typed into its filter. A key that
+ * A key in the store sheet (R281, docs/archive/store-design.md design A): a name is typed into its filter. A key that
  * types a letter on the line types it, in the layer it was pressed in (`shift`, `alpha`: a tap before it or a flick; x
  * alone, Alpha + Vars A; lower case in CAS, `cas`, R58). ▲ ▼ ◀ ▶, Enter, Esc and ⌫ keep their sheet job (⌫ with
  * nothing typed goes on to the line, R281f1). A plain

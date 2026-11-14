@@ -295,7 +295,6 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
 | Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find); Shift + Deselect is reserved. Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
 | ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
-| Help (context help) | the Find preview of the function before the cursor; with none there, Find (milestone 6) | ours; P8 left Help free |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
 | Shift + `−` [r9c5] | the Base menu (built, R193; 5.4) | reference: Base |
@@ -458,7 +457,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | Key presses | each task within its budget; a unit ≤ 4 at the median | — | task benchmark |
 | Find quality | 100 % top 3, ≥ 90 % first | 100/100 first at G4 | query test |
 
-"Start chunk" is the entry's JavaScript plus every chunk it imports statically, as `size-check.ts` measures it. The start graph is one chunk; a Rolldown $initial chunk group keeps it so (research/r21-chunks.md). Its CSS is not counted (own line past 40 kB).
+"Start chunk" is the entry's JavaScript plus every chunk it imports statically, as `size-check.ts` measures it. The start graph is one chunk; a Rolldown $initial chunk group keeps it so (archive/r21-chunks.md). Its CSS is not counted (own line past 40 kB).
 
 
 ---

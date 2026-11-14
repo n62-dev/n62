@@ -19,11 +19,13 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
 
+**Night review 2026-11-14:** twelve questions in [the note](research/night-review-2026-11-14.md) section 6, each with its recommendation; 1 and 2 before the hardware-key tests of 11-16, 3 before the tag.
+
 ## Decided proposals
 
 ### Pipeline and process
 - **No freeze until Tue 11-17, tag Mon 11-23 (owner, 2026-11-12):** to the freeze the order is use, critical bugs, features (brief section 0); the days, the bar and what v0.1.0 keeps for good (point 7): [release-0.1.0.md](release-0.1.0.md).
-- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](research/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
+- **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](archive/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
 - **Owner answers of 2026-11-10 (architecture review):** [the note](research/arch-review-2026-11-10.md) section 3.
 - **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). Bit-identity is untested until the merge request's first CI build, and no package tests it before (Opus pass 130). Would change if: the first build cannot be made bit-identical.
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
@@ -43,7 +45,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ### Feel, keys and screen (milestone 4a)
 - **Touch, keys and Store (owner, 2026-11-10; the keys 2026-11-12):** as built (docs/05 3.5; docs/04 5.5); the keys: [06-keypad-vs-g2.md](06-keypad-vs-g2.md) section 3b. Archived, "2026-11-12, evening". Would change if: A139 shows the gestures clash on a real WebView.
 - **Built, archived as they stood ("2026-11-12, evening"):** R151's start time (A73f1); the UI answers of 2026-11-06 (R140–R150, R53); R95, R100, R94, R110; S12 (R66–R68, G45; `mod` Euclidean); the feel answers of 2026-10-19 (R34: one shared entry line; R43, R7, A4a points 3 and 4).
-- **R41's status line at font scale 2.0 waits for a device (Opus pass 61):** annabell's next device run checks it with TalkBack. Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
+- **R41 at font scale 2.0:** the owner's hand check (A139; backlog). Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); Android's splash and bars Dark (A59). Archived. Would change if: users want the system switch to mute the keys.
 - **R4b's four defaults, as built (Opus pass 18):** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.

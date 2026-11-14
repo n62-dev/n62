@@ -19,38 +19,26 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 
 ## A. Before you tell anyone (v0.1.0; the freeze Tue 11-17, the tag after it)
 
-- **No known silent wrong number** [have]. No open bug line shows a wrong value unmarked (F192, phasor entry, closed by R180). The bar still counts the night review of 11-09. No package; F198 and F199 are named limits.
-- **Units and ± in the core list** [miss]. 66 cases, none with a unit or ±; the harness has no unit check. R170.
-- **Release notes** [part]. The release body holds only hashes; no notes file, no `changelogs/`. A90, then A91 after the freeze.
-- **First-run tips** [part, was miss]. The overlay is built with 2 cards; flicks, the round pad, Find and the marks are missing. R171.
-- **Report a problem** [part, was miss]. The form is merged (A81) with no session field; nothing in the app opens it. A92, R172, R173, A95.
-- **Why trust it** [miss]. "2,700" is not true: see the figures below. G200, G201, G202, A93, A94, R174.
-- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act, Sun 11-15; no package. Decision 4.
-- **F-Droid and IzzyOnDroid** [miss]. The recipe is a draft, never built. A96, A97, A98, then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
+- **No known silent wrong number** [part since 11-14]. The night review of 11-14 found three everyday ones (backlog `nr1114` lines; G352, G353, R298) and two extreme ones (G363, G364): the bar holds again once they merge. F198 and F199 are named limits.
+- **Units and ± in the core list** [have]. R170 (`521ae3fe`).
+- **Release notes** [part]. A90 (`47b5fe22`); A91 after the freeze.
+- **First-run tips** [have]. R171 (`72e872c6`).
+- **Report a problem** [have]. A92, R172, R173, A95.
+- **Why trust it** [have]. G200, G201, G202, A93, A94, R174.
+- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act on the release candidate (Sat 11-21); no package. Decision 4.
+- **F-Droid and IzzyOnDroid** [part]. The recipe is built by A96, A97, A98; then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
 - **APK and site** [not yet; the list's "have" is early]. Releases hold only `deps-giac-2.1.0-1d9536e0`; Pages has one test deployment from 11-05. The tag produces both. Owner's act, no package. Do not publicise n62.dev before the tag.
 
 **The figures "Why trust it" prints** (counted at de659c02; A93 reads them from the files):
 - Golden: 1,966 recorded answers, 5 of them open cases. 892 expected values are computed independently of Giac (790 by mpmath, 102 by exact arithmetic); 422 more are hand-derived or reference values cross-checked by machine; the other 652 are hand-derived expected results or behaviour guards. Parser (648) and bench (57) rows are not answers.
-- Patches: 37 Giac patches. 36 sent to the author: on 8 Nov he wrote that his updated source archive "should be synchronized" with them (his statement, not compared here); 1 (0037) not sent.
+- Patches: 48 Giac patches. 36 sent to the author: on 8 Nov he wrote that his updated source archive "should be synchronized" with them (his statement, not compared here); 12 (0037–0048) not sent.
 - Traps: Rump ≈ -0.827396059947 (ordinary IEEE double: about ±1.18E21, the sign depends on evaluation order); `1-cos(10⁻⁸)` RAD ≈ 5E-17 (double 0); `(1+10⁻¹⁶)^(10¹⁶)` ≈ 2.71828182846 (double 1); `e^(π√163)` at 30 digits ≈ 262537412640768743.999999999999 (double 2.6253741264076826E17); `∫1/x` from -1 to 1 refused (Giac alone gives 0).
-- The page may say values are re-checked only once G200 is merged: `oracle.py` crashes today and the gate does not run it (F197).
 
-Order (all v0.1.0):
-- Lane A: R170 and R172 first, with no wait (R170 has no app code and is the net for the keypad rows); after R53 and R148: R171, R173.
-- Lane B: R180 (first), G200, G201, G300, G202, A90, A92, A93, A94, G301, A96, A97, A98.
-- By day on Thu 11-12: A95 (the device, after R173). R174 dropped that morning, back as a feature row in the evening (owner, 11-12).
-- By day after the freeze: A91, refreshed Sun morning; `npm run trust:refresh` first each time.
-- Must land before the freeze: R180 (the phasor fix, section B). Should land: G300 and G301 (section D); if G301 misses it, F196 joins the known limits.
-- If it gets tight, drop in this order (in `docs/release-0.1.0.md`): R174 and A94; A96, A97 and A98 to Mon 11-16; if A95 fails, Android stays copy-only.
-- Capacity: 17 open rows in lane A (6 ron, 11 gorge; R53 is on its branch, unmerged) plus these 16 before the freeze and four nights left; 31 merges landed on 11-07. The unknowns are the 11-09 review's output and fix rounds.
-
-Open bugs:
-- F197: `oracle.py` exits 1 with a TypeError at `precision.yaml:1166` (since eba26abf), so no full check of the oracle values has finished since; past it, 248 PROBLEM lines, none about a value. Reach: no user; it undercuts the "re-checked" claim. G200.
-- F198: `1/0`, `tan(pi/2)` and DEG `tan(90)` show `infinity` with no mark (a deliberate pin since G78, `app/src/engine/novalue.test.ts:144`); once G168 lands, `0/0` is refused "Division by zero" while `1/0` stays `infinity`. No finite digits appear, so it is not a silent wrong number. Reach: everyday. No package unless the owner says; a named limit in A91.
+Open bugs: F198 (`1/0`, `tan(pi/2)`, DEG `tan(90)` show `infinity` with no mark, while `0/0` is refused since G168): a named limit, decision 8.
 
 Decisions for the owner:
 1. **Yes (2026-11-09).** Core cases c67–c69: add them, `hand: false`. The core list changes only with the owner; these are the flows you named.
-2. Patch 0037 goes in the next mail to the author; nothing to decide. Email 5 went on 2026-11-08 with 0013-0036, its links pinned at 8f398cca, which lacks it.
+2. Patches 0037–0048 go in the next mail to the author; nothing to decide. Email 5 went on 2026-11-08 with 0013-0036, its links pinned at 8f398cca, which lacks it.
 3. **Yes (2026-11-09).** Trust page location: in the app under Help and about, plus a README section. n62.dev is the app, with no separate pages.
 4. Video: keep the v6 cut and record the Qalculate side-by-side as a separate 10 s clip. Opening on it would re-cut the owner's 11-07 chapter order.
 5. "HP Prime key layout" in the video: the owner's choice, since `rules-core.md:21` does not list a video caption. Reword it without the name, which costs nothing; the other way is the disclaimer on screen.
@@ -70,7 +58,7 @@ Not verified:
 
 ## B. For daily use by engineers (v0.2 to v0.4)
 
-The phasor fix landed before the 11-12 freeze (R180, d89df4cc; F192 closed): `10∡30+5` from the keys now adds 5 to the phasor.
+The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from the keys now adds 5 to the phasor.
 
 **Hand-off to the laptop**
 - `[miss]` Session format v1. G210 merged (format v0, pure, no caller); `HistoryItem` holds no Giac text, angle or digits per row; `uses` is CAS only. G211, G212.
@@ -156,14 +144,14 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 **Open bugs:** none.
 
 **Decisions for the owner:**
-1. Share base: rows as % of σ² with one signed second-order row (mockup variant A). Recommended: the rows then add up to the σ² that is shown; the alternative, B, is first-order rows over a with second order on its own line, which never exceeds 100 % but no longer adds to σ². A design judgement: R220 shows both.
-2. `12.34(5)` or `12.340(50)`: GUM allows both; two digits always. Recommended for consistency with the ± line and NIST's practice.
-3. The published ten: S50's table (seven kept, three new; t03, t05, t06 out). Recommended: N62 can lose some of them.
-4. The HP name: the README only, with the disclaimer, no new exception. Recommended: it is the existing rule.
-5. Reopen the deferred layout for tablet and desktop only (R224); phone landscape waits. Recommended: one column wastes a tablet, and phone landscape has no design.
-6. Formula sets live in a lazy Symb/Num app, after the pick on `results-mode.html`, sharing R130's step idea. Recommended: no second worksheet.
+1. **Yes (2026-11-12).** Share base: rows as % of σ² with one signed second-order row (mockup variant A). Recommended: the rows then add up to the σ² that is shown; the alternative, B, is first-order rows over a with second order on its own line, which never exceeds 100 % but no longer adds to σ². A design judgement: R220 shows both.
+2. **Yes (2026-11-12).** `12.34(5)` or `12.340(50)`: GUM allows both; two digits always. Recommended for consistency with the ± line and NIST's practice.
+3. **Yes (2026-11-12).** The published ten: S50's table (seven kept, three new; t03, t05, t06 out). Recommended: N62 can lose some of them.
+4. **Yes (2026-11-12).** The HP name: the README only, with the disclaimer, no new exception. Recommended: it is the existing rule.
+5. **Yes (2026-11-12).** Reopen the deferred layout for tablet and desktop only (R224); phone landscape waits. Recommended: one column wastes a tablet, and phone landscape has no design.
+6. **Yes (2026-11-12).** Formula sets live in a lazy Symb/Num app, after the pick on `results-mode.html`, sharing R130's step idea. Recommended: no second worksheet.
 7. iOS for v1: **decided (owner, 2026-11-10): the web app only**; the list item is reworded. Why: the FSF reads the App Store as a further restriction (legal opinion); S51 lists the holders, and no Capacitor work is needed for the web app.
-8. R130 writes `± σ (k = 1)`. Change it to "standard uncertainty (σ)". Recommended: GUM 7.2.2 NOTE warns that "k = 1" misreads.
+8. **Yes (2026-11-12).** R130 writes `± σ (k = 1)`. Change it to "standard uncertainty (σ)". Recommended: GUM 7.2.2 NOTE warns that "k = 1" misreads.
 
 **Not verified:**
 - Which constants have no basis (the index is build output).
@@ -188,12 +176,12 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 - **RPN** (only after decision 1 is yes): "N62 has no RPN today: entry is textbook or one-line. It is planned for after 0.1.0, with no date; the stack design is written, nothing is built. If you want it, tell me what you would need from it (stack depth, how the keys behave), since the view and part of the key behaviour are still open."
 - **Programs:** "No program editor on the device and no PPL: programs are Giac definitions, written on a laptop or typed one line at a time."
 - **The chain:** "N62 gives 9 for arcsin(arccos(arctan(tan(cos(sin(9)))))) in DEG, exactly, at 12, 15 and 30 digits. It cancels symbolically, with branches picked by Giac's numeric reduction, so this is not a float chain that lands on 9." (`approx()` of it shows 9 with ≈; its 40-digit working value 8.999… is internal, never shown or copied.)
-- **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 37 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Thirty-six have gone to its author, who wrote on 8 Nov that his updated source archive 'should be synchronized' with them. One is not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
+- **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 48 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Thirty-six have gone to its author, who wrote on 8 Nov that his updated source archive 'should be synchronized' with them. One is not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
 
-Counts (must match section A): 37 patches; 36 sent (0001-0002, 0003-0012, and 0013-0036 on 2026-11-08); 1 not sent (0037). Attach a primary source for "also built on" when posting; the repo has a Wikipedia citation only.
+Counts (must match section A): 48 patches; 36 sent (0001-0002, 0003-0012, and 0013-0036 on 2026-11-08); 12 not sent (0037–0048). Attach a primary source for "also built on" when posting; the repo has a Wikipedia citation only.
 
 **Order:**
-- v0.1.0, before the 11-12 freeze: G300, G301. If G301 misses it: F196 joins the known limits and G301 runs in the 11-16/17 room, before the post.
+- v0.1.0: G300 and G301 merged (`782b641c`, `cac10d87`).
 - v1, after section C's order and the owner's yes: R250, R251, R252, R253, the owner's Virtual Calculator session, R254, G302; then the stub.
 
 **Open bugs:** F196: CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)` draws π/(6·π/180), the chain `180/20*pi/pi`); value right, form wrong. Reach: every exact inverse trig constant in CAS DEG. G301; a free name (`…+x`) and Home's same display stay open.
@@ -205,7 +193,7 @@ Counts (must match section A): 37 patches; 36 sent (0001-0002, 0003-0012, and 00
 4. The swap key (▶ is also a trackpad step, each 12 px of drag fires it), ▲/▼ and `frac` on an empty line: decide after the session, with the view.
 5. No program editor on the device: confirm, no package.
 6. The chain in the golden set, not in the core list: yes; the golden gate re-runs it whenever engine or parser code changes; the core list is everyday tasks.
-7. Patch 0037 is left for a later mail; refresh the counts on the day of the post (section A, item 2). Nothing to decide.
+7. Patches 0037–0048 are left for a later mail; refresh the counts on the day of the post (section A, item 2). Nothing to decide.
 8. Replace "Same CAS as the Prime" with the wording above, here and in `../outreach/reddit-post.md:23`: yes; the repo cannot prove "same".
 
 **Not verified:**
@@ -217,7 +205,7 @@ Counts (must match section A): 37 patches; 36 sent (0001-0002, 0003-0012, and 00
 
 ## E. Later, only if users ask
 
-Parked: no packages, no ids; days are rough. docs/02:68-69 and backlog:101 list most of these items (not sync step 3, QR, DMS or the second keypad), but P8 deferred them; docs/03:19 (rule 5) decides. The app has no analytics (rules-core:29), so "3 reports" means 3 GitHub issues from different people.
+Parked: no packages, no ids; days are rough. docs/02:68-69 and the backlog's "Without a package yet" list most of these items (not sync step 3, QR, DMS or the second keypad), but P8 deferred them; docs/03:19 (rule 5) decides. The app has no analytics (rules-core:29), so "3 reports" means 3 GitHub issues from different people.
 
 **mh-E1 Sync step 3.** Android port `clipboard/folder.ts` has no caller, answers "unavailable" on the web; no session format. 4-6 d (web port, read-only view with marks, merging device files). Needs B session format and sync folder. No blocker. Trigger: 3 reports wanting results on a laptop without Jupyter.
 

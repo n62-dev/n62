@@ -1,0 +1,28 @@
+instantiate 38 ms, init 10 ms
+"solve(x^3-3*x+2+10^-80=0,x)" => GIAC_ERROR: Proot error : no root found for [1.0,infinity,infinity,infinity] Error: Bad Argument Value (58.4 ms)
+"evalf(solve(x^3-3*x+2+10^-80=0,x))" => GIAC_ERROR: Proot error : no root found for [1.0,infinity,infinity,infinity] Error: Bad Argument Value (25.0 ms)
+"Digits:=40" => 40 (0.2 ms)
+"solve(x^2-2*x+1+10^-79=0,x)" => [] (0.4 ms)
+"solve(x^3-3*x+2+10^-80=0,x)" => list[1/108000000000000000000000000000000000000000000000000000000000000000000000000000000540000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+"evalf(solve(x^3-3*x+2+10^-80=0,x))" => list[-2.00000000000000000000000000000000000000,0.999999999999999999988239522834962869373,1.00000000000000000001176047716503713063] (294.9 ms)
+"size(solve(x^3-3*x+2+10^-80=0,x))" => 3 (253.3 ms)
+"Digits:=30" => 30 (0.2 ms)
+"solve(x^2-2*x+1+10^-59=0,x)" => [] (0.3 ms)
+"size(solve(x^3-3*x+2+10^-60=0,x))" => 3 (33.1 ms)
+"Digits:=12" => 12 (0.1 ms)
+wasm://wasm/025725a2:1
+
+
+RuntimeError: unreachable
+    at wasm://wasm/025725a2:wasm-function[11498]:0x7dec52
+    at abort (file://<checkout>/engine/giac/_out/gsl/giac.mjs:1:2974)
+    at __abort_js (file://<checkout>/engine/giac/_out/gsl/giac.mjs:1:56845)
+    at wasm://wasm/025725a2:wasm-function[1496]:0x101c49
+    at wasm://wasm/025725a2:wasm-function[194]:0x1ee38
+    at wasm://wasm/025725a2:wasm-function[202]:0x1f2db
+    at wasm://wasm/025725a2:wasm-function[998]:0x95b03
+    at wasm://wasm/025725a2:wasm-function[5104]:0x3b294f
+    at wasm://wasm/025725a2:wasm-function[264]:0x2f820
+    at wasm://wasm/025725a2:wasm-function[2566]:0x1be4bf
+
+Node.js v22.23.2

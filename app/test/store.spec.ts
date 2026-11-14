@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R281 (sd-3, docs/research/store-design.md design A; mockup docs/mockups/store-2026-11.html): Store ▶ puts `value ▶` on
+// R281 (sd-3, docs/archive/store-design.md design A; mockup docs/mockups/store-2026-11.html): Store ▶ puts `value ▶` on
 // the line and opens "Store in": the title shows the value with its mark, the letters A–Z with their values, then the
 // other names. A tap on a free letter stores (the name and Enter: a history row); a tap on a filled one arms it and the
 // second tap stores; any other press disarms. Typed letters (digits after a letter too) and Enter store the typed name;

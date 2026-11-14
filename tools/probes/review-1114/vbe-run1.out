@@ -1,0 +1,78 @@
+== engine build: Fri Nov 13 17:08:54 CET 2026
+== oracle
+sin(1)^5000 1.56938e-375
+(1+sin(1)^5000)^(sin(1)^-5000) 2.71828182845905
+ln2^500 2.58661e-80 (1+ln2^500)^(ln2^-500) 2.71828182845905
+(1+euler^5000)^(euler^-5000) 2.71828182845905
+1/(1-tanh(50)) 1.34405857090807e+43
+ln(1-tanh(50)) -99.3068528194401
+ln((tanh(100)-1)^2) -398.61370563888
+tanh(100)-1 -2.76779305347348e-87
+sin(10^70)*10^12 -148099131371.55038884 ceil -148099131371.0 floor -148099131372.0
+== parse
+"0B101" => "0*B*101"
+"0XFF" => "0*X*F*F"
+"0O17" => "0*O*17"
+"0b101" => "5"
+"0xFF" => "255"
+"B\\cdot101" => "B*101"
+== base
+value -1, word 8 signed: shown "0xFF"; parser reads it as 255
+value -128, word 8 signed: shown "0x80"; parser reads it as 128
+value 127, word 8 signed: shown "0x7F"; parser reads it as 127
+value 255, word 8 signed: shown {"error":"wordTooSmall"}; parser reads it as (error)
+== be-1 home
+"0*B*101" => 0 | mark = | exact true digits null warn -
+"B*101" => B*101 | mark (no value) | exact false digits null warn -
+"0*X*F*F" => 0 | mark = | exact true digits null warn -
+== be-2 session with linreg
+"L:=approx([1/10,1/10,1/10])" => [0.1,0.1,0.1] | mark (no value) | exact false digits 38 warn -
+   item 0: 0.1 mark ≈ exact false digits 38 warn -
+   item 1: 0.1 mark ≈ exact false digits 38 warn -
+   item 2: 0.1 mark ≈ exact false digits 38 warn -
+"linreg(L,[1,2,3])" => [0,2,0] | mark (no value) | exact false digits 38 warn unchecked
+   item 0: 0 mark ⚠ exact false digits 38 warn unchecked
+   item 1: 2 mark ⚠ exact false digits 38 warn unchecked
+   item 2: 0 mark ⚠ exact false digits 38 warn unchecked
+"stats1(L)" => [3,0.1,9.86076131526E-32*i,8.05127789926E-32*i,0.1,0.1] | mark (no value) | exact false digits 38 warn -
+   item 0: 3 mark ≈ exact false digits 38 warn -
+   item 1: 0.1 mark ≈ exact false digits 38 warn -
+   item 2: 9.86076131526E-32*i mark ≈ exact false digits 38 warn -
+   item 3: 8.05127789926E-32*i mark ≈ exact false digits 38 warn -
+   item 4: 0.1 mark ≈ exact false digits 38 warn -
+   item 5: 0.1 mark ≈ exact false digits 38 warn -
+"stddev(L)" => 8E-32*i | mark ⚠ | exact false digits 0 warn unaudited
+"variance(L)" => -1E-62 | mark ⚠ | exact false digits 0 warn unaudited
+== be-2 session without linreg
+"L:=approx([1/10,1/10,1/10])" => [0.1,0.1,0.1] | mark (no value) | exact false digits 38 warn -
+   item 0: 0.1 mark ≈ exact false digits 38 warn -
+   item 1: 0.1 mark ≈ exact false digits 38 warn -
+   item 2: 0.1 mark ≈ exact false digits 38 warn -
+"stats1(L)" => [3,0.1,1E-31*i,8E-32*i,0.1,0.1] | mark (no value) | exact false digits 0 warn -
+   item 0: 3 mark ≈ exact false digits 38 warn -
+   item 1: 0.1 mark ≈ exact false digits 37 warn -
+   item 2: 1E-31*i mark ⚠ exact false digits 0 warn -
+   item 3: 8E-32*i mark ⚠ exact false digits 0 warn -
+   item 4: 0.1 mark ≈ exact false digits 37 warn -
+   item 5: 0.1 mark ≈ exact false digits 37 warn -
+"M:=[1/10,1/10,1/10]" => [0.1,0.1,0.1] | mark (no value) | exact true digits null warn -
+   item 0: 0.1 mark = exact true digits null warn -
+   item 1: 0.1 mark = exact true digits null warn -
+   item 2: 0.1 mark = exact true digits null warn -
+"linreg(M,[1,2,3])" => refused: The x values are all equal | mark (no value) | exact false digits null warn -
+== be-3
+"(1+sin(1)^5000)^(sin(1)^(-5000))" => 1 | mark ≈ | exact false digits 38 warn -
+"(1+ln(2)^500)^(ln(2)^(-500))" => 1 | mark ≈ | exact false digits 38 warn -
+== be-4
+"1/(1-tanh(50))" => refused: Overflow: the number is too large | mark (no value) | exact false digits null warn -
+"ln(1-tanh(50))" => refused: Overflow: the number is too large | mark (no value) | exact false digits null warn -
+"ln((tanh(100)-1)^2)" => refused: Overflow: the number is too large | mark (no value) | exact false digits null warn -
+"tanh(100)-1" => -2.76779305347E-87 | mark ≈ | exact false digits 33 warn -
+== be-6
+"limit(iPart(x),x,1,-1)" => 1 | mark ⚠ | exact false digits 12 warn unaudited
+"limit(iPart(x),x,1,1)" => 1 | mark ⚠ | exact false digits 12 warn unaudited
+"limit(floor(x),x,1,-1)" => 0 | mark = | exact true digits null warn -
+== be-7
+"ceiling(sin(10^70)*10^12)" => 387557674395 | mark = | exact true digits null warn -
+"ceil(sin(10^70)*10^12)" => -148099131371 | mark = | exact true digits null warn -
+== done

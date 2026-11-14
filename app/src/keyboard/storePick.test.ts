@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R280 (sd-2, docs/research/store-design.md section 5): with a history row picked, Store ▶ (Shift + ᴇ, or its flick up)
+// R280 (sd-2, docs/archive/store-design.md section 5): with a history row picked, Store ▶ (Shift + ᴇ, or its flick up)
 // stores that row as the row bar's Store ▶ does (ClipActions.storeRow: its chip and ▶), not Ans, and the pick ends.
 // Without a pick it is unchanged: Ans ▶ on an empty line (docs/04 2.8). The real route.press, a stub context.
 import { describe, expect, test } from "vitest";
