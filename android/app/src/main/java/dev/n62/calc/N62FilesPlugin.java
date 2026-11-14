@@ -164,7 +164,7 @@ public class N62FilesPlugin extends Plugin {
             }
             try (OutputStream out = cr.openOutputStream(doc, "wt")) {
                 if (out == null) throw new IOException("no output stream for " + name);
-                out.write(text.getBytes(StandardCharsets.UTF_8));
+                writeBytes(out, text.getBytes(StandardCharsets.UTF_8), call);
             }
         } catch (SecurityException | IllegalArgumentException e) {
             // revoked or gone between the check and the write
@@ -286,6 +286,96 @@ public class N62FilesPlugin extends Plugin {
             return;
         }
         call.resolve(new JSObject().put("result", "ok").put("files", files));
+    }
+
+    /**
+     * The test build's seams (A137; BuildConfig.TEST_SEAMS, build.sh --test only; every other build writes the bytes whole):
+     * failAfter n writes the first n bytes, then throws an IOException (a full disk, a provider error); stallAfter n writes
+     * the first n bytes and waits 20 s before the rest, so app/test-device/folder.rec.ts can kill the app mid-write.
+     */
+    private static void writeBytes(OutputStream out, byte[] bytes, PluginCall call) throws IOException {
+        int failAfter = BuildConfig.TEST_SEAMS ? call.getInt("failAfter", -1) : -1;
+        int stallAfter = BuildConfig.TEST_SEAMS ? call.getInt("stallAfter", -1) : -1;
+        if (failAfter < 0 && stallAfter < 0) {
+            out.write(bytes);
+            return;
+        }
+        int end = failAfter >= 0 ? Math.min(failAfter, bytes.length) : bytes.length;
+        int stall = stallAfter >= 0 ? Math.min(stallAfter, end) : end;
+        out.write(bytes, 0, stall);
+        out.flush();
+        if (stallAfter >= 0) {
+            try {
+                Thread.sleep(20_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        out.write(bytes, stall, end - stall);
+        out.flush();
+        if (failAfter >= 0) throw new IOException("test seam: failed after " + end + " bytes");
+    }
+
+    /**
+     * A137 step 1, test build only, thrown away after the probe: what the folder's provider does with renameDocument onto
+     * an existing name, and with a dot name made by createDocument (kept? listed?). Leaves no file behind.
+     */
+    @PluginMethod
+    public void probeRename(PluginCall call) {
+        Uri tree = usableTree();
+        if (!BuildConfig.TEST_SEAMS || tree == null) {
+            unavailable(call);
+            return;
+        }
+        ContentResolver cr = getContext().getContentResolver();
+        JSObject out = new JSObject().put("result", "ok").put("authority", tree.getAuthority());
+        try {
+            Uri a = DocumentsContract.createDocument(cr, rootDoc(tree), "text/plain", "probe-a.txt");
+            Uri b = DocumentsContract.createDocument(cr, rootDoc(tree), "text/plain", "probe-b.txt");
+            try (OutputStream o = cr.openOutputStream(a, "wt")) { o.write("A".getBytes(StandardCharsets.UTF_8)); }
+            try (OutputStream o = cr.openOutputStream(b, "wt")) { o.write("B".getBytes(StandardCharsets.UTF_8)); }
+            Uri r;
+            try {
+                r = DocumentsContract.renameDocument(cr, b, "probe-a.txt");
+                out.put("renameOntoExisting", r != null ? displayNameOf(r) : "null");
+            } catch (RuntimeException | java.io.FileNotFoundException e) {
+                out.put("renameOntoExisting", "threw " + e);
+            }
+            Uri dot = DocumentsContract.createDocument(cr, rootDoc(tree), "application/octet-stream", ".n62-new~probe-c.json");
+            out.put("dotCreated", dot != null ? displayNameOf(dot) : "null");
+            out.put("listedAfterCreate", namesIn(tree));
+            if (dot != null) {
+                Uri c = DocumentsContract.renameDocument(cr, dot, "probe-c.json");
+                out.put("dotRenamed", c != null ? displayNameOf(c) : "null");
+            }
+            out.put("listedAfterRename", namesIn(tree));
+            for (String n : new String[] {"probe-a.txt", "probe-b.txt", "probe-a (1).txt", "probe-c.json", ".n62-new~probe-c.json"}) {
+                Uri d = child(tree, n);
+                if (d != null) DocumentsContract.deleteDocument(cr, d);
+            }
+            out.put("listedAfterDelete", namesIn(tree));
+        } catch (IOException | RuntimeException e) {
+            out.put("error", String.valueOf(e));
+        }
+        call.resolve(out);
+    }
+
+    private String displayNameOf(Uri doc) {
+        String[] cols = {DocumentsContract.Document.COLUMN_DISPLAY_NAME};
+        try (Cursor c = getContext().getContentResolver().query(doc, cols, null, null, null)) {
+            return c != null && c.moveToFirst() ? c.getString(0) : "?";
+        } catch (RuntimeException e) {
+            return "? " + e;
+        }
+    }
+
+    private JSArray namesIn(Uri tree) {
+        JSArray names = new JSArray();
+        String[] cols = {DocumentsContract.Document.COLUMN_DISPLAY_NAME};
+        try (Cursor c = getContext().getContentResolver().query(children(tree), cols, null, null, null)) {
+            while (c != null && c.moveToNext()) names.put(c.getString(0));
+        }
+        return names;
     }
 
     // ---- helpers ----

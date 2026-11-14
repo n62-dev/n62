@@ -9,6 +9,11 @@
 //   tools/devlock.sh acquire HA24BZ2Y <name> 1800 && (cd app && npx playwright test -c playwright.folder.config.ts);
 //   tools/devlock.sh release HA24BZ2Y <name>
 // It clears our app's data first (pm clear) and removes its test folder at the end. Prints one "A65 ..." line per step.
+// A137: write() replaces a file whole. With the test build's seams (failAfter: an I/O error after n bytes; stallAfter: a
+// 20 s pause after n bytes) and kills (am force-stop) at a sweep of times into a 2 MB write, the file under its real name
+// is always the old text or the new one, never a cut file; a missing file (the kill between the two renames) is put back
+// by the next read; the staged names (.n62-new~, .n62-old~) are never listed and never left behind.
+import { createHash } from "node:crypto";
 import { _android as android, expect, test, type AndroidDevice, type Page } from "@playwright/test";
 
 const PKG = "dev.n62.calc"; // our app only (docs/shifts/rules.md section 3)
@@ -75,7 +80,7 @@ test.afterAll(async () => {
 });
 
 test("A65 sync folder on the device", async () => {
-  test.setTimeout(300_000);
+  test.setTimeout(900_000);
   log(`device ${device.serial()} ${device.model()}; ${(await device.shell("getprop ro.build.version.release")).toString().trim()}`);
   await device.shell(`rm -rf ${PATH}; mkdir -p ${PATH}`);
   await device.shell(`pm clear ${PKG}`);
@@ -176,6 +181,9 @@ test("A65 sync folder on the device", async () => {
   expect(ms.same).toBe(true);
   log(`2 MB write (${ms.bytes} bytes): median ${(sorted[2] ?? 0).toFixed(0)} ms of 5 [${ms.out.map((x) => x.toFixed(0)).join(", ")}]; read back equal`);
 
+  await a137(page);
+  page = await launch();
+
   // the folder removed: unavailable, never a throw
   await device.shell(`rm -rf ${PATH}`);
   const gone: { folder: Answer; write: Answer; append: Answer; read: Answer; list: Answer } = {
@@ -198,3 +206,88 @@ test("A65 sync folder on the device", async () => {
   expect(await call(page, "folder")).toEqual({ result: "unavailable" });
   log("forget: folder unavailable");
 });
+
+const md5 = (t: string): string => createHash("md5").update(t, "utf8").digest("hex");
+/** The device's md5 of the file, or "missing". */
+async function shellMd5(name: string): Promise<string> {
+  const out = (await device.shell(`[ -f ${PATH}/${name} ] && md5sum ${PATH}/${name} || echo missing`)).toString().trim();
+  return out.split(/\s+/)[0] ?? "missing";
+}
+/** Every name in the folder that is not one of `keep`, the hidden ones included (the staged names, a "(1)" copy). */
+async function strays(keep: string[]): Promise<string[]> {
+  const all = (await device.shell(`ls -1a ${PATH}`)).toString().split("\n").map((x) => x.trim());
+  return all.filter((x) => x !== "" && x !== "." && x !== ".." && !keep.includes(x));
+}
+function log137(s: string): void {
+  console.log(`A137 ${s}`);
+}
+
+async function a137(start: Page): Promise<void> {
+  let page = start;
+  const probe = await call(page, "probeRename").catch((e: Error) => ({ result: `rejected: ${e.message}` }));
+  log137(`step 1 probe: ${JSON.stringify(probe)}`);
+  await device.shell(`rm -f ${PATH}/big.json ${PATH}/n62-backup-2026-11-07.json ${PATH}/from-outside.json; rm -rf ${PATH}/sub`);
+  const keep = ["n62-test.txt", "n62-keep.json"];
+
+  // an I/O error after 10 bytes of the new text: the old text stays whole under the real name
+  const old = `{"old":"${"o".repeat(200)}"}`;
+  expect(await call(page, "write", { name: "n62-keep.json", text: old })).toEqual({ result: "written" });
+  const failed = await call(page, "write", { name: "n62-keep.json", text: `{"new":"${"n".repeat(300)}"}`, failAfter: 10 })
+    .catch((e: Error) => ({ result: `rejected: ${e.message}` }));
+  const afterFail = (await device.shell(`cat ${PATH}/n62-keep.json`)).toString();
+  log137(`failAfter 10: write ${JSON.stringify(failed)}; the file holds ${afterFail.length} bytes (old ${old.length}); strays ${JSON.stringify(await strays(keep))}`);
+  expect.soft(String(failed.result)).toMatch(/^rejected: .*test seam/);
+  expect.soft(afterFail).toBe(old);
+  expect.soft(await call(page, "read", { name: "n62-keep.json" })).toEqual({ result: "ok", text: old });
+  expect.soft(await strays(keep)).toEqual([]);
+
+  // a 2 MB file; the app killed 20 s into a stalled write after 1 MB: the old text stays whole
+  const bigOld = `{"x":"${"é∑abcdef".repeat(200_000)}"}`;
+  const bigNew = `{"y":"${"ghijk∑é".repeat(200_000)}"}`;
+  const known: Record<string, string> = { [md5(bigOld)]: "old", [md5(bigNew)]: "new", missing: "missing" };
+  const fire = async (p: Page, text: string, extra: object): Promise<void> => {
+    await p.evaluate(([t, x]) => {
+      const w = window as unknown as { __w: unknown; Capacitor: { nativePromise(p: string, m: string, o: object): Promise<Answer> } };
+      w.__w = w.Capacitor.nativePromise("N62Files", "write", { name: "n62-big.json", text: t, ...(x as object) }).catch(() => undefined);
+    }, [text, extra] as const);
+  };
+  const keepBig = [...keep, "n62-big.json"];
+  expect(await call(page, "write", { name: "n62-big.json", text: bigOld })).toEqual({ result: "written" });
+  await fire(page, bigNew, { stallAfter: 1_000_000 });
+  await new Promise((r) => setTimeout(r, 3000));
+  const midStall = await device.shell(`ls -1a ${PATH}`);
+  await device.shell(`am force-stop ${PKG}`);
+  const stalled = known[await shellMd5("n62-big.json")] ?? "cut";
+  log137(`killed 3 s into a write stalled after 1 MB: the file is ${stalled}; the folder held ${JSON.stringify(midStall.toString().trim().split("\n"))}`);
+  expect.soft(stalled).toBe("old");
+  page = await launch();
+  const reread = await call(page, "read", { name: "n62-big.json" });
+  expect.soft(reread.text === bigOld).toBe(true);
+  const listedNames = ((await call(page, "list")).files as { name: string }[]).map((f) => f.name).sort();
+  log137(`after restart: read gives the old text ${reread.text === bigOld}; list ${JSON.stringify(listedNames)}; strays ${JSON.stringify(await strays(keepBig))}`);
+  expect.soft(listedNames).toEqual([...keepBig].sort());
+  expect.soft(await strays(keepBig)).toEqual([]);
+
+  // kills at a sweep of times into a plain 2 MB write (no seam): old or new, never cut; a missing file is put back by read
+  const seen: string[] = [];
+  let text = bigOld;
+  for (const ms of [0, 25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 400]) {
+    const next = text === bigOld ? bigNew : bigOld;
+    await fire(page, next, {});
+    await new Promise((r) => setTimeout(r, ms));
+    await device.shell(`am force-stop ${PKG}`);
+    const now = known[await shellMd5("n62-big.json")] ?? "cut";
+    page = await launch();
+    const r = await call(page, "read", { name: "n62-big.json" });
+    const after = r.text === bigOld ? "old" : r.text === bigNew ? "new" : `cut (${String(r.result)})`;
+    const left = await strays(keepBig);
+    seen.push(`${ms} ms: ${now} → ${after}${left.length ? ` strays ${JSON.stringify(left)}` : ""}`);
+    expect.soft(["old", "new", "missing"]).toContain(now);
+    expect.soft(["old", "new"]).toContain(after);
+    expect.soft(left).toEqual([]);
+    text = r.text === bigNew ? bigNew : bigOld;
+  }
+  // "old"/"new" name the two texts (the sweep writes them in turn), not the text before each kill
+  log137(`kill sweep (file right after the kill → after restart and read): ${seen.join("; ")}`);
+  await device.shell(`rm -f ${PATH}/n62-keep.json ${PATH}/n62-big.json`);
+}

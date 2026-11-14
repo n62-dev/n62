@@ -15,6 +15,9 @@ android {
         versionNameSuffix = (System.getenv('N62_MEASURE') == '1') ? "-measure" : ""
         // Measurement builds (N62_MEASURE=1) log timing marks to logcat; normal builds never do.
         buildConfigField "boolean", "MEASURE", (System.getenv('N62_MEASURE') == '1') ? "true" : "false"
+        // The device test build (build.sh --test, N62_WEBVIEW_DEBUG=1; A32) only: N62Files honours the test seams of A137
+        // (failAfter, stallAfter); every other build ignores them.
+        buildConfigField "boolean", "TEST_SEAMS", (System.getenv('N62_WEBVIEW_DEBUG') == '1') ? "true" : "false"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
