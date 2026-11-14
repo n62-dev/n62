@@ -15,6 +15,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **S50's G2 column** ([benchmark-protocol.md](research/benchmark-protocol.md) section 7): recommended, your own G2 (`source: device`), presses and seconds: it gives seconds and no licence question. Or the Virtual Calculator, presses only, if its licence allows publishing (not verified). Would change if: no G2 at hand.
 
+**R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
+
 ## Decided proposals
 
 ### Pipeline and process
@@ -182,6 +184,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 - **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Archived, "Opus pass 122". **G328 (pass 153):** a name set beside the result takes the facts of what sets it; after a decision on the line, the line's (G48).
 - **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
+- **t06 and Find (Opus pass 182, R221):** "es" ranks the unit statC (a shorter name) above eseries, as docs/04 3.5 orders prefixes; the ranking stays, and t06's budget (plan 12, today 13) is agreed with the owner when it goes active.
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Archived, "Opus pass 97".
 - **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads. A result with no list and no dimension error is not walked (pass 123): `col(idn(2),0)*col(zeros(3,3),0)` stays 0 with ⚠. `dot` conjugates its first vector (G227).
 - **Our Giac text binds only `pas…_` names (pass 123; G303, F205):** no user can type one; a free name in a cdf or icdf call gives no number, the inverse ones too (G221f1). Would change if: the parser takes a trailing `_`.
