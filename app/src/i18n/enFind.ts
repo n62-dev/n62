@@ -27,6 +27,8 @@ export const enFind = {
   "matrix.newLater": "Not yet: a new matrix comes in a later version",
   "matrix.unread": "This matrix could not be read",
   "matrix.oneValue": "A cell holds one value",
+  "matrix.noStore": "A cell cannot store or purge a name",
+  "matrix.notKept": "This matrix holds an element the line cannot write back",
   "vars.title": "Vars",
   "vars.free": "{name} is free; a tap puts it on the line",
   "memory.title": "Memory",

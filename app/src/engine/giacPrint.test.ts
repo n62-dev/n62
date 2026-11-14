@@ -22,6 +22,7 @@ import {
   splitList,
   typedFromPrinted,
   typedSequence,
+  numberLatex,
   stringEnd,
   topLevelArgs,
   UNCLOSED,
@@ -62,6 +63,12 @@ describe("brackets", () => {
     expect(noneOpen("x)", "typed")).toBe(true);
     expect(noneOpen("f(x", "typed")).toBe(false);
   });
+  it("numberLatex: a printed number as the line types it (R189); anything else null", () => {
+    expect(["-3", "7", "-9/2", "1/3", "0.5", "-4.5", "0.15e-19", "1.5E+20", "x", "2+3*i", "sqrt(2)", "1/x"].map(numberLatex)).toEqual([
+      "-3", "7", "-\\frac{9}{2}", "\\frac{1}{3}", "0.5", "-4.5", "0.15\\emark-19", "1.5\\emark20", null, null, null, null,
+    ]);
+  });
+
   it("typedSequence: a comma outside brackets or in bare parentheses only, never in a string or a call (R189)", () => {
     expect(typedSequence("(1,2)")).toBe(true);
     expect(typedSequence("((1,2))")).toBe(true);

@@ -99,15 +99,27 @@ describe("the matrix grid (R188)", () => {
   });
 });
 
-// R189: a cell is edited on the entry line and written back with `M:=[[…]]` through the session's store path; the other
-// elements as the log types them (the bridge's `typed`, engine/matrixRead.ts). Expected texts by hand.
+// R189: a cell is edited on the entry line and written back through the session's normal path as the line
+// `M:=\begin{pmatrix}…\end{pmatrix}` (fix round 2): the typed cell as typed, the other elements as the bridge's LaTeX
+// (engine/matrixRead.ts ElementTex, a float in approx()), the parser's store checked by the worker first (here a stand-in
+// that answers as told). Expected texts by hand.
 describe("the matrix grid's cell edit (R189)", () => {
   const key = (id: string) => keyboard.byId.get(id) ?? (() => { throw new Error(`no key ${id}`); })();
   const homeM = (): Promise<HomeOutcome> =>
     Promise.resolve({ ok: true, display: "", approximate: false, facts: { exact: true, reliableDigits: null }, full: "", shape: [2, 2], items: [exact(real(1n)), exact(real(2n)), exact(real(3n)), exact(real(4n))] });
-  const typed = (cells: true | "typed"): Promise<MatrixRead> =>
-    Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: ["1", "2", "3", "evalf(1/10,15)"] } : { name: "M", rows: 2, cols: 2 });
+  const TYPED = ["1", "2", "3", "evalf(1/10,15)"];
+  /** The worker's answer to a check (`candidate`): by default a matrix of the same size whose other elements are as they were. */
+  let answer: MatrixRead["candidate"];
+  const checks: string[] = [];
+  const typed = (cells: true | "typed", check?: string): Promise<MatrixRead> => {
+    if (check !== undefined) checks.push(check);
+    const candidate = answer ?? { ok: true as const, typed: ["1", "2", "?", TYPED[3] as string] };
+    const latex = [{ tex: "1" }, { tex: "2" }, { tex: "3" }, { tex: "0.1", float: true as const }];
+    return Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: TYPED, latex, ...(check === undefined ? {} : { candidate }) } : { name: "M", rows: 2, cols: 2 });
+  };
   async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; sent: string[] }> {
+    answer = undefined;
+    checks.length = 0;
     const sent: string[] = [];
     const entry = { value: "7", chips: {}, clear: () => void (entry.value = ""), set: (l: string) => void (entry.value = l) };
     const session = { shift: false, alpha: false, userNames: [], submit: (l: string, g?: string) => (sent.push(`${l} | ${g ?? ""}`), Promise.resolve()) };
@@ -134,7 +146,9 @@ describe("the matrix grid's cell edit (R189)", () => {
     expect(g.key(line, key("math"), undefined)).toBe(true); // a key that opens a sheet does nothing during the edit
     expect(g.key(line, key("enter"), undefined)).toBe(true);
     await g.loading();
-    expect(sent).toEqual(["M:=[[1,2],[9,evalf(1/10,15)]] | M:=[[1,2],[9,evalf(1/10,15)]]"]);
+    // the row is LaTeX the line reads back (no override: the session parses it, as a recall does)
+    expect(sent).toEqual(["M:=\\begin{pmatrix}1&2\\\\9&\\operatorname{approx}\\left(0.1\\right)\\end{pmatrix} | "]);
+    expect(checks).toEqual(["M:=[[1,2],[9,approx(0.1)]]"]); // the parser's store, checked before it was sent
     expect(g.editing).toBeNull();
     expect(entry.value).toBe("7");
   });
@@ -163,7 +177,24 @@ describe("the matrix grid's cell edit (R189)", () => {
     g.key(line, key("enter"), undefined);
     await g.loading();
     expect([g.refusal, sent.length]).toEqual([null, 1]);
-    expect(sent[0]).toMatch(/^M:=\[\[1,2\],\[max\(1,2\),evalf\(1\/10,15\)\]\] \| /);
+    expect(sent[0]).toContain("\\\\\\operatorname{max}\\left(1,2\\right)&");
+    expect(checks).toEqual(["M:=[[1,2],[max(1,2),approx(0.1)]]"]);
+  });
+
+  it("the worker's refusals: not a matrix of this size, a store in the cell, another element changed; nothing is sent", async () => {
+    for (const [a, why] of [
+      [{ ok: false, why: "shape" }, "matrix.oneValue"],
+      [{ ok: false, why: "store" }, "matrix.noStore"],
+      [{ ok: true, typed: ["1", "5", "9", "evalf(1/10,15)"] }, "matrix.notKept"],
+    ] as const) {
+      const { g, line, entry, sent } = await at21();
+      answer = a;
+      g.key(line, key("d9"), undefined);
+      entry.value = "9";
+      g.key(line, key("enter"), undefined);
+      await g.loading();
+      expect([g.refusal, sent, g.editing]).toEqual([findText(why), [], { row: 1, col: 0 }]);
+    }
   });
 
   it("Enter on an empty line ends the edit and keeps the old value", async () => {

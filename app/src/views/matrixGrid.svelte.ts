@@ -6,10 +6,12 @@
 // highlight and stop at the edges; Esc goes back to the list (views/sheet.svelte.ts). Its view, MatrixGrid.svelte, is a
 // chunk of its own, loaded when a grid opens.
 // R189 (docs/04 5.3): a key that types starts the highlighted cell's edit on the entry line (the line that was there is
-// kept and comes back when the edit ends); Enter reads the typed cell through the parser and stores `M:=[[…]]` through
-// the session's normal path (one history row; the definitions log keeps it), every other element as the log types a
-// stored value (engine/matrixRead.ts typed), then reads the grid again. A refusal of the parser shows under the grid and
-// sends nothing; Esc ends the edit and the old value stays.
+// kept and comes back when the edit ends); Enter writes the line `M:=\begin{pmatrix}…\end{pmatrix}`, the typed cell as
+// typed and every other element as LaTeX the line reads back (engine/matrixRead.ts ElementTex), and sends it through the
+// session's normal path (one history row, which a recall evaluates the same; the definitions log keeps the store), then
+// reads the grid again. Before that the worker checks the parser's store (matrixRead.ts checkStore): a matrix of the
+// same size, no other store, every other element as it was. A refusal shows under the grid and sends nothing; Esc ends
+// the edit and the old value stays.
 import type { Component } from "svelte";
 import type { AppHost } from "../apps/types.ts";
 import { engineFormat, type HomeOutcome } from "../calc/port.ts";
@@ -23,7 +25,7 @@ import type { Session } from "../state/session.svelte.ts";
 import { confirmedOptions, formatComplex, markOf, type ComplexValue, type FormatOptions } from "../engine/format.ts";
 import type { ValueFacts } from "../engine/types.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
-import type { MatrixCell, MatrixRead } from "../calc/matrices.ts";
+import type { ElementTex, MatrixCell, MatrixRead } from "../calc/matrices.ts";
 import { typedSequence } from "../engine/giacPrint.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
@@ -41,6 +43,11 @@ export interface CellLine {
   readonly entry: Pick<EntryController, "value" | "chips" | "clear" | "set">;
   readonly session: Pick<Session, "shift" | "alpha" | "userNames" | "submit">;
 }
+/** R189: the matrix through the bridge: `cells` true its elements, "typed" its elements as typed text and LaTeX, with
+ *  `check` the grid's store checked too (engine/matrixRead.ts); null when the name holds no matrix. */
+export type ReadElements = (cells: true | "typed", check?: string) => Promise<MatrixRead | null>;
+/** The render/tidy.ts function that the elements Giac wrote as LaTeX go through (as a CAS result does). */
+type Tidy = (raw: string) => string;
 /** The keys that keep the grid's own job when no cell is edited: ▲ ▼ ◀ ▶ move, Esc goes back (⌫ and Enter do nothing). */
 const GRID_KEYS: readonly string[] = ["up", "down", "left", "right", "enter", "esc", "bksp"];
 /** While a cell is edited, the specials that act on the line; any other (a sheet, a place, Format, units) does nothing,
@@ -60,7 +67,7 @@ export class MatrixGrid {
   C = $state.raw<Component<{ grid: MatrixGrid }> | null>(null);
   readonly settings: () => Settings;
   private readonly home: () => Promise<HomeOutcome>;
-  private readonly elements: (cells: true | "typed") => Promise<MatrixRead | null>;
+  private readonly elements: ReadElements;
   private pending: Promise<void> | null = null;
   /** R189: the cell edited on the entry line, else null. */
   editing = $state.raw<{ readonly row: number; readonly col: number } | null>(null);
@@ -71,7 +78,7 @@ export class MatrixGrid {
 
   /** `home`: the name through Home's path; `elements`: its size and elements through the bridge (a matrix of symbols),
    *  null when it holds no matrix. */
-  constructor(name: string, settings: () => Settings, home: () => Promise<HomeOutcome>, elements: (cells: true | "typed") => Promise<MatrixRead | null>) {
+  constructor(name: string, settings: () => Settings, home: () => Promise<HomeOutcome>, elements: ReadElements) {
     this.name = name;
     this.settings = settings;
     this.home = home;
@@ -165,26 +172,42 @@ export class MatrixGrid {
     else s.line.entry.set(s.latex, s.chips);
   }
 
-  /** R189: the typed cell into the matrix: parsed as CAS reads it (a chip as its value: the store keeps no chip table),
-   *  written with the other elements as the log types them, stored through the session, and the grid read again. */
+  /** R189: the typed cell into the matrix: refused when the parser refuses it or reads more than one value; else the
+   *  line of the whole store (each other element as LaTeX the line reads back), checked by the worker (refused when it
+   *  is not a matrix of this size, stores or purges another name, or changes another element), sent through the
+   *  session's normal path, and the grid read again. */
   private async write(line: CellLine, latex: string, chips: ChipTable): Promise<void> {
     const at = this.editing;
     if (!at) return;
-    let giac: string;
+    const names = line.session.userNames;
+    let entry: typeof import("../input/entry.ts");
     try {
-      const entry = await import("../input/entry.ts"); // (input/parser.ts loadEntry's module; not that loader: the start chunk would export it for this chunk)
-      giac = entry.giacOfEntry(latex, "cas", { chips, names: line.session.userNames }).giac;
+      entry = await import("../input/entry.ts"); // (input/parser.ts loadEntry's module; not that loader: the start chunk would export it for this chunk)
+      if (typedSequence(entry.giacOfEntry(latex, "cas", { chips, names }).giac)) return void (this.refusal = findText("matrix.oneValue"));
     } catch (e) {
       this.refusal = parseFailText(e);
       return;
     }
-    if (typedSequence(giac)) return void (this.refusal = findText("matrix.oneValue"));
     const m = await this.elements("typed").catch(() => null);
-    const texts = m?.typed ? [...m.typed] : [];
-    if (!m || texts.length !== this.rows * this.cols || m.cols !== this.cols) return void (this.refusal = findText("matrix.unread"));
-    texts[at.row * m.cols + at.col] = giac;
-    const store = `${this.name}:=[${Array.from({ length: m.rows }, (_, r) => `[${texts.slice(r * m.cols, (r + 1) * m.cols).join(",")}]`).join(",")}]`;
-    const job = line.session.submit(store, store);
+    const tidy = m?.latex?.some((e) => e.giac) ? await import("../render/tidy.ts").then((x) => x.tidyGiacLatex, () => null) : undefined;
+    if (!m?.latex || m.rows !== this.rows || m.cols !== this.cols || tidy === null) return void (this.refusal = findText("matrix.unread"));
+    const k = at.row * m.cols + at.col;
+    const cells = m.latex.map((e, i) => (i === k ? latex : cellTex(e, tidy)));
+    const rows = Array.from({ length: m.rows }, (_, r) => cells.slice(r * m.cols, (r + 1) * m.cols).join("&"));
+    const row = `${nameTex(this.name)}:=\\begin{pmatrix}${rows.join("\\\\")}\\end{pmatrix}`;
+    let store: string;
+    try {
+      store = entry.giacOfEntry(row, "cas", { chips, names }).giac;
+    } catch {
+      return void (this.refusal = findText("matrix.notKept"));
+    }
+    if (!store.startsWith(`${this.name}:=`)) return void (this.refusal = findText("matrix.notKept"));
+    const c = await this.elements("typed", store).catch(() => null);
+    if (!c?.candidate || !c.typed) return void (this.refusal = findText("matrix.unread"));
+    if (!c.candidate.ok) return void (this.refusal = findText(c.candidate.why === "store" ? "matrix.noStore" : "matrix.oneValue"));
+    const was = c.typed;
+    if (c.candidate.typed.some((t, i) => i !== k && t !== was[i])) return void (this.refusal = findText("matrix.notKept"));
+    const job = line.session.submit(row, undefined, chips);
     if (!job) return void (this.refusal = t("status.busy")); // a job runs: the edit stays, Enter again later
     this.end();
     await job;
@@ -222,6 +245,18 @@ export class MatrixGrid {
     const s = this.settings();
     return { format: engineFormat(s.format), digits: s.digits };
   }
+}
+
+/** R189: an element as the line types it: Giac's LaTeX through the tidy path, a float in approx() (a typed decimal is
+ *  read exactly, so the float stays a float). */
+function cellTex(e: ElementTex, tidy: Tidy | undefined): string {
+  const tex = e.giac && tidy ? tidy(e.tex) : e.tex;
+  return e.float ? `\\operatorname{approx}\\left(${tex}\\right)` : tex;
+}
+
+/** R189: the name as the line types it: one letter as it is, a longer name as the store sheet writes it (R281). */
+function nameTex(name: string): string {
+  return name.length === 1 ? name : `\\operatorname{${name}}`;
 }
 
 /** A cell's number and its facts: Home's element when it gave a value, or the bridge's number. */

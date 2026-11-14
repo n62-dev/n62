@@ -190,6 +190,18 @@ export function typedSequence(text: string): boolean {
   }, "typed") >= 0;
 }
 
+const DECIMAL = /^(-?(?:\d+\.?\d*|\.\d+))(?:[eE]([-+]?)(\d+))?$/;
+
+/** R189: a printed number as the entry line types it: a whole number as it is, a fraction as `\frac` (its sign before),
+ *  a decimal with its exponent after the mark ᴇ (`0.15e-19` → `0.15\emark-19`); null for any other text. Giac's latex()
+ *  writes `\mathrm{-3}` and `1.5e-20`, which the parser does not read. */
+export function numberLatex(text: string): string | null {
+  const q = /^(-?)(\d+)\/(\d+)$/.exec(text);
+  if (q) return `${q[1]}\\frac{${q[2]}}{${q[3]}}`;
+  const d = DECIMAL.exec(text);
+  return !d ? null : d[3] === undefined ? (d[1] as string) : `${d[1]}\\emark${d[2] === "-" ? "-" : ""}${d[3]}`;
+}
+
 /** The `(` at `open` opens a call's arguments: a name character, `)` or `]` before it (spaces skipped). */
 function callBefore(text: string, open: number): boolean {
   const c = text.slice(0, open).trimEnd().slice(-1);

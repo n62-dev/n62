@@ -1235,11 +1235,11 @@ export class EngineHost implements FactsHost {
     return table(this.watched, req, s, (cell) => this.formFor(cell));
   }
 
-  /** R188: the names that hold a matrix, with their elements when `cells` (matrixRead.ts), read in Home's mode. */
-  matrices(names: readonly string[], s: HomeSettings, cells: boolean | "typed"): MatrixRead[] {
-    this.need(names.join("\n"));
+  /** R188: the names that hold a matrix, with their elements when `cells` (matrixRead.ts; R189 `check`: a store), in Home's mode. */
+  matrices(names: readonly string[], s: HomeSettings, cells: boolean | "typed", check?: string): MatrixRead[] {
+    this.need([...names, check ?? ""].join("\n"));
     this.useHomeMode(s);
-    return readMatrices(this.giac, names, s.digits, cells);
+    return readMatrices(this.giac, names, s.digits, cells, check === undefined ? undefined : { store: check, parse: (t) => this.bridge.parse(t) });
   }
 
   private useCasMode(s: CasSettings): void {
@@ -1337,7 +1337,7 @@ export function createRequestHandler(load: GiacLoader, post: (r: Response) => vo
           post({ id: req.id, type: "table", result: host.table(req.req, req.settings) });
           break;
         case "matrices":
-          post({ id: req.id, type: "matrices", result: host.matrices(req.names, req.settings, req.cells) });
+          post({ id: req.id, type: "matrices", result: host.matrices(req.names, req.settings, req.cells, req.check) });
           break;
         case "units":
           post({ id: req.id, type: "units", result: host.units(req.job, req.settings) });
