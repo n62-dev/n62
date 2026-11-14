@@ -465,10 +465,11 @@ describe("Help and about (R87)", () => {
     }
     expect(text).not.toContain("`");
     expect(text.match(/^True value: /gm)).toHaveLength(5);
-    expect(text).toContain("Rump's expression at (77617, 33096)\nN62: ≈ -0.827396059947\nTrue value: -54767/66192");
+    expect(text).toContain("1. Rump's expression at (77617, 33096)\nN62: ≈ -0.827396059947\nTrue value: -54767/66192");
     expect(text).toContain('N62: refused: “The integral does not converge”');
-    expect(text).toContain("ordinary IEEE double");
-    expect(text).toContain("The second is in RAD.");
+    expect(text).toContain("The lines headed A plain double are what an ordinary IEEE double returns.");
+    expect(text).toContain("Trap 2 is in RAD.");
+    expect(text).not.toContain("last column");
     expect(text).not.toMatch(/proven|proof/i);
   });
 

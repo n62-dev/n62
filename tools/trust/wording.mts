@@ -43,3 +43,17 @@ export function trustSentences(f: TrustCounts, authorDate: string = AUTHOR_SOURC
 }
 
 export const TRAP_CAPTION = "*The sign of the first double depends on the order the expression is evaluated in; the other doubles are what a plain IEEE double returns.*";
+
+/** How a refusal is written: the word and the quote marks. README's table uses markdown's, the page the level's own. */
+export interface ShownStyle {
+  readonly refused: string;
+  readonly open: string;
+  readonly close: string;
+}
+export const MARKDOWN_STYLE: ShownStyle = { refused: "refused", open: '"', close: '"' };
+
+/** What N62 shows for a trap (R174f1): the golden row's mark and value; a row with no mark is a refusal and says so. One rule for
+ *  README's table and the page, so a changed golden mark changes both. */
+export function trapShown(mark: string, expect: string, style: ShownStyle = MARKDOWN_STYLE): string {
+  return mark ? `${mark} ${expect}` : `${style.refused}: ${style.open}${expect}${style.close}`;
+}
