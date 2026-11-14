@@ -51,6 +51,19 @@ test("the first tap picks the row and opens nothing; the second tap on the resul
   expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{1\.94\}$/);
 });
 
+test("a pick of Slope counts as screen:stat-sheet, not screen:row (R184f1)", async ({ page }) => {
+  await ready(page);
+  await regress(page);
+  await results(page).last().tap();
+  await results(page).last().tap();
+  await expect(menu(page)).toBeVisible();
+  await page.evaluate(() => window.n62.session.taps.reset());
+  await menu(page).locator('[data-id="stat.slope"]').tap(); // a touch on the row, as the owner picks (a number key would count as a key)
+  await expect(menu(page)).toHaveCount(0);
+  const keys = await page.evaluate(() => window.n62.session.taps.counts.keys);
+  expect(keys["screen:stat-sheet"]).toBe(1);
+});
+
 test("☰ 1 Insert on the picked row opens the same sheet", async ({ page }) => {
   await ready(page);
   await regress(page);
