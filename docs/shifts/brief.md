@@ -86,9 +86,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 760 | G348 a huge power under exp(i·x) or a negative base is unchecked (the G307 chain) | gorge, Opus | `p1/gorge-literalpow-cis` | – |
-| 680 | R194 word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
-| 682 | [R184](packages/R184.md) a labelled result sheet for linreg and stats1 | ron, Sonnet | `p1/ron-statsheet` | – |
+| 680 | [R194](packages/R194.md) word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
+| 682 | R184 a labelled result sheet for linreg and stats1 | ron, Sonnet | `p1/ron-statsheet` | – |
 | 684 | [G210](packages/G210.md) one result as one JSON line (session format v0, a preview) | gorge, Opus | `p1/gorge-sessionline` | – |
 | 685 | [G211](packages/G211.md) a history row keeps its Giac text, angle and digits | gorge, Opus | `p1/gorge-rowfacts` | G210 |
 | 687 | [G232](packages/G232.md) the history as CSV and as LaTeX | gorge, Sonnet | `p1/gorge-exportrows` | G210 |
