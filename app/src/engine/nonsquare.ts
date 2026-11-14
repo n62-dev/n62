@@ -47,20 +47,31 @@ const combiningIn = (t: string): boolean => COMBINING_TEXT.some((op) => t.includ
 const DIMENSION_ERROR = /Invalid dimension/;
 export const isDimensionError = (output: string): boolean => DIMENSION_ERROR.test(output);
 /** G225f1: each operand's shape in one Giac value, read from its value (`s` the list of them, evaluated): 0 a non-list or
- *  an asked coefficient vector (subtype 10, polyvec.ts), n+1 a flat list of n, -1 a list of lists that is no matrix,
- *  -(r*100000+c) an r by c matrix. */
+ *  an asked coefficient vector (subtype 10, polyvec.ts), n+1 a flat vector of n (G352: LIST+n+1 a flat list of n, Giac's
+ *  list type, subtype 23), -1 a list of lists that is no matrix, -(r*100000+c) an r by c matrix. */
 const shapeCodes = (s: string): string =>
-  `apply(v->when(subtype(v)==10 or type(v)!=DOM_LIST,0,when(count_eq(DOM_LIST,apply(type,v))==0,size(v)+1,when(is_matrix(v),-(rowdim(v)*100000+coldim(v)),-1))),${s})`;
+  `apply(v->when(subtype(v)==10 or type(v)!=DOM_LIST,0,when(count_eq(DOM_LIST,apply(type,v))==0,when(subtype(v)==23,${LIST},0)+size(v)+1,when(is_matrix(v),-(rowdim(v)*100000+coldim(v)),-1))),${s})`;
 const ROWS = 100000;
+/** G352: what shapeCodes adds to a flat list's code (no list is that long). */
+const LIST = 1000000000;
+/** G352: the length of a flat operand (a code > 0), vector or list. */
+const lengthOf = (c: number): number => (c > LIST ? c - LIST : c) - 1;
+const rowsOf = (c: number): number => Math.floor(-c / ROWS);
 /** G225f1: whether the operands' shape codes (shapeCodes) are ones `op` cannot combine. `*` of two matrices is the matrix
- *  product and of a matrix and a vector Giac's own check; a row vector times a matrix needs as many entries as rows. */
+ *  product and of a matrix and a vector Giac's own check; a row vector or a list times a matrix needs as many entries as
+ *  rows, and G352: so does a matrix times a list (Giac scales row k by element k, R80, and drops or keeps the rest). G352:
+ *  a pointwise head (`.*`, `./`, `.^`, `.+`, `.-`) of a matrix and a flat operand of any length is two shapes (Giac pairs
+ *  row k with element k). */
 function shapesDiffer(op: string, codes: readonly number[]): boolean {
-  const flat = new Set(codes.filter((c) => c > 0));
-  if (flat.size > 1) return true;
+  const flat = codes.filter((c) => c > 0);
+  if (new Set(flat.map(lengthOf)).size > 1) return true;
   if (op === "*") {
-    const [a, b] = codes;
-    return codes.length === 2 && a! > 0 && b! < -1 && a! - 1 !== Math.floor(-b! / ROWS);
+    if (codes.length !== 2) return false;
+    const [a, b] = codes as [number, number];
+    if (a > 0 && b < -1) return lengthOf(a) !== rowsOf(b);
+    return a < -1 && b > LIST && lengthOf(b) !== rowsOf(a);
   }
+  if (op.startsWith(".") && flat.length > 0 && codes.some((c) => c < -1)) return true;
   return new Set(codes.filter((c) => c < 0)).size > 1;
 }
 /** Time the operands may take, as throughInfinity's walk (novalue.ts): a part costs at most about the whole input. */
@@ -161,7 +172,7 @@ export function shapeRefusal(found: boolean | "unchecked" | "lengthsDiffer" | "v
  * G225f1: so is a `+`, `*` or pointwise part (mayCombineLists; G225f2: or any part with such an operator when the result
  * holds a list or is Giac's dimension error, for operands that only evaluate to lists, `idn(2)+zeros(2,3)`; never for an
  * input whose result holds no list) whose operands can be lists, "lengthsDiffer" when they are flat lists of different lengths (or matrices of different shape in `+` and the
- * pointwise ones, or a row vector and a matrix with another number of rows in `*`).
+ * pointwise ones, or a row vector and a matrix with another number of rows in `*`; G352: a matrix and a list in either order, and a matrix and a flat operand in a pointwise one).
  */
 export function nonSquarePower(
   giac: Giac,

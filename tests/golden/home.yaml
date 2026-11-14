@@ -963,7 +963,7 @@ cases:
   - { id: "g352-keep-matrix-times-list-2x2", input: "[[1,2],[3,4]]*list[1,2]", expect: "[[1,2],[6,8]]", mark: "=", source: "derived", note: "control, R80's row scaling (a list as long as the row count): [1·1,1·2], [2·3,2·4]" }
   - { id: "g352-keep-matrix-times-list-rows", input: "[[1,2,3],[4,5,6]]*list[1,2]", expect: "[[1,2,3],[8,10,12]]", mark: "=", source: "derived", note: "control, R80's row scaling: [1·1,1·2,1·3], [2·4,2·5,2·6]" }
   - { id: "g352-keep-matrix-times-vector", input: "[[1,2,3],[4,5,6]]*[1,2,3]", expect: "[14,32]", mark: "=", source: "derived", note: "control, the matrix-vector product: 1+4+9, 4+10+18" }
-  - { id: "g352-keep-list-times-matrix", input: "list[1,2]*[[1,2],[3,4]]", expect: "{[1,2],[6,8]}", mark: "=", source: "derived", note: "control, as before G352: a list as long as the row count scales the rows (R80), [1·1,1·2], [2·3,2·4], in Giac's list type" }
+  - { id: "g352-keep-list-times-matrix", input: "list[1,2]*[[1,2],[3,4]]", expect: "{[1,2],[6,8]}", source: "derived", note: "control, as before G352: a list as long as the row count scales the rows (R80), [1·1,1·2], [2·3,2·4], in Giac's list type (no mark, as before)" }
   # --- G173 (F108, F127, F93): Giac's print forms never reach the text ------------------------------------------------
   - { id: "g173-empty-seq", input: "op([])", expect: "No value found", source: "derived", note: "F108: a sequence of no element is no answer; it showed Giac's seq[]" }
   - { id: "g173-matrix-in-vector", input: "[idn(2),1]", expect: "[[[1,0],[0,1]],1]", source: "derived", note: "F127: idn(2) is the 2×2 identity; it showed [matrix[[1,0],[0,1]],1]" }
