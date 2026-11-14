@@ -7,7 +7,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-**F-Droid's Reproducible Builds box** (A145): the engine bits differ ([measured](../fdroid/README.md)). Recommended: leave it unticked at v0.1.0. Or a deterministic-compile package.
+**F-Droid's Reproducible Builds box** (A145): the engine bits differ ([measured](../fdroid/README.md)). Recommended: leave it unticked at v0.1.0 and drop `Binaries` and `AllowedAPKSigningKeys` from the recipe (F-Droid then signs with its own key: its APK and ours do not update each other). Or a deterministic-compile package.
 
 **G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-17); S36f1 set the two copper values to the sheet's. Cost: seven clauses to read. If not signed, the lines stay "to verify".
 
@@ -132,7 +132,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; at the whole line Select is a silent press. Archived, "Opus pass 172". Would change if: A139 finds a step surprising.
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172". Would change if: the owner drops paste in the apps.
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
-- **Hardware keys** (R31, R45, R312): docs/04 5.5 point 1; `e` after digits is ᴇ, unless `(` follows letters that with `e` form a known name; characters no key types do nothing.
+- **Hardware keys** (R31, R45, R312): the rule list heads `app/src/entry/hwkeys.ts` (docs/04 holds none, Opus pass 185); `e` after digits is ᴇ, unless `(` follows letters that with `e` form a known name; characters no key types do nothing.
 - **R131's desktop keys (Opus pass 170):** the worker's table stands (`spec/keyboard.yaml` `desktop:`). Archived, "Opus pass 178".
 - **R198's typed names (Opus pass 172):** a typed FUNCS or Find function name before `(` is the function, drawn by name; Giac's program words stay letters (R198f1). Archived, "Opus pass 179".
 - **R224's wide layout (Opus pass 172):** side by side the keypad fills the height in a column of 42 % within 400–560 px (`--keys-wide`), the status line across both. Would change if: the owner's look on the Tab One.
@@ -168,7 +168,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G307 past the cap (Opus passes 171–177):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts for the value only in a small value or an argument read modulo 2π (G348); then ⚠; a decision always counts it. Archived, "Opus pass 179". Would change if: S20.
 - **The session line (G210, G211; Opus passes 178, 181):** `value` is Copy's number alone, with `.`; `exact` reads in radians; `word` is the job's word, 64 bits unsigned while none is set. Archived, "Opus pass 184".
 - **The LaTeX export (G232, Opus pass 181):** only a ⚠ row gets its reason (whyLine) after the result; `\approx` and `=` stand alone, as the CSV's mark column. Would change if: the owner wants the rounding reason in a document.
-- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it, and Ans or a name only while its line holds the value it had (G213f1); the comments are English constants (a file format); `3!` and `\binom` are factorial and binomial; an odd root of a literal not below 0 is root(), else real_root(); a row parses with its `defs` as stored values. Would change if: G215 finds sympy disagrees.
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants. Archived, "Opus pass 185". Would change if: G215 finds sympy disagrees.
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
