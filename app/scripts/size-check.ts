@@ -458,8 +458,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  61,970 → 62,040 B (R224): the wide layout. Its look is CSS (App.svelte's `@media` block, outside the JS); what stays in
  *  the chunk is the condition (views/wide.ts), its matchMedia in App.svelte's onMount and `canFold` reading it (no results
  *  mode side by side). svelte/reactivity's MediaQuery cost 0.17 kB more, so a plain matchMedia. The merge base 4ee33b66
- *  measures 61.89 kB gzip (174.71 kB raw), the branch 61.99 kB (174.87 kB raw): 61.99 kB + 0.05 kB. */
-export const START_PIN_GZIP = 62_040;
+ *  measures 61.89 kB gzip (174.71 kB raw), the branch 61.99 kB (174.87 kB raw): 61.99 kB + 0.05 kB.
+ *  62,040 → 62,110 B (R184): linreg's and stats1's labelled result sheet. What stays in the chunk is the test in insertResult
+ *  (a regexp on the row's input and the call into the clipboard chunk, which loads views/statSheet.ts on demand); its rows,
+ *  words and chips are lazy, and a second import() site in the start chunk cost 0.1 kB more. The merge base measures
+ *  62.01 kB gzip (174.91 kB raw), the branch 62.06 kB (175.01 kB raw): 62.06 kB + 0.05 kB. */
+export const START_PIN_GZIP = 62_110;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

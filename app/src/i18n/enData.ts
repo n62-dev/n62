@@ -97,6 +97,18 @@ export const enData = {
   "base.title": "Base",
   "base.notInteger": "Only integers can be shown in a base",
   "base.noFit": "Does not fit the 64-bit word",
+  // R184: the labelled result sheet of linreg and stats1 (views/statSheet.ts); a row inserts its value as a chip
+  "stat.linreg": "Linear regression",
+  "stat.slope": "Slope",
+  "stat.intercept": "Intercept",
+  "stat.r2": "r²",
+  "stat.stats1": "Statistics",
+  "stat.n": "n",
+  "stat.mean": "Mean",
+  "stat.sample": "Sample s (n−1)",
+  "stat.population": "Population s (n)",
+  "stat.min": "Min",
+  "stat.max": "Max",
 } as const;
 
 export type DataKey = keyof typeof enData;
