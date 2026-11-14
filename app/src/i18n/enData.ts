@@ -61,6 +61,7 @@ export const enData = {
   "part.app.function": "Function app",
   "part.app.solve": "Solve app",
   "part.units.targets": "Unit targets",
+  "part.word": "Word size and sign",
   // R59: Settings › Data › Library (decisions.md S4, archive/r10-connector.md)
   "library": "Library",
   "library.value": "Import · Export",
@@ -97,6 +98,18 @@ export const enData = {
   "base.title": "Base",
   "base.notInteger": "Only integers can be shown in a base",
   "base.noFit": "Does not fit the 64-bit word",
+  // R184: the labelled result sheet of linreg and stats1 (views/statSheet.ts); a row inserts its value as a chip
+  "stat.linreg": "Linear regression",
+  "stat.slope": "Slope",
+  "stat.intercept": "Intercept",
+  "stat.r2": "r²",
+  "stat.stats1": "Statistics",
+  "stat.n": "n",
+  "stat.mean": "Mean",
+  "stat.sample": "Sample s (n−1)",
+  "stat.population": "Population s (n)",
+  "stat.min": "Min",
+  "stat.max": "Max",
 } as const;
 
 export type DataKey = keyof typeof enData;

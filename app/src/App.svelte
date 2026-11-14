@@ -198,7 +198,9 @@
   );
 
   /** L5 and docs/04 2.8: a tapped or picked result goes on the line as a chip that carries its full value. */
-  function insertResult(item: HistoryItem): void {
+  function insertResult(item: HistoryItem, whole = false): void {
+    // R184: linreg and stats1 ask which value (clipboard/actions.svelte.ts, lazy); an answer with no such list goes in whole
+    if (!whole && /linreg|stats1/.test(item.latex)) return withClip((c) => c.showStats(item).catch(() => false).then((ok) => void (ok || insertResult(item, true))));
     // a result with no confirmed digit goes on the line as the bare warning mark, never as its unconfirmed number
     const chip = session.chipFor(item);
     // a unit row with no chip (R63f1): Home's number alone, never its σ or unit (Home has no units); its chip shows both

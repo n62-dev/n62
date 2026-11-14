@@ -207,7 +207,7 @@ test.describe("at 360 × 740", () => {
     await page.setViewportSize({ width: 360, height: 740 });
     await open(page);
   });
-  for (const name of ["tmpl", "shift 6", "shift 9", "mode", "mode settings", "mode settings numbers"])
+  for (const name of ["tmpl", "shift 6", "shift 9", "mode", "mode settings"])
     test(`fit: ${name} shows all its items without a scroll`, async ({ page }) => {
       await openSheet(page, name);
       const box = sheet(page).locator(".list, .grid");
@@ -216,6 +216,22 @@ test.describe("at 360 × 740", () => {
       const [s, pad] = await Promise.all([boxOf(page, '[role="menu"]'), boxOf(page, ".pad")]);
       expect(Math.abs(s.y + s.height - (pad.y + pad.height))).toBeLessThanOrEqual(1);
     });
+});
+
+// R194f1: Numbers has seven rows (the Word row is the last), two of them with a button per value; at 360 × 740 they need
+// 308 px of the 288 the room gives, so the list scrolls (decisions.md "A sheet that cannot fit at its floor scrolls", as
+// Appearance does) and its last row is still reached. At 412 × 915 it fits whole.
+test("R194f1: Numbers at 360 × 740 scrolls to its Word row; at 412 × 915 it shows all seven without a scroll", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page);
+  await openSheet(page, "mode settings numbers");
+  const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+  expect(m.scroll).toBeGreaterThan(m.client); // it scrolls: no floor gives way
+  await sheet(page).locator('[data-id="word"]').scrollIntoViewIfNeeded();
+  await expect(sheet(page).locator('[data-id="word"]')).toBeInViewport();
+  await page.setViewportSize({ width: 412, height: 915 });
+  const big = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+  expect(big.scroll).toBeLessThanOrEqual(big.client);
 });
 
 // R281: the store sheet takes letters, so it stays above the keypad (Alpha and a letter key type a name as on the G2). At

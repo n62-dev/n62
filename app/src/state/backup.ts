@@ -32,6 +32,7 @@ export const BACKUP_KEYS: readonly string[] = [
   "app.function",
   "app.solve",
   "units.targets",
+  "word",
 ];
 
 /** Parts an older app wrote that this one no longer keeps: an old file's part is skipped, never refused (R122;
@@ -227,6 +228,7 @@ export const VALIDATORS: Validators = {
   "app.function": isObject,
   "app.solve": isObject,
   "units.targets": (v) => typeof v === "object" && v !== null,
+  word: (v) => isObject(v) && Object.keys(v).length === 2 && fields(v, { bits: (n) => n === 8 || n === 16 || n === 32 || n === 64, signed: bool }), // R194: both fields, a size of 8, 16, 32 or 64, a boolean sign (the same rule as wordSetting.ts validWord, the start's check; word.test.ts runs both on one table; this file stays off its chunk)
 };
 
 /** A file that passed: its envelope's facts and each part's value, brought up to DATA_VERSION. */

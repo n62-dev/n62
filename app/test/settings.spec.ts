@@ -52,7 +52,7 @@ test.describe("by keys", () => {
     await page.getByTestId("chip-format").tap();
     await tap(page, ["d6", "d2"]);
     await expect(title(page)).toHaveText("Mode › Settings › Numbers");
-    expect(await rowIds(page)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups"]); // R124: Marks, R125: Digit groups
+    expect(await rowIds(page)).toEqual(["mark", "fmtCycle", "decimals", "uncertainty", "marks", "groups", "word"]); // R124: Marks, R125: Digit groups, R194: Word
     await expect(row(page, "fmtCycle").getByTestId("sheet-value")).toHaveText("STD SCI ENG");
     await tap(page, ["d2"]);
     await expect(title(page)).toHaveText("Settings › Numbers › Fmt key cycle");
@@ -227,8 +227,9 @@ const LEVELS: Record<string, string[]> = {
   "Mode › Settings › Data": ["@mode", "d6", "d5"],
   "Mode › Settings › Counters": ["@mode", "d6", "d6"],
 };
-/** The one level that scrolls at 360 × 740 (decisions.md, R148f1): its rows need 304 px at the floor, the room is 287. */
-const SCROLLS = "Mode › Settings › Appearance";
+/** The levels that scroll at 360 × 740 (decisions.md, R148f1: a sheet that cannot fit at its floor scrolls), with how far:
+ *  Appearance needs 304 px, the room is 287; Numbers has seven rows since R194 (Word), 308 px. */
+const SCROLLS: Readonly<Record<string, number>> = { "Mode › Settings › Appearance": 17, "Mode › Settings › Numbers": 24 };
 for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
   test(`fit at ${w} × ${h}: every Settings level shows all its rows, the top cluster uncovered`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
@@ -237,9 +238,9 @@ for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
       await expect(title(page)).toHaveText(path);
       if (path.endsWith("Key vibration")) await row(page, "haptics").tap(); // on: no reason line, but ◀ ▶ rows
       const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      if (w === 360 && path === SCROLLS) {
-        // R148f1 (decisions.md): its rows need 304 px at the floor and the room is 287 or 288: it scrolls, by at most 17 px
-        expect(m.scroll - m.client, path).toBeLessThanOrEqual(17);
+      if (w === 360 && path in SCROLLS) {
+        // R148f1 (decisions.md): its rows need more than the room at the floor (Appearance 304 px for 287 or 288): it scrolls
+        expect(m.scroll - m.client, path).toBeLessThanOrEqual(SCROLLS[path] ?? 0);
         await sheet(page).getByRole("menuitem").last().scrollIntoViewIfNeeded();
         const [list, last] = await Promise.all([sheet(page).locator(".list").boundingBox(), sheet(page).getByRole("menuitem").last().boundingBox()]);
         expect(last && list && last.y + last.height <= list.y + list.height + 0.5 && last.y >= list.y - 0.5, `${path}: its last row scrolls into view`).toBe(true);

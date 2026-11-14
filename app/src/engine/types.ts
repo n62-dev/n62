@@ -94,6 +94,9 @@ export interface CasSettings {
   hardTimeoutS: number;
   /** Exact integer powers b^n with |n·ln b| above this fail at once. D3: Giac's default 1e8 in CAS. */
   powLimit: number;
+  /** R194: the word size and sign of the short forms of the word ops (wordOps.ts); absent: 64 bits, unsigned. */
+  word?: number | undefined;
+  signed?: boolean | undefined;
 }
 
 /** D3: no automatic fallback in CAS; after about this long the UI makes Cancel prominent. */

@@ -65,3 +65,44 @@ describe.skipIf(!giacAvailable())("G229 word operations in the engine", () => {
     expect(home("g229(128)")).toMatchObject({ ok: false, error: "wordValue" });
   });
 });
+
+// R194: the short forms read the word size and sign the settings carry (HomeSettings and CasSettings `word`, `signed`).
+// Expected values: shl(3,7) is 3·2^7 = 384 in 64 bits, 384 mod 256 = 128 in an unsigned byte, and bit 7 set is −128 in a
+// signed one; bnot(5) in 16 bits unsigned is 65535 − 5 = 65530, signed −6.
+describe.skipIf(!giacAvailable())("R194 the word setting in the engine", () => {
+  let host: EngineHost;
+  const home = (input: string, word?: number, signed?: boolean) =>
+    host.home(input, { ...defaultHomeSettings, ...(word === undefined ? {} : { word, signed: signed ?? false }) }).result;
+  beforeAll(async () => {
+    host = await nodeHost();
+  });
+
+  it("short forms follow the setting, and go back to 64 bits unsigned when it is absent", () => {
+    expect(home("shl(3,7)")).toMatchObject({ ok: true, display: "384" });
+    expect(home("shl(3,7)", 8, false)).toMatchObject({ ok: true, display: "128" });
+    expect(home("shl(3,7)", 8, true)).toMatchObject({ ok: true, display: "-128" });
+    expect(home("shl(3,7)")).toMatchObject({ ok: true, display: "384" });
+    expect(home("bnot(5)", 16, false)).toMatchObject({ ok: true, display: "65530" });
+    expect(home("bnot(5)", 16, true)).toMatchObject({ ok: true, display: "-6" });
+  });
+
+  it("an argument still gives the word of its own call", () => {
+    expect(home("shl(3,7,16,0)", 8, true)).toMatchObject({ ok: true, display: "384" });
+  });
+
+  it("refuses a value outside the setting's word, in words", () => {
+    expect(home("shl(300,1)", 8, false)).toMatchObject({ ok: false, error: "wordValue" });
+  });
+
+  it("a stored function that calls a short form reads the word it is called in", () => {
+    expect(home("g194(a):=shl(a,7)")).toMatchObject({ ok: true });
+    expect(home("g194(3)")).toMatchObject({ ok: true, display: "384" });
+    expect(home("g194(3)", 8, false)).toMatchObject({ ok: true, display: "128" });
+    expect(home("g194(3)")).toMatchObject({ ok: true, display: "384" });
+  });
+
+  it("CAS reads it too", () => {
+    expect(host.cas("shl(3,7)", { ...defaultCasSettings, word: 8, signed: true }).result).toMatchObject({ ok: true, text: "-128" });
+    expect(host.cas("shl(3,7)", defaultCasSettings).result).toMatchObject({ ok: true, text: "384" });
+  });
+});
