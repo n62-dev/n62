@@ -91,10 +91,8 @@ export function helpItems(env: SettingsEnv = {}): MenuItem[] {
       id: "trust",
       label: t("trust.row"),
       hint: t("trust.hint"),
-      get submenu() {
-        const d = aboutData(); // R174: a text from the data's `trust`, Loading… until the chunk is in
-        return { ...textLevel(t("trust.title"), d ? trustText(d.trust) : t("loading")), loading: aboutLoading };
-      },
+      // R174: the text is read when it is drawn, from the data's `trust`: Loading… until the chunk is in
+      submenu: { title: t("trust.title"), items: [], text: () => { const d = aboutData(); return d ? trustText(d.trust) : t("loading"); }, remember: false, loading: aboutLoading },
     },
     { id: "parts", label: t("parts"), hint: t("partsHint"), submenu: lazy(t("partsTitle"), partRows, { longPreview: true }) },
     {
