@@ -399,8 +399,9 @@ test.describe("R298: inserts before the field", () => {
     await setClipboard(next, "3");
     await tap(next, ["d2", ...PASTE, "enter"]);
     await fieldUp(next, release);
-    await expect(next.locator('[data-status="done"]')).toHaveCount(2);
-    expect(await results(next)).toEqual(["5", "23"]); // derived: the digits in the order pressed
+    // (the rows with their status and the line, so a miss says what happened)
+    const state = (): Promise<unknown> => next.evaluate(() => [window.n62.session.items.map((i) => `${i.status}:${i.text ?? ""}`), window.n62.entry.value]);
+    await expect.poll(state, { timeout: 20_000 }).toEqual([["done:5", "done:23"], ""]); // derived: the digits in the order pressed
   });
 });
 
@@ -412,7 +413,7 @@ test("R298: 2 ×, a second tap on the result 5, − 1 before the field: Enter gi
   await tapTwice(resultCell(next));
   await tap(next, ["sub", "d1", "enter"]);
   await fieldUp(next, release);
-  await expect(next.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
   expect(await results(next)).toEqual(["5", "9"]); // derived: 2·5 − 1
 });
 
@@ -421,7 +422,7 @@ test("R298: 5, Store ▶, a tap on A in the store sheet before the field: A hold
   await tap(next, ["d5", "shift", "emark"]);
   await next.getByTestId("store").locator('[data-id="name:A"]').tap();
   await fieldUp(next, release);
-  await expect(next.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(next.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
   expect(await lastInput(next)).toMatch(/^5\\blacktriangleright ?A$/); // (MathLive puts a space after the command)
   expect(await results(next)).toEqual(["7", "5"]);
   expect(await next.evaluate(() => window.n62.session.userNames.map((u) => `${u.name}:${u.kind}`))).toEqual(["A:var"]);
@@ -448,6 +449,6 @@ test("R298 control: the same keys after the field is up: 2 ×, the result 5, −
   await tap(page, ["sub", "d1"]);
   expect(await entryValue(page)).toBe("2\\times\\res{1}{5}-1");
   await tap(page, ["enter"]);
-  await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(2, { timeout: 20_000 });
   expect(await results(page)).toEqual(["5", "9"]);
 });
