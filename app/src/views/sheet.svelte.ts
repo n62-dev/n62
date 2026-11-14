@@ -4,6 +4,7 @@
 // Plain state, no DOM: the keys reach it through sheetKeys.ts, touch through Sheet.svelte.
 import type { MenuItem, SubMenu } from "../apps/types.ts";
 import type { IconId } from "./icons.ts";
+import type { MatrixGrid } from "./matrixGrid.svelte.ts";
 import { lastPicks } from "./picks.ts";
 
 /** Lists with more items than this get the letter filter (docs/05 3.1: "for lists longer than 10 items"). */
@@ -74,6 +75,8 @@ export class Level {
   readonly typed: ((name: string) => MenuItem) | undefined;
   /** R281: the line under the list, read on every draw, before the highlighted item's preview. */
   readonly note: (() => string | undefined) | undefined;
+  /** R188: a stored matrix's grid in place of rows (SubMenu.grid). */
+  readonly grid: MatrixGrid | undefined;
 
   constructor(title: string, source: () => readonly MenuItem[], memo: string, opts?: SheetOptions) {
     this.title = title;
@@ -84,11 +87,12 @@ export class Level {
     this.cells = opts?.cells;
     this.typed = opts?.typed;
     this.note = opts?.note;
+    this.grid = opts?.grid;
     this.search = opts?.search;
     this.text = opts?.text;
     this.credits = opts?.credits;
     this.longPreview = opts?.longPreview ?? false;
-    this.loading = opts?.loading ?? (() => null);
+    this.loading = opts?.loading ?? (this.grid ? () => this.grid?.loading() ?? null : () => null);
     this.filterable = this.columns === undefined && (this.search !== undefined || (opts?.filterable ?? source().length > FILTER_ABOVE));
     this.highlight = this.start(opts?.at);
   }
@@ -149,6 +153,7 @@ export class Level {
       this.nudge += by;
       return;
     }
+    if (this.grid) return this.grid.move(by, 0);
     if (this.columns !== undefined) return this.gridMove(by * this.columns, true);
     const rows = this.rows;
     if (rows.length === 0) return;
@@ -245,6 +250,8 @@ export interface SheetOptions {
   note?: () => string | undefined;
   /** The rows' load while they are not in (see Level.loading). */
   loading?: () => Promise<void> | null;
+  /** A stored matrix's grid in place of rows (see Level.grid). */
+  grid?: MatrixGrid;
   /** R145: where the ⚙ in the title row goes, read when it is tapped: Settings as a level of this sheet, or (before its
    *  code is in) a function that opens Mode › Settings. Absent: no ⚙. */
   settings?: () => SubMenu | (() => void);
@@ -259,8 +266,13 @@ export class Sheet {
   readonly id: string;
   levels = $state.raw<Level[]>([]);
   /** The list takes letters (a long list, Find later): it stays above the keypad, whose letter keys its query needs.
-   *  Every other sheet is drawn over the keypad's maths rows (decisions.md "R21"). Fixed when it opens. */
-  readonly letters: boolean;
+   *  Every other sheet is drawn over the keypad's maths rows (decisions.md "R21"). Fixed when it opens, but for a matrix
+   *  grid (R188): it is drawn over the view, so the keypad stays free and its on-screen arrows move the highlight (over
+   *  the keys, R144's tap outside would close the sheet). */
+  get letters(): boolean {
+    return this.rootLetters || this.level.grid !== undefined;
+  }
+  private readonly rootLetters: boolean;
   /** The icon before the title, if any. */
   readonly icon: IconId | undefined;
   private readonly settings: SheetOptions["settings"];
@@ -273,7 +285,7 @@ export class Sheet {
     this.settings = opts?.settings;
     const root = new Level(title, items, id, opts);
     this.levels = [root];
-    this.letters = root.filterable;
+    this.rootLetters = root.filterable;
   }
 
   get level(): Level {
@@ -337,6 +349,10 @@ export class Sheet {
 
   /** ▶: step the highlighted setting up, else open the highlighted item's submenu (only an item that has one). */
   right(): Picked {
+    if (this.level.grid) {
+      this.level.grid.move(0, 1);
+      return STAY;
+    }
     if (this.level.cells !== undefined) {
       this.level.stepRow(1);
       return STAY;
@@ -359,6 +375,10 @@ export class Sheet {
 
   /** ◀ on a setting changed in place: step it down. False when the highlighted item is not one (◀ then goes back). */
   left(): boolean {
+    if (this.level.grid) {
+      this.level.grid.move(0, -1);
+      return true;
+    }
     if (this.level.cells !== undefined) {
       this.level.stepRow(-1);
       return true;
@@ -428,7 +448,8 @@ export class Sheet {
   /** A submenu on top of `level`, from the item `id`. */
   private push(level: Level, id: string, sub: SubMenu): void {
     const base: SheetOptions = sub.search ? { search: sub.search, remember: false } : { remember: sub.remember ?? true };
-    const opts: SheetOptions = { ...base, ...(sub.text === undefined ? {} : { text: sub.text }), ...(sub.longPreview ? { longPreview: true } : {}), ...(sub.loading ? { loading: sub.loading } : {}), ...(sub.at === undefined ? {} : { at: sub.at }) };
+    const opts: SheetOptions = { ...base, ...(sub.text === undefined ? {} : { text: sub.text }), ...(sub.longPreview ? { longPreview: true } : {}), ...(sub.loading ? { loading: sub.loading } : {}), ...(sub.at === undefined ? {} : { at: sub.at }), ...(sub.grid ? { grid: sub.grid } : {}) };
+    sub.grid?.open(); // R188: the matrix is read (again) each time its grid opens
     this.levels = [...this.levels, new Level(sub.title, () => sub.items, `${level.memo}/${id}`, opts)];
   }
 }

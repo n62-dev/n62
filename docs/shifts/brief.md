@@ -63,8 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 755 | R294 one chunk group keeps the start whole, then the hand copies go (S52) | ron, Sonnet | `p1/ron-startgroup` | – |
-| 667 | [R188](packages/R188.md) the matrix grid: a stored matrix in rows and columns | ron, Opus | `p1/ron-matgrid` | R187 |
 | 668 | [R189](packages/R189.md) edit a cell of the grid and write it back | ron, Opus | `p1/ron-matedit` | R188 |
 | 669 | [R190](packages/R190.md) a new matrix, rows and columns in the grid | ron, Sonnet | `p1/ron-matsize` | R189 |
 | 732 | [R130](packages/R130.md) the work as a readable report | ron, Opus | `p1/ron-workreport` | – |
@@ -88,7 +86,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 760 | G348 a huge power under exp(i·x) or a negative base is unchecked (the G307 chain) | gorge, Opus | `p1/gorge-literalpow-cis` | – |
 | 680 | [R194](packages/R194.md) word size and signed, in Settings | ron, Sonnet | `p1/ron-wordsetting` | R192 |
 | 682 | R184 a labelled result sheet for linreg and stats1 | ron, Sonnet | `p1/ron-statsheet` | – |
 | 684 | [G210](packages/G210.md) one result as one JSON line (session format v0, a preview) | gorge, Opus | `p1/gorge-sessionline` | – |

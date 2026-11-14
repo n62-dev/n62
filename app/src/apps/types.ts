@@ -7,6 +7,7 @@ import type { Calc, CalcSettings, UserName } from "../calc/port.ts";
 import type { Chip } from "../input/chips.ts";
 import type { Kv } from "../state/storage.ts";
 import type { GroupSep } from "../render/home.ts";
+import type { MatrixGrid } from "../views/matrixGrid.svelte.ts";
 
 export type AppId = "function" | "solve";
 export type ViewId = "symb" | "plot" | "num";
@@ -127,6 +128,9 @@ export interface SubMenu {
   readonly longPreview?: boolean;
   /** While the rows are still loading (R87's About data), the load: keys pressed meanwhile wait for it (R8). */
   readonly loading?: () => Promise<void> | null;
+  /** R188: the level is a stored matrix's grid (views/matrixGrid.svelte.ts) instead of rows: it reads the matrix when it
+   *  opens, ▲ ▼ ◀ ▶ move its highlight, and keys wait while it reads. `items` is empty. */
+  readonly grid?: MatrixGrid;
 }
 
 export interface AppInstance {

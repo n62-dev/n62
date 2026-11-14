@@ -86,8 +86,9 @@ export class AppShell {
   readonly calc: Calc;
   private readonly kv: Kv;
   private readonly entry: EntryLine;
-  private readonly settings: () => AppHost["settings"];
-  private readonly userNames: () => readonly UserName[];
+  /** The settings and the user's names (R188: the matrix sheet reads them, finder.ts showMatrix). */
+  readonly settings: () => AppHost["settings"];
+  readonly userNames: () => readonly UserName[];
   /** What the app last put on the entry line (to tell "edited" from "as loaded"). */
   private entryBase = "";
   /** The entry line still holds Home's line (no app view has taken it yet): `showView` sets it aside, `close` gives it back. */
@@ -343,7 +344,7 @@ export class AppShell {
   }
   /** Open a list of items over the view (a long press on a history row): same sheet and keys as the Menu key.
    *  `settings`: the ⚙ in its title row opens Settings (R145). */
-  showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; at?: string; settings?: boolean; credits?: readonly CreditBlock[] }): void {
+  showMenu(title: string, items: readonly MenuItem[], opts?: { remember?: boolean; at?: string; settings?: boolean; credits?: readonly CreditBlock[]; loading?: () => Promise<void> | null }): void {
     this.openSheet((S) => new S(`list:${title}`, title, () => items, { ...opts, settings: opts?.settings ? this.toSettings : undefined }));
   }
   /** Find (R4a): its categories, searched by the letters typed (Sheet id "find"; route.ts gives it docs/04 3.7's keys). */
