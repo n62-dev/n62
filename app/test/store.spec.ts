@@ -5,7 +5,7 @@
 // second tap stores; any other press disarms. Typed letters (digits after a letter too) and Enter store the typed name;
 // Esc leaves `value ▶` on the line. The real engine.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, lastResult, open, tap } from "./helpers.ts";
+import { entryValue, lastResult, open, sheetKey, tap } from "./helpers.ts";
 
 const store = (page: Page) => page.getByTestId("store");
 const cell = (page: Page, letter: string) => store(page).locator(`[data-id="name:${letter}"]`);
@@ -115,4 +115,51 @@ test("R281f1: a key that types no name after typed letters keeps them: 7 ▶ x, 
   await tap(page, ["x", "shift", "space", "d0", "right", "add", "d1", "enter"]);
   await expect(done(page)).toHaveCount(2);
   await expect(lastResult(page)).toHaveAttribute("data-text", "8");
+});
+
+// R301 (night review 2026-11-14, vr-3): a row stored onto a line with text stores the line, and the title and a filled
+// name's question name what is stored: `2+`, pick the row of 5, Store ▶ is `2+5 ▶` (derived: 2+5 = 7).
+test("R301: 2+, a picked row of 5, Store ▶: the title names 2+5, A stores 7, and a filled A's question names 2+5", async ({ page }) => {
+  await tap(page, ["d5", "enter"]);
+  await expect(done(page)).toHaveCount(1);
+  await tap(page, ["d2", "add"]);
+  await page.locator('[data-testid="result"] .result').first().tap(); // picks the row of 5; the line stays (R273)
+  await page.getByTestId("row-actions").getByRole("button", { name: "Store ▶" }).tap();
+  await expect(store(page).getByTestId("sheet-title")).toHaveText("Store 2+5 in");
+  await cell(page, "A").tap();
+  await expect(store(page)).toBeHidden();
+  await expect(done(page)).toHaveCount(2);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "7");
+  expect(await names(page)).toEqual(["A"]);
+  // ☰ 4 with no pick acts on the last result (7) the same way, and the filled A's question repeats the title's text
+  await tap(page, ["d2", "add", "menu"]);
+  await sheetKey(page, ["d4"]);
+  await expect(store(page).getByTestId("sheet-title")).toHaveText("Store 2+7 in");
+  await cell(page, "A").tap();
+  await expect(store(page).getByTestId("find-preview")).toHaveText("A = 7. Tap A again to replace it with 2+7");
+  await cell(page, "A").tap();
+  await expect(store(page)).toBeHidden();
+  await expect(lastResult(page)).toHaveAttribute("data-text", "9");
+});
+
+// R301 (vr-7): Store ▶ on a linreg row puts the whole list before ▶ and opens "Store in" only, never R184's value sheet
+// (data of golden g223-linreg: slope 97/50, intercept 3/20).
+test("R301: Store ▶ on a linreg row opens only Store in, titled with the whole list; A stores the list", async ({ page }) => {
+  const LINREG = "\\operatorname{linreg}\\left(\\left\\{1,2,3,4\\right\\},\\left\\{2.1,3.9,6.2,7.8\\right\\}\\right)";
+  await page.evaluate((l) => window.n62.entry.set(l), LINREG);
+  await tap(page, ["enter"]);
+  await expect(done(page)).toHaveCount(1, { timeout: 30_000 });
+  const list = (await lastResult(page).getAttribute("data-text")) ?? "";
+  expect(list).toMatch(/^\{.*1\.94.*\}$/);
+  await page.locator('[data-testid="result"] .result').first().tap();
+  await page.getByTestId("row-actions").getByRole("button", { name: "Store ▶" }).tap();
+  await expect(store(page).getByTestId("sheet-title")).toContainText("1.94");
+  await page.waitForTimeout(500); // (the value sheet opened later and replaced "Store in" before R301)
+  await expect(page.getByTestId("menu")).toHaveCount(0);
+  await expect(store(page)).toBeVisible();
+  await cell(page, "A").tap();
+  await expect(store(page)).toBeHidden();
+  await expect(done(page)).toHaveCount(2);
+  await expect(lastResult(page)).toHaveAttribute("data-text", list);
+  expect(await names(page)).toEqual(["A"]);
 });

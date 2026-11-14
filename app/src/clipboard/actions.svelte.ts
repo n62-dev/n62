@@ -28,16 +28,16 @@ const NOTICE_MS = 2200;
 
 /** What the row actions do on the entry line; App owns these (a tap on a row uses them before this code has loaded). */
 export interface RowOps {
-  /** Put the result on the line as a chip (a tap on it). */
-  insert(item: HistoryItem): void;
+  /** Put the result on the line as a chip (a tap on it); `whole`: a linreg or stats1 list too, with no value sheet (R301). */
+  insert(item: HistoryItem, whole?: boolean): void;
   /** Put the entry back on the line, with its chips (a tap on it). */
   recall(item: HistoryItem): void;
   /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
   /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
   hold?(job: Promise<unknown>): void;
-  /** Store ▶ put this row's result and ▶ on the line: the store sheet opens (R281). */
-  stored?(item: HistoryItem): void;
+  /** Store ▶ put this row's result and ▶ on the line: the store sheet opens (R281); no item: the line had text, so the line is stored (R301). */
+  stored?(item?: HistoryItem): void;
 }
 
 export class ClipActions {
@@ -287,12 +287,16 @@ export class ClipActions {
     this.ops.recall(i);
     return true;
   }
-  /** Store ▶: the result and the store arrow on the line, the cursor ready for the variable's name (value ▶ name). */
+  /** Store ▶: the result and the store arrow on the line, the cursor ready for the variable's name (value ▶ name).
+   *  R301: a linreg or stats1 row goes in whole (its value sheet would open beside "Store in"); onto a line with text,
+   *  the line is what is stored, so "Store in" opens on the typed path (its title the line before ▶, `2+5`). */
   storeRow(row?: HistoryItem): boolean {
     const i = this.target(row);
-    if (!i || !this.insertRow(row)) return false;
+    if (!i || !this.shell.showsEntry) return false;
+    const typed = !this.entry.empty;
+    this.ops.insert(i, true);
     this.entry.insert("\\blacktriangleright");
-    this.ops.stored?.(i); // R281: "Store in" opens
+    this.ops.stored?.(typed ? undefined : i); // R281: "Store in" opens
     return true;
   }
   /** Delete: the picked row, else the last row of the view. A running row is not deleted; when the Undo code does not
