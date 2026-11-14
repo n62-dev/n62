@@ -604,14 +604,14 @@ class Parser implements CalcParser {
   }
 
   /**
-   * docs/04 5.4 (R191; 2.3 #1): a lone 0, x, b or o, then a digit run (numbers, for hex the letters A-F too: 0xFF, 0b101,
-   * 0o17) is one whole number, written in decimal (BigInt: 2^64-1 stays exact). A digit outside the base, a point, an ᴇ
-   * after it, or a prefix at the end of the line is refused; `0x+1`, `0xy` stay 0 times x. The cursor goes past the run.
+   * docs/04 5.4 (R191; 2.3 #1): a lone 0, x, b or o in either case (R304: Home's Alpha types 0B101), then a digit run (for
+   * hex A-F too) is one whole number, written in decimal (BigInt: 2^64-1 stays exact). A digit outside the base, a point,
+   * an ᴇ after it, or a prefix at the end of the line is refused; `0x+1`, `0xy` stay 0 times x. The cursor goes past it.
    */
   private baseLiteral(tok: Tok): Json | undefined {
     if (tok.v !== "0") return undefined;
     const p = this.peek(1);
-    const base = p?.t === "ch" ? BASE_PREFIX[p.v] : undefined;
+    const prefix = p?.t === "ch" ? p.v.toLowerCase() : "", base = BASE_PREFIX[prefix];
     if (!p || !base) return undefined;
     const hexLetter = (t: Tok | undefined): boolean => base === 16 && t?.t === "ch" && /^[A-Fa-f]$/.test(t.v);
     let k = this.pos + 2;
@@ -629,7 +629,7 @@ class Parser implements CalcParser {
     if (bad !== undefined) throw parseError("parse.baseDigit", { d: bad, base: String(base) });
     this.pos = k;
     if (this.isCmd(EMARK) || this.isCmd("tfrac")) throw parseError("parse.baseWhole");
-    return { num: BigInt(`0${p.v}${digits}`).toString() };
+    return { num: BigInt(`0${prefix}${digits}`).toString() };
   }
 
   /** The value of a chip from the table, as one factor; a missing chip is an error, never a guess. */

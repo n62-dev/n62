@@ -65,7 +65,8 @@ export function refuseStore(name: string): void {
   if ([FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) throw parseError("parse.builtInName", { name });
 }
 
-/** Letters that start a base prefix after a lone 0 (0x, 0b, 0o, docs/04 5.4), and their base. */
+/** Letters that start a base prefix after a lone 0 (0x, 0b, 0o, docs/04 5.4), and their base; parse.ts reads the
+ *  capital as the same prefix (R304). */
 export const BASE_PREFIX: Readonly<Record<string, number>> = { x: 16, b: 2, o: 8 };
 
 export interface ParseOptions {
