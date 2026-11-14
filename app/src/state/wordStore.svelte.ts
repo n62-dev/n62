@@ -8,7 +8,7 @@ import type { CalcSettings } from "../calc/port.ts";
 import { defaultHomeSettings } from "../engine/homeDefaults.ts";
 import { defaultCasSettings, type CasSettings, type HomeSettings } from "../engine/types.ts";
 import { idbKv, type Kv } from "./storage.ts";
-import { validWord, WORD_KEY, type WordSetting } from "./wordSetting.ts";
+import { DEFAULT_WORD, validWord, WORD_KEY, type WordSetting } from "./wordSetting.ts";
 
 export class WordStore {
   /** The word the user set; undefined until a row set it (64 bits, unsigned: the engine gets nothing). */
@@ -24,6 +24,13 @@ export class WordStore {
 
   get value(): WordSetting | undefined {
     return this.current;
+  }
+
+  /** G211: an engine request's outcome with the word in force when it was sent (a change meanwhile is not it): the one
+   *  set, else the engine's own (64 bits, unsigned). A history row keeps it (state/resultItem.ts). */
+  stamp<T extends object>(outcome: Promise<T>): Promise<T & { word: WordSetting }> {
+    const word = { ...(this.current ?? DEFAULT_WORD) };
+    return outcome.then((r) => ({ ...r, word }));
   }
 
   /** Read the stored record (once); a record that is not whole is as none. */

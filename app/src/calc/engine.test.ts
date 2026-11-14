@@ -70,6 +70,7 @@ describe.skipIf(!giacAvailable())("EngineCalc passes a result's facts whole (G76
   it("the keys the port lists as dropped are not in the outcome; the others are as the engine set them", async () => {
     const r = await calc.home("romberg(exp(-x^2),x,0,1)", settings);
     for (const [k, v] of Object.entries(HOME_KEYS)) if (v !== "pass" && k !== "exact") expect(r, k).not.toHaveProperty(k);
-    expect(Object.keys(r).sort()).toEqual(["approximate", "display", "facts", "full", "ok", "value"]);
+    expect(Object.keys(r).sort()).toEqual(["approximate", "display", "facts", "full", "ok", "value", "word"]); // word: the port's own (G211)
+    expect(r.word).toEqual({ bits: 64, signed: false }); // no word set: the engine's own
   });
 });

@@ -5,8 +5,16 @@ import { readValueFacts } from "../engine/types.ts";
 import type { ComplexValue, PrecisionFacts } from "../engine/format.ts";
 import { validChips } from "../input/chips.ts";
 import { isFormStep, type ResultFacts } from "./displayMode.ts";
-import { FULL_LIMIT, ITEMS_LIMIT } from "./results.ts";
+import { FULL_LIMIT, ITEMS_LIMIT, rowUid } from "./results.ts";
 import type { HistoryItem, UsedValue } from "./session.svelte.ts";
+
+/** A stored `word` (G211) when whole: the rule of wordSetting.ts validWord, repeated so this chunk does not import that
+ *  module (the shared import hoisted it into the start chunk, +40 B gzip); word.test.ts runs both on one table. */
+function storedWord(x: unknown): HistoryItem["word"] {
+  const w = x as { bits?: unknown; signed?: unknown } | null;
+  const ok = typeof w === "object" && w !== null && !Array.isArray(w) && Object.keys(w).length === 2;
+  return ok && typeof w.signed === "boolean" && [8, 16, 32, 64].includes(w.bits as number) ? { bits: w.bits as 8, signed: w.signed } : undefined;
+}
 
 /** A stored `uses` read back from IndexedDB: the well-formed entries only. */
 function validUses(x: unknown): UsedValue[] | undefined {
@@ -43,11 +51,19 @@ function validFacts(x: unknown): ResultFacts | undefined {
   };
 }
 
-/** A stored history item with a fresh id; chip fields that do not have their shape are dropped. */
+/** A stored history item with a fresh id; chip fields that do not have their shape are dropped. G211: so are the job's
+ *  (`giac` as `full`, `angle`, `digits` as the setting allows, `word` as R194's record, `at`); the uid is kept, and a row
+ *  stored without one (before G211) is given one here (the session writes it back). */
 export function restoredItem(i: HistoryItem, id: number): HistoryItem {
-  const { chips, full, fullExact, drawn, facts, uses, settingReset, ...rest } = i as HistoryItem & { form?: unknown };
+  const { chips, full, fullExact, drawn, facts, uses, settingReset, uid, giac, angle, digits, word, at, ...rest } = i as HistoryItem & { form?: unknown };
   const { form, ...base } = rest;
-  const out: HistoryItem = { ...base, id };
+  const out: HistoryItem = { ...base, id, uid: typeof uid === "string" && uid !== "" ? uid : rowUid(id) };
+  if (typeof giac === "string" && giac.length <= FULL_LIMIT) out.giac = giac;
+  if (angle === "rad" || angle === "deg") out.angle = angle;
+  if (typeof digits === "number" && Number.isInteger(digits) && digits >= 1 && digits <= 30) out.digits = digits; // (MAX_DIGITS)
+  const w = storedWord(word);
+  if (w) out.word = w;
+  if (typeof at === "number" && Number.isFinite(at)) out.at = at;
   if (isFormStep(form)) out.form = form;
   const f = validFacts(facts);
   if (f) out.facts = f;

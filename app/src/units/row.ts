@@ -8,7 +8,7 @@ import type { ChipTable } from "../input/chips.ts";
 import { unitLatex, validSlots } from "../input/chipUnit.ts";
 import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
-import { homeItem } from "../state/resultItem.ts";
+import { homeItem, placed } from "../state/resultItem.ts";
 import { uncDigitsOf } from "../engine/constUnc.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { quantityChip } from "./chip.ts";
@@ -67,11 +67,11 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
 }
 
 /** Put `row` in Home's history: in place of the row `id` while that is still there, else as a new last row. Saved
- *  with the history. Returns the row's id. */
+ *  with the history. Returns the row's id. G211: the row it replaces gives its uid (one per visit; resultItem.ts placed). */
 export function putRow(s: Session, row: Omit<HistoryItem, "id">, id?: number): number {
   const list = s.home;
   const k = id === undefined ? -1 : list.findIndex((i) => i.id === id);
-  const item: HistoryItem = { ...row, id: k < 0 ? s.newId() : (id as number) };
+  const item = placed(row, k < 0 ? s.newId() : (id as number), list[k], s.settings);
   if (k < 0) list.push(item);
   else list[k] = item;
   if (list.length > HISTORY_LIMIT) list.splice(0, list.length - HISTORY_LIMIT);

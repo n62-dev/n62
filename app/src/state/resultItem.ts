@@ -4,8 +4,30 @@
 // code of engine/format.ts it reads stays out of the start chunk. Pure TypeScript, no runes; the golden runner calls it too.
 import { decimalFromRational, decimalFromString } from "../engine/format.ts";
 import { bracesOf } from "../engine/giacPrint.ts";
-import { FULL_LIMIT, ITEMS_LIMIT, rationalOf, type CasIn, type FactsSource, type HomeIn, type ItemResult } from "./results.ts";
+import { FULL_LIMIT, ITEMS_LIMIT, rationalOf, rowUid, type CasIn, type FactsSource, type HomeIn, type ItemResult } from "./results.ts";
 import type { ResultFacts } from "./displayMode.ts";
+import type { CalcSettings } from "../calc/port.ts";
+import type { ChipFactsTable } from "../engine/chipFacts.ts";
+import type { ChipTable } from "../input/chips.ts";
+import type { HistoryItem } from "./session.svelte.ts";
+
+/** The chips an input holds by name (`pasr_<k>`), as the engine takes them (G49): the value and the facts. Here, not in
+ *  results.ts, since G211: only a job reads it, after this chunk is in (Session.finish), so it is out of the start chunk. */
+export function chipFactsOf(named: ChipTable): ChipFactsTable {
+  const out: Record<string, ChipFactsTable[string]> = {};
+  for (const [k, c] of Object.entries(named))
+    out[k] = { value: c.value, reliableDigits: c.reliableDigits ?? null, exact: c.exact, ...(c.warn ? { warn: c.warn } : {}), ...(c.unc !== undefined ? { unc: c.unc } : {}) };
+  return out;
+}
+
+/** G211: what a row keeps of its job: the Giac text sent (none over FULL_LIMIT, as `full`), the angle and digits it ran
+ *  in (`s`, the settings at job time), and the word the port says the request carried. Absent ones are not set. */
+function withJob(out: ItemResult, word: ItemResult["word"], giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
+  if (giac !== undefined && giac.length <= FULL_LIMIT) out.giac = giac;
+  if (s) Object.assign(out, { angle: s.angle, digits: s.digits });
+  if (word) out.word = word;
+  return out;
+}
 
 /** Engine text with a decimal point or an E exponent is rounded digits, not an exact value. */
 const isDigitsText = (t: string): boolean => /\.|\d[eE][+-]?\d/.test(t);
@@ -26,9 +48,10 @@ export function factsFrom(r: FactsSource): ResultFacts | undefined {
 /** A true or false: as approximate as an inexact chip it came from (R18f1; decisions M4-4). */
 const isTruth = (t: string): boolean => /^(true|false)$/.test(t);
 
-/** A Home result as a history item keeps it; `inexactInput`: an inexact chip or constant went into the input. */
-export function homeItem(r: HomeIn, inexactInput: boolean): ItemResult {
-  const out: ItemResult = { approximate: r.approximate || (inexactInput && isTruth(r.display)) };
+/** A Home result as a history item keeps it; `inexactInput`: an inexact chip or constant went into the input; `giac`
+ *  and `s`: the text sent and the settings of the job (withJob; absent for the golden runner and a unit row's number). */
+export function homeItem(r: HomeIn, inexactInput: boolean, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
+  const out = withJob({ approximate: r.approximate || (inexactInput && isTruth(r.display)) }, r.word, giac, s);
   if (r.value) out.value = r.value;
   if (r.ok) {
     const f = factsFrom(r);
@@ -56,9 +79,9 @@ export function homeItem(r: HomeIn, inexactInput: boolean): ItemResult {
   return out;
 }
 
-/** A CAS result as a history item keeps it; `inexactInput` as for homeItem. */
-export function casItem(r: CasIn, inexactInput: boolean): ItemResult {
-  const out: ItemResult = { approximate: false };
+/** A CAS result (or error) as a history item keeps it; `inexactInput`, `giac` and `s` as for homeItem. */
+export function casItem(r: CasIn, inexactInput: boolean, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
+  const out = withJob({ approximate: false }, r.word, giac, s);
   if (!r.ok) return out;
   // A plain number (3/4, 2.5): the Format key can show it in the other forms.
   const q = rationalOf(r.text);
@@ -93,3 +116,9 @@ export function casItem(r: CasIn, inexactInput: boolean): ItemResult {
   return out;
 }
 
+/** G211: a unit row (units/row.ts putRow) as Home's history takes it: its `id`, the uid of the row it replaces (`old`:
+ *  one uid per unit visit) or a new one, `at` (it finished now), and the angle and digits it was worked out in (`s`, the
+ *  settings now, as the view read them for the request). Here in the item chunk, as the rest of what a row keeps. */
+export function placed(row: Omit<HistoryItem, "id">, id: number, old: HistoryItem | undefined, s: Pick<CalcSettings, "angle" | "digits">): HistoryItem {
+  return { ...row, id, uid: old?.uid ?? rowUid(id), at: Date.now(), angle: s.angle, digits: s.digits };
+}

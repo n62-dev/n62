@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The calculator session: current view, modifier keys, settings and the history of both views.
 // Plain logic on Svelte 5 runes; the engine comes in through the Calc port.
-import { CalcCancelled, type AngleUnit, type CalcError, type Calc, type CalcSettings, type ChipFactsTable, type ConstTable, type NumberFormat, type UserName } from "../calc/port.ts";
+import { CalcCancelled, type AngleUnit, type CalcError, type Calc, type CalcSettings, type ConstTable, type NumberFormat, type UserName } from "../calc/port.ts";
 import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
@@ -31,13 +31,14 @@ import { idbKv, type Kv } from "./storage.ts";
 import { TapCounter } from "./taps.svelte.ts";
 import type { UseCounter } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
-import { chipFactsOf, chipOf, HISTORY_LIMIT, withUnit } from "./results.ts";
+import { chipOf, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
 import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
 import { storedReader } from "./storedLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
 import type { UnitRow } from "../units/types.ts";
+import type { WordSetting } from "./wordSetting.ts";
 
 export type View = "home" | "cas";
 export type EntryMode = "textbook" | "line";
@@ -136,11 +137,13 @@ export interface HistoryItem {
   units?: UnitRow;
   /** R63: a unit result's chip (Ans too) went into the input; Home has no units: a line under the result says so. */
   unitDropped?: true;
-  /** G210 (types only; G211 fills them): the row's identity across runs (never `id`), its Giac text, angle and digits. */
+  /** G211: the row's identity across runs (never `id`, results.ts rowUid); its job's Giac text, angle, digits, word (R194); `at`: finished. */
   uid?: string;
   giac?: string;
   angle?: AngleUnit;
   digits?: number;
+  word?: WordSetting;
+  at?: number;
   startedAt: number;
 }
 
@@ -462,8 +465,10 @@ export class Session {
     const ans = this.lastChip(view);
     const kept = pruneChips(chips, latex);
     const table: ChipTable = ans ? { ...kept, [ANS_KEY]: ans } : kept;
+    const id = this.nextId++;
     list.push({
-      id: this.nextId++,
+      id,
+      uid: rowUid(id), // G211
       view,
       latex,
       status: "pending",
@@ -481,10 +486,12 @@ export class Session {
       // A finished result with no chip value (a symbolic text over 2 kB, R44): say why, not "no result yet"
       live.status = "error";
       live.text = t("error.ansTooLong");
+      live.at = Date.now();
       this.saveHistory();
       return Promise.resolve();
     }
     return this.finish(live, view, latex, table, giacOverride).finally(() => {
+      live.at = Date.now(); // G211: when it finished
       this.saveHistory();
       if (live.status === "done") void this.refreshNames();
     });
@@ -517,7 +524,7 @@ export class Session {
   private async finish(live: HistoryItem, view: View, latex: string, chips: ChipTable, giacOverride?: string): Promise<void> {
     let giac: string;
     let defines: string | undefined;
-    let named: ChipFactsTable | undefined;
+    let named: ChipTable | undefined;
     let consts: ConstTable | undefined;
     const items = prefetchItems(); // R155f2: loaded beside the parser, and awaited before the engine is sent anything
     try {
@@ -532,7 +539,7 @@ export class Session {
         giac = p.giac;
         defines = p.defines;
         if (p.inexact) live.inexactInput = true;
-        if (p.named) named = chipFactsOf(p.named);
+        named = p.named; // (G211: its facts are read in the item chunk, resultItem.ts chipFactsOf)
         consts = p.consts; // R40: G26's uncDigits (and σ) come back for them
       }
     } catch (e) {
@@ -540,8 +547,9 @@ export class Session {
       live.text = parseFailText(e);
       return;
     }
+    let m: Awaited<typeof items>;
     try {
-      await itemsOr(items); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
+      m = await itemsOr(items); // a chunk that will not load (a tab open across a redeploy) stops the job here, before Giac defines or stores anything
     } catch {
       if (live.status === "pending") {
         live.status = "error";
@@ -554,16 +562,14 @@ export class Session {
     try {
       if (view === "home") {
         const tidy = prefetchTidy();
-        const r = await this.calc.home(giac, s, named, consts); // an absent table is not sent (EngineCalc.home)
+        const r = await this.calc.home(giac, s, named && m.chipFactsOf(named), consts); // an absent table is not sent (EngineCalc.home)
         if (live.status !== "pending") return;
         const latex = !r.ok ? "" : r.latex !== undefined ? await tidyOr(tidy, r.latex, homeResultToLatex(r.display)) : homeResultToLatex(r.display);
-        const { homeItem } = await itemsOr(items);
-        if (live.status !== "pending") return;
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.display : errorText(r.error, r.display);
         if (r.settingReset) live.settingReset = true;
         // The value, its facts and the chip text, by the one rule (results.ts, G86)
-        Object.assign(live, homeItem(r, live.inexactInput === true));
+        Object.assign(live, m.homeItem(r, live.inexactInput === true, giac, s)); // (G211: with the text sent and the job's settings)
         // A result that is not a number is drawn from Giac's latex(), as in CAS (R18f3); numbers from our formatter.
         if (r.ok) live.resultLatex = latex;
       } else {
@@ -571,16 +577,12 @@ export class Session {
         const r = await this.calc.cas(giac, s);
         if (live.status !== "pending") return;
         const latex = r.ok ? await tidyOr(tidy, r.latex, r.latex) : "";
-        const { casItem } = await itemsOr(items);
-        if (live.status !== "pending") return;
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.text : errorText(r.error, r.text);
         if (r.settingReset) live.settingReset = true;
-        if (r.ok) {
-          live.resultLatex = latex;
-          if (r.uses?.length) live.uses = r.uses;
-          Object.assign(live, casItem(r, live.inexactInput === true));
-        }
+        if (r.ok) live.resultLatex = latex;
+        if (r.ok && r.uses?.length) live.uses = r.uses;
+        Object.assign(live, m.casItem(r, live.inexactInput === true, giac, s));
       }
       if (defines && live.status === "done") this.noteFunction(defines, view, live.text);
     } catch (e) {
@@ -772,11 +774,12 @@ export class Session {
       if (!restoredItem) return;
       // Entries typed before the store answered stay after the restored ones.
       // Fresh ids: entries typed before the store answered already use the low numbers (ids key the list).
+      let gained = false; // G211: a row read without a uid gets one (storedItem.ts), written back below so it keeps it
       const keep = (xs: HistoryItem[] | undefined): HistoryItem[] =>
         (xs ?? [])
           .filter((i) => (i.status === "done" || i.status === "error") && typeof i.latex === "string")
           .slice(-HISTORY_LIMIT)
-          .map((i) => restoredItem(i, this.nextId++));
+          .map((i) => ((gained ||= i.uid === undefined), restoredItem(i, this.nextId++)));
       const [home, cas] = [keep(hist.home), keep(hist.cas)];
       this.home.splice(0, 0, ...home);
       this.cas.splice(0, 0, ...cas);
@@ -785,6 +788,7 @@ export class Session {
       // R98: the stored Undo copies (one per view, R119), unless an Enter or a Clear before the read (or meanwhile) changed the history
       const m = hist.undo && !this.savePending ? await loadRemoved() : undefined;
       if (m && !this.savePending) this.copies = m.withStored(this.copies, hist.undo, (i) => restoredItem(i, this.nextId++), HISTORY_LIMIT);
+      if (gained) this.savePending = true;
     }
     this.historyRead = true;
     if (this.savePending) {

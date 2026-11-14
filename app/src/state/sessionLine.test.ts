@@ -29,7 +29,7 @@ const exact = row({ uid: "r-1", latex: String.raw`\frac{3}{4}`, giac: "3/4", tex
 describe("sessionLine (G210)", () => {
   it("an exact row", () => {
     expect(sessionLine(exact, O)).toBe(
-      HEAD + String.raw`"id":"r-1",${TS},"view":"home","input":"\\frac{3}{4}","giac":"3/4","ok":true,"exact":"3/4","value":"0.75","mark":"=","reliableDigits":null,"angle":"rad","digits":12}`,
+      HEAD + String.raw`"id":"r-1",${TS},"view":"home","input":"\\frac{3}{4}","giac":"3/4","ok":true,"exact":"3/4","value":"0.75","mark":"=","reliableDigits":null,"angle":"rad","digits":12,"word":null}`,
     );
   });
 
@@ -37,7 +37,7 @@ describe("sessionLine (G210)", () => {
     const r = row({ uid: "r-2", latex: String.raw`\sqrt{2}`, giac: "sqrt(2)", text: "1.41421356237", value: re("1.414213562373095048801688724209698078570"),
       facts: { exact: false, reliableDigits: null, digits: 12 }, full: "sqrt(2)", fullExact: true, angle: "rad", digits: 12 });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-2",${TS},"view":"home","input":"\\sqrt{2}","giac":"sqrt(2)","ok":true,"exact":"sqrt(2)","value":"1.41421356237309504880168872420969807857","mark":"≈","reliableDigits":null,"angle":"rad","digits":12}`,
+      HEAD + String.raw`"id":"r-2",${TS},"view":"home","input":"\\sqrt{2}","giac":"sqrt(2)","ok":true,"exact":"sqrt(2)","value":"1.41421356237309504880168872420969807857","mark":"≈","reliableDigits":null,"angle":"rad","digits":12,"word":null}`,
     );
   });
 
@@ -45,10 +45,10 @@ describe("sessionLine (G210)", () => {
     const w = row({ uid: "r-3", latex: String.raw`\operatorname{Ei}(1)`, giac: "Ei(1)", text: "1.89511781636", value: re("1.89511781635594"),
       facts: { exact: false, reliableDigits: 15, warn: "unaudited", digits: 12 }, full: "1.89511781635594", fullExact: false, angle: "rad", digits: 12 });
     expect(sessionLine(w, O)).toBe(
-      HEAD + String.raw`"id":"r-3",${TS},"view":"home","input":"\\operatorname{Ei}(1)","giac":"Ei(1)","ok":true,"value":"1.89511781635594","mark":"⚠","warn":"unaudited","reliableDigits":15,"angle":"rad","digits":12}`,
+      HEAD + String.raw`"id":"r-3",${TS},"view":"home","input":"\\operatorname{Ei}(1)","giac":"Ei(1)","ok":true,"value":"1.89511781635594","mark":"⚠","warn":"unaudited","reliableDigits":15,"angle":"rad","digits":12,"word":null}`,
     );
     const n = row({ uid: "r-4", latex: "x", giac: "x", text: "1.4142", value: re("1.4142135623730950488"), facts: { exact: false, reliableDigits: 5, digits: 12 }, angle: "rad", digits: 12 });
-    expect(sessionLine(n, O)).toBe(HEAD + String.raw`"id":"r-4",${TS},"view":"home","input":"x","giac":"x","ok":true,"value":"1.4142","mark":"⚠","reliableDigits":5,"angle":"rad","digits":12}`);
+    expect(sessionLine(n, O)).toBe(HEAD + String.raw`"id":"r-4",${TS},"view":"home","input":"x","giac":"x","ok":true,"value":"1.4142","mark":"⚠","reliableDigits":5,"angle":"rad","digits":12,"word":null}`);
   });
 
   it("a unit row: unit, dimension, σ and its why in their own fields, the value a number alone", () => {
@@ -56,13 +56,13 @@ describe("sessionLine (G210)", () => {
       facts: { exact: false, reliableDigits: null, digits: 5 }, inexactInput: true, angle: "rad", digits: 12,
       units: { slots: {}, unit: "m²", dim: "m2", dimText: "L²", unc: { text: "1.2", shown: "39.5 ± 1.2", why: "order2" }, latex: "", text: " ± 1.2 m²", input: "" } });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-5",${TS},"view":"home","input":"2\\pi\\cdot 25","giac":"2*pi*25*pasu1","ok":true,"value":"39.488","mark":"≈","reliableDigits":null,"unit":"m²","dim":"m2","sigma":"1.2","sigmaWhy":"order2","angle":"rad","digits":12}`,
+      HEAD + String.raw`"id":"r-5",${TS},"view":"home","input":"2\\pi\\cdot 25","giac":"2*pi*25*pasu1","ok":true,"value":"39.488","mark":"≈","reliableDigits":null,"unit":"m²","dim":"m2","sigma":"1.2","sigmaWhy":"order2","angle":"rad","digits":12,"word":null}`,
     );
   });
 
   it("an error row", () => {
     const r = row({ uid: "r-6", latex: String.raw`\frac{1}{0}`, giac: "1/0", status: "error", text: "Division by 0", angle: "rad", digits: 12 });
-    expect(sessionLine(r, O)).toBe(HEAD + String.raw`"id":"r-6",${TS},"view":"home","input":"\\frac{1}{0}","giac":"1/0","ok":false,"error":"Division by 0","angle":"rad","digits":12}`);
+    expect(sessionLine(r, O)).toBe(HEAD + String.raw`"id":"r-6",${TS},"view":"home","input":"\\frac{1}{0}","giac":"1/0","ok":false,"error":"Division by 0","angle":"rad","digits":12,"word":null}`);
   });
 
   it("a chip input: \\res{7} in input and pasr_7 in giac name the res:7 entry of the same line", () => {
@@ -72,7 +72,7 @@ describe("sessionLine (G210)", () => {
       chips: { "res:7": { value: third, exact: false, reliableDigits: 40 } }, angle: "rad", digits: 12 });
     expect(sessionLine(r, O)).toBe(
       HEAD +
-        String.raw`"id":"r-7",${TS},"view":"home","input":"\\res{7}{0.333333333333}\\cdot3","giac":"pasr_7*3","chips":{"res:7":{"value":"${third}","exact":false}},"ok":true,"value":"0.9999999999999999999999999999999999999999","mark":"≈","reliableDigits":null,"angle":"rad","digits":12}`,
+        String.raw`"id":"r-7",${TS},"view":"home","input":"\\res{7}{0.333333333333}\\cdot3","giac":"pasr_7*3","chips":{"res:7":{"value":"${third}","exact":false}},"ok":true,"value":"0.9999999999999999999999999999999999999999","mark":"≈","reliableDigits":null,"angle":"rad","digits":12,"word":null}`,
     );
   });
 
@@ -80,7 +80,7 @@ describe("sessionLine (G210)", () => {
     const r = row({ uid: "r-8", latex: String.raw`\sin(30)`, giac: "sin(pasdeg*30)", text: "0.5", value: re("0.5"), rational: { n: "1", d: "2" },
       facts: { exact: true, reliableDigits: null, digits: 12 }, full: "1/2", fullExact: true, angle: "deg", digits: 12 });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-8",${TS},"view":"home","input":"\\sin(30)","giac":"sin(pasdeg*30)","ok":true,"exact":"1/2","value":"0.5","mark":"=","reliableDigits":null,"angle":"deg","digits":12}`,
+      HEAD + String.raw`"id":"r-8",${TS},"view":"home","input":"\\sin(30)","giac":"sin(pasdeg*30)","ok":true,"exact":"1/2","value":"0.5","mark":"=","reliableDigits":null,"angle":"deg","digits":12,"word":null}`,
     );
   });
 
@@ -89,7 +89,7 @@ describe("sessionLine (G210)", () => {
     const r = row({ uid: "r-10", latex: String.raw`\sin(x)`, giac: "sin(pasdeg*x)", text: "sin(x)", full: "sin(pi*x/180)", fullExact: true, drawn: "sin(x)",
       angle: "deg", digits: 12 });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-10",${TS},"view":"home","input":"\\sin(x)","giac":"sin(pasdeg*x)","ok":true,"exact":"sin(pi*x/180)","value":"sin(x)","mark":"=","angle":"deg","digits":12}`,
+      HEAD + String.raw`"id":"r-10",${TS},"view":"home","input":"\\sin(x)","giac":"sin(pasdeg*x)","ok":true,"exact":"sin(pi*x/180)","value":"sin(x)","mark":"=","angle":"deg","digits":12,"word":null}`,
     );
   });
 
@@ -97,13 +97,19 @@ describe("sessionLine (G210)", () => {
     const r = row({ uid: "r-9", view: "cas", latex: "f(2)", giac: "f(2)", text: "4", value: re("4"), rational: { n: "4", d: "1" }, full: "4", fullExact: true,
       uses: [{ name: "f", preview: "x^2", view: "cas" }], angle: "rad", digits: 12 });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-9",${TS},"view":"cas","input":"f(2)","giac":"f(2)","ok":true,"exact":"4","value":"4","mark":"=","angle":"rad","digits":12,"defs":[{"name":"f","preview":"x^2","view":"cas"}]}`,
+      HEAD + String.raw`"id":"r-9",${TS},"view":"cas","input":"f(2)","giac":"f(2)","ok":true,"exact":"4","value":"4","mark":"=","angle":"rad","digits":12,"word":null,"defs":[{"name":"f","preview":"x^2","view":"cas"}]}`,
     );
   });
 
-  it("what a row does not hold is null (id, giac, angle, digits), never a guess", () => {
+  it("what a row does not hold is null (id, giac, angle, digits, word), never a guess", () => {
     const r = row({ id: 4, latex: "2+2", text: "4", value: re("4"), full: "4", fullExact: true, facts: { exact: true, reliableDigits: null } });
-    expect(sessionLine(r, O)).toBe(HEAD + String.raw`"id":null,${TS},"view":"home","input":"2+2","giac":null,"ok":true,"exact":"4","value":"4","mark":"=","reliableDigits":null,"angle":null,"digits":null}`);
+    expect(sessionLine(r, O)).toBe(HEAD + String.raw`"id":null,${TS},"view":"home","input":"2+2","giac":null,"ok":true,"exact":"4","value":"4","mark":"=","reliableDigits":null,"angle":null,"digits":null,"word":null}`);
+  });
+
+  it("a row under Word 8 signed (G211): word after digits", () => {
+    const r = row({ uid: "r-11", latex: String.raw`\operatorname{shl}(3,7)`, giac: "shl(3,7)", text: "-128", value: re("-128"), rational: { n: "-128", d: "1" },
+      facts: { exact: true, reliableDigits: null, digits: 12 }, full: "-128", fullExact: true, angle: "rad", digits: 12, word: { bits: 8, signed: true } });
+    expect(sessionLine(r, O)).toContain(String.raw`"angle":"rad","digits":12,"word":{"bits":8,"signed":true}}`);
   });
 
   it("a row that is no result (pending, a note) gives no line", () => {

@@ -14,8 +14,8 @@ import { rewriteAngles } from "./engine/angles.ts";
 import { applyDefChanges, type DefChange } from "./engine/defs.ts";
 import { namesFlag } from "./engine/flags.ts";
 import { namesAssuming, setsAssumption } from "./engine/assumed.ts";
-import { chipFactsOf, chipOf } from "./state/results.ts";
-import { casItem, homeItem } from "./state/resultItem.ts";
+import { chipOf } from "./state/results.ts";
+import { casItem, chipFactsOf, homeItem } from "./state/resultItem.ts";
 
 export type Expect = string | Expect[];
 
