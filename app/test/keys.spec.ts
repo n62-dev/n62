@@ -407,6 +407,15 @@ test("0xFF typed with the keys is 255, not 0", async ({ page }) => {
   await resultIs(page, "255", 1);
 });
 
+// R304: Home's Alpha types the capital, so 0, Alpha B, 101 is 0B101: the binary literal 5 (derived: 4+1), not 0·B·101 = 0.
+test("0B101 typed with the keys is 5, not 0", async ({ page }) => {
+  await tap(page, ["d0", "alpha", "math", "d1", "d0", "d1"]);
+  expect(await entryValue(page)).toBe("0B101");
+  await tap(page, ["enter"]);
+  await resultIs(page, "5", 1);
+  await expect(page.getByTestId("mark").last()).toHaveAttribute("data-mark", "=");
+});
+
 // docs/04 2.3 #8: a tapped result carries its full value, so 1/3 tapped and ×3 is 1, not 0.999999999999.
 test("1/3, tap the result, ×3 is 1", async ({ page }) => {
   await tap(page, ["d1", "div", "d3", "enter"]);
