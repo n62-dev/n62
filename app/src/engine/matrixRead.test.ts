@@ -58,4 +58,17 @@ describe.skipIf(!giacAvailable())("R188: the stored matrices through the bridge"
       ["4", "="],
     ]);
   });
+
+  // R189: the grid's write-back reads each element as the log types a stored value (host.ts snapshot). By hand: Home
+  // stores 1.23456789012 as the exact 30864197253/25000000000 (G14, above); a float as evalf(<exact>,k), k its digits.
+  it("R189: the elements as typed text: exact ones exact, a float as evalf, and a matrix written from them reads back the same", () => {
+    expect(host.matrices(["M"], defaultHomeSettings, "typed")).toEqual([{ name: "M", rows: 2, cols: 2, typed: ["1/3", "2", "3", "4"] }]);
+    expect(host.matrices(["S"], defaultHomeSettings, "typed")[0]?.typed).toEqual(["x", "30864197253/25000000000"]);
+    const t = host.matrices(["T"], defaultHomeSettings, "typed")[0]?.typed ?? [];
+    expect(t).toHaveLength(4);
+    expect(t[0]).toBe("x");
+    expect(t[1]).toMatch(/^evalf\(.+,\d+\)$/); // (Home keeps that float at its P = 40 digits)
+    host.home(`U:=[[${t[0]},${t[1]}],[${t[2]},${t[3]}]]`, defaultHomeSettings);
+    expect(host.matrices(["U"], defaultHomeSettings, "typed")[0]?.typed).toEqual(t);
+  });
 });

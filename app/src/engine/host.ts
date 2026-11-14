@@ -1236,7 +1236,7 @@ export class EngineHost implements FactsHost {
   }
 
   /** R188: the names that hold a matrix, with their elements when `cells` (matrixRead.ts), read in Home's mode. */
-  matrices(names: readonly string[], s: HomeSettings, cells: boolean): MatrixRead[] {
+  matrices(names: readonly string[], s: HomeSettings, cells: boolean | "typed"): MatrixRead[] {
     this.need(names.join("\n"));
     this.useHomeMode(s);
     return readMatrices(this.giac, names, s.digits, cells);

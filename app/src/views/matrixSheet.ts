@@ -65,7 +65,7 @@ export function showMatrix(shell: AppShell, entry: EntryController, index: FindI
   const grid = (m: StoredMatrix): SubMenu => ({
     title: m.name,
     items: [],
-    grid: new MatrixGrid(m.name, shell.settings, () => shell.calc.home(m.name, shell.settings()), async () => (await readMatrices(shell.calc.engine, [m.name], shell.settings(), true))[0] ?? null),
+    grid: new MatrixGrid(m.name, shell.settings, () => shell.calc.home(m.name, shell.settings()), async (cells) => (await readMatrices(shell.calc.engine, [m.name], shell.settings(), cells))[0] ?? null),
   });
   const open = (stored: readonly StoredMatrix[], loading?: () => Promise<void> | null): void =>
     shell.showMenu(t("matrix.title"), matrixRows(index.byId, row, stored, grid), { remember: false, ...(loading ? { loading } : {}) });

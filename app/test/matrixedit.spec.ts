@@ -30,6 +30,14 @@ const cell = (page: Page, rc: string) => grid(page).locator(`td[data-cell="${rc}
 const texts = (page: Page): Promise<(string | null)[]> => grid(page).locator("td[data-cell]").evaluateAll((els) => els.map((e) => e.getAttribute("data-text")));
 const rows = (page: Page): Promise<number> => page.evaluate(() => window.n62.session.home.length);
 
+/** The entry line is drawn and a tap at its centre reaches it (no sheet or dimming layer over it). */
+const lineInSight = (page: Page): Promise<boolean> =>
+  page.evaluate(() => {
+    const r = document.querySelector('[data-testid="entry"]')!.getBoundingClientRect();
+    const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return r.height > 0 && el !== null && el.closest('[data-testid="entry"]') !== null;
+  });
+
 /** M:=[[1,2],[3,4]] stored, `7` on the line, and M's grid open at (2,1). */
 async function openAt21(page: Page): Promise<void> {
   await store(page, "M:=[[1,2],[3,4]]", "M");
@@ -47,6 +55,7 @@ test("a typed 9 and Enter write cell (2,1): the grid shows 9, M in Home is [[1,2
   await tap(page, ["d9"]);
   await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
   expect(await entryValue(page)).toBe("9"); // the cell is typed on the entry line
+  expect(await lineInSight(page)).toBe(true); // and that line is in sight, not under the grid or its dimming
   await tap(page, ["enter"]);
   await expect(cell(page, "2,1")).toHaveAttribute("data-text", "9");
   expect(await texts(page)).toEqual(["1", "2", "9", "4"]);
@@ -108,4 +117,21 @@ test("Esc in a cell leaves the old value and the line as it was; a second Esc cl
   await tap(page, ["esc"]);
   await expect(grid(page)).toBeHidden();
   expect(await run(page, "M")).toBe("[[1,2],[3,4]]");
+});
+
+test("a tall matrix keeps the line in sight: its grid scrolls, and the edited cell in row 10 is written", async ({ page }) => {
+  const rows10 = Array.from({ length: 10 }, (_, r) => `[${2 * r + 1},${2 * r + 2}]`).join(",");
+  await store(page, `T:=[${rows10}]`, "T");
+  await tap(page, ["shift", "d4"]);
+  await sheetKey(page, ["d0"]);
+  await expect(grid(page).locator("td[data-cell]")).toHaveCount(20);
+  for (let i = 0; i < 9; i++) await tap(page, ["down"]);
+  await expect(cell(page, "10,1")).toHaveAttribute("data-active", "true");
+  await expect(cell(page, "10,1")).toBeInViewport();
+  await tap(page, ["d5"]);
+  expect(await lineInSight(page)).toBe(true);
+  await tap(page, ["enter"]);
+  await expect(cell(page, "10,1")).toHaveAttribute("data-text", "5");
+  await tap(page, ["esc"]);
+  expect(await run(page, "T[9]")).toBe("[5,20]");
 });

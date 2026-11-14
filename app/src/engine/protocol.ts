@@ -22,7 +22,7 @@ export type Request =
   /** The unit view (G16): a job built from the Find index's factors (units/build.ts), evaluated in Home's mode. */
   | { id: number; type: "units"; job: UnitJob; settings: HomeSettings }
   /** R188: which of `names` hold a matrix, with their elements when `cells` (matrixRead.ts; calc/matrices.ts posts it). */
-  | { id: number; type: "matrices"; names: string[]; settings: HomeSettings; cells: boolean }
+  | { id: number; type: "matrices"; names: string[]; settings: HomeSettings; cells: boolean | "typed" }
   /** R59: a library file's text at `version`, imported against the client's log (library.ts importText). */
   | { id: number; type: "library"; input: Uint8Array | string; version: number; written: number; log: DefEntry[]; replace: boolean }
   | { id: number; type: "libraryExport"; version: number; written: number; log: DefEntry[] };

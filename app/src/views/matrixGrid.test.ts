@@ -9,7 +9,9 @@ import type { MatrixRead } from "../calc/matrices.ts";
 import type { HomeOutcome } from "../calc/port.ts";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
-import { MatrixGrid } from "./matrixGrid.svelte.ts";
+import { keyboard } from "../keyboard/keyboard.ts";
+import { findText } from "../i18n/enFind.ts";
+import { MatrixGrid, type CellLine } from "./matrixGrid.svelte.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 const SETTINGS: AppHost["settings"] = { digits: 12, angle: "rad", format: "std" };
@@ -94,5 +96,81 @@ describe("the matrix grid (R188)", () => {
     expect(sheet.pickNumber(1).kind).toBe("stay");
     expect(sheet.back()).toBe(true);
     expect(sheet.depth).toBe(1);
+  });
+});
+
+// R189: a cell is edited on the entry line and written back with `M:=[[…]]` through the session's store path; the other
+// elements as the log types them (the bridge's `typed`, engine/matrixRead.ts). Expected texts by hand.
+describe("the matrix grid's cell edit (R189)", () => {
+  const key = (id: string) => keyboard.byId.get(id) ?? (() => { throw new Error(`no key ${id}`); })();
+  const homeM = (): Promise<HomeOutcome> =>
+    Promise.resolve({ ok: true, display: "", approximate: false, facts: { exact: true, reliableDigits: null }, full: "", shape: [2, 2], items: [exact(real(1n)), exact(real(2n)), exact(real(3n)), exact(real(4n))] });
+  const typed = (cells: true | "typed"): Promise<MatrixRead> =>
+    Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: ["1", "2", "3", "evalf(1/10,15)"] } : { name: "M", rows: 2, cols: 2 });
+  async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; sent: string[] }> {
+    const sent: string[] = [];
+    const entry = { value: "7", chips: {}, clear: () => void (entry.value = ""), set: (l: string) => void (entry.value = l) };
+    const session = { shift: false, alpha: false, userNames: [], submit: (l: string, g?: string) => (sent.push(`${l} | ${g ?? ""}`), Promise.resolve()) };
+    const g = new MatrixGrid("M", () => SETTINGS, homeM, typed);
+    g.open();
+    await g.loading();
+    g.move(1, 0);
+    return { g, line: { entry, session } as unknown as CellLine, entry, sent };
+  }
+
+  it("a key that types starts the edit on a cleared line; the grid's keys and a control keep the sheet's job", async () => {
+    const { g, line, entry } = await at21();
+    for (const id of ["up", "down", "left", "right", "enter", "esc", "bksp", "math"]) expect(g.key(line, key(id), undefined)).toBeUndefined();
+    expect(g.editing).toBeNull();
+    expect(g.key(line, key("d9"), undefined)).toBe(false); // route.ts then runs it on the line
+    expect(g.editing).toEqual({ row: 1, col: 0 });
+    expect(entry.value).toBe("");
+  });
+
+  it("Enter writes the cell with the other elements as typed, in one store; the line that was there comes back", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d9"), undefined);
+    entry.value = "9";
+    expect(g.key(line, key("math"), undefined)).toBe(true); // a key that opens a sheet does nothing during the edit
+    expect(g.key(line, key("enter"), undefined)).toBe(true);
+    await g.loading();
+    expect(sent).toEqual(["M:=[[1,2],[9,evalf(1/10,15)]] | M:=[[1,2],[9,evalf(1/10,15)]]"]);
+    expect(g.editing).toBeNull();
+    expect(entry.value).toBe("7");
+  });
+
+  it("a refused cell sends nothing and the edit stays; Esc then ends it and the old line comes back", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d1"), undefined);
+    entry.value = "1+";
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect(g.refusal).toBeTruthy();
+    entry.value = "\\left(1,2\\right)"; // two values in one cell (the parser gives the sequence (1,2))
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect(g.refusal).toBe(findText("matrix.oneValue"));
+    expect(sent).toEqual([]);
+    expect(g.editing).toEqual({ row: 1, col: 0 });
+    expect(g.key(line, key("esc"), undefined)).toBe(true);
+    expect([g.editing, g.refusal, entry.value]).toEqual([null, null, "7"]);
+  });
+
+  it("a call's arguments are one value: f(1,2) is written as typed", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d9"), undefined);
+    entry.value = "\\operatorname{max}\\left(1,2\\right)";
+    g.key(line, key("enter"), undefined);
+    await g.loading();
+    expect([g.refusal, sent.length]).toEqual([null, 1]);
+    expect(sent[0]).toMatch(/^M:=\[\[1,2\],\[max\(1,2\),evalf\(1\/10,15\)\]\] \| /);
+  });
+
+  it("Enter on an empty line ends the edit and keeps the old value", async () => {
+    const { g, line, entry, sent } = await at21();
+    g.key(line, key("d9"), undefined);
+    entry.value = "";
+    g.key(line, key("enter"), undefined);
+    expect([g.editing, entry.value, sent]).toEqual([null, "7", []]);
   });
 });

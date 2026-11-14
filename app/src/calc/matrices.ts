@@ -12,7 +12,7 @@ export type { MatrixCell, MatrixRead } from "../engine/matrixRead.ts";
 
 /** The names of `names` that hold a matrix, in that order (`cells`: with their elements); none when `engine` has no
  *  worker. Rejects when the call fails (a Cancel, a crash). */
-export async function readMatrices(engine: MathEngine | undefined, names: readonly string[], s: CalcSettings, cells: boolean): Promise<MatrixRead[]> {
+export async function readMatrices(engine: MathEngine | undefined, names: readonly string[], s: CalcSettings, cells: boolean | "typed"): Promise<MatrixRead[]> {
   if (!engine || !("call" in engine) || names.length === 0) return [];
   const settings = { ...defaultHomeSettings, digits: s.digits, angle: s.angle }; // Home's (calc/engine.ts homeSettings): no mode change
   const r = await (engine as WorkerEngine).call({ type: "matrices", names: [...names], settings, cells });

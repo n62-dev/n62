@@ -202,6 +202,9 @@
 <div
   class="overlay"
   class:keypad={over === "keypad"}
+  class:matrix={over === "view" && level.grid !== undefined}
+  class:edits={over === "view" && level.grid?.editing != null}
+  style:--room="{below}px"
   data-testid={testid}
   bind:this={overlay}
   onpointerdown={noFocus}
@@ -322,6 +325,19 @@
     align-items: center;
     justify-content: flex-end;
     z-index: 5;
+  }
+  /* R189: a matrix cell is edited on the entry line: the line under the sheet is not dimmed, and a tap beside the sheet
+     goes through (to the line's cursor, or a history row into the cell) instead of closing it */
+  .overlay.edits {
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg) 55%, transparent) calc(100% - var(--room)), transparent 0);
+    pointer-events: none;
+  }
+  .overlay.edits > .sheet {
+    pointer-events: auto;
+  }
+  /* a matrix grid keeps the line's room (its cells are typed there, R189): the grid scrolls instead */
+  .overlay.matrix > .room {
+    flex-shrink: 0;
   }
   /* over the keypad: the maths keys a short sheet leaves visible stay live (their sheet job), dimmed */
   .overlay.keypad {

@@ -5,10 +5,14 @@
 // gives it, so the grid draws it with the Home formatter and its mark (views/matrixGrid.svelte.ts): an integer or a
 // rational is exact, a float or a complex with a float is unchecked (⚠, as Home marks a float in a non-number, G27).
 // Any other element keeps Giac's text, its floats at the display digits as Home shows them (G38), ⚠ when it holds one.
+// R189: for the grid's write-back, each element as the definitions log types a stored value (host.ts snapshot), so an
+// edited cell's `M:=[[…]]` keeps every other element as a relaunch would.
 // Runs in the worker in Home's mode (host.ts matrices); the client is calc/matrices.ts.
 import type { GiacValue } from "./bridge.ts";
 import { ZERO_VALUE, type ComplexValue } from "./format.ts";
-import { floatsAtDigits, floatsShown, hasFloat, partValue, valuePrecision, withDigits, type Giac } from "./numeric.ts";
+import { floatsAsEvalf } from "./homeEval.ts";
+import { typedFromPrinted } from "./giacPrint.ts";
+import { DOUBLE_DIGITS, floatsAtDigits, floatsShown, hasFloat, partValue, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import type { ValueFacts } from "./types.ts";
 
 /** A cell of the grid: a number with its facts, or Giac's text of an element that is not one (`unchecked`: it holds a
@@ -21,14 +25,16 @@ export interface MatrixRead {
   readonly rows: number;
   readonly cols: number;
   readonly cells?: readonly MatrixCell[];
+  /** R189 (asked for as `cells: "typed"`): its elements row by row as typed Giac text, as the log keeps a value. */
+  readonly typed?: readonly string[];
 }
 
 const EXACT: ValueFacts = { exact: true, reliableDigits: null };
 const UNCHECKED: ValueFacts = { exact: false, reliableDigits: null, warn: "unchecked" };
 
 /** The names of `names` (the definitions log's variables) that hold a matrix, in that order, with their sizes; `cells`:
- *  with their elements too. `giac` in Home's mode, its Digits the display digits `digits`. */
-export function readMatrices(giac: Giac, names: readonly string[], digits: number, cells: boolean): MatrixRead[] {
+ *  with their elements too (`"typed"`: as typed text, R189). `giac` in Home's mode, its Digits the display digits `digits`. */
+export function readMatrices(giac: Giac, names: readonly string[], digits: number, cells: boolean | "typed"): MatrixRead[] {
   const P = valuePrecision(digits);
   return names.flatMap((name) => {
     // the elements printed at P, so a float keeps its digits for its value
@@ -36,9 +42,20 @@ export function readMatrices(giac: Giac, names: readonly string[], digits: numbe
     const [rows, cols] = v.kind === "matrix" ? (v.shape ?? []) : [];
     if (!rows || !cols) return [];
     if (!cells) return [{ name, rows, cols }];
+    if (cells === "typed") {
+      const t = typedOf(giac, name, digits);
+      return t && t.length === rows * cols ? [{ name, rows, cols, typed: t }] : [];
+    }
     const read = cellsOf(giac, v, P, digits);
     return read && read.length === rows * cols ? [{ name, rows, cols, cells: read }] : [];
   });
+}
+
+/** R189: the elements of `name` as host.ts snapshot types a stored value: printed at DOUBLE_DIGITS, each float as
+ *  `evalf(<exact>,k)` (floatsAsEvalf), a string as typed text (typedFromPrinted). */
+function typedOf(giac: Giac, name: string, digits: number): string[] | null {
+  const v = withDigits(giac, DOUBLE_DIGITS, digits, () => giac.value(name, []));
+  return v.elements?.map((t) => typedFromPrinted(hasFloat(t) ? floatsAsEvalf(t) : t)) ?? null;
 }
 
 function cellsOf(giac: Giac, v: GiacValue, P: number, digits: number): MatrixCell[] | null {
