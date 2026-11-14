@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R11: the actions of a history row (Home and CAS), from keys and from touch. One list of nine (S2 rules M1, M2) on ☰,
+// R11: the actions of a history row (Home and CAS), from keys and from touch. One list of nine (S2 rules M1, M2) on ☰, then Export › (R130),
 // acting on the picked row, else the last result (Delete: the last row); the picked row's buttons are Store ▶ and
 // Copy as › (R276: a hold copies, a swipe deletes, rowgestures.spec.ts). Expected values are derived: 1/3 and 2/3 as 12 shown digits.
 import { expect, test, type Page } from "@playwright/test";
@@ -70,9 +70,9 @@ test("Store ▶ puts the result and the store arrow on the line, ready for the n
   await expect(page.locator('[data-testid="result"] .result').last()).toHaveAttribute("data-text", "0.25");
 });
 
-test("Menu is one list of nine (R145: Settings is the ⚙, not a row), the same with or without a picked row", async ({ page }) => {
+test("Menu is one list of nine then Export › as 0 (R145: Settings is the ⚙, not a row; R130), the same with or without a picked row", async ({ page }) => {
   await three(page);
-  const names = ["Insert", "Recall", "Copy", "Store ▶", "Delete", "Copy as›", "Paste", "Share session", "Clear history"];
+  const names = ["Insert", "Recall", "Copy", "Store ▶", "Delete", "Copy as›", "Paste", "Share session", "Clear history", "Export›"];
   await tap(page, ["@menu"]);
   await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveText(names.map((n, i) => `${(i + 1) % 10}${n}`));
   await tap(page, ["esc", "up", "@menu"]);
@@ -161,5 +161,5 @@ test("CAS has the same buttons and its own rows", async ({ page }) => {
   await tap(page, ["@home"]);
   await done(page, 1); // Home still has its row
   await tap(page, ["@menu"]);
-  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(9);
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(10); // the nine, then Export › (R130)
 });
