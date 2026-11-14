@@ -119,7 +119,7 @@ test("Why trust it (R174) at 360 × 740: the first line and the last are readabl
   expect(first).toBe(true);
   await sheetKey(page, ["down", "down", "down", "down", "down", "down"]);
   await expect.poll(() => t.evaluate((e) => e.scrollTop + e.clientHeight >= e.scrollHeight - 1)).toBe(true);
-  await expect(t).toContainText("The second is in RAD.");
+  await expect(t).toContainText("Trap 2 is in RAD.");
   // the last line sits inside the text's box at the bottom
   const last = await t.evaluate((e) => {
     const n = e.lastChild as Node, len = (n.textContent ?? "").length;

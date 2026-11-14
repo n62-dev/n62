@@ -7,7 +7,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AUTHOR_SOURCE_DATE, TRAP_CAPTION, group, trustSentences } from "./wording.mts";
+import { AUTHOR_SOURCE_DATE, TRAP_CAPTION, group, trapShown, trustSentences } from "./wording.mts";
 
 // The wording (the sentences, the caption) has no node import, so the in-app page can load it: wording.mts.
 export { AUTHOR_SOURCE_DATE, TRAP_CAPTION, group, trustSentences };
@@ -194,7 +194,7 @@ export function trapTable(f: TrustFacts): string {
   for (const t of TRAPS) {
     const row = f.golden.traps[t.id];
     if (!row) throw new Error(`trust: no golden row ${t.id}`);
-    const shown = t.id === "g39-int-1/x-pv" ? `refused: "${row.expect}"` : `≈ ${row.expect}`;
+    const shown = trapShown(row.mark, row.expect);
     const truth = trapTruth(t, row.note);
     out.push(`| ${t.label} | ${shown} | ${truth} | ${t.double} |`);
   }

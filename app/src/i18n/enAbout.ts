@@ -35,7 +35,7 @@ export const enAbout = {
   "trust.refused": "refused",
   "trust.true": "True value",
   "trust.double": "A plain double",
-  "trust.note": "The last column is an ordinary IEEE double. The sign of the first one depends on the order the expression is evaluated in. The second is in RAD.",
+  "trust.note": "The lines headed A plain double are what an ordinary IEEE double returns. For trap 1 its sign depends on the order the expression is evaluated in. Trap 2 is in RAD.",
   "loading": "Loading…",
   "version": "Version",
   "licence": "Licence",
