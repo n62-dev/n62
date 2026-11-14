@@ -141,13 +141,31 @@ public class N62FilesPlugin extends Plugin {
         call.resolve(new JSObject().put("result", "ok"));
     }
 
-    /** write({name, text}): creates the file or replaces its content. {result: "written" | "unavailable"}; rejects on an I/O error. */
+    /**
+     * write({name, text}): creates the file or replaces it whole (A137). {result: "written" | "unavailable"}; rejects on an
+     * I/O error, the file under `name` then unchanged. A provider's rename never replaces an existing name (it makes
+     * "name (1)"), so the order is:
+     * <ol>
+     * <li>recover(): put right what a kill left of an earlier write;</li>
+     * <li>the new text under STAGED_NEW + name, checked whole (COLUMN_SIZE, or read back when the provider gives no size);</li>
+     * <li>the old file renamed to STAGED_OLD + name;</li>
+     * <li>the staged new file renamed to `name`;</li>
+     * <li>the old file deleted.</li>
+     * </ol>
+     * A kill or an error leaves under `name` the old file or the new one, never a cut file; between steps 3 and 4 (two
+     * renames, milliseconds) `name` is absent, the next write puts the new file there and read() reads it. list() never
+     * shows a staged name.
+     */
     @PluginMethod
     public void write(PluginCall call) {
         String name = call.getString("name");
         String text = call.getString("text");
         if (!FolderNames.valid(name) || text == null) {
             call.reject("a plain file name and text are required");
+            return;
+        }
+        if (!FolderNames.valid(STAGED_OLD + name)) {
+            call.reject("a name of at most " + (255 - STAGED_OLD.length()) + " bytes is required to replace it whole");
             return;
         }
         Uri tree = usableTree();
@@ -157,15 +175,26 @@ public class N62FilesPlugin extends Plugin {
         }
         ContentResolver cr = getContext().getContentResolver();
         try {
-            Uri doc = child(tree, name);
-            if (doc == null) {
-                doc = DocumentsContract.createDocument(cr, rootDoc(tree), mimeOf(name), name);
-                if (doc == null) throw new IOException("could not create " + name);
+            Uri doc = recover(tree, name);
+            byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+            Uri fresh = DocumentsContract.createDocument(cr, rootDoc(tree), "application/octet-stream", STAGED_NEW + name);
+            if (fresh == null) throw new IOException("could not create " + STAGED_NEW + name);
+            try {
+                if (!(STAGED_NEW + name).equals(nameOf(fresh))) throw new IOException("the provider renamed " + STAGED_NEW + name);
+                try (OutputStream out = cr.openOutputStream(fresh, "wt")) {
+                    if (out == null) throw new IOException("no output stream for " + STAGED_NEW + name);
+                    writeBytes(out, bytes, call);
+                }
+                if (!holds(fresh, bytes)) throw new IOException("the new text did not reach " + STAGED_NEW + name + " whole");
+            } catch (IOException | RuntimeException e) {
+                deleteQuietly(fresh);
+                throw e;
             }
-            try (OutputStream out = cr.openOutputStream(doc, "wt")) {
-                if (out == null) throw new IOException("no output stream for " + name);
-                writeBytes(out, text.getBytes(StandardCharsets.UTF_8), call);
-            }
+            stallAt(call, "checked");
+            Uri aside = doc != null ? renameTo(doc, name, STAGED_OLD + name) : null;
+            stallAt(call, "aside");
+            renameTo(fresh, STAGED_NEW + name, name);
+            if (aside != null) deleteQuietly(aside);
         } catch (SecurityException | IllegalArgumentException e) {
             // revoked or gone between the check and the write
             unavailable(call);
@@ -240,7 +269,7 @@ public class N62FilesPlugin extends Plugin {
             return;
         }
         try {
-            Uri doc = child(tree, name);
+            Uri doc = readable(tree, name);
             if (doc == null) {
                 call.resolve(new JSObject().put("result", "missing"));
                 return;
@@ -272,7 +301,7 @@ public class N62FilesPlugin extends Plugin {
         try (Cursor c = getContext().getContentResolver().query(children(tree), cols, null, null, null)) {
             if (c == null) throw new SecurityException("no cursor");
             while (c.moveToNext()) {
-                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(1))) continue;
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(1)) || staged(c.getString(0))) continue;
                 files.put(new JSObject()
                     .put("name", c.getString(0))
                     .put("size", c.isNull(2) ? 0 : c.getLong(2))
@@ -291,7 +320,8 @@ public class N62FilesPlugin extends Plugin {
     /**
      * The test build's seams (A137; BuildConfig.TEST_SEAMS, build.sh --test only; every other build writes the bytes whole):
      * failAfter n writes the first n bytes, then throws an IOException (a full disk, a provider error); stallAfter n writes
-     * the first n bytes and waits 20 s before the rest, so app/test-device/folder.rec.ts can kill the app mid-write.
+     * the first n bytes and waits 20 s before the rest, so app/test-device/folder.rec.ts can kill the app mid-write;
+     * stallAt "checked" | "aside" (stallAt()) waits 20 s after write()'s step 2 or 3.
      */
     private static void writeBytes(OutputStream out, byte[] bytes, PluginCall call) throws IOException {
         int failAfter = BuildConfig.TEST_SEAMS ? call.getInt("failAfter", -1) : -1;
@@ -304,81 +334,124 @@ public class N62FilesPlugin extends Plugin {
         int stall = stallAfter >= 0 ? Math.min(stallAfter, end) : end;
         out.write(bytes, 0, stall);
         out.flush();
-        if (stallAfter >= 0) {
-            try {
-                Thread.sleep(20_000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        if (stallAfter >= 0) pause();
         out.write(bytes, stall, end - stall);
         out.flush();
         if (failAfter >= 0) throw new IOException("test seam: failed after " + end + " bytes");
     }
 
-    /**
-     * A137 step 1, test build only, thrown away after the probe: what the folder's provider does with renameDocument onto
-     * an existing name, and with a dot name made by createDocument (kept? listed?). Leaves no file behind.
-     */
-    @PluginMethod
-    public void probeRename(PluginCall call) {
-        Uri tree = usableTree();
-        if (!BuildConfig.TEST_SEAMS || tree == null) {
-            unavailable(call);
-            return;
-        }
-        ContentResolver cr = getContext().getContentResolver();
-        JSObject out = new JSObject().put("result", "ok").put("authority", tree.getAuthority());
+    /** The test build's stallAt seam: waits 20 s when the call names this step (see writeBytes). */
+    private static void stallAt(PluginCall call, String step) {
+        String at = BuildConfig.TEST_SEAMS ? call.getString("stallAt") : null;
+        if (step.equals(at)) pause();
+    }
+
+    private static void pause() {
         try {
-            Uri a = DocumentsContract.createDocument(cr, rootDoc(tree), "text/plain", "probe-a.txt");
-            Uri b = DocumentsContract.createDocument(cr, rootDoc(tree), "text/plain", "probe-b.txt");
-            try (OutputStream o = cr.openOutputStream(a, "wt")) { o.write("A".getBytes(StandardCharsets.UTF_8)); }
-            try (OutputStream o = cr.openOutputStream(b, "wt")) { o.write("B".getBytes(StandardCharsets.UTF_8)); }
-            Uri r;
-            try {
-                r = DocumentsContract.renameDocument(cr, b, "probe-a.txt");
-                out.put("renameOntoExisting", r != null ? displayNameOf(r) : "null");
-            } catch (RuntimeException | java.io.FileNotFoundException e) {
-                out.put("renameOntoExisting", "threw " + e);
-            }
-            Uri dot = DocumentsContract.createDocument(cr, rootDoc(tree), "application/octet-stream", ".n62-new~probe-c.json");
-            out.put("dotCreated", dot != null ? displayNameOf(dot) : "null");
-            out.put("listedAfterCreate", namesIn(tree));
-            if (dot != null) {
-                Uri c = DocumentsContract.renameDocument(cr, dot, "probe-c.json");
-                out.put("dotRenamed", c != null ? displayNameOf(c) : "null");
-            }
-            out.put("listedAfterRename", namesIn(tree));
-            for (String n : new String[] {"probe-a.txt", "probe-b.txt", "probe-a (1).txt", "probe-c.json", ".n62-new~probe-c.json"}) {
-                Uri d = child(tree, n);
-                if (d != null) DocumentsContract.deleteDocument(cr, d);
-            }
-            out.put("listedAfterDelete", namesIn(tree));
-        } catch (IOException | RuntimeException e) {
-            out.put("error", String.valueOf(e));
+            Thread.sleep(20_000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
-        call.resolve(out);
-    }
-
-    private String displayNameOf(Uri doc) {
-        String[] cols = {DocumentsContract.Document.COLUMN_DISPLAY_NAME};
-        try (Cursor c = getContext().getContentResolver().query(doc, cols, null, null, null)) {
-            return c != null && c.moveToFirst() ? c.getString(0) : "?";
-        } catch (RuntimeException e) {
-            return "? " + e;
-        }
-    }
-
-    private JSArray namesIn(Uri tree) {
-        JSArray names = new JSArray();
-        String[] cols = {DocumentsContract.Document.COLUMN_DISPLAY_NAME};
-        try (Cursor c = getContext().getContentResolver().query(children(tree), cols, null, null, null)) {
-            while (c != null && c.moveToNext()) names.put(c.getString(0));
-        }
-        return names;
     }
 
     // ---- helpers ----
+
+    /** The staged names of write() (A137): the new text before it takes the name, the old file before it is deleted. */
+    static final String STAGED_NEW = ".n62-new~";
+    static final String STAGED_OLD = ".n62-old~";
+
+    static boolean staged(String name) {
+        return name != null && (name.startsWith(STAGED_NEW) || name.startsWith(STAGED_OLD));
+    }
+
+    /**
+     * Puts right what a kill left of an earlier write of `name` and returns `name`'s document (null when absent). The old
+     * file goes aside only after the new text was checked whole, so with STAGED_OLD present and `name` absent (killed
+     * between the two renames) the staged new file is whole and takes the name; with no staged new file left, the old one
+     * goes back. Any other staged file is stale and deleted.
+     */
+    private Uri recover(Uri tree, String name) throws IOException {
+        Uri[] found = childrenNamed(tree, name, STAGED_NEW + name, STAGED_OLD + name);
+        Uri doc = found[0];
+        Uri fresh = found[1];
+        Uri aside = found[2];
+        if (doc == null && aside != null) {
+            if (fresh != null) {
+                doc = renameTo(fresh, STAGED_NEW + name, name);
+                fresh = null;
+            } else {
+                doc = renameTo(aside, STAGED_OLD + name, name);
+                aside = null;
+            }
+        }
+        ContentResolver cr = getContext().getContentResolver();
+        if (fresh != null) DocumentsContract.deleteDocument(cr, fresh);
+        if (aside != null) DocumentsContract.deleteDocument(cr, aside);
+        return doc;
+    }
+
+    /** read()'s document for `name`, changing nothing: `name`, or in the window between write()'s renames the whole new text. */
+    private Uri readable(Uri tree, String name) {
+        Uri[] found = childrenNamed(tree, name, STAGED_NEW + name, STAGED_OLD + name);
+        if (found[0] != null || found[2] == null) return found[0];
+        return found[1] != null ? found[1] : found[2];
+    }
+
+    /**
+     * Renames the document `from` → `to` and checks the provider kept the name: onto a name that exists (another writer,
+     * between our query and the rename) it makes "to (1)"; that is renamed back to `from` and the write fails.
+     */
+    private Uri renameTo(Uri doc, String from, String to) throws IOException {
+        ContentResolver cr = getContext().getContentResolver();
+        Uri r = DocumentsContract.renameDocument(cr, doc, to);
+        if (r == null) r = doc;
+        String got = nameOf(r);
+        if (!to.equals(got)) {
+            try {
+                DocumentsContract.renameDocument(cr, r, from);
+            } catch (IOException | RuntimeException e) {
+                // left as the provider named it
+            }
+            throw new IOException("the provider named it " + got + ", not " + to);
+        }
+        return r;
+    }
+
+    /** The document's own name as the provider shows it, or null. */
+    private String nameOf(Uri doc) {
+        String[] cols = {DocumentsContract.Document.COLUMN_DISPLAY_NAME};
+        try (Cursor c = getContext().getContentResolver().query(doc, cols, null, null, null)) {
+            return c != null && c.moveToFirst() ? c.getString(0) : null;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** Whether the document holds exactly `bytes`: by COLUMN_SIZE, or read back when the provider does not give a size. */
+    private boolean holds(Uri doc, byte[] bytes) throws IOException {
+        long size = sizeOf(doc);
+        if (size >= 0) return size == bytes.length;
+        try (InputStream in = getContext().getContentResolver().openInputStream(doc)) {
+            if (in == null) return false;
+            byte[] chunk = new byte[64 * 1024];
+            int at = 0;
+            int n;
+            while ((n = in.read(chunk)) != -1) {
+                if (at + n > bytes.length) return false;
+                for (int i = 0; i < n; i++) if (chunk[i] != bytes[at + i]) return false;
+                at += n;
+            }
+            return at == bytes.length;
+        }
+    }
+
+    private void deleteQuietly(Uri doc) {
+        try {
+            DocumentsContract.deleteDocument(getContext().getContentResolver(), doc);
+        } catch (IOException | RuntimeException e) {
+            // the next write's recover() deletes a staged file left behind
+        }
+    }
 
     private SharedPreferences prefs() {
         return getContext().getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -427,17 +500,26 @@ public class N62FilesPlugin extends Plugin {
 
     /** The document of the file called exactly `name` directly in the folder, or null. */
     private Uri child(Uri tree, String name) {
+        return childrenNamed(tree, name)[0];
+    }
+
+    /** For each name, the document of the file called exactly that directly in the folder, or null; one query. */
+    private Uri[] childrenNamed(Uri tree, String... names) {
+        Uri[] found = new Uri[names.length];
         String[] cols = {DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME,
             DocumentsContract.Document.COLUMN_MIME_TYPE};
         try (Cursor c = getContext().getContentResolver().query(children(tree), cols, null, null, null)) {
             if (c == null) throw new SecurityException("no cursor");
             while (c.moveToNext()) {
-                if (name.equals(c.getString(1)) && !DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(2))) {
-                    return DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0));
+                if (DocumentsContract.Document.MIME_TYPE_DIR.equals(c.getString(2))) continue;
+                for (int i = 0; i < names.length; i++) {
+                    if (found[i] == null && names[i].equals(c.getString(1))) {
+                        found[i] = DocumentsContract.buildDocumentUriUsingTree(tree, c.getString(0));
+                    }
                 }
             }
         }
-        return null;
+        return found;
     }
 
     /** The document's size in bytes as the provider reports it (COLUMN_SIZE), or -1 when it does not say. */

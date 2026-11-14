@@ -10,9 +10,10 @@
 //   tools/devlock.sh release HA24BZ2Y <name>
 // It clears our app's data first (pm clear) and removes its test folder at the end. Prints one "A65 ..." line per step.
 // A137: write() replaces a file whole. With the test build's seams (failAfter: an I/O error after n bytes; stallAfter: a
-// 20 s pause after n bytes) and kills (am force-stop) at a sweep of times into a 2 MB write, the file under its real name
-// is always the old text or the new one, never a cut file; a missing file (the kill between the two renames) is put back
-// by the next read; the staged names (.n62-new~, .n62-old~) are never listed and never left behind.
+// 20 s pause after n bytes; stallAt: a 20 s pause after the check or between the two renames) and kills (am force-stop),
+// also at a sweep of times into a 2 MB write, the file under its real name is the old text or the new one, never a cut
+// file; between the renames it is missing, read() then gives the new text and the next write puts it back; list() never
+// shows the staged names (.n62-new~, .n62-old~) and the next write removes any a kill left.
 import { createHash } from "node:crypto";
 import { _android as android, expect, test, type AndroidDevice, type Page } from "@playwright/test";
 
@@ -224,10 +225,10 @@ function log137(s: string): void {
 
 async function a137(start: Page): Promise<void> {
   let page = start;
-  const probe = await call(page, "probeRename").catch((e: Error) => ({ result: `rejected: ${e.message}` }));
-  log137(`step 1 probe: ${JSON.stringify(probe)}`);
   await device.shell(`rm -f ${PATH}/big.json ${PATH}/n62-backup-2026-11-07.json ${PATH}/from-outside.json; rm -rf ${PATH}/sub`);
   const keep = ["n62-test.txt", "n62-keep.json"];
+  const isStaged = (n: string): boolean => n.startsWith(".n62-new~") || n.startsWith(".n62-old~");
+  const listed = async (p: Page): Promise<string[]> => ((await call(p, "list")).files as { name: string }[]).map((f) => f.name).sort();
 
   // an I/O error after 10 bytes of the new text: the old text stays whole under the real name
   const old = `{"old":"${"o".repeat(200)}"}`;
@@ -235,13 +236,13 @@ async function a137(start: Page): Promise<void> {
   const failed = await call(page, "write", { name: "n62-keep.json", text: `{"new":"${"n".repeat(300)}"}`, failAfter: 10 })
     .catch((e: Error) => ({ result: `rejected: ${e.message}` }));
   const afterFail = (await device.shell(`cat ${PATH}/n62-keep.json`)).toString();
-  log137(`failAfter 10: write ${JSON.stringify(failed)}; the file holds ${afterFail.length} bytes (old ${old.length}); strays ${JSON.stringify(await strays(keep))}`);
+  log137(`failAfter 10: write ${JSON.stringify(failed.result).slice(0, 80)}; the file holds ${afterFail.length} bytes (old ${old.length}); strays ${JSON.stringify(await strays(keep))}`);
   expect.soft(String(failed.result)).toMatch(/^rejected: .*test seam/);
   expect.soft(afterFail).toBe(old);
   expect.soft(await call(page, "read", { name: "n62-keep.json" })).toEqual({ result: "ok", text: old });
   expect.soft(await strays(keep)).toEqual([]);
 
-  // a 2 MB file; the app killed 20 s into a stalled write after 1 MB: the old text stays whole
+  // 2 MB files; the app killed during a stalled write: in the bytes, after the check, between the two renames
   const bigOld = `{"x":"${"é∑abcdef".repeat(200_000)}"}`;
   const bigNew = `{"y":"${"ghijk∑é".repeat(200_000)}"}`;
   const known: Record<string, string> = { [md5(bigOld)]: "old", [md5(bigNew)]: "new", missing: "missing" };
@@ -251,27 +252,39 @@ async function a137(start: Page): Promise<void> {
       w.__w = w.Capacitor.nativePromise("N62Files", "write", { name: "n62-big.json", text: t, ...(x as object) }).catch(() => undefined);
     }, [text, extra] as const);
   };
+  const textOf = (r: Answer): string => (r.text === bigOld ? "old" : r.text === bigNew ? "new" : `not whole (${String(r.result)})`);
   const keepBig = [...keep, "n62-big.json"];
-  expect(await call(page, "write", { name: "n62-big.json", text: bigOld })).toEqual({ result: "written" });
-  await fire(page, bigNew, { stallAfter: 1_000_000 });
-  await new Promise((r) => setTimeout(r, 3000));
-  const midStall = await device.shell(`ls -1a ${PATH}`);
-  await device.shell(`am force-stop ${PKG}`);
-  const stalled = known[await shellMd5("n62-big.json")] ?? "cut";
-  log137(`killed 3 s into a write stalled after 1 MB: the file is ${stalled}; the folder held ${JSON.stringify(midStall.toString().trim().split("\n"))}`);
-  expect.soft(stalled).toBe("old");
-  page = await launch();
-  const reread = await call(page, "read", { name: "n62-big.json" });
-  expect.soft(reread.text === bigOld).toBe(true);
-  const listedNames = ((await call(page, "list")).files as { name: string }[]).map((f) => f.name).sort();
-  log137(`after restart: read gives the old text ${reread.text === bigOld}; list ${JSON.stringify(listedNames)}; strays ${JSON.stringify(await strays(keepBig))}`);
-  expect.soft(listedNames).toEqual([...keepBig].sort());
-  expect.soft(await strays(keepBig)).toEqual([]);
+  const stalls: [string, object, string, string][] = [
+    ["in the bytes, after 1 MB", { stallAfter: 1_000_000 }, "old", "old"],
+    ["after the check", { stallAt: "checked" }, "old", "old"],
+    ["between the two renames", { stallAt: "aside" }, "missing", "new"],
+  ];
+  for (const [where, seam, wantNow, wantRead] of stalls) {
+    expect(await call(page, "write", { name: "n62-big.json", text: bigOld })).toEqual({ result: "written" });
+    await fire(page, bigNew, seam);
+    await new Promise((r) => setTimeout(r, 3000));
+    const mid = (await device.shell(`ls -1a ${PATH}`)).toString().trim().split("\n").filter((n) => n.startsWith(".n62-") || n.startsWith("n62-big"));
+    await device.shell(`am force-stop ${PKG}`);
+    const now = known[await shellMd5("n62-big.json")] ?? "cut";
+    page = await launch();
+    const read = textOf(await call(page, "read", { name: "n62-big.json" }));
+    const names = await listed(page);
+    const left = await strays(keepBig);
+    expect(await call(page, "write", { name: "n62-big.json", text: bigOld })).toEqual({ result: "written" });
+    const clean = await strays(keepBig);
+    log137(`killed ${where}: the folder held ${JSON.stringify(mid)}; the file is ${now}; after restart read gives ${read}, list ${JSON.stringify(names)}, strays ${JSON.stringify(left)}; after the next write strays ${JSON.stringify(clean)}`);
+    expect.soft(now).toBe(wantNow);
+    expect.soft(read).toBe(wantRead);
+    expect.soft(names.filter(isStaged)).toEqual([]);
+    expect.soft(left.filter((n) => !isStaged(n))).toEqual([]);
+    expect.soft(clean).toEqual([]);
+    expect.soft(known[await shellMd5("n62-big.json")]).toBe("old");
+  }
 
-  // kills at a sweep of times into a plain 2 MB write (no seam): old or new, never cut; a missing file is put back by read
+  // kills at a sweep of times into a plain 2 MB write (no seam): old, new or (between the renames) missing, never cut
   const seen: string[] = [];
   let text = bigOld;
-  for (const ms of [0, 25, 50, 75, 100, 125, 150, 175, 200, 250, 300, 400]) {
+  for (const ms of [0, 10, 20, 30, 40, 50, 60, 80, 100, 120, 150, 200]) {
     const next = text === bigOld ? bigNew : bigOld;
     await fire(page, next, {});
     await new Promise((r) => setTimeout(r, ms));
@@ -279,15 +292,18 @@ async function a137(start: Page): Promise<void> {
     const now = known[await shellMd5("n62-big.json")] ?? "cut";
     page = await launch();
     const r = await call(page, "read", { name: "n62-big.json" });
-    const after = r.text === bigOld ? "old" : r.text === bigNew ? "new" : `cut (${String(r.result)})`;
+    const after = textOf(r);
     const left = await strays(keepBig);
-    seen.push(`${ms} ms: ${now} → ${after}${left.length ? ` strays ${JSON.stringify(left)}` : ""}`);
+    seen.push(`${ms} ms: ${now} → ${after}${left.length ? ` ${JSON.stringify(left)}` : ""}`);
     expect.soft(["old", "new", "missing"]).toContain(now);
     expect.soft(["old", "new"]).toContain(after);
-    expect.soft(left).toEqual([]);
+    expect.soft(left.filter((n) => !isStaged(n))).toEqual([]);
+    expect.soft((await listed(page)).filter(isStaged)).toEqual([]);
     text = r.text === bigNew ? bigNew : bigOld;
   }
   // "old"/"new" name the two texts (the sweep writes them in turn), not the text before each kill
-  log137(`kill sweep (file right after the kill → after restart and read): ${seen.join("; ")}`);
+  log137(`kill sweep (file right after the kill → read after restart, staged files left): ${seen.join("; ")}`);
+  expect(await call(page, "write", { name: "n62-big.json", text: bigNew })).toEqual({ result: "written" });
+  expect.soft(await strays(keepBig)).toEqual([]);
   await device.shell(`rm -f ${PATH}/n62-keep.json ${PATH}/n62-big.json`);
 }
