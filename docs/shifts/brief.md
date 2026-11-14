@@ -63,6 +63,18 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 752 | [R298](packages/R298.md) a paste or a result inserted before the entry field keeps its place among the keys | ron, Opus | `p1/ron-insertqueue` | – |
+| 753 | [S58](packages/S58.md) the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
+| 754 | [R299](packages/R299.md) the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
+| 755 | [R300](packages/R300.md) the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
+| 756 | [R301](packages/R301.md) Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
+| 757 | [R302](packages/R302.md) a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | R300 |
+| 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
+| 759 | [R304](packages/R304.md) a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
+| 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
+| 761 | [R306](packages/R306.md) a list, a matrix, cases and an integral read right as plain text | ron, Opus | `p1/ron-plainlists` | G232f1 |
+| 762 | [R307](packages/R307.md) the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | R300 |
+| 763 | [R308](packages/R308.md) a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | R300 |
 | 697 | [A145](packages/A145.md) F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
@@ -74,10 +86,12 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
 
 ### Lane B queue (the release, then the engine)
-The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-09.md) section 2. A66's device check is a backlog line.
+The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-14.md) section 2. A66's device check is a backlog line.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 764 | [G352](packages/G352.md) a matrix times a list of another length is refused, in either order | gorge, Opus | `p1/gorge-matlistshape` | – |
+| 765 | [G353](packages/G353.md) statistics of a float list take two passes, and equal values give exactly 0 | gorge, Opus | `p1/gorge-floatstats` | – |
 | 740 | G213 Copy as Python, the core | gorge, Opus | `p1/gorge-pycore` | G210 |
 | 741 | [G214](packages/G214.md) Copy as Python: functions and the angle mode | gorge, Opus | `p1/gorge-pyfuncs` | G211, G213 |
 | 688 | [A100](packages/A100.md) append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
@@ -96,8 +110,19 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
 | 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
 | 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
+| 766 | [G354](packages/G354.md) a store Giac refuses shows a refusal, not `ok` | gorge, Opus | `p1/gorge-reservedstore` | – |
+| 767 | [G355](packages/G355.md) a Home row's chip and Ans carry its σ | gorge, Opus | `p1/gorge-chipsigma` | – |
+| 768 | [G356](packages/G356.md) "interpolate" in Find no longer leads to the polynomial through every point | gorge, Opus | `p1/gorge-lagrangealias` | – |
+| 769 | [G357](packages/G357.md) the unit view takes ∛ of a quantity, and a mixed sum inside √, abs or atan2 says the units differ | gorge, Opus | `p1/gorge-unitroots` | – |
+| 770 | [G358](packages/G358.md) a finite value past a deep cancellation is not called an overflow | gorge, Opus | `p1/gorge-overflowtwice` | – |
+| 771 | [G359](packages/G359.md) a cubic with a 10^-30 term no longer kills the engine | gorge, Opus | `p1/gorge-cubictiny` | – |
+| 772 | [G360](packages/G360.md) Giac's other spellings of the decision functions read as one name, and iPart's limit as trunc's | gorge, Opus | `p1/gorge-decisionaliases` | – |
+| 773 | [G363](packages/G363.md) the working precision counts a power of any constant base with an integer exponent | gorge, Opus | `p1/gorge-constpowers` | – |
+| 774 | [G364](packages/G364.md) a real cubic's only real root never shows a noise imaginary part under ≈ | gorge, Opus | `p1/gorge-cubicpair` | G359 |
+| 775 | [G361](packages/G361.md) a linear interpolation in a table, found as "interpolate" | gorge, Opus | `p1/gorge-tableinterp` | G356 |
+| 776 | [G362](packages/G362.md) Math gets arg, re, im, conj, max, min and atan2 as checked functions | gorge, Sonnet | `p1/gorge-mathmenu` | – |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, S33. After the freeze, by day: A91, A82, R292.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, G365, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the freeze, by day: A91, A82, R292.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".

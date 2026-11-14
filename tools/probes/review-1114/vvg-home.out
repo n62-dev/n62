@@ -1,0 +1,12 @@
+H [[1,2,3],[4,5,6]]*list[1,2,3] => mark== items=[{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null}] ok=true display="[[1,2,3],[8,10,12]]" err= exact=true warn= why={}
+L [[1,2,3],[4,5,6]]*list[1,2,3] => mark== items=[{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null}] ok=true display="[[1,2,3],[8,10,12]]" err= exact=true warn= why={}
+L [[1,2,3],[4,5,6]]*list[1,2,3] => mark== items=[{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null}] ok=true display="[[1,2,3],[8,10,12]]" err= exact=true warn= why={}
+C [[1,2,3],[4,5,6]]*list[1,2,3] => mark=(none) items=null ok=true display="[[1,2,3],[8,10,12]]" err= exact=false warn= why={}
+H [[1,2],[3,4]]*list[1,2] => mark== items=[{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null}] ok=true display="[[1,2],[6,8]]" err= exact=true warn= why={}
+H list[1,2,3]*[[1,2,3],[4,5,6]] => mark=(none) items=null ok=false display="The sizes do not match" err=lengthsDiffer exact=false warn= why={}
+H [[1,2,3],[4,5,6]]*[1,2,3] => mark== items=[{"exact":true,"reliableDigits":null},{"exact":true,"reliableDigits":null}] ok=true display="[14,32]" err= exact=true warn= why={}
+H limit(iPart(x),x,1,-1) => mark=⚠ items=null ok=true display="1" err= exact=false warn=unaudited why={"unaudited":["limit","iPart"]}
+H limit(iPart(x),x,1,1) => mark=⚠ items=null ok=true display="1" err= exact=false warn=unaudited why={"unaudited":["limit","iPart"]}
+L limit((iPart(x)),x,1) => mark=⚠ items=null ok=true display="1" err= exact=false warn=unaudited why={"unaudited":["limit","iPart"]}
+H solve(x^3-3*x+2+10^-80=0,x) => mark=≈ items=[{"exact":false,"reliableDigits":40}] ok=true display="{-2+3.4717386591E-305*i}" err= exact=false warn= why={}
+H solve(x^3-3*x+2+10^-14=0,x) => mark=≈ items=[{"exact":false,"reliableDigits":40}] ok=true display="{-2}" err= exact=false warn= why={}

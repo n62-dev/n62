@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// G331 (F214, patch 0047; docs/research/r20-decompose.md): simplify of a power of an ln over nested roots met an ln argument
+// G331 (F214, patch 0047; docs/archive/r20-decompose.md): simplify of a power of an ln over nested roots met an ln argument
 // that alg_lvar's variables cannot write (subst.cc tsimplify_common, e2r gives undef), and decompose recursed until the stack
 // overflowed (F214's input) or expanded_ln looped until a clock stopped it (the other two; the CAS view waited up to 600 s).
 // Each input runs on a fresh raw engine with Giac's clock at 10 s (ckevery, as host.ts sets it): it must answer well inside

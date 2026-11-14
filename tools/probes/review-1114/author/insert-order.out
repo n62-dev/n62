@@ -1,0 +1,15 @@
+
+ RUN  v5.0.3 <checkout>/app
+
+stdout | ../tools/probes/review-1114/author/insert-order.probe.test.ts > 2, then ☰ Paste of 3 (clipboard/actions.svelte.ts pasteNow: entry.insert), before the field
+PENDING "3" QUEUE ["2"] FIELD "32" PRESSED 23
+
+stdout | ../tools/probes/review-1114/author/insert-order.probe.test.ts > 2 ×, then a result chip (insertResult), then − 1, before the field
+PENDING "\\res{1}{5}" QUEUE ["2","\\times","-","1"] FIELD "\\res{1}{5}2\\times-1"
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  11:24:58
+   Duration  499ms (transform 85%, import 13%, worker 1%, tests 1%)
+
