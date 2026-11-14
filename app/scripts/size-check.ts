@@ -471,8 +471,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  measures 62,114 B gzip (175,074 B raw), the branch 62,188 B (175,269 B raw): 62,188 B + 0.05 kB.
  *  62,240 → 62,300 B (R298 fix 2): Enter and the units key wait for the field whatever they first waited for (route.ts
  *  forLine, readsLine). The branch before it measures 62,208 B (175,292 B raw, phase-1 merged in), after it 62,244 B
- *  (175,348 B raw): 62,244 B + 0.05 kB. */
-export const START_PIN_GZIP = 62_300;
+ *  (175,348 B raw): 62,244 B + 0.05 kB.
+ *  62,300 → 62,380 B (G355): a Home row's chip and Ans carry its σ (state/results.ts chipOf sets R61's `unc` from the
+ *  row's uncSigma, and a row with σ never gives an exact chip). With phase-1 d3c84b9c merged in, the branch before it
+ *  measures 62,301 B (175,648 B raw), after it 62,321 B (175,669 B raw): 62,321 B + 0.05 kB, rounded up to 0.01 kB. */
+export const START_PIN_GZIP = 62_380;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

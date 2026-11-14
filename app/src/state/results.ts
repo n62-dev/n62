@@ -93,13 +93,13 @@ export interface ChipSource {
  *  drawn. */
 export function chipOf(item: ChipSource): Chip | undefined {
   if (item.status !== "done" || item.full === undefined) return undefined;
-  const f = item.facts;
-  // G355: a result with σ (R40's uncSigma, from an inexact constant or chip) is never an exact chip (M4-4, R61)
-  const sigma = f?.uncSigma;
-  if (item.fullExact === true && sigma === undefined) return { value: item.full, exact: true };
+  // G355: a result with σ (R40's uncSigma, from an inexact constant or chip; a decimal text, never empty) is never an
+  // exact chip (M4-4, R61)
+  const f = item.facts, unc = f?.uncSigma;
+  if (item.fullExact && !unc) return { value: item.full, exact: true };
   // R65 (deep check D1): a chip that is not exact carries the facts it was shown with, so the next line keeps them;
   // G355: its σ too, as R61's `unc`, so the chip and Ans stay an input of σ (chipFacts.ts chipSigma)
-  return { value: item.full, exact: false, ...(f ? { reliableDigits: f.reliableDigits } : {}), ...(f?.warn ? { warn: f.warn } : {}), ...(sigma !== undefined ? { unc: sigma } : {}) };
+  return { value: item.full, exact: false, ...(f ? { reliableDigits: f.reliableDigits } : {}), ...(f?.warn ? { warn: f.warn } : {}), ...(unc ? { unc } : {}) };
 }
 
 
