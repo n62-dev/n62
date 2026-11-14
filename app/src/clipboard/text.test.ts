@@ -2,7 +2,7 @@
 // Expected values are derived (mathematically provable decimal expansions) or follow docs/04 section 2.6 literally.
 import { describe, expect, it } from "vitest";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
-import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
+import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionCsv, sessionLatex, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
 import { markFor, modeOf, renderNumeric, type DisplayContext } from "../state/displayMode.ts";
 
 const CTX: DisplayContext = { format: "std", digits: 12, fixDecimals: 4, angle: "rad" };
@@ -300,5 +300,72 @@ describe("R100 (bu-6 = be-8): a drawn list copies with the decimal comma", () =>
   it("point: as drawn", () => {
     expect(copyFull(list)).toBe("{1.5,2}");
     expect(copyFull(exact)).toBe("{3/2,2}");
+  });
+});
+
+// G232: the history as CSV and as LaTeX. Values are the ones sessionText tests derive (1/2, 1/3, √2 at 5 confirmed
+// digits, t10 of decisions R61); the file's form is a preview (v0.1.0), the tests pin it so a change is seen.
+describe("sessionCsv / sessionLatex (G232)", () => {
+  const exact = { exact: true, reliableDigits: null } as const;
+  const half = done({ latex: "\\frac12", resultLatex: "\\frac{1}{2}", text: "0.5", full: "1/2", fullExact: true, value: re("0.5"), facts: exact, rational: { n: "1", d: "2" } });
+  const third = done({ latex: "\\frac{1}{3}", resultLatex: "\\frac{1}{3}", text: "0.333", full: "1/3", fullExact: true, value: ratio(1n, 3n), facts: exact, rational: { n: "1", d: "3" } });
+  const root = done({ latex: "\\sqrt{2}", resultLatex: "1.4142", text: "1.41421356237", full: "1.4142135623730950488", fullExact: false, value: re("1.4142135623730950488"), facts: { exact: false, reliableDigits: 5 } });
+  const comma = done({ latex: "\\max(1,2)", text: "2", full: "2", fullExact: true, value: re("2"), facts: exact, rational: { n: "2", d: "1" } });
+  const bad = done({ latex: "1+", status: "error", text: "Syntax error" });
+  const wait = done({ latex: "2", status: "pending" });
+  const unit = done({
+    latex: "12.34\\pm0.05\\times3.2\\pm0.1",
+    resultLatex: "39.488",
+    text: "39.488",
+    full: "39.488",
+    value: re("39.488"),
+    facts: { exact: false, reliableDigits: null },
+    units: { input: "12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m}", text: " ± 1.2 m²", unit: "m²", unc: { text: "1.2" }, latex: "\\pm1.2\\,\\mathrm{m}^{2}" },
+  });
+  const rows = [half, third, root, comma, bad, wait, unit];
+
+  it("CSV: the header input,value,mark,unit,sigma, then one row per finished entry, CRLF, no comment line", () => {
+    const csv = sessionCsv(rows, {}, CTX);
+    expect(csv).toBe(
+      [
+        "input,value,mark,unit,sigma",
+        "1/2,0.5,=,,",
+        "1/3,0." + "3".repeat(40) + ",≈,,",
+        "sqrt(2),1.4142,⚠,,",
+        '"max(1,2)",2,=,,',
+        "1+,Syntax error,,,",
+        "12.34±0.05 m×3.2±0.1 m,39.488,≈,m²,1.2",
+      ].join("\r\n") + "\r\n",
+    );
+  });
+  it("CSV: full-precision values, and with the decimal comma the separator is ; as in tableCsv", () => {
+    const csv = sessionCsv([third, unit, comma], { decimalComma: true }, { ...CTX, decimalComma: true });
+    expect(csv).toBe(
+      ["input;value;mark;unit;sigma", "1/3;0," + "3".repeat(40) + ";≈;;", "12,34±0,05 m×3,2±0,1 m;39,488;≈;m²;1,2", "max(1,2);2;=;;"].join("\r\n") + "\r\n",
+    );
+    expect(sessionCsv([comma], { decimalComma: true }, { ...CTX, decimalComma: true })).not.toContain('"');
+  });
+  it("CSV and LaTeX: empty when nothing finished (the caller says so)", () => {
+    expect(sessionCsv([wait], {}, CTX)).toBe("");
+    expect(sessionLatex([wait], {}, CTX, "0.1.0")).toBe("");
+    expect(sessionCsv([], {}, CTX)).toBe("");
+  });
+  it("LaTeX: the preview comment first, then one align* line per row with the mark as a relation", () => {
+    const lines = sessionLatex(rows, {}, CTX, "0.1.0").split("\n");
+    expect(lines).toEqual([
+      "% N62 0.1.0 · preview: the form of this file can change",
+      "\\begin{align*}\\frac12 &= \\frac{1}{2}\\end{align*}",
+      "\\begin{align*}\\frac{1}{3} &\\approx \\frac{1}{3}\\end{align*}",
+      "\\begin{align*}\\sqrt{2} &\\mathrel{\\triangle} 1.4142\\quad\\text{(5 of 12 digits confirmed)}\\end{align*}",
+      "\\begin{align*}\\max(1,2) &= 2\\end{align*}",
+      "\\begin{align*}1+ &\\rightarrow \\text{Syntax error}\\end{align*}",
+      "\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39.488\\,\\pm1.2\\,\\mathrm{m}^{2}\\end{align*}",
+      "",
+    ]);
+  });
+  it("LaTeX: an error's text is escaped, a row without a drawn result gives its value", () => {
+    const e = done({ latex: "x", status: "error", text: "100% of a_b & #1" });
+    expect(sessionLatex([e], {}, CTX, "0.1.0").split("\n")[1]).toBe("\\begin{align*}x &\\rightarrow \\text{100\\% of a\\_b \\& \\#1}\\end{align*}");
+    expect(sessionLatex([{ ...half, resultLatex: undefined }], {}, CTX, "0.1.0").split("\n")[1]).toBe("\\begin{align*}\\frac12 &= 0.5\\end{align*}");
   });
 });
