@@ -30,6 +30,43 @@ const clip = {
   "clip.shared": "Shared",
   "clip.sharedAsCopy": "This device cannot share: copied instead",
   "clip.sessionTitle": "N62 session",
+  // R130: ☰ › Export › (item 10, shared with R181 and R200) and the work report it saves (workReport.ts)
+  "clip.export": "Export",
+  "export.work": "Work report",
+  "export.nothing": "Nothing to export",
+  "export.saved": "Work report saved",
+  "export.offered": "Work report offered as a download",
+  "export.cancelled": "Work report not saved",
+  "export.failed": "The work report could not be saved",
+  "report.preview": "preview: the form of this file can change",
+  "report.title": "Work report",
+  "report.view": "View",
+  "report.exportAngle": "Angle mode at export",
+  "report.angle": "Angle",
+  "report.notRecorded": "not recorded",
+  "report.digits": "Digits",
+  "report.format": "Number format",
+  "report.decimalMark": "Decimal mark",
+  "report.point": "point",
+  "report.comma": "comma",
+  "report.step": "Step",
+  "report.input": "Input",
+  "report.mark": "Mark",
+  "report.value": "Value",
+  "report.uncertainty": "Uncertainty",
+  "report.sigma": "standard uncertainty (σ)",
+  "report.uses": "Uses",
+  "report.note": "Note",
+  "report.error": "Error",
+  "report.about":
+    "About this file: Markdown that a person reads and a program can parse. The first line names the N62 version; the list under the title gives the settings that change a value. " +
+    "Angle mode at export: the mode when the file was written; a row keeps the value it was computed with when the mode changes. " +
+    "Each step is one history row, under a heading `## Step n`, as a list of `Name: text` lines. Input: the entry as typed. " +
+    "Angle: the angle mode the step was computed in, when it differs from the mode at export, or `not recorded`; a step without it was computed in the mode at export. " +
+    "Mark: `= exact` (the value shown is exact), `≈` (rounded; every digit shown is confirmed) or `⚠` (not every digit shown is confirmed, or not checked), each followed by its reason. " +
+    "Value: the result as shown, in the decimal mark the header names and without digit groups, with its unit; a result of the unit view holds `± σ` before the unit. " +
+    "Uncertainty: `± σ` of every value that has one (a constant's too), the standard uncertainty (σ, one standard deviation). " +
+    "Uses: the stored values the input read. Note: a line the history showed under the row. Error: the message of an entry that failed. A step without a Mark line has no number to mark.",
   // R36: the picked row's line (whyLine.ts)
   "why.exact": "exact",
   "why.rounded": "rounded",

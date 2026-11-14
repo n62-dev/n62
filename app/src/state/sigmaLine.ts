@@ -25,6 +25,12 @@ function doubled(sigma: string): string | null {
   return v ? `${v.neg ? "-" : ""}${2n * BigInt(v.digits)}e${v.exp - v.digits.length + 1}` : null;
 }
 
+/** σ alone, as the σ line writes it (R130's report); null when the result has no σ. */
+export function sigmaText(facts: ValueFacts | undefined, mode: FmtMode, comma = false): string | null {
+  const s = facts?.uncSigma;
+  return s === undefined || facts?.uncDigits === undefined ? null : shown(s, mode, comma);
+}
+
 /** The σ line of a result with these facts, drawn in `mode` (the row's notation); null when it has no σ. */
 export function sigmaLine(facts: ValueFacts | undefined, mode: FmtMode, comma = false): string | null {
   const s = facts?.uncSigma;

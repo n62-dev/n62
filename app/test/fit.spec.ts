@@ -110,9 +110,9 @@ test.describe("at 412 × 915", () => {
       expect(hits).toEqual(["up", "down", "left", "right", "menu", "esc", "undo", "redo", "select", "deselect"]);
     });
 
-  // R145: Settings is the ⚙ in the title row, no longer a tenth row: the Home menu (9 rows) and the Plot menu (8, two lines
-  // of reasons) fit the room over the maths rows at 412 × 915 like every other pick sheet
-  for (const name of Object.keys(OPENERS))
+  // R145: Settings is the ⚙ in the title row: the Plot menu (8, two lines of reasons) fits the room over the maths rows at
+  // 412 × 915 like every other pick sheet. The Home menu has ten rows since R130 (item 10, Export ›): the test below.
+  for (const name of Object.keys(OPENERS).filter((n) => n !== "home menu"))
     test(`fit: ${name} shows all its items without a scroll`, async ({ page }) => {
       await openSheet(page, name);
       const box = sheet(page).locator(".list, .grid");
@@ -120,6 +120,23 @@ test.describe("at 412 × 915", () => {
       expect(m.scroll).toBeLessThanOrEqual(m.client);
       await expect(page.getByTestId("sheet-count")).toHaveCount(0);
     });
+
+  // R130: ten rows at the 36 px floor need 360 px and the room is 325 (docs/05 3.1 "fit, then scroll"): items 1 to 9 stay
+  // in sight, whole and in their places; the tenth, Export ›, is below the cut (the count says ten) and key 0 opens it
+  test("the Home menu's ten rows: 1 to 9 in sight at the floor, Export › below the cut, key 0 opens it (R130)", async ({ page }) => {
+    await tap(page, ["d1", "add", "d2", "enter"]); // a result, so Export › is on
+    await expect(page.locator('[data-testid="result"]')).toHaveCount(1);
+    await openSheet(page, "home menu");
+    const list = await boxOf(page, '[role="menu"] .list');
+    const rows = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getBoundingClientRect()));
+    expect(rows).toHaveLength(10);
+    for (const r of rows) expect(r.height).toBeGreaterThanOrEqual(36);
+    for (const r of rows.slice(0, 9)) expect(r.y + r.height).toBeLessThanOrEqual(list.y + list.height + 0.5);
+    expect(rows[9]!.y + rows[9]!.height).toBeGreaterThan(list.y + list.height);
+    await expect(page.getByTestId("sheet-count")).toHaveText(/10/);
+    await tap(page, ["d0"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
+  });
 
   test("a list row never goes below the floor of 36 px, and a value row's ◀ ▶ buttons are at least 44 × 44 px (R86: only Digits, Preset (R89) and Settings' rows have them)", async ({ page }) => {
     await openSheet(page, "mode digits");
@@ -338,7 +355,7 @@ for (const [width, height] of [[360, 740], [412, 839]] as const)
     expect(g.y + g.height).toBeLessThanOrEqual(height);
     expect(g.x + g.width).toBeLessThanOrEqual(width);
     expect(Math.abs(g.y + g.height / 2 - (head.y + head.height / 2))).toBeLessThanOrEqual(3);
-    expect(await sheet(page).getByRole("menuitem").count()).toBe(9);
+    expect(await sheet(page).getByRole("menuitem").count()).toBe(10); // R130: item 10 is Export ›
     await expect(sheet(page).locator('[data-id="settings"]')).toHaveCount(0);
     await gear.tap();
     await expect(page.getByTestId("sheet-title")).toHaveText("Home menu › Settings");
@@ -354,7 +371,7 @@ test("R145: CAS's ☰ and the ☰ on a picked row have the ⚙ and no Settings r
   await tap(page, ["up", "@menu"]); // a picked row: its menu, with the ⚙
   await expect(page.getByTestId("sheet-gear")).toBeVisible();
   await expect(sheet(page).locator('[data-id="settings"]')).toHaveCount(0);
-  await expect(sheet(page).getByRole("menuitem")).toHaveCount(9);
+  await expect(sheet(page).getByRole("menuitem")).toHaveCount(10); // R130: item 10 is Export ›
   await page.getByTestId("sheet-gear").tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("Menu › Settings");
   await tap(page, ["esc", "esc"]);

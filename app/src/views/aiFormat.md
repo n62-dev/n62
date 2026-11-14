@@ -168,3 +168,7 @@ The backup is one JSON file. It holds the app's own stored records, so you write
   }
 }
 ```
+
+## Part 3: the work report (☰ › Export › Work report; a preview, its form can change)
+
+N62 writes this file; it never reads it. About this file: Markdown that a person reads and a program can parse. The first line names the N62 version; the list under the title gives the settings that change a value. Angle mode at export: the mode when the file was written; a row keeps the value it was computed with when the mode changes. Each step is one history row, under a heading `## Step n`, as a list of `Name: text` lines. Input: the entry as typed. Angle: the angle mode the step was computed in, when it differs from the mode at export, or `not recorded`; a step without it was computed in the mode at export. Mark: `= exact` (the value shown is exact), `≈` (rounded; every digit shown is confirmed) or `⚠` (not every digit shown is confirmed, or not checked), each followed by its reason. Value: the result as shown, in the decimal mark the header names and without digit groups, with its unit; a result of the unit view holds `± σ` before the unit. Uncertainty: `± σ` of every value that has one (a constant's too), the standard uncertainty (σ, one standard deviation). Uses: the stored values the input read. Note: a line the history showed under the row. Error: the message of an entry that failed. A step without a Mark line has no number to mark.
