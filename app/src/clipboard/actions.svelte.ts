@@ -6,7 +6,7 @@ import type { EntryController } from "../entry/controller.ts";
 import { tc } from "./strings.ts";
 import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
-import type { HistoryItem, Session } from "../state/session.svelte.ts";
+import { loadForms, type HistoryItem, type Session } from "../state/session.svelte.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
 import { commaResult } from "../state/displayMode.ts";
 import { copyExact } from "./exact.ts";
@@ -223,6 +223,14 @@ export class ClipActions {
     return this.put(text, tc("clip.sharedAsCopy"));
   }
 
+  /** ☰ › Export › Work report (R130): the open view's rows as a Markdown report through the save port; the result is the
+   *  notice. The report code loads on the press. */
+  async exportWork(): Promise<void> {
+    const [m, about] = await Promise.all([import("./workReport.ts"), import("virtual:about"), loadForms()]);
+    const s = this.session;
+    this.say(await m.saveWork(s.items, s, { version: about.default.version, now: new Date(), view: s.view }));
+  }
+
   /** Settings › Help and about › Report a problem (R173): the report (version, device, the session) on the clipboard, then
    *  the issue form in a new tab (on Android in the browser, A95). The session travels on the clipboard, only the short fields in the link (report.ts). */
   reportProblem(): Promise<void> {
@@ -292,8 +300,9 @@ export class ClipActions {
     return this.session.removeItem(i);
   }
 
-  /** The Home/CAS Menu (docs/05 3.3, S2 rule M2): one fixed list of nine, the same numbers with or without a picked
-   *  row, acting on that row, else on the last result. The picked row's buttons are items 4 and 6 (R276). */
+  /** The Home/CAS Menu (docs/05 3.3, S2 rule M2): one fixed list, the same numbers with or without a picked row, acting
+   *  on that row, else on the last result. The picked row's buttons are items 4 and 6 (R276). Item 10 (key 0) is Export ›,
+   *  whose submenu R130, R181 and R200 share; nothing is inserted among items 1 to 9 (their digits are learned). */
   menu(row?: HistoryItem): MenuItem[] {
     const i = this.target(row);
     const none = i === undefined;
@@ -336,6 +345,13 @@ export class ClipActions {
       { id: "paste", label: tc("clip.paste"), run: () => this.pasteHeld() },
       { id: "share", label: tc("clip.share"), disabled: !finished, reason: why, run: () => void this.shareSession() },
       { id: "clear", label: tc("clip.clear"), disabled: empty, run: () => void this.session.clearHistory() },
+      {
+        id: "export",
+        label: tc("clip.export"),
+        disabled: !finished,
+        reason: why,
+        submenu: { title: tc("clip.export"), items: [{ id: "work", label: tc("export.work"), disabled: !finished, reason: why, run: () => void this.exportWork() }] },
+      },
     ];
   }
 

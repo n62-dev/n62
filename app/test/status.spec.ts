@@ -100,17 +100,17 @@ test("the tabs switch the views of Function and Solve, the current one marked; H
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: Solve\./);
 });
 
-test("☰ opens the view's menu of nine and Settings is the ⚙ in its title row (R145); key 0 picks nothing in Home", async ({ page }) => {
+test("☰ opens the view's menu of ten and Settings is the ⚙ in its title row (R145); key 0, Export ›, is off with no result", async ({ page }) => {
   await open(page);
   const rows = sheet(page).getByRole("menuitem");
   const gear = page.getByTestId("sheet-gear");
   await page.getByTestId("menu-button").tap();
-  await expect(rows).toHaveCount(9);
+  await expect(rows).toHaveCount(10); // R130: item 10 is Export ›
   await expect(sheet(page).locator('[data-id="settings"]')).toHaveCount(0);
   await expect(gear).toHaveAccessibleName("Settings");
   await page.getByTestId("menu-button").tap(); // closes again
   await expect(sheet(page)).toBeHidden();
-  await tap(page, ["@menu", "d0"]); // the Menu key still works; 0 has no item 10 any more: a dead press
+  await tap(page, ["@menu", "d0"]); // the Menu key still works; 0 is Export ›, off with nothing to export: a dead press
   await expect(page.getByTestId("sheet-title")).toHaveText("Home menu");
   await gear.tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("Home menu › Settings");
