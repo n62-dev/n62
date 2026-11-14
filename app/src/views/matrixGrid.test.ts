@@ -117,17 +117,18 @@ describe("the matrix grid's cell edit (R189)", () => {
     const latex = [{ tex: "1" }, { tex: "2" }, { tex: "3" }, { tex: "0.1", float: true as const }];
     return Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: TYPED, latex, ...(check === undefined ? {} : { candidate }) } : { name: "M", rows: 2, cols: 2 });
   };
-  async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; sent: string[] }> {
+  async function at21(): Promise<{ g: MatrixGrid; line: CellLine; entry: { value: string }; session: { shift: boolean }; sent: string[]; dead: { n: number } }> {
     answer = undefined;
     checks.length = 0;
     const sent: string[] = [];
+    const dead = { n: 0 };
     const entry = { value: "7", chips: {}, clear: () => void (entry.value = ""), set: (l: string) => void (entry.value = l) };
     const session = { shift: false, alpha: false, userNames: [], submit: (l: string, g?: string) => (sent.push(`${l} | ${g ?? ""}`), Promise.resolve()) };
     const g = new MatrixGrid("M", () => SETTINGS, homeM, typed);
     g.open();
     await g.loading();
     g.move(1, 0);
-    return { g, line: { entry, session } as unknown as CellLine, entry, sent };
+    return { g, line: { entry, session, dead: () => void dead.n++ } as unknown as CellLine, entry, session, sent, dead };
   }
 
   it("a key that types starts the edit on a cleared line; the grid's keys and a control keep the sheet's job", async () => {
@@ -198,6 +199,54 @@ describe("the matrix grid's cell edit (R189)", () => {
       await g.loading();
       expect([g.refusal, sent, g.editing]).toEqual([findText(why), [], { row: 1, col: 0 }]);
     }
+  });
+
+  // R300 (night review 2026-11-14, bu-1, bu-5): the grid reads the key's action in the layer pressed, not its id
+  it("Store ▶ (Shift + ᴇ) is a dead press, with and without an edit: no edit starts, the line stays", async () => {
+    const { g, line, entry, session, sent, dead } = await at21();
+    expect(g.key(line, key("emark"), "shift")).toBe(true); // a flick up
+    session.shift = true; // a one-shot Shift
+    expect(g.key(line, key("emark"), undefined)).toBe(true);
+    session.shift = false;
+    expect([g.editing, entry.value, dead.n]).toEqual([null, "7", 2]);
+    g.key(line, key("d2"), undefined);
+    entry.value = "2";
+    expect(g.key(line, key("emark"), "shift")).toBe(true);
+    expect([g.editing, entry.value, dead.n, sent]).toEqual([{ row: 1, col: 0 }, "2", 3, []]);
+    expect(g.key(line, key("emark"), undefined)).toBe(false); // ᴇ types
+  });
+
+  it("with no edit, Undo, Redo, ⇤ and ⇥ are dead presses; during an edit they act on the cell's line", async () => {
+    const { g, line, entry, dead } = await at21();
+    for (const [id, layer] of [["undo", "primary"], ["redo", "primary"], ["undo", "shift"], ["redo", "shift"]] as const) expect(g.key(line, key(id), layer)).toBe(true);
+    expect([g.editing, entry.value, dead.n]).toEqual([null, "7", 4]);
+    g.key(line, key("d2"), undefined);
+    for (const [id, layer] of [["undo", "primary"], ["redo", "primary"], ["undo", "shift"], ["redo", "shift"], ["bksp", "primary"], ["left", "primary"]] as const) expect(g.key(line, key(id), layer)).toBe(false);
+    expect([g.editing, dead.n]).toEqual([{ row: 1, col: 0 }, 4]);
+  });
+
+  it("during an edit ≈ (Shift + Enter) goes to the line, Clear (Shift + Esc) clears the cell's line, Esc ends the edit", async () => {
+    const { g, line, entry, session, sent } = await at21();
+    g.key(line, key("d2"), undefined);
+    entry.value = "2";
+    expect(g.key(line, key("enter"), "shift")).toBe(false); // route.ts runs ≈'s approx( ) on the cell's line
+    session.shift = true;
+    expect(g.key(line, key("enter"), undefined)).toBe(false);
+    session.shift = false;
+    expect([g.editing, sent]).toEqual([{ row: 1, col: 0 }, []]);
+    expect(g.key(line, key("esc"), "shift")).toBe(true);
+    expect([g.editing, entry.value]).toEqual([{ row: 1, col: 0 }, ""]);
+    expect(g.key(line, key("esc"), "shift")).toBe(true); // an empty cell line: Clear never reaches the history
+    expect([g.editing, entry.value]).toEqual([{ row: 1, col: 0 }, ""]);
+    expect(g.key(line, key("esc"), undefined)).toBe(true);
+    expect([g.editing, entry.value, sent]).toEqual([null, "7", []]);
+  });
+
+  it("a hardware letter's action (a type action, no key of the pad) starts the edit as a pad key does", async () => {
+    const { g, line, entry } = await at21();
+    const letter = { ...key("x"), id: "letter", actions: { primary: { kind: "type" as const, text: "a" } } };
+    expect(g.key(line, letter, "primary")).toBe(false);
+    expect([g.editing, entry.value]).toEqual([{ row: 1, col: 0 }, ""]);
   });
 
   it("Enter on an empty line ends the edit and keeps the old value", async () => {

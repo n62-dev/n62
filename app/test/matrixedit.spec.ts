@@ -209,3 +209,77 @@ test("a store in a cell (a:=5) is refused and stores nothing", async ({ page }) 
   expect(await page.evaluate(() => window.n62.session.userNames.some((u) => u.name === "a"))).toBe(false);
   expect(await run(page, "a")).toBe("a");
 });
+
+// R300 (night review 2026-11-14, bu-1, bu-3, bu-5, S3): the grid takes a key by what it does in the layer pressed.
+const names = (page: Page): Promise<string[]> => page.evaluate(() => window.n62.session.userNames.map((u) => u.name).sort());
+const editing = (page: Page) => grid(page).locator('td[data-editing="true"]');
+
+test("Store ▶ (Shift + ᴇ) in the grid, with and without an edit, does nothing: the grid stays, the line, history and names too", async ({ page }) => {
+  await openAt21(page);
+  const before = [await rows(page), await names(page)];
+  await tap(page, ["shift", "emark"]);
+  await expect(grid(page)).toBeVisible();
+  await expect(editing(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("7");
+  await tap(page, ["d2", "shift", "emark"]);
+  await expect(grid(page)).toBeVisible();
+  await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
+  expect(await entryValue(page)).toBe("2");
+  await tap(page, ["esc"]);
+  expect(await entryValue(page)).toBe("7");
+  expect([await rows(page), await names(page)]).toEqual(before);
+  expect(await texts(page)).toEqual(["1", "2", "3", "4"]);
+});
+
+test("a hardware letter starts the cell's edit and types in it: 2, a, Enter writes 2a's value", async ({ page }) => {
+  await store(page, "a:=3", "a");
+  await openAt21(page);
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.press("x");
+  await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
+  expect(await entryValue(page)).toBe("x");
+  await tap(page, ["esc"]);
+  expect(await entryValue(page)).toBe("7");
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.type("2a");
+  expect(await entryValue(page)).toBe("2a");
+  await page.keyboard.press("Enter");
+  await expect(cell(page, "2,1")).toHaveAttribute("data-text", "6");
+  await tap(page, ["esc"]);
+  expect(await run(page, "M")).toBe("[[1,2],[6,4]]");
+});
+
+test("with no edit Undo, Redo, ⇤ and ⇥ change nothing; during an edit ≈ types approx, Clear clears the cell's line, Esc ends it", async ({ page }) => {
+  await openAt21(page);
+  const before = await rows(page);
+  await tap(page, ["undo", "redo", "shift", "undo", "shift", "redo"]);
+  await expect(editing(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("7");
+  expect(await rows(page)).toBe(before);
+  await tap(page, ["d2", "shift", "enter"]);
+  await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
+  expect(await entryValue(page)).toContain("approx");
+  expect(await texts(page)).toEqual(["1", "2", "3", "4"]);
+  await tap(page, ["shift", "esc"]);
+  await expect(cell(page, "2,1")).toHaveAttribute("data-editing", "true");
+  expect(await entryValue(page)).toBe("");
+  await tap(page, ["shift", "esc"]); // an empty cell line: the history stays
+  expect(await rows(page)).toBe(before);
+  await tap(page, ["d2", "undo"]); // during an edit Undo acts on the cell's line
+  expect(await entryValue(page)).toBe("");
+  await tap(page, ["esc"]);
+  await expect(editing(page)).toHaveCount(0);
+  expect(await entryValue(page)).toBe("7");
+  expect(await rows(page)).toBe(before);
+});
+
+test("a cell's first − types itself: −, 5, Enter writes −5 (no Ans first in a cell)", async ({ page }) => {
+  await openAt21(page);
+  await tap(page, ["sub"]);
+  expect(await entryValue(page)).toBe("-");
+  await tap(page, ["d5", "enter"]);
+  await expect(page.getByTestId("matrix-refusal")).toHaveCount(0);
+  await expect(cell(page, "2,1")).toHaveAttribute("data-text", /^[-−]5$/);
+  await tap(page, ["esc"]);
+  expect(await run(page, "M")).toBe("[[1,2],[-5,4]]");
+});
