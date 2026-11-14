@@ -234,7 +234,7 @@ export function sessionLatex(items: readonly CopySource[], o: TextOptions, ctx: 
     if (unitRow && typeof i.units?.latex === "string") result += `\\,${comma ? commaResult(i.units.latex, true) : i.units.latex}`;
     const why = mark === "⚠" && info ? whyLine(i, info, ctx.digits) : null;
     const reason = why ? `\\quad\\text{(${latexText(why.replace(/^⚠\s*/, "").replace(/ · /g, "; "))})}` : "";
-    return `\\begin{align*}${exportLatex(input)} &${rel} ${result}${reason}\\end{align*}`;
+    return `\\begin{align*}${exportLatex(`${input} &${rel} ${result}`)}${reason}\\end{align*}`;
   });
   return lines.length ? [`% N62 ${version} · preview: the form of this file can change`, ...lines].join("\n") + "\n" : "";
 }
