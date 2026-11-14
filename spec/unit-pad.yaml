@@ -3,9 +3,9 @@
 # units/pad.ts reads it (R24b; the unit view, R24c); tools/probes/unit-presses.mjs counts presses from it and
 # tools/probes/pad-arrange.mjs scores it. The arrangement is the measured one of package S5 (r9 section 1): which units
 # get a cell comes from how often engineers use them (tools/probes/unit-weights.yaml, three fields weighted equally),
-# the rest from S5's fixed rules. Packages R24a-R24d build it, and it replaces the letters and the `symbols` of
-# `unit_slot:` in spec/keyboard.yaml (R24c). It is its own file so the start chunk does not carry it (the app bundles
-# keyboard.yaml whole); the unit view loads it lazily, with its unit factors (decisions.md P15).
+# the rest from S5's fixed rules. Packages R24a-R24d built it; it replaced S1's letters, which left spec/keyboard.yaml
+# with R24c (R299 removed their last record). It is its own file so the start chunk does not carry it; the unit view loads
+# it lazily, with its unit factors (decisions.md P15).
 #
 # In a unit slot the maths rows (3-9) show the pad: each cell lies exactly on the key under it (the R21 rule for
 # anything drawn over the keypad), so no key moves and a press on a key is a press on its cell. In the top cluster the

@@ -35,7 +35,7 @@ const legName = (leg: CellLeg): string => unitText(`units.cell.${leg}`);
 export const cellName = (key: string): string => `U${CELL_KEYS.indexOf(key) + 1}`;
 
 /** The cell and tap a unit goes to: a row per user cell (its three legs as the value), each opening its legs. */
-function cellRows(onSet: (key: string, leg: CellLeg) => void): MenuItem[] {
+export function cellRows(onSet: (key: string, leg: CellLeg) => void): MenuItem[] {
   return CELL_KEYS.map((key): MenuItem => ({
     id: key,
     label: cellName(key),

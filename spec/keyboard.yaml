@@ -428,28 +428,6 @@ desktop:
     num: F4
     fold: Alt+K
 
-# ---- Unit slot (P11 "units after the formula", P14 the unit pad; docs/archive/r9-unit-pad.md, docs/04 4.3). A record
-# for tools/probes/unit-presses.mjs; the app reads the pad from spec/unit-pad.yaml (units/pad.ts) and does not read this
-# section. The app bundles this file whole, so the reasons live in these comments, not in strings.
-# The units key (Shift + Tmpl, or a flick up on Tmpl; R24c) on an entry line or a picked history row shows the same
-# formula, read-only, with an empty unit slot after every number, and the end slot "→ should be" (empty = no check).
-# On an empty line it opens a single slot with the quantity 1, and the end slot (a unit check: `kg·m²/s³ → W`).
-# A quick conversion types the number first (`72`, units key, `km/h`).
-# Nothing on the keypad moves (docs/03 rule 8): in a slot the maths rows and U1–U6 are the pad's prefix, unit and
-# operator cells (spec/unit-pad.yaml), drawn on their keys. A slot holds Find unit ids, never typed text; no digit is
-# typed in a slot (a number belongs in the formula, before it).
-#   nav       ◀ the previous slot, ▶ the next one (never through the formula). Enter goes to the next slot and
-#             evaluates in the end slot; a flick up on Enter (Shift + Enter) evaluates from any slot. Esc leaves the
-#             unit view and the line keeps its slots. A key that is no cell does nothing in a slot (▲ ▼, Undo, …);
-#             a key that changes place (Home, CAS, Apps, Mode) leaves the unit view first.
-#   find      Math opens Find on units, for what the pad has no cell for (Å, ′, ″, mmH₂O).
-#   reading   (R24a, shown live under the formula) the active slot in words from Find's titles; a prefixed pair
-#             outside Find's list (Mm, kpsi) is marked. A prefix or √ alone, or ÷ with nothing after it, is refused.
-# `source: assumed`: ours (P11, 2026-10-13; P14, 2026-10-14); the units key position is the reference's (G2 item 30).
-unit_slot:
-  find: math
-  source: assumed
-
 # ---- Template palette (the Tmpl key, r4c3; R10). A 6 x 3 grid in the order the reference shows it (seen on a G2,
 # 2026-10-13: its Function app, Tmpl menu open, the first cell selected), listed row by row. keyboard.ts reads this
 # section (`palette`); Tmpl opens it on the sheet (app/src/views/sheet.svelte.ts, grid variant): ▲ ▼ ◀ ▶ move in two

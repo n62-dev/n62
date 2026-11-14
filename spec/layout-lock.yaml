@@ -13,7 +13,10 @@
 # Sections (`section/slot`): layers `<key id>.<layer>` = `<kind> <name>` | reserved; tmpl, relations, symbols (the palettes of
 # Tmpl, Shift + 6, Shift + 9): `row,col` = the cell's id; home-menu, home-copy-as (☰ in Home and CAS), mode (Mode's rows),
 # settings (Settings' sections: Your keys and Data are in the shipped app, so all seven are pinned), apps, base (Shift + −),
-# matrix (Shift + 4): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
+# matrix (Shift + 4; New is row 9), function-symb / function-plot / function-num and solve-symb / solve-num (each app view's ☰, Plot
+# with an answer and Solve with an unknown selected, so their last rows are there), stat-linreg and stat-stats1 (R184's sheets),
+# units-menu (the unit Find's category rows) and units-cell (its "put on a cell" sheet, U1 to U6): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
+# app/src/keyboard/layoutLock.ts LIST_BUILDERS names the files that build each list; a file that opens a new one must be there.
 schema: 1
 layers:
   "up.primary": "cmd moveUp"
@@ -239,5 +242,86 @@ matrix:
   "6": "fn:eigenvals"
   "7": "fn:det"
   "8": "fn:inv"
+  "9": "matrix:new"
+
+function-symb:
+  "1": "clear"
+  "2": "paste"
+
+function-plot:
+  "1": "root"
+  "2": "extremum"
+  "3": "intersection"
+  "4": "slope"
+  "5": "area"
+  "6": "default"
+  "7": "copy"
+  "8": "shown"
+  "9": "tohome"
+
+function-num:
+  "1": "start"
+  "2": "step"
+  "3": "csv"
+  "4": "paste"
+
+solve-symb:
+  "1": "clear"
+  "2": "paste"
+
+solve-num:
+  "1": "solve"
+  "2": "poly"
+  "3": "copy"
+  "4": "shown"
+  "5": "tohome"
+  "6": "paste"
+
+stat-linreg:
+  "1": "stat.slope"
+  "2": "stat.intercept"
+  "3": "stat.r2"
+
+stat-stats1:
+  "1": "stat.n"
+  "2": "stat.mean"
+  "3": "stat.sample"
+  "4": "stat.population"
+  "5": "stat.min"
+  "6": "stat.max"
+
+units-menu:
+  "1": "ucat:prefixes"
+  "2": "ucat:Length"
+  "3": "ucat:Area"
+  "4": "ucat:Volume"
+  "5": "ucat:Time"
+  "6": "ucat:Speed"
+  "7": "ucat:Mass"
+  "8": "ucat:Acceleration"
+  "9": "ucat:Force"
+  "10": "ucat:Energy"
+  "11": "ucat:Power"
+  "12": "ucat:Pressure"
+  "13": "ucat:Temperature"
+  "14": "ucat:Electricity"
+  "15": "ucat:Light"
+  "16": "ucat:Angle"
+  "17": "ucat:Viscosity"
+  "18": "ucat:Radiation"
+  "19": "ucat:Torque"
+  "20": "ucat:Flow"
+  "21": "ucat:Density"
+  "22": "ucat:Amount"
+  "23": "ucat:Data"
+  "24": "ucat:const"
+  "25": "ucat:tools"
+units-cell:
+  "1": "u1"
+  "2": "u2"
+  "3": "u3"
+  "4": "u4"
+  "5": "u5"
+  "6": "u6"
 
 moves: []
