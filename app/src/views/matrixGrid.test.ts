@@ -11,7 +11,7 @@ import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue }
 import type { HomeResult } from "../engine/homeEval.ts";
 import { keyboard } from "../keyboard/keyboard.ts";
 import { findText } from "../i18n/enFind.ts";
-import { MatrixGrid, type CellLine } from "./matrixGrid.svelte.ts";
+import { createMatrix, MatrixGrid, type CellLine } from "./matrixGrid.svelte.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 const SETTINGS: AppHost["settings"] = { digits: 12, angle: "rad", format: "std" };
@@ -113,7 +113,7 @@ describe("the matrix grid's cell edit (R189)", () => {
   const checks: string[] = [];
   const typed = (cells: true | "typed", check?: string): Promise<MatrixRead> => {
     if (check !== undefined) checks.push(check);
-    const candidate = answer ?? { ok: true as const, typed: ["1", "2", "?", TYPED[3] as string] };
+    const candidate = answer ?? { ok: true as const, rows: 2, cols: 2, typed: ["1", "2", "?", TYPED[3] as string] };
     const latex = [{ tex: "1" }, { tex: "2" }, { tex: "3" }, { tex: "0.1", float: true as const }];
     return Promise.resolve(cells === "typed" ? { name: "M", rows: 2, cols: 2, typed: TYPED, latex, ...(check === undefined ? {} : { candidate }) } : { name: "M", rows: 2, cols: 2 });
   };
@@ -187,7 +187,8 @@ describe("the matrix grid's cell edit (R189)", () => {
     for (const [a, why] of [
       [{ ok: false, why: "shape" }, "matrix.oneValue"],
       [{ ok: false, why: "store" }, "matrix.noStore"],
-      [{ ok: true, typed: ["1", "5", "9", "evalf(1/10,15)"] }, "matrix.notKept"],
+      [{ ok: true, rows: 2, cols: 2, typed: ["1", "5", "9", "evalf(1/10,15)"] }, "matrix.notKept"],
+      [{ ok: true, rows: 1, cols: 4, typed: ["1", "2", "9", "evalf(1/10,15)"] }, "matrix.oneValue"], // R190: the size is the one the grid meant
     ] as const) {
       const { g, line, entry, sent } = await at21();
       answer = a;
@@ -205,5 +206,116 @@ describe("the matrix grid's cell edit (R189)", () => {
     entry.value = "";
     g.key(line, key("enter"), undefined);
     expect([g.editing, entry.value, sent]).toEqual([null, "7", []]);
+  });
+
+  // R190: ☰ opens the grid's menu; a pick writes the matrix back as a cell does (the same store check, the same path).
+  describe("the grid's menu (R190)", () => {
+    const WAS = ["1", "2", "3", "evalf(1/10,15)"];
+    const A = "\\operatorname{approx}\\left(0.1\\right)";
+    it("☰ opens it on its first row; ▲ ▼ move; Esc and ☰ close it; other keys do nothing; the cell edit's keys are not used", async () => {
+      const { g, line, sent } = await at21();
+      expect(g.key(line, key("menu"), undefined)).toBe(true);
+      expect(g.menu).toBe(0);
+      expect(g.menuRows().map((r) => r.op)).toEqual(["addRow", "addCol", "delRow", "delCol"]);
+      g.key(line, key("down"), undefined);
+      g.key(line, key("down"), undefined);
+      expect(g.menu).toBe(2);
+      for (const id of ["d9", "left", "math", "bksp"]) expect(g.key(line, key(id), undefined)).toBe(true);
+      expect([g.menu, g.editing, g.row, g.col, sent]).toEqual([2, null, 1, 0, []]);
+      g.key(line, key("up"), undefined);
+      g.key(line, key("up"), undefined);
+      g.key(line, key("up"), undefined);
+      expect(g.menu).toBe(0);
+      g.key(line, key("esc"), undefined);
+      expect(g.menu).toBeNull();
+      g.key(line, key("menu"), undefined);
+      g.key(line, key("menu"), undefined);
+      expect(g.menu).toBeNull();
+    });
+
+    it("the delete rows name the row and column under the highlight; a 1 × 1 matrix keeps its cell", async () => {
+      const { g, line } = await at21();
+      expect(g.menuRows().map((r) => [r.label, r.reason])).toEqual([
+        ["Add a row at the end", undefined],
+        ["Add a column at the end", undefined],
+        ["Delete row 2", undefined],
+        ["Delete column 1", undefined],
+      ]);
+      const one = new MatrixGrid("O", () => SETTINGS, () => Promise.resolve({ ok: true, display: "", approximate: false, facts: { exact: true, reliableDigits: null }, full: "", shape: [1, 1], items: [exact(real(5n))] }), typed);
+      one.open();
+      await one.loading();
+      expect(one.menuRows().map((r) => r.reason)).toEqual([undefined, undefined, findText("matrix.keepsCell"), findText("matrix.keepsCell")]);
+      one.key(line, key("menu"), undefined);
+      one.key(line, key("d3"), undefined);
+      expect([one.refusal, one.menu]).toEqual([findText("matrix.keepsCell"), null]);
+      one.key(line, key("menu"), undefined);
+      one.key(line, key("d4"), undefined);
+      expect(one.refusal).toBe(findText("matrix.keepsCell"));
+    });
+
+    it("1: a row of zeros at the end, written as the line of the whole matrix", async () => {
+      const { g, line, sent } = await at21();
+      answer = { ok: true, rows: 3, cols: 2, typed: [...WAS, "0", "0"] };
+      g.key(line, key("menu"), undefined);
+      g.key(line, key("d1"), undefined);
+      await g.loading();
+      expect(sent).toEqual([`M:=\\begin{pmatrix}1&2\\\\3&${A}\\\\0&0\\end{pmatrix} | `]);
+      expect(checks).toEqual(["M:=[[1,2],[3,approx(0.1)],[0,0]]"]);
+      expect([g.menu, g.refusal]).toEqual([null, null]);
+    });
+
+    it("2: a column of zeros at the end", async () => {
+      const { g, line, sent } = await at21();
+      answer = { ok: true, rows: 2, cols: 3, typed: ["1", "2", "0", "3", WAS[3] as string, "0"] };
+      g.key(line, key("menu"), undefined);
+      g.key(line, key("d2"), undefined);
+      await g.loading();
+      expect(sent).toEqual([`M:=\\begin{pmatrix}1&2&0\\\\3&${A}&0\\end{pmatrix} | `]);
+    });
+
+    it("3 and 4: the row and the column under the highlight go (a tap on the row picks it as Enter does)", async () => {
+      const { g, line, sent } = await at21(); // the highlight is on row 2, column 1
+      answer = { ok: true, rows: 1, cols: 2, typed: ["1", "2"] };
+      g.key(line, key("menu"), undefined);
+      g.choose(2);
+      await g.loading();
+      expect(sent).toEqual(["M:=\\begin{pmatrix}1&2\\end{pmatrix} | "]);
+      const b = await at21();
+      b.g.move(0, 1); // row 2, column 2
+      answer = { ok: true, rows: 2, cols: 1, typed: ["1", "3"] };
+      b.g.key(b.line, key("menu"), undefined);
+      b.g.key(b.line, key("d4"), undefined);
+      await b.g.loading();
+      expect(b.sent).toEqual(["M:=\\begin{pmatrix}1\\\\3\\end{pmatrix} | "]);
+    });
+
+    it("a store that changes an element the pick keeps, or has the wrong size, is refused and nothing is sent", async () => {
+      for (const a of [{ ok: true, rows: 3, cols: 2, typed: ["1", "9", "3", WAS[3] as string, "0", "0"] }, { ok: true, rows: 2, cols: 3, typed: [...WAS, "0", "0"] }, { ok: false, why: "shape" }] as const) {
+        const { g, line, sent } = await at21();
+        answer = a;
+        g.key(line, key("menu"), undefined);
+        g.key(line, key("d1"), undefined);
+        await g.loading();
+        expect([g.refusal === null, sent]).toEqual([false, []]);
+      }
+    });
+  });
+});
+
+describe("New (R190)", () => {
+  const take = (taken: string[]): { line: Parameters<typeof createMatrix>[0]; sent: string[] } => {
+    const sent: string[] = [];
+    return { sent, line: { userNames: taken.map((name) => ({ name, kind: "var", time: 1 })), submit: (l: string) => (sent.push(l), Promise.resolve()) } as unknown as Parameters<typeof createMatrix>[0] };
+  };
+  it("a 2 × 2 of zeros under the first letter no name holds", async () => {
+    for (const [taken, name] of [[[], "A"], [["A", "B", "x"], "C"], [["B"], "A"], [["A", "B", "C", "D", "E", "F", "G", "H"], "J"]] as const) {
+      const { line, sent } = take([...taken]);
+      expect(await createMatrix(line)).toBe(name);
+      expect(sent).toEqual([`${name}:=\\begin{pmatrix}0&0\\\\0&0\\end{pmatrix}`]);
+    }
+  });
+  it("every letter taken: no name, nothing sent", async () => {
+    const { line, sent } = take([..."ABCDEFGHJKLMNOPQRSTUVWXYZ"]);
+    expect([await createMatrix(line), sent]).toEqual([null, []]);
   });
 });

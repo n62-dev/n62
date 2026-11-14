@@ -16,7 +16,7 @@ test("Shift + 4 lists the eight functions as rows 1 to 8", async ({ page }) => {
   await tap(page, ["shift", "d4"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Matrix");
   const rows = sheet(page).getByRole("menuitem");
-  await expect(rows).toHaveCount(9); // R188: row 9 is New (disabled until R190); no matrix is stored
+  await expect(rows).toHaveCount(9); // R188: row 9 is New (live since R190); no matrix is stored
   await expect(rows.nth(8)).toHaveAttribute("aria-label", /^9 New/);
   for (const [i, title] of TITLES.entries()) await expect(rows.nth(i)).toHaveAttribute("aria-label", new RegExp(`^${i + 1} ${title}`));
 });

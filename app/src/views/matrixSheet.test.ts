@@ -46,21 +46,23 @@ describe.skipIf(!raw.some((it) => it.kind === "unit"))("the matrix sheet's order
   const index = makeIndex(raw);
   const FNS = ["fn:tran", "fn:dot", "fn:cross", "fn:norm", "fn:rref", "fn:eigenvals", "fn:det", "fn:inv"];
   const opened: string[] = [];
+  let made = 0;
   const sheetOf = (stored: StoredMatrix[]): Sheet =>
-    new Sheet("matrix", "Matrix", () => matrixRows(index.byId, (it) => itemRow(it, () => {}), stored, (m) => (opened.push(m.name), { title: m.name, items: [] })), { remember: false });
+    new Sheet("matrix", "Matrix", () => matrixRows(index.byId, (it) => itemRow(it, () => {}), stored, (m) => (opened.push(m.name), { title: m.name, items: [] }), () => void made++), { remember: false });
 
   for (const stored of [[], [{ name: "M", rows: 2, cols: 2 }], [{ name: "M", rows: 2, cols: 2 }, { name: "A", rows: 1, cols: 3 }, { name: "rot", rows: 3, cols: 3 }]] as StoredMatrix[][]) {
     it(`${stored.length} stored: the functions at rows 1 to 8, New at 9, the matrices from row 10`, () => {
       const sheet = sheetOf(stored);
       const rows = sheet.level.rows;
       expect(rows.slice(0, 8).map((r) => [r.n, r.item.id])).toEqual(FNS.map((id, i) => [i + 1, id]));
-      expect([rows[8]?.n, rows[8]?.item.id, rows[8]?.item.label, rows[8]?.item.disabled]).toEqual([9, MATRIX_NEW, "New", true]);
-      expect(rows[8]?.item.reason).toBeTruthy();
+      expect([rows[8]?.n, rows[8]?.item.id, rows[8]?.item.label, rows[8]?.item.disabled]).toEqual([9, MATRIX_NEW, "New", undefined]); // R190: live in its place
+      expect(rows[8]?.item.reason).toBeUndefined();
       expect(rows.slice(9).map((r) => [r.item.id, r.item.label, r.item.value])).toEqual(stored.map((m) => [`matrix:${m.name}`, m.name, `${m.rows}×${m.cols}`]));
       expect(rows.slice(9).map((r) => r.n)).toEqual(stored.map((_, i) => (i === 0 ? 10 : undefined)));
-      // key 9 (New) does nothing yet; key 0 opens the first matrix's grid
+      // key 9 (New) makes the matrix and the sheet stays (it opens again with the new one); key 0 opens the first matrix's grid
+      made = 0;
       expect(sheet.pickNumber(9).kind).toBe("stay");
-      expect(sheet.depth).toBe(1);
+      expect([made, sheet.depth]).toEqual([1, 1]);
       opened.length = 0;
       sheet.pickNumber(10);
       expect(sheet.depth).toBe(stored.length > 0 ? 2 : 1);
