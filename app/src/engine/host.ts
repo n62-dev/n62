@@ -837,10 +837,12 @@ export class EngineHost implements FactsHost {
     this.assumeRisk = false;
     // G91: a precision with no name in it (`approx(e,2*10)`) is read as the literal it gives
     const input = askedLiterals(this.giac, typed, () => this.useHomeMode(s));
-    const reads = this.valuesOf(this.usesOf(input)); // G213f1: before the input runs (it may store to them)
+    const used = this.usesOf(input); // G212: before the input runs (it may store to them), as cas()
+    const reads = this.valuesOf(used); // G213f1
     const cleared = this.clearing(input, () => this.useHomeMode(s));
     const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips);
     if (out.result.ok) out.result.reads = reads;
+    if (used.length && out.result.ok) out.result.uses = used;
     // G67, G65: the call after the input, if the run did not make it (an error: a syntax error ran nothing)
     const post = cleared?.post ?? this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
     out.defs = this.followLost(post, out.defs);

@@ -4,7 +4,7 @@
 // chip a finished item gives. Pure TypeScript, no runes: the session (state/session.svelte.ts) and the golden runner
 // (goldenRun.ts, run by Node) both call it, so the gate checks the app's own rule. Only erasable TypeScript syntax.
 import type { ComplexValue } from "../engine/format.ts";
-import type { StoredRead, ValueFacts } from "../engine/types.ts";
+import type { StoredRead, StoredUse, ValueFacts } from "../engine/types.ts";
 import { RATIONAL } from "../engine/giacPrintStart.ts";
 import type { Chip, ChipTable } from "../input/chips.ts";
 import type { Rational, ResultFacts } from "./displayMode.ts";
@@ -48,6 +48,8 @@ export interface HomeIn extends FactsSource {
   word?: WordSetting;
   /** G213f1: the stored names the input read, with their values (HomeOutcome.reads). */
   reads?: StoredRead[];
+  /** G212: the stored variables the input read (HomeOutcome.uses). */
+  uses?: StoredUse[];
 }
 /** A CAS result as the rule reads it (CasOutcome of the port, CasResult of the engine). */
 export interface CasIn {
@@ -79,6 +81,8 @@ export interface ItemResult {
   word?: WordSetting;
   /** G213f1: the stored names the input read, with their values (HistoryItem). */
   reads?: StoredRead[];
+  /** G212: a Home row's stored variables read (HistoryItem.defsUsed). */
+  defsUsed?: StoredUse[];
 }
 
 /** What chipOf reads of a history item. */

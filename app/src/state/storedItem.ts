@@ -64,7 +64,7 @@ function validFacts(x: unknown): ResultFacts | undefined {
  *  (`giac` as `full`, `angle`, `digits` as the setting allows, `word` as R194's record, `at`); the uid is kept, and a row
  *  stored without one (before G211) is given one here (the session writes it back). */
 export function restoredItem(i: HistoryItem, id: number): HistoryItem {
-  const { chips, full, fullExact, drawn, facts, uses, settingReset, uid, giac, angle, digits, word, at, ans, reads, ...rest } = i as HistoryItem & { form?: unknown };
+  const { chips, full, fullExact, drawn, facts, uses, defsUsed, settingReset, uid, giac, angle, digits, word, at, ans, reads, ...rest } = i as HistoryItem & { form?: unknown };
   const { form, ...base } = rest;
   const out: HistoryItem = { ...base, id, uid: typeof uid === "string" && uid !== "" ? uid : rowUid(id) };
   if (typeof giac === "string" && giac.length <= FULL_LIMIT) out.giac = giac;
@@ -80,6 +80,8 @@ export function restoredItem(i: HistoryItem, id: number): HistoryItem {
   if (c) out.chips = c;
   const u = validUses(uses);
   if (u) out.uses = u;
+  const du = validUses(defsUsed); // G212
+  if (du) out.defsUsed = du;
   if (settingReset === true) out.settingReset = true;
   if (keptValue(ans) && ans.value.length <= FULL_LIMIT) out.ans = { value: ans.value, exact: ans.exact };
   const rd = validReads(reads);

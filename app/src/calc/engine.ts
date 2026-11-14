@@ -41,6 +41,7 @@ export const HOME_KEYS = {
   latex: "pass",
   settingReset: "pass",
   reads: "pass",
+  uses: "pass",
   exact: "held", // given only when `rational` says it is a plain integer or p/q: the Format key's fraction modes read it
   rational: "held", // read for `exact`
   path: "held", // the engine's route, for its tests and probes; no view reads it

@@ -13,7 +13,7 @@
 //
 // Runs synchronously next to the engine (inside the Giac worker, or in Node for tests). Only
 // erasable TypeScript syntax, so Node runs this file directly.
-import { valueFactsOf, type StoredRead, type ValueFacts } from "./types.ts";
+import { valueFactsOf, type StoredRead, type StoredUse, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -127,6 +127,8 @@ export interface HomeResult {
   settingReset?: true;
   /** G213f1: each stored name the input read, with its value before the input ran; [] for none. Set on a result only. */
   reads?: StoredRead[];
+  /** G212: the stored variables the input read, as CasResult's `uses` (EngineHost.usesOf); absent when there is none. */
+  uses?: StoredUse[];
 }
 
 export { precisionFacts } from "./precisionFacts.ts";
