@@ -8,6 +8,7 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import { splitList } from "../engine/giacPrint.ts";
 import { dataText, type DataKey } from "../i18n/enData.ts";
+import type { ValueFacts } from "../engine/types.ts";
 import type { Chip, ChipTable } from "../input/chips.ts";
 import { parseLatex } from "../input/parse.ts";
 import type { Json } from "../input/emit.ts";
@@ -70,7 +71,9 @@ export function statItems(item: HistoryItem, draw: Draw, insert: (shown: string,
   if (!values || values.length !== keys.length) return null;
   return keys.flatMap((key, i): MenuItem[] => {
     const full = values[i] as string;
-    const chip = chipOf({ status: "done", full, ...(item.fullExact === undefined ? {} : { fullExact: item.fullExact }), ...(item.facts ? { facts: item.facts } : {}) });
+    // the chip carries this element's facts (digits and warning), not the list's
+    const { items: _i, braces: _b, value: _v, ...own } = item.facts?.items?.[i] ?? {};
+    const chip = chipOf({ status: "done", full, ...(item.fullExact === undefined ? {} : { fullExact: item.fullExact }), ...(item.facts?.items?.[i] ? { facts: own as ValueFacts } : {}) });
     if (!chip) return [];
     const el = element(item, i, full);
     const drawn = el ? draw(el) : { text: full, latex: exactLatex(full) };

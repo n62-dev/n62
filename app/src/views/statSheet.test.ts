@@ -89,6 +89,16 @@ describe("the labelled result sheet (R184)", () => {
     }
   });
 
+  it("an approximate list: each chip carries its own element's digits and warning, not the list's", () => {
+    const base = row(LINREG, "list[1.5,2.5,3.5]", [[3n, 2n], [5n, 2n], [7n, 2n]]);
+    const els = (base.facts?.items ?? []).map((e, i) => ({ ...e, exact: false, reliableDigits: [7, 4, 9][i] as number, ...(i === 1 ? { warn: "unchecked" as const } : {}) }));
+    const approx = { ...base, fullExact: false, facts: { exact: false, reliableDigits: 2, warn: "unchecked", items: els } } as unknown as HistoryItem;
+    const got: Chip[] = [];
+    statItems(approx, draw, (_s, c) => void got.push(c))?.forEach((i) => i.run?.());
+    expect(got.map((c) => c.reliableDigits)).toEqual([7, 4, 9]);
+    expect(got.map((c) => c.warn)).toEqual([undefined, "unchecked", undefined]);
+  });
+
   it("only a call that is the entry's top call opens it", () => {
     expect(statCall(LINREG)).toBe("linreg");
     expect(statCall(STATS1)).toBe("stats1");

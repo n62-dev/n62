@@ -89,3 +89,14 @@ test("a row of any other call inserts its result on the second tap, with no shee
   expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{5\}$/);
   await expect(menu(page)).toHaveCount(0);
 });
+
+test("the sheet's chunk will not load: the second tap inserts the whole result", async ({ page }) => {
+  await ready(page);
+  await regress(page);
+  await page.route(/statSheet/, (r) => r.abort()); // offline after an update, a stale hash
+  await results(page).last().tap();
+  await results(page).last().tap();
+  await expect.poll(() => entryValue(page)).toMatch(/^\\res\{\d+\}\{/);
+  expect(await entryValue(page)).not.toMatch(/^\\res\{\d+\}\{1\.94\}$/); // the whole list, not one value
+  await expect(menu(page)).toHaveCount(0);
+});
