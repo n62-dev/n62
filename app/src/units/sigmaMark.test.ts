@@ -19,7 +19,7 @@ import { sigmaChipOf, uncChipsIn } from "../input/chipUnit.ts";
 import { validChips } from "../input/chips.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 import { fakeKv } from "../state/fakeKv.ts";
-import { chipFactsOf } from "../state/results.ts";
+import { chipFactsOf } from "../state/resultItem.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import { buildJob } from "./build.ts";
 import { quantityChip } from "./chip.ts";

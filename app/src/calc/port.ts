@@ -16,6 +16,7 @@ import type { LibraryReply } from "../engine/library.ts";
 import type { MathEngine } from "../engine/types.ts";
 export type { LibraryReply } from "../engine/library.ts";
 import type { Refusal } from "../engine/converge.ts";
+import type { WordSetting } from "../state/wordSetting.ts";
 import type { Quantity, UnitError, UnitRequest } from "../units/types.ts";
 export type { Quantity, UnitError, UnitRequest, UnitSlot, UnitToken } from "../units/types.ts";
 export { CAS_SOFT_BUDGET_MS, IDENT } from "../engine/types.ts";
@@ -70,6 +71,8 @@ export interface HomeOutcome {
   latex?: string;
   /** G67: the input changed one of the engine's settings, which was put back: the result line says it was not kept. */
   settingReset?: true;
+  /** G211: the word (R194) the request carried, the engine's own (64 bits, unsigned) while none is set; the port gives it. */
+  word?: WordSetting;
 }
 
 export interface CasOutcome {
@@ -92,6 +95,8 @@ export interface CasOutcome {
   uses?: { name: string; preview: string; view: "home" | "cas" }[];
   /** G67: the input changed one of the engine's settings, which was put back: the result line says it was not kept. */
   settingReset?: true;
+  /** G211: as HomeOutcome's. */
+  word?: WordSetting;
 }
 
 /** Thrown by home()/cas() when Cancel stopped the job. */

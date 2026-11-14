@@ -30,6 +30,9 @@
 //   angle    `rad` or `deg`, the angle mode the row was worked out in; null when the row does not keep it. It applies
 //            to `input` and `value` only, never to `giac` or `exact` (radians)
 //   digits   the digits setting of the row; null when the row does not keep it
+//   word     `{"bits":n,"signed":b}`, the word (R194: 8, 16, 32 or 64 bits) the row's job ran in; null when the row does
+//            not keep it. shl, shr, rotl, rotr and bnot read it: `shl(3,7)` is 384 in 64 bits, 128 in 8 bits unsigned,
+//            −128 in 8 bits signed (engine/wordOps.test.ts)
 //   defs     the stored values the input read: name, preview, the view that stored it
 import { DECIMAL_KEEP } from "../engine/format.ts";
 import { copyFull, copyMark, type CopySource } from "../clipboard/text.ts";
@@ -95,6 +98,7 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
     sigmaWhy: str(u?.unc?.why),
     angle: item.angle ?? null,
     digits: item.digits ?? null,
+    word: item.word ?? null,
     defs: item.uses?.length ? item.uses.map((d) => ({ name: d.name, preview: d.preview, view: d.view })) : undefined,
   };
   return JSON.stringify(line);

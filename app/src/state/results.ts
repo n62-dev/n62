@@ -3,12 +3,13 @@
 // `full`, whether it is exact (`fullExact`), the text drawn when it differs (`drawn`), the value and its facts, and the
 // chip a finished item gives. Pure TypeScript, no runes: the session (state/session.svelte.ts) and the golden runner
 // (goldenRun.ts, run by Node) both call it, so the gate checks the app's own rule. Only erasable TypeScript syntax.
-import type { ChipFactsTable } from "../engine/chipFacts.ts";
 import type { ComplexValue } from "../engine/format.ts";
 import type { ValueFacts } from "../engine/types.ts";
 import { RATIONAL } from "../engine/giacPrintStart.ts";
 import type { Chip, ChipTable } from "../input/chips.ts";
 import type { Rational, ResultFacts } from "./displayMode.ts";
+import type { AngleUnit } from "../calc/port.ts";
+import type { WordSetting } from "./wordSetting.ts";
 
 /** A chip carries at most this much text (docs/04 2.8); a longer result is inserted as it is drawn. */
 export const FULL_LIMIT = 2048;
@@ -16,6 +17,8 @@ export const FULL_LIMIT = 2048;
 export const ITEMS_LIMIT = 400;
 /** Rows a view's history keeps (in memory and stored); the oldest go first. */
 export const HISTORY_LIMIT = 200;
+/** G211: a row's uid, given once when it is made: the clock in milliseconds in base 36, a hyphen, its id of this run. */
+export const rowUid = (id: number): string => `${Date.now().toString(36)}-${id}`;
 
 /** A plain integer or fraction text as a Rational; undefined for anything else (or a zero denominator). */
 export function rationalOf(text: string | undefined): Rational | undefined {
@@ -41,6 +44,8 @@ export interface HomeIn extends FactsSource {
   value?: ComplexValue;
   exact?: string;
   full: string;
+  /** G211: the word the request carried (the port's, HomeOutcome). */
+  word?: WordSetting;
 }
 /** A CAS result as the rule reads it (CasOutcome of the port, CasResult of the engine). */
 export interface CasIn {
@@ -50,6 +55,7 @@ export interface CasIn {
   approximate?: boolean;
   facts: ValueFacts;
   numeric?: HomeIn;
+  word?: WordSetting;
 }
 
 /** What a history item keeps of a result; a field that is absent is not set on the item. */
@@ -63,6 +69,11 @@ export interface ItemResult {
   fullExact?: boolean;
   /** The text drawn when it differs from `full` (G46f1); Copy gives it. */
   drawn?: string;
+  /** G211: the Giac text the row was sent as, the angle and digits it ran in, the word in force (HistoryItem). */
+  giac?: string;
+  angle?: AngleUnit;
+  digits?: number;
+  word?: WordSetting;
 }
 
 /** What chipOf reads of a history item. */
@@ -83,13 +94,6 @@ export function chipOf(item: ChipSource): Chip | undefined {
   return { value: item.full, exact: false, ...(f ? { reliableDigits: f.reliableDigits } : {}), ...(f?.warn ? { warn: f.warn } : {}) };
 }
 
-/** The chips an input holds by name (`pasr_<k>`), as the engine takes them (G49): the value and the facts. */
-export function chipFactsOf(named: ChipTable): ChipFactsTable {
-  const out: Record<string, ChipFactsTable[string]> = {};
-  for (const [k, c] of Object.entries(named))
-    out[k] = { value: c.value, reliableDigits: c.reliableDigits ?? null, exact: c.exact, ...(c.warn ? { warn: c.warn } : {}), ...(c.unc !== undefined ? { unc: c.unc } : {}) };
-  return out;
-}
 
 /** R63f1: Home's number of a unit row with its ± σ and unit after it (units/row.ts UnitRow: `latex` drawn, `text` for
  *  Copy as shown and the row's data-text). Both are read back unchecked, so one that is not a string adds nothing.

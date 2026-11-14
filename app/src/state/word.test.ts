@@ -9,6 +9,10 @@ import type { HomeSettings, MathEngine } from "../engine/types.ts";
 import { DATA_VERSION } from "./storage.ts";
 import { fakeKv } from "./fakeKv.ts";
 import { validWord, WORD_KEY } from "./wordSetting.ts";
+import type { HistoryItem } from "./session.svelte.ts";
+import { restoredItem } from "./storedItem.ts";
+
+const ROW = { id: 1, view: "home", latex: "1", status: "done", resultLatex: "1", text: "1", approximate: false, startedAt: 0 };
 import { WordStore, wordStore } from "./wordStore.svelte.ts";
 
 const at = (value: unknown): { "@n62": number; value: unknown } => ({ "@n62": DATA_VERSION, value });
@@ -37,11 +41,12 @@ describe("the key `word` (R194)", () => {
     }
   });
 
-  it("validWord and the backup's `word` check agree on one table of good and bad records", () => {
+  it("validWord, the backup's `word` check and a stored row's (storedItem.ts) agree on one table of good and bad records", () => {
     const good = [{ bits: 8, signed: false }, { bits: 16, signed: true }, { bits: 32, signed: false }, { bits: 64, signed: true }];
     const bad = [{ bits: 12, signed: true }, { bits: "16", signed: true }, { bits: 16, signed: "yes" }, { bits: 16, signed: 1 }, { bits: 16, signed: true, extra: 1 }, { bits: 16 }, { signed: true }, { bits: 16, signed: true, bits2: 8 }, 16, "word", null, undefined, true, []];
     for (const v of [...good, ...bad]) {
       expect(VALIDATORS["word"]?.(v), JSON.stringify(v)).toBe(validWord(v) !== undefined);
+      expect(restoredItem({ ...ROW, word: v } as unknown as HistoryItem, 1).word, JSON.stringify(v)).toEqual(validWord(v)); // G211: a stored row's word
       if (v !== undefined) expect(checkBackup(file(v)).ok, JSON.stringify(v)).toBe(validWord(v) !== undefined);
     }
     expect(good.every((v) => validWord(v) !== undefined)).toBe(true);
