@@ -88,7 +88,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 746 | G218 what the sync folder receives | gorge, Opus | `p1/gorge-syncfiles` | – |
-| 747 | [G219](packages/G219.md) the sync queue: at least once, in order | gorge, Opus | `p1/gorge-syncqueue` | G218 |
+| 747 | G219 the sync queue: at least once, in order | gorge, Opus | `p1/gorge-syncqueue` | G218 |
 | 690 | [G233](packages/G233.md) your own unit: a definition the unit evaluator can read | gorge, Opus | `p1/gorge-userunit` | – |
 | 691 | [G234](packages/G234.md) your own units are stored, backed up and found | gorge, Sonnet | `p1/gorge-userunitstore` | G233 |
 | 742 | [G215](packages/G215.md) the generated Python runs and agrees with N62 | gorge, Opus | `p1/gorge-pydiff` | G214 |
