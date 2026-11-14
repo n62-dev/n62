@@ -290,10 +290,10 @@ describe("R198: a typed function name and ( give the function", () => {
     }) as unknown as HwTarget["field"];
   /** `(` typed after `typed` (one atom per character): what ran (the bracket pair `paren`, or the insert's LaTeX) and
    *  the count name; `stored`, the user's names. */
-  const paren = (typed: string, stored: readonly string[] = [], collapsed = true): { got: string; count: string } => {
+  const paren = (typed: string | readonly string[], stored: readonly string[] = [], collapsed = true): { got: string; count: string } => {
     const out = { got: "", count: "" };
     const t: HwTarget = {
-      field: line([...typed], collapsed),
+      field: line(typeof typed === "string" ? [...typed] : typed, collapsed),
       decimalComma: false,
       stored,
       onSymbol: () => {},
@@ -302,8 +302,9 @@ describe("R198: a typed function name and ( give the function", () => {
       onDead: () => {},
       onPress: () => {},
       onDesk: (as, key, layer) => {
-        const a = key?.actions.primary as (ActionBody & { call?: { name: string } }) | undefined;
-        out.got = a?.kind === "insert" ? `${key?.id}:${layer} ${a.latex} (${a.call?.name})` : "?";
+        const a = key?.actions.primary as (ActionBody & { call?: { name: string; typed?: readonly string[] } }) | undefined;
+        const typedAtoms = a?.kind === "insert" && a.call?.typed ? ` [${a.call.typed.join(" ")}]` : "";
+        out.got = a?.kind === "insert" ? `${key?.id}:${layer} ${a.latex} (${a.call?.name})${typedAtoms}` : "?";
         out.count = as;
       },
     };
@@ -336,6 +337,31 @@ describe("R198: a typed function name and ( give the function", () => {
     expect(paren("sin", ["sin"]).got).toBe("paren:primary");
   });
 
+  // R312 (the owner, 2026-11-14): `e` after a number's digits is ᴇ (R31), so a typed 2exp(1) was 2, ᴇ, x, p and a
+  // bracket pair, which Enter refused; at `(` such a ᴇ and the letters after it are the name e + letters when it is one
+  const E = "\\emark";
+  it("R312: a ᴇ right after a number, then letters that with e form a known name, is that function at (", () => {
+    expect(paren(["2", E, "x", "p"])).toEqual({ got: `paren:primary \\exp\\left(#0\\right) (exp) [${E} x p]`, count: "hw:name" });
+    expect(paren(["2", ".", "5", E, "x", "p"]).got).toBe(`paren:primary \\exp\\left(#0\\right) (exp) [${E} x p]`);
+    expect(paren(["x", "+", "1", "0", E, "x", "p"]).got).toBe(`paren:primary \\exp\\left(#0\\right) (exp) [${E} x p]`);
+  });
+  it("R312: a digit after ᴇ, no number before it, no letters, a name that is none, a user's name and a selection stay as before", () => {
+    for (const atoms of [
+      ["2", E, "5", "x", "p"], // a digit after ᴇ keeps it ᴇ (xp names nothing: the bracket pair)
+      ["x", E, "x", "p"], // no number before the mark
+      ["x", "2", E, "x", "p"], // x2 is a name, not a number (afterNumber's rule)
+      [E, "x", "p"],
+      ["2", E], // 2e( alone
+      ["2", E, "x", "q"], // exq is no name
+      ["2", E, "x"], // ex is no name
+    ])
+      expect(paren(atoms).got, atoms.join(" ")).toBe("paren:primary");
+    expect(paren(["2", E, "x", "p"], ["exp"]).got).toBe("paren:primary");
+    expect(paren(["2", E, "x", "p"], [], false).got).toBe("paren:primary");
+    // the letters' own name still wins where e + them names nothing (2ᴇ, then sin: today's line)
+    expect(paren(["2", E, "s", "i", "n"]).got).toBe("paren:primary \\sin\\left(#0\\right) (sin)");
+  });
+
   it("once the index is in: a Find function (stddev, a tier-1 name, log10) is its insert, the user's own names stay theirs", async () => {
     if (!existsSync(indexFile)) {
       if (process.env["FIND_INDEX"] === "required") expect.fail("app/src/find/_gen/find-index.json is missing; run npm run index");
@@ -364,5 +390,8 @@ describe("R198: a typed function name and ( give the function", () => {
     // the index would make them calls); at( stays the function
     for (const typed of ["do", "od", "fi", "si", "by", "in", "of", "et", "ou"]) expect(paren(typed).got, typed).toBe("paren:primary");
     expect(paren("at").got).toBe(`paren:primary ${insertOf("fn:at")} (at)`);
+    // R312: a Find function after a number's ᴇ (3erf( typed: 3, ᴇ, r, f)
+    expect(insertOf("fn:erf")).not.toBe("none");
+    expect(paren(["3", E, "r", "f"]).got).toBe(`paren:primary ${insertOf("fn:erf")} (erf) [${E} r f]`);
   });
 });

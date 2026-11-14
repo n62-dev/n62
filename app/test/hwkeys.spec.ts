@@ -294,6 +294,79 @@ test.describe("on the engine", () => {
     expect(await entryValue(page)).toBe("sin\\left(1\\right)");
   });
 
+  // R312 (bu-9; the owner, 2026-11-14): `e` after digits is ᴇ, so a typed 2exp(1) was 2ᴇ·xp(1) and Enter refused it
+  // ("ᴇ needs a whole-number exponent after it"); at `(` a ᴇ right after a number and letters that with e form a known
+  // name are that function
+  /** Clears the line and types `typed` until the names are in (the first letter loads them: before, `(` is a pair). */
+  const typeOnceIn = async (page: Page, typed: string, line: string): Promise<void> => {
+    await expect
+      .poll(async () => {
+        await page.evaluate(() => window.n62.entry.clear());
+        await page.keyboard.type(typed);
+        return entryValue(page);
+      })
+      .toBe(line);
+  };
+  const errorIs = (page: Page, text: string) => expect(page.locator('[data-status="error"]').last()).toContainText(text);
+
+  test("R312: 2exp(1) typed is 2·e = 5.43656365692 in Home, as 2\\exp(1) (it was refused: ᴇ needs a whole-number exponent)", async ({ page }) => {
+    await typeOnceIn(page, "2exp(", "2\\exp\\left(\\placeholder{}\\right)");
+    await page.keyboard.type("1)");
+    expect(await entryValue(page)).toBe("2\\exp\\left(1\\right)");
+    await page.keyboard.press("Enter");
+    await resultIs(page, "5.43656365692", 1); // 2·e = 5.436563656918…
+    await markIs(page, "≈");
+    // one Undo step takes the function back to the typed 2ᴇxp
+    await page.keyboard.type("2exp(");
+    expect(await entryValue(page)).toBe("2\\exp\\left(\\placeholder{}\\right)");
+    await page.keyboard.press("Control+z");
+    expect(await entryValue(page)).toBe("2\\emark xp");
+  });
+
+  test("R312: 3erf(1) typed is 3·erf(1) = 2.52810237885, Find's erf once the index is in", async ({ page }) => {
+    await page.keyboard.type("s"); // the first hardware letter asks for the index
+    await page.evaluate(() => (0, eval)('import("/src/find/finder.ts").then((m) => m.loadIndex(true))') as Promise<unknown>);
+    await typeOnceIn(page, "3erf(", "3\\operatorname{erf}\\left(\\placeholder{}\\right)");
+    await page.keyboard.type("1)");
+    await page.keyboard.press("Enter");
+    await resultIs(page, "2.52810237885", 1); // 3·0.842700792949715 = 2.528102378849145
+  });
+
+  test("R312: x+2exp(x) typed in CAS reads x+2*exp(x)", async ({ page }) => {
+    await page.evaluate(() => window.n62.session.setView("cas"));
+    await page.evaluate(() => window.n62.entry.focus());
+    await typeOnceIn(page, "x+2exp(", "x+2\\exp\\left(\\placeholder{}\\right)");
+    await page.keyboard.type("x)");
+    await page.keyboard.press("Enter");
+    await resultIs(page, "x+2*exp(x)", 1);
+  });
+
+  test("R312 controls: 2e5, 2e-3, 2E3 stay ᴇ numbers; 2e( alone, 2ex and an unknown 2exq(1) stay as before", async ({ page }) => {
+    for (const [typed, line, text] of [
+      ["2e5", "2\\emark5", "200000"],
+      ["2e-3", "2\\emark-3", "0.002"],
+      ["2E3", "2\\emark3", "2000"],
+    ] as const) {
+      await page.evaluate(() => window.n62.entry.clear());
+      await page.keyboard.type(typed);
+      expect(await entryValue(page), typed).toBe(line);
+      await page.keyboard.press("Enter");
+      await expect(lastResult(page), typed).toHaveAttribute("data-text", text);
+    }
+    await typeOnceIn(page, "sin(", "\\sin\\left(\\placeholder{}\\right)"); // the names are in
+    await page.evaluate(() => window.n62.entry.clear());
+    await page.keyboard.type("2e(");
+    expect(await entryValue(page)).toBe("2\\emark\\left(\\placeholder{}\\right)");
+    await page.evaluate(() => window.n62.entry.clear());
+    await page.keyboard.type("2ex");
+    expect(await entryValue(page)).toBe("2\\emark x");
+    await page.evaluate(() => window.n62.entry.clear());
+    await page.keyboard.type("2exq(1)");
+    expect(await entryValue(page)).toBe("2\\emark xq\\left(1\\right)");
+    await page.keyboard.press("Enter");
+    await errorIs(page, "whole-number exponent");
+  });
+
   test("Ctrl combinations stay with the field: Ctrl+A then a digit replaces the line", async ({ page }) => {
     await page.keyboard.type("12");
     await page.keyboard.press("Control+A");
