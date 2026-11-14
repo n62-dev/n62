@@ -565,6 +565,7 @@ export class Session {
         const r = await this.calc.home(giac, s, named && m.chipFactsOf(named), consts); // an absent table is not sent (EngineCalc.home)
         if (live.status !== "pending") return;
         const latex = !r.ok ? "" : r.latex !== undefined ? await tidyOr(tidy, r.latex, homeResultToLatex(r.display)) : homeResultToLatex(r.display);
+        if (live.status !== "pending") return; // a Cancel while the tidy chunk loaded stands
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.display : errorText(r.error, r.display);
         if (r.settingReset) live.settingReset = true;
@@ -577,6 +578,7 @@ export class Session {
         const r = await this.calc.cas(giac, s);
         if (live.status !== "pending") return;
         const latex = r.ok ? await tidyOr(tidy, r.latex, r.latex) : "";
+        if (live.status !== "pending") return;
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.text : errorText(r.error, r.text);
         if (r.settingReset) live.settingReset = true;
