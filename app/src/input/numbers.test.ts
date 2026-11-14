@@ -198,6 +198,50 @@ describe("a number in another base (docs/04 5.4, R191)", () => {
   });
 });
 
+describe("a capital prefix after a lone 0 is the prefix (R304)", () => {
+  // Home's Alpha types the capital (spec/keyboard.yaml), so 0, Alpha B, 101 is 0B101; C, Python and Giac read 0X, 0B, 0O
+  it.each([
+    ["0B101", "5"],
+    ["0O17", "15"],
+    ["0XFF", "255"],
+    ["0XFF+1", "255+1"],
+    ["0Xff", "255"],
+    ["2\\times0X10", "2*16"],
+  ])("%s is the decimal integer in %s", (latex, out) => {
+    expect(giac(latex)).toBe(out);
+  });
+  it.each([
+    ["0X+1", "0x+1"],
+    ["0Xy", "0xy"],
+  ])("%s reads as %s does: no prefix form", (latex, lower) => {
+    expect(giac(latex)).toBe(giac(lower).replace(/\bx\b/, "X").replace(/\bb\b/, "B").replace(/\bo\b/, "O"));
+  });
+  it.each([
+    ["0B", "0b"],
+    ["0X", "0x"],
+    ["0O", "0o"],
+    ["0B2", "0b2"],
+    ["0O8", "0o8"],
+    ["0B102", "0b102"],
+    ["0O18", "0o18"],
+    ["0B1.1", "0b1.1"],
+    ["0X\\,FF", "0x\\,FF"],
+    ["0\\,XFF", "0\\,xFF"],
+    ["0XF\\,F", "0xF\\,F"],
+  ])("%s is refused as %s is", (latex, lower) => {
+    expect(message(latex)).toBe(message(lower).replace(/^0[xbo]/, (m) => m.toUpperCase()));
+    expect(message(latex)).not.toBe("accepted");
+  });
+  it.each([
+    ["0xFF", "255"],
+    ["0b101", "5"],
+    ["20XFF", "20*X*F*F"],
+    ["0\\,X+1", "0*X+1"],
+  ])("%s stays %s", (latex, out) => {
+    expect(giac(latex)).toBe(out);
+  });
+});
+
 describe("a number in another base across spacing (R191f1)", () => {
   it.each(["0\\,xFF", "0x\\,FF", "0xF\\,F", "0x1\\,F", "0x1\\,0", "0b1\\,0", "0o1\\ 7", "0\\ b101", "0xFF\\,F"])(
     "%s is refused with a message of its own",
