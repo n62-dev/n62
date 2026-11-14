@@ -194,7 +194,7 @@ describe("folderAppend (A100: \"wa\", never a rewrite)", () => {
 });
 
 describe("appendChecked (A101: a checked append, never a mode switch)", () => {
-  const LINE = "{\"id\":\"a1\",\"v\":\"∑\"}\n"; // 17 bytes in UTF-8
+  const LINE = "{\"id\":\"a1\",\"v\":\"∑\"}\n"; // 22 bytes in UTF-8 (∑ is 3)
   const bytes = (t: string): number => new TextEncoder().encode(t).length;
   const ENDS_IN_NEWLINE = { result: "ok", text: "\n" };
   /** The check reads the tail: every tail call after the one-byte newline probe. */
@@ -204,7 +204,7 @@ describe("appendChecked (A101: a checked append, never a mode switch)", () => {
     native();
     cap.files.tail.mockResolvedValue(ENDS_IN_NEWLINE);
     cap.files.append.mockResolvedValue({ result: "appended", before: 40, after: 40 + bytes(LINE) });
-    expect(bytes(LINE)).toBe(17);
+    expect(bytes(LINE)).toBe(22);
     expect(await appendChecked("n62-results.txt", LINE)).toBe("appended");
     expect(cap.files.append).toHaveBeenCalledExactlyOnceWith({ name: "n62-results.txt", text: LINE });
     expect(cap.files.tail.mock.calls).toEqual([[{ name: "n62-results.txt", n: 1 }]]);
