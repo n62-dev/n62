@@ -449,6 +449,21 @@ describe.skipIf(!giacAvailable())("G225f1 operands of different shape", () => {
     expect(cas("dot(sm,su)")).toMatchObject({ ok: false, error: "vectorsOnly" });
   });
 
+  // G352: a matrix times a list scales row k by element k (R80); a list of another length than the row count drops or
+  // keeps rows, a value with no meaning. Kept: [[1,2,3],[4,5,6]]*list[1,2] = [[1,2,3],[8,10,12]] by hand.
+  it("refuses stored names of a matrix times a list of another length, and stores nothing", () => {
+    home("gm:=[[1,2,3],[4,5,6]]");
+    home("gl:=list[1,2,3]");
+    home("gk:=list[1,2]");
+    expect(home("gm*gl")).toMatchObject(differ);
+    expect(home("gr:=gm*gl")).toMatchObject(differ);
+    expect(home("gr")).toMatchObject({ ok: true, display: "gr" });
+    expect(cas("gs:=gm*gl")).toMatchObject({ ok: false, error: "lengthsDiffer" });
+    expect(cas("gs")).toMatchObject({ ok: true, text: "gs" });
+    expect(home("gm.*gk")).toMatchObject(differ);
+    expect(home("gm*gk")).toMatchObject({ ok: true, display: "[[1,2,3],[8,10,12]]" });
+  });
+
   it("walks a stored function's body whose list only the body or an argument holds", () => {
     home("sb(p,q):=p*q");
     expect(home("sb([1,2],[3,4,5])")).toMatchObject(differ);
