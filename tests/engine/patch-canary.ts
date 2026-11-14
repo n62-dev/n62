@@ -187,6 +187,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G308, patch 0048: is_one of a complex tests its imaginary part with is_zero, which compares a float with epsilon (1e-12), so
   // 1+1e-15*i was one: pow returned the base ((1+i/10^15)^(1/3) at Digits 40), operator_times the other factor (evalf(1+i/10^15)*x = x)
   ["0048-complex-is-one-exact.patch", "giac-2.1.0/src/gen.cc", /case _CPLX:\s*return is_one\(\*a\._CPLXptr\) && is_zero\(\*\(a\._CPLXptr\+1\)\);/, "bool is_one(const gen & a){"],
+  // G353, patch 0049: stddev (stddev, stddevp, variance of a list or a matrix) sums x^2 in one pass and subtracts s*mean^2, which
+  // cancels in floats (variance([1.1,1.1,1.1]) = -7.1e-15 at Digits 12; a stored float list gave stddevp 1e-31*i in Home)
+  ["0049-stddev-float-two-pass.patch", "giac-2.1.0/src/permu.cc", /somme = somme \+ \(\*jt\)\*\(\*jt\);\s*\}\s*if \(variance!=3\)\s*res\.push_back\(sqrt\(rdiv\(somme-s\*moyenne\[i\]\*moyenne\[i\]/, "vecteur stddev(const matrice & m,bool column,int variance){"],
 ];
 
 const tar = tarball(SOURCES.giac);
