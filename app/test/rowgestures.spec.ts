@@ -168,8 +168,8 @@ test("the picked row's bar holds Store ▶ and Copy as ›; Copy as opens its th
   await menu(page).locator('[data-id="exact"]').tap();
   await expect.poll(() => clipboard(page)).toBe("1/3"); // the picked row's, not the last one's
   await expect(bar(page)).toHaveCount(0); // the pick ended with the button
-  // ☰ keeps its nine (Delete for TalkBack, which cannot swipe)
+  // ☰ keeps its nine (Delete for TalkBack, which cannot swipe), then Export › (R130)
   await page.getByTestId("menu-button").tap();
-  await expect(menu(page).locator(".row[data-id]")).toHaveCount(9);
+  await expect(menu(page).locator(".row[data-id]")).toHaveCount(10);
   await expect(menu(page).locator('.row[data-id="delete"]')).toBeVisible();
 });

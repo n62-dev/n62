@@ -92,6 +92,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `solve.ts` | Solve app engine side: systems, polynomials, every candidate polished; called by `host.ts` |
 | `analysis.ts` | Function app: the Num table and the Plot analysis menu (root, extremum, intersection, slope, area); called by `host.ts` |
 | `matrixRead.ts` | R188: the matrix sheet's reads through the bridge: which names hold a matrix, their sizes and elements with Home's facts; called by `host.ts` (posted by `calc/matrices.ts`) |
+| `decimalLatex.ts` | R189f1: a plain decimal as the entry line types it (its exponent after the mark ᴇ); called by `matrixRead.ts` and the Solve app |
 | `library.ts` | S4, G33: the library file, read as a whole, defined through `cas()`, tested; loaded lazily (`state/libraryFormat.ts` passes it the stored data's version and migration) |
 | `libraryHeader.ts` | R59f1: the library file's stamp line (`HEADER`) and size limit (`LIB_MAX_BYTES`), imports nothing; imported by `library.ts`, `state/libraryFormat.ts` and `views/libraryJobs.ts` (lazy chunks, so the main thread gets these bytes and not the reader) |
 

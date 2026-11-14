@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // F100: a Copy then a Paste, started without waiting, act in that order even when the write is slower than the read.
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EntryController } from "../entry/controller.ts";
 import type { AppShell } from "../apps/shell.svelte.ts";
 import type { Session } from "../state/session.svelte.ts";
@@ -109,9 +109,9 @@ describe("ClipActions row buttons and the hold", () => {
     buttons[1]?.run?.();
     expect(menus).toEqual([{ title: "Copy as", ids: ["shown", "exact", "latex"] }]);
   });
-  it("☰ keeps its nine in the same order", () => {
+  it("☰ keeps its nine in the same order, then Export › (R130)", () => {
     const { c, item } = make();
-    expect(c.menu(item).map((m) => m.id)).toEqual(["insert", "recall", "copy", "store", "delete", "copyAs", "paste", "share", "clear"]);
+    expect(c.menu(item).map((m) => m.id)).toEqual(["insert", "recall", "copy", "store", "delete", "copyAs", "paste", "share", "clear", "export"]);
   });
   it("a hold on the input copies the entry as plain text, on the result Copy's full value; each counts as copy", async () => {
     const { c, item, acted, clip } = make();
@@ -120,5 +120,72 @@ describe("ClipActions row buttons and the hold", () => {
     await c.holdCopy(item, "result", "");
     expect(clip()).toBe("1/3");
     expect(acted).toEqual(["copy", "copy"]);
+  });
+});
+
+// R130: ☰ Home/CAS keeps items 1 to 9 (their digits are learned); item 10 (key 0) is Export ›, with the work report in it.
+describe("ClipActions menu: Export › is item 10", () => {
+  const menuOf = (items: object[]) => {
+    const session = { items } as unknown as Session;
+    const shell = { app: null, showsEntry: true } as unknown as AppShell;
+    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} }).menu();
+  };
+  it("items 1 to 9 keep their ids and order; the tenth opens Export › with the work report", () => {
+    const m = menuOf([{ status: "done", latex: "2", text: "2", facts: {} }]);
+    expect(m.map((i) => i.id)).toEqual(["insert", "recall", "copy", "store", "delete", "copyAs", "paste", "share", "clear", "export"]);
+    const exp = m[9]!;
+    expect(exp.label).toBe("Export");
+    expect(exp.disabled).toBe(false);
+    expect(exp.submenu?.items.map((i) => [i.id, i.label, i.disabled])).toEqual([["work", "Work report", false]]);
+  });
+  it("with nothing finished Export › is off, and an empty history gives it no reason line (fit.spec.ts)", () => {
+    expect(menuOf([])[9]).toMatchObject({ id: "export", disabled: true, reason: undefined });
+    expect(menuOf([{ status: "pending", latex: "2", text: "" }])[9]).toMatchObject({ id: "export", disabled: true, reason: "No result yet" });
+  });
+});
+
+// R130 fix 2: the export ends in a notice when its code does not load (an offline PWA after an update), and a second
+// press waits for the first save (the clipboard chain), as Report a problem does.
+describe("ClipActions export of the work", () => {
+  const actions = () => {
+    const session = { items: [], view: "home", decimalComma: false } as unknown as Session;
+    const shell = { app: null, showsEntry: true } as unknown as AppShell;
+    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} });
+  };
+  afterEach(() => {
+    vi.doUnmock("./workReport.ts");
+  });
+  it("says the report could not be saved when its code fails to load", async () => {
+    vi.doMock("./workReport.ts", () => {
+      throw new Error("Failed to fetch dynamically imported module");
+    });
+    const c = actions();
+    await expect(c.exportWork()).resolves.toBeUndefined();
+    expect(c.notice).toBe("The work report could not be saved");
+  });
+  it("runs a second press after the first save has ended, never beside it", async () => {
+    const log: string[] = [];
+    let release = (): void => {};
+    const first = new Promise<void>((r) => (release = r));
+    let n = 0;
+    vi.doMock("./workReport.ts", () => ({
+      saveWork: async () => {
+        const k = ++n;
+        log.push(`start ${k}`);
+        if (k === 1) await first;
+        log.push(`end ${k}`);
+        return `saved ${k}`;
+      },
+    }));
+    const c = actions();
+    const a = c.exportWork();
+    const b = c.exportWork();
+    await vi.waitFor(() => expect(log).toEqual(["start 1"]), { timeout: 5000 }); // the first save waits; the second has not started
+    await new Promise((r) => setTimeout(r, 50));
+    expect(log).toEqual(["start 1"]);
+    release();
+    await Promise.all([a, b]);
+    expect(log).toEqual(["start 1", "end 1", "start 2", "end 2"]);
+    expect(c.notice).toBe("saved 2");
   });
 });

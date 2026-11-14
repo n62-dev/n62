@@ -200,6 +200,7 @@ home-menu:
   "7": "paste"
   "8": "share"
   "9": "clear"
+  "10": "export"
 home-copy-as:
   "1": "shown"
   "2": "exact"

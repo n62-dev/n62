@@ -5,6 +5,8 @@
   // numbers on the left, each element through the Home formatter with Home's ≈ or ⚠, the highlighted cell marked. A
   // chunk of its own. The thin space of a digit group is drawn as a gap (as apps/Grouped.svelte does; not imported: it
   // would split a chunk shared with the apps, whose preload lists are in the start chunk).
+  // R189: the cell edited on the entry line is marked; the parser's refusal of it shows under the table; the grid
+  // leaving (the sheet closed or replaced) ends an edit, and the line that was there comes back.
   import { t } from "../i18n/index.ts";
   import { findText } from "../i18n/enFind.ts";
   import type { MatrixGrid } from "./matrixGrid.svelte.ts";
@@ -13,9 +15,16 @@
   const cells = $derived(grid.cells);
   const cols = $derived(Array.from({ length: grid.cols }, (_, c) => c));
   const rows = $derived(Array.from({ length: grid.rows }, (_, r) => r));
+  $effect(() => () => grid.end()); // (an effect's teardown, as onDestroy: the start chunk exports no onDestroy for this chunk)
+  let box: HTMLDivElement | undefined = $state();
+  // the highlighted cell stays in sight (a tall or wide matrix scrolls; R189: it is the one the line edits)
+  $effect(() => {
+    const at = `${grid.row + 1},${grid.col + 1}`;
+    if (Array.isArray(grid.cells)) box?.querySelector(`td[data-cell="${at}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  });
 </script>
 
-<div class="grid" data-testid="matrix-grid" role="grid" aria-label={grid.name}>
+<div class="grid" data-testid="matrix-grid" role="grid" aria-label={grid.name} bind:this={box}>
   {#if cells === "failed"}
     <p class="empty">{findText("matrix.unread")}</p>
   {:else if cells === null}
@@ -36,12 +45,13 @@
               {@const cell = cells[r * grid.cols + c]}
               {@const text = cell ? grid.text(cell) : ""}
               {@const mark = cell ? grid.mark(cell) : null}
-              <td data-cell="{r + 1},{c + 1}" data-text={text} data-active={r === grid.row && c === grid.col}>{#each grid.drawn(text).split("\u2009") as p, i (i)}{#if i > 0}<span class="gsep" aria-hidden="true"></span>{/if}{p}{/each}{#if mark === "⚠"}<span class="warn" data-testid="mark" title={t("mark.warn")}> ⚠</span>{:else if mark}<span class="approx" data-testid="mark" title={t("mark.approx")}> ≈</span>{/if}</td>
+              <td data-cell="{r + 1},{c + 1}" data-text={text} data-active={r === grid.row && c === grid.col} data-editing={grid.editing?.row === r && grid.editing.col === c}>{#each grid.drawn(text).split("\u2009") as p, i (i)}{#if i > 0}<span class="gsep" aria-hidden="true"></span>{/if}{p}{/each}{#if mark === "⚠"}<span class="warn" data-testid="mark" title={t("mark.warn")}> ⚠</span>{:else if mark}<span class="approx" data-testid="mark" title={t("mark.approx")}> ≈</span>{/if}</td>
             {/each}
           </tr>
         {/each}
       </tbody>
     </table>
+    {#if grid.refusal}<p class="refusal" role="alert" data-testid="matrix-refusal">{grid.refusal}</p>{/if}
   {/if}
 </div>
 
@@ -84,6 +94,14 @@
   .gsep {
     display: inline-block;
     width: var(--group-gap);
+  }
+  td[data-editing="true"] {
+    box-shadow: inset 0 0 0 var(--stroke-thick) var(--focus);
+  }
+  .refusal {
+    margin: var(--sp-2) 0;
+    color: var(--warn);
+    font-size: var(--fs-ui);
   }
   td > .warn {
     color: var(--warn);
