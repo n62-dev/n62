@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 |---|---|---|---|---|
 | 671 | R221 t08 and t09 replay what works today | ron, Sonnet | `p1/ron-taskbaselines` | – |
 | 672 | R220 the uncertainty sheet's mockup (the owner picks) | ron, Opus | `p1/ron-uncsheetmock` | – |
-| 670 | [R174](packages/R174.md) Help and about: Why trust it | ron, Sonnet | `p1/ron-trustpage` | – |
+| 670 | R174 Help and about: Why trust it | ron, Sonnet | `p1/ron-trustpage` | – |
 | 694 | [S45](packages/S45.md) units inside Solve: the design note | sandra, Opus | `p1/sandra-solveunits` | – |
 | 695 | [S51](packages/S51.md) who holds the rights an App Store build would need | sandra, Opus | `p1/sandra-iosrights` | – |
 | 697 | [A145](packages/A145.md) F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
