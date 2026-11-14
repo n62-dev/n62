@@ -3,8 +3,10 @@
 // Markdown a colleague reads and an AI parses. One block per step (a history row, R53), the marks as words (R36's line,
 // whyLine), the value as the screen shows it in the user's decimal mark without digit groups, its unit and σ named as the
 // standard uncertainty (must-have C decision 8: never `k = 1`). A header with the version (a preview, owner 2026-11-12),
-// the date and the settings that change a value; one paragraph says the format (also in the format for your AI, R59).
+// the date and the settings that change a value (the angle mode at export; a step computed in another mode, or in one
+// not recorded, says so on its own Angle line, R130f1); one paragraph says the format (also in the format for your AI, R59).
 // Saved through the save port (files.ts). Loaded on the press only (ClipActions.exportWork), never at start.
+import type { AngleUnit } from "../calc/port.ts";
 import type { MarkInfo } from "../engine/format.ts";
 import { t } from "../i18n/index.ts";
 import { typedName } from "../render/home.ts";
@@ -86,11 +88,14 @@ function notesOf(item: HistoryItem): string[] {
 }
 
 const field = (name: string, text: string): string => `- ${name}: ${text}`;
+const angleName = (a: AngleUnit): string => t(a === "deg" ? "angle.deg" : "angle.rad");
 
 /** The block of one step; null for a row that is no step (running, cancelled, a note). */
 function step(item: HistoryItem, n: number, look: ReportLook): string[] | null {
   if (item.status !== "done" && item.status !== "error") return null;
   const out = [`## ${tc("report.step")} ${n}`, "", field(tc("report.input"), code(line(inputOf(item, look))))];
+  // R130f1: rows are not re-evaluated when the mode changes, so a step computed in another mode says which (principle 3)
+  if (item.angle !== look.settings.angle) out.push(field(tc("report.angle"), item.angle ? angleName(item.angle) : tc("report.notRecorded")));
   if (item.status === "error") {
     out.push(field(tc("report.error"), line(item.text)));
     return out;
@@ -126,7 +131,7 @@ export function workReport(items: readonly HistoryItem[], look: ReportLook, head
     `# ${tc("report.title")}, ${time}`,
     "",
     field(tc("report.view"), t(head.view === "home" ? "view.home" : "view.cas")),
-    field(tc("report.angle"), t(s.angle === "deg" ? "angle.deg" : "angle.rad")),
+    field(tc("report.exportAngle"), angleName(s.angle)),
     field(tc("report.digits"), String(s.digits)),
     field(tc("report.format"), t(`format.${s.format}`)),
     field(tc("report.decimalMark"), tc(s.decimalMark === "comma" ? "report.comma" : "report.point")),
