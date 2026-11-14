@@ -4,6 +4,8 @@
 // folder Syncthing syncs, say). No storage permission. On the web, with no folder picked, or after the user revoked the
 // grant or removed the folder, every call answers "unavailable". Never throws. Load lazily (never in the start chunk).
 // A100: folderAppend adds text to the end of a file ("wa"), never rewriting it, so a crash can't lose its earlier lines.
+// A137: folderWrite replaces a file whole: the new text goes under a staged name, is checked, then takes the name, so a
+// kill or an I/O error leaves the old file or the new one, never a cut file (N62FilesPlugin.write has the order).
 
 export type Unavailable = "unavailable";
 export interface FolderFile {
@@ -86,7 +88,8 @@ export async function forgetFolder(): Promise<void> {
   }
 }
 
-/** Creates `name` in the folder or replaces its content with `text` (UTF-8). */
+/** Creates `name` in the folder or replaces it whole with `text` (UTF-8); "failed" leaves the old file as it was. A name
+ *  over 246 bytes fails (its staged name would pass 255). */
 export async function folderWrite(name: string, text: string): Promise<WriteResult> {
   const p = await plugin();
   if (!p) return "unavailable";
