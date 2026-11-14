@@ -114,20 +114,28 @@ export function keypadKeyOf(ch: string, decimalComma: boolean): readonly [string
   return LINE_ONLY.has(ch) ? undefined : KEYS.get(decimalComma && ch === "," ? "." : ch);
 }
 
+/** A chord (Ctrl, Alt or Meta held), not a typed character: AltGr's and a Mac's Option punctuation type (optionChar). */
+export function isChord(ev: KeyboardEvent): boolean {
+  return (ev.ctrlKey || ev.metaKey || ev.altKey) && !ev.getModifierState("AltGraph") && !optionChar(ev);
+}
+
+/** R131: press what the table names for the chord `ev` (Ctrl+Z, Alt+F); false: the table names none (or `only` refuses
+ *  its target). R303: the unit view's path too (units/open.ts), with the entry line as the target. */
+export function pressChord(ev: KeyboardEvent, tg: HwTarget, only?: (t: DeskTarget) => boolean): boolean {
+  const name = chordOf(ev);
+  const t = name === undefined ? undefined : desktop.byName.get(name);
+  if (!t || name === undefined || (only && !only(t))) return false;
+  act(t, name, ev, tg);
+  return true;
+}
+
 /** Handle a keydown on the entry line. True: handled, and the caller stops the event. */
 export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   const ch = ev.key;
   const mf = tg.field;
   if (!mf || ev.isComposing) return false;
-  const altGr = ev.getModifierState("AltGraph");
-  if ((ev.ctrlKey || ev.metaKey || ev.altKey) && !altGr && !optionChar(ev)) {
-    // R119, R131: a chord the table names presses its key (Ctrl+Z, Alt+S); every other one stays MathLive's (copy, select all)
-    const name = chordOf(ev);
-    const t = name === undefined ? undefined : desktop.byName.get(name);
-    if (!t || name === undefined) return false;
-    act(t, name, ev, tg);
-    return true;
-  }
+  // R119, R131: a chord the table names presses its key (Ctrl+Z, Alt+S); every other one stays MathLive's (copy, select all)
+  if (isChord(ev)) return pressChord(ev, tg);
   if (ch.length !== 1) {
     // a plain Enter or Escape: the field's own listener presses the same keys (EntryController: onKey, R45)
     if ((ch === "Enter" || ch === "Escape") && !ev.shiftKey) return false;

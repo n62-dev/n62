@@ -225,15 +225,19 @@ type Hw = typeof import("../entry/hwkeys.ts");
 
 /** A hardware key on the unit view's field: the keypad key it stands for, pressed as a tap through the entry line's
  *  own path (`onKey`) and map (entry/hwkeys.ts: ⌫, Del, the arrows, Enter, Esc, and the characters a keypad key types:
- *  a digit is its prefix cell); anything else does nothing. Copy and select all stay MathLive's. */
+ *  a digit is its prefix cell). R303: a chord of the desktop table presses its key as on the line (`onDesk`: Alt+F is
+ *  Math, Find on units; the fold stays dead, the pad lives on the keys), and with a sheet open over the view (Find) a
+ *  letter types into its query (`onLetter`, route.ts typeLetter); with none a letter does nothing (P14: no letters in a
+ *  slot). Anything else does nothing. Copy and select all stay MathLive's. */
 function hardwareKey(ev: KeyboardEvent, c: RouteCtx, hw: Hw): void {
   if (ev.isComposing) return;
-  const mod = (ev.ctrlKey || ev.metaKey || ev.altKey) && !ev.getModifierState("AltGraph");
+  const mod = hw.isChord(ev);
   if (mod && (ev.key === "c" || ev.key === "a")) return;
   if (["Tab", "Shift", "Control", "Alt", "Meta"].includes(ev.key)) return;
   ev.preventDefault();
   ev.stopPropagation();
-  if (mod) return c.dead();
+  if (mod) return void (hw.pressChord(ev, c.entry, (t) => !("action" in t && t.action === "fold")) || c.dead());
+  if (c.shell.sheet && /^[A-Za-z]$/.test(ev.key)) return c.entry.onLetter(ev.key, ev.repeat);
   const k = hw.controlKey(ev) ?? (ev.key.length === 1 ? hw.keypadKeyOf(ev.key, c.entry.decimalComma) : undefined);
   if (k) c.entry.onKey(k[0], k[1], ev.repeat);
   else c.dead();
