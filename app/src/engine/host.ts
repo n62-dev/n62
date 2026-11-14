@@ -34,13 +34,14 @@ import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } f
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
 import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
+import { parseText } from "../i18n/enParser.ts";
 import { WORD_DEFINITIONS } from "./wordOps.ts";
 import { wordDefinitions, wordOfSettings } from "./wordSettings.ts";
 import { dropAngleFactor, PASDEG } from "./angles.ts";
 import { askedDigits, DOUBLE_DIGITS, doubleFormsIn, notBuiltin, unauditedIn, floatFacts, hasFloat, integratedFacts, numberLatex, shapeOfValue, valuePrecision, whyOf, withDigits } from "./numeric.ts";
 import { balanced, callsOf, holdsList, isError, isName, isTimeout, leadingName, namesIn, parsePrinted, typedFromPrinted, wholeCall, wordsOf } from "./giacPrint.ts";
 import { contradictedCall, contradictedFloats, decidedAtDouble, decideTwice, nonRealArg, restsOnDecision } from "./decisions.ts";
-import { assignmentIn, clearingCall, formIn, formOf, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
+import { assignmentIn, clearingCall, formIn, formOf, functionTarget, mayStore, NOT_HERE_HEADS, programStores, scratchBack, STATE_HEADS, STRING_HEADS, writesScratch, writesThrough, type InputForm, type ProgramStores } from "./stores.ts";
 import { fnFacts, inherited, nameFacts, readFacts, readsFacts, storedFacts, storeFacts, type FactsHost } from "./facts.ts";
 import { changedPart, changesOf, isOurs, namesOf, namesPart, readsFrom, statePart, tableOf, type InputReads, type StoredName } from "./stateRead.ts";
 import { applyDefChanges, keyOf, PREVIEW_MAX, replayOrder, type DefChange, type DefEntry, type NameFacts, type StoredMark } from "./defs.ts";
@@ -576,6 +577,13 @@ export class EngineHost implements FactsHost {
     return this.unknownEmptyCall(input) ? "unknownFunction" : null;
   }
 
+  /** G354: a store into one of Giac's functions (`mean:=5`) that Giac answered with a value, not an error: the target's
+   *  value after the run (bridge-3) still is Giac's function, so nothing was stored. Worded as the parser's refusal. */
+  private unstored(input: string): string | null {
+    const name = mayStore(input) ? functionTarget(input, this.treeOf(input)) : null;
+    return name !== null && this.giac.value(name, []).kind === "function" ? parseText("parse.builtInName", { name }) : null;
+  }
+
   /** G174 (F87): restart, restart_vars or rm_all_vars alone (stores.ts clearingCall). Giac's answer lists every name it
    *  cleared, ours and the Ans slot among them (storing it in the slot is a recursive definition), so the command runs
    *  alone; the answer to evaluate is the list of the user's names it cleared (G93's lost, of the call after it). */
@@ -900,6 +908,8 @@ export class EngineHost implements FactsHost {
       };
     }
     if (!result.ok) return { result: { ...result, error: result.error ?? "engine" }, defs: [] };
+    const unstored = this.unstored(input);
+    if (unstored) return { result: { ok: false, display: unstored, path: "float-error", approximate: false, exactMs: result.exactMs, totalMs: performance.now() - t0, error: "builtInName", ...safePrecision(unstored) }, defs: [] };
     // M4-7: a value computed from stored floats keeps their marks. An assignment's right side is what ran; a
     // self-reference (B:=B*2) already overwrote B, and other stateful inputs cannot run again, so neither is moved.
     const asg = form.assignment;
@@ -1042,6 +1052,8 @@ export class EngineHost implements FactsHost {
       const numeric = { ...r, facts: { ...r.facts, why } };
       return { result: { ok: true, text: numeric.display, latex: numberLatex(numeric.display), timedOut: false, engineMs, numeric, facts: numeric.facts }, defs: [] };
     }
+    const unstored = this.unstored(input);
+    if (unstored) return fail(unstored, "builtInName");
     // An == or ≠ test on a float side: decided by its own digits, as in Home (R18f2).
     const inexactTest = test && this.giac.eval(EQ_INEXACT_FLAG) === "1";
     const decided = inexactTest && !single ? decideFloatTest(this.giac, exactInput, digitsSet) : null;

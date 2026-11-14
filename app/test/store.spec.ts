@@ -90,6 +90,19 @@ test("one of N62's own names typed in the sheet is refused: 7 ▶ sigfig says wh
   expect(await names(page)).toEqual([]); // nothing reached the engine: sigfig:=7 would replace our definition
 });
 
+test("G354: one of Giac's own names typed in the sheet is refused: 5 ▶ mean is a refusal row, not Giac's list, and stores nothing", async ({ page }) => {
+  await tap(page, ["d5", "shift", "emark"]);
+  await page.evaluate(() => window.n62.entry.focus()); // the field keeps focus while a sheet is open (hardware letters)
+  await page.keyboard.type("mean");
+  await expect(store(page).getByTestId("sheet-filter")).toHaveText("mean");
+  await tap(page, ["enter"]);
+  const refused = page.locator('[data-status="error"]');
+  await expect(refused).toHaveCount(1);
+  await expect(refused.last()).toContainText("mean is a built-in name");
+  await expect(refused.last()).not.toContainText("reserved word");
+  expect(await names(page)).toEqual([]);
+});
+
 test("R281f1: a key that types no name after typed letters keeps them: 7 ▶ x, Shift + ␣, 0, Enter stores x_0 as before the sheet", async ({ page }) => {
   await tap(page, ["d7", "shift", "emark", "x"]);
   await expect(store(page).getByTestId("sheet-filter")).toHaveText("x");
