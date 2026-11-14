@@ -1,0 +1,415 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The uncertainty sheet</title>
+<style>
+/* R220 (mh-C1, mh-C2): the picture the sheet's package is cut from. Nothing here is built and nothing loads from outside
+   this file: system fonts, no network. The phones use the N62 family's tokens (app/src/style.css, the n62 dark and light
+   blocks) and are drawn 1:1 in CSS px at 360 px wide (the narrow size of the e2e tests). The rows follow G272's rules
+   (docs/shifts/packages/G272.md): shares to 0.1 %, half away from zero, never adjusted; exact 0 is 0; "< 0.1 %" below
+   0.05. Every number on the page is "derived" (decimal arithmetic on the inputs shown, GUM 5.1.2 with its second-order
+   note, as app/src/units/evaluate.ts computes σ); the constants are CODATA 2022 as the Find index holds them. Layout
+   sizes (row heights, the sheet's height) are "drawn": a design value, not measured. */
+:root { --page: #f4f5f7; --ink: #1a1d22; --dim: #5b6575; --rule: #b9c0cc; --card: #ffffff; --ok: #1f6f54; color-scheme: light dark; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page: #14161a; --ink: #e8ebef; --dim: #98a2b3; --rule: #3a4250; --card: #1d2026; --ok: #5fc9a0; }
+}
+* { box-sizing: border-box; }
+body { margin: 0 auto; padding: 16px; background: var(--page); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; max-width: 1500px; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+h2 { font-size: 1.2rem; margin: 36px 0 6px; padding-top: 8px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.02rem; margin: 0 0 6px; }
+p, li { max-width: 88ch; }
+.lead { color: var(--dim); }
+.top { position: sticky; top: 0; z-index: 5; background: var(--page); padding: 8px 0; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; border-bottom: 1px solid var(--rule); }
+.top button { font: inherit; font-size: 13px; padding: 2px 10px; border-radius: 6px; border: 1px solid var(--rule); background: var(--card); color: var(--ink); cursor: pointer; }
+.top button[aria-pressed="true"] { background: var(--ok); color: #fff; border-color: var(--ok); }
+.top a { font-size: 13px; color: var(--ink); text-decoration: none; padding: 1px 6px; border-radius: 4px; background: var(--card); border: 1px solid var(--rule); }
+.cards { display: flex; flex-wrap: wrap; gap: 28px 32px; align-items: flex-start; }
+.card { flex: 0 0 auto; max-width: 100%; }
+.cap { font-size: 12.5px; margin: 6px 0 0; max-width: 360px; color: var(--dim); }
+.cap b { color: var(--ink); font-weight: 650; }
+.vs { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.pick { border-left: 4px solid var(--ok); padding: 6px 12px; background: var(--card); max-width: 100ch; }
+.tablewrap { overflow-x: auto; max-width: 100%; }
+table.words { border-collapse: collapse; font-size: 13px; }
+table.words th, table.words td { border: 1px solid var(--rule); padding: 3px 8px; text-align: left; vertical-align: top; }
+.pair { display: flex; flex-wrap: wrap; gap: 12px; }
+body[data-show="dark"] .light, body[data-show="light"] .dark { display: none !important; }
+
+/* ---- the phone and the sheet, in the N62 family (app/src/style.css) ---- */
+.ph { width: 360px; background: var(--bg); color: var(--text); font: 14px/1.3 system-ui, sans-serif; outline: 1px solid var(--rule); position: relative; overflow: hidden; }
+.ph.dark { --bg: #092726; --panel: #0e2f2e; --line: #335b59; --key-num: #194241; --key-fn: #123736; --key-enter: #529997; --text: #ebf6f6; --text-dead: #749392; --muted: #abccca; --shift: #ffa800; --chip-bg: #123736; --approx: #6ae5e2; --warn: #f3cb53; --pick: #134948; --focus: #529997; --share: #529997; --share-neg: #f3cb53; color-scheme: dark; }
+.ph.light { --bg: #cae6e5; --panel: #e0f3f2; --line: #88adab; --key-num: #eefaf9; --key-fn: #d7efee; --key-enter: #529997; --text: #062424; --text-dead: #587271; --muted: #314e4d; --shift: #5b2400; --chip-bg: #d7efee; --approx: #005b5a; --warn: #725400; --pick: #a9d9d8; --focus: #368281; --share: #368281; --share-neg: #725400; color-scheme: light; }
+.ph .status { height: 28px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.status .tile { width: 30px; height: 22px; border-radius: 6px; background: #529997; color: #000; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.status .nm { font-weight: 700; }
+.status .grow { flex: 1; }
+.status .chip { color: var(--muted); }
+/* the sheet: over the keypad's maths rows, anchored at the bottom, the top cluster left uncovered (docs/05 3.1) */
+.sheet { background: var(--panel); color: var(--text); border-top: 1px solid var(--line); border-radius: 12px 12px 0 0; }
+.sheet .title { height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 12px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.sheet .title b { font-weight: 650; }
+.sheet .title .of { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet .title .x { margin-left: auto; width: 44px; height: 36px; display: grid; place-items: center; color: var(--muted); font-size: 18px; }
+.head { padding: 10px 12px 8px; border-bottom: 1px solid var(--line); }
+.head .short { font-size: 26px; line-height: 34px; text-align: right; white-space: nowrap; }
+.head .short em { font-style: normal; color: var(--approx); font-size: 18px; margin-right: 6px; }
+.head .short small { font-size: 15px; color: var(--muted); margin-left: 6px; }
+.head .short .w { color: var(--warn); font-size: 18px; margin-left: 4px; }
+.head dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; margin: 6px 0 0; font-size: 13.5px; }
+.head dt { color: var(--muted); }
+.head dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.head .why { color: var(--warn); font-size: 12.5px; margin-top: 4px; }
+.rows { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.rows th { font-weight: 400; font-size: 12px; color: var(--muted); text-align: left; padding: 6px 4px 2px; }
+.rows th:first-child, .rows td:first-child { padding-left: 12px; }
+.rows th:last-child, .rows td:last-child { padding-right: 12px; text-align: right; }
+.rows th.n, .rows td.n { text-align: right; white-space: nowrap; }
+.rows td { padding: 6px 4px 4px; vertical-align: top; height: 36px; }
+.rows tr.r td { border-top: 1px solid var(--line); }
+.rows tr.sel td { background: var(--pick); }
+.rows tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--focus); }
+.rows .i { color: var(--text-dead); font-size: 11px; margin-right: 6px; }
+.rows .sub { display: block; color: var(--muted); font-size: 12px; }
+.rows .note td { height: auto; padding-top: 0; padding-bottom: 6px; color: var(--warn); font-size: 12px; text-align: left !important; }
+.rows .second td:first-child { color: var(--muted); }
+.rows .meter { height: 3px; margin-top: 3px; background: color-mix(in srgb, var(--line) 60%, transparent); position: relative; }
+.rows .meter i { position: absolute; top: 0; bottom: 0; left: 0; background: var(--share); }
+.rows .meter i.over { background: repeating-linear-gradient(90deg, var(--share) 0 6px, var(--warn) 6px 8px); }
+.rows .meter i.neg { left: auto; right: 0; background: var(--share-neg); }
+.lines { padding: 6px 12px 10px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); }
+.lines p { margin: 2px 0; }
+.lines .second-line { color: var(--text); }
+.none { padding: 12px; font-size: 13.5px; color: var(--muted); }
+.keys { height: 14px; }
+/* the phones of section 1: history, entry line, keypad (unlabelled) */
+.hist { padding: 0 12px; display: flex; flex-direction: column; justify-content: flex-end; }
+.it { margin-top: 10px; padding: 0 8px; margin-inline: -8px; border-radius: 8px; }
+.it.picked { background: var(--pick); box-shadow: inset 3px 0 0 var(--focus); }
+.it .in { color: var(--muted); font-size: 14px; }
+.it .out { text-align: right; font-size: 24px; line-height: 32px; white-space: nowrap; }
+.it .out em { font-style: normal; color: var(--approx); font-size: 17px; margin-right: 6px; }
+.it .out .mu { color: var(--text-dead); }
+.it .sig { text-align: right; font-size: 12.5px; color: var(--muted); padding-bottom: 6px; }
+.tapme { outline: 2px dashed var(--shift); outline-offset: 2px; border-radius: 4px; }
+.entry { height: 60px; border-top: 1px solid var(--line); margin-top: 8px; }
+.rowbar { height: 52px; display: flex; gap: 6px; padding: 6px 8px; }
+.rowbar div { flex: 0 0 96px; border-radius: 8px; border: 1px solid var(--line); display: grid; place-items: center; font-size: 12.5px; }
+.cl { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 4px; background: var(--panel); border-top: 1px solid var(--line); }
+.cl div { height: 32px; border-radius: 8px; background: var(--key-fn); }
+.uv { padding: 8px 12px; }
+.uv .formula { font-size: 20px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.uv .reading { color: var(--muted); font-size: 12.5px; padding: 4px 0; }
+.uv .res { text-align: right; font-size: 24px; line-height: 32px; white-space: nowrap; }
+.uv .res em { font-style: normal; color: var(--approx); font-size: 17px; margin-right: 6px; }
+.uv .res small { font-size: 15px; color: var(--muted); margin-left: 6px; }
+.uv .subl { text-align: right; font-size: 12.5px; color: var(--muted); }
+.uv .alts { display: flex; gap: 6px; padding-top: 6px; }
+.uv .alts span { border: 1px solid var(--line); border-radius: 14px; padding: 2px 10px; font-size: 12.5px; }
+</style>
+</head>
+<body data-show="dark">
+<h1>The uncertainty sheet: the budget, U, relative σ and the short form</h1>
+<p class="lead">2026-11-14, package R220 (mh-C1, mh-C2; <a href="../must-have.md">must-have.md</a> decisions 1 and 2). Nothing here is built. One sheet that says, for a result with σ, its short form, its standard uncertainty (σ), U = 2σ with k = 2, its relative σ, and each input's share of σ². The rows follow G272's rules (<a href="../shifts/packages/G272.md">the model's package</a>; once it merges its file goes). Every number is <em>derived</em> from the inputs shown (GUM 5.1.2 with its second-order note, the way <code>app/src/units/evaluate.ts</code> computes σ); sizes are <em>drawn</em>. Phones at 360 px wide, in the N62 family.</p>
+
+<div class="top" id="top">
+  <button type="button" data-show="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-show="light" aria-pressed="false">Light</button>
+  <button type="button" data-show="both" aria-pressed="false">Both</button>
+  <a href="#opens">1 Where it opens</a><a href="#variants">2 A or B</a><a href="#states">3 The states</a><a href="#words">4 Words</a><a href="#pick">The pick</a>
+</div>
+
+<!-- ================================================================== 1 -->
+<h2 id="opens">1 · Where it opens</h2>
+<p>From a σ line that is already on the screen; no new key (docs/03 rule 8). <strong>Home:</strong> a picked row whose σ line shows (Settings › Numbers › Uncertainty: σ on tap, R40); a tap on that σ line opens the sheet. <strong>The unit view:</strong> a tap on the result's σ line. The dashed orange outline marks the tap target (≥ 44 px high with its padding, drawn). The sheet rises over the keypad's maths rows like every pick sheet (docs/05 3.1); the top cluster stays uncovered, Esc or a tap on a cluster key closes it. Its title is the result it explains, with its mark.</p>
+<div class="cards">
+  <div class="card" data-from="home">
+    <h3>Home: a picked row's σ line</h3>
+    <div class="pair">
+      <div class="ph dark" role="img" aria-label="Home, a picked row with its σ line, dark">
+        <div class="status"><span class="tile">N</span><span class="nm">Home</span><span class="grow"></span><span class="chip">RAD</span><span class="chip">STD 12</span><span class="chip">☰</span></div>
+        <div class="hist" style="height:300px">
+          <div class="it"><div class="in">2·π·50</div><div class="out"><em>≈</em>314.159265359</div></div>
+          <div class="it picked"><div class="in">√(μ₀ ÷ ε₀) × G</div><div class="out"><em>≈</em>2.51441<span class="mu">113081</span>ᴇ−8</div><div class="sig"><span class="tapme">σ = 5.7ᴇ−13 · U = 2σ = 1.1ᴇ−12 (k = 2)</span></div></div>
+        </div>
+        <div class="rowbar"><div>Store ▶</div><div>Copy as ›</div></div>
+        <div class="cl"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <div class="sheet" style="height:120px"><div class="title"><b>Uncertainty</b><span class="of">≈ 2.51441ᴇ−8</span><span class="x">×</span></div><div class="none">the sheet (section 3, <code>leaf</code>) over the maths rows</div></div>
+      </div>
+      <div class="ph light" role="img" aria-label="Home, a picked row with its σ line, light">
+        <div class="status"><span class="tile">N</span><span class="nm">Home</span><span class="grow"></span><span class="chip">RAD</span><span class="chip">STD 12</span><span class="chip">☰</span></div>
+        <div class="hist" style="height:300px">
+          <div class="it"><div class="in">2·π·50</div><div class="out"><em>≈</em>314.159265359</div></div>
+          <div class="it picked"><div class="in">√(μ₀ ÷ ε₀) × G</div><div class="out"><em>≈</em>2.51441<span class="mu">113081</span>ᴇ−8</div><div class="sig"><span class="tapme">σ = 5.7ᴇ−13 · U = 2σ = 1.1ᴇ−12 (k = 2)</span></div></div>
+        </div>
+        <div class="rowbar"><div>Store ▶</div><div>Copy as ›</div></div>
+        <div class="cl"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <div class="sheet" style="height:120px"><div class="title"><b>Uncertainty</b><span class="of">≈ 2.51441ᴇ−8</span><span class="x">×</span></div><div class="none">the sheet (section 3, <code>leaf</code>) over the maths rows</div></div>
+      </div>
+    </div>
+    <p class="cap"><b>Home:</b> the σ line is today's (R40, <code>app/src/state/sigmaLine.ts</code>); only a picked row shows it, so the sheet is one tap after the pick. The digits past σ are muted as today.</p>
+  </div>
+  <div class="card" data-from="unit">
+    <h3>The unit view: the result's σ line</h3>
+    <div class="pair">
+      <div class="ph dark" role="img" aria-label="The unit view, a result with σ, dark">
+        <div class="status"><span class="tile">u</span><span class="nm">Units</span><span class="grow"></span><span class="chip">RAD</span><span class="chip">STD 12</span><span class="chip">☰</span></div>
+        <div class="uv" style="height:300px">
+          <div class="formula">(12.34 ± 0.05) m × (3.2 ± 0.1) m → <b>m²</b></div>
+          <div class="reading">square metres</div>
+          <div class="res" style="margin-top:40px"><em>≈</em>39.488 ± 1.2<small>m²</small></div>
+          <div class="subl"><span class="tapme">39.488 · σ 1.2</span></div>
+          <div class="alts"><span>cm²</span><span>ft²</span><span>ha</span><span>More…</span></div>
+        </div>
+        <div class="cl"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <div class="sheet" style="height:120px"><div class="title"><b>Uncertainty</b><span class="of">≈ 39.488 m²</span><span class="x">×</span></div><div class="none">the sheet (section 2, <code>t10</code>) over the maths rows</div></div>
+      </div>
+      <div class="ph light" role="img" aria-label="The unit view, a result with σ, light">
+        <div class="status"><span class="tile">u</span><span class="nm">Units</span><span class="grow"></span><span class="chip">RAD</span><span class="chip">STD 12</span><span class="chip">☰</span></div>
+        <div class="uv" style="height:300px">
+          <div class="formula">(12.34 ± 0.05) m × (3.2 ± 0.1) m → <b>m²</b></div>
+          <div class="reading">square metres</div>
+          <div class="res" style="margin-top:40px"><em>≈</em>39.488 ± 1.2<small>m²</small></div>
+          <div class="subl"><span class="tapme">39.488 · σ 1.2</span></div>
+          <div class="alts"><span>cm²</span><span>ft²</span><span>ha</span><span>More…</span></div>
+        </div>
+        <div class="cl"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+        <div class="sheet" style="height:120px"><div class="title"><b>Uncertainty</b><span class="of">≈ 39.488 m²</span><span class="x">×</span></div><div class="none">the sheet (section 2, <code>t10</code>) over the maths rows</div></div>
+      </div>
+    </div>
+    <p class="cap"><b>The unit view:</b> the value line and its σ sub-line are today's (R62, <code>app/src/units/panel.ts</code>); the slot keys and the chips stay as they are. The view's glyph and slot drawing are simplified here.</p>
+  </div>
+</div>
+<p><strong>Keys</strong> (docs/05 rule 1: every screen works with keys alone): inside the sheet ▲ ▼ move over the rows and Esc or ◀ closes it, as in every sheet. How the keys <em>open</em> it is open (see the pick): a tap is drawn, and no key is added.</p>
+
+<!-- ================================================================== 2 -->
+<h2 id="variants">2 · A or B: how a row reads when the second-order term matters</h2>
+<p><strong>A</strong> (recommended; the owner said yes to it for G272 on 2026-11-12, shown again here on the screen): every row is a share of σ², the second-order term is one signed row, and the rows add to the σ² the head shows. A row can read above 100 % when the second-order term is negative. <strong>B</strong>: the input rows are shares of the first-order sum a only, so they never pass 100 %; the second-order term is a separate line under them, and the rows no longer add to the σ² that is shown.</p>
+<div class="cards">
+  <div class="card"><h3><code>t10</code>: A beside B</h3><div class="vs">
+    <div>
+      <div class="ph dark" data-state="t10" data-variant="A">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">≈ 39.488 m²</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>39.5(12)<small>m²</small></div><dl><dt>standard uncertainty (σ)</dt><dd>1.2 m²</dd><dt>expanded</dt><dd>U = 2σ = 2.5 m² (k = 2)</dd><dt>relative σ</dt><dd>3.2 %</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>3.2 ± 0.1 m</td><td class="n">1.2 m²</td><td>98.3 %<div class="meter"><i style="width:98.3%"></i></div></td></tr>
+          <tr class="r"><td><span class="i">2</span>12.34 ± 0.05 m</td><td class="n">0.16 m²</td><td>1.7 %<div class="meter"><i style="width:1.7%"></i></div></td></tr>
+          <tr class="r second"><td><span class="i">3</span>second order</td><td class="n"></td><td>&lt; 0.1 %<div class="meter"></div></td></tr>
+        </table></div>
+      </div>
+      <div class="ph light" data-state="t10" data-variant="A">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">≈ 39.488 m²</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>39.5(12)<small>m²</small></div><dl><dt>standard uncertainty (σ)</dt><dd>1.2 m²</dd><dt>expanded</dt><dd>U = 2σ = 2.5 m² (k = 2)</dd><dt>relative σ</dt><dd>3.2 %</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>3.2 ± 0.1 m</td><td class="n">1.2 m²</td><td>98.3 %<div class="meter"><i style="width:98.3%"></i></div></td></tr>
+          <tr class="r"><td><span class="i">2</span>12.34 ± 0.05 m</td><td class="n">0.16 m²</td><td>1.7 %<div class="meter"><i style="width:1.7%"></i></div></td></tr>
+          <tr class="r second"><td><span class="i">3</span>second order</td><td class="n"></td><td>&lt; 0.1 %<div class="meter"></div></td></tr>
+        </table></div>
+      </div>
+      <p class="cap"><b>A (recommended).</b> σ² = 0.0256 + 1.522756 + 0.000025 = 1.548381 m⁴; rows 98.3 %, 1.7 %, second order &lt; 0.1 % (G272 row a).</p>
+    </div>
+    <div>
+      <div class="ph dark" data-state="t10" data-variant="B">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">≈ 39.488 m²</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>39.5(12)<small>m²</small></div><dl><dt>standard uncertainty (σ)</dt><dd>1.2 m²</dd><dt>expanded</dt><dd>U = 2σ = 2.5 m² (k = 2)</dd><dt>relative σ</dt><dd>3.2 %</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ² (first order)</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>3.2 ± 0.1 m</td><td class="n">1.2 m²</td><td>98.3 %<div class="meter"><i style="width:98.3%"></i></div></td></tr>
+          <tr class="r"><td><span class="i">2</span>12.34 ± 0.05 m</td><td class="n">0.16 m²</td><td>1.7 %<div class="meter"><i style="width:1.7%"></i></div></td></tr>
+        </table>
+        <div class="lines"><p class="second-line">Second order: + 0.000025 m⁴ on σ² (&lt; 0.1 %).</p></div></div>
+      </div>
+      <div class="ph light" data-state="t10" data-variant="B">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">≈ 39.488 m²</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>39.5(12)<small>m²</small></div><dl><dt>standard uncertainty (σ)</dt><dd>1.2 m²</dd><dt>expanded</dt><dd>U = 2σ = 2.5 m² (k = 2)</dd><dt>relative σ</dt><dd>3.2 %</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ² (first order)</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>3.2 ± 0.1 m</td><td class="n">1.2 m²</td><td>98.3 %<div class="meter"><i style="width:98.3%"></i></div></td></tr>
+          <tr class="r"><td><span class="i">2</span>12.34 ± 0.05 m</td><td class="n">0.16 m²</td><td>1.7 %<div class="meter"><i style="width:1.7%"></i></div></td></tr>
+        </table>
+        <div class="lines"><p class="second-line">Second order: + 0.000025 m⁴ on σ² (&lt; 0.1 %).</p></div></div>
+      </div>
+      <p class="cap"><b>B.</b> Rows over a = 1.548356 m⁴: 98.3 %, 1.7 % (the same to 0.1 % here); second order as a line under them.</p>
+    </div>
+  </div></div>
+
+  <div class="card"><h3><code>over100</code>: A beside B</h3><div class="vs">
+    <div>
+      <div class="ph dark" data-state="over100" data-variant="A">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">sin(0 ± 0.2) ≈ 0</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>0.00(20)</div><dl><dt>standard uncertainty (σ)</dt><dd>0.20</dd><dt>expanded</dt><dd>U = 2σ = 0.39 (k = 2)</dd><dt>relative σ</dt><dd>none: the value is 0</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>0 ± 0.2</td><td class="n">0.20</td><td>104.2 %<div class="meter"><i class="over" style="width:100%"></i></div></td></tr>
+          <tr class="r second"><td><span class="i">2</span>second order</td><td class="n"></td><td>−4.2 %<div class="meter"><i class="neg" style="width:4.2%"></i></div></td></tr>
+        </table>
+        <div class="lines"><p>A row can exceed 100 % when the second-order term is negative: it takes σ² below the first-order rows.</p></div></div>
+      </div>
+      <div class="ph light" data-state="over100" data-variant="A">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">sin(0 ± 0.2) ≈ 0</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>0.00(20)</div><dl><dt>standard uncertainty (σ)</dt><dd>0.20</dd><dt>expanded</dt><dd>U = 2σ = 0.39 (k = 2)</dd><dt>relative σ</dt><dd>none: the value is 0</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>0 ± 0.2</td><td class="n">0.20</td><td>104.2 %<div class="meter"><i class="over" style="width:100%"></i></div></td></tr>
+          <tr class="r second"><td><span class="i">2</span>second order</td><td class="n"></td><td>−4.2 %<div class="meter"><i class="neg" style="width:4.2%"></i></div></td></tr>
+        </table>
+        <div class="lines"><p>A row can exceed 100 % when the second-order term is negative: it takes σ² below the first-order rows.</p></div></div>
+      </div>
+      <p class="cap"><b>A (recommended).</b> σ² = 0.04 − 0.0016 = 0.0384, σ 0.196 → 0.20, no ⚠ (the second-order part is 4.2 %, under the 10 % that marks it); rows 104.2 %, −4.2 % (G272 row b). The bar of a row above 100 % ends in a stripe.</p>
+    </div>
+    <div>
+      <div class="ph dark" data-state="over100" data-variant="B">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">sin(0 ± 0.2) ≈ 0</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>0.00(20)</div><dl><dt>standard uncertainty (σ)</dt><dd>0.20</dd><dt>expanded</dt><dd>U = 2σ = 0.39 (k = 2)</dd><dt>relative σ</dt><dd>none: the value is 0</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ² (first order)</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>0 ± 0.2</td><td class="n">0.20</td><td>100.0 %<div class="meter"><i style="width:100%"></i></div></td></tr>
+        </table>
+        <div class="lines"><p class="second-line">Second order: − 0.0016 on σ², 4.2 % less than the first-order sum.</p></div></div>
+      </div>
+      <div class="ph light" data-state="over100" data-variant="B">
+        <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">sin(0 ± 0.2) ≈ 0</span><span class="x">×</span></div>
+        <div class="head"><div class="short"><em>≈</em>0.00(20)</div><dl><dt>standard uncertainty (σ)</dt><dd>0.20</dd><dt>expanded</dt><dd>U = 2σ = 0.39 (k = 2)</dd><dt>relative σ</dt><dd>none: the value is 0</dd></dl></div>
+        <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ² (first order)</th></tr>
+          <tr class="r sel"><td><span class="i">1</span>0 ± 0.2</td><td class="n">0.20</td><td>100.0 %<div class="meter"><i style="width:100%"></i></div></td></tr>
+        </table>
+        <div class="lines"><p class="second-line">Second order: − 0.0016 on σ², 4.2 % less than the first-order sum.</p></div></div>
+      </div>
+      <p class="cap"><b>B.</b> The row never passes 100 %, but 100 % of a = 0.04 is not the 0.0384 that σ is the root of; the line has to say so instead.</p>
+    </div>
+  </div></div>
+</div>
+
+<!-- ================================================================== 3 -->
+<h2 id="states">3 · The states (variant A)</h2>
+<p>Each block carries its <code>data-state</code> name. Row 1 is highlighted (▲ ▼ move it). An input row is the input as typed or the constant's name; its <strong>uᵢ</strong> is its part of σ in the result's unit (|∂f/∂xᵢ|·uᵢ, 2 significant digits); the second-order row has none. Rows are sorted by share, the second-order row last; a row whose model says <code>independent</code> carries a note in the warn colour.</p>
+<div class="cards">
+
+  <div class="card">
+    <div class="ph dark" data-state="jump">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">frac(2.95 ± 0.05) ≈ 0.95</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>0.950(50)<span class="w">⚠</span></div><dl><dt>standard uncertainty (σ)</dt><dd>0.050</dd><dt>expanded</dt><dd>U = 2σ = 0.10 (k = 2)</dd><dt>relative σ</dt><dd>5.3 %</dd></dl><div class="why">⚠ the interval reaches a jump</div></div>
+      <div class="lines"><p>No shares: 2.95 ± 2σ reaches the jump of frac at 3, where a derivative says nothing about the spread.</p></div></div>
+    </div>
+    <div class="ph light" data-state="jump">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">frac(2.95 ± 0.05) ≈ 0.95</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>0.950(50)<span class="w">⚠</span></div><dl><dt>standard uncertainty (σ)</dt><dd>0.050</dd><dt>expanded</dt><dd>U = 2σ = 0.10 (k = 2)</dd><dt>relative σ</dt><dd>5.3 %</dd></dl><div class="why">⚠ the interval reaches a jump</div></div>
+      <div class="lines"><p>No shares: 2.95 ± 2σ reaches the jump of frac at 3, where a derivative says nothing about the spread.</p></div></div>
+    </div>
+    <p class="cap"><b><code>jump</code></b>: a step function (G143). frac has slope 1 off its jumps, so first order gives σ 0.050 and ⚠; no table, the one line says why (G272 rule 1). The ⚠ line is the unit view's own (<code>units.why.jump</code>). A <code>singular</code> σ reads the same with its own line.</p>
+  </div>
+
+  <div class="card">
+    <div class="ph dark" data-state="firstOrderZero">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">(0 ± 0.1)² ≈ 0</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>0.000(14)<span class="w">⚠</span></div><dl><dt>standard uncertainty (σ)</dt><dd>0.014</dd><dt>expanded</dt><dd>U = 2σ = 0.028 (k = 2)</dd><dt>relative σ</dt><dd>none: the value is 0</dd></dl><div class="why">⚠ first order does not hold here</div></div>
+      <div class="lines"><p>No shares: the first-order part is 0, so all of σ² is the second-order term (shares would read 0 % and 100 %).</p></div></div>
+    </div>
+    <div class="ph light" data-state="firstOrderZero">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">(0 ± 0.1)² ≈ 0</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>0.000(14)<span class="w">⚠</span></div><dl><dt>standard uncertainty (σ)</dt><dd>0.014</dd><dt>expanded</dt><dd>U = 2σ = 0.028 (k = 2)</dd><dt>relative σ</dt><dd>none: the value is 0</dd></dl><div class="why">⚠ first order does not hold here</div></div>
+      <div class="lines"><p>No shares: the first-order part is 0, so all of σ² is the second-order term (shares would read 0 % and 100 %).</p></div></div>
+    </div>
+    <p class="cap"><b><code>firstOrderZero</code></b>: a = 0, b = ½·2²·0.1⁴ = 0.0002, σ = 0.0141 → 0.014 ⚠ (G272 row d).</p>
+  </div>
+
+  <div class="card">
+    <div class="ph dark" data-state="chip">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">A × (2.000 ± 0.005) m ≈ 78.976 m³</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>79.0(25)<small>m³</small></div><dl><dt>standard uncertainty (σ)</dt><dd>2.5 m³</dd><dt>expanded</dt><dd>U = 2σ = 5.0 m³ (k = 2)</dd><dt>relative σ</dt><dd>3.2 %</dd></dl></div>
+      <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+        <tr class="r sel"><td><span class="i">1</span>A <span class="sub">result chip, 39.488 ± 1.2 m²</span></td><td class="n">2.5 m³</td><td>99.4 %<div class="meter"><i style="width:99.4%"></i></div></td></tr>
+        <tr class="note sel"><td colspan="3">treated as independent; σ and shares may be off if it shares an input with another term.</td></tr>
+        <tr class="r"><td><span class="i">2</span>2.000 ± 0.005 m</td><td class="n">0.20 m³</td><td>0.6 %<div class="meter"><i style="width:0.6%"></i></div></td></tr>
+        <tr class="r second"><td><span class="i">3</span>second order</td><td class="n"></td><td>&lt; 0.1 %<div class="meter"></div></td></tr>
+      </table></div>
+    </div>
+    <div class="ph light" data-state="chip">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">A × (2.000 ± 0.005) m ≈ 78.976 m³</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>79.0(25)<small>m³</small></div><dl><dt>standard uncertainty (σ)</dt><dd>2.5 m³</dd><dt>expanded</dt><dd>U = 2σ = 5.0 m³ (k = 2)</dd><dt>relative σ</dt><dd>3.2 %</dd></dl></div>
+      <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+        <tr class="r sel"><td><span class="i">1</span>A <span class="sub">result chip, 39.488 ± 1.2 m²</span></td><td class="n">2.5 m³</td><td>99.4 %<div class="meter"><i style="width:99.4%"></i></div></td></tr>
+        <tr class="note sel"><td colspan="3">treated as independent; σ and shares may be off if it shares an input with another term.</td></tr>
+        <tr class="r"><td><span class="i">2</span>2.000 ± 0.005 m</td><td class="n">0.20 m³</td><td>0.6 %<div class="meter"><i style="width:0.6%"></i></div></td></tr>
+        <tr class="r second"><td><span class="i">3</span>second order</td><td class="n"></td><td>&lt; 0.1 %<div class="meter"></div></td></tr>
+      </table></div>
+    </div>
+    <p class="cap"><b><code>chip</code></b>: A is <code>t10</code>'s result as an R61 chip (key <code>pasr_…</code>, G272 rule 6). The note under its row is word for word the package's; it shows only on a row the model marks <code>independent</code>.</p>
+  </div>
+
+  <div class="card">
+    <div class="ph dark" data-state="leaf">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">√(μ₀ ÷ ε₀) × G ≈ 2.51441ᴇ−8</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>2.51441(57)ᴇ−8</div><dl><dt>standard uncertainty (σ)</dt><dd>5.7ᴇ−13</dd><dt>expanded</dt><dd>U = 2σ = 1.1ᴇ−12 (k = 2)</dd><dt>relative σ</dt><dd>0.0022 %</dd></dl></div>
+      <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+        <tr class="r sel"><td><span class="i">1</span>G <span class="sub">Newtonian constant of gravitation</span></td><td class="n">5.7ᴇ−13</td><td>100.0 %<div class="meter"><i style="width:100%"></i></div></td></tr>
+        <tr class="note sel"><td colspan="3">no basis: treated as independent of the other constants.</td></tr>
+        <tr class="r"><td><span class="i">2</span>α <span class="sub">fine-structure constant, via μ₀ and ε₀</span></td><td class="n">3.8ᴇ−18</td><td>&lt; 0.1 %<div class="meter"></div></td></tr>
+      </table></div>
+    </div>
+    <div class="ph light" data-state="leaf">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">√(μ₀ ÷ ε₀) × G ≈ 2.51441ᴇ−8</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>2.51441(57)ᴇ−8</div><dl><dt>standard uncertainty (σ)</dt><dd>5.7ᴇ−13</dd><dt>expanded</dt><dd>U = 2σ = 1.1ᴇ−12 (k = 2)</dd><dt>relative σ</dt><dd>0.0022 %</dd></dl></div>
+      <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+        <tr class="r sel"><td><span class="i">1</span>G <span class="sub">Newtonian constant of gravitation</span></td><td class="n">5.7ᴇ−13</td><td>100.0 %<div class="meter"><i style="width:100%"></i></div></td></tr>
+        <tr class="note sel"><td colspan="3">no basis: treated as independent of the other constants.</td></tr>
+        <tr class="r"><td><span class="i">2</span>α <span class="sub">fine-structure constant, via μ₀ and ε₀</span></td><td class="n">3.8ᴇ−18</td><td>&lt; 0.1 %<div class="meter"></div></td></tr>
+      </table></div>
+    </div>
+    <p class="cap"><b><code>leaf</code></b>, on Home (first order, so no second-order row): μ₀ and ε₀ share the leaf α (G80, G81), so the sheet names the leaf once, not μ₀ and ε₀ as two rows. G stands for a constant with no basis (which constants have none is not verified: the index is build output). The input exists to put both kinds of row on one sheet. Values: CODATA 2022 (Z₀ 376.730313412, G 6.67430(15)ᴇ−11, α's relative σ 1.5ᴇ−10).</p>
+  </div>
+
+  <div class="card">
+    <div class="ph dark" data-state="rounded">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">(1 ± 0.1) m + (2 ± 0.1) m + (3 ± 0.1) m ≈ 6 m</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>6.00(17)<small>m</small></div><dl><dt>standard uncertainty (σ)</dt><dd>0.17 m</dd><dt>expanded</dt><dd>U = 2σ = 0.35 m (k = 2)</dd><dt>relative σ</dt><dd>2.9 %</dd></dl></div>
+      <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+        <tr class="r sel"><td><span class="i">1</span>1 ± 0.1 m</td><td class="n">0.10 m</td><td>33.3 %<div class="meter"><i style="width:33.3%"></i></div></td></tr>
+        <tr class="r"><td><span class="i">2</span>2 ± 0.1 m</td><td class="n">0.10 m</td><td>33.3 %<div class="meter"><i style="width:33.3%"></i></div></td></tr>
+        <tr class="r"><td><span class="i">3</span>3 ± 0.1 m</td><td class="n">0.10 m</td><td>33.3 %<div class="meter"><i style="width:33.3%"></i></div></td></tr>
+      </table>
+      <div class="lines"><p>rounded; not adjusted (the shares add to 99.9 %)</p></div></div>
+    </div>
+    <div class="ph light" data-state="rounded">
+      <div class="sheet"><div class="title"><b>Uncertainty</b><span class="of">(1 ± 0.1) m + (2 ± 0.1) m + (3 ± 0.1) m ≈ 6 m</span><span class="x">×</span></div>
+      <div class="head"><div class="short"><em>≈</em>6.00(17)<small>m</small></div><dl><dt>standard uncertainty (σ)</dt><dd>0.17 m</dd><dt>expanded</dt><dd>U = 2σ = 0.35 m (k = 2)</dd><dt>relative σ</dt><dd>2.9 %</dd></dl></div>
+      <table class="rows"><tr><th>Input</th><th class="n">uᵢ</th><th>% of σ²</th></tr>
+        <tr class="r sel"><td><span class="i">1</span>1 ± 0.1 m</td><td class="n">0.10 m</td><td>33.3 %<div class="meter"><i style="width:33.3%"></i></div></td></tr>
+        <tr class="r"><td><span class="i">2</span>2 ± 0.1 m</td><td class="n">0.10 m</td><td>33.3 %<div class="meter"><i style="width:33.3%"></i></div></td></tr>
+        <tr class="r"><td><span class="i">3</span>3 ± 0.1 m</td><td class="n">0.10 m</td><td>33.3 %<div class="meter"><i style="width:33.3%"></i></div></td></tr>
+      </table>
+      <div class="lines"><p>rounded; not adjusted (the shares add to 99.9 %)</p></div></div>
+    </div>
+    <p class="cap"><b><code>rounded</code></b>: a sum has no second-order term (b = 0, so no row). Three equal rows, 33.3 % each, the muted line (G272 rules 3 and 4, row m).</p>
+  </div>
+</div>
+<p><code>t10</code> and <code>over100</code> in variant A are in section 2.</p>
+
+<!-- ================================================================== 4 -->
+<h2 id="words">4 · Words</h2>
+<div class="tablewrap"><table class="words">
+  <tr><th>Where</th><th>Text</th><th>Why</th></tr>
+  <tr><td>σ's name</td><td>standard uncertainty (σ)</td><td>GUM 7.2.2's NOTE: the factor 1 is not written, it misreads (must-have decision 8).</td></tr>
+  <tr><td>U</td><td>U = 2σ = … (k = 2)</td><td>As the σ line on Home writes it today (<code>unc.sigma</code>).</td></tr>
+  <tr><td>Relative</td><td>relative σ 3.2 %; with a value of 0: none: the value is 0</td><td>σ ÷ |value|, 2 significant digits.</td></tr>
+  <tr><td>Short form</td><td>39.5(12): two digits in the brackets, always</td><td>must-have decision 2 (recommended: NIST's practice, as the ± line).</td></tr>
+  <tr><td>The column</td><td>% of σ² (B: % of σ² (first order))</td><td>A share of a variance, not of σ: shares of σ would not add.</td></tr>
+  <tr><td>Rounded</td><td>rounded; not adjusted (the shares add to …)</td><td>G272 rule 4.</td></tr>
+  <tr><td>A chip's row</td><td>treated as independent; σ and shares may be off if it shares an input with another term.</td><td>G272: no cross terms; the error goes either way.</td></tr>
+</table></div>
+<p>Never on the sheet: a probability, an interval's likelihood, or the factor 1 written out. The sheet states σ and U; what U means for a distribution is the user's to say.</p>
+
+<h2 id="pick">The pick</h2>
+<p class="pick"><strong>Needs the user (R220).</strong> <strong>1. The rows:</strong> A (recommended: the rows add to the σ² the head shows; the owner's yes of 2026-11-12 for G272 stands unless this page changes it) · B (first-order rows over a, never above 100 %, second order as a line). <strong>2. How keys open the sheet:</strong> a tap on the σ line is drawn; a key path is needed (docs/05 rule 1) and adds no key. Recommended: an Uncertainty item in the ☰ menu's title row beside ⚙, shown only on a row with σ, so the ten numbered items keep their numbers. Or: Enter on the picked row's σ line, once ▼ can move the pick onto it.</p>
+
+<script>
+const bar = document.getElementById('top');
+function show(mode) {
+  document.body.dataset.show = mode;
+  bar.querySelectorAll('button[data-show]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.show === mode)));
+  try { localStorage.setItem('uncsheet-theme', mode); } catch { /* private window */ }
+}
+bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && b.dataset.show) show(b.dataset.show); });
+try { const m = localStorage.getItem('uncsheet-theme'); if (m) show(m); } catch { /* no storage */ }
+</script>
+</body>
+</html>
