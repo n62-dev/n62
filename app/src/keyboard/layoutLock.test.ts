@@ -20,6 +20,7 @@ import { decimalFromRational } from "../engine/format.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { IndexItem } from "../find/types.ts";
 import { unitsMenu } from "../units/menu.ts";
+import { cellRows } from "../units/find.ts";
 import { statItems } from "../views/statSheet.ts";
 import type { Calc } from "../calc/port.ts";
 import { FakeCalc } from "../calc/fake.ts";
@@ -113,6 +114,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     "stat-linreg": stat("linreg", 3),
     "stat-stats1": stat("stats1", 6),
     "units-menu": ids(units),
+    "units-cell": ids(cellRows(() => {})),
   };
 }
 
@@ -180,6 +182,16 @@ describe("every numbered list is in the lock (R299)", () => {
     for (const f of Object.values(LIST_BUILDERS).flat()) expect(existsSync(join(src, f)), f).toBe(true);
     const open = new Set(openers());
     for (const f of Object.keys(UNPINNED_LISTS)) expect(open.has(f), f).toBe(true);
+  });
+  it("a registered file opens no more lists than it has sections (a second showMenu in a registered file is a list the lock does not hold)", () => {
+    // calls that open the same list again (App.svelte opens Mode from two places) count once
+    const SAME_LIST: Record<string, number> = { "App.svelte": 1 };
+    const sections = new Map<string, number>();
+    for (const [name, files] of Object.entries(LIST_BUILDERS)) for (const f of files) sections.set(f, (sections.get(f) ?? 0) + (KEYPAD.has(name) ? 0 : 1));
+    for (const f of sections.keys()) {
+      const calls = (readFileSync(join(src, f), "utf8").match(/\.showMenu\(/g) ?? []).length - (SAME_LIST[f] ?? 0);
+      expect(calls, `${f}: ${calls} showMenu calls, ${sections.get(f)} sections registered`).toBeLessThanOrEqual(sections.get(f) ?? 0);
+    }
   });
   it("the registry's sections are the lists the test builds and the lock pins, no more and no fewer", () => {
     const lists = (o: object): string[] => Object.keys(o).filter((k) => !KEYPAD.has(k)).sort();

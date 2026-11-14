@@ -15,7 +15,7 @@
 # settings (Settings' sections: Your keys and Data are in the shipped app, so all seven are pinned), apps, base (Shift + −),
 # matrix (Shift + 4; New is row 9), function-symb / function-plot / function-num and solve-symb / solve-num (each app view's ☰, Plot
 # with an answer and Solve with an unknown selected, so their last rows are there), stat-linreg and stat-stats1 (R184's sheets),
-# units-menu (the unit Find's category rows): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
+# units-menu (the unit Find's category rows) and units-cell (its "put on a cell" sheet, U1 to U6): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
 # app/src/keyboard/layoutLock.ts LIST_BUILDERS names the files that build each list; a file that opens a new one must be there.
 schema: 1
 layers:
@@ -316,5 +316,12 @@ units-menu:
   "23": "ucat:Data"
   "24": "ucat:const"
   "25": "ucat:tools"
+units-cell:
+  "1": "u1"
+  "2": "u2"
+  "3": "u3"
+  "4": "u4"
+  "5": "u5"
+  "6": "u6"
 
 moves: []

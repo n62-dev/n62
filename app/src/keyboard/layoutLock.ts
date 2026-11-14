@@ -66,7 +66,8 @@ export const LIST_BUILDERS: Readonly<Record<string, readonly string[]>> = {
   "solve-num": ["apps/solve/app.svelte.ts"],
   "stat-linreg": ["views/statSheet.ts"],
   "stat-stats1": ["views/statSheet.ts"],
-  "units-menu": ["units/menu.ts", "units/find.ts"],
+  "units-menu": ["units/menu.ts"],
+  "units-cell": ["units/find.ts"],
 };
 
 /** The other files that open a sheet (`showMenu`) or an app's ☰ (`menu(view`), each with why its rows have no fixed digit. */
