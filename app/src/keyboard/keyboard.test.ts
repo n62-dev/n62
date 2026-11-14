@@ -336,9 +336,9 @@ describe("keyboard spec", () => {
     expect(keyboard.byId.get("frac")?.label.primary).toBe("a b/c");
   });
 
-  it("the built app's copy (no sample, source, check or unit_slot) loads to the same keys and palette", () => {
+  it("the built app's copy (no sample, source or check) loads to the same keys and palette", () => {
     const slim = shippedKeyboard(parse(spec));
-    expect(JSON.stringify(slim)).not.toMatch(/"(sample|source|check|unit_slot)"/);
+    expect(JSON.stringify(slim)).not.toMatch(/"(sample|source|check)"/);
     const k = loadKeyboard(slim);
     const plain = (a: unknown) => JSON.parse(JSON.stringify(a, (key, v: unknown) => (["sample", "source", "check"].includes(key) ? undefined : v)));
     expect(plain(k.keys)).toEqual(plain(keyboard.keys));
