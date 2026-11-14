@@ -18,7 +18,7 @@ import type { GiacValue } from "./bridge.ts";
 import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
-import { doubleElements } from "./doubleElements.ts";
+import { climbedFacts, doubleElements } from "./doubleElements.ts";
 import { giacRefusesOurs, icdfAtEnd, icdfCalls, icdfEndCalls } from "./icdf.ts";
 import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquare.ts";
 import { POLY_AT, POLY_AT_ANY_DEPTH, unaskedPoly } from "./polyvec.ts";
@@ -535,8 +535,10 @@ export function homeEval(
   let undecided = once && !inexactTest && onceUndecided(giac, form, exactBody, exactOut);
   // G57: a decision the precisions do not agree on, or a tie Giac cannot prove, is refused (any value would be a guess).
   let refusedCut: boolean | "branch" = false;
+  let decidedBelow = false; // G358: decided with the value not asked at P (`at`), so not from its climb: ⚠ when it climbs
   if (!once && !inexactTest && !isError(exactOut) && !hasFloat(exactOut) && restsOnDecision(exactBody, "typed", exactOut, notBuiltin(giac), nonRealArg(giac, P))) {
-    const d = decideTwice(giac, exactBody, exactOut, s.digits, s.digits);
+    decidedBelow = value.at?.[String(P)] === undefined;
+    const d = decideTwice(giac, exactBody, exactOut, s.digits, s.digits, value.at?.[String(P)] === null);
     if ("undecided" in d) undecided = true;
     if ("undecided" in d && d.refused) refusedCut = d.branch ? "branch" : true;
     if (!("undecided" in d) && d.from !== undefined) {
@@ -777,13 +779,18 @@ export function homeEval(
   const checked = new Map<number, boolean>();
   const underflowAt = once ? undefined : (k: number): boolean => checked.set(k, !late() && underflow(giac, [elementAt(ans, shape, k)], valuePrecision(s.digits))).get(k)!;
   let facts = exactFacts(giac, ans, shape, s.digits, s.maxExactDigits, exactOut, value, underflowAt);
+  // G358 (G123): MPFR's infinity at P is an overflow only when it is infinite at every level of the check's climb
+  const climbed = facts || once || shape.kind !== "scalar" || late() ? null : climbedFacts(giac, ans, exactOut, value, s.digits, s.maxExactDigits, late, underflowAt);
+  if (climbed === "timeout" || climbed === "overflow") return climbed === "overflow" ? refuse(climbed, "exact") : { ...failed(enEngine["error.timeout"], "exact"), error: "timeout" };
+  if (Array.isArray(climbed) && decidedBelow) undecided = true;
+  facts ??= climbed;
   if (!facts) {
     // G180 (F159): a number past 2 kB read at only one of P, P+20 ran out of steps (api.cc giac_value): as on a time-out
     if (!once && value.cut && mayBeNumbers(exactOut) && [P, P + 20].filter((p) => value.at?.[String(p)]).length === 1) return viaFloat("float-timeout");
     // G172 (F73): the double fallback, element by element in a list or matrix (doubleElements.ts).
     const d = doubleElements(giac, { name: ans, input: body, exactOut, value, shape, digits: s.digits, maxExactDigits: s.maxExactDigits, once, late });
     if (d === null) return symbolic();
-    if (typeof d === "string") return refuse(d, "exact");
+    if (typeof d === "string") return d === "timeout" ? { ...failed(enEngine["error.timeout"], "exact"), error: "timeout" } : refuse(d, "exact");
     const b = build(d, shape, s.digits, "exact", true);
     store();
     return fromBuilt(b, "exact", true, exactOut, b.decimal, { once: true });
