@@ -10,7 +10,7 @@ import { makeIndex } from "../find/testIndex.ts";
 import type { IndexItem } from "../find/types.ts";
 import { FUNCS } from "../input/parseTables.ts";
 import { keyboard, type ActionBody } from "../keyboard/keyboard.ts";
-import { controlKey, hardwareKey, keypadKeyOf, undoKey, type HwTarget } from "./hwkeys.ts";
+import { controlKey, hardwareKey, keypadKeyOf, undoKey, unitViewKey, type HwTarget } from "./hwkeys.ts";
 
 // R198: the Find index arrives when the test says so (the app fetches it, finder.ts loadIndex)
 const index = vi.hoisted(() => {
@@ -271,7 +271,37 @@ describe("R131: % and the desktop keys", () => {
   it("AltGr's characters count as typed (Windows: Ctrl + Alt with AltGraph)", () => {
     expect(run(ev("{", "Digit7", { ctrl: true, alt: true, altGraph: true })).got).toEqual(["d8:shift"]);
   });
-});
+
+  // R303 (fh-2): the unit view's capture listener (units/open.ts) stopped every chord and letter
+  describe("R303: unitViewKey, the unit view's hardware keys", () => {
+    /** What ran, and whether the view stopped each event (left to the browser and MathLive when not). */
+    const view = (sheet: boolean, ...evs: KeyboardEvent[]): { got: string[]; stopped: boolean[] } => {
+      const { t, got } = target();
+      const stopped = evs.map((e) => {
+        let stop = false;
+        unitViewKey({ ...(e as object), getModifierState: e.getModifierState, preventDefault: () => void (stop = true), stopPropagation: () => {} } as unknown as KeyboardEvent, t, sheet, () => void got.push("dead"));
+        return stop;
+      });
+      return { got, stopped };
+    };
+    it("Alt+F presses Math (Find on units), Alt+U the units key, Ctrl+Z the Undo key; the fold (Alt+K) and an unnamed chord are dead", () => {
+      expect(view(false, ev("f", "KeyF", { alt: true }), ev("u", "KeyU", { alt: true }), ev("z", "KeyZ", { ctrl: true })).got).toEqual(["math:primary", "tmpl:shift", "undo:primary"]);
+      expect(view(false, ev("k", "KeyK", { alt: true }), ev("j", "KeyJ", { ctrl: true })).got).toEqual(["dead", "dead"]);
+    });
+    it("a letter types into an open sheet's query (onLetter); with no sheet it does nothing (P14)", () => {
+      expect(view(true, ev("k"), ev("M", "KeyM", { shift: true })).got).toEqual(["letter k", "letter M"]);
+      expect(view(false, ev("k")).got).toEqual(["dead"]);
+    });
+    it("a digit, ⌫, the arrows, Enter and Esc take the keypad's path, with a sheet or without", () => {
+      for (const sheet of [false, true])
+        expect(view(sheet, ev("4"), ev("Backspace"), ev("ArrowLeft"), ev("Enter"), ev("Escape")).got).toEqual(["d4:primary", "bksp:primary", "left:primary", "enter:primary", "esc:primary"]);
+    });
+    it("Ctrl+C, Ctrl+A, Tab and a bare modifier are left alone; a typed { or | is dead (the entry line's only)", () => {
+      const r = view(false, ev("c", "KeyC", { ctrl: true }), ev("a", "KeyA", { ctrl: true }), ev("Tab"), ev("Shift"), ev("{"), ev("|"));
+      expect(r.stopped).toEqual([false, false, false, false, true, true]);
+      expect(r.got).toEqual(["dead", "dead"]);
+    });
+  });});
 
 // R198: a function name typed on a hardware keyboard, then `(`, becomes the function (the owner, 2026-11-12; it reverses
 // R31's "letters stay letters" for this path only). The line before the cursor is a fake field of one-character atoms.
