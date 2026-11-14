@@ -10,7 +10,8 @@
 //   tools/devlock.sh release HA24BZ2Y <name>
 // It clears our app's data first (pm clear) and removes its test folder at the end. Prints one "A65 ..." line per step.
 // A137: write() replaces a file whole. With the test build's seams (failAfter: an I/O error after n bytes; stallAfter: a
-// 20 s pause after n bytes; stallAt: a 20 s pause after the check or between the two renames) and kills (am force-stop),
+// 20 s pause after n bytes; stallAt: a 20 s pause after the check or between the two renames; failAt "rename": an I/O
+// error in place of the second rename, the old file then put back whole) and kills (am force-stop),
 // also at a sweep of times into a 2 MB write, the file under its real name is the old text or the new one, never a cut
 // file; between the renames it is missing, read() then gives the new text and the next write puts it back; list() never
 // shows the staged names (.n62-new~, .n62-old~) and the next write removes any a kill left.
@@ -241,6 +242,17 @@ async function a137(start: Page): Promise<void> {
   expect.soft(afterFail).toBe(old);
   expect.soft(await call(page, "read", { name: "n62-keep.json" })).toEqual({ result: "ok", text: old });
   expect.soft(await strays(keep)).toEqual([]);
+
+  // step 4 (the staged new file renamed to the real name) fails after the old file went aside: the old file is put back
+  const failedRename = await call(page, "write", { name: "n62-keep.json", text: `{"new":"${"n".repeat(300)}"}`, failAt: "rename" })
+    .catch((e: Error) => ({ result: `rejected: ${e.message}` }));
+  const afterRename = await shellMd5("n62-keep.json");
+  const strayRename = await strays(keep);
+  log137(`failAt rename: write ${JSON.stringify(failedRename.result).slice(0, 80)}; the file is ${afterRename === md5(old) ? "old" : afterRename}; strays ${JSON.stringify(strayRename)}`);
+  expect.soft(String(failedRename.result)).toMatch(/^rejected: .*test seam/);
+  expect.soft(afterRename).toBe(md5(old));
+  expect.soft(await call(page, "read", { name: "n62-keep.json" })).toEqual({ result: "ok", text: old });
+  expect.soft(strayRename).toEqual([]);
 
   // 2 MB files; the app killed during a stalled write: in the bytes, after the check, between the two renames
   const bigOld = `{"x":"${"é∑abcdef".repeat(200_000)}"}`;

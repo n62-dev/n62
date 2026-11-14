@@ -152,8 +152,9 @@ public class N62FilesPlugin extends Plugin {
      * <li>the staged new file renamed to `name`;</li>
      * <li>the old file deleted.</li>
      * </ol>
-     * A kill or an error leaves under `name` the old file or the new one, never a cut file; between steps 3 and 4 (two
-     * renames, milliseconds) `name` is absent, the next write puts the new file there and read() reads it. list() never
+     * An error in step 3 or 4 puts the old file back under `name` and deletes the staged new one (undoRenames). A kill or
+     * an error leaves under `name` the old file or the new one, never a cut file; between steps 3 and 4 (two renames,
+     * milliseconds) a kill leaves `name` absent, the next write puts the new file there and read() reads it. list() never
      * shows a staged name.
      */
     @PluginMethod
@@ -191,9 +192,16 @@ public class N62FilesPlugin extends Plugin {
                 throw e;
             }
             stallAt(call, "checked");
-            Uri aside = doc != null ? renameTo(doc, name, STAGED_OLD + name) : null;
-            stallAt(call, "aside");
-            renameTo(fresh, STAGED_NEW + name, name);
+            Uri aside = null;
+            try {
+                if (doc != null) aside = renameTo(doc, name, STAGED_OLD + name);
+                stallAt(call, "aside");
+                failAt(call, "rename");
+                renameTo(fresh, STAGED_NEW + name, name);
+            } catch (IOException | RuntimeException e) {
+                undoRenames(tree, name, aside, fresh);
+                throw e;
+            }
             if (aside != null) deleteQuietly(aside);
         } catch (SecurityException | IllegalArgumentException e) {
             // revoked or gone between the check and the write
@@ -321,7 +329,7 @@ public class N62FilesPlugin extends Plugin {
      * The test build's seams (A137; BuildConfig.TEST_SEAMS, build.sh --test only; every other build writes the bytes whole):
      * failAfter n writes the first n bytes, then throws an IOException (a full disk, a provider error); stallAfter n writes
      * the first n bytes and waits 20 s before the rest, so app/test-device/folder.rec.ts can kill the app mid-write;
-     * stallAt "checked" | "aside" (stallAt()) waits 20 s after write()'s step 2 or 3.
+     * stallAt "checked" | "aside" (stallAt()) waits 20 s after write()'s step 2 or 3; failAt "rename" (failAt()) fails step 4.
      */
     private static void writeBytes(OutputStream out, byte[] bytes, PluginCall call) throws IOException {
         int failAfter = BuildConfig.TEST_SEAMS ? call.getInt("failAfter", -1) : -1;
@@ -338,6 +346,12 @@ public class N62FilesPlugin extends Plugin {
         out.write(bytes, stall, end - stall);
         out.flush();
         if (failAfter >= 0) throw new IOException("test seam: failed after " + end + " bytes");
+    }
+
+    /** The test build's failAt seam: "rename" throws an IOException in place of write()'s step 4 (see writeBytes). */
+    private static void failAt(PluginCall call, String step) throws IOException {
+        String at = BuildConfig.TEST_SEAMS ? call.getString("failAt") : null;
+        if (step.equals(at)) throw new IOException("test seam: failed at " + step);
     }
 
     /** The test build's stallAt seam: waits 20 s when the call names this step (see writeBytes). */
@@ -388,6 +402,21 @@ public class N62FilesPlugin extends Plugin {
         if (fresh != null) DocumentsContract.deleteDocument(cr, fresh);
         if (aside != null) DocumentsContract.deleteDocument(cr, aside);
         return doc;
+    }
+
+    /**
+     * write()'s step 3 or 4 failed (a provider error; another writer took `name` meanwhile, so the rename made "name (1)"):
+     * best effort, the old file goes back under `name` while that is still free, and the staged new file is deleted while it
+     * still has its staged name (a provider that renamed it after all keeps it as `name`). What this cannot undo, the next
+     * write's recover() does.
+     */
+    private void undoRenames(Uri tree, String name, Uri aside, Uri fresh) {
+        try {
+            if (aside != null && child(tree, name) == null) renameTo(aside, STAGED_OLD + name, name);
+        } catch (IOException | RuntimeException e) {
+            // left as .n62-old~name: read() reads it, recover() puts it back
+        }
+        if ((STAGED_NEW + name).equals(nameOf(fresh))) deleteQuietly(fresh);
     }
 
     /** read()'s document for `name`, changing nothing: `name`, or in the window between write()'s renames the whole new text. */

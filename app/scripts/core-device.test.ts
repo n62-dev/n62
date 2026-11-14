@@ -115,10 +115,10 @@ describe("the sync folder's test seams (A137)", () => {
   });
   it("every read of a seam in N62FilesPlugin is guarded by BuildConfig.TEST_SEAMS", () => {
     const java = root("android/app/src/main/java/dev/n62/calc/N62FilesPlugin.java");
-    const reads = java.split("\n").filter((l) => /"(failAfter|stallAfter|stallAt)"\)?[,)]/.test(l) && /call\.get/.test(l));
-    expect(reads).toHaveLength(3);
+    const reads = java.split("\n").filter((l) => /"(failAfter|stallAfter|stallAt|failAt)"\)?[,)]/.test(l) && /call\.get/.test(l));
+    expect(reads).toHaveLength(4);
     for (const l of reads) {
-      expect(l).toMatch(/BuildConfig\.TEST_SEAMS \? call\.(getInt\("(failAfter|stallAfter)", -1\) : -1|getString\("stallAt"\) : null)/);
+      expect(l).toMatch(/BuildConfig\.TEST_SEAMS \? call\.(getInt\("(failAfter|stallAfter)", -1\) : -1|getString\("(stallAt|failAt)"\) : null)/);
     }
   });
 });
