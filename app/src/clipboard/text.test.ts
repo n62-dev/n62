@@ -341,7 +341,7 @@ describe("sessionCsv / sessionLatex (G232)", () => {
   it("CSV: full-precision values, and with the decimal comma the separator is ; as in tableCsv", () => {
     const csv = sessionCsv([third, unit, comma], { decimalComma: true }, { ...CTX, decimalComma: true });
     expect(csv).toBe(
-      ["input;value;mark;unit;sigma", "1/3;0," + "3".repeat(40) + ";≈;;", "12,34±0,05 m×3,2±0,1 m;39,488;≈;m²;1,2", "max(1,2);2;=;;"].join("\r\n") + "\r\n",
+      ["input;value;mark;unit;sigma", "1/3;0," + "3".repeat(40) + ";≈;;", "12.34±0.05 m×3.2±0.1 m;39,488;≈;m²;1,2", "max(1,2);2;=;;"].join("\r\n") + "\r\n",
     );
     expect(sessionCsv([comma], { decimalComma: true }, { ...CTX, decimalComma: true })).not.toContain('"');
   });

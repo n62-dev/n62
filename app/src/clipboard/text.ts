@@ -11,17 +11,19 @@ import {
   type ComplexValue,
   type DecimalValue,
   type Mark,
+  type MarkInfo,
   type PrecisionWarn,
 } from "../engine/format.ts";
-import type { ValueFacts } from "../engine/types.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { withUnit } from "../state/results.ts";
-import { commaResult, markFor, modeOf, type DisplayContext, type FmtMode, type FormStep, type Rational } from "../state/displayMode.ts";
+import { commaResult, markFor, modeOf, type DisplayContext, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
 
 /** The part of a history item that Copy reads (HistoryItem in state/session.svelte.ts has all of it). */
 export interface CopySource {
   latex: string;
   status: string;
+  /** The result as LaTeX, as the screen draws it (empty unless done); sessionLatex's result, else the value's text. */
+  resultLatex?: string;
   /** Plain text of the result (CAS: Giac's text or our formatter's) or of the error. */
   text: string;
   value?: ComplexValue;
@@ -33,7 +35,7 @@ export interface CopySource {
   drawn?: string;
   /** The value's facts, whole (G86; a history item's own): `reliableDigits` the digits confirmed by the agreement check
    *  (null = nothing in doubt), `warn`, `exact`. Absent: nothing in doubt, not claimed exact. */
-  facts?: ValueFacts;
+  facts?: ResultFacts;
   /** An inexact chip went into the input: never `=` (decisions M4-4). */
   inexactInput?: boolean;
   /** The item's display settings (Format key): the mode and the a b/c form the screen draws it in. */
@@ -42,7 +44,7 @@ export interface CopySource {
   chips?: ChipTable;
   /** R63f2: a unit-view row (units/row.ts UnitRow, read back unchecked): `input` the request as drawn (unit after each
    *  number, → the end unit), `text` the ` ± σ unit` after the value. Both strings, else the row is exported as Home's. */
-  units?: { input?: unknown; text?: unknown };
+  units?: { input?: unknown; text?: unknown; unit?: unknown; unc?: { text?: unknown }; latex?: unknown };
 }
 
 /** Text options: `decimalComma` writes `,` for the decimal point (the Settings option, docs/04 section 6.2). */
@@ -141,26 +143,83 @@ export function copyMark(i: CopySource, ctx: DisplayContext): { mark: Mark; n?: 
 const markText = (m: ReturnType<typeof copyMark>): string => (m === undefined ? "=" : m.mark === "⚠" && m.n !== undefined && !m.warn ? `⚠ ${m.n}` : m.mark);
 
 import { entryText } from "./plaintext.ts";
+import { whyLine } from "./whyLine.ts";
 export { entryText };
+
+/** A unit-view row's request, else the row's entry (LaTeX); and whether it is a unit row. R63f2: a unit row's latex is the
+ *  plain line and its value is in the result's unit: the request as drawn, the value with its unit (copyFull); without
+ *  the request the line is Home's, the number alone (never `2×π×25 ≈ 0.157 m`). */
+function rowInput(i: CopySource): { input: string; unitRow: boolean } {
+  const u = i.units;
+  return u && typeof u.input === "string" && typeof u.text === "string" ? { input: u.input, unitRow: true } : { input: i.latex, unitRow: false };
+}
 
 /** The session as text: one line per finished entry, `input mark result` with the full value; an error line shows the message. */
 export function sessionText(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
   const lines: string[] = [];
   for (const i of items) {
     if (i.status === "done") {
-      let result = valueFull(i, o) ?? i.text;
-      let input = i.latex;
-      // R63f2: a unit row's latex is the plain line and its value is in the result's unit: the request as drawn, the
-      // value with its unit (copyFull); without the request the line is Home's, the number alone (never `2×π×25 ≈ 0.157 m`)
-      const u = i.units;
-      if (u && typeof u.input === "string" && typeof u.text === "string") {
-        input = u.input;
-        result = copyFull(i, o) ?? result;
-      }
+      const { input, unitRow } = rowInput(i);
+      const result = (unitRow ? copyFull(i, o) : undefined) ?? valueFull(i, o) ?? i.text;
       lines.push(`${entryText(input)} ${markText(copyMark(i, ctx))} ${result}`);
     } else if (i.status === "error") lines.push(`${entryText(i.latex)} → ${i.text}`);
   }
   return lines.join("\n");
+}
+
+/** The glyph of a finished row's mark: Copy's for a number (copyMark), else the facts' (a float in a CAS result), else
+ *  `≈` when an inexact chip went in, `=` for the rest; the same rule as the session line (state/sessionLine.ts). */
+function rowMark(i: CopySource, ctx: DisplayContext): { mark: Mark; info?: MarkInfo } {
+  const m = i.value ? copyMark(i, ctx) : markFor(i, modeOf(i, ctx), ctx);
+  if (m) return { mark: m.mark, info: m };
+  return { mark: i.inexactInput ? "≈" : "=" };
+}
+
+/** The rows an export writes: finished entries and errors; pending rows and notes are no results. */
+const exported = (items: readonly CopySource[]): CopySource[] => items.filter((i) => i.status === "done" || i.status === "error");
+
+const str = (x: unknown): string => (typeof x === "string" ? x : "");
+
+/**
+ * G232: the history as CSV (a preview in v0.1.0). The header `input,value,mark,unit,sigma`, then one row per finished
+ * entry: the entry as text, the full value (every confirmed digit, as Copy writes it) alone, the mark glyph, a unit row's
+ * unit and σ. An error row has its message in `value` and no mark. No comment line (it breaks a spreadsheet's import).
+ * "" when there is no row to write. Quoting, separator (`;` with the decimal comma) and CRLF are tableCsv's.
+ */
+export function sessionCsv(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
+  const rows = exported(items).map((i): string[] => {
+    if (i.status === "error") return [entryText(i.latex), i.text, "", "", ""];
+    const { input } = rowInput(i);
+    const sigma = str(i.units?.unc?.text);
+    return [entryText(input), valueFull({ ...i, units: undefined }, o) ?? i.text, rowMark(i, ctx).mark, str(i.units?.unit), o.decimalComma ? sigma.replace(".", ",") : sigma];
+  });
+  return rows.length ? tableCsv(["input", "value", "mark", "unit", "sigma"], rows, o) : "";
+}
+
+/** Text inside `\text{}`: the characters LaTeX reads as commands escaped. */
+function latexText(s: string): string {
+  return s.replace(/[\\&%$#_{}~^]/g, (c) => (c === "\\" ? "\\textbackslash{}" : c === "~" ? "\\textasciitilde{}" : c === "^" ? "\\textasciicircum{}" : `\\${c}`));
+}
+
+/**
+ * G232: the history as LaTeX (a preview in v0.1.0; the first line says so, `version` is the app's). One `align*` line per
+ * finished entry: the entry's LaTeX, the mark as the relation (`=`, `\approx`, `\triangle` for ⚠ with the reason after the
+ * result), the result as the screen draws it (its text when the row keeps no LaTeX; a unit row adds its σ and unit). An
+ * error row has `\rightarrow` and its message. "" when there is no row to write.
+ */
+export function sessionLatex(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext, version: string): string {
+  const lines = exported(items).map((i) => {
+    if (i.status === "error") return `\\begin{align*}${i.latex} &\\rightarrow \\text{${latexText(i.text)}}\\end{align*}`;
+    const { input, unitRow } = rowInput(i);
+    const { mark, info } = rowMark(i, ctx);
+    const rel = mark === "=" ? "=" : mark === "≈" ? "\\approx" : "\\mathrel{\\triangle}";
+    let result = i.resultLatex || valueFull({ ...i, units: undefined }, o) || i.text;
+    if (unitRow && typeof i.units?.latex === "string") result += `\\,${i.units.latex}`;
+    const why = mark === "⚠" && info ? whyLine(i, info, ctx.digits) : null;
+    const reason = why ? `\\quad\\text{(${latexText(why.replace(/^⚠\s*/, "").replace(/ · /g, "; "))})}` : "";
+    return `\\begin{align*}${input} &${rel} ${result}${reason}\\end{align*}`;
+  });
+  return lines.length ? [`% N62 ${version} · preview: the form of this file can change`, ...lines].join("\n") + "\n" : "";
 }
 
 /** One CSV field: quoted when it holds the separator, a quote or a line break. */
