@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # R21: one chunk group keeps the start graph whole (S52)
 
-**Status: open.** The finding is measured and the recommendation (section 3) needs no owner choice: it is a build option that changes no byte today and lifts a constraint. What is open is the package that adds it (draft `r21-P1`, section 4), for the next Opus pass to place. Labels `r21-*` belong to this note. Base: `phase-1` `c3085825`, Vite 8.3.4 with Rolldown 1.2.13 (`app/package.json:43`), engine `_out/key-571fc1b085cff204`, win99. Rerun: `tools/probes/chunk-groups.mjs` (section 5).
+**Status: decided.** Built by R294 (merged `ef2d3c77`, Opus pass 176): the group is in `app/vite.config.ts` and the hand copies are gone; item 4 of section 3 stays for the package that touches `units/open.ts`. Labels `r21-*` belong to this note. Base: `phase-1` `c3085825`, Vite 8.3.4 with Rolldown 1.2.13 (`app/package.json:43`), engine `_out/key-571fc1b085cff204`, win99. Rerun: `tools/probes/chunk-groups.mjs` (section 5).
 
 ## 1. The option and what it does
 
