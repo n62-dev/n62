@@ -57,13 +57,14 @@ void userKeys.restore();
 const keeper = lineKeeper(idbKv);
 // R270: while an app is open the kept line is Home's line set aside in the shell, and an app's clear leaves it.
 const record = (l: { latex: string; chips: ChipTable } | null): KeptLine | null => l && lineRecord(session.view, l.latex, l.chips);
-entry.onClear = () => keeper.save(shell.app !== null ? record(shell.aside) : null);
+// R302: a matrix cell's edit on Home's line set the user's line aside: a clear of the cell's line leaves it kept.
+entry.onClear = () => keeper.save(record(shell.app !== null ? shell.aside : shell.editAside));
 const flush = (): void => {
   session.flushHistory();
   shell.flush();
   // before the kept line is on the field (or the line was typed or cleared) the stored line stays as it is; while a
-  // name is typed on the line (R89), the line it set aside is the one kept (R123)
-  if (entry.settled) keeper.save(record(shell.app !== null ? shell.aside : (shell.prompt?.aside ?? { latex: entry.value, chips: entry.chips })));
+  // name is typed on the line (R89), or a matrix cell (R302), the line it set aside is the one kept (R123)
+  if (entry.settled) keeper.save(record(shell.app !== null ? shell.aside : (shell.prompt?.aside ?? shell.editAside ?? { latex: entry.value, chips: entry.chips })));
 };
 // Leaving the app (a swipe, the app switcher): drop the focus. Android restores focus to the focused element when
 // the app comes back and opens the system keyboard on it, inputmode=none or not (K0, user 2026-10-13). The next key
