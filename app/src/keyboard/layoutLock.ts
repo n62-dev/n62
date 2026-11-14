@@ -97,6 +97,13 @@ function isTitle(line: string, decision: string): boolean {
   return false;
 }
 
+/** Whether a line of decisions.md is a heading that is `decision` as a whole: the text after the hashes and one space is
+ *  the decision, or the decision, a space and an opening bracket. */
+function isHeading(line: string, decision: string): boolean {
+  const m = /^#+ (.*)$/.exec(line);
+  return m !== null && ((m[1] as string) === decision || (m[1] as string).startsWith(`${decision} (`));
+}
+
 /** The lock's lines with its moves applied, in order. Problems: a move that does not fit the line it moves, or whose
  *  decision is not an entry of decisions.md. */
 export function applyMoves(lock: Lock, decisions: string): { pins: Pins; problems: string[] } {
@@ -111,7 +118,7 @@ export function applyMoves(lock: Lock, decisions: string): { pins: Pins; problem
     else if (now !== m.from) problems.push(`move ${m.entry}: the line is "${now}", the move says "${m.from}"`);
     else section[slot] = m.to;
     if (!/^v?\d+\.\d+/.test(m.version)) problems.push(`move ${m.entry}: version "${m.version}" is no version`);
-    const known = decisions.split("\n").some((l) => isTitle(l, m.decision) || (/^#+ /.test(l) && l.includes(m.decision)));
+    const known = decisions.split("\n").some((l) => isTitle(l, m.decision) || isHeading(l, m.decision));
     if (!known) problems.push(`move ${m.entry}: decisions.md has no entry titled "${m.decision}"`);
   }
   return { pins, problems };

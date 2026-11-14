@@ -225,7 +225,7 @@ describe("growth passes whatever the lock held before", () => {
 describe("a move is a line the owner's decision backs", () => {
   // a decisions text of its own, in the bold-title form of decisions.md: the real file is trimmed and rewritten
   const title = "Fixture layout move";
-  const fixture = `# Decisions\n\n- **${title} (owner, 2026-01-01):** the owner moved Menu to Esc.\n- **Fixture colon title:** another entry.\n`;
+  const fixture = `# Decisions\n\n- **${title} (owner, 2026-01-01):** the owner moved Menu to Esc.\n- **Fixture colon title:** another entry.\n\n### Fixture heading (milestone 9)\n`;
   const edited = (): Pins => spec((k) => (key(k, "menu")["primary"] = { special: "esc" }));
   const move = { entry: "layers/menu.primary", from: "special menu", to: "special esc", version: "0.2.0", decision: title };
   const check = (decision: string): string[] => compareLayout(edited(), { ...lock, moves: [{ ...move, decision }] }, fixture);
@@ -257,6 +257,12 @@ describe("a move is a line the owner's decision backs", () => {
     expect(check("Fixture layout move (owner")).toEqual(refused("Fixture layout move (owner"));
     expect(check("Fixture colon title")).toEqual([]);
     expect(check("Fixture colon")).toEqual(refused("Fixture colon"));
+  });
+  it("takes a whole heading only: the text after the hashes ends or goes on with a bracket, so a word of it is no decision", () => {
+    const refused = (d: string): string[] => [`move layers/menu.primary: decisions.md has no entry titled "${d}"`];
+    expect(check("Fixture heading")).toEqual([]);
+    expect(check("Fixture")).toEqual(refused("Fixture"));
+    expect(check("heading")).toEqual(refused("heading"));
   });
   it("the real lock's moves (if any) name entries of the real decisions.md", () => {
     expect(problems().filter((p) => p.startsWith("move "))).toEqual([]);
