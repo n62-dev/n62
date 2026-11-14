@@ -111,7 +111,8 @@ const no = (reason: string): never => {
 };
 
 /** What a Python name holds: the line that set it and its view, or that the line which would have set it is not here. */
-type Binding = { line: number; view: string; k: Kind } | { unknown: number };
+/** G218: `def` when the line bound a stored name to the value it read (a sync file's stored value), not to its result. */
+type Binding = { line: number; view: string; k: Kind; def?: PyChip } | { unknown: number };
 /** A translated row: the name it bound and what that holds. */
 interface Line {
   name: string;
@@ -145,6 +146,8 @@ class Row {
   readonly uses = new Set<string>();
   /** A chip went in as its own value (`# an earlier result`). */
   earlier = false;
+  /** G218: the stored names this row binds before its own line, to the value it read: name → its line and value. */
+  readonly defs = new Map<string, { code: string; k: Kind; value: PyChip }>();
   constructor(
     private readonly t: Translator,
     private readonly i: number,
@@ -312,6 +315,20 @@ class Row {
   private name(n: string): Out {
     const fixed = CONST.get(n);
     if (fixed !== undefined) return { s: this.use(fixed), p: 5, k: "sym" };
+    const own = this.defs.get(n);
+    if (own) return { s: n, p: 5, k: own.k };
+    try {
+      return this.bound(n);
+    } catch (err) {
+      // G218: a sync file binds what the file does not hold to the value this row read, right before the row
+      const d = err instanceof NotTranslated && this.t.withDefs ? this.def(n) : undefined;
+      if (d) return d;
+      throw err;
+    }
+  }
+
+  /** A name an earlier line of this file bound, holding the value this row read. */
+  private bound(n: string): Out {
     const b = this.t.names.get(n);
     if (b && "unknown" in b) return no(`uses line ${b.unknown}`);
     const py = this.t.pyName(n);
@@ -324,7 +341,8 @@ class Row {
     if (!Array.isArray(reads)) return no("this line does not keep the values it read");
     const kept = reads.find((d) => d.name === n);
     if (!kept || typeof kept.value !== "string") return no(`the value ${n} held when this line ran is not kept`);
-    if (fullOf(this.t.rows[b.line - 1], kept) !== kept.value) return no(`${n} held another value when this line ran`);
+    const held = b.def ? (b.def.exact === kept.exact ? b.def.value : undefined) : fullOf(this.t.rows[b.line - 1], kept);
+    if (held !== kept.value) return no(`${n} held another value when this line ran`);
     return { s: py, p: 5, k: b.k };
   }
 
@@ -367,14 +385,31 @@ class Row {
   /** A value N62 put in as it was (`# an earlier result`): a fraction or a decimal literal; any other text refuses. */
   private earlierValue(c: PyChip): Out {
     this.earlier = true;
-    const v = c.value.trim();
+    return this.valueOut(c.value) ?? no(`an earlier result ${c.value.trim()} is not translated`);
+  }
+
+  /** G218: stored name n bound to the value this row read, when that value is a number the file can write. */
+  private def(n: string): Out | undefined {
+    const reads = this.t.rows[this.i]?.reads;
+    const kept = Array.isArray(reads) ? reads.find((d) => d.name === n) : undefined;
+    if (!kept || typeof kept.value !== "string") return undefined;
+    const py = this.t.pyName(n);
+    const o = this.valueOut(kept.value);
+    if (!o) return undefined;
+    const exact = kept.exact === true;
+    this.defs.set(n, { code: `${py} = ${o.s}  # N62: stored, ${exact ? "=" : "≈"} ${oneLine(kept.value)}`, k: o.k, value: { value: kept.value, exact } });
+    return { s: py, p: 5, k: o.k };
+  }
+
+  /** A value N62 gave as text: a fraction or a decimal literal; undefined for any other text. */
+  private valueOut(text: string): Out | undefined {
+    const v = text.trim();
     const q = /^(-?)(\d+)\/(\d+)$/.exec(v);
     if (q) {
       const r: Out = { s: `${this.use("Rational")}(${q[2]}, ${q[3]})`, p: 5, k: "sym" };
       return q[1] ? { s: `-${r.s}`, p: 3, k: "sym" } : r;
     }
-    if (/^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v)) return this.lit(v);
-    return no(`an earlier result ${v} is not translated`);
+    return /^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? this.lit(v) : undefined;
   }
 }
 
@@ -385,7 +420,13 @@ class Translator {
   cut = 0;
   /** A row that may have stored to a name we cannot tell: no name bound before it is read after it. */
   allUnknown = 0;
-  constructor(readonly rows: readonly PyRow[]) {}
+  /** G218: `tag` ends each row's own name (`_3` + tag), so two runs in one file never bind one name; `withDefs` binds a
+   *  stored name the file does not hold to the value the row read (Row.def). Copy as Python uses neither. */
+  constructor(
+    readonly rows: readonly PyRow[],
+    readonly tag = "",
+    readonly withDefs = false,
+  ) {}
 
   view(i: number): string {
     return this.rows[i]?.view ?? "";
@@ -416,7 +457,7 @@ class Translator {
   holds(line: Line, j: number): boolean {
     if (line.name.startsWith("_")) return true;
     const b = this.names.get(line.name);
-    return b !== undefined && "line" in b && b.line === j + 1 && this.allUnknown <= j + 1;
+    return b !== undefined && "line" in b && b.def === undefined && b.line === j + 1 && this.allUnknown <= j + 1;
   }
 
   /** A row not translated binds nothing: the name it may have stored to is unknown from here on. */
@@ -459,7 +500,7 @@ class Translator {
         return no(`not read: ${err instanceof Error ? err.message : String(err)}`);
       }
       const t = new Row(this, i, keys);
-      let name = `_${line}`;
+      let name = `_${line}${this.tag}`;
       let body = tree;
       if (isHead(tree, "Assign")) {
         if (typeof tree[1] !== "string") no("a definition is not translated");
@@ -469,8 +510,9 @@ class Translator {
       const o = t.ser(body);
       for (const u of t.uses) uses.add(u);
       this.lines[i] = { name, k: o.k };
+      for (const [n, d] of t.defs) this.names.set(n, { line, view: this.view(i), k: d.k, def: d.value });
       if (!name.startsWith("_")) this.names.set(name, { line, view: this.view(i), k: o.k });
-      return `${name} = ${o.s}${t.earlier ? "  # an earlier result" : ""}  # N62: ${answer}`;
+      return `${[...t.defs.values()].map((d) => `${d.code}\n`).join("")}${name} = ${o.s}${t.earlier ? "  # an earlier result" : ""}  # N62: ${answer}`;
     } catch (err) {
       if (!(err instanceof NotTranslated)) throw err;
       this.forget(r, line);
@@ -490,12 +532,29 @@ function markers(r: PyRow): { table: Record<string, PyChip>; keys: string[] } {
 
 const oneLine = (s: string): string => s.replace(/\s*[\r\n]+\s*/g, " ");
 
+/** G213's first line of a file, with the app's version. */
+export const pyHead = (app: string): string => `# N62 ${oneLine(app)} · Copy as Python · preview: the form of this file can change`;
+
+/** One row's code (or its NOT TRANSLATED comment) and the sympy names it uses. */
+export interface PyCell {
+  code: string;
+  uses: readonly string[];
+}
+
+/** Each row's cell, in order; a row's cell depends on the rows before it only. G218's sync file: `tag` ends each row's
+ *  own name, `defs` binds a stored name the file does not hold to the value the row read (both off for Copy). */
+export function translateCells(rows: readonly PyRow[], o: { tag?: string; defs?: boolean } = {}): PyCell[] {
+  const t = new Translator(rows, o.tag ?? "", o.defs === true);
+  return rows.map((_, i) => {
+    const uses = new Set<string>();
+    return { code: t.row(i, uses), uses: [...uses] };
+  });
+}
+
 /** The rows (a view's history in order, or one row) as a sympy script: the N62 line, the imports it needs, one line per row. */
 export function translateRows(rows: readonly PyRow[], o: PyOptions): string {
-  const t = new Translator(rows);
-  const uses = new Set<string>();
-  const body = rows.map((_, i) => t.row(i, uses));
-  const head = `# N62 ${oneLine(o.app)} · Copy as Python · preview: the form of this file can change`;
+  const cells = translateCells(rows);
+  const uses = new Set(cells.flatMap((c) => c.uses));
   const imports = uses.size ? [`from sympy import ${[...uses].sort().join(", ")}`] : [];
-  return `${[head, ...imports, ...body].join("\n")}\n`;
+  return `${[pyHead(o.app), ...imports, ...cells.map((c) => c.code)].join("\n")}\n`;
 }
