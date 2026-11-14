@@ -54,7 +54,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **nr1114-vg-1, fixed by G352.** A matrix times a list of another length than its row count, either order, and `.*` `./` `.^` of a matrix and a flat operand are refused. Family 5.
-- **nr1114-be-2 (S1, `1f1a80582`; G353).** Home: a stored approx list of equal values, a linreg, then `stats1`: σ ≈ 9.9E-32·i (right 0). Rerun: `tools/probes/review-1114/rerun.sh be-2`. Family 6.
+- **nr1114-be-2, fixed by G353.** A stored float list of equal values: `stats1`, `variance`, `stddev`, `stddevp` give 0 (patch 0049, two passes), `linreg` refuses it, the same in either order. Family 6.
 - **nr1114-vr-1 and vr-5, fixed by R298 (run 1195).** Cold start with a history: `2`, ☰ Paste `3`, Enter before the entry field is up gave 32 (right 23). Rerun: `tools/probes/review-1114/rerun.sh vr-1`. Family 11.
 - **nr1114-bu-9 and vr-10, fixed by R312 (run 1198).** A typed `2exp(1)` was refused (2ᴇ, then xp); the desktop keys' help did not say its chords are for US and UK layouts.
 - **Night review 2026-11-14:** the rest in [research/night-review-2026-11-14.md](research/night-review-2026-11-14.md).

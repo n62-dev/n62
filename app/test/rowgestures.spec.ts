@@ -22,10 +22,15 @@ async function ready(page: Page, query = ""): Promise<void> {
   await open(page, query);
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
 }
-/** Each line, entered and finished. */
+/** Each line, entered and finished before the next: Enter is ignored while a row runs (session.svelte.ts submit), so on a
+ *  loaded host the next line's keys joined the entry still holding the last one (d7, d8 became one row 78: 7 rows of 8). */
 async function enter(page: Page, ...lines: string[][]): Promise<void> {
-  for (const keys of lines) await tap(page, [...keys, "enter"]);
-  await expect(page.locator('[data-status="done"]')).toHaveCount(lines.length);
+  const done = page.locator('[data-status="done"]');
+  const before = await done.count();
+  for (const [k, keys] of lines.entries()) {
+    await tap(page, [...keys, "enter"]);
+    await expect(done).toHaveCount(before + k + 1);
+  }
 }
 /** A swipe across `share` of the last row's width, slowly and lifted at rest (no fling); two steps is a fling. */
 async function swipe(page: Page, share: number, steps = 12): Promise<void> {
