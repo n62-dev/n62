@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
 import type { UserName } from "../engine/defs.ts";
-import { Session } from "../state/session.svelte.ts";
+import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import type { Kv } from "../state/storage.ts";
 import type { Sheet } from "./sheet.svelte.ts";
 import { showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.svelte.ts";
@@ -167,5 +167,15 @@ describe("the title's value (R281)", () => {
     await text;
     expect(shell.sheet?.path).toBe("Store 2+3 in");
     expect(sheet.level.items[0]?.confirm?.note).toBe("A = 5. Tap A again to replace it with 2+3"); // the question has it too
+  });
+
+  it("R301: a row stored onto a line with text before its chip names the line (2+5), not the row (5)", async () => {
+    const session = new Session(new FakeCalc(), kv());
+    await session.submit("5", "5");
+    const row = session.items.at(-1) as HistoryItem;
+    expect(row.status).toBe("done");
+    expect(await storedText(session, row, "2+\\res{0}{5}\\blacktriangleright")).toBe("2+5");
+    // the row alone on the line (an empty line before Store ▶): the row's value, with its mark when it has one (none over the fake engine), as before
+    expect(await storedText(session, row, "\\res{0}{5}\\blacktriangleright")).toBe("5");
   });
 });

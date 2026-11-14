@@ -30,16 +30,19 @@ export interface StoreEnv {
 
 /** What is stored, as the title shows it: a row's result with its mark (`≈ 0.333333333333`), else the line's text
  *  before the ▶ (`7`, not worked out yet: no mark), which comes with the clipboard's plain-text code (a chunk of its own:
- *  imported here, the unit view, which loads this chunk too, would name it). Empty: nothing to show. */
+ *  imported here, the unit view, which loads this chunk too, would name it). Empty: nothing to show. R301: a row whose
+ *  chip went onto a line with text before it (`2+` then Store ▶ on the row of 5) stores the line, so the title reads it
+ *  (`2+5`), not the row. */
 export function storedText(session: Session, row: HistoryItem | undefined, line: string): string | Promise<string> {
-  if (row?.status === "done") {
+  const at = line.lastIndexOf(STORE_ARROW);
+  const before = at < 0 ? line : line.slice(0, at);
+  if (row?.status === "done" && before.slice(0, Math.max(before.lastIndexOf("\\res{"), 0)).trim() === "") {
     const mark = session.mark(row);
     if (noDigit(mark)) return "⚠";
     const text = session.display(row).text;
     return mark ? `${markText(mark)} ${text}` : text;
   }
-  const at = line.lastIndexOf(STORE_ARROW);
-  return import("../clipboard/plaintext.ts").then((m) => m.entryText(at < 0 ? line : line.slice(0, at)).trim(), () => "");
+  return import("../clipboard/plaintext.ts").then((m) => m.entryText(before).trim(), () => "");
 }
 
 /** The name the store types for `typed` (letters and digits from the filter, or a stored name as drawn): one letter as
