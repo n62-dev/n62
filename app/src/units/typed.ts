@@ -4,9 +4,9 @@
 // and `/` between factors and `^2` for a power, as the pad builds them. The touch pad keeps P14's cells. This is the
 // unit view's own first look at a hardware key (units/open.ts), before the keypad's path (entry/hwkeys.ts unitViewKey),
 // and only with no sheet open (Find takes letters into its query, R303): a letter starts or extends the active slot's
-// letter run (shown and read at every letter), ⌫ takes the run's last letter, Esc drops the run and leaves as ever, `^`
-// and the digit after it (2, 3, 4, or -1) are the power, and any other key ends the run first: a run that reads as no
-// unit refuses the key, and the message names its letters. A chord is never taken here. Loaded with the unit view.
+// letter run (shown and read at every letter), ⌫ takes the run's last letter, Esc ends a run that reads as a unit (drops
+// one that reads as none) and leaves as ever, `^` and the digit after it (2, 3, 4, or -1) are the power, and any other
+// key ends the run first: a run that reads as no unit refuses the key, and the message names its letters. A chord is never taken here. Loaded with the unit view.
 import type { PadEmit } from "./pad.ts";
 import { isLetters } from "./slot.ts";
 

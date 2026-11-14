@@ -220,7 +220,8 @@ export class UnitView {
     return false;
   }
 
-  /** R313: Esc drops a letter run (the slot as before it), then leaves as ever. */
+  /** R313: Esc ends a letter run that reads as a unit and drops one that reads as none (the slot as before it), then
+   *  leaves as ever. */
   dropRun(): void {
     if (this.typing) this.#retype((m) => m.dropRun());
   }

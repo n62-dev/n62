@@ -168,8 +168,9 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // 38 kB (Opus pass 24): G81's correlated constants measure 34.04 kB, and R24d and R60–R63 still add; the bar that counts
   // is the first unit result < 1 s on the Tab One (decisions.md, Units: G81, R24b and R24c). 39 kB (R313; docs/04 8.3):
   // phase-1 145a2b0e measures 37.64 kB, the branch 38.92 kB: the hardware keyboard's letters in a slot (typed.ts and the
-  // view's glue in open's chunk, +1.28 kB; the slot's own part is in the shared row below). The owner confirms the raise
-  // (R313's report: its "Needs the user" entry, for decisions.md and backlog.md once the Opus pass makes room there).
+  // view's glue in open's chunk, +1.28 kB; the slot's own part is in the shared row below). Why a raise: the night
+  // report of 2026-11-14 says "the next unit package must raise the pin or cut". Not yet confirmed: the raise waits for
+  // the owner's yes, asked in R313's report under "Needs the user".
   add("Unit view chunk", dynamic("src/units/"), { rawMax: 39 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit

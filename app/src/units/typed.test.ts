@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R313: letters typed on a hardware keyboard into a unit slot read as a unit, the way Find reads an exact symbol
 // (slot.ts readSymbol, SlotModel's letter run), and the view's typing keys (typed.ts HwTyping): `*`, `/`, `^` and the
-// digit after `^` end the run, ⌫ takes its last letter, Esc drops it, a run that reads as no unit is refused.
+// digit after `^` end the run, ⌫ takes its last letter, Esc ends it (drops it when it reads as no unit), a run that
+// reads as no unit is refused.
 import { describe, expect, it } from "vitest";
 import type { IndexItem } from "../find/types.ts";
 import { unitText } from "../i18n/enUnits.ts";
@@ -124,12 +125,19 @@ describe("SlotModel: the letter run", () => {
     for (const ch of "Hz") r.type(ch); // (no Hz in this catalogue: the armed √ stays armed under the letters)
     expect(r.armed.sqrt).toBe(true);
   });
-  it("Esc drops the run: the slot as before it", () => {
+  it("Esc ends a run that reads as a unit (its factor stays) and drops one that reads as none: the slot as before it", () => {
     const s = new SlotModel(CAT, { tokens: [{ unit: "N" }] });
     for (const ch of "km") s.type(ch);
     s.dropRun();
-    expect(slot(s)).toBe("N");
+    expect(slot(s)).toBe("N k:m");
     expect(s.typing).toBe(false);
+    const z = new SlotModel(CAT, { tokens: [{ unit: "N" }] });
+    z.apply({ do: "prefix", id: "k" });
+    for (const ch of "zq") z.type(ch);
+    z.dropRun();
+    expect(slot(z)).toBe("N");
+    expect(z.armed.prefix).toBe("k");
+    expect(z.typing).toBe(false);
   });
 });
 

@@ -347,10 +347,10 @@ export class SlotModel {
     return OK;
   }
 
-  /** R313: Esc: the run is dropped, the slot as before it. */
+  /** R313: Esc: a run that reads as a unit ends (its factor stays, as the line showed it); one that reads as no unit is
+   *  dropped, the slot as before it (audit, fix round 2: `km` then Esc kept nothing). */
   dropRun(): void {
-    if (this.#run) this.#unread(this.#run);
-    this.#run = undefined;
+    this.#run = undefined; // (a run with no factor took nothing from the slot: its armed prefix and √ stay armed)
   }
 
   /** R313: a letter run is open. */

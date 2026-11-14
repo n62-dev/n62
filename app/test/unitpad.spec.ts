@@ -278,7 +278,7 @@ test.describe("R313: letters typed in a unit slot on a hardware keyboard", () =>
     await expect(reading(page)).toHaveText("kilowatt hour");
   });
 
-  test("kmz is no unit: it stays as typed and marked, Enter names it and no value comes; ⌫ takes a letter back; Esc drops the run", async ({ page }) => {
+  test("kmz is no unit: it stays as typed and marked, Enter names it and no value comes; ⌫ takes a letter back; Esc drops a run that reads as no unit", async ({ page }) => {
     await tap(page, ["d7", "d2"]);
     await unitsKey(page);
     await page.keyboard.type("kmz");
@@ -295,9 +295,25 @@ test.describe("R313: letters typed in a unit slot on a hardware keyboard", () =>
     expect(meant(await tokens(page, "u1"))).toBe("k:m");
     await expect(reading(page)).toHaveText("kilometer");
     await page.keyboard.press("z");
-    await page.keyboard.press("Escape"); // the run dropped (the kilometre with it), then the view leaves as ever
+    await page.keyboard.press("Escape"); // a run that reads as no unit is dropped (the slot as before it), the view leaves
     await expect(shown(page)).toBeHidden();
     expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
+    await unitsKey(page);
+    expect(meant(await tokens(page, "u1")), "kmz then Esc: the letters gone, the slot as before the run").toBe("");
+  });
+
+  // audit, fix round 2: Esc dropped a run that already read as a unit, so `km` the line showed was gone on the next open
+  test("km then Esc: the run reads as a unit, so it ends and the line keeps its slot (as the pad's k m then Esc)", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await unitsKey(page);
+    await page.keyboard.type("km");
+    await expect(reading(page)).toHaveText("kilometer");
+    await page.keyboard.press("Escape");
+    await expect(shown(page)).toBeHidden();
+    expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
+    await unitsKey(page);
+    expect(meant(await tokens(page, "u1")), "the slot keeps the kilometre").toBe("k:m");
+    await expect(reading(page)).toHaveText("kilometer");
   });
 });
 
