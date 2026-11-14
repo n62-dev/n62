@@ -60,8 +60,8 @@ const clip = {
     "About this file: Markdown that a person reads and a program can parse. The first line names the N62 version; the list under the title gives the settings that change a value. " +
     "Each step is one history row, under a heading `## Step n`, as a list of `Name: text` lines. Input: the entry as typed. " +
     "Mark: `= exact` (the value shown is exact), `≈` (rounded; every digit shown is confirmed) or `⚠` (not every digit shown is confirmed, or not checked), each followed by its reason. " +
-    "Value: the result as shown, in the decimal mark the header names and without digit groups, with its unit, and `± σ` before the unit when it has one. " +
-    "Uncertainty: `± σ` again, the standard uncertainty (σ, one standard deviation). " +
+    "Value: the result as shown, in the decimal mark the header names and without digit groups, with its unit; a result of the unit view holds `± σ` before the unit. " +
+    "Uncertainty: `± σ` of every value that has one (a constant's too), the standard uncertainty (σ, one standard deviation). " +
     "Uses: the stored values the input read. Note: a line the history showed under the row. Error: the message of an entry that failed. A step without a Mark line has no number to mark.",
   // R36: the picked row's line (whyLine.ts)
   "why.exact": "exact",

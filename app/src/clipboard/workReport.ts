@@ -47,7 +47,8 @@ function code(s: string): string {
 /** One line of text: a line break inside (an error message) becomes a space. */
 const line = (s: string): string => s.replace(/\s*[\r\n]+\s*/g, " ").trim();
 
-/** A unit row's fields, read back unchecked (state/session.svelte.ts UnitRow): strings only. */
+/** A unit row's fields, read back unchecked (state/session.svelte.ts UnitRow): strings only. `input` is the request as
+ *  drawn (LaTeX, units/row.ts). */
 function unitOf(item: HistoryItem): { input?: string; unit?: string; sigma?: string } {
   const u = item.units as { input?: unknown; unit?: unknown; unc?: { text?: unknown } } | undefined;
   if (!u) return {};
@@ -58,14 +59,20 @@ function unitOf(item: HistoryItem): { input?: string; unit?: string; sigma?: str
   return { ...(input ? { input } : {}), ...(unit ? { unit } : {}), ...(sigma ? { sigma } : {}) };
 }
 
-/** σ of a row as `± σ unit`: a unit row's (the unit view's σ), else the σ a constant's uncertainty leaves (R40). */
+/** A row's input as the history draws it (History.svelte drawnInput: a unit row's request, R100's comma rule), as text. */
+function inputOf(item: HistoryItem, look: ReportLook): string {
+  const u = item.status === "done" ? unitOf(item).input : undefined;
+  return entryText(look.input(u ? { ...item, latex: u } : item));
+}
+
+/** σ of a row as `± σ unit`: a unit row's (the unit view's σ), else the σ a constant's uncertainty leaves (R40). The
+ *  exponent as the Value line writes it (`E`, Copy's text), not the σ line's `ᴇ`: one notation in the file. */
 function sigmaOf(item: HistoryItem, look: ReportLook): string | null {
   const u = unitOf(item);
   const comma = look.decimalComma;
   const unit = u.unit ? ` ${u.unit}` : "";
-  if (u.sigma) return `± ${comma ? commaResult(u.sigma, false) : u.sigma}${unit}`;
-  const s = sigmaText(item.facts, modeOf(item, look.settings) ?? look.settings.format, comma);
-  return s === null ? null : `± ${s}${unit}`;
+  const s = u.sigma ? (comma ? commaResult(u.sigma, false) : u.sigma) : sigmaText(item.facts, modeOf(item, look.settings) ?? look.settings.format, comma);
+  return s === null ? null : `± ${s.replace(/ᴇ/g, "E")}${unit}`;
 }
 
 /** The notes the history draws under a row (History.svelte), as words. */
@@ -83,9 +90,7 @@ const field = (name: string, text: string): string => `- ${name}: ${text}`;
 /** The block of one step; null for a row that is no step (running, cancelled, a note). */
 function step(item: HistoryItem, n: number, look: ReportLook): string[] | null {
   if (item.status !== "done" && item.status !== "error") return null;
-  const u = unitOf(item);
-  const input = item.status === "done" && u.input ? u.input : entryText(look.input(item));
-  const out = [`## ${tc("report.step")} ${n}`, "", field(tc("report.input"), code(line(input)))];
+  const out = [`## ${tc("report.step")} ${n}`, "", field(tc("report.input"), code(line(inputOf(item, look))))];
   if (item.status === "error") {
     out.push(field(tc("report.error"), line(item.text)));
     return out;
@@ -95,8 +100,12 @@ function step(item: HistoryItem, n: number, look: ReportLook): string[] | null {
   out.push(field(tc("report.value"), code(line(withoutMark(look.display(item).text)))));
   const sigma = sigmaOf(item, look);
   if (sigma !== null) out.push(field(tc("report.uncertainty"), `${sigma}, ${tc("report.sigma")}`));
-  if (item.uses?.length)
-    out.push(field(tc("report.uses"), item.uses.map((v) => `${code(`${typedName(v.name)} = ${v.preview}`)} (${t(v.view === "home" ? "history.usesHome" : "history.usesCas")})`).join(", ")));
+  if (item.uses?.length) {
+    // the preview is Giac's text (a point): in the user's mark, as Session.display draws engine text
+    const value = (v: string): string => (look.decimalComma ? commaResult(v, false) : v);
+    const used = item.uses.map((v) => `${code(`${typedName(v.name)} = ${value(v.preview)}`)} (${t(v.view === "home" ? "history.usesHome" : "history.usesCas")})`);
+    out.push(field(tc("report.uses"), used.join(", ")));
+  }
   for (const note of notesOf(item)) out.push(field(tc("report.note"), line(note)));
   return out;
 }

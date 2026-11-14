@@ -225,10 +225,17 @@ export class ClipActions {
 
   /** ☰ › Export › Work report (R130): the open view's rows as a Markdown report through the save port; the result is the
    *  notice. The report code loads on the press. */
-  async exportWork(): Promise<void> {
-    const [m, about] = await Promise.all([import("./workReport.ts"), import("virtual:about"), loadForms()]);
-    const s = this.session;
-    this.say(await m.saveWork(s.items, s, { version: about.default.version, now: new Date(), view: s.view }));
+  exportWork(): Promise<void> {
+    // in the chain, so a second press waits for the first save; a chunk that does not load (offline after an update) says so
+    return this.serial(async () => {
+      try {
+        const [m, about] = await Promise.all([import("./workReport.ts"), import("virtual:about"), loadForms()]);
+        const s = this.session;
+        this.say(await m.saveWork(s.items, s, { version: about.default.version, now: new Date(), view: s.view }));
+      } catch {
+        this.say(tc("export.failed"));
+      }
+    });
   }
 
   /** Settings › Help and about › Report a problem (R173): the report (version, device, the session) on the clipboard, then
