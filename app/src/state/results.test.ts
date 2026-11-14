@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { decimalFromString, type ComplexValue } from "../engine/format.ts";
 import { chipOf, type CasIn, type HomeIn, type ItemResult } from "./results.ts";
 import { casItem, chipFactsOf, homeItem } from "./resultItem.ts";
+import { validChips } from "../input/chips.ts";
 
 
 const re = (s: string, sticky = false): ComplexValue => ({ re: { ...decimalFromString(s)!, ...(sticky ? { sticky: true } : {}) }, im: { neg: false, digits: "", exp: 0, sticky: false } });
@@ -109,6 +110,36 @@ describe("chipOf and chipFactsOf", () => {
   });
   it("a chip that is not exact and has no facts carries none", () => {
     expect(chipOf({ status: "done", full: "2.5", fullExact: false })).toEqual({ value: "2.5", exact: false });
+  });
+  // G355 (night review 2026-11-14, lo-1): a Home row with σ (G26: Find › G × 5.972ᴇ24 × 70 ÷ 6371000², uncDigits 4, σ
+  // 0.015448769, oracle tools/probes/review-1114/vlo-oracle.py) gives a chip that carries that σ as R61's `unc`, so the
+  // chip and Ans stay inputs of σ; nothing else of the row's facts goes on the chip.
+  const F = "687.39813983572803711"; // the oracle's 20 digits stand for the row's 40
+  const SIGMA = "0.15448769e-1"; // the oracle's σ in decimalToString's form
+  it("a row with σ gives a chip whose unc is that σ", () => {
+    const facts = { exact: false, reliableDigits: 40, inexact: true, uncDigits: 4, uncSigma: SIGMA } as const;
+    expect(chipOf({ status: "done", full: F, fullExact: false, facts })).toEqual({ value: F, exact: false, reliableDigits: 40, unc: SIGMA });
+    // with a ⚠ the σ and the warn both go on
+    expect(chipOf({ status: "done", full: F, fullExact: false, facts: { ...facts, warn: "unaudited" } })).toEqual({ value: F, exact: false, reliableDigits: 40, warn: "unaudited", unc: SIGMA });
+    // and it reaches the engine as an input of σ (chipFacts.ts sigmaChip)
+    expect(chipFactsOf({ "1": chipOf({ status: "done", full: F, fullExact: false, facts })! })["1"]!.unc).toBe(SIGMA);
+  });
+  it("controls: a row without σ, an exact row and a ⚠ row give today's chip", () => {
+    expect(chipOf({ status: "done", full: F, fullExact: false, facts: { exact: false, reliableDigits: 40 } })).toEqual({ value: F, exact: false, reliableDigits: 40 });
+    expect(chipOf({ status: "done", full: "1/3", fullExact: true, facts: { exact: true, reliableDigits: null } })).toEqual({ value: "1/3", exact: true });
+    expect(chipOf({ status: "done", full: "0.12345678", fullExact: false, facts: { exact: false, reliableDigits: 8, warn: "unaudited" } })).toEqual({ value: "0.12345678", exact: false, reliableDigits: 8, warn: "unaudited" });
+  });
+  it("a row with σ never gives an exact chip (M4-4, R61)", () => {
+    const c = chipOf({ status: "done", full: "1/3", fullExact: true, facts: { exact: false, reliableDigits: null, uncDigits: 4, uncSigma: SIGMA } });
+    expect(c).toEqual({ value: "1/3", exact: false, reliableDigits: null, unc: SIGMA });
+  });
+  it("a stored chip reads back with its σ; one stored before G355 (no unc) reads as before", () => {
+    const facts = { exact: false, reliableDigits: 40, uncDigits: 4, uncSigma: SIGMA } as const;
+    const chip = chipOf({ status: "done", full: F, fullExact: false, facts })!;
+    expect(validChips(JSON.parse(JSON.stringify({ "res:1": chip })))).toEqual({ "res:1": chip });
+    const old = { value: F, exact: false, reliableDigits: 40 };
+    expect(validChips({ "res:1": old })).toEqual({ "res:1": old });
+    expect(chipFactsOf(validChips({ "res:1": old })!)["res:1"]).not.toHaveProperty("unc");
   });
   it("named chips go to the engine with their facts; a missing reliableDigits is null", () => {
     expect(chipFactsOf({ "1": { value: "0.33333", exact: false, reliableDigits: 5, warn: "unchecked" }, "2": { value: "1/3", exact: true } })).toEqual({
