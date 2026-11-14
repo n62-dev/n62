@@ -58,6 +58,8 @@ export type ActionBody =
 export interface TypedCall {
   readonly name: string;
   readonly paren: ActionBody;
+  /** R312: the atoms' LaTeX the call replaces when they are not the name's letters (`2exp(`: `\emark`, x, p). */
+  readonly typed?: readonly string[];
 }
 
 /** A constant put on a free key (R4b): the chip table entry its `\const{ID}{symbol}` needs, set when the key inserts it. */

@@ -11,7 +11,8 @@
 // - `*` is ×, `/` is ÷ (a stacked fraction in textbook entry), `^` is xʸ, `(` is the bracket pair ( ), `|` the absolute
 //   value |x|, `{` the list braces { } and `[` the matrix [ ] (R131); `)`, a second `|`, `}` and `]` leave the pair they
 //   close (with no such pair, a dead press).
-// - `e` or `E` right after a number's digits (or its point) is the exponent key ᴇ.
+// - `e` or `E` right after a number's digits (or its point) is the exponent key ᴇ; R312: at `(`, a ᴇ right after a
+//   number followed by letters that with `e` form a known name (`2exp(`, `3erf(`) becomes that function (callKey).
 // - `<`, `>`, `!` and `%` insert the Shift palettes' own symbols (Shift + 6, Shift + 9; `%` as `\%`, R131: a bare `%`
 //   is a LaTeX comment).
 // - Other letters stay name letters. R198 (the owner, 2026-11-12; R31 had them stay letters): a function's name typed
@@ -31,6 +32,7 @@
 // (Option + 5 is `[` on a German Mac; R131f1, optionChar).
 import type { MathfieldElement } from "mathlive";
 import { numberRunStart } from "./numberRun.ts";
+import { EMARK } from "./macros.ts";
 import { keyboard, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
 import { chordOf, desktop, type DeskTarget } from "../keyboard/desktopKeys.ts";
 import type { FindItem } from "../find/types.ts";
@@ -207,8 +209,10 @@ function callsOf(funcs: ReadonlyMap<string, string>, items: readonly FindItem[])
 }
 
 /** R198: the name typed right before the cursor: a run of letters, then digits (`log10`), each an atom of its own at the
- *  cursor's depth; none with a selection or with no letter there. */
-function nameBefore(mf: MathfieldElement): string | undefined {
+ *  cursor's depth; none with a selection or with no letter there. R312: `eName`, e and the name when a ᴇ stands right
+ *  before its letters and a number right before the ᴇ (afterNumber's rule: not a name's digits, x2): the hardware `e`
+ *  typed ᴇ there (`2exp` is 2, ᴇ, x, p). */
+function nameBefore(mf: MathfieldElement): { name: string; eName?: string } | undefined {
   if (!mf.selectionIsCollapsed) return undefined;
   const d = mf.getElementInfo(mf.position)?.depth ?? 0;
   const at = (o: number): string => (o > 0 && (mf.getElementInfo(o)?.depth ?? 0) === d ? (mf.getElementInfo(o)?.latex ?? "") : "");
@@ -217,18 +221,30 @@ function nameBefore(mf: MathfieldElement): string | undefined {
   for (; /^\d$/.test(at(k)); k--) name = at(k) + name;
   const digits = name.length;
   for (; /^[A-Za-z]$/.test(at(k)); k--) name = at(k) + name;
-  return name.length > digits ? name : undefined;
+  if (name.length === digits) return undefined;
+  if (at(k) !== EMARK) return { name };
+  // the ᴇ at k; its parts (MathLive lists them one and two levels deeper before it), then the number's last atom
+  let b = k - 1;
+  while (b > 0 && (mf.getElementInfo(b)?.depth ?? 0) > d) b--;
+  const run = numberRunStart(mf, b, d);
+  return run < b && !/^\p{L}$/u.test(at(run)) ? { name, eName: `e${name}` } : { name };
 }
 
 /** R198: the key a `(` presses after a typed function name: the ( ) key with the function's insert (field.ts puts it in
- *  place of the letters); none where the letters before the cursor name no function, or a name of the user's. */
+ *  place of the letters); none where the letters before the cursor name no function, or a name of the user's. R312 (the
+ *  owner, 2026-11-14): after a number's ᴇ, e and the letters are tried first (`2exp(` is 2·exp, `3erf(` 3·erf): the
+ *  insert replaces the ᴇ and the letters (`typed`); a digit after the ᴇ keeps it ᴇ (nameBefore reads no letter run there). */
 function callKey(mf: MathfieldElement, tg: HwTarget): Key | undefined {
-  const name = nameBefore(mf);
-  const latex = name && !tg.stored?.includes(name) ? calls.get(name) : undefined;
+  const run = nameBefore(mf);
+  const known = (n: string | undefined): string | undefined => (n && !tg.stored?.includes(n) ? calls.get(n) : undefined);
+  const eLatex = known(run?.eName);
+  const name = eLatex === undefined ? run?.name : run?.eName;
+  const latex = eLatex ?? known(run?.name);
   const key = keyboard.byId.get("paren");
   const paren = key?.actions.primary;
-  if (!name || latex === undefined || !key || !paren) return undefined;
-  return { ...key, actions: { primary: { kind: "insert", latex, call: { name, paren } } } };
+  if (!run || !name || latex === undefined || !key || !paren) return undefined;
+  const typed = eLatex === undefined ? undefined : [EMARK, ...run.name];
+  return { ...key, actions: { primary: { kind: "insert", latex, call: typed ? { name, paren, typed } : { name, paren } } } };
 }
 
 /** R131f1: a Mac's Option is Alt with no AltGraph, so its characters (German Mac: Option + 5 is `[`, Option + L is `@`)

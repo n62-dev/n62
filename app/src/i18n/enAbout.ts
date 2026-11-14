@@ -16,7 +16,7 @@ export const enAbout = {
   /** R131: the desktop keys (keyboard/desktopHelp.ts builds the list from spec/keyboard.yaml `desktop:`). */
   "keys": "Desktop keys",
   "keys.hint": "A hardware keyboard's keys",
-  "keys.intro": "A character types its own key: digits, letters, . , + = _ # : ;. Ctrl is Cmd and Alt is Option on a Mac; an Option key that gives a sign such as [ or @ types it. The other keys:",
+  "keys.intro": "A character types its own key: digits, letters, . , + = _ # : ;. Ctrl is Cmd and Alt is Option on a Mac; an Option key that gives a sign such as [ or @ types it. The chords are for US and UK layouts; on other layouts some type their character instead. The other keys:",
   "keys.user": "User key",
   "keys.shift": "Shift",
   "keys.or": "or",
