@@ -59,12 +59,10 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, with rows from lane B)
-The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. S45, S51 and A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10.
+The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 694 | S45 units inside Solve: the design note | sandra, Opus | `p1/sandra-solveunits` | – |
-| 695 | S51 who holds the rights an App Store build would need | sandra, Opus | `p1/sandra-iosrights` | – |
 | 697 | [A145](packages/A145.md) F-Droid's engine build against the release engine (a measurement) | annabell, Sonnet | `p1/annabell-fdroidbits` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
