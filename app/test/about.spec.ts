@@ -32,13 +32,14 @@ test("start fetches no About data; opening Help and about does not either, About
 test.describe("by keys", () => {
   test.beforeEach(async ({ page }) => {
     await open(page);
-    // R173: Report a problem is the second row (after the first-start tips), so About is digit 3 and Parts digit 4
+    // R173: Report a problem is the second row (after the first-start tips), so About is digit 3, Why trust it (R174) digit 4 and Parts digit 5
     await tap(page, ["@mode", "d6", "d7"]);
   });
 
   test("Help and about: About N62, Parts we use and (R131) Desktop keys; digit 1 shows the name, the version, GPL-3.0-or-later and the source URL", async ({ page }) => {
-    await expect(rows(page)).toHaveCount(5);
+    await expect(rows(page)).toHaveCount(6);
     await expect(row(page, "about")).toContainText("About N62");
+    await expect(row(page, "trust")).toContainText("Why trust it");
     await expect(row(page, "parts")).toContainText("Parts we use and their licences");
     await expect(row(page, "keys")).toContainText("Desktop keys");
     await tap(page, ["d3"]);
@@ -80,7 +81,7 @@ test.describe("by keys", () => {
   });
 
   test("Parts we use: a row per part with its licence; Enter on MPFR shows the LGPL text, on GMP both of its licences", async ({ page }) => {
-    await tap(page, ["d4"]);
+    await tap(page, ["d5"]);
     await expect(title(page)).toHaveText("Settings › Help and about › Parts");
     await expect.poll(() => rows(page).count()).toBeGreaterThan(30); // the chunk loads on the first look
     const mpfr = rows(page).filter({ hasText: "MPFR 4.2.2" });
@@ -93,6 +94,44 @@ test.describe("by keys", () => {
     await expect(rows(page).first()).toContainText("LGPL-3.0-or-later");
     await expect(rows(page).last()).toContainText("GPL-2.0-or-later");
   });
+});
+
+test("Why trust it (R174) at 360 × 740: the first line and the last are readable, the level scrolls", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page);
+  await tap(page, ["@mode", "d6", "d7", "d4"]);
+  await expect(title(page)).toHaveText("Settings › Help and about › Why trust it");
+  await expect(text(page)).toContainText("recorded answers", { timeout: 20_000 });
+  await expect(text(page)).toContainText("Giac patches");
+  const box = await sheet(page).boundingBox();
+  const view = page.viewportSize();
+  expect(box && view && box.x >= 0 && box.x + box.width <= view.width).toBe(true); // not cut at the sides
+  const t = text(page);
+  expect(await t.evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(true); // longer than the level: it scrolls
+  // the first line sits inside the text's box at the top
+  const first = await t.evaluate((e) => {
+    const r = document.createRange();
+    r.setStart(e.firstChild as Node, 0);
+    r.setEnd(e.firstChild as Node, 1);
+    const b = r.getBoundingClientRect(), c = e.getBoundingClientRect();
+    return b.top >= c.top - 1 && b.bottom <= c.bottom + 1 && b.left >= c.left - 1 && b.right <= c.right + 1;
+  });
+  expect(first).toBe(true);
+  await sheetKey(page, ["down", "down", "down", "down", "down", "down"]);
+  await expect.poll(() => t.evaluate((e) => e.scrollTop + e.clientHeight >= e.scrollHeight - 1)).toBe(true);
+  await expect(t).toContainText("The second is in RAD.");
+  // the last line sits inside the text's box at the bottom
+  const last = await t.evaluate((e) => {
+    const n = e.lastChild as Node, len = (n.textContent ?? "").length;
+    const r = document.createRange();
+    r.setStart(n, Math.max(0, len - 1));
+    r.setEnd(n, len);
+    const b = r.getBoundingClientRect(), c = e.getBoundingClientRect();
+    return b.top >= c.top - 1 && b.bottom <= c.bottom + 1 && b.right <= c.right + 1;
+  });
+  expect(last).toBe(true);
+  await sheetKey(page, ["left"]);
+  await expect(row(page, "trust")).toHaveAttribute("data-active", "true");
 });
 
 test.describe("by touch", () => {

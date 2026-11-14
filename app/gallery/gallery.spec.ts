@@ -10,8 +10,7 @@ import { foldShots } from "./fold.ts";
 import { popShots } from "./keypop.ts";
 import { eiShots, entryShots, groupShots, ringShots, runShots, lookShots, markShots, menuMarkShots, wrapShots, creditsShots, logoShots } from "./looks.ts";
 
-const OUT = new URL("../test/gallery/", import.meta.url).pathname;
-const THEMES = ["light", "dark"] as const;
+const OUT = new URL("../test/gallery/", import.meta.url).pathname, THEMES = ["light", "dark"] as const;
 
 /** R49: Mode › Settings and each of its levels, at the small phone and the Fairphone 6 (380 px over the maths rows). */
 function settingsShots(): Shot[] {
@@ -24,9 +23,10 @@ function settingsShots(): Shot[] {
     { id: "-data", title: "Settings › Data (R38a, R96): Save a backup, Restore from a file, and the last row that says whether the data is kept", keys: ["d5"] },
     { id: "-counters", title: "Settings › Counters: the presses, the Shift and Alpha counts, the presets switched (R89), since when, Reset", keys: ["d6"] },
     { id: "-help", title: "Settings › Help and about (R87): the first-start tips row, About N62, Parts we use and their licences", keys: ["d7"] },
-    { id: "-about", title: "Help and about › About N62: version, licence, source, credits", keys: ["d7", "d2"] },
-    { id: "-parts", title: "Help and about › Parts: a row per part of THIRD_PARTY.md with its licence, the copyright line under the list", keys: ["d7", "d3"] },
-    { id: "-licence", title: "Parts › a licence's full text, a level that scrolls", keys: ["d7", "d2", "d2"] },
+    { id: "-about", title: "Help and about › About N62: version, licence, source, credits", keys: ["d7", "d3"] },
+    { id: "-trust", title: "Help and about › Why trust it (R174): the counts and the five traps, drawn from the generated facts, a level that scrolls", keys: ["d7", "d4"] },
+    { id: "-parts", title: "Help and about › Parts: a row per part of THIRD_PARTY.md with its licence, the copyright line under the list", keys: ["d7", "d5"] },
+    { id: "-licence", title: "Parts › a licence's full text, a level that scrolls", keys: ["d7", "d3", "d2"] },
   ];
   const sizes = [
     { tag: "small", group: "Small phone (360 × 740)", viewport: { width: 360, height: 740 } },
