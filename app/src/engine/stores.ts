@@ -122,6 +122,19 @@ export function mayStore(text: string): boolean {
   return STORE_TOKENS.some((t) => text.includes(t)) || wordsOf(text).some((w) => STORE_WORDS.has(w));
 }
 
+/** G354: a store Giac answered with a value and did not keep (functionTarget); host.ts words it as the parser's refusal
+ *  of a built-in (enParser.ts parse.builtInName), the view shows those words (session.svelte.ts errorText). */
+export type StoreRefusal = "builtInName";
+
+/** G354: the Giac function a top-level `name:=…` stores into (`mean:=5`): Giac's tree holds the function itself as the
+ *  target, not a name (form "other", its name among the heads). The text gives only the name's place, as in
+ *  assignmentIn. Null for any other input. */
+export function functionTarget(text: string, tree: GiacParse): string | null {
+  if (tree.form !== "other") return null;
+  const name = leadingName(text);
+  return name !== null && tree.heads.includes(name) && afterStore(text, name) !== null ? name : null;
+}
+
 /** What a stored program changes when it runs, read once from its tree. `writes`: the global names its body stores
  *  (its own name and its parameters and locals left out) and the state or string heads it calls, written `head(`;
  *  `calls`: the names it reads, through which the walk goes on (only those that are programs count). */

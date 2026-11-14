@@ -16,6 +16,7 @@ import type { LibraryReply } from "../engine/library.ts";
 import type { MathEngine } from "../engine/types.ts";
 export type { LibraryReply } from "../engine/library.ts";
 import type { Refusal } from "../engine/converge.ts";
+import type { StoreRefusal } from "../engine/stores.ts";
 import type { WordSetting } from "../state/wordSetting.ts";
 import type { Quantity, UnitError, UnitRequest } from "../units/types.ts";
 export type { Quantity, UnitError, UnitRequest, UnitSlot, UnitToken } from "../units/types.ts";
@@ -38,7 +39,7 @@ export interface CalcSettings {
   format: NumberFormat;
 }
 
-export type CalcError = "syntax" | "timeout" | "engine" | Refusal;
+export type CalcError = "syntax" | "timeout" | "engine" | Refusal | StoreRefusal;
 
 export interface HomeOutcome {
   ok: boolean;
