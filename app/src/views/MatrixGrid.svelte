@@ -7,7 +7,6 @@
   // would split a chunk shared with the apps, whose preload lists are in the start chunk).
   // R189: the cell edited on the entry line is marked; the parser's refusal of it shows under the table; the grid
   // leaving (the sheet closed or replaced) ends an edit, and the line that was there comes back.
-  import { onDestroy } from "svelte";
   import { t } from "../i18n/index.ts";
   import { findText } from "../i18n/enFind.ts";
   import type { MatrixGrid } from "./matrixGrid.svelte.ts";
@@ -16,7 +15,7 @@
   const cells = $derived(grid.cells);
   const cols = $derived(Array.from({ length: grid.cols }, (_, c) => c));
   const rows = $derived(Array.from({ length: grid.rows }, (_, r) => r));
-  onDestroy(() => grid.end());
+  $effect(() => () => grid.end()); // (an effect's teardown, as onDestroy: the start chunk exports no onDestroy for this chunk)
   let box: HTMLDivElement | undefined = $state();
   // the highlighted cell stays in sight (a tall or wide matrix scrolls; R189: it is the one the line edits)
   $effect(() => {

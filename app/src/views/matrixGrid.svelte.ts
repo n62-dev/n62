@@ -18,8 +18,7 @@ import { t } from "../i18n/index.ts";
 import { findText } from "../i18n/enFind.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
-import { loadEntry } from "../input/parser.ts";
-import { actionFor, OPENS_SHEET, type Key, type Layer, type Special } from "../keyboard/keyboard.ts";
+import type { Key, Layer, Special } from "../keyboard/keyboard.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { confirmedOptions, formatComplex, markOf, type ComplexValue, type FormatOptions } from "../engine/format.ts";
 import type { ValueFacts } from "../engine/types.ts";
@@ -43,8 +42,9 @@ export interface CellLine {
 }
 /** The keys that keep the grid's own job when no cell is edited: ▲ ▼ ◀ ▶ move, Esc goes back (⌫ and Enter do nothing). */
 const GRID_KEYS: readonly string[] = ["up", "down", "left", "right", "enter", "esc", "bksp"];
-/** While a cell is edited, a key that would open a sheet or change place does nothing (the edit would be lost under it). */
-const HELD: readonly Special[] = [...OPENS_SHEET, "home", "cas", "switch", "symb", "plot", "num", "units"];
+/** While a cell is edited, the specials that act on the line; any other (a sheet, a place, Format, units) does nothing,
+ *  so the edit is not lost under it. */
+const ON_LINE: readonly Special[] = ["clear", "selectGrow", "selectShrink"];
 
 export class MatrixGrid {
   readonly name: string;
@@ -128,7 +128,10 @@ export class MatrixGrid {
     if (!Array.isArray(this.cells) || this.pending) return undefined;
     this.refusal = null;
     const s = line.session;
-    const a = actionFor(key, layer === undefined ? s.shift : layer === "shift", layer === undefined ? s.alpha : layer === "alpha");
+    // the key's action in its layer, as keyboard.ts layerAction picks it (only whether it is special matters here; not
+    // imported: the start chunk would export it for this chunk)
+    const k = key.actions;
+    const a = (layer === undefined ? s.alpha : layer === "alpha") ? (k.alpha ?? k.primary) : (layer === undefined ? s.shift : layer === "shift") ? k.shift : k.primary;
     const special = a?.kind === "special" ? a.name : undefined;
     if (!this.editing) {
       if (special !== undefined || GRID_KEYS.includes(key.id)) return undefined;
@@ -147,7 +150,7 @@ export class MatrixGrid {
       this.end();
       return true;
     }
-    return special !== undefined && HELD.includes(special);
+    return special !== undefined && !ON_LINE.includes(special);
   }
 
   /** R189: the edit ends (Esc, the write, the grid closing): the line that was there comes back. */
@@ -168,7 +171,7 @@ export class MatrixGrid {
     if (!at) return;
     let giac: string;
     try {
-      const entry = await loadEntry();
+      const entry = await import("../input/entry.ts"); // (input/parser.ts loadEntry's module; not that loader: the start chunk would export it for this chunk)
       giac = entry.giacOfEntry(latex, "cas", { chips, names: line.session.userNames }).giac;
     } catch (e) {
       this.refusal = parseFailText(e);
