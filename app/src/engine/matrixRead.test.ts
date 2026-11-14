@@ -115,8 +115,8 @@ describe.skipIf(!giacAvailable())("R188: the stored matrices through the bridge"
 
 // R189f1 (P20): an element's LaTeX takes its kind from the bridge (giac_value's kinds and exact pairs), never from
 // Giac's printed text: an integer or a rational from its exact pair (a frac with its sign before it), a float from kind
-// float, its decimal at DOUBLE_DIGITS with the exponent after the mark ᴇ (the Solve app's rule, entry/macros.ts), any
-// other element through Giac's latex(). By hand: 1.5e-20 is the double Giac prints 1.5e-20.
+// float, its decimal at DOUBLE_DIGITS with the exponent after the mark ᴇ (the Solve app's rule,
+// engine/decimalLatex.ts), any other element through Giac's latex(). By hand: 1.5e-20 is the double Giac prints 1.5e-20.
 describe.skipIf(!giacAvailable())("R189f1: elementTex from the bridge's kinds", () => {
   let giac: EngineGiac;
   beforeAll(async () => {

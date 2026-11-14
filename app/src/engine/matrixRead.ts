@@ -14,7 +14,7 @@ import type { GiacParse, GiacValue } from "./bridge.ts";
 import { ZERO_VALUE, type ComplexValue } from "./format.ts";
 import { floatsAsEvalf, unquote } from "./homeEval.ts";
 import { typedFromPrinted } from "./giacPrint.ts";
-import { decimalLatex } from "../entry/decimalLatex.ts";
+import { decimalLatex } from "./decimalLatex.ts";
 import { DOUBLE_DIGITS, floatsAtDigits, floatsShown, hasFloat, partValue, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import type { ValueFacts } from "./types.ts";
 
@@ -90,8 +90,8 @@ function typedText(t: string): string {
 /** R189: element `k` of `v` (bridge-3's value, printed at DOUBLE_DIGITS as host.ts snapshot prints a stored value) as
  *  the entry line types it, its kind from the bridge (R189f1, P20: never read from the printed text): an integer or a
  *  rational from its exact pair (a frac with its sign before it), a float as its decimal with the exponent after the
- *  mark ᴇ (entry/macros.ts decimalLatex; Giac's latex() writes `\mathrm{-3}` and `1.5e-20`, which the parser does not
- *  read), any other element through Giac's latex() with the degree factor dropped (as homeEval.ts latexShown draws it). */
+ *  mark ᴇ (engine/decimalLatex.ts, the Solve app's rule; Giac's latex() writes `\mathrm{-3}` and `1.5e-20`, which the
+ *  parser does not read), any other element through Giac's latex() with the degree factor dropped (as homeEval.ts latexShown draws it). */
 export function elementTex(giac: Giac, v: GiacValue, k: number): ElementTex {
   const text = v.elements?.[k] ?? "";
   const q = v.exact?.[k];
