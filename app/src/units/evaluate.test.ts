@@ -2,7 +2,7 @@
 // G40: the unit view's angle wrappers as text: sin, cos and tan take an angle, the inverses give one, and the parser's
 // degree factor (R64) is taken off both. No engine (the golden gate's units stage evaluates them).
 import { describe, expect, it } from "vitest";
-import { withAngles } from "./evaluate.ts";
+import { checkArgs, dimInCall, withAngles } from "./evaluate.ts";
 
 describe("withAngles (P15, G40)", () => {
   it("sin, cos and tan take an angle, without the parser's pasdeg", () => {
@@ -25,3 +25,14 @@ describe("withAngles (P15, G40)", () => {
   });
 });
 
+describe("surd as a power (G357)", () => {
+  it("the value's text takes pasusurd, the check's pasucsurd, and a function of a pure number keeps its test", () => {
+    expect(withAngles("surd(27*(pasdimL^3),3)")).toBe("pasusurd(27*(pasdimL^3),3)");
+    expect(checkArgs(withAngles("pasz2*surd(pasz1*pasdimL^3,3)"))).toBe("pasz2*pasucsurd(pasz1*pasdimL^3,3)");
+    expect(checkArgs(withAngles("exp(surd(pasz1*pasdimL^3,3))"))).toBe("pasucf(pasucz(pasucsurd(pasz1*pasdimL^3,3)))");
+  });
+  it("a dimension inside surd alone does not make the check run with the value (a power never refuses)", () => {
+    expect(dimInCall(withAngles("surd(pasz1*pasdimL^3,3)"))).toBe(false);
+    expect(dimInCall(withAngles("exp(surd(pasz1*pasdimL^3,3))"))).toBe(true);
+  });
+});

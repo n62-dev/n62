@@ -247,6 +247,7 @@ cases:
   - { id: "r3h", input: "sqrt(1*{m}^2+1*{s}^2)", message: "Units don't match: L² vs T²", source: "derived", note: "vg-8: the terms inside √ differ (was the function reason)" }
   - { id: "r3i", input: "exp(1*{m}+1*{s})", message: "Units don't match: L vs T", source: "derived", note: "a sum whose terms differ is named first, also inside a function of a pure number (was the function reason)" }
   - { id: "r3j", input: "sin(1*{m})", message: "A function takes a pure number (sin, cos and tan also an angle)", source: "derived", note: "control: one dimension, the wrong one for sin" }
+  - { id: "r3l", input: "surd(pasupm(-8,0.1)*{m^3},3)", oracle: "F(-2)", expect: "-2", mark: "≈", exact: "-2", dim: "m1", unit: "m", unc: "0.0083", unc_oracle: "sqrt((F(1,12)*F('0.1'))**2+(F(1,2)*F(1,144)**2+F(1,12)*F(10,6912))*F('0.1')**4)", shown: "-2.0000 ± 0.0083", source: "derived", note: "σ through the real cube root at x = −8: f′ = 1/12, f″ = 1/144, f‴ = 10/6912 (G41's second order)" }
   - { id: "r3k", input: "atan2(1*{m},1*{s})", message: "Units don't match: L vs T", source: "derived", note: "atan2's two arguments differ (was the function reason)" }
   # --- G37: °C and °F inside a compound unit are a temperature interval (decisions.md "G37"; check-2026-10-19 finding 12) ---
   - { id: "i01", input: "1*{J / k:g oC}", to: "J / k:g K", oracle: "F(1)", expect: "1", mark: "=", exact: "1", source: "derived", note: "inside a compound unit 1 °C is 1 K, no offset (was the temperature-difference refusal)" }
