@@ -10,7 +10,7 @@ Licences are `THIRD_PARTY.md`'s; holders are its Copyright column unless marked.
 
 | Part | Licence | Holders | One holder? |
 |---|---|---|---|
-| Giac | GPL-3.0-or-later | B. Parisse, R. De Graeve (Institut Fourier) and others: the README's list a/ to k/ (the GiNaC-derived parser, Mainz and R. Kreckel) | No: two authors plus others. Our patches 0001–0037 are the owner's (P24). (to verify, sandra: which a/–k/ parts our compiled sources hold, `engine/giac/build-wasm.sh:188`, and `tinymt32.cc`'s header, `:193`) |
+| Giac | GPL-3.0-or-later | B. Parisse, R. De Graeve (Institut Fourier) and others: the README's list a/ to k/ (the GiNaC-derived parser, Mainz and R. Kreckel) | No: two authors plus others. Our patches in `engine/giac/patches/` are the owner's (every commit there is his, `git log --format=%an -- engine/giac/patches/`; P24 covers them unless the mail sending one says otherwise). (to verify, sandra: which a/–k/ parts our compiled sources hold, `engine/giac/build-wasm.sh:188`, and `tinymt32.cc`'s header, `:193`) |
 | GMP | LGPL-3.0-or-later OR GPL-2.0-or-later | Free Software Foundation | Yes, the FSF |
 | MPFR | LGPL-3.0-or-later | Free Software Foundation | Yes, the FSF |
 | GSL | GPL-3.0-or-later | the GSL authors (Jungman, Gough, Galassi, Theiler and others) | No: many. (to verify, sandra: no FSF assignment, from file headers) |
