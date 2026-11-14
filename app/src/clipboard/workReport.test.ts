@@ -64,7 +64,7 @@ const header = (mark: string): string[] => [
   "# Work report, 2026-11-14 09:05",
   "",
   "- View: Home",
-  "- Angle: Radians",
+  "- Angle mode at export: Radians",
   "- Digits: 12",
   "- Number format: Standard",
   `- Decimal mark: ${mark}`,
@@ -81,24 +81,28 @@ describe("R130: the work report", () => {
       "## Step 1",
       "",
       "- Input: `2+3`",
+      "- Angle: not recorded",
       "- Mark: = exact",
       "- Value: `5`",
       "",
       "## Step 2",
       "",
       "- Input: `1/3`",
+      "- Angle: not recorded",
       "- Mark: ≈ rounded: the exact value is 1/3",
       "- Value: `0.333333333333`",
       "",
       "## Step 3",
       "",
       "- Input: `sin(10^22)`",
+      "- Angle: not recorded",
       "- Mark: ⚠ 5 of 12 digits confirmed · decided at limited precision",
       "- Value: `-0.8522`", // the 5 confirmed digits, Standard drops the trailing zero
       "",
       "## Step 4",
       "",
       "- Input: `2×π×(25±0.1) mm → m`", // the request as written, not its LaTeX
+      "- Angle: not recorded",
       "- Mark: ≈ rounded",
       "- Value: `0.157079632679 ± 0.00063 m`",
       "- Uncertainty: ± 0.00063 m, standard uncertainty (σ)",
@@ -106,12 +110,14 @@ describe("R130: the work report", () => {
       "## Step 5",
       "",
       "- Input: `a:=1234567.5`",
+      "- Angle: not recorded",
       "- Mark: = exact", // 2469135/2 is 1234567.5 exactly
       "- Value: `1234567.5`",
       "",
       "## Step 6",
       "",
       "- Input: `2a`",
+      "- Angle: not recorded",
       "- Mark: = exact",
       "- Value: `2469135`",
       "- Uses: `a = 1234567.5` (stored in CAS)",
@@ -119,6 +125,7 @@ describe("R130: the work report", () => {
       "## Step 7",
       "",
       "- Input: `1/0`",
+      "- Angle: not recorded",
       "- Error: Division by zero",
       "",
     ]);
@@ -150,6 +157,21 @@ describe("R130: the work report", () => {
     expect(workReport([max], session(true), head)).toContain("- Input: `max(2.5;3) mm → m`\n");
   });
 
+  it("gives a step its own Angle line when its angle differs from the export's mode, and says when none was recorded", () => {
+    const sin30 = (angle?: "deg" | "rad"): HistoryItem =>
+      row({ latex: "\\sin\\left(30\\right)", text: "1/2", value: num("0.5"), rational: { n: "1", d: "2" }, full: "1/2", fullExact: true, facts: { exact: true, reliableDigits: null }, ...(angle ? { angle } : {}) });
+    const rad = session(); // the export's mode: Radians
+    const lines = (item: HistoryItem, s: Session): string[] => workReport([item], s, head).split("## Step 1")[1]!.split("\n");
+    expect(lines(sin30("deg"), rad).slice(0, 4)).toEqual(["", "", "- Input: `sin(30)`", "- Angle: Degrees"]); // computed in degrees, exported under radians
+    expect(lines(sin30(), rad).slice(0, 4)).toEqual(["", "", "- Input: `sin(30)`", "- Angle: not recorded"]);
+    expect(lines(sin30("rad"), rad).join("\n")).not.toContain("Angle");
+    const deg = session();
+    deg.setAngle("deg");
+    expect(workReport([sin30("deg")], deg, head)).toContain("- Angle mode at export: Degrees\n");
+    expect(lines(sin30("deg"), deg).join("\n")).not.toContain("- Angle:");
+    expect(lines(sin30("rad"), deg).slice(0, 4)).toEqual(["", "", "- Input: `sin(30)`", "- Angle: Radians"]);
+  });
+
   it("is empty when no row is a step", () => {
     expect(workReport([row({ status: "note", text: "x" })], session(), head)).toBe("");
   });
@@ -167,5 +189,7 @@ describe("R130: the work report", () => {
 
   it("holds its format paragraph, word for word, in the format for your AI (R59)", () => {
     expect(aiFormat()).toContain(reportAbout());
+    expect(reportAbout()).toContain("Angle mode at export"); // the header names the mode at export, a step its own (R130f1)
+    expect(reportAbout()).toContain("Angle: the angle mode the step was computed in");
   });
 });
