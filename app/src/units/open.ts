@@ -5,8 +5,9 @@
 // (UnitPad.route), then this view for the keys that are no cell (◀ ▶ between slots, Esc leaves and the line keeps its
 // slots, a key that changes place leaves first; any other key is dead). A hardware key on the field takes the keypad's
 // path through the entry line's own map (entry/hwkeys.ts, `onKey`), so it reaches the pad's actions or does nothing, and
-// does on the field what it does on the line. The view writes a slot only with setPromptValue. What it takes from the
-// start chunk is the route context `c` alone, so the start chunk holds only the units key's import (R24c).
+// does on the field what it does on the line; R313: letters first go into the slot as a unit's symbol (units/typed.ts).
+// The view writes a slot only with setPromptValue. What it takes from the start chunk is the route context `c` alone,
+// so the start chunk holds only the units key's import (R24c).
 // A lazy chunk: route.ts imports it on the first press of the units key. units/pad.ts is in it (a static import). R303
 // (r21 item 4, tools/probes/chunk-groups.mjs restore:pad): pad.ts behind import() no longer splits the start chunk (one
 // file, −19 B gzip) but costs the first open +0.4 kB gzip and a fetch more, so it stays static.
@@ -30,6 +31,7 @@ import { unitCells } from "./userCells.svelte.ts";
 import { putRow, rowSlots, unitRow } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
 import { unitTools } from "./tools.ts";
+import { HwTyping } from "./typed.ts";
 import { UnitView, carry, type ViewHost } from "./view.ts";
 
 /** The open unit view (window.n62.unitView in the e2e). */
@@ -138,7 +140,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   panel.formula.append(mf);
   await mounted;
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  setUp(mf, element, c, hw);
+  setUp(mf, element, c, hw, new HwTyping(view));
   mf.value = view.formula.latex;
   // locked: MathLive edits no prompt itself (and gives a tap on the field no focus); setPromptValue still writes
   for (const id of view.ids) mf.setPromptState(id, "undefined", true);
@@ -195,11 +197,11 @@ function layerAction(key: Key, mods: Mods): Key["actions"]["primary"] {
 
 /** The field: read-only, never MathLive's keyboard nor the system keyboard (inputmode none, as the entry line), with
  *  the entry line's macros (chips, ᴇ). The view's element holds the focus (tabindex -1, nothing editable in it, so no system
- *  keyboard) and its capture keydown sends a hardware key down the keypad's path (entry/hwkeys.ts unitViewKey), from the
- *  field too; a paste, a drop,
+ *  keyboard) and its capture keydown gives a hardware key to the view's typing (R313, units/typed.ts: letters into the
+ *  slot) and else down the keypad's path (entry/hwkeys.ts unitViewKey), from the field too; a paste, a drop,
  *  a cut and the browser's own text input (an IME) are stopped. MathLive's own beforeinput for setPromptValue is not
  *  trusted and goes through (cancelling it would cancel the write). */
-function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw): void {
+function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw, typing: HwTyping): void {
   mf.mathVirtualKeyboardPolicy = "manual";
   mf.menuItems = [];
   mf.inlineShortcuts = {};
@@ -213,7 +215,13 @@ function setUp(mf: MathfieldElement, element: HTMLElement, c: RouteCtx, hw: Hw):
   };
   enforce();
   mf.addEventListener("focusin", enforce);
-  element.addEventListener("keydown", (ev) => hw.unitViewKey(ev, c.entry, c.shell.sheet !== null, () => c.dead()), { capture: true }); // (R303: in hwkeys.ts)
+  element.addEventListener("keydown", (ev) => {
+    // R313: with no sheet open the view's own typing looks first (letters into the slot, `^2`), then the keypad's path
+    if (c.shell.sheet === null && typing.key(ev)) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    } else hw.unitViewKey(ev, c.entry, c.shell.sheet !== null, () => c.dead()); // (R303: in hwkeys.ts)
+  }, { capture: true });
   const stop = (ev: Event): void => {
     if (ev.type === "beforeinput" && !ev.isTrusted) return;
     ev.preventDefault();

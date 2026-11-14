@@ -138,8 +138,12 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  69.84 → 69.95 kB (R264, no unit code changed): phase-1 eaff256f measures 69,820 B, the branch 69,894 B (open 28,361 →
  *  28,398, factors 16,840 → 16,877): giacPrint.ts left the start chunk for a shared lazy chunk of its own (its start part
  *  is giacPrintStart.ts), so the unit view's two chunks that read it import that chunk by name. 69,894 B + 0.05 kB,
- *  rounded up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 69_950;
+ *  rounded up to the next 0.01 kB.
+ *  69.95 → 72.55 kB (R313): phase-1 145a2b0e measures 69,559 B, the branch 72,496 B (open 28,026 → 29,312, slot 10,379 →
+ *  12,030): letters typed on a hardware keyboard into a slot read as a unit (slot.ts readSymbol, isLetters and the slot's
+ *  letter run, with the catalogue's names; typed.ts, the view's typing keys and `^2`; view.ts, the run's glue). 72,496 B +
+ *  0.05 kB, rounded up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 72_550;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -162,12 +166,16 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // The unit view (G16, R24c): one rule over src/units/, so it covers the UI chunk (units/open.ts, 23.33 kB raw) and the
   // builder that Calc.units() loads with the factor table on its first call (units/calc.ts, 9.72 kB): 34 kB (Opus pass 22);
   // 38 kB (Opus pass 24): G81's correlated constants measure 34.04 kB, and R24d and R60–R63 still add; the bar that counts
-  // is the first unit result < 1 s on the Tab One (decisions.md, Units: G81, R24b and R24c).
-  add("Unit view chunk", dynamic("src/units/"), { rawMax: 38 * KB });
+  // is the first unit result < 1 s on the Tab One (decisions.md, Units: G81, R24b and R24c). 39 kB (R313; docs/04 8.3):
+  // phase-1 145a2b0e measures 37.64 kB, the branch 38.92 kB: the hardware keyboard's letters in a slot (typed.ts and the
+  // view's glue in open's chunk, +1.28 kB; the slot's own part is in the shared row below). Why a raise: the night
+  // report of 2026-11-14 says "the next unit package must raise the pin or cut". Not yet confirmed: the raise waits for
+  // the owner's yes, asked in R313's report under "Needs the user".
+  add("Unit view chunk", dynamic("src/units/"), { rawMax: 39 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit
   // view's whole code: its entries plus every shared chunk that holds a src/units/ module. Its bar is a pin at today's
-  // measure, not the 38 kB (decisions.md R24b and R24c: G163, Opus pass 62); a package that grows the unit code raises it with a reason.
+  // measure, not the 39 kB (decisions.md R24b and R24c: G163, Opus pass 62); a package that grows the unit code raises it with a reason.
   const unitEntries = dynamic("src/units/");
   add("Unit view + shared", unitEntries.length > 0 ? [...unitEntries, ...sharedChunksHolding(manifest, modules, "src/units/")] : [], { rawMax: UNIT_VIEW_PIN_RAW });
   // The index and qalc have no fixed place yet (G4 and A2 decide); these match by location and name, so they apply wherever they land.

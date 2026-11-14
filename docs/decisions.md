@@ -109,7 +109,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P22 (2026-10-20): libqalculate leaves the build;** its numbers are checked in (`find/factors.yaml`), refreshed by a developer tool (A21, A60). Archived, "Opus pass 96". Would change if: the unit view needs qalc at run time.
 - **Angles in the unit view (owner, 2026-10-19; built by G40):** an angle is a quantity both ways; the rad drop and the 2π·r·n note as built. Archived. Would change if: G2 item 68 shows the G2 refusing both.
 - **P15 (2026-10-14): the unit view computes on Giac** with the Find index's exact SI factors; libqalculate never runs in the app (P22). Archived. Would change if: a unit need has no clean exact form; the unit view feels slow on the Tab One.
-- **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](archive/r9-unit-pad.md), `spec/unit-pad.yaml`. Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs; the owner misses letters in a slot.
+- **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](archive/r9-unit-pad.md), `spec/unit-pad.yaml`; a hardware keyboard types a unit symbol in a slot (R313). Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs.
 - **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived, "Opus pass 96".
 - **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived, "Opus pass 85". Would change if: keyboard set-ups are shared (a `// key:` line).
 
