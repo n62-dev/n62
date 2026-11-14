@@ -9,7 +9,7 @@ import type { ResultFacts } from "./displayMode.ts";
 import type { CalcSettings } from "../calc/port.ts";
 import type { ChipFactsTable } from "../engine/chipFacts.ts";
 import type { ChipTable } from "../input/chips.ts";
-import type { HistoryItem } from "./session.svelte.ts";
+import type { HistoryItem, Session } from "./session.svelte.ts";
 
 /** The chips an input holds by name (`pasr_<k>`), as the engine takes them (G49): the value and the facts. Here, not in
  *  results.ts, since G211: only a job reads it, after this chunk is in (Session.finish), so it is out of the start chunk. */
@@ -116,9 +116,10 @@ export function casItem(r: CasIn, inexactInput: boolean, giac?: string, s?: Pick
   return out;
 }
 
-/** G211: a unit row (units/row.ts putRow) as Home's history takes it: its `id`, the uid of the row it replaces (`old`:
- *  one uid per unit visit) or a new one, `at` (it finished now), and the angle and digits it was worked out in (`s`, the
- *  settings now, as the view read them for the request). Here in the item chunk, as the rest of what a row keeps. */
-export function placed(row: Omit<HistoryItem, "id">, id: number, old: HistoryItem | undefined, s: Pick<CalcSettings, "angle" | "digits">): HistoryItem {
-  return { ...row, id, uid: old?.uid ?? rowUid(id), at: Date.now(), angle: s.angle, digits: s.digits };
+/** G211: a unit row (units/row.ts putRow) as Home's history takes it: the id and uid of the row it replaces (`old`: one
+ *  uid per unit visit), else new ones; `at` (it finished now), and the angle and digits it was worked out in (the
+ *  session's settings now, as the view read them for the request). Here in the item chunk, as the rest of a row's facts. */
+export function placed(s: Session, row: Omit<HistoryItem, "id">, old: HistoryItem | undefined): HistoryItem {
+  const id = old ? old.id : s.newId();
+  return { ...row, id, uid: old?.uid ?? rowUid(id), at: Date.now(), angle: s.settings.angle, digits: s.settings.digits };
 }

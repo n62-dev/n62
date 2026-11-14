@@ -71,7 +71,7 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
 export function putRow(s: Session, row: Omit<HistoryItem, "id">, id?: number): number {
   const list = s.home;
   const k = id === undefined ? -1 : list.findIndex((i) => i.id === id);
-  const item = placed(row, k < 0 ? s.newId() : (id as number), list[k], s.settings);
+  const item = placed(s, row, list[k]);
   if (k < 0) list.push(item);
   else list[k] = item;
   if (list.length > HISTORY_LIMIT) list.splice(0, list.length - HISTORY_LIMIT);
