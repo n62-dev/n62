@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Night review 2026-11-14
 
-Status: **open** (the owner's answers to section 6 at step 8).
+**Status: open** until the owner answers section 6.
 Written 2026-11-14 by Claude (Opus, the coordinator) on `phase-1` `1f1a80582`; ids minted and docs written on `708566f0a`.
 
 Eight independent hunts (sandra, Opus high) over the 249 merges since the 11-09 review (`f9352ae2a`), each report checked by its own verifier (sofia, Opus high); the packages argued by an author (sandra) and a reviewer (sofia), both Opus xhigh, to AGREED in round 3. Evidence: `.tasks/night-review-2026-11-14/` (outside git); probes in `tools/probes/review-1114/`.
