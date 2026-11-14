@@ -63,9 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 756 | R301 Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
-| 757 | R302 a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | – |
-| 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
 | 781 | [R313](packages/R313.md) on a hardware keyboard letters typed in a unit slot read as a unit | ron, Opus | `p1/ron-slotletters` | R303 |
 | 759 | [R304](packages/R304.md) a capital base prefix after a lone 0 reads as the prefix | ron, Opus | `p1/ron-capprefix` | – |
 | 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |

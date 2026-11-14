@@ -136,6 +136,60 @@ test.describe("the unit view from the keys", () => {
     expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
   });
 
+  // R303 (fh-2): the view's capture listener stopped every chord and every letter, so a hardware keyboard reached no
+  // unit: Alt+F (Math, the desktop table) was dead, and Find opened over the view took no typed letter
+  test("R303: Alt+F opens Find on units; typed letters fill its query and Enter puts the kilometre in the slot", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await page.evaluate(() => window.n62.entry.focus());
+    await page.keyboard.press("Alt+U"); // the units key (spec/keyboard.yaml desktop: tmpl shift)
+    await up(page);
+    await page.keyboard.press("Alt+F");
+    const find = page.getByTestId("find");
+    await expect(find).toBeVisible();
+    await page.keyboard.type("km");
+    await expect.poll(() => page.evaluate(() => window.n62.shell.sheet?.level.filter)).toBe("km");
+    await page.keyboard.press("Enter");
+    await expect(find).toBeHidden();
+    expect(meant(await tokens(page, "u1"))).toBe("k:m");
+    await expect(reading(page)).toHaveText("kilometer");
+    expect(await page.evaluate(() => window.n62.unitView?.field.value)).toMatch(/^72.*\\mathrm\{km\}/);
+    await page.keyboard.press("Escape");
+    await expect(shown(page)).toBeHidden();
+    expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
+  });
+
+  test("R303: with Find opened by a tap over the unit view, typed letters fill its query", async ({ page }) => {
+    await unitsKey(page);
+    await tap(page, ["math"]);
+    await expect(page.getByTestId("find")).toBeVisible();
+    await page.keyboard.type("kel");
+    await expect.poll(() => page.evaluate(() => window.n62.shell.sheet?.level.filter)).toBe("kel");
+    await page.keyboard.press("Backspace");
+    await expect.poll(() => page.evaluate(() => window.n62.shell.sheet?.level.filter)).toBe("ke");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("find")).toBeHidden();
+    await expect(shown(page)).toBeVisible();
+    expect(meant(await tokens(page, "u1"))).toBe("");
+  });
+
+  test("R303 controls: with no sheet open a letter does nothing (P14) and Ctrl+C stays the browser's", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await unitsKey(page);
+    await page.keyboard.press("k");
+    await page.keyboard.press("m");
+    expect(meant(await tokens(page, "u1"))).toBe("");
+    await expect(page.getByTestId("find")).toHaveCount(0);
+    const prevented = await page.evaluate(() => {
+      const el = window.n62.unitView?.element;
+      if (!el) return null;
+      const ev = new KeyboardEvent("keydown", { key: "c", code: "KeyC", ctrlKey: true, bubbles: true, cancelable: true });
+      el.dispatchEvent(ev);
+      return ev.defaultPrevented;
+    });
+    expect(prevented, "Ctrl+C is not taken by the view").toBe(false);
+    await expect(shown(page)).toBeVisible();
+  });
+
   test("Delete, Backspace, the arrows, Enter and Escape press the same keys on the unit view as on the entry line (one map)", async ({ page }) => {
     // every hardware key the entry line or the unit view hands to the keypad goes through entry.onKey: record them
     await page.evaluate(() => {

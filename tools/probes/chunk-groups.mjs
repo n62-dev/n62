@@ -14,7 +14,10 @@
 //            touched); sets, comma-separated, default all: `lib` calc/library.ts imports the error classes of
 //            engine/types.ts and tests them with instanceof; `row` units/row.ts imports a value of state/session.svelte.ts;
 //            `backup` state/backup.ts reads MAX_DIGITS and HAPTIC_MS_RANGE from state/session.svelte.ts and KEY_LAYERS
-//            from keyboard/userKeys.svelte.ts. A restore that matches nothing stops the build.
+//            from keyboard/userKeys.svelte.ts; `pad` (R303, r21 item 4) units/open.ts loads units/pad.ts by import()
+//            again, as before R24c held it in the unit view's chunk. A restore that matches nothing stops the build.
+// --chunk=<src> (R303): also prints that module's chunk (e.g. src/units/open.ts) with its static imports outside the start
+// chunk, and its dynamic imports' chunks: what a first open of that view fetches, gzip.
 // A build takes a few seconds on win99; run the probe under `tools/devlock.sh slice <name> …` all the same.
 // Needs app/public/engine (cd app && npm run engine:copy) and the Find index (npm run index). Read-only against the repo;
 // writes only to _out/. The size test on a variant's build: node app/scripts/size-check.ts tools/probes/_out/chunk-groups/<dir>.
@@ -30,6 +33,7 @@ const outRoot = join(root, "tools/probes/_out/chunk-groups");
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const build = !process.argv.includes("--no-build");
 const list = process.argv.includes("--list");
+const chunkSrc = process.argv.find((a) => a.startsWith("--chunk="))?.slice("--chunk=".length);
 const variants = args.length > 0 ? args : ["base", "group", "restore", "group+restore"];
 
 /** In-memory restores: [set, file under app/src, text in the file, replacement]. Each must match once, or the build stops. */
@@ -41,6 +45,8 @@ const RESTORES = [
   ["backup", "state/backup.ts", 'export const KEY_LAYERS: readonly string[] = ["primary", "shift", "alpha"];', "export const KEY_LAYERS: readonly string[] = USER_LAYERS;"],
   ["backup", "state/backup.ts", "digits: (x) => whole(x, 1, 30), // MAX_DIGITS", "digits: (x) => whole(x, 1, MAX_DIGITS),"],
   ["backup", "state/backup.ts", "ms: (v) => whole(v, 5, 100), click: bool }), // HAPTIC_MS_RANGE", "ms: (v) => whole(v, HAPTIC_MS_RANGE.min, HAPTIC_MS_RANGE.max), click: bool }),"],
+  ["pad", "units/open.ts", 'import { UnitPad, padUnitList } from "./pad.ts";', 'type ProbePad = typeof import("./pad.ts");\nlet probePad: ProbePad | undefined;\nconst probePadReady = import("./pad.ts").then((m) => void (probePad = m));\nconst UnitPad = function (u?: unknown) { return new (probePad as ProbePad).UnitPad(u as never); } as unknown as ProbePad["UnitPad"];\nconst padUnitList = (): ReturnType<ProbePad["padUnitList"]> => (probePad as ProbePad).padUnitList();'],
+  ["pad", "units/open.ts", "unitCells.restore()]);", "unitCells.restore(), probePadReady]);"],
 ];
 
 function configText(group, restores) {
@@ -112,5 +118,22 @@ for (const v of variants) {
   for (const f of start) console.log(`  start  ${f}  ${(modules[f] ?? []).length} app modules${(modules[f] ?? []).length === 1 ? ": " + modules[f][0] : ""}`);
   // the lazy chunks that hold an app module the start chunk also needs would show as shared files in `start`; list
   // the shared (no src) chunks outside the start, with their first modules, so a split of the start graph shows
+  if (chunkSrc !== undefined) {
+    if (!manifest[chunkSrc]) throw new Error(`no chunk for ${chunkSrc}`);
+    const gzOf = (f) => gzipSync(readFileSync(join(dir, f))).length;
+    const own = new Set();
+    const lazy = new Set();
+    const visit = (k) => {
+      const e = manifest[k];
+      if (start.includes(e.file) || own.has(e.file)) return;
+      own.add(e.file);
+      for (const d of e.imports ?? []) visit(d);
+      for (const d of e.dynamicImports ?? []) lazy.add(d);
+    };
+    visit(chunkSrc);
+    const total = [...own].reduce((n, f) => n + gzOf(f), 0);
+    console.log(`  chunk ${chunkSrc}: ${own.size} files outside the start, ${total} B gzip (${[...own].map((f) => `${f} ${gzOf(f)}`).join(", ")})`);
+    for (const k of lazy) if (!own.has(manifest[k].file) && !start.includes(manifest[k].file)) console.log(`    import() ${k}: ${manifest[k].file} ${gzOf(manifest[k].file)} B gzip`);
+  }
   if (list) for (const c of chunks.filter((c) => c.src === undefined && !start.includes(c.file))) console.log(`  shared ${c.file}  ${(modules[c.file] ?? []).slice(0, 4).join(" ")}`);
 }
