@@ -19,13 +19,20 @@ const refuse = (code: StatsRefusal): string => `throw("${REFUSAL_MARK}${code}")`
 const realsOnly = (l: string, k: string): string =>
   `for (${k}:=0;${k}<size(${l});${k}:=${k}+1) { if (type(${l}[${k}])!=integer and type(${l}[${k}])!=rational and type(evalf(${l}[${k}]))!=DOM_FLOAT) ${refuse("notData")}; } `;
 
+/** Giac: sets `flag` to 1 when every element of the list `l` equals its first, compared exactly (the difference is an exact 0
+ *  after normal; Giac's `==` of two floats compares them within epsilon, so a difference is tested), else 0. Index `k`. G353:
+ *  a sum over a float list is no test, its rounding is not 0 (three floats 0.1 gave Sxx = 1E-62). */
+const allEqual = (l: string, k: string, flag: string): string =>
+  `${flag}:=1; for (${k}:=1;${k}<size(${l});${k}:=${k}+1) { if (normal(${l}[${k}]-${l}[0])!=0) ${flag}:=0; } `;
+
 export const STATS_DEFINITIONS: Readonly<Record<string, string>> = {
   // {slope, intercept, r²} of the least-squares line y = slope·x + intercept: slope Sxy/Sxx, intercept ȳ − slope·x̄,
   // r² = Sxy²/(Sxx·Syy) (the square of the correlation). One parameter, the call's sequence (as paspercentile, G158f1):
   // Giac would refuse a fixed (x,y) function a wrong count with its own text. All-equal x has no slope; all-equal y has
-  // a slope (0) but no r² (0/0), and a list cannot hold a refused element, so the whole answer is refused.
+  // a slope (0) but no r² (0/0), and a list cannot hold a refused element, so the whole answer is refused. G353: "all equal"
+  // is decided on the values (allEqual), not on Sxx or Syy alone, whose float sum is rounding (Sxx 1E-62 gave the slope 0).
   linreg:
-    "linreg(pasa_):={ local pasx_,pasy_,pasn_,pask_,pasmx_,pasmy_,pasxx_,pasxy_,pasyy_; " +
+    "linreg(pasa_):={ local pasx_,pasy_,pasn_,pask_,pasmx_,pasmy_,pasxx_,pasxy_,pasyy_,paseq_; " +
     `if (subtype(pasa_)!=1 or size(pasa_)!=2) ${refuse("notData")}; pasx_:=pasa_[0]; pasy_:=pasa_[1]; ` +
     `if (type(pasx_)!=DOM_LIST or type(pasy_)!=DOM_LIST) ${refuse("notData")}; ` +
     realsOnly("pasx_", "pask_") +
@@ -33,17 +40,27 @@ export const STATS_DEFINITIONS: Readonly<Record<string, string>> = {
     `pasn_:=size(pasx_); if (size(pasy_)!=pasn_) ${refuse("listsDiffer")}; if (pasn_==0) ${refuse("emptyList")}; ` +
     "pasmx_:=sum(pasx_)/pasn_; pasmy_:=sum(pasy_)/pasn_; pasxx_:=0; pasxy_:=0; pasyy_:=0; " +
     "for (pask_:=0;pask_<pasn_;pask_:=pask_+1) { pasxx_:=pasxx_+(pasx_[pask_]-pasmx_)^2; pasxy_:=pasxy_+(pasx_[pask_]-pasmx_)*(pasy_[pask_]-pasmy_); pasyy_:=pasyy_+(pasy_[pask_]-pasmy_)^2; } " +
+    allEqual("pasx_", "pask_", "paseq_") +
+    `if (paseq_==1) ${refuse("xAllEqual")}; ` +
+    allEqual("pasy_", "pask_", "paseq_") +
+    `if (paseq_==1) ${refuse("yAllEqual")}; ` +
     `pasxx_:=normal(pasxx_); pasyy_:=normal(pasyy_); if (pasxx_==0) ${refuse("xAllEqual")}; if (pasyy_==0) ${refuse("yAllEqual")}; ` +
     "return list[normal(pasxy_/pasxx_),normal(pasmy_-pasxy_/pasxx_*pasmx_),normal(pasxy_^2/(pasxx_*pasyy_))]; }",
-  // {n, mean, sample s (n−1), population s (n), min, max} of one list, with Giac's mean, stddevp (n−1), stddev (n),
-  // min and max (each golden-checked on its own: stat-mean, stat-stddevp-sample, stat-stddev-population). One value
-  // has no sample deviation (Giac's stddevp([5]) is undef): refused, as sem's is (G155).
+  // {n, mean, sample s (n−1), population s (n), min, max} of one list, with Giac's mean, min and max (golden-checked on
+  // their own: stat-mean). One value has no sample deviation (Giac's stddevp([5]) is undef): refused, as sem's is (G155).
+  // G353: both deviations from S = Σ(x − x0 − m)², m the mean of x − x0 (two passes about the first value x0): the one-pass
+  // Σx² − n·x̄² of Giac's stddev cancels in floats (three stored floats 0.1 gave 1E-31·i). Every value equal to the first
+  // (allEqual, exactly) gives S a zero of the data's type (x0 − x0: 0 for exact data, 0.0 for floats), so both are exactly 0.
   stats1:
-    "stats1(pasl_):={ local pasn_,pask_; " +
+    "stats1(pasl_):={ local pasn_,pask_,pasm_,pass_,paseq_; " +
     `if (subtype(pasl_)==1 or type(pasl_)!=DOM_LIST) ${refuse("notData")}; pasn_:=size(pasl_); if (pasn_==0) ${refuse("emptyList")}; ` +
     realsOnly("pasl_", "pask_") +
     `if (pasn_<2) ${refuse("fewValues")}; ` +
-    "return list[pasn_,mean(pasl_),normal(stddevp(pasl_)),normal(stddev(pasl_)),min(pasl_),max(pasl_)]; }",
+    allEqual("pasl_", "pask_", "paseq_") +
+    "pasm_:=0; for (pask_:=0;pask_<pasn_;pask_:=pask_+1) pasm_:=pasm_+(pasl_[pask_]-pasl_[0]); pasm_:=pasm_/pasn_; " +
+    "pass_:=0; for (pask_:=0;pask_<pasn_;pask_:=pask_+1) pass_:=pass_+(pasl_[pask_]-pasl_[0]-pasm_)^2; " +
+    "if (paseq_==1) pass_:=0; else pass_:=normal(pass_); " +
+    "return list[pasn_,mean(pasl_),normal(sqrt(pass_/(pasn_-1))),normal(sqrt(pass_/pasn_)),min(pasl_),max(pasl_)]; }",
 };
 
 /** The refusal a definition of this file threw in Giac's error text `output` (the code in quotes after the mark); null
