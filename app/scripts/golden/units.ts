@@ -15,6 +15,7 @@ import type { UserCells } from "../../src/units/pad.ts";
 import { isUnitError, type Quantity, type UnitError, type UnitJob } from "../../src/units/types.ts";
 import type { FactorTable } from "../../src/units/factors.ts";
 import type { IndexItem } from "../../src/find/types.ts";
+import { findNames, mergedTable, validateDef, type FindNames, type UnitDef } from "../../src/units/userUnits.ts";
 import { latexToGiacInfo } from "../../src/input/latex-to-giac.ts";
 import { requestOf, slotOf } from "../unit-case.ts";
 import { root, ROUNDS, want, cases, median, freshHost, report, str, same } from "./lib.ts";
@@ -62,6 +63,19 @@ async function tapJob(c: Case, table: FactorTable, settings: HomeSettings, host:
   return { error: "engine", detail: `no alternative ${c.tap}` };
 }
 
+/** G233: a case's units of your own, each checked as a new definition after the ones before it: the table with them,
+ *  or the first refusal's message. */
+function defined(c: Case, table: FactorTable, names: FindNames): FactorTable | string {
+  const defs: UnitDef[] = [];
+  for (const d of c.define ?? []) {
+    const def = { name: d.name, factor: d.factor, of: slotOf(d.of, table) };
+    const r = validateDef(def, table, names, defs);
+    if (!r.ok) return r.message;
+    defs.push(def);
+  }
+  return mergedTable(table, defs);
+}
+
 export async function stageUnits(): Promise<void> {
   const cs = cases("units.yaml");
   const indexFile = process.env.FIND_INDEX_JSON ?? `${root}app/src/find/_gen/find-index.json`;
@@ -69,25 +83,35 @@ export async function stageUnits(): Promise<void> {
     report("units", false, `no Find index at ${indexFile}: run npm run index (N62_QALC_DL_DIR=<main checkout>/engine/qalc/_downloads in a worktree)`);
     return;
   }
-  const table = factorTable(JSON.parse(readFileSync(indexFile, "utf8")) as IndexItem[]);
+  const items = JSON.parse(readFileSync(indexFile, "utf8")) as IndexItem[];
+  const findTable = factorTable(items);
+  const names = findNames(items);
   const settingsOf = (c: Case): HomeSettings => ({ ...defaultHomeSettings, angle: c.settings?.angle ?? "rad" });
   let tapHost: EngineHost | null = null;
   const jobs: (UnitJob | UnitError)[] = [];
-  for (const c of cs)
+  const refusals = new Map<string, string>();
+  for (const c of cs) {
+    const table = defined(c, findTable, names);
+    if (typeof table === "string") {
+      refusals.set(c.id, `refused: ${table}`);
+      jobs.push({ error: "engine", detail: table });
+      continue;
+    }
     jobs.push(c.tap === undefined ? buildJob(requestOf(c.input!, c.to, table), table) : await tapJob(c, table, settingsOf(c), async () => (tapHost ??= await freshHost())));
+  }
   const runs = new Map<string, string[]>(cs.map((c) => [c.id, []]));
   let host: EngineHost | null = null;
   for (let r = 0; r < ROUNDS; r++) {
     host = await freshHost();
     cs.forEach((c, k) => {
       const job = jobs[k]!;
-      runs.get(c.id)!.push(unitGot(isUnitError(job) ? job : host!.units(job, settingsOf(c)), c));
+      runs.get(c.id)!.push(refusals.get(c.id) ?? unitGot(isUnitError(job) ? job : host!.units(job, settingsOf(c)), c));
     });
   }
   let pass = 0;
   for (const c of cs) {
     const want = unitWant(c);
-    const bad = latexMismatch(c, table);
+    const bad = latexMismatch(c, findTable);
     const got = bad === null ? runs.get(c.id)! : [bad];
     if (got.every((g) => g === want)) pass++;
     else console.log(`  units ${c.id}: got ${[...new Set(got)].join(" / ")}, expect ${want}`);

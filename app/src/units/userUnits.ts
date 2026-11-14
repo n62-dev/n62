@@ -35,7 +35,7 @@ const refuse = (key: UnitMessageKey, vars?: Readonly<Record<string, string>>): {
   ({ ok: false, key, message: unitText(key, vars) });
 
 /** Find's names that a name of your own may not take: every unit's and prefix's id and names, each to the symbol a
- *  message shows. */
+ *  message shows (a unit's first name, a prefix's id: fur, M). */
 export interface FindNames {
   units: ReadonlyMap<string, string>;
   prefixes: ReadonlyMap<string, string>;
@@ -48,7 +48,7 @@ export function findNames(items: readonly IndexItem[]): FindNames {
     if (it.kind !== "unit" && it.kind !== "pfx") continue;
     const id = bare(it.id);
     const to = it.kind === "unit" ? units : prefixes;
-    for (const n of [id, ...it.names]) if (!to.has(n)) to.set(n, it.names[0] ?? id);
+    for (const n of [id, ...it.names]) if (!to.has(n)) to.set(n, it.kind === "pfx" ? id : (it.names[0] ?? id));
   }
   return { units, prefixes };
 }

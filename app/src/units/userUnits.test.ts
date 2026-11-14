@@ -121,6 +121,8 @@ describe("a definition refused (G233)", () => {
     expect(why(validateDef({ name: "kilofurlong", factor: "1", of: M }, table, names))).toBe("units.own.pair");
     const r = validateDef({ name: "furlong", factor: "201.168", of: M }, table, names);
     expect(r.ok ? "" : r.message).toBe("Find already has furlong (fur)");
+    const pair = validateDef({ name: "Mm", factor: "1", of: M }, table, names);
+    expect(pair.ok ? "" : pair.message).toBe("Mm reads as M and m in Find");
   });
   it_("a name already among your own units", () => {
     expect(why(validateDef(myfurlong, table, names, [myfurlong]))).toBe("units.own.twice");
