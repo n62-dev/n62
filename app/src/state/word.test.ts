@@ -37,6 +37,17 @@ describe("the key `word` (R194)", () => {
     }
   });
 
+  it("validWord and the backup's `word` check agree on one table of good and bad records", () => {
+    const good = [{ bits: 8, signed: false }, { bits: 16, signed: true }, { bits: 32, signed: false }, { bits: 64, signed: true }];
+    const bad = [{ bits: 12, signed: true }, { bits: "16", signed: true }, { bits: 16, signed: "yes" }, { bits: 16, signed: 1 }, { bits: 16, signed: true, extra: 1 }, { bits: 16 }, { signed: true }, { bits: 16, signed: true, bits2: 8 }, 16, "word", null, undefined, true, []];
+    for (const v of [...good, ...bad]) {
+      expect(VALIDATORS["word"]?.(v), JSON.stringify(v)).toBe(validWord(v) !== undefined);
+      if (v !== undefined) expect(checkBackup(file(v)).ok, JSON.stringify(v)).toBe(validWord(v) !== undefined);
+    }
+    expect(good.every((v) => validWord(v) !== undefined)).toBe(true);
+    expect(bad.every((v) => validWord(v) === undefined)).toBe(true);
+  });
+
   it("validWord keeps a whole record and nothing else", () => {
     expect(validWord({ bits: 8, signed: false })).toEqual({ bits: 8, signed: false });
     expect(validWord({ bits: 12, signed: false })).toBeUndefined();
@@ -67,11 +78,19 @@ describe("the word store (R194)", () => {
     expect(s.value).toEqual({ bits: 32, signed: true });
   });
 
-  it("gives the engine the word only once it is set", async () => {
+  it("gives the engine's settings the word only once it is set", async () => {
     const s = new WordStore(fakeKv());
-    expect(await s.forEngine()).toEqual({});
+    const base = { digits: 9, angle: "deg", format: "std" } as const;
+    await s.restore();
+    for (const out of [s.home(base), s.cas(base)]) {
+      expect(out).toMatchObject({ digits: 9, angle: "deg" });
+      expect(out).not.toHaveProperty("word");
+      expect(out).not.toHaveProperty("signed");
+    }
     s.set({ bits: 16, signed: false });
-    expect(await s.forEngine()).toEqual({ word: 16, signed: false });
+    for (const out of [s.home(base), s.cas(base)]) expect(out).toMatchObject({ digits: 9, angle: "deg", word: 16, signed: false });
+    expect(s.home(base).budgetSteps).toBeGreaterThan(0); // Home's defaults come with it
+    expect(s.cas(base).hardTimeoutS).toBeGreaterThan(0);
   });
 });
 

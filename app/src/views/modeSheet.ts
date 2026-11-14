@@ -24,7 +24,8 @@ import { BRIGHTNESS, validLook, type Look } from "../theme/look.ts";
 import { familyOf, FAMILIES, stepped } from "../theme/lookView.ts";
 import { yourKeysItems, yourKeysValue, type SettingsEnv } from "./yourKeys.ts";
 import { presetRow, switchedRow } from "./presetsView.svelte.ts";
-import { wordStore, type WordStore } from "../state/wordStore.svelte.ts";
+import { wordStore } from "../state/cycleForms.ts";
+import type { WordStore } from "../state/wordStore.svelte.ts";
 import { DEFAULT_WORD, WORD_SIZES, type WordBits, type WordSetting } from "../state/wordSetting.ts";
 /** The presets' model (R88) is part of this chunk; R89 draws it in Mode (views/presetsView.svelte.ts). */
 export { presetsFor } from "../state/presets.svelte.ts";

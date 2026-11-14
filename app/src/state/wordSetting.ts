@@ -20,7 +20,8 @@ export interface WordSetting {
 export const DEFAULT_WORD: WordSetting = { bits: 64, signed: false };
 
 /** The record when it is whole (both fields, no other, a size of WORD_SIZES, a boolean sign); else undefined. Also the
- *  backup's check of the `word` part, so a file never holds what the start would drop. */
+ *  rule the backup's `word` validator repeats (backup.ts VALIDATORS, which stays off this file's chunk; word.test.ts runs both
+ *  on one table), so a file never holds what the start would drop. */
 export function validWord(v: unknown): WordSetting | undefined {
   if (typeof v !== "object" || v === null || Array.isArray(v)) return undefined;
   const keys = Object.keys(v);

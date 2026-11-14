@@ -23,6 +23,7 @@ import {
 } from "./displayMode.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
 import { wordStore } from "./wordStore.svelte.ts";
+export { wordStore };
 
 const isBase = (m: FmtMode | undefined): m is Base => m === "hex" || m === "bin" || m === "oct";
 

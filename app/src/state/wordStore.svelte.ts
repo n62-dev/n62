@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R194 (docs/04 5.4, 6.2): the word size and sign as the session keeps them: one record under the key `word`
-// (wordSetting.ts), read lazily and set from Settings › Numbers › Word. Out of the start chunk (R91's pin): the session
-// asks for it beside a job (state/resultItem.ts `wordOf`), the base forms' code (cycleForms.ts) reads it when it draws.
+// (wordSetting.ts), read lazily and set from Settings › Numbers › Word. Out of the start chunk (R91's pin): EngineCalc
+// takes the settings of every engine request from it (the defaults too, so they stay out of the start chunk), and the
+// base forms' code (cycleForms.ts, whose chunk carries this module) reads it when it draws.
 // Same pattern as the unit pad's cells (units/userCells.svelte.ts): a class on a Kv, and the app's session of it.
+import type { CalcSettings } from "../calc/port.ts";
+import { defaultHomeSettings } from "../engine/homeDefaults.ts";
+import { defaultCasSettings, type CasSettings, type HomeSettings } from "../engine/types.ts";
 import { idbKv, type Kv } from "./storage.ts";
 import { validWord, WORD_KEY, type WordSetting } from "./wordSetting.ts";
 
@@ -35,10 +39,19 @@ export class WordStore {
     void this.kv.set(WORD_KEY, w);
   }
 
-  /** What the engine's settings carry: the word once it was set (after the read), else nothing (its own: 64 unsigned). */
-  async forEngine(): Promise<{ word?: number; signed?: boolean }> {
-    await this.restore();
-    return this.current ? { word: this.current.bits, signed: this.current.signed } : {};
+  /** Home's settings for an engine request: the defaults, the digits and angle, and the word once it was set (after the
+   *  read), else none (the engine's own word: 64 bits, unsigned). */
+  home(s: CalcSettings): HomeSettings {
+    return this.withWord({ ...defaultHomeSettings, digits: s.digits, angle: s.angle });
+  }
+
+  /** CAS's settings for an engine request, as `home` gives Home's. */
+  cas(s: CalcSettings): CasSettings {
+    return this.withWord({ ...defaultCasSettings, digits: s.digits, angle: s.angle });
+  }
+
+  private withWord<T extends object>(base: T): T {
+    return this.current ? { ...base, word: this.current.bits, signed: this.current.signed } : base;
   }
 }
 

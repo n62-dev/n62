@@ -81,14 +81,16 @@ test("a change moves shl(3,7): 384, then 128 in a byte, then −128 in a signed 
   await expect(row(page, "signed")).toHaveAttribute("data-selected", "true");
 });
 
-test("a base form follows the word after a relaunch: 300 is 300 in a byte, 0x12C in 16 bits", async ({ page }) => {
-  await numbers(page);
-  await row(page, "bits").locator('[data-option="16"]').tap();
+test("a base form follows the word after a relaunch: 300 stays 300 in a byte, where the default word draws 0x12C", async ({ page }) => {
   await tap(page, ["d3", "d0", "d0", "enter"]);
   await done(page, 1);
   await tap(page, ["shift", "sub"]);
   await row(page, "hex").tap();
-  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C");
+  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C"); // the default word: 64 bits
+  await numbers(page);
+  await row(page, "bits").locator('[data-option="8"]').tap();
+  await expect(sheet(page)).toBeHidden();
+  await expect(lastResult(page)).toHaveAttribute("data-text", "300"); // 0x12C fits no unsigned byte: the number in its notation
   await reload(page);
-  await expect(lastResult(page)).toHaveAttribute("data-text", "0x12C");
+  await expect(lastResult(page)).toHaveAttribute("data-text", "300"); // a word never read after the reload would draw 0x12C again
 });
