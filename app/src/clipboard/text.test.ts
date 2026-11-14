@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionCsv, sessionLatex, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
 import { markFor, modeOf, renderNumeric, type DisplayContext } from "../state/displayMode.ts";
+import { unitLatex } from "../input/chipUnit.ts";
+import { muter } from "../render/uncMute.ts";
 
 const CTX: DisplayContext = { format: "std", digits: 12, fixDecimals: 4, angle: "rad" };
 
@@ -320,7 +322,7 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     full: "39.488",
     value: re("39.488"),
     facts: { exact: false, reliableDigits: null },
-    units: { input: "12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m}", text: " ± 1.2 m²", unit: "m²", unc: { text: "1.2" }, latex: "\\pm1.2\\,\\mathrm{m}^{2}" },
+    units: { input: "12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m}", text: " ± 1.2 m²", unit: "m²", unc: { text: "1.2" }, latex: `\\pm1.2${unitLatex("m²")}` },
   });
   const rows = [half, third, root, comma, bad, wait, unit];
 
@@ -359,7 +361,7 @@ describe("sessionCsv / sessionLatex (G232)", () => {
       "\\begin{align*}\\sqrt{2} &\\mathrel{\\triangle} 1.4142\\quad\\text{(5 of 12 digits confirmed)}\\end{align*}",
       "\\begin{align*}\\max(1,2) &= 2\\end{align*}",
       "\\begin{align*}1+ &\\rightarrow \\text{Syntax error}\\end{align*}",
-      "\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39.488\\,\\pm1.2\\,\\mathrm{m}^{2}\\end{align*}",
+      "\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39.488\\,\\pm1.2\\,\\text{m²}\\end{align*}",
       "",
     ]);
   });
@@ -377,7 +379,32 @@ describe("sessionCsv / sessionLatex (G232)", () => {
     const lines = sessionLatex([half, { ...half, resultLatex: undefined, facts: undefined }, { ...unit }], { decimalComma: true }, c, "0.1.0").split("\n");
     expect(lines[1]).toBe("\\begin{align*}\\frac12 &= 0{,}5\\end{align*}");
     expect(lines[2]).toBe("\\begin{align*}\\frac12 &= 0{,}5\\end{align*}");
-    expect(lines[3]).toBe("\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39{,}488\\,\\pm1{,}2\\,\\mathrm{m}^{2}\\end{align*}");
+    expect(lines[3]).toBe("\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39{,}488\\,\\pm1{,}2\\,\\text{m²}\\end{align*}");
+  });
+  it("G232f1: no KaTeX-only macro reaches the file (htmlStyle, class): the unit row's unit, PFX, the muted digits, a rare pair", () => {
+    const bare = /\\(?:htmlStyle|class|const|res|unit|pfx)(?![A-Za-z])/;
+    // the unit as unitLatex draws it, in the result and in the stored σ part
+    const l = sessionLatex([unit], {}, CTX, "0.1.0").split("\n")[1] ?? "";
+    expect(l).toBe("\\begin{align*}12.34\\pm0.05\\,\\mathrm{m}\\times3.2\\pm0.1\\,\\mathrm{m} &\\approx 39.488\\,\\pm1.2\\,\\text{m²}\\end{align*}");
+    // PFX: 4700 is drawn 4.7 k as class{pfx}{…} (render/home.ts)
+    const pfx: DisplayContext = { ...CTX, format: "pfx" };
+    const k = done({ latex: "4700", text: "4700", full: "4700", fullExact: true, value: re("4700"), facts: exact, fmt: "pfx" });
+    expect(renderNumeric({ value: k.value!, facts: exact }, "pfx", pfx)?.latex).toContain("\\class{pfx}");
+    const kl = sessionLatex([k], {}, pfx, "0.1.0").split("\n")[1] ?? "";
+    expect(kl).toBe("\\begin{align*}4700 &= 4.7\\,\\mathrm{k}\\end{align*}");
+    // a context with the muter: the digits past σ are drawn class{unc}{…} on the screen
+    const sigma = { exact: false, reliableDigits: null, uncDigits: 2, uncSigma: "0.01" } as const;
+    const m = done({ latex: "x", text: "1.23456", full: "1.23456", value: re("1.23456"), facts: sigma, view: "home" });
+    const mctx: DisplayContext = { ...CTX, mute: muter };
+    expect(renderNumeric(m, "std", mctx, true)?.latex).toContain("\\class{unc}"); // the screen mutes (grouped); the export draws ungrouped
+    const ml = sessionLatex([m], {}, mctx, "0.1.0").split("\n")[1] ?? "";
+    expect(ml).toBe("\\begin{align*}x &\\approx 1.23456\\end{align*}");
+    // a unit row whose input holds a rare pair
+    const rare = { ...unit, units: { ...unit.units, input: "5\\,\\class{pas-rare}{\\mathrm{M}\\mathrm{m}}\\to\\,\\mathrm{m}" } };
+    const rl = sessionLatex([rare], {}, CTX, "0.1.0").split("\n")[1] ?? "";
+    expect(rl).toBe("\\begin{align*}5\\,\\mathrm{M}\\mathrm{m}\\to\\,\\mathrm{m} &\\approx 39.488\\,\\pm1.2\\,\\text{m²}\\end{align*}");
+    for (const x of [l, kl, ml, rl]) expect(x).not.toMatch(bare);
+    expect(sessionLatex([...rows, k, m, rare], {}, { ...pfx, mute: muter }, "0.1.0")).not.toMatch(bare);
   });
   it("LaTeX: N62's own macros are written as the symbols they draw, in the done line and the error line", () => {
     const g = done({ latex: "\\const{G}{G}\\times\\ans", text: "2", full: "2", fullExact: true, value: re("2"), facts: exact, rational: { n: "2", d: "1" } });
