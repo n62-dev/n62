@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R15c2: the top cluster R3 (docs/mockups/top-cluster-r15c.html; decisions.md "R15c"), one test per path of its press
+// R15c2: the top cluster R3 (docs/archive/mockups/top-cluster-r15c.html; decisions.md "R15c"), one test per path of its press
 // table, by touch and by keys; the place name and its hit area; the free keys U1–U6. The editing wing's own jobs are in
 // editwing.spec.ts. Fake engine.
 import { expect, test, type Page } from "@playwright/test";

@@ -47,7 +47,7 @@ function settingsShots(): Shot[] {
   );
 }
 
-/** Two presets saved as the mockup has them (docs/mockups/settings.html section 4): Lab (DEG · ENG 4 · comma, two free
+/** Two presets saved as the mockup has them (docs/archive/mockups/settings.html section 4): Lab (DEG · ENG 4 · comma, two free
  *  keys) and Chemistry (RAD · SCI 4 · point, three keys, Teal), Lab active. */
 async function twoPresets(p: Page): Promise<void> {
   await p.evaluate(async (path) => {
