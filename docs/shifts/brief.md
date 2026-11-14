@@ -90,7 +90,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 764 | [G352](packages/G352.md) a matrix times a list of another length is refused, in either order | gorge, Opus | `p1/gorge-matlistshape` | – |
+| 764 | G352 a matrix times a list of another length is refused, in either order | gorge, Opus | `p1/gorge-matlistshape` | – |
 | 765 | [G353](packages/G353.md) statistics of a float list take two passes, and equal values give exactly 0 | gorge, Opus | `p1/gorge-floatstats` | – |
 | 688 | [A100](packages/A100.md) append to a file in the sync folder (the Tab One) | annabell, Opus | `p1/annabell-folderappend` | – |
 | 689 | [A137](packages/A137.md) the sync folder's write replaces a file whole (the Tab One) | annabell, Opus | `p1/annabell-folderwrite` | – |
