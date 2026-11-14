@@ -116,6 +116,25 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
       ),
     );
   });
+  it("a store that cannot be read leaves every earlier name unknown, for Ans and chips too", () => {
+    const out = py([
+      row("5\\blacktriangleright a", { exact: "5" }),
+      { view: "home", input: "\\frac{1}{\\blacktriangleright a", ok: false, error: "Syntax" },
+      row("\\ans+1", { exact: "6" }),
+      row("\\res{1}{5}+a", { exact: "10", chips: { "res:1": { value: "5", exact: true } } }),
+    ]);
+    expect(out).toBe(
+      file(
+        "a = 5  # N62: = 5",
+        "# N62 NOT TRANSLATED (N62 gave no result): \\frac{1}{\\blacktriangleright a",
+        "# N62: Syntax",
+        "# N62 NOT TRANSLATED (uses line 1): \\ans+1",
+        "# N62: = 6",
+        "# N62 NOT TRANSLATED (uses line 2): \\res{1}{5}+a",
+        "# N62: = 10",
+      ),
+    );
+  });
   it("a row that ended in an error, and a unit row, are not translated", () => {
     expect(py([{ view: "home", input: "\\frac{1}{0}", ok: false, error: "Division by 0" }])).toBe(
       file("# N62 NOT TRANSLATED (N62 gave no result): \\frac{1}{0}", "# N62: Division by 0"),

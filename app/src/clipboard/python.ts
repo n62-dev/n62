@@ -258,7 +258,7 @@ class Translator {
   holds(line: Line, j: number): boolean {
     if (line.name.startsWith("_")) return true;
     const b = this.names.get(line.name);
-    return b !== undefined && "line" in b && b.line === j + 1;
+    return b !== undefined && "line" in b && b.line === j + 1 && this.allUnknown <= j + 1;
   }
 
   /** A row not translated binds nothing: the name it may have stored to is unknown from here on. */
