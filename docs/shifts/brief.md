@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 |---|---|---|---|---|
 | 753 | S58 the start chunk's cut list, measured, before the 63 kB wall | sandra, Opus | `p1/sandra-chunkcuts` | – |
 | 754 | R299 the layout lock pins every numbered list, and the keyboard spec drops its unread `unit_slot` | ron, Sonnet | `p1/ron-locklists` | – |
-| 755 | [R300](packages/R300.md) the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
+| 755 | R300 the matrix grid takes a key by what it does | ron, Opus | `p1/ron-gridkeys` | – |
 | 756 | [R301](packages/R301.md) Store ▶ on a row stores what its title names | ron, Opus | `p1/ron-storerow` | – |
 | 757 | [R302](packages/R302.md) a cell edit keeps the user's line through a kill | ron, Opus | `p1/ron-gridkeep` | R300 |
 | 758 | [R303](packages/R303.md) on a hardware keyboard the unit view opens Find and types its query | ron, Opus | `p1/ron-unitkeys` | – |
@@ -110,22 +110,11 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
 | 785 | [G369](packages/G369.md) %, ‰, ppm and ppb are dimensionless units in the unit view | gorge, Opus | `p1/gorge-ratiounits` | – |
 | 786 | [G370](packages/G370.md) the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
-| 766 | [G354](packages/G354.md) a store Giac refuses shows a refusal, not `ok` | gorge, Opus | `p1/gorge-reservedstore` | – |
-| 767 | [G355](packages/G355.md) a Home row's chip and Ans carry its σ | gorge, Opus | `p1/gorge-chipsigma` | – |
-| 768 | [G356](packages/G356.md) "interpolate" in Find no longer leads to the polynomial through every point | gorge, Opus | `p1/gorge-lagrangealias` | – |
-| 769 | [G357](packages/G357.md) the unit view takes ∛ of a quantity, and a mixed sum inside √, abs or atan2 says the units differ | gorge, Opus | `p1/gorge-unitroots` | – |
-| 770 | [G358](packages/G358.md) a finite value past a deep cancellation is not called an overflow | gorge, Opus | `p1/gorge-overflowtwice` | – |
-| 771 | [G359](packages/G359.md) a cubic with a 10^-30 term no longer kills the engine | gorge, Opus | `p1/gorge-cubictiny` | – |
-| 772 | [G360](packages/G360.md) Giac's other spellings of the decision functions read as one name, and iPart's limit as trunc's | gorge, Opus | `p1/gorge-decisionaliases` | – |
-| 773 | [G363](packages/G363.md) the working precision counts a power of any constant base with an integer exponent | gorge, Opus | `p1/gorge-constpowers` | – |
-| 774 | [G364](packages/G364.md) a real cubic's only real root never shows a noise imaginary part under ≈ | gorge, Opus | `p1/gorge-cubicpair` | G359 |
-| 775 | [G361](packages/G361.md) a linear interpolation in a table, found as "interpolate" | gorge, Opus | `p1/gorge-tableinterp` | G356 |
-| 776 | [G362](packages/G362.md) Math gets arg, re, im, conj, max, min and atan2 as checked functions | gorge, Sonnet | `p1/gorge-mathmenu` | – |
 | 787 | [G372](packages/G372.md) split `homeEval.ts` under 800 lines | gorge, Opus | `p1/gorge-splithomeeval` | – |
 | 788 | [G373](packages/G373.md) split `api.cc` under 800 lines | gorge, Opus | `p1/gorge-splitapi` | – |
 | 789 | [G374](packages/G374.md) split `export.mjs` under 800 lines | gorge, Opus | `p1/gorge-splitexport` | – |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, G365, G371 then R315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the freeze, by day: A91, A82, R292.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). A third stream by day (owner, 2026-11-14, to the freeze): G354 to G360, G363, G364, G361, G362, one at a time through `scripts/pipeline.sh`, beside the lanes (`.tasks/stream-c/`). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, G365, G371 then R315, R267, R268, and G273, G274 (nothing in v0.1.0 reads what they store; after R220's pick). With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the freeze, by day: A91, A82, R292.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".

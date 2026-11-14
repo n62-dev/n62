@@ -24,7 +24,7 @@ import { t } from "../i18n/index.ts";
 import { findText } from "../i18n/enFind.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { parseFailText } from "../input/errors.ts";
-import type { Key, Layer, Special } from "../keyboard/keyboard.ts";
+import type { ActionBody, Key, Layer, Special } from "../keyboard/keyboard.ts";
 import type { Session } from "../state/session.svelte.ts";
 import { confirmedOptions, formatComplex, markOf, type ComplexValue, type FormatOptions } from "../engine/format.ts";
 import type { ValueFacts } from "../engine/types.ts";
@@ -45,6 +45,8 @@ type Settings = AppHost["settings"];
 export interface CellLine {
   readonly entry: Pick<EntryController, "value" | "chips" | "clear" | "set">;
   readonly session: Pick<Session, "shift" | "alpha" | "userNames" | "submit">;
+  /** R300: a key that does nothing in the grid (docs/05 3.7): the double haptic. */
+  dead(): void;
 }
 /** R190: what the sheet's New needs (the session of CellLine less its keys). */
 export type NewLine = Pick<Session, "userNames" | "submit">;
@@ -62,11 +64,14 @@ export interface GridMenuRow {
   readonly label: string;
   readonly reason?: string;
 }
-/** The keys that keep the grid's own job when no cell is edited: ▲ ▼ ◀ ▶ move, Esc goes back (⌫ and Enter do nothing). */
-const GRID_KEYS: readonly string[] = ["up", "down", "left", "right", "enter", "esc", "bksp"];
-/** While a cell is edited, the specials that act on the line; any other (a sheet, a place, Format, units) does nothing,
- *  so the edit is not lost under it. */
-const ON_LINE: readonly Special[] = ["clear", "selectGrow", "selectShrink"];
+/** R300: the editing commands that keep the grid's own job when no cell is edited, read by the action in the layer
+ *  pressed (not the key): ▲ ▼ ◀ ▶ move, ⌫ and Del do nothing. Every other command (Undo, Redo, ⇤, ⇥) is a dead press. */
+const GRID_CMDS: readonly string[] = ["moveUp", "moveDown", "moveToPreviousChar", "moveToNextChar", "deleteBackward", "deleteForward"];
+/** While a cell is edited, the specials that act on the line (Clear is the grid's own: the cell's line only); any other
+ *  (a sheet, a place, Format, units) does nothing, so the edit is not lost under it. */
+const ON_LINE: readonly Special[] = ["selectGrow", "selectShrink"];
+/** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml): an insert that types no cell (it would store, R281). */
+const STORE_ARROW = "\\blacktriangleright";
 
 export class MatrixGrid {
   readonly name: string;
@@ -145,44 +150,50 @@ export class MatrixGrid {
   }
 
   /**
-   * R189: a key while the grid is open (route.ts sheetPress asks first). `undefined`: the sheet's own job (no cell is
-   * edited: ▲ ▼ ◀ ▶ move, Esc goes back, a control keeps its job); `false`: the key runs on the entry line, which edits
-   * the highlighted cell (a key that types starts the edit); `true`: used here (Enter writes the cell, Esc ends the edit,
-   * a key that would open a sheet or change place does nothing while a cell is edited).
+   * R189: a key while the grid is open (route.ts sheetPress asks first; typeLetter too, a hardware letter as a type
+   * action, R300). `undefined`: the sheet's own job (no cell is edited: ▲ ▼ ◀ ▶ move, Esc goes back, a control keeps its
+   * job); `false`: the key runs on the entry line, which edits the highlighted cell (a key that types starts the edit);
+   * `true`: used here (Enter writes the cell, Esc ends the edit, Clear clears the cell's line, a key that would open a
+   * sheet or change place does nothing while a cell is edited). R300: read by the key's action in the layer pressed, not
+   * its id: only a type or an insert that types starts an edit; Store ▶ never runs here, nor does a command (Undo, Redo,
+   * ⇤, ⇥) with no edit (a dead press); during an edit the commands act on the cell's line.
    */
   key(line: CellLine, key: Key, layer: Layer | undefined): boolean | undefined {
     if (!Array.isArray(this.cells) || this.pending) return undefined;
     this.refusal = null;
-    const s = line.session;
-    // the key's action in its layer, as keyboard.ts layerAction picks it (only whether it is special matters here; not
-    // imported: the start chunk would export it for this chunk)
-    const k = key.actions;
-    const a = (layer === undefined ? s.alpha : layer === "alpha") ? (k.alpha ?? k.primary) : (layer === undefined ? s.shift : layer === "shift") ? k.shift : k.primary;
+    const a = actionIn(key, layer, line.session);
     const special = a?.kind === "special" ? a.name : undefined;
     if (this.menu !== null) return this.menuKey(key, special);
+    const store = a?.kind === "insert" && a.latex === STORE_ARROW;
     if (!this.editing) {
       if (special === "menu") {
         this.menuLine = line; // R190: ☰ opens the grid's menu
         this.menu = 0;
         return true;
       }
-      if (special !== undefined || GRID_KEYS.includes(key.id)) return undefined;
+      if (special !== undefined || (a?.kind === "cmd" && GRID_CMDS.includes(a.name))) return undefined;
+      if (!a || a.kind === "cmd" || store) return dead(line); // (no action in this layer: a dead press, as on the line)
       this.saved = { line, latex: line.entry.value, chips: line.entry.chips };
       this.editing = { row: this.row, col: this.col };
       line.entry.clear();
       return false;
     }
-    if (key.id === "enter") {
+    if (special === "enter") {
       const typed = line.entry.value;
       if (typed.trim() === "") this.end(); // nothing typed: the old value stays
       else this.pending = this.write(line, typed, line.entry.chips).finally(() => (this.pending = null)); // keys wait for it
       return true;
     }
-    if (key.id === "esc") {
+    if (special === "esc") {
       this.end();
       return true;
     }
-    return special !== undefined && !ON_LINE.includes(special);
+    if (special === "clear") {
+      line.entry.clear(); // the cell's line only: on an empty line route.ts's Clear would wipe the history
+      return true;
+    }
+    if (store || (special !== undefined && !ON_LINE.includes(special))) return dead(line);
+    return false;
   }
 
   /** R189: the edit ends (Esc, the write, the grid closing): the line that was there comes back. */
@@ -348,6 +359,19 @@ export class MatrixGrid {
     const s = this.settings();
     return { format: engineFormat(s.format), digits: s.digits };
   }
+}
+
+/** The key's action in its layer, as keyboard.ts layerAction picks it (Shift and Alpha from the session when no layer is
+ *  given; not imported: the start chunk would export it for this chunk). */
+function actionIn(key: Key, layer: Layer | undefined, s: CellLine["session"]): ActionBody | undefined {
+  const k = key.actions;
+  return (layer === undefined ? s.alpha : layer === "alpha") ? (k.alpha ?? k.primary) : (layer === undefined ? s.shift : layer === "shift") ? k.shift : k.primary;
+}
+
+/** R300: a dead press in the grid (the double haptic), used up. */
+function dead(line: CellLine): true {
+  line.dead();
+  return true;
 }
 
 /** R189: an element as the line types it: Giac's LaTeX through the tidy path, a float in approx() (a typed decimal is

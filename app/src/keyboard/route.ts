@@ -251,6 +251,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
   // R4b: while Your keys is open, a free key goes to its own slot's row (the cluster stays live above the sheet)
   if (key.user && sheet.goKey(key.id, layerOf(modsFor(c, layer)))) return true;
   const cell = level.grid?.key(c, key, layer); // R189: a matrix grid's cell is edited on the line (matrixGrid.svelte.ts)
+  if (cell === true && layer === undefined) c.session.clearModifiers(); // R300: a key the grid takes (Clear, Store ▶) uses a one-shot Shift up, as on the line
   if (cell !== undefined) return cell;
   // R144 (owner, 2026-11-06): any other tap on the on-screen keypad outside a pick sheet closes it and does nothing
   // else, the press used up; Esc keeps its job (back one level), and a sheet that takes letters (Find, Vars) its keys
@@ -418,10 +419,10 @@ function sheetUndrawn(c: RouteCtx): boolean {
 }
 
 /** The open level's rows are still loading (R87: About 1 2 typed fast, the 2 reached the Loading… row and was lost):
- *  hold the keys until they are in (R8); Esc and the place keys act at once. */
-function rowsLoading(c: RouteCtx, key: Key): boolean {
+ *  hold the keys until they are in (R8); Esc and the place keys act at once. No key: a hardware letter (R300). */
+function rowsLoading(c: RouteCtx, key?: Key): boolean {
   const load = c.shell.sheet?.level.loading();
-  const p = key.actions.primary;
+  const p = key?.actions.primary;
   if (!load || (p?.kind === "special" && AT_ONCE.includes(p.name))) return false;
   void holdKeys(c, load);
   return true;
@@ -453,14 +454,20 @@ export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): v
   run(c, key, mods);
 }
 
-/** A letter from a hardware keyboard (R45, F38): what the keypad's letter key does in this place. */
+/** A letter from a hardware keyboard (R45, F38): what the keypad's letter key does in this place. R300: an open matrix
+ *  grid is asked first, as press asks it (the letter as a type action): it starts the cell's edit, or types into it. */
 export function typeLetter(c: RouteCtx, ch: string): void {
-  if (sheetUndrawn(c)) return wait(c, { letter: ch });
+  if (sheetUndrawn(c) || rowsLoading(c)) return wait(c, { letter: ch });
   const sheet = c.shell.sheet;
   if (sheet) {
     sheet.disarm(); // R281
-    if (sheet.level.filterable) sheet.level.type(sheet.id === FIND_SHEET ? ch.toLowerCase() : ch);
-    return;
+    const grid = sheet.level.grid;
+    if (grid) {
+      if (grid.key(c, letterKey(ch), "primary") !== false) return; // (the grid's menu took it, or its read is still to come)
+    } else {
+      if (sheet.level.filterable) sheet.level.type(sheet.id === FIND_SHEET ? ch.toLowerCase() : ch);
+      return;
+    }
   }
   if (c.shell.loading !== null || c.sheetLoad !== null) return wait(c, { letter: ch });
   c.picked = null;
@@ -468,6 +475,9 @@ export function typeLetter(c: RouteCtx, ch: string): void {
   if (c.shell.app !== null && !c.shell.showsEntry) return c.dead();
   c.entry.run({ kind: "type", text: ch });
 }
+
+/** R300: a hardware letter as a key whose one action types it (no key of the pad: the grid reads its action only). */
+const letterKey = (ch: string): Key => ({ id: "letter", row: 0, col: 0, span: 1, cls: "fn", label: { primary: ch }, actions: { primary: { kind: "type", text: ch } } });
 
 /** Shift and Alpha: a tap is the G2's one-shot (L3's double taps lock), counted for P7 point 4; a flick locks
  *  (P7 point 3): up on Shift = shift lock, down on Alpha = capitals, up on Alpha = lower case. */
@@ -485,10 +495,13 @@ function modifier(c: RouteCtx, name: "shift" | "alpha", layer: Layer | undefined
 export function run(c: RouteCtx, key: Key, mods: Mods): void {
   const { session, shell, entry } = c;
   const action = actionFor(key, mods.shift, mods.alpha, session.settings.entry === "line", c.casKeys);
+  // R300: a matrix grid's cell is edited on this line (matrixGrid.svelte.ts): the line's own jobs on an empty line (Ans
+  // first, a b/c's form cycle, Undo of what Clear took, ▲'s pick of a history row) do not reach behind the grid
+  const cell = shell.sheet?.level.grid?.editing != null;
   if (!isSelect(action)) entry.endSelect(); // R279: any other key ends the chain of Select presses
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
-  if (shell.app === null && historyKey(c, action)) return;
+  if (shell.app === null && !cell && historyKey(c, action)) return;
   if (action.kind === "special") return special(c, action.name);
   if (shell.app !== null) {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;
@@ -497,6 +510,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     if (action.kind === "cmd" && action.name === "undo" && shell.undo()) return; // R261: what Menu › Clear took
     // Ans belongs to Home and CAS; ± (R71) is read by the unit view, from the Home or CAS line
     if (action.kind === "insert" && (action.latex === ANS_CHIP || action.units)) return c.dead();
+  } else if (cell) {
+    // (the cell's line: the key runs on it as typed)
   } else if (entry.empty && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {
     return; // R98: on an empty line Undo brings back what Clear or Delete took first; then the line's own undo (P13)
   } else if (entry.empty && key.id === "frac" && layerOf(mods) === "primary") {
@@ -505,7 +520,7 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     void session.cycleForm();
     return;
   }
-  const ans = shell.app === null && entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult();
+  const ans = shell.app === null && !cell && entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult();
   if (ans) entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   entry.run(action);
   // R281: Store ▶ in Home or CAS opens "Store in" (the value on the line, Ans's row when it put Ans there)
