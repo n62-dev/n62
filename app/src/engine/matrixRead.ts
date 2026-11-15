@@ -13,8 +13,8 @@ import { dropAngleFactor } from "./angles.ts";
 import type { GiacParse, GiacValue } from "./bridge.ts";
 import { ZERO_VALUE, type ComplexValue } from "./format.ts";
 import { floatsAsEvalf, unquote } from "./homeEval.ts";
-import { typedFromPrinted } from "./giacPrint.ts";
-import { decimalLatex } from "./decimalLatex.ts";
+import { mapNumbers, typedFromPrinted } from "./giacPrint.ts";
+import { DECIMAL_EMARK, decimalLatex } from "./decimalLatex.ts";
 import { DOUBLE_DIGITS, floatsAtDigits, floatsShown, hasFloat, partValue, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import type { ValueFacts } from "./types.ts";
 
@@ -92,7 +92,9 @@ function typedText(t: string): string {
  *  the entry line types it, its kind from the bridge (R189f1, P20: never read from the printed text): an integer or a
  *  rational from its exact pair (a frac with its sign before it), a float as its decimal with the exponent after the
  *  mark ᴇ (engine/decimalLatex.ts, the Solve app's rule; Giac's latex() writes `\mathrm{-3}` and `1.5e-20`, which the
- *  parser does not read), any other element through Giac's latex() with the degree factor dropped (as homeEval.ts latexShown draws it). */
+ *  parser does not read), any other element through Giac's latex() with the degree factor dropped (as homeEval.ts latexShown draws it)
+ *  and each float literal's exponent after the mark (R308: `1.5e-20+2.0\cdot i`, which the parser read as the letter e
+ *  minus 20, is `1.5\emark-20+2.0\cdot i`). */
 export function elementTex(giac: Giac, v: GiacValue, k: number): ElementTex {
   const text = v.elements?.[k] ?? "";
   const q = v.exact?.[k];
@@ -102,8 +104,15 @@ export function elementTex(giac: Giac, v: GiacValue, k: number): ElementTex {
     return { tex: den === "1" ? num : `${neg}\\frac{${num.slice(neg.length)}}{${den}}` };
   }
   if (v.kinds?.[k] === "float") return { tex: decimalLatex(text), float: true };
-  const float = hasFloat(text) ? { float: true as const } : {};
-  return { tex: unquote(giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`)), giac: true, ...float };
+  const tex = unquote(giac.eval(`latex(quote(${dropAngleFactor(text, "printed")}))`));
+  return hasFloat(text) ? { tex: exponentsMarked(tex), giac: true, float: true } : { tex, giac: true };
+}
+
+/** R308: every number literal of Giac's LaTeX `tex` that has an exponent (`1.5e-20`, `1.5e+20`, `3e-05`) with the
+ *  exponent after the mark ᴇ as the exponent key types it (`1.5\emark-20`, `1.5\emark20`, `3\emark-5`); the rest as it is
+ *  (the names, a \command, are not number literals: mapNumbers skips them). */
+function exponentsMarked(tex: string): string {
+  return mapNumbers(tex, (mant, exp) => (exp ? `${mant}${DECIMAL_EMARK}${parseInt(exp.slice(1), 10)}` : null), "printed");
 }
 
 /** R189: the grid's store `check.store` for `name`: no store but into `name` and no purge (bridge-2, not evaluated),
