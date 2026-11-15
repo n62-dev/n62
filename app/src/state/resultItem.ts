@@ -3,6 +3,7 @@
 // a result is in, never at the first frame or the first key, so it is a lazy chunk (state/itemLoad.ts) and the decimal
 // code of engine/format.ts it reads stays out of the start chunk. Pure TypeScript, no runes; the golden runner calls it too.
 import { decimalFromRational, decimalFromString } from "../engine/format.ts";
+import { PASDEG } from "../engine/pasdeg.ts";
 import { bracesOf } from "../engine/giacPrint.ts";
 import { FULL_LIMIT, ITEMS_LIMIT, rationalOf, rowUid, type CasIn, type FactsSource, type HomeIn, type ItemResult } from "./results.ts";
 import type { ResultFacts } from "./displayMode.ts";
@@ -25,6 +26,7 @@ export function chipFactsOf(named: ChipTable): ChipFactsTable {
 function withJob(out: ItemResult, r: Pick<ItemResult, "word" | "reads">, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
   if (giac !== undefined && giac.length <= FULL_LIMIT) out.giac = giac;
   if (s) Object.assign(out, { angle: s.angle, digits: s.digits });
+  if (giac?.includes(PASDEG)) out.readsAngle = true; // R265: the one place that decides it (not tied to the stored text's length)
   if (r.word) out.word = r.word;
   if (Array.isArray(r.reads)) out.reads = r.reads.filter((d) => d.value.length <= FULL_LIMIT); // G213f1: as `full`, a longer one not kept
   return out;
