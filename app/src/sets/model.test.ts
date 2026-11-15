@@ -90,6 +90,8 @@ function edited(edit: (j: Record<string, unknown>) => void, base: string = RC_TE
 }
 const inputs = (j: Record<string, unknown>): Record<string, unknown>[] => j["inputs"] as Record<string, unknown>[];
 const steps = (j: Record<string, unknown>): Record<string, unknown>[] => j["steps"] as Record<string, unknown>[];
+/** The steps list as untrusted data, to put a non-object in it. */
+const rawSteps = (j: Record<string, unknown>): unknown[] => j["steps"] as unknown[];
 
 describe("G275 first check: namesIn reads a set's step", () => {
   it("returns a multi-letter name as one and leaves out a called function", () => {
@@ -222,9 +224,9 @@ describe("G275 readSet refuses untrusted text", () => {
   });
 
   it("a step that is not an object", () => {
-    expect(readSet(edited((j) => (steps(j)[1] = "R*C")))).toEqual({ error: "field", path: "steps[1]" });
-    expect(readSet(edited((j) => (steps(j)[1] = null)))).toEqual({ error: "field", path: "steps[1]" });
-    expect(readSet(edited((j) => (steps(j)[1] = ["f", "R*C"])))).toEqual({ error: "field", path: "steps[1]" });
+    expect(readSet(edited((j) => (rawSteps(j)[1] = "R*C")))).toEqual({ error: "field", path: "steps[1]" });
+    expect(readSet(edited((j) => (rawSteps(j)[1] = null)))).toEqual({ error: "field", path: "steps[1]" });
+    expect(readSet(edited((j) => (rawSteps(j)[1] = ["f", "R*C"])))).toEqual({ error: "field", path: "steps[1]" });
   });
 
   it("a field missing, of the wrong type, or not the model's", () => {
