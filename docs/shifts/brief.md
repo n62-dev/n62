@@ -64,7 +64,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 793 | R323 Shift + `( )` types ∥ (par), Shift + 0 types % (owner, 11-14; before the freeze) | ron, Opus | `p1/ron-parpercent` | R322 |
-| 760 | [R305](packages/R305.md) the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
+| 760 | R305 the work report gives a signed negative in hex its decimal and its word, and the Base menu names the word | ron, Opus | `p1/ron-signedreport` | – |
 | 761 | [R306](packages/R306.md) a list, a matrix, cases and an integral read right as plain text | ron, Opus | `p1/ron-plainlists` | G232f1 |
 | 762 | [R307](packages/R307.md) the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | – |
 | 763 | [R308](packages/R308.md) a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | – |
