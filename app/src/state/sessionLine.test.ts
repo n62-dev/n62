@@ -51,12 +51,12 @@ describe("sessionLine (G210)", () => {
     expect(sessionLine(n, O)).toBe(HEAD + String.raw`"id":"r-4",${TS},"view":"home","input":"x","giac":"x","ok":true,"value":"1.4142","mark":"⚠","reliableDigits":5,"angle":"rad","digits":12,"word":null}`);
   });
 
-  it("a unit row: unit, dimension, σ and its why in their own fields, the value a number alone", () => {
+  it("a unit row: unit, dimension, σ and its why in their own fields, the value a number alone; its slots (G216)", () => {
     const r = row({ uid: "r-5", latex: String.raw`2\pi\cdot 25`, giac: "2*pi*25*pasu1", text: "39.488", value: re("39.488"), full: "39.488", fullExact: false,
       facts: { exact: false, reliableDigits: null, digits: 5 }, inexactInput: true, angle: "rad", digits: 12,
-      units: { slots: {}, unit: "m²", dim: "m2", dimText: "L²", unc: { text: "1.2", shown: "39.5 ± 1.2", why: "order2" }, latex: "", text: " ± 1.2 m²", input: "" } });
+      units: { slots: { u3: { tokens: [{ unit: "m" }] } }, unit: "m²", dim: "m2", dimText: "L²", unc: { text: "1.2", shown: "39.5 ± 1.2", why: "order2" }, latex: "", text: " ± 1.2 m²", input: "" } });
     expect(sessionLine(r, O)).toBe(
-      HEAD + String.raw`"id":"r-5",${TS},"view":"home","input":"2\\pi\\cdot 25","giac":"2*pi*25*pasu1","ok":true,"value":"39.488","mark":"≈","reliableDigits":null,"unit":"m²","dim":"m2","sigma":"1.2","sigmaWhy":"order2","angle":"rad","digits":12,"word":null}`,
+      HEAD + String.raw`"id":"r-5",${TS},"view":"home","input":"2\\pi\\cdot 25","giac":"2*pi*25*pasu1","ok":true,"value":"39.488","mark":"≈","reliableDigits":null,"unit":"m²","dim":"m2","sigma":"1.2","sigmaWhy":"order2","slots":{"u3":{"tokens":[{"unit":"m"}]}},"angle":"rad","digits":12,"word":null}`,
     );
   });
 

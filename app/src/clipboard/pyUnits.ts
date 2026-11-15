@@ -147,10 +147,13 @@ function token(t: UnitToken): { name: string; power: number } {
   return { name: `${pfx}${base}`, power: Number(power) };
 }
 
-/** A slot's tokens split at its ÷: each as pint's name and its power (a token below the ÷ with its power negated). */
+/** A slot's tokens split at its ÷: each as pint's name and its power (a token below the ÷ with its power negated); an
+ *  entry that is a name to a power (`m**2`, Find's m^2) is that name with its power multiplied. */
 function factors(slot: UnitSlot): { name: string; power: number }[] {
   return slot.tokens.map((t, i) => {
-    const f = token(t);
+    const tk = token(t);
+    const pw = /^([A-Za-z_][A-Za-z0-9_]*)\*\*(\d+)$/.exec(tk.name);
+    const f = pw ? { name: pw[1] as string, power: tk.power * Number(pw[2]) } : tk;
     return slot.per !== undefined && i >= slot.per ? { ...f, power: -f.power } : f;
   });
 }

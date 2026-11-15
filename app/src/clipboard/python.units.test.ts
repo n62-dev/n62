@@ -132,6 +132,11 @@ describe("pyUnits: the table's forms", () => {
     expect(pintDim("K-1kg1m2mol-1s-2")).toBe("kg*m**2/(K*mol*s**2)");
     expect(pintDim("mol-1")).toBe("1/mol");
   });
+  it("a Find id that is a power of a name is that name with its power", () => {
+    expect(pintAttr(slot("m^2"))).toEqual({ s: "ureg.m**2", p: 4 });
+    expect(pintText(slot("ft^2"))).toBe("ft**2");
+    expect(pintText(slot("m^2 / s"))).toBe("m**2/s");
+  });
   it("leaves out what N62 reads otherwise (rpm counts turns, G40; dB is G17's)", () => {
     for (const id of ["rpm", "tr", "dB", "dBm", "Np", "Btu", "gauss", "c_unit"]) expect(PY_UNITS.has(id)).toBe(false);
   });
