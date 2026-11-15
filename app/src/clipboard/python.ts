@@ -715,17 +715,26 @@ export function translateCells(rows: readonly PyRow[], o: { tag?: string; defs?:
   });
 }
 
+/** G216f1: the import lines a cell writes before its code, the one rule for Copy (translateRows) and the sync file
+ *  (sync/files.ts filesFor). `needs`: the names the cell uses; `had`: those this process already imported in this file.
+ *  Python's own Fraction first, then sympy's names (never pint's), then pint's registry once, when ureg or Q_ is first
+ *  needed, then Q_ once, when Q_ is first needed (also when ureg came in an earlier cell). */
+export function pyImports(needs: Iterable<string>, had: ReadonlySet<string> = new Set()): string[] {
+  const fresh = new Set([...needs].filter((u) => !had.has(u)));
+  const sympy = [...fresh].filter((u) => !PINT.has(u)).sort();
+  const registry = had.has("ureg") || had.has("Q_");
+  // G216: a unit row's Quantity is a float registry's
+  return [
+    ...(fresh.has("Fraction") ? ["from fractions import Fraction"] : []),
+    ...(sympy.length ? [`from sympy import ${sympy.join(", ")}`] : []),
+    ...(!registry && (fresh.has("ureg") || fresh.has("Q_")) ? ["from pint import UnitRegistry", "ureg = UnitRegistry()"] : []),
+    ...(fresh.has("Q_") ? ["Q_ = ureg.Quantity"] : []),
+  ];
+}
+
 /** The rows (a view's history in order, or one row) as a sympy script: the N62 line, the imports it needs, one line per row. */
 export function translateRows(rows: readonly PyRow[], o: PyOptions): string {
   const cells = translateCells(rows);
-  const uses = new Set(cells.flatMap((c) => c.uses));
-  const sympy = [...uses].filter((u) => !PINT.has(u)).sort();
-  // G216: Python's own module first, then sympy, then pint's registry (a unit row's Quantity is a float registry's)
-  const imports = [
-    ...(uses.has("Fraction") ? ["from fractions import Fraction"] : []),
-    ...(sympy.length ? [`from sympy import ${sympy.join(", ")}`] : []),
-    ...(uses.has("ureg") || uses.has("Q_") ? ["from pint import UnitRegistry", "ureg = UnitRegistry()"] : []),
-    ...(uses.has("Q_") ? ["Q_ = ureg.Quantity"] : []),
-  ];
+  const imports = pyImports(cells.flatMap((c) => c.uses));
   return `${[pyHead(o.app), ...imports, ...cells.map((c) => c.code)].join("\n")}\n`;
 }

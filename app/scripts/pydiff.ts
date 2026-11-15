@@ -29,13 +29,12 @@ import { realText } from "../src/clipboard/text.ts";
 import { FUNCTIONS, translateCells, translateRows, type PyRow } from "../src/clipboard/python.ts";
 import { PyUnitMissing, pintText } from "../src/clipboard/pyUnits.ts";
 import { constKey, type ChipTable } from "../src/input/chips.ts";
-import { latexToGiacInfo } from "../src/input/latex-to-giac.ts";
-import { filledLatex, slotFormula } from "../src/input/unitFormula.ts";
+import { slotFormula, unitRequest } from "../src/input/unitFormula.ts";
 import type { IndexItem } from "../src/find/types.ts";
 import { buildJob } from "../src/units/build.ts";
 import { factorTable, type FactorTable } from "../src/units/factors.ts";
 import { unitRow } from "../src/units/row.ts";
-import { isUnitError, type UnitRequest, type UnitSlot } from "../src/units/types.ts";
+import { isUnitError, type UnitSlot } from "../src/units/types.ts";
 import { VENV_PINS } from "./g2check.ts";
 import { pyunitsCheck, venvPython } from "./pyunits-check.ts";
 import { slotOf } from "./unit-case.ts";
@@ -96,7 +95,7 @@ export function unitIndex(path = join(app, "src/find/_gen/find-index.json")): Un
 }
 
 /** G216: a unit row as the unit view runs it (units/view.ts request): the line with a prompt per slot, the empty ones
- *  dropped, the parser's units mode, the job on the engine; the history row units/row.ts writes. */
+ *  dropped, the parser's units mode (unitRequest, the view's own), the job on the engine; the history row units/row.ts writes. */
 function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: UnitIndex): { item: HistoryItem; shown?: string; noShown?: string; value?: ComplexValue } {
   const filled: Record<string, UnitSlot> = Object.fromEntries(Object.entries(row.slots ?? {}).map(([id, t]) => [id, slotOf(t, ix.table)]));
   const chips: ChipTable = {};
@@ -104,12 +103,8 @@ function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: 
     const it = ix.items.find((x) => x.id === `const:${m[1]}`);
     if (it?.value !== undefined) chips[constKey(m[1] as string)] = it.unc === undefined ? { value: it.value, exact: true } : { value: it.value, exact: false, unc: it.unc };
   }
-  const f = slotFormula(row.input);
-  const latex = filledLatex(f, (id) => filled[id] !== undefined);
-  const info = latexToGiacInfo(latex, { units: true, chips });
-  const u = info.units ?? { slots: [], consts: [] };
-  const end = u.end !== undefined ? filled[u.end] : undefined;
-  const req: UnitRequest = { formula: info.giac, slots: u.slots.map((id) => filled[id] as UnitSlot), ...(u.consts.length ? { consts: u.consts } : {}), ...(end ? { end } : {}) };
+  // the view's own request (input/unitFormula.ts unitRequest): its σ chips and value chips' facts too (G216f1)
+  const req = unitRequest(slotFormula(row.input), (id) => filled[id], chips);
   const job = buildJob(req, ix.table);
   const q = isUnitError(job) ? job : host.units(job, s);
   if (isUnitError(q)) return { item: { id: k + 1, view: "home", latex: row.input, status: "error", resultLatex: "", text: JSON.stringify(q), startedAt: 0, approximate: false } };
