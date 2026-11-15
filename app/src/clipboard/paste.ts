@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Paste a number (docs/04 section 2.6): the clipboard is read as one number, or a list of numbers in braces (G109), and it
-// enters as the LaTeX our own keys would have typed, so the parser sees nothing it does not already know. Anything else is refused.
+// enters as the LaTeX our own keys would have typed, so the parser sees nothing it does not already know. A unit row's
+// Copy text (`39.488 ± 1.2 m²`) is pasteUnit.ts's, read with these numbers (R325); anything else is refused.
 import { EMARK } from "../entry/macros.ts";
 import type { TextOptions } from "./text.ts";
 
@@ -11,7 +12,7 @@ export interface PastedNumber {
 
 const MAX_LENGTH = 400;
 
-interface Real {
+export interface Real {
   neg: boolean;
   int: string;
   frac: string;
@@ -19,13 +20,13 @@ interface Real {
 }
 
 /** A real: digits with an optional point, then `e±k`, `ᴇ±k` or `×10^k` (also `*10^k`, `x10^k`, `·10^k`). */
-function realPattern(point: string): RegExp {
+export function realPattern(point: string): RegExp {
   const num = String.raw`(\d+)(?:${point}(\d*))?|${point}(\d+)`;
   const exp = String.raw`(?:[eE\u1D07]([+-]?\d+)|\s*[×x*·]\s*10\s*\^\s*(?:\(\s*([+-]?\d+)\s*\)|([+-]?\d+)))`;
   return new RegExp(String.raw`^([+-]?)\s*(?:${num})(?:${exp})?$`);
 }
 
-function parseReal(s: string, re: RegExp): Real | null {
+export function parseReal(s: string, re: RegExp): Real | null {
   const m = re.exec(s.trim());
   if (!m) return null;
   const [, sign = "", i1, f1, f2, e1, e2, e3] = m;
@@ -38,10 +39,16 @@ function parseReal(s: string, re: RegExp): Real | null {
   };
 }
 
+/** The clipboard text with its minus signs and spaces made plain, trimmed; null when empty, too long or on several lines. */
+export function pasteText(clip: string): string | null {
+  const s = clip.replace(/[−‒–]/g, "-").replace(/[   ]/g, " ").trim();
+  return s === "" || s.length > MAX_LENGTH || /[\r\n]/.test(s) ? null : s;
+}
+
 const isZeroReal = (r: Real): boolean => !/[1-9]/.test(r.int + r.frac);
 
 /** The number as the keys type it: the decimal comma is MathLive's `{,}` (R57), never a bare comma, which is an argument comma. */
-function latexOf(r: Real, comma: boolean): string {
+export function latexOf(r: Real, comma: boolean): string {
   const body = `${r.int}${r.frac ? `${comma ? "{,}" : "."}${r.frac}` : ""}`;
   // the exponent as the exponent key types it (R14): 1.5ᴇ-3
   const exp = r.exp !== 0 && !isZeroReal(r) ? `${EMARK}${r.exp}` : "";
@@ -83,8 +90,8 @@ function pastedList(s: string, o: TextOptions): PastedNumber | null {
  */
 export function parsePastedNumber(clip: string, o: TextOptions = {}): PastedNumber | null {
   const comma = o.decimalComma === true;
-  const s = clip.replace(/[−‒–]/g, "-").replace(/[   ]/g, " ").trim();
-  if (s === "" || s.length > MAX_LENGTH || /[\r\n]/.test(s)) return null;
+  const s = pasteText(clip);
+  if (s === null) return null;
   const re = realPattern(comma ? "," : String.raw`\.`);
   if (s.startsWith("{")) return pastedList(s, o);
 

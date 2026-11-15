@@ -77,10 +77,10 @@ describe("copy → paste gives the value back (P5)", () => {
   }
 });
 
-// R269: Copy on a unit row writes the value, ± σ and the unit. Paste reads one number, so each such text is refused
-// (the notice says so) until Paste reads the unit and σ too ("R269 round trip", decisions.md): never the number alone,
-// the unit and σ dropped. A unit ending in `i` takes the complex branch and must be refused there as well.
-describe("a unit row's Copy text is refused, never pasted without its unit (R269)", () => {
+// R269: Copy on a unit row writes the value, ± σ and the unit. The number reader takes none of these texts: never the
+// number alone, the unit and σ dropped. R325 reads them as a result chip with σ and unit (pasteUnit.ts, pasteUnit.test.ts);
+// Paste tries it when the number reader gives none. A unit ending in `i` takes the complex branch and must be refused there.
+describe("the number reader takes no unit row's Copy text, never the number without its unit (R269, R325)", () => {
   const copied: [string, boolean][] = [
     ["20 m/s", false],
     ["39.488 ± 1.2 m²", false],
