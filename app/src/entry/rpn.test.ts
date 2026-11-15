@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import type { Chip } from "../input/chips.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
-import { arityOf, canPush, inputsOf, RPN_DEPTH, RPN_UNDOS, RpnStack, sharesInput, type RpnLevel } from "./rpn.ts";
+import { arityOf, canPush, inputsOf, inputsOfAll, RPN_DEPTH, RPN_UNDOS, RpnStack, sharesInput, type RpnLevel } from "./rpn.ts";
 
 /** A level of row `uid` worth `value`: an exact chip, drawn as its value, no σ inputs. */
 const L = (uid: string, value = "1", inputs: string[] = []): RpnLevel => ({ uid, chip: { value, exact: true }, shown: value, inputs });
@@ -138,6 +138,13 @@ describe("inputsOf", () => {
   it("a row with no σ rests on none", () => {
     expect(inputsOf({ "res:1": { value: "2", exact: true }, "const:pi": { value: "pi", exact: true } }, "u9", false)).toEqual([]);
     expect(inputsOf({}, "u9", false)).toEqual([]);
+  });
+});
+
+describe("inputsOfAll", () => {
+  it("an operation's level rests on its operands' inputs, sorted with no repeats", () => {
+    expect(inputsOfAll([L("u2", "1", ["row:u2", "const:G"]), L("u1", "1", ["const:G", "pasl_a"])])).toEqual(["const:G", "pasl_a", "row:u2"]);
+    expect(inputsOfAll([L("u2"), L("u1")])).toEqual([]);
   });
 });
 
