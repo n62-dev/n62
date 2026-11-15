@@ -357,8 +357,13 @@ function shownOf(slots: readonly UnitSlot[], table: FactorTable, accept: (n: num
       merged.set(key, f);
     }
   }
-  const factors = [...merged.values()].filter((f) => f.power !== 0n);
-  if (!factors.length) return null;
+  const all = [...merged.values()].filter((f) => f.power !== 0n);
+  // G369: a ratio unit (the index's `ratio`, find/units.yaml) is a number, so beside another unit it drops out (5 %·200 m
+  // is 10 m, not 1000 %·m); ratios alone name a unit only as one ratio to the power 1 (‰·% or %² is none: each slot
+  // alone is tried then)
+  const others = all.filter((f) => table.units.get(f.token.unit)?.ratio !== true);
+  if (!others.length && (all.length > 1 || all[0]?.power !== 1n)) return null;
+  const factors = others.length ? others : all;
   const exps = new Map<string, bigint>();
   let rat: { p: bigint; q: bigint } | null = { p: 1n, q: 1n };
   const giac: string[] = [];

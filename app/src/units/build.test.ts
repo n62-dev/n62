@@ -2,7 +2,7 @@
 // The unit view's builder (G16): tokens → Giac text with the index's factors and the dimension symbols. A small table
 // written here (factors as the index writes them), so the test runs without the generated index.
 import { describe, expect, it } from "vitest";
-import { buildJob, slotGiac } from "./build.ts";
+import { buildJob, shownUnits, slotGiac } from "./build.ts";
 import { chipName } from "../input/chip-giac.ts";
 import { ANS_KEY } from "../input/chips.ts";
 import { CHIP_PREFIX, isChipName } from "../engine/ourNames.ts";
@@ -10,6 +10,7 @@ import { factorTable } from "./factors.ts";
 import { dimKeyOf, dimensionText, parseDimKey } from "./dims.ts";
 import { unitErrorMessage } from "./messages.ts";
 import type { IndexItem } from "../find/types.ts";
+import type { UnitSlot } from "./types.ts";
 
 const unit = (id: string, si: string | undefined, dim: string | undefined, symbol = id): IndexItem => ({
   id: `unit:${id}`, kind: "unit", names: [id], title: id, ...(si ? { si } : {}), ...(dim !== undefined ? { dim } : {}), tier: 0, insert: `\\unit{${id}}{\\mathrm{${symbol}}}`,
@@ -361,5 +362,33 @@ describe("the dimension check's text (G35)", () => {
     expect("error" in buildJob({ formula: "-5*pasu1", slots: [oC] }, table)).toBe(false);
     const sum = buildJob({ formula: "-(5*pasu1)+2", slots: [oC] }, table);
     expect("error" in sum && sum.error).toBe("temperature");
+  });
+});
+
+describe("G369: a ratio unit (%, ‰, ppm, ppb) in the shown unit", () => {
+  // the index's `ratio` flag (find/units.yaml; ratio.test.ts checks the real index carries it)
+  const ratio = (id: string, si: string, symbol = id): IndexItem => ({ ...unit(id, si, "", symbol), ratio: true });
+  const t = factorTable([
+    unit("m", "1", "m1"), unit("s", "1", "s1"), unit("rev", "1", ""), ratio("percent", "1/100", "\\%"), ratio("permille", "1/1000", "‰"), ratio("ppm", "1/1000000"),
+    pfx("k", "1000"),
+  ]);
+  const shown = (slots: UnitSlot[]): string[] => shownUnits({ formula: "", slots }, t).map((u) => `${u.text} ${u.dim} ${u.factor}`);
+  it("alone it is shown as typed, by its symbol (% from the chip's \\%)", () => {
+    expect(shown([{ tokens: [{ unit: "percent" }] }])).toEqual(["%  1/100"]);
+    expect(shown([{ tokens: [{ unit: "permille" }] }])).toEqual(["‰  1/1000"]);
+  });
+  it("beside another unit it drops out: 5 % · 200 m is shown in m, not %·m", () => {
+    expect(shown([{ tokens: [{ unit: "percent" }] }, { tokens: [{ unit: "m" }] }])[0]).toBe("m m1 1");
+    expect(shown([{ tokens: [{ unit: "ppm" }, { prefix: "k", unit: "m" }] }])[0]).toBe("km m1 1000");
+  });
+  it("two ratios are no product unit (‰·%): each slot alone, the first term's first", () => {
+    expect(shown([{ tokens: [{ unit: "permille" }] }, { tokens: [{ unit: "percent" }] }])).toEqual(["‰  1/1000", "%  1/100"]);
+  });
+  it("the flag decides, not the id: a pure number with a factor and no flag stays in the product", () => {
+    const bare = factorTable([unit("m", "1", "m1"), unit("percent", "1/100", "", "\\%")]);
+    expect(shownUnits({ formula: "", slots: [{ tokens: [{ unit: "percent" }] }, { tokens: [{ unit: "m" }] }] }, bare)[0]?.text).toBe("%·m");
+  });
+  it("control: rev is a count, not a ratio, and stays in rev/s", () => {
+    expect(shown([{ tokens: [{ unit: "rev" }, { unit: "s" }], per: 1 }])[0]).toBe("rev/s s-1 1");
   });
 });

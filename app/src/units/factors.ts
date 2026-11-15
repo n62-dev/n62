@@ -12,6 +12,8 @@ export interface UnitFactor {
   dim?: string;
   /** What a message calls it ("°C", "hp"). */
   symbol: string;
+  /** G369: a ratio (%, ‰, ppm, ppb), the index's `ratio`: it drops out of the shown unit beside another unit. */
+  ratio?: true;
 }
 
 export interface ConstFactor {
@@ -37,7 +39,9 @@ export interface FactorTable {
 function symbolOf(it: IndexItem): string {
   const m = /\{\\mathrm\{([^{}]+)\}\}$/.exec(it.insert ?? "");
   const name = it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1);
-  return m && !m[1]!.includes("\\") ? m[1]! : name;
+  // G369: % is \% in LaTeX
+  const sym = m ? m[1]!.replaceAll("\\%", "%") : undefined;
+  return sym !== undefined && !sym.includes("\\") ? sym : name;
 }
 
 /** A Find id without its kind ("unit:m" → "m"). */
@@ -53,7 +57,7 @@ export function factorTable(items: readonly IndexItem[]): FactorTable {
   const prefixes = new Map<string, { si: string; symbol: string }>();
   const consts = new Map<string, ConstFactor>();
   for (const it of items) {
-    if (it.kind === "unit") units.set(bare(it.id), { ...(it.si ? { si: it.si } : {}), ...(it.dim !== undefined ? { dim: it.dim } : {}), symbol: symbolOf(it) });
+    if (it.kind === "unit") units.set(bare(it.id), { ...(it.si ? { si: it.si } : {}), ...(it.dim !== undefined ? { dim: it.dim } : {}), symbol: symbolOf(it), ...(it.ratio ? { ratio: true as const } : {}) });
     else if (it.kind === "pfx" && it.si) prefixes.set(bare(it.id), { si: it.si, symbol: symbolOf(it) });
     else if (it.kind === "const" && it.value)
       consts.set(bare(it.id), {

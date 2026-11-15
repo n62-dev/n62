@@ -316,6 +316,7 @@ units-menu:
   "23": "ucat:Data"
   "24": "ucat:const"
   "25": "ucat:tools"
+  "26": "ucat:Ratio"
 units-cell:
   "1": "u1"
   "2": "u2"
