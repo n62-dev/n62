@@ -21,10 +21,12 @@ describe.skipIf(!full)("Find on the generated index", () => {
   const picked: FindItem[] = [];
   const menu = findMenu(index, (it) => void picked.push(it));
 
-  it("the empty query shows eleven fixed categories, the bit functions last", () => {
+  it("the empty query shows twelve fixed categories, Bits and then Complex last", () => {
     expect(menu.categories.map((c) => c.id)).toEqual(CATEGORIES.map((c) => `cat:${c.id}`));
-    expect(menu.categories).toHaveLength(11);
-    expect(menu.categories.at(-3)?.submenu?.items).toHaveLength(raw.filter((it) => it.kind === "const").length);
+    expect(menu.categories).toHaveLength(12);
+    expect(menu.categories.at(-2)?.id).toBe("cat:bits");
+    expect(menu.categories.at(-1)?.id).toBe("cat:complex");
+    expect(menu.categories.at(-4)?.submenu?.items).toHaveLength(raw.filter((it) => it.kind === "const").length);
   });
 
   // G235: the word operations (G229) and Giac's bit functions, found by name and by the word a user types, in one category
@@ -41,6 +43,27 @@ describe.skipIf(!full)("Find on the generated index", () => {
     }
     const bits = menu.categories.find((c) => c.id === "cat:bits")?.submenu;
     expect(bits?.items.map((it) => it.id).sort()).toEqual([...eight].sort());
+  });
+
+  // G362: arg, re, im, conj, max, min and atan2, each with a golden case that exists and an example; Complex lists four
+  it("arg, re, im, conj, max, min and atan2 are tier 0 with an example and a golden case; Complex lists arg, re, im, conj; max and min end Arithmetic", () => {
+    const seven = ["arg", "re", "im", "conj", "max", "min", "atan2"].map((n) => `fn:${n}`);
+    const here = dirname(fileURLToPath(import.meta.url));
+    const golden = new Set(["home", "precision"].flatMap((f) => [...readFileSync(join(here, `../../../tests/golden/${f}.yaml`), "utf8").matchAll(/\bid: "([^"]+)"/g)].map((m) => m[1])));
+    const curated = (parse(readFileSync(join(here, "../../../find/functions.yaml"), "utf8")) as { functions: { id: string; golden?: string; example?: { input?: string } }[] }).functions;
+    for (const id of seven) {
+      expect(index.byId.get(id)?.tier, id).toBe(0);
+      const c = curated.find((f) => f.id === id);
+      expect(c?.example?.input, `${id}: example`).toBeTruthy();
+      expect(c?.golden !== undefined && golden.has(c.golden), `${id}: golden ${c?.golden}`).toBe(true);
+    }
+    for (const id of seven) expect(menu.search(id.slice(3))[0]?.id, id).toBe(id);
+    const complex = menu.categories.find((c) => c.id === "cat:complex")?.submenu;
+    expect(complex?.items.map((it) => it.id)).toEqual(["fn:arg", "fn:re", "fn:im", "fn:conj"]);
+    const arith = menu.categories.find((c) => c.id === "cat:arith")?.submenu;
+    expect(arith?.items.map((it) => it.id)).toEqual(["fn:abs", "fn:floor", "fn:ceil", "fn:frac", "fn:irem", "fn:gcd", "fn:lcm", "fn:factorial", "fn:comb", "fn:sigfig", "fn:max", "fn:min"]);
+    const trig = menu.categories.find((c) => c.id === "cat:trig")?.submenu;
+    expect(trig?.items.map((it) => it.id)).toEqual(["fn:sin", "fn:cos", "fn:tan", "fn:asin", "fn:acos", "fn:atan", "fn:sinh", "fn:cosh", "fn:tanh", "fn:atan2"]);
   });
 
   // G222: the normal and t distributions (density, cumulative, inverse) are curated, each with a golden case that exists

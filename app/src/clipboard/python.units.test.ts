@@ -3,7 +3,7 @@
 // block), the `# N62:` answers are the rows' own text as given here (5 kg in lb is 5/0.45359237, 20 °C is 68 °F, 2 s·c is
 // 599584916 m: derived), never computed. Whether the code runs and agrees is the pydiff stage's (scripts/pydiff.ts).
 import { describe, expect, it } from "vitest";
-import { translateRows, type PyRow } from "./python.ts";
+import { translateCells, translateRows, type PyRow } from "./python.ts";
 import { PY_UNITS, absTemp, pintAttr, pintDim, pintText } from "./pyUnits.ts";
 import type { UnitSlot } from "../units/types.ts";
 
@@ -107,10 +107,7 @@ describe("translateRows: a unit row through pint (G216)", () => {
       file(...PINT, "_1 = 4186*(ureg.J/(ureg.kg*ureg.delta_degC))  # N62: = 4186 J/(kg·°C)"),
     );
   });
-  it("what a unit row does not translate: σ (G217), a function, a store, a chip, an old line without its slots", () => {
-    expect(py([unitRow("5\\pm0.1", { u1: "kg" }, { mark: "≈", value: "5", unit: "kg", dim: "kg1", sigma: "0.10" })])).toBe(
-      file("# N62 NOT TRANSLATED (σ is not translated): 5\\pm0.1", "# N62: ≈ 5 ± 0.10 kg"),
-    );
+  it("what a unit row does not translate: a function, a store, a chip, an old line without its slots", () => {
     expect(py([unitRow("\\sin\\left(30\\right)", { u1: "deg" }, { mark: "=", exact: "1/2", unit: "", dim: "" })])).toBe(
       file("# N62 NOT TRANSLATED (Sin in a unit row is not translated): \\sin\\left(30\\right)", "# N62: = 1/2"),
     );
@@ -125,6 +122,60 @@ describe("translateRows: a unit row through pint (G216)", () => {
         { view: "home", input: "\\ans\\times2", ok: true, mark: "=", exact: "20", ans: { value: "10", exact: true } },
       ]),
     ).toBe(file(...PINT, "_1 = (5*ureg.N)*(2*ureg.m)  # N62: = 10 N·m", "_2 = 10*2  # an earlier result  # N62: = 20"));
+  });
+});
+
+// G217: σ through uncertainties. The rows' answers are given here as the session line keeps them; σ's texts are derived
+// (GUM 5.1.2 with its note, N62's rule, evaluate.ts): (1 ± 0.5)² has σ² = 1 + 1/8, σ ≈ 1.06 → "1.1", share 1/9 > 0.1
+// (order2); 3 ± 0.2 squared has σ² = 1.44 + 0.0032, σ ≈ 1.2013 → "1.2", share 0.002 (no why); 2·(1 ± 0.1) is 0.20;
+// (1 ± 0.1) + (1 ± 0.1)·2.5 has σ = √0.0725 ≈ 0.269 → "0.27".
+const UFLOAT = "from uncertainties import ufloat";
+const NOTE = "(N62's σ includes the second-order term; uncertainties is first-order)";
+describe("translateRows: σ through uncertainties (G217)", () => {
+  it("(1 ± 0.5)²: one ufloat named once, the expression x**2, and the second-order note after the value and σ", () => {
+    expect(py([unitRow("\\left(1\\pm0.5\\right)^2", {}, { mark: "≈", value: "1", unit: "", dim: "", sigma: "1.1", sigmaWhy: "order2" })])).toBe(
+      file(UFLOAT, "_1_u1 = ufloat(1, 0.5)", `_1 = _1_u1**2  # N62: ≈ 1 ± 1.1 ${NOTE}`),
+    );
+  });
+  it("a linear row has no note; a slot makes the ufloat a Quantity", () => {
+    const out = py([unitRow("2\\times\\left(1\\pm0.1\\right)", { u2: "kg" }, { mark: "≈", value: "2", unit: "kg", dim: "kg1", sigma: "0.20" })]);
+    expect(out).toBe(file(...PINT, UFLOAT, "_1_u1 = ufloat(1, 0.1)", "_1 = 2*(_1_u1*ureg.kg)  # N62: ≈ 2 ± 0.20 kg"));
+    expect(py([unitRow("5\\pm0.1", { u1: "kg" }, { mark: "≈", value: "5", unit: "kg", dim: "kg1", sigma: "0.10" })])).toBe(
+      file(...PINT, UFLOAT, "_1_u1 = ufloat(5, 0.1)", "_1 = _1_u1*ureg.kg  # N62: ≈ 5 ± 0.10 kg"),
+    );
+    // two typed ± values are two inputs (G18), a sum of them is linear; a decimal in a σ row is a float (no Fraction × ufloat)
+    expect(py([unitRow("\\left(1\\pm0.1\\right)+\\left(1\\pm0.1\\right)\\times2.5", {}, { mark: "≈", value: "3.5", unit: "", dim: "", sigma: "0.27" })])).toBe(
+      file(UFLOAT, "_1_u1 = ufloat(1, 0.1)", "_1_u2 = ufloat(1, 0.1)", "_1 = _1_u1 + _1_u2*2.5  # N62: ≈ 3.5 ± 0.27"),
+    );
+  });
+  it("R115: a chip used twice is one ufloat; a non-linear row has the note whatever its why", () => {
+    const chips = { "res:1": { value: "3", exact: false, unc: "0.2" } };
+    expect(py([unitRow("\\res{1}{3}\\times\\res{1}{3}", {}, { mark: "≈", value: "9", unit: "", dim: "", sigma: "1.2", chips })])).toBe(
+      file(UFLOAT, "_1_u1 = ufloat(3, 0.2)", `_1 = _1_u1*_1_u1  # N62: ≈ 9 ± 1.2 ${NOTE}`),
+    );
+  });
+  it("a why of jump or singular adds N62's ⚠ reason", () => {
+    expect(py([unitRow("\\frac{1}{0.1\\pm0.2}", {}, { mark: "≈", value: "10", unit: "", dim: "", sigma: "110", sigmaWhy: "singular" })])).toBe(
+      file(UFLOAT, "_1_u1 = ufloat(0.1, 0.2)", `_1 = 1/_1_u1  # N62: ≈ 10 ± 110 ⚠ the interval reaches a singular point ${NOTE}`),
+    );
+  });
+  it("the sync file's tag ends the ufloat's name too; Home's Ans after a σ row is its number", () => {
+    expect(translateCells([unitRow("5\\pm0.1", {}, { mark: "≈", value: "5", unit: "", dim: "", sigma: "0.10" })], { tag: "_p" })[0]?.code).toBe(
+      "_1_p_u1 = ufloat(5, 0.1)\n_1_p = _1_p_u1  # N62: ≈ 5 ± 0.10",
+    );
+    expect(
+      py([unitRow("5\\pm0.1", {}, { mark: "≈", value: "5", unit: "", dim: "", sigma: "0.10" }), { view: "home", input: "\\ans\\times2", ok: true, mark: "=", exact: "10", ans: { value: "5", exact: false } }]),
+    ).toBe(file(UFLOAT, "_1_u1 = ufloat(5, 0.1)", "_1 = _1_u1  # N62: ≈ 5 ± 0.10", "_2 = 5*2  # an earlier result  # N62: = 10"));
+  });
+  it("not translated: a result chip as σ (R271), a constant with an uncertainty", () => {
+    const chips = { "res:1": { value: "0.1", exact: false } };
+    expect(py([unitRow("5\\pm\\res{1}{0.1}", {}, { mark: "≈", value: "5", unit: "", dim: "", sigma: "0.10", chips })])).toBe(
+      file("# N62 NOT TRANSLATED (a result chip as σ is not translated): 5\\pm\\res{1}{0.1}", "# N62: ≈ 5 ± 0.10"),
+    );
+    const c = { "const:c": { value: "299792458", exact: false, unc: "1" } };
+    expect(py([unitRow("\\const{c}{c}", {}, { mark: "≈", value: "299792458", unit: "m/s", dim: "m1s-1", sigma: "1", chips: c })])).toBe(
+      file("# N62 NOT TRANSLATED (a constant with an uncertainty is not translated): \\const{c}{c}", "# N62: ≈ 299792458 ± 1 m/s"),
+    );
   });
 });
 

@@ -17,9 +17,9 @@ export interface Category {
 const fn = (...names: string[]): string[] => names.map((n) => `fn:${n}`);
 
 export const CATEGORIES: readonly Category[] = [
-  { id: "arith", title: "cat.arith", ids: fn("abs", "floor", "ceil", "frac", "irem", "gcd", "lcm", "factorial", "comb", "sigfig") },
+  { id: "arith", title: "cat.arith", ids: fn("abs", "floor", "ceil", "frac", "irem", "gcd", "lcm", "factorial", "comb", "sigfig", "max", "min") },
   { id: "powers", title: "cat.powers", ids: [...fn("sqrt", "surd"), "tmpl:cbrt", ...fn("exp", "ln", "log10")] },
-  { id: "trig", title: "cat.trig", ids: fn("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh") },
+  { id: "trig", title: "cat.trig", ids: fn("sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "atan2") },
   { id: "calculus", title: "cat.calculus", ids: fn("int", "diff", "limit") },
   { id: "algebra", title: "cat.algebra", ids: fn("solve") },
   { id: "matrix", title: "cat.matrix", ids: fn("det", "inv", "tran", "trn", "cross", "dot", "norm", "rref", "eigenvals", "egv") },
@@ -29,6 +29,8 @@ export const CATEGORIES: readonly Category[] = [
   { id: "units", title: "cat.units", kinds: ["unit", "pfx"] },
   // G235: the eleventh, so the digits 1…9, 0 keep their categories; the word operations are ours (engine/wordOps.ts), the three bit* are Giac's
   { id: "bits", title: "cat.bits", ids: fn("bitand", "bitor", "bitxor", "bnot", "shl", "shr", "rotl", "rotr") },
+  // G362: the twelfth, so the digits 1…9, 0 keep their categories; the phasor entry (R180) makes the angle a number to compute with
+  { id: "complex", title: "cat.complex", ids: fn("arg", "re", "im", "conj") },
 ];
 
 /** The items of a category, in its order; an id the index lacks is left out. */
