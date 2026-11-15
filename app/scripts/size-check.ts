@@ -530,8 +530,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (entry/controller.ts recalledIn, dropped by any edit; App.svelte reads it), readsAngle (set where the row's job is kept) and typedIn, the mode the row was typed in (session.svelte.ts, storedItem.ts reads it back); all of it is on the
  *  start's own drawing of the stored history. A cut was looked for: folding History's muted lines into one list saved raw
  *  bytes but cost gzip. Under the budget of 63 kB (decisions.md Start chunk room). 62,445 B + 0.05 kB, rounded up to
- *  the next 10 B. */
-export const START_PIN_GZIP = 62_500;
+ *  the next 10 B.
+ *  62,500 → 62,600 B (R327): Shift + 1 is the uncertainty sheet, a reserved cell filled: the key's legend and action in the
+ *  shipped spec, "uncertainty" among the sheet keys, its case and the picked row's in route.ts. The sheet, its σ check and
+ *  its import are in the sheet's chunk (tmplSheet.ts, as Base) and a chunk of their own; the units key's loader is shared
+ *  (route.ts lazy). Phase-1 12fe787b measures 62.45 kB gzip (175.88 kB raw), the branch 62,544 B (176,133 B raw):
+ *  62,544 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_600;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
