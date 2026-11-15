@@ -14,7 +14,7 @@ import { decimalToString, roundSignificant } from "../engine/format.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
 import { limitDigits, worseFacts } from "./sigmaFacts.ts";
-import { shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
+import { parseDecimal, shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
 const ANY_DIM = BASES.map((b) => `has(pasy_,${b.symbol})`).join(" or ");
@@ -95,8 +95,9 @@ const BOOL = "['<','<=','>','>=','==','=','!=','and','or','not','xor','piecewise
  * - pasuu(g,v,x,u,w,Q) (G41): g's σ for the inputs v at the values x with the standard uncertainties u (lists; w the
  *   equations v=x; Q is g as typed, unevaluated, G159): pasuo's
  *   [σ, share] and 2 when an input's x ± 2u reaches a jump of a step function in g (G143), else 1 when it reaches a
- *   singular point of ∂g/∂v (the other inputs at their values, the dimension symbols 1), else 0. Each derivative is
- *   taken once.
+ *   singular point of ∂g/∂v (the other inputs at their values, the dimension symbols 1), else 0; G271: then each input's
+ *   term [(∂g/∂v·u)², |∂g/∂v·u|] and the second-order part, the dimension symbols 1, as 30-digit decimals. Each
+ *   derivative is taken once.
  */
 export const UNIT_DEFINITIONS: readonly string[] = [
   ...BASES.map((b) => `assume(${b.symbol}>0)`),
@@ -162,13 +163,14 @@ export const UNIT_DEFINITIONS: readonly string[] = [
     `for (pasj_:=0;pasj_<size(pasR_);pasj_++) { if (!has(pasR_[pasj_],past_)) { pasp_:=evalf(pasR_[pasj_]); if (im(pasp_)==0 and abs(pasp_-pasa_)<=2*pass_) { pasP_:=append(pasP_,pasR_[pasj_]); } } } } ` +
     `pasV_:=map(pasP_,pasp_->normal(subst(pasq_,past_,pasp_))); for (pasj_:=0;pasj_<size(pasV_);pasj_++) { if (has(pasV_[pasj_],undef) or has(pasV_[pasj_],infinity) or im(evalf(pasV_[pasj_]))!=0) { return 1; } } ` +
     `paslo_:=min(pasV_); pashi_:=max(pasV_); if (pasc_==1) { return paslo_<=0 and pashi_>=0; } if (pasc_==2) { paslo_:=paslo_-1/2; pashi_:=pashi_-1/2; } return ceil(paslo_)<=pashi_; }`,
-  `pasuu(pasg_,pasv_,pasx_,pasu_,pasw_,pasQ_):={local pasn_,pask_,pasm_,pash_,pasf_,pasd_,pass1_,pass2_,pasz_,pasL_,pasi_; pasn_:=size(pasv_); pass1_:=0; pass2_:=0; pasz_:=0; ` +
+  `pasuu(pasg_,pasv_,pasx_,pasu_,pasw_,pasQ_):={local pasn_,pask_,pasm_,pash_,pasf_,pasd_,pass1_,pass2_,pasz_,pasL_,pasi_,pasT_; pasn_:=size(pasv_); pass1_:=0; pass2_:=0; pasz_:=0; pasT_:=[]; ` +
     `pasL_:=concat(pasujl(subst(pasg_,${S},${ONES}),0),subst(pasujl(pasQ_,1),${S},${ONES})); ` +
     `for (pask_:=0;pask_<pasn_;pask_++) { pash_:=diff(pasg_,pasv_[pask_]); pasd_:=subst(pash_,pasw_); pass1_:=pass1_+pasd_^2*pasu_[pask_]^2; ` +
+    `pasT_:=append(pasT_,[evalf(subst(pasd_^2*pasu_[pask_]^2,${S},${ONES}),30),evalf(abs(subst(pasd_*pasu_[pask_],${S},${ONES})),30)]); ` +
     `for (pasm_:=0;pasm_<pasn_;pasm_++) { pasf_:=diff(pash_,pasv_[pasm_]); pass2_:=pass2_+(1/2*subst(pasf_,pasw_)^2+pasd_*subst(diff(pasf_,pasv_[pasm_]),pasw_))*pasu_[pask_]^2*pasu_[pasm_]^2; } ` +
     `for (pasi_:=0;pasi_<size(pasL_) and pasz_==0;pasi_:=pasi_+2) { if (pasujr(pasL_[pasi_],subst(pasL_[pasi_+1],suppress(pasw_,pask_)),pasv_[pask_],pasx_[pask_],pasu_[pask_])) { pasz_:=2; } } ` +
     `if (pasz_==0 and has(pash_,pasv_[pask_]) and pasusg(subst(subst(pash_,suppress(pasw_,pask_)),${S},${ONES}),pasv_[pask_],pasx_[pask_],pasu_[pask_])==1) pasz_:=1; } ` +
-    `return [op(pasuo(normal(pass1_),normal(pass2_))),pasz_]; }`,
+    `return [op(pasuo(normal(pass1_),normal(pass2_))),pasz_,pasT_,evalf(subst(pass2_,${S},${ONES}),30)]; }`,
 ];
 
 /** G319: our unit functions (UNIT_DEFINITIONS, pasup of a level too) start with it: they change nothing the user stored,
@@ -436,15 +438,31 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   const big = (Number.isFinite(share) ? share : Number(giac.eval("evalf(pasuW[1])"))) > ORDER2_SHARE;
   const flag = parts?.[2]?.trim();
   const why = flag === "2" ? "jump" : flag === "1" ? "singular" : big ? "order2" : null;
+  const budget = termsOf(u.vars, parts?.[3], parts?.[4]);
   const c = u.chip;
-  if (!c) return { value, text, shown, ...(why ? { why } : {}) };
+  if (!c) return { value, text, shown, ...(why ? { why } : {}), ...budget };
   // R271: σ keeps the chips' facts: no more confirmed digits than theirs, and their ⚠ reason; R271f1: its `full` (the
   // chip's σ, units/chip.ts) then has its confirmed digits only, a decimal Giac reads (none confirmed: no chip text)
   const facts = worseFacts(value.facts, c);
   const n = facts.reliableDigits;
   const v = value.value?.re;
   const full = n === null || !v || v.digits.length <= n ? value.full : n < 1 ? "" : decimalToString({ ...roundSignificant(v, n), sticky: false });
-  return { value: { ...value, facts, full }, text, shown, ...(why ? { why } : {}), chip: { reliableDigits: n, ...(facts.warn ? { warn: facts.warn } : {}) } };
+  return { value: { ...value, facts, full }, text, shown, ...(why ? { why } : {}), ...budget, chip: { reliableDigits: n, ...(facts.warn ? { warn: facts.warn } : {}) } };
+}
+
+/** G271: pasuu's terms (one [t, uy] per input, in the order of `vars`) and its second-order part, each input's key
+ *  beside its term; nothing when a number is not a plain decimal or the count is not the inputs'. */
+function termsOf(vars: readonly UncVar[], list: string | undefined, second: string | undefined): Pick<Uncertainty, "terms" | "second"> {
+  const rows = list === undefined ? null : splitList(list)?.map(splitList);
+  const plain = (x: string | undefined): x is string => x !== undefined && parseDecimal(x) !== null;
+  if (!rows || rows.length !== vars.length || !plain(second)) return {};
+  const terms: NonNullable<Uncertainty["terms"]> = [];
+  for (const [i, r] of rows.entries()) {
+    if (!r || r.length !== 2 || !plain(r[0]) || !plain(r[1])) return {};
+    const key = vars[i]!.key;
+    terms.push({ ...(key !== undefined ? { key } : {}), t: r[0], uy: r[1] });
+  }
+  return { terms, second: second.trim() };
 }
 
 const PREFIXES: Readonly<Record<number, string>> = { [-15]: "f", [-12]: "p", [-9]: "n", [-6]: "µ", [-3]: "m", 0: "", 3: "k", 6: "M", 9: "G", 12: "T", 15: "P" };

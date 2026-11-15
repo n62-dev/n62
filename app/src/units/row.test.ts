@@ -121,6 +121,16 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     expect(s.display(it).text).toBe("39,488 ± 1,2 m²");
   });
 
+  // G271: σ's terms and its second-order part are for this answer only (a chip's key is one run's row number): a stored
+  // row keeps neither
+  it("t10: the row keeps σ's text, not its terms or second-order part (G271)", () => {
+    const q = units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [M, M] });
+    const withTerms: Quantity = { ...q, unc: { ...q.unc!, terms: [{ t: "0.0256", uy: "0.16" }, { key: "pasr_1", t: "1.522756", uy: "1.234" }], second: "0.000025" } };
+    const row = unitRow({ line: "", chips: {}, q: withTerms, slots: { u1: M, u2: M }, input: "", digits: 12 });
+    expect(row.units?.unc).toEqual({ text: "1.2", shown: "39.5 ± 1.2" });
+    expect(JSON.stringify(row)).not.toMatch(/terms|second|0\.0256/);
+  });
+
   // R269: the Copy key and Copy as shown (☰ → Copy as → As shown, which reads Session.display) write the same unit part
   // for t10's row, in point and in comma mode; the real Session and ClipActions, only the clipboard is a fake
   it("t10: Copy and Copy as shown agree on the value, σ and unit (R269)", async () => {
