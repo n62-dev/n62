@@ -10,6 +10,9 @@ History only: read it when a decision is questioned. What still binds is in [../
 - **How research reaches the docs (owner, 2026-10-20; H7 and the consolidation).** Rule: rules sections 9 and 10; brief 0c step 5 and section 8; KhiCAS only for a named need, after a per-file licence check (E5). Archived. Would change if: the line baseline blocks a fix two nights running.
 - **A101, the checked append (Opus pass 189):** `appendChecked` reads the last byte first (`\n` goes before the text when it is another); a failed read, append or check is "cantAppend", nothing more written. Would change if: G219 finds the read too slow.
 
+### Shortened by Opus pass 201 (2026-11-16) to make room, as they stood
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants. Archived, "Opus pass 185". G215's pydiff found sympy agreeing on all 75 translated rows; `scripts/pipeline-lib.sh` ENGINE_STAGES gets no pydiff, as `pydiff.test.ts` runs the same rows on every merge (Opus pass 195). Would change if: pydiff finds sympy disagrees.
+
 ### Shortened by Opus pass 190 (2026-11-15) to make room, as they stood
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172". Would change if: the owner drops paste in the apps.
 - **R224's wide layout (Opus pass 172):** side by side the keypad fills the height in a column of 42 % within 400–560 px (`--keys-wide`), the status line across both. Would change if: the owner's look on the Tab One.
