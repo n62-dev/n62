@@ -12,7 +12,9 @@ export function oracleVenvPython(repo: string, main: string = repo): string | nu
   return null;
 }
 
-export const setupLine = "python3 -m venv tests/golden/.venv && tests/golden/.venv/bin/pip install mpmath==1.3.0 pyyaml==6.0.2";
+/** The venv's packages, pinned (tests/golden/README.md): the oracle's, and G215's sympy, pint and uncertainties with pint's own (scripts/pydiff.ts). */
+export const VENV_PINS = "mpmath==1.3.0 pyyaml==6.0.2 sympy==1.14.0 pint==0.26.2 uncertainties==3.2.3 flexcache==0.3 flexparser==0.4 platformdirs==4.14.5 typing_extensions==4.16.0";
+export const setupLine = `python3 -m venv tests/golden/.venv && tests/golden/.venv/bin/pip install ${VENV_PINS}`;
 
 /** Whether the diff touches the checklist's sources: g2.yaml, the checklist, oracle.py, or a golden yaml file that has a `g2:` link
  * in its branch version or in the base version (`baseText`: a file that lost its last link, or was deleted, still counts). */
