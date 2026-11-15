@@ -82,7 +82,7 @@ export const CAS_ANS = "pcasans";
  *  their name (homeEval.ts ENGINE_DEFINITIONS, eseries), the Giac names icdf.ts replaces by ours (ICDF_REPLACED; their
  *  meaning is ours too), and CAS_ANS. A user may call these; ourNames.test.ts fails on a new name outside both. */
 export const OUR_OTHER_NAMES: readonly string[] = [
-  "sigfig", "par", "linreg", "stats1", "shl", "shr", "rotl", "rotr", "bnot", "eseries",
+  "sigfig", "par", "linreg", "stats1", "linterp", "shl", "shr", "rotl", "rotr", "bnot", "eseries",
   "normald_icdf", "student_icdf", "chisquare_icdf", "fisher_icdf", "normal_icdf", "erf", "erfc",
   "student_cdf", "studentd_cdf", "chisquare_cdf", "chisquared_cdf", "normald_cdf", "normal_cdf", "UTPN",
   CAS_ANS,
