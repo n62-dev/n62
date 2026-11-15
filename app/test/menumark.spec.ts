@@ -69,11 +69,11 @@ for (const [brightness, contrast, keys] of LOOKS)
           expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
         } else expect(["none", "normal"], where).toContain(s.after);
       }
-      // the tap layer: Vars, Math, Tmpl; ☰ and its Shift legend Settings (r0c4, R278), the Shift legends: Memory (Math), ≤≠, α∞, Mode (Fmt), Help (Select, R197), Matrix (Shift + 4, R187); Shift armed: those as faces
+      // the tap layer: Vars, Math, Tmpl; ☰ and its Shift legend Settings (r0c4, R278), the Shift legends: Memory (Math), ≤≠, α∞, Mode (Deselect, R322), Help (Select, R197), Matrix (Shift + 4, R187); Shift armed: those as faces
       expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
         shift
-          ? ["d4/main", "d6/main", "d9/main", "fmt/main", "math/main", "menu/main", "select/main", "sub/main"]
-          : ["d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "fmt/shiftlegend", "math/main", "math/shiftlegend", "menu/main", "menu/shiftlegend", "select/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
+          ? ["d4/main", "d6/main", "d9/main", "deselect/main", "math/main", "menu/main", "select/main", "sub/main"]
+          : ["d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "deselect/shiftlegend", "math/main", "math/shiftlegend", "menu/main", "menu/shiftlegend", "select/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
       );
     }
   });
@@ -110,7 +110,7 @@ test("at 360 px the mark never shrinks Vars, Math, Tmpl or α∞ by more than 5 
       return {
         vars: px('[data-key="vars"] .main'), math: px('[data-key="math"] .main'), tmpl: px('[data-key="tmpl"] .main'),
         sin: px('[data-key="sin"] .main'), tan: px('[data-key="tan"] .main'),
-        sym: px('[data-key="d9"] .shiftlegend'), rel: px('[data-key="d6"] .shiftlegend'), plain: px('[data-key="d8"] .shiftlegend'), mode: px('[data-key="fmt"] .shiftlegend'),
+        sym: px('[data-key="d9"] .shiftlegend'), rel: px('[data-key="d6"] .shiftlegend'), plain: px('[data-key="d8"] .shiftlegend'), mode: px('[data-key="deselect"] .shiftlegend'),
       };
     });
   const s = await sizes();

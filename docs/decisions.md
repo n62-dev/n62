@@ -21,6 +21,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 **R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
 
+**R313's unit view budget** (docs/04 8.3): recommended, keep the entries' bar at 39 kB (was 38): R313's hardware letters cost 1.28 kB, the start chunk is unchanged, and the bar that counts is the first unit result < 1 s on the Tab One. Or a cut.
+
 ## Decided proposals
 
 ### Pipeline and process
@@ -130,12 +132,12 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms, a swipe goes at 40 % of the row. Archived, "Opus pass 181".
 - **R277's line scroll (Opus pass 155):** past 8 px a finger or pen scrolls the line, a tap places the caret, a hold selects the innermost term. Archived, "Opus pass 179". Would change if: MathLive ships a public scroll.
 - **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; at the whole line Select is a silent press. Archived, "Opus pass 172". Would change if: A139 finds a step surprising.
-- **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172". Would change if: the owner drops paste in the apps.
+- **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172".
 - **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45, R312): the rule list heads `app/src/entry/hwkeys.ts` (docs/04 holds none, Opus pass 185); `e` after digits is ᴇ, unless `(` follows letters that with `e` form a known name; characters no key types do nothing.
 - **R131's desktop keys (Opus pass 170):** the worker's table stands (`spec/keyboard.yaml` `desktop:`). Archived, "Opus pass 178".
 - **R198's typed names (Opus pass 172):** a typed FUNCS or Find function name before `(` is the function, drawn by name; Giac's program words stay letters (R198f1). Archived, "Opus pass 179".
-- **R224's wide layout (Opus pass 172):** side by side the keypad fills the height in a column of 42 % within 400–560 px (`--keys-wide`), the status line across both. Would change if: the owner's look on the Tab One.
+- **R224's wide layout (Opus pass 172):** the keypad in a 42 % column of 400–560 px (`--keys-wide`). Archived, "Opus pass 190". Would change if: the owner's look on the Tab One.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
 - **Flicks** (R9): arm at 20 px, cancel within 12 px; **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Archived, "Opus pass 132".
 - **R58 (Opus pass 18): in the CAS view Alpha types lower case.** Archived, "Opus pass 181".
@@ -190,8 +192,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R55: digit groups** in a drawn Home or CAS numeric result: the mantissa in threes from the point with a thin space, on a side of five or more digits; not in the entry line, a chip, Copy or the status line. Archived.
 
 - **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Archived, "Opus pass 122". **G328 (pass 153):** a name set beside the result takes the facts of what sets it; after a decision on the line, the line's (G48).
-- **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
-- **t06 and Find (Opus pass 182, R221):** "es" ranks the unit statC (a shorter name) above eseries, as docs/04 3.5 orders prefixes; the ranking stays, and t06's budget (plan 12, today 13) is agreed with the owner when it goes active.
+- **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home;** `why.rounded` names a stored float, never one of our names. Archived, "Opus pass 190".
+- **t06 and Find (Opus pass 182, R221):** "es" gives statC before eseries (docs/04 3.5); t06's budget is agreed with the owner when it goes active. Archived, "Opus pass 190".
 - **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Archived, "Opus pass 97".
 - **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads; `dot` conjugates its first vector (G227). Archived, "Opus pass 187".
 - **Our Giac text binds only `pas…_` names (pass 123; G303, F205):** no user can type one; a free name in a cdf or icdf call gives no number, the inverse ones too (G221f1). Would change if: the parser takes a trailing `_`.
@@ -226,7 +228,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R87 (Opus pass 15):** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **R38b, R88, the restore's checks and presets (Opus pass 29):** `state/backup.ts` repeats the start readers' rules, each guarded by a test on the same values; no pin in `vite.config.ts`. Archived. Would change if: a guard misses a drift.
-- **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Archived, "Opus pass 97". Would change if: the review after R24d.
+- **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Archived, "Opus pass 97".
 - **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04).** Archived, "Opus pass 122" and "Opus pass 66". Would change if: the milestone review.
 - **G119, Giac's sequence answers in Home (Opus pass 6):** each shows its value (one element) or a list in braces, so Ans and a stored name (`=>` too, G173f1) read back a value or a list; CAS too since G173 (owner, 11-05). Archived.
 - **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Archived, "Opus pass 123". Would change if: the per-element calls are batched.
