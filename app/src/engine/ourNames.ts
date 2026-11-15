@@ -2,7 +2,7 @@
 // G54: our replacements for Giac functions, by the name the user writes. One map for the parser (input/emit.ts) and for
 // every path that sends Giac text without the parser (the library import and its `// test:` lines, the export back).
 // No UI imports; only erasable TypeScript syntax.
-import { closing, isNameChar, isProgramWord, leadingName, mapNames, names, topLevelArgs, topLevelOps, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { closing, isProgramWord, leadingName, mapNames, names, outerGroups, topLevelArgs, topLevelOps, trailingName, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { isStandIn } from "./standIns.ts";
 
 /** Giac's own `mod` is the modular-number constructor (an error as a call); Find's `mod` is irem (Euclidean,
@@ -108,7 +108,7 @@ export function writeTests(text: string): string {
     if (!b) continue;
     const before = out.slice(0, at).trimEnd();
     const after = out.slice(b.end).trimStart();
-    const open = before === "" || OPEN_ENDS.some((e) => before.endsWith(e)) || LOGIC_WORDS.has(lastName(before));
+    const open = before === "" || OPEN_ENDS.some((e) => before.endsWith(e)) || LOGIC_WORDS.has(trailingName(before));
     const shut = after === "" || SHUT_STARTS.some((e) => after.startsWith(e)) || LOGIC_WORDS.has(leadingName(after, false) ?? "");
     out = out.slice(0, at) + (open && shut ? b.kept : `(${b.kept})`) + out.slice(b.end);
   }
@@ -118,13 +118,6 @@ export function writeTests(text: string): string {
 /** G377: what a kept test may stand right after, or right before, without a bracket (a logic word too). */
 const OPEN_ENDS = ["(", "[", "{", ",", ";", ":=", "->"];
 const SHUT_STARTS = [")", "]", "}", ",", ";"];
-
-/** The name `s` ends with ("" when it ends in another character). */
-function lastName(s: string): string {
-  let i = s.length;
-  while (i > 0 && isNameChar(s.charAt(i - 1))) i--;
-  return s.slice(i);
-}
 
 /** G377: what ends a test's side in typed text (a separator) and the relations beside which a test is not one alone.
  *  `not` binds tighter than `==` in Giac (`not 1==2` is false), so it is part of a side. */
@@ -156,17 +149,13 @@ function markTests(s: string, make: (a: string, b: string, negate: boolean) => s
 /** `seg` with the tests in each of its outer brackets made (markTests); a piecewise condition keeps Giac's own ==, as
  *  the parser writes one (input/emit.ts Piecewise). */
 function groupsIn(seg: string, make: (a: string, b: string, negate: boolean) => string): string {
-  const opens: number[] = [];
-  walk(seg, 0, (k, d, ch) => void (d === 1 && "([{".includes(ch) && opens.push(k)), "typed");
   let out = "";
   let i = 0;
-  for (const k of opens) {
-    const close = closing(seg, k, "typed");
-    if (close < 0) break;
-    const inner = seg.slice(k + 1, close);
-    const args = lastName(seg.slice(0, k)) === "piecewise" ? topLevelArgs(inner, "typed") : null;
+  for (const { open, close, caller } of outerGroups(seg, "typed")) {
+    const inner = seg.slice(open + 1, close);
+    const args = caller === "piecewise" ? topLevelArgs(inner, "typed") : null;
     const done = args ? args.map((x, n) => markTests(x, make, n % 2 === 0 && n < args.length - 1)).join(",") : markTests(inner, make);
-    out += seg.slice(i, k + 1) + done + seg.charAt(close);
+    out += seg.slice(i, open + 1) + done + seg.charAt(close);
     i = close + 1;
   }
   return out + seg.slice(i);

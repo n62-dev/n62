@@ -613,3 +613,25 @@ export function topLevelOps(s: string, ops: readonly string[], words: ReadonlySe
   }, "typed");
   return out;
 }
+
+/** G377: the brackets of `s` (typed Giac) that stand outside every other bracket and string, in order: where each opens
+ *  and closes, and the name right before it (`piecewise` of `piecewise(…)`; "" when none). Stops at one that does not
+ *  close. */
+export function outerGroups(s: string, q: Quoting): { open: number; close: number; caller: string }[] {
+  const out: { open: number; close: number; caller: string }[] = [];
+  const opens: number[] = [];
+  walk(s, 0, (k, d, ch) => void (d === 1 && OPENERS.includes(ch) && opens.push(k)), q);
+  for (const open of opens) {
+    const close = closing(s, open, q);
+    if (close < 0) break;
+    out.push({ open, close, caller: trailingName(s.slice(0, open)) });
+  }
+  return out;
+}
+
+/** G377: the name `s` ends with ("" when it ends in another character). */
+export function trailingName(s: string): string {
+  let i = s.length;
+  while (i > 0 && isNameChar(s.charAt(i - 1))) i--;
+  return s.slice(i);
+}

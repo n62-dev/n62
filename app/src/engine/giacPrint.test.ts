@@ -17,6 +17,7 @@ import {
   negated,
   noneOpen,
   opening,
+  outerGroups,
   powersIn,
   programParams,
   renameCalls,
@@ -25,6 +26,7 @@ import {
   typedFromPrinted,
   stringEnd,
   topLevelArgs,
+  trailingName,
   UNCLOSED,
   walk,
   wholeCall,
@@ -62,6 +64,21 @@ describe("brackets", () => {
     expect(balanced('f(")")', "typed")).toBe(true);
     expect(noneOpen("x)", "typed")).toBe(true);
     expect(noneOpen("f(x", "typed")).toBe(false);
+  });
+  it("G377: outerGroups gives the outer brackets with the name that calls each, skips strings, stops at an unclosed one", () => {
+    expect(outerGroups('piecewise(x==1,2,3)+[a,(b)]-"(" + {c}', "typed")).toEqual([
+      { open: 9, close: 18, caller: "piecewise" },
+      { open: 20, close: 26, caller: "" },
+      { open: 34, close: 36, caller: "" },
+    ]);
+    expect(outerGroups("f(a)+g(b", "typed")).toEqual([{ open: 1, close: 3, caller: "f" }]);
+    expect(outerGroups("x+1", "typed")).toEqual([]);
+  });
+  it("G377: trailingName is the name a text ends with, or empty", () => {
+    expect(trailingName("1 and")).toBe("and");
+    expect(trailingName("a_2")).toBe("a_2");
+    expect(trailingName("f(x) ")).toBe("");
+    expect(trailingName("")).toBe("");
   });
   it("splitList reads a printed list, list[…] too, and nothing else", () => {
     expect(splitList("[1,[2,3],f(4,5)]")).toEqual(["1", "[2,3]", "f(4,5)"]);
