@@ -22,7 +22,6 @@
   import { noDigit } from "./state/displayMode.ts";
   import type { HistoryItem, Session, View } from "./state/session.svelte.ts";
   import { counted } from "./state/tapsFront.svelte.ts";
-  import type { HwKind } from "./state/pressCount.ts";
   import { createLoaders, type FindCode, type ModeSheetCode } from "./appLoaders.ts";
   import { tipsDue } from "./state/tips.ts";
   import History from "./views/History.svelte";
@@ -74,7 +73,7 @@
     wide = mq.matches;
     mq.onchange = (e) => (wide = e.matches);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
-    const hwOther = (kind: HwKind) => (): void => session.taps.hw(kind); // a hardware key that runs no keypad key: the counter's chunk names it "hw:<kind>" (state/pressCount.ts hwKind)
+    const hwOther = (kind: Parameters<typeof session.taps.hw>[0]) => (): void => session.taps.hw(kind); // a hardware key that runs no keypad key: the counter's chunk names it "hw:<kind>" (state/pressCount.ts hwKind)
     // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
     // "<key id>:hw" (R127); Enter and Escape too (R45: Enter is the Enter key, a picked row's or an open sheet's, not a
     // bare submit; R15c2: Escape is the Esc key; R131: both through this hook, entry/controller.ts)
