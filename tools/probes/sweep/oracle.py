@@ -6,6 +6,7 @@
 #     value, so the agreement test would pass it. Past DPS_CAP digits the case is skipped with its reason, never judged at fewer.
 #     G307: a power of π or e with a negative integer exponent (POW(PI,mpf('-400')), exp(mpf('-400'))) counts as 10^-d, d its digit
 #     count: the tiny term a rung rounds away (a huge one alone loses nothing, and exp of an int leaf such as 2^31 stays judged).
+#     G363: so does the tiny b^n in 1 ± b^n of edges.ts's fourth form of family 0 (b = ln 2, ln 3, tanh 1).
 #   {"kind": "novalue"}   a pole, a non-finite result
 #   {"kind": "skip", "reason": "..."}   unstable, an infinite intermediate under a finite value (G345), a convention (negative base to a non-integer power, 0^0), complex in DEG, too slow
 # Run: tests/golden/.venv/bin/python -I tools/probes/sweep/oracle.py < requests.json   (mpmath 1.3.0)
@@ -188,13 +189,21 @@ _POW10 = _re.compile(r"POW\(mpf\('10'\),mpf\('(-?\d+)'\)\)")
 _LIT = _re.compile(r"mpf\('([^']*)'\)")
 _POWC = _re.compile(r"(POW\(PI,|exp\()mpf\('-(\d+)'\)\)")
 _LOG10 = {"POW(PI,": math.log10(math.pi), "exp(": math.log10(math.e)}
+# G363: edges.ts's fourth form of family 0, 1 ± b^n with b = ln 2, ln 3 or tanh 1: the power next to the 1 is the tiny term
+_ONEPOW = _re.compile(r"\(mpf\('1'\)\)[+-]\(POW\((LN\(mpf\('2'\)\)|LN\(mpf\('3'\)\)|tanh\(mpf\('1'\)\)),mpf\('(-?\d+)'\)\)\)")
+_LOG10B = {"LN(mpf('2'))": math.log10(math.log(2)), "LN(mpf('3'))": math.log10(math.log(3)), "tanh(mpf('1'))": math.log10(math.tanh(1))}
 
 
 def tens(expr):
     """G162: the largest k such that an exact literal of the input holds 10^±k: 10^{k} typed as a power, the exponent of 1ᴇ-k, or the
     first and last digit of a typed decimal (1.000…01 holds 10^-k, 100…001 holds 10^k); G307: π^-n and e^-n with an integer n hold
-    10^-k for k their digit count, ceil(n·log10 π) and ceil(n·log10 e)."""
+    10^-k for k their digit count, ceil(n·log10 π) and ceil(n·log10 e); G363: so does 1 ± b^n for edges.ts's constant bases b,
+    k = ceil(|n·log10 b|) when b^n is below 1."""
     k = 0
+    for m in _ONEPOW.finditer(expr):
+        d = int(m.group(2)) * _LOG10B[m.group(1)]
+        if d < 0:
+            k = max(k, math.ceil(-d))
     for m in _POWC.finditer(expr):
         k = max(k, math.ceil(abs(int(m.group(2))) * _LOG10[m.group(1)]))
     for m in _POW10.finditer(expr):
