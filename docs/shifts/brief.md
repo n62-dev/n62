@@ -94,7 +94,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
+| 750 | G275 the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
 | 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
 | 817 | [G302](packages/G302.md) golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
 | 785 | [G369](packages/G369.md) %, ‰, ppm and ppb are dimensionless units in the unit view | gorge, Opus | `p1/gorge-ratiounits` | – |
