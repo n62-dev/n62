@@ -144,7 +144,7 @@ export class ClipActions {
       return this.copy(item);
     }
     this.ops.acted?.("copy");
-    return this.copyRaw(entryText(latex));
+    return this.copyRaw(entryText(latex, this.opts));
   }
   copy(item?: HistoryItem): Promise<boolean> {
     return this.serial(() => this.copyNow(item));

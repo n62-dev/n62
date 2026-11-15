@@ -163,8 +163,8 @@ export function sessionText(items: readonly CopySource[], o: TextOptions, ctx: D
     if (i.status === "done") {
       const { input, unitRow } = rowInput(i);
       const result = (unitRow ? copyFull(i, o) : undefined) ?? valueFull(i, o) ?? i.text;
-      lines.push(`${entryText(input)} ${markText(copyMark(i, ctx))} ${result}`);
-    } else if (i.status === "error") lines.push(`${entryText(i.latex)} → ${i.text}`);
+      lines.push(`${entryText(input, o)} ${markText(copyMark(i, ctx))} ${result}`);
+    } else if (i.status === "error") lines.push(`${entryText(i.latex, o)} → ${i.text}`);
   }
   return lines.join("\n");
 }
@@ -191,10 +191,10 @@ const str = (x: unknown): string => (typeof x === "string" ? x : "");
  */
 export function sessionCsv(items: readonly CopySource[], o: TextOptions, ctx: DisplayContext): string {
   const rows = exported(items).map((i): string[] => {
-    if (i.status === "error") return [entryText(i.latex), i.text, "", "", ""];
+    if (i.status === "error") return [entryText(i.latex, o), i.text, "", "", ""];
     const { input } = rowInput(i);
     const sigma = str(i.units?.unc?.text);
-    return [entryText(input), valueFull({ ...i, units: undefined }, o) ?? i.text, rowMark(i, ctx).mark, str(i.units?.unit), o.decimalComma ? sigma.replace(".", ",") : sigma];
+    return [entryText(input, o), valueFull({ ...i, units: undefined }, o) ?? i.text, rowMark(i, ctx).mark, str(i.units?.unit), o.decimalComma ? sigma.replace(".", ",") : sigma];
   });
   return rows.length ? tableCsv(["input", "value", "mark", "unit", "sigma"], rows, o) : "";
 }

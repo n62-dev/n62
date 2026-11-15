@@ -1,9 +1,24 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // An entry's LaTeX as plain text (R134): what a shared session and the why line write for people. Its own module so the
 // why line (in the tidy chunk) does not pull the copy code of text.ts with it.
+import type { TextOptions } from "./text.ts";
 
-/** A fraction part or exponent: bare when it is one token, else in brackets. */
-const group = (s: string): string => (/^-?[\w.]+$/.test(s) ? s : `(${s})`);
+/** A fraction part or exponent: bare when it is one token (a bound may still be one command, `\pi`), else in brackets. */
+const group = (s: string): string => (/^-?(?:[\w.]+|\\[A-Za-z]+)$/.test(s) ? s : `(${s})`);
+/** The function names a fraction part may start with and stay bare (`sin(x)/2`): COMMANDS' names and `sqrt`. Any other
+ *  letters before a bracket are an implied product (`x(x+1)`), which keeps its brackets: `1/x(x+1)` reads as (1/x)·(x+1). */
+const FUNCTIONS = new Set(
+  "sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh coth log ln lg exp min max gcd lcm det dim arg sqrt".split(" "),
+);
+/** A fraction part: a call of a known function (`sin(x)`) is one token there too; anything else is `group`'s. */
+const fracPart = (s: string): string => {
+  const head = /^([A-Za-z]+)\([^()]*\)$/.exec(s)?.[1];
+  return head !== undefined && FUNCTIONS.has(head) ? s : group(s);
+};
+
+/** The braces of a list and of a piecewise (R306) while the groups are read: kept apart from LaTeX's `{…}`. */
+const OPEN = "\uE000";
+const CLOSE = "\uE001";
 
 /** The LaTeX commands an entry may hold that are one character or word in plain text: the Greek letters (the Symbols
  *  palette's and the constants' and units' symbols) and its other cells (spec/keyboard.yaml `symbols:`, text.test.ts
@@ -13,14 +28,10 @@ const COMMANDS: Readonly<Record<string, string>> = {
   iota: "ι", kappa: "κ", lambda: "λ", mu: "μ", nu: "ν", xi: "ξ", pi: "π", rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ",
   phi: "φ", varphi: "φ", chi: "χ", psi: "ψ", omega: "ω", Gamma: "Γ", Delta: "Δ", Theta: "Θ", Lambda: "Λ", Xi: "Ξ", Pi: "Π",
   Sigma: "Σ", Upsilon: "Υ", Phi: "Φ", Psi: "Ψ", Omega: "Ω", hbar: "ħ",
-  infty: "∞", degree: "°", prime: "′", doubleprime: "″", AA: "Å", to: " → ", rightarrow: " → ",
+  partial: "∂", int: "∫", infty: "∞", degree: "°", prime: "′", doubleprime: "″", AA: "Å", to: " → ", rightarrow: " → ",
   leq: " ≤ ", le: " ≤ ", geq: " ≥ ", ge: " ≥ ", neq: " ≠ ", ne: " ≠ ", approx: " ≈ ", equiv: " ≡ ", measuredangle: "∡", emark: "E",
   // the function names (MathLive writes `\sin`, `\log_{16}`): the name without its backslash
-  ...Object.fromEntries(
-    "sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh coth log ln lg exp min max gcd lcm det dim arg sum prod lim"
-      .split(" ")
-      .map((n) => [n, n]),
-  ),
+  ...Object.fromEntries([...FUNCTIONS, "sum", "prod", "lim"].filter((n) => n !== "sqrt").map((n) => [n, n])),
 };
 
 /** The command names the table holds (for the test that the Symbols palette is covered). */
@@ -81,19 +92,21 @@ function scriptArg(s: string, i: number, mark: "_" | "^"): { body: string; end: 
   return /\w/.test(s[i + 1] ?? "") ? { body: s[i + 1] as string, end: i + 2 } : undefined;
 }
 
-/** `\sum_{k=1}^{10}`, `\prod_{…}^{…}` and `\lim_{x\to0}` as `sum(k=1..10) `, `prod(…) `, `lim(x→0) ` (R199, F180); a limit
- *  without its subscript is left for the function names. The bounds stay LaTeX for the rules after it. */
+/** `\sum_{k=1}^{10}`, `\prod_{…}^{…}`, `\lim_{x\to0}` and `\int_{a}^{b}` as `sum(k=1..10) `, `prod(…) `, `lim(x→0) `,
+ *  `int(a..b) ` (R199, F180, R306; the `\,\mathrm{d}x` after an integrand reads ` dx`); a limit without its subscript is
+ *  left for the function names, an integral without bounds is `∫`. The bounds stay LaTeX for the rules after it. */
 function bigOperators(s: string): string {
   let out = "";
   let at = 0;
-  const head = /\\(sum|prod|lim)(?![A-Za-z])/g;
+  const head = /\\(sum|prod|lim|int)(?![A-Za-z])/g;
   for (let m = head.exec(s); m; m = head.exec(s)) {
     const lo = scriptArg(s, head.lastIndex, "_");
     if (!lo) continue;
     const hi = scriptArg(s, lo.end, "^");
     const name = m[1] as string;
     const low = lo.body.replace(/\\(?:to|rightarrow)(?![A-Za-z])/g, "→");
-    const call = name === "lim" || !hi ? `${name}(${low}) ` : `${name}(${low}..${group(hi.body)}) `;
+    const from = name === "int" ? group(low) : low; // an integral's bound is a value; a sum's is `k=1`
+    const call = name === "lim" || !hi ? `${name}(${from}) ` : `${name}(${from}..${group(hi.body)}) `;
     const end = name === "lim" || !hi ? lo.end : hi.end;
     out += s.slice(at, m.index) + call;
     at = end;
@@ -118,24 +131,79 @@ function nthRoots(s: string): string {
   return out + s.slice(at);
 }
 
+/** `\begin{pmatrix}…\end{pmatrix}` (also `bmatrix`, `matrix`; rows `\\`, cells `&`) as `[[1,2],[3,4]]`, the matrix as
+ *  Giac and people type it, and `\begin{cases}…\end{cases}` as `{x if x=0; 1 if x=1}` (R306), innermost first. `sep`
+ *  is `;` with the decimal comma (R100: `1{,}5` is one number), as Copy writes a list then. The cells stay LaTeX. */
+function environments(s: string, sep: string): string {
+  const env = /\\begin\{(pmatrix|bmatrix|matrix|cases)\}((?:(?!\\begin\{)[\s\S])*?)\\end\{\1\}/g;
+  let out = s;
+  for (let n = 0; n < 8; n++) {
+    const was = out;
+    out = out.replace(env, (_m, name: string, body: string) => {
+      const rows = body.split(/\\\\/).map((r) => r.split(/(?<!\\)&/).map((c) => c.trim()));
+      if (rows.length > 1 && rows[rows.length - 1]!.every((c) => c === "")) rows.pop(); // a closing `\\`
+      if (name === "cases") return `${OPEN}${rows.map((r) => r.filter((c) => c !== "").join(" ")).join("; ")}${CLOSE}`;
+      return `[${rows.map((r) => `[${r.join(sep)}]`).join(sep)}]`;
+    });
+    if (out === was) break;
+  }
+  return out;
+}
+
+/** The evaluate-at template `\left.f\right|_{x=3}` as `(f | x=3)`: in brackets, so what follows is not read into it. A
+ *  `\right|_` takes the nearest open `\left.` before it (a template inside a template closes first). */
+function evaluateAt(s: string): string {
+  const edits: { at: number; end: number; text: string }[] = [];
+  const open: number[] = [];
+  const mark = /\\left\.|\\right\|(?=_)/g;
+  for (let m = mark.exec(s); m; m = mark.exec(s)) {
+    if (m[0] === "\\left.") {
+      open.push(m.index);
+      continue;
+    }
+    const arg = scriptArg(s, mark.lastIndex, "_");
+    const from = open.pop();
+    if (from === undefined || !arg) continue;
+    edits.push({ at: from, end: from + 6, text: "(" }, { at: m.index, end: arg.end, text: ` | ${arg.body})` });
+    mark.lastIndex = arg.end;
+  }
+  let out = s;
+  for (const e of edits.sort((x, y) => y.at - x.at)) out = out.slice(0, e.at) + e.text + out.slice(e.end);
+  return out.replace(/\\(?:left|right)\./g, ""); // an empty delimiter left over
+}
+
+/** The derivative template `\frac{\partial f}{\partial x}` as `∂/∂x (f)`. */
+function derivatives(s: string): string {
+  let out = s;
+  for (const c of macroCalls(s, "frac", 2).reverse()) {
+    const f = /^\s*\\partial(?![A-Za-z])\s*([\s\S]+)$/.exec(c.args[0] ?? "")?.[1];
+    const x = /^\s*\\partial(?![A-Za-z])\s*([\s\S]+)$/.exec(c.args[1] ?? "")?.[1];
+    if (f !== undefined && x !== undefined) out = `${out.slice(0, c.start)}∂/∂${x.trim()} ${group(f.trim())}${out.slice(c.end)}`;
+  }
+  return out;
+}
+
 /** An entry as plain text for a shared session: the LaTeX as typed (the parser's output is for the engine, not for people).
  *  Wrappers and chips first (a chip's symbol is LaTeX too), then the commands, then `\mathrm`, so `\to\mathrm{m}` is
  *  read as `\to` and `m`, never `\tom`. */
-export function entryText(latex: string): string {
-  let s = latex.replace(/\\(?:left|right)(?![A-Za-z])/g, "");
+export function entryText(latex: string, o: TextOptions = {}): string {
+  const sep = o.decimalComma === true ? ";" : ","; // the decimal comma setting: `;` between elements, as Copy writes a list (R100)
+  let s = evaluateAt(latex.replace(/\\char"5E\s?/g, "^")); // the one-line caret
+  s = s.replace(/\\(?:left|right)(?![A-Za-z])/g, "");
+  s = environments(s, sep).replace(/\\\{/g, OPEN).replace(/\\\}/g, CLOSE); // a list's braces, R306
   s = s.replace(/(\d)\\tfrac(?![A-Za-z])/g, "$1 \\tfrac"); // the mixed number: `2\tfrac12` is "2 1/2", not "21/2"
-  s = nthRoots(bigOperators(unwrap(unwrap(s, "mathbin", 1, 0), "mathrel", 1, 0)));
+  s = derivatives(nthRoots(bigOperators(unwrap(unwrap(s, "mathbin", 1, 0), "mathrel", 1, 0))));
   s = unwrap(unwrap(s, "class", 2, 1), "htmlStyle", 2, 1);
   s = unwrap(unwrap(unwrap(unwrap(s, "const", 2, 1), "res", 2, 1), "unit", 2, 1), "pfx", 2, 1);
   s = s.replace(/\\([_&%])/g, "$1").replace(/\\([A-Za-z]+)/g, (m, name: string) => COMMANDS[name] ?? m);
   // \mathrm after the commands (so `\to\mathrm{m}` is not `\tom`); a symbol like `deg^{2}` holds braces
-  s = unwrap(unwrap(s, "mathrm", 1, 0), "operatorname", 1, 0);
+  s = unwrap(unwrap(unwrap(s, "mathrm", 1, 0), "operatorname", 1, 0), "text", 1, 0);
   s = s.replace(/\\(?:t|d)?frac(?!\{)(\w)(\w)/g, "\\frac{$1}{$2}"); // MathLive writes \frac13 for 1/3
   // the groups with no brace inside, innermost first: repeated, so `\frac{\mathrm{M}m^{2}}{s}` gets its exponent first
   for (let n = 0; n < 6; n++) {
     const was = s;
     s = s
-      .replace(/\\(?:t|d)?frac\{([^{}]*)\}\{([^{}]*)\}/g, (_m, a: string, b: string) => `${group(a)}/${group(b)}`)
+      .replace(/\\(?:t|d)?frac\{([^{}]*)\}\{([^{}]*)\}/g, (_m, a: string, b: string) => `${fracPart(a)}/${fracPart(b)}`)
       .replace(/\\sqrt\{([^{}]*)\}/g, "sqrt($1)")
       .replace(/\^\{([^{}]*)\}/g, (_m, a: string) => `^${group(a)}`)
       .replace(/_\{([^{}]*)\}/g, "_$1");
@@ -153,7 +221,9 @@ export function entryText(latex: string): string {
     .replace(/\\ans(?![A-Za-z])/g, "Ans")
     .replace(/[{}]/g, "")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .replaceAll(OPEN, "{")
+    .replaceAll(CLOSE, "}");
 }
 
 /** G232: LaTeX for a `.tex` file: N62's own and KaTeX's macros are not LaTeX. `\class` and `\htmlStyle` (the unit label, PFX,
