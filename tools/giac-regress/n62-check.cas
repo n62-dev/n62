@@ -369,6 +369,16 @@ Digits:=40:; pc("g178-keep-sinc-in-product",'(2*int(sin(x)/x,x,0,1))',(189216614
 Digits:=40:; pc("g305-keep-limit-round-3/2-right",'(limit(round(x),x,3/2,1))',2,5/10^12);
 // g305-keep-limit-round-3/2-left (home.yaml, derived)
 Digits:=40:; pc("g305-keep-limit-round-3/2-left",'(limit(round(x),x,3/2,-1))',1,5/10^12);
+// g360-COMB-52-5 (home.yaml, derived)
+Digits:=40:; pc("g360-COMB-52-5",'(COMB(52,5))',2598960,5/10^6);
+// g360-limit-iPart-1-right (home.yaml, derived)
+Digits:=40:; pc("g360-limit-iPart-1-right",'(limit(iPart(x),x,1,1))',1,5/10^12);
+// g360-limit-trunc-nested-1-left (home.yaml, derived)
+Digits:=40:; pc("g360-limit-trunc-nested-1-left",'(limit(trunc(trunc(x)+x),x,1,-1))',0,1/10^30);
+// g360-keep-limit-floor-1-left (home.yaml, derived)
+Digits:=40:; pc("g360-keep-limit-floor-1-left",'(limit(floor(x),x,1,-1))',0,1/10^30);
+// g360-keep-iPart-2.5 (home.yaml, derived)
+Digits:=40:; pc("g360-keep-iPart-2.5",'(iPart((25/10^1)))',2,5/10^12);
 // g39-keep-sum-cos/k (home.yaml, oracle)
 Digits:=40:; pc("g39-keep-sum-cos/k",'(sum(cos(k)/k,k,1,inf))',(420195058254/10^13),5/10^14);
 // g39-keep-sum-alt-harmonic (home.yaml, oracle)

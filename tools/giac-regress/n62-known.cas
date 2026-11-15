@@ -11,6 +11,38 @@ Digits:=40:; pc("g184-sum-harmonic-1e6",'(sum(1/x,x,1,1000000))',(143927267229/1
 Digits:=40:; pc("g38-floor-sin1e60",'(floor(sin(10^60)*10^12))',830389765219,5/10^1);
 // g38-floor-sin1e100 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
 Digits:=40:; pc("g38-floor-sin1e100",'(floor(sin(10^100)*10^12))',-372376123662,5/10^1);
+// g360-ceiling-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-ceiling-sin1e70",'(ceiling(sin(10^70)*10^12))',-148099131371,5/10^1);
+// g360-CEILING-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-CEILING-sin1e70",'(CEILING(sin(10^70)*10^12))',-148099131371,5/10^1);
+// g360-FLOOR-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-FLOOR-sin1e70",'(FLOOR(sin(10^70)*10^12))',-148099131372,5/10^1);
+// g360-ROUND-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-ROUND-sin1e70",'(ROUND(sin(10^70)*10^12))',-148099131372,5/10^1);
+// g360-TRUNCATE-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-TRUNCATE-sin1e70",'(TRUNCATE(sin(10^70)*10^12))',-148099131371,5/10^1);
+// g360-IP-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-IP-sin1e70",'(IP(sin(10^70)*10^12))',-148099131371,5/10^1);
+// g360-FP-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-FP-sin1e70",'(FP(sin(10^70)*10^12))',-(550388838943/10^12),5/10^13);
+// g360-ABS-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-ABS-sin1e70",'(ABS(sin(10^70)))',(148099131372/10^12),5/10^13);
+// g360-SIGN-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-SIGN-sin1e70",'(SIGN(sin(10^70)))',-1,5/10^12);
+// g360-MAX-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-MAX-sin1e70",'(MAX(sin(10^70),0))',0,1/10^30);
+// g360-MIN-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-MIN-sin1e70",'(MIN(sin(10^70),0))',-(148099131372/10^12),5/10^13);
+// g360-l2norm-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-l2norm-sin1e70",'(l2norm(sin(10^70)))',(148099131372/10^12),5/10^13);
+// g360-unitV-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-unitV-sin1e70",'(unitV(sin(10^70)))',-1,5/10^12);
+// g360-LN-sin1e70-squared (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-LN-sin1e70-squared",'(LN(sin(10^70)^2))',-(381974684575/10^11),5/10^12);
+// g360-ARG-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-ARG-sin1e70",'(ARG(sin(10^70)))',(314159265359/10^11),5/10^12);
+// g360-keep-ceil-sin1e70 (home.yaml, oracle): register row sign-at-digits (G38, G57): sin of 10^k at Digits 40 has too few digits of the argument reduction, so floor, trunc, sign and arg of it are wrong
+Digits:=40:; pc("g360-keep-ceil-sin1e70",'(ceil(sin(10^70)*10^12))',-148099131371,5/10^1);
 // g172-keep-besselj (home.yaml, oracle): register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14
 Digits:=40:; pc("g172-keep-besselj",'(BesselJ(1,2))',(576724807757/10^12),5/10^13);
 // prec-2-normald_icdf-value (precision.yaml, oracle): register row icdf-double (G44): the inverse distribution functions return a double at any Digits (or +infinity far in a tail)
