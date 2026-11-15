@@ -4,7 +4,9 @@
 // the lines become Copy as Python's script (clipboard/python.ts translateRows), the script runs in tests/golden/.venv,
 // and each translated row's Python value (sympy's N at 30 digits) must give N62's value at 12 significant digits (at
 // n for a `⚠ n` row), both written by N62's own realText. A row the yaml marks `comment: true` must come out NOT
-// TRANSLATED, every other row translated; the file as copied must run as it is.
+// TRANSLATED, every other row translated; the file as copied must run as it is. G216: a row with `slots` is a unit-view
+// row (its slots in scripts/unit-case.ts's text, by prompt id), run through the unit evaluator as the view runs it and
+// written by units/row.ts; its Python Quantity is compared in the unit N62 shows. The stage runs pyunits-check.ts first.
 //   node scripts/pydiff.ts                      # the gate stage: exit 1 on any problem
 //   node scripts/pydiff.ts --corrupt sin=cos    # the same with one function-table entry changed: it must go red
 // Environment: GIAC_OUT; the venv's Python (this checkout's tests/golden/.venv, else the main checkout's), which must
@@ -25,7 +27,17 @@ import { sessionLine } from "../src/state/sessionLine.ts";
 import type { HistoryItem } from "../src/state/session.svelte.ts";
 import { realText } from "../src/clipboard/text.ts";
 import { FUNCTIONS, translateCells, translateRows, type PyRow } from "../src/clipboard/python.ts";
-import { VENV_PINS, oracleVenvPython } from "./g2check.ts";
+import { PyUnitMissing, pintText } from "../src/clipboard/pyUnits.ts";
+import { constKey, type ChipTable } from "../src/input/chips.ts";
+import { slotFormula, unitRequest } from "../src/input/unitFormula.ts";
+import type { IndexItem } from "../src/find/types.ts";
+import { buildJob } from "../src/units/build.ts";
+import { factorTable, type FactorTable } from "../src/units/factors.ts";
+import { unitRow } from "../src/units/row.ts";
+import { isUnitError, type UnitSlot } from "../src/units/types.ts";
+import { VENV_PINS } from "./g2check.ts";
+import { pyunitsCheck, venvPython } from "./pyunits-check.ts";
+import { slotOf } from "./unit-case.ts";
 
 const app = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repo = resolve(app, "..");
@@ -45,6 +57,8 @@ export interface RowIn {
   angle?: "rad" | "deg";
   /** The row must come out NOT TRANSLATED (a comment). */
   comment?: boolean;
+  /** G216: a unit-view row: its filled slots and end slot by prompt id (`u1`, `end`), each as unit-case.ts writes one. */
+  slots?: Record<string, string>;
 }
 export interface Group {
   id: string;
@@ -55,18 +69,70 @@ export function readGroups(path = join(app, "scripts/pydiff-rows.yaml")): Group[
   return (parse(readFileSync(path, "utf8")) as { groups: Group[] }).groups;
 }
 
-/** One row as N62 gave it: its session line as the translator reads it, and the value N62 shows (absent: no number). */
+/** One row as N62 gave it: its session line as the translator reads it, and the value N62 shows (absent: no number).
+ *  G216: a unit row's unit as pint's text (`''` for a pure number), the unit `value` is in. */
 export interface N62Row {
   line: PyRow;
   value?: ComplexValue;
+  shown?: string;
+  /** G216: N62's unit has no pint text in the table. */
+  noShown?: string;
+}
+
+/** G216: the Find index's units and constants (npm run index), the factors the unit view builds its jobs with. */
+export interface UnitIndex {
+  table: FactorTable;
+  items: readonly IndexItem[];
+}
+export function unitIndex(path = join(app, "src/find/_gen/find-index.json")): UnitIndex {
+  let items: IndexItem[];
+  try {
+    items = JSON.parse(readFileSync(path, "utf8")) as IndexItem[];
+  } catch {
+    throw new Error(`no Find index at ${path}: run npm run index`);
+  }
+  return { table: factorTable(items), items };
+}
+
+/** G216: a unit row as the unit view runs it (units/view.ts request): the line with a prompt per slot, the empty ones
+ *  dropped, the parser's units mode (unitRequest, the view's own), the job on the engine; the history row units/row.ts writes. */
+function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: UnitIndex): { item: HistoryItem; shown?: string; noShown?: string; value?: ComplexValue } {
+  const filled: Record<string, UnitSlot> = Object.fromEntries(Object.entries(row.slots ?? {}).map(([id, t]) => [id, slotOf(t, ix.table)]));
+  const chips: ChipTable = {};
+  for (const m of row.input.matchAll(/\\const\{([^{}]*)\}/g)) {
+    const it = ix.items.find((x) => x.id === `const:${m[1]}`);
+    if (it?.value !== undefined) chips[constKey(m[1] as string)] = it.unc === undefined ? { value: it.value, exact: true } : { value: it.value, exact: false, unc: it.unc };
+  }
+  // the view's own request (input/unitFormula.ts unitRequest): its σ chips and value chips' facts too (G216f1)
+  const req = unitRequest(slotFormula(row.input), (id) => filled[id], chips);
+  const job = buildJob(req, ix.table);
+  const q = isUnitError(job) ? job : host.units(job, s);
+  if (isUnitError(q)) return { item: { id: k + 1, view: "home", latex: row.input, status: "error", resultLatex: "", text: JSON.stringify(q), startedAt: 0, approximate: false } };
+  const item: HistoryItem = { id: k + 1, ...unitRow({ line: row.input, chips, q, slots: filled, input: row.input, digits: DIGITS }) };
+  let shown: string | undefined;
+  let noShown: string | undefined;
+  try {
+    shown = q.shownSlot ? pintText(q.shownSlot) : "";
+  } catch (err) {
+    if (!(err instanceof PyUnitMissing)) throw err;
+    noShown = `${q.unit} (${err.reason})`;
+  }
+  return { item, ...(shown !== undefined ? { shown } : {}), ...(noShown ? { noShown } : {}), ...(q.value.ok && q.value.value ? { value: q.value.value } : {}) };
 }
 
 /** The rows of one group on `host`, in order, as the session runs them (session.svelte.ts finish; goldenRun.ts runSteps):
  *  the entry through our parser with Ans the last result's chip, the item by results.ts's rule, the line by sessionLine. */
-export function n62Rows(host: EngineHost, rows: readonly RowIn[]): N62Row[] {
+export function n62Rows(host: EngineHost, rows: readonly RowIn[], units?: UnitIndex): N62Row[] {
   let ans: Chip | undefined;
+  let ix = units;
   return rows.map((row, k) => {
     const s: HomeSettings = { ...defaultHomeSettings, angle: row.angle ?? "rad" };
+    if (row.slots) {
+      const u = unitItem(host, row, k, s, (ix ??= unitIndex()));
+      const text = sessionLine(u.item, { t: new Date(0), app: "pydiff" });
+      if (u.item.status === "done") ans = chipOf(u.item) ?? ans;
+      return { line: JSON.parse(text ?? "null") as PyRow, ...(u.value ? { value: u.value } : {}), ...(u.shown !== undefined ? { shown: u.shown } : {}), ...(u.noShown ? { noShown: u.noShown } : {}) };
+    }
     const readsAns = /\\ans(?![A-Za-z])/.test(row.input);
     const p = giacOfEntry(row.input, "home", { chips: ans ? { [ANS_KEY]: ans } : {} });
     const r = (p.named || p.consts ? host.home(p.giac, s, p.consts, p.named && chipFactsOf(p.named)) : host.home(p.giac, s)).result;
@@ -95,6 +161,9 @@ const PRELUDE = [
   "def _n62_probe(line, v):",
   "    z = _n62_N(_n62_sympify(v), 30, chop=True)",
   '    print(_n62_json.dumps({"line": line, "re": str(_n62_N(_n62_re(z), 30)), "im": str(_n62_N(_n62_im(z), 30))}), flush=True)',
+  // G216: a unit row's Quantity in the unit N62 shows ('' a pure number)
+  "def _n62_in(v, u):",
+  '    return v.to(u or "dimensionless").magnitude if hasattr(v, "to") else v',
 ];
 
 /** A translated line of the file: its number in the file, its text, the name it binds and the row it is. */
@@ -107,7 +176,7 @@ export interface Probe {
 
 /** The file Copy as Python gives for `rows`, and the same file with a probe after each translated line. `scriptLine[i]`:
  *  the file's line that line i+1 of the script is (0: the prelude or a probe). */
-export function probed(rows: readonly PyRow[]): { file: string; script: string; probes: Probe[]; comments: number[]; scriptLine: number[] } {
+export function probed(rows: readonly PyRow[], shown: readonly (string | undefined)[] = []): { file: string; script: string; probes: Probe[]; comments: number[]; scriptLine: number[] } {
   const file = translateRows(rows, { app: "pydiff" });
   const cells = translateCells(rows);
   const all = file.replace(/\n$/, "").split("\n");
@@ -132,7 +201,8 @@ export function probed(rows: readonly PyRow[]): { file: string; script: string; 
     const m = /^([A-Za-z_][A-Za-z0-9_]*) = /.exec(last);
     if (m && !c.code.startsWith("# N62 NOT TRANSLATED")) {
       probes.push({ fileLine: n, code: last, name: m[1] as string, row });
-      push(`_n62_probe(${n}, ${m[1]})`, 0);
+      const unit = shown[row];
+      push(unit === undefined ? `_n62_probe(${n}, ${m[1]})` : `_n62_probe(${n}, _n62_in(${m[1]}, ${JSON.stringify(unit)}))`, 0);
     } else comments.push(row);
   });
   return { file, script: `${script.join("\n")}\n`, probes, comments, scriptLine };
@@ -172,7 +242,7 @@ export interface GroupResult {
  *  comments. Each problem names the file's line and its text. */
 export function judgeGroup(group: Group, n62: readonly N62Row[], py: string, dir: string): GroupResult {
   const rows = n62.map((r) => r.line);
-  const { file, script, probes, comments, scriptLine } = probed(rows);
+  const { file, script, probes, comments, scriptLine } = probed(rows, n62.map((r) => r.shown));
   const problems: string[] = [];
   const slug = group.id.replace(/[^A-Za-z0-9]+/g, "-");
   const plain = runPython(py, join(dir, `${slug}.py`), file);
@@ -202,6 +272,10 @@ export function judgeGroup(group: Group, n62: readonly N62Row[], py: string, dir
     }
     if (!n?.value) {
       problems.push(`line ${p.fileLine}: ${p.code}: N62 gave no number to compare`);
+      continue;
+    }
+    if (n.noShown) {
+      problems.push(`line ${p.fileLine}: ${p.code}: N62 shows ${n.noShown}, which the table does not write`);
       continue;
     }
     const re = decimalFromString(v.re.replace("E", "e"));
@@ -241,14 +315,8 @@ export function venvVersions(py: string | null): { ok: true; versions: Record<st
   return off.length ? { ok: false, why: `pinned ${off.map(([k, v]) => `${k} ${v}`).join(", ")}, the venv has ${off.map(([k]) => `${k} ${versions[k]}`).join(", ")}: ${INSTALL_LINE}` } : { ok: true, versions };
 }
 
-/** The main checkout (the first worktree), whose tests/golden/.venv a worktree uses. */
-function mainCheckout(): string {
-  const common = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd: repo, encoding: "utf8" }).stdout.trim();
-  return common ? resolve(common, "..") : repo;
-}
-
-/** The venv's Python, as g2check and oraclecheck find it. */
-export const venvPython = (): string | null => oracleVenvPython(repo, mainCheckout());
+/** The venv's Python (pyunits-check.ts's: it runs alone too, and a dynamic import of this file from there deadlocks). */
+export { venvPython };
 
 /** `--corrupt name=py`: the function table's entry `name` writes `py` instead (to see the stage go red). */
 export function corrupt(spec: string): () => void {
@@ -275,14 +343,18 @@ async function main(): Promise<number> {
   const { pasdegCommand } = await import("../src/engine/homeEval.ts");
   const dir = join(app, "_out/pydiff");
   const groups = readGroups();
-  let problems = 0;
+  // G216: the unit table against pint and find/factors.yaml (scripts/pyunits-check.ts)
+  const pu = pyunitsCheck(py as string);
+  for (const p of pu.problems) console.log(`  pyunits: ${p}`);
+  let problems = pu.problems.length;
+  const units = groups.some((g) => g.rows.some((r) => r.slots)) ? unitIndex() : undefined;
   let compared = 0;
   let comments = 0;
   let rows = 0;
   for (const g of groups) {
     const host = await nodeHost();
     host.giac.eval(pasdegCommand("rad")); // R64: as the golden runner's fresh engine (scripts/golden/lib.ts)
-    const r = judgeGroup(g, n62Rows(host, g.rows), py as string, dir);
+    const r = judgeGroup(g, n62Rows(host, g.rows, units), py as string, dir);
     for (const p of r.problems) console.log(`  pydiff ${g.id}: ${p}`);
     problems += r.problems.length;
     compared += r.compared;
@@ -292,7 +364,7 @@ async function main(): Promise<number> {
   if (compared < MIN_COMPARED) problems++, console.log(`  pydiff: ${compared} rows compared, fewer than ${MIN_COMPARED}`);
   const s = ((performance.now() - t0) / 1000).toFixed(1);
   const pins = Object.entries(venv.versions).map(([k, v]) => `${k} ${v}`).join(", ");
-  const counts = `${groups.length} groups, ${rows} rows: ${compared} compared at ${DIGITS} digits, ${comments} not translated; ${pins}; total ${s} s`;
+  const counts = `${groups.length} groups, ${rows} rows: ${compared} compared at ${DIGITS} digits, ${comments} not translated; ${pu.checked} unit table entries; ${pins}; total ${s} s`;
   console.log(problems === 0 ? `PYDIFF PASSED: ${counts}` : `PYDIFF FAILED: ${problems} problem${problems > 1 ? "s" : ""}; ${counts}`);
   return problems === 0 ? 0 : 1;
 }

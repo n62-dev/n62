@@ -4,15 +4,16 @@
 // beside it (each row as a `# %%` cell of G213's translation), by the local date of the row, so a row one minute past
 // midnight opens the next day's pair. The files are appended, never rewritten, and a day's file can hold several runs
 // (processes) of the app, so the `.py` is written to run from the top whatever came before:
-// - each process starts its part of a file with G213's first line; a sympy name is imported in the first cell of the
-//   process that uses it, once per file and process;
+// - each process starts its part of a file with G213's first line; a name is imported in the first cell of the
+//   process that uses it, once per file and process, by Copy's own rule (python.ts pyImports: sympy's names, Python's
+//   Fraction, pint's registry and Q_, G216f1);
 // - a stored name a row reads that the process has not bound in this file (or that holds another value now) is bound
 //   right before the row, to the value the row read (`a = 5  # N62: stored, = 5`);
 // - a row's own name carries the process id (`_3_<id>`), so two processes' row 3 are two names and each later row reads
 //   its own; a stored name (`a`) keeps the user's name and is bound again by each process that reads it.
 // Translating a row re-reads the process's earlier rows of the file (a row's cell depends on them only): a pure
 // function, no file read. Lazy: reached only through R182's hook, never from the start chunk.
-import { pyHead, translateCells, type PyRow } from "../clipboard/python.ts";
+import { pyHead, pyImports, translateCells, type PyRow } from "../clipboard/python.ts";
 import { validName } from "../clipboard/folder.ts";
 import { sessionLine } from "../state/sessionLine.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
@@ -77,13 +78,7 @@ export function filesFor(row: HistoryItem, state: SyncFilesState, device: string
   const cells = translateCells(rows, { tag: `_${state.process}`, defs: true });
   const cell = cells[cells.length - 1] as (typeof cells)[number];
   const had = new Set(cells.slice(0, -1).flatMap((c) => c.uses));
-  const fresh = [...new Set(cell.uses)].filter((u) => !had.has(u)).sort();
-  const text = [
-    ...(rows.length === 1 ? [pyHead(state.app)] : []),
-    "# %%",
-    ...(fresh.length ? [`from sympy import ${fresh.join(", ")}`] : []),
-    cell.code,
-  ];
+  const text = [...(rows.length === 1 ? [pyHead(state.app)] : []), "# %%", ...pyImports(cell.uses, had), cell.code];
   return {
     files: [
       { file: jsonl, text: `${line}\n` },
