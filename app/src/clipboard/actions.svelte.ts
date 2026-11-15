@@ -260,6 +260,26 @@ export class ClipActions {
     });
   }
 
+  /** ☰ › Export › CSV or LaTeX (R200): the open session's finished rows as a file through the save port; the result is the
+   *  notice. In the chain, and a chunk that does not load says so, as the work report does. */
+  private exportRows(kind: "csv" | "latex"): Promise<void> {
+    return this.serial(async () => {
+      try {
+        const [m, about] = await Promise.all([import("./exportRows.ts"), import("virtual:about")]);
+        const s = this.session;
+        this.say(await m.saveRows(kind, s.items.map(source), this.opts, s.displayContext(), { version: about.default.version, now: new Date() }));
+      } catch {
+        this.say(tc("export.fileFailed").replace("{what}", tc(kind === "csv" ? "export.csv" : "export.latex")));
+      }
+    });
+  }
+  exportCsv(): Promise<void> {
+    return this.exportRows("csv");
+  }
+  exportLatex(): Promise<void> {
+    return this.exportRows("latex");
+  }
+
   /** Settings › Help and about › Report a problem (R173): the report (version, device, the session) on the clipboard, then
    *  the issue form in a new tab (on Android in the browser, A95). The session travels on the clipboard, only the short fields in the link (report.ts). */
   reportProblem(): Promise<void> {
@@ -383,7 +403,14 @@ export class ClipActions {
         label: tc("clip.export"),
         disabled: !finished,
         reason: why,
-        submenu: { title: tc("clip.export"), items: [{ id: "work", label: tc("export.work"), disabled: !finished, reason: why, run: () => void this.exportWork() }] },
+        submenu: {
+          title: tc("clip.export"),
+          items: [
+            { id: "work", label: tc("export.work"), disabled: !finished, reason: why, run: () => void this.exportWork() },
+            { id: "csv", label: tc("export.csv"), disabled: !finished, reason: why, run: () => void this.exportCsv() },
+            { id: "latex", label: tc("export.latex"), disabled: !finished, reason: why, run: () => void this.exportLatex() },
+          ],
+        },
       },
     ];
   }
