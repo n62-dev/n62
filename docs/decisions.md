@@ -133,9 +133,9 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R277's line scroll (Opus pass 155):** past 8 px a finger or pen scrolls the line, a tap places the caret, a hold selects the innermost term. Archived, "Opus pass 179". Would change if: MathLive ships a public scroll.
 - **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; at the whole line Select is a silent press. Archived, "Opus pass 172". Would change if: A139 finds a step surprising.
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172".
-- **R71 (Opus pass 30):** ± types on the Home and CAS line for the units key to read, and is dimmed in an app; rule: docs/06 section 2.
+- **R71 (Opus pass 30):** ± on Shift + `,`, for the units key; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45, R312): the rule list heads `app/src/entry/hwkeys.ts` (docs/04 holds none, Opus pass 185); `e` after digits is ᴇ, unless `(` follows letters that with `e` form a known name; characters no key types do nothing.
-- **R131's desktop keys (Opus pass 170):** the worker's table stands (`spec/keyboard.yaml` `desktop:`). Archived, "Opus pass 178".
+- **R131's desktop keys (Opus pass 170):** the worker's table stands (`spec/keyboard.yaml` `desktop:`); R323's ∥ is Alt + Shift + 9 (pass 192). Archived, "Opus pass 178".
 - **R198's typed names (Opus pass 172):** a typed FUNCS or Find function name before `(` is the function, drawn by name; Giac's program words stay letters (R198f1). Archived, "Opus pass 179".
 - **R224's wide layout (Opus pass 172):** the keypad in a 42 % column of 400–560 px (`--keys-wide`). Archived, "Opus pass 190". Would change if: the owner's look on the Tab One.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
@@ -147,7 +147,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Enter during a job (Opus pass 120):** starts nothing, the line stays (`session.submit`). Would change if: the owner wants it queued.
 - **Sheets** (R7, R8, R21a): the last pick per sheet in memory only; Mode and Settings open on their first row. Archived, "Opus pass 132".
 - **User keys** (R15b): a slot is `{ label, action }` in keyboard.yaml's action form, null empties it, the user's choice wins over a default.
-- **Keypad legends** (R6): a key is dimmed when its layer gives nothing; 4.5:1 contrast. Shift + 4 reads Mat (R187, pass 170; as short as Mem). Archived, "Opus pass 132".
+- **Keypad legends** (R6): a key is dimmed when its layer gives nothing; 4.5:1 contrast. Shift + 4 reads Mat (R187, pass 170). Archived, "Opus pass 132".
 - **The kept line** (R34): `{ view, latex, chips }` under `entry`, written on hide once settled, restored only into its view.
 - **An app's line stays with the app** (R76, R76f1, R262): cleared on the way back to Home or CAS. Archived, "Opus pass 153".
 - **Working… after 150 ms** (F8): the busy line and Cancel are drawn late; Cancel works from 0 ms.
