@@ -89,6 +89,9 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
     expect(py([row("\\cot(1)", { mark: "≈", value: "0.642092615934", angle: "rad" })])).toBe(
       file("# N62 NOT TRANSLATED (Cot is not translated): \\cot(1)", "# N62: ≈ 0.642092615934"),
     );
+    // G361: our linterp has no one-to-one sympy form (sympy has no table lookup), so it is left out of FUNCTIONS
+    const lt = "\\operatorname{linterp}\\left(\\left\\{0,10,20\\right\\},\\left\\{100,80,50\\right\\},15\\right)";
+    expect(py([row(lt, { exact: "65" })])).toMatch(/^# N62 NOT TRANSLATED \(.*linterp.*\): /m);
   });
   it("a later row that reads its name, or Ans after it, is comment-only too", () => {
     const out = py([
