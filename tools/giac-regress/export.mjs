@@ -785,6 +785,22 @@ export function build(cases) {
     patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath findroot" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0043 (G364), written lines: x^3-3*x+2+10^-t has one real root, -2-10^-t/9-…, and the pair 1 +- sqrt(10^-t/3)*i
+  // (mpmath polyroots at 200 and 300 digits agree); its Cardano rootofs (t <= 25) are ill-conditioned, so the double test
+  // of cubic_real_roots did not separate the pair and solve gave three roots, two of them no roots (0.99999997, 1.00000003 for
+  // t = 22 at Digits 12). Counts derived (nops(realroot(p)) = 1); each t once in the file order (proot caches the roots of
+  // a polynomial, so a t met before at other Digits can hide the fault: t = 16 at Digits 30 after Digits 25).
+  for (const [id, digits, input, value, tol] of [
+    ["g364-size-solve-x3-3x+2+1e-15-12", 12, "size(solve(x^3-3*x+2+10^-15=0,x))", "1", "1/10^30"],
+    ["g364-size-solve-x3-3x+2+1e-22-12", 12, "size(solve(x^3-3*x+2+10^-22=0,x))", "1", "1/10^30"],
+    ["g364-solve-x3-3x+2+1e-22-12", 12, "max(abs(solve(x^3-3*x+2+10^-22=0,x)-[-20000000000000000000000111111111111111111111110288/10^49]))", "0", "1/10^11"],
+    ["g364-size-solve-x3-3x+2+1e-23-15", 15, "size(solve(x^3-3*x+2+10^-23=0,x))", "1", "1/10^30"],
+    ["g364-size-solve-x3-3x+2+1e-20-20", 20, "size(solve(x^3-3*x+2+10^-20=0,x))", "1", "1/10^30"],
+    ["g364-size-solve-x3-3x+2+1e-25-20", 20, "size(solve(x^3-3*x+2+10^-25=0,x))", "1", "1/10^30"],
+  ]) {
+    patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${input.startsWith("max") ? "oracle: mpmath polyroots, the root -2-1.1E-23; Giac's vector minus pads a list of three, which fails" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   const G359_PATCH = "0050-proot-huge-coefficients.patch";
   // Patch 0050 (G359), written lines (the golden g359-* Home rows are lists): a cubic with a 10^-30 term trapped the engine
   // (RuntimeError: unreachable) at Digits 12. Roots by mpmath (polyroots, 60 and 90 digits agree); counts derived (nops(realroot(p))).
@@ -794,6 +810,9 @@ export function build(cases) {
     ["g359-solve-x3-3x+2+1e-30-40", 40, "solve(x^3-3*x+2+10^-30=0,x)[0]", "-20000000000000000000000000000001111111111111111111/10^49", "1/10^35"],
     ["g359-size-solve-x3-3x+2+1e-30-12", 12, "size(solve(x^3-3*x+2+10^-30=0,x))", "1", "1/10^30"],
     ["g359-size-csolve-x3-x-1-1e-30-12", 12, "size(csolve(x^3-x-1-10^-30=0,x))", "3", "1/10^30"],
+    // G364 (night review 2026-11-14, vg-2): the 10^-80 form gave three roots at Digits 30 and 40 before G359 took it to realroot
+    ["g364-size-solve-x3-3x+2+1e-80-12", 12, "size(solve(x^3-3*x+2+10^-80=0,x))", "1", "1/10^30"],
+    ["g364-size-solve-x3-3x+2+1e-80-30", 30, "size(solve(x^3-3*x+2+10^-80=0,x))", "1", "1/10^30"],
   ]) {
     patched.push(`// patch ${G359_PATCH}`, `// ${id} (${value.includes("/") ? "oracle: mpmath polyroots" : "derived: nops(realroot(p)), or the degree for three distinct roots"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
