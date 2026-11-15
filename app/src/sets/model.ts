@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G275: the formula set (mh-C3, decisions mh-C 6): named inputs with their numbers and named steps over them, re-run
-// with new numbers. This file is its model and its text form, UI-free: no view, no storage, no evaluation (G276 on).
+// with new numbers. This file is its model and its text form, UI-free: no view, no storage, no evaluation (sets/closed.ts, G276).
 // A set's text comes from a file or from an AI's answer, so readSet checks every field as untrusted and refuses the
 // first fault as data (a SetError), worded by the view. Only erasable TypeScript syntax.
 import { balanced, isName, isProgramWord, names } from "../engine/giacPrint.ts";
@@ -55,7 +55,12 @@ export type SetError =
    *  read the call as a value applied to a number (a silent wrong answer) or substitute without end (`M: S(1)`, `S: M(1)`). */
   | { error: "call"; step: string; name: string }
   /** Steps that read each other, in the order they read: each reads the next, the last the first. */
-  | { error: "cycle"; steps: string[] };
+  | { error: "cycle"; steps: string[] }
+  /** G276: a step asked to run that the set does not have. */
+  | { error: "nostep"; step: string }
+  /** G276: a step's closed text (sets/closed.ts, each step it reads written out in full) passes the length the engine is
+   *  given: steps that each read the one before twice double it. */
+  | { error: "long"; step: string };
 
 export function isSetError<T extends object>(r: T | SetError): r is SetError {
   return "error" in r;
