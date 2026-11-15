@@ -143,7 +143,7 @@ function uncVar(key: string, value: string, sigma: string, vars: UncVar[], seen:
   let name = seen.get(key);
   if (name === undefined) {
     name = `pasv${vars.length + 1}`;
-    vars.push({ name, value, sigma });
+    vars.push({ name, value, sigma, key });
     seen.set(key, name);
   }
   return name;
@@ -204,7 +204,7 @@ function uncertainValues(formula: string, vars: UncVar[], sigmaIn: SigmaIn): str
     const known = key !== undefined ? byKey.get(key) : undefined;
     // one key is one chip: the parser writes it with one value and one σ, so anything else is not ours
     if (known && (known.value !== value || known.sigma !== sigma)) throw bad();
-    const v = known ?? { name: `pasv${vars.length + 1}`, value, sigma };
+    const v: UncVar = known ?? { name: `pasv${vars.length + 1}`, value, sigma, ...(key !== undefined ? { key } : {}) };
     if (!known) {
       vars.push(v);
       if (key !== undefined) byKey.set(key, v);
