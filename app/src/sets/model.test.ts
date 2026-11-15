@@ -150,6 +150,17 @@ describe("G275 stepOrder", () => {
     const self: FormulaSet = { name: "s", inputs: [], steps: [{ name: "S", expr: "S+1" }] };
     expect(stepOrder(self)).toEqual({ error: "cycle", steps: ["S"] });
   });
+
+  it("refuses a step or an input called as a function (fix round 1)", () => {
+    const before: FormulaSet = { name: "s", inputs: [{ name: "x", value: "1" }], steps: [{ name: "S", expr: "M(2)+1" }, { name: "M", expr: "2*x" }] };
+    expect(stepOrder(before)).toEqual({ error: "call", step: "S", name: "M" });
+    expect(readSet(writeSet(before))).toEqual({ error: "call", step: "S", name: "M" });
+    const loop: FormulaSet = { name: "s", inputs: [], steps: [{ name: "M", expr: "S(1)" }, { name: "S", expr: "M(1)" }] };
+    expect(stepOrder(loop)).toEqual({ error: "call", step: "M", name: "S" });
+    expect(readSet(writeSet(loop))).toEqual({ error: "call", step: "M", name: "S" });
+    const input: FormulaSet = { name: "s", inputs: [{ name: "tau", value: "1" }], steps: [{ name: "S", expr: "tau(1+x)" }] };
+    expect(stepOrder(input)).toEqual({ error: "call", step: "S", name: "tau" });
+  });
 });
 
 describe("G275 readSet refuses untrusted text", () => {

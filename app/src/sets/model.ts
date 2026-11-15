@@ -3,7 +3,7 @@
 // with new numbers. This file is its model and its text form, UI-free: no view, no storage, no evaluation (G276 on).
 // A set's text comes from a file or from an AI's answer, so readSet checks every field as untrusted and refuses the
 // first fault as data (a SetError), worded by the view. Only erasable TypeScript syntax.
-import { balanced, isName, isProgramWord, namesIn } from "../engine/giacPrint.ts";
+import { balanced, isName, isProgramWord, names } from "../engine/giacPrint.ts";
 import { isFlagName } from "../engine/flags.ts";
 import { isOwnName } from "../engine/ourNames.ts";
 import { FN } from "../input/emit.ts";
@@ -51,6 +51,9 @@ export type SetError =
   | { error: "value" | "sigma"; input: string }
   /** A step reads a name that is neither an input, nor a step, nor a constant of Giac's. */
   | { error: "unknown"; step: string; name: string }
+  /** G275 fix 1: a step calls an input or a step as a function (`M(2)`): a set's name holds a value, and Giac would
+   *  read the call as a value applied to a number (a silent wrong answer) or substitute without end (`M: S(1)`, `S: M(1)`). */
+  | { error: "call"; step: string; name: string }
   /** Steps that read each other, in the order they read: each reads the next, the last the first. */
   | { error: "cycle"; steps: string[] };
 
@@ -93,7 +96,8 @@ export function writeSet(set: FormulaSet): string {
 /**
  * The steps in an order that runs each after the steps it reads, the listed order kept where none reads another
  * (`S` reads `M` and is listed first: `[M, S]`). Refuses a name a step reads that is neither an input, nor a step, nor a
- * Giac constant (the first, in listed order), then a cycle. Names are taken as distinct (readSet's check).
+ * Giac constant (the first, in listed order), or one an input or a step calls (`M(2)`: refused, never read as a
+ * function), then a cycle. Names are taken as distinct (readSet's check).
  */
 export function stepOrder(set: FormulaSet): string[] | SetError {
   const inputs = new Set(set.inputs.map((i) => i.name));
@@ -101,9 +105,13 @@ export function stepOrder(set: FormulaSet): string[] | SetError {
   const reads = new Map<string, string[]>();
   for (const s of set.steps) {
     const used: string[] = [];
-    for (const n of namesIn(s.expr, "typed")) {
-      if (stepNames.has(n)) used.push(n);
-      else if (!inputs.has(n) && !CONSTANTS.has(n)) return { error: "unknown", step: s.name, name: n };
+    for (const { name: n, call } of names(s.expr, "typed")) {
+      if (call) {
+        // a called name is Giac's function (checked when the set runs); a set's own name never is one
+        if (inputs.has(n) || stepNames.has(n)) return { error: "call", step: s.name, name: n };
+      } else if (stepNames.has(n)) {
+        if (!used.includes(n)) used.push(n);
+      } else if (!inputs.has(n) && !CONSTANTS.has(n)) return { error: "unknown", step: s.name, name: n };
     }
     reads.set(s.name, used);
   }
