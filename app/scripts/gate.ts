@@ -2,7 +2,7 @@
 // `npm run gate`: every check a branch must pass (docs/shifts/brief.md section 8), one line each, the full log in
 // app/_out/gate/<name>.log. Exit 1 on any FAIL.
 //   npm run gate            # typecheck, index (when missing), vitest (FIND_INDEX=required), e2e, golden (when engine or
-//                           # parser code changed against phase-1), sweep (G61, the oracle sweep), seqsweep (G62), casback (G64), viewsweep (G63), findcensus (G110), size test, docs sizes, g2check (G79), oraclecheck (G200, oracle.py when tests/golden changed)
+//                           # parser code changed against phase-1), sweep (G61, the oracle sweep), seqsweep (G62), casback (G64), pydiff (G215), viewsweep (G63), findcensus (G110), size test, docs sizes, g2check (G79), oraclecheck (G200, oracle.py when tests/golden changed)
 //   npm run gate -- --quick # typecheck and vitest only (engine tests skipped, and said so, when no engine build is found)
 //   npm run gate -- --update-text-baseline # rules stage (G88: text matches and `.eval(` outside engine and units are counted): write app/scripts/text-baseline.json (G88)
 // The vitest stage sets ENGINE=required (G146) unless --quick finds no engine build.
@@ -17,7 +17,7 @@ import { problemLines, touchesOracle } from "./oraclecheck.ts";
 import { checkImportDirection } from "./import-rules.ts";
 import { countAll, evalOutside, judge, readBaseline, totals, writeBaseline } from "./text-rules.ts";
 import {
-  duration, formatLine, playwrightFailedSpecs, retryable, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeFindCensus, summarizeTypecheck, regeneratesIndex, selectsGolden, summarizeVitest, vitestFailures,
+  duration, formatLine, playwrightFailedSpecs, retryable, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizePyDiff, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeFindCensus, summarizeTypecheck, regeneratesIndex, selectsGolden, summarizeVitest, vitestFailures,
   type Summary,
 } from "./gate-summary.ts";
 
@@ -209,6 +209,18 @@ const checks: Check[] = [
       if (!engine) return { ok: false, detail: "no engine build: set GIAC_OUT (absolute)" };
       const r = run("casback", "node", ["scripts/casback.ts"], { GIAC_OUT: engine }, 3 * 60_000);
       return summarizeCasBack(r.out, r.code);
+    },
+  },
+  {
+    // G215: Copy as Python runs and agrees with N62 (scripts/pydiff.ts; scripts/pydiff-rows.yaml): sympy in tests/golden/.venv,
+    // which must hold the pinned packages (tests/golden/README.md): without them it fails, as golden does without the engine
+    name: "pydiff",
+    skip: () => (quick ? "--quick" : null),
+    run: () => {
+      const engine = giacOut();
+      if (!engine) return { ok: false, detail: "no engine build: set GIAC_OUT (absolute)" };
+      const r = run("pydiff", "node", ["scripts/pydiff.ts"], { GIAC_OUT: engine }, 3 * 60_000);
+      return summarizePyDiff(r.out, r.code);
     },
   },
   {
