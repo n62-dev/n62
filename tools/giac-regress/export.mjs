@@ -793,12 +793,12 @@ export function build(cases) {
   for (const [id, digits, input, value, tol] of [
     ["g364-size-solve-x3-3x+2+1e-15-12", 12, "size(solve(x^3-3*x+2+10^-15=0,x))", "1", "1/10^30"],
     ["g364-size-solve-x3-3x+2+1e-22-12", 12, "size(solve(x^3-3*x+2+10^-22=0,x))", "1", "1/10^30"],
-    ["g364-solve-x3-3x+2+1e-22-12", 12, "solve(x^3-3*x+2+10^-22=0,x)", "[-20000000000000000000000111111111111111111111110288/10^49]", "1/10^11"],
+    ["g364-solve-x3-3x+2+1e-22-12", 12, "max(abs(solve(x^3-3*x+2+10^-22=0,x)-[-20000000000000000000000111111111111111111111110288/10^49]))", "0", "1/10^11"],
     ["g364-size-solve-x3-3x+2+1e-23-15", 15, "size(solve(x^3-3*x+2+10^-23=0,x))", "1", "1/10^30"],
     ["g364-size-solve-x3-3x+2+1e-20-20", 20, "size(solve(x^3-3*x+2+10^-20=0,x))", "1", "1/10^30"],
     ["g364-size-solve-x3-3x+2+1e-25-20", 20, "size(solve(x^3-3*x+2+10^-25=0,x))", "1", "1/10^30"],
   ]) {
-    patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath polyroots; a list of three is padded by Giac's vector minus and fails" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${input.startsWith("max") ? "oracle: mpmath polyroots, the root -2-1.1E-23; Giac's vector minus pads a list of three, which fails" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   const G359_PATCH = "0050-proot-huge-coefficients.patch";

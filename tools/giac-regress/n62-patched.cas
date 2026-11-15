@@ -1050,8 +1050,8 @@ Digits:=12:; pc("g364-size-solve-x3-3x+2+1e-15-12",'size(solve(x^3-3*x+2+10^-15=
 // g364-size-solve-x3-3x+2+1e-22-12 (derived: nops(realroot(p)))
 Digits:=12:; pc("g364-size-solve-x3-3x+2+1e-22-12",'size(solve(x^3-3*x+2+10^-22=0,x))',1,1/10^30);
 // patch 0043-solve-ckrange-imag-noise.patch
-// g364-solve-x3-3x+2+1e-22-12 (oracle: mpmath polyroots; a list of three is padded by Giac's vector minus and fails)
-Digits:=12:; pc("g364-solve-x3-3x+2+1e-22-12",'solve(x^3-3*x+2+10^-22=0,x)',[-20000000000000000000000111111111111111111111110288/10^49],1/10^11);
+// g364-solve-x3-3x+2+1e-22-12 (oracle: mpmath polyroots, the root -2-1.1E-23; Giac's vector minus pads a list of three, which fails)
+Digits:=12:; pc("g364-solve-x3-3x+2+1e-22-12",'max(abs(solve(x^3-3*x+2+10^-22=0,x)-[-20000000000000000000000111111111111111111111110288/10^49]))',0,1/10^11);
 // patch 0043-solve-ckrange-imag-noise.patch
 // g364-size-solve-x3-3x+2+1e-23-15 (derived: nops(realroot(p)))
 Digits:=15:; pc("g364-size-solve-x3-3x+2+1e-23-15",'size(solve(x^3-3*x+2+10^-23=0,x))',1,1/10^30);
