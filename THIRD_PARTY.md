@@ -39,6 +39,9 @@ Settings › Help and about (R87) lists every row of these tables with its licen
 | Emscripten (Debian package) | 3.1.69+dfsg-3 (`debian:trixie@sha256:913f6706df59a68922d1dd08f78c2476560a8d367897200a6005b00e5f67c2d5`) | MIT / UIUC (NCSA) | https://packages.debian.org/trixie/emscripten | **release builds** of the engine (decided 2026-10-11, P2; speed condition met 2026-10-11), `engine/giac/build-wasm-release.sh` | – |
 | Gradle | 8.14.3 (distribution SHA-256 `bd711022…3531`, pinned in build.sh) | Apache-2.0 | https://services.gradle.org/distributions/gradle-8.14.3-bin.zip | Android build, downloaded by `build.sh` into `~/.cache/n62/`; no wrapper jar in git (F-Droid uses its own Gradle) | – |
 | librosa | 1.0.0 (pinned in `tools/showcase/requirements.txt`, with soundfile 0.14.0; numpy, scipy, numba as pip resolves them) | ISC (soundfile BSD-3-Clause) | https://github.com/librosa/librosa | the showcase video's beat analysis, `tools/showcase/` (developer only) | – |
+| sympy | 1.14.0 (pinned in tests/golden/README.md's venv line) | BSD-3-Clause (parts from Diofant and PyDy BSD-3-Clause, from latex2sympy MIT) | https://github.com/sympy/sympy | test-only: the gate's pydiff stage runs Copy as Python's scripts in tests/golden/.venv (G215); never in the APK | – |
+| pint | 0.26.2 (pinned there, with flexcache 0.3 and flexparser 0.4 BSD-3-Clause, platformdirs 4.14.5 MIT, typing_extensions 4.16.0 PSF-2.0) | BSD-3-Clause | https://github.com/hgrecco/pint | test-only: the pydiff stage's unit scripts (G216); never in the APK | – |
+| uncertainties | 3.2.3 (pinned there) | BSD-3-Clause | https://github.com/lmfit/uncertainties | test-only: the pydiff stage's σ scripts (G217); never in the APK | – |
 
 ## Build and deploy (.github/workflows/pages.yml and release.yml, not shipped)
 
