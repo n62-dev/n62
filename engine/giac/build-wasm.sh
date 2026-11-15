@@ -3,11 +3,12 @@
 #
 # Build Giac + GSL + GMP + MPFR to WebAssembly from pinned, hash-checked sources.
 #
-#   [WITH_GSL=0] engine/giac/build-wasm.sh [--fetch-only | stage...]
+#   [WITH_GSL=0] [WITH_MPFI=1] engine/giac/build-wasm.sh [--fetch-only | stage...]
 #
-# Stages: fetch gmp mpfr gsl giac link (default: all, gsl skipped with WITH_GSL=0)
+# Stages: fetch gmp mpfr mpfi gsl giac link (default: all, gsl skipped with WITH_GSL=0, mpfi only with WITH_MPFI=1)
 # --fetch-only (A97): the SHA-256-checked downloads of stage fetch and nothing else: no emsdk or emcc needed, nothing compiled (the F-Droid recipe's prebuild).
 # Output: engine/giac/_out/<variant>/giac.{mjs,wasm}; variant = gsl (default) | base (WITH_GSL=0, comparisons only)
+#   | mpfi (WITH_MPFI=1, S20's spike: Giac's real_interval on MPFI, never shipped; use a GIAC_BUILD_DIR of its own)
 # GIAC_PATCHES=none (A71): no patch of patches/ is applied, the stock giac_2.1.0-1 for the red-first check of a package that says its
 #   tests "fail on the stock build" (scripts/pipeline-lib.sh); variant = stock-<key> (stock-base-<key> with WITH_GSL=0), where
 #   <key> is `build-wasm.sh stock-key`: a hash of the tarball's SHA-256, of this script and of the files in wasm/, so a stock build is made once and reused.
@@ -24,6 +25,7 @@ OUT="${GIAC_BUILD_OUT:-$HERE/_out}"
 PREFIX="$BUILD/prefix"
 JOBS="${JOBS:-$(nproc)}"
 WITH_GSL="${WITH_GSL:-1}"
+WITH_MPFI="${WITH_MPFI:-0}"
 GIAC_PATCHES="${GIAC_PATCHES:-all}"
 
 EMSDK_DIR="${EMSDK_DIR:-$HOME/emsdk}"
@@ -36,6 +38,12 @@ GMP_SHA256="a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898"
 MPFR_VERSION="4.2.2"
 MPFR_URLS=("https://ftp.gnu.org/gnu/mpfr/mpfr-$MPFR_VERSION.tar.xz")
 MPFR_SHA256="b67ba0383ef7e8a8563734e2e889ef5ec3c3b898a01d00fa0a6869ad81c6ce01"
+
+# S20: MPFI (interval arithmetic on MPFR) for the spike variant only. The release page's .tar.xz is the 2022-04-01
+# snapshot of 1.5.4: its SHA-512 a9bcbbb7…aa48f6 is the one Gentoo's Manifest gives for mpfi-1.5.4_p20220401.tar.xz.
+MPFI_VERSION="1.5.4"
+MPFI_URLS=("https://perso.ens-lyon.fr/nathalie.revol/softwares/mpfi-$MPFI_VERSION.tar.xz")
+MPFI_SHA256="819e98bc7dad7cf7e67c9ddb592f44545c300de143fe30bc29ca1b422b55306a"
 
 # GSL gives Giac's fsolve its Brent/secant/Steffensen and Powell-hybrid (hybrids/hybridj) methods.
 GSL_VERSION="2.8"
@@ -138,6 +146,7 @@ stage_fetch() {
   fetch_one "$MPFR_SHA256" "${MPFR_URLS[@]}"
   fetch_giac
   [[ "$WITH_GSL" != 1 ]] || fetch_one "$GSL_SHA256" "${GSL_URLS[@]}"
+  [[ "$WITH_MPFI" != 1 ]] || fetch_one "$MPFI_SHA256" "${MPFI_URLS[@]}"
 }
 
 unpack() { # tarball dir
@@ -161,6 +170,16 @@ stage_mpfr() {
   (cd "$src" && emconfigure ./configure --build=none --host=none --disable-assembly \
       --disable-shared --enable-static --prefix="$PREFIX" --with-gmp="$PREFIX" CFLAGS="-O2" \
     && emmake make -j"$JOBS" && emmake make install)
+}
+
+stage_mpfi() {
+  [[ "$WITH_MPFI" == 1 ]] || return 0
+  log "mpfi $MPFI_VERSION"
+  local src="$BUILD/mpfi-$MPFI_VERSION"
+  unpack "$DL/mpfi-$MPFI_VERSION.tar.xz" "$src"
+  (cd "$src" && emconfigure ./configure --build=x86_64-pc-linux-gnu --host=i686-pc-linux-gnu \
+      --disable-shared --enable-static --prefix="$PREFIX" --with-gmp="$PREFIX" --with-mpfr="$PREFIX" CFLAGS="-O2" \
+    && emmake make -C src -j"$JOBS" && emmake make -C src install && emmake make install-includeHEADERS) > "$BUILD/mpfi-build.log" 2>&1
 }
 
 stage_gsl() {
@@ -203,7 +222,7 @@ stock_key() {
 }
 
 variant() {
-  local v=gsl; [[ "$WITH_GSL" == 1 ]] || v=base
+  local v=gsl; [[ "$WITH_GSL" == 1 ]] || v=base; [[ "$WITH_MPFI" != 1 ]] || v=mpfi
   [[ "$GIAC_PATCHES" != none ]] && echo "$v" || { [[ "$v" == gsl ]] && echo "stock-$(stock_key)" || echo "stock-base-$(stock_key)"; }
 }
 
@@ -228,6 +247,9 @@ stage_giac() {
       CPPFLAGS="-I$PREFIX/include" LDFLAGS="-L$PREFIX/lib" > "$BUILD/giac-configure.log" 2>&1)
   # No threads in the browser build (would need SharedArrayBuffer + COOP/COEP).
   sed -i -E 's@^#define (HAVE_LIBPTHREAD|HAVE_PTHREAD_H|HAVE_LIBRT) .*@/* & (disabled for wasm) */@' "$src/config.h"
+  # Configure finds mpfi.h by itself when the prefix holds it: only the mpfi variant keeps it (S20). Both copies: a
+  # quoted #include "config.h" in src/ reads src/config.h, the copy configure made.
+  [[ "$WITH_MPFI" == 1 ]] || sed -i -E 's@^#define (HAVE_LIBMPFI|HAVE_MPFI_H) .*@/* & (WITH_MPFI=0) */@' "$src/config.h" "$src/src/config.h"
   local obj="$BUILD/giac-obj-$(variant)"
   rm -rf "$obj"; mkdir -p "$obj"
   local f
@@ -255,6 +277,7 @@ stage_link() {
   for f in api stubs; do em++ -std=c++17 "${GIAC_CXXFLAGS[@]}" "${extra[@]}" -I"$src" -I"$src/src" -I"$PREFIX/include" -c "$HERE/wasm/$f.cc" -o "$obj/$f.o"; done
   local libs=("$PREFIX/lib/libmpfr.a" "$PREFIX/lib/libgmp.a")  # mpfr before gmp
   [[ "$WITH_GSL" == 1 ]] && libs=("$PREFIX/lib/libgsl.a" "$PREFIX/lib/libgslcblas.a" "${libs[@]}")
+  [[ "$WITH_MPFI" != 1 ]] || libs=("$PREFIX/lib/libmpfi.a" "${libs[@]}")
   em++ "${GIAC_LDFLAGS[@]}" "$obj"/*.o "${libs[@]}" -o "$out/giac.mjs"
   ls -l "$out"
 }
@@ -264,7 +287,7 @@ main() {
   [[ "$GIAC_PATCHES" == all || "$GIAC_PATCHES" == none ]] || { echo "GIAC_PATCHES is '$GIAC_PATCHES': all (default) or none" >&2; exit 1; }
   [[ "${stages[0]:-}" != stock-key ]] || { stock_key; return; }  # needs no emsdk
   [[ "${stages[0]:-}" != --fetch-only ]] || { [[ ${#stages[@]} -eq 1 ]] || { echo "--fetch-only takes no stage" >&2; exit 2; }; stage_fetch; return; }  # needs no emsdk
-  [[ ${#stages[@]} -gt 0 ]] || stages=(fetch gmp mpfr gsl giac link)
+  [[ ${#stages[@]} -gt 0 ]] || stages=(fetch gmp mpfr mpfi gsl giac link)
   emsdk_env
   local s
   for s in "${stages[@]}"; do "stage_$s"; done

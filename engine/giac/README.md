@@ -10,10 +10,11 @@ git clone https://github.com/emscripten-core/emsdk.git ~/emsdk
 
 engine/giac/build-wasm.sh                              # fetch gmp mpfr gsl giac link → _out/gsl/ (the default build)
 WITH_GSL=0 engine/giac/build-wasm.sh fetch giac link   # without GSL → _out/base/ (comparisons only)
+WITH_MPFI=1 GIAC_BUILD_DIR=<own dir> engine/giac/build-wasm.sh   # with MPFI 1.5.4 (interval arithmetic) → _out/mpfi/; S20's spike, never shipped (docs/research/r22-mpfi.md)
 GIAC_PATCHES=none GIAC_BUILD_DIR=<own dir> engine/giac/build-wasm.sh   # stock giac_2.1.0-1, no patch → _out/stock-<key>/ (`build-wasm.sh stock-key`); the red-first check of a package that says its tests "fail on the stock build" (A71; the pipeline builds it once)
 ```
 
-Stages: `fetch gmp mpfr gsl giac link`. `JOBS` sets parallelism (default `nproc`). `N62_DL_DIR` points the download cache somewhere else, e.g. at the main checkout's `_downloads` from a git worktree. On a 16-core machine a clean build takes about 5 minutes (GMP + MPFR ≈2 min, GSL ≈1.5 min, Giac ≈1.7 min). Two clean builds on the same machine produced byte-identical `giac.wasm`.
+Stages: `fetch gmp mpfr mpfi gsl giac link` (`mpfi` only with `WITH_MPFI=1`). `JOBS` sets parallelism (default `nproc`). `N62_DL_DIR` points the download cache somewhere else, e.g. at the main checkout's `_downloads` from a git worktree. On a 16-core machine a clean build takes about 5 minutes (GMP + MPFR ≈2 min, GSL ≈1.5 min, Giac ≈1.7 min). Two clean builds on the same machine produced byte-identical `giac.wasm`.
 
 Output: `_out/<variant>/giac.mjs` (ES module factory `createGiacModule`) + `giac.wasm` (9.75 MB raw, 2.51 MB brotli).
 

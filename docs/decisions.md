@@ -7,6 +7,8 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+- **S20, MPFI intervals:** go for real values on Giac's interval functions? Recommended; +6.6 kB brotli ([r22](research/r22-mpfi.md) 1).
+
 ## Decided proposals
 
 ### Pipeline and process
