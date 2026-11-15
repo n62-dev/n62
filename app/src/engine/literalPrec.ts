@@ -31,6 +31,40 @@ const EXPONENT_GAPS: readonly string[] = ["", "-", "(", "(-"];
  *  log10 e; a power is read by constantPower. */
 const EXP_POWER = { before: "exp(", gaps: ["", "-"] } as const;
 
+/** `s` is one or more digits and nothing else. */
+function isDigits(s: string): boolean {
+  if (s === "") return false;
+  for (const c of s) if (c < "0" || c > "9") return false;
+  return true;
+}
+
+/** G363: `s`, a power's exponent, as an integer literal with an optional sign, in brackets or not (`200`, `-200`, `(200)`,
+ *  ` ( -200 ) `): the literal's value n and where its digits start; null for any other exponent. */
+function integerExponent(s: string): { at: number; n: number } | null {
+  let k = 0;
+  const skip = (): void => {
+    while (k < s.length && s.charAt(k).trim() === "") k++;
+  };
+  skip();
+  const open = s.startsWith("(", k);
+  if (open) k++;
+  skip();
+  const minus = s.charAt(k) === "-";
+  if (minus) k++;
+  skip();
+  const at = k;
+  while (s.charAt(k) >= "0" && s.charAt(k) <= "9") k++;
+  if (k === at) return null;
+  const digits = s.slice(at, k);
+  skip();
+  if (open) {
+    if (!s.startsWith(")", k)) return null;
+    k++;
+    skip();
+  }
+  return k === s.length ? { at, n: Number((minus ? "-" : "") + digits) } : null;
+}
+
 /** G363: the base of every power in `text` whose exponent is an integer literal (`^200`, `^-200`, `^(200)`, `^(-200)`)
  *  and whose base is a constant expression other than an integer literal (constantDouble: `pi`, `sin(1)`,
  *  `(1/sin(1))`, `euler_gamma`; a power of two integer literals is read in literalCounts), by where its exponent's
@@ -38,11 +72,11 @@ const EXP_POWER = { before: "exp(", gaps: ["", "-"] } as const;
 function constantPowers(text: string, q: Quoting): Map<number, { n: number; log10: number }> {
   const out = new Map<number, { n: number; log10: number }>();
   for (const p of powersIn(text, q)) {
-    const m = /^(\s*\(?\s*(-?)\s*)(\d+)(\s*\)?\s*)$/.exec(text.slice(...p.exponent));
-    if (!m || m[1]!.includes("(") !== m[4]!.includes(")") || /^\d+$/.test(p.base)) continue;
+    const e = integerExponent(text.slice(...p.exponent));
+    if (!e || isDigits(p.base)) continue;
     const log10 = Math.log10(Math.abs(constantDouble(p.base)));
     if (!Number.isFinite(log10)) continue;
-    out.set(p.exponent[0] + m[1]!.length, { n: Number(m[2]! + m[3]!), log10 });
+    out.set(p.exponent[0] + e.at, { n: e.n, log10 });
   }
   return out;
 }
