@@ -62,7 +62,8 @@ const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt", "rad", "de
  *  Giac's own conventions (dot conjugates its first argument, stddevp is the sample deviation, frac is not settled for
  *  a negative number), and what needs a list, a matrix or a free variable (the core translates none). */
 // Which of them takes or gives an angle is never written here: fn() asks angles.ts, the lists emit.ts adds pasdeg by.
-const FUNCTIONS: ReadonlyMap<string, { py: string; args: number }> = new Map([
+// Exported for G215's stage only (scripts/pydiff.ts --corrupt): its test corrupts one entry and sees the stage go red.
+export const FUNCTIONS: ReadonlyMap<string, { py: string; args: number }> = new Map([
   ["sqrt", { py: "sqrt", args: 1 }],
   ["exp", { py: "exp", args: 1 }],
   ["sin", { py: "sin", args: 1 }],
@@ -102,8 +103,10 @@ interface Out {
 }
 
 class NotTranslated extends Error {
-  constructor(readonly reason: string) {
+  readonly reason: string;
+  constructor(reason: string) {
     super(reason);
+    this.reason = reason;
   }
 }
 const no = (reason: string): never => {
@@ -148,11 +151,15 @@ class Row {
   earlier = false;
   /** G218: the stored names this row binds before its own line, to the value it read: name → its line and value. */
   readonly defs = new Map<string, { code: string; k: Kind; value: PyChip }>();
-  constructor(
-    private readonly t: Translator,
-    private readonly i: number,
-    private readonly keys: readonly string[],
-  ) {}
+  private readonly t: Translator;
+  private readonly i: number;
+  private readonly keys: readonly string[];
+  // plain fields, no parameter properties: Node's type stripping runs this file in G215's stage (scripts/pydiff.ts)
+  constructor(t: Translator, i: number, keys: readonly string[]) {
+    this.t = t;
+    this.i = i;
+    this.keys = keys;
+  }
 
   private use(name: string): string {
     this.uses.add(name);
@@ -422,11 +429,14 @@ class Translator {
   allUnknown = 0;
   /** G218: `tag` ends each row's own name (`_3` + tag), so two runs in one file never bind one name; `withDefs` binds a
    *  stored name the file does not hold to the value the row read (Row.def). Copy as Python uses neither. */
-  constructor(
-    readonly rows: readonly PyRow[],
-    readonly tag = "",
-    readonly withDefs = false,
-  ) {}
+  readonly rows: readonly PyRow[];
+  readonly tag: string;
+  readonly withDefs: boolean;
+  constructor(rows: readonly PyRow[], tag = "", withDefs = false) {
+    this.rows = rows;
+    this.tag = tag;
+    this.withDefs = withDefs;
+  }
 
   view(i: number): string {
     return this.rows[i]?.view ?? "";
