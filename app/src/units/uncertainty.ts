@@ -86,10 +86,9 @@ export function shortForm(value: string, sigma: string, maxDigits: number): stri
   const t = v && s ? twoDigits(s) : null;
   if (!v || !t) return null;
   const e10v = v.m === 0n ? 0 : v.m.toString().length - 1 + v.k;
-  // far above σ's place: the digits are too many (the carry adds one at most); far below: the value rounds to 0
-  if (v.m !== 0n && e10v - t.k > maxDigits) return null;
+  // far above σ's place: the digits are too many (the carry adds an exact leading 1, no digit to know); far below: the value rounds to 0
+  if (v.m !== 0n && e10v - t.k + 1 > maxDigits) return null;
   const m = v.m === 0n || e10v <= t.k - 2 ? 0n : roundTo(v, t.k);
-  if (m !== 0n && m.toString().length > maxDigits) return null;
   const forceExp = t.k > 0 || (m === 0n && t.k + 1 < -4);
   return write(v.neg, m, t.k, `(${t.m})`, forceExp);
 }

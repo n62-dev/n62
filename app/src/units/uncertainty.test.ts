@@ -53,6 +53,8 @@ describe("the short form 39.5(12) (G270, GUM 7.2.2 way 2)", () => {
     ["1E28", "1", 30, `1.${"0".repeat(29)}(10)E28`, "derived, needs exactly 30"],
     ["39.488", "0.1", 4, "39.49(10)", "derived, needs exactly 4"],
     ["39.488", "0.1", 3, null, "derived"],
+    ["9.996", "0.0996", 3, "10.00(10)", "derived, the carry at exactly 3"],
+    ["9.996", "0.0996", 2, null, "derived"],
     ["1E40", "1", 30, null, "derived, needs 42"],
     ["5", "0", 30, null, "derived"],
     ["1+2*i", "0.1", 30, null, "derived"],
