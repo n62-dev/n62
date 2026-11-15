@@ -136,9 +136,10 @@ describe("plain text of what is shared (R134)", () => {
       ["\\begin{cases}x & \\text{if }x=0\\\\ 1 & \\text{if }x=1\\end{cases}", "{x if x=0; 1 if x=1}"],
       ["\\int_{-1}^{10}x^2\\,\\mathrm{d}x", "int(-1..10) x^2 dx"],
       ["\\int_{0}^{\\pi}\\sin\\left(x\\right)\\,\\mathrm{d}x", "int(0..π) sin(x) dx"],
-      ["\\int_{a+1}^{2b}t\\,\\mathrm{d}t", "int((a+1)..(2b)) t dt"],
+      ["\\int_{a+1}^{2b}t\\,\\mathrm{d}t", "int((a+1)..2b) t dt"],
       ["\\frac{\\partial x^2}{\\partial x}", "∂/∂x (x^2)"],
-      ["\\left.x^2\\right|_{x=3}", "x^2 | x=3"],
+      ["\\left.x^2\\right|_{x=3}", "(x^2 | x=3)"],
+      ["\\left.\\frac{1}{x}\\right|_{x=2}+1", "(1/x | x=2)+1"],
       // the decimal comma (R100's input as drawn): `;` between the elements, as Copy writes a list
       ["\\begin{pmatrix}1{,}5 & 2\\\\ 3 & 4\\end{pmatrix}", "[[1,5;2];[3;4]]"],
       ["\\left\\{1{,}5;2\\right\\}", "{1,5;2}"],
