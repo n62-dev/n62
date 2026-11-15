@@ -979,6 +979,18 @@ Digits:=40:; pc("g175-keep-sqrt-exp-3i-12",'(sqrt(exp(3*i)))',(707372016677/10^1
 Digits:=40:; pc("g175-keep-sqrt-exp-2-12",'(sqrt(exp(2)))',(271828182846/10^11),5/10^12);
 // g175-keep-exp-half-12 (precision.yaml, oracle)
 Digits:=40:; pc("g175-keep-exp-half-12",'(exp(1/2))',(16487212707/10^10),5/10^12);
+// g378-keep-simplify-sqrt-2pi-i-over-3-sq-12 (precision.yaml, oracle)
+Digits:=40:; pc("g378-keep-simplify-sqrt-2pi-i-over-3-sq-12",'(simplify(sqrt((2*pi*i/3)^2)))',(209439510239/10^11)*i,5/10^12);
+// g378-keep-simplify-sqrt-asin2-sq-12 (precision.yaml, oracle)
+Digits:=40:; pc("g378-keep-simplify-sqrt-asin2-sq-12",'(simplify(sqrt(asin(2)^2)))',(157079632679/10^11)-(131695789692/10^11)*i,5/10^12+5/10^12);
+// g378-keep-simplify-sqrt-acosh-third-sq-12 (precision.yaml, oracle)
+Digits:=40:; pc("g378-keep-simplify-sqrt-acosh-third-sq-12",'(simplify(sqrt(acosh(1/3)^2)))',(123095941734/10^11)*i,5/10^12);
+// g378-keep-simplify-sqrt-ln-neg2-sq-12 (precision.yaml, oracle)
+Digits:=40:; pc("g378-keep-simplify-sqrt-ln-neg2-sq-12",'(simplify(sqrt(ln(-2)^2)))',(69314718056/10^11)+(314159265359/10^11)*i,5/10^13+5/10^12);
+// g378-keep-simplify-sqrt-4 (precision.yaml, derived)
+Digits:=40:; pc("g378-keep-simplify-sqrt-4",'(simplify(sqrt(4)))',2,5/10^12);
+// g378-keep-sqrt-neg4 (precision.yaml, derived)
+Digits:=40:; pc("g378-keep-sqrt-neg4",'(sqrt(-4))',2*i,5/10^12);
 // g177-keep-sin-half-asin-neg1+i-12 (precision.yaml, oracle)
 Digits:=40:; pc("g177-keep-sin-half-asin-neg1+i-12",'(sin(asin(-1+i)/2))',-(374119954519/10^12)+(525333765455/10^12)*i,5/10^13+5/10^13);
 // g177-keep-cos-half-asin-neg-third-12 (precision.yaml, oracle)
