@@ -47,7 +47,7 @@ test.describe("benchmark.yaml", () => {
 
   test("a missing or extra tool, a cell without its four fields, a bad angle, a bad source and a short list are rejected", () => {
     expect(rejects(variant((t) => delete (t.compare as Partial<BenchTask["compare"]>).qalculate), "qalculate")).toBe(true);
-    expect(rejects(variant((t) => ((t.compare as unknown as Record<string, Cell>)["hp"] = blank())), "compare")).toBe(true);
+    expect(rejects(variant((t) => ((t.compare as unknown as Record<string, Cell>)["other"] = blank())), "compare")).toBe(true);
     expect(rejects(variant((t) => delete (t.compare.qalculate as Partial<Cell>).date), "date")).toBe(true);
     expect(rejects(variant((t) => ((t as { angle: string }).angle = "grad")), "angle")).toBe(true);
     expect(rejects(variant((t) => ((t as { source: string }).source = "memory")), "source")).toBe(true);
