@@ -10,7 +10,7 @@
 
 <div class="head" data-testid="unc-head">
   <div class="of" data-testid="unc-of">{head.of}</div>
-  {#if head.short !== null}<div class="short" data-testid="unc-short">{#if head.mark}<em class:w={head.mark === "⚠"}>{head.mark}</em> {/if}{head.short}</div>{/if}
+  {#if head.short !== null}<div class="short" data-testid="unc-short">{#if head.mark}<em class:w={head.mark === "⚠"}>{head.mark}</em>{" "}{/if}{head.short}</div>{/if}
   <dl>
     {#each head.rows as r (r.id)}<div class="term" data-id={r.id}><dt>{r.label}</dt><dd>{r.value}</dd></div>{/each}
   </dl>

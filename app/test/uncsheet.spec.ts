@@ -55,9 +55,10 @@ test.beforeEach(async ({ page }) => {
 test("t10, leave the view, Shift + 1: the sheet Uncertainty with t10's head; Esc closes it", async ({ page }) => {
   await t10(page);
   await leaveView(page);
+  const line = await entryValue(page); // (the line keeps t10's request)
   await tap(page, ["shift", "d1"]);
   await t10Head(page);
-  expect(await entryValue(page)).toBe(""); // never a typed 1
+  expect(await entryValue(page)).toBe(line); // never a typed 1
   await tap(page, ["esc"]);
   await expect(sheet(page)).toHaveCount(0);
 });
@@ -99,9 +100,10 @@ test("a picked row: the sheet is that row's, not the last one's; the σ line on 
   await expect(head(page).getByTestId("unc-of")).toContainText("≈");
 });
 
-test("2·π·50, Enter, Shift + 1: a dead press (the double pulse, counted under d1 Shift), no sheet, nothing typed", async ({ page }) => {
+test("2·π·50, Enter, Shift + 1: a dead press (the double pulse, counted under d1 Shift), no sheet, nothing typed; t10's row above it still opens", async ({ page }) => {
   await t10(page);
   await leaveView(page);
+  await page.evaluate(() => window.n62.entry.clear());
   await tap(page, ["d2", "mul"]);
   await flick(page, "d3", "up");
   await tap(page, ["mul", "d5", "d0", "enter"]);
@@ -115,6 +117,9 @@ test("2·π·50, Enter, Shift + 1: a dead press (the double pulse, counted under
   await expect(sheet(page)).toHaveCount(0);
   expect(await entryValue(page)).toBe("");
   expect((await counts(page))["d1:shift"]).toBe((base["d1:shift"] ?? 0) + 1);
+  // the key is dead for that row only: ▲ ▲ picks t10's row above it, and Shift + 1 is its sheet
+  await tap(page, ["up", "up", "shift", "d1"]);
+  await t10Head(page);
 });
 
 test("controls: σ over 1, live; 1 types 1, Alpha + 1 types Y; a b/c, 7 and Fmt still reserved on Shift", async ({ page }) => {

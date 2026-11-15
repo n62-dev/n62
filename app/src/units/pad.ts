@@ -74,6 +74,8 @@ const KEEP: Readonly<Record<string, { text: () => string; emit: PadEmit }>> = {
 };
 
 const DRAWN: Action = { kind: "cmd", name: "unitPad" };
+/** R327: the key's Shift layer is the uncertainty sheet (Shift + 1; the drawn cell key carries it too, `key` below). */
+const isUncKey = (k: Key): boolean => k.actions.shift?.kind === "special" && k.actions.shift.name === "uncertainty";
 const NONE: Action = { kind: "special", name: "none" };
 const LEG = { primary: "tap", shift: "up", alpha: "down" } as const;
 
@@ -128,6 +130,11 @@ export class UnitPad {
       // (only whether a layer has an action matters to the drawing: the press goes to `route`)
       actions[layer] = leg ? DRAWN : NONE;
     }
+    // R327: Shift + 1, the uncertainty sheet, stays on its key over the pad (the d1 cell has no Shift leg): drawn and live
+    if (!c[LEG.shift] && isUncKey(k)) {
+      label.shift = k.label.shift ?? "";
+      actions.shift = k.actions.shift as Action;
+    }
     const empty = c.kind === "user" && c.tap === undefined;
     if (empty) label.primary = "+";
     const { user, ...rest } = k; // (a user cell is drawn as the pad's, not by the user's own slots)
@@ -140,7 +147,7 @@ export class UnitPad {
   route(c: RouteCtx, key: Key, mods: Mods): boolean {
     if (c.shell.sheet) return false; // (a sheet over the keys takes them)
     // R327: Shift + 1, the uncertainty sheet, acts on the view's result: the d1 cell (a prefix) has no Shift leg to take it
-    if (mods.shift && !mods.alpha && key.actions.shift?.kind === "special" && key.actions.shift.name === "uncertainty") return unitPad.other?.(c, key, mods) ?? false;
+    if (mods.shift && !mods.alpha && isUncKey(key) && !this.#cells.get(key.id)?.[LEG.shift]) return unitPad.other?.(c, key, mods) ?? false;
     const emit = this.press(key.id, mods.alpha ? "alpha" : mods.shift ? "shift" : "primary");
     if (emit === undefined) return unitPad.other?.(c, key, mods) ?? false; // no cell: the unit view's (R24c)
     c.session.clearModifiers();
