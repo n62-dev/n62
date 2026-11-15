@@ -190,6 +190,10 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G353, patch 0049: stddev (stddev, stddevp, variance of a list or a matrix) sums x^2 in one pass and subtracts s*mean^2, which
   // cancels in floats (variance([1.1,1.1,1.1]) = -7.1e-15 at Digits 12; a stored float list gave stddevp 1e-31*i in Home)
   ["0049-stddev-float-two-pass.patch", "giac-2.1.0/src/permu.cc", /somme = somme \+ \(\*jt\)\*\(\*jt\);\s*\}\s*if \(variance!=3\)\s*res\.push_back\(sqrt\(rdiv\(somme-s\*moyenne\[i\]\*moyenne\[i\]/, "vecteur stddev(const matrice & m,bool column,int variance){"],
+  // G359, patch 0050: proot's balance and in_proot take eps1=1/(the double of the largest coefficient), 0 past the double range,
+  // and convert -log(0) to int (int(+inf)): mpfr_init2 got INT_MAX bits and aborted (proot([1,0,10^400,1]) trapped the engine)
+  ["0050-proot-huge-coefficients.patch", "giac-2.1.0/src/vecteur.cc", /double eps1=1\/\(evalf_double\(maxv,1,contextptr\)\._DOUBLE_val\);\s*if \(debug_infolevel\)\s*CERR << "proot coefficients ratio /, "gen bestg=accurate_evalf(gen(best),90);"],
+  ["0050-proot-huge-coefficients.patch", "giac-2.1.0/src/vecteur.cc", /double eps1=1\/\(evalf_double\(maxvt,1,contextptr\)\._DOUBLE_val\);\s*if \(debug_infolevel\)\s*CERR << "proot after shift: coefficients ratio /, "gen shift(-v[1]/v[0]/int(v.size()+1));"],
 ];
 
 const tar = tarball(SOURCES.giac);

@@ -5,7 +5,7 @@ const out = process.env.GIAC_OUT;
 for (const arg of process.argv.slice(2)) {
   const { default: create } = await import(`${out}/giac.mjs?${Math.random()}`);
   globalThis.UI = { add_evalf: 0, js_bigint: 0, disable3d: -1, Datestart: Date.now() };
-  const M = await create({ print: () => {}, printErr: () => {} });
+  const M = await create({ print: () => {}, printErr: (s) => { if (process.env.ALLERR || String(s).includes("G359")) console.log(s); } });
   M.cwrap("giac_init", "number", [])();
   const ev = M.cwrap("giac_eval", "string", ["string"]);
   for (const s of arg.split(";;")) {
