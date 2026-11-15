@@ -401,10 +401,10 @@ export function arithmeticOf(text: string, q: Quoting): Arith | null {
     return true;
   };
   const both = (op: "+" | "-" | "*" | "/" | "^", a: Arith, b: Arith | null): Arith | null => b && { op, a, b };
-  // the bracket at `open`, read whole
+  // the round bracket at `open` (OPENERS' and CLOSERS' first), read whole
   const inner = (open: number): Arith | null => {
     const close = closing(text, open, q);
-    if (close < 0 || text.charAt(close) !== ")") return null;
+    if (close < 0 || text.charAt(close) !== CLOSERS.charAt(0)) return null;
     k = open + 1;
     const a = sum(close);
     skip(close);
@@ -444,7 +444,7 @@ export function arithmeticOf(text: string, q: Quoting): Arith | null {
   const atom = (end: number): Arith | null => {
     skip(end);
     if (k >= end) return null;
-    if (text.charAt(k) === "(") return inner(k);
+    if (text.charAt(k) === OPENERS.charAt(0)) return inner(k);
     const at = k;
     const num = nums.get(at);
     if (num !== undefined) {
