@@ -1,8 +1,8 @@
-# Upstream: giac 2.1.0 solve.cc: inside solve, epsilon is 10^-Digits, and the MPFR evalf of a real root written as a rootof (the real root of a cubic with one irrational real root) carries a rounding imaginary part of that size (x^3-x-1 at Digits 40: +0.163E-39*i), so solve_ckrange's is_zero(im) dropped it as a complex root: solve(x^3-x-1=0,x) = [] at Digits 40, solve(x^3-2*x-5=0,x) = [] at 60 (right at 12). Now the three candidates of the cubic branch are decided by the exact sign of the discriminant (one real root: the candidate with the smallest imaginary part), and an MPFR candidate elsewhere is real when |im| <= |sol|*10^(2-Digits). solve_inequation had the same epsilon in three places: the double test point between two roots stayed complex (the interval was skipped: solve(x^3-2*x-5>0,x) = []), e at a root was not 0 within epsilon (> became >= at Digits 60), and a root whose e had the wrong sign by rounding was added to a strict inequality as an isolated point (solve(x^3-x-1<0,x) = [x<r, r] at Digits 12).
+# Upstream: giac 2.1.0 solve.cc: inside solve, epsilon is 10^-Digits, and the MPFR evalf of a real root written as a rootof (the real root of a cubic with one irrational real root) carries a rounding imaginary part of that size (x^3-x-1 at Digits 40: +0.163E-39*i), so solve_ckrange's is_zero(im) dropped it as a complex root: solve(x^3-x-1=0,x) = [] at Digits 40, solve(x^3-2*x-5=0,x) = [] at 60 (right at 12). Now the three candidates of the cubic branch are decided by the exact sign of the discriminant (one real root: the candidate with the smallest imaginary part, evaluated in MPFR at a precision doubled until the conjugate pair separates: the candidates are rootofs of a degree-6 polynomial, ill-conditioned when two roots are close, and as doubles x^3-3*x+2+10^-22 gave three roots at Digits 12, two of them no roots), and an MPFR candidate elsewhere is real when |im| <= |sol|*10^(2-Digits). solve_inequation had the same epsilon in three places: the double test point between two roots stayed complex (the interval was skipped: solve(x^3-2*x-5>0,x) = []), e at a root was not 0 within epsilon (> became >= at Digits 60), and a root whose e had the wrong sign by rounding was added to a strict inequality as an isolated point (solve(x^3-x-1<0,x) = [x<r, r] at Digits 12).
 # Changed by Pascaline contributors, 2026-11-11
 --- a/src/solve.cc
 +++ b/src/solve.cc
-@@ -404,6 +404,54 @@
+@@ -404,6 +404,86 @@
      return sp;
    }
  
@@ -29,35 +29,67 @@
 +  // sign of disc (the cubic branch's 27a^2d^2-18abcd+4ac^3+4b^3d-b^2c^2, the negative of the usual discriminant): below 0
 +  // all three, above 0 one, the candidate whose evalf has the smallest imaginary part (the other two are a conjugate pair,
 +  // whose imaginary parts are equal and far from it). False when that cannot be decided (disc no rational number, or a
-+  // pair the evalf does not separate): then solve_ckrange decides by the evalf, as before.
++  // pair no precision up to 1280 digits separates): then solve_ckrange decides by the evalf, as before.
++  // G364: the candidates are rootofs of a degree-6 polynomial whose evalf is ill-conditioned when two roots of the cubic
++  // are close (x^3-3*x+2+10^-22, the pair 1 +- 5.77E-12*i): at Digits 12 (doubles) the pair came out as two reals near 1
++  // (0.99999997, 1.00000003) and the real root as -1.9999994, so the test did not separate them and solve gave three
++  // roots, two of them no roots; at Digits 20 and 30 the same for other terms. The candidates are now evaluated in MPFR at
++  // max(Digits,20) digits, doubled until the pair separates (at most 1280 digits), each level with Digits and epsilon
++  // put back after it; the real candidate is returned exact, so its evalf's rounding imaginary part is never judged.
 +  static bool cubic_real_roots(vecteur & v,const gen & disc,GIAC_CONTEXT){
 +    if (v.size()!=3 || (disc.type!=_INT_ && disc.type!=_ZINT && disc.type!=_FRAC) || is_exactly_zero(disc))
 +      return false;
 +    if (is_strictly_positive(-disc,contextptr))
 +      return true;
-+    double a[3];
-+    for (int k=0;k<3;++k){
-+      gen s=evalf_double(abs(im(evalf(v[k],1,contextptr),contextptr),contextptr),1,contextptr);
-+      if (s.type!=_DOUBLE_ || !(s._DOUBLE_val>=0))
-+	return false;
-+      a[k]=s._DOUBLE_val;
++    int D=decimal_digits(contextptr);
++    double eps0=epsilon(contextptr); // proot sets the session's epsilon to its own tolerance and never puts it back
++    for (int p=D<20?20:D;p<=1280;p*=2){
++      double a[3];
++      bool ok=true;
++      for (int k=0;ok && k<3;++k){
++	gen s;
++#ifndef NO_STDEXCEPT
++	try {
++#endif
++	  set_decimal_digits(p,contextptr);
++	  s=evalf_double(abs(im(evalf(v[k],1,contextptr),contextptr),contextptr),1,contextptr);
++#ifndef NO_STDEXCEPT
++	} catch (std::runtime_error & err){
++	  last_evaled_argptr(contextptr)=NULL;
++	  set_decimal_digits(D,contextptr);
++	  epsilon(eps0,contextptr);
++	  if (ctrl_c || interrupted)
++	    throw; // an interrupt (the clock, the step budget) is no failed level
++	  s=undef;
++	}
++#endif
++	set_decimal_digits(D,contextptr);
++	epsilon(eps0,contextptr);
++	if (s.type!=_DOUBLE_ || !(s._DOUBLE_val>=0))
++	  ok=false;
++	else
++	  a[k]=s._DOUBLE_val;
++      }
++      if (!ok)
++	continue;
++      int k0=0;
++      for (int k=1;k<3;++k){
++	if (a[k]<a[k0])
++	  k0=k;
++      }
++      double a1=a[(k0+1)%3],a2=a[(k0+2)%3],amin=a1<a2?a1:a2,amax=a1<a2?a2:a1;
++      if (!(amin>0 && a[k0]<=1e-6*amin && amax-amin<=1e-6*amax))
++	continue;
++      v=vecteur(1,v[k0]);
++      return true;
 +    }
-+    int k0=0;
-+    for (int k=1;k<3;++k){
-+      if (a[k]<a[k0])
-+	k0=k;
-+    }
-+    double a1=a[(k0+1)%3],a2=a[(k0+2)%3],amin=a1<a2?a1:a2,amax=a1<a2?a2:a1;
-+    if (!(amin>0 && a[k0]<=1e-6*amin && amax-amin<=1e-6*amax))
-+      return false;
-+    v=vecteur(1,v[k0]);
-+    return true;
++    return false;
 +  }
 +
    static void solve_ckrange(const identificateur & x,vecteur & v,int isolate_mode,GIAC_CONTEXT){
      vecteur w,excluded(find_excluded(x,contextptr));
      // assumption on x, either range or integer
-@@ -443,8 +491,7 @@
+@@ -443,8 +523,7 @@
        if (m!=plus_inf && fastsign(sol-m,contextptr)==1)
  	continue;
        sol=evalf(sol,eval_level(contextptr),contextptr);
@@ -67,7 +99,7 @@
  	continue;
        if (sol.type!=_DOUBLE_){ // check for trig solutions
  	newv.push_back(*it);
-@@ -990,6 +1037,7 @@
+@@ -990,6 +1069,7 @@
  	    calc_mode(contextptr)!=1 && abs_calc_mode(contextptr)!=38 && d==3 && lv_.size()==1
  	    ){
  	  gen W=r2sym(num,lv_,contextptr);
@@ -75,7 +107,7 @@
  #if 1
  	  // ALT: alpha*x^3+beta*x^2+gamma*x+delta
  	  /*
-@@ -1036,6 +1084,7 @@
+@@ -1036,6 +1116,7 @@
  	    newv=solve(F,x,isolate_mode,contextptr);
  	  }
  	  else {
@@ -83,7 +115,7 @@
  	    vecteur Q=makevecteur(alpha4,0,6*alpha3*gamma-2*alpha2*beta2,0,9*alpha2*gamma2-6*alpha*beta2*gamma+beta4,0,27*alpha2*delta2-18*alpha*beta*delta*gamma+4*alpha*gamma3+4*beta3*delta-beta2*gamma2);
  	    gen tmp=lgcd(Q);
  	    divvecteur(Q,tmp,Q);
-@@ -1056,7 +1105,10 @@
+@@ -1056,7 +1137,10 @@
  	      in_solve(e1,x,newv,isolate_mode,contextptr);
  	      isolate_mode = is;
  	      multvecteur(inv(q0,contextptr),newv,newv);
@@ -95,7 +127,7 @@
  	      v=mergevecteur(v,newv);
  	      return;
  	    }
-@@ -1092,8 +1144,12 @@
+@@ -1092,8 +1176,12 @@
  #endif
  	  withsqrt(b,contextptr);
  	  complex_mode(bc,contextptr);
@@ -110,7 +142,7 @@
  	  v=mergevecteur(v,newv);
  	  return ;
  	}
-@@ -1298,7 +1354,9 @@
+@@ -1298,7 +1386,9 @@
        }
        if (has_op(testval,*at_rootof)){
  	testval=evalf_double(testval,1,contextptr);
@@ -121,7 +153,7 @@
  	  testval=*testval._CPLXptr;
        }
        gen test=eval(subst(e0,x,testval,false,contextptr),eval_level(contextptr),contextptr);
-@@ -1309,7 +1367,7 @@
+@@ -1309,7 +1399,7 @@
  	a=a-b;
  	gen testnum=subst(a,x,evalf(testval,1,contextptr),false,contextptr);
  	if (testnum.type==_CPLX){
@@ -130,7 +162,7 @@
  	    // maybe add l
  	    gen test=eval(subst(e0,x,l,false,contextptr),eval_level(contextptr),contextptr);
  	    if (test==1)
-@@ -1339,7 +1397,7 @@
+@@ -1339,7 +1429,7 @@
  	  if (!has_i(a))
  	    add_eq.push_back(l);
  	}
@@ -139,7 +171,7 @@
  	  // maybe add l
  	  gen test=eval(subst(e0,x,l,false,contextptr),eval_level(contextptr),contextptr);
  	  if (test==1)
-@@ -1370,6 +1428,8 @@
+@@ -1370,6 +1460,8 @@
  	if (lfd>1)
  	  eps=lfd*eps;
        }
@@ -148,7 +180,7 @@
        // 22 feb 2018: revert change ... || test!=1 to && test!=1 made for solve(abs(x^2)=abs(x)^2)
        if ((is_greater(eps,testeq,contextptr) || test!=1) &&
  	  (equalposcomp(excluded_not_singu,l) || equalposcomp(singu,l) ||
-@@ -1405,6 +1465,8 @@
+@@ -1405,6 +1497,8 @@
  	if (lfd>1)
  	  eps=lfd*eps;
        }
