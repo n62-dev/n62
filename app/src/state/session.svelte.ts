@@ -6,7 +6,7 @@ import { ANS_KEY, pruneChips, validChips, type Chip, type ChipTable } from "../i
 import { parseFailText } from "../input/errors.ts";
 import { loadEntry } from "../input/parser.ts";
 import { hasMessage, t, type MessageKey } from "../i18n/index.ts";
-import { EngineCrashError, EngineLoadError, EngineMemoryError, type StoredRead } from "../engine/types.ts";
+import { EngineCrashError, EngineLoadError, EngineMemoryError, type StoredRead, type UncTerm } from "../engine/types.ts";
 import { type ComplexValue, type MarkInfo } from "../engine/format.ts";
 import { homeResultToLatex, type GroupSep } from "../render/home.ts";
 import {
@@ -133,6 +133,8 @@ export interface HistoryItem {
   uses?: UsedValue[];
   /** G212, Home: the stored values the input read, as a CAS row's `uses` (the session line's `defs`); never drawn. */
   defsUsed?: UsedValue[];
+  /** G274, Home: each uncertain input's share of σ² (HomeResult.uncTerms); never drawn yet, read back unchecked. */
+  uncTerms?: UncTerm[];
   /** G213f1, Copy as Python only (never drawn): Ans's value at Enter when read; each stored name read with its value ([] none). */
   ans?: Pick<Chip, "value" | "exact">;
   reads?: StoredRead[];

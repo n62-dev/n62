@@ -7,6 +7,8 @@ import { decimalFromString, type ComplexValue } from "../engine/format.ts";
 import { chipOf, type CasIn, type HomeIn, type ItemResult } from "./results.ts";
 import { casItem, chipFactsOf, homeItem } from "./resultItem.ts";
 import { validChips } from "../input/chips.ts";
+import { restoredItem } from "./storedItem.ts";
+import type { HistoryItem } from "./session.svelte.ts";
 
 
 const re = (s: string, sticky = false): ComplexValue => ({ re: { ...decimalFromString(s)!, ...(sticky ? { sticky: true } : {}) }, im: { neg: false, digits: "", exp: 0, sticky: false } });
@@ -146,5 +148,22 @@ describe("chipOf and chipFactsOf", () => {
       "1": { value: "0.33333", reliableDigits: 5, exact: false, warn: "unchecked" },
       "2": { value: "1/3", reliableDigits: null, exact: true },
     });
+  });
+});
+
+// G274: a Home result's σ terms (each input's share of σ², engine/constUnc.ts) ride on the item beside the facts, never
+// in them (the start chunk reads the facts); the stored field is read back as it was written.
+describe("uncTerms (G274)", () => {
+  const terms = [{ key: "pasr_1", t: "0.09", uy: "0.3" }, { key: "a", t: "0.16", uy: "0.4" }];
+  it("homeItem copies them onto the item, not into its facts", () => {
+    const r = home({ display: "6", value: re("6"), facts: { exact: false, reliableDigits: null, uncDigits: 1, uncSigma: "0.5" }, full: "6", uncTerms: terms });
+    const got = homeItem(r, true);
+    expect(got.uncTerms).toEqual(terms);
+    expect("uncTerms" in (got.facts ?? {})).toBe(false);
+    expect("uncTerms" in homeItem({ ...r, uncTerms: undefined }, true)).toBe(false);
+  });
+  it("restoredItem keeps them through a JSON round trip", () => {
+    const item = { id: 1, view: "home", latex: "x", status: "done", result: "6", uncTerms: terms } as unknown as HistoryItem;
+    expect(restoredItem(JSON.parse(JSON.stringify(item)) as HistoryItem, 5).uncTerms).toEqual(terms);
   });
 });

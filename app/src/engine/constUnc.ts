@@ -12,9 +12,9 @@ import { decimalFromString, decimalToString, isZero, roundSignificant, type Deci
 import { toExactLiterals } from "./exactLiterals.ts";
 import type { HomeResult } from "./homeEval.ts";
 import type { Giac } from "./numeric.ts";
-import { mapNames, names } from "./giacPrint.ts";
+import { mapNames, names, splitList } from "./giacPrint.ts";
 import { basisGiac, basisOf, correlated, isZeroText, LEAF_PREFIX } from "./constBasis.ts";
-import type { ValueFacts } from "./types.ts";
+import type { UncTerm, ValueFacts } from "./types.ts";
 import { CONST_PREFIX } from "./ourNames.ts";
 
 /** A constant the input holds by name: its value as Giac text (`6.67430E-11`), and its standard uncertainty in the
@@ -90,6 +90,8 @@ export interface SigmaInput {
   name: string;
   value: string;
   unc: string;
+  /** G274: the input's key in the terms (the unit view's UncVar.key): a constant's id, `pasl_<leaf>`, `pasr_<k>`; the name when absent. */
+  key?: string;
 }
 
 /** G81: the independent inputs of the inexact constants `ids`: a constant that enters through its basis brings its
@@ -104,7 +106,7 @@ function sigmaInputs(table: ConstTable, ids: readonly string[]): { keep: Set<str
     const b = through.has(id) ? basisOf(e) : undefined;
     if (b === undefined) {
       keep.add(id);
-      inputs.push({ name: `${CONST_PREFIX}${id}`, value: e.value, unc: e.unc! });
+      inputs.push({ name: `${CONST_PREFIX}${id}`, value: e.value, unc: e.unc!, key: id });
       continue;
     }
     basisGiac(e, b, (l, leaf) => {
@@ -116,17 +118,22 @@ function sigmaInputs(table: ConstTable, ids: readonly string[]): { keep: Set<str
   return { keep, inputs };
 }
 
-/** The Giac text of the first-order σ of `body` over the inexact constants `ids` (decimals as exact rationals): over
- *  the constants themselves, or over their leaves where they share one (G81). `ids` are `body`'s (inexactConstsIn).
+/** The first-order σ of `body` as its inputs and, for each, the Giac text of `∂f/∂xᵢ · σᵢ` (decimals as exact rationals):
+ *  over the constants themselves, or over their leaves where they share one (G81). `ids` are `body`'s (inexactConstsIn).
  *  `extra` (R61): more independent inputs whose names `body` holds (a chip's σ). */
-export function sigmaExpr(body: string, table: ConstTable, ids: readonly string[], extra: readonly SigmaInput[] = []): string {
+function sigmaParts(body: string, table: ConstTable, ids: readonly string[], extra: readonly SigmaInput[]): { inputs: SigmaInput[]; shares: string[] } {
   const { keep, inputs: own } = sigmaInputs(table, ids);
   const inputs = [...own, ...extra];
-  if (!inputs.length) return "0";
+  if (!inputs.length) return { inputs, shares: [] };
   const f = toExactLiterals(withConstValues(body, table, keep, "names"));
   const at = `[${inputs.map((v) => `${v.name}=(${toExactLiterals(v.value)})`).join(",")}]`;
-  const terms = inputs.map((v) => `(subst(diff(${f},${v.name}),${at})*(${toExactLiterals(v.unc)}))^2`);
-  return `sqrt(${terms.join("+")})`;
+  return { inputs, shares: inputs.map((v) => `(subst(diff(${f},${v.name}),${at})*(${toExactLiterals(v.unc)}))`) };
+}
+
+/** The Giac text of the first-order σ of `body` over the inexact constants `ids` (see sigmaParts). */
+export function sigmaExpr(body: string, table: ConstTable, ids: readonly string[], extra: readonly SigmaInput[] = []): string {
+  const { shares } = sigmaParts(body, table, ids, extra);
+  return shares.length ? `sqrt(${shares.map((p) => `${p}^2`).join("+")})` : "0";
 }
 
 /** Significant digits of `value` shown at `digits` that lie before the position of σ's first digit (≥ 0). Null for
@@ -166,10 +173,14 @@ export function constUncDigits(
   digits: number,
   extra: readonly SigmaInput[] = [],
   taken: (name: string) => boolean = () => false,
-): { uncDigits: number; uncSigma: string } | undefined {
+): { uncDigits: number; uncSigma: string; uncTerms?: UncTerm[] } | undefined {
   const ids = inexactConstsIn(body, table);
   if ((!ids.length && !extra.length) || !r.ok || !r.value || r.items || !isZero(r.value.im)) return undefined;
-  const raw = sigmaExpr(body, table, ids, extra);
+  const { inputs, shares } = sigmaParts(body, table, ids, extra);
+  // G274: two or more inputs: one call gives σ from the exact sum (20 digits, as one input's) and each share's t and uy
+  // (30 digits), the shares evaluated once; one input says nothing a σ does not
+  const many = shares.length > 1;
+  const raw = !shares.length ? "0" : many ? `(pasL_->[evalf(sqrt(add(map(pasL_,pasx_->pasx_^2))),20),map(pasL_,pasx_->[evalf(pasx_^2,30),evalf(abs(pasx_),30)])])([${shares.join(",")}])` : `sqrt(${shares[0]}^2)`;
   const used = new Set([...names(raw, "typed")].map((n) => n.name));
   let stuck = false;
   const expr = mapNames(raw, ({ name }) => {
@@ -179,10 +190,30 @@ export function constUncDigits(
     return m ?? name;
   }, "typed");
   if (stuck) return undefined;
-  const out = giac.eval(`evalf(${expr},20)`);
+  const out = giac.eval(many ? expr : `evalf(${expr},20)`);
   if (out.startsWith("GIAC_ERROR")) return undefined;
-  const sigma = decimalFromString(out);
+  const parts = many ? splitList(out) : [out];
+  const sigma = parts?.length === 2 || !many ? decimalFromString(parts![0]!) : null;
   if (!sigma) return undefined;
   const n = uncDigitsOf(r.value.re, sigma, digits);
-  return n === null ? undefined : { uncDigits: n, uncSigma: decimalToString(sigma) };
+  if (n === null) return undefined;
+  const got = { uncDigits: n, uncSigma: decimalToString(sigma) };
+  const terms = many ? termsOf(inputs, parts![1]!) : undefined;
+  return terms ? { ...got, uncTerms: terms } : got;
+}
+
+/** G274: `[[t, uy], …]` as Giac printed it, one pair per input, each a decimal, as terms keyed by the input's key; undefined
+ *  when it is not that. */
+function termsOf(inputs: readonly SigmaInput[], list: string): UncTerm[] | undefined {
+  const rows = splitList(list)?.map(splitList);
+  if (rows?.length !== inputs.length) return undefined;
+  const terms: UncTerm[] = [];
+  for (const [i, row] of rows.entries()) {
+    const t = row?.length === 2 ? decimalFromString(row[0]!) : null;
+    const uy = row?.length === 2 ? decimalFromString(row[1]!) : null;
+    if (!t || !uy) return undefined;
+    const v = inputs[i]!;
+    terms.push({ key: v.key ?? v.name, t: decimalToString(t), uy: decimalToString(uy) });
+  }
+  return terms;
 }

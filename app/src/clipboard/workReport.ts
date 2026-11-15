@@ -32,7 +32,7 @@ export interface ReportLook {
 }
 
 const pad = (n: number): string => String(n).padStart(2, "0");
-const day = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const day = (d: Date): string => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
 /** `n62-work-YYYY-MM-DD.md`, by the local date. */
 export const reportName = (now: Date): string => `n62-work-${day(now)}.md`;

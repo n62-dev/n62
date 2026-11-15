@@ -39,6 +39,13 @@ const clip = {
   "export.offered": "Work report offered as a download",
   "export.cancelled": "Work report not saved",
   "export.failed": "The work report could not be saved",
+  // R200: Export › CSV and LaTeX (exportRows.ts)
+  "export.csv": "CSV",
+  "export.latex": "LaTeX",
+  "export.fileSaved": "{what} saved",
+  "export.fileOffered": "{what} offered as a download",
+  "export.fileCancelled": "{what} not saved",
+  "export.fileFailed": "The {what} could not be saved",
   "report.preview": "preview: the form of this file can change",
   "report.title": "Work report",
   "report.view": "View",

@@ -120,6 +120,9 @@ export interface UncVar {
   sigma: string;
   /** R271: σ is a result chip's value: the evaluator checks it is real and not below 0. */
   chip?: true;
+  /** G271: the input's key for this answer: `pasl_<leaf>` a basis leaf (G81), `pasr_<k>` a result chip (R115, k the
+   *  row of one run), else a constant's id; absent for a typed ± (and a typed value with a chip as σ). */
+  key?: string;
 }
 
 export interface Quantity {
@@ -185,6 +188,12 @@ export interface Uncertainty {
   /** R271: σ took a result chip's facts; the result's mark is then the worse of the value's and σ's. R271f1: σ's facts
    *  (its confirmed digits, its ⚠ reason), decided once here; the value's facts hold them (units/sigmaFacts.ts). */
   chip?: SigmaFacts;
+  /** G271: each input's share of σ², in the order of UnitJob.unc.vars, the dimension symbols set to 1, in the shown
+   *  unit: `t` = (∂f/∂xᵢ)² uᵢ², `uy` = |∂f/∂xᵢ · uᵢ| (decimal text, 30 digits); `key` the input's (UncVar.key). With
+   *  `second` (the second-order part of σ², GUM 5.1.2 note) σ² = Σ t + second when that is above 0. Both absent when a
+   *  term is not a plain decimal. For this answer only: a stored row keeps neither (units/row.ts). */
+  terms?: { key?: string; t: string; uy: string }[];
+  second?: string;
   /** R286: with `chip`, the value's confirmed digits σ's limit gives (sigmaFacts.ts limitDigits): the view's ⚠ sits before
    *  σ when the value's facts hold this one. */
   limit?: number | null;

@@ -54,6 +54,7 @@ const isTruth = (t: string): boolean => /^(true|false)$/.test(t);
 export function homeItem(r: HomeIn, inexactInput: boolean, giac?: string, s?: Pick<CalcSettings, "angle" | "digits">): ItemResult {
   const out = withJob({ approximate: r.approximate || (inexactInput && isTruth(r.display)) }, r, giac, s);
   if (r.value) out.value = r.value;
+  if (r.ok && r.uncTerms?.length) out.uncTerms = r.uncTerms; // G274: beside the facts, never in them
   if (r.ok && r.uses?.length) out.defsUsed = r.uses; // G212: as a CAS row's `uses`, under its own name (HistoryItem.defsUsed)
   if (r.ok) {
     const f = factsFrom(r);

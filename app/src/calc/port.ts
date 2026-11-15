@@ -3,7 +3,7 @@
 // the UI never talks to Giac directly (CLAUDE.md).
 
 import type { ComplexValue, NumberFormat as EngineFormat } from "../engine/format.ts";
-import type { AnalysisRequest, AnalysisResult, HomeResult, SolveOutcome, SolveRequest, StoredRead, StoredUse, TableRequest, ValueFacts } from "../engine/types.ts";
+import type { AnalysisRequest, AnalysisResult, HomeResult, SolveOutcome, SolveRequest, StoredRead, StoredUse, TableRequest, UncTerm, ValueFacts } from "../engine/types.ts";
 import type { ChipFactsTable } from "../engine/chipFacts.ts";
 import type { ConstTable } from "../engine/constUnc.ts";
 export type { ChipEntry, ChipFactsTable } from "../engine/chipFacts.ts";
@@ -76,6 +76,8 @@ export interface HomeOutcome {
   reads?: StoredRead[];
   /** G212: the stored variables the input read, as CasOutcome's (HomeResult.uses); absent when there is none. */
   uses?: StoredUse[];
+  /** G274: each uncertain input's share of σ² (HomeResult.uncTerms). */
+  uncTerms?: UncTerm[];
   /** G211: the word (R194) the request carried, the engine's own (64 bits, unsigned) while none is set; the port gives it. */
   word?: WordSetting;
 }

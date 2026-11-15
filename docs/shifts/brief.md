@@ -17,7 +17,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 
 **The weekly extreme night** (owner, 2026-10-29; replaces the nightly fuzz of 2026-10-27): once a week lane B runs the extreme-input packages (G306–G308) and the fuzz (G309), in 10-minute slices (G167: from `app/`, each command as `../tools/devlock.sh slice <name> node scripts/sweep.ts …`; n = 4 for the 5,000 `--edges` trees: a part of 1,250 takes about 2 min at G138's 90 s per 1,000 trees, never more than 5,000 trees a part (8 min): `--nightly --edges --seed <clock> --count 5000 --part i/4` for i = 1..4, then `--shrink <seed>`; a missing part is named and exit 1; a long shrink: `--shrink <seed> --part i/m` for each i, then `--shrink <seed> --join`), with its triage (each week the text of G138, its package file at d1278849, with a new ID); the Opus pass files the backlog lines. Wrong numbers of everyday or medium reach run any time, by reach.
 
-**S20** (the MPFI spike) hands-on. No package yet: the backlog lines that say so.
+**S20** (the MPFI spike) runs in stream C (owner, 2026-11-15: the queue holds everything).
 
 **The night review** (owner, 2026-11-01; `/night-review`, `.claude/skills/night-review/`): beside the lanes on Mon 11-09 and Sat 11-14 (owner, 2026-11-12: moved from Fri 11-13 to after the weekly reset at 09:00), each ending at a daily stop, and on Tue 11-17 on the frozen code; after the release as the owner sets (on Max each run costs a lot); its packages wait in its open note (`docs/research/night-review-<date>`, section 2), and section 0c takes them a few rows at a time.
 
@@ -59,45 +59,49 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, with rows from lane B)
-The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10. The night review's answers (owner, 2026-11-14): R312 and R313 before the hardware-key tests of 11-16; R314 before the freeze; the splits last. The owner's answers of 2026-11-15: R324, R325, R327 (with R328) and R329 before the freeze; R327 and R328 wait on lane B's G270 and G272 to G274.
+The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 172) changed how today's calculator is used (touch, Store, Help, the matrix keys, the desktop keys, the wide layout); the rows left are new features. A145 came from lane B (2026-11-13); the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10. The night review's answers (owner, 2026-11-14): R312 and R313 before the hardware-key tests of 11-16; R314 before the freeze; the splits last. The owner's answers of 2026-11-15: R324, R325, R327 (with R328) and R329 before the freeze; R327 and R328 wait on lane B's G270 and G272 to G274. The owner, 2026-11-15 evening: the queue holds every open package to the stop of Tue 11-17 05:00; the after-tag rows follow the features, the cleanups last.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 796 | [R327](packages/R327.md) Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
 | 797 | [R328](packages/R328.md) the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
-| 736 | R222 the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
+| 802 | [R333](packages/R333.md) a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
+| 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
-| 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
 | 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
 | 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | – |
 | 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
 | 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
+| 804 | [R330](packages/R330.md) Shift + 7 opens the list sheet | ron, Opus | `p1/ron-listsheet` | – |
+| 807 | [R315](packages/R315.md) the unit view reads a stored name with a unit | ron, Opus | `p1/ron-nameslot` | G371 |
 | 783 | [R316](packages/R316.md) split `parse.ts` under 800 lines | ron, Opus | `p1/ron-splitparse` | – |
 | 784 | [R317](packages/R317.md) split `App.svelte` under 800 lines | ron, Opus | `p1/ron-splitapp` | – |
+| 805 | [R267](packages/R267.md) dead exports and copies in `app/src` | ron, Sonnet | `p1/ron-deadexports` | – |
+| 806 | [R268](packages/R268.md) unread theme tokens, finished probes, stale comments | ron, Sonnet | `p1/ron-tokensprobes` | – |
 
 ### Lane B queue (the release, then the engine)
-The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-14.md) section 2. Its answers (owner, 2026-11-14): G369 and G370 after the lane's features, before the freeze; the splits last. A66's device check is a backlog line.
+The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../research/night-review-2026-11-14.md) section 2. Its answers (owner, 2026-11-14): G369 and G370 after the lane's features, before the freeze; the splits last. A66's device check is a backlog line. From 2026-11-15 evening (the queue holds everything): G274 runs in stream C, beside G270 to G272, for R328; G371 before the splits; G365, G315 and G314 after them, as they touch the split files.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 743 | G216 Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
-| 744 | G217 Copy as Python: ± through uncertainties | gorge, Opus | `p1/gorge-pysigma` | G216 |
-| 692 | [G271](packages/G271.md) σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
-| 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
-| 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
+| 748 | G270 the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
 | 799 | [G273](packages/G273.md) a unit result carries U, relative σ, short form and terms, and the row keeps them (for R327) | gorge, Sonnet | `p1/gorge-uncrow` | G270, G271 |
-| 800 | [G274](packages/G274.md) a Home result from two or more uncertain inputs keeps its terms (for R328) | gorge, Sonnet | `p1/gorge-homeuncterms` | G271 |
+| 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
 | 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
 | 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
 | 785 | [G369](packages/G369.md) %, ‰, ppm and ppb are dimensionless units in the unit view | gorge, Opus | `p1/gorge-ratiounits` | – |
 | 786 | [G370](packages/G370.md) the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
+| 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 787 | [G372](packages/G372.md) split `homeEval.ts` under 800 lines | gorge, Opus | `p1/gorge-splithomeeval` | – |
 | 788 | [G373](packages/G373.md) split `api.cc` under 800 lines | gorge, Opus | `p1/gorge-splitapi` | – |
 | 789 | [G374](packages/G374.md) split `export.mjs` under 800 lines | gorge, Opus | `p1/gorge-splitexport` | – |
+| 810 | [G365](packages/G365.md) the Function app reads a cell's kind from the worker, not Giac's print | gorge, Sonnet | `p1/gorge-cellkind` | – |
+| 811 | [G315](packages/G315.md) the one import cycle goes, and the Calc port speaks its own errors | gorge, Sonnet | `p1/gorge-namesmodule` | – |
+| 812 | [G314](packages/G314.md) EngineHost's definitions replay and casRun in modules of their own | gorge, Opus | `p1/gorge-hostsplit` | – |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). A third stream by day (owner, 2026-11-14, to the freeze): G354 to G360, G363, G364, G361, G362, one at a time through `scripts/pipeline.sh`, beside the lanes (`.tasks/stream-c/`). The owner said yes to the must-have decisions B2 to B7, B9, C1 to C6 and C8 on 2026-11-12: their rows are in the tables. R225 (the owner's iPhone check); R250 to R254 and G302, RPN (after the tag, with the owner's Virtual Calculator session); R223 (the owner's measurements). After the tag: A73f2, A141 to A143, A76, G314, G315, G365, G371 then R315, R267, R268, and [R330](packages/R330.md) (Shift + 7, the list sheet; owner, 2026-11-15). With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the freeze, by day: A91, A82, R292.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). Stream C (owner, 2026-11-14 and 11-15, to Tue 11-17 05:00): `.tasks/stream-c/run2.sh` in the main checkout runs G274, G377, G378 and S20 through `scripts/pipeline.sh`, one at a time, beside the lanes; no lane takes them. No 05:00 close (owner, 2026-11-15): `.tasks/keep-lanes/keep-lanes2.sh` restarts each lane without `--until` until Tue 11-17 05:00, then stops both and runs each lane's closing (`--max-steps 2`). Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone), A82 (the release candidate on the Fairphone), A73f2 (the Tab One); R250 to R254 and G302, RPN (after the tag and the yes on mh-D1; R254 also the Virtual Calculator session). The freeze day, by day: R292, then A91. With no lane running (a stop the owner calls): A133 to A135, A154 to A156, S33. After the tag: A76, A141 to A143.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
