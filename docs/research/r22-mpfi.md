@@ -46,7 +46,7 @@ No interval (338): Giac leaves the name (`student_cdf` 16, `BesselJ` 13 as a Gia
 
 ## 4. A wrong `=` found on the way
 
-Home `floor((1+10^-100)^(10^100))` shows **= 1**; right 2 (the base lies in (2, 3): e·(1 − 10^−100/2 + …), source: derived). G141's report named it; G156 raised the decisions' start but this form still decides 1. Probe: `FACTS=1 node tools/probes/engine.ts 'floor((1+10^-100)^(10^100))'` (`exact: true`). The backlog line waits for room (backlog.md is full; the report holds the text).
+Home `floor((1+10^-100)^(10^100))` shows **= 1**; right 2 (the base lies in (2, 3): e·(1 − 10^−100/2 + …), source: derived). G141's report named it; G156 raised the decisions' start but this form still decides 1. Probe: `FACTS=1 node tools/probes/engine.ts 'floor((1+10^-100)^(10^100))'` (`exact: true`). Backlog: F252 (Open bugs), for a package of its own.
 
 ## 5. To verify
 

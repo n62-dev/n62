@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Third-party components
 
-Everything here is built from source by scripts in this repository. Spike-only tools and the prebuilt shortcut used during Phase 0 are listed in [docs/archive/phase-0-results.md](docs/archive/phase-0-results.md), not here.
+Everything here is built from source by scripts in this repository. Spike-only tools and the prebuilt shortcut used during Phase 0 are listed in [docs/archive/phase-0-results.md](docs/archive/phase-0-results.md), not here; a library an engine spike variant links is under "Spike builds".
 
 ## Maths engine (engine/giac/build-wasm.sh)
 
@@ -11,6 +11,12 @@ Everything here is built from source by scripts in this repository. Spike-only t
 | GMP | 6.3.0 (tarball SHA-256 `a3c2b802…8898`) | LGPL-3.0-or-later OR GPL-2.0-or-later | https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz | GPG signature checked (Niels Möller) | Copyright © 1991, 1993–1997, 1999–2016, 2020, 2021 Free Software Foundation, Inc. |
 | MPFR | 4.2.2 (tarball SHA-256 `b67ba038…ce01`) | LGPL-3.0-or-later | https://ftp.gnu.org/gnu/mpfr/mpfr-4.2.2.tar.xz | GPG signature checked (Vincent Lefèvre) | Copyright © 2000–2025 Free Software Foundation, Inc. (contributed by the AriC and Caramba projects, INRIA) |
 | GSL | 2.8 (tarball SHA-256 `6a99eeed…3190`) | GPL-3.0-or-later | https://ftp.gnu.org/gnu/gsl/gsl-2.8.tar.gz | GPG signature checked (Patrick Alken). Numeric solvers behind Giac `fsolve` (decided 2026-10-10) | Copyright © 1996 and later, the GSL authors (Gerard Jungman, Brian Gough, Mark Galassi, James Theiler and others; its AUTHORS file) |
+
+## Spike builds (engine/giac/build-wasm.sh variants, not shipped)
+
+| Component | Version | Licence | Source | Notes | Copyright |
+|---|---|---|---|---|---|
+| MPFI | 1.5.4 (the 2022-04-01 snapshot `mpfi-1.5.4.tar.xz`, SHA-256 `819e98bc…5306a`; its SHA-512 is the one Gentoo's Manifest gives) | LGPL-3.0-or-later | https://perso.ens-lyon.fr/nathalie.revol/softwares/mpfi-1.5.4.tar.xz | S20 spike variant `_out/mpfi` only (`WITH_MPFI=1`), not shipped: interval arithmetic behind Giac's `real_interval` ([r22](docs/research/r22-mpfi.md)). Its files are LGPL-2.1-or-later, `clears.c`, `inits.c` and `inits2.c` LGPL-3.0-or-later: the library as linked is LGPL-3.0-or-later | Copyright © 1999–2022 N. Revol, F. Rouillier, S. Chevillard, Ch. Lauter, H. D. Nguyen, Ph. Théveny (Inria, ENS Lyon, Univ. Lille); © 2018 Free Software Foundation, Inc. (the three LGPL-3.0 files) |
 
 ## Units and constants data (data only: not part of `./build.sh` since A21; engine/qalc/build-wasm.sh is a developer tool; not shipped in the app, P15)
 
