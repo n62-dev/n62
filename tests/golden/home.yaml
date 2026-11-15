@@ -1108,3 +1108,22 @@ cases:
   - { id: "g212-uses-bound-lambda", uses: [], steps: [{"input": "t:=5"}, {"input": "(t->t^2)(3)"}], oracle: "F(9)", expect: "9", mark: "=", source: "derived", note: "guard (G99): the t of the function body is its parameter, bound to 3, not the stored t" }
   - { id: "g212-uses-bound-product", uses: [], steps: [{"input": "x:=5"}, {"input": "product(x,x,1,4)"}], oracle: "F(24)", expect: "24", mark: "=", source: "derived", note: "guard (G99): product binds x (1*2*3*4 = 24), so the stored x is not read" }
   - { id: "g212-uses-bound-and-free", uses: ["t"], steps: [{"input": "t:=5"}, {"input": "(t->t^2)(3)+t"}], oracle: "F(14)", expect: "14", mark: "=", source: "derived", note: "the t outside the body is the stored 5: 9+5 = 14, and t is listed" }
+  # --- G362 (night review 2026-11-14, fh-6): arg, re, im, conj, max, min and atan2 as checked functions (Find tier 0) ---
+  - { id: "g362-arg-1+i-rad", input: "arg(1+i)", oracle: "atan(1)", expect: "0.785398163397", mark: "≈", source: "oracle", note: "G362: the phase angle of 1+i is pi/4 in RAD" }
+  - { id: "g362-arg-1+i-deg", input: "arg(1+i)", settings: { angle: "deg" }, oracle: "F(45)", expect: "45", mark: "=", source: "derived", note: "G362: the phase angle of 1+i is 45 degrees in DEG (ANGLE_OUT: the result follows the angle mode)" }
+  - { id: "g362-atan2-rad", input: "atan2(1,-1)", oracle: "3*pi/4", expect: "2.35619449019", mark: "≈", source: "oracle", note: "G362: atan2(y, x) with y = 1, x = -1 is the angle of the point (-1, 1): 3pi/4" }
+  - { id: "g362-atan2-deg", input: "atan2(1,-1)", settings: { angle: "deg" }, oracle: "F(135)", expect: "135", mark: "=", source: "derived", note: "G362: the same in DEG: 135" }
+  - { id: "g362-re", input: "re(3+4*i)", oracle: "F(3)", expect: "3", mark: "=", source: "derived" }
+  - { id: "g362-im", input: "im(3+4*i)", oracle: "F(4)", expect: "4", mark: "=", source: "derived" }
+  - { id: "g362-conj", input: "conj(3+4*i)", oracle: "3-4*I", expect: "3-4*i", mark: "=", source: "derived" }
+  - { id: "g362-max", input: "max(2,7,5)", oracle: "F(7)", expect: "7", mark: "=", source: "derived" }
+  - { id: "g362-min", input: "min(2,7,5)", oracle: "F(2)", expect: "2", mark: "=", source: "derived" }
+  - { id: "g362-arg-neg1-deg", input: "arg(-1)", settings: { angle: "deg" }, oracle: "F(180)", expect: "180", mark: "=", source: "derived", note: "G362: the principal value, in (-180, 180]: a negative real is 180, not -180" }
+  - { id: "g362-arg-neg1-neg-i-deg", input: "arg(-1-i)", settings: { angle: "deg" }, oracle: "F(-135)", expect: "-135", mark: "=", source: "derived", note: "G362: the third quadrant gives -135, not 225" }
+  - { id: "g362-arg-zero", input: "arg(0)", oracle: "F(0)", expect: "0", mark: "=", source: "derived", note: "G362 (decided before tier 0): the angle of 0 is no angle; Giac gives 0, the convention of C's atan2 and of Python's cmath.phase, kept, and Find's line says so; the same for atan2(0, 0) below" }
+  - { id: "g362-atan2-zero", input: "atan2(0,0)", oracle: "F(0)", expect: "0", mark: "=", source: "derived", note: "G362: the convention above (C's atan2(0, 0) is 0)" }
+  - { id: "g362-max-decimal-negative", input: "max(2.5,-7)", oracle: "F('2.5')", expect: "2.5", mark: "=", source: "derived", note: "G362: typed decimals are exact" }
+  - { id: "g362-min-pi", input: "min(pi,3.2)", oracle: "pi", expect: "3.14159265359", mark: "≈", source: "oracle", note: "G362: a constant and a decimal compare by value" }
+  - { id: "g362-max-list", input: "max([3,9,4])", oracle: "F(9)", expect: "9", mark: "=", source: "derived", note: "G362: the largest of a list" }
+  - { id: "g362-im-decimal", input: "im(0.5+1.5*i)", oracle: "F('1.5')", expect: "1.5", mark: "=", source: "derived", note: "G362: typed decimals are exact" }
+  - { id: "g362-conj-polar", input: "conj(2*exp(i*pi/3))", oracle: "2*exp(-I*pi/3)", expect: "1-1.73205080757*i", mark: "≈", source: "oracle", note: "G362: the conjugate of 2e^(i pi/3) = 1+sqrt(3)i" }

@@ -8,7 +8,7 @@
 export const PROBED_LIST_AS_ARGUMENTS: readonly string[] = [
   "surd", "root", "exponential", "irem", "remain", "comb", "nCr", "normald_cdf", "normal_cdf", "normald",
   "normald_icdf", "normal_icdf", "student", "studentd", "student_cdf", "student_icdf", "int", "integrate", "integrer",
-  "diff", "derive", "deriver", "limit", "limite", "lim", "roots", "znorder", "linspace", "besselY", "BesselY",
+  "diff", "derive", "deriver", "limit", "limite", "lim", "roots", "atan2", "znorder", "linspace", "besselY", "BesselY",
   "besselJ", "BesselJ", "uniform", "uniform_cdf", "uniformd_cdf", "uniform_icdf", "uniformd_icdf", "exponentiald",
   "exponential_cdf", "exponentiald_cdf", "exponential_icdf", "exponentiald_icdf", "geometric", "geometric_cdf",
   "geometric_icdf", "weibull", "weibulld", "weibull_cdf", "weibulld_cdf", "weibull_icdf", "weibulld_icdf", "cauchy",
@@ -20,7 +20,7 @@ export const PROBED_LIST_AS_ARGUMENTS: readonly string[] = [
   "poisson_icdf", "poisson", "convert", "convertir", "homogeneize", "chisquare", "chisquared", "chisquare_cdf",
   "chisquared_cdf", "chisquare_icdf", "chisquared_icdf", "fisher", "snedecor", "fisherd", "snedecord", "fisher_cdf",
   "snedecor_cdf", "fisherd_cdf", "snedecord_cdf", "UTPC", "UTPF", "UTPN", "UTPT", "genpoly", "coeff", "coeffs",
-  "taylor", "atan2", "canonical_form", "cyclotomic", "divpc", "symb2poly", "e2r", "equal", "froot", "fsolve", "cfsolve",
+  "taylor", "canonical_form", "cyclotomic", "divpc", "symb2poly", "e2r", "equal", "froot", "fsolve", "cfsolve",
   "nSolve", "ugamma", "igamma", "LambertW", "gauss", "has", "hermite", "grad", "ibpdv", "ibpu", "ecm_factor", "iquo",
   "intDiv", "iquorem", "divmod", "jacobi_symbol", "laguerre", "laplace", "legendre", "legendre_symbol", "logb",
   "makelist", "newton", "of", "parameq", "partfrac", "cpartfrac", "perm", "nPr", "powmod", "powermod", "pow", "Psi",
@@ -50,4 +50,4 @@ export const PROBED_LIST_FORMS: Readonly<Record<string, "any" | "integers" | "ro
 };
 
 /** How many names the probe asked (the index's and the census's, the skipped ones included). */
-export const PROBED_NAMES = 1618;
+export const PROBED_NAMES = 1631;
