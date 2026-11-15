@@ -7,14 +7,14 @@
 // - One table, spec/keyboard.yaml `desktop:` (R131, keyboard/desktopKeys.ts), names the hardware key of every keypad
 //   key and layer, and of the status line's controls and results mode; this handler acts on it.
 // - A character a keypad key types runs that key (in that layer) through the shell, as a tap would: digits, `.`, `+`,
-//   `-` (the − key: on an empty line it starts with Ans), `,`, space, and `=` `_` (Shift) and `#` `:` `;` (Alpha).
+//   `-` (the − key: on an empty line it starts with Ans), `,`, space, and `=` `_` `%` (Shift) and `#` `:` `;` (Alpha).
 // - `*` is ×, `/` is ÷ (a stacked fraction in textbook entry), `^` is xʸ, `(` is the bracket pair ( ), `|` the absolute
 //   value |x|, `{` the list braces { } and `[` the matrix [ ] (R131); `)`, a second `|`, `}` and `]` leave the pair they
 //   close (with no such pair, a dead press).
 // - `e` or `E` right after a number's digits (or its point) is the exponent key ᴇ; R312: at `(`, a ᴇ right after a
 //   number followed by letters that with `e` form a known name (`2exp(`, `3erf(`) becomes that function (callKey).
-// - `<`, `>`, `!` and `%` insert the Shift palettes' own symbols (Shift + 6, Shift + 9; `%` as `\%`, R131: a bare `%`
-//   is a LaTeX comment).
+// - `<`, `>` and `!` insert the Shift palettes' own symbols (Shift + 6, Shift + 9). `%` is Shift + 0 (R323), which
+//   inserts the Shift + 9 palette's `\%` (R131: a bare `%` is a LaTeX comment).
 // - Other letters stay name letters. R198 (the owner, 2026-11-12; R31 had them stay letters): a function's name typed
 //   before `(` becomes the function, as Find's pick of it puts it on the line (`sin(` is \sin with the cursor in its
 //   bracket): a name of the parser's FUNCS, or of a function or template of Find's index (tier 1 too), which the first
@@ -48,7 +48,7 @@ export interface HwTarget {
   readonly decimalComma: boolean;
   /** R198: the user's names (session.userNames): typed before `(`, they stay the user's. */
   readonly stored?: readonly string[];
-  /** A palette symbol typed on the hardware keyboard (`<`, `>`, `!`, `%`): `latex`, the Shift palettes' own insert. */
+  /** A palette symbol typed on the hardware keyboard (`<`, `>`, `!`): `latex`, the Shift palettes' own insert. */
   onSymbol(latex: string, repeat: boolean): void;
   /** Press a keypad key in a layer, as a tap would (the shell's path: Ans first, one-line forms, open sheets). `repeat`
    *  is the event's KeyboardEvent.repeat: a held key's auto-repeat acts again but is no new press (docs/04 5.2). */
@@ -77,15 +77,16 @@ const KEYS: ReadonlyMap<string, readonly [string, Layer]> = new Map(
 const DESK_CHARS = new Set(["{", "["]);
 /** The keys the handler pressed before the table (R45, R119): still onKey, counted `<key id>:hw` as before. */
 const BEFORE = new Set(["Ctrl+Z", "Ctrl+Y", "Ctrl+Shift+Z", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"]);
-/** The characters that the unit view's field does not take (units/open.ts: it keeps R24c's set). */
-const LINE_ONLY = new Set([...DESK_CHARS, "|"]);
+/** The characters that the unit view's field does not take (units/open.ts: it keeps R24c's set; `%`, Shift + 0 since
+ *  R323, stays out of it as before). */
+const LINE_ONLY = new Set([...DESK_CHARS, "|", "%"]);
 /** The pairs a closing character leaves (`leave`): the LaTeX its opening atom starts with. */
 const CLOSES: Readonly<Record<string, RegExp>> = { ")": /^\\left\(/, "|": /^\\left\|/, "}": /^\\left\\\{/, "]": /^\\begin\{pmatrix\}/ };
 /** The arrow keys and the keypad keys they press (R45, controlKey). */
 const ARROWS: Readonly<Record<string, string>> = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down" };
 /** The Shift palettes' symbols typed by one ASCII character, and their inserts (spec/keyboard.yaml `relations` lt, gt;
- *  `symbols` fact, percent). */
-const PALETTE: Readonly<Record<string, string>> = { "<": "<", ">": ">", "!": "!", "%": "\\%" };
+ *  `symbols` fact). `%` is a key's since R323 (Shift + 0, KEYS). */
+const PALETTE: Readonly<Record<string, string>> = { "<": "<", ">": ">", "!": "!" };
 
 /** The keypad key and layer a hardware control key presses (R45, F38): Backspace is ⌫, Delete is Shift + ⌫ (Del), the
  *  arrows are the pad's arrow keys, Enter is Enter and Escape is Esc. Shift + an arrow is none (MathLive's selection on
