@@ -51,6 +51,7 @@ const item = (kind: string, id: string, x: Record<string, unknown>): IndexItem =
 /** G81's fixture (build.test.ts): two constants sharing the leaf fine_structure; exact_leaf has σ 0. */
 const LEAVES = { fine_structure: { value: "7.3E-3", unc: "1E-12" }, exact_leaf: { value: "2", unc: "0" } };
 const TABLE = factorTable([
+  item("unit", "K", { dim: "K1", si: "1" }), item("unit", "oC", { dim: "K1", si: "1+5463/20" }), item("unit", "oF", { dim: "K1", si: "5/9+45967/180" }),
   item("unit", "m", { dim: "m1", si: "1" }), item("unit", "W", { dim: "kg1m2s-3", si: "1" }), item("unit", "dBm", { dim: "kg1m2s-3" }), item("pfx", "c", { si: "1/100" }),
   item("const", "G", { value: "6.67430E-11", unc: "1.5E-15", dim: "kg-1m3s-2" }),
   item("const", "mu", { value: "1.2E-6", unc: "2E-16", basis: "pasl_exact_leaf*pasl_fine_structure", basisLeaves: LEAVES, dim: "kg1" }),
@@ -134,5 +135,35 @@ describe.skipIf(!giacAvailable())("σ's terms, each naming its input (G271, real
     expectTerms(u, [[undefined, "0.1886116970116139292199608299650608736659", "0.4342944819032518276511289189166050822944"]]);
     expect(near(u.second, "0.004715292425290348230499020749126521841647"), `second ${u.second}`).toBe(true);
     expect(u.text).toBe("0.44");
+  });
+
+  it("G273 g01: U from the unrounded σ (2.5, not 2 × the shown 1.2), σ/|y| in per cent, the short form", () => {
+    const u = unc({ formula: T10, slots: [M, M] });
+    expect(u).toMatchObject({ expanded: "2.5", relative: "3.2", short: "39.5(12)" });
+  });
+  it("G273 g09: a value of 0 has a short form and U, no relative σ", () => {
+    const u = unc({ formula: "pasupm(5,0.2)*pasu1-pasupm(5,0.2)*pasu2", slots: [M, M] });
+    expect(u).toMatchObject({ short: "0.00(28)", expanded: "0.57" });
+    expect(u.relative).toBeUndefined();
+  });
+  it("G273 g10: a σ of 0 has none of the three", () => {
+    const u = unc({ formula: "pasupm(5,0)*pasu1", slots: [M] });
+    expect(u.expanded).toBeUndefined();
+    expect(u.relative).toBeUndefined();
+    expect(u.short).toBeUndefined();
+  });
+  it("G273: relative σ in K, none where the zero is arbitrary (°C, °F, a level)", () => {
+    const K = { tokens: [{ unit: "K" }] };
+    const k = unc({ formula: "pasupm(300,1)*pasu1", slots: [K] });
+    expect(k.relative).toBeDefined();
+    const no = (u: Uncertainty): void => {
+      expect(u.relative).toBeUndefined();
+      expect(u.expanded).toBeDefined();
+      expect(u.short).toBeDefined();
+    };
+    // g11: °C to K, g12: °F to °C, g08: W to dBm
+    no(unc({ formula: "pasupm(20,0.5)*pasu1", slots: [{ tokens: [{ unit: "oC" }] }], end: K }));
+    no(unc({ formula: "pasupm(68,0.9)*pasu1", slots: [{ tokens: [{ unit: "oF" }] }], end: { tokens: [{ unit: "oC" }] } }));
+    no(unc({ formula: "pasupm(1,0.1)*pasu1", slots: [{ tokens: [{ unit: "W" }] }], end: { tokens: [{ unit: "dBm" }] } }));
   });
 });

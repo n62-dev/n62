@@ -14,7 +14,7 @@ import { decimalToString, roundSignificant } from "../engine/format.ts";
 import { BASES, dimKeyOf, dimensionText, isExponent, parseDimKey, siSlot, siUnit } from "./dims.ts";
 import { isUnitError, type Quantity, type Uncertainty, type UncVar, type UnitError, type UnitJob, type UnitNote, type UnitSlot } from "./types.ts";
 import { limitDigits, worseFacts } from "./sigmaFacts.ts";
-import { parseDecimal, shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
+import { expandedText, parseDecimal, relativeSigma, shortForm, shownWithUncertainty, uncertaintyText } from "./uncertainty.ts";
 
 const S = `[${BASES.map((b) => b.symbol).join(",")}]`;
 const ANY_DIM = BASES.map((b) => `has(pasy_,${b.symbol})`).join(" or ");
@@ -438,7 +438,7 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   const big = (Number.isFinite(share) ? share : Number(giac.eval("evalf(pasuW[1])"))) > ORDER2_SHARE;
   const flag = parts?.[2]?.trim();
   const why = flag === "2" ? "jump" : flag === "1" ? "singular" : big ? "order2" : null;
-  const budget = termsOf(u.vars, parts?.[3], parts?.[4]);
+  const budget = { ...termsOf(u.vars, parts?.[3], parts?.[4]), ...forms(plain, sig, text, !job.absTemp && job.endLog === undefined && job.endOffset === undefined) };
   const c = u.chip;
   if (!c) return { value, text, shown, ...(why ? { why } : {}), ...budget };
   // R271: σ keeps the chips' facts: no more confirmed digits than theirs, and their ⚠ reason; R271f1: its `full` (the
@@ -448,6 +448,15 @@ function uncertainty(giac: Giac, job: UnitJob, src: Checked, dst: { num: string 
   const v = value.value?.re;
   const full = n === null || !v || v.digits.length <= n ? value.full : n < 1 ? "" : decimalToString({ ...roundSignificant(v, n), sticky: false });
   return { value: { ...value, facts, full }, text, shown, ...(why ? { why } : {}), ...budget, chip: { reliableDigits: n, ...(facts.warn ? { warn: facts.warn } : {}) } };
+}
+
+/** G273: U, σ/|y| and the short form from the 30-digit texts of the value and σ (the unrounded σ: U is 2σ, not 2 × the
+ *  shown σ); none for a σ of 0 (`text` "0"). `relative` also needs a zero that means something (`plainZero`: not an
+ *  absolute temperature, °C or °F, nor a level). */
+function forms(value: string, sigma: string, text: string, plainZero: boolean): Pick<Uncertainty, "expanded" | "relative" | "short"> {
+  if (text === "0") return {};
+  const [expanded, relative, short] = [expandedText(sigma), plainZero ? relativeSigma(value, sigma) : null, shortForm(value, sigma, 30)];
+  return { ...(expanded !== null ? { expanded } : {}), ...(relative !== null ? { relative } : {}), ...(short !== null ? { short } : {}) };
 }
 
 /** G271: pasuu's terms (one [t, uy] per input, in the order of `vars`) and its second-order part, each input's key
