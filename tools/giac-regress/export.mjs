@@ -775,6 +775,43 @@ export function build(cases) {
     patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath findroot" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  const G359_PATCH = "0050-proot-huge-coefficients.patch";
+  // Patch 0050 (G359), written lines (the golden g359-* Home rows are lists): a cubic with a 10^-30 term trapped the engine
+  // (RuntimeError: unreachable) at Digits 12. Roots by mpmath (polyroots, 60 and 90 digits agree); counts derived (nops(realroot(p))).
+  for (const [id, digits, input, value, tol] of [
+    ["g359-solve-x3-x-1-1e-30-12", 12, "solve(x^3-x-1-10^-30=0,x)[0]", "13247179572447460259609088544783318275/10^37", "1/10^11"],
+    ["g359-solve-x3-x-1-1e-30-40", 40, "solve(x^3-x-1-10^-30=0,x)[0]", "13247179572447460259609088544783318275003919941919/10^49", "1/10^35"],
+    ["g359-solve-x3-3x+2+1e-30-40", 40, "solve(x^3-3*x+2+10^-30=0,x)[0]", "-20000000000000000000000000000001111111111111111111/10^49", "1/10^35"],
+    ["g359-size-solve-x3-3x+2+1e-30-12", 12, "size(solve(x^3-3*x+2+10^-30=0,x))", "1", "1/10^30"],
+    ["g359-size-csolve-x3-x-1-1e-30-12", 12, "size(csolve(x^3-x-1-10^-30=0,x))", "3", "1/10^30"],
+  ]) {
+    patched.push(`// patch ${G359_PATCH}`, `// ${id} (${value.includes("/") ? "oracle: mpmath polyroots" : "derived: nops(realroot(p)), or the degree for three distinct roots"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
+  // G359f1: evalf of a rootof whose minimal polynomial passes the double range is an error or -10^-400, never another number
+  // (it was 1.27E392 at Digits 15 and 3.1E385 at 30: select_root now checks proot's roots against the polynomial). Before the
+  // proot lines: proot caches its roots, and a cached right answer hid the fault.
+  for (const digits of [15, 20, 30]) {
+    const id = `g359-rootof-1e400-error-or-right-${digits}`;
+    patched.push(`// patch ${G359_PATCH}`, `// ${id} (oracle: mpmath findroot, -10^-400; an error passes)`, `Digits:=${digits}:; pasr:=0:; try { pasr:=when(abs(10^400*evalf(rootof([1,0],[1,0,10^400,1]))+1)<1/10^10,1,0); } catch (err) { pasr:=1; }:; pc("${id}",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
+  // G359f1: proot itself (vecteur.cc's clamp; it trapped at any Digits) and csolve's pair 1 +- 5.7735E-16*i (merged into 1 by a
+  // complex double sum; at Digits 40 the parts of complexroot's double box: scaled, so a double's rounding cannot pass). Values
+  // mpmath (findroot at 1300 digits: the root is -10^-400*(1-10^-1200); polyroots at 80 and 120 digits agree on the pair);
+  // sizes derived (three distinct roots).
+  for (const [id, digits, input, value, tol] of [
+    ["g359-proot-1e400-real-12", 12, "10^400*min(re(proot([1,0,10^400,1])))", "-1", "1/10^10"],
+    ["g359-proot-1e400-real-40", 40, "10^400*min(re(proot([1,0,10^400,1])))", "-1", "1/10^35"],
+    ["g359-size-proot-1e400-12", 12, "size(proot([1,0,10^400,1]))", "3", "1/10^30"],
+    ["g359-size-proot-1e400-40", 40, "size(proot([1,0,10^400,1]))", "3", "1/10^30"],
+    ["g359-size-csolve-x3-3x+2+1e-30-12", 12, "size(csolve(x^3-3*x+2+10^-30=0,x))", "3", "1/10^30"],
+    ["g359-csolve-x3-3x+2+1e-30-re-40", 40, "10^31*(max(re(csolve(x^3-3*x+2+10^-30=0,x)))-1)", "5555555555555555556/10^19", "1/10^7"],
+    ["g359-csolve-x3-3x+2+1e-30-im-40", 40, "10^16*max(im(csolve(x^3-3*x+2+10^-30=0,x)))", "57735026918962576450914878050194409105803717659965/10^49", "1/10^37"],
+  ]) {
+    patched.push(`// patch ${G359_PATCH}`, `// ${id} (${value.includes("/") || value === "-1" ? "oracle: mpmath" : "derived: three distinct roots"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   // Patch 0047 (G331, F214), written lines (the golden g331-evalf-* Home rows are patched lines through PATCHED_IDS): subst.cc tsimplify_common went on with an undef
   // ln argument, so decompose overflowed the stack (F214) or expanded_ln looped until the clock. Values mpmath (r20); F214's is past MPFR's range.
   for (const [id, input, value, tol] of [

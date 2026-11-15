@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+# G359: the cubic branch of solve.cc by hand for x^3-x-1-10^-k (after its change of variable x -> x/q0), up to the evalf of
+# its first candidate R1. k = 25 answers; k = 26 traps in evalf(R1) at Digits 12 (the minimal polynomial's last coefficient
+# is past the double range).   GIAC_OUT=<dir> tools/probes/g359/steps.sh 26
+set -euo pipefail
+k="${1:-26}"
+s='k:=KK;;a0:=10^k;;w0:=[a0,0,-a0,-(a0+1)];;Q0:=[a0^4,0,6*a0^3*w0[2],0,9*a0^2*w0[2]^2,0,27*a0^2*w0[3]^2+4*a0*w0[2]^3];;q00:=(Q0/lgcd(Q0))[0];;w:=[a0,0,w0[2]*q00^2,w0[3]*q00^3];;w:=w/lgcd(w);;size(string(w));;al:=w[0];;be:=w[1];;ga:=w[2];;dd:=w[3];;Q:=[al^4,0,6*al^3*ga-2*al^2*be^2,0,9*al^2*ga^2-6*al*be^2*ga+be^4,0,27*al^2*dd^2-18*al*be*dd*ga+4*al*ga^3+4*be^3*dd-be^2*ga^2];;q:=Q/lgcd(Q);;q[0];;D:=27*al^2*dd-9*al*be*ga+2*be^3;;P1:=[-3*al^4,0,-15*al^3*ga+5*al^2*be^2,0,-9*al^2*be*dd-12*al^2*ga^2+11*al*be^2*ga-2*be^4];;R1:=rootof(P1,q)/al/D;;size(string(R1));;R1e:=evalf(R1);;R1s:=simplifier(R1);;evalf(R1/q00)'
+exec node "$(dirname "$0")/raw.mjs" "${s//KK/$k}"
