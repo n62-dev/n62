@@ -117,4 +117,32 @@ describe("budgetOf (G272)", () => {
     const b = budgetOf({ terms: [{ t: "1E-300", uy: "1" }, { t: "2.5e2", uy: "1" }] });
     expect(b && "rows" in b && b.rows.map(shown)).toEqual(["100.0", "< 0.1"]);
   });
+
+  it("parts 4E8 orders apart give their shares at once, not 10^400000000 (audit, run 1280)", () => {
+    const t0 = performance.now();
+    const p = budgetOf(input(["1E-400000000", "1"]));
+    expect(p && "rows" in p && p.rows.map(shown)).toEqual(["100.0", "< 0.1"]);
+    const q = budgetOf(input(["1"], "-1E-400000000"));
+    if (!q || !("rows" in q)) throw new Error(`no shares: ${JSON.stringify(q)}`);
+    expect([q.rows.map(shown), q.second && shown(q.second), q.fallback, q.rounded, q.over100]).toEqual([["100.0"], "> −0.1", false, false, false]);
+    // an exact zero's exponent scales nothing
+    const z = budgetOf(input(["0E-400000000", "1"], "0E-400000000"));
+    expect(z && "rows" in z && [z.rows.map(shown), z.second]).toEqual([["100.0", "0"], undefined]);
+    // the order of two far-apart small rows is exact too
+    const o = budgetOf({ terms: [{ key: "x1", t: "1E-400000000", uy: "1" }, { key: "x2", t: "3E-300000000", uy: "1" }, { key: "x3", t: "1", uy: "1" }] });
+    expect(o && "rows" in o && o.rows.map((r) => r.key)).toEqual(["x3", "x2", "x1"]);
+    expect(performance.now() - t0).toBeLessThan(1000);
+  });
+
+  it("a far part decides an exact threshold when it can, else no budget (never a guess)", () => {
+    // 1E-40 is summed exactly: over 1 + 1E-40, 0.9995 is just below 99.95 % and 0.0005 just below 0.05 % (row n reads 100.0, 0.1)
+    const n = budgetOf(input(["0.0005", "0.9995", "1E-40"]));
+    expect(n && "rows" in n && n.rows.map(shown)).toEqual(["99.9", "< 0.1", "< 0.1"]);
+    // 1E-2000 is only bounded: the threshold row reads 0.1 at one end of the bound and < 0.1 at the other
+    expect(budgetOf(input(["0.0005", "0.9995", "1E-2000"]))).toBeNull();
+    // a + b = 0 up to a far part: its sign is not known exactly, so neither is the base
+    expect(budgetOf(input(["1", "1E-2000"], "-1"))).toBeNull();
+    // an exponent BigInt cannot reach
+    expect(budgetOf(input(["1E99999999999999999999", "1"]))).toBeNull();
+  });
 });
