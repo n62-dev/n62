@@ -84,7 +84,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 |---|---|---|---|---|
 | 743 | G216 Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
 | 744 | G217 Copy as Python: ± through uncertainties | gorge, Opus | `p1/gorge-pysigma` | G216 |
-| 692 | [G271](packages/G271.md) σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
+| 692 | G271 σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
 | 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
 | 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
 | 799 | [G273](packages/G273.md) a unit result carries U, relative σ, short form and terms, and the row keeps them (for R327) | gorge, Sonnet | `p1/gorge-uncrow` | G270, G271 |
