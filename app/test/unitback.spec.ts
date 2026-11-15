@@ -7,7 +7,7 @@
 // chip's unit. Expected values: oracle (mpmath, tasks.yaml t04: 2π·0.025 = 0.1570796326794896619…, so 4π·0.025 =
 // 0.3141592653589793238…) and derived (t10: 12.34·3.2 = 39.488, σ² = 1.548381 by G41, decisions.md R61).
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, entryValue, flick, open, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, flick, open, PASTE, tap, useClipboardLock } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -276,6 +276,59 @@ test.describe("Copy as shown on a unit row (R63f1)", () => {
     await leaveView(page);
     await tap(page, COPY);
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");
+  });
+
+  // R325 (docs/04 2.6, P5): Paste reads that text back as R61's chip, σ and unit with it, its unit matched to Find ids, so
+  // the units key fills the slot after it as a picked row's chip does. Expected: the copied text itself, and cm² derived
+  // (×10⁴: 39.488 m² = 394880 cm², σ 1.2 m² = 12000 cm²)
+  test("☰ → Copy on t10's row, then ☰ → Paste: one chip 39.488 ± 1.2 m²; Enter gives 39.488 with σ 1.2; the units key fills m², → cm² is 394880, σ 12000", async ({ page }) => {
+    await t10(page);
+    await leaveView(page);
+    await tap(page, COPY);
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, PASTE);
+    await expect.poll(() => lineChip(page)).toEqual({
+      value: "39.488",
+      exact: false,
+      reliableDigits: null,
+      unc: "1.2",
+      unit: { text: "m²", dim: "m2", slot: { tokens: [{ unit: "m", power: "2" }] } },
+    });
+    // the line holds the one chip, drawn as a picked unit row's: the number, ± σ, the unit set apart
+    expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{39\.488\\pm1\.2\\htmlStyle\{color:var\(--muted\);font-size:smaller\}\{\\,\\text\{m²\}\}\}$/);
+    // the units key: the slot after the chip starts with its unit; the end slot c m x² gives the value in cm²
+    await unitsKey(page);
+    expect(await slotText(page, "u1")).toBe("m^2");
+    await tap(page, ["enter", "d5", "d9", "sq"]);
+    expect(await slotText(page, "end")).toBe("c:m^2");
+    await flick(page, "enter", "up");
+    await expect(page.getByTestId("unit-unit")).toHaveText("cm²");
+    await expect(result(page)).toHaveAttribute("data-text", "394880");
+    // (drawn to σ's digits, as t10's 39.5 ± 1.2: 394880 at the thousands of σ 12000)
+    await expect(result(page).locator(".value")).toHaveText("395 000 ± 12 000");
+    await leaveView(page);
+    // Enter on the pasted chip alone (Home: the unit dropped): 39.488, never =, with the chip's σ 1.2
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, PASTE);
+    await expect.poll(() => lineChip(page)).toBeDefined();
+    await tap(page, ["enter"]);
+    await expect(lastRow(page).locator(".result")).toHaveAttribute("data-text", "39.488");
+    await expect(lastRow(page).getByTestId("mark")).not.toHaveText("=");
+    const facts = await page.evaluate(() => window.n62.session.home.at(-1)?.facts);
+    expect(facts?.exact).toBe(false);
+    expect(Number(facts?.uncSigma)).toBe(1.2);
+  });
+
+  // R325: a unit the catalogue lacks is refused, named; a value with σ and no unit stays "not a number"
+  test("☰ → Paste of 20 m/zz says the unit is not found; 1.5 ± 0.2 is not a number; the line stays empty", async ({ page }) => {
+    await page.evaluate(() => navigator.clipboard.writeText("20 m/zz"));
+    await tap(page, PASTE);
+    await expect(page.getByTestId("notice")).toHaveText("Paste: unit m/zz not found");
+    await page.evaluate(() => navigator.clipboard.writeText("1.5 ± 0.2"));
+    await tap(page, PASTE);
+    await expect(page.getByTestId("notice")).toHaveText("Paste: not a number");
+    expect(await entryValue(page)).toBe("");
   });
 
   // R63f2: Share session writes the request with its units and the value with σ and unit, never the plain line with
