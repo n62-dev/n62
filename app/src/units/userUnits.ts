@@ -9,12 +9,11 @@ import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
 import type { IndexItem } from "../find/types.ts";
 import { rulesById, slotDim, slotFactor } from "./build.ts";
 import { isExponent } from "./dims.ts";
-import { bare, type FactorTable, type UnitFactor } from "./factors.ts";
+import { bare, isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
 import { exactFactor, type Exact } from "./slot.ts";
 import type { UnitSlot, UnitToken } from "./types.ts";
 
-/** The first character of an own unit's id. Kept for good from the first release: stored rows hold it. */
-export const OWN_PREFIX = "@";
+export { OWN_PREFIX, isOwnId };
 
 export interface UnitDef {
   /** Letters, digits and _, a letter first, at most 24 characters ("myfurlong"). */
@@ -28,7 +27,6 @@ export interface UnitDef {
 export type DefCheck = { ok: true } | { ok: false; key: UnitMessageKey; message: string };
 
 export const ownId = (name: string): string => OWN_PREFIX + name;
-export const isOwnId = (id: string): boolean => id.startsWith(OWN_PREFIX);
 export const ownToken = (name: string, prefix?: string): UnitToken => ({ ...(prefix !== undefined ? { prefix } : {}), unit: ownId(name) });
 
 const refuse = (key: UnitMessageKey, vars?: Readonly<Record<string, string>>): { ok: false; key: UnitMessageKey; message: string } =>

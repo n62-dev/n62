@@ -99,6 +99,23 @@ describe("the merged table (G233)", () => {
     expect(none).toEqual({ error: "engine", detail: "no unit @myfurlong in the index" });
     expect(jobs).toHaveLength(1);
   });
+  it_("an own unit whose name holds rev, rpm or Hz is no cycle unit: 2 brevet·rad → J drops the rad as N·m does (G40)", () => {
+    // audit, fix round 1: hasCycles read the id `@brevet` as rev, set cycles, and the rad was never dropped
+    const brevet: UnitDef = { name: "brevet", factor: "1", of: NM };
+    expect(why(validateDef(brevet, table, names))).toBe("ok");
+    const t = mergedTable(table, [brevet]);
+    const J: UnitSlot = { tokens: [{ unit: "J" }] };
+    const rad: UnitSlot = { tokens: [{ unit: "rad" }] };
+    const own = buildJob({ formula: "2*pasu1*pasu2", slots: [{ tokens: [ownToken("brevet")] }, rad], end: J }, t);
+    const find = buildJob({ formula: "2*pasu1*pasu2", slots: [NM, rad], end: J }, t);
+    expect("error" in own || "error" in find).toBe(false);
+    if ("error" in own || "error" in find) return;
+    expect(find.cycles).toBeUndefined();
+    expect(own.cycles).toBeUndefined();
+    // a Find cycle unit still sets it
+    const rpm = buildJob({ formula: "2*pasu1*pasu2", slots: [{ tokens: [{ unit: "rpm" }] }, { tokens: [{ unit: "m" }] }] }, t);
+    expect("error" in rpm ? undefined : rpm.cycles).toBe(true);
+  });
   it_("a stored definition keeps its value when Find gains its name (the merge checks no clash)", () => {
     const gained = factorTable([...items, { id: "unit:myfurlong", kind: "unit", names: ["myfurlong"], title: "Other", dim: "s1", si: "7" } as IndexItem]);
     const t = mergedTable(gained, [myfurlong]);

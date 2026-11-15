@@ -3,7 +3,7 @@
 // constant, the slots as tokens) becomes a UnitJob, Giac text in which every unit is its exact SI factor from the
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
 import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, unitProduct } from "./dims.ts";
-import type { FactorTable, UnitFactor } from "./factors.ts";
+import { isOwnId, type FactorTable, type UnitFactor } from "./factors.ts";
 import { balanced, closing, mapNames, names, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
@@ -315,8 +315,9 @@ export function powerKinds(slots: readonly UnitSlot[], table: FactorTable): stri
   return [...kinds];
 }
 
-/** G40: whether a slot holds a cycle unit: rpm, rev, Hz or a unit made of them (kHz). */
-const hasCycles = (slots: readonly UnitSlot[]): boolean => slots.some((s) => s.tokens.some((t) => /rpm|rev|Hz/.test(t.unit)));
+/** G40: whether a slot holds a cycle unit: rpm, rev, Hz or a unit made of them (kHz). Find's ids only: a unit of your own
+ *  is never one (userUnits.ts refuses one built from them), whatever its name holds (`@brevet`, G233 fix round 1). */
+const hasCycles = (slots: readonly UnitSlot[]): boolean => slots.some((s) => s.tokens.some((t) => !isOwnId(t.unit) && /rpm|rev|Hz/.test(t.unit)));
 
 /** G233: a unit whose rules go by its id (a level, a cycle unit, a kind of power): a unit of your own made of it would
  *  lose them, so userUnits.ts refuses it. */

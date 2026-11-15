@@ -43,6 +43,11 @@ function symbolOf(it: IndexItem): string {
 /** A Find id without its kind ("unit:m" → "m"). */
 export const bare = (id: string): string => id.slice(id.indexOf(":") + 1);
 
+/** G233: the first character of a unit of your own's id (units/userUnits.ts), a character no Find id holds. Kept for good
+ *  from the first release: stored rows hold it. Here, not in userUnits.ts: the builder (build.ts) reads it too. */
+export const OWN_PREFIX = "@";
+export const isOwnId = (id: string): boolean => id.startsWith(OWN_PREFIX);
+
 export function factorTable(items: readonly IndexItem[]): FactorTable {
   const units = new Map<string, UnitFactor>();
   const prefixes = new Map<string, { si: string; symbol: string }>();

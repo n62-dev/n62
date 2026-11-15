@@ -446,7 +446,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB (2026-10-18) | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
 | Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB (2026-10-15) | size test |
-| Unit view chunks | ≤ 39 kB raw (entries); pin 72.55 kB with shared ones (R313) | 38.92; 72.50 kB (R313) | size test |
+| Unit view chunks | ≤ 42 kB raw (entries); pin 76.05 kB with shared ones (G233) | 41.66; 76.00 kB (G233) | size test |
 | Precache total | ≤ 18 MB | 12.4 MB (2026-10-18) | size test |
 | Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions; nothing stored (A73f1, 11-08): Home 790 / 1330 ms, CAS last 795 / 1507 ms (in the worker's wasm instantiate: A73f2) | device runs |
 | Enter → result p95 (Tab One) | < 150 ms at 12 digits; at 30 digits ≤ 1.3 × the 12-digit p95 | RAD 147.9 ms at 12, 152.6 at 30; DEG 149.1 and 141.4 | device runs |
