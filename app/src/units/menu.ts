@@ -15,7 +15,7 @@ import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
 import { slotCatalogue, splitPair, type PadAction, type SlotCatalogue } from "./slot.ts";
 import type { UnitTool } from "./tools.ts";
 
-interface RawCategory { name: string; dims: string[]; first: string[]; hide?: string[] }
+interface RawCategory { name: string; dims: string[]; first: string[]; hide?: string[]; appended?: boolean }
 interface RawConstList { name: string; items: string[] | "generated" }
 const spec = raw as unknown as { prefixes: { items: string[] }; categories: RawCategory[]; constants: { lists: RawConstList[] } };
 
@@ -91,7 +91,7 @@ export function unitsMenu(index: FindIndex, o: UnitsMenuOptions): { categories: 
   const sub = (id: string, title: string, items: MenuItem[], ids: ReadonlySet<string>): MenuItem => ({ id, label: title, submenu: { title, items, search: (q) => find(q, ids) } });
   const categories: MenuItem[] = [sub("ucat:prefixes", unitText("units.menu.prefixes"), rows(prefixes), new Set(prefixes.map((p) => p.id)))];
 
-  for (const cat of spec.categories) {
+  const category = (cat: RawCategory): MenuItem => {
     const first = new Set(cat.first);
     const hide = new Set(cat.hide ?? []);
     const dims = new Set(cat.dims);
@@ -112,11 +112,14 @@ export function unitsMenu(index: FindIndex, o: UnitsMenuOptions): { categories: 
       ids.add(it.id);
     }
     const title = unitText(`units.cat.${cat.name}` as UnitMessageKey);
-    categories.push(sub(`ucat:${cat.name}`, title, items, ids));
-  }
+    return sub(`ucat:${cat.name}`, title, items, ids);
+  };
+  for (const cat of spec.categories) if (!cat.appended) categories.push(category(cat));
   const constant = o.constant;
   if (constant) categories.push(constantsRow(index, constant));
   if (o.tools) categories.push(toolsRow(o.tools));
+  // G369: a category `appended` comes after Tools, so no pinned row moves (spec/layout-lock.yaml)
+  for (const cat of spec.categories) if (cat.appended) categories.push(category(cat));
   return { categories, search: (q) => find(q) };
 }
 

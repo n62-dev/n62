@@ -37,7 +37,9 @@ export interface FactorTable {
 function symbolOf(it: IndexItem): string {
   const m = /\{\\mathrm\{([^{}]+)\}\}$/.exec(it.insert ?? "");
   const name = it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1);
-  return m && !m[1]!.includes("\\") ? m[1]! : name;
+  // G369: % is \% in LaTeX
+  const sym = m ? m[1]!.replace(/\\%/g, "%") : undefined;
+  return sym !== undefined && !sym.includes("\\") ? sym : name;
 }
 
 /** A Find id without its kind ("unit:m" → "m"). */

@@ -172,6 +172,20 @@ test.describe("Find in a slot", () => {
     await openFind(page, "d2"); // Length: every unit there has a factor
     await expect(find(page).getByTestId("row-note")).toHaveCount(0);
   });
+
+  test("G369: the Ratio category's % cell types the unit percent in the slot; ‰, ppm and ppb follow it", async ({ page }) => {
+    await unitsKey(page);
+    await openFind(page);
+    await row(page, "ucat:Ratio").tap();
+    await expect(page.getByTestId("sheet-title")).toHaveText("Find › Ratio");
+    const ids = await rows(page).evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
+    expect(ids.slice(0, 4)).toEqual(["unit:percent", "unit:permille", "unit:ppm", "unit:ppb"]);
+    await expect(row(page, "unit:percent")).toContainText("%");
+    await row(page, "unit:percent").tap();
+    await expect(find(page)).toBeHidden();
+    expect(await tokens(page)).toEqual([{ unit: "percent" }]);
+    await expect(page.getByTestId("unit-reading")).toHaveText("percent");
+  });
 });
 
 test.describe("the user cells", () => {

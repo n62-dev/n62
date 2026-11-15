@@ -91,6 +91,7 @@ export const enUnits = {
   "units.cat.Density": "Density",
   "units.cat.Amount": "Amount",
   "units.cat.Data": "Data",
+  "units.cat.Ratio": "Ratio",
   // R92: the units menu's last two rows (spec/units-menu.yaml `constants`, `tools`): the constant lists, Math's three
   // (Home's own e, π, i), and the unit view's places as tools, with the reason a tool cannot run yet.
   "units.menu.constants": "Constants",
