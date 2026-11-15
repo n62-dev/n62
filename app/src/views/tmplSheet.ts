@@ -7,6 +7,13 @@ import type { MenuItem } from "../apps/types.ts";
 import { legend } from "../i18n/index.ts";
 import { keyboard, type ActionBody, type PaletteItem } from "../keyboard/keyboard.ts";
 export { showBase } from "./baseSheet.ts"; // R193: the Base menu comes with the sheet's code
+import { lazy, type RouteCtx } from "../keyboard/route.ts";
+
+/** R327: Shift + 1's uncertainty sheet (uncSheet.ts, a chunk of its own) of `row`, else Home's or CAS's last row (as Fmt;
+ *  an app has none). Imported from the sheet's code, which the press waited for ("uncertainty" opens a sheet), so the start
+ *  chunk holds no import of it; keys pressed meanwhile wait (R8). */
+export const showUncertainty = (c: RouteCtx, row = c.shell.app === null ? c.session.items.at(-1) : undefined): void =>
+  lazy(c, import("./uncSheet.ts").then((m) => m.showUncertainty(c, row)));
 
 /** The template drawn with an empty box for every slot (#? a placeholder, #@ and #0 what the cursor would take).
  *  A box, not \placeholder: MathLive's static renderer draws a placeholder as nothing. */

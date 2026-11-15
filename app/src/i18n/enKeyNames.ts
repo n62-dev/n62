@@ -83,6 +83,7 @@ export const enKeyNames = {
   "mul.shift": "Angle sign",
   shift: "Shift",
   d1: "1",
+  "d1.shift": "Uncertainty sheet",
   d2: "2",
   "d2.shift": "Imaginary unit i",
   d3: "3",
