@@ -128,7 +128,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | List, matrix | `{a,b}`, `[[a,b],[c,d]]`, elements as above; with decimal comma `{1,5;2}`, `[[a;b];[c;d]]` | yes | yes | yes |
 | Solve root, analysis value | full value | yes | — | — |
 | Num table | CSV (Menu, Export): header row with the function names, full values, `.` and `,` as separator (`;` with decimal comma) | — | — | — |
-| Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269) | yes | `(1397/3125) m/s` | yes |
+| Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes.
@@ -294,7 +294,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | ☰ (row 0, col 4, id `menu`) [the G2's Menu key, r3c4] | the status line's ☰ as a key (R278): it opens the view's menu and closes the one it opened; with another sheet open it only closes that sheet; Shift = Settings (R146); a dead press where the view has no menu | R278; docs/06 3b |
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
-| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
+| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find; Insert replaces the call, R324); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
 | ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |

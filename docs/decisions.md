@@ -156,7 +156,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The session line (G210, G211; Opus passes 178, 181):** `value` is Copy's number alone, with `.`; `exact` reads in radians; `word` is the job's word, 64 bits unsigned while none is set. Archived, "Opus pass 184".
 - **G212 (Opus pass 189):** a Home row keeps its stored values as `defsUsed` (the session line's `defs`), not drawn; +10 B at start accepted. Would change if: the owner wants them drawn.
 - **The LaTeX export (G232, Opus pass 181):** only a ⚠ row gets its reason (whyLine) after the result; `\approx` and `=` stand alone, as the CSV's mark column. Would change if: the owner wants the rounding reason in a document.
-- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants. Archived, "Opus pass 185". Would change if: G215 finds sympy disagrees.
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants. Archived, "Opus pass 185". G215's pydiff found sympy agreeing on all 75 translated rows; `scripts/pipeline-lib.sh` ENGINE_STAGES gets no pydiff, as `pydiff.test.ts` runs the same rows on every merge (Opus pass 195). Would change if: pydiff finds sympy disagrees.
 - **G22, G26:** `once` for a value evaluated once; `uncDigits` counts on the value as shown. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
