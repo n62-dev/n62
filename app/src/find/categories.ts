@@ -24,7 +24,7 @@ export const CATEGORIES: readonly Category[] = [
   { id: "algebra", title: "cat.algebra", ids: fn("solve") },
   { id: "matrix", title: "cat.matrix", ids: fn("det", "inv", "tran", "trn", "cross", "dot", "norm", "rref", "eigenvals", "egv") },
   { id: "stats", title: "cat.stats", ids: fn("mean", "median", "percentile", "variance", "stddev", "stddevp", "sem", "stats1", "linreg", "normald", "normald_cdf", "normald_icdf", "student", "student_cdf", "student_icdf", "erf", "Gamma") },
-  { id: "eng", title: "cat.eng", ids: fn("par", "eseries") },
+  { id: "eng", title: "cat.eng", ids: fn("par", "eseries", "linterp") },
   { id: "const", title: "cat.const", kinds: ["const"] },
   { id: "units", title: "cat.units", kinds: ["unit", "pfx"] },
   // G235: the eleventh, so the digits 1…9, 0 keep their categories; the word operations are ours (engine/wordOps.ts), the three bit* are Giac's
