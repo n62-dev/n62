@@ -289,3 +289,43 @@ describe("G213f1: Ans's value at Enter and the stored names read, kept on the ro
     expect(restoredItem({ ...base, reads: [] } as HistoryItem, 1).reads).toEqual([]);
   });
 });
+
+describe("R265: readsAngle and typedIn on a row, stored and read back", () => {
+  const base = { id: 3, view: "home", latex: "1", status: "done", resultLatex: "1", text: "1", approximate: false, startedAt: 0 } as const;
+
+  it("a row whose Giac text holds the degree factor has readsAngle, one without has none, in the item's own build", async () => {
+    const s = new Session(new SpyCalc(), fakeKv());
+    await s.submit("\\sin(30)", "sin(pasdeg*30)");
+    await s.submit("2+3", "2+3");
+    expect(s.home[0]?.readsAngle).toBe(true);
+    expect("readsAngle" in (s.home[1] as HistoryItem)).toBe(false);
+  });
+
+  it("a stored row keeps typedIn only when it differs from angle, and readsAngle only as true", () => {
+    const r = restoredItem({ ...base, angle: "rad", typedIn: "deg", readsAngle: true } as HistoryItem, 1);
+    expect(r).toMatchObject({ angle: "rad", typedIn: "deg", readsAngle: true });
+    expect("typedIn" in restoredItem({ ...base, angle: "deg", typedIn: "deg" } as HistoryItem, 1)).toBe(false); // equal to angle
+    expect("typedIn" in restoredItem({ ...base, typedIn: "deg" } as HistoryItem, 1)).toBe(true); // no angle stored: differs
+    expect("typedIn" in restoredItem({ ...base, angle: "rad", typedIn: "grad" } as unknown as HistoryItem, 1)).toBe(false); // invalid
+    expect("readsAngle" in restoredItem({ ...base, readsAngle: false } as unknown as HistoryItem, 1)).toBe(false);
+    expect("readsAngle" in restoredItem({ ...base, readsAngle: "yes" } as unknown as HistoryItem, 1)).toBe(false);
+  });
+
+  it("after a reload (a second session on the same store) the row still has readsAngle and the note's typedIn", async () => {
+    const kv = fakeKv();
+    const a = new Session(new SpyCalc(), kv);
+    await a.restoreHistory(); // (the history is written only after it was read, R106)
+    a.setAngle("deg");
+    await a.submit("\\sin(30)", "sin(pasdeg*30)");
+    a.setAngle("rad");
+    await a.submit("\\sin(30)", "sin(pasdeg*30)", {}, "deg"); // a recall of the DEG row, run in RAD
+    a.flushHistory();
+    await new Promise((r) => setTimeout(r, 0));
+    const b = new Session(new SpyCalc(), kv);
+    await b.restoreHistory();
+    expect(b.home.map((i) => [i.angle, i.readsAngle, i.typedIn])).toEqual([
+      ["deg", true, undefined],
+      ["rad", true, "deg"],
+    ]);
+  });
+});

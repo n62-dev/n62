@@ -94,9 +94,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 748 | G270 the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
-| 799 | G273 a unit result carries U, relative σ, short form and terms, and the row keeps them (for R327) | gorge, Sonnet | `p1/gorge-uncrow` | G270, G271 |
-| 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
 | 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
 | 751 | [G276](packages/G276.md) a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
 | 817 | [G302](packages/G302.md) golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |

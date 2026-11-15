@@ -197,6 +197,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R286 (pass 153):** a σ chip limits the value at σ's last confirmed decade, then markOf (`1000.5 ± 0.0707`, 3 digits: ⚠ 8 at STD 12).
 - **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Archived, "Opus pass 97". Would change if: the owner wants a chip's σ dropped there.
 - **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is disabled until built. Archived.
+- **σ's forms and budget (pass 199; G270, G272, G273):** no relative σ for an absolute temperature, °C, °F, a level or an offset end slot (K to °C); a row keeps σ's terms with their keys, and R328 reads a key's kind (`pasr_`), never its run number; the budget sorts rows by the exact t, refuses a negative t, keeps the ⚠ reason beside its shares; the second-order row has no uy.
 
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35 rewrites G16's "an exact 0 loses its dimension" and the known gap of cancelling terms). Would change if: the per-term check costs more than the 5 ms p95 bar.
 
