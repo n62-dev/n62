@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { giacAvailable, nodeHost } from "../src/engine/nodeGiac.ts";
 import { pasdegCommand } from "../src/engine/homeEval.ts";
 import type { PyRow } from "../src/clipboard/python.ts";
-import { INSTALL_LINE, MIN_COMPARED, corrupt, judgeGroup, n62Rows, probed, readGroups, venvPython, venvVersions, type Group, type GroupResult } from "./pydiff.ts";
+import { decimalFromString } from "../src/engine/format.ts";
+import { INSTALL_LINE, MIN_COMPARED, SIGMA_TOL, corrupt, judgeGroup, judgeSigma, n62Rows, probed, readGroups, venvPython, venvVersions, type Group, type GroupResult, type N62Row } from "./pydiff.ts";
 
 const dir = join(resolve(fileURLToPath(import.meta.url), "../.."), "_out/pydiff-test");
 const groups = readGroups();
@@ -49,6 +50,27 @@ describe("pydiff: the probes (no engine)", () => {
     // the probed script is the file with the prelude and the probe lines added, nothing else
     const own = p.script.split("\n").filter((_, i) => (p.scriptLine[i] ?? 0) > 0);
     expect(`${own.join("\n")}\n`).toBe(p.file);
+  });
+});
+
+describe("pydiff: σ against N62's (G217, no engine)", () => {
+  // N62's σ 1.0 as given here; Python's σ the numbers below, 5 % and 7 % apart from it
+  const n62 = (why?: string): N62Row => ({ line: { input: "", ok: true, ...(why ? { sigmaWhy: why } : {}) }, sigma: decimalFromString("1.0")! });
+  it("passes within SIGMA_TOL, fails past it and names both", () => {
+    const sig = { sigmas: 0, sigmaSkipped: 0 };
+    expect(SIGMA_TOL).toBe(0.06);
+    expect(judgeSigma("1.05", n62(), sig)).toBeUndefined();
+    expect(judgeSigma("0.95", n62(), sig)).toBeUndefined();
+    expect(judgeSigma("1.07", n62(), sig)).toBe("Python σ 1.07, N62 σ 1 (more than 6 % apart)");
+    expect(sig).toEqual({ sigmas: 3, sigmaSkipped: 0 });
+  });
+  it("does not compare a row whose why is order2, jump or singular; a σ on one side only fails", () => {
+    const sig = { sigmas: 0, sigmaSkipped: 0 };
+    for (const w of ["order2", "jump", "singular"]) expect(judgeSigma("3", n62(w), sig)).toBeUndefined();
+    expect(sig).toEqual({ sigmas: 0, sigmaSkipped: 3 });
+    expect(judgeSigma(null, n62(), sig)).toBe("N62 gives σ, Python none");
+    expect(judgeSigma("0.5", { line: { input: "", ok: true } }, sig)).toBe("Python gives σ 0.5, N62 none");
+    expect(judgeSigma(null, { line: { input: "", ok: true } }, sig)).toBeUndefined();
   });
 });
 
@@ -94,6 +116,24 @@ describe.skipIf(!giacAvailable())("pydiff: the row set against N62's engine (G21
     const r = judgeGroup(g, rows, py ?? "python-missing", dir);
     expect(r.problems).toHaveLength(1);
     expect(r.problems[0]).toMatch(/^line \d+: _\d+ = factorial\(5\)  # N62: = 120: Python 120, N62 6 \(12 digits\)$/);
+  });
+
+  it("G217: the σ rows compare their σ, and a σ N62 did not give fails", { timeout: 60_000 }, async () => {
+    const g = group("sigma");
+    const host = await nodeHost();
+    host.giac.eval(pasdegCommand("rad"));
+    const rows = n62Rows(host, g.rows);
+    const ok = judgeGroup(g, rows, py ?? "python-missing", dir);
+    expect(ok.problems).toEqual([]);
+    expect(ok.sigmas).toBeGreaterThanOrEqual(6);
+    expect(ok.sigmaSkipped).toBe(2);
+    // 2·(1 ± 0.1) kg's line carries the σ of (3 ± 0.2)·(4 ± 0.3) N·m: Python's 0.2 is far from it
+    const k = g.rows.findIndex((x) => x.input === "2\\times\\left(1\\pm0.1\\right)");
+    const other = rows[g.rows.findIndex((x) => x.input.startsWith("\\left(3\\pm0.2\\right)\\times"))]!;
+    rows[k] = { ...rows[k]!, ...(other.sigma ? { sigma: other.sigma } : {}) };
+    const bad = judgeGroup(g, rows, py ?? "python-missing", dir);
+    expect(bad.problems).toHaveLength(1);
+    expect(bad.problems[0]).toMatch(/^line \d+: _3 = 2\*\(_3_u1\*ureg\.kg\)  # N62: ≈ 2 ± 0\.20 kg: Python σ 0\.2\d*, N62 σ \S+ \(more than 6 % apart\)$/);
   });
 
   it("a NOT TRANSLATED line binds nothing, so the script still runs and the rows after it agree", { timeout: 60_000 }, async () => {

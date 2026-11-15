@@ -6,7 +6,9 @@
 // n for a `⚠ n` row), both written by N62's own realText. A row the yaml marks `comment: true` must come out NOT
 // TRANSLATED, every other row translated; the file as copied must run as it is. G216: a row with `slots` is a unit-view
 // row (its slots in scripts/unit-case.ts's text, by prompt id), run through the unit evaluator as the view runs it and
-// written by units/row.ts; its Python Quantity is compared in the unit N62 shows. The stage runs pyunits-check.ts first.
+// written by units/row.ts; its Python Quantity is compared in the unit N62 shows. G217: a σ row's Python value is a ufloat:
+// its nominal value is compared as any value, its σ (uncertainties, first order) with N62's within SIGMA_TOL, except on a
+// row whose `why` is order2, jump or singular (not compared). The stage runs pyunits-check.ts first.
 //   node scripts/pydiff.ts                      # the gate stage: exit 1 on any problem
 //   node scripts/pydiff.ts --corrupt sin=cos    # the same with one function-table entry changed: it must go red
 // Environment: GIAC_OUT; the venv's Python (this checkout's tests/golden/.venv, else the main checkout's), which must
@@ -18,7 +20,7 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import type { EngineHost } from "../src/engine/host.ts";
 import { defaultHomeSettings, type HomeSettings } from "../src/engine/homeEval.ts";
-import { decimalFromString, isZero, type ComplexValue, type DecimalValue } from "../src/engine/format.ts";
+import { decimalFromString, decimalToString, isZero, type ComplexValue, type DecimalValue } from "../src/engine/format.ts";
 import { giacOfEntry } from "../src/input/entry.ts";
 import { ANS_KEY, type Chip } from "../src/input/chips.ts";
 import { chipOf } from "../src/state/results.ts";
@@ -49,6 +51,11 @@ export const PINNED: Readonly<Record<string, string>> = Object.fromEntries(
 );
 /** The digits a row is compared at (docs/04: STD 12). */
 export const DIGITS = 12;
+/** G217: the relative difference allowed between uncertainties' σ and N62's. A row without `why` has a second-order
+ *  share of σ² of at most 0.1 (units/evaluate.ts ORDER2_SHARE), so σ differs by 1 − √0.9 ≈ 5.1 % at most. */
+export const SIGMA_TOL = 0.06;
+/** G217: N62's σ reasons under which σ is not compared: the second order passes the share, or first order cannot hold. */
+const SIGMA_SKIP: ReadonlySet<string> = new Set(["order2", "jump", "singular"]);
 /** Fewer translated rows than this compared fails the stage: the translator must not go quiet on the row set. */
 export const MIN_COMPARED = 30;
 
@@ -77,6 +84,8 @@ export interface N62Row {
   shown?: string;
   /** G216: N62's unit has no pint text in the table. */
   noShown?: string;
+  /** G217: N62's σ, in the unit `value` is in. */
+  sigma?: DecimalValue;
 }
 
 /** G216: the Find index's units and constants (npm run index), the factors the unit view builds its jobs with. */
@@ -96,7 +105,7 @@ export function unitIndex(path = join(app, "src/find/_gen/find-index.json")): Un
 
 /** G216: a unit row as the unit view runs it (units/view.ts request): the line with a prompt per slot, the empty ones
  *  dropped, the parser's units mode (unitRequest, the view's own), the job on the engine; the history row units/row.ts writes. */
-function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: UnitIndex): { item: HistoryItem; shown?: string; noShown?: string; value?: ComplexValue } {
+function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: UnitIndex): { item: HistoryItem; shown?: string; noShown?: string; value?: ComplexValue; sigma?: DecimalValue } {
   const filled: Record<string, UnitSlot> = Object.fromEntries(Object.entries(row.slots ?? {}).map(([id, t]) => [id, slotOf(t, ix.table)]));
   const chips: ChipTable = {};
   for (const m of row.input.matchAll(/\\const\{([^{}]*)\}/g)) {
@@ -117,7 +126,8 @@ function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: 
     if (!(err instanceof PyUnitMissing)) throw err;
     noShown = `${q.unit} (${err.reason})`;
   }
-  return { item, ...(shown !== undefined ? { shown } : {}), ...(noShown ? { noShown } : {}), ...(q.value.ok && q.value.value ? { value: q.value.value } : {}) };
+  const sigma = q.unc?.value.value?.re;
+  return { item, ...(shown !== undefined ? { shown } : {}), ...(noShown ? { noShown } : {}), ...(q.value.ok && q.value.value ? { value: q.value.value } : {}), ...(sigma ? { sigma } : {}) };
 }
 
 /** The rows of one group on `host`, in order, as the session runs them (session.svelte.ts finish; goldenRun.ts runSteps):
@@ -131,7 +141,7 @@ export function n62Rows(host: EngineHost, rows: readonly RowIn[], units?: UnitIn
       const u = unitItem(host, row, k, s, (ix ??= unitIndex()));
       const text = sessionLine(u.item, { t: new Date(0), app: "pydiff" });
       if (u.item.status === "done") ans = chipOf(u.item) ?? ans;
-      return { line: JSON.parse(text ?? "null") as PyRow, ...(u.value ? { value: u.value } : {}), ...(u.shown !== undefined ? { shown: u.shown } : {}), ...(u.noShown ? { noShown: u.noShown } : {}) };
+      return { line: JSON.parse(text ?? "null") as PyRow, ...(u.value ? { value: u.value } : {}), ...(u.shown !== undefined ? { shown: u.shown } : {}), ...(u.noShown ? { noShown: u.noShown } : {}), ...(u.sigma ? { sigma: u.sigma } : {}) };
     }
     const readsAns = /\\ans(?![A-Za-z])/.test(row.input);
     const p = giacOfEntry(row.input, "home", { chips: ans ? { [ANS_KEY]: ans } : {} });
@@ -159,8 +169,11 @@ const PRELUDE = [
   "import json as _n62_json",
   "from sympy import N as _n62_N, im as _n62_im, re as _n62_re, sympify as _n62_sympify",
   "def _n62_probe(line, v):",
+  // G217: a ufloat's nominal value as the value, its σ beside it
+  '    s = repr(float(v.std_dev)) if hasattr(v, "std_dev") else None',
+  '    v = v.nominal_value if hasattr(v, "nominal_value") else v',
   "    z = _n62_N(_n62_sympify(v), 30, chop=True)",
-  '    print(_n62_json.dumps({"line": line, "re": str(_n62_N(_n62_re(z), 30)), "im": str(_n62_N(_n62_im(z), 30))}), flush=True)',
+  '    print(_n62_json.dumps({"line": line, "re": str(_n62_N(_n62_re(z), 30)), "im": str(_n62_N(_n62_im(z), 30)), "sigma": s}), flush=True)',
   // G216: a unit row's Quantity in the unit N62 shows ('' a pure number)
   "def _n62_in(v, u):",
   '    return v.to(u or "dimensionless").magnitude if hasattr(v, "to") else v',
@@ -234,6 +247,9 @@ const digitsOf = (l: PyRow & { reliableDigits?: number | null }): number =>
 export interface GroupResult {
   problems: string[];
   compared: number;
+  /** G217: σ rows whose σ was compared, and those not compared for their `why`. */
+  sigmas: number;
+  sigmaSkipped: number;
   comments: number;
   file: string;
 }
@@ -248,10 +264,10 @@ export function judgeGroup(group: Group, n62: readonly N62Row[], py: string, dir
   const plain = runPython(py, join(dir, `${slug}.py`), file);
   if (plain.code !== 0) problems.push(`the file as copied does not run: ${lastLine(plain.err)}`);
   const run = runPython(py, join(dir, `${slug}.probed.py`), script);
-  const got = new Map<number, { re: string; im: string }>();
+  const got = new Map<number, { re: string; im: string; sigma: string | null }>();
   for (const l of run.out.split("\n")) {
     if (!l.startsWith("{")) continue;
-    const o = JSON.parse(l) as { line: number; re: string; im: string };
+    const o = JSON.parse(l) as { line: number; re: string; im: string; sigma: string | null };
     got.set(o.line, o);
   }
   if (run.code !== 0) {
@@ -261,6 +277,7 @@ export function judgeGroup(group: Group, n62: readonly N62Row[], py: string, dir
     problems.push(`${text !== undefined ? `line ${fileLine}: ${text}: ` : ""}Python stopped: ${lastLine(run.err)}`);
   }
   let compared = 0;
+  const sig = { sigmas: 0, sigmaSkipped: 0 };
   for (const p of probes) {
     const want = group.rows[p.row];
     if (want?.comment) problems.push(`line ${p.fileLine}: ${p.code}: translated, the row set says NOT TRANSLATED`);
@@ -289,13 +306,32 @@ export function judgeGroup(group: Group, n62: readonly N62Row[], py: string, dir
     const n62Text = complexAt(n.value.re, n.value.im, digits);
     compared++;
     if (pyText !== n62Text) problems.push(`line ${p.fileLine}: ${p.code}: Python ${pyText}, N62 ${n62Text} (${digits} digits)`);
+    const sp = judgeSigma(v.sigma, n, sig);
+    if (sp) problems.push(`line ${p.fileLine}: ${p.code}: ${sp}`);
   }
   for (const row of comments) {
     if (group.rows[row]?.comment) continue;
     const text = cellText(file, rows, row);
     problems.push(`row ${row + 1} (${group.rows[row]?.input ?? "?"}) is not translated: ${text}`);
   }
-  return { problems, compared, comments: comments.length, file };
+  return { problems, compared, ...sig, comments: comments.length, file };
+}
+
+/** G217: Python's σ (uncertainties) against N62's: within SIGMA_TOL of it, not compared for a `why` of SIGMA_SKIP; a σ
+ *  on one side only is a problem. Counts into `sig`; returns the problem, else undefined. */
+export function judgeSigma(py: string | null, n: N62Row, sig: { sigmas: number; sigmaSkipped: number }): string | undefined {
+  if (py === null && !n.sigma) return undefined;
+  if (py === null || !n.sigma) return py === null ? "N62 gives σ, Python none" : `Python gives σ ${py}, N62 none`;
+  const why = n.line.sigmaWhy;
+  if (typeof why === "string" && SIGMA_SKIP.has(why)) {
+    sig.sigmaSkipped++;
+    return undefined;
+  }
+  sig.sigmas++;
+  const a = Number(py);
+  const b = Number(decimalToString(n.sigma));
+  if (Number.isFinite(a) && Math.abs(a - b) <= SIGMA_TOL * Math.abs(b)) return undefined;
+  return `Python σ ${py}, N62 σ ${realText(n.sigma, DIGITS)} (more than ${SIGMA_TOL * 100} % apart)`;
 }
 
 const lastLine = (s: string): string => s.trim().split("\n").filter(Boolean).pop()?.slice(0, 160) ?? "(no message)";
@@ -351,6 +387,8 @@ async function main(): Promise<number> {
   let compared = 0;
   let comments = 0;
   let rows = 0;
+  let sigmas = 0;
+  let sigmaSkipped = 0;
   for (const g of groups) {
     const host = await nodeHost();
     host.giac.eval(pasdegCommand("rad")); // R64: as the golden runner's fresh engine (scripts/golden/lib.ts)
@@ -360,11 +398,13 @@ async function main(): Promise<number> {
     compared += r.compared;
     comments += r.comments;
     rows += g.rows.length;
+    sigmas += r.sigmas;
+    sigmaSkipped += r.sigmaSkipped;
   }
   if (compared < MIN_COMPARED) problems++, console.log(`  pydiff: ${compared} rows compared, fewer than ${MIN_COMPARED}`);
   const s = ((performance.now() - t0) / 1000).toFixed(1);
   const pins = Object.entries(venv.versions).map(([k, v]) => `${k} ${v}`).join(", ");
-  const counts = `${groups.length} groups, ${rows} rows: ${compared} compared at ${DIGITS} digits, ${comments} not translated; ${pu.checked} unit table entries; ${pins}; total ${s} s`;
+  const counts = `${groups.length} groups, ${rows} rows: ${compared} compared at ${DIGITS} digits (${sigmas} σ within ${SIGMA_TOL * 100} %, ${sigmaSkipped} σ not compared for their why), ${comments} not translated; ${pu.checked} unit table entries; ${pins}; total ${s} s`;
   console.log(problems === 0 ? `PYDIFF PASSED: ${counts}` : `PYDIFF FAILED: ${problems} problem${problems > 1 ? "s" : ""}; ${counts}`);
   return problems === 0 ? 0 : 1;
 }

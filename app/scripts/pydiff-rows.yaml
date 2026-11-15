@@ -123,4 +123,18 @@ groups:
       - { input: "\\frac{1}{3}\\times2", slots: { u3: "m", end: "c:m" } }
       - { input: "9.81\\times75", slots: { u1: "m / s^2", u2: "kg" } }
       - { input: "1", slots: { u1: "Btu", end: "J" }, comment: true }
-      - { input: "5\\pm0.1", slots: { u1: "kg" }, comment: true }
+  # G217: σ rows through uncertainties: the nominal value at 12 digits, σ within 6 % (scripts/pydiff.ts SIGMA_TOL), not
+  # compared on a row whose why is order2, jump or singular. Linear rows first, then rows that are not affine.
+  - id: sigma
+    rows:
+      - { input: "5\\pm0.1", slots: { u1: "kg" } }
+      - { input: "\\ans\\times2" }
+      - { input: "2\\times\\left(1\\pm0.1\\right)", slots: { u2: "kg" } }
+      - { input: "12\\pm2\\%", slots: { u1: "kg", end: "lb" } }
+      - { input: "-20\\pm0.5", slots: { u1: "m", end: "ft" } }
+      - { input: "2.5\\times\\left(1\\pm0.1\\right)+\\left(3\\pm0.2\\right)", slots: { u2: "m", u3: "m" } }
+      - { input: "\\left(1\\pm0.5\\right)^2", slots: {} }
+      - { input: "\\left(2\\pm0.1\\right)^2", slots: { u1: "m", end: "ft^2" } }
+      - { input: "\\frac{10\\pm0.2}{2\\pm0.1}", slots: { u1: "m", u2: "s", end: "km / h" } }
+      - { input: "\\left(3\\pm0.2\\right)\\times\\left(4\\pm0.3\\right)", slots: { u1: "N", u2: "m" } }
+      - { input: "\\frac{1}{0.1\\pm0.2}", slots: {} }
