@@ -79,6 +79,8 @@ export interface ItemResult {
   /** G211: the Giac text the row was sent as, the angle and digits it ran in, the word in force (HistoryItem). */
   giac?: string;
   angle?: AngleUnit;
+  /** R265: the Giac text holds the degree factor (HistoryItem.readsAngle). */
+  readsAngle?: true;
   digits?: number;
   word?: WordSetting;
   /** G213f1: the stored names the input read, with their values (HistoryItem). */
