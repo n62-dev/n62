@@ -7,9 +7,9 @@
 // general cure). The literals are read by giacPrint's number reader. Only erasable TypeScript syntax, so Node runs this
 // file directly.
 import type { PrecisionWarn } from "./format.ts";
-import { callsOf, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { arithmeticOf, callsOf, integerLiteral, isNameChar, namesIn, negated, numbers, powersIn, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { PERIODIC } from "./converge.ts";
-import { constantDouble } from "./constDouble.ts";
+import { constantLog10 } from "./constDouble.ts";
 
 /** A literal with more digits than P minus this raises where the agreement check starts (G141): at P it would leave
  *  fewer than this many digits after its cancellation. */
@@ -31,52 +31,19 @@ const EXPONENT_GAPS: readonly string[] = ["", "-", "(", "(-"];
  *  log10 e; a power is read by constantPower. */
 const EXP_POWER = { before: "exp(", gaps: ["", "-"] } as const;
 
-/** `s` is one or more digits and nothing else. */
-function isDigits(s: string): boolean {
-  if (s === "") return false;
-  for (const c of s) if (c < "0" || c > "9") return false;
-  return true;
-}
-
-/** G363: `s`, a power's exponent, as an integer literal with an optional sign, in brackets or not (`200`, `-200`, `(200)`,
- *  ` ( -200 ) `): the literal's value n and where its digits start; null for any other exponent. */
-function integerExponent(s: string): { at: number; n: number } | null {
-  let k = 0;
-  const skip = (): void => {
-    while (k < s.length && s.charAt(k).trim() === "") k++;
-  };
-  skip();
-  const open = s.startsWith("(", k);
-  if (open) k++;
-  skip();
-  const minus = s.charAt(k) === "-";
-  if (minus) k++;
-  skip();
-  const at = k;
-  while (s.charAt(k) >= "0" && s.charAt(k) <= "9") k++;
-  if (k === at) return null;
-  const digits = s.slice(at, k);
-  skip();
-  if (open) {
-    if (!s.startsWith(")", k)) return null;
-    k++;
-    skip();
-  }
-  return k === s.length ? { at, n: Number((minus ? "-" : "") + digits) } : null;
-}
-
 /** G363: the base of every power in `text` whose exponent is an integer literal (`^200`, `^-200`, `^(200)`, `^(-200)`)
- *  and whose base is a constant expression other than an integer literal (constantDouble: `pi`, `sin(1)`,
- *  `(1/sin(1))`, `euler_gamma`; a power of two integer literals is read in literalCounts), by where its exponent's
- *  literal starts: the exponent n and log10 |b| from one double evaluation of the base. */
+ *  and whose base is a constant expression (`pi`, `sin(1)`, `(1/sin(1))`, `euler_gamma`; a
+ *  power of two integer literals, read in literalCounts too, counts the same), by where its exponent's literal starts: the
+ *  exponent n and log10 |b| (constantLog10, past the double's range too). Both are read by giacPrint's arithmeticOf. */
 function constantPowers(text: string, q: Quoting): Map<number, { n: number; log10: number }> {
   const out = new Map<number, { n: number; log10: number }>();
   for (const p of powersIn(text, q)) {
-    const e = integerExponent(text.slice(...p.exponent));
-    if (!e || isDigits(p.base)) continue;
-    const log10 = Math.log10(Math.abs(constantDouble(p.base)));
-    if (!Number.isFinite(log10)) continue;
-    out.set(p.exponent[0] + e.at, { n: e.n, log10 });
+    const e = integerLiteral(arithmeticOf(text.slice(...p.exponent), q));
+    const base = e && arithmeticOf(p.base, q);
+    if (!e || !base) continue;
+    // G363 fix round 2: past the double's range too (constantLog10); NaN: no constant, or no magnitude (a zero)
+    const log10 = constantLog10(base);
+    if (!Number.isNaN(log10)) out.set(p.exponent[0] + e.at, { n: e.n, log10 });
   }
   return out;
 }
@@ -86,7 +53,9 @@ function constantPowers(text: string, q: Quoting): Map<number, { n: number; log1
  *  no such exponent. */
 function constantPower(text: string, at: number, end: number, mant: string, powers: () => Map<number, { n: number; log10: number }>): number | null {
   const p = powers().get(at);
-  if (p) return Math.ceil(Math.abs(p.n * p.log10));
+  // a base of exactly 1 in double is no magnitude, even to an exponent of 309 digits and more (n is Infinity), and a
+  // power 0 none, so a count is never NaN (fix round 2)
+  if (p) return p.log10 === 0 || p.n === 0 ? 0 : Math.ceil(Math.abs(p.n * p.log10));
   for (const gap of EXP_POWER.gaps) {
     const k = at - gap.length - EXP_POWER.before.length;
     const b = text.charAt(k - 1);
@@ -156,7 +125,7 @@ function formsSmall(text: string, q: Quoting): boolean {
   const s = withoutStrings(text, "", q);
   if (s.includes("/") || s.includes("^-") || s.includes("^(-")) return true;
   if (callsOf(s, ["inv", "exp"], q).some((c) => c.name === "inv" || s.charAt(c.open + 1) === "-")) return true;
-  return [...constantPowers(text, q).values()].some((p) => p.n * p.log10 < 0);
+  return [...constantPowers(text, q).values()].some((p) => p.n !== 0 && p.log10 !== 0 && p.n * p.log10 < 0);
 }
 
 /**

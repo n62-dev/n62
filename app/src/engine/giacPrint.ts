@@ -370,6 +370,112 @@ export function negated(text: string, q: Quoting): boolean {
   return t.startsWith("-");
 }
 
+/** G363: an arithmetic text as a tree (arithmeticOf): a number literal (its text, where it starts), a name, a call of one
+ *  argument, a sign, or one of + - * / ^. */
+export type Arith =
+  | { op: "num"; text: string; at: number }
+  | { op: "name"; name: string }
+  | { op: "call"; name: string; arg: Arith }
+  | { op: "neg"; a: Arith }
+  | { op: "+" | "-" | "*" | "/" | "^"; a: Arith; b: Arith };
+
+/**
+ * G363 fix round 2: `text` as an arithmetic tree, read with this file's number reader (numbers), name reader (names) and
+ * bracket walk (closing): numbers, names, calls of one argument, round brackets, a sign, + - * / and ^ (Giac's ^ is
+ * right-associative and binds tighter than a sign before it: -2^2 is -(2^2), 2^-2 is 2^(-2)). Null for any other text (a
+ * string, a comma, `!`, `[`, two operands side by side). literalPrec.ts reads a power's base and exponent with it.
+ */
+export function arithmeticOf(text: string, q: Quoting): Arith | null {
+  const nums = new Map<number, number>();
+  for (const n of numbers(text, q)) nums.set(n.at, n.end);
+  const nms = new Map<number, { name: string; open: number }>();
+  for (const n of names(text, q)) nms.set(n.at, n);
+  let k = 0;
+  const skip = (end: number): void => {
+    while (k < end && text.charAt(k).trim() === "") k++;
+  };
+  const eat = (c: string, end: number): boolean => {
+    skip(end);
+    if (k >= end || text.charAt(k) !== c) return false;
+    k++;
+    return true;
+  };
+  const both = (op: "+" | "-" | "*" | "/" | "^", a: Arith, b: Arith | null): Arith | null => b && { op, a, b };
+  // the bracket at `open`, read whole
+  const inner = (open: number): Arith | null => {
+    const close = closing(text, open, q);
+    if (close < 0 || text.charAt(close) !== ")") return null;
+    k = open + 1;
+    const a = sum(close);
+    skip(close);
+    if (!a || k !== close) return null;
+    k = close + 1;
+    return a;
+  };
+  const sum = (end: number): Arith | null => {
+    let a = product(end);
+    while (a) {
+      if (eat("+", end)) a = both("+", a, product(end));
+      else if (eat("-", end)) a = both("-", a, product(end));
+      else return a;
+    }
+    return null;
+  };
+  const product = (end: number): Arith | null => {
+    let a = unary(end);
+    while (a) {
+      if (eat("*", end)) a = both("*", a, unary(end));
+      else if (eat("/", end)) a = both("/", a, unary(end));
+      else return a;
+    }
+    return null;
+  };
+  const unary = (end: number): Arith | null => {
+    if (eat("-", end)) {
+      const a = unary(end);
+      return a && { op: "neg", a };
+    }
+    return eat("+", end) ? unary(end) : power(end);
+  };
+  const power = (end: number): Arith | null => {
+    const b = atom(end);
+    return b && eat("^", end) ? both("^", b, unary(end)) : b;
+  };
+  const atom = (end: number): Arith | null => {
+    skip(end);
+    if (k >= end) return null;
+    if (text.charAt(k) === "(") return inner(k);
+    const at = k;
+    const num = nums.get(at);
+    if (num !== undefined) {
+      if (num > end) return null;
+      k = num;
+      return { op: "num", text: text.slice(at, num), at };
+    }
+    const n = nms.get(at);
+    if (!n || (n.open >= 0 && n.open >= end)) return null;
+    if (n.open < 0) {
+      k = at + n.name.length;
+      return { op: "name", name: n.name };
+    }
+    const arg = inner(n.open);
+    return arg && { op: "call", name: n.name, arg };
+  };
+  const out = sum(text.length);
+  skip(text.length);
+  return out && k === text.length ? out : null;
+}
+
+/** G363: `a` is an integer literal with an optional sign (brackets are no node: `(-200)` is one): its value (Infinity
+ *  for 309 digits and more) and where its digits start in the text arithmeticOf read; null otherwise. */
+export function integerLiteral(a: Arith | null): { n: number; at: number } | null {
+  const sign = a?.op === "neg" ? -1 : 1;
+  const lit = a?.op === "neg" ? a.a : a;
+  if (lit?.op !== "num" || lit.text === "") return null;
+  for (const c of lit.text) if (c < "0" || c > "9") return null;
+  return { n: sign * Number(lit.text), at: lit.at };
+}
+
 /** `text` with the name of every call of a key of `to` replaced by its value (`erf(` → `paserf(`). */
 export function renameCalls(text: string, to: Readonly<Record<string, string>>, q: Quoting): string {
   return mapNames(text, (n) => (n.call && Object.hasOwn(to, n.name) ? to[n.name]! : null), q);

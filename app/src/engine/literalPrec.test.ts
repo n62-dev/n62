@@ -181,6 +181,18 @@ describe("a power of a constant base (G363)", () => {
     expect(literalStart("(1+euler_gamma^5000)^(1/euler_gamma^5000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
     expect(literalStart("sin(1)^20000+pi^3000", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
   });
+  it("fix round 2: counts a power of a base the double cannot hold, and never NaN", () => {
+    // sin(1)^5000 is 0 in double: (sin(1)^5000)^-2 counted nothing, so 1+1E-750 was 1 at a start of 415 (≈ 1, the value e);
+    // 2·374.80 = 749.6 → 750
+    const audit = "(1+(sin(1)^5000)^2)^((sin(1)^5000)^(-2))";
+    expect(literalDigits(audit, "typed")).toBe(750);
+    expect(literalStart(audit, 40, 1000, "typed")).toEqual({ at: 790, unchecked: false });
+    // an exponent of 310 digits on a base of exactly 1 gave NaN, which hid the 2001 digits of 10^2000 from the decisions
+    const one = `sign(sin(10^2000)+cos(0)^1${"0".repeat(309)})`;
+    expect(literalDigits(one, "typed")).toBe(2001);
+    expect(literalPastCap(one, 40, 1000, "typed")).toBe(true);
+    expect(literalDigits(`(1+cos(0))^1${"0".repeat(309)}`, "typed")).toBe(Infinity);
+  });
   it("past the cap leaves out a huge power that forms no small value", () => {
     // above 1 to a positive power, below 1 to a negative one: alone it rounds no term away
     expect(literalStart("csc(1)^20000*sqrt(2)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
