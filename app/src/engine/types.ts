@@ -11,6 +11,14 @@ import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 
 export type { ChipEntry, ChipFactsTable, ConstEntry, ConstTable, HomeResult, HomeSettings };
 
+/** G274: one input's share of a Home result's σ² (decimal texts, 30 digits): `t` = (∂f/∂xᵢ)² σᵢ², `uy` = |∂f/∂xᵢ · σᵢ|; `key`
+ *  the input's: a constant's id, `pasl_<leaf>` (G81), `pasr_<k>` (a chip), as the unit view's (units/types.ts). */
+export interface UncTerm {
+  key: string;
+  t: string;
+  uy: string;
+}
+
 /** G213f1: a stored name an input read, taken before it ran: Giac's full text of its value (radians, as a row's `full`)
  *  and whether that value is exact (the definitions log keeps no facts for an exact one). Copy as Python reads it. */
 export interface StoredRead {

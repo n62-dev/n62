@@ -85,7 +85,7 @@ export function chipSigma(body: string, table: ChipFactsTable): { body: string; 
     if (!e) return null;
     if (!sigmaChip(e)) return `(${e.value})`;
     const sym = `${SIGMA_PREFIX}${k}`;
-    if (!inputs.some((v) => v.name === sym)) inputs.push({ name: sym, value: e.value, unc: e.unc! });
+    if (!inputs.some((v) => v.name === sym)) inputs.push({ name: sym, value: e.value, unc: e.unc!, key: `${CHIP_PREFIX}${k}` });
     return sym;
   }, "typed");
   return { body: out, inputs };
