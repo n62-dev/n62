@@ -76,6 +76,12 @@ describe("sessionLine (G210)", () => {
     );
   });
 
+  it("G217: a chip with σ keeps it as `unc`, so Copy as Python reads the input it was (R115)", () => {
+    const r = row({ uid: "r-9", latex: String.raw`\res{4}{3}\cdot2`, giac: "pasr_4*2", text: "6", value: re("6"), full: "6", fullExact: false,
+      facts: { exact: false, reliableDigits: null, digits: 12 }, inexactInput: true, chips: { "res:4": { value: "3", exact: false, unc: "0.2" } }, angle: "rad", digits: 12 });
+    expect(sessionLine(r, O)).toContain(String.raw`"chips":{"res:4":{"value":"3","exact":false,"unc":"0.2"}}`);
+  });
+
   it("a DEG row", () => {
     const r = row({ uid: "r-8", latex: String.raw`\sin(30)`, giac: "sin(pasdeg*30)", text: "0.5", value: re("0.5"), rational: { n: "1", d: "2" },
       facts: { exact: true, reliableDigits: null, digits: 12 }, full: "1/2", fullExact: true, angle: "deg", digits: 12 });
