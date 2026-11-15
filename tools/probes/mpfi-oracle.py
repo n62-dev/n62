@@ -1,26 +1,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """S20: the oracle side of tools/probes/mpfi.ts. Reads JSON lines on stdin, one per case:
-  {"id", "oracle" (an oracle.py expression), "P" (decimal digits), "re": [lo, hi] | null, "im": [lo, hi] | null}
+  {"id", "oracle" (an oracle.py expression), "P" (decimal digits), "P0" (max(40, digits+10)), "re": [lo, hi] | null,
+   "im": [lo, hi] | null}
 where lo and hi are the bounds Giac printed for an MPFI interval (decimal text). Writes one JSON line per case:
-  {"id", "value": the oracle value to 40 digits, "contains": "yes" | "edge" | "no" | "n/a", "digits": n | null}
-contains: "yes" when lo <= v <= hi; "edge" when v is outside by less than one unit of the bound's last printed digit
-(the bound is a binary number printed in decimal, so its text may be off by that much); "no" otherwise (a Giac bug).
-digits: the largest n (at most 60) for which lo and hi round alike to n significant digits, half away from zero, the
-agreement rule of docs/04 2.4; the smaller of the two parts for a complex value (an all-zero part is not counted).
+  {"id", "value": the oracle value to 40 digits, "contains": "yes" | "no" | "n/a", "digits": n | null}
+Each bound is first moved outward by one unit of its last printed digit: Giac prints the binary bound rounded to
+decimal (gen.cc real_object::print), so the printed text may sit up to half a unit inside the true bound.
+contains: "yes" when lo <= v <= hi (widened); "no" otherwise (a Giac bug, or a form that is not the value).
+digits: the largest n (at most 60) for which the widened lo and hi round alike to n significant digits, half away from
+zero, the agreement rule of docs/04 2.4; the smaller of the two parts for a complex value (a part whose interval holds
+0 and is 10^(P0-5) times smaller than the other, P0 the unraised working precision, is zero and not counted).
 Run by mpfi.ts with tests/golden/.venv/bin/python -I; values come from tests/golden/oracle.py (source: oracle)."""
 import json
 import sys
-from decimal import Decimal, ROUND_HALF_UP, ROUND_FLOOR, ROUND_CEILING, localcontext
+import decimal
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tests/golden"))
 import oracle  # noqa: E402
+
+# Bounds of 1200 digits and exponents past 10^±999999 (exp(-10^30)): one wide context for everything here.
+decimal.setcontext(decimal.Context(prec=4000, Emax=decimal.MAX_EMAX, Emin=decimal.MIN_EMIN, rounding=ROUND_HALF_UP))
 from mpmath import mp  # noqa: E402
 
 
 def _at_least(f):
-    """oracle.py's D200 at 200 digits or more: an interval raised to 1200 digits is judged at its own precision + 40."""
-    with mp.workdps(max(200, mp.dps)):
+    """oracle.py's D200 at 1200 digits or more (tan(10^1000) needs its argument to 1000 digits; an interval raised to
+    2500 digits is judged at its own precision + 40)."""
+    with mp.workdps(max(1200, mp.dps)):
         return f()
 
 
@@ -40,10 +48,8 @@ def last_unit(t: str) -> Decimal:
 def round_sig(d: Decimal, n: int) -> Decimal:
     if d == 0:
         return d
-    with localcontext() as c:
-        c.prec = 4000
-        e = d.adjusted() - n + 1
-        return d.scaleb(-e).quantize(Decimal(1), rounding=ROUND_HALF_UP).scaleb(e)
+    e = d.adjusted() - n + 1
+    return d.scaleb(-e).quantize(Decimal(1), rounding=ROUND_HALF_UP).scaleb(e)
 
 
 def agree(lo: Decimal, hi: Decimal) -> int:
@@ -61,17 +67,18 @@ def to_dec(x) -> Decimal:
     return Decimal(mp.nstr(x, mp.dps, min_fixed=1, max_fixed=0).replace("e", "E")) if x != 0 else Decimal(0)
 
 
-def part_contains(v, b):
+def widened(b):
     lo, hi = dec(b[0]), dec(b[1])
-    if not (lo.is_finite() and hi.is_finite()):
-        return "yes" if lo <= v <= hi else "no"
-    with localcontext() as c:
-        c.prec = 4000
-        if lo <= v <= hi:
-            return "yes"
-        if lo - last_unit(b[0]) <= v <= hi + last_unit(b[1]):
-            return "edge"
-        return "no"
+    if lo.is_finite():
+        lo -= last_unit(b[0])
+    if hi.is_finite():
+        hi += last_unit(b[1])
+    return lo, hi
+
+
+def part_contains(v, b):
+    lo, hi = widened(b)
+    return "yes" if lo <= v <= hi else "no"
 
 
 def judge(rec):
@@ -91,9 +98,19 @@ def judge(rec):
         return out
     re_v, im_v = to_dec(vc.real), to_dec(vc.imag)
     parts = [(re_v, rec["re"]), (im_v, rec.get("im") or ["0", "0"])]
-    verdicts = [part_contains(x, b) for x, b in parts]
-    out["contains"] = "no" if "no" in verdicts else ("edge" if "edge" in verdicts else "yes")
-    ns = [agree(dec(b[0]), dec(b[1])) for _, b in parts if not (dec(b[0]) == 0 and dec(b[1]) == 0)]
+    verdicts = [part_contains(x, b) if not (x == 0 and dec(b[0]) == 0 and dec(b[1]) == 0) else "yes" for x, b in parts]
+    out["contains"] = "no" if "no" in verdicts else "yes"
+    # A part whose interval holds 0 and is below 10^-(P0-5) of the other part's size counts as zero (P0 = max(40, digits
+    # + 10), the working precision before any raise), as markOf skips a
+    # zero part (format.ts isZero): acosh(1/2) = i*pi/3 has a real interval around 0, not a real part to confirm.
+    mags = [max(abs(x) for x in widened(b)) for _, b in parts]
+    def zero(k):
+        if dec(parts[k][1][0]) == 0 and dec(parts[k][1][1]) == 0:
+            return True
+        lo, hi = widened(parts[k][1])
+        other = mags[1 - k]
+        return lo <= 0 <= hi and (mags[k] == 0 or (other.is_finite() and other > 0 and mags[k] < other * Decimal(10) ** (5 - int(rec.get("P0", rec["P"])))))
+    ns = [agree(*widened(b)) for k, (_, b) in enumerate(parts) if not zero(k)]
     out["digits"] = min(ns) if ns else 60
     return out
 
