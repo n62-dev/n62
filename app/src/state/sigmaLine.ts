@@ -31,13 +31,17 @@ export function sigmaText(facts: ValueFacts | undefined, mode: FmtMode, comma = 
   return s === undefined || facts?.uncDigits === undefined ? null : shown(s, mode, comma);
 }
 
+/** U = 2σ alone (2 × the unrounded σ, at 2 significant digits), as the σ line writes it (R327's sheet); null without σ. */
+export function expandedSigmaText(facts: ValueFacts | undefined, mode: FmtMode, comma = false): string | null {
+  const s = facts?.uncSigma;
+  const u = s === undefined || facts?.uncDigits === undefined ? null : doubled(s);
+  return u === null ? null : shown(u, mode, comma);
+}
+
 /** The σ line of a result with these facts, drawn in `mode` (the row's notation); null when it has no σ. */
 export function sigmaLine(facts: ValueFacts | undefined, mode: FmtMode, comma = false): string | null {
-  const s = facts?.uncSigma;
-  if (s === undefined || facts?.uncDigits === undefined) return null;
-  const u = doubled(s);
-  const a = shown(s, mode, comma);
-  const b = u === null ? null : shown(u, mode, comma);
+  const a = sigmaText(facts, mode, comma);
+  const b = expandedSigmaText(facts, mode, comma);
   return a === null || b === null ? null : uncText("unc.sigma", { s: a, u: b });
 }
 

@@ -12,6 +12,7 @@
   import { ICONS, type IconId } from "./icons.ts";
   import MathView from "../render/Math.svelte";
   import Credits from "./Credits.svelte";
+  import UncHead from "./UncHead.svelte";
   import SheetCells from "./SheetCells.svelte";
   import type { MenuItem } from "../apps/types.ts";
   import type { Row, Sheet } from "./sheet.svelte.ts";
@@ -266,6 +267,8 @@
         {#if G}<G grid={level.grid} />{/if}
       {:else if level.credits !== undefined}
         <Credits blocks={level.credits} {level} />
+      {:else if level.unc !== undefined}
+        <UncHead head={level.unc} />
       {:else if level.text !== undefined}
         <!-- a text to read (R87, a licence): the list's scroll and fade, no rows; ▲ ▼ page through it -->
         <div class="list doc" class:cut-top={cutTop} class:cut-bottom={cutBottom} data-testid="sheet-text" bind:this={list} onscroll={measure}>{level.text}</div>

@@ -139,6 +139,8 @@ export class UnitPad {
    *  uses up a one-shot Shift or Alpha, a cell with nothing there is a dead key; true when the key was a cell. */
   route(c: RouteCtx, key: Key, mods: Mods): boolean {
     if (c.shell.sheet) return false; // (a sheet over the keys takes them)
+    // R327: Shift + 1, the uncertainty sheet, acts on the view's result: the d1 cell (a prefix) has no Shift leg to take it
+    if (mods.shift && !mods.alpha && key.actions.shift?.kind === "special" && key.actions.shift.name === "uncertainty") return unitPad.other?.(c, key, mods) ?? false;
     const emit = this.press(key.id, mods.alpha ? "alpha" : mods.shift ? "shift" : "primary");
     if (emit === undefined) return unitPad.other?.(c, key, mods) ?? false; // no cell: the unit view's (R24c)
     c.session.clearModifiers();

@@ -26,12 +26,14 @@ export type Special =
   | "help"
   /** Shift + 4 (R187): the matrix sheet, the matrix functions as rows 1 to 8 (views/matrixSheet.ts). */
   | "matrix"
+  /** Shift + 1 (R327): the uncertainty sheet of the picked or last result with σ, or the unit view's (views/uncSheet.ts). */
+  | "uncertainty"
   /** Shift + Vars (R329): ☰ → Paste's path, the clipboard as one number onto the entry line; it opens no sheet. */
   | "paste"
   /** A key whose function we don't have yet (it keeps its alpha letter): does nothing. */
   | "none";
 /** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
-export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base", "help", "matrix"];
+export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base", "help", "matrix", "uncertainty"];
 export const SPECIALS: readonly Special[] = [
   "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "paste", "none", ...OPENS_SHEET,
 ];

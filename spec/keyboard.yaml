@@ -32,12 +32,13 @@
 #                                  Any action may carry `line: <action>`, used instead of it when the
 #                                  one-line entry mode is on (a linear form of the same key).
 #   { cmd: "moveToNextChar" }      a MathLive editing command
-#   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|units|selectGrow|selectShrink|help|none }
+#   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|units|selectGrow|selectShrink|help|uncertainty|none }
 #                                  handled by the app (home, cas: go to that view, from an app too; switch: Home <-> CAS,
 #                                  or back to Home/CAS from an app; apps, symb, plot, num, menu: the status line's
 #                                  controls, R15c1, and what a user key may hold; selectGrow, selectShrink: Select grows
 #                                  the entry line's selection by the box model, Deselect walks it back, R279, entry/grow.ts;
-#                                  help: the syntax and example of the function at the cursor, else Find, R197)
+#                                  help: the syntax and example of the function at the cursor, else Find, R197;
+#                                  uncertainty: the uncertainty sheet of a result with σ, R327)
 # User keys (R15b, R15c): a key with `user: true` is a free key (U1-U6). Its layers here are only its defaults: the
 # user's own action for a layer (Settings > User keys, from Find, R4b) replaces the default, stored with a stamp in
 # IndexedDB (app/src/keyboard/userKeys.svelte.ts). A user key has three slots, tap, Shift and Alpha (R15c3), all empty
@@ -331,7 +332,10 @@ keys:
     source: virtual-calc  # r8c5 (shift angle sign: polar entry r∡θ, the angle in the current angle mode; its effect is assumed, user 2026-10-11)
 
   - { id: shift, row: 8, col: 0, cls: ctl, label: { primary: "$key.shift" }, primary: { special: shift }, source: virtual-calc }  # r9c1
-  - { id: d1, row: 8, col: 1, cls: num, label: { primary: "1", alpha: Y }, primary: { type: "1" }, alpha: { type: Y }, source: virtual-calc }  # r9c2 (shift Program not ours)
+  # Shift + 1 is the uncertainty sheet (R327, the owner 2026-11-15; a reserved cell filled): the σ, U and relative σ of the
+  # picked row, else the last finished row (as Fmt), or the unit view's result (views/uncSheet.ts); a dead press elsewhere
+  - { id: d1, row: 8, col: 1, cls: num, label: { primary: "1", shift: "σ", alpha: Y }, primary: { type: "1" }, shift: { special: uncertainty },
+      alpha: { type: Y }, source: virtual-calc }  # r9c2 (shift Program not ours: the uncertainty sheet is ours, assumed)
   - id: d2
     row: 8
     col: 2
@@ -422,7 +426,7 @@ desktop:
     d6: { primary: "6", shift: Alt+W, alpha: W }
     mul: { primary: "*", shift: Alt+Shift+P, alpha: X }
     shift: { primary: { why: "a chord names the Shift layer itself (Alt + Shift + its letter)" } }
-    d1: { primary: "1", alpha: Y }
+    d1: { primary: "1", shift: Alt+Shift+K, alpha: Y }  # R327: no letter of its own is free (Alt+K folds the keypad)
     d2: { primary: "2", shift: Alt+I, alpha: Z }
     d3: { primary: "3", shift: Alt+P, alpha: "#" }
     sub: { primary: "-", shift: Alt+B, alpha: ":" }
