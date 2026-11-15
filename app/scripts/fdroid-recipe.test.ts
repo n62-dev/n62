@@ -236,21 +236,20 @@ describe("fdroid/SUBMIT.md (A98)", () => {
   });
 });
 
-describe("F-Droid recipe asks for Reproducible Builds (A138)", () => {
+describe("F-Droid signs its own build (A158)", () => {
   const recipe = readFileSync(join(repo, "fdroid/dev.n62.calc.yml"), "utf8");
-  const field = (k: string): string | undefined => new RegExp(`^${k}:[ \\t]*(\\S+)[ \\t]*$`, "m").exec(recipe)?.[1];
+  const has = (k: string): boolean => new RegExp(`^${k}:`, "m").test(recipe);
 
-  it("AllowedAPKSigningKeys is the release certificate's SHA-256: lowercase hex, no colons", () => {
-    const cert = readFileSync(join(repo, "android/release-cert.sha256"), "utf8").trim();
-    expect(cert).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/i);
-    const key = field("AllowedAPKSigningKeys");
-    expect(key, "no AllowedAPKSigningKeys in the recipe").toBeDefined();
-    expect(key).toBe(cert.replaceAll(":", "").toLowerCase());
+  it("the recipe has no Binaries line (no Reproducible Build; owner, 2026-11-15)", () => {
+    expect(has("Binaries")).toBe(false);
   });
 
-  it("Binaries is the release APK under the SourceCode repository: releases/download/v%v/n62-%v.apk", () => {
-    const source = field("SourceCode");
-    expect(source, "no SourceCode in the recipe").toBeDefined();
-    expect(field("Binaries"), "no Binaries in the recipe").toBe(`${source as string}/releases/download/v%v/n62-%v.apk`);
+  it("the recipe has no AllowedAPKSigningKeys line", () => {
+    expect(has("AllowedAPKSigningKeys")).toBe(false);
+  });
+
+  it("control: the release certificate stays (GitHub and IzzyOnDroid use it): 32 colon-separated hex pairs", () => {
+    const cert = readFileSync(join(repo, "android/release-cert.sha256"), "utf8").trim();
+    expect(cert).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/i);
   });
 });
