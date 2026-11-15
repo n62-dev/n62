@@ -70,6 +70,8 @@ export const en = {
   "history.usesCas": "stored in CAS",
   "history.settingReset": "An engine setting this changed was not kept",
   "history.unitDropped": "unit dropped: Home has no units",
+  /** R265: a recall of a row typed in the other angle mode ran in this one. */
+  "history.angleNote": "Ran in {now}; typed in {was}",
   "history.insert": "Put this result on the entry line",
   "error.syntax": "Syntax error",
   "error.engine": "The calculation failed",

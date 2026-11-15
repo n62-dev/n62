@@ -95,7 +95,7 @@ Bug reports and ideas are very welcome. [Open an issue](https://github.com/n62-d
 
 ## License
 
-Copyright © 2026 Pascaline contributors. [GPL-3.0-or-later](LICENSE); the licence texts of the parts it ships are in [LICENSES/](LICENSES/) and their notices in [THIRD_PARTY.md](THIRD_PARTY.md). What the app stores and sends (nothing leaves the device): [PRIVACY.md](PRIVACY.md).
+Copyright © 2026 N62 contributors. [GPL-3.0-or-later](LICENSE); the licence texts of the parts it ships are in [LICENSES/](LICENSES/) and their notices in [THIRD_PARTY.md](THIRD_PARTY.md). What the app stores and sends (nothing leaves the device): [PRIVACY.md](PRIVACY.md).
 
 ---
 

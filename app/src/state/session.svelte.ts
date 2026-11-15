@@ -148,6 +148,10 @@ export interface HistoryItem {
   uid?: string;
   giac?: string;
   angle?: AngleUnit;
+  /** R265: this row is a recall of one typed in the other angle mode, run unchanged in `angle`: the mode it was typed in (a note says so). */
+  typedIn?: AngleUnit;
+  /** R265: the row's input reads the angle (its Giac text holds the degree factor, set where the row's job is kept, resultItem.ts): the tag and the recall note are for these rows only. */
+  readsAngle?: true;
   digits?: number;
   word?: WordSetting;
   at?: number;
@@ -460,7 +464,7 @@ export class Session {
    * line, or a job is running); otherwise the history item exists at once and the promise settles when
    * the job has finished, failed or been cancelled.
    */
-  submit(latex: string, giacOverride?: string, chips: ChipTable = {}): Promise<void> | undefined {
+  submit(latex: string, giacOverride?: string, chips: ChipTable = {}, typedIn?: AngleUnit): Promise<void> | undefined {
     if (latex.trim() === "" || this.busy || this.engineState === "failed") return undefined; // (R284: nothing would answer)
     const view = this.view;
     if (this.undoCopy) {
@@ -484,6 +488,7 @@ export class Session {
       text: "",
       approximate: false,
       ...(Object.keys(kept).length ? { chips: kept } : {}),
+      ...(typedIn ? { typedIn } : {}), // R265 (the caller passes it only when it differs from the mode on show)
       ...(usesAns && ans ? { ans } : {}), // G213f1: not in `chips` (a recall resolves Ans again); the line and the store keep value and exact
       ...(Object.values(kept).some((c) => c.unit) || (ans?.unit && usesAns) ? { unitDropped: true } : {}), // R63: a chip on the line, or Ans used
       startedAt: performance.now(),

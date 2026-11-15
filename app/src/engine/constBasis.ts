@@ -42,6 +42,18 @@ export function basisGiac(e: BasisCarrier, basis: string, uncertain: (leaf: stri
   });
 }
 
+/** R250: how a constant enters σ, by the rule above (the RPN stack's inputs read it, entry/rpn.ts ConstSigma): null when
+ *  it has no σ; "own" when it enters by its own id (no basis, or a malformed one); else the `pasl_<leaf>` names of the
+ *  basis's uncertain leaves (a leaf of zero uncertainty is its value, no input of σ). */
+export function sigmaLeaves(e: BasisCarrier): string[] | "own" | null {
+  if (typeof e.unc !== "string" || isZeroText(e.unc)) return null;
+  const basis = basisOf(e);
+  if (basis === undefined) return "own";
+  const out = new Set<string>();
+  mapLeaves(basis, (l) => (isZeroText(e.basisLeaves![l]!.unc) || out.add(LEAF_PREFIX + l), null));
+  return [...out];
+}
+
 /** The leaf ids `basis` names. */
 function leavesOf(basis: string): Set<string> {
   const out = new Set<string>();

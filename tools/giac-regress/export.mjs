@@ -605,6 +605,9 @@ export const PATCHED_IDS = new Map([
   ...["1-neg70", "1-neg63", "1-neg32", "1-neg31", "2^70-1", "2^70-neg1", "2^30-32", "neg-2^70-minus-1-1", "neg-2^70-71", "2^70-default", "1-2^40"].map((k) => [`g226-shift-${k}`, "0046-shift-integer-exact.patch"]),
   // G331 (F214): subst.cc tsimplify_common went on with an undef ln argument; stock overflows the stack or loops on these Home rows
   ...["sqrt-ln-nested-root", "asinh-cbrt2-pow-pi"].map((k) => [`g331-evalf-simplify-${k}-30`, "0047-tsimplify-ln-undef-arg.patch"]),
+  // G378 (F181): sym2poly.cc sym2rxrootnum took the root of a negative real radicand by the sign of evalf's rounding (stock and
+  // 0001-0051: -z for simplify(sqrt(z^2)), z = acosh(-1/2)); the g378-keep-* rows pass on stock and stay in the check file
+  ...["acosh-neg-half-sq-12", "acosh-neg-half-sq-30", "acosh-neg-third-sq-12", "acosh-neg-third-sq-30", "neg-acosh-neg-half-sq-12"].map((k) => [`g378-simplify-sqrt-${k}`, "0052-sqrt-root-pick-at-cut.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision

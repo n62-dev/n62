@@ -172,7 +172,8 @@
       return;
     }
     const credits = creditsAsked(entry.value, session.userNames, entry.chips); // R149: N62 then Enter shows the credits sheet (a lazy chunk with the About data, reached through the Find chunk), submits nothing
-    if (credits || session.submit(entry.value, undefined, entry.chips)) {
+    const typedIn = entry.recalledIn !== null && entry.recalledIn !== session.settings.angle ? entry.recalledIn : undefined; // R265: an unchanged recall of a row typed in the other mode
+    if (credits || session.submit(entry.value, undefined, entry.chips, typedIn)) {
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
       if (credits) openCredits();
@@ -395,7 +396,9 @@
   function onLine(item: HistoryItem, recall: boolean, count = true, whole = false): void {
     if (count && folded) countUse(recall ? "recall" : "insert");
     folded = false;
-    if (recall) entry.set(session.input(item), item.chips);
+    if (recall) {
+      entry.set(session.input(item), item.chips, item.readsAngle && item.angle ? item.angle : null);
+    }
     else insertResult(item, whole);
   }
   // Android back brings the keys back (a sheet opened over the fold is a later layer: back closes it first)
@@ -499,6 +502,7 @@
           sigma={(item) => session.sigma(item)}
           reason={(item) => session.reason(item)}
           marks={session.settings.marks}
+          angle={session.settings.angle}
           onpick={pick}
           onrecall={recallTapped}
           oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, false); }}

@@ -2,8 +2,8 @@
 // R323 (the owner, 2026-11-14), on the real engine: Shift + `( )` types ∥, Find's par() with the cursor in its bracket
 // (task t01: 4.7k ∥ 10k), and a flick up on `( )` does the same; Shift + 0 types % (5 % is 1/20, Home shows 0.05, as the
 // Shift + 9 palette's % cell gives, shiftpal.spec.ts). Controls: the taps of `( )` and 0 are unchanged, Alpha + 0 stays
-// dead, and the other blank Shift cells (a b/c, 7, 1, Fmt) stay reserved: dimmed in the Shift layer, no legend (Shift +
-// Vars is Paste since R329: live, its legend shown).
+// dead, and the other blank Shift cells (a b/c, 7, Fmt) stay reserved: dimmed in the Shift layer, no legend (Shift +
+// Vars is Paste since R329, Shift + 1 the uncertainty sheet since R327: live, their legends shown).
 // Expected values derived: 4700 × 10000 / 14700 = 470000/147 = 3197.278911…; 5/100 = 1/20.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, flick, lastResult, open, tap } from "./helpers.ts";
@@ -41,7 +41,7 @@ test("5, Shift, 0 types 5 %, which is 1/20 (Home shows 0.05, as the palette's % 
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.05");
 });
 
-test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c, 7, 1 and Fmt still reserved on Shift (Vars is Paste, R329)", async ({ page }) => {
+test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c, 7 and Fmt still reserved on Shift (Vars is Paste, R329; 1 is σ, R327)", async ({ page }) => {
   expect(await shiftLegend(page, "paren")).toBe("∥");
   expect(await shiftLegend(page, "d0")).toBe("%");
   expect(await shiftLegend(page, "vars")).toBe("Paste");
@@ -49,7 +49,7 @@ test("legends ∥ and %; the taps unchanged; Alpha + 0 dead; a b/c, 7, 1 and Fmt
   expect(await entryValue(page)).toBe("\\left(1\\right)0");
   await tap(page, ["shift"]);
   for (const id of ["paren", "d0", "vars"]) await expect(key(page, id), id).not.toHaveAttribute("data-dead", "true");
-  for (const id of ["frac", "d7", "d1", "fmt"]) {
+  for (const id of ["frac", "d7", "fmt"]) {
     await expect(key(page, id), id).toHaveAttribute("data-dead", "true");
     expect(await shiftLegend(page, id), id).toBe("");
   }
