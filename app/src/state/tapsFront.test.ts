@@ -25,6 +25,7 @@ describe("the press counters' front (R320)", () => {
     taps.touch({ kind: "key", key: { id: "d8" }, flick: { state: "cancelled" } }, up); // no press
     taps.touch({ kind: "pad", key: undefined, steps: { count: 4 } }, up); // a drag: one press
     taps.press("enter:hw"); // a hardware key
+    taps.hw("letter"); // a hardware key that runs no keypad key: the chunk names it
     taps.screen(ev("click", el("button"))); // a screen tap
     taps.screen(ev("click", el("button", "[data-key]"))); // a keypad key's click: its gesture counted it
     taps.screen(ev("touchend", el("button"))); // a touchend that a click follows: nothing
@@ -37,9 +38,9 @@ describe("the press counters' front (R320)", () => {
     expect(taps.counts).toEqual({
       shift: 2,
       alpha: 0,
-      presses: 3 + 7,
+      presses: 3 + 8,
       presets: 0,
-      keys: { "d7:primary": 4, "shift:primary": 1, "d7:shift": 1, "trackpad:drag": 1, "enter:hw": 1, "screen:button": 2 },
+      keys: { "d7:primary": 4, "shift:primary": 1, "d7:shift": 1, "trackpad:drag": 1, "enter:hw": 1, "hw:letter": 1, "screen:button": 2 },
       since: "2026-11-01",
     });
     expect(await taps.load()).toBe(c); // one counter

@@ -34,7 +34,8 @@ export function touchKey(g: FinishedTouch, layer: { shift: boolean; alpha: boole
  *  hw:Home), so the removal test reads the table's own presses; a hardware key R31, R45 or R119 had before the table and
  *  that runs a keypad key, Enter and Esc included, is "<key id>:hw". (desktopKeys.test.ts: no desktop name is a kind.) */
 export const HW_KINDS = ["letter", "symbol", "dead", "other"] as const;
-export const hwKind = (kind: (typeof HW_KINDS)[number]): string => `hw:${kind}`;
+export type HwKind = (typeof HW_KINDS)[number];
+export const hwKind = (kind: HwKind): string => `hw:${kind}`;
 
 /** What a finger can tap on the screen outside the keypad. */
 const TAPPABLE = "button, [role=menuitem], [role=button], [data-testid=sheet-catch]";

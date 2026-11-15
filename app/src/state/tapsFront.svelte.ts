@@ -5,7 +5,7 @@
 // its Shift and Alpha state, a hardware key's name, a screen tap's event), and the chunk names and counts them once, in
 // order. TapCounter already adds what was counted before the stored counts arrive, so the replay takes that path.
 import type { Kv } from "./storage.ts";
-import type { FinishedTouch } from "./pressCount.ts";
+import type { FinishedTouch, HwKind } from "./pressCount.ts";
 import type { TapCounter, TapCounts } from "./taps.svelte.ts";
 
 type Op = (c: TapCounter) => void;
@@ -51,6 +51,10 @@ export class Taps {
   /** A press already named: a hardware key (`<key id>:hw`, `hw:<kind>`, a desktop key's name). */
   press(key?: string): void {
     this.run((c) => c.press(key));
+  }
+  /** A hardware key that runs no keypad key (`letter`, `symbol`, `dead`, `other`): the chunk names it (pressCount.ts hwKind). */
+  hw(kind: HwKind): void {
+    this.run((c) => c.hw(kind));
   }
   /** A finished keypad touch, as Keypad.svelte holds it, with the layer the pad showed (the counter names it). */
   touch = (g: FinishedTouch, layer: { shift: boolean; alpha: boolean }): void => this.run((c) => c.touch(g, layer));

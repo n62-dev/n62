@@ -22,6 +22,7 @@
   import { noDigit } from "./state/displayMode.ts";
   import type { HistoryItem, Session, View } from "./state/session.svelte.ts";
   import { counted } from "./state/tapsFront.svelte.ts";
+  import type { HwKind } from "./state/pressCount.ts";
   import { createLoaders, type FindCode, type ModeSheetCode } from "./appLoaders.ts";
   import { tipsDue } from "./state/tips.ts";
   import History from "./views/History.svelte";
@@ -60,7 +61,7 @@
   // R15c4: the first-start tips, a lazy chunk (views/tipsHost.ts) shown once on a fresh profile and again from Settings › Help and about.
   const showTips = (): void => void import("./views/tipsHost.ts").then((m) => m.showTips(), () => {});
   // R266: the first start's tips wait for no press in this start (R8: a typed key is never taken by the overlay); asked once the counter is in (R320), again once the chunk is
-  const firstTips = (): void => void session.taps.load().then((c) => void (c && !c.pressedThisStart && import("./views/tipsHost.ts").then((m) => session.taps.pressedThisStart || m.showTips())), () => {});
+  const firstTips = (): void => void session.taps.load().then((c) => void (c && !c.pressedThisStart && import("./views/tipsHost.ts").then((m) => session.taps.pressedThisStart || m.showTips(), () => {})), () => {});
 
   const sheetOpen = $derived(shell.sheet !== null);
   $effect(() => entry.setNames(session.userNames)); // R33: the stored names are drawn in their colour on the line
@@ -73,7 +74,7 @@
     wide = mq.matches;
     mq.onchange = (e) => (wide = e.matches);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
-    const hwOther = (kind: (typeof import("./state/pressCount.ts").HW_KINDS)[number]) => (): void => session.taps.press(`hw:${kind}`); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts hwKind)
+    const hwOther = (kind: HwKind) => (): void => session.taps.hw(kind); // a hardware key that runs no keypad key: the counter's chunk names it "hw:<kind>" (state/pressCount.ts hwKind)
     // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
     // "<key id>:hw" (R127); Enter and Escape too (R45: Enter is the Enter key, a picked row's or an open sheet's, not a
     // bare submit; R15c2: Escape is the Esc key; R131: both through this hook, entry/controller.ts)
