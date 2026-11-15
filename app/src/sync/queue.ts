@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G219: the sync queue between a finished row (sync/files.ts gives its texts) and the sync folder (appendChecked,
 // clipboard/folder.ts). The rules:
-// - At least once: a line is stored in the queue (the store, SYNC_QUEUE_KEY) before it is appended, and leaves it only
-//   when appendChecked answers "appended". A crash between the two writes the line again at the next start: the same
-//   text, so the same `id`, and G210's reader keeps the last line of an id.
+// - Once, else at least once: a line is stored in the queue (the store, SYNC_QUEUE_KEY) before it is appended, and
+//   leaves it when appendChecked answers "appended". G219f1: before its append a line is marked sent, the mark stored;
+//   before sent lines go out again (a crash between the append and the dequeue, or a "cantAppend" whose text landed
+//   after all), the file's last bytes are read (folderTail) and the leading sent lines the file already ends with leave
+//   the queue as appended. A `.py` has no reader that keeps one copy: its cells would run twice. A tail read that fails
+//   writes them again: the same text, so the same `id`, and G210's reader keeps the last line of an id.
 // - In order: a file's lines are appended in the order they were added, in one text; a file that answers "cantAppend"
 //   keeps its lines (the others go on), "unavailable" (no folder) stops the write and keeps them all. Nothing retries
 //   by itself: the next add, flush or start writes again.
@@ -14,7 +17,7 @@
 //   line before its next cell; a file with no line left gets the mark alone. The status counts every drop.
 // The key is per install (state/backup.ts LEFT_OUT): a restore on another device must never write this one's lines
 // under that device's name. Lazy: reached only through the sync hook (R182), never from the start chunk.
-import type { CheckedAppend } from "../clipboard/folder.ts";
+import type { CheckedAppend, ReadResult } from "../clipboard/folder.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import type { Kv } from "../state/storage.ts";
 
@@ -31,9 +34,10 @@ export interface QueueText {
   readonly text: string;
 }
 
-/** The two things the queue reaches: the checked append and the store. */
+/** What the queue reaches: the checked append, the file's last `n` bytes (folderTail) and the store. */
 export interface SyncQueuePort {
   appendChecked(file: string, text: string): Promise<CheckedAppend>;
+  tail(file: string, n: number): Promise<ReadResult>;
   kv: Kv;
 }
 
@@ -49,6 +53,8 @@ interface Line {
   seq: number;
   file: string;
   text: string;
+  /** Handed to appendChecked at least once (G219f1): it may be in the file already. */
+  sent?: true;
 }
 /** The stored record: the lines in order, the next seq, the drops per file not yet written, all drops. */
 interface Stored {
@@ -61,7 +67,7 @@ interface Stored {
 const count = (n: unknown): n is number => typeof n === "number" && Number.isInteger(n) && n >= 0;
 const isLine = (l: unknown): l is Line => {
   const o = l as Partial<Line> | null;
-  return typeof o === "object" && o !== null && count(o.seq) && typeof o.file === "string" && typeof o.text === "string";
+  return typeof o === "object" && o !== null && count(o.seq) && typeof o.file === "string" && typeof o.text === "string" && (o.sent === undefined || o.sent === true);
 };
 /** The stored record, or an empty queue for anything else (a record of the wrong shape cannot be written). */
 function readStored(v: unknown): Stored {
@@ -182,14 +188,21 @@ export class SyncQueue {
   }
 
   /** One append per file, in the order of the files' oldest lines (a file with only a mark first: its lines were
-   *  older). A file's lines leave the queue only on "appended". */
+   *  older). A file's lines leave the queue on "appended", or when the file already ends with them (landed). */
   private async write(): Promise<void> {
     const files = [...new Set([...Object.keys(this.gaps).filter((f) => !this.lines.some((l) => l.file === f)), ...this.lines.map((l) => l.file)])];
     let failed: "cantAppend" | "unavailable" | undefined;
     let changed = false;
+    for (const file of files) if (await this.landed(file)) changed = true;
+    if (this.lines.some((l) => !l.sent)) {
+      for (const l of this.lines) l.sent = true;
+      // the marks are stored before the appends; a store that fails leaves the write at least once
+      await this.save().catch(() => {});
+    }
     for (const file of files) {
       const batch = this.lines.filter((l) => l.file === file);
       const gap = this.gaps[file] ?? 0;
+      if (!batch.length && !gap) continue;
       const text = withGap(file, batch.map((l) => l.text).join(""), gap);
       let r: CheckedAppend;
       try {
@@ -216,5 +229,40 @@ export class SyncQueue {
     this.failed = failed;
     if (changed) await this.save();
     this.report();
+  }
+
+  /** G219f1: the leading sent lines of `file` the file already ends with leave the queue as appended (the longest run
+   *  that matches; with the file's gap mark, which then leaves too). True when any left. A tail read that does not
+   *  answer the text ("missing", "failed", "unavailable", a throw) leaves them all to be written. */
+  private async landed(file: string): Promise<boolean> {
+    const batch = this.lines.filter((l) => l.file === file);
+    const unsent = batch.findIndex((l) => !l.sent);
+    const lead = unsent < 0 ? batch : batch.slice(0, unsent);
+    if (!lead.length) return false;
+    const gap = this.gaps[file] ?? 0;
+    const texts = lead.map((l) => l.text);
+    let end: ReadResult;
+    try {
+      end = await this.port.tail(file, new TextEncoder().encode(withGap(file, texts.join(""), gap)).length);
+    } catch {
+      return false;
+    }
+    if (typeof end !== "object") return false;
+    for (let k = lead.length; k > 0; k--) {
+      const plain = texts.slice(0, k).join("");
+      const marked = gap > 0 && end.text.endsWith(withGap(file, plain, gap));
+      if (!marked && !end.text.endsWith(plain)) continue;
+      const gone = new Set(lead.slice(0, k).map((l) => l.seq));
+      // a line of these dropped at the cap during the read is in the file after all: not a gap (as in write)
+      const kept = new Set(this.lines.map((l) => l.seq));
+      const dropped = [...gone].filter((q) => !kept.has(q)).length;
+      this.dropped -= dropped;
+      this.lines = this.lines.filter((l) => !gone.has(l.seq));
+      const left = (this.gaps[file] ?? 0) - (marked ? gap : 0) - dropped;
+      if (left > 0) this.gaps[file] = left;
+      else delete this.gaps[file];
+      return true;
+    }
+    return false;
   }
 }

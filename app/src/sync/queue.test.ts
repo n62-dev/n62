@@ -1,41 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// G219: the sync queue. The folder port (appendChecked) and the store are stubs: the "folder" is a map of file texts the
-// stub appends to, the store a map of values; the clock is vitest's fake timers.
+// G219: the sync queue. The folder port (appendChecked, folderTail) and the store are stubs (fakeFolder.ts): the "folder"
+// is a map of file texts the stub appends to, the store a map of values; the clock is vitest's fake timers.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CheckedAppend } from "../clipboard/folder.ts";
-import type { Kv } from "../state/storage.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import { LEFT_OUT } from "../state/backup.ts";
 import { COALESCE_MS, SYNC_QUEUE_CAP, SYNC_QUEUE_KEY, SyncQueue, type SyncStatus } from "./queue.ts";
-
-/** The store: a map; `frozen` drops every write (a crash: nothing written after it lands). */
-function memKv(): Kv & { data: Map<string, unknown>; frozen: boolean } {
-  const data = new Map<string, unknown>();
-  const kv = {
-    data,
-    frozen: false,
-    get: async <T>(key: string): Promise<T | undefined> => structuredClone(data.get(key)) as T | undefined,
-    set: async (key: string, value: unknown): Promise<void> => {
-      if (!kv.frozen) data.set(key, structuredClone(value));
-    },
-  };
-  return kv;
-}
-
-/** The folder: each file's text; `answer` is what the next appends answer (an "appended" one appends). */
-function folder(): { files: Map<string, string>; calls: { file: string; text: string }[]; answer: CheckedAppend; appendChecked: (f: string, t: string) => Promise<CheckedAppend> } {
-  const f = {
-    files: new Map<string, string>(),
-    calls: [] as { file: string; text: string }[],
-    answer: "appended" as CheckedAppend,
-    appendChecked: async (file: string, text: string): Promise<CheckedAppend> => {
-      f.calls.push({ file, text });
-      if (f.answer === "appended") f.files.set(file, (f.files.get(file) ?? "") + text);
-      return f.answer;
-    },
-  };
-  return f;
-}
+import { fakeFolder, fakePort, memKv } from "./fakeFolder.ts";
 
 /** A session line as G210 writes it (the fields the queue never reads, cut short). */
 const line = (id: string, n: number): string => `${JSON.stringify({ v: 0, app: "0.1.0", id, t: "2026-11-14T10:00:00Z", view: "home", input: String(n), ok: true })}\n`;
@@ -48,15 +18,15 @@ const row = (n: number): { file: string; text: string }[] => [
 ];
 
 let kv: ReturnType<typeof memKv>;
-let dir: ReturnType<typeof folder>;
+let dir: ReturnType<typeof fakeFolder>;
 let seen: SyncStatus[];
-const make = (): SyncQueue => new SyncQueue({ appendChecked: (f, t) => dir.appendChecked(f, t), kv }, (s) => seen.push(s));
+const make = (): SyncQueue => new SyncQueue(fakePort(dir, kv), (s) => seen.push(s));
 const last = (): SyncStatus | undefined => seen[seen.length - 1];
 
 beforeEach(() => {
   vi.useFakeTimers();
   kv = memKv();
-  dir = folder();
+  dir = fakeFolder();
   seen = [];
 });
 afterEach(() => vi.useRealTimers());
@@ -142,14 +112,56 @@ describe("the sync queue (G219)", () => {
     expect(last()).toEqual({ state: "cantAppend", queued: 1, dropped: 0 });
   });
 
-  it("a crash after the append and before the dequeue writes the line again at the next start, with the same id", async () => {
+  it("a crash after the append and before the dequeue: the next start reads the file's end and writes each line once (G219f1)", async () => {
     const q = make();
     await q.start();
     await q.add(row(1));
-    kv.frozen = true; // the append lands, the dequeue's write never does
+    dir.afterAppend = () => (kv.frozen = true); // the append lands, the dequeue's write never does
     await q.flush();
     expect(dir.files.get(J)).toBe(line("u1", 1));
     kv.frozen = false;
+    dir.afterAppend = () => {};
+    const calls = dir.calls.length;
+    const again = make();
+    await again.start();
+    await again.idle();
+    expect(dir.files.get(J)).toBe(line("u1", 1));
+    expect(dir.files.get(P)).toBe(cell(1));
+    expect(dir.calls.length).toBe(calls); // nothing appended again
+    expect(dir.tails.map((t) => t.file)).toEqual([J, P]);
+    expect(again.size).toBe(0);
+    expect(last()).toEqual({ state: "ok", queued: 0, dropped: 0 });
+    // a line added after it goes on as usual
+    await again.add(row(2));
+    await again.flush();
+    expect(dir.files.get(J)).toBe(line("u1", 1) + line("u2", 2));
+    expect(dir.files.get(P)).toBe(cell(1) + cell(2));
+  });
+
+  it("a crash between the mark and the append: the file does not end with the lines, so they are written", async () => {
+    const q = make();
+    await q.start();
+    await q.add(row(1));
+    dir.answer = "unavailable"; // the append never lands; the mark is stored
+    await q.flush();
+    dir.answer = "appended";
+    const again = make();
+    await again.start();
+    await again.idle();
+    expect(dir.files.get(J)).toBe(line("u1", 1));
+    expect(dir.files.get(P)).toBe(cell(1));
+    expect(again.size).toBe(0);
+  });
+
+  it("a failed tail read writes the lines again, as before G219f1 (at least once): G210's reader keeps the last line of an id", async () => {
+    const q = make();
+    await q.start();
+    await q.add(row(1));
+    dir.afterAppend = () => (kv.frozen = true);
+    await q.flush();
+    kv.frozen = false;
+    dir.afterAppend = () => {};
+    dir.tailAnswer = "failed";
     const again = make();
     await again.start();
     await again.idle();
@@ -160,7 +172,104 @@ describe("the sync queue (G219)", () => {
     // G210's reader: a repeated id that is not null, the last one wins: one row
     const rows = new Map(lines.map((l) => [(JSON.parse(l) as { id: string }).id, l]));
     expect([...rows.keys()]).toEqual(["u1"]);
+    expect(dir.files.get(P)).toBe(cell(1) + cell(1));
     expect(again.size).toBe(0);
+  });
+
+  it("a cantAppend whose text did land is not written again: the next write starts after it", async () => {
+    const q = make();
+    await q.start();
+    dir.answer = "cantAppend";
+    dir.lands = true;
+    await q.add(row(1));
+    await q.flush();
+    expect(last()).toEqual({ state: "cantAppend", queued: 2, dropped: 0 });
+    dir.answer = "appended";
+    dir.lands = false;
+    await q.add(row(2));
+    await q.flush();
+    expect(dir.files.get(J)).toBe(line("u1", 1) + line("u2", 2));
+    expect(dir.files.get(P)).toBe(cell(1) + cell(2));
+    expect(dir.calls.slice(2)).toEqual(row(2)); // only row 2's texts went out
+    expect(last()).toEqual({ state: "ok", queued: 0, dropped: 0 });
+  });
+
+  it("a cantAppend that landed with nothing new: the flush appends nothing and the queue is empty", async () => {
+    const q = make();
+    await q.start();
+    dir.answer = "cantAppend";
+    dir.lands = true;
+    await q.add(row(1));
+    await q.flush();
+    dir.answer = "appended";
+    dir.lands = false;
+    await q.flush();
+    expect(dir.calls).toHaveLength(2);
+    expect(dir.files.get(J)).toBe(line("u1", 1));
+    expect(dir.files.get(P)).toBe(cell(1));
+    expect(last()).toEqual({ state: "ok", queued: 0, dropped: 0 });
+  });
+
+  it("a landed cantAppend that carried the gap mark: the mark is not written again either", async () => {
+    dir.answer = "unavailable";
+    const q = make();
+    await q.start();
+    for (let n = 1; n <= SYNC_QUEUE_CAP / 2 + 1; n++) await q.add(row(n));
+    dir.answer = "cantAppend";
+    dir.lands = true;
+    await q.flush();
+    const sent = { j: dir.files.get(J), p: dir.files.get(P) };
+    expect(JSON.parse((sent.j ?? "").split("\n")[0] as string)).toMatchObject({ id: "u2", gap: 1 });
+    dir.answer = "appended";
+    dir.lands = false;
+    await q.flush();
+    expect(dir.files.get(J)).toBe(sent.j);
+    expect(dir.files.get(P)).toBe(sent.p);
+    expect(q.size).toBe(0);
+    await q.add(row(999));
+    await q.flush();
+    expect(dir.files.get(J)).toBe(sent.j + line("u999", 999));
+    expect(dir.files.get(P)).toBe(sent.p + cell(999));
+    expect(last()).toEqual({ state: "ok", queued: 0, dropped: 2 });
+  });
+
+  it("a sent line dropped at the cap while the tail is read, and found in the file, is no gap", async () => {
+    const q = make();
+    await q.start();
+    dir.answer = "cantAppend";
+    dir.lands = true;
+    await q.add([{ file: J, text: line("u0", 0) }]);
+    await q.flush();
+    dir.answer = "appended";
+    dir.lands = false;
+    let release: () => void = () => {};
+    const held = new Promise<void>((r) => (release = r));
+    const plain = dir.tail;
+    dir.tail = async (file, n) => {
+      await held;
+      return plain(file, n);
+    };
+    const writing = q.flush();
+    await vi.advanceTimersByTimeAsync(0);
+    for (let n = 1; n <= SYNC_QUEUE_CAP; n++) void q.add([{ file: J, text: line(`u${n}`, n) }]);
+    expect(q.status.dropped).toBe(1);
+    release();
+    await writing;
+    dir.tail = plain;
+    await q.flush();
+    const lines = (dir.files.get(J) ?? "").split("\n").filter((l) => l !== "");
+    expect(lines).toHaveLength(SYNC_QUEUE_CAP + 1);
+    expect(lines.some((l) => "gap" in (JSON.parse(l) as object))).toBe(false);
+    expect(last()).toEqual({ state: "ok", queued: 0, dropped: 0 });
+  });
+
+  it("a stored queue from before G219f1 (no sent mark) is read and written", async () => {
+    await kv.set(SYNC_QUEUE_KEY, { next: 2, lines: row(1).map((t, seq) => ({ seq, ...t })), gaps: {}, dropped: 0 });
+    const q = make();
+    await q.start();
+    await q.idle();
+    expect(dir.files.get(J)).toBe(line("u1", 1));
+    expect(dir.tails).toEqual([]);
   });
 
   it("the queue persists: a second instance reads the lines the first could not write", async () => {
