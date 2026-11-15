@@ -12,6 +12,9 @@ import { formatComplex, markOf, type FormatOptions } from "./format.ts";
 import { elementTex, type MatrixCell } from "./matrixRead.ts";
 import { engineGiac, giacAvailable, loadNodeGiac, nodeHost, type EngineGiac } from "./nodeGiac.ts";
 import { DOUBLE_DIGITS, withDigits } from "./numeric.ts";
+import { toExactLiterals } from "./exactLiterals.ts";
+import { giacOfEntry } from "../input/entry.ts";
+import { tidyGiacLatex } from "../render/tidy.ts";
 
 const shown = (c: MatrixCell | undefined, o: FormatOptions): [string, string | undefined] =>
   c === undefined ? ["", undefined] : "text" in c ? [c.text, c.unchecked ? "⚠" : undefined] : [formatComplex(c.value, o).text, markOf({ ...c.facts, value: c.value }, o)?.mark];
@@ -134,5 +137,31 @@ describe.skipIf(!giacAvailable())("R189f1: elementTex from the bridge's kinds", 
       { tex: "1.5\\emark-20", float: true },
       { tex: "x+1", giac: true },
     ]);
+  });
+
+  // R308: an element Giac writes with latex() keeps every float literal with the mark ᴇ, so the line reads it back as the
+  // same number (Giac's latex() writes 1.5e-20, which the parser read as 1.5·e_−20, the letter e minus 20). Each element
+  // as the grid writes it (views/matrixGrid.svelte.ts cellTex: tidied, a float in approx()), read by the parser and Home's
+  // exact literals, prints at DOUBLE_DIGITS as the element itself (the grid's check, checkStore, compares that print).
+  // Controls: a real float and an exact element as before. By hand: 1.5e-20 is 1.5·10⁻²⁰, 3e-05 is 3·10⁻⁵ (derived).
+  it("R308: a complex or symbolic element with an exponent: LaTeX with the mark, read back to the same value", () => {
+    const at = <T>(f: () => T): T => withDigits(giac, DOUBLE_DIGITS, 12, f);
+    const v = at(() => giac.value("[[1.5e-20+2.0*i,x+1.5e-20,1.5e20*x],[3e-5*i,1.5e-20,1/3]]", []));
+    expect(v.kinds).toEqual(["complex", "symbolic", "symbolic", "complex", "float", "rational"]);
+    const tex = (v.elements ?? []).map((_, k) => at(() => elementTex(giac, v, k)));
+    expect(tex).toEqual([
+      { tex: "1.5\\emark-20+2.0\\cdot i", giac: true, float: true },
+      { tex: "x+1.5\\emark-20", giac: true, float: true },
+      { tex: "1.5\\emark20\\cdot x", giac: true, float: true },
+      { tex: "3\\emark-5\\cdot i", giac: true, float: true },
+      { tex: "1.5\\emark-20", float: true },
+      { tex: "\\frac{1}{3}" },
+    ]);
+    tex.forEach((e, k) => {
+      const shown = e.giac ? tidyGiacLatex(e.tex) : e.tex;
+      const line = e.float ? `\\operatorname{approx}\\left(${shown}\\right)` : shown;
+      const back = toExactLiterals(giacOfEntry(line, "cas").giac);
+      expect(at(() => giac.eval(back)), line).toBe(at(() => giac.eval(v.elements?.[k] ?? "")));
+    });
   });
 });
