@@ -7,19 +7,16 @@ A package starts only through `scripts/pipeline.sh`, and only when a lane row or
 **2026-11-12, evening (owner):** sections B to D no longer wait for v0.1.0. The lanes build them to Tue 11-17 (Ultra ends after it) in the brief's order: what changes how today's calculator is used, then the critical bugs, then new features; what is merged by that freeze ships in v0.1.0. The version labels below (v0.2 to v1) are the order of the work, not the release it lands in.
 
 **When the decisions are due** (numbers per section; `docs/decisions.md` is at its budget, so an answer stays here until a trim makes room):
-- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only). On 2026-11-12, each as recommended: B2 to B7, B9, C1 to C6, C8; RPN stays after the tag. The same evening, from two analyses: the final layout (docs/06 section 3b: ☰ on row 0 col 4, Shift + Deselect reserved, folding by the swipe only, removals after the tag only blank a cell) and what v0.1.0 keeps for good ([release-0.1.0.md](release-0.1.0.md) point 7: the exports are a preview with `v:0`, the sync files are named per device, the prefix `pas` is ours, G273 and G274 wait for the tag).
-- The freeze (Tue 11-17), for A91: A8, and G2 item 70 with it.
-- The release candidate (Sat 11-21), for the video: A4, A5.
-- The tag (target Mon 11-23, owner 11-12; it moves if the bar needs it, owner 2026-11-10): A6, A10.
+- Answered by the owner on 2026-11-09, each as recommended: B1, A1, A7, A3, A9. On 2026-11-10: C7 (iOS v1 is the web app only). On 2026-11-12, each as recommended: B2 to B7, B9, C1 to C6, C8. The same evening, from two analyses: the final layout (docs/06 section 3b: ☰ on row 0 col 4, Shift + Deselect reserved, folding by the swipe only, removals after the tag only blank a cell) and what v0.1.0 keeps for good ([release-0.1.0.md](release-0.1.0.md) point 7: the exports are a preview with `v:0`, the sync files are named per device, the prefix `pas` is ours, G273 and G274 wait for the tag). On 2026-11-15, evening: A4, A6 (after vg-7), E1 and E2 as recommended, E3 and E4 on their triggers; D1 and D2 yes, with RPN before the freeze, in v0.1.0; D3 the other way (units and ± stay on the stack). A5, A8 and A10 were settled before (below).
 - Before any forum post: D8.
-- Before RPN (after the tag): D1 to D4.
-- No date: D5, D6, E1 to E4. D6 runs as written unless you say otherwise.
+- After the owner's Virtual Calculator session (Mon 11-16): D4.
+- No date: D5, D6. D6 runs as written unless you say otherwise.
 
-Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts.
+Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sync (they need the network permission, against the F-Droid promise), accounts, Geometry and a second keypad (section E, decisions 1 and 2).
 
 ## A. Before you tell anyone (v0.1.0; the freeze Tue 11-17, the tag after it)
 
-- **No known silent wrong number** [part since 11-14]. The night review of 11-14 found three everyday ones (backlog `nr1114` lines; G352, G353, R298) and two extreme ones (G363, G364): the bar holds again once they merge. F198 and F199 are named limits.
+- **No known silent wrong number** [part since 11-14]. The night review of 11-14 found three everyday ones (backlog `nr1114` lines; G352, G353, R298) and two extreme ones (G363, G364): the bar holds again once they merge. F198 is a named limit.
 - **Units and ± in the core list** [have]. R170 (`521ae3fe`).
 - **Release notes** [part]. A90 (`47b5fe22`); A91 after the freeze.
 - **First-run tips** [have]. R171 (`72e872c6`).
@@ -40,13 +37,13 @@ Decisions for the owner:
 1. **Yes (2026-11-09).** Core cases c67–c69: add them, `hand: false`. The core list changes only with the owner; these are the flows you named.
 2. Patches 0037–0048 go in the next mail to the author; nothing to decide. Email 5 went on 2026-11-08 with 0013-0036, its links pinned at 8f398cca, which lacks it.
 3. **Yes (2026-11-09).** Trust page location: in the app under Help and about, plus a README section. n62.dev is the app, with no separate pages.
-4. Video: keep the v6 cut and record the Qalculate side-by-side as a separate 10 s clip. Opening on it would re-cut the owner's 11-07 chapter order.
-5. "HP Prime key layout" in the video: the owner's choice, since `rules-core.md:21` does not list a video caption. Reword it without the name, which costs nothing; the other way is the disclaimer on screen.
-6. F-Droid without a local build: submit right after the tag and let the merge request's CI be the first real build. No build VM exists here.
+4. **Yes (2026-11-15).** Video: keep the v6 cut and record the Qalculate side-by-side as a separate 10 s clip. Opening on it would re-cut the owner's 11-07 chapter order.
+5. **Settled by C4 (2026-11-12: the HP name in the README only, with the disclaimer).** "HP Prime key layout" in the video: SHOWCASE.md's chapter headline is reworded without the name before the recording, in the owner's words.
+6. **Yes (2026-11-15), after vg-7** (the Node check of Mon 11-16, [release-0.1.0.md](release-0.1.0.md); red is a fix before the tag). F-Droid without a local build: submit right after the tag and let the merge request's CI be the first real build. No build VM exists here.
 7. **Yes (2026-11-09).** Tips layout: one screen, no steps. No new ring logic to get wrong.
-8. `infinity` for `1/0` and `tan(90°)`, beside G168's refused `0/0` (F198): ship as is and name it in the known limits; settle it with G2 item 70 after v0.1.0. It shows no wrong digits, and it stays neither exact, marked nor flagged under principle 3.
+8. **Settled:** F198 is a named limit (A91's list). `infinity` for `1/0` and `tan(90°)`, beside G168's refused `0/0` (F198): ship as is and name it in the known limits; settle it with G2 item 70 after v0.1.0. It shows no wrong digits, and it stays neither exact, marked nor flagged under principle 3.
 9. **Yes (2026-11-09).** v0.1.0 as a pre-release: make a plain tag a normal release (A90 step 3), reversing the 2026-10-29 choice. GitHub's `latest` skips a pre-release, so that link would miss it, and IzzyOnDroid may too (from memory); `-test` tags stay pre-releases.
-10. The move to the desktop PC: after the tag. CPU is not what limits the week, and the bar needs both devices green on a setup that works today.
+10. The move to the desktop PC: done on 2026-11-08; the lanes run on win99 (brief section 0).
 
 Not verified:
 - Capacitor's route to `ACTION_VIEW`: seen on upstream `main`, not at 8.5.3 and not on a device. A95's first check.
@@ -86,7 +83,7 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 - `[have]` Find shows where a function sits: the preview ends with its key (`asin` … · Shift sin; G230, R195 merged 3adeda3c).
 
 **Everywhere**
-- `[check: FAIL]` Desktop browser with a keyboard: typed `sin(1)` is `s*i_*n*(1)` (F199, a named limit of v0.1.0). R131 (existing, keys only), then R198, which reaches every function Find has. Both open v0.2.
+- `[have]` Desktop browser with a keyboard: a typed function name is a call (F199 closed by R131 and R198, which reaches every function Find has).
 - `[part]` Export: plain text only; F180 is left only for LaTeX no key types. G232, R199, R306, R200.
 - `[have]` Exact / ≈ / ⚠ marks, 30 digits, full precision on reuse, copy and paste. No package.
 - `[have]` Solve, Function, CAS. No package.
@@ -106,7 +103,6 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 - F193, Home and CAS: integer `shift` is wrong on negative counts and big integers, exact and no ⚠: `shift(1,-70)` = 64, `shift(1,-31)` = -2147483648, `shift(2^70,1)` unchanged. Giac's convention (n > 0 is a right shift) is not the bug. Reach: Find only; the parser refuses `<<`. G226.
 - F194, Home and CAS: `dot([1,2],[3,4,5])` = 11 and `cross([1,2,3],[4,5])` = `[-15,12,-3]`, exact, no ⚠. Reach: a Find typo, not everyday, not a bar item. G225.
 - F195, Home: far tails. `student_cdf(5,-100)` = 9.48002565337E-10 ⚠ (right 9.48000711231E-10); `student_cdf(30,-8)` wrong from the 6th digit, ⚠; `normald_cdf(0,1,-20)` = 0 ⚠ (right 2.75362411861E-89). All marked, so not a bar item. G220, G221.
-- F199, Home and CAS on a hardware keyboard: typed `sin(1)` is `s*i_*n*(1)`, no error, because letters stay names (`hwkeys.ts:13`, pinned by `hwkeys.spec.ts:203`). Reach: everyday on a laptop, and n62.dev goes public with the tag. The product of letters is visible on the line as typed; with `s` and `n` stored it would be a number (not probed). Named limit in A91. R131, R198 (start of v0.2).
 
 **Decisions for the owner**
 1. The ∡ rule (R180), **yes (owner, 2026-11-09; the G2 reads `10∡(30+5)` and N62 differs on purpose):** recommend Giac's binding, ∡ tighter than + × ÷, with a bare `/` beside the angle and a factor directly after it refused. Why: a flat `2∡π/6` would otherwise be silently -1/3; `10∡2π` then needs brackets, which is honest.
@@ -165,15 +161,15 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 
 ## D. What the HP crowd will ask for first
 
-- **RPN entry: [miss], confirmed.** Entry is textbook or one-line; the stack is written as packages, nothing is built. At v1, as the list says, after section C's order and on the owner's yes. R250, R251, R252, R253, R254, G302. Stack view: stub.
+- **RPN entry: [miss], confirmed.** Entry is textbook or one-line; the stack is written as packages, nothing is built. Before the freeze, in v0.1.0 (owner, 2026-11-15). R250, R251, R252, R253, R254, G302. Stack view and the Mode row: R343.
 - **Programs: [part], confirmed.** Library file from a laptop, or a one-line definition typed; no editor, no PPL (feedback #40, the owner's list). No package.
 - **The forensics chain: [have], unpublished (the list said miss).** Home DEG gives 9, mark `=`, at 12, 15, 30 digits; it cancels symbolically, branches picked by Giac's numeric reduction. No case guards it. G300; CAS DEG shows it badly, G301.
 - **Same CAS as the Prime: [have] overstated.** "Also built on Giac" holds, "same" does not; the Prime's Giac version is unknown. Wording below. No package.
 
-**Stub (mh-D1e, stack view):** split when the owner's look and decisions 2 and 4 land. It holds the view, the Mode row with `entry.rpn`, the swap key, ▲/▼ and `frac` in RPN mode.
+**Stub (mh-D1e), split 2026-11-15:** R343 builds the stack view and the Mode row with `entry.rpn` (after R254 and the session). Left in the stub: the swap key, ▲/▼ and `frac` in RPN mode, after decision 4.
 
 ### The post (the owner's text; refresh every count on the day)
-- **RPN** (only after decision 1 is yes): "N62 has no RPN today: entry is textbook or one-line. It is planned for after 0.1.0, with no date; the stack design is written, nothing is built. If you want it, tell me what you would need from it (stack depth, how the keys behave), since the view and part of the key behaviour are still open."
+- **RPN** (only after decision 1 is yes): "N62 has no RPN today: entry is textbook or one-line. It is being built now, numbers with units and ± included. If you want it, tell me what you would need from it (stack depth, how the keys behave), since the view and part of the key behaviour are still open."
 - **Programs:** "No program editor on the device and no PPL: programs are Giac definitions, written on a laptop or typed one line at a time."
 - **The chain:** "N62 gives 9 for arcsin(arccos(arctan(tan(cos(sin(9)))))) in DEG, exactly, at 12, 15 and 30 digits. It cancels symbolically, with branches picked by Giac's numeric reduction, so this is not a float chain that lands on 9." (`approx()` of it shows 9 with ≈; its 40-digit working value 8.999… is internal, never shown or copied.)
 - **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 48 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Thirty-six have gone to its author, who wrote on 8 Nov that his updated source archive 'should be synchronized' with them. One is not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
@@ -182,14 +178,14 @@ Counts (must match section A): 48 patches; 36 sent (0001-0002, 0003-0012, and 00
 
 **Order:**
 - v0.1.0: G300 and G301 merged (`782b641c`, `cac10d87`).
-- v1, after section C's order and the owner's yes: R250, R251, R252, R253, the owner's Virtual Calculator session, R254, G302; then the stub.
+- Before the freeze (owner, 2026-11-15): R250, R251, R252, R253 in lane A and G302 in lane B; the owner's Virtual Calculator session on Mon 11-16, then R254, then R343 (the stack view and the Mode row, so RPN is reachable in v0.1.0); the swap key, ▲/▼ and `frac` after decision 4.
 
 **Open bugs:** F196: CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)` draws π/(6·π/180), the chain `180/20*pi/pi`); value right, form wrong. Reach: every exact inverse trig constant in CAS DEG. G301; a free name (`…+x`) and Home's same display stay open.
 
 **Decisions for the owner:**
-1. RPN at v1, after section C's order, Home only, a third Entry value: yes; it is the first thing this forum asks, and the design adds no evaluation path.
-2. A Virtual Calculator session on RPN before R254, about 20 minutes, behaviour in our own words: yes; the reference's flow is the backbone and its RPN was never exercised.
-3. Units and ± on the stack: refuse. One chip used twice is one input, but across rows the result is a new independent chip, so σ would be wrong.
+1. **Yes (2026-11-15): before the freeze, in v0.1.0** (not at v1), Home only, a third Entry value; it is the first thing this forum asks, and the design adds no evaluation path.
+2. **Yes (2026-11-15): the owner's session on Mon 11-16 morning.** A Virtual Calculator session on RPN before R254, about 20 minutes, behaviour in our own words; the reference's flow is the backbone and its RPN was never exercised.
+3. **Units and ± on the stack: allowed (owner, 2026-11-15; the recommendation was to refuse).** A level keeps its chip's unit and σ; an operation with a unit operand runs as a unit-view row. One chip used twice is one input, so `x dup ×` is right; across rows a result is a new independent chip, so an operation whose two levels rest on a shared σ input within the stack (`x dup × x ×`) is refused with a note; a σ result chip on a typed line counts as a new input, as on the algebraic line (R61) (R250's `inputs`, R251).
 4. The swap key (▶ is also a trackpad step, each 12 px of drag fires it), ▲/▼ and `frac` on an empty line: decide after the session, with the view.
 5. No program editor on the device: confirm, no package.
 6. The chain in the golden set, not in the core list: yes; the golden gate re-runs it whenever engine or parser code changes; the core list is everyday tasks.
@@ -229,7 +225,7 @@ Parked: no packages, no ids; days are rough. docs/02:68-69 and the backlog's "Wi
 
 **mh-E11 Geometry.** Giac's `distance`, `area` work, `inter_unique` returns raw `pnt(...)`; Find hides the family (F90). 20-30 d. No trigger plausible. Decision 1.
 
-**mh-E12 Second keypad.** One layout, keyboard.yaml; 66 core cases and tasks.yaml are key sequences on it. 12-20 d, then every key change costs double. U1-U6 cover part. Trigger: owner only. Decision 2.
+**mh-E12 Second keypad.** One layout, keyboard.yaml; the core list's cases and tasks.yaml are key sequences on it. 12-20 d, then every key change costs double. U1-U6 cover part. Trigger: owner only. Decision 2.
 
 **Revive order**
 1. E9: half built.
@@ -244,10 +240,10 @@ Parked: no packages, no ids; days are rough. docs/02:68-69 and the backlog's "Wi
 10. E6: second interaction model.
 
 **Decisions for the owner**
-1. Geometry to NOT PLANNED: recommended. Largest item; rule 7 (docs/03:21), rules 4, 5 (docs/03:13, 19), the reasoning of rule 13 (GeoGebra is better).
-2. Second keypad to NOT PLANNED: recommended. Against rule 8 (docs/03:22) and rules-core:6-8; returns only if the owner rewrites them. rules-core:20-22 name HP only, the same clean-room method would apply. "fx-991", "TI-36X" are, from memory, product marks; by analogy with rules-core:21 keep them out of the app (no written rule covers Casio or TI).
-3. Spreadsheet: candidate for NOT PLANNED, the owner's call. Rule 7, rules 4, 5. No sheet engine to reuse: `cell(1,1)` gives `$B$1`, `spreadsheet(2,2)` gives `2,2`, `current_sheet()` 0. Cost per cell unmeasured: raw repeat Giac calls 0.1-13 ms on desktop; Home makes several, and the phone is slower.
-4. 3D: candidate for NOT PLANNED, the owner's call. Rule 13, rule 7 (rotate competes with Plot's drag); no hard conflict.
+1. **Yes (2026-11-15).** Geometry to NOT PLANNED: recommended. Largest item; rule 7 (docs/03:21), rules 4, 5 (docs/03:13, 19), the reasoning of rule 13 (GeoGebra is better).
+2. **Yes (2026-11-15).** Second keypad to NOT PLANNED: recommended. Against rule 8 (docs/03:22) and rules-core:6-8; returns only if the owner rewrites them. rules-core:20-22 name HP only, the same clean-room method would apply. "fx-991", "TI-36X" are, from memory, product marks; by analogy with rules-core:21 keep them out of the app (no written rule covers Casio or TI).
+3. **Owner, 2026-11-15: stays on its trigger (mh-E6), no package before it.** Spreadsheet: Rule 7, rules 4, 5. No sheet engine to reuse: `cell(1,1)` gives `$B$1`, `spreadsheet(2,2)` gives `2,2`, `current_sheet()` 0. Cost per cell unmeasured: raw repeat Giac calls 0.1-13 ms on desktop; Home makes several, and the phone is slower.
+4. **Owner, 2026-11-15: stays on its trigger (mh-E10), no package before it.** 3D: Rule 13, rule 7 (rotate competes with Plot's drag); no hard conflict.
 
 **Not verified**
 - Merged Android manifest; `home()` itself (smoke.mjs only); whether golden cases pass.
