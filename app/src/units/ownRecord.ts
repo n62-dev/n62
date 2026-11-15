@@ -103,9 +103,12 @@ export function recordOk(v: unknown): boolean {
   return true;
 }
 
-/** The definitions of a stored record as the start reads it: the good ones, a copy; anything else (no record, a record
- *  of another shape, a damaged entry) gives none or fewer, never a throw. */
+/** The definitions of a stored record as the start reads it: the good ones, a copy, the first of a name only (a second
+ *  of it would leave both out of the table; recordOk refuses such a record); anything else (no record, a record of
+ *  another shape, a damaged entry) gives none or fewer, never a throw. */
 export function readRecord(v: unknown): UnitDef[] {
   if (!isObject(v) || !Array.isArray(v["units"])) return [];
-  return (v["units"] as unknown[]).filter(defShapeOk).map((d) => structuredClone(d));
+  const out: UnitDef[] = [];
+  for (const d of v["units"] as unknown[]) if (defShapeOk(d) && !out.some((o) => o.name === d.name)) out.push(structuredClone(d));
+  return out;
 }

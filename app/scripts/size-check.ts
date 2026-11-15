@@ -152,8 +152,12 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  chunk of its own, 1.8 kB with decimal() and goodName() moved out of userUnits.ts), the store ownUnits.ts that
  *  calc.ts reads, the refusal of a unit with no definition (build.ts, messages.ts) and its words. A cut was tried: the
  *  store as a rune class cost +0.1 kB more; findClash and ownUnitItem are not in these chunks. 78.24 kB + 0.05 kB, rounded
- *  up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 78_300;
+ *  up to the next 0.01 kB.
+ *  78.30 → 78.55 kB (G234 fix round 2): the branch measured 78.27 kB, 78.48 kB with the fix (+0.21 kB: a unit slot that
+ *  holds a deleted own unit draws and reads its name without OWN_PREFIX, slot.ts; replace refuses a taken name and the
+ *  start reads the first definition of a name, ownUnits.ts and ownRecord.ts). Cuts tried: a method in the slot model
+ *  instead of a function, +0.04 kB; one `free` check for add and replace, nothing. 78.48 kB + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 78_550;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {

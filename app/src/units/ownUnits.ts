@@ -40,19 +40,25 @@ export class OwnUnits {
 
   /** A new definition (its name is checked by validateDef, userUnits.ts, before; here only that it is not taken). */
   add(def: UnitDef): void {
-    if (this.stored.some((d) => d.name === def.name)) throw new Error("name taken");
+    this.free(def.name);
     this.write([...this.stored, structuredClone(def)]);
   }
 
   /** The definition named `name` becomes `def` (its place in the list stays; a new name is allowed: the caller has
-   *  checked it with validateDef, as for `add`; no such name: nothing changes). */
+   *  checked it with validateDef, as for `add`, but a name another definition holds is refused here too, as `add` does:
+   *  a name twice would leave both out of the table; no such name: nothing changes). */
   replace(name: string, def: UnitDef): void {
+    if (def.name !== name) this.free(def.name);
     this.write(this.stored.map((d) => (d.name === name ? structuredClone(def) : d)));
   }
 
   /** Delete a definition: a unit slot that names it is then refused in words (build.ts), never read with another value. */
   remove(name: string): void {
     this.write(this.stored.filter((d) => d.name !== name));
+  }
+
+  private free(name: string): void {
+    if (this.stored.some((d) => d.name === name)) throw new Error("name taken");
   }
 
   private write(next: UnitDef[]): void {

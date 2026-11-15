@@ -25,7 +25,7 @@ import { unitsMenu } from "./menu.ts";
 import { OwnUnits, UNITS_OWN } from "./ownUnits.ts";
 import { defShapeOk } from "./ownRecord.ts";
 import { pickActions } from "./find.ts";
-import { slotCatalogue } from "./slot.ts";
+import { slotCatalogue, SlotModel } from "./slot.ts";
 import type { Quantity, UnitError, UnitJob, UnitSlot } from "./types.ts";
 import { checkDef, clashNote, findClash, findNames, ownToken, type UnitDef } from "./userUnits.ts";
 
@@ -82,6 +82,28 @@ describe("the store of your units (G234)", () => {
       await o.restore();
       expect(o.list()).toEqual([]);
     }
+  });
+  it("replace refuses a name another definition holds (as add does): no name twice, nothing written", async () => {
+    const kv = fakeKv();
+    const own = new OwnUnits(kv);
+    await own.restore();
+    own.add(myfurlong);
+    own.add(kgfm);
+    await written();
+    const before = kv.writes.length;
+    expect(() => own.replace("myfurlong", { ...myfurlong, name: "kgfm" })).toThrow("name taken");
+    own.replace("myfurlong", { ...myfurlong, name: "myfurlong" }); // the same name is a change of the rest
+    own.replace("myfurlong", { ...myfurlong, name: "furlong2" }); // a free new name is allowed
+    await written();
+    expect(own.list().map((d) => d.name)).toEqual(["furlong2", "kgfm"]);
+    expect(kv.writes.length).toBe(before + 2);
+  });
+  it("a record that holds a name twice is read with the first of it only (the backup check refuses such a record)", async () => {
+    const twice = { units: [myfurlong, kgfm, { ...kgfm, factor: "9.8" }] };
+    const own = new OwnUnits(fakeKv([[UNITS_OWN, twice]]));
+    await own.restore();
+    expect(own.list()).toEqual([myfurlong, kgfm]);
+    expect(VALIDATORS[UNITS_OWN]?.(twice)).toBe(false);
   });
   it("the snapshot a caller gets is its own copy: a change to it changes no definition", async () => {
     const own = new OwnUnits(fakeKv());
@@ -288,6 +310,23 @@ describe("a definition that is gone (G234)", () => {
     expect(clashNote(myfurlong, findNames(items))).toBeUndefined();
     expect(clashNote(myfurlong, findNames([...items, gained]))).toBe(unitText("units.own.nowFind", { name: "myfurlong", unit: "myfurlong" }));
     expect(clashNote(myfurlong, findNames([...items, gained]))).toContain("also");
+  });
+});
+
+describe("a stored unit row whose definition is gone (G234)", () => {
+  const engine = { units: () => Promise.reject(new Error("a refused job never reaches the engine")) } as unknown as MathEngine;
+  const source = (): Promise<readonly IndexItem[]> => Promise.resolve(items);
+
+  it_("is reopened in the slot as the unit's name, never with the internal prefix, and Enter gives units.own.gone", async () => {
+    const stored: UnitSlot = { tokens: [ownToken("myfurlong")] }; // as the history row holds it, the definition since deleted
+    const cat = slotCatalogue(items); // the index without the own unit
+    const s = new SlotModel(cat, stored);
+    expect(s.latex).toContain("myfurlong");
+    expect(s.latex).not.toContain("@");
+    expect(s.reading.text).toBe("myfurlong");
+    const req = { formula: "5*pasu1", slots: [stored], end: M };
+    const r = (await evaluateUnits(engine, source, req, defaultHomeSettings, [])) as UnitError;
+    expect(unitErrorMessage(r)).toBe(unitText("units.own.gone", { name: "myfurlong" }));
   });
 });
 
