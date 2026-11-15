@@ -11,14 +11,14 @@ const input = (t: string[], second?: string, why?: BudgetInput["why"]): BudgetIn
   ...(why ? { why } : {}),
 });
 
-type Shares = { rows: string[]; second?: string; rounded?: boolean; over100?: boolean; fallback?: boolean; why?: string };
+type Shares = { rows: string[]; second?: string; rounded?: boolean; over100?: boolean; fallback?: boolean };
 type Case = [name: string, t: string[], second: string | undefined, why: BudgetInput["why"], expected: Shares | { reason: string } | null, source: string];
 
 // sources: rows a to c tests/golden/oracle_budget.py (mpmath, 50 digits); the rest derived by hand from the rules
 const CASES: Case[] = [
   ["a, t10", ["0.0256", "1.522756"], "0.000025", undefined, { rows: ["98.3", "1.7"], second: "< 0.1", rounded: false, over100: false }, "oracle"],
   ["b, sin(0 ± 0.2)", ["0.04"], "-0.0016", undefined, { rows: ["104.2"], second: "−4.2", over100: true }, "oracle"],
-  ["c, sin(0 ± 0.5)", ["0.25"], "-0.0625", "order2", { rows: ["133.3"], second: "−33.3", over100: true, why: "order2" }, "oracle"],
+  ["c, sin(0 ± 0.5)", ["0.25"], "-0.0625", "order2", { rows: ["133.3"], second: "−33.3", over100: true }, "oracle"],
   ["d, 0 ± 0.1 squared", ["0"], "0.0002", "order2", { reason: "firstOrderZero" }, "derived"],
   ["e, a + b = 0", ["1"], "-1", "order2", { rows: ["100.0"], fallback: true }, "derived"],
   ["f, a + b < 0", ["4"], "-16", "order2", { rows: ["100.0"], fallback: true }, "derived"],
@@ -46,7 +46,7 @@ describe("budgetOf (G272)", () => {
     if (expected.rounded !== undefined) expect(b.rounded).toBe(expected.rounded);
     if (expected.over100 !== undefined) expect(b.over100).toBe(expected.over100);
     expect(b.fallback).toBe(expected.fallback ?? false);
-    expect(b.why).toBe(expected.why);
+    expect(b.why).toBe(why); // the ⚠ reason is kept (row c), order2 on e and f too
   });
 
   it("rounded is false where the shown shares sum to 100.0 (rows a, b, c, j, o)", () => {
