@@ -123,7 +123,7 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 - `"wa"` on any provider: memory only; A100 tests it first. No cloud provider has been run.
 - No device or Playwright run in this review; the engine used is main's build at 8f398cca.
 - The start chunk's room was not measured; every package keeps the pin or takes a cut.
-- The Python semantics: sympy, pint and uncertainties are not installed; G215 exists to check them. Their licences are from memory; G215's first step.
+- The Python semantics: the gate's pydiff stage (G215) runs Copy as Python's scripts in the golden venv against N62; sympy, pint and uncertainties are BSD-3-Clause (their own LICENSE files), pinned there.
 - "400+ units" and tier-1 membership: the Find index was denied.
 - The seam for R182's hook: its first step, with `start-chunk.mjs`.
 - B10, B11, B13, B14, B19 to B24: by code and tests only; G233's "no definition route" is its first check.
