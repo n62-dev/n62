@@ -196,6 +196,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   ["0050-proot-huge-coefficients.patch", "giac-2.1.0/src/vecteur.cc", /double eps1=1\/\(evalf_double\(maxvt,1,contextptr\)\._DOUBLE_val\);\s*if \(debug_infolevel\)\s*CERR << "proot after shift: coefficients ratio /, "gen shift(-v[1]/v[0]/int(v.size()+1));"],
   // G360, patch 0051: in_limit has no rule for iPart (no series rule, not in sign_floor_ceil_round_tab), so it substitutes the point
   ["0051-limit-ipart-as-trunc.patch", "giac-2.1.0/src/series.cc", /direction=-1;\s*vecteur vsign\(loptab\(e,sign_floor_ceil_round_tab\)\);/, "static gen in_limit(const gen & e0,const identificateur & x,const gen & lim_point,int direction,GIAC_CONTEXT){"],
+  // G378, patch 0052: sym2rxrootnum takes arg(num) from evalf(num), so on the cut (a negative real num) the sign of a rounding
+  // imaginary part chose the root (simplify(sqrt(acosh(-1/2)^2)) = -ln((i*sqrt(3)-1)/2))
+  ["0052-sqrt-root-pick-at-cut.patch", "giac-2.1.0/src/sym2poly.cc", /if \(hasevalf\)\s*numprevf=arg\(numprevf,contextptr\);\s*for \(f_it=f\.begin\(\);/, "static bool sym2rxrootnum(vecteur & v,const vecteur & lv,gen & num,gen & tmpden,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);

@@ -75,7 +75,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
-- **F181 (G175's probe, G378).** Home `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i (CAS right): `sym2poly.cc` sym2rxrootnum picks the root by the arg of evalf(z²), which lies on the cut with a rounding imaginary part. Family 3.
+- **F181, fixed by G378 (patch 0052).** Home and CAS `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i: `sym2poly.cc` sym2rxrootnum took arg(z²) from evalf (rounding −π on the cut) and for a square root scored the second root with d = 1. Family 3.
 - **F138 (G177).** CAS DEG `evalf(cos(atan(2*i)))` shows -1.37121078136E-60-0.57735026919·i after earlier golden cases (right -0.57735026919·i, as a fresh engine gives): state leaks between cases. Row `g177-cas-deg-evalf-cos-atan-2i` (pending). Family 2.
 - **F240, no package (G226's census).** Find's `convert(129,2,1/2)` is `pnt[129,1/2]` or `[129,1/2]` by what ran before: prog.cc:9345 takes the subtype from the fraction's pointer bits. Family 2.
 - **F161, fixed by G154 (left, no package).** An underflow whose size Giac cannot state (`exp(-10^30)+exp(-10^31)`: no finite re(lnexpand(ln(e))), e^(10^-1000) is 0) shows ⚠ 0 again, as before G84; was "Underflow". Family 3.
@@ -106,8 +106,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R192 (pass 158):** Copy marks a whole exact integer by its notation (`≈` past the digits).
 - **G313's leftover (pass 154):** find-queries.yaml's `dot product` and `bitand` rows are curated but still pending.
 - **G223f1's finds (pass 146):** stats1 of a stored float list shows [..], of a typed one {..} (G381); a stored catch(e) prints as catch(exp(1)).
-- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.
-- **Flaky (R255f2, pass 137; R339):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`) under load.
+- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp, fake curl).
+- **Flaky (R255f2, pass 137; R339):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`).
+- **Flaky (pass 199):** matrixsize.spec.ts "2 adds a column of zeros at the end": FLAKE in runs 1228, 1250, 1276.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS; red-first runs vitest on the branch's engine, reads ids as `[A-Za-z0-9_.-]` and counts a vitest file by its added test or assertion lines (A67).
 - **C3. CI** (needs your OK);
 
