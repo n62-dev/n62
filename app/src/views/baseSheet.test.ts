@@ -36,10 +36,28 @@ describe("baseItems", () => {
       expect(r.reason).toMatch(/only integers/i);
     }
   });
-  it("an integer outside the 64-bit word: the bases are dimmed (a negative one is unsigned until R194), DEC is not", () => {
-    const rows = baseItems(session, item(-1n));
+  it("an integer outside the word (none set: 64 bits, unsigned): the bases are dimmed with the word named, DEC is not", () => {
+    const rows = baseItems(session, item(2n ** 64n));
     for (const id of ["hex", "bin", "oct"]) expect(row(rows, id)?.disabled, id).toBe(true);
-    expect(row(rows, "hex")?.reason).toMatch(/64-bit/);
+    expect(row(rows, "hex")?.reason).toBe("Does not fit the 64-bit unsigned word");
     expect(row(rows, "dec")?.disabled).toBeUndefined();
+  });
+  // R305 (vr-6): the reason names the word in force (R194), and a negative in an unsigned word says it needs Signed
+  it("names the word that is set: 300 in 8 bits unsigned, 255 in 8 bits signed", () => {
+    expect(row(baseItems(session, item(300n), { bits: 8, signed: false }), "hex")?.reason).toBe("Does not fit the 8-bit unsigned word");
+    expect(row(baseItems(session, item(255n), { bits: 8, signed: true }), "bin")?.reason).toBe("Does not fit the 8-bit signed word");
+    expect(row(baseItems(session, item(-129n), { bits: 8, signed: true }), "oct")?.reason).toBe("Does not fit the 8-bit signed word");
+    expect(baseItems(session, item(-1n), { bits: 8, signed: true }).every((r) => !r.disabled)).toBe(true);
+  });
+  it("a negative in an unsigned word: its own reason, which sends to Signed", () => {
+    for (const word of [undefined, { bits: 16, signed: false } as const]) {
+      const rows = baseItems(session, item(-1n), word);
+      for (const id of ["hex", "bin", "oct"]) expect(row(rows, id)?.reason, id).toBe("A negative number needs a signed word: Settings › Numbers › Word");
+      expect(row(rows, "dec")?.disabled).toBeUndefined();
+    }
+  });
+  it("a negative in an unsigned word that the signed word of its size cannot hold: the word's reason, not Signed's", () => {
+    expect(row(baseItems(session, item(-200n), { bits: 8, signed: false }), "hex")?.reason).toBe("Does not fit the 8-bit unsigned word");
+    expect(row(baseItems(session, item(-128n), { bits: 8, signed: false }), "hex")?.reason).toMatch(/needs a signed word/);
   });
 });

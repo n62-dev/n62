@@ -4,15 +4,20 @@
 // paragraph the format for your AI holds too. Expected values are derived: 2 + 3, the decimal expansion of 1/3 at 12
 // digits, 2π × 25 mm in m at 12 digits (0.157079632679…) with σ = 2π × 0.1 mm = 0.000628… m (0.00063 to 2 digits),
 // the facts as given. The unit row is units/row.ts's own (unitRow), its request the LaTeX the unit view stores.
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { decimalFromString, type ComplexValue } from "../engine/format.ts";
 import { FakeCalc } from "../calc/fake.ts";
 import { fakeKv } from "../state/fakeKv.ts";
-import { Session, type HistoryItem } from "../state/session.svelte.ts";
+import { loadForms, Session, type HistoryItem } from "../state/session.svelte.ts";
+import { wordStore } from "../state/wordStore.svelte.ts";
+import type { WordSetting } from "../state/wordSetting.ts";
 import type { HomeResult } from "../engine/homeEval.ts";
 import { unitRow } from "../units/row.ts";
 import type { Quantity } from "../units/types.ts";
 import { aiFormat } from "../views/libraryJobs.ts";
+import { ClipActions } from "./actions.svelte.ts";
+import type { AppShell } from "../apps/shell.svelte.ts";
+import type { EntryController } from "../entry/controller.ts";
 import { reportAbout, reportName, saveWork, workReport } from "./workReport.ts";
 
 const num = (s: string): ComplexValue => ({ re: decimalFromString(s)!, im: decimalFromString("0")! });
@@ -191,5 +196,54 @@ describe("R130: the work report", () => {
     expect(aiFormat()).toContain(reportAbout());
     expect(reportAbout()).toContain("Angle mode at export"); // the header names the mode at export, a step its own (R130f1)
     expect(reportAbout()).toContain("Angle: the angle mode the step was computed in");
+  });
+});
+
+// R305 (night review 2026-11-14, vr-4): a signed negative drawn in a base is two's complement, which a reader takes for a
+// positive number; the report adds its decimal and names the word. Expected values are derived: -1 and -128 in 8 bits are
+// 0xFF and 0x80, -2 in 64 bits 0xFFFFFFFFFFFFFFFE, 255 unsigned 0xFF.
+describe("R305: a row drawn in a base", () => {
+  const int = (n: string, fmt?: "hex" | "bin" | "oct"): HistoryItem =>
+    row({ latex: n, text: n, value: num(n), rational: { n, d: "1" }, full: n, fullExact: true, facts: { exact: true, reliableDigits: null }, ...(fmt ? { fmt } : {}) });
+  const report = (items: HistoryItem[], word: WordSetting): string => {
+    wordStore.set(word);
+    return workReport(items, session(), { ...head, word });
+  };
+  const S8 = { bits: 8, signed: true } as const;
+  beforeAll(async () => void (await loadForms()));
+  afterAll(() => wordStore.set({ bits: 64, signed: false }));
+
+  it("gives a signed negative its decimal beside the base form", () => {
+    expect(report([int("-1", "hex")], S8)).toContain("- Value: `0xFF` (decimal `-1`)\n");
+    expect(report([int("-128", "hex")], S8)).toContain("- Value: `0x80` (decimal `-128`)\n");
+    expect(report([int("-1", "bin")], S8)).toContain("- Value: `0b11111111` (decimal `-1`)\n");
+    expect(report([int("-2", "hex")], { bits: 64, signed: true })).toContain("- Value: `0xFFFFFFFFFFFFFFFE` (decimal `-2`)\n");
+  });
+
+  it("names the word in the header whenever a row is drawn in a base, and only then", () => {
+    const head8 = report([int("2"), int("-1", "hex")], S8).split("\n\n## Step 1")[0]!;
+    expect(head8).toContain("- Number format: Standard\n- Word: 8-bit signed\n- Decimal mark: point");
+    expect(report([int("255", "hex")], { bits: 8, signed: false })).toContain("- Word: 8-bit unsigned\n");
+    expect(report([int("-1"), int("5")], S8)).not.toContain("- Word");
+    expect(report([int("300", "hex")], { bits: 8, signed: false })).not.toContain("- Word"); // does not fit: drawn in decimal
+  });
+
+  it("writes an unsigned or non-negative base row's Value line as before", () => {
+    expect(report([int("255", "hex")], { bits: 8, signed: false })).toContain("- Value: `0xFF`\n");
+    expect(report([int("5", "hex")], S8)).toContain("- Value: `0x5`\n");
+    expect(report([int("8", "oct")], S8)).toContain("- Value: `0o10`\n");
+  });
+
+  it("control: Copy as shown of a signed negative base row still gives the display text, 0xFF (docs/04 2.6)", async () => {
+    wordStore.set(S8);
+    let clip = "";
+    const port = { writeText: async (t: string) => ((clip = t), true), readText: async () => clip, share: async () => false };
+    const c = new ClipActions(session(), { app: null, showsEntry: true } as unknown as AppShell, {} as unknown as EntryController, { insert() {}, recall() {} }, port);
+    expect(await c.copyShown(int("-1", "hex"))).toBe(true);
+    expect(clip).toBe("0xFF");
+  });
+
+  it("says what the Word line means in its format paragraph", () => {
+    expect(reportAbout()).toContain("Word: ");
   });
 });

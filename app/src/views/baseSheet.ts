@@ -3,11 +3,13 @@
 // code (tmplSheet.ts re-exports showBase), so the start chunk carries only the key's routing. The menu shows the result in a base and never acts on what is being typed, so the key
 // is dead while the line holds text. A pick sets the result's display form (R192: `fmt`), that result only.
 import type { MenuItem } from "../apps/types.ts";
+import { formatBase } from "../engine/formatBase.ts";
 import { dataText } from "../i18n/enData.ts";
 import type { RouteCtx } from "../keyboard/route.ts";
-import { baseDrawn, isApplicable } from "../state/cycleForms.ts";
+import { baseDrawn, isApplicable, wordStore, type Word } from "../state/cycleForms.ts";
 import { factsOf } from "../state/displayMode.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
+import { DEFAULT_WORD } from "../state/wordSetting.ts";
 
 const BASES = ["hex", "bin", "oct"] as const;
 /** The rows, in the order of docs/04 5.4. */
@@ -18,17 +20,26 @@ const ROWS: readonly { id: (typeof BASES)[number] | "dec"; label: string }[] = [
   { id: "dec", label: "DEC" },
 ];
 
-/** The four rows for `item`. Dimmed, with the reason, when the result is no integer (or, for a base, outside the word). */
-export function baseItems(s: Session, item: HistoryItem): MenuItem[] {
+/** Why a base row is dimmed for an integer outside `word` (R305): a negative one in an unsigned word that the signed word
+ *  of the same size holds needs Signed; any other is named with the word in force. */
+function noFit(item: HistoryItem, word: Word): string {
+  const n = item.rational?.n;
+  if (!word.signed && n?.startsWith("-") && typeof formatBase(n, "hex", word.bits, true) === "string") return dataText("base.needsSigned");
+  return dataText("base.noFit", { bits: word.bits, sign: dataText(word.signed ? "base.signed" : "base.unsigned") });
+}
+
+/** The four rows for `item` in `word` (the setting's, R194, else 64 bits unsigned). Dimmed, with the reason, when the
+ *  result is no integer (or, for a base, outside the word). */
+export function baseItems(s: Session, item: HistoryItem, word: Word = wordStore.value ?? DEFAULT_WORD): MenuItem[] {
   const integer = isApplicable("hex", factsOf(item));
   const base = BASES.find((b) => b === item.fmt && item.form === undefined);
   return ROWS.map(({ id, label }) => {
-    const fits = id === "dec" || baseDrawn(item, id) !== undefined;
+    const fits = id === "dec" || baseDrawn(item, id, word) !== undefined;
     return {
       id,
       label,
       selected: id === "dec" ? integer && base === undefined : base === id,
-      ...(integer && fits ? {} : { disabled: true, reason: dataText(integer ? "base.noFit" : "base.notInteger") }),
+      ...(integer && fits ? {} : { disabled: true, reason: integer ? noFit(item, word) : dataText("base.notInteger") }),
       run: () => {
         if (id === "dec") delete item.fmt; // back to the global notation (Home) or the exact form (CAS)
         else item.fmt = id;

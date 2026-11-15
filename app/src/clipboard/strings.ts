@@ -47,6 +47,11 @@ const clip = {
   "report.digits": "Digits",
   "report.format": "Number format",
   "report.decimalMark": "Decimal mark",
+  // R305: the word a base form is drawn in, and a signed negative's decimal beside its two's complement
+  "report.word": "Word",
+  "report.wordSigned": "{bits}-bit signed",
+  "report.wordUnsigned": "{bits}-bit unsigned",
+  "report.inDecimal": "decimal {n}",
   "report.point": "point",
   "report.comma": "comma",
   "report.step": "Step",
@@ -64,7 +69,9 @@ const clip = {
     "Each step is one history row, under a heading `## Step n`, as a list of `Name: text` lines. Input: the entry as typed. " +
     "Angle: the angle mode the step was computed in, when it differs from the mode at export, or `not recorded`; a step without it was computed in the mode at export. " +
     "Mark: `= exact` (the value shown is exact), `≈` (rounded; every digit shown is confirmed) or `⚠` (not every digit shown is confirmed, or not checked), each followed by its reason. " +
+    "Word: the word size and sign a value shown in a base (`0x`, `0b`, `0o`) is drawn in; only when a step is. " +
     "Value: the result as shown, in the decimal mark the header names and without digit groups, with its unit; a result of the unit view holds `± σ` before the unit. " +
+    "A negative number in a signed word is shown in two's complement, followed by its decimal: `0xFF` (decimal `-1`). " +
     "Uncertainty: `± σ` of every value that has one (a constant's too), the standard uncertainty (σ, one standard deviation). " +
     "Uses: the stored values the input read. Note: a line the history showed under the row. Error: the message of an entry that failed. A step without a Mark line has no number to mark.",
   // R36: the picked row's line (whyLine.ts)
