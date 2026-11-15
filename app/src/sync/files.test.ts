@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G218: what the sync folder receives. The clock is given (local dates), the rows are fixed; the `.py` text expected is
 // G213's own translation of each row (python.test.ts pins those templates), here its place in the appended file.
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import { validName } from "../clipboard/folder.ts";
@@ -10,6 +11,9 @@ import type { ChipTable } from "../input/chips.ts";
 import { deviceSlug, filesFor, processId, syncFilesState, type SyncFile, type SyncFilesState } from "./files.ts";
 import { SyncQueue } from "./queue.ts";
 import { fakeFolder, fakePort, memKv } from "./fakeFolder.ts";
+import type { UnitRow } from "../units/types.ts";
+import { runPython } from "../../scripts/pydiff.ts";
+import { venvPython } from "../../scripts/pyunits-check.ts";
 
 const APP = "0.1.0";
 const HEAD = "# N62 0.1.0 · Copy as Python · preview: the form of this file can change";
@@ -147,20 +151,20 @@ describe("filesFor: the .py text", () => {
 });
 
 /** The file read top to bottom as Python would bind names: each code line `name = expr` reads the names in expr (string
- *  literals left out) and binds `name`; `from sympy import …` binds its names. */
+ *  literals and attributes left out) and binds `name`; `from sympy import …` (fractions, pint too) binds its names. */
 function bindings(py: string): { twice: string[]; unbound: string[] } {
   const bound = new Set<string>();
   const twice: string[] = [];
   const unbound: string[] = [];
   for (const line of py.split("\n")) {
-    const imp = /^from sympy import (.+)$/.exec(line);
+    const imp = /^from (?:sympy|fractions|pint) import (.+)$/.exec(line);
     if (imp) {
       for (const n of (imp[1] as string).split(", ")) bound.add(n);
       continue;
     }
     const m = /^([A-Za-z_]\w*) = (.*?)(?: {2}#.*)?$/.exec(line);
     if (!m) continue;
-    const expr = (m[2] as string).replace(/'[^']*'/g, "''");
+    const expr = (m[2] as string).replace(/'[^']*'/g, "''").replace(/\.[A-Za-z_]\w*/g, "");
     for (const n of expr.match(/[A-Za-z_]\w*/g) ?? []) if (!bound.has(n)) unbound.push(n);
     const name = m[1] as string;
     if (name.startsWith("_") && bound.has(name)) twice.push(name);
@@ -191,6 +195,54 @@ describe("filesFor: a Python name is bound once per file", () => {
 
   it("the check above sees a name bound twice and a name read before it is bound", () => {
     expect(bindings("_3 = 1\n_3 = 2\n_4 = a*_9\n")).toEqual({ twice: ["_3"], unbound: ["a", "_9"] });
+    expect(bindings("_1 = (5*ureg.kg).to('lb')\nfrom pint import UnitRegistry\nureg = UnitRegistry()\n")).toEqual({ twice: [], unbound: ["ureg"] });
+  });
+});
+
+/** G216f1: a done unit-view row: its line, filled slots by prompt id, its unit and dimension; the exact answer and its
+ *  decimal are the row's own (5 kg is 500000000/45359237 lb by lb = 0.45359237 kg; 20 °C is 68 °F: derived). */
+const unitDone = (latex: string, slots: UnitRow["slots"], unit: string, dim: string, exact: string, dec: string): HistoryItem =>
+  done(latex, exact, dec, { units: { slots, unit, dim, dimText: null, latex: "", text: ` ${unit}`, input: latex } });
+const KG_LB = unitDone("5", { u1: { tokens: [{ unit: "kg" }] }, end: { tokens: [{ unit: "lb" }] } }, "lb", "kg1", "500000000/45359237", "11.0231131092");
+const C_F = unitDone("20", { u1: { tokens: [{ unit: "oC" }] }, end: { tokens: [{ unit: "oF" }] } }, "°F", "K1", "68", "68");
+
+describe("filesFor: unit rows in the .py (G216f1)", () => {
+  const PY = venvPython();
+  /** Each process's part of the file (it starts at G213's first line). */
+  const parts = (py: string): string[] => py.split(`${HEAD}\n`).filter((p) => p !== "");
+  const count = (part: string, line: string): number => part.split("\n").filter((l) => l === line).length;
+
+  it("a Home row, 5 kg → lb, 20 °C → °F: Copy's imports, the registry and Q_ once; a second process binds its own; it runs", () => {
+    const one = run([done("\\frac{1}{3}", "1/3", "0.333333333333"), KG_LB, C_F], syncFilesState(APP, START1), at(10, 0));
+    expect(one.each.map((f) => f[1]?.text)).toEqual([
+      `${HEAD}\n# %%\nfrom sympy import Rational\n_1_${P1} = Rational(1, 3)  # N62: = 1/3\n`,
+      `# %%\nfrom pint import UnitRegistry\nureg = UnitRegistry()\n_2_${P1} = (5*ureg.kg).to('lb')  # N62: = 500000000/45359237 lb\n`,
+      `# %%\nQ_ = ureg.Quantity\n_3_${P1} = Q_(20, 'degC').to('degF')  # N62: = 68 °F\n`,
+    ]);
+    const two = run([C_F, KG_LB], syncFilesState(APP, START2), at(15, 0), "tab-1a2b", one.out);
+    const py = two.out.get("n62-tab-1a2b-2026-11-08.py") as string;
+    for (const l of py.split("\n").filter((x) => x.startsWith("from sympy import "))) expect(l).not.toMatch(/\b(?:Fraction|ureg|Q_|UnitRegistry)\b/);
+    const [p1, p2] = parts(py) as [string, string];
+    expect(parts(py)).toHaveLength(2);
+    for (const p of [p1, p2]) {
+      expect(count(p, "ureg = UnitRegistry()")).toBe(1);
+      expect(count(p, "Q_ = ureg.Quantity")).toBe(1);
+    }
+    // the second process's registry before its first unit cell
+    expect(p2.indexOf("ureg = UnitRegistry()")).toBeLessThan(p2.indexOf(`_1_${P2} = `));
+    expect(p2.indexOf("Q_ = ureg.Quantity")).toBeLessThan(p2.indexOf(`_1_${P2} = `));
+    expect(bindings(py)).toEqual({ twice: [], unbound: [] });
+    // the file as the sync folder holds it runs, as the pydiff stage runs a file (no venv: fails, never skips)
+    expect(PY, "no tests/golden/.venv with sympy and pint (tests/golden/README.md)").toBeTruthy();
+    const r = runPython(PY as string, join(import.meta.dirname, "../../_out/files-test/units.py"), py);
+    expect(r.err).toBe("");
+    expect(r.code).toBe(0);
+  }, 60_000);
+
+  it("a Fraction and a unit in one cell: Python's import, then sympy's, then pint's", () => {
+    const row = unitDone("2.5", { u1: { tokens: [{ unit: "kg" }] } }, "kg", "kg1", "5/2", "2.5");
+    const { each } = run([done("\\sqrt{2}", "sqrt(2)", "1.41421356237", { facts: { exact: false, reliableDigits: null, digits: 12 } }), row], syncFilesState(APP, START1), at(10, 0));
+    expect(each[1]?.[1]?.text).toBe(`# %%\nfrom fractions import Fraction\nfrom pint import UnitRegistry\nureg = UnitRegistry()\n_2_${P1} = Fraction('2.5')*ureg.kg  # N62: = 5/2 kg\n`);
   });
 });
 

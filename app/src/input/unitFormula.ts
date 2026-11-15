@@ -4,6 +4,10 @@
 // On an empty line: the quantity 1, its slot and the end slot. The slots' contents never come from here (R24a's model
 // holds them); the parser's units mode (R28) reads the prompts as pasu<n> and the end slot. The entry's LaTeX, so it lives
 // beside the parser (input/), not under units/ (P20: no text reading there). Plain TS, loaded with the unit view.
+import type { ChipTable } from "./chips.ts";
+import { sigmaChipOf, uncChipsIn } from "./chipUnit.ts";
+import { latexToGiacInfo } from "./latex-to-giac.ts";
+import type { UnitRequest, UnitSlot } from "../units/types.ts";
 
 /** The end slot's prompt id. */
 export const END = "end";
@@ -198,4 +202,28 @@ export function slotFormula(latex: string): SlotFormula {
     }
   }
   return { latex: `${out}\\to\\placeholder[${END}]{}`, slots, ...(Object.keys(chips).length ? { chips } : {}) };
+}
+
+/** G216: the formula as the unit view sends it (units/view.ts request), with each empty prompt dropped (an empty slot means
+ *  no unit; an empty end slot drops its → too); `filled(id)` holds for a slot or the end slot that has a unit. The one rule
+ *  for the view, Copy as Python (clipboard/python.ts) and the pydiff stage, so each reads the formula the row ran. */
+export function filledLatex(f: SlotFormula, filled: (id: string) => boolean): string {
+  let latex = f.latex;
+  for (const id of [...f.slots, END]) if (!filled(id)) latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
+  return latex;
+}
+
+/** G216f1: the request for Calc.units() from a formula and its slots, the pure part of units/view.ts request: the
+ *  filled slots only (`slot(id)` is a slot's or the end slot's unit, undefined when empty), parsed in units mode with
+ *  the chips and the stored values; each slot its UnitSlot, the constants, the σ chips (R271) and the facts of the σ
+ *  chips that went in as values (R271f1). The view and the pydiff stage (scripts/pydiff.ts) both call it, so the stage
+ *  tests the request the app sends. Throws the parser's error. */
+export function unitRequest(f: SlotFormula, slot: (id: string) => UnitSlot | undefined, chips: ChipTable, userValues?: ReadonlySet<string>): UnitRequest {
+  const latex = filledLatex(f, (id) => slot(id) !== undefined);
+  const r = latexToGiacInfo(latex, { units: true, chips, userValues });
+  const u = r.units ?? { slots: [], consts: [] };
+  const at = (id: string): UnitSlot => slot(id) as UnitSlot;
+  const sigmas = u.sigmas?.map((c) => sigmaChipOf(chips[c.key], c.slot));
+  const uncChips = uncChipsIn(latex, chips);
+  return { formula: r.giac, slots: u.slots.map(at), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: at(u.end) } : {}), ...(sigmas ? { sigmas } : {}), ...(uncChips.length ? { uncChips } : {}) };
 }

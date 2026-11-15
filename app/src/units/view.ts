@@ -6,10 +6,9 @@
 // open.ts), never through the entry line. Plain TS (no runes): a change calls `host.changed()`. Evaluation: the parser's units mode (R28) on the formula, the slots' tokens,
 // then Calc.units(). Loaded with the unit view.
 import type { ChipTable } from "../input/chips.ts";
-import { chipUnit, sigmaChipOf, uncChipsIn } from "../input/chipUnit.ts";
-import { latexToGiacInfo } from "../input/latex-to-giac.ts";
+import { chipUnit } from "../input/chipUnit.ts";
 import { unitText } from "../i18n/enUnits.ts";
-import { END, slotFormula, type SlotFormula } from "../input/unitFormula.ts";
+import { END, slotFormula, unitRequest, type SlotFormula } from "../input/unitFormula.ts";
 import type { Alternative } from "./alternatives.ts";
 import type { PadEmit } from "./pad.ts";
 import { shownOf, type Shown, type UnitFormat } from "./result.ts";
@@ -376,17 +375,10 @@ export class UnitView {
   /** The request for Calc.units(): the formula with the filled slots only (an empty slot means no unit), parsed in
    *  units mode. Throws the parser's error. */
   request(): UnitRequest {
-    let latex = this.formula.latex;
-    for (const id of this.ids) {
-      if (!(this.#models.get(id) as SlotModel).empty) continue;
-      latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
-    }
-    const r = latexToGiacInfo(latex, { units: true, chips: this.#chips, userValues: this.#host.values?.() });
-    const u = r.units ?? { slots: [], consts: [] };
-    const slot = (id: string): UnitSlot => (this.#models.get(id) as SlotModel).slot;
-    const sigmas = u.sigmas?.map((c) => sigmaChipOf(this.#chips[c.key], c.slot));
-    const uncChips = uncChipsIn(latex, this.#chips);
-    return { formula: r.giac, slots: u.slots.map(slot), ...(u.consts.length ? { consts: u.consts } : {}), ...(u.end ? { end: slot(u.end) } : {}), ...(sigmas ? { sigmas } : {}), ...(uncChips.length ? { uncChips } : {}) };
+    return unitRequest(this.formula, (id) => {
+      const m = this.#models.get(id) as SlotModel;
+      return m.empty ? undefined : m.slot;
+    }, this.#chips, this.#host.values?.());
   }
 
   /** Evaluate from any slot: every slot must be complete. */

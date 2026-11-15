@@ -99,3 +99,28 @@ groups:
       - { input: "b+1", comment: true }
       - { input: "\\ans\\times2", comment: true }
       - { input: "7\\times6" }
+  # G216: unit-view rows (their slots by prompt id, as scripts/unit-case.ts writes a slot), through pint (clipboard/pyUnits.ts);
+  # the inputs are those of clipboard/python.units.test.ts, and a Home row after one reads its Ans
+  - id: units
+    rows:
+      - { input: "5", slots: { u1: "kg", end: "lb" } }
+      - { input: "20", slots: { u1: "oC", end: "oF" } }
+      - { input: "-40", slots: { u1: "oF", end: "oC" } }
+      - { input: "300", slots: { u1: "K", end: "oF" } }
+      - { input: "5\\times2", slots: { u1: "N", u2: "m" } }
+      - { input: "\\ans\\times2" }
+      - { input: "72", slots: { u1: "km / h", end: "m / s" } }
+      - { input: "2\\cdot\\const{c}{c}", slots: { u1: "s", end: "km" } }
+      - { input: "2.5", slots: { u1: "k:N", end: "lbf" } }
+      - { input: "4186\\times2", slots: { u1: "J / kg oC", u2: "kg" } }
+      - { input: "1", slots: { u1: "gal_US", end: "L" } }
+      - { input: "3", slots: { u1: "in", end: "cm" } }
+      - { input: "2", slots: { u1: "a:s", end: "s" } }
+      - { input: "60", slots: { u1: "mph", end: "km / h" } }
+      - { input: "100", slots: { u1: "psi", end: "k:Pa" } }
+      - { input: "3", slots: { u1: "m^2", end: "ft^2" } }
+      - { input: "\\frac{1}{4}", slots: { u1: "h", end: "min" } }
+      - { input: "\\frac{1}{3}\\times2", slots: { u3: "m", end: "c:m" } }
+      - { input: "9.81\\times75", slots: { u1: "m / s^2", u2: "kg" } }
+      - { input: "1", slots: { u1: "Btu", end: "J" }, comment: true }
+      - { input: "5\\pm0.1", slots: { u1: "kg" }, comment: true }

@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { latexToGiacInfo } from "./latex-to-giac.ts";
 import { ANS_KEY, type Chip } from "./chips.ts";
-import { slotFormula } from "./unitFormula.ts";
+import { filledLatex, slotFormula } from "./unitFormula.ts";
 
 const giac = (latex: string): string => latexToGiacInfo(slotFormula(latex).latex, { units: true }).giac;
 
@@ -90,5 +90,15 @@ describe("slotFormula (R24c)", () => {
     expect(giac("10\\pm0.5")).toBe("pasupm(10,0.5)*pasu1");
     const chips = { "res:7": { value: "0.5", exact: true } };
     expect(latexToGiacInfo(slotFormula("10\\pm\\res{7}{0.5}").latex, { units: true, chips }).giac).toBe("pasupm(10,(5/10^1),pasws1)*pasu1"); // R271: the chip is σ
+  });
+});
+
+describe("filledLatex (G216): the empty prompts dropped, the one rule of the view, Copy as Python and pydiff", () => {
+  const f = slotFormula("5\\times2");
+  it("drops an empty slot's prompt, and an empty end slot with its →", () => {
+    expect(filledLatex(f, (id) => id === "u1")).toBe("5\\placeholder[u1]{}\\times2");
+    expect(filledLatex(f, (id) => id !== "u1")).toBe("5\\times2\\placeholder[u2]{}\\to\\placeholder[end]{}");
+    expect(filledLatex(f, () => true)).toBe(f.latex);
+    expect(filledLatex(f, () => false)).toBe("5\\times2");
   });
 });

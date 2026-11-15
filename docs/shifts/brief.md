@@ -85,7 +85,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 743 | [G216](packages/G216.md) Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
+| 743 | G216 Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
 | 744 | [G217](packages/G217.md) Copy as Python: ± through uncertainties | gorge, Opus | `p1/gorge-pysigma` | G216 |
 | 692 | [G271](packages/G271.md) σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
 | 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |

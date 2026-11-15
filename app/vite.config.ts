@@ -7,13 +7,17 @@ import { engineFiles, pwaLite } from "./vite-plugin-pwa-lite.ts";
 import { themeCssPlugin } from "./vite-plugin-theme-css.ts";
 import { yamlPlugin } from "./vite-plugin-yaml.ts";
 
+// G216: the unit view and Copy as Python both import input/unitFormula.ts, whose own import chipUnit.ts they share already:
+// the two in one chunk (their own imports stay where they were), so no chunk of its own adds its name to the start chunk's preload lists (the start pin, R91).
+const unitInput = { name: "chipUnit", test: /[\\/]src[\\/]input[\\/](?:chipUnit|unitFormula)\.ts$/, priority: 50, includeDependenciesRecursively: false };
+
 // The engine worker loads the engine by its hashed name in a production build (A49); the dev server and the tests use the plain one.
 export default defineConfig(({ command }) => ({
   define: { __GIAC_MJS__: JSON.stringify((command === "build" && engineFiles("public/engine")?.mjs) || "giac.mjs") },
   base: "./",
   plugins: [yamlPlugin(), aboutPlugin(), svelte(), themeCssPlugin(), chunkModulesPlugin(), pwaLite()],
   // R294 (archive/r21-chunks.md): every module an entry imports statically stays in the one start chunk, so a lazy chunk that imports a start value no longer makes Rolldown cut it out into shared files.
-  build: { target: "es2022", manifest: true, rolldownOptions: { output: { codeSplitting: { groups: [{ name: "start", tags: ["$initial"], priority: 100 }] } } } },
+  build: { target: "es2022", manifest: true, rolldownOptions: { output: { codeSplitting: { groups: [{ name: "start", tags: ["$initial"], priority: 100 }, unitInput] } } } },
   worker: { plugins: () => [yamlPlugin()] }, // golden.worker.ts reads the golden YAML files (A20)
   // spec/keyboard.yaml lives one level above app/
   server: { host: true, fs: { allow: [".."] } },
