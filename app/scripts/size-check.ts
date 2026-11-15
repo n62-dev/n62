@@ -523,8 +523,15 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,101 B (174,728 B raw); with R329 merged in, 62.13 kB (174.87 kB raw), inside R329's pin.
  *  62,100 → 62,190 B (R329): Shift + Vars is Paste, the key's legend and action in the shipped spec, `key.paste` in the
  *  i18n table and its case in route.ts (it reuses pasteText). Phase-1 fd0a9c24 measures 62.09 kB gzip (174.73 kB raw),
- *  the branch 62,140 B (174,872 B raw): 62,140 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 62_190;
+ *  the branch 62,140 B (174,872 B raw): 62,140 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  62,190 → 62,500 B (R265): phase-1 c77461e0 measures 62,139 B gzip (174,888 B raw), the branch merged with it 62,445 B
+ *  (175,746 B raw, +306 B gzip, +858 B raw): a history row typed in the other angle mode shows its DEG or RAD tag and, on
+ *  a recall that changes nothing, a note (History.svelte, the history.angleNote string in en.ts), the recall's record
+ *  (App.svelte) and typedIn, the mode the row was typed in (session.svelte.ts, storedItem.ts reads it back); all of it is on the
+ *  start's own drawing of the stored history. A cut was looked for: folding History's muted lines into one list saved raw
+ *  bytes but cost gzip. Under the budget of 63 kB (decisions.md Start chunk room). 62,445 B + 0.05 kB, rounded up to
+ *  the next 10 B. */
+export const START_PIN_GZIP = 62_500;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
