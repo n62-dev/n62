@@ -15,6 +15,7 @@ import { GROW_MATRIX, type Grown } from "./matgrow.ts";
 export { isInfixWord } from "./boxes.ts"; // R197: for the Help key's chunk (cursorFn.ts FnWords), from the chunk that holds boxes.ts
 
 export { SelectChain } from "./grow.ts"; // R279: Select and Deselect, loaded with the field
+export { bare, callRange } from "./callRange.ts"; // R324: the call Help's Insert replaces, for the Help key's chunk
 export { Grown } from "./matgrow.ts"; // R185: the matrices Shift + 5 made, loaded with the field
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */
