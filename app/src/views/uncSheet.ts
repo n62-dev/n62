@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R327 (the owner, 2026-11-15): the uncertainty sheet, opened by Shift + 1 (keyboard/route.ts) on a row with σ (state/
-// hasSigma.ts): its head as the mockup draws it (docs/mockups/uncertainty-sheet.html sections 3 and 4): the result it
-// explains with its mark, the short form "39.5(12)", the standard uncertainty σ, U = 2σ (k = 2) and relative σ, and the
-// ⚠ line of a σ first order does not hold for. A unit row reads G273's fields (U from the unrounded σ, never 2 × the shown
-// σ); a Home row its σ facts as the σ line does (state/sigmaLine.ts) and its value for relative σ and the short form
-// (units/uncertainty.ts). Under the head nothing yet: R328 adds the inputs' rows. A chunk of its own, loaded by the key.
+// R327 (the owner, 2026-11-15): the uncertainty sheet, opened by Shift + 1 (keyboard/route.ts) on a row with σ (hasSigma):
+// its head as the mockup draws it (docs/mockups/uncertainty-sheet.html sections 3 and 4): the result it explains with its
+// mark, the short form "39.5(12)", the standard uncertainty σ, U = 2σ (k = 2) and relative σ, and the ⚠ line of a σ first
+// order does not hold for. A unit row reads G273's fields (U from the unrounded σ, never 2 × the shown σ); a Home row its
+// σ facts as the σ line does (state/sigmaLine.ts) and its value for relative σ and the short form (units/uncertainty.ts).
+// Under the head nothing yet: R328 adds the inputs' rows. A chunk of its own, loaded by the key; a row without σ is a dead
+// press from here, so the start chunk carries only the key's import.
 import type { HistoryItem } from "../state/session.svelte.ts";
 import type { RouteCtx } from "../keyboard/route.ts";
 import { decimalToString, isZero } from "../engine/format.ts";
 import { uncText } from "../i18n/enUnc.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { commaResult, modeOf, type FmtMode } from "../state/displayMode.ts";
-import { hasSigma } from "../state/hasSigma.ts";
 import { expandedSigmaText, sigmaText } from "../state/sigmaLine.ts";
 import { relativeSigma, shortForm } from "../units/uncertainty.ts";
 import type { UncWhy } from "../units/types.ts";
 
-export { hasSigma };
+/** A row "with σ": a finished Home row whose facts carry σ and its digits (the σ line's own test, state/sigmaLine.ts), or a
+ *  unit row with σ (UnitRow.unc). */
+export const hasSigma = (item: HistoryItem | undefined): item is HistoryItem =>
+  item?.status === "done" && (item.units?.unc !== undefined || (item.facts?.uncSigma !== undefined && item.facts.uncDigits !== undefined));
 
 /** What the head reads besides the row: its mark and number as the history draws them, its notation and digits. */
 export interface HeadCtx {
@@ -93,8 +96,9 @@ export function uncHead(item: HistoryItem, ctx: HeadCtx): UncHead | null {
   };
 }
 
-/** Open the sheet of `item` over the view (Esc closes it); a row without σ is a dead press. */
-export function showUncertainty(c: RouteCtx, item: HistoryItem): void {
+/** Open the sheet of `item` over the view (Esc closes it); no row, or one without σ, is a dead press. */
+export function showUncertainty(c: RouteCtx, item: HistoryItem | undefined): void {
+  if (!hasSigma(item)) return c.dead();
   const s = c.session;
   const { units: _, ...bare } = item; // (the number alone: the head puts the unit after it)
   const head = uncHead(item, {
