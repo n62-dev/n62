@@ -75,6 +75,7 @@ describe.skipIf(!hasIndex)("the generated index carries where", () => {
     expect(byId.get("fn:asin")?.where).toBe("Shift sin");
     expect(byId.get("fn:exp")?.where).toBe("Shift ln");
     expect(byId.get("fn:sqrt")?.where).toBe("Shift x², Tmpl");
+    expect(byId.get("fn:par")?.where).toBe("Shift ( )"); // R323: Shift + ( ) inserts par() (Find's default insert)
   });
 
   it("palette functions name the key that opens the palette, through the label's i18n token", () => {

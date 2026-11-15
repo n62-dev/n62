@@ -144,7 +144,7 @@ export class ClipActions {
       return this.copy(item);
     }
     this.ops.acted?.("copy");
-    return this.copyRaw(entryText(latex));
+    return this.copyRaw(entryText(latex, this.opts));
   }
   copy(item?: HistoryItem): Promise<boolean> {
     return this.serial(() => this.copyNow(item));
@@ -229,9 +229,10 @@ export class ClipActions {
     // in the chain, so a second press waits for the first save; a chunk that does not load (offline after an update) says so
     return this.serial(async () => {
       try {
-        const [m, about] = await Promise.all([import("./workReport.ts"), import("virtual:about"), loadForms()]);
+        const [m, about, forms] = await Promise.all([import("./workReport.ts"), import("virtual:about"), loadForms()]);
         const s = this.session;
-        this.say(await m.saveWork(s.items, s, { version: about.default.version, now: new Date(), view: s.view }));
+        const word = forms?.wordStore.value; // R305: the word the base forms are drawn in, named in the header
+        this.say(await m.saveWork(s.items, s, { version: about.default.version, now: new Date(), view: s.view, ...(word ? { word } : {}) }));
       } catch {
         this.say(tc("export.failed"));
       }

@@ -3,7 +3,7 @@
 // constant, the slots as tokens) becomes a UnitJob, Giac text in which every unit is its exact SI factor from the
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
 import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, unitProduct } from "./dims.ts";
-import type { FactorTable, UnitFactor } from "./factors.ts";
+import { isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
 import { balanced, closing, mapNames, names, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
@@ -54,7 +54,7 @@ function numberDims(key: string): string {
  *  is its factor a without the offset b. `dims` writes the dimension symbols (numberDims leaves them out, G319). */
 function tokenGiac(t: UnitToken, below: boolean, table: FactorTable, interval: boolean, dims = dimSymbols): string {
   const u = table.units.get(t.unit);
-  if (!u) throw new Refused({ error: "engine", detail: `no unit ${t.unit} in the index` });
+  if (!u) throw new Refused(isOwnId(t.unit) ? { error: "own", name: t.unit.slice(OWN_PREFIX.length) } : { error: "engine", detail: `no unit ${t.unit} in the index` });
   if (LOGARITHMIC.has(t.unit) || /Np/.test(u.dim ?? "")) throw new Refused({ error: "logarithmic", unit: u.symbol });
   if (!u.si || u.dim === undefined) throw new Refused({ error: "nofactor", unit: u.symbol });
   const affine = u.si.split("+");
@@ -245,13 +245,13 @@ function sigmaFacts(req: UnitRequest): SigmaFacts | undefined {
 }
 
 /** R271: a slot's factor to SI without its dimension symbols, °C and °F as an interval (a σ has no offset). */
-function slotFactor(slot: UnitSlot, table: FactorTable): string {
+export function slotFactor(slot: UnitSlot, table: FactorTable): string {
   const per = slot.per ?? slot.tokens.length;
   return mapNames(`(${slot.tokens.map((t, i) => tokenGiac(t, i >= per, table, true)).join("*")})`, (n) => (n.name.startsWith("pasdim") ? "1" : null), "typed");
 }
 
 /** R271: a slot's dimension key, from its units' keys and powers (exact fractions). */
-function slotDim(slot: UnitSlot, table: FactorTable): string {
+export function slotDim(slot: UnitSlot, table: FactorTable): string {
   const per = slot.per ?? slot.tokens.length;
   const sum = new Map<string, [bigint, bigint]>();
   const frac = (e: string): [bigint, bigint] => {
@@ -315,8 +315,13 @@ export function powerKinds(slots: readonly UnitSlot[], table: FactorTable): stri
   return [...kinds];
 }
 
-/** G40: whether a slot holds a cycle unit: rpm, rev, Hz or a unit made of them (kHz). */
-const hasCycles = (slots: readonly UnitSlot[]): boolean => slots.some((s) => s.tokens.some((t) => /rpm|rev|Hz/.test(t.unit)));
+/** G40: whether a slot holds a cycle unit: rpm, rev, Hz or a unit made of them (kHz). Find's ids only: a unit of your own
+ *  is never one (userUnits.ts refuses one built from them), whatever its name holds (`@brevet`, G233 fix round 1). */
+const hasCycles = (slots: readonly UnitSlot[]): boolean => slots.some((s) => s.tokens.some((t) => !isOwnId(t.unit) && /rpm|rev|Hz/.test(t.unit)));
+
+/** G233: a unit whose rules go by its id (a level, a cycle unit, a kind of power): a unit of your own made of it would
+ *  lose them, so userUnits.ts refuses it. */
+export const rulesById = (id: string): boolean => LOGARITHMIC.has(id) || POWER_KIND[id] !== undefined || hasCycles([{ tokens: [{ unit: id }] }]);
 
 /** The end slot's part of a job. */
 function endJob(req: UnitRequest, table: FactorTable): Pick<UnitJob, "end" | "endOffset" | "endLog" | "endUnit" | "endSlot"> {

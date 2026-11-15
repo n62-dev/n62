@@ -84,6 +84,9 @@ export interface Case {
    *  slot syntax). */
   tap?: string;
   target?: string;
+  /** units.yaml, G233: units of your own the case defines first (units/userUnits.ts), `of` in unit-case.ts slot syntax; a
+   *  definition refused gives the case its message (validateDef against Find and the case's definitions before it). */
+  define?: { name: string; factor: string; of: string }[];
   exact?: string;
   dim?: string | null;
   /** units.yaml, G25: the unit the value is shown in ("" for a pure number) and the dimension as text. */

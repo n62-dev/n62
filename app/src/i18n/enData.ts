@@ -61,6 +61,7 @@ export const enData = {
   "part.app.function": "Function app",
   "part.app.solve": "Solve app",
   "part.units.targets": "Unit targets",
+  "part.units.own": "Your units",
   "part.word": "Word size and sign",
   // R59: Settings › Data › Library (decisions.md S4, archive/r10-connector.md)
   "library": "Library",
@@ -97,7 +98,11 @@ export const enData = {
   // R193: Shift + −, the Base menu (views/baseSheet.ts)
   "base.title": "Base",
   "base.notInteger": "Only integers can be shown in a base",
-  "base.noFit": "Does not fit the 64-bit word",
+  // R305: the word in force (Settings › Numbers › Word, R194), and a negative in an unsigned word
+  "base.noFit": "Does not fit the {bits}-bit {sign} word",
+  "base.signed": "signed",
+  "base.unsigned": "unsigned",
+  "base.needsSigned": "A negative number needs a signed word: Settings › Numbers › Word",
   // R184: the labelled result sheet of linreg and stats1 (views/statSheet.ts); a row inserts its value as a chip
   "stat.linreg": "Linear regression",
   "stat.slope": "Slope",

@@ -26,7 +26,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (R224's wide layout turned sideways; N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-8. **decisions.md "Needs the user":** A145's Reproducible Builds box (before the F-Droid request); sign S36's list by 11-17; R269 round trip; R197's Insert; S50's G2 column; R220's key path; S45's units in Solve; R313's 39 kB unit budget.
+8. **decisions.md "Needs the user":** A145's Reproducible Builds box (before the F-Droid request); sign S36's list by 11-17; R269 round trip; R197's Insert; S50's G2 column; R220's key path; S45's units in Solve; the unit view's 42 kB (G233, G234).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5 (`isImplicitArg` takes no matrix, F68) drafted by R75; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -55,7 +55,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **nr1114-be-2, fixed by G353 (patch 0049).** Left: Giac's weighted forms (misc.cc stddevmean) still sum x² in one pass: stored `L:=approx([1/10,1/10,1/10])`, `variance(L,[1,1,1])` is ⚠ -1E-62, `stddev(L,[1,1,1])` ⚠ 1E-31·i. Family 6.
 - **G353's trace (no package).** Before G353 `stats1(L)` of stored floats was ⚠ alone, ≈ after `linreg(L,…)` (facts.ts inherited's check); cause not traced. Family 2.
-- **nr1114, fixed:** vr-1 and vr-5 by R298 (a fast Paste before the field was up; family 11), bu-9 and vr-10 by R312 (typed `2exp(1)`), bu-1, bu-3 and bu-5 by R300 (G2 item 74 open), bu-2 by R302, vr-3 and vr-7 by R301 (Store ▶ on a row), fh-2 by R303 and R313 (Alt+F; letters in a slot), be-1 by R304 (`0B101`).
+- **nr1114, fixed:** vr-1 and vr-5 by R298 (a fast Paste before the field was up; family 11), bu-9 and vr-10 by R312 (typed `2exp(1)`), bu-1, bu-3 and bu-5 by R300 (G2 item 74 open), bu-2 by R302, vr-3 and vr-7 by R301 (Store ▶ on a row), fh-2 by R303 and R313 (Alt+F; letters in a slot), be-1 by R304 (`0B101`), vr-4 and vr-6 by R305 (G2 item 75 open), bu-4 by R306.
 - **Night review 2026-11-14:** the rest in [research/night-review-2026-11-14.md](research/night-review-2026-11-14.md).
 
 ### Background stream (extreme inputs; at night, by reach)

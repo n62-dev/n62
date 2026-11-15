@@ -42,7 +42,7 @@ export function storedText(session: Session, row: HistoryItem | undefined, line:
     const text = session.display(row).text;
     return mark ? `${markText(mark)} ${text}` : text;
   }
-  return import("../clipboard/plaintext.ts").then((m) => m.entryText(before).trim(), () => "");
+  return import("../clipboard/plaintext.ts").then((m) => m.entryText(before, session.decimalComma ? { decimalComma: true } : {}).trim(), () => "");
 }
 
 /** The name the store types for `typed` (letters and digits from the filter, or a stored name as drawn): one letter as

@@ -303,7 +303,8 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix sheet (built, R187–R190: functions 1–8, New 9, stored matrices, grid); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift is reserved (R322) | ours; decisions.md "Settings in the Mode sheet, and presets" |
-| Unassigned Shift cells (Vars, a b/c, `( )`, 1, 0, Fmt; `,` is ± since R71; the pad has no Shift layer, P12 point 7) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
+| Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); % (`\%`, the Shift + 9 palette's cell) (built, R323) | owner, 2026-11-14; docs/06 3b |
+| Unassigned Shift cells (Vars, a b/c, 1, Fmt; `,` is ± since R71; the pad has no Shift layer, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 
 ### 5.2 Decision: how key presses are counted (EN0)
@@ -350,13 +351,13 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
 | `view`, `place`, `entry` | the open view and app; the half-typed line |
 | `history` | ≤ 200 items per view, with `full` (≤ 2 kB) and the mark facts |
-| `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. `restore()` replays values, assumptions and typed inputs; a function (one balanced command) stays pending until `need()` loads it: pending names that are words in the input, then, transitively, those in each loaded body or stored value it reads, in one batch; `VARS`, `expr`, `rm_all_vars`, `restart` load all; redefining or purging a pending name drops it. **Variables are kept as their value**, not their command: `B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`; functions and `assume` keep their command; symbolic values replay first; a library function keeps its `desc`; a name a command stores through an argument (`QR(M,Q,R)`, stores.ts ARG_STORE_HEADS) is logged as any value, Giac's own names (`lastgb`, `lastv`) are put back after the input, and `restart`'s answer is the list of the user's names it cleared (G174) |
+| `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. **Variables are kept as their value**, not their command (`B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`); functions and `assume` keep their command. `restore()` replays them; a function stays pending until an input needs it (G83), names stored through an argument, Giac's own names and `restart` (G174): `engine/host.ts`, `stores.ts` |
 | `defsStarts` | starts that ran the replay and never got ready (a load failure is not counted, G327); at 2 the engine starts without the log |
 | `tipsSeen` | tips shown |
 | `historyDropNoted` | the note "older rows are dropped after 200" was said (per install, not backed up) |
 | `userKeys`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
-| `units.targets` | the last target per dimension |
+| `units.targets`, `units.own` | the last target per dimension; your units (`units/ownRecord.ts`, as strict at a restore as at the start; ids `@name`, G233) |
 | `word` | `{ bits, signed }` (R194) |
 | `uses` | the results mode's counts (R53, `state/uses.svelte.ts`), for decisions.md P16's removal test; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo`, `sync.queue` | not backed up |
@@ -446,7 +447,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB (2026-10-18) | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |
 | Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB (2026-10-15) | size test |
-| Unit view chunks | ≤ 39 kB raw (entries); pin 72.55 kB with shared ones (R313) | 38.92; 72.50 kB (R313) | size test |
+| Unit view chunks | ≤ 42 kB raw (entries); pin 78.55 kB with shared | 41.96; 78.48 kB | size test |
 | Precache total | ≤ 18 MB | 12.4 MB (2026-10-18) | size test |
 | Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions; nothing stored (A73f1, 11-08): Home 790 / 1330 ms, CAS last 795 / 1507 ms (in the worker's wasm instantiate: A73f2) | device runs |
 | Enter → result p95 (Tab One) | < 150 ms at 12 digits; at 30 digits ≤ 1.3 × the 12-digit p95 | RAD 147.9 ms at 12, 152.6 at 30; DEG 149.1 and 141.4 | device runs |

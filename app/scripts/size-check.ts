@@ -142,8 +142,22 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  69.95 → 72.55 kB (R313): phase-1 145a2b0e measures 69,559 B, the branch 72,496 B (open 28,026 → 29,312, slot 10,379 →
  *  12,030): letters typed on a hardware keyboard into a slot read as a unit (slot.ts readSymbol, isLetters and the slot's
  *  letter run, with the catalogue's names; typed.ts, the view's typing keys and `^2`; view.ts, the run's glue). 72,496 B +
- *  0.05 kB, rounded up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 72_550;
+ *  0.05 kB, rounded up to the next 0.01 kB.
+ *  72.55 → 76.05 kB (G233): phase-1 0d8a7e48 measures 72,465 B, the branch 76,000 B (calc 429 → 3,191 with userUnits.ts,
+ *  slot 12,004 → 12,671 with the units.own.* words in the i18n table and exactFactor exported, factors 16,900 → 16,975 with
+ *  build.ts's slotDim, slotFactor and rulesById exported; fix round 1, +31 B: OWN_PREFIX in factors.ts and build.ts's cycle
+ *  check skipping own ids): a unit of your own built from Find's units. 76,000 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  76.05 → 78.30 kB (G234): phase-1 165ad133 measures 76.00 kB, the branch 78.24 kB (+2.24 kB; the entries 41.66 → 41.96
+ *  kB, under their 42 kB): the stored units, ownRecord.ts (the record's shape check, which a restore runs too, in a shared
+ *  chunk of its own, 1.8 kB with decimal() and goodName() moved out of userUnits.ts), the store ownUnits.ts that
+ *  calc.ts reads, the refusal of a unit with no definition (build.ts, messages.ts) and its words. A cut was tried: the
+ *  store as a rune class cost +0.1 kB more; findClash and ownUnitItem are not in these chunks. 78.24 kB + 0.05 kB, rounded
+ *  up to the next 0.01 kB.
+ *  78.30 → 78.55 kB (G234 fix round 2): the branch measured 78.27 kB, 78.48 kB with the fix (+0.21 kB: a unit slot that
+ *  holds a deleted own unit draws and reads its name without OWN_PREFIX, slot.ts; replace refuses a taken name and the
+ *  start reads the first definition of a name, ownUnits.ts and ownRecord.ts). Cuts tried: a method in the slot model
+ *  instead of a function, +0.04 kB; one `free` check for add and replace, nothing. 78.48 kB + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 78_550;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -170,8 +184,12 @@ function subjects(manifest: Record<string, ManifestChunk>, all: string[], module
   // phase-1 145a2b0e measures 37.64 kB, the branch 38.92 kB: the hardware keyboard's letters in a slot (typed.ts and the
   // view's glue in open's chunk, +1.28 kB; the slot's own part is in the shared row below). Why a raise: the night
   // report of 2026-11-14 says "the next unit package must raise the pin or cut". The owner kept the raise (2026-11-14):
-  // no split of the typing code, which is +1.28 kB in a lazy chunk, outside the start chunk.
-  add("Unit view chunk", dynamic("src/units/"), { rawMax: 39 * KB });
+  // no split of the typing code, which is +1.28 kB in a lazy chunk, outside the start chunk. 42 kB (G233): phase-1
+  // 0d8a7e48 measures 38.92 kB, the branch 41.66 kB: a unit of your own as a row of the factor table (units/userUnits.ts
+  // mergedTable in the builder's chunk, +2.74 kB: the exact factor of its `of` and the checks a stored definition needs;
+  // validateDef, findNames and factorText are not in it). A cut was tried: nothing of it can wait for a later chunk, since
+  // the builder reads every own unit of a request.
+  add("Unit view chunk", dynamic("src/units/"), { rawMax: 42 * KB });
   // G163: Rollup hoists the units modules that two lazy chunks import (factors.ts with the builder, slot.ts, the cells'
   // store) into shared chunks, which the row above does not see (as finder.ts once was for Find). This row is the unit
   // view's whole code: its entries plus every shared chunk that holds a src/units/ module. Its bar is a pin at today's
@@ -485,8 +503,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  measures 62,301 B (175,648 B raw), after it 62,321 B (175,669 B raw): 62,321 B + 0.05 kB, rounded up to 0.01 kB.
  *  62,380 → 62,390 B (R302): a matrix cell's edit sets the user's line aside where a hide keeps it (apps/shell.svelte.ts
  *  `editAside`, read by main.ts's onClear and flush). Phase-1 d3c84b9c measures 62,297 B gzip (175,648 B raw), the branch
- *  62,306 B (175,685 B raw); with G355 merged in, 62,332 B (175,706 B raw): 62,332 B + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 62_390;
+ *  62,306 B (175,685 B raw); with G355 merged in, 62,332 B (175,706 B raw): 62,332 B + 0.05 kB, rounded up.
+ *  62,390 → 62,470 B (G234 fix round 1): units/open.ts imports the store of your units (ownUnits.ts, and with it ownRecord.ts)
+ *  to add them to Find's items in the unit view, so the start chunk's list of the files the unit view loads holds two more
+ *  names (no code of it is in the start chunk). The branch before the round measures 62.38 kB gzip (175.87 kB raw), after it
+ *  62.41 kB (175.92 kB raw). Tried: the store read from find.ts and from calc.ts (the start chunk +0.03 and +0.04 kB, and the
+ *  unit view's entries over their budget). 62.41 kB + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 62_470;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

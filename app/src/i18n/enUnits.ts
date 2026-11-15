@@ -112,6 +112,19 @@ export const enUnits = {
   "units.tool.needsUnit": "needs a result with a unit",
   "units.tool.isSI": "the result is in its SI form",
   "units.tool.notBuilt": "not built yet",
+  // G233: a unit of your own refused (units/userUnits.ts): {name} as given, {unit} and {prefix} Find's symbols
+  "units.own.name": "A name is letters, digits and _, a letter first (at most 24)",
+  "units.own.clash": "Find already has {name} ({unit})",
+  "units.own.pair": "{name} reads as {prefix} and {unit} in Find",
+  "units.own.gone": "Your unit {name} is not defined (any more)",
+  "units.own.nowFind": "{name} is now also Find's {unit}; yours keeps its value",
+  "units.own.twice": "You already have a unit {name}",
+  "units.own.factor": "{factor} is not a number (one decimal mark, no group separator)",
+  "units.own.zero": "The factor must be above 0",
+  "units.own.ofEmpty": "Give the units it is made of",
+  "units.own.unknown": "{unit} is not in Find's unit list",
+  "units.own.ofOwn": "Build it from Find's units ({unit} is your own)",
+  "units.own.ofKind": "{unit} has rules of its own (an offset, a level, turns, a kind of power or no factor)",
 } as const satisfies Record<string, string>;
 
 export type UnitMessageKey = keyof typeof enUnits;
