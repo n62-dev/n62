@@ -127,16 +127,16 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Complex | `a+b*i`, each part as above | yes | yes | yes |
 | List, matrix | `{a,b}`, `[[a,b],[c,d]]`, elements as above; with decimal comma `{1,5;2}`, `[[a;b];[c;d]]` | yes | yes | yes |
 | Solve root, analysis value | full value | yes | — | — |
-| Num table | CSV (Menu, Export): header row with the function names, full values, `.` and `,` as separator (`;` with decimal comma) | — | — | — |
-| Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
+| Num table | CSV (Menu, Export): a header of the function names, full values, `,` between them (`;` with decimal comma) | — | — | — |
+| Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (As shown and Share too; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
-**Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes.
+**Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text.
 
-**Paste** (☰ 7; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3`, `1.5E-3`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else gives "Paste: not a number", a unit Find lacks "Paste: unit … not found". Pasting a result copied from N62 gives the same value back (P5; with decimal comma not a list of one decimal).
-**Session line** (G210, v0): one JSON line per result; its format: `state/sessionLine.ts`.
-**Copy as Python** (G213, G214): sympy through a closed allow-list (`clipboard/python.ts`); the rest is `# N62 NOT TRANSLATED`.
-**Mechanics:** the APK uses `@capacitor/clipboard` and `@capacitor/share`; the PWA `navigator.clipboard`, and `navigator.share` where it exists, else copy. Files go out through the native `save` (`ACTION_CREATE_DOCUMENT`) in the APK and `<a download>` in the PWA, and come in through `<input type="file">`.
+**Paste** (☰ 7; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal).
+**Session line** (G210, v0): one JSON line per result, format in `state/sessionLine.ts`.
+**Copy as Python** (G213, G214, G216, G217): sympy through a closed allow-list (`clipboard/python.ts`), units through pint, σ through uncertainties (a ufloat per typed ± and per chip, R115; a non-affine row notes σ's second order); the rest is `# N62 NOT TRANSLATED`.
+**Mechanics:** APK: `@capacitor/clipboard`, `@capacitor/share`, files out by native `save` (`ACTION_CREATE_DOCUMENT`); PWA: `navigator.clipboard`, `navigator.share` (else copy), `<a download>`; files in by `<input type="file">`.
 
 ### 2.7 Decision: SI prefix display, and prefix entry
 

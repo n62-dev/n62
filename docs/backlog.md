@@ -35,9 +35,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
 - **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
-- **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
+- **F237 (A139, R333; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
 - **F238 (A139; ron).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
-- **F239 (G341's step 1).** A body with a float == or ≠ test (`f(x):=x==0.5`) exports with our `pasinexact`, `pasdiff`, `pasverdict`, `a_`, `b_`, `d_`; the import refuses it: no round trip through a library file. Family 8.
+- **F239 (G341's step 1, G377).** A body with a float == or ≠ test (`f(x):=x==0.5`) exports with our `pasinexact`, `pasdiff`, `pasverdict`, `a_`, `b_`, `d_`; the import refuses it: no round trip through a library file. Family 8.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
 - **F73 (lists, strings: G172).** A list or matrix element only a double values shows its number with ⚠ (longer than 32 elements: Giac's text). Left: `hasFloat` reads `1..3` as a float. Families 5, 6.
@@ -47,7 +47,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F215, no package (G328's rest, run 1033).** A name set beside the result keeps the line's ⚠ after a decision or inexact chip: `(A:=5)*floor(sin(10^100)*10^12)`. Family 1.
 - **F221 (G322; pass 141).** An inequality's bound shows as Giac's rootof: `solve(x^3-x-1<0,x)` is `{x<(-rootof(…)/54)}`, not x<1.32471795724. After the tag.
 - **F209, no package (G179's Not done).** A stored ≈ float through a user function is ⚠: `H:=evalf(sqrt(2))`, `f(t):=t`, `f(H)` (why: f unaudited). A rule needs care: such a line can still rest on an unaudited decision (`when`). Family 1.
-- **F184, no package (owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:156) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
+- **F184 (R334; owner, 2026-11-06).** `iⁱ` cannot be typed: xʸ (`#@^{#?}`, spec/keyboard.yaml:156) right after Shift+2's `\imaginaryI` does not give i a power. Cause not checked.
 - **F172, A73f2 (after the tag).** Stored history costs nothing, the rows drawn at start do (bar 1.5 s): a CAS-last cold start is 1507 ms against Home's 1323; A73f2 says where.
 - **F196, G301 built.** CAS DEG reduces a constant's `pi/180` quotient; a free name or Home keeps it, 5+ `sqrt` are slow (open).
 - **F198, no package (named limit).** `1/0`, `tan(90°)` show `infinity` unmarked; `0/0` is refused (G168).
@@ -75,7 +75,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
-- **F181 (G175's probe).** Home `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i (CAS right): `sym2poly.cc` sym2rxrootnum picks the root by the arg of evalf(z²), which lies on the cut with a rounding imaginary part. Family 3.
+- **F181 (G175's probe, G378).** Home `simplify(sqrt(acosh(-1/2)^2))` ≈ -2.09439510239·i, right +2.09439510239·i (CAS right): `sym2poly.cc` sym2rxrootnum picks the root by the arg of evalf(z²), which lies on the cut with a rounding imaginary part. Family 3.
 - **F138 (G177).** CAS DEG `evalf(cos(atan(2*i)))` shows -1.37121078136E-60-0.57735026919·i after earlier golden cases (right -0.57735026919·i, as a fresh engine gives): state leaks between cases. Row `g177-cas-deg-evalf-cos-atan-2i` (pending). Family 2.
 - **F240, no package (G226's census).** Find's `convert(129,2,1/2)` is `pnt[129,1/2]` or `[129,1/2]` by what ran before: prog.cc:9345 takes the subtype from the fraction's pointer bits. Family 2.
 - **F161, fixed by G154 (left, no package).** An underflow whose size Giac cannot state (`exp(-10^30)+exp(-10^31)`: no finite re(lnexpand(ln(e))), e^(10^-1000) is 0) shows ⚠ 0 again, as before G84; was "Underflow". Family 3.
