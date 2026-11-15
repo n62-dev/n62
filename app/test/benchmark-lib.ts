@@ -60,6 +60,13 @@ function cellProblems(tool: string, c: Cell | undefined): string[] {
   return bad;
 }
 
+const NUMERIC = /^-?\d+(\.\d+)?([eE][-+]?\d+)?$/;
+/** `text` is a read-out and `value` the true value: both numbers agree to 12 digits (relative 1e-11, as tasks-lib validate()). */
+const near = (text: string, value: string): boolean => {
+  const a = Number(text), b = Number(value);
+  return a === b || Math.abs((a - b) / b) < 1e-11;
+};
+
 /** Problems with the benchmark file (empty = fine). Needs no browser. `ten` false skips the count (a test of one task). */
 export function validateBenchmark(tasks: readonly BenchTask[], keys: ReadonlySet<string>, ten = true): string[] {
   const bad: string[] = [];
@@ -78,8 +85,16 @@ export function validateBenchmark(tasks: readonly BenchTask[], keys: ReadonlySet
     compare: { g2_virtual_calc: null, phone_calculator: null },
   });
   bad.push(...validate(tasks.map(asTask), keys));
+  // a YAML anchor would make the compare blocks one object: a measurement written under one task would show on all
+  if (new Set(tasks.map((t) => t.compare)).size !== tasks.length) bad.push("two tasks share one compare object (a YAML anchor?)");
   for (const t of tasks) {
     const at = (m: string): number => bad.push(`${t.id}: ${m}`);
+    // text is tied to the true value where it is a plain number; `1/2*pi` and `0b111100` are not numbers and are skipped
+    const texts = [t.expect?.text].flat(), values = [t.expect?.value].flat();
+    if (texts.every((x) => typeof x === "string" && NUMERIC.test(x))) {
+      if (texts.length !== values.length) at(`expect.text has ${texts.length} elements, expect.value ${values.length}`);
+      else texts.forEach((x, i) => near(x as string, String(values[i])) || at(`expect.text[${i}] ${String(x)} is not expect.value[${i}] ${String(values[i])} to 12 digits`));
+    }
     if (!["rad", "deg", "none"].includes(t.angle)) at(`angle is ${String(t.angle)}`);
     if (!Array.isArray(t.keys) || t.keys.length === 0) at("no keys");
     if (!t.compare || typeof t.compare !== "object") {

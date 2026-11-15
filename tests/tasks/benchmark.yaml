@@ -28,7 +28,7 @@ tasks:
     source: derived   # 4700 × 10000 / (4700 + 10000) = 470000/147
     keys: [{up: paren}, d4, d7, d0, d0, comma, d1, emark, d4, enter]   # par() on a flick up on ( ); 1ᴇ4 is shorter than 10000
     expect: { value: "3197.27891156462585034013605442", text: "3197.27891156" }
-    compare: &empty
+    compare:
       g2: { presses: null, seconds: null, source: null, date: null }
       qalculate: { presses: null, seconds: null, source: null, date: null }
       phone_calculator: { presses: null, seconds: null, source: null, date: null }
@@ -40,7 +40,10 @@ tasks:
     # 7 2, the units key (a flick up on Tmpl), k m ÷ h, a flick up on Enter evaluates, a tap on the m/s alternative
     keys: [d7, d2, {up: tmpl}, d4, d9, div, {up: d3}, {up: enter}, {tap: "alt:m/s"}]
     expect: { value: "20", text: "20", unit: m/s }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t04
     title: Circumference 2π r with r = 25 mm, result in m
@@ -49,17 +52,23 @@ tasks:
     # 2 × π × 2 5, the units key, Enter (past the 2's slot), m m, a flick up on Enter evaluates, a tap on the SI alternative
     keys: [d2, mul, {up: d3}, mul, d2, d5, {up: tmpl}, enter, d1, d9, {up: enter}, {tap: "alt:si"}]
     expect: { value: "0.157079632679489661923132169164", text: "0.157079632679", unit: m }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t07
     title: 0xFF AND 0x3C, shown in binary
     angle: none
     source: derived   # 0xFF = 11111111, 0x3C = 00111100, AND = 00111100 = 60
     # Math, a n d (Find's first hit is bitand), Enter; 0 x F F (Alpha, then the key lettered F, twice), `,`, 0 x 3 C; Enter;
-    # Shift + − (the Base menu), 2 (the BIN row)
-    keys: [math, vars, paren, x, enter, d0, x, alpha, pow, alpha, pow, comma, d0, x, d3, alpha, tmpl, enter, shift, sub, d2]
+    # a flick up on − (Shift + −: the Base menu; a tap on Shift then − opens it under the touch and counts a stray row tap), 2 (the BIN row)
+    keys: [math, vars, paren, x, enter, d0, x, alpha, pow, alpha, pow, comma, d0, x, d3, alpha, tmpl, enter, {up: sub}, d2]
     expect: { value: "60", text: "0b111100" }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t08
     title: Solve a 3×3 linear system
@@ -70,7 +79,10 @@ tasks:
     names: [x, y, Z]
     keys: ["@place", d4, x, add, {up: x}, add, {down: d2}, {up: dot}, d6, enter, down, d2, x, sub, {up: x}, add, {down: d2}, {up: dot}, d3, enter, down, x, add, d2, {up: x}, sub, {down: d2}, {up: dot}, d2, enter, "@num", "@menu", d1]
     expect: { value: ["1", "2", "3"], text: ["1", "2", "3"] }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t09
     title: Mean and sample standard deviation of ten readings
@@ -80,7 +92,10 @@ tasks:
     read: rows
     keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, x, enter, x, enter]
     expect: { value: ["9.81", "0.0182574185835055371152323260934"], text: ["9.81", "0.0182574185835"] }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t10
     title: (12.34 ± 0.05) m × (3.2 ± 0.1) m, with uncertainty
@@ -89,7 +104,10 @@ tasks:
     # 1 2 . 3 4 ± (Shift + `,`) 0 . 0 5 × 3 . 2 ± 0 . 1, the units key, m, Enter, m, a flick up on Enter evaluates
     keys: [d1, d2, dot, d3, d4, shift, comma, d0, dot, d0, d5, mul, d3, dot, d2, shift, comma, d0, dot, d1, {up: tmpl}, d9, enter, d9, {up: enter}]
     expect: { value: "39.488", text: "39.488", shown: "39.5 ± 1.2", unit: "m²" }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t11
     title: ∫₀^π sin²x dx, exact
@@ -98,7 +116,10 @@ tasks:
     # Apps › CAS (place, 2), the integral template (Tmpl, a tap on its cell), 0 ▶ π ▶ sin x ▶ x² ▶ x, Enter; the CAS view gives the exact 1/2*pi
     keys: ["@place", d2, tmpl, {tap: "cell:integral"}, d0, right, {up: d3}, right, sin, x, right, sq, right, x, enter]
     expect: { value: "1.57079632679489661923132169164", text: "1/2*pi" }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t12
     title: The root of cos x = x
@@ -109,7 +130,10 @@ tasks:
     names: [x]
     keys: ["@place", d4, "@symb", cos, x, right, {up: dot}, x, enter, "@num", "@menu", d1]
     expect: { value: "0.739085133215160641655312087674", text: ["0.739085133215"] }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
 
   - id: t13
     title: 3.2 · sin(25°) / 4.7, then the same with 27° by editing
@@ -119,4 +143,7 @@ tasks:
     read: rows
     keys: [d3, dot, d2, mul, sin, d2, d5, right, div, d4, dot, d7, enter, {tap: "input:last"}, {tap: "input:last"}, left, up, left, bksp, d7, enter]
     expect: { value: ["0.287740093100050679957091737632", "0.309099914716287177232618462201"], text: ["0.2877400931", "0.309099914716"] }
-    compare: *empty
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }

@@ -3,7 +3,7 @@
 // from their own file on the real engine. Each task starts from the start state (the angle set through the session, not
 // counted), presses its `keys` and reads what the protocol expects. One table is printed: task, presses, angle.
 // `seconds` stay null here: a replay at machine speed says nothing about a hand.
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { start, replayTask } from "./tasks-play.ts";
 import { benchmarkPresses, loadBenchmark, validateBenchmark, type BenchTask, type Cell } from "./benchmark-lib.ts";
 import { keyIds } from "./tasks-lib.ts";
@@ -12,6 +12,8 @@ const tasks = loadBenchmark();
 const rows: string[] = [];
 const keys = keyIds();
 const task = (id: string): BenchTask => tasks.find((t) => t.id === id) as BenchTask;
+/** The app's own counter of every press (R70): what docs/04 5.2 counts, as in tasks.spec.ts. */
+const pressed = (page: Page): Promise<number> => page.evaluate(() => window.n62.session.taps.counts.presses);
 const blank = (): Cell => ({ presses: null, seconds: null, source: null, date: null });
 /** A copy of t01 with `change` applied, for the rejection tests. */
 const variant = (change: (t: BenchTask) => void): BenchTask => {
@@ -26,6 +28,23 @@ test.describe("benchmark.yaml", () => {
     expect(tasks.map((t) => t.id)).toEqual(["t01", "t02", "t04", "t07", "t08", "t09", "t10", "t11", "t12", "t13"]);
     expect(validateBenchmark(tasks, keys)).toEqual([]);
     for (const t of tasks) expect(Object.keys(t.compare).sort(), t.id).toEqual(["g2", "phone_calculator", "qalculate"]);
+  });
+
+  test("the ten compare blocks are ten objects: a measurement under one task shows under no other", () => {
+    const fresh = loadBenchmark();
+    expect(new Set(fresh.map((t) => t.compare)).size).toBe(10);
+    (fresh[0] as BenchTask).compare.g2.presses = 9;
+    expect(fresh.slice(1).every((t) => t.compare.g2.presses === null)).toBe(true);
+    expect(validateBenchmark(fresh.map((t, i) => (i === 1 ? { ...t, compare: (fresh[0] as BenchTask).compare } : t)), keys).some((m) => m.includes("share one compare"))).toBe(true);
+  });
+
+  test("expect.text is tied to expect.value to 12 digits; a non-number text is skipped", () => {
+    expect(rejects(variant((t) => (t.expect.value = "3197.2789")), "expect.text[0]")).toBe(true);
+    expect(rejects(variant((t) => (t.expect.value = ["3197.27891156"])), "to 12 digits")).toBe(false);
+    expect(rejects(variant((t) => (t.expect.text = ["3197.27891156", "1"])), "elements")).toBe(true);
+    expect(rejects(variant((t) => (t.expect.text = "1/2*pi")), "expect.text")).toBe(false);
+    expect(rejects({ ...task("t13"), expect: { ...task("t13").expect, value: ["0.287740093100050679957091737632", "0.3091"] } }, "expect.text[1]")).toBe(true);
+    expect(rejects({ ...task("t07"), expect: { ...task("t07").expect, value: "61" } }, "expect.text")).toBe(false); // 0b111100 is not read as a number
   });
 
   test("the angle per task: t13 in deg, t11 and t12 in rad, the others none", () => {
@@ -72,6 +91,8 @@ test.describe("replay", () => {
     test(`${id} ${task(id)?.title ?? ""}`, async ({ page }) => {
       const t = task(id);
       await replayTask(page, t);
+      const n = benchmarkPresses(t);
+      expect(await pressed(page), `${t.id}: the app counted ${n} presses by docs/04 5.2`).toBe(n); // setAngle is not a press
       rows.push(`${t.id} | ${String(benchmarkPresses(t)).padStart(8)} | ${t.angle}`);
     });
   }
