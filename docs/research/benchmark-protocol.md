@@ -33,10 +33,10 @@ Ids: the ids of `tests/tasks/tasks.yaml` where the task is the same; t11 to t13 
 **N62 today** (checked 2026-11-13 at `a766ec9c`; the shortest sequences are R222's to find and replay):
 - t01, t02, t04, t10 are active in `tasks.yaml` (budgets 14, 9, 12, 25).
 - t08 through Solve and t09 through Find's `mean` and `stddevp` (sample, n − 1: `app/src/find/rank.test.ts:20`) work; R221 writes their baselines.
-- t07 **works today; the package's "not yet built" is stale.** Number bases have landed: entry of `0x…` (R191, R191f1 `a7214c9b`), the base as a display mode (R192 `240df474`), the Base menu on Shift + − (R193 `0325e5cb`). Evidence: `node tools/probes/parse.ts '\operatorname{bitand}\left(0xFF,0x3C\right)'` gives `bitand(255,60)`; `node tools/probes/engine.ts 'bitand(255,60)'` gives `60`, exact. That BIN draws `0b111100` is **(to verify)**: R222's replay reads it.
+- t07 **works today; the package's "not yet built" is stale.** Number bases have landed: entry of `0x…` (R191, R191f1 `a7214c9b`), the base as a display mode (R192 `240df474`), the Base menu on Shift + − (R193 `0325e5cb`). Evidence: `node tools/probes/parse.ts '\operatorname{bitand}\left(0xFF,0x3C\right)'` gives `bitand(255,60)`; `node tools/probes/engine.ts 'bitand(255,60)'` gives `60`, exact. BIN draws `0b111100`: R222's replay reads it (21 presses).
 - t11: CAS gives `1/2*pi` (`MODE=cas node tools/probes/engine.ts 'int(sin(x)^2,x,0,pi)'`); Home gives the decimal 1.57079632679 only, so the exact result needs the CAS view, and the presses to get there count.
-- t12: `fsolve(cos(x)=x,x,0.7)` in Home gives 0.739085133215, ≈ (engine probe); the Solve app's route is **(to verify)** by R222.
-- t13: in DEG the parser writes `3.2*sin(pasdeg*25)/4.7`, and Home shows 0.2877400931 and, for 27, 0.309099914716 (`ANGLE=deg node tools/probes/engine.ts '3.2*sin(pasdeg*25)/4.7'`). The edit route (recall the row, change 5 to 7) is **(to verify)** by R222.
+- t12: `fsolve(cos(x)=x,x,0.7)` in Home gives 0.739085133215, ≈ (engine probe); the Solve app's route works (R222's replay, 12 presses).
+- t13: in DEG the parser writes `3.2*sin(pasdeg*25)/4.7`, and Home shows 0.2877400931 and, for 27, 0.309099914716 (`ANGLE=deg node tools/probes/engine.ts '3.2*sin(pasdeg*25)/4.7'`). The edit route (recall the row, change 5 to 7) works (R222's replay, 21 presses).
 
 ## 2. The start state (the same for every tool)
 
