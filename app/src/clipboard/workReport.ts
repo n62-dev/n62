@@ -5,7 +5,8 @@
 // standard uncertainty (must-have C decision 8: never `k = 1`). A header with the version (a preview, owner 2026-11-12),
 // the date and the settings that change a value (the angle mode at export; a step computed in another mode, or in one
 // not recorded, says so on its own Angle line, R130f1); one paragraph says the format (also in the format for your AI, R59).
-// Saved through the save port (files.ts). Loaded on the press only (ClipActions.exportWork), never at start.
+// A value drawn in a base names the word in the header, and a signed negative one gives its decimal (R305): `0xFF` alone
+// reads as 255. Saved through the save port (files.ts). Loaded on the press only (ClipActions.exportWork), never at start.
 import type { AngleUnit } from "../calc/port.ts";
 import type { MarkInfo } from "../engine/format.ts";
 import { t } from "../i18n/index.ts";
@@ -13,6 +14,7 @@ import { typedName } from "../render/home.ts";
 import { commaResult, modeOf } from "../state/displayMode.ts";
 import type { HistoryItem, Settings } from "../state/session.svelte.ts";
 import { sigmaText } from "../state/sigmaLine.ts";
+import { DEFAULT_WORD, type WordSetting } from "../state/wordSetting.ts";
 import type { SaveResult } from "./files.ts";
 import { entryText } from "./plaintext.ts";
 import { tc } from "./strings.ts";
@@ -88,10 +90,29 @@ function notesOf(item: HistoryItem): string[] {
 }
 
 const field = (name: string, text: string): string => `- ${name}: ${text}`;
+
+/** The report's head: `word` is the word base forms are drawn in (wordStore; none set: 64 bits, unsigned). */
+export interface ReportHead {
+  version: string;
+  now: Date;
+  view: "home" | "cas";
+  word?: WordSetting;
+}
+
+/** The Value line's text: as shown, and a negative drawn in a base (two's complement, only in a signed word) followed by
+ *  its decimal (R305). `based` is set when the row is drawn in a base. */
+function valueOf(item: HistoryItem, look: ReportLook, based: { any: boolean }): string {
+  const shown = line(withoutMark(look.display(item).text));
+  const mode = modeOf(item, look.settings);
+  if ((mode !== "hex" && mode !== "bin" && mode !== "oct") || !/^0[xbo][0-9A-Fa-f]+$/.test(shown)) return code(shown);
+  based.any = true;
+  const n = item.rational?.n;
+  return n?.startsWith("-") ? `${code(shown)} (${tc("report.inDecimal").replace("{n}", code(n))})` : code(shown);
+}
 const angleName = (a: AngleUnit): string => t(a === "deg" ? "angle.deg" : "angle.rad");
 
 /** The block of one step; null for a row that is no step (running, cancelled, a note). */
-function step(item: HistoryItem, n: number, look: ReportLook): string[] | null {
+function step(item: HistoryItem, n: number, look: ReportLook, based: { any: boolean }): string[] | null {
   if (item.status !== "done" && item.status !== "error") return null;
   const out = [`## ${tc("report.step")} ${n}`, "", field(tc("report.input"), code(line(inputOf(item, look))))];
   // R130f1: rows are not re-evaluated when the mode changes, so a step computed in another mode says which (principle 3)
@@ -102,7 +123,7 @@ function step(item: HistoryItem, n: number, look: ReportLook): string[] | null {
   }
   const why = whyLine(item, look.mark(item), look.settings.digits);
   if (why !== null) out.push(field(tc("report.mark"), line(why)));
-  out.push(field(tc("report.value"), code(line(withoutMark(look.display(item).text)))));
+  out.push(field(tc("report.value"), valueOf(item, look, based)));
   const sigma = sigmaOf(item, look);
   if (sigma !== null) out.push(field(tc("report.uncertainty"), `${sigma}, ${tc("report.sigma")}`));
   if (item.uses?.length) {
@@ -115,11 +136,14 @@ function step(item: HistoryItem, n: number, look: ReportLook): string[] | null {
   return out;
 }
 
+const wordName = (w: WordSetting): string => tc(w.signed ? "report.wordSigned" : "report.wordUnsigned").replace("{bits}", String(w.bits));
+
 /** The report of `items` (the open view's rows, oldest first) as Markdown; "" when no row is a step. */
-export function workReport(items: readonly HistoryItem[], look: ReportLook, head: { version: string; now: Date; view: "home" | "cas" }): string {
+export function workReport(items: readonly HistoryItem[], look: ReportLook, head: ReportHead): string {
   const blocks: string[][] = [];
+  const based = { any: false };
   for (const item of items) {
-    const b = step(item, blocks.length + 1, look);
+    const b = step(item, blocks.length + 1, look, based);
     if (b) blocks.push(b);
   }
   if (blocks.length === 0) return "";
@@ -134,6 +158,7 @@ export function workReport(items: readonly HistoryItem[], look: ReportLook, head
     field(tc("report.exportAngle"), angleName(s.angle)),
     field(tc("report.digits"), String(s.digits)),
     field(tc("report.format"), t(`format.${s.format}`)),
+    ...(based.any ? [field(tc("report.word"), wordName(head.word ?? DEFAULT_WORD))] : []),
     field(tc("report.decimalMark"), tc(s.decimalMark === "comma" ? "report.comma" : "report.point")),
     "",
     reportAbout(),
@@ -147,7 +172,7 @@ const NOTICE = { saved: "export.saved", offered: "export.offered", cancelled: "e
 export async function saveWork(
   items: readonly HistoryItem[],
   look: ReportLook,
-  head: { version: string; now: Date; view: "home" | "cas" },
+  head: ReportHead,
   save: (name: string, mime: string, text: string) => Promise<SaveResult> = async (n, m, x) => (await import("./files.ts")).saveFile(n, m, x),
 ): Promise<string> {
   try {
