@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// G216: Copy as Python, unit rows through pint. Exact expected code, no engine: the templates are the package's own (G216
+// block), the `# N62:` answers are the rows' own text as given here (5 kg in lb is 5/0.45359237, 20 °C is 68 °F, 2 s·c is
+// 599584916 m: derived), never computed. Whether the code runs and agrees is the pydiff stage's (scripts/pydiff.ts).
+import { describe, expect, it } from "vitest";
+import { translateRows, type PyRow } from "./python.ts";
+import { PY_UNITS, absTemp, pintAttr, pintDim, pintText } from "./pyUnits.ts";
+import type { UnitSlot } from "../units/types.ts";
+
+const HEAD = "# N62 0.1.0 · Copy as Python · preview: the form of this file can change";
+const PINT = ["from pint import UnitRegistry", "ureg = UnitRegistry()"];
+const PINT_Q = [...PINT, "Q_ = ureg.Quantity"];
+const py = (rows: PyRow[]): string => translateRows(rows, { app: "0.1.0" });
+const file = (...lines: string[]): string => `${[HEAD, ...lines].join("\n")}\n`;
+/** A slot as text: tokens by space ("k:N", "m^2"), one "/" for the ÷. */
+const slot = (text: string): UnitSlot => {
+  const parts = text.split(" ");
+  const per = parts.indexOf("/");
+  const tokens = parts
+    .filter((p) => p !== "/")
+    .map((p) => {
+      const [pre, rest] = p.includes(":") ? (p.split(":") as [string, string]) : [undefined, p];
+      const [unit, power] = rest.split("^") as [string, string | undefined];
+      return { ...(pre ? { prefix: pre } : {}), unit, ...(power ? { power } : {}) };
+    });
+  return per >= 0 ? { tokens, per } : { tokens };
+};
+/** A done unit row: its line, its slots by prompt id, and its answer as the session line keeps it. */
+const unitRow = (input: string, slots: Record<string, string>, o: Partial<PyRow>): PyRow => ({
+  view: "home",
+  input,
+  ok: true,
+  slots: Object.fromEntries(Object.entries(slots).map(([k, v]) => [k, slot(v)])),
+  ...o,
+});
+
+describe("translateRows: a unit row through pint (G216)", () => {
+  it("5 kg → lb", () => {
+    expect(py([unitRow("5", { u1: "kg", end: "lb" }, { mark: "≈", value: "11.0231131092", unit: "lb", dim: "kg1" })])).toBe(
+      file(...PINT, "_1 = (5*ureg.kg).to('lb')  # N62: ≈ 11.0231131092 lb"),
+    );
+  });
+  it("20 °C → °F: an absolute temperature alone carries its offset (docs/04 4.3)", () => {
+    expect(py([unitRow("20", { u1: "oC", end: "oF" }, { mark: "=", exact: "68", unit: "°F", dim: "K1" })])).toBe(
+      file(...PINT_Q, "_1 = Q_(20, 'degC').to('degF')  # N62: = 68 °F"),
+    );
+    expect(py([unitRow("-5", { u1: "oC", end: "K" }, { mark: "=", exact: "5363/20", unit: "K", dim: "K1" })])).toBe(
+      file(...PINT_Q, "_1 = Q_(-5, 'degC').to('K')  # N62: = 5363/20 K"),
+    );
+  });
+  it("5 N × 2 m, shown in N·m: no end slot, pint keeps the product", () => {
+    expect(py([unitRow("5\\times2", { u1: "N", u2: "m" }, { mark: "=", exact: "10", unit: "N·m", dim: "kg1m2s-2" })])).toBe(
+      file(...PINT, "_1 = (5*ureg.N)*(2*ureg.m)  # N62: = 10 N·m"),
+    );
+  });
+  it("a constant is N62's value as a literal with its SI unit, never pint's", () => {
+    const out = py([
+      unitRow("2\\cdot\\const{c}{c}", { u1: "s", end: "km" }, { mark: "=", exact: "2997924580/5000", value: "599584.916", unit: "km", dim: "m1", chips: { "const:c": { value: "299792458", exact: true } } }),
+    ]);
+    expect(out).toBe(file(...PINT_Q, "_1 = ((2*ureg.s)*Q_(299792458, 'm/s')).to('km')  # N62: = 2997924580/5000 km"));
+    expect(out).not.toContain("speed_of_light");
+    // a constant not in the table, or whose value the line does not keep
+    expect(py([unitRow("\\const{G}{G}", {}, { mark: "≈", value: "6.6743E-11", unit: "m³/(kg·s²)", dim: "kg-1m3s-2", chips: { "const:G": { value: "6.6743E-11", exact: false } } })])).toBe(
+      file("# N62 NOT TRANSLATED (constant G): \\const{G}{G}", "# N62: ≈ 6.6743E-11 m³/(kg·s²)"),
+    );
+    expect(py([unitRow("\\const{c}{c}", {}, { mark: "=", exact: "299792458", unit: "m/s", dim: "m1s-1" })])).toBe(
+      file("# N62 NOT TRANSLATED (the value of constant c is not kept): \\const{c}{c}", "# N62: = 299792458 m/s"),
+    );
+  });
+  it("a unit not in the table is NOT TRANSLATED (unit <id>), and binds nothing", () => {
+    expect(py([unitRow("5", { u1: "rpm", end: "rad/s" }, { mark: "≈", value: "0.523598775598", unit: "rad/s", dim: "rad1s-1" })])).toBe(
+      file("# N62 NOT TRANSLATED (unit rpm): 5", "# N62: ≈ 0.523598775598 rad/s"),
+    );
+    expect(py([unitRow("5", { u1: "kg", end: "Mi:lb" }, { mark: "≈", value: "1", unit: "Milb", dim: "kg1" })])).toBe(
+      file("# N62 NOT TRANSLATED (unit Milb): 5", "# N62: ≈ 1 Milb"),
+    );
+  });
+  it("a decimal is an exact Fraction, a quotient of whole numbers too; slots with ÷, prefixes and powers", () => {
+    expect(py([unitRow("2.5", { u1: "kg" }, { mark: "=", exact: "5/2", unit: "kg", dim: "kg1" })])).toBe(
+      file("from fractions import Fraction", ...PINT, "_1 = Fraction('2.5')*ureg.kg  # N62: = 5/2 kg"),
+    );
+    // the slot after a numerator is the numerator's unit (1 m / 3); a quotient of whole numbers is a Fraction
+    expect(py([unitRow("\\frac{1}{3}", { u1: "m" }, { mark: "=", exact: "1/3", unit: "m", dim: "m1" })])).toBe(file(...PINT, "_1 = 1*ureg.m/3  # N62: = 1/3 m"));
+    expect(py([unitRow("\\frac{1}{3}\\times2", { u3: "m" }, { mark: "=", exact: "2/3", unit: "m", dim: "m1" })])).toBe(
+      file("from fractions import Fraction", ...PINT, "_1 = Fraction(1, 3)*(2*ureg.m)  # N62: = 2/3 m"),
+    );
+    expect(py([unitRow("72", { u1: "km / h", end: "m / s" }, { mark: "=", exact: "20", unit: "m/s", dim: "m1s-1" })])).toBe(
+      file(...PINT, "_1 = (72*(ureg.km/ureg.h)).to('m/s')  # N62: = 20 m/s"),
+    );
+    expect(py([unitRow("3", { u1: "k:N m^2", end: "N" }, { mark: "=", exact: "3000", unit: "N", dim: "kg1m3s-2" })])).toContain(
+      "_1 = (3*(ureg.kN*ureg.m**2)).to('N')",
+    );
+  });
+  it("°C and °F inside a compound unit are an interval (pint's delta unit)", () => {
+    expect(py([unitRow("4186", { u1: "J / kg oC" }, { mark: "=", exact: "4186", unit: "J/(kg·°C)", dim: "K-1m2s-2" })])).toBe(
+      file(...PINT, "_1 = 4186*(ureg.J/(ureg.kg*ureg.delta_degC))  # N62: = 4186 J/(kg·°C)"),
+    );
+  });
+  it("what a unit row does not translate: σ (G217), a function, a store, a chip, an old line without its slots", () => {
+    expect(py([unitRow("5\\pm0.1", { u1: "kg" }, { mark: "≈", value: "5", unit: "kg", dim: "kg1", sigma: "0.10" })])).toBe(
+      file("# N62 NOT TRANSLATED (σ is not translated): 5\\pm0.1", "# N62: ≈ 5 kg"),
+    );
+    expect(py([unitRow("\\sin\\left(30\\right)", { u1: "deg" }, { mark: "=", exact: "1/2", unit: "", dim: "" })])).toBe(
+      file("# N62 NOT TRANSLATED (Sin in a unit row is not translated): \\sin\\left(30\\right)", "# N62: = 1/2"),
+    );
+    expect(py([{ view: "home", input: "2\\times3", ok: true, mark: "=", exact: "6", unit: "m", dim: "m1" }])).toBe(
+      file("# N62 NOT TRANSLATED (a unit row that does not keep its slots is not translated): 2\\times3", "# N62: = 6 m"),
+    );
+  });
+  it("a unit row binds a Quantity: a Home row after it reads Ans as the number it held", () => {
+    expect(
+      py([
+        unitRow("5\\times2", { u1: "N", u2: "m" }, { mark: "=", exact: "10", unit: "N·m", dim: "kg1m2s-2" }),
+        { view: "home", input: "\\ans\\times2", ok: true, mark: "=", exact: "20", ans: { value: "10", exact: true } },
+      ]),
+    ).toBe(file(...PINT, "_1 = (5*ureg.N)*(2*ureg.m)  # N62: = 10 N·m", "_2 = 10*2  # an earlier result  # N62: = 20"));
+  });
+});
+
+describe("pyUnits: the table's forms", () => {
+  it("a slot as attributes and as text; °C alone is absolute", () => {
+    expect(pintAttr(slot("kg"))).toEqual({ s: "ureg.kg", p: 5 });
+    expect(pintAttr(slot("m^2"))).toEqual({ s: "ureg.m**2", p: 4 });
+    expect(pintAttr(slot("/ s"))).toEqual({ s: "1/ureg.s", p: 2 });
+    expect(pintAttr(slot("ft^3 / min")).s).toBe("ureg.ft**3/ureg.min");
+    expect(pintAttr(slot("cfm")).s).toBe("ureg('ft**3/min')");
+    expect(pintText(slot("m / s^2"))).toBe("m/s**2");
+    expect(pintText(slot("oF"))).toBe("degF");
+    expect(absTemp(slot("oC"))).toBe("degC");
+    expect(absTemp(slot("oC^-1"))).toBeUndefined();
+    expect(pintDim("kg1m2s-2")).toBe("kg*m**2/s**2");
+    expect(pintDim("K-1kg1m2mol-1s-2")).toBe("kg*m**2/(K*mol*s**2)");
+    expect(pintDim("mol-1")).toBe("1/mol");
+  });
+  it("leaves out what N62 reads otherwise (rpm counts turns, G40; dB is G17's)", () => {
+    for (const id of ["rpm", "tr", "dB", "dBm", "Np", "Btu", "gauss", "c_unit"]) expect(PY_UNITS.has(id)).toBe(false);
+  });
+});
