@@ -39,7 +39,7 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
     unit: q.unit,
     dim: q.dimension,
     dimText: q.dimensionText,
-    ...(q.unc ? { unc: { text: q.unc.text, shown: q.unc.shown, ...(q.unc.why ? { why: q.unc.why } : {}), ...q.unc.chip } } : {}),
+    ...(q.unc ? { unc: (({ value: _, ...rest }) => rest)(q.unc) } : {}),
     ...(q.note ? { note: q.note } : {}),
     ...(q.names?.length ? { names: unitNamesText(q.names) } : {}),
     latex: sigma + (q.unit ? unitLatex(q.unit) : ""),

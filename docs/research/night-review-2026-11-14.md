@@ -37,7 +37,7 @@ Written under "Open bugs" (rules section 9; rerun `tools/probes/review-1114/reru
 
 ## 4. To verify
 
-- **bu-8:** Vars inserts a variable stored as `e` or `i` as `e_`/`i_` (`find/names.svelte.ts:35-37` keeps the empty subscript; the parser refuses `e_`). One `vars.spec.ts` case (`e:=5`, Vars, the row, Enter, expect 5); a package if red.
+- **bu-8:** Vars inserts a variable stored as `e` or `i` as `e_`/`i_` (`find/names.svelte.ts:35-37` keeps the empty subscript; the parser refuses `e_`). One `vars.spec.ts` case (`e:=5`, Vars, the row, Enter, expect 5): R337 (red first; a fix only if red).
 - **vg-7:** the F-Droid recipe runs `node scripts/*.ts` on Debian trixie's nodejs (type stripping needs Node ≥ 22.6). `podman run --rm debian:trixie sh -c 'apt-get update -qq && apt-cache policy nodejs'` (annabell, network; A145 measures only `build-wasm.sh`).
 - **vr-10's AZERTY part:** Alt+3…6 type their character, Alt+5 presses the bracket key (someone with a French layout).
 - **G2 questions** (`tests/golden/g2.yaml`, virtual-calc): the matrix editor's first minus (R300); a hex literal in a signed word (R305); `30°15` in DEG: 30.25°, 450 or refused (`docs/04-architecture.md:333`, from the 11-09 note).

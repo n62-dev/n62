@@ -65,8 +65,8 @@ The estimate in person-months is in git at `82b261f9`; the phases stand:
 
 **Phases**
 - **MVP (≈ 6–9 PM):** keyboard, Home, CAS, textbook entry, Function app, Solve app, Python (MicroPython, D6; numpy/sympy only in the optional Python+ pack). Release on Play (testing track) and as a web app.
-- **v1 (≈ +10–15 PM):** Stats, Inference, Parametric/Polar/Sequence, Spreadsheet, Finance, Linear/Triangle solvers, RPN.
-- **v2 (≈ +10–17 PM):** Geometry, Advanced Graphing, 3D, Python apps, Explorers, polish.
+- **v1 (≈ +10–15 PM):** Stats, Inference, Parametric/Polar/Sequence, Finance, Linear/Triangle solvers. RPN moved to v0.1.0 (owner, 2026-11-15); Spreadsheet only on its trigger ([must-have.md](must-have.md) section E).
+- **v2 (≈ +10–17 PM):** Advanced Graphing, Python apps, Explorers, polish. 3D only on its trigger; Geometry not planned (owner, 2026-11-15; must-have section E).
 
 *Since 2026-10-12 (P8):* the engineer core (milestones 4–6: Find and honest precision, the unit view, matrices, bases and everyday functions) comes before v1; most of v1 is deferred and the MVP release is not scheduled. Order and tasks: docs/shifts/brief.md section 0, docs/backlog.md.
 
