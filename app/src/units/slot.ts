@@ -77,12 +77,12 @@ function titleWords(title: string): string {
 }
 
 /** An exact factor n/d·π^pi (not reduced: compared by cross-multiplying). */
-interface Exact { n: bigint; d: bigint; pi: number }
+export interface Exact { n: bigint; d: bigint; pi: number }
 
 /** The Find index's `si` text as an exact factor: integers, `pi`, `*`, `/`, `^` with an integer, parentheses
  *  ("201168/125", "16129*pi/10^14", "44173801/(21362355120000000000000*pi)"). Anything else ("1+5463/20", the
  *  offset of °C) is undefined: such a unit is never part of a pair. */
-function exactFactor(text: string): Exact | undefined {
+export function exactFactor(text: string): Exact | undefined {
   const toks = text.replace(/\s+/g, "").match(/\d+|pi|[-*/^()]|./g) ?? [];
   let i = 0;
   const mul = (a: Exact, b: Exact, inv: boolean): Exact =>

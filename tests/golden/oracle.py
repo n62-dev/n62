@@ -57,7 +57,7 @@ MARKS = {"=", "≈", "⚠"}
 WARN_COUNT = re.compile(r"⚠\d+")  # "⚠ n": a result shown with n confirmed digits; a mark like "⚠" for this file (written by hand, needs a note)
 NOT_CASES = {"g2.yaml", "corpus.yaml"}  # corpus.yaml (G55) is inputs with no ids and no expected values: nothing to check
 SOURCES = {"oracle", "derived", "device", "virtual-calc", "reference", "assumed"}
-KEYS = ["id", "kind", "input", "to", "tap", "target", "latex", "eq", "var", "guess", "f", "g", "x0", "lo", "hi", "a", "b", "xs", "settings", "budgetMs", "oracle",
+KEYS = ["id", "kind", "input", "define", "to", "tap", "target", "latex", "eq", "var", "guess", "f", "g", "x0", "lo", "hi", "a", "b", "xs", "settings", "budgetMs", "oracle",
         "options", "formula", "slots", "before", "beforeCas", "beforeHome", "relaunch", "own", "uses", "steps", "consts", "code", "file", "home", "expect", "error", "chips",
         "deg", "mark", "exact", "dim", "unit", "dimtext", "si", "si_oracle", "unc", "unc_oracle", "uncDigits", "shown", "unc_why", "notice", "message", "source", "g2",
         "status", "group", "cat", "note"]
