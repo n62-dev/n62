@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # The 16 sources of the materials sample (S36)
 
-**Status: open.** The owner signs the table and reads the short list below, by the freeze on Thu 11-12. The two copper edits go in with S36f1: Opus pass 103 read sections 3.3 and 3.9 of the sheet [D1] again and found 16.8 and 110 (annealed) there; the lines keep "(to verify: owner)".
+**Status: decided** (owner, 2026-11-15): not signed by the freeze; the lines stay "to verify" at v0.1.0 (decisions.md, "Owner answers of 2026-11-15"). The two copper edits go in with S36f1: Opus pass 103 read sections 3.3 and 3.9 of the sheet [D1] again and found 16.8 and 110 (annealed) there; the lines keep "(to verify: owner)".
 
 **Recommendation: read the seven short-list clauses before signing.** Two of the 16 values are wrong against the sheet they cite, and no line was found wrong against a Eurocode. Only four lines reach "confirmed at the clause", because the Eurocodes are paywalled and free texts rarely name a clause.
 
