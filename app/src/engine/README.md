@@ -23,7 +23,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `polarDigits.ts` | G312: how many digits of r and θ of a polar form the confirmed digits of its value confirm (an error bound carried through abs and arg); out of the start chunk, run by `state/cycleForms.ts` where r and θ are computed, the counts kept in the history item |
 | `formatBase.ts` | G228: `formatBase()` writes an integer text as `0x…`, `0b…` or `0o…` in a word of n bits (BigInt on the digits, never `Number`; an error value for a non-integer or a value outside the word); pure, loaded lazily by the base display |
 | `defs.ts` | the definitions log (docs/04 6.2): plain data and pure functions used on both sides; called by `workerEngine.ts`, `host.ts`, `find/`, `state/backup.ts` |
-| `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists); imports only `giacPrintStart.ts`, its own part; used by nearly every module here and by `state/resultItem.ts`, `units/` |
+| `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists, G363's arithmetic tree `arithmeticOf`); imports only `giacPrintStart.ts`, its own part; used by nearly every module here and by `state/resultItem.ts`, `units/` |
 | `giacPrintStart.ts` | R264: `giacPrint.ts`'s part the start chunk reads (the string skip, the walk, the name pattern, `balanced`, `isName`, `names`, `mapNames`, `RATIONAL`), re-exported by `giacPrint.ts`; no imports; used at start by `defs.ts`, `render/home.ts`, `state/results.ts` |
 
 **Worker side: the host and the Home pipeline**
@@ -49,6 +49,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `eseries.ts` | IEC 60063 E-series as published (G30); called by `homeEval.ts`, `decisions.ts`, `host.ts` |
 | `binary64.ts` | G140: whether a part Giac printed holds only a double's bits (exact BigInt); called by `numeric.ts` |
 | `literalPrec.ts` | G141: where the agreement check starts for an input with a long exact literal (its digits plus P); called by `numeric.ts` |
+| `constDouble.ts` | G363: the double value and the log10 magnitude (past the double's range) of a constant expression as `giacPrint.ts` `arithmeticOf` reads it (numbers, `pi`, `euler_gamma`, elementary functions; any other name gives NaN), the magnitude bound of a power of a constant base; called by `literalPrec.ts` |
 | `rootofNoise.ts` | G60's rounding-noise rule for a part of a non-real value; G324: a part 0 in the double and not at P is read at P + 20 and shown as 0 when it is noise; called by `numeric.ts` |
 | `doubleElements.ts` | G172: the double fallback of a result with no MPFR value, element by element in a list or matrix; called by `homeEval.ts` |
 | `complex.ts` | G50, G60: the complex workaround (our atan); called by `numeric.ts`, `homeEval.ts`, `stateRead.ts` |

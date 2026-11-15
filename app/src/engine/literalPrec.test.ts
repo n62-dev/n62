@@ -137,6 +137,72 @@ describe("literalStart", () => {
   });
 });
 
+// G363 (night review 2026-11-14, be-3): a power of any constant base with an integer literal exponent is a magnitude;
+// digit counts ⌈|n|·|log10 b|⌉ by hand: sin(1)^5000 374.80 → 375, ln(2)^500 79.59 → 80, euler_gamma^5000 1193.31 → 1194,
+// sin(1)^20000 and csc(1)^20000 1499.22 → 1500, cos(1)^10 2.67 → 3, sin(1)^2 0.15 → 1
+describe("a power of a constant base (G363)", () => {
+  it("counts its magnitude, as Giac prints it and as typed with no angle factor", () => {
+    expect(literalDigits("(1+sin(1)^5000)^(sin(1)^-5000)", "printed")).toBe(375);
+    expect(literalDigits("(1+sin(1)^5000)^(sin(1)^(-5000))", "typed")).toBe(375);
+    expect(literalDigits("(1+ln(2)^500)^(ln(2)^-500)", "printed")).toBe(80);
+    expect(literalDigits("(1+euler_gamma^5000)^(1/euler_gamma^5000)", "printed")).toBe(1194);
+    expect(literalDigits("(1+sin(1)^20000)^((1/sin(1))^20000)", "printed")).toBe(1500);
+    expect(literalDigits("cos(1)^10+1", "printed")).toBe(3);
+    expect(literalDigits("sin(1)^2", "printed")).toBe(1);
+    // was 0 before G363: no literal, Giac keeps sin(1)^5000 as it is
+    expect(literalDigits("ln(1+sin(1)^5000)*sin(1)^-5000", "printed")).toBe(375);
+  });
+  it("reads no free, stored or mode name, no complex or undefined base and no non-literal exponent", () => {
+    expect(literalDigits("sin(x)^5000+B^5000+sin(pasdeg*1)^5000+e^5000", "typed")).toBe(4);
+    expect(literalDigits("(1+i)^5000+ln(-2)^5000+asin(2)^5000+(1-1)^5000+0^5000", "typed")).toBe(4);
+    // a base 0 in exact maths that the double rounds (cos(pi/2) is 6.1E-17) counts too many digits: a later start or ⚠, never ≈
+    expect(literalDigits("cos(pi/2)^5", "typed")).toBe(82); // ⌈5·16.21⌉
+    expect(literalDigits("sin(1)^(5000*x)+sin(1)^5000.5", "typed")).toBe(4);
+    // a right-associative exponent is no literal; its own power (5000² = 25000000) counts as one
+    expect(literalDigits("sin(1)^(5000)^2", "typed")).toBe(8);
+    expect(literalDigits(`"sin(1)^5000"+1`, "typed")).toBe(1);
+    // a base of exactly 1 is no magnitude; an integer base stays a power of two integer literals (G141)
+    expect(literalDigits("cos(0)^5000", "typed")).toBe(4);
+    expect(literalDigits("10^(-100)", "typed")).toBe(101);
+  });
+  it("starts the agreement check past the power's digits below the cap", () => {
+    expect(literalStart("(1+sin(1)^5000)^(sin(1)^-5000)", 40, 1000, "printed")).toEqual({ at: 415, unchecked: false });
+    expect(literalStart("(1+ln(2)^500)^(ln(2)^-500)", 40, 1000, "printed")).toEqual({ at: 120, unchecked: false });
+    expect(literalStart("ln(1+sin(1)^5000)*sin(1)^-5000", 40, 1000, "printed")).toEqual({ at: 415, unchecked: false });
+    expect(literalStart("cos(1)^10+1", 40, 1000, "printed")).toEqual({ at: 40, unchecked: false });
+  });
+  it("past the cap counts a power that forms a small value: a base below 1 to a positive power, above 1 to a negative one", () => {
+    // CAS-typed (no angle factor): no slash, no minus after a caret; was { at: 40, unchecked: false } (≈ 1, the value is e)
+    expect(literalStart("(1+sin(1)^20000)^(csc(1)^20000)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+csc(1)^(-20000))^(csc(1)^20000)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+    // as Giac prints them
+    expect(literalStart("(1+sin(1)^20000)^((1/sin(1))^20000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+(1/sin(1))^-20000)^((1/sin(1))^20000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("(1+euler_gamma^5000)^(1/euler_gamma^5000)", 40, 1000, "printed")).toEqual({ at: 40, unchecked: true });
+    expect(literalStart("sin(1)^20000+pi^3000", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true });
+  });
+  it("fix round 2: counts a power of a base the double cannot hold, and never NaN", () => {
+    // sin(1)^5000 is 0 in double: (sin(1)^5000)^-2 counted nothing, so 1+1E-750 was 1 at a start of 415 (≈ 1, the value e);
+    // 2·374.80 = 749.6 → 750
+    const audit = "(1+(sin(1)^5000)^2)^((sin(1)^5000)^(-2))";
+    expect(literalDigits(audit, "typed")).toBe(750);
+    expect(literalStart(audit, 40, 1000, "typed")).toEqual({ at: 790, unchecked: false });
+    // an exponent of 310 digits on a base of exactly 1 gave NaN, which hid the 2001 digits of 10^2000 from the decisions
+    const one = `sign(sin(10^2000)+cos(0)^1${"0".repeat(309)})`;
+    expect(literalDigits(one, "typed")).toBe(2001);
+    expect(literalPastCap(one, 40, 1000, "typed")).toBe(true);
+    expect(literalDigits(`(1+cos(0))^1${"0".repeat(309)}`, "typed")).toBe(Infinity);
+  });
+  it("past the cap leaves out a huge power that forms no small value", () => {
+    // above 1 to a positive power, below 1 to a negative one: alone it rounds no term away
+    expect(literalStart("csc(1)^20000*sqrt(2)", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    expect(literalStart("sin(1)^(-20000)+1", 40, 1000, "typed")).toEqual({ at: 40, unchecked: true }); // ^( - is a negative exponent (G307f1)
+    expect(literalStart("pi^3000*cos(0)^5", 40, 1000, "typed")).toEqual({ at: 40, unchecked: false });
+    // but a decision on it cannot hold it
+    expect(literalPastCap("csc(1)^20000>0", 40, 1000, "typed")).toBe(true);
+  });
+});
+
 describe("literalPastCap (G307 fix round 2)", () => {
   it("counts a huge power of pi or exp, which a decision on it cannot hold, as a power of ten", () => {
     expect(literalPastCap("sin(10^2000)>0", 40, 1000, "typed")).toBe(true);

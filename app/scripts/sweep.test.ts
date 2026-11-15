@@ -129,7 +129,7 @@ describe("sweep edge generator (G116)", () => {
   it("G162: draws each cancellation family with k from 40 to 300", () => {
     const seen = new Map<string, number>();
     const cs = generateEdges(20261103, 2000, seen);
-    for (const f of ["cancel0", "cancel1", "cancel2", "cancel3"]) expect([f, seen.get(f) ?? 0]).not.toEqual([f, 0]);
+    for (const f of ["cancel0", "cancel1", "cancel2", "cancel3", "cancel4"]) expect([f, seen.get(f) ?? 0]).not.toEqual([f, 0]);
     const ks: number[] = [];
     for (const c of cs) {
       // (1 − cos 10^-k)·10^(2k): the two exponents belong together
@@ -184,6 +184,24 @@ describe("sweep edge generator (G116)", () => {
     out.forEach((o, i) => {
       expect(o.kind, cases[i]!.mp).toBe("value");
       if (o.kind === "value") expect(o.re.slice(0, 52), cases[i]!.mp).toBe(cases[i]!.want.slice(0, 52));
+    });
+  }, 60_000);
+  it("G363: draws the tiny term as a power of another constant base on both sides of 1, and the oracle judges it", () => {
+    const cs = generateEdges(20261103, 2000).filter((c) => /\\(ln|tanh)\\left\([123]\\right\)\^\{-?\d+\}/.test(c.latex));
+    expect(cs.some((c) => /\\ln\\left\(2\\right\)\^\{\d+\}/.test(c.latex))).toBe(true); // below 1, a positive exponent
+    expect(cs.some((c) => /\\ln\\left\(3\\right\)\^\{-\d+\}/.test(c.latex))).toBe(true); // above 1, a negative one
+    for (const c of cs) expect(() => latexToGiac(c.latex), c.latex).not.toThrow();
+    // derived: lim (1+t)^(1/t) = e, the 100 digits of the G307 case above; t = ln(2)^1257 = 1E-200.1 and ln(3)^-2453 = 1E-100.1
+    // (|n·log10 b| by hand), so 60 digits round t away (the oracle gave 1.0 there before G363)
+    const e = "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427";
+    const cases = [
+      "POW((mpf('1'))+(POW(LN(mpf('2')),mpf('1257'))),POW(LN(mpf('2')),mpf('-1257')))",
+      "POW((mpf('1'))+(POW(LN(mpf('3')),mpf('-2453'))),POW(LN(mpf('3')),mpf('2453')))",
+    ];
+    const out = oracleFor(cases.map((mp) => ({ latex: mp, mp, angle: "rad" as const, digits: 12 as const })), pythonFor(repo, mainCheckout), resolve(repo, "tools/probes/sweep/oracle.py"));
+    out.forEach((o, i) => {
+      expect(o.kind, cases[i]).toBe("value");
+      if (o.kind === "value") expect(o.re.slice(0, 52), cases[i]).toBe(e.slice(0, 52));
     });
   }, 60_000);
   it("G345: skips a finite value built on an infinite intermediate, keeps an everyday quotient and a pole", () => {
@@ -276,7 +294,8 @@ describe("sweep trees write e as the keys do (G326)", () => {
     expect(sha(asLetter(trees.view))).toBe("96781df693eff0101ca3a363c5885f3e55b93e905488f0ccc3721b10421efce3");
     expect(sha(asLetter(trees.casback))).toBe("4e6a9dc2cb06cefb7b8dda4728114ecabddb07ca791c3feb8f52d351bcdb12b5");
     // G307: family 0 takes its base as a power of π or e when its base draw is 3/4 or more, with no extra draw; G308 added the edge
-    // class nearone (1 ± 1ᴇ-k·i); both move the edge trees from G326's on purpose (G307 alone: cf3ac887…, G308 alone: 6979cf15…)
-    expect(sha(asLetter(trees.edges))).toBe("c93469ff9980f83ff28e55751b3b9d6cfd9cec244aa658633ca8dff17bfbf5d2");
+    // class nearone (1 ± 1ᴇ-k·i); both move the edge trees from G326's on purpose (G307 alone: cf3ac887…, G308 alone: 6979cf15…);
+    // G363 turns family 0's base draws of 7/8 or more into a power of ln 2, ln 3 or tanh 1, again with no extra draw (before: c93469ff…)
+    expect(sha(asLetter(trees.edges))).toBe("a4bbbd1bdb03822685abfa93e33d9191eb0c0792f5a57cb6f722c47545cafca9");
   });
 });
