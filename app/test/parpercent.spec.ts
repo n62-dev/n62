@@ -14,11 +14,13 @@ test.beforeEach(async ({ page }) => {
 
 const key = (page: Page, id: string) => page.locator(`[data-key="${id}"]`);
 const shiftLegend = (page: Page, id: string) => key(page, id).evaluate((k) => k.querySelector(".shiftlegend")?.textContent?.trim() ?? "");
+/** What MathLive writes for the inserted par() once filled (it wraps an \operatorname's name in \mathrm, as for approx). */
+const PAR = "\\operatorname{\\mathrm{par}}\\left(4700,10000\\right)";
 const DIGITS = ["d4", "d7", "d0", "d0", "comma", "d1", "d0", "d0", "d0", "d0"];
 
 test("Shift, ( ) inserts par() with the cursor inside: 4700, 10000 gives 3197.27891156", async ({ page }) => {
   await tap(page, ["shift", "paren", ...DIGITS]);
-  expect(await entryValue(page)).toBe("\\operatorname{par}\\left(4700,10000\\right)");
+  expect(await entryValue(page)).toBe(PAR);
   await tap(page, ["enter"]);
   await expect(lastResult(page)).toHaveAttribute("data-text", "3197.27891156");
 });
@@ -26,7 +28,7 @@ test("Shift, ( ) inserts par() with the cursor inside: 4700, 10000 gives 3197.27
 test("a flick up on ( ) does what Shift, ( ) does", async ({ page }) => {
   await flick(page, "paren", "up");
   await tap(page, DIGITS);
-  expect(await entryValue(page)).toBe("\\operatorname{par}\\left(4700,10000\\right)");
+  expect(await entryValue(page)).toBe(PAR);
   await tap(page, ["enter"]);
   await expect(lastResult(page)).toHaveAttribute("data-text", "3197.27891156");
 });
