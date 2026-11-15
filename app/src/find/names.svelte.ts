@@ -16,7 +16,8 @@ import { symbol } from "../units/padCells.ts";
 import { OWN_PREFIX } from "../units/factors.ts";
 import type { UnitDef } from "../units/ownRecord.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
-import { functionInsert, search } from "./rank.ts";
+import type { FindIndex } from "./finder.ts";
+import { functionInsert, prepare, search } from "./rank.ts";
 import type { FindItem } from "./types.ts";
 
 const NO_INDEX = { items: [] };
@@ -63,6 +64,16 @@ function slotText(of: UnitDef["of"]): string {
  *  a unit goes in a unit slot, not on the line (units/find.ts pickActions reads the id). */
 export function ownUnitItem(d: UnitDef): FindItem {
   return { id: `unit:${OWN_PREFIX}${d.name}`, kind: "unit", names: [d.name], title: d.name, desc: `${d.factor} ${slotText(d.of)}`, tier: 0, insert: "" };
+}
+
+/** G234: Find's index with your units added as items (a unit slot's Find searches them beside Find's own; units/open.ts
+ *  calls it with the stored definitions once the store is read). Without definitions the index itself, so nothing is copied. */
+export function withOwnUnits(index: FindIndex, defs: readonly UnitDef[]): FindIndex {
+  if (defs.length === 0) return index;
+  const own = prepare(defs.map(ownUnitItem));
+  const prepared = { items: [...index.prepared.items, ...own.items] };
+  const items = [...index.items, ...own.items.map((p) => p.item)];
+  return { prepared, items, byId: new Map(items.map((it) => [it.id, it])) };
 }
 
 /** A stored value's mark (S53f1): the one rule the history uses (displayMode.ts markFor), worked out for the text that is

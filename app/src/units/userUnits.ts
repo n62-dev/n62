@@ -8,9 +8,8 @@
 import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
 import type { IndexItem } from "../find/types.ts";
 import { rulesById, slotDim, slotFactor } from "./build.ts";
-import { isExponent } from "./dims.ts";
 import { bare, isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
-import { decimal, goodName, type UnitDef } from "./ownRecord.ts";
+import { decimal, defShapeOk, goodName, type UnitDef } from "./ownRecord.ts";
 import { exactFactor, type Exact } from "./slot.ts";
 import type { UnitSlot, UnitToken } from "./types.ts";
 
@@ -93,22 +92,20 @@ function rowOf(def: UnitDef, table: FactorTable): { ok: true; row: UnitFactor } 
   const f = typeof def.factor === "string" ? decimal(def.factor) : undefined;
   if (!f) return refuse("units.own.factor", { factor: String(def.factor) });
   if (f.n === 0n) return refuse("units.own.zero");
-  const of = def.of as Partial<UnitSlot> | undefined;
-  const tokens = Array.isArray(of?.tokens) ? of.tokens : [];
-  const per = of?.per;
-  if (tokens.length === 0 || tokens.length > 16 || (per !== undefined && !(Number.isInteger(per) && per >= 1 && per < tokens.length)))
-    return refuse("units.own.ofEmpty");
-  for (const t of tokens) {
-    if (typeof t?.unit !== "string" || (t.power !== undefined && (typeof t.power !== "string" || !isExponent(t.power) || Number(t.power) === 0)))
-      return refuse("units.own.ofEmpty");
-    if (isOwnId(t.unit)) return refuse("units.own.ofOwn", { unit: t.unit.slice(OWN_PREFIX.length) });
+  // a token of your own gets its message before the shape check (which refuses it, a stored token is never one)
+  const own = Array.isArray(def.of?.tokens) ? def.of.tokens.find((t) => typeof t?.unit === "string" && isOwnId(t.unit)) : undefined;
+  if (own) return refuse("units.own.ofOwn", { unit: own.unit.slice(OWN_PREFIX.length) });
+  // the one shape rule (ownRecord.ts defShapeOk, which the stored record's read and the backup's check use too): a
+  // definition accepted here is never dropped at the next start; what is left to check is Find's table
+  if (!defShapeOk(def)) return refuse("units.own.ofEmpty");
+  const slot: UnitSlot = def.of;
+  for (const t of slot.tokens) {
     const u = table.units.get(t.unit);
     if (!u) return refuse("units.own.unknown", { unit: t.unit });
     if (t.prefix !== undefined && (typeof t.prefix !== "string" || !table.prefixes.has(t.prefix))) return refuse("units.own.unknown", { unit: String(t.prefix) });
     if (u.si === undefined || u.dim === undefined || u.si.includes("+") || u.dim.includes("Np") || rulesById(t.unit))
       return refuse("units.own.ofKind", { unit: u.symbol });
   }
-  const slot: UnitSlot = { tokens, ...(per !== undefined ? { per } : {}) };
   return { ok: true, row: { si: ofSi(f, slot, table), dim: slotDim(slot, table), symbol: def.name } };
 }
 

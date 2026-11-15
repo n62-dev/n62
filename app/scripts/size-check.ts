@@ -499,8 +499,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  measures 62,301 B (175,648 B raw), after it 62,321 B (175,669 B raw): 62,321 B + 0.05 kB, rounded up to 0.01 kB.
  *  62,380 → 62,390 B (R302): a matrix cell's edit sets the user's line aside where a hide keeps it (apps/shell.svelte.ts
  *  `editAside`, read by main.ts's onClear and flush). Phase-1 d3c84b9c measures 62,297 B gzip (175,648 B raw), the branch
- *  62,306 B (175,685 B raw); with G355 merged in, 62,332 B (175,706 B raw): 62,332 B + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 62_390;
+ *  62,306 B (175,685 B raw); with G355 merged in, 62,332 B (175,706 B raw): 62,332 B + 0.05 kB, rounded up.
+ *  62,390 → 62,470 B (G234 fix round 1): units/open.ts imports the store of your units (ownUnits.ts, and with it ownRecord.ts)
+ *  to add them to Find's items in the unit view, so the start chunk's list of the files the unit view loads holds two more
+ *  names (no code of it is in the start chunk). The branch before the round measures 62.38 kB gzip (175.87 kB raw), after it
+ *  62.41 kB (175.92 kB raw). Tried: the store read from find.ts and from calc.ts (the start chunk +0.03 and +0.04 kB, and the
+ *  unit view's entries over their budget). 62.41 kB + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 62_470;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

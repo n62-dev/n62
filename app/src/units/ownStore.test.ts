@@ -9,8 +9,9 @@ import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defaultHomeSettings } from "../engine/homeDefaults.ts";
 import type { MathEngine } from "../engine/types.ts";
-import { search } from "../find/rank.ts";
-import { ownUnitItem } from "../find/names.svelte.ts";
+import { prepare, search } from "../find/rank.ts";
+import { ownUnitItem, withOwnUnits } from "../find/names.svelte.ts";
+import { itemRow, unitNote } from "../find/finder.ts";
 import type { IndexItem } from "../find/types.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { BACKUP_KEYS, checkBackup, makeBackup, VALIDATORS } from "../state/backup.ts";
@@ -19,9 +20,14 @@ import { fakeKv } from "../state/fakeKv.ts";
 import { DATA_VERSION, stamp } from "../state/storage.ts";
 import { evaluateUnits } from "./calc.ts";
 import { unitErrorMessage } from "./messages.ts";
+import { factorTable } from "./factors.ts";
+import { unitsMenu } from "./menu.ts";
 import { OwnUnits, UNITS_OWN } from "./ownUnits.ts";
+import { defShapeOk } from "./ownRecord.ts";
+import { pickActions } from "./find.ts";
+import { slotCatalogue } from "./slot.ts";
 import type { Quantity, UnitError, UnitJob, UnitSlot } from "./types.ts";
-import { clashNote, findClash, findNames, ownToken, type UnitDef } from "./userUnits.ts";
+import { checkDef, clashNote, findClash, findNames, ownToken, type UnitDef } from "./userUnits.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const indexFile = join(here, "../find/_gen/find-index.json");
@@ -166,6 +172,78 @@ describe("Find lists an own unit as a unit (G234)", () => {
     expect(hits.map((h) => h.item.id)).toEqual(["unit:@myfurlong"]);
     expect(hits[0]?.item.kind).toBe("unit");
     expect(search({ items: [] }, "kgf", { live: [ownUnitItem(myfurlong), ownUnitItem(kgfm)], filter: ["unit"] })[0]?.item.id).toBe("unit:@kgfm");
+  });
+});
+
+describe("a stored unit in a unit slot's Find (G234)", () => {
+  it_("a record in the store is found by its name in the units menu, picked as its own id, and the slot catalogue holds it", async () => {
+    const kv = fakeKv();
+    kv.data.set(UNITS_OWN, { units: [myfurlong, kgfm, { name: "", factor: "1", of: M }] }); // (a damaged entry is dropped at the read)
+    const own = new OwnUnits(kv); // a relaunch
+    await own.restore();
+    const prepared = prepare(items);
+    const all = prepared.items.map((p) => p.item); // (as finder.ts makeIndexIdle makes the index)
+    const base = { prepared, items: all, byId: new Map(all.map((i) => [i.id, i])) };
+    const index = withOwnUnits(base, own.list());
+    expect(index.items).toHaveLength(all.length + 2);
+    expect(withOwnUnits(base, [])).toBe(base); // (no definition: the index as it was)
+    const picked: string[] = [];
+    const menu = unitsMenu(index, { pick: (it) => picked.push(it.id) });
+    const rows = menu.search("myfurlong");
+    expect(rows[0]?.id).toBe("unit:@myfurlong");
+    rows[0]?.run?.();
+    expect(picked).toEqual(["unit:@myfurlong"]);
+    expect(menu.search("kgfm")[0]?.id).toBe("unit:@kgfm");
+    const it = index.byId.get("unit:@myfurlong")!;
+    expect(pickActions(slotCatalogue(index.items), it)).toEqual([{ do: "unit", id: "@myfurlong" }]);
+    expect(itemRow(it, () => undefined).note).toBeUndefined(); // (not "no factor": the definition has it)
+    expect(unitNote(it)).toBeUndefined();
+    // Find's own index is left as it was: a search without your units does not find them
+    expect(unitsMenu(base, { pick: () => undefined }).search("myfurlong").map((r) => r.id)).not.toContain("unit:@myfurlong");
+  });
+});
+
+describe("one shape rule for a definition: checkDef and the stored record's read (G234)", () => {
+  const table = factorTable(items);
+  const ok = (d: unknown): boolean => checkDef(d as UnitDef, table).ok;
+  const slot = (tokens: unknown, per?: unknown): unknown => ({ tokens, ...(per === undefined ? {} : { per }) });
+  const base = (of: unknown): unknown => ({ name: "myfurlong", factor: "201.168", of });
+  const m = { unit: "m" };
+  const cases: [string, unknown][] = [
+    ["good", base(slot([m]))],
+    ["good, 16 tokens", base(slot(Array.from({ length: 16 }, () => m)))],
+    ["17 tokens", base(slot(Array.from({ length: 17 }, () => m)))],
+    ["no tokens", base(slot([]))],
+    ["tokens no array", base({ tokens: "m" })],
+    ["a field of the slot it does not know", base({ tokens: [m], more: 1 })],
+    ["a field of the token it does not know", base(slot([{ unit: "m", more: 1 }]))],
+    ["a field of the definition it does not know", { ...(base(slot([m])) as object), more: 1 }],
+    ["a power of 0", base(slot([{ unit: "m", power: "0" }]))],
+    ["a power that is no number", base(slot([{ unit: "m", power: "x" }]))],
+    ["a power that is a number", base(slot([{ unit: "m", power: 2 }]))],
+    ["a good power", base(slot([{ unit: "m", power: "-1/2" }]))],
+    ["per 0", base(slot([m, m], 0))],
+    ["per at the last token", base(slot([m, m], 2))],
+    ["per 1 of 2", base(slot([m, m], 1))],
+    ["per a fraction", base(slot([m, m], 1.5))],
+    ["an empty unit", base(slot([{ unit: "" }]))],
+    ["a unit of your own in it", base(slot([{ unit: "@other" }]))],
+    ["an empty prefix", base(slot([{ unit: "m", prefix: "" }]))],
+    ["a prefix", base(slot([{ unit: "m", prefix: "k" }]))],
+    ["a prefix that is no text", base(slot([{ unit: "m", prefix: 5 }]))],
+    ["no name", { factor: "1", of: slot([m]) }],
+    ["a whole-number factor", { name: "x1", factor: "1", of: slot([m]) }],
+    ["a factor of 0", { name: "x1", factor: "0.0", of: slot([m]) }],
+    ["a unit Find lacks (the table's own check)", base(slot([{ unit: "nosuchunit" }]))],
+  ];
+  it_.each(cases)("%s: checkDef accepts only what the record's read keeps", (_why, d) => {
+    if (ok(d)) expect(defShapeOk(d)).toBe(true); // accepted here ⇒ kept at the next start (never lost without a word)
+    if (!defShapeOk(d)) expect(ok(d)).toBe(false);
+  });
+  it_("the table holds both kinds of case (a drift would show as one of them going missing)", () => {
+    expect(cases.filter(([, d]) => ok(d)).length).toBeGreaterThan(3);
+    expect(cases.filter(([, d]) => defShapeOk(d) && !ok(d)).length).toBeGreaterThan(0); // only Find's table refuses it
+    expect(cases.filter(([, d]) => !defShapeOk(d)).length).toBeGreaterThan(10);
   });
 });
 
