@@ -27,6 +27,8 @@
 //   warn     `unaudited` or `unchecked`: why a ⚠ although the digits agree
 //   reliableDigits  the digits the agreement check confirmed; null: none in doubt (absent: the row has no facts)
 //   unit, dim, sigma, sigmaWhy  a unit-view row's unit, dimension key, σ (2 digits, in `unit`) and why σ has ⚠
+//   slots    G216: a unit-view row's filled slots and end slot by prompt id (`u1`, `end`; units/types.ts UnitSlot), as the
+//            row keeps them (input/unitFormula.ts puts the prompts in `input`); absent on another row
 //   angle    `rad` or `deg`, the angle mode the row was worked out in; null when the row does not keep it. It applies
 //            to `input` and `value` only, never to `giac` or `exact` (radians)
 //   digits   the digits setting of the row; null when the row does not keep it
@@ -78,7 +80,7 @@ function markOfRow(i: HistoryItem): string {
 export function sessionLine(item: HistoryItem, o: LineOptions): string | undefined {
   if (item.status === "pending" || item.status === "note") return undefined;
   const done = item.status === "done";
-  const u = item.units as { unit?: unknown; dim?: unknown; unc?: { text?: unknown; why?: unknown } } | undefined; // read back unchecked
+  const u = item.units as { unit?: unknown; dim?: unknown; unc?: { text?: unknown; why?: unknown }; slots?: unknown } | undefined; // read back unchecked
   const chips = item.chips ? Object.fromEntries(Object.entries(item.chips).map(([k, c]) => [k, { value: c.value, exact: c.exact }])) : undefined;
   const src: CopySource = { ...item, units: undefined };
   const used = item.uses ?? item.defsUsed; // G212: a Home row's own field (HistoryItem.defsUsed)
@@ -102,6 +104,7 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
     dim: str(u?.dim),
     sigma: str(u?.unc?.text),
     sigmaWhy: str(u?.unc?.why),
+    slots: u?.slots && typeof u.slots === "object" ? u.slots : undefined,
     angle: item.angle ?? null,
     digits: item.digits ?? null,
     word: item.word ?? null,

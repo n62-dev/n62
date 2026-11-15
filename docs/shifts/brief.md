@@ -63,11 +63,8 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 794 | R324 Help's Insert replaces the call the cursor is in (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-helpreplace` | – |
-| 795 | R325 Paste takes a unit row's Copy back as a result chip with σ and unit (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-pasteunit` | – |
 | 796 | [R327](packages/R327.md) Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
 | 797 | [R328](packages/R328.md) the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
-| 801 | [R329](packages/R329.md) Shift + Vars is Paste (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-varspaste` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
@@ -85,7 +82,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 743 | [G216](packages/G216.md) Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
+| 743 | G216 Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
 | 744 | [G217](packages/G217.md) Copy as Python: ± through uncertainties | gorge, Opus | `p1/gorge-pysigma` | G216 |
 | 692 | [G271](packages/G271.md) σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
 | 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |

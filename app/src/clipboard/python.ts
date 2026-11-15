@@ -5,8 +5,15 @@
 // by construction: the row becomes `# N62 NOT TRANSLATED (<reason>): <input>` and binds nothing, and a later row that
 // reads what it would have bound is comment-only too (owner, 2026-11-12). Every row ends with N62's own answer as a
 // comment. G214: the tier-0 Find functions with a one-to-one sympy form (FUNCTIONS), each in the row's own angle mode;
-// a row that does not keep its angle mode refuses trig rather than assume radians. Units are G216, σ G217. Lazy: reached only through clipboard/impl.ts.
-import { parseLatex } from "../input/parse.ts";
+// a row that does not keep its angle mode refuses trig rather than assume radians. G216: a unit row (its slots kept by
+// the session line) through pint, by pyUnits.ts's table: numbers, + − × ÷, whole powers, its slots and constants, and
+// nothing else; σ is G217. Lazy: reached only through clipboard/impl.ts.
+import { parseLatex, parseLatexInfo, type UnitsInfo } from "../input/parse.ts";
+import { validSlots } from "../input/chipUnit.ts";
+import { END, filledLatex, slotFormula } from "../input/unitFormula.ts";
+import type { UnitSlot } from "../units/types.ts";
+import { KEYWORDS } from "./pyWords.ts";
+import { PY_CONSTS, PyUnitMissing, absTemp, pintAttr, pintDim, pintText } from "./pyUnits.ts";
 import { FN, oddIndex, type Json } from "../input/emit.ts";
 import { ANS_KEY } from "../input/chips.ts";
 import { angleInSpec, returnsAngle } from "../engine/angles.ts";
@@ -30,6 +37,8 @@ export interface PyRow {
   unit?: string | null;
   dim?: string | null;
   sigma?: string | null;
+  /** G216: a unit row's filled slots and end slot by prompt id, as the session line keeps them (checked here). */
+  slots?: Readonly<Record<string, unknown>> | null;
   /** G219: this many earlier lines were dropped before this one. */
   gap?: number | null;
   /** G211: `rad` or `deg`, the angle mode the row was worked out in; null when the row does not keep it. */
@@ -47,13 +56,10 @@ export interface PyOptions {
   app: string;
 }
 
-/** Python's own words: never a name we bind. */
-const KEYWORDS = new Set(
-  ("False None True and as assert async await break class continue def del elif else except finally for from global if " +
-    "import in is lambda nonlocal not or pass raise return try while with yield").split(" "),
-);
 /** The sympy names a template may write; a user name equal to one is not bound either (it would shadow it). */
 const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt", "rad", "deg", "log", "root", "real_root", "cos", "sin"]);
+/** G216: the names a unit row writes besides sympy's (pint's registry, its Quantity, Python's Fraction): never bound either. */
+const PINT = new Set(["Fraction", "ureg", "Q_", "UnitRegistry"]);
 
 /** G214, the function table: a Find tier-0 function (find/functions.yaml, by its Giac name) → its sympy function, which
  *  takes the same arguments in the same order and gives the same value. Closed: a name not here is not translated,
@@ -93,8 +99,9 @@ const ROOT_LOG = ["ln", "log10", "surd"];
 export const PY_FUNCTIONS: ReadonlySet<string> = new Set([...FUNCTIONS.keys(), ...ROOT_LOG]);
 for (const f of FUNCTIONS.values()) SYMPY.add(f.py);
 
-/** Python ints stay exact under + - * and ** n; a division or a negative power of two of them would be a float. */
-type Kind = "int" | "sym";
+/** Python ints stay exact under + - * and ** n; a division or a negative power of two of them would be a float. G216:
+ *  `unit` is a pint Quantity (sympy cannot take it); in a unit row `sym` is a Fraction. */
+type Kind = "int" | "sym" | "unit";
 /** Precedence as Python reads it: 1 + -, 2 * /, 3 unary minus, 4 **, 5 an atom. */
 interface Out {
   s: string;
@@ -123,6 +130,8 @@ interface Line {
 }
 
 const wrap = (o: Out, min: number): string => (o.p < min ? `(${o.s})` : o.s);
+/** The kind of + − × of terms: a Quantity when one is, an int when all are, else a sympy number (a Fraction in a unit row). */
+const kindOf = (outs: readonly Out[]): Kind => (outs.some((o) => o.k === "unit") ? "unit" : outs.every((o) => o.k === "int") ? "int" : "sym");
 const isHead = (e: Json, h: string): e is Json[] => Array.isArray(e) && e[0] === h;
 /** Row r's full value in the kind of `c` (exact text against exact, a decimal against a row without one), as a chip
  *  compares it: undefined when the row has none of that kind. */
@@ -154,11 +163,14 @@ class Row {
   private readonly t: Translator;
   private readonly i: number;
   private readonly keys: readonly string[];
+  /** G216: a unit row's slots and constants (the parser's units info, the slots by prompt id); undefined in a Home row. */
+  private readonly u: { info: UnitsInfo; slots: Readonly<Record<string, UnitSlot>> } | undefined;
   // plain fields, no parameter properties: Node's type stripping runs this file in G215's stage (scripts/pydiff.ts)
-  constructor(t: Translator, i: number, keys: readonly string[]) {
+  constructor(t: Translator, i: number, keys: readonly string[], u?: { info: UnitsInfo; slots: Readonly<Record<string, UnitSlot>> }) {
     this.t = t;
     this.i = i;
     this.keys = keys;
+    this.u = u;
   }
 
   private use(name: string): string {
@@ -186,8 +198,13 @@ class Row {
     return { s: `${wrap(base, 5)}**${wrap(ex, 5)}`, p: 4, k: "sym" };
   }
 
-  /** The allow-list: each head this package translates, and nothing else. */
+  /** The allow-list: each head this package translates, and nothing else; a unit row's own (uSer) in a unit row. */
   ser(e: Json): Out {
+    return this.u ? this.uSer(e) : this.core(e);
+  }
+
+  /** The heads of a Home or CAS row. + − × and brackets serve a unit row too, its terms through ser. */
+  private core(e: Json): Out {
     if (typeof e === "number") return Number.isSafeInteger(e) ? this.lit(String(e)) : no(`the number ${e} is not translated`);
     if (typeof e === "string") return this.name(e);
     if (!Array.isArray(e)) return "num" in e ? this.lit(e.num) : "sym" in e ? this.name(e.sym) : no("a string is not translated");
@@ -201,11 +218,11 @@ class Row {
         const terms = args.map((a, n) => (n > 0 && isHead(a, "Negate") && a.length === 2 ? { neg: true, o: this.ser(a[1] as Json) } : { neg: false, o: this.ser(a) }));
         if (terms.length < 2) return no("Add with one term is not translated");
         const s = terms.map(({ neg, o }, n) => (n === 0 ? o.s : `${neg ? " - " : " + "}${o.p === 3 ? `(${o.s})` : wrap(o, 2)}`));
-        return { s: s.join(""), p: 1, k: terms.every(({ o }) => o.k === "int") ? "int" : "sym" };
+        return { s: s.join(""), p: 1, k: kindOf(terms.map(({ o }) => o)) };
       }
       case "Subtract": {
         const [a, b] = two().map((x) => this.ser(x)) as [Out, Out];
-        return { s: `${a.s} - ${b.p === 3 ? `(${b.s})` : wrap(b, 2)}`, p: 1, k: a.k === "int" && b.k === "int" ? "int" : "sym" };
+        return { s: `${a.s} - ${b.p === 3 ? `(${b.s})` : wrap(b, 2)}`, p: 1, k: kindOf([a, b]) };
       }
       case "Negate": {
         const a = this.ser(one());
@@ -214,7 +231,7 @@ class Row {
       case "Multiply": {
         const outs = args.map((a) => this.ser(a));
         if (outs.length < 2) return no("Multiply with one factor is not translated");
-        return { s: outs.map((o, n) => wrap(o, n === 0 ? 3 : 4)).join("*"), p: 2, k: outs.every((o) => o.k === "int") ? "int" : "sym" };
+        return { s: outs.map((o, n) => wrap(o, n === 0 ? 3 : 4)).join("*"), p: 2, k: kindOf(outs) };
       }
       case "Divide":
       case "Rational": {
@@ -357,6 +374,7 @@ class Row {
   private chip(a: Json): Out {
     const m = typeof a === "object" && !Array.isArray(a) && "str" in a ? /^\(pyc(\d+)\)$/.exec(a.str) : null;
     const key = m ? this.keys[Number(m[1])] : undefined;
+    if (this.u) return no("a chip in a unit row is not translated");
     if (key === ANS_KEY) return this.ans();
     if (key?.startsWith("res:")) return this.result(key);
     if (key?.startsWith("const:")) return no("a constant is not translated");
@@ -371,7 +389,8 @@ class Row {
     const rows = this.t.rows;
     let j = this.i - 1;
     while (j >= 0 && !(rows[j]?.ok === true && this.t.view(j) === this.t.view(this.i))) j--;
-    if (j < 0 || j + 1 < this.t.cut || fullOf(rows[j], kept) !== kept.value) return this.earlierValue(kept);
+    // G216: a unit row's line holds a Quantity; Home's Ans is its number alone ("unit dropped")
+    if (j < 0 || j + 1 < this.t.cut || fullOf(rows[j], kept) !== kept.value || this.t.lines[j]?.k === "unit") return this.earlierValue(kept);
     const line = this.t.lines[j];
     if (!line || !this.t.holds(line, j)) return no(`uses line ${j + 1}`);
     return { s: line.name, p: 5, k: line.k };
@@ -384,7 +403,7 @@ class Row {
     for (let j = this.i - 1; j >= 0; j--) {
       const r = this.t.rows[j] as PyRow;
       const line = this.t.lines[j];
-      if (r.ok && fullOf(r, c) === c.value && line && this.t.holds(line, j)) return { s: line.name, p: 5, k: line.k };
+      if (r.ok && fullOf(r, c) === c.value && line && line.k !== "unit" && this.t.holds(line, j)) return { s: line.name, p: 5, k: line.k };
     }
     return this.earlierValue(c);
   }
@@ -418,6 +437,118 @@ class Row {
     }
     return /^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? this.lit(v) : undefined;
   }
+
+  /** G216, a unit row: an absolute temperature alone (`20 °C`, `-5 °C`) carries its offset, `Q_(20, 'degC')` (docs/04
+   *  4.3); any other formula goes through uSer, where °C and °F are refused as N62 refuses them in arithmetic. */
+  unitTop(e: Json): Out {
+    const neg = isHead(e, "Negate") && e.length === 2;
+    const m = neg ? (e[1] as Json) : e;
+    if (isHead(m, "Multiply") && m.length === 3 && typeof m[2] === "string") {
+      const slot = this.slotOf(m[2]);
+      const abs = slot && absTemp(slot);
+      const n = numText(m[1] as Json);
+      if (abs !== undefined && n !== undefined) {
+        const v = this.uLit(n);
+        return { s: `${this.use("Q_")}(${neg ? `-${wrap(v, 5)}` : v.s}, '${abs}')`, p: 5, k: "unit" };
+      }
+    }
+    return this.uSer(e);
+  }
+
+  /** The end slot: the Quantity converted with `.to('…')`. */
+  toEnd(o: Out, end: UnitSlot): Out {
+    if (o.k !== "unit") no("a pure number with an end slot is not translated");
+    return { s: `${wrap(o, 5)}.to('${this.pint(() => pintText(end))}')`, p: 5, k: "unit" };
+  }
+
+  /** The slot `pasu<i>` names, else undefined. */
+  private slotOf(name: string): UnitSlot | undefined {
+    const m = /^pasu(\d+)$/.exec(name);
+    const id = m ? this.u?.info.slots[Number(m[1]) - 1] : undefined;
+    return id === undefined ? undefined : this.u?.slots[id];
+  }
+
+  private pint<T>(f: () => T): T {
+    try {
+      return f();
+    } catch (err) {
+      if (err instanceof PyUnitMissing) no(err.reason);
+      throw err;
+    }
+  }
+
+  /** A number in a unit row: a whole number as a Python int, a decimal as an exact Fraction (pint takes no sympy number). */
+  private uLit(text: string): Out {
+    const o = literal(text);
+    if (o.k === "int") return o;
+    const digits = /Rational\('([^']*)'\)/.exec(o.s)?.[1] ?? no(`the number ${text} is not translated`);
+    return { s: `${o.p === 3 ? "-" : ""}${this.use("Fraction")}('${digits}')`, p: o.p, k: "sym" };
+  }
+
+  /** The allow-list of a unit row: numbers, + − × ÷, whole powers, brackets, its slots and constants; nothing else. */
+  private uSer(e: Json): Out {
+    if (typeof e === "number") return Number.isSafeInteger(e) ? this.uLit(String(e)) : no(`the number ${e} is not translated`);
+    if (typeof e === "string") {
+      const slot = this.slotOf(e);
+      if (slot) {
+        if (absTemp(slot) !== undefined) no("°C or °F in arithmetic is not translated");
+        const a = this.pint(() => pintAttr(slot));
+        this.use("ureg");
+        return { ...a, k: "unit" };
+      }
+      const k = /^pask(\d+)$/.exec(e);
+      if (k) return this.constant(this.u?.info.consts[Number(k[1]) - 1] ?? no("a constant is not translated"));
+      return no(`the name ${e} in a unit row is not translated`);
+    }
+    if (!Array.isArray(e)) return "num" in e ? this.uLit(e.num) : no(`${"sym" in e ? `the name ${e.sym}` : "a string"} in a unit row is not translated`);
+    const head = e[0] as string;
+    const args = e.slice(1) as Json[];
+    switch (head) {
+      case "Add":
+      case "Subtract":
+      case "Negate":
+      case "Multiply":
+      case "Delimiter":
+        // the Home path writes them, each term through ser (here uSer); kindOf makes a term with a unit a Quantity
+        return this.core(e);
+      case "Square":
+        return this.uPow(args, 2);
+      case "Divide":
+      case "Rational": {
+        if (args.length !== 2) no(`${head} with ${args.length} arguments is not translated`);
+        const [a, b] = args.map((x) => this.uSer(x)) as [Out, Out];
+        if (a.k === "int" && b.k === "int") return { s: `${this.use("Fraction")}(${a.s}, ${b.s})`, p: 5, k: "sym" };
+        return { s: `${wrap(a, 2)}/${wrap(b, 4)}`, p: 2, k: kindOf([a, b]) };
+      }
+      case "Power": {
+        if (args.length !== 2) no(`Power with ${args.length} arguments is not translated`);
+        const ex = args[1] as Json;
+        const n = numText(ex) ?? (isHead(ex, "Negate") && ex.length === 2 ? numText(ex[1] as Json) : undefined);
+        if (n === undefined || !/^\d+$/.test(n)) no("a power that is not a whole number in a unit row is not translated");
+        return this.uPow([args[0] as Json], isHead(ex, "Negate") ? -Number(n) : Number(n));
+      }
+      default:
+        return no(`${head} in a unit row is not translated`);
+    }
+  }
+
+  private uPow(args: Json[], n: number): Out {
+    if (args.length !== 1) no("a power with more than one base is not translated");
+    const b = this.uSer(args[0] as Json);
+    const k: Kind = b.k === "unit" ? "unit" : b.k === "int" && n >= 0 ? "int" : "sym";
+    return { s: `${wrap(b, 5)}**${n < 0 ? `(${n})` : n}`, p: 4, k };
+  }
+
+  /** A constant of a unit row: N62's value (the row's chip) as a literal with its SI unit, never pint's (G216). */
+  private constant(id: string): Out {
+    const dim = PY_CONSTS.get(id) ?? no(`constant ${id}`);
+    const c = this.t.rows[this.i]?.chips?.[`const:${id}`];
+    if (!c || typeof c.value !== "string") return no(`the value of constant ${id} is not kept`);
+    const v = c.value.trim();
+    const q = /^(\d+)\/(\d+)$/.exec(v);
+    const n = q ? `${this.use("Fraction")}(${q[1]}, ${q[2]})` : /^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? this.uLit(v).s : no(`the value of constant ${id} is not translated`);
+    return { s: `${this.use("Q_")}(${n}, '${pintDim(dim) ?? no(`constant ${id}`)}')`, p: 5, k: "unit" };
+  }
 }
 
 class Translator {
@@ -445,7 +576,7 @@ class Translator {
   /** The Python name of an N62 name; a Python word or a sympy name is refused. */
   pyName(n: string): string {
     if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(n)) return no(`the name ${n} is not translated`);
-    if (KEYWORDS.has(n) || SYMPY.has(n)) return no(`${n} is a Python word`);
+    if (KEYWORDS.has(n) || SYMPY.has(n) || PINT.has(n)) return no(`${n} is a Python word`);
     return n;
   }
 
@@ -461,6 +592,18 @@ class Translator {
       const loose = { has: (n: string) => values.has(n) || !PY_FUNCTIONS.has(n) } as unknown as ReadonlySet<string>;
       return parseLatex(r.input, { chips, userValues: loose });
     }
+  }
+
+  /** G216: a unit row's formula as the unit view built it (units/view.ts request): its line with a prompt per slot
+   *  (input/unitFormula.ts), the empty ones dropped, read by the parser's units mode; the slots by prompt id. */
+  unitParse(r: PyRow, chips: Record<string, PyChip>): { json: Json; u: { info: UnitsInfo; slots: Readonly<Record<string, UnitSlot>> } } {
+    const kept = r.slots;
+    if (!kept || typeof kept !== "object") return no("a unit row that does not keep its slots is not translated");
+    const slots = validSlots(kept) ?? {};
+    const f = slotFormula(r.input);
+    if (Object.keys(slots).length !== Object.keys(kept).length || Object.keys(slots).some((id) => id !== END && !f.slots.includes(id))) no("a unit slot that is not read");
+    const p = parseLatexInfo(filledLatex(f, (id) => slots[id] !== undefined), { units: true, chips });
+    return { json: p.json, u: { info: p.units ?? { slots: [], consts: [] }, slots } };
   }
 
   /** The name line j bound still holds line j's value. */
@@ -498,26 +641,37 @@ class Translator {
     const r = this.rows[i] as PyRow;
     const line = i + 1;
     if ((r.gap ?? 0) > 0) this.cut = line;
-    const answer = oneLine(r.ok ? `${r.mark ? `${r.mark} ` : ""}${(r.mark === "=" ? (r.exact ?? r.value) : (r.value ?? r.exact)) ?? ""}` : (r.error ?? "no result"));
+    // N62's answer as the row shows it: the value, ± σ when it has one (never dropped, principle 3), then the unit
+    const sigma = typeof r.sigma === "string" && r.sigma !== "" ? ` ± ${r.sigma}` : "";
+    const unit = r.ok && typeof r.unit === "string" && r.unit !== "" ? ` ${r.unit}` : "";
+    const answer = oneLine(r.ok ? `${r.mark ? `${r.mark} ` : ""}${(r.mark === "=" ? (r.exact ?? r.value) : (r.value ?? r.exact)) ?? ""}${sigma}${unit}` : (r.error ?? "no result"));
     try {
       if (!r.ok) no("N62 gave no result");
-      if (r.unit || r.dim || r.sigma) no("a unit result is not translated");
+      if (r.sigma) no("σ is not translated");
       const { table, keys } = markers(r);
+      // G216: a unit row (any of its fields; the session line writes them only for one) reads its slots back
+      const isUnit = r.unit != null || r.dim != null || r.slots != null;
       let tree: Json;
+      let u: ReturnType<Translator["unitParse"]>["u"] | undefined;
       try {
-        tree = this.parse(r, table);
+        if (isUnit) ({ json: tree, u } = this.unitParse(r, table));
+        else tree = this.parse(r, table);
       } catch (err) {
+        if (err instanceof NotTranslated) throw err;
         return no(`not read: ${err instanceof Error ? err.message : String(err)}`);
       }
-      const t = new Row(this, i, keys);
+      const t = new Row(this, i, keys, u);
       let name = `_${line}${this.tag}`;
       let body = tree;
       if (isHead(tree, "Assign")) {
+        if (u) no("a store in a unit row is not translated");
         if (typeof tree[1] !== "string") no("a definition is not translated");
         name = this.pyName(tree[1] as string);
         body = tree[2] as Json;
       }
-      const o = t.ser(body);
+      let o = u ? t.unitTop(body) : t.ser(body);
+      const end = u?.info.end !== undefined ? u.slots[u.info.end] : undefined;
+      if (end) o = t.toEnd(o, end);
       for (const u of t.uses) uses.add(u);
       this.lines[i] = { name, k: o.k };
       for (const [n, d] of t.defs) this.names.set(n, { line, view: this.view(i), k: d.k, def: d.value });
@@ -561,10 +715,26 @@ export function translateCells(rows: readonly PyRow[], o: { tag?: string; defs?:
   });
 }
 
+/** G216f1: the import lines a cell writes before its code, the one rule for Copy (translateRows) and the sync file
+ *  (sync/files.ts filesFor). `needs`: the names the cell uses; `had`: those this process already imported in this file.
+ *  Python's own Fraction first, then sympy's names (never pint's), then pint's registry once, when ureg or Q_ is first
+ *  needed, then Q_ once, when Q_ is first needed (also when ureg came in an earlier cell). */
+export function pyImports(needs: Iterable<string>, had: ReadonlySet<string> = new Set()): string[] {
+  const fresh = new Set([...needs].filter((u) => !had.has(u)));
+  const sympy = [...fresh].filter((u) => !PINT.has(u)).sort();
+  const registry = had.has("ureg") || had.has("Q_");
+  // G216: a unit row's Quantity is a float registry's
+  return [
+    ...(fresh.has("Fraction") ? ["from fractions import Fraction"] : []),
+    ...(sympy.length ? [`from sympy import ${sympy.join(", ")}`] : []),
+    ...(!registry && (fresh.has("ureg") || fresh.has("Q_")) ? ["from pint import UnitRegistry", "ureg = UnitRegistry()"] : []),
+    ...(fresh.has("Q_") ? ["Q_ = ureg.Quantity"] : []),
+  ];
+}
+
 /** The rows (a view's history in order, or one row) as a sympy script: the N62 line, the imports it needs, one line per row. */
 export function translateRows(rows: readonly PyRow[], o: PyOptions): string {
   const cells = translateCells(rows);
-  const uses = new Set(cells.flatMap((c) => c.uses));
-  const imports = uses.size ? [`from sympy import ${[...uses].sort().join(", ")}`] : [];
+  const imports = pyImports(cells.flatMap((c) => c.uses));
   return `${[pyHead(o.app), ...imports, ...cells.map((c) => c.code)].join("\n")}\n`;
 }

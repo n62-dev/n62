@@ -148,7 +148,7 @@ describe("translateRows: anything else is not translated, and binds nothing", ()
     expect(py([{ view: "home", input: "\\frac{1}{0}", ok: false, error: "Division by 0" }])).toBe(
       file("# N62 NOT TRANSLATED (N62 gave no result): \\frac{1}{0}", "# N62: Division by 0"),
     );
-    expect(py([row("2\\times3", { exact: "6", unit: "m" })])).toBe(file("# N62 NOT TRANSLATED (a unit result is not translated): 2\\times3", "# N62: = 6"));
+    expect(py([row("2\\times3", { exact: "6", unit: "m" })])).toBe(file("# N62 NOT TRANSLATED (a unit row that does not keep its slots is not translated): 2\\times3", "# N62: = 6 m"));
   });
   it("a store that ended in an error leaves its name unknown", () => {
     const out = py([row("5\\blacktriangleright a", { exact: "5" }), { view: "home", input: "\\frac{1}{0}\\blacktriangleright a", ok: false, error: "Division by 0" }, row("a+1", { exact: "6", reads: [{ name: "a", value: "5", exact: true }] })]);

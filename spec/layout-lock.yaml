@@ -36,7 +36,7 @@ layers:
   "deselect.primary": "special selectShrink"
   "deselect.shift": "special mode"
   "vars.primary": "special vars"
-  "vars.shift": "reserved"
+  "vars.shift": "special paste"
   "vars.alpha": "type A"
   "math.primary": "special find"
   "math.shift": "special memory"
