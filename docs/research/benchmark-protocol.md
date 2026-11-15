@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # The published benchmark: tasks, values and rules (S50)
 
-**Status: open** until the owner has measured. What the owner decides: one question in section 7 (how the G2 column is measured), and the stopwatch method in section 4 if the default does not suit. *sandra, 2026-11-13, at `a766ec9c`.*
+**Status: open** until the owner has measured. Section 7 is decided (owner, 2026-11-15: the owner's own G2); the stopwatch method in section 4 stays the default unless the owner changes it. *sandra, 2026-11-13, at `a766ec9c`.*
 
 **Why this note exists.** docs/03 rule 13: each benchmark task records hand-measured presses and time on the G2, on Qalculate! and on a phone calculator, and a feature whose task N62 does not win gets reworked or removed. A comparison that is published needs its tasks, expected values and rules fixed **before** anything is measured, so nobody can choose them after seeing the numbers. N62 can lose some of these tasks; the note is written so that it can.
 
@@ -73,8 +73,8 @@ Set before the first press and not counted: the tool open on its main calculatio
 
 **N62 wins a task** when its median seconds are the lowest among the tools that give the correct, unlabelled result; when another tool's median is within 10 % of N62's, the fewer presses decides; for a G2 cell from the Virtual Calculator (no seconds) presses alone compare. **A task N62 does not win** names its feature for rework or removal (rule 13): t01 Find's `par`; t02, t04 and t10 the unit view; t07 the number bases; t08 Solve; t09 Find's statistics; t11 the CAS view; t12 Solve or the Function app's root; t13 recalling and editing a row. The rework is a package; removal follows rule 11. Correctness comes first: a faster tool whose result is wrong or labelled does not beat N62.
 
-## 7. Open for the owner
+## 7. Decided by the owner (2026-11-15)
 
-**How the G2 column is measured.** Recommended: on your own G2 (`source: device`), presses and seconds both, because it is the real thing, it gives seconds the Virtual Calculator cannot, and black-box use of a device you own raises no licence question. Cost: the G2 in hand for the rounds. Alternatives: the Virtual Calculator, presses only (seconds "not comparable"); whether its licence allows publishing a comparison timed or counted on it is **not verified** and is yours to read before any Virtual Calculator cell is published; nothing here reads an answer into it. Would change if the G2 is not at hand: then the Virtual Calculator's presses, after that check.
+**How the G2 column is measured.** Decided (owner, 2026-11-15): on the owner's own G2 (`source: device`), presses and seconds both, because it is the real thing, it gives seconds the Virtual Calculator cannot, and black-box use of a device you own raises no licence question. Cost: the G2 in hand for the rounds. Alternatives: the Virtual Calculator, presses only (seconds "not comparable"); whether its licence allows publishing a comparison timed or counted on it is **not verified** and is yours to read before any Virtual Calculator cell is published; nothing here reads an answer into it. Would change if the G2 is not at hand: then the Virtual Calculator's presses, after that check.
 
 **The phone calculator** (a default, no question): the stock calculator of the phone N62 is timed on, so screen and hand are the same; its name and version are recorded.
