@@ -18,3 +18,6 @@ Set `status: active`, make sure every step in `keys` can be replayed (`replay()`
 
 ## The comparison column (`compare`)
 Hand-measured presses for the same task on the reference calculator (Virtual Calculator) and on a typical phone calculator, same counting rule. **Empty until the owner measures them**: nothing here may be guessed. A measurement goes in `compare.g2_virtual_calc` / `compare.phone_calculator` with the date in a comment.
+
+## The published ten (`benchmark.yaml`, R222)
+The ten tasks of the published comparison (protocol: `docs/research/benchmark-protocol.md`) are their own file, replayed by `app/test/benchmark.spec.ts` (`npm run test:e2e` runs it). A task has an `angle` (`rad`, `deg` or `none`: set through `window.n62.session` before the first press, not counted), its shortest `keys` found, how it is read, and a `compare` with `g2`, `qalculate` and `phone_calculator`, each `{presses, seconds, source, date}`, all null until the owner measures. A G2 cell's `source` is `device`, `virtual-calc` (presses only) or null. The spec prints one table (task, presses, angle); its seconds are the owner's hand runs, never the replay's.

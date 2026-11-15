@@ -513,6 +513,34 @@ Digits:=40:; pc("g225f1-keep-dot-one-list",'(dot([[1,2],[3,4]]))',11,5/10^11);
 Digits:=40:; pc("hunt2-solve-three-real-control",'(max(solve(x^3-3*x+1=0,x)))',(153208888624/10^11),5/10^12);
 // g324f1-approx-solve-x3-x-1-element (home.yaml, oracle)
 Digits:=40:; pc("g324f1-approx-solve-x3-x-1-element",'(approx(solve(x^3-x-1=0,x))[0])',(132471795724/10^11),5/10^12);
+// g362-arg-1+i-rad (home.yaml, oracle)
+Digits:=40:; pc("g362-arg-1+i-rad",'(arg(1+i))',(785398163397/10^12),5/10^13);
+// g362-atan2-rad (home.yaml, oracle)
+Digits:=40:; pc("g362-atan2-rad",'(atan2(1,-1))',(235619449019/10^11),5/10^12);
+// g362-re (home.yaml, derived)
+Digits:=40:; pc("g362-re",'(re(3+4*i))',3,5/10^12);
+// g362-im (home.yaml, derived)
+Digits:=40:; pc("g362-im",'(im(3+4*i))',4,5/10^12);
+// g362-conj (home.yaml, derived)
+Digits:=40:; pc("g362-conj",'(conj(3+4*i))',3-4*i,5/10^12+5/10^12);
+// g362-max (home.yaml, derived)
+Digits:=40:; pc("g362-max",'(max(2,7,5))',7,5/10^12);
+// g362-min (home.yaml, derived)
+Digits:=40:; pc("g362-min",'(min(2,7,5))',2,5/10^12);
+// g362-arg-zero (home.yaml, derived)
+Digits:=40:; pc("g362-arg-zero",'(arg(0))',0,1/10^30);
+// g362-atan2-zero (home.yaml, derived)
+Digits:=40:; pc("g362-atan2-zero",'(atan2(0,0))',0,1/10^30);
+// g362-max-decimal-negative (home.yaml, derived)
+Digits:=40:; pc("g362-max-decimal-negative",'(max((25/10^1),-7))',(25/10^1),5/10^12);
+// g362-min-pi (home.yaml, oracle)
+Digits:=40:; pc("g362-min-pi",'(min(pi,(32/10^1)))',(314159265359/10^11),5/10^12);
+// g362-max-list (home.yaml, derived)
+Digits:=40:; pc("g362-max-list",'(max([3,9,4]))',9,5/10^12);
+// g362-im-decimal (home.yaml, derived)
+Digits:=40:; pc("g362-im-decimal",'(im((5/10^1)+(15/10^1)*i))',(15/10^1),5/10^12);
+// g362-conj-polar (home.yaml, oracle)
+Digits:=40:; pc("g362-conj-polar",'(conj(2*exp(i*pi/3)))',1-(173205080757/10^11)*i,5/10^12+5/10^12);
 // prec-20-sqrt2 (precision.yaml, oracle)
 Digits:=40:; pc("prec-20-sqrt2",'(sqrt(2))',(14142135623730950488/10^19),5/10^20);
 // prec-20-third (precision.yaml, oracle)

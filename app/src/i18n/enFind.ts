@@ -14,6 +14,7 @@ export const enFind = {
   "cat.const": "Constants",
   "cat.units": "Units and prefixes",
   "cat.bits": "Bits and words",
+  "cat.complex": "Complex numbers",
   "matrix.title": "Matrix",
   "matrix.tran": "Transpose",
   "matrix.dot": "Dot",
