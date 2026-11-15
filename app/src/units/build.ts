@@ -3,7 +3,7 @@
 // constant, the slots as tokens) becomes a UnitJob, Giac text in which every unit is its exact SI factor from the
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
 import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, unitProduct } from "./dims.ts";
-import { isOwnId, type FactorTable, type UnitFactor } from "./factors.ts";
+import { isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
 import { balanced, closing, mapNames, names, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
@@ -54,7 +54,7 @@ function numberDims(key: string): string {
  *  is its factor a without the offset b. `dims` writes the dimension symbols (numberDims leaves them out, G319). */
 function tokenGiac(t: UnitToken, below: boolean, table: FactorTable, interval: boolean, dims = dimSymbols): string {
   const u = table.units.get(t.unit);
-  if (!u) throw new Refused({ error: "engine", detail: `no unit ${t.unit} in the index` });
+  if (!u) throw new Refused(isOwnId(t.unit) ? { error: "own", name: t.unit.slice(OWN_PREFIX.length) } : { error: "engine", detail: `no unit ${t.unit} in the index` });
   if (LOGARITHMIC.has(t.unit) || /Np/.test(u.dim ?? "")) throw new Refused({ error: "logarithmic", unit: u.symbol });
   if (!u.si || u.dim === undefined) throw new Refused({ error: "nofactor", unit: u.symbol });
   const affine = u.si.split("+");

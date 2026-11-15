@@ -7,6 +7,7 @@ import { dataText, enData, type DataKey } from "../i18n/enData.ts";
 import { KeyboardSpecError, keyboard, parseAction } from "../keyboard/keyboard.ts";
 import { USER_LAYERS } from "../keyboard/userKeys.svelte.ts";
 import { defaultLook, validLook } from "../theme/look.ts";
+import { recordOk, UNITS_OWN } from "../units/ownRecord.ts";
 import { CELL_KEYS } from "../units/userCells.svelte.ts";
 import { isFmtMode, normalizeCycle } from "./displayMode.ts";
 import { migratePresetKeys, PRESETS_KEY, renamedLook, renamedLooks } from "./presetRecord.ts";
@@ -32,6 +33,7 @@ export const BACKUP_KEYS: readonly string[] = [
   "app.function",
   "app.solve",
   "units.targets",
+  UNITS_OWN,
   "word",
 ];
 
@@ -229,6 +231,7 @@ export const VALIDATORS: Validators = {
   "app.function": isObject,
   "app.solve": isObject,
   "units.targets": (v) => typeof v === "object" && v !== null,
+  [UNITS_OWN]: recordOk, // G234: `{ units: [{ name, factor, of }] }` as strict as the start's read (units/ownRecord.ts)
   word: (v) => isObject(v) && Object.keys(v).length === 2 && fields(v, { bits: (n) => n === 8 || n === 16 || n === 32 || n === 64, signed: bool }), // R194: both fields, a size of 8, 16, 32 or 64, a boolean sign (the same rule as wordSetting.ts validWord, the start's check; word.test.ts runs both on one table; this file stays off its chunk)
 };
 

@@ -6,6 +6,7 @@
 // Plain TS, loaded with the unit view (nothing in the start chunk imports it).
 import type { IndexItem } from "../find/types.ts";
 import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
+import { isOwnId, OWN_PREFIX } from "./factors.ts";
 import type { UnitSlot, UnitToken } from "./types.ts";
 
 /** A press on the unit pad, as R24b hands it on. `power` -1 is ⁻¹; `delete` is ⌫. × has no action: units in a row
@@ -185,6 +186,10 @@ export function readSymbol(cat: SlotCatalogue, text: string): { prefix?: string;
   }
   return undefined;
 }
+
+/** A unit the catalogue lacks, as the user sees it: an own unit whose definition is gone (G234) by its name, never with
+ *  the internal OWN_PREFIX; any other id as it is. */
+const bareName = (id: string): string => (isOwnId(id) ? id.slice(OWN_PREFIX.length) : id);
 
 type Pending = { kind: "prefix"; id: string } | { kind: "sqrt" };
 
@@ -457,7 +462,7 @@ export class SlotModel {
    *  and the unit id counts only when it is the pair (isPair): "min" is no milli-inch. */
   #names(f: Factor): { words: string; marked: boolean } {
     const unit = this.#cat.units.get(f.unit);
-    const u = unit?.words ?? f.unit;
+    const u = unit?.words ?? bareName(f.unit);
     if (f.prefix === undefined) return { words: u, marked: false };
     const prefix = this.#cat.prefixes.get(f.prefix);
     const pair = this.#cat.units.get(f.prefix + f.unit);
@@ -466,7 +471,7 @@ export class SlotModel {
   }
 
   #factorLatex(f: Factor): string {
-    const u = `\\mathrm{${this.#cat.units.get(f.unit)?.latex ?? f.unit}}`;
+    const u = `\\mathrm{${this.#cat.units.get(f.unit)?.latex ?? bareName(f.unit)}}`;
     let body = f.prefix !== undefined ? `\\mathrm{${this.#cat.prefixes.get(f.prefix)?.latex ?? f.prefix}}${u}` : u;
     if (f.root) body = `\\sqrt{${body}}`;
     if (f.exp !== 1) body += `^{${f.exp}}`;

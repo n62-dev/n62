@@ -27,6 +27,7 @@ import { UnitPad, padUnitList } from "./pad.ts";
 import { unitPad } from "./padView.svelte.ts";
 import { slotCatalogue } from "./slot.ts";
 import { makePanel } from "./panel.ts";
+import { ownUnits } from "./ownUnits.ts";
 import { unitCells } from "./userCells.svelte.ts";
 import { putRow, rowSlots, unitRow } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
@@ -75,7 +76,13 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const parseChips: ChipTable = ans ? { ...chips, [ANS_KEY]: ans } : chips;
   void unitFind().catch(() => undefined);
   // MathLive comes with the entry line (its field is up once `ready`): the class is taken from the element registry
-  const [, { finder, index }, hw] = await Promise.all([c.entry.ready, import("../find/finder.ts").then(async (m) => ({ finder: m, index: await m.loadIndex(true) })), import("../entry/hwkeys.ts"), unitCells.restore()]);
+  // G234: your units are Find's items in the slot too (the store is read first: the list is as it was left)
+  const [, { finder, index }, hw] = await Promise.all([
+    c.entry.ready,
+    Promise.all([import("../find/finder.ts"), ownUnits.restore()]).then(async ([m]) => ({ finder: m, index: m.withOwnUnits(await m.loadIndex(true), ownUnits.list()) })),
+    import("../entry/hwkeys.ts"),
+    unitCells.restore(),
+  ]);
   const Field = customElements.get("math-field") as typeof MathfieldElement | undefined;
   if (!Field) return c.dead();
   // R63: a picked unit row shows its slots again. Only the picked row: a line typed again (after a relaunch too) is a

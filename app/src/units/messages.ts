@@ -41,6 +41,8 @@ export function unitErrorMessage(e: UnitError): string {
     case "refused":
       // Home's words (en.ts holds enEngine): the start chunk's table, so enEngine is no chunk of its own (G319 fix 1)
       return t(`error.${e.code}`);
+    case "own":
+      return unitText("units.own.gone", { name: e.name });
     case "engine":
       return unitText("units.engine");
   }

@@ -94,7 +94,7 @@ const LOG_IDS = new Set(["unit:dB", "unit:dBm", "unit:dBW", "unit:bel", "unit:Np
 
 /** A unit's mark in its row: a pick of it would not convert (R4a, finding 17). */
 export function unitNote(it: FindItem): string | undefined {
-  if (it.kind !== "unit" || it.si !== undefined) return undefined;
+  if (it.kind !== "unit" || it.si !== undefined || it.id.startsWith("unit:@")) return undefined; // (a unit of your own, id `unit:@name` as units/factors.ts OWN_PREFIX, has its factor in its definition, G234)
   return LOG_IDS.has(it.id) || /^Np/.test(it.dim ?? "") ? t("convertsOnly") : t("noFactor");
 }
 
@@ -209,7 +209,7 @@ export function showMatrix(c: MatrixCtx, index: FindIndex): void {
     );
 }
 
-export { showNames } from "./names.svelte.ts";
+export { showNames, withOwnUnits } from "./names.svelte.ts";
 // R281: the store sheet comes with Vars' code (one chunk: the names' values and marks are shared, no chunk of their own)
 export { showStore, storedText } from "../views/storeSheet.svelte.ts";
 /** R197: the Help key's sheet (it reads the index), a chunk of its own: R196's functionAt brings the parser's tables, which
