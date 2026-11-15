@@ -2,7 +2,7 @@
   "name": "n62-app",
   "private": true,
   "version": "0.1.0",
-  "author": "Pascaline contributors",
+  "author": "N62 contributors",
   "license": "GPL-3.0-or-later",
   "type": "module",
   "scripts": {
