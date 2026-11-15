@@ -28,18 +28,20 @@ function roundTo(d: Dec, place: number): bigint {
 }
 
 /** Digits `m` at the place `k`, written as text: plain for a nearby magnitude, else mantissa E exponent, with every
- *  digit kept (so "0.10" and "1.20E-9" keep their zero). A 0 at a place of 1 or above is "0" (G143: not "000"). */
-function write(neg: boolean, m: bigint, k: number): string {
-  if (m === 0n && k >= 0) return "0";
+ *  digit kept (so "0.10" and "1.20E-9" keep their zero). A 0 at a place of 1 or above is "0" (G143: not "000").
+ *  G270: `bracket` ("(12)") goes after the mantissa, before the exponent; `forceExp` writes the exponent form
+ *  whatever the magnitude (the exponent is then the last place's for a 0: "0(12)E1"). */
+function write(neg: boolean, m: bigint, k: number, bracket = "", forceExp = false): string {
+  if (m === 0n && k >= 0 && !forceExp) return "0" + bracket;
   const digits = m.toString();
   const e10 = digits.length - 1 + k;
   const sign = neg && m !== 0n ? "-" : "";
-  if (m === 0n || (e10 >= -4 && e10 < 12)) {
-    if (k >= 0) return sign + digits + "0".repeat(k);
+  if (!forceExp && (m === 0n || (e10 >= -4 && e10 < 12))) {
+    if (k >= 0) return sign + digits + "0".repeat(k) + bracket;
     const pad = digits.padStart(-k + 1, "0");
-    return `${sign}${pad.slice(0, pad.length + k)}.${pad.slice(pad.length + k)}`;
+    return `${sign}${pad.slice(0, pad.length + k)}.${pad.slice(pad.length + k)}${bracket}`;
   }
-  return `${sign}${digits[0]}${digits.length > 1 ? `.${digits.slice(1)}` : ""}E${e10}`;
+  return `${sign}${digits[0]}${digits.length > 1 ? `.${digits.slice(1)}` : ""}${bracket}E${e10}`;
 }
 
 /** σ at 2 significant digits as [m, k] with m in 10..99, or null for 0. */
@@ -72,4 +74,50 @@ export function shownWithUncertainty(value: string, sigma: string, plainValue: s
   const t = twoDigits(s);
   if (!t) return `${plainValue} ± 0`;
   return `${write(v.neg, roundTo(v, t.k), t.k)} ± ${write(false, t.m, t.k)}`;
+}
+
+/** G270 (GUM 7.2.2 way 2): "39.5(12)", the value rounded to σ's last place with σ's two digits in brackets (the
+ *  standard uncertainty σ, never U); "6.67430(15)E-11" with the exponent after the bracket. Where σ's last place is
+ *  above the units digit the exponent form is forced ("1.235(12)E4"). Null for σ 0, text that is no decimal, and a
+ *  value that needs more than `maxDigits` digits to reach σ's last place (they are not known that far; a 0 never). */
+export function shortForm(value: string, sigma: string, maxDigits: number): string | null {
+  const v = parseDecimal(value);
+  const s = parseDecimal(sigma);
+  const t = v && s ? twoDigits(s) : null;
+  if (!v || !t) return null;
+  const e10v = v.m === 0n ? 0 : v.m.toString().length - 1 + v.k;
+  // far above σ's place: the digits are too many (the carry adds one at most); far below: the value rounds to 0
+  if (v.m !== 0n && e10v - t.k > maxDigits) return null;
+  const m = v.m === 0n || e10v <= t.k - 2 ? 0n : roundTo(v, t.k);
+  if (m !== 0n && m.toString().length > maxDigits) return null;
+  const forceExp = t.k > 0 || (m === 0n && t.k + 1 < -4);
+  return write(v.neg, m, t.k, `(${t.m})`, forceExp);
+}
+
+/** G270: σ/|y| · 100 at 2 significant digits as text ("3.2"); null for a value of 0, a σ of 0 or no decimal. BigInt only. */
+export function relativeSigma(value: string, sigma: string): string | null {
+  const v = parseDecimal(value);
+  const s = parseDecimal(sigma);
+  if (!v || !s || v.m === 0n || s.m === 0n) return null;
+  // σ/|y| · 100 = s.m / v.m · 10^x; find the place p of the 2nd digit and m = round(s.m · 10^(x-p) / v.m)
+  const x = s.k - v.k + 2;
+  let p = s.m.toString().length - v.m.toString().length + x - 1;
+  for (let i = 0; i < 4; i++) {
+    const num = x - p >= 0 ? s.m * pow10(x - p) : s.m;
+    const den = x - p >= 0 ? v.m : v.m * pow10(p - x);
+    const m = (2n * num + den) / (2n * den);
+    if (m >= 100n) p += 1;
+    else if (m < 10n) p -= 1;
+    else return write(false, m, p);
+  }
+  return null;
+}
+
+/** G270: U = 2σ as text, 2 × the unrounded σ at 2 significant digits ("2.5" for σ = 1.2443…, not 2 × 1.2); null when
+ *  the text is no decimal. */
+export function expandedText(sigma: string): string | null {
+  const s = parseDecimal(sigma);
+  if (!s) return null;
+  const t = twoDigits({ ...s, m: 2n * s.m });
+  return t ? write(false, t.m, t.k) : "0";
 }
