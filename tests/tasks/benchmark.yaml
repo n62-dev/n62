@@ -1,0 +1,149 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# R222: the published ten tasks (docs/research/benchmark-protocol.md, section 1: tasks, values, rules). Replayed from the
+# start state by app/test/benchmark.spec.ts on the real engine; tasks.yaml (EN0, N62's own budgets) is a different file.
+#
+# A task has:
+#   id, title   the id of tasks.yaml where it is the same task, t11 to t13 for the new ones
+#   angle       rad | deg | none: the mode set through window.n62.session before the first press, not counted (protocol 2).
+#               N62's default is RAD; "none" is a task with no angle function
+#   source      oracle | derived | device | virtual-calc | assumed, like a golden case; the expected value's, never a tool's
+#   keys        N62's sequence from the start state, shortest found (a short search, not a proof); counted by docs/04 5.2
+#               (every step 1: Shift and Alpha, Enter, a tap on the screen, a flick). Steps as in tasks.yaml, plus
+#               {tap: "input:last"} (a history row's input; the second tap recalls it) and {tap: "cell:<id>"} (a cell of the open
+#               Tmpl palette)
+#   read        rows: the last n Home rows (n = the length of expect.text); solve: Solve's Num table, one row per `names`;
+#               absent: the one result of the view (Home, CAS, or the unit view with expect.unit)
+#   expect      value = the true value (30 digits, or exact; a list for several results), text = what the replay reads
+#   compare     the hand measurements per tool, the owner's: g2 | qalculate | phone_calculator, each
+#               {presses, seconds, source, date}. All null until measured; nothing here may be guessed. g2.source is
+#               `device` (the owner's G2) or `virtual-calc` (presses only: seconds stay null), else null. qalculate and
+#               phone_calculator: source is the tool and its version. Slips, failed runs and labels (protocol 5) go in the
+#               raw numbers the README table (R223) is built from; N62's seconds are the owner's hand runs, never the replay's
+schema: 1
+
+tasks:
+  - id: t01
+    title: Parallel combination 4.7k ∥ 10k (resistors)
+    angle: none
+    source: derived   # 4700 × 10000 / (4700 + 10000) = 470000/147
+    keys: [{up: paren}, d4, d7, d0, d0, comma, d1, emark, d4, enter]   # par() on a flick up on ( ); 1ᴇ4 is shorter than 10000
+    expect: { value: "3197.27891156462585034013605442", text: "3197.27891156" }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t02
+    title: 72 km/h → m/s
+    angle: none
+    source: derived   # 1 km/h = 5/18 m/s exactly
+    # 7 2, the units key (a flick up on Tmpl), k m ÷ h, a flick up on Enter evaluates, a tap on the m/s alternative
+    keys: [d7, d2, {up: tmpl}, d4, d9, div, {up: d3}, {up: enter}, {tap: "alt:m/s"}]
+    expect: { value: "20", text: "20", unit: m/s }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t04
+    title: Circumference 2π r with r = 25 mm, result in m
+    angle: none
+    source: oracle   # mpmath 1.3.0: 2π × 0.025
+    # 2 × π × 2 5, the units key, Enter (past the 2's slot), m m, a flick up on Enter evaluates, a tap on the SI alternative
+    keys: [d2, mul, {up: d3}, mul, d2, d5, {up: tmpl}, enter, d1, d9, {up: enter}, {tap: "alt:si"}]
+    expect: { value: "0.157079632679489661923132169164", text: "0.157079632679", unit: m }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t07
+    title: 0xFF AND 0x3C, shown in binary
+    angle: none
+    source: derived   # 0xFF = 11111111, 0x3C = 00111100, AND = 00111100 = 60
+    # Math, a n d (Find's first hit is bitand), Enter; 0 x F F (Alpha, then the key lettered F, twice), `,`, 0 x 3 C; Enter;
+    # a flick up on − (Shift + −: the Base menu; a tap on Shift then − opens it under the touch and counts a stray row tap), 2 (the BIN row)
+    keys: [math, vars, paren, x, enter, d0, x, alpha, pow, alpha, pow, comma, d0, x, d3, alpha, tmpl, enter, {up: sub}, d2]
+    expect: { value: "60", text: "0b111100" }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t08
+    title: Solve a 3×3 linear system
+    angle: none
+    source: derived   # x + y + z = 6; 2x − y + z = 3; x + 2y − z = 2; substitute (1, 2, 3): 6, 3, 2
+    # Apps › Solve, the three equations (y = {up: x}, Z = {down: d2}, = = {up: dot}), Num, Menu › Solve; read in Num's table
+    read: solve
+    names: [x, y, Z]
+    keys: ["@place", d4, x, add, {up: x}, add, {down: d2}, {up: dot}, d6, enter, down, d2, x, sub, {up: x}, add, {down: d2}, {up: dot}, d3, enter, down, x, add, d2, {up: x}, sub, {down: d2}, {up: dot}, d2, enter, "@num", "@menu", d1]
+    expect: { value: ["1", "2", "3"], text: ["1", "2", "3"] }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t09
+    title: Mean and sample standard deviation of ten readings
+    angle: none
+    source: oracle   # 9.81 9.79 9.83 9.80 9.82 9.78 9.84 9.81 9.80 9.82; mean = 981/100, s (n − 1) by mpmath 1.3.0
+    # the readings in a list (Shift + 8) stored in x once, then mean(x) and the sample standard deviation of x by Find; Home shows the last two rows
+    read: rows
+    keys: [shift, d8, d9, dot, d8, d1, comma, d9, dot, d7, d9, comma, d9, dot, d8, d3, comma, d9, dot, d8, comma, d9, dot, d8, d2, comma, d9, dot, d7, d8, comma, d9, dot, d8, d4, comma, d9, dot, d8, d1, comma, d9, dot, d8, comma, d9, dot, d8, d2, right, shift, emark, x, enter, math, neg, frac, vars, enter, x, enter, math, {down: d9}, div, x, enter, x, enter]
+    expect: { value: ["9.81", "0.0182574185835055371152323260934"], text: ["9.81", "0.0182574185835"] }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t10
+    title: (12.34 ± 0.05) m × (3.2 ± 0.1) m, with uncertainty
+    angle: none
+    source: derived   # 12.34 × 3.2 = 39.488; σ at two digits 1.2 by either order (protocol 1)
+    # 1 2 . 3 4 ± (Shift + `,`) 0 . 0 5 × 3 . 2 ± 0 . 1, the units key, m, Enter, m, a flick up on Enter evaluates
+    keys: [d1, d2, dot, d3, d4, shift, comma, d0, dot, d0, d5, mul, d3, dot, d2, shift, comma, d0, dot, d1, {up: tmpl}, d9, enter, d9, {up: enter}]
+    expect: { value: "39.488", text: "39.488", shown: "39.5 ± 1.2", unit: "m²" }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t11
+    title: ∫₀^π sin²x dx, exact
+    angle: rad
+    source: derived   # π/2 = 1.57079632679489661923132169164
+    # Apps › CAS (place, 2), the integral template (Tmpl, a tap on its cell), 0 ▶ π ▶ sin x ▶ x² ▶ x, Enter; the CAS view gives the exact 1/2*pi
+    keys: ["@place", d2, tmpl, {tap: "cell:integral"}, d0, right, {up: d3}, right, sin, x, right, sq, right, x, enter]
+    expect: { value: "1.57079632679489661923132169164", text: "1/2*pi" }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t12
+    title: The root of cos x = x
+    angle: rad
+    source: oracle   # mpmath 1.3.0: 0.739085133215160641655312087674
+    # Apps › Solve, cos x ▶ = x (the ▶ leaves cos's bracket), Enter, Num, Menu › Solve; read in Num's table
+    read: solve
+    names: [x]
+    keys: ["@place", d4, "@symb", cos, x, right, {up: dot}, x, enter, "@num", "@menu", d1]
+    expect: { value: "0.739085133215160641655312087674", text: ["0.739085133215"] }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
+
+  - id: t13
+    title: 3.2 · sin(25°) / 4.7, then the same with 27° by editing
+    angle: deg
+    source: oracle   # mpmath 1.3.0: 0.287740093100050679957091737632, then 0.309099914716287177232618462201
+    # 3 . 2 × sin 2 5 ▶ ÷ 4 . 7, Enter; the row's input twice (picks, then recalls it), ◀ ▲ ◀ (into the numerator, before the 5's end), ⌫ 7, Enter
+    read: rows
+    keys: [d3, dot, d2, mul, sin, d2, d5, right, div, d4, dot, d7, enter, {tap: "input:last"}, {tap: "input:last"}, left, up, left, bksp, d7, enter]
+    expect: { value: ["0.287740093100050679957091737632", "0.309099914716287177232618462201"], text: ["0.2877400931", "0.309099914716"] }
+    compare:
+      g2: { presses: null, seconds: null, source: null, date: null }
+      qalculate: { presses: null, seconds: null, source: null, date: null }
+      phone_calculator: { presses: null, seconds: null, source: null, date: null }
