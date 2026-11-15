@@ -70,7 +70,7 @@ const PINT = new Set(["Fraction", "ureg", "Q_", "UnitRegistry", "ufloat"]);
 /** G214, the function table: a Find tier-0 function (find/functions.yaml, by its Giac name) → its sympy function, which
  *  takes the same arguments in the same order and gives the same value. Closed: a name not here is not translated,
  *  tier 1 by construction. ln, log10 and surd are written by their own rule below (ROOT_LOG). Left out on purpose
- *  (G214 report): N62's own definitions (median, percentile, sem, irem, par, eseries, sigfig, the word operations),
+ *  (G214 report): N62's own definitions (median, percentile, sem, irem, par, eseries, sigfig, linterp, the word operations),
  *  Giac's own conventions (dot conjugates its first argument, stddevp is the sample deviation, frac is not settled for
  *  a negative number), and what needs a list, a matrix or a free variable (the core translates none). */
 // Which of them takes or gives an angle is never written here: fn() asks angles.ts, the lists emit.ts adds pasdeg by.

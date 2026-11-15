@@ -24,7 +24,7 @@ export const enEngineShown = {
   "why.pairDiffers": "The exact and numeric answers differ",
 } as const;
 
-/** The worker's table: the app's part and the refusals of (G223) linreg and stats1 (engine/stats.ts) and (G229) the word
+/** The worker's table: the app's part and the refusals of (G223) linreg and stats1, (G361) linterp (engine/stats.ts) and (G229) the word
  *  operations (engine/wordOps.ts). Those are not in en.ts, so the start chunk does not carry them (size-check.ts
  *  START_PIN_GZIP): their row shows the words the worker sends (state/session.svelte.ts errorText falls back to them,
  *  i18n/index.ts hasMessage). */
@@ -36,6 +36,10 @@ export const enEngine = {
   "error.fewValues": "A sample deviation needs at least two values",
   "error.xAllEqual": "The x values are all equal",
   "error.yAllEqual": "No spread in y: r² is undefined",
+  "error.tableArgs": "Needs a list of x values, a list of y values and a real x",
+  "error.tablePoints": "A table needs at least two points",
+  "error.tableOrder": "The x values must be strictly increasing",
+  "error.tableOutside": "x is outside the table",
   "error.wordArgs": "Needs a value, a count for a shift or rotation, then the word size and signed",
   "error.wordSize": "The word size is 8, 16, 32 or 64; signed is 0 or 1",
   "error.wordValue": "The value must be an integer that fits the word",

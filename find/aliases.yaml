@@ -45,6 +45,7 @@ aliases:
   "fn:asin": ["arcsin"]
   "fn:acos": ["arccos"]
   "fn:atan": ["arctan"]
+  "fn:linterp": ["interpolate", "interpolation", "lookup", "table"]   # G361 (G356: not Giac's lagrange or interp)
 
 symbols:
   "const:StdT": "T_std"
