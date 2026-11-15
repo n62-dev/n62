@@ -2,7 +2,7 @@
 // G54: our replacements for Giac functions, by the name the user writes. One map for the parser (input/emit.ts) and for
 // every path that sends Giac text without the parser (the library import and its `// test:` lines, the export back).
 // No UI imports; only erasable TypeScript syntax.
-import { closing, isProgramWord, mapNames, names, topLevelArgs, topLevelOps, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
+import { closing, isNameChar, isProgramWord, leadingName, mapNames, names, topLevelArgs, topLevelOps, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { isStandIn } from "./standIns.ts";
 
 /** Giac's own `mod` is the modular-number constructor (an error as a call); Find's `mod` is irem (Euclidean,
@@ -48,6 +48,9 @@ export const TEST_REL = { eq: "==", ne: "!=" } as const;
  * stays when undecided. Written by the parser (input/emit.ts equalityTest) and by the library import (readTests); read
  * back by the export (writeTests), so this text is the one shape of the block. The rules: emit.ts equalityTest.
  */
+/** G377: how every block starts (its two sides' parameters); writeTests finds a block by it. */
+const BLOCK_OPENER = "((a_,b_)->";
+
 export function equalityBlock(a: string, b: string, negate: boolean, kept: string): string {
   const [yes, no] = negate ? ["false", "true"] : ["true", "false"];
   const k = `'${kept}'`;
@@ -58,7 +61,7 @@ export function equalityBlock(a: string, b: string, negate: boolean, kept: strin
     `when(${float},when(${EQ_VERDICT}==0,${yes},when(${EQ_VERDICT}==1,${no},${k})),` +
     `when(simplify(d_)==0*d_,${yes},when(lname(d_)==[] and (type(d_)==integer or type(d_)==rational or ` +
     `${big("d_")}>10^-20*max(${big("a_")},${big("b_")})),${no},${k})))}`;
-  return `((a_,b_)->((d_)->${test})(a_-b_))(${a},${b})`;
+  return `${BLOCK_OPENER}((d_)->${test})(a_-b_))(${a},${b})`;
 }
 
 /** G377: equalityBlock's fixed text around its slots, read from the block itself: the head up to the first `kept`,
@@ -98,20 +101,29 @@ function blockAt(text: string, at: number): { end: number; kept: string } | null
  */
 export function writeTests(text: string): string {
   const starts: number[] = [];
-  const { head } = SHAPES()[0]!;
-  const opener = head.slice(0, head.indexOf("->") + 2);
-  walk(text, 0, (k) => void (text.startsWith(opener, k) && starts.push(k)), "typed");
+  walk(text, 0, (k) => void (text.startsWith(BLOCK_OPENER, k) && starts.push(k)), "typed");
   let out = text;
   for (const at of starts.reverse()) {
     const b = blockAt(out, at);
     if (!b) continue;
     const before = out.slice(0, at).trimEnd();
     const after = out.slice(b.end).trimStart();
-    const open = before === "" || /([([{,;]|:=|->|\b(and|or|xor))$/.test(before);
-    const shut = after === "" || /^([)\]},;]|(and|or|xor)\b)/.test(after);
+    const open = before === "" || OPEN_ENDS.some((e) => before.endsWith(e)) || LOGIC_WORDS.has(lastName(before));
+    const shut = after === "" || SHUT_STARTS.some((e) => after.startsWith(e)) || LOGIC_WORDS.has(leadingName(after, false) ?? "");
     out = out.slice(0, at) + (open && shut ? b.kept : `(${b.kept})`) + out.slice(b.end);
   }
   return out;
+}
+
+/** G377: what a kept test may stand right after, or right before, without a bracket (a logic word too). */
+const OPEN_ENDS = ["(", "[", "{", ",", ";", ":=", "->"];
+const SHUT_STARTS = [")", "]", "}", ",", ";"];
+
+/** The name `s` ends with ("" when it ends in another character). */
+function lastName(s: string): string {
+  let i = s.length;
+  while (i > 0 && isNameChar(s.charAt(i - 1))) i--;
+  return s.slice(i);
 }
 
 /** G377: what ends a test's side in typed text (a separator) and the relations beside which a test is not one alone.
@@ -133,7 +145,7 @@ function markTests(s: string, make: (a: string, b: string, negate: boolean) => s
     const r = rels.length === 1 && !keep ? rels[0]! : undefined;
     const [a, b] = r ? [s.slice(from, r.at), s.slice(r.at + r.op.length, sep.at)] : ["", ""];
     if (r && Object.hasOwn(TESTS, r.op) && a.trim() && b.trim()) {
-      out += /^\s*/.exec(a)![0] + make(a.trim(), b.trim(), TESTS[r.op]!) + /\s*$/.exec(b)![0];
+      out += a.slice(0, a.length - a.trimStart().length) + make(a.trim(), b.trim(), TESTS[r.op]!) + b.slice(b.trimEnd().length);
     } else out += groupsIn(seg, make);
     out += sep.op;
     from = sep.at + sep.op.length;
@@ -152,7 +164,7 @@ function groupsIn(seg: string, make: (a: string, b: string, negate: boolean) => 
     const close = closing(seg, k, "typed");
     if (close < 0) break;
     const inner = seg.slice(k + 1, close);
-    const args = /(^|[^A-Za-z0-9_])piecewise$/.test(seg.slice(0, k)) ? topLevelArgs(inner, "typed") : null;
+    const args = lastName(seg.slice(0, k)) === "piecewise" ? topLevelArgs(inner, "typed") : null;
     const done = args ? args.map((x, n) => markTests(x, make, n % 2 === 0 && n < args.length - 1)).join(",") : markTests(inner, make);
     out += seg.slice(i, k + 1) + done + seg.charAt(close);
     i = close + 1;
@@ -160,8 +172,16 @@ function groupsIn(seg: string, make: (a: string, b: string, negate: boolean) => 
   return out + seg.slice(i);
 }
 
-/** The pseudo name a test stands as while readTests puts the rest of a body through `giac` (no user writes `pas`). */
-const TEST_MARK = /^pastest(\d+)_$/;
+/** The pseudo name a test stands as while readTests puts the rest of a body through `giac` (no user writes `pas`):
+ *  TEST_MARK, its number, then `_`. */
+const TEST_MARK = "pastest";
+/** The number of a TEST_MARK name, or -1. */
+function markNumber(name: string): number {
+  const k = name.startsWith(TEST_MARK) && name.endsWith("_") ? name.slice(TEST_MARK.length, -1) : "";
+  return k !== "" && [...k].every((c) => c >= "0" && c <= "9") ? Number(k) : -1;
+}
+/** What makes a body a program, outside strings: braces, a `;`, a Giac quote. */
+const PROGRAM_MARKS = ["{", ";", "'"];
 
 /**
  * G377: a library body's tests (`A==B`, `A!=B`, `A<>B`, each alone between separators) as the parser writes a typed
@@ -171,17 +191,18 @@ const TEST_MARK = /^pastest(\d+)_$/;
  */
 export function readTests(text: string, giac: (t: string) => string): string {
   const words = [...names(text, "typed")].map((n) => n.name);
-  if (/[{;']/.test(withoutStrings(text, "", "typed")) || words.some((w) => isProgramWord(w) && !LOGIC_WORDS.has(w))) return giac(text);
+  const bare = withoutStrings(text, "", "typed");
+  if (PROGRAM_MARKS.some((c) => bare.includes(c)) || words.some((w) => isProgramWord(w) && !LOGIC_WORDS.has(w))) return giac(text);
   const blocks: string[] = [];
   const marked = markTests(text, (a, b, negate) => {
     const kept = `${renameOurCalls(a)}${negate ? TEST_REL.ne : TEST_REL.eq}${renameOurCalls(b)}`;
     blocks.push(equalityBlock(readTests(a, giac), readTests(b, giac), negate, kept));
-    return `pastest${blocks.length - 1}_`;
+    return `${TEST_MARK}${blocks.length - 1}_`;
   });
   if (!blocks.length) return giac(text);
   return mapNames(giac(marked), ({ name }) => {
-    const m = TEST_MARK.exec(name);
-    return m ? blocks[Number(m[1])]! : null;
+    const n = markNumber(name);
+    return n >= 0 && n < blocks.length ? blocks[n]! : null;
   }, "typed");
 }
 
