@@ -3,9 +3,10 @@
 // by element: an element MPFR values keeps its own facts, an element only a double values gets the fallback's facts (⚠),
 // an element with a free name (or no number at all) keeps the whole result symbolic. Each element is read at P from a slot
 // of its own, so it takes the scalar path the scalar result takes; the checks G84 and G123 make for a scalar hold per element.
+// G358: G123's overflow is asked along the agreement check's climb (climbedFacts), for a scalar by homeEval before the fallback.
 import type { GiacValue } from "./bridge.ts";
 import { doubleFallback, exactFacts, valuePrecision, withDigits, size, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
-import { elementAt, mayBeNumbers, overflowAt, underflow, zeroElements } from "./novalue.ts";
+import { elementAt, finiteLevel, mayBeNumbers, underflow, zeroElements } from "./novalue.ts";
 
 /** The element read; the list as Ans will hold it, the doubles in. Both purged after the run. */
 const EL = "pasel";
@@ -31,14 +32,34 @@ export interface DoubleElementsRun {
   late: () => boolean;
 }
 
+/**
+ * G358 (be-4): the facts of the value in `slot` (exact text `text`, value `v`) when exactFacts found none because it is
+ * MPFR's infinity at P: the agreement check from the first level of its climb where it is finite (novalue.ts
+ * finiteLevel; 1/(1-tanh(50)) from P + 20). "overflow" when it is infinite at every level up to MAX_EVAL_DIGITS (G123),
+ * "timeout" when Home's clock stops the climb, null when it is finite at P or that level gives no facts.
+ */
+export function climbedFacts(
+  giac: Giac,
+  slot: string,
+  text: string,
+  v: GiacValue,
+  digits: number,
+  maxExactDigits: number,
+  late: () => boolean,
+  underflowAt?: (k: number) => boolean,
+): ElementFacts[] | "overflow" | "timeout" | null {
+  const at = finiteLevel(giac, slot, text, valuePrecision(digits), late);
+  return at === null || typeof at === "string" ? at : exactFacts(giac, slot, SCALAR, digits, maxExactDigits, text, v, underflowAt, at);
+}
+
 /** The facts of `run`'s result by the double fallback; the reason it is refused; null: it stays symbolic. Ans holds the
  *  numbers only when every element has one. */
-export function doubleElements(giac: Giac, run: DoubleElementsRun): ElementFacts[] | "overflow" | "underflow" | null {
+export function doubleElements(giac: Giac, run: DoubleElementsRun): ElementFacts[] | "overflow" | "underflow" | "timeout" | null {
   const { name, input, exactOut, value, shape, digits, once, late } = run;
   const P = valuePrecision(digits);
   if (shape.kind === "scalar") {
-    // G123 (F123): MPFR's infinity at P is an overflow, whatever a double makes of it (1.000000000000001^(10^50) gave 1.0).
-    if (!once && !late() && overflowAt(giac, name, exactOut, P)) return "overflow";
+    // G123 (F123): MPFR's infinity at P is an overflow, whatever a double makes of it (1.000000000000001^(10^50) gave 1.0):
+    // asked by homeEval before this fallback, along the climb (climbedFacts, G358).
     const d = doubleFallback(giac, name, input, digits, digits, value);
     if (!d) return null;
     // G84 (F60): a double's 0 where MPFR found no value (exp(cosh(asin(π)/pasdeg))) whose exact answer is not 0.
@@ -64,7 +85,7 @@ export function doubleElements(giac: Giac, run: DoubleElementsRun): ElementFacts
   }
 }
 
-function oneElement(giac: Giac, run: DoubleElementsRun, k: number, P: number, copy: { made: boolean }): ElementFacts | "overflow" | "underflow" | null {
+function oneElement(giac: Giac, run: DoubleElementsRun, k: number, P: number, copy: { made: boolean }): ElementFacts | "overflow" | "underflow" | "timeout" | null {
   const { name, input, shape, digits, maxExactDigits, once, late } = run;
   // P and P + 20 always: G153's check (numberLost) of an element needs both, whatever else the input holds
   const ev = withDigits(giac, P, digits, () => {
@@ -80,13 +101,15 @@ function oneElement(giac: Giac, run: DoubleElementsRun, k: number, P: number, co
         under = !late() && underflow(giac, [EL], P);
         return under;
       };
-  const f = exactFacts(giac, EL, SCALAR, digits, maxExactDigits, ev.text, ev, underflowAt);
+  // G123 (F123), G358: MPFR's infinity at P is an overflow only when it is infinite at every level of the climb
+  const f0 = exactFacts(giac, EL, SCALAR, digits, maxExactDigits, ev.text, ev, underflowAt);
+  const f = f0 ?? (once || late() ? null : climbedFacts(giac, EL, ev.text, ev, digits, maxExactDigits, late, underflowAt));
+  if (typeof f === "string") return f;
   if (f) {
     // G84: an element that reads as 0 while its exact answer is not 0 (after G126's question, when exactFacts asked it)
     if (!once && (under || (!late() && underflow(giac, zeroElements(EL, f, SCALAR, asked), P)))) return "underflow";
     return f[0]!;
   }
-  if (!once && !late() && overflowAt(giac, EL, ev.text, P)) return "overflow";
   const d = doubleFallback(giac, EL, input, digits, digits, ev);
   if (!d) return null;
   if (!once && !late() && underflow(giac, zeroElements(`(${ev.text})`, [d], SCALAR), null)) return "underflow";

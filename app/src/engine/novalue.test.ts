@@ -10,7 +10,7 @@ import { defaultCasSettings } from "./types.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { rewriteAngles } from "./angles.ts";
 import type { Giac } from "./numeric.ts";
-import { approxRange, lostNumber, overflowAt, powerAtTop, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
+import { approxRange, finiteLevel, lostNumber, overflowAt, powerAtTop, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 
 describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
   let host: EngineHost;
@@ -133,6 +133,40 @@ describe.skipIf(!giacAvailable())("G78 on the real engine", () => {
       expect(() => overflowAt(giac, "pasov", "pnt", 40), g).not.toThrow();
     }
     giac.eval("purge(pasov);1");
+  });
+  it("calls an infinity at P an overflow only when every level of the climb is infinite (G358, be-4)", () => {
+    // Oracle values (mpmath at 200 digits, home.yaml g358-*): 1-tanh(50) = 2/(e^100+1) is 7.4E-44, 0 at P = 40;
+    // 1-tanh(100), 2.8E-87, is 0 at P, P + 20 and P + 40.
+    const rows: [string, string][] = [
+      ["1/(1-tanh(50))", "1.34405857091E43"],
+      ["ln(1-tanh(50))", "-99.3068528194"],
+      ["ln((tanh(50)-1)^2)", "-198.613705639"],
+      ["ln((tanh(100)-1)^2)", "-398.613705639"],
+      ["ln(abs(tanh(100)-1))", "-199.306852819"],
+      ["[ln(1-tanh(50)),1]", "[-99.3068528194,1]"],
+    ];
+    for (const [input, display] of rows) expect(home(input), input).toMatchObject({ ok: true, display });
+    const level = (e: string, P = 40): ReturnType<typeof finiteLevel> => {
+      giac.eval(`pasov:=${e}`);
+      return finiteLevel(giac, "pasov", giac.eval("pasov"), P, () => false);
+    };
+    try {
+      expect(level("1/(1-tanh(50))")).toBe(60);
+      expect(level("ln(1-tanh(100))")).toBe(120);
+      // At 30 digits P is 40 too; a larger P starts higher.
+      expect(level("1/(1-tanh(50))", 60)).toBe(null);
+      // A true overflow is infinite at every level up to MAX_EVAL_DIGITS (G123).
+      expect(level("exp(10^50*ln(1000000000000001/1000000000000000))")).toBe("overflow");
+      expect(level("exp(10^20)")).toBe("overflow");
+      // Not infinite at P: nothing to climb (a value, and a typed infinity).
+      expect(level("tanh(100)-1")).toBe(null);
+      expect(finiteLevel(giac, "infinity", "+infinity", 40, () => false)).toBe(null);
+      // The clock stops the climb: a time-out, not an overflow.
+      giac.eval("pasov:=exp(10^20)");
+      expect(finiteLevel(giac, "pasov", giac.eval("pasov"), 40, () => true)).toBe("timeout");
+    } finally {
+      giac.eval("purge(pasov);1");
+    }
   });
   it("refuses a power past MPFR's range by its size, before Giac's normal recursed (G187, F122)", () => {
     // The parser's text of the sweep rows; sizes 10^(-1.96E299) (RAD), 10^(-1.95E300) (DEG), 10^(-1.95E500) (mpmath).

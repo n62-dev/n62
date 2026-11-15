@@ -11,6 +11,7 @@ import { mayStore } from "./stores.ts";
 import type { GiacValue } from "./bridge.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { nonReal } from "./complex.ts";
+import { finiteLevel } from "./novalue.ts";
 
 const INTEGER = /^\s*\d+\s*$/;
 
@@ -534,7 +535,7 @@ export type Decision = { text: string; from?: string; value?: GiacValue } | Unde
  * whose texts differ or whose tie is unproven is `refused`. G156: P + 20 and P + 40 are counted from G141's raised
  * start when the input holds a long exact literal (a literal past the cap refuses a number).
  */
-export function decideTwice(giac: Giac, expr: string, text: string, digits: number, restore: number): Decision {
+export function decideTwice(giac: Giac, expr: string, text: string, digits: number, restore: number, climb = false): Decision {
   // G156: a long exact literal raises the base as it raises the agreement check's start (G141, literalStart): at P + 20
   // and P + 40 a 101-digit 10^100 is rounded, and both took the same wrong sign of sin(10^100) (abs(sin(10^100)) showed
   // ≈ -0.372376123661). A literal past the cap in a text a decision is made on (decisionArgs) refuses the result: no
@@ -554,7 +555,12 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
     return branch ? { undecided: true, refused: true, branch: true } : { undecided: true, refused: true };
   }
   const printed = literalStart(text, P0, MAX_EVAL_DIGITS, "printed");
-  const P = Math.max(typed.at, printed.unchecked ? P0 : printed.at);
+  // G358: with `climb` (the exact run found no number at P0), a text that is MPFR's infinity at P0 because a quantity
+  // cancels to 0 there is decided again from the first level where it is finite, as its value is (finiteLevel):
+  // 2*ln(tanh(100)-1), from ln((tanh(100)-1)^2) with the sign of tanh(100)-1 (-2.8E-87) taken at P0, P0 + 20 and P0 + 40,
+  // where it is 0, gave -398.613705639+6.28318530718*i. Not asked otherwise: an exact text may be slow to evaluate.
+  const finite = climb ? finiteLevel(giac, `(${text})`, text, P0, () => false) : null;
+  const P = Math.max(typed.at, printed.unchecked ? P0 : printed.at, typeof finite === "number" ? finite : 0);
   const failed: Undecided = P > P0 ? { undecided: true, refused: true } : { undecided: true };
   // G103: the P + 20 text is only compared, so it goes through bridge-3 (nothing stored, nothing to purge; no `=` read
   // as a store, as giac_eval's equaltosto would). A print bridge-3 cut at 2 kB is read whole.
