@@ -301,7 +301,7 @@ for (const width of [360, 412])
     expect(await fits('[data-fit="face"]')).toMatchObject({ text: "Settings", cut: false });
   });
 
-// R278: the faces of ☰ (with its ▾ mark), Select and Deselect, and Shift + Select's "Help", fit their cluster keys at 360 and 412 px
+// R278: the faces of ☰ (with its ▾ mark), Select and Deselect, and Shift + Select's "Help" and Shift + Deselect's "Mode" (R322), fit their cluster keys at 360 and 412 px
 for (const width of [360, 412])
   test(`R278: the faces of ☰, Select and Deselect fit their keys at ${width} px, Shift on too`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
@@ -326,7 +326,7 @@ for (const width of [360, 412])
     expect(await faces()).toEqual([
       { id: "menu", text: "Settings", cut: false },
       { id: "select", text: "Help", cut: false },
-      { id: "deselect", text: "Deselect", cut: false },
+      { id: "deselect", text: "Mode", cut: false },
     ]);
   });
 

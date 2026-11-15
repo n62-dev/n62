@@ -5,6 +5,13 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 190 (2026-11-15) to make room, as they stood
+- **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172". Would change if: the owner drops paste in the apps.
+- **R224's wide layout (Opus pass 172):** side by side the keypad fills the height in a column of 42 % within 400–560 px (`--keys-wide`), the status line across both. Would change if: the owner's look on the Tab One.
+- **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home,** so `√2·1.0` stored to B stays exact and B+1's line says "≈ rounded", not "uses B"; `why.rounded` names a stored float (`evalf(√2)`), never one of our names.
+- **t06 and Find (Opus pass 182, R221):** "es" ranks the unit statC (a shorter name) above eseries, as docs/04 3.5 orders prefixes; the ranking stays, and t06's budget (plan 12, today 13) is agreed with the owner when it goes active.
+- **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Archived, "Opus pass 97". Would change if: the review after R24d.
+
 ### Shortened by Opus pass 189 (2026-11-14) to make room, as they stood
 - **The matrix grid (R188, R189, R300; Opus passes 176, 179, 187):** Shift + 4 lists stored matrices, newest first; Enter writes one row `M:=`, idle on an unedited cell; a key acts by its action in the layer pressed (Store ▶ dead; in a cell an operator types itself). Archived, "Opus pass 186", "Opus pass 187". Would change if: the owner wants Enter to open the cell, or G2 item 74 shows Ans − 5.
 - **Tests:** the golden gate as docs/04 7.3; a pending task's budget is its planned press count, values `derived` or `oracle`; timing tests skip their assertion when the load average exceeds the cores; Vitest has no DOM, a DOM count is a Playwright test (R132, Opus pass 72). Archived.

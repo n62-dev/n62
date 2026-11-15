@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   await open(page);
 });
 
-test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ☰ | Esc, Undo | Redo, Select | Deselect; Shift + Select dimmed (R146, R278)", async ({ page }) => {
+test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ☰ | Esc, Undo | Redo, Select | Deselect; Help | Mode on Shift (R146, R278, R322)", async ({ page }) => {
   const ids = ["u1", "u2", "up", "menu", "esc", "u3", "u4", "left", "right", "undo", "redo", "u5", "u6", "down", "select", "deselect"];
   const boxes = await page.evaluate(
     (ids) =>
@@ -42,16 +42,16 @@ test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ☰ | Esc, U
   for (const id of ["menu", "select", "deselect"]) await expect(page.locator(`[data-key="${id}"]`)).not.toHaveAttribute("data-dead", "true"); // (the taps are live)
   const faces = { menu: "☰", esc: "Esc", undo: "Undo", redo: "Redo", select: "Select", deselect: "Deselect" };
   for (const [id, l] of Object.entries(faces)) await expect(page.locator(`[data-key="${id}"] .main`), id).toHaveText(l);
-  const legends = { menu: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", select: "Help", deselect: "" };
+  const legends = { menu: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", select: "Help", deselect: "Mode" };
   for (const [id, l] of Object.entries(legends)) await expect(page.locator(`[data-key="${id}"] .shiftlegend`), id).toHaveText(l);
   // no letter line in the cluster (vertical space)
   await expect(page.locator('[data-key="esc"] .alphalegend, [data-key="u1"] .alphalegend')).toHaveCount(0);
   const gone = ["apps", "symb", "plot", "num", "cancel", "app", "cas", "view", "lstart", "lend", "help", "copy", "paste"];
   await expect(page.locator(gone.map((id) => `[data-key="${id}"]`).join(", "))).toHaveCount(0);
-  // Shift on: the reserved Shift + Deselect is drawn dimmed, in that layer only (R278); Help (Select's layer) is live (R197)
+  // Shift on: Help (Select's layer, R197) and Mode (Deselect's, R322) are live; no cell of the cluster is reserved
   await tap(page, ["shift"]);
   await expect(page.locator('[data-key="select"]')).not.toHaveAttribute("data-dead", "true");
-  await expect(page.locator('[data-key="deselect"]')).toHaveAttribute("data-dead", "true");
+  await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true");
   await expect(page.locator('[data-key="menu"]')).not.toHaveAttribute("data-dead", "true");
 });
 
@@ -116,24 +116,7 @@ test("the ☰ key opens the sheet the status line's ☰ opens, in CAS and in eac
   }
 });
 
-test("Shift + Deselect is dead, a tap or a flick up: nothing changes, and each press is counted under its layer", async ({ page }) => {
-  await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
-  await tap(page, ["d1", "add", "d2"]);
-  const keys = (): Promise<Record<string, number>> => page.evaluate(() => ({ ...window.n62.session.taps.counts.keys }));
-  const base = await keys();
-  await tap(page, ["shift"]);
-  const v1 = (await vibrations(page)).length;
-  await tap(page, ["deselect"]); // Shift + Deselect: reserved
-  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3);
-  await flick(page, "deselect", "up");
-  await expect.poll(async () => (await keys())["deselect:up"] ?? 0).toBe(1);
-  const now = await keys();
-  expect(now["deselect:shift"]).toBe(1);
-  expect(now["deselect:up"]).toBe(1);
-  expect(base["deselect:shift"]).toBeUndefined();
-  expect(await entryValue(page)).toBe("1+2");
-  expect(await page.evaluate(() => window.n62.session.items.length)).toBe(0);
-});
+// R322: Shift + Deselect is Mode now, and the reserved Shift + Fmt's dead press is in modekey.spec.ts
 
 test("Home ↔ CAS: the place name and its sheet, by touch and by keys (the sheet's rows 1 and 2)", async ({ page }) => {
   await place(page).tap();
