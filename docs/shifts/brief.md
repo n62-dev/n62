@@ -64,7 +64,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 762 | R307 the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | – |
-| 763 | [R308](packages/R308.md) a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | – |
+| 763 | R308 a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | – |
 | 790 | [R320](packages/R320.md) the press counters load when the browser is idle, and the lazy check reads the chunks | ron, Opus | `p1/ron-tapscut` | – |
 | 736 | [R222](packages/R222.md) the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
