@@ -65,12 +65,22 @@ export async function helpAt(entry: EntryController, byId: ReadonlyMap<string, F
   return range && line !== undefined ? { it, at: { line, range } } : { it };
 }
 
+/** R324: the example over the call's atoms while the line is as Help read it, else at the cursor. MathLive's insert
+ *  replaces a selection as one step of the line's own history, so Undo brings the call back. */
+function put(entry: EntryController, latex: string, at: CallAt | undefined): void {
+  const mf = entry.field;
+  if (mf && at && mf.value === at.line) {
+    entry.endSelect();
+    mf.selection = { ranges: [at.range] };
+  }
+  entry.insert(latex);
+}
+
 /** The help sheet of the function at the cursor over the view; false (nothing opened) when there is none (R197: the
  *  caller opens Find). */
 export async function showHelpAt(shell: AppShell, entry: EntryController, byId: ReadonlyMap<string, FindItem>): Promise<boolean> {
   const found = await helpAt(entry, byId);
   if (!found) return false;
-  const put = (latex: string, at: CallAt | undefined): void => (at ? entry.replace(latex, at.range, at.line) : entry.insert(latex));
-  shell.showMenu(helpTitle(found.it), helpRows(found.it, put, found.at), { remember: false });
+  shell.showMenu(helpTitle(found.it), helpRows(found.it, (latex, at) => put(entry, latex, at), found.at), { remember: false });
   return true;
 }
