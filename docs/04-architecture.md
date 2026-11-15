@@ -304,7 +304,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift is reserved (R322) | ours; decisions.md "Settings in the Mode sheet, and presets" |
 | Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); % (`\%`, the Shift + 9 palette's cell) (built, R323) | owner, 2026-11-14; docs/06 3b |
-| Unassigned Shift cells (a b/c, 1, Fmt; `,` is ± since R71; the pad has no Shift layer, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
+| Unassigned Shift cells (a b/c, Fmt; `,` is ± since R71; the pad has no Shift layer, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 
 ### 5.2 Decision: how key presses are counted (EN0)
