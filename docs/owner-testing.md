@@ -13,7 +13,7 @@
 | v0.3 Structure | Matrix entry and editor, number bases, Help key, key positions in Find, CSV and LaTeX export | 22 | After v0.2 |
 | v0.4 Units, part 2 | Your own units, units inside Solve | 4 and stubs | After v0.3 |
 | v0.5 to v1 | Uncertainty budget, formula sets, published benchmark, tablet layout, iPhone web app | 17 and stubs | Later |
-| v1 RPN | Stack entry on Home | 6 | Only on the owner's yes |
+| RPN | Stack entry on Home, units and ± kept | 6 | Before the freeze (owner, 2026-11-15); its keys after the Virtual Calculator session of 11-16 |
 | Upkeep | Pipeline and device work | 5 | As needed |
 
 Package order and open decisions: [must-have.md](must-have.md). Everything listed through v1 is about 170 packages (92 files, the stubs split, fix rounds added; an estimate).
@@ -35,7 +35,7 @@ Tested in this order: the promise of the app first, then the areas with the thin
 | 9 | Look and layout | none | Everything; the review list in [release-0.1.0.md](release-0.1.0.md) | Should be settled |
 | 10 | First run and release pages | none | Whether a stranger understands them | Test after the freeze |
 
-Not worth testing yet: number bases (v0.3 builds them) and desktop typing of function names (F199, v0.2). Matrices are tested through Tmpl only; the editor and keys come in v0.2 to v0.3, so an idea for their entry counts as much as a bug.
+Not worth testing yet: number bases (v0.3 builds them). Matrices are tested through Tmpl only; the editor and keys come in v0.2 to v0.3, so an idea for their entry counts as much as a bug.
 
 ## Tasks and reporting
 
