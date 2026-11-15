@@ -109,10 +109,10 @@ describe("licences of what ships (THIRD_PARTY.md, LICENSES/)", () => {
 });
 
 describe("copyright and changes", () => {
-  it("the owner of the work is Pascaline contributors, in README and package.json", () => {
-    expect(read("README.md")).toContain("Copyright © 2026 Pascaline contributors");
+  it("the owner of the work is N62 contributors, in README and package.json", () => {
+    expect(read("README.md")).toContain("Copyright © 2026 N62 contributors");
     const pkg = JSON.parse(read("app/package.json")) as { author?: string };
-    expect(pkg.author).toBe("Pascaline contributors");
+    expect(pkg.author).toBe("N62 contributors");
   });
 
   it("each Giac patch says who changed Giac and when (GPL-3.0 section 5a)", () => {
@@ -181,7 +181,7 @@ describe("A78: N62 on the web and in every link", () => {
     expect(read(dir + "title.txt").trim()).toBe("N62");
     for (const f of ["short_description.txt", "full_description.txt"]) expect(read(dir + f), f).not.toMatch(/pascaline/i);
   });
-  it("README, CONTRIBUTING and PRIVACY call the app N62 (the copyright line keeps its owner)", () => {
-    for (const f of ["README.md", "CONTRIBUTING.md", "PRIVACY.md"]) expect(read(f).replace(/Pascaline contributors/g, ""), f).not.toMatch(/Pascaline/);
+  it("README, CONTRIBUTING, PRIVACY and package.json name N62, never Pascaline", () => {
+    for (const f of ["README.md", "CONTRIBUTING.md", "PRIVACY.md", "app/package.json"]) expect(read(f), f).not.toMatch(/pascaline/i);
   });
 });
