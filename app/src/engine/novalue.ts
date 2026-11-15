@@ -18,7 +18,7 @@
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
-import { callsOf, firstNameIn, functionsIn, isError, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
+import { callsOf, firstNameIn, functionsIn, isError, isTimeout, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import type { ParseNode } from "./bridge.ts";
 
@@ -219,6 +219,26 @@ export function lostCas(giac: Giac, slot: string, input: string, output: string,
 export function overflowAt(giac: Giac, slot: string, output: string, P: number): boolean {
   // G123f2: the module's one infinity rule on the string() text, so a part that is infinite (+infinity*i) is one too.
   return !infinite(output) && infinite(giac.eval(`string(evalf(${slot},${P}))`));
+}
+
+/**
+ * G358 (be-4): G123's overflow, asked along the agreement check's climb. The value in `slot` (exact text `output`) that
+ * is MPFR's infinity at `P` (overflowAt) is evaluated again at each level the check climbs to, P + 20, P + 40, P + 80, …
+ * up to MAX_EVAL_DIGITS, and the first level where it is a number is returned: the check starts there. 1-tanh(50) =
+ * 2/(e^100+1), 7.4E-44, is 0 at P = 40, so 1/(1-tanh(50)) is infinite there and finite from P + 20; 1-tanh(100), 2.8E-87,
+ * from P + 80. "overflow" when no level gives a number (1.000000000000001^(10^50), exp(10^20)); "timeout" when `late()`
+ * or Giac's interrupt stops the climb first; null when the value is not infinite at P. One engine call per level.
+ */
+export function finiteLevel(giac: Giac, slot: string, output: string, P: number, late: () => boolean): number | "overflow" | "timeout" | null {
+  if (!overflowAt(giac, slot, output, P)) return null;
+  for (let step = 20; P + step <= MAX_EVAL_DIGITS; step *= 2) {
+    if (late()) return "timeout";
+    const t = giac.eval(`string(evalf(${slot},${P + step}))`).trim();
+    if (isTimeout(t)) return "timeout";
+    // an undef or an error at a level is no number either: the climb goes on
+    if (!infinite(t) && !t.includes("undef") && !isError(t)) return P + step;
+  }
+  return "overflow";
 }
 
 /** G187: log10 of the largest number MPFR holds here, (2^30-1)*log10(2) = 323228496.32 rounded up (its smallest is
