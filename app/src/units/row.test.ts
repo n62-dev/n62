@@ -99,7 +99,7 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     const q = units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [M, M] });
     const row = unitRow({ line: "12.34\\pm0.05\\times3.2\\pm0.1", chips: {}, q, slots: { u1: M, u2: M }, input: "", digits: 12 });
     expect(row.inexactInput).toBe(true);
-    expect(row.units?.unc).toEqual({ text: "1.2", shown: "39.5 ± 1.2" });
+    expect(row.units?.unc).toMatchObject({ text: "1.2", shown: "39.5 ± 1.2", expanded: "2.5", relative: "3.2", short: "39.5(12)" });
     expect(row.units?.latex).toBe(`\\pm1.2${unitLatex("m²")}`);
     expect(row.units?.text).toBe(" ± 1.2 m²"); // R63f1: Copy as shown and the row's data-text keep σ and the unit
     const s = await session(fakeKv([], { cloneReads: true }));
@@ -121,14 +121,34 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     expect(s.display(it).text).toBe("39,488 ± 1,2 m²");
   });
 
-  // G271: σ's terms and its second-order part are for this answer only (a chip's key is one run's row number): a stored
-  // row keeps neither
-  it("t10: the row keeps σ's text, not its terms or second-order part (G271)", () => {
+  // G273: the row keeps everything of σ but its HomeResult (the strings, the terms, the second-order part), through a JSON
+  // round trip, and a row stored before G273 (text and shown only) is still read
+  it("t10: the row keeps σ's expanded, relative, short form, terms and second-order part, and no value (G273)", async () => {
     const q = units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [M, M] });
-    const withTerms: Quantity = { ...q, unc: { ...q.unc!, terms: [{ t: "0.0256", uy: "0.16" }, { key: "pasr_1", t: "1.522756", uy: "1.234" }], second: "0.000025" } };
-    const row = unitRow({ line: "", chips: {}, q: withTerms, slots: { u1: M, u2: M }, input: "", digits: 12 });
-    expect(row.units?.unc).toEqual({ text: "1.2", shown: "39.5 ± 1.2" });
-    expect(JSON.stringify(row)).not.toMatch(/terms|second|0\.0256/);
+    const row = unitRow({ line: "", chips: {}, q, slots: { u1: M, u2: M }, input: "", digits: 12 });
+    const unc = row.units?.unc;
+    expect(unc).toMatchObject({ expanded: "2.5", relative: "3.2", short: "39.5(12)", terms: q.unc?.terms, second: q.unc?.second });
+    expect(unc?.terms).toHaveLength(2);
+    expect(unc).not.toHaveProperty("value");
+    expect(JSON.parse(JSON.stringify(row.units))).toEqual(row.units);
+    const kv = fakeKv([], { cloneReads: true });
+    const s = await session(kv);
+    putRow(s, row);
+    s.flushHistory();
+    expect((await session(kv)).home[0]?.units?.unc).toEqual(unc);
+  });
+
+  it("a row stored before G273 (σ's text and shown only) is still read", async () => {
+    const q = units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [M, M] });
+    const row = unitRow({ line: "", chips: {}, q, slots: { u1: M, u2: M }, input: "", digits: 12 });
+    const old = { ...row, units: { ...row.units!, unc: { text: "1.2", shown: "39.5 ± 1.2" } } };
+    const kv = fakeKv([], { cloneReads: true });
+    const s = await session(kv);
+    putRow(s, old);
+    s.flushHistory();
+    const back = (await session(kv)).home[0] as HistoryItem;
+    expect(back.units?.unc).toEqual({ text: "1.2", shown: "39.5 ± 1.2" });
+    expect((await session(kv)).display(back).text).toBe("39.488 ± 1.2 m²");
   });
 
   // R269: the Copy key and Copy as shown (☰ → Copy as → As shown, which reads Session.display) write the same unit part

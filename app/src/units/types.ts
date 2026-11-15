@@ -183,6 +183,14 @@ export interface Uncertainty {
   text: string;
   /** The value rounded to σ's last digit, then " ± " and σ: "39.5 ± 1.2". */
   shown: string;
+  /** G273: U = 2σ at 2 significant digits, from the unrounded σ ("2.5" where 2 × the shown 1.2 would give 2.4); absent for a σ of 0. */
+  expanded?: string;
+  /** G273: σ/|y| in per cent at 2 significant digits; absent for a value of 0, a σ of 0, and where the zero is arbitrary
+   *  (an absolute temperature, °C and °F, or a level). */
+  relative?: string;
+  /** G273: the short form "39.5(12)": the value rounded to σ's last place with the standard uncertainty σ in brackets;
+   *  absent for a σ of 0 and when the value's digits do not reach σ's last place (uncertainty.ts shortForm). */
+  short?: string;
   /** G41: present when σ carries ⚠, with the reason. */
   why?: UncWhy;
   /** R271: σ took a result chip's facts; the result's mark is then the worse of the value's and σ's. R271f1: σ's facts
@@ -191,7 +199,7 @@ export interface Uncertainty {
   /** G271: each input's share of σ², in the order of UnitJob.unc.vars, the dimension symbols set to 1, in the shown
    *  unit: `t` = (∂f/∂xᵢ)² uᵢ², `uy` = |∂f/∂xᵢ · uᵢ| (decimal text, 30 digits); `key` the input's (UncVar.key). With
    *  `second` (the second-order part of σ², GUM 5.1.2 note) σ² = Σ t + second when that is above 0. Both absent when a
-   *  term is not a plain decimal. For this answer only: a stored row keeps neither (units/row.ts). */
+   *  term is not a plain decimal. The row keeps them (units/row.ts). */
   terms?: { key?: string; t: string; uy: string }[];
   second?: string;
   /** R286: with `chip`, the value's confirmed digits σ's limit gives (sigmaFacts.ts limitDigits): the view's ⚠ sits before
@@ -249,9 +257,10 @@ export interface UnitRow {
   unit: string;
   dim: string | null;
   dimText: string | null;
-  /** σ as the view showed it (Uncertainty.text, .shown, .why); R271f1: a σ from a result chip with its facts
-   *  (Uncertainty.chip), which the row's own facts already hold (readValueFacts checks those when the history is read back). */
-  unc?: { text: string; shown: string; why?: UncWhy } & Partial<SigmaFacts>;
+  /** σ as the view showed it: all of Uncertainty but its `value` (G273: text, shown, expanded, relative, short, why,
+   *  terms, second; R271f1: a σ from a result chip with its facts, Uncertainty.chip, which the row's own facts already hold:
+   *  readValueFacts checks those when the history is read back). A row stored before G273 has text and shown only. */
+  unc?: Omit<Uncertainty, "value">;
   note?: UnitNote;
   /** R121: the note on the names the formula read as pure numbers, as the view showed it (messages.ts unitNamesText). */
   names?: string;

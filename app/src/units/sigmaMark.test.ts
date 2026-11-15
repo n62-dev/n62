@@ -112,7 +112,7 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
     const r = row(q, LINE, { "res:3": FEW });
     expect(r.facts?.reliableDigits).toBe(6);
     // σ's own facts stay its 3 digits (a σ chip used again scales them anew)
-    expect(r.units?.unc).toEqual({ text: "0.071", shown: "10.100 ± 0.071", reliableDigits: 3 });
+    expect(r.units?.unc).toMatchObject({ text: "0.071", shown: "10.100 ± 0.071", chip: { reliableDigits: 3 } });
     const kv = fakeKv([], { cloneReads: true });
     const s = await session(kv);
     putRow(s, r);
@@ -209,12 +209,13 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
     const q = units(TYPED, {});
     expect(shown(q).mark).toBe("≈");
     const r = row(q, TYPED, {});
-    expect(r.units?.unc).toEqual({ text: "0.070", shown: "10.100 ± 0.070" });
+    expect(r.units?.unc).toMatchObject({ text: "0.070", shown: "10.100 ± 0.070" });
+    expect(r.units?.unc).not.toHaveProperty("chip");
     const s = await session();
     putRow(s, r);
     const item = s.home[0] as HistoryItem;
     expect(s.mark(item)?.mark).toBe("≈");
-    expect(item.units?.unc).not.toHaveProperty("reliableDigits");
+    expect(item.units?.unc).not.toHaveProperty("chip");
     expect(quantityChip(q)).not.toHaveProperty("uncFacts");
   });
 });

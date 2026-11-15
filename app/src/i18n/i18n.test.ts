@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { keyboard } from "../keyboard/keyboard.ts";
 import { paletteText } from "./enPalettes.ts";
+import { enUnc } from "./enUnc.ts";
 import { legend, t } from "./index.ts";
 
 describe("i18n", () => {
@@ -88,4 +89,12 @@ describe("message tables", () => {
       expect(unused).toEqual([]);
     });
   }
+});
+
+describe("the uncertainty strings (G273)", () => {
+  // GUM 6.3.3: k = 2 means about 95 % only for a near-normal result with enough effective degrees of freedom, and N62 knows
+  // neither: no string of enUnc states a level (Help may say that none is stated).
+  it("none states a confidence or coverage level", () => {
+    for (const [key, value] of Object.entries(enUnc)) expect(value, key).not.toMatch(/\b95\b|confidence|coverage/i);
+  });
 });

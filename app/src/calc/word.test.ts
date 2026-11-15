@@ -53,7 +53,7 @@ describe.skipIf(!giacAvailable())("shl(3,7) under Word 8 unsigned, from the real
 
   it("is 128 in the Solve app too", async () => {
     const r = await calc.solve({ kind: "equations", equations: ["shl(3,7)=x"], unknowns: ["x"], guesses: ["1"] }, settings);
-    expect(JSON.stringify(r)).toContain("128");
-    expect(JSON.stringify(r)).not.toContain("384");
+    // the root's own text, not the whole answer: its timing fields are digits too (30.438… holds "384")
+    expect(r).toMatchObject({ ok: true, roots: [{ name: "x", result: { ok: true, display: "128" } }] });
   });
 });
