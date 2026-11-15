@@ -371,6 +371,18 @@ Digits:=40:; pc("g305-keep-limit-round-3/2-right",'(limit(round(x),x,3/2,1))',2,
 Digits:=40:; pc("g305-keep-limit-round-3/2-left",'(limit(round(x),x,3/2,-1))',1,5/10^12);
 // g360-COMB-52-5 (home.yaml, derived)
 Digits:=40:; pc("g360-COMB-52-5",'(COMB(52,5))',2598960,5/10^6);
+// g360-mul-k-1-5 (home.yaml, derived)
+Digits:=40:; pc("g360-mul-k-1-5",'(mul(k,k,1,5))',120,5/10^10);
+// g360-remain-neg7-3 (home.yaml, derived)
+Digits:=40:; pc("g360-remain-neg7-3",'(remain(-7,3))',2,5/10^12);
+// g360-modp-neg7-3 (home.yaml, derived)
+Digits:=40:; pc("g360-modp-neg7-3",'(modp(-7,3))',2,5/10^12);
+// g360-intDiv-neg7-3 (home.yaml, derived)
+Digits:=40:; pc("g360-intDiv-neg7-3",'(intDiv(-7,3))',-3,5/10^12);
+// g360-igcd-1071-462 (home.yaml, derived)
+Digits:=40:; pc("g360-igcd-1071-462",'(igcd(1071,462))',21,5/10^11);
+// g360-nCr-52-5 (home.yaml, derived)
+Digits:=40:; pc("g360-nCr-52-5",'(nCr(52,5))',2598960,5/10^6);
 // g360-limit-iPart-1-right (home.yaml, derived)
 Digits:=40:; pc("g360-limit-iPart-1-right",'(limit(iPart(x),x,1,1))',1,5/10^12);
 // g360-limit-trunc-nested-1-left (home.yaml, derived)

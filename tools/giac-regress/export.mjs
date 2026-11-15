@@ -225,7 +225,7 @@ export const KNOWN_IDS = new Set([
   "g71-census-normalize-sin1e70",
   "g71-census-tri-sin1e70",
   // G360: the other spellings of the decision functions (Home decides them twice since G360; raw Giac at Digits 40 decides once)
-  ...["ceiling", "CEILING", "FLOOR", "ROUND", "TRUNCATE", "IP", "FP", "ABS", "SIGN", "MAX", "MIN", "l2norm", "unitV", "ARG", "keep-ceil"].map((k) => `g360-${k}-sin1e70`),
+  ...["ceiling", "CEILING", "FLOOR", "ROUND", "TRUNCATE", "IP", "FP", "ABS", "SIGN", "MAX", "MIN", "l2norm", "unitV", "ARG", "keep-ceil", "PIECEWISE", "IFTE", "sialorssinon"].map((k) => `g360-${k}-sin1e70`),
   "g360-LN-sin1e70-squared",
   "g140f2-negbinomial_cdf-2.5-30",
   "g184-sum-harmonic-1e6",
@@ -627,7 +627,7 @@ export const CANCELS_IDS = new Set([
   "prec-zero-cancel", "g358-ln-1-tanh50-30", "g358-keep-tanh100-minus-1", // G358: 1-tanh(50), 1-tanh(100) are 0 at Digits 40 (Home climbs to the level where they are finite)
   "g126-asinh-neg-1e-20-30",
   ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), ...["evalf-asin", "evalf-acos", "evalf-acosh", "approx-acos"].map((k) => `g325f2-${k}-sqrt-neg2-1e-${k === "approx-acos" ? "400" : "330"}-minus-2`), // G325f1, G325f2 (evalf of the call): nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
-  ...["ASIN-sqrt-neg2-1e-330-minus-2", "ACOS-sqrt-neg2-1e-330-minus-2", "evalf-ACOSH-sqrt-neg2-1e-330-minus-2"].map((k) => `g360-${k}`), // G360: as G325f1's, spelt ASIN, ACOS, ACOSH
+  ...["ASIN-sqrt-neg2-1e-330-minus-2", "ACOS-sqrt-neg2-1e-330-minus-2", "evalf-ACOSH-sqrt-neg2-1e-330-minus-2", "evalf-arccosh-sqrt-neg2-1e-330-minus-2"].map((k) => `g360-${k}`), // G360: as G325f1's, spelt ASIN, ACOS, ACOSH, arccosh
 ]);
 export const knownReason = (id) => (KNOWN_IDS.has(id) ? KNOWN_RULES.find(([re]) => re.test(id))?.[1] : undefined);
 
