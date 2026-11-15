@@ -88,7 +88,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
+| 748 | G270 the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |
 | 799 | [G273](packages/G273.md) a unit result carries U, relative σ, short form and terms, and the row keeps them (for R327) | gorge, Sonnet | `p1/gorge-uncrow` | G270, G271 |
 | 749 | [G272](packages/G272.md) the uncertainty budget's model | gorge, Opus | `p1/gorge-budgetmodel` | G270, G271 |
 | 750 | [G275](packages/G275.md) the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
