@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R197: the Help key, Shift + Select (r2c4, docs/06 section 1): the syntax and example of the function at the cursor (R196's
-// functionAt, G231's examples in the Find index), on a sheet; the example's Insert row puts it on the line. No function
+// functionAt, G231's examples in the Find index), on a sheet; the example's Insert row replaces the call (R324). No function
 // at the cursor: Find opens, as Math does. Each press is counted under its layer (R127: select:shift, select:up), for
 // the removal test (docs/03 rule 11). The fake engine; the full generated index (`npm run index`). Expected values are
 // the index's (find/functions.yaml, checked on the engine by examples.test.ts).
@@ -55,12 +55,21 @@ test("the innermost function wins: cos inside sin", async ({ page }) => {
   await expect(row(page, "example").getByTestId("row-hint")).toHaveText("= -1");
 });
 
-test("the example's Insert row puts it on the line at the cursor and closes the sheet", async ({ page }) => {
+/** The cursor stands at the end of the line. */
+const atEnd = (page: Page): Promise<boolean> => page.evaluate(() => {
+  const mf = window.n62.entry.field;
+  return !!mf && mf.selectionIsCollapsed && mf.position === mf.lastOffset;
+});
+
+// R324 (owner, 2026-11-15): Insert replaces the call Help named (the innermost one that holds the cursor), with its
+// name, its bracket and what was typed in it; the line's own Undo brings the call back
+test("the example's Insert row replaces the call at the cursor and closes the sheet", async ({ page }) => {
   await tap(page, ["sin"]);
   await tap(page, ["shift", "select"]);
   await row(page, "insert").tap();
   await expect(help(page)).toBeHidden();
-  expect(await entryValue(page)).toBe("\\sin\\left(\\sin\\left(30\\degree\\right)\\right)");
+  expect(await entryValue(page)).toBe("\\sin\\left(30\\degree\\right)");
+  expect(await atEnd(page)).toBe(true);
 });
 
 test("by keys: 3 picks the Insert row; 1 and 2 only inform, the sheet stays", async ({ page }) => {
@@ -71,7 +80,29 @@ test("by keys: 3 picks the Insert row; 1 and 2 only inform, the sheet stays", as
   await sineHelp(page);
   await tap(page, ["d3"]);
   await expect(help(page)).toBeHidden();
-  expect(await entryValue(page)).toBe("\\sin\\left(\\sin\\left(30\\degree\\right)\\right)");
+  expect(await entryValue(page)).toBe("\\sin\\left(30\\degree\\right)");
+  expect(await atEnd(page)).toBe(true);
+});
+
+test("Insert in a call inside another replaces only the inner one", async ({ page }) => {
+  await tap(page, ["cos", "sin"]);
+  await tap(page, ["shift", "select"]);
+  await sineHelp(page);
+  await row(page, "insert").tap();
+  await expect(help(page)).toBeHidden();
+  expect(await entryValue(page)).toBe("\\cos\\left(\\sin\\left(30\\degree\\right)\\right)");
+});
+
+test("Insert replaces what was typed in the call too; one Undo brings the call back", async ({ page }) => {
+  await tap(page, ["d2", "add", "sin", "d4", "d5", "left"]);
+  expect(await entryValue(page)).toBe("2+\\sin\\left(45\\right)");
+  await tap(page, ["shift", "select"]);
+  await sineHelp(page);
+  await row(page, "insert").tap();
+  await expect(help(page)).toBeHidden();
+  expect(await entryValue(page)).toBe("2+\\sin\\left(30\\degree\\right)");
+  await tap(page, ["undo"]);
+  expect(await entryValue(page)).toBe("2+\\sin\\left(45\\right)");
 });
 
 test("an inverse function's example says the angle unit of its result: (radians)", async ({ page }) => {

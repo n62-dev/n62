@@ -39,11 +39,11 @@ const chipArgs = (cmd: string): number | undefined => (Object.hasOwn(CHIP_MACROS
 const PLACEHOLDER = "\\placeholder";
 
 /** A span of the line: `start` before its first character, `end` after its last. */
-interface Span {
+export interface Span {
   start: number;
   end: number;
 }
-interface Call extends Span {
+export interface Call extends Span {
   id: string;
 }
 
@@ -256,10 +256,15 @@ function scan(s: string, w: FnWords): { calls: Call[]; chips: Span[] } {
  * `latex.length` after its last), or null: outside every function, inside a chip, or off the line. `words`: FnWords.
  */
 export function functionAt(latex: string, offset: number, words: FnWords): string | null {
+  return callAt(latex, offset, words)?.id ?? null;
+}
+
+/** R324: the call functionAt names, with its span in `latex` (Help's Insert replaces it, views/helpSheet.ts), or null. */
+export function callAt(latex: string, offset: number, words: FnWords): Call | null {
   if (!Number.isInteger(offset) || offset < 0 || offset > latex.length) return null;
   const { calls, chips } = scan(latex, words);
   if (chips.some((c) => c.start < offset && offset < c.end)) return null;
   let best: Call | undefined;
   for (const c of calls) if (c.start < offset && offset < c.end && (!best || c.start > best.start)) best = c;
-  return best?.id ?? null;
+  return best ?? null;
 }
