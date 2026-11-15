@@ -21,7 +21,8 @@
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
   import { noDigit } from "./state/displayMode.ts";
   import type { HistoryItem, Session, View } from "./state/session.svelte.ts";
-  import { counted, countScreenTaps, hwKind } from "./state/pressCount.ts";
+  import type { HW_KINDS } from "./state/pressCount.ts";
+  import { counted } from "./state/tapsFront.svelte.ts";
   import { createLoaders, type FindCode, type ModeSheetCode } from "./appLoaders.ts";
   import { tipsDue } from "./state/tips.ts";
   import History from "./views/History.svelte";
@@ -59,8 +60,9 @@
 
   // R15c4: the first-start tips, a lazy chunk (views/tipsHost.ts) shown once on a fresh profile and again from Settings › Help and about.
   const showTips = (): void => void import("./views/tipsHost.ts").then((m) => m.showTips(), () => {});
-  // R266: the first start's tips wait for no press in this start (R8: a typed key is never taken by the overlay); checked again once the chunk is in
-  const firstTips = (): void => void (!session.taps.pressedThisStart && import("./views/tipsHost.ts").then((m) => session.taps.pressedThisStart || m.showTips(), () => {}));
+  // R266: the first start's tips wait for no press in this start (R8: a typed key is never taken by the overlay); R320: asked once
+  // the counter is in (it names the presses that waited for it), and again once the tips' chunk is
+  const firstTips = (): void => void session.taps.load().then((c) => void (c && !c.pressedThisStart && import("./views/tipsHost.ts").then((m) => session.taps.pressedThisStart || m.showTips())), () => {});
 
   const sheetOpen = $derived(shell.sheet !== null);
   $effect(() => entry.setNames(session.userNames)); // R33: the stored names are drawn in their colour on the line
@@ -73,7 +75,7 @@
     wide = mq.matches;
     mq.onchange = (e) => (wide = e.matches);
     // R70, R107: a hardware key (`<` `>` `!` and a dead one too) and a tap are presses (docs/04 5.2)
-    const hwOther = (kind: Parameters<typeof hwKind>[0]) => (): void => session.taps.press(hwKind(kind)); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts)
+    const hwOther = (kind: (typeof HW_KINDS)[number]) => (): void => session.taps.press(`hw:${kind}`); // a hardware key that runs no keypad key is "hw:<kind>" (state/pressCount.ts hwKind)
     // R31 (F27): a hardware keyboard's printable keys are taps of the keypad key with that character, counted
     // "<key id>:hw" (R127); Enter and Escape too (R45: Enter is the Enter key, a picked row's or an open sheet's, not a
     // bare submit; R15c2: Escape is the Esc key; R131: both through this hook, entry/controller.ts)
@@ -105,12 +107,13 @@
     const loadFold = (): void => {
       void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}); // R53
       void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {}); // R285: a browser that has not passed says so once (the chunk decides)
+      void session.taps.load(); // R320: the press counters; the presses made until then wait in the session's front
     };
     if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
     else setTimeout(loadFold, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
     void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(firstTips, { timeout: 2000 }) : setTimeout(firstTips, 500)));
-    return countScreenTaps((kind) => session.taps.press(kind));
+    return session.taps.listen();
   });
   /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
    *  not in it: the chunk goes over the network that may be the cause, and the way on must not depend on it. */
@@ -563,7 +566,7 @@
       sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store" } : undefined}
       pops={session.settings.look.pops}
       onpress={(key, layer) => press(key, layer, true)}
-      oncount={(key) => session.taps.press(key)}
+      oncount={session.taps.touch}
       ontouch={touched}
     />
     </div>

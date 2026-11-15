@@ -12,6 +12,7 @@
 // Export the counts, and R128's sync folder as counters.json) is one JSON object, `{ "format": "n62-counts/1",
 // "since", "presses", "keys" }`, with the keys sorted by count, largest first, ties by name: counts only, no times, no content.
 import type { Kv } from "./storage.ts";
+import { screenTapKind, touchKey, touchPresses, type FinishedTouch } from "./pressCount.ts";
 
 export interface TapCounts {
   shift: number;
@@ -75,6 +76,17 @@ export class TapCounter {
     const keys = key === undefined ? c.keys : { ...c.keys, [key]: (c.keys[key] ?? 0) + 1 };
     this.counts = { ...c, presses: c.presses + 1, keys, since: c.since || this.today() };
     this.schedule();
+  }
+
+  /** A finished keypad touch (R320: Keypad.svelte hands it over raw, through tapsFront.svelte.ts): counted when it is a press. */
+  touch(g: FinishedTouch, layer: { shift: boolean; alpha: boolean }): void {
+    if (touchPresses(g) > 0) this.press(touchKey(g, layer));
+  }
+
+  /** A click or touchend on the page: counted when it is a screen tap (pressCount.ts screenTapKind). */
+  screen(ev: { type: string; target: unknown; defaultPrevented: boolean }): void {
+    const kind = screenTapKind(ev);
+    if (kind !== undefined) this.press(kind);
   }
 
   reset(): void {

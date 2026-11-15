@@ -264,7 +264,7 @@ test("Shift and Alpha taps stay as on the G2 (one-shot, Alpha twice locks) and a
   await page.waitForTimeout(1300);
   await page.reload();
   await page.waitForFunction(() => window.n62 !== undefined);
-  await page.evaluate(() => window.n62.session.taps.ready);
+  await page.evaluate(() => window.n62.session.taps.load().then((c) => c?.ready)); // (R320: the counter is a lazy chunk)
   expect(await taps(page)).toEqual({ shift: 0, alpha: 0 });
 });
 

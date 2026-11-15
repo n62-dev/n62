@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // What counts as one press (R70; docs/04 section 5.2): a key tap, a flick, a drag on the trackpad, a tap on the screen.
 import { describe, expect, it } from "vitest";
-import { counted, HW_KINDS, hwKind, isScreenTap, screenKind, touchKey, touchPresses } from "./pressCount.ts";
+import { counted } from "./tapsFront.svelte.ts";
+import { HW_KINDS, hwKind, isScreenTap, screenKind, touchKey, touchPresses } from "./pressCount.ts";
 
-const key = {};
+const key = { id: "d7" };
 /** A stand-in element that answers `closest` for the selectors it is given. */
 const el = (...inside: string[]) => ({ closest: (sel: string) => (inside.some((s) => sel.includes(s)) ? {} : null) });
 

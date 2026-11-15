@@ -404,7 +404,8 @@ describe("Settings, a level of the sheet (R49)", () => {
     expect(s.pickNumber(5)).toEqual({ kind: "stay" });
     expect(session.settings.haptics.click).toBe(false);
   });
-  it("Counters: ▲ ▼ walk round the ends; an information row does nothing; Reset runs and stays", () => {
+  it("Counters: ▲ ▼ walk round the ends; an information row does nothing; Reset runs and stays", async () => {
+    await session.taps.load(); // (R320: the counter is a lazy chunk)
     const s = settings(4);
     s.level.move(-1);
     expect(s.level.current?.id).toBe("reset");
@@ -666,7 +667,8 @@ describe("Settings › Data (R38a)", () => {
 });
 
 describe("Settings › Counters › Export the counts (R127)", () => {
-  it("is a row before Reset only where the app gives the file port; it saves the counts as they stand", () => {
+  it("is a row before Reset only where the app gives the file port; it saves the counts as they stand", async () => {
+    await session.taps.load(); // (R320: the counter is a lazy chunk)
     expect(settings(4).level.items.map((x) => x.id)).toEqual(["presses", "taps", "presets", "uses", "since", "reset"]);
     const saved: string[] = [];
     const userKeys = new UserKeys(fakeKv());
