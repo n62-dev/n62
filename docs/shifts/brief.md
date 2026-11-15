@@ -63,9 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 762 | R307 the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | – |
-| 763 | R308 a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | – |
-| 790 | R320 the press counters load when the browser is idle, and the lazy check reads the chunks | ron, Opus | `p1/ron-tapscut` | – |
 | 794 | [R324](packages/R324.md) Help's Insert replaces the call the cursor is in (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-helpreplace` | – |
 | 795 | [R325](packages/R325.md) Paste takes a unit row's Copy back as a result chip with σ and unit (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-pasteunit` | – |
 | 796 | [R327](packages/R327.md) Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
