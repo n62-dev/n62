@@ -66,7 +66,7 @@ function unitOf(item: HistoryItem): { input?: string; unit?: string; sigma?: str
 /** A row's input as the history draws it (History.svelte drawnInput: a unit row's request, R100's comma rule), as text. */
 function inputOf(item: HistoryItem, look: ReportLook): string {
   const u = item.status === "done" ? unitOf(item).input : undefined;
-  return entryText(look.input(u ? { ...item, latex: u } : item));
+  return entryText(look.input(u ? { ...item, latex: u } : item), look.decimalComma ? { decimalComma: true } : {});
 }
 
 /** σ of a row as `± σ unit`: a unit row's (the unit view's σ), else the σ a constant's uncertainty leaves (R40). The

@@ -240,6 +240,12 @@ describe("sessionText", () => {
   it("is empty when nothing finished", () => {
     expect(sessionText([done({ status: "pending" })], {}, CTX)).toBe("");
   });
+  it("R306: an entry's matrix follows the decimal comma setting, in Share and in the CSV's input column", () => {
+    const row = done({ status: "error", latex: "\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}", text: "x" });
+    expect(sessionText([row], { decimalComma: true }, { ...CTX, decimalComma: true })).toBe("[[1;2];[3;4]] → x");
+    expect(sessionText([row], {}, CTX)).toBe("[[1,2],[3,4]] → x");
+    expect(sessionCsv([row], { decimalComma: true }, { ...CTX, decimalComma: true }).split("\r\n")[1]).toBe('"[[1;2];[3;4]]";x;;;');
+  });
 });
 
 describe("entryText", () => {
