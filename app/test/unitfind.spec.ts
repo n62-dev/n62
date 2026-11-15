@@ -180,11 +180,11 @@ test.describe("Find in a slot", () => {
     await expect(page.getByTestId("sheet-title")).toHaveText("Find › Ratio");
     const ids = await rows(page).evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
     expect(ids.slice(0, 4)).toEqual(["unit:percent", "unit:permille", "unit:ppm", "unit:ppb"]);
-    await expect(row(page, "unit:percent")).toContainText("%");
     await row(page, "unit:percent").tap();
     await expect(find(page)).toBeHidden();
     expect(await tokens(page)).toEqual([{ unit: "percent" }]);
     await expect(page.getByTestId("unit-reading")).toHaveText("percent");
+    expect(await page.evaluate(() => window.n62.unitView?.view.model("u1")?.latex)).toBe("\\mathrm{\\%}"); // drawn as %
   });
 });
 
