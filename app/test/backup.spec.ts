@@ -98,3 +98,26 @@ test("Settings › Counters › Export the counts saves n62-counts/1 with the pr
   const counts = Object.values(o.keys);
   expect(counts).toEqual([...counts].sort((a, b) => b - a));
 });
+
+test("☰ 0 Export › CSV saves the session as n62-<date>.csv, then LaTeX as .tex (R200)", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await savePicker(page, "fake");
+  await open(page, "");
+  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  await tap(page, ["d1", "div", "d4", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  await tap(page, ["@menu", "d0"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(3); // Work report, CSV, LaTeX
+  await page.getByTestId("menu").locator('[data-id="csv"]').tap();
+  await expect(page.getByTestId("notice")).toHaveText("CSV saved");
+  const csv = await savedText(page);
+  expect(csv?.name).toMatch(/^n62-\d{4}-\d{2}-\d{2}\.csv$/);
+  expect(csv?.text.split("\r\n").slice(0, 2)).toEqual(["input,value,mark,unit,sigma", "1/4,0.25,=,,"]);
+  await tap(page, ["@menu", "d0"]);
+  await page.getByTestId("menu").locator('[data-id="latex"]').tap();
+  await expect(page.getByTestId("notice")).toHaveText("LaTeX saved");
+  const tex = await savedText(page);
+  expect(tex?.name).toMatch(/^n62-\d{4}-\d{2}-\d{2}\.tex$/);
+  expect(tex?.text).toContain("\\begin{align*}");
+});
