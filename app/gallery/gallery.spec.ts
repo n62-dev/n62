@@ -369,7 +369,7 @@ const shots: Shot[] = [
   {
     id: "home-mode",
     group: "Home",
-    title: "Mode sheet (Shift + Fmt) over the keypad: buttons for Angle, Format and Entry, Digits with its list, Preset, Settings ›",
+    title: "Mode sheet (Shift + Deselect) over the keypad: buttons for Angle, Format and Entry, Digits with its list, Preset, Settings ›",
     setup: async (p) => {
       await someHistory(p);
       await tap(p, ["@mode"]);

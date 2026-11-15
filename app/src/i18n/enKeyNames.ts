@@ -28,6 +28,7 @@ export const enKeyNames = {
   select: "Select",
   "select.shift": "Help",
   deselect: "Deselect",
+  "deselect.shift": "Mode",
   // the maths rows
   vars: "Variables",
   math: "Math",
@@ -89,7 +90,6 @@ export const enKeyNames = {
   "sub.shift": "Base",
   "sub.alpha": "Colon",
   fmt: "Format",
-  "fmt.shift": "Mode",
   d0: "0",
   dot: "Decimal point",
   "dot.shift": "Equals",

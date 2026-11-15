@@ -66,20 +66,24 @@ describe("keyboard spec", () => {
     expect(k("menu").label).toEqual({ primary: "$key.menu", shift: "$key.settings" });
     expect(actionFor(k("select"), false, false)).toEqual({ kind: "special", name: "selectGrow" });
     expect(actionFor(k("deselect"), false, false)).toEqual({ kind: "special", name: "selectShrink" });
-    // Shift + Select is Help (R197): live, the same cell and legend; Shift + Deselect is RESERVED: no action, no legend
+    // Shift + Select is Help (R197): live, the same cell and legend; Shift + Deselect is Mode (R322, owner 2026-11-14)
     expect(actionFor(k("select"), true, false)).toEqual({ kind: "special", name: "help" });
     expect(k("select").label).toEqual({ primary: "$key.select", shift: "$key.help" });
-    expect(actionFor(k("deselect"), true, false)).toBeUndefined();
-    expect(k("deselect").actions.shift).toBeUndefined();
-    expect(k("deselect").label).toEqual({ primary: "$key.deselect" });
+    expect(actionFor(k("deselect"), true, false)).toEqual({ kind: "special", name: "mode" });
+    expect(k("deselect").label).toEqual({ primary: "$key.deselect", shift: "$key.mode" });
     expect([k("undo"), k("redo")].map((x) => [x.label.primary, x.label.shift])).toEqual([["$key.undo", "⇤"], ["$key.redo", "⇥"]]);
     for (const id of ["menu", "esc", "undo", "redo", "select", "deselect"]) expect(k(id).cls, id).toBe("nav");
     // no keypad cell runs the Copy or Paste special any more
     for (const key of keyboard.keys)
       for (const a of Object.values(key.actions)) expect(a.kind === "special" && ["copy", "paste"].includes(a.name), key.id).toBe(false);
-    // R85: Fmt's free Shift cell opens Mode
-    expect(k("fmt").actions.shift).toEqual({ kind: "special", name: "mode" });
-    expect(k("fmt").label.shift).toBe("$key.mode");
+    // R322: Mode left Fmt's Shift cell (R85) for Deselect's; Shift + Fmt is RESERVED: no action, no legend; the tap stays Fmt
+    expect(actionFor(k("fmt"), true, false)).toBeUndefined();
+    expect(k("fmt").actions.shift).toBeUndefined();
+    expect(k("fmt").label).toEqual({ primary: "$key.fmt" });
+    expect(k("fmt").actions.primary).toEqual({ kind: "special", name: "fmt" });
+    // Shift + Vars stays reserved (the owner, 2026-11-14: Store already has Shift + ᴇ)
+    expect(k("vars").actions.shift).toBeUndefined();
+    expect(k("vars").label.shift).toBeUndefined();
     // R193 (docs/04 5.4): Shift + − opens the Base menu for the last result (route.ts: dead with text on the line)
     expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
     expect(k("sub").label.shift).toBe("$key.base");

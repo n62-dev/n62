@@ -37,7 +37,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
 - **F236 (ron).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F237 (A139; ron, ≈½ d).** One fast drag scrolls a long row to its end, then slides and deletes it; only a new drag may slide (decisions.md "Row gestures").
-- **F238 (A139; ron).** Shift + Deselect, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
+- **F238 (A139; ron).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
 - **F239 (G341's step 1).** A body with a float == or ≠ test (`f(x):=x==0.5`) exports with our `pasinexact`, `pasdiff`, `pasverdict`, `a_`, `b_`, `d_`; the import refuses it: no round trip through a library file. Family 8.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.
 - **F85, no package (G102's Not done; cost only).** A Home input with chips is parsed twice per Enter (G100); the parse is its own bridge-2 call, so G102 could not fold it.
