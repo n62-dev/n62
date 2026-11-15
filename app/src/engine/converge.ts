@@ -13,6 +13,7 @@ import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
 import { statsRefusal, type StatsRefusal } from "./stats.ts";
 import { wordRefusal, type WordRefusal } from "./wordOps.ts";
+import { decisionName } from "./decisionAlias.ts";
 
 /** Why a result is refused; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 /** `undecided` (G57) comes from decisions.ts decideTwice: a decision on a cut Giac cannot make. `divisionByZero`,
@@ -35,7 +36,9 @@ type Verdict = "ok" | "diverges" | "unchecked";
 type Kind = "int" | "sum" | "limit";
 
 const KIND: Readonly<Record<string, Kind>> = { int: "int", integrate: "int", sum: "sum", limit: "limit" };
-const KINDS = Object.keys(KIND);
+/** G360: the calls of `names` in `text`, under any of Giac's spellings (decisionAlias.ts: integrer, somme, limite, lim). */
+const callsNamed = (text: string, names: readonly string[], q: "typed" | "printed"): ReturnType<typeof callsOf> =>
+  callsOf(text, undefined, q).filter((c) => names.includes(decisionName(c.name)));
 const REFUSAL: Readonly<Record<Kind, CheckRefusal>> = { int: "integralDiverges", sum: "seriesDiverges", limit: "noLimit" };
 
 interface Call {
@@ -48,8 +51,8 @@ interface Call {
 export function callsIn(input: string): Call[] {
   const out: Call[] = [];
   // A name that merely ends in the word (`myint(`) is not a call of it.
-  for (const { name, at, open, close } of callsOf(input, KINDS, "typed")) {
-    if (close >= 0) out.push({ kind: KIND[name]!, text: input.slice(at, close + 1), args: topLevelArgs(input.slice(open + 1, close), "typed").map((a) => a.trim()) });
+  for (const { name, at, open, close } of callsNamed(input, Object.keys(KIND), "typed")) {
+    if (close >= 0) out.push({ kind: KIND[decisionName(name)]!, text: input.slice(at, close + 1), args: topLevelArgs(input.slice(open + 1, close), "typed").map((a) => a.trim()) });
   }
   return out;
 }
@@ -74,7 +77,7 @@ export function errorRefusal(input: string, output: string): Refusal | null {
 /** Giac's text for "no finite number": undef, or an infinity anywhere in it. */
 const notFinite = (t: string): boolean => t === "undef" || t.includes("infinity") || wordsOf(t).includes("inf");
 /** A result that is a value we may test: no infinity, no undef, no unevaluated call of the same kind left in it. */
-const finiteValue = (t: string): boolean => !isError(t) && !notFinite(t) && !callsOf(t, KINDS, "printed").length;
+const finiteValue = (t: string): boolean => !isError(t) && !notFinite(t) && !callsNamed(t, Object.keys(KIND), "printed").length;
 
 /** Giac's free names of `e` are among `vars` (Giac lists ∞ as the name `infinity`, which is not free). */
 function onlyNames(giac: Giac, e: string, vars: string[]): boolean {
@@ -280,7 +283,7 @@ function check(giac: Giac, calls: Call[], input: string, output: string, digits:
   if (callsOf(out, ["bounded_function"], "printed").length && calls.some((c) => c.kind === "limit")) return "noLimit";
   // G176 (patch 0035): Giac leaves a limit unevaluated where it cannot decide on which side of 0 a trunc's argument
   // lies (limit(trunc(sin(1/x)/2),x,0)); nothing confirmed a value, so it stands with ⚠, never =.
-  if (calls.some((c) => c.kind === "limit") && callsOf(out, ["limit"], "printed").length) return "unchecked";
+  if (calls.some((c) => c.kind === "limit") && callsNamed(out, ["limit"], "printed").length) return "unchecked";
   // G78 (Home only; the CAS view keeps Giac's ∞): a definite integral whose value is an infinity does not converge
   // (∫₋₁¹ 1/x² = +∞); a limit keeps its ∞.
   if (home && /^[+-]?infinity$/.test(out)) {
@@ -332,7 +335,7 @@ export function hasDefiniteIntegral(input: string): boolean {
 }
 
 /** An unevaluated integral call in Giac's text. */
-const hasIntegral = (t: string): boolean => callsOf(t, ["int", "integrate"], "printed").length > 0;
+const hasIntegral = (t: string): boolean => callsNamed(t, ["int", "integrate"], "printed").length > 0;
 
 /**
  * G90 (F65, F67): `input` with each definite integral's bounds made floats (`int(f,x,evalf(a),evalf(b))`, nested ones
@@ -342,7 +345,7 @@ const hasIntegral = (t: string): boolean => callsOf(t, ["int", "integrate"], "pr
 export function floatBounds(input: string): string {
   let out = "";
   let i = 0;
-  for (const { name, at, open, close } of callsOf(input, ["int", "integrate"], "typed")) {
+  for (const { name, at, open, close } of callsNamed(input, ["int", "integrate"], "typed")) {
     if (at < i || close < 0) continue;
     const args = topLevelArgs(input.slice(open + 1, close), "typed").map(floatBounds);
     const bounds = args.length === 4 ? [args[0]!, args[1]!, `evalf(${args[2]!.trim()})`, `evalf(${args[3]!.trim()})`] : args;
