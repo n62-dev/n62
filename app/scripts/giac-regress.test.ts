@@ -72,8 +72,9 @@ describe("giac-regress exporter", () => {
     // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
     // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power), patch 0042 (G170:
     // VARS() keeps its size after ilaplace), patch 0043 (G322: solve keeps the real root of a cubic, 6 lines), patch 0047 (G331: simplify of an ln
-    // of a nested root, 3 lines), patch 0048 (G308: a power and a product of 1+eps*i, 5 lines); the check file gets G149's written line for the CAS view's exact forms
-    expect([r.nCheck, r.nPatched]).toEqual([1, 40]);
+    // of a nested root, 3 lines), patch 0048 (G308: a power and a product of 1+eps*i, 5 lines), patch 0050 (G359: a cubic with a 10^-30 term, 5 lines); the check file gets G149's written line for the CAS view's exact forms
+    expect([r.nCheck, r.nPatched]).toEqual([1, 45]);
+    expect(r.patched.match(/\/\/ patch 0050-proot-huge-coefficients\.patch\n/g)).toHaveLength(5);
     expect(r.patched.match(/\/\/ patch 0048-complex-is-one-exact\.patch\n/g)).toHaveLength(5);
     expect(r.patched).toContain('Digits:=12:; pc("g308-pow-1e-12-third-12",\'(1+i/10^12)^(1/3)\',1+333333333333333/10^27*i,1/10^14);');
     expect(r.patched.match(/\/\/ patch 0047-tsimplify-ln-undef-arg\.patch\n/g)).toHaveLength(3);

@@ -775,6 +775,19 @@ export function build(cases) {
     patched.push("// patch 0043-solve-ckrange-imag-noise.patch", `// ${id} (${value.includes("/") ? "oracle: mpmath findroot" : "derived: nops(realroot(p))"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  const G359_PATCH = "0050-proot-huge-coefficients.patch";
+  // Patch 0050 (G359), written lines (the golden g359-* Home rows are lists): a cubic with a 10^-30 term trapped the engine
+  // (RuntimeError: unreachable) at Digits 12. Roots by mpmath (polyroots, 60 and 90 digits agree); counts derived (nops(realroot(p))).
+  for (const [id, digits, input, value, tol] of [
+    ["g359-solve-x3-x-1-1e-30-12", 12, "solve(x^3-x-1-10^-30=0,x)[0]", "13247179572447460259609088544783318275/10^37", "1/10^11"],
+    ["g359-solve-x3-x-1-1e-30-40", 40, "solve(x^3-x-1-10^-30=0,x)[0]", "13247179572447460259609088544783318275003919941919/10^49", "1/10^35"],
+    ["g359-solve-x3-3x+2+1e-30-40", 40, "solve(x^3-3*x+2+10^-30=0,x)[0]", "-20000000000000000000000000000001111111111111111111/10^49", "1/10^35"],
+    ["g359-size-solve-x3-3x+2+1e-30-12", 12, "size(solve(x^3-3*x+2+10^-30=0,x))", "1", "1/10^30"],
+    ["g359-size-csolve-x3-3x+2+1e-30-12", 12, "size(csolve(x^3-3*x+2+10^-30=0,x))", "3", "1/10^30"],
+  ]) {
+    patched.push(`// patch ${G359_PATCH}`, `// ${id} (${value.includes("/") ? "oracle: mpmath polyroots" : "derived: nops(realroot(p)), or the degree"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   // Patch 0047 (G331, F214), written lines (the golden g331-evalf-* Home rows are patched lines through PATCHED_IDS): subst.cc tsimplify_common went on with an undef
   // ln argument, so decompose overflowed the stack (F214) or expanded_ln looped until the clock. Values mpmath (r20); F214's is past MPFR's range.
   for (const [id, input, value, tol] of [
