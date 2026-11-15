@@ -106,8 +106,9 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **R192 (pass 158):** Copy marks a whole exact integer by its notation (`≈` past the digits).
 - **G313's leftover (pass 154):** find-queries.yaml's `dot product` and `bitand` rows are curated but still pending.
 - **G223f1's finds (pass 146):** stats1 of a stored float list shows [..], of a typed one {..} (G381); a stored catch(e) prints as catch(exp(1)).
-- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp with the fake curl). Cause unknown.
-- **Flaky (R255f2, pass 137; R339):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`) under load.
+- **Flaky:** `scripts/fdroid-recipe.test.ts` "giac: downloads, then stops" failed once (run 881: no usable gmp, fake curl).
+- **Flaky (R255f2, pass 137; R339):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`).
+- **Flaky (pass 199):** matrixsize.spec.ts "2 adds a column of zeros at the end": FLAKE in runs 1228, 1250, 1276.
 - **The pipeline:** `resolve_audit_model` is tested only by dry-run echo lines; the size test skips CSS; red-first runs vitest on the branch's engine, reads ids as `[A-Za-z0-9_.-]` and counts a vitest file by its added test or assertion lines (A67).
 - **C3. CI** (needs your OK);
 
