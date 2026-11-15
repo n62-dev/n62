@@ -7,21 +7,25 @@
 // comment. G214: the tier-0 Find functions with a one-to-one sympy form (FUNCTIONS), each in the row's own angle mode;
 // a row that does not keep its angle mode refuses trig rather than assume radians. G216: a unit row (its slots kept by
 // the session line) through pint, by pyUnits.ts's table: numbers, + − × ÷, whole powers, its slots and constants, and
-// nothing else; σ is G217. Lazy: reached only through clipboard/impl.ts.
+// nothing else. G217: σ through uncertainties (pySigma.ts), a ufloat per typed ± and per chip with σ. Lazy: reached only
+// through clipboard/impl.ts.
 import { parseLatex, parseLatexInfo, type UnitsInfo } from "../input/parse.ts";
 import { validSlots } from "../input/chipUnit.ts";
 import { END, filledLatex, slotFormula } from "../input/unitFormula.ts";
 import type { UnitSlot } from "../units/types.ts";
 import { KEYWORDS } from "./pyWords.ts";
 import { PY_CONSTS, PyUnitMissing, absTemp, pintAttr, pintDim, pintText } from "./pyUnits.ts";
+import { affinity, floatText, isUncertain, sigmaTail } from "./pySigma.ts";
 import { FN, oddIndex, type Json } from "../input/emit.ts";
-import { ANS_KEY } from "../input/chips.ts";
+import { ANS_KEY, type ChipTable } from "../input/chips.ts";
 import { angleInSpec, returnsAngle } from "../engine/angles.ts";
 
 /** A chip of a row's table as the session line keeps it. */
 export interface PyChip {
   value: string;
   exact: boolean;
+  /** G217: a result chip's σ (R61) or a constant's, when it had one. */
+  unc?: string | null;
 }
 
 /** The fields of one session line (G210) the translator reads; any can be absent or null, as in the format. */
@@ -37,6 +41,8 @@ export interface PyRow {
   unit?: string | null;
   dim?: string | null;
   sigma?: string | null;
+  /** G217: why σ has ⚠ (`order2`, `jump`, `singular`). */
+  sigmaWhy?: string | null;
   /** G216: a unit row's filled slots and end slot by prompt id, as the session line keeps them (checked here). */
   slots?: Readonly<Record<string, unknown>> | null;
   /** G219: this many earlier lines were dropped before this one. */
@@ -59,7 +65,7 @@ export interface PyOptions {
 /** The sympy names a template may write; a user name equal to one is not bound either (it would shadow it). */
 const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt", "rad", "deg", "log", "root", "real_root", "cos", "sin"]);
 /** G216: the names a unit row writes besides sympy's (pint's registry, its Quantity, Python's Fraction): never bound either. */
-const PINT = new Set(["Fraction", "ureg", "Q_", "UnitRegistry"]);
+const PINT = new Set(["Fraction", "ureg", "Q_", "UnitRegistry", "ufloat"]);
 
 /** G214, the function table: a Find tier-0 function (find/functions.yaml, by its Giac name) → its sympy function, which
  *  takes the same arguments in the same order and gives the same value. Closed: a name not here is not translated,
@@ -160,6 +166,11 @@ class Row {
   earlier = false;
   /** G218: the stored names this row binds before its own line, to the value it read: name → its line and value. */
   readonly defs = new Map<string, { code: string; k: Kind; value: PyChip }>();
+  /** G217: the row holds an uncertain input: a decimal is a float and a quotient of whole numbers true division (a
+   *  Fraction times a ufloat is Python's TypeError). The lines binding its ufloats, each chip's name by its key (R115). */
+  float = false;
+  readonly uncLines: string[] = [];
+  private readonly uncByKey = new Map<string, string>();
   private readonly t: Translator;
   private readonly i: number;
   private readonly keys: readonly string[];
@@ -186,7 +197,7 @@ class Row {
   }
 
   private div(a: Out, b: Out): Out {
-    if (a.k === "int" && b.k === "int") return { s: `${this.use("Rational")}(${a.s}, ${b.s})`, p: 5, k: "sym" };
+    if (a.k === "int" && b.k === "int" && !this.float) return { s: `${this.use("Rational")}(${a.s}, ${b.s})`, p: 5, k: "sym" };
     return { s: `${wrap(a, 2)}/${wrap(b, 4)}`, p: 2, k: "sym" };
   }
 
@@ -372,14 +383,44 @@ class Row {
 
   /** A chip: Ans, a result chip, or a kind with no mapping. Never by the number in `\res{k}` (one run's row number). */
   private chip(a: Json): Out {
-    const m = typeof a === "object" && !Array.isArray(a) && "str" in a ? /^\(pyc(\d+)\)$/.exec(a.str) : null;
-    const key = m ? this.keys[Number(m[1])] : undefined;
+    const key = this.keyOf(a);
     if (this.u) return no("a chip in a unit row is not translated");
     if (key === ANS_KEY) return this.ans();
     if (key?.startsWith("res:")) return this.result(key);
     if (key?.startsWith("const:")) return no("a constant is not translated");
     return no("a chip is not translated");
   }
+
+  /** The table key of a chip marker (`(pyc<n>)`), else undefined. */
+  private keyOf(a: Json): string | undefined {
+    const m = typeof a === "object" && !Array.isArray(a) && "str" in a ? /^\(pyc(\d+)\)$/.exec(a.str) : null;
+    return m ? this.keys[Number(m[1])] : undefined;
+  }
+
+  /** G217: an uncertain input `pasupm(value, σ[, key])` as a ufloat bound on its own line before the row's: each typed
+   *  one an input of its own (G18), a result chip with its σ one input per key (R115); a chip as σ (R271) refuses. */
+  private uncertain(args: Json[]): Out {
+    const [v, s, key] = args;
+    if (v === undefined || s === undefined || args.length > 3) return no("a ± that is not read");
+    let code: string;
+    if (key !== undefined) {
+      if (isHead(key, "Chip") && /^pasws\d+$/.test(String((key[1] as { str?: unknown }).str))) no("a result chip as σ is not translated");
+      const k = isHead(v, "Chip") ? this.keyOf(v[1] as Json) : undefined;
+      const c = k?.startsWith("res:") ? this.t.rows[this.i]?.chips?.[k] : undefined;
+      if (!k || !c || typeof c.value !== "string" || typeof c.unc !== "string") return no("a chip in a unit row is not translated");
+      const known = this.uncByKey.get(k);
+      if (known) return { s: known, p: 5, k: "sym" };
+      const [cv, cs] = [c.value, c.unc].map((x) => floatText(x) ?? no(`the chip value ${x.trim()} is not translated`));
+      code = `${this.use("ufloat")}(${cv}, ${cs})`;
+      this.uncByKey.set(k, this.uncName());
+    } else code = `${this.use("ufloat")}(${this.uSer(v).s}, ${this.uSer(s).s})`;
+    const name = this.uncName();
+    this.uncLines.push(`${name} = ${code}`);
+    return { s: name, p: 5, k: "sym" };
+  }
+
+  /** The name of the row's next ufloat: the row's own name, `_u` and its count. */
+  private uncName = (): string => `_${this.i + 1}${this.t.tag}_u${this.uncLines.length + 1}`;
 
   /** Ans: the last row of this view that finished with a result (session.svelte.ts lastChip), when it is in the file and
    *  holds the value Ans held at Enter (G213f1: a deleted row in between changes it); else that value itself. */
@@ -482,6 +523,7 @@ class Row {
     const o = literal(text);
     if (o.k === "int") return o;
     const digits = /Rational\('([^']*)'\)/.exec(o.s)?.[1] ?? no(`the number ${text} is not translated`);
+    if (this.float) return { s: `${o.p === 3 ? "-" : ""}${digits}`, p: o.p, k: "sym" };
     return { s: `${o.p === 3 ? "-" : ""}${this.use("Fraction")}('${digits}')`, p: o.p, k: "sym" };
   }
 
@@ -517,7 +559,7 @@ class Row {
       case "Rational": {
         if (args.length !== 2) no(`${head} with ${args.length} arguments is not translated`);
         const [a, b] = args.map((x) => this.uSer(x)) as [Out, Out];
-        if (a.k === "int" && b.k === "int") return { s: `${this.use("Fraction")}(${a.s}, ${b.s})`, p: 5, k: "sym" };
+        if (a.k === "int" && b.k === "int" && !this.float) return { s: `${this.use("Fraction")}(${a.s}, ${b.s})`, p: 5, k: "sym" };
         return { s: `${wrap(a, 2)}/${wrap(b, 4)}`, p: 2, k: kindOf([a, b]) };
       }
       case "Power": {
@@ -527,6 +569,9 @@ class Row {
         if (n === undefined || !/^\d+$/.test(n)) no("a power that is not a whole number in a unit row is not translated");
         return this.uPow([args[0] as Json], isHead(ex, "Negate") ? -Number(n) : Number(n));
       }
+      case "Call":
+        if (isUncertain(e)) return this.uncertain(args.slice(1));
+        return no(`${head} in a unit row is not translated`);
       default:
         return no(`${head} in a unit row is not translated`);
     }
@@ -544,6 +589,8 @@ class Row {
     const dim = PY_CONSTS.get(id) ?? no(`constant ${id}`);
     const c = this.t.rows[this.i]?.chips?.[`const:${id}`];
     if (!c || typeof c.value !== "string") return no(`the value of constant ${id} is not kept`);
+    // G217: its σ would be an input of its own, and a G81 basis correlates two constants: not translated
+    if (c.exact === false) no("a constant with an uncertainty is not translated");
     const v = c.value.trim();
     const q = /^(\d+)\/(\d+)$/.exec(v);
     const n = q ? `${this.use("Fraction")}(${q[1]}, ${q[2]})` : /^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(v) ? this.uLit(v).s : no(`the value of constant ${id} is not translated`);
@@ -583,7 +630,7 @@ class Translator {
   /** Row r's tree as the app read it (G214): `\operatorname{name}` is a stored value when the input read one (`defs`)
    *  or this file set it, so `\operatorname{name}(2)` multiplies it; any other name before a bracket is the call it was.
    *  A bare name nothing set does not parse so: read as a value, the translator then says where it is not set (G213). */
-  private parse(r: PyRow, chips: Record<string, PyChip>): Json {
+  private parse(r: PyRow, chips: ChipTable): Json {
     const read = new Set([...(r.defs ?? []), ...(Array.isArray(r.reads) ? r.reads : [])].map((d) => d.name));
     const values = { has: (n: string) => read.has(n) || this.names.has(n) } as unknown as ReadonlySet<string>;
     try {
@@ -596,7 +643,7 @@ class Translator {
 
   /** G216: a unit row's formula as the unit view built it (units/view.ts request): its line with a prompt per slot
    *  (input/unitFormula.ts), the empty ones dropped, read by the parser's units mode; the slots by prompt id. */
-  unitParse(r: PyRow, chips: Record<string, PyChip>): { json: Json; u: { info: UnitsInfo; slots: Readonly<Record<string, UnitSlot>> } } {
+  unitParse(r: PyRow, chips: ChipTable): { json: Json; u: { info: UnitsInfo; slots: Readonly<Record<string, UnitSlot>> } } {
     const kept = r.slots;
     if (!kept || typeof kept !== "object") return no("a unit row that does not keep its slots is not translated");
     const slots = validSlots(kept) ?? {};
@@ -647,10 +694,10 @@ class Translator {
     const answer = oneLine(r.ok ? `${r.mark ? `${r.mark} ` : ""}${(r.mark === "=" ? (r.exact ?? r.value) : (r.value ?? r.exact)) ?? ""}${sigma}${unit}` : (r.error ?? "no result"));
     try {
       if (!r.ok) no("N62 gave no result");
-      if (r.sigma) no("σ is not translated");
-      const { table, keys } = markers(r);
       // G216: a unit row (any of its fields; the session line writes them only for one) reads its slots back
       const isUnit = r.unit != null || r.dim != null || r.slots != null;
+      if (r.sigma && !isUnit) no("σ is not translated");
+      const { table, keys } = markers(r, isUnit);
       let tree: Json;
       let u: ReturnType<Translator["unitParse"]>["u"] | undefined;
       try {
@@ -669,14 +716,20 @@ class Translator {
         name = this.pyName(tree[1] as string);
         body = tree[2] as Json;
       }
+      // G217: σ through uncertainties, its note from the tree (pySigma.ts), never from `why`
+      const unc = u ? affinity(body) : 0;
+      t.float = unc > 0;
       let o = u ? t.unitTop(body) : t.ser(body);
       const end = u?.info.end !== undefined ? u.slots[u.info.end] : undefined;
       if (end) o = t.toEnd(o, end);
       for (const u of t.uses) uses.add(u);
-      this.lines[i] = { name, k: o.k };
+      // a ufloat is no number Home reads: Home's Ans and chips take N62's value of the row (unit dropped, as a Quantity)
+      this.lines[i] = { name, k: unc > 0 ? "unit" : o.k };
       for (const [n, d] of t.defs) this.names.set(n, { line, view: this.view(i), k: d.k, def: d.value });
       if (!name.startsWith("_")) this.names.set(name, { line, view: this.view(i), k: o.k });
-      return `${[...t.defs.values()].map((d) => `${d.code}\n`).join("")}${name} = ${o.s}${t.earlier ? "  # an earlier result" : ""}  # N62: ${answer}`;
+      const tail = unc > 0 ? sigmaTail(r.sigmaWhy, unc === 1) : "";
+      const before = [...[...t.defs.values()].map((d) => d.code), ...t.uncLines].map((l) => `${l}\n`).join("");
+      return `${before}${name} = ${o.s}${t.earlier ? "  # an earlier result" : ""}  # N62: ${answer}${tail}`;
     } catch (err) {
       if (!(err instanceof NotTranslated)) throw err;
       this.forget(r, line);
@@ -688,11 +741,14 @@ class Translator {
 /** Every `\operatorname{name}` reads as a stored value (a store's target): whether this file set it is the translator's question. */
 const ANY: ReadonlySet<string> = { has: () => true } as unknown as ReadonlySet<string>;
 
-/** The row's chips as markers `pyc<n>` for the parser, so the tree says which chip stands where; Ans always has one. */
-function markers(r: PyRow): { table: Record<string, PyChip>; keys: string[] } {
+/** The row's chips as markers `pyc<n>` for the parser, so the tree says which chip stands where; Ans always has one.
+ *  G217: in a unit row a chip with σ keeps one (`pycu<n>`), so the parser reads it as an uncertain input (R115). */
+function markers(r: PyRow, unit = false): { table: ChipTable; keys: string[] } {
   const keys = [...Object.keys(r.chips ?? {}).filter((k) => k !== ANS_KEY), ANS_KEY];
-  return { table: Object.fromEntries(keys.map((k, n) => [k, { value: `pyc${n}`, exact: true }])), keys };
+  const unc = (k: string, n: number): { unc?: string } => (unit && typeof r.chips?.[k]?.unc === "string" ? { unc: `pycu${n}` } : {});
+  return { table: Object.fromEntries(keys.map((k, n) => [k, { value: `pyc${n}`, exact: true, ...unc(k, n) }])), keys };
 }
+
 
 const oneLine = (s: string): string => s.replace(/\s*[\r\n]+\s*/g, " ");
 
@@ -718,7 +774,7 @@ export function translateCells(rows: readonly PyRow[], o: { tag?: string; defs?:
 /** G216f1: the import lines a cell writes before its code, the one rule for Copy (translateRows) and the sync file
  *  (sync/files.ts filesFor). `needs`: the names the cell uses; `had`: those this process already imported in this file.
  *  Python's own Fraction first, then sympy's names (never pint's), then pint's registry once, when ureg or Q_ is first
- *  needed, then Q_ once, when Q_ is first needed (also when ureg came in an earlier cell). */
+ *  needed, then Q_ once, when Q_ is first needed (also when ureg came in an earlier cell), then G217's ufloat. */
 export function pyImports(needs: Iterable<string>, had: ReadonlySet<string> = new Set()): string[] {
   const fresh = new Set([...needs].filter((u) => !had.has(u)));
   const sympy = [...fresh].filter((u) => !PINT.has(u)).sort();
@@ -729,6 +785,7 @@ export function pyImports(needs: Iterable<string>, had: ReadonlySet<string> = ne
     ...(sympy.length ? [`from sympy import ${sympy.join(", ")}`] : []),
     ...(!registry && (fresh.has("ureg") || fresh.has("Q_")) ? ["from pint import UnitRegistry", "ureg = UnitRegistry()"] : []),
     ...(fresh.has("Q_") ? ["Q_ = ureg.Quantity"] : []),
+    ...(fresh.has("ufloat") ? ["from uncertainties import ufloat"] : []),
   ];
 }
 
