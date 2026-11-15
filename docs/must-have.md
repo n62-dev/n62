@@ -87,7 +87,7 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 
 **Everywhere**
 - `[check: FAIL]` Desktop browser with a keyboard: typed `sin(1)` is `s*i_*n*(1)` (F199, a named limit of v0.1.0). R131 (existing, keys only), then R198, which reaches every function Find has. Both open v0.2.
-- `[part]` Export: plain text only, and F180 half-reads templates. G232, R199, R200.
+- `[part]` Export: plain text only; F180 is left only for LaTeX no key types. G232, R199, R306, R200.
 - `[have]` Exact / ≈ / ⚠ marks, 30 digits, full precision on reuse, copy and paste. No package.
 - `[have]` Solve, Function, CAS. No package.
 - `[have]` History, variables, functions survive a relaunch; Esc cancels. No package.
