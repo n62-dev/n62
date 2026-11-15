@@ -64,11 +64,12 @@ function validFacts(x: unknown): ResultFacts | undefined {
  *  (`giac` as `full`, `angle`, `digits` as the setting allows, `word` as R194's record, `at`); the uid is kept, and a row
  *  stored without one (before G211) is given one here (the session writes it back). */
 export function restoredItem(i: HistoryItem, id: number): HistoryItem {
-  const { chips, full, fullExact, drawn, facts, uses, defsUsed, settingReset, uid, giac, angle, digits, word, at, ans, reads, ...rest } = i as HistoryItem & { form?: unknown };
+  const { chips, full, fullExact, drawn, facts, uses, defsUsed, settingReset, uid, giac, angle, typedIn, digits, word, at, ans, reads, ...rest } = i as HistoryItem & { form?: unknown };
   const { form, ...base } = rest;
   const out: HistoryItem = { ...base, id, uid: typeof uid === "string" && uid !== "" ? uid : rowUid(id) };
   if (typeof giac === "string" && giac.length <= FULL_LIMIT) out.giac = giac;
   if (angle === "rad" || angle === "deg") out.angle = angle;
+  if ((typedIn === "rad" || typedIn === "deg") && typedIn !== out.angle) out.typedIn = typedIn; // R265
   if (typeof digits === "number" && Number.isInteger(digits) && digits >= 1 && digits <= MAX_DIGITS) out.digits = digits;
   const w = storedWord(word);
   if (w) out.word = w;

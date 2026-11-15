@@ -13,6 +13,7 @@
   import { rowHold, rowSwipe } from "./rowGestures.ts";
   import type { MarkInfo } from "../engine/format.ts";
   import type { Drawn } from "../state/displayMode.ts";
+  import type { AngleUnit } from "../calc/port.ts";
   import type { HistoryItem, MarkStyle, UsedValue } from "../state/session.svelte.ts";
 
   let {
@@ -23,6 +24,7 @@
     sigma = () => null,
     reason = () => null,
     marks = "reason",
+    angle = "rad",
     onrecall,
     oninsert,
     onpick,
@@ -56,6 +58,8 @@
     reason?: (item: HistoryItem) => string | null;
     /** R124: how the marks are drawn: Muted, ⚠ coloured, ⚠ + reason. */
     marks?: MarkStyle;
+    /** R265: the angle mode on show: a row that reads the angle and ran in the other carries its mode as a small tag. */
+    angle?: AngleUnit;
     /** A second tap on the picked row's entry puts it back on the line, with the values of its chips (R147). */
     onrecall: (item: HistoryItem) => void;
     /** L5: a second tap on the picked row's result puts it on the entry line at the cursor, as a chip (docs/04 2.8, R147). */
@@ -225,6 +229,7 @@
           {@const d = display(item)}
           {@const m = mark(item)}
           {@const noDigit = hasNoDigit(m)}
+          {#if item.angle && item.angle !== angle && item.giac?.includes("pasdeg")}<span class="angle" data-testid="row-angle">{item.angle.toUpperCase()}</span>{/if}
           {#if m}<span class="mark" data-mark={m.mark} data-testid="mark" title={t(`mark.${m.mark === "=" ? "exact" : m.mark === "≈" ? "approx" : "warn"}`)}>{noDigit ? t("mark.noDigit") : markText(m)}</span>{/if}
           {#if d.wrap && !noDigit && d.latex.length <= MAX_DRAWN_LATEX}
             <!-- R158: a plain number: its groups, each unbreakable, wrap at a gap when the row is too narrow for the whole; the mark stays beside the first line -->
@@ -253,6 +258,9 @@
       {/if}
       {#if item.unitDropped}
         <div class="uses" data-testid="unit-dropped">{t("history.unitDropped")}</div>
+      {/if}
+      {#if item.typedIn}
+        <div class="uses" data-testid="row-angle-note">{t("history.angleNote", { now: (item.angle ?? angle).toUpperCase(), was: item.typedIn.toUpperCase() })}</div>
       {/if}
     </article>
     {/if}
@@ -385,6 +393,11 @@
   }
   .mark {
     font-size: var(--fs-key);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .angle {
+    font-size: var(--fs-note);
     color: var(--muted);
     white-space: nowrap;
   }

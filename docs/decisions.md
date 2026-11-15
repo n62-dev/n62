@@ -7,6 +7,8 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
+- **R265 start chunk (ron, run 1269):** the row's angle tag and recall note cost 0.32 kB gzip in the start chunk (phase-1 62.13 kB, branch 62.45 kB; pin 62.19 kB, budget 63.00 kB), so `npm run size` fails at the pin. Recommend raising `START_PIN_GZIP` to 62,460 B with that reason (a cut was looked for: folding History's muted lines into one list saved raw bytes but cost gzip). Or name a 0.26 kB cut.
+
 ## Decided proposals
 
 ### Pipeline and process
