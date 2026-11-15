@@ -54,7 +54,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F66.** At a hole (x/x at x = 0) Home refuses (G168), Num and CAS show the value of Giac's simplified form, the plot evaluator has NaN; 6 rows in `viewsweep-known.yaml`.
 - **nr1114-be-2, fixed by G353 (patch 0049).** Left: Giac's weighted forms (misc.cc stddevmean) still sum x² in one pass: stored `L:=approx([1/10,1/10,1/10])`, `variance(L,[1,1,1])` is ⚠ -1E-62, `stddev(L,[1,1,1])` ⚠ 1E-31·i. Family 6.
 - **G353's trace (no package).** Before G353 `stats1(L)` of stored floats was ⚠ alone, ≈ after `linreg(L,…)` (facts.ts inherited's check); cause not traced. Family 2.
-- **nr1114, fixed:** vr-1 and vr-5 by R298 (a fast Paste before the field was up; family 11), bu-9 and vr-10 by R312 (typed `2exp(1)`), bu-1, bu-3 and bu-5 by R300 (G2 item 74 open), bu-2 by R302, vr-3 and vr-7 by R301 (Store ▶ on a row), fh-2 by R303 and R313 (Alt+F; letters in a slot), be-1 by R304 (`0B101`), vr-4 and vr-6 by R305 (G2 item 75 open), bu-4 by R306.
+- **nr1114, fixed:** vr-1 and vr-5 by R298 (a fast Paste before the field was up; family 11), bu-9 and vr-10 by R312 (typed `2exp(1)`), bu-1, bu-3 and bu-5 by R300 (G2 item 74 open), bu-2 by R302, vr-3 and vr-7 by R301 (Store ▶ on a row), fh-2 by R303 and R313 (Alt+F; letters in a slot), be-1 by R304 (`0B101`), vr-4 and vr-6 by R305 (G2 item 75 open), bu-4 by R306, bu-6 and bu-7 by R307, vr-9 by R308 (a matrix element whose float prints with an exponent).
 - **Night review 2026-11-14:** the rest in [research/night-review-2026-11-14.md](research/night-review-2026-11-14.md).
 
 ### Background stream (extreme inputs; at night, by reach)
