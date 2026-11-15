@@ -171,7 +171,7 @@ export function special(c: RouteCtx, name: Special): void {
       // R329: Shift + Vars, ☰ → Paste's path (R278 took the Paste key; the keys pressed meanwhile wait for it); a view
       // without an entry line (Plot) has nowhere to put it: a dead press, no clipboard read
       if (c.shell.app !== null && !c.shell.showsEntry) c.dead();
-      else c.withClip((x) => holdKeys(c, x.paste()));
+      else pasteText(c);
       break;
     case "shift":
     case "alpha":
@@ -341,9 +341,9 @@ const VIEW_KEYS: readonly string[] = ["symb", "plot", "num"];
 /** During a load: does this action run at once? (AT_ONCE; a view key only when no key is waiting.) */
 const runsAtOnce = (c: RouteCtx, name: string): boolean => AT_ONCE.includes(name) && (c.waiting.length === 0 || !VIEW_KEYS.includes(name));
 
-/** R114: a system paste's text (Ctrl+V, Shift+Insert, the context menu) takes ☰ → Paste's path (Shift + Vars' too, R329), and the
- *  keys pressed meanwhile wait for it as they do after Paste. */
-export function pasteText(c: RouteCtx, text: string): void {
+/** R114: a system paste's text (Ctrl+V, Shift+Insert, the context menu) takes ☰ → Paste's path, and the keys pressed meanwhile
+ *  wait for it as they do after Paste. No `text` (Shift + Vars, R329): the clipboard's. */
+export function pasteText(c: RouteCtx, text?: string): void {
   c.withClip((x) => holdKeys(c, x.paste(text)));
 }
 

@@ -516,8 +516,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,470 → 62,100 B (R320, a cut, S58's item 2): the press counters (state/taps.svelte.ts, state/pressCount.ts) are a lazy
  *  chunk fetched when idle; the start holds their front (state/tapsFront.svelte.ts: the queue, the screen-tap listener and
  *  the hardware keys' `counted`), and Keypad hands each touch over raw. phase-1 c6fe6992 measures 62,415 B gzip (175,965 B
- *  raw), the branch 62,049 B (174,622 B raw, −366 B): 62,049 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 62_100;
+ *  raw), the branch 62,049 B (174,622 B raw, −366 B): 62,049 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  62,100 → 62,190 B (R329): Shift + Vars is Paste, the key's legend and action in the shipped spec, `key.paste` in the
+ *  i18n table and its case in route.ts (it reuses pasteText). Phase-1 fd0a9c24 measures 62.09 kB gzip (174.73 kB raw),
+ *  the branch 62,140 B (174,872 B raw): 62,140 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 62_190;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
