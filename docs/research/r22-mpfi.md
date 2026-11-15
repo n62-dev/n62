@@ -3,7 +3,7 @@
 
 **Status (2026-11-15): open.** The owner decides: intervals for real values whose every function Giac can take as an interval (recommended: go), as section 1 says; decisions.md "Needs the user".
 
-*Spike S20 on `p1/sandra-mpfi` from `phase-1` at c7481f98. Engine: `WITH_MPFI=1 engine/giac/build-wasm.sh` (MPFI 1.5.4, all patches to 0052, GSL) against the same sources without MPFI. Probe: `tools/probes/mpfi.ts` with `mpfi-oracle.py` (rows in `tools/probes/_out/mpfi/`). Values: `tests/golden/oracle.py` (source: oracle), mpmath at the interval's precision + 40 and at least 1200 digits. Desktop, Linux on WSL2, 32 cores; the times are one run per call, three probe processes at once, outside the host-cpu lock while other runs' checks held it: read the ratios, not the milliseconds.*
+*Spike S20 on `p1/sandra-mpfi` from `phase-1` at c7481f98. Engine: `WITH_MPFI=1 engine/giac/build-wasm.sh` (MPFI 1.5.4, all patches to 0052, GSL) against the same sources without MPFI. Probe: `tools/probes/mpfi.ts` with `mpfi-oracle.py` (rows in `tools/probes/_out/mpfi/`). Values: `tests/golden/oracle.py` (source: oracle), mpmath at the interval's precision + 40 and at least 1200 digits. Desktop, Linux on WSL2, 32 cores; the times are one run per call, three probe processes at once, outside the host-cpu lock while other runs' checks held it; a third of the cases rerun alone under the lock gave the same ratio (interval median 0.23 ms, evalf at P 0.10 ms): read the ratios, not the milliseconds.*
 
 ## 1. Recommendation
 
