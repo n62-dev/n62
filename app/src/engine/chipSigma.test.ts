@@ -77,5 +77,31 @@ describe("a chip with σ (R61)", () => {
     expect(markOf(precisionFacts(r), o)?.mark).not.toBe("=");
     expect(r.facts.uncDigits).toBe(1);
   });
+  // G274: a result from two or more uncertain inputs keeps each input's share of σ² (Home's budget). Derived: A·B,
+  // A = 2 ± 0.1, B = 3 ± 0.2: ∂/∂A = B = 3 and ∂/∂B = A = 2, so uy = 0.3 and 0.4, t = 0.09 and 0.16.
+  describe("σ's terms (G274)", () => {
+    const chip = (v: string, u: string) => ({ value: v, reliableDigits: null, exact: false, unc: u });
+    const near = (a: string | undefined, b: number) => expect(Number(a)).toBeCloseTo(b, 25);
+    it("two σ chips: one term each, in input order, keyed by the chip's name", () => {
+      const r = home("pasr_1*pasr_2", { "1": chip("2", "0.1"), "2": chip("3", "0.2") });
+      expect(r.uncTerms?.map((t) => t.key)).toEqual(["pasr_1", "pasr_2"]);
+      near(r.uncTerms?.[0]?.t, 0.09);
+      near(r.uncTerms?.[0]?.uy, 0.3);
+      near(r.uncTerms?.[1]?.t, 0.16);
+      near(r.uncTerms?.[1]?.uy, 0.4);
+      expect("uncTerms" in r.facts).toBe(false); // never in ValueFacts (the start chunk reads those)
+      near(r.facts.uncSigma, 0.5);
+      // input order, not name order
+      expect(home("pasr_2*pasr_1", { "1": chip("2", "0.1"), "2": chip("3", "0.2") }).uncTerms?.map((t) => t.key)).toEqual(["pasr_2", "pasr_1"]);
+    });
+    it("one input alone: no terms (one row says nothing)", () => {
+      expect(home("pasr_1*2", { "1": chip("2", "0.1") }).uncTerms).toBeUndefined();
+    });
+    it("a constant's key is its id, without pasc_ (as in the unit view)", () => {
+      const r = home("pasc_a*pasr_1", { "1": chip("3", "0.2") }, { a: { value: "2", unc: "0.1" } });
+      expect(r.uncTerms?.map((t) => t.key)).toEqual(["a", "pasr_1"]);
+      near(r.uncTerms?.[0]?.t, 0.09);
+    });
+  });
 });
 });

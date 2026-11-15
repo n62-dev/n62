@@ -69,7 +69,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
 | 736 | R222 the published ten tasks replay from their file | ron, Sonnet | `p1/ron-benchmarkfile` | S50, R221 |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
-| 674 | [R200](packages/R200.md) export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
+| 674 | R200 export the session as CSV and LaTeX from the menu | ron, Sonnet | `p1/ron-exportrows` | G232f1 |
 | 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
 | 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | – |
 | 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
