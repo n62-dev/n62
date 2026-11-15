@@ -5,6 +5,7 @@
 import type { MathfieldElement } from "mathlive";
 import { constKey, pruneChips, resKey, type Chip, type ChipTable } from "../input/chips.ts";
 import type { ActionBody, Key, Layer } from "../keyboard/keyboard.ts";
+import type { AngleUnit } from "../calc/port.ts";
 import { mathlive } from "../render/mathlive.svelte.ts";
 import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 
@@ -65,6 +66,9 @@ export class EntryController {
   /** Resolves when the entry line is on the page and the queued keys have been replayed. */
   ready: Promise<void> = Promise.resolve();
   private started = false;
+  /** R265: the line is an unchanged recall of a row that reads the angle: the mode that row ran in. Dropped by anything that
+   *  edits or clears the line, so the same text typed again by hand is a new entry (not a recall). Read only outside. */
+  recalledIn: AngleUnit | null = null;
   /** R255: 1 while the kept line (R34) is being read, 2 once it was read with text. */
   private kept = 0;
   /** R255: true until the field is up with the queued keys on it, or will never come (MathLive did not load). Read only. */
@@ -127,6 +131,7 @@ export class EntryController {
     // what MathLive edits itself (a character outside ASCII); a set of the value is silent
     mf.addEventListener("input", () => {
       this.touched = true;
+      this.recalledIn = null;
       this.onEdit();
     });
   }
@@ -161,6 +166,7 @@ export class EntryController {
     return pruneChips(this.table, this.value);
   }
   clear(): void {
+    this.recalledIn = null;
     this.queue = [];
     this.pendingValue = undefined;
     this.keptStale = true;
@@ -169,10 +175,11 @@ export class EntryController {
     // still be worth what they were. The `chips` getter only hands out the chips on the line.
     if (this.mf) this.mf.value = "";
   }
-  /** Put a previous entry back on the line, with the values of its chips. */
-  set(latex: string, chips: ChipTable = {}): void {
+  /** Put a previous entry back on the line, with the values of its chips. `recalledIn`: the row reads the angle and ran in this mode (R265). */
+  set(latex: string, chips: ChipTable = {}, recalledIn: AngleUnit | null = null): void {
     this.touched = true;
     this.onEdit();
+    this.recalledIn = recalledIn;
     latex = this.adopt(latex, chips);
     this.grown?.clear(); // R185: a recalled line's matrix does not grow (the default; a cleared line has none to find)
     if (!this.mf) {
@@ -205,6 +212,7 @@ export class EntryController {
   /** Insert LaTeX at the cursor (a history result, L5). */
   insert(latex: string): void {
     this.touched = true;
+    this.recalledIn = null;
     this.onEdit();
     if (!this.mf) return void this.queue.push({ kind: "put", latex }); // R298: in its place among the queued keys
     this.put(latex);
@@ -242,10 +250,13 @@ export class EntryController {
     if (a.kind === "insert" && a.chip) this.table[a.chip.key] = a.chip.chip; // a constant on a free key (R4b)
     this.touched = true;
     if (!this.mf) {
+      this.recalledIn = null;
       this.queue.push(a);
       return;
     }
+    const before = this.mf.value;
     this.onField?.(this.mf, a, this.grown);
+    if (this.mf.value !== before) this.recalledIn = null; // (a cursor key leaves the recall as it was)
   }
 
   /** R279: Select (`grow`) or Deselect on the line (entry/grow.ts); false where the key does nothing. */

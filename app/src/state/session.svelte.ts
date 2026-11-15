@@ -150,6 +150,8 @@ export interface HistoryItem {
   angle?: AngleUnit;
   /** R265: this row is a recall of one typed in the other angle mode, run unchanged in `angle`: the mode it was typed in (a note says so). */
   typedIn?: AngleUnit;
+  /** R265: the row's input reads the angle (its Giac text holds the degree factor, set where the row's job is kept, resultItem.ts): the tag and the recall note are for these rows only. */
+  readsAngle?: true;
   digits?: number;
   word?: WordSetting;
   at?: number;

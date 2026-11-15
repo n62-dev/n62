@@ -229,7 +229,7 @@
           {@const d = display(item)}
           {@const m = mark(item)}
           {@const noDigit = hasNoDigit(m)}
-          {#if item.angle && item.angle !== angle && item.giac?.includes("pasdeg")}<span class="angle" data-testid="row-angle">{item.angle.toUpperCase()}</span>{/if}
+          {#if item.readsAngle && item.angle && item.angle !== angle}<span class="angle" data-testid="row-angle">{item.angle.toUpperCase()}</span>{/if}
           {#if m}<span class="mark" data-mark={m.mark} data-testid="mark" title={t(`mark.${m.mark === "=" ? "exact" : m.mark === "≈" ? "approx" : "warn"}`)}>{noDigit ? t("mark.noDigit") : markText(m)}</span>{/if}
           {#if d.wrap && !noDigit && d.latex.length <= MAX_DRAWN_LATEX}
             <!-- R158: a plain number: its groups, each unbreakable, wrap at a gap when the row is too narrow for the whole; the mark stays beside the first line -->

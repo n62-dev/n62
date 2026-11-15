@@ -19,7 +19,6 @@
   import { resultToEntry } from "./render/insertable.ts";
   import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
-  import type { AngleUnit } from "./calc/port.ts";
   import { noDigit } from "./state/displayMode.ts";
   import type { HistoryItem, Session, View } from "./state/session.svelte.ts";
   import { counted } from "./state/tapsFront.svelte.ts";
@@ -166,8 +165,6 @@
     if (!busy) requestIdleCallback(() => void loadFind().catch(() => {}), { timeout: 5000 }); // the first Math press tries again
   });
 
-  /** R265: the line is a recall of a row that reads the angle: its text as the field holds it, and the mode it ran in. */
-  let recalled: { value: string; angle: AngleUnit } | null = null;
   /** Home/CAS: the entry line is cleared as soon as the job starts; the result arrives in the history. Apps decide themselves. */
   function enter(): void {
     if (shell.app !== null) {
@@ -175,8 +172,7 @@
       return;
     }
     const credits = creditsAsked(entry.value, session.userNames, entry.chips); // R149: N62 then Enter shows the credits sheet (a lazy chunk with the About data, reached through the Find chunk), submits nothing
-    const typedIn = recalled?.value === entry.value && recalled.angle !== session.settings.angle ? recalled.angle : undefined; // R265: an unchanged recall of a row typed in the other mode
-    recalled = null;
+    const typedIn = entry.recalledIn !== null && entry.recalledIn !== session.settings.angle ? entry.recalledIn : undefined; // R265: an unchanged recall of a row typed in the other mode
     if (credits || session.submit(entry.value, undefined, entry.chips, typedIn)) {
       entry.clear();
       edited = false; // the line is empty again: an error outline (ringState) stays until the next key
@@ -401,8 +397,7 @@
     if (count && folded) countUse(recall ? "recall" : "insert");
     folded = false;
     if (recall) {
-      entry.set(session.input(item), item.chips);
-      recalled = item.angle && item.giac?.includes("pasdeg") ? { value: entry.value, angle: item.angle } : null;
+      entry.set(session.input(item), item.chips, item.readsAngle && item.angle ? item.angle : null);
     }
     else insertResult(item, whole);
   }

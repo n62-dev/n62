@@ -73,3 +73,31 @@ test("a recall of the DEG row in RAD runs in RAD and the new row says so; a chip
   await expect(page.locator('[data-status="done"]')).toHaveCount(5);
   await expect(note(rows(page).nth(4))).toHaveCount(0);
 });
+
+test("a recall cleared and typed again by hand is a new entry: no note (R265f1)", async ({ page }) => {
+  await setAngle(page, "deg");
+  await enterRow(page, ["sin", "d3", "d0"], 1);
+  await setAngle(page, "rad");
+  await tapTwice(rows(page).first().locator(".in"), "click");
+  await tap(page, ["esc"]); // the line is empty again
+  await tap(page, ["sin", "d3", "d0"]); // the same text, typed
+  await tap(page, ["enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+  await expect(note(rows(page).nth(1))).toHaveCount(0);
+  expect(await page.evaluate(() => window.n62.session.items[1]?.typedIn)).toBeUndefined();
+});
+
+test("the note survives a reload", async ({ page }) => {
+  await setAngle(page, "deg");
+  await enterRow(page, ["sin", "d3", "d0"], 1);
+  await setAngle(page, "rad");
+  await tapTwice(rows(page).first().locator(".in"), "click");
+  await tap(page, ["enter"]);
+  await expect(note(rows(page).nth(1))).toContainText("DEG");
+  await page.waitForTimeout(800); // the store write is debounced
+  await page.reload();
+  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  await expect(rows(page)).toHaveCount(2); // the stored history is read after the first frames
+  await expect(note(rows(page).nth(1))).toContainText("DEG");
+  await expect(tag(rows(page).first())).toHaveText("DEG");
+});
