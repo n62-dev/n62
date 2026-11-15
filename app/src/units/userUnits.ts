@@ -10,19 +10,12 @@ import type { IndexItem } from "../find/types.ts";
 import { rulesById, slotDim, slotFactor } from "./build.ts";
 import { isExponent } from "./dims.ts";
 import { bare, isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
+import { decimal, goodName, type UnitDef } from "./ownRecord.ts";
 import { exactFactor, type Exact } from "./slot.ts";
 import type { UnitSlot, UnitToken } from "./types.ts";
 
 export { OWN_PREFIX, isOwnId };
-
-export interface UnitDef {
-  /** Letters, digits and _, a letter first, at most 24 characters ("myfurlong"). */
-  name: string;
-  /** Exact decimal text with a point ("201.168", "1.5e-3"), above 0. */
-  factor: string;
-  /** What one of it is made of, as Find ids (one or more units, prefixes, powers, a ÷). */
-  of: UnitSlot;
-}
+export type { UnitDef };
 
 export type DefCheck = { ok: true } | { ok: false; key: UnitMessageKey; message: string };
 
@@ -49,47 +42,6 @@ export function findNames(items: readonly IndexItem[]): FindNames {
     for (const n of [id, ...it.names]) if (!to.has(n)) to.set(n, it.kind === "pfx" ? id : (it.names[0] ?? id));
   }
   return { units, prefixes };
-}
-
-const isDigit = (c: string): boolean => c >= "0" && c <= "9";
-/** A letter of any script with a case (a–z, µ, Ω, é): by its case, no pattern (G88). */
-const isLetter = (c: string): boolean => c.toLowerCase() !== c.toUpperCase();
-
-function goodName(name: string): boolean {
-  const cs = [...name];
-  return cs.length >= 1 && cs.length <= 24 && isLetter(cs[0]!) && cs.every((c) => isLetter(c) || isDigit(c) || c === "_");
-}
-
-/** Decimal text with a point as an exact fraction: digits, an optional point and digits, an optional e with a sign and
- *  at most two digits ("201.168", "1.5e-3"); undefined for anything else. By character, no pattern (G88). */
-function decimal(s: string): { n: bigint; d: bigint } | undefined {
-  let i = 0;
-  const run = (): string => {
-    const j = i;
-    while (i < s.length && isDigit(s[i]!)) i++;
-    return s.slice(j, i);
-  };
-  const int = run();
-  if (!int || s.length > 40) return undefined;
-  let frac = "";
-  if (s[i] === ".") {
-    i++;
-    frac = run();
-    if (!frac) return undefined;
-  }
-  let exp = 0;
-  if (s[i] === "e" || s[i] === "E") {
-    i++;
-    const neg = s[i] === "-";
-    if (s[i] === "-" || s[i] === "+") i++;
-    const e = run();
-    if (!e || e.length > 2) return undefined;
-    exp = neg ? -Number(e) : Number(e);
-  }
-  if (i !== s.length) return undefined;
-  const k = exp - frac.length;
-  const m = BigInt(int + frac);
-  return k >= 0 ? { n: m * 10n ** BigInt(k), d: 1n } : { n: m, d: 10n ** BigInt(-k) };
 }
 
 /** The factor as typed, with the session's decimal mark, as the text a definition stores (a point). The other mark is
@@ -166,18 +118,40 @@ export function checkDef(def: UnitDef, table: FactorTable): DefCheck {
   return r.ok ? { ok: true } : r;
 }
 
+/** Find's own use of a name: the unit or prefix it is (a symbol a message shows), or a prefix and a unit read together as
+ *  a typed name would be (Mm, kilofurlong), as the two symbols; undefined for a name Find does not use. */
+function clash(name: string, names: FindNames): { key: "units.own.clash"; unit: string } | { key: "units.own.pair"; prefix: string; unit: string } | undefined {
+  const hit = names.units.get(name) ?? names.prefixes.get(name);
+  if (hit !== undefined) return { key: "units.own.clash", unit: hit };
+  for (let i = 1; i < name.length; i++) {
+    const prefix = names.prefixes.get(name.slice(0, i));
+    const unit = names.units.get(name.slice(i));
+    if (prefix !== undefined && unit !== undefined) return { key: "units.own.pair", prefix, unit };
+  }
+  return undefined;
+}
+
+/** G234: a stored definition whose name Find has gained since (an index with one more unit): the Find unit's symbol, else
+ *  undefined. The definition keeps its value (its id is @name); Your units says the name is now also Find's (R201). */
+export function findClash(def: UnitDef, names: FindNames): string | undefined {
+  const c = clash(def.name, names);
+  return c && c.unit;
+}
+
+/** The line Your units shows under such a definition (R201): the name is now also Find's, the value is unchanged. */
+export function clashNote(def: UnitDef, names: FindNames): string | undefined {
+  const unit = findClash(def, names);
+  return unit === undefined ? undefined : unitText("units.own.nowFind", { name: def.name, unit });
+}
+
 /** A new definition: checkDef, and a name that is none of Find's (a unit's or prefix's id or name, or a prefix and a
  *  unit read together, as a typed name would be: Mm, kilofurlong) nor one of `defs` (your units so far). */
 export function validateDef(def: UnitDef, table: FactorTable, names: FindNames, defs: readonly UnitDef[] = []): DefCheck {
   if (typeof def.name !== "string" || !goodName(def.name)) return refuse("units.own.name");
   const name = def.name;
-  const hit = names.units.get(name) ?? names.prefixes.get(name);
-  if (hit !== undefined) return refuse("units.own.clash", { name, unit: hit });
-  for (let i = 1; i < name.length; i++) {
-    const prefix = names.prefixes.get(name.slice(0, i));
-    const unit = names.units.get(name.slice(i));
-    if (prefix !== undefined && unit !== undefined) return refuse("units.own.pair", { name, prefix, unit });
-  }
+  const c = clash(name, names);
+  if (c?.key === "units.own.clash") return refuse(c.key, { name, unit: c.unit });
+  if (c?.key === "units.own.pair") return refuse(c.key, { name, prefix: c.prefix, unit: c.unit });
   if (defs.some((d) => d.name === name)) return refuse("units.own.twice", { name });
   return checkDef(def, table);
 }

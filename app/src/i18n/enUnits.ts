@@ -116,6 +116,8 @@ export const enUnits = {
   "units.own.name": "A name is letters, digits and _, a letter first (at most 24)",
   "units.own.clash": "Find already has {name} ({unit})",
   "units.own.pair": "{name} reads as {prefix} and {unit} in Find",
+  "units.own.gone": "Your unit {name} is not defined (any more)",
+  "units.own.nowFind": "{name} is now also Find's {unit}; yours keeps its value",
   "units.own.twice": "You already have a unit {name}",
   "units.own.factor": "{factor} is not a number (one decimal mark, no group separator)",
   "units.own.zero": "The factor must be above 0",

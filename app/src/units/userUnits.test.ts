@@ -95,8 +95,8 @@ describe("the merged table (G233)", () => {
     const req = { formula: "5*pasu1", slots: [{ tokens: [ownToken("myfurlong")] }], end: M };
     await evaluateUnits(engine, source, req, defaultHomeSettings, [myfurlong]);
     expect(jobs[0]?.expr).toContain("25146/125");
-    const none = (await evaluateUnits(engine, source, req, defaultHomeSettings)) as UnitError;
-    expect(none).toEqual({ error: "engine", detail: "no unit @myfurlong in the index" });
+    const none = (await evaluateUnits(engine, source, req, defaultHomeSettings, [])) as UnitError;
+    expect(none).toEqual({ error: "own", name: "myfurlong" }); // G234: a refusal that names it (ownStore.test.ts)
     expect(jobs).toHaveLength(1);
   });
   it_("an own unit whose name holds rev, rpm or Hz is no cycle unit: 2 brevet·rad → J drops the rad as N·m does (G40)", () => {

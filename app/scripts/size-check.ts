@@ -146,8 +146,14 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  72.55 → 76.05 kB (G233): phase-1 0d8a7e48 measures 72,465 B, the branch 76,000 B (calc 429 → 3,191 with userUnits.ts,
  *  slot 12,004 → 12,671 with the units.own.* words in the i18n table and exactFactor exported, factors 16,900 → 16,975 with
  *  build.ts's slotDim, slotFactor and rulesById exported; fix round 1, +31 B: OWN_PREFIX in factors.ts and build.ts's cycle
- *  check skipping own ids): a unit of your own built from Find's units. 76,000 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 76_050;
+ *  check skipping own ids): a unit of your own built from Find's units. 76,000 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  76.05 → 78.30 kB (G234): phase-1 165ad133 measures 76.00 kB, the branch 78.24 kB (+2.24 kB; the entries 41.66 → 41.96
+ *  kB, under their 42 kB): the stored units, ownRecord.ts (the record's shape check, which a restore runs too, in a shared
+ *  chunk of its own, 1.8 kB with decimal() and goodName() moved out of userUnits.ts), the store ownUnits.ts that
+ *  calc.ts reads, the refusal of a unit with no definition (build.ts, messages.ts) and its words. A cut was tried: the
+ *  store as a rune class cost +0.1 kB more; findClash and ownUnitItem are not in these chunks. 78.24 kB + 0.05 kB, rounded
+ *  up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 78_300;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
