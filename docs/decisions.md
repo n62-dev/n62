@@ -193,7 +193,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Archived, "Opus pass 97".
 - **R28:** rule: docs/04 4.3 (slot order, the end slot); a slot only right after a number literal; σ is a number literal, `n %` of the value (R104) or a result chip (R271, R271f1; both docs/04 4.2); a product with a slot keeps its brackets.
 - **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Archived, "Opus pass 96".
-- **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not; %, ‰, ppm, ppb are dimensionless units (owner, 2026-11-14; G369). Archived. Would change if: a power-triangle rule is packaged.
+- **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not; %, ‰, ppm, ppb are dimensionless units (G369). Archived. Would change if: a power-triangle rule is packaged.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
 - **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ. Archived, "Opus pass 122". Would change if: a chip keeps its inputs' basis (G81).
 - **R286 (pass 153):** a σ chip limits the value at σ's last confirmed decade, then markOf (`1000.5 ± 0.0707`, 3 digits: ⚠ 8 at STD 12).
