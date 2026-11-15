@@ -75,7 +75,9 @@ units:
 
 # defined: units qalc lacks or has with another meaning, with an exact `si` (a product or quotient of decimals) and
 #   `dim` (the dimension key; "" = a pure count), `source` (derived or oracle) and `title`; optional `names`, `symbol`.
-#   `replace: true` takes the place of qalc's unit of that id. No checks entry: the definition is the size.
+#   `replace: true` takes the place of qalc's unit of that id; `ratio: true` (dim "") marks a ratio (%, ‰, ppm, ppb),
+#   which drops out of the shown unit beside another unit (app/src/units/build.ts shownOf). No checks entry: the
+#   definition is the size.
 # dropNames: names taken off another item (the unit that now owns them).
 #
 # Why `mmH2O` is no unit of its own: it is qalc's mmWC (name "mmH₂O", the unit pad and menu use `mmWC`). qalc has
@@ -98,11 +100,11 @@ defined:
   - { id: Mvar, title: "Megavar (reactive power)", names: ["megavar"], si: "1000000", dim: "kg1m2s-3", source: derived }
   # the ratios (G369; owner, 2026-11-14): dimensionless, exact powers of ten, so a unit slot holds them (the units menu's
   # Ratio category) and an end slot converts to them (0.0042 → 0.42 %, 25 mg/kg → 25 ppm); beside another unit a ratio
-  # drops out of the shown unit (app/src/units/build.ts RATIOS). After ± a typed % stays R104's σ (decisions.md R28).
-  - { id: percent, symbol: "\\%", title: "Percent (1/100)", names: ["%", "per cent"], si: "1/100", dim: "", source: derived }
-  - { id: permille, symbol: "‰", title: "Per mille (1/1000)", names: ["‰", "per mille", "per mil"], si: "1/1000", dim: "", source: derived }
-  - { id: ppm, title: "Parts per million (10⁻⁶)", names: ["parts per million"], si: "1/1000000", dim: "", source: derived }
-  - { id: ppb, title: "Parts per billion (10⁻⁹)", names: ["parts per billion"], si: "1/1000000000", dim: "", source: derived }
+  # drops out of the shown unit (`ratio: true`). After ± a typed % stays R104's σ (decisions.md R28).
+  - { id: percent, symbol: "\\%", title: "Percent (1/100)", names: ["%", "per cent"], si: "1/100", dim: "", ratio: true, source: derived }
+  - { id: permille, symbol: "‰", title: "Per mille (1/1000)", names: ["‰", "per mille", "per mil"], si: "1/1000", dim: "", ratio: true, source: derived }
+  - { id: ppm, title: "Parts per million (10⁻⁶)", names: ["parts per million"], si: "1/1000000", dim: "", ratio: true, source: derived }
+  - { id: ppb, title: "Parts per billion (10⁻⁹)", names: ["parts per billion"], si: "1/1000000000", dim: "", ratio: true, source: derived }
   # the metric cup (G321): the bare cup is 250 mL; qalc's cup, the US food-label cup of 240 mL, is cup_US_label (rename)
   - { id: cup, title: "Metric Cup (250 mL)", names: ["metric cup"], si: "0.00025", dim: "m3", source: derived }
 

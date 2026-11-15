@@ -40,6 +40,8 @@ export interface FindItem {
   dim?: string;
   /** unit, pfx: exact factor to SI base units as p/q (with pi where needed); "k+offset" for °C and °F. */
   si?: string;
+  /** unit (G369): a ratio, a pure number with a factor (%, ‰, ppm, ppb; find/units.yaml `ratio: true`). */
+  ratio?: true;
   /** 0: curated, audited, ranked first; 1: documented only ("not checked" in the preview). */
   tier: 0 | 1;
   /** The LaTeX the entry line receives: a chip macro or an \operatorname template with #0 (the selection or a box). */

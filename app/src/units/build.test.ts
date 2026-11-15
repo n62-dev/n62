@@ -366,8 +366,10 @@ describe("the dimension check's text (G35)", () => {
 });
 
 describe("G369: a ratio unit (%, ‰, ppm, ppb) in the shown unit", () => {
+  // the index's `ratio` flag (find/units.yaml; ratio.test.ts checks the real index carries it)
+  const ratio = (id: string, si: string, symbol = id): IndexItem => ({ ...unit(id, si, "", symbol), ratio: true });
   const t = factorTable([
-    unit("m", "1", "m1"), unit("s", "1", "s1"), unit("rev", "1", ""), unit("percent", "1/100", "", "\\%"), unit("permille", "1/1000", "", "‰"), unit("ppm", "1/1000000", ""),
+    unit("m", "1", "m1"), unit("s", "1", "s1"), unit("rev", "1", ""), ratio("percent", "1/100", "\\%"), ratio("permille", "1/1000", "‰"), ratio("ppm", "1/1000000"),
     pfx("k", "1000"),
   ]);
   const shown = (slots: UnitSlot[]): string[] => shownUnits({ formula: "", slots }, t).map((u) => `${u.text} ${u.dim} ${u.factor}`);
@@ -381,6 +383,10 @@ describe("G369: a ratio unit (%, ‰, ppm, ppb) in the shown unit", () => {
   });
   it("two ratios are no product unit (‰·%): each slot alone, the first term's first", () => {
     expect(shown([{ tokens: [{ unit: "permille" }] }, { tokens: [{ unit: "percent" }] }])).toEqual(["‰  1/1000", "%  1/100"]);
+  });
+  it("the flag decides, not the id: a pure number with a factor and no flag stays in the product", () => {
+    const bare = factorTable([unit("m", "1", "m1"), unit("percent", "1/100", "", "\\%")]);
+    expect(shownUnits({ formula: "", slots: [{ tokens: [{ unit: "percent" }] }, { tokens: [{ unit: "m" }] }] }, bare)[0]?.text).toBe("%·m");
   });
   it("control: rev is a count, not a ratio, and stays in rev/s", () => {
     expect(shown([{ tokens: [{ unit: "rev" }, { unit: "s" }], per: 1 }])[0]).toBe("rev/s s-1 1");
