@@ -237,6 +237,7 @@ describe("keyboard spec", () => {
     "d2/shift/normal": "i: a constant",
     "d3/shift/normal": "π: a constant",
     "add/shift/normal": "Ans: a value",
+    "d0/shift/normal": "%: a character, as the Shift + 9 palette's % cell (R323)",
     "comma/shift/normal": "±: an operator between two numbers (R71)",
     "mul/primary/normal": "×: an operator",
     "mul/shift/normal": "∡: an operator (polar form)",

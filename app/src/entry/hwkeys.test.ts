@@ -192,8 +192,14 @@ describe("R131: % and the desktop keys", () => {
     return counts;
   };
 
-  it("% inserts the percent sign as the Shift + 9 palette's % cell does (\\%; a bare % is a LaTeX comment), not a dead press", () => {
-    expect(run(ev("%", "Digit5", { shift: true }))).toEqual({ handled: [true], got: ["symbol \\%"] });
+  it("% is Shift + 0 (R323), which inserts \\% as the Shift + 9 palette's % cell does; the unit view's field does not take it", () => {
+    expect(run(ev("%", "Digit5", { shift: true }))).toEqual({ handled: [true], got: ["d0:shift"] });
+    expect(countsOf(ev("%", "Digit5", { shift: true }))).toEqual(["d0:hw"]);
+    expect(keypadKeyOf("%", false)).toBeUndefined();
+  });
+  it("Alt + Shift + 9 is Shift + ( ), ∥ (R323): by place, on any layout", () => {
+    expect(run(ev("(", "Digit9", { alt: true, shift: true }), ev(")", "Digit9", { alt: true, shift: true })).got).toEqual(["paren:shift", "paren:shift"]);
+    expect(countsOf(ev("(", "Digit9", { alt: true, shift: true }))).toEqual(["hw:Alt+Shift+9"]);
   });
   it("< > ! insert their own symbols", () => {
     expect(run(ev("<"), ev(">"), ev("!")).got).toEqual(["symbol <", "symbol >", "symbol !"]);
