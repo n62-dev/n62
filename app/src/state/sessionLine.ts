@@ -14,7 +14,8 @@
 //   view     `home` or `cas`
 //   input    the entry as MathLive LaTeX
 //   giac     the Giac text the entry was sent as; null when the row does not keep it
-//   chips    each chip key of the row's table (`res:7`, `const:c`): the value it held and whether it was exact.
+//   chips    each chip key of the row's table (`res:7`, `const:c`): the value it held and whether it was exact; G217:
+//            `unc`, its σ (a unit result's in the unit shown, R61, or a constant's), when it had one.
 //            `\res{k}` in `input` and `pasr_<k>` in `giac` name the entry `res:k` of the same line, never another
 //            line. Absent without a table. Ans is not kept (resolved at Enter), so a line with `\ans` has no value for it
 //   ok       the row finished with a result
@@ -81,7 +82,7 @@ export function sessionLine(item: HistoryItem, o: LineOptions): string | undefin
   if (item.status === "pending" || item.status === "note") return undefined;
   const done = item.status === "done";
   const u = item.units as { unit?: unknown; dim?: unknown; unc?: { text?: unknown; why?: unknown }; slots?: unknown } | undefined; // read back unchecked
-  const chips = item.chips ? Object.fromEntries(Object.entries(item.chips).map(([k, c]) => [k, { value: c.value, exact: c.exact }])) : undefined;
+  const chips = item.chips ? Object.fromEntries(Object.entries(item.chips).map(([k, c]) => [k, { value: c.value, exact: c.exact, ...(c.unc !== undefined ? { unc: c.unc } : {}) }])) : undefined;
   const src: CopySource = { ...item, units: undefined };
   const used = item.uses ?? item.defsUsed; // G212: a Home row's own field (HistoryItem.defsUsed)
   const line = {
