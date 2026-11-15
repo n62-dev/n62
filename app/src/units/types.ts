@@ -220,6 +220,8 @@ export type UnitError =
   /** G319: Home's refusal of the formula's number part (a division by zero through an infinity, a divergent integral or
    *  series, no limit, no value found): worded with Home's message (`error.<code>`, enEngine.ts). */
   | { error: "refused"; code: CheckRefusal }
+  /** G234: a unit of your own that no definition has (deleted, or a restore without it): `name` is its name. */
+  | { error: "own"; name: string }
   /** Anything else (a syntax error, a timeout, a bad request): the detail is for the log, not for the user. */
   | { error: "engine"; detail: string };
 

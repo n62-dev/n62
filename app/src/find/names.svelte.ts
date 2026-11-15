@@ -12,8 +12,12 @@ import { LETTER_NAMES } from "../engine/standIns.ts";
 import { homeResultToLatex, typedName } from "../render/home.ts";
 import { markFor, markText, type DisplayContext, type NumericResult } from "../state/displayMode.ts";
 import type { Session } from "../state/session.svelte.ts";
+import { symbol } from "../units/padCells.ts";
+import { OWN_PREFIX } from "../units/factors.ts";
+import type { UnitDef } from "../units/ownRecord.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
-import { functionInsert, search } from "./rank.ts";
+import type { FindIndex } from "./finder.ts";
+import { functionInsert, prepare, search } from "./rank.ts";
 import type { FindItem } from "./types.ts";
 
 const NO_INDEX = { items: [] };
@@ -43,6 +47,33 @@ export function liveItem(n: UserName): FindItem {
   const typed = typedName(n.name);
   const names = typed === n.name ? [n.name] : [n.name, typed];
   return { id: `${n.kind === "fn" ? "userfn" : "var"}:${n.name}`, kind: n.kind === "fn" ? "userfn" : "var", names, title: typed, ...(desc ? { desc } : {}), tier: 0, insert: insertOf(n) };
+}
+
+/** A unit slot as text for a line under a name: the symbols of its units, `·` between factors, `/` before the ones below the
+ *  ÷, `^p` for a power (`m·s^2`, `km^2/h`). */
+function slotText(of: UnitDef["of"]): string {
+  const per = of.per ?? of.tokens.length;
+  const one = (t: UnitDef["of"]["tokens"][number]): string => `${t.prefix === undefined ? "" : symbol(t.prefix)}${symbol(t.unit)}${t.power === undefined || t.power === "1" ? "" : `^${t.power}`}`;
+  const top = of.tokens.slice(0, per).map(one).join("·");
+  const below = of.tokens.slice(per).map(one).join("·");
+  return below ? `${top}/${below}` : top;
+}
+
+/** G234: a unit of your own as a Find item of kind `unit` (a live item, as the variables are): under its own id (OWN_PREFIX +
+ *  name, as every stored token has it), found by its name, with `factor of` as its line (`201.168 m`). It has no `insert`:
+ *  a unit goes in a unit slot, not on the line (units/find.ts pickActions reads the id). */
+export function ownUnitItem(d: UnitDef): FindItem {
+  return { id: `unit:${OWN_PREFIX}${d.name}`, kind: "unit", names: [d.name], title: d.name, desc: `${d.factor} ${slotText(d.of)}`, tier: 0, insert: "" };
+}
+
+/** G234: Find's index with your units added as items (a unit slot's Find searches them beside Find's own; units/open.ts
+ *  calls it with the stored definitions once the store is read). Without definitions the index itself, so nothing is copied. */
+export function withOwnUnits(index: FindIndex, defs: readonly UnitDef[]): FindIndex {
+  if (defs.length === 0) return index;
+  const own = prepare(defs.map(ownUnitItem));
+  const prepared = { items: [...index.prepared.items, ...own.items] };
+  const items = [...index.items, ...own.items.map((p) => p.item)];
+  return { prepared, items, byId: new Map(items.map((it) => [it.id, it])) };
 }
 
 /** A stored value's mark (S53f1): the one rule the history uses (displayMode.ts markFor), worked out for the text that is
