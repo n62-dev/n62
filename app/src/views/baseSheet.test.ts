@@ -56,4 +56,8 @@ describe("baseItems", () => {
       expect(row(rows, "dec")?.disabled).toBeUndefined();
     }
   });
+  it("a negative in an unsigned word that the signed word of its size cannot hold: the word's reason, not Signed's", () => {
+    expect(row(baseItems(session, item(-200n), { bits: 8, signed: false }), "hex")?.reason).toBe("Does not fit the 8-bit unsigned word");
+    expect(row(baseItems(session, item(-128n), { bits: 8, signed: false }), "hex")?.reason).toMatch(/needs a signed word/);
+  });
 });

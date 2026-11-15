@@ -3,6 +3,7 @@
 // code (tmplSheet.ts re-exports showBase), so the start chunk carries only the key's routing. The menu shows the result in a base and never acts on what is being typed, so the key
 // is dead while the line holds text. A pick sets the result's display form (R192: `fmt`), that result only.
 import type { MenuItem } from "../apps/types.ts";
+import { formatBase } from "../engine/formatBase.ts";
 import { dataText } from "../i18n/enData.ts";
 import type { RouteCtx } from "../keyboard/route.ts";
 import { baseDrawn, isApplicable, wordStore, type Word } from "../state/cycleForms.ts";
@@ -19,10 +20,11 @@ const ROWS: readonly { id: (typeof BASES)[number] | "dec"; label: string }[] = [
   { id: "dec", label: "DEC" },
 ];
 
-/** Why a base row is dimmed for an integer outside `word` (R305): a negative one in an unsigned word needs Signed, any
- *  other is named with the word in force. */
+/** Why a base row is dimmed for an integer outside `word` (R305): a negative one in an unsigned word that the signed word
+ *  of the same size holds needs Signed; any other is named with the word in force. */
 function noFit(item: HistoryItem, word: Word): string {
-  if (!word.signed && item.rational?.n.startsWith("-")) return dataText("base.needsSigned");
+  const n = item.rational?.n;
+  if (!word.signed && n?.startsWith("-") && typeof formatBase(n, "hex", word.bits, true) === "string") return dataText("base.needsSigned");
   return dataText("base.noFit", { bits: word.bits, sign: dataText(word.signed ? "base.signed" : "base.unsigned") });
 }
 
