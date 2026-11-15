@@ -95,39 +95,25 @@ export function canPush(chip: Chip | undefined): PushRefusal | null {
   return chip === undefined ? "noChip" : null;
 }
 
-/** A decimal or integer text that is exactly zero (as engine/constBasis.ts isZeroText, which this file may not import). */
-const isZero = (s: string): boolean => /^\s*[+-]?0*\.?0*(?:[eE][+-]?\d+)?\s*$/.test(s) && /\d/.test(s);
-const hasSigma = (c: Chip): boolean => typeof c.unc === "string" && !isZero(c.unc);
-
-/** G81: the uncertain leaves a constant enters through: those its basis names, when it carries every one of them
- *  (as constBasis.ts basisOf); undefined for a constant with no basis or a malformed one, which enters by its own id. */
-function leavesOf(c: Chip): string[] | undefined {
-  const L = c.basisLeaves;
-  if (typeof c.basis !== "string" || !c.basis || !L || typeof L !== "object") return undefined;
-  const named = new Set([...c.basis.matchAll(/pasl_([A-Za-z0-9_]*)/g)].map((m) => m[1] as string));
-  if (named.size === 0) return undefined;
-  const leaves: string[] = [];
-  for (const l of named) {
-    const v = L[l];
-    if (!Object.hasOwn(L, l) || typeof v?.value !== "string" || typeof v.unc !== "string") return undefined;
-    if (!isZero(v.unc)) leaves.push(`pasl_${l}`); // a leaf of zero uncertainty is its value, no input of σ
-  }
-  return leaves;
-}
+/** How a constant chip of a line enters σ: null, it has none; "own", by its own id (`const:<ID>`); else the
+ *  `pasl_<leaf>` names it rests on through its basis (G81, as G271 keys them). The caller passes engine/constBasis.ts
+ *  sigmaLeaves, the one reader of a basis's names (P20, G105): this file reads no names itself. */
+export type ConstSigma = (c: Chip) => string[] | "own" | null;
 
 /**
  * The σ inputs of a level pushed from row `uid` whose line held `chips` (HistoryItem.chips); `rowHasSigma`: the row's
  * result has a σ. Such a level rests on the row itself (`row:<uid>`) and on each σ constant of its line, by its basis
  * leaves when it has a basis (`pasl_<leaf>`, as G271 keys them), else by its id (`const:<ID>`). A σ result chip on the
  * line names no source row (its `res:<k>` is the entry's own counter): it counts as a new input, as on the algebraic
- * line (decisions.md R61). A level with no σ rests on none.
+ * line (decisions.md R61). A level with no σ rests on none. `constSigma` reads each constant (ConstSigma).
  */
-export function inputsOf(chips: ChipTable, uid: string, rowHasSigma: boolean): string[] {
+export function inputsOf(chips: ChipTable, uid: string, rowHasSigma: boolean, constSigma: ConstSigma): string[] {
   if (!rowHasSigma) return [];
   const out = new Set([`row:${uid}`]);
   for (const [k, c] of Object.entries(chips)) {
-    if (!k.startsWith("const:") || !hasSigma(c)) continue;
-    for (const i of leavesOf(c) ?? [k]) out.add(i);
+    if (!k.startsWith("const:")) continue;
+    const via = constSigma(c);
+    for (const i of via === "own" ? [k] : (via ?? [])) out.add(i);
   }
   return [...out].sort();
 }

@@ -2,6 +2,7 @@
 // R250: the RPN stack model (entry/rpn.ts): levels of result chips, the stack moves and their undo, what may be pushed,
 // the σ inputs a level rests on, and the keys' arity.
 import { describe, expect, it } from "vitest";
+import { sigmaLeaves } from "../engine/constBasis.ts";
 import type { Chip } from "../input/chips.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import { arityOf, canPush, inputsOf, inputsOfAll, RPN_DEPTH, RPN_UNDOS, RpnStack, sharesInput, type RpnLevel } from "./rpn.ts";
@@ -120,7 +121,7 @@ describe("canPush", () => {
 describe("inputsOf", () => {
   it("names the row and the σ constants, never a line's result chips", () => {
     const chips = { "res:3": sigma("2.5", "0.1"), "const:G": sigma("6.6743E-11", "1.5E-15"), "res:4": { value: "2", exact: true } };
-    expect(inputsOf(chips, "u9", true)).toEqual(["const:G", "row:u9"]);
+    expect(inputsOf(chips, "u9", true, sigmaLeaves)).toEqual(["const:G", "row:u9"]);
   });
 
   it("a constant with a basis rests on its uncertain leaves", () => {
@@ -129,15 +130,26 @@ describe("inputsOf", () => {
       basis: "2*pasl_alpha*pasl_h/(pasl_e^2*pasl_c)",
       basisLeaves: { alpha: { value: "0.0072973525643", unc: "1.1E-12" }, h: { value: "6.62607015E-34", unc: "0" }, e: { value: "1.602176634E-19", unc: "0" }, c: { value: "299792458", unc: "0" } },
     };
-    expect(inputsOf({ "const:mu0": c }, "u9", true)).toEqual(["pasl_alpha", "row:u9"]);
+    expect(inputsOf({ "const:mu0": c }, "u9", true, sigmaLeaves)).toEqual(["pasl_alpha", "row:u9"]);
     // a basis naming a leaf it does not carry is malformed: the constant enters by its own id (constBasis.ts basisOf)
     const bad: Chip = { ...c, basis: "pasl_alpha*pasl_x" };
-    expect(inputsOf({ "const:mu0": bad }, "u9", true)).toEqual(["const:mu0", "row:u9"]);
+    expect(inputsOf({ "const:mu0": bad }, "u9", true, sigmaLeaves)).toEqual(["const:mu0", "row:u9"]);
+  });
+
+  it("reads a basis's leaves by the one rule of names (constBasis.ts, P20), as Home and the unit view do", () => {
+    const leaves = { a: { value: "2", unc: "0.1" }, b: { value: "3", unc: "0.2" } };
+    // `xpasl_a` is one name, not the leaf a: the basis names no leaf, so the constant rests on none of them
+    const glued: Chip = { ...sigma("4", "0.2"), basis: "2*xpasl_a", basisLeaves: leaves };
+    expect(inputsOf({ "const:K": glued }, "u9", true, sigmaLeaves)).toEqual(["row:u9"]);
+    // a σ of zero is no σ (a constant of zero uncertainty, and a leaf of one, adds no input)
+    expect(inputsOf({ "const:K": sigma("4", "0E-11") }, "u9", true, sigmaLeaves)).toEqual(["row:u9"]);
+    const zeroLeaf: Chip = { ...sigma("6", "0.3"), basis: "pasl_a*pasl_b", basisLeaves: { ...leaves, b: { value: "3", unc: "0.0" } } };
+    expect(inputsOf({ "const:K": zeroLeaf }, "u9", true, sigmaLeaves)).toEqual(["pasl_a", "row:u9"]);
   });
 
   it("a row with no σ rests on none", () => {
-    expect(inputsOf({ "res:1": { value: "2", exact: true }, "const:pi": { value: "pi", exact: true } }, "u9", false)).toEqual([]);
-    expect(inputsOf({}, "u9", false)).toEqual([]);
+    expect(inputsOf({ "res:1": { value: "2", exact: true }, "const:pi": { value: "pi", exact: true } }, "u9", false, sigmaLeaves)).toEqual([]);
+    expect(inputsOf({}, "u9", false, sigmaLeaves)).toEqual([]);
   });
 });
 
