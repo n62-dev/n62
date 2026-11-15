@@ -209,6 +209,18 @@ export class EntryController {
     if (!this.mf) return void this.queue.push({ kind: "put", latex }); // R298: in its place among the queued keys
     this.put(latex);
   }
+  /**
+   * R324: put `latex` over the atoms `range` (a selection range) of the line, if the line is still `line`; else insert it
+   * at the cursor. MathLive's insert replaces a selection as one step of the line's own history: Undo brings it back.
+   */
+  replace(latex: string, range: [number, number], line: string): void {
+    if (!this.mf || this.mf.value !== line) return this.insert(latex);
+    this.touched = true;
+    this.onEdit();
+    this.endSelect();
+    this.mf.selection = { ranges: [range] };
+    this.put(latex);
+  }
   private put(latex: string): void {
     this.mf?.insert(latex, { format: "latex", selectionMode: "after" });
     this.mf?.focus();
