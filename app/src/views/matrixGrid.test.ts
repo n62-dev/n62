@@ -373,14 +373,14 @@ describe("New (R190)", () => {
     return { sent, line: { userNames: taken.map((name) => ({ name, kind: "var", time: 1 })), submit: (l: string) => (sent.push(l), Promise.resolve()) } as unknown as Parameters<typeof createMatrix>[0] };
   };
   it("a 2 × 2 of zeros under the first letter no name holds", async () => {
-    for (const [taken, name] of [[[], "A"], [["A", "B", "x"], "C"], [["B"], "A"], [["A", "B", "C", "D", "E", "F", "G", "H"], "J"]] as const) {
+    for (const [taken, name] of [[[], "A"], [["A", "B", "x"], "C"], [["B"], "A"], [["A", "B", "C", "D", "E", "F", "G", "H"], "I"], [["A", "B", "C", "D", "E", "F", "G", "H", "I"], "J"]] as const) {
       const { line, sent } = take([...taken]);
       expect(await createMatrix(line)).toBe(name);
       expect(sent).toEqual([`${name}:=\\begin{pmatrix}0&0\\\\0&0\\end{pmatrix}`]);
     }
   });
   it("every letter taken: no name, nothing sent", async () => {
-    const { line, sent } = take([..."ABCDEFGHJKLMNOPQRSTUVWXYZ"]);
+    const { line, sent } = take([..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"]);
     expect([await createMatrix(line), sent]).toEqual([null, []]);
   });
 });

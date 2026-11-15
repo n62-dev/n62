@@ -34,6 +34,7 @@ import type { ElementTex, MatrixCell, MatrixRead } from "../calc/matrices.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
 import { commaResult } from "../state/displayMode.ts";
+import { NAME_LETTERS } from "../find/names.svelte.ts";
 
 /** A cell: an element as Home computed it, or (a matrix Home gives no elements for: one that holds a symbol) as the
  *  bridge read it (engine/matrixRead.ts): a number with its facts, or Giac's text of an element that is not one. */
@@ -397,13 +398,13 @@ function numberOf(c: GridCell): { value: ComplexValue; facts: ValueFacts } | nul
   return "value" in c ? c : null;
 }
 
-/** R190: the sheet's New: the first letter A to Z (but I) that no name of the user's holds (and the parser takes as a name) gets a
+/** R190: the sheet's New: the first letter A to Z that no name of the user's holds (and the parser takes as a name) gets a
  *  2 × 2 of zeros, stored through the session's normal path as a cell write is (one history row). The name, or null when
  *  every letter is taken, or a job runs (the press does nothing). */
 export async function createMatrix(line: NewLine): Promise<string | null> {
   const used = new Set(line.userNames.map((n) => n.name));
   const entry = await import("../input/entry.ts");
-  for (const name of "ABCDEFGHJKLMNOPQRSTUVWXYZ") { // (not I: the imaginary unit, which Giac cannot store into)
+  for (const name of NAME_LETTERS) { // (the letters Store in offers, R307; I too: Giac stores into it)
     if (used.has(name)) continue;
     const row = `${name}:=\\begin{pmatrix}0&0\\\\0&0\\end{pmatrix}`;
     try {

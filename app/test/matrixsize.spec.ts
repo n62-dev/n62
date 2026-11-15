@@ -167,3 +167,21 @@ test("a 1 × 1 matrix keeps its cell: Delete row and Delete column say so and ch
   await expect.poll(() => texts(page)).toEqual(["5", "0"]);
   expect(await lastLatex(page)).toBe("O:=\\begin{pmatrix}5\\\\0\\end{pmatrix}");
 });
+
+// R307 (night review 2026-11-14, bu-6): the list row's size follows a write of the grid: after Add a row and Esc it reads 3×2
+test("after Add a row and Esc the list row reads the new size; a list opened fresh shows the sizes as stored", async ({ page }) => {
+  await store(page, "M:=[[1,2],[3,4]]", "M");
+  await tap(page, ["shift", "d4"]);
+  const value = sheet(page).locator('[data-id="matrix:M"] [data-testid="sheet-value"]');
+  await expect(value).toHaveText("2×2"); // (control: a fresh list)
+  await sheetKey(page, ["d0"]);
+  await expect(grid(page).locator("td[data-cell]")).toHaveCount(4);
+  await tap(page, ["menu"]);
+  await sheetKey(page, ["d1"]);
+  await expect.poll(() => texts(page)).toEqual(["1", "2", "3", "4", "0", "0"]);
+  await tap(page, ["esc"]);
+  await expect(value).toHaveText("3×2");
+  await tap(page, ["esc"]);
+  await tap(page, ["shift", "d4"]);
+  await expect(value).toHaveText("3×2");
+});
