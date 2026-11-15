@@ -31,6 +31,7 @@ export const enKeyNames = {
   "deselect.shift": "Mode",
   // the maths rows
   vars: "Variables",
+  "vars.shift": "Paste",
   math: "Math",
   "math.shift": "Memory",
   tmpl: "Templates",
