@@ -588,3 +588,28 @@ export function isError(out: string): boolean {
 export function isTimeout(out: string): boolean {
   return isError(out) && /interrupt/i.test(out);
 }
+
+/** G377: the operators of `s` (typed Giac) that stand outside every bracket and string, in order, each the first of
+ *  `ops` that starts there (so list a longer one before its prefix: `==` before `=`), and the words of `words` that stand
+ *  there as whole names. */
+export function topLevelOps(s: string, ops: readonly string[], words: ReadonlySet<string>): { at: number; op: string }[] {
+  const out: { at: number; op: string }[] = [];
+  let skip = -1;
+  walk(s, 0, (k, d, ch) => {
+    if (k < skip || d !== 0 || OPENERS.includes(ch)) return;
+    if (isNameChar(ch)) {
+      if (isNameChar(s.charAt(k - 1))) return;
+      let e = k;
+      while (isNameChar(s.charAt(e))) e++;
+      if (words.has(s.slice(k, e))) out.push({ at: k, op: s.slice(k, e) });
+      skip = e;
+      return;
+    }
+    const op = ops.find((o) => s.startsWith(o, k));
+    if (op !== undefined) {
+      out.push({ at: k, op });
+      skip = k + op.length;
+    }
+  }, "typed");
+  return out;
+}

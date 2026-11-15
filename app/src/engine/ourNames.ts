@@ -2,7 +2,7 @@
 // G54: our replacements for Giac functions, by the name the user writes. One map for the parser (input/emit.ts) and for
 // every path that sends Giac text without the parser (the library import and its `// test:` lines, the export back).
 // No UI imports; only erasable TypeScript syntax.
-import { mapNames, type Quoting } from "./giacPrint.ts";
+import { closing, isProgramWord, mapNames, names, topLevelArgs, topLevelOps, walk, withoutStrings, type Quoting } from "./giacPrint.ts";
 import { isStandIn } from "./standIns.ts";
 
 /** Giac's own `mod` is the modular-number constructor (an error as a call); Find's `mod` is irem (Euclidean,
@@ -38,6 +38,151 @@ export function renameOurCalls(text: string): string {
  *  the log's commands, typed (G105f2: a variable's value too, giacPrint.ts typedFromPrinted). */
 export function writeUserNames(text: string): string {
   return renameCalls(text, WRITTEN_NAME, "typed");
+}
+
+/** G377: the relation an == test and a ≠ test keep as their text (`kept` of equalityBlock). */
+export const TEST_REL = { eq: "==", ne: "!=" } as const;
+
+/**
+ * R18f1: the value test `a == b` (`negate`: `a ≠ b`) as Giac text; `kept` (`A==B`, the sides as shown) is what it
+ * stays when undecided. Written by the parser (input/emit.ts equalityTest) and by the library import (readTests); read
+ * back by the export (writeTests), so this text is the one shape of the block. The rules: emit.ts equalityTest.
+ */
+export function equalityBlock(a: string, b: string, negate: boolean, kept: string): string {
+  const [yes, no] = negate ? ["false", "true"] : ["true", "false"];
+  const k = `'${kept}'`;
+  const big = (v: string): string => `max(abs(evalf(${v},30)))`;
+  const float = "string(exact(d_))!=string(d_)";
+  const test =
+    `{if(${float}){sto(1,${EQ_INEXACT_FLAG});sto(d_,${EQ_DIFF})};` +
+    `when(${float},when(${EQ_VERDICT}==0,${yes},when(${EQ_VERDICT}==1,${no},${k})),` +
+    `when(simplify(d_)==0*d_,${yes},when(lname(d_)==[] and (type(d_)==integer or type(d_)==rational or ` +
+    `${big("d_")}>10^-20*max(${big("a_")},${big("b_")})),${no},${k})))}`;
+  return `((a_,b_)->((d_)->${test})(a_-b_))(${a},${b})`;
+}
+
+/** G377: equalityBlock's fixed text around its slots, read from the block itself: the head up to the first `kept`,
+ *  the part between the two, and the tail from the second up to the sides' `(`. */
+const blockShape = (negate: boolean): { head: string; mid: string; tail: string } => {
+  const slot = (c: string): string => `\u0000${c}`;
+  const [head = "", mid = "", rest = ""] = equalityBlock(slot("a"), slot("b"), negate, slot("k")).split(slot("k"));
+  return { head, mid, tail: rest.slice(0, rest.indexOf(slot("a"))) };
+};
+let shapes: ({ negate: boolean } & ReturnType<typeof blockShape>)[] | undefined;
+/** Both shapes, made at first use (the names they hold are declared below). */
+const SHAPES = (): NonNullable<typeof shapes> => (shapes ??= [false, true].map((negate) => ({ negate, ...blockShape(negate) })));
+
+/** The block that starts at `at` in `text`, if one does: where it ends and what it keeps. */
+function blockAt(text: string, at: number): { end: number; kept: string } | null {
+  for (const { negate, head, mid, tail } of SHAPES()) {
+    if (!text.startsWith(head, at)) continue;
+    const from = at + head.length;
+    const to = text.indexOf(mid, from);
+    if (to < 0) continue;
+    const kept = text.slice(from, to);
+    const open = to + mid.length + kept.length + tail.length - 1;
+    if (!text.startsWith(kept + tail, to + mid.length)) continue;
+    const close = closing(text, open, "typed");
+    const sides = close < 0 ? [] : topLevelArgs(text.slice(open + 1, close), "typed");
+    if (sides.length === 2 && equalityBlock(sides[0]!, sides[1]!, negate, kept) === text.slice(at, close + 1)) return { end: close + 1, kept };
+  }
+  return null;
+}
+
+/**
+ * G377: the inverse of the import's readTests, for the export: each == or ≠ block in a log's command written back as
+ * the test it keeps (`x==(5/10^1)`, `x!=1/3`), so a file holds no name of ours and reads the same on the way back in.
+ * Innermost first (a test inside a side is written before the one around it). The kept text is bracketed where an
+ * operator beside it would bind tighter than `==` (the parser's own blocks stand in a bracket, an argument or a
+ * definition's right side).
+ */
+export function writeTests(text: string): string {
+  const starts: number[] = [];
+  const { head } = SHAPES()[0]!;
+  const opener = head.slice(0, head.indexOf("->") + 2);
+  walk(text, 0, (k) => void (text.startsWith(opener, k) && starts.push(k)), "typed");
+  let out = text;
+  for (const at of starts.reverse()) {
+    const b = blockAt(out, at);
+    if (!b) continue;
+    const before = out.slice(0, at).trimEnd();
+    const after = out.slice(b.end).trimStart();
+    const open = before === "" || /([([{,;]|:=|->|\b(and|or|xor))$/.test(before);
+    const shut = after === "" || /^([)\]},;]|(and|or|xor)\b)/.test(after);
+    out = out.slice(0, at) + (open && shut ? b.kept : `(${b.kept})`) + out.slice(b.end);
+  }
+  return out;
+}
+
+/** G377: what ends a test's side in typed text (a separator) and the relations beside which a test is not one alone.
+ *  `not` binds tighter than `==` in Giac (`not 1==2` is false), so it is part of a side. */
+const TEST_SEPARATORS = [":=", "->", "&&", "||", ",", ";"];
+const RELATIONS = ["==", "!=", "<>", "<=", ">=", "=<", "=>", "<", ">", "="];
+const LOGIC_WORDS: ReadonlySet<string> = new Set(["and", "or", "xor"]);
+const TESTS: Readonly<Record<string, boolean>> = { "==": false, "!=": true, "<>": true };
+
+/** Each test that stands alone between two separators of `s` (and not as a piecewise condition, `keep`) as `make` of its
+ *  sides; the rest of `s` as written, its brackets read the same way. */
+function markTests(s: string, make: (a: string, b: string, negate: boolean) => string, keep = false): string {
+  const ops = topLevelOps(s, [...TEST_SEPARATORS, ...RELATIONS], LOGIC_WORDS);
+  let out = "";
+  let from = 0;
+  for (const sep of [...ops.filter((o) => !RELATIONS.includes(o.op)), { at: s.length, op: "" }]) {
+    const seg = s.slice(from, sep.at);
+    const rels = ops.filter((o) => RELATIONS.includes(o.op) && o.at >= from && o.at < sep.at);
+    const r = rels.length === 1 && !keep ? rels[0]! : undefined;
+    const [a, b] = r ? [s.slice(from, r.at), s.slice(r.at + r.op.length, sep.at)] : ["", ""];
+    if (r && Object.hasOwn(TESTS, r.op) && a.trim() && b.trim()) {
+      out += /^\s*/.exec(a)![0] + make(a.trim(), b.trim(), TESTS[r.op]!) + /\s*$/.exec(b)![0];
+    } else out += groupsIn(seg, make);
+    out += sep.op;
+    from = sep.at + sep.op.length;
+  }
+  return out;
+}
+
+/** `seg` with the tests in each of its outer brackets made (markTests); a piecewise condition keeps Giac's own ==, as
+ *  the parser writes one (input/emit.ts Piecewise). */
+function groupsIn(seg: string, make: (a: string, b: string, negate: boolean) => string): string {
+  const opens: number[] = [];
+  walk(seg, 0, (k, d, ch) => void (d === 1 && "([{".includes(ch) && opens.push(k)), "typed");
+  let out = "";
+  let i = 0;
+  for (const k of opens) {
+    const close = closing(seg, k, "typed");
+    if (close < 0) break;
+    const inner = seg.slice(k + 1, close);
+    const args = /(^|[^A-Za-z0-9_])piecewise$/.test(seg.slice(0, k)) ? topLevelArgs(inner, "typed") : null;
+    const done = args ? args.map((x, n) => markTests(x, make, n % 2 === 0 && n < args.length - 1)).join(",") : markTests(inner, make);
+    out += seg.slice(i, k + 1) + done + seg.charAt(close);
+    i = close + 1;
+  }
+  return out + seg.slice(i);
+}
+
+/** The pseudo name a test stands as while readTests puts the rest of a body through `giac` (no user writes `pas`). */
+const TEST_MARK = /^pastest(\d+)_$/;
+
+/**
+ * G377: a library body's tests (`A==B`, `A!=B`, `A<>B`, each alone between separators) as the parser writes a typed
+ * one (equalityBlock), its sides and the rest of the body put through `giac` (the import's asGiac), the kept text with
+ * our call names only (no angle factor: it is shown). A program (braces, `;`, a program word, a Giac quote) keeps
+ * Giac's own ==, as the format says; so does a piecewise condition. A body without a test is `giac` of it, unchanged.
+ */
+export function readTests(text: string, giac: (t: string) => string): string {
+  const words = [...names(text, "typed")].map((n) => n.name);
+  if (/[{;']/.test(withoutStrings(text, "", "typed")) || words.some((w) => isProgramWord(w) && !LOGIC_WORDS.has(w))) return giac(text);
+  const blocks: string[] = [];
+  const marked = markTests(text, (a, b, negate) => {
+    const kept = `${renameOurCalls(a)}${negate ? TEST_REL.ne : TEST_REL.eq}${renameOurCalls(b)}`;
+    blocks.push(equalityBlock(readTests(a, giac), readTests(b, giac), negate, kept));
+    return `pastest${blocks.length - 1}_`;
+  });
+  if (!blocks.length) return giac(text);
+  return mapNames(giac(marked), ({ name }) => {
+    const m = TEST_MARK.exec(name);
+    return m ? blocks[Number(m[1])]! : null;
+  }, "typed");
 }
 
 /** Set to 1 by an == or ≠ test that met a float (input/emit.ts equalityTest). Purged, not set to 0, before an input
