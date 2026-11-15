@@ -253,7 +253,7 @@ describe("uncertain inputs (G18)", () => {
   it("a constant with a CODATA uncertainty is an input once, however often it is used; c has none", () => {
     const job = buildJob({ formula: "pask1*pask1*pask2", slots: [], consts: ["G", "c"] }, table);
     if ("error" in job) throw new Error(job.error);
-    expect(job.unc?.vars).toEqual([{ name: "pasv1", value: "6.67430E-11", sigma: "1.5E-15" }]);
+    expect(job.unc?.vars).toEqual([{ name: "pasv1", value: "6.67430E-11", sigma: "1.5E-15", key: "G" }]);
     expect(job.unc?.expr).toBe("(pasv1*pasdimM^(-1)*pasdimL^(3)*pasdimT^(-2))*(pasv1*pasdimM^(-1)*pasdimL^(3)*pasdimT^(-2))*((299792458)*pasdimL^(1)*pasdimT^(-1))");
   });
   it("G81: a constant with a basis enters as its basis, each leaf an input once, shared between constants", () => {
@@ -264,7 +264,7 @@ describe("uncertain inputs (G18)", () => {
     ]);
     const job = buildJob({ formula: "pask1*pask2", slots: [], consts: ["mu", "eps"] }, t);
     if ("error" in job) throw new Error(job.error);
-    expect(job.unc?.vars).toEqual([{ name: "pasv1", value: "7.3E-3", sigma: "1E-12" }]);
+    expect(job.unc?.vars).toEqual([{ name: "pasv1", value: "7.3E-3", sigma: "1E-12", key: "pasl_fine_structure" }]);
     expect(job.unc?.expr).toBe("(((2)*pasv1)*pasdimM^(1))*((1/pasv1)*pasdimM^(-1))");
     expect(job.expr).toBe("(((2)*(7.3E-3))*pasdimM^(1))*((1/(7.3E-3))*pasdimM^(-1))");
   });
@@ -272,7 +272,7 @@ describe("uncertain inputs (G18)", () => {
     const m = { tokens: [{ unit: "m" }] };
     const once = buildJob({ formula: "pasupm(12.34,0.05,pasr_1)*pasu1-pasupm(12.34,0.05,pasr_1)*pasu2", slots: [m, m] }, table);
     if ("error" in once) throw new Error(once.error);
-    expect(once.unc?.vars).toEqual([{ name: "pasv1", value: "12.34", sigma: "0.05" }]);
+    expect(once.unc?.vars).toEqual([{ name: "pasv1", value: "12.34", sigma: "0.05", key: "pasr_1" }]);
     expect(once.unc?.expr).toBe("pasv1*(((1)*pasdimL^(1)))-pasv1*(((1)*pasdimL^(1)))");
     const two = buildJob({ formula: "pasupm(12.34,0.05,pasr_1)*pasu1-pasupm(12.34,0.05,pasr_2)*pasu2", slots: [m, m] }, table);
     if ("error" in two) throw new Error(two.error);
@@ -299,6 +299,17 @@ describe("uncertain inputs (G18)", () => {
       if ("error" in job) throw new Error(job.error);
       expect(job.unc?.vars.map((v) => v.name)).toEqual(["pasv1"]);
     }
+  });
+  it("G271: each input keeps the key the builder has (a constant's id, pasl_<leaf>, a chip's name; none typed), names and order as before", () => {
+    const m = { tokens: [{ unit: "m" }] };
+    const job = buildJob({ formula: "pasupm(1,0.1)*pasu1+pasupm(2,0.2,pasr_3)*pasu2+pasupm(1,0.1)*pasu3+pask1*pasupm(2,0.2,pasr_3)", slots: [m, m, m], consts: ["G"] }, table);
+    if ("error" in job) throw new Error(job.error);
+    expect(job.unc?.vars.map((v) => [v.name, v.key])).toEqual([["pasv1", undefined], ["pasv2", "pasr_3"], ["pasv3", undefined], ["pasv4", "G"]]);
+    expect(job.unc?.vars.filter((v) => v.key === undefined).every((v) => !("key" in v))).toBe(true);
+    // R271: a typed value with a result chip as σ has no key (the chip is σ, not the input)
+    const s = buildJob({ formula: "pasupm(1,0.2,pasws1)*pasu1", slots: [m], sigmas: [{ slot: 0, reliableDigits: null }] }, table);
+    if ("error" in s) throw new Error(s.error);
+    expect(s.unc?.vars).toEqual([{ name: "pasv1", value: "1", sigma: "0.2", chip: true }]);
   });
   it("a value without ± has no uncertainty; a malformed ± is refused", () => {
     const job = buildJob({ formula: "12.34*pasu1", slots: [{ tokens: [{ unit: "m" }] }] }, table);
