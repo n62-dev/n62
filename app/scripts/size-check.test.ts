@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { checkLazyParts, checkSizes, checkSplits, checkStartPin, INLINE_PIN_GZIP, inlineScripts, LAZY_PARTS, START_PIN_GZIP, startFiles, UNIT_VIEW_PIN_RAW } from "./size-check.ts";
+import { checkLazyParts, checkSizes, checkSplits, checkStartPin, INLINE_PIN_GZIP, inlineScripts, LAZY_PARTS, lazyFailures, START_PIN_GZIP, startFiles, UNIT_VIEW_PIN_RAW } from "./size-check.ts";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -311,5 +311,24 @@ describe("size-check", () => {
     const atStart = { ...manifest, "index.html": { ...manifest["index.html"], imports: ["_migrations-x.js"] }, ...lazy, ...shared };
     expect(checkLazyParts(fakeDist(atStart, all))).toEqual(["src/state/migrations.ts (assets/migrations-x.js) is loaded at start"]);
     expect(checkLazyParts(fakeDist({ ...manifest, ...lazy }, all))[0]).toContain("src/state/migrations.ts is not a dynamic chunk");
+  });
+
+  it("reads chunk-modules.json when the build has it: a module inside another lazy chunk passes, one a start file holds fails (R320, S58)", () => {
+    const { manifest, files } = base(1000);
+    const sheet = { ...manifest, "src/views/matrixSheet.ts": { file: "assets/ms.js", src: "src/views/matrixSheet.ts", isDynamicEntry: true } };
+    const grid = "src/views/matrixGrid.svelte.ts";
+    const run = (modules: Record<string, string[]> | null): string[] => {
+      const dist = fakeDist(sheet, { ...files, "assets/ms.js": 1000 });
+      if (modules !== null) writeFileSync(join(dist, ".vite/chunk-modules.json"), JSON.stringify(modules));
+      return lazyFailures(dist, [grid]);
+    };
+    expect(run({ "assets/index.js": ["src/main.ts"], "assets/ms.js": [grid, "src/views/matrixSheet.ts"] })).toEqual([]);
+    expect(run({ "assets/index.js": ["src/main.ts", grid], "assets/ms.js": ["src/views/matrixSheet.ts"] })).toEqual([`${grid} (assets/index.js) is loaded at start`]);
+    expect(run({ "assets/index.js": ["src/main.ts"], "assets/ms.js": ["src/views/matrixSheet.ts"] })).toEqual([`${grid} is in no chunk of this build`]);
+    expect(run(null)[0]).toContain(`${grid} is not a dynamic chunk`); // a fake dist without the file: the name rule
+  });
+
+  it("holds the press counters and S58's five modules among the lazy parts (R320)", () => {
+    for (const src of ["src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts"]) expect(LAZY_PARTS).toContain(src);
   });
 });
