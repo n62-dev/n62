@@ -8,8 +8,6 @@ The layer is dead only because the feature is not built: the key is dimmed in th
 
 | Key and layer | Planned as | Where decided |
 |---|---|---|
-| Shift + Select (row 2, col 4): Help (the G2's function on its r1c4) | context help from the Find index (milestone 6, built in R197: the syntax and example of the function at the cursor, else Find); the owner may veto | docs/04 5.1, R278, section 3b |
-| Shift + 4, 5 | matrix editor, `[ ]` (EN5, milestone 6) | docs/04 5.1 |
 | Shift + 7 (List) | deferred with Statistics | docs/04 5.1 |
 
 ## 2. Different on purpose, with a written reason
@@ -31,8 +29,9 @@ The layer is dead only because the feature is not built: the key is dimmed in th
 | Shift + Symb, Plot, Num (Setup) omitted | the same settings sit in the Mode sheet and in the Plot and Num menus (Window, Start, Step); nothing is lost |
 | Shift + Vars (Chars) omitted | Find covers named symbols (docs/04 5.1) |
 | Shift + 1 (Program) omitted | no PPL and no Python (P11); programs are Giac definitions |
-| Shift + `,` (Eval) and Shift + `( )` (tick marks) omitted; Shift + `,` is ± on the Home and CAS line, for the units key to read, dimmed in an app (R71) | the owner put ± there (decisions.md "M4-2"): no free key is nearer the digits, and Shift + − is EN6's Base; "evaluate at" comes with the Tmpl palette; quoting is not used for engineering work |
-| Shift + 0 (Notes) and the G2's User (Shift + Help, Settings here) omitted | no notes feature; the User keyboard is a parked idea (feedback #17) |
+| Shift + `,` (Eval) omitted; Shift + `,` is ± on the Home and CAS line, for the units key to read, dimmed in an app (R71) | the owner put ± there (decisions.md "M4-2"): no free key is nearer the digits, and Shift + − is EN6's Base; "evaluate at" comes with the Tmpl palette |
+| Shift + `( )` is ∥, Find's par() with the cursor in its bracket, where the G2 has tick marks | quoting is not used for engineering work; the parallel combination is task t01's function, 14 presses through Find and 11 by the key, 10 with a flick up (the owner, 2026-11-14, R323: a reserved cell filled, section 3b) |
+| Shift + 0 is %, where the G2 has Notes; the G2's User (Shift + Help, Settings here) omitted | no notes feature; % is the Shift + 9 palette's cell (R110, which keeps it) one press nearer: 5 % is 1/20, after ± R104's relative σ (the owner, 2026-11-14, R323: a reserved cell filled, section 3b); the User keyboard is a parked idea (feedback #17) |
 | `(−)` where the G2 prints `+/−` | behaviour is identical: the G2 key inserts a minus sign and does not toggle (keys.yaml r6c2). The label is the honest one |
 | Shift + x = y, where the G2 has Define | kept (owner, 2026-10-13). If typing `f(x):=…` shows up as a friction, Define gets a place by section 3b's growth rule; Shift + x itself changes only as section 3b says for a live layer (at a version boundary, with the owner's yes) |
 | Shift + a b/c (DMS) omitted | DMS is in Tmpl (owner, 2026-10-13) |
@@ -87,7 +86,7 @@ The owner's rule: "the layout should stay the same from start of release". From 
 5. It is not a user slot. If a user could bind it, a later built-in would take that binding away, which is a move for that user. The user's keys are U1–U6.
 6. It is filled only with the owner's yes, from the counts of the task benchmark (docs/04 5.1), and the layout lock records the fill as an addition.
 
-**Reserved at the tag:** the Shift layers of Vars, a b/c, `( )`, 7, 1, 0 and Fmt. (Shift + 7 is the G2's List; it waits for the list editor that comes with Statistics.) No tap is blank: U1–U6 are empty, but they are the user's. Closed, not reserved: the pad has no Shift layer (section 3 point 8) and Alpha + 0 is dead (section 3 point 7). A planned layer that misses the tag stays dead and dimmed until its package lands, which is a fill and not a move: Shift + 4 (R187), Shift + − (R193).
+**Reserved at the tag:** the Shift layers of Vars, a b/c, 7, 1 and Fmt. (Shift + `( )` and Shift + 0 were reserved until the owner filled them on 2026-11-14, R323: ∥ and %, each recorded in the layout lock as an addition.) (Shift + 7 is the G2's List; it waits for the list editor that comes with Statistics.) No tap is blank: U1–U6 are empty, but they are the user's. Closed, not reserved: the pad has no Shift layer (section 3 point 8) and Alpha + 0 is dead (section 3 point 7). A planned layer that misses the tag stays dead and dimmed until its package lands, which is a fill and not a move (Shift + 4, R187, and Shift + −, R193, landed before it).
 
 **The Alpha layers that fall back are final.** The keys of rows 0–2 other than U1–U6, and Enter, ⌫, Fmt, `.` and ␣, have no letter: a flick down on them does the tap. They get no letter later, because a letter there would change what a flick down does.
 

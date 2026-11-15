@@ -98,9 +98,9 @@ keys:
   - { id: u3, row: 1, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: u4, row: 1, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: left, row: 1, col: 2, cls: ctl, label: { primary: "◀" },
-      primary: { cmd: moveToPreviousChar }, source: virtual-calc }  # pad left; no shift layer (P12 point 7)
+      primary: { cmd: moveToPreviousChar }, source: virtual-calc }  # pad left; no shift layer (docs/06 3 point 8)
   - { id: right, row: 1, col: 3, cls: ctl, label: { primary: "▶" },
-      primary: { cmd: moveToNextChar }, source: virtual-calc }  # pad right; no shift layer (P12 point 7)
+      primary: { cmd: moveToNextChar }, source: virtual-calc }  # pad right; no shift layer (docs/06 3 point 8)
   # Undo | Redo: the entry line's own history (P13, R16; a chip comes back with its own value). Shift: ⇤ | ⇥, the start
   # and end of the line.
   - { id: undo, row: 1, col: 4, cls: nav, label: { primary: "$key.undo", shift: "⇤" },
@@ -235,10 +235,13 @@ keys:
     row: 5
     col: 2
     cls: op
-    label: { primary: "( )", alpha: N }
+    label: { primary: "( )", shift: "∥", alpha: N }
     primary: { insert: "\\left(#0\\right)", sample: ["\\left(1+2\\right)\\times3", "(1+2)*3"] }
+    # Shift + ( ) is ∥ (R323, the owner 2026-11-14; a reserved cell filled): Find's par(), the parallel combination
+    # 1/(1/a + 1/b + …), with the cursor in its bracket (task t01)
+    shift: { insert: "\\operatorname{par}\\left(#0\\right)", sample: ["\\operatorname{par}\\left(4700,10000\\right)", "par(4700,10000)"] }
     alpha: { type: N }
-    source: virtual-calc  # r6c3 (a matched pair; shift tick marks not ours)
+    source: virtual-calc  # r6c3 (a matched pair; shift tick marks not ours: ∥ is ours, assumed)
   # Shift + , is ± (R71, decisions.md "M4-2" point 5; the reference's Eval is omitted). `units: true`: only the unit view's
   # formula (parser units mode, R28) reads \pm, so an app dims the key; on the Home and CAS line it types, for the units key to read.
   - id: comma
@@ -349,7 +352,9 @@ keys:
   # Shift + Fmt is RESERVED (docs/06 section 3b; R322, owner 2026-11-14: Mode moved to Shift + Deselect): no action and no
   # legend, dimmed in that layer only, counted when pressed.
   - { id: fmt, row: 9, col: 0, cls: ctl, label: { primary: "$key.fmt" }, primary: { special: fmt }, source: assumed }  # at the reference's On key (r10c1); ours cycles the display format of the last result (Settings: Format key cycle)
-  - { id: d0, row: 9, col: 1, cls: num, label: { primary: "0" }, primary: { type: "0" }, alpha: { special: none }, source: virtual-calc }  # r10c2 (no quote mark, P12 point 8; alpha is dead, not 0; shift Notes not ours)
+  # Shift + 0 is % (R323, the owner 2026-11-14; a reserved cell filled): the Shift + 9 palette's % cell (R110), which stays
+  - { id: d0, row: 9, col: 1, cls: num, label: { primary: "0", shift: "%" }, primary: { type: "0" },
+      shift: { insert: "\\%", sample: ["5\\%", "1/20"] }, alpha: { special: none }, source: virtual-calc }  # r10c2 (no quote mark, docs/06 3 point 7; alpha is dead, not 0; shift Notes not ours: % is ours, assumed)
   - { id: dot, row: 9, col: 2, cls: num, label: { primary: ".", shift: "=" }, primary: { type: "." }, shift: { type: "=" }, source: virtual-calc }  # r10c3 (shift =)
   - { id: space, row: 9, col: 3, cls: num, label: { primary: "␣", shift: "_" }, primary: { type: " " }, shift: { type: "_" }, source: virtual-calc }  # r10c4 (space; shift _)
   - { id: add, row: 9, col: 4, cls: op, label: { primary: "+", shift: "Ans", alpha: ";" }, primary: { type: "+" },
@@ -400,7 +405,7 @@ desktop:
     log: { primary: Alt+G, shift: Alt+Shift+G, alpha: K }
     sq: { primary: Alt+Q, shift: Alt+Shift+Q, alpha: L }
     neg: { primary: Alt+N, shift: "|", alpha: M }
-    paren: { primary: "(", alpha: N }
+    paren: { primary: "(", shift: Alt+Shift+9, alpha: N }  # by place: Shift + 9 is `(` on a US layout
     comma: { primary: ",", shift: Alt+Shift+N, alpha: O }
     enter: { primary: Enter, shift: Shift+Enter }
     emark: { primary: Alt+E, shift: Alt+Shift+E, alpha: P }
@@ -419,7 +424,7 @@ desktop:
     d3: { primary: "3", shift: Alt+P, alpha: "#" }
     sub: { primary: "-", shift: Alt+B, alpha: ":" }
     fmt: { primary: Alt+O }
-    d0: { primary: "0", alpha: { why: "dead: Alpha + 0 types nothing (docs/06 section 3 point 7)" } }
+    d0: { primary: "0", shift: "%", alpha: { why: "dead: Alpha + 0 types nothing (docs/06 section 3 point 7)" } }
     dot: { primary: ".", shift: "=" }
     space: { primary: Space, shift: _ }
     add: { primary: "+", shift: Alt+Shift+A, alpha: ";" }

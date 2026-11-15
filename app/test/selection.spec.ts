@@ -41,6 +41,7 @@ const REPLACES = new Set([
   "d2/shift", // i: a constant
   "d3/shift", // π: a constant
   "add/shift", // Ans: a value
+  "d0/shift", // %: a character, as the Shift + 9 palette's % cell (R323)
   "comma/shift", // ±: an operator between two numbers (R71)
   "div/primary/line", // ÷ in one-line entry: an operator
   "frac/primary/line", // a b/c in one-line entry: an operator
