@@ -5,7 +5,6 @@
 // about 5 %: the note goes on every row whose formula is not affine, read from the tree (never from `why`). Lazy: reached
 // only through clipboard/python.ts.
 import type { Json } from "../input/emit.ts";
-import { unitText } from "../i18n/enUnits.ts";
 
 /** The note on a row whose formula is not affine in its uncertain inputs. */
 export const SIGMA_NOTE = "(N62's σ includes the second-order term; uncertainties is first-order)";
@@ -46,10 +45,15 @@ export function affinity(e: Json): 0 | 1 | 2 {
   }
 }
 
+/** N62's ⚠ reasons for σ, as i18n/enUnits.ts writes them (units.why.jump, units.why.singular; pySigma.test.ts checks
+ *  they are the same). Not imported: enUnits.ts in this chunk too splits it into a shared chunk, and the start chunk's
+ *  preload list then names one more file (+30 B raw, measured 2026-11-15). */
+export const WHY_TEXT: Readonly<Record<string, string>> = { jump: "the interval reaches a jump", singular: "the interval reaches a singular point" };
+
 /** The text after N62's answer on a σ row: N62's ⚠ reason for a `why` of `jump` or `singular` (order2 is what the
  *  note says), then the note when the formula is not affine; "" when neither. */
 export function sigmaTail(why: string | null | undefined, affine: boolean): string {
-  const reason = why === "jump" ? unitText("units.why.jump") : why === "singular" ? unitText("units.why.singular") : undefined;
+  const reason = why === "jump" || why === "singular" ? WHY_TEXT[why] : undefined;
   return `${reason ? ` ⚠ ${reason}` : ""}${affine ? "" : ` ${SIGMA_NOTE}`}`;
 }
 
