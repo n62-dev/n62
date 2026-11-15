@@ -40,7 +40,7 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
   // G71's census (tools/probes/tier1-decide.ts): tier-1 functions that decide a sign inside on sin(10^70) at P.
   "arg", "angle", "instphase", "norm", "normalize", "polar", "polar_coordinates", "tri", "dfc", "classes", "Psi",
   // G139: our definitions (homeEval.ts ENGINE_DEFINITIONS, eseries.ts) that compare and floor an exact x inside
-  "eseries", "sigfig",
+  "eseries", "sigfig", "linterp", // G361: linterp compares x with the table's ends (a value or a refusal)
   // G306: an odd root by the sign of its argument (∛ is surd), a quadrant by the signs of y and x, an order by
   // comparisons; surd(sin(10^70),3) is sin(10^70)^(1/3) at Digits 40 and -(-sin(10^70))^(1/3) at 80 (tier1-decide.ts)
   "surd", "atan2", "sort", "SortA", "SortD", "sorta", "sortd", "sortperm",
@@ -184,7 +184,7 @@ function hasComparison(input: string, q: Quoting): boolean {
 /** Functions that map rationals to rationals and decide on rationals only (exactly, at any Digits). */
 const RATIONAL_FUNCTIONS: ReadonlySet<string> = new Set([
   "sum", "product", "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "sign", "abs", "max", "min", "piecewise", "when",
-  "ifte", "irem", "iquo", "gcd", "lcm", "comb", "factorial", "pasmod", "eseries", "sigfig",
+  "ifte", "irem", "iquo", "gcd", "lcm", "comb", "factorial", "pasmod", "eseries", "sigfig", "linterp",
   "sort", "SortA", "SortD", "sorta", "sortd", "sortperm", // G306: an order of rationals, decided exactly
 ]);
 

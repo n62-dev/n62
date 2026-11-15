@@ -146,6 +146,12 @@ queries:
   - { query: "significant figures", expect: "fn:sigfig", note: "G313" }
   - { query: "sig figs", expect: "fn:sigfig", note: "G313" }
   - { query: "rms", expect: "fn:rms", note: "tier 1" }
+  # G356: not Giac's lagrange (the polynomial through every point); G361: our table interpolation, linterp
+  - { query: "interpolate", expect: "fn:linterp", note: "G361" }
+  - { query: "interpolation", expect: "fn:linterp", note: "G361" }
+  - { query: "lookup", expect: "fn:linterp", note: "G361: a value read from a table" }
+  - { query: "table", expect: "fn:linterp", note: "G361: Giac's table (a hash table) is tier 1" }
+  - { query: "lagrange", expect: "fn:lagrange", note: "G356, G361: Giac's polynomial keeps its own name" }
   # Milestone 6 (pending)
   - { query: "hex", expect: "tmpl:base", note: "number bases, EN6", status: pending }
   - { query: "dot product", expect: "fn:dot", note: "curated in EN5", status: pending }
@@ -153,9 +159,6 @@ queries:
   - { query: "dms", expect: "tmpl:dms", note: "degrees-minutes-seconds", status: pending }
   - { query: "db", expect: "fn:db", note: "the dB function in Home, the dB unit in the unit view (context decides)", status: pending }
   - { query: "bitand", expect: "fn:bitand", note: "EN6", status: pending }
-  # G356: not Giac's lagrange (the polynomial through every point); G361's table interpolation, its name a plan
-  - { query: "interpolate", expect: "fn:linterp", note: "G361", status: pending }
-  - { query: "interpolation", expect: "fn:linterp", note: "G361", status: pending }
 
 variants:
   - { query: "gal", none: "unit:gal", items: { "unit:gal_US": "U.S.", "unit:gal_UK": "UK" } }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G223 (owner's list: data list -> mean, sample/population deviation, min, max, linear regression + r²): `linreg(x,y)`
-// and `stats1(l)`, our Giac definitions (homeEval.ts ENGINE_DEFINITIONS, loaded on the first input that names them).
+// and `stats1(l)`, our Giac definitions (homeEval.ts ENGINE_DEFINITIONS, loaded on the first input that names them); G361:
+// `linterp(xs,ys,x)`, the value between two rows of a table.
 // Exact for exact data: typed decimals are exact rationals in Home, so the slope of 2.1, 3.9, … is 97/50, not a double.
 // A refusal is a throw of REFUSAL_MARK and its code; Giac's error text carries it, and statsRefusal reads it back
 // (converge.ts errorRefusal, which Home and CAS ask before their error text), so the row shows its words, not the
@@ -9,7 +10,7 @@
 export const REFUSAL_MARK = "n62refusal:";
 
 /** The refusals of these definitions (text: enEngine.ts). */
-export const STATS_REFUSALS = ["notData", "listsDiffer", "emptyList", "fewValues", "xAllEqual", "yAllEqual"] as const;
+export const STATS_REFUSALS = ["notData", "listsDiffer", "emptyList", "fewValues", "xAllEqual", "yAllEqual", "tableArgs", "tablePoints", "tableOrder", "tableOutside"] as const;
 export type StatsRefusal = (typeof STATS_REFUSALS)[number];
 
 const refuse = (code: StatsRefusal): string => `throw("${REFUSAL_MARK}${code}")`;
@@ -64,6 +65,23 @@ export const STATS_DEFINITIONS: Readonly<Record<string, string>> = {
     "pass_:=0; for (pask_:=0;pask_<pasn_;pask_:=pask_+1) pass_:=pass_+(pasl_[pask_]-pasl_[0]-pasm_)^2; " +
     "if (paseq_==1) pass_:=0; else pass_:=normal(pass_); " +
     "return list[pasn_,mean(pasl_),normal(sqrt(pass_/(pasn_-1))),normal(sqrt(pass_/pasn_)),min(pasl_),max(pasl_)]; }",
+  // G361: linear interpolation in a table (property tables, pump and data-sheet curves): the straight line between the two
+  // rows around x, exact for exact data; Giac's interp and lagrange are the polynomial through every point (G356). The xs
+  // strictly increasing, compared exactly (the difference to 0, as allEqual); x in [x1, xn], no extrapolation. The pick of
+  // the row is continuous (at a row both lines give its y); the ends decide between a value and a refusal (decisions.ts).
+  // One parameter, the call's sequence (as linreg).
+  linterp:
+    "linterp(pasa_):={ local pasx_,pasy_,pasv_,pasn_,pask_; " +
+    `if (subtype(pasa_)!=1 or size(pasa_)!=3) ${refuse("tableArgs")}; pasx_:=pasa_[0]; pasy_:=pasa_[1]; pasv_:=pasa_[2]; ` +
+    `if (type(pasx_)!=DOM_LIST or type(pasy_)!=DOM_LIST) ${refuse("tableArgs")}; ` +
+    `if (type(pasv_)!=integer and type(pasv_)!=rational and type(evalf(pasv_))!=DOM_FLOAT) ${refuse("tableArgs")}; ` +
+    realsOnly("pasx_", "pask_") +
+    realsOnly("pasy_", "pask_") +
+    `pasn_:=size(pasx_); if (size(pasy_)!=pasn_) ${refuse("listsDiffer")}; if (pasn_==0) ${refuse("emptyList")}; if (pasn_<2) ${refuse("tablePoints")}; ` +
+    `for (pask_:=1;pask_<pasn_;pask_:=pask_+1) { if (normal(pasx_[pask_]-pasx_[pask_-1])<=0) ${refuse("tableOrder")}; } ` +
+    `if (pasv_<pasx_[0] or pasv_>pasx_[pasn_-1]) ${refuse("tableOutside")}; ` +
+    "for (pask_:=1;pask_<pasn_;pask_:=pask_+1) { if (pasv_<=pasx_[pask_]) return normal(pasy_[pask_-1]+(pasv_-pasx_[pask_-1])*(pasy_[pask_]-pasy_[pask_-1])/(pasx_[pask_]-pasx_[pask_-1])); } " +
+    `${refuse("tableOutside")}; }`,
 };
 
 /** The refusal a definition of this file threw in Giac's error text `output` (the code in quotes after the mark); null

@@ -86,3 +86,46 @@ describe.skipIf(!giacAvailable())("G223 linreg and stats1 in the engine", () => 
     expect(first.facts.warn).toBeUndefined();
   });
 });
+
+// G361: linterp(xs, ys, x), the straight line between the two rows around x. Expected values derived in exact fractions:
+// G356's 11-point table at 0.9 lies halfway between (0.8, 0.0588) and (1, 0.0385), so (0.0588 + 0.0385)/2 = 973/20000;
+// |x-2| sampled at 0..5 at 2.5 is halfway between (2, 0) and (3, 1), so 1/2.
+describe.skipIf(!giacAvailable())("G361 linterp in the engine", () => {
+  let host: EngineHost;
+  const home = (input: string) => host.home(input, defaultHomeSettings).result;
+  const cas = (input: string) => host.cas(input, defaultCasSettings).result;
+  const TABLE = "[-1,-0.8,-0.6,-0.4,-0.2,0,0.2,0.4,0.6,0.8,1],[0.0385,0.0588,0.1,0.2,0.5,1,0.5,0.2,0.1,0.0588,0.0385]";
+  beforeAll(async () => {
+    host = await nodeHost();
+  });
+
+  it("answers exactly between two rows, at a row and at the ends", () => {
+    expect(cas(`linterp(${TABLE},0.9)`)).toMatchObject({ ok: true, text: "973/20000" });
+    expect(home(`linterp(${TABLE},0.9)`)).toMatchObject({ ok: true, display: "0.04865", facts: { exact: true } });
+    expect(home("linterp([0,1,2,3,4,5],[2,1,0,1,2,3],5/2)")).toMatchObject({ ok: true, display: "0.5", facts: { exact: true } });
+    expect(cas("linterp([0,1,2,3,4,5],[2,1,0,1,2,3],0)")).toMatchObject({ ok: true, text: "2" });
+    expect(cas("linterp([0,1,2,3,4,5],[2,1,0,1,2,3],2)")).toMatchObject({ ok: true, text: "0" });
+    expect(cas("linterp([0,1,2,3,4,5],[2,1,0,1,2,3],5)")).toMatchObject({ ok: true, text: "3" });
+    expect(home("linterp(list[0,1],list[0,10],1/4)")).toMatchObject({ ok: true, display: "2.5" });
+  });
+
+  it("refuses in words: outside the table, xs not increasing, lists that differ, too few points, no x", () => {
+    expect(home(`linterp(${TABLE},1.1)`)).toMatchObject({ ok: false, error: "tableOutside", display: "x is outside the table" });
+    expect(home(`linterp(${TABLE},-1.1)`)).toMatchObject({ ok: false, error: "tableOutside" });
+    expect(home("linterp([0,2,1],[1,2,3],1)")).toMatchObject({ ok: false, error: "tableOrder", display: "The x values must be strictly increasing" });
+    expect(home("linterp([0,1,1],[1,2,3],1)")).toMatchObject({ ok: false, error: "tableOrder" });
+    expect(home("linterp([0,1,2],[1,2],1)")).toMatchObject({ ok: false, error: "listsDiffer", display: "The lists have different lengths" });
+    expect(home("linterp([],[],1)")).toMatchObject({ ok: false, error: "emptyList" });
+    expect(home("linterp([1],[5],1)")).toMatchObject({ ok: false, error: "tablePoints" });
+    expect(home("linterp([0,1],[0,1])")).toMatchObject({ ok: false, error: "tableArgs" });
+    expect(home("linterp([0,1],[0,1],a)")).toMatchObject({ ok: false, error: "tableArgs" });
+    expect(home("linterp([0,1],[0,1],i)")).toMatchObject({ ok: false, error: "tableArgs" });
+    expect(home("linterp([0,a],[0,1],1/2)")).toMatchObject({ ok: false, error: "notData" });
+    expect(cas("W361:=linterp([0,1],[0,1],2)")).toMatchObject({ ok: false, error: "tableOutside" });
+  });
+
+  it("gives ≈ for a float input and for an irrational value", () => {
+    expect(home("linterp([0,1],[0,1],approx(1/3))")).toMatchObject({ ok: true, display: "0.333333333333", facts: { exact: false } });
+    expect(home("linterp([0,1],[0,sqrt(2)],1/2)")).toMatchObject({ ok: true, display: "0.707106781187", facts: { exact: false } });
+  });
+});
