@@ -53,8 +53,8 @@ const TINY_LOG10 = -300;
  * exactly 1 or for n = 0, never NaN), sqrt halves, abs and a sign keep, exp and ln go through log10 e, and a sum of two
  * operands that underflow is bounded by the larger. `(sin(1)^5000)^-2` is 750, where the double of its base is 0. Any
  * other value the double cannot hold counts as Infinity (a start past the cap: ⚠, never ≈). A value 0 in double where
- * its operands are normal (`(1-1)`, `sin(0)`) is no magnitude (NaN, as 0^n), and so is a value that is not constant or
- * not real.
+ * its operands are normal (`(1-1)`, `sin(0)`, `ln(1)`) is no magnitude (NaN, as 0^n), and so is a value that is not
+ * constant or not real: a tiny term the double rounds away (`ln(1+sin(1)^5000)`) is S20's (intervals).
  */
 export function constantLog10(a: Arith): number {
   // first, as 1^Infinity is NaN in double
@@ -87,16 +87,20 @@ export function constantLog10(a: Arith): number {
     }
     case "call": {
       if (inRange) return Math.log10(Math.abs(d));
+      const x = constantDouble(a.arg);
+      if (Number.isNaN(x)) return NaN;
+      if (a.name === "exp") return x * Math.LOG10E;
+      // an argument in the double's range: 0 is a zero of it (ln(1), sin(0)), no magnitude; else an overflow (cosh(1000))
+      if (Number.isFinite(x) && x !== 0) return d === 0 ? NaN : Infinity;
+      // the argument itself is past the range
       const l = constantLog10(a.arg);
       if (Number.isNaN(l)) return NaN;
-      const x = constantDouble(a.arg);
       if (a.name === "sqrt") return l / 2;
       if (a.name === "abs") return l;
-      if (a.name === "exp") return Number.isFinite(x) ? x * Math.LOG10E : x;
       if ((a.name === "ln" || a.name === "log") && Number.isFinite(l)) return Math.log10(Math.abs(l / Math.LOG10E));
       if (a.name === "log10" && Number.isFinite(l)) return Math.log10(Math.abs(l));
-      // a zero of a normal argument is a zero; past the range, a tiny or a huge value of unknown size
-      return d === 0 ? (Number.isFinite(l) && l > TINY_LOG10 ? NaN : -Infinity) : Infinity;
+      // a tiny or a huge value of unknown size
+      return d === 0 ? -Infinity : Infinity;
     }
     default:
       return inRange ? Math.log10(Math.abs(d)) : d === 0 ? NaN : Infinity;

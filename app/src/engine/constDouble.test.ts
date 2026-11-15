@@ -64,5 +64,9 @@ describe("constantLog10 (G363 fix round 2)", () => {
   });
   it("gives NaN for no constant, and for a zero of normal operands (no magnitude, as 0^n)", () => {
     for (const t of ["x^5000", "(1-1)", "sin(0)", "(1-1)^5000", "0", "1/0", "(sin(1)^5000*x)^2", "asin(2)^5"]) expect(l(t), t).toBeNaN();
+    // Giac's print of e^sqrt(acosh(10^-300)) (g186-exp-sqrt-acosh-1e-300-12) holds ln(1/10^600+1)^2: ln(1) in double, which
+    // a log10 of -Infinity sent past the cap (⚠ where ≈ is right); its 1/10^600 counts by itself
+    expect(l("ln((1/10^300)^2+1)")).toBeNaN();
+    expect(l("ln((1/10^300)^2+1)^2")).toBeNaN();
   });
 });
