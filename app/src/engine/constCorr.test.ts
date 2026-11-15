@@ -102,6 +102,45 @@ describe.skipIf(!giacAvailable())("a constant's σ through its basis (G81, real 
     expect(home(body, WITH).facts.uncDigits).toBe(clean);
   });
 
+  /** A decimal text (`0.15e-1`, `3.2`) as an integer count of 1e-120. */
+  const scaled = (t: string): bigint => {
+    const [m = "", e = "0"] = t.toLowerCase().split("e");
+    const [w = "", f = ""] = m.split(".");
+    return BigInt(w + f) * 10n ** BigInt(120 - f.length + Number(e));
+  };
+
+  // G274: Home keeps each input's share of σ² when there are two or more. Derived: the terms of the first-order sum (the
+  // exact sum σ² = Σ t, up to σ's 20 digits).
+  it("G274: a pair whose only uncertain leaf is α is one input: no terms", () => {
+    expect(home("sqrt(pasc_mu_0/pasc_epsilon_0)", WITH).uncTerms).toBeUndefined();
+  });
+
+  it("G274: m_p/m_e (leaves α, R, m_e/u, m_p/u) gives one term per leaf, input order; Σ t is σ² to 18 digits", () => {
+    const r = home("pasc_m_p/pasc_m_e", WITH);
+    const terms = r.uncTerms ?? [];
+    expect(terms.length).toBeGreaterThan(1);
+    for (const t of terms) expect(t.key.startsWith("pasl_")).toBe(true);
+    const sum = terms.reduce((a, t) => a + scaled(t.t), 0n);
+    const s2 = scaled(r.facts.uncSigma!) ** 2n / 10n ** 120n;
+    const diff = sum > s2 ? sum - s2 : s2 - sum;
+    // relative 1e-18: diff · 1e18 ≤ sum
+    expect(diff * 10n ** 18n <= sum).toBe(true);
+  });
+
+  it("G274: a user's variable named as a leaf: the keys stay the original pasl_ names, σ as without it", () => {
+    const clean = home("pasc_m_p/pasc_m_e", WITH);
+    expect(clean.uncTerms?.map((t) => t.key)).toContain("pasl_rydberg");
+    host.home("pasl_rydberg:=5", defaultHomeSettings);
+    try {
+      const r = home("pasc_m_p/pasc_m_e", WITH);
+      expect(r.uncTerms?.map((t) => t.key)).toEqual(clean.uncTerms?.map((t) => t.key));
+      expect(r.uncTerms).toEqual(clean.uncTerms);
+      expect(r.facts.uncSigma).toBe(clean.facts.uncSigma);
+    } finally {
+      host.home("purge(pasl_rydberg)", defaultHomeSettings);
+    }
+  });
+
   it("freeName: the name when free, else the first free one with more `_`, never a name the text already uses", () => {
     const taken = new Set(["pasl_a", "pasl_a_"]);
     expect(freeName("pasl_b", (n) => taken.has(n))).toBe("pasl_b");
