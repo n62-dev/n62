@@ -224,6 +224,9 @@ export const KNOWN_IDS = new Set([
   "g71-census-norm-sin1e70",
   "g71-census-normalize-sin1e70",
   "g71-census-tri-sin1e70",
+  // G360: the other spellings of the decision functions (Home decides them twice since G360; raw Giac at Digits 40 decides once)
+  ...["ceiling", "CEILING", "FLOOR", "ROUND", "TRUNCATE", "IP", "FP", "ABS", "SIGN", "MAX", "MIN", "l2norm", "unitV", "ARG", "keep-ceil", "PIECEWISE", "IFTE", "sialorssinon"].map((k) => `g360-${k}-sin1e70`),
+  "g360-LN-sin1e70-squared",
   "g140f2-negbinomial_cdf-2.5-30",
   "g184-sum-harmonic-1e6",
 ]);
@@ -567,6 +570,12 @@ export const PATCHED_IDS = new Map([
   // limit substitutes the point into trunc); g176-limit-trunc-1-left and -half-x-2-left pass on stock (floor's limit) and
   // fail with 0028 alone, so they stay in the check file
   ["g157f1-limit-trunc-neg1-right", "0035-limit-trunc-side.patch"],
+  // G360 (be-6): iPart's limit as trunc's (stock and 0001-0050: iPart taken as continuous, the float at the point);
+  // g360-limit-iPart-1-right passes everywhere (1.0 is 1) and g360-limit-trunc-nested-1-left on stock (trunc is floor there),
+  // so they stay in the check file
+  ["g360-limit-iPart-1-left", "0051-limit-ipart-as-trunc.patch"],
+  ["g360-limit-iPart-neg1-right", "0051-limit-ipart-as-trunc.patch"],
+  ["g360-limit-iPart-nested-1-left", "0051-limit-ipart-as-trunc.patch"],
   ["g176-limit-trunc-neg1-left", "0028-trunc-toward-zero.patch"],
   ["g176-limit-trunc-neg-half", "0028-trunc-toward-zero.patch"],
   // G181 (F177): atanh and atan of a small non-real value (stock: the ln forms of 1+O(z), which lose the real part at Digits 40,
@@ -618,6 +627,7 @@ export const CANCELS_IDS = new Set([
   "prec-zero-cancel", "g358-ln-1-tanh50-30", "g358-keep-tanh100-minus-1", // G358: 1-tanh(50), 1-tanh(100) are 0 at Digits 40 (Home climbs to the level where they are finite)
   "g126-asinh-neg-1e-20-30",
   ...["acos-sqrt-neg2-1e-330-minus-2", "acos-sqrt-neg2-1e-400-minus-2", "asin-sqrt-neg2-1e-330-minus-2", "asin-minus-sqrt-neg2-1e-330-minus-2", "asin-sqrt-neg2-1e-330-plus-2"].map((k) => `g325f1-${k}`), ...["evalf-asin", "evalf-acos", "evalf-acosh", "approx-acos"].map((k) => `g325f2-${k}-sqrt-neg2-1e-${k === "approx-acos" ? "400" : "330"}-minus-2`), // G325f1, G325f2 (evalf of the call): nested roots past MAX_EVAL_DIGITS (Home: from the argument's float)
+  ...["ASIN-sqrt-neg2-1e-330-minus-2", "ACOS-sqrt-neg2-1e-330-minus-2", "evalf-ACOSH-sqrt-neg2-1e-330-minus-2", "evalf-arccosh-sqrt-neg2-1e-330-minus-2"].map((k) => `g360-${k}`), // G360: as G325f1's, spelt ASIN, ACOS, ACOSH, arccosh
 ]);
 export const knownReason = (id) => (KNOWN_IDS.has(id) ? KNOWN_RULES.find(([re]) => re.test(id))?.[1] : undefined);
 

@@ -1,0 +1,49 @@
+# Upstream: giac 2.1.0 series.cc in_limit. iPart(u) is trunc(u) as a float (ti89.cc _iPart: evalf of floor(u) for a proven u >= 0, of -floor(-u) for a proven u < 0), but it has no series rule (floor has taylor_floor) and is not in sign_floor_ceil_round_tab (usual.cc), the functions whose side the limit decides, so the limit took iPart as continuous and substituted the point: limit(iPart(x),x,1,-1) = 1.0 (right 0: iPart(x) = 0 on [0,1)), limit(iPart(x),x,-1,1) = -1.0 (right 0: iPart(x) = 0 on (-1,0)), and the two-sided limit(iPart(x),x,1) = 1.0 (no limit: 0 from the left, 1 from the right). Now each iPart(u) of one argument is read as trunc(u) before patch 0035's limit_trunc, which takes trunc's sides (floor(u) or ceil(u) by the sign of u's limit); a two-sided limit with distinct sides gives floor's error "Unidirectional limits are distinct". The limit is then an exact integer where it was iPart's float (limit(iPart(x),x,5/2) = 2, was 2.0). And 0035 ran limit_trunc once, which skips a trunc inside another (the outer one is rewritten by the limit of its argument), so the inner one was left to floor's rule at the point: limit(trunc(trunc(x)+x),x,1,-1) = 1 (right 0: trunc(x)+x = x on (0,1)); now it runs again while a trunc is left and a pass changes something. Applies after 0035.
+# Changed by Pascaline contributors, 2026-11-15
+--- a/src/series.cc
++++ b/src/series.cc
+@@ -2556,6 +2556,7 @@
+   // failed limit of u is the answer, and an L of undecided sign sets undecided: the limit then stays unevaluated, as
+   // limit(e,x=a[,side]), the form texprintaslimit draws with its point and side (limit(e,x,a,side) printed a bare lim).
+   extern const unary_function_ptr * const at_trunc;
++  extern const unary_function_ptr * const at_iPart; // N62 patch 0051 (G360)
+   static gen limit_trunc(const gen & e,const identificateur & x,const gen & lim_point,int direction,bool & undecided,GIAC_CONTEXT){
+     vecteur v(lop(e,at_trunc)),from,to;
+     for (int i=0;i<int(v.size());++i){
+@@ -2637,14 +2638,35 @@
+       direction=1;
+     if (lim_point==minus_inf)
+       direction=-1;    
++    // N62 patch 0051 (G360): iPart(u) is trunc(u) as a float (ti89.cc _iPart: floor of a proven u >= 0, -floor(-u) of
++    // a proven u < 0), but it has no series rule and is not in sign_floor_ceil_round_tab, so the limit took it as
++    // continuous: limit(iPart(x),x,1,-1) = 1.0 (right 0, iPart(x) = 0 on [0,1)). Each iPart(u) of one argument is read
++    // as trunc(u), whose sides limit_trunc takes below (patch 0035); the limit is then trunc's, an exact integer.
++    for (int k=0;k<64 && has_op(e,*at_iPart);++k){
++      vecteur v(lop(e,at_iPart)),from,to;
++      for (int i=0;i<int(v.size());++i){
++        if (v[i]._SYMBptr->feuille.type==_VECT)
++          continue;
++        from.push_back(v[i]);
++        to.push_back(symbolic(at_trunc,v[i]._SYMBptr->feuille));
++      }
++      if (from.empty())
++        break;
++      e=subst(e,from,to,false,contextptr);
++    }
+     // Pascaline patch 0035 (G176): trunc(u) as floor(u) or ceil(u) by the side of u near the point (limit_trunc)
+-    if (has_op(e,*at_trunc)){
++    // N62 patch 0051 (G360): again while a trunc is left, the ones inside another that the pass before skipped
++    // (limit(trunc(trunc(x)+x),x,1,-1) took floor(trunc(x)+x) at the point, 1, right 0); a pass that changes nothing ends it
++    for (int k=0;k<64 && has_op(e,*at_trunc);++k){
+       bool undecided=false;
++      gen before=e;
+       e=limit_trunc(e,x,lim_point,direction,undecided,contextptr);
+       if (is_undef(e))
+         return e;
+       if (undecided)
+         return direction?symbolic(at_limit,makesequence(e0,symb_equal(x,lim_point),direction)):symbolic(at_limit,makesequence(e0,symb_equal(x,lim_point)));
++      if (e==before)
++        break;
+     }
+     vecteur vsign(loptab(e,sign_floor_ceil_round_tab));
+     // First try substitution

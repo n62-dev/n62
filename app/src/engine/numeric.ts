@@ -28,6 +28,7 @@ import {
   type PrecisionWhy,
 } from "./format.ts";
 import { binary64Of } from "./binary64.ts";
+import { isAlias } from "./decisionAlias.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";
 import type { GiacValue } from "./bridge.ts";
 import { callsOf, functionsIn, isError, KEYWORDS, LIST_TYPE, matrixTyped, type Quoting, RATIONAL, splitList, topLevelArgs, wholeCall, withoutStrings } from "./giacPrint.ts";
@@ -1076,13 +1077,13 @@ const FIXED_PRINTS = new WeakMap<Giac, Map<string, string>>();
  *  (printed quoted) is reserved, Giac refuses to store into it: its print is asked once per Giac instance (G53:
  *  notBuiltin and callsStateful asked them on every Enter). G223f1: a keyword cannot be stored into either, and is
  *  answered as a built-in without asking: a bare `local`, `catch` or `else` is a Giac parse error, which the host's
- *  strict eval turns into the whole input's syntax error (`inc(1)` of a body with try/catch, through decidingStored). */
+ *  strict eval turns into the whole input's syntax error (`inc(1)` of a body with try/catch, through decidingStored); G360: a spelling of our alias lists too (decisionAlias.ts isAlias: rpn.cc's bare `CEILING` is a parse error). */
 export function namePrint(giac: Giac, name: string): string {
   let fixed = FIXED_PRINTS.get(giac);
   if (!fixed) FIXED_PRINTS.set(giac, (fixed = new Map()));
   const known = fixed.get(name);
   if (known !== undefined) return known;
-  if (RUNS_BARE.has(name) || KEYWORDS.has(name)) return `'${name}'`;
+  if (RUNS_BARE.has(name) || KEYWORDS.has(name) || isAlias(name)) return `'${name}'`;
   const out = giac.eval(name).trim();
   if (out === `'${name}'`) fixed.set(name, out);
   return out;

@@ -12,13 +12,27 @@ import type { GiacValue } from "./bridge.ts";
 import { ESERIES_CUT } from "./eseries.ts";
 import { nonReal } from "./complex.ts";
 import { finiteLevel } from "./novalue.ts";
+import { decisionName } from "./decisionAlias.ts";
 
 const INTEGER = /^\s*\d+\s*$/;
+
+/** G360: every call in `s`, named by its canonical name (decisionAlias.ts: `ceiling` as ceil, `ASIN` as asin), so the
+ *  sets below are read under any of Giac's spellings. */
+function canonicalCalls(s: string, q: Quoting): { name: string; at: number; open: number; close: number }[] {
+  return callsOf(s, undefined, q).map((c) => ({ ...c, name: decisionName(c.name) }));
+}
+
+/** G360: the calls in `s` of the functions in `only`, under any of their spellings, each with its canonical name. */
+function namedCalls(s: string, only: ReadonlySet<string> | readonly string[], q: Quoting): { name: string; at: number; open: number; close: number }[] {
+  const want = new Set(only);
+  return canonicalCalls(s, q).filter((c) => want.has(c.name));
+}
 
 /**
  * Functions whose result rests on a numeric decision Giac makes at `Digits` inside the exact evaluation: the sign of a
  * value, its place between two integers, or a branch (deep check 2026-10-19 E1). `int`, `sum`, `limit` and `solve`
- * decide signs inside. An input that calls one of them is evaluated again at P + 20 (decideTwice).
+ * decide signs inside. An input that calls one of them is evaluated again at P + 20 (decideTwice). G360: every set here is
+ * read under any of Giac's spellings (decisionAlias.ts: `ceiling`, `CEILING`, `IP`, `LN`), by their canonical names.
  */
 export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
   "floor", "ceil", "round", "trunc", "frac", "fPart", "iPart", "sign", "Heaviside", "abs", "max", "min", "piecewise", "when",
@@ -41,7 +55,7 @@ export const DECISION_FUNCTIONS: ReadonlySet<string> = new Set([
  * one, and neither is made again. G325f2: acosh too, whose exact text nests the same roots (acosh(sqrt(-2)/10^2000-2)
  * showed = 0.69314718056+3.14159265359*i for 1.31695789692+3.14159265359*i).
  */
-const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "arcsin", "arccos", "acosh", "arccosh"]);
+const COMPLEX_DECISION_FUNCTIONS: ReadonlySet<string> = new Set(["asin", "acos", "acosh"]); // arcsin, ASIN, …: decisionName
 
 /** G325: Giac's text of the result (`text`) is not real, so a COMPLEX_DECISION_FUNCTIONS call in the input may decide. */
 const nonRealText = (text: string): boolean => namesIn(text, "printed").includes("i");
@@ -49,7 +63,7 @@ const nonRealText = (text: string): boolean => namesIn(text, "printed").includes
 /** G325: `input` calls asin, acos or acosh on an argument `complexArg` finds not real, and `result` is not real. */
 function complexDecision(input: string, q: Quoting, result: string, complexArg: (arg: string) => boolean): boolean {
   if (!nonRealText(result)) return false;
-  return callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).some((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
+  return namedCalls(input, COMPLEX_DECISION_FUNCTIONS, q).some((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)));
 }
 
 /** G325: whether an argument (typed Giac text) is not real: Giac's evalf of it at P digits (MPFR) has an imaginary part,
@@ -84,7 +98,7 @@ export function argumentsAsFloats(
   swap: (name: string, arg: string) => boolean = () => true,
 ): string | null {
   if (!nonRealText(result)) return null;
-  const calls = callsOf(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)) && swap(c.name, input.slice(c.open + 1, c.close)));
+  const calls = namedCalls(input, COMPLEX_DECISION_FUNCTIONS, q).filter((c) => c.close >= 0 && complexArg(input.slice(c.open + 1, c.close)) && swap(c.name, input.slice(c.open + 1, c.close)));
   if (!calls.length) return null;
   const marks = calls.flatMap((c) => [{ at: c.open + 1, s: "evalf(" }, { at: c.close, s: ")" }]).sort((a, b) => b.at - a.at);
   let out = input;
@@ -182,9 +196,9 @@ const RATIONAL_FUNCTIONS: ReadonlySet<string> = new Set([
  */
 export function rationalOnly(expr: string, q: Quoting): boolean {
   if (expr.includes('"') || /[.]/.test(expr)) return false;
-  if (!functionsIn(expr, q).every((f) => RATIONAL_FUNCTIONS.has(f))) return false;
+  if (!functionsIn(expr, q).every((f) => RATIONAL_FUNCTIONS.has(decisionName(f)))) return false;
   const bound = new Set<string>();
-  for (const { open, close } of callsOf(expr, ["sum", "product"], q)) {
+  for (const { open, close } of namedCalls(expr, ["sum", "product"], q)) {
     if (close < 0) return false;
     const args = topLevelArgs(expr.slice(open + 1, close), q);
     if (args.length !== 4 || !isName(args[1]!.trim())) return false;
@@ -234,7 +248,7 @@ export function restsOnDecision(
 ): boolean {
   if (rationalOnly(input, q)) return false;
   const calls = functionsIn(input, q);
-  if (calls.some((f) => DECISION_FUNCTIONS.has(f)) || hasComparison(input, q) || result.includes("abs(") || evenPowerRoot(input, q) || logOfPower(input, q)) return true;
+  if (calls.some((f) => DECISION_FUNCTIONS.has(decisionName(f))) || hasComparison(input, q) || result.includes("abs(") || evenPowerRoot(input, q) || logOfPower(input, q)) return true;
   return calls.some(stored) || complexDecision(input, q, result, complexArg);
 }
 
@@ -270,7 +284,7 @@ const LOGS = ["ln", "log", "log10", "logb"];
 /** G306: a logarithm (LOGS) whose argument holds a power with an integer exponent but 0 and 1, odd or even
  *  (ln(x^3) is 3*ln(x), on the other side of the cut for a negative x). */
 export function logOfPower(input: string, q: Quoting): boolean {
-  return callsOf(input, LOGS, q).some((c) => c.close >= 0 && holdsEvenPower(logArg(input.slice(c.open + 1, c.close), q), q, true));
+  return namedCalls(input, LOGS, q).some((c) => c.close >= 0 && holdsEvenPower(logArg(input.slice(c.open + 1, c.close), q), q, true));
 }
 
 /** The argument of a logarithm's call text: logb's first, the whole text otherwise. */
@@ -303,7 +317,7 @@ function topComparison(seg: string): boolean {
  * printed (`text`) that `expr` does not call. A literal outside them (`sign(x)+10^2000`) is no decision's.
  */
 export function decisionArgs(expr: string, text: string, stored: (name: string) => boolean, complexArg: (arg: string) => boolean = () => false): string[] {
-  const named = new Map(callsOf(expr, undefined, "typed").map((c) => [c.open, c.name]));
+  const named = new Map(canonicalCalls(expr, "typed").map((c) => [c.open, c.name]));
   const opens: number[] = [];
   walk(expr, 0, (k, _d, ch) => void ("([{".includes(ch) && opens.push(k)), "typed");
   const out = topComparison(expr) ? [expr] : [];
@@ -358,7 +372,7 @@ function comparisonCut(seg: string): string | null {
 export function decisionCuts(expr: string): Cut[] {
   const cuts: Cut[] = [];
   const segments = [expr];
-  const named = new Map(callsOf(expr, undefined, "typed").map((c) => [c.open, c]));
+  const named = new Map(canonicalCalls(expr, "typed").map((c) => [c.open, c]));
   const opens: number[] = [];
   walk(expr, 0, (k, _d, ch) => void (ch === "(" && opens.push(k)), "typed");
   for (const open of opens) {
@@ -550,7 +564,7 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
   const complexArg = nonRealArg(giac, P0);
   if (pastCap(expr) && decisionArgs(expr, text, decidingStored(giac), complexArg).some(pastCap)) {
     const argOf = (c: { open: number; close: number }): string => expr.slice(c.open + 1, c.close);
-    const calls = callsOf(expr, COMPLEX_DECISION_FUNCTIONS, "typed").filter((c) => c.close >= 0);
+    const calls = namedCalls(expr, COMPLEX_DECISION_FUNCTIONS, "typed").filter((c) => c.close >= 0);
     const branch = nonRealText(text) && calls.some((c) => pastCap(argOf(c)) && complexArg(argOf(c)));
     return branch ? { undecided: true, refused: true, branch: true } : { undecided: true, refused: true };
   }

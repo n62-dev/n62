@@ -104,6 +104,15 @@ Digits:=40:; pc("g226-shift-2^70-default",'(shift(2^70))',(236118324143*10^10),5
 // patch 0046-shift-integer-exact.patch
 // g226-shift-1-2^40 (home.yaml, derived)
 Digits:=40:; pc("g226-shift-1-2^40",'(shift(1,2^40))',0,1/10^30);
+// patch 0051-limit-ipart-as-trunc.patch
+// g360-limit-iPart-1-left (home.yaml, derived)
+Digits:=40:; pc("g360-limit-iPart-1-left",'(limit(iPart(x),x,1,-1))',0,1/10^30);
+// patch 0051-limit-ipart-as-trunc.patch
+// g360-limit-iPart-neg1-right (home.yaml, derived)
+Digits:=40:; pc("g360-limit-iPart-neg1-right",'(limit(iPart(x),x,-1,1))',0,1/10^30);
+// patch 0051-limit-ipart-as-trunc.patch
+// g360-limit-iPart-nested-1-left (home.yaml, derived)
+Digits:=40:; pc("g360-limit-iPart-nested-1-left",'(limit(iPart(iPart(x)+x),x,1,-1))',0,1/10^30);
 // patch 0005-mpfr-pi-and-real-domains.patch
 // g78-novalue-asin-acos (home.yaml, oracle)
 Digits:=40:; pc("g78-novalue-asin-acos",'(asin(acos(pi*pi)))',(181211256762/10^11)*i,5/10^12);

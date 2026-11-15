@@ -1,0 +1,202 @@
+# spelling -> canonical: how found
+"ACOS" -> acos: evaluator acos (rpn.cc)
+"arccos" -> acos: lexer at_acos; aide_cas "# acos arccos" (no evaluator of its own)
+"cos" -> acos: lexer at_acos (no evaluator of its own)
+"ACOSH" -> acosh: evaluator acosh (rpn.cc); aide_cas "# acosh arccosh ACOSH"
+"arccosh" -> acosh: lexer at_acosh; aide_cas "# acosh arccosh ACOSH" (no evaluator of its own)
+"arcsin" -> asin: lexer at_asin; aide_cas "# asin arcsin ASIN" (no evaluator of its own)
+"ASIN" -> asin: evaluator asin (rpn.cc); aide_cas "# asin arcsin ASIN"
+"sin" -> asin: lexer at_asin (no evaluator of its own)
+"ceiling" -> ceil: evaluator _ceil (ti89.cc); aide_cas "# ceil ceiling"
+"CEILING" -> ceil: evaluator _ceil (rpn.cc)
+"COMB" -> comb: evaluator _comb (rpn.cc)
+"nCr" -> comb: evaluator _comb (ti89.cc); aide_cas "# comb nCr"
+"!" -> factorial: lexer at_factorial (no evaluator of its own)
+"FLOOR" -> floor: evaluator _floor (rpn.cc)
+"igcd" -> gcd: evaluator _gcd (maple.cc); aide_cas "# gcd igcd"
+"_if" -> ifte: lexer at_ifte (no evaluator of its own)
+"'if'" -> ifte: lexer at_ifte (no evaluator of its own)
+"'ifte'" -> ifte: lexer at_ifte (no evaluator of its own)
+"alors" -> ifte: evaluator _ifte (ti89.cc)
+"fsi" -> ifte: evaluator _ifte (ti89.cc)
+"if" -> ifte: evaluator _ifte (prog.cc); lexer at_ifte
+"If" -> ifte: lexer at_ifte (no evaluator of its own)
+"IF" -> ifte: lexer at_ifte (no evaluator of its own)
+"si" -> ifte: evaluator _ifte (ti89.cc)
+"sialorssinon" -> ifte: evaluator _ifte (ti89.cc)
+"sinon" -> ifte: evaluator _ifte (ti89.cc)
+"integrer" -> integrate: evaluator _integrate (subst.cc); aide_cas "# int integrate integrer"
+"/%" -> iquo: lexer at_iquo (no evaluator of its own)
+"div" -> iquo: evaluator _iquo (maple.cc)
+"intDiv" -> iquo: evaluator _iquo (ti89.cc); aide_cas "# iquo intDiv"
+"_mod" -> irem: lexer at_irem (no evaluator of its own)
+"'%'" -> irem: lexer at_irem (no evaluator of its own)
+"'mod'" -> irem: lexer at_irem (no evaluator of its own)
+"%/" -> irem: lexer at_irem (no evaluator of its own)
+"mod" -> irem: lexer at_irem (no evaluator of its own)
+"modp" -> irem: evaluator _irem (maple.cc)
+"remain" -> irem: evaluator _irem (ti89.cc); aide_cas "# irem remain"
+"lim" -> limit: evaluator _limit (series.cc); lexer at_limit
+"limite" -> limit: evaluator _limit (subst.cc); aide_cas "# limit limite"
+"LN" -> ln: evaluator ln (rpn.cc); aide_cas "# ln log LN"
+"MAX" -> max: evaluator _max (rpn.cc)
+"MIN" -> min: evaluator _min (rpn.cc)
+"l2norm" -> norm: evaluator _l2norm (misc.cc); aide_cas "# norm l2norm"
+"unitV" -> normalize: aide_cas "# normalize unitV"
+"PIECEWISE" -> piecewise: evaluator _piecewise (prog.cc)
+"∏" -> product: lexer at_product (no evaluator of its own)
+"mul" -> product: evaluator _product (ti89.cc); aide_cas "# product mul"
+"ROUND" -> round: evaluator _round (rpn.cc)
+"resoudre" -> solve: evaluator _solve (subst.cc); aide_cas "# solve resoudre"
+"SORT" -> sort: evaluator _sort (rpn.cc)
+"sorted" -> sort: evaluator _sort (prog.cc); aide_cas "# sort sorted"
+"trier" -> sort: lexer at_sort (no evaluator of its own)
+"add" -> sum: aide_cas "# sum somme add"
+"somme" -> sum: aide_cas "# sum somme add"
+"TRUNCATE" -> trunc: evaluator _trunc (rpn.cc)
+"IFTE" -> when: lexer at_when; aide_cas "# ifte IFTE"
+# spelling -> canonical: how found (after the hand reading)
+"IP" -> trunc: same body: _INT: floor for a proven x >= 0, ceil for a proven x < 0, each part of a complex (trunc's split; an exact integer)
+"FP" -> fPart: same body: FP: g-_INT(g), fPart's body (fPart also maps a list)
+"ABS" -> abs: same body: _ABS: abs, a list's l2norm (norm)
+"SIGN" -> sign: same body: sign, the function _sign maps over a list
+
+# evaluators
+floor: _floor (usual.cc)
+ceil: _ceil (usual.cc)
+round: _round (usual.cc)
+trunc: _trunc (maple.cc)
+frac: fPart (ti89.cc)
+fPart: fPart (ti89.cc)
+iPart: _iPart (ti89.cc)
+sign: _sign (usual.cc)
+Heaviside: _Heaviside (usual.cc)
+abs: _abs (usual.cc)
+max: _max (usual.cc)
+min: _min (usual.cc)
+piecewise: _piecewise (prog.cc)
+when: _when (prog.cc)
+ifte: _ifte (prog.cc)
+int: _int (ti89.cc)
+integrate: _integrate (intg.cc)
+sum: -
+limit: _limit (series.cc)
+solve: _solve (solve.cc)
+arg: arg (usual.cc)
+angle: _angle (plot.cc)
+instphase: _instphase (signalprocessing.cc)
+norm: _l2norm (misc.cc)
+normalize: _normalize (misc.cc)
+polar: _polaire (plot.cc)
+polar_coordinates: _coordonnees_polaires (plot.cc)
+tri: _tri (signalprocessing.cc)
+dfc: _dfc (misc.cc)
+classes: _classes (misc.cc)
+Psi: _Psi (usual.cc)
+surd: _surd (intg.cc)
+atan2: _atan2 (misc.cc)
+sort: _sort (prog.cc)
+SortA: _SortA (ti89.cc)
+SortD: _SortD (ti89.cc)
+sorta: _sorta (ti89.cc)
+sortd: _sortd (ti89.cc)
+sortperm: _sortperm (optimization.cc)
+ln: ln (usual.cc)
+log: -
+log10: log10 (usual.cc)
+logb: _logb (ti89.cc)
+asin: asin (usual.cc)
+acos: acos (usual.cc)
+acosh: acosh (usual.cc)
+product: _product (ti89.cc)
+irem: _irem (usual.cc)
+iquo: _iquo (usual.cc)
+gcd: _gcd (usual.cc)
+lcm: _lcm (usual.cc)
+comb: _comb (usual.cc)
+factorial: _factorial (usual.cc)
+IP: _INT (rpn.cc)
+FP: FP (rpn.cc)
+TRUNCATE: _trunc (rpn.cc)
+
+# raw engine, Digits 12: spelling | canonical
+FLOOR(-1.5) = -2 | floor(-1.5) = -2 | quote: FLOOR(-1.5)
+CEILING(-1.5) = -1 | ceil(-1.5) = -1 | quote: CEILING(-1.5)
+ceiling(-1.5) = -1 | ceil(-1.5) = -1 | quote: ceiling(-1.5)
+ROUND(-1.5) = -1 | round(-1.5) = -1 | quote: ROUND(-1.5)
+TRUNCATE(-3/2) = -1 | trunc(-3/2) = -1 | quote: TRUNCATE((-3)/2)
+MAX(-3/2,1/2) = 1/2 | max(-3/2,1/2) = 1/2 | quote: MAX((-3)/2,1/2)
+MIN(-3/2,1/2) = -3/2 | min(-3/2,1/2) = -3/2 | quote: MIN((-3)/2,1/2)
+PIECEWISE(1>0,1,2) = 1 | piecewise(1>0,1,2) = 1 | quote: PIECEWISE(1>0,1,2)
+if(1>0,1,2) = "if(1>0,1,2)" | ifte(1>0,1,2) = 1 | quote: "quote(if(1>0,1,2))"
+sialorssinon(1>0,1,2) = 1 | ifte(1>0,1,2) = 1 | quote: si 1>0 alors 1 sinon 2 
+fsi
+si(1>0,1,2) = "si(1>0,1,2)" | ifte(1>0,1,2) = 1 | quote: "quote(si(1>0,1,2))"
+alors(1>0,1,2) = undef(true,1,2) | ifte(1>0,1,2) = 1 | quote: undef(1>0,1,2)
+sinon(1>0,1,2) = undef(true,1,2) | ifte(1>0,1,2) = 1 | quote: undef(1>0,1,2)
+fsi(1>0,1,2) = undef(true,1,2) | ifte(1>0,1,2) = 1 | quote: undef(1>0,1,2)
+integrer(x,x,0,1) = 1/2 | integrate(x,x,0,1) = 1/2 | quote: integrer(x,x,0,1)
+lim(x,x,1) = 1 | limit(x,x,1) = 1 | quote: limit(x,x,1)
+limite(x,x,1) = 1 | limit(x,x,1) = 1 | quote: limite(x,x,1)
+resoudre(x=1,x) = list[1] | solve(x=1,x) = list[1] | quote: resoudre(x=1,x)
+l2norm(-1.5) = 1.5 | norm(-1.5) = 1.5 | quote: l2norm(-1.5)
+sorted([3,1,2]) = [1,2,3] | sort([3,1,2]) = [1,2,3] | quote: sorted([3,1,2])
+SORT([3,1,2]) = [1,2,3] | sort([3,1,2]) = [1,2,3] | quote: SORT([3,1,2])
+LN(1.) = 0.0 | ln(1.) = 0.0 | quote: LN(1.0)
+ASIN(-1.5) = -1.57079632679+0.962423650119*i | asin(-1.5) = -1.57079632679+0.962423650119*i | quote: ASIN(-1.5)
+ACOS(-1.5) = 3.14159265359-0.962423650119*i | acos(-1.5) = 3.14159265359-0.962423650119*i | quote: ACOS(-1.5)
+ACOSH(-1.5) = 0.962423650119+3.14159265359*i | acosh(-1.5) = 0.962423650119+3.14159265359*i | quote: ACOSH(-1.5)
+mul(k,k,1,3) = 6 | product(k,k,1,3) = 6 | quote: mul(k,k,1,3)
+modp(7,3) = 1 | irem(7,3) = 1 | quote: modp(7,3)
+remain(7,3) = 1 | irem(7,3) = 1 | quote: remain(7,3)
+div(7,3) = GIAC_ERROR: div(undef,7,3) 
+ Error: Bad Argument Value | iquo(7,3) = 2 | quote: undef div (7,3)
+intDiv(7,3) = 2 | iquo(7,3) = 2 | quote: intDiv(7,3)
+igcd(4,6) = 2 | gcd(4,6) = 2 | quote: igcd(4,6)
+COMB(5,2) = 10 | comb(5,2) = 10 | quote: COMB(5,2)
+nCr(5,2) = 10 | comb(5,2) = 10 | quote: nCr(5,2)
+trier([3,1,2]) = [1,2,3] | sort([3,1,2]) = [1,2,3] | quote: sort([3,1,2])
+!(-1.5) = false | factorial(-1.5) = -3.54490770181 | quote: not(-1.5)
+/%(7,3) = GIAC_ERROR: iquo(undef,7,3) 
+ Error: Bad Argument Value | iquo(7,3) = 2 | quote: iquo(undef,7,3)
+%/(7,3) = GIAC_ERROR: irem(undef,7,3) 
+ Error: Bad Argument Value | irem(7,3) = 1 | quote: irem(undef,7,3)
+'%'(7,3) = 1 | irem(7,3) = 1 | quote: 'irem'(7,3)
+mod(7,3) = GIAC_ERROR: %(undef,7,3) 
+ Error: Bad Argument Value | irem(7,3) = 1 | quote: undef % (7,3)
+'mod'(7,3) = 1 | irem(7,3) = 1 | quote: 'irem'(7,3)
+_mod(7,3) = 1 | irem(7,3) = 1 | quote: 'irem'(7,3)
+arccos(-1.5) = 3.14159265359-0.962423650119*i | acos(-1.5) = 3.14159265359-0.962423650119*i | quote: acos(-1.5)
+arccosh(-1.5) = 0.962423650119+3.14159265359*i | acosh(-1.5) = 0.962423650119+3.14159265359*i | quote: acosh(-1.5)
+arcsin(-1.5) = -1.57079632679+0.962423650119*i | asin(-1.5) = -1.57079632679+0.962423650119*i | quote: asin(-1.5)
+IF(1>0,1,2) = "IF(1>0,1,2)" | ifte(1>0,1,2) = 1 | quote: "quote(IF(1>0,1,2))"
+IFTE(1>0,1,2) = 1 | when(1>0,1,2) = 1 | quote: ((1>0)? 1 : 2)
+'ifte'(1>0,1,2) = 1 | ifte(1>0,1,2) = 1 | quote: 'ifte'(1>0,1,2)
+'if'(1>0,1,2) = 1 | ifte(1>0,1,2) = 1 | quote: 'ifte'(1>0,1,2)
+_if(1>0,1,2) = 1 | ifte(1>0,1,2) = 1 | quote: 'ifte'(1>0,1,2)
+sin(-1.5) = -1.57079632679+0.962423650119*i | asin(-1.5) = -1.57079632679+0.962423650119*i | quote: asin(-1.5)
+cos(-1.5) = 3.14159265359-0.962423650119*i | acos(-1.5) = 3.14159265359-0.962423650119*i | quote: acos(-1.5)
+If(1>0,1,2) = "If(1>0,1,2)" | ifte(1>0,1,2) = 1 | quote: "quote(If(1>0,1,2))"
+∏(k,k,1,3) = pi(k,k,1,3) | product(k,k,1,3) = 6 | quote: pi(k,k,1,3)
+unitV(-1.5) = -1.0 | normalize(-1.5) = -1.0 | quote: unitV(-1.5)
+somme(k,k,1,3) = 6 | sum(k,k,1,3) = 6 | quote: somme(k,k,1,3)
+add(k,k,1,3) = 6 | sum(k,k,1,3) = 6 | quote: add(k,k,1,3)
+IP(-3/2) = -1 | trunc(-3/2) = -1 | quote: IP((-3)/2)
+FP(-1.5) = -0.5 | fPart(-1.5) = -0.5 | quote: FP(-1.5)
+ABS(-1.5) = 1.5 | abs(-1.5) = 1.5 | quote: ABS(-1.5)
+SIGN(-1.5) = -1.0 | sign(-1.5) = -1.0 | quote: SIGN(-1.5)
+
+# be-7: a decision at Digits 12 (sin(10^70)*10^12 = -148099131371.55…, mpmath)
+FLOOR(sin(10^70)*10^12) = -538716204749 | floor(…) = -538716204749
+CEILING(sin(10^70)*10^12) = -538716204748 | ceil(…) = -538716204748
+ceiling(sin(10^70)*10^12) = -538716204748 | ceil(…) = -538716204748
+ROUND(sin(10^70)*10^12) = -538716204748 | round(…) = -538716204748
+TRUNCATE(sin(10^70)*10^12) = -538716204748 | trunc(…) = -538716204748
+IP(sin(10^70)*10^12) = -538716204748 | trunc(…) = -538716204748
+FP(sin(10^70)*10^12) = sin(10000000000000000000000000000000000000000000000000000000000000000000000)*1000000000000+538716204748 | fPart(…) = sin(10000000000000000000000000000000000000000000000000000000000000000000000)*1000000000000+538716204748
+ABS(sin(10^70)*10^12) = (-sin(10000000000000000000000000000000000000000000000000000000000000000000000))*1000000000000 | abs(…) = (-sin(10000000000000000000000000000000000000000000000000000000000000000000000))*1000000000000
+SIGN(sin(10^70)*10^12) = -1 | sign(…) = -1
+MAX(sin(10^70),0) = 0 | max(…) = 0
+SIGN(0) = 0 | SIGN([-2,3]) = sign([-2,3]) | sign([-2,3]) = [-1,1] | ABS([3,4]) = 5 | abs([3,4]) = [3,4]
+IP(-1.5) = -1 | trunc(-1.5) = -1 | iPart(-1.5) = -1.0
+FP(-1.5) = -0.5 | fPart(-1.5) = -0.5 | frac(-1.5) = -0.5
