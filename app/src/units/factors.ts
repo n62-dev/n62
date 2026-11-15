@@ -38,7 +38,7 @@ function symbolOf(it: IndexItem): string {
   const m = /\{\\mathrm\{([^{}]+)\}\}$/.exec(it.insert ?? "");
   const name = it.names[0] ?? it.id.slice(it.id.indexOf(":") + 1);
   // G369: % is \% in LaTeX
-  const sym = m ? m[1]!.replace(/\\%/g, "%") : undefined;
+  const sym = m ? m[1]!.replaceAll("\\%", "%") : undefined;
   return sym !== undefined && !sym.includes("\\") ? sym : name;
 }
 
