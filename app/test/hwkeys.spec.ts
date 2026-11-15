@@ -43,7 +43,7 @@ function keypad(ch: string, afterNumber: boolean): Step[] {
   if (ch === "<") return taps("shift", "d6", "d7");
   if (ch === ">") return taps("shift", "d6", "d9");
   if (ch === "!") return [...taps("shift", "d9"), { item: "fact" }];
-  if (ch === "%") return [...taps("shift", "d9"), { item: "percent" }]; // R131: the % cell (R110), `\%`
+  if (ch === "%") return taps("shift", "d0"); // R323: Shift + 0 is % (`\%`, the Shift + 9 palette's cell, R110, R131)
   if (ch === "{") return taps("shift", "d8"); // R131: the list braces { }
   if (ch === "[") return taps("shift", "d5"); // R131: the matrix [ ]
   const hit = TYPED.get(ch);
