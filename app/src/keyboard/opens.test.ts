@@ -11,7 +11,7 @@ import { opensSheet } from "./opens.ts";
 /** Every other special: it does something else (a modifier, an edit, a place, a view, the unit view, nothing). A new
  *  special must be added here or to OPENS_SHEET (keyboard.ts), so someone decides. */
 const OPENS_NOTHING: ReadonlySet<Special> = new Set<Special>([
-  "shift", "alpha", "enter", "clear", "esc", "fmt", "symb", "plot", "num", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "none",
+  "shift", "alpha", "enter", "clear", "esc", "fmt", "symb", "plot", "num", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "paste", "none",
 ]);
 
 const spec = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../../spec/keyboard.yaml"), "utf8");
@@ -20,7 +20,7 @@ describe("opensSheet (R143)", () => {
   it("is true for exactly the specials that open a sheet", () => {
     for (const name of ["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "help", "matrix"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(true);
-    for (const name of ["esc", "clear", "selectGrow", "selectShrink", "fmt", "units", "enter", "shift", "alpha", "none", "home", "cas", "switch", "symb", "plot", "num"] as const)
+    for (const name of ["esc", "clear", "selectGrow", "selectShrink", "paste", "fmt", "units", "enter", "shift", "alpha", "none", "home", "cas", "switch", "symb", "plot", "num"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(false);
   });
 

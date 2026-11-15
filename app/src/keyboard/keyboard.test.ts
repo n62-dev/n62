@@ -73,17 +73,18 @@ describe("keyboard spec", () => {
     expect(k("deselect").label).toEqual({ primary: "$key.deselect", shift: "$key.mode" });
     expect([k("undo"), k("redo")].map((x) => [x.label.primary, x.label.shift])).toEqual([["$key.undo", "⇤"], ["$key.redo", "⇥"]]);
     for (const id of ["menu", "esc", "undo", "redo", "select", "deselect"]) expect(k(id).cls, id).toBe("nav");
-    // no keypad cell runs the Copy or Paste special any more
+    // no keypad cell runs a Copy special any more, and Paste only on Shift + Vars (R329, a reserved cell filled)
     for (const key of keyboard.keys)
-      for (const a of Object.values(key.actions)) expect(a.kind === "special" && ["copy", "paste"].includes(a.name), key.id).toBe(false);
+      for (const [layer, a] of Object.entries(key.actions))
+        expect(a.kind === "special" && ((a.name as string) === "copy" || (a.name === "paste" && `${key.id}.${layer}` !== "vars.shift")), key.id).toBe(false);
     // R322: Mode left Fmt's Shift cell (R85) for Deselect's; Shift + Fmt is RESERVED: no action, no legend; the tap stays Fmt
     expect(actionFor(k("fmt"), true, false)).toBeUndefined();
     expect(k("fmt").actions.shift).toBeUndefined();
     expect(k("fmt").label).toEqual({ primary: "$key.fmt" });
     expect(k("fmt").actions.primary).toEqual({ kind: "special", name: "fmt" });
-    // Shift + Vars stays reserved (the owner, 2026-11-14: Store already has Shift + ᴇ)
-    expect(k("vars").actions.shift).toBeUndefined();
-    expect(k("vars").label.shift).toBeUndefined();
+    // Shift + Vars is Paste (R329, the owner 2026-11-15: the one frequent ☰ row with no touch route of its own)
+    expect(k("vars").actions.shift).toEqual({ kind: "special", name: "paste" });
+    expect(k("vars").label.shift).toBe("$key.paste");
     // R193 (docs/04 5.4): Shift + − opens the Base menu for the last result (route.ts: dead with text on the line)
     expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
     expect(k("sub").label.shift).toBe("$key.base");

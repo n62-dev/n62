@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R323 (the owner, 2026-11-14): two reserved Shift cells get a function. Shift + `( )` types ∥, Find's par() (task t01's
 // function) with the cursor in its bracket; Shift + 0 types %, as the Shift + 9 palette's % cell does (it stays there).
-// The other blank Shift cells stay reserved (Vars, a b/c, 7, 1, Fmt), and Alpha + 0 stays dead.
+// The other blank Shift cells stay reserved (a b/c, 7, 1, Fmt; Vars is Paste since R329), and Alpha + 0 stays dead.
 import { describe, expect, it } from "vitest";
 import { enKeyNames } from "../i18n/enKeyNames.ts";
 import { latexToGiac } from "../input/latex-to-giac.ts";
@@ -46,7 +46,7 @@ describe("R323: Shift + ( ) is ∥ (par), Shift + 0 is %", () => {
     expect(actionFor(k("d0"), false, false)).toEqual({ kind: "type", text: "0" });
     expect(k("d0").actions.alpha).toEqual({ kind: "special", name: "none" });
     expect(k("d0").label.alpha).toBeUndefined();
-    for (const id of ["vars", "frac", "d7", "d1", "fmt"]) {
+    for (const id of ["frac", "d7", "d1", "fmt"]) {
       expect(k(id).actions.shift, id).toBeUndefined();
       expect(k(id).label.shift, id).toBeUndefined();
     }

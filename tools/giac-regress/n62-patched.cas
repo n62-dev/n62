@@ -1043,6 +1043,24 @@ Digits:=40:; pc("g322-size-zeros-x3-x-1-40",'size(zeros(x^3-x-1,x))',1,1/10^30);
 // patch 0043-solve-ckrange-imag-noise.patch
 // g322-size-solve-x3-2x-5-gt-60 (derived: nops(realroot(p)))
 Digits:=60:; pc("g322-size-solve-x3-2x-5-gt-60",'size(solve(x^3-2*x-5>0,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g364-size-solve-x3-3x+2+1e-15-12 (derived: nops(realroot(p)))
+Digits:=12:; pc("g364-size-solve-x3-3x+2+1e-15-12",'size(solve(x^3-3*x+2+10^-15=0,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g364-size-solve-x3-3x+2+1e-22-12 (derived: nops(realroot(p)))
+Digits:=12:; pc("g364-size-solve-x3-3x+2+1e-22-12",'size(solve(x^3-3*x+2+10^-22=0,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g364-solve-x3-3x+2+1e-22-12 (oracle: mpmath polyroots, the root -2-1.1E-23; Giac's vector minus pads a list of three, which fails)
+Digits:=12:; pc("g364-solve-x3-3x+2+1e-22-12",'max(abs(solve(x^3-3*x+2+10^-22=0,x)-[-20000000000000000000000111111111111111111111110288/10^49]))',0,1/10^11);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g364-size-solve-x3-3x+2+1e-23-15 (derived: nops(realroot(p)))
+Digits:=15:; pc("g364-size-solve-x3-3x+2+1e-23-15",'size(solve(x^3-3*x+2+10^-23=0,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g364-size-solve-x3-3x+2+1e-20-20 (derived: nops(realroot(p)))
+Digits:=20:; pc("g364-size-solve-x3-3x+2+1e-20-20",'size(solve(x^3-3*x+2+10^-20=0,x))',1,1/10^30);
+// patch 0043-solve-ckrange-imag-noise.patch
+// g364-size-solve-x3-3x+2+1e-25-20 (derived: nops(realroot(p)))
+Digits:=20:; pc("g364-size-solve-x3-3x+2+1e-25-20",'size(solve(x^3-3*x+2+10^-25=0,x))',1,1/10^30);
 // patch 0050-proot-huge-coefficients.patch
 // g359-solve-x3-x-1-1e-30-12 (oracle: mpmath polyroots)
 Digits:=12:; pc("g359-solve-x3-x-1-1e-30-12",'solve(x^3-x-1-10^-30=0,x)[0]',13247179572447460259609088544783318275/10^37,1/10^11);
@@ -1058,6 +1076,12 @@ Digits:=12:; pc("g359-size-solve-x3-3x+2+1e-30-12",'size(solve(x^3-3*x+2+10^-30=
 // patch 0050-proot-huge-coefficients.patch
 // g359-size-csolve-x3-x-1-1e-30-12 (derived: nops(realroot(p)), or the degree for three distinct roots)
 Digits:=12:; pc("g359-size-csolve-x3-x-1-1e-30-12",'size(csolve(x^3-x-1-10^-30=0,x))',3,1/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g364-size-solve-x3-3x+2+1e-80-12 (derived: nops(realroot(p)), or the degree for three distinct roots)
+Digits:=12:; pc("g364-size-solve-x3-3x+2+1e-80-12",'size(solve(x^3-3*x+2+10^-80=0,x))',1,1/10^30);
+// patch 0050-proot-huge-coefficients.patch
+// g364-size-solve-x3-3x+2+1e-80-30 (derived: nops(realroot(p)), or the degree for three distinct roots)
+Digits:=30:; pc("g364-size-solve-x3-3x+2+1e-80-30",'size(solve(x^3-3*x+2+10^-80=0,x))',1,1/10^30);
 // patch 0050-proot-huge-coefficients.patch
 // g359-rootof-1e400-error-or-right-15 (oracle: mpmath findroot, -10^-400; an error passes)
 Digits:=15:; pasr:=0:; try { pasr:=when(abs(10^400*evalf(rootof([1,0],[1,0,10^400,1]))+1)<1/10^10,1,0); } catch (err) { pasr:=1; }:; pc("g359-rootof-1e400-error-or-right-15",'pasr',1,1/10^30);

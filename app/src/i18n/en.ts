@@ -27,6 +27,8 @@ export const en = {
   "key.esc": "Esc",
   "key.del": "Del",
   "key.vars": "Vars",
+  /** Shift + Vars (R329): ☰ → Paste on a key. */
+  "key.paste": "Paste",
   "key.math": "Math",
   "key.memory": "Mem",
   "key.tmpl": "Tmpl",

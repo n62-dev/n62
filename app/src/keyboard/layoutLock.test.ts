@@ -236,11 +236,11 @@ describe("a pinned key layer cannot change unnoticed (altered copies of the spec
   it("a reserved cell turned live is not in the lock yet", () => {
     const p = problems(
       spec((k) => {
-        key(k, "vars")["shift"] = { special: "memory" };
-        (key(k, "vars")["label"] as Record<string, string>)["shift"] = "$key.memory";
+        key(k, "d7")["shift"] = { special: "memory" };
+        (key(k, "d7")["label"] as Record<string, string>)["shift"] = "$key.memory";
       }),
     );
-    expect(p).toEqual(['layers/vars.shift: reserved in the lock but live ("special memory"): record the fill in the lock']);
+    expect(p).toEqual(['layers/d7.shift: reserved in the lock but live ("special memory"): record the fill in the lock']);
   });
   it("a layer that was dead and is live has no line in the lock", () => {
     const p = problems(
@@ -307,10 +307,10 @@ describe("a numbered list cannot change unnoticed (altered copies of the lists)"
 describe("growth into blank space passes once the lock records it", () => {
   it("a reserved layer that turns live: the lock's line goes from reserved to the action", () => {
     const a = spec((k) => {
-      key(k, "vars")["shift"] = { special: "memory" };
-      (key(k, "vars")["label"] as Record<string, string>)["shift"] = "$key.memory";
+      key(k, "d7")["shift"] = { special: "memory" };
+      (key(k, "d7")["label"] as Record<string, string>)["shift"] = "$key.memory";
     });
-    expect(problems(a, pinned("layers", "vars.shift", "special memory"))).toEqual([]);
+    expect(problems(a, pinned("layers", "d7.shift", "special memory"))).toEqual([]);
   });
   it("a row appended after a list's last fixed row: its line is appended", () => {
     const n = Object.keys(actual["base"] ?? {}).length + 1;
@@ -321,12 +321,12 @@ describe("growth into blank space passes once the lock records it", () => {
 describe("growth passes whatever the lock held before", () => {
   it("a reserved cell filled and a Settings section appended, each recorded in the lock", () => {
     const filled = spec((k) => {
-      key(k, "vars")["shift"] = { special: "memory" };
-      (key(k, "vars")["label"] as Record<string, string>)["shift"] = "$key.memory";
+      key(k, "d7")["shift"] = { special: "memory" };
+      (key(k, "d7")["label"] as Record<string, string>)["shift"] = "$key.memory";
     });
     const n = Object.keys(actual["settings"] ?? {}).length + 1;
     const grown: Pins = { ...filled, settings: { ...actual["settings"], [n]: "extra" } };
-    expect(problems(grown, { ...lock, pins: { ...lock.pins, layers: { ...lock.pins["layers"], "vars.shift": "special memory" }, settings: { ...lock.pins["settings"], [n]: "extra" } } })).toEqual([]);
+    expect(problems(grown, { ...lock, pins: { ...lock.pins, layers: { ...lock.pins["layers"], "d7.shift": "special memory" }, settings: { ...lock.pins["settings"], [n]: "extra" } } })).toEqual([]);
     expect(problems(grown).length).toBe(2); // not recorded: both are named
   });
 });
@@ -389,7 +389,7 @@ describe("the last release's lock (altered copies of the lock)", () => {
   it("passes when the lock only grew", () => {
     const grown = pinned("base", "5", "bin16");
     expect(compareToRelease("v0.1.0", lock, grown)).toEqual([]);
-    const filled = pinned("layers", "vars.shift", "special memory");
+    const filled = pinned("layers", "d7.shift", "special memory");
     expect(compareToRelease("v0.1.0", lock, filled)).toEqual([]);
   });
   it("fails for a live line edited in place, whatever the layout shows", () => {
