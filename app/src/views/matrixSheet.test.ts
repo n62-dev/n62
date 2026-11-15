@@ -9,6 +9,7 @@ import { itemRow } from "../find/finder.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { FindItem, IndexItem } from "../find/types.ts";
 import { MATRIX_NEW, matrixItems, matrixRows, showMatrix, type MatrixCtx, type StoredMatrix } from "./matrixSheet.ts";
+import { MatrixGrid } from "./matrixGrid.svelte.ts";
 import { Sheet } from "./sheet.svelte.ts";
 
 vi.mock("../calc/matrices.ts", () => ({
@@ -141,5 +142,21 @@ describe("New while the store runs (R190f1)", () => {
     await st.done();
     await sheet.level.loading();
     expect(st.submits).toBe(1);
+  });
+});
+
+// R307: the list row's size is the grid's once the grid has read it, so a write shows without reopening the list
+describe.skipIf(!raw.some((it) => it.kind === "unit"))("a stored matrix's row size (R307)", () => {
+  const index = makeIndex(raw);
+  it("reads the stored size until the grid knows its own, then the grid's", async () => {
+    const home = (): ReturnType<ConstructorParameters<typeof MatrixGrid>[2]> =>
+      Promise.resolve({ ok: true, display: "", approximate: false, facts: { exact: true, reliableDigits: null }, full: "", shape: [3, 2], items: Array.from({ length: 6 }, () => ({ ok: true, display: "0", approximate: false, facts: { exact: true, reliableDigits: null } })) } as never);
+    const g = new MatrixGrid("M", () => ({ digits: 12, angle: "rad", format: "std" }), home, () => Promise.resolve(null));
+    const rows = matrixRows(index.byId, (it) => itemRow(it, () => {}), [{ name: "M", rows: 2, cols: 2 }], (m) => ({ title: m.name, items: [], grid: g }));
+    const row = rows.find((r) => r.id === "matrix:M");
+    expect(row?.value).toBe("2×2"); // a list opened fresh: the sizes as stored
+    g.open();
+    await g.loading();
+    expect(row?.value).toBe("3×2"); // the grid wrote and read again: the same row, no reopening
   });
 });

@@ -3,7 +3,7 @@
 // Vitest's and Playwright's JSON reporters.
 import { describe, expect, it } from "vitest";
 import {
-  formatLine, retryable, coreCount, regeneratesIndex, selectsGolden, playwrightFailedSpecs, playwrightFailures, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeFindCensus, summarizeTypecheck, summarizeVitest, vitestFailures,
+  formatLine, retryable, coreCount, regeneratesIndex, selectsGolden, playwrightFailedSpecs, playwrightFailures, summarizeDocs, summarizeGolden, summarizePlaywright, summarizeCasBack, summarizePyDiff, summarizeSeqSweep, summarizeSize, summarizeSweep, summarizeViewSweep, summarizeFindCensus, summarizeTypecheck, summarizeVitest, vitestFailures,
 } from "./gate-summary.ts";
 
 const vitestOk = {
@@ -195,5 +195,23 @@ describe("summarizeCasBack", () => {
     const s = summarizeCasBack("  casback NEW antiderivative: x [antiderivative]: a\nCASBACK FAILED: 3 questions (seed 1): 2 checked, 0 skipped as not checkable, 1 failed, total 1.0 s; 0 known failures, 1 new, 0 now passing", 1);
     expect(s.ok).toBe(false);
     expect(s.detail).toContain("1 to look at");
+  });
+});
+
+describe("summarizePyDiff (G215)", () => {
+  it("reads the counts of a passing stage", () => {
+    const ok = "PYDIFF PASSED: 7 groups, 78 rows: 75 compared at 12 digits, 3 not translated; sympy 1.14.0, pint 0.26.2, uncertainties 3.2.3; total 3.9 s";
+    expect(summarizePyDiff(ok, 0)).toEqual({ ok: true, detail: "75 of 78 rows agree at 12 digits, 3 not translated, 3.9 s" });
+  });
+  it("names the line of a problem", () => {
+    const out = "  pydiff degrees: line 3: _1 = cos(rad(30))  # N62: = 1/2: Python 0.866025403784, N62 0.5 (12 digits)\nPYDIFF FAILED: 1 problem; 7 groups, 78 rows: 75 compared at 12 digits, 3 not translated; sympy 1.14.0; total 3.9 s";
+    const s = summarizePyDiff(out, 1);
+    expect(s.ok).toBe(false);
+    expect(s.detail).toBe("degrees: line 3: _1 = cos(rad(30))  # N62: = 1/2: Python 0.866025403784, N62 0.5 (12 digits); PYDIFF FAILED: 1 problem");
+  });
+  it("a venv without the packages is a failure with the install line", () => {
+    const s = summarizePyDiff("PYDIFF FAILED: sympy, pint and uncertainties are not all in x; install them: pip install sympy==1.14.0", 1);
+    expect(s.ok).toBe(false);
+    expect(s.detail).toContain("sympy, pint and uncertainties are not all in x");
   });
 });

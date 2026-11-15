@@ -179,6 +179,34 @@ test("a CAS-stored float survives the write: the Home row is LaTeX with no evalf
   expect(await texts(page)).toEqual(grid1);
 });
 
+// R308: an element whose float Giac prints with an exponent (a complex float, tiny imaginary parts are common) was written
+// back as Giac's latex() wrote it, 1.5e-20, which the parser read as the letter e minus 20: every edit was refused as
+// changing that element. It goes back with the mark ᴇ (1.5ᴇ-20), so the edit of the other cell is written. By hand: T
+// holds the same 1.5·10⁻²⁰+2i and the typed 2.
+test("a complex element with an exponent survives the write: CAS T:=[[approx(1.5e-20+2.0*i),1]], cell (1,2) edited to 2", async ({ page }) => {
+  await page.evaluate(() => window.n62.session.setView("cas"));
+  await store(page, "T:=[[approx(1.5e-20+2.0*i),1]]", "T"); // a float, as the ≈ key types it (a typed decimal alone is exact)
+  expect(await run(page, "T")).toBe("[[1.5E-20+2*i,1]]");
+  // the element's value to far past the 40 digits CAS keeps (its last bits differ after the write: it is read back from
+  // its 40-digit decimal), to compare after the write
+  const near = "abs(T[0][0]-approx(1.5e-20+2.0*i))<10^-55";
+  const was = await run(page, near);
+  await page.evaluate(() => window.n62.session.setView("home"));
+  await tap(page, ["shift", "d4"]);
+  await sheetKey(page, ["d0"]);
+  await expect(grid(page).locator("td[data-cell]")).toHaveCount(2);
+  await tap(page, ["right", "d2", "enter"]);
+  await expect(cell(page, "1,2")).toHaveAttribute("data-text", "2");
+  await expect(page.getByTestId("matrix-refusal")).toBeHidden();
+  // the element in approx() with the mark, at every digit CAS keeps (40; Giac prints 1.5·10⁻²⁰ at them as 0.15e-19)
+  expect(await page.evaluate(() => window.n62.session.home.at(-1)?.latex ?? "")).toMatch(/^T:=\\begin\{pmatrix\}\\operatorname\{approx\}\\left\(0\.150*\\emark-19\+2\.0*\\mathrm\{i\}\\right\)&2\\end\{pmatrix\}$/);
+  await tap(page, ["esc", "esc"]);
+  await page.evaluate(() => window.n62.session.setView("cas"));
+  expect(await run(page, "T")).toBe("[[1.5E-20+2*i,2]]");
+  expect(was).toBe("true");
+  expect(await run(page, near)).toBe(was);
+});
+
 /** Starts the edit of (2,1) with a digit, puts `latex` on the line, Enter: the refusal shows, nothing is sent, M is as it was. */
 async function refused(page: Page, latex: string | null, keys: string[] = ["d1"]): Promise<void> {
   await openAt21(page);

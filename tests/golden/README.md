@@ -50,8 +50,10 @@ default for cases without it. The oracle is evaluated at N+20 and N+50 digits an
 
 The gate also runs `tests/engine/interrupt-test.mjs` (16 forced interrupts, Giac patch 0002).
 
+The gate's `pydiff` stage (G215, `app/scripts/pydiff.ts`, rows in `app/scripts/pydiff-rows.yaml`) runs Copy as Python's script of each row set in this venv and compares every translated row with N62's value at 12 digits; sympy, pint and uncertainties (BSD-3-Clause, test-only, never in the APK) and pint's own dependencies are pinned in the line below, and the stage fails without them.
+
 ```bash
-python3 -m venv tests/golden/.venv && tests/golden/.venv/bin/pip install mpmath==1.3.0 pyyaml==6.0.2   # once
+python3 -m venv tests/golden/.venv && tests/golden/.venv/bin/pip install mpmath==1.3.0 pyyaml==6.0.2 sympy==1.14.0 pint==0.26.2 uncertainties==3.2.3 flexcache==0.3 flexparser==0.4 platformdirs==4.14.5 typing_extensions==4.16.0   # once (app/scripts/g2check.ts VENV_PINS)
 tests/golden/.venv/bin/python tests/golden/oracle.py          # check expect values and the format
 tests/golden/.venv/bin/python tests/golden/oracle.py --write  # fill expect for source: oracle
 tests/golden/.venv/bin/python tests/golden/oracle.py --counts # G202: write oracle-counts.json (at the release)

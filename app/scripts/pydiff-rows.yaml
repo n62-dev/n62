@@ -1,0 +1,101 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# G215: the rows of the pydiff stage (scripts/pydiff.ts). Each group is one Home session on a fresh engine, its rows in
+# order, each in its `angle` (default rad). The stage runs each row through N62's engine, writes its session line (G210,
+# state/sessionLine.ts), turns the group into Copy as Python's script (clipboard/python.ts), runs the script and compares
+# each translated row with N62's value at 12 significant digits. No expected values here: N62's answers are the engine's
+# own, at the run. The inputs are those of G213's and G214's tests (clipboard/python.test.ts).
+groups:
+  - id: arithmetic
+    rows:
+      - { input: "\\frac{1}{3}" }
+      - { input: "2^3" }
+      - { input: "1.5" }
+      - { input: "\\pi" }
+      - { input: "\\exponentialE" }
+      - { input: "2+3\\imaginaryI" }
+      - { input: "\\sqrt{2}" }
+      - { input: "\\sqrt{2}+\\pi" }
+      - { input: "\\frac{2+1}{4}" }
+      - { input: "2^{-1}" }
+      - { input: "2^{3-5}" }
+      - { input: "\\frac{\\pi}{2}" }
+      - { input: "50\\%" }
+      - { input: "-2^2" }
+      - { input: "\\left(-2\\right)^2" }
+      - { input: "2\\times\\left(-3\\right)" }
+      - { input: "1-\\left(2+3\\right)" }
+      - { input: "1-2\\times3" }
+      - { input: "\\frac{1}{3}\\times\\frac{\\pi}{2}" }
+      - { input: "1.5\\emark-3" }
+  - id: stores and Ans
+    rows:
+      - { input: "5\\blacktriangleright a" }
+      - { input: "a+1" }
+      - { input: "\\ans\\times2" }
+      - { input: "a:=\\ans-2" }
+      - { input: "\\ans+a" }
+  - id: degrees
+    rows:
+      - { input: "\\sin(30)", angle: deg }
+      - { input: "\\cos\\left(60\\right)", angle: deg }
+      - { input: "\\tan\\left(45\\right)", angle: deg }
+      - { input: "\\operatorname{sin}\\left(30\\right)", angle: deg }
+      - { input: "\\arcsin(1)", angle: deg }
+      - { input: "\\arccos\\left(0\\right)", angle: deg }
+      - { input: "\\arctan\\left(1\\right)", angle: deg }
+      - { input: "\\sin^{-1}\\left(1\\right)", angle: deg }
+      - { input: "\\sin\\left(\\arcsin\\left(1\\right)\\right)", angle: deg }
+      - { input: "\\sin\\left(30\\degree\\right)", angle: deg }
+      - { input: "2\\measuredangle30", angle: deg }
+  - id: radians
+    rows:
+      - { input: "\\sin(30)" }
+      - { input: "\\sin\\left(\\frac{\\pi}{6}\\right)" }
+      - { input: "\\arcsin(1)" }
+      - { input: "\\sin\\left(30\\degree\\right)" }
+      - { input: "30\\degree" }
+      - { input: "\\sinh\\left(1\\right)" }
+      - { input: "\\cosh\\left(1\\right)" }
+      - { input: "\\tanh\\left(1\\right)" }
+      - { input: "2\\measuredangle30" }
+  - id: logarithms and roots
+    rows:
+      - { input: "\\ln(2)" }
+      - { input: "\\log(100)" }
+      - { input: "\\lg\\left(100\\right)" }
+      - { input: "\\log_{2}\\left(8\\right)" }
+      - { input: "\\operatorname{ln}\\left(2\\right)" }
+      - { input: "\\operatorname{log10}\\left(1000\\right)" }
+      - { input: "\\exp\\left(1\\right)" }
+      - { input: "\\sqrt[3]{8}" }
+      - { input: "\\sqrt[3]{-8}" }
+      - { input: "\\sqrt[5]{\\frac{1}{32}}" }
+      - { input: "\\operatorname{surd}\\left(-32,5\\right)" }
+      - { input: "\\operatorname{surd}\\left(8,3\\right)" }
+      - { input: "\\sqrt[4]{16}" }
+      - { input: "\\sqrt[4]{-16}" }
+      - { input: "\\operatorname{sqrt}\\left(2\\right)" }
+  - id: functions
+    rows:
+      - { input: "\\operatorname{abs}\\left(-3\\right)" }
+      - { input: "\\left|-3\\right|" }
+      - { input: "\\operatorname{floor}\\left(-2.5\\right)" }
+      - { input: "\\operatorname{ceil}\\left(2.1\\right)" }
+      - { input: "\\operatorname{gcd}\\left(12,18\\right)" }
+      - { input: "\\operatorname{lcm}\\left(4,6\\right)" }
+      - { input: "\\operatorname{factorial}\\left(5\\right)" }
+      - { input: "3!" }
+      - { input: "\\operatorname{comb}\\left(5,2\\right)" }
+      - { input: "\\binom{5}{2}" }
+      - { input: "\\operatorname{Gamma}\\left(5\\right)" }
+      - { input: "\\operatorname{erf}\\left(0.5\\right)" }
+      - { input: "2\\times\\operatorname{gcd}\\left(12,18\\right)^2" }
+      - { input: "\\frac{1}{\\operatorname{factorial}\\left(3\\right)}" }
+  # A row not translated binds nothing: the store below is a comment, so is the row that reads it and Ans after it;
+  # the script still runs and the rows after them still agree.
+  - id: not translated
+    rows:
+      - { input: "b:=\\operatorname{surd}\\left(16,4\\right)", comment: true }
+      - { input: "b+1", comment: true }
+      - { input: "\\ans\\times2", comment: true }
+      - { input: "7\\times6" }

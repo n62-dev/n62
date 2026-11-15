@@ -51,7 +51,11 @@ export function matrixRows(byId: ReadonlyMap<string, FindItem>, row: (it: FindIt
   return [
     ...matrixItems(byId, row),
     { id: MATRIX_NEW, label: t("matrix.new"), keep: true, run: make }, // (keep: the sheet stays while the store runs, then opens the new matrix's grid)
-    ...stored.map((m) => ({ id: `matrix:${m.name}`, label: m.name, value: `${m.rows}×${m.cols}`, submenu: grid(m) })),
+    ...stored.map((m) => {
+      const submenu = grid(m);
+      // R307: the size is the grid's once it has read the matrix (a write of the grid changes it), else the one stored
+      return { id: `matrix:${m.name}`, label: m.name, get value() { const g = submenu.grid; return g && g.rows > 0 ? `${g.rows}×${g.cols}` : `${m.rows}×${m.cols}`; }, submenu };
+    }),
   ];
 }
 

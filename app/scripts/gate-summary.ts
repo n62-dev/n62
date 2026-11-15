@@ -213,6 +213,19 @@ export function summarizeCasBack(out: string, exitCode: number): Summary {
   return { ok: false, detail: news.length > 0 ? `${news.length} to look at: ${news.slice(0, 2).join(" | ")}; ${tail}` : tail };
 }
 
+/** G215: the pydiff stage (scripts/pydiff.ts) ends in `PYDIFF PASSED: <g> groups, <n> rows: <c> compared at 12 digits, <k> not
+ *  translated; <versions>; total <s> s` or `PYDIFF FAILED: <p> problems; …`; each problem before it is `  pydiff <group>: line <n>: …`. */
+export function summarizePyDiff(out: string, exitCode: number): Summary {
+  const last = out.trim().split("\n").filter((l) => /^PYDIFF (PASSED|FAILED)/.test(l)).slice(-1)[0];
+  if (exitCode === 0 && last?.startsWith("PYDIFF PASSED")) {
+    const m = /(\d+) rows: (\d+) compared at (\d+) digits, (\d+) not translated;.*total ([\d.]+) s/.exec(last);
+    return { ok: true, detail: m ? `${m[2]} of ${m[1]} rows agree at ${m[3]} digits, ${m[4]} not translated, ${m[5]} s` : "PYDIFF PASSED" };
+  }
+  const problems = out.split("\n").filter((l) => l.startsWith("  pydiff ")).map((l) => l.slice(9, 150));
+  const tail = last ? last.replace(/;.*$/, "").slice(0, 160) : `exit ${exitCode}: ${out.trim().split("\n").slice(-1)[0]?.slice(0, 100) ?? ""}`;
+  return { ok: false, detail: problems.length > 0 ? `${problems.slice(0, 2).join(" | ")}; ${tail}` : tail };
+}
+
 /** The view sweep (G63, scripts/viewsweep.ts) ends with `VIEWSWEEP PASSED: <counts>; <known/new/now passing>`, or `VIEWSWEEP FAILED: …`. */
 export function summarizeViewSweep(out: string, exitCode: number): Summary {
   const last = out.trim().split("\n").filter((l) => /^VIEWSWEEP (PASSED|FAILED)/.test(l)).slice(-1)[0];

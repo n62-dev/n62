@@ -1,6 +1,6 @@
 # Units inside Solve: the design (S45)
 
-**Status: open.** The owner picks the recommendation of section 1 (or an alternative), and with it whether P8's "Solve stays unit-free" gives way for Solve only (Home stays unit-free). Then the cut of section 7 becomes packages.
+**Status: decided** (owner, 2026-11-15): section 1's recommendation, after the v0.1.0 tag; P8's "Solve stays unit-free" gives way for Solve only (Home stays unit-free). The cut of section 7 becomes packages after the tag (decisions.md, "Owner answers of 2026-11-15").
 
 Base: phase-1 at `639c43dc`. Every claim below is checked in the code (file:line) or by `tools/probes/solve-units.ts` (`GIAC_OUT=<main>/engine/giac/_out/gsl node tools/probes/solve-units.ts`); values are `derived` (exact Giac arithmetic) unless marked (to verify).
 

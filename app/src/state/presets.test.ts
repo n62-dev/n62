@@ -416,8 +416,9 @@ describe("presets (R88)", () => {
     const id = presets.capture("Lab", PRESET_GROUPS);
     await presets.apply(id);
     await presets.apply(id);
+    const taps = await session.taps.load(); // (R320: the counter is a lazy chunk; the applies waited for it)
     expect(session.taps.counts.presets).toBe(2);
-    await session.taps.flush();
+    await taps?.flush();
     expect(kv.data.get("taps")).toMatchObject({ presets: 2 });
   });
 

@@ -7,22 +7,6 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-**F-Droid's Reproducible Builds box** (A145): the engine bits differ ([measured](../fdroid/README.md)). Recommended: leave it unticked at v0.1.0 and drop `Binaries` and `AllowedAPKSigningKeys` from the recipe (F-Droid then signs with its own key: its APK and ours do not update each other). Or a deterministic-compile package.
-
-**G164's sample sources** (`app/public/samples/materials.txt`): sign [S36](shifts/2026-11-sandra-sample-sources.md)'s short list by the freeze (11-17); S36f1 set the two copper values to the sheet's. Cost: seven clauses to read. If not signed, the lines stay "to verify".
-
-**R269 round trip** (paste back a unit row's Copy): recommended, a package (≈1 d, Opus) where Paste reads `value ± σ unit` as R61's result chip, its unit matched back to Find ids, so the units key fills the slot as a picked row does. Why: Copy on a unit row writes `39.488 ± 1.2 m²`, but Paste reads one number ("Paste: not a number") and the unit view takes no paste. Until then the refusal is said, never silent. Would change if the owner wants the value ± σ pasted with the unit left out and said.
-
-**R197 Help's Insert row**: recommended, a package (≈½ d): Insert replaces the call the cursor is in (Undo brings it back). Help opens only inside a call, so at the cursor the example always nests: `\sin(` gives sin(sin(30°)). Or: the cursor, as a Find pick (today).
-
-**S50's G2 column** ([benchmark-protocol.md](research/benchmark-protocol.md) section 7): recommended, your own G2 (`source: device`), presses and seconds: it gives seconds and no licence question. Or the Virtual Calculator, presses only, if its licence allows publishing (not verified). Would change if: no G2 at hand.
-
-**S45 units inside Solve** ([note](research/r-solveunits.md)): recommended, a layer around today's solver: equations in the typed units, the unknown's unit found or set on its row, the answer by the unit view's rule; Solve leaves P8 (Home stays unit-free). Cost ≈3.5 d, four packages. Or SI numbers with a new residual rule.
-
-**R220 the uncertainty sheet** ([mockup](mockups/uncertainty-sheet.html)): the rows stay A (your yes to C1, 2026-11-12) unless the page changes your mind. Pick the key path that opens it, no new key: recommended, an Uncertainty item in ☰ beside ⚙, shown only on a row with σ; or Enter on the σ line once ▼ can reach it. Then the sheet's package is cut.
-
-**The unit view's budget** (docs/04 8.3): recommended, keep G233's and G234's raise (entries 42 kB, pin 78.55 kB; was 39 and 72.55): your units, all lazy; the bar that counts is the first unit result < 1 s on the Tab One. Or a cut.
-
 ## Decided proposals
 
 ### Pipeline and process
@@ -30,7 +14,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Owner answers of 2026-11-09/10 (night review):** one line each in [the note](archive/night-review-2026-11-09.md) section 6 (what was kept is there too). Would change if: the G2 or an outside round reads one otherwise.
 - **Owner answers of 2026-11-10 (architecture review):** [the note](research/arch-review-2026-11-10.md) section 3.
 - **Owner answers of 2026-11-14 (night review):** [the note](research/night-review-2026-11-14.md) section 6; each package rewrites its decision line here when it lands.
-- **F-Droid Reproducible Builds (owner, 2026-11-10):** asked for: one signing key everywhere (`fdroid/SUBMIT.md`). A145: the recipe's engine build differs from the release engine (`fdroid/README.md`); the whole APK is uncompared. Would change if: the engine cannot be made bit-identical.
+- **Owner answers of 2026-11-15 (Needs the user):** the unit view keeps G233/G234's raise (entries 42 kB, pin 78.55 kB; the bar is the first unit result < 1 s on the Tab One); G164's sample sources are not signed by the freeze, so their lines stay "to verify" at v0.1.0; F-Droid's box unticked (A158, the entry below); before the freeze R324 (Help's Insert replaces the call), R325 (Paste reads `value ± σ unit` as R61's chip) and R327, R328 (the uncertainty sheet on Shift + 1, rows A); S45 units inside Solve after the tag (≈3.5 d, four packages, [the note](research/r-solveunits.md)); S50's G2 column from the owner's own G2 (`source: device`, presses and seconds). After a review of the ☰ menus: Shift + Vars is Paste (R329, before the freeze; the owner's yes, as no benchmark task pastes, docs/06 3b point 6); Shift + 7 waits for a list sheet like Shift + 4's (R330, after the tag), not the full Statistics editor; Shift + a b/c and Fmt stay reserved. Each package rewrites its line here when it lands.
+- **F-Droid Reproducible Builds (owner, 2026-11-15; asked for on 11-10):** unticked at v0.1.0: the recipe has no `Binaries` and no `AllowedAPKSigningKeys` (A158, built), F-Droid signs with its own key, so its APK and ours (GitHub, IzzyOnDroid) do not update each other. Why: A145 measured that the recipe's engine differs from the release engine (`fdroid/README.md`); the whole APK is uncompared. Would change if: a deterministic engine build exists before the F-Droid request (the template says the box cannot be ticked later, `fdroid/SUBMIT.md`).
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** A83, A88, G167, A67, A71, A39; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "Opus pass 184".
 - **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Archived, "Opus pass 97". Would change if: a finished package ends NOT MERGED on it.

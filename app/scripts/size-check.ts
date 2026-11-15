@@ -214,8 +214,12 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  the sheet's model (views/sheet.svelte.ts), loaded with the sheet's view or by the first sheet that opens before it. A66f1: the key click's code (input/click.ts), loaded only
  *  when the Key click setting is on. R264: the stored rows' reader (state/storedItem.ts), loaded beside the history's start
  *  read, and engine/giacPrint.ts, a shared lazy chunk (the start reads its part engine/giacPrintStart.ts). R276: a history
- *  row's swipe and hold (views/rowGesturesCode.ts: rowSwipe.ts, apps/longpress.ts), fetched when idle (views/rowGestures.ts). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts"];
+ *  row's swipe and hold (views/rowGesturesCode.ts: rowSwipe.ts, apps/longpress.ts), fetched when idle (views/rowGestures.ts).
+ *  R320: the press counters (state/taps.svelte.ts with state/pressCount.ts), fetched when idle behind the session's front
+ *  (state/tapsFront.svelte.ts); and S58's five, of which three sit inside another lazy chunk (lazyFailures reads
+ *  chunk-modules.json): views/statSheet.ts, views/helpSheet.ts, views/matrixGrid.svelte.ts (the matrix sheet's chunk),
+ *  entry/cursorFn.ts (helpSheet's), engine/decimalLatex.ts (solve's). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -508,8 +512,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  to add them to Find's items in the unit view, so the start chunk's list of the files the unit view loads holds two more
  *  names (no code of it is in the start chunk). The branch before the round measures 62.38 kB gzip (175.87 kB raw), after it
  *  62.41 kB (175.92 kB raw). Tried: the store read from find.ts and from calc.ts (the start chunk +0.03 and +0.04 kB, and the
- *  unit view's entries over their budget). 62.41 kB + 0.05 kB, rounded up to the next 0.01 kB. */
-export const START_PIN_GZIP = 62_470;
+ *  unit view's entries over their budget). 62.41 kB + 0.05 kB, rounded up to the next 0.01 kB.
+ *  62,470 → 62,100 B (R320, a cut, S58's item 2): the press counters (state/taps.svelte.ts, state/pressCount.ts) are a lazy
+ *  chunk fetched when idle; the start holds their front (state/tapsFront.svelte.ts: the queue, the screen-tap listener and
+ *  the hardware keys' `counted`), and Keypad hands each touch over raw. phase-1 c6fe6992 measures 62,415 B gzip (175,965 B
+ *  raw), the branch 62,049 B (174,622 B raw, −366 B): 62,049 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const START_PIN_GZIP = 62_100;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
@@ -552,12 +560,22 @@ function lazyChunk(manifest: Record<string, ManifestChunk>, src: string): Manife
   return chunks.find((c) => c.isDynamicEntry && normalSrc(c.src) === src) ?? chunks.find((c) => c.src === undefined && c.name === name);
 }
 
-/** Failures for `srcs` that are missing as a dynamic chunk, or that are loaded at start. */
-function lazyFailures(dist: string, srcs: readonly string[]): string[] {
+/** Failures for `srcs` that are loaded at start, or (R320, S58) in no chunk of the build. With chunk-modules.json (a real
+ *  build), a module passes when no start file holds it, so a module inside another lazy chunk (views/matrixGrid.svelte.ts
+ *  in the matrix sheet's) passes; without it (a fake dist), by name: a dynamic chunk of its own, or a shared one named after it. */
+export function lazyFailures(dist: string, srcs: readonly string[]): string[] {
   const manifest = readManifest(dist);
   const start = new Set(startFiles(manifest));
+  const modules = readChunkModules(dist);
   const failures: string[] = [];
   for (const src of srcs) {
+    if (modules !== null) {
+      const held = Object.keys(modules).filter((file) => modules[file]?.includes(src));
+      const atStart = held.find((file) => start.has(file));
+      if (held.length === 0) failures.push(`${src} is in no chunk of this build`);
+      else if (atStart !== undefined) failures.push(`${src} (${atStart}) is loaded at start`);
+      continue;
+    }
     const chunk = lazyChunk(manifest, src);
     if (chunk === undefined) failures.push(`${src} is not a dynamic chunk: it is in the start chunk (import it with import())`);
     else if (start.has(chunk.file)) failures.push(`${src} (${chunk.file}) is loaded at start`);
