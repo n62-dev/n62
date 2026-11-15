@@ -495,7 +495,8 @@ function exactElement(re: { v: DecimalValue; p: bigint; q: bigint }, im: { v: De
  * that is not real, or whose digits end (it may be a rational re() finds): a part they give as a rational keeps it.
  * G44f1: erf and erfc are read through our MPFR definitions, which run at Digits: the value is evaluated from its text
  * at each precision with Digits set to it. Null when some element is not a number. G126: `underflowAt(k)`, whether
- * element k, 0 at P and P+20, is an underflow (no steps then); without it such an element takes the steps.
+ * element k, 0 at P and P+20, is an underflow (no steps then); without it such an element takes the steps. G358: `start`,
+ * the first level where a value infinite at P is finite (novalue.ts finiteLevel), raises the check's start to it.
  */
 export function exactFacts(
   giac: Giac,
@@ -506,6 +507,7 @@ export function exactFacts(
   text: string,
   v: GiacValue,
   underflowAt?: (k: number) => boolean,
+  start = 0,
 ): ElementFacts[] | null {
   const P = valuePrecision(digits);
   const n = size(shape);
@@ -538,7 +540,8 @@ export function exactFacts(
   if (erf !== safe) giac.eval(`${ICDF_FAILED}:=0`);
   // G141: the check starts at the longest exact integer's digits plus P when they pass P - 20 (literalStart; a number, rational or complex, is no
   // cancellation: G141f1, a pasted E8365 copy). Past MAX_EVAL_DIGITS, or when that start gives no value (the budget), it runs from P (uncheckedPastCap).
-  const lit = v.kind === "integer" || v.kind === "rational" || v.kind === "complex" ? { at: P, unchecked: false } : literalStart(text, P, MAX_EVAL_DIGITS, "printed");
+  const found = v.kind === "integer" || v.kind === "rational" || v.kind === "complex" ? { at: P, unchecked: false } : literalStart(text, P, MAX_EVAL_DIGITS, "printed");
+  const lit = start > found.at ? { ...found, at: start } : found;
   // G166: past the cap no level holds the literal, so further levels add noise, not digits, and how many the budget
   // (EXTRA_BUDGET_MS) allowed chose the value shown: atan(tan(10^5000)) showed -0.2 on the desktop, 0.5 on a clock 8× fast.
   const from = (start: number, steps = true): ElementFacts[] | null => {
@@ -547,7 +550,7 @@ export function exactFacts(
     return factsFrom(giac, name, v, first, read, whole, known, shape, digits, maxExactDigits, text, start, steps, underflowAt);
   };
   try {
-    const raised = lit.at > P ? from(lit.at) : null;
+    const raised = lit.at > P ? from(lit.at, !lit.unchecked) : null;
     const unchecked = lit.unchecked || (lit.at > P && !raised);
     const out = (raised ?? from(P, !unchecked))?.map((f) => (unchecked ? uncheckedPastCap(f) : f)) ?? null;
     if (erf === safe || !out) return out;
