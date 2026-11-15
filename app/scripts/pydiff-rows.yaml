@@ -114,6 +114,8 @@ groups:
       - { input: "2.5", slots: { u1: "k:N", end: "lbf" } }
       - { input: "4186\\times2", slots: { u1: "J / kg oC", u2: "kg" } }
       - { input: "1", slots: { u1: "gal_US", end: "L" } }
+      - { input: "3", slots: { u1: "in", end: "cm" } }
+      - { input: "2", slots: { u1: "a:s", end: "s" } }
       - { input: "60", slots: { u1: "mph", end: "km / h" } }
       - { input: "100", slots: { u1: "psi", end: "k:Pa" } }
       - { input: "3", slots: { u1: "m^2", end: "ft^2" } }

@@ -3,14 +3,18 @@
 // Every entry must exist in pint (the venv's pinned one), have Find's dimension and its exact factor to SI base units: a
 // registry with Fraction numbers gives pint's factor as a rational, Find's `si` is "p/q" or a rational times a power of
 // π (pint's own π then); °C and °F their scale and offset, and their delta unit the scale. Each prefix on each unit that
-// takes one, likewise (prefix × unit), and each constant's dimension is Find's with pint's SI text worth exactly 1.
+// takes one, likewise (prefix × unit), and each constant's dimension is Find's with pint's SI text worth exactly 1. The
+// Python a slot of each unit writes (pintAttr: `ureg.kg`, `ureg('in')`) must compile and be that unit; pyWords.ts's
+// keywords must be the venv Python's.
 //   node scripts/pyunits-check.ts        # exit 1 on any problem
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
-import { PY_CONSTS, PY_PREFIXED, PY_PREFIXES, PY_TEMPS, PY_UNITS, pintDim } from "../src/clipboard/pyUnits.ts";
+import { PY_CONSTS, PY_PREFIXED, PY_PREFIXES, PY_TEMPS, PY_UNITS, pintAttr, pintDim } from "../src/clipboard/pyUnits.ts";
+import { KEYWORDS } from "../src/clipboard/pyWords.ts";
+import { oracleVenvPython } from "./g2check.ts";
 
 const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -62,6 +66,8 @@ interface Case {
   pi: number;
   dims: Record<string, number>;
   offset?: string;
+  /** The Python a slot of this unit alone writes (pyUnits.ts pintAttr): it must compile, and be the same unit. */
+  attr?: string;
 }
 
 /** The cases: each table entry, each prefixed unit, each temperature (absolute and delta), each constant's SI text. */
@@ -86,7 +92,7 @@ export function cases(f: Factors): { cases: Case[]; problems: string[] } {
       problems.push(`unit ${id}: its factor ${u.si} is not read here`);
       continue;
     }
-    out.push({ what: `unit ${id}`, name, q: p.q, pi: p.pi, dims: pintDims(u.dim) });
+    out.push({ what: `unit ${id}`, name, q: p.q, pi: p.pi, dims: pintDims(u.dim), attr: pintAttr({ tokens: [{ unit: id }] }).s });
     if (!PY_PREFIXED.has(id)) continue;
     for (const [pid, pfx] of PY_PREFIXES) {
       const ps = f.prefixes[pid]?.si;
@@ -95,7 +101,7 @@ export function cases(f: Factors): { cases: Case[]; problems: string[] } {
         problems.push(`prefix ${pid}: no factor in find/factors.yaml`);
         continue;
       }
-      out.push({ what: `unit ${pid}${id}`, name: `${pfx}${name}`, q: mul(pq.q, p.q), pi: p.pi, dims: pintDims(u.dim) });
+      out.push({ what: `unit ${pid}${id}`, name: `${pfx}${name}`, q: mul(pq.q, p.q), pi: p.pi, dims: pintDims(u.dim), attr: pintAttr({ tokens: [{ prefix: pid, unit: id }] }).s });
     }
   }
   for (const id of PY_PREFIXED) if (!PY_UNITS.has(id)) problems.push(`unit ${id}: takes a prefix but is not in the table`);
@@ -107,7 +113,7 @@ export function cases(f: Factors): { cases: Case[]; problems: string[] } {
       continue;
     }
     out.push({ what: `temperature ${id}`, name: t.abs, q: p.q, pi: 0, dims: pintDims(u.dim), offset: p.offset });
-    out.push({ what: `temperature interval ${id}`, name: t.delta, q: p.q, pi: 0, dims: pintDims(u.dim) });
+    out.push({ what: `temperature interval ${id}`, name: t.delta, q: p.q, pi: 0, dims: pintDims(u.dim), attr: pintAttr({ tokens: [{ unit: id }] }).s });
   }
   for (const [id, dim] of PY_CONSTS) {
     const c = f.constants[id];
@@ -127,7 +133,19 @@ from fractions import Fraction
 import pint
 r = pint.UnitRegistry(non_int_type=Fraction)
 PI = r.Quantity(Fraction(1), "pi").to_base_units().magnitude
-for c in json.load(sys.stdin):
+data = json.load(sys.stdin)
+import keyword
+if sorted(keyword.kwlist) != sorted(data["keywords"]):
+    print(json.dumps({"what": "pyWords.ts KEYWORDS", "why": f"Python's keywords are {sorted(keyword.kwlist)}"}))
+for c in data["cases"]:
+    if "attr" in c:
+        try:
+            a = eval(compile(c["attr"], "<attr>", "eval"), {"ureg": r})
+            ga = (Fraction(1) * a).to_base_units().magnitude
+            if Fraction(ga) != Fraction(c["q"]) * PI ** c["pi"]:
+                print(json.dumps({"what": c["what"], "why": f"{c['attr']} is {ga} in SI"}))
+        except Exception as e:
+            print(json.dumps({"what": c["what"], "why": f"{c['attr']} does not run: {type(e).__name__}: {e}"}))
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -151,10 +169,19 @@ for c in json.load(sys.stdin):
 print(json.dumps({"done": True}))
 `;
 
+/** The main checkout (the first worktree), whose tests/golden/.venv a worktree uses. */
+function mainCheckout(): string {
+  const common = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd: repo, encoding: "utf8" }).stdout.trim();
+  return common ? resolve(common, "..") : repo;
+}
+
+/** The venv's Python, as g2check and oraclecheck find it (pydiff.ts re-exports it). */
+export const venvPython = (): string | null => oracleVenvPython(repo, mainCheckout());
+
 /** Runs the check; the problems, none when the table agrees with pint and Find. */
 export function pyunitsCheck(py: string, factorsFile = join(repo, "find/factors.yaml")): { problems: string[]; checked: number } {
   const { cases: cs, problems } = cases(parse(readFileSync(factorsFile, "utf8")) as Factors);
-  const r = spawnSync(py, ["-I", "-c", CHECK], { input: JSON.stringify(cs), encoding: "utf8", timeout: 120_000 });
+  const r = spawnSync(py, ["-I", "-c", CHECK], { input: JSON.stringify({ cases: cs, keywords: [...KEYWORDS] }), encoding: "utf8", timeout: 120_000 });
   const lines = (r.stdout ?? "").split("\n").filter((l) => l.startsWith("{"));
   if (r.status !== 0 || !lines.some((l) => l.includes('"done"'))) problems.push(`the check did not run: ${(r.stderr ?? "").trim().split("\n").pop() ?? r.error?.message}`);
   for (const l of lines) {
@@ -165,7 +192,6 @@ export function pyunitsCheck(py: string, factorsFile = join(repo, "find/factors.
 }
 
 async function main(): Promise<number> {
-  const { venvPython } = await import("./pydiff.ts");
   const py = venvPython();
   if (!py) {
     console.log("PYUNITS FAILED: no tests/golden/.venv (tests/golden/README.md)");

@@ -9,7 +9,7 @@ import type { ChipTable } from "../input/chips.ts";
 import { chipUnit, sigmaChipOf, uncChipsIn } from "../input/chipUnit.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 import { unitText } from "../i18n/enUnits.ts";
-import { END, slotFormula, type SlotFormula } from "../input/unitFormula.ts";
+import { END, filledLatex, slotFormula, type SlotFormula } from "../input/unitFormula.ts";
 import type { Alternative } from "./alternatives.ts";
 import type { PadEmit } from "./pad.ts";
 import { shownOf, type Shown, type UnitFormat } from "./result.ts";
@@ -376,11 +376,7 @@ export class UnitView {
   /** The request for Calc.units(): the formula with the filled slots only (an empty slot means no unit), parsed in
    *  units mode. Throws the parser's error. */
   request(): UnitRequest {
-    let latex = this.formula.latex;
-    for (const id of this.ids) {
-      if (!(this.#models.get(id) as SlotModel).empty) continue;
-      latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
-    }
+    const latex = filledLatex(this.formula, (id) => !(this.#models.get(id) as SlotModel).empty);
     const r = latexToGiacInfo(latex, { units: true, chips: this.#chips, userValues: this.#host.values?.() });
     const u = r.units ?? { slots: [], consts: [] };
     const slot = (id: string): UnitSlot => (this.#models.get(id) as SlotModel).slot;

@@ -30,14 +30,14 @@ import { FUNCTIONS, translateCells, translateRows, type PyRow } from "../src/cli
 import { PyUnitMissing, pintText } from "../src/clipboard/pyUnits.ts";
 import { constKey, type ChipTable } from "../src/input/chips.ts";
 import { latexToGiacInfo } from "../src/input/latex-to-giac.ts";
-import { END, slotFormula } from "../src/input/unitFormula.ts";
+import { filledLatex, slotFormula } from "../src/input/unitFormula.ts";
 import type { IndexItem } from "../src/find/types.ts";
 import { buildJob } from "../src/units/build.ts";
 import { factorTable, type FactorTable } from "../src/units/factors.ts";
 import { unitRow } from "../src/units/row.ts";
 import { isUnitError, type UnitRequest, type UnitSlot } from "../src/units/types.ts";
-import { VENV_PINS, oracleVenvPython } from "./g2check.ts";
-import { pyunitsCheck } from "./pyunits-check.ts";
+import { VENV_PINS } from "./g2check.ts";
+import { pyunitsCheck, venvPython } from "./pyunits-check.ts";
 import { slotOf } from "./unit-case.ts";
 
 const app = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -105,8 +105,7 @@ function unitItem(host: EngineHost, row: RowIn, k: number, s: HomeSettings, ix: 
     if (it?.value !== undefined) chips[constKey(m[1] as string)] = it.unc === undefined ? { value: it.value, exact: true } : { value: it.value, exact: false, unc: it.unc };
   }
   const f = slotFormula(row.input);
-  let latex = f.latex;
-  for (const id of [...f.slots, END]) if (!filled[id]) latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
+  const latex = filledLatex(f, (id) => filled[id] !== undefined);
   const info = latexToGiacInfo(latex, { units: true, chips });
   const u = info.units ?? { slots: [], consts: [] };
   const end = u.end !== undefined ? filled[u.end] : undefined;
@@ -321,14 +320,8 @@ export function venvVersions(py: string | null): { ok: true; versions: Record<st
   return off.length ? { ok: false, why: `pinned ${off.map(([k, v]) => `${k} ${v}`).join(", ")}, the venv has ${off.map(([k]) => `${k} ${versions[k]}`).join(", ")}: ${INSTALL_LINE}` } : { ok: true, versions };
 }
 
-/** The main checkout (the first worktree), whose tests/golden/.venv a worktree uses. */
-function mainCheckout(): string {
-  const common = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { cwd: repo, encoding: "utf8" }).stdout.trim();
-  return common ? resolve(common, "..") : repo;
-}
-
-/** The venv's Python, as g2check and oraclecheck find it. */
-export const venvPython = (): string | null => oracleVenvPython(repo, mainCheckout());
+/** The venv's Python (pyunits-check.ts's: it runs alone too, and a dynamic import of this file from there deadlocks). */
+export { venvPython };
 
 /** `--corrupt name=py`: the function table's entry `name` writes `py` instead (to see the stage go red). */
 export function corrupt(spec: string): () => void {

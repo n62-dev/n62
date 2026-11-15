@@ -10,8 +10,9 @@
 // nothing else; σ is G217. Lazy: reached only through clipboard/impl.ts.
 import { parseLatex, parseLatexInfo, type UnitsInfo } from "../input/parse.ts";
 import { validSlots } from "../input/chipUnit.ts";
-import { END, slotFormula } from "../input/unitFormula.ts";
+import { END, filledLatex, slotFormula } from "../input/unitFormula.ts";
 import type { UnitSlot } from "../units/types.ts";
+import { KEYWORDS } from "./pyWords.ts";
 import { PY_CONSTS, PyUnitMissing, absTemp, pintAttr, pintDim, pintText } from "./pyUnits.ts";
 import { FN, oddIndex, type Json } from "../input/emit.ts";
 import { ANS_KEY } from "../input/chips.ts";
@@ -55,11 +56,6 @@ export interface PyOptions {
   app: string;
 }
 
-/** Python's own words: never a name we bind. */
-const KEYWORDS = new Set(
-  ("False None True and as assert async await break class continue def del elif else except finally for from global if " +
-    "import in is lambda nonlocal not or pass raise return try while with yield").split(" "),
-);
 /** The sympy names a template may write; a user name equal to one is not bound either (it would shadow it). */
 const SYMPY = new Set(["E", "I", "Integer", "Rational", "pi", "sqrt", "rad", "deg", "log", "root", "real_root", "cos", "sin"]);
 /** G216: the names a unit row writes besides sympy's (pint's registry, its Quantity, Python's Fraction): never bound either. */
@@ -606,9 +602,7 @@ class Translator {
     const slots = validSlots(kept) ?? {};
     const f = slotFormula(r.input);
     if (Object.keys(slots).length !== Object.keys(kept).length || Object.keys(slots).some((id) => id !== END && !f.slots.includes(id))) no("a unit slot that is not read");
-    let latex = f.latex;
-    for (const id of [...f.slots, END]) if (!slots[id]) latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
-    const p = parseLatexInfo(latex, { units: true, chips });
+    const p = parseLatexInfo(filledLatex(f, (id) => slots[id] !== undefined), { units: true, chips });
     return { json: p.json, u: { info: p.units ?? { slots: [], consts: [] }, slots } };
   }
 

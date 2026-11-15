@@ -91,6 +91,17 @@ describe("translateRows: a unit row through pint (G216)", () => {
       "_1 = (3*(ureg.kN*ureg.m**2)).to('N')",
     );
   });
+  it("a unit whose pint name is a Python keyword is written ureg('<name>'): in, and as (attosecond)", () => {
+    expect(py([unitRow("3", { u1: "in", end: "cm" }, { mark: "=", exact: "381/50", unit: "cm", dim: "m1" })])).toBe(
+      file(...PINT, "_1 = (3*ureg('in')).to('cm')  # N62: = 381/50 cm"),
+    );
+    expect(py([unitRow("2", { u1: "a:s", end: "s" }, { mark: "=", exact: "1/500000000000000000", unit: "s", dim: "s1" })])).toBe(
+      file(...PINT, "_1 = (2*ureg('as')).to('s')  # N62: = 1/500000000000000000 s"),
+    );
+    expect(pintAttr(slot("in^2"))).toEqual({ s: "ureg('in')**2", p: 4 });
+    expect(pintAttr(slot("in^3 / a:s")).s).toBe("ureg('in')**3/ureg('as')");
+    expect(pintText(slot("in^2"))).toBe("in**2");
+  });
   it("°C and °F inside a compound unit are an interval (pint's delta unit)", () => {
     expect(py([unitRow("4186", { u1: "J / kg oC" }, { mark: "=", exact: "4186", unit: "J/(kg·°C)", dim: "K-1m2s-2" })])).toBe(
       file(...PINT, "_1 = 4186*(ureg.J/(ureg.kg*ureg.delta_degC))  # N62: = 4186 J/(kg·°C)"),

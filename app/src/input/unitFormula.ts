@@ -199,3 +199,12 @@ export function slotFormula(latex: string): SlotFormula {
   }
   return { latex: `${out}\\to\\placeholder[${END}]{}`, slots, ...(Object.keys(chips).length ? { chips } : {}) };
 }
+
+/** G216: the formula as the unit view sends it (units/view.ts request), with each empty prompt dropped (an empty slot means
+ *  no unit; an empty end slot drops its → too); `filled(id)` holds for a slot or the end slot that has a unit. The one rule
+ *  for the view, Copy as Python (clipboard/python.ts) and the pydiff stage, so each reads the formula the row ran. */
+export function filledLatex(f: SlotFormula, filled: (id: string) => boolean): string {
+  let latex = f.latex;
+  for (const id of [...f.slots, END]) if (!filled(id)) latex = latex.replace(id === END ? `\\to\\placeholder[${END}]{}` : `\\placeholder[${id}]{}`, "");
+  return latex;
+}

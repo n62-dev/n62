@@ -9,6 +9,7 @@
 // cd or bar is left out: pint reads `mcd` as micro-day and `hbar` as ℏ. A constant is never pint's: N62's value goes in as a literal with its SI
 // unit (CONSTS holds only the dimension). Lazy: reached only through clipboard/python.ts.
 import type { UnitSlot, UnitToken } from "../units/types.ts";
+import { KEYWORDS } from "./pyWords.ts";
 
 /** Find unit ids pint reads as they are (`^` written `**`). */
 const SAME =
@@ -159,14 +160,16 @@ function factors(slot: UnitSlot): { name: string; power: number }[] {
 }
 
 const isName = (s: string): boolean => /^[A-Za-z_][A-Za-z0-9_]*$/.test(s);
+/** A name Python reads as an attribute: not a keyword (`in`, and `as`, attosecond, would be a SyntaxError). */
+const isAttr = (s: string): boolean => isName(s) && !KEYWORDS.has(s);
 
-/** A slot as Python: a product of `ureg.<name>` (`ureg('<text>')` for a name with an operator), each with its power;
+/** A slot as Python: a product of `ureg.<name>` (`ureg('<text>')` for a name with an operator or a Python keyword: `ureg('in')`), each with its power;
  *  p is Python's precedence of the text (5 an atom, 4 a power, 2 a product). Throws PyUnitMissing. */
 export function pintAttr(slot: UnitSlot): { s: string; p: number } {
   const fs = factors(slot);
   if (fs.length === 0) throw new PyUnitMissing("an empty slot");
   const one = (name: string, power: number): string => {
-    const u = isName(name) ? `ureg.${name}` : `ureg('${name}')`;
+    const u = isAttr(name) ? `ureg.${name}` : `ureg('${name}')`;
     return power === 1 ? u : `${u}**${power < 0 ? `(${power})` : power}`;
   };
   const up = fs.filter((f) => f.power > 0).map((f) => one(f.name, f.power));
