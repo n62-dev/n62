@@ -13,7 +13,7 @@
 // file, −19 B gzip) but costs the first open +0.4 kB gzip and a fetch more, so it stays static.
 import type { MathfieldElement } from "mathlive";
 import type { Key } from "../keyboard/keyboard.ts";
-import { uncertainty, type Mods, type RouteCtx } from "../keyboard/route.ts";
+import { lazy, type Mods, type RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { engineFormat } from "../calc/port.ts";
 import { ANS_KEY, type ChipTable } from "../input/chips.ts";
@@ -188,7 +188,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     else if (a?.kind === "special" && a.name === "esc") {
       if (!view.escape()) close();
     }
-    else if (a?.kind === "special" && a.name === "uncertainty") uncertainty(c2, rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId)); // R327: on the result's row
+    else if (a?.kind === "special" && a.name === "uncertainty") {
+      const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row
+      lazy(c2, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c2, row)));
+    }
     else c2.dead();
     if (current?.view === view) keep();
     return true;

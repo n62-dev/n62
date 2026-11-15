@@ -189,16 +189,16 @@ export function special(c: RouteCtx, name: Special): void {
 const units = (c: RouteCtx, row?: HistoryItem): void => lazy(c, import("../units/open.ts").then((m) => m.openUnits(c, row)));
 
 /** A key's job in a chunk of its own: the keys pressed meanwhile wait for it (R8); a chunk that does not load is a dead press. */
-function lazy(c: RouteCtx, job: Promise<unknown>): void {
+export function lazy(c: RouteCtx, job: Promise<unknown>): void {
   const load: Promise<void> = job
     .then(() => {}, () => c.dead())
     .finally(() => c.sheetLoad === load && (c.sheetLoad = null));
   c.sheetLoad ??= load;
 }
 
-/** Shift + 1 (R327): the uncertainty sheet of `row` (views/uncSheet.ts, its own chunk); no row, or one without σ, is a
- *  dead press there. Home and CAS give the picked or the last row, the unit view its result's (units/open.ts), an app none. */
-export const uncertainty = (c: RouteCtx, row: HistoryItem | undefined): void => lazy(c, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c, row)));
+/** Shift + 1 (R327): the uncertainty sheet of `row`, from the sheet's code (views/tmplSheet.ts; the press waited for it, as
+ *  for Base); no row, or one without σ, is a dead press there. Home and CAS give the picked or the last row, an app none. */
+const uncertainty = (c: RouteCtx, row: HistoryItem | undefined): void => (sheetChunk.palette ? sheetChunk.palette.showUncertainty(c, row) : c.dead());
 
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Menu acts
