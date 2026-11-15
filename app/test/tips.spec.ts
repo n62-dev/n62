@@ -211,7 +211,7 @@ test("R266: a relaunch with stored presses and no typing shows the tips", async 
   await page.locator('[data-key="d2"]').waitFor();
   await tap(page, ["d2"]);
   await page.evaluate(() => window.n62.entry.ready);
-  await page.evaluate(() => window.n62.session.taps.flush());
+  await page.evaluate(() => window.n62.session.taps.load().then((c) => c?.flush())); // (R320: the counter is a lazy chunk)
   await page.evaluate(() => window.n62.yieldWriter());
   const next = await page.context().newPage();
   await slowIdle(next);

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // What counts as one press (R70; docs/04 section 5.2): a key tap, a flick (lock flicks too), a held ⌫ (once, when it goes
 // down), a trackpad drag (once), a tap on the screen (a history row, a Find result, a chip, a menu item). Nothing is free.
-// Pure, so the rules are unit-tested; Keypad.svelte and App.svelte call them.
+// Pure, so the rules are unit-tested. R320: a lazy chunk with the counter (taps.svelte.ts names each press with them); the
+// start chunk hands the raw press to state/tapsFront.svelte.ts, which holds `counted` and the screen-tap listener.
 
 /** A finished touch on the keypad, as Keypad.svelte holds it (only what counting needs). */
 export type FinishedTouch =
-  | { kind: "pad"; key: unknown; steps: { count: number } }
-  | { kind: "key"; key: unknown; flick: { state: "tap" | "up" | "down" | "cancelled" } }
+  | { kind: "pad"; key: { id: string } | undefined; steps: { count: number } }
+  | { kind: "key"; key: { id: string } | undefined; flick: { state: "tap" | "up" | "down" | "cancelled" } }
   | { kind: "repeat" };
 
 /** How many presses a touch is when the finger lifts. A repeating key (⌫) counts once at touch-down, so 0 here. */
@@ -20,10 +21,7 @@ export function touchPresses(g: FinishedTouch): 0 | 1 {
  *  key's layer is hw): "<key id>:<layer>" with the layer the pad shows for
  *  a tap (Alpha over Shift) and up or down for a flick; a trackpad drag is "trackpad:drag". Undefined where
  *  `touchPresses` is 0. */
-export function touchKey(
-  g: { kind: "pad"; key: { id: string } | undefined; steps: { count: number } } | { kind: "key"; key: { id: string } | undefined; flick: { state: "tap" | "up" | "down" | "cancelled" } } | { kind: "repeat" },
-  layer: { shift: boolean; alpha: boolean },
-): string | undefined {
+export function touchKey(g: FinishedTouch, layer: { shift: boolean; alpha: boolean }): string | undefined {
   if (g.kind === "repeat") return undefined;
   if (g.kind === "pad" && g.steps.count > 0) return "trackpad:drag";
   const st = g.kind === "key" ? g.flick.state : "tap";
@@ -36,7 +34,8 @@ export function touchKey(
  *  hw:Home), so the removal test reads the table's own presses; a hardware key R31, R45 or R119 had before the table and
  *  that runs a keypad key, Enter and Esc included, is "<key id>:hw". (desktopKeys.test.ts: no desktop name is a kind.) */
 export const HW_KINDS = ["letter", "symbol", "dead", "other"] as const;
-export const hwKind = (kind: (typeof HW_KINDS)[number]): string => `hw:${kind}`;
+export type HwKind = (typeof HW_KINDS)[number];
+export const hwKind = (kind: HwKind): string => `hw:${kind}`;
 
 /** What a finger can tap on the screen outside the keypad. */
 const TAPPABLE = "button, [role=menuitem], [role=button], [data-testid=sheet-catch]";
@@ -54,33 +53,9 @@ export function screenKind(target: { closest(selector: string): unknown }): stri
   return `screen:${(target.closest("[data-count]") as { dataset: { count: string } } | null)?.dataset.count ?? "button"}`;
 }
 
-/** A hardware key's handler that counts the press first (docs/04 5.2: every key press counts 1; `count` gets the handler's
- *  own arguments, R127). Its last argument is the event's KeyboardEvent.repeat: a held key counts once, so an auto-repeat
- *  runs the key again but counts nothing (R70f1). */
-export function counted<A extends unknown[]>(count: (...a: NoInfer<A>) => void, run: (...a: A) => void): (...a: [...A, repeat: boolean]) => void {
-  return (...a) => {
-    const args = a.slice(0, -1) as A;
-    if (a[a.length - 1] !== true) count(...args);
-    run(...args);
-  };
-}
-
-/** Count every tap on the screen (a history row, a Find result, a chip, a menu item). Captured, so the count is in before
- *  the tap's own handler runs (Reset then zeroes it; a Settings tap counts itself). Returns the cleanup. */
-export function countScreenTaps(count: (kind: string) => void): () => void {
-  const on = (ev: Event): void => {
-    const el = ev.target;
-    if (el instanceof Element && isScreenTap(el)) count(screenKind(el));
-  };
-  // R159f1: a control that cancels its touchend (the unit chips, which pick on pointerup) gets no click, so its tap is counted
-  // here; bubbling, so the control's own listener has run and `defaultPrevented` tells that no click follows.
-  const off = (ev: Event): void => {
-    if (ev.defaultPrevented) on(ev);
-  };
-  document.addEventListener("click", on, true);
-  document.addEventListener("touchend", off);
-  return () => {
-    document.removeEventListener("click", on, true);
-    document.removeEventListener("touchend", off);
-  };
+/** A screen tap's count name, or undefined when the event is no counted tap (tapsFront.svelte.ts listens): a click on a
+ *  button or a row that is no keypad key; a touchend only when its control cancelled it (R159f1: no click follows). */
+export function screenTapKind(ev: { type: string; target: unknown; defaultPrevented: boolean }): string | undefined {
+  const el = ev.target as { closest(selector: string): unknown } | null;
+  return (ev.type === "click" || ev.defaultPrevented) && typeof el?.closest === "function" && isScreenTap(el) ? screenKind(el) : undefined;
 }

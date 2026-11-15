@@ -28,7 +28,7 @@ import {
 } from "./displayMode.ts";
 import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
-import { TapCounter } from "./taps.svelte.ts";
+import { Taps } from "./tapsFront.svelte.ts";
 import type { UseCounter } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
 import { chipOf, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
@@ -231,8 +231,8 @@ export class Session {
   capsLock = $state(false);
   /** Shift lock (a flick up on Shift, R9): shift stays on after each key until Shift is tapped or flicked again. */
   shiftLock = $state(false);
-  /** The local count of Shift and Alpha taps (R9, P7 point 4); shown in Settings. */
-  readonly taps: TapCounter;
+  /** The press counts (R9, R70, R127), shown in Settings; R320: a front that queues them until the counter's chunk is in. */
+  readonly taps: Taps;
   /** The results mode's counter (R53, uses.svelte.ts), once loaded: its own chunk, fetched by the first fold or Counters. */
   usesCounter = $state.raw<UseCounter | undefined>();
   private usesLoad: Promise<UseCounter> | undefined;
@@ -274,7 +274,7 @@ export class Session {
   constructor(calc: Calc, kv: Kv = idbKv) {
     this.kv = kv;
     this.calc = calc;
-    this.taps = new TapCounter(kv);
+    this.taps = new Taps(kv);
     this.namesRead = calc.ready().then(
       (info) => {
         if (info?.safeStart) this.note(t("engine.safeStart"));

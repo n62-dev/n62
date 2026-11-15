@@ -9,7 +9,7 @@
   import { opensSheet } from "./opens.ts";
   import { typesVariable, varLayers } from "./variable.ts";
   import { createPressFlag } from "../input/pressFlag.ts";
-  import { touchKey, touchPresses } from "../state/pressCount.ts";
+  import type { FinishedTouch } from "../state/pressCount.ts";
   import { sheetChunk } from "../views/sheetView.svelte.ts";
   import type { UserKeys } from "./userKeys.svelte.ts";
 
@@ -50,9 +50,9 @@
      *  "alpha" for a flick down (on Shift and Alpha themselves: the lock flicks). A press that closes an open sheet
      *  (R144) is the gesture's last: a drag steps nothing more and a held ⌫ does not repeat until the finger lifts. */
     onpress: (key: Key, layer?: Layer) => void;
-    /** One press was made, as docs/04 5.2 counts them (R70): a tap, a flick, a drag, a held ⌫ once. `key`: which one,
-     *  "<key id>:<layer>" (R127, state/pressCount.ts). */
-    oncount?: (key?: string) => void;
+    /** A touch ended (a held ⌫: went down, as a tap), with the layer the pad showed: the counter (R70, R127) counts and
+     *  names it (R320: in its lazy chunk, state/pressCount.ts; a touch that is no press counts nothing). */
+    oncount?: (touch: FinishedTouch, layer: { shift: boolean; alpha: boolean }) => void;
     /** A finger went down on the pad: the key vibration, one pulse per touch (R112). A drag step or an armed flick makes none. */
     ontouch?: () => void;
   } = $props();
@@ -269,7 +269,7 @@
 
     if (target && target !== "pad" && REPEAT_KEYS.includes(target.id)) {
       // the repeats keep the layer of the first press (Shift ⌫ = Del), which used up a one-shot Shift
-      oncount(`${target.id}:${alpha ? "alpha" : shift ? "shift" : "primary"}`);
+      oncount({ kind: "key", key: target, flick: { state: "tap" } }, { shift, alpha });
       const open = sheet;
       onpress(target);
       if (open && !sheet) return unlight(el); // (R144: the tap closed a sheet; nothing repeats)
@@ -322,7 +322,7 @@
    */
   function finish(g: Gesture): void {
     unlight(g.el);
-    if (touchPresses(g) > 0) oncount(touchKey(g, { shift, alpha }));
+    oncount(g, { shift, alpha });
     if (g.kind === "pad") {
       if (g.steps.count === 0 && g.key) onpress(g.key);
     } else if (g.kind === "key") {
