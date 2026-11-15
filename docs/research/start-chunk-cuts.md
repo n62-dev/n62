@@ -30,7 +30,8 @@ Ranked by measured bytes. "Realistic" is what a cut that keeps the app working c
 2. **`state/taps.svelte.ts` with `state/pressCount.ts`: 544 B gzip (2,013 B raw).** Both leave; nothing else at start reaches them. They are the press counters (R70, R127): `TapCounter` is built in the session (`session.svelte.ts:275`), and every key, tap and hardware key calls it (`App.svelte:24, 76-113, 566`; `Keypad.svelte:325`).
    - Cut: until the chunk is in, `session.taps.press(name)` is a queue, replayed when the chunk loads. The chunk loads when the browser is idle, as the key names do (R41). Keypad hands over the raw touch with its Shift and Alpha state, and the chunk names it.
    - `TapCounter` already merges presses made before the stored counts arrive (`taps.svelte.ts:45-61`), so the replay follows a path that exists. `firstTips` reads `pressedThisStart` (`App.svelte:63`), and the queue can answer that itself.
-   - Risk to the first key: none (a push onto an array). The risk is a lost count, which a test of presses made before the load covers. Realistic: **about 0.4 kB** (to verify).
+   - Risk to the first key: none (a push onto an array). The risk is a lost count, which a test of presses made before the load covers.
+   - **Done by R320:** the front is `state/tapsFront.svelte.ts`; measured **−366 B gzip** (phase-1 `c6fe6992` 62,415 B, the branch 62,049 B); pin 62,100 B.
 3. **`input/backLayer.ts`: 195 B gzip (467 B raw).** It is Android back's history layers. It is used when a sheet opens (`App.svelte:313`) and when results mode folds (`:403`).
    - Cut: it rides with the sheet's model (`views/sheet.svelte.ts`, already lazy: a sheet waits for it anyway) and with the fold.
    - Risk: back pressed in the first instant of a fold, before the chunk is in (to verify by the package). No key waits.
@@ -53,6 +54,8 @@ The next room is structural, and these are leads, not measures:
 - The part of `session.svelte.ts` and `route.ts` that no first-screen key uses.
 
 ## `LAZY_PARTS`: the five modules
+**Done by R320:** `lazyFailures` reads `chunk-modules.json` (a module no start file holds passes; the name rule stays for a fake dist), and all five are in `LAZY_PARTS`. What follows is the state before it.
+
 `views/statSheet.ts`, `views/matrixGrid.svelte.ts`, `views/helpSheet.ts`, `entry/cursorFn.ts` and `engine/decimalLatex.ts` are all outside the start chunk in this build (`start-cuts.mjs` base, lazy check).
 
 Only two of them can go into `LAZY_PARTS` (`size-check.ts:192`) as it is. `lazyFailures` (`:519-529`) finds a part only through `lazyChunk` (`:512-516`): a dynamic entry with that source, or a shared chunk named after the file. Three of the modules are neither:
@@ -69,4 +72,4 @@ Listed, these three would fail the gate with "is not a dynamic chunk: it is in t
 - Then add the other three.
 
 ## Order
-Cut 2 first: no visible change, and a pattern that already exists. Then cut 1 with cut 4, then cut 3. Write the first one before the next row that would take the pin past about 62.8 kB, so it is not done under time pressure at the wall.
+Cut 2 first (done, R320). Then cut 1 with cut 4, then cut 3. Write the first one before the next row that would take the pin past about 62.8 kB, so it is not done under time pressure at the wall.

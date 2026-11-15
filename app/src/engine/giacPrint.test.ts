@@ -4,12 +4,14 @@
 import { describe, expect, it } from "vitest";
 import {
   afterStore,
+  arithmeticOf,
   balanced,
   callsOf,
   closing,
   definedName,
   firstNameIn,
   functionsIn,
+  integerLiteral,
   mapNumbers,
   namesIn,
   negated,
@@ -112,6 +114,32 @@ describe("numbers", () => {
     expect(typedFromPrinted('"a""b"+"x\\y\\"')).toBe('"a""b"+("x"+char(92)+"y"+char(92))');
     expect(typedFromPrinted('"q""\\"')).toBe('("q"""+char(92))');
     expect(typedFromPrinted("[1,2]")).toBe("[1,2]");
+  });
+});
+
+describe("arithmeticOf and integerLiteral (G363 fix round 2)", () => {
+  const show = (t: string): string => {
+    const a = arithmeticOf(t, "typed");
+    const w = (n: NonNullable<typeof a>): string =>
+      n.op === "num" ? n.text : n.op === "name" ? n.name : n.op === "call" ? `${n.name}[${w(n.arg)}]` : n.op === "neg" ? `~${w(n.a)}` : `{${w(n.a)}${n.op}${w(n.b)}}`;
+    return a ? w(a) : "null";
+  };
+  it("reads numbers, names, calls, brackets, signs and the five operations with their precedence", () => {
+    expect(show(" 2 * exp( 1 ) - 1.5e1 ")).toBe("{{2*exp[1]}-1.5e1}");
+    expect(show("(1+sin(1)^5000)^(sin(1)^-5000)")).toBe("{{1+{sin[1]^5000}}^{sin[1]^~5000}}");
+    expect(show("-2^2")).toBe("~{2^2}");
+    expect(show("2^3^2")).toBe("{2^{3^2}}");
+    expect(show("1/2/3")).toBe("{{1/2}/3}");
+    expect(show("((pi))")).toBe("pi");
+  });
+  it("gives null for any other text: a string, a comma, a list, a factorial, an unclosed bracket, two operands", () => {
+    for (const t of ['"1"+2', "sin(1,2)", "[1]", "2!", "(1", "1)", "", "2 pi", "f(1)(2)", "sin[1]"]) expect(show(t), t).toBe("null");
+  });
+  it("integerLiteral: a literal with a sign, in brackets or not, and where its digits start", () => {
+    expect(integerLiteral(arithmeticOf(" ( -200 ) ", "typed"))).toEqual({ n: -200, at: 4 });
+    expect(integerLiteral(arithmeticOf("5000", "typed"))).toEqual({ n: 5000, at: 0 });
+    expect(integerLiteral(arithmeticOf(`1${"0".repeat(309)}`, "typed"))).toEqual({ n: Infinity, at: 0 });
+    for (const t of ["5000.5", "2e3", "(5000)^2", "x", "--2"]) expect(integerLiteral(arithmeticOf(t, "typed")), t).toBeNull();
   });
 });
 

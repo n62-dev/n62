@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R197: the help sheet's rows from a Find item (G231's example fields): the syntax with the description, the example
-// drawn as LaTeX with its mark and result (and the angle unit of an inverse function's result), the Insert row. An item
-// without an example (tier 1) has only its syntax. Pure: no sheet, no field.
+// drawn as LaTeX with its mark and result (and the angle unit of an inverse function's result), the Insert row with the
+// call it replaces (R324). An item without an example (tier 1) has only its syntax. Pure: no sheet, no field.
 import { describe, expect, it } from "vitest";
 import type { FindItem } from "../find/types.ts";
 import { helpRows, helpTitle } from "./helpSheet.ts";
@@ -10,13 +10,15 @@ const fn = (extra: Partial<FindItem>): FindItem => ({ id: "fn:sin", kind: "fn", 
 
 describe("helpRows (R197)", () => {
   it("syntax, example with mark and result, Insert", () => {
-    const put: string[] = [];
-    const rows = helpRows(fn({ syntax: "sin(x)", desc: "Sine.", example: "\\sin\\left(30\\degree\\right)", exampleResult: "0.5", exampleMark: "=" }), (l) => put.push(l));
+    const put: unknown[] = [];
+    const at = { line: "2+\\sin\\left(45\\right)", range: [2, 8] as [number, number] };
+    const rows = helpRows(fn({ syntax: "sin(x)", desc: "Sine.", example: "\\sin\\left(30\\degree\\right)", exampleResult: "0.5", exampleMark: "=" }), (l, a) => put.push([l, a]), at);
     expect(rows.map((r) => r.id)).toEqual(["syntax", "example", "insert"]);
     expect(rows[0]).toMatchObject({ label: "sin(x)", hint: "Sine.", keep: true });
     expect(rows[1]).toMatchObject({ latex: "\\sin\\left(30\\degree\\right)", hint: "= 0.5", keep: true });
     rows[2]?.run?.();
-    expect(put).toEqual(["\\sin\\left(30\\degree\\right)"]);
+    // R324: Insert replaces the call Help named: its run gets the call's range on the line, not a bare insert
+    expect(put).toEqual([["\\sin\\left(30\\degree\\right)", at]]);
     expect(helpTitle(fn({}))).toBe("Help: Sine");
   });
 

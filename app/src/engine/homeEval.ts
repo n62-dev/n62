@@ -796,8 +796,9 @@ export function homeEval(
     return fromBuilt(b, "exact", true, exactOut, b.decimal, { once: true });
   }
   let exactText = exactOut;
-  // G58: not for a text whose re and im already were unsafe (heavySplit): Giac's simplify of it loops as they do.
-  if (shape.kind === "scalar" && !facts[0]!.exact && !heavySplit(exactOut)) {
+  // G58: not for a text whose re and im already were unsafe (heavySplit): Giac's simplify of it loops as they do. G363: nor
+  // past the cap (pastCap), where a short print is digits lost, no sign of a rational: (1+sin(1)^20000)^(csc(1)^20000) printed 1 and simplify took 0.9 s.
+  if (shape.kind === "scalar" && !facts[0]!.exact && !facts[0]!.pastCap && !heavySplit(exactOut)) {
     const proved = provedRational(giac, ans, facts[0]!, valuePrecision(s.digits));
     if (proved) {
       facts = [proved.facts];

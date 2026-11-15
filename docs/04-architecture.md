@@ -294,7 +294,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | ☰ (row 0, col 4, id `menu`) [the G2's Menu key, r3c4] | the status line's ☰ as a key (R278): it opens the view's menu and closes the one it opened; with another sheet open it only closes that sheet; Shift = Settings (R146); a dead press where the view has no menu | R278; docs/06 3b |
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
-| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
+| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find; Insert replaces the call, R324); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7 and any system paste: there are no Copy and Paste keys (R278) | R278, R279 |
 | ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (built, R11; decisions.md S2); R53 makes item 6 Plot | P8, S2, S9 |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
@@ -442,7 +442,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 
 | Item | Budget | State | Enforced by |
 |---|---|---|---|
-| Start chunk | ≤ 180 kB raw, ≤ 63 kB gzip; pin `START_PIN_GZIP` | its value and each raise with both sizes: size-check.ts. A package growing the chunk past it raises it to its size after merging phase-1 plus 0.05 kB, with the reason; `LAZY_PARTS` must stay dynamic chunks. `tools/probes/start-chunk.mjs` lists bytes per source | size test (`npm run size`) |
+| Start chunk | ≤ 180 kB raw, ≤ 63 kB gzip; pin `START_PIN_GZIP` | its value and each raise with both sizes: size-check.ts. A package growing the chunk past it raises it to its size after merging phase-1 plus 0.05 kB, with the reason; no start file may hold a `LAZY_PARTS` module (chunk-modules.json; a module inside another lazy chunk passes). `tools/probes/start-chunk.mjs` lists bytes per source | size test (`npm run size`) |
 | Inline scripts of `index.html` (run before the first paint, outside the start chunk) | pin 1.53 kB gzip (`INLINE_PIN_GZIP`; per script, summed) | 1.53 kB | size test |
 | MathLive chunk (after the keypad) | ≤ 830 kB raw | 807.74 kB (2026-10-18) | size test |
 | Find UI chunk | ≤ 30 kB raw | 8.04 kB raw: the chunk that holds `src/find/finder.ts` (dynamic entry or shared chunk); a build without it fails | size test |

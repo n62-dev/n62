@@ -63,10 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 762 | R307 the matrix list shows a changed size, and New takes the same letters as Store in | ron, Sonnet | `p1/ron-matlist` | – |
-| 763 | R308 a matrix element with an exponent writes back through the grid | ron, Opus | `p1/ron-matexp` | – |
-| 790 | R320 the press counters load when the browser is idle, and the lazy check reads the chunks | ron, Opus | `p1/ron-tapscut` | – |
-| 794 | [R324](packages/R324.md) Help's Insert replaces the call the cursor is in (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-helpreplace` | – |
+| 794 | R324 Help's Insert replaces the call the cursor is in (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-helpreplace` | – |
 | 795 | [R325](packages/R325.md) Paste takes a unit row's Copy back as a result chip with σ and unit (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-pasteunit` | – |
 | 796 | [R327](packages/R327.md) Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
 | 797 | [R328](packages/R328.md) the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
@@ -88,9 +85,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 742 | G215 the generated Python runs and agrees with N62 | gorge, Opus | `p1/gorge-pydiff` | G214 |
 | 743 | G216 Copy as Python: units through pint | gorge, Opus | `p1/gorge-pyunits` | G215 |
-| 798 | [A158](packages/A158.md) the F-Droid recipe drops `Binaries` and `AllowedAPKSigningKeys` (owner, 11-15; before the tag) | annabell, Sonnet | `p1/annabell-fdroidbox` | – |
 | 744 | [G217](packages/G217.md) Copy as Python: ± through uncertainties | gorge, Opus | `p1/gorge-pysigma` | G216 |
 | 692 | [G271](packages/G271.md) σ's terms leave the worker, each naming its input | gorge, Opus | `p1/gorge-uncterms` | – |
 | 748 | [G270](packages/G270.md) the short form, the relative σ and U as text | gorge, Sonnet | `p1/gorge-shortform` | – |

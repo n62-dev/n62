@@ -5,7 +5,8 @@
 // double (2^31, 2^53 ± 1, 10^20 + 1, 30!), and huge and tiny magnitudes (1ᴇ±300, 1ᴇ±1000, 10^50). G162: cancellation families, k from
 // 40 to 300: (1 ± 10^-k)^(c·10^k) (the base typed as a power or as the long decimal 1.000…01), (f(a + 10^-k) − f(a))·10^k + b,
 // (1 − cos 10^-k)·10^(2k) + b and, G307, (1 ± π^-2k)^(c·π^2k) or (1 ± e^-2k)^(c·e^2k), the tiny term as the keys write it (the oracle
-// raises its digits by 2k for them, by twice the digit count of the power of π or e for the last, oracle.py `tens`). G308: 1 ± 10^-k·i,
+// raises its digits by 2k for them, by twice the digit count of the power of π or e for the last, oracle.py `tens`); G363,
+// (1 ± b^±m)^(c·b^∓m) with b = ln 2, ln 3 or tanh 1, about k digits (oracle.py `tens` reads its digit count too). G308: 1 ± 10^-k·i,
 // real part exactly 1, alone or to a power that is no integer (Giac took it for one and returned the base, patch 0048). The functions add acosh, atanh and
 // the cube root to gen.ts's. Pure; `childrenOf` gives a generated tree's operands, for the smallest subtree that still fails.
 import { lcg, type Case } from "./gen.ts";
@@ -73,9 +74,28 @@ const DERIV: { latex: (a: string) => string; mp: (a: string) => string; angle: b
   { latex: (a) => `\\sinh\\left(${a}\\right)`, mp: (a) => `sinh(${a})`, angle: false },
 ];
 
-/** G162: one cancellation family at a k from CANCEL_K; `family` counts which one was drawn: `cancel0` to `cancel2`, and
- *  `cancel3` for family 0 with its tiny term a power of π or e (G307). G307 draws nothing more than G162 did, so every other
- *  tree of a seed stays as it was (the weekly night's seed of G138 keeps its failures, sweep-parts.test.ts). */
+/** G363: the constant bases of family 0's fourth form, none of them read in an angle unit: ln 2 and tanh 1 below 1, ln 3
+ *  above 1, with log10 b. */
+const CONST_BASES: { latex: string; mp: string; log10: number }[] = [
+  { latex: "\\ln\\left(2\\right)", mp: "LN(mpf('2'))", log10: Math.log10(Math.LN2) },
+  { latex: "\\ln\\left(3\\right)", mp: "LN(mpf('3'))", log10: Math.log10(Math.log(3)) },
+  { latex: "\\tanh\\left(1\\right)", mp: "tanh(mpf('1'))", log10: Math.log10(Math.tanh(1)) },
+];
+
+/** G363: the tiny (or, `huge`, the huge) power b^±m of family 0's fourth form, b from CONST_BASES by k and m the integer
+ *  for about k digits (m·|log10 b| ≈ k): a base below 1 gets a positive exponent for the tiny term, one above 1 a negative
+ *  one. Drawn from k alone, so the form takes no draw of its own. */
+function constPower(k: number, huge: boolean): { latex: string; mp: string } {
+  const b = CONST_BASES[k % CONST_BASES.length]!;
+  const m = Math.round(k / Math.abs(b.log10));
+  const n = (b.log10 < 0) !== huge ? m : -m;
+  return { latex: `${b.latex}^{${n}}`, mp: `POW(${b.mp},mpf('${n}'))` };
+}
+
+/** G162: one cancellation family at a k from CANCEL_K; `family` counts which one was drawn: `cancel0` to `cancel2`,
+ *  `cancel3` for family 0 with its tiny term a power of π or e (G307), and `cancel4` with a power of another constant base
+ *  (G363). G307 and G363 draw nothing more than G162 did, so every other tree of a seed stays as it was (G363 turns an
+ *  eighth of family 0's trees from cancel3 to cancel4). */
 function cancel(r: () => number, family?: Map<string, number>): Node {
   const k = CANCEL_K.lo + Math.min(CANCEL_K.hi - CANCEL_K.lo, Math.floor(r() * (CANCEL_K.hi - CANCEL_K.lo + 1)));
   const f = Math.min(2, Math.floor(r() * 3));
@@ -85,15 +105,16 @@ function cancel(r: () => number, family?: Map<string, number>): Node {
   if (f === 0) {
     const plus = r() < 0.5;
     const c = pick(r, ["1", "2", "-1", "3"]);
-    // the base: the long decimal 1.000…01 (below 1/2), 1 ± 10^-k (to 3/4), or, G307, 1 ± π^-2k (k even) or 1 ± e^-2k (k odd),
-    // about 0.99k or 0.87k digits, as the keys write it
+    // the base: the long decimal 1.000…01 (below 1/2), 1 ± 10^-k (to 3/4), G307, 1 ± π^-2k (k even) or 1 ± e^-2k (k odd),
+    // about 0.99k or 0.87k digits (to 7/8), or, G363, 1 ± b^±m with b a constant other than π and e (cancel4), as the keys
+    // write each
     const form = r();
-    const name = form < 0.75 ? "cancel0" : "cancel3";
+    const name = form < 0.75 ? "cancel0" : form < 0.875 ? "cancel3" : "cancel4";
     family?.set(name, (family.get(name) ?? 0) + 1);
     const pow = (n: string): { latex: string; mp: string } =>
       k % 2 === 0 ? { latex: `\\pi^{${n}}`, mp: `POW(PI,mpf('${n}'))` } : { latex: `\\exponentialE^{${n}}`, mp: `exp(mpf('${n}'))` };
-    const tiny = form < 0.75 ? small : pow(`-${2 * k}`);
-    const huge = form < 0.75 ? big : pow(`${2 * k}`);
+    const tiny = form < 0.75 ? small : form < 0.875 ? pow(`-${2 * k}`) : constPower(k, false);
+    const huge = form < 0.75 ? big : form < 0.875 ? pow(`${2 * k}`) : constPower(k, true);
     const base = form < 0.5
       ? (plus ? { latex: `1.${"0".repeat(k - 1)}1`, mp: `mpf('1.${"0".repeat(k - 1)}1')` } : { latex: `0.${"9".repeat(k)}`, mp: `mpf('0.${"9".repeat(k)}')` })
       : { latex: `1${plus ? "+" : "-"}${tiny.latex}`, mp: `(mpf('1'))${plus ? "+" : "-"}(${tiny.mp})` };
@@ -266,7 +287,7 @@ function remember(n: Node): void {
   n.kids.forEach(remember);
 }
 
-/** `count` edge trees from `seed`, depth up to 3. `seen` (optional) counts the leaf classes drawn, and the cancellation families as `cancel0` to `cancel3`. */
+/** `count` edge trees from `seed`, depth up to 3. `seen` (optional) counts the leaf classes drawn, and the cancellation families as `cancel0` to `cancel4`. */
 export function generateEdges(seed: number, count: number, seen?: Map<string, number>): Case[] {
   const r = lcg(seed);
   const out: Case[] = [];
