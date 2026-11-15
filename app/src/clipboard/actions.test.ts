@@ -136,7 +136,11 @@ describe("ClipActions menu: Export › is item 10", () => {
     const exp = m[9]!;
     expect(exp.label).toBe("Export");
     expect(exp.disabled).toBe(false);
-    expect(exp.submenu?.items.map((i) => [i.id, i.label, i.disabled])).toEqual([["work", "Work report", false]]);
+    expect(exp.submenu?.items.map((i) => [i.id, i.label, i.disabled])).toEqual([
+      ["work", "Work report", false],
+      ["csv", "CSV", false],
+      ["latex", "LaTeX", false],
+    ]);
   });
   it("with nothing finished Export › is off, and an empty history gives it no reason line (fit.spec.ts)", () => {
     expect(menuOf([])[9]).toMatchObject({ id: "export", disabled: true, reason: undefined });
@@ -187,5 +191,64 @@ describe("ClipActions export of the work", () => {
     await Promise.all([a, b]);
     expect(log).toEqual(["start 1", "end 1", "start 2", "end 2"]);
     expect(c.notice).toBe("saved 2");
+  });
+});
+
+// R200: ☰ › Export › CSV and LaTeX: the open session as a file through the save port (files.ts), named n62-<date>.<ext>.
+describe("ClipActions exportCsv and exportLatex", () => {
+  const saved: { name: string; mime: string; text: string }[] = [];
+  const actions = (items: object[]) => {
+    const session = { items, view: "home", decimalComma: false, displayContext: () => ({ format: "std", digits: 12, fixDecimals: 4, angle: "rad" }) } as unknown as Session;
+    const shell = { app: null, showsEntry: true } as unknown as AppShell;
+    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} });
+  };
+  const half = { status: "done", latex: "\\frac12", resultLatex: "0.5", text: "0.5", full: "1/2", fullExact: true, facts: { exact: true, reliableDigits: null }, rational: { n: "1", d: "2" } };
+  afterEach(() => {
+    vi.doUnmock("./files.ts");
+    saved.length = 0;
+  });
+  const fake = (result: string) =>
+    vi.doMock("./files.ts", () => ({
+      saveFile: async (name: string, mime: string, text: string) => {
+        saved.push({ name, mime, text });
+        return result;
+      },
+    }));
+  it("exportCsv saves n62-<date>.csv through saveFile and says so", async () => {
+    fake("saved");
+    const c = actions([half]);
+    await c.exportCsv();
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.name).toMatch(/^n62-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(saved[0]?.mime).toBe("text/csv");
+    expect(saved[0]?.text.split("\r\n")[0]).toBe("input,value,mark,unit,sigma");
+    expect(c.notice).toBe("CSV saved");
+  });
+  it("exportLatex saves n62-<date>.tex through saveFile and says so", async () => {
+    fake("offered");
+    const c = actions([half]);
+    await c.exportLatex();
+    expect(saved[0]?.name).toMatch(/^n62-\d{4}-\d{2}-\d{2}\.tex$/);
+    expect(saved[0]?.text).toContain("\\begin{align*}");
+    expect(c.notice).toBe("LaTeX offered as a download");
+  });
+  it("nothing to export says so and saves nothing", async () => {
+    fake("saved");
+    const c = actions([{ status: "pending", latex: "2", text: "" }]);
+    await c.exportCsv();
+    expect(c.notice).toBe("Nothing to export");
+    await c.exportLatex();
+    expect(c.notice).toBe("Nothing to export");
+    expect(saved).toEqual([]);
+  });
+  it("a cancelled or failed save is the notice", async () => {
+    fake("cancelled");
+    const c = actions([half]);
+    await c.exportCsv();
+    expect(c.notice).toBe("CSV not saved");
+    vi.doUnmock("./files.ts");
+    fake("failed");
+    await c.exportLatex();
+    expect(c.notice).toBe("The LaTeX could not be saved");
   });
 });
