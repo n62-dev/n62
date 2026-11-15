@@ -5,6 +5,6 @@
 import { OPENS_SHEET, type ActionBody } from "./keyboard.ts";
 
 /** True if the action opens a sheet (OPENS_SHEET: Vars, Math, Shift + Math, Tmpl, Shift + 6, Shift + 9, Shift + Deselect
- *  (Mode, R322), Shift + −, Shift + Select (Help, R197), and what a user key may hold: the Apps sheet and the view's or the picked row's menu); false for typing, a
+ *  (Mode, R322), Shift + −, Shift + Select (Help, R197), Shift + 1 (the uncertainty sheet, R327), and what a user key may hold: the Apps sheet and the view's or the picked row's menu); false for typing, a
  *  template, an editing command and every other special. */
 export const opensSheet = (a: ActionBody | undefined): boolean => a?.kind === "special" && OPENS_SHEET.includes(a.name);

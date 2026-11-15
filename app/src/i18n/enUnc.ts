@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R40: the uncertainty texts (Settings › Numbers › Uncertainty, R124's Marks, R125's Digit groups, the Fmt key cycle row, the σ line). A table of its own,
+// R40: the uncertainty texts (Settings › Numbers › Uncertainty, R124's Marks, R125's Digit groups, the Fmt key cycle row, the σ line,
+// R327's uncertainty sheet). A table of its own,
 // loaded with the Mode sheet's and the σ line's chunks, so the start chunk does not carry it (R91's pin, docs/04 8.3).
 // English only so far.
 export const enUnc = {
@@ -8,6 +9,14 @@ export const enUnc = {
   "unc.setting.sigma": "Muted digits, σ on tap",
   "unc.setting.muted": "Muted digits",
   "unc.sigma": "σ = {s} · U = 2σ = {u} (k = 2)",
+  // R327: the uncertainty sheet's head (Shift + 1; docs/mockups/uncertainty-sheet.html section 4's words)
+  "unc.sheet": "Uncertainty",
+  "unc.sheet.sigma": "standard uncertainty (σ)",
+  "unc.sheet.expanded": "expanded",
+  "unc.sheet.u": "U = 2σ = {u} (k = 2)",
+  "unc.sheet.relative": "relative σ",
+  "unc.sheet.percent": "{p} %",
+  "unc.sheet.zero": "none: the value is 0",
   // R124: Settings › Numbers › Marks
   "marks.setting": "Marks",
   "marks.setting.muted": "Muted",
