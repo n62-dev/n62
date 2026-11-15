@@ -32,6 +32,8 @@ export function matches(label: string, filter: string): boolean {
 
 /** The credits sheet's text (R149, views/creditsSheet.ts): a heading, or a paragraph under it. */
 export type CreditBlock = { readonly heading: string } | { readonly text: string };
+/** R327: the uncertainty sheet's head (views/uncSheet.ts builds it; only its type here, the code stays in its chunk). */
+export type UncHead = import("./uncSheet.ts").UncHead;
 
 /** One level of the stack: the root list or a submenu. */
 export class Level {
@@ -60,6 +62,8 @@ export class Level {
   }
   /** R149: the credits, a list of headings and paragraphs that rolls up (Sheet.svelte); ▲ ▼ page through it like a text. */
   readonly credits: readonly CreditBlock[] | undefined;
+  /** R327: the uncertainty sheet's head, drawn in place of rows (UncHead.svelte); ▲ ▼ and digits find no row. */
+  readonly unc: UncHead | undefined;
   /** The preview under the list may take several lines. */
   readonly longPreview: boolean;
   /** The load of rows that are not in yet (a lazy submenu, R87), else null: keys wait for it (route.ts, R8). */
@@ -95,6 +99,7 @@ export class Level {
     this.search = opts?.search;
     this.textSource = opts?.text;
     this.credits = opts?.credits;
+    this.unc = opts?.unc;
     this.longPreview = opts?.longPreview ?? false;
     this.loading = opts?.loading ?? (this.grid ? () => this.grid?.loading() ?? null : () => null);
     this.filterable = this.columns === undefined && (this.search !== undefined || (opts?.filterable ?? source().length > FILTER_ABOVE));
@@ -244,6 +249,8 @@ export interface SheetOptions {
   text?: string | (() => string);
   /** The credits (see Level.credits). */
   credits?: readonly CreditBlock[];
+  /** The uncertainty sheet's head (see Level.unc). */
+  unc?: UncHead;
   /** Several lines for the preview (see Level.longPreview). */
   longPreview?: boolean;
   /** A letter grid above the list, of this many columns (see Level.cells). */

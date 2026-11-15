@@ -117,8 +117,13 @@ describe("what a cell shows and emits", () => {
   });
 
   it("is dead where a cell has nothing: null, and the legends say so", () => {
+    expect(pad.press("d8", "shift")).toBeNull();
+    expect(shown(pad, "d8", true, false)).toMatchObject({ dead: true });
+    // R327: d1's cell has no Shift leg either, but Shift + 1 (the uncertainty sheet) stays on it, drawn with σ and live
+    // (UnitPad.route hands it to the unit view); the cell itself still emits nothing there
     expect(pad.press("d1", "shift")).toBeNull();
-    expect(shown(pad, "d1", true, false)).toMatchObject({ dead: true });
+    expect(shown(pad, "d1", false, false)).toMatchObject({ face: "m", up: "σ" });
+    expect(shown(pad, "d1", true, false)).toMatchObject({ face: "σ", dead: false });
     expect(pad.press("math", "shift")).toBeNull();
     // R118: Shift + ⌫ (Del, a hardware Delete) is dead with the pulse: a slot has no cursor, so nothing is after it
     expect(pad.press("bksp", "shift")).toBeNull();

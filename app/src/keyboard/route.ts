@@ -158,6 +158,9 @@ export function special(c: RouteCtx, name: Special): void {
     case "matrix":
       c.openMatrix();
       break;
+    case "uncertainty":
+      uncertainty(c); // R327: no pick, the last row (as Fmt)
+      break;
     case "selectGrow":
     case "selectShrink":
       // R279: the entry line only; a view without one (Plot) has nothing to select
@@ -183,13 +186,19 @@ export function special(c: RouteCtx, name: Special): void {
 
 /** The units key (R24c): the unit view (a lazy chunk) on the line or `row`; keys pressed while it loads wait (R8). It
  *  reads the line, so before the field is up press holds it as it holds Enter (R255f1). */
-function units(c: RouteCtx, row?: HistoryItem): void {
-  const load: Promise<void> = import("../units/open.ts")
-    .then((m) => m.openUnits(c, row))
-    .catch(() => c.dead())
+const units = (c: RouteCtx, row?: HistoryItem): void => lazy(c, import("../units/open.ts").then((m) => m.openUnits(c, row)));
+
+/** A key's job in a chunk of its own: the keys pressed meanwhile wait for it (R8); a chunk that does not load is a dead press. */
+export function lazy(c: RouteCtx, job: Promise<unknown>): void {
+  const load: Promise<void> = job
+    .then(() => {}, () => c.dead())
     .finally(() => c.sheetLoad === load && (c.sheetLoad = null));
   c.sheetLoad ??= load;
 }
+
+/** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
+ *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
+const uncertainty = (c: RouteCtx, row?: HistoryItem): void => (sheetChunk.palette ? sheetChunk.palette.showUncertainty(c, row) : c.dead());
 
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Menu acts
@@ -228,6 +237,10 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   }
   if (action.kind !== "special") return false;
   if (action.name === "esc") return true;
+  if (action.name === "uncertainty") {
+    uncertainty(c, item); // Shift + 1 on the picked row (R327)
+    return true;
+  }
   if (action.name === "units" && item) {
     units(c, item); // the units key on the picked row (docs/04 4.3)
     return true;
