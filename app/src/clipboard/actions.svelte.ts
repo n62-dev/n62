@@ -23,6 +23,8 @@ const source = (i: HistoryItem): CopySource => i;
 
 // The text, paste and port code loads on first use (it is not needed to start).
 const impl = () => import("./impl.ts");
+/** R325: the reader of a unit row's Copy text, with the unit catalogue: only when the clipboard holds no number. */
+const pasteUnit = () => import("./pasteUnit.ts");
 
 const NOTICE_MS = 2200;
 
@@ -194,15 +196,34 @@ export class ClipActions {
       return false;
     }
     const n = (await impl()).parsePastedNumber(clip, this.opts);
-    if (!n) {
-      this.say(tc("clip.notNumber"));
-      return false;
-    }
+    if (!n) return this.pasteQuantity(clip);
     if (this.shell.showsEntry) this.entry.insert(n.latex);
     else {
       this.say(tc("clip.nothing"));
       return false;
     }
+    return true;
+  }
+  /** R325: a unit row's Copy text (`39.488 ± 1.2 m²`) as R61's result chip, its unit read against the Find index, which
+   *  Paste then waits for (hurried, as Help does); a unit the index does not hold is refused, named. */
+  private async pasteQuantity(clip: string): Promise<boolean> {
+    const u = await pasteUnit();
+    const q = u.quantityText(clip, this.opts);
+    if (!q) {
+      this.say(tc("clip.notNumber"));
+      return false;
+    }
+    // (an index that does not load holds no unit: refused as one it lacks)
+    const r = await u.unitCatalogue().then((c) => u.readQuantity(q, ...c), () => ({ unknown: q.unit }));
+    if ("unknown" in r) {
+      this.say(tc("clip.unknownUnit").replace("{unit}", r.unknown));
+      return false;
+    }
+    if (!this.shell.showsEntry) {
+      this.say(tc("clip.nothing"));
+      return false;
+    }
+    this.entry.insertResult(r.shown, r.chip);
     return true;
   }
 

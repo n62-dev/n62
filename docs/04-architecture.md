@@ -128,7 +128,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | List, matrix | `{a,b}`, `[[a,b],[c,d]]`, elements as above; with decimal comma `{1,5;2}`, `[[a;b];[c;d]]` | yes | yes | yes |
 | Solve root, analysis value | full value | yes | — | — |
 | Num table | CSV (Menu, Export): header row with the function names, full values, `.` and `,` as separator (`;` with decimal comma) | — | — | — |
-| Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269) | yes | `(1397/3125) m/s` | yes |
+| Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (Copy as shown and Share write the same; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry as its plain text, as Share session writes it (`sqrt(2)+3`); on its result, what Copy writes.

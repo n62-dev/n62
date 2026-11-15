@@ -26,6 +26,7 @@ const clip = {
   "clip.noExact": "No exact form",
   "clip.noResult": "No result yet",
   "clip.notNumber": "Paste: not a number",
+  "clip.unknownUnit": "Paste: unit {unit} not found",
   "clip.unavailable": "The clipboard is not available",
   "clip.shared": "Shared",
   "clip.sharedAsCopy": "This device cannot share: copied instead",

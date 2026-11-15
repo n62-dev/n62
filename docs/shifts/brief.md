@@ -64,7 +64,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 794 | R324 Help's Insert replaces the call the cursor is in (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-helpreplace` | – |
-| 795 | [R325](packages/R325.md) Paste takes a unit row's Copy back as a result chip with σ and unit (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-pasteunit` | – |
+| 795 | R325 Paste takes a unit row's Copy back as a result chip with σ and unit (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-pasteunit` | – |
 | 796 | [R327](packages/R327.md) Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
 | 797 | [R328](packages/R328.md) the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
 | 801 | [R329](packages/R329.md) Shift + Vars is Paste (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-varspaste` | – |
