@@ -231,8 +231,7 @@ export class Session {
   capsLock = $state(false);
   /** Shift lock (a flick up on Shift, R9): shift stays on after each key until Shift is tapped or flicked again. */
   shiftLock = $state(false);
-  /** The local count of Shift and Alpha taps (R9, P7 point 4) and of every press (R70, R127); shown in Settings. R320: a
-   *  front that queues the presses until the counter's chunk is in (tapsFront.svelte.ts). */
+  /** The press counts (R9, R70, R127), shown in Settings; R320: a front that queues them until the counter's chunk is in. */
   readonly taps: Taps;
   /** The results mode's counter (R53, uses.svelte.ts), once loaded: its own chunk, fetched by the first fold or Counters. */
   usesCounter = $state.raw<UseCounter | undefined>();
