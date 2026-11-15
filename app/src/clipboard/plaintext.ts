@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // An entry's LaTeX as plain text (R134): what a shared session and the why line write for people. Its own module so the
 // why line (in the tidy chunk) does not pull the copy code of text.ts with it.
+import type { TextOptions } from "./text.ts";
 
 /** A fraction part or exponent: bare when it is one token (a bound may still be one command, `\pi`), else in brackets. */
 const group = (s: string): string => (/^-?(?:[\w.]+|\\[A-Za-z]+)$/.test(s) ? s : `(${s})`);
-/** A fraction part: a function call (`sin(x)`) is one token there too. */
-const fracPart = (s: string): string => (/^[A-Za-z]+\([^()]*\)$/.test(s) ? s : group(s));
+/** The function names a fraction part may start with and stay bare (`sin(x)/2`): COMMANDS' names and `sqrt`. Any other
+ *  letters before a bracket are an implied product (`x(x+1)`), which keeps its brackets: `1/x(x+1)` reads as (1/x)·(x+1). */
+const FUNCTIONS = new Set(
+  "sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh coth log ln lg exp min max gcd lcm det dim arg sqrt".split(" "),
+);
+/** A fraction part: a call of a known function (`sin(x)`) is one token there too; anything else is `group`'s. */
+const fracPart = (s: string): string => {
+  const head = /^([A-Za-z]+)\([^()]*\)$/.exec(s)?.[1];
+  return head !== undefined && FUNCTIONS.has(head) ? s : group(s);
+};
 
 /** The braces of a list and of a piecewise (R306) while the groups are read: kept apart from LaTeX's `{…}`. */
 const OPEN = "\uE000";
@@ -22,11 +31,7 @@ const COMMANDS: Readonly<Record<string, string>> = {
   partial: "∂", int: "∫", infty: "∞", degree: "°", prime: "′", doubleprime: "″", AA: "Å", to: " → ", rightarrow: " → ",
   leq: " ≤ ", le: " ≤ ", geq: " ≥ ", ge: " ≥ ", neq: " ≠ ", ne: " ≠ ", approx: " ≈ ", equiv: " ≡ ", measuredangle: "∡", emark: "E",
   // the function names (MathLive writes `\sin`, `\log_{16}`): the name without its backslash
-  ...Object.fromEntries(
-    "sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh coth log ln lg exp min max gcd lcm det dim arg sum prod lim"
-      .split(" ")
-      .map((n) => [n, n]),
-  ),
+  ...Object.fromEntries([...FUNCTIONS, "sum", "prod", "lim"].filter((n) => n !== "sqrt").map((n) => [n, n])),
 };
 
 /** The command names the table holds (for the test that the Symbols palette is covered). */
@@ -181,8 +186,8 @@ function derivatives(s: string): string {
 /** An entry as plain text for a shared session: the LaTeX as typed (the parser's output is for the engine, not for people).
  *  Wrappers and chips first (a chip's symbol is LaTeX too), then the commands, then `\mathrm`, so `\to\mathrm{m}` is
  *  read as `\to` and `m`, never `\tom`. */
-export function entryText(latex: string): string {
-  const sep = latex.includes("{,}") ? ";" : ","; // the decimal comma: `;` between elements (R100)
+export function entryText(latex: string, o: TextOptions = {}): string {
+  const sep = o.decimalComma === true ? ";" : ","; // the decimal comma setting: `;` between elements, as Copy writes a list (R100)
   let s = evaluateAt(latex.replace(/\\char"5E\s?/g, "^")); // the one-line caret
   s = s.replace(/\\(?:left|right)(?![A-Za-z])/g, "");
   s = environments(s, sep).replace(/\\\{/g, OPEN).replace(/\\\}/g, CLOSE); // a list's braces, R306

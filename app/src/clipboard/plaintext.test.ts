@@ -140,14 +140,34 @@ describe("plain text of what is shared (R134)", () => {
       ["\\frac{\\partial x^2}{\\partial x}", "∂/∂x (x^2)"],
       ["\\left.x^2\\right|_{x=3}", "(x^2 | x=3)"],
       ["\\left.\\frac{1}{x}\\right|_{x=2}+1", "(1/x | x=2)+1"],
-      // the decimal comma (R100's input as drawn): `;` between the elements, as Copy writes a list
-      ["\\begin{pmatrix}1{,}5 & 2\\\\ 3 & 4\\end{pmatrix}", "[[1,5;2];[3;4]]"],
-      ["\\left\\{1{,}5;2\\right\\}", "{1,5;2}"],
     ];
     for (const [latex, text] of cases) {
       expect(entryText(latex), latex).toBe(text);
       expect(entryText(latex), latex).not.toContain("\\");
     }
+  });
+
+  it("the decimal comma setting, not the entry, picks `;` between elements: a whole-number matrix too (R306 fix 2, R100)", () => {
+    const comma = { decimalComma: true };
+    const cases: [string, string][] = [
+      ["\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}", "[[1;2];[3;4]]"],
+      ["\\begin{pmatrix}1{,}5 & 2\\\\ 3 & 4\\end{pmatrix}", "[[1,5;2];[3;4]]"],
+      ["\\left\\{1{,}5;2\\right\\}", "{1,5;2}"],
+    ];
+    for (const [latex, text] of cases) expect(entryText(latex, comma), latex).toBe(text);
+    // without the setting a point is the mark, and the comma separates
+    expect(entryText("\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}")).toBe("[[1,2],[3,4]]");
+  });
+
+  it("a fraction part is bare only as a call of a known function; an implied product keeps its brackets (R306 fix 1)", () => {
+    const cases: [string, string][] = [
+      ["\\frac{1}{x\\left(x+1\\right)}", "1/(x(x+1))"],
+      ["\\frac{a}{b\\left(c\\right)}", "a/(b(c))"],
+      ["\\frac{\\operatorname{f}\\left(x\\right)}{2}", "(f(x))/2"],
+      ["\\frac{\\sin\\left(x\\right)}{\\cos\\left(x\\right)}", "sin(x)/cos(x)"],
+      ["\\frac{1}{\\ln\\left(2\\right)}", "1/ln(2)"],
+    ];
+    for (const [latex, text] of cases) expect(entryText(latex), latex).toBe(text);
   });
 
   it("every template of the Tmpl palette and the list and matrix keys read with no backslash and no brace group (R306)", () => {
