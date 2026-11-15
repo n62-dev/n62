@@ -13,7 +13,7 @@
 //
 // Runs synchronously next to the engine (inside the Giac worker, or in Node for tests). Only
 // erasable TypeScript syntax, so Node runs this file directly.
-import { valueFactsOf, type StoredRead, type StoredUse, type ValueFacts } from "./types.ts";
+import { valueFactsOf, type StoredRead, type StoredUse, type UncTerm, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
 import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
@@ -107,6 +107,8 @@ export interface HomeResult {
   error?: "syntax" | "engine" | "timeout" | Refusal | StoreRefusal;
   /** How far the value can be trusted (G76): `exact` with the format decides "=" (docs/04 section 2.4, 8.2). */
   facts: ValueFacts;
+  /** G274: two or more uncertain inputs: each one's share of σ² (not in `facts`, which the start reads). */
+  uncTerms?: UncTerm[];
   /** The text to copy and the `\res` chip value: the exact text or P digits (docs/04 section 2.6, 3.6). */
   full: string;
   /** What a stateful input defined, for the live Find items (docs/04 section 3.4). */
