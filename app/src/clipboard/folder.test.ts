@@ -2,7 +2,7 @@
 // A65, A100, A101: the sync folder's port with @capacitor/core mocked (never a device in unit tests; the device check is in the report).
 import { readdirSync, readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { appendChecked, folderAppend, folderList, folderModel, folderName, folderRead, folderWrite, forgetFolder, pickFolder, validName } from "./folder.ts";
+import { appendChecked, folderAppend, folderList, folderTail, folderModel, folderName, folderRead, folderWrite, forgetFolder, pickFolder, validName } from "./folder.ts";
 
 const cap = vi.hoisted(() => ({
   native: false,
@@ -331,6 +331,22 @@ describe("appendChecked (A101: a checked append, never a mode switch)", () => {
     expect(callers).toEqual(["clipboard/folder.ts"]);
     const folder = readFileSync(new URL("folder.ts", import.meta.url), "utf8");
     expect(folder.match(/\bfolderAppend\s*\(/g)).toHaveLength(2); // its definition and appendChecked's call
+  });
+});
+
+describe("folderTail (G219f1: the sync queue's read of a file's end)", () => {
+  it("answers the plugin's text, missing, or failed; never reaches the plugin on the web or with a bad name", async () => {
+    expect(await folderTail("n62-x.py", 4)).toBe("unavailable");
+    native();
+    cap.files.tail.mockResolvedValueOnce({ result: "ok", text: "= 1\n" }).mockResolvedValueOnce({ result: "missing" }).mockResolvedValueOnce({ result: "ok" });
+    expect(await folderTail("n62-x.py", 4)).toEqual({ text: "= 1\n" });
+    expect(cap.files.tail).toHaveBeenLastCalledWith({ name: "n62-x.py", n: 4 });
+    expect(await folderTail("n62-x.py", 4)).toBe("missing");
+    expect(await folderTail("n62-x.py", 4)).toBe("failed");
+    cap.files.tail.mockRejectedValueOnce(new Error("io"));
+    expect(await folderTail("n62-x.py", 4)).toBe("failed");
+    expect(await folderTail("../x.py", 4)).toBe("failed");
+    expect(cap.files.tail).toHaveBeenCalledTimes(4);
   });
 });
 

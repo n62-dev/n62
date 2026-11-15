@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G218: what the sync folder receives. The clock is given (local dates), the rows are fixed; the `.py` text expected is
 // G213's own translation of each row (python.test.ts pins those templates), here its place in the appended file.
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
 import { validName } from "../clipboard/folder.ts";
 import { sessionLine } from "../state/sessionLine.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { deviceSlug, filesFor, processId, syncFilesState, type SyncFile, type SyncFilesState } from "./files.ts";
+import { SyncQueue } from "./queue.ts";
+import { fakeFolder, fakePort, memKv } from "./fakeFolder.ts";
 
 const APP = "0.1.0";
 const HEAD = "# N62 0.1.0 · Copy as Python · preview: the form of this file can change";
@@ -189,5 +191,43 @@ describe("filesFor: a Python name is bound once per file", () => {
 
   it("the check above sees a name bound twice and a name read before it is bound", () => {
     expect(bindings("_3 = 1\n_3 = 2\n_4 = a*_9\n")).toEqual({ twice: ["_3"], unbound: ["a", "_9"] });
+  });
+});
+
+describe("through the sync queue (G219f1): a crash between the append and the dequeue", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("the .py binds no name twice and each cell runs once: a = a + 1 stays one step, _5 stays 12", async () => {
+    // batch one binds a = 5; batch two rebinds a from its own value (= 6) and reads it (_5 = a*2, = 12)
+    const rows = [
+      done("2", "2", "2", { uid: "r-1" }),
+      done("3", "3", "3", { uid: "r-2" }),
+      done("5\\blacktriangleright a", "5", "5", { uid: "r-3" }),
+      done("a+1\\blacktriangleright a", "6", "6", { uid: "r-4", reads: [{ name: "a", value: "5", exact: true }] }),
+      done("a\\times2", "12", "12", { uid: "r-5", reads: [{ name: "a", value: "6", exact: true }] }),
+    ];
+    const { each } = run(rows, syncFilesState(APP, START1), at(10, 0));
+    const kv = memKv();
+    const dir = fakeFolder();
+    const q = new SyncQueue(fakePort(dir, kv));
+    await q.start();
+    for (const files of each.slice(0, 3)) await q.add(files);
+    await q.flush();
+    for (const files of each.slice(3)) await q.add(files);
+    dir.afterAppend = () => (kv.frozen = true); // batch two lands, the dequeue's write never does
+    await q.flush();
+    kv.frozen = false;
+    dir.afterAppend = () => {};
+    const again = new SyncQueue(fakePort(dir, kv));
+    await again.start();
+    await again.idle();
+    const py = dir.files.get("n62-tab-1a2b-2026-11-08.py") as string;
+    expect(bindings(py)).toEqual({ twice: [], unbound: [] });
+    expect(py).toBe(each.map((f) => f[1]?.text).join(""));
+    expect(py.split("\n").filter((l) => l.startsWith("a = a + 1"))).toEqual(["a = a + 1  # N62: = 6"]);
+    expect(py).toContain(`\n_5_${P1} = a*2  # N62: = 12\n`);
+    const ids = (dir.files.get("n62-tab-1a2b-2026-11-08.jsonl") as string).split("\n").filter((l) => l !== "").map((l) => (JSON.parse(l) as { id: string }).id);
+    expect(ids).toEqual(["r-1", "r-2", "r-3", "r-4", "r-5"]);
   });
 });
