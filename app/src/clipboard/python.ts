@@ -641,8 +641,10 @@ class Translator {
     const r = this.rows[i] as PyRow;
     const line = i + 1;
     if ((r.gap ?? 0) > 0) this.cut = line;
+    // N62's answer as the row shows it: the value, ± σ when it has one (never dropped, principle 3), then the unit
+    const sigma = typeof r.sigma === "string" && r.sigma !== "" ? ` ± ${r.sigma}` : "";
     const unit = r.ok && typeof r.unit === "string" && r.unit !== "" ? ` ${r.unit}` : "";
-    const answer = oneLine(r.ok ? `${r.mark ? `${r.mark} ` : ""}${(r.mark === "=" ? (r.exact ?? r.value) : (r.value ?? r.exact)) ?? ""}${unit}` : (r.error ?? "no result"));
+    const answer = oneLine(r.ok ? `${r.mark ? `${r.mark} ` : ""}${(r.mark === "=" ? (r.exact ?? r.value) : (r.value ?? r.exact)) ?? ""}${sigma}${unit}` : (r.error ?? "no result"));
     try {
       if (!r.ok) no("N62 gave no result");
       if (r.sigma) no("σ is not translated");

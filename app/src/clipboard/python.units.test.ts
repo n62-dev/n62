@@ -109,7 +109,7 @@ describe("translateRows: a unit row through pint (G216)", () => {
   });
   it("what a unit row does not translate: σ (G217), a function, a store, a chip, an old line without its slots", () => {
     expect(py([unitRow("5\\pm0.1", { u1: "kg" }, { mark: "≈", value: "5", unit: "kg", dim: "kg1", sigma: "0.10" })])).toBe(
-      file("# N62 NOT TRANSLATED (σ is not translated): 5\\pm0.1", "# N62: ≈ 5 kg"),
+      file("# N62 NOT TRANSLATED (σ is not translated): 5\\pm0.1", "# N62: ≈ 5 ± 0.10 kg"),
     );
     expect(py([unitRow("\\sin\\left(30\\right)", { u1: "deg" }, { mark: "=", exact: "1/2", unit: "", dim: "" })])).toBe(
       file("# N62 NOT TRANSLATED (Sin in a unit row is not translated): \\sin\\left(30\\right)", "# N62: = 1/2"),
