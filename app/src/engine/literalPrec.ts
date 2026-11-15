@@ -38,11 +38,11 @@ const EXP_POWER = { before: "exp(", gaps: ["", "-"] } as const;
 function constantPowers(text: string, q: Quoting): Map<number, { n: number; log10: number }> {
   const out = new Map<number, { n: number; log10: number }>();
   for (const p of powersIn(text, q)) {
-    const m = /^\s*(\(\s*)?(-?)\s*(\d+)\s*(\))?\s*$/.exec(text.slice(...p.exponent));
-    if (!m || (m[1] === undefined) !== (m[4] === undefined) || /^\d+$/.test(p.base)) continue;
+    const m = /^(\s*\(?\s*(-?)\s*)(\d+)(\s*\)?\s*)$/.exec(text.slice(...p.exponent));
+    if (!m || m[1]!.includes("(") !== m[4]!.includes(")") || /^\d+$/.test(p.base)) continue;
     const log10 = Math.log10(Math.abs(constantDouble(p.base)));
     if (!Number.isFinite(log10)) continue;
-    out.set(p.exponent[0] + m.index + m[0].indexOf(m[3]!), { n: Number(m[2] + m[3]), log10 });
+    out.set(p.exponent[0] + m[1]!.length, { n: Number(m[2]! + m[3]!), log10 });
   }
   return out;
 }
