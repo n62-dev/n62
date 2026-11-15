@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 |---|---|---|---|---|
 | 796 | R327 Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
 | 797 | [R328](packages/R328.md) the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
-| 813 | [R250](packages/R250.md) the RPN stack model (units and ± kept; owner, 11-15: before the freeze) | ron, Opus | `p1/ron-rpnstack` | – |
+| 813 | R250 the RPN stack model (units and ± kept; owner, 11-15: before the freeze) | ron, Opus | `p1/ron-rpnstack` | – |
 | 814 | [R251](packages/R251.md) the RPN operation composer and its binding to a row | ron, Opus | `p1/ron-rpncompose` | R250 |
 | 815 | [R252](packages/R252.md) the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
 | 816 | [R253](packages/R253.md) the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
