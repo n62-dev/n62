@@ -8,6 +8,7 @@
 // kill or an I/O error leaves the old file or the new one, never a cut file (N62FilesPlugin.write has the order).
 // A101: appendChecked is the app's append: it confirms each append by the sizes, else by re-reading the file's tail, and
 // a folder whose append it cannot confirm answers "cantAppend" (the caller keeps the line queued); no rewrite mode.
+// G219f1: folderTail reads a file's last bytes, for the sync queue's check before it sends lines again.
 
 export type Unavailable = "unavailable";
 export interface FolderFile {
@@ -125,8 +126,16 @@ export async function folderAppend(name: string, text: string, port?: AppendPort
   }
 }
 
-/** The last `n` bytes of `name` as UTF-8 (a cut character at the start reads as U+FFFD). */
-async function folderTail(p: AppendPort, name: string, n: number): Promise<ReadResult> {
+/** The last `n` bytes of `name` as UTF-8 (a cut character at the start reads as U+FFFD); the whole file when it is
+ *  shorter. G219f1: the sync queue reads it before it sends lines again (appendChecked reads back the same way). */
+export async function folderTail(name: string, n: number, port?: AppendPort): Promise<ReadResult> {
+  const p = port ?? (await plugin());
+  if (!p) return "unavailable";
+  if (!validName(name)) return "failed";
+  return tailOf(p, name, n);
+}
+
+async function tailOf(p: AppendPort, name: string, n: number): Promise<ReadResult> {
   try {
     const r = await p.tail({ name, n });
     if (r.result === "ok") return typeof r.text === "string" ? { text: r.text } : "failed";
@@ -146,7 +155,7 @@ export async function appendChecked(name: string, text: string, port?: AppendPor
   const p = port ?? (await plugin());
   if (!p) return "unavailable";
   if (!validName(name)) return "cantAppend";
-  const last = await folderTail(p, name, 1);
+  const last = await tailOf(p, name, 1);
   if (last === "unavailable") return "unavailable";
   if (last === "failed") return "cantAppend";
   const sent = last !== "missing" && last.text !== "" && last.text !== "\n" ? "\n" + text : text;
@@ -155,7 +164,7 @@ export async function appendChecked(name: string, text: string, port?: AppendPor
   if (r === "failed") return "cantAppend";
   const bytes = new TextEncoder().encode(sent).length;
   if (r.before >= 0 && r.after >= 0 && r.before + bytes === r.after) return "appended";
-  const end = await folderTail(p, name, bytes);
+  const end = await tailOf(p, name, bytes);
   if (end === "unavailable") return "unavailable";
   return typeof end === "object" && end.text === sent ? "appended" : "cantAppend";
 }
