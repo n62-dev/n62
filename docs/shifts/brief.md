@@ -99,7 +99,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 849 | [G557](packages/G557.md) simplify keeps the sign of two square roots (F311) | gorge, Opus | `p1/gorge-tworoots` | – |
+| 849 | G557 simplify keeps the sign of two square roots (F311) | gorge, Opus | `p1/gorge-tworoots` | – |
 | 860 | [G524](packages/G524.md) Solve never takes a pole as a root, scaled or DEG (F403) | gorge, Opus | `p1/gorge-scaledpole` | – |
 | 861 | [G618](packages/G618.md) Σ to ∞ is checked against its terms (F432) | gorge, Opus | `p1/gorge-sumcheck` | – |
 | 862 | [G617](packages/G617.md) an alternating Σ from a start other than 1 keeps its sign (F431) | gorge, Opus | `p1/gorge-altsumstart` | – |

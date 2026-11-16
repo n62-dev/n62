@@ -199,6 +199,13 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G378, patch 0052: sym2rxrootnum takes arg(num) from evalf(num), so on the cut (a negative real num) the sign of a rounding
   // imaginary part chose the root (simplify(sqrt(acosh(-1/2)^2)) = -ln((i*sqrt(3)-1)/2))
   ["0052-sqrt-root-pick-at-cut.patch", "giac-2.1.0/src/sym2poly.cc", /if \(hasevalf\)\s*numprevf=arg\(numprevf,contextptr\);\s*for \(f_it=f\.begin\(\);/, "static bool sym2rxrootnum(vecteur & v,const vecteur & lv,gen & num,gen & tmpden,GIAC_CONTEXT){"],
+  // G557, patch 0053: algnum_rewritable writes a biquadratic E as shift +- sqrt(sol) and takes the minus sign when is_positive(E-shift)
+  // is false, as for any complex E (normal(sqrt(2)+i*sqrt(3)) gave its negative)
+  ["0053-algnum-complex-root-sign.patch", "giac-2.1.0/src/sym2poly.cc", /e=normalize_sqrt\(e,contextptr\);\s*if \(!is_positive\(Eapproxshift,contextptr\)\)\s*e=-e;/, "gen Eapproxshift=Eapprox-shift;"],
+  // ... and algnum_normal and algnum_rref write the generator as rootof([1,0],pminv) with no check that its value r is that root
+  // (normal(sqrt(10^(1/3)-sqrt(6))) was a rootof worth 2.1457, right 0.5432*i)
+  ["0053-algnum-complex-root-sign.patch", "giac-2.1.0/src/sym2poly.cc", /ext=rootofallowed\?algebraic_EXTension\(makevecteur\(1,0\),pminv\):rexact;\s*r=_evalf\(makesequence\(rexact,extpar\.digits\),contextptr\);\s*nums=/, "  bool algnum_normal(gen & e,GIAC_CONTEXT){\n#ifdef"],
+  ["0053-algnum-complex-root-sign.patch", "giac-2.1.0/src/sym2poly.cc", /ext=rootofallowed\?algebraic_EXTension\(makevecteur\(1,0\),pminv\):rexact;\s*r=_evalf\(makesequence\(rexact,extpar\.digits\),contextptr\);\s*nums=/, "++l; ++c;"],
 ];
 
 const tar = tarball(SOURCES.giac);
