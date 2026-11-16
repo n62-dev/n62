@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import type { UnitRow } from "../units/types.ts";
 import { decimalFromString, type DecimalValue } from "../engine/format.ts";
+import { latexToGiacInfo } from "../input/latex-to-giac.ts";
+import { slotFormula } from "../input/unitFormula.ts";
 import { typedInputs, uncRows } from "./rows.ts";
 
 const dec = (s: string): DecimalValue => decimalFromString(s) as DecimalValue;
@@ -123,6 +125,26 @@ describe("R328: the uncertainty sheet's rows (variant A)", () => {
     expect(t?.rows[0]?.note).toBeUndefined(); // (a constant with a basis)
   });
 
+  // fix round 2: √(μ₀/ε₀) = Z₀ ∝ α, two chips with σ on one uncertain leaf: G274 keeps no terms (constCorr.test.ts), so
+  // the one row is the leaf at 100.0 %. σ derived: Z₀ = 376.730313412 Ω, σ/Z₀ = σα/α = 1.1E-12 / 7.2973525643E-3.
+  const leaves = (own: string) => ({ fine_structure: { value: "7.2973525643E-3", unc: "1.1E-12" }, [own]: { value: "1", unc: "0" } });
+  const muEps = (eps: Record<string, { value: string; unc: string }>) => row({
+    latex: "\\sqrt{\\frac{\\const{mu_0}{μ₀}}{\\const{epsilon_0}{ε₀}}}",
+    chips: {
+      "const:mu_0": { value: "1.25663706127E-6", unc: "2.0E-16", basis: "2*pasl_fine_structure*pasl_h", basisLeaves: leaves("h"), exact: false, inexact: true },
+      "const:epsilon_0": { value: "8.8541878188E-12", unc: "1.4E-21", basis: "1/pasl_fine_structure*pasl_e", basisLeaves: eps, exact: false, inexact: true },
+    },
+    facts: { exact: false, reliableDigits: null, inexact: true, uncSigma: "5.7E-8", uncDigits: 2 },
+  });
+  it("Home, √(μ₀/ε₀): two chips with σ on one uncertain leaf (α) give its one row at 100.0 %, never an empty table", () => {
+    const t = uncRows(muEps(leaves("e")), false);
+    expect(shown(t)).toEqual([["fine structure", "5.7ᴇ-8", "100.0 %"]]);
+    expect(t?.rows[0]?.sub).toBe("via μ₀, ε₀");
+    expect(t?.rows[0]?.note).toBeUndefined();
+    // control: two uncertain leaves are two inputs, which G274 keeps as terms; without them there is no one row to show
+    expect(uncRows(muEps({ fine_structure: { value: "7.2973525643E-3", unc: "1.1E-12" }, R: { value: "1", unc: "1E-9" } }), false)).toBeNull();
+  });
+
   it("the decimal comma: 98,3 % and 12,34 ± 0,05 m", () => {
     const t = uncRows(unitRow("12{,}34\\pm0{,}05\\times3{,}2\\pm0{,}1", "12{,}34\\pm0{,}05\\,\\mathrm{m}\\times3{,}2\\pm0{,}1\\,\\mathrm{m}", "m²", {
       terms: [{ t: "0.0256", uy: "0.16" }, { t: "1.522756", uy: "1.234" }],
@@ -132,8 +154,47 @@ describe("R328: the uncertainty sheet's rows (variant A)", () => {
   });
 
   it("the typed ± inputs in order, outside the chips, with their units and without their brackets", () => {
+    // the minus before 4 is binary (after a unit): Subtract(…, pasupm(4,1)), so the input is 4 ± 1 (the parser's reading)
     expect(typedInputs("\\res{2}{5\\pm1}\\times\\left(1.5\\emark-3\\pm1\\emark-4\\right)\\,\\mathrm{m}^{2}\\cdot\\mathrm{s}^{-1}-4\\pm1", false))
       .toEqual(["1.5ᴇ-3 ± 1ᴇ-4 m²·s⁻¹", "4 ± 1"]);
+  });
+
+  // fix round 2: the labels read a unary minus and `± n %` as the parser does (parse.ts negate, unitsAfter R104)
+  it("a unary minus is inside the input (−20 ± 0.5 m); a double minus cancels; a binary one, or one before the bracket, is not", () => {
+    expect(typedInputs("\\left(-20\\pm0.5\\right)\\,\\mathrm{m}\\times\\left(3\\pm0.1\\right)\\,\\mathrm{m}", false)).toEqual(["−20 ± 0.5 m", "3 ± 0.1 m"]);
+    expect(typedInputs("-\\left(20\\pm0.5\\right)\\,\\mathrm{m}", false)).toEqual(["20 ± 0.5 m"]); // -(pasupm(20,0.5)·m)
+    expect(typedInputs("2\\times-20\\pm0.5\\,\\mathrm{m}", false)).toEqual(["−20 ± 0.5 m"]);
+    expect(typedInputs("--20\\pm0.5\\,\\mathrm{m}", false)).toEqual(["20 ± 0.5 m"]);
+    expect(typedInputs("3\\,\\mathrm{m}-4\\pm1\\,\\mathrm{m}", false)).toEqual(["4 ± 1 m"]);
+    expect(typedInputs("3\\,\\mathrm{m}--4\\pm1\\,\\mathrm{m}", false)).toEqual(["−4 ± 1 m"]);
+  });
+
+  it("± n % keeps its % (σ = |value|·n/100 is the parser's) and the unit after the bracket: 5 ± 2 % m", () => {
+    expect(typedInputs("\\left(5\\pm2\\%\\right)\\,\\mathrm{m}\\times\\left(3\\pm0.1\\right)\\,\\mathrm{m}", false)).toEqual(["5 ± 2 % m", "3 ± 0.1 m"]);
+    expect(typedInputs("5\\pm2{,}5\\%\\,\\mathrm{m}", true)).toEqual(["5 ± 2,5 % m"]);
+  });
+
+  it("a result chip as σ (R271): the value ± the chip's text, with the unit", () => {
+    expect(typedInputs("5\\pm\\res{2}{0.1}\\,\\mathrm{m}\\times\\left(3\\pm0.1\\right)\\,\\mathrm{m}", false)).toEqual(["5 ± 0.1 m", "3 ± 0.1 m"]);
+  });
+
+  it("the labels match the parser's typed inputs (uncertainValues' vars without a key) in count, order and value", () => {
+    const chips = { "res:2": { value: "0.1", exact: true }, "res:3": { value: "7", unc: "1", exact: false, inexact: true as const } };
+    for (const line of [
+      "\\left(-20\\pm0.5\\right)\\times\\left(3\\pm0.1\\right)",
+      "-\\left(20\\pm0.5\\right)+2\\times-3\\pm0.1-4\\pm1--5\\pm2",
+      "\\left(5\\pm2\\%\\right)\\times\\left(-3\\pm1\\%\\right)",
+      "\\res{3}{7\\pm1}\\times5\\pm\\res{2}{0.1}-1.5\\emark-3\\pm1\\emark-4",
+      "\\sin\\left(0\\pm0.2\\right)\\div\\left(--2\\pm0.1\\right)",
+    ]) {
+      const giac = latexToGiacInfo(slotFormula(line).latex, { units: true, chips }).giac;
+      // a typed input: pasupm(value,σ) or pasupm(value,σ,pasws<j>); a chip's call has its key third (R115), not typed
+      const typed = [...giac.matchAll(/pasupm\(([^,()]+|\([^()]*\)),([^,()]+|\([^()]*\))(?:,(\w+))?\)/g)]
+        .filter((m) => m[3] === undefined || m[3].startsWith("pasws"))
+        .map((m) => Number(m[1]!.replace(/[()]/g, "")));
+      const labels = typedInputs(line, false).map((l) => Number(l.split(" ± ")[0]!.replace("−", "-").replace("ᴇ", "e")));
+      expect(labels, line).toEqual(typed);
+    }
   });
 
   it("controls: one input alone shows its single row at 100.0 %, never an empty table; no terms (a row before G273) no table", () => {

@@ -6,6 +6,7 @@
 // them. A unit row reads G273's terms (UnitRow.unc), a Home row G274's uncTerms (first order: no second-order row). Pure:
 // views/uncSheet.ts and UncHead.svelte draw it, in the sheet's chunk with the model.
 import { entryText } from "../clipboard/plaintext.ts";
+import type { Chip } from "../input/chips.ts";
 import { uncText } from "../i18n/enUnc.ts";
 import { commaResult, type FmtMode } from "../state/displayMode.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
@@ -79,13 +80,30 @@ function inputOf(item: HistoryItem): (BudgetInput & { unit: string; home: boolea
 const termKey = (chip: string): string | null =>
   chip.startsWith("const:") ? chip.slice("const:".length) : chip.startsWith("res:") ? `pasr_${chip.slice("res:".length)}` : chip === "ans" ? "pasr_ans" : null;
 
+/** The one uncertain leaf (a nonzero σ) that the chips' bases name together, or null: some chip has no basis, or
+ *  they name none or several. */
+function oneLeaf(chips: readonly Chip[]): string | null {
+  const leaves = new Set<string>();
+  for (const c of chips) {
+    if (c.basis === undefined || c.basisLeaves === undefined) return null;
+    for (const [l, x] of Object.entries(c.basisLeaves)) {
+      const u = parseDecimal(x.unc);
+      if (!u) return null;
+      if (u.m !== 0n) leaves.add(l);
+    }
+  }
+  return leaves.size === 1 ? [...leaves][0]! : null;
+}
+
 /** A Home row with σ from one input alone: G274 keeps no terms for it (one input says nothing σ does not), so its one
- *  term is σ itself, t = σ² and uy = σ, keyed by the line's one chip with σ; undefined for anything else. */
+ *  term is σ itself, t = σ² and uy = σ, keyed by the line's one chip with σ, or, where two or more chips with σ rest on
+ *  one uncertain leaf alone (√(μ₀/ε₀): α), by that leaf, `pasl_<leaf>`; undefined for anything else. */
 function alone(item: HistoryItem): { key: string; t: string; uy: string }[] | undefined {
   const sigma = item.facts?.uncSigma;
   const d = typeof sigma === "string" ? parseDecimal(sigma) : null;
   const withSigma = Object.entries(item.chips ?? {}).filter(([, c]) => c.unc !== undefined);
-  const key = withSigma.length === 1 ? termKey(withSigma[0]![0]) : null;
+  const leaf = withSigma.length > 1 ? oneLeaf(withSigma.map(([, c]) => c)) : null;
+  const key = leaf !== null ? `pasl_${leaf}` : withSigma.length === 1 ? termKey(withSigma[0]![0]) : null;
   return d && key ? [{ key, t: `${d.m * d.m}E${2 * d.k}`, uy: sigma as string }] : undefined;
 }
 
@@ -150,6 +168,17 @@ function unitAt(t: readonly Tok[], j: number): number {
   }
 }
 
+/** Tokens before which a minus is unary (parse.ts term, signedImplicit, signedFactor): the line's start, an open
+ *  bracket or group, an operator. After anything else (a digit, a unit, a closing bracket) it is binary. */
+const UNARY_AFTER: ReadonlySet<string> = new Set(["(", "[", "{", "+", "-", "*", "/", "=", ",", "\\times", "\\cdot", "\\div", "\\to"]);
+
+/** How many unary minuses stand right before `j`. */
+function minuses(t: readonly Tok[], j: number): number {
+  let n = 0;
+  for (let k = j - 1; t[k] === "-" && (k === 0 || UNARY_AFTER.has(t[k - 1]!)); k--) n++;
+  return n;
+}
+
 const SUPER: Readonly<Record<string, string>> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
 
 /** A piece of the line as plain text, as the head writes numbers: ± spaced, `ᴇ`, a unit's powers raised. */
@@ -175,13 +204,19 @@ export function typedInputs(latex: string, comma: boolean): string[] {
     }
     if (t[i] !== "\\pm") continue;
     const from = numberBefore(t, i);
-    // σ typed, or a result chip as σ (R271)
+    // σ typed, or a result chip as σ (R271); `± n %` is σ = |value|·n/100, its % part of the σ (R104, parse.ts unitsAfter)
     let to = t[i + 1] === "\\res" ? group(t, group(t, i + 2)) : numberAt(t, i + 1);
-    const piece = t.slice(from, to).join("");
+    if (t[i + 1] !== "\\res" && t[to] === "\\%") to++;
+    const piece = t.slice(from, to).join("").replace(/\\%$/, "\\,\\%");
+    // a unary minus right before the value is inside it (parse.ts negate, pmPercent.ts negateUncertain: -20 ± 0.5 is
+    // pasupm(-20,0.5)); a binary one (3 - 4 ± 1) is not, nor one before a bracket (-(20 ± 0.5) is -(pasupm(20,0.5)));
+    // a double minus cancels
+    const n = minuses(t, from);
     // (a ± b) unit: the unit is after the bracket
-    if (t[from - 1] === "(" && t[from - 2] === "\\left" && t[to] === "\\right" && t[to + 1] === ")") to += 2;
+    const open = from - n;
+    if (t[open - 1] === "(" && t[open - 2] === "\\left" && t[to] === "\\right" && t[to + 1] === ")") to += 2;
     const end = unitAt(t, to);
-    out.push(plain(piece + (end > to ? t.slice(to, end).join("") : ""), comma));
+    out.push((n % 2 === 1 ? "−" : "") + plain(piece + (end > to ? t.slice(to, end).join("") : ""), comma));
     i = Math.max(i, end - 1);
   }
   return out;
@@ -250,17 +285,15 @@ function labels(item: HistoryItem, terms: readonly { key?: string }[], comma: bo
 
 // ---- the shares ----
 
-/** A share's tenths of a per cent as a number (small ones count as 0, as the model sums them). */
-const tenths = (s: BudgetShare): number => (s.small ? 0 : Math.round(Number(s.share) * 10));
-
 function shareText(s: BudgetShare, comma: boolean): string {
   const num = (x: string): string => (comma ? x.replace(".", ",") : x).replace("-", "−");
   if (s.small) return uncText(s.share.startsWith("-") ? "unc.rows.smallNeg" : "unc.rows.small", { p: num(s.share) });
   return uncText("unc.sheet.percent", { p: num(s.share) });
 }
 
+/** The bar of a share, drawn only: a small share has none; every sum is the model's (BudgetShares.total). */
 function bar(s: BudgetShare): ShareRow["bar"] {
-  const v = tenths(s) / 10;
+  const v = s.small ? 0 : Number(s.share);
   if (v > 100) return { width: 100, over: true };
   if (v < 0) return { width: Math.min(-v, 100), neg: true };
   return { width: v };
@@ -298,10 +331,6 @@ export function uncRows(item: HistoryItem, comma: boolean, mode: FmtMode = "std"
   if (b.second) rows.push({ id: "second", label: uncText("unc.rows.second"), uy: "", share: shareText(b.second, comma), bar: bar(b.second), second: true });
   const lines: string[] = [];
   if (b.over100) lines.push(uncText("unc.rows.over100"));
-  if (b.rounded) {
-    const sum = [...b.rows, ...(b.second ? [b.second] : [])].reduce((s, x) => s + tenths(x), 0);
-    const p = `${sum < 0 ? "-" : ""}${Math.trunc(Math.abs(sum) / 10)}.${Math.abs(sum) % 10}`;
-    lines.push(uncText("unc.rows.rounded", { p: (comma ? p.replace(".", ",") : p).replace("-", "−") }));
-  }
+  if (b.rounded) lines.push(uncText("unc.rows.rounded", { p: (comma ? b.total.replace(".", ",") : b.total).replace("-", "−") }));
   return { columns: columns(), rows, lines };
 }

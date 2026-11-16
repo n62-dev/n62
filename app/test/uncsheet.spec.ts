@@ -156,6 +156,33 @@ test("a picked row: the sheet is that row's, not the last one's; the σ line on 
   await expect(rows.getByTestId("unc-share")).toHaveText(["100.0 %"]);
 });
 
+test("R328 fix 2: √(μ₀/ε₀) in Home, Shift + 1: σ from α alone over two chips, its one row at 100.0 %, never an empty table", async ({ page }) => {
+  // G274 keeps no terms for it (constCorr.test.ts): α is the only uncertain leaf of μ₀ and ε₀
+  const put = (id: string) =>
+    page.evaluate(async (cid) => {
+      const url = "/src/find/finder.ts";
+      const f = (await import(/* @vite-ignore */ url)) as typeof Finder;
+      const it = (await f.loadIndex(true)).byId.get(`const:${cid}`);
+      if (!it) throw new Error(`no constant ${cid} in the index`);
+      f.putOnLine(window.n62.entry, it);
+    }, id);
+  await tap(page, ["shift", "sq"]);
+  await put("mu_0");
+  await tap(page, ["div"]);
+  await put("epsilon_0");
+  await tap(page, ["enter"]);
+  await done(page, 1);
+  expect(await page.evaluate(() => window.n62.session.home.at(-1)?.uncTerms)).toBeUndefined();
+  await tap(page, ["shift", "d1"]);
+  const sigma = ((await head(page).locator('[data-id="sigma"]').textContent()) ?? "").replace("standard uncertainty (σ)", "");
+  expect(sigma).not.toBe("");
+  const rows = sheet(page).locator('[role="menuitem"]');
+  await expect(rows).toHaveCount(1);
+  await expect(rows.getByTestId("unc-label")).toHaveText(["fine structure"]);
+  await expect(rows.getByTestId("unc-uy")).toHaveText([sigma]);
+  await expect(rows.getByTestId("unc-share")).toHaveText(["100.0 %"]);
+});
+
 test("2·π·50, Enter, Shift + 1: a dead press (the double pulse, counted under d1 Shift), no sheet, nothing typed; t10's row above it still opens", async ({ page }) => {
   await t10(page);
   await leaveView(page);
