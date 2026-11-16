@@ -8,6 +8,7 @@ import { memKv } from "../sync/fakeFolder.ts";
 import { readSync } from "../sync/record.ts";
 import { dataSection, resetUndoTime } from "./dataSection.svelte.ts";
 import { syncSection, type SyncDeps } from "./syncRows.svelte.ts";
+import { reportStatus } from "../sync/status.ts";
 
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
@@ -34,25 +35,26 @@ describe("Settings › Data › Sync folder (R128)", () => {
     expect(sub?.items.map((r) => r.label)).toEqual([dataText("sync.web")]);
     expect(sub?.note).toBeUndefined();
   });
-  it("on Android: Choose folder (its name), On start (Offer, Restore silently), Write now, Stop syncing, and the line under them", async () => {
+  it("on Android: Choose folder (its name), Status, Device name, On start (Offer, Restore silently), Write now, Stop syncing, and the line under them", async () => {
     const { row, kv } = setup(true);
     const sub = row.submenu;
     const items = (): readonly MenuItem[] => sub?.items ?? [];
-    expect(items().map((r) => r.id)).toEqual(["choose", "mode", "now", "stop"]);
+    expect(items().map((r) => r.id)).toEqual(["choose", "status", "device", "mode", "now", "stop"]);
     expect(items().length).toBeLessThanOrEqual(7);
     await tick();
     expect(items()[0]?.value).toBe("Sync");
-    const mode = items()[1];
+    const mode = items().find((r) => r.id === "mode");
     expect(mode?.options?.map((o) => [o.label, o.selected])).toEqual([
       [dataText("sync.mode.offer"), true],
       [dataText("sync.mode.silent"), false],
     ]);
     expect(mode?.keep).toBe(true);
     mode?.options?.[1]?.run();
-    expect(items()[1]?.options?.[1]?.selected).toBe(true);
+    expect(items().find((r) => r.id === "mode")?.options?.[1]?.selected).toBe(true);
     await tick();
     expect((await readSync(kv)).mode).toBe("silent");
-    expect(sub?.note?.()).toBe(dataText("sync.line"));
+    expect(sub?.note?.()).toBe(`${dataText("sync.line")} ${dataText("sync.jupyter")}`);
+    expect(dataText("sync.jupyter")).toBe("Jupyter opens the .py as a script; for a notebook view it needs jupytext.");
     expect(dataText("sync.line")).toContain("the form of these files can change until N62 says otherwise");
   });
   it("shows None with no folder; its rows hand their job to the sync code", async () => {
@@ -72,6 +74,44 @@ describe("Settings › Data › Sync folder (R128)", () => {
     const sub = row.submenu;
     sub?.items;
     await tick();
-    expect(sub?.items[1]?.options?.find((o) => o.selected)?.id).toBe("silent");
+    expect(sub?.items.find((r) => r.id === "mode")?.options?.find((o) => o.selected)?.id).toBe("silent");
+  });
+  it("Choose folder's hint says a sub-folder of Download works", async () => {
+    const { row } = setup(true);
+    expect(row.submenu?.items[0]?.hint).toBe(dataText("sync.choose.hint"));
+    expect(dataText("sync.choose.hint")).toBe("a sub-folder of Download works");
+  });
+  it("Status shows the queue's last answer: ok, queued n, can't append, unavailable (R183)", async () => {
+    const { row } = setup(true);
+    const sub = row.submenu;
+    const status = (): string | undefined => sub?.items.find((r) => r.id === "status")?.value;
+    sub?.items;
+    await tick();
+    expect(status()).toBe("ok");
+    reportStatus({ state: "queued", queued: 3, dropped: 0 });
+    expect(status()).toBe("queued 3");
+    reportStatus({ state: "cantAppend", queued: 3, dropped: 0 });
+    expect(status()).toBe("can't append");
+    reportStatus({ state: "unavailable", queued: 3, dropped: 0 });
+    expect(status()).toBe("unavailable");
+    reportStatus({ state: "ok", queued: 0, dropped: 0 });
+    expect(status()).toBe("ok");
+  });
+  it("Device name shows the kept name, and an edit keeps it sanitised (R183)", async () => {
+    const { row, kv } = setup(true);
+    await kv.set("sync", { device: "Pixel-7-0a3f" });
+    const sub = row.submenu;
+    sub?.items;
+    await tick();
+    const dev = (): MenuItem | undefined => sub?.items.find((r) => r.id === "device");
+    expect(dev()?.value).toBe("Pixel-7-0a3f");
+    expect(dev()?.label).toBe(dataText("sync.device"));
+  });
+  it("Device name before a name is made says so", async () => {
+    const { row } = setup(true);
+    const sub = row.submenu;
+    sub?.items;
+    await tick();
+    expect(sub?.items.find((r) => r.id === "device")?.value).toBe(dataText("sync.device.none"));
   });
 });

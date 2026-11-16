@@ -8,6 +8,7 @@ import { idbKv } from "../state/storage.ts";
 import { deviceName } from "./device.ts";
 import { filesFor, syncFilesState, type SyncFilesState } from "./files.ts";
 import { SyncQueue, type SyncQueuePort, type SyncStatus } from "./queue.ts";
+import { reportStatus } from "./status.ts";
 
 /** The queue's port, and what the files' names need: the folder's file names (a new device name is none of them),
  *  the device's model, the app's version and when this process started. */
@@ -21,7 +22,7 @@ export interface FeedPort extends SyncQueuePort {
 export class SyncFeed {
   readonly queue: SyncQueue;
   private state: SyncFilesState;
-  private device: Promise<string> | undefined;
+  private taken: Promise<readonly string[]> | undefined;
   private chain: Promise<void> = Promise.resolve();
 
   constructor(
@@ -51,9 +52,9 @@ export class SyncFeed {
   }
 
   private name(): Promise<string> {
-    const p = (this.device ??= this.port.names().then((taken) => deviceName(this.port.kv, () => this.port.model(), Math.random, taken)));
-    p.catch(() => (this.device = undefined)); // (tried again by the next row)
-    return p;
+    const taken = (this.taken ??= this.port.names());
+    taken.catch(() => (this.taken = undefined)); // (tried again by the next row)
+    return taken.then((names) => deviceName(this.port.kv, () => this.port.model(), Math.random, names)); // the kept name, read each time: an edit counts from the next row
   }
 }
 
@@ -76,7 +77,7 @@ export function pageFeed(): Promise<SyncFeed> {
         },
         app: about.default.version,
         start: new Date(Date.now() - performance.now()),
-      }),
+      }, reportStatus),
   );
   page.catch(() => (page = undefined));
   return page;
