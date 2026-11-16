@@ -58,7 +58,12 @@ export function closedRequest(set: FormulaSet, stepName: string): UnitRequest | 
   const closed = new Map<string, string>();
   for (const name of order) {
     if (!needed.has(name)) continue;
-    const text = mapNames(byName.get(name)!.expr, (n) => (!n.call && closed.has(n.name) ? `(${closed.get(n.name)!})` : null), "typed");
+    const expr = byName.get(name)!.expr;
+    // the text's length before it is built: the expr, and for each read of a step that step's text in brackets in place of its name
+    let length = expr.length;
+    for (const n of names(expr, "typed")) if (!n.call && closed.has(n.name)) length += closed.get(n.name)!.length + 2 - n.name.length;
+    if (length > MAX_CLOSED) return { error: "long", step: stepName };
+    const text = mapNames(expr, (n) => (!n.call && closed.has(n.name) ? `(${closed.get(n.name)!})` : null), "typed");
     if (text.length > MAX_CLOSED) return { error: "long", step: stepName };
     closed.set(name, text);
   }

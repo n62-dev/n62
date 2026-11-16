@@ -56,6 +56,17 @@ describe("G276 closedRequest", () => {
     expect(closedRequest(big, "S1")).toEqual({ formula: "((2))*((2))", slots: [] });
     expect(MAX_CLOSED).toBeGreaterThan(1000);
   });
+  it("one step reading a long step many times is refused before its text is built: long, nothing thrown", () => {
+    // S0 is 24000 terms (48 k characters, under MAX_CLOSED); S1 reads it 20000 times: 960 M characters, past JavaScript's string limit
+    const s0 = Array.from({ length: 24000 }, () => "x").join("+");
+    const s1 = Array.from({ length: 20000 }, () => "S0").join("+");
+    const probe: FormulaSet = { name: "p", inputs: [{ name: "x", value: "2" }], steps: [{ name: "S0", expr: s0 }, { name: "S1", expr: s1 }] };
+    expect(s0.length).toBeLessThan(MAX_CLOSED);
+    expect(() => closedRequest(probe, "S1")).not.toThrow();
+    expect(closedRequest(probe, "S1")).toEqual({ error: "long", step: "S1" });
+    // the step it reads is still built on its own
+    expect(closedRequest(probe, "S0")).toMatchObject({ slots: [] });
+  });
   it("an input in °C with another input in the step: the builder's refusal, step and input named, no job runs", async () => {
     const set: FormulaSet = { name: "t", inputs: [{ name: "T", value: "20", sigma: "0.5", slot: C }, { name: "d", value: "3", slot: M }], steps: [{ name: "X", expr: "T*d" }] };
     const evaluate = vi.fn<Evaluate>();
