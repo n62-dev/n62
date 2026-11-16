@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Owner feedback inbox
 
-The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 68). Each point is kept in the owner's words (shortened) and gets one triage:
+The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 69). Each point is kept in the owner's words (shortened) and gets one triage:
 
 - **bug**: fixed now, regression test first;
 - **feel**: goes into the next package for the look or the entry (brief section 0);
@@ -34,3 +34,4 @@ The owner's `todo.txt` held no `+N62` line on 2026-11-16, so no owner report was
 | 65 | 2026-11-16 | S16: every CAS series ends in "x⁷·order size(x)", Giac's word for O(x⁷) (F359). | bug, R580 |
 | 66 | 2026-11-16 | S17: "permutation" finds LQ and c1oc2; nPr is only "perm", while nCr is "Combinations (nCr)" (F360). | feel, G578 |
 | 67 | 2026-11-16 | S18: pasting 1,234.5 or 12'345.6 or 1 234.5 says "Paste: not a number" (F361). | idea, R581 (owner's yes) |
+| 68 | 2026-11-16 | S07, S13: after one press of a keyboard's Escape key nothing I type reaches the line, not even the on-screen keys, until another Escape throws it away (F362). | bug, R582 |
