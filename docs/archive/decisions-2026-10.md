@@ -5,6 +5,29 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Grouped on 2026-11-16 (Ultra) to make room, as they stood
+- **Shift + 5's matrix (R185, R186; Opus pass 169):** only the one Shift + 5 made on the line grows; a new column's other cells get □, an empty cell is refused (R185f1). Archived, "Opus pass 178". Would change if: the owner re-types recalled matrices.
+- **R194's word (Opus pass 178):** Word in Settings › Numbers opens Word size (8–64) and Signed; a preset leaves the word as it is. Archived, "Opus pass 186". Would change if: the owner wants the two rows in Numbers.
+- **The matrix grid (R188, R189, R300; Opus passes 176, 179, 187):** Shift + 4 lists stored matrices; Enter writes one row `M:=`; a key acts by its action in the layer pressed. Archived, "Opus pass 186" to "Opus pass 189". Would change if: the owner wants Enter to open the cell, or G2 item 74 shows Ans − 5.
+- **R277's line scroll (Opus pass 155):** past 8 px a finger or pen scrolls the line, a tap places the caret, a hold selects the innermost term. Archived, "Opus pass 179". Would change if: MathLive ships a public scroll.
+- **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; at the whole line Select is a silent press. Archived, "Opus pass 172". Would change if: A139 finds a step surprising.
+- **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Archived. Would change if: the owner wants the text floor in the box.
+- **View keys and the load queue** (Opus pass 109, R148f2): behind waiting keys Symb, Plot and Num wait in order (c46). Archived, "Opus pass 122". Would change if: a view key feels dead during a load on the Tab One.
+- **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Archived. Would change if: Giac can size such a sum.
+- **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Archived. Would change if: a cheaper test tells exp(-10^20) from 0.
+- **The session line (G210, G211; Opus passes 178, 181):** `value` is Copy's number alone, with `.`; `exact` reads in radians; `word` is the job's word, 64 bits unsigned while none is set. Archived, "Opus pass 184".
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants; pydiff runs on every merge (`pydiff.test.ts`). Archived, "Opus pass 201". Would change if: sympy disagrees.
+- **A stored name's mark in Vars (S53f1, Opus pass 132):** from its facts, else the mark Home stored; never `=` without either. Archived, "Opus pass 150". Would change if: the owner wants old names marked.
+- **R258 (Opus pass 132): a stored value of more than one letter is `\operatorname{name}`** on the line; a bracket after it multiplies; Function and Solve refuse it. Archived, "Opus pass 150". Would change if: plots read user names.
+- **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not; %, ‰, ppm, ppb are dimensionless units (G369). Archived. Would change if: a power-triangle rule is packaged.
+- **G143 (Opus pass 36): σ through a step function** stays the GUM σ, with ⚠ "the interval reaches a jump" when an input's x ± 2σ reaches one. Archived. Would change if: S16's sweep finds a missed jump.
+- **A47b, a start does not wait for the queue (Opus pass 13):** a run's start copies node_modules under its own `nodemods` lock, not under `integ`. Archived. Would change if: a copy is ever seen half-refreshed.
+- **A45 (Opus pass 19):** a criterion on a shared file is met by its exact text under "For shared files"; the next Opus pass applies it. Archived, "Opus pass 189". Would change if: workers may edit `THIRD_PARTY.md`.
+- **R38b, R88, the restore's checks and presets (Opus pass 29):** `state/backup.ts` repeats the start readers' rules, each guarded by a test on the same values; no pin in `vite.config.ts`. Archived. Would change if: a guard misses a drift.
+- **G119, Giac's sequence answers in Home (Opus pass 6):** each shows its value (one element) or a list in braces, so Ans and a stored name (`=>` too, G173f1) read back a value or a list; CAS too since G173 (owner, 11-05). Archived.
+- **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Archived, "Opus pass 123". Would change if: the per-element calls are batched.
+- **A101, the checked append (Opus pass 189):** a failed read, append or check is "cantAppend", nothing more written (`appendChecked`). Archived, "Opus pass 191". Would change if: G219 finds the read too slow.
+
 ### Shortened by Opus pass 203 (2026-11-16) to make room, as they stood
 - **σ's forms and budget (pass 199; G270, G272, G273):** no relative σ for an absolute temperature, °C, °F, a level or an offset end slot (K to °C); a row keeps σ's terms with their keys, and R328 reads a key's kind (`pasr_`), never its run number; the budget sorts rows by the exact t, refuses a negative t, keeps the ⚠ reason beside its shares; the second-order row has no uy.
 
