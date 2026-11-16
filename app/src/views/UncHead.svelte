@@ -101,7 +101,7 @@
   .th,
   .r {
     display: grid;
-    grid-template-columns: 1fr auto 6.5em;
+    grid-template-columns: 1fr auto var(--share-w);
     column-gap: var(--sp-2);
     padding: var(--sp-1) var(--sp-2);
   }
@@ -112,13 +112,13 @@
   }
   .r {
     border-top: var(--stroke-thin) solid var(--line);
-    min-height: 36px;
+    min-height: var(--share-row-h);
     box-sizing: border-box;
     overflow-wrap: anywhere;
   }
   .r[data-active="true"] {
     background: var(--pick);
-    box-shadow: inset 3px 0 0 var(--focus);
+    box-shadow: inset var(--stroke-thick) 0 0 var(--focus);
   }
   .n {
     text-align: right;
@@ -140,8 +140,8 @@
   .meter {
     display: block;
     position: relative;
-    height: 3px;
-    margin-top: 3px;
+    height: var(--meter-h);
+    margin-top: var(--meter-h);
     background: color-mix(in srgb, var(--line) 60%, transparent);
   }
   .meter i {
@@ -153,7 +153,7 @@
   }
   /* above 100 %: the bar is full and ends in a stripe */
   .meter i.over {
-    background: repeating-linear-gradient(90deg, var(--focus) 0 6px, var(--warn) 6px 8px);
+    background: repeating-linear-gradient(90deg, var(--focus) 0 var(--sp-15), var(--warn) var(--sp-15) var(--sp-2));
   }
   .meter i.neg {
     left: auto;
@@ -172,6 +172,6 @@
     font-size: var(--fs-note);
   }
   .lines p {
-    margin: 2px 0;
+    margin: var(--sp-05) 0;
   }
 </style>
