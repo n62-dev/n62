@@ -33,6 +33,7 @@ You are writing a file for N62, a calculator app for engineers whose engine is G
 
 ### Bodies and values
 - Raw Giac in radians: `sin(x)` takes radians; the app follows the user's angle mode when the function is called.
+- `==` and `!=` in a body that is not a program are N62's value test, as typed on the keys (`f(x):=x==1/2`); a `// test:` line and a program (braces, `;`) keep Giac's `==`.
 - A decimal such as `9.81` is a Giac float. Write an exact constant as a fraction: `980665/100000`.
 - A body assigns only its parameters and names declared with `local`. A value assigns nothing.
 - Nothing may change the engine's state: no setting (`Digits`, `angle_radian`, …), no `purge`, `restart`, `assume`, `read`, `write`, `sto`, `=>`, and no string that Giac evaluates (`expr("…")`).

@@ -9,7 +9,9 @@ import { defaultCasSettings } from "./types.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { renameOurCalls, writeUserNames } from "./ourNames.ts";
 import type { GiacParse } from "./bridge.ts";
-import { exportLibrary, importLibrary, importText, LibError, parseLibrary, type ImportResult } from "./library.ts";
+import { asGiac, bodyAsGiac, exportLibrary, importLibrary, importText, LibError, parseLibrary, type ImportResult } from "./library.ts";
+import { dropAngleFactor } from "./angles.ts";
+import { latexToGiac } from "../input/latex-to-giac.ts";
 import { LIBRARY_FORMAT, libraryFormatOf, upToDate } from "../state/libraryFormat.ts";
 import { DATA_VERSION, STEP_KEYS } from "../state/storage.ts";
 import { GREEK, LETTER_NAMES } from "../input/parseTables.ts";
@@ -617,5 +619,82 @@ describe("the version an export writes (G342)", () => {
     const core = (l: readonly DefEntry[]) => l.map((e) => ({ name: e.name, kind: e.kind, cmds: e.cmds, desc: e.desc }));
     expect(core(r.result.log)).toEqual(core(mine).map((e) => ({ ...e, desc: expect.any(String) })));
     expect(exportLibrary(r.result.log, LIBRARY_FORMAT).text).toBe(text);
+  });
+});
+
+// G377 (F239): a typed == or ≠ test is the parser's value test (input/emit.ts equalityTest), whose text names ours
+// (pasinexact, pasdiff, pasverdict, a_, b_, d_); the file N62 writes must load into N62 and give what it gave.
+describe.skipIf(!giacAvailable())("a test in a body round-trips through the library (G377, real Giac)", () => {
+  const deg = { ...defaultHomeSettings, angle: "deg" as const };
+  const typed = (latex: string): string => latexToGiac(latex, { userFunctions: new Set(["f", "g", "h", "k"]) });
+  /** f, g, h typed in RAD; k in DEG (a trig side: the file is in radians, G46). */
+  const typedLog = async (): Promise<{ h: EngineHost; log: DefEntry[] }> => {
+    const h = await nodeHost();
+    let log: DefEntry[] = [];
+    for (const l of ["f(x):=x==0.5", "g(x):=x\\ne\\frac{1}{3}", "h(x):=\\operatorname{when}(x==0.5,1,2)"]) log = applyDefChanges(log, h.home(typed(l), defaultHomeSettings).defs);
+    log = applyDefChanges(log, h.home(typed("k(x):=\\sin(x)==\\frac{1}{2}"), deg).defs);
+    return { h, log };
+  };
+  const calls: [string, typeof defaultHomeSettings][] = [
+    ["f(0.5)", defaultHomeSettings], ["f(evalf(1/2))", defaultHomeSettings], ["f(1)", defaultHomeSettings],
+    ["g(1)", defaultHomeSettings], ["g(1/3)", defaultHomeSettings], ["h(0.5)", defaultHomeSettings], ["h(1)", defaultHomeSettings],
+    ["k(30)", deg], ["k(pi/6)", defaultHomeSettings], ["k(45)", deg],
+  ];
+  const shown = (h: EngineHost): string[] => calls.map(([c, s]) => `${c} = ${h.home(c, s).result.display}`);
+
+  it("the export writes each test as typed, the file loads, and every call gives what it gave (derived: 0.5 = 1/2, 1 ≠ 1/3, sin 30° = 1/2)", async () => {
+    const { h, log } = await typedLog();
+    const before = shown(h);
+    expect(before).toEqual(["f(0.5) = true", "f(evalf(1/2)) = true", "f(1) = false", "g(1) = true", "g(1/3) = false", "h(0.5) = 1", "h(1) = 2", "k(30) = true", "k(pi/6) = true", "k(45) = false"]);
+    const { text, skipped } = exportLibrary(log, LIBRARY_FORMAT);
+    expect(skipped).toEqual([]);
+    expect(text).not.toMatch(/pas|\b[abd]_\b/);
+    // the log keeps a typed decimal exact (5/10^1, the host's literal), so the file holds that
+    for (const d of ["f(x):=x==(5/10^1)", "g(x):=x!=1/3", "h(x):=when(x==(5/10^1),1,2)", "k(x):=sin(x)==1/2"]) expect(text).toContain(`\n${d}\n`);
+    const fresh = await nodeHost();
+    const back = importLibrary(fresh, parseLibrary(text, parse, LIBRARY_FORMAT), []);
+    expect(back).toMatchObject({ ok: true, plan: { added: ["f", "g", "h", "k"] } });
+    expect(shown(fresh)).toEqual(before);
+    // the loaded bodies are the typed ones (k's side takes the factor as the import writes it, sin(pasdeg*(x)))
+    const cmds = (l: readonly DefEntry[]) => Object.fromEntries(l.map((e) => [e.name, e.cmds.join("\n")]));
+    const [typedCmds, loaded] = [cmds(log), cmds(back.ok ? back.log : [])];
+    for (const n of ["f", "g", "h"]) expect(loaded[n], n).toBe(typedCmds[n]);
+    expect(loaded.k).toBe(typedCmds.k!.replace("sin(pasdeg*x)", "sin(pasdeg*(x))"));
+    // and the file it loaded exports the same text again; into the session that typed them, f, g and h are unchanged
+    expect(back.ok && exportLibrary(back.log, LIBRARY_FORMAT).text).toBe(text);
+    const again = importLibrary(h, parseLibrary(text, parse, LIBRARY_FORMAT), log, { replace: true });
+    expect(again.ok && again.plan.same).toEqual(["f", "g", "h"]);
+  });
+
+  it("a hand-written file: == and != in an expression body are the value test, a test line and a program keep Giac's ==", async () => {
+    const lib = [
+      "// n62 library 4", "// d", "p(x):=x!=0.5", "// test: p(1/2) == false", "// d", "q(x):=x<>2", "// test: q(2) == false",
+      "// d", "s(n):={ if (n==0) { return 1; } return n; }", "// test: s(0) == 1",
+    ].join("\n");
+    const h = await nodeHost();
+    const r = importLibrary(h, parseLibrary(`${lib}\n`, parse, LIBRARY_FORMAT), []);
+    expect(r).toMatchObject({ ok: true, tests: 3 });
+    const cmds = r.ok ? r.log.map((e) => e.cmds[0]!) : [];
+    expect(cmds[0]).toContain("'x!=(5/10^1)'"); // the decimal stored exact, as a typed one
+    expect(cmds[1]).toContain("'x!=2'");
+    expect(cmds[2]).toBe("s(n):={ if (n==0) { return 1; } return n; }");
+    // derived: 0.5 ≠ 1/2 is false (a float equal to its exact value), 3 ≠ 2 is true
+    expect(h.home("p(1/2)", defaultHomeSettings).result.display).toBe("false");
+    expect(h.home("q(3)", defaultHomeSettings).result.display).toBe("true");
+    // a body without a test reads as before (beams.txt; the controls' piecewise keeps Giac's ==)
+    for (const d of parseLibrary(file("beams.txt"), parse, LIBRARY_FORMAT).defs) expect(bodyAsGiac(d.text)).toBe(asGiac(d.text));
+    expect(bodyAsGiac("sq(x):=piecewise(x==0,1,x^2)")).toBe(asGiac("sq(x):=piecewise(x==0,1,x^2)"));
+  });
+
+  it("controls: a body with no test exports and imports as before; a file that names pasdiff is still refused (G341)", async () => {
+    const h = await nodeHost();
+    let log: DefEntry[] = [];
+    for (const s of ["beam(q,L):=q*L^2/8", "sq(x):=piecewise(x==0,1,x^2)", "w(x):=sin(pasdeg*x)+mod(x,3)"]) log = applyDefChanges(log, h.home(s, defaultHomeSettings).defs);
+    const old = log.map((e) => e.cmds.map((c) => writeUserNames(dropAngleFactor(c, "typed"))).join("\n"));
+    const { text } = exportLibrary(log, LIBRARY_FORMAT);
+    for (const o of old) expect(text).toContain(`\n${o}\n`);
+    const back = importLibrary(await nodeHost(), parseLibrary(text, parse, LIBRARY_FORMAT), []);
+    expect(back.ok && back.log.map((e) => e.cmds.join("\n"))).toEqual(log.map((e) => e.cmds.join("\n")));
+    expect(() => parseLibrary("// n62 library 4\n// d\nf(x):=x+pasdiff\n", parse, LIBRARY_FORMAT)).toThrow(/line 3: pasdiff starts with pas/);
   });
 });

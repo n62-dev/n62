@@ -5,7 +5,8 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
-import { CAS_ANS, isOurName, isOwnName, OUR_OTHER_NAMES, OUR_PREFIX, OUR_STORES } from "./ourNames.ts";
+import { CAS_ANS, equalityBlock, isOurName, isOwnName, OUR_OTHER_NAMES, OUR_PREFIX, OUR_STORES, readTests, writeTests, writeUserNames } from "./ourNames.ts";
+import { latexToGiac } from "../input/latex-to-giac.ts";
 import { ENGINE_DEFINITIONS, WORKER_DEFINITION_NAMES, defaultHomeSettings } from "./homeEval.ts";
 import { COMPLEX_DEFINITIONS } from "./complex.ts";
 import { ICDF_DEFINITIONS, ICDF_DIGITS, ICDF_FAILED, ICDF_REPLACED } from "./icdf.ts";
@@ -102,5 +103,49 @@ describe.skipIf(!giacAvailable())("G341: what our Giac text leaves stored is our
     const held = splitList(giac.eval("VARS")) ?? [];
     expect(held.length).toBeGreaterThan(40);
     expect(held.filter((n) => !ours(n))).toEqual([]);
+  });
+});
+
+// G377 (F239): the value test's one text (equalityBlock), read back by the export (writeTests) and written by the
+// import (readTests), as the parser writes it.
+describe("an == or ≠ test written back and read again (G377)", () => {
+  const id = (t: string): string => t;
+  const block = (a: string, b: string, kept: string, negate = false): string => equalityBlock(a, b, negate, kept);
+
+  it("the parser's block is equalityBlock's text, byte for byte as before the move (derived: phase-1's emit.ts output)", () => {
+    const typed = latexToGiac("f(x):=x==0.5");
+    expect(typed).toBe("f(x):=((a_,b_)->((d_)->{if(string(exact(d_))!=string(d_)){sto(1,pasinexact);sto(d_,pasdiff)};when(string(exact(d_))!=string(d_),when(pasverdict==0,true,when(pasverdict==1,false,'x==0.5')),when(simplify(d_)==0*d_,true,when(lname(d_)==[] and (type(d_)==integer or type(d_)==rational or max(abs(evalf(d_,30)))>10^-20*max(max(abs(evalf(a_,30))),max(abs(evalf(b_,30))))),false,'x==0.5')))})(a_-b_))(x,0.5)");
+    expect(latexToGiac("g(x):=x\\ne\\frac{1}{3}")).toBe(`g(x):=${block("x", "1/3", "x!=1/3", true)}`);
+    expect(writeTests(typed)).toBe("f(x):=x==0.5");
+    expect(readTests("f(x):=x==0.5", id)).toBe(typed);
+  });
+
+  it("round-trips a nested test, a test in a call, a ≠, and both tests beside and/or", () => {
+    for (const t of ["f(x):=x!=1/3", "h(x):=when(x==1,1,2)", "m(x):=(x==1)==(x!=2)", "a(x):=x==1 and x!=2", "b:=x->x==y", "c(x):=[x==1,2]", "n(x):=not x==1"]) {
+      const read = readTests(t, id);
+      expect(read, t).toMatch(/pasverdict/);
+      expect(writeTests(read), t).toBe(t);
+    }
+    expect(readTests("n(x):=not x==1", id)).toBe(`n(x):=${block("not x", "1", "not x==1")}`); // Giac: `not 1==2` is (not 1)==2
+  });
+
+  it("brackets the kept text where an operator beside it binds tighter than ==", () => {
+    expect(writeTests(`f(x):=2*${block("x", "1", "x==1")}+1`)).toBe("f(x):=2*(x==1)+1");
+    expect(writeTests(`f(x):=-${block("x", "1", "x==1")}`)).toBe("f(x):=-(x==1)");
+  });
+
+  it("leaves Giac's own == where the parser writes it or a program holds it, and every other relation", () => {
+    for (const t of ["sq(x):=piecewise(x==0,1,x^2)", "s(n):={ if (n==0) { return 1; } return n; }", "f(x):=x==1==y", "f(x):=x<=1", 'f(x):="x==1"', "f(x):=x", "f(n):=if n==0 then 1 else n fi"]) {
+      expect(readTests(t, id), t).toBe(t);
+      expect(writeTests(t), t).toBe(t);
+    }
+    // a piecewise value (not a condition) is a test as typed
+    expect(readTests("p(x):=piecewise(x>0,x==1,0)", id)).toBe(`p(x):=piecewise(x>0,${block("x", "1", "x==1")},0)`);
+  });
+
+  it("the sides go through the import's text, the kept text keeps our call names only (no angle factor: it is shown)", () => {
+    const giac = (t: string): string => t.replace(/sin\(/g, "sin(pasdeg*").replace(/\bmod\(/g, "pasmod(");
+    expect(readTests("k(x):=sin(x)==mod(x,3)", giac)).toBe(`k(x):=${block("sin(pasdeg*x)", "pasmod(x,3)", "sin(x)==pasmod(x,3)")}`);
+    expect(writeUserNames(writeTests(readTests("k(x):=sin(x)==mod(x,3)", giac)).replace("pasdeg*", ""))).toBe("k(x):=sin(x)==mod(x,3)");
   });
 });
