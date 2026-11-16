@@ -2,6 +2,7 @@
 // History persistence and the lazy-loaded entry line.
 import { expect, test } from "@playwright/test";
 import { entryValue, open, PASTE, setClipboard, sheet, sheetKey, tap, tapTwice, useClipboardLock } from "./helpers.ts";
+import { DATA_VERSION } from "../src/state/storage.ts";
 
 // Not helpers.lastResult: this one is the whole result row, not its `.result` part.
 const lastResult = (page: import("@playwright/test").Page) => page.locator('[data-testid="result"]').last();
@@ -254,7 +255,7 @@ test("a definitions log stamped 2 is migrated at start, its steps loaded on dema
   await next.evaluate(() => window.n62.entry.ready);
   await tap(next, ["alpha", "vars", "enter"]); // A
   await expect(lastResult(next).locator(".result")).toHaveAttribute("data-text", "1"); // derived: exp(0)
-  // written back under today's stamp, migrated
+  // written back under today's stamp (DATA_VERSION, not a literal: G371 stepped it), migrated
   await expect
     .poll(() =>
       next.evaluate(
@@ -270,7 +271,7 @@ test("a definitions log stamped 2 is migrated at start, its steps loaded on dema
           }),
       ),
     )
-    .toEqual([4, ["A:=(exp(0))"]]);
+    .toEqual([DATA_VERSION, ["A:=(exp(0))"]]);
 });
 
 // R255 (bu-1): on a cold start with a stored history the keypad is up before MathLive's field; keys pressed then wait
