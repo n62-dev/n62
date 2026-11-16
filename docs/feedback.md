@@ -22,7 +22,7 @@ The owner's `todo.txt` held no `+N62` line on 2026-11-16, so no owner report was
 
 | # | Date | Point (T4's words) | Triage |
 |---|---|---|---|
-| 56 | 2026-11-16 | S16: CAS ∫₋₂²√(4−x²)dx shows 16π/8, ∫₀¹√(1−x²)dx shows √π/2 √π/2. Right, but not how anyone writes it (F350). | bug, G575 |
+| 56 | 2026-11-16 | S16: CAS ∫₋₂²√(4−x²)dx shows 16π/8, ∫₀¹√(1−x²)dx shows √π/2 √π/2, √12 + √27 shows 2√3 + 3√3. Right, but not how anyone writes it (F350). | bug, G575 |
 | 57 | 2026-11-16 | S05: `sin` Enter, `2 xʸ` Enter, `4 ÷` Enter say "unsupported command \placeholder"; `2 × × 3` says "unsupported command \times"; `3 +` Enter says "unexpected end of input at end of input" (F351). | bug, R575 |
 | 58 | 2026-11-16 | S01, S05: (1 + 1/10⁵)^(10⁵), the limit that gives e, says "The calculation failed" (so do `2^1000000` and `10^(10^6)`), though 1.00001^100000 and `2^(1ᴇ7)` have a number (F352). | bug, G576 |
 | 59 | 2026-11-16 | S07, S16: the ≈ on Enter, pressed after typing a sum, puts approx(□) behind it and the next Enter fails (F353). | feel, R576 (owner's yes) |
