@@ -104,7 +104,7 @@ export function modeItems(session: Session, env: SettingsEnv = {}): MenuItem[] {
       id: "entry",
       label: modeText("mode.entry"),
       get options() {
-        return buttons(ENTRIES, () => s.entry, (v) => session.setEntry(v), (v) => modeText(v === "line" ? "entry.line" : "entry.textbook")); // (R253: rpn has no button until R343)
+        return buttons(ENTRIES, () => s.entry, (v) => session.setEntry(v), (v) => modeText(`entry.${v as Exclude<EntryMode, "rpn">}`)); // (R253: rpn has no button until R343)
       },
       adjust: (by) => session.setEntry(cycle(ENTRIES, s.entry, by)),
     },
