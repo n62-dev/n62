@@ -7,10 +7,9 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-- **S20, MPFI intervals:** go for real values on Giac's interval functions? Recommended; +6.6 kB brotli ([r22](research/r22-mpfi.md) 1).
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
-- **T1's 26 questions (2026-11-16):** R513, R509, G504, R505, R507, A204, A205, G517, R517, G518, G527 and the rest in `../drafts/2026-11-16-ultra/t1-packages/SUMMARY.md` ("Needs the owner"); each package waits for its answer; recommended as written.
+- **G518, the worst case (T1's 8 and 9):** its range (the typed ± as limits, or k·σ) and a formula it cannot bound exactly (refuse, or an outer bound if that stays simple); sandra's note `../drafts/2026-11-16-ultra/coordinator/sandra-worst-case.md`; G518 waits for the answer.
 
 ## Decided proposals
 
@@ -64,6 +63,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts; the inline scripts 1.53 kB gzip). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
 - **T4's answers (owner, 2026-11-16):** the todo test sessions are dropped; a prefix key pressed after a value takes it in (≈: R576, ∥: R585); T + ΔT gives a temperature (G577); grouped numbers paste after the tag (R581); Home draws matrix results as grids after the tag (R578).
 - **T2's and T3's answers (owner, 2026-11-16):** A÷B of two matrices is refused (G555); Home's σ of second order goes through the unit view's rule after the tag (F309, no package yet); the word-op row tag after the tag (R552); iOS in phase 2 is the home-screen web app (no Capacitor iOS, no App Store ask, iOS 18 floor; S90), desktop the installed web app (no Tauri, Electron or Flathub; S95), the sync folder through the browser's folder access after S95 (A231); G524 before the tag.
+- **T1's answers (owner, 2026-11-16; `../drafts/2026-11-16-ultra/t1-packages/SUMMARY.md` 1–26):** as recommended: v1 waits for its triggers; the results-mode pick W, K1, R2 + R3 (C3c splits); phone landscape waits; S20 go (G519 on, then G520, G521, G536, G537, A219, R520); CI on pull requests only, later; rule C refuses (G527); `1/0` copied is F198's limit; Copy marks a whole exact integer `=` (R513); one budget of 2 presses, a tap 1 (R509); dB ↔ ratio as four Find templates (G504); the σ sheet's Copy row (R505); a 2 GB emulator on lin99 (A205); GNU Units developer-only (G517). Otherwise: typed intervals in CAS after G519 (a package then); the disabled "The unit alone" row goes, no UPART (R507); the CSP is loosened for Capacitor's bridge in the APK, not left out (A204); page zoom only through a setting, off by default (R517); `L(2)` from the keys indexes a stored list or matrix (EN4, R630); mpmath oracles for all 313 agreement-only hunt rows (G630). Open: RPN's swap key, ▲/▼ and `frac` wait for the owner's VC notes; A202, A210 and G9 are backlog "Needs the user" 7.
 
 ### Precision, engine and parser
 - **G141 (Opus pass 68): a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too (`(1-cos(10^-600))*10^1200+1` showed ≈ 1, right 1.5); G126's and G153's rows turn ⚠ until S20.
