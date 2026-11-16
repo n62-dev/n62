@@ -63,9 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 815 | R252 the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
-| 816 | R253 the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
-| 802 | R333 a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
 | 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
