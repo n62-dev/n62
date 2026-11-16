@@ -44,6 +44,10 @@ describe("share", () => {
     expect(share(-30, 100.4, 100, 0)).toEqual({ scroll: 100, offset: -30 });
     expect(share(-30, 100.4, 100, 0, true)).toEqual({ scroll: 100, offset: 0 });
   });
+  it("slides the row from a scroller whose true end is fractional, just under max", () => {
+    expect(share(-30, 99.6, 100, 0)).toEqual({ scroll: 100, offset: -30 });
+    expect(share(-30, 99.6, 100, 0, true)).toEqual({ scroll: 100, offset: 0 });
+  });
   it("leaves the row at 0 for every later move of a drag that moved the scroller, both ways", () => {
     expect(share(-30, 100, 100, 0, true)).toEqual({ scroll: 100, offset: 0 });
     expect(share(30, 100, 100, 0, true)).toEqual({ scroll: 70, offset: 0 });

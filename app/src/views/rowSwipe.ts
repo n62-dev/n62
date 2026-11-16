@@ -45,8 +45,8 @@ export function share(d: number, scroll: number, max: number, offset: number, mo
   let s = from;
   if (off === 0 && rest !== 0) {
     s = Math.min(Math.max(from - rest, 0), Math.max(max, 0));
-    rest += s - from;
-    if (moved || s !== from) rest = 0;
+    // (the same 1 px as `move`'s: under it the scroller is at its end, the rest slides the row)
+    if (moved || Math.abs(s - from) >= 1) rest = 0;
   }
   return { scroll: s, offset: off + rest };
 }
