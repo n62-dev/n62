@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R328: the uncertainty sheet's rows (docs/mockups/uncertainty-sheet.html sections 2 to 4, variant A), a pure function of
+// R328: the uncertainty sheet's rows (docs/archive/mockups/uncertainty-sheet.html sections 2 to 4, variant A), a pure function of
 // the history row and G272's model. Sources: the terms of t10 are G271's (units/evaluate.test.ts g01) and the shares of
 // rows a and b G272's oracle rows (tests/golden/oracle_budget.py, via budget/model.test.ts); the rest derived by hand:
 // a chip of σ 1.2 times (2.000 ± 0.005): t = (2·1.2)² = 5.76, (39.488·0.005)² = 0.0389825536, second 1.2²·0.005² =

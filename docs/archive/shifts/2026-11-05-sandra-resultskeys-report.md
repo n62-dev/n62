@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # S25 report: results mode, the six top-right keys, the viewport room (sandra, 2026-11-05)
 
-Pipeline run 643, branch `p1/sandra-resultskeys` from `phase-1` 6ce82ab8. The note: [r19](../archive/r19-results-and-keys.md) (open). Nothing in `app/src` changed.
+Pipeline run 643, branch `p1/sandra-resultskeys` from `phase-1` 6ce82ab8. The note: [r19](../r19-results-and-keys.md) (open). Nothing in `app/src` changed.
 
 ## What I verified (rerun commands)
 
@@ -63,8 +63,8 @@ At 360 × 740 (1.36 rows) touch costs one scroll from k = 2 on. A visit with n a
 > ### ron, R129: the study's mockups: results mode, the six top-right keys and the viewport room, branch `p1/ron-resultsmockup`
 > **Lane:** A, day (the owner picks from it), **Sonnet** (a mockup page; nothing merges into `app/src`). **Starts when:** S25 is merged.
 > **Why:** S25 (r19, linked as `../../research/r19-results-and-keys.md` from the package file) measured three layouts of the six keys, two screens for results mode and four room options. The owner picks from pictures, and keys move once (decisions.md, 2026-11-02 point 5).
-> **Read:** r19 parts 1–3 and S25's report (`docs/shifts/2026-11-05-sandra-resultskeys-report.md`); `docs/archive/mockups/top-cluster-r15c.html` (its phone drawing, Dark/Light/Both bar and summary table: reuse them); `docs/archive/mockups/settings.html`; the theme tokens of `app/src/style.css` and the theme files (R50b–R50e); the probes' output (`node tools/probes/results-geometry.mjs --options`, `node tools/probes/results-keys.mjs`).
-> 1. **The page** `docs/mockups/results-mode.html`, in the Pascaline theme, Dark and Light (the Dark/Light/Both bar), each phone drawn at 412 × 839 and 360 × 740 CSS px to scale:
+> **Read:** r19 parts 1–3 and S25's report (`docs/archive/shifts/2026-11-05-sandra-resultskeys-report.md`); `docs/archive/mockups/top-cluster-r15c.html` (its phone drawing, Dark/Light/Both bar and summary table: reuse them); `docs/archive/mockups/settings.html`; the theme tokens of `app/src/style.css` and the theme files (R50b–R50e); the probes' output (`node tools/probes/results-geometry.mjs --options`, `node tools/probes/results-keys.mjs`).
+> 1. **The page** `docs/archive/mockups/results-mode.html`, in the Pascaline theme, Dark and Light (the Dark/Light/Both bar), each phone drawn at 412 × 839 and 360 × 740 CSS px to scale:
 >    - **Keys:** K0 (today), K1 (recommended), K2, as r19 part 2's table. Each shows the cluster with both layers' legends, a ghost of maths row 3, and under it r19's press row (Redo, Paste, ⇤ ⇥) and what moves.
 >    - **Results mode:** W (recommended: today's rows plus a name tag on a stored row, e.g. `v = 20 m/s` over `72 km/h → m/s`, with σ muted and ⚠ with its reason line) and W2 (one line per step: name = result unit, the formula muted). Both are drawn collapsed: the 44 px slice, a picked row, and the line of six (Insert, Recall, Copy, Store ▶, Delete, Plot). Use five steps of an RC filter: R, C, τ = R·C, f = 1/(2πτ), with one ⚠ row. Write the measured viewport under each (767 px at 412 × 839, 668 px at 360 × 740).
 >    - **Room:** today, R1, R2, R1 + R2 and R3 at both sizes, with the keypad drawn at its measured rows and gaps. Under each: viewport, share, history unpicked and picked, from r19 part 3's table. Draw the 0.35 floor as a line.

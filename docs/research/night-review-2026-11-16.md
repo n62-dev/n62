@@ -30,10 +30,9 @@ All of it is in brief section 0c: lane B steps 833, 834 at the head (G398, G399)
 
 ## 3. Backlog lines
 
-Written: nr1116-be-4 and -be-1 under "Open bugs" (rerun `tools/probes/review-1116/author/rerun.sh <label>`), the pointer here; F181 out; the Giac line's counts; "Needs the user" item 2 to 76.
+Written: nr1116-be-4 and -be-1, and -vg-1, -vg-2, -vg-5 (owner, 2026-11-16: the S1 rule over the 200 B margin), under "Open bugs" (rerun `tools/probes/review-1116/author/rerun.sh <label>`), the pointer here; F181 out; the Giac line's counts; "Needs the user" item 2 to 76.
 
 **Waiting for room** (the backlog keeps 200 B free):
-- `- **nr1116-vg-1, -vg-2, -vg-5 (S1 extreme, `d4bf19bf0`; G403, G405, G404).** A false ≈ 1, a false `=` count, a CAS +2πi. Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-vg-1` (`-vg-2`, `-vg-5`). Family 3.`
 - lo-8: F61's "(decisions.md G71)" → "(archive/decisions-2026-10.md G71)" (+40 B).
 
 ## 4. To verify

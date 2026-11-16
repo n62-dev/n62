@@ -68,7 +68,7 @@ Doc commits on phase-1 (not pushed), by pass merge: d9562495 (92), a766f47f (93)
 1. **Decide** (decisions.md "Needs the user"): A83 (take `engine/giac/patches/README.md` off the shared-file list, so a patch's worker writes its row; proposed); A73f1 (A73f2 after v0.1.0, recommended); G164's 16 sample sources by the freeze on Thu 11-12; A64 lo-11 (yes, warn only, recommended by pass 93).
 2. **Device checks by day** (backlog lines): A66's Key click on the Tab One (system touch sounds on and off, latency against the pulse); R155f1's dash in Home during a cold start; after R53f1, the swipe on a real WebView and TalkBack on the handle and the slice.
 3. **Milestone review additions:** the Fairphone fast-typing check for R161, R162's pop and R158's 30-digit row; R156's gallery `look-n62-flat`; R153 to R155's defaults above (decisions.md "R153–R155"); the gallery look at N62, Black & White and Solarized (A82).
-4. **Morning check** on the Tab One ([MORNING.md](../../tests/core/MORNING.md)): the device list was 65/65 on cdea80f1; check c29 (5 ▶ A, relaunch, A×2) by hand, and put the normal APK and STAY_ON back if a measure build is on the device.
+4. **Morning check** on the Tab One ([MORNING.md](../../../tests/core/MORNING.md)): the device list was 65/65 on cdea80f1; check c29 (5 ▶ A, relaunch, A×2) by hand, and put the normal APK and STAY_ON back if a measure build is on the device.
 5. **Push phase-1** when content: this night's 24 merges and 11 doc commits sit on top of earlier unpushed work.
 6. **Watch:** F200 (c29); the `isTiming` tests under load; `presetsMode.spec.ts:208` (no backlog line yet; the backlog is full).
 

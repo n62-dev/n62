@@ -58,6 +58,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **G353's trace (no package).** Before G353 `stats1(L)` of stored floats was ⚠ alone, ≈ after `linreg(L,…)` (facts.ts inherited's check); cause not traced. Family 2.
 - **F252, no package (S20).** Home `floor((1+10^-100)^(10^100))` shows **= 1**, right 2 (source: derived: the power lies in (2, 3)); G156's raised start misses the loss. An MPFI interval decides 2 ([r22](research/r22-mpfi.md) 4). Family 3.
 - **nr1116-be-4, -be-1 (S1, `d4bf19bf0`; G398, G399).** `sqrt(sec(2))` ≈ -1.55016062449·i (right +), `arg((i*pi)^2)` ≈ -3.14159265359 (right π). Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-be-4` (`-be-1`). Families 4, 5.
+- **nr1116-vg-1, -vg-2, -vg-5 (S1 extreme, `d4bf19bf0`; G403, G405, G404).** A false ≈ 1, a false `=` count, a CAS +2πi. Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-vg-1` (`-vg-2`, `-vg-5`). Family 3.
 - **Night review 2026-11-16:** [the rest](research/night-review-2026-11-16.md).
 
 ### Background stream (extreme inputs; at night, by reach)

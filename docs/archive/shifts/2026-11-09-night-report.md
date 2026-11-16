@@ -48,7 +48,7 @@ Opus pass merges: 74c9b3f7 (103), d7e3679d (104), bbe6afdf (105), 662ae7ad (106)
 - 109 (R148f1): fix (R148f2, the key queue). CORE 66/66 at 3eb5497a; device 65/65. F201's backlog line gives the cause.
 
 ## What the owner must do
-1. **Sign G164's sample sources** (decisions.md "Needs the user"; [S36](2026-11-sandra-sample-sources.md)) by the freeze on Thu 11-12: seven clauses to read, including the two copper values and the J1 row. If not signed, the lines stay "to verify".
+1. **Sign G164's sample sources** (decisions.md "Needs the user"; [S36](../sample-sources-s36.md)) by the freeze on Thu 11-12: seven clauses to read, including the two copper values and the J1 row. If not signed, the lines stay "to verify".
 2. **Device check by day** (backlog line): after R53f1, the swipe on a real WebView and TalkBack on the handle and the slice.
 3. **Look at R148's layout** after R148f2 merges: 360 x 740 (the keypad 434 px; the Mode, Settings, Appearance sheet scrolls there by default, overflow at most 17 px).
 4. **Push phase-1** when content: this night's merges and doc commits are local.

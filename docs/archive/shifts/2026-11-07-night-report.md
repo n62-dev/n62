@@ -61,7 +61,7 @@ Doc commits on phase-1 (not pushed): 369663eb (pass 84), 7e2ddda2 (85), cf5f0cd5
    - G164's 16 sources by the freeze on 11-12 and R59's Math-key Find (both earlier, still open).
 2. **Look at the gallery** (A82): N62, Teal and Solarized in Dark, Light, High contrast and Plain keys; also R141's round pad, R142's italic letters, R143's ▾ mark and R145's ⚙. R143's 1 px legend shrink at 360 px joins the milestone review after R24d.
 3. **After the push:** look at A81's three issue forms on GitHub (backlog "Needs the user", item 6).
-4. **Morning check** on the Tab One ([MORNING.md](../../tests/core/MORNING.md)): the device list was 65/65 on b8ea3bd7; check c45 (Solve's second root) by eye at 1192 x 672 and put the normal APK back if the lane left a measure build.
+4. **Morning check** on the Tab One ([MORNING.md](../../../tests/core/MORNING.md)): the device list was 65/65 on b8ea3bd7; check c45 (Solve's second root) by eye at 1192 x 672 and put the normal APK back if the lane left a measure build.
 5. **Push phase-1** when content: this night's 15 merges and 7 doc commits sit on top of earlier unpushed work.
 6. **Watch:** the unitresult Wh-tap flake; F186 (c45, red on devices 84 and 85 only); F187 and F188 (Area, G188's finds) have no package.
 
