@@ -25,7 +25,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
 5. **Tap "Allow USB debugging"** on a device when it shows `unauthorized`.
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (R224's wide layout turned sideways; N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
-7. **S20, MPFI intervals:** go or no-go ([decisions.md](decisions.md); recommended: go).
+7. **T1's hands-on items (2026-11-16):** A202 (the key click with the system touch sounds off, the Tab One); A210's feel after it merges (30 % against 90 % on the Fairphone); RPN's swap key, ▲/▼ and `frac` (your VC session's notes, mh-D1e); G9 waits on item 2.
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **G369, a % chip in Home:** its pure number (0.0042) or the number shown (0.42)? See decisions.md.
 10. **R128:** offer another device's backup on Choose folder? See decisions.md.
@@ -95,7 +95,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
-- **Milestone 6, Structure:** built: matrices (R185, R187–R190), number bases (R191–R194), Help (R197); not packaged: EN7 everyday functions, EN4 copying one element of a list or matrix.
+- **Milestone 6, Structure:** built: matrices (R185, R187–R190), number bases (R191–R194), Help (R197); not packaged: EN7 everyday functions, EN4 one element of a list or matrix (`L(2)` from the keys indexes, R630).
 
 ### Without a package yet
 - **R41's device check** (the owner's hand; A139 left it, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys; the status line at font scale 2.0 (DOM names: A139's report); R53's slice under TalkBack (R283).
