@@ -3,7 +3,7 @@
 
 *sandra, 2026-10-12. **This document supersedes [02-architecture-plan.md](02-architecture-plan.md) wherever the two differ.** docs/02 stays the record of the original plan and of the reasoning that still holds (solver choice in section 4, licence and F-Droid in sections 10–11). Binding inputs: [rules-core.md](rules-core.md) (goal, three principles, hard rules), [03-feature-analysis.md](03-feature-analysis.md) (the owner's design rules), [decisions.md](decisions.md) P8. A claim about the code cites the file or a probe (`tools/probes/`, its README; Appendix A); **(to verify)** marks what was not checked, with who checks it and how (Appendix C).*
 
-Each area: **state** (verified), **decision** (with the reason), **alternatives**, **budgets and gates**, **risks**, **what would change it**. Section 8: the component diagram, the interfaces, the budgets. A paragraph shortened on 2026-11-05 has its longer text in this file at `4d80167f`.
+Each area: **state** (verified), **decision** (with the reason), **alternatives**, **budgets and gates**, **risks**, **what would change it**. Section 8: the component diagram, the interfaces, the budgets.
 
 ## 0. The decisions on one page
 
@@ -352,7 +352,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
 | `view`, `place`, `entry` | the open view and app; the half-typed line |
 | `history` | ≤ 200 items per view, with `full` (≤ 2 kB) and the mark facts |
-| `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. **Variables are kept as their value**, not their command (`B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`); functions and `assume` keep their command. `restore()` replays them; a function stays pending until an input needs it (G83), names stored through an argument, Giac's own names and `restart` (G174): `engine/host.ts`, `stores.ts` |
+| `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. **Variables are kept as their value** (`B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`); functions and `assume` keep their command. `restore()` replays them (`engine/host.ts`, `stores.ts`): functions pending until used (G83), names stored through an argument, Giac's own names, `restart` (G174) |
 | `defsStarts` | starts that ran the replay and never got ready (a load failure is not counted, G327); at 2 the engine starts without the log |
 | `tipsSeen` | tips shown |
 | `historyDropNoted` | the note "older rows are dropped after 200" was said (per install, not backed up) |
