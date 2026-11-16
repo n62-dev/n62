@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dataText } from "../i18n/enData.ts";
-import { backupName, BACKUP_KEYS, checkBackup, LEFT_OUT, makeBackup, partName, saveBackup, VALIDATORS } from "./backup.ts";
+import { backupName, BACKUP_KEYS, checkBackup, LEFT_OUT, makeBackup, partName, saveBackup, SETTING_RULES, VALIDATORS } from "./backup.ts";
 import { fakeIndexedDb, type FakeIdb } from "./fakeIdb.ts";
 import { DATA_VERSION, stamp } from "./storage.ts";
 import { kvGetRaw, type RawRecord } from "./storageRaw.ts";
@@ -264,5 +264,18 @@ describe("the rpn part (R252)", () => {
     for (const bad of [3, { ...level, uid: 4 }, { ...level, shown: 1 }, { ...level, chip: 5 }, { ...level, chip: null }, { ...level, inputs: "row:u1" }, { ...level, inputs: [1] }, { uid: "u" }])
       expect(VALIDATORS["rpn"]?.({ levels: [bad] }), JSON.stringify(bad)).toBe(false);
     expect(VALIDATORS["rpn"]?.([])).toBe(false);
+  });
+});
+
+describe("the Entry setting's third value (R253)", () => {
+  it("SETTING_RULES.entry keeps textbook, line and rpn, and nothing else", () => {
+    for (const v of ["textbook", "line", "rpn"]) expect(SETTING_RULES["entry"]?.(v), v).toBe(true);
+    expect(SETTING_RULES["entry"]?.("nope")).toBe(false);
+  });
+  it("a backup whose settings hold entry rpn passes the check", () => {
+    const file = (entry: string): Uint8Array =>
+      new TextEncoder().encode(JSON.stringify({ "n62-backup": 1, parts: { settings: { "@n62": DATA_VERSION, value: { entry } } } }));
+    expect(checkBackup(file("rpn")).ok).toBe(true);
+    expect(checkBackup(file("nope")).ok).toBe(false);
   });
 });

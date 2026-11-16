@@ -155,7 +155,7 @@ const fields = (x: unknown, rules: Readonly<Record<string, (v: unknown) => boole
 export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = {
   angle: (x) => x === "rad" || x === "deg",
   format: (x) => x === "std" || x === "sci" || x === "eng" || x === "pfx",
-  entry: (x) => x === "textbook" || x === "line",
+  entry: (x) => x === "textbook" || x === "line" || x === "rpn", // R253
   decimalMark: (x) => x === "point" || x === "comma",
   digits: (x) => whole(x, 1, MAX_DIGITS),
   fixDecimals: (x) => whole(x, 0, 12),
