@@ -109,9 +109,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 The defaults that bind code and tests, one line each. A default changes when its "would change if" happens or the owner says so.
 
 **Entry and keys**
-- **Shift + 5's matrix (R185, R186; Opus pass 169):** only the one Shift + 5 made on the line grows; a new column's other cells get □, an empty cell is refused (R185f1). Archived, "Opus pass 178". Would change if: the owner re-types recalled matrices.
-- **R194's word (Opus pass 178):** Word in Settings › Numbers opens Word size (8–64) and Signed; a preset leaves the word as it is. Archived, "Opus pass 186". Would change if: the owner wants the two rows in Numbers.
-- **The matrix grid (R188, R189, R300; Opus passes 176, 179, 187):** Shift + 4 lists stored matrices; Enter writes one row `M:=`; a key acts by its action in the layer pressed. Archived, "Opus pass 186" to "Opus pass 189". Would change if: the owner wants Enter to open the cell, or G2 item 74 shows Ans − 5.
+- **Built, archived as they stood ("2026-11-16, Ultra"):** Shift + 5's matrix (R185, R186; Opus pass 169); R194's word (Opus pass 178); The matrix grid (R188, R189, R300; Opus passes 176, 179, 187); R277's line scroll (Opus pass 155); R279's Select (Opus pass 159); R116, the entry's highlights (Opus pass 51); View keys and the load queue.
 - **R299's lock (Opus pass 187):** `UNPINNED_LISTS` stands; Plot's and Solve Num's ☰ are pinned with their last rows. Would change if: one of those lists gets a fixed row.
 - **R130's tenth ☰ row (Opus pass 179):** it keeps the 36 px floor and scrolls; rows 1–9 stay, key 0 opens Export › (docs/06 3b rule 2). Would change if: the owner's look on a phone.
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
@@ -119,8 +117,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **Store ▶ on a picked row (R280):** every key holding ▶ stores as the row bar's Store ▶; no result: the double haptic. Archived, "Opus pass 189". Would change if: the G2 differs (store-design.md 1).
 - **R261 (Opus pass 135):** Symb's ☰ lists Clear, then R83's pointer row; Esc on Solve's Num value line puts the value back; a new value takes Clear or ⌫ first (docs/05 3.5). Would change if: the owner wants type-to-replace.
 - **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms, a swipe goes at 40 % of the row. Archived, "Opus pass 181".
-- **R277's line scroll (Opus pass 155):** past 8 px a finger or pen scrolls the line, a tap places the caret, a hold selects the innermost term. Archived, "Opus pass 179". Would change if: MathLive ships a public scroll.
-- **R279's Select (Opus pass 159):** with no term before the cursor it takes the term after it; at the whole line Select is a silent press. Archived, "Opus pass 172". Would change if: A139 finds a step surprising.
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172".
 - **R71 (Opus pass 30):** ± on Shift + `,`, for the units key; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45, R312): the rule list heads `app/src/entry/hwkeys.ts` (docs/04 holds none, Opus pass 185); `e` after digits is ᴇ, unless `(` follows letters that with `e` form a known name; characters no key types do nothing.
@@ -143,24 +139,19 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **One-line mode:** `^` is literal and the exponent is the next signed factor. **Results are insertable**, bracketed when a sum. **Default angle mode: radians.**
 - **R98, Clear and Delete (Opus pass 50):** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
-- **R116, the entry's highlights (Opus pass 51):** the caret is --alpha; the bracket box and the selection are --pick with --text on them. Archived. Would change if: the owner wants the text floor in the box.
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it). Archived, "Opus pass 132".
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is a mask. Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
-- **View keys and the load queue** (Opus pass 109, R148f2): behind waiting keys Symb, Plot and Num wait in order (c46). Archived, "Opus pass 122". Would change if: a view key feels dead during a load on the Tab One.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived, "Opus pass 117".
 
 **Engine, precision and formats**
 - **Honest precision** (G2): rule: docs/04 2.4 rules 2–3; assignments evaluated once. **G44, G23:** the inverse distributions are solved against our MPFR forward functions, every fallback keeps ⚠. Archived, "Shortened 2026-10-21 (P23)". Would change if: a G2 user types Giac's aliases.
 - **Stored definitions** (G3): rule: docs/04 6.2 `defs` and 2.4 "Built in G3"; k ≥ 15 in `evalf(<exact>,k)`; the defs load times out after 3 s and a timed-out store is never saved over.
-- **G154 (Opus pass 42): no size, no underflow.** A value that is MPFR's 0 at every precision is refused "Underflow" only when Giac states its size; otherwise it shows ⚠ 0 (backlog F161). Archived. Would change if: Giac can size such a sum.
-- **G148, G148f1, G148f2 (Opus passes 62, 63, 65):** approx or evalf past MPFR's range is refused as the bare input is, inside a larger input and per call too. Archived. Would change if: a cheaper test tells exp(-10^20) from 0.
+- **Built, archived as they stood ("2026-11-16, Ultra"):** G154 (Opus pass 42): no size, no underflow; G148, G148f1, G148f2 (Opus passes 62, 63, 65); The session line (G210, G211; Opus passes 178, 181); Copy as Python (G213, G214, Opus pass 184); A stored name's mark in Vars (S53f1, Opus pass 132); R258 (Opus pass 132): a stored value of more than one letter is `\operatorname{name}`.
 - **G307 past the cap (Opus passes 171–177):** a huge `pi^n` or `exp(n)` past `MAX_EVAL_DIGITS` counts for the value only in a small value or an argument read modulo 2π (G348); then ⚠; a decision always counts it. Archived, "Opus pass 179". Would change if: S20.
-- **The session line (G210, G211; Opus passes 178, 181):** `value` is Copy's number alone, with `.`; `exact` reads in radians; `word` is the job's word, 64 bits unsigned while none is set. Archived, "Opus pass 184".
 - **G212 (Opus pass 189):** a Home row keeps its stored values as `defsUsed` (the session line's `defs`), not drawn; +10 B at start accepted. Would change if: the owner wants them drawn.
 - **The LaTeX export (G232, Opus pass 181):** only a ⚠ row gets its reason (whyLine) after the result; `\approx` and `=` stand alone, as the CSV's mark column. Would change if: the owner wants the rounding reason in a document.
-- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants; pydiff runs on every merge (`pydiff.test.ts`). Archived, "Opus pass 201". Would change if: sympy disagrees.
 - **G22, G26, G371:** a stored name keeps σ and unit, Home's σ is a chip's; `W:=W*2` doubles it. Archived, "Opus pass 97".
 - **Home and CAS share one Giac context, each with its own Ans** (`pasans`, `pcasans`). Would change if: G2 item 52 shows separate variables.
 - **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
@@ -170,12 +161,10 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R52:** `SerializeError` carries the English text plus key and values; `parseError(key, vars)` in `app/src/i18n/enParser.ts`.
 - **Home number formats:** `digits` are significant digits; rounding half away from zero (one rule); G31's Fixed. Archived, "Opus pass 181".
 - **G5:** a list's mark: docs/04 2.4. **Chips and Ans** (R2): rule: docs/04 2.8; a chip has two arguments (key, shown); an operator on an empty line starts with Ans only when the view has a result.
-- **A stored name's mark in Vars (S53f1, Opus pass 132):** from its facts, else the mark Home stored; never `=` without either. Archived, "Opus pass 150". Would change if: the owner wants old names marked.
 - **Time limits:** CAS 10 s soft budget, Giac's 600 s net; Solve and analysis 30 s; Home and units a 4 s watchdog from engine-ready (G185); Cancel replays the definitions only. Archived, "Opus pass 132".
 - **Solve and Plot:** a root at relative residual ≤ 1e-15 at 30 digits, else ⚠; Plot searches the visible window. Archived.
 - **Function app:** window x ∈ [-10, 10] square; Num from 0 by 0.1. Archived.
 - **Parser (L6):** odd root templates are real roots; `{…}` is a list; `3{,}5` and `{,}5` (R99). Archived, "Opus pass 181".
-- **R258 (Opus pass 132): a stored value of more than one letter is `\operatorname{name}`** on the line; a bracket after it multiplies; Function and Solve refuse it. Archived, "Opus pass 150". Would change if: plots read user names.
 - **Discrete distributions (G113, G113f1; patches 0009, 0010):** off the integers or below the support a pmf is an exact 0 and a cdf takes floor(k). Archived.
 - **G140 (Opus pass 34): a value Giac holds only as a double** is an unaudited double: ⚠, at most 14 digits, never ≈. Archived. Would change if: Giac gets an MPFR path for them.
 - **R55: digit groups** in a drawn Home or CAS numeric result: the mantissa in threes from the point with a thin space, on a side of five or more digits; not in the entry line, a chip, Copy or the status line. Archived.
@@ -195,7 +184,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Archived, "Opus pass 97".
 - **R28:** rule: docs/04 4.3 (slot order, the end slot); a slot only right after a number literal; σ is a number literal, `n %` of the value (R104) or a result chip (R271, R271f1; both docs/04 4.2); a product with a slot keeps its brackets.
 - **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Archived, "Opus pass 96".
-- **G161 (Opus passes 60, 62):** W, VA and var are three kinds; a conversion or a sum between kinds is refused, a product is not; %, ‰, ppm, ppb are dimensionless units (G369). Archived. Would change if: a power-triangle rule is packaged.
+- **Built, archived as they stood ("2026-11-16, Ultra"):** G161 (Opus passes 60, 62); G143 (Opus pass 36): σ through a step function.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
 - **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ. Archived, "Opus pass 122". Would change if: a chip keeps its inputs' basis (G81).
 - **R286 (pass 153):** a σ chip limits the value at σ's last confirmed decade, then markOf (`1000.5 ± 0.0707`, 3 digits: ⚠ 8 at STD 12).
@@ -207,7 +196,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35 rewrites G16's "an exact 0 loses its dimension" and the known gap of cancelling terms). Would change if: the per-term check costs more than the 5 ms p95 bar.
 
 - **The deep check of 2026-10-19 (G41):** σ includes the GUM's second-order term, ⚠ when it passes 10 % of σ² or x ± 2σ reaches a singular point. Archived.
-- **G143 (Opus pass 36): σ through a step function** stays the GUM σ, with ⚠ "the interval reaches a jump" when an input's x ± 2σ reaches one. Archived. Would change if: S16's sweep finds a missed jump.
 
 **Library, release and process**
 - **The check of 2026-10-19:** a Home value that leaves its evaluation is the value shown in any later angle mode (G34). Archived, "Opus pass 155".
@@ -216,19 +204,14 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The release path (A7, A8, A45, A48):** APK and website from one tag; golden on the release engine before signing; the web names frozen; `master` follows phase-1. Archived, "Opus pass 189".
 - **Releases:** the engine built in the pinned container (P2), `setarch -R`, bit-reproducible. **Minimum WebView:** Chrome 111 (R160; minSdk 24). Archived, "Opus pass 189".
 - **Tests:** the golden gate as docs/04 7.3; values `derived` or `oracle`; timing tests skip their assertion under load; a DOM count is a Playwright test (R132). Archived, "Opus pass 189".
-- **A47b, a start does not wait for the queue (Opus pass 13):** a run's start copies node_modules under its own `nodemods` lock, not under `integ`. Archived. Would change if: a copy is ever seen half-refreshed.
-- **A45 (Opus pass 19):** a criterion on a shared file is met by its exact text under "For shared files"; the next Opus pass applies it. Archived, "Opus pass 189". Would change if: workers may edit `THIRD_PARTY.md`.
+- **Built, archived as they stood ("2026-11-16, Ultra"):** A47b, a start does not wait for the queue (Opus pass 13); A45 (Opus pass 19); R38b, R88, the restore's checks and presets (Opus pass 29); G119, Giac's sequence answers in Home (Opus pass 6); G172, the double fallback per element stops at 32 elements; A101, the checked append (Opus pass 189).
 - **R87 (Opus pass 15):** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
-- **R38b, R88, the restore's checks and presets (Opus pass 29):** `state/backup.ts` repeats the start readers' rules, each guarded by a test on the same values; no pin in `vite.config.ts`. Archived. Would change if: a guard misses a drift.
 - **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Archived, "Opus pass 97".
 - **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04).** Archived, "Opus pass 122" and "Opus pass 66". Would change if: the milestone review.
-- **G119, Giac's sequence answers in Home (Opus pass 6):** each shows its value (one element) or a list in braces, so Ans and a stored name (`=>` too, G173f1) read back a value or a list; CAS too since G173 (owner, 11-05). Archived.
-- **G172, the double fallback per element stops at 32 elements** (`MAX_DOUBLE_ELEMENTS`; Opus pass 122); a longer list shows Giac's text. Archived, "Opus pass 123". Would change if: the per-element calls are batched.
 - **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Archived, "Opus pass 97". Would change if: the owner wants an older look flat.
 - **A66, the key click (Opus pass 97):** the app's switch alone decides (R112). Archived, "Opus pass 135". Would change if: its device check, or the owner wants the system's setting to win.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
 - **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.
-- **A101, the checked append (Opus pass 189):** a failed read, append or check is "cantAppend", nothing more written (`appendChecked`). Archived, "Opus pass 191". Would change if: G219 finds the read too slow.
 - **G218, G219, G233, G234 (Opus pass 191):** a sync `.py` row name carries its process id (`_3_<id>`); the queue keeps 400 lines, a burst waits 2 s. Your unit is the id `@name`, for good. Would change if: G215 finds a sync `.py` that does not run.
