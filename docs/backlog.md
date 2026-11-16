@@ -18,8 +18,8 @@ The one place for "where are we and what's left", one or two lines per open item
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
 
 ## Needs the user
-0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml) (tell a session what to drop or add); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
-1. **Your outreach steps** (decisions.md P18–P22): mirror G77's pin (`gh` logged in; the command is in `engine/giac/README.md`).
+0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
+1. **Your outreach steps** (decisions.md P18–P22): mirror G77's pin (the `gh` command is in `engine/giac/README.md`).
 2. **G2 questions:** the unanswered items of `tests/golden/G2-CHECKLIST.md` (41, 42, 52, 56, 63–75; each package built a default, named in decisions.md; 63–65 can reverse S14's route R); the optional real-G2 spot checks (`spec/mapping/vc-2026-10-11/SPOT-CHECK.md`).
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
@@ -27,7 +27,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): freeze Tue 11-17. Now: your look at the UI on the Tab One (R224's wide layout turned sideways; N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **S20, MPFI intervals:** go or no-go ([decisions.md](decisions.md); recommended: go).
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-9. **G369, a % chip in Home:** its pure number (0.0042) or the number shown (0.42)? See decisions.md, Needs the user.
+9. **G369, a % chip in Home:** its pure number (0.0042) or the number shown (0.42)? See decisions.md.
+10. **R128:** offer another device's backup on Choose folder? See decisions.md.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
