@@ -23,14 +23,14 @@ import { root, ROUNDS, want, cases, median, freshHost, report, str, same } from 
 const UNIT_P95_MS = 5;
 
 /** What a units case got, as text to compare and print. */
-function unitGot(r: Quantity | UnitError, c: Case): string {
+export function unitGot(r: Quantity | UnitError, c: Case): string {
   if (isUnitError(r)) return `refused: ${unitErrorMessage(r)}`;
   const m = markText(markOf(precisionFacts(r.value), { format: "STD", digits: 12 }));
   return `${m ?? "-"} ${r.value.display} exact ${r.value.exact ?? "-"}${c.dim !== undefined ? ` dim ${JSON.stringify(r.dimension)}` : ""}${c.unit !== undefined ? ` unit ${JSON.stringify(r.unit)}` : ""}${c.dimtext !== undefined ? ` dimtext ${JSON.stringify(r.dimensionText)}` : ""}${c.si !== undefined ? ` si ${r.si ?? "-"}` : ""}${c.unc !== undefined ? ` unc ${r.unc?.text ?? "none"}` : ""}${c.shown !== undefined ? ` shown ${r.unc?.shown ?? "-"}` : ""}${r.unc?.why ? ` ⚠ ${unitWhyText(r.unc.why)}` : ""}${r.note ? ` note ${unitNoteText(r.note)}` : ""}`;
 }
 
 /** The same text for what the case expects; `dim` and `si` are checked where the case gives them. */
-function unitWant(c: Case): string {
+export function unitWant(c: Case): string {
   if (c.message !== undefined) return `refused: ${c.message}`;
   return `${c.mark ?? "-"} ${str(c.expect as string)} exact ${c.exact ?? "-"}${c.dim !== undefined ? ` dim ${JSON.stringify(c.dim)}` : ""}${c.unit !== undefined ? ` unit ${JSON.stringify(c.unit)}` : ""}${c.dimtext !== undefined ? ` dimtext ${JSON.stringify(c.dimtext)}` : ""}${c.si !== undefined ? ` si ${c.si}` : ""}${c.unc !== undefined ? ` unc ${c.unc}` : ""}${c.shown !== undefined ? ` shown ${c.shown}` : ""}${c.unc_why !== undefined ? ` ⚠ ${c.unc_why}` : ""}${c.notice !== undefined ? ` note ${c.notice}` : ""}`;
 }

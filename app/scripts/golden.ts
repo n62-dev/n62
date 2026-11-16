@@ -3,7 +3,7 @@
 // build that ships (CLAUDE.md). Exit 0 only if every stage passes.
 //   npm run golden                                  # engine: $GIAC_MJS, else $GIAC_OUT/giac.mjs, else engine/giac/_out/gsl
 //   GIAC_MJS=/path/giac.mjs ROUNDS=5 npm run golden
-//   ONLY=home,parser npm run golden                 # stages: interrupt, steps, flags, home, precision, solve, function, bench, calls, invariants, units, parser
+//   ONLY=home,parser npm run golden                 # stages: interrupt, steps, flags, home, precision, solve, function, bench, calls, invariants, units, parser, rpn
 // Typed Giac text in a case (`input`, `before`, step inputs, `eq`, `f`, `g`) gets the parser's angle rule first (G46).
 // Stages:
 //   interrupt  tests/engine/interrupt-test.mjs (Giac patch 0002): 16 forced interrupts, no escapes
@@ -61,6 +61,9 @@
 //              `options: { units: true }` is the unit view's formula: `formula` is the exact text the parser must give,
 //              `slots` (and `to`) the slots in unit-case.ts syntax, and `expect` the Giac text G16's builder makes from
 //              them (needs the Find index, as the units stage does)
+//   rpn        G302 (mh-D1): the cases with `rpn:` in home.yaml and units.yaml, driven as a stack sequence (entry/rpn.ts, rpnCompose.ts),
+//              give what their own line gives: the text, mark, σ and copy text (Home), the value, unit, σ or refusal (unit view);
+//              two fresh engines per case (golden/rpn.ts)
 // The stages are one module each under scripts/golden/ (lib.ts: the shared helpers and the report).
 import { mjs, want, summary } from "./golden/lib.ts";
 import { stageFlags, stageInterrupt, stageSteps } from "./golden/engine.ts";
@@ -72,6 +75,7 @@ import { stageCalls } from "./golden/calls.ts";
 import { stageInvariants } from "./golden/invariants.ts";
 import { stageUnits } from "./golden/units.ts";
 import { stageParser } from "./golden/parser.ts";
+import { stageRpn } from "./golden/rpn.ts";
 
 console.log(`golden: engine ${mjs}`);
 if (want("interrupt")) stageInterrupt();
@@ -86,6 +90,7 @@ if (want("calls")) await stageCalls();
 if (want("invariants")) await stageInvariants();
 if (want("units")) await stageUnits();
 if (want("parser")) await stageParser();
+if (want("rpn")) await stageRpn();
 const failed = summary.filter((s) => !s.ok);
 console.log(failed.length ? `\nGOLDEN GATE FAILED: ${failed.map((s) => s.stage).join(", ")}` : "\nGOLDEN GATE PASSED");
 process.exit(failed.length ? 1 : 0);
