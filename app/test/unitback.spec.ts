@@ -146,6 +146,22 @@ test.describe("the way back from the unit view (R63)", () => {
     await expect(lastRow(page).getByTestId("unit-names")).toHaveCount(0);
   });
 
+  // R352: the end slot's reading says what it does (a bare → □ shows nothing else); c67's keys, derived 5/0.45359237 = 11.0231131092
+  test("5 kg: after Enter the end slot is active and its reading says what it does; lb and Eval give c67's ≈ 11.0231131092 lb", async ({ page }) => {
+    await tap(page, ["d5"]);
+    await unitsKey(page);
+    await tap(page, ["d4", "d6"]);
+    await expect(page.getByTestId("unit-reading")).toHaveText("kilogram");
+    await tap(page, ["enter"]);
+    expect(await page.evaluate(() => window.n62.unitView?.view.activeId)).toBe("end");
+    await expect(page.getByTestId("unit-reading")).toHaveText("Leave empty: the result in its own unit. A unit here: checked, then converted");
+    await flick(page, "d6", "up");
+    await expect(page.getByTestId("unit-reading")).toHaveText("pound");
+    await flick(page, "enter", "up");
+    await expect(result(page)).toHaveAttribute("data-text", "11.0231131092");
+    await expect(page.getByTestId("unit-unit")).toHaveText("lb");
+  });
+
   test("the units key on chip × 2 fills the slot after the chip with m; the 2 keeps its own empty slot", async ({ page }) => {
     await t04(page);
     await leaveView(page);

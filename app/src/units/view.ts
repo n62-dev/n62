@@ -450,6 +450,13 @@ export class UnitView {
   }
 
   #read(): void {
-    this.reading = (this.#models.get(this.activeId) as SlotModel).reading;
+    const m = this.#models.get(this.activeId) as SlotModel;
+    // R352: an empty end slot says what it does (a bare → □ shows nothing else)
+    if (this.activeId === END && m.empty) {
+      const text = unitText("units.read.endEmpty");
+      this.reading = { text, parts: [{ text, marked: false }], marked: false };
+      return;
+    }
+    this.reading = m.reading;
   }
 }

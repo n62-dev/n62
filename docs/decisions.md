@@ -150,7 +150,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is a mask. Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
 - **View keys and the load queue** (Opus pass 109, R148f2): behind waiting keys Symb, Plot and Num wait in order (c46). Archived, "Opus pass 122". Would change if: a view key feels dead during a load on the Tab One.
-- **The tips' text stops at 18 px** (Opus pass 110, R171): six cards at scale 2.0 cannot fit 360 × 740 at 32 px. Would change if: the owner wants them to follow the scale and scroll.
+- **The tips' text stops at 18 px** (Opus pass 110, R171): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived, "Opus pass 117".
 
 **Engine, precision and formats**

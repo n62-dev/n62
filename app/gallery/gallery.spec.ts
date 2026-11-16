@@ -190,6 +190,11 @@ function unitResultShots(): Shot[] {
     { id: "over100-sheet", title: "sin(0 ± 0.2), Shift + 1 (R328): the row at 104.2 % with its bar's stripe, second order −4.2 %, the over-100 line", setup: async (p) => { await units(p, ["sin", "d0", ...pm, "d0", "dot", "d2"], "↑enter"); await tap(p, ["shift", "d1"]); await p.getByTestId("unc-rows").waitFor(); } },
     { id: "warn", title: "σ with ⚠ (G41): the ⚠ sits before σ, the why-line under it in the warn colour", setup: (p) => units(p, ["cos", "d0", ...pm, "d0", "dot", "d1"], "↑enter") },
     { id: "note", title: "A note (G40): one line under the value, which stays", setup: (p) => units(p, ["d3", "d0", "d0", "d0", "mul", "d0", "dot", "d1"], "↑x enter d9 enter d9 div d3 ↑enter") },
+    { id: "end-empty", title: "R352: 5 kg, Enter: the end slot is active and empty, its reading says what it does (no result yet)", setup: async (p) => {
+      await plan(p, "d5"); await flick(p, "tmpl", "up");
+      await p.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
+      await plan(p, "d4 d6 enter"); await p.getByTestId("unit-reading").filter({ hasText: "Leave empty" }).waitFor();
+    } },
     { id: "refusal", title: "A refusal: the message in the value's place, no row, no chip, the slots as typed", setup: (p) => units(p, ["d1", "add", "d1"], "d9 enter d3 ↑enter") },
   ];
   return sizes.flatMap((z) => cases.map((c) => ({ id: `unitresult-${c.id}-${z.tag}`, group: z.group, title: c.title, viewport: z.viewport, setup: c.setup })));
@@ -416,7 +421,7 @@ const shots: Shot[] = [
   {
     id: "home-tips",
     group: "First-start tips (R15c4)",
-    title: "The tips: the screen dimmed, the place name and ☰ ringed, one line for each, Got it",
+    title: "The tips: the screen dimmed, the place name and ☰ ringed, the seven lines (the last names the units key, R352), Got it",
     setup: async (p) => {
       await someHistory(p);
       await tap(p, ["@mode", "d6", "d7"]);
