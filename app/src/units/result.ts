@@ -13,7 +13,7 @@ import { commaResult, markText, withSigmaText } from "../state/displayMode.ts";
 import type { Alternative } from "./alternatives.ts";
 import { unitErrorMessage, unitNamesText, unitNoteText, unitWhyText } from "./messages.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
-import { shownDigits } from "./uncertainty.ts";
+import { shownDigits } from "../state/sigmaDigits.ts";
 
 /** What the view shows under the reading: nothing, a refusal (a slot's or the evaluator's), Working…, or a result. */
 export type Shown =

@@ -22,7 +22,7 @@ import {
   type PrecisionFacts,
 } from "../engine/format.ts";
 import type { NumberFormat } from "../calc/port.ts";
-import { shownDigits } from "../units/uncertainty.ts";
+import { shownDigits } from "./sigmaDigits.ts";
 import { complexToLatex, fractionToLatex, GROUP_LATEX, groupSepFor, homeResultToLatex, polarToLatex, type GroupSep, type Mute } from "../render/home.ts";
 
 export type FmtMode = "std" | "sci" | "eng" | "pfx" | "fix" | "frac" | "mixed" | "polar" | "hex" | "bin" | "oct";
@@ -269,7 +269,7 @@ export function markFor(r: NumericResult, mode: FmtMode | undefined, ctx: Displa
 }
 
 /** R327f1: the mark of a row with σ, whose "value ± σ" or short form rounds the value to σ's last place: ⚠ with the
- *  value's confirmed digits when that text shows more of them (`shown`, units/uncertainty.ts digitsToSigma) than are
+ *  value's confirmed digits when that text shows more of them (`shown`, state/sigmaDigits.ts shownDigits) than are
  *  confirmed (principle 3), as markOf does for the digits the format shows; `m` itself otherwise. */
 export function withSigmaText(m: MarkInfo | null, reliableDigits: number | null | undefined, shown: number | null): MarkInfo | null {
   if (!m || m.mark === "⚠" || reliableDigits === null || reliableDigits === undefined || shown === null || shown <= reliableDigits) return m;

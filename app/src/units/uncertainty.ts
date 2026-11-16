@@ -132,11 +132,3 @@ export function digitsToSigma(value: string, sigma: string): number | null {
   const m = roundTo(v, t.k);
   return m === 0n ? null : m.toString().length;
 }
-
-/** R327f1: the digits the value part of a unit row's "value ± σ" (Uncertainty.shown) shows; null as digitsToSigma, and
- *  for a text that is not the value, " ± " and σ. */
-export function shownDigits(unc: { shown?: unknown; text?: unknown } | undefined): number | null {
-  const sh = unc?.shown, tx = unc?.text;
-  if (typeof sh !== "string" || typeof tx !== "string" || !sh.endsWith(` ± ${tx}`)) return null;
-  return digitsToSigma(sh.slice(0, sh.length - tx.length - 3), tx);
-}

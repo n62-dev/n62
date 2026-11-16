@@ -13,7 +13,8 @@ import { uncText } from "../i18n/enUnc.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { commaResult, modeOf, withSigmaText, type FmtMode } from "../state/displayMode.ts";
 import { expandedSigmaText, sigmaText } from "../state/sigmaLine.ts";
-import { digitsToSigma, relativeSigma, shortForm, shownDigits } from "../units/uncertainty.ts";
+import { shownDigits } from "../state/sigmaDigits.ts";
+import { digitsToSigma, relativeSigma, shortForm } from "../units/uncertainty.ts";
 import type { UncWhy } from "../units/types.ts";
 
 /** A row "with σ": a finished Home row whose facts carry σ and its digits (the σ line's own test, state/sigmaLine.ts), or a
