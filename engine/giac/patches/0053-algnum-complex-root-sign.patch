@@ -1,0 +1,69 @@
+# Upstream: giac 2.1.0 sym2poly.cc algnum_normal and algnum_rewritable, the primitive-element path of normal and simplify for expressions with algebraic numbers. (1) When the expression E satisfies a biquadratic, algnum_rewritable writes it as shift+e or shift-e with e=sqrt(sol) and took the minus sign whenever is_positive(E-shift) was false, which it is for every complex E-shift: normal(sqrt(2)+i*sqrt(3)) gave -sqrt(2)*(1+i*2*sqrt(6)/4) (the negation), also simplify(exp(i*pi/6)*sqrt(2)), normal((-8)^(1/6)), det([[sqrt(2),-sqrt(3)],[i,1]]) and normal(sqrt(-sqrt(2))) = -sqrt(-sqrt(2)). Now the sign whose value (evalf at extpar.digits) is nearer E-shift is taken; a root with no numeric value keeps the real test. (2) With a rootof among the radicals (a cube root after patch 0045), algnum_normal writes the generator as rootof([1,0],pminv), which alg_evalf reads as the root with the largest real part, while the generator's value r may be another root of pminv: normal(sqrt(10^(1/3)-sqrt(6))) was a degree-12 rootof worth 2.1457 (right 0.5432*i). Giac's own RUR branch (#else) checks that r is that root; now the active branch does the same at 100 digits, and a generator that is not the rootof keeps the radicals.
+# Changed by Pascaline contributors, 2026-11-16
+--- a/src/sym2poly.cc
++++ b/src/sym2poly.cc
+@@ -4561,7 +4561,16 @@
+                           else
+                             e=sqrt(sols[0],contextptr);
+                           e=normalize_sqrt(e,contextptr);
+-                          if (!is_positive(Eapproxshift,contextptr))
++                          // N62 patch 0053 (G557): E-shift is +e or -e; is_positive is false for a complex E-shift, so
++                          // the root was negated whenever E was not real (normal(sqrt(2)+i*sqrt(3)) gave its negative,
++                          // normal(sqrt(-sqrt(2))) -sqrt(-sqrt(2))). Take the sign whose value is nearer E-shift; a root
++                          // with no numeric value keeps the real test.
++                          gen ef=_evalf(makesequence(e,extpar.digits),contextptr);
++                          if (ef.type==_DOUBLE_ || ef.type==_REAL || ef.type==_CPLX){
++                            if (is_greater(abs(Eapproxshift-ef,contextptr),abs(Eapproxshift+ef,contextptr),contextptr))
++                              e=-e;
++                          }
++                          else if (!is_positive(Eapproxshift,contextptr))
+                             e=-e;
+                           e += shift;
+                           return true;
+@@ -4639,6 +4648,16 @@
+     return true;
+   }
+ 
++  // N62 patch 0053 (G557): whether the rootof ext (the root alg_evalf selects) has the value r, at 100 digits
++  static bool rootof_is_value(const gen & ext,const gen & r,GIAC_CONTEXT){
++    gen R=accurate_evalf(ext,100);
++    if (R.type!=_REAL && R.type!=_CPLX && R.type!=_DOUBLE_)
++      return true; // no numeric value: keep Giac's choice
++    if (is_zero(R,contextptr))
++      return is_greater(1e-10,abs(r,contextptr),contextptr);
++    return is_greater(1e-10,abs(1-r/R,contextptr),contextptr);
++  }
++
+   // returns 0 on failure, or n==v.size() on success
+   // find Q algebraic extensions inside e, on success
+   // rewrite e as E in terms of
+@@ -5281,6 +5300,14 @@
+       }
+       ext=rootofallowed?algebraic_EXTension(makevecteur(1,0),pminv):rexact;
+       r=_evalf(makesequence(rexact,extpar.digits),contextptr);
++      // N62 patch 0053 (G557): rootof([1,0],pminv) is the root of pminv that alg_evalf selects (the largest real part),
++      // and the generator's value is r, which may be another root: normal(sqrt(10^(1/3)-sqrt(6))) was written with the
++      // real root of a degree-12 pminv, 2.1457 (right 0.5432*i). As in the check of the RUR branch below (#else), a
++      // generator that is not that root is not written as a rootof: the answer keeps the radicals of v.
++      if (rootofallowed && !rootof_is_value(ext,r,contextptr)){
++        rootofallowed=false;
++        ext=rexact;
++      }
+       nums=vecteur(G._VECTptr->begin()+4,G._VECTptr->end());
+       // rewrite E as a rational frac in var, replace vars by nums/diffpmin
+       pmin=horner(pminv,var);
+@@ -5350,6 +5377,14 @@
+       }
+       ext=rootofallowed?algebraic_EXTension(makevecteur(1,0),pminv):rexact;
+       r=_evalf(makesequence(rexact,extpar.digits),contextptr);
++      // N62 patch 0053 (G557): rootof([1,0],pminv) is the root of pminv that alg_evalf selects (the largest real part),
++      // and the generator's value is r, which may be another root: normal(sqrt(10^(1/3)-sqrt(6))) was written with the
++      // real root of a degree-12 pminv, 2.1457 (right 0.5432*i). As in the check of the RUR branch below (#else), a
++      // generator that is not that root is not written as a rootof: the answer keeps the radicals of v.
++      if (rootofallowed && !rootof_is_value(ext,r,contextptr)){
++        rootofallowed=false;
++        ext=rexact;
++      }
+       nums=vecteur(G._VECTptr->begin()+4,G._VECTptr->end());
+       // rewrite E as a rational frac in var, replace vars by nums/diffpmin
+       pmin=horner(pminv,var);
