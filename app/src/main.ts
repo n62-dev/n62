@@ -74,16 +74,11 @@ const dropFocus = (): void => {
   while (el?.shadowRoot?.activeElement) el = el.shadowRoot.activeElement;
   if (el instanceof HTMLElement) el.blur();
 };
-// R128: the sync folder, Android only (on the web no folder can be chosen): leaving writes this device's files into it,
-// and the start looks at the other devices' backups once the history is in (sync/live.ts, a lazy chunk).
-const native = (): boolean => (window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() === true;
-const sync = (run: (m: typeof import("./sync/live.ts")) => Promise<unknown>): void => void (native() && import("./sync/live.ts").then(run).catch(() => {}));
 addEventListener("pagehide", flush);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) return;
   flush();
   dropFocus();
-  sync((m) => m.leave(session, shell));
 });
 addEventListener("blur", () => matchMedia("(pointer: coarse)").matches && dropFocus());
 // A focus can also arrive while the app is away: MathLive focuses its keyboard sink 60 ms after mf.focus(), in a
@@ -141,7 +136,9 @@ requestAnimationFrame(() =>
       return undefined;
     });
     void entry.load(kept);
-    void kept.then(() => idle(() => sync((m) => m.onStart(session, shell))), () => {});
+    // R128: the sync folder (sync/hook.ts, lazy; Android only): from here a hide writes this device's files into it, and
+    // the other devices' backups are looked at once
+    void kept.then(() => idle(() => void import("./sync/hook.ts").then((m) => m.start(session, shell), () => {})), () => {});
     // An app that was open at the last exit comes back once the keypad is up (its code loads lazily).
     void place.then((app) => app && shell.open(app));
   }),

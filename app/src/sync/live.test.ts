@@ -6,6 +6,7 @@ import { FakeCalc } from "../calc/fake.ts";
 import { dataText } from "../i18n/enData.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import { Session } from "../state/session.svelte.ts";
+import { start } from "./hook.ts";
 import { onStart, syncJob } from "./live.ts";
 
 function kept(): Pick<Storage, "getItem" | "setItem" | "removeItem"> & { map: Map<string, string> } {
@@ -31,5 +32,15 @@ describe("the sync folder in the app (R128)", () => {
     const session = new Session(new FakeCalc(), fakeKv());
     const shell = { calc: new FakeCalc(), showMenu: () => {}, clip: undefined } as unknown as Parameters<typeof onStart>[1];
     expect(await syncJob("now", session, shell)).toBe(dataText("sync.unavailable"));
+  });
+  it("the hook (main.ts's one import) listens for a hide on Android only", () => {
+    const listened: string[] = [];
+    const doc = { hidden: false, addEventListener: (type: string) => void listened.push(type) } as unknown as Document;
+    const session = new Session(new FakeCalc(), fakeKv());
+    const shell = { calc: new FakeCalc(), showMenu: () => {}, clip: undefined } as unknown as Parameters<typeof onStart>[1];
+    start(session, shell, doc, false);
+    expect(listened).toEqual([]);
+    start(session, shell, doc, true);
+    expect(listened).toEqual(["visibilitychange"]);
   });
 });

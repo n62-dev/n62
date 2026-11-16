@@ -4,11 +4,12 @@
 // Restore silently: two buttons), Write now and Stop syncing, and under them one line on which files are kept. On the
 // web it says "Android only" and holds nothing else. The folder's work (sync/live.ts) loads on a press, through the
 // clipboard code (ClipActions.syncJob), whose notice says what happened; the writes on leave and the start's offer are
-// main.ts's. Comes with the Mode sheet's chunk; the folder code stays out of it (read on the level's first draw).
+// main.ts's. Comes with the Mode sheet's chunk; the folder code and the page's record (sync/record.ts, shared with the
+// sync chunk, so a chunk of its own the start would name) stay out of it, read on the level's first draw.
 import type { MenuItem } from "../apps/types.ts";
 import { dataText } from "../i18n/enData.ts";
 import { idbKv, type Kv } from "../state/storage.ts";
-import { patchSync, readMode, type SyncMode } from "../sync/record.ts";
+import type { SyncMode } from "../sync/record.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
 
 const MODES: readonly SyncMode[] = ["offer", "silent"];
@@ -38,14 +39,14 @@ function rows(env: SettingsEnv, deps: SyncDeps): { items: () => MenuItem[] } {
   let read = false;
   const setMode = (m: SyncMode): void => {
     mode = m;
-    void patchSync(deps.kv, { mode: m });
+    void import("../sync/record.ts").then((r) => r.patchSync(deps.kv, { mode: m }));
   };
   const job = (j: "pick" | "now" | "stop"): void => env.data?.((c) => c.syncJob(j));
   const items = (): MenuItem[] => {
     if (!read) {
       read = true;
       void deps.folderName().then((n) => (folder = n), () => (folder = null));
-      void readMode(deps.kv).then((m) => (mode = m));
+      void import("../sync/record.ts").then((r) => r.readMode(deps.kv)).then((m) => (mode = m));
     }
     return [
       {
