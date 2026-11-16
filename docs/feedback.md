@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Owner feedback inbox
 
-The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 71). Each point is kept in the owner's words (shortened) and gets one triage:
+The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 72). Each point is kept in the owner's words (shortened) and gets one triage:
 
 - **bug**: fixed now, regression test first;
 - **feel**: goes into the next package for the look or the entry (brief section 0);
@@ -37,3 +37,4 @@ The owner's `todo.txt` held no `+N62` line on 2026-11-16, so no owner report was
 | 68 | 2026-11-16 | S07, S13: after one press of a keyboard's Escape key nothing I type reaches the line, not even the on-screen keys, until another Escape throws it away (F362). | bug, R582 |
 | 69 | 2026-11-16 | S09: the key says ton, the line, the result and the history say s_ton (and l_ton, gal_US) (F363). | bug, R583 |
 | 70 | 2026-11-16 | S18: Share session writes √2 as \sqrt2; the other templates come out plain (F364). | bug, R584 |
+| 71 | 2026-11-16 | S07, S05: 5 ∥ 20 typed in that order gives = 100 (5·par(20)); parallel 5 and 20 is 4 (F365). | bug, R585 |
