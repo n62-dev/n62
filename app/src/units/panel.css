@@ -26,6 +26,10 @@
 /* R353: Store ▶ beside the result, at the row's end (after the dimension when there is one); the reason a store was refused */
 .unitview .result .store { margin-left: auto; align-self: center; flex: none; font: inherit; font-size: 14px; color: var(--text); background: none; border: 1px solid var(--muted); border-radius: 14px; padding: 2px 10px; white-space: nowrap; cursor: pointer; }
 .unitview .result .dim + .store { margin-left: 0; }
+/* R349: → Check / ✕ Check between the formula and the reading, at the line's end */
+.unitview .check { align-self: flex-end; flex: none; font: inherit; font-size: 14px; color: var(--text); background: none; border: 1px solid var(--muted); border-radius: 14px; padding: 2px 10px; white-space: nowrap; cursor: pointer; }
+.unitview .check[aria-pressed="true"] { background: var(--chip-bg); }
+.unitview .check[hidden] { display: none; }
 .unitview .said { font-size: 13px; color: var(--warn); margin-inline-start: 1.9em; }
 .unitview .alt[data-focus] { outline: 2px solid var(--focus); outline-offset: 1px; }
 .unitview .alt[hidden] { display: none; }

@@ -9,7 +9,7 @@ export const enTips = {
   "tips.fold": "On the entry line, swipe down to fold the keypad and up to bring it back",
   "tips.line": "On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it",
   "tips.marks": "= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.",
-  "tips.units": "Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; the last slot checks against a unit, or leave it empty",
+  "tips.units": "Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; → Check checks the result against a unit",
   "tips.gotIt": "Got it",
 } as const;
 

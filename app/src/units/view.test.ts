@@ -405,6 +405,7 @@ describe("R349: the end slot only after → Check", () => {
     const done = v2.pickAlt((v2.shown as { alts: readonly unknown[] }).alts[0] as never);
     expect(v2.checking).toBe(true);
     expect(v2.model("end")?.slot).toEqual(alt.slot);
+    await new Promise((r) => setTimeout(r, 0)); // (the chip is remembered first)
     expect(b.h.requests.at(-1)?.end).toEqual(alt.slot);
     b.h.answer(q);
     await done;

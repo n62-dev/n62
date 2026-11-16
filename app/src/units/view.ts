@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: the unit view's state (docs/04 4.3, docs/archive/r9-unit-pad.md 2.1–2.8). The formula is read-only, with a
-// slot after every number and the end slot (input/unitFormula.ts); each slot is R24a's SlotModel, fed by the pad's
-// presses (units/pad.ts emits them). Enter goes to the next slot and evaluates in the end slot, a flick up on Enter
+// slot after every number and, after → Check (R349), the end slot (input/unitFormula.ts); each slot is R24a's SlotModel,
+// fed by the pad's presses (units/pad.ts emits them). Enter goes to the next slot and evaluates in the last, a flick up on Enter
 // evaluates at once, ◀ ▶ move between slots. A slot reaches the field only through `write` (setPromptValue, units/
 // open.ts), never through the entry line. Plain TS (no runes): a change calls `host.changed()`. Evaluation: the parser's units mode (R28) on the formula, the slots' tokens,
 // then Calc.units(). Loaded with the unit view.
@@ -35,6 +35,9 @@ export interface ViewHost {
   dead(): void;
   /** The active slot, the reading or what is shown changed: draw them (units/panel.ts). */
   changed(): void;
+  /** R349: the end slot went on or off: the field's value becomes `latex` with the prompts `ids` locked (the slots are
+   *  then written again through `write`). */
+  reset?(latex: string, ids: readonly string[]): void;
   /** R258: the session's stored values (latex-to-giac.ts userValuesOf), read at each request. */
   values?(): ReadonlySet<string>;
   /** R63: a result is in (as shown: the unit a tapped chip names): it becomes Home's history row of this visit. */
@@ -56,9 +59,11 @@ export function carry(from: string, to: string): void {
 
 export class UnitView {
   readonly line: string;
-  readonly formula: SlotFormula;
-  /** The slots' ids, then the end slot's. */
-  readonly ids: readonly string[];
+  /** R349: the formula and the ids without the end slot, then with it. */
+  readonly #forms: readonly [SlotFormula, SlotFormula];
+  readonly #ids: readonly [readonly string[], readonly string[]];
+  /** R349: the end slot is on (→ Check, a pick that writes it, a row or a kept line that has one). */
+  #checking: boolean;
   readonly #models = new Map<string, SlotModel>();
   readonly #cat: SlotCatalogue;
   readonly #chips: ChipTable;
@@ -122,14 +127,18 @@ export class UnitView {
    *  chip that neither fills starts with the chip's unit (R63, r17 section 2), which the user can change. */
   constructor(catalogue: SlotCatalogue, line: string, chips: ChipTable, host: ViewHost, seed?: Readonly<Record<string, UnitSlot>>) {
     this.line = line;
-    this.formula = slotFormula(line);
-    this.ids = [...this.formula.slots, END];
+    const on = slotFormula(line, true);
+    this.#forms = [slotFormula(line, false), on];
+    this.#ids = [on.slots, [...on.slots, END]];
     this.#cat = catalogue;
     this.#chips = chips;
     this.#host = host;
     const from = seed ?? kept.get(line);
-    const after = this.formula.chips ?? {};
-    for (const id of this.ids) {
+    // R349: on for a row or a line kept with an end slot (every row saved before R349 restores as a check), and for a
+    // formula with no number (no slot to evaluate in but the end slot)
+    this.#checking = from?.[END] !== undefined || !this.canCheck;
+    const after = on.chips ?? {};
+    for (const id of this.#ids[1]) {
       let m: SlotModel;
       try {
         const key = after[id];
@@ -139,6 +148,52 @@ export class UnitView {
       }
       this.#models.set(id, m);
     }
+  }
+
+  /** The formula as the field shows it: with the end slot's prompt while it is on. */
+  get formula(): SlotFormula {
+    return this.#forms[this.#checking ? 1 : 0];
+  }
+  /** The slots' ids, then the end slot's while it is on. */
+  get ids(): readonly string[] {
+    return this.#ids[this.#checking ? 1 : 0];
+  }
+  /** R349: the end slot is on. */
+  get checking(): boolean {
+    return this.#checking;
+  }
+  /** R349: the end slot can be taken off (the formula has a number slot to evaluate in). */
+  get canCheck(): boolean {
+    return this.#forms[0].slots.length > 0;
+  }
+
+  /** R349: → Check (on: the end slot comes, active and empty; from a slot that cannot be left its refusal shows) and
+   *  ✕ Check (off: the end slot goes; a result of a request without it stays). */
+  setChecking(on: boolean): void {
+    if (on === this.#checking) return;
+    if (!on && !this.canCheck) return this.#host.dead();
+    if (this.#row >= 0) this.up();
+    if (on && !this.#leavable()) return;
+    this.#setEnd(on);
+    this.#read();
+  }
+
+  /** The end slot on (empty, active) or off: the field's value is set again and every slot drawn (setPromptValue only).
+   *  A request that changes (a filled end slot goes) drops what is shown and a running evaluation. */
+  #setEnd(on: boolean): void {
+    const end = this.#models.get(END) as SlotModel;
+    if (!end.empty) {
+      this.#run++;
+      this.#picked = undefined;
+      this.shown = { kind: "none" };
+    }
+    this.#more = false;
+    this.#models.set(END, new SlotModel(this.#cat));
+    this.#checking = on;
+    this.#host.reset?.(this.formula.latex, this.ids);
+    this.#active = on ? this.ids.length - 1 : Math.min(this.#active, this.ids.length - 1);
+    for (const id of this.ids) this.#draw(id);
+    this.#host.changed();
   }
 
   /** The field is up: draw every slot once. */
@@ -235,7 +290,7 @@ export class UnitView {
     this.#read();
   }
 
-  /** Enter: on a chip of the row, pick it; else the next slot; in the end slot, evaluate. */
+  /** Enter: on a chip of the row, pick it; else the next slot; in the last (the end slot while it is on), evaluate. */
   next(): Promise<void> {
     if (this.#row >= 0) return this.pick(this.#row);
     this.#more = false;
@@ -302,6 +357,7 @@ export class UnitView {
     } catch {
       return this.#host.dead(); // (a unit the catalogue does not read)
     }
+    if (!this.#checking) this.#setEnd(true); // R349: a chip writes the end slot, which comes with it
     this.#more = false;
     this.#picked = alt;
     this.#models.set(END, m);
@@ -313,8 +369,10 @@ export class UnitView {
     await this.evaluate();
   }
 
-  /** R92's Tools › the end slot: it becomes the active slot (from a slot that cannot be left, its refusal shows). */
+  /** R92's Tools › the end slot: it becomes the active slot, turned on first (R349; from a slot that cannot be left,
+   *  its refusal shows). */
   toEnd(): void {
+    if (!this.#checking) return this.setChecking(true);
     const end = this.ids.length - 1;
     if (this.#row >= 0) this.up();
     if (this.active === end || !this.#leavable()) return;
@@ -337,6 +395,7 @@ export class UnitView {
   pickMore(a: PadAction): void {
     if (this.#more === "asked") {
       const was = this.activeId;
+      if (!this.#checking) this.#setEnd(true); // R349: the pick goes into the end slot, which comes with it
       this.#models.set(END, new SlotModel(this.#cat));
       this.#row = -1;
       this.active = this.ids.length - 1;
@@ -347,8 +406,10 @@ export class UnitView {
     this.apply(a);
   }
 
-  /** ⌫ on an empty slot: to the slot before, whose next ⌫ removes its last token; on the first slot a dead key. */
+  /** ⌫ on an empty slot: to the slot before, whose next ⌫ removes its last token; on the first slot a dead key. R349:
+   *  on the empty end slot it takes the end slot off (✕ Check). */
   #back(): void {
+    if (this.activeId === END && this.canCheck) return this.setChecking(false);
     if (this.active === 0) return this.#host.dead();
     this.#move(-1);
   }

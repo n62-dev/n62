@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: the unit view's formula (docs/04 4.3, docs/archive/r9-unit-pad.md 2.1): the entry line's LaTeX with an empty
-// unit slot (a MathLive prompt, `\placeholder[u<n>]{}`) after every number and the end slot "→ should be" at the end.
-// On an empty line: the quantity 1, its slot and the end slot. The slots' contents never come from here (R24a's model
+// unit slot (a MathLive prompt, `\placeholder[u<n>]{}`) after every number and, when it is on (R349: → Check), the end
+// slot "→ should be" at the end. On an empty line: the quantity 1, its slot (and the end slot). The slots' contents never come from here (R24a's model
 // holds them); the parser's units mode (R28) reads the prompts as pasu<n> and the end slot. The entry's LaTeX, so it lives
 // beside the parser (input/), not under units/ (P20: no text reading there). Plain TS, loaded with the unit view.
 import type { ChipTable } from "./chips.ts";
@@ -132,10 +132,12 @@ function exponentEnd(s: string, i: number): number {
   return num ? k + num[0].length : groupEnd(s, k);
 }
 
-/** The formula for `latex` (the entry line, or a picked row's input). */
-export function slotFormula(latex: string): SlotFormula {
+/** The formula for `latex` (the entry line, or a picked row's input); `end`: with the end slot (R349: the unit view has
+ *  it only after → Check; Copy as Python and the stages read a row's request with it). */
+export function slotFormula(latex: string, end = true): SlotFormula {
+  const to = end ? `\\to\\placeholder[${END}]{}` : "";
   const src = braceArgs(latex.trim());
-  if (src === "") return { latex: `1\\placeholder[u1]{}\\to\\placeholder[${END}]{}`, slots: ["u1"] };
+  if (src === "") return { latex: `1\\placeholder[u1]{}${to}`, slots: ["u1"] };
   const slots: string[] = [];
   const chips: Record<string, string> = {};
   let out = "";
@@ -201,7 +203,7 @@ export function slotFormula(latex: string): SlotFormula {
       i++;
     }
   }
-  return { latex: `${out}\\to\\placeholder[${END}]{}`, slots, ...(Object.keys(chips).length ? { chips } : {}) };
+  return { latex: `${out}${to}`, slots, ...(Object.keys(chips).length ? { chips } : {}) };
 }
 
 /** G216: the formula as the unit view sends it (units/view.ts request), with each empty prompt dropped (an empty slot means
