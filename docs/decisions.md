@@ -190,6 +190,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ. Archived, "Opus pass 122". Would change if: a chip keeps its inputs' basis (G81).
 - **R286 (pass 153):** a σ chip limits the value at σ's last confirmed decade, then markOf (`1000.5 ± 0.0707`, 3 digits: ⚠ 8 at STD 12).
 - **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Archived, "Opus pass 97". Would change if: the owner wants a chip's σ dropped there.
+- **G392's note (Opus pass 210):** "unit dropped: Home has no units" rides in the row and the work report, never in Copy as shown, which stays the value as drawn so Paste reads it back (R325); a chip row alike. Would change if: the owner wants the note in the copied text.
 - **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is disabled until built. Archived.
 - **σ's forms and budget (pass 199; G270, G272, G273):** no relative σ for an absolute temperature, a level or an offset end slot; R328 reads a key's kind (`pasr_`), never its run number. Archived, "Opus pass 203".
 - **G370's shape (Opus pass 203):** `T1 − T2` is the whole formula, in brackets or not; a bracketed difference inside a longer one (`(80 °C − 20 °C) + 5 K`, a power, a product) stays refused, as the package's controls say. Would change if: the owner wants a difference to take part in arithmetic.
