@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R327 (the owner, 2026-11-15), on the real engine: Shift + 1 opens the uncertainty sheet of a result with σ (mockup
 // docs/mockups/uncertainty-sheet.html sections 1, 3 and 4): on the picked row in Home, else on the last finished row, and
-// in the unit view on its result. Its head: the result with its mark, the short form, σ, U = 2σ and relative σ; nothing
-// under it until R328. Anywhere else a dead press (the double pulse, counted under d1 Shift), never a typed character.
+// in the unit view on its result. Its head: the result with its mark, the short form, σ, U = 2σ and relative σ; R328: the
+// inputs' rows under it (each one's share of σ², G272: 98.3 %, 1.7 %, second order < 0.1 %), ▲ ▼ over them. Anywhere else a dead press (the double pulse, counted under d1 Shift), never a typed character.
 // Controls: 1 and Alpha + 1 unchanged, a b/c, 7 and Fmt still reserved on Shift, the σ line on a picked row unchanged.
 // Expected values derived: t10 = 12.34 × 3.2 = 39.488 m², σ² = 1.548381 (G41), σ = 1.24434… → 1.2, U = 2.48868… → 2.5,
 // σ/|y| = 3.151 % → 3.2 %; G × 5.972ᴇ24 (constdigits.spec.ts): σ 8.958ᴇ9 → 9.0ᴇ9, U 1.79ᴇ10 → 1.8ᴇ10, σ/|y| =
@@ -42,8 +42,17 @@ async function t10Head(page: Page): Promise<void> {
   await expect(head(page).locator('[data-id="sigma"]')).toHaveText(["standard uncertainty (σ)", "1.2 m²"].join(""));
   await expect(head(page).locator('[data-id="expanded"]')).toHaveText("expandedU = 2σ = 2.5 m² (k = 2)");
   await expect(head(page).locator('[data-id="relative"]')).toHaveText("relative σ3.2 %");
-  await expect(sheet(page).locator('[role="menuitem"]')).toHaveCount(0); // nothing under the head until R328
   await expect(sheet(page).getByTestId("sheet-empty")).toHaveCount(0);
+}
+/** R328: t10's rows under the head (the mockup's section 2, variant A); the first one highlighted. */
+async function t10Rows(page: Page): Promise<void> {
+  const rows = sheet(page).locator('[role="menuitem"]');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.getByTestId("unc-label")).toHaveText(["3.2 ± 0.1 m", "12.34 ± 0.05 m", "second order"]);
+  await expect(rows.getByTestId("unc-uy")).toHaveText(["1.2 m²", "0.16 m²", ""]);
+  await expect(rows.getByTestId("unc-share")).toHaveText(["98.3 %", "1.7 %", "< 0.1 %"]);
+  await expect(rows.nth(0)).toHaveAttribute("data-active", "true");
+  await expect(sheet(page).getByTestId("unc-lines")).toHaveCount(0); // the shares add to 100.0 %: no line
 }
 
 test.beforeEach(async ({ page }) => {
@@ -72,6 +81,48 @@ test("in the unit view, Shift + 1 opens the sheet on its result; Esc closes it a
   expect(await page.evaluate(() => window.n62.unitView !== undefined)).toBe(true);
 });
 
+test("R328: t10, Shift + 1: three rows under the head; ▼ moves the highlight over them, a digit keeps the sheet; Esc closes", async ({ page }) => {
+  await t10(page);
+  await tap(page, ["shift", "d1"]);
+  await t10Head(page);
+  await t10Rows(page);
+  const rows = sheet(page).locator('[role="menuitem"]');
+  // the keyboard's ▼ (an on-screen tap outside a pick sheet closes it, R144)
+  await page.keyboard.press("ArrowDown");
+  await expect(rows.nth(1)).toHaveAttribute("data-active", "true");
+  await expect(rows.nth(0)).toHaveAttribute("data-active", "false");
+  await page.keyboard.press("ArrowDown");
+  await expect(rows.nth(2)).toHaveAttribute("data-active", "true");
+  await page.keyboard.press("ArrowDown"); // round the end
+  await expect(rows.nth(0)).toHaveAttribute("data-active", "true");
+  await page.keyboard.press("2"); // a row's digit highlights it; the sheet stays
+  await expect(rows.nth(1)).toHaveAttribute("data-active", "true");
+  await expect(sheet(page)).toHaveCount(1);
+  await tap(page, ["esc"]);
+  await expect(sheet(page)).toHaveCount(0);
+  expect(await page.evaluate(() => window.n62.unitView !== undefined)).toBe(true);
+  // the same rows from Home's row of the visit
+  await leaveView(page);
+  await tap(page, ["shift", "d1"]);
+  await t10Rows(page);
+});
+
+test("R328: sin(0 ± 0.2) in the unit view, Shift + 1: 104.2 % with the stripe, second order −4.2 %, the over-100 line", async ({ page }) => {
+  await tap(page, ["sin", "d0", "shift", "comma", "d0", "dot", "d2"]);
+  await flick(page, "tmpl", "up");
+  await up(page);
+  await flick(page, "enter", "up");
+  await page.getByTestId("unit-result").waitFor();
+  await tap(page, ["shift", "d1"]);
+  const rows = sheet(page).locator('[role="menuitem"]');
+  await expect(rows.getByTestId("unc-label")).toHaveText(["0 ± 0.2", "second order"]);
+  await expect(rows.getByTestId("unc-uy")).toHaveText(["0.20", ""]);
+  await expect(rows.getByTestId("unc-share")).toHaveText(["104.2 %", "−4.2 %"]);
+  await expect(rows.nth(0).getByTestId("unc-bar")).toHaveClass(/over/);
+  await expect(rows.nth(1).getByTestId("unc-bar")).toHaveClass(/neg/);
+  await expect(sheet(page).getByTestId("unc-lines")).toHaveText("A row can exceed 100 % when the second-order term is negative: it takes σ² below the first-order rows.");
+});
+
 test("a picked row: the sheet is that row's, not the last one's; the σ line on a pick is unchanged", async ({ page }) => {
   // G × 5.972ᴇ24 (a Home row whose σ comes from a constant), then t10's unit row last
   await page.evaluate(async () => {
@@ -98,6 +149,38 @@ test("a picked row: the sheet is that row's, not the last one's; the σ line on 
   await expect(head(page).locator('[data-id="expanded"]')).toHaveText("expandedU = 2σ = 1.8ᴇ10 (k = 2)");
   await expect(head(page).locator('[data-id="relative"]')).toHaveText("relative σ0.0022 %");
   await expect(head(page).getByTestId("unc-of")).toContainText("≈");
+  // R328: Home's rows (G274's terms, first order): G alone at 100.0 %, its uᵢ as the σ line writes σ, no second-order row
+  const rows = sheet(page).locator('[role="menuitem"]');
+  await expect(rows.getByTestId("unc-label")).toHaveText(["G"]);
+  await expect(rows.getByTestId("unc-uy")).toHaveText(["9.0ᴇ9"]);
+  await expect(rows.getByTestId("unc-share")).toHaveText(["100.0 %"]);
+});
+
+test("R328 fix 2: √(μ₀/ε₀) in Home, Shift + 1: σ from α alone over two chips, its one row at 100.0 %, never an empty table", async ({ page }) => {
+  // G274 keeps no terms for it (constCorr.test.ts): α is the only uncertain leaf of μ₀ and ε₀
+  const put = (id: string) =>
+    page.evaluate(async (cid) => {
+      const url = "/src/find/finder.ts";
+      const f = (await import(/* @vite-ignore */ url)) as typeof Finder;
+      const it = (await f.loadIndex(true)).byId.get(`const:${cid}`);
+      if (!it) throw new Error(`no constant ${cid} in the index`);
+      f.putOnLine(window.n62.entry, it);
+    }, id);
+  await tap(page, ["shift", "sq"]);
+  await put("mu_0");
+  await tap(page, ["div"]);
+  await put("epsilon_0");
+  await tap(page, ["enter"]);
+  await done(page, 1);
+  expect(await page.evaluate(() => window.n62.session.home.at(-1)?.uncTerms)).toBeUndefined();
+  await tap(page, ["shift", "d1"]);
+  const sigma = ((await head(page).locator('[data-id="sigma"]').textContent()) ?? "").replace("standard uncertainty (σ)", "");
+  expect(sigma).not.toBe("");
+  const rows = sheet(page).locator('[role="menuitem"]');
+  await expect(rows).toHaveCount(1);
+  await expect(rows.getByTestId("unc-label")).toHaveText(["fine structure"]);
+  await expect(rows.getByTestId("unc-uy")).toHaveText([sigma]);
+  await expect(rows.getByTestId("unc-share")).toHaveText(["100.0 %"]);
 });
 
 test("2·π·50, Enter, Shift + 1: a dead press (the double pulse, counted under d1 Shift), no sheet, nothing typed; t10's row above it still opens", async ({ page }) => {

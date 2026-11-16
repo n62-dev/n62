@@ -107,6 +107,10 @@
   --icon-w: 16px;
   --icon-h: 14px;
   --dot: 10px;
+  /* R328: the uncertainty sheet's rows: the share column, a row's least height, the bar under a share */
+  --share-w: 6.5em;
+  --share-row-h: 36px;
+  --meter-h: 3px;
   /* R157: the logo as the app icon draws it, on Home's tile: black mark (the file's own colour) on the logo teal, in every family and mode (not theme roles) */
   --logo-ground: #529997;
   --logo-ink: #000000;

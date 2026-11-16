@@ -62,7 +62,8 @@ export class Level {
   }
   /** R149: the credits, a list of headings and paragraphs that rolls up (Sheet.svelte); ▲ ▼ page through it like a text. */
   readonly credits: readonly CreditBlock[] | undefined;
-  /** R327: the uncertainty sheet's head, drawn in place of rows (UncHead.svelte); ▲ ▼ and digits find no row. */
+  /** R327: the uncertainty sheet's head, drawn in place of the list (UncHead.svelte); R328: with the inputs' rows under it,
+   *  which are this level's items, so ▲ ▼ and digits move the highlight over them. */
   readonly unc: UncHead | undefined;
   /** The preview under the list may take several lines. */
   readonly longPreview: boolean;
