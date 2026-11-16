@@ -82,8 +82,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 817 | G302 golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
-| 786 | G370 the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
 | 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 826 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Sonnet | `p1/gorge-storedlist` | – |
