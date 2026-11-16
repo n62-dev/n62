@@ -63,10 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 733 | R181 Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
-| 676 | R128 the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | – |
-| 734 | R182 each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
-| 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
+| 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | – |
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 804 | [R330](packages/R330.md) Shift + 7 opens the list sheet | ron, Opus | `p1/ron-listsheet` | – |
@@ -85,9 +82,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 817 | G302 golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
-| 786 | G370 the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
-| 809 | G371 a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
+| 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 826 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Sonnet | `p1/gorge-storedlist` | – |
 | 823 | [G382](packages/G382.md) a decimal inside a string is never rounded (F206) | gorge, Sonnet | `p1/gorge-stringdigits` | – |

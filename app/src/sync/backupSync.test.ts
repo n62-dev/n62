@@ -11,6 +11,7 @@ import type { TapCounts } from "../state/taps.svelte.ts";
 import { SyncFolder, type FolderPort, type OtherBackup, type StartUi, type SyncHost } from "./backupSync.ts";
 import { deviceSlug, newDeviceName } from "./device.ts";
 import { memKv } from "./fakeFolder.ts";
+import { leaveNotice } from "./live.ts";
 import { readSync, SYNC_KEY } from "./record.ts";
 
 interface Folder extends FolderPort {
@@ -59,7 +60,7 @@ function host(dir: Folder, store: Map<string, RawRecord> = new Map([["settings",
     raw: async (k) => store.get(k),
     counts: () => counts(3),
     library: async () => LIB,
-    now: () => new Date(Date.UTC(2026, 10, 16, 12, 0, n++)),
+    now: () => new Date(Date.UTC(2026, 10, 9, 12, 0, n++)), // this device's leaves: 2026-11-09 12:00, a second apart
     random: () => 0.0425,
     ...more,
   } as SyncHost & { store: Map<string, RawRecord>; kv: ReturnType<typeof memKv> };
@@ -218,6 +219,50 @@ describe("on start (R128)", () => {
     expect(u.shown).toHaveLength(1);
     expect(u.shown[0]).toMatch(/^refused SM-A546B-77aa: .*Settings/);
     expect(await new SyncFolder(h).onStart(u)).toBe("none");
+  });
+});
+
+describe("on start, against this device's own file (R128f1)", () => {
+  for (const mode of ["silent", "offer"] as const) {
+    it(`${mode}: another device's file made before this device's own leave is marked read, never offered or applied`, async () => {
+      const dir = folder();
+      const h = host(dir);
+      await h.kv.set(SYNC_KEY, { mode });
+      dir.files.set(OTHER, { text: await other("2026-11-09T10:00:00Z"), modified: 9 }); // A left at 10:00
+      await new SyncFolder(h).leave(); // B leaves at 12:00, then is closed
+      const u = ui();
+      expect(await new SyncFolder(h).onStart(u)).toBe("none");
+      expect(u.shown).toEqual([]);
+      expect((await readSync(h.kv)).read).toEqual({ name: OTHER, made: "2026-11-09T10:00:00.000Z" });
+      dir.files.set(OTHER, { text: await other("2026-11-09T13:00:00Z"), modified: 9 }); // A's later work: as before
+      expect(await new SyncFolder(h).onStart(u)).toBe(mode === "silent" ? "applied" : "offered");
+      expect(u.shown).toEqual([`${mode === "silent" ? "apply" : "offer"} SM-A546B-77aa 2026-11-09T13:00:00.000Z`]);
+    });
+  }
+  it("a file that holds this device's own parts is marked read and shows nothing", async () => {
+    const dir = folder();
+    const h = host(dir);
+    await h.kv.set(SYNC_KEY, { mode: "silent" });
+    await new SyncFolder(h).leave();
+    // A restored B's backup and left: B's parts, a later made
+    const mine = JSON.parse(dir.files.get("n62-Pixel-7-0ae1-backup.json")?.text ?? "");
+    dir.files.set(OTHER, { text: JSON.stringify({ ...mine, made: "2026-11-10T08:00:00.000Z" }), modified: 9 });
+    const u = ui();
+    expect(await new SyncFolder(h).onStart(u)).toBe("none");
+    expect(u.shown).toEqual([]);
+    expect((await readSync(h.kv)).read?.made).toBe("2026-11-10T08:00:00.000Z");
+    await h.kv.set(SYNC_KEY, { mode: "offer" });
+    dir.files.set(OTHER, { text: JSON.stringify({ ...mine, made: "2026-11-11T08:00:00.000Z" }), modified: 9 });
+    expect(await new SyncFolder(h).onStart(u)).toBe("none");
+    expect(u.shown).toEqual([]);
+  });
+});
+
+describe("Write now's notice (R128f1)", () => {
+  it("says one file in the singular, more in the plural", () => {
+    expect(leaveNotice({ written: 1 })).toBe("Written to the sync folder: 1 file");
+    expect(leaveNotice({ written: 3 })).toBe("Written to the sync folder: 3 files");
+    expect(leaveNotice("unchanged")).toBe("Nothing changed since the last write");
   });
 });
 

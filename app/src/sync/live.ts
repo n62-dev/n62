@@ -97,7 +97,11 @@ export async function syncJob(job: "pick" | "now" | "stop", session: Session, sh
     await forgetFolder();
     return dataText("sync.stopped");
   }
-  const r = await leave(session, shell);
-  if (typeof r === "object") return dataText("sync.written", { n: r.written });
+  return leaveNotice(await leave(session, shell));
+}
+
+/** Write now's notice for what the leave did (one file in the singular, R128f1). */
+export function leaveNotice(r: LeaveResult): string {
+  if (typeof r === "object") return r.written === 1 ? dataText("sync.writtenOne") : dataText("sync.written", { n: r.written });
   return dataText(r === "unchanged" ? "sync.unchanged" : r === "unavailable" ? "sync.unavailable" : "sync.failed");
 }
