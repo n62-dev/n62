@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dataText } from "../i18n/enData.ts";
-import { backupName, BACKUP_KEYS, checkBackup, LEFT_OUT, makeBackup, saveBackup, VALIDATORS } from "./backup.ts";
+import { backupName, BACKUP_KEYS, checkBackup, LEFT_OUT, makeBackup, partName, saveBackup, VALIDATORS } from "./backup.ts";
 import { fakeIndexedDb, type FakeIdb } from "./fakeIdb.ts";
 import { DATA_VERSION, stamp } from "./storage.ts";
 import { kvGetRaw, type RawRecord } from "./storageRaw.ts";
@@ -237,5 +237,32 @@ describe("the taps part with the per-key counts (R127)", () => {
   });
   it("refuses a keys field that is not a map of counts", () => {
     for (const keys of [[], "x", 3, null, { a: -1 }, { a: 1.5 }, { a: "2" }]) expect(VALIDATORS["taps"]?.({ ...base, keys }), JSON.stringify(keys)).toBe(false);
+  });
+});
+
+describe("the rpn part (R252)", () => {
+  const level = { uid: "u1", chip: { value: "2", exact: true }, shown: "2", inputs: [] };
+  const file = (v: unknown): Uint8Array =>
+    new TextEncoder().encode(JSON.stringify({ "n62-backup": 1, parts: { rpn: { "@n62": DATA_VERSION, value: v } } }));
+  it("is a backup key, left out of nothing", () => {
+    expect(BACKUP_KEYS).toContain("rpn");
+    expect(LEFT_OUT).not.toContain("rpn");
+  });
+  it("a good part passes the check, and so does an empty stack", () => {
+    expect(checkBackup(file({ levels: [level, { ...level, uid: "u2", inputs: ["row:u2"] }] })).ok).toBe(true);
+    expect(checkBackup(file({ levels: [] })).ok).toBe(true);
+  });
+  it("a part whose levels is not an array is refused, naming the part", () => {
+    const r = checkBackup(file({ levels: 3 }));
+    expect(r.ok).toBe(false);
+    if (!r.ok) {
+      expect(r.part).toBe("rpn");
+      expect(r.message).toContain(partName("rpn"));
+    }
+  });
+  it("a level that is not an object, or lacks a string uid or shown, a chip object or an inputs array of strings, is refused", () => {
+    for (const bad of [3, { ...level, uid: 4 }, { ...level, shown: 1 }, { ...level, chip: 5 }, { ...level, chip: null }, { ...level, inputs: "row:u1" }, { ...level, inputs: [1] }, { uid: "u" }])
+      expect(VALIDATORS["rpn"]?.({ levels: [bad] }), JSON.stringify(bad)).toBe(false);
+    expect(VALIDATORS["rpn"]?.([])).toBe(false);
   });
 });

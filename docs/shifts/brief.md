@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 815 | [R252](packages/R252.md) the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
+| 815 | R252 the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
 | 816 | [R253](packages/R253.md) the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
 | 802 | [R333](packages/R333.md) a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
 | 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
