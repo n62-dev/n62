@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Owner feedback inbox
 
-The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 60). Each point is kept in the owner's words (shortened) and gets one triage:
+The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 62). Each point is kept in the owner's words (shortened) and gets one triage:
 
 - **bug**: fixed now, regression test first;
 - **feel**: goes into the next package for the look or the entry (brief section 0);
@@ -26,3 +26,5 @@ The owner's `todo.txt` held no `+N62` line on 2026-11-16, so no owner report was
 | 57 | 2026-11-16 | S05: `sin` Enter, `2 xʸ` Enter, `4 ÷` Enter say "unsupported command \placeholder"; `2 × × 3` says "unsupported command \times"; `3 +` Enter says "unexpected end of input at end of input" (F351). | bug, R575 |
 | 58 | 2026-11-16 | S05: `2^1000000` and `10^(10^6)` say "The calculation failed", though `2^(1ᴇ7)` has a number (F352). | bug, G576 (background) |
 | 59 | 2026-11-16 | S07, S16: the ≈ on Enter, pressed after typing a sum, puts approx(□) behind it and the next Enter fails (F353). | feel, R576 (owner's yes) |
+| 60 | 2026-11-16 | S09: 20 °C + 5 K is refused with "Use K or Δ°C for a temperature difference"; the 5 is already in K (F354). | feel, G577 (part 2: owner's yes) |
+| 61 | 2026-11-16 | S09, S10: on a long formula the unit view's end slot is off the right edge; the target unit is typed blind (F355). | bug, R577 |
