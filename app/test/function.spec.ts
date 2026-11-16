@@ -394,3 +394,25 @@ test("Function: a Root readout, Menu › To Home: one chip on Home's line; ×2 g
   await expect(page.locator('[data-status="done"]').last().locator(".result")).toHaveAttribute("data-text", "2.82842712475");
   await expect(page.getByTestId("mark").last()).toHaveAttribute("data-mark", "≈");
 });
+
+// R601 (F414): a Num cell reads the names in its function as they are now: Home stores a new A, Num shows the new value.
+test("Function: Home 3▶A, F1 = A·x, Num at x = 1 is 3; Home 5▶A, back to Num: 5 (R601, derived)", async ({ page }) => {
+  const storeA = async (d: string, n: number): Promise<void> => {
+    await tap(page, ["@home", d, "shift", "emark", "alpha", "vars", "enter"]); // d▶A
+    await expect(page.locator('[data-status="done"]')).toHaveCount(n);
+    await page.waitForFunction((v) => window.n62.session.userNames.some((u) => u.name === "A" && u.preview === v), d.slice(1));
+  };
+  await storeA("d3", 1);
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["alpha", "vars", "x", "enter"]);
+  await expect(page.locator('[data-name="F1"] .math')).toHaveAttribute("data-latex", /^A\\?(cdot)? ?x$|^Ax$/);
+  await tap(page, ["@num"]);
+  await tap(page, ["@menu", "d2", "d1", "enter"]); // step 1
+  const cell = page.locator('[data-testid="num-table"] tr:has(td[data-x="1"]) td').nth(1);
+  await expect(cell).toHaveAttribute("data-text", "3");
+  await storeA("d5", 2);
+  await tap(page, ["@num"]); // back to the app, Num view
+  await expect(page.locator('[data-app="function"]')).toBeVisible();
+  await expect(cell).toHaveAttribute("data-text", "5");
+});
