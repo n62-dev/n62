@@ -42,6 +42,7 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `facts.ts` | the mark facts that stored names lend (M4-7); called by `host.ts` |
 | `stateRead.ts` | G65: which names an input stored and read, from Giac's own state; called by `host.ts`, `facts.ts` |
 | `chipFacts.ts` | G49: a result reused through Ans or a chip (`pasr_<k>`) keeps its facts; called by `host.ts`, `workerEngine.ts` |
+| `nameSigma.ts` | G371: a name stored from a result keeps its σ and its unit chip's unit; a Home read of it takes its σ as a chip's; called by `host.ts` |
 | `constUnc.ts` | G26: constants sent by name (`pasc_<id>`) with CODATA values and σ; the first-order σ of a Home result and its `uncDigits`; called by `host.ts` |
 | `constBasis.ts` | G81: an inexact constant's basis (value over its measured leaves); called by `constUnc.ts`, `units/` |
 | `converge.ts` | G39: refusals for a divergent integral or series and a limit that does not exist; called by `homeEval.ts`, `host.ts`, `analysis.ts` |

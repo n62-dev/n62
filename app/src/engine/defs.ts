@@ -12,8 +12,17 @@ import type { ProgramStores } from "./stores.ts";
 import { isName } from "./giacPrintStart.ts";
 
 /** How far a variable that holds a float can be trusted (decisions M4-7): the facts of the result it was stored from
- *  (never `exact`: an exact value stores none). */
+ *  (never `exact`: an exact value stores none), its σ (`uncDigits`, `uncSigma`, G371) too. */
 export type NameFacts = ValueFacts;
+
+/** G371: the unit a variable's value is in, from the unit result's chip it was stored from (R61's ChipUnit, input/chips.ts:
+ *  the unit as shown, its dimension key, its slot of Find ids). Home has no units: the value is the number in it. */
+export interface NameUnit {
+  text: string;
+  dim: string;
+  /** units/types.ts UnitSlot (the engine imports nothing from units/: G147), checked where it is read (chipUnit.ts). */
+  slot: object;
+}
 
 /** The mark Vars draws for a name that holds no facts (an exact value). */
 export type StoredMark = "=" | "≈";
@@ -29,9 +38,13 @@ export interface DefEntry {
   kind: DefKind;
   /** Giac commands that recreate it in a fresh engine. */
   cmds: string[];
-  /** A variable holding a float, or an inexact value that prints exactly (G49): its mark facts (M4-7). Absent for
-   *  exact values. */
+  /** A variable holding a float, or an inexact value that prints exactly (G49): its mark facts (M4-7), with the σ of
+   *  the value it was stored from (G371: `uncDigits`, `uncSigma`). Absent for exact values. */
   facts?: NameFacts;
+  /** G371: a variable stored from a unit result's chip (or from a name that holds one): the unit its value is in. As
+   *  read back, unchecked (as a stored chip's, input/chips.ts validChips): input/chipUnit.ts chipUnit checks it where it
+   *  is used. */
+  unit?: NameUnit;
   /** The value as shown when it was defined (Vars and Find previews, docs/04 3.4). */
   preview: string;
   /** A variable: the mark of the result it was stored from, as the history drew it (S53f1: `=` for 5, `≈` for 1/3 shown
@@ -109,6 +122,8 @@ export function validDefs(x: unknown): DefEntry[] {
     const cmds = e["cmds"];
     const kind = e["kind"];
     const facts = validFacts(e["facts"]);
+    // G371: a variable's unit as stored, an object only: input/chipUnit.ts chipUnit checks its shape where it is read
+    const unit = kind === "var" && e["unit"] && typeof e["unit"] === "object" ? (e["unit"] as NameUnit) : undefined;
     if (typeof e["name"] !== "string" || !KINDS.includes(kind as DefKind) || facts === null) continue;
     if (!Array.isArray(cmds) || cmds.length === 0 || !cmds.every((c) => typeof c === "string")) continue;
     if (kind !== "other" && !isName(e["name"], true)) continue;
@@ -117,6 +132,7 @@ export function validDefs(x: unknown): DefEntry[] {
       kind: kind as DefKind,
       cmds: cmds as string[],
       ...(facts ? { facts } : {}),
+      ...(unit ? { unit } : {}),
       preview: typeof e["preview"] === "string" ? e["preview"].slice(0, PREVIEW_MAX) : "",
       view: e["view"] === "cas" ? "cas" : "home",
       time: typeof e["time"] === "number" && Number.isFinite(e["time"]) ? e["time"] : 0,

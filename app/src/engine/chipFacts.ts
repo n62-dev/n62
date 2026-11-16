@@ -7,7 +7,7 @@
 // digit. An exact chip (decisions M4-4) is put in as a literal, as before. Synchronous, UI-free. Only erasable
 // TypeScript syntax.
 import type { ValueFacts } from "./types.ts";
-import type { NameFacts } from "./defs.ts";
+import type { NameFacts, NameUnit } from "./defs.ts";
 import { floatsAsEvalf } from "./homeEval.ts";
 import { hasFloat } from "./numeric.ts";
 import { CHIP_PREFIX } from "./ourNames.ts";
@@ -22,6 +22,8 @@ export interface ChipEntry extends ValueFacts {
   value: string;
   /** R61: a unit result's σ in the unit shown (Giac text); a nonzero one makes the chip an input of σ (sigmaChip). */
   unc?: string;
+  /** G371: a unit result's unit (R61's ChipUnit): never in the arithmetic; a name stored from the chip keeps it. */
+  unit?: NameUnit;
 }
 export type ChipFactsTable = Readonly<Record<string, ChipEntry>>;
 

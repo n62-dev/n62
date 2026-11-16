@@ -52,6 +52,7 @@ import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
 import { constUncDigits, inexactConstsIn, withConstValues, type ConstTable } from "./constUnc.ts";
 import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
 import { chipCommand, chipNameFacts, chipSigma, chipsIn, literalChip, withChipValues, type ChipFactsTable } from "./chipFacts.ts";
+import { nameSigma, sigmaNamesIn, unitOfStore, withNameFacts } from "./nameSigma.ts";
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
@@ -715,6 +716,13 @@ export class EngineHost implements FactsHost {
     return out;
   }
 
+  /** G371 (nameSigma.ts withNameFacts): the store's entry with its σ and unit, in this host's log too. */
+  private nameFacts(defs: DefChange[], name: string | undefined, unc: Parameters<typeof withNameFacts>[2], unit: Parameters<typeof withNameFacts>[3]): DefChange[] {
+    const out = withNameFacts(defs, name, unc, unit);
+    if (out !== defs) this.record(out.filter((c) => "set" in c && c.set.name === name));
+    return out;
+  }
+
   private record(changes: readonly DefChange[]): void {
     if (!changes.length) return;
     this.log = applyDefChanges(this.log, changes);
@@ -840,7 +848,7 @@ export class EngineHost implements FactsHost {
     const used = this.usesOf(input); // G212: before the input runs (it may store to them), as cas()
     const reads = this.valuesOf(used); // G213f1
     const cleared = this.clearing(input, () => this.useHomeMode(s));
-    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips);
+    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips, used.map((u) => u.name));
     if (out.result.ok) out.result.reads = reads;
     if (used.length && out.result.ok) out.result.uses = used;
     // G67, G65: the call after the input, if the run did not make it (an error: a syntax error ran nothing)
@@ -850,8 +858,9 @@ export class EngineHost implements FactsHost {
     return post.reset ? { ...out, result: { ...out.result, settingReset: true } } : out;
   }
 
-  private homeTabled(input: string, s: HomeSettings, consts?: ConstTable, chips?: ChipFactsTable): { result: HomeResult; defs: DefChange[] } {
-    if (!consts && !chips) return this.homeRun(input, s, false);
+  private homeTabled(input: string, s: HomeSettings, consts?: ConstTable, chips?: ChipFactsTable, read: readonly string[] = []): { result: HomeResult; defs: DefChange[] } {
+    const sigNames = sigmaNamesIn(read, this.byName); // G371: the stored names with σ the input reads
+    if (!consts && !chips && !sigNames.length) return this.homeRun(input, s, false);
     const form = this.formFor(input);
     const asg = form.assignment;
     const stateful = form.stores;
@@ -872,13 +881,15 @@ export class EngineHost implements FactsHost {
     try {
       const ran = consts ? withConstValues(named, consts) : named;
       const out = this.homeRun(ran, s, inexactIn, lent, formIn(form, ran));
-      const sig = chipSigma(asg ? (formIn(form, named).assignment?.rhs ?? named) : named, chips ?? {}); // R61: σ chips (G26's body without)
+      out.defs = this.nameFacts(out.defs, asg?.name, undefined, asg ? unitOfStore(asg.rhs, chips ?? {}, this.byName) : undefined); // G371: a unit chip's unit
+      const chipSig = chipSigma(asg ? (formIn(form, named).assignment?.rhs ?? named) : named, chips ?? {}); // R61: σ chips (G26's body without)
+      const sig = nameSigma(chipSig.body, sigNames.filter((n) => n !== asg?.name), this.byName), inputs = [...chipSig.inputs, ...sig.inputs]; // G371
       // A setting the input changed was put back after its run: it is not run again (G67).
-      if ((!consts && !sig.inputs.length) || (stateful && !asg) || this.post?.flagsChanged) return out;
-      const n = constUncDigits(this.giac, sig.body, consts ?? {}, out.result, Math.trunc(out.result.digits ?? s.digits), sig.inputs, (m) => this.stored.has(m) || this.skipped.has(m) || this.byName.has(m) || this.pending.has(m) || m === asg?.name || m === form.defined?.name);
+      if ((!consts && !inputs.length) || (stateful && !asg) || this.post?.flagsChanged) return out;
+      const n = constUncDigits(this.giac, sig.body, consts ?? {}, out.result, Math.trunc(out.result.digits ?? s.digits), inputs, (m) => this.stored.has(m) || this.skipped.has(m) || this.byName.has(m) || this.pending.has(m) || m === asg?.name || m === form.defined?.name);
       if (n === undefined) return out;
       const { uncTerms, ...unc } = n; // G274: the terms ride on the result, never in its facts
-      return { ...out, result: { ...out.result, facts: { ...out.result.facts, ...unc }, ...(uncTerms ? { uncTerms } : {}) } };
+      return { result: { ...out.result, facts: { ...out.result.facts, ...unc }, ...(uncTerms ? { uncTerms } : {}) }, defs: this.nameFacts(out.defs, asg?.name, unc, undefined) }; // G371: the store keeps σ
     } finally {
       if (keep.size) this.giac.eval(`purge(${[...keep].map((k) => CHIP_PREFIX + k).join(",")})`);
       this.chipFacts.clear();

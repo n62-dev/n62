@@ -9,7 +9,7 @@ import type { ChipFactsTable } from "./chipFacts.ts";
 import type { SigmaInput } from "./constUnc.ts";
 import type { ValueFacts } from "./types.ts";
 import { isZeroText } from "./constBasis.ts";
-import { mapNames } from "./giacPrint.ts";
+import { isName, mapNames } from "./giacPrint.ts";
 import { CHIP_PREFIX } from "./ourNames.ts";
 
 /** The free symbol a stored name with σ is in the σ expression (its own name holds its value during the run). */
@@ -35,12 +35,11 @@ export function nameSigma(body: string, names: readonly string[], byName: Readon
   return { body: mapNames(body, ({ name, call }) => (!call && names.includes(name) ? SIGMA_PREFIX + name : null), "typed"), inputs };
 }
 
-/** The unit a store's right side `rhs` (as it ran, chips by name) carries: a unit result's chip alone, or a stored name
- *  that holds one, alone (in brackets or not); none for anything else (Home has no units: `chip × 2` is a number). */
+/** The unit a store's right side `rhs` (as typed, chips by name) carries: a unit result's chip alone, or a stored name
+ *  that holds one, alone; none for anything else (Home has no units: `chip × 2` is a number). */
 export function unitOfStore(rhs: string, chips: ChipFactsTable, byName: ReadonlyMap<string, DefEntry>): NameUnit | undefined {
-  let t = rhs.trim();
-  while (t.startsWith("(") && t.endsWith(")")) t = t.slice(1, -1).trim();
-  if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(t)) return undefined;
+  const t = rhs.trim();
+  if (!isName(t, true)) return undefined;
   const k = t.startsWith(CHIP_PREFIX) ? t.slice(CHIP_PREFIX.length) : undefined;
   if (k !== undefined) return Object.hasOwn(chips, k) ? chips[k]!.unit : undefined;
   const e = byName.get(t);
