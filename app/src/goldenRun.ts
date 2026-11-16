@@ -152,10 +152,10 @@ export const homeLatexStep = (latex: string, chips: ChipTable = {}): ReturnType<
  * with Home's options and an Ans chip built from the step before, by the session's rule (state/results.ts, G86). An
  * inexact chip makes an "=" a "≈" (displayMode.ts markFor, decisions M4-4); `inexactInput` carries that to markOf.
  */
-export async function runSteps(fresh: () => Promise<EngineHost>, steps: Step[], digits: number, consts: ConstTable | undefined, chips0: ChipTable = {}): Promise<HomeResult & { inexactInput?: boolean }> {
+export async function runSteps(fresh: () => Promise<EngineHost>, steps: Step[], digits: number, consts: ConstTable | undefined): Promise<HomeResult & { inexactInput?: boolean }> {
   const host = await fresh();
   let last: (HomeResult & { inexactInput?: boolean }) | undefined;
-  let chips: ChipTable = chips0; // (G302: the case's own chips, a constant of Find on the line, for the first step)
+  let chips: ChipTable = {};
   // G49: every step's result as a chip by name (`pasr_<k>`, k from 1), with its facts, for the `input` steps.
   const named: Record<string, ChipFactsTable[string]> = {};
   for (const [k, st] of steps.entries()) {
@@ -211,8 +211,13 @@ export function casMark(r: CasResult, digits: number): MarkInfo | null {
 /** One home.yaml case on `host` (a sequence on its own engine from `fresh`). */
 export async function runHomeCase(c: Case, host: EngineHost, fresh: () => Promise<EngineHost>): Promise<HomeResult & { inexactInput?: boolean }> {
   if (c.steps) return runSteps(fresh, c.steps, c.settings?.digits ?? 12, c.consts && constTable(c.consts));
-  // G302: a `latex` case with `chips` (a constant of Find, `\const{G}{G}`) runs as one step with them, its σ kept
-  if (c.latex !== undefined && c.chips) return runSteps(fresh, [{ latex: c.latex, angle: c.settings?.angle ?? "rad" }], c.settings?.digits ?? 12, undefined, c.chips);
+  // G302: an `input` case with `consts` (a constant of Find held by name, σ with it) runs as one step with that table; an inexact
+  // constant in it makes an "=" a "≈", as the `\const` chip does in the session (the line and the stack agree)
+  if (c.consts && c.input !== undefined) {
+    const table = constTable(c.consts);
+    const r = await runSteps(fresh, [{ input: c.input, angle: c.settings?.angle ?? "rad" }], c.settings?.digits ?? 12, table);
+    return inexactConstsIn(c.input, table).length > 0 ? { ...r, inexactInput: true } : r;
+  }
   const s: HomeSettings = { ...defaultHomeSettings, angle: c.settings?.angle ?? "rad" };
   // A case written as `latex` goes through our parser with Home's options (no realOddRoots since R66), its `before` too
   const giacOf = (t: string): string => (c.latex !== undefined ? giacOfEntry(t, "home").giac : t);
