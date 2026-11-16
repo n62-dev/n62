@@ -59,8 +59,8 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 
 **Hand-off to the laptop**
 - `[miss]` Session format v1. G210 merged (format v0, pure, no caller); `HistoryItem` holds no Giac text, angle or digits per row; `uses` is CAS only. G211, G212.
-- `[miss]` Copy as Python. Allow-list on our parser's tree; anything else says NOT TRANSLATED. G213, G214, G215, G216, G217, R181.
-- `[part]` Sync folder. Folder grant works on the Tab One (A65); append is missing, and `"wa"` is untested. A100, A101, G218, G219, then R128 (existing), R182, R183. No rewrite mode: a folder that cannot append says so and keeps the queue.
+- `[have]` Copy as Python. Allow-list on our parser's tree; anything else says NOT TRANSLATED. G213, G214, G215, G216, G217, R181 (Copy as › Python, ☰ › Export › Python).
+- `[part]` Sync folder. Folder grant (A65), append (A100, A101), the files and queue (G218, G219), the Settings page with write on leave and offer on start (R128) and each result to the queue (R182) are merged; R183 is left, and the two-device Syncthing check on a phone. No rewrite mode: a folder that cannot append says so and keeps the queue.
 
 **Maths**
 - `[part]` Matrices and vectors. `tran`, `dot`, `cross`, `norm`, `rref`, `eigenvals`, `egv` all work; keys and editor are not built. G225, G227, R185, R186, R187, R188, R189, R190.
