@@ -208,6 +208,7 @@ home-copy-as:
   "1": "shown"
   "2": "exact"
   "3": "latex"
+  "4": "python"
 mode:
   "1": "angle"
   "2": "format"
