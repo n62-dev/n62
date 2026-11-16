@@ -68,7 +68,8 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R353 |
 | 835 | [R361](packages/R361.md) the Plot draws a function that reads a value stored in Home | ron, Opus | `p1/ron-plotstored` | – |
 | 836 | [R362](packages/R362.md) the start chunk's first cut: app opening and view-tab icons load with the first app | ron, Opus | `p1/ron-startcut1` | – |
-| 675 | R201 a sheet to make your own unit | ron, Opus | `p1/ron-userunitsheet` | G234 |
+| 852 | [G551](packages/G551.md) bitand, bitor, bitxor of a small negative and a big integer (F302) | gorge, Opus | `p1/gorge-bitsigned` | – |
+| 853 | [G554](packages/G554.md) exp of a float matrix, never the identity (F305) | gorge, Opus | `p1/gorge-matexpfloat` | – |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 804 | [R330](packages/R330.md) Shift + 7 opens the list sheet | ron, Opus | `p1/ron-listsheet` | – |
 | 807 | [R315](packages/R315.md) the unit view reads a stored name with a unit | ron, Opus | `p1/ron-nameslot` | G371 |
@@ -95,9 +96,11 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 809 | G371 a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
+| 849 | [G557](packages/G557.md) simplify keeps the sign of two square roots (F311) | gorge, Opus | `p1/gorge-tworoots` | – |
 | 833 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
 | 834 | [G399](packages/G399.md) `arg` of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
+| 850 | [G553](packages/G553.md) floor and ceil decide at the working precision (F304) | gorge, Opus | `p1/gorge-floorepsilon` | – |
+| 851 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so (F301) | gorge, Opus | `p1/gorge-sigmalost` | – |
 | 827 | G390 the unit view refuses a store, so no name holds our dimension symbols (F255) | gorge, Opus | `p1/gorge-unitstore` | – |
 | 832 | [G392](packages/G392.md) a Home row that reads a name stored with a unit says the unit was dropped | gorge, Opus | `p1/gorge-namedunitnote` | G371 |
 | 828 | [G387](packages/G387.md) the formula result: letters with units and no values, behind a request flag | gorge, Opus | `p1/gorge-formularesult` | G371, G390 |
