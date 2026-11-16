@@ -175,7 +175,8 @@ export function typedInputs(latex: string, comma: boolean): string[] {
     }
     if (t[i] !== "\\pm") continue;
     const from = numberBefore(t, i);
-    let to = numberAt(t, i + 1);
+    // σ typed, or a result chip as σ (R271)
+    let to = t[i + 1] === "\\res" ? group(t, group(t, i + 2)) : numberAt(t, i + 1);
     const piece = t.slice(from, to).join("");
     // (a ± b) unit: the unit is after the bracket
     if (t[from - 1] === "(" && t[from - 2] === "\\left" && t[to] === "\\right" && t[to + 1] === ")") to += 2;
@@ -199,22 +200,43 @@ function chipText(latex: string, macro: string, k: string, comma: boolean): stri
   return null;
 }
 
-/** The label of each term: a typed ± by its place among the typed ones, a chip and a constant by their text in the line,
- *  a basis leaf by its name with the constants that share it. */
+/** The result chips with σ in the line (`\\res{k}{…}`, `\\ans`), each once, in the order they first appear: the order
+ *  of their inputs (units/build.ts uncertainValues, the parser writes the line left to right). */
+function resultChips(item: HistoryItem, comma: boolean): string[] {
+  const t = tokens(item.latex);
+  const chips = item.chips ?? {};
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (let i = 0; i < t.length; i++) {
+    const res = t[i] === "\\res";
+    if (!res && t[i] !== "\\ans") continue;
+    const a = res ? group(t, i + 1) : i + 1;
+    const key = res ? `res:${t.slice(i + 2, a - 1).join("")}` : "ans";
+    const b = res ? group(t, a) : a;
+    if (chips[key]?.unc !== undefined && !seen.has(key)) {
+      seen.add(key);
+      out.push(plain(t.slice(i, b).join(""), comma));
+    }
+    i = b - 1;
+  }
+  return out;
+}
+
+/** The label of each term: a typed ± by its place among the typed ones, a result chip by its place among the line's
+ *  chips with σ (a `pasr_` key's number is its run's, never read: decisions.md pass 199), a constant by its text in the
+ *  line, a basis leaf by its name with the constants that share it. */
 function labels(item: HistoryItem, terms: readonly { key?: string }[], comma: boolean): { label: string; sub?: string }[] {
   const line = item.latex;
   const typed = typedInputs(item.units?.input || line, comma);
+  const results = resultChips(item, comma);
   let n = 0;
+  let r = 0;
   return terms.map(({ key }) => {
     if (key === undefined) {
       n++;
       return { label: typed[n - 1] ?? uncText("unc.rows.typed", { n: String(n) }) };
     }
-    if (key.startsWith("pasr_")) {
-      const k = key.slice("pasr_".length);
-      const text = k === "ans" ? plain("\\ans", comma) : chipText(line, "\\res", k, comma);
-      return { label: text ?? key, sub: uncText("unc.rows.chip") };
-    }
+    if (key.startsWith("pasr_")) return { label: results[r++] ?? uncText("unc.rows.chip"), sub: uncText("unc.rows.chip") };
     if (key.startsWith("pasl_")) {
       const leaf = key.slice("pasl_".length);
       const via = Object.entries(item.chips ?? {})

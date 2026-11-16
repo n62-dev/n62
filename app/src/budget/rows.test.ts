@@ -72,11 +72,13 @@ describe("R328: the uncertainty sheet's rows (variant A)", () => {
   });
 
   it("a result chip's row (pasr_): its text, 'result chip' under it, and the warn note; the typed input after it", () => {
+    // the key's number is its run's (decisions.md pass 199): the label is the line's chip with σ by order, never by it
     const line = "\\res{1}{39.488}\\times\\left(2.000\\pm0.005\\right)";
+    const chips = { "res:1": { value: "39.488", unc: "1.2", exact: false, inexact: true as const } };
     const t = uncRows(unitRow(line, `${line}\\,\\mathrm{m}`, "m³", {
-      terms: [{ key: "pasr_1", t: "5.76", uy: "2.4" }, { t: "0.0389825536", uy: "0.19744" }],
+      terms: [{ key: "pasr_7", t: "5.76", uy: "2.4" }, { t: "0.0389825536", uy: "0.19744" }],
       second: "0.000036",
-    }), false);
+    }, { chips }), false);
     expect(shown(t)).toEqual([
       ["39.488", "2.4 m³", "99.3 %"],
       ["2.000 ± 0.005 m", "0.20 m³", "0.7 %"],
