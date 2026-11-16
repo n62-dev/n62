@@ -91,7 +91,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 |---|---|---|---|---|
 | 809 | G371 a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 827 | G390 the unit view refuses a store, so no name holds our dimension symbols (F255) | gorge, Opus | `p1/gorge-unitstore` | – |
-| 832 | [G392](packages/G392.md) a Home row that reads a name stored with a unit says the unit was dropped | gorge, Opus | `p1/gorge-namedunitnote` | G371 |
+| 832 | G392 a Home row that reads a name stored with a unit says the unit was dropped | gorge, Opus | `p1/gorge-namedunitnote` | G371 |
 | 828 | [G387](packages/G387.md) the formula result: letters with units and no values, behind a request flag | gorge, Opus | `p1/gorge-formularesult` | G371, G390 |
 | 826 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Opus | `p1/gorge-storedlist` | – |
