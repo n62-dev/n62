@@ -101,16 +101,25 @@ const refuseSpecial = (id: string, u: UnitFactor): Refused => new Refused({ erro
 /** The number part of a formula that is only `number*pasuN` (or `pasuN`): a unit-free factor with no +/- outside
  *  parentheses (2+3*pasu1 is not (2+3)*pasu1), else null. */
 function aloneNumber(formula: string, n: number): string | null {
+  const m = numberTimesSlot(formula);
+  return m && m.slot === n && plainNumber(m.num) ? m.num : null;
+}
+
+/** `number*pasuN` (or `pasuN`, the number 1): the number as typed and N, else null. */
+function numberTimesSlot(formula: string): { num: string; slot: number } | null {
   const m = /^\s*(?:(.+?)\s*\*\s*)?pasu(\d+)\s*$/.exec(formula);
-  if (!m || Number(m[2]) !== n) return null;
-  const num = m[1]?.trim() ?? "1";
+  return m ? { num: m[1]?.trim() ?? "1", slot: Number(m[2]) } : null;
+}
+
+/** Whether `num` is a unit-free number with no +/- outside parentheses. */
+function plainNumber(num: string): boolean {
   // E notation (1.5e-3, as the parser writes it): a digit, e or E, an optional sign, digits.
   const E = /(\d)[eE][+-]?\d+/g;
-  if (!/^[0-9.+\-*/^()\s]+$/.test(mapNames(num, (w) => (w.name === "pi" ? "1" : null), "typed").replace(E, "$1"))) return null;
-  if (!balanced(num, "typed")) return null;
+  if (!/^[0-9.+\-*/^()\s]+$/.test(mapNames(num, (w) => (w.name === "pi" ? "1" : null), "typed").replace(E, "$1"))) return false;
+  if (!balanced(num, "typed")) return false;
   const sign = (i: number, d: number, c: string): boolean =>
     d === 0 && (c === "+" || c === "-") && num.slice(0, i).trim() !== "" && !/[*/^(]\s*$/.test(num.slice(0, i)) && !/\d[eE]$/.test(num.slice(0, i));
-  return walk(num, 0, sign, "typed") < 0 ? num : null;
+  return walk(num, 0, sign, "typed") < 0;
 }
 
 /** A bracket around the whole of `t`, taken off (again and again); else `t` trimmed. */
@@ -123,9 +132,9 @@ function unbracket(t: string): string {
 /** G370: one side of T1 − T2: `number*pasuN` (or `pasuN`), in brackets or not, where the number may hold ± values
  *  (`pasupm(…)`, each a number here). Its slot index and its number with each ± value as its value, else null. */
 function tempSide(term: string): { slot: number; num: string } | null {
-  const m = /^(?:([\s\S]*?)\s*\*\s*)?pasu(\d+)$/.exec(unbracket(term));
+  const m = numberTimesSlot(unbracket(term));
   if (!m) return null;
-  const raw = m[1] ?? "1";
+  const raw = m.num;
   let num = "";
   let plain = "";
   let i = 0;
@@ -139,7 +148,7 @@ function tempSide(term: string): { slot: number; num: string } | null {
   }
   num += raw.slice(i);
   plain += raw.slice(i);
-  return aloneNumber(`${plain}*pasu1`, 1) !== null ? { slot: Number(m[2]) - 1, num } : null;
+  return plainNumber(plain) ? { slot: m.slot - 1, num } : null;
 }
 
 /** A slot that is one temperature unit alone (°C, °F, K, °R: no prefix, power or ÷), or null. */
