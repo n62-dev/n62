@@ -83,7 +83,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
+| 809 | G371 a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 827 | [G390](packages/G390.md) the unit view refuses a store, so no name holds our dimension symbols (F255) | gorge, Sonnet | `p1/gorge-unitstore` | – |
 | 832 | [G392](packages/G392.md) a Home row that reads a name stored with a unit says the unit was dropped | gorge, Sonnet | `p1/gorge-namedunitnote` | G371 |
 | 828 | [G387](packages/G387.md) the formula result: letters with units and no values, behind a request flag | gorge, Opus | `p1/gorge-formularesult` | G371, G390 |

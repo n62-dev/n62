@@ -274,8 +274,8 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 62,790 B gzip (R327f1: the digits of a Home row's value ± σ count for its mark, measured 62,735 B, 62,544 B on phase-1; the earlier raises are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(62_790);
+  it("pins the start chunk at 62,880 B gzip (G371: the stored log's load check reads a name's unit, measured 62,821 B, 62,786 B on phase-1; the earlier raises are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(62_880);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...

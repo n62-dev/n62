@@ -29,7 +29,7 @@ export const USER_KEYS = "userKeys";
  * of stored text changes: definitions are Giac text that holds our internal names (R18f1 renamed Φ and Ψ to Phi_ and
  * Psi_), so a rename or a parser fix must rewrite what older versions stored. 0 = stored before versions (2026-10-14).
  */
-export const DATA_VERSION = 4;
+export const DATA_VERSION = 5;
 /**
  * The data version from which each settings schema (`SETTINGS_SCHEMA`, state/session.svelte.ts) is stamped (R94). A
  * new schema raises DATA_VERSION with it (storage.test.ts holds the two together): a build that knows only the stamp
@@ -47,7 +47,7 @@ export type Migrations = Record<number, Record<string, (value: unknown) => unkno
 
 /** The keys that have a step from version n to n+1: MIGRATIONS's own keys (storage.test.ts holds the two together), so a
  *  read knows whether to load the steps without loading them. */
-export const STEP_KEYS: Readonly<Record<number, readonly string[]>> = { 0: [], 1: [], 2: ["defs", "library"], 3: [] };
+export const STEP_KEYS: Readonly<Record<number, readonly string[]>> = { 0: [], 1: [], 2: ["defs", "library"], 3: [], 4: [] };
 
 /** The version a stored record was written in (0 before versions). */
 function storedVersion(stored: unknown): number {
