@@ -9,6 +9,8 @@ export const enUnits = {
   "units.cycle.rev": "{unit} counts turns: write tr for an angle",
   "units.power": "VA, var and W differ by the power factor",
   "units.temperature": "Use K or Δ°C for a temperature difference",
+  // G370: T1 − T2 of two temperature scales; {a}, {b} their symbols as typed ("K", "°C")
+  "units.scales": "{a} and {b} are two scales: write both temperatures in one",
   "units.logarithmic": "{unit} converts only",
   "units.level": "A level needs a positive value",
   "units.belowzero": "Below absolute zero",

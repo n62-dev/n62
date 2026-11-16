@@ -362,12 +362,17 @@ function operandEnd(t: string, from: number): number {
   return t.charAt(j) === "^" ? operandEnd(t, j + 1) : k;
 }
 
+/** `text` trimmed, without the brackets that hold all of it (`((x*pasu1))` → `x*pasu1`), taken off again and again. */
+export function unbracket(text: string, q: Quoting): string {
+  let t = text.trim();
+  while (t.startsWith("(") && closing(t, 0, q) === t.length - 1) t = t.slice(1, -1).trim();
+  return t;
+}
+
 /** G348: `text`, one operand (powersIn's base), starts with a minus inside any brackets that hold all of it (`(-1)`,
  *  `((-2))`, `-x`): a negative number or a negated term. */
 export function negated(text: string, q: Quoting): boolean {
-  let t = text.trim();
-  while (t.startsWith("(") && closing(t, 0, q) === t.length - 1) t = t.slice(1, -1).trim();
-  return t.startsWith("-");
+  return unbracket(text, q).startsWith("-");
 }
 
 /** G363: an arithmetic text as a tree (arithmeticOf): a number literal (its text, where it starts), a name, a call of one
