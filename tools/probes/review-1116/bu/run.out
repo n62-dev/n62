@@ -1,0 +1,47 @@
+ RUN  v5.0.3 <checkout>/app
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/csv-sigma.probe.ts > a Home row with σ in the exports
+σ line on screen: null
+CSV:
+input,value,mark,unit,sigma
+2× G,1.33486E-10,≈,,
+LaTeX:
+% N62 probe · preview: the form of this file can change
+\begin{align*}2\times G &\approx 0\end{align*}
+Share session:
+2× G ≈ 1.33486E-10
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/bu/csv-sigma.probe.ts > a Home row with σ in the exports 4ms
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/app-paste.probe.ts > a pasted unit row in an app's line
+plain paste: null | quantityText: {"value":"20","valueLatex":"20","unit":"m/s"}
+Function Symb \res{0}{20\,\mathrm{m/s}} -> error: "result chip: its value is missing"
+Function Symb \res{0}{20\,\mathrm{m/s}}\times x -> error: "result chip: its value is missing"
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/bu/app-paste.probe.ts > a pasted unit row in an app's line 4ms
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/backup-size.probe.ts > the worst history then and now against the restore's cap
+r11's worst row: 1728884 bytes (cap 4194304); restore: ok
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/silent-fresh.probe.ts > a fresh device's first backup is applied silently over a used device's history
+A leave: {"written":1}
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/new-folder.probe.ts > a second folder chosen in the same session
+leave into X: {"written":2} [ 'n62-Phone-815a-backup.json', 'n62-Phone-815a-library.txt' ]
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/new-folder.probe.ts > a second folder chosen in the same session
+leave into Y: "unchanged" []
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/silent-fresh.probe.ts > a fresh device's first backup is applied silently over a used device's history
+B leave: {"written":1}
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/new-folder.probe.ts > a second folder chosen in the same session
+Write now into Y: "unchanged" []
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/silent-fresh.probe.ts > a fresh device's first backup is applied silently over a used device's history
+A start: applied [ 'apply Tablet-ef69' ]
+A's history now: {"home":[],"cas":[]}
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/bu/new-folder.probe.ts > a second folder chosen in the same session 3ms
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/silent-fresh.probe.ts > a fresh device's first backup is applied silently over a used device's history
+A leave: {"written":1}
+folder n62-Phone-0f1e-backup.json history: {"home":[],"cas":[]}
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/bu/silent-fresh.probe.ts > a fresh device's first backup is applied silently over a used device's history 5ms
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/bu/backup-size.probe.ts > the worst history then and now against the restore's cap
+with giac, ans, one read: 4222484 bytes (cap 4194304); restore: Not a backup: the file is over 4 MB
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/bu/backup-size.probe.ts > the worst history then and now against the restore's cap 30ms
+ Test Files  5 passed (5)
+      Tests  5 passed (5)
+   Start at  10:09:16
+   Duration  842ms (transform 87%, import 11%, tests 2%, worker 1%)
+  Transform  transforming modules took 2.52s · 87% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

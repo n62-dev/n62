@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R328 (the owner, 2026-11-15; mh-C1, variant A): the uncertainty sheet's rows under R327's head, each input's share of σ²
-// as docs/mockups/uncertainty-sheet.html sections 2 to 4 draw them: the input as typed (or the chip, the constant), its uᵢ
+// as docs/archive/mockups/uncertainty-sheet.html sections 2 to 4 draw them: the input as typed (or the chip, the constant), its uᵢ
 // in the result's unit, its % of σ², then one signed "second order" row last; the lines under them (over 100 %, rounded,
 // or why there are no shares). Every number is G272's (budget/model.ts budgetOf); this module only words and places
 // them. A unit row reads G273's terms (UnitRow.unc), a Home row G274's uncTerms (first order: no second-order row). Pure:

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R327 (the owner, 2026-11-15): the uncertainty sheet, opened by Shift + 1 (keyboard/route.ts) on a row with σ (hasSigma):
-// its head as the mockup draws it (docs/mockups/uncertainty-sheet.html sections 3 and 4): the result it explains with its
+// its head as the mockup draws it (docs/archive/mockups/uncertainty-sheet.html sections 3 and 4): the result it explains with its
 // mark, the short form "39.5(12)", the standard uncertainty σ, U = 2σ (k = 2) and relative σ, and the ⚠ line of a σ first
 // order does not hold for. A unit row reads G273's fields (U from the unrounded σ, never 2 × the shown σ); a Home row its
 // σ facts as the σ line does (state/sigmaLine.ts) and its value for relative σ and the short form (units/uncertainty.ts).
