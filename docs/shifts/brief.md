@@ -63,10 +63,8 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 829 | R352 the unit view says what its end slot does, and a first-start tip names the units key | ron, Sonnet | `p1/ron-endslothint` | – |
 | 830 | [R353](packages/R353.md) Store ▶ in the unit view stores the result with its unit | ron, Opus | `p1/ron-unitresultstore` | G371, G390 |
-| 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R352, R353 |
-| 735 | R183 the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | – |
+| 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R353 |
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 804 | [R330](packages/R330.md) Shift + 7 opens the list sheet | ron, Opus | `p1/ron-listsheet` | – |
