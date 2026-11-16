@@ -196,6 +196,40 @@ test.describe("the way back from the unit view (R63)", () => {
     expect(facts?.uncDigits).toBe(1);
   });
 
+  test("G371: t10's row, its chip ▶ F: the definitions log's F holds the chip's unit and its σ, stamped with the store's version", async ({ page }) => {
+    await t10(page);
+    await leaveView(page);
+    await pickLast(page);
+    const unit = (await lineChip(page))?.unit;
+    expect(unit).toEqual({ text: "m²", dim: "m2", slot: { tokens: [{ unit: "m", power: "2" }] } });
+    await tap(page, ["shift", "emark", "alpha", "pow", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    // the definitions log as stored (state/storage.ts): `{ "@n62": version, value: DefEntry[] }`
+    const stored = async () =>
+      page.evaluate(
+        () =>
+          new Promise<{ v: number; F?: { unit?: unknown; facts?: { uncSigma?: string; uncDigits?: number } } }>((resolve, reject) => {
+            const req = indexedDB.open("n62", 1);
+            req.onerror = () => reject(req.error);
+            req.onsuccess = () => {
+              const get = req.result.transaction("kv", "readonly").objectStore("kv").get("defs");
+              get.onerror = () => reject(get.error);
+              get.onsuccess = () => {
+                const rec = get.result as { "@n62": number; value: { name: string; unit?: unknown; facts?: { uncSigma?: string; uncDigits?: number } }[] } | undefined;
+                resolve({ v: rec?.["@n62"] ?? -1, F: rec?.value.find((e) => e.name === "F") });
+              };
+            };
+          }),
+      );
+    await expect.poll(async () => (await stored()).F?.unit, { timeout: 5000 }).toEqual(unit);
+    const { v, F } = await stored();
+    expect(v).toBe(5);
+    // σ = sqrt(1548381)/1000 m² = 1.24433958… (the chip's, derived: tasks.yaml t10, G41), its first digit at 10⁰: one digit
+    // of 39.488 lies before it (constUnc.ts uncDigitsOf, derived: exp 1 − exp 0)
+    expect(Number(F?.facts?.uncSigma).toPrecision(6)).toBe("1.24434");
+    expect(F?.facts?.uncDigits).toBe(1);
+  });
+
   test("a relaunch keeps the row, its slots and its chip's facts; the units key on the picked row shows its slots again", async ({ page }) => {
     await t04(page);
     await leaveView(page);
