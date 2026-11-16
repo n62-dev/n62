@@ -1,0 +1,147 @@
+engine build: Sun Nov 15 23:23:12 CET 2026
+=== index 10:35:02
+find-index: 1707 items (fn 1149 [tier 0: 73], tmpl 1, const 71, unit 452, pfx 34) -> <checkout>/tools/probes/review-1116/vfh-index.json
+find-index: 323691 bytes raw, 65676 bytes gzip, 2484 ms (aide_cas: 1780 entries, 640 left out: 211 underscore, 104 notFunction, 281 excluded, 44 noName)
+find-index: qalc: 439 units (143 composites), 34 prefixes, 71 constants; 33 units and 2 constants skipped, 34 units without si, 74 values checked against definitions, 0 overridden
+find-index: 42 constants carry a basis; 1 without: const:fermi_coupling (fermi_coupling has the unit GeV^(-2), not SI base units)
+find-index: 1 note(s) (--verbose lists them)
+=== exit 0 10:35:05
+=== find 10:35:05
+"kj/kg"                    math: unit:kg/kg*   |   slot: unit:kg/kg*
+"nm3/h"                    math: unit:nmi/h*   |   slot: unit:nmi/h*
+"s/m"                      math: unit:m/s*  unit:m/s^2*  unit:m/s^3*   |   slot: unit:m/s*  unit:m/s^2*  unit:m/s^3*
+"kg/s"                     math: unit:kg*m/s*  unit:kg/kg*  unit:kg/m^3*   |   slot: unit:kg*m/s*  unit:kg/kg*  unit:kg/m^3*
+"kn/m"                     math: unit:kN*m*  unit:kg/m^3*   |   slot: unit:kN*m*  unit:kg/m^3*
+"j/kgk"                    math: unit:J/kg*   |   slot: unit:J/kg*
+"w/mk"                     math: unit:W/m^2*  unit:W/(m*K)*   |   slot: unit:W/m^2*  unit:W/(m*K)*
+"mach"                     math: unit:mAh*   |   slot: unit:mAh*
+"m3/h"                     math: (nothing)   |   slot: (nothing)
+"btu/h"                    math: (nothing)   |   slot: (nothing)
+"w/m2k"                    math: (nothing)   |   slot: (nothing)
+"wh/kg"                    math: (nothing)   |   slot: (nothing)
+"lb/ft3"                   math: (nothing)   |   slot: (nothing)
+"lbm"                      math: (nothing)   |   slot: (nothing)
+"nmm"                      math: (nothing)   |   slot: (nothing)
+"dbv"                      math: (nothing)   |   slot: (nothing)
+"dbu"                      math: (nothing)   |   slot: (nothing)
+"mho"                      math: (nothing)   |   slot: (nothing)
+"metric horsepower"        math: (nothing)   |   slot: (nothing)
+"standard atmosphere"      math: (nothing)   |   slot: (nothing)
+"atm"                      math: unit:atm*  const:n_0*  const:sackur_tetrode_atm*   |   slot: unit:atm*
+"simultaneous equations"   math: (nothing)   |   slot: (nothing)
+"solve numerically"        math: (nothing)   |   slot: (nothing)
+"numerical integration"    math: (nothing)   |   slot: (nothing)
+"trapezoid"                math: (nothing)   |   slot: (nothing)
+"partial fractions"        math: (nothing)   |   slot: (nothing)
+"unit vector"              math: (nothing)   |   slot: (nothing)
+"dms"                      math: (nothing)   |   slot: (nothing)
+"degrees minutes seconds"  math: (nothing)   |   slot: (nothing)
+"polar to rectangular"     math: (nothing)   |   slot: (nothing)
+"rectangular to polar"     math: (nothing)   |   slot: (nothing)
+"cylindrical"              math: (nothing)   |   slot: (nothing)
+"spherical"                math: (nothing)   |   slot: (nothing)
+"percent change"           math: (nothing)   |   slot: (nothing)
+"hypotenuse"               math: (nothing)   |   slot: (nothing)
+"linear system"            math: fn:desolve  fn:gauss_seidel_linsolve  fn:jacobi_linsolve   |   slot: (nothing)
+"quadratic"                math: fn:a2q  fn:gauss  fn:q2a   |   slot: (nothing)
+"permutations"             math: fn:groupermu   |   slot: (nothing)
+"polynomial"               math: fn:polynomial_regression  fn:flow_polynomial  fn:tutte_polynomial   |   slot: (nothing)
+"exponential fit"          math: (nothing)   |   slot: (nothing)
+"curve fit"                math: (nothing)   |   slot: (nothing)
+"power fit"                math: (nothing)   |   slot: (nothing)
+"logarithmic fit"          math: (nothing)   |   slot: (nothing)
+"polynomial fit"           math: fn:fitpoly   |   slot: (nothing)
+"regression"               math: fn:linreg*  fn:power_regression  fn:linear_regression   |   slot: (nothing)
+"kJ/kg"                    math: unit:kg/kg*   |   slot: unit:kg/kg*
+"m^3/h"                    math: unit:m^3/s*  unit:m^3/kg*   |   slot: unit:m^3/s*  unit:m^3/kg*
+"Btu/h"                    math: (nothing)   |   slot: (nothing)
+=== exit 0 10:35:06
+=== apps 10:35:51
+solve known "50"                           -> 50
+solve known "4.7\\times10^{3}"             -> 4.7e3
+solve known "4.7\\emark3"                  -> 4.7e3
+solve known "-0.25"                        -> -0.25
+solve known "2\\pi\\cdot50"                -> REFUSED (Not a number)
+solve known "\\frac{1}{3}"                 -> REFUSED (Not a number)
+solve known "\\sqrt{2}"                    -> REFUSED (Not a number)
+solve known "R"                            -> REFUSED (Not a number)
+solve known "\\operatorname{Ans}"          -> REFUSED (Not a number)
+solve known "1/3"                          -> REFUSED (Not a number)
+solve known "2*50"                         -> REFUSED (Not a number)
+function def "x^{2}"                              -> giac "x^2" drawn: yes
+function def "A\\cdot x^{2}"                      -> giac "A*x^2" drawn: NO
+function def "Ax^{2}"                             -> giac "A*x^2" drawn: NO
+function def "\\sin\\left(x\\right)"              -> giac "sin(pasdeg*x)" drawn: yes
+function def "\\pi x"                             -> giac "pi*x" drawn: yes
+function def "R\\cdot x"                          -> giac "R*x" drawn: NO
+function def "f\\left(x\\right)"                  -> giac "f(x)" drawn: NO
+function def "\\operatorname{abs}\\left(x\\right)" -> giac "abs(x)" drawn: yes
+=== exit 0 10:35:52
+=== stored 10:35:52
+Home A:=3 -> 3
+Function root of A*x^2-12 near 1 -> true 2 
+Home R:=4700 -> 4700
+Solve unknowns of V=I*R -> [ 'V', 'I', 'R' ]
+Solve V with I=2 and R's Num value 0 (as the app sends) -> {"ok":true,"roots":[{"name":"V","result":{"ok":true,"display":"0","value":{"re":{"neg":false,"digits":"","exp":0,"sticky":false},"im":{"neg":false,"digits":"","exp":0,"sticky":false}},"facts":{"exact":false,"reliableDigits":40},"full":"0","path":"numeric","approximate":true,"exactMs":0,"totalMs":2.1
+Home R still -> 4700
+=== exit 0 10:35:53
+=== f1 10:35:53
+"F1\\left(2.5\\right)" no F: "F*1*(2.5)"  F stored: "F*1*(2.5)"
+"F1(2.5)" no F: "F*1*(2.5)"  F stored: "F*1*(2.5)"
+F unset, F*1*(2.5) -> F*5/2
+Home F:=10 -> 10
+F1(2.5) with F=10 -> 25 {"exact":true,"reliableDigits":null}
+=== exit 0 10:35:54
+=== engine 10:35:54
+"exponential_regression([1,2,3,4],[2.7,7.4,20.1,54.6])" => {"ok":true,"path":"exact","display":"{2.72361111171,0.993992946666}","approximate":false,"exact":"list[exp((4*(ln(27/10)+2*ln(37/5)+3*ln(201/10)+4*ln(273/5))-10*(ln(27/10)+ln(37/"}
+   facts {"facts":{"exact":false,"reliableDigits":38},"items":2,"full":"list[exp((4*(ln(27/10)+2*ln(37/5)+3*ln(201/10)+4*ln(273/5))-","fullLength":262,"exactLength":262}
+"power_regression([1,2,3,4],[1,4.1,8.9,16.2])" => {"ok":true,"path":"exact","display":"{2.00133795815,1.00543716024}","approximate":true,"exact":"list[2.00133795815,1.00543716024]"}
+   facts {"facts":{"exact":false,"reliableDigits":null,"warn":"unchecked","why":{"once":true}},"full":"list[2.00133795815,1.00543716024]","fullLength":33,"exactLength":33}
+=== exit 0 10:35:54
+=== units 10:35:54
+500*{lbf}/(0.25*{in^2})  (from the command line)
+  ≈ 13.7895145863 MPa   dim M·L⁻¹·T⁻² (kg1m-1s-2)   si 8896443230521/645160   exact 8896443230521/645160000000   17.1 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+M·L⁻¹·T⁻² (kg1m-1s-2): 20 units, 6 with a measured weight
+  Pa         w 0.0328  tier 0  13789514.5863
+  psi        w 0.0142  tier 0  2000.0
+  bar        w 0.0106  tier 0  137.895145863
+  atm        w 0.0068  tier 0  136.09192782
+=== exit 0 10:35:54
+=== units2 10:35:54
+2000*{lbf / in^2}  (from the command line)
+  = 2000 lbf/in^2   dim M·L⁻¹·T⁻² (kg1m-1s-2)   si 8896443230521/645160   exact 2000   17.3 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+M·L⁻¹·T⁻² (kg1m-1s-2): 20 units, 6 with a measured weight
+  Pa         w 0.0328  tier 0  13789514.5863
+  psi        w 0.0142  tier 0  2000.0
+  bar        w 0.0106  tier 0  137.895145863
+=== exit 0 10:35:55
+=== units3 10:35:55
+100*{mi}/(2*{h})  (from the command line)
+  = 22.352 m/s   dim L·T⁻¹ (m1s-1)   si 2794/125   exact 2794/125   13.2 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+L·T⁻¹ (m1s-1): 6 units, 2 with a measured weight
+  knot       w 0.0044  tier 0  43.448812095
+  mph        w 0.0040  tier 0  50.0
+  km/h       w 0.0000  tier 0  80.4672
+=== exit 0 10:35:55
+=== units4 10:35:55
+100*{mi / h}  (from the command line)
+  = 100 mi/h   dim L·T⁻¹ (m1s-1)   si 5588/125   exact 100   15.3 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+L·T⁻¹ (m1s-1): 6 units, 2 with a measured weight
+  knot       w 0.0044  tier 0  86.8976241901
+  mph        w 0.0040  tier 0  100.0
+  km/h       w 0.0000  tier 0  160.9344
+=== exit 0 10:35:56
+=== oracle 10:35:56
+exp fit y=b*a^x: a = 2.72361111171417 b = 0.993992946666111
+power fit y=b*x^a: a = 2.00133795814764 b = 1.00543716023791
+500 lbf / 0.25 in^2 = 13.7895145863367 MPa = 2000.0 psi
+=== exit 0 10:35:56
+=== done 10:35:56

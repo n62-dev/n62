@@ -1,0 +1,58 @@
+same  \left(-20\pm0.5\right)\times\left(3\pm0.1\right)
+      giac (pasupm(-20,0.5)*pasu1)*(pasupm(3,0.1)*pasu2)
+      parser [-20,3] (pasupm calls 2)  labels ["−20 ± 0.5","3 ± 0.1"]
+same  \frac{3\pm0.1}{2}
+      giac pasupm(3,0.1)*pasu1/(2*pasu2)
+      parser [3] (pasupm calls 1)  labels ["3 ± 0.1"]
+same  \sqrt{4\pm0.1}
+      giac sqrt(pasupm(4,0.1)*pasu1)
+      parser [4] (pasupm calls 1)  labels ["4 ± 0.1"]
+same  2^{1\pm0.1}
+      giac (2*pasu1)^pasupm(1,0.1)
+      parser [1] (pasupm calls 1)  labels ["1 ± 0.1"]
+REFUSED  \left(1+2\right)\pm0.1  (± goes right after a number: 12.3 ± 0.1)
+REFUSED  \pi\pm0.1  (± goes right after a number: 12.3 ± 0.1)
+REFUSED  2\pi\pm0.1  (± goes right after a number: 12.3 ± 0.1)
+same  3\pm0.1\times2\pm0.2
+      giac (pasupm(3,0.1)*pasu1)*(pasupm(2,0.2)*pasu2)
+      parser [3,2] (pasupm calls 2)  labels ["3 ± 0.1","2 ± 0.2"]
+same  .5\pm.1
+      giac pasupm(.5,.1)*pasu1
+      parser [0.5] (pasupm calls 1)  labels [".5 ± .1"]
+same  \frac{1}{3\pm0.1}
+      giac 1*pasu1/(pasupm(3,0.1)*pasu2)
+      parser [3] (pasupm calls 1)  labels ["3 ± 0.1"]
+DIFF  \left|-3\pm0.1\right|
+      giac abs(pasupm(-3,0.1)*pasu1)
+      parser [-3] (pasupm calls 1)  labels ["3 ± 0.1"]
+REFUSED  \left|-3\pm0.1\right|\,\mathrm{m}  (unsupported name \mathrm{m} (units are not supported yet))
+DIFF  2\times\left|-3\pm0.1\right|
+      giac (2*pasu1)*abs(pasupm(-3,0.1)*pasu2)
+      parser [-3] (pasupm calls 1)  labels ["3 ± 0.1"]
+REFUSED  \left(-3\pm0.1\right)\,\mathrm{m}  (unsupported name \mathrm{m} (units are not supported yet))
+same  2^{-3\pm0.1}
+      giac (2*pasu1)^pasupm(-3,0.1)
+      parser [-3] (pasupm calls 1)  labels ["−3 ± 0.1"]
+same  \sqrt{-3\pm0.1}
+      giac sqrt(pasupm(-3,0.1)*pasu1)
+      parser [-3] (pasupm calls 1)  labels ["−3 ± 0.1"]
+DIFF  -3\pm0.1^{2}
+      giac -(pasupm(3,0.1)*pasu1)^2
+      parser [3] (pasupm calls 1)  labels ["−3 ± 0.1"]
+REFUSED  \left(3\pm0.1\right)^{2}\pm0.5  (± goes right after a number: 12.3 ± 0.1)
+same  \sin\left(-0.5\pm0.1\right)
+      giac sin(pasdeg*(pasupm(-0.5,0.1)*pasu1))
+      parser [-0.5] (pasupm calls 1)  labels ["−0.5 ± 0.1"]
+same  1-\left(-2\pm0.1\right)
+      giac 1*pasu1-(pasupm(-2,0.1)*pasu2)
+      parser [-2] (pasupm calls 1)  labels ["−2 ± 0.1"]
+REFUSED  3\pm\left(0.1\right)  (± needs a plain number after it: 12.3 ± 0.1)
+same  \frac{-3\pm0.1}{2}
+      giac pasupm(-3,0.1)*pasu1/(2*pasu2)
+      parser [-3] (pasupm calls 1)  labels ["−3 ± 0.1"]
+same  2\times\frac{-3\pm0.1}{2}
+      giac (2*pasu1)*(pasupm(-3,0.1)*pasu2/(2*pasu3))
+      parser [-3] (pasupm calls 1)  labels ["−3 ± 0.1"]
+REFUSED  \left[1\pm0.1,2\pm0.2\right]  (unsupported delimiter [)
+REFUSED  \res{4}{7}\pm0.1  (± goes right after a number: 12.3 ± 0.1)
+REFUSED  2\times\res{4}{7}\pm0.1  (± goes right after a number: 12.3 ± 0.1)

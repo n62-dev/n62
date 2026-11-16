@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The uncertainty sheet</title>
 <style>
-/* R220 (mh-C1, mh-C2): the picture the sheet's package is cut from. Nothing here is built and nothing loads from outside
+/* R220 (mh-C1, mh-C2): the picture the sheet's package is cut from. Built by R327, R328; nothing loads from outside
    this file: system fonts, no network. The phones use the N62 family's tokens (app/src/style.css, the n62 dark and light
    blocks) and are drawn 1:1 in CSS px at 360 px wide (the narrow size of the e2e tests). The rows follow G272's rules
    (docs/shifts/packages/G272.md): shares to 0.1 %, half away from zero, never adjusted; exact 0 is 0; "< 0.1 %" below
@@ -114,7 +114,7 @@ body[data-show="dark"] .light, body[data-show="light"] .dark { display: none !im
 </head>
 <body data-show="dark">
 <h1>The uncertainty sheet: the budget, U, relative σ and the short form</h1>
-<p class="lead">2026-11-14, package R220 (mh-C1, mh-C2; <a href="../must-have.md">must-have.md</a> decisions 1 and 2). Nothing here is built. One sheet that says, for a result with σ, its short form, its standard uncertainty (σ), U = 2σ with k = 2, its relative σ, and each input's share of σ². The rows follow G272's rules (<a href="../shifts/packages/G272.md">the model's package</a>; once it merges its file goes). Every number is <em>derived</em> from the inputs shown (GUM 5.1.2 with its second-order note, the way <code>app/src/units/evaluate.ts</code> computes σ); sizes are <em>drawn</em>. Phones at 360 px wide, in the N62 family.</p>
+<p class="lead">2026-11-14, package R220 (mh-C1, mh-C2; <a href="../must-have.md">must-have.md</a> decisions 1 and 2). Built by R327, R328. One sheet that says, for a result with σ, its short form, its standard uncertainty (σ), U = 2σ with k = 2, its relative σ, and each input's share of σ². The rows follow G272's rules (<a href="../shifts/packages/G272.md">the model's package</a>; once it merges its file goes). Every number is <em>derived</em> from the inputs shown (GUM 5.1.2 with its second-order note, the way <code>app/src/units/evaluate.ts</code> computes σ); sizes are <em>drawn</em>. Phones at 360 px wide, in the N62 family.</p>
 
 <div class="top" id="top">
   <button type="button" data-show="dark" aria-pressed="true">Dark</button>

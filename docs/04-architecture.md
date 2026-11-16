@@ -282,29 +282,29 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Key | Decided | Source and why |
 |---|---|---|
 | Math (row 3, col 1) [r4c2] | Find, everything (R4a) | P8 |
-| Shift + Math | Memory: Find on variables and user functions, with delete and "clear all" (built, R4b) | reference: Mem |
-| Vars (row 3, col 0) [r4c1] | Find, filtered to variables (built, R4b); Shift + Vars = Paste, ☰ 7's path (R329) | P8 |
-| Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (built, R10; r8 rule M1) | P8, P11 |
+| Shift + Math | Memory: Find on variables and user functions, with delete and "clear all" | reference: Mem |
+| Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift + Vars = Paste, ☰ 7's path (R329) | P8 |
+| Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (r8 rule M1) | P8, P11 |
 | Shift + Tmpl | the unit view (unit slots) | P11; reference: Units |
 | The letters A–Z, `#`, `:`, `;` (Alpha layer, flick down) | **stay**: Find's keyboard (3.7), names, CAS symbols, hex digits A–F (5.4); not the unit slots (P14) | decisions.md "The letters stay" |
 | Alpha key [r8c1] | one-shot Alpha with lock flicks; stays its own key (P7 point 4, owner 2026-10-19; reopens if Alpha taps fall near zero) | P7 |
-| a b/c (row 3, col 4) [r4c5] | toggles the last result's form: decimal ↔ fraction, polar ↔ rectangular (built, R10) | G2 item 29, P12 |
-| Exponent key (row 6, col 0) [r7c1] | types the mark `ᴇ` (`\emark`, one token); Shift = Sto ▶ (built, R14) | P12 |
-| Rows 0–2 | R3 (built, R15c2; the pairs R146; R278): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; ☰ \| Esc, Undo \| Redo, Select \| Deselect in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, Help \| Mode on Shift. Apps, Mode and the views: the status line (R15c1); results mode: the swipe on the entry line (R53). The cells at the tag: docs/06 3b | P12, S2, R15c, R146, R278 |
-| Shift + 6, Shift + 9 | the G2's palettes: relations and logic; symbols and Greek with `!` and ∞ (built, R18) | P12 |
+| a b/c (row 3, col 4) [r4c5] | toggles the last result's form: decimal ↔ fraction, polar ↔ rectangular | G2 item 29, P12 |
+| Exponent key (row 6, col 0) [r7c1] | types the mark `ᴇ` (`\emark`, one token); Shift = Sto ▶ | P12 |
+| Rows 0–2 | R3 (the pairs R146; R278): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; ☰ \| Esc, Undo \| Redo, Select \| Deselect in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, Help \| Mode on Shift. Apps, Mode and the views: the status line (R15c1); results mode: the swipe on the entry line (R53). The cells at the tag: docs/06 3b | P12, S2, R15c, R146, R278 |
+| Shift + 6, Shift + 9 | the G2's palettes: relations and logic; symbols and Greek with `!` and ∞ | P12 |
 | ☰ (row 0, col 4, id `menu`) [the G2's Menu key, r3c4] | the status line's ☰ as a key (R278): it opens the view's menu and closes the one it opened; with another sheet open it only closes that sheet; Shift = Settings (R146); a dead press where the view has no menu | R278; docs/06 3b |
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
-| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back (built, R279); Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find; Insert replaces the call, R324); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7, Shift + Vars (R329) and any system paste: no Copy key (R278) | R278, R279 |
-| ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (built, R11; decisions.md S2); item 6 is Copy as › | P8, S2, S9 |
-| User keys | U1–U6, all empty, with tap, Shift and Alpha (built, R15c2, R15c3; an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet (built, R4b) | R15b, R15c |
+| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back; Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find; Insert replaces the call, R324); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7, Shift + Vars (R329) and any system paste: no Copy key (R278) | R278, R279 |
+| ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (decisions.md S2); item 6 is Copy as › | P8, S2, S9 |
+| User keys | U1–U6, all empty, with tap, Shift and Alpha (an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
-| Shift + `−` [r9c5] | the Base menu (built, R193; 5.4) | reference: Base |
-| Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list (built, R54) | reference |
+| Shift + `−` [r9c5] | the Base menu (5.4) | reference: Base |
+| Shift + 5 [r8c3]; Shift + 8 [r7c3] | `[ ]` vector or matrix template (EN5); `{ }` list | reference |
 | Shift + 4 [r8c2]; Shift + 7 [r7c2] | the matrix sheet (built, R187–R190: functions 1–8, New 9, stored matrices, grid); the list editor, deferred with Statistics | reference: Matrix, List |
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift is reserved (R322) | ours; decisions.md "Settings in the Mode sheet, and presets" |
-| Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); % (`\%`, the Shift + 9 palette's cell) (built, R323) | owner, 2026-11-14; docs/06 3b |
+| Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); % (`\%`, the Shift + 9 palette's cell) | owner, 2026-11-14; docs/06 3b |
 | Unassigned Shift cells (a b/c, Fmt; `,` is ± (R71), 1 the σ sheet (R327); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 

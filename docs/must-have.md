@@ -16,7 +16,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 
 ## A. Before you tell anyone (v0.1.0; the freeze Tue 11-17, the tag after it)
 
-- **No known silent wrong number** [part since 11-14]. The night review of 11-14 found three everyday ones (backlog `nr1114` lines; G352, G353, R298) and two extreme ones (G363, G364): the bar holds again once they merge. F198 is a named limit.
+- **No known silent wrong number** [part]: the 11-14 five are merged (G352, G353, R298, G363, G364); the 11-16 review found two everyday ones (nr1116-be-4, -be-1; G398, G399, before the freeze) and three extreme ones (G403 to G405). F198 is a named limit.
 - **Units and ± in the core list** [have]. R170 (`521ae3fe`).
 - **Release notes** [part]. A90 (`47b5fe22`); A91 after the freeze.
 - **First-run tips** [have]. R171 (`72e872c6`).
@@ -28,14 +28,14 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 
 **The figures "Why trust it" prints** (counted at de659c02; A93 reads them from the files):
 - Golden: 1,966 recorded answers, 5 of them open cases. 892 expected values are computed independently of Giac (790 by mpmath, 102 by exact arithmetic); 422 more are hand-derived or reference values cross-checked by machine; the other 652 are hand-derived expected results or behaviour guards. Parser (648) and bench (57) rows are not answers.
-- Patches: 48 Giac patches. 36 sent to the author: on 8 Nov he wrote that his updated source archive "should be synchronized" with them (his statement, not compared here); 12 (0037–0048) not sent.
+- Patches: 52 Giac patches. 51 sent to the author: 36 by 8 Nov, when he wrote that his updated source archive "should be synchronized" with them (his statement, not compared here), and 0037–0051 on 2026-11-15; 0052 not sent.
 - Traps: Rump ≈ -0.827396059947 (ordinary IEEE double: about ±1.18E21, the sign depends on evaluation order); `1-cos(10⁻⁸)` RAD ≈ 5E-17 (double 0); `(1+10⁻¹⁶)^(10¹⁶)` ≈ 2.71828182846 (double 1); `e^(π√163)` at 30 digits ≈ 262537412640768743.999999999999 (double 2.6253741264076826E17); `∫1/x` from -1 to 1 refused (Giac alone gives 0).
 
 Open bugs: F198 (`1/0`, `tan(pi/2)`, DEG `tan(90)` show `infinity` with no mark, while `0/0` is refused since G168): a named limit, decision 8.
 
 Decisions for the owner:
 1. **Yes (2026-11-09).** Core cases c67–c69: add them, `hand: false`. The core list changes only with the owner; these are the flows you named.
-2. Patches 0037–0048 go in the next mail to the author; nothing to decide. Email 5 went on 2026-11-08 with 0013-0036, its links pinned at 8f398cca, which lacks it.
+2. Done: sent 2026-11-15 (0037–0051).
 3. **Yes (2026-11-09).** Trust page location: in the app under Help and about, plus a README section. n62.dev is the app, with no separate pages.
 4. **Yes (2026-11-15).** Video: keep the v6 cut and record the Qalculate side-by-side as a separate 10 s clip. Opening on it would re-cut the owner's 11-07 chapter order.
 5. **Settled by C4 (2026-11-12: the HP name in the README only, with the disclaimer).** "HP Prime key layout" in the video: SHOWCASE.md's chapter headline is reworded without the name before the recording, in the owner's words.
@@ -172,9 +172,9 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (R327, R328) �
 - **RPN** (only after decision 1 is yes): "N62 has no RPN today: entry is textbook or one-line. It is being built now, numbers with units and ± included. If you want it, tell me what you would need from it (stack depth, how the keys behave), since the view and part of the key behaviour are still open."
 - **Programs:** "No program editor on the device and no PPL: programs are Giac definitions, written on a laptop or typed one line at a time."
 - **The chain:** "N62 gives 9 for arcsin(arccos(arctan(tan(cos(sin(9)))))) in DEG, exactly, at 12, 15 and 30 digits. It cancels symbolically, with branches picked by Giac's numeric reduction, so this is not a float chain that lands on 9." (`approx()` of it shows 9 with ≈; its 40-digit working value 8.999… is internal, never shown or copied.)
-- **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 48 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Thirty-six have gone to its author, who wrote on 8 Nov that his updated source archive 'should be synchronized' with them. One is not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
+- **Giac:** "N62 uses Giac, the open-source CAS by Bernard Parisse and Renée De Graeve, which the HP Prime's CAS is also built on. It is not the same build: N62 is pinned to Giac 2.1.0 with 52 local patches, I don't know which Giac a given Prime firmware contains, and so results can differ. Fifty-one have gone to its author, who wrote on 8 Nov that his updated source archive 'should be synchronized' with the first thirty-six. One is not sent yet. Not affiliated with HP Inc. or Moravia; HP and HP Prime are trademarks of HP Inc."
 
-Counts (must match section A): 48 patches; 36 sent (0001-0002, 0003-0012, and 0013-0036 on 2026-11-08); 12 not sent (0037–0048). Attach a primary source for "also built on" when posting; the repo has a Wikipedia citation only.
+Counts (must match section A): 52 patches; 51 sent (0001-0002, 0003-0012, 0013-0036 on 2026-11-08, 0037-0051 on 2026-11-15); 1 not sent (0052). Attach a primary source for "also built on" when posting; the repo has a Wikipedia citation only.
 
 **Order:**
 - v0.1.0: G300 and G301 merged (`782b641c`, `cac10d87`).
@@ -189,7 +189,7 @@ Counts (must match section A): 48 patches; 36 sent (0001-0002, 0003-0012, and 00
 4. The swap key (▶ is also a trackpad step, each 12 px of drag fires it), ▲/▼ and `frac` on an empty line: decide after the session, with the view.
 5. No program editor on the device: confirm, no package.
 6. The chain in the golden set, not in the core list: yes; the golden gate re-runs it whenever engine or parser code changes; the core list is everyday tasks.
-7. Patches 0037–0048 are left for a later mail; refresh the counts on the day of the post (section A, item 2). Nothing to decide.
+7. Patch 0052 waits for the next mail; refresh the counts on the day of the post (section A, item 2). Nothing to decide.
 8. Replace "Same CAS as the Prime" with the wording above, here and in `../outreach/reddit-post.md:23`: yes; the repo cannot prove "same".
 
 **Not verified:**
