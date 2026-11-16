@@ -274,8 +274,8 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 62,600 B gzip (R327: Shift + 1, the uncertainty sheet, measured 62,544 B, 62.45 kB on phase-1; the earlier raises are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(62_600);
+  it("pins the start chunk at 62,790 B gzip (R327f1: the digits of a Home row's value ± σ count for its mark, measured 62,735 B, 62,544 B on phase-1; the earlier raises are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(62_790);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...
@@ -283,7 +283,7 @@ describe("size-check", () => {
     const over = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 63_200 }, "assets/mathlive.js": 1000 }));
     expect(over.rows[0]!.gzip).toBeGreaterThan(63_000);
     expect(checkStartPin(over.rows[0]!)[0]).toContain("pinned"); // over both
-    const between = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 62_700 }, "assets/mathlive.js": 1000 }));
+    const between = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 62_880 }, "assets/mathlive.js": 1000 }));
     expect(between.failures).toEqual([]); // inside the budget of 63 kB ...
     expect(checkStartPin(between.rows[0]!)[0]).toContain("pinned"); // ... but over the pin
     const inside = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 58_000 }, "assets/mathlive.js": 1000 }));

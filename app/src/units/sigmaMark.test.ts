@@ -198,6 +198,55 @@ describe.skipIf(!giacAvailable())("R271f1: a σ chip's mark in the view, the row
     expect(s.sigma?.tail).toBe("0.071");
   });
 
+  it("R327f1: 10.123 ± 0.071 draws 5 digits, 4 confirmed: ⚠ 4 at every setting, in the view, the Home row and its chip", async () => {
+    // the ± text and the short form round the value to σ's last place (10^-3): 10.123, 5 significant digits whatever
+    // the digits setting, against the value's 4 (1 + 1 + 2, R286); phase-1 counted the setting's digits: ≈ at STD 3 and 4
+    const one: Chip = { ...FEW, reliableDigits: 1 };
+    const line = "10.123456\\pm\\res{3}{0.0707}\\placeholder[u1]{}";
+    const q = units(line, { "res:3": one });
+    expect(q.unc).toMatchObject({ text: "0.071", shown: "10.123 ± 0.071", short: "10.123(71)" });
+    const STD = [3, 4, 5, 12];
+    const view = STD.map((d) => {
+      const s = shown(q, { format: "STD", digits: d });
+      return [d, s.mark, s.markText, s.text, s.warn, s.sigma?.tail];
+    });
+    expect(view).toEqual(STD.map((d) => [d, "⚠", "⚠ 4", "10.123 ± 0.071", true, "0.071"]));
+    const r = row(q, line, { "res:3": one });
+    const s = await session();
+    putRow(s, r);
+    const item = s.home[0] as HistoryItem;
+    s.setFormat("std");
+    const home = STD.map((d) => {
+      s.setDigits(d);
+      return [d, s.mark(item)];
+    });
+    expect(home).toEqual(STD.map((d) => [d, { mark: "⚠", n: 4 }]));
+    // its chip keeps the 4 digits and σ's 1: used again (× 2, 20.246912 ± 0.1414) the ± text is 20.25 ± 0.14, 4 digits
+    // to σ's 10^-2, against 1 + 1 + 1 = 3: ⚠ 3 at every setting
+    const chip = quantityChip(q);
+    expect(chip).toMatchObject({ exact: false, reliableDigits: 4, uncFacts: { reliableDigits: 1 } });
+    expect(s.chipFor(item)).toEqual(chip);
+    const again = units("2\\times\\res{7}{10.123}\\placeholder[u1]{}", { "res:7": chip! });
+    expect(again.value.facts.reliableDigits).toBe(3);
+    expect(again.unc?.shown).toBe("20.25 ± 0.14");
+    expect(STD.map((d) => shown(again, { format: "STD", digits: d }).markText)).toEqual(STD.map(() => "⚠ 3"));
+  });
+
+  it("R327f1: ≈ stays where every digit of the ± text is confirmed: 1000.5 ± a 3-digit σ chip at STD 8, view and row", async () => {
+    const line = "1000.5\\pm\\res{3}{0.0707}\\placeholder[u1]{}";
+    const q = units(line, { "res:3": FEW });
+    // 1000.500: 7 digits to σ's 10^-3, 8 confirmed
+    expect(q.unc?.shown).toBe("1000.500 ± 0.071");
+    expect(shown(q, { format: "STD", digits: 8 }).markText).toBe("≈");
+    const s = await session();
+    putRow(s, row(q, line, { "res:3": FEW }));
+    s.setFormat("std");
+    s.setDigits(8);
+    expect(s.mark(s.home[0] as HistoryItem)).toEqual({ mark: "≈" });
+    s.setDigits(12);
+    expect(s.mark(s.home[0] as HistoryItem)).toEqual({ mark: "⚠", n: 8 });
+  });
+
   it("a σ chip with a ⚠ reason carries it to the value, whatever the digits (control)", () => {
     const q = units(LINE, { "res:3": { ...FEW, warn: "unchecked" } });
     expect(q.value.facts.warn).toBe("unchecked");
