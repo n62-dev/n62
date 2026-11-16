@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Owner feedback inbox
 
-The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 62). Each point is kept in the owner's words (shortened) and gets one triage:
+The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 65). Each point is kept in the owner's words (shortened) and gets one triage:
 
 - **bug**: fixed now, regression test first;
 - **feel**: goes into the next package for the look or the entry (brief section 0);
@@ -28,3 +28,6 @@ The owner's `todo.txt` held no `+N62` line on 2026-11-16, so no owner report was
 | 59 | 2026-11-16 | S07, S16: the ≈ on Enter, pressed after typing a sum, puts approx(□) behind it and the next Enter fails (F353). | feel, R576 (owner's yes) |
 | 60 | 2026-11-16 | S09: 20 °C + 5 K is refused with "Use K or Δ°C for a temperature difference"; the 5 is already in K (F354). | feel, G577 (part 2: owner's yes) |
 | 61 | 2026-11-16 | S09, S10: on a long formula the unit view's end slot is off the right edge; the target unit is typed blind (F355). | bug, R577 |
+| 62 | 2026-11-16 | S11: Home shows A⁻¹ as [[0,0,1],[−2,1,3],[3,−1,−5]] and a linear system's answer as [[3],[9],[−14]]; the line and CAS draw grids (F356). | feel, R578 (after the tag) |
+| 63 | 2026-11-16 | S14: in Function's Symb view, Enter keeps the line on F1, so typing the next function extends F1; only ▼ moves on (F357). | feel; the G2's way first (Needs the owner) |
+| 64 | 2026-11-16 | S15: Solve says "Giac Newton … hybridsj: polish failed" and "(Giac proot)", and draws complex roots as -1.047…-1.135…*i (F358). | feel, R579 |
