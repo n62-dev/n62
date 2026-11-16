@@ -4,6 +4,7 @@
 // (the level's first draw starts it; SubMenu.loading: keys pressed meanwhile wait for it) and drawn as soon as it is in (`code` is reactive).
 import type { MenuItem } from "../apps/types.ts";
 import { findText as t } from "../i18n/enFind.ts";
+import { presetText as pt } from "../i18n/enPresets.ts";
 import type { DecimalMark } from "../state/session.svelte.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
 
@@ -25,18 +26,18 @@ function load(): Promise<void> | null {
 export function ownUnitsItem(env: SettingsEnv, mark: () => DecimalMark): MenuItem {
   return {
     id: "units",
-    label: t("keys.units"),
+    label: pt("units"),
     get value() {
       const n = code?.count();
       return n === undefined ? undefined : n === 0 ? t("keys.none") : t("keys.some", { n: String(n) });
     },
     submenu: {
-      title: t("keys.units"),
+      title: pt("units"),
       remember: false,
       loading: load,
       get items(): MenuItem[] {
         void load(); // (the level's first draw starts the read; `loading` holds the keys pressed before it is in)
-        return code ? code.ownUnitsRows(env, mark) : [{ id: "loading", label: t("keys.loading"), disabled: true }];
+        return code ? code.ownUnitsRows(env, mark) : [{ id: "loading", label: pt("units.loading"), disabled: true }];
       },
     },
   };

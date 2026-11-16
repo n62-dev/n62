@@ -51,8 +51,6 @@ export const enFind = {
   "keys.emptyDo": "Empty this slot",
   "keys.reset": "Reset all your keys",
   "keys.unitCells": "Unit pad cells",
-  "keys.units": "Your units",
-  "keys.loading": "Loading…",
   "keys.default": "Back to the default",
   "keys.resetCells": "Reset the unit pad cells",
   "convertsOnly": "converts only",
