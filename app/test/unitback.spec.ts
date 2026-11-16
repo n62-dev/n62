@@ -8,6 +8,7 @@
 // 0.3141592653589793238…) and derived (t10: 12.34·3.2 = 39.488, σ² = 1.548381 by G41, decisions.md R61).
 import { expect, test, type Page } from "@playwright/test";
 import { COPY, entryValue, flick, open, PASTE, tap, useClipboardLock } from "./helpers.ts";
+import { DATA_VERSION } from "../src/state/storage.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
@@ -223,7 +224,7 @@ test.describe("the way back from the unit view (R63)", () => {
       );
     await expect.poll(async () => (await stored()).F?.unit, { timeout: 5000 }).toEqual(unit);
     const { v, F } = await stored();
-    expect(v).toBe(5);
+    expect(v).toBe(DATA_VERSION); // today's stamp, not a literal (G371 stepped it)
     // σ = sqrt(1548381)/1000 m² = 1.24433958… (the chip's, derived: tasks.yaml t10, G41), its first digit at 10⁰: one digit
     // of 39.488 lies before it (constUnc.ts uncDigitsOf, derived: exp 1 − exp 0)
     expect(Number(F?.facts?.uncSigma).toPrecision(6)).toBe("1.24434");

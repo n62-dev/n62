@@ -54,6 +54,23 @@ describe.skipIf(!giacAvailable())("a stored name keeps its σ and unit (G371)", 
     expect(entry("M")?.facts?.uncDigits).toBe(5);
   });
 
+  it("a store to a name its right side reads keeps σ (W:=W·2 is twice W's), taken at the value read", () => {
+    home(`W:=${ROW}`, { G });
+    expect(sigma8(entry("W")?.facts?.uncSigma)).toBe("0.015448769");
+    home("W:=W*2");
+    expect(sigma8(entry("W")?.facts?.uncSigma)).toBe("0.030897539");
+    expect(entry("W")?.facts?.uncDigits).toBe(5);
+  });
+
+  it("a name a called program sets again (p() stores W, A:=p()·W) gives a result, and W's old σ is not claimed", () => {
+    home(`W:=${ROW}`, { G });
+    expect(home("p():={W:=1;return 2;}").ok).toBe(true);
+    const r = home("A:=p()*W");
+    expect(r.ok).toBe(true);
+    expect(r.facts.uncSigma).toBeUndefined();
+    expect(entry("A")?.facts?.uncSigma).toBeUndefined();
+  });
+
   it("a unit result's chip ▶ F: F holds its unit (dimension, slot) and σ; a stored log keeps them", () => {
     const unit = { text: "N", dim: "kg1m1s-2", slot: { tokens: [{ unit: "N" }] } };
     home("F:=pasr_1", undefined, { "1": { value: "68670/100", exact: false, reliableDigits: null, unc: "3.5", unit } });

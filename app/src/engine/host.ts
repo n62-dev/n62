@@ -52,7 +52,7 @@ import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
 import { constUncDigits, inexactConstsIn, withConstValues, type ConstTable } from "./constUnc.ts";
 import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
 import { chipCommand, chipNameFacts, chipSigma, chipsIn, literalChip, withChipValues, type ChipFactsTable } from "./chipFacts.ts";
-import { nameSigma, sigmaNamesIn, unitOfStore, withNameFacts } from "./nameSigma.ts";
+import { nameSigma, nameSigmaInputs, namesChanged, unitOfStore, withNameFacts } from "./nameSigma.ts";
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
@@ -525,6 +525,11 @@ export class EngineHost implements FactsHost {
     return formOf(input, mayStore(input) ? this.treeOf(input) : null, (names) => writesThrough(names, (n) => this.keptOf(n)));
   }
 
+  /** G371: whether `text` (a store's right side) may store, from its own tree; the input's cached tree is kept. */
+  private storesIn(text: string): boolean {
+    return formOf(text, mayStore(text) ? this.bridge.parse(text) : null, (names) => writesThrough(names, (n) => this.keptOf(n))).stores;
+  }
+
   /** G100: the kept stores of a parsed program text, by text (a restored entry: the stored log keeps none, validDefs). */
   private readonly keptByText = new Map<string, ProgramStores>();
 
@@ -848,7 +853,7 @@ export class EngineHost implements FactsHost {
     const used = this.usesOf(input); // G212: before the input runs (it may store to them), as cas()
     const reads = this.valuesOf(used); // G213f1
     const cleared = this.clearing(input, () => this.useHomeMode(s));
-    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips, used.map((u) => u.name));
+    const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips, reads);
     if (out.result.ok) out.result.reads = reads;
     if (used.length && out.result.ok) out.result.uses = used;
     // G67, G65: the call after the input, if the run did not make it (an error: a syntax error ran nothing)
@@ -858,9 +863,9 @@ export class EngineHost implements FactsHost {
     return post.reset ? { ...out, result: { ...out.result, settingReset: true } } : out;
   }
 
-  private homeTabled(input: string, s: HomeSettings, consts?: ConstTable, chips?: ChipFactsTable, read: readonly string[] = []): { result: HomeResult; defs: DefChange[] } {
-    const sigNames = sigmaNamesIn(read, this.byName); // G371: the stored names with σ the input reads
-    if (!consts && !chips && !sigNames.length) return this.homeRun(input, s, false);
+  private homeTabled(input: string, s: HomeSettings, consts?: ConstTable, chips?: ChipFactsTable, reads: readonly StoredRead[] = []): { result: HomeResult; defs: DefChange[] } {
+    const sigNamed = nameSigmaInputs(reads, this.byName); // G371: the stored names with σ the input reads, σ and value before the run
+    if (!consts && !chips && !sigNamed.length) return this.homeRun(input, s, false);
     const form = this.formFor(input);
     const asg = form.assignment;
     const stateful = form.stores;
@@ -883,7 +888,11 @@ export class EngineHost implements FactsHost {
       const out = this.homeRun(ran, s, inexactIn, lent, formIn(form, ran));
       out.defs = this.nameFacts(out.defs, asg?.name, undefined, asg ? unitOfStore(asg.rhs, chips ?? {}, this.byName) : undefined); // G371: a unit chip's unit
       const chipSig = chipSigma(asg ? (formIn(form, named).assignment?.rhs ?? named) : named, chips ?? {}); // R61: σ chips (G26's body without)
-      const sig = nameSigma(chipSig.body, sigNames.filter((n) => n !== asg?.name), this.byName), inputs = [...chipSig.inputs, ...sig.inputs]; // G371
+      // G371: a name the run set again is left out (its σ and value were read before it, but a call may have set it
+      // first); the store's own target is read before it is set, unless its right side stores (a program call)
+      const changed = namesChanged(out.defs);
+      const ownTarget = asg && !this.storesIn(asg.rhs) ? asg.name : undefined;
+      const sig = nameSigma(chipSig.body, sigNamed.filter((v) => !changed.has(v.stored) || v.stored === ownTarget)), inputs = [...chipSig.inputs, ...sig.inputs];
       // A setting the input changed was put back after its run: it is not run again (G67).
       if ((!consts && !inputs.length) || (stateful && !asg) || this.post?.flagsChanged) return out;
       const n = constUncDigits(this.giac, sig.body, consts ?? {}, out.result, Math.trunc(out.result.digits ?? s.digits), inputs, (m) => this.stored.has(m) || this.skipped.has(m) || this.byName.has(m) || this.pending.has(m) || m === asg?.name || m === form.defined?.name);
