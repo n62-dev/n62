@@ -42,6 +42,7 @@ export const HOME_KEYS = {
   settingReset: "pass",
   reads: "pass",
   uses: "pass",
+  unitNames: "pass",
   uncTerms: "pass",
   exact: "held", // given only when `rational` says it is a plain integer or p/q: the Format key's fraction modes read it
   rational: "held", // read for `exact`

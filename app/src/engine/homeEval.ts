@@ -131,6 +131,9 @@ export interface HomeResult {
   reads?: StoredRead[];
   /** G212: the stored variables the input read, as CasResult's `uses` (EngineHost.usesOf); absent when there is none. */
   uses?: StoredUse[];
+  /** G392: the stored variables the input reached (through a function too) whose entry holds a unit (DefEntry.unit):
+   *  Home has no units, so the row says it was dropped. Absent when there is none. Set on a result only. */
+  unitNames?: string[];
 }
 
 export { precisionFacts } from "./precisionFacts.ts";
