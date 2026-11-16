@@ -29,12 +29,33 @@ describe("share", () => {
     expect(share(-30, 0, 0, 0)).toEqual({ scroll: 0, offset: -30 });
     expect(share(30, 0, 0, 0)).toEqual({ scroll: 0, offset: 30 });
   });
-  it("scrolls a long input first; the row slides only from the end of that scroll", () => {
-    // finger left: the content scrolls on towards its end (max 100), the rest slides the row
+  it("scrolls a long input first; a drag that scrolled it never slides the row (R333)", () => {
+    // finger left: the content scrolls on towards its end (max 100); the rest past the end is dropped, in the same move too
     expect(share(-30, 50, 100, 0)).toEqual({ scroll: 80, offset: 0 });
-    expect(share(-30, 80, 100, 0)).toEqual({ scroll: 100, offset: -10 });
-    // finger right: back towards the start, then the row
-    expect(share(30, 10, 100, 0)).toEqual({ scroll: 0, offset: 20 });
+    expect(share(-30, 80, 100, 0)).toEqual({ scroll: 100, offset: 0 });
+    // finger right: back towards the start; the rest past it is dropped
+    expect(share(30, 10, 100, 0)).toEqual({ scroll: 0, offset: 0 });
+  });
+  it("slides the row from a scroller already at its end, as before (a drag that never moved it)", () => {
+    expect(share(-30, 100, 100, 0)).toEqual({ scroll: 100, offset: -30 });
+    expect(share(30, 0, 100, 0)).toEqual({ scroll: 0, offset: 30 });
+  });
+  it("counts a fractional scrollLeft past the integer max as the end (a device pixel ratio that is not 1)", () => {
+    expect(share(-30, 100.4, 100, 0)).toEqual({ scroll: 100, offset: -30 });
+    expect(share(-30, 100.4, 100, 0, true)).toEqual({ scroll: 100, offset: 0 });
+  });
+  it("slides the row from a scroller whose true end is fractional, just under max", () => {
+    expect(share(-30, 99.6, 100, 0)).toEqual({ scroll: 100, offset: -30 });
+    expect(share(-30, 99.6, 100, 0, true)).toEqual({ scroll: 100, offset: 0 });
+  });
+  it("leaves the row at 0 for every later move of a drag that moved the scroller, both ways", () => {
+    expect(share(-30, 100, 100, 0, true)).toEqual({ scroll: 100, offset: 0 });
+    expect(share(30, 100, 100, 0, true)).toEqual({ scroll: 70, offset: 0 });
+    expect(share(30, 0, 100, 0, true)).toEqual({ scroll: 0, offset: 0 });
+    expect(share(-30, 0, 100, 0, true)).toEqual({ scroll: 30, offset: 0 });
+  });
+  it("a short row (no scroller) slides whatever the drag did", () => {
+    expect(share(-30, 0, 0, 0, false)).toEqual({ scroll: 0, offset: -30 });
   });
   it("brings an out row back before the content scrolls again", () => {
     expect(share(15, 100, 100, -10)).toEqual({ scroll: 95, offset: 0 });

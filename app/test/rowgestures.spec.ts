@@ -151,6 +151,26 @@ test("a long input scrolls sideways first; the row slides only from the end of t
   await expect(page.getByTestId("undo-note")).toBeVisible();
 });
 
+test("one fast drag that scrolls a long row to its end never slides it (R333); a second drag deletes it", async ({ page }) => {
+  await ready(page);
+  const long = Array.from({ length: 12 }, () => ["d1", "add"]).flat();
+  await enter(page, [...long, "d1"]);
+  const input = rows(page).last().locator(".in");
+  const max = await input.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(max).toBeGreaterThan(20); // (the input is wider than the row)
+  await input.evaluate((el) => (el.scrollLeft = 0));
+  // from the start: the first part of the drag scrolls the input to its end, the rest (past 24 px, in two quick moves: a fling) would slide the row
+  await finger(page, "input:last", { dx: -(max + 90), steps: 2 });
+  await page.waitForTimeout(500);
+  await expect(rows(page)).toHaveCount(1);
+  await expect(page.getByTestId("undo-note")).toHaveCount(0);
+  expect(await input.evaluate((el) => Math.round(el.scrollWidth - el.clientWidth - el.scrollLeft))).toBeLessThanOrEqual(1); // scrolled to its end
+  await expect(rows(page).last()).not.toHaveAttribute("style", /translate/);
+  await finger(page, "input:last", { dx: -90, steps: 2 }); // a new drag, from the end: the row slides
+  await expect(rows(page)).toHaveCount(0);
+  await expect(page.getByTestId("undo-note")).toBeVisible();
+});
+
 test("a running row does not slide", async ({ page }) => {
   await ready(page, "engine=fake&delay=3000");
   await tap(page, ["d2", "enter"]);
