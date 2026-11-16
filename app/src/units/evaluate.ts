@@ -627,6 +627,8 @@ export function unitEval(giac: Giac, job: UnitJob, s: HomeSettings): Quantity | 
     return { value, dimension, dimensionText: dimension === null ? null : dimensionText(dimension), unit, ...(shownSlot ? { shownSlot } : {}), siPrefixed: sp?.text ?? "", ...si, ...(unc ? { unc } : {}), ...(note ? { note } : {}), ms: performance.now() - t0 };
   };
   if ((job.absTemp || job.endOffset !== undefined) && src.kind === "term" && giac.eval(`sign(${num})`).trim() === "-1") return { error: "belowzero" };
+  // G370: each temperature of a difference T1 − T2 is one (the difference itself may be below 0)
+  if (job.kelvin?.some((k) => giac.eval(`sign(normal(${k}))`).trim() === "-1")) return { error: "belowzero" };
   // An end slot in °C or °F: the SI number less the offset (K = a·x + b, the end slot holds a); in dB, dBm or Np: the
   // level of the ratio to its reference. Both give the number of Giac's text, not a rational quotient.
   const shifted = job.endOffset !== undefined ? giac.eval(`normal((${num})-(${job.endOffset}))`) : num;

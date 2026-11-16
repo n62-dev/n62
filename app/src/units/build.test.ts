@@ -187,6 +187,32 @@ describe("unit view builder (G16)", () => {
     expect(to("Np")).toMatchObject({ endLog: "ln(pasux)" });
     expect(buildJob({ formula: "2*pasu1", slots: [{ tokens: [{ unit: "m" }] }], end: { tokens: [{ unit: "dB" }, { unit: "m" }] } }, table)).toEqual({ error: "logarithmic", unit: "dB" });
   });
+  it("G370: T1 − T2 of one scale is a difference (its slots intervals); of two scales refused, naming them", () => {
+    const oC = { tokens: [{ unit: "oC" }] };
+    const job = (formula: string, slots: UnitSlot[] = [oC, oC], end?: UnitSlot) => buildJob({ formula, slots, ...(end ? { end } : {}) }, table);
+    const k = ["(((1)*(80)+(5463/20)))", "(((1)*(20)+(5463/20)))"];
+    const sc = factorTable([unit("oC", "1+5463/20", "K1", "°C"), unit("oF", "5/9+45967/180", "K1", "°F"), unit("K", "1", "K1"), unit("oR", "5/9", "K1", "°R")]);
+    expect(job("80*pasu1-20*pasu2")).toMatchObject({ expr: "80*(((1)*pasdimK^(1)))-20*(((1)*pasdimK^(1)))", kelvin: k });
+    expect(job("80*pasu1-20*pasu2")).not.toHaveProperty("absTemp");
+    expect(job("(80*pasu1)-(20*pasu2)")).toMatchObject({ kelvin: k });
+    expect(job("((80*pasu1-20*pasu2))")).toMatchObject({ kelvin: k });
+    expect(job("-80*pasu1-20*pasu2")).toMatchObject({ kelvin: ["(((1)*(-80)+(5463/20)))", k[1]] });
+    expect(job("pasupm(80,0.5)*pasu1-(-pasupm((20),(1/2),pasr_1))*pasu2")).toMatchObject({ kelvin: ["(((1)*((80))+(5463/20)))", "(((1)*((-((20))))+(5463/20)))"], unc: { vars: [{ value: "80" }, { value: "(20)" }] } });
+    expect(buildJob({ formula: "80*pasu1-20*pasu2", slots: [oC, oC], end: { tokens: [{ unit: "K" }] } }, sc)).toMatchObject({ kelvin: k, end: "(((1)*pasdimK^(1)))" });
+    // an absolute end slot would read the difference as a temperature
+    expect(job("80*pasu1-20*pasu2", [oC, oC], oC)).toEqual({ error: "temperature", unit: "°C" });
+    for (const f of ["80*pasu1+20*pasu2", "2*(80*pasu1-20*pasu2)", "(80*pasu1-20*pasu2)^2", "(80*pasu1-20*pasu2)/2", "80*pasu1-20*pasu1*pasu2", "80*pasu1*20-pasu2", "x*pasu1-20*pasu2", "80*pasu1-20*pasu2,1", "-(80*pasu1)-20*pasu2"])
+      expect(job(f)).toEqual({ error: "temperature", unit: "°C" });
+    expect(job("(80*pasu1-20*pasu2)+5*pasu3", [oC, oC, oC])).toEqual({ error: "temperature", unit: "°C" });
+    expect(job("80*pasu1-20*pasu2", [oC, { tokens: [{ prefix: "k", unit: "oC" }] }])).toEqual({ error: "temperature", unit: "°C" });
+    const two = (a: string, b: string) => buildJob({ formula: "300*pasu1-20*pasu2", slots: [{ tokens: [{ unit: a }] }, { tokens: [{ unit: b }] }] }, sc);
+    expect(two("K", "oC")).toEqual({ error: "scales", units: ["K", "°C"] });
+    expect(two("oC", "oF")).toEqual({ error: "scales", units: ["°C", "°F"] });
+    expect(unitErrorMessage({ error: "scales", units: ["K", "°C"] })).toBe("K and °C are two scales: write both temperatures in one");
+    // K − K and K − °R have no offset: differences as before
+    expect(two("K", "K")).not.toHaveProperty("kelvin");
+    expect(two("K", "oR")).not.toHaveProperty("error");
+  });
   it("refuses a request that does not fit together", () => {
     const one = { tokens: [{ unit: "m" }] };
     expect(buildJob({ formula: "2*pasu1*pasu2", slots: [one] }, table)).toMatchObject({ error: "engine" });

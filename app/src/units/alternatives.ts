@@ -5,7 +5,7 @@
 // `units.targets` (the last unit tapped per dimension) orders the row only; it never changes the unit shown (G25).
 // Main thread, synchronous, no Giac; loaded with the unit view only. Only erasable TypeScript syntax (the golden gate).
 import type { Kv } from "../state/storage.ts";
-import { endMixesPowers, powerKinds, shownUnits, slotText } from "./build.ts";
+import { endMixesPowers, powerKinds, shownUnits, slotText, tempDifference } from "./build.ts";
 import { BASES, dimKeyOf, isExponent, parseDimKey, powerText, siSlot } from "./dims.ts";
 import type { FactorTable } from "./factors.ts";
 import { cellText, type PadLegUnit, type PadUnitCell } from "./padCells.ts";
@@ -105,10 +105,10 @@ function padLegs(dim: string, ctx: AltContext): { leg: PadLegUnit; power: number
 }
 
 /** Temperatures (docs/04 4.3): an absolute one (°C or °F alone in a slot or the end slot) offers K, °C, °F; an interval
- *  offers K, Δ°C, Δ°F (Find's aliases of K and °R, so Δ°C's slot is K). */
-function temperatures(req: UnitRequest): { slot: UnitSlot; text: string; key?: string }[] {
+ *  offers K, Δ°C, Δ°F (Find's aliases of K and °R, so Δ°C's slot is K), and so does a difference T1 − T2 (G370). */
+function temperatures(req: UnitRequest, table: FactorTable): { slot: UnitSlot; text: string; key?: string }[] {
   const lone = (s: UnitSlot | undefined): boolean => s?.tokens.length === 1 && (s.tokens[0]!.power ?? "1") === "1" && ["oC", "oF"].includes(s.tokens[0]!.unit);
-  const absolute = req.slots.some(lone) || lone(req.end);
+  const absolute = (req.slots.some(lone) && tempDifference(req, table) === null) || lone(req.end);
   const one = (unit: string): UnitSlot => ({ tokens: [{ unit }] });
   return absolute
     ? [{ slot: one("K"), text: "K" }, { slot: one("oC"), text: "°C" }, { slot: one("oF"), text: "°F" }]
@@ -142,7 +142,7 @@ export function alternatives(q: Quantity, ctx: AltContext): Alternative[] {
   add(inKind(coherent(dim, typed, ctx)), "si");
   if (q.siPrefixed !== "") add(inKind(siSlot(dim, q.siPrefixed)), "siPrefixed");
   if (dim === "K1") {
-    for (const t of temperatures(ctx.req)) add(t.slot, "pad", t.text, t.key);
+    for (const t of temperatures(ctx.req, ctx.table)) add(t.slot, "pad", t.text, t.key);
     return out;
   }
   if (ctx.target && unitOf(ctx.target, ctx.table)?.dim === dim) add(ctx.target, "target");
