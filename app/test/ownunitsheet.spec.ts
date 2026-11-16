@@ -4,9 +4,9 @@
 // the form comes back with the value. Save checks the definition (G233: validateDef) and says why not in the Save row; a
 // good one is stored, listed by its name with `factor unit`, and found by the unit view's Find. A unit's row opens the same
 // form to change it (Delete asks once: a first tap arms it, a second removes). `furlong` is Find's, so the example's name
-// is myfurlong (G233 refuses the other). The fake engine: nothing here evaluates (ownunits.spec.ts does, on the real one).
+// is myfurlong (G233 refuses the other). The real engine, for the unit view the new unit is found in (ownunits.spec.ts evaluates with it).
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, open, sheet, tap } from "./helpers.ts";
+import { flick, open, sheet, tap } from "./helpers.ts";
 
 const title = (page: Page) => page.getByTestId("sheet-title");
 const row = (page: Page, id: string) => sheet(page).locator(`[role="menuitem"][data-id="${id}"]`);
@@ -19,13 +19,14 @@ async function yourUnits(page: Page): Promise<void> {
   await tap(page, ["@mode", "d6", "d4"]);
   await expect(title(page)).toHaveText("Mode › Settings › Your keys");
   await row(page, "units").tap();
-  await expect(title(page)).toHaveText("Mode › Settings › Your keys › Your units");
+  await expect(title(page)).toHaveText("Settings › Your keys › Your units");
 }
 
-/** A form row is tapped, its value typed on the keyboard under the label, Enter: the form is back. */
-async function fill(page: Page, id: string, entryLabel: string, text: string, formTitle: string): Promise<void> {
+/** A form row is tapped, `erase` characters of its value taken off, the new one typed on the keyboard under the label, Enter: the form is back. */
+async function fill(page: Page, id: string, entryLabel: string, text: string, formTitle: string, erase = 0): Promise<void> {
   await row(page, id).tap();
   await expect(label(page)).toHaveText(entryLabel);
+  for (let i = 0; i < erase; i++) await page.keyboard.press("Backspace"); // (a value to change starts on the line)
   await page.keyboard.type(text);
   await page.keyboard.press("Enter");
   await expect(label(page)).toHaveCount(0);
@@ -35,7 +36,8 @@ async function fill(page: Page, id: string, entryLabel: string, text: string, fo
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 915 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await open(page);
+  await open(page, ""); // the real engine: the unit view below needs it
+  await page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 30_000 });
 });
 
 test("Your units: New makes myfurlong (201.168 m), a name Find has is refused with its reason, the unit view's Find lists it, an edit changes the factor, Delete asks once", async ({ page }) => {
@@ -56,7 +58,7 @@ test("Your units: New makes myfurlong (201.168 m), a name Find has is refused wi
   await expect(title(page)).toHaveText("New unit"); // the form stays
 
   // the name of its own: stored, and the list says what it is
-  await fill(page, "name", "Unit name", "myfurlong", "New unit");
+  await fill(page, "name", "Unit name", "myfurlong", "New unit", "furlong".length);
   await row(page, "save").tap();
   await expect(notice(page)).toHaveText("Saved myfurlong");
   await expect(sheet(page)).toHaveCount(0);
@@ -65,7 +67,8 @@ test("Your units: New makes myfurlong (201.168 m), a name Find has is refused wi
   await expect(row(page, "u:myfurlong").getByTestId("sheet-value")).toHaveText("201.168 m");
 
   // it is in the unit view's Find (the pad's pick list)
-  await tap(page, ["esc"]);
+  await tap(page, ["esc", "esc", "esc", "esc"]);
+  await expect(sheet(page)).toHaveCount(0);
   await tap(page, ["d5"]);
   await flick(page, "tmpl", "up");
   await page.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
@@ -82,11 +85,12 @@ test("Your units: New makes myfurlong (201.168 m), a name Find has is refused wi
   await expect(title(page)).toHaveText("myfurlong");
   expect(await rowIds(page)).toEqual(["name", "factor", "of", "save", "delete"]);
   await expect(row(page, "factor").getByTestId("sheet-value")).toHaveText("201.168");
-  await fill(page, "factor", "Factor", "1,5", "myfurlong");
+  await fill(page, "factor", "Factor", "1,5", "myfurlong", "201.168".length);
   await row(page, "save").tap();
   await expect(row(page, "save").getByTestId("row-hint")).toContainText("is not a number");
-  await fill(page, "factor", "Factor", "200", "myfurlong");
+  await fill(page, "factor", "Factor", "200", "myfurlong", "1,5".length);
   await row(page, "save").tap();
+  await expect(sheet(page)).toHaveCount(0); // (the notice of the first save may still be up)
   await expect(notice(page)).toHaveText("Saved myfurlong");
   await yourUnits(page);
   await expect(row(page, "u:myfurlong").getByTestId("sheet-value")).toHaveText("200 m");
@@ -100,5 +104,5 @@ test("Your units: New makes myfurlong (201.168 m), a name Find has is refused wi
   await expect(notice(page)).toHaveText("Deleted myfurlong");
   await yourUnits(page);
   expect(await rowIds(page)).toEqual(["new"]);
-  expect(await entryValue(page)).toBe("");
+  await expect(label(page)).toHaveCount(0); // no name is still being typed
 });

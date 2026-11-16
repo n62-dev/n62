@@ -117,7 +117,7 @@ function openForm(env: SettingsEnv, mark: () => DecimalMark, start: Draft): void
     if (d.factor.trim() === "") return fail(unitText("units.own.factor", { factor: unitText("units.sheet.none") }));
     const f = factorText(d.factor, mark());
     if (!f.ok) return fail(f.message);
-    let of = d.of;
+    let of = d.of === undefined ? undefined : $state.snapshot(d.of); // (a plain copy: the store clones it)
     if (!of) {
       const r = readOf(d.ofText, t.cat);
       if (!r.ok) return fail(r.empty ? unitText("units.own.ofEmpty") : unitText("units.own.unknown", { unit: r.unit }));

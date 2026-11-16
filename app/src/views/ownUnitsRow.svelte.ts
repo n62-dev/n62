@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R201: the row Settings › Your keys › Your units. Only this row is in the Settings chunk; the level it opens (the list,
 // the form that makes or changes a unit, the check against Find) is ownUnitsSheet.svelte.ts, loaded when the row opens
-// (SubMenu.loading: keys pressed meanwhile wait for it) and drawn as soon as it is in (`code` is reactive).
+// (the level's first draw starts it; SubMenu.loading: keys pressed meanwhile wait for it) and drawn as soon as it is in (`code` is reactive).
 import type { MenuItem } from "../apps/types.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import type { DecimalMark } from "../state/session.svelte.ts";
@@ -35,6 +35,7 @@ export function ownUnitsItem(env: SettingsEnv, mark: () => DecimalMark): MenuIte
       remember: false,
       loading: load,
       get items(): MenuItem[] {
+        void load(); // (the level's first draw starts the read; `loading` holds the keys pressed before it is in)
         return code ? code.ownUnitsRows(env, mark) : [{ id: "loading", label: t("keys.loading"), disabled: true }];
       },
     },
