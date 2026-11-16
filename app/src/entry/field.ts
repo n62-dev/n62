@@ -25,8 +25,9 @@ const FRAC = "\\frac{#@}{#?}";
 /** An atom a bare ^ would not read as raising whole (L8): a fraction or a root. */
 const COMPOUND = /^\\(?:[dt]?frac|sqrt)(?![A-Za-z])/;
 const MIXED_FRAC = /^\\tfrac(?![A-Za-z])/;
-/** A matrix or vector (an array environment): one atom MathLive's #@ does not take as the previous term (F68, R75). */
-const MATRIX = /^\\begin\{[a-z]*matrix\}/;
+/** A matrix or vector (an array environment), or i or e (MathLive's macros \imaginaryI, \exponentialE): one atom
+ *  MathLive's #@ does not take as the previous term (F68, R75; F184, R334). */
+const WHOLE_ATOM = /^(?:\\begin\{[a-z]*matrix\}|\\(?:imaginaryI|exponentialE)$)/;
 
 /** The ÷ / a/b template (stacked fraction); the one-line mode inserts \\div instead. */
 function isDivide(a: ActionBody): boolean {
@@ -272,8 +273,9 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
   } else if (a.kind === "insert" && a.latex.includes("#@") && selectChip(mf)) {
     // a chip is one term: ÷, a/b, x², xʸ, x⁻¹ take all of it, and it draws as one box, so no brackets
     apply(mf, a);
-  } else if (a.kind === "insert" && a.latex.includes("#@") && selectMatrix(mf)) {
-    // R75 (F68): a matrix is one term, as a bracket group is: x², xʸ, x⁻¹ raise all of it and ÷ divides it, no brackets
+  } else if (a.kind === "insert" && a.latex.includes("#@") && selectAtom(mf)) {
+    // R75 (F68): a matrix is one term, as a bracket group is: x², xʸ, x⁻¹ raise all of it and ÷ divides it, no brackets;
+    // R334 (F184): so are i and e, as a letter is (iⁱ, 2i³ raises the i alone)
     apply(mf, a);
   } else if (a.kind === "insert" && a.latex.startsWith("#@^") && selectCompound(mf)) {
     apply(mf, { ...a, latex: `\\left(#@\\right)${a.latex.slice(2)}` });
@@ -360,15 +362,16 @@ function selectChip(mf: MathfieldElement): boolean {
 }
 
 /**
- * R75 (F68): if a matrix or vector is right before the cursor, select it whole and return true. MathLive's #@ takes
- * only the atom types of its isImplicitArg (mathlive.mjs, 0.111.1), and an array is not one of them, so the template
- * would open on an empty base after it. Its cells are listed before it, one level deeper.
+ * R75 (F68), R334 (F184): if a matrix or vector, or i or e, is right before the cursor, select it whole and return true.
+ * MathLive's #@ takes only the atom types of its isImplicitArg (mathlive.mjs, 0.111.1); an array is not one of them,
+ * nor a macro atom (\imaginaryI and \exponentialE are macros of MathLive's default table), so the template would
+ * open on an empty base after it. Its parts (cells, the macro's expansion) are listed before it, one level deeper.
  */
-function selectMatrix(mf: MathfieldElement): boolean {
+function selectAtom(mf: MathfieldElement): boolean {
   if (!mf.selectionIsCollapsed) return false;
   const end = mf.position;
   const info = mf.getElementInfo(end);
-  if (end <= 0 || !MATRIX.test(info?.latex ?? "")) return false;
+  if (end <= 0 || !WHOLE_ATOM.test(info?.latex ?? "")) return false;
   const d = info?.depth ?? 0;
   let start = end - 1;
   while (start > 0 && (mf.getElementInfo(start)?.depth ?? 0) > d) start--;

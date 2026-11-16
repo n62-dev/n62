@@ -17,7 +17,7 @@ test("☰ 0 opens Export ›, and Work report saves the view's steps as n62-work
   await expect(page.locator('[data-status="done"]')).toHaveCount(2);
   await tap(page, ["@menu", "d0"]);
   await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
-  await expect(page.getByRole("menuitem")).toHaveText([/^1\s*Work report/, /^2\s*CSV/, /^3\s*LaTeX/]);
+  await expect(page.getByRole("menuitem")).toHaveText([/^1\s*Work report/, /^2\s*CSV/, /^3\s*LaTeX/, /^4\s*Python/]);
   await tap(page, ["d1"]);
   await expect(page.getByTestId("notice")).toHaveText("Work report saved");
   const file = await savedText(page);

@@ -11,8 +11,8 @@ import type { NumberFormat } from "../calc/port.ts";
 /** The notation σ is shown in, from the row's: Standard and Fixed would drop σ's second digit or show it as zeros. */
 const SIGMA_FORMAT: Readonly<Record<string, FormatOptions["format"]>> = { eng: "ENG", pfx: "PFX" };
 
-/** σ with its two significant digits, `ᴇ` for the exponent as on the entry line. */
-function shown(text: string, mode: FmtMode, comma: boolean): string | null {
+/** σ with its two significant digits, `ᴇ` for the exponent as on the entry line (R328: an input's uᵢ on Home's sheet). */
+export function sigmaShown(text: string, mode: FmtMode, comma: boolean): string | null {
   const v = decimalFromString(text);
   if (!v) return null;
   const s = toText(formatReal(v, { format: SIGMA_FORMAT[mode] ?? "SCI", digits: 2, keepZeros: true })).replace("E", "ᴇ");
@@ -28,14 +28,14 @@ function doubled(sigma: string): string | null {
 /** σ alone, as the σ line writes it (R130's report); null when the result has no σ. */
 export function sigmaText(facts: ValueFacts | undefined, mode: FmtMode, comma = false): string | null {
   const s = facts?.uncSigma;
-  return s === undefined || facts?.uncDigits === undefined ? null : shown(s, mode, comma);
+  return s === undefined || facts?.uncDigits === undefined ? null : sigmaShown(s, mode, comma);
 }
 
 /** U = 2σ alone (2 × the unrounded σ, at 2 significant digits), as the σ line writes it (R327's sheet); null without σ. */
 export function expandedSigmaText(facts: ValueFacts | undefined, mode: FmtMode, comma = false): string | null {
   const s = facts?.uncSigma;
   const u = s === undefined || facts?.uncDigits === undefined ? null : doubled(s);
-  return u === null ? null : shown(u, mode, comma);
+  return u === null ? null : sigmaShown(u, mode, comma);
 }
 
 /** The σ line of a result with these facts, drawn in `mode` (the row's notation); null when it has no σ. */

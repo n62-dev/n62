@@ -126,8 +126,8 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 
 ## C. What makes them want it, not just use it (v0.5 to v1)
 
-- **mh-C1 Uncertainty budget** [miss]. `pasuu` returns each input's term with its key (G271, `Uncertainty.terms`). The model has no cross terms; eq. 10 holds for its inputs only. Correlation is modelled by shared leaves where a basis exists; R61 chips, basis-less constants and CODATA leaf correlations are treated as independent. Packages G271, G272, G274, R220 (mockup). Stub: the sheet, split when R220 is picked (outside `src/units/`; no shares in `ValueFacts`; names the leaves, which `basisLeaves` does not hold).
-- **mh-C2 Expanded uncertainty, relative σ, short form** [part: Home rows have `U = 2σ (k = 2)`; unit rows, relative σ and `12.34(5)` are missing]. Packages G270, G273, R327 (Shift + 1 opens the sheet with this head: short form, σ, U, relative σ). Stub: sheet rows and Copy (C2c), split when R220 is picked; they say "standard uncertainty (σ)", no "k = 1".
+- **mh-C1 Uncertainty budget** [built: R327, R328]. `pasuu` returns each input's term with its key (G271, `Uncertainty.terms`). The model has no cross terms; eq. 10 holds for its inputs only. Correlation is modelled by shared leaves where a basis exists; R61 chips and constants with no basis say so on their rows; CODATA leaf correlations are treated as independent without a note. Packages G271, G272, G274, R220 (mockup), R327 (Shift + 1, the head), R328 (the rows, variant A: input, uᵢ, % of σ², one signed second-order row; `app/src/budget/`). Left: a leaf's row reads its name (`fine structure`, via the constants that share it), not its symbol, which needs the Find index.
+- **mh-C2 Expanded uncertainty, relative σ, short form** [built: R327, R328]. Packages G270, G273, R327 (Shift + 1 opens the sheet with this head: short form, σ, U, relative σ), R328 (the inputs' rows under it). Stub: Copy of the sheet (C2c), unsplit; it says "standard uncertainty (σ)", no "k = 1".
 - **mh-C3 Formula sets** [part: Solve holds ten equations and systems, no units]. A step is one closed expression over the inputs, since chained chips ignore a shared input and σ can be wrong in either direction. Packages G275, G276. Stubs: the app view (C3c), split when the pick on `docs/mockups/results-mode.html` and decision 6 land; storage and laptop import (C3d), split when the view lands. °C, °F and level inputs work only alone (`build.ts:428-434`).
 - **mh-C4 Library from a laptop** [have]. Import, export, "copy the format for your AI", tested (`libraryJobs.engine.test.ts:71`). No package.
 - **mh-C5 Published benchmark** [part: harness exists, `compare` empty, no `qalculate` column; only t07 is truly unbuilt; t08 and t09 work today]. Packages S50, R221, R222, R223. Hand-measuring is the owner's act, not a package. A task N62 loses triggers rework or removal (docs/03 rule 13).
@@ -135,7 +135,7 @@ The phasor fix landed on 11-12 (R180, d89df4cc; F192 closed): `10∡30+5` from t
 - **mh-C7 iPhone web app, checked** [miss; unverified, Chromium only; the web app only, owner 2026-11-10]. Packages S51, A144 (merged d55b37b1, replacing A110: WebKit starts in the Playwright container, the engine boots and the offline reload works; the core list does not run there yet, its tap sends no click), R225. No Capacitor iOS work. The legal lines are opinion.
 
 **Order:** all v0.5–v1.
-G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50, R221, R222, owner measures, R223 → S51, A144, R225 → R224 → G275, G276 → stubs of C3.
+G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (R327, R328) → S50, R221, R222, owner measures, R223 → S51, A144, R225 → R224 → G275, G276 → stubs of C3.
 
 **Open bugs:** none.
 
@@ -161,7 +161,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (stub) → S50
 
 ## D. What the HP crowd will ask for first
 
-- **RPN entry: [miss], confirmed.** Entry is textbook or one-line; the stack is written as packages, nothing is built. Before the freeze, in v0.1.0 (owner, 2026-11-15). R250, R251, R252, R253, R254, G302. Stack view and the Mode row: R343.
+- **RPN entry: [miss], confirmed.** Entry is textbook or one-line to the user; the stack, its formulas, its store and the setting's value are built (R250 to R253), with no key or view to reach them yet. Before the freeze, in v0.1.0 (owner, 2026-11-15). R250, R251, R252, R253, R254, G302. Stack view and the Mode row: R343.
 - **Programs: [part], confirmed.** Library file from a laptop, or a one-line definition typed; no editor, no PPL (feedback #40, the owner's list). No package.
 - **The forensics chain: [have], unpublished (the list said miss).** Home DEG gives 9, mark `=`, at 12, 15, 30 digits; it cancels symbolically, branches picked by Giac's numeric reduction. No case guards it. G300; CAS DEG shows it badly, G301.
 - **Same CAS as the Prime: [have] overstated.** "Also built on Giac" holds, "same" does not; the Prime's Giac version is unknown. Wording below. No package.

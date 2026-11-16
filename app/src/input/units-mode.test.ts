@@ -57,6 +57,11 @@ describe("units mode (R28)", () => {
     expect(() => units("\\pm5\\%")).toThrow("± goes right after a number");
     expect(() => units("5\\pm x\\%\\placeholder[u1]{}")).toThrow("± needs a plain number after it");
   });
+  it("G369 controls: a % in a slot is the slot's unit, never the formula's; after ± a % stays R104's σ; Home's % is ÷100", () => {
+    expect(units("5\\placeholder[u1]{\\mathrm{\\%}}\\times200\\placeholder[u2]{\\mathrm{m}}").giac).toBe("(5*pasu1)*(200*pasu2)");
+    expect(units("12\\pm5\\%").giac).toBe("pasupm(12,0.6)");
+    expect(latexToGiacInfo("5\\%").giac).toBe("5/100");
+  });
   it("R71: the ± key (Shift + `,`) inserts \\pm, which units mode reads as pasupm and every other mode refuses", () => {
     const comma = keyboard.byId.get("comma");
     if (!comma) throw new Error("comma key missing");

@@ -63,6 +63,7 @@ export const enData = {
   "part.units.targets": "Unit targets",
   "part.units.own": "Your units",
   "part.word": "Word size and sign",
+  "part.rpn": "RPN stack", // R252
   // R59: Settings › Data › Library (decisions.md S4, archive/r10-connector.md)
   "library": "Library",
   "library.value": "Import · Export",

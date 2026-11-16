@@ -150,7 +150,10 @@ export function stepOrder(set: FormulaSet): string[] | SetError {
 
 /** A refusal found deep in the read: thrown to readSet, which returns it. */
 class Refused {
-  constructor(readonly why: SetError) {}
+  readonly why: SetError;
+  constructor(why: SetError) {
+    this.why = why;
+  }
 }
 const refuse = (why: SetError): never => {
   throw new Refused(why);

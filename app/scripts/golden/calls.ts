@@ -49,7 +49,7 @@ export async function stageCalls(): Promise<void> {
     const { host, calls } = await counted();
     const s: HomeSettings = { ...defaultHomeSettings, digits: 12 };
     for (const c of cases("home.yaml")) {
-      if (c.steps) continue;
+      if (c.steps || c.chips) continue; // (G302: a case with chips holds a constant, run by runHomeCase)
       const hs: HomeSettings = { ...s, angle: c.settings?.angle ?? "rad" };
       const giacOf = (t: string): string => (c.latex !== undefined ? giacOfEntry(t, "home").giac : t);
       for (const b of c.before ?? []) host.home(giacOf(b), hs);

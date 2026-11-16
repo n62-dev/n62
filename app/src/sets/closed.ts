@@ -5,7 +5,7 @@
 // reads is written out in full instead, and each input once, as the unit view's keyed `pasupm(value,sigma,pasr_<i>)`,
 // one input however often it appears (units/build.ts uncertainValues). No change to the builder: a request in, the
 // builder and the injected evaluator as for the unit view. UI-free, no user string; only erasable TypeScript syntax.
-import { closing, mapNames, names } from "../engine/giacPrint.ts";
+import { mapNames, names, unbracket } from "../engine/giacPrint.ts";
 import { CHIP_PREFIX } from "../engine/ourNames.ts";
 import { buildJob } from "../units/build.ts";
 import type { FactorTable } from "../units/factors.ts";
@@ -22,14 +22,6 @@ export type StepError = UnitError & { step: string; input?: string };
 
 /** The evaluator of a job: the worker's (Calc.units) or, in tests, EngineHost.units. */
 export type Evaluate = (job: UnitJob) => Quantity | UnitError | Promise<Quantity | UnitError>;
-
-/** `text` without brackets that hold all of it (`((x*pasu1))` → `x*pasu1`): the builder takes a °C, °F or level value
- *  only when it is the whole formula, unbracketed. */
-function unwrapped(text: string): string {
-  let t = text.trim();
-  while (t.startsWith("(") && closing(t, 0, "typed") === t.length - 1) t = t.slice(1, -1).trim();
-  return t;
-}
 
 /**
  * The unit view's request for step `stepName` of `set`: the step's text with each step it reads replaced by that step's
@@ -58,7 +50,12 @@ export function closedRequest(set: FormulaSet, stepName: string): UnitRequest | 
   const closed = new Map<string, string>();
   for (const name of order) {
     if (!needed.has(name)) continue;
-    const text = mapNames(byName.get(name)!.expr, (n) => (!n.call && closed.has(n.name) ? `(${closed.get(n.name)!})` : null), "typed");
+    const expr = byName.get(name)!.expr;
+    // the text's length before it is built: the expr, and for each read of a step that step's text in brackets in place of its name
+    let length = expr.length;
+    for (const n of names(expr, "typed")) if (!n.call && closed.has(n.name)) length += closed.get(n.name)!.length + 2 - n.name.length;
+    if (length > MAX_CLOSED) return { error: "long", step: stepName };
+    const text = mapNames(expr, (n) => (!n.call && closed.has(n.name) ? `(${closed.get(n.name)!})` : null), "typed");
     if (text.length > MAX_CLOSED) return { error: "long", step: stepName };
     closed.set(name, text);
   }
@@ -72,7 +69,8 @@ export function closedRequest(set: FormulaSet, stepName: string): UnitRequest | 
     if (x.slot) slots.push(x.slot);
     written.set(x.name, x.slot ? `(${value}*pasu${slots.length})` : `(${value})`);
   });
-  const formula = unwrapped(mapNames(over, (n) => (n.call ? null : written.get(n.name) ?? null), "typed"));
+  // unbracketed: the builder takes a °C, °F or level value only when it is the whole formula
+  const formula = unbracket(mapNames(over, (n) => (n.call ? null : written.get(n.name) ?? null), "typed"), "typed");
   return { formula, slots, ...(asked.end ? { end: asked.end } : {}) };
 }
 

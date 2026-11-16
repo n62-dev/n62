@@ -462,6 +462,11 @@ export async function unitItems({ q, factors, xml, ours, aliases }) {
     if (at < 0 && d.replace) { fail(`find/units.yaml defined ${d.id}: replace: true, but qalc has no such unit`); continue; }
     try { frac(evalProduct(d.si).n); } catch { fail(`find/units.yaml defined ${d.id}: bad si "${d.si}"`); continue; }
     const item = { id: `unit:${d.id}`, kind: "unit", names: uniq([d.id, ...(d.names ?? [])]), title: d.title, dim: d.dim, si: ftext(evalProduct(d.si)), tier: 0, insert: `\\unit{${d.id}}{\\mathrm{${d.symbol ?? d.id}}}` };
+    // G369: a ratio (%, ‰, ppm, ppb) is a pure number with a factor, so it drops out of the shown unit beside another unit
+    if (d.ratio === true) {
+      if (d.dim !== "") fail(`find/units.yaml defined ${d.id}: ratio: true needs dim ""`);
+      item.ratio = true;
+    }
     // G321: a checks entry audits a defined unit too (the metric cup against its 250 mL)
     const check = ours.checks?.[item.id];
     if (check !== undefined) {

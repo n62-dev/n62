@@ -41,6 +41,10 @@ describe("migrateSettings", () => {
     expect(migrateSettings({ digits: 0 }).settings.digits).toBe(1);
     expect(migrateSettings({ digits: 7.6 }).settings.digits).toBe(8);
   });
+  it("the Entry setting keeps rpn (R253); another value is the default", () => {
+    expect(migrateSettings({ entry: "rpn" }).settings.entry).toBe("rpn");
+    expect(migrateSettings({ entry: "nope" }).settings.entry).toBe(defaultSettings.entry);
+  });
   it("a wrong field keeps its default and does not spoil the others", () => {
     const { settings } = migrateSettings({ digits: "20", angle: "grad", format: "hex", entry: 3, fmtCycle: "std", fixDecimals: NaN, haptics: 5, schema: 2 });
     expect(settings).toEqual(defaultSettings);

@@ -108,7 +108,7 @@ test("☰ 0 Export › CSV saves the session as n62-<date>.csv, then LaTeX as .t
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["@menu", "d0"]);
   await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
-  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(3); // Work report, CSV, LaTeX
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(4); // Work report, CSV, LaTeX, Python
   await page.getByTestId("menu").locator('[data-id="csv"]').tap();
   await expect(page.getByTestId("notice")).toHaveText("CSV saved");
   const csv = await savedText(page);

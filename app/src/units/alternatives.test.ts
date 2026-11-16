@@ -124,6 +124,12 @@ describe("the unit result's alternatives (R60)", () => {
     allBuild(q, ctx);
     expect(row(qty("K1", "°R", "oR", "K"), "9*{oR}").texts).toEqual(["K", "Δ°C"]);
   });
+  it_("G370: Θ from 80 °C − 20 °C (a difference): Δ°C, Δ°F, never °C with its offset", () => {
+    const q = qty("K1", "K", "K", "K");
+    const { texts, ctx } = row(q, "80*{oC}-20*{oC}");
+    expect(texts).toEqual(["Δ°C", "Δ°F"]);
+    allBuild(q, ctx);
+  });
   it_("s⁻¹ gives Hz (the pad's tap unit) and never Bq", () => {
     const q = qty("s-1", "kHz", "k:Hz", "kHz");
     const { texts, ctx } = row(q, "1/(2*{u:s})");

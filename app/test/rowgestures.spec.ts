@@ -151,6 +151,26 @@ test("a long input scrolls sideways first; the row slides only from the end of t
   await expect(page.getByTestId("undo-note")).toBeVisible();
 });
 
+test("one fast drag that scrolls a long row to its end never slides it (R333); a second drag deletes it", async ({ page }) => {
+  await ready(page);
+  const long = Array.from({ length: 12 }, () => ["d1", "add"]).flat();
+  await enter(page, [...long, "d1"]);
+  const input = rows(page).last().locator(".in");
+  const max = await input.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(max).toBeGreaterThan(20); // (the input is wider than the row)
+  await input.evaluate((el) => (el.scrollLeft = 0));
+  // from the start: the first part of the drag scrolls the input to its end, the rest (past 24 px, in two quick moves: a fling) would slide the row
+  await finger(page, "input:last", { dx: -(max + 90), steps: 2 });
+  await page.waitForTimeout(500);
+  await expect(rows(page)).toHaveCount(1);
+  await expect(page.getByTestId("undo-note")).toHaveCount(0);
+  expect(await input.evaluate((el) => Math.round(el.scrollWidth - el.clientWidth - el.scrollLeft))).toBeLessThanOrEqual(1); // scrolled to its end
+  await expect(rows(page).last()).not.toHaveAttribute("style", /translate/);
+  await finger(page, "input:last", { dx: -90, steps: 2 }); // a new drag, from the end: the row slides
+  await expect(rows(page)).toHaveCount(0);
+  await expect(page.getByTestId("undo-note")).toBeVisible();
+});
+
 test("a running row does not slide", async ({ page }) => {
   await ready(page, "engine=fake&delay=3000");
   await tap(page, ["d2", "enter"]);
@@ -162,14 +182,14 @@ test("a running row does not slide", async ({ page }) => {
   await expect(page.getByTestId("undo-note")).toHaveCount(0);
 });
 
-test("the picked row's bar holds Store ▶ and Copy as ›; Copy as opens its three for that row", async ({ page }) => {
+test("the picked row's bar holds Store ▶ and Copy as ›; Copy as opens its four for that row", async ({ page }) => {
   await ready(page);
   await enter(page, ["d1", "div", "d3"], ["d2", "add", "d3"]);
   await setClipboard(page, "before");
   await results(page).first().tap();
   await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]);
   await bar(page).getByRole("button", { name: "Copy as ›" }).tap();
-  await expect(menu(page).getByRole("menuitem")).toHaveText([/As shown/, /Exact/, /LaTeX/]);
+  await expect(menu(page).getByRole("menuitem")).toHaveText([/As shown/, /Exact/, /LaTeX/, /Python/]);
   await menu(page).locator('[data-id="exact"]').tap();
   await expect.poll(() => clipboard(page)).toBe("1/3"); // the picked row's, not the last one's
   await expect(bar(page)).toHaveCount(0); // the pick ended with the button

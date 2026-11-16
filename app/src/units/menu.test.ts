@@ -21,7 +21,7 @@ const file = join(here, "../find/_gen/find-index.json");
 const raw = existsSync(file) ? (JSON.parse(readFileSync(file, "utf8")) as IndexItem[]) : [];
 const full = raw.some((it) => it.kind === "unit");
 const spec = parse(readFileSync(join(here, "../../../spec/units-menu.yaml"), "utf8")) as {
-  categories: { name: string; first: string[] }[];
+  categories: { name: string; first: string[]; appended?: boolean }[];
   constants: { lists: { name: string; items: string[] | "generated" }[] };
 };
 
@@ -136,9 +136,15 @@ describe.skipIf(!full)("R92: the units menu's Constants and Tools", () => {
   const menu = unitsMenu(index, { pick: () => {}, put: () => {}, product: () => {}, constant: (c) => void consts.push(c), tools });
   const level = (items: readonly MenuItem[], id: string): MenuItem[] => [...(items.find((c) => c.id === id)?.submenu?.items ?? [])];
 
-  it("the empty query ends with Constants and Tools, after every existing row: no row moves, every digit stays", () => {
-    expect(menu.categories.map((c) => c.id)).toEqual(["ucat:prefixes", ...spec.categories.map((c) => `ucat:${c.name}`), "ucat:const", "ucat:tools"]);
-    expect(menu.categories.slice(-2).map((c) => c.label)).toEqual(["Constants", "Tools"]);
+  it("the empty query has Constants and Tools after every category row, then the appended ones (G369: Ratio): no row moves, every digit stays", () => {
+    const cats = (appended: boolean): string[] => spec.categories.filter((c) => (c.appended ?? false) === appended).map((c) => `ucat:${c.name}`);
+    expect(menu.categories.map((c) => c.id)).toEqual(["ucat:prefixes", ...cats(false), "ucat:const", "ucat:tools", ...cats(true)]);
+    expect(cats(true)).toEqual(["ucat:Ratio"]);
+    expect(menu.categories.slice(-3, -1).map((c) => c.label)).toEqual(["Constants", "Tools"]);
+  });
+  it("G369: Ratio lists %, ‰, ppm and ppb in that order", () => {
+    const ratio = level(menu.categories, "ucat:Ratio");
+    expect(ratio.map((r) => r.id)).toEqual(["unit:percent", "unit:permille", "unit:ppm", "unit:ppb"]);
   });
 
   it("Constants holds the spec's five lists in its order; More is every other Find constant in qalc's order", () => {

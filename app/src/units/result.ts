@@ -9,10 +9,11 @@ import { precisionFacts } from "../engine/precisionFacts.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { groupText } from "../render/groupText.ts";
 import { groupSepFor, type GroupSep } from "../render/home.ts";
-import { commaResult, markText } from "../state/displayMode.ts";
+import { commaResult, markText, withSigmaText } from "../state/displayMode.ts";
 import type { Alternative } from "./alternatives.ts";
 import { unitErrorMessage, unitNamesText, unitNoteText, unitWhyText } from "./messages.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
+import { shownDigits } from "../state/sigmaDigits.ts";
 
 /** What the view shows under the reading: nothing, a refusal (a slot's or the evaluator's), Working…, or a result. */
 export type Shown =
@@ -69,7 +70,8 @@ export function shownOf(q: Quantity | UnitError, u: UnitFormat, alts: readonly A
   const drawn = (s: string): string => comma(grouped ? groupText(s, sep) : s);
   const facts = precisionFacts(q.value);
   // R271f1: the value's facts already hold σ's limit (evaluate.ts done, sigmaFacts.ts), as the Home row and the chip do
-  const m = markOf(facts, o);
+  // R327f1: the line draws unc.shown, the value rounded to σ's last place whatever the setting: its digits count too
+  const m = withSigmaText(markOf(facts, o), facts.reliableDigits, shownDigits(q.unc));
   // the ⚠ sits before σ when σ's facts are the limit the value carries (its ⚠ reason, or the digits σ's limit gives it at
   // σ's decade, R286: evaluate.ts done works them out)
   const limit = q.unc?.chip;

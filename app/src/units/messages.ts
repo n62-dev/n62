@@ -16,6 +16,8 @@ export function unitErrorMessage(e: UnitError): string {
       return unitText("units.power");
     case "temperature":
       return unitText("units.temperature");
+    case "scales":
+      return unitText("units.scales", { a: e.units[0], b: e.units[1] });
     case "logarithmic":
       return unitText("units.logarithmic", { unit: e.unit });
     case "nofactor":

@@ -56,6 +56,21 @@ describe("budgetOf (G272)", () => {
     }
   });
 
+  it("R328: total is the sum of the shown tenths, a small share counted as 0 (rows a, b, l, m, n); rounded is total ≠ 100.0", () => {
+    for (const [t, s, total] of [
+      [["0.0256", "1.522756"], "0.000025", "100.0"],
+      [["0.04"], "-0.0016", "100.0"],
+      [["1"], "-0.0001", "100.0"],
+      [["1", "1", "1"], undefined, "99.9"],
+      [["0.0005", "0.9995"], undefined, "100.1"],
+    ] as const) {
+      const b = budgetOf(input([...t], s));
+      if (!b || !("rows" in b)) throw new Error(`no shares: ${JSON.stringify(b)}`);
+      expect(b.total).toBe(total);
+      expect(b.rounded).toBe(total !== "100.0");
+    }
+  });
+
   it("over100 only above 100.0 (rows e, j, k: 100.0 is not over)", () => {
     for (const [t, s] of [[["1"], "-1"], [["0", "1.5"], "0"], [["0.000001", "1"], undefined]] as const) {
       const b = budgetOf(input([...t], s));

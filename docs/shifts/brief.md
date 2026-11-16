@@ -63,16 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 796 | R327 Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
-| 797 | [R328](packages/R328.md) the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
-| 813 | R250 the RPN stack model (units and ± kept; owner, 11-15: before the freeze) | ron, Opus | `p1/ron-rpnstack` | – |
-| 814 | [R251](packages/R251.md) the RPN operation composer and its binding to a row | ron, Opus | `p1/ron-rpncompose` | R250 |
-| 815 | [R252](packages/R252.md) the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
-| 816 | [R253](packages/R253.md) the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
-| 802 | [R333](packages/R333.md) a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
-| 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
-| 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
-| 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
+| 733 | R181 Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
 | 676 | [R128](packages/R128.md) the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | – |
 | 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
 | 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
@@ -94,11 +85,8 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 750 | G275 the formula set's model and its text form | gorge, Opus | `p1/gorge-setmodel` | – |
-| 751 | G276 a set's step is one closed expression | gorge, Opus | `p1/gorge-setclosed` | G275, G271 |
-| 817 | [G302](packages/G302.md) golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
-| 785 | [G369](packages/G369.md) %, ‰, ppm and ppb are dimensionless units in the unit view | gorge, Opus | `p1/gorge-ratiounits` | – |
-| 786 | [G370](packages/G370.md) the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
+| 817 | G302 golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
+| 786 | G370 the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
 | 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Sonnet | `p1/gorge-storedlist` | – |
 | 823 | [G382](packages/G382.md) a decimal inside a string is never rounded (F206) | gorge, Sonnet | `p1/gorge-stringdigits` | – |

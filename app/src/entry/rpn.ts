@@ -124,7 +124,7 @@ export function inputsOfAll(levels: readonly RpnLevel[]): string[] {
 }
 
 /** One identity: the same row and the same value (a unit-view row replaced within one visit keeps its uid, resultItem.ts placed). */
-function sameIdentity(a: RpnLevel, b: RpnLevel): boolean {
+export function sameIdentity(a: RpnLevel, b: RpnLevel): boolean {
   const x = a.chip, y = b.chip;
   return a.uid === b.uid && x.value === y.value && x.unc === y.unc && x.unit?.text === y.unit?.text;
 }

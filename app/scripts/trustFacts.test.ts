@@ -167,7 +167,9 @@ describe("npm run trust:check and trust:refresh", () => {
     const readme = readFileSync(join(tmp, "README.md"), "utf8");
     expect(readme).toContain(trustSentences(trustFacts(tmp)));
     expect(readme).toContain(trapTable(trustFacts(tmp)));
-    expect(readFileSync(join(tmp, "tests/golden/README.md"), "utf8")).toContain(`| \`home.yaml\` | ${goldenFacts(tmp).files["home.yaml"]?.rows} |`);
+    // the Cases cell is the count, with "(n `pending`)" after it when the file holds pending cases (home.yaml since G302)
+    const home = goldenFacts(tmp).files["home.yaml"];
+    expect(readFileSync(join(tmp, "tests/golden/README.md"), "utf8")).toContain(`| \`home.yaml\` | ${home?.rows}${home?.pending ? ` (${home.pending} \`pending\`)` : ""} |`);
 
     appendFileSync(join(tmp, "tests/golden/precision.yaml"), `  - { id: "a93-extra", input: "1+1", expect: "2", mark: "=", source: "derived" }\n`);
     expect(trust("check").status).toBe(1);

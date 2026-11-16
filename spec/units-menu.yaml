@@ -107,6 +107,9 @@ categories:
   - name: Data
     dims: [bit1]
     first: [bit, B, kB, MB, GB, TB, KiB, MiB, GiB, TiB, kbit, Mbit, Gbit]
+  # G369: the dimensionless ratios (find/units.yaml defined). `appended`: after Constants and Tools, so no row the layout
+  # lock pins moves (spec/layout-lock.yaml); `dims: []`: rev and kg/kg, pure numbers too, are found by typing.
+  - { name: Ratio, dims: [], first: [percent, permille, ppm, ppb], appended: true }
 
 # Units the grids name that Find does not have yet: the package adds them to find/units.yaml (curated units, with a
 # `checks` entry each). Sizes exact from the definitions (source: oracle, mpmath).

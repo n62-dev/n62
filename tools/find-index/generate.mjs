@@ -196,7 +196,7 @@ for (const it of items) {
 if (new Set(items.map((i) => i.id)).size !== items.length) fail("duplicate ids");
 
 // field order of the schema (docs/04 3.3)
-const ORDER = ["id", "kind", "names", "title", "desc", "syntax", "example", "exampleResult", "exampleMark", "exampleAngle", "value", "unc", "unit", "dim", "basis", "basisLeaves", "si", "tier", "insert", "where"];
+const ORDER = ["id", "kind", "names", "title", "desc", "syntax", "example", "exampleResult", "exampleMark", "exampleAngle", "value", "unc", "unit", "dim", "basis", "basisLeaves", "si", "ratio", "tier", "insert", "where"];
 items = items.map((it) => Object.fromEntries(ORDER.filter((k) => it[k] !== undefined).map((k) => [k, it[k]])));
 
 if (problems.length) {

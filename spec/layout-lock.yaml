@@ -208,6 +208,7 @@ home-copy-as:
   "1": "shown"
   "2": "exact"
   "3": "latex"
+  "4": "python"
 mode:
   "1": "angle"
   "2": "format"
@@ -316,6 +317,7 @@ units-menu:
   "23": "ucat:Data"
   "24": "ucat:const"
   "25": "ucat:tools"
+  "26": "ucat:Ratio"
 units-cell:
   "1": "u1"
   "2": "u2"

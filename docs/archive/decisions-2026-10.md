@@ -5,10 +5,20 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Shortened by Opus pass 203 (2026-11-16) to make room, as they stood
+- **σ's forms and budget (pass 199; G270, G272, G273):** no relative σ for an absolute temperature, °C, °F, a level or an offset end slot (K to °C); a row keeps σ's terms with their keys, and R328 reads a key's kind (`pasr_`), never its run number; the budget sorts rows by the exact t, refuses a negative t, keeps the ⚠ reason beside its shares; the second-order row has no uy.
+
+### Shortened by Opus pass 200 (2026-11-16) to make room, as they stood
+- **F-Droid Reproducible Builds (owner, 2026-11-15; asked for on 11-10):** unticked at v0.1.0: the recipe has no `Binaries` and no `AllowedAPKSigningKeys` (A158, built), F-Droid signs with its own key, so its APK and ours (GitHub, IzzyOnDroid) do not update each other. Why: A145 measured that the recipe's engine differs from the release engine (`fdroid/README.md`); the whole APK is uncompared. Would change if: a deterministic engine build exists before the F-Droid request (the template says the box cannot be ticked later, `fdroid/SUBMIT.md`).
+- **Owner answers of 2026-11-15 (Needs the user):** the unit view keeps G233/G234's raise (entries 42 kB, pin 78.55 kB; the bar is the first unit result < 1 s on the Tab One); G164's sample sources are not signed by the freeze, so their lines stay "to verify" at v0.1.0; F-Droid's box unticked (A158, the entry below); before the freeze R324 (Help's Insert replaces the call, built), R325 (Paste reads `value ± σ unit` as R61's chip, built; pass 196: a unit of your own is refused as not found, and a value without σ pastes as an exact chip, as typed digits are, P9) and R327, R328 (the uncertainty sheet on Shift + 1, rows A); S45 units inside Solve after the tag (≈3.5 d, four packages, [the note](../research/r-solveunits.md)); S50's G2 column from the owner's own G2 (`source: device`, presses and seconds). After a review of the ☰ menus: Shift + Vars is Paste (built, R329; the owner's yes, as no benchmark task pastes, docs/06 3b point 6); Shift + 7 waits for a list sheet like Shift + 4's (R330, after the tag), not the full Statistics editor; Shift + a b/c and Fmt stay reserved. Each package rewrites its line here when it lands.
+
 ### Shortened by Opus pass 191 (2026-11-15) to make room, as they stood
 - **P24 (2026-11-08): commercial reuse of our Giac fixes.** Written permission to B. Parisse (email 13), not revocable; N62 stays GPL-3.0-or-later; a fix from outside code or another contributor is flagged before it is sent. Archived, "Opus pass 106". Would change if: a contributor other than the owner writes a Giac fix.
 - **How research reaches the docs (owner, 2026-10-20; H7 and the consolidation).** Rule: rules sections 9 and 10; brief 0c step 5 and section 8; KhiCAS only for a named need, after a per-file licence check (E5). Archived. Would change if: the line baseline blocks a fix two nights running.
 - **A101, the checked append (Opus pass 189):** `appendChecked` reads the last byte first (`\n` goes before the text when it is another); a failed read, append or check is "cantAppend", nothing more written. Would change if: G219 finds the read too slow.
+
+### Shortened by Opus pass 201 (2026-11-16) to make room, as they stood
+- **Copy as Python (G213, G214, Opus pass 184):** a name is read only in the view that set it (G213f1); the comments are English constants. Archived, "Opus pass 185". G215's pydiff found sympy agreeing on all 75 translated rows; `scripts/pipeline-lib.sh` ENGINE_STAGES gets no pydiff, as `pydiff.test.ts` runs the same rows on every merge (Opus pass 195). Would change if: pydiff finds sympy disagrees.
 
 ### Shortened by Opus pass 190 (2026-11-15) to make room, as they stood
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172". Would change if: the owner drops paste in the apps.

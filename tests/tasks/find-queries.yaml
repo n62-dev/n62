@@ -94,6 +94,11 @@ queries:
   - { query: "psig", expect: none, where: slot, note: "a gauge reading: not psi (one edit away)" }
   - { query: "barg", expect: none, where: slot, note: "a gauge reading: not bar" }
   - { query: "kpag", expect: none, where: slot, note: "a gauge reading: not kPa" }
+  # Ratios as dimensionless units (G369; owner, 2026-11-14)
+  - { query: "ppm", expect: "unit:ppm", where: slot }
+  - { query: "percent", expect: "unit:percent", where: slot }
+  - { query: "per mille", expect: "unit:permille", where: slot }
+  - { query: "ppb", expect: "unit:ppb", where: slot }
   # Prefixes (5)
   - { query: "kilo", expect: "pfx:k" }
   - { query: "micro", expect: "pfx:u" }

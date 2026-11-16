@@ -15,6 +15,7 @@ const clip = {
   "clip.subShown": "As shown",
   "clip.subExact": "Exact",
   "clip.subLatex": "LaTeX",
+  "clip.subPython": "Python",
   "clip.working": "Still working",
   "clip.paste": "Paste",
   "clip.share": "Share session",
@@ -42,6 +43,7 @@ const clip = {
   // R200: Export › CSV and LaTeX (exportRows.ts)
   "export.csv": "CSV",
   "export.latex": "LaTeX",
+  "export.python": "Python", // R181 (pyExport.ts)
   "export.fileSaved": "{what} saved",
   "export.fileOffered": "{what} offered as a download",
   "export.fileCancelled": "{what} not saved",
