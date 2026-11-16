@@ -52,7 +52,7 @@ import { UNIT_DEFINITIONS, unitEval, withNames } from "../units/evaluate.ts";
 import { constUncDigits, inexactConstsIn, withConstValues, type ConstTable } from "./constUnc.ts";
 import { CHIP_PREFIX, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "./ourNames.ts";
 import { chipCommand, chipNameFacts, chipSigma, chipsIn, literalChip, withChipValues, type ChipFactsTable } from "./chipFacts.ts";
-import { nameSigma, nameSigmaInputs, namesChanged, unitOfStore, withNameFacts } from "./nameSigma.ts";
+import { nameSigma, nameSigmaInputs, namesChanged, unitNamesOf, unitOfStore, withNameFacts } from "./nameSigma.ts";
 import type { Quantity, UnitError, UnitJob } from "../units/types.ts";
 import { contextDiff, hostContext, isFlagName, namesFlag, namesUnreadFlag } from "./flags.ts";
 import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
@@ -852,10 +852,12 @@ export class EngineHost implements FactsHost {
     const input = askedLiterals(this.giac, typed, () => this.useHomeMode(s));
     const used = this.usesOf(input); // G212: before the input runs (it may store to them), as cas()
     const reads = this.valuesOf(used); // G213f1
+    const unitNames = this.unitNamesOf(input); // G392: before the run too (it may store to them)
     const cleared = this.clearing(input, () => this.useHomeMode(s));
     const out = cleared ? this.homeRun(cleared.answer, s, false) : this.homeTabled(input, s, consts, chips, reads);
     if (out.result.ok) out.result.reads = reads;
     if (used.length && out.result.ok) out.result.uses = used;
+    if (unitNames.length && out.result.ok) out.result.unitNames = unitNames;
     // G67, G65: the call after the input, if the run did not make it (an error: a syntax error ran nothing)
     const post = cleared?.post ?? this.post ?? this.after(input, false, out.result.error !== "syntax" && this.formFor(input).stores);
     out.defs = this.followLost(post, out.defs);
@@ -981,6 +983,22 @@ export class EngineHost implements FactsHost {
         const e = this.byName.get(n);
         return e?.kind === "var" ? [{ name: n, preview: e.preview, view: e.view }] : [];
       });
+  }
+
+  /** G392: the stored variables with a unit `input` reaches (nameSigma.ts unitNamesOf): from the names its tree reads
+   *  (a store's: its stored side; as usesOf), through the names each stored value or body holds (Giac's table, G65), or
+   *  for a function restore() has not given to Giac yet (G83) the names its definition's tree reads. Before the run. */
+  private unitNamesOf(input: string): string[] {
+    if (![...this.byName.values()].some((e) => e.unit) || !wordsOf(input).some((w) => this.byName.has(w))) return [];
+    const tree = this.treeOf(input);
+    const set = assignmentIn(input, tree) ? [] : tree.top;
+    const namesOf = (n: string): readonly string[] => {
+      const held = this.stored.get(n)?.names;
+      if (held) return held;
+      const p = this.pending.get(n);
+      return p ? this.bridge.parse(p.cmds[0]!).reads : [];
+    };
+    return unitNamesOf(tree.reads.filter((n) => !set.includes(n)), this.byName, namesOf);
   }
 
   /** G213f1: usesOf's names with Giac's stored text of each and whether it is exact (no facts kept: DefEntry.facts). */

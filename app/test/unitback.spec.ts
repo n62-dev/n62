@@ -7,7 +7,7 @@
 // chip's unit. Expected values: oracle (mpmath, tasks.yaml t04: 2π·0.025 = 0.1570796326794896619…, so 4π·0.025 =
 // 0.3141592653589793238…) and derived (t10: 12.34·3.2 = 39.488, σ² = 1.548381 by G41, decisions.md R61).
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, entryValue, flick, open, PASTE, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, entryValue, flick, open, PASTE, savePicker, savedText, tap, useClipboardLock } from "./helpers.ts";
 import { DATA_VERSION } from "../src/state/storage.ts";
 
 const up = (page: Page): Promise<unknown> =>
@@ -390,6 +390,72 @@ test.describe("the way back from the unit view (R63)", () => {
     await flick(page, "enter", "up");
     await expect(result(page)).toHaveAttribute("data-text", "72");
     await expect(result(page)).toHaveAttribute("data-unit", "km/h");
+  });
+});
+
+// G392: a Home row that reads a name stored with a unit (G371) says the unit was dropped, as a row with the chip does.
+// Expected values derived: F holds t10's 39.488 (m²), so F × 2 is 78.976; A:=5 gives A + 3 = 8.
+test.describe("a Home row that reads a name stored with a unit (G392)", () => {
+  test.beforeEach(async ({ page }) => {
+    await savePicker(page, "fake");
+    await open(page, "");
+    await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  });
+  const ready = async (page: Page): Promise<void> => {
+    await page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 20_000 });
+    await page.evaluate(() => window.n62.entry.ready);
+    await page.evaluate(() => window.n62.entry.clear());
+  };
+  /** t10's row, its chip ▶ F (G371's path): the store row has the chip on its line, so the note, as today. */
+  async function storeF(page: Page): Promise<void> {
+    await t10(page);
+    await leaveView(page);
+    await pickLast(page);
+    await tap(page, ["shift", "emark", "alpha", "pow", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
+  }
+  const timesTwo = async (page: Page, done: number): Promise<void> => {
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["alpha", "pow", "mul", "d2", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(done);
+    await expect(lastRow(page).locator(".result")).toHaveAttribute("data-text", "78.976");
+  };
+
+  test("chip ▶ F, then F × 2: 78.976 with the note, and the work report carries it", async ({ page }) => {
+    await storeF(page);
+    await timesTwo(page, 3);
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
+    await tap(page, ["@menu", "d0"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
+    await tap(page, ["d1"]);
+    await expect(page.getByTestId("notice")).toHaveText("Work report saved");
+    const text = (await savedText(page))?.text ?? "";
+    const step3 = text.slice(text.lastIndexOf("\n## Step 3\n"));
+    expect(step3).toContain("- Value: `78.976`");
+    expect(step3).toContain("- Note: unit dropped: Home has no units");
+  });
+
+  test("after a relaunch: the F × 2 row keeps its note, and F × 2 typed again gets it", async ({ page }) => {
+    await storeF(page);
+    await timesTwo(page, 3);
+    await page.waitForTimeout(800); // the store write is debounced (400 ms) and asynchronous
+    await page.reload();
+    await ready(page);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(3);
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
+    await timesTwo(page, 4);
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
+  });
+
+  test("control: a name stored from a plain number (A:=5), A + 3 is 8 with no note", async ({ page }) => {
+    await tap(page, ["d5", "shift", "emark", "alpha", "vars", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["alpha", "vars", "add", "d3", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    await expect(lastRow(page).locator(".result")).toHaveAttribute("data-text", "8");
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveCount(0);
   });
 });
 

@@ -583,6 +583,7 @@ export class Session {
         live.status = r.ok ? "done" : "error";
         live.text = r.ok ? r.display : errorText(r.error, r.display);
         if (r.settingReset) live.settingReset = true;
+        if (r.ok && r.unitNames?.length) live.unitDropped = true; // G392: a stored name with a unit read, as a chip (R63)
         // The value, its facts and the chip text, by the one rule (results.ts, G86)
         Object.assign(live, m.homeItem(r, live.inexactInput === true, giac, s)); // (G211: with the text sent and the job's settings)
         // A result that is not a number is drawn from Giac's latex(), as in CAS (R18f3); numbers from our formatter.
