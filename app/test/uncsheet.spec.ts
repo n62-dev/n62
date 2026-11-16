@@ -107,6 +107,22 @@ test("R328: t10, Shift + 1: three rows under the head; ▼ moves the highlight o
   await t10Rows(page);
 });
 
+test("R328: sin(0 ± 0.2) in the unit view, Shift + 1: 104.2 % with the stripe, second order −4.2 %, the over-100 line", async ({ page }) => {
+  await tap(page, ["sin", "d0", "shift", "comma", "d0", "dot", "d2"]);
+  await flick(page, "tmpl", "up");
+  await up(page);
+  await flick(page, "enter", "up");
+  await page.getByTestId("unit-result").waitFor();
+  await tap(page, ["shift", "d1"]);
+  const rows = sheet(page).locator('[role="menuitem"]');
+  await expect(rows.getByTestId("unc-label")).toHaveText(["0 ± 0.2", "second order"]);
+  await expect(rows.getByTestId("unc-uy")).toHaveText(["0.20", ""]);
+  await expect(rows.getByTestId("unc-share")).toHaveText(["104.2 %", "−4.2 %"]);
+  await expect(rows.nth(0).getByTestId("unc-bar")).toHaveClass(/over/);
+  await expect(rows.nth(1).getByTestId("unc-bar")).toHaveClass(/neg/);
+  await expect(sheet(page).getByTestId("unc-lines")).toHaveText("A row can exceed 100 % when the second-order term is negative: it takes σ² below the first-order rows.");
+});
+
 test("a picked row: the sheet is that row's, not the last one's; the σ line on a pick is unchanged", async ({ page }) => {
   // G × 5.972ᴇ24 (a Home row whose σ comes from a constant), then t10's unit row last
   await page.evaluate(async () => {
