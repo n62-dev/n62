@@ -104,6 +104,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](archive/r9-unit-pad.md), `spec/unit-pad.yaml`; a hardware keyboard types a unit symbol in a slot (R313). Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs.
 - **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived, "Opus pass 96".
 - **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived, "Opus pass 85". Would change if: keyboard set-ups are shared (a `// key:` line).
+- **Formula, then units (owner, 2026-11-16):** letters get unit slots; → Check turns the end slot on (R349); Store ▶ in the view (R353); SI names, no J or Hz (G389).
 
 ## Defaults
 
