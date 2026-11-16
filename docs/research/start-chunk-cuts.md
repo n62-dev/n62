@@ -6,7 +6,7 @@
 ## Where it stands
 - Budget 63,000 B gzip (`app/scripts/size-check.ts:156`, `KB = 1000` at `:16`); pin 62,300 B (`:475`, R298 fix 2, which measured 62,244 B, `:472-474`).
 - This build: **62,229 B gzip, 175,348 B raw, one JS file** (`start-cuts.mjs`, base). Room to the budget: **771 B** (derived).
-- The pin rose about 600 B a day over the last 55 h (night review ca-1, [its note](night-review-2026-11-14.md)). At that rate the room lasts about a day and a third (derived).
+- The pin rose about 600 B a day over the last 55 h (night review ca-1, [its note](../archive/night-review-2026-11-14.md)). At that rate the room lasts about a day and a third (derived).
 - Where the bytes are (`start-chunk.mjs --top=40`, raw per source from the source map; that build carries a source-map comment and reads 62.27 kB): Svelte's runtime 41.9 kB, `App.svelte` 12.6, `state/session.svelte.ts` 12.3, `keyboard/route.ts` 7.6, `Keypad.svelte` 7.3, `spec/keyboard.yaml` 6.8, `keyboard/keyboard.ts` 6.3, `History.svelte` 6.2, `apps/shell.svelte.ts` 6.2, `engine/format.ts` 6.0, `engine/workerEngine.ts` 5.6.
 
 ## How it was measured

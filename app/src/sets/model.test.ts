@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { namesIn } from "../engine/giacPrint.ts";
 import { isSetError, readSet, stepOrder, writeSet, type FormulaSet } from "./model.ts";
 
-/** An RC filter as a set (the step idea of docs/mockups/results-mode.html): two inputs with units, three steps. */
+/** An RC filter as a set (the step idea of docs/archive/mockups/results-mode.html): two inputs with units, three steps. */
 const RC: FormulaSet = {
   name: "RC filter",
   inputs: [

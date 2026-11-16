@@ -3,7 +3,7 @@
 """Probe (S36): the 16 values of app/public/samples/materials.txt against what their sources say.
 
 Exact arithmetic (fractions). For each name it checks that the definition, the number its `// source:` line
-states, its `// test:` line and the value found in the public source (docs/shifts/2026-11-sandra-sample-sources.md)
+states, its `// test:` line and the value found in the public source (docs/archive/sample-sources-s36.md)
 agree. Exit 1 when one differs. Tests that call the file's functions are left to `tools/probes/library.ts check`.
 
   python3 tools/probes/sample-sources.py                 # from the repo root

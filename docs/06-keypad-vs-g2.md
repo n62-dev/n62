@@ -26,7 +26,7 @@ The layer is dead only because the feature is not built: the key is dimmed in th
 | Shift + ☰ opens Settings (the G2's Shift + Help is User, omitted) | Settings one press from the keys, beside ☰ and outside the maths rows (owner, 2026-11-06, R146; the key moved from Help to ☰ in R278); Mode's last row and every ☰ menu still reach it |
 | A legend that opens a menu has a mark (▾) | the keys stay in the G2's cells; the mark says which open a list or grid (owner, 2026-11-06) |
 | Six user keys U1–U6, all empty, where the G2 has Apps, Symb, Plot, Num, Home and CAS | each key a slot of the user's (tap, Shift, Alpha); Home and CAS are the place name's first two rows (R15c point 5) |
-| Shift + Symb, Plot, Num (Setup) omitted | the same settings sit in the Mode sheet and in the Plot and Num menus (Window, Start, Step); nothing is lost |
+| Shift + Symb, Plot, Num (Setup) omitted | the same settings sit in the Mode sheet and Num's ☰ (Start, Step); the Plot's window by pan and pinch and Default window (typed ranges: R371, after the tag) |
 | Shift + Vars (Chars) omitted | Find covers named symbols (docs/04 5.1) |
 | Shift + 1 is the uncertainty sheet, where the G2 has Program (the owner, 2026-11-15, R327: a reserved cell filled) | no PPL and no Python (P11); programs are Giac definitions |
 | Shift + `,` (Eval) omitted; Shift + `,` is ± on the Home and CAS line, for the units key to read, dimmed in an app (R71) | the owner put ± there (decisions.md "M4-2"): no free key is nearer the digits, and Shift + − is EN6's Base; "evaluate at" comes with the Tmpl palette |

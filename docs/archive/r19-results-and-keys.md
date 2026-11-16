@@ -3,7 +3,7 @@
 
 **Status (2026-11-06): decided** (decisions.md "Owner answers of 2026-11-06 (UI)"): K1 with Help·Esc and no View key (R146); results mode folds by a handle or a swipe (R53); a tap picks (R147); the room R1 + R2 + R3 (R147, R148). All built (R148). Kept for the numbers the results-mode mockup and the probes cite.
 
-*sandra, S25, base `phase-1` 6ce82ab8. Counts follow docs/04 5.2. Probes: `node tools/probes/results-geometry.mjs --options`, `node tools/probes/results-keys.mjs --ends`. Detail tables: [the report](../shifts/2026-11-05-sandra-resultskeys-report.md).*
+*sandra, S25, base `phase-1` 6ce82ab8. Counts follow docs/04 5.2. Probes: `node tools/probes/results-geometry.mjs --options`, `node tools/probes/results-keys.mjs --ends`. Detail tables: [the report](shifts/2026-11-05-sandra-resultskeys-report.md).*
 
 ## 1. What results mode is for
 
