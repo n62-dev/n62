@@ -18,8 +18,48 @@ function el(tag: string, cls: string, testid?: string, text?: string): HTMLEleme
   return e;
 }
 
+/** `b` runs `run` on a tap. R159: the pick is made when the finger lifts on the button it went down on (as the keypad's
+ *  keys are), not on the click the browser makes from it: under load Chromium now and then gave a chip or More…
+ *  pointerdown, touchstart, pointerup and touchend and no click, and the tap was lost. A click that follows a pointer
+ *  (detail > 0) is that same press; one without (a keyboard or a screen reader activating the button) picks itself.
+ *  R159f2: `picked` is set only where pointerup picked. A touch that lands just beside the button (a finger's radius) is
+ *  not on it at pointerup, so nothing is picked and the browser's click, which lands on the button, picks instead. */
+function tapped(b: HTMLElement, run: () => void): HTMLElement {
+  b.tabIndex = -1;
+  let down = false;
+  let picked = false;
+  b.addEventListener("pointerdown", (e) => {
+    e.preventDefault(); // the view keeps the focus (hardware keys)
+    down = e.isPrimary && e.button === 0;
+    picked = false;
+  });
+  b.addEventListener("pointercancel", () => (down = false));
+  b.addEventListener("pointerup", (e) => {
+    const was = down;
+    down = false;
+    if (!was || e.button !== 0) return;
+    const at = document.elementFromPoint(e.clientX, e.clientY); // (a touch is captured by its first target: the finger may have left it)
+    if (at === b || b.contains(at)) {
+      picked = true;
+      run();
+    }
+  });
+  // R159f1: the click the browser still makes after the pick would land on what the pick opened (a tap on More… sent its
+  // click to the Find sheet just drawn); a cancelled touchend makes no click. Only after a pick: a near miss keeps its click.
+  b.addEventListener("touchend", (e) => {
+    if (picked && e.cancelable) e.preventDefault();
+    picked = false;
+  });
+  b.addEventListener("click", (e) => {
+    const again = picked;
+    picked = false;
+    if (e.detail === 0 || !again) run();
+  });
+  return b;
+}
+
 /** The value line, σ's lines, the note and the alternatives row of a result (`docs/mockups/unit-result.html` at `b1c44ee4`). */
-function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void): HTMLElement[] {
+function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void, store?: () => void): HTMLElement[] {
   const r = el("div", "result", "unit-result");
   r.dataset["text"] = s.display;
   r.dataset["unit"] = s.unit;
@@ -37,6 +77,8 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
   r.append(mark, value);
   if (s.unit) r.append(el("span", "unit", "unit-unit", s.unit));
   if (s.dim) r.append(el("span", "dim", "unit-dim", s.dim));
+  // R353: Store ▶ beside the result (the key's job: the result's chip into "Store in")
+  if (store) r.append(tapped(el("button", "store", "unit-store", unitText("units.store.button")), store));
   const out = [r];
   if (s.sub) out.push(el("div", "sub", "unit-sub", s.sub));
   if (s.why) out.push(el("div", "why", "unit-why", s.why));
@@ -48,44 +90,8 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
     row.setAttribute("aria-label", unitText("units.result.alts"));
     const chip = (text: string, i: number, testid: string, cls: string): HTMLElement => {
       const b = el("button", `alt ${cls}`, testid, text);
-      b.tabIndex = -1;
       b.dataset["i"] = `${i}`;
-      // R159: the pick is made when the finger lifts on the chip it went down on (as the keypad's keys are), not on the click
-      // the browser makes from it: under load Chromium now and then gave a chip or More… pointerdown, touchstart, pointerup
-      // and touchend and no click, and the tap was lost. A click that follows a pointer (detail > 0) is that same press;
-      // one without (a keyboard or a screen reader activating the button) picks itself.
-      // R159f2: `picked` is set only where pointerup picked. A touch that lands just beside the chip (a finger's radius) is not
-      // on it at pointerup, so nothing is picked and the browser's click, which lands on the chip, picks instead.
-      let down = false;
-      let picked = false;
-      b.addEventListener("pointerdown", (e) => {
-        e.preventDefault(); // the view keeps the focus (hardware keys)
-        down = e.isPrimary && e.button === 0;
-        picked = false;
-      });
-      b.addEventListener("pointercancel", () => (down = false));
-      b.addEventListener("pointerup", (e) => {
-        const was = down;
-        down = false;
-        if (!was || e.button !== 0) return;
-        const at = document.elementFromPoint(e.clientX, e.clientY); // (a touch is captured by its first target: the finger may have left it)
-        if (at === b || b.contains(at)) {
-          picked = true;
-          void v.pick(i);
-        }
-      });
-      // R159f1: the click the browser still makes after the pick would land on what the pick opened (a tap on More… sent its
-      // click to the Find sheet just drawn); a cancelled touchend makes no click. Only after a pick: a near miss keeps its click.
-      b.addEventListener("touchend", (e) => {
-        if (picked && e.cancelable) e.preventDefault();
-        picked = false;
-      });
-      b.addEventListener("click", (e) => {
-        const again = picked;
-        picked = false;
-        if (e.detail === 0 || !again) void v.pick(i);
-      });
-      return b;
+      return tapped(b, () => void v.pick(i));
     };
     s.alts.forEach((a, i) => row.append(chip(a.text, i, "unit-alt", "")));
     const more = chip(unitText("units.result.more"), s.alts.length, "unit-more", "more");
@@ -95,6 +101,13 @@ function resultRows(s: UnitShown, v: UnitView, fit: (row: HTMLElement) => void):
     queueMicrotask(() => fit(row));
   }
   return out;
+}
+
+/** R353: what the panel's Store ▶ button runs, and the reason a press of it (or of the key) was refused, shown under
+ *  the result or the message while they stand. */
+export interface PanelStore {
+  run(): void;
+  said(): string | undefined;
 }
 
 export interface Panel {
@@ -107,13 +120,16 @@ export interface Panel {
 }
 
 /** The panel for `view`, not yet on the page. `marks` (R124): Settings › Numbers › Marks, which panel.css follows. */
-export function makePanel(view: () => UnitView | undefined, marks: () => MarkStyle = () => "reason"): Panel {
+export function makePanel(view: () => UnitView | undefined, marks: () => MarkStyle = () => "reason", store?: PanelStore): Panel {
   const element = el("div", "unitview", "unit-view");
   element.tabIndex = -1;
   const formula = el("div", "formula");
   const reading = el("div", "reading", "unit-reading");
   const below = el("div", "below");
-  element.append(formula, reading, below);
+  const said = el("div", "said", "unit-store-note");
+  said.setAttribute("role", "alert");
+  said.hidden = true;
+  element.append(formula, reading, below, said);
   /** Hide the chips that do not fit beside "More…" (at least as many as the view can use) and tell the view how many fit. */
   const fitRow = (row: HTMLElement): void => {
     const v = view();
@@ -148,6 +164,9 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
     element.dataset["slot"] = v.activeId;
     element.dataset["marks"] = marks();
     reading.replaceChildren(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)]));
+    const why = store?.said();
+    said.hidden = why === undefined;
+    said.textContent = why ?? "";
     const s = v.shown;
     if (s === built) {
       const row = below.querySelector<HTMLElement>(".alts");
@@ -161,7 +180,7 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
       m.setAttribute("role", "alert");
       out.push(m);
     } else if (s.kind === "working") out.push(el("div", "working", "unit-working", unitText("units.view.working")));
-    else if (s.kind === "result") out.push(...resultRows(s, v, fitRow));
+    else if (s.kind === "result") out.push(...resultRows(s, v, fitRow, store?.run));
     below.replaceChildren(...out);
   };
   // a new width changes how many chips fit (the first callback is the size at the start: the draws measure it themselves)

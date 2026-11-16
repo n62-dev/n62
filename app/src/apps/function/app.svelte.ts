@@ -400,7 +400,13 @@ export class FunctionApp implements AppInstance {
     const step = parseDec(this.num.step) as Dec;
     return decText(addMul(start, k, step));
   }
-  /** Engine rows by x for the current functions and angle unit (scrolling by a row asks for one row). */
+  /** R601: the user's stored names as they are now, each with the time it was stored. A definition's Giac text names a
+   *  value (`a*x`), it does not hold it: a store in Home changes this, and the Num cells and the trace y are asked again.
+   *  All the names: a definition may read any of them through a function it calls. */
+  private names(): string {
+    return this.host.userNames.map((u) => `${u.name}@${u.time}`).join(",");
+  }
+  /** Engine rows by x for the current functions, angle unit and stored names (scrolling by a row asks for one row). */
   numCache = $state.raw<ReadonlyMap<string, Cell[]>>(new Map());
   private numSig = "";
   numCell(row: number, col: number): Cell | undefined {
@@ -411,7 +417,7 @@ export class FunctionApp implements AppInstance {
     this.numXs = Array.from({ length: this.num.rows }, (_, i) => this.numX(this.num.top + i));
     this.numSlots = slots;
     const fns = slots.map((i) => this.compiled[i]?.giac ?? "");
-    const sig = `${fns.join(" ; ")}|${this.host.settings.angle}`;
+    const sig = `${fns.join(" ; ")}|${this.host.settings.angle}|${this.names()}`;
     if (sig !== this.numSig) {
       this.numSig = sig;
       this.numCache = new Map();
@@ -485,16 +491,17 @@ export class FunctionApp implements AppInstance {
     this.save();
     void this.refreshTrace();
   }
-  /** The engine's y at the trace position, keyed as the Num cache is: position, slot, the function's Giac text and the angle unit (R257). */
-  private traceAt = $state.raw<{ x: string; slot: number; f: string; angle: string; y: Cell } | undefined>(undefined);
-  private traceKey(): { x: string; slot: number; f: string; angle: string } {
+  /** The engine's y at the trace position, keyed as the Num cache is: position, slot, the function's Giac text, the angle
+   *  unit (R257) and the stored names (R601). */
+  private traceAt = $state.raw<{ x: string; slot: number; f: string; angle: string; names: string; y: Cell } | undefined>(undefined);
+  private traceKey(): { x: string; slot: number; f: string; angle: string; names: string } {
     const slot = this.trace.slot;
-    return { x: this.trace.x, slot, f: this.compiled[slot]?.giac ?? "", angle: this.host.settings.angle };
+    return { x: this.trace.x, slot, f: this.compiled[slot]?.giac ?? "", angle: this.host.settings.angle, names: this.names() };
   }
   get traceY(): Cell | undefined {
     const a = this.traceAt;
     const k = this.traceKey();
-    return a && a.x === k.x && a.slot === k.slot && a.f === k.f && a.angle === k.angle ? a.y : undefined;
+    return a && a.x === k.x && a.slot === k.slot && a.f === k.f && a.angle === k.angle && a.names === k.names ? a.y : undefined;
   }
   set traceY(y: Cell | undefined) {
     this.traceAt = y ? { ...this.traceKey(), y } : undefined;

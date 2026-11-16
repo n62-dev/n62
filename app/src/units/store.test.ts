@@ -21,7 +21,7 @@ const TABLE = factorTable([
 ]);
 const M = { tokens: [{ unit: "m" }] };
 const S = { tokens: [{ unit: "s" }] };
-const MESSAGE = "The unit view does not store: put the result on Home's line, then ▶";
+const MESSAGE = "The unit view stores from its result: Eval, then Store ▶";
 
 describe.skipIf(!giacAvailable())("a store in the unit view is refused (G390, real Giac)", () => {
   let host: EngineHost;

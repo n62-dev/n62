@@ -3,7 +3,7 @@
 // docs/archive/r9-unit-pad.md 2.1): the line (or a picked row's input) read-only with its slots, the pad up on the
 // keys (R24b). Key owners while it is up (docs/04 5.5): an open sheet (Find on units), then the pad's cells
 // (UnitPad.route), then this view for the keys that are no cell (◀ ▶ between slots, Esc leaves and the line keeps its
-// slots, a key that changes place leaves first; any other key is dead). A hardware key on the field takes the keypad's
+// slots, a key that changes place leaves first, Store ▶ stores the result with its unit, R353; any other key is dead). A hardware key on the field takes the keypad's
 // path through the entry line's own map (entry/hwkeys.ts, `onKey`), so it reaches the pad's actions or does nothing, and
 // does on the field what it does on the line; R313: letters first go into the slot as a unit's symbol (units/typed.ts).
 // The view writes a slot only with setPromptValue. What it takes from the start chunk is the route context `c` alone,
@@ -18,9 +18,11 @@ import type { HistoryItem } from "../state/session.svelte.ts";
 import { engineFormat } from "../calc/port.ts";
 import { ANS_KEY, type ChipTable } from "../input/chips.ts";
 import { userValuesOf } from "../input/latex-to-giac.ts";
+import { unitText } from "../i18n/enUnits.ts";
 import { idbKv } from "../state/storage.ts";
 import { loadSheetView } from "../views/sheetView.svelte.ts";
 import { alternatives, readTargets, writeTarget } from "./alternatives.ts";
+import { storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
 import { userUnitCells } from "./padCells.ts";
 import { UnitPad, padUnitList } from "./pad.ts";
@@ -33,7 +35,7 @@ import { putRow, rowSlots, unitRow } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
 import { unitTools } from "./tools.ts";
 import { HwTyping } from "./typed.ts";
-import { UnitView, carry, type ViewHost } from "./view.ts";
+import { UnitView, carry, type Shown, type ViewHost } from "./view.ts";
 
 /** The open unit view (window.n62.unitView in the e2e). */
 export interface OpenUnitView {
@@ -57,6 +59,9 @@ const unitFind = (): Promise<typeof import("./find.ts")> =>
     findChunk = null;
     throw e;
   }));
+
+/** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml). */
+const STORE_ARROW = "\\blacktriangleright";
 
 /** Keys that change place: the unit view closes first, then they do their job. */
 const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "symb", "plot", "num", "settings", "mode"];
@@ -98,7 +103,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     find: (into, dim) =>
       void unitFind().then((m) => {
         if (current?.view !== view) return;
-        const more = dim === undefined ? { constant, tools: unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home }) } : {};
+        const more = dim === undefined ? { constant, tools: unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home, store, storeRefused }) } : {};
         m.showUnitFind({ shell: c.shell, index, cat, apply: dim === undefined ? (a) => view.apply(a) : (a) => view.pickMore(a), refresh: () => (unitPad.model = new UnitPad(unitCells.userSet())), ...more }, into, dim);
       }),
     format: () => ({ format: engineFormat(c.session.settings.format), digits: c.session.settings.digits, decimalComma: c.session.decimalComma, grouped: true, groupSep: c.session.settings.groupSep }),
@@ -129,8 +134,35 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     close();
     c.insertResult(item);
   };
+  /** R353: the result's row (this visit's, while a result is shown) and the reason a store of it is refused. */
+  const resultRow = (): HistoryItem | undefined =>
+    rowId === undefined || view.shown.kind !== "result" ? undefined : c.session.home.find((r) => r.id === rowId && r.status === "done");
+  const storeRefused = (): string | undefined => {
+    const item = resultRow();
+    if (!item) return unitText("units.store.first");
+    return storeChip(c.session.chipFor(item), item.units?.unit ?? "", item.units?.unc) ? undefined : unitText("units.store.noUnit");
+  };
+  /** R353: the refusal of the last Store ▶, shown while what it was pressed on stands. */
+  let said: { on: Shown; text: string } | undefined;
+  /** R353: Store ▶ (Shift + ᴇ, the button beside the result, Tools › Store in a name): the view leaves, the result's chip
+   *  goes on Home's line alone (the line was the request, which the row keeps) and "Store in" opens on its row, the row
+   *  bar's Store ▶ path (clipboard/actions.svelte.ts storeRow, App openStore): the one store path, which keeps the unit
+   *  and σ in the name (G371). No result, or a chip without the unit or σ shown: dead, with the reason. */
+  const store = (): void => {
+    if (current?.view !== view) return c.dead();
+    const why = storeRefused();
+    const item = resultRow();
+    if (why !== undefined || !item) {
+      said = { on: view.shown, text: why ?? unitText("units.store.first") };
+      panel.draw();
+      return c.dead();
+    }
+    close();
+    c.entry.clear();
+    c.withClip((x) => void (x.storeRow(item) || c.dead()));
+  };
   let made: UnitView | undefined;
-  const panel = makePanel(() => made, () => c.session.settings.marks);
+  const panel = makePanel(() => made, () => c.session.settings.marks, { run: store, said: () => (said && made?.shown === said.on ? said.text : undefined) });
   const cat = slotCatalogue(index.items);
   const table = factorTable(index.items);
   const view = new UnitView(cat, line, parseChips, host, seed);
@@ -188,6 +220,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     else if (a?.kind === "special" && a.name === "esc") {
       if (!view.escape()) close();
     }
+    else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
     else if (a?.kind === "special" && a.name === "uncertainty") {
       const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row
       lazy(c2, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c2, row)));

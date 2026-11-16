@@ -12,11 +12,11 @@ const result = (dimension: string, alts: readonly Alternative[]): Shown => ({
   kind: "result", text: "72", display: "72", unit: "km/h", mark: "=", markText: "=", warn: false, dimension, alts,
 } as Shown);
 
-function acts(): { acts: ToolActs; ran: string[] } {
+function acts(refused?: string): { acts: ToolActs; ran: string[] } {
   const ran: string[] = [];
-  return { ran, acts: { end: () => void ran.push("end"), alt: (a) => void ran.push(`alt ${a.text}`), alts: () => void ran.push("alts"), home: () => void ran.push("home") } };
+  return { ran, acts: { end: () => void ran.push("end"), alt: (a) => void ran.push(`alt ${a.text}`), alts: () => void ran.push("alts"), home: () => void ran.push("home"), store: () => void ran.push("store"), storeRefused: () => refused } };
 }
-const ids = ["end", "si", "alts", "unit", "number"];
+const ids = ["end", "si", "alts", "unit", "number", "store"];
 
 describe("the unit tools", () => {
   it("without a result: the end slot runs; the SI form, the alternatives and the number need a result; the unit alone is not built", () => {
@@ -24,7 +24,7 @@ describe("the unit tools", () => {
       const { acts: a, ran } = acts();
       const t = unitTools(shown, a);
       expect(t.map((x) => x.id)).toEqual(ids);
-      expect(t.map((x) => x.reason)).toEqual([undefined, "needs a result first", "needs a result first", "not built yet", "needs a result first"]);
+      expect(t.map((x) => x.reason)).toEqual([undefined, "needs a result first", "needs a result first", "not built yet", "needs a result first", "needs a result first"]);
       t[0]?.run?.();
       expect(ran).toEqual(["end"]);
       expect(t.slice(1).every((x) => x.run === undefined)).toBe(true);
@@ -34,15 +34,23 @@ describe("the unit tools", () => {
   it("with a result: the SI form picks the row's SI chip, the alternatives enter the row, the number goes into Home", () => {
     const { acts: a, ran } = acts();
     const t = unitTools(result("m1s-1", [SI, MPH]), a);
-    expect(t.map((x) => x.reason)).toEqual([undefined, undefined, undefined, "not built yet", undefined]);
+    expect(t.map((x) => x.reason)).toEqual([undefined, undefined, undefined, "not built yet", undefined, undefined]);
     for (const x of t) x.run?.();
-    expect(ran).toEqual(["end", "alt m/s", "alts", "home"]);
+    expect(ran).toEqual(["end", "alt m/s", "alts", "home", "store"]);
+  });
+
+  it("R353: a result whose chip cannot carry its unit: Store in a name is disabled with the reason", () => {
+    const { acts: a, ran } = acts("This result cannot be stored with its unit");
+    const t = unitTools(result("m1s-1", [SI, MPH]), a);
+    expect(t.at(-1)).toEqual({ id: "store", reason: "This result cannot be stored with its unit" });
+    t.at(-1)?.run?.();
+    expect(ran).toEqual([]);
   });
 
   it("a result shown in its SI form already has no SI chip; a pure number has no row", () => {
     const { acts: a } = acts();
     expect(unitTools(result("m1s-1", [MPH]), a)[1]?.reason).toBe("the result is in its SI form");
     const pure = unitTools(result("", []), a);
-    expect(pure.map((x) => x.reason)).toEqual([undefined, "needs a result with a unit", "needs a result with a unit", "not built yet", undefined]);
+    expect(pure.map((x) => x.reason)).toEqual([undefined, "needs a result with a unit", "needs a result with a unit", "not built yet", undefined, undefined]);
   });
 });
