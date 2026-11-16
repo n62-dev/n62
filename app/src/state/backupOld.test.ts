@@ -11,6 +11,7 @@ import { fakeIndexedDb } from "./fakeIdb.ts";
 import { restoreParts } from "./restore.ts";
 import { Session } from "./session.svelte.ts";
 import { DATA_VERSION, idbKv } from "./storage.ts";
+import { validDefs, type DefEntry } from "../engine/defs.ts";
 
 type File = { dataVersion: number; parts: Record<string, { "@n62": number; value: unknown }> };
 const FIXTURES = ["backup-2026-11.json"] as const;
@@ -114,5 +115,37 @@ describe("a part this version no longer keeps (R122, ca-6)", () => {
     const f = fixture("backup-2026-11.json");
     f.parts["nope"] = { "@n62": 3, value: 1 };
     expect(checkBackup(bytes(f)).ok).toBe(false);
+  });
+});
+
+describe("the definitions log across G371's step (a stored name's σ and unit)", () => {
+  beforeEach(() => {
+    const idb = fakeIndexedDb();
+    idb.stores.set("kv", new Map());
+    vi.stubGlobal("indexedDB", idb.factory);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+  const restoredDefs = async (f: File): Promise<DefEntry[]> => {
+    await restoreParts({ defs: checked(f).parts["defs"] }, 1);
+    return validDefs(await idbKv.get("defs"));
+  };
+
+  it("control: the fixture's names come back as before, with no σ and no unit (a missing fact claims nothing)", async () => {
+    const f = fixture("backup-2026-11.json");
+    const before = f.parts["defs"]!.value as DefEntry[];
+    const defs = await restoredDefs(f);
+    expect(defs).toEqual(before);
+    expect(defs.every((e) => e.unit === undefined && e.facts?.uncSigma === undefined)).toBe(true);
+  });
+  it("a file of this version with a name's σ and unit restores them", async () => {
+    const f = fixture("backup-2026-11.json");
+    const unit = { text: "N", dim: "kg1m1s-2", slot: { tokens: [{ unit: "N" }] } };
+    const facts = { exact: false, reliableDigits: null, uncDigits: 3, uncSigma: "3.5" };
+    const F = { name: "F", kind: "var", cmds: ["F:=(68670/100)"], preview: "686.7", view: "home", time: 1793676002483, facts, unit };
+    f.dataVersion = DATA_VERSION;
+    f.parts["defs"] = { "@n62": DATA_VERSION, value: [F] };
+    const [e] = await restoredDefs(f);
+    expect(e?.unit).toEqual(unit);
+    expect(e?.facts).toEqual(facts);
   });
 });

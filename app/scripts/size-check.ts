@@ -539,8 +539,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,600 → 62,790 B (R327f1): a Home row with σ is ⚠ when its "value ± σ" shows more digits than the value has confirmed
  *  (principle 3), so markFor counts that text's digits in start (state/sigmaDigits.ts, text only: the BigInt arithmetic of
  *  units/uncertainty.ts stays in the unit view's chunk, importing it cost 0.65 kB). Phase-1 b9bda425 measures 62,544 B
- *  gzip (176,133 B raw), the branch 62,735 B (176,700 B raw): 62,735 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_790;
+ *  gzip (176,133 B raw), the branch 62,735 B (176,700 B raw): 62,735 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,790 → 62,880 B (G371): a stored name keeps its value's unit, so the stored log's load check (validDefs, engine/defs.ts)
+ *  reads `unit` back, and DATA_VERSION steps to 5 (storage.ts). validDefs runs when the stored log loads, before the first
+ *  call, so it stays in start; a shorter form of the read cost gzip (62,828 B). Phase-1 d4bf19bf measures 62,786 B gzip
+ *  (176,852 B raw), the branch 62,821 B (176,928 B raw): 62,821 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_880;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
