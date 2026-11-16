@@ -71,7 +71,7 @@ Every Home and CAS number is marked by 2.4's rules; the agreement check runs on 
 | Home float fallback (timeout, error, an exact form past 2 kB whose check ran out of its call's step budget, G180) | `homeEval.ts` | Giac floats at `max(30, digits+10)` | once | by the agreement check |
 | Home non-number (lists, matrices, symbols) | `homeEval.ts` `symbolic()`, `render/tidy.ts` | exact | elements by our formatter | the weakest element's; a symbol with a float `⚠` (2.3 #17) |
 | Solve, Function analysis | `solve.ts`, `analysis.ts` | `max(30, digits+10)`; residual relative ≤ 1e-15 | once | `⚠` when the residual check fails |
-| Function Num, Plot | `analysis.ts` (each cell is Home's), `input/emit-js.ts` | as Home; Plot draws in JS doubles | as Home | `⚠` only; trace values come from the engine |
+| Function Num, Plot | `analysis.ts` (each cell is Home's), `input/emit-js.ts` | as Home; Plot draws in JS doubles; a stored real value at the engine's value, σ and unit named in a note (R361); user functions are not drawn | as Home | `⚠` only; trace values come from the engine |
 | CAS exact; CAS numeric | `host.ts` `cas()` | exact; typed decimals exact (P9) | numbers by our formatter (2.9) | none for exact results; numbers as Home |
 | Unit view | section 4 | Giac, exact factors from the Find index (P15) | our formatter | as Home; never `=` with a σ |
 
