@@ -49,10 +49,14 @@ export async function deviceName(kv: Kv, model: () => Promise<string | undefined
 
 /** The name as the user edits it (R183): sanitised as a made one is (deviceSlug) and kept in the page's record, so the
  *  next file the sync writes carries it. A blank edit keeps the old name (or leaves none: one is made at the first
- *  write). Returns the name kept, or "" when there is none yet. */
-export async function renameDevice(kv: Kv, input: string): Promise<string> {
-  if (input.trim() === "") return (await readSync(kv)).device ?? "";
+ *  write). `taken`: the file names in the folder, when one is chosen (R183f1): a name a file there starts with
+ *  (`n62-<name>-`) is another device's unless it is this one's current name, and is refused: the old name stays (G218:
+ *  a device never writes a name it did not make). Returns the name kept, or "" when there is none yet. */
+export async function renameDevice(kv: Kv, input: string, taken: readonly string[] = []): Promise<string> {
+  const kept = (await readSync(kv)).device;
+  if (input.trim() === "") return kept ?? "";
   const name = deviceSlug(input);
+  if (name !== kept && taken.some((f) => f.startsWith(`n62-${name}-`))) return kept ?? "";
   await patchSync(kv, { device: name });
   return name;
 }

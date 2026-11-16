@@ -37,6 +37,24 @@ describe("the device name's edit (R183)", () => {
     expect(await renameDevice(kv, "  ")).toBe("Desk");
     expect((await readSync(kv)).device).toBe("Desk");
   });
+  it("a name another device's files carry is refused, the old name stays (R183f1)", async () => {
+    const kv = memKv();
+    await deviceName(kv, model, () => 0.5); // Pixel-7-8000
+    const taken = ["n62-Pixel-7-77aa-backup.json", "n62-Pixel-7-8000-backup.json", "n62-Pixel-7-77aa-counts.json"];
+    expect(await renameDevice(kv, "Pixel-7-77aa", taken)).toBe("Pixel-7-8000"); // device B renamed to A's name
+    expect(await renameDevice(kv, "Pixel 7", taken)).toBe("Pixel-7-8000"); // typed as the model, a prefix of A's files
+    expect((await readSync(kv)).device).toBe("Pixel-7-8000");
+  });
+  it("this device's own current name and a free name still work with a folder (R183f1)", async () => {
+    const kv = memKv();
+    await deviceName(kv, model, () => 0.5);
+    const taken = ["n62-Pixel-7-77aa-backup.json", "n62-Pixel-7-8000-backup.json"];
+    expect(await renameDevice(kv, "Pixel-7-8000", taken)).toBe("Pixel-7-8000");
+    expect(await renameDevice(kv, "Kitchen tablet", taken)).toBe("Kitchen-tablet");
+    expect(await renameDevice(kv, "  ", taken)).toBe("Kitchen-tablet");
+    expect((await readSync(kv)).device).toBe("Kitchen-tablet");
+    expect(await renameDevice(kv, "Kitchen tablet", [...taken, "n62-Kitchen-tablet-backup.json"])).toBe("Kitchen-tablet"); // its own
+  });
   it("the files the sync writes carry the edited name (G218)", async () => {
     const kv = memKv();
     const name = await renameDevice(kv, "My phone");

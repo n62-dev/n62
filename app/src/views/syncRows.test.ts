@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R128: Settings › Data › Sync folder, its rows on Android and on the web.
 import { describe, expect, it } from "vitest";
+import type { EntryPrompt } from "../apps/shell.svelte.ts";
+import type { ActionBody } from "../keyboard/keyboard.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import { dataText } from "../i18n/enData.ts";
@@ -12,11 +14,11 @@ import { reportStatus } from "../sync/status.ts";
 
 const tick = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
 
-function setup(native: boolean, name: string | null = "Sync") {
+function setup(native: boolean, name: string | null = "Sync", files: string[] = []) {
   const jobs: string[] = [];
   const kv = memKv();
   const clip = { syncJob: async (j: string) => void jobs.push(j) } as unknown as ClipActions;
-  const deps: SyncDeps = { native, kv, folderName: async () => name };
+  const deps: SyncDeps = { native, kv, folderName: async () => name, fileNames: async () => files };
   const row = syncSection({ data: (run) => void run(clip) }, () => deps);
   return { row, jobs, kv };
 }
@@ -113,5 +115,46 @@ describe("Settings › Data › Sync folder (R128)", () => {
     sub?.items;
     await tick();
     expect(sub?.items.find((r) => r.id === "device")?.value).toBe(dataText("sync.device.none"));
+  });
+  it("an edit to a name another device's files carry is refused: the row keeps its name and the notice says so (R183f1)", async () => {
+    const notices: string[] = [];
+    const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
+    let line = "";
+    const entry = {
+      get value() {
+        return line;
+      },
+      chips: {},
+      set: (latex: string) => void (line = latex),
+      run: (a: ActionBody) => void (line += a.kind === "type" ? a.text : ""),
+      clear: () => void (line = ""),
+    };
+    const kv = memKv();
+    await kv.set("sync", { device: "Pixel-7-0a3f" });
+    const clip = { say: (m: string) => void notices.push(m) } as unknown as ClipActions;
+    const deps: SyncDeps = { native: true, kv, folderName: async () => "Sync", fileNames: async () => ["n62-Pixel-7-77aa-backup.json", "n62-Pixel-7-0a3f-backup.json"] };
+    const sub = syncSection({ shell, entry, data: (run) => void run(clip) }, () => deps).submenu;
+    sub?.items;
+    await tick();
+    const type = (text: string): void => {
+      shell.prompt?.key({ kind: "special", name: "clear" }); // the line starts with the old name
+      for (const ch of text) shell.prompt?.key({ kind: "type", text: ch });
+      shell.prompt?.key({ kind: "special", name: "enter" });
+    };
+    const dev = (): MenuItem | undefined => sub?.items.find((r) => r.id === "device");
+    dev()?.run?.();
+    type("Pixel-7-77aa");
+    await tick();
+    await tick();
+    expect(dev()?.value).toBe("Pixel-7-0a3f");
+    expect((await readSync(kv)).device).toBe("Pixel-7-0a3f");
+    expect(notices.at(-1)).toBe(dataText("sync.device.taken", { name: "Pixel-7-77aa" }));
+    dev()?.run?.();
+    type("Desk");
+    await tick();
+    await tick();
+    expect(dev()?.value).toBe("Desk");
+    expect((await readSync(kv)).device).toBe("Desk");
+    expect(notices.at(-1)).toBe(dataText("sync.device.said", { name: "Desk" }));
   });
 });
