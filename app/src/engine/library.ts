@@ -8,7 +8,7 @@ import { applyDefChanges, DESC_MAX, MAX_DEFS, replayOrder, type DefChange, type 
 import type { GiacParse } from "./bridge.ts";
 import { assignmentIn, stateHeads, valueTargets } from "./stores.ts";
 import { defaultCasSettings, type CasResult } from "./types.ts";
-import { CAS_ANS, isOurName, isOwnName, renameOurCalls, writeUserNames } from "./ourNames.ts";
+import { CAS_ANS, isOurName, isOwnName, readTests, renameOurCalls, writeTests, writeUserNames } from "./ourNames.ts";
 import { parseText } from "../i18n/enParser.ts";
 import { dropAngleFactor, PASDEG, rewriteAngles } from "./angles.ts";
 import { isFlagName } from "./flags.ts";
@@ -264,6 +264,12 @@ export function asGiac(text: string): string {
   return rewriteAngles(renameOurCalls(text), "typed");
 }
 
+/** G377: a definition's text as Giac text (asGiac), its == and ≠ tests written as the parser writes a typed one (the value
+ *  test, ourNames.ts readTests), so the body defined is the one typing it stores. A test line keeps Giac's own ==. */
+export function bodyAsGiac(text: string): string {
+  return readTests(text, asGiac);
+}
+
 /** One `// n62 library` import into an engine that holds `log`. Checks the rest against the engine (built-in
  *  names, own names, the log's size), defines every definition through cas(), runs the tests, and returns the changes. */
 export function importLibrary(engine: LibraryEngine, lib: LibFile, log: readonly DefEntry[], opts: { replace?: boolean } = {}): ImportResult {
@@ -298,7 +304,7 @@ export function importLibrary(engine: LibraryEngine, lib: LibFile, log: readonly
     } else {
       // G46: a library file is Giac text in radians, written without our degree factor; it goes in here, so a body's
       // sin(x) follows the mode at call time as a typed one does (S14 R14 section 5)
-      const r = engine.cas(asGiac(d.text), defaultCasSettings);
+      const r = engine.cas(bodyAsGiac(d.text), defaultCasSettings);
       if (!r.result.ok) return fail(`line ${d.line}: ${d.name}: ${r.result.error ?? "the engine refused it"}`, d.line, { plan, dirty: true });
       mine = r.defs.map((c) => ("set" in c && c.set.name === d.name ? { set: { ...c.set, desc: d.desc } } : c));
     }
@@ -373,7 +379,7 @@ function inRadians<T>(engine: LibraryEngine, fn: () => T): T {
 /** A library value or function that is the same as the log's entry: the same commands (a function), or a value that
  *  evaluates to what the log holds (the log keeps `B:=(10)`, not `B:=A*2`). */
 function sameDefinition(engine: LibraryEngine, d: LibDef, old: DefEntry): boolean {
-  if (old.cmds.join("\n") === d.text || old.cmds.join("\n") === asGiac(d.text)) return true;
+  if (old.cmds.join("\n") === d.text || old.cmds.join("\n") === bodyAsGiac(d.text)) return true;
   if (d.kind !== "var" || old.kind !== "var" || d.value === undefined) return false;
   const rhs = d.value;
   // a value in a file is in radians (G46): read with the factor 1, as the import's cas() in RAD reads it
@@ -407,8 +413,9 @@ export function exportLibrary(log: readonly DefEntry[], format: LibraryFormat): 
       skipped.push({ name: e.name, why: "a decimal value with its mark facts, in the backup only" });
       continue;
     }
-    // G46: the file is in radians, as typed: a body is written without our degree factor (the import puts it in)
-    out.push("", `// ${describe(e)}`, e.cmds.map((c) => writeUserNames(dropAngleFactor(c, "typed"))).join("\n"));
+    // G46: the file is in radians, as typed: a body is written without our degree factor (the import puts it in);
+    // G377: an == or ≠ test as the test it keeps, so the file names none of ours
+    out.push("", `// ${describe(e)}`, e.cmds.map((c) => writeUserNames(dropAngleFactor(writeTests(c), "typed"))).join("\n"));
   }
   return { text: out.join("\n") + "\n", skipped };
 }

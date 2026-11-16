@@ -94,6 +94,11 @@ export class ClipActions {
     this.say(await (await import("../state/backup.ts")).saveBackup());
   }
 
+  /** Settings › Data › Sync folder (R128): a row's job on the sync code (sync/live.ts), loaded on the press; its result is the notice. */
+  async syncJob(job: "pick" | "now" | "stop"): Promise<void> {
+    this.say(await (await import("../sync/live.ts")).syncJob(job, this.session, this.shell));
+  }
+
   /** Settings › Counters › Export the counts (R127): the counts as they stand; the result is the notice. */
   async saveCounts(counts: TapCounts): Promise<void> {
     const m = await import("../state/countsFile.ts");

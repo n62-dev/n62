@@ -16,7 +16,10 @@
 import { pyHead, pyImports, translateCells, type PyRow } from "../clipboard/python.ts";
 import { validName } from "../clipboard/folder.ts";
 import { sessionLine } from "../state/sessionLine.ts";
+import { deviceSlug } from "./device.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
+
+export { deviceSlug } from "./device.ts";
 
 /** One file's text to append. */
 export interface SyncFile {
@@ -40,23 +43,6 @@ export const processId = (start: Date): string => Math.max(0, Math.floor(start.g
 
 /** A new process's state: nothing written yet. */
 export const syncFilesState = (app: string, start: Date): SyncFilesState => ({ app, process: processId(start), rows: {} });
-
-/** The longest device part of a name, in UTF-8 bytes: the name stays far under folderWrite's 246. */
-const DEVICE_BYTES = 64;
-
-/** The device name as it goes into a file name: a character a file name or Windows refuses (`/ \ : * ? " < > |`, a
- *  control character, a space) becomes `-`, runs of `-` become one, none at either end; cut to 64 UTF-8 bytes on a
- *  whole character; `device` when nothing is left. */
-export function deviceSlug(device: string): string {
-  const s = device.replace(/[\s/\\:*?"<>|\p{Cc}]+/gu, "-").replace(/-+/g, "-").replace(/^[-.]+|[-.]+$/g, "");
-  let out = "";
-  for (const ch of s) {
-    if (new TextEncoder().encode(out + ch).length > DEVICE_BYTES) break;
-    out += ch;
-  }
-  out = out.replace(/[-.]+$/, "");
-  return out === "" ? "device" : out;
-}
 
 const two = (n: number): string => String(n).padStart(2, "0");
 

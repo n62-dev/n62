@@ -593,3 +593,50 @@ export function isError(out: string): boolean {
 export function isTimeout(out: string): boolean {
   return isError(out) && /interrupt/i.test(out);
 }
+
+/** G377: the operators of `s` (typed Giac) that stand outside every bracket and string, in order, each the first of
+ *  `ops` that starts there (so list a longer one before its prefix: `==` before `=`), and the words of `words` that stand
+ *  there as whole names. */
+export function topLevelOps(s: string, ops: readonly string[], words: ReadonlySet<string>): { at: number; op: string }[] {
+  const out: { at: number; op: string }[] = [];
+  let skip = -1;
+  walk(s, 0, (k, d, ch) => {
+    if (k < skip || d !== 0 || OPENERS.includes(ch)) return;
+    if (isNameChar(ch)) {
+      if (isNameChar(s.charAt(k - 1))) return;
+      let e = k;
+      while (isNameChar(s.charAt(e))) e++;
+      if (words.has(s.slice(k, e))) out.push({ at: k, op: s.slice(k, e) });
+      skip = e;
+      return;
+    }
+    const op = ops.find((o) => s.startsWith(o, k));
+    if (op !== undefined) {
+      out.push({ at: k, op });
+      skip = k + op.length;
+    }
+  }, "typed");
+  return out;
+}
+
+/** G377: the brackets of `s` (typed Giac) that stand outside every other bracket and string, in order: where each opens
+ *  and closes, and the name right before it (`piecewise` of `piecewise(…)`; "" when none). Stops at one that does not
+ *  close. */
+export function outerGroups(s: string, q: Quoting): { open: number; close: number; caller: string }[] {
+  const out: { open: number; close: number; caller: string }[] = [];
+  const opens: number[] = [];
+  walk(s, 0, (k, d, ch) => void (d === 1 && OPENERS.includes(ch) && opens.push(k)), q);
+  for (const open of opens) {
+    const close = closing(s, open, q);
+    if (close < 0) break;
+    out.push({ open, close, caller: trailingName(s.slice(0, open)) });
+  }
+  return out;
+}
+
+/** G377: the name `s` ends with ("" when it ends in another character). */
+export function trailingName(s: string): string {
+  let i = s.length;
+  while (i > 0 && isNameChar(s.charAt(i - 1))) i--;
+  return s.slice(i);
+}
