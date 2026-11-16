@@ -22,6 +22,7 @@ import {
   type PrecisionFacts,
 } from "../engine/format.ts";
 import type { NumberFormat } from "../calc/port.ts";
+import { shownDigits } from "../units/uncertainty.ts";
 import { complexToLatex, fractionToLatex, GROUP_LATEX, groupSepFor, homeResultToLatex, polarToLatex, type GroupSep, type Mute } from "../render/home.ts";
 
 export type FmtMode = "std" | "sci" | "eng" | "pfx" | "fix" | "frac" | "mixed" | "polar" | "hex" | "bin" | "oct";
@@ -92,6 +93,8 @@ export interface NumericResult {
   polar?: Polar;
   /** The mode chosen with the Format key for this result; undefined: the global setting (Home) or exact (CAS). */
   fmt?: FmtMode;
+  /** R327f1: a unit row's σ (units/types.ts UnitRow.unc): its "value ± σ" is drawn after the number, and counts for the mark. */
+  units?: { unc?: { shown?: unknown; text?: unknown } };
 }
 
 export interface Facts {
@@ -261,7 +264,16 @@ export function markFor(r: NumericResult, mode: FmtMode | undefined, ctx: Displa
     info = markOf({ ...p, ...polar }, o);
     if (info?.mark === "=" && polar) info = { mark: "≈" };
   }
-  return info?.mark === "=" && r.inexactInput ? { mark: "≈" } : info;
+  // R327f1: a unit row's ± σ claims the value to σ's last place, whatever the digits setting (units/result.ts as well)
+  return withSigmaText(info?.mark === "=" && r.inexactInput ? { mark: "≈" } : info, p.reliableDigits, shownDigits(r.units?.unc));
+}
+
+/** R327f1: the mark of a row with σ, whose "value ± σ" or short form rounds the value to σ's last place: ⚠ with the
+ *  value's confirmed digits when that text shows more of them (`shown`, units/uncertainty.ts digitsToSigma) than are
+ *  confirmed (principle 3), as markOf does for the digits the format shows; `m` itself otherwise. */
+export function withSigmaText(m: MarkInfo | null, reliableDigits: number | null | undefined, shown: number | null): MarkInfo | null {
+  if (!m || m.mark === "⚠" || reliableDigits === null || reliableDigits === undefined || shown === null || shown <= reliableDigits) return m;
+  return { mark: "⚠", n: Math.max(0, reliableDigits) };
 }
 
 /** The mark as drawn: `=`, `≈`, `⚠ 7`, or a bare `⚠` for an un-audited or unchecked float (decisions M4-5). */

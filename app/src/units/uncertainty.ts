@@ -120,3 +120,23 @@ export function expandedText(sigma: string): string | null {
   const t = twoDigits({ ...s, m: 2n * s.m });
   return t ? write(false, t.m, t.k) : "0";
 }
+
+/** R327f1: the significant digits the value part of "value ± σ" and of the short form shows: both round the value to
+ *  σ's last place (σ at 2 significant digits), so "10.123 ± 0.071" and "10.123(71)" show 5 ("12300 ± 1200": 3, its
+ *  zeros hold places). Null for a σ of 0, a value that rounds to 0 and text that is no decimal. */
+export function digitsToSigma(value: string, sigma: string): number | null {
+  const v = parseDecimal(value);
+  const s = parseDecimal(sigma);
+  const t = v && s ? twoDigits(s) : null;
+  if (!v || !t) return null;
+  const m = roundTo(v, t.k);
+  return m === 0n ? null : m.toString().length;
+}
+
+/** R327f1: the digits the value part of a unit row's "value ± σ" (Uncertainty.shown) shows; null as digitsToSigma, and
+ *  for a text that is not the value, " ± " and σ. */
+export function shownDigits(unc: { shown?: unknown; text?: unknown } | undefined): number | null {
+  const sh = unc?.shown, tx = unc?.text;
+  if (typeof sh !== "string" || typeof tx !== "string" || !sh.endsWith(` ± ${tx}`)) return null;
+  return digitsToSigma(sh.slice(0, sh.length - tx.length - 3), tx);
+}
