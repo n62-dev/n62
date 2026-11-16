@@ -9,6 +9,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
+- **G557, patch 0045 drops a square root (before the tag?):** on phase-1 `simplify(sqrt(2^(1/3)+sqrt(3)))`, `normal(sqrt(2^(1/3)+3^(1/3)))` and `normal(sqrt(3^(1/3)+7^(1/3)))` show `= 1` (right 1.72973172991, 1.64382803851, 1.83171524891); the engine without 0045 is right. A gorge package that fixes 0045 at its cause, lane B's head before the freeze? Recommended (an exact wrong answer); pending rows `g557-*-cbrt*` in precision.yaml.
 
 ## Decided proposals
 
