@@ -106,6 +106,26 @@ cases:
   - { id: "t14b7", input: "pasupm(-273.15,0.1)*{oC}", oracle: "F('-273.15')+F('273.15')", expect: "0", mark: "≈", exact: "0", dim: "K1", unit: "K", unc: "0.10", unc_oracle: "F('0.1')", shown: "0.00 ± 0.10", source: "derived", note: "with ±, no end slot (was the engine message, uncertainty of K1 on a pure number)" }
   - { id: "t14c1", input: "-273*{oC}", to: "K", oracle: "F(-273)+F('273.15')", expect: "0.15", mark: "=", exact: "3/20", source: "derived", note: "control: just above absolute zero" }
   - { id: "t14c2", input: "-273.16*{oC}", to: "K", message: "Below absolute zero", source: "derived", note: "control: just below absolute zero" }
+  # --- G370: T1 − T2 of one absolute scale is a temperature difference (owner, 2026-11-14; night review fh-7): shown in K without an end slot (t06), Δ°C and Δ°F among the alternatives; every other mix stays refused ---
+  - { id: "td01", input: "80*{oC}-20*{oC}", oracle: "F(80)-F(20)", expect: "60", mark: "=", exact: "60", dim: "K1", unit: "K", source: "oracle", note: "a point minus a point: 60 K (was Use K or Δ°C)" }
+  - { id: "td02", input: "98.6*{oF}-32*{oF}", oracle: "(F('98.6')-32)*F(5,9)", expect: "37", mark: "=", exact: "37", dim: "K1", unit: "K", source: "oracle", note: "66.6 Δ°F = 37 K" }
+  - { id: "td03", input: "98.6*{oF}-32*{oF}", to: "oR", oracle: "F('98.6')-32", expect: "66.6", mark: "=", exact: "333/5", source: "oracle", note: "in °R, the size of Δ°F: 66.6" }
+  - { id: "td04", input: "80*{oC}-20*{oC}", tap: "Δ°C", oracle: "F(80)-F(20)", expect: "60", mark: "=", exact: "60", source: "oracle", note: "the row offers Δ°C, not the absolute °C (which would read 60 K as -213.15 °C)" }
+  - { id: "td05", input: "98.6*{oF}-32*{oF}", tap: "Δ°F", oracle: "F('98.6')-32", expect: "66.6", mark: "=", exact: "333/5", source: "oracle", note: "Δ°F is °R's size" }
+  - { id: "td06", input: "(80*{oC}-20*{oC})", oracle: "F(80)-F(20)", expect: "60", mark: "=", exact: "60", dim: "K1", unit: "K", source: "oracle", note: "the difference in brackets" }
+  - { id: "td07", input: "20*{oC}-80*{oC}", oracle: "F(20)-F(80)", expect: "-60", mark: "=", exact: "-60", dim: "K1", unit: "K", source: "oracle", note: "a difference may be negative; each temperature is above 0 K" }
+  - { id: "td08", input: "20*{oC}-20*{oC}", oracle: "F(0)", expect: "0", mark: "=", exact: "0", dim: "K1", unit: "K", source: "oracle", note: "a difference of 0 keeps its K (G35)" }
+  - { id: "td09", input: "80*{oC}-20*{oC}", to: "K", oracle: "F(60)", expect: "60", mark: "=", exact: "60", source: "oracle" }
+  - { id: "td10", input: "pasupm(80,0.5)*{oC}-pasupm(20,0.5)*{oC}", oracle: "F(60)", expect: "60", mark: "≈", exact: "60", dim: "K1", unit: "K", unc: "0.71", unc_oracle: "sqrt(2)*F('0.5')", shown: "60.00 ± 0.71", source: "oracle", note: "two independent inputs, 1 °C = 1 K in σ" }
+  - { id: "td11", input: "-300*{oC}-20*{oC}", message: "Below absolute zero", source: "derived", note: "each temperature must be one: -300 °C is below 0 K" }
+  - { id: "td12", input: "300*{K}-20*{oC}", message: "K and °C are two scales: write both temperatures in one", source: "derived", note: "two scales: the message names them" }
+  - { id: "td13", input: "80*{oC}-20*{oF}", message: "°C and °F are two scales: write both temperatures in one", source: "derived" }
+  - { id: "td14", input: "80*{oC}-20*{oC}", to: "oC", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "an absolute °C as the end slot would read the difference as a temperature" }
+  - { id: "td15", input: "20*{oC}+5*{oC}", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a sum of two temperatures" }
+  - { id: "td16", input: "(80*{oC}-20*{oC})+5*{oC}", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a third term" }
+  - { id: "td17", input: "(80*{oC}-20*{oC})^2", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a power around the difference" }
+  - { id: "td18", input: "2*(80*{oC}-20*{oC})", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a product around the difference" }
+  - { id: "td19", input: "(80*{oC}-20*{oC})/(2*{s})", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "control: a quotient around the difference" }
   - { id: "l01", input: "1*{W}", to: "dBm", oracle: "10*log10(1000)", expect: "30", mark: "=", exact: "30", source: "derived", note: "10·log10(P / 1 mW)" }
   - { id: "l02", input: "1*{Np}", to: "dB", oracle: "20/ln(10)", expect: "8.68588963807", mark: "≈", exact: "20/ln(10)", source: "derived", note: "the field-quantity convention: 1 Np = 20/ln 10 dB" }
   - { id: "l03", input: "30*{dBm}", to: "W", oracle: "F(1)", expect: "1", mark: "=", exact: "1", source: "derived" }
