@@ -72,6 +72,10 @@ export interface Case {
   own?: boolean;
   /** home.yaml (G34): a sequence of lines, each in its own angle mode; the last one is checked against expect and mark. */
   steps?: Step[];
+  /** home.yaml, units.yaml (G302): the same result as an RPN sequence: a number (LaTeX in Home, the `input` syntax in the unit view),
+   *  `dup`, `drop`, `swap`, or a key id with `:shift` for its Shift layer. The gate's rpn stage runs it on the stack model and
+   *  composer (entry/rpn.ts, rpnCompose.ts) and must give what the case's own line gives. */
+  rpn?: string[];
   /** home.yaml sequences (G49): the constants the steps hold by name (`pasc_<id>`), as G26's table. */
   consts?: ConstTable;
   /** precision.yaml, kind cas: the stored names the CAS result must list as used (G20); [] means none. */
@@ -148,10 +152,10 @@ export const homeLatexStep = (latex: string, chips: ChipTable = {}): ReturnType<
  * with Home's options and an Ans chip built from the step before, by the session's rule (state/results.ts, G86). An
  * inexact chip makes an "=" a "≈" (displayMode.ts markFor, decisions M4-4); `inexactInput` carries that to markOf.
  */
-export async function runSteps(fresh: () => Promise<EngineHost>, steps: Step[], digits: number, consts: ConstTable | undefined): Promise<HomeResult & { inexactInput?: boolean }> {
+export async function runSteps(fresh: () => Promise<EngineHost>, steps: Step[], digits: number, consts: ConstTable | undefined, chips0: ChipTable = {}): Promise<HomeResult & { inexactInput?: boolean }> {
   const host = await fresh();
   let last: (HomeResult & { inexactInput?: boolean }) | undefined;
-  let chips: ChipTable = {};
+  let chips: ChipTable = chips0; // (G302: the case's own chips, a constant of Find on the line, for the first step)
   // G49: every step's result as a chip by name (`pasr_<k>`, k from 1), with its facts, for the `input` steps.
   const named: Record<string, ChipFactsTable[string]> = {};
   for (const [k, st] of steps.entries()) {
@@ -207,6 +211,8 @@ export function casMark(r: CasResult, digits: number): MarkInfo | null {
 /** One home.yaml case on `host` (a sequence on its own engine from `fresh`). */
 export async function runHomeCase(c: Case, host: EngineHost, fresh: () => Promise<EngineHost>): Promise<HomeResult & { inexactInput?: boolean }> {
   if (c.steps) return runSteps(fresh, c.steps, c.settings?.digits ?? 12, c.consts && constTable(c.consts));
+  // G302: a `latex` case with `chips` (a constant of Find, `\const{G}{G}`) runs as one step with them, its σ kept
+  if (c.latex !== undefined && c.chips) return runSteps(fresh, [{ latex: c.latex, angle: c.settings?.angle ?? "rad" }], c.settings?.digits ?? 12, undefined, c.chips);
   const s: HomeSettings = { ...defaultHomeSettings, angle: c.settings?.angle ?? "rad" };
   // A case written as `latex` goes through our parser with Home's options (no realOddRoots since R66), its `before` too
   const giacOf = (t: string): string => (c.latex !== undefined ? giacOfEntry(t, "home").giac : t);
