@@ -147,6 +147,13 @@ describe("presets (R88)", () => {
     expect(again.session.settings.haptics).toEqual({ on: false, strength: 80, ms: 40, click: true });
   });
 
+  it("a preset holding entry rpn applies it (R253)", async () => {
+    const rpn: StoredPresets = { presets: [{ id: 1, name: "Stack", groups: { mode: { entry: "rpn" } } }], active: null, next: 2 };
+    const { session, presets } = await setup({ "@n62": DATA_VERSION, value: rpn });
+    await presets.apply(1);
+    expect(session.settings.entry).toBe("rpn");
+  });
+
   it("a held field the app cannot read is skipped, and the other fields still apply", async () => {
     const bad: StoredPresets = { presets: [{ id: 1, name: "Bad", groups: { mode: { angle: "grad", digits: 8, format: "hex" } } }], active: null, next: 2 };
     const { session, presets } = await setup({ "@n62": DATA_VERSION, value: bad });

@@ -63,13 +63,9 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 796 | R327 Shift + 1 opens the uncertainty sheet: the key and the head (owner, 11-15; before the freeze) | ron, Opus | `p1/ron-uncsheet` | G270, G273 |
-| 797 | R328 the uncertainty sheet's rows, variant A | ron, Opus | `p1/ron-uncrows` | R327, G272, G273, G274 |
-| 813 | R250 the RPN stack model (units and ± kept; owner, 11-15: before the freeze) | ron, Opus | `p1/ron-rpnstack` | – |
-| 814 | R251 the RPN operation composer and its binding to a row | ron, Opus | `p1/ron-rpncompose` | R250 |
-| 815 | [R252](packages/R252.md) the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
-| 816 | [R253](packages/R253.md) the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
-| 802 | [R333](packages/R333.md) a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
+| 815 | R252 the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
+| 816 | R253 the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
+| 802 | R333 a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
 | 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |

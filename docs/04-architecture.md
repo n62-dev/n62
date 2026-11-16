@@ -3,7 +3,7 @@
 
 *sandra, 2026-10-12. **This document supersedes [02-architecture-plan.md](02-architecture-plan.md) wherever the two differ.** docs/02 stays the record of the original plan and of the reasoning that still holds (solver choice in section 4, licence and F-Droid in sections 10–11). Binding inputs: [rules-core.md](rules-core.md) (goal, three principles, hard rules), [03-feature-analysis.md](03-feature-analysis.md) (the owner's design rules), [decisions.md](decisions.md) P8. A claim about the code cites the file or a probe (`tools/probes/`, its README; Appendix A); **(to verify)** marks what was not checked, with who checks it and how (Appendix C).*
 
-Each area: **state** (verified), **decision** (with the reason), **alternatives**, **budgets and gates**, **risks**, **what would change it**. Section 8: the component diagram, the interfaces, the budgets. A paragraph shortened on 2026-11-05 has its longer text in this file at `4d80167f`.
+Each area: **state** (verified), **decision** (with the reason), **alternatives**, **budgets and gates**, **risks**, **what would change it**. Section 8: the component diagram, the interfaces, the budgets.
 
 ## 0. The decisions on one page
 
@@ -173,7 +173,7 @@ Giac runs with `angle_radian:=1` in every view and mode, and the degree mode liv
 - the polar entry's angle carries it, and the ° template is `u*pi/180/pasdeg`; `polar_coordinates` and `instfreq` answer over it and the one-list `rectangular_coordinates([r,t])` takes its angle times it;
 - the host sets `pasdeg` to π/180 in DEG and 1 in RAD when the mode changes, and every name that starts with `pas` (`pasdeg` among them) is reserved (G341: the parser and the library reader refuse it, `ourNames.ts` isOurName). The rule is one table, `app/src/engine/angles.ts`, shared by the emitter and `rewriteAngles`.
 
-Every Giac path therefore sees radians. A typed or library function keeps `pasdeg` in its body, so it follows the mode at call time. The plot multiplies by the same factor. In DEG the CAS view, and a Home result that is not a number, show the result as the mode reads it: Giac evaluates the text with each `trig(u)` taken as trig of u·180/π and each inverse as π/180 times the inverse, so `diff(sin(x),x)` shows `pi/180*cos(x)` (`engine/degrees.ts`). A constant's degree quotient is reduced in the CAS view (G301): a text with no free name, no trig call and the printed form `/(pi/180)` or `*pi/pi` goes through `normal`, so `asin(1/2)` shows 30. That `normal` is slow on many roots (five take 7 s; backlog F196). Ans and chips keep the radian text. Previews, Vars and the library export drop the factor, and a library import puts it in. Stored logs older than DATA_VERSION 3 are migrated (`engine/angleMigration.ts`). Evidence: [archive/r14-angle-mode.md](archive/r14-angle-mode.md).
+Every Giac path therefore sees radians. A typed or library function keeps `pasdeg` in its body, so it follows the mode at call time. The plot multiplies by the same factor. In DEG the CAS view, and a Home result that is not a number, show the result as the mode reads it: Giac evaluates the text with each `trig(u)` taken as trig of u·180/π and each inverse as π/180 times the inverse, so `diff(sin(x),x)` shows `pi/180*cos(x)` (`engine/degrees.ts`). A constant's degree quotient is reduced in the CAS view (G301): a text with no free name, no trig call and the printed form `/(pi/180)` or `*pi/pi` goes through `normal`, so `asin(1/2)` shows 30. It is slow on many roots (backlog F196). Ans and chips keep the radian text. Previews, Vars and the library export drop the factor, and a library import puts it in. Stored logs older than DATA_VERSION 3 are migrated (`engine/angleMigration.ts`). Evidence: [archive/r14-angle-mode.md](archive/r14-angle-mode.md).
 
 ---
 
@@ -352,7 +352,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
 | `view`, `place`, `entry` | the open view and app; the half-typed line |
 | `history` | ≤ 200 items per view, with `full` (≤ 2 kB) and the mark facts |
-| `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. **Variables are kept as their value**, not their command (`B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`); functions and `assume` keep their command. `restore()` replays them; a function stays pending until an input needs it (G83), names stored through an argument, Giac's own names and `restart` (G174): `engine/host.ts`, `stores.ts` |
+| `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, preview, view, time; ≤ 500 lines. **Variables are kept as their value** (`B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`); functions and `assume` keep their command. `restore()` replays them (`engine/host.ts`, `stores.ts`): functions pending until used (G83), names stored through an argument, Giac's own names, `restart` (G174) |
 | `defsStarts` | starts that ran the replay and never got ready (a load failure is not counted, G327); at 2 the engine starts without the log |
 | `tipsSeen` | tips shown |
 | `historyDropNoted` | the note "older rows are dropped after 200" was said (per install, not backed up) |
@@ -360,6 +360,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets`, `units.own` | the last target per dimension; your units (`units/ownRecord.ts`, as strict at a restore as at the start; ids `@name`, G233) |
 | `word` | `{ bits, signed }` (R194) |
+| `rpn` | `{ levels: [{ uid, chip, shown, inputs }] }`, level 1 first (R252, `entry/rpnStore.ts`) |
 | `uses` | the results mode's counts (R53, `state/uses.svelte.ts`), for decisions.md P16's removal test; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo`, `sync.queue` | not backed up |
 
@@ -450,7 +451,7 @@ The types live in the code; this is the map. Views see `Calc` (`app/src/calc/por
 | Find index asset | ≤ 400 kB raw, ≤ 100 kB gzip | 325.7 / 67.1 kB (2026-10-15) | size test |
 | Unit view chunks | ≤ 42 kB raw (entries); pin 78.55 kB with shared | 41.96; 78.48 kB | size test |
 | Precache total | ≤ 18 MB | 12.4 MB (2026-10-18) | size test |
-| Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions; nothing stored (A73f1, 11-08): Home 790 / 1330 ms, CAS last 795 / 1507 ms (in the worker's wasm instantiate: A73f2) | device runs |
+| Keyboard usable / engine ready (Tab One) | < 1 s / < 1.5 s, with the `defs` replay | 722 / 1103 ms cold; 1489 ms engine ready with 200 definitions; nothing stored (A73f1, 11-08): Home 790 / 1330 ms, CAS last 795 / 1507 ms (A73f2) | device runs |
 | Enter → result p95 (Tab One) | < 150 ms at 12 digits; at 30 digits ≤ 1.3 × the 12-digit p95 | RAD 147.9 ms at 12, 152.6 at 30; DEG 149.1 and 141.4 | device runs |
 | Find key → list (Tab One) | p95 ≤ 16 ms | 14.1 ms | `?bench=find` (A4b) |
 | Find open | ≤ 100 ms warm, ≤ 300 ms cold | max of 50: 244 ms | device runs |
