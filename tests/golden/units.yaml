@@ -118,6 +118,10 @@ cases:
   - { id: "td09", input: "80*{oC}-20*{oC}", to: "K", oracle: "F(60)", expect: "60", mark: "=", exact: "60", source: "oracle" }
   - { id: "td10", input: "pasupm(80,0.5)*{oC}-pasupm(20,0.5)*{oC}", oracle: "F(60)", expect: "60", mark: "≈", exact: "60", dim: "K1", unit: "K", unc: "0.71", unc_oracle: "sqrt(2)*F('0.5')", shown: "60.00 ± 0.71", source: "oracle", note: "two independent inputs, 1 °C = 1 K in σ" }
   - { id: "td11", input: "-300*{oC}-20*{oC}", message: "Below absolute zero", source: "derived", note: "each temperature must be one: -300 °C is below 0 K" }
+  - { id: "td11b", input: "-273.15*{oC}-20*{oC}", oracle: "F('-273.15')-F(20)", expect: "-293.15", mark: "=", exact: "-5863/20", dim: "K1", unit: "K", source: "derived", note: "T1 is exactly 0 K: allowed, the sign decided exactly (fix round 2: the check read the decimals as floats)" }
+  - { id: "td11c", input: "-459.67*{oF}-32*{oF}", oracle: "(F('-459.67')-32)*F(5,9)", expect: "-273.15", mark: "=", exact: "-5463/20", dim: "K1", unit: "K", source: "derived", note: "T1 is exactly 0 K in °F: 5/9·(-459.67) + 45967/180 is 0 only when exact" }
+  - { id: "td11d", input: "-273.16*{oC}-20*{oC}", message: "Below absolute zero", source: "derived", note: "just below 0 K (was = -293.16 K: the float sign -1.0 never matched -1)" }
+  - { id: "td11e", input: "-273.1500000000000000001*{oC}-20*{oC}", message: "Below absolute zero", source: "derived", note: "control: 1E-19 K below 0 K, more digits than a double holds (Giac read it as a long float; now exact)" }
   - { id: "td12", input: "300*{K}-20*{oC}", message: "K and °C are two scales: write both temperatures in one", source: "derived", note: "two scales: the message names them" }
   - { id: "td13", input: "80*{oC}-20*{oF}", message: "°C and °F are two scales: write both temperatures in one", source: "derived" }
   - { id: "td14", input: "80*{oC}-20*{oC}", to: "oC", message: "Use K or Δ°C for a temperature difference", source: "derived", note: "an absolute °C as the end slot would read the difference as a temperature" }
