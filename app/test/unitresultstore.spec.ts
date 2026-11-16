@@ -123,7 +123,7 @@ test.describe("Store ▶ in the unit view (R353)", () => {
     await expect(note(page)).toHaveText(FIRST);
     await expect(page.getByTestId("unit-view")).toBeVisible();
     await expect(store(page)).toHaveCount(0);
-    expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1", "end"]);
+    expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1"]);
     expect(await page.evaluate(() => window.n62.session.userNames.length)).toBe(0);
     // Tools › Store in a name needs a result too
     await tap(page, ["math"]);

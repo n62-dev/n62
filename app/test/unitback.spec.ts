@@ -17,6 +17,9 @@ const unitsKey = async (page: Page): Promise<void> => {
   await up(page);
 };
 const result = (page: Page) => page.getByTestId("unit-result");
+/** R349: → Check / ✕ Check, and whether the end slot is on. */
+const check = (page: Page) => page.getByTestId("unit-check");
+const checking = (page: Page) => page.evaluate(() => window.n62.unitView?.view.checking);
 const chip = (page: Page, text: string) => page.getByTestId("unit-alt").filter({ hasText: new RegExp(`^${text}$`) });
 const lastRow = (page: Page) => page.locator("article.item").last();
 /** The view's slot as text: `m`, `m:m`, `m^2`, `` (empty). */
@@ -148,8 +151,6 @@ test.describe("the way back from the unit view (R63)", () => {
 
   // R349 (owner, 2026-11-16): no end slot until → Check is tapped; Enter in the last slot evaluates in the result's own
   // unit. c67's keys (→ Check, lb), derived 5/0.45359237 = 11.0231131092; 72 km/h = 20 m/s (1 km/h = 5/18 m/s, derived)
-  const check = (page: Page) => page.getByTestId("unit-check");
-  const checking = (page: Page) => page.evaluate(() => window.n62.unitView?.view.checking);
   test("5 kg: Enter in the last slot evaluates, = 5 kg; → Check brings the end slot with its reading, lb gives c67's ≈ 11.0231131092 lb", async ({ page }) => {
     await tap(page, ["d5"]);
     await unitsKey(page);
@@ -203,7 +204,7 @@ test.describe("the way back from the unit view (R63)", () => {
     await expect(result(page)).toHaveAttribute("data-text", "72");
     await expect(result(page)).toHaveAttribute("data-unit", "km/h");
     await check(page).tap();
-    await tap(page, ["d9", "div", "d9"]);
+    await tap(page, ["d9", "div", "d3"]);
     await tap(page, ["enter"]);
     await expect(result(page)).toHaveAttribute("data-text", "20");
     await expect(result(page)).toHaveAttribute("data-unit", "m/s");
@@ -238,9 +239,9 @@ test.describe("the way back from the unit view (R63)", () => {
     await page.evaluate(() => window.n62.entry.ready);
     await reopen();
     await leaveView(page);
-    // a row without one (5 kg, Enter) opens without it
+    // a row without one (7 kg, Enter) opens without it (a new line: "5" keeps its slots, lb too)
     await page.evaluate(() => window.n62.entry.clear());
-    await tap(page, ["d5"]);
+    await tap(page, ["d7"]);
     await unitsKey(page);
     await tap(page, ["d4", "d6", "enter"]);
     await expect(result(page)).toHaveAttribute("data-unit", "kg");
@@ -442,7 +443,8 @@ test.describe("Copy as shown on a unit row (R63f1)", () => {
     // the units key: the slot after the chip starts with its unit; the end slot c m x² gives the value in cm²
     await unitsKey(page);
     expect(await slotText(page, "u1")).toBe("m^2");
-    await tap(page, ["enter", "d5", "d9", "sq"]);
+    await check(page).tap(); // R349: → Check brings the end slot
+    await tap(page, ["d5", "d9", "sq"]);
     expect(await slotText(page, "end")).toBe("c:m^2");
     await flick(page, "enter", "up");
     await expect(page.getByTestId("unit-unit")).toHaveText("cm²");
