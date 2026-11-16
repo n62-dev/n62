@@ -23,6 +23,8 @@ export interface SyncDeps {
   readonly native: boolean;
   readonly kv: Kv;
   folderName(): Promise<string | null>;
+  /** The file names in the kept folder, listed as the sync code lists them (none when no folder is chosen). */
+  fileNames(): Promise<string[]>;
 }
 
 const isNative = (): boolean => (globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.() === true;
@@ -32,6 +34,10 @@ const live = (): SyncDeps => ({
   folderName: async () => {
     const r = await (await import("../clipboard/folder.ts")).folderName();
     return r === "unavailable" ? null : r.name;
+  },
+  fileNames: async () => {
+    const r = await (await import("../clipboard/folder.ts")).folderList();
+    return r === "unavailable" ? [] : r.map((f) => f.name);
   },
 });
 
@@ -47,23 +53,29 @@ function rows(env: SettingsEnv, deps: SyncDeps): { items: () => MenuItem[] } {
   let mode = $state<SyncMode>("offer");
   let device = $state<string | undefined>(undefined); // the kept name (undefined: none made yet)
   let status = $state<SyncStatus | undefined>(undefined);
-  let slug: ((name: string) => string) | undefined; // sync/device.ts deviceSlug, once its chunk is in
   let read = false;
   const setMode = (m: SyncMode): void => {
     mode = m;
     void import("../sync/record.ts").then((r) => r.patchSync(deps.kv, { mode: m }));
   };
   // A tap on Device name: the name is typed on the entry line (as a preset's is) and kept sanitised, as a made one is.
+  // R183f1: when the edit is saved the folder's file names are read and a name another device's files carry is refused
+  // (sync/device.ts renameDevice): the row shows the name kept, the notice says which.
+  const rename1 = async (typed: string): Promise<void> => {
+    const d = await import("../sync/device.ts");
+    const kept = await d.renameDevice(deps.kv, typed, await deps.fileNames().catch(() => []));
+    device = kept === "" ? undefined : kept;
+    const refused = kept !== d.deviceSlug(typed);
+    env.data?.((c) => c.say(refused ? dataText("sync.device.taken", { name: d.deviceSlug(typed) }) : dataText("sync.device.said", { name: kept })));
+  };
   const rename = (): void => {
     const kept = (): string => device ?? dataText("sync.device.none");
     askName(
       env,
       device ?? "",
       (typed) => {
-        if (!slug) throw new Error("device.ts not loaded"); // (read on the level's first draw: this is the notice's unknown fault)
         if (typed.trim() === "") return; // a blank edit keeps the name
-        device = slug(typed);
-        void import("../sync/device.ts").then((d) => d.renameDevice(deps.kv, typed));
+        void rename1(typed);
       },
       () => dataText("sync.device.said", { name: kept() }),
       dataText("sync.device"),
@@ -78,7 +90,6 @@ function rows(env: SettingsEnv, deps: SyncDeps): { items: () => MenuItem[] } {
         mode = r.mode ?? "offer";
         device = r.device;
       });
-      void import("../sync/device.ts").then((d) => (slug = d.deviceSlug));
       void import("../sync/status.ts").then((m) => {
         status = m.lastStatus();
         m.watchStatus((s) => (status = s));
