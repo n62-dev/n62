@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R128: Settings › Data › Sync folder, its rows on Android and on the web.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { EntryPrompt } from "../apps/shell.svelte.ts";
 import type { ActionBody } from "../keyboard/keyboard.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
@@ -144,15 +144,14 @@ describe("Settings › Data › Sync folder (R128)", () => {
     const dev = (): MenuItem | undefined => sub?.items.find((r) => r.id === "device");
     dev()?.run?.();
     type("Pixel-7-77aa");
-    await tick();
-    await tick();
+    // the rename imports sync/device.ts first (a real wait on a cold run): wait for its notice, not for a count of ticks
+    await vi.waitFor(() => expect(notices.at(-1)).toBe(dataText("sync.device.taken", { name: "Pixel-7-77aa" })));
     expect(dev()?.value).toBe("Pixel-7-0a3f");
     expect((await readSync(kv)).device).toBe("Pixel-7-0a3f");
     expect(notices.at(-1)).toBe(dataText("sync.device.taken", { name: "Pixel-7-77aa" }));
     dev()?.run?.();
     type("Desk");
-    await tick();
-    await tick();
+    await vi.waitFor(() => expect(notices.at(-1)).toBe(dataText("sync.device.said", { name: "Desk" })));
     expect(dev()?.value).toBe("Desk");
     expect((await readSync(kv)).device).toBe("Desk");
     expect(notices.at(-1)).toBe(dataText("sync.device.said", { name: "Desk" }));

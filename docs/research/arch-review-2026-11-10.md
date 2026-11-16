@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # The architecture review of 2026-11-10
 
-**Status (2026-11-10): open.** This note holds the findings, the owner's answers and the boundary design for the checking layer. The packages are being placed. Once they all exist, this note is deleted, unless code or a live doc cites it as its spec (rules section 10).
+**Status: decided** (2026-11-10, placed 2026-11-14): X9–X27 after the tag in REPORT-2's order; section 4 is their spec. This note holds the findings, the owner's answers and the boundary design for the checking layer. Once the packages all exist, this note is deleted, unless code or a live doc cites it as its spec (rules section 10).
 
 *Written 2026-11-10 by Claude (Opus, the coordinator), from an outside review by Claude Fable 5.2. The review was read-only, on `phase-1` `5d91e0c4`, in three passes: the review, the second pass and a hunt for wrong answers. A check of the before-tag packages by sofia followed.* The evidence is the two reports (about 8,000 words, with `file:line`, counts and probe output) and the package drafts. They are in git, in [archive/arch-review-2026-11-10/](../archive/arch-review-2026-11-10/REPORT.md) (`REPORT.md`, `REPORT-2.md`, `HUNT.md`, `HUNT-2.md`, `hunt-tasks.yaml`, `SOFIA-CHECK.md`, `packages/`).
 
@@ -91,19 +91,7 @@ Three small engine modules and one main-thread function. Each gathers code that 
 
 Placed on 2026-11-10 after sofia's check (`SOFIA-CHECK.md`: every claim held, and every draft was corrected).
 
-**Before the tag:**
-
-| Id | From | What |
-|---|---|---|
-| G318 | X2 | an engine that cannot start stops after two tries; a start failure is classed as load or memory |
-| R284 | X3 | the engine-failed note says why and offers Reload |
-| A144 | X1 | the core list in Firefox; the WebKit try (replaces A110) |
-| R285 | X4 | a browser that has not passed says so at start |
-| G319 | X5 | the unit view refuses what Home refuses |
-| G320 | X5c | CAS refuses a pure number through an infinity |
-| G321 | X7 | 17 bare US unit ids get `_US` |
-| G322 | X28 | `solve` keeps the real root of a cubic factor: a Giac patch at the cause, `solve.cc:445-448` (H2, HUNT-2) |
-| A91 | X8 | the release notes' known limits gain screen readers, browsers and the decimal mark of plot axes |
+**Before the tag:** all merged (G318, R284, A144, R285, G319, G320, G321, G322: X1 to X5c, X7, X28) but A91 (X8, the release notes' known limits), by day.
 
 **By day, not holding the tag:** A145 (X6), the F-Droid engine build measured against the release engine.
 

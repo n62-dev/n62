@@ -1,0 +1,53 @@
+== build: Sun Nov 15 23:23:12 CET 2026  index: Sun Nov  8 12:30:58 CET 2026  run: Mon Nov 16 10:07:49 CET 2026
+80*{oC}-5*{K}  (from the command line)
+  refused: °C and K are two scales: write both temperatures in one  [scales]
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+80*{oC}+5*{K}  (from the command line)
+  refused: Use K or Δ°C for a temperature difference  [temperature]
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+80*{oC}-20*{oC}  (from the command line)
+  = 60 K   dim Θ (K1)   si 60   exact 60   14.0 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+Θ (K1): 3 units, 1 with a measured weight
+surd(-4*{m^2},2)  (from the command line)
+  = 2*i m   dim L (m1)   si 2*i   exact 2*i   19.6 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+L (m1): 49 units, 6 with a measured weight
+surd(-16*{m^4},4)  (from the command line)
+  ≈ 1.41421356237+1.41421356237*i m   dim L (m1)   si (1+i)*sqrt(2)   exact (1+i)*sqrt(2)   49.5 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+L (m1): 49 units, 6 with a measured weight
+surd(-8*{m^3},3)  (from the command line)
+  = -2 m   dim L (m1)   si -2   exact -2   15.8 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+L (m1): 49 units, 6 with a measured weight
+surd(pasupm(-4,0.1)*{m^2},2)  (from the command line)
+  refused: The unit view could not evaluate this  [engine]
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+"approx(ln(1-tanh(50)))" => {"ok":false,"path":"exact","display":"Overflow: the number is too large","approximate":false,"error":"overflow"}
+   facts {"facts":{"exact":false,"reliableDigits":null},"full":"Overflow: the number is too large","fullLength":33}
+"(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^(-2))" => {"ok":true,"path":"exact","display":"1","approximate":false,"exact":"(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^-2)"}
+   value re 0.1e1  920.8 ms
+   facts {"facts":{"exact":false,"reliableDigits":40},"full":"(1+ln(1+sin(1)^5000)^2)^(ln(1+sin(1)^5000)^-2)","fullLength":46,"exactLength":46}
+"1/(1-tanh(1000))" => {"ok":false,"path":"exact","display":"Overflow: the number is too large","approximate":false,"error":"overflow"}
+   facts {"facts":{"exact":false,"reliableDigits":null},"full":"Overflow: the number is too large","fullLength":33}
+"1/(1-tanh(800))" => {"ok":false,"path":"exact","display":"Overflow: the number is too large","approximate":false,"error":"overflow"}
+   facts {"facts":{"exact":false,"reliableDigits":null},"full":"Overflow: the number is too large","fullLength":33}
+"ln(1-tanh(800))" => {"ok":false,"path":"exact","display":"Overflow: the number is too large","approximate":false,"error":"overflow"}
+   facts {"facts":{"exact":false,"reliableDigits":null},"full":"Overflow: the number is too large","fullLength":33}
+"1/(1-tanh(300))" => {"ok":true,"path":"exact","display":"1.88651015046E260","approximate":false,"exact":"1/(1-tanh(300))"}
+   value re 0.188651015046496991170071559674156754859138e261 (more digits)  1.8 ms
+   facts {"facts":{"exact":false,"reliableDigits":40},"full":"1/(1-tanh(300))","fullLength":15,"exactLength":15}
+"ln((tanh(100)-1)^2)" => {"ok":true,"text":"2*ln(tanh(100)-1)","latex":"2 \\ln\\left(\\mathrm{tanh}\\left(100\\right)-1\\right)"} 18.5 ms
+"evalf(ln((tanh(100)-1)^2))" => {"ok":false,"text":"Overflow: the number is too large","latex":"","error":"overflow"} 2.7 ms
+3.71655915373099e+694 -1599.30685281944 1.94059009714218e+868 1.88651015046497e+260
+2.71828182845905
+-398.61370563888
+== done Mon Nov 16 10:07:53 CET 2026
