@@ -79,6 +79,7 @@ export const enData = {
   "sync.cancelled": "No folder chosen",
   "sync.unavailable": "No sync folder: choose one first",
   "sync.written": "Written to the sync folder: {n} files",
+  "sync.writtenOne": "Written to the sync folder: 1 file",
   "sync.unchanged": "Nothing changed since the last write",
   "sync.failed": "Could not write to the sync folder",
   "sync.stopped": "Sync stopped; the files stay in the folder",
