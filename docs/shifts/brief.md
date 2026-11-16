@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 830 | [R353](packages/R353.md) Store ▶ in the unit view stores the result with its unit | ron, Opus | `p1/ron-unitresultstore` | G371, G390 |
+| 830 | R353 Store ▶ in the unit view stores the result with its unit | ron, Opus | `p1/ron-unitresultstore` | G371, G390 |
 | 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R353 |
 | 675 | R201 a sheet to make your own unit | ron, Opus | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
