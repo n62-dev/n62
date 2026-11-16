@@ -76,6 +76,8 @@ export interface HomeOutcome {
   reads?: StoredRead[];
   /** G212: the stored variables the input read, as CasOutcome's (HomeResult.uses); absent when there is none. */
   uses?: StoredUse[];
+  /** G392: the stored names with a unit the input reached (HomeResult.unitNames): the row says the unit was dropped. */
+  unitNames?: string[];
   /** G274: each uncertain input's share of σ² (HomeResult.uncTerms). */
   uncTerms?: UncTerm[];
   /** G211: the word (R194) the request carried, the engine's own (64 bits, unsigned) while none is set; the port gives it. */

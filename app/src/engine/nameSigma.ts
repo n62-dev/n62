@@ -74,3 +74,22 @@ export function withNameFacts(defs: DefChange[], name: string | undefined, unc: 
     return { set: { ...c.set, ...(facts ? { facts } : {}), ...(unit ? { unit } : {}) } };
   });
 }
+
+/** G392: the stored variables an input reaches whose entry holds a unit (G371's DefEntry.unit), each once, in the order
+ *  met: from `reads` (the names its tree reads) through `namesOf` (the names a stored value or function body holds,
+ *  the closure facts.ts nameFacts walks), so a name reached only through a function is named too. Home has no units:
+ *  the row says the unit was dropped (session.svelte.ts unitDropped). */
+export function unitNamesOf(reads: readonly string[], byName: ReadonlyMap<string, DefEntry>, namesOf: (name: string) => readonly string[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const queue = [...reads];
+  for (let n = queue.shift(); n !== undefined; n = queue.shift()) {
+    if (seen.has(n)) continue;
+    seen.add(n);
+    const e = byName.get(n);
+    if (!e || e.kind === "assume" || e.kind === "other") continue;
+    if (e.kind === "var" && e.unit) out.push(n);
+    queue.push(...namesOf(n));
+  }
+  return out;
+}
