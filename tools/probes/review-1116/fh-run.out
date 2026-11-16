@@ -1,0 +1,225 @@
+engine build: Sun Nov 15 23:23:12 CET 2026
+=== index 09:46:30
+find-index: 1707 items (fn 1149 [tier 0: 73], tmpl 1, const 71, unit 452, pfx 34) -> <checkout>/tools/probes/review-1116/fh-index.json
+find-index: 323691 bytes raw, 65676 bytes gzip, 2384 ms (aide_cas: 1780 entries, 640 left out: 211 underscore, 104 notFunction, 281 excluded, 44 noName)
+find-index: qalc: 439 units (143 composites), 34 prefixes, 71 constants; 33 units and 2 constants skipped, 34 units without si, 74 values checked against definitions, 0 overridden
+find-index: 42 constants carry a basis; 1 without: const:fermi_coupling (fermi_coupling has the unit GeV^(-2), not SI base units)
+find-index: 1 note(s) (--verbose lists them)
+=== exit 0 09:46:33
+=== find 09:46:33
+"round"                    math: fn:round  fn:ceil*  fn:floor*   |   slot: unit:lb*  unit:pdl*  unit:lbf*
+"round to 2 decimals"      math: (nothing)   |   slot: (nothing)
+"log base 2"               math: fn:log2   |   slot: (nothing)
+"percent change"           math: (nothing)   |   slot: (nothing)
+"hypotenuse"               math: (nothing)   |   slot: (nothing)
+"quadratic"                math: fn:a2q  fn:gauss  fn:q2a   |   slot: (nothing)
+"polynomial roots"         math: fn:pcoeff  fn:proot  fn:roots   |   slot: (nothing)
+"roots"                    math: fn:solve*  fn:roots  fn:eigenvals*   |   slot: (nothing)
+"simultaneous equations"   math: (nothing)   |   slot: (nothing)
+"linear system"            math: fn:desolve  fn:gauss_seidel_linsolve  fn:jacobi_linsolve   |   slot: (nothing)
+"system of equations"      math: fn:cfsolve  fn:dnewton_solver  fn:fsolve   |   slot: (nothing)
+"rms"                      math: fn:rms   |   slot: (nothing)
+"root mean square"         math: fn:rms   |   slot: (nothing)
+"exponential fit"          math: (nothing)   |   slot: (nothing)
+"curve fit"                math: (nothing)   |   slot: (nothing)
+"power fit"                math: (nothing)   |   slot: (nothing)
+"polynomial fit"           math: fn:fitpoly   |   slot: (nothing)
+"logarithmic fit"          math: (nothing)   |   slot: (nothing)
+"regression"               math: fn:linreg*  fn:power_regression  fn:linear_regression   |   slot: (nothing)
+"radians to degrees"       math: fn:degrees  fn:radians   |   slot: (nothing)
+"degrees to radians"       math: fn:degrees  fn:radians   |   slot: (nothing)
+"permutations"             math: fn:groupermu   |   slot: (nothing)
+"npr"                      math: fn:perm  fn:nprimes   |   slot: (nothing)
+"prime factors"            math: fn:factors  fn:ifactor  fn:ifactors   |   slot: (nothing)
+"random"                   math: fn:rand  fn:random_tree  fn:random_variable   |   slot: (nothing)
+"sum"                      math: fn:sum  fn:sum_riemann  fn:stats1*   |   slot: (nothing)
+"cumulative sum"           math: fn:cumSum   |   slot: (nothing)
+"numerical integration"    math: (nothing)   |   slot: (nothing)
+"trapezoid"                math: (nothing)   |   slot: (nothing)
+"magnitude"                math: fn:abs*  fn:norm*   |   slot: (nothing)
+"phase"                    math: fn:arg*  fn:shift_phase  fn:instphase   |   slot: (nothing)
+"polar"                    math: fn:polar_coordinates  fn:pole  fn:rectangular_coordinates   |   slot: unit:molar*  unit:solar_mass  unit:solar_radius
+"rectangular"              math: fn:rectangular_coordinates   |   slot: (nothing)
+"voltage divider"          math: (nothing)   |   slot: (nothing)
+"db"                       math: unit:dB*  unit:dBW*  unit:dBm*   |   slot: unit:dB*  unit:dBW*  unit:dBm*
+"decibel"                  math: unit:dB*  unit:dBW*  unit:dBm*   |   slot: unit:dB*  unit:dBW*  unit:dBm*
+"sinc"                     math: fn:sinc  fn:sincos  fn:sin*   |   slot: (nothing)
+"bessel"                   math: fn:BesselJ  fn:BesselY  fn:besselJ   |   slot: (nothing)
+"sort"                     math: fn:sort  fn:SortA  fn:SortD   |   slot: unit:fortnight*  unit:s_ton*
+"count"                    math: fn:count  fn:count_eq  fn:count_inf   |   slot: unit:rev*
+"length"                   math: fn:norm*  fn:size  unit:l_P   |   slot: unit:l_P  unit:bohr_unit  unit:l_N
+"angle between"            math: fn:arg*  fn:atan2*   |   slot: (nothing)
+"unit vector"              math: (nothing)   |   slot: (nothing)
+"fft"                      math: fn:fft   |   slot: (nothing)
+"taylor"                   math: fn:taylor  fn:divpc  fn:ptayl   |   slot: (nothing)
+"partial fractions"        math: (nothing)   |   slot: (nothing)
+"laplace"                  math: fn:laplace  fn:addtable  fn:ilaplace   |   slot: (nothing)
+"weibull"                  math: fn:weibull  fn:weibull_cdf  fn:weibull_icdf   |   slot: (nothing)
+"binomial"                 math: fn:binomial  fn:binomial_cdf  fn:binomial_icdf   |   slot: (nothing)
+"poisson"                  math: fn:poisson  fn:poisson_cdf  fn:poisson_icdf   |   slot: (nothing)
+"chi square"               math: fn:chisquare  fn:chisquaret  fn:chisquare_cdf   |   slot: (nothing)
+"confidence"               math: fn:mlr_ic   |   slot: (nothing)
+"t test"                   math: fn:student*  fn:student_cdf*  fn:student_icdf*   |   slot: (nothing)
+"sec"                      math: fn:sec  unit:s*  unit:section*   |   slot: unit:s*  unit:section*  unit:light_second*
+"cot"                      math: fn:cot  fn:cote   |   slot: (nothing)
+"nth root"                 math: fn:surd*   |   slot: (nothing)
+"10^x"                     math: fn:alog10   |   slot: (nothing)
+"sign"                     math: fn:sign  fn:signe  fn:signature   |   slot: unit:ligne*
+"truncate"                 math: fn:truncate  fn:truncate_graph  fn:trunc   |   slot: (nothing)
+"integer part"             math: fn:frac*   |   slot: (nothing)
+"nearest integer"          math: fn:round   |   slot: (nothing)
+"dms"                      math: (nothing)   |   slot: (nothing)
+"degrees minutes seconds"  math: (nothing)   |   slot: (nothing)
+"rms"                      math: fn:rms   |   slot: (nothing)
+"cylindrical"              math: (nothing)   |   slot: (nothing)
+"spherical"                math: (nothing)   |   slot: (nothing)
+"polar to rectangular"     math: (nothing)   |   slot: (nothing)
+"rectangular to polar"     math: (nothing)   |   slot: (nothing)
+"percent error"            math: (nothing)   |   slot: (nothing)
+"log2"                     math: fn:log2  fn:log10*  fn:logb   |   slot: (nothing)
+"logb"                     math: fn:logb  fn:log10*  fn:log2   |   slot: (nothing)
+"fsolve"                   math: fn:fsolve  fn:bisection_solver  fn:dnewton_solver   |   slot: (nothing)
+"proot"                    math: fn:proot  fn:froot  const:m_p*   |   slot: (nothing)
+"perm"                     math: fn:perm  unit:permille*  fn:perminv   |   slot: unit:permille*  unit:percent*
+"polynomial"               math: fn:polynomial_regression  fn:flow_polynomial  fn:tutte_polynomial   |   slot: (nothing)
+"zeros"                    math: fn:zeros  fn:newList  fn:newMat   |   slot: (nothing)
+"solve numerically"        math: (nothing)   |   slot: (nothing)
+"newton"                   math: unit:N*  fn:newton  unit:N*m*   |   slot: unit:N*  unit:N*m*  unit:N/C*
+"secant"                   math: fn:bisection_solver  fn:sec   |   slot: (nothing)
+"ksi"                      math: unit:ksi*   |   slot: unit:ksi*
+"kgf"                      math: unit:kgf*  unit:kgf/cm^2*   |   slot: unit:kgf*  unit:kgf/cm^2*
+"kgf/cm2"                  math: unit:kgf/cm^2*   |   slot: unit:kgf/cm^2*
+"torr"                     math: unit:Torr*  unit:TOR*  fn:correlation   |   slot: unit:Torr*  unit:TOR*
+"atm"                      math: unit:atm*  const:n_0*  const:sackur_tetrode_atm*   |   slot: unit:atm*
+"m3/h"                     math: (nothing)   |   slot: (nothing)
+"nm3/h"                    math: unit:nmi/h*   |   slot: unit:nmi/h*
+"scfm"                     math: (nothing)   |   slot: (nothing)
+"cfm"                      math: unit:cfm*   |   slot: unit:cfm*
+"l/s"                      math: unit:L/s*  fn:shl*  const:c*   |   slot: unit:L/s*  unit:light_second*  unit:solar_luminosity
+"btu/h"                    math: (nothing)   |   slot: (nothing)
+"ton of refrigeration"     math: unit:TR*  unit:TOR*   |   slot: unit:TR*  unit:TOR*
+"kva"                      math: unit:kVA*  unit:kvar*   |   slot: unit:kVA*  unit:kvar*
+"kvar"                     math: unit:kvar*  unit:kVA*  unit:Mvar*   |   slot: unit:kvar*  unit:kVA*  unit:Mvar*
+"var"                      math: fn:variance*  unit:var*  fn:local   |   slot: unit:var*
+"mho"                      math: (nothing)   |   slot: (nothing)
+"gauss"                    math: unit:gauss*  fn:gauss  fn:normald*   |   slot: unit:gauss*
+"lux"                      math: unit:lx*   |   slot: unit:lx*
+"knot"                     math: unit:knot*  fn:bnot*   |   slot: unit:knot*
+"mach"                     math: unit:mAh*   |   slot: unit:mAh*
+"centipoise"               math: unit:cP*   |   slot: unit:cP*
+"cp"                       math: unit:cP*  fn:cpartfrac  const:proton_compton_wavelength*   |   slot: unit:cP*
+"cst"                      math: unit:cSt*  fn:CST   |   slot: unit:cSt*
+"stokes"                   math: unit:St*   |   slot: unit:St*
+"dyne"                     math: unit:dyn*  fn:dnewton_solver   |   slot: unit:dyn*
+"kcal"                     math: unit:kcal*  unit:kcal/g*  fn:dot*   |   slot: unit:kcal*  unit:kcal/g*
+"therm"                    math: unit:thm*  unit:th*  unit:thm_US*   |   slot: unit:thm*  unit:th*  unit:thm_US*
+"ps"                       math: unit:PS*  unit:psi*  fn:Psi   |   slot: unit:PS*  unit:psi*
+"metric horsepower"        math: (nothing)   |   slot: (nothing)
+"wh/kg"                    math: (nothing)   |   slot: (nothing)
+"kg/m3"                    math: unit:kg/m^3*   |   slot: unit:kg/m^3*
+"g/cm3"                    math: unit:g/cm^3*   |   slot: unit:g/cm^3*
+"lb/ft3"                   math: (nothing)   |   slot: (nothing)
+"slug"                     math: unit:slug*   |   slot: unit:slug*
+"lbm"                      math: (nothing)   |   slot: (nothing)
+"grain"                    math: unit:gr*  fn:train   |   slot: unit:gr*
+"fl oz"                    math: unit:fl_oz_US*  unit:fl_oz_UK*  fn:floor*   |   slot: unit:fl_oz_US*  unit:fl_oz_UK*
+"acre"                     math: unit:acre*  unit:acre*ft*  unit:acre*ft/d*   |   slot: unit:acre*  unit:acre*ft*  unit:acre*ft/d*
+"hectare"                  math: unit:ha*   |   slot: unit:ha*
+"nautical mile"            math: unit:nmi*  unit:nmi/h*   |   slot: unit:nmi*  unit:nmi/h*
+"yard"                     math: unit:yd*   |   slot: unit:yd*
+"micron"                   math: unit:micron*  pfx:u*  unit:um*   |   slot: unit:micron*  pfx:u*  unit:um*
+"angstrom"                 math: unit:angstrom*   |   slot: unit:angstrom*
+"ev"                       math: unit:eV*  fn:eval  fn:even   |   slot: unit:eV*  unit:eV/c_unit  unit:eV/c_unit^2
+"electron volt"            math: unit:eV*  const:eV_constant*   |   slot: unit:eV*
+"ppm"                      math: unit:ppm*   |   slot: unit:ppm*
+"percent"                  math: unit:percent*  fn:percentile*  fn:normald_icdf*   |   slot: unit:percent*
+"rankine"                  math: unit:oR*   |   slot: unit:oR*
+"water density"            math: (nothing)   |   slot: (nothing)
+"density of water"         math: (nothing)   |   slot: (nothing)
+"speed of sound"           math: (nothing)   |   slot: (nothing)
+"standard atmosphere"      math: (nothing)   |   slot: (nothing)
+"electron mass"            math: const:m_e*  unit:eV/c_unit^2   |   slot: unit:eV/c_unit^2
+"earth radius"             math: (nothing)   |   slot: (nothing)
+"g"                        math: unit:g*  const:G*  pfx:G*   |   slot: unit:g*  pfx:G*  unit:GB*
+"gravity"                  math: const:g_0*  unit:gee*  unit:gee/s*   |   slot: unit:gee*  unit:gee/s*
+"r"                        math: pfx:r*  const:gas_constant*  pfx:R*   |   slot: pfx:r*  unit:R*  pfx:R*
+"gas constant"             math: const:gas_constant*   |   slot: (nothing)
+"air density"              math: (nothing)   |   slot: (nothing)
+"mmh2o"                    math: unit:mmWC*   |   slot: unit:mmWC*
+"inh2o"                    math: unit:inWC*   |   slot: unit:inWC*
+"in wc"                    math: unit:inWC*  unit:in*  fn:incenter   |   slot: unit:inWC*  unit:in*
+"psia"                     math: unit:psi*  fn:Psi   |   slot: unit:psi*
+"psig"                     math: (nothing)   |   slot: (nothing)
+"barg"                     math: (nothing)   |   slot: (nothing)
+"kj/kg"                    math: unit:kg/kg*   |   slot: unit:kg/kg*
+"s/m"                      math: unit:m/s*  unit:m/s^2*  unit:m/s^3*   |   slot: unit:m/s*  unit:m/s^2*  unit:m/s^3*
+"kg/s"                     math: unit:kg*m/s*  unit:kg/kg*  unit:kg/m^3*   |   slot: unit:kg*m/s*  unit:kg/kg*  unit:kg/m^3*
+"dbv"                      math: (nothing)   |   slot: (nothing)
+"dbu"                      math: (nothing)   |   slot: (nothing)
+"w/m2k"                    math: (nothing)   |   slot: (nothing)
+"w/mk"                     math: unit:W/m^2*  unit:W/(m*K)*   |   slot: unit:W/m^2*  unit:W/(m*K)*
+"j/kgk"                    math: unit:J/kg*   |   slot: unit:J/kg*
+"n/mm2"                    math: unit:MPa*   |   slot: unit:MPa*
+"mpa"                      math: unit:MPa*   |   slot: unit:MPa*
+"kn/m"                     math: unit:kN*m*  unit:kg/m^3*   |   slot: unit:kN*m*  unit:kg/m^3*
+"knm"                      math: unit:kN*m*   |   slot: unit:kN*m*
+"nmm"                      math: (nothing)   |   slot: (nothing)
+"n mm"                     math: unit:MPa*   |   slot: unit:MPa*
+"rev/min"                  math: unit:rpm*   |   slot: unit:rpm*
+"rad/s"                    math: unit:rad/s*  unit:rad/s^2*  const:c_2*   |   slot: unit:rad/s*  unit:rad/s^2*  unit:solar_radius
+"hz"                       math: unit:Hz*   |   slot: unit:Hz*
+=== exit 0 09:46:34
+=== apps 10:07:51
+solve known "50"                           -> 50
+solve known "4.7\\times10^{3}"             -> 4.7e3
+solve known "4.7\\emark3"                  -> 4.7e3
+solve known "-0.25"                        -> -0.25
+solve known "2\\pi\\cdot50"                -> REFUSED (Not a number)
+solve known "\\frac{1}{3}"                 -> REFUSED (Not a number)
+solve known "\\sqrt{2}"                    -> REFUSED (Not a number)
+solve known "R"                            -> REFUSED (Not a number)
+solve known "\\operatorname{Ans}"          -> REFUSED (Not a number)
+solve known "1/3"                          -> REFUSED (Not a number)
+solve known "2*50"                         -> REFUSED (Not a number)
+function def "x^{2}"                              -> giac "x^2" drawn: yes
+function def "A\\cdot x^{2}"                      -> giac "A*x^2" drawn: NO
+function def "Ax^{2}"                             -> giac "A*x^2" drawn: NO
+function def "\\sin\\left(x\\right)"              -> giac "sin(pasdeg*x)" drawn: yes
+function def "\\pi x"                             -> giac "pi*x" drawn: yes
+function def "R\\cdot x"                          -> giac "R*x" drawn: NO
+function def "f\\left(x\\right)"                  -> giac "f(x)" drawn: NO
+function def "\\operatorname{abs}\\left(x\\right)" -> giac "abs(x)" drawn: yes
+=== exit 0 10:07:52
+=== engine 10:07:52
+"round(2.675,2)" => {"ok":true,"path":"exact","display":"2.68","approximate":true,"exact":"2.68"}
+   value re 0.268e1  18.9 ms
+   facts {"facts":{"exact":false,"reliableDigits":13,"warn":"unaudited","why":{"unaudited":["round"]}},"full":"2.68","fullLength":4,"exactLength":4}
+"round(1.005,2)" => {"ok":true,"path":"exact","display":"1.01","approximate":true,"exact":"1.01"}
+   value re 0.101e1  1.7 ms
+   facts {"facts":{"exact":false,"reliableDigits":13,"warn":"unaudited","why":{"unaudited":["round"]}},"full":"1.01","fullLength":4,"exactLength":4}
+"round(-2.5)" => {"ok":true,"path":"exact","display":"-2","approximate":false,"exact":"-2"}
+   value re -0.2e1  2.2 ms
+   facts {"facts":{"exact":true,"reliableDigits":null},"rational":true,"full":"-2","fullLength":2,"exactLength":2}
+"round(2.5)" => {"ok":true,"path":"exact","display":"3","approximate":false,"exact":"3"}
+   value re 0.3e1  0.6 ms
+   facts {"facts":{"exact":true,"reliableDigits":null},"rational":true,"full":"3","fullLength":1,"exactLength":1}
+"round(0.125,2)" => {"ok":true,"path":"exact","display":"0.13","approximate":true,"exact":"0.13"}
+   value re 0.13e0  1.4 ms
+   facts {"facts":{"exact":false,"reliableDigits":13,"warn":"unaudited","why":{"unaudited":["round"]}},"full":"0.13","fullLength":4,"exactLength":4}
+"exponential_regression([1,2,3,4],[2.7,7.4,20.1,54.6])" => {"ok":true,"path":"exact","display":"{2.72361111171,0.993992946666}","approximate":false,"exact":"list[exp((4*(ln(27/10)+2*ln(37/5)+3*ln(201/10)+4*ln(273/5))-10*(ln(27/10)+ln(37/"}
+   facts {"facts":{"exact":false,"reliableDigits":38},"items":2,"full":"list[exp((4*(ln(27/10)+2*ln(37/5)+3*ln(201/10)+4*ln(273/5))-","fullLength":262,"exactLength":262}
+"power_regression([1,2,3,4],[1,4.1,8.9,16.2])" => {"ok":true,"path":"exact","display":"{2.00133795815,1.00543716024}","approximate":true,"exact":"list[2.00133795815,1.00543716024]"}
+   facts {"facts":{"exact":false,"reliableDigits":null,"warn":"unchecked","why":{"once":true}},"full":"list[2.00133795815,1.00543716024]","fullLength":33,"exactLength":33}
+=== exit 0 10:07:52
+=== units 10:07:52
+500*{lbf}/(0.25*{in^2})  (from the command line)
+  ≈ 13.7895145863 MPa   dim M·L⁻¹·T⁻² (kg1m-1s-2)   si 8896443230521/645160   exact 8896443230521/645160000000   18.9 ms
+
+alternatives per dimension (Find units of the dimension; S5 weight, then tier; value of the last result in each)
+M·L⁻¹·T⁻² (kg1m-1s-2): 20 units, 6 with a measured weight
+  Pa         w 0.0328  tier 0  13789514.5863
+  psi        w 0.0142  tier 0  2000.0
+  bar        w 0.0106  tier 0  137.895145863
+  atm        w 0.0068  tier 0  136.09192782
+=== exit 0 10:07:52
+=== done 10:07:52

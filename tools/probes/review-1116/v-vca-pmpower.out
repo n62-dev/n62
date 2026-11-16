@@ -1,0 +1,21 @@
+3\pm0.1^{2}
+   formula 3\pm0.1\placeholder[u1]{}^{2}\to\placeholder[end]{}
+   giac    (pasupm(3,0.1)*pasu1)^2
+-3\pm0.1^{2}
+   formula -3\pm0.1\placeholder[u1]{}^{2}\to\placeholder[end]{}
+   giac    -(pasupm(3,0.1)*pasu1)^2
+3\pm0.1^{2}\times2
+   formula 3\pm0.1\placeholder[u1]{}^{2}\times2\placeholder[u2]{}\to\placeholder[end]{}
+   giac    (pasupm(3,0.1)*pasu1)^2*(2*pasu2)
+\left(3\pm0.1\right)^{2}
+   formula \left(3\pm0.1\placeholder[u1]{}\right)^{2}\to\placeholder[end]{}
+   giac    (pasupm(3,0.1)*pasu1)^2
+3\pm0.1
+   formula 3\pm0.1\placeholder[u1]{}\to\placeholder[end]{}
+   giac    pasupm(3,0.1)*pasu1
+1.5\emark3^{2}
+   formula 1.5\emark3\placeholder[u1]{}^{2}\to\placeholder[end]{}
+   giac    (1.5e3*pasu1)^2
+3\pm1\emark-2^{2}
+   formula 3\pm1\emark-2\placeholder[u1]{}^{2}\to\placeholder[end]{}
+   giac    (pasupm(3,1e-2)*pasu1)^2

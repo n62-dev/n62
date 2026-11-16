@@ -1,0 +1,34 @@
+== run 10:53:23, phase-1 copy of backupSync.ts at 9dd4f083
+
+ RUN  v5.0.3 <checkout>/app
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/silent-fresh-p1.probe.ts > a fresh device's first backup is applied silently over a used device's history
+A leave: {"written":1}
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/new-folder-p1.probe.ts > a second folder chosen in the same session
+leave into X: {"written":2} [ 'n62-Phone-d00e-backup.json', 'n62-Phone-d00e-library.txt' ]
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/new-folder-p1.probe.ts > a second folder chosen in the same session
+leave into Y: "unchanged" []
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/silent-fresh-p1.probe.ts > a fresh device's first backup is applied silently over a used device's history
+B leave: {"written":1}
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/new-folder-p1.probe.ts > a second folder chosen in the same session
+Write now into Y: "unchanged" []
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/silent-fresh-p1.probe.ts > a fresh device's first backup is applied silently over a used device's history
+A start: applied [ 'apply Tablet-d662' ]
+A's history now: {"home":[],"cas":[]}
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/author/silent-fresh-p1.probe.ts > a fresh device's first backup is applied silently over a used device's history
+A leave: {"written":1}
+folder n62-Phone-930a-backup.json history: {"home":[],"cas":[]}
+
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  10:53:24
+   Duration  755ms (transform 87%, import 12%, tests 1%, worker 1%)
+
+exit 0

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R327: the uncertainty sheet's head (mockup docs/mockups/uncertainty-sheet.html sections 3 and 4), a pure function of
+// R327: the uncertainty sheet's head (mockup docs/archive/mockups/uncertainty-sheet.html sections 3 and 4), a pure function of
 // the row: the result with its mark, the short form, σ, U and relative σ, and the ⚠ line. A unit row reads G273's
 // fields (U from the unrounded σ), a Home row its σ facts as the σ line does (state/sigmaLine.ts).
 // Expected values derived: t10 = 12.34 × 3.2 = 39.488 m², σ² = 1.548381 (G41), σ = 1.24434…, U = 2σ = 2.48868… → 2.5
