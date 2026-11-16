@@ -27,7 +27,7 @@ describe("golden speed (G82, G137)", () => {
     const all = new Set([...pending("home.yaml", "home"), ...pending("precision.yaml", "precision")]);
     expect(Object.keys(SPEED_KNOWN).filter((k) => all.has(k))).toEqual([]);
   });
-  it("every SPEED_KNOWN entry names an existing case; G340's two single long calls are known (HOME_CLOCK_S)", () => {
+  it("every SPEED_KNOWN entry names an existing case; G340's four and G331's single long calls are known (HOME_CLOCK_S)", () => {
     const root = fileURLToPath(new URL("../../tests/golden/", import.meta.url));
     const ids = (file: string, stage: string): string[] =>
       (parse(readFileSync(`${root}${file}`, "utf8")) as { cases: { id: string }[] }).cases.map((c) => `${stage}/${c.id}`);
@@ -35,5 +35,8 @@ describe("golden speed (G82, G137)", () => {
     expect(Object.keys(SPEED_KNOWN).filter((k) => !all.has(k))).toEqual([]);
     expect(SPEED_KNOWN["home/g340-normal-sqrt-cbrt2-plus-cbrt9"]).toBe("HOME_CLOCK_S");
     expect(SPEED_KNOWN["home/g340-simplify-sqrt-cbrt2-plus-cbrt9"]).toBe("HOME_CLOCK_S");
+    expect(SPEED_KNOWN["home/g340-normal-sqrt-root4-2"]).toBe("HOME_CLOCK_S");
+    expect(SPEED_KNOWN["home/g340-simplify-sqrt-root4-2"]).toBe("HOME_CLOCK_S");
+    expect(SPEED_KNOWN["precision/g331-evalf-simplify-sqrt-ln-nested-root-30"]).toBe("HOME_CLOCK_S");
   });
 });
