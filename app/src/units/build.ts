@@ -4,7 +4,7 @@
 // Find index times the dimension symbols of dims.ts. Main thread, plain TS, no engine.
 import { BASES, dimKeyOf, dimSymbols, isExponent, parseDimKey, unitProduct } from "./dims.ts";
 import { isOwnId, OWN_PREFIX, type FactorTable, type UnitFactor } from "./factors.ts";
-import { balanced, callsOf, closing, mapNames, names, topLevelArgs, walk } from "../engine/giacPrint.ts";
+import { balanced, callsOf, closing, mapNames, names, topLevelArgs, unbracket, walk } from "../engine/giacPrint.ts";
 import { basisGiac, basisOf, correlated, LEAF_PREFIX } from "../engine/constBasis.ts";
 import { isChipName } from "../engine/ourNames.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
@@ -122,17 +122,10 @@ function plainNumber(num: string): boolean {
   return walk(num, 0, sign, "typed") < 0;
 }
 
-/** A bracket around the whole of `t`, taken off (again and again); else `t` trimmed. */
-function unbracket(t: string): string {
-  let s = t.trim();
-  while (s.startsWith("(") && closing(s, 0, "typed") === s.length - 1) s = s.slice(1, -1).trim();
-  return s;
-}
-
 /** G370: one side of T1 − T2: `number*pasuN` (or `pasuN`), in brackets or not, where the number may hold ± values
  *  (`pasupm(…)`, each a number here). Its slot index and its number with each ± value as its value, else null. */
 function tempSide(term: string): { slot: number; num: string } | null {
-  const m = numberTimesSlot(unbracket(term));
+  const m = numberTimesSlot(unbracket(term, "typed"));
   if (!m) return null;
   const raw = m.num;
   let num = "";
@@ -165,7 +158,7 @@ function bareTemperature(slot: UnitSlot | undefined, table: FactorTable): { id: 
  *  third term, a constant (G17 refuses those); K − K and °R − °R need no rule, K and °R have no offset. */
 export function tempDifference(req: UnitRequest, table: FactorTable): { kelvin: [string, string] } | { scales: [string, string] } | null {
   if (req.slots.length !== 2 || req.consts?.length) return null;
-  const terms = splitTop(unbracket(req.formula), "terms");
+  const terms = splitTop(unbracket(req.formula, "typed"), "terms");
   if (terms.length !== 2 || !terms[1]!.startsWith("-") || terms[0]!.startsWith(",")) return null;
   const a = tempSide(terms[0]!);
   const b = tempSide(terms[1]!.slice(1));
@@ -176,7 +169,7 @@ export function tempDifference(req: UnitRequest, table: FactorTable): { kelvin: 
   return { kelvin: [specialSource(ta.id, ta.u, a.num, numberDims), specialSource(tb.id, tb.u, b.num, numberDims)] };
 }
 
-/** A source quantity that is alone and absolute:°C, °F by K = a·x + b, a logarithmic unit by its level's ratio; with
+/** A source quantity that is alone and absolute: °C, °F by K = a·x + b, a logarithmic unit by its level's ratio; with
  *  numberDims its number part (G319). */
 function specialSource(id: string, u: UnitFactor, num: string, dimsOf = dimSymbols): string {
   const dims = dimsOf(u.dim ?? "");

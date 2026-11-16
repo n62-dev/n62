@@ -25,6 +25,7 @@ import {
   typedFromPrinted,
   stringEnd,
   topLevelArgs,
+  unbracket,
   UNCLOSED,
   walk,
   wholeCall,
@@ -164,5 +165,12 @@ describe("powersIn and negated (G348)", () => {
     expect(negated("(1-2)", "typed")).toBe(false);
     expect(negated("(-1)*(2)", "typed")).toBe(false);
     expect(negated("pi", "typed")).toBe(false);
+  });
+  it("unbracket: the brackets that hold all of the text, every layer, and no others (G370 fix: the one copy)", () => {
+    expect(unbracket(" ((80*pasu1 - 20*pasu2)) ", "typed")).toBe("80*pasu1 - 20*pasu2");
+    expect(unbracket("( (x) )", "typed")).toBe("x");
+    expect(unbracket("(a)*(b)", "typed")).toBe("(a)*(b)");
+    expect(unbracket("(a", "typed")).toBe("(a");
+    expect(unbracket('("(")', "typed")).toBe('"("');
   });
 });

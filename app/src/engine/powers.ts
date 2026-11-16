@@ -2,23 +2,16 @@
 // G59f1 (r16 F3): powers that Giac's exact evaluation may move to another branch. Giac rewrites a power with a
 // non-positive or complex base as (z^a)^(1/n), which is another branch, and evalf of its exact text takes the same path;
 // exp(b*ln(a)) is the principal value. Text only, no engine; only erasable TypeScript syntax, so Node runs this file.
-import { closing, isNameChar, opening } from "./giacPrint.ts";
-
-/** `t` without the brackets that enclose all of it. */
-function unwrap(t: string): string {
-  let s = t.trim();
-  while (s.startsWith("(") && closing(s, 0, "typed") === s.length - 1) s = s.slice(1, -1).trim();
-  return s;
-}
+import { closing, isNameChar, opening, unbracket } from "./giacPrint.ts";
 
 /** The base is a number literal (positive or zero) or a positive real constant by name: its power has one value. */
 function plainBase(base: string): boolean {
-  return /^(?:\d+(?:\.\d*)?|\.\d+|pi|e)$/.test(unwrap(base));
+  return /^(?:\d+(?:\.\d*)?|\.\d+|pi|e)$/.test(unbracket(base, "typed"));
 }
 
 /** The exponent is an integer literal (with a sign): the power has one value on every branch. */
 function integerExponent(exp: string): boolean {
-  return /^[+-]?\s*\d+$/.test(unwrap(exp));
+  return /^[+-]?\s*\d+$/.test(unbracket(exp, "typed"));
 }
 
 /** [start, end) of the operand that ends just before `at` (a name, a number, a call or a bracketed group); null. */
