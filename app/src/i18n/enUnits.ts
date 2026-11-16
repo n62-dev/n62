@@ -132,6 +132,21 @@ export const enUnits = {
   "units.own.unknown": "{unit} is not in Find's unit list",
   "units.own.ofOwn": "Build it from Find's units ({unit} is your own)",
   "units.own.ofKind": "{unit} has rules of its own (an offset, a level, turns, a kind of power or no factor)",
+  // R201: Settings › Your keys › Your units (views/ownUnitsSheet.svelte.ts)
+  "units.sheet.new": "New unit",
+  "units.sheet.name": "Name",
+  "units.sheet.factor": "Factor",
+  "units.sheet.of": "Made of",
+  "units.sheet.of.hint": "Find's units: m, km/h, kg*m^2",
+  "units.sheet.entry.name": "Unit name",
+  "units.sheet.entry.factor": "Factor",
+  "units.sheet.entry.of": "Made of",
+  "units.sheet.none": "—",
+  "units.sheet.save": "Save",
+  "units.sheet.delete": "Delete",
+  "units.sheet.delete.again": "Tap Delete again to remove {name}",
+  "units.sheet.saved": "Saved {name}",
+  "units.sheet.deleted": "Deleted {name}",
 } as const satisfies Record<string, string>;
 
 export type UnitMessageKey = keyof typeof enUnits;

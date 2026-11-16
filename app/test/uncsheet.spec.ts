@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R327 (the owner, 2026-11-15), on the real engine: Shift + 1 opens the uncertainty sheet of a result with σ (mockup
-// docs/mockups/uncertainty-sheet.html sections 1, 3 and 4): on the picked row in Home, else on the last finished row, and
+// docs/archive/mockups/uncertainty-sheet.html sections 1, 3 and 4): on the picked row in Home, else on the last finished row, and
 // in the unit view on its result. Its head: the result with its mark, the short form, σ, U = 2σ and relative σ; R328: the
 // inputs' rows under it (each one's share of σ², G272: 98.3 %, 1.7 %, second order < 0.1 %), ▲ ▼ over them. Anywhere else a dead press (the double pulse, counted under d1 Shift), never a typed character.
 // Controls: 1 and Alpha + 1 unchanged, a b/c, 7 and Fmt still reserved on Shift, the σ line on a picked row unchanged.

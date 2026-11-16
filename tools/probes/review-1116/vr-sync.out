@@ -1,0 +1,40 @@
+
+ RUN  v5.0.3 <checkout>/app
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-newfolder.test.mts > probe
+folder one, Write now: {"written":1} files in one: [ 'n62-PhoneA-8000-backup.json' ]
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+11:00 B leaves (digits 9)
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-newfolder.test.mts > probe
+folder two, Write now: "unchanged" files in two: []
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+12:00 A leaves (digits 12)
+
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-newfolder.test.mts > probe 651ms
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+12:10 B start: APPLY silently the backup from PhoneA-1999 made 2026-11-16T12:00:00.000Z
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+12:30 B leaves (digits {"@n62":4,"value":{"digits":12}})
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+13:00 A changes Digits to 5 and leaves (its own file: digits 5, made 13:00)
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+14:00 A start: APPLY silently the backup from PhoneB-e666 made 2026-11-16T12:30:00.000Z
+
+stdout | ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe
+A's Digits now: {"@n62":4,"value":{"digits":12}} (its own work of 13:00 was digits 5)
+  n62-PhoneB-e666-backup.json: made 2026-11-16T12:30:00.000Z
+  n62-PhoneA-1999-backup.json: made 2026-11-16T13:00:00.000Z
+
+ ✓ ../../../../.tasks/night-review-2026-11-16/probes/vr-sync-rollback.test.mts > probe 649ms
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  10:09:10
+   Duration  765ms (tests 96%, transform 3%, import 1%, worker 1%)
+

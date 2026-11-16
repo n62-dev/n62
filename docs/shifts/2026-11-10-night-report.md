@@ -53,7 +53,7 @@ Nothing is open. The NOT MERGED runs and what closed each:
 - 126 (G186): ok. F212 (Giac's exact asin of `sqrt(-2)-10^1000` loses ln 2; Home shows wrong digits under its mark) and F213 (the sweep writes exp as the letter e, so 262 of 1187 runs are never judged); a small gorge package is recommended for F213. On the 8× device clock, DEG `cos(tanh(acosh(1ᴇ-1000)))` says "No value found" where the desktop says Overflow (a refusal, in `SPEED_KNOWN`).
 
 ## What the owner must do
-1. **Sign G164's sample sources** (decisions.md "Needs the user"; [S36](2026-11-sandra-sample-sources.md)) by Thu 11-12: seven clauses to read. If not signed, the lines stay "to verify".
+1. **Sign G164's sample sources** (decisions.md "Needs the user"; [S36](../archive/sample-sources-s36.md)) by Thu 11-12: seven clauses to read. If not signed, the lines stay "to verify".
 2. **F-Droid Reproducible Builds** (new, pass 117; `fdroid/SUBMIT.md`): recommendation: tick the box and ask for them, as without them F-Droid signs with its own key. Before the fdroiddata push, run `fdroid rewritemeta` (SUBMIT.md step 3).
 3. **Look at R173's report form** by hand (`tests/core/ONE-TIME.md`), and check the PRIVACY sentence after A95 (pass 114).
 4. **Parisse:** patches 0037, 0038 and 0039 are marked not sent; they go in the next batch.
