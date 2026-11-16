@@ -62,7 +62,7 @@ run "malformed tag" 2 "" "${good[@]}" N62_RELEASE_TAG=nonsense -- "${A[@]}"
 run "dev build ignores a real alias" 99 "" "${good[@]}" -- --dev --engine-dir "$tmp/engine"
 
 # 7. tools/release-verify.sh with a fake apksigner: the pinned certificate passes, any other deletes the APK
-CERT="34:E5:3A:5B:BD:0D:2F:5F:25:EE:B0:FA:A0:33:06:18:DC:64:E0:7C:D1:B7:4E:81:10:D2:0D:88:AD:D0:D9:C0"
+CERT="84:34:71:04:8F:8E:48:93:21:13:75:54:32:BC:7E:B7:35:D4:3F:57:67:63:1D:A0:E3:3D:63:30:16:A7:B5:CC"
 digest="$(tr -d ':' <<<"$CERT" | tr 'A-F' 'a-f')"
 fake() {   # fake <digest line value>
   printf '#!/usr/bin/env bash\necho "Verified using v2 scheme (APK Signature Scheme v2): true"\necho "Number of signers: 1"\necho "Signer #1 certificate DN: CN=x"\necho "Signer #1 certificate SHA-256 digest: %s"\n' "$1" > "$tmp/apksigner"; chmod +x "$tmp/apksigner"

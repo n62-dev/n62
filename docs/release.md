@@ -14,6 +14,7 @@ The four secrets (Settings → Secrets and variables → Actions, set once; A7):
 - `app/package.json` `"version"` (and the same line at the top of `app/package-lock.json`), `android/app/build.gradle` `versionName` and
   `versionCode` (one more than the last release; both stay plain literals), and the F-Droid draft `fdroid/dev.n62.calc.yml`:
   a new `Builds` entry with that `versionName`, `versionCode` and `commit: vX.Y.Z`, and `CurrentVersion` / `CurrentVersionCode`.
+- `npm run trust:refresh` (from `app/`; needs the oracle's venv) rewrites README.md's "Why trust it" and tests/golden/README.md's table from the files; the lanes' new golden rows make them stale, and the release run's golden step stops on `trust:check` (A93; the test of 2026-11-16 did).
 - `tools/check-version.sh vX.Y.Z` prints `check-version: ok X.Y.Z (<code>), tag vX.Y.Z`. Commit (`git commit -s`).
 - A test tag needs no bump: `vX.Y.Z-test` (suffix of letters, digits and dots) is checked against the current X.Y.Z.
 - Write the release notes, `X.Y.Z.md` in the folder release-notes of `docs/` (what is in it, the known limits, what is next); the release run stops in its second step without it (a test tag needs the same file) and puts it above the hashes in the release body.
