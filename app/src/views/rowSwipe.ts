@@ -40,11 +40,13 @@ export function share(d: number, scroll: number, max: number, offset: number, mo
     off += back;
     rest -= back;
   }
-  let s = scroll;
+  // (`scrollLeft` can be fractional past the integer `max`: a scroller at its true end counts as at `max`)
+  const from = Math.min(Math.max(scroll, 0), Math.max(max, 0));
+  let s = from;
   if (off === 0 && rest !== 0) {
-    s = Math.min(Math.max(scroll - rest, 0), Math.max(max, 0));
-    rest += s - scroll;
-    if (moved || s !== scroll) rest = 0;
+    s = Math.min(Math.max(from - rest, 0), Math.max(max, 0));
+    rest += s - from;
+    if (moved || s !== from) rest = 0;
   }
   return { scroll: s, offset: off + rest };
 }
@@ -125,8 +127,8 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     const max = s ? s.scrollWidth - s.clientWidth : 0;
     const next = share(d, s ? s.scrollLeft : 0, max, offset, scrolled);
     if (s && next.scroll !== s.scrollLeft) {
+      if (Math.abs(next.scroll - s.scrollLeft) >= 1) scrolled = true; // (under 1 px: a fractional scrollLeft at its end)
       s.scrollLeft = next.scroll;
-      scrolled = true;
     }
     offset = next.offset;
     place(offset);
