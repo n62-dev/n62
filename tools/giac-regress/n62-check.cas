@@ -541,6 +541,8 @@ Digits:=40:; pc("g362-max-list",'(max([3,9,4]))',9,5/10^12);
 Digits:=40:; pc("g362-im-decimal",'(im((5/10^1)+(15/10^1)*i))',(15/10^1),5/10^12);
 // g362-conj-polar (home.yaml, oracle)
 Digits:=40:; pc("g362-conj-polar",'(conj(2*exp(i*pi/3)))',1-(173205080757/10^11)*i,5/10^12+5/10^12);
+// g302-const-dup (home.yaml, oracle)
+Digits:=40:; pc("g302-const-dup",'(pasc_G*pasc_G)',(4454628049/10^30),5/10^33);
 // prec-20-sqrt2 (precision.yaml, oracle)
 Digits:=40:; pc("prec-20-sqrt2",'(sqrt(2))',(14142135623730950488/10^19),5/10^20);
 // prec-20-third (precision.yaml, oracle)

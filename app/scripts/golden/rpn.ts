@@ -11,6 +11,7 @@ import { applyOp } from "../../src/entry/rpnCompose.ts";
 import { arityOf, inputsOf, RpnStack, type RpnLevel } from "../../src/entry/rpn.ts";
 import { EngineHost } from "../../src/engine/host.ts";
 import { defaultHomeSettings, type HomeResult, type HomeSettings } from "../../src/engine/homeEval.ts";
+import { toExactLiterals } from "../../src/engine/exactLiterals.ts";
 import { sigmaLeaves } from "../../src/engine/constBasis.ts";
 import { rewriteAngles } from "../../src/engine/angles.ts";
 import { chipUnit } from "../../src/input/chipUnit.ts";
@@ -140,6 +141,15 @@ function homeText(r: HomeResult & { inexactInput?: boolean }, digits: number): {
   return { text: `${markText(seqMark(r, digits)) ?? "-"} ${r.display} σ ${r.facts?.uncSigma ?? "none"} uncDigits ${r.facts?.uncDigits ?? "-"}`, full: r.full ?? "-" };
 }
 
+/** Two copy texts of a result that is not exact: equal as values when `normal` of their difference, with the decimals as exact
+ *  rationals, is 0 on a fresh engine. A side with no copy text ("-") is never the same. */
+async function sameValue(a: string, b: string): Promise<boolean> {
+  if (a === "-" || b === "-") return false;
+  if (a === b) return true;
+  const r = (await freshHost()).eval(`normal((${toExactLiterals(a)})-(${toExactLiterals(b)}))`);
+  return r.ok && r.output.trim() === "0";
+}
+
 export async function stageRpn(): Promise<void> {
   const homeCases = cases("home.yaml").filter((c) => c.rpn);
   const unitCases = cases("units.yaml").filter((c) => c.rpn);
@@ -150,7 +160,6 @@ export async function stageRpn(): Promise<void> {
   }
   const table = items ? factorTable(items) : undefined;
   let pass = 0;
-  let pending = 0;
   for (const c of homeCases) {
     const digits = c.settings?.digits ?? 12;
     const s: HomeSettings = { ...defaultHomeSettings, angle: c.settings?.angle ?? "rad", digits };
@@ -165,16 +174,11 @@ export async function stageRpn(): Promise<void> {
     const got = "home" in raw ? homeText(raw.home, digits) : { text: "unit result in a Home case", full: "-" };
     const shown = "home" in raw ? raw.home.display : "";
     const same = got.text === line.text && shown === String(c.expect) && (c.mark === undefined || got.text.startsWith(c.mark));
-    // `full` apart: a case `status: pending` is a known difference of the copy text (listed, never fails; the other fields must still agree)
-    const fullSame = got.full === line.full;
-    if (same && fullSame) {
-      pass++;
-      if (c.status === "pending") console.log(`  rpn ${c.id}: NOW PASSING (remove its status)`);
-    } else if (same && c.status === "pending") {
-      pass++;
-      pending++;
-      console.log(`  rpn ${c.id}: pending, copy text differs: stack ${got.full}, line ${line.full}`);
-    } else console.log(`  rpn ${c.id}: stack ${got.text} full ${got.full}, line ${line.text} full ${line.full}, expect ${c.mark ?? ""} ${String(c.expect)}`);
+    // `full` apart (Opus pass 203): the line and the stack may hold one value as Giac's exact text or as a decimal, so a result that
+    // is not exact (the line's mark is not =) compares by value, and an exact one as text
+    const fullSame = same && (line.text.startsWith("=") ? got.full === line.full : await sameValue(got.full, line.full));
+    if (same && fullSame) pass++;
+    else console.log(`  rpn ${c.id}: stack ${got.text} full ${got.full}, line ${line.text} full ${line.full}, expect ${c.mark ?? ""} ${String(c.expect)}`);
   }
   for (const c of unitCases) {
     const s: HomeSettings = { ...defaultHomeSettings, angle: c.settings?.angle ?? "rad" };
@@ -196,7 +200,7 @@ export async function stageRpn(): Promise<void> {
     else console.log(`  rpn ${c.id}: stack ${got}, line ${algebraic}, expect ${unitWant(c)}`);
   }
   const total = homeCases.length + unitCases.length;
-  report("rpn", total > 0 && pass === total, `${pass}/${total} sequences give their line's mark, text, σ, unit and copy text (${homeCases.length} Home, ${unitCases.length} unit view${pending ? `; ${pending} pending on the copy text` : ""})`);
+  report("rpn", total > 0 && pass === total, `${pass}/${total} sequences give their line's mark, text, σ, unit and copy text (${homeCases.length} Home, ${unitCases.length} unit view)`);
 }
 
 /** A units case's own line on `host`, as the units stage runs it. */
