@@ -96,11 +96,11 @@ test("Menu 5 on a picked row deletes that row, not the last", async ({ page }) =
   expect(texts).toEqual(["0.333333333333", "0.25"]);
 });
 
-test("Menu 6 opens Copy as: as shown, exact, LaTeX", async ({ page }) => {
+test("Menu 6 opens Copy as: as shown, exact, LaTeX, Python", async ({ page }) => {
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 1);
   await tap(page, ["@menu", "d6"]);
-  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveText(["1As shown", "2Exact", "3LaTeX"]);
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveText(["1As shown", "2Exact", "3LaTeX", "4Python"]);
   await tap(page, ["d2"]);
   await expect.poll(() => clipboard(page)).toBe("1/3");
 });

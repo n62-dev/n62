@@ -182,14 +182,14 @@ test("a running row does not slide", async ({ page }) => {
   await expect(page.getByTestId("undo-note")).toHaveCount(0);
 });
 
-test("the picked row's bar holds Store ▶ and Copy as ›; Copy as opens its three for that row", async ({ page }) => {
+test("the picked row's bar holds Store ▶ and Copy as ›; Copy as opens its four for that row", async ({ page }) => {
   await ready(page);
   await enter(page, ["d1", "div", "d3"], ["d2", "add", "d3"]);
   await setClipboard(page, "before");
   await results(page).first().tap();
   await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]);
   await bar(page).getByRole("button", { name: "Copy as ›" }).tap();
-  await expect(menu(page).getByRole("menuitem")).toHaveText([/As shown/, /Exact/, /LaTeX/]);
+  await expect(menu(page).getByRole("menuitem")).toHaveText([/As shown/, /Exact/, /LaTeX/, /Python/]);
   await menu(page).locator('[data-id="exact"]').tap();
   await expect.poll(() => clipboard(page)).toBe("1/3"); // the picked row's, not the last one's
   await expect(bar(page)).toHaveCount(0); // the pick ended with the button

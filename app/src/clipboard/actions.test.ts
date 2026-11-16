@@ -102,12 +102,12 @@ describe("ClipActions row buttons and the hold", () => {
     const c = new ClipActions(session, shell, entry, { insert() {}, recall() {}, acted: (id) => void acted.push(id) }, port);
     return { c, item: item as never, menus, acted, clip: () => clip };
   };
-  it("the bar holds Store ▶ and Copy as ›; Copy as opens As shown, Exact, LaTeX", () => {
+  it("the bar holds Store ▶ and Copy as ›; Copy as opens As shown, Exact, LaTeX, Python (R181)", () => {
     const { c, item, menus } = make();
     const buttons = c.rowButtons(item);
     expect(buttons.map((b) => [b.id, b.label])).toEqual([["store", "Store ▶"], ["copyAs", "Copy as ›"]]);
     buttons[1]?.run?.();
-    expect(menus).toEqual([{ title: "Copy as", ids: ["shown", "exact", "latex"] }]);
+    expect(menus).toEqual([{ title: "Copy as", ids: ["shown", "exact", "latex", "python"] }]);
   });
   it("☰ keeps its nine in the same order, then Export › (R130)", () => {
     const { c, item } = make();
@@ -140,6 +140,7 @@ describe("ClipActions menu: Export › is item 10", () => {
       ["work", "Work report", false],
       ["csv", "CSV", false],
       ["latex", "LaTeX", false],
+      ["python", "Python", false],
     ]);
   });
   it("with nothing finished Export › is off, and an empty history gives it no reason line (fit.spec.ts)", () => {
@@ -250,5 +251,57 @@ describe("ClipActions exportCsv and exportLatex", () => {
     fake("failed");
     await c.exportLatex();
     expect(c.notice).toBe("The LaTeX could not be saved");
+  });
+});
+
+// R181: Copy as › Python puts the row's sympy text on the clipboard; ☰ › Export › Python saves the session as n62-<date>.py.
+describe("ClipActions copyPython and savePython", () => {
+  const saved: { name: string; mime: string; text: string }[] = [];
+  let clip = "";
+  const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
+  const third = { status: "done", view: "home", latex: "\\frac{1}{3}", text: "0.333333333333", full: "1/3", fullExact: true, facts: { exact: true, reliableDigits: null }, rational: { n: "1", d: "3" } };
+  const actions = (items: object[]) => {
+    const session = { items, view: "home", decimalComma: false, displayContext: () => ({ format: "std", digits: 12, fixDecimals: 4, angle: "rad" }) } as unknown as Session;
+    const shell = { app: null, showsEntry: true } as unknown as AppShell;
+    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} }, port);
+  };
+  afterEach(() => {
+    vi.doUnmock("./files.ts");
+    saved.length = 0;
+    clip = "";
+  });
+  it("copyPython puts translateRows of the row on the clipboard", async () => {
+    const c = actions([third]);
+    expect(await c.copyPython()).toBe(true);
+    expect(clip).toContain("Rational(1, 3)");
+    expect(clip.split("\n")[0]).toMatch(/^# N62 .*Copy as Python/);
+    expect(c.notice).toBe("Copied");
+  });
+  it("copyPython of a picked row copies that row, not the last", async () => {
+    const four = { ...third, latex: "2^2", full: "4", rational: { n: "4", d: "1" } };
+    const c = actions([third, four]);
+    await c.copyPython(third as never);
+    expect(clip).toContain("Rational(1, 3)");
+    expect(clip).not.toContain("Integer(4)");
+  });
+  it("savePython saves n62-<date>.py through saveFile with every finished row", async () => {
+    vi.doMock("./files.ts", () => ({ saveFile: async (name: string, mime: string, text: string) => (saved.push({ name, mime, text }), "saved") }));
+    const c = actions([third, { status: "pending", latex: "2", text: "" }, third]);
+    await c.savePython();
+    expect(saved).toHaveLength(1);
+    expect(saved[0]?.name).toMatch(/^n62-\d{4}-\d{2}-\d{2}\.py$/);
+    expect(saved[0]?.mime).toBe("text/x-python");
+    expect(saved[0]?.text.match(/Rational\(1, 3\)/g)).toHaveLength(2);
+    expect(c.notice).toBe("Python saved");
+  });
+  it("nothing finished says so and saves nothing; a cancelled or failed save is the notice", async () => {
+    vi.doMock("./files.ts", () => ({ saveFile: async (name: string, mime: string, text: string) => (saved.push({ name, mime, text }), "failed") }));
+    const c = actions([{ status: "pending", latex: "2", text: "" }]);
+    await c.savePython();
+    expect(c.notice).toBe("Nothing to export");
+    expect(saved).toEqual([]);
+    const d = actions([third]);
+    await d.savePython();
+    expect(d.notice).toBe("The Python could not be saved");
   });
 });

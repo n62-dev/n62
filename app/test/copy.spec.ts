@@ -2,7 +2,7 @@
 // Copy, paste, share and export (docs/04 section 2.6, backlog step 9, P5): one test per action and a copy → paste round
 // trip, by key sequences on the real engine. Expected values are derived: the decimal expansion of 1/3 and 2/3.
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, PASTE, entryValue, lastResult, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { COPY, PASTE, entryValue, lastResult, open, savePicker, savedText, setClipboard, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 // The system clipboard is one for the whole browser: these tests run one after another.
@@ -112,6 +112,29 @@ test("Menu: Copy as › As shown, Exact, LaTeX", async ({ page }) => {
   await expect.poll(() => clipboard(page)).toContain("0.333333333333");
   await pickMenu(page, "Copy");
   await expect.poll(() => clipboard(page)).toBe(THIRD);
+});
+
+test("Menu: Copy as › Python gives the row as a sympy script (R181)", async ({ page }) => {
+  await tap(page, ["d1", "div", "d3", "enter"]);
+  await done(page, 1);
+  await pickCopyAs(page, "Python");
+  await expect.poll(() => clipboard(page)).toContain("Rational(1, 3)");
+  expect((await clipboard(page)).split("\n")[0]).toMatch(/^# N62 .*Copy as Python/);
+});
+
+test("☰ 0 Export › Python saves the session as n62-<date>.py (R181)", async ({ page }) => {
+  await savePicker(page, "fake");
+  await open(page, "");
+  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  await tap(page, ["d1", "div", "d3", "enter"]);
+  await done(page, 1);
+  await tap(page, ["@menu", "d0"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
+  await page.getByRole("menuitem", { name: /^\d Python$/ }).click();
+  await expect(page.getByTestId("notice")).toHaveText("Python saved");
+  const file = await savedText(page);
+  expect(file?.name).toMatch(/^n62-\d{4}-\d{2}-\d{2}\.py$/);
+  expect(file?.text).toContain("Rational(1, 3)");
 });
 
 test("Menu: Copy exact is on for an exact result and off for one that is only digits", async ({ page }) => {

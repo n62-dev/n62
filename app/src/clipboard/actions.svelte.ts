@@ -173,6 +173,19 @@ export class ClipActions {
       return this.put(exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact);
     });
   }
+  /** R181: Copy as › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
+  copyPython(item?: HistoryItem): Promise<boolean> {
+    return this.serial(async () => {
+      const i = this.target(item);
+      try {
+        const [m, about] = i ? await Promise.all([import("./pyExport.ts"), import("virtual:about")]) : [];
+        return this.put(i && m && about ? m.pythonText([i], about.default.version, new Date()) : undefined);
+      } catch {
+        this.say(tc("export.fileFailed").replace("{what}", tc("export.python")));
+        return false;
+      }
+    });
+  }
   copyLatex(item?: HistoryItem): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
@@ -270,6 +283,17 @@ export class ClipActions {
         this.say(await m.saveRows(kind, s.items.map(source), this.opts, s.displayContext(), { version: about.default.version, now: new Date() }));
       } catch {
         this.say(tc("export.fileFailed").replace("{what}", tc(kind === "csv" ? "export.csv" : "export.latex")));
+      }
+    });
+  }
+  /** ☰ › Export › Python (R181): the open session's finished rows as `n62-<date>.py`; the result is the notice. */
+  savePython(): Promise<void> {
+    return this.serial(async () => {
+      try {
+        const [m, about] = await Promise.all([import("./pyExport.ts"), import("virtual:about")]);
+        this.say(await m.savePython(this.session.items, { version: about.default.version, now: new Date() }));
+      } catch {
+        this.say(tc("export.fileFailed").replace("{what}", tc("export.python")));
       }
     });
   }
@@ -375,6 +399,7 @@ export class ClipActions {
         run: () => void this.copyExact(row),
       },
       { id: "latex", label: tc("clip.subLatex"), disabled: none, reason: why, run: () => void this.copyLatex(row) },
+      { id: "python", label: tc("clip.subPython"), disabled: none, reason: why, run: () => void this.copyPython(row) },
     ];
     const finished = this.session.items.some((x) => x.status === "done" || x.status === "error");
     /** A row action: told to the app first, while the keypad is as the user left it (the row buttons share these items). */
@@ -409,6 +434,7 @@ export class ClipActions {
             { id: "work", label: tc("export.work"), disabled: !finished, reason: why, run: () => void this.exportWork() },
             { id: "csv", label: tc("export.csv"), disabled: !finished, reason: why, run: () => void this.exportCsv() },
             { id: "latex", label: tc("export.latex"), disabled: !finished, reason: why, run: () => void this.exportLatex() },
+            { id: "python", label: tc("export.python"), disabled: !finished, reason: why, run: () => void this.savePython() },
           ],
         },
       },
