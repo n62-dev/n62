@@ -49,6 +49,8 @@ export const enUnits = {
   "units.read.fourth": "{u} to the fourth",
   "units.read.power": "{u} to the power {p}",
   "units.read.root": "square root of {u}",
+  // R352: the reading of the end slot while it is active and empty (the last slot after →)
+  "units.read.endEmpty": "Leave empty: the result in its own unit. A unit here: checked, then converted",
   // G37: °C or °F inside a compound unit or with a power is a temperature interval ("per degree Celsius (difference)").
   "units.read.interval": "{u} (difference)",
   // R24b: the pad's own keys (Math is Find in a slot, Enter goes to the next slot, a flick up on Enter evaluates).

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R290: the six first-start tips teach the final handling (K5): the gestures that nothing on screen shows, and ☰.
+// R290: the seven first-start tips teach the final handling (K5): the gestures that nothing on screen shows, and ☰.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -17,8 +17,8 @@ const card = (re: RegExp): string => {
 };
 
 describe("the first-start tips (R290)", () => {
-  it("are six cards, and every message of the table but the title and Got it is one of them", () => {
-    expect(drawn.length).toBe(6);
+  it("are seven cards, and every message of the table but the title and Got it is one of them", () => {
+    expect(drawn.length).toBe(7);
     expect(Object.keys(enTips).filter((k) => k !== "tips.title" && k !== "tips.gotIt").sort()).toEqual([...drawn].sort());
   });
   it("keep the two ringed cards (the place name, the status line's ☰) and the marks card", () => {
@@ -44,6 +44,9 @@ describe("the first-start tips (R290)", () => {
     expect(c).toMatch(/status line/);
     expect(c).toMatch(/Paste/);
     expect(c).toMatch(/each app's menu/);
+  });
+  it("name the units key and what the last slot of the unit view does (R352)", () => {
+    expect(card(/Units/)).toBe("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; the last slot checks against a unit, or leave it empty");
   });
   it("name no control that is gone: a Copy or Paste key, the fold handle; nor a dimmed Help", () => {
     expect(all).not.toMatch(/\b(copy|paste) key|key.*\b(copy|paste)\b.*key|handle|\bbar\b|\bhelp\b/i);

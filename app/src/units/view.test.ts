@@ -224,3 +224,40 @@ describe("R258: a stored value of more than one letter in the unit view", () => 
     expect(() => gone.request()).toThrow("rate is not a stored name");
   });
 });
+
+describe("R352: the reading of an empty end slot says what it does", () => {
+  const END_EMPTY = "Leave empty: the result in its own unit. A unit here: checked, then converted";
+  /** "5" with kg-like m in the first slot, Enter: the end slot is active. */
+  function atEnd(): UnitView {
+    const view = new UnitView(CAT, "5", {}, host().host);
+    view.start();
+    view.apply(U("km"));
+    view.apply({ do: "next" });
+    expect(view.activeId).toBe("end");
+    return view;
+  }
+
+  it("an active, empty end slot reads the line", () => {
+    const view = atEnd();
+    expect(view.reading.text).toBe(END_EMPTY);
+    expect(view.reading.marked).toBe(false);
+  });
+
+  it("an active, filled end slot reads the unit in words, as before (control)", () => {
+    const view = atEnd();
+    view.apply(U("km"));
+    expect(view.reading.text).toBe("kilometer");
+  });
+
+  it("the end slot emptied again reads the line; an empty number slot reads nothing (control)", () => {
+    const view = atEnd();
+    view.apply(U("km"));
+    view.apply({ do: "delete" });
+    expect(view.reading.text).toBe(END_EMPTY);
+    view.move(-1);
+    expect(view.activeId).toBe("u1");
+    expect(view.reading.text).toBe("kilometer");
+    view.apply({ do: "delete" });
+    expect(view.reading.text).toBe("");
+  });
+});
