@@ -65,23 +65,23 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 |---|---|---|---|---|
 | 830 | [R353](packages/R353.md) Store ▶ in the unit view stores the result with its unit | ron, Opus | `p1/ron-unitresultstore` | G371, G390 |
 | 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R353 |
-| 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
+| 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Opus | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 804 | [R330](packages/R330.md) Shift + 7 opens the list sheet | ron, Opus | `p1/ron-listsheet` | – |
 | 807 | [R315](packages/R315.md) the unit view reads a stored name with a unit | ron, Opus | `p1/ron-nameslot` | G371 |
 | 818 | [R339](packages/R339.md) a kept line is on the field before the queued keys, under load too (R255f2's flake) | ron, Opus | `p1/ron-keptfirst` | – |
-| 819 | [R337](packages/R337.md) Vars inserts a variable stored as e or i as the letter (bu-8; red first) | ron, Sonnet | `p1/ron-varsletter` | – |
-| 820 | [R338](packages/R338.md) a stored history's first rows render 15 times again (F236) | ron, Sonnet | `p1/ron-firstrenders` | – |
-| 821 | [R340](packages/R340.md) a dead key says so to a screen reader (F238) | ron, Sonnet | `p1/ron-deadaria` | – |
+| 819 | [R337](packages/R337.md) Vars inserts a variable stored as e or i as the letter (bu-8; red first) | ron, Opus | `p1/ron-varsletter` | – |
+| 820 | [R338](packages/R338.md) a stored history's first rows render 15 times again (F236) | ron, Opus | `p1/ron-firstrenders` | – |
+| 821 | [R340](packages/R340.md) a dead key says so to a screen reader (F238) | ron, Opus | `p1/ron-deadaria` | – |
 | 783 | [R316](packages/R316.md) split `parse.ts` under 800 lines | ron, Opus | `p1/ron-splitparse` | – |
 | 784 | [R317](packages/R317.md) split `App.svelte` under 800 lines | ron, Opus | `p1/ron-splitapp` | – |
-| 805 | [R267](packages/R267.md) dead exports and copies in `app/src` | ron, Sonnet | `p1/ron-deadexports` | – |
-| 806 | [R268](packages/R268.md) unread theme tokens, finished probes, stale comments | ron, Sonnet | `p1/ron-tokensprobes` | – |
+| 805 | [R267](packages/R267.md) dead exports and copies in `app/src` | ron, Opus | `p1/ron-deadexports` | – |
+| 806 | [R268](packages/R268.md) unread theme tokens, finished probes, stale comments | ron, Opus | `p1/ron-tokensprobes` | – |
 | 787 | [G372](packages/G372.md) split `homeEval.ts` under 800 lines | gorge, Opus | `p1/gorge-splithomeeval` | – |
 | 788 | [G373](packages/G373.md) split `api.cc` under 800 lines | gorge, Opus | `p1/gorge-splitapi` | – |
 | 789 | [G374](packages/G374.md) split `export.mjs` under 800 lines | gorge, Opus | `p1/gorge-splitexport` | – |
-| 810 | [G365](packages/G365.md) the Function app reads a cell's kind from the worker, not Giac's print | gorge, Sonnet | `p1/gorge-cellkind` | – |
-| 811 | [G315](packages/G315.md) the one import cycle goes, and the Calc port speaks its own errors | gorge, Sonnet | `p1/gorge-namesmodule` | – |
+| 810 | [G365](packages/G365.md) the Function app reads a cell's kind from the worker, not Giac's print | gorge, Opus | `p1/gorge-cellkind` | – |
+| 811 | [G315](packages/G315.md) the one import cycle goes, and the Calc port speaks its own errors | gorge, Opus | `p1/gorge-namesmodule` | – |
 | 812 | [G314](packages/G314.md) EngineHost's definitions replay and casRun in modules of their own | gorge, Opus | `p1/gorge-hostsplit` | – |
 
 ### Lane B queue (the release, then the engine)
@@ -90,15 +90,15 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 809 | G371 a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
-| 827 | G390 the unit view refuses a store, so no name holds our dimension symbols (F255) | gorge, Sonnet | `p1/gorge-unitstore` | – |
-| 832 | [G392](packages/G392.md) a Home row that reads a name stored with a unit says the unit was dropped | gorge, Sonnet | `p1/gorge-namedunitnote` | G371 |
+| 827 | G390 the unit view refuses a store, so no name holds our dimension symbols (F255) | gorge, Opus | `p1/gorge-unitstore` | – |
+| 832 | [G392](packages/G392.md) a Home row that reads a name stored with a unit says the unit was dropped | gorge, Opus | `p1/gorge-namedunitnote` | G371 |
 | 828 | [G387](packages/G387.md) the formula result: letters with units and no values, behind a request flag | gorge, Opus | `p1/gorge-formularesult` | G371, G390 |
 | 826 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
-| 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Sonnet | `p1/gorge-storedlist` | – |
-| 823 | [G382](packages/G382.md) a decimal inside a string is never rounded (F206) | gorge, Sonnet | `p1/gorge-stringdigits` | – |
-| 824 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time (the Tab One) | annabell, Sonnet | `p1/annabell-casstart2` | – |
+| 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Opus | `p1/gorge-storedlist` | – |
+| 823 | [G382](packages/G382.md) a decimal inside a string is never rounded (F206) | gorge, Opus | `p1/gorge-stringdigits` | – |
+| 824 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time (the Tab One) | annabell, Opus | `p1/annabell-casstart2` | – |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). Stream C (owner, 2026-11-14 and 11-15, to Tue 11-17 05:00): `.tasks/stream-c/run2.sh` in the main checkout runs G274, G377, G378 and S20, then `.tasks/stream-c/run3.sh` runs [G377f1](packages/G377f1.md), through `scripts/pipeline.sh`, one at a time, beside the lanes; no lane takes them. No 05:00 close (owner, 2026-11-15): `.tasks/keep-lanes/keep-lanes3.sh` restarts each lane without `--until` until Tue 11-17 09:00 (owner, 2026-11-16), then stops both and runs each lane's closing (`--max-steps 2`). A lane whose queue ran out (SHIFT DONE) stays off until a session adds rows and touches `.tasks/keep-lanes/restart-<lane>`. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Fri 11-20), A82 (the release candidate on the Fairphone). From the stop (owner, 2026-11-15): one lane, fixes only, started only when it has fix rows, the closing passes' FIX packages first, then the night review's; by day R292, then A91. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: [G389](packages/G389.md), [G391](packages/G391.md), [R347](packages/R347.md), then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): [R354](packages/R354.md), [R355](packages/R355.md), [G393](packages/G393.md), [G394](packages/G394.md), [G395](packages/G395.md), [R356](packages/R356.md), [R357](packages/R357.md), [R358](packages/R358.md); then [R346](packages/R346.md), [G388](packages/G388.md), [R348](packages/R348.md), [R351](packages/R351.md). After the tag: [R254](packages/R254.md) then [R343](packages/R343.md) (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156.
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). While Ultra lasts (owner, 2026-11-16, to Tue 11-17 09:00) every lane row runs on Opus, and a second factory, the clone `../n62-next` with its own `.coord` and `.tasks` (merge queue, locks, run counter), runs this paragraph's after-tag rows in two lanes of its own, from its own brief, with no device; its phase-1 takes this phase-1 in every two hours and merges back once after the tag, which ticks those rows here. Stream C (owner, 2026-11-14 and 11-15, to Tue 11-17 05:00): `.tasks/stream-c/run2.sh` in the main checkout runs G274, G377, G378 and S20, then `.tasks/stream-c/run3.sh` runs [G377f1](packages/G377f1.md), through `scripts/pipeline.sh`, one at a time, beside the lanes; no lane takes them. No 05:00 close (owner, 2026-11-15): `.tasks/keep-lanes/keep-lanes3.sh` restarts each lane without `--until` until Tue 11-17 09:00 (owner, 2026-11-16), then stops both and runs each lane's closing (`--max-steps 2`). A lane whose queue ran out (SHIFT DONE) stays off until a session adds rows and touches `.tasks/keep-lanes/restart-<lane>`. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Fri 11-20), A82 (the release candidate on the Fairphone). From the stop (owner, 2026-11-15): one lane, fixes only, started only when it has fix rows, the closing passes' FIX packages first, then the night review's; by day R292, then A91. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: [G389](packages/G389.md), [G391](packages/G391.md), [R347](packages/R347.md), then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): [R354](packages/R354.md), [R355](packages/R355.md), [G393](packages/G393.md), [G394](packages/G394.md), [G395](packages/G395.md), [R356](packages/R356.md), [R357](packages/R357.md), [R358](packages/R358.md); then [R346](packages/R346.md), [G388](packages/G388.md), [R348](packages/R348.md), [R351](packages/R351.md). After the tag: [R254](packages/R254.md) then [R343](packages/R343.md) (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156.
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
