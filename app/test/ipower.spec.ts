@@ -24,12 +24,12 @@ async function result(page: Page, text: string, m: string): Promise<void> {
 }
 
 const CASES: [string, string[], string, string, string][] = [
-  ["i, xʸ 2", [...I, "pow", "d2", "right"], "\\imaginaryI^{2}", "-1", "="],
+  ["i, xʸ 2", [...I, "pow", "d2", "right"], "\\imaginaryI^2", "-1", "="],
   ["i, x²", [...I, "sq"], "\\imaginaryI^2", "-1", "="],
   ["i, x⁻¹", [...I, "shift", "div"], "\\imaginaryI^{-1}", "-i", "="],
-  ["i, ÷ 2", [...I, "div", "d2", "right"], "\\frac{\\imaginaryI}{2}", "i/2", "="],
+  ["i, ÷ 2", [...I, "div", "d2", "right"], "\\frac{\\imaginaryI}{2}", "0.5*i", "="],
   // the control: after a number the key raises the i alone, as it raises a letter alone (2x³)
-  ["2 i, xʸ 3", ["d2", ...I, "pow", "d3", "right"], "2\\imaginaryI^{3}", "-2*i", "="],
+  ["2 i, xʸ 3", ["d2", ...I, "pow", "d3", "right"], "2\\imaginaryI^3", "-2*i", "="],
 ];
 for (const [name, keys, line, text, m] of CASES)
   test(`R334: ${name} takes the i as its base: ${line} = ${text}`, async ({ page }) => {
@@ -51,7 +51,7 @@ test("R334: i, xʸ, i gives iⁱ = 0.207879576351 with the mark a typed e^(−π
 test("R334: a bare e (a result's e put on the line), xʸ 2 gives e² = 7.38905609893", async ({ page }) => {
   await page.evaluate(() => window.n62.entry.set("\\exponentialE"));
   await tap(page, ["pow", "d2", "right"]);
-  expect(await entryValue(page)).toBe("\\exponentialE^{2}");
+  expect(await entryValue(page)).toBe("\\exponentialE^2");
   await tap(page, ["enter"]);
   await expect(lastResult(page)).toHaveAttribute("data-text", "7.38905609893");
 });
