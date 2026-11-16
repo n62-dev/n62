@@ -1265,8 +1265,10 @@ export class EngineHost implements FactsHost {
   }
 
   /** The unit view (G16, docs/04 4.2): in Home's mode, with our unit definitions loaded on the first request; R121: its
-   *  tree's stored user names (facts.ts usedBy; no chip) are named. A syntax error or a timeout is an engine error. */
+   *  tree's stored user names (facts.ts usedBy; no chip) are named. G390: a store is refused first. A syntax error or a timeout is an engine error. */
   units(job: UnitJob, s: HomeSettings): Quantity | UnitError {
+    // G390: a store of any depth (sto, =>, purge too) would leave a name holding our dimension symbols: refused before any eval
+    if (this.bridge.parse(job.expr).targets.length) return { error: "store" };
     this.need(expressionsOf([job.expr, job.check, job.end]));
     if (!this.unitsLoaded) {
       for (const d of UNIT_DEFINITIONS) this.giac.eval(d);
