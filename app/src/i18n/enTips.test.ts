@@ -45,8 +45,8 @@ describe("the first-start tips (R290)", () => {
     expect(c).toMatch(/Paste/);
     expect(c).toMatch(/each app's menu/);
   });
-  it("name the units key and what the last slot of the unit view does (R352)", () => {
-    expect(card(/Units/)).toBe("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; the last slot checks against a unit, or leave it empty");
+  it("name the units key and → Check, the end slot of the unit view (R352, R349)", () => {
+    expect(card(/Units/)).toBe("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; → Check checks the result against a unit");
   });
   it("name no control that is gone: a Copy or Paste key, the fold handle; nor a dimmed Help", () => {
     expect(all).not.toMatch(/\b(copy|paste) key|key.*\b(copy|paste)\b.*key|handle|\bbar\b|\bhelp\b/i);

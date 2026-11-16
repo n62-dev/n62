@@ -64,8 +64,8 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 859 | R601 Function's Num cells and trace y follow a name changed in Home (F414) | ron, Opus | `p1/ron-numnames` | – |
-| 819 | [R337](packages/R337.md) Vars inserts a variable stored as e or i as the letter (bu-8; red first) | ron, Opus | `p1/ron-varsletter` | – |
-| 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | – |
+| 819 | R337 Vars inserts a variable stored as e or i as the letter (bu-8; red first) | ron, Opus | `p1/ron-varsletter` | – |
+| 831 | R349 the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | – |
 | 835 | [R361](packages/R361.md) the Plot draws a function that reads a value stored in Home | ron, Opus | `p1/ron-plotstored` | – |
 | 836 | [R362](packages/R362.md) the start chunk's first cut: app opening and view-tab icons load with the first app | ron, Opus | `p1/ron-startcut1` | – |
 | 854 | [R582](packages/R582.md) one physical Escape no longer loses what is typed next (F362) | ron, Opus | `p1/ron-escmathmode` | – |

@@ -47,7 +47,7 @@ test.describe("the unit view from the keys", () => {
     await tap(page, ["d7", "d2"]);
     await unitsKey(page);
     await expect(shown(page)).toBeVisible();
-    expect(await page.evaluate(() => window.n62.unitView?.view.formula)).toEqual({ latex: "72\\placeholder[u1]{}\\to\\placeholder[end]{}", slots: ["u1"] });
+    expect(await page.evaluate(() => window.n62.unitView?.view.formula)).toEqual({ latex: "72\\placeholder[u1]{}", slots: ["u1"] }); // R349: no end slot until → Check
     await expect(page.locator('[data-key="d9"][data-pad="unit"]')).toBeVisible(); // the pad is up
     await expect(page.locator('[data-key="d4"][data-pad="prefix"]')).toBeVisible();
     expect(await activeId(page)).toBe("u1");
@@ -62,7 +62,7 @@ test.describe("the unit view from the keys", () => {
     // the field shows the slot (setPromptValue), never as text on the entry line
     expect(await page.evaluate(() => window.n62.unitView?.field.getPromptValue("u1"))).toContain("\\mathrm{km}");
     expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
-    await tap(page, ["enter"]);
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
     expect(await activeId(page)).toBe("end");
     await tap(page, ["d9", "div", "d3"]);
     await expect(reading(page)).toHaveText("meter per second");
@@ -75,13 +75,15 @@ test.describe("the unit view from the keys", () => {
     await tap(page, ["d9"]);
     await tap(page, ["right"]);
     expect(await activeId(page)).toBe("u2");
-    await tap(page, ["d3", "right"]);
+    await tap(page, ["d3", "right"]); // R349: no end slot until → Check, nothing after the last slot
+    expect(await activeId(page)).toBe("u2");
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
     expect(await activeId(page)).toBe("end");
     await tap(page, ["right"]); // nothing after the end slot
     expect(await activeId(page)).toBe("end");
     await tap(page, ["left", "left"]);
     expect(await activeId(page)).toBe("u1");
-    await tap(page, ["esc"]);
+    await tap(page, ["esc"]); // (the end slot is empty: the line keeps the slots without it)
     await expect(shown(page)).toBeHidden();
     await expect(page.locator('[data-key="d9"][data-pad]')).toHaveCount(0); // the keypad is the keypad again
     expect(await page.evaluate(() => window.n62.entry.value)).toBe("1+2");
@@ -108,7 +110,7 @@ test.describe("the unit view from the keys", () => {
   test("on an empty line: the quantity 1 and its slot; on a picked history row: that row's input", async ({ page }) => {
     await unitsKey(page);
     await expect(shown(page)).toBeVisible();
-    expect(await page.evaluate(() => window.n62.unitView?.view.formula.latex)).toBe("1\\placeholder[u1]{}\\to\\placeholder[end]{}");
+    expect(await page.evaluate(() => window.n62.unitView?.view.formula.latex)).toBe("1\\placeholder[u1]{}"); // R349: no end slot until → Check
     await tap(page, ["esc"]);
     await tap(page, ["d5", "mul", "d3", "enter"]);
     await expect(page.locator('[data-status="done"]')).toHaveCount(1);
@@ -129,8 +131,9 @@ test.describe("the unit view from the keys", () => {
     expect(meant(await tokens(page, "u1"))).toBe("k:m");
     await expect(reading(page)).toHaveText("kilometer");
     await page.keyboard.press("Backspace"); // the ÷
-    await page.keyboard.press("Enter");
-    expect(await activeId(page)).toBe("end");
+    await page.keyboard.press("Enter"); // R349: the last slot, so Enter evaluates
+    expect(await activeId(page)).toBe("u1");
+    await expect(page.locator('[data-testid="unit-result"], [data-testid="unit-message"]')).toHaveCount(1);
     await page.keyboard.press("Escape");
     await expect(shown(page)).toBeHidden();
     expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
@@ -215,6 +218,8 @@ test.describe("the unit view from the keys", () => {
     expect(meant(await tokens(page, "u1")), "⌫ removes the unit and arms its prefix again").toBe("");
     await tap(page, ["bksp"]); // and the armed k (a prefix alone cannot leave its slot)
     expect(await pressed("ArrowRight")).toEqual([["right", "primary"]]);
+    expect(await activeId(page)).toBe("u1"); // R349: nothing after the last slot until → Check
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
     expect(await activeId(page)).toBe("end");
     expect(await pressed("ArrowLeft")).toEqual([["left", "primary"]]);
     expect(await activeId(page)).toBe("u1");
@@ -255,7 +260,7 @@ test.describe("R313: letters typed in a unit slot on a hardware keyboard", () =>
     expect(meant(await tokens(page, "u1"))).toBe("k:m");
     await expect(reading(page)).toHaveText("kilometer");
     expect(await prompt(page, "u1")).toContain("\\mathrm{km}");
-    await page.keyboard.press("Enter");
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
     expect(await activeId(page)).toBe("end");
     expect(await page.evaluate(() => window.n62.unitView?.field.value)).toMatch(/^72.*\\mathrm\{km\}/);
     expect(await page.evaluate(() => window.n62.entry.value)).toBe("72");
@@ -405,7 +410,8 @@ test.describe("on the engine (check 2026-10-19, Part 2 point 5)", () => {
     await unitsKey(page);
     await flick(page, "space", "up");
     await expect(reading(page)).toHaveText("degree Celsius");
-    await tap(page, ["enter", "space", "enter"]);
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
+    await tap(page, ["space", "enter"]);
     await expect(result(page)).toHaveAttribute("data-text", "293.15");
     await expect(result(page)).toHaveAttribute("data-unit", "K");
   });
@@ -433,7 +439,9 @@ test.describe("on the engine (check 2026-10-19, Part 2 point 5)", () => {
 
   test("kg·m²/s³ → W on an empty line is 1 W; without an end slot the typed unit is kept", async ({ page }) => {
     await unitsKey(page);
-    for (const s of "d4 d6 d9 sq div d3 pow enter paren enter".split(" ")) await step(page, s);
+    for (const s of "d4 d6 d9 sq div d3 pow".split(" ")) await step(page, s);
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
+    for (const s of "paren enter".split(" ")) await step(page, s);
     await expect(result(page)).toHaveAttribute("data-text", "1");
     await expect(result(page)).toHaveAttribute("data-unit", "W");
     await tap(page, ["esc", "d7", "d2"]);

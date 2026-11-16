@@ -40,7 +40,7 @@ P21 (G77): Giac is pinned to Parisse's numbered Debian source archive, `giac_<ve
 
 The numbered archive is a configured tree (Debian's `config.h`, `src/config.h`, Makefiles, `libtool`); our `configure` rewrites them, and `configure.ac:688` copies its `config.h` to `src/`.
 
-Creating the mirror (needs a logged-in `gh` and the maintainer's OK):
+The mirror exists (the owner, 2026-11-16, release `deps-giac-2.1.0-1-cdec2989`); for a new pin, the same command with its names (a logged-in `gh`):
 ```bash
 gh release create deps-giac-2.1.0-1-cdec2989 engine/giac/_downloads/giac_2.1.0-1.tar.gz engine/giac/_downloads/giac_2.1.0-1.dsc \
   --repo n62-dev/n62 --title "Giac 2.1.0-1 source (pinned, sha256 cdec2989…)" \

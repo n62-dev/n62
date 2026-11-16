@@ -164,6 +164,7 @@ function unitResultShots(): Shot[] {
   const plan = async (p: Page, steps: string): Promise<void> => {
     for (const s of steps.split(" ")) {
       if (s.startsWith("↑")) await flick(p, s.slice(1), "up");
+      else if (s === "check") await p.getByTestId("unit-check").tap(); // R349: → Check
       else await tap(p, [s]);
     }
   };
@@ -189,11 +190,12 @@ function unitResultShots(): Shot[] {
     { id: "t10-comma", title: "t10 with the decimal comma (R120): 39,5 ± 1,2 m² and the sub line with the comma, as Home's row", setup: async (p) => { await p.evaluate(() => window.n62.session.setDecimalMark("comma")); await units(p, ["d1", "d2", "dot", "d3", "d4", ...pm, "d0", "dot", "d0", "d5", "mul", "d3", "dot", "d2", ...pm, "d0", "dot", "d1"], "d9 enter d9 ↑enter"); } },
     { id: "over100-sheet", title: "sin(0 ± 0.2), Shift + 1 (R328): the row at 104.2 % with its bar's stripe, second order −4.2 %, the over-100 line", setup: async (p) => { await units(p, ["sin", "d0", ...pm, "d0", "dot", "d2"], "↑enter"); await tap(p, ["shift", "d1"]); await p.getByTestId("unc-rows").waitFor(); } },
     { id: "warn", title: "σ with ⚠ (G41): the ⚠ sits before σ, the why-line under it in the warn colour", setup: (p) => units(p, ["cos", "d0", ...pm, "d0", "dot", "d1"], "↑enter") },
-    { id: "note", title: "A note (G40): one line under the value, which stays", setup: (p) => units(p, ["d3", "d0", "d0", "d0", "mul", "d0", "dot", "d1"], "↑x enter d9 enter d9 div d3 ↑enter") },
-    { id: "end-empty", title: "R352: 5 kg, Enter: the end slot is active and empty, its reading says what it does (no result yet)", setup: async (p) => {
+    { id: "note", title: "A note (G40): one line under the value, which stays", setup: (p) => units(p, ["d3", "d0", "d0", "d0", "mul", "d0", "dot", "d1"], "↑x enter d9 check d9 div d3 ↑enter") },
+    { id: "check-off", title: "R349: 5 kg, Enter: no end slot, = 5 kg in its own unit; → Check between the formula and the reading", setup: (p) => units(p, ["d5"], "d4 d6 enter") },
+    { id: "end-empty", title: "R349, R352: 5 kg, → Check: the end slot is on, active and empty, its reading says what it does; the button reads ✕ Check", setup: async (p) => {
       await plan(p, "d5"); await flick(p, "tmpl", "up");
       await p.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
-      await plan(p, "d4 d6 enter"); await p.getByTestId("unit-reading").filter({ hasText: "Leave empty" }).waitFor();
+      await plan(p, "d4 d6 check"); await p.getByTestId("unit-reading").filter({ hasText: "Check against" }).waitFor();
     } },
     { id: "refusal", title: "A refusal: the message in the value's place, no row, no chip, the slots as typed", setup: (p) => units(p, ["d1", "add", "d1"], "d9 enter d3 ↑enter") },
   ];
