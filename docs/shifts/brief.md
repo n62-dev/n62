@@ -95,7 +95,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 817 | [G302](packages/G302.md) golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
-| 786 | [G370](packages/G370.md) the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
+| 786 | G370 the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
 | 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Sonnet | `p1/gorge-storedlist` | – |
 | 823 | [G382](packages/G382.md) a decimal inside a string is never rounded (F206) | gorge, Sonnet | `p1/gorge-stringdigits` | – |
