@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R89: the words of the presets in Mode (docs/05 3.4). A table of its own, loaded with the Mode sheet's chunk
-// (views/presetsView.svelte.ts), so the start chunk does not carry it. English only so far.
+// (views/presetsView.svelte.ts), so the start chunk does not carry it. English only so far. R201: the row of Settings ›
+// Your keys › Your units (views/ownUnitsRow.svelte.ts) is worded here too, for the same reason (enFind is in the start chunk).
 export const enPresets = {
   "row": "Preset",
   "none": "None",
@@ -10,6 +11,8 @@ export const enPresets = {
   "edit.title": "Edit",
   "edit.empty": "No presets yet",
   "loading": "Loading the presets…",
+  "units": "Your units",
+  "units.loading": "Loading…",
   "newer": "Saved by a newer N62: kept as it is",
   "unreadable": "Could not be read: kept as it is",
   "name": "Preset name",

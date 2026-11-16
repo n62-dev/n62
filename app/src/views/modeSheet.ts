@@ -214,7 +214,7 @@ export function settingsSections(session: Session, env: SettingsEnv = {}): MenuI
       () => keyFeelText(s.haptics.on ? "settings.on" : "settings.off"),
     ),
     // Your keys (R4b, views/yourKeys.ts): only where the app gives the slots
-    ...(env.userKeys ? [section("keys", findText("keys.title"), yourKeysItems(env), () => yourKeysValue(env))] : []),
+    ...(env.userKeys ? [section("keys", findText("keys.title"), yourKeysItems(env, () => session.settings.decimalMark), () => yourKeysValue(env))] : []),
     // Data (R38a, R38b: views/dataSection.svelte.ts; R59 adds the library): only where the app gives the backup
     ...(env.data ? [dataSection(env)] : []),
     section("counters", keyFeelText("settings.counters"), tapsItems(session, env), () => {
