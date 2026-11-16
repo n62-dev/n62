@@ -268,7 +268,7 @@
       {:else if level.credits !== undefined}
         <Credits blocks={level.credits} {level} />
       {:else if level.unc !== undefined}
-        <UncHead head={level.unc} />
+        <UncHead head={level.unc} {level} {ontap} />
       {:else if level.text !== undefined}
         <!-- a text to read (R87, a licence): the list's scroll and fade, no rows; ▲ ▼ page through it -->
         <div class="list doc" class:cut-top={cutTop} class:cut-bottom={cutBottom} data-testid="sheet-text" bind:this={list} onscroll={measure}>{level.text}</div>

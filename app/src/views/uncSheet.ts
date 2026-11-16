@@ -4,8 +4,9 @@
 // mark, the short form "39.5(12)", the standard uncertainty σ, U = 2σ (k = 2) and relative σ, and the ⚠ line of a σ first
 // order does not hold for. A unit row reads G273's fields (U from the unrounded σ, never 2 × the shown σ); a Home row its
 // σ facts as the σ line does (state/sigmaLine.ts) and its value for relative σ and the short form (units/uncertainty.ts).
-// Under the head nothing yet: R328 adds the inputs' rows. A chunk of its own, loaded by the key; a row without σ is a dead
-// press from here, so the start chunk carries only the key's import.
+// R328: under the head the inputs' rows, each one's share of σ² (budget/rows.ts, G272's model), as the sheet's items, so
+// ▲ ▼ move the highlight over them and a pick keeps the sheet open. A chunk of its own with the model, loaded by the key; a
+// row without σ is a dead press from here, so the start chunk carries only the key's import.
 import type { HistoryItem } from "../state/session.svelte.ts";
 import type { RouteCtx } from "../keyboard/route.ts";
 import { decimalToString, isZero } from "../engine/format.ts";
@@ -16,6 +17,8 @@ import { expandedSigmaText, sigmaText } from "../state/sigmaLine.ts";
 import { shownDigits } from "../state/sigmaDigits.ts";
 import { digitsToSigma, relativeSigma, shortForm } from "../units/uncertainty.ts";
 import type { UncWhy } from "../units/types.ts";
+import type { MenuItem } from "../apps/types.ts";
+import { uncRows, type ShareTable } from "../budget/rows.ts";
 
 /** A row "with σ": a finished Home row whose facts carry σ and its digits (the σ line's own test, state/sigmaLine.ts), or a
  *  unit row with σ (UnitRow.unc). */
@@ -52,6 +55,8 @@ export interface UncHead {
   rows: HeadRow[];
   /** "⚠ the interval reaches a jump" (G41's reason), or null. */
   warn: string | null;
+  /** R328: the inputs' rows under the head and the lines under them; absent or null: none (no terms stored, σ 0). */
+  table?: ShareTable | null;
 }
 
 const WHY: Readonly<Record<UncWhy, "units.why.order2" | "units.why.singular" | "units.why.jump">> = {
@@ -117,5 +122,8 @@ export function showUncertainty(c: RouteCtx, item: HistoryItem | undefined): voi
     digits: item.digits ?? s.settings.digits,
   });
   if (!head) return c.dead();
-  c.shell.showMenu(head.title, [], { remember: false, unc: head });
+  const table = uncRows(item, s.decimalComma, modeOf(item, s.settings) ?? s.settings.format);
+  // each row an item: ▲ ▼ and its digit highlight it, a pick keeps the sheet open; read aloud as label, uᵢ, share
+  const items: MenuItem[] = (table?.rows ?? []).map((r) => ({ id: r.id, label: [r.label, r.uy, r.share].filter(Boolean).join(", "), keep: true }));
+  c.shell.showMenu(head.title, items, { remember: false, filterable: false, unc: { ...head, table } });
 }

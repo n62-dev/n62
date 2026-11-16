@@ -46,6 +46,8 @@ export interface BudgetShares {
   second?: BudgetShare;
   /** The shown shares (a small one counted as 0) do not sum to 100.0. */
   rounded: boolean;
+  /** R328: that sum as decimal text to 0.1 ("99.9", "100.0"), the number the rounded line states. */
+  total: string;
   /** A share reads above 100.0. */
   over100: boolean;
   /** a + b ≤ 0: the base is a alone (as pasuo, evaluate.ts), no second-order row. */
@@ -141,10 +143,12 @@ export function budgetOf(input: BudgetInput): Budget {
   });
   rows.sort((p, q) => compare(terms[q.i]!, terms[p.i]!) || p.i - q.i);
   const second = shown.length > terms.length ? shown[terms.length]! : null;
+  const sum = shown.reduce((s, x) => s + x.tenths, 0n);
   return {
     rows: rows.map((r) => r.row),
     ...(second ? { second: { share: second.share, ...(second.small ? { small: true as const } : {}) } } : {}),
-    rounded: shown.reduce((s, x) => s + x.tenths, 0n) !== 1000n,
+    rounded: sum !== 1000n,
+    total: `${sum < 0n ? "-" : ""}${abs(sum) / 10n}.${abs(sum) % 10n}`,
     over100: shown.some((x) => x.tenths > 1000n),
     fallback,
     ...(input.why ? { why: input.why } : {}),
