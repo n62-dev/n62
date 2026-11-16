@@ -7,7 +7,7 @@ import { flick, lastResult, open, tap } from "./helpers.ts";
 
 const up = (page: Page): Promise<unknown> =>
   page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
-const MESSAGE = "The unit view does not store: put the result on Home's line, then ▶";
+const MESSAGE = "The unit view stores from its result: Eval, then Store ▶";
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");
