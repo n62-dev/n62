@@ -65,7 +65,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 |---|---|---|---|---|
 | 733 | R181 Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
 | 676 | R128 the sync folder's Settings page | ron, Opus | `p1/ron-syncpage` | – |
-| 734 | [R182](packages/R182.md) each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
+| 734 | R182 each finished result goes to the sync queue | ron, Opus | `p1/ron-synchook` | R128, G219 |
 | 735 | [R183](packages/R183.md) the sync page's device name and status line | ron, Sonnet | `p1/ron-syncstatus` | R128, R182 |
 | 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Sonnet | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
