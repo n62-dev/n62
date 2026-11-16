@@ -76,6 +76,10 @@ const KEEP: Readonly<Record<string, { text: () => string; emit: PadEmit }>> = {
 const DRAWN: Action = { kind: "cmd", name: "unitPad" };
 /** R327: the key's Shift layer is the uncertainty sheet (Shift + 1; the drawn cell key carries it too, `key` below). */
 const isUncKey = (k: Key): boolean => k.actions.shift?.kind === "special" && k.actions.shift.name === "uncertainty";
+/** R353: the key's Shift layer is Store ▶ (Shift + ᴇ, spec/keyboard.yaml): the view stores its result with its unit. */
+const isStoreKey = (k: Key): boolean => k.actions.shift?.kind === "insert" && k.actions.shift.latex === "\\blacktriangleright";
+/** A key whose Shift layer is the view's own where its cell has no up item: drawn and live over the pad. */
+const passes = (k: Key): boolean => isUncKey(k) || isStoreKey(k);
 const NONE: Action = { kind: "special", name: "none" };
 const LEG = { primary: "tap", shift: "up", alpha: "down" } as const;
 
@@ -130,8 +134,9 @@ export class UnitPad {
       // (only whether a layer has an action matters to the drawing: the press goes to `route`)
       actions[layer] = leg ? DRAWN : NONE;
     }
-    // R327: Shift + 1, the uncertainty sheet, stays on its key over the pad (the d1 cell has no Shift leg): drawn and live
-    if (!c[LEG.shift] && isUncKey(k)) {
+    // R327: Shift + 1, the uncertainty sheet, stays on its key over the pad (the d1 cell has no Shift leg): drawn and live;
+    // R353: Shift + ᴇ, Store ▶, too (the mol cell has none)
+    if (!c[LEG.shift] && passes(k)) {
       label.shift = k.label.shift ?? "";
       actions.shift = k.actions.shift as Action;
     }
@@ -146,8 +151,10 @@ export class UnitPad {
    *  uses up a one-shot Shift or Alpha, a cell with nothing there is a dead key; true when the key was a cell. */
   route(c: RouteCtx, key: Key, mods: Mods): boolean {
     if (c.shell.sheet) return false; // (a sheet over the keys takes them)
-    // R327: Shift + 1, the uncertainty sheet, acts on the view's result: the d1 cell (a prefix) has no Shift leg to take it
-    if (mods.shift && !mods.alpha && isUncKey(key) && !this.#cells.get(key.id)?.[LEG.shift]) return unitPad.other?.(c, key, mods) ?? false;
+    // R327: Shift + 1, the uncertainty sheet, acts on the view's result: the d1 cell (a prefix) has no Shift leg to take it;
+    // R353: Shift + ᴇ, Store ▶, stores the view's result (the mol cell has none). With no view (the dev pad) the cell's dead leg
+    const other = unitPad.other;
+    if (other && mods.shift && !mods.alpha && passes(key) && !this.#cells.get(key.id)?.[LEG.shift]) return other(c, key, mods);
     const emit = this.press(key.id, mods.alpha ? "alpha" : mods.shift ? "shift" : "primary");
     if (emit === undefined) return unitPad.other?.(c, key, mods) ?? false; // no cell: the unit view's (R24c)
     c.session.clearModifiers();

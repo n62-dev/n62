@@ -101,7 +101,7 @@ test.describe("Store ▶ in the unit view (R353)", () => {
     await unitsKey(page);
     await tap(page, ["d9", "div", "d3", "sq"]); // m ÷ s²
     await flick(page, "enter", "up");
-    await expect(result(page).locator(".value")).toHaveText("9.81 ± 0.01");
+    await expect(result(page).locator(".value")).toHaveText("9.810 ± 0.010");
     await tap(page, ["shift", "emark"]);
     await expect(store(page).getByTestId("sheet-title")).toContainText("9.81");
     await cell(page, "G").tap();

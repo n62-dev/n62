@@ -637,8 +637,9 @@ class Parser implements CalcParser {
     const c = this.chips[key];
     if (!c) throw key === ANS_KEY ? parseError("parse.ansNone") : parseError("parse.valueMissing", { what });
     if (!c.exact) this.inexact = true;
-    // a value with an == or ≠ test in it stays a value: only chip-giac.ts rewrites the test (R18f3)
-    const name = !c.exact && this.named && !/==|<>|!=/.test(c.value) ? chipName(key) : undefined;
+    // a value with an == or ≠ test in it stays a value: only chip-giac.ts rewrites the test (R18f3). R353: an exact chip
+    // with a unit goes by name too, so a store of it keeps the unit (host.ts, G371 unitOfStore); its value goes in as written
+    const name = (!c.exact || c.unit !== undefined) && this.named && !/==|<>|!=/.test(c.value) ? chipName(key) : undefined;
     if (name && this.named) {
       chipToGiac(c.value); // the same refusals as a value put in
       this.named[name] = c;

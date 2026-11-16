@@ -29,3 +29,11 @@ export function quantityChip(q: Quantity | UnitError): Chip | undefined {
   return chip;
 }
 
+/** R353: the chip Store ▶ in the unit view stores: `chip` when it carries the unit and the σ the result shows (`unit`, as
+ *  Quantity.unit; `unc`, σ's text when there is one), else undefined, so the bare number is never stored in its place
+ *  (quantityChip leaves the unit out for no shown slot or a unit text over 40 characters; a σ of 0 is dropped there). */
+export function storeChip(chip: Chip | undefined, unit: string, unc?: { text: string }): Chip | undefined {
+  if (!chip || (unit !== "" && !chip.unit)) return undefined;
+  return unc && !isZeroText(unc.text) && chip.unc === undefined ? undefined : chip;
+}
+
