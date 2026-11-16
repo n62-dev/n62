@@ -9,7 +9,7 @@ import { DATA_VERSION } from "../state/storage.ts";
 import type { RawRecord } from "../state/storageRaw.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
 import { SyncFolder, type FolderPort, type OtherBackup, type StartUi, type SyncHost } from "./backupSync.ts";
-import { deviceSlug, newDeviceName } from "./device.ts";
+import { deviceSlug, newDeviceName, renameDevice } from "./device.ts";
 import { memKv } from "./fakeFolder.ts";
 import { leaveNotice } from "./live.ts";
 import { readSync, SYNC_KEY } from "./record.ts";
@@ -104,6 +104,24 @@ describe("the device name (R128)", () => {
     const h = host(dir, undefined, { random: () => [0.0425, 0.5][r++] ?? 0.5 });
     await new SyncFolder(h).onStart(ui());
     expect((await readSync(h.kv)).device).toBe("Pixel-7-8000");
+  });
+});
+
+describe("a refused rename (R183f1)", () => {
+  it("a leave after it leaves the other device's backup text unchanged", async () => {
+    const dir = folder("Pixel 7");
+    const text = await other("2026-11-01T00:00:00Z");
+    dir.files.set("n62-Pixel-7-77aa-backup.json", { text, modified: 1 });
+    const h = host(dir);
+    await new SyncFolder(h).leave(); // this device takes a free name
+    const mine = (await readSync(h.kv)).device;
+    expect(mine).not.toBe("Pixel-7-77aa");
+    const names = (await dir.list()) as FolderFile[];
+    expect(await renameDevice(h.kv, "Pixel-7-77aa", names.map((f) => f.name))).toBe(mine);
+    h.store.set("view", rec("cas"));
+    await new SyncFolder(h).leave();
+    expect(dir.files.get("n62-Pixel-7-77aa-backup.json")?.text).toBe(text);
+    expect(dir.writes.every((w) => w.startsWith(`n62-${mine}-`))).toBe(true);
   });
 });
 
