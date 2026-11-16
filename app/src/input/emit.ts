@@ -2,7 +2,7 @@
 // MathJSON (Compute Engine's shape, also produced by our own parser) -> Giac input string.
 import { parseError } from "../i18n/enParser.ts";
 import { SerializeError } from "./errors.ts";
-import { CALL_NAME, EQ_DIFF, EQ_INEXACT_FLAG, EQ_VERDICT } from "../engine/ourNames.ts";
+import { CALL_NAME, equalityBlock, TEST_REL } from "../engine/ourNames.ts";
 import { DEGREE, PASDEG, POLAR, POLAR_OUT, RECT, angleInSpec, angleName, numericLiteral, rectArg, returnsAngle, withFactor } from "../engine/angles.ts";
 
 export { SerializeError };
@@ -102,17 +102,10 @@ const REL: Record<string, string> = {
  * stored function) a float side stays as typed.
  */
 export function equalityTest(a: Out, b: Out, negate: boolean, shown: { a: Out; b: Out } = { a, b }): Out {
-  const [yes, no, rel] = negate ? ["false", "true", "!="] : ["true", "false", "=="];
-  // R64: the kept text is shown, so it is built from the sides without the angle factor (`shown`)
-  const kept = `'${wrap(shown.a, 1)}${rel}${wrap(shown.b, 1)}'`;
-  const big = (v: string): string => `max(abs(evalf(${v},30)))`;
-  const float = "string(exact(d_))!=string(d_)";
-  const test =
-    `{if(${float}){sto(1,${EQ_INEXACT_FLAG});sto(d_,${EQ_DIFF})};` +
-    `when(${float},when(${EQ_VERDICT}==0,${yes},when(${EQ_VERDICT}==1,${no},${kept})),` +
-    `when(simplify(d_)==0*d_,${yes},when(lname(d_)==[] and (type(d_)==integer or type(d_)==rational or ` +
-    `${big("d_")}>10^-20*max(${big("a_")},${big("b_")})),${no},${kept})))}`;
-  return { s: `((a_,b_)->((d_)->${test})(a_-b_))(${a.s},${b.s})`, p: 5 };
+  // R64: the kept text is shown, so it is built from the sides without the angle factor (`shown`); G377: the block's
+  // text is engine/ourNames.ts equalityBlock, which the library import writes and the export reads back too
+  const kept = `${wrap(shown.a, 1)}${negate ? TEST_REL.ne : TEST_REL.eq}${wrap(shown.b, 1)}`;
+  return { s: equalityBlock(a.s, b.s, negate, kept), p: 5 };
 }
 
 const LOGIC: Record<string, string> = { And: "and", Or: "or" };
