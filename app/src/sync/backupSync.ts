@@ -3,8 +3,9 @@
 // writes this device's backup (as Save makes it), its library file and its counts export, each only when it changed
 // since the last write, each under this device's name (`n62-<device>-…`, sync/device.ts): two devices in one folder
 // never write one name, and a device never writes a name it did not make. On start the other devices' backups are
-// looked at, the newest by the envelope's `made`; one newer than the last one read is offered (the default), or with
-// "Restore silently" applied whole, but only while this device's own backup in the folder holds its state as it is (the
+// looked at, the newest by the envelope's `made`; one newer than the last one read, newer than this device's own file
+// there and not holding this device's own parts (R128f1: else it is marked read and nothing shows), is offered (the
+// default), or with "Restore silently" applied whole, but only while this device's own backup in the folder holds its state as it is (the
 // last leave wrote it), so what it replaces is in the folder and in `backup.undo`; else it is offered. A file the check
 // refuses is never applied and the notice says why. Nothing writes while no folder is chosen; there is no reminder.
 // Pure but for its port (live.ts gives the real one). Lazy: never in the start chunk.
@@ -155,13 +156,18 @@ export class SyncFolder {
     if (last !== undefined && Date.parse(newest.made) <= Date.parse(last.made)) return "none";
     // read now, whatever comes of it: Not now (or a refusal) asks again only for a newer file, never a reminder
     await patchSync(kv, { read: { name: newest.name, made: newest.made } });
+    const mine = await this.ownBackup(own, list);
+    // R128f1: made no later than this device's own file: older than the work it left there; never over it
+    if (mine?.made !== undefined && Date.parse(newest.made) <= Date.parse(mine.made)) return "none";
+    const now = JSON.stringify((await makeBackup(this.host.raw, this.host.now())).parts);
+    if (partsKey(newest.text) === now) return "none"; // R128f1: this device's own parts (another device restored them)
     const checked = checkBackup(new TextEncoder().encode(newest.text));
     const from: OtherBackup = { name: newest.name, device: newest.device, made: newest.made };
     if (!checked.ok) {
       ui.refused(from, checked.message);
       return "refused";
     }
-    if ((await readMode(kv)) === "silent" && (await this.stateInFolder(own, list))) {
+    if ((await readMode(kv)) === "silent" && mine?.key === now) {
       await ui.apply(from, checked);
       return "applied";
     }
@@ -169,13 +175,20 @@ export class SyncFolder {
     return "offered";
   }
 
-  /** This device's own backup in the folder holds the store's records as they are now (the last leave wrote them). */
-  private async stateInFolder(own: string, list: readonly FolderFile[]): Promise<boolean> {
-    if (!list.some((f) => f.name === own)) return false;
+  /** This device's own backup in the folder: its envelope's `made` (when a time) and its compare key. The silent restore
+   *  runs only while that key is the store's records as they are now (the last leave wrote them). */
+  private async ownBackup(own: string, list: readonly FolderFile[]): Promise<{ made?: string; key?: string } | undefined> {
+    if (!list.some((f) => f.name === own)) return undefined;
     const r = await this.host.folder.read(own);
-    if (typeof r !== "object") return false;
-    const now = await makeBackup(this.host.raw, this.host.now());
-    return partsKey(r.text) === JSON.stringify(now.parts);
+    if (typeof r !== "object") return undefined;
+    let made: unknown;
+    try {
+      made = (JSON.parse(r.text) as { made?: unknown }).made;
+    } catch {
+      return undefined;
+    }
+    const key = partsKey(r.text);
+    return { ...(typeof made === "string" && !Number.isNaN(Date.parse(made)) ? { made } : {}), ...(key !== undefined ? { key } : {}) };
   }
 }
 
