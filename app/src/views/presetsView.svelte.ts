@@ -166,10 +166,10 @@ const nameLatex = (name: string): string => name.replace(/[\\{}]/g, "").replace(
 /** The sheet has closed: the entry line takes a name under its label, and every key goes to it first. Enter offers the
  *  name to `save` (a refusal is the notice, and the line stays for another try); Esc cancels; C empties the name only,
  *  never the history nor the kept line (R123: the line's own clear would drop it, main.ts onClear); the space key types a space; a key or a tap that goes elsewhere (a sheet, a place) cancels first. Either way the
- *  line then holds what it held before. */
-export function askName(host: PresetsHost, start: string, save: (name: string) => void, said: (name: string) => string, label: string = pt("name")): void {
+ *  line then holds what it held before. `read` turns the line's LaTeX into the text offered (R201: a unit's text, ownUnitsText.ts). */
+export function askName(host: PresetsHost, start: string, save: (name: string) => void, said: (name: string) => string, label: string = pt("name"), read: (latex: string) => string = nameFrom): void {
   const { shell, entry } = host;
-  if (!shell || !entry?.fieldPending || !entry.fieldUp) return nameNow(host, start, save, said, label);
+  if (!shell || !entry?.fieldPending || !entry.fieldUp) return nameNow(host, start, save, said, label, read);
   // R255f1: before the entry field is up the line's keys are still in its queue (EntryController.value does not see
   // them): the name's keys wait here, in the order typed, and once the field is up the line is read and they go to the
   // prompt. Enter waits for the field in route.ts press (R255), so it comes after them; a key that goes elsewhere cancels.
@@ -192,12 +192,12 @@ export function askName(host: PresetsHost, start: string, save: (name: string) =
   void entry.fieldUp.then(() => {
     if (shell.prompt !== hold) return;
     shell.prompt = null;
-    nameNow(host, start, save, said, label);
+    nameNow(host, start, save, said, label, read);
     const named = (): EntryPrompt | null => shell.prompt; // (set again by nameNow; ended by an Esc among the keys)
     for (const a of held) if (!named()?.key(a) && a.kind !== "special") entry.run(a); // after an Esc: the line's
   });
 }
-function nameNow(host: PresetsHost, start: string, save: (name: string) => void, said: (name: string) => string, label: string): void {
+function nameNow(host: PresetsHost, start: string, save: (name: string) => void, said: (name: string) => string, label: string, read: (latex: string) => string): void {
   const { shell, entry } = host;
   if (!shell || !entry) return;
   shell.prompt?.cancel(); // a name still being typed (a tap went elsewhere): its line comes back first, and is the one kept
@@ -210,14 +210,15 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
     entry.set(line, chips);
   };
   const offer = (): void => {
-    const name = nameFrom(entry.value);
+    const name = read(entry.value);
     try {
       save(name);
     } catch (e) {
       return say(host, faultText(e, name));
     }
     end();
-    say(host, said(name));
+    const notice = said(name);
+    if (notice !== "") say(host, notice); // (a field of the unit sheet, R201, says nothing: the form shows it)
   };
   const prompt: EntryPrompt = {
     label,

@@ -180,7 +180,7 @@ test.describe("Your keys", () => {
     await open(page);
     await tap(page, ["@mode", "d6", "d4"]);
     await expect(title(page)).toHaveText("Mode › Settings › Your keys");
-    await expect(menu(page).getByRole("menuitem")).toHaveCount(20); // 18 slots, Reset all and Unit pad cells (R24d)
+    await expect(menu(page).getByRole("menuitem")).toHaveCount(21); // 18 slots, Reset all, Unit pad cells (R24d) and Your units (R201)
     await expect(mrow(page, "u1:primary")).toContainText("Empty");
     await tap(page, ["u3"]);
     await expect(mactive(page)).toHaveAttribute("data-id", "u3:primary");

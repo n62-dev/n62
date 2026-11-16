@@ -1,0 +1,18 @@
+engine build: Sun Nov 15 23:23:12 CET 2026
+=== stored 10:09:04
+Home A:=3 -> 3
+Function root of A*x^2-12 near 1 -> true 2 
+Home R:=4700 -> 4700
+Solve unknowns of V=I*R -> [ 'V', 'I', 'R' ]
+Solve V with I=2 and R's Num value 0 (as the app sends) -> {"ok":true,"roots":[{"name":"V","result":{"ok":true,"display":"0","value":{"re":{"neg":false,"digits":"","exp":0,"sticky":false},"im":{"neg":false,"digits":"","exp":0,"sticky":false}},"facts":{"exact":false,"reliableDigits":40},"full":"0","path":"numeric","approximate":true,"exactMs":0,"totalMs":2.1
+Home R still -> 4700
+=== exit 0 10:09:05
+=== parse 10:09:05
+"F1(2.5)" => "F*1*(2.5)"
+"F_{1}\\left(2.5\\right)" => "F_1*(2.5)"
+=== exit 0 10:09:05
+=== oracle 10:09:05
+exponential y=b*a^x: a = 2.72361111171417  b = 0.993992946666111
+power y=b*x^a: a = 2.00133795814764  b = 1.00543716023791
+=== exit 0 10:09:05
+=== done 10:09:05

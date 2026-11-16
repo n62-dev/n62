@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  // R327: the uncertainty sheet's head (views/uncSheet.ts builds it; docs/mockups/uncertainty-sheet.html sections 3 and 4):
+  // R327: the uncertainty sheet's head (views/uncSheet.ts builds it; docs/archive/mockups/uncertainty-sheet.html sections 3 and 4):
   // the result it explains with its mark, the short form, σ, U and relative σ as a list of terms, and the ⚠ line. R328:
   // under it the inputs' rows (budget/rows.ts), the level's items, so ▲ ▼ move the highlight; a row's bar ends in a stripe
   // above 100 %; then the muted lines. No words of its own (the start chunk draws it). Plain text: a screen reader reads the terms, then each row as label, uᵢ, share.

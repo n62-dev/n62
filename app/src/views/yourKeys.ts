@@ -4,17 +4,22 @@
 // sheet (Home, CAS, Apps, Menu, Mode, Settings), or empty. Pressing a free key while the list is open highlights its
 // row (route.ts, Sheet.goKey). The slots are in the stamped store under USER_KEYS (keyboard/userKeys.svelte.ts).
 import type { PresetsHost } from "./presetsView.svelte.ts";
+import { ownUnitsItem } from "./ownUnitsRow.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
+import type { AppShell } from "../apps/shell.svelte.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { findText as t } from "../i18n/enFind.ts";
 import { legend, t as tr } from "../i18n/index.ts";
 import type { Layer, Special } from "../keyboard/keyboard.ts";
+import type { DecimalMark } from "../state/session.svelte.ts";
 import { USER_KEY_IDS, USER_LAYERS, type UserKeys } from "../keyboard/userKeys.svelte.ts";
 import { CELL_KEYS, LEG_OF, unitCells } from "../units/userCells.svelte.ts";
 
 /** What Settings › Your keys needs from the app: the slots, and Find to pick a slot's content from (App.svelte). */
 export interface SettingsEnv extends PresetsHost {
   readonly userKeys?: UserKeys;
+  /** The shell also opens a sheet of its own and closes it (R201: the form that makes a unit; absent in tests that pass less). */
+  readonly shell?: NonNullable<PresetsHost["shell"]> & Partial<Pick<AppShell, "showMenu" | "closeSheet">>;
   chooseFor?(id: string, layer: Layer): void;
   /** Settings › Data (R38a, R38b): runs a backup action on the clipboard code, which shows its notice and opens the
    *  restore sheet (App.svelte's withClip: it waits for that code when the sheet opened before it came). */
@@ -39,7 +44,7 @@ export function slotsSet(u: UserKeys): number {
   return USER_KEY_IDS.reduce((n, id) => n + USER_LAYERS.filter((l) => u.labelOf(id, l) !== undefined).length, 0);
 }
 
-export function yourKeysItems(env: SettingsEnv): MenuItem[] {
+export function yourKeysItems(env: SettingsEnv, mark: () => DecimalMark = () => "point"): MenuItem[] {
   const u = env.userKeys;
   if (!u) return [];
   const slot = (id: string, n: number, layer: Layer): MenuItem => {
@@ -75,6 +80,7 @@ export function yourKeysItems(env: SettingsEnv): MenuItem[] {
   return [
     ...USER_KEY_IDS.flatMap((id, i) => USER_LAYERS.map((layer) => slot(id, i + 1, layer))),
     unitCellsItem(env),
+    ownUnitsItem(env, mark), // R201
     { id: "reset", label: t("keys.reset"), keep: true, run: () => u.reset() },
   ];
 }

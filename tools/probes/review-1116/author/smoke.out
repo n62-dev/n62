@@ -1,0 +1,20 @@
+== engine Sun Nov 15 23:23:12 CET 2026, run 12:10:43
+"ln(1/x)" => -ln(x)
+"sqrt(1/x)" => 1/sqrt(x)
+"ln(inv(x))" => -ln(x)
+"assume(x<0)" => x
+"ln(1/x)" => -ln(x)
+"sqrt(1/x)" => 1/sqrt(x)
+"purge(x)" => assume[[],[line[-infinity,0]],[0]]
+"ln(1/(1-sqrt(2)))" => -ln(1-sqrt(2))
+"sqrt(1/(pi-4))" => 1/sqrt(pi-4)
+"is_positive(-(1-sqrt(2)))" => is_positive(-1+sqrt(2))
+"is_positive(1-sqrt(2))" => is_positive(1-sqrt(2))
+"sign(1-sqrt(2))" => -1
+"sign(cos(2))" => -1
+"is_positive(-cos(2))" => is_positive(-cos(2))
+"ln(1/2)" => -ln(2)
+"sqrt(1/4)" => 1/2
+"ln(1/(x^2+1))" => -ln(x^2+1)
+"sqrt(1/(x^2+1))" => 1/sqrt(x^2+1)
+exit 0
