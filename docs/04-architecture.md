@@ -368,7 +368,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 
 **The backup**: one JSON file of each record as stored, stamped (without `defsStarts`, `tipsSeen`, history's `undo`); a restore checks the file, refusing at the first fault (newer format or part, bad stamp, unknown part, validator), then replaces the ticked keys in one transaction, keeps old ones in `backup.undo` for Undo, reloads.
 
-**The library file** writes a body's == or ≠ test as typed (`x!=1/3`); the import rebuilds a body's `A==B`, `A!=B`, `A<>B` into the parser's block. A program and a `// test:` line keep Giac's `==` (G377).
+**The library file** writes a body's == or ≠ test as typed (`x!=1/3`); the import rebuilds a body's `A==B`, `A!=B`, `A<>B` into the parser's block. A program, a piecewise condition and a `// test:` line keep Giac's `==` (G377).
 
 ### 6.3 Decision: start-up and bytes
 - The sizes and budgets are in 8.3. New code for Find, units, copy and the matrix editor lives in lazy chunks, and so do every Settings page, sheet and the first-start tips: the start chunk takes only what draws the first screen, key handlers and marks (the budget: 8.3). `virtual:about` (`vite-plugin-about.ts`): the version, THIRD_PARTY.md's parts and the texts of LICENSES/, 36 kB gzip, loaded when Settings › Help and about › About or Parts is first drawn.
