@@ -30,8 +30,9 @@ export function swipeOut(offset: number, width: number, speed: number): boolean 
 
 /** One move of the finger by `d` px (+ = right) split between a sideways scroller (at `scroll` of `max`, from the start
  *  edge) and the row (out by `offset`): a row that is out comes back first, then the scroller moves to its end, then the
- *  row slides. A finger going right scrolls towards the start. */
-export function share(d: number, scroll: number, max: number, offset: number): { scroll: number; offset: number } {
+ *  row slides. A finger going right scrolls towards the start. A drag that moved the scroller (`moved`, or in this very
+ *  move) drops the rest past its end: only a new drag slides the row (R333). */
+export function share(d: number, scroll: number, max: number, offset: number, moved = false): { scroll: number; offset: number } {
   let rest = d;
   let off = offset;
   if (off !== 0 && Math.sign(rest) !== Math.sign(off)) {
@@ -43,6 +44,7 @@ export function share(d: number, scroll: number, max: number, offset: number): {
   if (off === 0 && rest !== 0) {
     s = Math.min(Math.max(scroll - rest, 0), Math.max(max, 0));
     rest += s - scroll;
+    if (moved || s !== scroll) rest = 0;
   }
   return { scroll: s, offset: off + rest };
 }
@@ -65,6 +67,8 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
   let lastX = 0;
   let offset = 0;
   let scroller: HTMLElement | null = null;
+  /** This drag has moved the scroller (R333): the row stays at 0 for the rest of it. */
+  let scrolled = false;
   let moves: { t: number; x: number }[] = [];
   /** A drag ended: the click the browser may send after it (a mouse) is not a tap. */
   let swallow = false;
@@ -93,6 +97,7 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     x0 = lastX = e.clientX;
     y0 = e.clientY;
     offset = 0;
+    scrolled = false;
     const box = (e.target as Element).closest(".in, .out");
     scroller = box instanceof HTMLElement && node.contains(box) ? box : null;
     moves = [{ t: e.timeStamp, x: e.clientX }];
@@ -118,8 +123,11 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     lastX = e.clientX;
     const s = scroller;
     const max = s ? s.scrollWidth - s.clientWidth : 0;
-    const next = share(d, s ? s.scrollLeft : 0, max, offset);
-    if (s && next.scroll !== s.scrollLeft) s.scrollLeft = next.scroll;
+    const next = share(d, s ? s.scrollLeft : 0, max, offset, scrolled);
+    if (s && next.scroll !== s.scrollLeft) {
+      s.scrollLeft = next.scroll;
+      scrolled = true;
+    }
     offset = next.offset;
     place(offset);
     moves.push({ t: e.timeStamp, x: e.clientX });
