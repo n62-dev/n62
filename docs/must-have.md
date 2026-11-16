@@ -161,7 +161,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (R327, R328) �
 
 ## D. What the HP crowd will ask for first
 
-- **RPN entry: [miss], confirmed.** Entry is textbook or one-line; the stack is written as packages, nothing is built. Before the freeze, in v0.1.0 (owner, 2026-11-15). R250, R251, R252, R253, R254, G302. Stack view and the Mode row: R343.
+- **RPN entry: [miss], confirmed.** Entry is textbook or one-line to the user; the stack, its formulas, its store and the setting's value are built (R250 to R253), with no key or view to reach them yet. Before the freeze, in v0.1.0 (owner, 2026-11-15). R250, R251, R252, R253, R254, G302. Stack view and the Mode row: R343.
 - **Programs: [part], confirmed.** Library file from a laptop, or a one-line definition typed; no editor, no PPL (feedback #40, the owner's list). No package.
 - **The forensics chain: [have], unpublished (the list said miss).** Home DEG gives 9, mark `=`, at 12, 15, 30 digits; it cancels symbolically, branches picked by Giac's numeric reduction. No case guards it. G300; CAS DEG shows it badly, G301.
 - **Same CAS as the Prime: [have] overstated.** "Also built on Giac" holds, "same" does not; the Prime's Giac version is unknown. Wording below. No package.
