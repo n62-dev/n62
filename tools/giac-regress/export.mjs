@@ -609,6 +609,9 @@ export const PATCHED_IDS = new Map([
   // G378 (F181): sym2poly.cc sym2rxrootnum took the root of a negative real radicand by the sign of evalf's rounding (stock and
   // 0001-0051: -z for simplify(sqrt(z^2)), z = acosh(-1/2)); the g378-keep-* rows pass on stock and stay in the check file
   ...["acosh-neg-half-sq-12", "acosh-neg-half-sq-30", "acosh-neg-third-sq-12", "acosh-neg-third-sq-30", "neg-acosh-neg-half-sq-12"].map((k) => [`g378-simplify-sqrt-${k}`, "0052-sqrt-root-pick-at-cut.patch"]),
+  // G557 (F311, F320): sym2poly.cc algnum_rewritable negated a complex value written as shift +- sqrt(sol), and algnum_normal wrote the
+  // generator as a rootof that is not its value; the g557-keep-* rows pass on stock and stay in the check file
+  ...["simplify-sqrt2-plus-i-sqrt3-12", "simplify-sqrt2-plus-i-sqrt3-30", "normal-sqrt2-times-sqrt3-plus-i", "simplify-exp-i-pi-over-6-sqrt2", "normal-neg8-sixth-root", "det-sqrt2-sqrt3-i", "simplify-sqrt-neg-sqrt2", "simplify-sqrt-1-minus-sqrt2", "simplify-sqrt-cbrt10-minus-sqrt6"].map((k) => [`g557-${k}`, "0053-algnum-complex-root-sign.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
