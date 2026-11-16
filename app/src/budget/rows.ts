@@ -11,6 +11,7 @@ import { commaResult, type FmtMode } from "../state/displayMode.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { sigmaShown } from "../state/sigmaLine.ts";
 import type { UncWhy } from "../units/types.ts";
+import { parseDecimal } from "../units/uncertainty.ts";
 import { budgetOf, type BudgetInput, type BudgetReason, type BudgetRow, type BudgetShare } from "./model.ts";
 
 /** One row of the table: an input, or the second-order part (`second`). */
@@ -33,6 +34,8 @@ export interface ShareRow {
 }
 
 export interface ShareTable {
+  /** The column heads: Input, uᵢ, % of σ². */
+  columns: readonly [string, string, string];
   rows: ShareRow[];
   /** The muted lines under the rows, or the one line that says why there are none. */
   lines: string[];
@@ -54,7 +57,7 @@ const isTerm = (x: unknown): x is { key?: string; t: string; uy: string } => {
  *  are read back unchecked from the history: a bad shape is no table. */
 function inputOf(item: HistoryItem): (BudgetInput & { unit: string; home: boolean }) | null {
   const unc = item.units?.unc;
-  const terms: unknown = unc ? unc.terms : item.uncTerms;
+  const terms: unknown = unc ? unc.terms : (item.uncTerms ?? alone(item));
   if (!Array.isArray(terms) || !terms.length || !terms.every(isTerm)) return null;
   if (unc && unc.second !== undefined && typeof unc.second !== "string") return null;
   const why: UncWhy | undefined = unc?.why;
@@ -70,6 +73,20 @@ function inputOf(item: HistoryItem): (BudgetInput & { unit: string; home: boolea
     unit: unc ? (item.units?.unit ?? "") : "",
     home: !unc,
   };
+}
+
+/** The chip keys of the line as the terms name them: `const:G` is G, `res:3` is pasr_3, `ans` is pasr_ans. */
+const termKey = (chip: string): string | null =>
+  chip.startsWith("const:") ? chip.slice("const:".length) : chip.startsWith("res:") ? `pasr_${chip.slice("res:".length)}` : chip === "ans" ? "pasr_ans" : null;
+
+/** A Home row with σ from one input alone: G274 keeps no terms for it (one input says nothing σ does not), so its one
+ *  term is σ itself, t = σ² and uy = σ, keyed by the line's one chip with σ; undefined for anything else. */
+function alone(item: HistoryItem): { key: string; t: string; uy: string }[] | undefined {
+  const sigma = item.facts?.uncSigma;
+  const d = typeof sigma === "string" ? parseDecimal(sigma) : null;
+  const withSigma = Object.entries(item.chips ?? {}).filter(([, c]) => c.unc !== undefined);
+  const key = withSigma.length === 1 ? termKey(withSigma[0]![0]) : null;
+  return d && key ? [{ key, t: `${d.m * d.m}E${2 * d.k}`, uy: sigma as string }] : undefined;
 }
 
 // ---- the labels: the inputs as the line holds them ----
@@ -227,6 +244,8 @@ function bar(s: BudgetShare): ShareRow["bar"] {
   return { width: v };
 }
 
+const columns = (): ShareTable["columns"] => [uncText("unc.rows.input"), uncText("unc.rows.uy"), uncText("unc.rows.share")];
+
 /** The rows of `item`'s sheet; null where the model gives no budget (no terms, σ 0, a term that is not a decimal). */
 export function uncRows(item: HistoryItem, comma: boolean, mode: FmtMode = "std"): ShareTable | null {
   const input = inputOf(item);
@@ -236,7 +255,7 @@ export function uncRows(item: HistoryItem, comma: boolean, mode: FmtMode = "std"
   const at = (i: number): string => `#${i}`;
   const b = budgetOf({ ...input, terms: input.terms.map((x, i) => (x.key === undefined ? { ...x, key: at(i) } : x)) });
   if (b === null) return null;
-  if ("reason" in b) return { rows: [], lines: [uncText(LINE[b.reason])] };
+  if ("reason" in b) return { columns: columns(), rows: [], lines: [uncText(LINE[b.reason])] };
   const names = labels(item, input.terms, comma);
   const nameOf = (r: BudgetRow): { label: string; sub?: string } => {
     const i = input.terms.findIndex((x, k) => (x.key ?? at(k)) === r.key);
@@ -262,5 +281,5 @@ export function uncRows(item: HistoryItem, comma: boolean, mode: FmtMode = "std"
     const p = `${sum < 0 ? "-" : ""}${Math.trunc(Math.abs(sum) / 10)}.${Math.abs(sum) % 10}`;
     lines.push(uncText("unc.rows.rounded", { p: (comma ? p.replace(".", ",") : p).replace("-", "−") }));
   }
-  return { rows, lines };
+  return { columns: columns(), rows, lines };
 }

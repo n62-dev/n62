@@ -46,6 +46,7 @@ describe("R328: the uncertainty sheet's rows (variant A)", () => {
     expect(t?.rows.map((r) => r.bar)).toEqual([{ width: 98.3 }, { width: 1.7 }, { width: 0 }]);
     expect(t?.rows.some((r) => r.note)).toBe(false);
     expect(t?.lines).toEqual([]);
+    expect(t?.columns).toEqual(["Input", "uᵢ", "% of σ²"]);
   });
 
   it("sin(0 ± 0.2): 104.2 % with its bar ending in the stripe, second order −4.2 %, and the over-100 line", () => {
@@ -108,6 +109,16 @@ describe("R328: the uncertainty sheet's rows (variant A)", () => {
     expect(shown(t)).toEqual([["G", "9.0ᴇ9", "100.0 %"]]);
     expect(t?.rows[0]?.note).toBe("treated as independent; σ and shares may be off if it shares an input with another term.");
     expect(t?.lines).toEqual([]);
+  });
+
+  it("Home with one input alone (G274 keeps no terms for it): its one row at 100.0 %, σ as its uᵢ", () => {
+    const t = uncRows(row({
+      latex: "\\const{G}{G}\\times5.972\\emark24",
+      chips: { "const:G": { value: "6.6743E-11", unc: "1.5E-15", basis: "x", exact: false, inexact: true } },
+      facts: { exact: false, reliableDigits: null, inexact: true, uncSigma: "8.958E9", uncDigits: 2 },
+    }), false);
+    expect(shown(t)).toEqual([["G", "9.0ᴇ9", "100.0 %"]]);
+    expect(t?.rows[0]?.note).toBeUndefined(); // (a constant with a basis)
   });
 
   it("the decimal comma: 98,3 % and 12,34 ± 0,05 m", () => {
