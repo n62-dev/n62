@@ -30,25 +30,31 @@ export function swipeOut(offset: number, width: number, speed: number): boolean 
 
 /** One move of the finger by `d` px (+ = right) split between a sideways scroller (at `scroll` of `max`, from the start
  *  edge) and the row (out by `offset`): a row that is out comes back first, then the scroller moves to its end, then the
- *  row slides. A finger going right scrolls towards the start. A drag that moved the scroller (`moved`, or in this very
- *  move) drops the rest past its end: only a new drag slides the row (R333). */
-export function share(d: number, scroll: number, max: number, offset: number, moved = false): { scroll: number; offset: number } {
+ *  row slides. A finger going right scrolls towards the start. The scroller has room in the move's direction (max minus
+ *  the start position going left, the start position going right): 1 px of it or more and the move scrolls and the rest
+ *  past the end is dropped, even when this one move is under 1 px (a slow drag, fractional clientX; R333f1). Under 1 px
+ *  the scroller is at its end and the rest slides the row, unless the drag had scrolled (`moved`): only a new drag
+ *  slides the row then (R333). `scrolled` answers whether this drag has moved the scroller, for the next move. */
+export function share(d: number, scroll: number, max: number, offset: number, moved = false): { scroll: number; offset: number; scrolled: boolean } {
   let rest = d;
   let off = offset;
+  let scrolled = moved;
   if (off !== 0 && Math.sign(rest) !== Math.sign(off)) {
     const back = Math.sign(rest) * Math.min(Math.abs(rest), Math.abs(off));
     off += back;
     rest -= back;
   }
   // (`scrollLeft` can be fractional past the integer `max`: a scroller at its true end counts as at `max`)
-  const from = Math.min(Math.max(scroll, 0), Math.max(max, 0));
+  const top = Math.max(max, 0);
+  const from = Math.min(Math.max(scroll, 0), top);
   let s = from;
   if (off === 0 && rest !== 0) {
-    s = Math.min(Math.max(from - rest, 0), Math.max(max, 0));
-    // (the same 1 px as `move`'s: under it the scroller is at its end, the rest slides the row)
-    if (moved || Math.abs(s - from) >= 1) rest = 0;
+    s = Math.min(Math.max(from - rest, 0), top);
+    const room = rest < 0 ? top - from : from;
+    if (room >= 1) scrolled = true;
+    if (scrolled) rest = 0;
   }
-  return { scroll: s, offset: off + rest };
+  return { scroll: s, offset: off + rest, scrolled };
 }
 
 export interface SwipeOptions {
@@ -126,10 +132,8 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     const s = scroller;
     const max = s ? s.scrollWidth - s.clientWidth : 0;
     const next = share(d, s ? s.scrollLeft : 0, max, offset, scrolled);
-    if (s && next.scroll !== s.scrollLeft) {
-      if (Math.abs(next.scroll - s.scrollLeft) >= 1) scrolled = true; // (under 1 px: a fractional scrollLeft at its end)
-      s.scrollLeft = next.scroll;
-    }
+    if (s && next.scroll !== s.scrollLeft) s.scrollLeft = next.scroll;
+    scrolled = next.scrolled;
     offset = next.offset;
     place(offset);
     moves.push({ t: e.timeStamp, x: e.clientX });
