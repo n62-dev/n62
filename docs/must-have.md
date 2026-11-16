@@ -161,7 +161,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (R327, R328) �
 
 ## D. What the HP crowd will ask for first
 
-- **RPN entry: [miss], confirmed.** Entry is textbook or one-line to the user; the stack, its formulas, its store and the setting's value are built (R250 to R253), with no key or view to reach them yet. Before the freeze, in v0.1.0 (owner, 2026-11-15). R250, R251, R252, R253, R254, G302. Stack view and the Mode row: R343.
+- **RPN entry: [miss], confirmed.** Entry is textbook or one-line to the user; the stack, its formulas, its store and the setting's value are built (R250 to R253), with no key or view to reach them yet. R250 to R253 and G302 ship in v0.1.0 with no way in; R254 (the keys) and R343 (the stack view, the Mode row) after the tag (owner, 2026-11-16).
 - **Programs: [part], confirmed.** Library file from a laptop, or a one-line definition typed; no editor, no PPL (feedback #40, the owner's list). No package.
 - **The forensics chain: [have], unpublished (the list said miss).** Home DEG gives 9, mark `=`, at 12, 15, 30 digits; it cancels symbolically, branches picked by Giac's numeric reduction. No case guards it. G300; CAS DEG shows it badly, G301.
 - **Same CAS as the Prime: [have] overstated.** "Also built on Giac" holds, "same" does not; the Prime's Giac version is unknown. Wording below. No package.
@@ -178,7 +178,7 @@ Counts (must match section A): 48 patches; 36 sent (0001-0002, 0003-0012, and 00
 
 **Order:**
 - v0.1.0: G300 and G301 merged (`782b641c`, `cac10d87`).
-- Before the freeze (owner, 2026-11-15): R250, R251, R252, R253 in lane A and G302 in lane B; the owner's Virtual Calculator session on Mon 11-16, then R254, then R343 (the stack view and the Mode row, so RPN is reachable in v0.1.0); the swap key, ▲/▼ and `frac` after decision 4.
+- Before the freeze (owner, 2026-11-15): R250, R251, R252, R253 in lane A and G302 in lane B; after the tag (owner, 2026-11-16), the owner's Virtual Calculator session, then R254, then R343 (the stack view and the Mode row); the swap key, ▲/▼ and `frac` after decision 4.
 
 **Open bugs:** F196: CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)` draws π/(6·π/180), the chain `180/20*pi/pi`); value right, form wrong. Reach: every exact inverse trig constant in CAS DEG. G301; a free name (`…+x`) and Home's same display stay open.
 
