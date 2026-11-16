@@ -146,20 +146,110 @@ test.describe("the way back from the unit view (R63)", () => {
     await expect(lastRow(page).getByTestId("unit-names")).toHaveCount(0);
   });
 
-  // R352: the end slot's reading says what it does (a bare → □ shows nothing else); c67's keys, derived 5/0.45359237 = 11.0231131092
-  test("5 kg: after Enter the end slot is active and its reading says what it does; lb and Eval give c67's ≈ 11.0231131092 lb", async ({ page }) => {
+  // R349 (owner, 2026-11-16): no end slot until → Check is tapped; Enter in the last slot evaluates in the result's own
+  // unit. c67's keys (→ Check, lb), derived 5/0.45359237 = 11.0231131092; 72 km/h = 20 m/s (1 km/h = 5/18 m/s, derived)
+  const check = (page: Page) => page.getByTestId("unit-check");
+  const checking = (page: Page) => page.evaluate(() => window.n62.unitView?.view.checking);
+  test("5 kg: Enter in the last slot evaluates, = 5 kg; → Check brings the end slot with its reading, lb gives c67's ≈ 11.0231131092 lb", async ({ page }) => {
     await tap(page, ["d5"]);
     await unitsKey(page);
+    await expect(check(page)).toHaveText("→ Check");
+    expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1"]);
+    expect(await page.evaluate(() => window.n62.unitView?.field.value)).not.toContain("\\to");
     await tap(page, ["d4", "d6"]);
     await expect(page.getByTestId("unit-reading")).toHaveText("kilogram");
     await tap(page, ["enter"]);
+    await expect(result(page)).toHaveAttribute("data-text", "5");
+    await expect(page.getByTestId("unit-unit")).toHaveText("kg");
+    await expect(page.getByTestId("unit-mark")).toHaveText("=");
+    await check(page).tap();
+    expect(await checking(page)).toBe(true);
     expect(await page.evaluate(() => window.n62.unitView?.view.activeId)).toBe("end");
-    await expect(page.getByTestId("unit-reading")).toHaveText("Leave empty: the result in its own unit. A unit here: checked, then converted");
+    expect(await page.evaluate(() => window.n62.unitView?.field.getPromptValue("u1"))).toContain("\\mathrm{kg}"); // drawn again
+    await expect(check(page)).toHaveText("✕ Check");
+    await expect(page.getByTestId("unit-reading")).toHaveText("Check against a unit: the result is converted to it, or refused if it does not fit");
     await flick(page, "d6", "up");
     await expect(page.getByTestId("unit-reading")).toHaveText("pound");
     await flick(page, "enter", "up");
     await expect(result(page)).toHaveAttribute("data-text", "11.0231131092");
     await expect(page.getByTestId("unit-unit")).toHaveText("lb");
+  });
+
+  test("✕ Check takes the end slot off, and so does ⌫ in it once empty; the slots before keep their units", async ({ page }) => {
+    await tap(page, ["d5"]);
+    await unitsKey(page);
+    await tap(page, ["d4", "d6"]);
+    await check(page).tap();
+    await flick(page, "d6", "up");
+    await check(page).tap();
+    expect(await checking(page)).toBe(false);
+    await expect(check(page)).toHaveText("→ Check");
+    expect(await page.evaluate(() => window.n62.unitView?.view.activeId)).toBe("u1");
+    expect(await slotText(page, "u1")).toBe("k:g");
+    await check(page).tap();
+    expect(await slotText(page, "end")).toBe(""); // on again: empty
+    await tap(page, ["bksp"]);
+    expect(await checking(page)).toBe(false);
+    expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1"]);
+    expect(await page.evaluate(() => window.n62.unitView?.field.value)).not.toContain("\\to");
+  });
+
+  test("72 km/h: Eval gives 72 km/h; → Check, m/s, Eval gives = 20 m/s", async ({ page }) => {
+    await tap(page, ["d7", "d2"]);
+    await unitsKey(page);
+    await tap(page, ["d4", "d9", "div"]);
+    await flick(page, "d3", "up");
+    await tap(page, ["enter"]);
+    await expect(result(page)).toHaveAttribute("data-text", "72");
+    await expect(result(page)).toHaveAttribute("data-unit", "km/h");
+    await check(page).tap();
+    await tap(page, ["d9", "div", "d9"]);
+    await tap(page, ["enter"]);
+    await expect(result(page)).toHaveAttribute("data-text", "20");
+    await expect(result(page)).toHaveAttribute("data-unit", "m/s");
+    await expect(page.getByTestId("unit-mark")).toHaveText("=");
+  });
+
+  test("a row saved with an end slot (lb) opens with it on and filled, after a relaunch too; one without, off", async ({ page }) => {
+    await tap(page, ["d5"]);
+    await unitsKey(page);
+    await tap(page, ["d4", "d6"]);
+    await check(page).tap();
+    await flick(page, "d6", "up");
+    await flick(page, "enter", "up");
+    await expect(result(page)).toHaveAttribute("data-unit", "lb");
+    await leaveView(page);
+    const reopen = async (): Promise<void> => {
+      await page.evaluate(() => window.n62.entry.clear());
+      await tap(page, ["up"]);
+      await unitsKey(page);
+      expect(await checking(page)).toBe(true);
+      await expect(check(page)).toHaveText("✕ Check");
+      expect(await slotText(page, "u1")).toBe("k:g");
+      expect(await slotText(page, "end")).toBe("lb");
+      expect(await page.evaluate(() => window.n62.unitView?.field.getPromptValue("end"))).toContain("lb");
+    };
+    await reopen();
+    await leaveView(page);
+    await page.waitForTimeout(800); // the store write is debounced (400 ms) and asynchronous
+    await page.reload();
+    await page.waitForFunction(() => window.n62?.session.engineState === "ready", undefined, { timeout: 20_000 });
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await page.evaluate(() => window.n62.entry.ready);
+    await reopen();
+    await leaveView(page);
+    // a row without one (5 kg, Enter) opens without it
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["d5"]);
+    await unitsKey(page);
+    await tap(page, ["d4", "d6", "enter"]);
+    await expect(result(page)).toHaveAttribute("data-unit", "kg");
+    await leaveView(page);
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["up"]);
+    await unitsKey(page);
+    expect(await checking(page)).toBe(false);
+    expect(await slotText(page, "u1")).toBe("k:g");
   });
 
   test("the units key on chip × 2 fills the slot after the chip with m; the 2 keeps its own empty slot", async ({ page }) => {
@@ -265,6 +355,7 @@ test.describe("the way back from the unit view (R63)", () => {
     expect(await slotText(page, "u1")).toBe("");
     expect(await slotText(page, "u2")).toBe("m:m");
     expect(await slotText(page, "end")).toBe("m");
+    expect(await page.evaluate(() => window.n62.unitView?.view.checking)).toBe(true); // R349: the row has an end slot
     await flick(page, "enter", "up");
     await expect(result(page)).toHaveAttribute("data-text", "0.157079632679");
     await expect(page.getByTestId("unit-unit")).toHaveText("m");

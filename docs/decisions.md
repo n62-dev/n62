@@ -183,7 +183,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G17:** dB is a field-ratio level, dBm and dBW to 1 mW and 1 W; offsets and levels alone convert, T1 − T2 of one scale too (G370); impossible levels and other temperature mixes are refused (G16's zero: G35, below). Archived.
 - **G18:** ± is `pasupm(value,sigma)`, each an independent standard uncertainty in the slot's unit; ± inside sin, cos, tan works. **G25:** a typed product is kept when at most one token carries a prefix or its factor is 1 (N·m, kW·h), else SI with a prefix.
 - **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Archived, "Opus pass 97".
-- **R28:** rule: docs/04 4.3 (slot order, the end slot); a slot only right after a number literal; σ is a number literal, `n %` of the value (R104) or a result chip (R271, R271f1; both docs/04 4.2); a product with a slot keeps its brackets.
+- **R28:** rule: docs/04 4.3 (slot order, the end slot, there only after → Check, R349); a slot only right after a number literal; σ is a number literal, `n %` of the value (R104) or a result chip (R271, R271f1; both docs/04 4.2); a product with a slot keeps its brackets.
 - **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Archived, "Opus pass 96".
 - **Built, archived as they stood ("2026-11-16, Ultra"):** G161 (Opus passes 60, 62); G143 (Opus pass 36): σ through a step function.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
