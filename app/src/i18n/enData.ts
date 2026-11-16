@@ -86,6 +86,7 @@ export const enData = {
   "sync.device": "Device name",
   "sync.device.none": "made at the first write",
   "sync.device.said": "Device name: {name}",
+  "sync.device.taken": "Another device in the sync folder has the name {name}",
   "sync.chosen": "Sync folder: {name}",
   "sync.cancelled": "No folder chosen",
   "sync.unavailable": "No sync folder: choose one first",

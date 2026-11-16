@@ -15,6 +15,10 @@ export const MIGRATIONS: Migrations = {
   2: { defs: migrateAngleDefs, library: migrateAngleText },
   // 3 → 4 (R94): nothing to rewrite; the stamp guards settings schema 4 from builds that would drop its fields.
   3: {},
+  // 4 → 5 (G371): a definitions entry may carry its value's σ (facts `uncDigits`, `uncSigma`) and unit (`unit`);
+  // nothing to rewrite (an old entry has neither, and a missing fact claims nothing): the stamp guards the log from
+  // builds that would drop them.
+  4: {},
 };
 
 /** Plain text (a library file, G33) written in `from`, brought up to DATA_VERSION by the same steps as the stored `defs`. */

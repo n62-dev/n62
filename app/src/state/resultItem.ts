@@ -10,14 +10,17 @@ import type { ResultFacts } from "./displayMode.ts";
 import type { CalcSettings } from "../calc/port.ts";
 import type { ChipFactsTable } from "../engine/chipFacts.ts";
 import type { ChipTable } from "../input/chips.ts";
+import { chipUnit } from "../input/chipUnit.ts";
 import type { HistoryItem, Session } from "./session.svelte.ts";
 
 /** The chips an input holds by name (`pasr_<k>`), as the engine takes them (G49): the value and the facts. Here, not in
  *  results.ts, since G211: only a job reads it, after this chunk is in (Session.finish), so it is out of the start chunk. */
 export function chipFactsOf(named: ChipTable): ChipFactsTable {
   const out: Record<string, ChipFactsTable[string]> = {};
-  for (const [k, c] of Object.entries(named))
-    out[k] = { value: c.value, reliableDigits: c.reliableDigits ?? null, exact: c.exact, ...(c.warn ? { warn: c.warn } : {}), ...(c.unc !== undefined ? { unc: c.unc } : {}) };
+  for (const [k, c] of Object.entries(named)) {
+    const unit = chipUnit(c); // G371: a stored chip's unit, checked before a name keeps it
+    out[k] = { value: c.value, reliableDigits: c.reliableDigits ?? null, exact: c.exact, ...(c.warn ? { warn: c.warn } : {}), ...(c.unc !== undefined ? { unc: c.unc } : {}), ...(unit ? { unit } : {}) };
+  }
   return out;
 }
 
