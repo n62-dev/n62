@@ -41,6 +41,7 @@ test("a fresh profile shows the tips; a reload does not", async ({ page }) => {
   await expect(tips(page)).toContainText("On the entry line, swipe down to fold the keypad and up to bring it back");
   await expect(tips(page)).toContainText("On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it");
   await expect(tips(page)).toContainText("= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.");
+  await expect(tips(page)).toContainText("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; the last slot checks against a unit, or leave it empty");
   await expect(tips(page).locator(".tip .n")).toHaveCount(2); // R171: only the two ringed cards carry a number
   await expect(page.getByTestId("tips-got-it")).toHaveText("Got it");
   await page.getByTestId("tips-got-it").tap();
@@ -95,7 +96,7 @@ test("each ring is centred on its control's content and stays within the status 
   }
 });
 
-// R171: six cards and Got it fit the small phone at the largest font scale: none cut by the screen's edges (R290: and the
+// R171, R352: seven cards and Got it fit the small phone at the largest font scale: none cut by the screen's edges (R290: and the
 // big phone at the same scale).
 for (const [w, h] of [[360, 740], [412, 915]] as const) {
   test(`at ${w} × ${h} and font scale 2.0 every card and Got it lie inside the viewport`, async ({ page }) => {
@@ -106,7 +107,7 @@ for (const [w, h] of [[360, 740], [412, 915]] as const) {
     await page.getByTestId("menu").locator('[data-id="tips"]').tap();
     await expect(tips(page)).toBeVisible();
     const boxes = [...(await page.locator(".tips .tip").all()), page.getByTestId("tips-got-it")];
-    expect(boxes.length).toBe(7);
+    expect(boxes.length).toBe(8);
     for (const [i, b] of boxes.entries()) {
       const r = (await b.boundingBox())!;
       expect(r.x, `box ${i}: left`).toBeGreaterThanOrEqual(0);
