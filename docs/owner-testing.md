@@ -39,16 +39,7 @@ Not worth testing yet: number bases (v0.3 builds them). Matrices are tested thro
 
 ## Tasks and reporting
 
-The tasks are open sessions in the owner's own `todo.txt` under `+N62`: S01 to S20, 20 to 45 minutes in one area each, with a start, directions to try, the bugs already known and a `Report:` field (since 2026-11-10; the first 76 scripted steps were too small to explore with). Contexts `@n62-01-home` to `@n62-10-release` are the segments. A number quoted in a session comes from `mpmath`, the core list or the golden files, never from memory. Priority A is the first round, B the second, C waits for its date.
-
-A report is one note per finding after `Report:`, split by `;`, each starting with `bad W` (wrong number), `bad B` (broken), `bad F` (feel), `bad L` (look), `bad I` (idea) or `?`; or `ok` and what was covered. `SIGN OFF` on a session signs its segment.
-
-**When the owner says "process N62 todo",** a session:
-1. reads the `+N62` lines whose `Report:` is filled in, and works out the build from the date and `.coord/device-runs.jsonl`;
-2. adds each `bad` to [feedback.md](feedback.md), in the owner's words, with its triage (rule 12 of [03-feature-analysis.md](03-feature-analysis.md));
-3. writes each `W` or `B` as a backlog bug line and a package with the regression test first, and shows the owner before committing;
-4. writes the bug id back on the owner's line in `todo.txt`, appended to the report and nothing else changed;
-5. copies each `SIGN OFF` verdict into the table below.
+**The todo sessions are dropped** (the owner, 2026-11-16: not usable for him). The `+N62` block of S01–S20 left `todo.txt` before that day; T4 ran the sessions itself on 2026-11-16 (feedback.md rows 56–71). A point the owner makes from daily use goes to [feedback.md](feedback.md) in his words with its triage (rule 12 of [03-feature-analysis.md](03-feature-analysis.md)); a `W` or `B` gets a package with the regression test first. Contexts `@n62-01-home` to `@n62-10-release` stay as the segment names of the table above.
 
 ## Sign-offs
 
