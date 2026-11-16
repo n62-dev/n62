@@ -10,6 +10,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **S20, MPFI intervals:** go for real values on Giac's interval functions? Recommended; +6.6 kB brotli ([r22](research/r22-mpfi.md) 1).
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
+- **T1's 26 questions (2026-11-16):** R513, R509, G504, R505, R507, A204, A205, G517, R517, G518, G527 and the rest in `../drafts/2026-11-16-ultra/t1-packages/SUMMARY.md` ("Needs the owner"); each package waits for its answer; recommended as written.
 
 ## Decided proposals
 
@@ -62,6 +63,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Stored data carries a version; one signing key (2026-10-14).** Rule: docs/04 6.2 (the stamp); the throwaway key lives in `~/.cache/n62/keys/` for every worktree, so an install over the last keeps its data.
 - **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts; the inline scripts 1.53 kB gzip). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
 - **T4's answers (owner, 2026-11-16):** the todo test sessions are dropped; a prefix key pressed after a value takes it in (≈: R576, ∥: R585); T + ΔT gives a temperature (G577); grouped numbers paste after the tag (R581); Home draws matrix results as grids after the tag (R578).
+- **T2's and T3's answers (owner, 2026-11-16):** A÷B of two matrices is refused (G555); Home's σ of second order goes through the unit view's rule after the tag (F309, no package yet); the word-op row tag after the tag (R552); iOS in phase 2 is the home-screen web app (no Capacitor iOS, no App Store ask, iOS 18 floor; S90), desktop the installed web app (no Tauri, Electron or Flathub; S95), the sync folder through the browser's folder access after S95 (A231); G524 before the tag.
 
 ### Precision, engine and parser
 - **G141 (Opus pass 68): a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too (`(1-cos(10^-600))*10^1200+1` showed ≈ 1, right 1.5); G126's and G153's rows turn ⚠ until S20.
