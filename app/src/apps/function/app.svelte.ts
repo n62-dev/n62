@@ -16,6 +16,7 @@ import { slotNames, SlotsState, type SlotsJson } from "../slots.svelte.ts";
 import { answerChip, answerShown } from "../toHome.ts";
 import type { AppHost, AppInstance, MenuItem, NavDir, SubMenu, ViewId } from "../types.ts";
 import { compileDefinition, type Compiled } from "./compile.ts";
+import { drawValues, nameRead, noteOf, type NameRead } from "./stored.ts";
 import type { AnalysisOutcome, AnalysisRequest, Cell } from "./engineApi.ts";
 
 import { brightness, family } from "../../theme.svelte.ts";
@@ -67,6 +68,8 @@ export class FunctionApp implements AppInstance {
   readonly views: readonly ViewId[] = ["symb", "plot", "num"];
   readonly slots = new SlotsState(slotNames("F"));
   compiled = $state.raw<Compiled[]>([]);
+  /** R361: the stored names the slots on read, as the engine gave them when Plot last opened (stored.ts). */
+  reads = $state.raw<ReadonlyMap<string, NameRead>>(new Map());
 
   /** null until Plot has been drawn once (then y follows the board's aspect). */
   win = $state<PlotWindow | null>(null);
@@ -303,8 +306,12 @@ export class FunctionApp implements AppInstance {
   }
 
   // ---- Symb
+  /** A definition compiled with the stored values last read (R361). */
+  private compile(latex: string, angle: "rad" | "deg"): Compiled {
+    return compileDefinition(latex, angle, drawValues(this.reads));
+  }
   define(i: number, latex: string): void {
-    const c = compileDefinition(latex, this.host.settings.angle);
+    const c = this.compile(latex, this.host.settings.angle);
     this.slots.set(i, latex, c.error === "not a function of x" ? numText("function.notFunction") : c.error);
     const next = [...this.compiled];
     next[i] = c;
@@ -317,7 +324,7 @@ export class FunctionApp implements AppInstance {
   syncAngle(): boolean {
     const angle = this.host.settings.angle;
     if (this.compiled.every((c) => c.angle === angle)) return false;
-    this.compiled = this.slots.latex.map((l) => compileDefinition(l, angle));
+    this.compiled = this.slots.latex.map((l) => this.compile(l, angle));
     // R257: the last analysis and the trace y belong to the old unit. The trace is asked in a microtask, outside
     // FunctionPlot.svelte's angle effect that calls this (its reads are not that effect's dependencies).
     this.marks = [];
@@ -325,6 +332,37 @@ export class FunctionApp implements AppInstance {
     this.areaStart = undefined;
     queueMicrotask(() => void this.refreshTrace());
     return true;
+  }
+  /** R361: on Plot open, the stored names the slots on read, asked of the engine once (their kind and value, never
+   *  Giac's print, P20); a slot that reads one is compiled again with the values, so a name stored again since is drawn
+   *  anew. Counts the open (`event:plot-open`, a slot on) and a drawing of a stored value (`event:plot-stored`). */
+  async readStored(): Promise<void> {
+    const on = this.active;
+    const names = [...new Set(on.flatMap((i) => this.compiled[i]?.uses ?? []))];
+    if (names.length) {
+      try {
+        const { readPlotValues } = await import("../../calc/plotValues.ts");
+        const got = new Map((await readPlotValues(this.host.calc.engine, names, this.host.settings)).map((v) => [v.name, v]));
+        this.reads = new Map(names.map((n) => [n, nameRead(got.get(n))]));
+        const angle = this.angle;
+        this.compiled = this.compiled.map((c, i) => (c.uses ? this.compile(this.slots.latex[i] ?? "", angle) : c));
+      } catch {
+        // a Cancel or a crash: the curves stay as they were
+      }
+    }
+    if (on.length) this.host.count?.("plot-open");
+    if (on.some((i) => this.compiled[i]?.fn && this.compiled[i]?.uses)) this.host.count?.("plot-stored");
+  }
+  /** R361: the note lines under the board, one per stored name a slot on reads that is not drawn or is drawn with its σ or unit dropped. */
+  get notes(): string[] {
+    return this.active.flatMap((i) => {
+      const c = this.compiled[i];
+      return (c?.uses ?? []).flatMap((n) => {
+        const r = this.reads.get(n);
+        const t = r && noteOf(this.slots.names[i] ?? "", n, r, c?.fn !== undefined, (s) => this.mark(s));
+        return t ? [t] : [];
+      });
+    });
   }
   select(i: number): void {
     this.slots.select(i);

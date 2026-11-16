@@ -59,6 +59,7 @@ import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
 import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
 import { readMatrices, type MatrixRead } from "./matrixRead.ts";
+import { readPlotValues, type PlotValue } from "./plotValues.ts";
 import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine, startDead } from "./dead.ts";
@@ -1315,6 +1316,14 @@ export class EngineHost implements FactsHost {
     return readMatrices(this.giac, names, s.digits, cells, check === undefined ? undefined : { store: check, parse: (t) => this.bridge.parse(t) });
   }
 
+  /** R361: the names a Function definition reads, each with its kind and a variable's value, σ and unit (plotValues.ts),
+   *  for the Plot's drawing; in Home's mode, the value read at P digits. */
+  plotValues(names: readonly string[], s: HomeSettings): PlotValue[] {
+    this.need(names.join("\n"));
+    this.useHomeMode(s);
+    return readPlotValues(this.giac, names, this.byName, valuePrecision(s.digits));
+  }
+
   private useCasMode(s: CasSettings): void {
     this.useWord(s);
     this.useMode(`cas${JSON.stringify(s)}`, s.digits, s.angle, () => {
@@ -1426,6 +1435,9 @@ export function createRequestHandler(load: GiacLoader, post: (r: Response) => vo
           break;
         case "units":
           post({ id: req.id, type: "units", result: host.units(req.job, req.settings) });
+          break;
+        case "plotValues":
+          post({ id: req.id, type: "plotValues", result: host.plotValues(req.names, req.settings) });
           break;
         case "library":
           post({ id: req.id, type: "library", ...importText(host, req.input, req, req.log, req.replace) });

@@ -25,18 +25,24 @@ const angleIn = (h: string, n: number): boolean => h in FN1 && ANGLE_IN[FN[h] ??
 const angleOut = (h: string, n: number): boolean => h in FN1 && ANGLE_OUT.has(FN[h] ?? "") && n === 1;
 const RAD_PER_DEG = "(Math.PI/180)";
 
-function js(e: Json, vars: ReadonlySet<string>, deg = false): string {
+/** R361: the values the Plot draws a stored name at (each a finite real; see apps/function/stored.ts). */
+export type NameValues = ReadonlyMap<string, number>;
+const NO_VALUES: NameValues = new Map();
+
+function js(e: Json, vars: ReadonlySet<string>, deg = false, values: NameValues = NO_VALUES): string {
   const n = num(e);
   if (n !== undefined) return /^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(n) ? n : fail("parse.badNumber", { n });
   if (typeof e === "string") {
     if (vars.has(e)) return e;
     if (e in CONST) return CONST[e] as string;
+    const v = values.get(e);
+    if (v !== undefined && Number.isFinite(v)) return `(${String(v)})`;
     return fail("parse.unknownName", { e });
   }
   if (!Array.isArray(e)) return fail("parse.unsupportedNode2");
   const h = e[0] as string;
   const a = e.slice(1) as Json[];
-  const r = (i: number): string => js(a[i] as Json, vars, deg);
+  const r = (i: number): string => js(a[i] as Json, vars, deg, values);
   switch (h) {
     case "Add": return `(${a.map((_, i) => r(i)).join("+")})`;
     case "Subtract": return `(${r(0)}-${r(1)})`;
@@ -80,7 +86,24 @@ export function latexToJs(latex: string, vars: readonly string[] = ["x"]): strin
   return js(parseLatex(latex), new Set(vars));
 }
 
-/** JS source of an already parsed expression (MathJSON from parseLatex). */
-export function jsonToJs(e: Json, vars: readonly string[] = ["x"], deg = false): string {
-  return js(e, new Set(vars), deg);
+/** JS source of an already parsed expression (MathJSON from parseLatex); R361: a name of `values` as its number. */
+export function jsonToJs(e: Json, vars: readonly string[] = ["x"], deg = false, values?: NameValues): string {
+  return js(e, new Set(vars), deg, values);
+}
+
+/** Symbols emit.ts writes as Giac's constants (its CONST), and the empty input: never a stored name. */
+const NOT_NAMES: ReadonlySet<string> = new Set(["Pi", "ExponentialE", "ImaginaryUnit", "PositiveInfinity", "NegativeInfinity", "ComplexInfinity", "Nothing"]);
+
+/** R361: the names `e` reads besides `vars` and the constants, each once in the order met: the stored names a Plot
+ *  asks the engine for (emit.ts writes a symbol as its own Giac name). A call's head is no read, nor a user function's
+ *  name (`["Call", "f", "x"]`: user functions are not drawn, decisions.md "R258"). */
+export function freeNames(e: Json, vars: readonly string[] = ["x"]): string[] {
+  const out = new Set<string>();
+  const walk = (n: Json): void => {
+    if (typeof n === "string") {
+      if (!vars.includes(n) && !NOT_NAMES.has(n) && !(n.startsWith("'") && n.endsWith("'"))) out.add(n);
+    } else if (Array.isArray(n)) for (let i = n[0] === "Call" ? 2 : 1; i < n.length; i++) walk(n[i] as Json); // (a user function's name: no read)
+  };
+  walk(e);
+  return [...out];
 }

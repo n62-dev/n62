@@ -33,6 +33,8 @@ export interface AppHost {
   toHome(shown: string, chip: Chip): void;
   /** R278f1: ☰ → Paste on the entry line, the path of Home's ☰ → Paste (the keys pressed meanwhile wait for the clipboard). */
   paste(): void;
+  /** R361: counts an event that is no press (`event:<name>` in the press counts' keys, state/taps.svelte.ts event). */
+  count?(event: string): void;
 }
 
 /** A place's glyph on the status line's tile (R82f2) and in the apps list (R84): maths-font text, or a drawn icon (Home's house). */
