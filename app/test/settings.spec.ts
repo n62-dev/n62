@@ -165,6 +165,19 @@ test.describe("by touch", () => {
   });
 });
 
+test("Settings › Data › Sync folder (R128): its own level, opened from Data; on the web it says Android only and holds nothing else", async ({ page }) => {
+  await tap(page, ["@mode", "d6", "d5"]);
+  await expect(title(page)).toHaveText("Mode › Settings › Data");
+  expect(await rowIds(page)).toEqual(["backup", "restore", "library", "sync", "store"]);
+  await row(page, "sync").tap();
+  await expect(title(page)).toHaveText(/Settings › Data › Sync folder$/);
+  expect(await rowIds(page)).toEqual(["web"]);
+  await expect(row(page, "web")).toHaveText(/Android only/);
+  await tap(page, ["esc"]);
+  await expect(title(page)).toHaveText("Mode › Settings › Data");
+  await expect(active(page)).toHaveAttribute("data-id", "sync");
+});
+
 test.describe("Android back (history.back())", () => {
   test("back goes back one level, then closes; the next key works as before", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d2"]);

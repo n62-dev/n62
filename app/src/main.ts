@@ -136,6 +136,9 @@ requestAnimationFrame(() =>
       return undefined;
     });
     void entry.load(kept);
+    // R128: the sync folder (sync/hook.ts, lazy; Android only): from here a hide writes this device's files into it, and
+    // the other devices' backups are looked at once
+    void kept.then(() => idle(() => void import("./sync/hook.ts").then((m) => m.start(session, shell), () => {})), () => {});
     // An app that was open at the last exit comes back once the keypad is up (its code loads lazily).
     void place.then((app) => app && shell.open(app));
   }),
