@@ -22,6 +22,8 @@ export const enUnits = {
   "units.sigmadim": "The result after ± doesn't fit the value's unit: {dims}",
   "units.minus": "Put the minus on the number, not before the bracket around {unit}",
   "units.symbolic": "Not a number: {detail}",
+  // G390: a store on the unit view's line
+  "units.store": "The unit view does not store: put the result on Home's line, then ▶",
   "units.engine": "The unit view could not evaluate this",
   // G40: the notes under a result (decisions.md "Angles in the unit view").
   "units.note.radDropped": "rad = 1 dropped",
