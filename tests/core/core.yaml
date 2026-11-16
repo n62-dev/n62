@@ -602,10 +602,11 @@ cases:
     source: derived
 
   # ---- units: the unit view (R170; owner's yes on mh-A2, 2026-11-09) ----
+  # c67: the end slot comes with → Check (R349, owner 2026-11-16: Enter in the last slot evaluates, no end slot by default)
   - id: c67
     area: units
-    title: "5 kg in lb: Tmpl flicked up, kg, Enter, lb, Enter flicked up shows ≈ 11.0231131092 lb"
-    keys: [d5, {up: tmpl}, d4, d6, enter, {up: d6}, {up: enter}]
+    title: "5 kg in lb: Tmpl flicked up, kg, → Check, lb, Enter flicked up shows ≈ 11.0231131092 lb"
+    keys: [d5, {up: tmpl}, d4, d6, {tap: '[data-testid="unit-check"]'}, {up: d6}, {up: enter}]
     expect: { unit: { text: "11.0231131092", unit: "lb", mark: "≈" } }
     value: "5/0.45359237 = 500000000/45359237"
     source: derived

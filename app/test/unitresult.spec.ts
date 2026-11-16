@@ -293,7 +293,9 @@ test.describe("the unit result view (R62)", () => {
   test("3000 rpm × 0.1 m → m/s shows the rpm note under = 5 m/s, and the value stays", async ({ page }) => {
     await tap(page, ["d3", "d0", "d0", "d0", "mul", "d0", "dot", "d1"]);
     await unitsKey(page);
-    await plan(page, "↑x enter d9 enter d9 div d3 ↑enter");
+    await plan(page, "↑x enter d9");
+    await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
+    await plan(page, "d9 div d3 ↑enter");
     await expect(mark(page)).toHaveText("=");
     await expect(result(page).locator(".value")).toHaveText("5");
     await expect(page.getByTestId("unit-unit")).toHaveText("m/s");
@@ -434,7 +436,7 @@ test.describe("Ans in the unit view (R259)", () => {
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   });
   const line = (page: Page): Promise<string> => page.evaluate(() => window.n62.entry.field?.value ?? "");
-  /** `× 2` on the empty line (Ans × 2), the units key, m in the first slot, Enter to the end slot, Enter. */
+  /** `× 2` on the empty line (Ans × 2), the units key, m in the first slot, Enter (the last slot, R349: it evaluates), Enter again. */
   const ansTimes2InM = async (page: Page): Promise<void> => {
     await tap(page, ["mul", "d2"]);
     await expect.poll(() => line(page)).toMatch(/^\\ans\\times2$/);
@@ -449,7 +451,7 @@ test.describe("Ans in the unit view (R259)", () => {
     await expect(result(page)).toHaveAttribute("data-text", "14");
     await expect(result(page)).toHaveAttribute("data-unit", "m");
     await expect(page.locator('[data-status="done"]')).toHaveCount(2); // the view's Home row, now the last result
-    await page.evaluate(() => window.n62.unitView?.view.evaluate()); // what the second Enter in the end slot does, awaited
+    await page.evaluate(() => window.n62.unitView?.view.evaluate()); // what the second Enter in the last slot does, awaited
     await tap(page, ["enter"]);
     await expect(page.getByTestId("unit-message")).toHaveCount(0);
     await expect(result(page)).toHaveAttribute("data-text", "14");

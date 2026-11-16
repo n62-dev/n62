@@ -115,6 +115,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     dead: () => c.dead(),
     values: () => userValuesOf(c.session.userNames),
     changed: () => panel.draw(),
+    reset: (latex, ids) => lockedValue(mf, latex, ids),
     result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId)),
   };
   /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
@@ -180,9 +181,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   await mounted;
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   setUp(mf, element, c, hw, new HwTyping(view));
-  mf.value = view.formula.latex;
-  // locked: MathLive edits no prompt itself (and gives a tap on the field no focus); setPromptValue still writes
-  for (const id of view.ids) mf.setPromptState(id, "undefined", true);
+  lockedValue(mf, view.formula.latex, view.ids);
   view.start();
 
   const close = (): void => {
@@ -231,6 +230,13 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   };
   unitPad.model = new UnitPad(unitCells.userSet());
   element.focus();
+}
+
+/** The field's value with its prompts locked: MathLive edits no prompt itself (and gives a tap on the field no focus);
+ *  setPromptValue still writes. Set once at the start and again when the end slot goes on or off (R349). */
+function lockedValue(mf: MathfieldElement, latex: string, ids: readonly string[]): void {
+  mf.value = latex;
+  for (const id of ids) mf.setPromptState(id, "undefined", true);
 }
 
 /** The action of a key that is no cell, in the layer it was pressed in (keyboard.ts actionFor, for the keys the view

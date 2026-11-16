@@ -41,7 +41,7 @@ test("a fresh profile shows the tips; a reload does not", async ({ page }) => {
   await expect(tips(page)).toContainText("On the entry line, swipe down to fold the keypad and up to bring it back");
   await expect(tips(page)).toContainText("On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it");
   await expect(tips(page)).toContainText("= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.");
-  await expect(tips(page)).toContainText("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; the last slot checks against a unit, or leave it empty");
+  await expect(tips(page)).toContainText("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; → Check checks the result against a unit");
   await expect(tips(page).locator(".tip .n")).toHaveCount(2); // R171: only the two ringed cards carry a number
   await expect(page.getByTestId("tips-got-it")).toHaveText("Got it");
   await page.getByTestId("tips-got-it").tap();

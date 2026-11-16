@@ -93,6 +93,23 @@ describe("slotFormula (R24c)", () => {
   });
 });
 
+describe("R349: slotFormula with the end slot off (the default view) and on (→ Check)", () => {
+  it("off: no end prompt, the slots as with it", () => {
+    expect(slotFormula("72", false)).toEqual({ latex: "72\\placeholder[u1]{}", slots: ["u1"] });
+    expect(slotFormula("", false)).toEqual({ latex: "1\\placeholder[u1]{}", slots: ["u1"] });
+    expect(slotFormula("0+1", false).latex).toBe("0\\placeholder[u1]{}+1\\placeholder[u2]{}");
+  });
+  it("on: as today (control)", () => {
+    expect(slotFormula("72", true)).toEqual({ latex: "72\\placeholder[u1]{}\\to\\placeholder[end]{}", slots: ["u1"] });
+    expect(slotFormula("", true)).toEqual({ latex: "1\\placeholder[u1]{}\\to\\placeholder[end]{}", slots: ["u1"] });
+  });
+  it("off: the parser reads the formula with no end slot", () => {
+    const r = latexToGiacInfo(slotFormula("72", false).latex, { units: true });
+    expect(r.giac).toBe("72*pasu1");
+    expect(r.units?.end).toBeUndefined();
+  });
+});
+
 describe("filledLatex (G216): the empty prompts dropped, the one rule of the view, Copy as Python and pydiff", () => {
   const f = slotFormula("5\\times2");
   it("drops an empty slot's prompt, and an empty end slot with its →", () => {

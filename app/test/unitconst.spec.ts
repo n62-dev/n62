@@ -44,8 +44,8 @@ test.describe("the units menu's Constants and Tools (R92)", () => {
     await up(page);
     expect(await entryValue(page)).toMatch(/^5.*\\const\{g_0\}/); // the chip after Home's cursor
     expect(await slot(page, "u1")).toBe("kg"); // the slot went with the line
-    expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1", "end"]); // a chip adds no slot
-    await tap(page, ["enter", "enter"]); // the end slot, then evaluate there
+    expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1"]); // a chip adds no slot (R349: no end slot)
+    await tap(page, ["enter"]); // evaluate in the last slot
     await expect(result(page)).toHaveAttribute("data-text", "49.03325"); // derived: 5 × 9.80665
     await expect(result(page)).toHaveAttribute("data-unit", "N");
   });

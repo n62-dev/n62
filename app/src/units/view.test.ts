@@ -45,12 +45,14 @@ function host(): { host: ViewHost; requests: UnitRequest[]; answer: (q: Quantity
 
 const RESULT = { value: { display: "20", approximate: false }, unit: "m/s" } as unknown as Quantity;
 
-/** 72 km/h → m/s, Enter in the end slot: the evaluation is running. */
+/** 72 km/h → m/s (R349: → Check turns the end slot on), Enter in the end slot: the evaluation is running. */
 async function running(): Promise<{ view: UnitView; h: ReturnType<typeof host>; done: Promise<void> }> {
   const h = host();
   const view = new UnitView(CAT, "72", {}, h.host);
   view.start();
-  for (const e of [U("km"), { do: "per" } as const, U("h"), { do: "next" } as const, U("m"), { do: "per" } as const, U("s")]) view.apply(e);
+  for (const e of [U("km"), { do: "per" } as const, U("h")]) view.apply(e);
+  view.setChecking(true);
+  for (const e of [U("m"), { do: "per" } as const, U("s")]) view.apply(e);
   expect(view.activeId).toBe("end");
   const done = view.next();
   expect(view.shown).toEqual({ kind: "working" });
@@ -125,12 +127,13 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     expect(view.reading.text).toBe("");
   });
 
-  it("from the empty end slot too", () => {
+  it("from the empty end slot too (R349: it removes the end slot)", () => {
     const { view } = second();
-    view.apply({ do: "next" });
+    view.setChecking(true);
     expect(view.activeId).toBe("end");
     view.apply(DEL);
     expect(view.activeId).toBe("u2");
+    expect(view.ids).toEqual(["u1", "u2"]);
     view.apply(DEL);
     expect(view.activeId).toBe("u1");
   });
@@ -153,9 +156,10 @@ describe("UnitView: ⌫ on an empty slot steps back, as ⌫ at the start of a bo
     const h = host();
     const view = new UnitView(CAT, "72", {}, h.host);
     view.start();
-    for (const e of [U("km"), { do: "per" } as const, U("h"), { do: "next" } as const]) view.apply(e);
+    for (const e of [U("km"), { do: "per" } as const, U("h")]) view.apply(e);
+    view.setChecking(true);
     const done = view.evaluate();
-    view.apply(DEL); // the end slot is empty: back to u1
+    view.apply(DEL); // the end slot is empty: it goes (the request is the same), u1 is active
     expect(view.activeId).toBe("u1");
     h.answer(RESULT);
     await done;
@@ -226,13 +230,13 @@ describe("R258: a stored value of more than one letter in the unit view", () => 
 });
 
 describe("R352: the reading of an empty end slot says what it does", () => {
-  const END_EMPTY = "Leave empty: the result in its own unit. A unit here: checked, then converted";
-  /** "5" with kg-like m in the first slot, Enter: the end slot is active. */
+  const END_EMPTY = "Check against a unit: the result is converted to it, or refused if it does not fit";
+  /** "5" with kg-like m in the first slot, → Check (R349): the end slot is active. */
   function atEnd(): UnitView {
     const view = new UnitView(CAT, "5", {}, host().host);
     view.start();
     view.apply(U("km"));
-    view.apply({ do: "next" });
+    view.setChecking(true);
     expect(view.activeId).toBe("end");
     return view;
   }
@@ -259,5 +263,163 @@ describe("R352: the reading of an empty end slot says what it does", () => {
     expect(view.reading.text).toBe("kilometer");
     view.apply({ do: "delete" });
     expect(view.reading.text).toBe("");
+  });
+});
+
+describe("R349: the end slot only after → Check", () => {
+  /** A host that records what the field is set to (the formula with or without the end prompt) and the prompts written. */
+  function field(): { h: ReturnType<typeof host>; values: string[]; locked: string[][] } {
+    const h = host();
+    const values: string[] = [];
+    const locked: string[][] = [];
+    h.host.reset = (latex, ids) => {
+      values.push(latex);
+      locked.push([...ids]);
+    };
+    return { h, values, locked };
+  }
+  const END_EMPTY = "Check against a unit: the result is converted to it, or refused if it does not fit";
+
+  it("by default there is no end slot: Enter in the last slot evaluates, the request has no end (the result in its own unit)", () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "5", {}, h.host);
+    view.start();
+    expect(view.checking).toBe(false);
+    expect(view.ids).toEqual(["u1"]);
+    expect(view.formula.latex).toBe("5\\placeholder[u1]{}");
+    view.apply(U("km"));
+    view.apply({ do: "next" });
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0]?.formula).toBe("5*pasu1");
+    expect(h.requests[0]?.end).toBeUndefined();
+    expect(view.shown).toEqual({ kind: "working" });
+  });
+
+  it("Enter in a slot that is not the last still goes to the next slot (control)", () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    view.apply({ do: "next" });
+    expect(view.activeId).toBe("u2");
+    expect(h.requests).toHaveLength(0);
+  });
+
+  it("→ Check turns the end slot on, active and empty, with its reading; ✕ Check takes it off again", () => {
+    const { h, values, locked } = field();
+    const view = new UnitView(CAT, "72", {}, h.host);
+    view.start();
+    view.apply(U("km"));
+    view.setChecking(true);
+    expect(view.checking).toBe(true);
+    expect(view.ids).toEqual(["u1", "end"]);
+    expect(view.activeId).toBe("end");
+    expect(view.model("end")?.empty).toBe(true);
+    expect(view.reading.text).toBe(END_EMPTY);
+    expect(values.at(-1)).toBe("72\\placeholder[u1]{}\\to\\placeholder[end]{}");
+    expect(locked.at(-1)).toEqual(["u1", "end"]);
+    view.apply(U("m"));
+    view.setChecking(false);
+    expect(view.checking).toBe(false);
+    expect(view.ids).toEqual(["u1"]);
+    expect(view.activeId).toBe("u1");
+    expect(view.model("u1")?.slot).toEqual({ tokens: [{ unit: "km" }] });
+    expect(values.at(-1)).toBe("72\\placeholder[u1]{}");
+    expect(view.filled()).toEqual({ u1: { tokens: [{ unit: "km" }] } });
+    // on again: empty, not the unit it held
+    view.setChecking(true);
+    expect(view.model("end")?.empty).toBe(true);
+  });
+
+  it("with the end slot on and filled, Enter there evaluates against it", () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "72", {}, h.host);
+    view.start();
+    for (const e of [U("km"), { do: "per" } as const, U("h")]) view.apply(e);
+    view.setChecking(true);
+    for (const e of [U("m"), { do: "per" } as const, U("s"), { do: "next" } as const]) view.apply(e);
+    expect(h.requests).toHaveLength(1);
+    expect(h.requests[0]?.end).toEqual({ tokens: [{ unit: "m" }, { unit: "s" }], per: 1 });
+  });
+
+  it("⌫ in the empty end slot removes it; in a filled one it takes a token (control)", () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "72", {}, h.host);
+    view.start();
+    view.setChecking(true);
+    view.apply(U("m"));
+    view.apply({ do: "delete" });
+    expect(view.checking).toBe(true);
+    expect(view.model("end")?.empty).toBe(true);
+    view.apply({ do: "delete" });
+    expect(view.checking).toBe(false);
+    expect(view.activeId).toBe("u1");
+    expect(h.dead()).toBe(0);
+  });
+
+  it("a picked row whose slots hold end opens with the end slot on and filled; one without, off", () => {
+    const seed = { u1: { tokens: [{ unit: "km" }] }, end: { tokens: [{ unit: "m" }] } };
+    const on = new UnitView(CAT, "5", {}, field().h.host, seed);
+    expect(on.checking).toBe(true);
+    expect(on.ids).toEqual(["u1", "end"]);
+    expect(on.model("end")?.slot).toEqual({ tokens: [{ unit: "m" }] });
+    const off = new UnitView(CAT, "5", {}, field().h.host, { u1: { tokens: [{ unit: "km" }] } });
+    expect(off.checking).toBe(false);
+    expect(off.ids).toEqual(["u1"]);
+  });
+
+  it("Tools › the end slot turns it on and makes it active", () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    view.toEnd();
+    expect(view.checking).toBe(true);
+    expect(view.activeId).toBe("end");
+  });
+
+  it("More… and an alternatives chip turn it on with their unit", async () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "72", {}, h.host);
+    view.start();
+    for (const e of [U("km"), { do: "per" } as const, U("h"), { do: "next" } as const]) view.apply(e);
+    h.answer(RESULT);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(view.shown.kind).toBe("result");
+    expect(view.checking).toBe(false);
+    view.more("m1s-1");
+    expect(view.checking).toBe(false); // (Find closed without a pick leaves the view as it was, R118)
+    view.pickMore(U("km"));
+    expect(view.checking).toBe(true);
+    expect(view.activeId).toBe("end");
+    expect(view.model("end")?.slot).toEqual({ tokens: [{ unit: "km" }] });
+
+    const b = field();
+    const v2 = new UnitView(CAT, "72", {}, b.h.host);
+    v2.start();
+    for (const e of [U("km"), { do: "per" } as const, U("h"), { do: "next" } as const]) v2.apply(e);
+    const alt = { text: "m/s", kind: "si", slot: { tokens: [{ unit: "m" }, { unit: "s" }], per: 1 } };
+    const q = { ...RESULT, dimension: "m1s-1" } as unknown as Quantity;
+    b.h.host.alternatives = () => Promise.resolve([alt] as never);
+    b.h.answer(q);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(v2.shown.kind).toBe("result");
+    const done = v2.pickAlt((v2.shown as { alts: readonly unknown[] }).alts[0] as never);
+    expect(v2.checking).toBe(true);
+    expect(v2.model("end")?.slot).toEqual(alt.slot);
+    await new Promise((r) => setTimeout(r, 0)); // (the chip is remembered first)
+    expect(b.h.requests.at(-1)?.end).toEqual(alt.slot);
+    b.h.answer(q);
+    await done;
+  });
+
+  it("a formula with no number has no slot to leave: the end slot stays on, ✕ Check is dead", () => {
+    const { h } = field();
+    const view = new UnitView(CAT, "x", {}, h.host);
+    view.start();
+    expect(view.canCheck).toBe(false);
+    expect(view.checking).toBe(true);
+    expect(view.ids).toEqual(["end"]);
+    view.setChecking(false);
+    expect(view.checking).toBe(true);
+    expect(h.dead()).toBe(1);
   });
 });

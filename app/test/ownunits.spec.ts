@@ -84,7 +84,7 @@ test("5 myfurlong → m in the unit view after a relaunch: picked through Find, 
   await flick(page, "tmpl", "up"); // the unit view
   await page.waitForFunction(() => window.n62.unitView !== undefined && document.activeElement === window.n62.unitView.element && document.querySelector('[data-pad="unit"]') !== null);
   await pickUnit(page, "myfurlong", "unit:@myfurlong");
-  await tap(page, ["enter"]); // on to the end slot
+  await page.getByTestId("unit-check").tap(); // R349: → Check brings the end slot
   await pickUnit(page, "m", "unit:m");
   await flick(page, "enter", "up"); // evaluate
   const result = page.getByTestId("unit-result");

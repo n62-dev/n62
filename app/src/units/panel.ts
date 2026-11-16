@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: the unit view's panel in the entry line's place (docs/04 4.3): the read-only formula with its slots (the
-// field, made by units/open.ts), the reading of the active slot in words under it, then a refusal or the result as
+// field, made by units/open.ts), → Check (R349: the end slot on and off), the reading of the active slot in words under it, then a refusal or the result as
 // Calc.units() returns it (R62: the value line, σ, the note and the alternatives row, units/result.ts). Plain DOM over the
 // view's state (a change calls `draw`).
 // Loaded with the unit view.
@@ -124,12 +124,14 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   const element = el("div", "unitview", "unit-view");
   element.tabIndex = -1;
   const formula = el("div", "formula");
+  // R349: → Check puts the end slot on (active, empty), ✕ Check takes it off; hidden where it cannot go (no number slot)
+  const check = tapped(el("button", "check", "unit-check"), () => view()?.setChecking(!view()?.checking));
   const reading = el("div", "reading", "unit-reading");
   const below = el("div", "below");
   const said = el("div", "said", "unit-store-note");
   said.setAttribute("role", "alert");
   said.hidden = true;
-  element.append(formula, reading, below, said);
+  element.append(formula, check, reading, below, said);
   /** Hide the chips that do not fit beside "More…" (at least as many as the view can use) and tell the view how many fit. */
   const fitRow = (row: HTMLElement): void => {
     const v = view();
@@ -163,6 +165,10 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
     if (!v) return;
     element.dataset["slot"] = v.activeId;
     element.dataset["marks"] = marks();
+    check.hidden = !v.canCheck;
+    check.textContent = unitText(v.checking ? "units.check.off" : "units.check.on");
+    check.setAttribute("aria-label", unitText(v.checking ? "units.check.offLabel" : "units.check.onLabel"));
+    check.setAttribute("aria-pressed", `${v.checking}`);
     reading.replaceChildren(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)]));
     const why = store?.said();
     said.hidden = why === undefined;
