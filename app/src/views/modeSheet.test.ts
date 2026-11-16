@@ -566,7 +566,8 @@ describe("Settings › Your keys (R4b)", () => {
     expect(byId(s, "keys")?.value).toBe("None set");
     s.pickNumber(4);
     const ids = s.level.items.map((x) => x.id);
-    expect(ids).toHaveLength(20); // 18 slots, Unit pad cells (R24d), Reset all
+    expect(ids).toHaveLength(21); // 18 slots, Unit pad cells (R24d), Your units (R201), Reset all
+    expect(ids.slice(-3)).toEqual(["unitcells", "units", "reset"]);
     expect(ids.slice(0, 4)).toEqual(["u1:primary", "u1:shift", "u1:alpha", "u2:primary"]);
     expect(byId(s, "u2:shift")?.label).toBe("U2 ⇧");
     expect(byId(s, "u1:alpha")?.label).toBe("U1 α");

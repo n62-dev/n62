@@ -67,7 +67,7 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 | 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R353 |
 | 835 | [R361](packages/R361.md) the Plot draws a function that reads a value stored in Home | ron, Opus | `p1/ron-plotstored` | – |
 | 836 | [R362](packages/R362.md) the start chunk's first cut: app opening and view-tab icons load with the first app | ron, Opus | `p1/ron-startcut1` | – |
-| 675 | [R201](packages/R201.md) a sheet to make your own unit | ron, Opus | `p1/ron-userunitsheet` | G234 |
+| 675 | R201 a sheet to make your own unit | ron, Opus | `p1/ron-userunitsheet` | G234 |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 804 | [R330](packages/R330.md) Shift + 7 opens the list sheet | ron, Opus | `p1/ron-listsheet` | – |
 | 807 | [R315](packages/R315.md) the unit view reads a stored name with a unit | ron, Opus | `p1/ron-nameslot` | G371 |
