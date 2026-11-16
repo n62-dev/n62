@@ -296,7 +296,7 @@ export class Session {
 
   /** Says something once as a history line, in both views (the definitions are shared, and the open view may still be
    *  restoring). Notes are not stored: the saved history keeps finished entries only. */
-  private note(text: string, views: readonly View[] = ["home", "cas"]): void {
+  note(text: string, views: readonly View[] = ["home", "cas"]): void {
     for (const view of views) {
       (view === "home" ? this.home : this.cas).push({
         id: this.nextId++,

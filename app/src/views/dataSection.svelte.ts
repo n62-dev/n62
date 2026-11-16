@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Settings › Data (R38a, R38b): Save a backup, Restore from a file, Undo the restore while its kept copy exists, and
-// Library › (R59, libraryRows.ts). Each row runs and closes the sheet, so its notice shows in the stage. The last row
+// Library › (R59, libraryRows.ts), Sync folder › (R128, syncRows.svelte.ts). Each row runs and closes the sheet, so its notice shows in the stage. The last row
 // (R96) tells whether the data is kept, with the date of the last backup under it. The backup and restore code loads on the press
 // (clipboard/actions.svelte.ts); this module comes with the Mode sheet's chunk.
 import type { MenuItem } from "../apps/types.ts";
@@ -8,6 +8,7 @@ import { dataText, shownTime, type DataKey } from "../i18n/enData.ts";
 import { kvGet, storeHealth } from "../state/storage.ts";
 import type { SettingsEnv } from "./yourKeys.ts";
 import { librarySection } from "./libraryRows.ts";
+import { syncSection } from "./syncRows.svelte.ts";
 
 /** The time of the kept copy (`backup.undo`): undefined until read, null when there is none. A restore and an Undo
  *  both reload the page, so it is read once per session, when the section is first drawn. */
@@ -88,7 +89,7 @@ function dataItems(env: SettingsEnv, pick: () => Promise<File | null>): MenuItem
     const time = undoTime;
     rows.push({ id: "undo", label: dataText("restore.undo", { time: shownTime(time) }), run: () => env.data?.((c) => c.restoreBackup("undo")) });
   }
-  rows.push(librarySection(env, pick), storeRow()); // R59: the library's four rows under one (Data keeps at most seven)
+  rows.push(librarySection(env, pick), syncSection(env), storeRow()); // R59, R128: the library's rows and the sync folder's under one each (Data keeps at most seven)
   return rows;
 }
 
