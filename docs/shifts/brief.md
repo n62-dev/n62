@@ -70,6 +70,7 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 | 856 | [G576](packages/G576.md) exact powers past the limit get their number (F352, F303) | gorge, Opus | `p1/gorge-bigintpow` | – |
 | 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
 | 858 | [R576](packages/R576.md) Shift + Enter after a typed line (F353) | ron, Opus | `p1/ron-approxline` | – |
+| 864 | [R376](packages/R376.md) a number right after °, ′, % or ! is refused, naming the missing mark (G2 row 76) | ron, Opus | `p1/ron-markthen` | – |
 | 852 | [G551](packages/G551.md) bitand, bitor, bitxor of a small negative and a big integer (F302) | gorge, Opus | `p1/gorge-bitsigned` | – |
 | 853 | [G554](packages/G554.md) exp of a float matrix, never the identity (F305) | gorge, Opus | `p1/gorge-matexpfloat` | – |
 | 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
