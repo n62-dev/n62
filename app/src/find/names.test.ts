@@ -8,7 +8,7 @@ import type { EntryController } from "../entry/controller.ts";
 import { Session } from "../state/session.svelte.ts";
 import type { Kv } from "../state/storage.ts";
 import { Sheet } from "../views/sheet.svelte.ts";
-import { liveItem, showNames } from "./names.svelte.ts";
+import { liveItem, nameLatex, showNames } from "./names.svelte.ts";
 
 const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promise.resolve() });
 const name = (n: string, kind: UserName["kind"], preview: string, time: number): UserName => ({ name: n, kind, preview, view: "home", time });
@@ -49,6 +49,22 @@ describe("R258: a stored value of more than one letter", () => {
     expect(ins("k_B")).toBe("k_{B}");
     expect(ins("theta")).toBe("\\theta ");
     expect(ins("beta_")).toBe("\\beta ");
+  });
+});
+
+describe("R337: a variable stored as e or i (the stand-ins e_, i_, R67)", () => {
+  it("goes on the line as the letter the keys type, never the stand-in with an empty subscript", () => {
+    expect(nameLatex("e_")).toBe("e");
+    expect(nameLatex("i_")).toBe("i");
+    expect(liveItem(name("e_", "var", "5", 0)).insert).toBe("e");
+    expect(liveItem(name("i_", "var", "7", 0)).insert).toBe("i");
+  });
+  it("controls: x_1, k_B, beta_ and rate keep today's form; a function e_ keeps R260f1's call", () => {
+    expect(nameLatex("x_1")).toBe("x_{1}");
+    expect(nameLatex("k_B")).toBe("k_{B}");
+    expect(nameLatex("beta_")).toBe("\\beta ");
+    expect(nameLatex("rate")).toBe("\\operatorname{rate}");
+    expect(liveItem(name("e_", "fn", "", 0)).insert).toBe("\\operatorname{e}\\left(#0\\right)");
   });
 });
 

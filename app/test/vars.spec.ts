@@ -107,6 +107,25 @@ test.describe("Vars", () => {
     await expect(lastResult(page)).toHaveAttribute("data-text", "3");
   });
 
+  for (const [letter, key, digit, value] of [["e", "frac", "d5", "5"], ["i", "tan", "d7", "7"]] as const) {
+    test(`R337: a variable typed as ${letter} is picked as ${letter}, not its stand-in ${letter}_, and gives its value`, async ({ page }) => {
+      await start(page);
+      await tap(page, ["shift", "alpha", key, "alpha", "sub", "shift", "dot", digit, "enter"]); // e:=5 (i:=7)
+      await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+      expect(await names(page)).toEqual([`${letter}_`]);
+      await tap(page, ["vars"]);
+      await expect(active(page)).toHaveAttribute("data-id", `var:${letter}_`); // it opens on the newest
+      await tap(page, ["enter"]);
+      await expect(find(page)).toBeHidden();
+      const line = await entryValue(page);
+      expect(line).not.toContain("_");
+      expect(line).toBe(letter); // the letter as the keys type it
+      await tap(page, ["enter"]);
+      await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+      await expect(lastResult(page)).toHaveAttribute("data-text", value);
+    });
+  }
+
   test("by touch: a tap on a row inserts the name", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);

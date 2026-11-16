@@ -34,8 +34,10 @@ function insertOf(n: UserName): string {
   return nameLatex(n.name);
 }
 
-/** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). */
+/** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). R337: a stand-in e_ or i_ (R67)
+ *  as the letter the keys type, which the parser reads back as the stand-in (`e_` itself would be e with an empty subscript). */
 export function nameLatex(name: string): string {
+  if (Object.values(LETTER_NAMES).includes(name)) return typedName(name);
   const drawn = homeResultToLatex(name);
   return /^[A-Za-z](_[A-Za-z0-9]*)?$/.test(name) || drawn.startsWith("\\") ? drawn : `\\operatorname{${name.replace(/_/g, "\\_")}}`;
 }
