@@ -193,6 +193,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R286 (pass 153):** a σ chip limits the value at σ's last confirmed decade, then markOf (`1000.5 ± 0.0707`, 3 digits: ⚠ 8 at STD 12).
 - **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Archived, "Opus pass 97". Would change if: the owner wants a chip's σ dropped there.
 - **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is off until built; R353's Store in a name is ours. Archived.
+- **R201, R353 (Opus pass 211):** Your units' Made of is typed text (Find's symbols), not a pick; a unit is not renamed (delete, make again: a pad cell or slot naming it would go stale, G234). R353's Store ▶ title keeps the mark (`Store = 5 km in`, as Home's), and Home's line is emptied first (the request stays in its row). Would change if: the owner, after his try on the phone.
 - **σ's forms and budget (pass 199; G270, G272, G273):** no relative σ for an absolute temperature, a level or an offset end slot; R328 reads a key's kind (`pasr_`), never its run number. Archived, "Opus pass 203".
 - **G370's shape (Opus pass 203):** `T1 − T2` is the whole formula, in brackets or not; a bracketed difference inside a longer one (`(80 °C − 20 °C) + 5 K`, a power, a product) stays refused, as the package's controls say. Would change if: the owner wants a difference to take part in arithmetic.
 
