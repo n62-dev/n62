@@ -180,7 +180,10 @@ test("Settings › Data › Sync folder (R128): its own level, opened from Data;
 
 test("Settings › Data › Sync folder (R183): on Android it lists the device name and a status row, and the folder's hint", async ({ page }) => {
   await page.addInitScript(() => {
-    (window as unknown as { Capacitor: unknown }).Capacitor = { isNativePlatform: () => true };
+    // (@capacitor/core fills this object in when it loads: its own isNativePlatform write is ignored)
+    const cap = {};
+    Object.defineProperty(cap, "isNativePlatform", { get: () => () => true, set: () => {} });
+    (window as unknown as { Capacitor: unknown }).Capacitor = cap;
   });
   await open(page);
   await tap(page, ["@mode", "d6", "d5"]);
