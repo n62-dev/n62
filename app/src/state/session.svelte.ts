@@ -41,7 +41,7 @@ import type { UnitRow } from "../units/types.ts";
 import type { WordSetting } from "./wordSetting.ts";
 
 export type View = "home" | "cas";
-export type EntryMode = "textbook" | "line";
+export type EntryMode = "textbook" | "line" | "rpn"; // R253: rpn is kept, no key reads it yet (R343)
 
 /** Key vibration (off by default). Strength 0..100 %, duration in ms; the web build can only set the duration. */
 export interface HapticsSettings {
@@ -208,7 +208,7 @@ export function migrateSettings(saved: unknown, firstLook: Look = defaultSetting
   const x = (saved && typeof saved === "object" ? saved : {}) as Partial<Record<keyof Settings | "schema", unknown>>;
   if (x["angle"] === "rad" || x["angle"] === "deg") s.angle = x["angle"];
   if (x["format"] === "std" || x["format"] === "sci" || x["format"] === "eng" || x["format"] === "pfx") s.format = x["format"];
-  if (x["entry"] === "textbook" || x["entry"] === "line") s.entry = x["entry"];
+  if (x["entry"] === "textbook" || x["entry"] === "line" || x["entry"] === "rpn") s.entry = x["entry"];
   if (x["decimalMark"] === "point" || x["decimalMark"] === "comma") s.decimalMark = x["decimalMark"];
   if (x["uncertainty"] === "muted") s.uncertainty = "muted"; // R40: anything else is the default, sigma
   if (x["marks"] === "muted" || x["marks"] === "colour") s.marks = x["marks"]; // R124: anything else is the default
