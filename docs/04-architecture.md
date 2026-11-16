@@ -359,7 +359,8 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `userKeys`, `unitPadCells`, `taps`, `app.function`, `app.solve` | the user keys, the unit pad cells; the counters (Shift/Alpha, presses, preset applies); per app (`uses` counters) |
 | `presets` | `state/presetRecord.ts`: `{ presets: [{ id, name, groups }], active, next }`; groups `mode`, `numbers`, `look`, `vibration`, `keys` (both key records, migrated too); AI format: `views/aiFormat.md` part 2 |
 | `units.targets`, `units.own` | the last target per dimension; your units (`units/ownRecord.ts`, as strict at a restore as at the start; ids `@name`, G233) |
-| `word`,`rpn` | `{bits,signed}` (R194) |
+| `word` | `{ bits, signed }` (R194) |
+| `rpn` | `{ levels: [{ uid, chip, shown, inputs }] }`, level 1 first (R252, `entry/rpnStore.ts`) |
 | `uses` | the results mode's counts (R53, `state/uses.svelte.ts`), for decisions.md P16's removal test; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo`, `sync.queue` | not backed up |
 
