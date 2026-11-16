@@ -72,6 +72,10 @@ export interface Case {
   own?: boolean;
   /** home.yaml (G34): a sequence of lines, each in its own angle mode; the last one is checked against expect and mark. */
   steps?: Step[];
+  /** home.yaml, units.yaml (G302): the same result as an RPN sequence: a number (LaTeX in Home, the `input` syntax in the unit view),
+   *  `dup`, `drop`, `swap`, or a key id with `:shift` for its Shift layer. The gate's rpn stage runs it on the stack model and
+   *  composer (entry/rpn.ts, rpnCompose.ts) and must give what the case's own line gives. */
+  rpn?: string[];
   /** home.yaml sequences (G49): the constants the steps hold by name (`pasc_<id>`), as G26's table. */
   consts?: ConstTable;
   /** precision.yaml, kind cas: the stored names the CAS result must list as used (G20); [] means none. */
@@ -207,6 +211,13 @@ export function casMark(r: CasResult, digits: number): MarkInfo | null {
 /** One home.yaml case on `host` (a sequence on its own engine from `fresh`). */
 export async function runHomeCase(c: Case, host: EngineHost, fresh: () => Promise<EngineHost>): Promise<HomeResult & { inexactInput?: boolean }> {
   if (c.steps) return runSteps(fresh, c.steps, c.settings?.digits ?? 12, c.consts && constTable(c.consts));
+  // G302: an `input` case with `consts` (a constant of Find held by name, σ with it) runs as one step with that table; an inexact
+  // constant in it makes an "=" a "≈", as the `\const` chip does in the session (the line and the stack agree)
+  if (c.consts && c.input !== undefined) {
+    const table = constTable(c.consts);
+    const r = await runSteps(fresh, [{ input: c.input, angle: c.settings?.angle ?? "rad" }], c.settings?.digits ?? 12, table);
+    return inexactConstsIn(c.input, table).length > 0 ? { ...r, inexactInput: true } : r;
+  }
   const s: HomeSettings = { ...defaultHomeSettings, angle: c.settings?.angle ?? "rad" };
   // A case written as `latex` goes through our parser with Home's options (no realOddRoots since R66), its `before` too
   const giacOf = (t: string): string => (c.latex !== undefined ? giacOfEntry(t, "home").giac : t);

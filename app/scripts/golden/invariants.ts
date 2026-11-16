@@ -22,7 +22,7 @@ export async function stageInvariants(): Promise<void> {
       // A case whose only setting is `angle` joins when its input holds no angle function (G46: cosh(90*i), (-8)^0.2 exist
       // only in DEG cases); it runs in both modes, the setting dropped.
       const angleOnly = c.settings !== undefined && Object.keys(c.settings).every((k) => k === "angle");
-      if ((c.settings && !angleOnly) || c.steps || c.beforeHome?.length || c.beforeCas?.length || c.relaunch || c.status === "pending" || c.kind === "cas") continue;
+      if ((c.settings && !angleOnly) || c.steps || c.chips || c.beforeHome?.length || c.beforeCas?.length || c.relaunch || c.status === "pending" || c.kind === "cas") continue;
       const giacOf = (t: string): string => (c.latex !== undefined ? giacOfEntry(t, "home").giac : t);
       let giac: string;
       try {
