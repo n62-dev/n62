@@ -63,6 +63,15 @@ export const SPEED_KNOWN: Record<string, string> = {
   // against HOME_CLOCK_S (1.5 s), so under load the Tab One shows the time-out (normal) or the input back (simplify)
   "home/g340-normal-sqrt-cbrt2-plus-cbrt9": "HOME_CLOCK_S",
   "home/g340-simplify-sqrt-cbrt2-plus-cbrt9": "HOME_CLOCK_S",
+  // their 2^(1/4) rows: normal and simplify of sqrt(1+sqrt(1+2^(1/4))) take 151-273 ms (exactMs, key-81219a110c1c4e19,
+  // 2026-11-16, host load 32 on 32 cores), the degree-16 rootof: 1.2-2.2 s 8× slower, the same way past the clock
+  "home/g340-normal-sqrt-root4-2": "HOME_CLOCK_S",
+  "home/g340-simplify-sqrt-root4-2": "HOME_CLOCK_S",
+  // G331 (F214, patch 0047): Home's exact path of evalf(simplify(sqrt(ln(1+sqrt(1+2^(1/3)))))) is one Giac simplify of
+  // 167-238 ms (exactMs, engine key-81219a110c1c4e19, 2026-11-16), the degree-6 rootof under ln; 8× slower that is 1.3-1.9 s
+  // against HOME_CLOCK_S (1.5 s): in time it shows ⚠ 12 0.957920253119 (simplify unaudited, its double and P agree to 12
+  // digits), past it the float path's ⚠ 0.957920253118554998403493714904; both are the oracle's digits
+  "precision/g331-evalf-simplify-sqrt-ln-nested-root-30": "HOME_CLOCK_S",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
