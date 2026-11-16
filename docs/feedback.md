@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Owner feedback inbox
 
-The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 65). Each point is kept in the owner's words (shortened) and gets one triage:
+The one place for the owner's points from using the app (docs/03 section 0, rule 12). Oldest first, one dated section per round, numbered on from the last row (the next is 68). Each point is kept in the owner's words (shortened) and gets one triage:
 
 - **bug**: fixed now, regression test first;
 - **feel**: goes into the next package for the look or the entry (brief section 0);
@@ -31,3 +31,6 @@ The owner's `todo.txt` held no `+N62` line on 2026-11-16, so no owner report was
 | 62 | 2026-11-16 | S11: Home shows A⁻¹ as [[0,0,1],[−2,1,3],[3,−1,−5]] and a linear system's answer as [[3],[9],[−14]]; the line and CAS draw grids (F356). | feel, R578 (after the tag) |
 | 63 | 2026-11-16 | S14: in Function's Symb view, Enter keeps the line on F1, so typing the next function extends F1; only ▼ moves on (F357). | feel; the G2's way first (Needs the owner) |
 | 64 | 2026-11-16 | S15: Solve says "Giac Newton … hybridsj: polish failed" and "(Giac proot)", and draws complex roots as -1.047…-1.135…*i (F358). | feel, R579 |
+| 65 | 2026-11-16 | S16: every CAS series ends in "x⁷·order size(x)", Giac's word for O(x⁷) (F359). | bug, R580 |
+| 66 | 2026-11-16 | S17: "permutation" finds LQ and c1oc2; nPr is only "perm", while nCr is "Combinations (nCr)" (F360). | feel, G578 |
+| 67 | 2026-11-16 | S18: pasting 1,234.5 or 12'345.6 or 1 234.5 says "Paste: not a number" (F361). | idea, R581 (owner's yes) |
