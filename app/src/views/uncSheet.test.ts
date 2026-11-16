@@ -91,6 +91,24 @@ describe("R327: the uncertainty sheet's head", () => {
     ]);
   });
 
+  it("R327f1: a short form with more digits than the value has confirmed gets ⚠ before it, whatever mark the row had", () => {
+    // 10.123456 ± a σ chip of 0.0707 with 1 confirmed digit (units/sigmaMark.test.ts): 4 digits confirmed, 10.123(71)
+    // shows 5 (to σ's 10^-3); the head is ⚠ whatever the digits setting gave the row (phase-1 kept its ≈ at STD 3 and 4)
+    const facts = { exact: false, reliableDigits: 4, inexact: true as const };
+    const unit = row("10.123456", { facts, units: { slots: {}, unit: "m", dim: "m1", dimText: null, unc: { text: "0.071", shown: "10.123 ± 0.071", short: "10.123(71)", chip: { reliableDigits: 1 } }, latex: "", text: "", input: "" } });
+    for (const mark of ["≈", "⚠"]) {
+      const h = uncHead(unit, ctx("10.1", { mark, digits: 3 }));
+      expect([h?.mark, h?.short, h?.of]).toEqual(["⚠", "10.123(71) m", "⚠ 10.1 m"]);
+    }
+    // a Home row with σ facts: its short form from the value and σ, the same count
+    const home = row("10.123456", { facts: { ...facts, uncSigma: "0.0707", uncDigits: 5 } });
+    const h = uncHead(home, ctx("10.12", { mark: "≈" }));
+    expect([h?.mark, h?.short]).toEqual(["⚠", "10.123(71)"]);
+    // ≈ stays where every digit is confirmed: 1000.500(71), 7 digits, 8 confirmed
+    const ok = row("1000.5", { facts: { ...facts, reliableDigits: 8 }, units: { slots: {}, unit: "m", dim: "m1", dimText: null, unc: { text: "0.071", shown: "1000.500 ± 0.071", short: "1000.500(71)" }, latex: "", text: "", input: "" } });
+    expect(uncHead(ok, ctx("1000.5", { digits: 8 }))?.mark).toBe("≈");
+  });
+
   it("no σ: no head (the key is a dead press); a σ without its digits is not the σ line's either", () => {
     const plain = row("314.159265359", {});
     expect(hasSigma(plain)).toBe(false);

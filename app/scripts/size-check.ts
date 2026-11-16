@@ -535,8 +535,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  shipped spec, "uncertainty" among the sheet keys, its case and the picked row's in route.ts. The sheet, its σ check and
  *  its import are in the sheet's chunk (tmplSheet.ts, as Base) and a chunk of their own; the units key's loader is shared
  *  (route.ts lazy). Phase-1 12fe787b measures 62.45 kB gzip (175.88 kB raw), the branch 62,544 B (176,133 B raw):
- *  62,544 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_600;
+ *  62,544 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,600 → 62,790 B (R327f1): a Home row with σ is ⚠ when its "value ± σ" shows more digits than the value has confirmed
+ *  (principle 3), so markFor counts that text's digits in start (state/sigmaDigits.ts, text only: the BigInt arithmetic of
+ *  units/uncertainty.ts stays in the unit view's chunk, importing it cost 0.65 kB). Phase-1 b9bda425 measures 62,544 B
+ *  gzip (176,133 B raw), the branch 62,735 B (176,700 B raw): 62,735 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_790;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

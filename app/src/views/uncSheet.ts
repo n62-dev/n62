@@ -11,9 +11,10 @@ import type { RouteCtx } from "../keyboard/route.ts";
 import { decimalToString, isZero } from "../engine/format.ts";
 import { uncText } from "../i18n/enUnc.ts";
 import { unitText } from "../i18n/enUnits.ts";
-import { commaResult, modeOf, type FmtMode } from "../state/displayMode.ts";
+import { commaResult, modeOf, withSigmaText, type FmtMode } from "../state/displayMode.ts";
 import { expandedSigmaText, sigmaText } from "../state/sigmaLine.ts";
-import { relativeSigma, shortForm } from "../units/uncertainty.ts";
+import { shownDigits } from "../state/sigmaDigits.ts";
+import { digitsToSigma, relativeSigma, shortForm } from "../units/uncertainty.ts";
 import type { UncWhy } from "../units/types.ts";
 
 /** A row "with σ": a finished Home row whose facts carry σ and its digits (the σ line's own test, state/sigmaLine.ts), or a
@@ -69,9 +70,12 @@ export function uncHead(item: HistoryItem, ctx: HeadCtx): UncHead | null {
   const unc = item.units?.unc;
   let sigma: string | null, u: string | null, rel: string | null, short: string | null;
   let unit = "";
+  // R327f1: the digits the short form (and a unit row's ± text) shows: the value to σ's last place
+  let digits: number | null = null;
   if (unc) {
     unit = item.units?.unit ? ` ${item.units.unit}` : "";
     [sigma, u, rel, short] = [num(unc.text), unc.expanded === undefined ? null : num(unc.expanded), unc.relative ?? null, unc.short === undefined ? null : num(unc.short)];
+    digits = shownDigits(unc);
   } else {
     const s = item.facts?.uncSigma as string; // (hasSigma)
     const v = real && re ? decimalToString(re) : null;
@@ -79,6 +83,7 @@ export function uncHead(item: HistoryItem, ctx: HeadCtx): UncHead | null {
     rel = v === null ? null : relativeSigma(v, s);
     const sf = v === null ? null : shortForm(v, s, ctx.digits);
     short = sf === null ? null : num(sf);
+    digits = sf === null || v === null ? null : digitsToSigma(v, s);
   }
   const rows: HeadRow[] = [];
   if (sigma !== null) rows.push({ id: "sigma", label: uncText("unc.sheet.sigma"), value: sigma + unit });
@@ -86,10 +91,13 @@ export function uncHead(item: HistoryItem, ctx: HeadCtx): UncHead | null {
   const relText = rel !== null ? uncText("unc.sheet.percent", { p: ctx.comma ? commaResult(rel, false) : rel }) : zero ? uncText("unc.sheet.zero") : null;
   if (relText !== null) rows.push({ id: "relative", label: uncText("unc.sheet.relative"), value: relText });
   const why = unc?.why;
+  // R327f1: ⚠ when those digits are more than the value has confirmed, whatever the digits setting gave the row
+  const rd = item.facts?.reliableDigits;
+  const mark = ctx.mark !== "" && ctx.mark !== "⚠" && withSigmaText({ mark: "≈" }, rd, digits)?.mark === "⚠" ? "⚠" : ctx.mark;
   return {
     title: uncText("unc.sheet"),
-    of: [ctx.mark, ctx.shown + unit].filter(Boolean).join(" "),
-    mark: ctx.mark,
+    of: [mark, ctx.shown + unit].filter(Boolean).join(" "),
+    mark,
     short: short === null ? null : short + unit,
     rows,
     warn: why ? `⚠ ${unitText(WHY[why])}` : null,
