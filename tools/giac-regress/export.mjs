@@ -89,6 +89,7 @@ export function explicitPrecision(input) {
 export function caseLine(c, file) {
   if (c.source !== "oracle" && c.source !== "derived") return { leftOut: `source ${c.source} (only oracle and derived)` };
   if (c.kind !== undefined || c.status === "pending") return { leftOut: "CAS view or pending case (our layer)" };
+  if (c.consts !== undefined || c.chips !== undefined) return { leftOut: "a constant held by name (our layer's constants table)" };
   if (c.input === undefined || c.before || c.beforeCas || c.beforeHome || c.steps || c.relaunch) return { leftOut: "entered as LaTeX or a sequence (our parser and session)" };
   const s = c.settings ?? {};
   if (Object.keys(s).some((k) => k !== "digits")) return { leftOut: "angle mode or other setting (our layer)" };

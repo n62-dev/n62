@@ -63,9 +63,6 @@ The order (owner, 2026-11-12): the rows down to R224 (all merged by Opus pass 17
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 815 | R252 the RPN stack survives a relaunch and goes in the backup | ron, Sonnet | `p1/ron-rpnstore` | R250 |
-| 816 | R253 the Entry setting holds a third value, `rpn` | ron, Sonnet | `p1/ron-rpnsetting` | – |
-| 802 | [R333](packages/R333.md) a drag that scrolls a long row to its end never slides it (F237) | ron, Sonnet | `p1/ron-rowscrollstop` | – |
 | 803 | [R334](packages/R334.md) xʸ after Shift + 2's i raises i (F184) | ron, Opus | `p1/ron-ipower` | – |
 | 673 | [R265](packages/R265.md) a history row says when it ran in another angle mode | ron, Sonnet | `p1/ron-rowangle` | G211 |
 | 733 | [R181](packages/R181.md) Copy as Python on a row and on the session | ron, Sonnet | `p1/ron-pycopy` | – |
@@ -90,7 +87,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 817 | [G302](packages/G302.md) golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
+| 817 | G302 golden cases: an RPN sequence gives what its algebraic line gives, units and ± too | gorge, Sonnet | `p1/gorge-rpnequal` | R251 |
 | 786 | G370 the difference of two temperatures on one absolute scale is a temperature difference | gorge, Opus | `p1/gorge-tempdiff` | – |
 | 809 | [G371](packages/G371.md) a name stored from a result keeps its σ and unit | gorge, Opus | `p1/gorge-namefacts` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Sonnet | `p1/gorge-storedlist` | – |
