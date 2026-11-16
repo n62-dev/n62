@@ -324,7 +324,8 @@ def check_exact(case: dict, key: str = "exact", oracle_key: str = "oracle") -> l
     if re.fullmatch(r"-?\d+(/\d+)?", text):
         got = Fraction(text)
     else:
-        got = eval(EXACT_NUMBER.sub(r"mpf(\1)", text.replace("^", "**")), namespace())
+        # G557: Giac's exact text writes the imaginary unit as i (a complex value in the unit view)
+        got = eval(EXACT_NUMBER.sub(r"mpf(\1)", text.replace("^", "**")), {**namespace(), "i": mp.mpc(0, 1)})
     if isinstance(want, int):
         want = Fraction(want)
     if isinstance(got, int):
