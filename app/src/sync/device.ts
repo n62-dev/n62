@@ -2,8 +2,8 @@
 // The device's name in the sync folder (R128; owner, 2026-11-12, must-have B decision 6): the model (Android's
 // Build.MODEL, A100's folderModel) and four random hex digits, made once per install and kept in the page's record
 // (sync/record.ts, per install: a restore on another device never takes this one's name). Every file the app
-// writes into the folder starts `n62-<device>-`, so two devices in one folder never write one name (G218). R183 adds the
-// row that edits it. Lazy: reached from the sync code only.
+// writes into the folder starts `n62-<device>-`, so two devices in one folder never write one name (G218). R183's row on the
+// sync page edits it (renameDevice). Lazy: reached from the sync code and that page only.
 import type { Kv } from "../state/storage.ts";
 import { patchSync, readSync } from "./record.ts";
 
@@ -43,6 +43,16 @@ export async function deviceName(kv: Kv, model: () => Promise<string | undefined
   const m = await model();
   let name = newDeviceName(m, random);
   for (let i = 0; i < 16 && taken.some((f) => f.startsWith(`n62-${name}-`)); i++) name = newDeviceName(m, random);
+  await patchSync(kv, { device: name });
+  return name;
+}
+
+/** The name as the user edits it (R183): sanitised as a made one is (deviceSlug) and kept in the page's record, so the
+ *  next file the sync writes carries it. A blank edit keeps the old name (or leaves none: one is made at the first
+ *  write). Returns the name kept, or "" when there is none yet. */
+export async function renameDevice(kv: Kv, input: string): Promise<string> {
+  if (input.trim() === "") return (await readSync(kv)).device ?? "";
+  const name = deviceSlug(input);
   await patchSync(kv, { device: name });
   return name;
 }

@@ -178,6 +178,20 @@ test("Settings › Data › Sync folder (R128): its own level, opened from Data;
   await expect(active(page)).toHaveAttribute("data-id", "sync");
 });
 
+test("Settings › Data › Sync folder (R183): on Android it lists the device name and a status row, and the folder's hint", async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { Capacitor: unknown }).Capacitor = { isNativePlatform: () => true };
+  });
+  await open(page);
+  await tap(page, ["@mode", "d6", "d5"]);
+  await row(page, "sync").tap();
+  await expect(title(page)).toHaveText(/Settings › Data › Sync folder$/);
+  expect(await rowIds(page)).toEqual(["choose", "status", "device", "mode", "now", "stop"]);
+  await expect(row(page, "device")).toHaveText(/Device name/);
+  await expect(row(page, "status").getByTestId("sheet-value")).toHaveText("ok");
+  await expect(row(page, "choose")).toHaveText(/a sub-folder of Download works/);
+});
+
 test.describe("Android back (history.back())", () => {
   test("back goes back one level, then closes; the next key works as before", async ({ page }) => {
     await tap(page, ["@mode", "d6", "d2"]);
