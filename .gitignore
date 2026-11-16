@@ -77,3 +77,7 @@ app/_out/
 # Test coverage output
 coverage/
 .nyc_output/
+
+# T5 / A240: the UI walk's per-state screenshots are made by each run and never committed (37 MB a run; owner 2026-11-16)
+tests/ui-walk/shots/phone/
+tests/ui-walk/shots/tablet/

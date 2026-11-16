@@ -61,7 +61,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The letters stay on the keys (2026-10-14).** Rule: docs/04 5.1 (the letters; the unassigned Shift cells). Would change if: Alpha taps near zero (P7 point 4); a function in the benchmark needs a key and no cell is free.
 - **Stored data carries a version; one signing key (2026-10-14).** Rule: docs/04 6.2 (the stamp); the throwaway key lives in `~/.cache/n62/keys/` for every worktree, so an install over the last keeps its data.
 - **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts; the inline scripts 1.53 kB gzip). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
-- **The Ultra terminals' answers (owner, 2026-11-16; T1 to T4, T6):** full text in [the archive](archive/owner-answers-2026-11-16.md); each package file and the brief's rows state the answer they build, so a worker needs no other place. Would change if: the owner answers again.
+- **The Ultra terminals' answers (owner, 2026-11-16; T1 to T6):** full text in [the archive](archive/owner-answers-2026-11-16.md); each package file and the brief's rows state the answer they build, so a worker needs no other place. Would change if: the owner answers again.
 - **The release key (owner, 2026-11-16):** a new key (alias `n62`, certificate 84:34…B5:CC in `android/release-cert.sha256`) replaces the Pascaline one before any release; the four secrets keep their names; the `v0.1.0-test` run on it is green (run 43920270352: CN=N62, the pinned digest).
 
 ### Precision, engine and parser
@@ -89,7 +89,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
 - **The marks (M4-1, M4-4 to M4-8, G3; 2026-10-12 and -13):** the rules are docs/04 2.4 and 2.8.
 - **P10 (2026-10-12): Giac's English help lines in Find.** Confirmed by B. Parisse (email, 2026-10-19): `aide_cas` is entirely GPL; the non-GPL French documentation means R. De Graeve's LaTeX/PDF manuals.
-- **P5 (2026-10-11; revised 2026-10-14 and by S12, 2026-10-19): behaviour against the reference.** Complex `sqrt(-4)` and `asin(2)`; Home keeps Giac's principal root, the ∛ template, Function and Solve the real odd root (R39). Archived.
+- **P5 (2026-10-11; revised 2026-10-14, by S12 2026-10-19 and by the owner 2026-11-16): behaviour against the reference.** The maths is Giac's wherever possible; it departs only where Giac gives a silent wrong answer (principle 3: refuse or flag, and a patch to Parisse). The G2 guides the keys and the flow, not the maths: its Home is HP's own engine, not Giac, so a G2 result alone never changes a result, and no G2 question asks about maths (checklist rows 67, 68, 75 closed). Complex `sqrt(-4)` and `asin(2)`; Home keeps Giac's principal root, the ∛ template, Function and Solve the real odd root (R39). Archived.
 - **P8 (2026-10-12): the engineer core:** milestones 4, 5, 6, each with benchmark tasks; fewer features done well beat G2 parity.
 - **P4 (2026-10-11): the reference's logical key layout, our own look;** ▲ on an empty line picks the last history row.
 - **User requests (2026-10-11):** the Format key, ∡ polar entry, key vibration, a tap places the cursor, E-notation formats.
@@ -184,7 +184,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **G17:** dB is a field-ratio level, dBm and dBW to 1 mW and 1 W; offsets and levels alone convert, T1 − T2 of one scale too (G370); impossible levels and other temperature mixes are refused (G16's zero: G35, below). Archived.
 - **G18:** ± is `pasupm(value,sigma)`, each an independent standard uncertainty in the slot's unit; ± inside sin, cos, tan works. **G25:** a typed product is kept when at most one token carries a prefix or its factor is 1 (N·m, kW·h), else SI with a prefix.
 - **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Archived, "Opus pass 97".
-- **R28:** rule: docs/04 4.3 (slot order, the end slot, there only after → Check, R349); a slot only right after a number literal; σ is a number literal, `n %` of the value (R104) or a result chip (R271, R271f1; both docs/04 4.2); a product with a slot keeps its brackets.
+- **R28:** rule: docs/04 4.3 (slot order, the end slot, there only after → Check, R349; a formula with no number keeps it and hides the button: Enter has no other slot, Opus pass 212); a slot only right after a number literal; σ is a number literal, `n %` of the value (R104) or a result chip (R271, R271f1; both docs/04 4.2); a product with a slot keeps its brackets.
 - **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Archived, "Opus pass 96".
 - **Built, archived as they stood ("2026-11-16, Ultra"):** G161 (Opus passes 60, 62); G143 (Opus pass 36): σ through a step function.
 - **R60:** the alternatives row (units/alternatives.ts) takes a temperature's three units (absolute K, °C, °F; interval K, Δ°C, Δ°F) and no target; Δ°C is K's Find alias, so its tap shows K. Would change if: R62 labels the alias.
