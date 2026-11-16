@@ -9,7 +9,7 @@ import { giacAvailable, loadNodeGiac } from "../engine/nodeGiac.ts";
 import type { IndexItem } from "../find/types.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 import { buildJob } from "./build.ts";
-import { quantityChip } from "./chip.ts";
+import { quantityChip, storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
 import { isUnitError, type Quantity, type UnitError, type UnitRequest } from "./types.ts";
 
@@ -104,5 +104,38 @@ describe.skipIf(!giacAvailable())("quantityChip (R61, real Giac)", () => {
     const q = units({ formula: "pasu1/pasu2*3", slots: [{ tokens: [{ unit: "m" }] }, { tokens: [{ unit: "m" }] }] }) as Quantity;
     expect(q.unit).toBe("");
     expect(quantityChip(q)).toEqual({ value: "3", exact: true });
+  });
+
+  // R353: Store ▶ in the unit view stores the chip only when it carries the unit and σ the view shows; the bare number never
+  describe("storeChip (R353)", () => {
+    const store = (q: Quantity) => storeChip(quantityChip(q), q.unit, q.unc);
+    const kmh = (): Quantity => units({ formula: "72*pasu1", slots: [KMH] }) as Quantity;
+    const t10 = (): Quantity => units({ formula: "pasupm(12.34,0.05)*pasu1*pasupm(3.2,0.1)*pasu2", slots: [{ tokens: [{ unit: "m" }] }, { tokens: [{ unit: "m" }] }] }) as Quantity;
+    it("72 km/h and t10's 39.488 ± 1.2 m²: the chip with its unit (and σ)", () => {
+      expect(store(kmh())).toEqual(quantityChip(kmh()));
+      expect(store(t10())).toMatchObject({ unc: "sqrt(1548381)/1000", unit: { text: "m²" } });
+    });
+    it("a pure number stores without a unit", () => {
+      const q = units({ formula: "pasu1/pasu2*3", slots: [{ tokens: [{ unit: "m" }] }, { tokens: [{ unit: "m" }] }] }) as Quantity;
+      expect(store(q)).toEqual({ value: "3", exact: true });
+    });
+    it("no shown slot: no chip to store, never the number alone", () => {
+      const q = kmh();
+      delete (q as { shownSlot?: unknown }).shownSlot;
+      expect(quantityChip(q)).toEqual({ value: "72", exact: true }); // the chip Home would take, without its unit
+      expect(store(q)).toBeUndefined();
+    });
+    it("a unit text over 40 characters: none", () => {
+      const q = { ...kmh(), unit: "k".repeat(41) };
+      expect(quantityChip(q)?.unit).toBeUndefined();
+      expect(store(q)).toBeUndefined();
+    });
+    it("σ with no chip text: none; a chip that lost σ while the view shows one: none", () => {
+      const q = t10();
+      expect(store({ ...q, unc: { ...q.unc!, value: { ...q.unc!.value, full: "" } } })).toBeUndefined();
+      const { unc: _, ...noSigma } = quantityChip(q)!;
+      expect(storeChip(noSigma, q.unit, q.unc)).toBeUndefined();
+      expect(storeChip(noSigma, q.unit, { text: "0" })).toEqual(noSigma); // a σ of 0 is dropped by quantityChip
+    });
   });
 });

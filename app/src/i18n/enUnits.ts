@@ -22,8 +22,12 @@ export const enUnits = {
   "units.sigmadim": "The result after ± doesn't fit the value's unit: {dims}",
   "units.minus": "Put the minus on the number, not before the bracket around {unit}",
   "units.symbolic": "Not a number: {detail}",
-  // G390: a store on the unit view's line
-  "units.store": "The unit view does not store: put the result on Home's line, then ▶",
+  // G390: a store on the unit view's line (R353: the way the view stores)
+  "units.store": "The unit view stores from its result: Eval, then Store ▶",
+  // R353: Store ▶ in the view (the key, the button beside the result, Tools › Store in a name)
+  "units.store.button": "▶ Store",
+  "units.store.first": "Eval first, then Store ▶",
+  "units.store.noUnit": "This result cannot be stored with its unit",
   "units.engine": "The unit view could not evaluate this",
   // G40: the notes under a result (decisions.md "Angles in the unit view").
   "units.note.radDropped": "rad = 1 dropped",
@@ -115,6 +119,7 @@ export const enUnits = {
   "units.tool.alts": "The alternatives",
   "units.tool.unit": "The unit alone",
   "units.tool.number": "The number into Home",
+  "units.tool.store": "Store in a name",
   "units.tool.needsResult": "needs a result first",
   "units.tool.needsUnit": "needs a result with a unit",
   "units.tool.isSI": "the result is in its SI form",

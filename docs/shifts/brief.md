@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 830 | [R353](packages/R353.md) Store ▶ in the unit view stores the result with its unit | ron, Opus | `p1/ron-unitresultstore` | G371, G390 |
+| 830 | R353 Store ▶ in the unit view stores the result with its unit | ron, Opus | `p1/ron-unitresultstore` | G371, G390 |
 | 819 | [R337](packages/R337.md) Vars inserts a variable stored as e or i as the letter (bu-8; red first) | ron, Opus | `p1/ron-varsletter` | – |
 | 831 | [R349](packages/R349.md) the unit view has no end slot until → Check is tapped (in v0.1.0) | ron, Opus | `p1/ron-checkbutton` | R353 |
 | 835 | [R361](packages/R361.md) the Plot draws a function that reads a value stored in Home | ron, Opus | `p1/ron-plotstored` | – |

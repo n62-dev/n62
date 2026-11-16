@@ -132,7 +132,7 @@ describe.skipIf(!full)("R92: the units menu's Constants and Tools", () => {
   const index = makeIndex(raw);
   const consts: ConstPick[] = [];
   const ran: string[] = [];
-  const tools = unitTools({ kind: "none" }, { end: () => void ran.push("end"), alt: () => void ran.push("si"), alts: () => void ran.push("alts"), home: () => void ran.push("home") });
+  const tools = unitTools({ kind: "none" }, { end: () => void ran.push("end"), alt: () => void ran.push("si"), alts: () => void ran.push("alts"), home: () => void ran.push("home"), store: () => void ran.push("store"), storeRefused: () => undefined });
   const menu = unitsMenu(index, { pick: () => {}, put: () => {}, product: () => {}, constant: (c) => void consts.push(c), tools });
   const level = (items: readonly MenuItem[], id: string): MenuItem[] => [...(items.find((c) => c.id === id)?.submenu?.items ?? [])];
 
@@ -192,11 +192,11 @@ describe.skipIf(!full)("R92: the units menu's Constants and Tools", () => {
     expect(physics?.submenu?.search?.("planck").map((r) => r.id)).toEqual([]);
   });
 
-  it("Tools has one row per unit tool of the spec; without a result only the end slot runs, the rest says why", () => {
+  it("Tools has one row per unit tool of the spec, then ours (R353: Store in a name); without a result only the end slot runs, the rest says why", () => {
     const rows = level(menu.categories, "ucat:tools");
-    expect(rows.map((r) => r.id)).toEqual(["utool:end", "utool:si", "utool:alts", "utool:unit", "utool:number"]);
-    expect(rows.map((r) => r.label)).toEqual(["The end slot", "The SI form", "The alternatives", "The unit alone", "The number into Home"]);
-    expect(rows.map((r) => r.disabled ?? false)).toEqual([false, true, true, true, true]);
+    expect(rows.map((r) => r.id)).toEqual(["utool:end", "utool:si", "utool:alts", "utool:unit", "utool:number", "utool:store"]);
+    expect(rows.map((r) => r.label)).toEqual(["The end slot", "The SI form", "The alternatives", "The unit alone", "The number into Home", "Store in a name"]);
+    expect(rows.map((r) => r.disabled ?? false)).toEqual([false, true, true, true, true, true]);
     expect(rows[1]?.reason).toBe("needs a result first");
     rows[0]?.run?.();
     expect(ran).toEqual(["end"]);
