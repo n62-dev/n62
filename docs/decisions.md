@@ -61,6 +61,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The letters stay on the keys (2026-10-14).** Rule: docs/04 5.1 (the letters; the unassigned Shift cells). Would change if: Alpha taps near zero (P7 point 4); a function in the benchmark needs a key and no cell is free.
 - **Stored data carries a version; one signing key (2026-10-14).** Rule: docs/04 6.2 (the stamp); the throwaway key lives in `~/.cache/n62/keys/` for every worktree, so an install over the last keeps its data.
 - **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts; the inline scripts 1.53 kB gzip). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
+- **T4's answers (owner, 2026-11-16):** the todo test sessions are dropped; a prefix key pressed after a value takes it in (≈: R576, ∥: R585); T + ΔT gives a temperature (G577); grouped numbers paste after the tag (R581); Home draws matrix results as grids after the tag (R578).
 
 ### Precision, engine and parser
 - **G141 (Opus pass 68): a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too (`(1-cos(10^-600))*10^1200+1` showed ≈ 1, right 1.5); G126's and G153's rows turn ⚠ until S20.
