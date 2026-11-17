@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 
 export const LOGO_FILE = fileURLToPath(new URL("../../logo/monochrome/n62_monochrome.svg", import.meta.url));
 export const MARK_FILE = fileURLToPath(new URL("../public/n62-mark.svg", import.meta.url));
-/** The mark fills x 31.85–76.15, y 31–77 of the logo's canvas; this box is that with half a unit round it. */
-export const MARK_VIEWBOX = "31.35 30.5 45.3 47";
+/** The mark fills x 34.54–73.46, y 30.37–77.63 of the logo's canvas; this box is that with half a unit round it. */
+export const MARK_VIEWBOX = "34.04 29.87 39.92 48.25";
 
 /** The logo file's one path's `d`. */
 export function logoPath(logo: string): string {
