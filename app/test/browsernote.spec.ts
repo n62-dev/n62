@@ -36,15 +36,15 @@ for (const [name, ua] of [["Firefox", FIREFOX], ["Safari", SAFARI]] as const) {
     test.use({ userAgent: ua });
     test.beforeEach(async ({ page }) => brands(page, false));
 
-    test("the first start shows one line under the status line; OK closes it for good", async ({ page }) => {
+    test("the first start shows one line at the screen's top, above the stage; OK closes it for good", async ({ page }) => {
       await open(page);
       await expect(note(page)).toBeVisible();
       await expect(note(page)).toHaveCount(1);
       await expect(note(page)).toContainText(LINE);
       await expect(ok(page)).toHaveText("OK");
-      const status = await page.getByTestId("status").boundingBox();
+      const stage = await page.locator(".stage").boundingBox();
       const line = await note(page).boundingBox();
-      expect(line && status && line.y >= status.y + status.height - 1).toBe(true);
+      expect(line && stage && line.y <= 1 && line.y + line.height <= stage.y + 1).toBe(true); // R722: the bar is on the keys
       await ok(page).click();
       await expect(note(page)).toHaveCount(0);
       await open(page);

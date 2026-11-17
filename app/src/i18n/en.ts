@@ -101,6 +101,8 @@ export const en = {
   "flick.unlock": "🔓",
   "status.place": "Place: {place}. Tap to open the apps list.",
   "status.views": "Views",
+  "status.places": "Home and CAS",
+  "status.bar": "Places and modes",
   "status.menu": "Menu",
   "status.angle": "Angle unit: {angle}. Tap to switch.",
   "status.format": "Number format and digits: {format}. Tap to change.",

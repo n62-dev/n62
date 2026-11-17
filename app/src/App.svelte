@@ -24,6 +24,7 @@
   import { counted } from "./state/tapsFront.svelte.ts";
   import { createLoaders, type FindCode, type ModeSheetCode } from "./appLoaders.ts";
   import { tipsDue } from "./state/tips.ts";
+  import { updateOffer } from "./state/updateOffer.svelte.ts";
   import History from "./views/History.svelte";
   import StatusLine from "./views/StatusLine.svelte";
   import { WIDE_QUERY } from "./views/wide.ts";
@@ -114,6 +115,11 @@
   /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
    *  not in it: the chunk goes over the network that may be the cause, and the way on must not depend on it. */
   let EngineFailed = $state.raw<typeof import("./views/EngineFailed.svelte").default | undefined>();
+  // The update note shows only when an update waits (A49): its code and style are a lazy chunk (R97), in the stage (R722).
+  let UpdateNote = $state.raw<typeof import("./views/UpdateNote.svelte").default | null>(null);
+  $effect(() => {
+    if (updateOffer.restart && !UpdateNote) void import("./views/UpdateNote.svelte").then((m) => (UpdateNote = m.default)).catch(() => {});
+  });
   $effect(() => void (session.engineState === "failed" && import("./views/EngineFailed.svelte").then((m) => (EngineFailed = m.default), () => {})));
   let host: HTMLElement | undefined = $state();
   let entryHeight = $state(0);
@@ -475,7 +481,7 @@
   };
   const cancel = (): Promise<void> => route.escape(ctx);
 
-  /** A tap on the status line's strip is not a place for typing: it must not take the caret out of the entry line. */
+  /** A tap on the catch strip is not a place for typing: it must not take the caret out of the entry line. */
   const noFocus = (e: Event): void => e.preventDefault();
 
   const busy = $derived(session.busy || shell.busy);
@@ -490,8 +496,6 @@
 </script>
 
 <main class="app">
-  <StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />
-
   <div class="screen">
     <div class="stage">
       {#if session.engineState !== "ready"}
@@ -500,6 +504,8 @@
           {#if session.engineState === "failed"}<button type="button" class="reload" data-testid="engine-reload" onclick={() => location.reload()}>{t("engine.reload")}</button>{/if}
         </p>
       {/if}
+      <!-- A49, R722: a waiting update's Restart, a pill at the stage's top beside the engine's notes (its own chunk) -->
+      {#if updateOffer.restart && UpdateNote}<UpdateNote restart={updateOffer.restart} />{/if}
       {#if shell.app === null}
         <History
           items={session.items}
@@ -562,6 +568,9 @@
     {/if}
   </div>
 
+  <!-- R722: the bar, on the keypad's top edge (folded, above the slice until R724) -->
+  <StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />
+
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
     <!-- R53: folded, the 44 px slice over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
     {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
@@ -616,8 +625,8 @@
     margin: 0 auto;
   }
   /* R224 (docs/05 3.9): the wide layout, on a landscape screen at least 1000 × 600 (views/wide.ts says the same; change
-     both): the status line across the top, the stage with the entry line on the left, the keypad in its own column on the
-     right at full height (its rows share the height; the grid is the phone's, docs/03 rule 8). No results mode here
+     both): the stage with the entry line on the left at full height, the keypad in its own column on the right, the bar
+     at its head (R722), the rows sharing the rest (the grid is the phone's, docs/03 rule 8). No results mode here
      (canFold): the keypad covers no history. */
   @media (min-width: 1000px) and (min-height: 600px) and (orientation: landscape) {
     .app {
@@ -626,14 +635,17 @@
       grid-template-columns: minmax(0, 1fr) var(--keys-wide);
       grid-template-rows: auto minmax(0, 1fr);
     }
-    .app > :global(header) {
-      grid-column: 1 / -1;
+    .app > :global(.bar) {
+      grid-column: 2;
+      grid-row: 1;
     }
     .screen {
       grid-column: 1;
+      grid-row: 1 / -1;
     }
     .keys {
       grid-column: 2;
+      grid-row: 2;
       display: flex;
       flex-direction: column;
       min-height: 0;
@@ -647,7 +659,7 @@
       flex: 1;
     }
   }
-  /* the engine's start and failure notes, in the stage (R82f2: not in the status line) */
+  /* the engine's start and failure notes, in the stage (R82f2: not on the bar) */
   .enginenote {
     position: absolute;
     top: var(--sp-2);
