@@ -9,6 +9,7 @@ export const enStore = {
   "store.holds": "{what}. Tap {name} again to replace it",
   "store.holdsWith": "{what}. Tap {name} again to replace it with {with}",
   "store.typed": "Enter stores {name}",
+  "store.new": "New name…",
 } as const;
 
 export type StoreMessageKey = keyof typeof enStore;

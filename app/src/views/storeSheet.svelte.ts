@@ -26,6 +26,10 @@ export interface StoreEnv {
   readonly session: Session;
   /** Types `latex` (a name) at the cursor, after the ▶, and presses Enter. */
   store(latex: string): void;
+  /** R740: the keypad is folded: the sheet ends with New name…, which brings the keys up. */
+  folded(): boolean;
+  /** New name… was tapped: the keys come up (the sheet stays, its filter ready for the letters). */
+  newName(): void;
 }
 
 /** What is stored, as the title shows it: a row's result with its mark (`≈ 0.333333333333`), else the line's text
@@ -76,7 +80,9 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
     };
   };
   const free = (letter: string): MenuItem => ({ id: `name:${letter}`, label: letter, cell: true, preview: t("store.free", { name: letter }), run: () => env.store(letter) });
-  const items = (): MenuItem[] => nameItems(session.userNames, filled, free);
+  /** R740: folded, a last row that brings the keys up for a longer name (the grid has no room for it); unfolded the keys are there. */
+  const fresh: MenuItem = { id: "new", label: t("store.new"), keep: true, run: () => env.newName() };
+  const items = (): MenuItem[] => [...nameItems(session.userNames, filled, free), ...(env.folded() ? [fresh] : [])];
   const firstFree = NAME_LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
   const sheet = new Sheet(STORE_SHEET, shown.value ? t("store.title", { value: shown.value }) : t("store.titleBare"), items, {
     cells: NAME_COLUMNS,
