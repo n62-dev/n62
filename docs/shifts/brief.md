@@ -63,7 +63,7 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
+| 857 | R585 ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
 | 858 | [R576](packages/R576.md) Shift + Enter after a typed line (F353) | ron, Opus | `p1/ron-approxline` | – |
 | 864 | [R376](packages/R376.md) a number right after °, ′, % or ! is refused, naming the missing mark (G2 row 76) | ron, Opus | `p1/ron-markthen` | – |
 | 852 | [G551](packages/G551.md) bitand, bitor, bitxor of a small negative and a big integer (F302) | gorge, Opus | `p1/gorge-bitsigned` | – |
