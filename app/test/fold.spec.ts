@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R53 (decisions.md P16, owner 2026-11-06), R283: results mode. A swipe down on the entry line (the only way to fold:
-// the handle on the keypad's top edge is gone) folds the keypad into a 44 px slice, and the history gets the screen; the
-// slice, a swipe up, Android back and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
+// R53 (decisions.md P16, owner 2026-11-06), R283, R724: results mode. A swipe down on the entry line (or ⌄, foldbar.spec.ts;
+// the handle on the keypad's top edge is gone) folds the keypad into the 44 px folded bar, and the history gets the screen;
+// its ⌃ (the slice), a swipe up, Android back and Esc bring it back. By touch (synthetic touches through CDP, helpers.ts `touch`) and by keys. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
 import { finger, STILL_MS } from "./core-lib.ts";
@@ -55,13 +55,13 @@ test.beforeEach(async ({ page }) => {
   await expect(keys(page)).toHaveAttribute("data-fold-ready", "true"); // the controls' chunk is in (loaded when idle after the start)
 });
 
-test("no handle is drawn; a swipe down on the line folds to the 44 px slice, a tap on the slice brings the keys back", async ({ page }) => {
+test("no handle is drawn; a swipe down on the line folds to the 44 px folded bar, a tap on its ⌃ brings the keys back", async ({ page }) => {
   await expect(page.locator(HANDLE)).toHaveCount(0);
   const up = await screenHeight(page);
   await fold(page);
   expect((await box(page, ".keys")).height).toBe(44);
   await expect(page.locator(SLICE)).toHaveAccessibleName("Show keypad");
-  await expect(page.locator(SLICE)).toHaveText("Keys");
+  await expect(page.getByTestId("folded-bar").locator(SLICE)).toBeVisible(); // R724: ⌃ in the folded bar
   await expect(page.locator(HANDLE)).toHaveCount(0);
   await expect(page.locator('[data-key="d7"]')).toBeHidden(); // the keypad is under the slice, not drawn
   await page.locator(SLICE).tap();
@@ -197,12 +197,13 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
 test("folded: a tap picks, the second inserts and unfolds; a hold copies and a swipe deletes with the keys down, a recall unfolds and Store ▶ keeps the keys down; a letter types; ☰ rises over the history", async ({ page }) => {
   await rows(page);
   await fold(page);
-  const slice = await box(page, SLICE);
+  const slice = await box(page, '[data-testid="folded-bar"]');
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
   await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy ›"]);
   const b = await box(page, '[data-testid="row-actions"]');
-  expect(Math.abs(b.y + b.height - (slice.y - 28))).toBeLessThanOrEqual(1); // on the bar's top edge, the bar on the slice (R722; R724 joins them)
+  expect(b.y).toBeGreaterThanOrEqual(slice.y - 1); // R724: in the folded bar, not over the line
+  expect(b.y + b.height).toBeLessThanOrEqual(slice.y + slice.height + 1);
   await holdLast(page); // on the picked row: it copies, the pick stays
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await isFolded(page, true);
@@ -241,8 +242,8 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   await page.getByTestId("menu-button").tap();
   await expect(sheet(page)).toBeVisible();
   const m = await box(page, '[data-testid="menu"]');
-  expect(m.y + m.height).toBeLessThanOrEqual(slice.y + 1); // from the slice's top edge, over the history
-  expect(m.y + m.height).toBeLessThanOrEqual((await box(page, '[data-testid="bar"]')).y + 1); // R722: the bar stays above the slice, uncovered
+  expect(m.y + m.height).toBeLessThanOrEqual(slice.y + 1); // from the folded bar's top edge, over the history, the bar uncovered
+  await expect(page.locator('[data-testid="bar"]')).toHaveCount(0); // R724: the bar is the folded bar
   expect(m.y).toBeGreaterThanOrEqual(0);
 });
 
@@ -409,7 +410,7 @@ test("Tab reaches the slice, and Enter on it unfolds; a hardware letter types wh
   await page.keyboard.press("x");
   await expect.poll(() => entryValue(page)).toContain("x");
   await isFolded(page, true);
-  // Tab from the line reaches the slice (the only control the fold has; the bar's seven controls lie between since R722),
+  // Tab from the line reaches ⌃ (the folded bar's first control, R724),
   // Enter on it unfolds and typing goes on
   let at = "";
   for (let i = 0; i < 14 && at !== "fold-slice"; i++) {

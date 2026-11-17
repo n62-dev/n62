@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R53: results mode for the gallery. Folded by the entry line's swipe (R283: no handle) to the 44 px slice with a row
-// picked by a tap (its buttons on the slice's top edge), at the two phone sizes; light and dark come with every shot.
+// R53, R724: results mode for the gallery. Folded by the entry line's swipe (R283: no handle) to the 44 px folded bar, with
+// and without a row picked by a tap (its buttons in the folded bar), at the two phone sizes; light and dark come with every shot.
 import type { Page } from "@playwright/test";
 import { touch } from "../test/helpers.ts";
 
@@ -8,9 +8,23 @@ import { touch } from "../test/helpers.ts";
 export const foldShots = (history: (p: Page) => Promise<void>): { id: string; group: string; title: string; viewport: { width: number; height: number }; setup: (p: Page) => Promise<void> }[] =>
   ([[360, 740], [412, 839]] as const).flatMap(([width, height]) => [
     {
+      id: `fold-bar-${width}`,
+      group: "Results mode (R53)",
+      title: `Folded (R724): the folded bar, ⌃ · Home | CAS · ⇧ α · ☰, no pick, at ${width} × ${height}`,
+      viewport: { width, height },
+      setup: async (p: Page) => {
+        await history(p);
+        const f = await touch(p, '[data-testid="entry"]');
+        await f.move(0, 40, 4);
+        await f.end();
+        await p.locator('[data-testid="keys"][data-folded="true"]').waitFor();
+        await p.waitForTimeout(250);
+      },
+    },
+    {
       id: `fold-picked-${width}`,
       group: "Results mode (R53)",
-      title: `Folded to the slice, a row picked by a tap: its buttons on the slice's top edge, at ${width} × ${height}`,
+      title: `Folded, a row picked by a tap: Store ▶ · Copy › in the folded bar (R724), at ${width} × ${height}`,
       viewport: { width, height },
       setup: async (p: Page) => {
         await history(p);

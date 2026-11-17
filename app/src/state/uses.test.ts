@@ -23,12 +23,13 @@ describe("the results mode's counter (R53, P16's removal test)", () => {
     c.count("fold.swipe");
     expect(c.folds).toBe(8);
   });
-  it("a fold by the desktop key (R131, `fold.hw`) is a fold too", async () => {
+  it("a fold by the desktop key (R131, `fold.hw`) or by ⌄ (R724, `fold.tap`) is a fold too", async () => {
     const c = new UseCounter(fakeKv(), day("2026-11-13"));
     await c.ready;
     c.count("fold.hw");
     c.count("fold.swipe");
-    expect(c.folds).toBe(2);
+    c.count("fold.tap");
+    expect(c.folds).toBe(3);
   });
   it("adds counts made before the stored ones arrived, and ignores what is not a count", async () => {
     const kv = fakeKv([[USES_KEY, { counts: { "fold.swipe": 4, pick: -1, copy: "x" }, since: "2026-11-01" }]]);

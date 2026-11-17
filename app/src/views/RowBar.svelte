@@ -2,22 +2,25 @@
 <!-- R11, R276: the picked history row's actions, Store ▶ and Copy › of the Menu (docs/05 3.3), with R36's why line above them. It is
      drawn only while a row is picked, so it loads with the clipboard code (appLoaders.ts), not in the start chunk (R147).
      R3 (r19 section 3, R147): on an empty line it lies over the entry line's box, with that box's bottom edge and height,
-     so neither the history nor the keypad moves; with text on the line it stands above the line in the flow. -->
+     so neither the history nor the keypad moves; with text on the line it stands above the line in the flow. R724: folded,
+     the buttons are in the folded bar (`inbar`, App.svelte hands them to keyboard/Fold.svelte), and the why line alone lies
+     on the line's bottom edge. -->
 <script lang="ts">
   import type { ClipActions } from "../clipboard/actions.svelte.ts";
   import type { EntryController } from "../entry/controller.ts";
   import { t } from "../i18n/index.ts";
   import type { HistoryItem } from "../state/session.svelte.ts";
 
-  let { clip, entry, row, height, folded = false, onaction }: {
+  let { clip, entry, row, height, folded = false, inbar = false, onaction }: {
     clip: ClipActions;
     entry: EntryController;
     row: HistoryItem;
     /** The entry line's height (px): the slot it covers when `over`. */
     height: number;
-    /** The keypad is folded (R53): the buttons sit on the slice's top edge, over the line, whatever it holds (a key
-     *  that types drops the pick, so nothing typed is hidden). */
+    /** The keypad is folded (R53): the why line alone, over the line's bottom edge (R724: the buttons are in the bar). */
     folded?: boolean;
+    /** R724: the buttons alone, in the folded bar (views/StatusLine.svelte `actions`), the bar's full height. */
+    inbar?: boolean;
     /** A button was pressed (its id: store, copy): the pick ends before the action runs. */
     onaction: (id: string) => void;
   } = $props();
@@ -31,14 +34,22 @@
   const noFocus = (e: Event): void => e.preventDefault();
 </script>
 
-<div class="rowslot" class:over style:min-height={over ? `${height}px` : undefined}>
-  {#if why}<div class="rowwhy" data-testid="row-why">{why}</div>{/if}
-  <div class="rowbar" role="toolbar" aria-label={t("history.actions")} data-testid="row-actions">
+{#snippet buttons()}
+  <div class="rowbar" class:inbar role="toolbar" aria-label={t("history.actions")} data-testid="row-actions">
     {#each clip.rowButtons(row) as b (b.id)}
-      <button type="button" disabled={b.disabled} onpointerdown={noFocus} onclick={() => { onaction(b.id); b.run?.(); }}>{b.label}</button>
+      <button type="button" data-item={b.id} disabled={b.disabled} onpointerdown={noFocus} onclick={() => { onaction(b.id); b.run?.(); }}>{b.label}</button>
     {/each}
   </div>
-</div>
+{/snippet}
+
+{#if inbar}
+  {@render buttons()}
+{:else if !folded || why}
+  <div class="rowslot" class:over style:min-height={over && !folded ? `${height}px` : undefined}>
+    {#if why}<div class="rowwhy" data-testid="row-why">{why}</div>{/if}
+    {#if !folded}{@render buttons()}{/if}
+  </div>
+{/if}
 
 <style>
   /* the entry line is the screen's last row in the flow, so bottom 0 is its bottom edge; a long why line rises over the
@@ -58,6 +69,17 @@
     display: flex;
     gap: var(--sp-15);
     padding: var(--sp-1) var(--sp-3);
+  }
+  .rowbar.inbar {
+    flex: none;
+    gap: var(--sp-05);
+    padding: 0;
+  }
+  .rowbar.inbar button {
+    flex: none;
+    min-height: 0;
+    min-width: var(--view-w);
+    padding: 0 var(--sp-2);
   }
   .rowwhy {
     padding: var(--sp-05) var(--sp-3) 0;

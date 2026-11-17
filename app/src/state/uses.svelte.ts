@@ -2,12 +2,12 @@
 // The results mode's counter (R53; decisions.md P16's removal test): named counts plus a `since` date, after R9's tap
 // counter (taps.svelte.ts), under its own IndexedDB key `uses`. Counted on the device only, never sent, and not in a
 // backup (backup.ts LEFT_OUT: it judges this install's use). Its own chunk: App.svelte loads it on the first fold, and
-// Settings › Counters › Removal tests › Results mode reads it. Counted names: `fold.swipe` (each fold by the swipe), `fold.hw` (by the desktop key, R131), `pick` (a row
+// Settings › Counters › Removal tests › Results mode reads it. Counted names: `fold.swipe` (each fold by the swipe), `fold.hw` (by the desktop key, R131), `fold.tap` (by ⌄, R724), `pick` (a row
 // picked by a tap while folded) and each row action run while folded (`insert`, `recall`, `copy`, `store`, `delete`), and `store.new`: New name… on the store sheet, which brings the keys up (R740; not an action of the sum).
 // R722: a second counter of this class under its own key `bar-uses` (its own `since` and Reset, so the results mode's
 // 14 days never start on an angle tap): `bar.angle` (each tap on the bar's angle chip) and `bar.angle.undo` (a tap within
 // 3 s of the one before, which takes it back; decisions.md "The bar on the keypad"), read in Settings › Counters › Angle chip.
-// P16's test reads the folds (`fold.swipe` and `fold.hw`, plus `fold.handle`: counts stored before R283 removed the handle stay in the total) and the actions' sum after 14 days from `since`.
+// P16's test reads the folds (`fold.swipe`, `fold.hw` and `fold.tap`, plus `fold.handle`: counts stored before R283 removed the handle stay in the total) and the actions' sum after 14 days from `since`.
 import type { Kv } from "./storage.ts";
 
 export const USES_KEY = "uses";
@@ -58,9 +58,9 @@ export class UseCounter {
     return this.state.counts[name] ?? 0;
   }
 
-  /** The folds: swipes, the desktop key's (R131), and the stored counts of the handle R283 removed. */
+  /** The folds: swipes, the desktop key's (R131), ⌄'s (R724), and the stored counts of the handle R283 removed. */
   get folds(): number {
-    return this.get("fold.handle") + this.get("fold.swipe") + this.get("fold.hw");
+    return this.get("fold.handle") + this.get("fold.swipe") + this.get("fold.hw") + this.get("fold.tap");
   }
 
   /** The row actions run while folded. */

@@ -500,6 +500,7 @@ function usesRow(session: Session): MenuItem {
       remember: false,
       items: [
         row("swipe", keyFeelText("settings.uses.swipe"), n((c) => c.get("fold.swipe"))),
+        row("tap", keyFeelText("settings.uses.tap"), n((c) => c.get("fold.tap"))), // R724: P16's ⌄ test (under 5 % of folds: ⌄ goes)
         row("pick", keyFeelText("settings.uses.pick"), n((c) => c.get("pick"))),
         row("actions", keyFeelText("settings.uses.actions"), n((c) => c.actions)),
         row("since", keyFeelText("settings.taps.since"), () => u()?.state.since || "—"),

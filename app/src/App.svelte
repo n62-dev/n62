@@ -103,7 +103,7 @@
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take ☰ → Paste's path
     };
     const loadFold = (): void => {
-      void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}), session.taps.load(); // R53; R320: the press counters (presses wait in the session's front)
+      void import("./keyboard/foldParts.ts").then((m) => ((Fold = m.Fold), (Chevron = m.FoldChevron)), () => {}), session.taps.load(); // R53, R724; R320: the press counters (presses wait in the session's front)
       void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {}); // R285: a browser that has not passed says so once (the chunk decides)
     };
     if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
@@ -392,8 +392,8 @@
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
-  /** Fold the keypad: by the line's swipe, or (R131) by the desktop key, counted apart (`fold.swipe`, `fold.hw`). */
-  function fold(as: "fold.swipe" | "fold.hw" = "fold.swipe"): void {
+  /** Fold the keypad: by the line's swipe, (R131) the desktop key or (R724) ⌄, counted apart (`fold.swipe`, `fold.hw`, `fold.tap`). */
+  function fold(as: "fold.swipe" | "fold.hw" | "fold.tap" = "fold.swipe"): void {
     if (folded || !canFold) return;
     folded = true;
     countUse(as);
@@ -418,8 +418,9 @@
   $effect(() => {
     if (folded) return openLayer(() => (folded = false));
   });
-  /** The slice and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
-  let Fold = $state.raw<typeof import("./keyboard/Fold.svelte").default | undefined>();
+  /** The folded bar and the line's swipe (keyboard/Fold.svelte), ⌄ (FoldChevron.svelte): one chunk, fetched when idle after the start. */
+  let Fold = $state.raw<typeof import("./keyboard/foldParts.ts").Fold | undefined>();
+  let Chevron = $state.raw<typeof import("./keyboard/foldParts.ts").FoldChevron | undefined>();
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
@@ -534,14 +535,15 @@
 
     {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>{/if}
 
-    <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
+    <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code); folded, its why line alone (R724: the buttons are in the folded bar) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
       {@const Bar = rowBar}
       <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />
     {/if}
 
-    <div class="entry" class:hidden={!shell.showsEntry} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
+    <div class="entry" class:hidden={!shell.showsEntry} class:chev={canFold} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
       {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
+      {#if Chevron && Fold && canFold && !folded && !shell.sheet}<Chevron onfold={() => fold("fold.tap")} />{/if}<!-- R724: ⌄ -->
       <!-- R155: one flat dash on the outline's path while a job runs (aria-hidden: the hidden status line names the job); in the
            field's box, where the unit view (units/open.ts) hides it with the field -->
       <div class="field" bind:this={host}>
@@ -564,10 +566,12 @@
     {/if}
   </div>
 
-  <StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} /><!-- R722: on the keys (folded, above the slice until R724) -->
+  {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar -->
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
-    <!-- R53: folded, the 44 px slice over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
-    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
+    <!-- R53, R724: folded, the 44 px folded bar over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
+    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}>
+      {#snippet bar()}<StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} folded onunfold={unfold} actions={pickBar} />{/snippet}
+    </Fold>{/if}
     <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}
@@ -591,6 +595,10 @@
     {/if}
   </div>
 </main>
+
+{#snippet pickBar()}
+  {#if clip && rowBar && picked !== null && session.items[picked]}{@const Bar = rowBar}<Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} folded inbar onaction={() => (picked = null)} />{/if}
+{/snippet}
 
 {#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, over: "keypad" | "view", below = entryHeight)}
   {#if sheetChunk.C}
@@ -737,6 +745,13 @@
     min-height: var(--entry-h);
     /* R53: a vertical swipe on the line folds or unfolds the keypad; the browser pans nothing vertically here */
     touch-action: pan-x;
+  }
+  /* R724: ⌄ (keyboard/FoldChevron.svelte) on the field's corner; no text under it */
+  .entry.chev {
+    position: relative;
+  }
+  .entry.chev :global(math-field) {
+    padding-left: var(--chev-pad);
   }
   .entry.hidden {
     display: none;

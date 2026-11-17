@@ -6,7 +6,7 @@ export const enTips = {
   "tips.place": "Tap Apps ▾ for your apps; Home and CAS are the tabs beside it",
   "tips.menu": "Tap ☰, on the keys or on the bar above them, for Paste and each app's menu",
   "tips.rows": "On a history row, hold to copy and swipe to delete",
-  "tips.fold": "On the entry line, swipe down to fold the keypad and up to bring it back",
+  "tips.fold": "Tap ⌄ or swipe down on the line to fold the keypad",
   "tips.line": "On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it",
   "tips.marks": "= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.",
   "tips.units": "Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; → Check checks the result against a unit",
