@@ -1316,15 +1316,13 @@ export class EngineHost implements FactsHost {
     return readMatrices(this.giac, names, s.digits, cells, check === undefined ? undefined : { store: check, parse: (t) => this.bridge.parse(t) });
   }
 
-  /** R361: by Giac text of a Function definition, the names it reads, each with its kind and a variable's value, σ and
-   *  unit (plotValues.ts), for the Plot's drawing; in Home's mode, the value read at P digits. R361f1: the names are its
-   *  tree's reads (bridge-2, G99: a bound name, the sum's k, is none), less x, Giac's constants and our own names. */
+  /** R361: by Function definition's Giac text, the names its tree reads (R361f1, G99: not a bound k), less x, constants
+   *  and ours, each with kind and a variable's value, σ and unit (plotValues.ts); in Home's mode, the value at P digits. */
   plotValues(texts: readonly string[], s: HomeSettings): PlotValue[][] {
     const names = texts.map((t) => this.treeFrom(t).reads.filter((n) => n !== "x" && !CONSTANT_NAMES.has(n) && !isOurs(n)));
-    const all = [...new Set(names.flat())];
-    this.need(all.join("\n"));
+    this.need(names.flat().join("\n"));
     this.useHomeMode(s);
-    const read = new Map(readPlotValues(this.giac, all, this.byName, valuePrecision(s.digits)).map((v) => [v.name, v]));
+    const read = new Map(readPlotValues(this.giac, names.flat(), this.byName, valuePrecision(s.digits)).map((v) => [v.name, v]));
     return names.map((ns) => ns.flatMap((n) => read.get(n) ?? []));
   }
 
