@@ -82,10 +82,10 @@ export async function tapTwice(l: Locator, how: "tap" | "click" = "tap"): Promis
 }
 /** The open pick sheet (the `menu` test id). */
 export const sheet = (page: Page): Locator => page.getByTestId("menu");
-/** ☰ → Copy and ☰ → Paste on Home and CAS (R278: the Copy and Paste keys are gone; the Menu's items 3 and 7). Copy takes the
+/** ☰ → Copy › → Full value and ☰ → Paste on Home and CAS (R278: the Copy and Paste keys are gone; R720: the Menu's items 2 › 1 and 4). Copy takes the
  *  picked row, else the last result; Paste puts the clipboard's number on the line, and the keys after it wait for it. */
-export const COPY: string[] = ["@menu", "d3"];
-export const PASTE: string[] = ["@menu", "d7"];
+export const COPY: string[] = ["@menu", "d2", "d1"];
+export const PASTE: string[] = ["@menu", "d4"];
 
 /** ☰ and the view's own item `id` (an app's Copy or CSV: the app menus have no numbers a test can rely on). */
 export async function menuItem(page: Page, id: string): Promise<void> {

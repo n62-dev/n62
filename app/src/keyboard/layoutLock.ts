@@ -53,7 +53,7 @@ export function layerPins(kb: Keyboard): Record<string, string> {
  *  sections `layers`, `tmpl`, `relations` and `symbols` are the keypad's, not lists of this kind. */
 export const LIST_BUILDERS: Readonly<Record<string, readonly string[]>> = {
   "home-menu": ["clipboard/actions.svelte.ts"],
-  "home-copy-as": ["clipboard/actions.svelte.ts"],
+  "home-copy": ["clipboard/actions.svelte.ts"],
   mode: ["views/modeSheet.ts", "App.svelte"],
   settings: ["views/modeSheet.ts"],
   apps: ["apps/shell.svelte.ts"],

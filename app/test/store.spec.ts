@@ -131,9 +131,9 @@ test("R301: 2+, a picked row of 5, Store ▶: the title names 2+5, A stores 7, a
   await expect(done(page)).toHaveCount(2);
   await expect(lastResult(page)).toHaveAttribute("data-text", "7");
   expect(await names(page)).toEqual(["A"]);
-  // ☰ 4 with no pick acts on the last result (7) the same way, and the filled A's question repeats the title's text
+  // ☰ 1 with no pick acts on the last result (7) the same way, and the filled A's question repeats the title's text
   await tap(page, ["d2", "add", "menu"]);
-  await sheetKey(page, ["d4"]);
+  await sheetKey(page, ["d1"]);
   await expect(store(page).getByTestId("sheet-title")).toHaveText("Store 2+7 in");
   await cell(page, "A").tap();
   await expect(store(page).getByTestId("find-preview")).toHaveText("A = 7. Tap A again to replace it with 2+7");

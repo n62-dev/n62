@@ -35,9 +35,9 @@ const pickMenu = async (page: Page, label: string): Promise<void> => {
   await page.getByRole("menuitem", { name: new RegExp(`^\\d ${label}$`) }).click();
 };
 
-/** Menu → 6 Copy as › → the item. */
+/** Menu → 2 Copy › → the item. */
 const pickCopyAs = async (page: Page, label: string): Promise<void> => {
-  await tap(page, ["@menu", "d6"]);
+  await tap(page, ["@menu", "d2"]);
   await expect(page.getByTestId("menu")).toBeVisible();
   await page.getByRole("menuitem", { name: new RegExp(`^\\d ${label}$`) }).click();
 };
@@ -122,13 +122,13 @@ test("Menu: Copy as › Python gives the row as a sympy script (R181)", async ({
   expect((await clipboard(page)).split("\n")[0]).toMatch(/^# N62 .*Copy as Python/);
 });
 
-test("☰ 0 Export › Python saves the session as n62-<date>.py (R181)", async ({ page }) => {
+test("☰ 7 Export › Python saves the session as n62-<date>.py (R181)", async ({ page }) => {
   await savePicker(page, "fake");
   await open(page, "");
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 1);
-  await tap(page, ["@menu", "d0"]);
+  await tap(page, ["@menu", "d7"]);
   await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
   await page.getByRole("menuitem", { name: /^\d Python$/ }).click();
   await expect(page.getByTestId("notice")).toHaveText("Python saved");
@@ -140,11 +140,11 @@ test("☰ 0 Export › Python saves the session as n62-<date>.py (R181)", async 
 test("Menu: Copy exact is on for an exact result and off for one that is only digits", async ({ page }) => {
   await tap(page, ["d2", "sq", "enter"]);
   await done(page, 1);
-  await tap(page, ["@menu", "d6"]);
+  await tap(page, ["@menu", "d2"]);
   await expect(page.getByRole("menuitem", { name: /Exact$/ })).toBeEnabled(); // 2² = 4
   await tap(page, ["esc", "esc", "shift", "enter", "d1", "div", "d3", "enter"]); // back out of Copy as and the Menu; approx(1/3)
   await done(page, 2);
-  await tap(page, ["@menu", "d6"]);
+  await tap(page, ["@menu", "d2"]);
   await expect(page.getByRole("menuitem", { name: /Exact$/ })).toBeDisabled(); // approx(1/3) is digits only
 });
 

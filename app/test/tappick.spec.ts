@@ -56,7 +56,7 @@ test("a tap on a result picks its row; a second tap inserts it and ends the pick
   await results(page).last().tap();
   await expect(selected(page)).toHaveCount(1);
   await expect(rows(page).last()).toHaveAttribute("data-selected", "true");
-  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]); // (R276)
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy ›"]); // (R276)
   expect(await entryValue(page)).toBe(""); // the line is as it was
   await results(page).last().tap();
   expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{8\}$/);

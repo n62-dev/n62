@@ -426,7 +426,7 @@ test.describe("a Home row that reads a name stored with a unit (G392)", () => {
     await storeF(page);
     await timesTwo(page, 3);
     await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
-    await tap(page, ["@menu", "d0"]);
+    await tap(page, ["@menu", "d7"]);
     await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
     await tap(page, ["d1"]);
     await expect(page.getByTestId("notice")).toHaveText("Work report saved");
@@ -469,11 +469,11 @@ test.describe("Copy as shown on a unit row (R63f1)", () => {
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   });
 
-  test("t10's row reads 39.488 ± 1.2 m², and Menu → Copy as › As shown copies that", async ({ page }) => {
+  test("t10's row reads 39.488 ± 1.2 m², and Menu → Copy › As shown copies that", async ({ page }) => {
     await t10(page);
     await leaveView(page);
     await expect(lastRow(page).locator(".result")).toHaveAttribute("data-text", "39.488 ± 1.2 m²");
-    await tap(page, ["@menu", "d6"]);
+    await tap(page, ["@menu", "d2"]);
     await expect(page.getByTestId("menu")).toBeVisible();
     await page.getByRole("menuitem", { name: /^\d As shown$/ }).click();
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39.488 ± 1.2 m²");

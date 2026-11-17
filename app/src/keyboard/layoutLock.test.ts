@@ -100,7 +100,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     relations: paletteSlots(kb.relations),
     symbols: paletteSlots(kb.symbols),
     "home-menu": ids(menu),
-    "home-copy-as": ids(menu.find((r) => r.id === "copyAs")?.submenu?.items ?? []),
+    "home-copy": ids(menu.find((r) => r.id === "copy")?.submenu?.items ?? []),
     mode: ids(modeItems(session, env)),
     settings: ids(settingsSections(session, env)),
     apps: ids(shell.sheet?.level.items ?? []),
@@ -269,8 +269,8 @@ describe("a pinned key layer cannot change unnoticed (altered copies of the spec
 describe("a numbered list cannot change unnoticed (altered copies of the lists)", () => {
   const rows = (section: string): string[] => Object.values(actual[section] ?? {});
   it("a row gone names its slot, and the rows after it shift into the gap", () => {
-    const p = problems(with_("home-menu", (s) => listSlots(rows("home-menu").filter((r) => r !== "recall"))));
-    expect(p[0]).toBe('home-menu/2: pinned "recall", now "copy"');
+    const p = problems(with_("home-menu", (s) => listSlots(rows("home-menu").filter((r) => r !== "copy"))));
+    expect(p[0]).toBe('home-menu/2: pinned "copy", now "delete"');
     expect(p.length).toBeGreaterThan(1);
   });
   it("a row inserted before a pinned row moves it", () => {

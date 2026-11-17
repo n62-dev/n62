@@ -399,7 +399,7 @@ test.describe("t10 with the decimal comma (R120)", () => {
     await page.waitForFunction(() => window.n62.unitView === undefined);
     const row = page.locator("article.item").last().locator(".result");
     await expect(row).toHaveAttribute("data-text", "39,488 ± 1,2 m²");
-    await tap(page, ["@menu", "d6"]);
+    await tap(page, ["@menu", "d2"]);
     await expect(page.getByTestId("menu")).toBeVisible();
     await page.getByRole("menuitem", { name: /^\d As shown$/ }).click();
     await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe("39,488 ± 1,2 m²");

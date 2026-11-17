@@ -200,7 +200,7 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   const slice = await box(page, SLICE);
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
-  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy as ›"]);
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy ›"]);
   const b = await box(page, '[data-testid="row-actions"]');
   expect(Math.abs(b.y + b.height - slice.y)).toBeLessThanOrEqual(1); // on the slice's top edge
   await holdLast(page); // on the picked row: it copies, the pick stays
@@ -254,13 +254,13 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
   expect(await entryValue(page)).toMatch(/^\\res/);
   await expect.poll(async () => (await counts())["insert"]).toBe(1);
 
-  // ☰ → Copy on a pick (R278: the Copy key is gone; the status line's ☰ is on screen while the pad is folded)
+  // the bar's Copy › then Full value on a pick (R720: ☰ has Copy › too; the bar is on screen while the pad is folded)
   await clearLine(page);
   await fold(page);
   await results(page).last().tap();
   await expect(picked(page)).toHaveCount(1);
-  await page.getByTestId("menu-button").tap();
-  await sheet(page).locator('[data-id="copy"]').tap();
+  await bar(page).getByRole("button", { name: "Copy ›" }).tap();
+  await sheet(page).locator('[data-id="full"]').tap();
   await expect(picked(page)).toHaveCount(0);
   await expect.poll(async () => (await counts())["copy"]).toBe(1);
   await isFolded(page, true);
@@ -279,7 +279,7 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
   await expect.poll(async () => (await counts())["recall"]).toBe(1);
 });
 
-test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back, Insert from the list", async ({ page }) => {
+test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back, Store ▶ from the list", async ({ page }) => {
   const layer = () => page.evaluate(() => (history.state as { n62Layer?: number } | null)?.n62Layer);
   await rows(page);
   // the slice under an open sheet, then Esc
@@ -300,12 +300,14 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await page.evaluate(() => history.back());
   await expect(sheet(page)).toBeHidden();
   await expect.poll(layer).toBeUndefined();
-  // Insert from the list over the fold: the sheet and the fold close in one update
+  // Store ▶ from the list over the fold (R720: ☰ has no Insert): the list and the fold close in one update, the store sheet opens
   await fold(page);
   await page.getByTestId("menu-button").tap();
-  await sheet(page).locator('[data-id="insert"]').tap();
+  await sheet(page).locator('[data-id="store"]').tap();
   await isFolded(page, false);
   await expect.poll(layer).toBeUndefined();
+  await page.keyboard.press("Escape");
+  await expect(sheet(page)).toBeHidden();
   // the count is even: a new fold takes one entry, and back closes it
   await clearLine(page);
   await fold(page);
@@ -414,6 +416,7 @@ test("a hold, a swipe and ☰'s list each count their action once while folded (
   await expect(page.locator('[data-status="done"]')).toHaveCount(3);
   await page.getByTestId("menu-button").tap(); // ☰ with no row: the list, on the last result
   await sheet(page).locator('[data-id="copy"]').tap();
+  await sheet(page).locator('[data-id="full"]').tap();
   await expect(sheet(page)).toBeHidden();
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
   expect(counts).toEqual({ "fold.swipe": 1, copy: 2, delete: 1 });
