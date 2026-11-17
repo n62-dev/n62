@@ -128,9 +128,16 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
     "keydown",
     (ev) => {
       // R26b, R31 (F16, F27): Backspace, Delete and the printable keys take the keypad's path (entry/hwkeys.ts)
-      if (!on.key(ev)) return;
-      ev.preventDefault();
-      ev.stopPropagation();
+      if (on.key(ev)) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      } else if (ev.key === "Escape") {
+        // R582 (F362): Escape is the Esc key (R15c2), here before MathLive's keybinding switches the field to its LaTeX
+        // mode, where every key after it went into MathLive's LaTeX buffer and the line stayed empty
+        ev.preventDefault();
+        ev.stopPropagation();
+        on.escape(ev.repeat);
+      }
     },
     { capture: true },
   );
@@ -147,13 +154,9 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
     { capture: true },
   );
   mf.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      on.enter(ev.repeat);
-    } else if (ev.key === "Escape") {
-      ev.preventDefault();
-      on.escape(ev.repeat);
-    }
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    on.enter(ev.repeat);
   });
   settleClick(mf);
   lineTouch(mf, mf.parentElement ?? mf, (dx) => scrollLine(mf, dx));

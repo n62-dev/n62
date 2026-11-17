@@ -27,6 +27,7 @@ Ranked by measured bytes. "Realistic" is what a cut that keeps the app working c
    - It loads with the first app key. That key already waits for the app's chunk (`shell.load`), so the two fetch in parallel through the preload list.
    - It also loads at start when an app was open at the last exit (`restorePlace`, `:417`).
    - Risk to the first key: none for Home's keys.
+   - **Done by R362** with cut 4: the part is `apps/shellOpen.ts`, which `AppShell.open` loads before the app's code. Measured with cut 4 below.
 2. **`state/taps.svelte.ts` with `state/pressCount.ts`: 544 B gzip (2,013 B raw).** Both leave; nothing else at start reaches them. They are the press counters (R70, R127): `TapCounter` is built in the session (`session.svelte.ts:275`), and every key, tap and hardware key calls it (`App.svelte:24, 76-113, 566`; `Keypad.svelte:325`).
    - Cut: until the chunk is in, `session.taps.press(name)` is a queue, replayed when the chunk loads. The chunk loads when the browser is idle, as the key names do (R41). Keypad hands over the raw touch with its Shift and Alpha state, and the chunk names it.
    - `TapCounter` already merges presses made before the stored counts arrive (`taps.svelte.ts:45-61`), so the replay follows a path that exists. `firstTips` reads `pressedThisStart` (`App.svelte:63`), and the queue can answer that itself.
@@ -39,6 +40,7 @@ Ranked by measured bytes. "Realistic" is what a cut that keeps the app working c
    - The icons are drawn only in an open app's view tabs (`StatusLine.svelte:77-90`, `shell.app !== null`), so they can ride with cut 1.
    - `updateOffer` is a four-line state the status line reads at start (95 B gzipped alone, source estimate). It is not worth a cut alone.
    - Take this with cut 1: about 0.15 kB.
+   - **Done by R362** (the icons only; `updateOffer` stays at start, since an update can wait before any app opens): `views/icons.ts` rides with `apps/shellOpen.ts`. Cuts 1 and 4 together measured **−693 B gzip** (phase-1 `d9b130d8` 62,879 B, the branch 62,186 B), against the estimate of 0.65-0.75 kB; pin 62,240 B.
 5. **`views/edgeFade.ts`: 136 B gzip (374 B raw).** It draws the fade on a cut-off input or result in the first screen's rows (R12b).
    - Lazy, the first rows would show cut text without its sign until the chunk is in, against docs/05 3.5 ("never cut without a sign").
    - Do it last, if at all.
@@ -72,4 +74,4 @@ Listed, these three would fail the gate with "is not a dynamic chunk: it is in t
 - Then add the other three.
 
 ## Order
-Cut 2 first (done, R320). Then cut 1 with cut 4, then cut 3. Write the first one before the next row that would take the pin past about 62.8 kB, so it is not done under time pressure at the wall.
+Cut 2 first (done, R320). Then cut 1 with cut 4 (done, R362), then cut 3. Write the first one before the next row that would take the pin past about 62.8 kB, so it is not done under time pressure at the wall.

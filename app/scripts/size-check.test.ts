@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { readSources, startReach } from "./import-rules.ts";
 import { checkLazyParts, checkSizes, checkSplits, checkStartPin, INLINE_PIN_GZIP, inlineScripts, LAZY_PARTS, lazyFailures, START_PIN_GZIP, startFiles, UNIT_VIEW_PIN_RAW } from "./size-check.ts";
 
 const dirs: string[] = [];
@@ -274,8 +275,8 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 62,940 B gzip (G392f1: a stored name's unit read shows \"unit dropped\", measured 62,882 B, 62,862 B on phase-1; the earlier raises are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(62_940);
+  it("pins the start chunk at 62,240 B gzip (R362: the shell's app opening and the view tabs' icons load with the first app, measured 62,186 B, 62,879 B on phase-1; the earlier pins are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(62_240);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...
@@ -283,7 +284,7 @@ describe("size-check", () => {
     const over = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 63_200 }, "assets/mathlive.js": 1000 }));
     expect(over.rows[0]!.gzip).toBeGreaterThan(63_000);
     expect(checkStartPin(over.rows[0]!)[0]).toContain("pinned"); // over both
-    const between = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 62_950 }, "assets/mathlive.js": 1000 }));
+    const between = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 62_500 }, "assets/mathlive.js": 1000 }));
     expect(between.failures).toEqual([]); // inside the budget of 63 kB ...
     expect(checkStartPin(between.rows[0]!)[0]).toContain("pinned"); // ... but over the pin
     const inside = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 58_000 }, "assets/mathlive.js": 1000 }));
@@ -330,5 +331,13 @@ describe("size-check", () => {
 
   it("holds the press counters and S58's five modules among the lazy parts (R320)", () => {
     for (const src of ["src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts"]) expect(LAZY_PARTS).toContain(src);
+  });
+
+  it("holds the shell's app-opening part and the view tabs' icons among the lazy parts, and no static import from main.ts reaches them (R362, S58 cuts 1 and 4)", () => {
+    const parts = ["src/apps/shellOpen.ts", "src/views/icons.ts"];
+    for (const src of parts) expect(LAZY_PARTS).toContain(src);
+    const reach = startReach(readSources(join(import.meta.dirname, "..")));
+    expect(reach.has("src/apps/shell.svelte.ts")).toBe(true); // the walk sees the start: the shell's start part stays
+    expect(parts.filter((src) => reach.has(src))).toEqual([]);
   });
 });
