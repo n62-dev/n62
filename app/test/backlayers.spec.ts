@@ -14,7 +14,13 @@ const inLine = (p: Page): Promise<boolean> => p.evaluate(() => document.activeEl
 const gone = (p: Page) => expect.poll(() => p.url()).toBe("about:blank"); // back left the app
 const stays = (p: Page) => expect(p.url()).toContain("engine=fake");
 const mods = (p: Page) => p.evaluate(() => ({ s: window.n62.session.shift, a: window.n62.session.alpha, sl: window.n62.session.shiftLock, al: window.n62.session.alphaLock }));
-const ring = (p: Page) => p.evaluate(() => getComputedStyle(document.querySelector<HTMLElement>('[data-testid="entry"]') as HTMLElement).getPropertyValue("--ring-on"));
+/** What the outline says (App.svelte data-ring: "shift" armed, "alpha", "error", else none) and the colour it is drawn in (--ring-c on the field: --shift armed, --ring at rest). */
+const ring = (p: Page) =>
+  p.evaluate(() => {
+    const e = document.querySelector<HTMLElement>('[data-testid="entry"]') as HTMLElement;
+    const f = e.querySelector("math-field") as HTMLElement;
+    return { state: e.dataset["ring"] ?? "", colour: getComputedStyle(f).getPropertyValue("--ring-c").trim(), w: getComputedStyle(f).getPropertyValue("--ring-w").trim() };
+  });
 const fold = async (p: Page): Promise<void> => {
   const f = await touch(p, '[data-testid="entry"]'); // R283: a swipe down on the line
   await f.move(0, 40, 4);
@@ -60,11 +66,16 @@ test("(b) the unit view: back closes it as Esc does, and the line is as it was",
 
 test("(c) Shift armed: back disarms it and the outline goes back to --ring", async ({ page }) => {
   const before = await ring(page);
+  expect(before.state).not.toBe("shift");
   await tap(page, ["shift"]);
   expect((await mods(page)).s).toBe(true);
+  await expect.poll(async () => (await ring(page)).state).toBe("shift");
+  const armed = await ring(page);
+  expect(armed.colour).not.toBe(before.colour); // --shift, not --ring
   await page.goBack();
   await expect.poll(async () => (await mods(page)).s).toBe(false);
-  expect(await ring(page)).toBe(before);
+  await expect.poll(async () => (await ring(page)).state).not.toBe("shift");
+  expect(await ring(page)).toEqual(before); // --ring again, at its resting width
   stays(page);
   await page.goBack();
   await gone(page);
