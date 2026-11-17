@@ -49,3 +49,18 @@ export function caseRecord(o: CaseOutcome, t: string, serial: string): CaseRecor
   const rec = { t, kind: "core", case: m[1], ok, ms: Math.round(o.duration), serial, ...(skipped ? { skipped: true } : {}), ...(known ? { known: true } : {}), ...(ok === false ? { error } : {}) };
   return { counts: skipped ? "needs" : known ? "known" : "active", passed: !skipped && !known && o.status === "passed", rec };
 }
+
+/** The activity the dump of `dumpsys activity activities` shows in front (`topResumedActivity=` since Android 10, else `mResumedActivity:`), as `pkg/.Class`; null when none. */
+export function resumedActivity(dump: string): string | null {
+  const m = /(?:topResumedActivity=|[mM]ResumedActivity:?\s*)ActivityRecord\{[^}]*?\s(\S+\/\S+)\s+t\d+/.exec(dump);
+  return m?.[1] ?? null;
+}
+
+/** R700 (F381): after a real KEYCODE_BACK our own MainActivity must still be in front. Back with nothing to undo moves the task to the
+ *  background (Android 12 and later): the WebView stays alive and the runner still reaches the page, so only this tells. Null: it is. */
+export function backProblem(dump: string, pkg: string): string | null {
+  const at = resumedActivity(dump);
+  return at !== null && /^[^/]+\/(?:\.|[\w.]*\.)MainActivity$/.test(at) && at.startsWith(`${pkg}/`)
+    ? null
+    : `after the real back key ${at ?? "no activity"} is in front, not ${pkg}/.MainActivity (the app left)`;
+}

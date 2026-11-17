@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { loadCore } from "../test/core-lib.ts";
-import { caseRecord, deviceLine, planDevice, pluginProblem } from "../test-device/core-plan.ts";
+import { backProblem, caseRecord, deviceLine, planDevice, pluginProblem, resumedActivity } from "../test-device/core-plan.ts";
 
 const root = (rel: string): string => readFileSync(new URL(`../../${rel}`, import.meta.url), "utf8");
 
@@ -34,6 +34,28 @@ describe("device plan", () => {
     expect(spec).toMatch(/replay\(/);
     expect(spec).toMatch(/check\(/);
     expect(spec).toMatch(/planDevice\(/);
+  });
+});
+
+describe("the foreground check after a real back (R700, F381)", () => {
+  const ours = "  topResumedActivity=ActivityRecord{1a2b3c u0 dev.n62.calc/.MainActivity t42}\n  ResumedActivity: ActivityRecord{1a2b3c u0 dev.n62.calc/.MainActivity t42}";
+  const launcher = "  topResumedActivity=ActivityRecord{9f8e7d u0 com.google.android.apps.nexuslauncher/.NexusLauncherActivity t2}";
+  const old = "  mResumedActivity: ActivityRecord{4c5d6e u0 dev.n62.calc/.MainActivity t7}";
+  it("reads the resumed activity", () => {
+    expect(resumedActivity(ours)).toBe("dev.n62.calc/.MainActivity");
+    expect(resumedActivity(old)).toBe("dev.n62.calc/.MainActivity");
+    expect(resumedActivity(launcher)).toBe("com.google.android.apps.nexuslauncher/.NexusLauncherActivity");
+    expect(resumedActivity("nothing")).toBeNull();
+  });
+  it("passes with N62 in front and names the launcher when the app left", () => {
+    expect(backProblem(ours, "dev.n62.calc")).toBeNull();
+    expect(backProblem(old, "dev.n62.calc")).toBeNull();
+    expect(backProblem(launcher, "dev.n62.calc")).toMatch(/nexuslauncher.*not dev\.n62\.calc\/\.MainActivity/);
+    expect(backProblem("", "dev.n62.calc")).toMatch(/no activity/);
+  });
+  it("the device case sends keyevent 4 and runs the check in the back hook", () => {
+    const spec = readFileSync(new URL("../test-device/core.device.spec.ts", import.meta.url), "utf8");
+    expect(spec).toMatch(/input keyevent 4[\s\S]*backProblem\([\s\S]*dumpsys activity activities/);
   });
 });
 
