@@ -422,3 +422,19 @@ describe("the decimal comma on the keypad (R57)", () => {
     expect(latexToGiac(typed, { decimalComma: true })).toBe("max(1.5,2)");
   });
 });
+
+describe("R585: ∥ takes in the value before it (`infix: true`)", () => {
+  it("only Shift + ( ) carries the flag, and its insert has the one #0 the field splits into #0 and a second box", () => {
+    const flagged = [...keyboard.byId.values()].flatMap((k) =>
+      Object.entries(k.actions).filter(([, a]) => a?.kind === "insert" && a.infix).map(([layer, a]) => [k.id, layer, a]),
+    );
+    expect(flagged.map(([id, layer]) => `${id}.${layer}`)).toEqual(["paren.shift"]);
+    const a = flagged[0]?.[2] as { latex: string };
+    expect(a.latex.match(/#0/g)).toHaveLength(1);
+    expect(a.latex).not.toMatch(/#[@?]/);
+  });
+  it("parses `infix: true` (the one action key beside `insert`)", () => {
+    const kb = loadKeyboard(parse(`schema: 1\ncolumns: 1\nkeys:\n  - { id: k, row: 0, col: 0, cls: fn, label: { primary: k }, primary: { insert: "\\\\operatorname{par}\\\\left(#0\\\\right)", infix: true, sample: ["\\\\operatorname{par}\\\\left(1,2\\\\right)", "par(1,2)"] }, source: assumed }\n`));
+    expect(kb.byId.get("k")?.actions.primary).toMatchObject({ kind: "insert", infix: true });
+  });
+});

@@ -406,6 +406,14 @@ selftest_run() {
   done
   rm -f "$log.one"; echo PASSED
 }
+# limit_resume_commit <marker> <branch> (A258): prints the commit the marker names when it is a commit on <branch>; fails otherwise
+# (no marker, an empty or garbled one, a commit the branch does not hold, no branch).
+limit_resume_commit() {
+  local c; [[ -f "$1" ]] || return 1
+  c="$(head -n1 "$1" 2>/dev/null)"; [[ "$c" =~ ^[0-9a-f]{7,64}$ ]] || return 1
+  git merge-base --is-ancestor "$c" "refs/heads/$2" 2>/dev/null || return 1
+  echo "$c"
+}
 # ---- A55: guards that never fired ----
 # package_shaped <id>: succeeds for a package's id (A46, G112, R15c1) and fails for a FIX id (G112f1, R82f2, A47bf1) or free text.
 package_shaped() { [[ "$1" =~ ^[A-Z][0-9]+[a-z0-9]*$ && ! "$1" =~ f[0-9]+$ ]]; }
@@ -678,7 +686,7 @@ red_first() {
 # the golden gate or its engine stages run (golden.ts and golden/, golden-*.ts, invariants, calls-budget, behaviour-diff, the sweeps), and
 # the app modules outside those directories that golden.ts imports (A136: what a mark, a chip and a Copy are built from);
 # scripts/pipeline.test.sh walks the import closure (tools/golden-closure.mjs) and fails when one is missing here.
-GOLDEN_RE='^(engine/|app/src/engine/|app/src/input/|app/src/units/|app/src/(clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnits|index)|render/home|state/(displayMode|resultItem|results|sigmaDigits))\.ts|tests/golden/|find/|tools/find-index/|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff\.ts|sweep\.ts|seqsweep\.ts|casback\.ts|viewsweep\.ts|findcensus\.ts))'
+GOLDEN_RE='^(engine/|app/src/engine/|app/src/input/|app/src/units/|app/src/(clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnits|index|sumWords)|render/home|state/(displayMode|resultItem|results|sigmaDigits))\.ts|tests/golden/|find/|tools/find-index/|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff\.ts|sweep\.ts|seqsweep\.ts|casback\.ts|viewsweep\.ts|findcensus\.ts))'
 # golden_selected: succeeds when a changed file (one per line, on stdin) plans the golden check.
 golden_selected() { grep -qE "$GOLDEN_RE"; }
 

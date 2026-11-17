@@ -73,7 +73,7 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 | 865 | [R700](packages/R700.md) Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381) | ron, Opus | `p1/ron-backlayers` | – |
 | 867 | [R720](packages/R720.md) Home and CAS ☰ of seven rows | ron, Opus | `p1/ron-homemenu` | R700, R702 |
 | 868 | [R703](packages/R703.md) the keypad, the status line and Mode fit at font scale 1.5 and 2.0 (F383) | ron, Opus | `p1/ron-textzoom` | R700 |
-| 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
+| 857 | R585 ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
 | 858 | [R576](packages/R576.md) Shift + Enter after a typed line (F353) | ron, Opus | `p1/ron-approxline` | – |
 | 864 | [R376](packages/R376.md) a number right after °, ′, % or ! is refused, naming the missing mark (G2 row 76) | ron, Opus | `p1/ron-markthen` | – |
 | 852 | [G551](packages/G551.md) bitand, bitor, bitxor of a small negative and a big integer (F302) | gorge, Opus | `p1/gorge-bitsigned` | – |
