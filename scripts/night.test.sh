@@ -80,6 +80,22 @@ inp="$(hi "$tmp/nopass.md" A)"
 [[ "$(wc -l <<<"$inp")" -eq 80 ]] && grep -q 'nopass 41$' <<<"$inp" && ! grep -q 'nopass 40$' <<<"$inp" || fail "A260: a lane with no pass does not keep its last 80 lines"
 { echo "- 09:00 [A] Opus pass 41 reply:"; for i in $(seq 1 120); do printf -- '- 09:00 [A] near %d\n' "$i"; done; echo "- 10:00 [A] Opus pass 42 reply:"; } > "$tmp/near.md"
 [[ "$(hi "$tmp/near.md" A | wc -l)" -eq 80 ]] || fail "A260: a pass a few lines back does not keep at least 80 lines"
+# a night without lanes (henri_stdin calls henri_input with an empty lane): the untagged lines from the newest untagged pass reply on
+{
+  echo "## 2026-11-17 night, 07:00"
+  for i in $(seq 1 30); do printf -- '- 08:00 old %d\n' "$i"; done
+  echo "- 09:00 Opus pass 51 reply:"; echo "    VERDICT: pass51-body"
+  for p in U1 U2 U3 U4 U5 U6; do pkg A "$p" 25 | sed 's/ \[A\] / /'; done
+} > "$tmp/nolane.md"
+inp="$(hi "$tmp/nolane.md" "")"
+for p in U1 U2 U3 U4 U5 U6; do grep -q "pipeline #1 $p: MERGED m$p" <<<"$inp" || fail "A260: no lanes: $p's MERGED line is not in henri's input"; done
+grep -q '^- 09:00 Opus pass 51 reply:$' <<<"$inp" && grep -q 'pass51-body' <<<"$inp" || fail "A260: no lanes: the untagged pass reply is not in henri's input"
+grep -q 'old 30$' <<<"$inp" && fail "A260: no lanes: lines before the pass are kept though the window since it passes 80"
+[[ "$(wc -l <<<"$inp")" -eq 152 ]] || fail "A260: no lanes: the window is $(wc -l <<<"$inp") lines, expected 152 (from the pass on)"
+{ for i in $(seq 1 120); do printf -- '- 09:00 plain %d\n' "$i"; done; } > "$tmp/plain.md"
+inp="$(hi "$tmp/plain.md" "")"
+[[ "$(wc -l <<<"$inp")" -eq 80 ]] && grep -q 'plain 41$' <<<"$inp" && grep -q 'plain 120$' <<<"$inp" || fail "A260: no lanes, no pass: not the last 80 lines ($(wc -l <<<"$inp"))"
+grep -qF 'henri_input "$coord/log.md" "$lane"' <<<"$(sed -n '/^henri_stdin() {/,/^}/p' "$night")" || fail "A260: henri_stdin does not use henri_input for a night without lanes"
 grep -qE '^PASS_EVERY=6( |$)' "$night" || fail "A260: night.sh has no PASS_EVERY=6"
 grep -qF "(after every '\"\$PASS_EVERY\"' finished packages since the last pass" "$night" || fail "A260: henri's pass line does not use PASS_EVERY"
 out="$(N62_COORD="$c" N62_NIGHT_NOW=07:00 "$night" --lane A --dry-run --max-steps 4 2>&1)"
