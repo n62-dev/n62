@@ -89,6 +89,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
 - **The marks (M4-1, M4-4 to M4-8, G3; 2026-10-12 and -13):** the rules are docs/04 2.4 and 2.8.
 - **P10 (2026-10-12): Giac's English help lines in Find.** Confirmed by B. Parisse (email, 2026-10-19): `aide_cas` is entirely GPL; the non-GPL French documentation means R. De Graeve's LaTeX/PDF manuals.
+- **K22 (owner, 2026-11-17):** the unit view's refusal of `80 °C − 5 K` and its words wait for G385, after the tag.
 - **P5 (2026-10-11; revised 2026-10-14, by S12 2026-10-19 and by the owner 2026-11-16): behaviour against the reference.** The maths is Giac's wherever possible; it departs only where Giac gives a silent wrong answer (principle 3: refuse or flag, and a patch to Parisse). The G2 guides the keys and the flow, not the maths: its Home is HP's own engine, not Giac, so a G2 result alone never changes a result, and no G2 question asks about maths (checklist rows 67, 68, 75 closed). Complex `sqrt(-4)` and `asin(2)`; Home keeps Giac's principal root, the ∛ template, Function and Solve the real odd root (R39). Archived.
 - **P8 (2026-10-12): the engineer core:** milestones 4, 5, 6, each with benchmark tasks; fewer features done well beat G2 parity.
 - **P4 (2026-10-11): the reference's logical key layout, our own look;** ▲ on an empty line picks the last history row.
