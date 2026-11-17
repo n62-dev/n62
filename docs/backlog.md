@@ -59,12 +59,12 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **nr1116-be-4, -be-1 (S1, `d4bf19bf0`; G398, G399).** `sqrt(sec(2))` ≈ -1.55016062449·i (right +), `arg((i*pi)^2)` ≈ -3.14159265359 (right π). Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-be-4` (`-be-1`). Families 4, 5.
 - **nr1116-vg-1, -vg-2, -vg-5 (S1 extreme, `d4bf19bf0`; G403, G405, G404).** A false ≈ 1, a false `=` count, a CAS +2πi. Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-vg-1` (`-vg-2`, `-vg-5`). Family 3.
 - **Night review 2026-11-16:** [the rest](research/night-review-2026-11-16.md).
-- **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F304 G553; F302 G551; F305 G554; F301 G550 (before the freeze); F306 G555; F307, F308 G556; F318 G558; F303 G576 (took G552); F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
+- **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F304 G553; F302 G551; F305 G554; F301 G550 (before the freeze); F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
 - **F460 (G557's report).** `normal((i*sqrt(-2))^(1/3))` is a rootof worth 1.12246204831·i, stock too (right 0.561231024155+0.972080648620·i). Family 5.
 - **F461 (pass 213, code read).** A CAS row that reads a name stored with a unit (G371) has no unit-dropped note; G392's is Home's. Family 12.
 - **F309, no package (T2; owner: after the tag).** Home σ is first order only: a chip at a stationary point loses σ, near a pole it is too small, never ⚠.
 - **F310, F316, F317, F319, no package (T2, low).** linterp refuses an x inside the table when the end check needs > 40 digits; Ans and the last chip are two σ inputs; `floor(evalf(pi,3)*1000)` = 3139 with `=`; weights summing to 0 give `infinity` unmarked.
-- **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F352 G576, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584, F365 R585.
+- **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584, F365 R585.
 - **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G524 (F403, DEG; merged), R601 (merged), G600–G608, R600; T6b: G613–G624; unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
 - **F357, no package (T4, S14).** Function Symb: Enter keeps the line on F1 (the owner's G2 check).
 
@@ -83,7 +83,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F243, no package (pass 168; run 1106).** Home `normal(sqrt(2^(1/3)+3^(2/3)))` and its `simplify`: one Giac call of 171–225 ms on the desktop (patch 0045's degree-18 rootof), about 8× that on the Tab One, past Home's 1.5 s clock (Stopped, or the input back). In golden-speed.ts SPEED_KNOWN.
 - **F245, no package (G308; pass 171).** CAS `evalf(1+i/10^15)*x` shows `1.0+1e-15*i*x`: Giac drops a complex double factor's brackets (`(1.0+i)*x` keeps them), no mark; `evalf((1+i/10^15)^x)` too.
 - **F246, no package (G308).** Digits 40 `ln(evalf(1+i/10^15))`: real part 5E-31, 10 right digits (Home's check catches it; CAS ⚠).
-- **F217, no package (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, shows `GIAC_ERROR: Exponent overflow`; `0.5^(1073741000)` is ≈ 2.6653924762E-323228249. Family 5.
+- **F217, fixed by G576 (G187; pass 139).** Home `2^(-1073741000)`, inside MPFR's range, showed `GIAC_ERROR: Exponent overflow`; with G576 it is ≈ 2.6653924762E-323228249 (home.yaml g576-f217-2^-1073741000). Family 5.
 - **F187 (G188's view sweep, seed 20752).** Area's `romberg((e_/x^x),x,exact(0),exact(1))` at Digits 30 throws a C++ exception at a 525 MB heap (2 calls); the app's engine dies (G183 restarts it).
 - **F188 (same run).** Area gives no answer in 45 s for e^(π^x), (e^x)^√x, √x^(e+x), x^x−e², e^(x^x).
 - **F138 (G177).** CAS DEG `evalf(cos(atan(2*i)))` shows -1.37121078136E-60-0.57735026919·i after earlier golden cases (right -0.57735026919·i, as a fresh engine gives): state leaks between cases. Row `g177-cas-deg-evalf-cos-atan-2i` (pending). Family 2.
