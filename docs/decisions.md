@@ -8,7 +8,6 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
-- **G524, the root after a rejected pole:** the search goes on (as `tan(x)=0` from 1.4 gives 0), so `tan(x/1000)=0` from 1400 gives 0, not the package's "no root found"; and its doubling step can jump a root and a pole together (DEG `tan(x)=3` from 10 gives −108.43, not the nearer 71.57). Keep both? Recommended (every answer is a real root); a step limit near a rejected pole would be its own package.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
@@ -65,7 +64,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The release key (owner, 2026-11-16):** a new key (alias `n62`, certificate 84:34…B5:CC in `android/release-cert.sha256`) replaces the Pascaline one before any release; the four secrets keep their names; the `v0.1.0-test` run on it is green (run 43920270352: CN=N62, the pinned digest).
 
 ### Precision, engine and parser
-- **G557 (Opus pass 213): patch 0045's dropped square root is a fix, not a plan change:** `normal(sqrt(2^(1/3)+3^(1/3)))` and two more show `= 1` (right 1.64382803851; mpmath), an exact wrong answer of our own patch, so G340f1 fixes 0045 at its cause before features (brief 0's order; a fix row after the freeze). Would change if: the cause is past a day of work (then Needs the user).
+- **G557 (Opus pass 213): patch 0045's dropped square root is a fix, not a plan change:** `normal(sqrt(2^(1/3)+3^(1/3)))` and two more show `= 1` (right 1.64382803851; mpmath), an exact wrong answer of our own patch, so G340f1 fixes 0045 at its cause before features (brief 0's order; a fix row after the freeze). Would change if: the cause is past a day of work (then Needs the user). Done: G340f1 (run 1355), cause under a day.
 - **G141 (Opus pass 68): a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too (`(1-cos(10^-600))*10^1200+1` showed ≈ 1, right 1.5); G126's and G153's rows turn ⚠ until S20.
 - **G138 (Opus pass 69): a nightly known row names one tree, not a shape:** a shape would hide a new cause that shrinks to it (F175: ∛ of F151's leaf); G141 removes F151's families. Would change if: one cause fills two weekly reports.
 - **G133f1 (Opus pass 24):** Home's "Underflow" for an exact 0 it cannot prove (`re(asin(i/10))`) is a bug line, F139 (wrong reason, no wrong number), not a plan change.
@@ -221,3 +220,4 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R53, R159 (Opus pass 101):** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.
 - **G218, G219, G233, G234 (Opus pass 191):** a sync `.py` row name carries its process id (`_3_<id>`); the queue keeps 400 lines, a burst waits 2 s. Your unit is the id `@name`, for good. Would change if: G215 finds a sync `.py` that does not run.
 - **G618 (run 1361):** Σ to ∞ is checked against its terms only for a term rational in k, or (−1)^k times one, with every pole left of start + 100: there the estimate (two cuts that must agree) is proven far inside 1e-8; any other term (cos k / k, 1/2^k, 1/k!) stands as before. Would change if: the owner wants the general term estimated too (a bump past the cuts could then refuse a right value).
+- **G524 (Opus pass 215):** after a rejected pole the search goes on, so Solve gives a real root that may not be the nearest (`tan(x/1000)=0` from 1400 gives 0; DEG `tan(x)=3` from 10 gives −108.43, the doubling step jumped 71.57 and the pole 90 together); "no root found" only when no bracket holds a root. Every answer is a substituted-back root, so no step limit near a rejected pole for now. Would change if: the owner wants the nearest root (a step-limit package).
