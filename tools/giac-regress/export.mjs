@@ -601,6 +601,9 @@ export const PATCHED_IDS = new Map([
   ...["normal", "simplify"].flatMap((c) => ["cbrt2", "cbrt3", "root4-2", "2-plus", "2-times", "cbrt2-plus-cbrt9", "cbrt2-plus-root"].map((k) => [`g340-${c}-sqrt-${k}`, "0045-algnum-convert-nested-rootof.patch"])),
   ...["normal", "simplify"].map((c) => [`g340-${c}-sqrt-cbrt2-30`, "0045-algnum-convert-nested-rootof.patch"]),
   ["g340-normal-root-times-ln", "0045-algnum-convert-nested-rootof.patch"],
+  // G340f1: 0045's first form wrote the generator rootof([1,0],P) as rootof(P), whose x^2-rootof(P) the power branch's _factors
+  // split (the root set to 1: these three gave 1); they pass on stock (a degree-12 rootof) and fail with 0045's first form
+  ...["simplify-sqrt-cbrt2-plus-sqrt3", "normal-sqrt-cbrt2-plus-cbrt3", "normal-sqrt-cbrt3-plus-cbrt7"].map((k) => [`g557-${k}`, "0045-algnum-convert-nested-rootof.patch"]),
   // G226 (F193): ti89.cc shiftrotate shifted an _INT_ with the C >> and << (count mod 32, sign wrap) and returned a _ZINT unchanged;
   // the g226-keep-* rows pass on stock and stay in the check file as guards
   ...["1-neg70", "1-neg63", "1-neg32", "1-neg31", "2^70-1", "2^70-neg1", "2^30-32", "neg-2^70-minus-1-1", "neg-2^70-71", "2^70-default", "1-2^40"].map((k) => [`g226-shift-${k}`, "0046-shift-integer-exact.patch"]),
