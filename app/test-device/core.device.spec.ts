@@ -4,7 +4,7 @@
 // tools/core-device.sh holds the device lock and keeps the screen awake around it.
 import { _android as android, test, type AndroidDevice, type Page } from "@playwright/test";
 import { check, engineReady, loadCore, replay } from "../test/core-lib.ts";
-import { NATIVE_PLUGINS, pluginProblem, planDevice } from "./core-plan.ts";
+import { NATIVE_PLUGINS, backProblem, pluginProblem, planDevice } from "./core-plan.ts";
 import { installTouchTap } from "./touch-tap.ts";
 
 const PKG = "dev.n62.calc"; // our app only (docs/shifts/rules.md section 3)
@@ -89,7 +89,13 @@ test.describe("core list on the device", () => {
       let page = await fresh();
       try {
         page = await replay(page, c.keys, {
-          back: async () => void (await device.shell("input keyevent KEYCODE_BACK")), // the real KEYCODE_BACK
+          back: async () => {
+            await device.shell("input keyevent 4"); // the real KEYCODE_BACK
+            // R700 (F381): a Back that left the app moves the task to the launcher, and the WebView still answers: ask Android who is in front
+            await new Promise((done) => setTimeout(done, 700));
+            const problem = backProblem((await device.shell("dumpsys activity activities")).toString(), PKG);
+            if (problem !== null) throw new Error(problem);
+          },
           relaunch: async () => {
             await device.shell(`am force-stop ${PKG}`); // the real stop and start; the data stays
             page = await launch();

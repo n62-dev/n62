@@ -678,3 +678,11 @@ cases:
     expect: { entry: "A" }
     value: "A"
     source: derived
+
+  - id: c78
+    area: entry
+    title: "Android back drops a picked row and the app stays: 2+3 Enter, ▲, back, then 7 Enter gives 7 (R700, F381; on the device the real KEYCODE_BACK)"
+    keys: [d2, add, d3, enter, up, {back: true}, d7, enter]
+    expect: { result: "7", mark: "=" }
+    value: "7"
+    source: derived

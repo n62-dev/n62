@@ -554,8 +554,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  the branch 62,186 B (175,370 B raw; −693 B): 62,186 B + 0.05 kB, rounded up to the next 10 B.
  *  62,240 → 62,300 B (G618 fix round 1): phase-1 8f1c84df measures 62,244 B gzip (175,530 B raw), past the pin by the
  *  merges since R362; the branch's start chunk is the same file, byte for byte (G618's words are in the worker's table
- *  and the unit view's chunk, i18n/sumWords.ts): 62,244 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_300;
+ *  and the unit view's chunk, i18n/sumWords.ts): 62,244 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,300 → 62,420 B (R700 fix round 1): the branch on phase-1 0d58866a measures 62,363 B gzip (175,872 B raw): the three Android
+ *  back layers (App.svelte: the picked row, Shift or Alpha armed; units/open.ts: the unit view's, 12 lines) and the layer's
+ *  release in Session; 62,363 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_420;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
