@@ -59,10 +59,13 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### Lane A queue (ron's UI, with rows from lane B)
-The order (owner, 2026-11-12): what changes how the calculator is used first, then new features, the cleanups last; the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10. Still open from the owner's answers: R314 before the freeze; R339, R337, R338, R340 before the cleanups; the splits last (2026-11-14; kept in on 2026-11-16). The night review of 2026-11-16 (owner): R361 and R362 after R349; R363 to R366 are its fix rows for the stop. R337 first (owner, 2026-11-16: n62-next's G393 waits on it). T4's use rows (owner, 2026-11-16) after R362: R582 first, then R575, G576, R585, R576.
+The order (owner, 2026-11-12): what changes how the calculator is used first, then new features, the cleanups last; the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10. Still open from the owner's answers: R314 before the freeze; R339, R337, R338, R340 before the cleanups; the splits last (2026-11-14; kept in on 2026-11-16). The night review of 2026-11-16 (owner): R361 and R362 after R349; R363 to R366 are its fix rows for the stop. R337 first (owner, 2026-11-16: n62-next's G393 waits on it). The layout chain first (owner, 2026-11-17, to feel it on the Fairphone soon): R700, R720 and R703 at lane A's head, R702 at lane B's; the bar packages follow. T4's use rows (owner, 2026-11-16) after R362: R582 first, then R575, G576, R585, R576.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 865 | [R700](packages/R700.md) Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381) | ron, Opus | `p1/ron-backlayers` | – |
+| 867 | [R720](packages/R720.md) Home and CAS ☰ of seven rows | ron, Opus | `p1/ron-homemenu` | R700, R702 |
+| 868 | [R703](packages/R703.md) the keypad, the status line and Mode fit at font scale 1.5 and 2.0 (F383) | ron, Opus | `p1/ron-textzoom` | R700 |
 | 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
 | 858 | [R576](packages/R576.md) Shift + Enter after a typed line (F353) | ron, Opus | `p1/ron-approxline` | – |
 | 864 | [R376](packages/R376.md) a number right after °, ′, % or ! is refused, naming the missing mark (G2 row 76) | ron, Opus | `p1/ron-markthen` | – |
@@ -94,6 +97,7 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 866 | [R702](packages/R702.md) Store ▶ with nothing to store is a dead press (F382) | ron, Opus | `p1/ron-storeempty` | – |
 | 862 | [G617](packages/G617.md) an alternating Σ from a start other than 1 keeps its sign (F431) | gorge, Opus | `p1/gorge-altsumstart` | – |
 | 863 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a point is their value (F434) | gorge, Opus | `p1/gorge-hyplimit` | – |
 | 833 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
