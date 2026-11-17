@@ -678,7 +678,7 @@ red_first() {
 # the golden gate or its engine stages run (golden.ts and golden/, golden-*.ts, invariants, calls-budget, behaviour-diff, the sweeps), and
 # the app modules outside those directories that golden.ts imports (A136: what a mark, a chip and a Copy are built from);
 # scripts/pipeline.test.sh walks the import closure (tools/golden-closure.mjs) and fails when one is missing here.
-GOLDEN_RE='^(engine/|app/src/engine/|app/src/input/|app/src/units/|app/src/(clipboard/(exact|paste|plaintext|text)|entry/macros|goldenRun|i18n/(en|enEngine|enParser|enUnits|index)|render/home|state/(displayMode|resultItem|results))\.ts|tests/golden/|find/|tools/find-index/|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff\.ts|sweep\.ts|seqsweep\.ts|casback\.ts|viewsweep\.ts|findcensus\.ts))'
+GOLDEN_RE='^(engine/|app/src/engine/|app/src/input/|app/src/units/|app/src/(clipboard/(exact|paste|plaintext|strings|text|whyLine)|entry/(macros|rpn|rpnCompose)|goldenRun|i18n/(en|enEngine|enParser|enUnits|index)|render/home|state/(displayMode|resultItem|results|sigmaDigits))\.ts|tests/golden/|find/|tools/find-index/|tools/probes/(giac-check\.mjs|giaccheck/|sweep/|casback/)|tests/engine/|app/scripts/(unit-case\.ts|golden\.ts|golden/.*\.ts|golden-[a-z-]+\.ts|invariants\.ts|calls-budget\.ts|behaviour-diff\.ts|sweep\.ts|seqsweep\.ts|casback\.ts|viewsweep\.ts|findcensus\.ts))'
 # golden_selected: succeeds when a changed file (one per line, on stdin) plans the golden check.
 golden_selected() { grep -qE "$GOLDEN_RE"; }
 

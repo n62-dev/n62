@@ -64,8 +64,6 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 835 | R361 the Plot draws a function that reads a value stored in Home | ron, Opus | `p1/ron-plotstored` | – |
-| 836 | [R362](packages/R362.md) the start chunk's first cut: app opening and view-tab icons load with the first app | ron, Opus | `p1/ron-startcut1` | – |
-| 854 | [R582](packages/R582.md) one physical Escape no longer loses what is typed next (F362) | ron, Opus | `p1/ron-escmathmode` | – |
 | 855 | [R575](packages/R575.md) everyday key slips get plain-word messages (F351) | ron, Opus | `p1/ron-slipwords` | – |
 | 856 | [G576](packages/G576.md) exact powers past the limit get their number (F352, F303) | gorge, Opus | `p1/gorge-bigintpow` | – |
 | 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
@@ -99,7 +97,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 849 | G557 simplify keeps the sign of two square roots (F311) | gorge, Opus | `p1/gorge-tworoots` | – |
 | 860 | [G524](packages/G524.md) Solve never takes a pole as a root, scaled or DEG (F403) | gorge, Opus | `p1/gorge-scaledpole` | – |
 | 861 | [G618](packages/G618.md) Σ to ∞ is checked against its terms (F432) | gorge, Opus | `p1/gorge-sumcheck` | – |
 | 862 | [G617](packages/G617.md) an alternating Σ from a start other than 1 keeps its sign (F431) | gorge, Opus | `p1/gorge-altsumstart` | – |
@@ -108,7 +105,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 | 834 | [G399](packages/G399.md) `arg` of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
 | 850 | [G553](packages/G553.md) floor and ceil decide at the working precision (F304) | gorge, Opus | `p1/gorge-floorepsilon` | – |
 | 851 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so (F301) | gorge, Opus | `p1/gorge-sigmalost` | – |
-| 832 | G392 a Home row that reads a name stored with a unit says the unit was dropped | gorge, Opus | `p1/gorge-namedunitnote` | G371 |
 | 828 | [G387](packages/G387.md) the formula result: letters with units and no values, behind a request flag | gorge, Opus | `p1/gorge-formularesult` | G371, G390 |
 | 826 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Opus | `p1/gorge-storedlist` | – |

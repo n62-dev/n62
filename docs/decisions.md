@@ -9,7 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
-- **G557, patch 0045 drops a square root (before the tag?):** on phase-1 `simplify(sqrt(2^(1/3)+sqrt(3)))`, `normal(sqrt(2^(1/3)+3^(1/3)))` and `normal(sqrt(3^(1/3)+7^(1/3)))` show `= 1` (right 1.72973172991, 1.64382803851, 1.83171524891); the engine without 0045 is right. A gorge package that fixes 0045 at its cause, lane B's head before the freeze? Recommended (an exact wrong answer); pending rows `g557-*-cbrt*` in precision.yaml.
 
 ## Decided proposals
 
@@ -65,6 +64,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **The release key (owner, 2026-11-16):** a new key (alias `n62`, certificate 84:34…B5:CC in `android/release-cert.sha256`) replaces the Pascaline one before any release; the four secrets keep their names; the `v0.1.0-test` run on it is green (run 43920270352: CN=N62, the pinned digest).
 
 ### Precision, engine and parser
+- **G557 (Opus pass 213): patch 0045's dropped square root is a fix, not a plan change:** `normal(sqrt(2^(1/3)+3^(1/3)))` and two more show `= 1` (right 1.64382803851; mpmath), an exact wrong answer of our own patch, so G340f1 fixes 0045 at its cause before features (brief 0's order; a fix row after the freeze). Would change if: the cause is past a day of work (then Needs the user).
 - **G141 (Opus pass 68): a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too (`(1-cos(10^-600))*10^1200+1` showed ≈ 1, right 1.5); G126's and G153's rows turn ⚠ until S20.
 - **G138 (Opus pass 69): a nightly known row names one tree, not a shape:** a shape would hide a new cause that shrinks to it (F175: ∛ of F151's leaf); G141 removes F151's families. Would change if: one cause fills two weekly reports.
 - **G133f1 (Opus pass 24):** Home's "Underflow" for an exact 0 it cannot prove (`re(asin(i/10))`) is a bug line, F139 (wrong reason, no wrong number), not a plan change.

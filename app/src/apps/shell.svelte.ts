@@ -10,8 +10,11 @@ import type { Kv } from "../state/storage.ts";
 import type { IconId } from "../views/icons.ts";
 import type { CreditBlock, Picked, Sheet, UncHead } from "../views/sheet.svelte.ts";
 import { loadSheetModel, sheetChunk } from "../views/sheetView.svelte.ts";
-import { APPS, appEntry, isAppId, placeGlyph } from "./registry.ts";
+import type * as ShellOpenCode from "./shellOpen.ts";
+import { APPS, isAppId, placeGlyph } from "./registry.ts";
 import { VIEW_IDS, type AppHost, type AppId, type AppInstance, type LoadedApp, type MenuItem, type NavDir, type SubMenu, type ViewId } from "./types.ts";
+
+type ShellOpen = typeof ShellOpenCode;
 
 /** The entry line as the shell sees it (EntryController in the app, a stub in tests). */
 export interface EntryLine {
@@ -89,16 +92,16 @@ export class AppShell {
   homeView: (() => "home" | "cas") | undefined;
 
   readonly calc: Calc;
-  private readonly kv: Kv;
-  private readonly entry: EntryLine;
+  readonly kv: Kv;
+  readonly entry: EntryLine;
   /** The settings and the user's names (R188: the matrix sheet reads them, finder.ts showMatrix). */
   readonly settings: () => AppHost["settings"];
   readonly userNames: () => readonly UserName[];
   /** What the app last put on the entry line (to tell "edited" from "as loaded"). */
-  private entryBase = "";
+  entryBase = "";
   /** The entry line still holds Home's line (no app view has taken it yet): `showView` sets it aside, `close` gives it back. */
-  private homeLine = true;
-  private pending = new Map<AppId, Promise<LoadedApp>>();
+  homeLine = true;
+  pending = new Map<AppId, Promise<LoadedApp>>();
 
   constructor(calc: Calc, kv: Kv, entry: EntryLine, settings: () => AppHost["settings"], userNames: () => readonly UserName[] = () => []) {
     this.calc = calc;
@@ -134,95 +137,28 @@ export class AppShell {
     return this.entry.value !== this.entryBase;
   }
 
-  private host(): AppHost {
-    const self = this;
-    return {
-      calc: this.calc,
-      kv: this.kv,
-      get settings() {
-        return self.settings();
-      },
-      get userNames() {
-        return self.userNames();
-      },
-      setEntry: (latex: string) => {
-        this.entryBase = latex;
-        this.entry.set(latex);
-      },
-      copy: (text: string, notice?: string) => void this.clip?.copyRaw(text, notice),
-      notice: (text: string) => this.clip?.say(text),
-      toHome: (shown: string, chip: Chip) => this.toHome(shown, chip),
-      paste: () => this.clip?.pasteHeld(),
-      count: (e: string) => this.onEvent?.(e),
-    };
-  }
-
-  /** Load (once) and restore an app. */
-  load(id: AppId): Promise<LoadedApp> {
-    const have = this.loaded[id];
-    if (have) return Promise.resolve(have);
-    let p = this.pending.get(id);
-    if (!p) {
-      p = appEntry(id)
-        .load(this.host())
-        .then(async (l) => {
-          await l.instance.restore();
-          this.loaded = { ...this.loaded, [id]: l };
-          return l;
-        });
-      this.pending.set(id, p);
-    }
-    return p;
-  }
-
-  /** Open an app at a view (default: the view it was left in, else Symb). */
+  /** R362: the app-opening part (shellOpen.ts, with the view tabs' icons), loaded by the first `open`; null until it is in. */
+  code = $state.raw<ShellOpen | null>(null);
+  /** Open an app at a view (default: the view it was left in, else Symb). Its part and the app's code load first. */
   open(id: AppId, view?: ViewId): Promise<void> {
-    this.opening = this.doOpen(id, view);
-    return this.opening;
-  }
-  /** Settles when the app being opened is on screen (keys pressed meanwhile wait for it). */
-  opening: Promise<void> = Promise.resolve();
-  private async doOpen(id: AppId, view?: ViewId): Promise<void> {
     this.sheet = null;
     this.loading = id;
     this.app = id;
-    try {
-      const l = await this.load(id);
-      if (this.app !== id) return;
-      const v = view ?? (l.instance.views.includes(this.view) ? this.view : (l.instance.views[0] as ViewId));
-      this.showView(l.instance, v);
-    } finally {
-      if (this.loading === id) this.loading = null;
-    }
+    return (this.opening = import("./shellOpen.ts")
+      .then((m) => (this.code = m).open(this, id, view))
+      .finally(() => {
+        if (this.loading === id) this.loading = null;
+      }));
   }
+  /** Settles when the app being opened is on screen (keys pressed meanwhile wait for it). */
+  opening: Promise<void> = Promise.resolve();
 
   /** Symb / Plot / Num key. From Home or CAS it opens the last app (Function by default). */
   async setView(v: ViewId): Promise<void> {
     this.sheet = null;
     if (this.app === null || this.loading !== null) return this.open(this.app ?? this.lastApp ?? "function", v);
     const a = this.instance;
-    if (!a || !a.views.includes(v)) return;
-    this.showView(a, v);
-  }
-
-  private showView(a: AppInstance, v: ViewId): void {
-    if (this.homeLine) this.setAside();
-    if (this.view !== v || this.entryBase !== "" || this.entry.value !== "") {
-      this.entryBase = "";
-      this.entry.clear();
-    }
-    this.view = v;
-    this.save();
-    a.show?.(v);
-  }
-
-  /** R270: leaving Home for an app view sets Home's unentered line (text and chips) aside; a name being typed (R89) ends
-   *  first, so the line it set aside is the one taken. An empty line sets nothing aside (a stored one stays). */
-  private setAside(): void {
-    this.homeLine = false;
-    this.prompt?.cancel();
-    const latex = this.entry.value;
-    if (latex !== "") this.aside = { latex, chips: this.entry.chips ?? {} };
+    if (a?.views.includes(v)) this.code?.showView(this, a, v); // an instance came through the part, so it is in
   }
 
   /** Back to Home/CAS (the place name, U2, U3 or the Apps sheet from inside an app). */
@@ -240,15 +176,6 @@ export class AppShell {
     this.save();
   }
   lastApp: AppId | null = null;
-  /** R262: Menu › To Home: Home comes back as the place keys bring it (Home's set-aside line too), and the answer goes on
-   *  its line as a chip, as a tapped history result does. The explicit carry R76 allows: what the app had on its line
-   *  (a value, a half-typed one too) stays with the app. */
-  toHome(shown: string, chip: Chip): void {
-    this.entryBase = this.entry.value; // the app's line is not carried: close() clears it
-    if (this.goTo) this.goTo("home");
-    else this.close();
-    this.entry.insertResult?.(shown, chip);
-  }
 
   // ---- keys routed to the app
   enter(latex: string): void {
@@ -276,29 +203,8 @@ export class AppShell {
    *  title row (R145), not a row. */
   get menuItems(): readonly MenuItem[] {
     const own = this.app === null ? this.homeMenu?.() : this.instance?.menu?.(this.view);
-    if (!own || own.length === 0) return this.pointer();
-    return own.every((r) => r.slotRow) ? [...own, ...this.pointer()] : own; // R261: Symb's Clear keeps the pointer
-  }
-  /** R83: a view whose Menu has no rows of its own (or only slot rows, R261) gets one row naming the view that has them; it switches there and
-   *  opens that Menu on its first row. Nothing when the view has rows, or no view has. */
-  private pointer(): MenuItem[] {
-    const a = this.instance;
-    if (this.app === null || !a?.menu) return [];
-    for (const v of a.views) {
-      const rows = v === this.view ? [] : a.menu(v);
-      if (rows.length === 0) continue;
-      const [x, y] = rows;
-      const low = (s: string): string => (/^\p{Lu}\p{Ll}/u.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s);
-      const labels = `${x?.label ?? ""}${y ? `, ${low(y.label)}` : ""} …`;
-      return [
-        {
-          id: `in-${v}`,
-          label: t("menu.inView", { labels, view: t(`view.${v}`) }),
-          run: () => void this.setView(v).then(() => this.toggleMenu({ at: x?.id })),
-        },
-      ];
-    }
-    return [];
+    if (!own || own.length === 0) return (this.code?.pointer(this) ?? []);
+    return own.every((r) => r.slotRow) ? [...own, ...(this.code?.pointer(this) ?? [])] : own; // R261: Symb's Clear keeps the pointer
   }
   /** The Menu's title: the view whose Menu it is, and that view's icon. */
   get menuTitle(): { text: string; icon: IconId } {
@@ -416,7 +322,7 @@ export class AppShell {
   }
 
   // ---- persistence
-  private save(): void {
+  save(): void {
     void this.kv.set("place", { app: this.app, view: this.view } satisfies Place);
   }
   /** The stored place; the app itself loads later (after the keypad), see main.ts. */
