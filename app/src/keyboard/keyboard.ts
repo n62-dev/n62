@@ -51,7 +51,7 @@ export type ActionBody =
   /** Type characters as a physical keyboard would (smart fences, auto-subscript rules apply). */
   | { kind: "type"; text: string }
   /** Insert a LaTeX template; #? marks a placeholder, #@ the selection or what is before the cursor. */
-  | { kind: "insert"; latex: string; sample?: readonly [string, string]; chip?: ConstChip; units?: true; call?: TypedCall }
+  | { kind: "insert"; latex: string; sample?: readonly [string, string]; chip?: ConstChip; units?: true; call?: TypedCall; infix?: true }
   /** A MathLive editing command. */
   | { kind: "cmd"; name: string }
   /** Handled by the app (shift, alpha, enter, clear, esc, Home/CAS, settings, mode, apps and their views, menu). */
@@ -172,7 +172,7 @@ export function parseAction(v: unknown, where: string): Action {
 
 function parseBody(v: unknown, where: string): ActionBody {
   if (!isObj(v)) throw new KeyboardSpecError(`${where}: not a mapping`);
-  const names = Object.keys(v).filter((k) => k !== "sample" && k !== "chip" && k !== "units");
+  const names = Object.keys(v).filter((k) => k !== "sample" && k !== "chip" && k !== "units" && k !== "infix");
   if (names.length !== 1) throw new KeyboardSpecError(`${where}: an action has exactly one of type/insert/cmd/special`);
   const name = names[0] as string;
   switch (name) {
@@ -196,7 +196,11 @@ function parseBody(v: unknown, where: string): ActionBody {
         return { kind: "insert", latex, chip: { key, chip } };
       }
       // R71: `units: true` = the unit view's line alone reads it (±): its sample is read in units mode, and an app dims the key
-      const units = v["units"] === true ? { units: true as const } : {};
+      const units = {
+        ...(v["units"] === true ? { units: true as const } : {}),
+        // R585: `infix: true` = after a value the key takes it in as its call's first argument (∥: 5 ∥ 20 is par(5, 20))
+        ...(v["infix"] === true ? { infix: true as const } : {}),
+      };
       if (sample === undefined) return { kind: "insert", latex, ...units };
       if (!Array.isArray(sample) || sample.length !== 2 || sample.some((s) => typeof s !== "string"))
         throw new KeyboardSpecError(`${where}: bad sample`);

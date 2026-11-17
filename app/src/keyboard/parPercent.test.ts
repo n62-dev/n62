@@ -18,6 +18,7 @@ describe("R323: Shift + ( ) is ∥ (par), Shift + 0 is %", () => {
       kind: "insert",
       latex: "\\operatorname{par}\\left(#0\\right)",
       sample: ["\\operatorname{par}\\left(4700,10000\\right)", "par(4700,10000)"],
+      infix: true, // R585: after a value it takes the value in (entry/field.ts)
     });
     expect(labelFor(k("paren"), true, false)).toBe("∥");
     expect(latexToGiac("\\operatorname{par}\\left(4700,10000\\right)")).toBe("par(4700,10000)");
