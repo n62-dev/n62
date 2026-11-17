@@ -97,8 +97,6 @@ The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 860 | G524 Solve never takes a pole as a root, scaled or DEG (F403) | gorge, Opus | `p1/gorge-scaledpole` | – |
-| 861 | G618 Σ to ∞ is checked against its terms (F432) | gorge, Opus | `p1/gorge-sumcheck` | – |
 | 862 | [G617](packages/G617.md) an alternating Σ from a start other than 1 keeps its sign (F431) | gorge, Opus | `p1/gorge-altsumstart` | – |
 | 863 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a point is their value (F434) | gorge, Opus | `p1/gorge-hyplimit` | – |
 | 833 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
