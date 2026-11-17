@@ -178,8 +178,8 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G340, patch 0045: algnum_convert rewrites only the rootofs lvar lists at the top level, so one inside a power kept its place and
   // the power's base was written with the generator's variable (normal(sqrt(1+sqrt(1+2^(1/3)))) = 0.00732, right 1.58218)
   ["0045-algnum-convert-nested-rootof.patch", "giac-2.1.0/src/sym2poly.cc", /v=lvar\(e\);\s*vecteur vr,wr;\s*\/\/ rewrite rootofs inside e\s*for \(int i=0;i<v\.size\(\);\+\+i\)\{\s*if \(v\[i\]\.is_symb_of_sommet\(at_rootof\)\)\{/, "int algnum_convert(const gen & e_,gen & E,gen & G,vecteur & syst,vecteur & vars,vecteur & v,vecteur & varapprox,ext_param_t & extpar,GIAC_CONTEXT){"],
-  // G340f1: ... and it writes a rewritten rootof's generator as the one-argument rootof(pmin), which the power branch takes for
-  // no generator once 0045 rewrites a rootof under a power (normal(sqrt(2^(1/3)+3^(1/3))) = 1, right 1.64382803851)
+  // G340f1: ... and it writes a rewritten rootof's generator as the one-argument rootof(pmin), whose x^2-rootof(pmin) the power
+  // branch's _factors splits (the root set to 1) once 0045 rewrites a rootof under a power (normal(sqrt(2^(1/3)+3^(1/3))) = 1, right 1.64382803851)
   ["0045-algnum-convert-nested-rootof.patch", "giac-2.1.0/src/sym2poly.cc", /pmin\.subtype=_POLY1__VECT;\s*wr\.push_back\(horner\(p,symbolic\(at_rootof,pmin\)\)\);/, "int algnum_convert(const gen & e_,gen & E,gen & G,vecteur & syst,vecteur & vars,vecteur & v,vecteur & varapprox,ext_param_t & extpar,GIAC_CONTEXT){"],
   // G226, patch 0046: shiftrotate shifts an _INT_ with the C >> and << (the count read mod 32, a left shift wrapping into the sign bit)
   // and returns a _ZINT unchanged (shift(1,-70) = 64, shift(2^70,1) = 2^70)
