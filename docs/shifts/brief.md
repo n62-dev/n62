@@ -78,7 +78,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 876 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
 | 877 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
 | 878 | [R725](packages/R725.md) the Chars sheet on Shift + Vars | ron, Sonnet | `p1/ron-charssheet` | R723 |
-| 879 | [R744](packages/R744.md) the layout lock reads only release tags (before the beta tag) | ron, Sonnet | `p1/ron-lockprerelease` | – |
+| 879 | R744 the layout lock reads only release tags (before the beta tag) | ron, Sonnet | `p1/ron-lockprerelease` | – |
 | 880 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
 | 881 | [R727](packages/R727.md) Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
 | 882 | [R743](packages/R743.md) a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |

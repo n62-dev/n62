@@ -8,7 +8,8 @@
 #   - a move (a change to a live line, or a removal: to `reserved`) is a line under `moves:` that names the entry as
 #     `<section>/<slot>`, the old value (`from`), the new one (`to`), the version it lands in and the title of the decisions.md
 #     entry that holds the owner's yes. The test applies the moves on top of the lines and checks the title is in decisions.md.
-# The test also reads the last `v*` tag's lock (`git show`) and fails if a live line pinned there is missing or edited.
+# The test also reads the last release tag's lock (`vX.Y.Z`; a pre-release such as a beta pins nothing; `git show`) and fails if
+# a live line pinned there is missing or edited.
 #
 # Sections (`section/slot`): layers `<key id>.<layer>` = `<kind> <name>` | reserved; tmpl, relations, symbols (the palettes of
 # Tmpl, Shift + 6, Shift + 9): `row,col` = the cell's id; home-menu, home-copy (☰ in Home and CAS; R720), mode (Mode's rows),

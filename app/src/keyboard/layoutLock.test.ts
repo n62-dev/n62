@@ -424,4 +424,40 @@ describe("the last release's lock (altered copies of the lock)", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+  it("skips a pre-release tag: it never pins the lock and never shadows its release (R744)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "n62-lock-pre-"));
+    const git = (...a: string[]): void => void execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.org", "-c", "commit.gpgsign=false", ...a], { cwd: dir, stdio: "ignore" });
+    const lockText = (menu: string): string => read(LOCK).replace('"menu.primary": "special menu"', `"menu.primary": "${menu}"`);
+    try {
+      git("init", "-q");
+      mkdirSync(join(dir, "spec"));
+      writeFileSync(join(dir, "a.txt"), "a");
+      git("add", ".");
+      git("commit", "-q", "-m", "one");
+      // only a beta holds a lock: nothing is pinned
+      writeFileSync(join(dir, LOCK), lockText("special esc"));
+      git("add", ".");
+      git("commit", "-q", "-m", "two");
+      git("tag", "v0.1.0-beta.1");
+      expect(releaseLock(dir, LOCK)).toBeNull();
+      // the release below the beta wins, whatever the sort says
+      git("tag", "v0.1.0", "HEAD~1");
+      git("rm", "-q", "--cached", LOCK);
+      writeFileSync(join(dir, LOCK), lockText("special menu"));
+      git("add", ".");
+      git("commit", "-q", "-m", "three");
+      git("tag", "-f", "v0.1.0");
+      git("tag", "-f", "v0.1.0-beta.1", "HEAD~1");
+      writeFileSync(join(dir, LOCK), lockText("special find"));
+      git("add", ".");
+      git("commit", "-q", "-m", "four");
+      git("tag", "v0.1.0-beta.2");
+      git("tag", "v0.1.1-rc.1");
+      const rel = releaseLock(dir, LOCK);
+      expect(rel?.tag).toBe("v0.1.0");
+      expect(rel?.lock.pins["layers"]?.["menu.primary"]).toBe("special menu");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
