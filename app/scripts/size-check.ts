@@ -547,8 +547,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (176,852 B raw), the branch 62,821 B (176,928 B raw): 62,821 B + 0.05 kB, rounded up to the next 10 B.
  *  62,880 → 62,940 B (G392f1): a stored name with a unit read shows "unit dropped" in its Home row (host.ts and nameSigma.ts
  *  carry the names, session.svelte.ts sets the flag, R63), all in start with the row's result path. Phase-1 b80c3d10 measures
- *  62,862 B gzip (176,988 B raw), the branch 62,882 B (177,051 B raw): 62,882 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_940;
+ *  62,862 B gzip (176,988 B raw), the branch 62,882 B (177,051 B raw): 62,882 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,940 → 62,240 B (R362, a cut: S58's cuts 1 and 4, docs/research/start-chunk-cuts.md): the shell's app-opening part
+ *  (apps/shellOpen.ts: the app's host, load, open, showView, setAside, toHome, the Menu's pointer row) loads with the first
+ *  app key, and the view tabs' icons (views/icons.ts) with it. Phase-1 d9b130d8 measures 62,879 B gzip (177,051 B raw),
+ *  the branch 62,186 B (175,370 B raw; −693 B): 62,186 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_240;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
