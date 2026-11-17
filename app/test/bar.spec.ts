@@ -53,9 +53,9 @@ test("Home shows the Home tab selected and the CAS tab; one tap switches; Home f
 test("the bar's controls stand in the lock's order, left to right (spec/layout-lock.yaml bar:, R722)", async ({ page }) => {
   await open(page);
   const items = await page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] [data-item]')].map((e) => ({ n: Number(e.dataset["item"]), x: e.getBoundingClientRect().left })),
+    [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] [data-item]')].map((e) => ({ n: e.dataset["item"], x: e.getBoundingClientRect().left })),
   );
-  expect(items.map((i) => i.n)).toEqual(BAR_ITEMS.map((_, i) => i + 1));
+  expect(items.map((i) => i.n)).toEqual([...BAR_ITEMS]);
   expect(items.every((it, i) => i === 0 || it.x > (items[i - 1]?.x ?? 0))).toBe(true);
 });
 

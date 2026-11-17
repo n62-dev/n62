@@ -6,7 +6,6 @@
   import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
-  import { BAR_ITEMS, type BarItem } from "./barItems.ts";
 
   // R97, R722: the bar on the keypad's top edge, out of App.svelte. Props in, events out; no store of its own.
   let { session, shell, busy, cas, onpress, onmode }: {
@@ -27,8 +26,6 @@
   const PLACE_KEY = barKey("place", "apps"), MENU_KEY = barKey("menu-status", "menu");
   const TABS = (["symb", "plot", "num"] as const).map((v) => ({ view: v, name: t(`view.${v}`), key: barKey(`tab-${v}`, v) }));
   const PLACES = (["home", "cas"] as const).map((v) => ({ view: v, name: t(`view.${v}`), glyph: placeGlyph(v), key: barKey(`tab-${v}`, v) }));
-  /** Each control's position in the lock's `bar:` list (spec/layout-lock.yaml), on the element as `data-item`. */
-  const item = (id: BarItem): string => `${BAR_ITEMS.indexOf(id) + 1}`;
 
   const appName = $derived(shell.app ? t(APPS.find((a) => a.id === shell.app)?.name as MessageKey) : "");
   /** Where you are (docs/05 3.2): Home, CAS, or an app and its view. */
@@ -49,10 +46,11 @@
   const noFocus = (e: Event): void => e.preventDefault();
 
   // The guard (R722): the bar sits on the keys, so a touch that began on a key may end over it. A control acts only on a
-  // pointer that went down on it: every down anywhere disarms (the window's capture listener runs first), a down on a
-  // control arms that control, and its click acts only when armed. A click with no pointer (Enter or Space on a focused
-  // control, a screen reader's activation: detail 0) acts as it always did.
-  let armed: string | null = null;
+  // pointer that went down on it: every down anywhere disarms (the window's capture listener runs first), a down in the
+  // bar arms the control under it, and a click on any other control is stopped in the capture phase, before the
+  // controls' own (delegated) handlers. A click with no pointer (Enter or Space on a focused control, a screen reader's
+  // activation: detail 0) acts as it always did.
+  let armed: Element | null = null;
   $effect(() => {
     const disarm = (): void => void (armed = null);
     window.addEventListener("pointerdown", disarm, true);
@@ -60,12 +58,12 @@
   });
   const down = (e: PointerEvent): void => {
     noFocus(e);
-    armed = (e.target as Element | null)?.closest<HTMLElement>("[data-testid]")?.dataset["testid"] ?? null;
+    armed = (e.target as Element | null)?.closest("button") ?? null;
   };
-  const guarded = (id: string, run: () => void) => (e: MouseEvent): void => {
-    const ok = armed === id || e.detail === 0;
+  const guard = (e: MouseEvent): void => {
+    const ok = e.detail === 0 || armed === (e.target as Element | null)?.closest("button");
     armed = null;
-    if (ok) run();
+    if (!ok) e.stopPropagation();
   };
 
   /** R722: `bar.angle` counts each angle-chip tap, `bar.angle.undo` a second tap within 3 s, which takes the first back
@@ -88,18 +86,18 @@
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
-  <nav class="bar" class:inapp={shell.app !== null} data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down}>
+  <nav class="bar" class:inapp={shell.app !== null} data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
     <button
       type="button"
       class="place"
       use:pressFlag
       data-testid="place"
-      data-item={item("apps")}
+      data-item="apps"
       data-tip="place"
       data-app={shell.app ?? ""}
       data-view={shell.app === null ? session.view : shell.view}
       aria-label={t("status.place", { place })}
-      onclick={guarded("place", () => onpress(PLACE_KEY, "primary"))}>
+      onclick={() => onpress(PLACE_KEY, "primary")}>
       {#if glyph}
         <!-- the glyph is our own table's text (registry.ts), never user text -->
         <span class="tile math" class:small={"text" in glyph && glyph.text.length > 1} data-ring={ring} aria-hidden="true">{"text" in glyph ? glyph.text : ""}</span>
@@ -120,7 +118,7 @@
             aria-selected={shell.view === tab.view}
             aria-label={tab.name}
             title={tab.name}
-            onclick={guarded(`tab-${tab.view}`, () => onpress(tab.key, "primary"))}>
+            onclick={() => onpress(tab.key, "primary")}>
             <span class="face">{@html shell.code?.ICONS[tab.view] ?? ""}</span>
           </button>
         {/each}
@@ -138,10 +136,10 @@
           role="tab"
           use:pressFlag
           data-testid="tab-{p.view}"
-          data-item={item(p.view)}
+          data-item={p.view}
           aria-selected={cur}
           aria-label={p.name}
-          onclick={guarded(`tab-${p.view}`, () => onpress(p.key, "primary"))}>
+          onclick={() => onpress(p.key, "primary")}>
           <span class="tile" class:logo={"icon" in p.glyph} class:math={"text" in p.glyph} data-ring={cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<span class="logomark"></span>{:else}{p.glyph.text}{/if}</span>
           <span class="nm" aria-hidden="true">{p.name}</span>
         </button>
@@ -158,16 +156,16 @@
       type="button"
       class="chip"
       data-testid="chip-angle"
-      data-item={item("angle")}
+      data-item="angle"
       data-angle={angle}
       data-changed={angle !== "rad"}
       aria-label={t("status.angle", { angle: t(`angle.${angle}`) })}
-      onclick={guarded("chip-angle", switchAngle)}>{angle === "rad" ? "RAD" : "DEG"}</button>
+      onclick={switchAngle}>{angle === "rad" ? "RAD" : "DEG"}</button>
     <span class="pair" aria-label={t("status.format", { format: t(`format.${session.settings.format}`) })}>
-      <button type="button" class="chip more format" data-testid="chip-format" data-item={item("format")} onclick={guarded("chip-format", () => onmode("format"))}>{session.settings.format.toUpperCase()}</button>
-      <button type="button" class="chip more digits" data-testid="chip-digits" data-item={item("digits")} onclick={guarded("chip-digits", () => onmode("digits"))}>{session.settings.digits}</button>
+      <button type="button" class="chip more format" data-testid="chip-format" data-item="format" onclick={() => onmode("format")}>{session.settings.format.toUpperCase()}</button>
+      <button type="button" class="chip more digits" data-testid="chip-digits" data-item="digits" onclick={() => onmode("digits")}>{session.settings.digits}</button>
     </span>
-    <button type="button" class="menubtn" use:pressFlag data-testid="menu-button" data-item={item("menu")} data-tip="menu" aria-label={t("status.menu")} onclick={guarded("menu-button", () => onpress(MENU_KEY, "primary"))}>☰</button>
+    <button type="button" class="menubtn" use:pressFlag data-testid="menu-button" data-item="menu" data-tip="menu" aria-label={t("status.menu")} onclick={() => onpress(MENU_KEY, "primary")}>☰</button>
     <!-- the busy ring is drawn on an aria-hidden tile: a screen reader hears the job from this hidden line (R102) -->
     {#if busy}<span class="sr" role="status" data-testid="busy-status">{t("status.busy")}</span>{/if}
   </nav>
