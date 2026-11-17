@@ -387,9 +387,10 @@
     pointer-events: auto;
     box-shadow: var(--shadow-sheet) color-mix(in srgb, var(--bg) 50%, transparent);
   }
-  /* R148f1: on a screen under 760 px tall (the keypad's short rows) the sheet's top padding is 3 px, the border's 1 px making up
-     the 4: Mode with its six rows at their floor (36 px, the longest preset name) fits the 326 px of room at 360 × 740 */
-  @media (max-height: 760px) {
+  /* R148f1: with the keypad's short rows the sheet's top padding is 3 px, the border's 1 px making up the 4: Mode with its six
+     rows at their floor (36 px, the longest preset name) fits the 326 px of room at 360 × 740. Keypad.svelte decides the
+     breakpoint (under 1000 px tall since R722) and this query follows it (R722f1) */
+  @media (max-height: 999px) {
     .keypad .sheet {
       padding-top: calc(var(--sp-1) - var(--stroke-thin));
     }

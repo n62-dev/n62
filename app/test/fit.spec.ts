@@ -93,6 +93,20 @@ test.describe("at 412 × 915", () => {
       expect(await keyBoxes(page)).toEqual(before);
     });
 
+  // R722f1: Keypad.svelte decides the short-row breakpoint (under 1000 px tall) and Sheet.svelte's top padding follows it, so at
+  // 412 × 915 (the Fairphone 6) a sheet over the short keys has the short padding: sp-1 less the border, 3 px (was 4 px here)
+  test("R722f1: a sheet over the short keys at 412 × 915 has the short top padding (sp-1 − stroke-thin)", async ({ page }) => {
+    await openSheet(page, "mode");
+    const got = await page.evaluate(() => {
+      const root = getComputedStyle(document.documentElement);
+      const short = parseFloat(root.getPropertyValue("--sp-1")) - parseFloat(root.getPropertyValue("--stroke-thin"));
+      const menu = document.querySelector('[role="menu"]');
+      return { pad: menu ? getComputedStyle(menu).paddingTop : "missing", short: `${short}px` };
+    });
+    expect(got.short).toBe("3px");
+    expect(got.pad).toBe(got.short);
+  });
+
   for (const name of Object.keys(OPENERS))
     test(`where: ${name} sits over the maths rows, at the keypad's bottom edge; the top cluster stays live`, async ({ page }) => {
       await openSheet(page, name);
