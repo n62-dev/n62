@@ -8,7 +8,6 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
-- **R722, the 7–9 row sheets under 1000 px tall:** the 43 px rows leave 290–294 px over rows 3–9 at 412 × 915 and on the Fairphone (330+ before), so Plot's ☰ (nine rows after a Root, R262), Mode › Digits, Numbers and Appearance scroll at their 36 px floor there, with the cue, as at 360 × 740 before; the e2e pins it. Keep that? Recommended: keep it (decisions.md "A sheet that cannot fit at its floor scrolls"); a 32 px floor (measured) brings back Plot's ☰ and Digits whole, not Numbers or Appearance (their 52 px option rows).
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
@@ -147,7 +146,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it). Archived, "Opus pass 132".
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is a mask. Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
-- **The tips' text stops at 18 px** (Opus pass 110, R171): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
+- **The tips' text stops at 17 px** (Opus pass 110, R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived, "Opus pass 117".
   - **Under 1000 px tall with R722's 43 px rows too (Opus pass 217, R722's question):** Plot's ☰ after a Root, Mode › Digits, Numbers and Appearance scroll at their floor at 412 × 915 and on the Fairphone 6. Would change if: the owner's look at the beta wants them whole (a 32 px floor, measured by R722, brings back Plot's ☰ and Digits).
 
