@@ -198,11 +198,13 @@ export function compareToRelease(tag: string, released: Lock, now: Lock): string
   return problems;
 }
 
-/** The lock of the newest `v*` tag that holds it, by `git show`; null without git or such a tag. */
+/** The lock of the newest release tag (`vX.Y.Z`, nothing after the version) that holds it, by `git show`; null without git or such
+ *  a tag. A pre-release (`v0.1.0-beta.1`) is skipped: git's version sort puts it above its release, so it would pin the lock
+ *  before the release and shadow the release's lock after it (R744; docs/06 section 3b). */
 export function releaseLock(root: string, path: string): { tag: string; lock: Lock } | null {
   const git = (...args: string[]): string => execFileSync("git", args, { cwd: root, encoding: "utf8", timeout: 15000, stdio: ["ignore", "pipe", "ignore"] });
   try {
-    for (const tag of git("tag", "--list", "v*", "--sort=-v:refname").split("\n").filter(Boolean)) {
+    for (const tag of git("tag", "--list", "v*", "--sort=-v:refname").split("\n").filter((t) => /^v\d+\.\d+\.\d+$/.test(t))) {
       try {
         return { tag, lock: parseLock(git("show", `${tag}:${path}`), `${tag}:${path}`) };
       } catch {

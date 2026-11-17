@@ -71,14 +71,10 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 870 | [S55](packages/S55.md) room in the four budgeted docs | sandra, Sonnet | `p1/sandra-docsroom` | – |
-| 871 | R700 Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381), if not merged by the stop | ron, Sonnet | `p1/ron-backlayers` | – |
-| 873 | R720 Home and CAS ☰ of seven rows, if not merged by the stop | ron, Sonnet | `p1/ron-homemenu` | R700, R702 |
-| 874 | R740 Store ▶ on a folded pick keeps the keys down; New name… brings them | ron, Sonnet | `p1/ron-foldstore` | – |
 | 875 | R722 the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
 | 876 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
 | 877 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
 | 878 | [R725](packages/R725.md) the Chars sheet on Shift + Vars | ron, Sonnet | `p1/ron-charssheet` | R723 |
-| 879 | [R744](packages/R744.md) the layout lock reads only release tags (before the beta tag) | ron, Sonnet | `p1/ron-lockprerelease` | – |
 | 880 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
 | 881 | [R727](packages/R727.md) Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
 | 882 | [R743](packages/R743.md) a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
