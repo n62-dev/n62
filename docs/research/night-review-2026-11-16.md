@@ -34,6 +34,7 @@ Written: nr1116-be-4 and -be-1, and -vg-1, -vg-2, -vg-5 (owner, 2026-11-16: the 
 
 **Waiting for room** (the backlog keeps 200 B free):
 - lo-8: F61's "(decisions.md G71)" → "(archive/decisions-2026-10.md G71)" (+40 B).
+- Flaky (Opus pass 216; three FLAKE lines each since the census, A129): store.spec.ts "the row bar's Store ▶ opens it for the picked row; Esc leaves value ▶ on the line" (runs 1106, 1301, 1351); linetouch.spec.ts "a tap puts the caret at the touched term, on a scrolled line too" (runs 1203, 1211, 1359). For backlog "Flaky".
 
 ## 4. To verify
 
