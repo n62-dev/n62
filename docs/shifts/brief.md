@@ -65,66 +65,47 @@ With the lanes, start both from the phase-1 worktree: `cd .claude/worktrees/phas
 ### The lanes on the Tab One (owner, 2026-11-07)
 `ANDROID_SERIAL=HA24BZ2Y` for both lanes, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
-### Lane A queue (ron's UI, with rows from lane B)
-The order (owner, 2026-11-12): what changes how the calculator is used first, then new features, the cleanups last; the rows that wait on lane B come last, after their After is due there, as a second WAITS with no merge is SKIPPED. A package whose file says day runs here by rule 10. Still open from the owner's answers: R314 before the freeze; R339, R337, R338, R340 before the cleanups; the splits last (2026-11-14; kept in on 2026-11-16). The night review of 2026-11-16 (owner): R361 and R362 after R349; R363 to R366 are its fix rows for the stop. R337 first (owner, 2026-11-16: n62-next's G393 waits on it). The layout chain first (owner, 2026-11-17, to feel it on the Fairphone soon): R700, R720 and R703 at lane A's head, R702 at lane B's; the bar packages follow. T4's use rows (owner, 2026-11-16) after R362: R582 first, then R575, G576, R585, R576.
+### The queue (one lane, from the stop of Tue 11-17; owner, 2026-11-17)
+One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--lane` (rule 12's form), from the phase-1 worktree. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. Steps 870 to 873 are the pipeline rows of 2026-11-17 (their package files come with their own commit). After R720 (step 876) the two closing passes' FIX lines run, each as its FIX command (rule 5), before R740. After R744 the owner tags `v0.1.0-beta.1`; the release candidate is Mon 11-23, the tag Tue 11-24. Workers run on Sonnet but R722, R724 and R723 (owner, 2026-11-17); `--audit-model auto` as always.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 865 | [R700](packages/R700.md) Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381) | ron, Opus | `p1/ron-backlayers` | – |
-| 867 | [R720](packages/R720.md) Home and CAS ☰ of seven rows | ron, Opus | `p1/ron-homemenu` | R700, R702 |
-| 868 | [R703](packages/R703.md) the keypad, the status line and Mode fit at font scale 1.5 and 2.0 (F383) | ron, Opus | `p1/ron-textzoom` | R700 |
-| 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
-| 858 | [R576](packages/R576.md) Shift + Enter after a typed line (F353) | ron, Opus | `p1/ron-approxline` | – |
-| 864 | [R376](packages/R376.md) a number right after °, ′, % or ! is refused, naming the missing mark (G2 row 76) | ron, Opus | `p1/ron-markthen` | – |
-| 852 | [G551](packages/G551.md) bitand, bitor, bitxor of a small negative and a big integer (F302) | gorge, Opus | `p1/gorge-bitsigned` | – |
-| 853 | [G554](packages/G554.md) exp of a float matrix, never the identity (F305) | gorge, Opus | `p1/gorge-matexpfloat` | – |
-| 782 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
-| 807 | [R315](packages/R315.md) the unit view reads a stored name with a unit | ron, Opus | `p1/ron-nameslot` | G371 |
-| 818 | [R339](packages/R339.md) a kept line is on the field before the queued keys, under load too (R255f2's flake) | ron, Opus | `p1/ron-keptfirst` | – |
-| 820 | [R338](packages/R338.md) a stored history's first rows render 15 times again (F236) | ron, Opus | `p1/ron-firstrenders` | – |
-| 821 | [R340](packages/R340.md) a dead key says so to a screen reader (F238) | ron, Opus | `p1/ron-deadaria` | – |
-| 783 | [R316](packages/R316.md) split `parse.ts` under 800 lines | ron, Opus | `p1/ron-splitparse` | – |
-| 784 | [R317](packages/R317.md) split `App.svelte` under 800 lines | ron, Opus | `p1/ron-splitapp` | – |
-| 805 | [R267](packages/R267.md) dead exports and copies in `app/src` | ron, Opus | `p1/ron-deadexports` | – |
-| 806 | [R268](packages/R268.md) unread theme tokens, finished probes, stale comments | ron, Opus | `p1/ron-tokensprobes` | – |
-| 787 | [G372](packages/G372.md) split `homeEval.ts` under 800 lines | gorge, Opus | `p1/gorge-splithomeeval` | – |
-| 788 | [G373](packages/G373.md) split `api.cc` under 800 lines | gorge, Opus | `p1/gorge-splitapi` | – |
-| 789 | [G374](packages/G374.md) split `export.mjs` under 800 lines | gorge, Opus | `p1/gorge-splitexport` | – |
-| 810 | [G365](packages/G365.md) the Function app reads a cell's kind from the worker, not Giac's print | gorge, Opus | `p1/gorge-cellkind` | – |
-| 811 | [G315](packages/G315.md) the one import cycle goes, and the Calc port speaks its own errors | gorge, Opus | `p1/gorge-namesmodule` | – |
-| 812 | [G314](packages/G314.md) EngineHost's definitions replay and casRun in modules of their own | gorge, Opus | `p1/gorge-hostsplit` | – |
-| 837 | [R363](packages/R363.md) the start's sync never silently replaces rows the other device has not seen | ron, Opus | `p1/ron-syncdescends` | – |
-| 839 | [R364](packages/R364.md) the sync writes what the chosen folder lacks, and names a backup it cannot read | ron, Opus | `p1/ron-syncfolderfiles` | R363 |
-| 840 | [R365](packages/R365.md) a typed ± is read once: the unit view and the sheet's labels | ron, Opus | `p1/ron-pmonereader` | – |
-| 841 | [R366](packages/R366.md) a unit row pasted into an app's line is refused at once | ron, Opus | `p1/ron-apppaste` | – |
+| 870 | A258 a rerun after a usage limit skips the worker that already finished | annabell, Sonnet, audit Opus | `p1/annabell-limitresume` | – |
+| 871 | A259 every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | A258 |
+| 872 | A260 an Opus pass after every six packages | annabell, Sonnet, audit Opus | `p1/annabell-passsix` | A259 |
+| 873 | S55 room in the four budgeted docs | sandra, Sonnet | `p1/sandra-docsroom` | A260 |
+| 874 | [R700](packages/R700.md) Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381), if not merged by the stop | ron, Sonnet | `p1/ron-backlayers` | – |
+| 875 | [R702](packages/R702.md) Store ▶ with nothing to store is a dead press (F382), if not merged by the stop | ron, Sonnet | `p1/ron-storeempty` | – |
+| 876 | [R720](packages/R720.md) Home and CAS ☰ of seven rows, if not merged by the stop | ron, Sonnet | `p1/ron-homemenu` | R700, R702 |
+| 877 | [R740](packages/R740.md) Store ▶ on a folded pick keeps the keys down; New name… brings them | ron, Sonnet | `p1/ron-foldstore` | – |
+| 878 | [R722](packages/R722.md) the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
+| 879 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
+| 880 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
+| 881 | [R725](packages/R725.md) the Chars sheet on Shift + Vars | ron, Sonnet | `p1/ron-charssheet` | R723 |
+| 882 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
+| 883 | [R727](packages/R727.md) Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
+| 884 | [R743](packages/R743.md) a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
+| 885 | [R744](packages/R744.md) the layout lock reads only release tags (before the beta tag) | ron, Sonnet | `p1/ron-lockprerelease` | – |
 
-### Lane B queue (the release, then the engine)
-The order (owner, 2026-11-12): what a key or a result shows (R192 to G224); then the bugs (G340 to G309: wrong numbers first, then this week's extreme night); then S52, for the start chunk's room, and new features in the must-have list's order, with S50 and the sync chain to G219 early because lane A's last rows wait on them (2026-11-13). A package whose file says day runs here by rule 10, the device ones on the Tab One. The night review's queue goes on in [its note](../archive/night-review-2026-11-14.md) section 2. Its answers (owner, 2026-11-14): G369 and G370 after the lane's features, before the freeze; the splits last. A66's device check is a backlog line. From 2026-11-15 evening (the queue holds everything): G274 runs in stream C, beside G270 to G272, for R328; G371 before the splits; G365, G315 and G314 after them, as they touch the split files. Later that evening: G302 (RPN) after the formula sets (G275, G276), where R251 is due; G381, G382 and A73f2 (the Tab One) before the splits. The night review of 2026-11-16 (owner): G398 then G399 at the head, before the freeze; G400 to A162 are its fix rows for the stop; G403 to G405 its extreme night.
+#### v0.1.1, after the tag (owner, 2026-11-17)
+**Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R314, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 866 | [R702](packages/R702.md) Store ▶ with nothing to store is a dead press (F382) | ron, Opus | `p1/ron-storeempty` | – |
-| 862 | [G617](packages/G617.md) an alternating Σ from a start other than 1 keeps its sign (F431) | gorge, Opus | `p1/gorge-altsumstart` | – |
-| 863 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a point is their value (F434) | gorge, Opus | `p1/gorge-hyplimit` | – |
-| 833 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
-| 834 | [G399](packages/G399.md) `arg` of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
-| 850 | [G553](packages/G553.md) floor and ceil decide at the working precision (F304) | gorge, Opus | `p1/gorge-floorepsilon` | – |
-| 851 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so (F301) | gorge, Opus | `p1/gorge-sigmalost` | – |
-| 828 | [G387](packages/G387.md) the formula result: letters with units and no values, behind a request flag | gorge, Opus | `p1/gorge-formularesult` | G371, G390 |
-| 826 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
-| 822 | [G381](packages/G381.md) a stored float list reads back as a list (F208) | gorge, Opus | `p1/gorge-storedlist` | – |
-| 823 | [G382](packages/G382.md) a decimal inside a string is never rounded (F206) | gorge, Opus | `p1/gorge-stringdigits` | – |
-| 824 | [A73f2](packages/A73f2.md) where a CAS-last cold start spends its time (the Tab One) | annabell, Opus | `p1/annabell-casstart2` | – |
-| 838 | [G400](packages/G400.md) Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
-| 842 | [G401](packages/G401.md) Find knows the engineers' words for functions it has, fits included | gorge, Opus | `p1/gorge-findwords` | – |
-| 843 | [G402](packages/G402.md) Find in a unit slot reads a compound unit as the slot does | gorge, Opus | `p1/gorge-findcompound` | G401 |
-| 844 | [A161](packages/A161.md) `size-check.ts` keeps the rule and the newest raise | annabell, Opus | `p1/annabell-pinlog` | R362 |
-| 845 | [A162](packages/A162.md) `build-wasm.sh` names a stock MPFI build apart | annabell, Opus | `p1/annabell-stockvariant` | – |
-| 846 | [G403](packages/G403.md) a tiny constant reached without an integer literal raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
-| 847 | [G404](packages/G404.md) G358's climb on every path; a value past its reach is never called an overflow | gorge, Opus | `p1/gorge-climball` | – |
-| 848 | [G405](packages/G405.md) solve keeps two close real roots; a count of an unchecked list is no `=` | gorge, Opus | `p1/gorge-closeroots` | – |
+| 886 | [R703](packages/R703.md) the keypad, the bar and Mode fit at font scale 1.5 and 2.0 (F383), if not merged by the stop | ron, Sonnet | `p1/ron-textzoom` | R700, R722 |
+| 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Sonnet | `p1/ron-emptyuserkey` | – |
+| 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Sonnet | `p1/ron-markthen` | – |
+| 889 | [R741](packages/R741.md) a tap anywhere on a history row picks it | ron, Sonnet | `p1/ron-rowtap` | R743 |
+| 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Sonnet | `p1/ron-zebra` | R741, R743 |
+| 891 | [R728](packages/R728.md) the keys say what they do (CAS letters, Alpha colours, docs/06's differences) | ron, Sonnet | `p1/ron-keyssay` | R723, R726 |
+| 892 | [R729](packages/R729.md) the key legends: armed a ring, locked a fill | ron, Sonnet | `p1/ron-keylegends` | R723, R726, R728 |
+| 893 | [R701](packages/R701.md) the folder plugin (F380) | annabell, Sonnet | `p1/annabell-folderproxy` | – |
+| 894 | [R710](packages/R710.md) Plot draws its axes (F385) | ron, Sonnet | `p1/ron-plotaxes` | – |
+| 895 | [R709](packages/R709.md) every control has a spoken name (F384) | ron, Sonnet | `p1/ron-spokennames` | – |
+| 896 | [A256](packages/A256.md) a sync run is audited by its conflict resolutions | annabell, Sonnet | `p1/annabell-syncaudit` | – |
+| 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). While Ultra lasts (owner, 2026-11-16, to the stop) every lane row runs on Opus, and a second factory, the clone `../n62-next` with its own `.coord` and `.tasks` (merge queue, locks, run counter), runs this paragraph's after-tag rows G389 to R351 and R367 to G407 in two lanes of its own, from its own brief, with no device; its phase-1 takes this phase-1 in every two hours and merges back once after the tag, which ticks those rows here. No 05:00 close (owner, 2026-11-15): `.tasks/keep-lanes/keep-lanes3.sh` restarts each lane without `--until` until Tue 11-17 16:46 (owner, 2026-11-16 13:15), then stops both and runs each lane's closing (`--max-steps 2`). A lane whose queue ran out (SHIFT DONE) stays off until a session adds rows and touches `.tasks/keep-lanes/restart-<lane>`. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). From the stop: one lane, in the order of [release-0.1.0.md](../release-0.1.0.md)'s freeze row (owner, 2026-11-17: before the tag only what the layout lock pins, then R744 and the beta tag, not before; the release candidate Mon 11-23, the tag Tue 11-24; the rest is v0.1.1); by day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). While Ultra lasts (owner, 2026-11-16, to the stop) every lane row runs on Opus, and a second factory, the clone `../n62-next` with its own `.coord` and `.tasks` (merge queue, locks, run counter), runs this paragraph's after-tag rows G389 to R351 and R367 to G407 in two lanes of its own, from its own brief, with no device; its phase-1 takes this phase-1 in every two hours and merges back once after the tag, which ticks those rows here. No 05:00 close (owner, 2026-11-15): `.tasks/keep-lanes/keep-lanes3.sh` restarts each lane without `--until` until Tue 11-17 16:46 (owner, 2026-11-16 13:15), then stops both and runs each lane's closing (`--max-steps 2`). A lane whose queue ran out (SHIFT DONE) stays off until a session adds rows and touches `.tasks/keep-lanes/restart-<lane>`. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). From the stop: one lane, "The queue" above, in the order of [release-0.1.0.md](../release-0.1.0.md)'s freeze row (owner, 2026-11-17: before the tag only what the layout lock pins, then R744 and the beta tag, not before; the release candidate Mon 11-23, the tag Tue 11-24; the rest is v0.1.1); by day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
