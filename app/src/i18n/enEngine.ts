@@ -2,11 +2,11 @@
 // G39: the messages the engine side gives with a refusal (engine/converge.ts; G78 engine/novalue.ts; G58 the time-out, engine/homeEval.ts; G223 engine/stats.ts) and a why-line (format.ts PrecisionWhy).
 // A table of its own, so the engine worker carries these few lines and not the app's whole table; en.ts includes it.
 // English only so far.
+import { SUM_UNCHECKED } from "./sumWords.ts";
 /** The app's part (en.ts spreads it), in the start chunk. */
 export const enEngineShown = {
   "error.integralDiverges": "The integral does not converge",
   "error.seriesDiverges": "The series does not converge",
-  "error.sumUnchecked": "Giac's closed form of this sum does not match its terms",
   "error.noLimit": "No limit",
   "error.timeout": "Stopped: it took too long",
   "error.divisionByZero": "Division by zero",
@@ -25,12 +25,13 @@ export const enEngineShown = {
   "why.pairDiffers": "The exact and numeric answers differ",
 } as const;
 
-/** The worker's table: the app's part and the refusals of (G223) linreg and stats1, (G361) linterp (engine/stats.ts) and (G229) the word
- *  operations (engine/wordOps.ts). Those are not in en.ts, so the start chunk does not carry them (size-check.ts
- *  START_PIN_GZIP): their row shows the words the worker sends (state/session.svelte.ts errorText falls back to them,
- *  i18n/index.ts hasMessage). */
+/** The worker's table: the app's part and the refusals of (G223) linreg and stats1, (G361) linterp (engine/stats.ts), (G229)
+ *  the word operations (engine/wordOps.ts) and (G618) a sum its terms refute (engine/sumcheck.ts). Those are not in en.ts,
+ *  so the start chunk does not carry them (size-check.ts START_PIN_GZIP): their row shows the words the worker sends
+ *  (state/session.svelte.ts errorText falls back to them, i18n/index.ts hasMessage). */
 export const enEngine = {
   ...enEngineShown,
+  "error.sumUnchecked": SUM_UNCHECKED,
   "error.notData": "Needs lists of real numbers",
   "error.listsDiffer": "The lists have different lengths",
   "error.emptyList": "The list is empty",
