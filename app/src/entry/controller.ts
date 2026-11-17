@@ -255,7 +255,7 @@ export class EntryController {
       return;
     }
     const before = this.mf.value;
-    this.onField?.(this.mf, a, this.grown);
+    this.onField?.(this.mf, a, this.grown, this.decimalComma);
     if (this.mf.value !== before) this.recalledIn = null; // (a cursor key leaves the recall as it was)
   }
 
