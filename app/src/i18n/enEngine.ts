@@ -6,6 +6,7 @@
 export const enEngineShown = {
   "error.integralDiverges": "The integral does not converge",
   "error.seriesDiverges": "The series does not converge",
+  "error.sumUnchecked": "Giac's closed form of this sum does not match its terms",
   "error.noLimit": "No limit",
   "error.timeout": "Stopped: it took too long",
   "error.divisionByZero": "Division by zero",
