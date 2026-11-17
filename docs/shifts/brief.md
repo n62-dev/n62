@@ -13,7 +13,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 - Workers run on Sonnet. `--audit-model auto` still gives Opus to gorge packages and to diffs in the engine, input or units. Every package keeps its own audit.
 - An Opus pass runs after every six packages (A260).
 - No hourly monitor sessions, and no `/night-review` until a Pro week is measured.
-- A258, A259, A260 and S55 head the lane.
+- A258, A259 and A260 head the lane.
 - A256 and A257 wait until after the tag.
 
 **To build before 24/7** (checked 2026-11-08). Code: a henri call that fails at a usage limit counts as a bad reply and two end the lane; the six waits add up over a whole `night.sh` run; neither has met a real limit since `night.sh` began. Flags today: `--limit-wait 18000` (5 h a wait), `--max-steps 100`, `--until`; a shift a day is the daily stop (rules section 4a). The stop covers planned reboots and Windows updates and writes the queue's rows; a lane lost to an unplanned reboot restarts at the next stop.
@@ -70,7 +70,6 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 870 | [S55](packages/S55.md) room in the four budgeted docs | sandra, Sonnet | `p1/sandra-docsroom` | – |
 | 875 | R722 the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
 | 876 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
 | 877 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
