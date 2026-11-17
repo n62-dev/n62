@@ -89,7 +89,8 @@
       board = b;
       b.suspendUpdate();
       for (const i of app.active) {
-        if (!app.compiled[i]?.fn && !app.compiled[i]?.uses) continue; // (R361: a slot that reads a stored name gets its evaluator from readStored)
+        // (R361f1: every slot on has a curve, NaN until it can draw: which stored names a slot reads is the engine's
+        // answer, so one may get its evaluator from readStored after the board is made)
         // read through the app, so a recompile for another angle mode is drawn at once (R64a)
         const c = b.create("functiongraph", [(x: number): number => app.compiled[i]?.fn?.(x) ?? NaN], {
           strokeColor: (): string => curveColors()[i] ?? "",
