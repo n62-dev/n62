@@ -13,6 +13,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 ## Decided proposals
 
 ### Pipeline and process
+- **Decided by Opus passes, rule in code or docs (A64, G125, S2, G133f1, G138, R261, G557, G78):** the eight entries as they stood: [archive/decisions-2026-11.md](archive/decisions-2026-11.md).
 - **No freeze until Tue 11-17 (owner, 2026-11-12); the beta after the layout rows and R744 merge, the release candidate Mon 11-23, the tag Tue 11-24, no history rewrite, only what the layout lock pins before the tag and the rest in v0.1.1 (owner, 2026-11-17):** to the freeze the order is use, critical bugs, features (brief section 0); the days, the bar and what v0.1.0 keeps for good (point 7): [release-0.1.0.md](release-0.1.0.md).
 - **Owner answers of the night and architecture reviews:** 11-09/10 [archive](archive/night-review-2026-11-09.md) section 6; 11-10 [arch](research/arch-review-2026-11-10.md) section 3; 11-14 [archive](archive/night-review-2026-11-14.md) section 6; 11-16 [note](research/night-review-2026-11-16.md) section 5 (Function and Solve open after the tag; `5 % 3` kept). Each package rewrites its line here when it lands. Would change if: the G2 or an outside round reads one otherwise.
 - **Owner answers of 2026-11-15 (Needs the user):** R324, R325, R327 to R329 built; still binding: the unit view's raise (entries 42 kB, pin 78.55 kB; the first unit result < 1 s on the Tab One), G164's sources "to verify" at v0.1.0, S45 (units in Solve, [the note](research/r-solveunits.md)) and R330 after the tag, S50's G2 column from the owner's G2 (`source: device`), Shift + a b/c and Fmt reserved. Archived, "Opus pass 200".
@@ -20,11 +21,9 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **F-Droid Reproducible Builds (owner, 2026-11-15):** unticked at v0.1.0 (A158). Archived, "Opus pass 200". Would change if: a deterministic engine build exists before the F-Droid request (the box cannot be ticked later).
 - **P25 (owner, 2026-11-08): auto or hands-on, around the clock, on Max.** Rule and numbers: brief section 0; the daily stop (05:00, 07:00) and the day's budget: rules section 4a. Would change if: Max cannot carry the queue.
 - **Owner answers of 2026-10-25 and 2026-11-02 to 11-08 (pipeline), built:** A83, A88, G167, A67, A71, A39; a 1507 ms CAS-last cold start does not hold v0.1.0. Archived, "Opus pass 184".
-- **A64: a reply that says not done ends the run before the checks (Opus pass 93),** only as the done field (A64f1). Archived, "Opus pass 97". Would change if: a finished package ends NOT MERGED on it.
 - **The name N62 (owner, 2026-11-05):** id `dev.n62.calc`, never changed after the v0.1.0 tag; the web `https://n62.dev/` from a release tag (A45); repo `n62-dev/n62`; spelling: docs/rules-core.md. Archived, "Opus pass 96". Would change if: TMview finds N62 in class 9; the domain lapses.
 - **The declutter (owner, 2026-11-05 evening): history lives in git.** Rule: rules section 10. Archived, "Opus pass 106". Would change if: a deleted file is needed back twice a month.
 - **Owner answers of 2026-10-22 to 2026-10-31 and Opus passes 55–78:** built; the list of packages: [archive](archive/decisions-2026-10.md), "Shortened 2026-11-07 (Opus pass 93)".
-- **G125 (Opus pass 5): a bug an earlier merge already fixed** keeps its tests as regression tests that fail on the stock build, and merges review-only. Rule: brief section 8a (A71). Would change if: a test passes on stock too.
 - **P23 (2026-10-21, ended 2026-10-27, owner): the core freeze's net stays;** the list changes only with the owner. Rule: brief section 0, `tests/core/README.md`. Archived.
 - **The docs budgets stay (owner, 2026-10-20):** brief 40 kB (2026-11-10), backlog 20, decisions 40; when decisions.md has under 1 kB left, the Opus pass moves the full texts of built entries to the archive and keeps a short line.
   - **S55's targets (Opus pass 217):** brief, decisions and docs/04 at 90 % of their budgets; the backlog at 19 kB, as its open lines stay word for word (S55 rule 1) and a package that reruns the no-package bug lines costs more on Pro than the kilobyte it would free. Would change if: the backlog fails a package's docs check twice in a week.
@@ -52,7 +51,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS). Would change if: under 14 folds or 10 actions while folded in 14 days. Archived.
   - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).
 - **R21 (2026-10-14): pick sheets rise over the keypad's rows 3–9, Settings too;** 36 px rows, 44 px cells, then scroll. Archived.
-- **S2: one menu system (2026-10-13).** Rule: [archive/r8-menus.md](archive/r8-menus.md) sections 5–6 (M1–M7). Archived, "Opus pass 96". Would change if: a G2 answer contradicts a rule.
 - **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke. Archived.
 - **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](06-keypad-vs-g2.md). Archived, "Opus pass 96".
 - **P11 (2026-10-13): back to the G2's flow; milestone 4a before the rest of milestone 4.** Departures sit on top of the G2 way, never instead of it (docs/03 rules 5–13). Archived.
@@ -65,11 +63,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Home/CAS ☰ of seven rows (owner, 2026-11-17, R720).** Why: "Why do we still have Insert, Recall, Copy in the menu?" Rows: 1 Store ▶, 2 Copy › (1 Full value, 2 As shown, 3 Exact, 4 LaTeX, 5 Python), 3 Delete, 4 Paste, 5 Share session, 6 Clear history, 7 Export ›; 8, 9 and 0 are blank. Insert and Recall went (Enter and ◀ on a pick do their jobs; ◀ with text on the line moves the caret). Rule: docs/05 3.3, 3.5. Would change if: keys-only Copy proves frequent (then Ctrl+C on a pick).
 
 ### Precision, engine and parser
-- **G557 (Opus pass 213): patch 0045's dropped square root is a fix, not a plan change:** `normal(sqrt(2^(1/3)+3^(1/3)))` and two more show `= 1` (right 1.64382803851; mpmath), an exact wrong answer of our own patch, so G340f1 fixes 0045 at its cause before features (brief 0's order; a fix row after the freeze). Would change if: the cause is past a day of work (then Needs the user). Done: G340f1 (run 1355), cause under a day.
 - **G141 (Opus pass 68): a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too (`(1-cos(10^-600))*10^1200+1` showed ≈ 1, right 1.5); G126's and G153's rows turn ⚠ until S20.
-- **G138 (Opus pass 69): a nightly known row names one tree, not a shape:** a shape would hide a new cause that shrinks to it (F175: ∛ of F151's leaf); G141 removes F151's families. Would change if: one cause fills two weekly reports.
-- **G133f1 (Opus pass 24):** Home's "Underflow" for an exact 0 it cannot prove (`re(asin(i/10))`) is a bug line, F139 (wrong reason, no wrong number), not a plan change.
-- **G78 (Opus pass 45; F50, F51):** `√(asinh(asin 3.7))` stays refused at Home's budget; a series or limit at ±∞ keeps Giac's infinity. Archived, "Opus pass 106". Would change if: the owner wants these refused or computed.
 - **Built, archived as they stood ("2026-11-12, evening"):** G78f1, G68, G84, G70, G71, G67, G65; A20 (G82); A12 and A62 (G83); A16 after G53; F50, F51 (G78); G33 and R56; A4a point 1 (G52); G20 (G28).
 - **G58, G59 (Opus pass 45):** a Giac call deaf to its interrupt gets a `control_c()` patch at its cause (P19); when the exact and numeric answers disagree Home shows ⚠. Archived, "Opus pass 96".
 - **S13, G57 (owner, 2026-10-20; built by G65): names from Giac's state;** an undecided run-once store is refused as `a:=` is. Archived, "Opus pass 106". Would change if: A16's RAD Enter p95 > 150 ms.
@@ -119,7 +113,6 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
 - **Store ▶ on a picked row (R280):** every key holding ▶ stores as the row bar's Store ▶; no result: the double haptic. Archived, "Opus pass 189". Would change if: the G2 differs (store-design.md 1).
-- **R261 (Opus pass 135):** Symb's ☰ lists Clear, then R83's pointer row; Esc on Solve's Num value line puts the value back; a new value takes Clear or ⌫ first (docs/05 3.5). Would change if: the owner wants type-to-replace.
 - **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms, a swipe goes at 40 % of the row. Archived, "Opus pass 181".
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172".
 - **R71 (Opus pass 30):** ± on Shift + `,`, for the units key; rule: docs/06 section 2.

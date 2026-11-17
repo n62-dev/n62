@@ -1,25 +1,19 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 # Status and backlog
 
-The one place for "where are we and what's left", one or two lines per open item. The architecture is [04-architecture.md](04-architecture.md) (it supersedes [02-architecture-plan.md](02-architecture-plan.md) where they differ; 02 section 12 keeps the milestone history); decisions are in [decisions.md](decisions.md); the order of the packages is [shifts/brief.md](shifts/brief.md) section 0, and each package's cause, steps and tests are in its file in [shifts/packages/](shifts/packages/). Done items leave this file (git history keeps them).
+Where we are and what is left, one or two lines per open item. Architecture: [04-architecture.md](04-architecture.md); decisions: [decisions.md](decisions.md); package order: [shifts/brief.md](shifts/brief.md) section 0, each package's cause, steps and tests in [shifts/packages/](shifts/packages/). Done items leave this file (the [archive](archive/backlog-2026-11.md) and git keep them).
 
 ## Where we are
 
 | Stage | State |
 |---|---|
-| Phase 0 spike; MVP milestones 1 (Home, CAS), 2 (Function, Solve), 3 (Python, removed by P11) | **Done** 2026-10-11 |
-| **The core freeze (P23)** | **Ended 2026-10-27** (owner). Its net stays: [tests/core/](../tests/core/README.md) runs on every merge and on the night's device; a red case is a bug to fix. |
-| Milestone 4a: feel (P11) | Built (the entry work, sheets, flicks, Settings, history-row actions, the visual pass, themes, results mode; the list: git). Waiting: the trust features |
-| Milestone 4: Find and trust | Engine side done (marks, 30 digits, chips, copy, defs, the Find index, the size test, A4a); Find's UI: R4a, R4b built; Find per key on the Tab One: p95 14.1 ms ≤ 16 (A74), E3 met; the gate is not complete |
-| Milestone 5: Units | Built: the evaluator on Giac (P15), the pad, the entry and Find in a slot (R24a–R24d), the result's alternatives and view (R60–R63), ± (R71), a result chip as σ (R271), menu Constants and Tools (R92) |
-| Milestone 6: Structure | Built: R185, R187–R194, R197 |
-| MVP release | v0.1.0, the APK and the website from one tag, after the 11-17 freeze, at the bar: [release-0.1.0.md](release-0.1.0.md) |
+| Milestones 1–3 (2026-10-11), 4a, 4, 5, 6 | Built (the lists, and the core freeze P23: [archive](archive/backlog-2026-11.md)). Open: the trust features' gate (Find per key on the Tab One: p95 14.1 ms ≤ 16, A74, E3 met), the unit gate (Next, below) |
 
 Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, the release path).
 
 ## Needs the user
 0. **The core list (P23):** cut or extend [tests/core/core.yaml](../tests/core/core.yaml); do the [hand check](../tests/core/MORNING.md) before a release tag (P25; about 10 minutes, 15 cases; tell the next session what failed); keep the automatic runs' device plugged in, unlocked and on the charger (A32, A33). The one-time checks: [ONE-TIME.md](../tests/core/ONE-TIME.md).
-1. **Your outreach steps** (decisions.md P18–P22): none open; G77's mirror is up (2026-11-16).
+1. Your outreach steps: none open ([archive](archive/backlog-2026-11.md)).
 2. **G2 questions:** none open in `tests/golden/G2-CHECKLIST.md` (2026-11-16; the G2 answers keys and flow only, decisions.md P5); spot checks of keys and flow (SPOT-CHECK.md items 1–3; maths follows Giac, P5).
 3. **From daily use:** the key sequence that left ⌫ stuck "at log" (F39); feel R112 (one pulse per touch, merged) on the next build; more points into [feedback.md](feedback.md).
 4. **The new application id** (`dev.n62.calc`, A77): N62 installs as a new app beside the old app Pascaline; on a phone of your own copy what you need, then uninstall Pascaline (the test devices hold only N62, A77). Android's own backup is off (A23).
@@ -65,8 +59,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F462 (G576's report).** Home `sin(3^(1e6))` ≈ -0.920699462879 (4.3 s), `sin(2^(1e6))` ≈ -0.9 (right -0.0887753640826, 0.650909333380; mpmath): a huge float argument confirms digits it cannot hold. Family 4.
 - **F309, no package (T2; owner: after the tag).** Home σ is first order only: a chip at a stationary point loses σ, near a pole it is too small, never ⚠.
 - **F310, F316, F317, F319, no package (T2, low).** linterp refuses an x inside the table when the end check needs > 40 digits; Ans and the last chip are two σ inputs; `floor(evalf(pi,3)*1000)` = 3139 with `=`; weights summing to 0 give `infinity` unmarked.
-- **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584, F365 R585.
-- **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G524 (F403, DEG; merged), R601 (merged), G600–G608, R600; T6b: G613–G624 (G618 merged); unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
+- **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584.
+- **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G600–G608, R600; T6b: G613–G624; unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
 - **F357, no package (T4, S14).** Function Symb: Enter keeps the line on F1 (the owner's G2 check).
 
 ### Background stream (extreme inputs; at night, by reach)
@@ -98,10 +92,10 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 
 ### Next (packages and order: brief section 0)
 - **Units (milestone 5; docs/04 section 4):** the first unit result on the Tab One and the Fairphone 6 (< 1 s). Gate: tasks 1–4 and 10; a unit in ≤ 4 presses at the median; `units.yaml`; the owner's hand timing.
-- **Milestone 6, Structure:** built: matrices (R185, R187–R190), number bases (R191–R194), Help (R197); not packaged: EN7 everyday functions, EN4 one element of a list or matrix (`L(2)` from the keys indexes, R630).
+- **Milestone 6, Structure:** built (the archive); not packaged: EN7 everyday functions, EN4 one element of a list or matrix (`L(2)` from the keys indexes, R630).
 
 ### Without a package yet
-- **R41's device check** (the owner's hand; A139 left it, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys; the status line at font scale 2.0 (DOM names: A139's report); R53's slice under TalkBack (R283).
+- **R41's device check** (the owner's hand; A139 left it, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys; the status line at font scale 2.0 (DOM names: A139's report); R53's slice under TalkBack (R283). R720's history row: TalkBack offers no extra actions on it (the Tab One).
 - **R58b** Alpha letters are always names in CAS (G2 item 62 can reverse it).
 - **G9. Number formats against the G2** (item 15): decide in the settings and help pass.
 - **R183f1's gaps (pass 211):** a name typed with no folder chosen is kept; a folder chosen later that holds another device of that name is written over (sync/device.ts deviceName returns a kept name unchecked): the first write in a folder needs to tell this device's own files from another's (a record of what it wrote, sync/record.ts). A refused rename to a prefix of this device's own name says "Another device" (syncRows.svelte.ts rename1).
