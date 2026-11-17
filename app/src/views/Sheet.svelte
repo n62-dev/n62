@@ -20,12 +20,12 @@
   import { builtRows, keyedById, plainRow, rowKey, sameRows } from "./sheetWindow.ts";
 
   /** R145: the ⚙ in a ☰ sheet's title row (drawn, not the emoji glyph, which Android paints in colour). Here, not in
-   *  icons.ts: only this lazy chunk draws it, and icons.ts is in the start chunk (R145f1). */
+   *  icons.ts: only this lazy chunk draws it, and icons.ts rides with the first app's opening (R145f1, R362). */
   const GEAR =
     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="2.4"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4"/></svg>';
 
   /** R157f1: the home icon, the sheet's title icon and a row's glyph (the other icons are the views', in icons.ts). Here, not in
-   *  icons.ts: StatusLine draws the N62 mark now, and icons.ts is in the start chunk. The markup is the same as ICONS.home was. */
+   *  icons.ts: StatusLine draws the N62 mark now, and icons.ts rides with the first app's opening (R362). The markup is the same as ICONS.home was. */
   const HOME =
     '<svg viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 7.5 8 2.5l5.5 5M4 6.5v6h8v-6" stroke-linejoin="round"/></svg>';
   const icon = (id: IconId): string => (id === "home" ? HOME : ICONS[id]);

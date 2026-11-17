@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { readSources, startReach } from "./import-rules.ts";
 import { checkLazyParts, checkSizes, checkSplits, checkStartPin, INLINE_PIN_GZIP, inlineScripts, LAZY_PARTS, lazyFailures, START_PIN_GZIP, startFiles, UNIT_VIEW_PIN_RAW } from "./size-check.ts";
 
 const dirs: string[] = [];
@@ -330,5 +331,13 @@ describe("size-check", () => {
 
   it("holds the press counters and S58's five modules among the lazy parts (R320)", () => {
     for (const src of ["src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts"]) expect(LAZY_PARTS).toContain(src);
+  });
+
+  it("holds the shell's app-opening part and the view tabs' icons among the lazy parts, and no static import from main.ts reaches them (R362, S58 cuts 1 and 4)", () => {
+    const parts = ["src/apps/shellOpen.ts", "src/views/icons.ts"];
+    for (const src of parts) expect(LAZY_PARTS).toContain(src);
+    const reach = startReach(readSources(join(import.meta.dirname, "..")));
+    expect(reach.has("src/apps/shell.svelte.ts")).toBe(true); // the walk sees the start: the shell's start part stays
+    expect(parts.filter((src) => reach.has(src))).toEqual([]);
   });
 });

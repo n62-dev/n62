@@ -7,7 +7,6 @@
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
   import { updateOffer } from "../state/updateOffer.svelte.ts";
-  import { ICONS } from "./icons.ts";
 
   // R97: the status line, out of App.svelte. Props in, events out; no store of its own.
   let { session, shell, busy, cas, onpress, onmode }: {
@@ -77,7 +76,7 @@
     {#if shell.app !== null}
       <span class="seg" role="tablist" aria-label={t("status.views")}>
         {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}
-          <!-- the icons are our own markup (ICONS), never user text -->
+          <!-- the icons are our own markup (ICONS, views/icons.ts), never user text; they ride in the shell's app-opening chunk (R362), so a tab is drawn empty until it is in -->
           <button
             type="button"
             class="tab"
@@ -87,7 +86,7 @@
             aria-label={tab.name}
             title={tab.name}
             onclick={() => onpress(tab.key, "primary")}>
-            {@html ICONS[tab.view]}
+            {@html shell.code?.ICONS[tab.view] ?? ""}
           </button>
         {/each}
       </span>
