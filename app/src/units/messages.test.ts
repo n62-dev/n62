@@ -11,6 +11,10 @@ describe("unitErrorMessage, G319: Home's refusals", () => {
       expect(unitErrorMessage({ error: "refused", code })).toBe(enEngine[`error.${code}`]);
     }
   });
+  it("G618: words a sum its terms refute, a refusal the app's table does not hold (the start chunk's pin)", () => {
+    expect(unitErrorMessage({ error: "refused", code: "sumUnchecked" })).toBe(enEngine["error.sumUnchecked"]);
+    expect(enEngine["error.sumUnchecked"]).toBe("Giac's closed form of this sum does not match its terms");
+  });
 
   it("reads them from the app's table, not enEngine.ts (G319 fix 1: that import made enEngine a start chunk of its own, +0.14 kB gzip)", () => {
     const specs = importsOf(readFileSync(new URL("./messages.ts", import.meta.url), "utf8")).map((i) => i.spec);

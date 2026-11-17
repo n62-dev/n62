@@ -275,8 +275,8 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 62,240 B gzip (R362: the shell's app opening and the view tabs' icons load with the first app, measured 62,186 B, 62,879 B on phase-1; the earlier pins are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(62_240);
+  it("pins the start chunk at 62,300 B gzip (G618 fix round 1: phase-1 8f1c84df measures 62,244 B, the branch the same file; the earlier pins are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(62_300);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...

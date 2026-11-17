@@ -196,9 +196,28 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     ["limit(round(x),x,1.5)", "noLimit"],
     ["limit(sign(x),x,0.0)", "noLimit"],
     ["limit(atan(1/x),x,0)", "noLimit"],
+    // G618 (F432): Giac's closed form contradicts the terms (right: 11/18, 25/48, 4 − π/2 − 3 ln 2, derived)
+    ["sum(1/(k*(k+3)),k,1,inf)", "sumUnchecked"],
+    ["sum(1/(k*(k+4)),k,1,inf)", "sumUnchecked"],
+    ["sum(1/(k*(4*k+1)),k,1,inf)", "sumUnchecked"],
+    ["sum(1/(k^2+3*k),k,1,inf)", "sumUnchecked"],
+    ["sum(1/(n*(n+3)),n,1,inf)", "sumUnchecked"],
+    ["2*sum(1/(k*(k+4)),k,1,inf)+1", "sumUnchecked"],
   ])("Home and CAS refuse %s", (input, code) => {
     expect(home(input)).toMatchObject({ ok: false, error: code });
     expect(cas(input)).toMatchObject({ ok: false, error: code });
+  });
+
+  it("G618: Giac's closed form of a series that its terms contradict is refused, an infinity for a convergent one too", () => {
+    expect(refusalOf(giac, "sum(1/(k*(k+4)),k,1,inf)", "11/24", 12)).toBe("sumUnchecked");
+    expect(refusalOf(giac, "sum(1/(k*(4*k+1)),k,1,inf)", "-3*ln(2)+2", 12)).toBe("sumUnchecked");
+    expect(refusalOf(giac, "sum(1/(k*(k+3)),k,1,inf)", "infinity", 12)).toBe("sumUnchecked");
+    // the right values stand (25/48, 11/18 telescoping; derived)
+    expect(refusalOf(giac, "sum(1/(k*(k+4)),k,1,inf)", "25/48", 12)).toBeNull();
+    expect(refusalOf(giac, "sum(1/(k*(k+3)),k,1,inf)", "11/18", 12)).toBeNull();
+    expect(refusalOf(giac, "sum(1/(k*(4*k+1)),k,1,inf)", "4-pi/2-3*ln(2)", 12)).toBeNull();
+    // a divergent series keeps Giac's ∞
+    expect(refusalOf(giac, "sum(1/k,k,1,inf)", "+infinity", 12)).toBeNull();
   });
 
   it("refuses in DEG too: the poles of tan at 90°, 1/x", () => {
@@ -245,6 +264,12 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     ["int(1/sqrt(x),x,0,1)", "2"],
     ["int(sin(x)/x,x,0,inf)", "1.57079632679"],
     ["sum(1/k!,k,0,inf)", "2.71828182846"],
+    // G618 controls: the terms agree with Giac's closed form, or are not checked (a free name, 1/2^k is no rational term)
+    ["sum(1/(k*(k+1)),k,1,inf)", "1"],
+    ["sum(1/(k^2+1),k,0,inf)", "2.07667404747"],
+    ["sum(1/2^k,k,0,inf)", "2"],
+    ["sum(1/k,k,1,inf)", "+infinity"],
+    ["sum(x^k/k!,k,0,inf)", "exp(x)"],
   ])("keeps %s = %s", (input, shown) => {
     expect(home(input)).toMatchObject({ ok: true, display: shown });
   });

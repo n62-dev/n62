@@ -2,6 +2,7 @@
 // The message for a unit-view refusal (docs/04 4.3), from the i18n table. Plain TS.
 import { unitText } from "../i18n/enUnits.ts";
 import { t } from "../i18n/index.ts";
+import { SUM_UNCHECKED } from "../i18n/sumWords.ts";
 import { typedName } from "../render/home.ts";
 import { dimensionText } from "./dims.ts";
 import type { UncWhy, UnitError, UnitNote } from "./types.ts";
@@ -41,8 +42,9 @@ export function unitErrorMessage(e: UnitError): string {
     case "symbolic":
       return unitText("units.symbolic", { detail: e.detail });
     case "refused":
-      // Home's words (en.ts holds enEngine): the start chunk's table, so enEngine is no chunk of its own (G319 fix 1)
-      return t(`error.${e.code}`);
+      // Home's words (en.ts holds enEngine): the start chunk's table, so enEngine is no chunk of its own (G319 fix 1);
+      // G618's words are in no app table (the start chunk's pin), so they come from their own module
+      return e.code === "sumUnchecked" ? SUM_UNCHECKED : t(`error.${e.code}`);
     case "store":
       return unitText("units.store");
     case "own":
