@@ -189,14 +189,24 @@ export function solve1(
   /** SB1. f(pasx) failed the residual check, but is it only the rounding noise of evaluating f at workDigits?
    *  The noise is estimated as |f_W(x) − f_{W+20}(x)| (an expanded product of 25 factors loses ~15 digits to
    *  cancellation). A residual within NOISE_FACTOR times that is indistinguishable from 0 at this precision. A pole,
-   *  a jump or a wrong root has f_W = f_{W+20} (noise ~ 1e-30·|f|), so the residual stays far above the bound. */
+   *  a jump or a wrong root of an unscaled f has f_W = f_{W+20} (noise ~ 1e-30·|f|), so the residual stays far above
+   *  the bound. A pole of a scaled f (tan(x/1000), every trig function in DEG) does not: the rounding of x/1000 at W
+   *  digits is as large as the distance to the pole, so f_W and f_{W+20} differ by about f itself (G524). The growth
+   *  test catches it: at a root |f| grows on both sides (|f(x±δ)| ≈ |f'|·δ, far above the noise-level f(x)); at a pole
+   *  it falls (|f(x±δ)| ≈ 1/δ-sized, far below |f(x)| ≈ 1e28). δ is relative to x, so the test is scale-free. */
   const noiseLimited = (): boolean => {
     ev(`Digits:=${s.workDigits}`);
     const fW = num(ev(`evalf(subst(pasf,${v}=pasx))`));
     const w = evalWide();
     if (fW === undefined || w === undefined) return false;
     const noise = Math.abs(fW - w[0]);
-    return noise > 0 && Math.abs(fW) <= NOISE_FACTOR * noise;
+    if (!(noise > 0 && Math.abs(fW) <= NOISE_FACTOR * noise)) return false;
+    // Growth test at W+20 (evalWide left pasxh and pasvh there).
+    ev(`Digits:=${s.workDigits + 20}`);
+    ev(`pasdw:=evalf(max(abs(pasxh),10^(-300))*10^(-${Math.floor(s.workDigits / 2)}))`);
+    const grows = ev(`evalf(abs(subst(pasf,${v}=pasxh+pasdw)))>abs(pasvh[0]) and evalf(abs(subst(pasf,${v}=pasxh-pasdw)))>abs(pasvh[0])`) === "true";
+    ev(`Digits:=${s.workDigits}`);
+    return grows;
   };
 
   /** SB2. f is exactly 0 on a plateau around pasx (a multiple root: (x−1/3)^4 is 0 at 30 digits for |x−1/3| < 1e-8).

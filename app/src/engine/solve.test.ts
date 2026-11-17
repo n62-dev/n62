@@ -121,4 +121,30 @@ describe.skipIf(!giacAvailable())("Solve and analysis plumbing (real Giac)", () 
     expect(r).toMatchObject({ ok: false, error: "no-root" });
     expect(r.info).toMatch(/sign change/);
   });
+
+  // G524: a pole of a scaled tan passed SB1's noise test (the rounding of X/1000 at W digits is as large as the
+  // distance to the pole, so f_W and f_{W+20} differ by about f itself). Before G524 each gave the pole, ok, 28 digits.
+  // Now the pole is rejected and the search goes on, as for tan(X) (golden tan-pole).
+  it.each([
+    ["tan(X/1000)=0", "1400", "0"], // derived: tan(0) = 0; the pole 1000·π/2 = 1570.79632679 was shown
+    ["tan(X/100)=0", "140", "0"], // derived: tan(0) = 0; the pole 100·π/2 = 157.079632679 was shown
+    ["tan(1000*X)=0", "0.0014", "-0.0251327412287"], // oracle -8*mp.pi/1000 (solve.yaml g524-tan-mul); the pole π/400 was shown
+  ])("G524: the pole of a scaled tan is no root: %s from %s gives %s", (eq, guess, root) => {
+    const r = host.solve({ kind: "equations", equations: [eq], unknowns: ["X"], guesses: [guess] }, s);
+    expect(r.error).toBeUndefined();
+    expect(r.roots[0]!.result.display).toBe(root);
+  });
+
+  it("G524: a scaled function with poles and no root is refused, the info names the poles", () => {
+    // derived: 1/cos never reaches 0; before G524 the pole 1000·π/2 = 1570.79632679 was the root
+    const r = host.solve({ kind: "equations", equations: ["1/cos(X/1000)=0"], unknowns: ["X"], guesses: ["1400"] }, s);
+    expect(r).toMatchObject({ ok: false, error: "no-root" });
+    expect(r.info).toMatch(/sign change\(s\) without a root \(pole, jump or underflow\)/);
+  });
+
+  it("G524 control: a real root of the same scaled tan is still found", () => {
+    const r = host.solve({ kind: "equations", equations: ["tan(X/1000)=0"], unknowns: ["X"], guesses: ["3000"] }, s);
+    expect(r.error).toBeUndefined();
+    expect(r.roots[0]!.result.display).toBe("3141.59265359"); // oracle 1000*mp.pi: solve.yaml g524-tan-div-root
+  });
 });

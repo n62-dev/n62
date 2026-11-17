@@ -14,6 +14,9 @@ cases:
   - { id: "root-zero", kind: "root", f: "x^3-2*x", x0: "0.2", oracle: "[F(0), F(0)]", expect: ["0", "0"], source: "derived" }
   - { id: "root-outside-window", kind: "root", f: "x^3-2*x", x0: "1", lo: "0.5", hi: "1.2", expect: "no root found", source: "derived", note: "the roots are 0 and ±1.414, none in [0.5, 1.2]" }
   - { id: "root-pole-in-window", kind: "root", f: "tan(x)", x0: "1.4", lo: "1", hi: "2", expect: "no root found", source: "derived", note: "the only sign change in the window is the pole at pi/2" }
+  - { id: "g524-root-tan-scaled-window", kind: "root", f: "tan(x/1000)", x0: "1400", lo: "1000", hi: "2000", expect: "no root found", source: "derived", note: "G524: the only sign change in the window is the pole of a scaled tan, 1000*pi/2. Before G524: 1570.79632679, y 0" }
+  - { id: "g524-deg-root-tan", kind: "root", f: "tan(x)", x0: "80", settings: { angle: "deg" }, oracle: "[F(0), F(0)]", expect: ["0", "0"], source: "derived", note: "G524, T6a F403: tan is 0 at k*180, never at the pole 90. Before G524: x 90, y 0" }
+  - { id: "g524-deg-root-sec", kind: "root", f: "1/cos(x)", x0: "80", settings: { angle: "deg" }, expect: "no root found", source: "derived", note: "G524, T6a F403: 1/cos has no root. Before G524: x 90, y 0" }
   - { id: "extremum-min", kind: "extremum", f: "x^3-2*x", x0: "1", oracle: "[sqrt(F(2,3)), sqrt(F(2,3))**3-2*sqrt(F(2,3)), S('min')]", expect: ["0.816496580928", "-1.0886621079", "min"], source: "oracle" }
   - { id: "extremum-max", kind: "extremum", f: "x^3-2*x", x0: "-1", oracle: "[-sqrt(F(2,3)), -sqrt(F(2,3))**3+2*sqrt(F(2,3)), S('max')]", expect: ["-0.816496580928", "1.0886621079", "max"], source: "oracle" }
   - { id: "extremum-sin", kind: "extremum", f: "sin(x)", x0: "1.5", oracle: "[pi/2, F(1), S('max')]", expect: ["1.57079632679", "1", "max"], source: "oracle" }
