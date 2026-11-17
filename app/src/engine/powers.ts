@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G59f1 (r16 F3): powers that Giac's exact evaluation may move to another branch. Giac rewrites a power with a
 // non-positive or complex base as (z^a)^(1/n), which is another branch, and evalf of its exact text takes the same path;
-// exp(b*ln(a)) is the principal value. Text only, no engine; only erasable TypeScript syntax, so Node runs this file.
+// exp(b*ln(a)) is the principal value. G576: the float path's powers past Home's power limit (floatBasePowers).
+// Text only, no engine (G576's helper is defined by one call of the caller's); only erasable TypeScript syntax.
 import { closing, isNameChar, opening, unbracket } from "./giacPrint.ts";
 
 /** The base is a number literal (positive or zero) or a positive real constant by name: its power has one value. */
@@ -73,4 +74,52 @@ export function principalPowers(text: string): string | null {
     if (!found) break;
   }
   return changed ? s : null;
+}
+
+/** G576 (F352): Giac's error for an exact integer power past Home's power limit (HomeSettings.powLimit). */
+export const EXPONENT_OVERFLOW = "Exponent overflow";
+
+/** G576: our helper for each power a^b of the float path's text: Giac's exact power, but where Giac refuses it with
+ *  EXPONENT_OVERFLOW (an integer or rational base, an integer exponent n) the base's float to that exponent, as a typed
+ *  decimal base gives it (1.00001^100000). The base's float has Digits plus the digits of n: its relative error grows n
+ *  times in the power, so a base near 1 ((1-1/10^45)^(10^9) at Digits 40 would be 1^n = 1 at both precisions of the
+ *  agreement check) keeps its digits. The limit decides through Giac's own error, so it is not copied; an n past 1000
+ *  digits keeps that error (Giac writes such a power as exp(n*ln(a)) without one); a base or exponent of any other kind
+ *  (a name, a matrix, a float) keeps its power as Giac evaluates it. */
+export const BIG_POW = "pasbigpow";
+export const BIG_POW_DEFINITION =
+  `${BIG_POW}(pasa_,pasb_):={ local pasr_,pask_; ` +
+  "if (type(pasb_)!=integer or (type(pasa_)!=integer and type(pasa_)!=rational)) return pasa_^pasb_; " +
+  "try { pasr_:=pasa_^pasb_; } catch(pase_) { pask_:=ceil(evalf(log10(abs(pasb_)),15)); " +
+  "if (pask_>1000) pasr_:=pasa_^pasb_; else pasr_:=evalf(pasa_,Digits+pask_)^pasb_; } return pasr_; }";
+
+/** G576: `text` with each power a^b written as BIG_POW(a,b), the innermost first; null when it holds none (or a string).
+ *  A power whose operands it cannot read (an element-wise `.^`, a list base, `x!^2`) stays as typed. */
+export function bigPowers(text: string): string | null {
+  if (text.includes('"') || !text.includes("^")) return null;
+  let s = text;
+  let changed = false;
+  for (let guard = 0; guard < 256; guard++) {
+    let found = false;
+    for (let at = s.lastIndexOf("^"); at >= 0; at = at > 0 ? s.lastIndexOf("^", at - 1) : -1) {
+      if (s.charAt(at - 1) === "." || s.charAt(at - 1) === "*") continue;
+      const l = leftOperand(s, at);
+      const r = rightOperand(s, at);
+      if (!l || !r) continue;
+      s = `${s.slice(0, l[0])}${BIG_POW}(${s.slice(l[0], l[1])},${s.slice(r[0], r[1])})${s.slice(r[1])}`;
+      changed = found = true;
+      break;
+    }
+    if (!found) break;
+  }
+  return changed ? s : null;
+}
+
+/** G576: the float path's text for an input whose exact run gave `exactOut`: after EXPONENT_OVERFLOW, `body` with its
+ *  powers through BIG_POW (defined here with one call); else `body`. Home's exact run keeps its limit (its memory). */
+export function floatBasePowers(giac: { eval(input: string): string }, body: string, exactOut: string): string {
+  const text = exactOut.includes(EXPONENT_OVERFLOW) ? bigPowers(body) : null;
+  if (text === null) return body;
+  giac.eval(BIG_POW_DEFINITION);
+  return text;
 }

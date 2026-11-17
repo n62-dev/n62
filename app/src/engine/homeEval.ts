@@ -24,7 +24,7 @@ import { NO_BODIES, nonSquarePower, shapeRefusal, type Bodies } from "./nonsquar
 import { POLY_AT, POLY_AT_ANY_DEPTH, unaskedPoly } from "./polyvec.ts";
 import { listAsArguments } from "./listargs.ts";
 import { backInDegrees, needsDegrees } from "./degrees.ts";
-import { principalPowers } from "./powers.ts";
+import { floatBasePowers, principalPowers } from "./powers.ts";
 import { dropAngleFactor, hasAngleFactor } from "./angles.ts";
 import { decimalFromRational, decimalFromString, formatConfirmed, isZero, ZERO_VALUE, type ComplexValue, type DecimalValue, type PrecisionFacts, type PrecisionWarn, type PrecisionWhy } from "./format.ts";
 import { askedDigits, DOUBLE_DIGITS, exactFacts, floatFacts, floatPathFacts, integratedFacts, hasFloat, isAudited, doubleFormsIn, unauditedIn, numericDisagrees, notBuiltin, floatsShown, heavySplit, REGROUP_MAX, shapeOfValue, endsEarly, valuePrecision, whyOf, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
@@ -655,7 +655,7 @@ export function homeEval(
   // G221 (F195): Giac refuses a ν that is no integer (student_cdf(2.5,1)): the polish computes it, or the float path answers as before.
   const polished = isError(exactOut) && giacRefusesOurs(exactBody) ? polishedResult() : null;
   if (polished) return polished;
-  if (isError(exactOut)) return viaFloat("float-error");
+  if (isError(exactOut)) return viaFloat("float-error", undefined, floatBasePowers(giac, body, exactOut)); // G576: a power past powLimit, from its base's float
   // G106 (F78): Giac's polynomial of a list plus a number (`[1,4]+1` = poly1[1,5]), which the input did not ask for.
   if (unaskedPoly(giac, ans, exactBody, exactOut, userFn)) return refuse("listPlusNumber", "exact");
 
