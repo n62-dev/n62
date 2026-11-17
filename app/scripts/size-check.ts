@@ -551,8 +551,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,940 → 62,240 B (R362, a cut: S58's cuts 1 and 4, docs/research/start-chunk-cuts.md): the shell's app-opening part
  *  (apps/shellOpen.ts: the app's host, load, open, showView, setAside, toHome, the Menu's pointer row) loads with the first
  *  app key, and the view tabs' icons (views/icons.ts) with it. Phase-1 d9b130d8 measures 62,879 B gzip (177,051 B raw),
- *  the branch 62,186 B (175,370 B raw; −693 B): 62,186 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_240;
+ *  the branch 62,186 B (175,370 B raw; −693 B): 62,186 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,240 → 62,300 B (G618 fix round 1): phase-1 8f1c84df measures 62,244 B gzip (175,530 B raw), past the pin by the
+ *  merges since R362; the branch's start chunk is the same file, byte for byte (G618's words are in the worker's table
+ *  and the unit view's chunk, i18n/sumWords.ts): 62,244 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_300;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

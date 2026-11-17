@@ -7,6 +7,9 @@
 // - an integral ∫ f dx over [a, b] with a finite result: near each real singular point of f inside [a, b] (`singular`,
 //   and for a periodic f its shifts by the period) ∫|f| must be finite. The window is the point ± 1, cut to [a, b], so a
 //   conditionally convergent integral (∫₀^∞ sin x / x) is not refused for its tail, which is not the singular point.
+// - G618 (F432): a series up to ±∞ of a rational term (or (−1)^k times one) is checked against its own terms
+//   (sumcheck.ts): an infinity for a series that converges, or a closed form the terms' estimate contradicts, is
+//   refused "sumUnchecked" (Giac's sum of a rational function is wrong for some; G619 has the causes).
 // Only inputs that hold one of these calls pay, and an integral pays for the second integral only when f has a real
 // singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
 import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
@@ -14,6 +17,7 @@ import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelAr
 import { statsRefusal, type StatsRefusal } from "./stats.ts";
 import { wordRefusal, type WordRefusal } from "./wordOps.ts";
 import { decisionName } from "./decisionAlias.ts";
+import { sumRefuted } from "./sumcheck.ts";
 
 /** Why a result is refused; the UI shows `error.<code>` from the i18n table (enEngine.ts). */
 /** `undecided` (G57) comes from decisions.ts decideTwice: a decision on a cut Giac cannot make. `divisionByZero`,
@@ -26,7 +30,7 @@ import { decisionName } from "./decisionAlias.ts";
  *  stores.ts NOT_HERE_HEADS). The `StatsRefusal` codes (G223) come from stats.ts: linreg and stats1 refusing their data; the `WordRefusal` codes
  *  (G229) from wordOps.ts: a word operation refusing its arguments. */
 /** The refusals a check of ours gives (all but the stats and word ones, which only errorRefusal reads; G223, G229). */
-export type CheckRefusal = "integralDiverges" | "seriesDiverges" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer" | "vectorsOnly" | "unknownFunction" | "notHere";
+export type CheckRefusal = "integralDiverges" | "seriesDiverges" | "sumUnchecked" | "noLimit" | "undecided" | "divisionByZero" | "overflow" | "underflow" | "noValue" | "notSquare" | "listPlusNumber" | "listAsArguments" | "listInArgument" | "lengthsDiffer" | "vectorsOnly" | "unknownFunction" | "notHere";
 export type Refusal = StatsRefusal | WordRefusal | CheckRefusal;
 
 /** A check's answer: the result stands, it is refused, or the check could not finish (an error or Giac's timeout), in
@@ -116,6 +120,14 @@ function seriesCheck(giac: Giac, c: Call): Verdict {
     // Anything else (`1/((+infinity)!)` for 1/k!, an unevaluated limit) is not a proof of divergence: kept.
   }
   return "ok";
+}
+
+/** G618: Giac's `value` of the series `c` is refuted by its terms (sumcheck.ts sumRefuted). */
+function termsRefute(giac: Giac, c: Call, value: string): boolean {
+  const [t, k, a, b] = c.args as [string, string, string, string];
+  const lo = realOf(giac, a);
+  const hi = realOf(giac, b);
+  return lo !== null && hi !== null && sumRefuted(giac, t, k, lo, hi, value);
 }
 
 /** Giac's limit text `l` is not 0: bounded_function(…) (no limit), undef, ±infinity, or a non-zero number. */
@@ -291,7 +303,7 @@ function check(giac: Giac, calls: Call[], input: string, output: string, digits:
     if (c) return "integralDiverges";
   }
   // The calls to check (Giac runs in radians in every mode, G46).
-  const todo: Call[] = [];
+  const todo: { call: Call; value: string }[] = [];
   for (const c of calls) {
     if (c.kind === "limit" || c.args.length !== 4) continue;
     const [body, v, a, b] = c.args as [string, string, string, string];
@@ -301,18 +313,22 @@ function check(giac: Giac, calls: Call[], input: string, output: string, digits:
     if (c.kind === "sum" && !wordsOf(`${a},${b}`).some((w) => w === "inf" || w === "infinity")) continue;
     const value = valueOf(giac, c, input, out, digits).trim();
     if (value === "undef") return REFUSAL[c.kind];
+    // G618: an infinity for a series whose terms prove it converges (Σ 1/(k(k+3)) = infinity).
+    if (c.kind === "sum" && value.includes("infinity") && !isError(value) && termsRefute(giac, c, value)) return "sumUnchecked";
     const pair = c.kind === "int" ? giacPair(value) : null;
     // G178: a value the budget stopped says nothing about the integral, so the check on its arguments still runs (a stop
     // already makes the result "unchecked" unless the check proves the divergence).
     if (!pair && !finiteValue(value) && !isTimeout(value)) continue;
-    todo.push(c);
+    todo.push({ call: c, value });
   }
   if (!todo.length) return null;
   let unchecked = false;
-  for (const c of todo) {
+  for (const { call: c, value } of todo) {
     const v = c.kind === "sum" ? seriesCheck(giac, c) : integralCheck(giac, c);
     if (v === "diverges") return REFUSAL[c.kind];
     if (v === "unchecked") unchecked = true;
+    // G618: a finite closed form the series' own terms contradict (Σ 1/(k(k+4)) = 11/24, right 25/48).
+    if (v === "ok" && c.kind === "sum" && finiteValue(value) && termsRefute(giac, c, value)) return "sumUnchecked";
   }
   return unchecked ? "unchecked" : null;
 }
