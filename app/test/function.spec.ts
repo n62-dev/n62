@@ -2,7 +2,7 @@
 // Function app key-sequence tests on the real engine (docs/shifts/brief.md section 8, item 2).
 // Expected numbers: oracle = mpmath 1.3.0 at 30 digits, rounded to 12 significant digits.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, tap } from "./helpers.ts";
+import { entryValue, flick, open, tap } from "./helpers.ts";
 
 test.beforeEach(async ({ page }) => {
   await open(page, "");
@@ -415,4 +415,113 @@ test("Function: Home 3▶A, F1 = A·x, Num at x = 1 is 3; Home 5▶A, back to Nu
   await tap(page, ["@num"]); // back to the app, Num view
   await expect(page.locator('[data-app="function"]')).toBeVisible();
   await expect(cell).toHaveAttribute("data-text", "5");
+});
+
+// R361 (owner, 2026-11-16; decisions.md "R258"): the Plot draws a function that reads a value stored in Home, at the
+// engine's value (bridge-3's parts), and says what it did with a σ, a unit or a value it cannot draw. Expected values
+// derived: A·x² at x = 1 is A (3, then 5); the Root of A·x² − 12 near 1 is 2 (3x² = 12).
+test.describe("the Plot draws a stored value (R361)", () => {
+  const storeIn = async (page: Page, keys: string[], name: string[], n: number): Promise<void> => {
+    await tap(page, ["@home", ...keys, "shift", "emark", ...name, "enter"]); // keys ▶ name
+    await expect(page.locator('[data-status="done"]')).toHaveCount(n);
+  };
+  const A = ["alpha", "vars"];
+  /** The first drawn curve's y at x (the plot cases' read of a curve, as the DEG case). */
+  const curveY = (page: Page, x: number, k = 0): Promise<number> =>
+    page.evaluate(
+      ([xv, kv]) => {
+        const b = window.n62.plot.board as unknown as { objectsList: { elType: string; Y(x: number): number }[] };
+        return b.objectsList.filter((o) => o.elType === "curve")[kv]!.Y(xv);
+      },
+      [x, k] as const,
+    );
+  const notes = (page: Page) => page.getByTestId("plot-notes");
+  const keys = (page: Page): Promise<Record<string, number>> => page.evaluate(() => ({ ...window.n62.session.taps.counts.keys }));
+  /** F1 = A·x² in Symb. */
+  async function f1(page: Page): Promise<void> {
+    await tap(page, ["@symb"]);
+    await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+    await tap(page, ["alpha", "vars", "x", "pow", "d2", "enter"]);
+    await expect(page.locator('[data-name="F1"] .math')).toHaveAttribute("data-latex", /^A.*x\^2$/);
+  }
+  async function plot(page: Page): Promise<void> {
+    await tap(page, ["@plot"]);
+    await page.waitForFunction(() => window.n62.plot.board !== undefined);
+  }
+
+  test("Home 3 ▶ A, F1 = A·x²: drawn, 3 at x = 1; Home 5 ▶ A, back to Plot: 5; counted; Root of A·x² − 12 still 2", async ({ page }) => {
+    await storeIn(page, ["d3"], A, 1);
+    await f1(page);
+    await plot(page);
+    await expect.poll(() => curveY(page, 1)).toBe(3);
+    await expect(notes(page)).toHaveCount(0); // a plain real value: drawn, nothing to say
+    await expect.poll(async () => (await keys(page))["event:plot-stored"]).toBe(1);
+    expect((await keys(page))["event:plot-open"]).toBe(1);
+    await storeIn(page, ["d5"], A, 2);
+    await tap(page, ["@plot"]); // back to the app, Plot view
+    await page.waitForFunction(() => window.n62.plot.board !== undefined);
+    await expect.poll(() => curveY(page, 1)).toBe(5);
+    await expect.poll(async () => (await keys(page))["event:plot-open"]).toBe(2);
+    expect((await keys(page))["event:plot-stored"]).toBe(2);
+    // the counts export holds both
+    const exported = await page.evaluate(async () => {
+      const { countsText } = (await (0, eval)('import("/src/state/countsFile.ts")')) as typeof import("../src/state/countsFile.ts");
+      return JSON.parse(countsText(window.n62.session.taps.counts)) as { keys: Record<string, number> };
+    });
+    expect(exported.keys["event:plot-open"]).toBe(2);
+    expect(exported.keys["event:plot-stored"]).toBe(2);
+    // control: the engine's Root of A·x² − 12 near 1 is 2 (A = 3: Home 3 ▶ A again)
+    await storeIn(page, ["d3"], A, 3);
+    await tap(page, ["@symb", "down"]);
+    await expect(page.getByTestId("entry-label")).toHaveText("F2(x)=");
+    await tap(page, ["alpha", "vars", "x", "pow", "d2", "right", "sub", "d1", "d2", "enter"]); // F2 = A·x² − 12
+    await tap(page, ["@plot"]);
+    await page.waitForFunction(() => window.n62.plot.board !== undefined);
+    await tap(page, ["down"]); // trace F2
+    await expect.poll(() => curveY(page, 1, 1)).toBe(-9); // drawn too: 3 − 12
+    await page.evaluate(() => (window.n62.shell.loaded.function!.instance as unknown as { traceTo(x: number): void }).traceTo(1));
+    await tap(page, ["@menu", "d1"]);
+    await expect(page.getByTestId("readout-x")).toHaveText("2");
+  });
+
+  test("F2 = B·x with B complex: one note names F2 and B, not drawn; F1 = A·x² still drawn; an off slot says nothing", async ({ page }) => {
+    await storeIn(page, ["d3"], A, 1);
+    await storeIn(page, ["d1", "add", "d2", "shift", "d2"], ["alpha", "math"], 2); // 1+2i ▶ B
+    await f1(page);
+    await tap(page, ["down", "alpha", "math", "x", "enter"]); // F2 = B·x
+    await tap(page, ["down", "alpha", "tmpl", "x", "enter"]); // F3 = C·x, C never stored
+    await page.evaluate(() => (window.n62.shell.loaded.function!.instance as unknown as { slots: { toggle(i: number): void } }).slots.toggle(2)); // F3 off
+    await plot(page);
+    await expect(notes(page)).toHaveText("F2 uses B: not drawn, its value is not a real number");
+    await expect.poll(() => curveY(page, 1)).toBe(3);
+    expect(await curveY(page, 1, 1)).toBeNaN();
+  });
+
+  test("A stored as 3 ± 0.1 m (G371): F1 drawn at 3, the note names σ and the unit dropped", async ({ page }) => {
+    await tap(page, ["d3", "shift", "comma", "d0", "dot", "d1"]); // 3 ± 0.1
+    await flick(page, "tmpl", "up");
+    await page.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
+    await tap(page, ["d9"]); // m
+    await flick(page, "enter", "up");
+    await expect(page.getByTestId("unit-result").locator(".value")).toHaveText("3.00 ± 0.10");
+    await tap(page, ["shift", "emark"]);
+    await page.getByTestId("store").locator('[data-id="name:A"]').tap();
+    await expect(page.getByTestId("store")).toBeHidden();
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    await f1(page);
+    await plot(page);
+    await expect(notes(page)).toHaveText("F1 uses A = 3.00 ± 0.10 m: unit dropped, drawn at 3");
+    await expect.poll(() => curveY(page, 1)).toBe(3);
+  });
+
+  test("controls: x² draws as before with no note; no slot on: plot.empty unchanged", async ({ page }) => {
+    await tap(page, ["@symb", "x", "pow", "d2", "enter"]);
+    await plot(page);
+    await expect.poll(() => curveY(page, 3)).toBe(9);
+    await expect(notes(page)).toHaveCount(0);
+    expect((await keys(page))["event:plot-stored"]).toBeUndefined();
+    await page.evaluate(() => (window.n62.shell.loaded.function!.instance as unknown as { slots: { toggle(i: number): void } }).slots.toggle(0));
+    await tap(page, ["@plot"]);
+    await expect(page.locator(".note")).toHaveText("Define a function in Symb to draw it.");
+  });
 });

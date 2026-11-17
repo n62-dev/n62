@@ -62,6 +62,10 @@
   onMount(() => {
     let disposed = false;
     const t0 = performance.now();
+    // R361: the stored names the slots read, asked of the engine once per open; their curves are drawn when it answers
+    void app.readStored().then(() => {
+      if (!disposed && ready) board?.update();
+    });
     void import("jsxgraph").then((m) => {
       if (disposed || !box) return;
       const t1 = performance.now();
@@ -85,7 +89,8 @@
       board = b;
       b.suspendUpdate();
       for (const i of app.active) {
-        if (!app.compiled[i]?.fn) continue;
+        // (R361f1: every slot on has a curve, NaN until it can draw: which stored names a slot reads is the engine's
+        // answer, so one may get its evaluator from readStored after the board is made)
         // read through the app, so a recompile for another angle mode is drawn at once (R64a)
         const c = b.create("functiongraph", [(x: number): number => app.compiled[i]?.fn?.(x) ?? NaN], {
           strokeColor: (): string => curveColors()[i] ?? "",
@@ -205,6 +210,7 @@
   <div class="board" bind:this={box} onpointerdown={pointerDown} onpointerup={pointerUp} aria-label={numText("plot.label")} role="img"></div>
   {#if !ready}<p class="note">{numText("plot.loading")}</p>{/if}
   {#if ready && app.active.length === 0}<p class="note">{numText("plot.empty")}</p>{/if}
+  {#if ready && app.notes.length > 0}<p class="note" data-testid="plot-notes">{#each app.notes as n (n)}<span class="line">{n}</span>{/each}</p>{/if}
   {#if app.active.length > 0}
     <div class="readout" data-testid="readout">
       {#if app.readout}
@@ -259,6 +265,9 @@
     background: var(--panel);
     color: var(--muted);
     pointer-events: none;
+  }
+  .note .line {
+    display: block;
   }
   .readout {
     display: flex;

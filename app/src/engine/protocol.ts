@@ -7,6 +7,7 @@ import type { ConstTable } from "./constUnc.ts";
 import type { ChipFactsTable } from "./chipFacts.ts";
 import type { LibraryReply } from "./library.ts";
 import type { MatrixRead } from "./matrixRead.ts";
+import type { PlotValue } from "./plotValues.ts";
 
 export type Request =
   | { id: number; type: "init"; baseUrl: string; replay: DefEntry[] }
@@ -24,6 +25,8 @@ export type Request =
   /** R188: which of `names` hold a matrix, with their elements when `cells` (matrixRead.ts; calc/matrices.ts posts it).
    *  R189: `check`, with "typed": the grid's store to check (matrixRead.ts checkStore). */
   | { id: number; type: "matrices"; names: string[]; settings: HomeSettings; cells: boolean | "typed"; check?: string }
+  /** R361: by Function definition's Giac text, the names it reads, with a variable's value, σ and unit (plotValues.ts; calc/plotValues.ts posts it). */
+  | { id: number; type: "plotValues"; texts: string[]; settings: HomeSettings }
   /** R59: a library file's text at `version`, imported against the client's log (library.ts importText). */
   | { id: number; type: "library"; input: Uint8Array | string; version: number; written: number; log: DefEntry[]; replace: boolean }
   | { id: number; type: "libraryExport"; version: number; written: number; log: DefEntry[] };
@@ -42,6 +45,7 @@ export type Response =
   | { id: number; type: "table"; result: HomeResult[][] }
   | { id: number; type: "units"; result: Quantity | UnitError }
   | { id: number; type: "matrices"; result: MatrixRead[] }
+  | { id: number; type: "plotValues"; result: PlotValue[][] }
   | ({ id: number; type: "library" } & LibraryReply)
   | { id: number; type: "libraryExport"; text: string; skipped: { name: string; why: string }[] }
   /** `dead` (G24, G183): the engine is not trusted after this throw (out of memory, a wasm trap, a stack overflow); the

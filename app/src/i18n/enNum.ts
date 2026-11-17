@@ -13,6 +13,13 @@ export const enNum = {
   "plot.empty": "Define a function in Symb to draw it.",
   "plot.loading": "Loading the graph…",
   "plot.label": "Graph",
+  /** R361: a slot on that reads a stored name, under the board: drawn at the engine's value (σ and unit named), or not */
+  "plot.storedNot": "{slot} uses {name}: not drawn, {why}",
+  "plot.whyNotReal": "its value is not a real number",
+  "plot.whyNoValue": "it holds no value",
+  "plot.storedSigma": "{slot} uses {name} = {shown}: drawn at {value}",
+  "plot.storedUnit": "{slot} uses {name} in {unit}: unit dropped, drawn at {value}",
+  "plot.storedSigmaUnit": "{slot} uses {name} = {shown} {unit}: unit dropped, drawn at {value}",
   // the apps' menus, readouts and messages (moved out of en.ts by R53, to make room in the start chunk)
   "solve.solve": "Solve",
   "solve.polyRoots": "Polynomial roots",
