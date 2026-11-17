@@ -399,6 +399,14 @@ Digits:=40:; pc("g39-keep-sum-alt-harmonic",'(sum((-1)^k/k,k,1,inf))',-(69314718
 Digits:=40:; pc("g618-keep-sum-k(k+1)",'(sum(1/(k*(k+1)),k,1,inf))',1,5/10^12);
 // g618-keep-sum-1/(k^2+1) (home.yaml, oracle)
 Digits:=40:; pc("g618-keep-sum-1/(k^2+1)",'(sum(1/(k^2+1),k,0,inf))',(207667404747/10^11),5/10^12);
+// g617-keep-sum-alt-sq-from-1 (home.yaml, oracle)
+Digits:=40:; pc("g617-keep-sum-alt-sq-from-1",'(sum((-1)^k/k^2,k,1,inf))',-(822467033424/10^12),5/10^13);
+// g617-keep-sum-alt-harmonic-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-keep-sum-alt-harmonic-from-2",'(sum((-1)^k/k,k,2,inf))',(30685281944/10^11),5/10^13);
+// g617-keep-sum-alt-sq-from-3 (home.yaml, oracle)
+Digits:=40:; pc("g617-keep-sum-alt-sq-from-3",'(sum((-1)^k/k^2,k,3,inf))',-(724670334241/10^13),5/10^14);
+// g617-keep-sum-alt-5th-from-3 (home.yaml, oracle)
+Digits:=40:; pc("g617-keep-sum-alt-5th-from-3",'(sum((-1)^k/k^5,k,3,inf))',-(336977044691/10^14),5/10^15);
 // g39-keep-int-1/(2+cos) (home.yaml, oracle)
 Digits:=40:; pc("g39-keep-int-1/(2+cos)",'(int(1/(2+cos(x)),x,0,2*pi))',(362759872847/10^11),5/10^12);
 // g39-keep-int-gauss (home.yaml, oracle)

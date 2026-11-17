@@ -615,6 +615,9 @@ export const PATCHED_IDS = new Map([
   // G557 (F311, F320): sym2poly.cc algnum_rewritable negated a complex value written as shift +- sqrt(sol), and algnum_normal wrote the
   // generator as a rootof that is not its value; the g557-keep-* rows pass on stock and stay in the check file
   ...["simplify-sqrt2-plus-i-sqrt3-12", "simplify-sqrt2-plus-i-sqrt3-30", "normal-sqrt2-times-sqrt3-plus-i", "simplify-exp-i-pi-over-6-sqrt2", "normal-neg8-sixth-root", "det-sqrt2-sqrt3-i", "simplify-sqrt-neg-sqrt2", "simplify-sqrt-1-minus-sqrt2", "simplify-sqrt-cbrt10-minus-sqrt6"].map((k) => [`g557-${k}`, "0053-algnum-complex-root-sign.patch"]),
+  // G617 (F431): intgab.cc in_sumab took c*(-1)^k/k^p from an even start with the sign flipped, and for p = 1 took the harmonic sum
+  // off ln(2); the g617-keep-* rows (odd starts, a = 1, p = 1 from 2) pass on stock and stay in the check file
+  ...["alt-sq-from-2", "alt-sq-from-4", "alt-cube-from-2", "alt-4th-from-2", "alt-6th-from-2", "alt-plus-one-from-2", "cos-kpi-from-2", "alt-harmonic-from-3", "alt-harmonic-from-4", "alt-harmonic-from-5", "alt-sq-coeff-from-2", "alt-harmonic-coeff-from-3"].map((k) => [`g617-sum-${k}`, "0054-alternating-sum-start.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -874,6 +877,10 @@ export function build(cases) {
     patched.push("// patch 0048-complex-is-one-exact.patch", `// ${id} (${id.startsWith("g308-times") ? "derived: (1+i/10^15)*3" : "oracle: mpmath"})`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0054 (G617), written line: the exact sum is the closed form 1-pi^2/12 (normal of the difference is 0; stock gives pi^2/12-1,
+  // a difference of pi^2/6-2)
+  patched.push("// patch 0054-alternating-sum-start.patch", "// g617-normal-sum-alt-sq-from-2 (derived: sum((-1)^k/k^2,k,1,inf) = -pi^2/12 less the term k = 1)", 'Digits:=40:; pc("g617-normal-sum-alt-sq-from-2",\'normal(sum((-1)^k/k^2,k,2,inf)-(1-pi^2/12))\',0,1/10^30);');
+  nPatched++;
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
