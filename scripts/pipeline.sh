@@ -485,13 +485,22 @@ slug="$(tr -cs 'a-z0-9' '-' <<<"${id,,}" | sed 's/^-//; s/-$//')"
 
 # A47a: one run per branch: the lock branch-<branch> with this pid, held to the end (a dead pid's lock is broken by the next run).
 branch_lock="branch-${branch//\//-}"
-cleanup() { owned_kill; host_cpu_drop; nodemods_drop; queue_leave; rm -f "$spec_file" "$brief"; [[ "${branch_locked:-0}" -eq 0 ]] || tools/devlock.sh release "$branch_lock" "pipeline-$$" >/dev/null 2>&1 || true; }
+# A258: limit_marker is $tasks/limit-resume/<id>@<branch> once this run holds the branch (never in a dry run); a RESULT other than LIMIT
+# (exit 75) removes it; a run killed by a signal (exit > 128) prints none and keeps it.
+limit_marker=""
+cleanup() {
+  local rc=$?
+  owned_kill; host_cpu_drop; nodemods_drop; queue_leave; rm -f "$spec_file" "$brief"
+  [[ -z "$limit_marker" || $rc -eq 75 || $rc -gt 128 ]] || rm -f "$limit_marker"
+  [[ "${branch_locked:-0}" -eq 0 ]] || tools/devlock.sh release "$branch_lock" "pipeline-$$" >/dev/null 2>&1 || true
+}
 trap cleanup EXIT
 if [[ $dry -eq 0 ]]; then
   if [[ $nowork -eq 1 ]]; then git show-ref --verify --quiet "refs/heads/$branch" || die "--no-worker: branch $branch does not exist"; fi
   tools/devlock.sh acquire "$branch_lock" "pipeline-$$" 0 >/dev/null 2>&1 \
     || die "branch $branch is in use by another run ($(cat "$coord/locks/$branch_lock/owner" 2>/dev/null || echo '?'), pid $(cat "$coord/locks/$branch_lock/pid" 2>/dev/null || echo '?'))"
   branch_locked=1
+  limit_marker="$tasks/limit-resume/$id@$branch"
 fi
 
 # The run directory and its number: taken from .tasks/counter under flock (a dry run only peeks).
@@ -515,6 +524,14 @@ if [[ -n "${after_wait:-}" && $dry -eq 1 ]]; then echo "after: WAITS for $after_
 elif [[ -n "${after_wait:-}" ]]; then
   runno="$n"; rm -rf "$run"; log "pipeline #$n $id: WAITS for $after_wait"
   echo "RESULT #$n $id: WAITS for $after_wait"; exit 2
+fi
+
+# A258: a rerun after a usage limit whose worker had already finished (its marker names a commit on the branch) starts no new worker:
+# it goes on as --no-worker does (phase-1 merged in first, the round count from 0). A marker of another id or branch is another file.
+lr_commit="$(limit_resume_commit "$tasks/limit-resume/$id@$branch" "$branch")" || lr_commit=""
+if [[ $nowork -eq 0 && -n "$lr_commit" ]]; then
+  nowork=1; lr_note="worker finished in an earlier run (${lr_commit:0:9}); no new worker (A258)"
+  if [[ $dry -eq 1 ]]; then echo "worker: $lr_note"; else log "pipeline #$n $id: $lr_note"; fi
 fi
 
 # The bundle: spec, the files it names (capped), the report format and the definition of done.
@@ -899,7 +916,9 @@ merge_phase1() {
   dead_links_drop
 }
 
+worker_ran=0
 if [[ $nowork -eq 0 ]]; then
+  worker_ran=1
   # A38: a resumed branch gets phase-1 first, so its worker starts on today's code
   [[ $resumed -eq 0 ]] || merge_phase1
   run_agent "pl-$n-$agent" "$run/worker-0.log" "$agent" "$model" "$effort" "$bundle" "$worker_prompt" "${worker_tools[@]}"
@@ -913,6 +932,11 @@ if [[ $nowork -eq 0 ]]; then
 fi
 if [[ -z "$(git -C "$wt" log --oneline "phase-1..HEAD")" ]]; then
   log "pipeline #$n $id: NOT MERGED (no commits on $branch)"; echo "RESULT #$n $id: NOT MERGED (no commits; worktree $wt kept)"; exit 1
+fi
+# A258: the worker ended with commits: a usage limit from here on (a fix or resolve round, the audit) reruns without a new worker
+if [[ $worker_ran -eq 1 ]]; then
+  mkdir -p "$(dirname "$limit_marker")"; git -C "$wt" rev-parse HEAD > "$limit_marker.tmp.$$" && mv -f "$limit_marker.tmp.$$" "$limit_marker"
+  runlog "limit-resume marker $limit_marker: $(cat "$limit_marker")"
 fi
 
 # A75: the package's own file is deleted on its branch, in a commit of its own, before each queue entry and again after the queue's
