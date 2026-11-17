@@ -5,7 +5,7 @@
 # A case has:
 #   id, area, title   c<nn>; area = entry | home | trig | cas | matrix | solve | function | state | units
 #   keys              the presses, in order, as app/test/helpers.ts tap() takes them: a key id of spec/keyboard.yaml,
-#                     a status-line control (@home @cas @symb @plot @num @menu @mode @place), or
+#                     a bar control (@home @cas @symb @plot @num @menu @mode @place), or
 #                     {tmpl: <cell id of keyboard.yaml templates>}, {up: <key>} / {down: <key>} (a flick),
 #                     {tap: "result:last"} (the last history result), {tap: "<css selector>"}, {relaunch: true},
 #                     {hold: <target>} (a 700 ms touch: a hold), {swipe: <target>, dir: left|right} (a touch drag across

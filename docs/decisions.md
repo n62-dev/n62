@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **R722, the 7–9 row sheets under 1000 px tall:** the 43 px rows leave 290–294 px over rows 3–9 at 412 × 915 and on the Fairphone (330+ before), so Plot's ☰ (nine rows after a Root, R262), Mode › Digits, Numbers and Appearance scroll at their 36 px floor there, with the cue, as at 360 × 740 before; the e2e pins it. Keep that? Recommended: keep it (decisions.md "A sheet that cannot fit at its floor scrolls"); a 32 px floor (measured) brings back Plot's ☰ and Digits whole, not Numbers or Appearance (their 52 px option rows).
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
@@ -45,7 +46,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived, "Opus pass 96".
 - **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
-- **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line.** Rule: docs/04 5.1, docs/05 3.2. Archived.
+- **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line** (the bar on the keypad since R722, below). Rule: docs/04 5.1, docs/05 3.2. Archived.
+- **The bar on the keypad (owner, 2026-11-17, R722):** the status line moves onto the keypad's top edge as the bar (Apps ▾ · Home | CAS · ⇧/α · RAD · STD ▾ · 12 ▾ · ☰, 28 px; the lock's `bar:`), Home and CAS one tap each, and the rows under 1000 px tall are 43 and 33 px (history 220 → 264 px at 412 × 815). Rule: docs/05 3.2, docs/03 rule 9. Would change if: over 2 % of angle-chip taps are undone within 3 s in four weeks (`bar.angle.undo` against `bar.angle`, Settings › Counters).
 - **R15b (2026-10-17): cluster rows 36 px; the place target at least 48 × 28 px** (R82f2). Archived, "Opus pass 96". Would change if: 36 px keys are mis-tapped on the phone.
 - **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS). Would change if: under 14 folds or 10 actions while folded in 14 days. Archived.
   - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).

@@ -16,7 +16,7 @@ What to read, and where each fact lives. One place per fact: status and tasks in
 
 ## The rest of docs/ (what each file is for)
 - [03-feature-analysis.md](03-feature-analysis.md): trimmed to what binds: **section 0** (the owner's design rules and the removal tests), section 6 (the task benchmark) and section 7 (the precision promises); the engineer-core plan is in git at `82b261f9`.
-- [05-ui-plan.md](05-ui-plan.md): the screens as built (the sheet, the status line, Mode and Settings, history rows, Find's layout, the look); [feedback.md](feedback.md): the owner's feedback inbox, dated, in the owner's words (docs/03 rule 12).
+- [05-ui-plan.md](05-ui-plan.md): the screens as built (the sheet, the bar on the keypad, Mode and Settings, history rows, Find's layout, the look); [feedback.md](feedback.md): the owner's feedback inbox, dated, in the owner's words (docs/03 rule 12).
 - [must-have.md](must-have.md): the owner's must-have list of 2026-11-08 with its status, packages, order, open bugs and open decisions.
 - [owner-testing.md](owner-testing.md): the owner's guide to testing by hand (2026-11-09): what is coming, the ten segments, how a finding is reported, the sign-offs.
 - [release-0.1.0.md](release-0.1.0.md): what v0.1.0 must meet and the days to its tag (owner, 2026-11-01); [release.md](release.md): the owner's checklist for every release tag (A8).
