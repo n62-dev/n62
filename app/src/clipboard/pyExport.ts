@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R181: Copy as › Python and ☰ › Export › Python: the row, or the open session's finished rows, as the sympy script of
+// R181: Copy › Python and ☰ › Export › Python: the row, or the open session's finished rows, as the sympy script of
 // python.ts (translateRows). The rows are read back from their session lines (sessionLine, G210), the format the sync
 // folder writes, so a row says the same in both. The file is `n62-<date>.py` through the save port (files.ts); the result
 // is the notice. Loaded on the press only (ClipActions.copyPython, savePython), never at start.

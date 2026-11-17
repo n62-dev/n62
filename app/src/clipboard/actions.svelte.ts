@@ -176,7 +176,7 @@ export class ClipActions {
       return this.put(exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact);
     });
   }
-  /** R181: Copy as › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
+  /** R181: Copy › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
   copyPython(item?: HistoryItem): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);

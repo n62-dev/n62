@@ -100,7 +100,7 @@ describe("ClipActions row buttons and the hold", () => {
     const entry = { insert() {} } as unknown as EntryController;
     const acted: string[] = [];
     const c = new ClipActions(session, shell, entry, { insert() {}, acted: (id) => void acted.push(id) }, port);
-    return { c, item: item as never, menus, acted, clip: () => clip };
+    return { c, item: item as never, menus, acted, clip: () => clip, port };
   };
   it("the bar holds Store ▶ and Copy ›; Copy › opens Full value, As shown, Exact, LaTeX, Python (R181, R720)", () => {
     const { c, item, menus } = make();
@@ -114,12 +114,12 @@ describe("ClipActions row buttons and the hold", () => {
     expect(c.menu(item).map((m) => m.id)).toEqual(["store", "copy", "delete", "paste", "share", "clear", "export"]);
   });
   it("Copy › Full value writes what a hold on the result does and counts as copy (R720)", async () => {
-    const { c, item, acted, clip } = make();
+    const { c, item, acted, clip, port } = make();
+    await port.writeText("x"); // (a sentinel: only the run's own write can change it)
     const full = c.menu(item).find((m) => m.id === "copy")?.submenu?.items[0];
     expect(full).toMatchObject({ id: "full", label: "Full value" });
     full?.run?.();
-    await c.copy(item); // (the chain: the run above has been written by now)
-    expect(clip()).toBe("1/3");
+    await vi.waitFor(() => expect(clip()).toBe("1/3"));
     expect(acted).toEqual(["copy"]);
   });
   it("a hold on the input copies the entry as plain text, on the result Copy's full value; each counts as copy", async () => {
@@ -263,7 +263,7 @@ describe("ClipActions exportCsv and exportLatex", () => {
   });
 });
 
-// R181: Copy as › Python puts the row's sympy text on the clipboard; ☰ › Export › Python saves the session as n62-<date>.py.
+// R181: Copy › Python puts the row's sympy text on the clipboard; ☰ › Export › Python saves the session as n62-<date>.py.
 describe("ClipActions copyPython and savePython", () => {
   const saved: { name: string; mime: string; text: string }[] = [];
   let clip = "";
