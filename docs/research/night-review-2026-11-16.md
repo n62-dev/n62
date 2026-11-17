@@ -50,7 +50,7 @@ Written: nr1116-be-4 and -be-1, and -vg-1, -vg-2, -vg-5 (owner, 2026-11-16: the 
 
 **The owner's answers (2026-11-16):**
 1. K1, K2: lane B's head before the freeze, K2 first: G398, G399.
-2. K22: checked again after G385, then decided, before the freeze (section 6).
+2. K22 waits for G385, after the tag (owner, 2026-11-17; decisions.md K22).
 3. Function and Solve open after the tag: R367 (knowns), R368 and R369 (Home rows), R371 (Window), R370 (F1…F0); docs/06's "nothing is lost" fixed now.
 4. Doc room: F181 out, docs/04's bare "(built, R…)" out; the moves wait (below).
 5. K17, draw a stored value before the freeze: R361 (it rewrites decisions "R258").
@@ -70,7 +70,7 @@ Written: nr1116-be-4 and -be-1, and -vg-1, -vg-2, -vg-5 (owner, 2026-11-16: the 
 
 ## 6. Question for the owner
 
-- **K22** (vg-3): `80 °C − 5 K` gets the two-scales refusal, whose words lead to `80 °C − 5 °C` = 75 K. Checked again after G385, then decided, before the freeze: rerun the three unit lines of `tools/probes/review-1116/vg/run3.sh` on phase-1 after G385 merges.
+- **K22** (vg-3): `80 °C − 5 K` gets the two-scales refusal, whose words lead to `80 °C − 5 °C` = 75 K. K22 waits for G385, after the tag (owner, 2026-11-17; decisions.md K22): rerun the three unit lines of `tools/probes/review-1116/vg/run3.sh` on phase-1 after G385 merges.
 
 ## 7. Budgets
 

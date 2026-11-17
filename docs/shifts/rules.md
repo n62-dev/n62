@@ -17,7 +17,7 @@ The three principles in `docs/rules-core.md` decide every default:
 - **The reference calculator is not ours to touch.**
   - The G2 stays off the laptop.
   - Virtual Calculator sessions run separately, on their own branch, with the user.
-  - Anything taken from the reference calculator without an answer is `source: assumed`, with a G2-checklist question.
+  - Anything taken from the reference calculator without an answer is `source: assumed`, with a G2-checklist question about keys or flow (P5).
   - Never lose an answer the user already gave.
 - **Never invent expected values.** Sources: `device`, `virtual-calc`, `oracle`, `derived`, `assumed`. Measurements are medians of ≥5 runs, with device, Android version, WebView version and build type.
 - **Git:**

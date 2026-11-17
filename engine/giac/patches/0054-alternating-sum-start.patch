@@ -1,0 +1,33 @@
+# Upstream: giac 2.1.0 intgab.cc in_sumab, the branch for c*(-1)^k/k^p summed from an integer a to inf (r a monomial, q+r=0). (1) p>=2: res=-sum(1/k^p,k,a,inf)+2^(1-p)*sum(1/k^p,k,ceil(a/2),inf) is already sum((-1)^k/k^p,k,a,inf), but it was multiplied by -subst(g/R,x,a), which is -c*(-1)^a: c for an odd a, -c for an even a, so sum((-1)^k/k^2,k,2,inf) gave pi^2/12-1 (right 1-pi^2/12 = 0.1775...), also from 4, p=3, 4, 6, (-1)^(k+1), cos(k*pi). Now the factor is (-1)^a*subst(g/R,x,a) = c. (2) p=1: ln(2) is sum((-1)^(k+1)/k,k,1,inf), and the terms below a were taken off as the harmonic sum sum(1/k,k,1,a-1) where the alternating partial sum sum((-1)^(k+1)/k,k,1,a-1) belongs (equal for a=2 only): sum((-1)^k/k,k,3,inf) gave 3/2-ln(2) (right 1/2-ln(2)). Now the partial sum is sum(R,k,1,a-1)-sum(R,k,1,floor((a-1)/2)) (R=c/k, the even terms are half the first floor((a-1)/2)).
+# Changed by Pascaline contributors, 2026-11-17
+--- a/src/intgab.cc
++++ b/src/intgab.cc
+@@ -1858,15 +1858,27 @@
+ 	    return true;
+ 	  }
+ 	  res=symbolic(at_ln,2);
++	  // N62 patch 0054 (G617): ln(2) is sum((-1)^(k+1)/k,k,1,inf), so the terms below a are the alternating
++	  // partial sum sum((-1)^(k+1)*R,k,1,a-1) = sum(R,k,1,a-1)-sum(R,k,1,floor((a-1)/2)) (R is c/k: the even
++	  // terms are R(2m)=R(m)/2), not the harmonic sum sum(R,k,1,a-1), which agrees for a=2 only
++	  // (sum((-1)^k/k,k,3,inf) gave 3/2-ln(2), right 1/2-ln(2))
+ 	  if (a.val>1)
+ 	    res = res-_sum(makesequence(R,x,1,a.val-1),contextptr);
++	  if (a.val>2)
++	    res = res+_sum(makesequence(R,x,1,(a.val-1)/2),contextptr);
+ 	  res=res*subst(g/R,x,1,false,contextptr);
+ 	  return true;
+ 	}
+ 	// add sum(1/k^pui,k,a,inf)
+ 	// -> 2*sum(1/(2*k)^pui,k,a/2,inf)=2^(1-pui)*sum(1/k^pui,k,a/2,inf)
+ 	res = - _sum(makesequence(R,x,a,plus_inf),contextptr) + pow(2,1-pui,contextptr)*_sum(makesequence(R,x,(a.val+1)/2,plus_inf),contextptr);
+-	res = -res*subst(g/R,x,a,false,contextptr);
++	// N62 patch 0054 (G617): res is already sum((-1)^k*R,k,a,inf); g/R at a is c*(-1)^a, so the factor is
++	// (-1)^a times it (the summand's coefficient c), not its negation, which is c for an odd a only
++	// (sum((-1)^k/k^2,k,2,inf) gave pi^2/12-1, right 1-pi^2/12)
++	if (a.val%2==0)
++	  res = res*subst(g/R,x,a,false,contextptr);
++	else
++	  res = -res*subst(g/R,x,a,false,contextptr);
+ 	return true;
+       }
+       gen n=b-a;

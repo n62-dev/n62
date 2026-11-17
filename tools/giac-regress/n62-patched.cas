@@ -113,6 +113,42 @@ Digits:=40:; pc("g360-limit-iPart-neg1-right",'(limit(iPart(x),x,-1,1))',0,1/10^
 // patch 0051-limit-ipart-as-trunc.patch
 // g360-limit-iPart-nested-1-left (home.yaml, derived)
 Digits:=40:; pc("g360-limit-iPart-nested-1-left",'(limit(iPart(iPart(x)+x),x,1,-1))',0,1/10^30);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-sq-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-sq-from-2",'(sum((-1)^k/k^2,k,2,inf))',(177532966576/10^12),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-sq-from-4 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-sq-from-4",'(sum((-1)^k/k^2,k,4,inf))',(38644077687/10^12),5/10^14);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-cube-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-cube-from-2",'(sum((-1)^k/k^3,k,2,inf))',(984573226303/10^13),5/10^14);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-4th-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-4th-from-2",'(sum((-1)^k/k^4,k,2,inf))',(529671705028/10^13),5/10^14);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-6th-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-6th-from-2",'(sum((-1)^k/k^6,k,2,inf))',(144489087026/10^13),5/10^14);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-plus-one-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-plus-one-from-2",'(sum((-1)^(k+1)/k^2,k,2,inf))',-(177532966576/10^12),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-cos-kpi-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-cos-kpi-from-2",'(sum(cos(k*pi)/k^2,k,2,inf))',(177532966576/10^12),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-harmonic-from-3 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-harmonic-from-3",'(sum((-1)^k/k,k,3,inf))',-(19314718056/10^11),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-harmonic-from-4 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-harmonic-from-4",'(sum((-1)^k/k,k,4,inf))',(140186152773/10^12),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-harmonic-from-5 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-harmonic-from-5",'(sum((-1)^k/k,k,5,inf))',-(109813847227/10^12),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-sq-coeff-from-2 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-sq-coeff-from-2",'(sum(3*(-1)^k/k^2,k,2,inf))',(532598899728/10^12),5/10^13);
+// patch 0054-alternating-sum-start.patch
+// g617-sum-alt-harmonic-coeff-from-3 (home.yaml, oracle)
+Digits:=40:; pc("g617-sum-alt-harmonic-coeff-from-3",'(sum((-1)^k/(2*k),k,3,inf))',-(9657359028/10^11),5/10^14);
 // patch 0005-mpfr-pi-and-real-domains.patch
 // g78-novalue-asin-acos (home.yaml, oracle)
 Digits:=40:; pc("g78-novalue-asin-acos",'(asin(acos(pi*pi)))',(181211256762/10^11)*i,5/10^12);
@@ -1187,6 +1223,9 @@ Digits:=12:; pc("g308-pow-1e-12-third-12",'(1+i/10^12)^(1/3)',1+333333333333333/
 // patch 0048-complex-is-one-exact.patch
 // g308-times-x-1e-15-40 (derived: (1+i/10^15)*3)
 Digits:=40:; pc("g308-times-x-1e-15-40",'subst(evalf(1+i/10^15)*x,x,3)',3+3/10^15*i,1/10^35);
+// patch 0054-alternating-sum-start.patch
+// g617-normal-sum-alt-sq-from-2 (derived: sum((-1)^k/k^2,k,1,inf) = -pi^2/12 less the term k = 1)
+Digits:=40:; pc("g617-normal-sum-alt-sq-from-2",'normal(sum((-1)^k/k^2,k,2,inf)-(1-pi^2/12))',0,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

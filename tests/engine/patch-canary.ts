@@ -209,6 +209,10 @@ const CANARIES: [string, string, RegExp, string][] = [
   // (normal(sqrt(10^(1/3)-sqrt(6))) was a rootof worth 2.1457, right 0.5432*i)
   ["0053-algnum-complex-root-sign.patch", "giac-2.1.0/src/sym2poly.cc", /ext=rootofallowed\?algebraic_EXTension\(makevecteur\(1,0\),pminv\):rexact;\s*r=_evalf\(makesequence\(rexact,extpar\.digits\),contextptr\);\s*nums=/, "  bool algnum_normal(gen & e,GIAC_CONTEXT){\n#ifdef"],
   ["0053-algnum-complex-root-sign.patch", "giac-2.1.0/src/sym2poly.cc", /ext=rootofallowed\?algebraic_EXTension\(makevecteur\(1,0\),pminv\):rexact;\s*r=_evalf\(makesequence\(rexact,extpar\.digits\),contextptr\);\s*nums=/, "++l; ++c;"],
+  // G617, patch 0054: in_sumab's branch for c*(-1)^k/k^p from a multiplies sum((-1)^k/k^p,k,a,inf) by -c*(-1)^a (the sign flipped for an
+  // even a: sum((-1)^k/k^2,k,2,inf) = pi^2/12-1), and for p = 1 takes the harmonic sum off ln(2) (sum((-1)^k/k,k,3,inf) = 3/2-ln(2))
+  ["0054-alternating-sum-start.patch", "giac-2.1.0/src/intgab.cc", /plus_inf\),contextptr\);\s*res = -res\*subst\(g\/R,x,a,false,contextptr\);/, "// coeff*sum((-1)^k/k^pui,k,a,inf)"],
+  ["0054-alternating-sum-start.patch", "giac-2.1.0/src/intgab.cc", /res = res-_sum\(makesequence\(R,x,1,a\.val-1\),contextptr\);\s*res=res\*subst\(g\/R,x,1,false,contextptr\);/, "// coeff*sum((-1)^k/k^pui,k,a,inf)"],
 ];
 
 const tar = tarball(SOURCES.giac);

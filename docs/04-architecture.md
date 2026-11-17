@@ -197,10 +197,9 @@ Live items (variables, user functions) have the same shape with `kind: "var" | "
 **Format and size:** `find-index.<hash>.json`, a Vite asset outside every chunk. Budget ≤ 400 kB raw, ≤ 100 kB gzip (8.3). **i18n:** English titles and descriptions in the index; another language is an overlay file `find-index.<lang>.json` keyed by id with its own titles and aliases, merged at load. The structure allows it now; only English ships.
 
 **Generation, from source at build time** (gorge; `tools/find-index/generate.mjs`, Node, no network; run by `build.sh` after the engines, and by `npm run index` in development; output gitignored under `app/src/find/_gen/`):
-1. Giac `doc/aide_cas` from the pinned tarball: names, the English line (`2 …`) only, never French (R5), syntax (its examples are not shown: tier 0's are ours, G231); entries starting with `_` dropped.
-2. libqalculate 5.13.1 `units.xml.in`, `variables.xml.in`, `prefixes.xml.in` from the pinned tarball; `currencies.xml.in`, `elements`, `planets`, `datasets` skipped.
-3. **Values from `find/factors.yaml`** (P22): each constant's value, uncertainty and dimension and each unit's SI factor, with its source. `tools/find-index/refresh-factors.mjs` recomputes them from a qalc build, with a round-trip check that every unit and constant ID parses back to itself, and reports what differs.
-4. Our own files: `find/aliases.yaml` (what users type and the data lacks, such as `kph`, `eps0`, `degC`; per item id), `find/functions.yaml` (tier 0: each function with our own one-line description and the id of its golden accuracy case), `find/where.yaml` (the keys whose insert is no function's own, per Find id) and `find/units.yaml` (the common prefixed units as items: `km`, `MPa`, `kΩ`, …, and `checks:`, our audit against the exact definitions; a row that differs fails the build).
+1. Giac's `doc/aide_cas` and libqalculate 5.13.1's XML from the pinned tarballs, filtered as the header of `generate.mjs` says (English lines only, never French, R5; Giac's examples are not shown: tier 0's are ours, G231; the full list as it stood: [archive/architecture-2026-11-17.md](archive/architecture-2026-11-17.md) section 2).
+2. **Values from `find/factors.yaml`** (P22): each constant's value, uncertainty and dimension and each unit's SI factor, with its source. `tools/find-index/refresh-factors.mjs` recomputes them from a qalc build, with a round-trip check that every unit and constant ID parses back to itself, and reports what differs.
+3. Our own files: `find/aliases.yaml` (what users type and the data lacks, such as `kph`, `eps0`, `degC`; per item id), `find/functions.yaml` (tier 0: each function with our own one-line description and the id of its golden accuracy case), `find/where.yaml` (the keys whose insert is no function's own, per Find id) and `find/units.yaml` (the common prefixed units as items: `km`, `MPa`, `kΩ`, …, and `checks:`, our audit against the exact definitions; a row that differs fails the build).
 
 **Tier 0** is the audited set: every tier-0 function has a golden case at 12 digits against the oracle, including the edges of its domain (where 2.3 #2 was found), and, for a function defined on complex numbers, complex arguments in RAD (`tools/probes/complex-audit.ts`; Giac's complex atan is replaced by our definition, `pasatan` in `complex.ts`, and Giac's exact atan on its cut is the principal value (patch 0019), so one input has one branch; complex tanh is patch 0003, asin, acos and acosh patch 0005). Complex arguments in DEG are not audited (S14). Tier 1 is everything else Giac documents, ranked below tier 0 and labelled "not checked" in the preview.
 
@@ -409,26 +408,7 @@ The gates per milestone are the backlog's milestone lines.
 ## 8. Components, interfaces, budgets
 
 ### 8.1 Component diagram
-
-```
-Capacitor shell (Android) / PWA (service worker precaches everything after the engine is up)
-└─ Main thread (TypeScript)
-   ├─ Keypad + key layers (spec/keyboard.yaml)       ─┐
-   ├─ Entry line: MathLive + macros (\const \res \ans) │ key → action
-   │                                                   │
-   ├─ Parser P1 (LaTeX → Giac text | unit tokens)     ─┤
-   ├─ Formatter + marks (format.ts, pure)              │
-   ├─ Views: Home, CAS, Function, Solve,               │
-   │  Units (m5), Find palette (lazy), Matrix editor   │
-   ├─ Find: index (lazy asset) + ranking (rank.ts)     │
-   ├─ Clipboard / share port                           │
-   └─ Session state ── Kv (IndexedDB: settings, history, defs, units.*)
-        │ Calc port (views)
-        ▼
-   Worker 1: Giac + GSL + GMP + MPFR
-   (launch; Home, CAS, Solve, analysis, table, units (m5); defs replay)
-Build: build.sh → engines (container) → Find index generator (Node: Giac's help, qalc's XML, `find/factors.yaml`) → Vite (size test) → Capacitor → Gradle
-```
+The parts and their ports are 8.2's map; the diagram of milestone 5 as it stood: [archive/architecture-2026-11-17.md](archive/architecture-2026-11-17.md) section 1.
 
 Web build: the service worker precaches the whole build; the engine files carry their content hash in the name and the install checks it (a missing or different file fails the install and leaves the old version); a new version waits behind the old one and the update line's Restart (the only reload) activates it; `pwa/kill/sw.js` served as `sw.js` switches the worker off; the manifest `id` is `/`; `navigator.storage.persist()` is asked once; a lazy chunk missing after a deploy reloads the page once.
 
