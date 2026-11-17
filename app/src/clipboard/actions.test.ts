@@ -24,7 +24,7 @@ describe("ClipActions order", () => {
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
-    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {} }, port);
+    const c = new ClipActions(session, shell, entry, { insert() {} }, port);
     const copied = c.copyShown();
     const pasted = c.paste();
     await Promise.all([copied, pasted]);
@@ -42,7 +42,7 @@ describe("ClipActions Copy exact with the decimal comma", () => {
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
-    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {} }, port, () => comma);
+    const c = new ClipActions(session, shell, entry, { insert() {} }, port, () => comma);
     await c.copyExact();
     await c.paste();
     return { clip, inserted };
@@ -69,7 +69,7 @@ describe("ClipActions paste of a given text", () => {
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
-    const c = new ClipActions({ items: [] } as unknown as Session, shell, entry, { insert() {}, recall() {} }, port, () => comma);
+    const c = new ClipActions({ items: [] } as unknown as Session, shell, entry, { insert() {} }, port, () => comma);
     return { c, inserted, reads: () => reads };
   };
   it("enters the given text as the Paste key would, without reading the clipboard", async () => {
@@ -87,7 +87,7 @@ describe("ClipActions paste of a given text", () => {
   });
 });
 
-// R276: the picked row's buttons are Store ▶ and Copy as › (its three on a sheet); a hold copies the input as plain text
+// R276: the picked row's buttons are Store ▶ and Copy › (its five on a sheet; R720); a hold copies the input as plain text
 // or the result as Copy does, each a row action (R53's count).
 describe("ClipActions row buttons and the hold", () => {
   const make = () => {
@@ -99,19 +99,28 @@ describe("ClipActions row buttons and the hold", () => {
     const shell = { app: null, showsEntry: true, showMenu: (title: string, items: { id: string }[]) => void menus.push({ title, ids: items.map((i) => i.id) }) } as unknown as AppShell;
     const entry = { insert() {} } as unknown as EntryController;
     const acted: string[] = [];
-    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {}, acted: (id) => void acted.push(id) }, port);
-    return { c, item: item as never, menus, acted, clip: () => clip };
+    const c = new ClipActions(session, shell, entry, { insert() {}, acted: (id) => void acted.push(id) }, port);
+    return { c, item: item as never, menus, acted, clip: () => clip, port };
   };
-  it("the bar holds Store ▶ and Copy as ›; Copy as opens As shown, Exact, LaTeX, Python (R181)", () => {
+  it("the bar holds Store ▶ and Copy ›; Copy › opens Full value, As shown, Exact, LaTeX, Python (R181, R720)", () => {
     const { c, item, menus } = make();
     const buttons = c.rowButtons(item);
-    expect(buttons.map((b) => [b.id, b.label])).toEqual([["store", "Store ▶"], ["copyAs", "Copy as ›"]]);
+    expect(buttons.map((b) => [b.id, b.label])).toEqual([["store", "Store ▶"], ["copy", "Copy ›"]]);
     buttons[1]?.run?.();
-    expect(menus).toEqual([{ title: "Copy as", ids: ["shown", "exact", "latex", "python"] }]);
+    expect(menus).toEqual([{ title: "Copy", ids: ["full", "shown", "exact", "latex", "python"] }]);
   });
-  it("☰ keeps its nine in the same order, then Export › (R130)", () => {
+  it("☰ has seven rows in this order, Export › the seventh (R720)", () => {
     const { c, item } = make();
-    expect(c.menu(item).map((m) => m.id)).toEqual(["insert", "recall", "copy", "store", "delete", "copyAs", "paste", "share", "clear", "export"]);
+    expect(c.menu(item).map((m) => m.id)).toEqual(["store", "copy", "delete", "paste", "share", "clear", "export"]);
+  });
+  it("Copy › Full value writes what a hold on the result does and counts as copy (R720)", async () => {
+    const { c, item, acted, clip, port } = make();
+    await port.writeText("x"); // (a sentinel: only the run's own write can change it)
+    const full = c.menu(item).find((m) => m.id === "copy")?.submenu?.items[0];
+    expect(full).toMatchObject({ id: "full", label: "Full value" });
+    full?.run?.();
+    await vi.waitFor(() => expect(clip()).toBe("1/3"));
+    expect(acted).toEqual(["copy"]);
   });
   it("a hold on the input copies the entry as plain text, on the result Copy's full value; each counts as copy", async () => {
     const { c, item, acted, clip } = make();
@@ -123,17 +132,17 @@ describe("ClipActions row buttons and the hold", () => {
   });
 });
 
-// R130: ☰ Home/CAS keeps items 1 to 9 (their digits are learned); item 10 (key 0) is Export ›, with the work report in it.
-describe("ClipActions menu: Export › is item 10", () => {
+// R130, R720: ☰ Home/CAS has seven rows (their digits are learned); item 7 is Export ›, with the work report in it.
+describe("ClipActions menu: Export › is item 7", () => {
   const menuOf = (items: object[]) => {
     const session = { items } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} }).menu();
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} }).menu();
   };
-  it("items 1 to 9 keep their ids and order; the tenth opens Export › with the work report", () => {
+  it("the seven rows keep their ids and order; the seventh opens Export › with the work report", () => {
     const m = menuOf([{ status: "done", latex: "2", text: "2", facts: {} }]);
-    expect(m.map((i) => i.id)).toEqual(["insert", "recall", "copy", "store", "delete", "copyAs", "paste", "share", "clear", "export"]);
-    const exp = m[9]!;
+    expect(m.map((i) => i.id)).toEqual(["store", "copy", "delete", "paste", "share", "clear", "export"]);
+    const exp = m[6]!;
     expect(exp.label).toBe("Export");
     expect(exp.disabled).toBe(false);
     expect(exp.submenu?.items.map((i) => [i.id, i.label, i.disabled])).toEqual([
@@ -144,8 +153,8 @@ describe("ClipActions menu: Export › is item 10", () => {
     ]);
   });
   it("with nothing finished Export › is off, and an empty history gives it no reason line (fit.spec.ts)", () => {
-    expect(menuOf([])[9]).toMatchObject({ id: "export", disabled: true, reason: undefined });
-    expect(menuOf([{ status: "pending", latex: "2", text: "" }])[9]).toMatchObject({ id: "export", disabled: true, reason: "No result yet" });
+    expect(menuOf([])[6]).toMatchObject({ id: "export", disabled: true, reason: undefined });
+    expect(menuOf([{ status: "pending", latex: "2", text: "" }])[6]).toMatchObject({ id: "export", disabled: true, reason: "No result yet" });
   });
 });
 
@@ -155,7 +164,7 @@ describe("ClipActions export of the work", () => {
   const actions = () => {
     const session = { items: [], view: "home", decimalComma: false } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} });
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} });
   };
   afterEach(() => {
     vi.doUnmock("./workReport.ts");
@@ -201,7 +210,7 @@ describe("ClipActions exportCsv and exportLatex", () => {
   const actions = (items: object[]) => {
     const session = { items, view: "home", decimalComma: false, displayContext: () => ({ format: "std", digits: 12, fixDecimals: 4, angle: "rad" }) } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} });
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} });
   };
   const half = { status: "done", latex: "\\frac12", resultLatex: "0.5", text: "0.5", full: "1/2", fullExact: true, facts: { exact: true, reliableDigits: null }, rational: { n: "1", d: "2" } };
   afterEach(() => {
@@ -254,7 +263,7 @@ describe("ClipActions exportCsv and exportLatex", () => {
   });
 });
 
-// R181: Copy as › Python puts the row's sympy text on the clipboard; ☰ › Export › Python saves the session as n62-<date>.py.
+// R181: Copy › Python puts the row's sympy text on the clipboard; ☰ › Export › Python saves the session as n62-<date>.py.
 describe("ClipActions copyPython and savePython", () => {
   const saved: { name: string; mime: string; text: string }[] = [];
   let clip = "";
@@ -263,7 +272,7 @@ describe("ClipActions copyPython and savePython", () => {
   const actions = (items: object[]) => {
     const session = { items, view: "home", decimalComma: false, displayContext: () => ({ format: "std", digits: 12, fixDecimals: 4, angle: "rad" }) } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} }, port);
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} }, port);
   };
   afterEach(() => {
     vi.doUnmock("./files.ts");

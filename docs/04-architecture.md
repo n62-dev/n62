@@ -122,7 +122,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 ### 2.6 Decision: copy and paste
 
-| What | Copy (☰ 3; a hold on a history row's result) | Menu 6, Copy as › As shown | Copy as › Exact | Copy as › LaTeX |
+| What | Full value (☰ 2 › 1; a hold on a history row's result) | ☰ 2 › 2, As shown | Copy › Exact | Copy › LaTeX |
 |---|---|---|---|---|
 | Home or CAS number | full value: every confirmed digit up to P (40), trailing zeros dropped, `.` (`,` with the decimal-comma setting), plain for 1E-4 ≤ \|x\| < 1E21, else `d.ddd…E±k` | display text, without the mark | Giac's exact text when it exists (`1/3`, `sqrt(2)`) | the result LaTeX |
 | Complex | `a+b*i`, each part as above | yes | yes | yes |
@@ -134,7 +134,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text.
 
-**Paste** (☰ 7; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal).
+**Paste** (☰ 4; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal).
 **Session line** (G210, v0): one JSON line per result, format in `state/sessionLine.ts`.
 **Copy as Python** (G213, G214, G216, G217): sympy through a closed allow-list (`clipboard/python.ts`), units through pint, σ through uncertainties (a ufloat per typed ± and per chip, R115; a non-affine row notes σ's second order); the rest is `# N62 NOT TRANSLATED`.
 **Mechanics:** APK: `@capacitor/clipboard`, `@capacitor/share`, files out by native `save` (`ACTION_CREATE_DOCUMENT`); PWA: `navigator.clipboard`, `navigator.share` (else copy), `<a download>`; files in by `<input type="file">`.
@@ -282,7 +282,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 |---|---|---|
 | Math (row 3, col 1) [r4c2] | Find, everything (R4a) | P8 |
 | Shift + Math | Memory: Find on variables and user functions, with delete and "clear all" | reference: Mem |
-| Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift + Vars = Paste, ☰ 7's path (R329) | P8 |
+| Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift + Vars = Paste, ☰ 4's path (R329) | P8 |
 | Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (r8 rule M1) | P8, P11 |
 | Shift + Tmpl | the unit view (unit slots) | P11; reference: Units |
 | The letters A–Z, `#`, `:`, `;` (Alpha layer, flick down) | **stay**: Find's keyboard (3.7), names, CAS symbols, hex digits A–F (5.4); not the unit slots (P14) | decisions.md "The letters stay" |
@@ -294,8 +294,8 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | ☰ (row 0, col 4, id `menu`) [the G2's Menu key, r3c4] | the status line's ☰ as a key (R278): it opens the view's menu and closes the one it opened; with another sheet open it only closes that sheet; Shift = Settings (R146); a dead press where the view has no menu | R278; docs/06 3b |
 | Esc (row 0, col 5) [r1c5] | stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line; also the hardware Escape; Shift = Clear (R15c2) | reference; R15c point 3 |
 | Undo \| Redo (row 1, cols 4–5) | undo, redo; Shift: ⇤ \| ⇥, the start and end of the line; all dead without an entry line (R15c2) | P13, R16, R15c, R146 |
-| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back; Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find; Insert replaces the call, R324); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 3 and a hold on a row's input or result, Paste ☰ 7, Shift + Vars (R329) and any system paste: no Copy key (R278) | R278, R279 |
-| ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of ten on the picked row, else the last result (decisions.md S2); item 6 is Copy as › | P8, S2, S9 |
+| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back; Shift + Select = Help (R197: the syntax and example of the function at the cursor, else Find; Insert replaces the call, R324); Shift + Deselect = Mode on Angle (R322). Copy is ☰ 2 › 1 and a hold on a row's input or result, Paste ☰ 4, Shift + Vars (R329) and any system paste: no Copy key (R278) | R278, R279 |
+| ☰ on the status line (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of seven on the picked row, else the last result (decisions.md S2, R720); item 2 is Copy › | P8, S2, S9 |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
 | Shift + `−` [r9c5] | the Base menu (5.4) | reference: Base |

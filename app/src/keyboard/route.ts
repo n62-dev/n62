@@ -201,7 +201,8 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
 const uncertainty = (c: RouteCtx, row?: HistoryItem): void => (sheetChunk.palette ? sheetChunk.palette.showUncertainty(c, row) : c.dead());
 
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
- *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), Esc drops the pick, Menu acts
+ *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), ◀ on an
+ *  empty line puts the entry back too, with chips (R720), Esc drops the pick, Menu acts
  *  on the picked row, Store ▶ stores it (R280). Any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
@@ -228,6 +229,13 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
   const item = items[picked];
   c.picked = null;
+  if (isCmd("moveToPreviousChar") && item && c.entry.empty) {
+    // R720: ◀ on a pick with an empty line gives the row's input back (Recall's job since ☰ lost its row); a running row is a dead
+    // press. With text on the line ◀ keeps its job (the caret), as Enter keeps its (R273).
+    if (item.status === "pending") c.dead();
+    else c.recallRow(item);
+    return true;
+  }
   if (action.kind === "insert" && action.latex === STORE_ARROW && item) {
     // R280 (sd-2): Store ▶ (Shift + ᴇ, its flick, a user key) stores the picked row as the row bar's Store ▶ does: its
     // chip and ▶ on the line; a row without a result has nothing to store (the bar's Store ▶ is off there)

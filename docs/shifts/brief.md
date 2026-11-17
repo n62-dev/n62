@@ -72,7 +72,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 |---|---|---|---|---|
 | 870 | [S55](packages/S55.md) room in the four budgeted docs | sandra, Sonnet | `p1/sandra-docsroom` | – |
 | 871 | R700 Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381), if not merged by the stop | ron, Sonnet | `p1/ron-backlayers` | – |
-| 873 | [R720](packages/R720.md) Home and CAS ☰ of seven rows, if not merged by the stop | ron, Sonnet | `p1/ron-homemenu` | R700, R702 |
+| 873 | R720 Home and CAS ☰ of seven rows, if not merged by the stop | ron, Sonnet | `p1/ron-homemenu` | R700, R702 |
 | 874 | [R740](packages/R740.md) Store ▶ on a folded pick keeps the keys down; New name… brings them | ron, Sonnet | `p1/ron-foldstore` | – |
 | 875 | [R722](packages/R722.md) the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
 | 876 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |

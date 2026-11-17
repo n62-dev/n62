@@ -2,7 +2,7 @@
 // R329 (the owner, 2026-11-15): Shift + Vars is Paste, a reserved cell filled. It takes ☰ → Paste's path (clipboard/
 // actions.svelte.ts paste: the clipboard as one number onto the entry line), so a hold on a result then a flick up on Vars
 // puts that result on the line, in Home and in Solve Symb; the keys pressed meanwhile wait for the paste (holdKeys), and
-// where no entry line shows (Plot) it is a dead press. Controls: Vars' tap still opens Find on the user's names, ☰ 7 still
+// where no entry line shows (Plot) it is a dead press. Controls: Vars' tap still opens Find on the user's names, ☰ 4 still
 // pastes (the core list's cases), and Shift + a b/c, 7 and Fmt stay reserved. Key sequences on the real engine; the
 // expected values are derived (9 + 1 = 10, 12 ÷ 4 = 3).
 import { expect, test, type Page } from "@playwright/test";
@@ -85,7 +85,7 @@ test("Vars' Shift legend reads Paste and fits its face, no ▾ (it opens no shee
   await expect(page.locator('[data-key="vars"]')).not.toHaveAttribute("data-dead", "true");
 });
 
-test("controls: Vars' tap opens Find on your names; ☰ 7 still pastes; Shift + a b/c, 7 and Fmt stay reserved (dimmed)", async ({ page }) => {
+test("controls: Vars' tap opens Find on your names; ☰ 4 still pastes; Shift + a b/c, 7 and Fmt stay reserved (dimmed)", async ({ page }) => {
   await tap(page, ["vars"]);
   await expect(page.getByTestId("find")).toBeVisible();
   await tap(page, ["esc"]);

@@ -64,11 +64,11 @@ test("a pick of Slope counts as screen:stat-sheet, not screen:row (R184f1)", asy
   expect(keys["screen:stat-sheet"]).toBe(1);
 });
 
-test("☰ 1 Insert on the picked row opens the same sheet", async ({ page }) => {
+test("Enter on the picked row opens the same sheet (R720: ☰ has no Insert)", async ({ page }) => {
   await ready(page);
   await regress(page);
   await inputs(page).last().tap(); // picks
-  await tap(page, ["menu", "d1"]);
+  await tap(page, ["enter"]);
   await expect(menu(page)).toContainText("Slope");
   await sheetKey(page, ["d2"]);
   expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{0\.15\}$/);

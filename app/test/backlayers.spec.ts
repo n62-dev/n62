@@ -94,11 +94,11 @@ test("(d) Alpha lock: back unlocks", async ({ page }) => {
   stays(page);
 });
 
-test("(e) stacked: the keypad folded, then Shift armed: Shift, then the fold, then leave; Copy as › ends the pick, so no pick lies under it", async ({ page }) => {
+test("(e) stacked: the keypad folded, then Shift armed: Shift, then the fold, then leave; Copy › ends the pick, so no pick lies under it", async ({ page }) => {
   await tap(page, ["d2", "add", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["up"]);
-  await bar(page).getByRole("button", { name: /Copy as/ }).tap();
+  await bar(page).getByRole("button", { name: /Copy ›/ }).tap();
   await expect(sheet(page)).toBeVisible();
   await expect(picked(page)).toHaveCount(0); // (the bar's button ends the pick before the sheet opens)
   await page.goBack();

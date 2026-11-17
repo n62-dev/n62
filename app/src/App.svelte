@@ -46,7 +46,6 @@
     entry,
     busy: () => busy,
     insertResult: (item, whole) => onLine(item, false, false, whole), // (the Menu's list counts its own)
-    recall: (item) => onLine(item, true, false),
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),
@@ -533,7 +532,7 @@
 
     {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>{/if}
 
-    <!-- R11, R276: the picked row's actions, Store ▶ and Copy as › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
+    <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
       {@const Bar = rowBar}
       <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />

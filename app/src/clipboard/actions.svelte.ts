@@ -32,9 +32,7 @@ const NOTICE_MS = 2200;
 export interface RowOps {
   /** Put the result on the line as a chip (a tap on it); `whole`: a linreg or stats1 list too, with no value sheet (R301). */
   insert(item: HistoryItem, whole?: boolean): void;
-  /** Put the entry back on the line, with its chips (a tap on it). */
-  recall(item: HistoryItem): void;
-  /** One of the Menu's row actions (items 1-5: insert, recall, copy, store, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
+  /** One of the Menu's row actions (store, copy, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
   /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
   hold?(job: Promise<unknown>): void;
@@ -178,7 +176,7 @@ export class ClipActions {
       return this.put(exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact);
     });
   }
-  /** R181: Copy as › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
+  /** R181: Copy › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
   copyPython(item?: HistoryItem): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
@@ -333,30 +331,10 @@ export class ClipActions {
     if (!opened) this.say(aboutText("report.openBy"));
   }
 
-  /** The row an action means: the picked one, else the newest finished result. Recall also takes an error or a
-   *  cancelled entry when it is picked (its input comes back). */
-  private recallable(row?: HistoryItem): HistoryItem | undefined {
-    return row && row.status !== "pending" ? row : this.target(row);
-  }
-
-  /** Insert: the result as a chip on the entry line. */
-  insertRow(row?: HistoryItem): boolean {
-    const i = this.target(row);
-    if (!i || !this.shell.showsEntry) return false;
-    this.ops.insert(i);
-    return true;
-  }
   /** R184: the labelled sheet of a linreg or stats1 row (views/statSheet.ts, a lazy module), which inserts a value as a chip;
    *  false: the row has none, so the caller inserts its result whole. */
   async showStats(row: HistoryItem): Promise<boolean> {
     return (await import("../views/statSheet.ts")).showStats(this.shell, this.session, row, this.entry);
-  }
-  /** Recall: the entry back on the line. */
-  recallRow(row?: HistoryItem): boolean {
-    const i = this.recallable(row);
-    if (!i || !this.shell.showsEntry) return false;
-    this.ops.recall(i);
-    return true;
   }
   /** Store ▶: the result and the store arrow on the line, the cursor ready for the variable's name (value ▶ name).
    *  R301: a linreg or stats1 row goes in whole (its value sheet would open beside "Store in"); onto a line with text,
@@ -382,19 +360,26 @@ export class ClipActions {
     return this.session.removeItem(i);
   }
 
-  /** The Home/CAS Menu (docs/05 3.3, S2 rule M2): one fixed list, the same numbers with or without a picked row, acting
-   *  on that row, else on the last result. The picked row's buttons are items 4 and 6 (R276). Item 10 (key 0) is Export ›,
-   *  whose submenu R130, R181 and R200 share; nothing is inserted among items 1 to 9 (their digits are learned). */
+  /** The Home/CAS Menu (docs/05 3.3, S2 rule M2; R720): seven rows, the same numbers with or without a picked row, acting
+   *  on that row, else on the last result. The picked row's buttons are items 1 and 2 (R276). Item 2 is Copy ›, whose first
+   *  item is what a hold copies; item 7 is Export ›, whose submenu R130, R181 and R200 share. Insert and Recall are gone (Enter
+   *  and ◀ on the pick do their jobs, route.ts); 8, 9 and 0 are blank, and a new row takes the next digit (the layout lock). */
   menu(row?: HistoryItem): MenuItem[] {
     const i = this.target(row);
     const none = i === undefined;
     // A disabled item says why on its second line (docs/05 3.1). With an empty history it says nothing: the screen says
-    // "Type a calculation" already, and nine rows with a reason line do not fit over the keypad (fit.spec.ts).
+    // "Type a calculation" already, and the rows with a reason line do not fit over the keypad (fit.spec.ts).
     const empty = this.session.items.length === 0;
     const why = empty ? undefined : tc("clip.noResult");
     const last = row ?? this.session.items.at(-1);
     const noLine = !this.shell.showsEntry;
+    /** A row action: told to the app first, while the keypad is as the user left it (the row buttons share these items). */
+    const act = (id: string, run: () => unknown) => (): void => {
+      this.ops.acted?.(id);
+      void run();
+    };
     const copies: MenuItem[] = [
+      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: act("copy", () => this.copy(row)) },
       { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row) },
       {
         id: "exact",
@@ -407,16 +392,9 @@ export class ClipActions {
       { id: "python", label: tc("clip.subPython"), disabled: none, reason: why, run: () => void this.copyPython(row) },
     ];
     const finished = this.session.items.some((x) => x.status === "done" || x.status === "error");
-    /** A row action: told to the app first, while the keypad is as the user left it (the row buttons share these items). */
-    const act = (id: string, run: () => unknown) => (): void => {
-      this.ops.acted?.(id);
-      void run();
-    };
     return [
-      { id: "insert", label: tc("clip.insert"), disabled: none || noLine, reason: why, run: act("insert", () => this.insertRow(row)) },
-      { id: "recall", label: tc("clip.recall"), disabled: this.recallable(row) === undefined || noLine, reason: why, run: act("recall", () => this.recallRow(row)) },
-      { id: "copy", label: tc("clip.copy"), disabled: none, reason: why, run: act("copy", () => this.copy(row)) },
       { id: "store", label: tc("clip.store"), disabled: none || noLine, reason: why, run: act("store", () => this.storeRow(row)) },
+      { id: "copy", label: tc("clip.copy"), disabled: none, reason: why, submenu: { title: tc("clip.copy"), items: copies } },
       {
         id: "delete",
         label: tc("clip.delete"),
@@ -424,7 +402,6 @@ export class ClipActions {
         reason: last === undefined ? undefined : tc("clip.working"),
         run: act("delete", () => this.deleteRow(row)),
       },
-      { id: "copyAs", label: tc("clip.copyAs"), disabled: none, reason: why, submenu: { title: tc("clip.copyAs"), items: copies } },
       { id: "paste", label: tc("clip.paste"), run: () => this.pasteHeld() },
       { id: "share", label: tc("clip.share"), disabled: !finished, reason: why, run: () => void this.shareSession() },
       { id: "clear", label: tc("clip.clear"), disabled: empty, run: () => void this.session.clearHistory() },
@@ -446,12 +423,12 @@ export class ClipActions {
     ];
   }
 
-  /** The row buttons above the entry line (R276): Store ▶ and Copy as › of the list, for the picked row; Copy as opens
-   *  its three on the sheet. The second tap inserts or recalls, a hold copies, a swipe deletes (History.svelte). */
+  /** The row buttons above the entry line (R276): Store ▶ and Copy › of the list, for the picked row; Copy › opens
+   *  its five on the sheet. The second tap inserts or recalls, a hold copies, a swipe deletes (History.svelte). */
   rowButtons(row: HistoryItem): MenuItem[] {
     const all = this.menu(row);
     const store = all.find((b) => b.id === "store");
-    const as = all.find((b) => b.id === "copyAs");
+    const as = all.find((b) => b.id === "copy");
     const buttons: MenuItem[] = store ? [store] : [];
     if (as?.submenu) {
       const { submenu: sub, ...button } = as;
