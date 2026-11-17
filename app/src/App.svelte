@@ -115,11 +115,8 @@
   /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
    *  not in it: the chunk goes over the network that may be the cause, and the way on must not depend on it. */
   let EngineFailed = $state.raw<typeof import("./views/EngineFailed.svelte").default | undefined>();
-  // The update note shows only when an update waits (A49): its code and style are a lazy chunk (R97), in the stage (R722).
-  let UpdateNote = $state.raw<typeof import("./views/UpdateNote.svelte").default | null>(null);
-  $effect(() => {
-    if (updateOffer.restart && !UpdateNote) void import("./views/UpdateNote.svelte").then((m) => (UpdateNote = m.default)).catch(() => {});
-  });
+  let UpdateNote = $state.raw<typeof import("./views/UpdateNote.svelte").default | null>(null); // A49: Restart, a lazy chunk (R97), in the stage (R722)
+  $effect(() => void (updateOffer.restart && !UpdateNote && import("./views/UpdateNote.svelte").then((m) => (UpdateNote = m.default), () => {})));
   $effect(() => void (session.engineState === "failed" && import("./views/EngineFailed.svelte").then((m) => (EngineFailed = m.default), () => {})));
   let host: HTMLElement | undefined = $state();
   let entryHeight = $state(0);
@@ -504,7 +501,6 @@
           {#if session.engineState === "failed"}<button type="button" class="reload" data-testid="engine-reload" onclick={() => location.reload()}>{t("engine.reload")}</button>{/if}
         </p>
       {/if}
-      <!-- A49, R722: a waiting update's Restart, a pill at the stage's top beside the engine's notes (its own chunk) -->
       {#if updateOffer.restart && UpdateNote}<UpdateNote restart={updateOffer.restart} />{/if}
       {#if shell.app === null}
         <History
@@ -568,9 +564,7 @@
     {/if}
   </div>
 
-  <!-- R722: the bar, on the keypad's top edge (folded, above the slice until R724) -->
-  <StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />
-
+  <StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} /><!-- R722: on the keys (folded, above the slice until R724) -->
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
     <!-- R53: folded, the 44 px slice over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
     {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold} />{/if}
@@ -598,7 +592,6 @@
   </div>
 </main>
 
-
 {#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, over: "keypad" | "view", below = entryHeight)}
   {#if sheetChunk.C}
   <sheetChunk.C
@@ -624,10 +617,9 @@
     max-width: var(--app-max);
     margin: 0 auto;
   }
-  /* R224 (docs/05 3.9): the wide layout, on a landscape screen at least 1000 × 600 (views/wide.ts says the same; change
-     both): the stage with the entry line on the left at full height, the keypad in its own column on the right, the bar
-     at its head (R722), the rows sharing the rest (the grid is the phone's, docs/03 rule 8). No results mode here
-     (canFold): the keypad covers no history. */
+  /* R224 (docs/05 3.9): the wide layout, on a landscape screen at least 1000 × 600 (views/wide.ts too; change both): the
+     stage with the entry line on the left at full height, the keypad in its own column on the right, the bar at its head
+     (R722), its rows (the phone's grid, docs/03 rule 8) sharing the rest. No results mode (canFold): it covers no history. */
   @media (min-width: 1000px) and (min-height: 600px) and (orientation: landscape) {
     .app {
       --app-max: var(--app-max-wide);
@@ -636,16 +628,13 @@
       grid-template-rows: auto minmax(0, 1fr);
     }
     .app > :global(.bar) {
-      grid-column: 2;
-      grid-row: 1;
+      grid-area: 1 / 2;
     }
     .screen {
-      grid-column: 1;
-      grid-row: 1 / -1;
+      grid-area: 1 / 1 / -1 / 2;
     }
     .keys {
-      grid-column: 2;
-      grid-row: 2;
+      grid-area: 2 / 2;
       display: flex;
       flex-direction: column;
       min-height: 0;
