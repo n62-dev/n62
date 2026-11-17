@@ -16,7 +16,7 @@ import { slotNames, SlotsState, type SlotsJson } from "../slots.svelte.ts";
 import { answerChip, answerShown } from "../toHome.ts";
 import type { AppHost, AppInstance, MenuItem, NavDir, SubMenu, ViewId } from "../types.ts";
 import { compileDefinition, type Compiled } from "./compile.ts";
-import { drawValues, nameRead, noteOf, type NameRead } from "./stored.ts";
+import { drawValues, nameRead, noteOf, usesOf, type NameRead } from "./stored.ts";
 import type { AnalysisOutcome, AnalysisRequest, Cell } from "./engineApi.ts";
 
 import { brightness, family } from "../../theme.svelte.ts";
@@ -306,9 +306,10 @@ export class FunctionApp implements AppInstance {
   }
 
   // ---- Symb
-  /** A definition compiled with the stored values last read (R361). */
-  private compile(latex: string, angle: "rad" | "deg"): Compiled {
-    return compileDefinition(latex, angle, drawValues(this.reads));
+  /** A definition compiled with the stored values last read (R361) for `uses`, the names the engine read in it
+   *  (R361f1); without them (a new definition) none, so Plot open asks the engine for it. */
+  private compile(latex: string, angle: "rad" | "deg", uses?: readonly string[]): Compiled {
+    return compileDefinition(latex, angle, uses ? drawValues(this.reads) : undefined, uses);
   }
   define(i: number, latex: string): void {
     const c = this.compile(latex, this.host.settings.angle);
@@ -324,7 +325,7 @@ export class FunctionApp implements AppInstance {
   syncAngle(): boolean {
     const angle = this.host.settings.angle;
     if (this.compiled.every((c) => c.angle === angle)) return false;
-    this.compiled = this.slots.latex.map((l) => this.compile(l, angle));
+    this.compiled = this.slots.latex.map((l, i) => this.compile(l, angle, this.compiled[i]?.uses));
     // R257: the last analysis and the trace y belong to the old unit. The trace is asked in a microtask, outside
     // FunctionPlot.svelte's angle effect that calls this (its reads are not that effect's dependencies).
     this.marks = [];
@@ -333,19 +334,22 @@ export class FunctionApp implements AppInstance {
     queueMicrotask(() => void this.refreshTrace());
     return true;
   }
-  /** R361: on Plot open, the stored names the slots on read, asked of the engine once (their kind and value, never
-   *  Giac's print, P20); a slot that reads one is compiled again with the values, so a name stored again since is drawn
+  /** R361: on Plot open, the Giac text of each slot on that has no drawing evaluator, or was drawn with stored values,
+   *  asked of the engine once: the names its tree reads (R361f1: a bound name, the sum's k, is none), with their kind
+   *  and value (never Giac's print, P20); each is compiled again with them, so a name stored again since is drawn
    *  anew. Counts the open (`event:plot-open`, a slot on) and a drawing of a stored value (`event:plot-stored`). */
   async readStored(): Promise<void> {
     const on = this.active;
-    const names = [...new Set(on.flatMap((i) => this.compiled[i]?.uses ?? []))];
-    if (names.length) {
+    const ask = on.filter((i) => !this.compiled[i]?.fn || this.compiled[i]?.uses);
+    if (ask.length) {
       try {
         const { readPlotValues } = await import("../../calc/plotValues.ts");
-        const got = new Map((await readPlotValues(this.host.calc.engine, names, this.host.settings)).map((v) => [v.name, v]));
-        this.reads = new Map(names.map((n) => [n, nameRead(got.get(n))]));
+        const got = await readPlotValues(this.host.calc.engine, ask.map((i) => this.compiled[i]?.giac ?? ""), this.host.settings);
+        this.reads = new Map(got.flat().map((v) => [v.name, nameRead(v)]));
         const angle = this.angle;
-        this.compiled = this.compiled.map((c, i) => (c.uses ? this.compile(this.slots.latex[i] ?? "", angle) : c));
+        const next = [...this.compiled];
+        ask.forEach((i, k) => (next[i] = this.compile(this.slots.latex[i] ?? "", angle, usesOf(got[k] ?? []))));
+        this.compiled = next;
       } catch {
         // a Cancel or a crash: the curves stay as they were
       }
@@ -359,7 +363,7 @@ export class FunctionApp implements AppInstance {
       const c = this.compiled[i];
       return (c?.uses ?? []).flatMap((n) => {
         const r = this.reads.get(n);
-        const t = r && noteOf(this.slots.names[i] ?? "", n, r, c?.fn !== undefined, (s) => this.mark(s));
+        const t = r && noteOf(this.slots.names[i] ?? "", n, r, c?.fn !== undefined, (s) => this.mark(s), (s) => this.fmtX(s));
         return t ? [t] : [];
       });
     });

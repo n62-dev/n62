@@ -19,6 +19,12 @@ export function nameRead(v: PlotValue | undefined): NameRead {
   return { value: v.re, ...(v.sigma ? { sigma: v.sigma } : {}), ...(v.unit ? { unit: v.unit } : {}) };
 }
 
+/** R361f1: the names a slot reads as the Plot asks of them, from the engine's answer for its Giac text; a stored user
+ *  function is left out (undrawn, silent). */
+export function usesOf(answer: readonly PlotValue[]): string[] {
+  return answer.filter((v) => v.kind !== "fn").map((v) => v.name);
+}
+
 /** The values to compile with: each name read as a real. */
 export function drawValues(reads: ReadonlyMap<string, NameRead>): NameValues {
   const out = new Map<string, number>();
@@ -27,11 +33,12 @@ export function drawValues(reads: ReadonlyMap<string, NameRead>): NameValues {
 }
 
 /** The note line for name `name` of slot `slot` (`drawn`: the slot has a curve), or none when it says nothing. `mark`
- *  writes a number with the decimal mark of the settings. */
-export function noteOf(slot: string, name: string, r: NameRead, drawn: boolean, mark: (s: string) => string): string | undefined {
+ *  writes a number with the decimal mark of the settings; `num` writes the drawn-at value as the app shows a number
+ *  (R361f1: its digits and decimal mark, app.svelte.ts fmtX). */
+export function noteOf(slot: string, name: string, r: NameRead, drawn: boolean, mark: (s: string) => string, num: (s: string) => string): string | undefined {
   if ("why" in r) return numText("plot.storedNot", { slot, name, why: numText(r.why === "notReal" ? "plot.whyNotReal" : "plot.whyNoValue") });
   if (!drawn || (!r.sigma && !r.unit)) return undefined;
-  const value = mark(String(r.value));
+  const value = num(String(r.value));
   if (!r.sigma) return numText("plot.storedUnit", { slot, name, unit: r.unit ?? "", value });
   const shown = mark(shownWithUncertainty(String(r.value), r.sigma, String(r.value)) ?? `${r.value} ± ${r.sigma}`);
   return r.unit ? numText("plot.storedSigmaUnit", { slot, name, shown, unit: r.unit, value }) : numText("plot.storedSigma", { slot, name, shown, value });

@@ -90,20 +90,3 @@ export function latexToJs(latex: string, vars: readonly string[] = ["x"]): strin
 export function jsonToJs(e: Json, vars: readonly string[] = ["x"], deg = false, values?: NameValues): string {
   return js(e, new Set(vars), deg, values);
 }
-
-/** Symbols emit.ts writes as Giac's constants (its CONST), and the empty input: never a stored name. */
-const NOT_NAMES: ReadonlySet<string> = new Set(["Pi", "ExponentialE", "ImaginaryUnit", "PositiveInfinity", "NegativeInfinity", "ComplexInfinity", "Nothing"]);
-
-/** R361: the names `e` reads besides `vars` and the constants, each once in the order met: the stored names a Plot
- *  asks the engine for (emit.ts writes a symbol as its own Giac name). A call's head is no read, nor a user function's
- *  name (`["Call", "f", "x"]`: user functions are not drawn, decisions.md "R258"). */
-export function freeNames(e: Json, vars: readonly string[] = ["x"]): string[] {
-  const out = new Set<string>();
-  const walk = (n: Json): void => {
-    if (typeof n === "string") {
-      if (!vars.includes(n) && !NOT_NAMES.has(n) && !(n.startsWith("'") && n.endsWith("'"))) out.add(n);
-    } else if (Array.isArray(n)) for (let i = n[0] === "Call" ? 2 : 1; i < n.length; i++) walk(n[i] as Json); // (a user function's name: no read)
-  };
-  walk(e);
-  return [...out];
-}
