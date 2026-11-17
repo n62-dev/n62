@@ -6,7 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { open, sheet, tap, touch, useClipboardLock } from "./helpers.ts";
 import { finger } from "./core-lib.ts";
 
-test.use({ permissions: ["clipboard-read", "clipboard-write"] });
+test.use({ permissions: ["clipboard-read", "clipboard-write"], actionTimeout: 10_000 }); // (a missing control fails in 10 s, not at the clipboard budget)
 useClipboardLock();
 
 const CHEV = '[data-testid="fold-chevron"]';
@@ -19,7 +19,7 @@ const fbar = (p: Page) => p.locator(FBAR);
 const clipboard = (p: Page): Promise<string> => p.evaluate(() => navigator.clipboard.readText());
 type Box = { x: number; y: number; width: number; height: number };
 async function box(p: Page, sel: string): Promise<Box> {
-  const b = await p.locator(sel).first().boundingBox();
+  const b = await p.locator(sel).first().boundingBox({ timeout: 5000 });
   if (!b) throw new Error(`${sel} is not visible`);
   return b;
 }
@@ -215,11 +215,13 @@ test("at 360 × 740 the folded bar fits with a pick: every target at least 44 px
   await fold(page);
   await results(page).last().tap();
   await expect(fbar(page).getByTestId("row-actions").getByRole("button")).toHaveCount(2);
-  const boxes = await fbar(page).getByRole("button").evaluateAll((els) => els.map((e) => {
+  const boxes = await fbar(page).locator("button").evaluateAll((els) => els.map((e) => {
     const r = e.getBoundingClientRect();
     return { id: (e as HTMLElement).dataset["testid"] ?? e.textContent ?? "", x: r.x, y: r.y, width: r.width, height: r.height };
   }));
   expect(boxes.length).toBe(6); // ⌃, Home, CAS, Store ▶, Copy ›, ☰
+  const items = await fbar(page).locator("[data-item]").evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["item"]));
+  expect(items).toEqual(["unfold", "home", "cas", "store", "copy", "menu"]); // the lock's folded-bar: (barItems.ts FOLDED_BAR_ITEMS)
   for (const b of boxes) {
     expect(b.height, b.id).toBeGreaterThanOrEqual(44);
     expect(b.width, b.id).toBeGreaterThanOrEqual(32);

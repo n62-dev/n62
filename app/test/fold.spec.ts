@@ -137,9 +137,10 @@ test("a swipe down on the line folds and leaves its text, caret and selection; a
   await page.mouse.up();
   await expect.poll(collapsed).toBe(false);
   await isFolded(page, false);
-  // a tap places the caret: at the line's left end it goes before the first digit
+  // a tap places the caret: at the line's left end it goes before the first digit (R724: in the field's upper part, above
+  // ⌄'s 48 × 48 touch box on its lower-left corner, which folds)
   await page.evaluate(() => window.n62.entry.field?.executeCommand("moveToMathfieldEnd"));
-  await page.touchscreen.tap(l.x + 14, l.y + l.height / 2);
+  await page.touchscreen.tap(l.x + 14, l.y + 12);
   await expect.poll(() => page.evaluate(() => window.n62.entry.field?.position ?? -1)).toBeLessThan(6);
   await isFolded(page, false);
 });
