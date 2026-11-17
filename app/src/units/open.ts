@@ -17,6 +17,7 @@ import { lazy, type Mods, type RouteCtx } from "../keyboard/route.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 import { engineFormat } from "../calc/port.ts";
 import { ANS_KEY, type ChipTable } from "../input/chips.ts";
+import { openLayer } from "../input/backLayer.ts";
 import { userValuesOf } from "../input/latex-to-giac.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { idbKv } from "../state/storage.ts";
@@ -184,9 +185,19 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   lockedValue(mf, view.formula.latex, view.ids);
   view.start();
 
+  /** R700: Android back is Esc for the view (docs/05 3.7): out of the alternatives row, else it leaves; each back takes a new entry for what is left. */
+  let unlayer = (): void => {};
+  const layer = (): void => {
+    unlayer = openLayer(() => {
+      unlayer = () => {};
+      if (view.escape()) layer();
+      else close();
+    });
+  };
   const close = (): void => {
     if (current?.view !== view) return;
     current = null;
+    unlayer();
     view.keep();
     unitPad.model = null;
     unitPad.on = () => {};
@@ -197,6 +208,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     c.entry.focus();
   };
   current = { view, field: mf, element, close };
+  layer();
   window.n62.unitView = current;
   // every press keeps the focus on the view (as the entry line's keys keep it on the line), for the hardware keys
   const keep = (): void => element.focus({ preventScroll: true });

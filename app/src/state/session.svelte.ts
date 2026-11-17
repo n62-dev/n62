@@ -384,7 +384,8 @@ export class Session {
     this.alpha = on;
     this.shift = on && lower;
   }
-  private unlock(): void {
+  /** Every lock and every armed layer off (a lock flick's first step; R700: Android back). */
+  unlock(): void {
     this.shiftLock = this.alphaLock = this.capsLock = this.alpha = this.shift = false;
   }
   toggleAlpha(): void {

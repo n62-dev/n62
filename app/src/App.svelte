@@ -368,6 +368,17 @@
     if ((picked = i) !== null) void loadClip();
     if (i !== null && folded) countUse("pick"); // R53
   }
+  // R700 (F381): Android back drops a picked row as Esc does. One layer for as long as some row is picked (a move to another row
+  // keeps it); it opens after the fold's when the pick came later, so the pick closes first.
+  const hasPick = $derived(picked !== null);
+  $effect(() => {
+    if (hasPick) return openLayer(() => (picked = null));
+  });
+  // R700: ...and an armed or locked Shift or Alpha, as the key that disarms it (session.unlock); one layer while any of the four holds.
+  const armed = $derived(session.shift || session.alpha || session.shiftLock || session.alphaLock);
+  $effect(() => {
+    if (armed) return openLayer(() => session.unlock());
+  });
   /** Results mode (R53, decisions.md P16): the keypad folded to its 44 px slice, the history over the screen. Home and
    *  CAS only; never stored, so a reload has the keys up. */
   let folded = $state(false);
