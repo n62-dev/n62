@@ -64,7 +64,7 @@ In the brief's table form. The steps are left for the owner to number. "Fix" row
 | – | [R710](../../shifts/packages/R710.md) Plot draws its axes, numbers and trace dot in the theme's colours (fix, F385) | ron, Sonnet | `p1/ron-plotaxes` | – |
 | – | [R700](../../shifts/packages/R700.md) Android Back undoes a picked row, the unit view and an armed Shift or Alpha (fix, F381) | ron, Sonnet | `p1/ron-backlayers` | – |
 | – | [R709](../../shifts/packages/R709.md) every control has a spoken name that says what it is (fix, F384) | ron, Sonnet | `p1/ron-spokennames` | – |
-| – | [R702](../../shifts/packages/R702.md) Store ▶ with nothing to store is a dead press; a lone ▶ says what it needs (fix, F382) | ron, Sonnet | `p1/ron-storeempty` | – |
+| – | R702 Store ▶ with nothing to store is a dead press; a lone ▶ says what it needs (fix, F382) | ron, Sonnet | `p1/ron-storeempty` | – |
 | – | [R703](../../shifts/packages/R703.md) the keypad, the status line and Mode fit at font scale 1.5 and 2.0 on a real WebView (fix, F383) | ron, Opus | `p1/ron-textzoom` | R700 |
 | – | [R708](../../shifts/packages/R708.md) the small controls get 48 dp touch boxes without changing their look | ron, Sonnet | `p1/ron-touchboxes` | – |
 | – | [R705](../../shifts/packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Sonnet | `p1/ron-emptyuserkey` | – |
