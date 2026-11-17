@@ -12,8 +12,8 @@ describe("R157: the mark file", () => {
     expect(d.length).toBeGreaterThan(1500);
     expect(mark()).toContain(` d="${d}"`);
   });
-  it("crops to the mark: a viewBox of 31.35 30.5 45.3 47", () => {
-    expect(mark()).toMatch(/viewBox="31\.35 30\.5 45\.3 47"/);
+  it("crops to the mark: a viewBox of 34.04 29.87 39.92 48.25", () => {
+    expect(mark()).toMatch(/viewBox="34\.04 29\.87 39\.92 48\.25"/);
   });
   it("has an SPDX line first (rules-core), as public/icons/icon.svg has", () => {
     expect(mark().split("\n")[0]).toBe("<!-- SPDX-License-Identifier: GPL-3.0-or-later -->");
