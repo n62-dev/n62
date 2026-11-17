@@ -7,7 +7,7 @@
 //   every pole of A and B left of start + N/2 and none at an integer of the range. Any other term is not checked: an
 //   estimate from the first terms says nothing of what comes after them (a bump at k = 1000, cos k / k).
 // - The estimate at a cut M: the partial sum of the first M terms in 20 digits, plus A's Euler–Maclaurin tail (∫ of A
-//   from start + M on, A/2, −A′/12, A‴/720, −A⁽⁵⁾/30240 there) and the alternating part's tail by Euler's transform
+//   from start + M on by Giac's numeric quadrature, A/2, −A′/12, A‴/720, −A⁽⁵⁾/30240 there) and the alternating part's tail by Euler's transform
 //   (the partial sums from M on averaged pairwise LEVELS times). Its error is far below 1e-12 for such terms; the
 //   estimates at M = N and M = 2N must agree to a hundredth of the tolerance, else nothing is decided.
 // - The closed form must agree with the estimate to a relative REL (plus 1e-12 of Σ|t| for a sum near 0); an
@@ -177,7 +177,9 @@ function estimate(giac: Giac, p: Piece, k: string): { at: [number, number]; scal
 /** Σ_{k ≥ m} A(k) for each m of `ms` by Euler–Maclaurin to the fifth derivative; null when Giac gives no real number. */
 function eulerMaclaurin(giac: Giac, a: string, k: string, ms: number[]): number[] | null {
   const at = (e: string, m: number): string => `subst(${e},${k},${m})`;
-  const parts = ms.flatMap((m) => [`int(${a},${k},${m},inf)`, at(a, m), at(`diff(${a},${k})`, m), at(`diff(${a},${k},3)`, m), at(`diff(${a},${k},5)`, m)]);
+  // The integral with a float bound is Giac's numeric quadrature (about 1e-14 here): its exact one gave `infinity` for
+  // ∫ 1/(k^7+3) from 201 on, in 144 ms.
+  const parts = ms.flatMap((m) => [`int(${a},${k},evalf(${m}),inf)`, at(a, m), at(`diff(${a},${k})`, m), at(`diff(${a},${k},3)`, m), at(`diff(${a},${k},5)`, m)]);
   const vals = splitList(giac.eval(`evalf([${parts.join(",")}],30)`))?.map(num);
   if (!vals || vals.length !== 5 * ms.length || vals.some((v) => v === null)) return null;
   return ms.map((_, i) => {

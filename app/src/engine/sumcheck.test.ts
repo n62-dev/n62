@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G618: Giac's closed form of Σ to ∞ against the series' own terms (sumcheck.ts). The values are derived (telescoping,
-// the Basel and Leibniz series, (1 + π coth π)/2 for Σ_{k≥0} 1/(k²+1)); a value off by a relative 1e-6 must be refuted
+// the Basel and Leibniz series, (1 + π coth π)/2 for Σ_{k≥0} 1/(k²+1); one oracle value); a value off by a relative 1e-6 must be refuted
 // and one off by 1e-11 kept, which shows the check ran and that its estimate is far inside REL.
 import { beforeAll, describe, expect, it } from "vitest";
 import { euler, sumRefuted } from "./sumcheck.ts";
@@ -38,6 +38,9 @@ describe.skipIf(!giacAvailable())("G618 on the real engine", () => {
     ["(-1)^(n+1)/(2*n+1)", "n", 0, Infinity, "-pi/4"],
     ["1/k^2", "k", -Infinity, -1, "pi^2/6"],
     ["1/(k^2+1)", "k", -Infinity, Infinity, "pi*cosh(pi)/sinh(pi)"],
+    // oracle: mpmath nsum at 40 and 60 digits agree; Giac's exact ∫ of this term from 201 on is `infinity`, so the tail
+    // takes its numeric quadrature
+    ["1/(k^7+3)", "k", 1, Infinity, "258169727093034522482691307877507/10^33"],
   ];
   it.each(right)("Σ %s over %s from %s to %s = %s: kept, refuted when off by 1e-6", (t, k, lo, hi, v) => {
     expect(sumRefuted(giac, t, k, lo, hi, v)).toBe(false);
