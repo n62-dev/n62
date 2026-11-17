@@ -713,18 +713,21 @@ stage_findings() { grep -E '^ {2}(sweep|seq|casback|viewsweep|findcensus) (NEW|N
 # lane_tag: "[A] " or "[B] " when N62_LANE (exported by `night.sh --lane`) names a lane, else nothing; every log line of a lane
 # starts with it after the time.
 lane_tag() { if [[ "${N62_LANE:-}" =~ ^[AB]$ ]]; then printf '[%s] ' "$N62_LANE"; fi; }
-# henri_input <log> <lane> [<n>]: henri's stdin in a lane: the last <n> (80) lines of his lane (its tagged lines with their indented
-# continuation lines, untagged lines and headers) and every MERGED, NOT MERGED or SKIPPED line of the other lane since the newest
-# night header, in log order.
+# henri_input <log> <lane> [<n>]: henri's stdin in a lane: his lane's lines (its tagged lines with their indented continuation lines,
+# untagged lines and headers) from its newest `Opus pass <k> reply:` line on, at least the last <n> (80) and at most the last 400
+# (A260: a pass per six packages, which 80 lines do not hold), and every MERGED, NOT MERGED or SKIPPED line of the other lane since
+# the newest night header, in log order. With <lane> empty (a night without lanes) the untagged lines are his.
 henri_input() {
-  awk -v me="$2" -v keep="${3:-80}" '
+  awk -v me="$2" -v keep="${3:-80}" -v most=400 '
     { line[NR] = $0
       if ($0 ~ /^## .* night/) { night = NR; cur = ""; lane[NR] = "" }
       else if ($0 ~ /^#/) { cur = ""; lane[NR] = "" }
       else if ($0 ~ /^- [0-9][0-9]:[0-9][0-9] \[[AB]\] /) { cur = substr($0, 10, 1); lane[NR] = cur }
       else if ($0 ~ /^- /) { cur = ""; lane[NR] = "" }
-      else lane[NR] = cur }
+      else lane[NR] = cur
+      if (lane[NR] == me && $0 ~ /^- [0-9][0-9]:[0-9][0-9] (\[[AB]\] )?Opus pass [0-9]+ reply:/) pass = NR }
     END {
+      if (pass) { c = 0; for (i = pass; i <= NR; i++) if (lane[i] == "" || lane[i] == me) c++; if (c > keep) keep = c < most ? c : most }
       k = 0; for (i = NR; i >= 1 && k < keep; i--) if (lane[i] == "" || lane[i] == me) { own[i] = 1; k++ }
       for (i = 1; i <= NR; i++)
         if (own[i] || (i > night && lane[i] != "" && lane[i] != me && line[i] ~ /^- / && line[i] ~ /MERGED|SKIPPED/)) print line[i]

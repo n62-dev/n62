@@ -10,8 +10,9 @@
 #   scripts/night.sh --stop A|B|all                     (the owner's stop: logs `STOPPED night.sh (lane A): by the owner`)
 #
 # Lanes (A47c): --lane A|B exports N62_LANE, so every log line of the lane (night.sh's and the pipeline's) starts with [A]
-# or [B] after its time; henri runs the table "### Lane X queue" and reads the last 80 lines of his lane plus the other lane's
-# MERGED, NOT MERGED and SKIPPED lines since the newest night header (henri_input). Without --lane: one queue, "The queue", as before.
+# or [B] after its time; henri runs the table "### Lane X queue" and reads his lane's lines from its newest Opus pass reply on (80 to
+# 400 lines) plus the other lane's MERGED, NOT MERGED and SKIPPED lines since the newest night header (henri_input). Without --lane:
+# one queue, "The queue", and the untagged lines read the same way. An Opus pass after every PASS_EVERY (6) finished packages (A260).
 # The guard: one night.sh per lane, a pid file each (.coord/night-A.pid, night-B.pid; night-all.pid without --lane), checked with
 # kill -0 and the command line; a lane refuses to start while it or a night without lanes runs, a night without lanes while any
 # runs (exit 3, logged); a stale pid file is replaced and logged. The first of two lanes writes the night header, the second none.
@@ -124,10 +125,11 @@ export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
 limit_max=10   # A121: usage limits in a row; 10 x 1800 s covers the CLI's five-hour window, and a wait costs no usage
 henri_limit='(henri: usage limit)'
 dry_rc=0; steps=0; limits=0; bad=0; closing=0; declare -A norsl=() waited_at=(); merges=0
+PASS_EVERY=6  # A260 (owner, 2026-11-17, on Pro): an Opus pass after every six finished packages; henri_input keeps the lane since its last pass
 henri_prompt='You are henri, the night coordinator. Read docs/shifts/brief.md section 0c (the rules, the queue table and the Opus pass) and the tail of .coord/log.md on stdin. Reply with exactly one line and nothing else: the next command to run, one of
   scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto   (the next queue step not done; skip steps the table or the log marks merged or skipped)
   scripts/pipeline.sh <agent> "<FIX prompt, verbatim>" --id <IDf1> --branch <branch> --model <m> --audit-model auto   (a FIX line of the last Opus pass, one per call, in order)
-  scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" "<open questions or none>"   (after every 3 finished packages since the last pass, and at the end)
+  scripts/pipeline.sh pass <n> "<IDs with merge commits or unmerged branches>" "<open questions or none>"   (after every '"$PASS_EVERY"' finished packages since the last pass, and at the end)
   scripts/pipeline.sh report                                                     (after the last pass, its device step and its FIX packages)
   SHIFT DONE                                                                     (after the report)
 A step whose log line says MERGED, NOT MERGED or SKIPPED (the pipeline line, or the RESULT line night.sh writes) is finished; never repeat a finished step. A step whose log line says WAITS is not finished: take the next row whose After is met and come back to it once that After has merged. Follow the last Opus pass QUEUE line. Decide nothing else. In a FIX prompt use no backtick and no dollar sign (the command is refused with them).'
@@ -136,7 +138,7 @@ closing_prompt='You are henri, the night coordinator. The night is closing (nigh
   NO PASS   (no package finished since the last Opus pass)
 Start no queue step and no FIX package. Use no backtick and no dollar sign.'
 if [[ -n "$lane" ]]; then  # A47c: henri's lane
-  lane_prompt="In this night you run lane $lane: your table is \`### Lane $lane queue\` in section 0c (not \"The queue\" and not lane $other's table). The log on stdin holds your lane's lines (marked [$lane] after the time), lines without a mark, and lane $other's finished steps since the night started (marked [$other]), which an After of yours may name. Count the three packages for an Opus pass, and the IDs of a pass, in your lane only; never run a lane $other step or one of its FIX lines."
+  lane_prompt="In this night you run lane $lane: your table is \`### Lane $lane queue\` in section 0c (not \"The queue\" and not lane $other's table). The log on stdin holds your lane's lines (marked [$lane] after the time), lines without a mark, and lane $other's finished steps since the night started (marked [$other]), which an After of yours may name. Count the $PASS_EVERY finished packages for an Opus pass, and the IDs of a pass, in your lane only; never run a lane $other step or one of its FIX lines."
   if [[ "$lane" == B ]]; then lane_prompt+=" Lane B never runs the report: after your last pass, its device step and its FIX packages, answer SHIFT DONE (lane A's night.sh writes the report)."
   else lane_prompt+=" Before the report, night.sh waits for lane B to end."; fi
   henri_prompt+=$'\n'"$lane_prompt"
@@ -163,8 +165,8 @@ ask_henri() {  # <n> <prompt>: henri's one-line reply
   rm -f "$tmp" "$tmp.in" "$tmp.err"
   echo "$r"
 }
-henri_stdin() {  # A47c: in a lane, henri_input (pipeline-lib.sh); else the log's last 80 lines
-  if [[ -n "$lane" ]]; then henri_input "$coord/log.md" "$lane"; else tail -n 80 "$coord/log.md"; fi
+henri_stdin() {  # A47c, A260: henri_input (pipeline-lib.sh): the lane's lines (no lane: the untagged ones) since its last pass, 80 to 400
+  henri_input "$coord/log.md" "$lane"
 }
 unsafe() {  # <cmd>: true (unsafe) for a bare ; & | < > outside quotes, a backslash outside quotes, a line ending inside quotes, or a backtick or $ anywhere
   [[ "$1" != *[\`\$]* ]] || return 0
@@ -289,7 +291,7 @@ while :; do
 
   if [[ $dry -eq 1 && -n "$lane" && $steps -eq 0 ]]; then  # A47c: what henri would get, once
     say "henri prompt (lane $lane): $lane_prompt"
-    say "henri input (lane $lane's last 80 lines and lane $other's finished steps since the night header; $coord/log.md):"
+    say "henri input (lane $lane's lines since its last Opus pass, 80 to 400, and lane $other's finished steps since the night header; $coord/log.md):"
     [[ ! -f "$coord/log.md" ]] || henri_input "$coord/log.md" "$lane" | sed 's/^/  | /'
   fi
   cmd="$(ask_henri "$n" "$henri_prompt")"
