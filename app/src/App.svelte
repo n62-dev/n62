@@ -569,9 +569,8 @@
   {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar -->
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
     <!-- R53, R724: folded, the 44 px folded bar over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
-    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}>
-      {#snippet bar()}<StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} folded onunfold={unfold} actions={pickBar} />{/snippet}
-    </Fold>{/if}
+    {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}
+      bar={{ session, shell, busy, cas: casKeys, onpress: press, onmode: openMode }} pick={folded && clip && rowBar && picked !== null ? { clip, Bar: rowBar, row: session.items[picked], drop: () => (picked = null) } : undefined} />{/if}
     <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}
@@ -595,10 +594,6 @@
     {/if}
   </div>
 </main>
-
-{#snippet pickBar()}
-  {#if clip && rowBar && picked !== null && session.items[picked]}{@const Bar = rowBar}<Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} folded inbar onaction={() => (picked = null)} />{/if}
-{/snippet}
 
 {#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, over: "keypad" | "view", below = entryHeight)}
   {#if sheetChunk.C}
