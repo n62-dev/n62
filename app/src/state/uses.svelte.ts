@@ -3,7 +3,7 @@
 // counter (taps.svelte.ts), under its own IndexedDB key `uses`. Counted on the device only, never sent, and not in a
 // backup (backup.ts LEFT_OUT: it judges this install's use). Its own chunk: App.svelte loads it on the first fold, and
 // Settings › Counters › Results mode reads it. Counted names: `fold.swipe` (each fold by the swipe), `fold.hw` (by the desktop key, R131), `pick` (a row
-// picked by a tap while folded) and each row action run while folded (`insert`, `recall`, `copy`, `store`, `delete`).
+// picked by a tap while folded) and each row action run while folded (`insert`, `recall`, `copy`, `store`, `delete`), and `store.new`: New name… on the store sheet, which brings the keys up (R740; not an action of the sum).
 // P16's test reads the folds (`fold.swipe` and `fold.hw`, plus `fold.handle`: counts stored before R283 removed the handle stay in the total) and the actions' sum after 14 days from `since`.
 import type { Kv } from "./storage.ts";
 

@@ -27,7 +27,7 @@ function ctx(cas = false) {
   session.userNames = [{ name: "A", kind: "var", preview: "5", view: "home", time: 1, mark: "=" } satisfies UserName];
   const stored: string[] = [];
   const shell = { app: null, sheet: null as Sheet | null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, closeSheet: () => void (shell.sheet = null), picked: (p: { kind: string; item?: { run?: () => void } }) => void (p.kind === "run" && ((shell.sheet = null), p.item?.run?.())) };
-  showStore({ shell, session, store: (latex) => void stored.push(latex) }, "7");
+  showStore({ shell, session, store: (latex) => void stored.push(latex), folded: () => false, newName() {} }, "7");
   // the entry line, as far as these keys reach it: what was typed on it, one action at a time
   const line: string[] = [];
   const entry = { empty: false, endSelect() {}, run: (a: { kind: string; text?: string }) => void line.push(a.kind === "type" ? (a.text ?? "") : `<${a.kind}>`) };

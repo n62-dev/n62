@@ -45,7 +45,7 @@
     shell,
     entry,
     busy: () => busy,
-    insertResult: (item, whole) => onLine(item, false, false, whole), // (the Menu's list counts its own)
+    insertResult: (item, whole, stay) => onLine(item, false, false, whole, stay), // (the Menu's list counts its own)
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),
@@ -279,7 +279,7 @@
   function openStore(row?: HistoryItem): void {
     if (shell.app !== null) return;
     const store = (latex: string): void => { entry.insert(latex); route.enterLine(ctx); }; // the name after ▶, then Enter: the one store path (R298: before the field, Enter waits for it)
-    onFind(finder(), (m) => { picked = null; m.showStore({ shell, session, store }, m.storedText(session, row, entry.value)); });
+    onFind(finder(), (m) => { picked = null; m.showStore({ shell, session, store, folded: () => folded, newName: () => { countUse("store.new"); unfold(); } }, m.storedText(session, row, entry.value)); });
   }
   const finder = (): Promise<typeof import("./find/finder.ts")> => import("./find/finder.ts"); // (one import() site: each carries its own preload list)
   function onFind<T>(load: Promise<T>, show: (t: T) => void): void {
@@ -403,9 +403,9 @@
   }
   /** A row's value, or with `recall` its entry, goes on the line and the keys come back for it. `count`: false for the
    *  Menu's list, which counts its own; a second tap on a row and Enter on a pick are counted here. `whole`: R301. */
-  function onLine(item: HistoryItem, recall: boolean, count = true, whole = false): void {
+  function onLine(item: HistoryItem, recall: boolean, count = true, whole = false, stay = false): void {
     if (count && folded) countUse(recall ? "recall" : "insert");
-    folded = false;
+    if (!stay) folded = false; // (Store ▶ stays: R740)
     if (recall) {
       entry.set(session.input(item), item.chips, item.readsAngle && item.angle ? item.angle : null);
     }

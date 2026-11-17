@@ -194,7 +194,7 @@ test("Esc after its own jobs (a sheet level, a pick), Android back, and a reload
   await expect(keys(page)).toHaveAttribute("data-fold-ready", "true");
 });
 
-test("folded: a tap picks, the second inserts and unfolds; a hold copies and a swipe deletes with the keys down, a recall and Store ▶ unfold; a letter types; ☰ rises over the history", async ({ page }) => {
+test("folded: a tap picks, the second inserts and unfolds; a hold copies and a swipe deletes with the keys down, a recall unfolds and Store ▶ keeps the keys down; a letter types; ☰ rises over the history", async ({ page }) => {
   await rows(page);
   await fold(page);
   const slice = await box(page, SLICE);
@@ -225,10 +225,12 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   await fold(page);
   await results(page).first().tap();
   await bar(page).getByRole("button", { name: "Store ▶" }).tap();
-  await isFolded(page, false);
+  await isFolded(page, true); // R740: Store ▶ keeps the keys down
   expect(await entryValue(page)).toContain("\\blacktriangleright");
   await expect(page.getByTestId("store")).toBeVisible(); // R281: Store ▶ opens the store sheet; Esc closes it
-  await tap(page, ["esc"]);
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("store")).toBeHidden();
+  await isFolded(page, true);
 
   await clearLine(page);
   await fold(page);
@@ -241,6 +243,83 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   const m = await box(page, '[data-testid="menu"]');
   expect(m.y + m.height).toBeLessThanOrEqual(slice.y + 1); // from the slice's top edge, over the history
   expect(m.y).toBeGreaterThanOrEqual((await box(page, "header")).height);
+});
+
+/** R740: folded, the bar's Store ▶ on a picked result: the sheet "Store in" opens over the history and the keys stay down. */
+async function foldedStore(p: Page): Promise<void> {
+  await rows(p, 2);
+  await fold(p);
+  await results(p).last().tap();
+  await bar(p).getByRole("button", { name: "Store ▶" }).tap();
+  await expect(p.getByTestId("store")).toBeVisible();
+}
+const storeSheet = (p: Page) => p.getByTestId("store");
+
+test("R740: folded, Store ▶ keeps the keys down; a tap on a free letter stores, the new row shows, the keys stay down", async ({ page }) => {
+  await foldedStore(page);
+  await isFolded(page, true);
+  expect(await entryValue(page)).toContain("\\blacktriangleright");
+  await storeSheet(page).locator('[data-id="name:B"]').tap();
+  await expect(storeSheet(page)).toBeHidden();
+  await expect(page.locator('[data-status="done"]')).toHaveCount(3);
+  await isFolded(page, true);
+  await expect(page.locator("article.item .in").last()).toContainText("B"); // (the fake engine keeps no names: the row's input is the store)
+});
+
+test("R740: folded, ☰ then Store ▶ keeps the keys down too", async ({ page }) => {
+  await rows(page, 2);
+  await fold(page);
+  await results(page).last().tap();
+  await page.getByTestId("menu-button").tap();
+  await sheet(page).locator('[data-id="store"]').tap();
+  await expect(storeSheet(page)).toBeVisible();
+  await isFolded(page, true);
+});
+
+test("R740: folded, the sheet's last row is New name…: it brings the keys up, the sheet stays, letters type the name", async ({ page }) => {
+  await foldedStore(page);
+  const last = storeSheet(page).getByRole("menuitem").last();
+  await expect(last).toHaveAttribute("data-id", "new");
+  await expect(last).toContainText("New name…");
+  await last.tap();
+  await isFolded(page, false);
+  await expect(storeSheet(page)).toBeVisible();
+  await page.keyboard.type("rate"); // (a hardware keyboard: the letters go to the sheet's filter)
+  await expect(storeSheet(page).getByTestId("sheet-filter")).toHaveText("rate");
+  await tap(page, ["enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(3);
+  await expect(page.locator("article.item .in").last()).toContainText("rate");
+});
+
+test("R740: unfolded, Store ▶ on a pick has no New name… row (the keys are there)", async ({ page }) => {
+  await rows(page, 2);
+  await results(page).last().tap();
+  await bar(page).getByRole("button", { name: "Store ▶" }).tap();
+  await expect(storeSheet(page)).toBeVisible();
+  await expect(storeSheet(page).locator('[data-id="new"]')).toHaveCount(0);
+});
+
+test("R740: at 412 × 815 with no stored names, New name… is in view without a scroll", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 815 });
+  await foldedStore(page);
+  const row = storeSheet(page).locator('[data-id="new"]');
+  await expect(row).toBeVisible();
+  const [r, list] = await Promise.all([row.boundingBox(), storeSheet(page).locator(".list").boundingBox()]);
+  if (!r || !list) throw new Error("no box");
+  expect(r.y).toBeGreaterThanOrEqual(list.y - 1);
+  expect(r.y + r.height).toBeLessThanOrEqual(list.y + list.height + 1);
+});
+
+test("R740: the controls: Copy › leaves the keys down, a recall unfolds", async ({ page }) => {
+  await rows(page, 2);
+  await fold(page);
+  await results(page).last().tap();
+  await bar(page).getByRole("button", { name: "Copy ›" }).tap();
+  await sheet(page).locator('[data-id="full"]').tap();
+  await isFolded(page, true);
+  await page.locator("article.item .in").first().tap();
+  await page.locator("article.item .in").first().tap();
+  await isFolded(page, false);
 });
 
 test("by keys: Enter on a pick inserts, or recalls a row without a result, brings the keys back and counts; the Copy key counts and stays down", async ({ page }) => {
@@ -300,13 +379,17 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await page.evaluate(() => history.back());
   await expect(sheet(page)).toBeHidden();
   await expect.poll(layer).toBeUndefined();
-  // Store ▶ from the list over the fold (R720: ☰ has no Insert): the list and the fold close in one update, the store sheet opens
+  // Store ▶ from the list over the fold (R720: ☰ has no Insert): the list closes, the store sheet opens, the keys stay down (R740)
   await fold(page);
   await page.getByTestId("menu-button").tap();
   await sheet(page).locator('[data-id="store"]').tap();
-  await isFolded(page, false);
+  await isFolded(page, true); // R740: the keys stay down
+  await expect(page.getByTestId("store")).toBeVisible();
   await page.keyboard.press("Escape"); // (the store sheet is a layer of its own while it is open)
   await expect(sheet(page)).toBeHidden();
+  await isFolded(page, true);
+  await clearLine(page);
+  await page.locator(SLICE).tap();
   await expect.poll(layer).toBeUndefined();
   // the count is even: a new fold takes one entry, and back closes it
   await clearLine(page);
@@ -374,7 +457,11 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await fold(page);
   await results(page).first().tap();
   await bar(page).getByRole("button", { name: "Store ▶" }).tap(); // store
-  await expect(page.getByTestId("store")).toBeVisible(); // R281: the store sheet; Esc closes it
+  await expect(page.getByTestId("store")).toBeVisible(); // R281: the store sheet; R740: the keys stay down
+  await isFolded(page, true);
+  await storeSheet(page).locator('[data-id="new"]').tap(); // New name…: the keys come up, counted as `store.new`
+  await isFolded(page, false);
+  await expect(page.getByTestId("store")).toBeVisible();
   await tap(page, ["esc"]);
   await clearLine(page);
   await fold(page);
@@ -388,7 +475,7 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await results(page).first().tap(); // the second tap: insert
   await isFolded(page, false);
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
-  expect(counts).toEqual({ "fold.swipe": 6, pick: 4, insert: 2, recall: 1, copy: 1, store: 1, delete: 1 });
+  expect(counts).toEqual({ "fold.swipe": 6, pick: 4, insert: 2, recall: 1, copy: 1, store: 1, "store.new": 1, delete: 1 });
   // the keys up: a hold copies, uncounted
   await clearLine(page);
   await holdLast(page);

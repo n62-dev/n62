@@ -48,6 +48,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line.** Rule: docs/04 5.1, docs/05 3.2. Archived.
 - **R15b (2026-10-17): cluster rows 36 px; the place target at least 48 × 28 px** (R82f2). Archived, "Opus pass 96". Would change if: 36 px keys are mis-tapped on the phone.
 - **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS). Would change if: under 14 folds or 10 actions while folded in 14 days. Archived.
+  - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).
 - **R21 (2026-10-14): pick sheets rise over the keypad's rows 3–9, Settings too;** 36 px rows, 44 px cells, then scroll. Archived.
 - **S2: one menu system (2026-10-13).** Rule: [archive/r8-menus.md](archive/r8-menus.md) sections 5–6 (M1–M7). Archived, "Opus pass 96". Would change if: a G2 answer contradicts a rule.
 - **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke. Archived.

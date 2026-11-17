@@ -14,12 +14,12 @@ import { showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.sve
 const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promise.resolve() });
 const name = (n: string, preview: string, time: number, kind: UserName["kind"] = "var"): UserName => ({ name: n, kind, preview, view: "home", time, mark: "=" });
 
-function setup(names: UserName[] = [name("A", "5", 1), name("C", "299792458", 2), name("rate", "0.0425", 3), name("R2", "10000", 4)]) {
+function setup(names: UserName[] = [name("A", "5", 1), name("C", "299792458", 2), name("rate", "0.0425", 3), name("R2", "10000", 4)], folded: () => boolean = () => false, newName: () => void = () => {}) {
   const session = new Session(new FakeCalc(), kv());
   session.userNames = names;
   const stored: string[] = [];
   const shell: { sheet: Sheet | null } = { sheet: null };
-  showStore({ shell, session, store: (latex) => void stored.push(latex) }, "≈ 0.333333333333");
+  showStore({ shell, session, store: (latex) => void stored.push(latex), folded, newName }, "≈ 0.333333333333");
   const sheet = shell.sheet as unknown as Sheet;
   /** A tap on the item `id` (Sheet.svelte's ontap: shell.picked(sheet.activate(i))). */
   const tap = (id: string): void => {
@@ -28,6 +28,21 @@ function setup(names: UserName[] = [name("A", "5", 1), name("C", "299792458", 2)
   };
   return { session, sheet, stored, tap };
 }
+
+describe("the store sheet's New name… row (R740)", () => {
+  it("is the last row while folded, keeps the sheet open and calls newName; unfolded it is not there", () => {
+    let calls = 0;
+    let folded = true;
+    const { sheet, tap } = setup([name("rate", "0.0425", 3)], () => folded, () => void (folded = false, calls++));
+    const items = sheet.level.items;
+    expect(items.at(-1)).toMatchObject({ id: "new", label: "New name…", keep: true });
+    expect(items.filter((x) => x.cell)).toHaveLength(26);
+    tap("new");
+    expect(calls).toBe(1);
+    expect(sheet.level.items.some((x) => x.id === "new")).toBe(false); // the keys are up: the row goes
+    expect(setup([]).sheet.level.items.some((x) => x.id === "new")).toBe(false);
+  });
+});
 
 describe("the store sheet (R281)", () => {
   it("lists A–Z as cells, a filled one with its value and mark, then the other names newest first", () => {
@@ -160,7 +175,7 @@ describe("the title's value (R281)", () => {
     session.userNames = [name("A", "5", 1)]; // (after the session's own start has read its names)
     const shell: { sheet: Sheet | null } = { sheet: null };
     const text = storedText(session, undefined, "2+3\\blacktriangleright");
-    showStore({ shell, session, store() {} }, text);
+    showStore({ shell, session, store() {}, folded: () => false, newName() {} }, text);
     expect(shell.sheet?.path).toBe("Store in");
     const sheet = shell.sheet as Sheet;
     sheet.activate(0); // A, filled: armed before the text came

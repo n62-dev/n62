@@ -20,7 +20,7 @@ export interface LoaderDeps {
   /** A job runs: the idle preparing of the Find index gives way to it. */
   readonly busy: () => boolean;
   /** A tapped or picked result goes on the entry line (the clipboard code's `insert`). */
-  readonly insertResult: (item: HistoryItem, whole?: boolean) => void;
+  readonly insertResult: (item: HistoryItem, whole?: boolean, stay?: boolean) => void;
   /** A row action of the Menu's list runs (the clipboard code's `acted`). */
   readonly acted: (id: string) => void;
   /** ☰ → Paste runs: the keys pressed while it reads the clipboard wait for it (route.holdKeys). */

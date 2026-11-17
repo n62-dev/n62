@@ -30,8 +30,9 @@ const NOTICE_MS = 2200;
 
 /** What the row actions do on the entry line; App owns these (a tap on a row uses them before this code has loaded). */
 export interface RowOps {
-  /** Put the result on the line as a chip (a tap on it); `whole`: a linreg or stats1 list too, with no value sheet (R301). */
-  insert(item: HistoryItem, whole?: boolean): void;
+  /** Put the result on the line as a chip (a tap on it); `whole`: a linreg or stats1 list too, with no value sheet (R301);
+   *  `stay`: a folded keypad stays down (Store ▶, R740: its sheet takes the name). */
+  insert(item: HistoryItem, whole?: boolean, stay?: boolean): void;
   /** One of the Menu's row actions (store, copy, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
   /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
@@ -343,7 +344,7 @@ export class ClipActions {
     const i = this.target(row);
     if (!i || !this.shell.showsEntry) return false;
     const typed = !this.entry.empty;
-    this.ops.insert(i, true);
+    this.ops.insert(i, true, true); // (R740: folded, the keys stay down)
     this.entry.insert("\\blacktriangleright");
     this.ops.stored?.(typed ? undefined : i); // R281: "Store in" opens
     return true;
