@@ -64,8 +64,6 @@ The order (owner, 2026-11-12): what changes how the calculator is used first, th
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 835 | [R361](packages/R361.md) the Plot draws a function that reads a value stored in Home | ron, Opus | `p1/ron-plotstored` | – |
-| 836 | R362 the start chunk's first cut: app opening and view-tab icons load with the first app | ron, Opus | `p1/ron-startcut1` | – |
-| 854 | R582 one physical Escape no longer loses what is typed next (F362) | ron, Opus | `p1/ron-escmathmode` | – |
 | 855 | [R575](packages/R575.md) everyday key slips get plain-word messages (F351) | ron, Opus | `p1/ron-slipwords` | – |
 | 856 | [G576](packages/G576.md) exact powers past the limit get their number (F352, F303) | gorge, Opus | `p1/gorge-bigintpow` | – |
 | 857 | [R585](packages/R585.md) ∥ after a value takes it in (F365) | ron, Opus | `p1/ron-parafter` | – |
