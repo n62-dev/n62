@@ -52,6 +52,55 @@ grep -q 'closing 2 of 2' <<<"$out" && ! grep -q 'run: scripts/pipeline.sh report
 out="$(N62_COORD="$c" N62_NIGHT_NOW=07:00 "$night" --dry-run --max-steps 4 2>&1)"
 grep -qi 'lane' <<<"$out" && fail "no --lane: the dry run talks of lanes: $out"
 "$night" --lane C --dry-run >/dev/null 2>&1 && fail "--lane C is accepted"
+# A260: a pass per six packages: henri's input keeps the lane's lines from its newest Opus pass reply on (80 to 400 lines)
+hi() { (source "$dir/pipeline-lib.sh"; henri_input "$@"); }
+pkg() {  # <lane> <id> <lines>: one finished package of <lines> log lines, its MERGED line last
+  local j; for j in $(seq 1 $(($3 - 1))); do printf -- '- 09:00 [%s] pipeline #1 %s: step %d\n' "$1" "$2" "$j"; done
+  printf -- '- 09:00 [%s] pipeline #1 %s: MERGED m%s\n' "$1" "$2" "$2"
+}
+{
+  echo "## 2026-11-17 night, 07:00 (lane A)"
+  pkg A P0 30; echo "- 08:59 [B] pipeline #2 B1: MERGED mb1"
+  echo "- 09:00 [A] Opus pass 41 reply:"; echo "    VERDICT: pass41-body"
+  for p in P1 P2 P3 P4 P5 P6; do pkg A "$p" 25; done
+  echo "- 10:00 [B] Opus pass 42 reply:"; echo "- 10:01 [B] pipeline #3 B2: MERGED mb2"
+} > "$tmp/six.md"
+inp="$(hi "$tmp/six.md" A)"
+for p in P1 P2 P3 P4 P5 P6; do grep -q "$p: MERGED m$p" <<<"$inp" || fail "A260: six packages since the pass: $p's MERGED line is not in henri's input"; done
+grep -q '\[A\] Opus pass 41 reply:' <<<"$inp" && grep -q 'pass41-body' <<<"$inp" || fail "A260: the lane's newest pass reply is not in henri's input"
+grep -q 'P1: step 1$' <<<"$inp" || fail "A260: not every lane line since the pass is kept"
+grep -q 'B1: MERGED mb1' <<<"$inp" && grep -q 'B2: MERGED mb2' <<<"$inp" || fail "A260: lane B's finished lines are not kept"
+grep -q 'Opus pass 42' <<<"$inp" && fail "A260: lane B's pass reply is in lane A's input"
+n="$(grep -cvE '^- [0-9:]+ \[B\]' <<<"$inp")"; [[ "$n" -eq 152 ]] || fail "A260: lane A's window is $n lines, expected 152 (from its pass on)"
+{ echo "- 09:00 [A] Opus pass 41 reply:"; for i in $(seq 1 500); do printf -- '- 09:00 [A] long %d\n' "$i"; done; } > "$tmp/long.md"
+inp="$(hi "$tmp/long.md" A)"
+[[ "$(wc -l <<<"$inp")" -eq 400 ]] && grep -q 'long 500$' <<<"$inp" || fail "A260: more than 400 lane lines since the pass: not the last 400 ($(wc -l <<<"$inp"))"
+{ for i in $(seq 1 120); do printf -- '- 09:00 [A] nopass %d\n' "$i"; done; } > "$tmp/nopass.md"
+inp="$(hi "$tmp/nopass.md" A)"
+[[ "$(wc -l <<<"$inp")" -eq 80 ]] && grep -q 'nopass 41$' <<<"$inp" && ! grep -q 'nopass 40$' <<<"$inp" || fail "A260: a lane with no pass does not keep its last 80 lines"
+{ echo "- 09:00 [A] Opus pass 41 reply:"; for i in $(seq 1 120); do printf -- '- 09:00 [A] near %d\n' "$i"; done; echo "- 10:00 [A] Opus pass 42 reply:"; } > "$tmp/near.md"
+[[ "$(hi "$tmp/near.md" A | wc -l)" -eq 80 ]] || fail "A260: a pass a few lines back does not keep at least 80 lines"
+# a night without lanes (henri_stdin calls henri_input with an empty lane): the untagged lines from the newest untagged pass reply on
+{
+  echo "## 2026-11-17 night, 07:00"
+  for i in $(seq 1 30); do printf -- '- 08:00 old %d\n' "$i"; done
+  echo "- 09:00 Opus pass 51 reply:"; echo "    VERDICT: pass51-body"
+  for p in U1 U2 U3 U4 U5 U6; do pkg A "$p" 25 | sed 's/ \[A\] / /'; done
+} > "$tmp/nolane.md"
+inp="$(hi "$tmp/nolane.md" "")"
+for p in U1 U2 U3 U4 U5 U6; do grep -q "pipeline #1 $p: MERGED m$p" <<<"$inp" || fail "A260: no lanes: $p's MERGED line is not in henri's input"; done
+grep -q '^- 09:00 Opus pass 51 reply:$' <<<"$inp" && grep -q 'pass51-body' <<<"$inp" || fail "A260: no lanes: the untagged pass reply is not in henri's input"
+grep -q 'old 30$' <<<"$inp" && fail "A260: no lanes: lines before the pass are kept though the window since it passes 80"
+[[ "$(wc -l <<<"$inp")" -eq 152 ]] || fail "A260: no lanes: the window is $(wc -l <<<"$inp") lines, expected 152 (from the pass on)"
+{ for i in $(seq 1 120); do printf -- '- 09:00 plain %d\n' "$i"; done; } > "$tmp/plain.md"
+inp="$(hi "$tmp/plain.md" "")"
+[[ "$(wc -l <<<"$inp")" -eq 80 ]] && grep -q 'plain 41$' <<<"$inp" && grep -q 'plain 120$' <<<"$inp" || fail "A260: no lanes, no pass: not the last 80 lines ($(wc -l <<<"$inp"))"
+grep -qF 'henri_input "$coord/log.md" "$lane"' <<<"$(sed -n '/^henri_stdin() {/,/^}/p' "$night")" || fail "A260: henri_stdin does not use henri_input for a night without lanes"
+grep -qE '^PASS_EVERY=6( |$)' "$night" || fail "A260: night.sh has no PASS_EVERY=6"
+grep -qF "(after every '\"\$PASS_EVERY\"' finished packages since the last pass" "$night" || fail "A260: henri's pass line does not use PASS_EVERY"
+out="$(N62_COORD="$c" N62_NIGHT_NOW=07:00 "$night" --lane A --dry-run --max-steps 4 2>&1)"
+grep -qF 'Count the 6 finished packages for an Opus pass' <<<"$out" || fail "A260: the lane prompt does not count 6 packages: $out"
+grep -qi 'three packages\|every 3 finished' "$night" && fail "A260: night.sh still names three packages per pass"
 
 # ---- 2. the pipeline starts each log line with the lane ----
 pl="$tmp/pl"; mkdir -p "$pl"; git init -q -b main "$pl"; gc "$pl" init
