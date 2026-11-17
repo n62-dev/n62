@@ -22,7 +22,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 - **First-run tips** [have]. R171 (`72e872c6`).
 - **Report a problem** [have]. A92, R172, R173, A95.
 - **Why trust it** [have]. G200, G201, G202, A93, A94, R174.
-- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act on the release candidate (Thu 11-19, or after the tag); no package. Decision 4.
+- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act on the release candidate (Mon 11-23, or after the tag); no package. Decision 4.
 - **F-Droid and IzzyOnDroid** [part]. The recipe is built by A96, A97, A98; then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
 - **APK and site** [not yet; the list's "have" is early]. Releases hold only `deps-giac-2.1.0-1d9536e0`; Pages has one test deployment from 11-05. The tag produces both. Owner's act, no package. Do not publicise n62.dev before the tag.
 
@@ -166,7 +166,7 @@ G270, G271, G272, G273, G274 → R220 (owner picks) → the sheet (R327, R328) �
 - **The forensics chain: [have], unpublished (the list said miss).** Home DEG gives 9, mark `=`, at 12, 15, 30 digits; it cancels symbolically, branches picked by Giac's numeric reduction. No case guards it. G300; CAS DEG shows it badly, G301.
 - **Same CAS as the Prime: [have] overstated.** "Also built on Giac" holds, "same" does not; the Prime's Giac version is unknown. Wording below. No package.
 
-**Stub (mh-D1e), split 2026-11-15:** R343 builds the stack view and the Mode row with `entry.rpn` (after R254 and the session). Left in the stub: the swap key, ▲/▼ and `frac` in RPN mode, after decision 4.
+**Stub (mh-D1e), split 2026-11-15:** R343 builds the stack view and the Mode row with `entry.rpn` (after R254 and the session). Left in the stub: the swap key, ▲/▼ and `frac` in RPN mode: decision 4 (2026-11-16) in R254.
 
 ### The post (the owner's text; refresh every count on the day)
 - **RPN** (only after decision 1 is yes): "N62 has no RPN today: entry is textbook or one-line. It is being built now, numbers with units and ± included. If you want it, tell me what you would need from it (stack depth, how the keys behave), since the view and part of the key behaviour are still open."
@@ -178,7 +178,7 @@ Counts (must match section A): 52 patches; 51 sent (0001-0002, 0003-0012, 0013-0
 
 **Order:**
 - v0.1.0: G300 and G301 merged (`782b641c`, `cac10d87`).
-- Before the freeze (owner, 2026-11-15): R250, R251, R252, R253 in lane A and G302 in lane B; after the tag (owner, 2026-11-16), the owner's Virtual Calculator session, then R254, then R343 (the stack view and the Mode row); the swap key, ▲/▼ and `frac` after decision 4.
+- Before the freeze (owner, 2026-11-15): R250, R251, R252, R253 in lane A and G302 in lane B; after the tag (owner, 2026-11-16), the owner's Virtual Calculator session, then R254, then R343 (the stack view and the Mode row); the swap key, ▲/▼ and `frac`: decision 4 (2026-11-16) in R254.
 
 **Open bugs:** F196: CAS in DEG leaves a `pi/180` quotient (`arcsin(0.5)` draws π/(6·π/180), the chain `180/20*pi/pi`); value right, form wrong. Reach: every exact inverse trig constant in CAS DEG. G301; a free name (`…+x`) and Home's same display stay open.
 

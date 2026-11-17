@@ -5,6 +5,40 @@ History only: read it when a decision is questioned. What still binds is in [../
 
 ## Decided proposals moved here later
 
+### Grouped on 2026-11-17 to make room for the fix lane's entries, as they stood
+- **R41 at font scale 2.0:** the owner's hand check (A139; backlog). Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
+- **R140's colour-vision floors (owner, 2026-11-07):** Shift and Alpha 0.12 apart, ⚠ 0.08 from Shift (High contrast 0.10, 0.06). Archived, "Opus pass 97". Would change if: a colour-vision test fails.
+- **R50 (owner 2026-11-07): three themes;** docs/05 3.10. Archived, "Opus pass 155".
+- **Redo after ⌫ (Opus pass 44; R15c2):** Redo does not delete again (MathLive [#3125](https://github.com/arnog/mathlive/issues/3125)); no workaround of ours. Archived.
+- **G22, G26, G371:** a stored name keeps σ and unit, Home's σ is a chip's; `W:=W*2` doubles it. Archived, "Opus pass 97".
+- **G92, G93 (Opus pass 73): what Giac changes behind the host** is put back after each input (`assumed.ts`, a probed list); `restart(1)` keeps Giac's meaning. Archived.
+- **The angle mode, route R (S14, R64, G46):** docs/04 2.12; `sinc` takes no factor. Archived, "Opus pass 155".
+- **R18:** Greek names with Giac stand-ins; `&` refused until G2 item 41. Archived, "Opus pass 97".
+- **Home number formats:** `digits` are significant digits; rounding half away from zero (one rule); G31's Fixed. Archived, "Opus pass 181".
+- **Solve and Plot:** a root at relative residual ≤ 1e-15 at 30 digits, else ⚠; Plot searches the visible window. Archived.
+- **Function app:** window x ∈ [-10, 10] square; Num from 0 by 0.1. Archived.
+- **Parser (L6):** odd root templates are real roots; `{…}` is a list; `3{,}5` and `{,}5` (R99). Archived, "Opus pass 181".
+- **Discrete distributions (G113, G113f1; patches 0009, 0010):** off the integers or below the support a pmf is an exact 0 and a cdf takes floor(k). Archived.
+- **G140 (Opus pass 34): a value Giac holds only as a double** is an unaudited double: ⚠, at most 14 digits, never ≈. Archived. Would change if: Giac gets an MPFR path for them.
+- **R55: digit groups** in a drawn Home or CAS numeric result: the mantissa in threes from the point with a thin space, on a side of five or more digits; not in the entry line, a chip, Copy or the status line. Archived.
+- **R36f1 (Opus pass 50): `1.0` is an exact decimal in Home;** `why.rounded` names a stored float, never one of our names. Archived, "Opus pass 190".
+- **t06 and Find (Opus pass 182, R221):** "es" gives statC before eseries (docs/04 3.5); t06's budget is agreed with the owner when it goes active. Archived, "Opus pass 190".
+- **G158 (Opus pass 52):** `sem` and `median` take one list only ("needs one list of values"). Archived, "Opus pass 97".
+- **Unequal shapes are refused (pass 119):** `+`, `-`, `*`, `dot`, `cross`; Giac pads; `dot` conjugates its first vector (G227). Archived, "Opus pass 187".
+- **G17:** dB is a field-ratio level, dBm and dBW to 1 mW and 1 W; offsets and levels alone convert, T1 − T2 of one scale too (G370); impossible levels and other temperature mixes are refused (G16's zero: G35, below). Archived.
+- **G13, G7:** the CODATA overrides and hp, mmHg, inHg stay in `find/factors.yaml` until qalc agrees (P22); `rev` is a count. Archived, "Opus pass 97".
+- **R24a, R24af1:** ⁻¹ turns the power's sign, ², ³, ⁴ set its size; √ arms like a prefix; a unit without an exact factor never pairs. Archived, "Opus pass 96".
+- **R61 (Opus pass 28):** a unit result's σ chip is an independent input of σ. Archived, "Opus pass 122". Would change if: a chip keeps its inputs' basis (G81).
+- **R63:** in the unit view a result chip is a number with a slot and its σ (R115). Archived, "Opus pass 97". Would change if: the owner wants a chip's σ dropped there.
+- **R92, the units menu's Constants and Tools (Opus pass 51):** the last two rows, after the categories; a constant goes on Home's line at its cursor; UPART's row is off until built; R353's Store in a name is ours. Archived.
+- **The deep check of 2026-10-19 (G41):** σ includes the GUM's second-order term, ⚠ when it passes 10 % of σ² or x ± 2σ reaches a singular point. Archived.
+- **R59, R59f1 (Opus passes 72, 73):** the clash sheet stays; the library stays out of the start chunk. Archived, "Opus pass 97".
+- **R89, presets in Mode (Opus pass 47):** no built-in Default; Delete acts at once; names typed as maths. Archived, "Opus pass 97".
+- **R40, R124, R125, Settings › Numbers (Opus passes 64, 65; owner 2026-11-04).** Archived, "Opus pass 122" and "Opus pass 66". Would change if: the milestone review.
+- **R156, Key shadows (ron, run 762):** a look stored before R156 has them on; Appearance opens on Theme. Archived, "Opus pass 97". Would change if: the owner wants an older look flat.
+- **A66, the key click (Opus pass 97):** the app's switch alone decides (R112). Archived, "Opus pass 135". Would change if: its device check, or the owner wants the system's setting to win.
+- **G218, G219, G233, G234 (Opus pass 191):** sync row names carry the process id; Your unit is `@name`. Archived, "Opus pass 216".
+
 ### Grouped on 2026-11-16 (Ultra) to make room, as they stood
 - **Shift + 5's matrix (R185, R186; Opus pass 169):** only the one Shift + 5 made on the line grows; a new column's other cells get □, an empty cell is refused (R185f1). Archived, "Opus pass 178". Would change if: the owner re-types recalled matrices.
 - **R194's word (Opus pass 178):** Word in Settings › Numbers opens Word size (8–64) and Signed; a preset leaves the word as it is. Archived, "Opus pass 186". Would change if: the owner wants the two rows in Numbers.
