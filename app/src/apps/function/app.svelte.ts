@@ -16,6 +16,7 @@ import { slotNames, SlotsState, type SlotsJson } from "../slots.svelte.ts";
 import { answerChip, answerShown } from "../toHome.ts";
 import type { AppHost, AppInstance, MenuItem, NavDir, SubMenu, ViewId } from "../types.ts";
 import { compileDefinition, type Compiled } from "./compile.ts";
+import { drawValues, nameRead, noteOf, usesOf, type NameRead } from "./stored.ts";
 import type { AnalysisOutcome, AnalysisRequest, Cell } from "./engineApi.ts";
 
 import { brightness, family } from "../../theme.svelte.ts";
@@ -67,6 +68,8 @@ export class FunctionApp implements AppInstance {
   readonly views: readonly ViewId[] = ["symb", "plot", "num"];
   readonly slots = new SlotsState(slotNames("F"));
   compiled = $state.raw<Compiled[]>([]);
+  /** R361: the stored names the slots on read, as the engine gave them when Plot last opened (stored.ts). */
+  reads = $state.raw<ReadonlyMap<string, NameRead>>(new Map());
 
   /** null until Plot has been drawn once (then y follows the board's aspect). */
   win = $state<PlotWindow | null>(null);
@@ -303,8 +306,13 @@ export class FunctionApp implements AppInstance {
   }
 
   // ---- Symb
+  /** A definition compiled with the stored values last read (R361) for `uses`, the names the engine read in it
+   *  (R361f1); without them (a new definition) none, so Plot open asks the engine for it. */
+  private compile(latex: string, angle: "rad" | "deg", uses?: readonly string[]): Compiled {
+    return compileDefinition(latex, angle, uses ? drawValues(this.reads) : undefined, uses);
+  }
   define(i: number, latex: string): void {
-    const c = compileDefinition(latex, this.host.settings.angle);
+    const c = this.compile(latex, this.host.settings.angle);
     this.slots.set(i, latex, c.error === "not a function of x" ? numText("function.notFunction") : c.error);
     const next = [...this.compiled];
     next[i] = c;
@@ -317,7 +325,7 @@ export class FunctionApp implements AppInstance {
   syncAngle(): boolean {
     const angle = this.host.settings.angle;
     if (this.compiled.every((c) => c.angle === angle)) return false;
-    this.compiled = this.slots.latex.map((l) => compileDefinition(l, angle));
+    this.compiled = this.slots.latex.map((l, i) => this.compile(l, angle, this.compiled[i]?.uses));
     // R257: the last analysis and the trace y belong to the old unit. The trace is asked in a microtask, outside
     // FunctionPlot.svelte's angle effect that calls this (its reads are not that effect's dependencies).
     this.marks = [];
@@ -325,6 +333,40 @@ export class FunctionApp implements AppInstance {
     this.areaStart = undefined;
     queueMicrotask(() => void this.refreshTrace());
     return true;
+  }
+  /** R361: on Plot open, the Giac text of each slot on that has no drawing evaluator, or was drawn with stored values,
+   *  asked of the engine once: the names its tree reads (R361f1: a bound name, the sum's k, is none), with their kind
+   *  and value (never Giac's print, P20); each is compiled again with them, so a name stored again since is drawn
+   *  anew. Counts the open (`event:plot-open`, a slot on) and a drawing of a stored value (`event:plot-stored`). */
+  async readStored(): Promise<void> {
+    const on = this.active;
+    const ask = on.filter((i) => !this.compiled[i]?.fn || this.compiled[i]?.uses);
+    if (ask.length) {
+      try {
+        const { readPlotValues } = await import("../../calc/plotValues.ts");
+        const got = await readPlotValues(this.host.calc.engine, ask.map((i) => this.compiled[i]?.giac ?? ""), this.host.settings);
+        this.reads = new Map(got.flat().map((v) => [v.name, nameRead(v)]));
+        const angle = this.angle;
+        const next = [...this.compiled];
+        ask.forEach((i, k) => (next[i] = this.compile(this.slots.latex[i] ?? "", angle, usesOf(got[k] ?? []))));
+        this.compiled = next;
+      } catch {
+        // a Cancel or a crash: the curves stay as they were
+      }
+    }
+    if (on.length) this.host.count?.("plot-open");
+    if (on.some((i) => this.compiled[i]?.fn && this.compiled[i]?.uses)) this.host.count?.("plot-stored");
+  }
+  /** R361: the note lines under the board, one per stored name a slot on reads that is not drawn or is drawn with its σ or unit dropped. */
+  get notes(): string[] {
+    return this.active.flatMap((i) => {
+      const c = this.compiled[i];
+      return (c?.uses ?? []).flatMap((n) => {
+        const r = this.reads.get(n);
+        const t = r && noteOf(this.slots.names[i] ?? "", n, r, c?.fn !== undefined, (s) => this.mark(s), (s) => this.fmtX(s));
+        return t ? [t] : [];
+      });
+    });
   }
   select(i: number): void {
     this.slots.select(i);

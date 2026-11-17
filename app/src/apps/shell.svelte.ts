@@ -86,6 +86,8 @@ export class AppShell {
   settingsMenu: (() => SubMenu | undefined) | undefined;
   /** Opens Mode › Settings (set by App.svelte): a user key that holds Settings, or the ⚙ before the Mode code is in. */
   openSettings: (() => void) | undefined;
+  /** R361: counts an app's event that is no press (set by main.ts: the press counts' event). */
+  declare onEvent: ((name: string) => void) | undefined;
   /** Which of Home and CAS is under the keys (set by App.svelte); names the Menu there (R83). */
   homeView: (() => "home" | "cas") | undefined;
 

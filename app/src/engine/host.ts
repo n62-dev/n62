@@ -59,6 +59,7 @@ import { contextOf, gated, type GatedGiac } from "./ctxGate.ts";
 import { aboutsOf, leakPart, namesAssuming, putBack, selfHolding, setsAssumption } from "./assumed.ts";
 import { plainRowsText, soleMatrixLatexOfText } from "./matrixType.ts";
 import { readMatrices, type MatrixRead } from "./matrixRead.ts";
+import { readPlotValues, type PlotValue } from "./plotValues.ts";
 import { casSequence, nameBack } from "./sequences.ts";
 import { exportText, importText } from "./library.ts";
 import { deadEngine, startDead } from "./dead.ts";
@@ -1315,6 +1316,16 @@ export class EngineHost implements FactsHost {
     return readMatrices(this.giac, names, s.digits, cells, check === undefined ? undefined : { store: check, parse: (t) => this.bridge.parse(t) });
   }
 
+  /** R361: by Function definition's Giac text, the names its tree reads (R361f1, G99: not a bound k), less x, constants
+   *  and ours, each with kind and a variable's value, σ and unit (plotValues.ts); in Home's mode, the value at P digits. */
+  plotValues(texts: readonly string[], s: HomeSettings): PlotValue[][] {
+    const names = texts.map((t) => this.treeFrom(t).reads.filter((n) => n !== "x" && !CONSTANT_NAMES.has(n) && !isOurs(n)));
+    this.need(names.flat().join("\n"));
+    this.useHomeMode(s);
+    const read = new Map(readPlotValues(this.giac, names.flat(), this.byName, valuePrecision(s.digits)).map((v) => [v.name, v]));
+    return names.map((ns) => ns.flatMap((n) => read.get(n) ?? []));
+  }
+
   private useCasMode(s: CasSettings): void {
     this.useWord(s);
     this.useMode(`cas${JSON.stringify(s)}`, s.digits, s.angle, () => {
@@ -1426,6 +1437,9 @@ export function createRequestHandler(load: GiacLoader, post: (r: Response) => vo
           break;
         case "units":
           post({ id: req.id, type: "units", result: host.units(req.job, req.settings) });
+          break;
+        case "plotValues":
+          post({ id: req.id, type: "plotValues", result: host.plotValues(req.texts, req.settings) });
           break;
         case "library":
           post({ id: req.id, type: "library", ...importText(host, req.input, req, req.log, req.replace) });

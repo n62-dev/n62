@@ -128,3 +128,31 @@ describe("the press counter per key and layer (R127)", () => {
     expect(Object.entries(o.keys)).toEqual([["d:shift", 3], ["c:up", 2], ["a:primary", 1], ["b:primary", 1]]);
   });
 });
+
+describe("an event that is no press (R361)", () => {
+  it("event(name) counts event:<name> in keys and the export; presses stay", async () => {
+    const kv = fakeKv();
+    const c = new TapCounter(kv, day("2026-11-16"));
+    await c.ready;
+    c.press("d1:primary");
+    c.event("plot-open");
+    c.event("plot-open");
+    c.event("plot-stored");
+    expect(c.counts.presses).toBe(1);
+    expect(c.pressedThisStart).toBe(true);
+    expect(c.counts.keys).toEqual({ "d1:primary": 1, "event:plot-open": 2, "event:plot-stored": 1 });
+    const o = JSON.parse(countsText(c.counts)) as { presses: number; keys: Record<string, number> };
+    expect(o.keys["event:plot-open"]).toBe(2);
+    expect(o.keys["event:plot-stored"]).toBe(1);
+    await c.flush();
+    expect((kv.data.get(TAPS_KEY) as { keys: Record<string, number> }).keys["event:plot-stored"]).toBe(1);
+  });
+  it("an event alone is no press of this start", async () => {
+    const c = new TapCounter(fakeKv(), day("2026-11-16"));
+    await c.ready;
+    c.event("plot-open");
+    expect(c.pressedThisStart).toBe(false);
+    expect(c.counts.presses).toBe(0);
+    expect(c.counts.since).toBe("2026-11-16");
+  });
+});

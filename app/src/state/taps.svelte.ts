@@ -78,6 +78,14 @@ export class TapCounter {
     this.schedule();
   }
 
+  /** R361: an event that is no press, counted as `event:<name>` in `keys` (R127's open map); `presses` stays. */
+  event(name: string): void {
+    const c = this.counts;
+    const k = `event:${name}`;
+    this.counts = { ...c, keys: { ...c.keys, [k]: (c.keys[k] ?? 0) + 1 }, since: c.since || this.today() };
+    this.schedule();
+  }
+
   /** A hardware key that runs no keypad key (R127): named here, `hw:<kind>` (pressCount.ts hwKind). */
   hw(kind: HwKind): void {
     this.press(hwKind(kind));

@@ -48,6 +48,7 @@ session.saveDelayMs = 400;
 // inline script of index.html has already shown it (lazy chunk, off the start).
 session.onLook = (look) => void import("./theme/lookApply.ts").then((m) => m.applyLook(look)).catch(() => {});
 const shell = new AppShell(calc, idbKv, entry, () => session.settings, () => session.userNames);
+shell.onEvent = (n) => void session.taps.load().then((c) => c?.event(n)); // R361: an event that is no press, in the counter's chunk
 const place = shell.restorePlace();
 const settingsRead = session.restoreSettings();
 // the free keys U1–U3 (R15b): their defaults are drawn first, the user's slots replace them when read
