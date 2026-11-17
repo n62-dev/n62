@@ -47,7 +47,7 @@ The top risks are in section 9.
 |---|---|---|---|
 | P1 | Golden cases, with their mark | 100 % at 12 digits; the precision set also at 20 and 30 | golden gate (`npm run golden`) |
 | P2 | Known paths that show a wrong or unmarked number | zero; each one in 2.3 is a regression case first | golden gate, parser and e2e tests |
-| P3 | Numeric roots | every root substituted back (existing) | `solve.yaml`, `function.yaml` |
+| P3 | Numeric roots | every root substituted back (existing); a point accepted as noise-limited must also have \|f\| growing on both sides (G524), so a pole of a scaled function is never a root | `solve.yaml`, `function.yaml` |
 | P4 | Units | a dimension mismatch is never a number; SI-exact conversions are `=` | `units.yaml` (milestone 5) |
 | P5 | Copy | copy → paste gives the same value to every confirmed digit | e2e test per copy action (EN4) |
 

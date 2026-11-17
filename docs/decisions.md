@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **G524, the root after a rejected pole:** the search goes on (as `tan(x)=0` from 1.4 gives 0), so `tan(x/1000)=0` from 1400 gives 0, not the package's "no root found"; and its doubling step can jump a root and a pole together (DEG `tan(x)=3` from 10 gives −108.43, not the nearer 71.57). Keep both? Recommended (every answer is a real root); a step limit near a rejected pole would be its own package.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals

@@ -35,6 +35,9 @@ async function enter(s: Session, n: number, view: View = "home"): Promise<void> 
   await settle();
 }
 
+/** Each of these enters 200 to 400 rows: about 2.5 s alone, past vitest's 5 s under the full suite's load (SYNC7, 2026-11-17). */
+const SLOW = 20_000;
+
 describe("the note at the first dropped row (R272)", () => {
   it("the text says what happens and where the backup is", () => {
     expect(dataText("history.dropped")).toBe("Older rows are dropped after 200. Save a backup: Settings › Data.");
@@ -46,7 +49,7 @@ describe("the note at the first dropped row (R272)", () => {
     await enter(s, HISTORY_LIMIT);
     expect(s.home.length).toBe(HISTORY_LIMIT);
     expect(notes(s, "home")).toEqual([]);
-  });
+  }, SLOW);
 
   it("the first drop adds one note row, and the flag is stored", async () => {
     const kv = fakeKv();
@@ -56,7 +59,7 @@ describe("the note at the first dropped row (R272)", () => {
     expect(notes(s, "home")).toEqual([dataText("history.dropped")]);
     expect(s.home.filter((i) => i.status !== "note").length).toBe(HISTORY_LIMIT);
     expect(kv.data.get("historyDropNoted")).toBe(true);
-  });
+  }, SLOW);
 
   it("a second drop adds none, and neither does a drop in the other view", async () => {
     const s = new Session(new QuickCalc(0), fakeKv());
@@ -66,7 +69,7 @@ describe("the note at the first dropped row (R272)", () => {
     await enter(s, HISTORY_LIMIT + 1, "cas");
     expect(notes(s, "cas")).toEqual([]);
     expect(notes(s, "home")).toHaveLength(1);
-  });
+  }, SLOW);
 
   it("a relaunch adds none (the flag is stored per install)", async () => {
     const kv: FakeKv = fakeKv();
@@ -77,5 +80,5 @@ describe("the note at the first dropped row (R272)", () => {
     await b.restoreHistory();
     await enter(b, HISTORY_LIMIT + 1);
     expect(notes(b, "home")).toEqual([]);
-  });
+  }, SLOW);
 });
