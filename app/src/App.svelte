@@ -750,8 +750,11 @@
   .entry.chev {
     position: relative;
   }
-  .entry.chev :global(math-field) {
+  .entry.chev > .field :global(math-field) {
     padding-left: var(--chev-pad);
+  }
+  .entry:has(> :global(.unitview)) > :global([data-testid="fold-chevron"]) {
+    display: none; /* the unit view (units/open.ts) holds the row */
   }
   .entry.hidden {
     display: none;

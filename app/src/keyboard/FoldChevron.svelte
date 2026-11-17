@@ -2,7 +2,8 @@
 <!-- R724 (decisions.md P16): ⌄ on the entry field's lower-left corner, half on its outline; a tap folds the keypad as the
      line's swipe does (App.svelte counts it `fold.tap`). A 16 px stroke icon in a 48 × 48 touch box that stays inside the
      entry row (its bottom is the row's), so it never reaches the bar; the field's left padding is --chev-pad, so no text
-     lies under it. Drawn in Home and CAS only (no app, not the wide layout), never while folded; in the fold's chunk. -->
+     lies under it. The box takes no tap on the field's text: over the field it is 32 px wide (clip-path), below it 48, so a
+     tap on the line's first term still places the caret. Drawn in Home and CAS only (no app, not the wide layout), never while folded; in the fold's chunk. -->
 <script lang="ts">
   import { keyFeelText as t } from "../i18n/enKeyFeel.ts";
 
@@ -28,6 +29,7 @@
     background: none;
     color: var(--muted);
     -webkit-tap-highlight-color: transparent;
+    clip-path: polygon(0 0, var(--chev-take) 0, var(--chev-take) calc(100% - var(--sp-2)), 100% calc(100% - var(--sp-2)), 100% 100%, 0 100%);
   }
   /* centred on the field's corner: the entry row's padding from the box's left and bottom edges */
   svg {

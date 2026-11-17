@@ -113,7 +113,8 @@ test("a tap puts the caret at the touched term, on a scrolled line too", async (
   // a long line scrolled to its start: a tap on its tenth digit puts the caret after it
   await setLine(page, LONG);
   const f = await field(page);
-  for (let k = 0; k < 2; k++) await finger(page, f.left + 20, (f.top + f.bottom) / 2, { dx: f.right - f.left - 40, steps: 20 });
+  // (from 30 px in: the field's first 20 px over its lower part are ⌄'s touch box, R724)
+  for (let k = 0; k < 2; k++) await finger(page, f.left + 30, (f.top + f.bottom) / 2, { dx: f.right - f.left - 50, steps: 20 });
   expect((await scrolled(page))?.left).toBe(0);
   const tenth = await boxOf(page, 10);
   await page.waitForTimeout(550);

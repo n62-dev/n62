@@ -195,6 +195,10 @@ test("no glyph of the field meets ⌄'s icon: a long line scrolled to its start,
   let g = await glyphs(page);
   expect(g.length).toBeGreaterThan(10);
   expect(g.filter((b) => meets(b, icon))).toEqual([]);
+  // ⌄'s touch box takes no tap on the text: the first glyph's lower part is the line's
+  const first = g.reduce((a, b) => (b.x < a.x ? b : a));
+  const hit = await page.evaluate(([x, y]) => document.elementFromPoint(x!, y!)?.closest('[data-testid="fold-chevron"]') !== null, [first.x + first.width / 2, first.y + first.height * 0.8]);
+  expect(hit).toBe(false);
   await page.evaluate(() => {
     const f = window.n62.entry.field;
     if (f) f.value = "\\frac{12345}{67890}";
