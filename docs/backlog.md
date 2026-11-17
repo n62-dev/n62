@@ -65,7 +65,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F309, no package (T2; owner: after the tag).** Home σ is first order only: a chip at a stationary point loses σ, near a pole it is too small, never ⚠.
 - **F310, F316, F317, F319, no package (T2, low).** linterp refuses an x inside the table when the end check needs > 40 digits; Ans and the last chip are two σ inputs; `floor(evalf(pi,3)*1000)` = 3139 with `=`; weights summing to 0 give `infinity` unmarked.
 - **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F351 R575, F352 G576, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584, F365 R585.
-- **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G524 (F403, DEG; merged), R601 (merged), G600–G608, R600; T6b: G613–G624 (G618 merged); unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
+- **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G524 (F403, DEG; merged), R601 (merged), G600–G608, R600; T6b: G613–G624; unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
 - **F357, no package (T4, S14).** Function Symb: Enter keeps the line on F1 (the owner's G2 check).
 
 ### Background stream (extreme inputs; at night, by reach)
