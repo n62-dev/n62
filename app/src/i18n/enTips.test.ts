@@ -29,8 +29,8 @@ describe("the first-start tips (R290)", () => {
   it("say that on a history row a hold copies and a swipe deletes", () => {
     expect(card(/history row/i)).toMatch(/hold.*cop(y|ies).*swipe.*delet/i);
   });
-  it("say that a swipe down on the entry line folds the keypad and a swipe up brings it back", () => {
-    expect(card(/entry line/i)).toMatch(/swipe down.*fold.*keypad.*(swipe )?up.*back/i);
+  it("say that a tap on ⌄ or a swipe down on the line folds the keypad (R724)", () => {
+    expect(card(/⌄/)).toMatch(/tap ⌄ or swipe down on the line to fold the keypad/i);
   });
   it("say that on the line a drag scrolls and a hold selects, and Select and Deselect grow and shrink it", () => {
     const c = card(/\bselect\b/i);
