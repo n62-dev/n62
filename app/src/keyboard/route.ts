@@ -539,9 +539,12 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     void session.cycleForm();
     return;
   }
+  const store = shell.app === null && action.kind === "insert" && action.latex === STORE_ARROW;
+  // R702: Store ▶ with no value on the line and no result to store is a dead press (as Base's, baseSheet.ts)
+  if (store && !cell && entry.empty && !session.hasResult()) return c.dead();
   const ans = shell.app === null && !cell && entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult();
   if (ans) entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   entry.run(action);
   // R281: Store ▶ in Home or CAS opens "Store in" (the value on the line, Ans's row when it put Ans there)
-  if (shell.app === null && action.kind === "insert" && action.latex === STORE_ARROW) c.openStore(ans ? [...session.items].reverse().find((x) => x.status === "done") : undefined);
+  if (store) c.openStore(ans ? [...session.items].reverse().find((x) => x.status === "done") : undefined);
 }

@@ -13,6 +13,7 @@ export const enParser = {
   "parse.unexpectedToken": "unexpected token",
   "parse.needsAVariable": "→ needs a variable name before it (x → x²)",
   "parse.expectedAName": "expected a name after ▶",
+  "parse.storeNeedsValue": "Store needs a value before ▶",
   "parse.timesBetweenResults": "put × between two results",
   "parse.timesResultNumber": "put × between a result and a number",
   "parse.ambiguousDoubleSuperscript": "ambiguous double superscript, use braces",

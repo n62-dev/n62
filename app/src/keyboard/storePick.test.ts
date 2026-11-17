@@ -120,3 +120,31 @@ describe("Store ▶ on a picked row (R280)", () => {
     expect(c.picked).toBeNull();
   });
 });
+
+// R702 (F382): with no value and no result Store ▶ is a dead press, as Base is: no ▶ on the line, no "Store in".
+describe("Store ▶ with nothing to store (R702)", () => {
+  test("an empty history and an empty line: Shift + ᴇ is dead", () => {
+    const { log, shiftStore, line } = ctx([]);
+    shiftStore();
+    expect(log).toEqual(["dead"]);
+    expect(line()).toBe("");
+  });
+  test("the flick up on ᴇ: dead too", () => {
+    const { log, press, line } = ctx([]);
+    press("emark", "shift");
+    expect(log).toEqual(["dead"]);
+    expect(line()).toBe("");
+  });
+  test("only error rows: no result, dead", () => {
+    const { log, shiftStore } = ctx(["error"]);
+    shiftStore();
+    expect(log).toEqual(["dead"]);
+  });
+  test("control: 5 on the line, no result: 5 ▶ and Store in", () => {
+    const { log, press, shiftStore, line } = ctx([]);
+    press("d5");
+    shiftStore();
+    expect(line()).toBe("5\\blacktriangleright");
+    expect(log).toEqual(["run 5", "run \\blacktriangleright", "openStore undefined"]);
+  });
+});

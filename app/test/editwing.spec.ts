@@ -95,11 +95,11 @@ test("Esc: stops a running job, goes back a sheet level, drops a pick, closes Se
 
 test("Store: Shift + ᴇ on an empty line after a result starts Ans ▶ (G2 item 58)", async ({ page }) => {
   await open(page);
-  // no result yet: Store is bare
+  // no result yet and an empty line: nothing to store, a dead press (R702; storeempty.spec.ts counts it)
   await tap(page, ["shift", "emark"]);
-  expect(await entryValue(page)).toBe("\\blacktriangleright");
-  // R281: Store ▶ opens the store sheet; the first Esc closes it (the line keeps value ▶), the second clears the line
-  await tap(page, ["esc", "esc", "d5", "enter"]);
+  expect(await entryValue(page)).toBe("");
+  await expect(page.getByTestId("store")).toHaveCount(0);
+  await tap(page, ["d5", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["shift", "emark", "alpha", "d1"]);
   expect(await entryValue(page)).toBe("\\ans\\blacktriangleright");
