@@ -487,9 +487,10 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await tap(page, ["@mode", "d6"]); // Mode › Settings
   await sheet(page).locator('[data-id="counters"]').tap();
   const row = sheet(page).locator('[data-id="uses"]');
-  await expect(row).toContainText("Results mode");
+  await expect(row).toContainText("Removal tests"); // R722: Results mode and the angle chip, a level each
   await expect(row).toContainText("6 folds");
   await row.tap();
+  await sheet(page).locator('[data-id="results"]').tap();
   await expect(page.getByTestId("sheet-title")).toContainText("Results mode");
   await expect(sheet(page).locator('[data-id="actions"]')).toContainText("6");
   await expect(sheet(page).locator('[data-id="pick"]')).toContainText("4");

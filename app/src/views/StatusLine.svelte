@@ -66,17 +66,11 @@
     if (!ok) e.stopPropagation();
   };
 
-  /** R722: `bar.angle` counts each angle-chip tap, `bar.angle.undo` a second tap within 3 s, which takes the first back
-   *  (decisions.md "The bar on the keypad": over 2 % undone in four weeks reopens the chip's place). */
-  let angleAt = 0;
+  /** R722: `bar.angle` counts each angle-chip tap, `bar.angle.undo` a tap within 3 s of the one before, which takes it back
+   *  (uses.svelte.ts countTap, under its own key; decisions.md "The bar on the keypad"). */
   const switchAngle = (): void => {
-    const now = Date.now();
-    const undo = now - angleAt < 3000;
-    angleAt = undo ? 0 : now;
-    void session.uses().then((c) => {
-      c.count("bar.angle");
-      if (undo) c.count("bar.angle.undo");
-    }, () => {});
+    const at = Date.now();
+    void session.uses("bar-uses").then((c) => c.countTap("bar.angle", at), () => {});
     session.setAngle(angle === "rad" ? "deg" : "rad");
   };
 </script>
@@ -409,8 +403,8 @@
     font-size: var(--fs-key-fn);
     color: var(--text);
   }
-  /* narrow (a phone under 400 px wide): the tab that is not current shows its glyph only; in an app the views are 28 px
-     and STD and 12 share one chip with one ▾ */
+  /* narrow (a phone under 400 px wide): the tab that is not current shows its glyph only; in an app the views keep their
+     32 px, the room is won from the gaps, the separator's margins and ☰, and STD and 12 share one chip with one ▾ */
   @media (max-width: 400px) {
     .ptab:not(.cur) .nm {
       display: none;
@@ -418,9 +412,6 @@
     .ptab:not(.cur) {
       min-width: var(--tile-w);
       padding: 0;
-    }
-    .inapp .tab {
-      width: var(--view-w-narrow);
     }
     .inapp .sep {
       margin: var(--sp-2) 0;

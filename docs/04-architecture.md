@@ -360,7 +360,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 | `units.targets`, `units.own` | the last target per dimension; your units (`units/ownRecord.ts`, as strict at a restore as at the start; ids `@name`, G233) |
 | `word` | `{ bits, signed }` (R194) |
 | `rpn` | `{ levels: [{ uid, chip, shown, inputs }] }`, level 1 first (R252, `entry/rpnStore.ts`) |
-| `uses` | the results mode's counts (R53, `state/uses.svelte.ts`), for decisions.md P16's removal test; not backed up |
+| `uses`, `bar-uses` | the results mode's counts (R53, `state/uses.svelte.ts`) and the bar's angle-chip taps (R722), each with its own since, for decisions.md's removal tests; not backed up |
 | `backup.last`, `backup.offered`, `backup.undo`, `sync.queue`, `sync` | not backed up |
 
 **Every value is stamped** with `DATA_VERSION` (`storage.ts`): `{ "@n62": n, value }` (`@pascaline` before R138, read as `@n62`); a value without the stamp is version 0. On read, the key's `MIGRATIONS` steps (`state/migrations.ts`, loaded on demand) run from its version up and the value is written back. A save never overwrites a newer version's record, and each step is safe twice. A failed read is not "nothing stored": the caller keeps its defaults and that key is not written for the session. One writer per browser profile: the tab holding the Web Lock `n62-writer` writes the store; other tabs compute and write nothing, with a note and Use here; without `navigator.locks` every tab writes. Raise the version with a step when a stored shape or the meaning of stored Giac text changes (Φ → `Phi_`). **Replay budget:** 8.3 (`replayMs`, inside the engine-ready bar).

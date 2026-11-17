@@ -50,7 +50,7 @@ export const DROPPED: readonly string[] = ["units.history"];
  *  rows past 200, said once per install; `sync.queue` (G219) holds the lines this install has not yet written to its
  *  sync folder: restored on another device they would be written there, under that device's name; `sync` (R128) holds this install's sync folder page: "On start", the last other device's
  *  backup read, and the device name its files carry (sync/record.ts). */
-export const LEFT_OUT: readonly string[] = ["defsStarts", "backup.undo", "tipsSeen", "backup.last", "backup.offered", "uses", "historyDropNoted", "sync.queue", "sync"];
+export const LEFT_OUT: readonly string[] = ["defsStarts", "backup.undo", "tipsSeen", "backup.last", "backup.offered", "uses", "bar-uses", "historyDropNoted", "sync.queue", "sync"];
 
 export interface Backup {
   "n62-backup": 1;

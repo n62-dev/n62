@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
 import { fakeKv } from "./fakeKv.ts";
-import { USES_KEY, UseCounter } from "./uses.svelte.ts";
+import { BAR_USES_KEY, USES_KEY, UseCounter } from "./uses.svelte.ts";
 
 const day = (iso: string) => () => new Date(`${iso}T12:00:00Z`);
 
@@ -44,5 +44,25 @@ describe("the results mode's counter (R53, P16's removal test)", () => {
     await c.ready;
     await c.flush();
     expect(kv.data.get(USES_KEY)).toEqual({ counts: {}, since: "2026-11-09" });
+  });
+});
+
+describe("the bar's angle-chip counter (R722, decisions.md \"The bar on the keypad\")", () => {
+  it("counts a tap within 3 s of the counted one before as an undo, and the tap after an undo as a new tap", async () => {
+    const kv = fakeKv();
+    const c = new UseCounter(kv, day("2026-11-17"), BAR_USES_KEY);
+    await c.ready;
+    c.countTap("bar.angle", 10_000);
+    c.countTap("bar.angle", 12_000); // within 3 s: takes the first back
+    expect([c.get("bar.angle"), c.get("bar.angle.undo")]).toEqual([2, 1]);
+    c.countTap("bar.angle", 13_000); // within 3 s of the undo, but an undo is not undone
+    expect([c.get("bar.angle"), c.get("bar.angle.undo")]).toEqual([3, 1]);
+    c.countTap("bar.angle", 15_999); // within 3 s of the third, which was counted as a tap
+    c.countTap("bar.angle", 30_000);
+    c.countTap("bar.angle", 33_000); // exactly 3 s later: not an undo
+    expect([c.get("bar.angle"), c.get("bar.angle.undo")]).toEqual([6, 2]);
+    await c.flush();
+    expect(kv.data.get(BAR_USES_KEY)).toEqual({ counts: { "bar.angle": 6, "bar.angle.undo": 2 }, since: "2026-11-17" });
+    expect(kv.data.has(USES_KEY)).toBe(false); // its own key: the results mode's counts and since are untouched
   });
 });
