@@ -78,13 +78,17 @@
   --app-max-wide: 1600px;
   --keys-wide: clamp(400px, 42vw, 560px);
   --sheet-max: 420px;
-  --status-h: 28px;
+  /* R722: the bar on the keypad's top edge (views/StatusLine.svelte): its height, the views' width in an app (at every
+     width) and the dots of the Apps tile */
+  --bar-h: 28px;
+  --view-w: 32px;
+  --grid-dot: 7px;
   --touch: 44px;
   --touch-big: 48px; /* R145: the ⚙ in a sheet head */
   --key-h: 48px;
-  --key-h-short: 42px;
+  --key-h-short: 43px;
   --nav-h: 36px;
-  --nav-h-short: 32px;
+  --nav-h-short: 33px;
   --head-h: 32px;
   --sheet-row: 42px;
   --line-h: 34px;

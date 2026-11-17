@@ -275,29 +275,26 @@ test("an empty free key gives the dead-key haptic and types nothing", async ({ p
   expect(await view(page)).toBe("home");
 });
 
-test("the place name's target is the line's full height and at least 96 px from the left edge; below the line the history keeps its taps", async ({ page }) => {
-  const box = await place(page).boundingBox();
-  expect(box?.x).toBe(0);
-  expect(box?.width ?? 0).toBeGreaterThanOrEqual(96);
-  expect(box?.height).toBe(28);
-  await page.touchscreen.tap(93, 14);
+// R722: the place (Apps ▾) is the bar's left end, on the keys: its target is the bar's full height from the screen's left
+// edge, and it reaches neither into the entry line above it nor into the keys below it.
+test("the place's target is the bar's full height from the left edge; the entry line above and the keys below keep their taps", async ({ page }) => {
+  const box = (await place(page).boundingBox())!;
+  const bar = (await page.getByTestId("bar").boundingBox())!;
+  expect(box.x).toBe(0);
+  expect(box.width).toBeGreaterThanOrEqual(40);
+  expect(box.height).toBe(28);
+  expect(box.y).toBe(bar.y);
+  await page.touchscreen.tap(box.x + box.width - 3, box.y + 14);
   await expect(appsSheet(page)).toBeVisible();
-  await page.touchscreen.tap(93, 14);
+  await page.touchscreen.tap(box.x + box.width - 3, box.y + 14);
   await expect(appsSheet(page)).toHaveCount(0);
-  // a full history: the top row's formula lies right under the line, and a tap on it is the row's, not the switch's
-  for (let i = 0; i < 12; i++) await tap(page, ["d1", "add", "d2", "enter"]);
-  await page.waitForTimeout(300);
-  // scrolled so that one row's formula starts right under the line (R148: the history's height moved with the keypad's gaps)
-  await page.evaluate(() => {
-    const h = document.querySelector(".history") as HTMLElement;
-    const row = document.querySelectorAll("article.item")[4] as HTMLElement;
-    h.scrollTop += row.getBoundingClientRect().top - 23;
-  });
-  const hit = await page.evaluate(() => (document.elementFromPoint(50, 38)?.closest("article") ? "row" : "other"));
-  expect(hit).toBe("row");
-  await page.touchscreen.tap(50, 38);
+  const at = (y: number) => page.evaluate(([x, y]) => {
+    const el = document.elementFromPoint(x, y);
+    return el?.closest("[data-testid='place']") ? "place" : el?.closest("[data-key]") ? "key" : el?.closest("[data-testid='entry']") ? "entry" : "other";
+  }, [20, y] as const);
+  expect(await at(box.y - 3)).toBe("entry");
+  expect(await at(box.y + box.height + 6)).toBe("key");
   expect(await view(page)).toBe("home");
-  await expect(page.locator('article.item[data-selected="true"]')).toHaveCount(1); // the row's tap picked it (R147)
 });
 
 test("a status tap while an app's code loads runs at once (decisions.md R8)", async ({ page }) => {

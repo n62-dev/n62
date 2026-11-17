@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R41 (A4a point 4): at the Android font scale 1.5 and 2.0 the keypad's text still fits: a face stays between its two legend
-// lines, a legend inside its own line, nothing is cut by the key edge, in Home and CAS and in every layer. The status line
-// keeps its chips on one line at 1.5 (at 2.0 its fixed 28 px header cannot hold the text: R41's report). (The scale is emulated: helpers.ts setFontScale.)
+// lines, a legend inside its own line, nothing is cut by the key edge, in Home and CAS and in every layer. The bar
+// keeps its chips on one line at 1.5 (at 2.0 its fixed 28 px bar cannot hold the text: R41's report). (The scale is emulated: helpers.ts setFontScale.)
 import { expect, test } from "@playwright/test";
 import { open, setFontScale, tap } from "./helpers.ts";
 
@@ -57,11 +57,11 @@ for (const scale of [1.5, 2.0])
     });
 
 for (const scale of [1.5])
-  test(`the status line keeps its chips on one line at font scale ${scale}`, async ({ page }) => {
+  test(`the bar keeps its chips on one line at font scale ${scale}`, async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await open(page);
     await setFontScale(page, scale);
-    const line = page.getByTestId("status");
+    const line = page.getByTestId("bar");
     const box = await line.boundingBox();
     expect(box).not.toBeNull();
     const m = await line.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth, height: el.getBoundingClientRect().height }));

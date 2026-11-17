@@ -202,7 +202,7 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   await expect(picked(page)).toHaveCount(1);
   await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy ›"]);
   const b = await box(page, '[data-testid="row-actions"]');
-  expect(Math.abs(b.y + b.height - slice.y)).toBeLessThanOrEqual(1); // on the slice's top edge
+  expect(Math.abs(b.y + b.height - (slice.y - 28))).toBeLessThanOrEqual(1); // on the bar's top edge, the bar on the slice (R722; R724 joins them)
   await holdLast(page); // on the picked row: it copies, the pick stays
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await isFolded(page, true);
@@ -242,7 +242,8 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   await expect(sheet(page)).toBeVisible();
   const m = await box(page, '[data-testid="menu"]');
   expect(m.y + m.height).toBeLessThanOrEqual(slice.y + 1); // from the slice's top edge, over the history
-  expect(m.y).toBeGreaterThanOrEqual((await box(page, "header")).height);
+  expect(m.y + m.height).toBeLessThanOrEqual((await box(page, '[data-testid="bar"]')).y + 1); // R722: the bar stays above the slice, uncovered
+  expect(m.y).toBeGreaterThanOrEqual(0);
 });
 
 /** R740: folded, the bar's Store ▶ on a picked result: the sheet "Store in" opens over the history and the keys stay down. */
@@ -408,9 +409,10 @@ test("Tab reaches the slice, and Enter on it unfolds; a hardware letter types wh
   await page.keyboard.press("x");
   await expect.poll(() => entryValue(page)).toContain("x");
   await isFolded(page, true);
-  // Tab from the line reaches the slice (the only control the fold has), Enter on it unfolds and typing goes on
+  // Tab from the line reaches the slice (the only control the fold has; the bar's seven controls lie between since R722),
+  // Enter on it unfolds and typing goes on
   let at = "";
-  for (let i = 0; i < 6 && at !== "fold-slice"; i++) {
+  for (let i = 0; i < 14 && at !== "fold-slice"; i++) {
     await page.keyboard.press("Tab");
     at = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset["testid"] ?? "");
   }
@@ -485,9 +487,10 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await tap(page, ["@mode", "d6"]); // Mode › Settings
   await sheet(page).locator('[data-id="counters"]').tap();
   const row = sheet(page).locator('[data-id="uses"]');
-  await expect(row).toContainText("Results mode");
+  await expect(row).toContainText("Removal tests"); // R722: Results mode and the angle chip, a level each
   await expect(row).toContainText("6 folds");
   await row.tap();
+  await sheet(page).locator('[data-id="results"]').tap();
   await expect(page.getByTestId("sheet-title")).toContainText("Results mode");
   await expect(sheet(page).locator('[data-id="actions"]')).toContainText("6");
   await expect(sheet(page).locator('[data-id="pick"]')).toContainText("4");

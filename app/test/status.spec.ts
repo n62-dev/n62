@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R8: the status line (docs/05 3.2), the Mode sheet (the chips since R15c2) and Settings (Mode's last row) (3.4). The
+// R8, R722: the bar on the keypad (docs/05 3.2; the status line before R722), the Mode sheet (the chips since R15c2) and Settings (Mode's last row) (3.4). The
 // real engine for the angle test (GIAC_OUT); the fake one for the rest.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, sheet, sheetKey, tap } from "./helpers.ts";
@@ -10,28 +10,30 @@ const angle = (page: Page) => page.evaluate(() => window.n62.session.settings.an
 const active = (page: Page) => sheet(page).locator('[role="menuitem"][data-active="true"]');
 
 /** The share of the window the calculation viewport (history or view, and the entry line) gets, docs/03 rule 9. */
-/** Measured after R8 (Pixel 7, 412 × 915): 0.3540 with the 28 px status line. A package may not go below it. */
+/** Measured after R8 (Pixel 7, 412 × 915): 0.3540 with the 28 px status line. A package may not go below it (R722: the bar is
+ *  on the keys, the screen the rest). */
 const FLOOR = 0.35;
 
 // R148 (S25, docs/archive/r19-results-and-keys.md §3): the floor holds at the three sizes the room was measured at
 for (const [width, height] of [[412, 915], [412, 839], [360, 740]] as const)
-  test(`the status line is at most 28 px, and the viewport keeps its share of the screen (the floor of docs/03 rule 9) at ${width} × ${height}`, async ({ page }) => {
+  test(`the bar is 28 px and holds the Home and CAS tabs, and the viewport keeps its share of the screen (the floor of docs/03 rule 9) at ${width} × ${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await open(page);
     const m = await page.evaluate(() => {
-      const h = document.querySelector("header")?.getBoundingClientRect();
+      const h = document.querySelector('[data-testid="bar"]')?.getBoundingClientRect();
       const v = document.querySelector(".screen")?.getBoundingClientRect();
-      return { header: h?.height ?? 0, screen: v?.height ?? 0, window: window.innerHeight, tabs: document.querySelectorAll('[role="tab"]').length };
+      const tabs = [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] [role="tab"]')].map((e) => e.dataset["testid"]);
+      return { header: h?.height ?? 0, screen: v?.height ?? 0, window: window.innerHeight, tabs };
     });
-    expect(m.tabs).toBe(0);
-    expect(m.header).toBeLessThanOrEqual(28);
+    expect(m.tabs).toEqual(["tab-home", "tab-cas"]);
+    expect(m.header).toBe(28);
     const share = m.screen / m.window;
-    console.log(`viewport share at ${width} × ${height}: ${share.toFixed(4)} (screen ${m.screen} of ${m.window} px, status line ${m.header} px)`);
+    console.log(`viewport share at ${width} × ${height}: ${share.toFixed(4)} (screen ${m.screen} of ${m.window} px, bar ${m.header} px)`);
     expect(share).toBeGreaterThanOrEqual(FLOOR);
   });
 
-// R148 R2: the keypad's gaps and padding are 4 px; R1: the short rows apply below 760 px tall (a digit key 42 px), not above (48 px)
-for (const [width, height, key] of [[360, 740, 42], [412, 839, 48]] as const)
+// R148 R2: the keypad's gaps and padding are 4 px; R1, R722: the short rows apply under 1000 px tall (a digit key 43 px), not above (48 px)
+for (const [width, height, key] of [[360, 740, 43], [412, 839, 43], [800, 1148, 48]] as const)
   test(`the keypad has 4 px gaps and padding, and digit keys ${key} px tall, at ${width} × ${height} (R148)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await open(page);
@@ -46,7 +48,7 @@ for (const [width, height, key] of [[360, 740, 42], [412, 839, 48]] as const)
     expect(m.key).toBe(key);
   });
 
-test("the status line shows the place, the angle unit, the format and digits", async ({ page }) => {
+test("the bar shows the place, the angle unit, the format and digits", async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: Home\./);
   await expect(page.getByTestId("chip-angle")).toHaveText("RAD");
@@ -80,7 +82,8 @@ test("a tap on the place name opens the Apps sheet; Home and CAS are its first r
 
 test("the tabs switch the views of Function and Solve, the current one marked; Home has none (R15c1)", async ({ page }) => {
   await open(page);
-  await expect(page.getByRole("tab")).toHaveCount(0);
+  const views = page.getByRole("tablist", { name: "Views" }).getByRole("tab");
+  await expect(views).toHaveCount(0);
   await tap(page, ["@symb"]);
   const tab = (v: string) => page.getByTestId(`tab-${v}`);
   await expect(tab("symb")).toHaveAttribute("aria-selected", "true");
@@ -94,7 +97,7 @@ test("the tabs switch the views of Function and Solve, the current one marked; H
   await tap(page, ["d4"]);
   await page.waitForFunction(() => window.n62.shell.app === "solve" && window.n62.shell.loading === null);
   await expect(page.getByTestId("tab-plot")).toHaveCount(0); // Solve has Symb and Num only
-  await expect(page.getByRole("tab")).toHaveCount(2);
+  await expect(views).toHaveCount(2);
   await tab("symb").tap();
   await expect(page.getByTestId("place")).toHaveAttribute("data-view", "symb");
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: Solve\./);
@@ -133,25 +136,25 @@ test("☰ on a picked history row opens the row's menu (R15c1)", async ({ page }
   await expect(sheet(page).getByRole("menuitem").first()).toContainText("Store ▶");
 });
 
-test("the status line fits at 360 px in an app with the chips and ☰, and the targets keep their size (R15c1)", async ({ page }) => {
+test("the bar fits at 360 px in an app with the chips and ☰, and the targets keep their size (R15c1, R722)", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await open(page);
   await tap(page, ["@plot"]);
   await page.waitForFunction(() => window.n62.shell.app === "function" && window.n62.shell.loading === null);
   const m = await page.evaluate(() => {
-    const h = document.querySelector("header") as HTMLElement;
+    const h = document.querySelector('[data-testid="bar"]') as HTMLElement;
     const r = (id: string) => document.querySelector(`[data-testid="${id}"]`)?.getBoundingClientRect();
     return { over: h.scrollWidth - h.clientWidth, header: h.getBoundingClientRect().height, menu: r("menu-button"), place: r("place"), digits: r("chip-digits") };
   });
   expect(m.over).toBeLessThanOrEqual(0);
   expect(m.header).toBeLessThanOrEqual(28);
-  expect(m.menu?.width ?? 0).toBeGreaterThanOrEqual(36);
+  expect(m.menu?.width ?? 0).toBeGreaterThanOrEqual(28); // R722: at least 28 × 28 (docs/05 3.2)
   expect(m.menu?.height ?? 0).toBeGreaterThanOrEqual(28);
-  expect(m.place?.width ?? 0).toBeGreaterThanOrEqual(48); // R82f2: the glyph tile and ▾ (R15b had 96 px for the name)
+  expect(m.place?.width ?? 0).toBeGreaterThanOrEqual(40); // R82f2: the glyph tile and ▾ (R15b had 96 px for the name)
   expect((m.digits?.right ?? 999) <= (m.menu?.left ?? 0)).toBe(true);
 });
 
-test("Shift and Alpha show in the status line: one tap each, twice for the lock", async ({ page }) => {
+test("Shift and Alpha show on the bar: one tap each, twice for the lock", async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0);
   await tap(page, ["shift"]);
@@ -308,7 +311,7 @@ test("the last row of the Mode sheet opens Settings as its next level, on its fi
   await sheet(page).locator('[data-id="settings"]').tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
   await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "appearance");
-  // the status line's ☰ stays uncovered: it closes the sheet it did not open (as on Mode)
+  // the bar's ☰ stays uncovered: it closes the sheet it did not open (as on Mode)
   await page.getByTestId("menu-button").tap();
   await expect(sheet(page)).toBeHidden();
 });

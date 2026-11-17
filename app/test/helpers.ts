@@ -3,10 +3,10 @@ import { linkSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, wri
 import { dirname, resolve } from "node:path";
 import { test, type Locator, type Page } from "@playwright/test";
 
-/** The status line's controls (R15c1, R15c2), for keys that left the cluster: `@place` (the place name, the Apps
- *  sheet), `@menu` (☰), `@symb` / `@plot` / `@num` (the view tab; from Home or CAS the last app is opened first from the
- *  Apps sheet, as the old view keys did), `@home` and `@cas` (the Apps sheet's first two rows), `@mode` (the Mode
- *  sheet on its Angle row, as Shift + Apps opened it before R15c2: the format chip, then ▲). */
+/** The bar's controls (R15c1, R15c2, R722), for keys that left the cluster: `@place` (Apps ▾, the Apps sheet), `@menu`
+ *  (☰), `@symb` / `@plot` / `@num` (the view tab; from Home or CAS the last app is opened first from the Apps sheet, as
+ *  the old view keys did), `@home` and `@cas` (the bar's Home and CAS tabs, one tap), `@mode` (the Mode sheet on its
+ *  Angle row, as Shift + Apps opened it before R15c2: the format chip, then ▲). */
 async function statusTap(page: Page, id: string): Promise<void> {
   const apps = page.getByTestId("apps");
   const fromApps = async (row: string): Promise<void> => {
@@ -15,14 +15,14 @@ async function statusTap(page: Page, id: string): Promise<void> {
   };
   if (id === "@place") return page.getByTestId("place").tap();
   if (id === "@menu") return page.getByTestId("menu-button").tap();
-  if (id === "@home" || id === "@cas") return fromApps(id.slice(1));
+  if (id === "@home" || id === "@cas") return page.getByTestId(`tab-${id.slice(1)}`).tap();
   if (id === "@mode") {
     await page.getByTestId("chip-format").tap();
     await page.getByTestId("menu").getByRole("menuitem").first().waitFor();
     return sheetKey(page, ["up"]); // (R144: an on-screen ▲ would close the sheet)
   }
   const view = id.slice(1);
-  if (!["symb", "plot", "num"].includes(view)) throw new Error(`no status-line control ${id}`);
+  if (!["symb", "plot", "num"].includes(view)) throw new Error(`no bar control ${id}`);
   const inApp = await page.evaluate(() => window.n62.shell.app !== null);
   if (!inApp) await fromApps(await page.evaluate(() => window.n62.shell.lastApp ?? "function"));
   await page.getByTestId(`tab-${view}`).tap();
@@ -39,7 +39,7 @@ export async function sheetKey(page: Page, ids: string[]): Promise<void> {
  * (R21a: the sheet is drawn over the maths rows, Settings too since R49) cannot be touched: the sheet's row or cell is where it was, and
  * fit.spec.ts taps those. Its key path stays for a hardware keyboard (docs/05 2 rule 1), so such a key is pressed the
  * way a hardware key is (R31: the keypad key with that character), in the current Shift/Alpha state. An id that
- * starts with `@` is a status-line control (statusTap).
+ * starts with `@` is a bar control (statusTap).
  */
 export async function tap(page: Page, ids: string[]): Promise<void> {
   const covered = (id: string): Promise<boolean> =>

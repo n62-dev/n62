@@ -694,10 +694,40 @@ describe("Settings › Counters › Results mode (R53, R283: the handle is gone)
     const s = settings(4);
     expect(byId(s, "uses")?.value).toBe("7 folds");
     s.level.highlight = at(s, "uses");
+    expect(s.enter()).toEqual({ kind: "stay" }); // R722: Removal tests › Results mode
+    expect(s.level.items.map((x) => x.id)).toEqual(["results", "bar"]);
+    s.level.highlight = at(s, "results");
     expect(s.enter()).toEqual({ kind: "stay" });
     expect(s.level.items.map((x) => x.id)).toEqual(["swipe", "pick", "actions", "since", "reset"]);
     expect(byId(s, "swipe")?.value).toBe("2");
     c.count("fold.swipe");
     expect(c.folds).toBe(8);
+  });
+});
+
+describe("Settings › Counters › Removal tests › Angle chip (R722)", () => {
+  it("shows the angle chip's taps and undos under their own key; they leave the results mode's counts and since alone", async () => {
+    const kv = fakeKv();
+    session = new Session(new FakeCalc(), kv);
+    const bar = await session.uses("bar-uses");
+    bar.countTap("bar.angle", 1_000);
+    bar.countTap("bar.angle", 2_500);
+    const results = await session.uses();
+    await results.ready;
+    expect(results.state).toEqual({ counts: {}, since: "" }); // P16's 14 days do not start on an angle tap
+    const s = settings(4);
+    s.level.highlight = at(s, "uses");
+    s.enter();
+    expect(byId(s, "bar")?.value).toBe("1 of 2 undone");
+    s.level.highlight = at(s, "bar");
+    expect(s.enter()).toEqual({ kind: "stay" });
+    expect(s.level.items.map((x) => x.id)).toEqual(["angle", "undo", "since", "reset"]);
+    expect([byId(s, "angle")?.value, byId(s, "undo")?.value]).toEqual(["2", "1"]);
+    expect(byId(s, "since")?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    const reset = s.activate(at(s, "reset"));
+    if (reset.kind === "run") reset.item.run?.();
+    await session.uses("bar-uses");
+    expect(byId(s, "angle")?.value).toBe("0");
+    expect(results.state.since).toBe(""); // the angle chip's Reset is its own
   });
 });

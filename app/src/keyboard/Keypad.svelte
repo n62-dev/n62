@@ -553,16 +553,18 @@
   .key[data-zone="true"] {
     min-height: var(--nav-h);
   }
-  /* R82: a short screen (bars, a larger font scale) lowers the rows, so the header, the keypad and the Plot readout still
+  /* R82: a short screen (bars, a larger font scale) lowers the rows, so the bar, the keypad and the Plot readout still
      fit the column without a scroll; a taller screen keeps the full rows. R148: from 760 px tall (was 700), because
-     360 × 740 reaches the viewport floor of docs/03 rule 9 only with them (S25, r19 §3; owner, 2026-11-06) */
-  @media (max-height: 760px) {
+     360 × 740 reaches the viewport floor of docs/03 rule 9 only with them (S25, r19 §3; owner, 2026-11-06). R722: under
+     1000 px tall, a notch taller (43 and 33 px; owner, 2026-11-17), so a phone gives the history the room the bar left. This query decides the breakpoint: Sheet.svelte's
+     short-row padding follows it (R722f1) */
+  @media (max-height: 999px) {
     .key {
       --legend-h: var(--sp-25);
       min-height: var(--key-h-short);
     }
     .key[data-letters="true"] .main {
-      line-height: 1; /* a letter row holds two legend lines: 10 + 20 + 10 + 2 = 42 px */
+      line-height: 1; /* a letter row holds two legend lines: 10 + 20 + 10 + 2 = 42 px, in a 43 px key */
     }
     .key.nav,
     .key[data-zone="true"] {

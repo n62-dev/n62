@@ -557,8 +557,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  and the unit view's chunk, i18n/sumWords.ts): 62,244 B + 0.05 kB, rounded up to the next 10 B.
  *  62,300 → 62,420 B (R700 fix round 1): the branch on phase-1 0d58866a measures 62,363 B gzip (175,872 B raw): the three Android
  *  back layers (App.svelte: the picked row, Shift or Alpha armed; units/open.ts: the unit view's, 12 lines) and the layer's
- *  release in Session; 62,363 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_420;
+ *  release in Session; 62,363 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,420 → 62,970 B (R722, fix round 1): the bar on the keypad (views/StatusLine.svelte: the Home and CAS tabs with their
+ *  tiles, the angle undo count, the guard that lets a control act only on a pointer that went down on it). Phase-1 e8c6fdd3
+ *  measures 62,393 B gzip (175,989 B raw); the branch first measured 63,079 B, over the budget, so it was cut: the controls'
+ *  `data-item` became static names (barItems.ts left the start chunk) and the guard one capture-phase click handler on the
+ *  bar instead of a wrapped handler per control (−159 B). The branch 62,920 B (177,881 B raw): + 0.05 kB, rounded up. */
+export const START_PIN_GZIP = 62_970;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

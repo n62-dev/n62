@@ -21,8 +21,8 @@ describe("the first-start tips (R290)", () => {
     expect(drawn.length).toBe(7);
     expect(Object.keys(enTips).filter((k) => k !== "tips.title" && k !== "tips.gotIt").sort()).toEqual([...drawn].sort());
   });
-  it("keep the two ringed cards (the place name, the status line's ☰) and the marks card", () => {
-    expect(cards[0]).toMatch(/name/);
+  it("keep the two ringed cards (Apps ▾ and the bar's ☰, R722) and the marks card", () => {
+    expect(cards[0]).toMatch(/Apps ▾.*Home and CAS/);
     expect(cards[1]).toMatch(/☰/);
     card(/= exact\. ≈ rounded.*⚠/);
   });
@@ -38,17 +38,17 @@ describe("the first-start tips (R290)", () => {
     expect(c).toMatch(/hold.*select/i);
     expect(c).toMatch(/Select and Deselect grow and shrink/);
   });
-  it("say that ☰, on the keys and on the status line, holds Paste and each app's menu", () => {
+  it("say that ☰, on the keys and on the bar, holds Paste and each app's menu", () => {
     const c = card(/☰/);
     expect(c).toMatch(/keys/);
-    expect(c).toMatch(/status line/);
+    expect(c).toMatch(/\bbar\b/);
     expect(c).toMatch(/Paste/);
     expect(c).toMatch(/each app's menu/);
   });
   it("name the units key and → Check, the end slot of the unit view (R352, R349)", () => {
     expect(card(/Units/)).toBe("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; → Check checks the result against a unit");
   });
-  it("name no control that is gone: a Copy or Paste key, the fold handle; nor a dimmed Help", () => {
-    expect(all).not.toMatch(/\b(copy|paste) key|key.*\b(copy|paste)\b.*key|handle|\bbar\b|\bhelp\b/i);
+  it("name no control that is gone: a Copy or Paste key, the fold handle or fold bar; nor a dimmed Help (R722: the bar on the keys is there)", () => {
+    expect(all).not.toMatch(/\b(copy|paste) key|key.*\b(copy|paste)\b.*key|handle|fold(ing)? bar|\bhelp\b/i);
   });
 });

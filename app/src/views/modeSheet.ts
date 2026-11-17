@@ -458,7 +458,7 @@ function tapsItems(session: Session, env: SettingsEnv): MenuItem[] {
     // P7 point 4's two counts share a row (R53: the level keeps docs/05 3.4's seven rows with Results mode in it)
     { id: "taps", label: keyFeelText("settings.taps.shiftAlpha"), keep: true, get value() { return `${taps.counts.shift} / ${taps.counts.alpha}`; } },
     switchedRow(session), // R88, R89: the presets applied
-    usesRow(session), // R53: the results mode's counts, one row with its own level
+    testsRow(session), // R53, R722: the removal tests' counts (results mode, the angle chip), one row so the level keeps seven
     { id: "since", label: keyFeelText("settings.taps.since"), keep: true, get value() { return taps.counts.since || "—"; } },
     // R127: the counts per key and layer as a file (R128 writes the same text into the sync folder); only where the app gives the file port
     ...(env.data ? [{ id: "export", label: keyFeelText("settings.taps.export"), run: () => env.data?.((c) => c.saveCounts(taps.counts)) }] : []),
@@ -466,15 +466,30 @@ function tapsItems(session: Session, env: SettingsEnv): MenuItem[] {
   ];
 }
 
+/** "Removal tests ›" (R722): one row in Counters, its value the folds (P16), its level a row per counted removal test, each
+ *  with its own level, counts, since and reset: Results mode (R53) and the bar's angle chip (R722). */
+function testsRow(session: Session): MenuItem {
+  const folds = () => String(session.useCounters.uses?.folds ?? 0);
+  return {
+    id: "uses",
+    label: keyFeelText("settings.tests"),
+    get value() {
+      void session.uses(); // (its chunk, once)
+      return keyFeelText("settings.uses.value", { n: folds() });
+    },
+    submenu: { title: keyFeelText("settings.tests"), remember: false, items: [usesRow(session), barRow(session)] },
+  };
+}
+
 /** R53 (decisions.md P16's removal test): "Results mode ›", the counts under the IndexedDB key `uses` (state/uses.svelte.ts),
  *  loaded when Counters is drawn: folds by a swipe, rows picked while folded, row actions while folded,
  *  since, reset. */
 function usesRow(session: Session): MenuItem {
-  const u = () => session.usesCounter;
+  const u = () => session.useCounters.uses;
   const n = (get: (c: NonNullable<ReturnType<typeof u>>) => number) => () => String(u() ? get(u()!) : 0);
   const row = (id: string, label: string, value: () => string): MenuItem => ({ id, label, keep: true, get value() { return value(); } });
   return {
-    id: "uses",
+    id: "results",
     label: keyFeelText("settings.uses"),
     get value() {
       void session.uses(); // (its chunk, once)
@@ -489,6 +504,32 @@ function usesRow(session: Session): MenuItem {
         row("actions", keyFeelText("settings.uses.actions"), n((c) => c.actions)),
         row("since", keyFeelText("settings.taps.since"), () => u()?.state.since || "—"),
         { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => void session.uses().then((c) => c.reset()) },
+      ],
+    },
+  };
+}
+
+/** R722 (decisions.md "The bar on the keypad"): "Angle chip ›", the bar's counts under their own IndexedDB key `bar-uses`
+ *  (their own since and Reset, apart from the results mode's): taps on the angle chip, taps that undid the one before
+ *  within 3 s, since, reset. */
+function barRow(session: Session): MenuItem {
+  const n = (name: string) => () => String(session.useCounters["bar-uses"]?.get(name) ?? 0);
+  const row = (id: string, label: string, value: () => string): MenuItem => ({ id, label, keep: true, get value() { return value(); } });
+  return {
+    id: "bar",
+    label: keyFeelText("settings.bar"),
+    get value() {
+      void session.uses("bar-uses"); // (its chunk, once)
+      return keyFeelText("settings.bar.value", { n: n("bar.angle.undo")(), of: n("bar.angle")() });
+    },
+    submenu: {
+      title: keyFeelText("settings.bar"),
+      remember: false,
+      items: [
+        row("angle", keyFeelText("settings.bar.angle"), n("bar.angle")),
+        row("undo", keyFeelText("settings.bar.undo"), n("bar.angle.undo")),
+        row("since", keyFeelText("settings.taps.since"), () => session.useCounters["bar-uses"]?.state.since || "—"),
+        { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => void session.uses("bar-uses").then((c) => c.reset()) },
       ],
     },
   };

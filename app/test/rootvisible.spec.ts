@@ -47,10 +47,13 @@ for (const [name, width, height] of SIZES)
 // R82f1 (F117): Plot's ☰ at the Fairphone's size. Every entry is on screen and uncovered without scrolling at 372×828
 // and at 372×767 (the WebView's height there, bars taken off: CORE DEVICE's log); on the short screen each one is
 // reachable: on screen, or the count cue shown and scrolled to. Phase-1 cut Settings, the ninth row, by 3 px at both.
+// R722: under 1000 px tall the rows are 43 px (owner, 2026-11-17), so the Fairphone's Menu scrolls at its floor (every row
+// reachable, the cue showing); a phone 1000 px tall has the full rows and shows them all
 const MENU_SIZES = [
-  ["Fairphone 6", 372, 828, true],
-  ["Fairphone 6 WebView", 372, 767, true],
+  ["Fairphone 6", 372, 828, false],
+  ["Fairphone 6 WebView", 372, 767, false],
   ["Fairphone 6 width, short", 372, 560, false],
+  ["a tall phone", 412, 1000, true],
 ] as const;
 for (const [name, width, height, all] of MENU_SIZES)
   test(`Plot's Menu entries are all ${all ? "on screen" : "reachable"} at ${name} (${width}×${height})`, async ({ browser }) => {
@@ -79,15 +82,17 @@ for (const [name, width, height, all] of MENU_SIZES)
     }
   });
 
-// R262: after a Root, Plot's Menu has its ninth row (To Home, shown only with an answer): all nine rows are on screen
-// without the scroll cue at the Fairphone's sizes and the Pixel 7's (no reason line then: every row is live).
+// R262: after a Root, Plot's Menu has its ninth row (To Home, shown only with an answer). R722: under 1000 px tall (the
+// Fairphone's sizes and the Pixel 7's) the 43 px rows leave 290 px, the nine rows need 324 at their floor: the list
+// scrolls with its cue and every row is reached; at 1000 px tall all nine are on screen without the cue.
 const ANSWER_SIZES = [
-  ["Fairphone 6", 372, 828],
-  ["Fairphone 6 WebView", 372, 767],
-  ["Pixel 7", 412, 915],
+  ["Fairphone 6", 372, 828, false],
+  ["Fairphone 6 WebView", 372, 767, false],
+  ["Pixel 7", 412, 915, false],
+  ["a tall phone", 412, 1000, true],
 ] as const;
-for (const [name, width, height] of ANSWER_SIZES)
-  test(`Plot's Menu after a Root shows its nine rows, To Home last, on screen at ${name} (${width}×${height})`, async ({ browser }) => {
+for (const [name, width, height, all] of ANSWER_SIZES)
+  test(`Plot's Menu after a Root shows its nine rows, To Home last, ${all ? "on screen" : "each reached"} at ${name} (${width}×${height})`, async ({ browser }) => {
     if (!c46) throw new Error("c46 is not in core.yaml");
     const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
@@ -100,9 +105,16 @@ for (const [name, width, height] of ANSWER_SIZES)
       await expect(rows).toHaveCount(9);
       const ids = await rows.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["id"] ?? ""));
       expect(ids.at(-1)).toBe("tohome");
-      await expect(page.getByTestId("sheet-count"), `no scroll cue at ${width}×${height}`).toHaveCount(0);
-      for (const id of ids)
-        await expect.poll(() => seen(page, `[data-testid="menu"] .row[data-id="${id}"]`), { message: `Menu row ${id} at ${width}×${height}`, timeout: 2000 }).toBe("");
+      const cue = page.getByTestId("sheet-count");
+      if (all) await expect(cue, `no scroll cue at ${width}×${height}`).toHaveCount(0);
+      for (const id of ids) {
+        const sel = `[data-testid="menu"] .row[data-id="${id}"]`;
+        if (!all && (await seen(page, sel)) !== "") {
+          await expect(cue, `${id} is cut, so the cue shows`).toBeVisible();
+          await page.locator(sel).evaluate((e) => e.scrollIntoView({ block: "nearest" }));
+        }
+        await expect.poll(() => seen(page, sel), { message: `Menu row ${id} at ${width}×${height}`, timeout: 2000 }).toBe("");
+      }
     } finally {
       await ctx.close();
     }

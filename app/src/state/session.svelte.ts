@@ -29,7 +29,7 @@ import {
 import { defaultLook, validLook, type Look } from "../theme/look.ts";
 import { idbKv, type Kv } from "./storage.ts";
 import { Taps } from "./tapsFront.svelte.ts";
-import type { UseCounter } from "./uses.svelte.ts";
+import type { UseCounter, UseKey } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
 import { chipOf, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
@@ -239,9 +239,9 @@ export class Session {
   shiftLock = $state(false);
   /** The press counts (R9, R70, R127), shown in Settings; R320: a front that queues them until the counter's chunk is in. */
   readonly taps: Taps;
-  /** The results mode's counter (R53, uses.svelte.ts), once loaded: its own chunk, fetched by the first fold or Counters. */
-  usesCounter = $state.raw<UseCounter | undefined>();
-  private usesLoad: Promise<UseCounter> | undefined;
+  /** The use counters by key (uses.svelte.ts, its own chunk), once uses() loaded them: `uses` results mode's (R53), `bar-uses` the bar's (R722). */
+  useCounters = $state.raw<Partial<Record<UseKey, UseCounter>>>({});
+  private usesLoad: Partial<Record<UseKey, Promise<UseCounter>>> = {};
   settings = $state<Settings>(structuredClone(defaultSettings));
   home = $state<HistoryItem[]>([]);
   cas = $state<HistoryItem[]>([]);
@@ -272,9 +272,9 @@ export class Session {
   /** R94: the stored settings are from a newer schema. They are read and kept in memory, never written. */
   private settingsNewer = false;
 
-  /** The results mode's counter (R53), loaded on first use. */
-  uses(): Promise<UseCounter> {
-    return (this.usesLoad ??= import("./uses.svelte.ts").then((m) => (this.usesCounter = new m.UseCounter(this.kv))));
+  uses(key: UseKey = "uses"): Promise<UseCounter> {
+    const add = (c: UseCounter): UseCounter => ((this.useCounters = { ...this.useCounters, [key]: c }), c);
+    return (this.usesLoad[key] ??= import("./uses.svelte.ts").then((m) => add(new m.UseCounter(this.kv, undefined, key))));
   }
 
   constructor(calc: Calc, kv: Kv = idbKv) {

@@ -265,7 +265,7 @@ export async function replay(page: Page, steps: readonly CoreStep[], hooks: Repl
 
 /** R82f1 (F117): a digit pressed while a menu sheet is open picks the row numbered with it; that row must be on
  *  screen and uncovered first, as the eye needs it (a replay that presses 1 without looking passed c46 on the Fairphone
- *  while Root sat under the status line). Throws with what covers it, and the boxes, for a device log. */
+ *  while Root sat under the status line, before R722 put the bar on the keys). Throws with what covers it, and the boxes, for a device log. */
 async function pickSeen(page: Page, digit: string): Promise<void> {
   const id = await page.evaluate((d) => {
     const sheet = document.querySelector('[data-testid="menu"], [data-testid="apps"]');
@@ -366,7 +366,7 @@ export function seen(page: Page, sel: string, every = false): Promise<string> {
     const box = (b: DOMRect): string => `${Math.round(b.left)},${Math.round(b.top)} ${Math.round(b.width)}×${Math.round(b.height)}`;
     const where = (): string =>
       ` (viewport ${innerWidth}×${innerHeight} dpr ${devicePixelRatio}; ` +
-      ["header", ".screen", ".keys"].map((q) => { const b = document.querySelector(q)?.getBoundingClientRect(); return `${q} ${b ? box(b) : "-"}`; }).join("; ") + ")";
+      ['[data-testid="bar"]', ".screen", ".keys"].map((q) => { const b = document.querySelector(q)?.getBoundingClientRect(); return `${q} ${b ? box(b) : "-"}`; }).join("; ") + ")";
     if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === "hidden") return `hidden, box ${box(r)}${where()}`;
     if (r.left < 0 || r.top < 0 || r.right > innerWidth || r.bottom > innerHeight) return `outside the viewport, box ${box(r)}${where()}`;
     // the centre and the middle of each edge, 2 px in: a text half under the keypad cannot be read either
@@ -388,7 +388,7 @@ export function seen(page: Page, sel: string, every = false): Promise<string> {
     }
     if (at === "") return "";
     const name = (n: Element | null): string => n ? `${n.tagName.toLowerCase()}${n.id ? `#${n.id}` : ""}${n.className && typeof n.className === "string" ? `.${n.className.trim().split(/\s+/).join(".")}` : ""}` : "nothing";
-    const owner = top?.closest("[data-testid], header, .keys, [data-key]");
+    const owner = top?.closest("[data-testid], .keys, [data-key]");
     return `covered at its ${at} by ${name(top)}${owner && owner !== top ? ` in ${name(owner)}` : ""}, box ${box(r)}${where()}`;
     };
     for (const [i, el] of (every ? all : all.slice(0, 1)).entries()) {

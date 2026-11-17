@@ -51,8 +51,11 @@ export function showTips(): void {
     p.append(line);
   });
   // R171, R290: the handling no control shows (rows, the fold, the line), the marks and the units key (R352); no ring, no number
-  for (const key of ["tips.rows", "tips.fold", "tips.line", "tips.marks", "tips.units"] as const) el("p", "tip", tr(key), cards);
-  const gotIt = el("button", "gotit", tr("tips.gotIt"), cards);
+  // R722: the rest, a second column: below the rings when they sit low (on the bar, on the keys), inside the first when high
+  const rest = el("div", "cards", undefined, root);
+  for (const key of ["tips.rows", "tips.fold", "tips.line", "tips.marks", "tips.units"] as const) el("p", "tip", tr(key), rest);
+  const gotIt = el("button", "gotit", tr("tips.gotIt"), rest);
+  const flow = [...rest.children];
   gotIt.type = "button";
   gotIt.dataset["testid"] = "tips-got-it";
 
@@ -61,6 +64,7 @@ export function showTips(): void {
   const holes: SVGRectElement[] = [];
   const measure = (): void => {
     let bottom = 0;
+    let top = innerHeight;
     (["place", "menu"] as const).forEach((id, i) => {
       const target = document.querySelector(`[data-tip="${id}"]`);
       const r = target?.getBoundingClientRect();
@@ -85,8 +89,30 @@ export function showTips(): void {
       Object.assign(ring.style, { left: `${box.x}px`, top: `${box.y}px`, width: `${box.w}px`, height: `${box.h}px` });
       for (const [k, v] of Object.entries({ x: box.x, y: box.y, width: box.w, height: box.h })) holes[i]?.setAttribute(k, String(v));
       bottom = Math.max(bottom, box.y + box.h);
+      top = Math.min(top, box.y);
     });
-    cards.style.top = `${bottom + 14}px`;
+    // R722: the rings are on the bar, on the keys' top edge: the cards stand above them, the two numbered ones first and
+    // then as many more as the room holds, in order, and the rest below, over the keys. When the controls sit at the screen's top (the wide layout: the bar heads the keypad's column) all the
+    // cards are below, as before.
+    const low = top > innerHeight / 4;
+    if (low) {
+      root.append(rest);
+      Object.assign(cards.style, { top: "auto", bottom: `${innerHeight - top + 8}px`, maxHeight: `${Math.max(0, top - 16)}px` }); // (the numbers hang below the rings, not above)
+      Object.assign(rest.style, { position: "", top: `${bottom + 14}px`, bottom: "" });
+      rest.append(...flow);
+      for (const card of flow) {
+        cards.append(card);
+        if (cards.scrollHeight > cards.clientHeight + 0.5) {
+          rest.prepend(card);
+          break;
+        }
+      }
+    } else {
+      rest.append(...flow);
+      cards.append(rest);
+      Object.assign(cards.style, { top: `${bottom + 14}px`, bottom: "", maxHeight: "" });
+      Object.assign(rest.style, { position: "static", top: "", bottom: "" });
+    }
   };
   measure();
   const ro = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure);

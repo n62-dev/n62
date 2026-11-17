@@ -46,7 +46,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived, "Opus pass 96".
 - **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
 - **R15c Store (owner, 2026-10-19; G2 item 58, device):** Shift + ᴇ (Store ▶) on an empty line after a result starts `Ans ▶`, as + − × ÷ do; built in R15c2.
-- **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line.** Rule: docs/04 5.1, docs/05 3.2. Archived.
+- **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line** (the bar on the keypad since R722, below). Rule: docs/04 5.1, docs/05 3.2. Archived.
+- **The bar on the keypad (owner, 2026-11-17, R722):** the status line moves onto the keypad's top edge as the bar (Apps ▾ · Home | CAS · ⇧/α · RAD · STD ▾ · 12 ▾ · ☰, 28 px; the lock's `bar:`), Home and CAS one tap each, and the rows under 1000 px tall are 43 and 33 px (history 220 → 264 px at 412 × 815). Rule: docs/05 3.2, docs/03 rule 9. Would change if: over 2 % of angle-chip taps are undone within 3 s in four weeks (`bar.angle.undo` against `bar.angle`, under their own key `bar-uses` and since: Settings › Counters › Removal tests › Angle chip).
 - **R15b (2026-10-17): cluster rows 36 px; the place target at least 48 × 28 px** (R82f2). Archived, "Opus pass 96". Would change if: 36 px keys are mis-tapped on the phone.
 - **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS). Would change if: under 14 folds or 10 actions while folded in 14 days. Archived.
   - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).
@@ -145,7 +146,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it). Archived, "Opus pass 132".
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is a mask. Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
-- **The tips' text stops at 18 px** (Opus pass 110, R171): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
+- **The tips' text stops at 17 px** (Opus pass 110, R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived, "Opus pass 117".
   - **Under 1000 px tall with R722's 43 px rows too (Opus pass 217, R722's question):** Plot's ☰ after a Root, Mode › Digits, Numbers and Appearance scroll at their floor at 412 × 915 and on the Fairphone 6. Would change if: the owner's look at the beta wants them whole (a 32 px floor, measured by R722, brings back Plot's ☰ and Digits).
 

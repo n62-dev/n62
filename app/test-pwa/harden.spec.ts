@@ -119,7 +119,7 @@ test.describe("on a site that can change", () => {
     const line = page.locator('[data-testid="update-note"]');
     await expect(line).toBeVisible({ timeout: 20_000 });
     await expect(line).toHaveAttribute("title", /new version/);
-    expect(await line.evaluate((el) => el.closest('[data-testid="status"]') !== null)).toBe(true); // in the status line, not over the stage
+    expect(await line.evaluate((el) => el.closest(".stage") !== null && el.closest('[data-testid="bar"]') === null)).toBe(true); // a pill at the stage's top, not on the bar (R722)
     await page.waitForTimeout(1500);
     expect(loads).toBe(0); // nothing reloaded on its own; the user's line is still there
     expect(await page.evaluate(() => (window as unknown as { __old?: number }).__old)).toBe(1);

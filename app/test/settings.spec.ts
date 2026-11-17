@@ -257,8 +257,9 @@ const LEVELS: Record<string, string[]> = {
   "Mode › Settings › Data": ["@mode", "d6", "d5"],
   "Mode › Settings › Counters": ["@mode", "d6", "d6"],
 };
-/** The levels that scroll at 360 × 740 (decisions.md, R148f1: a sheet that cannot fit at its floor scrolls), with how far:
- *  Appearance needs 304 px, the room is 287; Numbers has seven rows since R194 (Word), 308 px. */
+/** The levels that scroll under 1000 px tall (decisions.md, R148f1: a sheet that cannot fit at its floor scrolls), with how
+ *  far: Appearance needs 304 px, the room is 287 at 360 × 740 and 294 with R722's 43 px rows; Numbers has seven rows since
+ *  R194 (Word), 308 px. Before R722 only 360 × 740 had the short rows; now every phone under 1000 px tall has them. */
 const SCROLLS: Readonly<Record<string, number>> = { "Mode › Settings › Appearance": 17, "Mode › Settings › Numbers": 24 };
 for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
   test(`fit at ${w} × ${h}: every Settings level shows all its rows, the top cluster uncovered`, async ({ page }) => {
@@ -268,7 +269,7 @@ for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
       await expect(title(page)).toHaveText(path);
       if (path.endsWith("Key vibration")) await row(page, "haptics").tap(); // on: no reason line, but ◀ ▶ rows
       const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      if (w === 360 && path in SCROLLS) {
+      if (h < 1000 && path in SCROLLS) {
         // R148f1 (decisions.md): its rows need more than the room at the floor (Appearance 304 px for 287 or 288): it scrolls
         expect(m.scroll - m.client, path).toBeLessThanOrEqual(SCROLLS[path] ?? 0);
         await sheet(page).getByRole("menuitem").last().scrollIntoViewIfNeeded();
