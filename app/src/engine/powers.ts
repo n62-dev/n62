@@ -54,20 +54,31 @@ function rightOperand(s: string, at: number): [number, number] | null {
  * cannot read). The rightmost power is rewritten first, so a^b^c is a^(b^c), as Giac reads it.
  */
 export function principalPowers(text: string): string | null {
+  return eachPower(text, 64, true, (base, exp) => (plainBase(base) || integerExponent(exp) ? null : `exp((${exp})*ln(${base}))`));
+}
+
+/**
+ * `text` with powers a^b rewritten by `f` (its text for the power, or null to keep it), the rightmost first, so a^b^c
+ * is a^(b^c) as Giac reads it, at most `rounds` of them; null when none changed (or `text` holds a string). An
+ * element-wise `.^` and `*^` are kept; a power whose operands cannot be read gives null when `strict`, else is kept.
+ */
+function eachPower(text: string, rounds: number, strict: boolean, f: (base: string, exp: string) => string | null): string | null {
   if (text.includes('"')) return null;
   let s = text;
   let changed = false;
-  for (let guard = 0; guard < 64; guard++) {
+  for (let guard = 0; guard < rounds; guard++) {
     let found = false;
     for (let at = s.lastIndexOf("^"); at >= 0; at = at > 0 ? s.lastIndexOf("^", at - 1) : -1) {
       if (s.charAt(at - 1) === "." || s.charAt(at - 1) === "*") continue;
       const l = leftOperand(s, at);
       const r = rightOperand(s, at);
-      if (!l || !r) return null;
-      const base = s.slice(l[0], l[1]);
-      const exp = s.slice(r[0], r[1]);
-      if (plainBase(base) || integerExponent(exp)) continue;
-      s = `${s.slice(0, l[0])}exp((${exp})*ln(${base}))${s.slice(r[1])}`;
+      if (!l || !r) {
+        if (strict) return null;
+        continue;
+      }
+      const out = f(s.slice(l[0], l[1]), s.slice(r[0], r[1]));
+      if (out === null) continue;
+      s = `${s.slice(0, l[0])}${out}${s.slice(r[1])}`;
       changed = found = true;
       break;
     }
@@ -96,23 +107,7 @@ export const BIG_POW_DEFINITION =
 /** G576: `text` with each power a^b written as BIG_POW(a,b), the innermost first; null when it holds none (or a string).
  *  A power whose operands it cannot read (an element-wise `.^`, a list base, `x!^2`) stays as typed. */
 export function bigPowers(text: string): string | null {
-  if (text.includes('"') || !text.includes("^")) return null;
-  let s = text;
-  let changed = false;
-  for (let guard = 0; guard < 256; guard++) {
-    let found = false;
-    for (let at = s.lastIndexOf("^"); at >= 0; at = at > 0 ? s.lastIndexOf("^", at - 1) : -1) {
-      if (s.charAt(at - 1) === "." || s.charAt(at - 1) === "*") continue;
-      const l = leftOperand(s, at);
-      const r = rightOperand(s, at);
-      if (!l || !r) continue;
-      s = `${s.slice(0, l[0])}${BIG_POW}(${s.slice(l[0], l[1])},${s.slice(r[0], r[1])})${s.slice(r[1])}`;
-      changed = found = true;
-      break;
-    }
-    if (!found) break;
-  }
-  return changed ? s : null;
+  return text.includes("^") ? eachPower(text, 256, false, (base, exp) => `${BIG_POW}(${base},${exp})`) : null;
 }
 
 /** G576: the float path's text for an input whose exact run gave `exactOut`: after EXPONENT_OVERFLOW, `body` with its
