@@ -112,11 +112,24 @@ test.describe("at 412 × 915", () => {
 
   // R145: Settings is the ⚙ in the title row: the Plot menu (8, two lines of reasons) fits the room over the maths rows at
   // 412 × 915 like every other pick sheet. The Home menu has seven rows (R720): the test below too, at both phone sizes.
+  // R722: the rows are 43 px under 1000 px tall (owner, 2026-11-17), so the room over them at 412 × 915 is 290–294 px, as
+  // small as at 360 × 740: these sheets scroll at their floor there (decisions.md "A sheet that cannot fit at its floor
+  // scrolls"), by at most this many px, and their last row scrolls into view. Every other sheet still fits whole.
+  const SCROLLS: Readonly<Record<string, number>> = { "function plot menu": 30, "mode digits": 30, "mode settings numbers": 14 };
   for (const name of Object.keys(OPENERS))
-    test(`fit: ${name} shows all its items without a scroll`, async ({ page }) => {
+    test(`fit: ${name} ${name in SCROLLS ? "scrolls at its floor to its last row" : "shows all its items without a scroll"}`, async ({ page }) => {
       await openSheet(page, name);
       const box = sheet(page).locator(".list, .grid");
       const m = await box.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+      if (name in SCROLLS) {
+        expect(m.scroll - m.client).toBeGreaterThan(0);
+        expect(m.scroll - m.client).toBeLessThanOrEqual(SCROLLS[name] ?? 0);
+        const last = sheet(page).getByRole("menuitem").last();
+        await last.scrollIntoViewIfNeeded();
+        const [list, row] = await Promise.all([box.boundingBox(), last.boundingBox()]);
+        expect(row && list && row.y + row.height <= list.y + list.height + 0.5 && row.y >= list.y - 0.5).toBe(true);
+        return;
+      }
       expect(m.scroll).toBeLessThanOrEqual(m.client);
       await expect(page.getByTestId("sheet-count")).toHaveCount(0);
     });
@@ -240,8 +253,8 @@ test.describe("at 360 × 740", () => {
 
 // R194f1: Numbers has seven rows (the Word row is the last), two of them with a button per value; at 360 × 740 they need
 // 308 px of the 288 the room gives, so the list scrolls (decisions.md "A sheet that cannot fit at its floor scrolls", as
-// Appearance does) and its last row is still reached. At 412 × 915 it fits whole.
-test("R194f1: Numbers at 360 × 740 scrolls to its Word row; at 412 × 915 it shows all seven without a scroll", async ({ page }) => {
+// Appearance does) and its last row is still reached. With the full rows (1000 px tall and more since R722) it fits whole.
+test("R194f1: Numbers at 360 × 740 scrolls to its Word row; at 412 × 1000 it shows all seven without a scroll", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await open(page);
   await openSheet(page, "mode settings numbers");
@@ -249,7 +262,7 @@ test("R194f1: Numbers at 360 × 740 scrolls to its Word row; at 412 × 915 it sh
   expect(m.scroll).toBeGreaterThan(m.client); // it scrolls: no floor gives way
   await sheet(page).locator('[data-id="word"]').scrollIntoViewIfNeeded();
   await expect(sheet(page).locator('[data-id="word"]')).toBeInViewport();
-  await page.setViewportSize({ width: 412, height: 915 });
+  await page.setViewportSize({ width: 412, height: 1000 });
   const big = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
   expect(big.scroll).toBeLessThanOrEqual(big.client);
 });

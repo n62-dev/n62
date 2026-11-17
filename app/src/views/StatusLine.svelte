@@ -325,13 +325,22 @@
   .places {
     display: flex;
     gap: var(--sp-05);
+    min-width: 0;
   }
+  /* at a large font scale the name is what gives way (R41: the chips stay whole), down to the tile */
   .ptab {
+    flex-shrink: 1;
+    min-width: calc(var(--tile-w) + 2 * var(--sp-1));
     gap: var(--sp-1);
     padding: 0 var(--sp-1);
     color: var(--muted);
     font-weight: 700;
     white-space: nowrap;
+  }
+  .nm {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .ptab .tile {
     opacity: 0.75;
@@ -349,6 +358,7 @@
     display: none;
   }
   .inapp .ptab {
+    min-width: var(--tile-w);
     padding: 0;
   }
   /* the fixed ⇧ α slot: always 16 px, so Shift or Alpha moves nothing; it takes the room left over */
@@ -408,6 +418,7 @@
       display: none;
     }
     .ptab:not(.cur) {
+      min-width: var(--tile-w);
       padding: 0;
     }
     .inapp .tab {
