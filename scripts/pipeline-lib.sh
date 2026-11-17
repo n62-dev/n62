@@ -406,6 +406,14 @@ selftest_run() {
   done
   rm -f "$log.one"; echo PASSED
 }
+# limit_resume_commit <marker> <branch> (A258): prints the commit the marker names when it is a commit on <branch>; fails otherwise
+# (no marker, an empty or garbled one, a commit the branch does not hold, no branch).
+limit_resume_commit() {
+  local c; [[ -f "$1" ]] || return 1
+  c="$(head -n1 "$1" 2>/dev/null)"; [[ "$c" =~ ^[0-9a-f]{7,64}$ ]] || return 1
+  git merge-base --is-ancestor "$c" "refs/heads/$2" 2>/dev/null || return 1
+  echo "$c"
+}
 # ---- A55: guards that never fired ----
 # package_shaped <id>: succeeds for a package's id (A46, G112, R15c1) and fails for a FIX id (G112f1, R82f2, A47bf1) or free text.
 package_shaped() { [[ "$1" =~ ^[A-Z][0-9]+[a-z0-9]*$ && ! "$1" =~ f[0-9]+$ ]]; }
