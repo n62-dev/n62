@@ -27,6 +27,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **G125 (Opus pass 5): a bug an earlier merge already fixed** keeps its tests as regression tests that fail on the stock build, and merges review-only. Rule: brief section 8a (A71). Would change if: a test passes on stock too.
 - **P23 (2026-10-21, ended 2026-10-27, owner): the core freeze's net stays;** the list changes only with the owner. Rule: brief section 0, `tests/core/README.md`. Archived.
 - **The docs budgets stay (owner, 2026-10-20):** brief 40 kB (2026-11-10), backlog 20, decisions 40; when decisions.md has under 1 kB left, the Opus pass moves the full texts of built entries to the archive and keeps a short line.
+  - **S55's targets (Opus pass 217):** brief, decisions and docs/04 at 90 % of their budgets; the backlog at 19 kB, as its open lines stay word for word (S55 rule 1) and a package that reruns the no-package bug lines costs more on Pro than the kilobyte it would free. Would change if: the backlog fails a package's docs check twice in a week.
 - **How research reaches the docs (owner, 2026-10-20):** rules sections 9 and 10; KhiCAS only after a per-file licence check (E5). Archived, "Opus pass 191". Would change if: the line baseline blocks a fix two nights running.
 - **The pipeline merges what it audited, the night ends on time, the audit sees a behaviour diff (owner, 2026-10-19):** A17, G55, A18. Would change if: the diff stage adds over ten minutes to a run. Archived.
 - **P17 (2026-10-18; two lanes 2026-10-29, owner): the pipeline is the only path** (`scripts/pipeline.sh`, brief 0c; two lanes, one merge queue, A47b). Archived. Would change if: the queue's waits cost more than the second lane gains.
@@ -146,6 +147,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
 - **The tips' text stops at 18 px** (Opus pass 110, R171): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived, "Opus pass 117".
+  - **Under 1000 px tall with R722's 43 px rows too (Opus pass 217, R722's question):** Plot's ☰ after a Root, Mode › Digits, Numbers and Appearance scroll at their floor at 412 × 915 and on the Fairphone 6. Would change if: the owner's look at the beta wants them whole (a 32 px floor, measured by R722, brings back Plot's ☰ and Digits).
 
 **Engine, precision and formats**
 - **Honest precision** (G2): rule: docs/04 2.4 rules 2–3; assignments evaluated once. **G44, G23:** the inverse distributions are solved against our MPFR forward functions, every fallback keeps ⚠. Archived, "Shortened 2026-10-21 (P23)". Would change if: a G2 user types Giac's aliases.
