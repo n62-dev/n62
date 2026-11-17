@@ -32,7 +32,8 @@ const show = (page: Page, look: Look): Promise<void> =>
 
 const credits = (page: Page) => page.getByTestId("credits");
 const place = (page: Page) => page.getByTestId("place");
-const tile = (page: Page) => place(page).locator(".tile");
+/** Home's tile: on the bar's Home tab since R722 (the place shows Apps, or an app's glyph). */
+const tile = (page: Page) => page.getByTestId("tab-home").locator(".tile");
 
 /** The colour of a role as rgb(). */
 const role = (page: Page, name: string): Promise<string> =>
@@ -72,7 +73,7 @@ test.describe("fake engine", () => {
       const [tb, mb] = await Promise.all([tile(page).boundingBox(), mark.boundingBox()]);
       expect(tb && mb && mb.height > tb.height * 0.7 && mb.height < tb.height).toBe(true); // fills the tile, not a small mark in the middle
       expect(await tile(page).evaluate((el) => el.getBoundingClientRect().width)).toBe(30); // the tile keeps its size
-      await expect(place(page)).toHaveAttribute("aria-label", /^Place: Home/); // the button keeps its label; the tile is for the eye only
+      await expect(page.getByTestId("tab-home")).toHaveAttribute("aria-label", "Home"); // the button keeps its label; the tile is for the eye only
       await expect(tile(page)).toHaveAttribute("aria-hidden", "true");
     });
 
@@ -85,11 +86,12 @@ test.describe("fake engine", () => {
   test("CAS and an app keep their glyphs; the busy ring still draws over Home's tile", async ({ page }) => {
     await expect(tile(page).locator(".logomark")).toHaveCount(1);
     await page.evaluate(() => window.n62.session.setView("cas"));
-    await expect(tile(page).locator(".logomark")).toHaveCount(0);
-    await expect(tile(page)).toHaveText("∫");
+    const cas = page.getByTestId("tab-cas").locator(".tile");
+    await expect(cas.locator(".logomark")).toHaveCount(0);
+    await expect(cas).toHaveText("∫");
     await page.evaluate(() => window.n62.shell.open("function", "symb"));
-    await expect(tile(page).locator(".logomark")).toHaveCount(0);
-    await expect(tile(page)).toHaveText("ƒ");
+    await expect(place(page).locator(".tile .logomark")).toHaveCount(0);
+    await expect(place(page).locator(".tile")).toHaveText("ƒ");
     await page.evaluate(() => {
       window.n62.shell.close();
       window.n62.session.setView("home");

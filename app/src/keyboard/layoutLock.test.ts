@@ -30,6 +30,7 @@ import type { FindItem } from "../find/types.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import { baseItems } from "../views/baseSheet.ts";
+import { BAR_ITEMS } from "../views/barItems.ts";
 import { matrixRows, MATRIX_ROWS } from "../views/matrixSheet.ts";
 import { modeItems, settingsSections } from "../views/modeSheet.ts";
 import { loadKeyboard, keyboard } from "./keyboard.ts";
@@ -115,6 +116,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     "stat-stats1": stat("stats1", 6),
     "units-menu": ids(units),
     "units-cell": ids(cellRows(() => {})),
+    bar: listSlots(BAR_ITEMS),
   };
 }
 

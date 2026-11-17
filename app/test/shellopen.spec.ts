@@ -9,8 +9,10 @@ import { entryValue, lastResult, open, tap } from "./helpers.ts";
 /** The app-opening part is in (AppShell.code). */
 const partIn = (page: Page): Promise<boolean> => page.evaluate(() => window.n62.shell.code !== null);
 /** What each view tab draws: its icon's markup (an svg, or the math glyph). */
+/** The app's view tabs (R722: the bar's Home and CAS tabs are tabs too, in their own list). */
+const views = (page: Page) => page.getByRole("tablist", { name: "Views" }).getByRole("tab");
 const tabIcons = (page: Page): Promise<Record<string, string>> =>
-  page.evaluate(() => Object.fromEntries([...document.querySelectorAll('[role="tab"]')].map((t) => [t.getAttribute("data-testid") ?? "", t.querySelector("svg") ? "svg" : (t.querySelector(".math")?.textContent ?? "")])));
+  page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.seg [role="tab"]')].map((t) => [t.getAttribute("data-testid") ?? "", t.querySelector("svg") ? "svg" : (t.querySelector(".math")?.textContent ?? "")])));
 
 test("before any app opens, keys, taps and the status line work on the shell's start part, and its app-opening part is not loaded", async ({ page }) => {
   await open(page);
@@ -23,7 +25,7 @@ test("before any app opens, keys, taps and the status line work on the shell's s
   await tap(page, ["@menu"]); // Home's ☰ (the clipboard code, not the app part)
   await expect(page.getByTestId("menu")).toBeVisible();
   await tap(page, ["esc"]);
-  await expect(page.getByRole("tab")).toHaveCount(0);
+  await expect(views(page)).toHaveCount(0);
   expect(await partIn(page)).toBe(false);
 });
 
@@ -34,7 +36,7 @@ test("the first app key on a cold start opens Function with its view tabs and th
   await tap(page, ["@symb"]);
   await page.waitForFunction(() => window.n62.shell.app === "function" && window.n62.shell.loading === null);
   expect(await partIn(page)).toBe(true);
-  await expect(page.getByRole("tab")).toHaveCount(3);
+  await expect(views(page)).toHaveCount(3);
   expect(await tabIcons(page)).toEqual({ "tab-symb": "ƒ=", "tab-plot": "svg", "tab-num": "svg" });
   await expect(page.getByTestId("tab-symb")).toHaveAttribute("aria-selected", "true");
   await page.getByTestId("tab-num").tap(); // a tab switches the view (setView, shown by the part)
@@ -46,7 +48,7 @@ test("the first app key on a cold start opens Function with its view tabs and th
   expect(await entryValue(page)).toBe("");
   await tap(page, ["@home"]);
   await expect(page.getByTestId("place")).toHaveAttribute("data-view", "home");
-  await expect(page.getByRole("tab")).toHaveCount(0);
+  await expect(views(page)).toHaveCount(0);
   expect(await entryValue(page)).toBe("7");
   await tap(page, ["add", "d1", "enter"]);
   await expect(lastResult(page)).toHaveAttribute("data-text", "7+1"); // the fake engine echoes

@@ -35,8 +35,8 @@ test.beforeEach(async ({ page }) => {
 test("a fresh profile shows the tips; a reload does not", async ({ page }) => {
   await open(page, ON);
   await expect(tips(page)).toBeVisible();
-  await expect(tips(page)).toContainText("Tap the name for your apps, Home and CAS");
-  await expect(tips(page)).toContainText("Tap ☰, on the keys or the status line, for Paste and each app's menu");
+  await expect(tips(page)).toContainText("Tap Apps ▾ for your apps; Home and CAS are the tabs beside it");
+  await expect(tips(page)).toContainText("Tap ☰, on the keys or on the bar above them, for Paste and each app's menu");
   await expect(tips(page)).toContainText("On a history row, hold to copy and swipe to delete");
   await expect(tips(page)).toContainText("On the entry line, swipe down to fold the keypad and up to bring it back");
   await expect(tips(page)).toContainText("On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it");
@@ -76,12 +76,12 @@ test("the rings sit on the place name and ☰, measured from their boxes", async
 });
 
 // R113: the rings are centred on the controls' visible content (the tile and name, the ☰ glyph), not on their padded
-// boxes, and none reaches below the status line by more than the padding (at 360 × 780, the phone check's width).
-test("each ring is centred on its control's content and stays within the status line's padding", async ({ page }) => {
+// boxes, and none reaches past the bar (R722: on the keys) by more than the padding (at 360 × 780, the phone check's width).
+test("each ring is centred on its control's content and stays within the bar's padding", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 780 });
   await open(page, ON);
   await expect(tips(page)).toBeVisible();
-  const status = (await page.getByTestId("status").boundingBox())!;
+  const status = (await page.getByTestId("bar").boundingBox())!;
   for (const [ring, target] of [["tips-ring-place", "place"], ["tips-ring-menu", "menu-button"]] as const) {
     const r = (await page.getByTestId(ring).boundingBox())!;
     const c = await page.getByTestId(target).evaluate((e) => {
@@ -93,6 +93,7 @@ test("each ring is centred on its control's content and stays within the status 
     expect(c.h, target).toBeGreaterThan(0);
     expect(Math.abs(r.y + r.height / 2 - c.mid), `${ring}: centre`).toBeLessThanOrEqual(1);
     expect(r.y + r.height, `${ring}: bottom`).toBeLessThanOrEqual(status.y + status.height + 4);
+    expect(r.y, `${ring}: top`).toBeGreaterThanOrEqual(status.y - 4);
   }
 });
 

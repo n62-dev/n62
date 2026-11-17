@@ -59,7 +59,7 @@
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 10px;
-  font-size: min(var(--fs-body), 18px); /* the font scale reaches it, up to 18 px: seven cards must fit 360 × 740 at scale 2.0 (R171, R352) */
+  font-size: min(var(--fs-body), 17px); /* the font scale reaches it, up to 17 px: seven cards must fit 360 × 740 at scale 2.0 (R171, R352; 18 px before R722 put the rings mid-screen) */
   line-height: 1.3;
 }
 .tips .gotit {

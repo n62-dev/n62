@@ -196,7 +196,8 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .bar button {
+  /* (in :where, so each control's own class sets its size over this reset) */
+  :where(.bar) button {
     all: unset;
     box-sizing: border-box;
     cursor: pointer;

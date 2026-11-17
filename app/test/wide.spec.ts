@@ -79,10 +79,11 @@ test("the keypad's grid is the phone's: same key ids, same order, same rows, sid
   expect(tops.every((n) => n === 1)).toBe(true);
 });
 
-// phase-1's boxes (measured 2026-11-13 at 4ee33b66): x, y, width, height of the stage and of the keypad's box
+// phase-1's boxes (measured 2026-11-13 at 4ee33b66; R722: the bar moved onto the keys, so the stage starts at 0, and the
+// rows under 1000 px tall are 43 and 33 px): x, y, width, height of the stage and of the keypad's box
 const COLUMN: Record<string, { stage: Box; keys: Box }> = {
-  "412x915": { stage: [0, 28, 412, 319.40625], keys: [0, 427, 412, 488] },
-  "800x1340": { stage: [40, 28, 720, 744.40625], keys: [40, 852, 720, 488] },
+  "412x915": { stage: [0, 0, 412, 363.40625], keys: [0, 471, 412, 444] },
+  "800x1340": { stage: [40, 0, 720, 744.40625], keys: [40, 852, 720, 488] },
 };
 for (const [width, height] of [[412, 915], [800, 1340]] as const)
   test(`at ${width} × ${height} the layout is the one centred column, box for box`, async ({ page }) => {

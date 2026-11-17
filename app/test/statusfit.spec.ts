@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R82f2 (F118): the status line at phone widths. The Fairphone 6 is 372 CSS px wide; 360 the small phone; 412 the
-// Pixel 7 (the e2e default, where phase-1's cut never showed). In every place and state nothing in the header is cut or
-// overflows it, ☰ is on screen and uncovered, and the views' and chips' boxes do not move when ⇧ or α shows or the
-// engine starts (a fixed slot: a press must not move a tab from under the finger).
+// R82f2 (F118), R722: the bar at phone widths. The Fairphone 6 is 372 CSS px wide; 360 the small phone; 412 the
+// Pixel 7 (the e2e default, where phase-1's cut never showed). In every place and state (locked, the engine starting: the
+// ring) nothing in the bar is cut or overflows it, every target is at least 28 × 28, ☰ and every tab are on screen and
+// uncovered, and the tabs' and chips' boxes do not move when ⇧ or α shows or the engine starts (a fixed slot: a press must
+// not move a tab from under the finger).
 import { expect, test, type Page } from "@playwright/test";
 import { seen } from "./core-lib.ts";
 import { open } from "./helpers.ts";
@@ -57,13 +58,17 @@ async function setState(page: Page, chips: (typeof CHIPS)[number], mod: Mod): Pr
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 }
 
-/** What is wrong with the header's layout ("" = nothing), and the boxes of the controls that must not move. */
+/** What is wrong with the bar's layout ("" = nothing), and the boxes of the controls that must not move. */
 function measure(page: Page): Promise<{ bad: string[]; boxes: Record<string, string> }> {
   return page.evaluate(() => {
-    const h = document.querySelector("header") as HTMLElement;
+    const h = document.querySelector('[data-testid="bar"]') as HTMLElement;
     const hr = h.getBoundingClientRect();
     const bad: string[] = [];
-    if (h.scrollWidth > h.clientWidth) bad.push(`header overflows by ${h.scrollWidth - h.clientWidth} px`);
+    if (h.scrollWidth > h.clientWidth) bad.push(`bar overflows by ${h.scrollWidth - h.clientWidth} px`);
+    for (const b of h.querySelectorAll<HTMLElement>("button")) {
+      const r = b.getBoundingClientRect();
+      if (r.width < 28 - 0.01 || r.height < 28 - 0.01) bad.push(`${b.dataset["testid"]} is ${r.width.toFixed(1)} × ${r.height.toFixed(1)}, under 28 × 28`);
+    }
     const name = (e: Element): string => (e as HTMLElement).dataset["testid"] ?? `${e.tagName.toLowerCase()}.${(e as HTMLElement).className}`;
     for (const e of h.querySelectorAll<HTMLElement>("*")) {
       if (e instanceof SVGElement) continue;
@@ -83,13 +88,13 @@ function measure(page: Page): Promise<{ bad: string[]; boxes: Record<string, str
 
 for (const width of WIDTHS)
   for (const place of PLACES)
-    test(`the status line fits and holds still at ${width} px in ${place} (R82f2)`, async ({ browser }) => {
+    test(`the bar fits and holds still at ${width} px in ${place} (R82f2, R722)`, async ({ browser }) => {
       const ctx = await browser.newContext({ viewport: { width, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
       const page = await ctx.newPage();
       try {
         await open(page);
         await goTo(page, place);
-        const views = place.includes(":") ? (place.startsWith("solve") ? 2 : 3) : 0;
+        const views = 2 + (place.includes(":") ? (place.startsWith("solve") ? 2 : 3) : 0); // Home and CAS, and the app's views
         await expect(page.getByRole("tab")).toHaveCount(views);
         for (const chips of CHIPS) {
           let base: Record<string, string> | undefined;

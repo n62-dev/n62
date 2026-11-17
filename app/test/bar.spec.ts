@@ -2,6 +2,7 @@
 // R722: the bar on the keypad's top edge (docs/05 3.2): Apps ▾ · Home | CAS · ⇧/α · RAD · STD ▾ · 12 ▾ · ☰, 28 px, flush
 // on the keys; the short key rows a notch taller (43 / 33 px under 1000 px tall). The fake engine.
 import { expect, test, type Page } from "@playwright/test";
+import { BAR_ITEMS } from "../src/views/barItems.ts";
 import { open, sheet, tap, touch } from "./helpers.ts";
 
 const box = (page: Page, sel: string) =>
@@ -47,6 +48,15 @@ test("Home shows the Home tab selected and the CAS tab; one tap switches; Home f
   await expect(cas).toHaveAttribute("aria-selected", "false");
   await home.tap();
   expect(await page.evaluate(() => [window.n62.shell.app, window.n62.session.view])).toEqual([null, "home"]);
+});
+
+test("the bar's controls stand in the lock's order, left to right (spec/layout-lock.yaml bar:, R722)", async ({ page }) => {
+  await open(page);
+  const items = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] [data-item]')].map((e) => ({ n: Number(e.dataset["item"]), x: e.getBoundingClientRect().left })),
+  );
+  expect(items.map((i) => i.n)).toEqual(BAR_ITEMS.map((_, i) => i + 1));
+  expect(items.every((it, i) => i === 0 || it.x > (items[i - 1]?.x ?? 0))).toBe(true);
 });
 
 test("the place opens Apps; in Function it shows the app's glyph and its views (R722)", async ({ page }) => {

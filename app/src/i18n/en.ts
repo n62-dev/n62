@@ -15,7 +15,7 @@ export const en = {
   "key.user": "＋",
   "key.select": "Select",
   "key.deselect": "Deselect",
-  /** The Menu key (R278): the status line's ☰ on the cluster. */
+  /** The Menu key (R278): the bar's ☰ on the cluster. */
   "key.menu": "☰",
   "key.undo": "Undo",
   "key.redo": "Redo",
