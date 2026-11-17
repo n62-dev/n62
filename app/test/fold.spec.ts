@@ -305,9 +305,9 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await page.getByTestId("menu-button").tap();
   await sheet(page).locator('[data-id="store"]').tap();
   await isFolded(page, false);
-  await expect.poll(layer).toBeUndefined();
-  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape"); // (the store sheet is a layer of its own while it is open)
   await expect(sheet(page)).toBeHidden();
+  await expect.poll(layer).toBeUndefined();
   // the count is even: a new fold takes one entry, and back closes it
   await clearLine(page);
   await fold(page);

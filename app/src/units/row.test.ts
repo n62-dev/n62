@@ -161,7 +161,7 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     let clip = "";
     const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    const c = new ClipActions(s, shell, {} as EntryController, { insert() {}, recall() {} }, port);
+    const c = new ClipActions(s, shell, {} as EntryController, { insert() {} }, port);
     const both = async (): Promise<[string, string]> => {
       await c.copy(it);
       const copied = clip;

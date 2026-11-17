@@ -7,11 +7,9 @@ const clip = {
   "clip.asShown": "Copy as shown",
   "clip.exact": "Copy exact",
   "clip.latex": "Copy LaTeX",
-  "clip.insert": "Insert",
-  "clip.recall": "Recall",
   "clip.store": "Store ▶",
   "clip.delete": "Delete",
-  "clip.copyAs": "Copy as",
+  "clip.subFull": "Full value",
   "clip.subShown": "As shown",
   "clip.subExact": "Exact",
   "clip.subLatex": "LaTeX",
@@ -32,7 +30,7 @@ const clip = {
   "clip.shared": "Shared",
   "clip.sharedAsCopy": "This device cannot share: copied instead",
   "clip.sessionTitle": "N62 session",
-  // R130: ☰ › Export › (item 10, shared with R181 and R200) and the work report it saves (workReport.ts)
+  // R130: ☰ › Export › (item 7, shared with R181 and R200) and the work report it saves (workReport.ts)
   "clip.export": "Export",
   "export.work": "Work report",
   "export.nothing": "Nothing to export",

@@ -238,7 +238,7 @@ describe("R305: a row drawn in a base", () => {
     wordStore.set(S8);
     let clip = "";
     const port = { writeText: async (t: string) => ((clip = t), true), readText: async () => clip, share: async () => false };
-    const c = new ClipActions(session(), { app: null, showsEntry: true } as unknown as AppShell, {} as unknown as EntryController, { insert() {}, recall() {} }, port);
+    const c = new ClipActions(session(), { app: null, showsEntry: true } as unknown as AppShell, {} as unknown as EntryController, { insert() {} }, port);
     expect(await c.copyShown(int("-1", "hex"))).toBe(true);
     expect(clip).toBe("0xFF");
   });

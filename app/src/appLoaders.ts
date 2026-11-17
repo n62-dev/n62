@@ -21,8 +21,6 @@ export interface LoaderDeps {
   readonly busy: () => boolean;
   /** A tapped or picked result goes on the entry line (the clipboard code's `insert`). */
   readonly insertResult: (item: HistoryItem, whole?: boolean) => void;
-  /** A row's entry goes back on the line (the clipboard code's `recall`: Recall, Menu 2). */
-  readonly recall: (item: HistoryItem) => void;
   /** A row action of the Menu's list runs (the clipboard code's `acted`). */
   readonly acted: (id: string) => void;
   /** ☰ → Paste runs: the keys pressed while it reads the clipboard wait for it (route.holdKeys). */
@@ -60,7 +58,7 @@ export function createLoaders(d: LoaderDeps) {
     loadClip: lazyOnce(
       (): Promise<ClipActions> =>
         import("./clipboard/actions.svelte.ts").then((m) => {
-          const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, recall: d.recall, acted: d.acted, hold: d.hold, stored: d.stored });
+          const c = new m.ClipActions(d.session, d.shell, d.entry, { insert: d.insertResult, acted: d.acted, hold: d.hold, stored: d.stored });
           d.shell.clip = c;
           d.shell.homeMenu = () => c.menu();
           d.onClip(c, m.RowBar);

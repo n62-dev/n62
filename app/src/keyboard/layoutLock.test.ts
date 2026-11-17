@@ -80,7 +80,7 @@ const statRow = (call: string, n: number, full: string): HistoryItem =>
 async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findItems()): Promise<Record<string, Record<string, string>>> {
   const session = new Session(new FakeCalc(), fakeKv());
   const env = { userKeys: new UserKeys(fakeKv()), data: () => {} };
-  const clip = new ClipActions({ items: [] } as unknown as Session, { showsEntry: true } as unknown as AppShell, {} as EntryController, { insert() {}, recall() {} });
+  const clip = new ClipActions({ items: [] } as unknown as Session, { showsEntry: true } as unknown as AppShell, {} as EntryController, { insert() {} });
   const menu = clip.menu();
   const shell = new AppShell({} as Calc, fakeKv(), { value: "", set() {}, clear() {} }, () => session.settings);
   shell.toggleApps();

@@ -24,7 +24,7 @@ describe("ClipActions order", () => {
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
-    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {} }, port);
+    const c = new ClipActions(session, shell, entry, { insert() {} }, port);
     const copied = c.copyShown();
     const pasted = c.paste();
     await Promise.all([copied, pasted]);
@@ -42,7 +42,7 @@ describe("ClipActions Copy exact with the decimal comma", () => {
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
-    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {} }, port, () => comma);
+    const c = new ClipActions(session, shell, entry, { insert() {} }, port, () => comma);
     await c.copyExact();
     await c.paste();
     return { clip, inserted };
@@ -69,7 +69,7 @@ describe("ClipActions paste of a given text", () => {
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
-    const c = new ClipActions({ items: [] } as unknown as Session, shell, entry, { insert() {}, recall() {} }, port, () => comma);
+    const c = new ClipActions({ items: [] } as unknown as Session, shell, entry, { insert() {} }, port, () => comma);
     return { c, inserted, reads: () => reads };
   };
   it("enters the given text as the Paste key would, without reading the clipboard", async () => {
@@ -99,7 +99,7 @@ describe("ClipActions row buttons and the hold", () => {
     const shell = { app: null, showsEntry: true, showMenu: (title: string, items: { id: string }[]) => void menus.push({ title, ids: items.map((i) => i.id) }) } as unknown as AppShell;
     const entry = { insert() {} } as unknown as EntryController;
     const acted: string[] = [];
-    const c = new ClipActions(session, shell, entry, { insert() {}, recall() {}, acted: (id) => void acted.push(id) }, port);
+    const c = new ClipActions(session, shell, entry, { insert() {}, acted: (id) => void acted.push(id) }, port);
     return { c, item: item as never, menus, acted, clip: () => clip };
   };
   it("the bar holds Store ▶ and Copy ›; Copy › opens Full value, As shown, Exact, LaTeX, Python (R181, R720)", () => {
@@ -137,7 +137,7 @@ describe("ClipActions menu: Export › is item 7", () => {
   const menuOf = (items: object[]) => {
     const session = { items } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} }).menu();
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} }).menu();
   };
   it("the seven rows keep their ids and order; the seventh opens Export › with the work report", () => {
     const m = menuOf([{ status: "done", latex: "2", text: "2", facts: {} }]);
@@ -164,7 +164,7 @@ describe("ClipActions export of the work", () => {
   const actions = () => {
     const session = { items: [], view: "home", decimalComma: false } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} });
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} });
   };
   afterEach(() => {
     vi.doUnmock("./workReport.ts");
@@ -210,7 +210,7 @@ describe("ClipActions exportCsv and exportLatex", () => {
   const actions = (items: object[]) => {
     const session = { items, view: "home", decimalComma: false, displayContext: () => ({ format: "std", digits: 12, fixDecimals: 4, angle: "rad" }) } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} });
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} });
   };
   const half = { status: "done", latex: "\\frac12", resultLatex: "0.5", text: "0.5", full: "1/2", fullExact: true, facts: { exact: true, reliableDigits: null }, rational: { n: "1", d: "2" } };
   afterEach(() => {
@@ -272,7 +272,7 @@ describe("ClipActions copyPython and savePython", () => {
   const actions = (items: object[]) => {
     const session = { items, view: "home", decimalComma: false, displayContext: () => ({ format: "std", digits: 12, fixDecimals: 4, angle: "rad" }) } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
-    return new ClipActions(session, shell, {} as EntryController, { insert() {}, recall() {} }, port);
+    return new ClipActions(session, shell, {} as EntryController, { insert() {} }, port);
   };
   afterEach(() => {
     vi.doUnmock("./files.ts");

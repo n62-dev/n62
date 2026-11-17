@@ -31,7 +31,7 @@ describe("the Undo code does not load (R98)", () => {
     const s = new Session(new FakeCalc(0), fakeKv());
     await s.restoreHistory();
     for (const x of ["1", "2"]) await s.submit(x);
-    const clip = new ClipActions(s, {} as never, {} as never, { insert: () => {}, recall: () => {} });
+    const clip = new ClipActions(s, {} as never, {} as never, { insert: () => {} });
     expect(await s.removeItem(s.items[0]!)).toBe(false);
     expect(await clip.deleteRow()).toBe(false);
     expect(rows(s)).toEqual(["1", "2"]);

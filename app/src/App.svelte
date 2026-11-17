@@ -46,7 +46,6 @@
     entry,
     busy: () => busy,
     insertResult: (item, whole) => onLine(item, false, false, whole), // (the Menu's list counts its own)
-    recall: (item) => onLine(item, true, false),
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),

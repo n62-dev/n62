@@ -92,8 +92,8 @@ test("controls: ▲ Enter inserts the result chip, two taps on the input recall 
   await page.locator('[data-testid="result"] .result').last().tap();
   expect(await entryValue(page)).toContain("\\res");
   await tap(page, ["esc"]);
-  await page.locator('[data-testid="result"] button.in').last().tap();
-  await page.locator('[data-testid="result"] button.in').last().tap();
+  await page.locator("article.item button.in").last().tap();
+  await page.locator("article.item button.in").last().tap();
   expect(await entryValue(page)).toBe("\\frac14");
 });
 

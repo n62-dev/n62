@@ -64,7 +64,7 @@ test("Menu with a picked row copies that row, not the last result (R13, S2 I1)",
   await tap(page, ["d1", "div", "d4", "enter"]);
   await done(page, 3);
   await tap(page, ["up", "up"]);
-  await pickMenu(page, "Copy");
+  await pickCopyAs(page, "Full value");
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
@@ -110,7 +110,7 @@ test("Menu: Copy as › As shown, Exact, LaTeX", async ({ page }) => {
   await expect.poll(() => clipboard(page)).toBe("1/3");
   await pickCopyAs(page, "LaTeX");
   await expect.poll(() => clipboard(page)).toContain("0.333333333333");
-  await pickMenu(page, "Copy");
+  await pickCopyAs(page, "Full value");
   await expect.poll(() => clipboard(page)).toBe(THIRD);
 });
 
