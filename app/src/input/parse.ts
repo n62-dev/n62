@@ -15,6 +15,10 @@ import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./toke
 
 export { FUNCS, GREEK, INVERSE, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 
+/** R575: an operator as the line draws it, keyed by its token's value (a value missing after it, or before it). */
+const SIGN: Readonly<Record<string, string>> = { "+": "+", "-": "−", "*": "×", "/": "/", "^": "^", [CARET]: "^", times: "×", div: "÷", cdot: "·" };
+const signOf = (t: Tok | undefined): string | undefined => (t && (t.t === "ch" || t.t === "cmd") && Object.hasOwn(SIGN, t.v) ? SIGN[t.v] : undefined);
+
 /** G341: a typed name that is N62's own (`pas…`, CAS's answer slot) is refused with the reason. */
 function refuseOurs(text: string): void {
   if (isOurName(text)) throw text === CAS_ANS ? parseError("parse.ourName", { name: text }) : parseError("parse.reservedName", { name: text });
@@ -265,6 +269,8 @@ class Parser implements CalcParser {
         // R28: in units mode a prompt or ± with no number before it reaches atom(), which says why it is refused;
         // R71f1: outside units mode ± reaches atom() too, which sends the user to the unit view
         if (t.v === "pm" || (this.units && t.id !== undefined)) return true;
+        // R575: an empty template box after a value (2□) reaches atom(), which asks to fill it
+        if (t.v === "placeholder" && t.id === undefined) return true;
         // the exponent mark after something that is not a number: atom() refuses it with a message
         // Å and & (R18) too, so that 5Å reaches the message that says why it is refused
         return FACTOR_CMDS.has(t.v) || t.v in FUNCS || t.v in CONSTS || t.v in GREEK || t.v === EMARK || t.v === ARING || t.v === "&";
@@ -440,8 +446,12 @@ class Parser implements CalcParser {
   // ---- atoms ----
   private atom(): Json {
     const t = this.peek();
-    if (!t) this.fail("parse.unexpectedEndOf");
-    const tok = t as Tok;
+    if (!t) {
+      // R575: the message says where itself, so it is not wrapped in "at end of input"
+      const sign = signOf(this.toks[this.pos - 1]);
+      throw sign ? parseError("parse.endsAfter", { sign }) : parseError("parse.endsEarly");
+    }
+    const tok = t;
     switch (tok.t) {
       case "num": {
         // F43 (R51): the line shows two numbers with a gap and no ×; checked here, so a chip's drawn digits are skipped
@@ -500,6 +510,8 @@ class Parser implements CalcParser {
       case "ch": {
         if (tok.v === "{") return this.arg();
         if (/^[A-Za-z]$/.test(tok.v)) return this.symbol(tok.v);
+        const sign = signOf(tok);
+        if (sign) throw parseError("parse.operatorNeedsValue", { sign }); // R575: 2×+3, 2+^3
         return this.fail("parse.unexpectedToken");
       }
       case "cmd":
@@ -806,6 +818,16 @@ class Parser implements CalcParser {
       case ARING:
         // R18: Å is the ångström, a unit; Home is unit-free (P8), so it is refused, never read as a name
         throw parseError("parse.isAUnit");
+      case "placeholder":
+        // R575: MathLive's empty template box (a unit slot has an id, R28, and keeps its own messages)
+        if (promptId(this.peek()) === undefined) throw parseError("parse.emptyBox");
+        throw parseError("parse.unsupportedCommand", { name });
+      case "times":
+      case "div":
+      case "cdot":
+      case CARET:
+        // R575: an operator where a value belongs (2××3, 2+×3, ×3), named as the line draws it
+        throw parseError("parse.operatorNeedsValue", { sign: SIGN[name] as string });
       default:
         throw parseError("parse.unsupportedCommand", { name });
     }
