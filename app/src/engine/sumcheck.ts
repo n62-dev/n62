@@ -15,6 +15,7 @@
 // A sum from −∞ is its reflection (k → −k); from −∞ to ∞, the two halves. About five engine calls per sum.
 import type { Giac } from "./numeric.ts";
 import { splitList, wordsOf } from "./giacPrint.ts";
+import { decimalFromString } from "./format.ts";
 
 /** The first cut; the second is 2N. */
 const N = 200;
@@ -47,7 +48,7 @@ interface Part {
 /** A Giac number text as a JS number; null for anything else (infinity, undef, a complex, a name). */
 function num(t: string): number | null {
   const s = t.trim();
-  if (!/^-?\d+(\.\d*)?(e[+-]?\d+)?$/.test(s)) return null;
+  if (!decimalFromString(s)) return null;
   const v = Number(s);
   return Number.isFinite(v) ? v : null;
 }
@@ -127,7 +128,7 @@ function piecesConverge(giac: Giac, pieces: Piece[], k: string): boolean {
 export function sumRefuted(giac: Giac, t: string, k: string, lo: number, hi: number, value: string): boolean {
   const pieces = piecesOf(giac, t, k, lo, hi);
   if (!pieces) return false;
-  if (/infinity/.test(value)) return piecesConverge(giac, pieces, k);
+  if (value.includes("infinity")) return piecesConverge(giac, pieces, k);
   const closed = num(giac.eval(`evalf(${value},30)`));
   if (closed === null) return false;
   let est = [0, 0];

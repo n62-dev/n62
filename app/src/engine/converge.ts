@@ -314,7 +314,7 @@ function check(giac: Giac, calls: Call[], input: string, output: string, digits:
     const value = valueOf(giac, c, input, out, digits).trim();
     if (value === "undef") return REFUSAL[c.kind];
     // G618: an infinity for a series whose terms prove it converges (Σ 1/(k(k+3)) = infinity).
-    if (c.kind === "sum" && /infinity/.test(value) && !isError(value) && termsRefute(giac, c, value)) return "sumUnchecked";
+    if (c.kind === "sum" && value.includes("infinity") && !isError(value) && termsRefute(giac, c, value)) return "sumUnchecked";
     const pair = c.kind === "int" ? giacPair(value) : null;
     // G178: a value the budget stopped says nothing about the integral, so the check on its arguments still runs (a stop
     // already makes the result "unchecked" unless the check proves the divergence).
