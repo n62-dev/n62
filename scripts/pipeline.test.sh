@@ -1695,7 +1695,8 @@ grep -q 'conflicts with phase-1 resolved by ron' "$dl/.coord/log.md" || fail "A1
 [[ "$(git -C "$dl" show phase-1:docs/shifts/brief.md)" == $'| 1 | Y1 one, edited |\n| 2 | Y2 two |\n| 3 | Y3 three |\n| 4 | [Y9](packages/Y9.md) nine |' ]] || fail "A140: the brief keeps a dead link or lost the live one: $(git -C "$dl" show phase-1:docs/shifts/brief.md)"
 [[ "$(git -C "$dl" show phase-1:docs/notes.md)" == 'see Y3 and `[Y3](packages/Y3.md)` and [Y9](shifts/packages/Y9.md)' ]] || fail "A140: notes.md: a dead link stays, a code span or a live link changed: $(git -C "$dl" show phase-1:docs/notes.md)"
 (cd "$dl/.claude/worktrees/phase-1" && node tools/docs-check.mjs >/dev/null 2>&1) || fail "A140: docs-check fails on phase-1 after the merge"
-[[ "$(git -C "$dl" log --format=%s --grep='(A140)' phase-1^2 | wc -l)" -eq 1 ]] && git -C "$dl" log --format=%s phase-1^2 | grep -qxF 'chore(Y1f1): drop links to deleted package files (A140)' || fail "A140: no commit of its own named chore(Y1f1): drop links to deleted package files (A140): $(git -C "$dl" log --format=%s phase-1^2 -5)"
+dls="$(git -C "$dl" log --format=%s phase-1^2)"  # captured first: grep -q under pipefail can SIGPIPE git log (141) and fail the case at random
+[[ "$(git -C "$dl" log --format=%s --grep='(A140)' phase-1^2 | wc -l)" -eq 1 ]] && grep -qxF 'chore(Y1f1): drop links to deleted package files (A140)' <<<"$dls" || fail "A140: no commit of its own named chore(Y1f1): drop links to deleted package files (A140): $(git -C "$dl" log --format=%s phase-1^2 -5)"
 grep -qE 'Y1f1: dropped 4 link\(s\) to deleted package files in 2 file\(s\)' "$dl/.coord/log.md" || fail "A140: the drop is not logged with its count: $(grep 'Y1f1' "$dl/.coord/log.md" | grep -i dropped)"
 # control: a run whose merge of phase-1 brings no dead link makes no such commit
 printf 'more\n' > "$dl/.claude/worktrees/phase-1/more.md"; git -C "$dl/.claude/worktrees/phase-1" add more.md; gc "$dl/.claude/worktrees/phase-1" "phase-1 moves on"
@@ -1832,6 +1833,82 @@ out="$(awrun ron R901 --dry-run)"; rc=$?
  [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R906)" ]] || echo "FAIL: A127: after_ids of plain words is not empty"
  [[ -z "$(after_ids "$aw/docs/shifts/brief.md" R907)" ]] || echo "FAIL: A127: after_ids reads a row outside the lane tables"
  [[ "$(after_waits "$aw/docs/shifts/brief.md" R909 phase-1)" == R900 ]] || echo "FAIL: A127: after_waits of R909: $(after_waits "$aw/docs/shifts/brief.md" R909 phase-1)") 2>&1 | grep '^FAIL' >&2 && fails=$((fails + 1))
+
+# A258: a rerun after a usage limit skips the worker that already finished. The stand-in claude logs each agent's -n name to calls; a file
+# limit-once names the agent kind (worker, fix, audit) that hits the CLI's limit once; typecheck fails until fixed.txt is on the branch
+lr="$tmp/lr"; mkdir -p "$lr/bin" "$lr/tools" "$lr/docs/shifts" "$lr/app/node_modules/x"; git init -q -b main "$lr"
+cp "$sb/tools/devlock.sh" "$lr/tools/"; : > "$lr/docs/shifts/brief.md"; echo t > "$lr/tracked"; echo t > "$lr/app/keep"
+cat > "$lr/bin/claude" <<'STUB'
+#!/bin/sh
+name=""; prev=""; for a in "$@"; do [ "$prev" = "-n" ] && name="$a"; prev="$a"; done
+echo "$name" >> "$LR/calls"
+case "$name" in pl-*) kind=worker;; fix-*) kind=fix;; audit-*) kind=audit;; *) kind=other;; esac
+case "$kind" in
+  worker) echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work;;
+  fix) echo f > fixed.txt; git add fixed.txt; git -c user.name=t -c user.email=t@t commit -qm fix;;
+esac
+if [ "$(cat "$LR/limit-once" 2>/dev/null)" = "$kind" ]; then rm -f "$LR/limit-once"; echo "You've hit your 5-hour limit"; exit 1; fi
+if [ "$kind" = audit ]; then echo APPROVED; else echo "Last commit abc1234; done."; fi
+STUB
+cat > "$lr/bin/npm" <<'STUB'
+#!/bin/sh
+[ "$1" = ci ] && { mkdir -p node_modules/x; exit 0; }
+if [ -n "$LR_TC_FAIL" ] && [ ! -e ../fixed.txt ]; then echo "error TS2322: x"; exit 1; fi
+exit 0
+STUB
+chmod +x "$lr/bin/"*; git -C "$lr" add -A; gc "$lr" init; git -C "$lr" branch phase-1
+lrrun() { (cd "$lr" && PATH="$lr/bin:$PATH" LR="$lr" GIAC_OUT="$lr/engine" "$script" annabell "limit task" --checks typecheck "$@" 2>&1); }
+lrmark() { echo "$lr/.tasks/limit-resume/$1@$2"; }
+workers() { grep -c '^pl-' "$lr/calls"; }
+# (a) the audit hits the limit after the worker committed: exit 75, the marker names the worker's commit; the rerun starts no worker,
+# runs the checks and the audit, merges, and removes the marker
+: > "$lr/calls"; echo audit > "$lr/limit-once"
+out="$(lrrun --id L1 --branch p1/lr-l1)"; rc=$?
+[[ $rc -eq 75 ]] && grep -qE '^RESULT #[0-9]+ L1: LIMIT$' <<<"$out" || fail "A258 (a): an audit at a limit is not exit 75 (rc $rc): $out"
+m="$(lrmark L1 p1/lr-l1)"; c="$(head -n1 "$m" 2>/dev/null)"
+[[ -n "$c" ]] && git -C "$lr" merge-base --is-ancestor "$c" p1/lr-l1 && [[ "$(git -C "$lr" log -1 --format=%s "$c")" == work ]] || fail "A258 (a): no marker naming the worker's commit: $m: $c"
+: > "$lr/calls"; l0="$(wc -l < "$lr/.coord/log.md")"
+out="$(lrrun --id L1 --branch p1/lr-l1)"; rc=$?
+[[ $rc -eq 0 ]] && grep -qE '^RESULT #[0-9]+ L1: MERGED ' <<<"$out" || fail "A258 (a): the rerun did not merge (rc $rc): $out"
+[[ "$(workers)" -eq 0 ]] && grep -q '^audit-' "$lr/calls" || fail "A258 (a): the rerun started a worker or no audit: $(paste -sd' ' "$lr/calls")"
+tail -n +$((l0 + 1)) "$lr/.coord/log.md" | grep -qE "pipeline #[0-9]+ L1: worker finished in an earlier run \(${c:0:9}\); no new worker \(A258\)$" || fail "A258 (a): the skip is not logged: $(tail -n +$((l0 + 1)) "$lr/.coord/log.md")"
+tail -n +$((l0 + 1)) "$lr/.coord/log.md" | grep -q 'L1: checks passed (round 0)' || fail "A258 (a): the rerun ran no checks"
+[[ ! -e "$m" ]] || fail "A258 (a): the merged run left its marker"
+# (b) the worker itself hits the limit: no marker; the rerun starts the worker again on the kept branch
+: > "$lr/calls"; echo worker > "$lr/limit-once"
+out="$(lrrun --id L2 --branch p1/lr-l2)"; rc=$?
+[[ $rc -eq 75 && ! -e "$(lrmark L2 p1/lr-l2)" ]] || fail "A258 (b): a worker at a limit: rc $rc, or a marker was written: $out"
+: > "$lr/calls"; out="$(lrrun --id L2 --branch p1/lr-l2)"; rc=$?
+[[ $rc -eq 0 && "$(workers)" -eq 1 ]] && grep -qE '^RESULT #[0-9]+ L2: MERGED ' <<<"$out" || fail "A258 (b): the rerun after a worker's limit did not start the worker and merge (rc $rc): $(paste -sd' ' "$lr/calls") $out"
+[[ "$(git -C "$lr" log --format=%s phase-1^1..phase-1^2 | grep -c '^work$')" -eq 2 ]] || fail "A258 (b): the rerun did not resume the kept branch (two work commits expected on it)"
+# (c) a fix round hits the limit: the rerun starts no first worker, the failing check gets its fix round and the run merges
+: > "$lr/calls"; echo fix > "$lr/limit-once"
+out="$(LR_TC_FAIL=1 lrrun --id L3 --branch p1/lr-l3)"; rc=$?
+[[ $rc -eq 75 && -s "$(lrmark L3 p1/lr-l3)" ]] && grep -q '^fix-' "$lr/calls" || fail "A258 (c): a fix round at a limit: rc $rc, or no marker: $out"
+wt3="$(git -C "$lr" worktree list --porcelain | awk '/^worktree /{w=$2} $0=="branch refs/heads/p1/lr-l3"{print w}')"
+git -C "$wt3" rm -q fixed.txt && git -C "$wt3" -c user.name=t -c user.email=t@t commit -qm 'undo the fix (the round hit its limit before it ended)'
+: > "$lr/calls"; l0="$(wc -l < "$lr/.coord/log.md")"
+out="$(LR_TC_FAIL=1 lrrun --id L3 --branch p1/lr-l3)"; rc=$?
+[[ $rc -eq 0 && "$(workers)" -eq 0 ]] && grep -q '^fix-' "$lr/calls" && grep -qE '^RESULT #[0-9]+ L3: MERGED ' <<<"$out" || fail "A258 (c): the rerun after a fix round's limit (rc $rc): $(paste -sd' ' "$lr/calls") $out"
+tail -n +$((l0 + 1)) "$lr/.coord/log.md" | grep -q 'L3: checks failed (round 0)' || fail "A258 (c): the rerun's check did not fail first: $(tail -n +$((l0 + 1)) "$lr/.coord/log.md")"
+[[ ! -e "$(lrmark L3 p1/lr-l3)" ]] || fail "A258 (c): the merged run left its marker"
+# (d) a marker of another id, of the same id on another branch, or naming a commit the branch lacks changes nothing
+gc "$lr" other; oc="$(git -C "$lr" rev-parse HEAD)"; git -C "$lr" branch p1/lr-l4 phase-1; git -C "$lr" branch p1/lr-x "$oc"
+mkdir -p "$lr/.tasks/limit-resume/L9@p1" "$lr/.tasks/limit-resume/L4@p1"
+git -C "$lr" rev-parse p1/lr-l4 > "$(lrmark L9 p1/lr-l4)"; git -C "$lr" rev-parse p1/lr-x > "$(lrmark L4 p1/lr-x)"
+echo "$oc" > "$(lrmark L4 p1/lr-l4)"   # on p1/lr-x, not on p1/lr-l4
+: > "$lr/calls"; out="$(lrrun --id L4 --branch p1/lr-l4)"; rc=$?
+[[ $rc -eq 0 && "$(workers)" -eq 1 ]] && grep -qE '^RESULT #[0-9]+ L4: MERGED ' <<<"$out" || fail "A258 (d): a marker of another id or branch, or of a commit not on the branch, skipped the worker (rc $rc): $(paste -sd' ' "$lr/calls") $out"
+[[ -s "$(lrmark L9 p1/lr-l4)" && -s "$(lrmark L4 p1/lr-x)" ]] || fail "A258 (d): the run removed another id's or branch's marker"
+# (e) a NOT MERGED rerun removes its marker (the phase-1 worktree is dirty at the queue entry)
+: > "$lr/calls"; echo audit > "$lr/limit-once"
+out="$(lrrun --id L5 --branch p1/lr-l5)"; rc=$?
+[[ $rc -eq 75 && -s "$(lrmark L5 p1/lr-l5)" ]] || fail "A258 (e): no marker after an audit at a limit (rc $rc): $out"
+echo dirty >> "$lr/.claude/worktrees/phase-1/tracked"
+out="$(lrrun --id L5 --branch p1/lr-l5)"; rc=$?
+[[ $rc -eq 1 ]] && grep -qE '^RESULT #[0-9]+ L5: NOT MERGED \(phase-1 worktree not clean' <<<"$out" || fail "A258 (e): the dirty rerun is not NOT MERGED (rc $rc): $out"
+[[ ! -e "$(lrmark L5 p1/lr-l5)" ]] || fail "A258 (e): a NOT MERGED run left its marker"
+git -C "$lr/.claude/worktrees/phase-1" checkout -q tracked
 
 [[ $fails -eq 0 ]] || { echo "pipeline.test.sh: $fails failure(s) in $count packages" >&2; exit 1; }
 echo "pipeline.test.sh: ok ($count packages)"

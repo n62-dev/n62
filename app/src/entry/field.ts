@@ -11,6 +11,8 @@ import { lineTouch } from "./lineTouch.ts";
 import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
 import { nextBox, settle } from "./stops.ts";
 import { GROW_MATRIX, type Grown } from "./matgrow.ts";
+import { atomStart, latexAt } from "./boxes.ts";
+import { termRange } from "./term.ts";
 
 export { isInfixWord } from "./boxes.ts"; // R197: for the Help key's chunk (cursorFn.ts FnWords), from the chunk that holds boxes.ts
 
@@ -75,6 +77,11 @@ function isPlainTerm(latex: string): boolean {
  * in the list, so `3,ᴇ3` types no 1.
  */
 const OPENS_TERM = /^(?:|[-+=<>,;([]|\\(?:times|div|cdot|lt|gt|le|leq|ge|geq|ne|neq|lbrack|lbrace|\{)(?![A-Za-z]))$/;
+
+/** R585: atoms term.ts reads as a term that are no value for ∥ to take in: the polar sign ∡, store ▶, the DMS marks, a lone ᴇ. */
+const NO_OPERAND = /^\\(?:mathbin|blacktriangleright|degree|prime|doubleprime|emark)(?![A-Za-z])/;
+/** R585: a mark after its term, one operand with it: 5 % and 5!. */
+const POSTFIX = /^(?:!|\\%)$/;
 
 /** The exponent key (R14): the mark ᴇ, one token. */
 function isEMark(a: ActionBody): boolean {
@@ -208,16 +215,16 @@ function forceNoSystemKeyboard(mf: MathfieldElement): void {
 }
 
 /** A type / insert / cmd action on the field (EntryController.run once the field is up). `grown`: the line's Shift + 5
- *  matrices (R185). */
-export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown): void {
+ *  matrices (R185); `decimalComma`: the decimal comma is on (R57), so an argument separator is `;` (R585). */
+export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown, decimalComma = false): void {
   // R185: the matrices are found again after what changed the line since the last key (a result put on it, a character
   // MathLive typed itself) and after this key
   grown?.refresh(mf);
-  onField(mf, a, grown);
+  onField(mf, a, grown, decimalComma);
   grown?.refresh(mf);
 }
 
-function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined): void {
+function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined, decimalComma: boolean): void {
   // R185: a tapped ▶ or ▼ (or a hardware arrow) at the edge of Shift + 5's matrix adds a column or row, or takes back an
   // empty one; a drag step on the pad (its action marked `drag` by the Keypad) only moves
   if (a.kind === "cmd" && !("drag" in a) && grown?.key(mf, a.name)) {
@@ -244,6 +251,13 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined):
   if (a.kind !== "cmd" && mf.mode === "text") mf.mode = "math";
   if (a.kind === "insert" && a.call) {
     typedCall(mf, a.latex, a.call);
+    mf.focus();
+    return;
+  }
+  if (a.kind === "insert" && a.infix && selectOperand(mf)) {
+    // R585 (F365): ∥ right after a value takes it in, par(value, □), the cursor in the second box: 5 ∥ 20 is par(5, 20),
+    // not the product 5·par(20). The separator is the `,` key's own (`;` with the decimal comma, R57)
+    apply(mf, { kind: "insert", latex: a.latex.replace("#0", `#0${decimalComma ? ";" : ","}#?`) });
     mf.focus();
     return;
   }
@@ -313,6 +327,23 @@ function typedStart(mf: MathfieldElement, typed: readonly string[]): number {
     for (k--; k > 0 && depth(k) > d; k--);
   }
   return k;
+}
+
+/**
+ * R585: with nothing selected, if a term ends right before the cursor (term.ts: a number with its ᴇ part, a name, a chip,
+ * a bracket group with its function's name, a fraction, a root, a matrix, each with its power; a % or ! after it goes
+ * with it), select it and return true. After an operator, a separator, at a box's start or inside a number: false.
+ */
+function selectOperand(mf: MathfieldElement): boolean {
+  if (!mf.selectionIsCollapsed) return false;
+  const end = mf.position;
+  if (end < 1) return false;
+  const o = POSTFIX.test(latexAt(mf, end)) ? atomStart(mf, end) : end;
+  if (o < 1 || NO_OPERAND.test(latexAt(mf, o))) return false;
+  const r = termRange(mf, o);
+  if (!r || r[1] !== o) return false;
+  mf.selection = { ranges: [[r[0], end]] };
+  return true;
 }
 
 /** True if the selection is followed by a ° (it is the degrees box of a DMS). */

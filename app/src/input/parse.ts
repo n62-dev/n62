@@ -17,6 +17,8 @@ export { FUNCS, GREEK, INVERSE, LETTER_NAMES, type ParseInfo, type ParseOptions,
 
 /** R575: an operator as the line draws it, keyed by its token's value (a value missing after it, or before it). */
 const SIGN: Readonly<Record<string, string>> = { "+": "+", "-": "−", "*": "×", "/": "/", "^": "^", [CARET]: "^", times: "×", div: "÷", cdot: "·" };
+/** R702: the infix and postfix commands that need a value before them, as their keys draw them (none is a name the user typed). */
+const NEEDS_LEFT: Readonly<Record<string, string>> = { [`${LOGIC}and`]: "AND", [`${LOGIC}or`]: "OR", [`${LOGIC}xor`]: "XOR", measuredangle: "∡", bmod: "mod", degree: "°", circ: "°", "%": "%" };
 const signOf = (t: Tok | undefined): string | undefined => (t && (t.t === "ch" || t.t === "cmd") && Object.hasOwn(SIGN, t.v) ? SIGN[t.v] : undefined);
 
 /** G341: a typed name that is N62's own (`pas…`, CAS's answer slot) is refused with the reason. */
@@ -829,6 +831,11 @@ class Parser implements CalcParser {
         // R575: an operator where a value belongs (2××3, 2+×3, ×3), named as the line draws it
         throw parseError("parse.operatorNeedsValue", { sign: SIGN[name] as string });
       default:
+        // R702 (F382): a store arrow, a function arrow or another command of NEEDS_LEFT with nothing before it says
+        // what it needs; only a command the user typed is named
+        if (name === "blacktriangleright") throw parseError("parse.storeNeedsValue");
+        if (name === "rightarrow" || name === "to") throw parseError("parse.needsAVariable");
+        if (Object.hasOwn(NEEDS_LEFT, name)) throw parseError("parse.operatorNeedsValue", { sign: NEEDS_LEFT[name] as string });
         throw parseError("parse.unsupportedCommand", { name });
     }
   }

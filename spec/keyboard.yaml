@@ -29,6 +29,9 @@
 #                                  with Ans = 7 (SAMPLE_CHIPS in app/src/input/testChips.ts).
 #                                  An insert may carry `units: true` (R71, ±): only the unit view's formula reads it; its
 #                                  sample is read in units mode, and an app dims the key.
+#                                  An insert with one #0 may carry `infix: true` (R585, ∥): with nothing selected and a
+#                                  term right before the cursor (entry/term.ts) the term becomes the first argument and
+#                                  the cursor goes to a second box (entry/field.ts selectOperand).
 #                                  Any action may carry `line: <action>`, used instead of it when the
 #                                  one-line entry mode is on (a linear form of the same key).
 #   { cmd: "moveToNextChar" }      a MathLive editing command
@@ -242,8 +245,9 @@ keys:
     label: { primary: "( )", shift: "∥", alpha: N }
     primary: { insert: "\\left(#0\\right)", sample: ["\\left(1+2\\right)\\times3", "(1+2)*3"] }
     # Shift + ( ) is ∥ (R323, the owner 2026-11-14; a reserved cell filled): Find's par(), the parallel combination
-    # 1/(1/a + 1/b + …), with the cursor in its bracket (task t01)
-    shift: { insert: "\\operatorname{par}\\left(#0\\right)", sample: ["\\operatorname{par}\\left(4700,10000\\right)", "par(4700,10000)"] }
+    # 1/(1/a + 1/b + …), with the cursor in its bracket (task t01). `infix: true` (R585): pressed right after a value (a
+    # number, a name, a chip, a bracket group, a template) it takes the value in, par(value, □), so 5 ∥ 20 is par(5, 20)
+    shift: { insert: "\\operatorname{par}\\left(#0\\right)", infix: true, sample: ["\\operatorname{par}\\left(4700,10000\\right)", "par(4700,10000)"] }
     alpha: { type: N }
     source: virtual-calc  # r6c3 (a matched pair; shift tick marks not ours: ∥ is ours, assumed)
   # Shift + , is ± (R71, decisions.md "M4-2" point 5; the reference's Eval is omitted). `units: true`: only the unit view's
