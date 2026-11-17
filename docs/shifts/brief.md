@@ -70,22 +70,23 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 870 | A258 a rerun after a usage limit skips the worker that already finished | annabell, Sonnet, audit Opus | `p1/annabell-limitresume` | – |
-| 871 | A259 every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | A258 |
-| 872 | A260 an Opus pass after every six packages | annabell, Sonnet, audit Opus | `p1/annabell-passsix` | A259 |
-| 873 | S55 room in the four budgeted docs | sandra, Sonnet | `p1/sandra-docsroom` | A260 |
-| 874 | [R700](packages/R700.md) Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381), if not merged by the stop | ron, Sonnet | `p1/ron-backlayers` | – |
-| 875 | [R702](packages/R702.md) Store ▶ with nothing to store is a dead press (F382), if not merged by the stop | ron, Sonnet | `p1/ron-storeempty` | – |
-| 876 | [R720](packages/R720.md) Home and CAS ☰ of seven rows, if not merged by the stop | ron, Sonnet | `p1/ron-homemenu` | R700, R702 |
-| 877 | [R740](packages/R740.md) Store ▶ on a folded pick keeps the keys down; New name… brings them | ron, Sonnet | `p1/ron-foldstore` | – |
-| 878 | [R722](packages/R722.md) the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
-| 879 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
-| 880 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
-| 881 | [R725](packages/R725.md) the Chars sheet on Shift + Vars | ron, Sonnet | `p1/ron-charssheet` | R723 |
-| 882 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
-| 883 | [R727](packages/R727.md) Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
-| 884 | [R743](packages/R743.md) a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
-| 885 | [R744](packages/R744.md) the layout lock reads only release tags (before the beta tag) | ron, Sonnet | `p1/ron-lockprerelease` | – |
+| 870 | [S55](packages/S55.md) room in the four budgeted docs | sandra, Sonnet | `p1/sandra-docsroom` | – |
+| 871 | [R700](packages/R700.md) Android Back undoes a pick, the unit view and an armed Shift or Alpha (F381), if not merged by the stop | ron, Sonnet | `p1/ron-backlayers` | – |
+| 872 | [R702](packages/R702.md) Store ▶ with nothing to store is a dead press (F382), if not merged by the stop | ron, Sonnet | `p1/ron-storeempty` | – |
+| 873 | [R720](packages/R720.md) Home and CAS ☰ of seven rows, if not merged by the stop | ron, Sonnet | `p1/ron-homemenu` | R700, R702 |
+| 874 | [R740](packages/R740.md) Store ▶ on a folded pick keeps the keys down; New name… brings them | ron, Sonnet | `p1/ron-foldstore` | – |
+| 875 | [R722](packages/R722.md) the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
+| 876 | [R724](packages/R724.md) the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
+| 877 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
+| 878 | [R725](packages/R725.md) the Chars sheet on Shift + Vars | ron, Sonnet | `p1/ron-charssheet` | R723 |
+| 879 | [R744](packages/R744.md) the layout lock reads only release tags (before the beta tag) | ron, Sonnet | `p1/ron-lockprerelease` | – |
+| 880 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
+| 881 | [R727](packages/R727.md) Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
+| 882 | [R743](packages/R743.md) a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
+| 883 | [A260](packages/A260.md) an Opus pass after every six packages | annabell, Sonnet, audit Opus | `p1/annabell-passsix` | – (taken by #1372, pipeline-optimizer; this row only if NOT MERGED) |
+| 884 | [A259](packages/A259.md) every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | R743 |
+
+If the release candidate (Mon 11-23) comes before every row has merged, R743, then R727, then R726 move to v0.1.1; the other rows are the layout that the lock pins and stay (owner, 2026-11-17).
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
 **Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R314, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
