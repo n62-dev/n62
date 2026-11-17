@@ -22,7 +22,7 @@ Not planned (decided): Python on the device (P11), direct Wi-Fi link or cloud sy
 - **First-run tips** [have]. R171 (`72e872c6`).
 - **Report a problem** [have]. A92, R172, R173, A95.
 - **Why trust it** [have]. G200, G201, G202, A93, A94, R174.
-- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act on the release candidate (Sat 11-21); no package. Decision 4.
+- **Showcase video** [part]. The v6 cut opens on d/dx; units are blocks 12–16. Owner's act on the release candidate (Thu 11-19, or after the tag); no package. Decision 4.
 - **F-Droid and IzzyOnDroid** [part]. The recipe is built by A96, A97, A98; then the owner's acts after the tag: the fdroiddata merge request and the IzzyOnDroid request. Acceptance takes weeks.
 - **APK and site** [not yet; the list's "have" is early]. Releases hold only `deps-giac-2.1.0-1d9536e0`; Pages has one test deployment from 11-05. The tag produces both. Owner's act, no package. Do not publicise n62.dev before the tag.
 
