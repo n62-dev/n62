@@ -118,10 +118,6 @@
   --share-w: 6.5em;
   --share-row-h: 36px;
   --meter-h: 3px;
-  /* R157: the logo as the app icon draws it, on Home's tile: black mark (the file's own colour) on the logo teal, in every family and mode (not theme roles) */
-  --logo-ground: #529997;
-  --logo-ink: #000000;
-  --tile-mark: 18px;
   /* R157: the faint mark on an empty history; its colour is the generated role --mark-faint */
   --mark-h: 128px;
 }

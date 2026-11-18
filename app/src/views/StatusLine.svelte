@@ -125,7 +125,7 @@
     <span class="places" role="tablist" aria-label={t("status.places")}>
       {#each PLACES as p (p.view)}
         {@const cur = shell.app === null && session.view === p.view}
-        <!-- Home's tile is the app icon's (R157): the black mark on the logo teal, the same in every theme -->
+        <!-- Home's tile is the colour logo, the app icon (R745): the one file icons/icon.svg, the same in every theme -->
         <button
           type="button"
           class="ptab"
@@ -137,7 +137,7 @@
           aria-selected={cur}
           aria-label={p.name}
           onclick={() => onpress(p.key, "primary")}>
-          <span class="tile" class:logo={"icon" in p.glyph} class:math={"text" in p.glyph} data-ring={cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<span class="logomark"></span>{:else}{p.glyph.text}{/if}</span>
+          <span class="tile math" data-ring={cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<img src="{import.meta.env.BASE_URL}icons/icon.svg" alt="" role="presentation" />{:else}{p.glyph.text}{/if}</span>
           <span class="nm" aria-hidden="true">{p.name}</span>
         </button>
       {/each}
@@ -275,16 +275,17 @@
     border-radius: var(--sp-05);
     background: var(--muted);
   }
-  .tile.logo {
-    background: var(--logo-ground);
+  /* Home's tile: the colour logo (public/icons/icon.svg, a square) at the tile's height, in the tile's corner radius */
+  .tile:has(img) {
+    background: none;
   }
-  /* the mark as a mask of the one file (public/n62-mark.svg) in --logo-ink */
-  .tile :global(.logomark) {
-    width: var(--tile-mark);
-    height: var(--tile-mark);
-    background: var(--logo-ink);
-    -webkit-mask: url("/n62-mark.svg") center / contain no-repeat;
-    mask: url("/n62-mark.svg") center / contain no-repeat;
+  .tile img {
+    display: block;
+    height: 100%;
+    width: auto;
+    aspect-ratio: 1;
+    border-radius: var(--radius-s);
+    pointer-events: none; /* not draggable: a press lands on the button */
   }
   .tile.small {
     font-size: var(--fs-small);
