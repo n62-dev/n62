@@ -484,6 +484,25 @@ const shots: Shot[] = [
       await tap(p, ["shift", "d9", "down", "down", "down"]);
     },
   },
+  {
+    id: "home-chars",
+    group: "Home",
+    title: "Shift + Vars, Chars (R725): 46 cells in 10 columns over the view, each with its digit; the keypad's digit keys stay uncovered",
+    setup: async (p) => {
+      await someHistory(p);
+      await tap(p, ["shift", "vars", "down", "down", "down", "right", "right"]);
+    },
+  },
+  {
+    id: "home-chars-small",
+    group: "Small phone (360 × 740)",
+    title: "Chars (R725) on the small phone: ten cells across 360 px",
+    viewport: { width: 360, height: 740 },
+    setup: async (p) => {
+      await someHistory(p);
+      await tap(p, ["shift", "vars", "down", "down", "down", "down"]);
+    },
+  },
   // ---- CAS
   {
     id: "cas",
