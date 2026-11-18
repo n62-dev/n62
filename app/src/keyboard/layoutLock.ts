@@ -4,6 +4,7 @@
 //
 // A lock is a set of sections, each a map slot → value, plus the owner's moves:
 //   layers:   `<key id>.<layer>` → `<kind> <name>` for every live key layer (`reserved` for a cell blank on purpose)
+//   modifiers: what Shift and Alpha do (R726), `<key>.<gesture>` → the state it leaves; built by running a Session
 //   <list>:   a numbered list's digit → the id of its fixed row (a palette: `row,col` → the cell's id)
 // A live pinned line is never edited or deleted. A reserved line may turn into a live one (the fill), and a line may be
 // appended after a list's last fixed row. Everything else is a move: a line under `moves:` with the owner's decision.
@@ -46,6 +47,49 @@ export function layerPins(kb: Keyboard): Record<string, string> {
     }
   }
   return out;
+}
+
+/** The modifier part of a Session that modifierPins drives. */
+export interface ModifierSession {
+  shift: boolean;
+  alpha: boolean;
+  alphaLock: boolean;
+  capsLock: boolean;
+  shiftLock: boolean;
+  toggleShift(): void;
+  toggleAlpha(): void;
+  flickShiftLock(): void;
+  flickAlphaLock(lower: boolean): void;
+  releaseModifiers(): void;
+}
+
+/** The modifiers (R726), `<key>.<gesture>` → the state the gesture leaves: `off`, `arm` (one key), `lock` (Shift locked), `capsLock`,
+ *  `lowerLock` (Alpha locked, capitals or lower case) or `lower` (Shift and Alpha armed: one lower-case letter). Each line is
+ *  one sequence run on a fresh session; `slot.tap` is the bar's ⇧/α sign after a Shift lock. */
+export function modifierPins(fresh: () => ModifierSession): Record<string, string> {
+  const state = (s: ModifierSession): string =>
+    s.shiftLock ? "lock" : s.alphaLock ? (s.capsLock ? "lowerLock" : "capsLock") : s.shift && s.alpha ? "lower" : s.shift || s.alpha ? "arm" : "off";
+  const run = (...steps: ((s: ModifierSession) => void)[]): string => {
+    const s = fresh();
+    for (const step of steps) step(s);
+    return state(s);
+  };
+  const shift = (s: ModifierSession): void => s.toggleShift();
+  const alpha = (s: ModifierSession): void => s.toggleAlpha();
+  return {
+    "shift.tap": run(shift),
+    "shift.tap2": run(shift, shift),
+    "shift.tap3": run(shift, shift, shift),
+    "shift.flickUp": run((s) => s.flickShiftLock()),
+    "alpha.tap": run(alpha),
+    "alpha.tap2": run(alpha, alpha),
+    "alpha.tap3": run(alpha, alpha, alpha),
+    "alpha.flickDown": run((s) => s.flickAlphaLock(false)),
+    "alpha.flickUp": run((s) => s.flickAlphaLock(true)),
+    "shift.alpha": run(shift, alpha),
+    "shift.alpha.alpha": run(shift, alpha, alpha),
+    "slot.tap": run(shift, shift, (s) => s.releaseModifiers()),
+  };
 }
 
 /** The numbered-list builders: each pinned list section → the source files (under app/src) that build or open it. A list that

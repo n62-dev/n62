@@ -143,11 +143,18 @@
       {/each}
     </span>
     <span class="slot" data-testid="mod-slot">
-      <span
-        class="mod"
-        data-testid={mod ? `mod-${mod.alpha ? "alpha" : "shift"}` : undefined}
-        data-lock={mod?.lock}
-        aria-label={mod && t(mod.alpha ? "key.alpha" : "key.shift")}>{mod?.text}</span>
+      {#if mod}
+        <!-- R726: while Shift or Alpha is on, the sign is a button: a tap ends it, armed or locked (the bar's guard applies) -->
+        <button
+          type="button"
+          class="mod"
+          data-testid={mod.alpha ? "mod-alpha" : "mod-shift"}
+          data-lock={mod.lock}
+          aria-label={t("status.modOff", { mod: t(mod.alpha ? "key.alpha" : "key.shift") })}
+          onclick={() => session.releaseModifiers()}>{mod.text}</button>
+      {:else}
+        <span class="mod"></span>
+      {/if}
     </span>
     <button
       type="button"
@@ -395,6 +402,17 @@
     color: var(--shift);
     font-weight: 700;
     line-height: var(--lh-small);
+  }
+  /* the sign as a button (R726): the slot's width over the bar's min-width, drawn as before; its target is the bar's height */
+  .slot button.mod {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
+  .slot button.mod::before {
+    content: "";
+    position: absolute;
+    inset: calc(var(--bar-h) / -2) calc(-1 * var(--sp-05));
   }
   .mod[data-testid="mod-alpha"] {
     color: var(--alpha);

@@ -364,10 +364,10 @@
   $effect(() => {
     if (hasPick) return openLayer(() => (picked = null));
   });
-  // R700: ...and an armed or locked Shift or Alpha, as the key that disarms it (session.unlock); one layer while any of the four holds.
+  // R700: ...and an armed or locked Shift or Alpha, as the key that disarms it (session.releaseModifiers); one layer while any of the four holds.
   const armed = $derived(session.shift || session.alpha || session.shiftLock || session.alphaLock);
   $effect(() => {
-    if (armed) return openLayer(() => session.unlock());
+    if (armed) return openLayer(() => session.releaseModifiers());
   });
   /** Results mode (R53, decisions.md P16): the keypad folded to its 44 px slice, the history over the screen. Home and
    *  CAS only; never stored, so a reload has the keys up. */
