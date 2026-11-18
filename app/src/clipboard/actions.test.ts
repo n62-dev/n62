@@ -133,7 +133,7 @@ describe("ClipActions row buttons and the hold", () => {
 });
 
 // R723: Shift + Select (keyCopy) writes what a hold on the row's result does: the given row, else the last finished one;
-// with none, or in an app, nothing is written and the route makes it a dead press.
+// with none, or in an app, nothing is written and it is a dead press.
 describe("ClipActions keyCopy (Shift + Select, R723)", () => {
   const make = (items: object[], app: string | null = null) => {
     let clip = "untouched";
@@ -147,20 +147,26 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
   it("copies the given row's full value, as a hold on its result, and counts as copy", async () => {
     const rows = [row("1/3"), row("2/3")];
     const m = make(rows);
-    expect(m.c.keyCopy(rows[0] as never)).toBe(true);
+    const dead = vi.fn();
+    m.c.keyCopy(dead, rows[0] as never);
+    expect(dead).not.toHaveBeenCalled();
     await vi.waitFor(() => expect(m.clip()).toBe("1/3"));
     expect(m.acted).toEqual(["copy"]);
   });
   it("with no row given, the last finished row", async () => {
     const m = make([row("1/3"), row("2/3"), row("x", "error")]);
-    expect(m.c.keyCopy()).toBe(true);
+    m.c.keyCopy(() => {
+      throw new Error("dead");
+    });
     await vi.waitFor(() => expect(m.clip()).toBe("2/3"));
   });
-  it("no finished row, a given row without a result, or an app: false, and nothing written", async () => {
+  it("no finished row, a given row without a result, or an app: the dead press, and nothing written", async () => {
     const pending = row("5", "pending");
-    for (const m of [make([]), make([row("x", "error")]), make([row("1/3")], "function")]) expect(m.c.keyCopy()).toBe(false);
+    const dead = vi.fn();
+    for (const m of [make([]), make([row("x", "error")]), make([row("1/3")], "function")]) m.c.keyCopy(dead);
     const m = make([row("1/3"), pending]);
-    expect(m.c.keyCopy(pending as never)).toBe(false);
+    m.c.keyCopy(dead, pending as never);
+    expect(dead).toHaveBeenCalledTimes(4);
     await new Promise((r) => setTimeout(r, 20));
     expect([m.clip(), m.acted]).toEqual(["untouched", []]);
   });

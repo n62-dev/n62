@@ -34,11 +34,11 @@ function ctx(items: Row[] = [], app: string | null = null) {
     cycleFormat: async () => void log.push("cycleFormat"),
   };
   const shell = { app, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, nav: () => false, toggleMenu: () => (log.push("toggleMenu"), true) };
-  // ClipActions.keyCopy (clipboard/actions.test.ts holds its rule): here it says what it was given and whether it copied
+  // ClipActions.keyCopy (clipboard/actions.test.ts holds its rule): here it says what it was given, and calls the dead press when it has nothing to copy
   const clip = {
-    keyCopy: (row?: Row): boolean => {
+    keyCopy: (dead: () => void, row?: Row): void => {
       log.push(`keyCopy:${row?.input ?? "none"}`);
-      return app === null && (row ? row.status === "done" : items.some((r) => r.status === "done"));
+      if (!(app === null && (row ? row.status === "done" : items.some((r) => r.status === "done")))) dead();
     },
     paste: async () => void log.push("paste"),
   };

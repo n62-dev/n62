@@ -161,6 +161,9 @@ export function special(c: RouteCtx, name: Special): void {
     case "uncertainty":
       uncertainty(c); // R327: no pick, the last row (as Fmt)
       break;
+    case "copy":
+      copyKey(c); // R723: Shift + Select with no pick, the last finished row
+      break;
     case "selectGrow":
     case "selectShrink":
       // R279: the entry line only; a view without one (Plot) has nothing to select
@@ -169,9 +172,6 @@ export function special(c: RouteCtx, name: Special): void {
     case "vars":
     case "memory":
       c.openNames(name === "memory");
-      break;
-    case "copy":
-      copyKey(c); // R723: Shift + Select with no pick, the last finished row
       break;
     case "paste":
       // R723: Shift + Deselect (R329 had it on Shift + Vars), ☰ → Paste's path (the keys pressed meanwhile wait for it); a
@@ -201,7 +201,7 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
 
 /** Shift + Select (R723): Copy, the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
  *  an app, is a dead press with no clipboard write. */
-const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => void (x.keyCopy(row) || c.dead()));
+const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row));
 
 /** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
  *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
