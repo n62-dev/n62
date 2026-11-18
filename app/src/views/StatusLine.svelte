@@ -8,7 +8,7 @@
   import { pressFlag } from "../input/pressFlag.ts";
 
   // R97, R722: the bar on the keypad's top edge, out of App.svelte. Props in, events out; no store of its own.
-  let { session, shell, busy, cas, onpress, onmode }: {
+  let { session, shell, busy, cas, onpress, onmode, folded = false }: {
     session: Session;
     shell: AppShell;
     /** A job runs (session or app). */
@@ -19,6 +19,9 @@
     onpress: (key: Key, layer: Layer) => void;
     /** A tap on a mode chip: the Mode sheet, on that row. */
     onmode: (at: string) => void;
+    /** R724: in the folded bar (keyboard/Fold.svelte): the nav lays out as Fold's row (display: contents), and only the
+     *  tabs, the slot and ☰ show, each at its place in the row (`order`) among Fold's ⌃, free stretch and row buttons. */
+    folded?: boolean;
   } = $props();
 
   /** A bar control as a key (R15b, R15c1, R722): its tap takes the same path as a key press (an open sheet gives way, it runs at once while an app loads, and waits while a sheet's code loads). */
@@ -80,7 +83,7 @@
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
-  <nav class="bar" class:inapp={shell.app !== null} data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
+  <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
     <button
       type="button"
       class="place"
@@ -178,6 +181,31 @@
     box-shadow: inset 0 var(--stroke-thin) 0 var(--line);
     font-size: var(--fs-note);
     line-height: 1;
+  }
+  /* R724: folded, the row is Fold.svelte's (44 px): ⌃ 0, the tabs 1, the free stretch 2, the slot 3, the row buttons 4, ☰ 5;
+     every target the row's height, at least 32 px wide; no Apps ▾, no views, no chips */
+  .bar.folded {
+    display: contents;
+  }
+  .folded .place,
+  .folded .seg,
+  .folded .sep,
+  .folded .chip,
+  .folded .pair {
+    display: none;
+  }
+  .folded .places {
+    order: 1;
+  }
+  .folded .slot {
+    order: 3;
+    margin-left: 0;
+  }
+  .folded .menubtn {
+    order: 5;
+  }
+  .folded button {
+    min-width: var(--view-w);
   }
   .sr {
     position: absolute;
@@ -412,6 +440,9 @@
     .ptab:not(.cur) {
       min-width: var(--tile-w);
       padding: 0;
+    }
+    .folded .ptab:not(.cur) {
+      min-width: var(--view-w);
     }
     .inapp .sep {
       margin: var(--sp-2) 0;

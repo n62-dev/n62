@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **R724, ⌄'s touch box over the line's text:** a full 48 × 48 box took a tap on the line's first term (the caret, a hold) and folded instead; built: the box is 48 × 48 but takes taps only left of the text over the field (32 px wide there, 48 below it). Keep? Recommended; the alternative is the full box and a first term that folds.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
@@ -48,7 +49,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R15c (2026-10-17): the top cluster becomes R3; Apps, Menu and the views sit in the status line** (the bar on the keypad since R722, below). Rule: docs/04 5.1, docs/05 3.2. Archived.
 - **The bar on the keypad (owner, 2026-11-17, R722):** the status line moves onto the keypad's top edge as the bar (Apps ▾ · Home | CAS · ⇧/α · RAD · STD ▾ · 12 ▾ · ☰, 28 px; the lock's `bar:`), Home and CAS one tap each, and the rows under 1000 px tall are 43 and 33 px (history 220 → 264 px at 412 × 815). Rule: docs/05 3.2, docs/03 rule 9. Would change if: over 2 % of angle-chip taps are undone within 3 s in four weeks (`bar.angle.undo` against `bar.angle`, under their own key `bar-uses` and since: Settings › Counters › Removal tests › Angle chip).
 - **R15b (2026-10-17): cluster rows 36 px; the place target at least 48 × 28 px** (R82f2). Archived, "Opus pass 96". Would change if: 36 px keys are mis-tapped on the phone.
-- **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS). Would change if: under 14 folds or 10 actions while folded in 14 days. Archived.
+- **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS), ⌄ and the folded bar (owner, 2026-11-17, R724; reverses R283's "nothing else"). Would change if: under 14 folds or 10 actions while folded in 14 days; ⌄ makes under 5 % of folds in four weeks (`fold.tap`; then ⌄ goes, the bar stays). Archived.
   - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).
 - **R21 (2026-10-14): pick sheets rise over the keypad's rows 3–9, Settings too;** 36 px rows, 44 px cells, then scroll. Archived.
 - **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke. Archived.

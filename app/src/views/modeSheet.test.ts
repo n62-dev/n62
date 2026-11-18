@@ -698,10 +698,12 @@ describe("Settings › Counters › Results mode (R53, R283: the handle is gone)
     expect(s.level.items.map((x) => x.id)).toEqual(["results", "bar"]);
     s.level.highlight = at(s, "results");
     expect(s.enter()).toEqual({ kind: "stay" });
-    expect(s.level.items.map((x) => x.id)).toEqual(["swipe", "pick", "actions", "since", "reset"]);
+    expect(s.level.items.map((x) => x.id)).toEqual(["swipe", "tap", "pick", "actions", "since", "reset"]); // R724: ⌄'s folds
     expect(byId(s, "swipe")?.value).toBe("2");
     c.count("fold.swipe");
-    expect(c.folds).toBe(8);
+    c.count("fold.tap");
+    expect(byId(s, "tap")?.value).toBe("1");
+    expect(c.folds).toBe(9);
   });
 });
 

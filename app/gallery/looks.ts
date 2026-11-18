@@ -285,7 +285,7 @@ export function logoShots(): LookShot[] {
       id: `logo-status-${family}-${view}`,
       group: "Home's tile and the empty history (R157)",
       title: `${name(family)}: the status line in ${view === "home" ? "Home (the mark on the tile)" : "CAS (its own glyph)"}`,
-      element: "header",
+      element: '[data-testid="bar"]', // R722: the bar on the keys (no <header> since)
       setup: async (p: Page) => {
         await p.evaluate((v) => window.n62.session.setView(v), view);
         await setLook(p, { family, brightness: "system" });
