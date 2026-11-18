@@ -403,16 +403,13 @@
     font-weight: 700;
     line-height: var(--lh-small);
   }
-  /* the sign as a button (R726): the slot's width over the bar's min-width, drawn as before; its target is the bar's height */
+  /* the sign as a button (R726): the bar's 28 × 28 target over the 16 px slot (the slot keeps its width: nothing moves; the
+     overlap is the margin, and the chip after it is drawn over it); a lock's underline sits on the bar's lower edge */
   .slot button.mod {
-    position: relative;
-    width: 100%;
+    flex: none;
+    width: var(--bar-h);
+    height: var(--bar-h);
     min-width: 0;
-  }
-  .slot button.mod::before {
-    content: "";
-    position: absolute;
-    inset: calc(var(--bar-h) / -2) calc(-1 * var(--sp-05));
   }
   .mod[data-testid="mod-alpha"] {
     color: var(--alpha);
