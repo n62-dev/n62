@@ -64,8 +64,8 @@ export interface RouteCtx {
 
 /** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml). */
 const STORE_ARROW = "\\blacktriangleright";
-/** Select or Deselect (R279): they act on the entry line only. */
-const isSelect = (a?: ActionBody): boolean => a?.kind === "special" && a.name.startsWith("select");
+/** Select, Deselect (R279: they act on the entry line only) or Copy (R727: it leaves the selection and its Select chain as they are). */
+const isSelect = (a?: ActionBody): a is { kind: "special"; name: "selectGrow" | "selectShrink" | "copy" } => a?.kind === "special" && /^(select|copy)/.test(a.name);
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
   layer === undefined ? { shift: c.session.shift, alpha: c.session.alpha } : { shift: layer === "shift", alpha: layer === "alpha" };
 const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");
@@ -235,8 +235,12 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     c.picked = pickAfter(items, picked);
     return true;
   }
-  if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
-  if (action.kind === "special" && action.name === "copy" && c.entry.hasSelection) return false; // R727: Copy takes the line's selection, the pick stays
+  if (isSelect(action)) {
+    // R279: Select and Deselect act on the line only; the pick stays. Copy (R723, R727): the line's selection, else the picked row;
+    // the pick stays as it does with a selection (a copy changes nothing)
+    if (action.name === "copy") copyKey(c, items[picked]);
+    return true;
+  }
   const item = items[picked];
   c.picked = null;
   if (isCmd("moveToPreviousChar") && item && c.entry.empty) {
@@ -257,10 +261,6 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   if (action.name === "esc") return true;
   if (action.name === "uncertainty") {
     uncertainty(c, item); // Shift + 1 on the picked row (R327)
-    return true;
-  }
-  if (action.name === "copy") {
-    copyKey(c, item); // Shift + Select on the picked row (R723)
     return true;
   }
   if (action.name === "units" && item) {
@@ -539,8 +539,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   // R300: a matrix grid's cell is edited on this line (matrixGrid.svelte.ts): the line's own jobs on an empty line (Ans
   // first, a b/c's form cycle, Undo of what Clear took, ▲'s pick of a history row) do not reach behind the grid
   const cell = shell.sheet?.level.grid?.editing != null;
-  // R279: any other key ends the chain of Select presses; Copy does not (R727: it copies the selection and leaves it)
-  if (!isSelect(action) && !(action?.kind === "special" && action.name === "copy")) entry.endSelect();
+  // R279: any other key ends the chain of Select presses
+  if (!isSelect(action)) entry.endSelect();
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
   if (shell.app === null && !cell && historyKey(c, action)) return;
