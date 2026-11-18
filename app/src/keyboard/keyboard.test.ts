@@ -32,9 +32,9 @@ describe("keyboard spec", () => {
     expect(gridPlace(keyboard, keyboard.byId.get("div") as Key)).toEqual({ start: 25, span: 6 });
   });
 
-  it("the upper cluster is R3 (decisions.md R15c, R278): six user keys, the round pad, the editing wing; no letter line", () => {
+  it("the upper cluster is R3 (decisions.md R15c, R723): six user keys, the round pad, the editing wing; no letter line", () => {
     const at = (r: number) => keyboard.keys.filter((k) => k.row === r).sort((a, b) => a.col - b.col).map((k) => k.id);
-    expect(at(0)).toEqual(["u1", "u2", "up", "menu", "esc"]);
+    expect(at(0)).toEqual(["u1", "u2", "up", "help", "esc"]);
     expect(at(1)).toEqual(["u3", "u4", "left", "right", "undo", "redo"]);
     expect(at(2)).toEqual(["u5", "u6", "down", "select", "deselect"]);
     const k = (id: string) => keyboard.byId.get(id) as Key;
@@ -49,8 +49,9 @@ describe("keyboard spec", () => {
     }
     // the keys that went to the status line (R15c1) and Cancel (now Esc) are no keys any more
     // and View (R146: results mode is R53's handle and swipe), ⇤ and ⇥ (now Undo's and Redo's Shift layers); R278: Copy and Paste
-    // left (a hold on a row, ☰ → Copy and ☰ → Paste), and `help` left r0c4 with its function: an id is never reused (docs/06 3b)
-    for (const id of ["apps", "symb", "plot", "num", "cancel", "view", "lstart", "lend", "copy", "paste", "help"]) expect(keyboard.byId.has(id), id).toBe(false);
+    // left as keys (Shift + Select and Shift + Deselect since R723), and R723: the ☰ key `menu` retired (☰ is on the bar, R722);
+    // `help` came back to r0c4 with its own function, Help: an id is never reused for another one (docs/06 3b)
+    for (const id of ["apps", "symb", "plot", "num", "cancel", "view", "lstart", "lend", "copy", "paste", "menu", "mode"]) expect(keyboard.byId.has(id), id).toBe(false);
     expect(keyboard.byId.has("app") || keyboard.byId.has("cas")).toBe(false);
     // the wing's layers (point 2)
     expect(actionFor(k("esc"), false, false)).toEqual({ kind: "special", name: "esc" });
@@ -60,31 +61,34 @@ describe("keyboard spec", () => {
     expect(actionFor(k("undo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldStart" });
     expect(actionFor(k("redo"), false, false)).toEqual({ kind: "cmd", name: "redo" });
     expect(actionFor(k("redo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldEnd" });
-    // R278: ☰ at r0c4 (the status line's ☰ on the cluster; Shift stays Settings), Select | Deselect at r2c4 and r2c5 (R279)
-    expect(actionFor(k("menu"), false, false)).toEqual({ kind: "special", name: "menu" });
-    expect(actionFor(k("menu"), true, false)).toEqual({ kind: "special", name: "settings" });
-    expect(k("menu").label).toEqual({ primary: "$key.menu", shift: "$key.settings" });
+    // R723: Help at r0c4 (R197; Shift stays Settings), Select | Deselect at r2c4 and r2c5 (R279)
+    expect(actionFor(k("help"), false, false)).toEqual({ kind: "special", name: "help" });
+    expect(actionFor(k("help"), true, false)).toEqual({ kind: "special", name: "settings" });
+    expect(k("help").label).toEqual({ primary: "$key.help", shift: "$key.settings" });
     expect(actionFor(k("select"), false, false)).toEqual({ kind: "special", name: "selectGrow" });
     expect(actionFor(k("deselect"), false, false)).toEqual({ kind: "special", name: "selectShrink" });
-    // Shift + Select is Help (R197): live, the same cell and legend; Shift + Deselect is Mode (R322, owner 2026-11-14)
-    expect(actionFor(k("select"), true, false)).toEqual({ kind: "special", name: "help" });
-    expect(k("select").label).toEqual({ primary: "$key.select", shift: "$key.help" });
-    expect(actionFor(k("deselect"), true, false)).toEqual({ kind: "special", name: "mode" });
-    expect(k("deselect").label).toEqual({ primary: "$key.deselect", shift: "$key.mode" });
+    // R723 (owner, 2026-11-17): Shift + Select is Copy, Shift + Deselect is Paste; Mode has no key (the bar's chips)
+    expect(actionFor(k("select"), true, false)).toEqual({ kind: "special", name: "copy" });
+    expect(k("select").label).toEqual({ primary: "$key.select", shift: "$key.copy" });
+    expect(actionFor(k("deselect"), true, false)).toEqual({ kind: "special", name: "paste" });
+    expect(k("deselect").label).toEqual({ primary: "$key.deselect", shift: "$key.paste" });
     expect([k("undo"), k("redo")].map((x) => [x.label.primary, x.label.shift])).toEqual([["$key.undo", "⇤"], ["$key.redo", "⇥"]]);
-    for (const id of ["menu", "esc", "undo", "redo", "select", "deselect"]) expect(k(id).cls, id).toBe("nav");
-    // no keypad cell runs a Copy special any more, and Paste only on Shift + Vars (R329, a reserved cell filled)
+    for (const id of ["help", "esc", "undo", "redo", "select", "deselect"]) expect(k(id).cls, id).toBe("nav");
+    // Copy only on Shift + Select, Paste only on Shift + Deselect, Mode and ☰ on no key (R723)
     for (const key of keyboard.keys)
-      for (const [layer, a] of Object.entries(key.actions))
-        expect(a.kind === "special" && ((a.name as string) === "copy" || (a.name === "paste" && `${key.id}.${layer}` !== "vars.shift")), key.id).toBe(false);
-    // R322: Mode left Fmt's Shift cell (R85) for Deselect's; Shift + Fmt is RESERVED: no action, no legend; the tap stays Fmt
+      for (const [layer, a] of Object.entries(key.actions)) {
+        const at = `${key.id}.${layer}`;
+        const odd = a.kind === "special" && ((a.name === "copy" && at !== "select.shift") || (a.name === "paste" && at !== "deselect.shift") || a.name === "mode" || a.name === "menu");
+        expect(odd, at).toBe(false);
+      }
+    // R322: Mode left Fmt's Shift cell (R85); Shift + Fmt is RESERVED: no action, no legend; the tap stays Fmt
     expect(actionFor(k("fmt"), true, false)).toBeUndefined();
     expect(k("fmt").actions.shift).toBeUndefined();
     expect(k("fmt").label).toEqual({ primary: "$key.fmt" });
     expect(k("fmt").actions.primary).toEqual({ kind: "special", name: "fmt" });
-    // Shift + Vars is Paste (R329, the owner 2026-11-15: the one frequent ☰ row with no touch route of its own)
-    expect(k("vars").actions.shift).toEqual({ kind: "special", name: "paste" });
-    expect(k("vars").label.shift).toBe("$key.paste");
+    // Shift + Vars is RESERVED (R723: Paste moved to Shift + Deselect; R725 fills it with Chars)
+    expect(k("vars").actions.shift).toBeUndefined();
+    expect(k("vars").label.shift).toBeUndefined();
     // R193 (docs/04 5.4): Shift + − opens the Base menu for the last result (route.ts: dead with text on the line)
     expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
     expect(k("sub").label.shift).toBe("$key.base");
@@ -98,7 +102,7 @@ describe("keyboard spec", () => {
     // Esc keeps its G2 cell (r1c5), as does the pad; every other key of the cluster is our choice (☰, Select and Deselect are
     // not the G2's function in their G2 cell)
     expect(k("esc").source).toBe("virtual-calc");
-    for (const id of ["u1", "u2", "u3", "u4", "u5", "u6", "menu", "undo", "redo", "select", "deselect"]) expect(k(id).source, id).toBe("assumed");
+    for (const id of ["u1", "u2", "u3", "u4", "u5", "u6", "help", "undo", "redo", "select", "deselect"]) expect(k(id).source, id).toBe("assumed");
     // a user key may take an Alpha layer (R15c3, the loader test is in userKeys.test.ts) but needs both its legend and action
     const bad = (extra: string) => () => loadKeyboard(parse(spec.replace("{ id: u1, row: 0, col: 0, cls: nav, user: true,", `{ id: u1, row: 0, col: 0, cls: nav, user: true, ${extra}`)));
     expect(bad("alpha: { type: Q },")).toThrow(KeyboardSpecError);

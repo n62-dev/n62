@@ -84,7 +84,7 @@ test("New takes the first letter free among the user's names, whatever they hold
 
 test("☰ in the grid opens its menu: 1 Add a row, 2 Add a column, 3 Delete row, 4 Delete column; Esc and ☰ close it", async ({ page }) => {
   await openM(page);
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await expect(menu(page)).toBeVisible();
   await expect(grid(page)).toBeVisible(); // the sheet did not close
   const items = menu(page).getByRole("menuitem");
@@ -99,9 +99,9 @@ test("☰ in the grid opens its menu: 1 Add a row, 2 Add a column, 3 Delete row,
   await tap(page, ["esc"]);
   await expect(menu(page)).toBeHidden();
   await expect(grid(page)).toBeVisible(); // Esc closed the menu only
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await expect(menu(page)).toBeVisible();
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await expect(menu(page)).toBeHidden();
   await expect(grid(page)).toBeVisible();
 });
@@ -109,7 +109,7 @@ test("☰ in the grid opens its menu: 1 Add a row, 2 Add a column, 3 Delete row,
 test("1 adds a row of zeros at the end and writes the matrix back (one history row)", async ({ page }) => {
   await openM(page);
   const before = await rowCount(page);
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await sheetKey(page, ["d1"]);
   await expect.poll(() => texts(page)).toEqual(["1", "2", "3", "4", "0", "0"]);
   await expect(grid(page).locator("tbody tr")).toHaveCount(3);
@@ -122,7 +122,7 @@ test("1 adds a row of zeros at the end and writes the matrix back (one history r
 
 test("2 adds a column of zeros at the end (Enter on the highlighted menu row)", async ({ page }) => {
   await openM(page);
-  await tap(page, ["menu", "down", "enter"]);
+  await tap(page, ["@menu", "down", "enter"]);
   await expect.poll(() => texts(page)).toEqual(["1", "2", "0", "3", "4", "0"]);
   expect(await lastLatex(page)).toBe("M:=\\begin{pmatrix}1&2&0\\\\3&4&0\\end{pmatrix}");
   await tap(page, ["esc"]);
@@ -134,12 +134,12 @@ test("3 and 4 delete the row and the column under the highlight (a tap on the me
   await tap(page, ["shift", "d4"]);
   await sheetKey(page, ["d0"]);
   await expect(grid(page).locator("td[data-cell]")).toHaveCount(9);
-  await tap(page, ["down", "right", "menu"]); // the highlight on (2,2)
+  await tap(page, ["down", "right", "@menu"]); // the highlight on (2,2)
   await expect(menu(page).getByRole("menuitem").nth(2)).toHaveAttribute("aria-label", /^3 Delete row 2/);
   await menu(page).locator('[data-id="delRow"]').tap();
   await expect.poll(() => texts(page)).toEqual(["1", "2", "3", "7", "8", "9"]);
   expect(await lastLatex(page)).toBe("M:=\\begin{pmatrix}1&2&3\\\\7&8&9\\end{pmatrix}");
-  await tap(page, ["right", "menu"]); // (2,3)... the highlight stays in the matrix: column 3, row 2
+  await tap(page, ["right", "@menu"]); // (2,3)... the highlight stays in the matrix: column 3, row 2
   await sheetKey(page, ["d4"]);
   await expect.poll(() => texts(page)).toEqual(["1", "2", "7", "8"]);
   await expect(grid(page).locator('td[data-active="true"]')).toHaveAttribute("data-cell", "2,2"); // (a deleted last column: the highlight steps back)
@@ -153,17 +153,17 @@ test("a 1 × 1 matrix keeps its cell: Delete row and Delete column say so and ch
   await sheetKey(page, ["d0"]);
   await expect.poll(() => texts(page)).toEqual(["5"]);
   const before = await rowCount(page);
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await expect(menu(page).locator('[data-id="delRow"]')).toHaveAttribute("aria-disabled", "true");
   await expect(menu(page).locator('[data-id="delCol"]')).toHaveAttribute("aria-disabled", "true");
   await sheetKey(page, ["d3"]);
   await expect(page.getByTestId("matrix-refusal")).toHaveText("A matrix keeps at least one cell");
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await sheetKey(page, ["d4"]);
   await expect(page.getByTestId("matrix-refusal")).toBeVisible();
   expect(await texts(page)).toEqual(["5"]);
   expect(await rowCount(page)).toBe(before); // nothing was written
-  await tap(page, ["menu", "d1"]); // it can still grow
+  await tap(page, ["@menu", "d1"]); // it can still grow
   await expect.poll(() => texts(page)).toEqual(["5", "0"]);
   expect(await lastLatex(page)).toBe("O:=\\begin{pmatrix}5\\\\0\\end{pmatrix}");
 });
@@ -176,7 +176,7 @@ test("after Add a row and Esc the list row reads the new size; a list opened fre
   await expect(value).toHaveText("2×2"); // (control: a fresh list)
   await sheetKey(page, ["d0"]);
   await expect(grid(page).locator("td[data-cell]")).toHaveCount(4);
-  await tap(page, ["menu"]);
+  await tap(page, ["@menu"]);
   await sheetKey(page, ["d1"]);
   await expect.poll(() => texts(page)).toEqual(["1", "2", "3", "4", "0", "0"]);
   await tap(page, ["esc"]);

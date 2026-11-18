@@ -21,6 +21,8 @@ export const enAbout = {
   "keys.shift": "Shift",
   "keys.or": "or",
   "keys.action.apps": "Apps",
+  "keys.action.menu": "☰, the view's menu",
+  "keys.action.mode": "Mode",
   "keys.action.switch": "Home ↔ CAS, or back from an app",
   "keys.action.symb": "Symb",
   "keys.action.plot": "Plot",

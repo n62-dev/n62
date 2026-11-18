@@ -6,7 +6,7 @@ Each is done once, by the owner, or by annabell when a package names it; the dai
 - Flick misfires (R9: 20 px arm, 12 px cancel); whether the first tap after a cold start vibrates (R35); R7's sheet defaults; the 36 px cluster rows and the 28 px bar on the keypad (R15b, R722).
 - A11: Share session, Paste of `1.5e-3`; a chip tapped right after a flick (R15c2); the ~8 px strip right of an inner fraction (R42); "Working…" on the WebView and a taller CAS result growing its row (F8); the trackpad's `touch-action: none` (K1).
 - The memory cap on the Tab One: `makemat(1,30000,30000)` in CAS gives "Out of memory" and the app stays up (G24).
-- R85 (merged `1d35189`; Mode on Shift + Deselect since R322): on the Fairphone, Shift, Deselect opens Mode on Angle; ▶, Enter gives DEG (the owner).
+- R85 (merged `1d35189`; Mode has no key since R723): on the Fairphone, the STD chip opens Mode; ▲ to Angle; ▶, Enter gives DEG (the owner).
 - R86 (merged `cf087b9`): on the Fairphone, the pill then SCI sets it and closes; the digits chip then 20; ◀ goes up to Mode (the owner).
 - R50e (merged `e4d6085`): each theme family on the phone for a while; a cold start with a non-default theme shows no flash; a first start after "clear data" is Dark from the first frame (the owner).
 - Removal tests to read: the "stored in Home" line under CAS results (R32), library imports (S4), Undo (P13).

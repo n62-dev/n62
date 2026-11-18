@@ -562,8 +562,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  tiles, the angle undo count, the guard that lets a control act only on a pointer that went down on it). Phase-1 e8c6fdd3
  *  measures 62,393 B gzip (175,989 B raw); the branch first measured 63,079 B, over the budget, so it was cut: the controls'
  *  `data-item` became static names (barItems.ts left the start chunk) and the guard one capture-phase click handler on the
- *  bar instead of a wrapped handler per control (−159 B). The branch 62,920 B (177,881 B raw): + 0.05 kB, rounded up. */
-export const START_PIN_GZIP = 62_970;
+ *  bar instead of a wrapped handler per control (−159 B). The branch 62,920 B (177,881 B raw): + 0.05 kB, rounded up.
+ *  62,970 → 62,990 B (R723): the Copy key's routing in route.ts (Shift + Select: the `copy` special, its case and the picked
+ *  row's branch; the rule itself is ClipActions.keyCopy, in the clipboard chunk). Phase-1 49652b92 measures 62,961 B gzip
+ *  (178,051 B raw), the branch 62,978 B (178,097 B raw; it first measured 62,999 B, cut by moving the rule out). The usual
+ *  + 0.05 kB would pass the 63.00 kB budget, so the pin keeps 10 B under it; the next start-chunk growth needs a split. */
+export const START_PIN_GZIP = 62_990;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

@@ -69,11 +69,11 @@ for (const [brightness, contrast, keys] of LOOKS)
           expect(s.afterColor, `${where}: the mark has the legend's colour`).toBe(s.color);
         } else expect(["none", "normal"], where).toContain(s.after);
       }
-      // the tap layer: Vars, Math, Tmpl; ☰ and its Shift legend Settings (r0c4, R278), the Shift legends: Memory (Math), ≤≠, α∞, Mode (Deselect, R322), Help (Select, R197), Matrix (Shift + 4, R187), σ (Shift + 1, the uncertainty sheet, R327); Shift armed: those as faces
+      // the tap layer: Vars, Math, Tmpl; Help and its Shift legend Settings (r0c4, R723), the Shift legends: Memory (Math), ≤≠, α∞, Base (Shift + −), Matrix (Shift + 4, R187), σ (Shift + 1, the uncertainty sheet, R327); Copy and Paste (Shift + Select and Shift + Deselect, R723) open no sheet; Shift armed: those as faces
       expect(marked.sort(), shift ? "Shift armed" : "tap").toEqual(
         shift
-          ? ["d1/main", "d4/main", "d6/main", "d9/main", "deselect/main", "math/main", "menu/main", "select/main", "sub/main"]
-          : ["d1/shiftlegend", "d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "deselect/shiftlegend", "math/main", "math/shiftlegend", "menu/main", "menu/shiftlegend", "select/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
+          ? ["d1/main", "d4/main", "d6/main", "d9/main", "help/main", "math/main", "sub/main"]
+          : ["d1/shiftlegend", "d4/shiftlegend", "d6/shiftlegend", "d9/shiftlegend", "help/main", "help/shiftlegend", "math/main", "math/shiftlegend", "sub/shiftlegend", "tmpl/main", "vars/main"],
       );
     }
   });

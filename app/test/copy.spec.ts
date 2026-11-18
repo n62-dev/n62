@@ -2,7 +2,8 @@
 // Copy, paste, share and export (docs/04 section 2.6, backlog step 9, P5): one test per action and a copy → paste round
 // trip, by key sequences on the real engine. Expected values are derived: the decimal expansion of 1/3 and 2/3.
 import { expect, test, type Page } from "@playwright/test";
-import { COPY, PASTE, entryValue, lastResult, open, savePicker, savedText, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { finger } from "./core-lib.ts";
+import { COPY, KEYCOPY, KEYPASTE, PASTE, entryValue, recordVibrations, vibrations, lastResult, open, savePicker, savedText, setClipboard, tap, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 // The system clipboard is one for the whole browser: these tests run one after another.
@@ -67,6 +68,50 @@ test("Menu with a picked row copies that row, not the last result (R13, S2 I1)",
   await pickCopyAs(page, "Full value");
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
+});
+
+// R723: Shift + Select is Copy, Shift + Deselect is Paste
+test("Shift + Select copies the picked row's full value, what a hold on that result copies", async ({ page }) => {
+  await thirds(page);
+  await finger(page, "result:last", { ms: 700 }); // (a hold on the last result: 2/3)
+  await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
+  await setClipboard(page, "");
+  await tap(page, ["up", "up"]); // 1÷3 picked
+  await tap(page, KEYCOPY);
+  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect.poll(() => clipboard(page)).toBe(THIRD);
+  await tap(page, ["d1", "div", "d3", "enter"]);
+  await done(page, 3);
+  await finger(page, "result:last", { ms: 700 }); // what a hold on the 1÷3 result copies
+  const held = await clipboard(page);
+  await tap(page, ["esc"]); // (no pick left over)
+  await setClipboard(page, "");
+  await tap(page, ["up", ...KEYCOPY]); // 1÷3 Enter ▲, Shift + Select
+  await expect.poll(() => clipboard(page)).toBe(held);
+});
+
+test("Shift + Select with no rows is a dead press (the double pulse, no clipboard write); with no pick it copies the last row's full value", async ({ page }) => {
+  await recordVibrations(page);
+  await open(page, ""); // (again: the recorder is in from the first script)
+  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+  await setClipboard(page, "untouched");
+  await tap(page, ["shift"]);
+  await page.waitForTimeout(100);
+  const v = (await vibrations(page)).length;
+  await tap(page, ["select"]); // Shift + Select
+  await expect.poll(async () => (await vibrations(page)).length - v).toBe(3); // the key down + the dead key's double
+  await expect(page.getByTestId("notice")).toHaveCount(0);
+  expect(await clipboard(page)).toBe("untouched");
+  await thirds(page);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
+});
+
+test("Shift + Deselect pastes the clipboard's number onto the line", async ({ page }) => {
+  await setClipboard(page, "42");
+  await tap(page, KEYPASTE);
+  await expect.poll(() => entryValue(page)).toBe("42");
 });
 
 test("☰ → Paste pastes a number as the keyboard's own LaTeX", async ({ page }) => {

@@ -27,7 +27,7 @@ const CLOSERS: Record<string, (page: Page) => Promise<void>> = {
   "▶": (page) => page.locator('[data-key="right"]').tap(),
   "a trackpad drag": (page) => drag(page, '[data-testid="pad-hub"]', 0, 90),
   Undo: (page) => page.locator('[data-key="undo"]').tap(),
-  "☰ (R278)": (page) => page.locator('[data-key="menu"]').tap(),
+  "Help (R723)": (page) => page.locator('[data-key="help"]').tap(),
   Select: (page) => page.locator('[data-key="select"]').tap(),
   Deselect: (page) => page.locator('[data-key="deselect"]').tap(),
   "⇤ (Shift, Undo)": async (page) => {

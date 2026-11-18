@@ -72,7 +72,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 |---|---|---|---|---|
 | 875 | R722 the bar moves onto the keypad's top edge; short rows a notch taller | ron, Opus | `p1/ron-barkeypad` | R700, R720 |
 | 876 | R724 the folded bar replaces the slice; ⌄ on the entry field folds | ron, Opus | `p1/ron-foldedbar` | R720, R722, R740 |
-| 877 | [R723](packages/R723.md) row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
+| 877 | R723 row 0, col 4 Help; Copy and Paste on Select and Deselect's Shift; Mode on the chips | ron, Opus | `p1/ron-keysreshuffle` | R722, R724 |
 | 879 | [R745](packages/R745.md) the Home tab shows the colour logo (the owner's, 2026-11-17) | ron, Sonnet | `p1/ron-hometablogo` | R723 |
 | 878 | [R725](packages/R725.md) the Chars sheet on Shift + Vars | ron, Sonnet | `p1/ron-charssheet` | R723 |
 | 880 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |

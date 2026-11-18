@@ -1,40 +1,42 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R322 (owner, 2026-11-14): Shift + Deselect (and a flick up on Deselect) opens Mode on Angle, as Shift + Fmt did from R85;
-// Shift + Fmt is now a reserved cell (docs/06 section 3b): no legend, dimmed in the Shift layer only, a dead press that
-// counts (R127). The Fmt key's tap is unchanged (fmt.spec.ts), and so is Deselect's (selectgrow.spec.ts).
+// R723 (owner, 2026-11-17): Mode has no key. It opens from the bar's STD (format) and 12 (digits) chips, a free key that
+// holds it, ‹ from Settings and a desktop chord (Alt + Shift + O); Shift + Deselect is Paste now (R322 is reversed).
+// Shift + Fmt stays a reserved cell (docs/06 section 3b): no legend, dimmed in the Shift layer only, a dead press that counts
+// (R127). The Fmt key's tap is unchanged (fmt.spec.ts), and so is Deselect's (selectgrow.spec.ts).
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, flick, open, recordVibrations, sheet, sheetKey, tap, vibrations } from "./helpers.ts";
 
 const title = (page: Page) => page.getByTestId("sheet-title");
 const angle = (page: Page) => page.evaluate(() => window.n62.session.settings.angle);
 
-test("Shift, Deselect opens Mode (on Angle: the next test steps its value)", async ({ page }) => {
+test("the STD chip opens Mode", async ({ page }) => {
   await open(page);
-  await tap(page, ["shift", "deselect"]);
+  await page.getByTestId("chip-format").tap();
   await expect(title(page)).toHaveText("Mode");
 });
 
-test("a flick up on Deselect does what Shift, Deselect does", async ({ page }) => {
+test("the 12 chip opens Mode too", async ({ page }) => {
   await open(page);
-  await flick(page, "deselect", "up");
-  await expect(title(page)).toHaveText("Mode");
+  await page.getByTestId("chip-digits").tap();
+  await expect(title(page)).toHaveText("Mode › Significant digits"); // (straight on its list of digits)
 });
 
-test("Shift, Deselect, ▶, Enter switches RAD → DEG (three keys after Shift)", async ({ page }) => {
+test("the STD chip, ◀ to Angle (▲), ▶, Enter switches RAD → DEG", async ({ page }) => {
   await open(page);
   expect(await angle(page)).toBe("rad");
-  await tap(page, ["shift", "deselect"]);
+  await tap(page, ["@mode"]); // (the format chip, then ▲ to Angle)
   await sheetKey(page, ["right", "enter"]);
   await expect.poll(() => angle(page)).toBe("deg");
 });
 
-test("Shift, Deselect, 6 opens Settings (row 6 since R89)", async ({ page }) => {
+test("the STD chip, 6 opens Settings (row 6 since R89)", async ({ page }) => {
   await open(page);
-  await tap(page, ["shift", "deselect", "d6"]);
+  await page.getByTestId("chip-format").tap();
+  await sheetKey(page, ["d6"]);
   await expect(title(page)).toHaveText("Mode › Settings");
 });
 
-test("Deselect's Shift legend reads Mode and fits its face in every theme family; Fmt has none", async ({ page }) => {
+test("Deselect's Shift legend reads Paste and fits its face in every theme family; Fmt has none", async ({ page }) => {
   await open(page);
   for (const family of ["n62", "bw", "solarized"]) {
     await page.evaluate(
@@ -50,7 +52,7 @@ test("Deselect's Shift legend reads Mode and fits its face in every theme family
         const l = key.querySelector<HTMLElement>(".shiftlegend");
         return { text: l?.textContent?.trim() ?? "", fits: l ? l.scrollWidth <= key.clientWidth : true };
       });
-    expect(await legend("deselect"), family).toEqual({ text: "Mode", fits: true });
+    expect(await legend("deselect"), family).toEqual({ text: "Paste", fits: true });
     expect((await legend("fmt")).text, family).toBe("");
   }
 });
@@ -66,7 +68,7 @@ test("Shift + Fmt is reserved: dimmed in the Shift layer only, a tap or a flick 
   const base = await keys();
   await tap(page, ["shift"]);
   await expect(fmt).toHaveAttribute("data-dead", "true");
-  await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true"); // Mode is live there
+  await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true"); // Paste is live there
   const v1 = (await vibrations(page)).length;
   await tap(page, ["fmt"]); // Shift + Fmt: reserved
   await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3); // the dead key's double pulse

@@ -96,7 +96,7 @@ test("the guard: a press that went down on a key never acts on the bar (R722)", 
   await open(page);
   await downOnKeyClickOn(page, "esc", "chip-angle");
   expect(await angle(page)).toBe("rad");
-  await downOnKeyClickOn(page, "menu", "chip-digits"); // the row 0, col 4 key, under the digits chip
+  await downOnKeyClickOn(page, "help", "chip-digits"); // the row 0, col 4 key, under the digits chip
   await expect(sheet(page)).toHaveCount(0);
   await page.getByTestId("chip-angle").tap(); // a press that went down on the chip acts
   expect(await angle(page)).toBe("deg");

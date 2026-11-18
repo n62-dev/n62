@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R197: the Help key (Shift + Select, docs/06 section 1, milestone 6): the syntax and example of the function at the
+// R197: the Help key (row 0, col 4 since R723; docs/06 section 1, milestone 6): the syntax and example of the function at the
 // cursor, from the Find index. R196's functionAt names the function (entry/cursorFn.ts; the cursor's offset from
 // entry/cursorAt.ts); its Find item gives the rows: the syntax with the description, G231's example drawn as LaTeX with
 // its mark and result under it (an inverse function's result says its angle unit), and an Insert row that puts the example on
