@@ -241,7 +241,7 @@ chars:
   "4,2": "le"
   "4,3": "ge"
   "4,4": "micro"
-  "4,5": "aring"
+  "4,5": "angstrom"
 home-menu:
   "1": "store"
   "2": "copy"

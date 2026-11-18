@@ -21,7 +21,7 @@ const CHAR: Record<string, string> = {
   nu: "ν", xi: "ξ", rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ", phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
   Gamma: "Γ", Delta: "Δ", Theta: "Θ", Lambda: "Λ", Xi: "Ξ", Pi: "Π", Sigma: "Σ", Phi: "Φ", Psi: "Ψ", Omega: "Ω",
   deg: "°", minute: "′", second: "″", plusminus: "±", times: "×", cdot: "·", angle: "∠", sqrt: "√", inf: "∞", permille: "‰",
-  approx: "≈", ne: "≠", le: "≤", ge: "≥", micro: "µ", aring: "Å",
+  approx: "≈", ne: "≠", le: "≤", ge: "≥", micro: "µ", angstrom: "Å",
 };
 
 describe("the Chars sheet's cells (R725)", () => {
@@ -62,8 +62,8 @@ describe("the Chars sheet's cells (R725)", () => {
   });
 
   it("the refused cells are ≈, µ and Å, each with a message, and the notice gives that message", () => {
-    expect(chars.items.filter((c) => c.refused).map((c) => c.id)).toEqual(["approx", "micro", "aring"]);
-    for (const id of ["approx", "micro", "aring"]) {
+    expect(chars.items.filter((c) => c.refused).map((c) => c.id)).toEqual(["approx", "micro", "angstrom"]);
+    for (const id of ["approx", "micro", "angstrom"]) {
       const c = chars.items.find((x) => x.id === id) as PaletteItem;
       expect(() => latexToGiac(`2${c.action.latex}`), id).toThrow(/has no meaning|is a unit/);
       expect(charsRefusal(id), id).toMatch(/has no meaning|is a unit/);
@@ -99,7 +99,7 @@ describe("the sheet's digits (R725)", () => {
   beforeEach(() => lastPicks.clear()); // (a sheet opens on its last pick)
   const make = (log: string[] = []): Sheet => {
     const cells = paletteItems(chars.items, (p) => void log.push(p.id), (id) => id);
-    return new Sheet("chars", "Characters", () => cells, { columns: chars.columns, digits: true, view: true });
+    return new Sheet("chars", "Characters", () => cells, { columns: chars.columns });
   };
   it("rises over the view like a list that takes letters, so the digit keys stay uncovered", () => {
     expect(make().letters).toBe(true);
@@ -120,7 +120,7 @@ describe("the sheet's digits (R725)", () => {
     const last = make();
     for (let i = 0; i < 4; i++) last.level.move(1);
     expect(last.level.current?.id).toBe("approx");
-    expect(last.pickNumber(6)).toMatchObject({ kind: "run", item: { id: "aring" } });
+    expect(last.pickNumber(6)).toMatchObject({ kind: "run", item: { id: "angstrom" } });
     expect(last.pickNumber(7)).toEqual({ kind: "stay" });
     expect(last.pickKey("d3")).toBeUndefined(); // no cell is picked by the key at its place
   });

@@ -264,10 +264,10 @@ export class AppShell {
     this.openSheet((S) => new S("find", title, () => categories, { search, remember: false }));
   }
   /** A palette on the grid sheet: Tmpl (R10; its key closes it again), Shift + 6 `rel`, Shift + 9 `sym` (R18; the
-   *  digits pick inside those, so only Esc and Cancel close them) and Shift + Vars `chars` (R725: over the view, its digits pick a cell of the focused row; `opts`). Each opens on its last pick. */
-  togglePalette(id: PaletteId, title: string, items: () => readonly MenuItem[], columns: number, opts?: { view?: boolean; digits?: boolean }): void {
+   *  digits pick inside those, so only Esc and Cancel close them) and Shift + Vars `chars` (R725: over the view, its digits pick a cell of the focused row; Sheet reads that from the id). Each opens on its last pick. */
+  togglePalette(id: PaletteId, title: string, items: () => readonly MenuItem[], columns: number): void {
     if (this.sheet?.id === id) this.sheet = null;
-    else this.openSheet((S) => new S(id, title, items, { columns, ...opts }));
+    else this.openSheet((S) => new S(id, title, items, { columns }));
   }
   /** Opens the sheet `make` builds, and then runs `then` on it. Before the sheet's model is in (R151: a long press on a
    *  history row before the idle load), it loads first and `sheetPending` holds the open; a sheet set meanwhile (or

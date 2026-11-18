@@ -691,5 +691,5 @@ chars:
     - { id: le,      row: 4, col: 2, desc: "less than or equal", insert: "\\le", sample: ["1\\le2", "1<=2"] }
     - { id: ge,      row: 4, col: 3, desc: "greater than or equal", insert: "\\ge", sample: ["2\\ge1", "2>=1"] }
     - { id: micro,   row: 4, col: 4, desc: "micro sign", insert: "µ", sample: ["2µ", ""], refused: true }
-    - { id: aring,   row: 4, col: 5, desc: "ångström sign", insert: "\\AA", sample: ["5\\AA", ""], refused: true }
+    - { id: angstrom, row: 4, col: 5, desc: "ångström sign", insert: "\\AA", sample: ["5\\AA", ""], refused: true }
   source: assumed

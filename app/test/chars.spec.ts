@@ -48,7 +48,7 @@ test("a tap on Ω puts \\Omega on the line; µ, ≈ and Å type nothing and say 
   await tapCell(page, "Omega");
   expect(await entryValue(page)).toBe("\\Omega");
   await tap(page, ["esc"]);
-  for (const [id, why] of [["approx", /≈ has no meaning/], ["micro", /µ.*has no meaning.*μ/], ["aring", /Å is a unit/]] as const) {
+  for (const [id, why] of [["approx", /≈ has no meaning/], ["micro", /µ.*has no meaning.*μ/], ["angstrom", /Å is a unit/]] as const) {
     await tap(page, CHARS);
     await sheet(page).locator(`[data-id="${id}"]`).tap();
     await expect(page.getByTestId("notice")).toHaveText(why);

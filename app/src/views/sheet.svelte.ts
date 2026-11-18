@@ -96,7 +96,7 @@ export class Level {
     this.memo = memo;
     this.remember = opts?.remember ?? true;
     this.columns = opts?.columns;
-    this.digits = opts?.digits === true && opts.columns !== undefined;
+    this.digits = memo === CHARS_SHEET && opts?.columns !== undefined;
     this.cells = opts?.cells;
     this.typed = opts?.typed;
     this.note = opts?.note;
@@ -246,10 +246,6 @@ export interface SheetOptions {
   at?: string;
   /** A grid of this many columns (see Level.columns). */
   columns?: number;
-  /** A grid whose digit keys pick a cell of the focused row (see Level.digits). */
-  digits?: boolean;
-  /** Drawn over the view like a list that takes letters, so the keypad's digit keys stay uncovered (R725; see Sheet.letters). */
-  view?: boolean;
   /** The icon drawn before the title (views/icons.ts; R83: the Menu's view). */
   icon?: IconId;
   /** Find (R4a): letters search with this instead of filtering the labels (see Level.search). */
@@ -281,6 +277,10 @@ export interface SheetOptions {
 export type Picked = { kind: "stay" } | { kind: "run"; item: MenuItem };
 const STAY: Picked = { kind: "stay" };
 
+/** R725: the Chars sheet (Shift + Vars): a grid drawn over the view like a list that takes letters, so the keypad's digit keys
+ *  stay uncovered, and whose digit keys pick a cell of the row with the focus (Level.digits). */
+const CHARS_SHEET = "chars";
+
 export class Sheet {
   /** Names the sheet for the remembered pick: `apps`, `menu:<place>`, `list:<title>`. */
   readonly id: string;
@@ -305,7 +305,7 @@ export class Sheet {
     this.settings = opts?.settings;
     const root = new Level(title, items, id, opts);
     this.levels = [root];
-    this.rootLetters = root.filterable || opts?.view === true;
+    this.rootLetters = root.filterable || id === CHARS_SHEET;
   }
 
   get level(): Level {

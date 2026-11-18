@@ -18,9 +18,11 @@ export const symbols: Palette = loadPalette(doc["symbols"], "symbols", keyboard.
 export const chars: Palette = loadPalette(doc["chars"], "chars", keyboard.byId, shipped);
 /** R725: why a refused Chars cell types nothing on a maths line: the parser's own message for it (input/parse.ts), so the
  *  notice and the round trip's refusal cannot differ. */
-const REFUSALS: Readonly<Record<string, ParseKey>> = { approx: "parse.approxNoMeaning", micro: "parse.microNoMeaning", aring: "parse.isAUnit" };
+const REFUSALS: Readonly<Record<string, ParseKey>> = { approx: "parse.approxNoMeaning", micro: "parse.microNoMeaning", angstrom: "parse.isAUnit" };
 export const charsRefusal = (cell: string): string | undefined => {
   const key = REFUSALS[cell];
   return key === undefined ? undefined : parseError(key).message;
 };
+/** The palettes by their sheet's id (apps/shell.svelte.ts PaletteId). */
+export const palettes = { tmpl, rel: relations, sym: symbols, chars } as const;
 export { enPalettes, paletteText };

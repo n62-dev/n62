@@ -105,7 +105,7 @@ export const enPalettes = {
   "chars.le": "less than or equal",
   "chars.ge": "greater than or equal",
   "chars.micro": "micro sign µ (a unit prefix)",
-  "chars.aring": "Ångström Å (a unit: not in Home)",
+  "chars.angstrom": "Ångström Å (a unit: not in Home)",
 } as const satisfies Record<string, string>;
 
 /** A palette message; throws on a missing one, like `legend`. */
