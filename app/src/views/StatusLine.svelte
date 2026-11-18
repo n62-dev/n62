@@ -28,8 +28,6 @@
   const barKey = (id: string, name: "apps" | "home" | "cas" | "symb" | "plot" | "num" | "menu"): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
   const PLACE_KEY = barKey("place", "apps"), MENU_KEY = barKey("menu-status", "menu");
   const TABS = (["symb", "plot", "num"] as const).map((v) => ({ view: v, name: t(`view.${v}`), key: barKey(`tab-${v}`, v) }));
-  /** Home's tile: the app icon, generated from logo/ by scripts/gen-icons.mjs; the base path as the manifest has it. */
-  const LOGO = `${import.meta.env.BASE_URL}icons/icon.svg`;
   const PLACES = (["home", "cas"] as const).map((v) => ({ view: v, name: t(`view.${v}`), glyph: placeGlyph(v), key: barKey(`tab-${v}`, v) }));
 
   const appName = $derived(shell.app ? t(APPS.find((a) => a.id === shell.app)?.name as MessageKey) : "");
@@ -139,7 +137,7 @@
           aria-selected={cur}
           aria-label={p.name}
           onclick={() => onpress(p.key, "primary")}>
-          <span class="tile" class:logo={"icon" in p.glyph} class:math={"text" in p.glyph} data-ring={cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<img class="logoimg" src={LOGO} alt="" draggable="false" />{:else}{p.glyph.text}{/if}</span>
+          <span class="tile math" data-ring={cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<img src="{import.meta.env.BASE_URL}icons/icon.svg" alt="" role="presentation" />{:else}{p.glyph.text}{/if}</span>
           <span class="nm" aria-hidden="true">{p.name}</span>
         </button>
       {/each}
@@ -278,15 +276,16 @@
     background: var(--muted);
   }
   /* Home's tile: the colour logo (public/icons/icon.svg, a square) at the tile's height, in the tile's corner radius */
-  .tile.logo {
+  .tile:has(img) {
     background: none;
   }
-  .tile .logoimg {
+  .tile img {
     display: block;
     height: 100%;
     width: auto;
     aspect-ratio: 1;
     border-radius: var(--radius-s);
+    pointer-events: none; /* not draggable: a press lands on the button */
   }
   .tile.small {
     font-size: var(--fs-small);
