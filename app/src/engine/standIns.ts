@@ -7,9 +7,9 @@
 
 /** The Greek variable names as Giac prints them (the values of input/parseTables.ts GREEK), in Unicode's order (R260):
  *  the small letters (α U+03B1 … ω), then the capitals (Α U+0391 … Ω), `-` for a letter that is no variable (ο, π, ς,
- *  υ, …): a name's place gives its letter. */
-export const GREEK_NAMES: readonly string[] = ("alpha beta_ gamma_ delta epsilon_ zeta eta theta iota kappa lambda mu nu xi - - rho - sigma tau - phi chi psi omega " +
-  "- - Gamma_ Delta - - - Theta - - Lambda - - - - - - - Sigma - - Phi_ - Psi_ Omega").split(" ");
+ *  Latin look-alikes, …; R725: υ, Ξ and Π are names for the Chars sheet, Π as `Pi_` since Giac's `Pi` is π): a name's place gives its letter. */
+export const GREEK_NAMES: readonly string[] = ("alpha beta_ gamma_ delta epsilon_ zeta eta theta iota kappa lambda mu nu xi - - rho - sigma tau upsilon phi chi psi omega " +
+  "- - Gamma_ Delta - - - Theta - - Lambda - - Xi - Pi_ - - Sigma - - Phi_ - Psi_ Omega").split(" ");
 
 /**
  * R67 (decisions R58b): a typed letter is always a name. Giac reads `e` as exp(1) and `i` as √−1 (`e:=3` is refused,

@@ -528,8 +528,8 @@ describe.skipIf(!giacAvailable())("the parser's letter stand-ins in library file
     return log;
   };
 
-  it("the eight stand-ins, each accepted as a name (derived: the values of GREEK and LETTER_NAMES that end in _)", () => {
-    expect(standIns.sort()).toEqual(["Gamma_", "Phi_", "Psi_", "beta_", "e_", "epsilon_", "gamma_", "i_"]);
+  it("the nine stand-ins (R725: Pi_), each accepted as a name (derived: the values of GREEK and LETTER_NAMES that end in _)", () => {
+    expect(standIns.sort()).toEqual(["Gamma_", "Phi_", "Pi_", "Psi_", "beta_", "e_", "epsilon_", "gamma_", "i_"]);
     for (const n of standIns) expect(parseLibrary(`// n62 library 1\n// d\n${n}:=1\n`, parse, LIBRARY_FORMAT).defs.map((d) => d.name), n).toEqual([n]);
   });
 
@@ -570,7 +570,7 @@ describe.skipIf(!giacAvailable())("the parser's letter stand-ins in library file
 });
 
 describe("the format for your AI names the stand-ins (G311)", () => {
-  it("its name rule lists exactly the eight stand-ins as the exception to the trailing `_` (views/aiFormat.md)", () => {
+  it("its name rule lists exactly the nine stand-ins as the exception to the trailing `_` (views/aiFormat.md)", () => {
     const md = readFileSync(new URL("../views/aiFormat.md", import.meta.url), "utf8");
     const rule = md.split("\n").find((l) => l.startsWith("- Not one of N62's own names:")) ?? "";
     const listed = /\(except the letters N62 writes so: ([^)]*)\)/.exec(rule)?.[1]?.match(/`[^`]+`/g)?.map((t) => t.slice(1, -1)) ?? [];

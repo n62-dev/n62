@@ -25,6 +25,14 @@ export const EMARK = "emark";
 export const LOGIC = "logic:";
 /** The Å of the Shift + 9 palette (R18), refused with a message. */
 export const ARING = "aring";
+/** R725: the marks of the Chars sheet that are no LaTeX of ours. ‰ is per mille (the cell inserts the character; MathLive's
+ *  \\permille and \\textperthousand are the same token), ≈ and µ (U+00B5, the micro sign; μ is the Greek letter) are
+ *  refused with a message, ∠ is the polar sign ∡ (measuredangle). */
+export const PERMILLE = "permille";
+export const APPROX = "approx";
+export const MICRO = "micro";
+const MARKS: Readonly<Record<string, string>> = { "\u2030": PERMILLE, "\u2248": APPROX, "\u00B5": MICRO, "\u2220": "measuredangle" };
+const MARK_CMDS: Readonly<Record<string, string>> = { permille: PERMILLE, textperthousand: PERMILLE, perthousand: PERMILLE, approx: APPROX, micro: MICRO, textmu: MICRO, angle: "measuredangle" };
 /** The id of a MathLive prompt token `\placeholder[id]{…}` (R28, the unit view's slots), else undefined. Its body is
  *  skipped: a slot's units live in R24a's model and are never read back from the LaTeX (docs/04 4.3). */
 export const promptId = (t: Tok | undefined): string | undefined => (t?.t === "cmd" ? t.id : undefined);
@@ -87,6 +95,10 @@ export function tokenize(src: string): Tok[] {
           out.push({ t: "cmd", v: "placeholder", id: m[1] as string });
           continue;
         }
+      }
+      if (Object.hasOwn(MARK_CMDS, name)) {
+        out.push({ t: "cmd", v: MARK_CMDS[name] as string });
+        continue;
       }
       if (name === "AA") {
         // the Å of the Shift + 9 palette (\AA keeps MathLive in math mode; a pasted Å is read below)
@@ -170,6 +182,9 @@ export function tokenize(src: string): Tok[] {
       i = j;
     } else if (c === "\u1D07") {
       out.push({ t: "cmd", v: EMARK });
+      i++;
+    } else if (Object.hasOwn(MARKS, c)) {
+      out.push({ t: "cmd", v: MARKS[c] as string });
       i++;
     } else if (c === "\u00C5") {
       out.push({ t: "cmd", v: ARING });

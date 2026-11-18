@@ -11,14 +11,14 @@ import { bigOp, integral, limit, matrix, tryDerivative, tryPartial, type CalcPar
 import { ABS_LIKE, BASE_PREFIX, CONSTS, FACTOR_CMDS, FUNCS, GREEK, INVERSE, LOGIC_FUNCS, NAMED_FUNCS, RELATION, letterName, refuseStore,
   type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 import { negateUncertain, percentSigma } from "./pmPercent.ts";
-import { ARING, CARET, EMARK, LOGIC, promptId, tokenize, type Tok } from "./tokenize.ts";
+import { APPROX, ARING, CARET, EMARK, LOGIC, MICRO, PERMILLE, promptId, tokenize, type Tok } from "./tokenize.ts";
 
 export { FUNCS, GREEK, INVERSE, LETTER_NAMES, type ParseInfo, type ParseOptions, type UnitsInfo } from "./parseTables.ts";
 
 /** R575: an operator as the line draws it, keyed by its token's value (a value missing after it, or before it). */
 const SIGN: Readonly<Record<string, string>> = { "+": "+", "-": "−", "*": "×", "/": "/", "^": "^", [CARET]: "^", times: "×", div: "÷", cdot: "·" };
 /** R702: the infix and postfix commands that need a value before them, as their keys draw them (none is a name the user typed). */
-const NEEDS_LEFT: Readonly<Record<string, string>> = { [`${LOGIC}and`]: "AND", [`${LOGIC}or`]: "OR", [`${LOGIC}xor`]: "XOR", measuredangle: "∡", bmod: "mod", degree: "°", circ: "°", "%": "%" };
+const NEEDS_LEFT: Readonly<Record<string, string>> = { [`${LOGIC}and`]: "AND", [`${LOGIC}or`]: "OR", [`${LOGIC}xor`]: "XOR", measuredangle: "∡", bmod: "mod", degree: "°", circ: "°", "%": "%", [PERMILLE]: "‰" };
 const signOf = (t: Tok | undefined): string | undefined => (t && (t.t === "ch" || t.t === "cmd") && Object.hasOwn(SIGN, t.v) ? SIGN[t.v] : undefined);
 
 /** G341: a typed name that is N62's own (`pas…`, CAS's answer slot) is refused with the reason. */
@@ -275,7 +275,7 @@ class Parser implements CalcParser {
         if (t.v === "placeholder" && t.id === undefined) return true;
         // the exponent mark after something that is not a number: atom() refuses it with a message
         // Å and & (R18) too, so that 5Å reaches the message that says why it is refused
-        return FACTOR_CMDS.has(t.v) || t.v in FUNCS || t.v in CONSTS || t.v in GREEK || t.v === EMARK || t.v === ARING || t.v === "&";
+        return FACTOR_CMDS.has(t.v) || t.v in FUNCS || t.v in CONSTS || t.v in GREEK || t.v === EMARK || t.v === ARING || t.v === "&" || t.v === APPROX || t.v === MICRO;
       default:
         return false;
     }
@@ -346,6 +346,9 @@ class Parser implements CalcParser {
       } else if (this.isCmd("%")) {
         this.pos++;
         base = ["Divide", base, { num: "100" }];
+      } else if (this.isCmd(PERMILLE)) {
+        this.pos++; // R725: per mille, read as % is
+        base = ["Divide", base, { num: "1000" }];
       } else return base;
     }
   }
@@ -563,6 +566,7 @@ class Parser implements CalcParser {
       // R104: `± n %` is σ = |value|·n/100 in the value's unit (G18), so % here is part of the σ
       const pct = this.isCmd("%");
       if (pct) this.pos++;
+      else if (this.isCmd(PERMILLE)) throw parseError("parse.pmPermille"); // R725: ± n ‰ is not read
       v = ["Call", "pasupm", n, pct ? percentSigma(n, sigma) : sigma];
     }
     const out = this.slotAfter(v);
@@ -817,6 +821,12 @@ class Parser implements CalcParser {
         // R4a: a unit or prefix from Find goes on the line as a chip; Home is unit-free (P8), the unit view takes it
         this.pos++;
         throw parseError("parse.unitChip", { name: this.groupText() });
+      case APPROX:
+        // R725: ≈ of the Chars sheet; Shift + Enter is the approximation (approx())
+        throw parseError("parse.approxNoMeaning");
+      case MICRO:
+        // R725: µ, the micro sign of the Chars sheet: the unit view reads it as the prefix, a maths line has no use for it
+        throw parseError("parse.microNoMeaning");
       case ARING:
         // R18: Å is the ångström, a unit; Home is unit-free (P8), so it is refused, never read as a name
         throw parseError("parse.isAUnit");

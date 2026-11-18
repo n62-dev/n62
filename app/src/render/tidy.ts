@@ -141,7 +141,7 @@ function subscriptNames(s: string): string {
 }
 
 /**
- * R18: the Greek names that would clash in Giac are entered as beta_, gamma_, Gamma_, epsilon_ (input/parse.ts GREEK);
+ * R18: the Greek names that would clash in Giac are entered as beta_, gamma_, Gamma_, epsilon_, Pi_ (input/parse.ts GREEK);
  * Giac draws them as `\beta_`, a letter with a stray subscript mark. They are the letters again, and ε and φ take the
  * shapes the palette shows (\varepsilon, \varphi).
  */
@@ -149,7 +149,9 @@ function greekNames(s: string): string {
   return s
     .replace(/\\(beta|gamma|Gamma|epsilon|Phi|Psi)_(?![A-Za-z0-9{])(?=([A-Za-z]?))/g, (_, n: string, letter: string) =>
       `\\${n === "epsilon" ? "varepsilon" : n}${letter ? " " : ""}`)
-    .replace(/\\phi(?![A-Za-z])/g, "\\varphi");
+    .replace(/\\phi(?![A-Za-z])/g, "\\varphi")
+    // R725: Π is the name Pi_ (Giac's Pi is π) and υ the name upsilon: Giac draws both as upright words
+    .replace(/\\mathrm\{(Pi\\_|upsilon)\}(?=([A-Za-z]?))/g, (_, n: string, letter: string) => `${n === "upsilon" ? "\\upsilon" : "\\Pi"}${letter ? " " : ""}`);
 }
 
 /**
