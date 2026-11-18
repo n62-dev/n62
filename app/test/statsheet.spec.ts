@@ -88,7 +88,7 @@ test("a second tap on the input recalls it; a hold copies the whole result; a sw
   await expect.poll(() => clipboard(page)).toBe("{97/50,3/20,9409/9450}"); // the whole result, exact (Copy, docs/04 2.6)
   await expect(menu(page)).toHaveCount(0);
   const width = (await rows(page).last().boundingBox())?.width ?? 0;
-  await finger(page, "row:last", { dx: 0.6 * width, steps: 12, still: STILL_MS });
+  await finger(page, "row:last", { dx: -0.6 * width, steps: 12, still: STILL_MS });
   await expect(rows(page)).toHaveCount(0);
   await expect(page.getByTestId("undo-note")).toHaveText(/Row deleted/);
 });

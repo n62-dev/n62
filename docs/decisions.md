@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **R743, a `swipe.left` counter:** count left swipes too, so the 10 % rule reads right against left? Recommended; it needs `fold.spec.ts:515` and R70's counters test to expect it (they list every counter); now only `swipe.right` is counted, against the `delete` count (folded only).
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
@@ -118,7 +119,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived, "Opus pass 122". Would change if: G2 items 50 or 57 differ.
 - **Store ▶ on a picked row (R280):** every key holding ▶ stores as the row bar's Store ▶; no result: the double haptic. Archived, "Opus pass 189". Would change if: the G2 differs (store-design.md 1).
-- **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms, a swipe goes at 40 % of the row. Archived, "Opus pass 181".
+- **Row gestures (R276, Opus pass 155):** a hold copies at 500 ms, a swipe goes at 40 % of the row; delete from the right only, behind a red strip; right is reserved (owner, 2026-11-17, R743); would change if over 10 % of row swipes in four weeks go right (counts `swipe.right`, R70's counter, against the rows deleted). Archived, "Opus pass 181".
 - **Paste in the apps (Opus pass 159, R278f1):** Solve's and Function's ☰ get Paste wherever the entry line shows, the view's last own row. Archived, "Opus pass 172".
 - **R71 (Opus pass 30):** ± on Shift + `,`, for the units key; rule: docs/06 section 2.
 - **Hardware keys** (R31, R45, R312): the rule list heads `app/src/entry/hwkeys.ts` (docs/04 holds none, Opus pass 185); `e` after digits is ᴇ, unless `(` follows letters that with `e` form a known name; characters no key types do nothing.

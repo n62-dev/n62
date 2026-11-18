@@ -1,26 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R276: when a swiped history row goes, and how a drag is split between a long input's sideways scroll and the row.
+// R276, R743: when a swiped history row goes (to the left only), and how a drag is split between a long input's sideways scroll and the row.
 import { describe, expect, it } from "vitest";
-import { FLING_MIN_PX, FLING_SPEED, share, swipeOut, SWIPE_SHARE } from "./rowSwipe.ts";
+import { FLING_MIN_PX, FLING_SPEED, rubber, share, swipeOut, SWIPE_SHARE } from "./rowSwipe.ts";
 
 describe("swipeOut", () => {
-  it("goes at 40 % of the width, either way", () => {
+  it("goes at 40 % of the width to the left (R743)", () => {
     expect(SWIPE_SHARE).toBe(0.4);
-    expect(swipeOut(160, 400, 0)).toBe(true);
     expect(swipeOut(-160, 400, 0)).toBe(true);
-    expect(swipeOut(159, 400, 0)).toBe(false);
     expect(swipeOut(-159, 400, 0)).toBe(false);
+    expect(swipeOut(-240, 400, 0)).toBe(true);
   });
-  it("goes on a fling in the slide's direction, once the row is out a little", () => {
-    expect(swipeOut(FLING_MIN_PX, 400, FLING_SPEED)).toBe(true);
+  it("never goes to the right, however far or fast (R743: right is reserved)", () => {
+    expect(swipeOut(0.6 * 400, 400, 0)).toBe(false);
+    expect(swipeOut(160, 400, 0)).toBe(false);
+    expect(swipeOut(FLING_MIN_PX, 400, FLING_SPEED)).toBe(false);
+    expect(swipeOut(100, 400, 5)).toBe(false);
+  });
+  it("goes on a fling left, once the row is out a little", () => {
     expect(swipeOut(-FLING_MIN_PX, 400, -FLING_SPEED)).toBe(true);
-    expect(swipeOut(FLING_MIN_PX, 400, -FLING_SPEED)).toBe(false); // flung back
-    expect(swipeOut(FLING_MIN_PX - 1, 400, 2)).toBe(false); // the row barely moved (a long input took the drag)
-    expect(swipeOut(60, 400, FLING_SPEED / 2)).toBe(false); // a slow lift springs back
+    expect(swipeOut(-FLING_MIN_PX, 400, FLING_SPEED)).toBe(false); // flung back
+    expect(swipeOut(-(FLING_MIN_PX - 1), 400, -2)).toBe(false); // the row barely moved (a long input took the drag)
+    expect(swipeOut(-60, 400, -FLING_SPEED / 2)).toBe(false); // a slow lift springs back
   });
   it("never goes with the row in place or no width", () => {
-    expect(swipeOut(0, 400, 5)).toBe(false);
-    expect(swipeOut(30, 0, 5)).toBe(false);
+    expect(swipeOut(0, 400, -5)).toBe(false);
+    expect(swipeOut(-30, 0, -5)).toBe(false);
+  });
+});
+
+describe("rubber", () => {
+  it("is a band of at most 24 px, growing with the drag and never reaching it", () => {
+    expect(rubber(0)).toBe(0);
+    expect(rubber(1000)).toBeLessThan(24);
+    expect(rubber(20)).toBeGreaterThan(0);
+    expect(rubber(20)).toBeLessThan(rubber(100));
+    expect(rubber(100)).toBeLessThan(24);
+    expect(rubber(48)).toBeCloseTo(24 * (1 - Math.exp(-1)), 10);
   });
 });
 

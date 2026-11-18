@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R276 (owner, 2026-11-10): a history row by touch. A hold (500 ms) on its input or result copies that part and opens
-// no menu; a swipe left or right (40 % of the width, or a fling) deletes it through R98's path (the Undo note row);
+// R276 (owner, 2026-11-10), R743 (2026-11-17): a history row by touch. A hold (500 ms) on its input or result copies that
+// part and opens no menu; a swipe left (40 % of the width, or a fling) deletes it through R98's path (the Undo note row),
+// behind a red strip that grows with it; a swipe right does nothing (a short rubber band);
 // the history's vertical scroll wins; a long input scrolls sideways first; a running row does not slide. The picked
 // row's bar keeps Store ▶ and Copy ›. Values are derived (2+3 = 5).
 import { expect, test, type Page } from "@playwright/test";
 import { finger, STILL_MS } from "./core-lib.ts";
-import { entryValue, open, setClipboard, tap, useClipboardLock } from "./helpers.ts";
+import { entryValue, open, setClipboard, tap, touch, useClipboardLock } from "./helpers.ts";
 
 test.use({ permissions: ["clipboard-read", "clipboard-write"] });
 test.describe.configure({ mode: "serial" });
@@ -90,16 +91,87 @@ test("a short hold or a tap is still a tap: the first picks, the second inserts"
   await expect.poll(() => entryValue(page)).not.toBe("");
 });
 
-test("a swipe right deletes the row through R98: the Undo note, and Undo brings it back", async ({ page }) => {
+test("a swipe left deletes the row through R98: the Undo note, and Undo brings it back", async ({ page }) => {
   await ready(page);
   await enter(page, ["d2"], ["d3"]);
-  await swipe(page, 0.6);
+  await swipe(page, -0.6);
   await expect(rows(page)).toHaveCount(1);
   await expect(page.getByTestId("undo-note")).toHaveText(/Row deleted/);
   await page.waitForTimeout(250); // (Chrome takes a touch right after a drag as the stop of its fling)
   await tap(page, ["undo"]);
   await expect(rows(page)).toHaveCount(2);
   await expect(results(page).last()).toHaveAttribute("data-text", "3");
+});
+
+test("a swipe right across 60 % and a fling right leave every row, with no note (R743: right is reserved)", async ({ page }) => {
+  await ready(page);
+  await enter(page, ["d2"], ["d3"]);
+  await swipe(page, 0.6);
+  await page.waitForTimeout(400);
+  await expect(rows(page)).toHaveCount(2);
+  await expect(page.getByTestId("undo-note")).toHaveCount(0);
+  await expect(rows(page).last()).not.toHaveAttribute("style", /translate/);
+  await swipe(page, 0.6, 2); // two quick moves: a fling right
+  await page.waitForTimeout(400);
+  await expect(rows(page)).toHaveCount(2);
+  await expect(page.getByTestId("undo-note")).toHaveCount(0);
+  // each lifted right swipe is counted (R70's counter; decisions.md "Row gestures" reads it): the 60 % one and the fling
+  await expect.poll(() => page.evaluate(async () => (await window.n62.session.uses()).state.counts["swipe.right"])).toBe(2);
+});
+
+const del = (page: Page) => page.locator('[data-testid="swipe-del"]:visible');
+/** The row's translateX (px): the offset it is out by. */
+const out = (page: Page): Promise<number> => rows(page).last().evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+
+test("mid-swipe left: a red strip as wide as the offset says Delete; past 40 % it is armed, back under it is not (R743)", async ({ page }) => {
+  await ready(page);
+  await enter(page, ["d2"], ["d3"]);
+  await expect(rows(page).last()).toHaveAttribute("data-gestures", "", { timeout: 15_000 });
+  const width = (await rows(page).last().boundingBox())?.width ?? 0;
+  const err = await page.evaluate(() => {
+    const d = document.createElement("div");
+    d.style.background = "var(--error)";
+    document.body.append(d);
+    const c = getComputedStyle(d).backgroundColor;
+    d.remove();
+    return c;
+  });
+  const f = await touch(page, rows(page).last());
+  await f.move(-0.3 * width, 0, 6);
+  await expect(del(page)).toBeVisible();
+  const strip = del(page);
+  await expect(strip).toHaveText("Delete");
+  await expect(strip).toHaveCSS("background-color", err);
+  await expect(strip).not.toHaveAttribute("data-armed");
+  // as wide as the offset (polled: the moves are still arriving), and the offset is where the finger is: 30 % of the row
+  await expect.poll(async () => Math.abs((await strip.boundingBox())!.width + (await out(page)))).toBeLessThanOrEqual(2);
+  expect(Math.abs(-(await out(page)) - 0.3 * width)).toBeLessThanOrEqual(2);
+  expect(await rows(page).last().evaluate((el) => el.style.opacity)).toBe("");
+  await f.move(-0.45 * width, 0, 3);
+  await expect(strip).toHaveAttribute("data-armed", "true");
+  await f.move(-0.2 * width, 0, 4);
+  await expect(strip).not.toHaveAttribute("data-armed");
+  await page.waitForTimeout(600); // at rest: no fling at the lift
+  await f.end();
+  await page.waitForTimeout(400);
+  await expect(rows(page)).toHaveCount(2);
+  await expect(del(page)).toHaveCount(0);
+});
+
+test("mid-swipe right: a rubber band under 24 px, no strip (R743)", async ({ page }) => {
+  await ready(page);
+  await enter(page, ["d2"], ["d3"]);
+  await expect(rows(page).last()).toHaveAttribute("data-gestures", "", { timeout: 15_000 });
+  const width = (await rows(page).last().boundingBox())?.width ?? 0;
+  const f = await touch(page, rows(page).last());
+  await f.move(0.6 * width, 0, 8);
+  await expect.poll(() => out(page)).toBeGreaterThan(5);
+  expect(await out(page)).toBeLessThan(24);
+  await expect(del(page)).toHaveCount(0);
+  await page.waitForTimeout(600);
+  await f.end();
+  await expect.poll(() => out(page)).toBe(0); // springs back
+  await expect(rows(page)).toHaveCount(2);
 });
 
 test("a short slow swipe springs back; a short fling deletes", async ({ page }) => {
@@ -169,6 +241,23 @@ test("one fast drag that scrolls a long row to its end never slides it (R333); a
   await finger(page, "input:last", { dx: -90, steps: 2 }); // a new drag, from the end: the row slides
   await expect(rows(page)).toHaveCount(0);
   await expect(page.getByTestId("undo-note")).toBeVisible();
+});
+
+test("a long input: a drag right scrolls it towards its start and never deletes (R333 kept, R743)", async ({ page }) => {
+  await ready(page);
+  const long = Array.from({ length: 30 }, () => ["d1", "add"]).flat();
+  await enter(page, [...long, "d1"]);
+  const input = rows(page).last().locator(".in");
+  const max = await input.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(max).toBeGreaterThan(100);
+  await input.evaluate((el) => (el.scrollLeft = el.scrollWidth));
+  const width = (await rows(page).last().boundingBox())?.width ?? 0;
+  const before = await input.evaluate((el) => el.scrollLeft);
+  await finger(page, "input:last", { dx: Math.min(max - 10, 0.6 * width), steps: 12, still: STILL_MS });
+  await page.waitForTimeout(400);
+  await expect(rows(page)).toHaveCount(1);
+  await expect(page.getByTestId("undo-note")).toHaveCount(0);
+  expect(await input.evaluate((el) => el.scrollLeft)).toBeLessThan(before - 50);
 });
 
 test("a running row does not slide", async ({ page }) => {
