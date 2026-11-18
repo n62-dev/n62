@@ -362,10 +362,8 @@ export class Session {
   // locks capitals, up on Alpha lower case. One lock at a time: a lock flick replaces the other lock, and the same flick
   // again (or a tap on that key) unlocks. A tap on the bar's ⇧/α sign ends any of them (releaseModifiers).
   toggleShift(): void {
-    if (this.shiftLock) {
-      this.shiftLock = false;
-      this.shift = false;
-    } else if (this.shift && !this.alpha) this.shiftLock = true;
+    if (this.shiftLock) this.shiftLock = this.shift = false;
+    else if (this.shift && !this.alpha) this.shiftLock = true;
     else this.shift = !this.shift;
   }
   /** Flick up on Shift. */

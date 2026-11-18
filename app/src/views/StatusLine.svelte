@@ -398,15 +398,14 @@
     align-items: center;
     justify-content: center;
   }
+  /* R726: the sign is a button while one is on: the bar's 28 × 28 target over the 16 px slot (the slot keeps its width, so
+     nothing moves; the chip after it is drawn over the overlap); a lock's underline sits on the bar's lower edge */
   .mod {
     color: var(--shift);
     font-weight: 700;
     line-height: var(--lh-small);
   }
-  /* the sign as a button (R726): the bar's 28 × 28 target over the 16 px slot (the slot keeps its width: nothing moves; the
-     overlap is the margin, and the chip after it is drawn over it); a lock's underline sits on the bar's lower edge */
   .slot button.mod {
-    flex: none;
     width: var(--bar-h);
     height: var(--bar-h);
     min-width: 0;
