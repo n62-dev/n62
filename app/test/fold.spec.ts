@@ -244,7 +244,8 @@ test("folded: a tap picks, the second inserts and unfolds; a hold copies and a s
   await expect(sheet(page)).toBeVisible();
   const m = await box(page, '[data-testid="menu"]');
   expect(m.y + m.height).toBeLessThanOrEqual(slice.y + 1); // from the folded bar's top edge, over the history, the bar uncovered
-  await expect(page.locator('[data-testid="bar"]')).toHaveCount(0); // R724: the bar is the folded bar
+  await expect(page.locator('[data-testid="bar"]')).toHaveCount(1); // R724: one bar, in the folded bar
+  await expect(page.getByTestId("folded-bar").getByTestId("bar")).toHaveCount(1);
   expect(m.y).toBeGreaterThanOrEqual(0);
 });
 

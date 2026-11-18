@@ -540,7 +540,7 @@
       <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />
     {/if}
 
-    <div class="entry" class:hidden={!shell.showsEntry} class:chev={canFold} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
+    <div class="entry" class:hidden={!shell.showsEntry} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
       {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
       <!-- R155: one flat dash on the outline's path while a job runs (aria-hidden: the hidden status line names the job); in the
            field's box, where the unit view (units/open.ts) hides it with the field -->
@@ -568,7 +568,7 @@
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
     <!-- R53, R724: folded, the 44 px folded bar over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
     {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}
-      bar={{ session, shell, busy, cas: casKeys, onpress: press, onmode: openMode }} pick={folded && clip && rowBar && picked !== null ? { clip, Bar: rowBar, row: session.items[picked], drop: () => (picked = null) } : undefined} />{/if}
+      {ctx} {busy} onpress={press} />{/if}
     <div class="pad-wrap" inert={folded} aria-hidden={folded}>
     <Keypad
       {userKeys}
@@ -739,11 +739,11 @@
     /* R53: a vertical swipe on the line folds or unfolds the keypad; the browser pans nothing vertically here */
     touch-action: pan-x;
   }
-  /* R724: ⌄ (keyboard/FoldChevron.svelte) on the field's corner; no text under it */
-  .entry.chev {
+  /* R724: ⌄ (keyboard/foldChevron.ts) on the field's corner in Home and CAS; no text under it (in an app too: no line moves) */
+  .entry {
     position: relative;
   }
-  .entry.chev > .field :global(math-field) {
+  .entry > .field :global(math-field) {
     padding-left: var(--chev-pad);
   }
   .entry:has(> :global(.unitview)) > :global([data-testid="fold-chevron"]) {

@@ -104,8 +104,9 @@ test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, th
   expect(b.height).toBe(44);
   expect(b.y + b.height).toBe(815);
   for (const id of ["fold-slice", "tab-home", "tab-cas", "mod-slot", "menu-button"]) await expect(fbar(page).getByTestId(id)).toBeVisible();
-  await expect(page.locator('[data-testid="bar"]')).toHaveCount(0); // the bar is the folded row
-  await expect(fbar(page).getByTestId("chip-angle")).toHaveCount(0); // no chips while folded
+  await expect(page.locator('[data-testid="bar"]')).toHaveCount(1); // one bar: the folded row's
+  await expect(fbar(page).getByTestId("bar")).toHaveCount(1);
+  for (const id of ["chip-angle", "chip-format", "chip-digits", "place"]) await expect(fbar(page).getByTestId(id)).toBeHidden(); // no chips, no Apps ▾
   expect((await box(page, ".keys")).height).toBe(44);
   const screen = await page.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
   console.log(`folded history height at 412 × 815: ${screen}`);
@@ -222,9 +223,10 @@ test("at 360 × 740 the folded bar fits with a pick: every target at least 44 px
   const boxes = await fbar(page).locator("button").evaluateAll((els) => els.map((e) => {
     const r = e.getBoundingClientRect();
     return { id: (e as HTMLElement).dataset["testid"] ?? e.textContent ?? "", x: r.x, y: r.y, width: r.width, height: r.height };
-  }));
+  }).filter((b) => b.width > 0).sort((a, b) => a.x - b.x));
   expect(boxes.length).toBe(6); // ⌃, Home, CAS, Store ▶, Copy ›, ☰
-  const items = await fbar(page).locator("[data-item]").evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["item"]));
+  const items = await fbar(page).locator("[data-item]").evaluateAll((els) =>
+    els.map((e) => ({ n: (e as HTMLElement).dataset["item"], r: e.getBoundingClientRect() })).filter((e) => e.r.width > 0).sort((a, b) => a.r.x - b.r.x).map((e) => e.n));
   expect(items).toEqual(["unfold", "home", "cas", "store", "copy", "menu"]); // the lock's folded-bar: (barItems.ts FOLDED_BAR_ITEMS)
   for (const b of boxes) {
     expect(b.height, b.id).toBeGreaterThanOrEqual(44);
