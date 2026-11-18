@@ -261,7 +261,7 @@
     if (loaders.findLoading) void finder().then((m) => m.loadIndex(true)).catch(() => {}); // hurry the idle load
     return loadFind(true);
   }
-  /** Help (R197, Shift + Select): the help sheet of the function at the cursor (views/helpSheet.ts); none there: Find. */
+  /** Help (R197; the Help key since R723): the help sheet of the function at the cursor (views/helpSheet.ts); none there: Find. */
   function openHelp(): void {
     if (!shell.showsEntry) return dead();
     onFind(findNow().then(async (f) => ((await f.m.showHelpAt(shell, entry, f.index.byId)) ? null : f)), (f) => f && showFind(f)); // (the route dropped a pick)

@@ -30,7 +30,8 @@ describe("the desktop key map (R131)", () => {
     const stale = keyEntries.flatMap((e) => {
       const t = e.target as { key: string; layer: Layer };
       const k = keyboard.byId.get(t.key);
-      return k && layersOf(k).includes(t.layer) ? [] : [`${t.key} ${t.layer}`];
+      // (a reserved layer may carry its reason alone, no desktop key: R723's vars.shift, until R725 fills it)
+      return k && (layersOf(k).includes(t.layer) || (e.names.length === 0 && /\breserved\b/.test(e.why ?? ""))) ? [] : [`${t.key} ${t.layer}`];
     });
     expect(stale, "desktop.keys names a key or layer that `keys:` does not have (removed, or a reserved layer)").toEqual([]);
   });

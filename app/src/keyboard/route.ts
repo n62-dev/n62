@@ -48,7 +48,7 @@ export interface RouteCtx {
   openFind(slot?: { id: string; layer: Layer }): void;
   /** Vars (R4b): Find on the user's variables and functions; Shift + Math, Memory: the same list with delete and clear all. */
   openNames(memory: boolean): void;
-  /** Help (R197, Shift + Select): the help sheet of the function at the cursor, else Find. */
+  /** Help (R197; row 0, col 4 since R723): the help sheet of the function at the cursor, else Find. */
   openHelp(): void;
   /** Shift + 4 (R187): the matrix sheet (Find's items for its rows, picked by Find's route). */
   openMatrix(): void;
@@ -170,9 +170,12 @@ export function special(c: RouteCtx, name: Special): void {
     case "memory":
       c.openNames(name === "memory");
       break;
+    case "copy":
+      copyKey(c); // R723: Shift + Select with no pick, the last finished row
+      break;
     case "paste":
-      // R329: Shift + Vars, ☰ → Paste's path (R278 took the Paste key; the keys pressed meanwhile wait for it); a view
-      // without an entry line (Plot) has nowhere to put it: a dead press, no clipboard read
+      // R723: Shift + Deselect (R329 had it on Shift + Vars), ☰ → Paste's path (the keys pressed meanwhile wait for it); a
+      // view without an entry line (Plot) has nowhere to put it: a dead press, no clipboard read
       if (c.shell.app !== null && !c.shell.showsEntry) c.dead();
       else pasteText(c);
       break;
@@ -194,6 +197,16 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
     .then(() => {}, () => c.dead())
     .finally(() => c.sheetLoad === load && (c.sheetLoad = null));
   c.sheetLoad ??= load;
+}
+
+/** Shift + Select (R723): Copy, what a hold on a row's result copies (R276; ☰ → Copy › Full value, R720), of `row` (the
+ *  picked one), else of the last finished row. No such row, or an app (its rows are not Home's), is a dead press: the double
+ *  pulse and no clipboard write. */
+function copyKey(c: RouteCtx, row?: HistoryItem): void {
+  let item = row;
+  for (let i = c.session.items.length - 1; item === undefined && i >= 0; i--) if (c.session.items[i]?.status === "done") item = c.session.items[i];
+  if (c.shell.app !== null || item?.status !== "done") return c.dead();
+  c.withClip((x) => void x.holdCopy(item, "result", ""));
 }
 
 /** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
@@ -247,6 +260,10 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   if (action.name === "esc") return true;
   if (action.name === "uncertainty") {
     uncertainty(c, item); // Shift + 1 on the picked row (R327)
+    return true;
+  }
+  if (action.name === "copy") {
+    copyKey(c, item); // Shift + Select on the picked row (R723)
     return true;
   }
   if (action.name === "units" && item) {
@@ -363,7 +380,7 @@ const VIEW_KEYS: readonly string[] = ["symb", "plot", "num"];
 const runsAtOnce = (c: RouteCtx, name: string): boolean => AT_ONCE.includes(name) && (c.waiting.length === 0 || !VIEW_KEYS.includes(name));
 
 /** R114: a system paste's text (Ctrl+V, Shift+Insert, the context menu) takes ☰ → Paste's path, and the keys pressed meanwhile
- *  wait for it as they do after Paste. No `text` (Shift + Vars, R329): the clipboard's. */
+ *  wait for it as they do after Paste. No `text` (Shift + Deselect, R723): the clipboard's. */
 export function pasteText(c: RouteCtx, text?: string): void {
   c.withClip((x) => holdKeys(c, x.paste(text)));
 }

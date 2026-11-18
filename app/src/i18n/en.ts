@@ -8,26 +8,26 @@ export const en = {
   "view.cas": "CAS",
   "key.shift": "shift",
   "key.alpha": "alpha",
+  /** Help (R197; row 0, col 4 since R723). */
   "key.help": "Help",
-  /** Shift + Help (R146): the legend must fit the cluster key at 360 px. */
+  /** Shift + Help (R146, R723): the legend must fit the cluster key at 360 px. */
   "key.settings": "Settings",
   /** An empty user key (U1–U6, R15c): nothing set yet. */
   "key.user": "＋",
   "key.select": "Select",
   "key.deselect": "Deselect",
-  /** The Menu key (R278): the bar's ☰ on the cluster. */
-  "key.menu": "☰",
   "key.undo": "Undo",
   "key.redo": "Redo",
   "key.fmt": "Fmt",
-  "key.mode": "Mode",
   "key.clear": "Clear",
   "key.sto": "Store",
   "key.emark": "ᴇ",
   "key.esc": "Esc",
   "key.del": "Del",
   "key.vars": "Vars",
-  /** Shift + Vars (R329): ☰ → Paste on a key. */
+  /** Shift + Select (R723): what a hold on the picked or last row's result copies. */
+  "key.copy": "Copy",
+  /** Shift + Deselect (R723): ☰ → Paste on a key. */
   "key.paste": "Paste",
   "key.math": "Math",
   "key.memory": "Mem",

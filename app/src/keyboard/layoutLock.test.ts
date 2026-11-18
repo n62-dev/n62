@@ -338,32 +338,32 @@ describe("a move is a line the owner's decision backs", () => {
   // a decisions text of its own, in the bold-title form of decisions.md: the real file is trimmed and rewritten
   const title = "Fixture layout move";
   const fixture = `# Decisions\n\n- **${title} (owner, 2026-01-01):** the owner moved Menu to Esc.\n- **Fixture colon title:** another entry.\n\n### Fixture heading (milestone 9)\n`;
-  const edited = (): Pins => spec((k) => (key(k, "menu")["primary"] = { special: "esc" }));
-  const move = { entry: "layers/menu.primary", from: "special menu", to: "special esc", version: "0.2.0", decision: title };
+  const edited = (): Pins => spec((k) => (key(k, "help")["primary"] = { special: "esc" }));
+  const move = { entry: "layers/help.primary", from: "special help", to: "special esc", version: "0.2.0", decision: title };
   const check = (decision: string): string[] => compareLayout(edited(), { ...lock, moves: [{ ...move, decision }] }, fixture);
   it("is applied on top of the pinned line, which stays as it was", () => {
     expect(check(title)).toEqual([]);
-    expect(lock.pins["layers"]?.["menu.primary"]).toBe("special menu");
+    expect(lock.pins["layers"]?.["help.primary"]).toBe("special help");
   });
   it("a removal moves the line to reserved: the layer must be gone", () => {
     const gone = spec((k) => drop(k, "select", "shift"));
-    const m = { ...move, entry: "layers/select.shift", from: "special help", to: "reserved" };
+    const m = { ...move, entry: "layers/select.shift", from: "special copy", to: "reserved" };
     expect(compareLayout(gone, { ...lock, moves: [m] }, fixture)).toEqual([]);
   });
   it("a later fill of the removed cell is a move from reserved", () => {
-    const m1 = { ...move, entry: "layers/select.shift", from: "special help", to: "reserved" };
+    const m1 = { ...move, entry: "layers/select.shift", from: "special copy", to: "reserved" };
     const m2 = { ...m1, from: "reserved", to: "special find" };
     const a = spec((k) => (key(k, "select")["shift"] = { special: "find" }));
     expect(compareLayout(a, { ...lock, moves: [m1, m2] }, fixture)).toEqual([]);
   });
   it("must start from the line as it is", () => {
-    expect(compareLayout(edited(), { ...lock, moves: [{ ...move, from: "special esc" }] }, fixture)[0]).toBe('move layers/menu.primary: the line is "special menu", the move says "special esc"');
+    expect(compareLayout(edited(), { ...lock, moves: [{ ...move, from: "special esc" }] }, fixture)[0]).toBe('move layers/help.primary: the line is "special help", the move says "special esc"');
   });
   it("needs a decisions.md entry of that title", () => {
-    expect(check("Nobody decided this")).toEqual(['move layers/menu.primary: decisions.md has no entry titled "Nobody decided this"']);
+    expect(check("Nobody decided this")).toEqual(['move layers/help.primary: decisions.md has no entry titled "Nobody decided this"']);
   });
   it("takes a whole title only: the title ends at the colon or the bracket, so a prefix of it is no decision", () => {
-    const refused = (d: string): string[] => [`move layers/menu.primary: decisions.md has no entry titled "${d}"`];
+    const refused = (d: string): string[] => [`move layers/help.primary: decisions.md has no entry titled "${d}"`];
     expect(check("Fi")).toEqual(refused("Fi"));
     expect(check("Fixture layout")).toEqual(refused("Fixture layout"));
     expect(check("Fixture layout move (owner")).toEqual(refused("Fixture layout move (owner"));
@@ -371,7 +371,7 @@ describe("a move is a line the owner's decision backs", () => {
     expect(check("Fixture colon")).toEqual(refused("Fixture colon"));
   });
   it("takes a whole heading only: the text after the hashes ends or goes on with a bracket, so a word of it is no decision", () => {
-    const refused = (d: string): string[] => [`move layers/menu.primary: decisions.md has no entry titled "${d}"`];
+    const refused = (d: string): string[] => [`move layers/help.primary: decisions.md has no entry titled "${d}"`];
     expect(check("Fixture heading")).toEqual([]);
     expect(check("Fixture")).toEqual(refused("Fixture"));
     expect(check("heading")).toEqual(refused("heading"));
@@ -384,7 +384,7 @@ describe("a move is a line the owner's decision backs", () => {
     expect(compareLayout(actual, { ...lock, moves: [{ ...move, entry: "layers/nokey.shift" }] }, fixture)[0]).toBe("move layers/nokey.shift: no such line in the lock");
   });
   it("a move that the layout does not show is still a pinned line that is gone or changed", () => {
-    expect(compareLayout(actual, { ...lock, moves: [move] }, fixture)).toEqual(['layers/menu.primary: pinned "special esc", now "special menu"']);
+    expect(compareLayout(actual, { ...lock, moves: [move] }, fixture)).toEqual(['layers/help.primary: pinned "special esc", now "special help"']);
   });
 });
 
@@ -396,13 +396,13 @@ describe("the last release's lock (altered copies of the lock)", () => {
     expect(compareToRelease("v0.1.0", lock, filled)).toEqual([]);
   });
   it("fails for a live line edited in place, whatever the layout shows", () => {
-    const p = compareToRelease("v0.1.0", lock, pinned("layers", "menu.primary", "special esc"));
-    expect(p).toEqual(['layers/menu.primary: pinned "special menu" in v0.1.0, edited to "special esc" now']);
+    const p = compareToRelease("v0.1.0", lock, pinned("layers", "help.primary", "special esc"));
+    expect(p).toEqual(['layers/help.primary: pinned "special help" in v0.1.0, edited to "special esc" now']);
   });
   it("fails for a live line deleted, and for a recorded move changed or dropped", () => {
     expect(compareToRelease("v0.1.0", lock, pinned("mode", "1", undefined))).toEqual([`mode/1: pinned "${lock.pins["mode"]?.["1"]}" in v0.1.0, missing now`]);
-    const m = { entry: "layers/menu.primary", from: "special menu", to: "special esc", version: "0.2.0", decision: "x" };
-    expect(compareToRelease("v0.1.0", { ...lock, moves: [m] }, lock)).toEqual(["move 1 (layers/menu.primary) of v0.1.0 is changed or missing"]);
+    const m = { entry: "layers/help.primary", from: "special help", to: "special esc", version: "0.2.0", decision: "x" };
+    expect(compareToRelease("v0.1.0", { ...lock, moves: [m] }, lock)).toEqual(["move 1 (layers/help.primary) of v0.1.0 is changed or missing"]);
   });
   it("reads the newest v* tag that holds a lock with git show, and says nothing without one", () => {
     const dir = mkdtempSync(join(tmpdir(), "n62-lock-"));
@@ -421,7 +421,7 @@ describe("the last release's lock (altered copies of the lock)", () => {
       git("tag", "v0.1.0");
       const rel = releaseLock(dir, LOCK);
       expect(rel?.tag).toBe("v0.1.0");
-      expect(rel?.lock.pins["layers"]?.["menu.primary"]).toBe("special menu");
+      expect(rel?.lock.pins["layers"]?.["help.primary"]).toBe("special help");
       expect(releaseLock(join(dir, "nowhere"), LOCK)).toBeNull();
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -430,7 +430,7 @@ describe("the last release's lock (altered copies of the lock)", () => {
   it("skips a pre-release tag: it never pins the lock and never shadows its release (R744)", () => {
     const dir = mkdtempSync(join(tmpdir(), "n62-lock-pre-"));
     const git = (...a: string[]): void => void execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.org", "-c", "commit.gpgsign=false", ...a], { cwd: dir, stdio: "ignore" });
-    const lockText = (menu: string): string => read(LOCK).replace('"menu.primary": "special menu"', `"menu.primary": "${menu}"`);
+    const lockText = (menu: string): string => read(LOCK).replace('"help.primary": "special help"', `"help.primary": "${menu}"`);
     try {
       git("init", "-q");
       mkdirSync(join(dir, "spec"));
@@ -446,7 +446,7 @@ describe("the last release's lock (altered copies of the lock)", () => {
       // the release below the beta wins, whatever the sort says
       git("tag", "v0.1.0", "HEAD~1");
       git("rm", "-q", "--cached", LOCK);
-      writeFileSync(join(dir, LOCK), lockText("special menu"));
+      writeFileSync(join(dir, LOCK), lockText("special help"));
       git("add", ".");
       git("commit", "-q", "-m", "three");
       git("tag", "-f", "v0.1.0");
@@ -458,7 +458,7 @@ describe("the last release's lock (altered copies of the lock)", () => {
       git("tag", "v0.1.1-rc.1");
       const rel = releaseLock(dir, LOCK);
       expect(rel?.tag).toBe("v0.1.0");
-      expect(rel?.lock.pins["layers"]?.["menu.primary"]).toBe("special menu");
+      expect(rel?.lock.pins["layers"]?.["help.primary"]).toBe("special help");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

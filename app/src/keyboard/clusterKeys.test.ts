@@ -37,6 +37,7 @@ function ctx(items: Row[] = [], app: string | null = null) {
   const clip = {
     holdCopy: async (item: Row, part: string) => void log.push(`copy:${item.input}:${part}`),
     copy: async (item?: Row) => void log.push(`copy:${item?.input ?? "?"}`),
+    paste: async () => void log.push("paste"),
   };
   const c = {
     session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false,

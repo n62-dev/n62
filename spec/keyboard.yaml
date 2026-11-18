@@ -37,10 +37,11 @@
 #   { cmd: "moveToNextChar" }      a MathLive editing command
 #   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|units|selectGrow|selectShrink|help|uncertainty|none }
 #                                  handled by the app (home, cas: go to that view, from an app too; switch: Home <-> CAS,
-#                                  or back to Home/CAS from an app; apps, symb, plot, num, menu: the status line's
+#                                  or back to Home/CAS from an app; apps, symb, plot, num, menu, mode: the status line's
 #                                  controls, R15c1, and what a user key may hold; selectGrow, selectShrink: Select grows
 #                                  the entry line's selection by the box model, Deselect walks it back, R279, entry/grow.ts;
 #                                  help: the syntax and example of the function at the cursor, else Find, R197;
+#                                  copy: what a hold on the picked or last row's result copies, R723; paste: ☰ → Paste's path;
 #                                  uncertainty: the uncertainty sheet of a result with σ, R327)
 # User keys (R15b, R15c): a key with `user: true` is a free key (U1-U6). Its layers here are only its defaults: the
 # user's own action for a layer (Settings > User keys, from Find, R4b) replaces the default, stored with a stamp in
@@ -83,20 +84,21 @@ keys:
   # ---- rows 0-2: the upper cluster, R3 (decisions.md "R15c", chosen by the owner 2026-10-17; built in R15c2). Three bands
   # of two columns: the free keys U1-U6 (`user: true`, all empty, set from Find, R4b), the round pad (a circle, no drawn hub, no OK; a drag from
   # anywhere on it, the centre too, steps the cursor, a tap at the centre does nothing; Keypad.svelte) and the editing wing, read in pairs level with the pad, each pair on one layer
-  # (R146, S25's K1, owner 2026-11-06; R278): ☰ | Esc, Undo | Redo, Select | Deselect on the tap; Settings | Clear, ⇤ | ⇥,
-  # Help | Mode on Shift (a flick up reaches each; Mode since R322). ☰ is the status line's ☰ as a key. Apps and the
-  # views are on the status line (R15c1); Mode is on its chips too; results mode is the swipe on the entry line, so there is no
-  # View key. There is no Cancel key: Esc stops a running job, closes Settings, goes back one sheet level, drops a picked
-  # row, else clears the line. Copy is ☰ 3 and a hold on a row, Paste ☰ 7 and Shift + Vars (R329). Only Esc (r1c5) and the pad keep their
-  # G2 cells; every other key here is ours (`assumed`). From the v0.1.0 tag the cluster is fixed like the maths keys (docs/06 3b).
+  # (R146, S25's K1, owner 2026-11-06; R723, owner 2026-11-17): Help | Esc, Undo | Redo, Select | Deselect on the tap; Settings |
+  # Clear, ⇤ | ⇥, Copy | Paste on Shift (a flick up reaches each). ☰, Apps and the views are on the bar (R15c1, R722); Mode is
+  # on its STD and 12 chips (no key); results mode is the swipe on the entry line, so there is no View key. There is no Cancel
+  # key: Esc stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line. Copy is
+  # also ☰ 2 and a hold on a row, Paste ☰ 4. Only Esc (r1c5) and the pad keep their G2 cells; every other key here is ours
+  # (`assumed`). From the v0.1.0 tag the cluster is fixed like the maths keys (docs/06 3b).
   - { id: u1, row: 0, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: u2, row: 0, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: up, row: 0, col: 2, span: 2, cls: ctl, label: { primary: "▲" }, primary: { cmd: moveUp }, source: virtual-calc }  # pad up; on an empty entry line it selects the last history row (App.svelte)
-  # ☰ (R278): the Menu key, the G2's r3c4 function in this column. The tap does what the status line's ☰ does in every view
-  # (opens the view's menu, closes the menu it opened; app/src/keyboard/route.ts `menu`); Shift stays Settings (docs/06 section 3b).
-  # The id `help` left this cell: an id is never reused for another function (TalkBack's name and the press counts hang on it).
-  - { id: menu, row: 0, col: 4, cls: nav, label: { primary: "$key.menu", shift: "$key.settings" },
-      primary: { special: menu }, shift: { special: settings }, source: assumed }  # ☰ is ours (assumed); shift Settings is ours too
+  # Help (R723, owner 2026-11-17): the syntax and example of the function at the cursor on a sheet, else Find (R197,
+  # views/helpSheet.ts); Shift stays Settings (docs/06 section 3b). The ☰ key `menu` (R278) retired: ☰ is on the bar (R722).
+  # Help comes back with its own id, `help`: an id is never reused for another function (TalkBack's name and the press counts
+  # hang on it), and `menu` is never given to another key.
+  - { id: help, row: 0, col: 4, cls: nav, label: { primary: "$key.help", shift: "$key.settings" },
+      primary: { special: help }, shift: { special: settings }, source: assumed }  # Help is ours (assumed); shift Settings is ours too
   - { id: esc, row: 0, col: 5, cls: nav, label: { primary: "$key.esc", shift: "$key.clear" },
       primary: { special: esc }, shift: { special: clear }, source: virtual-calc }  # r1c5; Esc also takes the old Cancel key's jobs (R15c point 3); shift Clear wipes the history on an empty line
   - { id: u3, row: 1, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
@@ -115,22 +117,20 @@ keys:
   - { id: u6, row: 2, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: down, row: 2, col: 2, span: 2, cls: ctl, label: { primary: "▼" }, primary: { cmd: moveDown }, source: virtual-calc }  # pad down
   # Select | Deselect (R279, docs/04 5.1): Select grows the entry line's selection by the box model, Deselect walks it back.
-  # Shift + Select is Help (milestone 6, R197): the syntax and example of the function at the cursor on a sheet, else Find
-  # (views/helpSheet.ts). Shift + Deselect is Mode (R322, owner 2026-11-14; Shift + Fmt from R85 until then): it opens the
-  # Mode sheet on Angle, beside the other sheet keys.
-  # Copy and Paste left the cluster (R278): a hold on a history row copies (R276), ☰ → Copy and ☰ → Paste are in the Menu;
-  # Paste is Shift + Vars too (R329).
-  - { id: select, row: 2, col: 4, cls: nav, label: { primary: "$key.select", shift: "$key.help" },
-      primary: { special: selectGrow }, shift: { special: help }, source: assumed }
-  - { id: deselect, row: 2, col: 5, cls: nav, label: { primary: "$key.deselect", shift: "$key.mode" },
-      primary: { special: selectShrink }, shift: { special: mode }, source: assumed }  # shift Mode is ours too (the G2's CAS settings sit there)
+  # Shift + Select is Copy (R723, owner 2026-11-17): what a hold on the row's result copies (R276; ☰ → Copy › Full value,
+  # R720), of the picked row, else the last finished row; no row, or an app, is a dead press. Shift + Deselect is Paste: ☰ →
+  # Paste's path, the clipboard as one number onto the entry line (keys pressed meanwhile wait for it); where no entry line
+  # shows, a dead press. Neither opens a sheet. (Help was here from R197, Mode from R322 until R723.)
+  - { id: select, row: 2, col: 4, cls: nav, label: { primary: "$key.select", shift: "$key.copy" },
+      primary: { special: selectGrow }, shift: { special: copy }, source: assumed }
+  - { id: deselect, row: 2, col: 5, cls: nav, label: { primary: "$key.deselect", shift: "$key.paste" },
+      primary: { special: selectShrink }, shift: { special: paste }, source: assumed }  # shift Paste is ours too
 
-  # ---- row 3 (r4). P8, docs/04 section 5.1: Vars = Find on variables (R4b), shift Vars = Paste (R329), Math = Find (R4a),
-  # shift Math = Memory (R4b); shift Tmpl = the unit view (R24c). The Alpha letters stay. Tmpl opens the template palette (R10,
-  # `templates:` below).
-  # Shift + Vars is Paste (R329, the owner 2026-11-15; a reserved cell filled): ☰ → Paste's path, the clipboard as one
-  # number onto the entry line (keys pressed meanwhile wait for it); where no entry line shows, a dead press
-  - { id: vars, row: 3, col: 0, cls: fn, label: { primary: "$key.vars", shift: "$key.paste", alpha: A }, primary: { special: vars }, shift: { special: paste }, alpha: { type: A }, source: virtual-calc }  # r4c1; Find on the user's variables and functions (R4b, docs/04 5.1); shift Paste is ours (assumed)
+  # ---- row 3 (r4). P8, docs/04 section 5.1: Vars = Find on variables (R4b), Math = Find (R4a), shift Math = Memory (R4b);
+  # shift Tmpl = the unit view (R24c). The Alpha letters stay. Tmpl opens the template palette (R10, `templates:` below).
+  # Shift + Vars is RESERVED (docs/06 section 3b; R723: Paste, there since R329, moved to Shift + Deselect): no action and no
+  # legend, dimmed in that layer only, counted when pressed, until R725 fills it with Chars.
+  - { id: vars, row: 3, col: 0, cls: fn, label: { primary: "$key.vars", alpha: A }, primary: { special: vars }, alpha: { type: A }, source: virtual-calc }  # r4c1; Find on the user's variables and functions (R4b, docs/04 5.1)
   - { id: math, row: 3, col: 1, cls: fn, label: { primary: "$key.math", shift: "$key.memory", alpha: B }, primary: { special: find }, shift: { special: memory }, alpha: { type: B }, source: virtual-calc }  # r4c2; Find, everything (R4a); Shift = Memory, the reference's Mem (R4b, docs/04 5.1)
   - { id: tmpl, row: 3, col: 2, cls: fn, label: { primary: "$key.tmpl", shift: "$key.units", alpha: C }, primary: { special: tmpl }, shift: { special: units }, alpha: { type: C }, source: virtual-calc }  # r4c3 (the palette: seen on a G2, 2026-10-13); shift: the units key (R24c, G2 item 30)
   # The variable key types x (the reference types the current app's variable, X in its Function app); shift y is
@@ -360,8 +360,8 @@ keys:
     source: virtual-calc  # r9c4 (shift π; alpha #)
   - { id: sub, row: 8, col: 4, cls: op, label: { primary: "−", shift: "$key.base", alpha: ":" }, primary: { type: "-" }, shift: { special: base }, alpha: { type: ":" }, source: virtual-calc }  # r9c5 (alpha :); shift opens the Base menu for the last result, dead with text on the line (R193, docs/04 5.4)
 
-  # Shift + Fmt is RESERVED (docs/06 section 3b; R322, owner 2026-11-14: Mode moved to Shift + Deselect): no action and no
-  # legend, dimmed in that layer only, counted when pressed.
+  # Shift + Fmt is RESERVED (docs/06 section 3b; R322, owner 2026-11-14: Mode left it; R723: Mode is on the bar's chips): no
+  # action and no legend, dimmed in that layer only, counted when pressed.
   - { id: fmt, row: 9, col: 0, cls: ctl, label: { primary: "$key.fmt" }, primary: { special: fmt }, source: assumed }  # at the reference's On key (r10c1); ours cycles the display format of the last result (Settings: Format key cycle)
   # Shift + 0 is % (R323, the owner 2026-11-14; a reserved cell filled): the Shift + 9 palette's % cell (R110), which stays
   - { id: d0, row: 9, col: 1, cls: num, label: { primary: "0", shift: "%" }, primary: { type: "0" },
@@ -396,13 +396,13 @@ desktop:
     down: { primary: ArrowDown }
     left: { primary: ArrowLeft }
     right: { primary: ArrowRight }
-    menu: { primary: Alt+M, shift: Alt+Shift+M }
+    help: { primary: F1, shift: Alt+Shift+M }  # Settings keeps the chord it had on the ☰ key
     esc: { primary: Escape, shift: Alt+Shift+Backspace }  # Shift+Escape is the browser's task manager on Windows
     undo: { primary: Ctrl+Z, shift: Home }
     redo: { primary: [Ctrl+Y, Ctrl+Shift+Z], shift: End }
-    select: { primary: Alt+ArrowUp, shift: F1 }
-    deselect: { primary: Alt+ArrowDown, shift: Alt+Shift+O }  # Mode: the chord it had on Fmt (R322)
-    vars: { primary: Alt+V, shift: Alt+Shift+V, alpha: A }
+    select: { primary: Alt+ArrowUp, shift: Alt+Shift+Y }  # Copy (R723; Alt+Shift+C is cos.shift, acos)
+    deselect: { primary: Alt+ArrowDown, shift: Alt+Shift+V }  # Paste: the chord it had on Vars (R329)
+    vars: { primary: Alt+V, shift: { why: "reserved, R725" }, alpha: A }
     math: { primary: Alt+F, shift: Alt+Shift+F, alpha: B }
     tmpl: { primary: Alt+Shift+U, shift: Alt+U, alpha: C }  # Alt+U, the shorter, for the units key
     x: { primary: x, shift: y, alpha: D }
@@ -441,6 +441,8 @@ desktop:
     add: { primary: "+", shift: Alt+Shift+A, alpha: ";" }
   actions:
     apps: Alt+A
+    menu: Alt+M  # the bar's ☰ (R723: no key holds it)
+    mode: Alt+Shift+O  # the Mode sheet (R723: the bar's chips; no key holds it)
     switch: Alt+H
     symb: F2
     plot: F3
