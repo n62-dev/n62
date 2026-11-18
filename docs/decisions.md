@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **R724, ⌄'s touch box over the line's text:** a full 48 × 48 box took a tap on the line's first term (the caret, a hold) and folded instead; built: the box is 48 × 48 but takes taps only left of the text over the field (32 px wide there, 48 below it). Keep? Recommended; the alternative is the full box and a first term that folds.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
