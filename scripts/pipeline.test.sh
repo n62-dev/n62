@@ -46,6 +46,20 @@ grep -q 'mismatch' "$here/pipeline.sh" || fail "pipeline.sh does not compare the
 grep -qE 'reuseExistingServer: *false' "$here/../app/playwright.config.ts" || fail "playwright.config.ts reuses an existing server"
 # point 3: a stale dist fails with a message
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+# A259: the stand-ins answer as `claude -p --output-format json` does: the reply in .result, the counts in .usage and .modelUsage.
+# `jout "$*" <text>` (the model is the --model in the arguments; 4500 tokens in with the cache, 1200 out, $0.50 a call);
+# JOUT_TEXT=1 makes it print the plain text (an old CLI)
+export JOUT="$tmp/jout.sh"
+cat > "$JOUT" <<'JSTUB'
+jout() {
+  if [ -n "$JOUT_TEXT" ]; then printf '%s\n' "$2"; return; fi
+  m=$(printf '%s' "$1" | sed -n 's/.*--model \([a-z]*\).*/\1/p'); [ -n "$m" ] || m=sonnet
+  e=false; [ -z "$3" ] || e=true   # a third argument: an error result (the CLI's limit text comes so, with exit 1)
+  jq -n --arg r "$2" --arg m "claude-$m" --argjson e "$e" '{type:"result",subtype:"success",is_error:$e,result:$r,total_cost_usd:0.5,
+    usage:{input_tokens:1000,output_tokens:1200,cache_read_input_tokens:3000,cache_creation_input_tokens:500},
+    modelUsage:{($m):{inputTokens:1000,outputTokens:1200,cacheReadInputTokens:3000,cacheCreationInputTokens:500,costUSD:0.5}}}'
+}
+JSTUB
 mkdir -p "$tmp/dist"; touch -d '2000-01-01' "$tmp/dist/index.html"
 out="$(node "$here/../app/scripts/size-check.ts" "$tmp/dist" 2>&1)"; rc=$?
 [[ $rc -eq 1 ]] && grep -q 'older than' <<<"$out" || fail "size-check on a stale dist: exit $rc: $out"
@@ -140,8 +154,8 @@ printf '#!/bin/sh\nexit 0\n' > "$sb/tools/devlock.sh"; chmod +x "$sb/tools/devlo
 cat > "$sb/bin/claude" <<'STUB'
 #!/bin/sh
 case "$*" in
-  *"--agent sofia"*) [ -z "$SB_DIRTY" ] || echo dirty >> "$SB_DIRTY/tracked"; echo APPROVED;;
-  *) echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; echo done;;
+  *"--agent sofia"*) [ -z "$SB_DIRTY" ] || echo dirty >> "$SB_DIRTY/tracked"; . "$JOUT"; jout "$*" APPROVED;;
+  *) echo w >> w.txt; git add w.txt; git -c user.name=t -c user.email=t@t commit -qm work; . "$JOUT"; jout "$*" done;;
 esac
 STUB
 printf '#!/bin/sh\n[ "$1" = ci ] && { mkdir -p node_modules/x; exit 0; }\necho "sh: 1: svelte-check: command not found"; exit 1\n' > "$sb/bin/npm"; chmod +x "$sb/bin/claude" "$sb/bin/npm"
@@ -756,6 +770,7 @@ exit 0
 STUB
 cat > "$mq/bin/claude" <<STUB
 #!/bin/sh
+. "\$JOUT"
 br=\$(git rev-parse --abbrev-ref HEAD 2>/dev/null | tr / -)
 case "\$*" in
   *"Opus pass "*) owner > "$mq/pass-start"; echo "\$(pwd) \$(git rev-parse --abbrev-ref HEAD) \$(git rev-parse --short=9 HEAD)" > "$mq/pass-where"
@@ -774,15 +789,15 @@ case "\$*" in
        hold) touch "$mq/hold.started"; i=0; while [ ! -e "$mq/hold.go" ] && [ \$i -lt 300 ]; do sleep 0.2; i=\$((i + 1)); done;;
        limit) echo "Claude usage limit reached" >&2; exit 1;;
      esac
-     owner > "$mq/pass-end"; echo "My preface."; echo "OPUS PASS 1"; echo "VERDICT: old"; echo; echo "OPUS PASS 2"; echo "VERDICT: last"; echo "NOTES: n";;
+     owner > "$mq/pass-end"; jout "\$*" "\$(printf 'My preface.\nOPUS PASS 1\nVERDICT: old\n\nOPUS PASS 2\nVERDICT: last\nNOTES: n')";;
   *"Write the shift report"*) owner > "$mq/report-owner"
-     case "\$MQ_REPORT" in limit) echo "You've hit your 5-hour limit"; exit 1;; fail) echo "something broke"; exit 1;; esac
-     echo abc1234;;
+     case "\$MQ_REPORT" in limit) jout "\$*" "You've hit your 5-hour limit" err; exit 1;; limittext) echo "You've hit your 5-hour limit"; exit 1;; fail) echo "something broke"; exit 1;; esac
+     jout "\$*" abc1234;;
   *"--agent sofia"*) echo "\$br \$(owner)" >> "$mq/audits"; sleep 2
-     if [ -n "\$MQ_FIX" ] && [ "\$br" = "\$MQ_FIX" ] && [ ! -e "$mq/fixed-\$br" ]; then touch "$mq/fixed-\$br"; echo FIX; echo "a.txt:1: say more"; else echo APPROVED; fi;;
-  *"fix round"*) echo "\$br \$(owner)" >> "$mq/fixes"; echo more >> "\$br.txt"; git add -A; git -c user.name=t -c user.email=t@t commit -qm fix; echo fixed;;
+     if [ -n "\$MQ_FIX" ] && [ "\$br" = "\$MQ_FIX" ] && [ ! -e "$mq/fixed-\$br" ]; then touch "$mq/fixed-\$br"; jout "\$*" "\$(printf 'FIX\na.txt:1: say more')"; else jout "\$*" APPROVED; fi;;
+  *"fix round"*) echo "\$br \$(owner)" >> "$mq/fixes"; echo more >> "\$br.txt"; git add -A; git -c user.name=t -c user.email=t@t commit -qm fix; jout "\$*" fixed;;
   *) if [ -n "\$MQ_HOLD" ]; then touch "\$MQ_HOLD.started"; i=0; while [ ! -e "\$MQ_HOLD" ] && [ \$i -lt 150 ]; do sleep 0.2; i=\$((i + 1)); done; fi
-     echo w > "\$br.txt"; git add -A; git -c user.name=t -c user.email=t@t commit -qm "work \$br"; echo done;;
+     echo w > "\$br.txt"; git add -A; git -c user.name=t -c user.email=t@t commit -qm "work \$br"; jout "\$*" done;;
 esac
 STUB
 cat > "$mq/fake-ci.js" <<'STUB'
@@ -954,6 +969,13 @@ out="$(MQ_REPORT=limit mqrun "$script" report 2>/dev/null)"; rc=$?
 grep -q 'Shift report: LIMIT' "$mq/.coord/log.md" || fail "A121: a report at a limit logs no 'Shift report: LIMIT'"
 out="$(MQ_REPORT=fail mqrun "$script" report 2>/dev/null)"; rc=$?
 [[ $rc -eq 0 && "$out" == "RESULT report: something broke" ]] || fail "A121: a report failing with other text changed: rc $rc, out '$out'"
+# A259: a pass and the report log the tokens of their call; their reply files hold the plain text; a limit in the JSON error result is still exit 75
+grep -qE 'pipeline #[0-9]+ report: tokens 5k in, 1k out, \$0\.50 \(report sonnet 6k\)$' "$mq/.coord/log.md" || fail "A259: the report logs no tokens line: $(grep 'report:' "$mq/.coord/log.md" | head -n 3)"
+rj="$(ls "$mq"/.tasks/report-*/reply.md.json 2>/dev/null | head -n1)"; [[ -n "$rj" ]] || fail "A259: the report's JSON is not kept beside its reply"
+grep -qE 'pipeline #[0-9]+ pass-1[5-9]: tokens 5k in, 1k out, \$0\.50 \(sofia opus 6k\)$' "$mq/.coord/log.md" || fail "A259: a pass logs no tokens line: $(grep 'pass-' "$mq/.coord/log.md" | head -n 3)"
+[[ "$(head -n1 "$mq/.tasks/pass-15/reply.md")" == "My preface." && -s "$mq/.tasks/pass-15/reply.md.json" ]] || fail "A259: the pass's reply.md is not the plain reply, or its JSON is not kept: $(head -c 120 "$mq/.tasks/pass-15/reply.md")"
+out="$(MQ_REPORT=limittext mqrun "$script" report 2>/dev/null)"; rc=$?
+[[ $rc -eq 75 && "$out" == "RESULT report: LIMIT" ]] || fail "A259: a report whose limit text is plain (not JSON) is not LIMIT: rc $rc, out '$out'"
 # the device step holds integ while it builds the APK and releases it before the device run
 cat > "$mq/bin/adb" <<'STUB'
 #!/bin/sh
@@ -1528,14 +1550,15 @@ STUB
 cat > "$ab/bin/claude" <<STUB
 #!/bin/sh
 c() { git add -A; git -c user.name=t -c user.email=t@t commit -q "\$@"; }
+. "\$JOUT"
 case "\$*" in
   *"--agent sofia"*) echo "audit \$(git rev-parse HEAD)" >> "$ab/seen"; : > "$ab/audit-on"
      i=0; while [ ! -e "$ab/e2e-running" ] && [ \$i -lt 80 ]; do sleep 0.1; i=\$((i + 1)); done
      [ ! -e "$ab/e2e-running" ] || { echo "audit beside e2e" >> "$ab/seen"; : > "$ab/audit-saw-e2e"; }
-     if [ -n "\$AB_FIX" ] && [ ! -e "$ab/fixed-once" ]; then : > "$ab/fixed-once"; printf 'FIX\napp/src/engine/x.ts:1 the stand-in audit finding: fix it\n'; else echo APPROVED; fi;;
-  *"fix round"*) date +%s%N > fix.txt; c -m fix; echo fixed;;
+     if [ -n "\$AB_FIX" ] && [ ! -e "$ab/fixed-once" ]; then : > "$ab/fixed-once"; jout "\$*" "\$(printf 'FIX\napp/src/engine/x.ts:1 the stand-in audit finding: fix it')"; else jout "\$*" APPROVED; fi;;
+  *"fix round"*) date +%s%N > fix.txt; c -m fix; jout "\$*" fixed;;
   *) mkdir -p app/src/engine; date +%s%N > app/src/engine/x.ts; c -m "report: w" -m "Done: w.
-Tests: none."; echo done;;
+Tests: none."; jout "\$*" done;;
 esac
 STUB
 chmod +x "$ab/bin/"* "$ab/tools/devlock.sh"; git -C "$ab" add -A; gc "$ab" init; git -C "$ab" branch phase-1
@@ -1550,6 +1573,19 @@ heads="$(grep -E '^(audit|golden|e2e) [0-9a-f]{40}$' "$ab/seen" | cut -d' ' -f2 
 [[ "$(grep -E '^(acquire|release) host-cpu|^behaviour$' "$ab/locks" | grep -B1 -x behaviour | head -n1)" == "acquire host-cpu"* ]] || fail "A84: the behaviour diff runs without host-cpu: $(cat "$ab/locks")"
 grep -q '^audit beside the checks (A84): ' <<<"$("$script" ron "$ron_pkg" --dry-run 2>&1)" || fail "A84: the dry run does not show the audit beside the checks"
 grep -q 'the checks run meanwhile; judge the diff' "$here/pipeline.sh" && ! grep -q 'the deterministic checks passed' "$here/pipeline.sh" || fail "A84: the audit prompt still says the checks passed"
+# A259: a run's end logs its tokens (the worker's and the audit's counts of the JSON replies), each reply file holds the plain text, the JSON is beside it
+tl="$(grep -E 'pipeline #[0-9]+ B1: tokens' "$ab/.coord/log.md")"
+grep -qE 'pipeline #[0-9]+ B1: tokens 9k in, 2k out, \$1\.00 \(annabell sonnet 6k, audit opus 6k\)$' <<<"$tl" && [[ "$(wc -l <<<"$tl")" -eq 1 ]] || fail "A259: the run's tokens line is not 'tokens 9k in, 2k out, \$1.00 (annabell sonnet 6k, audit opus 6k)', once: $tl"
+b1d="$(ls -d "$ab"/.tasks/*-b1 | head -n1)"
+[[ "$(cat "$b1d/worker-0.log" 2>/dev/null)" == done && "$(cat "$b1d/audit-0.log" 2>/dev/null)" == APPROVED ]] || fail "A259: a reply file does not hold the plain reply text: $(head -c 200 "$b1d/worker-0.log")"
+jq -e '.usage.output_tokens == 1200 and .result == "done"' "$b1d/worker-0.log.json" >/dev/null 2>&1 && [[ -s "$b1d/audit-0.log.json" ]] || fail "A259: the JSON is not kept beside the reply (<reply>.json)"
+grep -rq -- '--output-format text' "$here/pipeline.sh" "$here/night.sh" && fail "A259: pipeline.sh or night.sh still asks for --output-format text"
+grep -q -- 'claude_common=(--permission-mode auto --output-format json' "$here/pipeline.sh" || fail "A259: claude_common is not --output-format json"
+# a reply that is not JSON (an old CLI, a crash) is kept as text, logged 'tokens: unknown', and never fails the run
+out="$(JOUT_TEXT=1 abrun "$script" annabell "ab task" --id B4 --branch p1/b4 --checks docs 2>&1)"
+grep -q '^RESULT #[0-9]* B4: MERGED' <<<"$out" || fail "A259: a text reply fails the run: $out"
+grep -qE 'pipeline #[0-9]+ B4: tokens: unknown$' "$ab/.coord/log.md" || fail "A259: a text reply is not logged 'tokens: unknown': $(grep B4 "$ab/.coord/log.md")"
+b4d="$(ls -d "$ab"/.tasks/*-b4 | head -n1)"; [[ "$(cat "$b4d/worker-0.log")" == done && ! -e "$b4d/worker-0.log.json" ]] || fail "A259: a text reply was changed or got a .json"
 out="$(AB_E2E_FAIL=1 AB_FIX=1 abrun "$script" annabell "ab task" --id B2 --branch p1/b2 --checks docs,typecheck,e2e 2>&1)"
 f1="$(ls "$ab"/.tasks/*-b2/fix-1.in 2>/dev/null | head -n1)"
 fe="$(grep -n '^## e2e failed' "$f1" 2>/dev/null | head -n1 | cut -d: -f1)"; fa="$(grep -n 'the stand-in audit finding' "$f1" 2>/dev/null | head -n1 | cut -d: -f1)"

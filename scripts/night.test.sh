@@ -146,11 +146,16 @@ n=$(echo "$*" | grep -oE 'henri-[0-9]+' | cut -d- -f2)
 k=$(( $(wc -l < "$SBN_ASKED") + 1 ))   # A121: a retried step keeps its number, so the reply is keyed on the count of asks
 cat > "$SBN_IN.$n"; echo "$k" >> "$SBN_ASKED"
 r=$(sed -n "${k}p" "$SBN_REPLIES")
+# A259: henri's call answers as `claude -p --output-format json` does (4500 tokens in with the cache, 1200 out, $0.50 a call)
+jout() { jq -n --arg r "$1" --argjson e "$2" '{type:"result",subtype:"success",is_error:$e,result:$r,total_cost_usd:0.5,
+  usage:{input_tokens:1000,output_tokens:1200,cache_read_input_tokens:3000,cache_creation_input_tokens:500},
+  modelUsage:{"claude-sonnet":{inputTokens:1000,outputTokens:1200,cacheReadInputTokens:3000,cacheCreationInputTokens:500,costUSD:0.5}}}'; }
 case "$r" in
-  LIMIT) echo "You've hit your 5-hour limit"; exit 1;;
+  LIMIT) jout "You've hit your 5-hour limit" true; exit 1;;
+  LIMITERR) echo "You've hit your 5-hour limit" >&2; exit 1;;
   FAIL) echo "boom"; echo "boom" >&2; exit 1;;
 esac
-echo "${r:-SHIFT DONE}"
+jout "${r:-SHIFT DONE}" false
 STUB
 # a fake df (A69): SBN_DF_KB set = that many KB available on every file system
 cat > "$sb/bin/df" <<'STUB'
@@ -251,6 +256,19 @@ out="$(sbnight l2 --limit-wait 1 --max-steps 3 2>&1)"; rc=$?
 grep -q ' pass 7 ' "$tmp/l2.calls" && grep -qx 'lane= device 9' "$tmp/l2.calls" || fail "limits: henri at a limit in closing step 1 lost the last pass (rc $rc): $(cat "$tmp/l2.calls")"
 newlog | grep -q 'no Opus pass line' && fail "limits: a limit in closing step 1 read as no pass line: $(newlog)"
 [[ "$(nwait)" -eq 1 ]] || fail "limits: closing step 1: $(nwait) waits, expected 1"
+# the CLI's limit text on stderr only (no JSON on stdout) is a limit too
+printf '%s\n' LIMITERR "$R1" > "$tmp/l7.replies"; lcase
+out="$(sbnight l7 --limit-wait 1 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q 'ron R1' "$tmp/l7.calls" && [[ "$(nwait)" -eq 1 ]] && ! newlog | grep -q 'STOPPED' || fail "limits: a limit text on stderr is not waited for (rc $rc): $(newlog)"
+# A259: the lane's henri cost: one line at its end, from the JSON replies (2 asks: R1, then SHIFT DONE); a reply that is not JSON counts as unknown
+printf '%s\n' "$R1" > "$tmp/t1.replies"; lcase
+out="$(sbnight t1 --lane A 2>&1)"; rc=$?
+newlog | grep -qE '^- [0-9:]+ \[A\] night\.sh: henri tokens 9k in, 2k out, \$1\.00 \(2 calls\)$' || fail "A259: no 'henri tokens 9k in, 2k out, \$1.00 (2 calls)' line at the lane's end (rc $rc): $(newlog | tail -n 4)"
+grep -q 'ron R1' "$tmp/t1.calls" || fail "A259: henri's JSON reply did not give the command (the reply is .result): $(cat "$tmp/t1.calls")"
+printf '%s\n' FAIL "$R1" FAIL FAIL > "$tmp/t2.replies"; lcase
+out="$(sbnight t2 2>&1)"; rc=$?
+newlog | grep -qE '^- [0-9:]+ night\.sh: henri tokens 5k in, 1k out, \$0\.50 \(4 calls, 3 unknown\)$' || fail "A259: a failed (not JSON) henri call is not counted unknown beside the known one: $(newlog | tail -n 3)"
+grep -q -- '--output-format text' "$night" && fail "A259: night.sh still asks for --output-format text"
 # henri exits 1 with other text, twice: still the old stop, and no wait
 printf '%s\n' FAIL FAIL > "$tmp/l3.replies"; lcase
 out="$(sbnight l3 --limit-wait 1 2>&1)"; rc=$?
