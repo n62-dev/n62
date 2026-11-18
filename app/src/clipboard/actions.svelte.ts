@@ -152,6 +152,13 @@ export class ClipActions {
     this.ops.acted?.("copy");
     return this.copyRaw(entryText(latex, this.opts));
   }
+  /** Shift + Select (R723): what a hold on the row's result copies, of `row` (the picked one), else of the last finished
+   *  row; false, and nothing written, when there is no such row or an app is open (its rows are not Home's). */
+  keyCopy(row?: HistoryItem): boolean {
+    const i = this.shell.app === null ? this.target(row) : undefined;
+    if (i) void this.holdCopy(i, "result", "");
+    return i !== undefined;
+  }
   copy(item?: HistoryItem): Promise<boolean> {
     return this.serial(() => this.copyNow(item));
   }

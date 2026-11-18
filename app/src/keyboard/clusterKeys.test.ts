@@ -34,9 +34,12 @@ function ctx(items: Row[] = [], app: string | null = null) {
     cycleFormat: async () => void log.push("cycleFormat"),
   };
   const shell = { app, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, nav: () => false, toggleMenu: () => (log.push("toggleMenu"), true) };
+  // ClipActions.keyCopy (clipboard/actions.test.ts holds its rule): here it says what it was given and whether it copied
   const clip = {
-    holdCopy: async (item: Row, part: string) => void log.push(`copy:${item.input}:${part}`),
-    copy: async (item?: Row) => void log.push(`copy:${item?.input ?? "?"}`),
+    keyCopy: (row?: Row): boolean => {
+      log.push(`keyCopy:${row?.input ?? "none"}`);
+      return app === null && (row ? row.status === "done" : items.some((r) => r.status === "done"));
+    },
     paste: async () => void log.push("paste"),
   };
   const c = {
@@ -81,25 +84,25 @@ describe("Shift + Select is Copy (R723)", () => {
     const { c, press, log } = ctx([done("1"), done("2"), done("3")]);
     c.picked = 1;
     press("select", "shift");
-    expect(log).toEqual(["copy:2:result"]);
+    expect(log).toEqual(["keyCopy:2"]);
   });
-  test("with no pick it copies the last finished row", () => {
+  test("with no pick it asks for the last finished row", () => {
     const { press, log } = ctx([done("1"), done("2"), { input: "3", status: "error" }]);
     press("select", "shift");
-    expect(log).toEqual(["copy:2:result"]);
+    expect(log).toEqual(["keyCopy:none"]);
   });
   test("with no rows, or none finished, it is a dead press and writes nothing", () => {
     const a = ctx();
     a.press("select", "shift");
-    expect(a.log).toEqual(["dead"]);
+    expect(a.log).toEqual(["keyCopy:none", "dead"]);
     const b = ctx([{ input: "1", status: "error" }]);
     b.press("select", "shift");
-    expect(b.log).toEqual(["dead"]);
+    expect(b.log).toEqual(["keyCopy:none", "dead"]);
   });
   test("in an app it is a dead press", () => {
     const { press, log } = ctx([done("1")], "function");
     press("select", "shift");
-    expect(log).toEqual(["dead"]);
+    expect(log).toEqual(["keyCopy:none", "dead"]);
   });
 });
 

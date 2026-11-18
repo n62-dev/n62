@@ -132,6 +132,40 @@ describe("ClipActions row buttons and the hold", () => {
   });
 });
 
+// R723: Shift + Select (keyCopy) writes what a hold on the row's result does: the given row, else the last finished one;
+// with none, or in an app, nothing is written and the route makes it a dead press.
+describe("ClipActions keyCopy (Shift + Select, R723)", () => {
+  const make = (items: object[], app: string | null = null) => {
+    let clip = "untouched";
+    const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
+    const shell = { app, showsEntry: true } as unknown as AppShell;
+    const acted: string[] = [];
+    const c = new ClipActions({ items } as unknown as Session, shell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port);
+    return { c, clip: () => clip, acted };
+  };
+  const row = (full: string, status = "done") => ({ status, latex: full, full, fullExact: true, rational: undefined, facts: {} });
+  it("copies the given row's full value, as a hold on its result, and counts as copy", async () => {
+    const rows = [row("1/3"), row("2/3")];
+    const m = make(rows);
+    expect(m.c.keyCopy(rows[0] as never)).toBe(true);
+    await vi.waitFor(() => expect(m.clip()).toBe("1/3"));
+    expect(m.acted).toEqual(["copy"]);
+  });
+  it("with no row given, the last finished row", async () => {
+    const m = make([row("1/3"), row("2/3"), row("x", "error")]);
+    expect(m.c.keyCopy()).toBe(true);
+    await vi.waitFor(() => expect(m.clip()).toBe("2/3"));
+  });
+  it("no finished row, a given row without a result, or an app: false, and nothing written", async () => {
+    const pending = row("5", "pending");
+    for (const m of [make([]), make([row("x", "error")]), make([row("1/3")], "function")]) expect(m.c.keyCopy()).toBe(false);
+    const m = make([row("1/3"), pending]);
+    expect(m.c.keyCopy(pending as never)).toBe(false);
+    await new Promise((r) => setTimeout(r, 20));
+    expect([m.clip(), m.acted]).toEqual(["untouched", []]);
+  });
+});
+
 // R130, R720: ☰ Home/CAS has seven rows (their digits are learned); item 7 is Export ›, with the work report in it.
 describe("ClipActions menu: Export › is item 7", () => {
   const menuOf = (items: object[]) => {

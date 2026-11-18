@@ -199,15 +199,9 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
   c.sheetLoad ??= load;
 }
 
-/** Shift + Select (R723): Copy, what a hold on a row's result copies (R276; ☰ → Copy › Full value, R720), of `row` (the
- *  picked one), else of the last finished row. No such row, or an app (its rows are not Home's), is a dead press: the double
- *  pulse and no clipboard write. */
-function copyKey(c: RouteCtx, row?: HistoryItem): void {
-  let item = row;
-  for (let i = c.session.items.length - 1; item === undefined && i >= 0; i--) if (c.session.items[i]?.status === "done") item = c.session.items[i];
-  if (c.shell.app !== null || item?.status !== "done") return c.dead();
-  c.withClip((x) => void x.holdCopy(item, "result", ""));
-}
+/** Shift + Select (R723): Copy, the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
+ *  an app, is a dead press with no clipboard write. */
+const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => void (x.keyCopy(row) || c.dead()));
 
 /** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
  *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
