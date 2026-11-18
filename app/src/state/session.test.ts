@@ -186,6 +186,13 @@ describe("Shift locks on a second tap, as Alpha does (R726)", () => {
     s.toggleShift();
     expect([s.alpha, s.shift, s.shiftLock]).toEqual([true, false, false]);
   });
+  it("a Shift tap that ends a Shift lock leaves Alpha as it is", () => {
+    const s = new Session(new FakeCalc(), fakeKv());
+    s.flickShiftLock();
+    s.toggleAlpha();
+    s.toggleShift();
+    expect(mods(s)).toEqual({ ...off, alpha: true });
+  });
   it("releaseModifiers ends every armed layer and every lock", () => {
     const s = new Session(new FakeCalc(), fakeKv());
     for (const set of [() => s.toggleShift(), () => (s.toggleShift(), s.toggleShift()), () => s.toggleAlpha(), () => (s.toggleAlpha(), s.toggleAlpha()), () => (s.toggleShift(), s.toggleAlpha(), s.toggleAlpha())]) {

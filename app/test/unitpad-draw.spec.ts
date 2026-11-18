@@ -104,7 +104,7 @@ test("the cells are the keys' own faces and legends, the prefixes in their own c
   await tap(page, ["shift"]);
   await expect(text("d9", "main")).toHaveText("ft");
   await expect(text("d9", "shiftlegend")).toHaveText("");
-  await tap(page, ["shift"]); // off again
+  await page.evaluate(() => window.n62.session.releaseModifiers()); // off again (a second Shift tap would lock it, R726)
   const bg = (id: string): Promise<string> => page.locator(`[data-key="${id}"]`).evaluate((el) => getComputedStyle(el).backgroundColor);
   await expect(page.locator('[data-key="d1"]')).toHaveAttribute("data-pad", "prefix");
   await expect(page.locator('[data-key="d9"]')).toHaveAttribute("data-pad", "unit");

@@ -89,7 +89,7 @@ for (const [family, brightness] of LOOKS)
     expect(parseFloat(rest.on)).toBeGreaterThan(parseFloat(rest.rest));
     await tap(page, ["shift"]);
     const shift = await at("shift", "on");
-    await tap(page, ["shift"]);
+    await page.evaluate(() => window.n62.session.releaseModifiers()); // (a second Shift tap locks it, R726)
     const back = await at("ring", "rest");
     expect(back.box, "back at rest: the same box").toEqual(rest.box);
     await tap(page, ["alpha"]);
