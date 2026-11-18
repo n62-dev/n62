@@ -38,9 +38,13 @@ describe("key names (R41)", () => {
     expect(layerName(k("div"), "shift", false)).toBe("x to the minus one");
     expect(layerName(k("emark"), "primary", false)).toBe("E for the exponent");
     expect(layerName(k("shift"), "primary", false)).toBe("Shift");
-    // R197: Help on Shift + Select is live, so TalkBack reads it on the key
-    expect(layerName(k("select"), "shift", false)).toBe("Help");
-    expect(keyLabels(k("select"), false, false, false)).toEqual({ label: "Select", description: "Shift: Help" });
+    // R723: Help (Shift Settings) at row 0, col 4; Copy and Paste on Shift + Select and Shift + Deselect; Shift + Vars reserved
+    expect(keyLabels(k("help"), false, false, false)).toEqual({ label: "Help", description: "Shift: Settings" });
+    expect(keyLabels(k("help"), true, false, false)).toEqual({ label: "Settings", description: "" });
+    expect(keyLabels(k("select"), false, false, false)).toEqual({ label: "Select", description: "Shift: Copy" });
+    expect(keyLabels(k("deselect"), false, false, false)).toEqual({ label: "Deselect", description: "Shift: Paste" });
+    expect(keyLabels(k("vars"), false, false, false)).toEqual({ label: "Variables", description: "Alpha: A" });
+    expect(keyLabels(k("vars"), true, false, false).label).toBe("Variables"); // no Shift layer to read
   });
 
   it("the label is the layer a tap gives now, the description the other layers", () => {

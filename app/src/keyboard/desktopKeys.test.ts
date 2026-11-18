@@ -35,7 +35,16 @@ describe("the desktop key map (R131)", () => {
     expect(stale, "desktop.keys names a key or layer that `keys:` does not have (removed, or a reserved layer)").toEqual([]);
   });
   it("its actions are the status line's controls and results mode's fold", () => {
-    expect(desktop.entries.filter((e) => "action" in e.target).map((e) => (e.target as { action: string }).action).sort()).toEqual(["apps", "fold", "num", "plot", "switch", "symb"]);
+    expect(desktop.entries.filter((e) => "action" in e.target).map((e) => (e.target as { action: string }).action).sort()).toEqual(["apps", "fold", "menu", "mode", "num", "plot", "switch", "symb"]);
+  });
+  it("R723: F1 is Help, Alt + M the bar's ☰, Alt + Shift + O Mode, Alt + Shift + Y Copy; Alt + Shift + C stays acos", () => {
+    expect(desktop.byName.get("F1")).toEqual({ key: "help", layer: "primary" });
+    expect(desktop.byName.get("Alt+Shift+M")).toEqual({ key: "help", layer: "shift" });
+    expect(desktop.byName.get("Alt+M")).toEqual({ action: "menu" });
+    expect(desktop.byName.get("Alt+Shift+O")).toEqual({ action: "mode" });
+    expect(desktop.byName.get("Alt+Shift+Y")).toEqual({ key: "select", layer: "shift" });
+    expect(desktop.byName.get("Alt+Shift+C")).toEqual({ key: "cos", layer: "shift" });
+    expect(desktop.entries.find((e) => "key" in e.target && e.target.key === "vars" && e.target.layer === "shift")?.why).toMatch(/reserved, R725/);
   });
   it("no two share a desktop key: the reader refuses a table where they do", () => {
     const keys = doc["desktop"] as { keys: Record<string, unknown>; actions: Record<string, unknown> };

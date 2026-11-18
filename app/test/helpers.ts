@@ -86,6 +86,10 @@ export const sheet = (page: Page): Locator => page.getByTestId("menu");
  *  picked row, else the last result; Paste puts the clipboard's number on the line, and the keys after it wait for it. */
 export const COPY: string[] = ["@menu", "d2", "d1"];
 export const PASTE: string[] = ["@menu", "d4"];
+/** Shift + Select, the Copy key (R723): what a hold on the picked row's result copies, else the last finished row's. */
+export const KEYCOPY: string[] = ["shift", "select"];
+/** Shift + Deselect, the Paste key (R723): ☰ → Paste's path. */
+export const KEYPASTE: string[] = ["shift", "deselect"];
 
 /** ☰ and the view's own item `id` (an app's Copy or CSV: the app menus have no numbers a test can rely on). */
 export async function menuItem(page: Page, id: string): Promise<void> {

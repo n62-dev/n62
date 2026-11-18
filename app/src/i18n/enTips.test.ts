@@ -38,12 +38,8 @@ describe("the first-start tips (R290)", () => {
     expect(c).toMatch(/hold.*select/i);
     expect(c).toMatch(/Select and Deselect grow and shrink/);
   });
-  it("say that ☰, on the keys and on the bar, holds Paste and each app's menu", () => {
-    const c = card(/☰/);
-    expect(c).toMatch(/keys/);
-    expect(c).toMatch(/\bbar\b/);
-    expect(c).toMatch(/Paste/);
-    expect(c).toMatch(/each app's menu/);
+  it("say that ☰ on the bar holds Paste and each app's menu (R723: no ☰ key)", () => {
+    expect(card(/☰/)).toBe("Tap ☰ on the bar for Paste and each app's menu");
   });
   it("name the units key and → Check, the end slot of the unit view (R352, R349)", () => {
     expect(card(/Units/)).toBe("Units: type the numbers, then Shift + Units (Tmpl). A unit after each number; → Check checks the result against a unit");

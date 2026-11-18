@@ -132,7 +132,7 @@ test("R301: 2+, a picked row of 5, Store ▶: the title names 2+5, A stores 7, a
   await expect(lastResult(page)).toHaveAttribute("data-text", "7");
   expect(await names(page)).toEqual(["A"]);
   // ☰ 1 with no pick acts on the last result (7) the same way, and the filled A's question repeats the title's text
-  await tap(page, ["d2", "add", "menu"]);
+  await tap(page, ["d2", "add", "@menu"]);
   await sheetKey(page, ["d1"]);
   await expect(store(page).getByTestId("sheet-title")).toHaveText("Store 2+7 in");
   await cell(page, "A").tap();

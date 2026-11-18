@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R329 (the owner, 2026-11-15): Shift + Vars is Paste, a reserved cell filled. It takes ☰ → Paste's path (the clipboard
-// as one number onto the entry line, clipboard/actions.svelte.ts paste), the keys pressed meanwhile wait for it (holdKeys),
-// and where no entry line shows it is a dead press (R127). It opens no sheet (no ▾). Vars' tap stays Find on the user's
-// names; the other blank Shift cells (a b/c, 7, Fmt) stay reserved. The real route.press, a stub context (no MathLive).
+// R723 (the owner, 2026-11-17): Shift + Deselect is Paste (R329 had it on Shift + Vars, now reserved for Chars, R725). It
+// takes ☰ → Paste's path (the clipboard as one number onto the entry line, clipboard/actions.svelte.ts paste), the keys
+// pressed meanwhile wait for it (holdKeys), and where no entry line shows it is a dead press (R127). It opens no sheet (no
+// ▾). Deselect's tap stays Deselect (R279). The real route.press, a stub context (no MathLive).
 import { describe, expect, test, vi } from "vitest";
 
 vi.mock("../render/mathlive.svelte.ts", () => ({ mathlive: { load: () => new Promise(() => {}) } }));
@@ -52,14 +52,13 @@ function ctx(app: string | null = null, entryShown = true) {
   return { c, log, press, finish: (ok = true) => done(ok) };
 }
 
-describe("R329: Shift + Vars is Paste", () => {
-  test("the spec: vars.shift is the paste special with the Paste legend; the tap and the letter are unchanged", () => {
-    expect(actionFor(k("vars"), true, false)).toEqual({ kind: "special", name: "paste" });
-    expect(k("vars").label.shift).toBe("$key.paste");
-    expect(labelFor(k("vars"), true, false)).toBe("$key.paste");
+describe("R723: Shift + Deselect is Paste", () => {
+  test("the spec: deselect.shift is the paste special with the Paste legend; the tap is unchanged", () => {
+    expect(actionFor(k("deselect"), true, false)).toEqual({ kind: "special", name: "paste" });
+    expect(k("deselect").label.shift).toBe("$key.paste");
+    expect(labelFor(k("deselect"), true, false)).toBe("$key.paste");
     expect(en["key.paste" as keyof typeof en]).toBe("Paste");
-    expect(actionFor(k("vars"), false, false)).toEqual({ kind: "special", name: "vars" });
-    expect(actionFor(k("vars"), false, true)).toEqual({ kind: "type", text: "A" });
+    expect(actionFor(k("deselect"), false, false)).toEqual({ kind: "special", name: "selectShrink" });
   });
 
   test("paste is a special that opens no sheet: no ▾ on its legend", () => {
@@ -69,19 +68,19 @@ describe("R329: Shift + Vars is Paste", () => {
   });
 
   test("TalkBack names the layer", () => {
-    expect(enKeyNames).toHaveProperty("vars.shift", "Paste");
-    expect(layerName(k("vars"), "shift", false)).toBe("Paste");
-    expect(keyLabels(k("vars"), false, false, false).description).toBe("Shift: Paste. Alpha: A");
+    expect(enKeyNames).toHaveProperty("deselect.shift", "Paste");
+    expect(layerName(k("deselect"), "shift", false)).toBe("Paste");
+    expect(keyLabels(k("deselect"), false, false, false).description).toBe("Shift: Paste");
   });
 
-  test("a hardware keyboard: Alt + Shift + V, beside Vars' Alt + V", () => {
-    expect(desktop.byName.get("Alt+Shift+V")).toEqual({ key: "vars", layer: "shift" });
+  test("a hardware keyboard: Alt + Shift + V; Vars keeps Alt + V", () => {
+    expect(desktop.byName.get("Alt+Shift+V")).toEqual({ key: "deselect", layer: "shift" });
     expect(desktop.byName.get("Alt+V")).toEqual({ key: "vars", layer: "primary" });
   });
 
   test("in Home it pastes the clipboard (☰ → Paste's path), and a key pressed meanwhile waits for it (holdKeys)", async () => {
     const { c, log, press, finish } = ctx();
-    press("vars", "shift");
+    press("deselect", "shift");
     expect(log).toEqual(["paste:clipboard"]);
     expect(c.sheetLoad).not.toBeNull(); // the hold
     press("div");
@@ -92,22 +91,22 @@ describe("R329: Shift + Vars is Paste", () => {
 
   test("in an app view with an entry line (Solve Symb) it pastes as well", () => {
     const { log, press } = ctx("solve", true);
-    press("vars", "shift");
+    press("deselect", "shift");
     expect(log).toEqual(["paste:clipboard"]);
   });
 
   test("where no entry line shows (Plot) it is a dead press and reads no clipboard", () => {
     const { c, log, press } = ctx("function", false);
-    press("vars", "shift");
+    press("deselect", "shift");
     expect(log).toEqual(["dead"]);
     expect(c.sheetLoad).toBeNull();
   });
 
-  test("controls: Vars' tap opens Find on the user's names; Shift + a b/c, 7 and Fmt stay reserved (Shift + 1 is R327's)", () => {
+  test("controls: Vars' tap opens Find on the user's names; Shift + a b/c, 7, Fmt and Vars are reserved (Shift + 1 is R327's)", () => {
     const { log, press } = ctx();
     press("vars");
     expect(log).toEqual(["names"]);
-    for (const id of ["frac", "d7", "fmt"]) {
+    for (const id of ["frac", "d7", "fmt", "vars"]) {
       expect(k(id).actions.shift, id).toBeUndefined();
       expect(k(id).label.shift, id).toBeUndefined();
     }

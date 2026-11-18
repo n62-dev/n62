@@ -220,21 +220,21 @@ describe("every numbered list is in the lock (R299)", () => {
 
 describe("a pinned key layer cannot change unnoticed (altered copies of the spec)", () => {
   it("a changed action names the entry", () => {
-    const p = problems(spec((k) => (key(k, "menu")["primary"] = { special: "esc" })));
-    expect(p).toEqual(['layers/menu.primary: pinned "special menu", now "special esc"']);
+    const p = problems(spec((k) => (key(k, "help")["primary"] = { special: "esc" })));
+    expect(p).toEqual(['layers/help.primary: pinned "special help", now "special esc"']);
   });
   it("a layer taken away names the entry", () => {
     const p = problems(spec((k) => drop(k, "select", "shift")));
-    expect(p.join("\n")).toContain('layers/select.shift: pinned "special help" is gone');
+    expect(p.join("\n")).toContain('layers/select.shift: pinned "special copy" is gone');
   });
   it("a layer copied into a reserved cell names that cell", () => {
     const p = problems(
       spec((k) => {
         key(k, "fmt")["shift"] = key(k, "select")["shift"];
-        (key(k, "fmt")["label"] as Record<string, string>)["shift"] = "$key.help";
+        (key(k, "fmt")["label"] as Record<string, string>)["shift"] = "$key.copy";
       }),
     );
-    expect(p).toEqual(['layers/fmt.shift: reserved in the lock but live ("special help"): record the fill in the lock']); // (R322: Shift + Fmt is reserved)
+    expect(p).toEqual(['layers/fmt.shift: reserved in the lock but live ("special copy"): record the fill in the lock']); // (R322: Shift + Fmt is reserved)
   });
   it("a reserved cell turned live is not in the lock yet", () => {
     const p = problems(
