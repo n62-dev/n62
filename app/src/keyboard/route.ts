@@ -236,6 +236,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     return true;
   }
   if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
+  if (action.kind === "special" && action.name === "copy" && c.entry.hasSelection) return false; // R727: Copy takes the line's selection, the pick stays
   const item = items[picked];
   c.picked = null;
   if (isCmd("moveToPreviousChar") && item && c.entry.empty) {

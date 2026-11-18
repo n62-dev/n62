@@ -79,17 +79,24 @@ test("sin(2) selected whole: Shift + Select copies what a hold on that input cop
   await expect.poll(() => clipboard(page)).toBe("sin(2)");
 });
 
-test("1÷3 Enter, ▲, 5, select 5, Shift + Select: the clipboard holds 5, not the row", async ({ page }) => {
+test("1÷3 Enter, 5 on the line, tap the row to pick it, select 5, Shift + Select: the clipboard holds 5 and the pick stays", async ({ page }) => {
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 1);
-  await tap(page, ["up"]);
-  await expect(page.locator('[data-selected="true"]')).toHaveCount(1);
   await tap(page, ["d5"]);
-  await selectUntil(page, "5");
+  await page.locator('[data-status="done"]').last().locator(".result").tap(); // a first tap picks the row (R147), the text stays
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(1);
+  // (Select does nothing on a pick, R279: the line's selection is made the way a drag in the line makes it)
+  await page.evaluate(() => {
+    const mf = window.n62.entry.field;
+    if (!mf) throw new Error("no field");
+    mf.selection = { ranges: [[0, mf.lastOffset]] };
+  });
+  expect(await selected(page)).toBe("5");
   await setClipboard(page, "untouched");
   await tap(page, KEYCOPY);
   await expect.poll(() => clipboard(page)).toBe("5");
   expect(await entryValue(page)).toBe("5");
+  await expect(page.locator('[data-selected="true"]')).toHaveCount(1);
 });
 
 test("no selection: the last row's full value; with a pick, the picked row's (R723 as before)", async ({ page }) => {

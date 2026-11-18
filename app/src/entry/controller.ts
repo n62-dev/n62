@@ -263,6 +263,10 @@ export class EntryController {
   select(grow: boolean): boolean {
     return !!this.mf && !!this.chain?.step(this.mf, grow);
   }
+  /** R727: the line has a selection (not collapsed); Shift + Select then copies it, and a pick stays. */
+  get hasSelection(): boolean {
+    return !!this.mf && !this.mf.selectionIsCollapsed;
+  }
   /** Any other key ends the chain of Select presses (R279; a tap does by changing the selection). */
   endSelect(): void {
     this.chain?.end();
