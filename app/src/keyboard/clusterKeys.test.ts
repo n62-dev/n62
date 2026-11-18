@@ -2,7 +2,7 @@
 // R723 (the owner, 2026-11-17): the cluster's cells. Row 0, col 4 is Help (its own id `help`, R197), Shift Settings; the
 // id `menu` is retired (☰ is on the bar, R722). Shift + Select is Copy (what a hold on the row's result copies, R276, R720):
 // the picked row, else the last finished row; no row, or an app, is a dead press with no clipboard write. Shift + Deselect is
-// Paste (deselectPaste.test.ts); Mode has no key (the bar's chips). Shift + Fmt and Shift + Vars are reserved: no action, no
+// Paste (deselectPaste.test.ts); Mode has no key (the bar's chips). Shift + Fmt is reserved (Shift + Vars is Chars, R725): no action, no
 // legend, a dead press. The real route.press, a stub context (no MathLive, no field).
 import { describe, expect, test, vi } from "vitest";
 
@@ -106,7 +106,7 @@ describe("Shift + Select is Copy (R723)", () => {
   });
 });
 
-describe("Mode has no key (R723); Shift + Fmt and Shift + Vars are reserved", () => {
+describe("Mode has no key (R723); Shift + Fmt is reserved (Shift + Vars is Chars, R725)", () => {
   test("no key's layer holds mode; Shift + Deselect does not open it", () => {
     const holders = keyboard.keys.flatMap((k) => Object.entries(k.actions).filter(([, a]) => a?.kind === "special" && a.name === "mode").map(([l]) => `${k.id}.${l}`));
     expect(holders).toEqual([]);
@@ -119,7 +119,7 @@ describe("Mode has no key (R723); Shift + Fmt and Shift + Vars are reserved", ()
     press("fmt");
     expect(log).toEqual(["cycleFormat"]);
   });
-  for (const id of ["fmt", "vars"])
+  for (const id of ["fmt"])
     test(`Shift + ${id} is dead and changes nothing on the line: no action, no legend`, () => {
       const { press, log, entry } = ctx();
       const before = entry.value;

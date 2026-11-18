@@ -33,8 +33,8 @@ interface Place {
 }
 
 /** The palettes' sheet ids: Tmpl (R10), Shift + 6 and Shift + 9 (R18). Also their i18n prefix (`<id>.title`). */
-export type PaletteId = "tmpl" | "rel" | "sym";
-const PALETTE_IDS: readonly string[] = ["tmpl", "rel", "sym"] satisfies PaletteId[];
+export type PaletteId = "tmpl" | "rel" | "sym" | "chars";
+const PALETTE_IDS: readonly string[] = ["tmpl", "rel", "sym", "chars"] satisfies PaletteId[];
 
 /** The entry line asks for a name (R89, views/presetsView.svelte.ts): its label stands over the line, and every key's
  *  action goes to `key` first (true: taken). The asker clears `prompt` when done; `cancel` ends it as Esc does (the line
@@ -263,8 +263,8 @@ export class AppShell {
   showFind(title: string, categories: readonly MenuItem[], search: (q: string) => readonly MenuItem[]): void {
     this.openSheet((S) => new S("find", title, () => categories, { search, remember: false }));
   }
-  /** A palette on the grid sheet: Tmpl (R10; its key closes it again), Shift + 6 `rel` and Shift + 9 `sym` (R18; the
-   *  digits pick inside those, so only Esc and Cancel close them). Each opens on its last pick. */
+  /** A palette on the grid sheet: Tmpl (R10; its key closes it again), Shift + 6 `rel`, Shift + 9 `sym` (R18; the
+   *  digits pick inside those, so only Esc and Cancel close them) and Shift + Vars `chars` (R725: over the view, its digits pick a cell of the focused row; Sheet reads that from the id). Each opens on its last pick. */
   togglePalette(id: PaletteId, title: string, items: () => readonly MenuItem[], columns: number): void {
     if (this.sheet?.id === id) this.sheet = null;
     else this.openSheet((S) => new S(id, title, items, { columns }));

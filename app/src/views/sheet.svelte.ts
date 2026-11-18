@@ -77,6 +77,9 @@ export class Level {
   /** A grid of this many columns (the Tmpl palette, R10): ▲ ▼ ◀ ▶ move in two dimensions, no numbers, no filter.
    *  Undefined: a list. */
   readonly columns: number | undefined;
+  /** R725, the Chars sheet: a grid whose cells carry their digit (1-9, 0 the tenth) in the corner; a digit key picks that
+   *  cell of the row with the focus, and no cell is picked by the key at its place (pickKey). */
+  readonly digits: boolean;
   /** R281: the items marked `cell` are drawn as a grid of this many columns above the list (the store sheet's letters);
    *  ▲ ▼ move a row of the grid, ◀ ▶ one cell, and no row has a number (a digit types into the name). */
   readonly cells: number | undefined;
@@ -93,6 +96,7 @@ export class Level {
     this.memo = memo;
     this.remember = opts?.remember ?? true;
     this.columns = opts?.columns;
+    this.digits = memo === CHARS_SHEET && opts?.columns !== undefined;
     this.cells = opts?.cells;
     this.typed = opts?.typed;
     this.note = opts?.note;
@@ -273,6 +277,10 @@ export interface SheetOptions {
 export type Picked = { kind: "stay" } | { kind: "run"; item: MenuItem };
 const STAY: Picked = { kind: "stay" };
 
+/** R725: the Chars sheet (Shift + Vars): a grid drawn over the view like a list that takes letters, so the keypad's digit keys
+ *  stay uncovered, and whose digit keys pick a cell of the row with the focus (Level.digits). */
+const CHARS_SHEET = "chars";
+
 export class Sheet {
   /** Names the sheet for the remembered pick: `apps`, `menu:<place>`, `list:<title>`. */
   readonly id: string;
@@ -297,7 +305,7 @@ export class Sheet {
     this.settings = opts?.settings;
     const root = new Level(title, items, id, opts);
     this.levels = [root];
-    this.rootLetters = root.filterable;
+    this.rootLetters = root.filterable || id === CHARS_SHEET;
   }
 
   get level(): Level {
@@ -323,9 +331,15 @@ export class Sheet {
     return this.levels.slice(-3).map((l) => l.title).join(" › ");
   }
 
-  /** Digit keys and taps: the row numbered `n` (1…10) on screen. A grid has no numbers: a digit does nothing there. */
+  /** Digit keys and taps: the row numbered `n` (1…10) on screen. A grid has no numbers: a digit does nothing there, but in
+   *  a grid with `digits` (Chars, R725) it picks the n-th cell of the row with the focus (0 is the tenth). */
   pickNumber(n: number): Picked {
-    if (this.level.columns !== undefined) return STAY;
+    const grid = this.level;
+    if (grid.columns !== undefined) {
+      if (!grid.digits || n > grid.columns) return STAY;
+      const i = Math.floor(Math.max(grid.highlight, 0) / grid.columns) * grid.columns + n - 1;
+      return i < grid.items.length ? this.activate(i) : STAY;
+    }
     const row = this.level.rows.find((r) => r.n === n);
     return row ? this.activate(row.index) : STAY;
   }
@@ -333,7 +347,7 @@ export class Sheet {
   /** A key that picks a grid cell by its place (Shift + 6, R18: 7 8 9 ÷ / 4 5 6 × / 1 2 3). Undefined: no cell of the
    *  open level is picked by this key, so the key does its usual sheet job. */
   pickKey(keyId: string): Picked | undefined {
-    if (this.level.columns === undefined) return undefined;
+    if (this.level.columns === undefined || this.level.digits) return undefined;
     const i = this.level.items.findIndex((x) => x.pick?.key === keyId);
     return i < 0 ? undefined : this.activate(i);
   }

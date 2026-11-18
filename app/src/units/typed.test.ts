@@ -164,6 +164,20 @@ describe("HwTyping: the unit view's typing keys", () => {
   const ev = (key: string, mods: { ctrlKey?: boolean; altKey?: boolean } = {}) => ({ key, ctrlKey: false, metaKey: false, altKey: false, isComposing: false, ...mods });
   const keys = (t: HwTyping, ks: string): boolean[] => [...ks].map((k) => t.key(ev(k)));
 
+  it("R725: µ typed (the micro sign of the Chars sheet) is the prefix, Ω the ohm, as the pad's cells give them; μ and the ohm sign too", () => {
+    for (const [k, emit] of [["µ", { do: "prefix", id: "u" }], ["μ", { do: "prefix", id: "u" }], ["Ω", { do: "unit", id: "ohm" }], ["\u2126", { do: "unit", id: "ohm" }]] as const) {
+      const { v, got } = view();
+      expect(new HwTyping(v).key(ev(k)), k).toBe(true);
+      expect(got, k).toEqual([emit]);
+    }
+    const { v, s, got } = view();
+    const t = new HwTyping(v);
+    keys(t, "m"); // a run of letters in progress: the mark ends it first, then it is pressed
+    expect(t.key(ev("µ"))).toBe(true);
+    expect(got).toEqual([{ do: "prefix", id: "u" }]);
+    expect(slot(s)).toBe("m");
+  });
+
   it("letters go into the run; `/` ends it and goes the keypad's way; `^` then 2 is the power ²", () => {
     const { v, s, got } = view();
     const t = new HwTyping(v);

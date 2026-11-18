@@ -42,8 +42,7 @@ export interface RouteCtx {
   clearKey(): void;
   openSettings(): void;
   openMode(at?: string): void;
-  openTemplates(): void;
-  openShiftPalette(id: "rel" | "sym"): void;
+  openShiftPalette(id: "tmpl" | "rel" | "sym" | "chars"): void;
   /** Math (R4a): open Find (inside Find, Math types b; docs/04 3.7). */
   openFind(slot?: { id: string; layer: Layer }): void;
   /** Vars (R4b): Find on the user's variables and functions; Shift + Math, Memory: the same list with delete and clear all. */
@@ -135,7 +134,7 @@ export function special(c: RouteCtx, name: Special): void {
       else c.dead();
       break;
     case "tmpl":
-      c.openTemplates();
+      c.openShiftPalette("tmpl");
       break;
     case "units":
       units(c);
@@ -148,6 +147,9 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "symbols":
       c.openShiftPalette("sym");
+      break;
+    case "chars":
+      c.openShiftPalette("chars"); // R725: Shift + Vars
       break;
     case "find":
       c.openFind();

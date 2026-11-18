@@ -35,7 +35,7 @@
 #                                  Any action may carry `line: <action>`, used instead of it when the
 #                                  one-line entry mode is on (a linear form of the same key).
 #   { cmd: "moveToNextChar" }      a MathLive editing command
-#   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|units|selectGrow|selectShrink|help|uncertainty|none }
+#   { special: shift|alpha|enter|clear|esc|home|cas|switch|settings|mode|apps|symb|plot|num|menu|copy|paste|tmpl|relations|symbols|chars|units|selectGrow|selectShrink|help|uncertainty|none }
 #                                  handled by the app (home, cas: go to that view, from an app too; switch: Home <-> CAS,
 #                                  or back to Home/CAS from an app; apps, symb, plot, num, menu, mode: the status line's
 #                                  controls, R15c1, and what a user key may hold; selectGrow, selectShrink: Select grows
@@ -128,9 +128,9 @@ keys:
 
   # ---- row 3 (r4). P8, docs/04 section 5.1: Vars = Find on variables (R4b), Math = Find (R4a), shift Math = Memory (R4b);
   # shift Tmpl = the unit view (R24c). The Alpha letters stay. Tmpl opens the template palette (R10, `templates:` below).
-  # Shift + Vars is RESERVED (docs/06 section 3b; R723: Paste, there since R329, moved to Shift + Deselect): no action and no
-  # legend, dimmed in that layer only, counted when pressed, until R725 fills it with Chars.
-  - { id: vars, row: 3, col: 0, cls: fn, label: { primary: "$key.vars", alpha: A }, primary: { special: vars }, alpha: { type: A }, source: virtual-calc }  # r4c1; Find on the user's variables and functions (R4b, docs/04 5.1)
+  # Shift + Vars is Chars (R725, owner 2026-11-17; docs/06 section 3b; R723 had reserved it when Paste moved to Shift + Deselect): the
+  # Greek letters and an engineer's symbols on a grid sheet over the view (`chars:` below).
+  - { id: vars, row: 3, col: 0, cls: fn, label: { primary: "$key.vars", shift: "$key.chars", alpha: A }, primary: { special: vars }, shift: { special: chars }, alpha: { type: A }, source: virtual-calc }  # r4c1; Find on the user's variables and functions (R4b, docs/04 5.1)
   - { id: math, row: 3, col: 1, cls: fn, label: { primary: "$key.math", shift: "$key.memory", alpha: B }, primary: { special: find }, shift: { special: memory }, alpha: { type: B }, source: virtual-calc }  # r4c2; Find, everything (R4a); Shift = Memory, the reference's Mem (R4b, docs/04 5.1)
   - { id: tmpl, row: 3, col: 2, cls: fn, label: { primary: "$key.tmpl", shift: "$key.units", alpha: C }, primary: { special: tmpl }, shift: { special: units }, alpha: { type: C }, source: virtual-calc }  # r4c3 (the palette: seen on a G2, 2026-10-13); shift: the units key (R24c, G2 item 30)
   # The variable key types x (the reference types the current app's variable, X in its Function app); shift y is
@@ -402,7 +402,7 @@ desktop:
     redo: { primary: [Ctrl+Y, Ctrl+Shift+Z], shift: End }
     select: { primary: Alt+ArrowUp, shift: Alt+Shift+Y }  # Copy (R723; Alt+Shift+C is cos.shift, acos)
     deselect: { primary: Alt+ArrowDown, shift: Alt+Shift+V }  # Paste: the chord it had on Vars (R329)
-    vars: { primary: Alt+V, shift: { why: "reserved, R725" }, alpha: A }
+    vars: { primary: Alt+V, shift: Alt+Shift+H, alpha: A }
     math: { primary: Alt+F, shift: Alt+Shift+F, alpha: B }
     tmpl: { primary: Alt+Shift+U, shift: Alt+U, alpha: C }  # Alt+U, the shorter, for the units key
     x: { primary: x, shift: y, alpha: D }
@@ -627,3 +627,69 @@ symbols:
     # row 4: ours, not the G2's (R110, owner 2026-11-01): the cell's own `source` says so; the grid's usual rule reaches it (▼ from `mu` in column 1, ▲ from `fact` wraps to it, ◀ ▶ in reading order)
     - { id: percent, row: 3, col: 0, desc: "percent", insert: "\\%", sample: ["5\\%", "1/20"], source: assumed }
   source: device
+
+# Shift + Vars, Chars (R725, owner 2026-11-17): Greek letters and an engineer's symbols, 10 columns on the Shift palettes' grid
+# sheet. It rises over the view as a list that takes letters does (the digit keys stay uncovered): each cell shows its digit
+# (1-9, 0 for the tenth) in its corner, a digit picks that cell in the row with the focus, ▲ ▼ move the focus between rows,
+# ◀ ▶ one cell, a tap picks any cell. Cells in rows: 10 small Greek letters, 10 more, 10 capitals, ten engineer's marks, then six.
+# Greek capitals that look Latin (Α Β Ε …) are left out. Every cell has its parser rule and round trip (`sample`), or `refused: true`
+# with the parser's message; a Greek letter is a name (the symbols: palette's spelling: β γ ε are beta_ gamma_ epsilon_; Π is a name,
+# Pi_, never π, which stays on Shift + 3; Ξ Π υ have names since R725, engine/standIns.ts). Cells that are a key's layer (`key`,
+# `layer`: × ± ∠ √) insert what that key inserts, so they cannot differ from it. ≈ is refused (Shift + Enter is approx()); Å as in
+# `symbols:`; µ (the micro sign U+00B5) is refused on a maths line and points to μ (the unit view reads it as the prefix); ‰ is per
+# mille, read as % is (5‰ is 5/1000). In a name or text prompt a cell types its character, a refused one too.
+chars:
+  columns: 10
+  items:
+    # row 1
+    - { id: alpha,   row: 0, col: 0, desc: "alpha", insert: "\\alpha", sample: ["2\\alpha", "2*alpha"] }
+    - { id: beta,    row: 0, col: 1, desc: "beta", insert: "\\beta", sample: ["2\\beta", "2*beta_"] }
+    - { id: gamma,   row: 0, col: 2, desc: "gamma", insert: "\\gamma", sample: ["2\\gamma", "2*gamma_"] }
+    - { id: delta,   row: 0, col: 3, desc: "delta", insert: "\\delta", sample: ["2\\delta", "2*delta"] }
+    - { id: epsilon, row: 0, col: 4, desc: "epsilon", insert: "\\varepsilon", sample: ["2\\varepsilon", "2*epsilon_"] }
+    - { id: zeta,    row: 0, col: 5, desc: "zeta", insert: "\\zeta", sample: ["2\\zeta", "2*zeta"] }
+    - { id: eta,     row: 0, col: 6, desc: "eta", insert: "\\eta", sample: ["2\\eta", "2*eta"] }
+    - { id: theta,   row: 0, col: 7, desc: "theta", insert: "\\theta", sample: ["2\\theta", "2*theta"] }
+    - { id: lambda,  row: 0, col: 8, desc: "lambda", insert: "\\lambda", sample: ["2\\lambda", "2*lambda"] }
+    - { id: mu,      row: 0, col: 9, desc: "mu", insert: "\\mu", sample: ["2\\mu", "2*mu"] }
+    # row 2
+    - { id: nu,      row: 1, col: 0, desc: "nu", insert: "\\nu", sample: ["2\\nu", "2*nu"] }
+    - { id: xi,      row: 1, col: 1, desc: "xi", insert: "\\xi", sample: ["2\\xi", "2*xi"] }
+    - { id: rho,     row: 1, col: 2, desc: "rho", insert: "\\rho", sample: ["2\\rho", "2*rho"] }
+    - { id: sigma,   row: 1, col: 3, desc: "sigma", insert: "\\sigma", sample: ["2\\sigma", "2*sigma"] }
+    - { id: tau,     row: 1, col: 4, desc: "tau", insert: "\\tau", sample: ["2\\tau", "2*tau"] }
+    - { id: upsilon, row: 1, col: 5, desc: "upsilon", insert: "\\upsilon", sample: ["2\\upsilon", "2*upsilon"] }
+    - { id: phi,     row: 1, col: 6, desc: "phi", insert: "\\varphi", sample: ["2\\varphi", "2*phi"] }
+    - { id: chi,     row: 1, col: 7, desc: "chi", insert: "\\chi", sample: ["2\\chi", "2*chi"] }
+    - { id: psi,     row: 1, col: 8, desc: "psi", insert: "\\psi", sample: ["2\\psi", "2*psi"] }
+    - { id: omega,   row: 1, col: 9, desc: "omega", insert: "\\omega", sample: ["2\\omega", "2*omega"] }
+    # row 3: the capitals that do not look Latin
+    - { id: Gamma,   row: 2, col: 0, desc: "capital gamma", insert: "\\Gamma", sample: ["2\\Gamma", "2*Gamma_"] }
+    - { id: Delta,   row: 2, col: 1, desc: "capital delta", insert: "\\Delta", sample: ["2\\Delta", "2*Delta"] }
+    - { id: Theta,   row: 2, col: 2, desc: "capital theta", insert: "\\Theta", sample: ["2\\Theta", "2*Theta"] }
+    - { id: Lambda,  row: 2, col: 3, desc: "capital lambda", insert: "\\Lambda", sample: ["2\\Lambda", "2*Lambda"] }
+    - { id: Xi,      row: 2, col: 4, desc: "capital xi", insert: "\\Xi", sample: ["2\\Xi", "2*Xi"] }
+    - { id: Pi,      row: 2, col: 5, desc: "capital pi", insert: "\\Pi", sample: ["2\\Pi", "2*Pi_"] }
+    - { id: Sigma,   row: 2, col: 6, desc: "capital sigma", insert: "\\Sigma", sample: ["2\\Sigma", "2*Sigma"] }
+    - { id: Phi,     row: 2, col: 7, desc: "capital phi", insert: "\\Phi", sample: ["2\\Phi", "2*Phi_"] }
+    - { id: Psi,     row: 2, col: 8, desc: "capital psi", insert: "\\Psi", sample: ["2\\Psi", "2*Psi_"] }
+    - { id: Omega,   row: 2, col: 9, desc: "capital omega", insert: "\\Omega", sample: ["2\\Omega", "2*Omega"] }
+    # row 4: an engineer's marks. ° ′ ″ ∞ ≠ ≤ ≥ insert what symbols: and relations: insert; × ± ∠ √ are their keys' own layers
+    - { id: deg,     row: 3, col: 0, desc: "degree", insert: "\\degree", sample: ["30\\degree", "30*pi/180"] }
+    - { id: minute,  row: 3, col: 1, desc: "minute ′", insert: "\\prime", sample: ["30\\degree15\\prime", "(30+15/60)*pi/180"] }
+    - { id: second,  row: 3, col: 2, desc: "second ″", insert: "\\doubleprime", sample: ["30\\degree36\\doubleprime", "(30+36/3600)*pi/180"] }
+    - { id: plusminus, row: 3, col: 3, desc: "plus or minus", key: comma, layer: shift }
+    - { id: times,   row: 3, col: 4, desc: "times", key: mul, layer: primary }
+    - { id: cdot,    row: 3, col: 5, desc: "multiplication dot", insert: "\\cdot", sample: ["3\\cdot4", "3*4"] }
+    - { id: angle,   row: 3, col: 6, desc: "angle", key: mul, layer: shift }
+    - { id: sqrt,    row: 3, col: 7, desc: "square root", key: sq, layer: shift }
+    - { id: inf,     row: 3, col: 8, desc: "infinity", insert: "\\infty", sample: ["\\infty", "inf"] }
+    - { id: permille, row: 3, col: 9, desc: "per mille", insert: "‰", sample: ["5‰", "5/1000"] }
+    # row 5
+    - { id: approx,  row: 4, col: 0, desc: "approximately", insert: "\\approx", sample: ["2\\approx3", ""], refused: true }
+    - { id: ne,      row: 4, col: 1, desc: "not equal", insert: "\\ne", sample: ["1\\ne2", "1!=2"] }
+    - { id: le,      row: 4, col: 2, desc: "less than or equal", insert: "\\le", sample: ["1\\le2", "1<=2"] }
+    - { id: ge,      row: 4, col: 3, desc: "greater than or equal", insert: "\\ge", sample: ["2\\ge1", "2>=1"] }
+    - { id: micro,   row: 4, col: 4, desc: "micro sign", insert: "µ", sample: ["2µ", ""], refused: true }
+    - { id: angstrom, row: 4, col: 5, desc: "ångström sign", insert: "\\AA", sample: ["5\\AA", ""], refused: true }
+  source: assumed

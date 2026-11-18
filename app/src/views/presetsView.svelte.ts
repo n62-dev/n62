@@ -230,7 +230,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
       else if (a.name === "esc") end();
       else if (a.name === "clear") entry.set("");
       else {
-        if (a.name !== "none") end();
+        if (a.name !== "none" && a.name !== "chars") end(); // R725: Chars opens over the name; its pick types into it
         return false;
       }
       return true;
@@ -244,7 +244,7 @@ function nameNow(host: PresetsHost, start: string, save: (name: string) => void,
   const view = shell.view;
   const stop = $effect.root(() => {
     $effect(() => {
-      if (shell.sheet !== null || shell.app !== app || shell.view !== view) end();
+      if ((shell.sheet !== null && (shell.sheet as { id?: string }).id !== "chars") || shell.app !== app || shell.view !== view) end();
     });
   });
 }

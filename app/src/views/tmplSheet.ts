@@ -5,7 +5,10 @@
 // key at its place (Shift + 6) carries that key and its legend.
 import type { MenuItem } from "../apps/types.ts";
 import { legend } from "../i18n/index.ts";
+import type { AppShell, PaletteId } from "../apps/shell.svelte.ts";
+import type { EntryController } from "../entry/controller.ts";
 import { keyboard, type ActionBody, type PaletteItem } from "../keyboard/keyboard.ts";
+import type * as Palettes from "../keyboard/shiftPalettes.ts";
 export { showBase } from "./baseSheet.ts"; // R193: the Base menu comes with the sheet's code
 import { lazy, type RouteCtx } from "../keyboard/route.ts";
 
@@ -44,4 +47,31 @@ export function paletteItems(
       run: () => insert(p),
     };
   });
+}
+
+/** What a palette needs of the app (App.svelte): the shell and the entry line, the session, the dead press, a notice, the pick to drop
+ *  and whether the entry is one line. */
+export interface PaletteHost {
+  readonly shell: AppShell;
+  readonly entry: EntryController;
+  readonly session: { readonly settings: { readonly entry: string } };
+  dead(): void;
+  say(text: string): void;
+  reset(): void;
+}
+
+/** Tmpl, Shift + 6, Shift + 9 and Shift + Vars: the palette `id` on the grid sheet (apps/shell.svelte.ts togglePalette); a pick
+ *  inserts its cell. R725: a refused Chars cell types nothing on a maths line and the notice gives the parser's message (in a
+ *  name prompt, which has shell.prompt, it types the character). */
+export function openPalette(h: PaletteHost, id: PaletteId, m: typeof Palettes): void {
+  const { shell, entry } = h;
+  if (!shell.showsEntry) return h.dead();
+  h.reset();
+  const p = m.palettes[id];
+  const insert = (c: PaletteItem): void => {
+    const why = c.refused && !shell.prompt ? m.charsRefusal(c.id) : undefined;
+    if (why === undefined) entry.run(paletteAction(c, h.session.settings.entry === "line"));
+    else h.say(why);
+  };
+  shell.togglePalette(id, m.paletteText(`${id}.title`), () => paletteItems(p.items, insert, (cell) => m.paletteText(`${id}.${cell}`)), p.columns);
 }

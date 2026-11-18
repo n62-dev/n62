@@ -30,7 +30,7 @@ describe("the desktop key map (R131)", () => {
     const stale = keyEntries.flatMap((e) => {
       const t = e.target as { key: string; layer: Layer };
       const k = keyboard.byId.get(t.key);
-      // (a reserved layer may carry its reason alone, no desktop key: R723's vars.shift, until R725 fills it)
+      // (a reserved layer may carry its reason alone, no desktop key)
       return k && (layersOf(k).includes(t.layer) || (e.names.length === 0 && /\breserved\b/.test(e.why ?? ""))) ? [] : [`${t.key} ${t.layer}`];
     });
     expect(stale, "desktop.keys names a key or layer that `keys:` does not have (removed, or a reserved layer)").toEqual([]);
@@ -45,7 +45,7 @@ describe("the desktop key map (R131)", () => {
     expect(desktop.byName.get("Alt+Shift+O")).toEqual({ action: "mode" });
     expect(desktop.byName.get("Alt+Shift+Y")).toEqual({ key: "select", layer: "shift" });
     expect(desktop.byName.get("Alt+Shift+C")).toEqual({ key: "cos", layer: "shift" });
-    expect(desktop.entries.find((e) => "key" in e.target && e.target.key === "vars" && e.target.layer === "shift")?.why).toMatch(/reserved, R725/);
+    expect(desktop.byName.get("Alt+Shift+H")).toEqual({ key: "vars", layer: "shift" }); // R725: Chars
   });
   it("no two share a desktop key: the reader refuses a table where they do", () => {
     const keys = doc["desktop"] as { keys: Record<string, unknown>; actions: Record<string, unknown> };

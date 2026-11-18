@@ -273,7 +273,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 |---|---|---|
 | Math (row 3, col 1) [r4c2] | Find, everything (R4a) | P8 |
 | Shift + Math | Memory: Find on variables and user functions, with delete and "clear all" | reference: Mem |
-| Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift + Vars is reserved for Chars (R725; Paste there from R329 until R723) | P8 |
+| Vars (row 3, col 0) [r4c1] | Find, filtered to variables; Shift = Chars (R725; Paste there from R329 until R723) | P8 |
 | Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (r8 rule M1) | P8, P11 |
 | Shift + Tmpl | the unit view (unit slots) | P11; reference: Units |
 | The letters A–Z, `#`, `:`, `;` (Alpha layer, flick down) | **stay**: Find's keyboard (3.7), names, CAS symbols, hex digits A–F (5.4); not the unit slots (P14) | decisions.md "The letters stay" |
@@ -294,7 +294,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Unit slots | the unit pad (`spec/unit-pad.yaml`, docs/archive/r9-unit-pad.md): prefix and unit cells over the maths rows, S5's arrangement, 18 user slots; Enter to the next slot, `→` the end slot. | P11, S1, P14 |
 | Fmt (row 9, col 0) | a tap cycles the last result's format; Shift is reserved (R322; Mode has no key since R723: the bar's STD and 12 chips) | ours; decisions.md "Settings in the Mode sheet, and presets" |
 | Shift + `( )` [r6c3]; Shift + 0 [r10c2] | ∥: Find's par() with the cursor inside (task t01); after a value it takes the value in, par(value, □) (R585); % (`\%`, the Shift + 9 palette's cell) | owner, 2026-11-14; docs/06 3b |
-| Unassigned Shift cells (a b/c, 7, Fmt; Vars waits for Chars, R725; `,` is ± (R71), 1 the σ sheet (R327); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
+| Unassigned Shift cells (a b/c, 7, Fmt; `,` is ± (R71), 1 the σ sheet (R327); the pad: none, P12 point 8) | they get the functions the task benchmark shows are pressed most, not a list made in advance | decisions.md "The letters stay" |
 
 
 ### 5.2 Decision: how key presses are counted (EN0)
@@ -321,7 +321,7 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 
 **The polar sign (R180, F192):** ∡ binds tighter than + × ÷ and looser than a power. Left: one factor (`3+4∡30` is `3+(4∡30)`). Right: one signed factor (a power or a `\frac` counts). `10∡30*2` is `(10∡30)*2`. In a flat line a bare `/` right after the angle or right before the radius is refused with "put the angle in brackets" (Giac reads `2∡π/6` as `(2∡π)/6` = -1/3); a factor written directly after the angle (`10∡2π`, `10∡2x`) is refused the same way (else `(10∡2)·π`). A stacked `\frac` stays fine (`2∡\frac{π}{6}`). The G2 makes `10∡30+5` `10∡(30+5)`; N62 differs on purpose so that `10∡30+5∡-45` adds two phasors (owner).
 
-**A number right after °, ′, % or ! is refused (be-7; owner, 2026-11-16):** the G2 reads `30°15` as 30°15′ (G2 checklist row 76), so the line names the missing mark, as `parse.oneExponent` does for ᴇ; R376 builds it. Until then the parser reads minutes and seconds only with their marks (`input/parse.ts`, the DMS rows) and the line computes a product it shows no × for: `30°15` = 450 in DEG, `2%3` = 0.06, `5!3` = 360.
+**A number right after °, ′, % (‰ beside %, R725: /1000) or ! is refused (be-7; owner, 2026-11-16):** the G2 reads `30°15` as 30°15′ (G2 checklist row 76), so the line names the missing mark, as `parse.oneExponent` does for ᴇ; R376 builds it. Until then the parser reads minutes and seconds only with their marks (`input/parse.ts`, the DMS rows) and the line computes a product it shows no × for: `30°15` = 450 in DEG, `2%3` = 0.06, `5!3` = 360.
 
 ---
 

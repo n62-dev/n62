@@ -10,8 +10,8 @@ export type Special =
   | "apps" | "symb" | "plot" | "num" | "menu"
   /** Places (R15b): Home, CAS (from an app too), and the status line's switch: Home ↔ CAS, or back from an app. */
   | "home" | "cas" | "switch"
-  /** The Shift palettes (R18): Shift + 6 relations and logic, Shift + 9 symbols and Greek. */
-  | "relations" | "symbols"
+  /** The Shift palettes (R18): Shift + 6 relations and logic, Shift + 9 symbols and Greek; Shift + Vars Chars (R725). */
+  | "relations" | "symbols" | "chars"
   /** Math (R4a): Find, everything (docs/04 3.5–3.7). */
   | "find"
   /** Vars (R4b): Find on the user's variables and functions; Shift + Math, Memory: the same list with delete and clear all. */
@@ -35,7 +35,7 @@ export type Special =
   /** A key whose function we don't have yet (it keeps its alpha letter): does nothing. */
   | "none";
 /** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
-export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "find", "vars", "memory", "base", "help", "matrix", "uncertainty"];
+export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "chars", "find", "vars", "memory", "base", "help", "matrix", "uncertainty"];
 export const SPECIALS: readonly Special[] = [
   "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "paste", "copy", "none", ...OPENS_SHEET,
 ];
@@ -100,7 +100,7 @@ export interface Key {
 /** A template action (and its one-line form, if any). */
 export type InsertAction = Extract<ActionBody, { kind: "insert" }> & { readonly line?: ActionBody };
 
-/** One cell of a palette (the Tmpl key, `templates:`; Shift + 6, `relations:`; Shift + 9, `symbols:`). */
+/** One cell of a palette (the Tmpl key, `templates:`; Shift + 6, `relations:`; Shift + 9, `symbols:`; Shift + Vars, `chars:`). */
 export interface PaletteItem {
   readonly id: string;
   readonly row: number;
@@ -124,8 +124,8 @@ export interface Palette {
 }
 
 /** The palettes by the yaml section that holds them; the template `keyId` of an own cell is `<prefix>:<id>`. */
-const PALETTES = { palette: "templates", relations: "relations", symbols: "symbols" } as const;
-const PREFIX: Readonly<Record<keyof typeof PALETTES, string>> = { palette: "tmpl", relations: "rel", symbols: "sym" };
+const PALETTES = { palette: "templates", relations: "relations", symbols: "symbols", chars: "chars" } as const;
+const PREFIX: Readonly<Record<keyof typeof PALETTES, string>> = { palette: "tmpl", relations: "rel", symbols: "sym", chars: "chr" };
 
 export interface Keyboard {
   /** Cells in a row unless `rowColumns` says otherwise. */
@@ -143,6 +143,8 @@ export interface Keyboard {
   readonly relations: Palette;
   /** Shift + 9, symbols and Greek (R18); as `relations`. */
   readonly symbols: Palette;
+  /** Shift + Vars, Chars (R725); as `relations`. */
+  readonly chars: Palette;
 }
 
 export class KeyboardSpecError extends Error {}
@@ -281,7 +283,7 @@ export function loadKeyboard(doc: unknown): Keyboard {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const units = [columns, ...rowColumns.values()].reduce((a, b) => (a * b) / gcd(a, b), 1);
   const pal = (k: keyof typeof PALETTES): Palette => loadPalette(doc[PALETTES[k]], PALETTES[k], byId, shipped);
-  return { columns, rowColumns, units, rows, keys, byId, palette: pal("palette"), relations: pal("relations"), symbols: pal("symbols") };
+  return { columns, rowColumns, units, rows, keys, byId, palette: pal("palette"), relations: pal("relations"), symbols: pal("symbols"), chars: pal("chars") };
 }
 
 /** A palette section (`templates:`, `relations:`, `symbols:`): a grid of cells, each the template of a key or its own
@@ -413,7 +415,7 @@ export interface Template {
 }
 
 /** Every LaTeX template on the keyboard, including the one-line variants and the palettes' own templates (keyId
- *  `tmpl:<id>`, `rel:<id>`, `sym:<id>`); each needs a parser case. */
+ *  `tmpl:<id>`, `rel:<id>`, `sym:<id>`, `chr:<id>`); each needs a parser case. */
 export function templates(kb: Keyboard): Template[] {
   const out: Template[] = [];
   for (const k of Object.keys(PALETTES) as (keyof typeof PALETTES)[])

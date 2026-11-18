@@ -22,6 +22,12 @@ export interface TypedView {
 
 /** The digits after `^` and the pad's power they press (² ³ ⁴, as the pad's ops cells). */
 const POWERS: Readonly<Record<string, 2 | 3 | 4>> = { "2": 2, "3": 3, "4": 4 };
+/** R725: the signs that are no ASCII letters: µ (U+00B5, the micro sign) and μ the prefix µ; Ω (U+03A9) and the ohm sign
+ *  (U+2126) the unit ohm: each as the pad's cell (padCells.ts SYMBOL: u, ohm). */
+const MARKS: Readonly<Record<string, PadEmit>> = {
+  "\u00B5": { do: "prefix", id: "u" }, "\u03BC": { do: "prefix", id: "u" },
+  "\u03A9": { do: "unit", id: "ohm" }, "\u2126": { do: "unit", id: "ohm" },
+};
 /** Keys that type nothing: they leave the run and a `^` as they are. */
 const BARE = new Set(["Shift", "Control", "Alt", "AltGraph", "Meta", "CapsLock", "Tab"]);
 
@@ -46,7 +52,11 @@ export class HwTyping {
     else if (caret === "^" && POWERS[k] !== undefined) v.apply({ do: "power", n: POWERS[k] });
     else if (caret === "^-" && k === "1") v.apply({ do: "power", n: -1 });
     else if (caret && k === "Backspace") return true; // (the `^` taken back)
-    else if (k.length === 1 && isLetters(k)) v.letter(k);
+    else if (MARKS[k] !== undefined) {
+      // R725: µ (the micro sign of the Chars sheet) is the prefix and Ω the ohm, as the pad's cells give them
+      if (v.typing && !v.endRun()) return true;
+      v.apply(MARKS[k] as PadEmit);
+    } else if (k.length === 1 && isLetters(k)) v.letter(k);
     else if (v.typing && k === "Backspace") v.untype();
     else if (v.typing && k === "Escape") {
       v.dropRun();

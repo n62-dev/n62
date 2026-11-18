@@ -11,8 +11,8 @@
 # The test also reads the last release tag's lock (`vX.Y.Z`; a pre-release such as a beta pins nothing; `git show`) and fails if
 # a live line pinned there is missing or edited.
 #
-# Sections (`section/slot`): layers `<key id>.<layer>` = `<kind> <name>` | reserved; tmpl, relations, symbols (the palettes of
-# Tmpl, Shift + 6, Shift + 9): `row,col` = the cell's id; home-menu, home-copy (☰ in Home and CAS; R720), mode (Mode's rows),
+# Sections (`section/slot`): layers `<key id>.<layer>` = `<kind> <name>` | reserved; tmpl, relations, symbols, chars (the palettes of
+# Tmpl, Shift + 6, Shift + 9, Shift + Vars): `row,col` = the cell's id; home-menu, home-copy (☰ in Home and CAS; R720), mode (Mode's rows),
 # settings (Settings' sections: Your keys and Data are in the shipped app, so all seven are pinned), apps, base (Shift + −),
 # matrix (Shift + 4; New is row 9), function-symb / function-plot / function-num and solve-symb / solve-num (each app view's ☰, Plot
 # with an answer and Solve with an unknown selected, so their last rows are there), stat-linreg and stat-stats1 (R184's sheets),
@@ -38,7 +38,7 @@ layers:
   "deselect.primary": "special selectShrink"
   "deselect.shift": "special paste"
   "vars.primary": "special vars"
-  "vars.shift": "reserved"
+  "vars.shift": "special chars"
   "vars.alpha": "type A"
   "math.primary": "special find"
   "math.shift": "special memory"
@@ -195,6 +195,53 @@ symbols:
   "2,6": "chi"
   "2,7": "Omega"
   "3,0": "percent"
+chars:
+  "0,0": "alpha"
+  "0,1": "beta"
+  "0,2": "gamma"
+  "0,3": "delta"
+  "0,4": "epsilon"
+  "0,5": "zeta"
+  "0,6": "eta"
+  "0,7": "theta"
+  "0,8": "lambda"
+  "0,9": "mu"
+  "1,0": "nu"
+  "1,1": "xi"
+  "1,2": "rho"
+  "1,3": "sigma"
+  "1,4": "tau"
+  "1,5": "upsilon"
+  "1,6": "phi"
+  "1,7": "chi"
+  "1,8": "psi"
+  "1,9": "omega"
+  "2,0": "Gamma"
+  "2,1": "Delta"
+  "2,2": "Theta"
+  "2,3": "Lambda"
+  "2,4": "Xi"
+  "2,5": "Pi"
+  "2,6": "Sigma"
+  "2,7": "Phi"
+  "2,8": "Psi"
+  "2,9": "Omega"
+  "3,0": "deg"
+  "3,1": "minute"
+  "3,2": "second"
+  "3,3": "plusminus"
+  "3,4": "times"
+  "3,5": "cdot"
+  "3,6": "angle"
+  "3,7": "sqrt"
+  "3,8": "inf"
+  "3,9": "permille"
+  "4,0": "approx"
+  "4,1": "ne"
+  "4,2": "le"
+  "4,3": "ge"
+  "4,4": "micro"
+  "4,5": "angstrom"
 home-menu:
   "1": "store"
   "2": "copy"

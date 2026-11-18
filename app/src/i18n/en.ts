@@ -25,6 +25,8 @@ export const en = {
   "key.esc": "Esc",
   "key.del": "Del",
   "key.vars": "Vars",
+  /** Shift + Vars (R725): the Chars sheet, Greek letters and an engineer's symbols. */
+  "key.chars": "Chars",
   /** Shift + Select (R723): what a hold on the picked or last row's result copies. */
   "key.copy": "Copy",
   /** Shift + Deselect (R723): ☰ → Paste on a key. */

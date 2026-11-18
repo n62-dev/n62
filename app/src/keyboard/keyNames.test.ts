@@ -38,13 +38,13 @@ describe("key names (R41)", () => {
     expect(layerName(k("div"), "shift", false)).toBe("x to the minus one");
     expect(layerName(k("emark"), "primary", false)).toBe("E for the exponent");
     expect(layerName(k("shift"), "primary", false)).toBe("Shift");
-    // R723: Help (Shift Settings) at row 0, col 4; Copy and Paste on Shift + Select and Shift + Deselect; Shift + Vars reserved
+    // R723: Help (Shift Settings) at row 0, col 4; Copy and Paste on Shift + Select and Shift + Deselect; Shift + Vars is Chars (R725)
     expect(keyLabels(k("help"), false, false, false)).toEqual({ label: "Help", description: "Shift: Settings" });
     expect(keyLabels(k("help"), true, false, false)).toEqual({ label: "Settings", description: "" });
     expect(keyLabels(k("select"), false, false, false)).toEqual({ label: "Select", description: "Shift: Copy" });
     expect(keyLabels(k("deselect"), false, false, false)).toEqual({ label: "Deselect", description: "Shift: Paste" });
-    expect(keyLabels(k("vars"), false, false, false)).toEqual({ label: "Variables", description: "Alpha: A" });
-    expect(keyLabels(k("vars"), true, false, false).label).toBe("Variables"); // no Shift layer to read
+    expect(keyLabels(k("vars"), false, false, false)).toEqual({ label: "Variables", description: "Shift: Characters. Alpha: A" });
+    expect(keyLabels(k("vars"), true, false, false).label).toBe("Characters"); // R725
   });
 
   it("the label is the layer a tap gives now, the description the other layers", () => {

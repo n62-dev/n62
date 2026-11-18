@@ -710,6 +710,15 @@ cases:
   - { id: "pal-greek-05", latex: "\\phi-\\varphi", expect: "0", source: "derived", group: "palettes" }
   - { id: "pal-greek-06", latex: "\\Gamma+1", expect: "Gamma_+1", source: "derived", group: "palettes", note: "Giac's Gamma is the function and cannot be stored" }
   - { id: "pal-greek-07", latex: "\\mu\\Omega", expect: "mu*Omega", source: "derived", group: "palettes", note: "names, never micro or ohm" }
+  # R725: the Chars sheet (Shift + Vars, spec/keyboard.yaml `chars:`)
+  - { id: "pal-chars-01", latex: "5‰", expect: "1/200", source: "derived", group: "palettes", note: "R725: per mille, 5/1000, read as % is" }
+  - { id: "pal-chars-02", latex: "2\\cdot50‰", expect: "1/10", source: "derived", group: "palettes", note: "2·(50/1000)" }
+  - { id: "pal-chars-03", latex: "5\\permille", expect: "1/200", source: "derived", group: "palettes", note: "the LaTeX command of the same mark" }
+  - { id: "pal-chars-04", latex: "2\\Pi", expect: "2*Pi_", source: "derived", group: "palettes", note: "Π is a name, never π (Giac's Pi is π, so Pi_)" }
+  - { id: "pal-chars-05", latex: "\\Xi+\\upsilon", expect: "Xi+upsilon", source: "derived", group: "palettes", note: "Ξ and υ have names since R725" }
+  - { id: "pal-chars-06", latex: "2\\approx3", error: true, source: "derived", group: "palettes", note: "≈ has no meaning on a line (Shift + Enter is approx())" }
+  - { id: "pal-chars-07", latex: "2µ", error: true, source: "derived", group: "palettes", note: "µ is the micro sign, refused on a maths line; μ is the letter" }
+  - { id: "pal-chars-08", latex: "2∠\\frac{\\pi}{6}", expect: "2*(cos(pi/6)+i*sin(pi/6))", source: "derived", group: "palettes", note: "∠ is the polar sign ∡" }
   - { id: "pal-greek-08", latex: "\\Delta x", expect: "Delta*x", source: "derived", group: "palettes" }
   - { id: "pal-greek-09", latex: "\\Sigma+\\sigma+\\delta+\\theta+\\lambda+\\rho+\\tau+\\chi", expect: "Sigma+sigma+delta+theta+lambda+rho+tau+chi", source: "derived", group: "palettes" }
   - { id: "pal-greek-10", latex: "\\Psi+1", expect: "Psi_+1", source: "derived", group: "palettes", note: "R18f1: Giac keeps Psi and Phi (Psi:=3 is refused); precision.yaml prec-greek-Psi stores 3 and gets 4" }

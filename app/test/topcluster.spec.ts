@@ -88,22 +88,21 @@ test("R723: Mode opens from the STD and 12 chips and from a free key that holds 
   await expect(sheet(page)).toBeHidden();
 });
 
-test("R723: Shift + Vars is reserved: dimmed in the Shift layer only, no legend, a dead press counted under its layer", async ({ page }) => {
-  await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+test("R725: Shift + Vars is Chars (R723 had reserved it): the legend Chars, live in the Shift layer, the press counted under its layer, the sheet opens", async ({ page }) => {
   const vars = page.locator('[data-key="vars"]');
-  await expect(vars.locator(".shiftlegend")).toHaveText("");
+  await expect(vars.locator(".shiftlegend")).toHaveText("Chars");
   const keys = (): Promise<Record<string, number>> => page.evaluate(() => ({ ...window.n62.session.taps.counts.keys }));
   await tap(page, ["shift"]);
-  await expect(vars).toHaveAttribute("data-dead", "true");
-  const v = (await vibrations(page)).length;
+  await expect(vars).not.toHaveAttribute("data-dead", "true");
   await tap(page, ["vars"]);
-  await expect.poll(async () => (await vibrations(page)).length - v).toBe(3); // the dead key's double pulse
-  await expect(sheet(page)).toHaveCount(0);
+  await expect(sheet(page)).toBeVisible();
+  await expect(page.getByTestId("sheet-title")).toHaveText("Characters");
   expect((await keys())["vars:shift"]).toBe(1);
   expect(await entryValue(page)).toBe("");
   await tap(page, ["esc"]);
+  await expect(sheet(page)).toBeHidden();
   await expect(vars).toHaveAttribute("aria-label", "Variables"); // (the names chunk is in)
-  await expect(vars).toHaveAttribute("aria-description", "Alpha: A"); // TalkBack reads no Shift layer
+  await expect(vars).toHaveAttribute("aria-description", "Shift: Characters. Alpha: A");
 });
 
 test.describe("R278: ☰ → Paste is how a number comes in from another app", () => {

@@ -86,9 +86,9 @@ describe("keyboard spec", () => {
     expect(k("fmt").actions.shift).toBeUndefined();
     expect(k("fmt").label).toEqual({ primary: "$key.fmt" });
     expect(k("fmt").actions.primary).toEqual({ kind: "special", name: "fmt" });
-    // Shift + Vars is RESERVED (R723: Paste moved to Shift + Deselect; R725 fills it with Chars)
-    expect(k("vars").actions.shift).toBeUndefined();
-    expect(k("vars").label.shift).toBeUndefined();
+    // Shift + Vars is Chars (R725; R723 had reserved it when Paste moved to Shift + Deselect)
+    expect(k("vars").actions.shift).toEqual({ kind: "special", name: "chars" });
+    expect(k("vars").label.shift).toBe("$key.chars");
     // R193 (docs/04 5.4): Shift + − opens the Base menu for the last result (route.ts: dead with text on the line)
     expect(k("sub").actions.shift).toEqual({ kind: "special", name: "base" });
     expect(k("sub").label.shift).toBe("$key.base");
@@ -258,6 +258,10 @@ describe("keyboard spec", () => {
     ...Object.fromEntries(
       ["fact", "arrow", "inf", "deg", "minute", "second", "amp", "aring", "alpha", "beta", "gamma", "Delta", "delta", "epsilon",
         "theta", "lambda", "mu", "rho", "Sigma", "sigma", "tau", "phi", "chi", "Omega", "percent"].map((id) => [`sym:${id}/primary/normal`, "a character"]),
+    ),
+    // R725, Shift + Vars: every cell of its own is a character (the key cells × ± ∠ √ are their keys' layers, listed there)
+    ...Object.fromEntries(
+      keyboard.chars.items.filter((c) => c.key === undefined).map((c) => [`chr:${c.id}/primary/normal`, "a character"]),
     ),
   };
   // The one-line forms of xʸ and x²: a bare caret. EntryController.run() brackets a selection in front of it (R17).

@@ -33,11 +33,11 @@ describe("typedName: the Giac name as typed (R260)", () => {
 
   it("every stand-in of the parser's tables reads back as the letter its key types (derived from GREEK, LETTER_NAMES)", () => {
     for (const [letter, name] of Object.entries(LETTER_NAMES)) expect(typedName(name)).toBe(letter);
-    // the Unicode Greek letters by name (U+0391 Α … U+03C9 ω); \varepsilon, \varphi, \vartheta share their letter's name
+    // the Unicode Greek letters by name (U+0391 Α … U+03C9 ω; R725: υ, Ξ and Π are names too, for the Chars sheet); \varepsilon, \varphi, \vartheta share their letter's name
     const LETTERS: Record<string, string> = {
       alpha: "α", beta: "β", gamma: "γ", delta: "δ", epsilon: "ε", zeta: "ζ", eta: "η", theta: "θ", iota: "ι", kappa: "κ",
-      lambda: "λ", mu: "μ", nu: "ν", xi: "ξ", rho: "ρ", sigma: "σ", tau: "τ", phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
-      Gamma: "Γ", Delta: "Δ", Theta: "Θ", Lambda: "Λ", Sigma: "Σ", Phi: "Φ", Psi: "Ψ", Omega: "Ω",
+      lambda: "λ", mu: "μ", nu: "ν", xi: "ξ", rho: "ρ", sigma: "σ", tau: "τ", upsilon: "υ", phi: "φ", chi: "χ", psi: "ψ", omega: "ω",
+      Gamma: "Γ", Delta: "Δ", Theta: "Θ", Lambda: "Λ", Xi: "Ξ", Pi: "Π", Sigma: "Σ", Phi: "Φ", Psi: "Ψ", Omega: "Ω",
     };
     for (const [cmd, name] of Object.entries(GREEK)) expect(typedName(name), cmd).toBe(LETTERS[cmd.replace(/^var/, "")]);
   });

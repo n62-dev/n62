@@ -11,7 +11,7 @@
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
-  import { keyboard, MATHS_ROW, type Key, type Layer, type Palette, type PaletteItem } from "./keyboard/keyboard.ts";
+  import { keyboard, MATHS_ROW, type Key, type Layer } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
@@ -226,28 +226,21 @@
     else entry.clear();
   }
 
-  /** Tmpl: the template palette (R10), a grid on the sheet; a pick inserts its template as its key would. A view
-   *  without an entry line (Plot) has nothing to insert into. */
-  function openTemplates(): void {
-    withPalettes((m) => openPalette("tmpl", m.paletteText("tmpl.title"), m.tmpl, (cell) => m.paletteText(`tmpl.${cell}`)));
-  }
   /** Run `open` with the palettes' chunk (loaded with MathLive): at once when it is in, else after the load, with every key
    *  meanwhile in the queue (decisions.md R8). If the chunk does not load, the queued keys run without the sheet. */
   function withPalettes(open: (m: NonNullable<typeof shiftPalettes>) => void): void {
     if (shiftPalettes) return open(shiftPalettes);
     sheetLoad = loadShiftPalettes().then(open, () => {}).finally(() => (sheetLoad = null));
   }
-  /** Tmpl, Shift + 6 (relations and logic) and Shift + 9 (symbols and Greek, R18): a palette on the grid sheet. */
-  function openPalette(id: PaletteId, title: string, p: Palette, name: (id: string) => string): void {
-    if (!shell.showsEntry) return dead();
-    const cells = sheetChunk.palette; // (R91: with the sheet's view; the palette keys wait for it in the queue)
-    if (!cells) return void loadSheetView().then(() => openPalette(id, title, p, name), dead);
-    picked = null;
-    shell.togglePalette(id, title, () => cells.paletteItems(p.items, insertTemplate, name), p.columns);
-  }
-  /** The palettes (Tmpl too, R91) come in their own chunk, loaded with MathLive; until then the key waits for it. */
-  function openShiftPalette(id: "rel" | "sym"): void {
-    withPalettes((m) => openPalette(id, m.paletteText(`${id}.title`), id === "rel" ? m.relations : m.symbols, (cell) => m.paletteText(`${id}.${cell}`)));
+  /** Tmpl (R10), Shift + 6 (relations and logic), Shift + 9 (symbols and Greek, R18) and Shift + Vars (Chars, R725): a palette on
+   *  the grid sheet; a pick inserts its cell as its key would. A view without an entry line (Plot) has nothing to insert into. The palettes (Tmpl too, R91) come in their own chunk, loaded with MathLive, and the sheet's view in its own
+   *  (R91: its `palette` code opens the palette, R725: the pick too); until then the key waits for them in the queue. */
+  function openShiftPalette(id: PaletteId): void {
+    withPalettes((m) => {
+      const cells = sheetChunk.palette;
+      if (!cells) return void loadSheetView().then(() => openShiftPalette(id), dead);
+      cells.openPalette({ shell, entry, session, dead, say: (t) => withClip((c) => c.say(t)), reset: () => (picked = null) }, id, m);
+    });
   }
   /** Math (R4a): Find (find/finder.ts). Until its code and the index are in, every key waits in the queue (decisions.md
    *  R8). No entry line, nothing to insert into. `slot` (R4b, Settings › Your keys): a pick sets that free key's slot. */
@@ -288,11 +281,6 @@
   function onFind<T>(load: Promise<T>, show: (t: T) => void): void {
     sheetLoad = Promise.all([load, loadSheetView()]).then(([t]) => { sheetLoad = null; show(t); }, () => { sheetLoad = null; dead(); }); // (a load that fails: the queued keys run without the sheet)
   }
-  function insertTemplate(p: PaletteItem): void {
-    const cells = sheetChunk.palette;
-    if (cells) entry.run(cells.paletteAction(p, session.settings.entry === "line")); // (a pick is of an open palette, so it is loaded)
-  }
-
   /** What Settings › Your keys needs (R4b): the slots, and Find to pick a slot's content from. */
   // svelte-ignore state_referenced_locally (main.ts mounts App once; shell and entry are never replaced)
   const settingsEnv = { get userKeys() { return userKeys; }, shell, entry, tips: showTips, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a hold on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
@@ -456,7 +444,6 @@
     clearKey,
     openSettings,
     openMode,
-    openTemplates,
     openShiftPalette,
     openFind,
     openHelp,

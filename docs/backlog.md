@@ -23,6 +23,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **G369, a % chip in Home:** its pure number (0.0042) or the number shown (0.42)? See decisions.md.
 10. **R128:** offer another device's backup on Choose folder? See decisions.md.
+11. **R725, Chars in the unit view:** keep it as built (µ and Ω typed there, the sheet for maths lines and names; recommended)? See decisions.md.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.

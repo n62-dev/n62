@@ -18,7 +18,7 @@ const spec = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../.
 
 describe("opensSheet (R143)", () => {
   it("is true for exactly the specials that open a sheet", () => {
-    for (const name of ["vars", "find", "memory", "tmpl", "relations", "symbols", "mode", "settings", "apps", "menu", "help", "matrix"] as const)
+    for (const name of ["vars", "find", "memory", "tmpl", "relations", "symbols", "chars", "mode", "settings", "apps", "menu", "help", "matrix"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(true);
     for (const name of ["esc", "clear", "selectGrow", "selectShrink", "paste", "copy", "fmt", "units", "enter", "shift", "alpha", "none", "home", "cas", "switch", "symb", "plot", "num"] as const)
       expect(opensSheet({ kind: "special", name }), name).toBe(false);
@@ -51,6 +51,6 @@ describe("opensSheet (R143)", () => {
     const seen: string[] = [];
     for (const k of keyboard.keys)
       for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) seen.push(`${k.id}/${layer}`);
-    expect(seen.sort()).toEqual(["d1/shift", "d4/shift", "d6/shift", "d9/shift", "help/primary", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary"]);
+    expect(seen.sort()).toEqual(["d1/shift", "d4/shift", "d6/shift", "d9/shift", "help/primary", "help/shift", "math/primary", "math/shift", "sub/shift", "tmpl/primary", "vars/primary", "vars/shift"]);
   });
 });

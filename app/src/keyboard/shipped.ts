@@ -21,17 +21,17 @@ function strip(v: unknown): unknown {
  *  palette, `templates`, is a Shift palette's neighbour in it). */
 export function shippedKeyboard(doc: unknown): unknown {
   if (doc === null || typeof doc !== "object" || Array.isArray(doc)) return doc;
-  const { templates: _templates, relations: _relations, symbols: _symbols, desktop: _desktop, ...rest } = doc as Record<string, unknown>;
+  const { templates: _templates, relations: _relations, symbols: _symbols, chars: _chars, desktop: _desktop, ...rest } = doc as Record<string, unknown>;
   const out = strip(rest) as { keys: { label: { alpha?: string }; alpha?: { type?: string } }[] };
   for (const k of out.keys) if (k.alpha?.type === k.label.alpha) delete k.label.alpha;
   return { ...out, shipped: true };
 }
 
-/** The palettes alone (`keyboard.yaml?palettes`): Tmpl, Shift + 6 and Shift + 9, slimmed the same way. */
+/** The palettes alone (`keyboard.yaml?palettes`): Tmpl, Shift + 6, Shift + 9 and Shift + Vars (R725), slimmed the same way. */
 export function shippedPalettes(doc: unknown): unknown {
   if (doc === null || typeof doc !== "object" || Array.isArray(doc)) return doc;
-  const { templates, relations, symbols } = doc as Record<string, unknown>;
-  return { ...(strip({ templates, relations, symbols }) as Record<string, unknown>), shipped: true };
+  const { templates, relations, symbols, chars } = doc as Record<string, unknown>;
+  return { ...(strip({ templates, relations, symbols, chars }) as Record<string, unknown>), shipped: true };
 }
 
 /** The desktop keys alone (`keyboard.yaml?desktop`, R131): hwkeys.ts and the help text read them. */
