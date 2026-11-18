@@ -102,11 +102,11 @@ describe("R723: Shift + Deselect is Paste", () => {
     expect(c.sheetLoad).toBeNull();
   });
 
-  test("controls: Vars' tap opens Find on the user's names; Shift + a b/c, 7, Fmt and Vars are reserved (Shift + 1 is R327's)", () => {
+  test("controls: Vars' tap opens Find on the user's names; Shift + a b/c, 7 and Fmt are reserved (Shift + 1 is R327's, Shift + Vars R725's)", () => {
     const { log, press } = ctx();
     press("vars");
     expect(log).toEqual(["names"]);
-    for (const id of ["frac", "d7", "fmt", "vars"]) {
+    for (const id of ["frac", "d7", "fmt"]) {
       expect(k(id).actions.shift, id).toBeUndefined();
       expect(k(id).label.shift, id).toBeUndefined();
     }

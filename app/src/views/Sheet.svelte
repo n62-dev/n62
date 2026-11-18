@@ -69,7 +69,7 @@
   /** The line under the list: an armed item's question (R281), the level's own note, else the highlighted item's details. */
   const note = $derived(items.find((x) => x.id === sheet.armed)?.confirm?.note ?? level.note?.() ?? level.current?.preview);
   /** The palettes' normal cell height: Tmpl's templates need more than the Shift palettes' one symbol or word. */
-  const normalCell = $derived(sheet.id === "rel" || sheet.id === "sym" ? 46 : 58);
+  const normalCell = $derived(sheet.id === "rel" || sheet.id === "sym" || sheet.id === "chars" ? 46 : 58);
 
   // ---- fit (R21a): one measure per resize or change of rows, no per-frame work
   let overlay: HTMLDivElement | undefined = $state();
@@ -249,7 +249,7 @@
             style:width={px(c?.w)}
             style:height={px(c?.h)}
             onclick={() => ontap(r.index)}
-          >{#if r.item.pick}<span class="pick" data-testid="cell-key">{r.item.pick.legend}</span>{/if}<MathView latex={r.item.latex ?? r.item.label} label={r.item.label} /></button>
+          >{#if r.item.pick}<span class="pick" data-testid="cell-key">{r.item.pick.legend}</span>{:else if level.digits}<span class="pick" data-testid="cell-digit">{(r.index % columns + 1) % 10}</span>{/if}<MathView latex={r.item.latex ?? r.item.label} label={r.item.label} /></button>
         {/each}
       </div>
     {:else}
@@ -726,7 +726,7 @@
     background: var(--panel);
   }
   /* the Shift palettes hold one symbol or word per cell: larger type in lower cells */
-  .grid:is([data-grid="rel"], [data-grid="sym"]) button.cell {
+  .grid:is([data-grid="rel"], [data-grid="sym"], [data-grid="chars"]) button.cell {
     font-size: var(--fs-ui);
   }
   .pick {

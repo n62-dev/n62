@@ -100,6 +100,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     tmpl: paletteSlots(kb.palette),
     relations: paletteSlots(kb.relations),
     symbols: paletteSlots(kb.symbols),
+    chars: paletteSlots(kb.chars),
     "home-menu": ids(menu),
     "home-copy": ids(menu.find((r) => r.id === "copy")?.submenu?.items ?? []),
     mode: ids(modeItems(session, env)),
@@ -176,7 +177,7 @@ describe("every numbered list is in the lock (R299)", () => {
       .filter((f) => /\.(ts|svelte)$/.test(f) && !/\.test\.ts$/.test(f) && !f.includes("_gen"))
       .filter((f) => /\bshowMenu\(|^\s*menu\(view: ViewId\)/m.test(readFileSync(join(src, f), "utf8")))
       .sort();
-  const KEYPAD = new Set(["layers", "tmpl", "relations", "symbols"]);
+  const KEYPAD = new Set(["layers", "tmpl", "relations", "symbols", "chars"]);
   it("every file that opens a numbered list is in the registry, or is listed with why its rows have no fixed digit", () => {
     const known = new Set([...Object.values(LIST_BUILDERS).flat(), ...Object.keys(UNPINNED_LISTS)]);
     expect(openers().filter((f) => !known.has(f))).toEqual([]);

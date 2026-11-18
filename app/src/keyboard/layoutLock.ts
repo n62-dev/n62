@@ -50,7 +50,7 @@ export function layerPins(kb: Keyboard): Record<string, string> {
 
 /** The numbered-list builders: each pinned list section → the source files (under app/src) that build or open it. A list that
  *  is not here and not in UNPINNED_LISTS fails layoutLock.test.ts, so a new numbered list cannot ship outside the lock. The
- *  sections `layers`, `tmpl`, `relations` and `symbols` are the keypad's, not lists of this kind. */
+ *  sections `layers`, `tmpl`, `relations`, `symbols` and `chars` are the keypad's, not lists of this kind. */
 export const LIST_BUILDERS: Readonly<Record<string, readonly string[]>> = {
   "home-menu": ["clipboard/actions.svelte.ts"],
   "home-copy": ["clipboard/actions.svelte.ts"],

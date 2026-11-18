@@ -238,16 +238,17 @@
     sheetLoad = loadShiftPalettes().then(open, () => {}).finally(() => (sheetLoad = null));
   }
   /** Tmpl, Shift + 6 (relations and logic) and Shift + 9 (symbols and Greek, R18): a palette on the grid sheet. */
-  function openPalette(id: PaletteId, title: string, p: Palette, name: (id: string) => string): void {
+  function openPalette(id: PaletteId, title: string, p: Palette, name: (id: string) => string, refusal?: (cell: string) => string | undefined): void {
     if (!shell.showsEntry) return dead();
     const cells = sheetChunk.palette; // (R91: with the sheet's view; the palette keys wait for it in the queue)
-    if (!cells) return void loadSheetView().then(() => openPalette(id, title, p, name), dead);
+    if (!cells) return void loadSheetView().then(() => openPalette(id, title, p, name, refusal), dead);
     picked = null;
-    shell.togglePalette(id, title, () => cells.paletteItems(p.items, insertTemplate, name), p.columns);
+    const chars = id === "chars"; // R725: over the view, a digit picks a cell of the focused row
+    shell.togglePalette(id, title, () => cells.paletteItems(p.items, chars ? (cell) => insertChar(cell, refusal) : insertTemplate, name), p.columns, chars ? { view: true, digits: true } : undefined);
   }
   /** The palettes (Tmpl too, R91) come in their own chunk, loaded with MathLive; until then the key waits for it. */
-  function openShiftPalette(id: "rel" | "sym"): void {
-    withPalettes((m) => openPalette(id, m.paletteText(`${id}.title`), id === "rel" ? m.relations : m.symbols, (cell) => m.paletteText(`${id}.${cell}`)));
+  function openShiftPalette(id: "rel" | "sym" | "chars"): void {
+    withPalettes((m) => openPalette(id, m.paletteText(`${id}.title`), id === "rel" ? m.relations : id === "sym" ? m.symbols : m.chars, (cell) => m.paletteText(`${id}.${cell}`), id === "chars" ? m.charsRefusal : undefined));
   }
   /** Math (R4a): Find (find/finder.ts). Until its code and the index are in, every key waits in the queue (decisions.md
    *  R8). No entry line, nothing to insert into. `slot` (R4b, Settings › Your keys): a pick sets that free key's slot. */
@@ -291,6 +292,14 @@
   function insertTemplate(p: PaletteItem): void {
     const cells = sheetChunk.palette;
     if (cells) entry.run(cells.paletteAction(p, session.settings.entry === "line")); // (a pick is of an open palette, so it is loaded)
+  }
+  /** A Chars cell (R725): on a maths line it inserts as the Shift palettes' cells do, but a refused cell types nothing and the
+   *  notice gives the parser's message; in a name or text prompt (the prompt takes the action: shell.entryLabel) every cell types
+   *  its character, a refused one too. */
+  function insertChar(p: PaletteItem, refusal: ((cell: string) => string | undefined) | undefined): void {
+    const why = p.refused && !shell.prompt ? refusal?.(p.id) : undefined;
+    if (why === undefined) return insertTemplate(p);
+    withClip((c) => c.say(why));
   }
 
   /** What Settings › Your keys needs (R4b): the slots, and Find to pick a slot's content from. */
