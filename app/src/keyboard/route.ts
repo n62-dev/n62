@@ -203,7 +203,7 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
 
 /** Shift + Select (R723): Copy, the line's selection (R727), else the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
  *  an app, is a dead press with no clipboard write. */
-const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row));
+const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row, () => (c.picked = null)));
 
 /** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
  *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
@@ -212,7 +212,7 @@ const uncertainty = (c: RouteCtx, row?: HistoryItem): void => (sheetChunk.palett
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), ◀ on an
  *  empty line puts the entry back too, with chips (R720), Esc drops the pick, Menu acts
- *  on the picked row, Store ▶ stores it (R280). Any other key drops the pick and does its normal job. True: the key was used up here. */
+ *  on the picked row, Store ▶ stores it (R280). Shift + Select (Copy) keeps the pick when the line has a selection; any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
   const n = items.length;
@@ -237,7 +237,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   }
   if (isSelect(action)) {
     // R279: Select and Deselect act on the line only; the pick stays. Copy (R723, R727): the line's selection, else the picked row;
-    // the pick stays as it does with a selection (a copy changes nothing)
+    // the pick stays when the line has a selection (a copy changes nothing), and is let go otherwise (R723)
     if (action.name === "copy") copyKey(c, items[picked]);
     return true;
   }
