@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R723 (the owner, 2026-11-17): Shift + Deselect is Paste (R329 had it on Shift + Vars, now reserved for Chars, R725). It
+// R723 (the owner, 2026-11-17): Shift + Deselect is Paste (R329 had it on Shift + Vars, now Chars, R725). It
 // takes ☰ → Paste's path (clipboard/actions.svelte.ts paste: the clipboard as one number onto the entry line), so a hold on
 // a result then a flick up on Deselect puts that result on the line, in Home and in Solve Symb; the keys pressed meanwhile
 // wait for the paste (holdKeys), and where no entry line shows (Plot) it is a dead press. Controls: Vars' tap still opens
@@ -85,7 +85,7 @@ test("Deselect's Shift legend reads Paste and fits its face, no ▾ (it opens no
   await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true");
 });
 
-test("controls: Vars' tap opens Find on your names; ☰ 4 still pastes; Shift + a b/c, 7, Fmt and Vars are reserved (dimmed)", async ({ page }) => {
+test("controls: Vars' tap opens Find on your names; ☰ 4 still pastes; Shift + a b/c, 7 and Fmt are reserved (dimmed), Vars is Chars (R725)", async ({ page }) => {
   await tap(page, ["vars"]);
   await expect(page.getByTestId("find")).toBeVisible();
   await tap(page, ["esc"]);
@@ -94,5 +94,6 @@ test("controls: Vars' tap opens Find on your names; ☰ 4 still pastes; Shift + 
   await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("6");
   await tap(page, ["shift"]);
-  for (const id of ["frac", "d7", "fmt", "vars"]) await expect(page.locator(`[data-key="${id}"]`), id).toHaveAttribute("data-dead", "true");
+  for (const id of ["frac", "d7", "fmt"]) await expect(page.locator(`[data-key="${id}"]`), id).toHaveAttribute("data-dead", "true");
+  await expect(page.locator('[data-key="vars"]')).not.toHaveAttribute("data-dead", "true");
 });
