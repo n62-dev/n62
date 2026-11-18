@@ -566,8 +566,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,970 → 62,990 B (R723): the Copy key's routing in route.ts (Shift + Select: the `copy` special, its case and the picked
  *  row's branch; the rule itself is ClipActions.keyCopy, in the clipboard chunk). Phase-1 49652b92 measures 62,961 B gzip
  *  (178,051 B raw), the branch 62,978 B (178,097 B raw; it first measured 62,999 B, cut by moving the rule out). The usual
- *  + 0.05 kB would pass the 63.00 kB budget, so the pin keeps 10 B under it; the next start-chunk growth needs a split. */
-export const START_PIN_GZIP = 62_990;
+ *  + 0.05 kB would pass the 63.00 kB budget, so the pin keeps 10 B under it; the next start-chunk growth needs a split.
+ *  62,990 → 63,000 B (R727, fix round 2): Shift + Select copies the line's selection first, and Copy keeps the Select chain
+ *  (route.ts: `isSelect` takes the `copy` special, so the one test in `run` and the one in `historyKey` carry it; the
+ *  rule itself is ClipActions.keyCopy, in the clipboard chunk). Phase-1 3ea24712 measures 62.98 kB gzip (177.77 kB raw), the
+ *  branch 62,995 B (177.77 kB raw): the first build measured 63.05 kB, over the budget, cut by folding the Copy tests into
+ *  `isSelect` and dropping the controller's getter. The pin is the budget itself: nothing is left under it. */
+export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

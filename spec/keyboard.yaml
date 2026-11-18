@@ -118,8 +118,9 @@ keys:
   - { id: u6, row: 2, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: down, row: 2, col: 2, span: 2, cls: ctl, label: { primary: "▼" }, primary: { cmd: moveDown }, source: virtual-calc }  # pad down
   # Select | Deselect (R279, docs/04 5.1): Select grows the entry line's selection by the box model, Deselect walks it back.
-  # Shift + Select is Copy (R723, owner 2026-11-17): what a hold on the row's result copies (R276; ☰ → Copy › Full value,
-  # R720), of the picked row, else the last finished row; no row, or an app, is a dead press. Shift + Deselect is Paste: ☰ →
+  # Shift + Select is Copy (R723, owner 2026-11-17): the line's selection when it is not collapsed (R727: its plain
+  # text, as a hold on an input copies; the Select chain stays), else what a hold on the row's result copies (R276; ☰ → Copy ›
+  # Full value, R720), of the picked row, else the last finished row; none of these, or an app with no selection, is a dead press. Shift + Deselect is Paste: ☰ →
   # Paste's path, the clipboard as one number onto the entry line (keys pressed meanwhile wait for it); where no entry line
   # shows, a dead press. Neither opens a sheet. (Help was here from R197, Mode from R322 until R723.)
   - { id: select, row: 2, col: 4, cls: nav, label: { primary: "$key.select", shift: "$key.copy" },

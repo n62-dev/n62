@@ -64,8 +64,8 @@ export interface RouteCtx {
 
 /** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml). */
 const STORE_ARROW = "\\blacktriangleright";
-/** Select or Deselect (R279): they act on the entry line only. */
-const isSelect = (a?: ActionBody): boolean => a?.kind === "special" && a.name.startsWith("select");
+/** Select, Deselect (R279: they act on the entry line only) or Copy (R727: it leaves the selection and its Select chain as they are). */
+const isSelect = (a?: ActionBody): a is { kind: "special"; name: "selectGrow" | "selectShrink" | "copy" } => a?.kind === "special" && /^(select|copy)/.test(a.name);
 const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
   layer === undefined ? { shift: c.session.shift, alpha: c.session.alpha } : { shift: layer === "shift", alpha: layer === "alpha" };
 const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");
@@ -201,9 +201,9 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
   c.sheetLoad ??= load;
 }
 
-/** Shift + Select (R723): Copy, the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
+/** Shift + Select (R723): Copy, the line's selection (R727), else the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
  *  an app, is a dead press with no clipboard write. */
-const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row));
+const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row, () => (c.picked = null)));
 
 /** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
  *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
@@ -212,7 +212,7 @@ const uncertainty = (c: RouteCtx, row?: HistoryItem): void => (sheetChunk.palett
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), ◀ on an
  *  empty line puts the entry back too, with chips (R720), Esc drops the pick, Menu acts
- *  on the picked row, Store ▶ stores it (R280). Any other key drops the pick and does its normal job. True: the key was used up here. */
+ *  on the picked row, Store ▶ stores it (R280). Shift + Select (Copy) keeps the pick when the line has a selection; any other key drops the pick and does its normal job. True: the key was used up here. */
 export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
   const n = items.length;
@@ -235,7 +235,12 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     c.picked = pickAfter(items, picked);
     return true;
   }
-  if (isSelect(action)) return true; // R279: Select and Deselect act on the line only; the pick stays
+  if (isSelect(action)) {
+    // R279: Select and Deselect act on the line only; the pick stays. Copy (R723, R727): the line's selection, else the picked row;
+    // the pick stays when the line has a selection (a copy changes nothing), and is let go otherwise (R723)
+    if (action.name === "copy") copyKey(c, items[picked]);
+    return true;
+  }
   const item = items[picked];
   c.picked = null;
   if (isCmd("moveToPreviousChar") && item && c.entry.empty) {
@@ -256,10 +261,6 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   if (action.name === "esc") return true;
   if (action.name === "uncertainty") {
     uncertainty(c, item); // Shift + 1 on the picked row (R327)
-    return true;
-  }
-  if (action.name === "copy") {
-    copyKey(c, item); // Shift + Select on the picked row (R723)
     return true;
   }
   if (action.name === "units" && item) {
@@ -538,7 +539,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   // R300: a matrix grid's cell is edited on this line (matrixGrid.svelte.ts): the line's own jobs on an empty line (Ans
   // first, a b/c's form cycle, Undo of what Clear took, ▲'s pick of a history row) do not reach behind the grid
   const cell = shell.sheet?.level.grid?.editing != null;
-  if (!isSelect(action)) entry.endSelect(); // R279: any other key ends the chain of Select presses
+  // R279: any other key ends the chain of Select presses
+  if (!isSelect(action)) entry.endSelect();
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
   if (shell.app === null && !cell && historyKey(c, action)) return;
