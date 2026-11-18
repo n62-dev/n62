@@ -118,3 +118,54 @@ describe("render", () => {
     expect(render(stats(parseLog(log), {}))).not.toContain("fewer than");
   });
 });
+
+// A259: the tokens lines (the run's end, a pass, the report) and henri's lane totals. By hand, runs as in LOG: 1 ron sonnet merged (A),
+// 2 ron sonnet merged (A), 3 gorge opus not merged (B), 4 gorge sonnet not merged (B, no counts), 7 ron opus merged (A); 8 a pass and 9
+// the report (A, no run). Lines with counts: 1, 2, 3, 7, 8, 9; unknown: 4 (and one call of run 7, inside its line).
+const TOKENS = `${LOG}- 10:12 [A] pipeline #1 R1: tokens 100k in, 10k out, $1.50 (ron sonnet 60k, audit sonnet 51k)
+- 11:22 [A] pipeline #2 R2: tokens 300k in, 30k out, $4.50 (ron sonnet 250k, audit opus 80k)
+- 12:32 [B] pipeline #3 G3: tokens 200k in, 20k out, $3.00 (gorge opus 150k, audit opus 70k)
+- 13:06 [B] pipeline #4 G4: tokens: unknown
+- 15:12 [A] pipeline #7 R7: tokens 50k in, 5k out, $0.50 (ron opus 40k, audit opus 16k, 1 unknown)
+- 16:00 [A] pipeline #8 pass-3: tokens 80k in, 8k out, $2.00 (sofia opus 88k)
+- 16:30 [A] pipeline #9 report: tokens 10k in, 1k out, $0.10 (report sonnet 11k)
+- 17:00 [A] night.sh: henri tokens 90k in, 9k out, $0.90 (30 calls)
+- 17:01 [B] night.sh: henri tokens 60k in, 6k out, $0.60 (20 calls, 2 unknown)
+- 17:02 [B] night.sh: henri tokens: unknown (3 calls)
+`;
+describe("tokens", () => {
+  const p = parseLog(TOKENS);
+  const row = (kind: string, name: string) => stats(p, {}).bands[0]!.tokens.find((x) => x.kind === kind && x.name === name)!;
+  it("reads the tokens lines and henri's totals", () => {
+    expect(p.tokens.map((t) => [t.n, t.id, t.lane, t.unknown])).toEqual([[1, "R1", "A", false], [2, "R2", "A", false], [3, "G3", "B", false], [4, "G4", "B", true], [7, "R7", "A", false], [8, "pass-3", "A", false], [9, "report", "A", false]]);
+    expect(p.tokens.find((t) => t.n === 7)).toMatchObject({ inK: 50, outK: 5, cost: 0.5, unknownCalls: 1, parts: [{ role: "ron", model: "opus", k: 40 }, { role: "audit", model: "opus", k: 16 }] });
+    expect(p.henri).toEqual([{ lane: "A", calls: 30, unknown: 0, inK: 90, outK: 9, cost: 0.9 }, { lane: "B", calls: 20, unknown: 2, inK: 60, outK: 6, cost: 0.6 }, { lane: "B", calls: 3, unknown: 3, inK: 0, outK: 0, cost: 0 }]);
+  });
+  it("totals per agent, model and lane, total and per merged package, by hand", () => {
+    expect(row("all", "all")).toMatchObject({ lines: 6, unknown: 1, inK: 740, outK: 74, cost: 11.6, merged: 3 });
+    expect(row("agent", "ron")).toMatchObject({ lines: 3, unknown: 0, inK: 450, outK: 45, cost: 6.5, merged: 3 });
+    expect(row("agent", "gorge")).toMatchObject({ lines: 1, unknown: 1, inK: 200, outK: 20, cost: 3, merged: 0 });
+    expect(row("agent", "pass")).toMatchObject({ lines: 1, inK: 80, outK: 8, cost: 2, merged: 0 });
+    expect(row("agent", "report")).toMatchObject({ lines: 1, inK: 10, outK: 1, cost: 0.1 });
+    expect(row("lane", "A")).toMatchObject({ lines: 5, inK: 540, outK: 54, cost: 8.6, merged: 3 });
+    expect(row("lane", "B")).toMatchObject({ lines: 1, unknown: 1, inK: 200, outK: 20, cost: 3, merged: 0 });
+    expect(row("model", "sonnet")).toMatchObject({ lines: 3, k: 372, merged: 2, inK: null, cost: null });
+    expect(row("model", "opus")).toMatchObject({ lines: 4, k: 444, merged: 2 });
+  });
+  it("a band cuts the tokens lines by run number like the runs", () => {
+    const b = stats(p, { band: 5 }).bands;
+    expect(b.map((x) => x.tokens.find((t) => t.kind === "all")!.lines)).toEqual([3, 3]);
+  });
+  it("prints the tokens table and henri's lane totals", () => {
+    const out = render(stats(p, {}));
+    expect(out).toMatch(/all\s+6\s+1\s+740\s+74\s+11\.60\s+3\s+271\s+3\.87/);
+    expect(out).toMatch(/ron\s+3\s+0\s+450\s+45\s+6\.50\s+3\s+165\s+2\.17/);
+    expect(out).toMatch(/gorge\s+1\s+1\s+200\s+20\s+3\.00\s+0\s+-\s+-/);
+    expect(out).toMatch(/sonnet\s+3\s+0\s+-\s+-\s+-\s+2\s+186\s+-/);
+    expect(out).toMatch(/A\s+30\s+0\s+90\s+9\s+0\.90/);
+    expect(out).toMatch(/B\s+23\s+5\s+60\s+6\s+0\.60/);
+  });
+  it("a log with no tokens line prints no tokens table", () => {
+    expect(render(stats(parseLog(LOG), {}))).not.toContain("tokens");
+  });
+});

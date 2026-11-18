@@ -70,6 +70,7 @@ export N62_LOCK_PID=$$   # A35: locks taken here (and by the agents it starts) r
 self_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"  # before the cd below: a relative call (night.sh's) resolves here
 # shellcheck source=scripts/pipeline-lib.sh
 source "$self_dir/pipeline-lib.sh"
+source "$self_dir/pipeline-tokens.sh"
 own_traps  # A54: TERM, HUP and INT end the child sessions first (owned_kill), then the job (its EXIT trap drops the locks)
 
 main="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
@@ -84,7 +85,7 @@ export N62_QALC_DL_DIR="${N62_QALC_DL_DIR:-$main/engine/qalc/_downloads}"
 engine_root="$main/engine/giac/_out"; engine_managed=1; [[ -z "${GIAC_OUT:-}" ]] || engine_managed=0
 export GIAC_OUT="${GIAC_OUT:-$engine_root/gsl}"
 export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
-claude_common=(--permission-mode auto --output-format text --no-session-persistence)
+claude_common=(--permission-mode auto --output-format json --no-session-persistence)  # A259: the reply is JSON; claude_unwrap (pipeline-tokens.sh) writes the plain text, the counts go to tokens lines
 worker_tools=(--disallowedTools Agent)
 # shellcheck disable=SC2054  # one comma-separated argument for --allowedTools
 audit_tools=(--allowedTools Read,Grep,Glob --disallowedTools Bash,Edit,Write,Agent,NotebookEdit)
@@ -211,6 +212,7 @@ if [[ "${1:-}" == "pass" ]]; then
     integ="$(integ_dir)"; : "${integ:=$main/.claude/worktrees/phase-1}"  # shown, never created
     echo "DRY RUN: Opus pass $n on: $ids; open questions: $open; PW_PORT=$PW_PORT; first tools/devlock.sh acquire pass pass-$n ${N62_PASS_WAIT:-9000} (A86: one pass at a time; a wait is logged once, past it: RESULT pass $n: NOT RUN (pass lock busy for <s> s), no number, branch or worktree taken), held to the end; worktree $main/.claude/worktrees/pass-$n on branch p1/pass-$n from phase-1 (A85: no integ while sofia runs); then under integ: phase-1 merged into the branch, node tools/docs-check.mjs, git -C $integ merge --no-ff --signoff (nothing when no file changed); starts nothing"; echo "RESULT pass $n: DRY RUN"; exit 0
   fi
+  need_jq >/dev/null || die "$(need_jq)"  # A259: the replies are JSON
   ensure_integ
   # A86: one pass at a time: the pass lock before the pass number and the branch, held to the end (the EXIT trap drops it), so a second
   # pass branches from phase-1 after the first's merge and never conflicts with it. Runs and integ are not touched. The wait (9000 s)
@@ -237,9 +239,11 @@ if [[ "${1:-}" == "pass" ]]; then
   setup_node_modules "$wt"  # nodemods alone, as a run's start (integ only for a stale phase-1 copy)
   log "Opus pass $n (job $job, PW_PORT $PW_PORT): spawned sofia (opus) on: $ids; waiting."
   prompt="Opus pass $n of the night shift: follow \"Opus pass (instructions for the Opus agent)\" in docs/shifts/brief.md section 0c for packages $ids. Open questions from the log: $open. You run in your own worktree $wt on branch $pbranch, made from phase-1 at ${base:0:9}: run the checks there and commit your doc changes there with git commit -s and the Opus trailer (where the brief says to work in the phase-1 worktree or to commit on phase-1, this replaces it); leave nothing uncommitted (the pipeline then merges nothing); switch no branch and touch no other worktree. The log is $coord/log.md. Run any e2e with PW_PORT=$PW_PORT (exported; do not change it). After your reply the pipeline takes the integration lock (integ), merges phase-1 into your branch, runs the docs check and merges the branch into phase-1, so your FIX and QUEUE lines apply to phase-1 after that merge: do not take or release integ yourself, whatever the brief says. Reply in exactly the form the section gives (OPUS PASS, VERDICT, FIX lines, QUEUE, NOTES)."
+  rm -f "$run/tokens.tsv"
   set +e
   own_sh 'cd "$1" && shift && timeout -k 60 7200 claude "$@"' "$wt" -p --agent sofia --model opus --effort high "${claude_common[@]}" -n "pass-$n" "$prompt" < /dev/null > "$run/reply.md" 2> "$run/stderr.log"
   rc=$?; set -e
+  claude_unwrap "$run/reply.md" sofia "$run/tokens.tsv"; log "pipeline #$job pass-$n: $(tokens_summary "$run/tokens.tsv")"  # A259
   # A85f: what she left uncommitted (untracked files too) is never merged nor deleted: the branch and the worktree are kept
   dirty="$(git -C "$wt" status --porcelain 2>/dev/null | head -n 5 | cut -c4- | paste -sd' ' -)"
   # pass_merge: what the pass committed, into phase-1 under integ; sets merged (the RESULT's note). A conflict or a failing docs check
@@ -413,6 +417,7 @@ fi
 
 # ---------- subcommand: report ----------
 if [[ "${1:-}" == "report" ]]; then
+  need_jq >/dev/null || die "$(need_jq)"  # A259: the reply is JSON
   ensure_integ; run="$tasks/report-$(date +%F)"; mkdir -p "$run"
   job="$(take_number "$tasks")" || die "report: the counter lock is busy"; export PW_PORT="$(job_port "$job")"
   trap 'owned_kill; integ_drop' EXIT  # A47b: the report holds integ for its whole run
@@ -421,7 +426,9 @@ if [[ "${1:-}" == "report" ]]; then
   log "Shift report (job $job): spawned sonnet writer; waiting."
   prompt="Write the shift report of docs/shifts/brief.md section 0c (\"Shift report\") for the night section of .coord/log.md (the log is on stdin; a line with [A] or [B] after its time belongs to that night lane: report both lanes). You run in the phase-1 worktree $integ: commit the report there with git commit -s and the Sonnet trailer. The pipeline holds the integration lock (integ) for you: do not take or release it yourself. Never push. Reply with the commit hash only."
   night_section "$coord/log.md" > "$run/input.txt"
+  rm -f "$run/tokens.tsv"  # A259: a report run again the same day (after a limit) counts its own call
   rc=0; own_sh 'cd "$1" && shift && timeout -k 60 1800 claude "$@"' "$integ" -p --model sonnet --effort high "${claude_common[@]}" -n report "$prompt" < "$run/input.txt" > "$run/reply.md" 2> "$run/stderr.log" || rc=$?
+  claude_unwrap "$run/reply.md" report "$run/tokens.tsv"; log "pipeline #$job report: $(tokens_summary "$run/tokens.tsv")"  # A259
   integ_drop
   # A121: at a usage limit the CLI's message is not the report: exit 75, night.sh waits and runs the report again
   if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$run/stderr.log" "$run/reply.md"; then
@@ -452,6 +459,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+[[ $dry -eq 1 ]] || need_jq >/dev/null || die "$(need_jq)"  # A259: a run reads claude's JSON replies with jq; refused before a run number is taken
 ensure_integ
 # A47b: the brief, the package and the files it names come from phase-1's commit, never from the phase-1 worktree (which may
 # be dirty, or mid-edit by a pass or an interactive session holding integ).
@@ -491,6 +499,7 @@ limit_marker=""
 cleanup() {
   local rc=$?
   owned_kill; host_cpu_drop; nodemods_drop; queue_leave; rm -f "$spec_file" "$brief"
+  [[ -z "$runno" || ! -s "${run:-/nonexistent}/tokens.tsv" ]] || log "pipeline #$runno $id: $(tokens_summary "$run/tokens.tsv")" || true  # A259: one line per run, whatever its end
   [[ -z "$limit_marker" || $rc -eq 75 || $rc -gt 128 ]] || rm -f "$limit_marker"
   [[ "${branch_locked:-0}" -eq 0 ]] || tools/devlock.sh release "$branch_lock" "pipeline-$$" >/dev/null 2>&1 || true
 }
@@ -718,6 +727,7 @@ agent_end() {  # <pid> <name> <log>
   [[ "$name" == audit-* ]] || worker_heartbeat "$1" "$out"
   own_wait "$1" || rc=$?
   agent_rc=$rc
+  claude_unwrap "$out" "$([[ "$name" == audit-* ]] && echo audit || echo "$agent")" "$run/tokens.tsv"  # A259: before any read of the reply
   if [[ $rc -ne 0 ]] && grep -qiE "$LIMIT_RE" "$out" "$out.err"; then
     log "pipeline #$n $id: LIMIT during $name (claude exit $rc)"; echo "RESULT #$n $id: LIMIT"; exit 75
   fi
