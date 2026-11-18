@@ -50,6 +50,7 @@ main="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"; cd "$main"
 coord="${N62_COORD:-$main/.coord}"; tasks="$main/.tasks"
 # shellcheck source=scripts/pipeline-lib.sh
 source "$(dirname "$self")/pipeline-lib.sh"
+source "$(dirname "$self")/pipeline-tokens.sh"
 poll="${N62_NIGHT_POLL:-60}"
 
 # A47c: the lane, its pid file, its stop file
@@ -108,7 +109,12 @@ else
   stale="$(cat "$pidf" 2>/dev/null || true)"; echo $$ > "$pidf"
   first=1; if [[ -n "$other" ]] && night_alive "$other" >/dev/null; then first=0; fi
   flock -u "$gfd"; exec {gfd}>&-
-  trap '[[ "$(cat "$pidf" 2>/dev/null)" != "$$" ]] || rm -f "$pidf"' EXIT
+  henri_rec="$tasks/night-$key-$$.tokens"; rm -f "$henri_rec" "$henri_rec.n"   # A259: henri's calls (records of claude_unwrap, one line per call in .n)
+  night_exit() {
+    [[ "$(cat "$pidf" 2>/dev/null)" != "$$" ]] || rm -f "$pidf"
+    henri_tokens_log || true
+  }
+  trap night_exit EXIT
   integ="$(git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch refs\/heads\/phase-1$/{print w}')"
   [[ -n "$integ" ]] || { integ="$main/.claude/worktrees/phase-1"; git worktree add "$integ" phase-1 >/dev/null; }
   out="$tasks/night-$(date +%F)${lane:+-$lane}.log"
@@ -145,6 +151,14 @@ if [[ -n "$lane" ]]; then  # A47c: henri's lane
   closing_prompt="${closing_prompt/and night.sh runs the report after it/and $([[ "$lane" == A ]] && echo "night.sh runs the report after it" || echo "lane A's night.sh writes the report")}"$'\n'"$lane_prompt"
 fi
 
+henri_tokens_log() {  # A259: the lane's henri total, one line at the end: tokens in+cache, out, cost, calls (and the calls with no counts)
+  [[ -s "${henri_rec:-}.n" ]] || return 0
+  local t; t="$(LC_ALL=C awk -F'\t' -v calls="$(wc -l < "$henri_rec.n")" 'function k(x) { return int(x / 1000 + 0.5) }
+    $2 == "unknown" { unk++; next } { m++; i += $3; o += $4; c += $5 }
+    END { e = calls " calls" (unk ? ", " unk " unknown" : "")
+      if (m == 0) printf "tokens: unknown (%s)", e; else printf "tokens %dk in, %dk out, $%.2f (%s)", k(i), k(o), c, e }' "$henri_rec" 2>/dev/null)"
+  log "night.sh: henri $t"; rm -f "$henri_rec" "$henri_rec.n"
+}
 ask_henri() {  # <n> <prompt>: henri's one-line reply
   if [[ $dry -eq 1 ]]; then  # stand-in: N62_NIGHT_REPLIES names a file of replies, one per ask (a line "75: <cmd>" ends with exit 75)
     local f="${N62_NIGHT_REPLIES:-}"
@@ -155,14 +169,15 @@ ask_henri() {  # <n> <prompt>: henri's one-line reply
   # printed, any other failure is "(henri failed)". This runs in a command substitution: the caller counts and waits (limit_hit).
   local r tmp rc=0
   tmp="$(mktemp)"; henri_stdin > "$tmp.in" 2>/dev/null || true
-  (cd "$integ" && timeout -k 60 600 claude -p --agent henri --model sonnet --effort medium --permission-mode auto --output-format text --no-session-persistence --allowedTools Read,Grep --disallowedTools Bash,Edit,Write,Agent,NotebookEdit -n "henri-$1" "$2") < "$tmp.in" > "$tmp" 2> "$tmp.err" || rc=$?
+  (cd "$integ" && timeout -k 60 600 claude -p --agent henri --model sonnet --effort medium --permission-mode auto --output-format json --no-session-persistence --allowedTools Read,Grep --disallowedTools Bash,Edit,Write,Agent,NotebookEdit -n "henri-$1" "$2") < "$tmp.in" > "$tmp" 2> "$tmp.err" || rc=$?
+  claude_unwrap "$tmp" henri "$henri_rec"; echo x >> "$henri_rec.n"   # A259: the plain reply in $tmp, the JSON beside it (removed below); the counts in the lane's records
   cat "$tmp.err" >> "$out"
   if [[ $rc -ne 0 ]]; then
     if grep -qiE "$LIMIT_RE" "$tmp" "$tmp.err"; then r="$henri_limit"; else r="(henri failed)"; fi
   else
     r="$(grep -vE '^\s*$' "$tmp" | tail -n 1 | sed 's/^[` ]*//; s/[` ]*$//' || true)"
   fi
-  rm -f "$tmp" "$tmp.in" "$tmp.err"
+  rm -f "$tmp" "$tmp.json" "$tmp.in" "$tmp.err"
   echo "$r"
 }
 henri_stdin() {  # A47c, A260: henri_input (pipeline-lib.sh): the lane's lines (no lane: the untagged ones) since its last pass, 80 to 400

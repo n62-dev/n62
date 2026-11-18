@@ -24,7 +24,7 @@ tools/folder-names.test.sh                                        # A65: FolderN
 (cd app && npx playwright test -c playwright.folder.config.ts)   # A65, A100, A137, A101: the sync folder on the device's test build (pick, write, append "wa", tail by seek and by stream (noSeek seam), appendChecked over a torn line, restart, read, list, outside change; a write replaced whole under failAfter/stallAfter/stallAt seams and kills), under the device lock; annabell
 tools/release-gate.test.sh                                        # A42, in SELFTESTS (A55): release-gate.sh --dry-run lists its stages on _out/release
 tools/release-guard.test.sh                                       # A7, in SELFTESTS (A75): build.sh --release refuses before any step; release-verify.sh takes only the pinned certificate
-node app/scripts/pipeline-stats.ts [--from N] [--to N] [--band SIZE] [--log PATH]   # A132: the pipeline's rates from .coord/log.md (read-only): not merged, first-pass, fix rounds, audit FIX, failures per check per band, agent and model, and the lock waits per lane; test: app/scripts/pipeline-stats.test.ts
+node app/scripts/pipeline-stats.ts [--from N] [--to N] [--band SIZE] [--log PATH]   # A132: the pipeline's rates from .coord/log.md (read-only): not merged, first-pass, fix rounds, audit FIX, failures per check per band, agent and model, and the lock waits per lane, and (A259) the tokens and cost per agent, model and lane, total and per merged package, with henri's lane totals; test: app/scripts/pipeline-stats.test.ts
 ```
 
 They use `$ANDROID_SERIAL`: `core-device.sh` requires it, the Python tools default to the Tab One. `shots.py` (usage in its header) cold-starts a page N times and keeps a screenshot of each.
@@ -35,6 +35,7 @@ Kept though no script calls them:
 - `update-device.sh` and `update-device.ts`: A76 points the update check at the release APKs. The fixture `tests/fixtures/update-from-ef857a6.json` was made once by `tools/make-update-snapshot.mjs` at `89859bd1`.
 - `shots.py`: for a page whose numbers only show on screen (the screenshots of a cold start).
 - The WebView golden run (A20), run once per Giac bump (`engine/giac/README.md`, "Bumping Giac"): a measure build opened with `?bench=golden` (`app/src/goldenBench.ts`, `golden.worker.ts`), its log compared with `app/scripts/golden-dump.ts` by `golden-compare.ts`.
+`jq` (on the host) is needed by the pipeline (A259): every `claude -p` runs with `--output-format json`, `jq -r .result` writes the reply file (the JSON stays beside it, `<reply>.json`) and the counts go to one `tokens` line per run, pass, report and lane in `.coord/log.md`; a reply that is not JSON is kept as text and logged `tokens: unknown`.
 Night-shift coordinators (docs/shifts/rules.md section 4). Run them from the phase-1 worktree (`cd .claude/worktrees/phase-1`): the main checkout may be on another branch, without `scripts/`.
 ```bash
 scripts/night.sh --until 07:30   # start it as brief section 0c says (phase-1 worktree, ANDROID_SERIAL, setsid); the night shift: a fresh Read-only henri per decision, scripts/pipeline.sh per package (docs/shifts/rules.md section 4)
