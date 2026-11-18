@@ -5,7 +5,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { test, type Page } from "@playwright/test";
 import { parse } from "yaml";
-import { entryValue, flick, open, setFontScale, tap } from "../test/helpers.ts";
+import { entryValue, flick, open, setFontScale, tap, touch } from "../test/helpers.ts";
 import { foldShots } from "./fold.ts";
 import { popShots } from "./keypop.ts";
 import { eiShots, entryShots, groupShots, ringShots, runShots, lookShots, markShots, menuMarkShots, wrapShots, creditsShots, logoShots } from "./looks.ts";
@@ -307,6 +307,18 @@ const shots: Shot[] = [
   { id: "layer-shift-alpha", group: "Keypad layers", title: "Shift then Alpha (lower case)", setup: (p) => tap(p, ["shift", "alpha"]) },
   ...popShots(), // R162
   ...foldShots(someHistory), // R53
+  // R743: the last row 30 % out to the left, the finger still down: the red strip says Delete (dimmed, not yet armed)
+  { id: "row-swipe-30", group: "History rows (R743)", title: "A row 30 % out to the left: the red strip says Delete, dimmed until it is past 40 %", setup: async (p) => {
+    await someHistory(p);
+    const row = p.locator("article.item[data-status]").last();
+    await row.waitFor();
+    await p.waitForFunction(() => [...document.querySelectorAll("article.item[data-status]")].at(-1)?.hasAttribute("data-gestures"), undefined, { timeout: 15_000 });
+    const width = (await row.boundingBox())?.width ?? 0;
+    const f = await touch(p, row);
+    await f.move(-0.3 * width, 0, 8);
+    await p.locator('[data-testid="swipe-del"]:visible').waitFor();
+    await p.waitForTimeout(150);
+  } },
   // ---- R146: rows 0–2 (Help | Esc, Undo | Redo, Copy | Paste; on Shift Settings | Clear, ⇤ | ⇥), N62 Light and Dark
   ...([[360, 740], [412, 915]] as const).flatMap(([width, height]) => [false, true].map((on) => ({ id: `sixkeys-${width}${on ? "-shift" : ""}`, group: "The six keys (R146)",
     title: `Rows 0–2 at ${width} × ${height}, Shift ${on ? "on" : "off"}`, viewport: { width, height }, element: ".pad", setup: (p: Page) => tap(p, on ? ["shift"] : []) }))),

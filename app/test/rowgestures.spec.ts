@@ -115,9 +115,10 @@ test("a swipe right across 60 % and a fling right leave every row, with no note 
   await page.waitForTimeout(400);
   await expect(rows(page)).toHaveCount(2);
   await expect(page.getByTestId("undo-note")).toHaveCount(0);
+  // each lifted right swipe is counted (R70's counter; decisions.md "Row gestures" reads it): the 60 % one and the fling
+  await expect.poll(() => page.evaluate(async () => (await window.n62.session.uses()).state.counts["swipe.right"])).toBe(2);
 });
 
-const LAST = "section.history article.item[data-status]:last-of-type";
 const del = (page: Page) => page.locator('[data-testid="swipe-del"]:visible');
 /** The row's translateX (px): the offset it is out by. */
 const out = (page: Page): Promise<number> => rows(page).last().evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
@@ -135,14 +136,16 @@ test("mid-swipe left: a red strip as wide as the offset says Delete; past 40 % i
     d.remove();
     return c;
   });
-  const f = await touch(page, LAST);
+  const f = await touch(page, rows(page).last());
   await f.move(-0.3 * width, 0, 6);
   await expect(del(page)).toBeVisible();
   const strip = del(page);
   await expect(strip).toHaveText("Delete");
   await expect(strip).toHaveCSS("background-color", err);
   await expect(strip).not.toHaveAttribute("data-armed");
-  expect(Math.abs((await strip.boundingBox())!.width + (await out(page)))).toBeLessThanOrEqual(2); // as wide as the offset
+  // as wide as the offset (polled: the moves are still arriving), and the offset is where the finger is: 30 % of the row
+  await expect.poll(async () => Math.abs((await strip.boundingBox())!.width + (await out(page)))).toBeLessThanOrEqual(2);
+  expect(Math.abs(-(await out(page)) - 0.3 * width)).toBeLessThanOrEqual(2);
   expect(await rows(page).last().evaluate((el) => el.style.opacity)).toBe("");
   await f.move(-0.45 * width, 0, 3);
   await expect(strip).toHaveAttribute("data-armed", "true");
@@ -160,7 +163,7 @@ test("mid-swipe right: a rubber band under 24 px, no strip (R743)", async ({ pag
   await enter(page, ["d2"], ["d3"]);
   await expect(rows(page).last()).toHaveAttribute("data-gestures", "", { timeout: 15_000 });
   const width = (await rows(page).last().boundingBox())?.width ?? 0;
-  const f = await touch(page, LAST);
+  const f = await touch(page, rows(page).last());
   await f.move(0.6 * width, 0, 8);
   await expect.poll(() => out(page)).toBeGreaterThan(5);
   expect(await out(page)).toBeLessThan(24);

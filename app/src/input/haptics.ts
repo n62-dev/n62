@@ -40,10 +40,9 @@ export function vibrate(strength01: number, ms: number): void {
       // no navigator or vibrator, or the browser forbids it before a user gesture: nothing to do
     }
   };
+  if (!native) return web();
   try {
-    if (!native) return web();
-    const amplitude = Math.min(255, Math.max(1, Math.round(strength01 * 255)));
-    native.vibrate({ ms: duration, amplitude }).catch(web);
+    native.vibrate({ ms: duration, amplitude: Math.min(255, Math.max(1, Math.round(strength01 * 255))) }).catch(web);
   } catch {
     web(); // the plugin threw at once: the web call
   }

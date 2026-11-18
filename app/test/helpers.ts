@@ -134,15 +134,16 @@ export async function open(page: Page, query = "engine=fake"): Promise<void> {
  */
 export async function touch(
   page: Page,
-  id: string,
+  id: string | Locator,
 ): Promise<{
   move: (dx: number, dy: number, steps?: number) => Promise<void>;
   end: () => Promise<void>;
   cancel: () => Promise<void>;
 }> {
   // a key id, or a CSS selector (starting with "[") for a surface that is not a key (the pad's hub, R15c2)
-  const box = await page.locator(id.startsWith("[") ? id : `[data-key="${id}"]`).boundingBox();
-  if (!box) throw new Error(`key ${id} is not visible`);
+  // (R743: or a locator, a history row)
+  const box = await (typeof id !== "string" ? id : page.locator(id.startsWith("[") ? id : `[data-key="${id}"]`)).boundingBox();
+  if (!box) throw new Error(`key ${String(id)} is not visible`);
   const x0 = box.x + box.width / 2;
   const y0 = box.y + box.height / 2;
   const cdp = await page.context().newCDPSession(page);
