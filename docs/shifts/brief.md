@@ -70,7 +70,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 880 | [R726](packages/R726.md) Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
+| 880 | R726 Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
 | 881 | [R727](packages/R727.md) Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
 | 882 | [R743](packages/R743.md) a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
 | 883 | [A259](packages/A259.md) every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | R743 |
