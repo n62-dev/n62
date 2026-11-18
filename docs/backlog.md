@@ -23,7 +23,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **G369, a % chip in Home:** its pure number (0.0042) or the number shown (0.42)? See decisions.md.
 10. **R128:** offer another device's backup on Choose folder? See decisions.md.
-11. **R725, Chars in the unit view:** keep it as built (µ and Ω typed there, the sheet for maths lines and names; recommended)? See decisions.md.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
@@ -96,7 +95,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **Milestone 6, Structure:** built (the archive); not packaged: EN7 everyday functions, EN4 one element of a list or matrix (`L(2)` from the keys indexes, R630).
 
 ### Without a package yet
-- **R41's device check** (the owner's hand; A139 left it, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys; the status line at font scale 2.0 (DOM names: A139's report); R53's slice under TalkBack (R283). R720's history row: TalkBack offers no extra actions on it (the Tab One).
+- **R41's device check** (the owner's hand; A139 left it, rules section 3): TalkBack on the keypad, a sheet, ☰ Delete and the six wing keys; the status line at font scale 2.0 (DOM names: A139's report); R53's slice under TalkBack (R283). R720's history row: TalkBack offers no extra actions on it (the Tab One). R722: RAD mis-taps on the bar; R723's names (Help, Settings, Copy, Paste, no Shift layer on Vars); R724: ⌄ under TalkBack and the folded bar against the gesture bar (the Fairphone).
 - **R58b** Alpha letters are always names in CAS (G2 item 62 can reverse it).
 - **G9. Number formats against the G2** (item 15): decide in the settings and help pass.
 - **R183f1's gaps (pass 211):** a name typed with no folder chosen is kept; a folder chosen later that holds another device of that name is written over (sync/device.ts deviceName returns a kept name unchecked): the first write in a folder needs to tell this device's own files from another's (a record of what it wrote, sync/record.ts). A refused rename to a prefix of this device's own name says "Another device" (syncRows.svelte.ts rename1).
