@@ -240,3 +240,47 @@ test("at 360 × 740 the folded bar fits with a pick: every target at least 44 px
   const screen = await page.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
   console.log(`folded history height at 360 × 740: ${screen}`);
 });
+
+/** The data-item of the focused control (or its test id). */
+const focused = (p: Page): Promise<string> =>
+  p.evaluate(() => {
+    const e = document.activeElement as HTMLElement | null;
+    return e?.dataset["item"] ?? e?.dataset["testid"] ?? e?.tagName ?? "";
+  });
+/** Tab from the line until ⌃ has the focus (at most 40 presses). */
+async function tabToUnfold(p: Page): Promise<void> {
+  for (let i = 0; i < 40 && (await focused(p)) !== "unfold"; i++) await p.keyboard.press("Tab");
+  expect(await focused(p)).toBe("unfold");
+}
+
+test("a drag up that unfolds leaves no stale drag: Alt+K folds, Tab to ⌃, Enter unfolds", async ({ page }) => {
+  await rows(page);
+  await fold(page);
+  await results(page).last().tap();
+  const f = await touch(page, `${FBAR} [data-testid="row-actions"] button:last-child`);
+  await f.move(0, -30, 4);
+  await isFolded(page, false);
+  await f.end(); // a moved touch: no click follows
+  await page.waitForTimeout(100);
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.press("Alt+KeyK");
+  await isFolded(page, true);
+  await tabToUnfold(page);
+  await page.keyboard.press("Enter"); // a click with no pointerdown before it
+  await isFolded(page, false);
+});
+
+test("Tab walks the folded bar with a pick in its pinned order: ⌃, Home, CAS, Store ▶, Copy ›, ☰", async ({ page }) => {
+  await rows(page);
+  await fold(page);
+  await results(page).last().tap();
+  await expect(fbar(page).getByTestId("row-actions").getByRole("button")).toHaveCount(2);
+  await page.evaluate(() => window.n62.entry.focus());
+  await tabToUnfold(page);
+  const walk = ["unfold"];
+  for (let i = 0; i < 5; i++) {
+    await page.keyboard.press("Tab");
+    walk.push(await focused(page));
+  }
+  expect(walk).toEqual(["unfold", "home", "cas", "store", "copy", "menu"]);
+});

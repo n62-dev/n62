@@ -42,6 +42,16 @@
     if (!from || from.id !== e.pointerId || e.clientY - from.y > -FOLD_PX) return;
     from = undefined;
     dragged = true;
+    // the flag lives only for the click this gesture may still send: a moved touch sends none, and the row is gone by its
+    // lift, so it is cleared on the window after the lift's click task (else a keyboard or screen-reader click, which has
+    // no pointerdown, would be eaten the next time the keys are down)
+    const lift = (): void => {
+      removeEventListener("pointerup", lift, true);
+      removeEventListener("pointercancel", lift, true);
+      setTimeout(() => (dragged = false));
+    };
+    addEventListener("pointerup", lift, true);
+    addEventListener("pointercancel", lift, true);
     onunfold();
   };
   const eat = (e: MouseEvent): void => {
@@ -55,6 +65,17 @@
     onunfold();
     if (was) void tick().then(() => entry.focus());
   };
+
+  /** The row buttons' slot goes just before the bar's ☰, so the page order (Tab, TalkBack) is the row's: ⌃, Home, CAS,
+   *  Store ▶, Copy ›, ☰ (the lock's `folded-bar:`). Done here, not in StatusLine, which is in the start chunk. */
+  const beforeMenu = (node: HTMLElement): void => {
+    node.parentElement?.querySelector('[data-testid="menu-button"]')?.before(node);
+  };
+
+  // a new fold starts clean
+  $effect(() => {
+    if (folded) dragged = false;
+  });
 
   // ⌄ (R724) in the entry line's box while the keys are up and the swipes are taken
   $effect(() => {
@@ -85,7 +106,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (⌃ is the control; this is room a tap may land on) -->
     <span class="free" data-testid="fold-free" aria-hidden="true" onclick={() => onunfold()}></span>
     <!-- the picked row's Store ▶ · Copy ›: views/RowBar.svelte moves its buttons in here while folded -->
-    <span class="acts" data-fold-acts></span>
+    <span class="acts" data-fold-acts use:beforeMenu></span>
   </div>
 {/if}
 
@@ -114,7 +135,8 @@
     justify-content: center;
     font: inherit;
   }
-  /* the row's order (views/StatusLine.svelte places the tabs 1, the slot 3 and ☰ 5) */
+  /* the row's order (views/StatusLine.svelte places the tabs 1, the slot 3 and ☰ 5; `beforeMenu` puts the row buttons'
+     slot just before ☰, so the page order is the row's but for the free stretch, which no focus reaches) */
   .unfold {
     order: 0;
   }
