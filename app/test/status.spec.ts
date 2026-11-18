@@ -154,12 +154,17 @@ test("the bar fits at 360 px in an app with the chips and ☰, and the targets k
   expect((m.digits?.right ?? 999) <= (m.menu?.left ?? 0)).toBe(true);
 });
 
-test("Shift and Alpha show on the bar: one tap each, twice for the lock", async ({ page }) => {
+test("Shift and Alpha show on the bar: one tap each, twice for the lock, a third ends it", async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0);
   await tap(page, ["shift"]);
   await expect(page.getByTestId("mod-shift")).toHaveText("⇧");
-  await tap(page, ["shift", "alpha"]);
+  await expect(page.getByTestId("mod-shift")).toHaveAttribute("data-lock", "false");
+  await tap(page, ["shift"]); // R726: a second tap locks Shift, as Alpha's does
+  await expect(page.getByTestId("mod-shift")).toHaveAttribute("data-lock", "true");
+  await tap(page, ["shift"]);
+  await expect(page.getByTestId("mod-shift")).toHaveCount(0);
+  await tap(page, ["alpha"]);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0); // one slot (R82f2): α once
   await expect(page.getByTestId("mod-alpha")).toHaveText("α");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "false");

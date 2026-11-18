@@ -69,7 +69,8 @@
 #     sideways slip or a long hold is still a tap. No left/right flicks; the trackpad and `bksp` have none.
 #     Legends: the shift layer at the top left of the key, the letter at the bottom left.
 #     Lock flicks: up on `shift` = shift lock; down on `alpha` = capitals lock, up on `alpha` = lower-case lock; the
-#     same flick again, or a tap on that key, unlocks. Taps on Shift and Alpha stay one-shot (Alpha twice locks).
+#     same flick again, or a tap on that key, unlocks. A tap on Shift or Alpha arms it for one key, a second tap locks it, a
+#     third ends it (R726; while Alpha is on, Shift's second tap flips the case again); a tap on the bar's ⇧/α sign ends any.
 #     In a sheet a flick down types the key's letter into the filter on any key; a flick up does nothing there.
 #   A second finger fires the first key at once, so two-thumb typing keeps its order; the browser taking the touch
 #     (pointercancel) types nothing. There is no hold-and-drag cursor (removed by P11). Exception: `bksp` fires on
@@ -309,7 +310,7 @@ keys:
     alpha: { type: T }
     source: device  # stacked fraction seen on a G2; r7c5 (virtual-calc) for the position and shift x⁻¹
 
-  - { id: alpha, row: 7, col: 0, cls: ctl, label: { primary: "$key.alpha" }, primary: { special: alpha }, source: virtual-calc }  # r8c1 (twice locks it, L3: ours)
+  - { id: alpha, row: 7, col: 0, cls: ctl, label: { primary: "$key.alpha" }, primary: { special: alpha }, source: virtual-calc }  # r8c1 (twice locks it, L3: ours; Shift's second tap locks it too, R726)
   # Shift + 4 (R187, docs/04 5.3): the matrix sheet, the eight functions as its fixed rows 1 to 8 (views/matrixSheet.ts); R188 adds the stored matrices
   - { id: d4, row: 7, col: 1, cls: num, label: { primary: "4", shift: "$key.matrix", alpha: U }, primary: { type: "4" }, shift: { special: matrix }, alpha: { type: U }, source: virtual-calc }  # r8c2 (shift Matrix, the reference's matrix editor: here a sheet of the matrix functions)
   # Shift + 5: a matrix that grows as you type (R185, docs/04 5.3): a 1×1 whose tapped ▶ at a row's end adds a column and

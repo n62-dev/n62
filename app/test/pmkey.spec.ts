@@ -35,7 +35,7 @@ test.describe("± on Shift + ,", () => {
     await expect(key(page, "comma")).not.toHaveAttribute("data-dead", "true");
     await tap(page, ["shift"]);
     await expect(key(page, "comma")).not.toHaveAttribute("data-dead", "true"); // Home: live
-    await tap(page, ["shift"]);
+    await page.evaluate(() => window.n62.session.releaseModifiers());
     await page.evaluate(async () => window.n62.shell.open("solve", "symb"));
     await page.waitForFunction(() => window.n62.shell.loading === null);
     await tap(page, ["shift"]);

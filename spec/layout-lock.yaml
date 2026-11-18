@@ -18,6 +18,7 @@
 # with an answer and Solve with an unknown selected, so their last rows are there), stat-linreg and stat-stats1 (R184's sheets),
 # units-menu (the unit Find's category rows), units-cell (its "put on a cell" sheet, U1 to U6), bar (the bar's controls left to
 # right, R722) and folded-bar (the folded bar's, R724): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
+# modifiers (R726): `<key>.<gesture>` = the state it leaves (off, arm, lock, capsLock, lowerLock, lower), built by running a Session.
 # app/src/keyboard/layoutLock.ts LIST_BUILDERS names the files that build each list; a file that opens a new one must be there.
 schema: 1
 layers:
@@ -380,6 +381,19 @@ folded-bar:
   "4": "store"
   "5": "copy"
   "6": "menu"
+modifiers:
+  "shift.tap": "arm"
+  "shift.tap2": "lock"
+  "shift.tap3": "off"
+  "shift.flickUp": "lock"
+  "alpha.tap": "arm"
+  "alpha.tap2": "capsLock"
+  "alpha.tap3": "off"
+  "alpha.flickDown": "capsLock"
+  "alpha.flickUp": "lowerLock"
+  "shift.alpha": "lower"
+  "shift.alpha.alpha": "lowerLock"
+  "slot.tap": "off"
 units-cell:
   "1": "u1"
   "2": "u2"

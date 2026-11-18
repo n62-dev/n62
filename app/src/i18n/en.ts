@@ -108,6 +108,7 @@ export const en = {
   "status.menu": "Menu",
   "status.angle": "Angle unit: {angle}. Tap to switch.",
   "status.format": "Number format and digits: {format}. Tap to change.",
+  "status.modOff": "{mod} on. Double-tap to turn it off",
   "status.busy": "Working",
 } as const;
 

@@ -164,6 +164,45 @@ describe("alpha lock (L3)", () => {
   });
 });
 
+describe("Shift locks on a second tap, as Alpha does (R726)", () => {
+  const mods = (s: Session) => ({ shift: s.shift, alpha: s.alpha, shiftLock: s.shiftLock, alphaLock: s.alphaLock, capsLock: s.capsLock });
+  const off = { shift: false, alpha: false, shiftLock: false, alphaLock: false, capsLock: false };
+  it("tap 1 arms Shift for one key, tap 2 locks it (it stays after a key), tap 3 ends it", () => {
+    const s = new Session(new FakeCalc(), fakeKv());
+    s.toggleShift();
+    expect([s.shift, s.shiftLock]).toEqual([true, false]);
+    s.toggleShift();
+    expect([s.shift, s.shiftLock]).toEqual([true, true]);
+    s.clearModifiers();
+    expect([s.shift, s.shiftLock]).toEqual([true, true]);
+    s.toggleShift();
+    expect(mods(s)).toEqual(off);
+  });
+  it("with Alpha armed, Shift twice flips the case twice and does not lock", () => {
+    const s = new Session(new FakeCalc(), fakeKv());
+    s.toggleAlpha();
+    s.toggleShift();
+    expect([s.alpha, s.shift, s.shiftLock]).toEqual([true, true, false]);
+    s.toggleShift();
+    expect([s.alpha, s.shift, s.shiftLock]).toEqual([true, false, false]);
+  });
+  it("a Shift tap that ends a Shift lock leaves Alpha as it is", () => {
+    const s = new Session(new FakeCalc(), fakeKv());
+    s.flickShiftLock();
+    s.toggleAlpha();
+    s.toggleShift();
+    expect(mods(s)).toEqual({ ...off, alpha: true });
+  });
+  it("releaseModifiers ends every armed layer and every lock", () => {
+    const s = new Session(new FakeCalc(), fakeKv());
+    for (const set of [() => s.toggleShift(), () => (s.toggleShift(), s.toggleShift()), () => s.toggleAlpha(), () => (s.toggleAlpha(), s.toggleAlpha()), () => (s.toggleShift(), s.toggleAlpha(), s.toggleAlpha())]) {
+      set();
+      s.releaseModifiers();
+      expect(mods(s)).toEqual(off);
+    }
+  });
+});
+
 describe("lock flicks (R9, P7 point 3)", () => {
   const mods = (s: Session) => ({ shift: s.shift, alpha: s.alpha, shiftLock: s.shiftLock, alphaLock: s.alphaLock, capsLock: s.capsLock });
   it("up on Shift locks shift: it stays on after each key; a tap on Shift or the same flick unlocks", () => {

@@ -35,7 +35,7 @@ import { matrixRows, MATRIX_ROWS } from "../views/matrixSheet.ts";
 import { modeItems, settingsSections } from "../views/modeSheet.ts";
 import { loadKeyboard, keyboard } from "./keyboard.ts";
 import { UserKeys } from "./userKeys.svelte.ts";
-import { compareLayout, compareToRelease, layerPins, LIST_BUILDERS, listSlots, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
+import { compareLayout, compareToRelease, layerPins, LIST_BUILDERS, listSlots, modifierPins, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const LOCK = "spec/layout-lock.yaml";
@@ -119,6 +119,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     "units-cell": ids(cellRows(() => {})),
     bar: listSlots(BAR_ITEMS),
     "folded-bar": listSlots(FOLDED_BAR_ITEMS),
+    modifiers: modifierPins(() => new Session(new FakeCalc(), fakeKv())),
   };
 }
 
@@ -177,7 +178,7 @@ describe("every numbered list is in the lock (R299)", () => {
       .filter((f) => /\.(ts|svelte)$/.test(f) && !/\.test\.ts$/.test(f) && !f.includes("_gen"))
       .filter((f) => /\bshowMenu\(|^\s*menu\(view: ViewId\)/m.test(readFileSync(join(src, f), "utf8")))
       .sort();
-  const KEYPAD = new Set(["layers", "tmpl", "relations", "symbols", "chars"]);
+  const KEYPAD = new Set(["layers", "tmpl", "relations", "symbols", "chars", "modifiers"]);
   it("every file that opens a numbered list is in the registry, or is listed with why its rows have no fixed digit", () => {
     const known = new Set([...Object.values(LIST_BUILDERS).flat(), ...Object.keys(UNPINNED_LISTS)]);
     expect(openers().filter((f) => !known.has(f))).toEqual([]);
@@ -305,6 +306,16 @@ describe("a numbered list cannot change unnoticed (altered copies of the lists)"
     const { matrix: _m, ...rest } = actual;
     expect(problems(rest)[0]).toBe('matrix/1: pinned "fn:tran" is gone');
     expect(problems({ ...actual, extra: { "1": "x" } })).toEqual(['extra/1: "x" is live but not in the lock']);
+  });
+});
+
+describe("the modifiers are in the lock (R726)", () => {
+  it("a second Shift tap that no longer locks names its entry", () => {
+    expect(problems(with_("modifiers", (m) => ({ ...m, "shift.tap2": "off" })))).toEqual([expect.stringContaining('modifiers/shift.tap2: pinned "lock", now "off"')]);
+  });
+  it("the lock holds what a Session does: Shift taps arm, lock, end; the flicks lock; the sign ends a lock", () => {
+    const m = lock.pins["modifiers"] ?? {};
+    expect([m["shift.tap"], m["shift.tap2"], m["shift.tap3"], m["shift.flickUp"], m["slot.tap"]]).toEqual(["arm", "lock", "off", "lock", "off"]);
   });
 });
 

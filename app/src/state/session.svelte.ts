@@ -235,7 +235,7 @@ export class Session {
   /** Alpha lock (L3): alpha stays on after each key; capsLock keeps shift on too (shift + alpha: lower case, P4). */
   alphaLock = $state(false);
   capsLock = $state(false);
-  /** Shift lock (a flick up on Shift, R9): shift stays on after each key until Shift is tapped or flicked again. */
+  /** Shift lock (a second tap on Shift, R726, or a flick up on it, R9): shift stays on after each key until Shift is tapped or flicked again. */
   shiftLock = $state(false);
   /** The press counts (R9, R70, R127), shown in Settings; R320: a front that queues them until the counter's chunk is in. */
   readonly taps: Taps;
@@ -356,52 +356,43 @@ export class Session {
     return [...this.home, ...this.cas].find((i) => i.status === "pending");
   }
 
-  // ---- modifiers: one-shot, as on a calculator. Alpha twice locks it (alpha, alpha locks capitals; shift, alpha, alpha lower case);
-  // alpha again unlocks. In the lock, shift is one-shot and flips the case of the next letter.
-  // Lock flicks (P7 point 3, R9): up on Shift locks shift, down on Alpha locks capitals, up on Alpha lower case. One
-  // lock at a time: a lock flick replaces the other lock, and the same flick again (or a tap on that key) unlocks.
+  // ---- modifiers: one tap arms Shift or Alpha for one key, a second tap locks it, a third ends it (R726). Alpha twice locks
+  // capitals; shift, alpha, alpha lower case. While Alpha is armed or locked, Shift is one-shot and flips the case of the next
+  // letter (a second Shift tap there does not lock). Lock flicks (P7 point 3, R9): up on Shift locks shift, down on Alpha
+  // locks capitals, up on Alpha lower case. One lock at a time: a lock flick replaces the other lock, and the same flick
+  // again (or a tap on that key) unlocks. A tap on the bar's ⇧/α sign ends any of them (releaseModifiers).
   toggleShift(): void {
-    if (this.shiftLock) {
-      this.shiftLock = false;
-      this.shift = false;
-      return;
-    }
-    this.shift = !this.shift;
+    if (this.shiftLock) this.shiftLock = this.shift = false; // (Alpha is left as it is: a Shift tap while it is on flips one letter's case)
+    else if (this.shift && !this.alpha) this.shiftLock = true;
+    else this.shift = !this.shift;
   }
   /** Flick up on Shift. */
   flickShiftLock(): void {
     const on = !this.shiftLock;
-    this.unlock();
-    this.shiftLock = on;
-    this.shift = on;
+    this.releaseModifiers();
+    this.shiftLock = this.shift = on;
   }
   /** Flick down (capitals) or up (lower case) on Alpha. */
   flickAlphaLock(lower: boolean): void {
     const on = !(this.alphaLock && this.capsLock === lower);
-    this.unlock();
-    this.alphaLock = on;
-    this.capsLock = on && lower;
-    this.alpha = on;
-    this.shift = on && lower;
+    this.releaseModifiers();
+    this.capsLock = this.shift = on && lower;
+    this.alphaLock = this.alpha = on;
   }
-  /** Every lock and every armed layer off (a lock flick's first step; R700: Android back). */
-  unlock(): void {
+  /** Every lock and every armed layer off (a lock flick's first step; R700: Android back; R726: a tap on the bar's ⇧/α sign). */
+  releaseModifiers(): void {
     this.shiftLock = this.alphaLock = this.capsLock = this.alpha = this.shift = false;
   }
   toggleAlpha(): void {
-    if (this.alphaLock) {
-      this.alphaLock = false;
-      this.capsLock = false;
-      this.alpha = false;
-      this.shift = false;
-    } else if (this.alpha) {
+    if (this.alphaLock) this.releaseModifiers(); // (no shift lock is on beside an Alpha lock: one lock at a time)
+    else if (this.alpha) {
       this.alphaLock = true;
       this.capsLock = this.shift;
       this.shiftLock = false; // one lock at a time (a shift lock made this a lower-case lock)
     } else this.alpha = true;
   }
   clearModifiers(): void {
-    this.shift = this.shiftLock || (this.alphaLock && this.capsLock);
+    this.shift = this.shiftLock || this.capsLock; // (a caps lock is only ever on with the Alpha lock)
     this.alpha = this.alphaLock;
   }
 

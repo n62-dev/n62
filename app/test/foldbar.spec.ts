@@ -174,7 +174,7 @@ test("the folded bar's states: the busy ring on the current tile, Shift in the s
   await tap(page, ["shift"]);
   await fold(page);
   await expect(fbar(page).getByTestId("mod-shift")).toHaveText("⇧");
-  await page.evaluate(() => window.n62.session.unlock());
+  await page.evaluate(() => window.n62.session.releaseModifiers());
   await expect(fbar(page).getByTestId("mod-shift")).toHaveCount(0);
   await page.keyboard.type("2");
   await page.keyboard.press("Enter");

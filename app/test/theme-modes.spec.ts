@@ -82,7 +82,7 @@ test("High contrast: a one-shot Shift fills the key with --key-shift, a locked o
   expect(press.o).toBe("none");
   expect(await page.locator('[data-key="shift"]').evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(await token(page, "--key-shift"));
   expect((await style(page, '[data-key="shift"] .main')).c).toBe(await token(page, "--on-key-shift"));
-  await tap(page, ["shift"]); // off
+  await page.evaluate(() => window.n62.session.releaseModifiers()); // off (a second Shift tap would lock it, R726)
   const box = (await page.locator('[data-key="shift"]').boundingBox())!;
   const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];
   await page.mouse.move(x, y);

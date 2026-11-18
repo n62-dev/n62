@@ -40,9 +40,9 @@
   /** The ⇧ α slot: one sign, underlined when locked; `a` when Alpha types lower case here, `α` when it types capitals (R101). */
   const mod = $derived(
     session.alpha
-      ? { alpha: true, lock: session.alphaLock, text: alphaLower(session.shift, true, cas) ? "a" : "α" }
+      ? { id: "alpha" as const, lock: session.alphaLock, text: alphaLower(session.shift, true, cas) ? "a" : "α" }
       : session.shift
-        ? { alpha: false, lock: session.shiftLock, text: "⇧" }
+        ? { id: "shift" as const, lock: session.shiftLock, text: "⇧" }
         : null,
   );
   /** The bar is not a place for typing: a tap on it must not take the caret out of the entry line. */
@@ -143,11 +143,14 @@
       {/each}
     </span>
     <span class="slot" data-testid="mod-slot">
-      <span
-        class="mod"
-        data-testid={mod ? `mod-${mod.alpha ? "alpha" : "shift"}` : undefined}
-        data-lock={mod?.lock}
-        aria-label={mod && t(mod.alpha ? "key.alpha" : "key.shift")}>{mod?.text}</span>
+      {#if mod}
+        <!-- R726: while Shift or Alpha is on, the sign is a button: a tap ends it, armed or locked (the bar's guard applies) -->
+        <button type="button" class="mod"
+          data-testid="mod-{mod.id}"
+          data-lock={mod.lock}
+          aria-label={t("status.modOff", { mod: t(`key.${mod.id}`) })}
+          onclick={() => session.releaseModifiers()}>{mod.text}</button>
+      {/if}
     </span>
     <button
       type="button"
@@ -391,10 +394,17 @@
     align-items: center;
     justify-content: center;
   }
+  /* R726: the sign is a button while one is on: the bar's 28 × 28 target over the 16 px slot (the slot keeps its width, so
+     nothing moves; the chip after it is drawn over the overlap); a lock's underline sits on the bar's lower edge */
   .mod {
     color: var(--shift);
     font-weight: 700;
     line-height: var(--lh-small);
+  }
+  .slot button.mod {
+    width: var(--bar-h);
+    height: var(--bar-h);
+    min-width: 0;
   }
   .mod[data-testid="mod-alpha"] {
     color: var(--alpha);

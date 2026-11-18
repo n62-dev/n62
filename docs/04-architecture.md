@@ -277,7 +277,7 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Tmpl (row 3, col 2) [r4c3] | the 6 × 3 template palette, picked by arrows, Enter or a tap (r8 rule M1) | P8, P11 |
 | Shift + Tmpl | the unit view (unit slots) | P11; reference: Units |
 | The letters A–Z, `#`, `:`, `;` (Alpha layer, flick down) | **stay**: Find's keyboard (3.7), names, CAS symbols, hex digits A–F (5.4); not the unit slots (P14) | decisions.md "The letters stay" |
-| Alpha key [r8c1] | one-shot Alpha with lock flicks; stays its own key (P7 point 4, owner 2026-10-19; reopens if Alpha taps fall near zero) | P7 |
+| Shift key [r9c1], Alpha key [r8c1] | one tap arms for one key, a second locks, a third ends it (Shift's second tap too since R726; with Alpha on, Shift stays one-shot), plus the lock flicks; a tap on the bar's ⇧/α sign ends either; each stays its own key (P7 point 4, owner 2026-10-19; reopens if Alpha taps fall near zero) | P7 |
 | a b/c (row 3, col 4) [r4c5] | toggles the last result's form: decimal ↔ fraction, polar ↔ rectangular | G2 item 29, P12 |
 | Exponent key (row 6, col 0) [r7c1] | types the mark `ᴇ` (`\emark`, one token); Shift = Sto ▶ | P12 |
 | Rows 0–2 | R3 (the pairs R146; R723): U1–U6 in columns 0–1; the round pad (one drag surface, a circle with no drawn hub, no OK) in columns 2–3; Help \| Esc, Undo \| Redo, Select \| Deselect in columns 4–5, with Settings \| Clear, ⇤ \| ⇥, Copy \| Paste on Shift. Apps, Home, CAS, ☰, Mode and the views: the bar on the keypad (R15c1, R722); results mode: the swipe on the entry line or ⌄ on its corner, and the folded bar (R53, R724). The cells at the tag: docs/06 3b | P12, S2, R15c, R146, R723 |

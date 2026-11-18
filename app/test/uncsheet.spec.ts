@@ -213,7 +213,8 @@ test("controls: σ over 1, live; 1 types 1, Alpha + 1 types Y; a b/c, 7 and Fmt 
     await expect(key(page, id), id).toHaveAttribute("data-dead", "true");
     expect(await shiftLegend(page, id), id).toBe("");
   }
-  await tap(page, ["shift", "d1", "alpha", "d1"]);
+  await page.evaluate(() => window.n62.session.releaseModifiers()); // (a second Shift tap would lock it, R726)
+  await tap(page, ["d1", "alpha", "d1"]);
   expect(await entryValue(page)).toBe("1Y");
   // an empty history: Shift + 1 is dead and types nothing
   await page.evaluate(() => window.n62.entry.clear());
