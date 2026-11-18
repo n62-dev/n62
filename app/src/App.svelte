@@ -1,6 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
   import { onMount } from "svelte";
+  import { idle } from "./idle.ts";
   import type { AppShell, PaletteId } from "./apps/shell.svelte.ts";
   import type { SubMenu } from "./apps/types.ts";
   import type { ClipActions } from "./clipboard/actions.svelte.ts";
@@ -106,10 +107,9 @@
       void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}), session.taps.load(); // R53, R724; R320: the press counters (presses wait in the session's front)
       void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {}); // R285: a browser that has not passed says so once (the chunk decides)
     };
-    if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
-    else setTimeout(loadFold, 300);
+    idle(loadFold, 1500, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
-    void tipsDue(location.search).then((due) => due && ("requestIdleCallback" in window ? requestIdleCallback(firstTips, { timeout: 2000 }) : setTimeout(firstTips, 500)));
+    void tipsDue(location.search).then((due) => due && idle(firstTips, 2000, 500));
     return session.taps.listen();
   });
   /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
@@ -364,8 +364,8 @@
   $effect(() => {
     if (hasPick) return openLayer(() => (picked = null));
   });
-  // R700: ...and an armed or locked Shift or Alpha, as the key that disarms it (session.releaseModifiers); one layer while any of the four holds.
-  const armed = $derived(session.shift || session.alpha || session.shiftLock || session.alphaLock);
+  // R700: ...and an armed or locked Shift or Alpha, as the key that disarms it (session.releaseModifiers); one layer while either holds.
+  const armed = $derived(session.shift || session.alpha); // (a lock keeps its own layer on)
   $effect(() => {
     if (armed) return openLayer(() => session.releaseModifiers());
   });

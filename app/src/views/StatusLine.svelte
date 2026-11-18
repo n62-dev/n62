@@ -40,9 +40,9 @@
   /** The ⇧ α slot: one sign, underlined when locked; `a` when Alpha types lower case here, `α` when it types capitals (R101). */
   const mod = $derived(
     session.alpha
-      ? { alpha: true, lock: session.alphaLock, text: alphaLower(session.shift, true, cas) ? "a" : "α" }
+      ? { id: "alpha" as const, lock: session.alphaLock, text: alphaLower(session.shift, true, cas) ? "a" : "α" }
       : session.shift
-        ? { alpha: false, lock: session.shiftLock, text: "⇧" }
+        ? { id: "shift" as const, lock: session.shiftLock, text: "⇧" }
         : null,
   );
   /** The bar is not a place for typing: a tap on it must not take the caret out of the entry line. */
@@ -145,15 +145,11 @@
     <span class="slot" data-testid="mod-slot">
       {#if mod}
         <!-- R726: while Shift or Alpha is on, the sign is a button: a tap ends it, armed or locked (the bar's guard applies) -->
-        <button
-          type="button"
-          class="mod"
-          data-testid={mod.alpha ? "mod-alpha" : "mod-shift"}
+        <button type="button" class="mod"
+          data-testid="mod-{mod.id}"
           data-lock={mod.lock}
-          aria-label={t("status.modOff", { mod: t(mod.alpha ? "key.alpha" : "key.shift") })}
+          aria-label={t("status.modOff", { mod: t(`key.${mod.id}`) })}
           onclick={() => session.releaseModifiers()}>{mod.text}</button>
-      {:else}
-        <span class="mod"></span>
       {/if}
     </span>
     <button

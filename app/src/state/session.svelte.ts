@@ -362,7 +362,7 @@ export class Session {
   // locks capitals, up on Alpha lower case. One lock at a time: a lock flick replaces the other lock, and the same flick
   // again (or a tap on that key) unlocks. A tap on the bar's ⇧/α sign ends any of them (releaseModifiers).
   toggleShift(): void {
-    if (this.shiftLock) this.shiftLock = this.shift = false;
+    if (this.shiftLock) this.releaseModifiers();
     else if (this.shift && !this.alpha) this.shiftLock = true;
     else this.shift = !this.shift;
   }
@@ -370,36 +370,29 @@ export class Session {
   flickShiftLock(): void {
     const on = !this.shiftLock;
     this.releaseModifiers();
-    this.shiftLock = on;
-    this.shift = on;
+    this.shiftLock = this.shift = on;
   }
   /** Flick down (capitals) or up (lower case) on Alpha. */
   flickAlphaLock(lower: boolean): void {
     const on = !(this.alphaLock && this.capsLock === lower);
     this.releaseModifiers();
-    this.alphaLock = on;
-    this.capsLock = on && lower;
-    this.alpha = on;
-    this.shift = on && lower;
+    this.capsLock = this.shift = on && lower;
+    this.alphaLock = this.alpha = on;
   }
   /** Every lock and every armed layer off (a lock flick's first step; R700: Android back; R726: a tap on the bar's ⇧/α sign). */
   releaseModifiers(): void {
     this.shiftLock = this.alphaLock = this.capsLock = this.alpha = this.shift = false;
   }
   toggleAlpha(): void {
-    if (this.alphaLock) {
-      this.alphaLock = false;
-      this.capsLock = false;
-      this.alpha = false;
-      this.shift = false;
-    } else if (this.alpha) {
+    if (this.alphaLock) this.releaseModifiers(); // (no shift lock is on beside an Alpha lock: one lock at a time)
+    else if (this.alpha) {
       this.alphaLock = true;
       this.capsLock = this.shift;
       this.shiftLock = false; // one lock at a time (a shift lock made this a lower-case lock)
     } else this.alpha = true;
   }
   clearModifiers(): void {
-    this.shift = this.shiftLock || (this.alphaLock && this.capsLock);
+    this.shift = this.shiftLock || this.capsLock; // (a caps lock is only ever on with the Alpha lock)
     this.alpha = this.alphaLock;
   }
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The only door from the start chunk into the key names (R41, keyboard/keyNames.ts). They load after the first paint, so the
 // start chunk carries neither the table nor the code; until they are in, a button is named by its face, as before.
+import { idle } from "../idle.ts";
 type KeyNames = typeof import("./keyNames.ts");
 
 let loading: Promise<void> | undefined;
@@ -19,7 +20,6 @@ export function loadKeyNames(): void {
         done();
       });
     };
-    if (typeof requestIdleCallback === "function") requestIdleCallback(go, { timeout: 1500 });
-    else setTimeout(go, 200);
+    idle(go, 1500);
   });
 }

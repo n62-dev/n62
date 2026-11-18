@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import { idle } from "./idle.ts";
 import { mark } from "./marks.ts";
 mark("js-start");
 import "mathlive/static.css";
@@ -109,8 +110,7 @@ if (import.meta.env.DEV && new URLSearchParams(location.search).has("pad")) void
 // (the whole build, ~10 MB with both wasm files) never compete with the first paint or the engine's own load.
 void calc.ready().then(() => {
   const register = (): void => void import("./pwa.ts").then((m) => m.registerServiceWorker());
-  if ("requestIdleCallback" in window) requestIdleCallback(register, { timeout: 5000 });
-  else setTimeout(register, 2000);
+  idle(register, 5000, 2000);
 });
 
 // Keypad first: MathLive (the biggest chunk) is fetched and parsed only after the keypad has been painted.
@@ -119,7 +119,6 @@ requestAnimationFrame(() =>
   requestAnimationFrame(() => {
     mark("keyboard-ready");
     // Key vibration with strength needs @capacitor/core, which stays out of the start chunk (R35): load it when idle.
-    const idle = (f: () => void): void => (typeof requestIdleCallback === "function" ? void requestIdleCallback(f) : void setTimeout(f, 200));
     idle(() => void loadNative());
     idle(() => void import("./views/modeSheet.ts")); // fetched when idle, so the first Mode or Settings open is not slower
     idle(() => void loadSheetView().catch(() => {})); // the sheet's view, likewise (R46)
