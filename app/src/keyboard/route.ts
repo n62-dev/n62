@@ -201,7 +201,7 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
   c.sheetLoad ??= load;
 }
 
-/** Shift + Select (R723): Copy, the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
+/** Shift + Select (R723): Copy, the line's selection (R727), else the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
  *  an app, is a dead press with no clipboard write. */
 const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row));
 
@@ -538,7 +538,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   // R300: a matrix grid's cell is edited on this line (matrixGrid.svelte.ts): the line's own jobs on an empty line (Ans
   // first, a b/c's form cycle, Undo of what Clear took, ▲'s pick of a history row) do not reach behind the grid
   const cell = shell.sheet?.level.grid?.editing != null;
-  if (!isSelect(action)) entry.endSelect(); // R279: any other key ends the chain of Select presses
+  // R279: any other key ends the chain of Select presses; Copy does not (R727: it copies the selection and leaves it)
+  if (!isSelect(action) && !(action?.kind === "special" && action.name === "copy")) entry.endSelect();
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
   if (shell.app === null && !cell && historyKey(c, action)) return;

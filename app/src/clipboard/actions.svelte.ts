@@ -152,9 +152,16 @@ export class ClipActions {
     this.ops.acted?.("copy");
     return this.copyRaw(entryText(latex, this.opts));
   }
-  /** Shift + Select (R723): what a hold on the row's result copies, of `row` (the picked one), else of the last finished
+  /** Shift + Select (R723): the entry line's selection (R727) as plain text, else what a hold on the row's result copies, of `row` (the picked one), else of the last finished
    *  row; `dead` (the dead press), and nothing written, when there is no such row or an app is open (its rows are not Home's). */
   keyCopy(dead: () => void, row?: HistoryItem): void {
+    const mf = this.entry.field;
+    const selection = mf && !mf.selectionIsCollapsed ? mf.getValue(mf.selection, "latex") : "";
+    if (selection) {
+      this.ops.acted?.("copy"); // as a hold on an input counts, and copies its plain text
+      void this.copyRaw(entryText(selection, this.opts));
+      return;
+    }
     const i = this.shell.app === null ? this.target(row) : undefined;
     if (i) void this.holdCopy(i, "result", "");
     else dead();
