@@ -212,6 +212,7 @@ if [[ "${1:-}" == "pass" ]]; then
     integ="$(integ_dir)"; : "${integ:=$main/.claude/worktrees/phase-1}"  # shown, never created
     echo "DRY RUN: Opus pass $n on: $ids; open questions: $open; PW_PORT=$PW_PORT; first tools/devlock.sh acquire pass pass-$n ${N62_PASS_WAIT:-9000} (A86: one pass at a time; a wait is logged once, past it: RESULT pass $n: NOT RUN (pass lock busy for <s> s), no number, branch or worktree taken), held to the end; worktree $main/.claude/worktrees/pass-$n on branch p1/pass-$n from phase-1 (A85: no integ while sofia runs); then under integ: phase-1 merged into the branch, node tools/docs-check.mjs, git -C $integ merge --no-ff --signoff (nothing when no file changed); starts nothing"; echo "RESULT pass $n: DRY RUN"; exit 0
   fi
+  need_jq >/dev/null || die "$(need_jq)"  # A259: the replies are JSON
   ensure_integ
   # A86: one pass at a time: the pass lock before the pass number and the branch, held to the end (the EXIT trap drops it), so a second
   # pass branches from phase-1 after the first's merge and never conflicts with it. Runs and integ are not touched. The wait (9000 s)
@@ -416,6 +417,7 @@ fi
 
 # ---------- subcommand: report ----------
 if [[ "${1:-}" == "report" ]]; then
+  need_jq >/dev/null || die "$(need_jq)"  # A259: the reply is JSON
   ensure_integ; run="$tasks/report-$(date +%F)"; mkdir -p "$run"
   job="$(take_number "$tasks")" || die "report: the counter lock is busy"; export PW_PORT="$(job_port "$job")"
   trap 'owned_kill; integ_drop' EXIT  # A47b: the report holds integ for its whole run
@@ -457,6 +459,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+[[ $dry -eq 1 ]] || need_jq >/dev/null || die "$(need_jq)"  # A259: a run reads claude's JSON replies with jq; refused before a run number is taken
 ensure_integ
 # A47b: the brief, the package and the files it names come from phase-1's commit, never from the phase-1 worktree (which may
 # be dirty, or mid-edit by a pass or an interactive session holding integ).

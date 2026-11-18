@@ -1586,6 +1586,19 @@ out="$(JOUT_TEXT=1 abrun "$script" annabell "ab task" --id B4 --branch p1/b4 --c
 grep -q '^RESULT #[0-9]* B4: MERGED' <<<"$out" || fail "A259: a text reply fails the run: $out"
 grep -qE 'pipeline #[0-9]+ B4: tokens: unknown$' "$ab/.coord/log.md" || fail "A259: a text reply is not logged 'tokens: unknown': $(grep B4 "$ab/.coord/log.md")"
 b4d="$(ls -d "$ab"/.tasks/*-b4 | head -n1)"; [[ "$(cat "$b4d/worker-0.log")" == done && ! -e "$b4d/worker-0.log.json" ]] || fail "A259: a text reply was changed or got a .json"
+# A259f1: jq is a checked requirement: on a PATH without it a run, a pass and a report stop at once with a clear RESULT (no run number, no
+# raw JSON in a reply file, no agent started); a dry run needs no jq
+nj="$tmp/nojq"; mkdir -p "$nj"; for d in /usr/bin /bin; do for f in "$d"/*; do [[ "${f##*/}" == jq || -e "$nj/${f##*/}" ]] || ln -s "$f" "$nj/${f##*/}" 2>/dev/null; done; done
+PATH="$nj" command -v jq >/dev/null 2>&1 && fail "A259f1: the test's PATH still has jq"
+for c in 'annabell|ab task|--id|B5|--branch|p1/b5|--checks|docs' 'pass|9|B5|none' 'report'; do
+  IFS='|' read -ra av <<<"$c"
+  out="$(abrun env PATH="$ab/bin:$nj" "$script" "${av[@]}" 2>&1)"; rc=$?
+  [[ $rc -eq 2 ]] && grep -q '^RESULT -: NOT STARTED (jq is not installed' <<<"$out" || fail "A259f1: ${av[0]} without jq does not stop with 'NOT STARTED (jq is not installed': rc $rc: $out"
+done
+[[ ! -e "$ab"/.tasks/*-b5 ]] 2>/dev/null || fail "A259f1: a run without jq took a run number"
+grep -q 'jq is not installed' "$ab/.coord/log.md" || fail "A259f1: the refusal is not logged"
+out="$(abrun env PATH="$ab/bin:$nj" "$script" annabell "ab task" --id B5 --branch p1/b5 --dry-run 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] || fail "A259f1: a dry run without jq fails (rc $rc): $out"
 out="$(AB_E2E_FAIL=1 AB_FIX=1 abrun "$script" annabell "ab task" --id B2 --branch p1/b2 --checks docs,typecheck,e2e 2>&1)"
 f1="$(ls "$ab"/.tasks/*-b2/fix-1.in 2>/dev/null | head -n1)"
 fe="$(grep -n '^## e2e failed' "$f1" 2>/dev/null | head -n1 | cut -d: -f1)"; fa="$(grep -n 'the stand-in audit finding' "$f1" 2>/dev/null | head -n1 | cut -d: -f1)"

@@ -73,6 +73,9 @@ if [[ -n "$stop" ]]; then  # the owner's stop: never kills a running pipeline; p
   else echo "night.sh: $line; $(what "$stop") is not running (the line keeps it from being restarted)"; fi
   exit 0
 fi
+if [[ $dry -eq 0 ]] && ! why="$(need_jq)"; then  # A259: henri's replies and every step's are JSON; without jq a lane would read raw JSON as henri's line
+  echo "night.sh: refused: $why" >&2; mkdir -p "$coord"; logline "$tag" "night.sh: refused: $why"; exit 2
+fi
 if [[ $dry -eq 0 && -z "${N62_NIGHT_INHIBITED:-}" ]] && command -v systemd-inhibit >/dev/null; then
   N62_NIGHT_INHIBITED=1 exec systemd-inhibit --what=sleep:idle:handle-lid-switch --why="N62 night shift" "$self" "${orig_args[@]}"
 fi

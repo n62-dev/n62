@@ -198,6 +198,17 @@ out="$(sbnight g6 --lane A 2>&1)"; rc=$?
 [[ $rc -eq 0 ]] && grep -q "stale pid file night-A.pid (pid $dead" "$lg" || fail "guard: a stale pid file is not replaced and logged (rc $rc): $out"
 grep -q "^## .* night, .* (lane A)$" "$lg" || fail "guard: lane A started alone wrote no night header"
 
+# A259f1: without jq a real night.sh refuses at once (exit 2, logged, no pid file, henri not asked); a dry run and --stop need none
+nj="$tmp/nojq"; mkdir -p "$nj"; for d in /usr/bin /bin; do for f in "$d"/*; do [[ "${f##*/}" == jq || -e "$nj/${f##*/}" ]] || ln -s "$f" "$nj/${f##*/}" 2>/dev/null; done; done
+PATH="$nj" command -v jq >/dev/null 2>&1 && fail "A259f1: the test's PATH still has jq"
+: > "$tmp/j1.asked"
+out="$(cd "$sb" && PATH="$sb/bin:$nj" N62_NIGHT_INHIBITED=1 SBN_CALLS="$tmp/j1.calls" SBN_ASKED="$tmp/j1.asked" SBN_IN="$tmp/j1.in" SBN_REPLIES="$tmp/j1.replies" "$night" --lane A 2>&1)"; rc=$?
+[[ $rc -eq 2 ]] && grep -q 'night.sh: refused: jq is not installed' <<<"$out" || fail "A259f1: night.sh without jq is not refused with exit 2 (rc $rc): $out"
+grep -q '\[A\] night.sh: refused: jq is not installed' "$lg" || fail "A259f1: the refusal is not logged: $(tail -n 3 "$lg")"
+[[ ! -s "$tmp/j1.asked" && ! -e "$sb/.coord/night-A.pid" ]] || fail "A259f1: night.sh without jq asked henri or left a pid file"
+out="$(cd "$sb" && PATH="$sb/bin:$nj" N62_NIGHT_NOW=07:00 "$night" --lane A --dry-run --max-steps 3 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] || fail "A259f1: a dry run without jq fails (rc $rc): $out"
+
 # --stop A: the line percy reads, the running step finishes, then lane A ends
 printf '%s\n' 'scripts/pipeline.sh ron "R1" --model sonnet' 'scripts/pipeline.sh ron "R2" --model sonnet' > "$tmp/s1.replies"
 out="$(SBN_STOP_ON=R1 SBN_STOP_LANE=A sbnight s1 --lane A 2>&1)"; rc=$?

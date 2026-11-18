@@ -7,6 +7,9 @@
 # to the records file: role, model, tokens in (input + cache read + cache creation), tokens out, cost in USD, tab separated. A reply that
 # is not JSON (an old CLI, a crash, an empty file, no jq) stays as it is and gets the record `role<TAB>unknown`; never a failure. Callers
 # read the reply file only after this (the limit text of an is_error result is the .result).
+need_jq() {  # prints the reason and fails when jq is missing: without it every reply file would hold raw JSON, so a start refuses (callers die)
+  command -v jq >/dev/null 2>&1 || { echo "jq is not installed (A259: the pipeline reads claude's JSON replies with it; apt install jq)"; return 1; }
+}
 claude_unwrap() {
   local f="$1" role="$2" rec="$3"
   if [[ -s "$f" ]] && command -v jq >/dev/null 2>&1 && jq -e 'type == "object" and (has("result") or has("usage"))' "$f" >/dev/null 2>&1; then
