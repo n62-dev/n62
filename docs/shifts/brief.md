@@ -73,7 +73,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 880 | R726 Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
 | 881 | R727 Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
 | 882 | R743 a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
-| 883 | [A259](packages/A259.md) every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | R743 |
+| 883 | A259 every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | R743 |
 
 If the release candidate (Mon 11-23) comes before every row has merged, R743, then R727, then R726 move to v0.1.1; the other rows are the layout that the lock pins and stay (owner, 2026-11-17).
 
