@@ -82,9 +82,9 @@ test("Shift + Select copies the picked row's full value, what a hold on that res
   await expect.poll(() => clipboard(page)).toBe(THIRD);
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 3);
-  await tap(page, ["up"]);
-  await finger(page, "result:last", { ms: 700 });
+  await finger(page, "result:last", { ms: 700 }); // what a hold on the 1÷3 result copies
   const held = await clipboard(page);
+  await tap(page, ["esc"]); // (no pick left over)
   await setClipboard(page, "");
   await tap(page, ["up", ...KEYCOPY]); // 1÷3 Enter ▲, Shift + Select
   await expect.poll(() => clipboard(page)).toBe(held);

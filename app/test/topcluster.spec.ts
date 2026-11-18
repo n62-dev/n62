@@ -75,8 +75,8 @@ test("R146, R723: one press for Redo; Help's tap opens Help, Shift + Help Settin
 test("R723: Mode opens from the STD and 12 chips and from a free key that holds it; Shift + Deselect does not open it", async ({ page }) => {
   for (const chip of ["chip-format", "chip-digits"]) {
     await page.getByTestId(chip).tap();
-    await expect(page.getByTestId("sheet-title"), chip).toHaveText("Mode");
-    await tap(page, ["esc"]);
+    await expect(page.getByTestId("sheet-title"), chip).toHaveText(/^Mode\b/); // (12 opens straight on its digits)
+    for (let i = 0; i < 2 && (await sheet(page).count()) > 0; i++) await tap(page, ["esc"]); // (Esc goes back a level, then closes)
     await expect(sheet(page)).toBeHidden();
   }
   await page.evaluate(() => window.n62.userKeys.set("u1", "primary", { label: "Mode", action: { special: "mode" } }));

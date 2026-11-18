@@ -18,7 +18,7 @@ test("the STD chip opens Mode", async ({ page }) => {
 test("the 12 chip opens Mode too", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-digits").tap();
-  await expect(title(page)).toHaveText("Mode");
+  await expect(title(page)).toHaveText("Mode › Significant digits"); // (straight on its list of digits)
 });
 
 test("the STD chip, ◀ to Angle (▲), ▶, Enter switches RAD → DEG", async ({ page }) => {
