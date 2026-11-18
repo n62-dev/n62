@@ -204,10 +204,9 @@ describe("R157: --mark-faint, the faint mark on an empty history", () => {
     expect(css).toContain("--mark-faint: #061b1b;");
     expect(css).toContain("--mark-faint: #bcd8d7;");
   });
-  it("style.css holds the two tiles' colours and the mark's height as tokens, not theme roles", () => {
+  it("style.css holds the mark's height as a token, and no logo colours (R745: Home's tile is the app icon's own file)", () => {
     const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
-    expect(css).toMatch(/--logo-ground: #529997;/);
-    expect(css).toMatch(/--logo-ink: #000000;/);
+    expect(css).not.toMatch(/--logo-ground|--logo-ink/);
     expect(css).toMatch(/--mark-h: 128px;/);
     for (const c of combos()) expect(Object.keys(theme(c).t)).not.toContain("logo-ground");
   });
