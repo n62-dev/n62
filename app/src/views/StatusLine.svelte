@@ -6,10 +6,9 @@
   import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
-  import type { Snippet } from "svelte";
 
   // R97, R722: the bar on the keypad's top edge, out of App.svelte. Props in, events out; no store of its own.
-  let { session, shell, busy, cas, onpress, onmode, folded = false, onunfold, actions }: {
+  let { session, shell, busy, cas, onpress, onmode, folded = false }: {
     session: Session;
     shell: AppShell;
     /** A job runs (session or app). */
@@ -20,11 +19,9 @@
     onpress: (key: Key, layer: Layer) => void;
     /** A tap on a mode chip: the Mode sheet, on that row. */
     onmode: (at: string) => void;
-    /** R724: the folded bar's part (keyboard/Fold.svelte draws ⌃ before it): the tabs, a free stretch (a tap unfolds), the
-     *  slot, the picked row's Store ▶ · Copy › (`actions`) and ☰; no Apps ▾, no views, no chips. */
+    /** R724: in the folded bar (keyboard/Fold.svelte): the nav lays out as Fold's row (display: contents), and only the
+     *  tabs, the slot and ☰ show, each at its place in the row (`order`) among Fold's ⌃, free stretch and row buttons. */
     folded?: boolean;
-    onunfold?: () => void;
-    actions?: Snippet;
   } = $props();
 
   /** A bar control as a key (R15b, R15c1, R722): its tap takes the same path as a key press (an open sheet gives way, it runs at once while an app loads, and waits while a sheet's code loads). */
@@ -86,8 +83,7 @@
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
-  <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid={folded ? undefined : "bar"} data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
-    {#if !folded}
+  <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
     <button
       type="button"
       class="place"
@@ -126,7 +122,6 @@
       </span>
     {/if}
     <span class="sep" aria-hidden="true"></span>
-    {/if}
     <span class="places" role="tablist" aria-label={t("status.places")}>
       {#each PLACES as p (p.view)}
         {@const cur = shell.app === null && session.view === p.view}
@@ -147,10 +142,6 @@
         </button>
       {/each}
     </span>
-    {#if folded}
-      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (⌃ before it is the control; this is room a tap may land on) -->
-      <span class="free" data-testid="fold-free" aria-hidden="true" onclick={() => onunfold?.()}></span>
-    {/if}
     <span class="slot" data-testid="mod-slot">
       <span
         class="mod"
@@ -158,9 +149,6 @@
         data-lock={mod?.lock}
         aria-label={mod && t(mod.alpha ? "key.alpha" : "key.shift")}>{mod?.text}</span>
     </span>
-    {#if folded}
-      {@render actions?.()}
-    {:else}
     <button
       type="button"
       class="chip"
@@ -174,7 +162,6 @@
       <button type="button" class="chip more format" data-testid="chip-format" data-item="format" onclick={() => onmode("format")}>{session.settings.format.toUpperCase()}</button>
       <button type="button" class="chip more digits" data-testid="chip-digits" data-item="digits" onclick={() => onmode("digits")}>{session.settings.digits}</button>
     </span>
-    {/if}
     <button type="button" class="menubtn" use:pressFlag data-testid="menu-button" data-item="menu" data-tip="menu" aria-label={t("status.menu")} onclick={() => onpress(MENU_KEY, "primary")}>☰</button>
     <!-- the busy ring is drawn on an aria-hidden tile: a screen reader hears the job from this hidden line (R102) -->
     {#if busy}<span class="sr" role="status" data-testid="busy-status">{t("status.busy")}</span>{/if}
@@ -195,20 +182,27 @@
     font-size: var(--fs-note);
     line-height: 1;
   }
-  /* R724: folded, the row's rest after ⌃ (Fold.svelte holds the row, its height and its top line); every target is the
-     row's full 44 px, at least 32 px wide */
+  /* R724: folded, the row is Fold.svelte's (44 px): ⌃ 0, the tabs 1, the free stretch 2, the slot 3, the row buttons 4, ☰ 5;
+     every target the row's height, at least 32 px wide; no Apps ▾, no views, no chips */
   .bar.folded {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    box-shadow: none;
+    display: contents;
   }
-  .folded .free {
-    flex: 1;
-    min-width: 0;
+  .folded .place,
+  .folded .seg,
+  .folded .sep,
+  .folded .chip,
+  .folded .pair {
+    display: none;
+  }
+  .folded .places {
+    order: 1;
   }
   .folded .slot {
+    order: 3;
     margin-left: 0;
+  }
+  .folded .menubtn {
+    order: 5;
   }
   .folded button {
     min-width: var(--view-w);

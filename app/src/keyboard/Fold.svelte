@@ -6,7 +6,8 @@
      and so does a drag up of FOLD_PX begun anywhere on the row (it cancels the click of the button it began on). Its own
      chunk (foldParts.ts), loaded when the browser is idle after the start, so the start chunk carries only the fold's state. -->
 <script lang="ts">
-  import { tick, type ComponentProps } from "svelte";
+  import { mount, tick, unmount, type ComponentProps } from "svelte";
+  import FoldChevron from "./FoldChevron.svelte";
   import type { RowBarView } from "../appLoaders.ts";
   import type { ClipActions } from "../clipboard/actions.svelte.ts";
   import type { EntryController } from "../entry/controller.ts";
@@ -22,10 +23,10 @@
     entry: EntryController;
     /** The line's swipes are taken now. */
     swipes: () => boolean;
-    onfold: () => void;
+    onfold: (as?: "fold.tap") => void;
     onunfold: () => void;
     /** The bar's props (App.svelte's bar on the keys): the folded bar draws its folded part after ⌃. */
-    bar: Omit<ComponentProps<typeof StatusLine>, "folded" | "onunfold" | "actions">;
+    bar: Omit<ComponentProps<typeof StatusLine>, "folded">;
     /** The picked row, its buttons in the folded bar (the clipboard chunk's RowBar), and the pick's end. */
     pick: { clip: ClipActions; Bar: RowBarView; row: HistoryItem | undefined; drop: () => void } | undefined;
   } = $props();
@@ -55,6 +56,13 @@
     if (!folded && row?.contains(document.activeElement)) void tick().then(() => entry.focus());
   });
 
+  // ⌄ (R724) in the entry line's box, where the swipes are taken (Home and CAS, not wide, no sheet over the keys), unfolded
+  $effect(() => {
+    if (!line || folded || !swipes()) return;
+    const c = mount(FoldChevron, { target: line, props: { onfold: () => onfold("fold.tap") } });
+    return () => void unmount(c);
+  });
+
   // The swipe on the entry line: down folds, up unfolds; any other pointer is MathLive's
   $effect(() => {
     if (!line) return;
@@ -75,13 +83,12 @@
     <button type="button" class="unfold" data-testid="fold-slice" data-item="unfold" aria-label={t("keys.unfold")} onclick={() => onunfold()}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 10.5 8 5.5l5 5" /></svg>
     </button>
-    <StatusLine session={bar.session} shell={bar.shell} busy={bar.busy} cas={bar.cas} onpress={bar.onpress} onmode={bar.onmode} folded {onunfold} {actions} />
+    <StatusLine session={bar.session} shell={bar.shell} busy={bar.busy} cas={bar.cas} onpress={bar.onpress} onmode={bar.onmode} folded />
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (⌃ is the control; this is room a tap may land on) -->
+    <span class="free" data-testid="fold-free" aria-hidden="true" onclick={() => onunfold()}></span>
+    {#if pick?.row}<span class="acts"><pick.Bar clip={pick.clip} {entry} row={pick.row} height={0} folded inbar onaction={pick.drop} /></span>{/if}
   </div>
 {/if}
-
-{#snippet actions()}
-  {#if pick?.row}<pick.Bar clip={pick.clip} {entry} row={pick.row} height={0} folded inbar onaction={pick.drop} />{/if}
-{/snippet}
 
 <style>
   .folded {
@@ -107,6 +114,19 @@
     align-items: center;
     justify-content: center;
     font: inherit;
+  }
+  /* the row's order (views/StatusLine.svelte places the tabs 1, the slot 3 and ☰ 5) */
+  .unfold {
+    order: 0;
+  }
+  .free {
+    order: 2;
+    flex: 1;
+    min-width: 0;
+  }
+  .acts {
+    order: 4;
+    display: flex;
   }
   svg {
     width: var(--icon-w);

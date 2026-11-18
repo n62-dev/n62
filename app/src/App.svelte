@@ -103,7 +103,7 @@
       route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take ☰ → Paste's path
     };
     const loadFold = (): void => {
-      void import("./keyboard/foldParts.ts").then((m) => ((Fold = m.Fold), (Chevron = m.FoldChevron)), () => {}), session.taps.load(); // R53, R724; R320: the press counters (presses wait in the session's front)
+      void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}), session.taps.load(); // R53, R724; R320: the press counters (presses wait in the session's front)
       void import("./views/browserNote.ts").then((m) => m.browserNote(), () => {}); // R285: a browser that has not passed says so once (the chunk decides)
     };
     if ("requestIdleCallback" in window) requestIdleCallback(loadFold, { timeout: 1500 });
@@ -418,9 +418,8 @@
   $effect(() => {
     if (folded) return openLayer(() => (folded = false));
   });
-  /** The folded bar and the line's swipe (keyboard/Fold.svelte), ⌄ (FoldChevron.svelte): one chunk, fetched when idle after the start. */
-  let Fold = $state.raw<typeof import("./keyboard/foldParts.ts").Fold | undefined>();
-  let Chevron = $state.raw<typeof import("./keyboard/foldParts.ts").FoldChevron | undefined>();
+  /** The folded bar, ⌄ and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
+  let Fold = $state.raw<typeof import("./keyboard/Fold.svelte").default | undefined>();
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
@@ -543,7 +542,6 @@
 
     <div class="entry" class:hidden={!shell.showsEntry} class:chev={canFold} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
       {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
-      {#if Chevron && Fold && canFold && !folded && !shell.sheet}<Chevron onfold={() => fold("fold.tap")} />{/if}<!-- R724: ⌄ -->
       <!-- R155: one flat dash on the outline's path while a job runs (aria-hidden: the hidden status line names the job); in the
            field's box, where the unit view (units/open.ts) hides it with the field -->
       <div class="field" bind:this={host}>
