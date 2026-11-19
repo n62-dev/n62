@@ -15,7 +15,7 @@
 // erasable TypeScript syntax, so Node runs this file directly.
 import { valueFactsOf, type StoredRead, type StoredUse, type UncTerm, type ValueFacts } from "./types.ts";
 import type { GiacValue } from "./bridge.ts";
-import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, integratedNumerically, type Refusal } from "./converge.ts";
+import { errorRefusal, floatBounds, refusalOf, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, type Refusal } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { approxRange, elementAt, lostFloat, lostNumber, mayBeNumbers, powerPastRange, throughInfinity, underflow, zeroElements } from "./novalue.ts";
 import { climbedFacts, doubleElements } from "./doubleElements.ts";
@@ -679,7 +679,7 @@ export function homeEval(
   if (seq.empty) return refuse("noValue", "exact");
   // G39: Giac's [exact, numeric] pair of a definite integral is never a list. The two answers differ, so neither is
   // confirmed: the float is the value, with no digit confirmed (⚠, docs/04 2.4), and the why-line says the pair differs.
-  const pair = !once && hasDefiniteIntegral(exactBody) ? giacPair(exactOut) : null;
+  const pair = !once && hasDefiniteIntegral(exactBody) ? giacPair(exactOut, hasNestedIntegral(exactBody)) : null;
   if (pair) {
     const P = valuePrecision(s.digits);
     const re = decimalFromString(pair.numeric, P);
