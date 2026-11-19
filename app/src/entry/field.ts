@@ -4,7 +4,11 @@
 // it is there are queued by the controller and replayed through runOnField.
 import type { MathfieldElement } from "mathlive";
 import type { ActionBody, TypedCall } from "../keyboard/keyboard.ts";
+import { appAction, appText, type Where } from "./appValue.ts";
+import type { Chip } from "../input/chips.ts";
+import type { EntryController } from "./controller.ts";
 import { deleteAtTemplate } from "./delete.ts";
+import { resultOnLine } from "./oneTerm.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
 import { lineTouch } from "./lineTouch.ts";
@@ -19,7 +23,16 @@ export { isInfixWord } from "./boxes.ts"; // R197: for the Help key's chunk (cur
 export { SelectChain } from "./grow.ts"; // R279: Select and Deselect, loaded with the field
 export { bare, callRange } from "./callRange.ts"; // R324: the call Help's Insert replaces, for the Help key's chunk
 export { Grown } from "./matgrow.ts"; // R185: the matrices Shift + 5 made, loaded with the field
-export { resultOnLine } from "./oneTerm.ts"; // R746: a history result as it goes on the line, maths or chip, one term
+
+/** `latex` at the cursor (EntryController.put): R747, on an app's line a constant as its value and any chip refused; R746, a
+ *  history result (`term`) as it goes on the line, maths or chip, one term (oneTerm.ts). Nothing before the field is up. */
+export function putText(c: EntryController, latex: string, term: boolean | Chip): void {
+  const mf = c.field;
+  const l = mf && appText(latex, c.shell, c.table);
+  if (!mf || l === undefined) return;
+  mf.insert(term ? resultOnLine(mf, l, term === true ? undefined : (s) => c.chip(s, term)) : l, { format: "latex", selectionMode: "after" });
+  mf.focus();
+}
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */
 export const CARET = '\\char"5E ';
@@ -217,7 +230,10 @@ function forceNoSystemKeyboard(mf: MathfieldElement): void {
 
 /** A type / insert / cmd action on the field (EntryController.run once the field is up). `grown`: the line's Shift + 5
  *  matrices (R185); `decimalComma`: the decimal comma is on (R57), so an argument separator is `;` (R585). */
-export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown, decimalComma = false): void {
+export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown, decimalComma = false, w?: Where): void {
+  const b = w ? appAction(a, w) : a; // R747
+  if (!b) return;
+  a = b;
   // R185: the matrices are found again after what changed the line since the last key (a result put on it, a character
   // MathLive typed itself) and after this key
   grown?.refresh(mf);

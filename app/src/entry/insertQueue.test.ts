@@ -36,8 +36,8 @@ vi.mock("./field.ts", () => ({
     add(): void {}
   },
   // R746: the line as it is when the insert lands
-  resultOnLine: (mf: FakeField, shown: string, toChip?: (s: string) => string) =>
-    toChip && !shown.includes("\\frac") ? toChip(shown) : `${/\d$/.test(mf.value) ? "\\times" : ""}${shown}`,
+  putText: (c: { field: FakeField; chip(s: string, k: { value: string; exact: boolean }): string }, shown: string, term: boolean | { value: string; exact: boolean }) =>
+    c.field.insert(!term ? shown : term !== true && !shown.includes("\\frac") ? c.chip(shown, term) : `${/\d$/.test(c.field.value) ? "\\times" : ""}${shown}`),
 }));
 vi.mock("./hwkeys.ts", () => ({ hardwareKey: () => false }));
 vi.mock("./namemarks.ts", () => ({ NameMarks: class { setNames(): void {} } }));

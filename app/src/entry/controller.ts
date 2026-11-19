@@ -7,7 +7,7 @@ import { constKey, pruneChips, resKey, type Chip, type ChipTable } from "../inpu
 import type { ActionBody, Key, Layer } from "../keyboard/keyboard.ts";
 import type { AngleUnit } from "../calc/port.ts";
 import { mathlive } from "../render/mathlive.svelte.ts";
-import { constValueLatex, hasChipLatex, type LineKind } from "./appConst.ts";
+import type { Where } from "./appValue.ts";
 import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 
 /** How an insert goes on the field (R746): as given (false), a result as drawn (true), or an exact result's chip (entry/oneTerm.ts resultOnLine). */
@@ -27,15 +27,14 @@ export class EntryController {
   /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts; runOnField keeps it up to
    *  date): loaded with MathLive. */
   private grown: import("./matgrow.ts").Grown | undefined;
-  /** R746: a history result as it goes on the line, maths or chip, one term (entry/oneTerm.ts): loaded with MathLive. */
-  private onLine: typeof import("./field.ts").resultOnLine | undefined;
+  /** An insert on the field: R746, a history result as maths or chip, one term (entry/oneTerm.ts); R747, on an app's line a
+   *  constant as its value and no chip at all (entry/appValue.ts). Loaded with MathLive. */
+  private onLine: typeof import("./field.ts").putText | undefined;
+  /** R747: the shell (set by main.ts), which says which line this is: an app's line is stored as text and parsed without the
+   *  chip table, so there a constant goes in as its value (entry/appValue.ts). */
+  shell?: Where;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
-  /** R747: which line this is (set by the shell): an app's line holds no chip (it is stored as text and parsed without the
-   *  chip table), so a constant goes on it as its value and any chip is refused (entry/appConst.ts). */
-  lineKind: () => LineKind = () => "home";
-  /** R747: a constant went on an app's line as its value (the shell says so once). */
-  onAppConst: () => void = () => {};
   /** The user's names (setNames); hwkeys.ts reads them (R198: a typed name of the user's stays the user's). */
   stored: string[] = [];
   /** The line set() put before the field was up (a recall, the kept line); what is typed or inserted meanwhile waits in `queue`. */
@@ -48,7 +47,7 @@ export class EntryController {
    */
   private touched = false;
   /** The values of the chips on the line (docs/04 3.6); keys as in input/chips.ts. */
-  private table: ChipTable = {};
+  readonly table: ChipTable = {};
   private nextRes = 1;
   /** R57: the decimal comma is on; a hardware `,` or `.` types the decimal mark, and ᴇ reads `{,}` as part of a number. */
   decimalComma = false;
@@ -108,7 +107,7 @@ export class EntryController {
       this.onField = f.runOnField;
       this.chain = new f.SelectChain();
       this.grown = new f.Grown();
-      this.onLine = f.resultOnLine;
+      this.onLine = f.putText;
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips); // (only set() writes pendingValue, and it marks the kept line stale)
@@ -224,7 +223,6 @@ export class EntryController {
   /** Insert LaTeX at the cursor. `term` (R746): a history result's drawn LaTeX (true), or an exact result's with its
    *  chip: decided when it goes on the field, by the line there (entry/oneTerm.ts resultOnLine). */
   insert(latex: string, term: Term = false): void {
-    if (this.lineKind() !== "home" && hasChipLatex(latex)) return; // R747: an app's line never holds a chip it cannot value
     this.touched = true;
     this.recalledIn = null;
     this.onEdit();
@@ -232,9 +230,7 @@ export class EntryController {
     this.put(latex, term);
   }
   private put(latex: string, term: Term = false): void {
-    if (term && this.mf && this.onLine) latex = this.onLine(this.mf, latex, term === true ? undefined : (s) => this.chip(s, term));
-    this.mf?.insert(latex, { format: "latex", selectionMode: "after" });
-    this.mf?.focus();
+    this.onLine?.(this, latex, term);
   }
   /** A history result as a chip (docs/04 2.8): drawn as `shown` (its display LaTeX), worth `chip.value`. `maths` (R746):
    *  its drawing is its exact value, so a fraction, root, power or matrix in it goes on the line as that maths (put). */
@@ -242,22 +238,15 @@ export class EntryController {
     if (maths) return this.insert(shown, chip);
     this.insert(this.chip(shown, chip));
   }
-  private chip(shown: string, chip: Chip): string {
+  chip(shown: string, chip: Chip): string {
     const k = this.nextRes++;
     this.table[resKey(k)] = chip;
     return resChip(k, shown);
   }
   /** A constant as a chip (Find, docs/04 3.6): `symbol` is LaTeX, the value and uncertainty come with it. */
   insertConst(id: string, symbol: string, chip: Chip): void {
-    const kind = this.lineKind();
-    if (kind !== "home") return this.insertValue(chip, kind);
     this.table[constKey(id)] = chip;
     this.insert(constChip(id, symbol));
-  }
-  /** R747: a constant on an app's line as its value, editable, one term (appConst.ts). */
-  private insertValue(chip: Chip, kind: "expr" | "num"): void {
-    this.insert(constValueLatex(chip.value, kind));
-    this.onAppConst();
   }
   /** Ans: the view's last result, read when Enter is pressed. */
   insertAns(): void {
@@ -274,12 +263,6 @@ export class EntryController {
   run(a: ActionBody): void {
     if (a.kind === "special") return;
     this.endSelect();
-    const kind = this.lineKind();
-    if (kind !== "home" && a.kind === "insert" && (a.chip || hasChipLatex(a.latex))) {
-      // R747: an app's line holds no chip: a constant on a free key (R4b) types its value, Ans and any other chip are refused
-      if (a.chip) this.insertValue(a.chip.chip, kind);
-      return;
-    }
     if (a.kind === "insert" && a.chip) this.table[a.chip.key] = a.chip.chip; // a constant on a free key (R4b)
     this.touched = true;
     if (!this.mf) {
@@ -288,7 +271,7 @@ export class EntryController {
       return;
     }
     const before = this.mf.value;
-    this.onField?.(this.mf, a, this.grown, this.decimalComma);
+    this.onField?.(this.mf, a, this.grown, this.decimalComma, this.shell);
     if (this.mf.value !== before) this.recalledIn = null; // (a cursor key leaves the recall as it was)
   }
 

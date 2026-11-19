@@ -50,14 +50,7 @@ session.saveDelayMs = 400;
 session.onLook = (look) => void import("./theme/lookApply.ts").then((m) => m.applyLook(look)).catch(() => {});
 const shell = new AppShell(calc, idbKv, entry, () => session.settings, () => session.userNames);
 shell.onEvent = (n) => void session.taps.load().then((c) => c?.event(n)); // R361: an event that is no press, in the counter's chunk
-// R747: an app's line (Symb's expression, Num's number) holds no chip: a constant goes in as its value, and the note says so once
-entry.lineKind = () => (shell.app === null ? "home" : shell.view === "num" ? "num" : "expr");
-let constTold = false;
-entry.onAppConst = () => {
-  if (constTold || !shell.clip) return;
-  constTold = true;
-  void import("./i18n/enNum.ts").then((m) => shell.clip?.say(m.numText("app.constValue")));
-};
+entry.shell = shell; // R747: an app's line holds no chip: a constant goes in as its value (entry/appValue.ts)
 const place = shell.restorePlace();
 const settingsRead = session.restoreSettings();
 // the free keys U1–U3 (R15b): their defaults are drawn first, the user's slots replace them when read

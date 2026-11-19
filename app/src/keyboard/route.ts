@@ -9,7 +9,6 @@ import type { NavDir } from "../apps/types.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { startsWithAns } from "../entry/ans.ts";
 import type { EntryController } from "../entry/controller.ts";
-import { hasChipLatex } from "../entry/appConst.ts";
 import { ANS_CHIP } from "../entry/macros.ts";
 import { canPick, pickAfter, pickAtOrBefore } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
@@ -551,9 +550,8 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     if (dir && shell.nav(dir)) return;
     if (!shell.showsEntry) return c.dead(); // a view without an entry line (Plot) ignores typing, ⇤ ⇥ and Undo
     if (action.kind === "cmd" && action.name === "undo" && shell.undo()) return; // R261: what Menu › Clear took
-    // Ans belongs to Home and CAS; ± (R71) is read by the unit view, from the Home or CAS line. R747: no chip of any kind
-    // (the app's line is parsed without a chip table); a constant on a free key (R4b) is no chip there, the controller types its value
-    if (action.kind === "insert" && (action.latex === ANS_CHIP || action.units || (!action.chip && hasChipLatex(action.latex)))) return c.dead();
+    // Ans belongs to Home and CAS; ± (R71) is read by the unit view, from the Home or CAS line
+    if (action.kind === "insert" && (action.latex === ANS_CHIP || action.units)) return c.dead();
   } else if (cell) {
     // (the cell's line: the key runs on it as typed)
   } else if (entry.empty && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {
