@@ -73,6 +73,17 @@ for (const [id, keys, sample, result] of FILLS)
     await expect(lastResult(page)).toHaveAttribute("data-text", result);
   });
 
+// G770 (F470): a nested definite integral in Home is a value within the default budget (518,000 of Giac's checks), not
+// "Stopped: it took too long": the keys are the owner's (Tmpl ∫, 0 ▶ 2 ▶, Tmpl ∫, 0 ▶ 3 ▶ x x² + y x² ▶ y ▶ ▶ x). ∫₀²∫₀³ (x²+y²) dy dx = ∫₀² (3x² + 9) dx = 8 + 18.
+test("G770: ∫₀²∫₀³ (x²+y²) dy dx typed from the keys is 26 (it took too long: 1.7 million checks)", async ({ page }) => {
+  await insert(page, "integral");
+  await tap(page, ["d0", "right", "d2", "right"]);
+  await insert(page, "integral");
+  await tap(page, ["d0", "right", "d3", "right", "x", "sq", "add", "shift", "x", "sq", "right", "shift", "x", "right", "right", "x"]);
+  await tap(page, ["enter"]);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "26");
+});
+
 test("mixed number: 2, then the template takes the 2 as its whole part: 2 11/13 = 37/13", async ({ page }) => {
   await tap(page, ["d2"]);
   await insert(page, "mixed");
