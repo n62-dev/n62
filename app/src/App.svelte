@@ -17,7 +17,6 @@
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
   import { ringState } from "./entry/ringState.ts";
-  import { resultToEntry } from "./render/insertable.ts";
   import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
   import { noDigit } from "./state/displayMode.ts";
@@ -214,7 +213,7 @@
     const shown = noDigit(mark) ? "⚠" : session.display(units && !chip ? number : item).latex;
     if (chip) entry.insertResult(shown, chip, !!chip.exact && !chip.unc && !units && (mark ? mark.mark === "=" : item.view === "cas"));
     else if (tooLongToInsert(shown, false)) withClip((c) => c.say(tooLongToInsertNote())); // R135f2: too long to draw, so to insert
-    else entry.insert(resultToEntry(shown), true); // too long for a chip: as drawn, one term
+    else entry.insert(shown, true); // too long for a chip: as drawn (render/insertable.ts), one term
   }
 
   /** Home or CAS, from anywhere (an app too). */

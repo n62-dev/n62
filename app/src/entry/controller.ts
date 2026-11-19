@@ -9,7 +9,7 @@ import type { AngleUnit } from "../calc/port.ts";
 import { mathlive } from "../render/mathlive.svelte.ts";
 import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 
-/** How an insert goes on the field (R746): as given, as one term (true), or an exact result's chip, as its maths when it can. */
+/** How an insert goes on the field (R746): as given (false), a result as drawn (true), or an exact result's chip (entry/oneTerm.ts resultOnLine). */
 type Term = boolean | Chip;
 
 export class EntryController {
@@ -26,10 +26,8 @@ export class EntryController {
   /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts; runOnField keeps it up to
    *  date): loaded with MathLive. */
   private grown: import("./matgrow.ts").Grown | undefined;
-  /** R746: a result put on the line as its maths (render/exactMaths.ts), with a × where the line beside it would run into
-   *  it (entry/oneTerm.ts): loaded with MathLive. */
-  private oneTerm: typeof import("./field.ts").asOneTerm | undefined;
-  private exactMaths: typeof import("./field.ts").exactMaths | undefined;
+  /** R746: a history result as it goes on the line, maths or chip, one term (entry/oneTerm.ts): loaded with MathLive. */
+  private onLine: typeof import("./field.ts").resultOnLine | undefined;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
   /** The user's names (setNames); hwkeys.ts reads them (R198: a typed name of the user's stays the user's). */
@@ -104,8 +102,7 @@ export class EntryController {
       this.onField = f.runOnField;
       this.chain = new f.SelectChain();
       this.grown = new f.Grown();
-      this.oneTerm = f.asOneTerm;
-      this.exactMaths = f.exactMaths;
+      this.onLine = f.resultOnLine;
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips); // (only set() writes pendingValue, and it marks the kept line stale)
@@ -218,9 +215,8 @@ export class EntryController {
     }
     return latex;
   }
-  /** Insert LaTeX at the cursor (a history result, L5). `term` (R746): a result as its maths, one term with a × where the
-   *  line beside the cursor would run into it (entry/oneTerm.ts), read when it goes on the field; a chip: an exact result,
-   *  as its maths when render/exactMaths.ts reads it so, else as this chip. */
+  /** Insert LaTeX at the cursor. `term` (R746): a history result's drawn LaTeX (true), or an exact result's with its
+   *  chip: decided when it goes on the field, by the line there (entry/oneTerm.ts resultOnLine). */
   insert(latex: string, term: Term = false): void {
     this.touched = true;
     this.recalledIn = null;
@@ -229,11 +225,7 @@ export class EntryController {
     this.put(latex, term);
   }
   private put(latex: string, term: Term = false): void {
-    if (typeof term === "object") {
-      const maths = this.exactMaths?.(latex);
-      [latex, term] = maths === undefined ? [this.chip(latex, term), false] : [maths, true]; // (a chip as today: no ×)
-    }
-    if (term && this.mf && this.oneTerm) latex = this.oneTerm(this.mf, latex);
+    if (term && this.mf && this.onLine) latex = this.onLine(this.mf, latex, term === true ? undefined : (s) => this.chip(s, term));
     this.mf?.insert(latex, { format: "latex", selectionMode: "after" });
     this.mf?.focus();
   }

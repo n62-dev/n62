@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R746: an exact result put on the line as its maths (App.svelte insertResult) stays one term, as the chip it replaces
+// R746: a history result put on the line as its maths (App.svelte insertResult) stays one term, as the chip it replaces
 // did (a chip beside a number is refused: "put × between a result and a number"). A × goes between it and a number, a
 // closing bracket, a postfix mark or a chip before the cursor, and a number, an opening bracket or a chip after it, so
 // 2 then 5/6 is 2×5/6, never the mixed number 2⅚ it would look like. Its own leading minus or top-level sum is
 // bracketed by resultToEntry (render/insertable.ts). Loaded with the field (entry/field.ts).
 import type { MathfieldElement } from "mathlive";
+import { exactMaths } from "../render/exactMaths.ts";
+import { resultToEntry } from "../render/insertable.ts";
 
 type Field = Pick<MathfieldElement, "getElementInfo" | "selection" | "position" | "lastOffset">;
 
@@ -35,4 +37,11 @@ export function asOneTerm(mf: Field, latex: string): string {
   const before = prev !== undefined && ENDS_TERM.test(prev.latex) ? TIMES : "";
   const after = STARTS_TERM.test(next) ? TIMES : "";
   return `${before}${latex}${after}`;
+}
+
+/** A history result's drawn LaTeX as it goes on the line at the cursor, one term: with `toChip` (an exact result's chip),
+ *  as its maths when render/exactMaths.ts reads it so, else as that chip (as before R746: no ×); without, as drawn. */
+export function resultOnLine(mf: Field, shown: string, toChip?: (shown: string) => string): string {
+  const maths = toChip ? exactMaths(shown) : resultToEntry(shown);
+  return maths === undefined ? (toChip?.(shown) ?? shown) : asOneTerm(mf, maths);
 }

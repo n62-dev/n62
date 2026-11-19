@@ -35,8 +35,9 @@ vi.mock("./field.ts", () => ({
     clear(): void {}
     add(): void {}
   },
-  asOneTerm: (mf: FakeField, latex: string) => `${/\d$/.test(mf.value) ? "\\times" : ""}${latex}`, // R746: the line as it is when the insert lands
-  exactMaths: (shown: string) => (shown.includes("\\frac") ? shown : undefined),
+  // R746: the line as it is when the insert lands
+  resultOnLine: (mf: FakeField, shown: string, toChip?: (s: string) => string) =>
+    toChip && !shown.includes("\\frac") ? toChip(shown) : `${/\d$/.test(mf.value) ? "\\times" : ""}${shown}`,
 }));
 vi.mock("./hwkeys.ts", () => ({ hardwareKey: () => false }));
 vi.mock("./namemarks.ts", () => ({ NameMarks: class { setNames(): void {} } }));
