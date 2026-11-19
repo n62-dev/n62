@@ -85,6 +85,7 @@ export N62_QALC_DL_DIR="${N62_QALC_DL_DIR:-$main/engine/qalc/_downloads}"
 engine_root="$main/engine/giac/_out"; engine_managed=1; [[ -z "${GIAC_OUT:-}" ]] || engine_managed=0
 export GIAC_OUT="${GIAC_OUT:-$engine_root/gsl}"
 export CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0
+maths_re='^(app/src/input/|app/src/engine/|app/src/units/|engine/)'  # A262: a maths diff (the parser, the engine client, units, the engine)
 claude_common=(--permission-mode auto --output-format json --no-session-persistence)  # A259: the reply is JSON; claude_unwrap (pipeline-tokens.sh) writes the plain text, the counts go to tokens lines
 worker_tools=(--disallowedTools Agent)
 # shellcheck disable=SC2054  # one comma-separated argument for --allowedTools
@@ -237,11 +238,12 @@ if [[ "${1:-}" == "pass" ]]; then
   ! git show-ref --verify --quiet "refs/heads/$pbranch" || die "pass $n: branch $pbranch exists"
   git worktree add -q -b "$pbranch" "$wt" "$base" > "$run/worktree.log" 2>&1 || die "pass $n: no worktree $wt: $(tail -n 1 "$run/worktree.log")"
   setup_node_modules "$wt"  # nodemods alone, as a run's start (integ only for a stale phase-1 copy)
-  log "Opus pass $n (job $job, PW_PORT $PW_PORT): spawned sofia (opus) on: $ids; waiting."
+  pass_model=opus; pass_tools=(); [[ "$(model_cap "$coord")" != sonnet ]] || { pass_model=sonnet; pass_tools=(--disallowedTools Agent); }  # A262: no opus subagent either
+  log "Opus pass $n (job $job, PW_PORT $PW_PORT): spawned sofia ($pass_model) on: $ids; waiting."
   prompt="Opus pass $n of the night shift: follow \"Opus pass (instructions for the Opus agent)\" in docs/shifts/brief.md section 0c for packages $ids. Open questions from the log: $open. You run in your own worktree $wt on branch $pbranch, made from phase-1 at ${base:0:9}: run the checks there and commit your doc changes there with git commit -s and the Opus trailer (where the brief says to work in the phase-1 worktree or to commit on phase-1, this replaces it); leave nothing uncommitted (the pipeline then merges nothing); switch no branch and touch no other worktree. The log is $coord/log.md. Run any e2e with PW_PORT=$PW_PORT (exported; do not change it). After your reply the pipeline takes the integration lock (integ), merges phase-1 into your branch, runs the docs check and merges the branch into phase-1, so your FIX and QUEUE lines apply to phase-1 after that merge: do not take or release integ yourself, whatever the brief says. Reply in exactly the form the section gives (OPUS PASS, VERDICT, FIX lines, QUEUE, NOTES)."
   rm -f "$run/tokens.tsv"
   set +e
-  own_sh 'cd "$1" && shift && timeout -k 60 7200 claude "$@"' "$wt" -p --agent sofia --model opus --effort high "${claude_common[@]}" -n "pass-$n" "$prompt" < /dev/null > "$run/reply.md" 2> "$run/stderr.log"
+  own_sh 'cd "$1" && shift && timeout -k 60 7200 claude "$@"' "$wt" -p --agent sofia --model "$pass_model" --effort high "${claude_common[@]}" ${pass_tools[@]+"${pass_tools[@]}"} -n "pass-$n" "$prompt" < /dev/null > "$run/reply.md" 2> "$run/stderr.log"
   rc=$?; set -e
   claude_unwrap "$run/reply.md" sofia "$run/tokens.tsv"; log "pipeline #$job pass-$n: $(tokens_summary "$run/tokens.tsv")"  # A259
   # A85f: what she left uncommitted (untracked files too) is never merged nor deleted: the branch and the worktree are kept
@@ -427,7 +429,8 @@ if [[ "${1:-}" == "report" ]]; then
   prompt="Write the shift report of docs/shifts/brief.md section 0c (\"Shift report\") for the night section of .coord/log.md (the log is on stdin; a line with [A] or [B] after its time belongs to that night lane: report both lanes). You run in the phase-1 worktree $integ: commit the report there with git commit -s and the Sonnet trailer. The pipeline holds the integration lock (integ) for you: do not take or release it yourself. Never push. Reply with the commit hash only."
   night_section "$coord/log.md" > "$run/input.txt"
   rm -f "$run/tokens.tsv"  # A259: a report run again the same day (after a limit) counts its own call
-  rc=0; own_sh 'cd "$1" && shift && timeout -k 60 1800 claude "$@"' "$integ" -p --model sonnet --effort high "${claude_common[@]}" -n report "$prompt" < "$run/input.txt" > "$run/reply.md" 2> "$run/stderr.log" || rc=$?
+  report_tools=(); [[ "$(model_cap "$coord")" != sonnet ]] || report_tools=(--disallowedTools Agent)  # A262
+  rc=0; own_sh 'cd "$1" && shift && timeout -k 60 1800 claude "$@"' "$integ" -p --model sonnet --effort high "${claude_common[@]}" ${report_tools[@]+"${report_tools[@]}"} -n report "$prompt" < "$run/input.txt" > "$run/reply.md" 2> "$run/stderr.log" || rc=$?
   claude_unwrap "$run/reply.md" report "$run/tokens.tsv"; log "pipeline #$job report: $(tokens_summary "$run/tokens.tsv")"  # A259
   integ_drop
   # A121: at a usage limit the CLI's message is not the report: exit 75, night.sh waits and runs the report again
@@ -459,6 +462,9 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# A262: on the Pro plan (model_cap) an opus worker runs on sonnet; the run's start line says so
+cap_note=""
+if [[ "$(model_cap "$coord")" == sonnet && "$model" != sonnet && "$model" != haiku ]]; then cap_note="worker model $model capped to sonnet (model-cap, A262)"; model=sonnet; fi
 [[ $dry -eq 1 ]] || need_jq >/dev/null || die "$(need_jq)"  # A259: a run reads claude's JSON replies with jq; refused before a run number is taken
 ensure_integ
 # A47b: the brief, the package and the files it names come from phase-1's commit, never from the phase-1 worktree (which may
@@ -620,8 +626,9 @@ if [[ $dry -eq 1 ]]; then
   if git show-ref --verify --quiet "refs/heads/$branch"; then changed() { git diff --name-only "phase-1...$branch"; }; echo "checks for $branch as it is now: $(want_checks)"; fi
   echo "stray check (A88): before the worker and each fix or resolve round the top level of $(dirname "$main") and $main/.claude/worktrees is listed; afterwards one log line per new entry: pipeline #<n> $id: WARN new file outside the worktree: <path> (a worktree git knows is not new; warns only)"
   echo "locks: $branch_lock for the whole run (a second run on $branch is refused); integ and host-cpu wait up to 7200 s each; lock order integ before host-cpu"
+  if [[ "$(model_cap "$coord")" == sonnet ]]; then echo "model cap (A262): sonnet for the worker and its rounds${cap_note:+ ($cap_note)}; the audit opus only for a gorge package or a diff matching $maths_re, else sonnet"; else
   [[ "$audit_model" == auto || "$audit_model" == opus ]] || { [[ "$agent" == gorge ]] && echo "audit model raised to opus: gorge package (--audit-model $audit_model is a floor)"; }
-  echo "audit model: $audit_model$([[ "$audit_model" == auto ]] && { [[ "$model" == opus ]] && echo " (opus: --model opus; else opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)" || echo " (opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)"; })"
+  echo "audit model: $audit_model$([[ "$audit_model" == auto ]] && { [[ "$model" == opus ]] && echo " (opus: --model opus; else opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)" || echo " (opus when the diff touches app/src/input/, app/src/engine/, app/src/units/, engine/ or spec/keyboard.yaml, else sonnet)"; })"; fi
   echo "--- bundle ($bundle, $(wc -l < "$bundle") lines) ---"; cat "$bundle"
   echo "--- commands ---"
   echo "git worktree add $wt -b $branch phase-1   (or: git worktree add $wt $branch, when the branch exists)"
@@ -633,7 +640,8 @@ if [[ $dry -eq 1 ]]; then
   echo "queue (after the worker and after each fix round): tools/devlock.sh acquire integ pipeline-$n 7200 (wait logged); git -C $wt merge phase-1 (a conflict is a resolve round); the engine; the cheap checks; the audit beside the long ones; on APPROVED the merge and the engine promotion, then release; a failed check or a FIX releases integ before its fix round"
   echo "audit beside the checks (A84): once docs, typecheck, size, redfirst and vitest passed, audited=HEAD, the behaviour diff (under host-cpu, before golden or e2e start), then sofia in the background while golden, its stages, e2e and shell run; the round waits for both (a failed check releases integ first); a failed cheap check starts no audit; the fix round's input is the failing output, then the audit's findings"
   echo "checks in $wt (under host-cpu, in the order above, the first failure stops them): docs-check; typecheck; npm run index && build && size; red-first; npm run index && FIND_INDEX=required npm test; golden and the stages; e2e; the shell tests"
-  echo "git -C $wt diff -U5 phase-1...<audited sha> | claude -p --agent sofia --model ${audit_model/auto/<auto: opus for --model opus or app/src/input/, app/src/engine/, engine/, spec/keyboard.yaml; else sonnet>} ${audit_tools[*]} \"AUDIT ...\""
+  if [[ "$(model_cap "$coord")" == sonnet ]]; then echo "git -C $wt diff -U5 phase-1...<audited sha> | claude -p --agent sofia --model <capped: opus for a gorge package or a diff matching $maths_re; else sonnet> ${audit_tools[*]} \"AUDIT ...\""; else
+  echo "git -C $wt diff -U5 phase-1...<audited sha> | claude -p --agent sofia --model ${audit_model/auto/<auto: opus for --model opus or app/src/input/, app/src/engine/, engine/, spec/keyboard.yaml; else sonnet>} ${audit_tools[*]} \"AUDIT ...\""; fi
   echo "audit input: the criteria, the diff, then \"## Behaviour changes\": when the diff touches engine/, app/src/engine/, app/src/input/ or app/src/units/, GIAC_MJS_A=<phase-1 engine>/giac.mjs GIAC_MJS_B=<the branch's engine>/giac.mjs node app/scripts/behaviour-diff.ts <phase-1 worktree> $wt (once per audit round, timeout 20 min, never retried; timeout -> \"timed out after 20 min\"; over half of a tree's runs throwing -> \"failed to run\"), else \"none\"; a change the package does not name is a FIX"
   echo "audited=\$(git -C $wt rev-parse HEAD) at each audit; the merge takes that sha, or stops with NOT MERGED (the branch is not the audited HEAD) when $branch is not at it"
   echo "git -C $integ merge --no-ff --signoff <audited sha>; git worktree remove $wt; git branch -d $branch   (still in the queue; NOT MERGED when phase-1 is not an ancestor of the audited sha)"
@@ -643,6 +651,7 @@ fi
 
 runno="$n"
 log "pipeline #$n $id ($agent, $model, effort $effort) on $branch: started; PW_PORT $PW_PORT; bundle $bundle"
+[[ -z "$cap_note" ]] || log "pipeline #$n $id: $cap_note"
 runlog "start $id $agent $model $branch"
 
 # A28: no run checks against an engine that phase-1 lacks.
@@ -868,15 +877,18 @@ run_checks() {  # <round>; returns 1 and writes fail-<round>.txt on failure; onc
   return 0
 }
 
-# sofia's model: auto = opus for --model opus or a diff in the input, engine client, units, engine or key layout.
+# sofia's model: auto = opus for --model opus or a diff in the input, engine client, units, engine (maths_re) or key layout.
 # auto is a floor (A15): a gorge package or such a diff is audited by opus even when sonnet is named; the raise is logged.
 resolve_audit_model() {
   local why=""
   if [[ "$model" == "opus" ]]; then why="worker model is opus"
   elif [[ "$agent" == "gorge" ]]; then why="gorge package"
-  elif changed | grep -qE '^(app/src/input/|app/src/engine/|app/src/units/|engine/|spec/keyboard\.yaml)'; then why="diff touches input, engine, units or the key layout"
+  elif changed | grep -qE "$maths_re|^spec/keyboard\\.yaml"; then why="diff touches input, engine, units or the key layout"
   fi
-  if [[ "$audit_model" == "opus" ]]; then echo opus
+  if [[ "$(model_cap "$coord")" == sonnet ]]; then  # A262: on Pro only a maths diff is audited by opus (a gorge package, the parser, engine or units)
+    if [[ "$agent" == gorge ]] || changed | grep -qE "$maths_re"; then runlog "audit model opus under model-cap: a maths diff (A262)"; echo opus
+    else [[ -z "$why" && "$audit_model" != opus ]] || runlog "audit model kept at sonnet by model-cap (A262)${why:+: $why}"; echo sonnet; fi
+  elif [[ "$audit_model" == "opus" ]]; then echo opus
   elif [[ -n "$why" ]]; then
     [[ "$audit_model" == "auto" ]] || { log "pipeline #$n $id: audit model raised to opus: $why (line said $audit_model)"; runlog "audit model raised to opus: $why"; }
     echo opus

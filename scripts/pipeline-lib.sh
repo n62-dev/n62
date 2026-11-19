@@ -23,6 +23,14 @@ from_opus_pass() {
 # A121: what a claude exit at a usage limit says (the words of Claude Code 2.1.319 included); always read only when claude exited
 # non-zero. Used by pipeline.sh (agents, pass, report) and night.sh (henri), with grep -iE.
 LIMIT_RE='usage limit|rate limit|429|overloaded|You.ve (hit|reached) your|You.re out of (usage|extra)'
+# model_cap <coord dir> (A262, owner 2026-11-19, on Pro): prints "sonnet" when N62_MODEL_CAP, or else the first line of <coord>/model-cap,
+# says sonnet; then the worker, its fix and resolve rounds, the pass and the report run on sonnet with no subagents, and the audit uses
+# opus only for a maths diff (resolve_audit_model). Prints nothing otherwise; N62_MODEL_CAP=none overrides the file (the selftest).
+model_cap() {
+  local c="${N62_MODEL_CAP:-}"
+  [[ -n "$c" ]] || c="$(head -n1 "$1/model-cap" 2>/dev/null || true)"
+  [[ "${c//[[:space:]]/}" != sonnet ]] || echo sonnet
+}
 
 # A bare missing module ('vitest', '@capacitor/clipboard') is the machine's; a relative one ('./x.ts') is the worker's own import (A34).
 MACHINE_RE="command not found|node_modules (is )?missing|Cannot find module '[^./']"
