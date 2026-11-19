@@ -72,8 +72,16 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 884 | R746 an exact result drawn as a fraction, root, power or matrix goes on the line as editable maths (the owner's bug, 2026-11-18) | ron, Opus | `p1/ron-plainexact` | – |
 | 884a | R747 a constant from Find works in Solve and Function | ron, Sonnet | `p1/ron-appconst` | R746 |
 | 885 | [R748](packages/R748.md) a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
-| 885a | [S56](packages/S56.md) a bug hunt on the new layout; confirmed bugs become rows after it (R750–R759) | sandra, Opus | `p1/sandra-hunt-layout` | R748 |
-| 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | S56 |
+| 885c | [G770](packages/G770.md) a nested definite integral in Home is fast (the owner's 26, not "it took too long") | gorge, Opus | `p1/gorge-nestedintfast` | – |
+| 885d | [G771](packages/G771.md) an inner integral is checked for convergence: no divergent double integral with "=" (wrong answers) | gorge, Opus | `p1/gorge-innerconverge` | G770 |
+| 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19) | ron, Opus | `p1/ron-sheetsview` | R748 |
+| 885f | [R775](packages/R775.md) Fmt and a b/c act on the picked row, else the newest finished row | ron, Sonnet | `p1/ron-fmtpicked` | – |
+| 885h | [R771](packages/R771.md) the tabs: the house and names at one fixed width, the current one filled; STD cycles the format | ron, Opus | `p1/ron-tabsstd` | R770 |
+| 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R771 |
+| 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
+| 885k | [R776](packages/R776.md) a name prompt says what it wants and starts in Alpha; the credits' text | ron, Sonnet | `p1/ron-nameprompt` | R770 |
+| 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look | ron, Sonnet | `p1/ron-deadquiet` | R770 |
+| 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R777 |
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
 **Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R314, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
