@@ -17,7 +17,7 @@
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
   import { ringState } from "./entry/ringState.ts";
-  import { exactMaths, resultToEntry } from "./render/insertable.ts";
+  import { resultToEntry } from "./render/insertable.ts";
   import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
   import { noDigit } from "./state/displayMode.ts";
@@ -202,7 +202,7 @@
 
   /** L5 and docs/04 2.8: a tapped or picked result goes on the line as a chip that carries its full value; R746: an exact
    *  result drawn as its exact value (`=`, or CAS's own unmarked maths) with a fraction, root, power or matrix goes as that
-   *  maths, editable, one term (insertable.ts exactMaths, entry/oneTerm.ts). */
+   *  maths, editable, one term (render/exactMaths.ts, entry/oneTerm.ts; decided as it goes on the field). */
   function insertResult(item: HistoryItem, whole = false): void {
     // R184: linreg and stats1 ask which value (clipboard/actions.svelte.ts, lazy); an answer with no such list goes in whole
     if (!whole && /linreg|stats1/.test(item.latex)) return withClip((c) => c.showStats(item).catch(() => false).then((ok) => void (ok || insertResult(item, true))));
@@ -212,9 +212,7 @@
     const { units, ...number } = item;
     const mark = session.mark(item);
     const shown = noDigit(mark) ? "⚠" : session.display(units && !chip ? number : item).latex;
-    const maths = chip?.exact && !chip.unc && !units && (mark ? mark.mark === "=" : item.view === "cas") ? exactMaths(shown) : undefined;
-    if (maths !== undefined) entry.insert(maths, true);
-    else if (chip) entry.insertResult(shown, chip);
+    if (chip) entry.insertResult(shown, chip, !!chip.exact && !chip.unc && !units && (mark ? mark.mark === "=" : item.view === "cas"));
     else if (tooLongToInsert(shown, false)) withClip((c) => c.say(tooLongToInsertNote())); // R135f2: too long to draw, so to insert
     else entry.insert(resultToEntry(shown), true); // too long for a chip: as drawn, one term
   }

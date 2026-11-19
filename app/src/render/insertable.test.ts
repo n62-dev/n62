@@ -2,7 +2,8 @@
 // L5: results put back on the entry line must parse to the same value (derived).
 import { describe, expect, it } from "vitest";
 import { latexToGiac } from "../input/latex-to-giac.ts";
-import { exactMaths, resultToEntry } from "./insertable.ts";
+import { exactMaths } from "./exactMaths.ts";
+import { resultToEntry } from "./insertable.ts";
 import { tidyGiacLatex } from "./tidy.ts";
 
 const cases: [string, string, string][] = [

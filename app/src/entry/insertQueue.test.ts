@@ -36,6 +36,7 @@ vi.mock("./field.ts", () => ({
     add(): void {}
   },
   asOneTerm: (mf: FakeField, latex: string) => `${/\d$/.test(mf.value) ? "\\times" : ""}${latex}`, // R746: the line as it is when the insert lands
+  exactMaths: (shown: string) => (shown.includes("\\frac") ? shown : undefined),
 }));
 vi.mock("./hwkeys.ts", () => ({ hardwareKey: () => false }));
 vi.mock("./namemarks.ts", () => ({ NameMarks: class { setNames(): void {} } }));
@@ -117,6 +118,15 @@ describe("an insert before the field keeps its place among the keys (R298)", () 
     entry.insert("\\frac{5}{6}", true);
     entry.insert("\\frac{1}{2}");
     expect(await up()).toBe("2\\times\\frac{5}{6}\\frac{1}{2}");
+  });
+  test("2, then exact results (R746): as maths with its × where it reads so, else a chip as today, decided on the field", async () => {
+    const { entry, press, up } = ctx();
+    press("d2");
+    entry.insertResult("\\frac{5}{6}", chip, true);
+    entry.insertResult("5", chip, true);
+    press("d3");
+    entry.insertResult("\\frac{1}{2}", chip);
+    expect(await up()).toBe(`2\\times\\frac{5}{6}${resChip(2, "5")}3${resChip(1, "\\frac{1}{2}")}`); // (a deferred chip takes its number on the field)
   });
   test("5, Store ▶, the store sheet's A: 5▶A", async () => {
     const { entry, press, up } = ctx();
