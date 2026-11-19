@@ -19,6 +19,7 @@ export { isInfixWord } from "./boxes.ts"; // R197: for the Help key's chunk (cur
 export { SelectChain } from "./grow.ts"; // R279: Select and Deselect, loaded with the field
 export { bare, callRange } from "./callRange.ts"; // R324: the call Help's Insert replaces, for the Help key's chunk
 export { Grown } from "./matgrow.ts"; // R185: the matrices Shift + 5 made, loaded with the field
+export { asOneTerm } from "./oneTerm.ts"; // R746: an exact result put on the line as its maths stays one term
 
 /** The literal caret of the one-line mode, as MathLive serialises it (the parser reads it as a power). */
 export const CARET = '\\char"5E ';
