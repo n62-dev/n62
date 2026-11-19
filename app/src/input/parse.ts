@@ -503,6 +503,7 @@ class Parser implements CalcParser {
           if (this.peek()?.t === "close" && (this.peek() as Tok).v === "}") throw parseError("parse.emptyList");
           return ["List", ...this.list("}")];
         }
+        if (tok.v === "[") return ["Vector", ...this.list("]")]; // R746: `\left[…\right]`, an exact vector tapped from history (its `[a,b]`); a typed bare `[` stays refused
         if (tok.v === "floor" || tok.v === "ceil") {
           const e = this.relation();
           this.expectClose(tok.v);

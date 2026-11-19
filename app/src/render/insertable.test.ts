@@ -49,9 +49,14 @@ const plain: [string, string, string][] = [
     "\\begin{pmatrix}-2 & 1 \\\\ \\frac{3}{2} & \\frac{-1}{2}\\end{pmatrix}",
     "[[-2,1],[3/2,(-1)/2]]",
   ],
+  // a CAS vector (Giac's latex([1/2,1/3]), latex([-1/2,sqrt(2)]), latex([x^2,1/2])): a bracket group the caret enters
+  ["[\\frac{1}{2},\\frac{1}{3}]", "\\left[\\frac{1}{2},\\frac{1}{3}\\right]", "[1/2,1/3]"],
+  ["[\\frac{\\mathrm{-1}}{2},\\sqrt{2}]", "\\left[\\frac{-1}{2},\\sqrt{2}\\right]", "[(-1)/2,sqrt(2)]"],
+  ["[x^{2}-1,\\frac{1}{2}]", "\\left[x^{2}-1,\\frac{1}{2}\\right]", "[x^2-1,1/2]"],
+  ["[1,2]", "\\left[1,2\\right]", "[1,2]"],
 ];
 // a chip still: no structure, a rounded or mixed drawing, a name or anything outside the plain maths
-const chip = ["5", "0.833333333333", "\\pi", "2\\frac{5}{6}", "-2\\frac{5}{6}", "\\frac{ab}{2}", "\\sqrt{\\mathrm{undef}}", "\\ln\\left(2\\right)^{2}", "[[1,2],[3,4]]"];
+const chip = ["5", "0.833333333333", "\\pi", "2\\frac{5}{6}", "-2\\frac{5}{6}", "\\frac{ab}{2}", "\\sqrt{\\mathrm{undef}}", "\\ln\\left(2\\right)^{2}", "[[1,2],[3,4]]", "\\frac{1}{2},\\frac{1}{3}", "[\\frac{1}{2},\\ln\\left(2\\right)]", "[1,]"];
 
 describe("exactMaths", () => {
   for (const [drawn, entry, giac] of plain)

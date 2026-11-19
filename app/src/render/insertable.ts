@@ -15,8 +15,8 @@ function hasTopLevelSum(s: string): boolean {
       const name = s.slice(at + 1, i + 1);
       if (name === "begin") depth++; // R746: a matrix's cells (`\mathrm{-2} & 1`) are inside it
       else if (name === "end") depth--;
-    } else if (s[i] === "{" || s[i] === "(") depth++;
-    else if (s[i] === "}" || s[i] === ")") depth--;
+    } else if (s[i] === "{" || s[i] === "(" || s[i] === "[") depth++; // R746: a vector's elements are inside it
+    else if (s[i] === "}" || s[i] === ")" || s[i] === "]") depth--;
     else if (depth === 0 && (i > 0 || s[i] === "-") && (s[i] === "+" || s[i] === "-")) return true; // 10^{-7}: inside braces
   }
   return false;

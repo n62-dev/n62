@@ -3,7 +3,7 @@
 // caret could not enter it and ◀ jumped over it. An exact result drawn as a fraction, root, power or matrix now goes on
 // the line as its maths, editable, and stays one term: a × between it and a number or a bracket beside the cursor, its
 // leading minus bracketed. Expected values are derived: 5/67, 2·5/6 = 5/3, 2·(−5/6) = −5/3, (−5/6)² = 25/36, √2² = 2,
-// [[1,2],[3,4]]² = [[7,10],[15,22]]; checked by the item's exact text (`full`).
+// [[1,2],[3,4]]² = [[7,10],[15,22]], [1/2,1/3]² = 13/36 (a vector's dot product), 2·[1/2,1/3] = [1,2/3]; checked by the item's exact text (`full`).
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, lastResult, open, tap, tapTwice } from "./helpers.ts";
 
@@ -97,6 +97,24 @@ test("(d) CAS: a 2×2 matrix inserted: ◀ enters a cell; x² then Enter gives i
   await insert(page, 1);
   await tap(page, ["sq", "enter"]);
   expect(await full(page, 2)).toBe("[[7,10],[15,22]]");
+});
+
+test("(d) CAS: a vector of fractions inserted: ◀ enters its last element; x² and ×2 give the vector's values", async ({ page }) => {
+  // seq(1/k,k,2,3) is Giac's vector [1/2,1/3], drawn [\\frac{1}{2},\\frac{1}{3}] (latex([1/2,1/3]), engine of 2026-11-19)
+  await result(page, "\\operatorname{seq}\\left(\\frac{1}{k},k,2,3\\right)", 1, false);
+  expect(await full(page, 1)).toBe("[1/2,1/3]");
+  await insert(page, 1);
+  expect(await line(page)).toBe("\\left[\\frac{1}{2},\\frac{1}{3}\\right]");
+  await tap(page, ["left", "left", "d7"]); // ◀ into the bracket, ◀ into the last fraction's denominator
+  expect(await line(page)).toBe("\\left[\\frac{1}{2},\\frac{1}{37}\\right]");
+  await tap(page, ["enter"]);
+  expect(await full(page, 2)).toBe("[1/2,1/37]");
+  await insert(page, 1);
+  await tap(page, ["sq", "enter"]);
+  expect(await full(page, 3)).toBe("13/36"); // Giac's square of a vector is its dot product, as the chip's [1/2,1/3]^2 was
+  await insert(page, 1);
+  await tap(page, ["mul", "d2", "enter"]);
+  expect(await full(page, 4)).toBe("[1,2/3]");
 });
 
 test("controls: an integer, a rounded decimal and π stay chips", async ({ page }) => {
