@@ -1,0 +1,42 @@
+# Upstream: giac 2.1.0 intg.cc _integrate, the 4-argument branch (G770, F470): before the exact run it integrates the integrand numerically (tegral, 1e-6, 1<<10 intervals) only to write "// ∫ ~= <value>" to the log. When the integrand holds an integral, evalf_double of it integrates the inner integral at every sample point of the outer one, and the inner call does the same again: int(int(x^2+y^2,y,0,3),x,0,2) took 1,743,911 interrupt checks (Digits 40) where int(int(x^2+y^2,y=0..3),x,0,2), which has no 4-argument call to preview, took 5,272; the triple integral of x+y+z over [0,1]x[0,2]x[0,3] 176,058,981 against 4,386. `int` and `integration` are functions of their own that call _integrate, so the guard reads their names as well as at_integrate. The preview is skipped when the integrand holds an integral call; the value, the exact run and every other integral are unchanged.
+# Changed by Pascaline contributors, 2026-11-19
+--- a/src/intg.cc
++++ b/src/intg.cc
+@@ -4693,6 +4693,25 @@
+     return symbolic(at_pow,makesequence(f._VECTptr->front(),f1));
+   }
+   // "unary" version
++  // N62 patch 0055 (G770): e holds a call of integrate, int or integration (int and integration are separate
++  // functions that call _integrate, so at_integrate alone does not find them)
++  static bool holds_integral_call(const gen & e){
++    if (e.type==_SYMB){
++      const char * s=e._SYMBptr->sommet.ptr()->s;
++      if (e._SYMBptr->sommet==at_integrate || (s && (!strcmp(s,"int") || !strcmp(s,"integration"))))
++	return true;
++      return holds_integral_call(e._SYMBptr->feuille);
++    }
++    if (e.type==_VECT){
++      const vecteur & w=*e._VECTptr;
++      for (size_t i=0;i<w.size();++i){
++	if (holds_integral_call(w[i]))
++	  return true;
++      }
++    }
++    return false;
++  }
++
+   gen _integrate(const gen & args_,GIAC_CONTEXT){
+     bool setcplx=false;
+     if (!complex_mode(contextptr)){
+@@ -4742,7 +4761,10 @@
+     if (args.type==_VECT && args._VECTptr->size()==4){
+       vecteur v = *args._VECTptr;
+       gen x=v[1],a=v[2],b=v[3];
+-      if (x.type==_IDNT && a.type!=_DOUBLE_ && b.type!=_DOUBLE_){
++      // N62 patch 0055 (G770): the preview below only writes "// ∫ ~= ..." to the log, but for an integrand that holds an
++      // integral it integrates the inner one at every sample point of the outer tegral: the nested
++      // int(int(x^2+y^2,y,0,3),x,0,2) cost 1.7 million interrupt checks, the same with y=0..3 for the inner one 5000
++      if (x.type==_IDNT && a.type!=_DOUBLE_ && b.type!=_DOUBLE_ && !holds_integral_call(v[0])){
+         gen v0=evalf_double(v[0],1,contextptr),resapprox,tmp;
+         vecteur lv=lidnt(v0);
+         if (lv.size()==1 && lv[0]==x && has_evalf(a,tmp,1,contextptr) && has_evalf(b,tmp,1,contextptr) && tegral(v[0],x,a,b,1e-6,(1<<10),resapprox,false,contextptr)){

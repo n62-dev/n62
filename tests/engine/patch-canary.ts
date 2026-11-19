@@ -213,6 +213,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // even a: sum((-1)^k/k^2,k,2,inf) = pi^2/12-1), and for p = 1 takes the harmonic sum off ln(2) (sum((-1)^k/k,k,3,inf) = 3/2-ln(2))
   ["0054-alternating-sum-start.patch", "giac-2.1.0/src/intgab.cc", /plus_inf\),contextptr\);\s*res = -res\*subst\(g\/R,x,a,false,contextptr\);/, "// coeff*sum((-1)^k/k^pui,k,a,inf)"],
   ["0054-alternating-sum-start.patch", "giac-2.1.0/src/intgab.cc", /res = res-_sum\(makesequence\(R,x,1,a\.val-1\),contextptr\);\s*res=res\*subst\(g\/R,x,1,false,contextptr\);/, "// coeff*sum((-1)^k/k^pui,k,a,inf)"],
+  // G770 (F470), patch 0055: _integrate's 4-argument branch previews the integrand numerically for its log, which integrates an inner
+  // integral at every sample point (int(int(x^2+y^2,y,0,3),x,0,2): 1.7 million interrupt checks)
+  ["0055-nested-integral-no-preview.patch", "giac-2.1.0/src/intg.cc", /if \(x\.type==_IDNT && a\.type!=_DOUBLE_ && b\.type!=_DOUBLE_\)\{\s*gen v0=evalf_double\(v\[0\],1,contextptr\),resapprox,tmp;/, "gen _integrate(const gen & args_,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);
