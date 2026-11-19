@@ -22,7 +22,7 @@ export const hasChipLatex = (latex: string): boolean => /\\(?:const|res|ans)(?![
 const DECIMAL = /^([+-]?\d+(?:\.\d+)?)(?:[eE]([+-]?\d+))?$/;
 
 /** A constant's value as an app's line takes it, every digit as the chip holds it. On an expression line one term: with an
- *  exponent it is bracketed (`\left(6.6743\times10^{-11}\right)`); on a number line (Num) it is the number as the exponent
+ *  exponent it is bracketed (`\left(6.6743\times10^{-11}\right)`), as is a signed one (`\left(-2.5\right)`); on a number line (Num) it is the number as the exponent
  *  key types it (`6.6743\emark-11`), which the line reads as a plain number. A value that is no plain decimal (a user key's
  *  own text) goes in as written, bracketed on an expression line. */
 export function constValueLatex(value: string, kind: Kind): string {
@@ -31,7 +31,7 @@ export function constValueLatex(value: string, kind: Kind): string {
   if (!m) return kind === "expr" ? `\\left(${v}\\right)` : v;
   const mant = m[1] as string;
   const exp = m[2] === undefined ? undefined : String(Number(m[2]));
-  if (exp === undefined || exp === "0") return mant;
+  if (exp === undefined || exp === "0") return kind === "expr" && /^[+-]/.test(mant) ? `\\left(${mant}\\right)` : mant; // a sign is no part of a term: x^{-2.5}, never x^-2.5
   return kind === "num" ? `${mant}\\emark${exp}` : `\\left(${mant}\\times10^{${exp}}\\right)`;
 }
 

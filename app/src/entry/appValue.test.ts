@@ -14,6 +14,13 @@ describe("a constant on an app's line (R747)", () => {
     expect(constValueLatex("6.67430E-11", "num")).toBe("6.67430\\emark-11");
     expect(constValueLatex("2E0", "expr")).toBe("2");
   });
+  it("a signed value is one bracketed term on an expression line, so x^(-2.5) never reads x^-2.5", () => {
+    expect(constValueLatex("-2.5", "expr")).toBe("\\left(-2.5\\right)");
+    expect(constValueLatex("-3", "expr")).toBe("\\left(-3\\right)");
+    expect(constValueLatex("+1.5", "expr")).toBe("\\left(+1.5\\right)");
+    expect(constValueLatex("-2.5", "num")).toBe("-2.5");
+    expect(constValueLatex("-2.5E-3", "expr")).toBe("\\left(-2.5\\times10^{-3}\\right)");
+  });
   it("a value that is no plain decimal goes in as written", () => {
     expect(constValueLatex("1/3", "expr")).toBe("\\left(1/3\\right)");
   });
