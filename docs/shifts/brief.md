@@ -69,7 +69,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 884 | [R746](packages/R746.md) an exact result drawn as a fraction, root, power or matrix goes on the line as editable maths (the owner's bug, 2026-11-18) | ron, Opus | `p1/ron-plainexact` | – |
+| 884 | R746 an exact result drawn as a fraction, root, power or matrix goes on the line as editable maths (the owner's bug, 2026-11-18) | ron, Opus | `p1/ron-plainexact` | – |
 | 884a | [R747](packages/R747.md) a constant from Find works in Solve and Function | ron, Sonnet | `p1/ron-appconst` | R746 |
 | 885 | [R748](packages/R748.md) a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
 | 885a | [S56](packages/S56.md) a bug hunt on the new layout; confirmed bugs become rows after it (R750–R759) | sandra, Opus | `p1/sandra-hunt-layout` | R748 |

@@ -121,7 +121,7 @@ describe("a list plus or minus a number (R78)", () => {
     expect(mathJsonToGiac(["Add", "L", 1])).toBe("L+1");
   });
 
-  it("does not change a typed [1,4]+1: the parser refuses square brackets, so no list is emitted (G106 refuses it)", () => {
+  it("does not change [1,4]+1: \\left[…\\right] is Giac's vector (R746, a tapped vector result), never a list; a bare [ is refused (G106 refuses the sum)", () => {
     const key = (latex: string): string | undefined => {
       try {
         latexToGiac(latex);
@@ -130,7 +130,7 @@ describe("a list plus or minus a number (R78)", () => {
       }
       return undefined;
     };
-    expect(key("\\left[1,4\\right]+1")).toBe("parse.unsupportedDelimiter");
+    expect(latexToGiac("\\left[1,4\\right]+1")).toBe("[1,4]+1");
     expect(key("[1,4]+1")).toBe("parse.atToken");
   });
 });

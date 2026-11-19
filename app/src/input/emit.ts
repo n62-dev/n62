@@ -293,6 +293,8 @@ function ser(e: Json, o: SerializeOptions): Out {
       // R80: a `{ }` list (typed braces, the list key) is Giac's list type, which keeps its type through :=, ▶ and Ans
       // and is elementwise in ^, *, + and / (G109); a `[ ]` vector keeps the dot product
       return { s: `list[${args.map((a) => ser(a, o).s).join(",")}]`, p: 5 };
+    case "Vector": // R746: Giac's vector `[a,b]` (dot product in ^ and *; a number plus it is refused, G106)
+      return { s: `[${args.map((a) => ser(a, o).s).join(",")}]`, p: 5 };
     case "Matrix": {
       // a matrix's rows are List nodes too, but it stays Giac's matrix of vectors (G97 reads it)
       if (!isHead(a0, "List")) return ser(a0, o);

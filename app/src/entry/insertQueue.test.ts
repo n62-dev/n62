@@ -35,6 +35,9 @@ vi.mock("./field.ts", () => ({
     clear(): void {}
     add(): void {}
   },
+  // R746: the line as it is when the insert lands
+  resultOnLine: (mf: FakeField, shown: string, toChip?: (s: string) => string) =>
+    toChip && !shown.includes("\\frac") ? toChip(shown) : `${/\d$/.test(mf.value) ? "\\times" : ""}${shown}`,
 }));
 vi.mock("./hwkeys.ts", () => ({ hardwareKey: () => false }));
 vi.mock("./namemarks.ts", () => ({ NameMarks: class { setNames(): void {} } }));
@@ -109,6 +112,22 @@ describe("an insert before the field keeps its place among the keys (R298)", () 
     entry.insertConst("c", "c", { value: "299792458", exact: true });
     press("d4");
     expect(await up()).toBe(`23${resChip(1, "5")}${constChip("c", "c")}4`);
+  });
+  test("2, then an exact result as its maths (R746): the × is read from the line the insert lands on", async () => {
+    const { entry, press, up } = ctx();
+    press("d2");
+    entry.insert("\\frac{5}{6}", true);
+    entry.insert("\\frac{1}{2}");
+    expect(await up()).toBe("2\\times\\frac{5}{6}\\frac{1}{2}");
+  });
+  test("2, then exact results (R746): as maths with its × where it reads so, else a chip as today, decided on the field", async () => {
+    const { entry, press, up } = ctx();
+    press("d2");
+    entry.insertResult("\\frac{5}{6}", chip, true);
+    entry.insertResult("5", chip, true);
+    press("d3");
+    entry.insertResult("\\frac{1}{2}", chip);
+    expect(await up()).toBe(`2\\times\\frac{5}{6}${resChip(2, "5")}3${resChip(1, "\\frac{1}{2}")}`); // (a deferred chip takes its number on the field)
   });
   test("5, Store ▶, the store sheet's A: 5▶A", async () => {
     const { entry, press, up } = ctx();
