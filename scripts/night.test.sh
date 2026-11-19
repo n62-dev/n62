@@ -285,16 +285,24 @@ printf '%s\n' FAIL FAIL > "$tmp/l3.replies"; lcase
 out="$(sbnight l3 --limit-wait 1 2>&1)"; rc=$?
 [[ $rc -ne 0 ]] && newlog | grep -q 'STOPPED night.sh: henri gave no pipeline command twice' || fail "limits: another henri failure twice does not stop the lane (rc $rc): $(newlog)"
 [[ "$(nwait)" -eq 0 ]] || fail "limits: another henri failure waited"
-# the pipeline at rc 75 eleven times in a row: the stop
-for i in $(seq 1 12); do echo "$R1"; done > "$tmp/l4.replies"; printf 'L\n%.0s' $(seq 1 11) > "$tmp/l4.limits"; lcase
-out="$(sbnight l4 --limit-wait 1 2>&1)"; rc=$?
+# A262: henri at a limit eleven times in a row with N62_NIGHT_LIMIT_MAX=10: the stop
+{ for i in $(seq 1 11); do echo LIMIT; done; echo "$R1"; } > "$tmp/l4.replies"; lcase
+out="$(N62_NIGHT_LIMIT_MAX=10 sbnight l4 --limit-wait 1 2>&1)"; rc=$?
 [[ $rc -ne 0 ]] && newlog | grep -qx -- '- [0-9:]* STOPPED night.sh: usage limit 10 times' || fail "limits: 11 limits in a row do not stop with 'usage limit 10 times' (rc $rc): $(newlog | tail -n 4)"
-# ten, a merged step, ten: no stop (the count is of consecutive limits)
-{ for i in $(seq 1 10); do echo "$R1"; done; echo 'scripts/pipeline.sh ron "R2" --model sonnet'; for i in $(seq 1 10); do echo 'scripts/pipeline.sh ron "R3" --model sonnet'; done; } > "$tmp/l5.replies"
-{ printf 'L\n%.0s' $(seq 1 10); echo N; printf 'L\n%.0s' $(seq 1 10); } > "$tmp/l5.limits"; lcase
-out="$(sbnight l5 --limit-wait 1 2>&1)"; rc=$?
-[[ $rc -eq 0 ]] && ! newlog | grep -q 'STOPPED' || fail "limits: ten limits, a merged step, ten limits stopped the lane (rc $rc): $(newlog | tail -n 4)"
-grep -q 'ron R2' "$tmp/l5.calls" || fail "limits: the merged step between did not run"
+# A262: by default no stop: henri at a limit twelve times, then a command that runs
+{ for i in $(seq 1 12); do echo LIMIT; done; echo "$R1"; } > "$tmp/l8.replies"; lcase
+out="$(sbnight l8 --limit-wait 1 2>&1)"; rc=$?
+[[ $rc -eq 0 ]] && grep -q 'ron R1' "$tmp/l8.calls" && ! newlog | grep -q 'STOPPED' && [[ "$(nwait)" -eq 12 ]] || fail "A262: twelve limits stopped the lane or the command did not run (rc $rc, $(nwait) waits): $(newlog | tail -n 3)"
+# A262: henri's answer resets the count: with N62_NIGHT_LIMIT_MAX=2, twelve pipeline limits (twelve commands, henri answering before
+# each) do not stop the lane (the old count of 10 in a row did)
+{ for i in $(seq 1 12); do echo "scripts/pipeline.sh ron \"R$i\" --model sonnet"; done; echo "$R1"; } > "$tmp/l9.replies"; printf 'L\n%.0s' $(seq 1 12) > "$tmp/l9.limits"; lcase
+out="$(N62_NIGHT_LIMIT_MAX=2 sbnight l9 --limit-wait 1 2>&1)"; rc=$?
+! newlog | grep -q 'STOPPED night.sh: usage limit' && [[ "$(nwait)" -eq 12 && "$(grep -c 'ron R1 ' "$tmp/l9.calls")" -eq 2 ]] || fail "A262: limits after henri's answers stopped the lane ($(nwait) waits): $(newlog | tail -n 3)"
+# A262: one command at a limit four times in a row while henri answered: SKIPPED after three waits, then the lane goes on
+{ for i in 1 2 3 4; do echo "$R1"; done; echo 'scripts/pipeline.sh ron "R2" --model sonnet'; } > "$tmp/l10.replies"; printf 'L\nL\nL\nL\n' > "$tmp/l10.limits"; lcase
+out="$(sbnight l10 --limit-wait 1 2>&1)"; rc=$?
+newlog | grep -q 'RESULT -: SKIPPED (scripts/pipeline.sh ron "R1" --model sonnet --audit-model auto: LIMIT 4 times in a row while henri answered)' && [[ "$(nwait)" -eq 3 ]] && grep -q 'ron R2' "$tmp/l10.calls" || fail "A262: a command at a limit four times is not SKIPPED after 3 waits ($(nwait) waits): $(newlog | tail -n 4)"
+grep -q 'max_steps=40; limit_wait=900;' "$night" || fail "A262: the default limit wait is not 900 s"
 # a small --max-steps: three limits before the merged step do not close the lane early
 { for i in 1 2 3 4; do echo "$R1"; done; echo 'scripts/pipeline.sh ron "R2" --model sonnet'; echo 'scripts/pipeline.sh pass 7 "R1" "none"'; } > "$tmp/l6.replies"; printf 'L\nL\nL\n' > "$tmp/l6.limits"; lcase
 out="$(sbnight l6 --limit-wait 1 --max-steps 4 2>&1)"; rc=$?

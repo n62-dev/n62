@@ -11,6 +11,7 @@ integ="$(git worktree list --porcelain | awk '/^worktree /{w=$2} /^branch refs\/
 [[ -n "$integ" ]] || { echo "no phase-1 worktree" >&2; exit 1; }
 # A55: the sandbox runs below use made-up ids of a package's shape (T1, Q1, ...) with no package file; only this variable lets them through
 export N62_ALLOW_UNPACKAGED_IDS=1
+export N62_MODEL_CAP=none  # A262: the owner's .coord/model-cap never reaches the tests; a case sets the cap itself
 fails=0; count=0
 fail() { echo "FAIL: $*" >&2; fails=$((fails + 1)); }
 re='^### (ron|gorge|annabell|sandra), ([A-Z][0-9]+[a-z0-9]*)( \([^)]*\))?:.*branch `([^`]+)`'
@@ -37,6 +38,21 @@ out="$("$script" gorge "$(basename "$(ls "$integ"/docs/shifts/packages/G*.md | h
 grep -q 'audit model raised to opus: gorge' <<<"$out" || fail "gorge with --audit-model sonnet: no 'audit model raised to opus' line"
 out="$("$script" ron "$ron_pkg" --dry-run --audit-model sonnet 2>&1)"
 grep -q 'audit model raised' <<<"$out" && fail "ron with --audit-model sonnet is raised without a reason"
+# A262: model-cap sonnet (N62_MODEL_CAP): an opus gorge package runs on sonnet and is audited on opus (a maths diff); the dry run says so
+gpkg="$(basename "$(ls "$integ"/docs/shifts/packages/G*.md | head -n1)" .md)"
+out="$(N62_MODEL_CAP=sonnet "$script" gorge "$gpkg" --model opus --dry-run 2>&1)"
+grep -q 'model cap (A262): sonnet' <<<"$out" && grep -q 'the audit opus only for a gorge package' <<<"$out" && grep -qE 'claude -p --agent gorge --model sonnet ' <<<"$out" && ! grep -q 'raised to opus' <<<"$out" || fail "A262: model-cap sonnet does not run an opus gorge package on sonnet: $(grep -E 'model|cap' <<<"$out" | head -n 5)"
+grep -q 'model <capped: opus for a gorge package' <<<"$out" || fail "A262: the capped dry run's audit command does not say the cap"
+out="$("$script" gorge "$gpkg" --model opus --dry-run 2>&1)"
+grep -qE 'claude -p --agent gorge --model opus ' <<<"$out" || fail "A262: without a cap an opus worker is not opus"
+capco="$(mktemp -d)"; echo sonnet > "$capco/model-cap"
+out="$(N62_COORD="$capco" N62_MODEL_CAP= "$script" gorge "$gpkg" --model opus --dry-run 2>&1)"
+grep -qE 'claude -p --agent gorge --model sonnet ' <<<"$out" || fail "A262: a model-cap file saying sonnet does not cap: $(grep -E 'model|cap' <<<"$out" | head -n 3)"
+out="$(N62_COORD="$capco" N62_MODEL_CAP=none "$script" gorge "$gpkg" --model opus --dry-run 2>&1)"
+grep -qE 'claude -p --agent gorge --model opus ' <<<"$out" || fail "A262: N62_MODEL_CAP=none does not override the file"
+rm -rf "$capco"
+out="$(N62_MODEL_CAP=sonnet "$script" gorge "$gpkg" --model claude-opus-5-5 --dry-run 2>&1)"
+grep -qE 'claude -p --agent gorge --model sonnet ' <<<"$out" || fail "A262: a full opus model name passes the cap"
 # point 3: the checks the dry run plans
 out="$("$script" ron "$ron_pkg" --dry-run 2>&1)"
 grep -qE '^checks: .*docs' <<<"$out" || fail "dry run: the docs check is not planned"
@@ -733,7 +749,7 @@ rm -rf "$ja/.coord/locks/host-cpu"
 grep -q 'N62_CPU_WAIT:-7200' "$here/pipeline-lib.sh" || fail "A47a: the host-cpu wait is not 7200 s"
 grep -qE 'acquire host-cpu [^ ]+ 1800' "$here/pipeline.sh" "$here/pipeline-lib.sh" && fail "A47a: a host-cpu wait of 1800 s is left"
 # effort: high for the worker, fix rounds, audit, pass and report; henri stays medium
-grep -q 'effort="high"' "$here/pipeline.sh" && grep -q 'sofia "$(resolve_audit_model)" high' "$here/pipeline.sh" && grep -q 'agent sofia --model opus --effort high' "$here/pipeline.sh" && grep -q 'model sonnet --effort high "${claude_common\[@\]}" -n report' "$here/pipeline.sh" || fail "A47a: an effort is not high"
+grep -q 'effort="high"' "$here/pipeline.sh" && grep -q 'sofia "$(resolve_audit_model)" high' "$here/pipeline.sh" && grep -q 'agent sofia --model "$pass_model" --effort high' "$here/pipeline.sh" && grep -q 'model sonnet --effort high "${claude_common\[@\]}" ${report_tools\[@\]+"${report_tools\[@\]}"} -n report' "$here/pipeline.sh" || fail "A47a: an effort is not high"
 grep -q 'agent henri --model sonnet --effort medium' "$here/night.sh" || fail "A47a: henri is not medium"
 # selftest: PASSED on real tests (the pipeline test itself is left out: it would run itself), FAILED with the first failing line
 printf '#!/bin/sh\necho ok\n' > "$tmp/st-ok.sh"; printf '#!/bin/sh\necho noise\necho "FAIL: stub broke"\nexit 1\n' > "$tmp/st-bad.sh"; chmod +x "$tmp/st-ok.sh" "$tmp/st-bad.sh"
@@ -974,6 +990,10 @@ grep -qE 'pipeline #[0-9]+ report: tokens 5k in, 1k out, \$0\.50 \(report sonnet
 rj="$(ls "$mq"/.tasks/report-*/reply.md.json 2>/dev/null | head -n1)"; [[ -n "$rj" ]] || fail "A259: the report's JSON is not kept beside its reply"
 grep -qE 'pipeline #[0-9]+ pass-1[5-9]: tokens 5k in, 1k out, \$0\.50 \(sofia opus 6k\)$' "$mq/.coord/log.md" || fail "A259: a pass logs no tokens line: $(grep 'pass-' "$mq/.coord/log.md" | head -n 3)"
 [[ "$(head -n1 "$mq/.tasks/pass-15/reply.md")" == "My preface." && -s "$mq/.tasks/pass-15/reply.md.json" ]] || fail "A259: the pass's reply.md is not the plain reply, or its JSON is not kept: $(head -c 120 "$mq/.tasks/pass-15/reply.md")"
+# A262: a pass under model-cap sonnet runs sofia on sonnet without the Agent tool
+mqrun env N62_MODEL_CAP=sonnet MQ_PASS=line "$script" pass 40 "Q1" none > "$tmp/pass-cap.out" 2>&1
+grep -qE 'pipeline #[0-9]+ pass-[0-9]+: tokens .*\(sofia sonnet 6k\)$' "$mq/.coord/log.md" && grep -qE 'spawned sofia \(sonnet\)' "$mq/.coord/log.md" || fail "A262: a capped pass is not sonnet: $(grep -E 'pass-|spawned' "$mq/.coord/log.md" | tail -n 3)"
+grep -q 'pass_tools=(--disallowedTools Agent)' "$here/pipeline.sh" && grep -q 'report_tools=(--disallowedTools Agent)' "$here/pipeline.sh" || fail "A262: a capped pass or report may start a subagent"
 out="$(MQ_REPORT=limittext mqrun "$script" report 2>/dev/null)"; rc=$?
 [[ $rc -eq 75 && "$out" == "RESULT report: LIMIT" ]] || fail "A259: a report whose limit text is plain (not JSON) is not LIMIT: rc $rc, out '$out'"
 # the device step holds integ while it builds the APK and releases it before the device run
@@ -1557,7 +1577,7 @@ case "\$*" in
      [ ! -e "$ab/e2e-running" ] || { echo "audit beside e2e" >> "$ab/seen"; : > "$ab/audit-saw-e2e"; }
      if [ -n "\$AB_FIX" ] && [ ! -e "$ab/fixed-once" ]; then : > "$ab/fixed-once"; jout "\$*" "\$(printf 'FIX\napp/src/engine/x.ts:1 the stand-in audit finding: fix it')"; else jout "\$*" APPROVED; fi;;
   *"fix round"*) date +%s%N > fix.txt; c -m fix; jout "\$*" fixed;;
-  *) mkdir -p app/src/engine; date +%s%N > app/src/engine/x.ts; c -m "report: w" -m "Done: w.
+  *) if [ -n "\$AB_PLAIN" ]; then f=plain.txt; else mkdir -p app/src/engine; f=app/src/engine/x.ts; fi; date +%s%N > "\$f"; c -m "report: w" -m "Done: w.
 Tests: none."; jout "\$*" done;;
 esac
 STUB
@@ -1581,6 +1601,12 @@ b1d="$(ls -d "$ab"/.tasks/*-b1 | head -n1)"
 jq -e '.usage.output_tokens == 1200 and .result == "done"' "$b1d/worker-0.log.json" >/dev/null 2>&1 && [[ -s "$b1d/audit-0.log.json" ]] || fail "A259: the JSON is not kept beside the reply (<reply>.json)"
 grep -rq -- '--output-format text' "$here/pipeline.sh" "$here/night.sh" && fail "A259: pipeline.sh or night.sh still asks for --output-format text"
 grep -q -- 'claude_common=(--permission-mode auto --output-format json' "$here/pipeline.sh" || fail "A259: claude_common is not --output-format json"
+# A262: under model-cap sonnet an opus worker runs on sonnet (its own log line, the start line unchanged) and a maths diff keeps an opus audit
+out="$(abrun env N62_MODEL_CAP=sonnet "$script" annabell "ab task" --id B6 --branch p1/b6 --model opus --checks docs 2>&1)"
+grep -q '^RESULT #[0-9]* B6: MERGED' <<<"$out" || fail "A262: a capped run does not merge: $out"
+grep -qE 'pipeline #[0-9]+ B6: tokens .*\(annabell sonnet 6k, audit opus 6k\)$' "$ab/.coord/log.md" && grep -qE 'pipeline #[0-9]+ B6 \(annabell, sonnet, effort high\) on p1/b6: started' "$ab/.coord/log.md" && grep -qE 'pipeline #[0-9]+ B6: worker model opus capped to sonnet \(model-cap, A262\)$' "$ab/.coord/log.md" || fail "A262: a capped maths run: $(grep B6 "$ab/.coord/log.md")"
+out="$(abrun env N62_MODEL_CAP=sonnet AB_PLAIN=1 "$script" annabell "ab task" --id B7 --branch p1/b7 --audit-model opus --checks docs 2>&1)"
+grep -qE 'pipeline #[0-9]+ B7: tokens .*\(annabell sonnet 6k, audit sonnet 6k\)$' "$ab/.coord/log.md" || fail "A262: a capped diff that is not maths is not audited on sonnet (--audit-model opus): $(grep B7 "$ab/.coord/log.md")"
 # a reply that is not JSON (an old CLI, a crash) is kept as text, logged 'tokens: unknown', and never fails the run
 out="$(JOUT_TEXT=1 abrun "$script" annabell "ab task" --id B4 --branch p1/b4 --checks docs 2>&1)"
 grep -q '^RESULT #[0-9]* B4: MERGED' <<<"$out" || fail "A259: a text reply fails the run: $out"
