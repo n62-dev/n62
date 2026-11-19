@@ -7,6 +7,7 @@ import { constKey, pruneChips, resKey, type Chip, type ChipTable } from "../inpu
 import type { ActionBody, Key, Layer } from "../keyboard/keyboard.ts";
 import type { AngleUnit } from "../calc/port.ts";
 import { mathlive } from "../render/mathlive.svelte.ts";
+import type { Where } from "./appValue.ts";
 import { ANS_CHIP, constChip, resChip } from "./macros.ts";
 
 /** How an insert goes on the field (R746): as given (false), a result as drawn (true), or an exact result's chip (entry/oneTerm.ts resultOnLine). */
@@ -16,7 +17,7 @@ export class EntryController {
   private mf: MathfieldElement | undefined;
   private host: HTMLElement | undefined;
   /** What waits for the field, in the order made (decisions.md R8): the keys' actions and, as `put`, the inserts (R298). */
-  private queue: (ActionBody | { kind: "put"; latex: string; term: Term })[] = [];
+  private queue: (ActionBody | { kind: "put"; latex: string; term: Term; consts?: ChipTable })[] = [];
   /** How a key acts on the field (entry/field.ts: ⌫ and Del at a template, ᴇ, 10ˣ, a power's base, the stops): loaded with MathLive. */
   private onField: typeof import("./field.ts").runOnField | undefined;
   /** Backspace, Delete and the printable keys of a hardware keyboard (entry/hwkeys.ts, R26b, R31): loaded with MathLive. */
@@ -26,8 +27,12 @@ export class EntryController {
   /** R185: the matrices Shift + 5 made on the line, which ▶ and ▼ grow (entry/matgrow.ts; runOnField keeps it up to
    *  date): loaded with MathLive. */
   private grown: import("./matgrow.ts").Grown | undefined;
-  /** R746: a history result as it goes on the line, maths or chip, one term (entry/oneTerm.ts): loaded with MathLive. */
-  private onLine: typeof import("./field.ts").resultOnLine | undefined;
+  /** An insert on the field: R746, a history result as maths or chip, one term (entry/oneTerm.ts); R747, on an app's line a
+   *  constant as its value and no chip at all (entry/appValue.ts). Loaded with MathLive. */
+  private onLine: typeof import("./field.ts").putText | undefined;
+  /** R747: the shell (set by main.ts), which says which line this is: an app's line is stored as text and parsed without the
+   *  chip table, so there a constant goes in as its value (entry/appValue.ts). */
+  shell?: Where;
   /** R33: the stored names drawn in their colour (entry/namemarks.ts), made with the field. */
   private marks: { setNames(names: string[]): void } | undefined;
   /** The user's names (setNames); hwkeys.ts reads them (R198: a typed name of the user's stays the user's). */
@@ -42,7 +47,7 @@ export class EntryController {
    */
   private touched = false;
   /** The values of the chips on the line (docs/04 3.6); keys as in input/chips.ts. */
-  private table: ChipTable = {};
+  readonly table: ChipTable = {};
   private nextRes = 1;
   /** R57: the decimal comma is on; a hardware `,` or `.` types the decimal mark, and ᴇ reads `{,}` as part of a number. */
   decimalComma = false;
@@ -102,7 +107,7 @@ export class EntryController {
       this.onField = f.runOnField;
       this.chain = new f.SelectChain();
       this.grown = new f.Grown();
-      this.onLine = f.resultOnLine;
+      this.onLine = f.putText;
       this.hwKey = h.hardwareKey;
       if (l !== null) this.touched = true;
       if (l && !this.keptStale) this.pendingValue = this.adopt(l.latex, l.chips); // (only set() writes pendingValue, and it marks the kept line stale)
@@ -131,7 +136,7 @@ export class EntryController {
     mf.focus();
     mf.executeCommand("moveToMathfieldEnd");
     for (let a = this.queue.shift(); a; a = this.queue.shift()) {
-      if (a.kind === "put") this.put(a.latex, a.term);
+      if (a.kind === "put") this.put(a.latex, a.term, a.consts);
       else this.run(a);
     }
     // what MathLive edits itself (a character outside ASCII); a set of the value is silent
@@ -217,17 +222,15 @@ export class EntryController {
   }
   /** Insert LaTeX at the cursor. `term` (R746): a history result's drawn LaTeX (true), or an exact result's with its
    *  chip: decided when it goes on the field, by the line there (entry/oneTerm.ts resultOnLine). */
-  insert(latex: string, term: Term = false): void {
+  insert(latex: string, term: Term = false, consts?: ChipTable): void {
     this.touched = true;
     this.recalledIn = null;
     this.onEdit();
-    if (!this.mf) return void this.queue.push({ kind: "put", latex, term }); // R298: in its place among the queued keys
-    this.put(latex, term);
+    if (!this.mf) return void this.queue.push({ kind: "put", latex, term, ...(consts ? { consts } : {}) }); // R298: in its place among the queued keys
+    this.put(latex, term, consts);
   }
-  private put(latex: string, term: Term = false): void {
-    if (term && this.mf && this.onLine) latex = this.onLine(this.mf, latex, term === true ? undefined : (s) => this.chip(s, term));
-    this.mf?.insert(latex, { format: "latex", selectionMode: "after" });
-    this.mf?.focus();
+  private put(latex: string, term: Term = false, consts?: ChipTable): void {
+    this.onLine?.(this, latex, term, consts);
   }
   /** A history result as a chip (docs/04 2.8): drawn as `shown` (its display LaTeX), worth `chip.value`. `maths` (R746):
    *  its drawing is its exact value, so a fraction, root, power or matrix in it goes on the line as that maths (put). */
@@ -235,15 +238,14 @@ export class EntryController {
     if (maths) return this.insert(shown, chip);
     this.insert(this.chip(shown, chip));
   }
-  private chip(shown: string, chip: Chip): string {
+  chip(shown: string, chip: Chip): string {
     const k = this.nextRes++;
     this.table[resKey(k)] = chip;
     return resChip(k, shown);
   }
   /** A constant as a chip (Find, docs/04 3.6): `symbol` is LaTeX, the value and uncertainty come with it. */
   insertConst(id: string, symbol: string, chip: Chip): void {
-    this.table[constKey(id)] = chip;
-    this.insert(constChip(id, symbol));
+    this.insert(constChip(id, symbol), false, { [constKey(id)]: chip }); // (in the table once the line takes the chip, R747: an app's line does not)
   }
   /** Ans: the view's last result, read when Enter is pressed. */
   insertAns(): void {
@@ -268,7 +270,7 @@ export class EntryController {
       return;
     }
     const before = this.mf.value;
-    this.onField?.(this.mf, a, this.grown, this.decimalComma);
+    this.onField?.(this.mf, a, this.grown, this.decimalComma, this.shell);
     if (this.mf.value !== before) this.recalledIn = null; // (a cursor key leaves the recall as it was)
   }
 

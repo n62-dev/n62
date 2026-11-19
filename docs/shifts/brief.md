@@ -70,7 +70,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 884 | R746 an exact result drawn as a fraction, root, power or matrix goes on the line as editable maths (the owner's bug, 2026-11-18) | ron, Opus | `p1/ron-plainexact` | – |
-| 884a | [R747](packages/R747.md) a constant from Find works in Solve and Function | ron, Sonnet | `p1/ron-appconst` | R746 |
+| 884a | R747 a constant from Find works in Solve and Function | ron, Sonnet | `p1/ron-appconst` | R746 |
 | 885 | [R748](packages/R748.md) a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
 | 885c | [G770](packages/G770.md) a nested definite integral in Home is fast (the owner's 26, not "it took too long") | gorge, Opus | `p1/gorge-nestedintfast` | – |
 | 885d | [G771](packages/G771.md) an inner integral is checked for convergence: no divergent double integral with "=" (wrong answers) | gorge, Opus | `p1/gorge-innerconverge` | G770 |

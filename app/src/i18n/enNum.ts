@@ -5,6 +5,8 @@
 export const enNum = {
   "num.notNumber": "Not a number",
   "num.zeroStep": "The step cannot be 0",
+  /** R747: said once, when a constant from Find or a free key goes on an app's line */
+  "app.constValue": "In an app a constant goes in as its value",
   "solve.empty": "Enter an equation in Symb (e.g. X²+Y²=4) to see its unknowns here.",
   "solve.warnTitle": "Substituting the answer back leaves a large residual: check it.",
   "symb.label": "Definitions",
