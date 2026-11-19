@@ -92,6 +92,25 @@ test("Solve › Num: a constant on a value line is the number (digits with the e
   expect(await entryValue(page)).toBe("6.67430\\emark-11");
 });
 
+test("Function › F1: a constant beside a digit is its own term (2 then c is 2×299792458), and the refused line keeps the note", async ({ page }) => {
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
+  await tap(page, ["d2"]);
+  await pick(page, "c");
+  expect(await entryValue(page)).toBe("2\\times299792458");
+  await tap(page, ["esc"]);
+  await tap(page, ["d2"]);
+  await pick(page, "G");
+  expect(await entryValue(page)).toBe("2\\times\\left(6.67430\\times10^{-11}\\right)");
+});
+
+test("a refused line puts nothing in the table and says no note", async ({ page }) => {
+  await openSolve(page);
+  await page.evaluate(() => window.n62.entry.insert("\\const{c}{c}+\\ans"));
+  expect(await entryValue(page)).toBe("");
+  await expect(page.getByTestId("notice")).toHaveCount(0);
+});
+
 test("a free key holding c: in Solve it types the value, in Home it types the chip", async ({ page }) => {
   await onU1(page, "c");
   await tap(page, ["u1"]);

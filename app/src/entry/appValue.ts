@@ -15,6 +15,8 @@ export interface Where {
 }
 type Kind = "expr" | "num";
 const kindOf = (w: Where | undefined): Kind | undefined => (w?.app ? (w.view === "num" ? "num" : "expr") : undefined);
+/** Which line this is: an app's expression line, its number line, or (undefined) Home's and CAS's. */
+export const lineKind = kindOf;
 
 /** A chip's macro in a line's LaTeX (`\const{..}`, `\res{..}`, `\ans`). */
 export const hasChipLatex = (latex: string): boolean => /\\(?:const|res|ans)(?![A-Za-z])/.test(latex);
@@ -49,6 +51,7 @@ export function appText(latex: string, w: Where | undefined, table: ChipTable): 
   if (!kind) return latex;
   let out = "";
   let i = 0;
+  let valued = false;
   for (let j = latex.indexOf("\\const{"); j >= 0; j = latex.indexOf("\\const{", i)) {
     const chip = table[constKey(latex.slice(j + 7, latex.indexOf("}", j)))];
     let k = latex.indexOf("}", j) + 1; // the symbol's group follows, braces in it paired
@@ -58,10 +61,12 @@ export function appText(latex: string, w: Where | undefined, table: ChipTable): 
     if (!chip || latex[latex.indexOf("}", j) + 1] !== "{") return undefined;
     out += latex.slice(i, j) + constValueLatex(chip.value, kind);
     i = k + 1;
-    tell(w);
+    valued = true;
   }
   out += latex.slice(i);
-  return hasChipLatex(out) ? undefined : out;
+  if (hasChipLatex(out)) return undefined;
+  if (valued) tell(w); // (only for a line that goes in: a refused one says nothing and keeps the note)
+  return out;
 }
 
 /** A key's action on an app's line: a constant on a free key (R4b) types its value, any other chip is refused (undefined). */

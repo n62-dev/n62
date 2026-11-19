@@ -4,11 +4,11 @@
 // it is there are queued by the controller and replayed through runOnField.
 import type { MathfieldElement } from "mathlive";
 import type { ActionBody, TypedCall } from "../keyboard/keyboard.ts";
-import { appAction, appText, type Where } from "./appValue.ts";
-import type { Chip } from "../input/chips.ts";
+import { appAction, appText, lineKind, type Where } from "./appValue.ts";
+import type { Chip, ChipTable } from "../input/chips.ts";
 import type { EntryController } from "./controller.ts";
 import { deleteAtTemplate } from "./delete.ts";
-import { resultOnLine } from "./oneTerm.ts";
+import { asOneTerm, resultOnLine } from "./oneTerm.ts";
 import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
 import { lineTouch } from "./lineTouch.ts";
@@ -24,12 +24,16 @@ export { SelectChain } from "./grow.ts"; // R279: Select and Deselect, loaded wi
 export { bare, callRange } from "./callRange.ts"; // R324: the call Help's Insert replaces, for the Help key's chunk
 export { Grown } from "./matgrow.ts"; // R185: the matrices Shift + 5 made, loaded with the field
 
-/** `latex` at the cursor (EntryController.put): R747, on an app's line a constant as its value and any chip refused; R746, a
- *  history result (`term`) as it goes on the line, maths or chip, one term (oneTerm.ts). Nothing before the field is up. */
-export function putText(c: EntryController, latex: string, term: boolean | Chip): void {
+/** `latex` at the cursor (EntryController.put): R747, on an app's line a constant as its value (one term: a × beside a number,
+ *  as for a result) and any chip refused; R746, a history result (`term`) as it goes on the line, maths or chip, one term
+ *  (oneTerm.ts). `consts`: chips the text brings (insertConst), in the line's table once the line takes them. Nothing before the field is up. */
+export function putText(c: EntryController, latex: string, term: boolean | Chip, consts?: ChipTable): void {
   const mf = c.field;
-  const l = mf && appText(latex, c.shell, c.table);
+  const kind = lineKind(c.shell);
+  let l = mf && appText(latex, c.shell, consts ? { ...c.table, ...consts } : c.table);
   if (!mf || l === undefined) return;
+  if (kind === "expr" && l !== latex) l = asOneTerm(mf, l);
+  else if (!kind) Object.assign(c.table, consts);
   mf.insert(term ? resultOnLine(mf, l, term === true ? undefined : (s) => c.chip(s, term)) : l, { format: "latex", selectionMode: "after" });
   mf.focus();
 }
@@ -233,7 +237,8 @@ function forceNoSystemKeyboard(mf: MathfieldElement): void {
 export function runOnField(mf: MathfieldElement, a: ActionBody, grown?: Grown, decimalComma = false, w?: Where): void {
   const b = w ? appAction(a, w) : a; // R747
   if (!b) return;
-  a = b;
+  if (b !== a && b.kind === "insert" && lineKind(w) === "expr") a = { ...b, latex: asOneTerm(mf, b.latex) }; // (a constant's value, one term)
+  else a = b;
   // R185: the matrices are found again after what changed the line since the last key (a result put on it, a character
   // MathLive typed itself) and after this key
   grown?.refresh(mf);

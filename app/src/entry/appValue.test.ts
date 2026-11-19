@@ -53,6 +53,15 @@ describe("a constant on an app's line (R747)", () => {
     expect(appAction({ kind: "insert", latex: "\\ans" }, hook("expr"))).toBeUndefined();
     expect(appAction({ kind: "type", text: "x" }, hook("expr"))).toEqual({ kind: "type", text: "x" });
   });
+  it("a refused line says nothing and keeps the note", async () => {
+    vi.resetModules();
+    const { appText } = await import("./appValue.ts");
+    const said: string[] = [];
+    expect(appText("\\const{c}{c}+\\ans", hook("expr", said), table)).toBeUndefined();
+    expect(said).toHaveLength(0);
+    appText("\\const{c}{c}", hook("expr", said), table);
+    expect(said).toHaveLength(1);
+  });
   it("the note is said once", async () => {
     vi.resetModules();
     const { appText } = await import("./appValue.ts");
