@@ -13,7 +13,6 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 - Workers run on Sonnet. `--audit-model auto` still gives Opus to gorge packages and to diffs in the engine, input or units. Every package keeps its own audit.
 - An Opus pass runs after every six packages (A260).
 - No hourly monitor sessions, and no `/night-review` until a Pro week is measured.
-- A258, A259 and A260 head the lane.
 - A256 and A257 wait until after the tag.
 
 **To build before 24/7** (checked 2026-11-08). Code: a henri call that fails at a usage limit counts as a bad reply and two end the lane; the six waits add up over a whole `night.sh` run; neither has met a real limit since `night.sh` began. Flags today: `--limit-wait 18000` (5 h a wait), `--max-steps 100`, `--until`; a shift a day is the daily stop (rules section 4a). The stop covers planned reboots and Windows updates and writes the queue's rows; a lane lost to an unplanned reboot restarts at the next stop.
@@ -70,17 +69,11 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 880 | R726 Shift locks on a second tap; the bar's ⇧/α ends any Shift or Alpha | ron, Sonnet | `p1/ron-modlocks` | R722, R724 |
-| 881 | R727 Shift + Select copies the line's selection first | ron, Sonnet | `p1/ron-copyselection` | R723 |
-| 882 | R743 a swipe from the right deletes behind a red strip; from the left nothing | ron, Sonnet | `p1/ron-swipered` | – |
-| 883 | A259 every agent call logs its tokens and cost | annabell, Sonnet, audit Opus | `p1/annabell-tokenlog` | R743 |
 | 884 | [R746](packages/R746.md) an exact result drawn as a fraction, root, power or matrix goes on the line as editable maths (the owner's bug, 2026-11-18) | ron, Opus | `p1/ron-plainexact` | – |
 | 884a | [R747](packages/R747.md) a constant from Find works in Solve and Function | ron, Sonnet | `p1/ron-appconst` | R746 |
 | 885 | [R748](packages/R748.md) a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
 | 885a | [S56](packages/S56.md) a bug hunt on the new layout; confirmed bugs become rows after it (R750–R759) | sandra, Opus | `p1/sandra-hunt-layout` | R748 |
 | 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | S56 |
-
-If the release candidate (Mon 11-23) comes before every row has merged, R743, then R727, then R726 move to v0.1.1; the other rows are the layout that the lock pins and stay (owner, 2026-11-17).
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
 **Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R314, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
