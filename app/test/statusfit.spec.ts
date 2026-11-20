@@ -109,8 +109,8 @@ for (const width of WIDTHS)
               expect(await seen(page, `[data-testid="${id}"]`), `${id} at ${at}`).toBe("");
             }
             expect(m.boxes["mod-slot"], `no ⇧ α slot with the keys up at ${at}`).toBeUndefined(); // R783: it is the folded bar's (modlocks.spec.ts)
-            // R722: in an app the views are 32 px at every width (the room at 360 px is won from the gaps, the separator and ☰)
-            for (const v of ["symb", "plot", "num"]) if (m.boxes[`tab-${v}`]) expect(m.boxes[`tab-${v}`]?.split(",")[1], `tab-${v} at ${at}`).toBe("32.0");
+            // R785: in an app the views are the bay's 36 px at every width
+            for (const v of ["symb", "plot", "num"]) if (m.boxes[`tab-${v}`]) expect(m.boxes[`tab-${v}`]?.split(",")[1], `tab-${v} at ${at}`).toBe("36.0");
             if (base === undefined) base = m.boxes;
             else expect(m.boxes, `boxes moved at ${at}`).toEqual(base);
           }

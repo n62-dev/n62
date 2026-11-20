@@ -81,7 +81,7 @@
 </script>
 
   <!-- the bar (docs/05 3.2, R722): on the keypad's top edge, 28 px, its targets its full height. Apps ▾ (in an app its
-       glyph ▾ and the views), the Home and CAS tabs, the fixed ⇧ α slot, the angle, format and digits chips, ☰; the order
+       glyph ▾), the Home and CAS tabs, the hairline, the bay (the format and digits chip in Home and CAS, an app's view icons), the ⇧ α slot, the angle, ☰; the order
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
@@ -105,25 +105,6 @@
       {/if}
       <span class="caret" aria-hidden="true">▾</span>
     </button>
-    {#if shell.app !== null}
-      <span class="seg" role="tablist" aria-label={t("status.views")}>
-        {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}
-          <!-- the icons are our own markup (ICONS, views/icons.ts), never user text; they ride in the shell's app-opening chunk (R362), so a tab is drawn empty until it is in -->
-          <button
-            type="button"
-            class="tab"
-            role="tab"
-            data-testid="tab-{tab.view}"
-            aria-selected={shell.view === tab.view}
-            aria-label={tab.name}
-            title={tab.name}
-            onclick={() => onpress(tab.key, "primary")}>
-            <span class="face">{@html shell.code?.ICONS[tab.view] ?? ""}</span>
-          </button>
-        {/each}
-      </span>
-    {/if}
-    <span class="sep" aria-hidden="true"></span>
     <span class="places" role="tablist" aria-label={t("status.places")}>
       {#each PLACES as p (p.view)}
         {@const cur = shell.app === null && session.view === p.view}
@@ -144,6 +125,28 @@
         </button>
       {/each}
     </span>
+    <span class="sep" aria-hidden="true"></span>
+    {#if shell.app === null}
+      <!-- R785: the bay in Home and CAS: the format, a divider and the significant digits as one chip (`STD|12`); it opens Mode on Format, Significant digits the next row -->
+      <button type="button" class="chip mode" data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
+    {:else}
+      <span class="seg" role="tablist" aria-label={t("status.views")}>
+        {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}
+          <!-- the icons are our own markup (ICONS, views/icons.ts), never user text; they ride in the shell's app-opening chunk (R362), so a tab is drawn empty until it is in -->
+          <button
+            type="button"
+            class="tab"
+            role="tab"
+            data-testid="tab-{tab.view}"
+            aria-selected={shell.view === tab.view}
+            aria-label={tab.name}
+            title={tab.name}
+            onclick={() => onpress(tab.key, "primary")}>
+            <span class="face">{@html shell.code?.ICONS[tab.view] ?? ""}</span>
+          </button>
+        {/each}
+      </span>
+    {/if}
     {#if folded || hw}
       <!-- R783: the ⇧ α badge is on the folded bar and with a hardware keyboard in use; with the keys up the Shift and Alpha keys show the state -->
       <span class="slot" data-testid="mod-slot">
@@ -170,10 +173,6 @@
       <svg viewBox="0 0 16 14" aria-hidden="true"><path d="M1.5 12.5H14.5M1.5 12.5 9.5 3" /><path d="M7.5 12.5A6 6 0 0 0 5.4 7.9" /></svg>
       <span class="mark math" aria-hidden="true">{angle === "rad" ? "π" : "°"}</span>
     </button>
-    <span class="pair" aria-label={t("status.format", { format: t(`format.${session.settings.format}`) })}>
-      <button type="button" class="chip more format" data-testid="chip-format" data-item="format" onclick={() => onmode("format")}>{session.settings.format.toUpperCase()}</button>
-      <button type="button" class="chip more digits" data-testid="chip-digits" data-item="digits" onclick={() => onmode("digits")}>{session.settings.digits}</button>
-    </span>
     <button type="button" class="menubtn" use:pressFlag data-testid="menu-button" data-item="menu" data-tip="menu" aria-label={t("status.menu")} onclick={() => onpress(MENU_KEY, "primary")}>☰</button>
     <!-- the busy ring is drawn on an aria-hidden tile: a screen reader hears the job from this hidden line (R102) -->
     {#if busy}<span class="sr" role="status" data-testid="busy-status">{t("status.busy")}</span>{/if}
@@ -202,8 +201,7 @@
   .folded .place,
   .folded .seg,
   .folded .sep,
-  .folded .chip,
-  .folded .pair {
+  .folded .chip {
     display: none;
   }
   .folded .places {
@@ -330,7 +328,7 @@
     pointer-events: none;
   }
   .tab {
-    width: var(--view-w);
+    width: var(--bay-view-w);
     color: var(--muted);
     font-size: var(--fs-ui);
   }
@@ -422,7 +420,7 @@
   .mod[data-lock="true"] {
     box-shadow: inset 0 calc(-1 * var(--stroke)) 0 currentColor;
   }
-  /* the chips: the bar's height, outlined; the format and digits ones with a small ▾ (they open Mode) */
+  /* the chips: the bar's height, outlined; the format and digits chip (R785) is one target that opens Mode, a muted hairline between them */
   .chip {
     padding: 0 var(--sp-1);
     border-radius: calc(var(--radius-s) + var(--stroke-thin));
@@ -430,10 +428,11 @@
     color: var(--muted);
     font-variant-numeric: tabular-nums;
   }
-  .chip.more::after {
-    content: "▾";
-    margin-left: var(--stroke-thin);
-    font-size: var(--mark-size);
+  .chip.mode {
+    gap: var(--sp-05);
+    color: var(--text);
+  }
+  .chip.mode .dv {
     color: var(--muted);
   }
   /* R783: the angle icon: 34 px wide, one target; the right side's first item takes the room left over */
@@ -462,18 +461,13 @@
     color: var(--on-enter);
     box-shadow: none;
   }
-  .pair {
-    display: flex;
-    gap: var(--sp-05);
-  }
   .menubtn {
     width: var(--menu-w);
     font-size: var(--fs-key-fn);
     color: var(--text);
   }
   /* narrow (a phone under 400 px wide): the tab that is not current shows its glyph only; in an app the views keep their
-     32 px, the room is won from the gaps, the separator's margins and ☰, and STD and 12 share one chip with one ▾ (the right side
-     the same in every place, R783) */
+     36 px, the room is won from the gaps (the right side the same in every place, R783) */
   @media (max-width: 400px) {
     .ptab:not(.cur) .nm {
       display: none;
@@ -495,20 +489,6 @@
     }
     .menubtn {
       width: var(--bar-h);
-    }
-    .pair {
-      gap: 0;
-      border-radius: calc(var(--radius-s) + var(--stroke-thin));
-      box-shadow: inset 0 0 0 var(--stroke-thin) var(--line);
-    }
-    .pair .chip {
-      box-shadow: none;
-    }
-    .chip.format {
-      padding-right: var(--sp-05);
-    }
-    .chip.format::after {
-      content: none;
     }
   }
 </style>

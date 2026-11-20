@@ -21,7 +21,7 @@ test.describe("by touch", () => {
     await opt(page, "format", "sci").tap();
     await expect(sheet(page)).toHaveCount(0);
     expect(await setting(page, "format")).toBe("sci");
-    await expect(page.getByTestId("chip-format")).toHaveText("SCI");
+    await expect(page.getByTestId("chip-format")).toHaveText("SCI|12");
   });
 
   test("STD → PFX in 2 taps", async ({ page }) => {
@@ -59,15 +59,17 @@ test.describe("by touch", () => {
     await expect(row("format").getByRole("button", { name: "Standard", exact: true })).toHaveAttribute("aria-pressed", "true");
   });
 
-  test("the digits chip opens Mode › Significant digits; 20 is one more tap; ◀ from that list goes up to Mode", async ({ page }) => {
-    await page.getByTestId("chip-digits").tap();
+  test("the chip, then Significant digits opens its list; 20 is one more tap; ◀ from that list goes up to Mode", async ({ page }) => {
+    await page.getByTestId("chip-format").tap();
+    await tap(page, ["d3"]);
     await expect(title(page)).toHaveText("Mode › Significant digits");
     await expect(sheet(page).locator('[data-id="12"]')).toHaveAttribute("data-selected", "true");
     await sheetKey(page, ["left"]);
     await expect(title(page)).toHaveText("Mode");
     await tap(page, ["esc"]);
     await expect(sheet(page)).toHaveCount(0);
-    await page.getByTestId("chip-digits").tap();
+    await page.getByTestId("chip-format").tap();
+    await tap(page, ["d3"]);
     await sheet(page).locator('[data-id="20"]').tap();
     await expect(sheet(page)).toHaveCount(0);
     expect(await setting(page, "digits")).toBe(20);

@@ -31,6 +31,7 @@ function host(s: AppShell): AppHost {
     notice: (text: string) => s.clip?.say(text),
     toHome: (shown: string, chip: Chip) => toHome(s, shown, chip),
     paste: () => s.clip?.pasteHeld(),
+    mode: () => s.openMode?.(),
     count: (e: string) => s.onEvent?.(e),
   };
 }

@@ -371,10 +371,11 @@ test("Function: a Root readout, Menu › To Home: one chip on Home's line; ×2 g
   await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
   await tap(page, ["x", "pow", "d2", "right", "sub", "d2", "enter", "@plot"]);
   await page.waitForFunction(() => window.n62.plot.board !== undefined);
-  // no analysis yet: no row (Plot's eight rows and their reasons fill the room at the floor; the last row moves no number)
+  // no analysis yet: To Home is there but off, so Mode keeps its tenth place (R785, docs/06 3b)
   await tap(page, ["@menu"]);
-  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(8);
-  await expect(menuRow(page, "tohome")).toHaveCount(0);
+  await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveCount(10);
+  await expect(menuRow(page, "tohome")).toBeDisabled();
+  await expect(menuRow(page, "mode")).toHaveCount(1);
   await tap(page, ["esc"]);
   await tap(page, Array<string>(10).fill("right")); // x = 1
   await expect(page.getByTestId("trace-x")).toHaveText("1");

@@ -20,6 +20,7 @@ import { commaResult } from "../../state/displayMode.ts";
 import { drawnGroups } from "../grouped.ts";
 import { t } from "../../i18n/index.ts";
 import { numText } from "../../i18n/enNum.ts";
+import { modeRow } from "../modeRow.ts";
 import { parseDec, plainNumber, showDecimal } from "../decimal.ts";
 import { decimalFromString } from "../../engine/format.ts";
 import { slotNames, SlotsState, type SlotsJson } from "../slots.svelte.ts";
@@ -233,7 +234,7 @@ export class SolveApp implements AppInstance {
   menu(view: ViewId): MenuItem[] {
     if (view === "symb") {
       const empty = (this.slots.latex[this.slots.selected] ?? "") === "";
-      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }, ...this.pasteRow(view)];
+      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }, ...this.pasteRow(view), modeRow(this.host)];
     }
     if (view !== "num") return [];
     const none = !this.selected || this.active.length === 0;
@@ -252,6 +253,7 @@ export class SolveApp implements AppInstance {
       // R262: only an answer (its full value kept): a typed value does not go (R76, c56)
       { id: "tohome", count: "tohome", label: numText("app.toHome"), disabled: !(this.selected in this.copies), reason: numText("why.noAnswerSolve"), run: () => void this.toHome(this.selected) },
       ...this.pasteRow(view),
+      modeRow(this.host),
     ];
   }
   /** R278f1: ☰ → Paste where the shell shows the entry line (the Paste key is gone, and the line's long press is R277's hold); last, so no other row's number moves. */

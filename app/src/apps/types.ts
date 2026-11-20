@@ -33,6 +33,8 @@ export interface AppHost {
   toHome(shown: string, chip: Chip): void;
   /** R278f1: ☰ → Paste on the entry line, the path of Home's ☰ → Paste (the keys pressed meanwhile wait for the clipboard). */
   paste(): void;
+  /** R785: ☰ › Mode in an app: the Mode sheet, as the bar's format and digits chip opens it in Home and CAS. */
+  mode(): void;
   /** R361: counts an event that is no press (`event:<name>` in the press counts' keys, state/taps.svelte.ts event). */
   count?(event: string): void;
 }

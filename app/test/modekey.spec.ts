@@ -15,10 +15,11 @@ test("the STD chip opens Mode", async ({ page }) => {
   await expect(title(page)).toHaveText("Mode");
 });
 
-test("the 12 chip opens Mode too", async ({ page }) => {
+test("the chip's Mode has Significant digits as the next row after Format (R785)", async ({ page }) => {
   await open(page);
-  await page.getByTestId("chip-digits").tap();
-  await expect(title(page)).toHaveText("Mode › Significant digits"); // (straight on its list of digits)
+  await page.getByTestId("chip-format").tap();
+  await tap(page, ["d3"]);
+  await expect(title(page)).toHaveText("Mode › Significant digits");
 });
 
 test("the STD chip, ◀ to Angle (▲), ▶, Enter switches RAD → DEG", async ({ page }) => {

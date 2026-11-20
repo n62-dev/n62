@@ -49,12 +49,12 @@ for (const [name, width, height] of SIZES)
 // reachable: on screen, or the count cue shown and scrolled to. Phase-1 cut Settings, the ninth row, by 3 px at both.
 // R770: every sheet is in the viewport now, so under 1000 px tall the Menu scrolls inside it and each row is scrolled to.
 // R722: under 1000 px tall the rows are 43 px (owner, 2026-11-17), so the Fairphone's Menu scrolls at its floor (every row
-// reachable, the cue showing); a phone 1000 px tall has the full rows and shows them all
+// reachable, the cue showing); a phone 1010 px tall has the full rows and shows all ten (Mode, R785, and To Home, off with no answer, take the room 1000 px had)
 const MENU_SIZES = [
   ["Fairphone 6", 372, 828, false],
   ["Fairphone 6 WebView", 372, 767, false],
   ["Fairphone 6 width, short", 372, 560, false],
-  ["a tall phone", 412, 1000, true],
+  ["a tall phone", 412, 1010, true],
 ] as const;
 for (const [name, width, height, all] of MENU_SIZES)
   test(`Plot's Menu entries are all ${all ? "on screen" : "reachable"} at ${name} (${width}×${height})`, async ({ browser }) => {
@@ -91,17 +91,17 @@ for (const [name, width, height, all] of MENU_SIZES)
     }
   });
 
-// R262: after a Root, Plot's Menu has its ninth row (To Home, shown only with an answer). R722: under 1000 px tall (the
-// Fairphone's sizes and the Pixel 7's) the 43 px rows leave 290 px, the nine rows need 324 at their floor: the list
-// scrolls with its cue and every row is reached; at 1000 px tall all nine are on screen without the cue.
+// R262, R785: after a Root, Plot's Menu has its ninth row (To Home, off until then) and Mode as the tenth. R722: under 1000 px tall (the
+// Fairphone's sizes and the Pixel 7's) the 43 px rows leave 290 px, the ten rows need more at their floor: the list
+// scrolls with its cue and every row is reached; at 1010 px tall all ten are on screen without the cue.
 const ANSWER_SIZES = [
   ["Fairphone 6", 372, 828, false],
   ["Fairphone 6 WebView", 372, 767, false],
   ["Pixel 7", 412, 915, false],
-  ["a tall phone", 412, 1000, true],
+  ["a tall phone", 412, 1010, true],
 ] as const;
 for (const [name, width, height, all] of ANSWER_SIZES)
-  test(`Plot's Menu after a Root shows its nine rows, To Home last, ${all ? "on screen" : "each reached"} at ${name} (${width}×${height})`, async ({ browser }) => {
+  test(`Plot's Menu after a Root shows its ten rows, Mode last (To Home the ninth), ${all ? "on screen" : "each reached"} at ${name} (${width}×${height})`, async ({ browser }) => {
     if (!c46) throw new Error("c46 is not in core.yaml");
     const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
@@ -111,9 +111,9 @@ for (const [name, width, height, all] of ANSWER_SIZES)
       await expect(page.locator('[data-testid="readout-x"]')).toHaveText("1.41421356237");
       await replay(page, ["@menu"]);
       const rows = page.locator('[data-testid="menu"] .row[data-id]');
-      await expect(rows).toHaveCount(9);
+      await expect(rows).toHaveCount(10);
       const ids = await rows.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["id"] ?? ""));
-      expect(ids.at(-1)).toBe("tohome");
+      expect(ids.slice(-2)).toEqual(["tohome", "mode"]);
       const cue = page.getByTestId("sheet-count");
       if (all) await expect(cue, `no scroll cue at ${width}×${height}`).toHaveCount(0);
       for (const id of ids) {
