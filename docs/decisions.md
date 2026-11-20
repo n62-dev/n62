@@ -113,7 +113,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 **Entry and keys**
 - **Built, archived as they stood ("2026-11-16, Ultra"):** Shift + 5's matrix (R185, R186; Opus pass 169); R194's word (Opus pass 178); The matrix grid (R188, R189, R300; Opus passes 176, 179, 187); R277's line scroll (Opus pass 155); R279's Select (Opus pass 159); R116, the entry's highlights (Opus pass 51); View keys and the load queue.
-- **R746's exact maths on the line (ron, run 1400):** a result goes as its maths only when its drawing is its exact value and holds only `render/exactMaths.ts`'s tokens (rule: docs/04 2.8). Would change if: the owner wants `\cdot`, or a result kind that should go plain stays a chip.
+- **R746's exact maths on the line (ron, run 1400):** a result goes as its maths only when its drawing is its exact value and holds only `render/exactMaths.ts`'s tokens (rule: docs/04 2.8); the parser reads `\left[…\right]` as Giac's vector (the round trip; a typed bare `[` stays refused). Would change if: the owner wants `\cdot`, or a result kind that should go plain stays a chip.
 - **R299's lock (Opus pass 187):** `UNPINNED_LISTS` stands; Plot's and Solve Num's ☰ are pinned with their last rows. Would change if: one of those lists gets a fixed row.
 - **R130's tenth ☰ row (Opus pass 179):** it keeps the 36 px floor and scrolls; rows 1–9 stay, key 0 opens Export › (docs/06 3b rule 2). Would change if: the owner's look on a phone.
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
