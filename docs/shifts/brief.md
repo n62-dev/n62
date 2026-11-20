@@ -69,8 +69,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885 | R748 a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
-| 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19) | ron, Opus | `p1/ron-sheetsview` | R748 |
+| 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19); NOT MERGED after two rounds: its work is on `p1/ron-sheetsview` (8ae3dde8), pass 221's FIX R770f1 finishes it | ron, Sonnet (Opus is capped, A262) | `p1/ron-sheetsview-f1` | – |
 | 885m | [R778](packages/R778.md) a window that scrolls gets a corner button that fills the whole screen (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfull` | R770 |
 | 885p | [R783](packages/R783.md) the bar's right anchor: the angle icon (π or °) and ☰; no ⇧ α slot while the keys are up (owner, 2026-11-20) | ron, Sonnet | `p1/ron-barangle` | R778 |
 | 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰ | ron, Sonnet | `p1/ron-barbay` | R783 |
