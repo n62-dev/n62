@@ -72,11 +72,9 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885 | R748 a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
 | 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19) | ron, Opus | `p1/ron-sheetsview` | R748 |
 | 885m | [R778](packages/R778.md) a window that scrolls gets a corner button that fills the whole screen (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfull` | R770 |
-| 885h | [R771](packages/R771.md) STD cycles the format in one tap (the tab bar waits for the owner's idea) | ron, Opus | `p1/ron-tabsstd` | R770 |
-| 885p | [R782](packages/R782.md) the bar's three workspace slots: Home fixed, slot 2 CAS, slot 3 +, a second tap reassigns (owner, 2026-11-20) | ron, Opus | `p1/ron-barslots` | R771 |
-| 885q | [R783](packages/R783.md) the bar's middle bay and right anchor: STD and digits in Home/CAS, the views and one state chip in an app | ron, Opus | `p1/ron-barbay` | R782 |
-| 885r | [R784](packages/R784.md) Shift + Fmt opens the digits menu | ron, Sonnet | `p1/ron-fmtdigits` | R783 |
-| 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R784 |
+| 885p | [R782](packages/R782.md) the bar's three workspace slots: Home fixed, slot 2 CAS, slot 3 +, a second tap reassigns (owner, 2026-11-20) | ron, Opus | `p1/ron-barslots` | R778 |
+| 885q | [R783](packages/R783.md) the bar's right anchor: (RAD) (STD|4) in every place; the bay holds an app's views | ron, Opus | `p1/ron-barbay` | R782 |
+| 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R783 |
 | 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
 | 885k | [R776](packages/R776.md) a name prompt says what it wants and starts in Alpha | ron, Sonnet | `p1/ron-nameprompt` | R770 |
 | 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look | ron, Sonnet | `p1/ron-deadquiet` | R770 |
