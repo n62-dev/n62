@@ -369,6 +369,14 @@ Digits:=40:; pc("g770-int-nested-3",'(int(int(int(x+y+z,z,0,3),y,0,2),x,0,1))',1
 Digits:=40:; pc("g770-int-nested-recip",'(int(int(1/(x+y),y,0,1),x,1,2))',(523248143765/10^12),5/10^13);
 // g770-int-nested-var-bound (home.yaml, derived)
 Digits:=40:; pc("g770-int-nested-var-bound",'(int(int(x^2+y^2,y,0,x),x,0,2))',(533333333333/10^11),5/10^12);
+// g771-keep-recip-abs (home.yaml, oracle)
+Digits:=40:; pc("g771-keep-recip-abs",'(int(int(1/(abs(x-1/2)+y),y,0,1),x,0,1))',(190954250488/10^11),5/10^12);
+// g771-keep-sqrt-abs (home.yaml, derived)
+Digits:=40:; pc("g771-keep-sqrt-abs",'(int(int(1/sqrt(abs(x-y)),y,0,1),x,0,1))',(266666666667/10^11),5/10^12);
+// g771-keep-ln-abs (home.yaml, derived)
+Digits:=40:; pc("g771-keep-ln-abs",'(int(int(ln(abs(x-y)),y,0,1),x,0,1))',-(15/10^1),5/10^12);
+// g771-keep-exp-inner (home.yaml, oracle)
+Digits:=40:; pc("g771-keep-exp-inner",'(int(int(exp(-x*y),y,0,inf),x,1,2))',(69314718056/10^11),5/10^13);
 // g178-keep-int-1/x^2-in-sum (home.yaml, derived)
 Digits:=40:; pc("g178-keep-int-1/x^2-in-sum",'(3*int(1/x^2,x,1,2)+1)',(25/10^1),5/10^12);
 // g178-keep-sinc-in-product (home.yaml, oracle)
