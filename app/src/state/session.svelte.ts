@@ -516,16 +516,13 @@ export class Session {
   /** Whether the view has a finished result (Ans-first inserts \\ans then, R44). */
   hasResult(view: View = this.view): boolean {
     const list = view === "home" ? this.home : this.cas;
-    return list.some((item) => item.status === "done");
+    return !!targetRow(list);
   }
   /** The last finished result of a view, as Ans. */
   lastChip(view: View = this.view): Chip | undefined {
     const list = view === "home" ? this.home : this.cas;
-    for (let i = list.length - 1; i >= 0; i--) {
-      const item = list[i] as HistoryItem;
-      if (item.status === "done") return this.chipFor(item);
-    }
-    return undefined;
+    const item = targetRow(list);
+    return item && this.chipFor(item);
   }
 
   private async finish(live: HistoryItem, view: View, latex: string, chips: ChipTable, giacOverride?: string): Promise<void> {
@@ -654,26 +651,14 @@ export class Session {
     return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
   }
 
-  /** The row the Format and a b/c keys mean (R775, Copy's rule): the picked `row` when it is finished, else the open view's newest finished row. */
-  formRow(row?: HistoryItem): HistoryItem | undefined {
-    return targetRow(this.items, row);
-  }
-
-  /** The Format key (cycleForms.ts): the picked `row`, else the last finished result of the open view, in the next ticked mode. Resolves true when the display changed. */
-  cycleFormat(row?: HistoryItem): Promise<boolean> {
-    return this.formKey("cycleFormat", row);
-  }
-
-  /** The a b/c key on an empty line (R10, cycleForms.ts): the picked `row`, else the last finished result, in its other form. Resolves true when the display changed. */
-  cycleForm(row?: HistoryItem): Promise<boolean> {
-    return this.formKey("cycleForm", row);
-  }
-
-  /** Either key on its row (formRow), when nothing runs, taken at the press before any await: a later row must not take
-   *  the act (R135f1). The code loaded: no await, the act is done before the next key. */
-  private async formKey(key: "cycleFormat" | "cycleForm", row?: HistoryItem): Promise<boolean> {
-    const item = this.formRow(row);
-    if (!item || this.busy) return false;
+  /** The Format key (cycleFormat) or the a b/c key on an empty line (cycleForm, R10; cycleForms.ts) on the picked row `at`, else
+   *  the open view's newest finished result (R775, Copy's rule); `dead`: called when there is none. Taken at the press before
+   *  any await, and only when nothing runs: a later row must not take the act (R135f1). The code loaded: no await, the act is
+   *  done before the next key. True when the display changed. */
+  async formKey(key: "cycleFormat" | "cycleForm", at?: number | null, dead?: () => void): Promise<boolean> {
+    const item = targetRow(this.items, this.items[at ?? -1]);
+    if (!item) return dead?.(), false;
+    if (this.busy) return false;
     const m = formsCode ?? (await loadForms());
     return m ? m[key](this, this.calc, item) : false;
   }

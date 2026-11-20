@@ -28,8 +28,5 @@ export const rowTap = (selected: number | null, index: number): "pick" | "act" =
 
 /** The row an action means (Copy's rule, R775): the given (picked) one when it is finished, none when it is not; with no
  *  row given, the newest finished one. Copy, Fmt and a b/c share it. */
-export function targetRow<T extends Row>(items: readonly T[], row?: T): T | undefined {
-  if (row) return row.status === "done" ? row : undefined;
-  for (let i = items.length - 1; i >= 0; i--) if (items[i]?.status === "done") return items[i];
-  return undefined;
-}
+export const targetRow = <T extends Row>(items: readonly T[], row?: T): T | undefined =>
+  (row ? [row] : [...items].reverse()).find((i) => i.status === "done");

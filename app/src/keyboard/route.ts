@@ -10,7 +10,7 @@ import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { startsWithAns } from "../entry/ans.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { ANS_CHIP } from "../entry/macros.ts";
-import { canPick, pickAfter, pickAtOrBefore } from "../state/pickRows.ts";
+import { canPick, pickAfter, pickAtOrBefore, targetRow } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
 import { sheetChunk, loadSheetView } from "../views/sheetView.svelte.ts";
 import { actionFor, keyboard, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
@@ -130,7 +130,7 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "fmt":
       // Format key: Home and CAS show the last result in the next mode; the apps have no such result.
-      if (c.shell.app === null) formKeys(c, "cycleFormat");
+      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked, c.dead);
       else c.dead();
       break;
     case "tmpl":
@@ -209,18 +209,11 @@ const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.ke
  *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
 const uncertainty = (c: RouteCtx, row?: HistoryItem): void => (sheetChunk.palette ? sheetChunk.palette.showUncertainty(c, row) : c.dead());
 
-/** Fmt or a b/c (R775): `row` (picked), else the newest finished row, through Session; none such is a dead press. */
-function formKeys(c: RouteCtx, key: "cycleFormat" | "cycleForm", row?: HistoryItem): void {
-  const target = c.session.formRow(row);
-  if (target) void c.session[key](target);
-  else c.dead();
-}
-
 /** P4: Up on an empty entry line picks the last history row (Home/CAS); Up/Down walk the rows, Enter puts the picked
  *  result on the entry line (L5; an entry without a result puts its input back on an empty line, else the line stays, R273), ◀ on an
  *  empty line puts the entry back too, with chips (R720), Esc drops the pick, Menu acts
  *  on the picked row, Store ▶ stores it (R280). Shift + Select (Copy) keeps the pick when the line has a selection; any other key drops the pick and does its normal job. True: the key was used up here. */
-export function historyKey(c: RouteCtx, action: ActionBody, abc = false): boolean {
+export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const items = c.session.items;
   const n = items.length;
   const isCmd = (name: string) => action.kind === "cmd" && action.name === name;
@@ -249,11 +242,6 @@ export function historyKey(c: RouteCtx, action: ActionBody, abc = false): boolea
     return true;
   }
   const item = items[picked];
-  // R775: Fmt, and a b/c on an empty line (`abc`), act on the picked row and keep the pick, so the next press goes on round on the same row; a row that is not finished is a dead press
-  if ((abc && c.entry.empty) || (action.kind === "special" && action.name === "fmt")) {
-    formKeys(c, abc ? "cycleForm" : "cycleFormat", item);
-    return true;
-  }
   c.picked = null;
   if (isCmd("moveToPreviousChar") && item && c.entry.empty) {
     // R720: ◀ on a pick with an empty line gives the row's input back (Recall's job since ☰ lost its row); a running row is a dead
@@ -555,7 +543,9 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   if (!isSelect(action)) entry.endSelect();
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
-  if (shell.app === null && !cell && historyKey(c, action, key.id === "frac" && layerOf(mods) === "primary")) return;
+  // R775: Fmt and a b/c on an empty line act on the picked row and keep the pick (Session.formKey), so the next press goes on round on the same row
+  const abc = entry.empty && key.id === "frac" && layerOf(mods) === "primary";
+  if (shell.app === null && !cell && !abc && !(action.kind === "special" && action.name === "fmt") && historyKey(c, action)) return;
   if (action.kind === "special") return special(c, action.name);
   if (shell.app !== null) {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;
@@ -568,10 +558,10 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     // (the cell's line: the key runs on it as typed)
   } else if (entry.empty && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {
     return; // R98: on an empty line Undo brings back what Clear or Delete took first; then the line's own undo (P13)
-  } else if (entry.empty && key.id === "frac" && layerOf(mods) === "primary") {
+  } else if (abc) {
     // a b/c on an empty line (R10): the last result in its next form (decimal ↔ fraction, a+bi ↔ polar), as on the
     // G2; while typing it is the stacked fraction below
-    formKeys(c, "cycleForm");
+    void c.session.formKey("cycleForm", c.picked, c.dead);
     return;
   }
   const store = shell.app === null && action.kind === "insert" && action.latex === STORE_ARROW;
@@ -581,5 +571,5 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   if (ans) entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   entry.run(action);
   // R281: Store ▶ in Home or CAS opens "Store in" (the value on the line, Ans's row when it put Ans there)
-  if (store) c.openStore(ans ? [...session.items].reverse().find((x) => x.status === "done") : undefined);
+  if (store) c.openStore(ans ? targetRow(session.items) : undefined);
 }

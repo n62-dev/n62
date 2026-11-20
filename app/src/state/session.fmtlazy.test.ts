@@ -12,7 +12,7 @@ describe("Format key before its module has loaded", () => {
     const s = new Session(new FakeCalc(), fakeKv());
     s.setView("cas");
     await s.submit("\\frac14", "1/4");
-    const press = s.cycleFormat(); // the module is not in yet: this waits for it
+    const press = s.formKey("cycleFormat"); // the module is not in yet: this waits for it
     await s.submit("\\frac34", "3/4");
     expect(await press).toBe(true);
     expect(s.display(s.cas[0]!).text).toBe("0.25");
