@@ -350,8 +350,8 @@
     opacity: 0.8;
   }
   .fill :global(svg) {
-    width: 16px;
-    height: 16px;
+    width: var(--fill-icon);
+    height: var(--fill-icon);
   }
   .head {
     display: flex;
