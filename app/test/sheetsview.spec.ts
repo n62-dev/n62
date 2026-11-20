@@ -7,6 +7,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, tap } from "./helpers.ts";
 
+const LINREG = "\\operatorname{linreg}\\left(\\left\\{1,2,3,4\\right\\},\\left\\{2.1,3.9,6.2,7.8\\right\\}\\right)";
+
 const SIZES = [
   { width: 360, height: 740 },
   { width: 412, height: 915 },
@@ -25,6 +27,7 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   "☰": (page) => tap(page, ["@menu"]),
   "Mode (STD/12)": (page) => tap(page, ["@mode"]),
   Settings: (page) => tap(page, ["@mode", "d6"]),
+  Help: (page) => tap(page, ["sin", "d1", "help"]), // the help sheet of sin
   Apps: (page) => tap(page, ["@place"]),
   Tmpl: (page) => tap(page, ["tmpl"]),
   "Shift + 6": (page) => tap(page, ["shift", "d6"]),
@@ -32,6 +35,15 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   Base: (page) => tap(page, ["shift", "sub"]),
   "matrix size": (page) => tap(page, ["shift", "d4"]),
 };
+
+/** The sheet's box lies inside the history area and clear of the keypad (criterion 1a). */
+async function insideScreen(page: Page): Promise<void> {
+  await expect(panel(page)).toBeVisible();
+  const [p, screen, keys] = [await box(page, '[role="menu"]'), await box(page, ".screen"), await box(page, '[data-testid="keys"]')];
+  expect(p.y).toBeGreaterThanOrEqual(screen.y - 1);
+  expect(p.y + p.height).toBeLessThanOrEqual(screen.y + screen.height + 1);
+  expect(p.y + p.height).toBeLessThanOrEqual(keys.y + 1); // no overlap with the keypad's box
+}
 
 for (const size of SIZES) {
   test.describe(`${size.width} × ${size.height}`, () => {
@@ -45,13 +57,23 @@ for (const size of SIZES) {
     for (const [name, openSheet] of Object.entries(OPENERS)) {
       test(`(a) ${name}: the sheet lies in the history area and clear of the keypad`, async ({ page }) => {
         await openSheet(page);
-        await expect(panel(page)).toBeVisible();
-        const [p, screen, keys] = [await box(page, '[role="menu"]'), await box(page, ".screen"), await box(page, '[data-testid="keys"]')];
-        expect(p.y).toBeGreaterThanOrEqual(screen.y - 1);
-        expect(p.y + p.height).toBeLessThanOrEqual(screen.y + screen.height + 1);
-        expect(p.y + p.height).toBeLessThanOrEqual(keys.y + 1); // no overlap with the keypad's box
+        await insideScreen(page);
       });
     }
+
+    // the stats sheet needs the real engine (a linreg result; the second tap on it opens the sheet, R184)
+    test("(a) the stats sheet: the sheet lies in the history area and clear of the keypad", async ({ page }) => {
+      await open(page, "");
+      await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+      await page.evaluate((l) => window.n62.entry.set(l), LINREG);
+      await tap(page, ["enter"]);
+      await expect(page.locator('[data-status="done"]')).toHaveCount(1, { timeout: 30_000 });
+      const result = page.locator('article.item[data-status] .result').last();
+      await result.tap();
+      await result.tap();
+      await expect(page.getByTestId("menu")).toContainText("Linear regression");
+      await insideScreen(page);
+    });
 
     test("(b) ☰: a digit picks its row, ▼ ▼ Enter picks the row two below, Esc goes back, a tap on sin does nothing", async ({ page }) => {
       await tap(page, ["@menu"]);

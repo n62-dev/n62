@@ -271,6 +271,7 @@
     align-items: center;
     justify-content: flex-end;
     z-index: 5;
+    container-type: size; /* its box is the viewport above the keys (inset 0): the query below reads its height */
   }
   /* R189: a matrix cell is edited on the entry line: the line under the sheet is not dimmed, and a tap beside the sheet
      goes through (to the line's cursor, or a history row into the cell) instead of closing it */
@@ -659,5 +660,21 @@
   .empty {
     margin: var(--sp-2) var(--sp-3);
     color: var(--muted);
+  }
+
+  /* R770: on a very short screen (Plot at 372 × 560 leaves 88 px above the keys) the margins and the head's padding go, so
+     the sheet keeps its title row and one whole row of the list; the highlighted row is always in view */
+  @container (max-height: 120px) {
+    .sheet {
+      margin-block: 0;
+      max-height: 100%;
+      padding-top: 0;
+    }
+    .head {
+      padding-block: 0;
+    }
+    .list {
+      min-height: var(--row, 0px);
+    }
   }
 </style>

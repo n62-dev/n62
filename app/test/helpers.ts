@@ -19,7 +19,7 @@ async function statusTap(page: Page, id: string): Promise<void> {
   if (id === "@mode") {
     await page.getByTestId("chip-format").tap();
     await page.getByTestId("menu").getByRole("menuitem").first().waitFor();
-    return sheetKey(page, ["up"]); // (R144: an on-screen ▲ would close the sheet)
+    return sheetKey(page, ["up"]);
   }
   const view = id.slice(1);
   if (!["symb", "plot", "num"].includes(view)) throw new Error(`no bar control ${id}`);
@@ -29,44 +29,20 @@ async function statusTap(page: Page, id: string): Promise<void> {
 }
 
 /** Press keys the way a hardware keyboard does (R31: the keypad key with that character, in the current Shift/Alpha
- *  state), the path that steps an open pick sheet (R144: an on-screen tap on the top cluster closes it instead). */
+ *  state), the path that steps an open sheet from a hardware keyboard. */
 export async function sheetKey(page: Page, ids: string[]): Promise<void> {
   for (const id of ids) await page.evaluate((id) => window.n62.entry.onKey(id, undefined as never, false), id);
 }
 
 /**
- * Tap keys by their id in spec/keyboard.yaml (d0..d9, div, frac, shift, enter, ...). A key under an open pick sheet
- * (R21a: the sheet is drawn over the maths rows, Settings too since R49) cannot be touched: the sheet's row or cell is where it was, and
- * fit.spec.ts taps those. Its key path stays for a hardware keyboard (docs/05 2 rule 1), so such a key is pressed the
- * way a hardware key is (R31: the keypad key with that character), in the current Shift/Alpha state. An id that
- * starts with `@` is a bar control (statusTap).
+ * Tap keys by their id in spec/keyboard.yaml (d0..d9, div, frac, shift, enter, ...). A sheet is in the viewport and never
+ * over the keys (R770), so every key is tapped where it is, a sheet open or not. An id that starts with `@` is a bar
+ * control (statusTap).
  */
 export async function tap(page: Page, ids: string[]): Promise<void> {
-  const covered = (id: string): Promise<boolean> =>
-    page.evaluate((id) => {
-      const k = document.querySelector(`[data-key="${id}"]`);
-      if (!k) return false;
-      const r = k.getBoundingClientRect();
-      const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      return el !== null && !k.contains(el) && el.closest('[role="menu"]') !== null;
-    }, id);
-  const press = (id: string): Promise<void> => sheetKey(page, [id]);
   for (const id of ids) {
-    if (id.startsWith("@")) {
-      await statusTap(page, id);
-      continue;
-    }
-    if (await covered(id)) {
-      await press(id);
-      continue;
-    }
-    try {
-      await page.locator(`[data-key="${id}"]`).tap({ timeout: 3000 });
-    } catch (e) {
-      // a sheet whose code was still loading (the Mode sheet, R35) rose over the key meanwhile
-      if (!(await covered(id))) throw e;
-      await press(id);
-    }
+    if (id.startsWith("@")) await statusTap(page, id);
+    else await page.locator(`[data-key="${id}"]`).tap({ timeout: 3000 });
   }
 }
 

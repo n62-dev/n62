@@ -50,6 +50,10 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
     await tap(page, ["@mode", "d6"]);
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
   },
+  "mode settings appearance": async (page) => {
+    await tap(page, ["@mode", "d6", "d1"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Appearance");
+  },
   "mode settings numbers": async (page) => {
     await tap(page, ["@mode", "d6", "d2"]);
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
@@ -66,6 +70,31 @@ async function openSheet(page: Page, name: string): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" }); // no rise animation: the boxes are final at once
+});
+
+/** The sheet's last row can be scrolled into the box of its list or grid and lies inside it then. */
+async function lastRowReachable(page: Page): Promise<void> {
+  const box = sheet(page).locator(".list, .grid");
+  const last = sheet(page).getByRole("menuitem").last();
+  await last.scrollIntoViewIfNeeded();
+  const [list, row] = await Promise.all([box.boundingBox(), last.boundingBox()]);
+  expect(row && list && row.y + row.height <= list.y + list.height + 0.5 && row.y >= list.y - 0.5).toBe(true);
+}
+
+// R770: at 360 × 740 the viewport leaves a sheet about 250 px; these three are taller than that, so each scrolls inside its box
+// (scroll height above client height: a sheet that does not scroll fails here) and its last row is reached
+test.describe("at 360 × 740", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await open(page);
+  });
+  for (const name of ["function plot menu", "mode settings numbers", "mode settings appearance"])
+    test(`scroll: ${name} is taller than its box, scrolls inside it to its last row`, async ({ page }) => {
+      await openSheet(page, name);
+      const m = await sheet(page).locator(".list, .grid").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+      expect(m.scroll).toBeGreaterThan(m.client);
+      await lastRowReachable(page);
+    });
 });
 
 test.describe("at 412 × 915", () => {
@@ -93,18 +122,12 @@ test.describe("at 412 × 915", () => {
       expect(await keyBoxes(page)).toEqual(before);
     });
 
-  // R770: a sheet taller than its room scrolls inside its box, and its last row scrolls into view
-  for (const name of ["function plot menu", "mode digits", "mode settings numbers"])
-    test(`scroll: ${name} scrolls inside its box to its last row`, async ({ page }) => {
-      await openSheet(page, name);
-      const box = sheet(page).locator(".list, .grid");
-      const m = await box.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      expect(m.scroll).toBeGreaterThanOrEqual(m.client);
-      const last = sheet(page).getByRole("menuitem").last();
-      await last.scrollIntoViewIfNeeded();
-      const [list, row] = await Promise.all([box.boundingBox(), last.boundingBox()]);
-      expect(row && list && row.y + row.height <= list.y + list.height + 0.5 && row.y >= list.y - 0.5).toBe(true);
-    });
+  // R770: a sheet taller than its room scrolls inside its box, and its last row scrolls into view; "mode digits" has the
+  // room at 412 × 915 and is only checked for its last row, the three of the 360 × 740 block below are taller than the box
+  test("scroll: mode digits scrolls inside its box to its last row", async ({ page }) => {
+    await openSheet(page, "mode digits");
+    await lastRowReachable(page);
+  });
 
   // R720: seven rows, Export › last as 7: key 7 opens Export › at both phone sizes (R770: the rows scroll in the viewport, none below the floor)
   for (const [width, height] of [[412, 915], [360, 740]] as const)

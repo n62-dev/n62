@@ -53,10 +53,9 @@ for (const [name, width, height] of SIZES)
 const MENU_SIZES = [
   ["Fairphone 6", 372, 828, false],
   ["Fairphone 6 WebView", 372, 767, false],
+  ["Fairphone 6 width, short", 372, 560, false],
   ["a tall phone", 412, 1000, true],
 ] as const;
-// R770: the Menu is a sheet in the viewport, which at 372×560 is the 88 px the Plot view's floor leaves above the keys: a sheet that small
-// cannot show a 42 px row whole, so that size has no case here (decisions.md, Needs the user)
 for (const [name, width, height, all] of MENU_SIZES)
   test(`Plot's Menu entries are all ${all ? "on screen" : "reachable"} at ${name} (${width}×${height})`, async ({ browser }) => {
     if (!c46) throw new Error("c46 is not in core.yaml");
@@ -76,6 +75,14 @@ for (const [name, width, height, all] of MENU_SIZES)
         if (!all && (await seen(page, sel)) !== "") {
           await expect(cue, `${id} is cut, so the cue shows`).toBeVisible();
           await page.locator(sel).evaluate((e) => e.scrollIntoView({ block: "nearest" }));
+        }
+        // R770: at 372×560 the sheet is the 88 px above the keys, its list 48 px: a row with a reason line (58 px) cannot be whole
+        // there, so such a row is reached when it fills the list's box (the row is the picked one; its text is in sight)
+        const [row, list] = await Promise.all([page.locator(sel).boundingBox(), page.locator('[data-testid="menu"] .list').boundingBox()]);
+        if (!all && row && list && row.height > list.height) {
+          expect(row.y, `${id} fills the list at ${width}×${height}`).toBeLessThanOrEqual(list.y + 0.5);
+          expect(row.y + row.height, `${id} fills the list at ${width}×${height}`).toBeGreaterThanOrEqual(list.y + list.height - 0.5);
+          continue;
         }
         await expect.poll(() => seen(page, sel), { message: `Menu row ${id} at ${width}×${height}`, timeout: 2000 }).toBe("");
       }
