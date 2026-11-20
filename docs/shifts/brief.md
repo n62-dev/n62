@@ -74,6 +74,8 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885x | [R800](packages/R800.md) Memory's number keys highlight, never delete (owner's walk 2026-11-20, B1: data loss, first) | ron, Sonnet | `p1/ron-memdigits` | – |
 | 885r | [R786](packages/R786.md) ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
 | 885s | [R782](packages/R782.md) the left side: APP▾, Home fixed, slot 2 reassignable by a second tap; stops if the bar does not fit 356 dp | ron, Sonnet | `p1/ron-barslots` | R786 |
+| 885sa | [R830](packages/R830.md) Home and CAS ☰: 1 Delete, 2 Share, 3 Clear, 4 Export › (owner, 2026-11-20 night, H1; reverses R720) | ron, Sonnet | `p1/ron-homemenu4` | R782 |
+| 885sb | [R832](packages/R832.md) a tap lights the input, the result or the whole row; Copy, Store, insert act on it (H2; takes in R741) | ron, Sonnet | `p1/ron-rowpart` | R830 |
 | 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R782 |
 | 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
 | 885k | R776 a name prompt says what it wants and starts in Alpha | ron, Sonnet | `p1/ron-nameprompt` | R770 |
@@ -99,10 +101,9 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 886 | [R703](packages/R703.md) the keypad, the bar and Mode fit at font scale 1.5 and 2.0 (F383), if not merged by the stop | ron, Sonnet | `p1/ron-textzoom` | R700, R722 |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Sonnet | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Sonnet | `p1/ron-markthen` | – |
-| 889 | [R741](packages/R741.md) a tap anywhere on a history row picks it | ron, Sonnet | `p1/ron-rowtap` | R743 |
-| 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Sonnet | `p1/ron-zebra` | R741, R743 |
+| 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Sonnet | `p1/ron-zebra` | R832, R743 |
 | 891 | [R728](packages/R728.md) the keys say what they do (CAS letters, Alpha colours, docs/06's differences) | ron, Sonnet | `p1/ron-keyssay` | R723, R726 |
-| 892 | [R729](packages/R729.md) the key legends: armed a ring, locked a fill | ron, Sonnet | `p1/ron-keylegends` | R723, R726, R728 |
+| 892 | [R729](packages/R729.md) the key legends: armed a ring, locked a fill; Shift and Alpha show their layers (K4) | ron, Sonnet | `p1/ron-keylegends` | R723, R726, R728 |
 | 893 | [R701](packages/R701.md) the folder plugin (F380) | annabell, Sonnet | `p1/annabell-folderproxy` | – |
 | 894 | [R710](packages/R710.md) Plot draws its axes (F385) | ron, Sonnet | `p1/ron-plotaxes` | – |
 | 895 | [R709](packages/R709.md) every control has a spoken name (F384) | ron, Sonnet | `p1/ron-spokennames` | – |
@@ -124,9 +125,22 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
 | 917 | [R810](packages/R810.md) Shift + ◀ ▶ jump a block (C8); not before the owner's yes on docs/06 | ron, Sonnet | `p1/ron-shiftarrows` | R808 |
-| 918 | [R811](packages/R811.md) a Shift flick down: block mode (C5); not before the owner's answers | ron, Sonnet | `p1/ron-blockmode` | R810 |
+| 917a | [R845](packages/R845.md) super mode's green: one mock-up in N62 Dark, Light, High contrast | ron, Sonnet | `p1/ron-supermock` | – |
+| 918 | [R811](packages/R811.md) super mode's state and keys: Shift flick down once, Shift + Fmt held; after the owner's yes on the docs/06 lines | ron, Sonnet | `p1/ron-supermode` | R810 |
+| 918a | [R850](packages/R850.md) super mode drawn green (`--key-super`); after the owner's yes on R845 | ron, Sonnet | `p1/ron-supergreen` | R811, R845 |
 | 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
 | 920 | [R822](packages/R822.md) Store: a tap types the case Alpha types; after the owner's answer | ron, Sonnet | `p1/ron-storecase` | R820 |
+| 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Sonnet | `p1/ron-rowx` | R832, R742 |
+| 922 | [G640](packages/G640.md) Ans frozen in history, live on the line: the tests, known-fail until G642 and R836 | gorge, Sonnet | `p1/gorge-anstests` | – |
+| 923 | [G642](packages/G642.md) a row that used Ans keeps its snapshot (chip, shown LaTeX, source row) | gorge, Sonnet | `p1/gorge-anssnapshot` | G640 |
+| 924 | [R836](packages/R836.md) the row draws and copies the value Ans had: `[5]² = 25` | ron, Sonnet | `p1/ron-ansvalue` | G642 |
+| 925 | [R838](packages/R838.md) Settings and Mode open over the unit view and close back onto it (U2) | ron, Sonnet | `p1/ron-unitsettings` | R770 |
+| 926 | [R840](packages/R840.md) every pop-up window: a 2 px edge in the theme's accent (P1) | ron, Sonnet | `p1/ron-sheetedge` | R770 |
+| 927 | [R842](packages/R842.md) N62 Light, Enter orange: one mock-up for the owner (K7) | ron, Sonnet | `p1/ron-enterorangemock` | – |
+| 928 | [R843](packages/R843.md) N62 Light's Enter in the picked orange; after the owner's pick | ron, Sonnet | `p1/ron-enterorange` | R842 |
+| 929 | [R847](packages/R847.md) Find for a user-key slot: titled "U1 ⇧", Places, Back returns (Y1) | ron, Sonnet | `p1/ron-slotfind` | R811, R821 |
+| 930 | [R848](packages/R848.md) a tap on an empty user key opens its own slot sheet (Y1; reworks R705) | ron, Sonnet | `p1/ron-keysheet` | R705, R811, R821, R847 |
+| 931 | [R849](packages/R849.md) super mode: a tap or hold on any user key opens its sheet (Y1) | ron, Sonnet | `p1/ron-superkeys` | R811, R850, R848 |
 
 **Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The Ultra clone `../n62-next` ran the after-tag rows G389 to R351 and R367 to G407 from its own brief and stopped; its phase-1 merges back once after the tag, which ticks those rows here. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 

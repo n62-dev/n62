@@ -91,6 +91,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P4 (2026-10-11): the reference's logical key layout, our own look;** ▲ on an empty line picks the last history row.
 
 ### Units (milestone 5)
+- **Ans in history (owner, 2026-11-20, G642/R836):** frozen in the history row, live on the entry line, a recalled row comes back live. Rejected: literal digits (1/3 ×3 gives 0.999999999999 or ≈1, σ and unit lost), Giac text (radians, no text over 2 kB), numbered ans1/ans2 (numbers shift when rows are deleted). Would change if: the G2 re-resolves a recalled Ans differently (tests/golden/g2.yaml question) or daily use asks.
 - **Ans in the unit view (R259; owner, 2026-11-12):** no slot before v0.1.0; an Ans with a unit or σ is refused, naming its row's chip. Would change if: daily use asks (≈0.5 d).
 - **Prefix entry (owner, 2026-10-31; night review fh-8):** Home has none; a prefix goes in the unit view's prefix cells (P11, docs/05 §7.2), and docs/04 2.7's prefix chip is dropped.
 - **Built, archived ("2026-11-12, evening"):** G81, R24d, R24b and R24c, G37, G15 and G25, the units menu ([spec/units-menu.yaml](../spec/units-menu.yaml)).
@@ -114,7 +115,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
 - **The cursor stops only at a box** (R27b) **and goes where the user aims** (R42, R43). Archived. Would change if: G2 items 50 or 57 differ.
 - **Store ▶ on a picked row (R280):** every key holding ▶ stores as the row bar's Store ▶; no result: the double haptic. Archived. Would change if: the G2 differs (store-design.md 1).
-- **Row gestures (R276):** a hold copies at 500 ms, a swipe goes at 40 % of the row; delete from the right only, behind a red strip; right is reserved (owner, 2026-11-17, R743); would change if over 10 % of row swipes in four weeks go right (`swipe.right` against `swipe.left`, R70's counters; `swipe.left` comes with R741, as the `delete` count is kept only folded). Archived.
+- **Row gestures (R276):** a hold copies at 500 ms, a swipe goes at 40 % of the row; delete from the right only, behind a red strip; right is reserved (owner, 2026-11-17, R743); would change if over 10 % of row swipes in four weeks go right (`swipe.right` against `swipe.left`, R70's counters; `swipe.left` comes with R832 (R741 folded in), as the `delete` count is kept only folded). Archived.
 - **R198's typed names:** a typed FUNCS or Find function name before `(` is the function, drawn by name; Giac's program words stay letters (R198f1). Archived.
 - **R224's wide layout:** the keypad in a 42 % column of 400–560 px (`--keys-wide`). Archived. Would change if: the owner's look on the Tab One.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
