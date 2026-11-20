@@ -674,7 +674,7 @@
       padding-block: 0;
     }
     .list {
-      min-height: var(--row, 0px);
+      min-height: var(--row, 0);
     }
   }
 </style>
