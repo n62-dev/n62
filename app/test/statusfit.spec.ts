@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R82f2 (F118), R722: the bar at phone widths. The Fairphone 6 is 372 CSS px wide; 360 the small phone; 412 the
+// R82f2 (F118), R722, R783: the bar at phone widths. The Fairphone 6 is 372 CSS px wide; 360 the small phone; 412 the
 // Pixel 7 (the e2e default, where phase-1's cut never showed). In every place and state (locked, the engine starting: the
 // ring) nothing in the bar is cut or overflows it, every target is at least 28 × 28, ☰ and every tab are on screen and
 // uncovered, and the tabs' and chips' boxes do not move when ⇧ or α shows or the engine starts (a fixed slot: a press must
@@ -108,7 +108,7 @@ for (const width of WIDTHS)
               const id = await tab.getAttribute("data-testid");
               expect(await seen(page, `[data-testid="${id}"]`), `${id} at ${at}`).toBe("");
             }
-            expect(m.boxes["mod-slot"], `the ⇧ α slot at ${at}`).toBeDefined();
+            expect(m.boxes["mod-slot"], `no ⇧ α slot with the keys up at ${at}`).toBeUndefined(); // R783: it is the folded bar's (modlocks.spec.ts)
             // R722: in an app the views are 32 px at every width (the room at 360 px is won from the gaps, the separator and ☰)
             for (const v of ["symb", "plot", "num"]) if (m.boxes[`tab-${v}`]) expect(m.boxes[`tab-${v}`]?.split(",")[1], `tab-${v} at ${at}`).toBe("32.0");
             if (base === undefined) base = m.boxes;

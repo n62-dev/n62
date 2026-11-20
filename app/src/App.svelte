@@ -27,6 +27,7 @@
   import { updateOffer } from "./state/updateOffer.svelte.ts";
   import History from "./views/History.svelte";
   import StatusLine from "./views/StatusLine.svelte";
+  import { hw, watchHw } from "./input/hwSeen.svelte.ts";
   import { WIDE_QUERY } from "./views/wide.ts";
   /** Set while the first Mode or Settings open waits for that code. */
   let sheetLoad: Promise<void> | null = null;
@@ -109,7 +110,8 @@
     idle(loadFold, 1500, 300);
     // the first start (R15c4): once the keypad is drawn and the browser is idle, so the tips never compete with the start
     void tipsDue(location.search).then((due) => due && idle(firstTips, 2000, 500));
-    return session.taps.listen();
+    const stopTaps = session.taps.listen(), stopHw = watchHw(); // R783: a hardware keyboard in use brings the ⇧ α badge back
+    return () => (stopTaps(), stopHw());
   });
   /** R284: the failure note's words (views/EngineFailed.svelte), fetched once the engine has failed. The Reload button is
    *  not in it: the chunk goes over the network that may be the cause, and the way on must not depend on it. */
@@ -512,7 +514,7 @@
     {#if shell.sheet}{@render sheetView(shell.sheet, folded && !shell.sheet.letters ? 0 : entryHeight)}{/if}
   </div>
 
-  {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar -->
+  {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} hw={hw.keys} onpress={press} onmode={openMode} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar -->
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined}>
     <!-- R53, R724: folded, the 44 px folded bar over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
     {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}

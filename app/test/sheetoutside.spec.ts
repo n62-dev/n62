@@ -170,7 +170,7 @@ test("a hardware Enter picks in Tmpl, a hardware digit picks in a menu", async (
   expect(await entryValue(page)).not.toBe("78");
   await tap(page, ["@mode"]); // the Mode sheet on Angle
   await page.keyboard.press("1"); // a digit steps its row's value: RAD → DEG
-  await expect(page.getByTestId("chip-angle")).toHaveText("DEG");
+  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "deg");
 });
 
 test("Find and Vars keep typing letters from the keypad (Tmpl is c, Vars is a)", async ({ page }) => {

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R726 (decisions.md "Modifier locks"; owner 2026-11-17): a second Shift tap locks Shift as a second Alpha tap locks
-// Alpha, a third ends it; the bar's ⇧/α sign is a button while Shift or Alpha is on, and a tap on it ends any of them.
-// The sign counts nothing; an empty slot is not a button. The fake engine; the folded bar (R724).
-import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, open, tap, touch } from "./helpers.ts";
+// Alpha, a third ends it; the ⇧/α sign is a button while Shift or Alpha is on, and a tap on it ends any of them. R783 (owner,
+// 2026-11-20): the sign is on the folded bar (R724) and, with a hardware keyboard in use, on the unfolded one; with the keys up
+// the keys show the state. The sign counts nothing; an empty slot is not a button. The fake engine.
+import { expect, test, type Locator, type Page } from "@playwright/test";
+import { entryValue, flick, hwOn, open, tap, touch } from "./helpers.ts";
 
-const slot = (p: Page) => p.getByTestId("mod-slot");
-const sign = (p: Page, which: "shift" | "alpha") => p.getByTestId(`mod-${which}`);
+const slot = (p: Page | Locator) => p.getByTestId("mod-slot");
+const sign = (p: Page | Locator, which: "shift" | "alpha") => p.getByTestId(`mod-${which}`);
 const shiftKey = (p: Page) => p.locator('[data-key="shift"]');
 const counts = (p: Page) => p.evaluate(() => ({ shift: window.n62.session.taps.counts.shift, alpha: window.n62.session.taps.counts.alpha, presses: window.n62.session.taps.counts.presses }));
 const mods = (p: Page) =>
@@ -21,9 +22,11 @@ test.beforeEach(async ({ page }) => {
   await open(page);
 });
 
-test("Shift, Shift locks Shift: the key and the sign show it, it stays after each key; a third tap ends it", async ({ page }) => {
+test("Shift, Shift locks Shift: the key shows it and the bar has no sign (keys up), it stays after each key; a third tap ends it", async ({ page }) => {
   await tap(page, ["shift", "shift"]);
   await expect(shiftKey(page)).toHaveAttribute("data-locked", "true");
+  await expect(slot(page)).toHaveCount(0);
+  await hwOn(page); // a hardware keyboard in use: the sign is there
   await expect(sign(page, "shift")).toHaveAttribute("data-lock", "true");
   await tap(page, ["d3", "d2"]);
   expect(await entryValue(page)).toMatch(/\\pi.*\\imaginaryI/);
@@ -57,27 +60,42 @@ const STATES: Record<string, string[]> = {
   "Alpha locked": ["alpha", "alpha"],
   "the lower-case lock": ["shift", "alpha", "alpha"],
 };
+/** Fold the keypad by a swipe down on the entry line (R53). */
+async function fold(page: Page): Promise<void> {
+  await expect(page.getByTestId("keys")).toHaveAttribute("data-fold-ready", "true");
+  const f = await touch(page, '[data-testid="entry"]');
+  await f.move(0, 40, 4);
+  await f.end();
+  await expect(page.getByTestId("keys")).toHaveAttribute("data-folded", "true");
+}
+const fbar = (p: Page) => p.locator('[data-testid="folded-bar"]');
+
 for (const [name, keys] of Object.entries(STATES))
-  test(`a tap on the bar's sign ends ${name}: the slot empties and 3 types 3, and no Shift or Alpha tap is counted`, async ({ page }) => {
+  test(`folded: a tap on the badge ends ${name}: the slot empties and 3 types 3, and no Shift or Alpha tap is counted`, async ({ page }) => {
     await tap(page, keys);
+    await fold(page);
     const before = await counts(page);
-    const s = sign(page, keys[0] === "alpha" || keys.includes("alpha") ? "alpha" : "shift");
+    const s = sign(fbar(page), keys[0] === "alpha" || keys.includes("alpha") ? "alpha" : "shift");
     await expect(s).toHaveAccessibleName(/on\. Double-tap to turn it off$/);
     await s.tap();
-    await expect(slot(page).locator("button")).toHaveCount(0);
-    await expect(slot(page)).toHaveText("");
+    await expect(slot(fbar(page)).locator("button")).toHaveCount(0);
+    await expect(slot(fbar(page))).toHaveText("");
     expect(await mods(page)).toEqual(OFF);
     // the Shift and Alpha counts stay (the sign is no Shift or Alpha tap); the tap is a screen press like any bar button's
     expect(await counts(page)).toEqual({ ...before, presses: before.presses + 1 });
+    await page.getByTestId("fold-slice").tap();
+    await expect(page.getByTestId("keys")).toHaveAttribute("data-folded", "false");
     await tap(page, ["d3"]);
     expect(await entryValue(page)).toBe("3");
   });
 
-test("a tap on the empty slot changes nothing and counts nothing", async ({ page }) => {
+test("a tap on the empty slot changes nothing and counts no Shift or Alpha tap (folded)", async ({ page }) => {
+  await fold(page);
   const before = await counts(page);
-  await slot(page).tap();
+  await slot(fbar(page)).tap();
   expect(await mods(page)).toEqual(OFF);
-  expect(await counts(page)).toEqual(before);
+  expect(await counts(page)).toMatchObject({ shift: before.shift, alpha: before.alpha });
+  await page.getByTestId("fold-slice").tap();
   expect(await entryValue(page)).toBe("");
 });
 

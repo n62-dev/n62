@@ -113,6 +113,7 @@
   --row-tile-w: 36px;
   --row-tile-h: 28px;
   --menu-w: 36px;
+  --angle-w: 34px; /* R783: the angle icon, the bar's one control for RAD and DEG */
   --icon-w: 16px;
   --icon-h: 14px;
   --fill-icon: 16px; /* R778: the corner button that fills the screen */
