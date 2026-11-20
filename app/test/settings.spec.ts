@@ -3,7 +3,7 @@
 // over the keypad's maths rows, opened by Mode's last row and by the ⚙ in every ☰ menu's title row (R145), with its path in the title.
 // By touch, by keys and by Android back (`history.back()`); the history never grows. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, recordVibrations, sheet, sheetKey, tap, vibrations } from "./helpers.ts";
+import { entryValue, open, recordVibrations, sheet, sheetKey, tap, vibrations, tapHistory, closeSheet } from "./helpers.ts";
 
 const title = (page: Page) => page.getByTestId("sheet-title");
 const row = (page: Page, id: string) => sheet(page).locator(`[role="menuitem"][data-id="${id}"]`);
@@ -103,6 +103,7 @@ test.describe("by keys", () => {
 
 test.describe("by touch", () => {
   test("Mode's Settings row shows ›; a tap opens it, a section's tap opens it, ‹ goes back, a tap above the sheet closes it", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 }); // a sheet that leaves room above it (at 360 × 740 it fills the view)
     await page.getByTestId("chip-format").tap();
     await expect(row(page, "settings").locator(".more")).toHaveText("›");
     await row(page, "settings").tap();
@@ -111,7 +112,7 @@ test.describe("by touch", () => {
     await expect(title(page)).toHaveText("Mode › Settings › Counters");
     await sheet(page).getByRole("button", { name: "Back" }).tap();
     await expect(title(page)).toHaveText("Mode › Settings");
-    await page.locator(".screen").click({ position: { x: 2, y: 2 } });
+    await tapHistory(page);
     await expect(sheet(page)).toHaveCount(0);
   });
 
@@ -220,23 +221,22 @@ test.describe("Android back (history.back())", () => {
   });
 
   test("opening Settings and closing it five ways leaves the history as it was", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 }); // room above the sheet for the tap on the history
     const before = await historyLength(page);
     const closes = [
-      () => tap(page, ["esc", "esc", "esc"]),
-      () => page.locator(".screen").click({ position: { x: 2, y: 2 } }),
+      () => tap(page, ["esc", "esc"]),
+      () => tapHistory(page), // Settings' first level leaves history above it at 412 × 915 (Numbers does not)
       async () => {
-        await back(page);
-        await expect(title(page)).toHaveText("Mode › Settings");
         await back(page);
         await expect(title(page)).toHaveText("Mode");
         await back(page);
       },
       () => sheet(page).getByRole("button", { name: "Close" }).tap(),
-      () => page.keyboard.press("Escape").then(() => page.keyboard.press("Escape")).then(() => page.keyboard.press("Escape")),
+      () => page.keyboard.press("Escape").then(() => page.keyboard.press("Escape")),
     ];
     for (const close of closes) {
-      await tap(page, ["@mode", "d6", "d2"]);
-      await expect(title(page)).toHaveText("Mode › Settings › Numbers");
+      await tap(page, ["@mode", "d6"]);
+      await expect(title(page)).toHaveText("Mode › Settings");
       await close();
       await expect(sheet(page)).toHaveCount(0);
     }
@@ -277,7 +277,7 @@ for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
           return r ? document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest<HTMLElement>("[data-key]")?.dataset["key"] : undefined;
         }), ["up", "down", "left", "right", "esc"]);
       expect(hits).toEqual(["up", "down", "left", "right", "esc"]);
-      await page.locator(".screen").click({ position: { x: 2, y: 2 } });
+      await closeSheet(page); // a tap on the history where the level leaves room, else its × (docs/05 3.1)
       await expect(sheet(page)).toHaveCount(0);
     }
   });

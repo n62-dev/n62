@@ -3,7 +3,7 @@
 // viewport scrolls inside its box with its last row reachable. Where each sheet sits is sheetsview.spec.ts. The fake engine,
 // except for the Tmpl flow.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, sheetKey, tap } from "./helpers.ts";
+import { entryValue, open, sheetKey, tap, tapHistory } from "./helpers.ts";
 
 // Not helpers.sheet: this one is every element with role menu, not the `menu` test id.
 const sheet = (page: Page) => page.locator('[role="menu"]');
@@ -196,8 +196,9 @@ test.describe("at 412 × 915", () => {
   });
 
   test("a tap in the viewport closes the sheet; nothing is picked", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 }); // the sheet leaves history above it
     await openSheet(page, "home menu");
-    await page.locator(".screen").click({ position: { x: 2, y: 2 } });
+    await tapHistory(page);
     await expect(sheet(page)).toHaveCount(0);
     await expect(page.locator('[data-app="function"]')).toHaveCount(0);
   });

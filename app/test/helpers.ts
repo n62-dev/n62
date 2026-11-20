@@ -46,6 +46,38 @@ export async function tap(page: Page, ids: string[]): Promise<void> {
   }
 }
 
+/** How far a tap on the history must lie from the open sheet's box (px): more than the sheet's own margin (8 px at the sides, 4 above),
+ *  so the point is the history and not the sheet's margin (R770f1). */
+export const HISTORY_CLEAR = 10;
+
+type Pt = { x: number; y: number };
+/** A point of the history area (section.history) that lies outside the open sheet by HISTORY_CLEAR px: the old (20, 20) where it
+ *  is outside, else the first of a coarse scan. Null when the sheet fills the view or the view has no history (Plot) and leaves nothing to tap (Mode, Settings
+ *  levels and ☰ at 360 × 740; docs/05 3.1). Page coordinates. */
+export async function historyPoint(page: Page): Promise<Pt | null> {
+  if ((await page.locator("section.history").count()) === 0) return null; // an app's view (Plot) has no history at all
+  const [h, s] = [await page.locator("section.history").first().boundingBox(), await page.locator('[role="menu"]').first().boundingBox()];
+  if (!h || !s) throw new Error("no history or no open sheet to measure");
+  const away = (p: Pt): number => Math.hypot(Math.max(s.x - p.x, 0, p.x - (s.x + s.width)), Math.max(s.y - p.y, 0, p.y - (s.y + s.height)));
+  const xs = [20, h.width / 2, h.width - 20];
+  const cands: Pt[] = [{ x: h.x + 20, y: h.y + 20 }];
+  for (let y = 4; y < h.height; y += 16) for (const x of xs) cands.push({ x: h.x + x, y: h.y + y });
+  return cands.find((p) => p.x >= h.x && p.x <= h.x + h.width && p.y >= h.y && p.y <= h.y + h.height && away(p) >= HISTORY_CLEAR) ?? null;
+}
+/** Tap the history outside the open sheet (a mouse click at that point); throws when the sheet leaves no history to tap. */
+export async function tapHistory(page: Page): Promise<void> {
+  const p = await historyPoint(page);
+  if (!p) throw new Error("the sheet fills the view: no history point to tap");
+  await page.mouse.click(p.x, p.y);
+}
+
+/** Close the open sheet the way its size allows: a tap on the history where the sheet leaves room, else its × button. */
+export async function closeSheet(page: Page): Promise<void> {
+  const p = await historyPoint(page);
+  if (p) await page.mouse.click(p.x, p.y);
+  else await page.locator('[role="menu"]').first().getByRole("button", { name: "Close" }).tap();
+}
+
 export const entryValue = (page: Page): Promise<string> => page.evaluate(() => window.n62.entry.value);
 
 // R137: the helpers most specs had a copy of.
