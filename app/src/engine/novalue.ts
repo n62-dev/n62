@@ -18,6 +18,7 @@
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
 import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { namesOf } from "./lname.ts";
 import { callsOf, firstNameIn, functionsIn, isError, isTimeout, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import type { ParseNode } from "./bridge.ts";
@@ -360,12 +361,6 @@ export function lostFloat(giac: Giac, input: string, error: string): NoValue | n
   // A name that holds a value (pasdeg, a stored variable) is not free; a free name's type is "identifier".
   if (!names || names.some((n) => !CONSTANTS.has(n) && giac.eval(`type(${n})`).trim() === "identifier")) return null;
   return infinite(e) ? "overflow" : "noValue";
-}
-
-/** Giac's lname of `expr` (the names in it), from bridge-3's elements; null when it is no list (an error). */
-function namesOf(giac: Giac, expr: string): string[] | null {
-  const v = giac.value(`lname(${expr})`, []);
-  return v.kind === "list" || v.kind === "matrix" ? (v.elements ?? null) : null;
 }
 
 const CONSTANTS = new Set(["pi", "e", "i", "infinity", "euler_gamma"]);

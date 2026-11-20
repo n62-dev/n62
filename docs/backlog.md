@@ -31,7 +31,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
-- **F471 (G771).** Wrong "=": `∫₁²∫₋₁¹ x/y² dy dx` = −3 (diverges), `∫₋₁¹ x/y dy` = 0, `∫₀¹∫₀¹ 1/(x−y) dy dx` = 0; converge.ts:312 never checks an inner integral.
 - **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F238 (A139; R340).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
 - **F183, no package (G171's report).** `p(A)^2` (`A:=[[1,2,3]]`, `p(M):={local t; t:=M; return t;}`) is ⚠ 14, not refused: a program with a local has no known body. Fix: a `pure(name)` in Bodies (writesThrough false) so its call is evaluated.

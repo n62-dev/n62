@@ -32,7 +32,7 @@ import { isDimensionError, mayCombineLists, mayPowerMatrix, nonSquarePower, shap
 import { unaskedPoly } from "./polyvec.ts";
 import { approxRange, lostCas, mayApproxRange, mayBeNumbers, throughInfinity } from "./novalue.ts";
 import { listAsArguments, mayListAsArguments } from "./listargs.ts";
-import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
+import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { enEngine } from "../i18n/enEngine.ts";
 import { parseText } from "../i18n/enParser.ts";
 import { WORD_DEFINITIONS } from "./wordOps.ts";
@@ -1180,7 +1180,7 @@ export class EngineHost implements FactsHost {
     text = plainRowsText(this.giac, "pcasans", text); // G130 (F125): Giac's matrix type as plain rows, as in Home
     // A check that could not finish: the result stands with ⚠ (its numeric facts, or the text's mark).
     const unverified = refused === "unchecked" || square === "unchecked";
-    const pair = !single && hasDefiniteIntegral(exactInput) && giacPair(text) !== null;
+    const pair = !single && hasDefiniteIntegral(exactInput) && giacPair(text, hasNestedIntegral(exactInput)) !== null;
     // G65: the call after the input (its checks above ran it again; nothing after this does but print the result).
     const after = (): AfterInput => this.after(input, true, single, text);
     // G49f3: a function defined here keeps the facts of the names its body holds, as in Home (fnFacts).

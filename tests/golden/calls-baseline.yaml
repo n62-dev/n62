@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Giac calls per Enter (G52): the totals of the gate's `calls` stage. A set fails when its calls per input (total / inputs) are more than
 # 10 % above the baseline's (calls / inputs). Raise a value only with the reason in the package's report (the audit reads it).
-commit: G329  # the stage now counts the app's path (its counting bridge forwards value's tree); no app code changed. bench 477/57 → 498/57 (8.74 per input, the limit 9.61), home 6064/673 → 6434/718 (8.96, the limit 9.86); unforwarded on the same tree: bench 477/57 and home 6414/718 (8.93), the home inputs 673 → 718 are home.yaml's rows since the last measure. Earlier reasons are in git log of this file
+commit: G771f1  # home 6434/718 → 10260/996. Measured on phase-1 15eb3b72 without G771: 9463/982 (9.64 per input), so home.yaml's growth since G329 (+264 rows) and the code since cost +3029 calls; G771 owns 797 calls over its 14 rows (sampledCheck: an inner integral is checked at two generic points of each enclosing interval, a free name at four values; the dearest: g771f1-nested-free-a 89, g771-single-x-over-y 70, g771-keep-free-pole-wide 68). bench unchanged. Earlier reasons are in git log of this file
 bench: 498
 benchInputs: 57
-home: 6434
-homeInputs: 718
+home: 10260
+homeInputs: 996
