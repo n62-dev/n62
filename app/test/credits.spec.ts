@@ -36,7 +36,7 @@ test.describe("fake engine", () => {
 
   test("a tap on the history closes it", async ({ page }) => {
     await asked(page, "home");
-    await page.getByTestId("sheet-catch").tap({ position: { x: 20, y: 20 } });
+    await page.locator(".screen").click({ position: { x: 2, y: 2 } });
     await expect(credits(page)).toHaveCount(0);
   });
 

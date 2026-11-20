@@ -336,7 +336,10 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
       return true;
     case "backspace":
       // in Find ⌫ on an empty query goes back from a category to the list of categories
-      if (!level.backspace() && find) sheet.back();
+      if (!level.backspace()) {
+        if (find) sheet.back();
+        else c.dead(); // R770: nothing to delete here
+      }
       return true;
     case "line":
       // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.

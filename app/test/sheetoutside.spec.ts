@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R144 (owner, 2026-11-06, point 9): a tap on the on-screen keypad outside an open pick sheet closes the sheet and does
-// nothing else: no step, no template, no Undo, no copy. Esc goes back one level (the root closes). A hardware keyboard
-// still drives the sheet (▼, a digit, Enter, Escape); Find and Vars, which take letters, keep typing them from the
-// keypad; in Settings › Your keys a free key still goes to its row (R4b); the status line's ☰, place and view tabs
-// keep their jobs. Expected values derived from the rule.
+// R770 (owner, 2026-11-19, ends R144's "a tap beside a pick sheet closes it"): every sheet is in the viewport and the keys
+// stay live below it. A key the sheet does not use (Undo, Help, Select, Deselect, a free key, Shift + Undo) is dead: the
+// sheet stays and nothing else happens (no step, no template, no Undo, no copy). ▲ ▼ and a trackpad drag move the
+// highlight; Esc goes back one level (the root closes); a tap on the history outside the sheet closes it. A hardware
+// keyboard drives the sheet too (▼, a digit, Enter, Escape); Find and Vars, which take letters, keep typing them from the
+// keypad; in Settings › Your keys a free key still goes to its row (R4b); the status line's ☰, place and view tabs keep
+// their jobs. Expected values derived from the rule.
 import { expect, test, type Page } from "@playwright/test";
 import { drag, entryValue, open, sheet, tap, touch } from "./helpers.ts";
 
@@ -21,11 +23,8 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   mode: (page) => page.getByTestId("chip-format").tap(),
   "shift 9": (page) => tap(page, ["shift", "d9"]),
 };
-/** An on-screen tap on a top-cluster key, or a drag on the trackpad. */
-const CLOSERS: Record<string, (page: Page) => Promise<void>> = {
-  "▲": (page) => page.locator('[data-key="up"]').tap(),
-  "▶": (page) => page.locator('[data-key="right"]').tap(),
-  "a trackpad drag": (page) => drag(page, '[data-testid="pad-hub"]', 0, 90),
+/** An on-screen tap on a key the sheet does not use. */
+const DEAD: Record<string, (page: Page) => Promise<void>> = {
   Undo: (page) => page.locator('[data-key="undo"]').tap(),
   "Help (R723)": (page) => page.locator('[data-key="help"]').tap(),
   Select: (page) => page.locator('[data-key="select"]').tap(),
@@ -35,6 +34,7 @@ const CLOSERS: Record<string, (page: Page) => Promise<void>> = {
     await page.locator('[data-key="undo"]').tap();
   },
   U1: (page) => page.locator('[data-key="u1"]').tap(),
+  sin: (page) => page.locator('[data-key="sin"]').tap(),
 };
 
 /** What a closing tap must leave as it was: the line, the history and every setting. */
@@ -43,18 +43,27 @@ const state = (page: Page): Promise<string> =>
 
 for (const [name, openSheet] of Object.entries(OPENERS)) {
   test.describe(`with ${name} open`, () => {
-    for (const [what, close] of Object.entries(CLOSERS)) {
-      test(`an on-screen ${what} closes the sheet and does nothing else`, async ({ page }) => {
+    for (const [what, press] of Object.entries(DEAD)) {
+      test(`an on-screen ${what} is dead: the sheet stays and nothing else happens`, async ({ page }) => {
         const before = await state(page);
         await openSheet(page);
         await expect(sheet(page)).toBeVisible();
-        await close(page);
-        await expect(sheet(page)).toHaveCount(0);
+        await press(page);
         await page.waitForTimeout(150);
+        await expect(sheet(page)).toBeVisible();
         expect(await state(page)).toBe(before);
         expect(await entryValue(page)).toBe("78"); // no template inserted, no undo done
       });
     }
+
+    test("a tap on the history outside the sheet closes it and does nothing else", async ({ page }) => {
+      const before = await state(page);
+      await openSheet(page);
+      await page.locator(".screen").click({ position: { x: 2, y: 2 } });
+      await expect(sheet(page)).toHaveCount(0);
+      await page.waitForTimeout(150);
+      expect(await state(page)).toBe(before);
+    });
 
     test("the on-screen Esc closes the root", async ({ page }) => {
       await openSheet(page);
@@ -77,25 +86,22 @@ for (const [name, openSheet] of Object.entries(OPENERS)) {
   });
 }
 
-test("the rest of a trackpad drag that closed a sheet steps nothing until the finger lifts", async ({ page }) => {
-  await tap(page, ["esc"]); // an empty line: a further ▲ step would pick the history row (P4)
+test("a trackpad drag moves the highlight of an open sheet: it stays open and picks nothing", async ({ page }) => {
+  await tap(page, ["esc"]); // an empty line: a step with no sheet would pick the history row (P4)
   expect(await entryValue(page)).toBe("");
-  await tap(page, ["tmpl"]);
-  await drag(page, '[data-testid="pad-hub"]', 0, -90); // seven steps up: the first closes the sheet
-  await expect(sheet(page)).toHaveCount(0);
-  await page.waitForTimeout(150);
+  await tap(page, ["@menu"]);
+  await drag(page, '[data-testid="pad-hub"]', 0, 30);
+  await expect(sheet(page)).toBeVisible();
   await expect(page.getByTestId("row-actions")).toHaveCount(0);
-  await drag(page, '[data-testid="pad-hub"]', 0, -30); // a new drag steps again: ▲ picks the row
-  await expect(page.getByTestId("row-actions")).toBeVisible();
 });
 
-test("a held ⌫ that closed a short sheet does not repeat until the finger lifts", async ({ page }) => {
-  await tap(page, ["@place"]); // the Apps sheet: four rows, the ⌫ row stays visible above it
+test("a held ⌫ over a short sheet leaves it open and the line as it was", async ({ page }) => {
+  await tap(page, ["@place"]); // the Apps sheet: four rows
   await expect(page.getByTestId("apps")).toBeVisible();
   const f = await touch(page, "bksp");
   await page.waitForTimeout(800); // past the repeat delay (400 ms) and several repeats
   await f.end();
-  await expect(page.getByTestId("apps")).toHaveCount(0);
+  await expect(page.getByTestId("apps")).toBeVisible();
   expect(await entryValue(page)).toBe("78");
 });
 

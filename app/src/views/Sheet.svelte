@@ -294,7 +294,7 @@
   .sheet {
     position: relative;
     width: min(calc(100% - var(--sp-4)), var(--sheet-max));
-    margin: 0 var(--sp-2) var(--sp-1);
+    margin: var(--sp-1) var(--sp-2);
     background: var(--panel);
     border: var(--stroke-thin) solid var(--line);
     border-radius: var(--radius-l);
