@@ -6,7 +6,7 @@ import { test, type Locator, type Page } from "@playwright/test";
 /** The bar's controls (R15c1, R15c2, R722), for keys that left the cluster: `@place` (Apps ▾, the Apps sheet), `@menu`
  *  (☰), `@symb` / `@plot` / `@num` (the view tab; from Home or CAS the last app is opened first from the Apps sheet, as
  *  the old view keys did), `@home` and `@cas` (the bar's Home and CAS tabs, one tap), `@mode` (the Mode sheet on its
- *  Angle row, as Shift + Apps opened it before R15c2: the format chip, then ▲). */
+ *  Angle row, as Shift + Apps opened it before R15c2: in Home and CAS the format chip, in an app ☰ › Mode (R785), then ▲). */
 async function statusTap(page: Page, id: string): Promise<void> {
   const apps = page.getByTestId("apps");
   const fromApps = async (row: string): Promise<void> => {
@@ -17,7 +17,11 @@ async function statusTap(page: Page, id: string): Promise<void> {
   if (id === "@menu") return page.getByTestId("menu-button").tap();
   if (id === "@home" || id === "@cas") return page.getByTestId(`tab-${id.slice(1)}`).tap();
   if (id === "@mode") {
-    await page.getByTestId("chip-format").tap();
+    // R785: in Home and CAS the format and digits chip; in an app (no chip) ☰ and its Mode row
+    if (await page.evaluate(() => window.n62.shell.app !== null)) {
+      await page.getByTestId("menu-button").tap();
+      await page.getByTestId("menu").locator('[role="menuitem"][data-id="mode"]').tap();
+    } else await page.getByTestId("chip-format").tap();
     await page.getByTestId("menu").getByRole("menuitem").first().waitFor();
     return sheetKey(page, ["up"]);
   }

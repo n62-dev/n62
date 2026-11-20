@@ -2,8 +2,9 @@
 // R722: the bar's controls in their order, left to right (views/StatusLine.svelte draws them; docs/05 3.2). The layout
 // lock pins this order (spec/layout-lock.yaml `bar:`): the ⇧ α slot between CAS and the angle is a sign, not a control.
 
-/** The bar's controls: Apps ▾ (the place), the Home and CAS tabs, the angle, format and digits chips, ☰. */
-export const BAR_ITEMS = ["apps", "home", "cas", "angle", "format", "digits", "menu"] as const;
+/** The bar's controls: Apps ▾ (the place), the Home and CAS tabs, the format and digits chip `mode` (Home and CAS only; an app's
+ *  bay holds its view icons and Mode is the last row of its ☰, R785), the angle, ☰. */
+export const BAR_ITEMS = ["apps", "home", "cas", "mode", "angle", "menu"] as const;
 export type BarItem = (typeof BAR_ITEMS)[number];
 
 /** R724: the folded bar's controls (keyboard/Fold.svelte with views/StatusLine.svelte `folded`; lock `folded-bar:`): ⌃, the

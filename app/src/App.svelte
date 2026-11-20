@@ -88,6 +88,7 @@
     entry.onLetter = counted(hwOther("letter"), typeLetter);
     shell.goTo = goTo; // the Apps sheet's Home and CAS rows
     shell.openSettings = openSettings;
+    shell.openMode = () => openMode("format"); // R785: an app's ☰ › Mode opens as the chip does
     shell.settingsMenu = () => (loaders.modeSheet ? (settingsMenu ??= loaders.modeSheet.settingsMenu(session, settingsEnv)) : undefined); // (R49)
     shell.homeView = () => (session.view === "cas" ? "cas" : "home"); // the last row of every Menu
     entry.onSymbol = counted(hwOther("symbol"), (ch) => {
@@ -283,13 +284,12 @@
       else shell.closeSheet();
     });
   });
-  /** A tap on a status chip (`at`: the row to start on; "digits": its list, one level down), or a user key that holds
+  /** A tap on the bar's format and digits chip (`at`: the row to start on), an app's ☰ › Mode, or a user key that holds
    *  Mode: the Mode sheet. Without `at` it starts on Angle, so Mode, ▶, Enter always switches the angle unit. */
   function openMode(at?: string): void {
     onModeSheet((m) => {
       picked = null;
       shell.showMenu(t("mode.title"), m.modeItems(session, settingsEnv), { remember: false, at });
-      if (at === "digits") shell.sheet?.enter(); // R86: the digits chip opens the list itself, Mode under it
     });
   }
   /** Run `open` at once when the lists are loaded; else after the load, with every key meanwhile waiting in the queue

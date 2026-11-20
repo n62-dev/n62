@@ -67,6 +67,7 @@ const appHost = (): AppHost =>
     copy: () => undefined,
     notice: () => undefined,
     paste: () => undefined,
+    mode: () => undefined,
   }) as unknown as AppHost;
 
 /** A finished row of `linreg` or `stats1` whose list holds `n` exact values (the sheet's rows follow its call). */
@@ -204,9 +205,12 @@ describe("every numbered list is in the lock (R299)", () => {
     expect(lists(lock.pins)).toEqual(Object.keys(LIST_BUILDERS).sort());
   });
   it("the apps' ☰ and the stat sheets are pinned with their rows", () => {
-    expect(Object.values(actual["function-plot"] ?? {})).toEqual(["root", "extremum", "intersection", "slope", "area", "default", "copy", "shown", "tohome"]);
-    expect(Object.values(actual["function-num"] ?? {})).toEqual(["start", "step", "csv", "paste"]);
-    expect(Object.values(actual["solve-num"] ?? {})).toEqual(["solve", "poly", "copy", "shown", "tohome", "paste"]);
+    expect(Object.values(actual["function-plot"] ?? {})).toEqual(["root", "extremum", "intersection", "slope", "area", "default", "copy", "shown", "tohome", "mode"]); // R785: Mode is the next free row of every app view's ☰
+    // Mode keeps its tenth place with no answer too: To Home is there, off (docs/06 3b: a key never moves)
+    expect(Object.values(ids(new FunctionApp(appHost()).menu("plot")))).toEqual(Object.values(actual["function-plot"] ?? {}));
+    expect(Object.values(actual["function-num"] ?? {})).toEqual(["start", "step", "csv", "paste", "mode"]);
+    expect(Object.values(actual["solve-num"] ?? {})).toEqual(["solve", "poly", "copy", "shown", "tohome", "paste", "mode"]);
+    for (const l of ["function-symb", "solve-symb"]) expect(Object.values(actual[l] ?? {}).at(-1)).toBe("mode");
     expect(Object.values(actual["stat-linreg"] ?? {})).toEqual(["stat.slope", "stat.intercept", "stat.r2"]);
     expect(Object.values(actual["stat-stats1"] ?? {})).toHaveLength(6);
     expect(Object.values(actual["matrix"] ?? {}).at(-1)).toBe("matrix:new");

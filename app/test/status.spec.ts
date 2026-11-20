@@ -52,8 +52,7 @@ test("the bar shows the place, the angle unit, the format and digits", async ({ 
   await open(page);
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: Home\./);
   await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "rad"); // R783: the icon with π
-  await expect(page.getByTestId("chip-format")).toHaveText("STD");
-  await expect(page.getByTestId("chip-digits")).toHaveText("12");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD|12"); // R785: one chip, the format and the digits
   await tap(page, ["@cas"]);
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: CAS\./);
   await tap(page, ["@plot"]);
@@ -144,14 +143,14 @@ test("the bar fits at 360 px in an app with the chips and ☰, and the targets k
   const m = await page.evaluate(() => {
     const h = document.querySelector('[data-testid="bar"]') as HTMLElement;
     const r = (id: string) => document.querySelector(`[data-testid="${id}"]`)?.getBoundingClientRect();
-    return { over: h.scrollWidth - h.clientWidth, header: h.getBoundingClientRect().height, menu: r("menu-button"), place: r("place"), digits: r("chip-digits") };
+    return { over: h.scrollWidth - h.clientWidth, header: h.getBoundingClientRect().height, menu: r("menu-button"), place: r("place"), num: r("tab-num") };
   });
   expect(m.over).toBeLessThanOrEqual(0);
   expect(m.header).toBeLessThanOrEqual(28);
   expect(m.menu?.width ?? 0).toBeGreaterThanOrEqual(28); // R722: at least 28 × 28 (docs/05 3.2)
   expect(m.menu?.height ?? 0).toBeGreaterThanOrEqual(28);
   expect(m.place?.width ?? 0).toBeGreaterThanOrEqual(40); // R82f2: the glyph tile and ▾ (R15b had 96 px for the name)
-  expect((m.digits?.right ?? 999) <= (m.menu?.left ?? 0)).toBe(true);
+  expect((m.num?.right ?? 999) <= (m.menu?.left ?? 0)).toBe(true); // R785: the view icons are the bay, no chip in an app
 });
 
 test("with a hardware keyboard in use Shift and Alpha show on the bar: one tap each, twice for the lock, a third ends it (R783)", async ({ page }) => {
@@ -270,26 +269,25 @@ test("digits to 20: Mode, 3, 7", async ({ page }) => {
   await expect(sheet(page).locator('[data-id="12"]')).toHaveAttribute("data-selected", "true");
   await tap(page, ["d7"]);
   await expect(sheet(page)).toBeHidden();
-  await expect(page.getByTestId("chip-digits")).toHaveText("20");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD|20");
   expect(await page.evaluate(() => window.n62.session.settings.digits)).toBe(20);
 });
 
-test("the format and digits chips open the Mode sheet on their row; ◀ ▶ change a value in place, a tap on a row steps it", async ({ page }) => {
+test("the format and digits chip opens the Mode sheet on Format; ◀ ▶ change a value in place, a tap on a row steps it", async ({ page }) => {
   await open(page);
   await page.getByTestId("chip-format").tap();
   await expect(active(page)).toHaveAttribute("data-id", "format");
   await sheetKey(page, ["right"]);
-  await expect(page.getByTestId("chip-format")).toHaveText("SCI");
+  await expect(page.getByTestId("chip-format")).toHaveText("SCI|12");
   await sheetKey(page, ["left"]);
-  await expect(page.getByTestId("chip-format")).toHaveText("STD");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD|12");
   await expect(sheet(page)).toBeVisible(); // ◀ on a setting steps it, it does not go back
   await tap(page, ["esc"]);
-  await page.getByTestId("chip-digits").tap(); // R86: the chip opens the list itself, with Mode under it
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Significant digits");
-  await sheetKey(page, ["left"]);
+  await page.getByTestId("chip-format").tap(); // R785: Format is active, Significant digits the next row
+  await sheetKey(page, ["down"]);
   await expect(active(page)).toHaveAttribute("data-id", "digits");
   await sheetKey(page, ["right", "right"]);
-  await expect(page.getByTestId("chip-digits")).toHaveText("14");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD|14");
   await sheet(page).locator('[data-id="entry"]').tap(); // a tap steps the row forward and the sheet stays
   expect(await page.evaluate(() => window.n62.session.settings.entry)).toBe("line");
   await expect(sheet(page)).toBeVisible();

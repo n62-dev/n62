@@ -8,6 +8,7 @@ import { numberSource } from "../../clipboard/source.ts";
 import type { CopySource, TextOptions } from "../../clipboard/text.ts";
 import { t } from "../../i18n/index.ts";
 import { numText } from "../../i18n/enNum.ts";
+import { modeRow } from "../modeRow.ts";
 import { tc } from "../../clipboard/strings.ts";
 import { commaResult } from "../../state/displayMode.ts";
 import { drawnGroups } from "../grouped.ts";
@@ -212,9 +213,10 @@ export class FunctionApp implements AppInstance {
         { id: "default", label: numText("plot.defaultWindow"), run: () => this.defaultWindow() },
         { id: "copy", label: tc("clip.copy"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine()) },
         { id: "shown", label: tc("clip.asShown"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine(), true) },
-        // R262: the ninth row only with an answer: at the 36 px floor nine rows with a reason line do not fit over the keys
-        // (412 × 915, the Fairphone: R145, R82f1), and as the last row it moves no other row's number (docs/05 3.1)
-        ...(this.copyLine() ? [{ id: "tohome", count: "tohome", label: numText("app.toHome"), run: () => void this.toHome(this.copyLine()) }] : []),
+        // R785 and pass 222 replace R262's rule of a ninth row only with an answer: To Home is always the ninth row, off with its reason
+        // (the one Copy and As shown say, so said once) while there is no answer, so Mode keeps its tenth place (docs/06 3b)
+        { id: "tohome", count: "tohome", label: numText("app.toHome"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.toHome(this.copyLine()) },
+        modeRow(this.host), // R785: last, the tenth row in both states
       ];
     }
     if (view === "num")
@@ -223,10 +225,11 @@ export class FunctionApp implements AppInstance {
         { id: "step", label: numText("num.setStep"), run: () => this.editNum("step") },
         { id: "csv", label: tc("clip.csv"), disabled: this.numSlots.length === 0, reason: numText("why.noFunction"), run: () => void this.copyNum() },
         ...this.pasteRow(view),
+        modeRow(this.host),
       ];
     if (view === "symb") {
       const empty = (this.slots.latex[this.slots.selected] ?? "") === "";
-      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }, ...this.pasteRow(view)];
+      return [{ id: "clear", label: numText("slot.clear"), slotRow: true, disabled: empty, reason: numText("why.emptySlot"), run: () => this.clearSlot() }, ...this.pasteRow(view), modeRow(this.host)];
     }
     return [];
   }

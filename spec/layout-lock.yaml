@@ -296,6 +296,7 @@ matrix:
 function-symb:
   "1": "clear"
   "2": "paste"
+  "3": "mode"
 
 function-plot:
   "1": "root"
@@ -307,16 +308,19 @@ function-plot:
   "7": "copy"
   "8": "shown"
   "9": "tohome"
+  "10": "mode"
 
 function-num:
   "1": "start"
   "2": "step"
   "3": "csv"
   "4": "paste"
+  "5": "mode"
 
 solve-symb:
   "1": "clear"
   "2": "paste"
+  "3": "mode"
 
 solve-num:
   "1": "solve"
@@ -325,6 +329,7 @@ solve-num:
   "4": "shown"
   "5": "tohome"
   "6": "paste"
+  "7": "mode"
 
 stat-linreg:
   "1": "stat.slope"
@@ -370,10 +375,9 @@ bar:
   "1": "apps"
   "2": "home"
   "3": "cas"
-  "4": "angle"
-  "5": "format"
-  "6": "digits"
-  "7": "menu"
+  "4": "mode"
+  "5": "angle"
+  "6": "menu"
 folded-bar:
   "1": "unfold"
   "2": "home"
