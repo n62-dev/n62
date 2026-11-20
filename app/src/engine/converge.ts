@@ -10,8 +10,10 @@
 // - G618 (F432): a series up to ±∞ of a rational term (or (−1)^k times one) is checked against its own terms
 //   (sumcheck.ts): an infinity for a series that converges, or a closed form the terms' estimate contradicts, is
 //   refused "sumUnchecked" (Giac's sum of a rational function is wrong for some; G619 has the causes).
-// Only inputs that hold one of these calls pay, and an integral pays for the second integral only when f has a real
-// singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
+// Only inputs that hold one of these calls pay. An integral with a name besides its variable (a free name, or the
+// variable of an enclosing integral) pays for sampledCheck (G771): a free name at four values, an enclosing variable at
+// two points (two checks each; two for an enclosing variable alone); any other integral pays for the second integral only
+// when f has a real singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
 import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import { namesOf } from "./lname.ts";
 import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
@@ -310,7 +312,8 @@ const substIn = (giac: Giac, e: string, subs: readonly (readonly [string, string
  * - an enclosing variable at two generic interior points of its interval (FRACTIONS): a divergence at either refuses;
  * - a free name has no interval: generic values of both signs, inside and beyond the ends; refused only when it diverges
  *   at every one, as the integral then diverges for every value of the name tried (∫₋₁¹ x/y² dy), and one that converges for some keeps
- *   Giac's algebra (∫₀^∞ e^(a·y) dy, a < 0).
+ *   Giac's algebra (∫₀^∞ e^(a·y) dy, a < 0). A value of the name counts as diverging when either of the two points of
+ *   the enclosing variables diverges (G771f1: ∫₀¹∫₀^½ a/(y−x) dy dx).
  * An error or Giac's interruption at a point is "unchecked" (⚠), never ok. null: nothing to check here (the integrand
  * holds an integral of its own: the integral inside it is checked on its own, as before).
  */
@@ -344,24 +347,32 @@ function sampledCheck(giac: Giac, c: Call, calls: Call[]): Verdict | null {
     const ends = [a, b].map((e) => realOf(giac, substIn(giac, e, free.map((n, j) => [n, freeValue(j, 0)]))));
     scale = `(1+${ends.reduce<number>((s, x) => s + (x !== null && Number.isFinite(x) ? Math.abs(x) : 0), 0)})`;
   }
-  for (const sample of free.length ? [0, 1, 2, 3] : [0, 1]) {
-    const subs: [string, string][] = free.map((n, j) => [n, freeValue(j, sample, sample < 2 ? "1" : scale)]);
-    let skipped = false;
-    for (const [d, k] of used.entries()) {
-      const lo = substIn(giac, k.args[2]!, subs);
-      const hi = substIn(giac, k.args[3]!, subs);
-      const point = isError(lo) || isError(hi) ? null : samplePoint(giac, lo, hi, FRACTIONS[d]![sample % 2]!);
-      if (point === null) skipped = true;
-      else subs.push([k.args[1]!, point]);
+  // G771f1: each free-name sample takes both fractions of every enclosing variable (a divergence at an enclosing variable's
+  // point does not depend on the name: ∫₀^½ a/(y−x) dy diverges for x in (0, ½) and not for x = 0.72), and counts as
+  // diverging when either point diverges; without a free name each fraction is a sample of its own.
+  for (const sample of free.length ? [0, 1, 2, 3] : [0]) {
+    const points: Verdict[] = [];
+    for (const fraction of used.length ? [0, 1] : [0]) {
+      const subs: [string, string][] = free.map((n, j) => [n, freeValue(j, sample, sample < 2 ? "1" : scale)]);
+      let skipped = false;
+      for (const [d, k] of used.entries()) {
+        const lo = substIn(giac, k.args[2]!, subs);
+        const hi = substIn(giac, k.args[3]!, subs);
+        const point = isError(lo) || isError(hi) ? null : samplePoint(giac, lo, hi, FRACTIONS[d]![fraction]!);
+        if (point === null) skipped = true;
+        else subs.push([k.args[1]!, point]);
+      }
+      const [f, lo, hi] = skipped ? [] : [body, a, b].map((e) => substIn(giac, e, subs));
+      if (f === undefined || isError(f) || isError(lo!) || isError(hi!) || !onlyNames(giac, f, [v]) || !onlyNames(giac, lo!, []) || !onlyNames(giac, hi!, [])) {
+        points.push("unchecked");
+        continue;
+      }
+      const verdict = integralCheck(giac, { kind: "int", text: "", args: [f, v, lo!, hi!], at: 0, end: 0 });
+      if (verdict === "diverges" && !free.length) return "diverges"; // at one point of the enclosing intervals
+      points.push(verdict);
+      if (verdict === "diverges") break; // the sample diverges at either point
     }
-    const [f, lo, hi] = skipped ? [] : [body, a, b].map((e) => substIn(giac, e, subs));
-    if (f === undefined || isError(f) || isError(lo!) || isError(hi!) || !onlyNames(giac, f, [v]) || !onlyNames(giac, lo!, []) || !onlyNames(giac, hi!, [])) {
-      verdicts.push("unchecked");
-      continue;
-    }
-    const verdict = integralCheck(giac, { kind: "int", text: "", args: [f, v, lo!, hi!], at: 0, end: 0 });
-    if (verdict === "diverges" && !free.length) return "diverges"; // at one point of the enclosing intervals
-    verdicts.push(verdict);
+    verdicts.push(points.includes("diverges") ? "diverges" : points.includes("unchecked") ? "unchecked" : "ok");
   }
   if (verdicts.every((x) => x === "diverges")) return "diverges";
   return verdicts.includes("unchecked") ? "unchecked" : "ok";
@@ -468,10 +479,14 @@ export function giacPair(output: string, nested = false): { exact: string; numer
   return { exact: e, numeric: n };
 }
 
-/** G771: the input holds a definite integral inside another one (its pair may hold two numbers, giacPair). */
+/** G771f1: the input IS a definite integral that holds another one (outer brackets aside): only then is a two-element
+ *  list read as the nested integral's pair (giacPair). An integral inside another call or an operation
+ *  (`approx(int(int(x*y,y,0,1),x,0,1)*[1,2])`, the list [0.25,0.5]) is not the input's value, so its list stays a list. */
 export function hasNestedIntegral(input: string): boolean {
+  let whole = input.trim();
+  while (whole.startsWith("(") && callsOf(`f${whole}`, new Set(["f"]), "typed")[0]?.close === whole.length) whole = whole.slice(1, -1).trim();
   const ints = callsIn(input).filter((c) => c.kind === "int" && c.args.length === 4);
-  return ints.some((c) => ints.some((k) => k !== c && k.at >= c.at && k.end <= c.end));
+  return ints.some((c) => c.text === whole && ints.some((k) => k !== c && k.at >= c.at && k.end <= c.end));
 }
 
 /** The input holds a definite integral (four arguments): only then is a two-element list read as Giac's pair. */

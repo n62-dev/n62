@@ -32,11 +32,17 @@ describe("converge helpers", () => {
   it("G771: a nested integral's pair holds two numbers; only the input with an integral inside an integral reads it so", () => {
     const nested = "[1.6235826468788-5.78E-41*i,1.35506364264]";
     expect(giacPair(nested, true)).toEqual({ exact: "1.6235826468788-5.78E-41*i", numeric: "1.35506364264" });
-    expect(giacPair("[0.5,0.785398163397]", true)).toEqual({ exact: "0.5", numeric: "0.785398163397" });
     expect(giacPair(nested)).toBeNull();
     expect(giacPair("[x+0.5,0.785398163397]", true)).toBeNull();
     expect(hasNestedIntegral("int(int(x*y,y,0,1),x,0,1)")).toBe(true);
     expect(hasNestedIntegral("int(x*sum(1/k,k,1,3),x,0,1)+int(x,x,0,1)")).toBe(false);
+    // G771f1: the nested call is the whole input (the pair is the input's value); inside another call or an operation a
+    // two-element list is a list (approx(…*[1,2]) is [0.25,0.5])
+    expect(hasNestedIntegral(" int(int(x*y,y,0,1),x,0,1) ")).toBe(true);
+    expect(hasNestedIntegral("(int(int(x*y,y,0,1),x,0,1))")).toBe(true);
+    expect(hasNestedIntegral("approx(int(int(x*y,y,0,1),x,0,1)*[1,2])")).toBe(false);
+    expect(hasNestedIntegral("int(int(x*y,y,0,1),x,0,1)*[1,2]")).toBe(false);
+    expect(hasNestedIntegral("evalf(int(int(x*y,y,0,1),x,0,1))")).toBe(false);
   });
   it("G90: makes every definite integral's bounds floats, nested ones too, and leaves the rest alone", () => {
     expect(floatBounds("int(asin(x)*12^x,x,0,1)")).toBe("int(asin(x)*12^x,x,evalf(0),evalf(1))");
@@ -192,6 +198,22 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     expect(cas("int(1/(y-a),y,-5,5)")).toMatchObject({ ok: true });
     expect(home("int(1/(x-a),x,0,10)")).toMatchObject({ ok: true });
     expect(home("int(x/y^2,y,-1,1)")).toMatchObject({ ok: false, error: "integralDiverges" });
+  });
+  it("G771f1: a free name is tried with both fractions of every enclosing variable; a divergence at either point refuses", () => {
+    // diverges for every a not 0, but the inner integral over [0, 1/2] diverges only at x = y, inside it for x in (0, 1/2)
+    for (const input of ["int(int(a/(y-x),y,0,1/2),x,0,1)", "int(int(1/(y-x),y,0,1/2),x,0,1)"]) {
+      expect(home(input), input).toMatchObject({ ok: false, error: "integralDiverges" });
+      expect(cas(input), input).toMatchObject({ ok: false, error: "integralDiverges" });
+    }
+  });
+  it("G771f1: a two-element list that is not a nested integral's value stays a list", () => {
+    const r = home("approx(int(int(x*y,y,0,1),x,0,1)*[1,2])");
+    expect(r).toMatchObject({ ok: true });
+    expect(r).not.toMatchObject({ approximate: true, facts: { reliableDigits: 0 } });
+    expect((r as { display: string }).display).toBe("[0.25,0.5]");
+    const c = cas("approx(int(int(x*y,y,0,1),x,0,1)*[1,2])");
+    expect(c).toMatchObject({ ok: true });
+    expect(JSON.stringify(c)).not.toContain("differ");
   });
   it("G771: a nested integral's two-number pair is no list: one value, no confirmed digit", () => {
     const r = home("int(int(abs(y-sin(10^50)),y,-1,1),x,0,1)");
