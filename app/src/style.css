@@ -207,6 +207,12 @@
   --mark-faint: #bcd8d7;
   color-scheme: light;
 }
+/* R748: a chip in the history looks like the entry line's (entry/field.ts): inline-block, so its tint covers tall content; the shape is here, not inline (the start chunk is at its pin) */
+[style*="--chip-tint"] {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 0 3px;
+}
 * {
   box-sizing: border-box;
 }
