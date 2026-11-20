@@ -71,9 +71,11 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 |---|---|---|---|---|
 | 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19); NOT MERGED after two rounds: its work is on `p1/ron-sheetsview` (8ae3dde8), pass 221's FIX R770f1 finishes it | ron, Sonnet (Opus is capped, A262) | `p1/ron-sheetsview-f1` | – |
 | 885m | [R778](packages/R778.md) a window that scrolls gets a corner button that fills the whole screen (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfull` | R770 |
-| 885p | [R782](packages/R782.md) the bar's left side: ⌄, APP▾, Home fixed, CAS slot reassignable by a second tap (owner, 2026-11-20) | ron, Opus | `p1/ron-barslots` | R778 |
-| 885q | [R783](packages/R783.md) the bar's right anchor: (RAD) (STD|4) in every place; the bay holds an app's views | ron, Opus | `p1/ron-barbay` | R782 |
-| 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R783 |
+| 885p | [R783](packages/R783.md) the bar's right anchor: the angle icon (π or °) and ☰; no ⇧ α slot while the keys are up (owner, 2026-11-20) | ron, Sonnet | `p1/ron-barangle` | R778 |
+| 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰ | ron, Sonnet | `p1/ron-barbay` | R783 |
+| 885r | [R786](packages/R786.md) ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
+| 885s | [R782](packages/R782.md) the left side: APP▾, Home fixed, slot 2 reassignable by a second tap; stops if the bar does not fit 356 dp | ron, Sonnet | `p1/ron-barslots` | R786 |
+| 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R782 |
 | 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
 | 885k | [R776](packages/R776.md) a name prompt says what it wants and starts in Alpha | ron, Sonnet | `p1/ron-nameprompt` | R770 |
 | 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look | ron, Sonnet | `p1/ron-deadquiet` | R770 |
