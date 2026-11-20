@@ -75,7 +75,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885c | G770 a nested definite integral in Home is fast (the owner's 26, not "it took too long") | gorge, Opus | `p1/gorge-nestedintfast` | – |
 | 885d | [G771](packages/G771.md) an inner integral is checked for convergence: no divergent double integral with "=" (wrong answers) | gorge, Opus | `p1/gorge-innerconverge` | G770 |
 | 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19) | ron, Opus | `p1/ron-sheetsview` | R748 |
-| 885f | [R775](packages/R775.md) Fmt and a b/c act on the picked row, else the newest finished row | ron, Sonnet | `p1/ron-fmtpicked` | – |
+| 885f | R775 Fmt and a b/c act on the picked row, else the newest finished row | ron, Sonnet | `p1/ron-fmtpicked` | – |
 | 885h | [R771](packages/R771.md) the tabs: the house and names at one fixed width, the current one filled; STD cycles the format | ron, Opus | `p1/ron-tabsstd` | R770 |
 | 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R771 |
 | 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
