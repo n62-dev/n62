@@ -164,6 +164,26 @@ test.describe("Memory", () => {
     await expect(lastResult(page)).not.toHaveAttribute("data-text", "5");
   });
 
+  test("R800: a digit only highlights a row, it never deletes a name or arms Clear all; Enter still deletes", async ({ page }) => {
+    await start(page);
+    await store(page, "d5", "vars", 1);
+    await store(page, "d7", "math", 2);
+    await tap(page, ["shift", "math", "d1"]);
+    await expect(rows(page)).toHaveCount(3); // B, A and Clear all, nothing deleted
+    await expect(active(page)).toHaveAttribute("data-id", "var:B");
+    await tap(page, ["d3"]);
+    await expect(active(page)).toHaveAttribute("data-id", "clearall");
+    await tap(page, ["d3"]); // a second 3 does not clear
+    await expect(row(page, "clearall")).not.toContainText("again");
+    await expect(rows(page)).toHaveCount(3);
+    await expect.poll(() => names(page)).toEqual(["A", "B"]);
+    await tap(page, ["d2"]);
+    await expect(active(page)).toHaveAttribute("data-id", "var:A");
+    await tap(page, ["enter"]); // Enter keeps its job
+    await expect(row(page, "var:A")).toHaveCount(0);
+    await expect.poll(() => names(page)).toEqual(["B"]);
+  });
+
   test("by keys: a deleted name stays deleted after a reload, and a search shows no deleted row", async ({ page }) => {
     await start(page);
     await store(page, "d5", "vars", 1);

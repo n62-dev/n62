@@ -213,7 +213,7 @@ No usage boost (P11), so the same query always gives the same order (docs/03 rul
 - Functions insert `\operatorname{name}\left(#0\right)` (`#0`: a selection becomes the argument); templates insert their LaTeX, each with a parser rule and round-trip case.
 
 ### 3.7 Keys inside Find
-Every key types its Alpha letter in lower case (no Alpha press); Shift + key types the key's primary character (digits, `.`); the space key types a space; ⌫ deletes; ▲▼ and the trackpad move the selection; Enter inserts; Esc closes. Vars opens the same sheet on the user's variables and functions (no index needed); Shift + Math, Memory, deletes the highlighted name with Enter and clears all with Enter twice. Digits do not pick, unlike the other sheets, because queries need them (`g0`, `log10`, `e24`).
+Every key types its Alpha letter in lower case (no Alpha press); Shift + key types the key's primary character (digits, `.`); the space key types a space; ⌫ deletes; ▲▼ and the trackpad move the selection; Enter inserts; Esc closes. Vars opens the same sheet on the user's variables and functions (no index needed); Shift + Math, Memory, deletes the highlighted name with Enter and clears all with Enter twice. A digit picks the numbered row while the query is empty and types itself after a letter (`g0`, `log10`, `e24`); in Memory a digit only highlights the row (R800), Enter deletes.
 **Keystroke budget:** an item used before: Math, first letter, Enter (3 presses); a new one: Math, the letters, Enter. Benchmark task 5 checks it.
 
 ### 3.8 The query test
