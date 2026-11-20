@@ -8,7 +8,7 @@
   import { pressFlag } from "../input/pressFlag.ts";
 
   // R97, R722: the bar on the keypad's top edge, out of App.svelte. Props in, events out; no store of its own.
-  let { session, shell, busy, cas, onpress, onmode, folded = false }: {
+  let { session, shell, busy, cas, onpress, onmode, hw = false, folded = false }: {
     session: Session;
     shell: AppShell;
     /** A job runs (session or app). */
@@ -19,6 +19,8 @@
     onpress: (key: Key, layer: Layer) => void;
     /** A tap on a mode chip: the Mode sheet, on that row. */
     onmode: (at: string) => void;
+    /** R783: a hardware keyboard is in use (input/hwSeen.svelte.ts): the ⇧ α badge shows with the keys up too. */
+    hw?: boolean;
     /** R724: in the folded bar (keyboard/Fold.svelte): the nav lays out as Fold's row (display: contents), and only the
      *  tabs, the slot and ☰ show, each at its place in the row (`order`) among Fold's ⌃, free stretch and row buttons. */
     folded?: boolean;
@@ -142,25 +144,32 @@
         </button>
       {/each}
     </span>
-    <span class="slot" data-testid="mod-slot">
-      {#if mod}
-        <!-- R726: while Shift or Alpha is on, the sign is a button: a tap ends it, armed or locked (the bar's guard applies) -->
-        <button type="button" class="mod"
-          data-testid="mod-{mod.id}"
-          data-lock={mod.lock}
-          aria-label={t("status.modOff", { mod: t(`key.${mod.id}`) })}
-          onclick={() => session.releaseModifiers()}>{mod.text}</button>
-      {/if}
-    </span>
+    {#if folded || hw}
+      <!-- R783: the ⇧ α badge is on the folded bar and with a hardware keyboard in use; with the keys up the Shift and Alpha keys show the state -->
+      <span class="slot" data-testid="mod-slot">
+        {#if mod}
+          <!-- R726: while Shift or Alpha is on, the sign is a button: a tap ends it, armed or locked (the bar's guard applies) -->
+          <button type="button" class="mod"
+            data-testid="mod-{mod.id}"
+            data-lock={mod.lock}
+            aria-label={t("status.modOff", { mod: t(`key.${mod.id}`) })}
+            onclick={() => session.releaseModifiers()}>{mod.text}</button>
+        {/if}
+      </span>
+    {/if}
+    <!-- R783: the angle as one icon, two rays with an arc, and its mark beside it: π for radians, ° for degrees -->
     <button
       type="button"
-      class="chip"
+      class="chip angle"
       data-testid="chip-angle"
       data-item="angle"
       data-angle={angle}
       data-changed={angle !== "rad"}
-      aria-label={t("status.angle", { angle: t(`angle.${angle}`) })}
-      onclick={switchAngle}>{angle === "rad" ? "RAD" : "DEG"}</button>
+      aria-label={t(`status.angle.${angle}`)}
+      onclick={switchAngle}>
+      <svg viewBox="0 0 16 14" aria-hidden="true"><path d="M1.5 12.5H14.5M1.5 12.5 9.5 3" /><path d="M7.5 12.5A6 6 0 0 0 5.4 7.9" /></svg>
+      <span class="mark math" aria-hidden="true">{angle === "rad" ? "π" : "°"}</span>
+    </button>
     <span class="pair" aria-label={t("status.format", { format: t(`format.${session.settings.format}`) })}>
       <button type="button" class="chip more format" data-testid="chip-format" data-item="format" onclick={() => onmode("format")}>{session.settings.format.toUpperCase()}</button>
       <button type="button" class="chip more digits" data-testid="chip-digits" data-item="digits" onclick={() => onmode("digits")}>{session.settings.digits}</button>
@@ -385,7 +394,8 @@
     min-width: var(--tile-w);
     padding: 0;
   }
-  /* the fixed ⇧ α slot: always 16 px, so Shift or Alpha moves nothing; it takes the room left over */
+  /* the fixed ⇧ α slot (the folded bar, a hardware keyboard in use): always 16 px, so Shift or Alpha moves nothing; it takes the
+     room left over, else the angle icon does (R783: the right anchor stands at the same x in every place) */
   .slot {
     flex: none;
     width: var(--icon-w);
@@ -426,12 +436,31 @@
     font-size: var(--mark-size);
     color: var(--muted);
   }
+  /* R783: the angle icon: 34 px wide, one target; the right side's first item takes the room left over */
+  .chip.angle {
+    width: var(--angle-w);
+    padding: 0;
+    gap: var(--stroke-thin);
+    margin-left: auto;
+    color: var(--text);
+    font-size: var(--fs-ui);
+    font-weight: 400;
+  }
+  .slot + .chip.angle {
+    margin-left: 0;
+  }
+  .angle svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--stroke);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
   /* a changed angle: filled in --key-on (R722; not --shift, which is the Shift key's) */
   .chip[data-changed="true"] {
     background: var(--key-on);
     color: var(--on-enter);
     box-shadow: none;
-    font-weight: 700;
   }
   .pair {
     display: flex;
@@ -443,7 +472,8 @@
     color: var(--text);
   }
   /* narrow (a phone under 400 px wide): the tab that is not current shows its glyph only; in an app the views keep their
-     32 px, the room is won from the gaps, the separator's margins and ☰, and STD and 12 share one chip with one ▾ */
+     32 px, the room is won from the gaps, the separator's margins and ☰, and STD and 12 share one chip with one ▾ (the right side
+     the same in every place, R783) */
   @media (max-width: 400px) {
     .ptab:not(.cur) .nm {
       display: none;
@@ -458,25 +488,26 @@
     .inapp .sep {
       margin: var(--sp-2) 0;
     }
-    .inapp,
+    /* the right side is the same in every place (R783: the angle icon and ☰ stand at the same x), so these are not .inapp's alone */
+    .bar,
     .inapp .places {
       gap: var(--stroke-thin);
     }
-    .inapp .menubtn {
+    .menubtn {
       width: var(--bar-h);
     }
-    .inapp .pair {
+    .pair {
       gap: 0;
       border-radius: calc(var(--radius-s) + var(--stroke-thin));
       box-shadow: inset 0 0 0 var(--stroke-thin) var(--line);
     }
-    .inapp .pair .chip {
+    .pair .chip {
       box-shadow: none;
     }
-    .inapp .chip.format {
+    .chip.format {
       padding-right: var(--sp-05);
     }
-    .inapp .chip.format::after {
+    .chip.format::after {
       content: none;
     }
   }

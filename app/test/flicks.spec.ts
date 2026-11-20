@@ -3,7 +3,7 @@
 // the lock flicks on Shift and Alpha, the bubble, one motion with no wait, two thumbs, the tap counter, and
 // keys typed while an app loads keeping their layer. Synthetic touches through CDP, as in gestures.spec.ts.
 import { expect, test, type CDPSession, type Page } from "@playwright/test";
-import { entryValue, flick, open, recordVibrations, tap, touch, vibrations } from "./helpers.ts";
+import { entryValue, flick, hwOn, open, recordVibrations, tap, touch, vibrations } from "./helpers.ts";
 
 test.beforeEach(async ({ page }) => {
   await recordVibrations(page);
@@ -200,6 +200,7 @@ test("two thumbs keep their order: a second finger fires the first one's flick a
 
 test("lock flicks: up on Shift locks shift; a tap on Shift unlocks", async ({ page }) => {
   await flick(page, "shift", "up");
+  await hwOn(page); // R783: the bar's badge shows with a hardware keyboard in use (a touch turned it off)
   await expect(page.getByTestId("mod-shift")).toHaveText("⇧");
   await expect(page.getByTestId("mod-shift")).toHaveAttribute("data-lock", "true");
   await expect(page.locator('[data-key="shift"]')).toHaveAttribute("data-locked", "true");
@@ -207,6 +208,7 @@ test("lock flicks: up on Shift locks shift; a tap on Shift unlocks", async ({ pa
   expect(await entryValue(page)).toBe("==");
   await tap(page, ["shift", "dot"]);
   expect(await entryValue(page)).toBe("==.");
+  await hwOn(page);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0);
   // a flick down on Shift does nothing
   await flick(page, "shift", "down");
@@ -215,6 +217,7 @@ test("lock flicks: up on Shift locks shift; a tap on Shift unlocks", async ({ pa
 
 test("lock flicks: down on Alpha locks capitals, and a flick up types `=` without leaving the lock (the G2 friction)", async ({ page }) => {
   await flick(page, "alpha", "down");
+  await hwOn(page);
   await expect(page.getByTestId("mod-alpha")).toHaveText("α");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "true");
   await tap(page, ["vars", "math"]);

@@ -3,7 +3,7 @@
 // on the keys; the short key rows a notch taller (43 / 33 px under 1000 px tall). The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { BAR_ITEMS } from "../src/views/barItems.ts";
-import { open, sheet, tap, touch } from "./helpers.ts";
+import { hwOn, open, sheet, tap, touch } from "./helpers.ts";
 
 const box = (page: Page, sel: string) =>
   page.evaluate((s) => {
@@ -121,6 +121,7 @@ test("the states: the ring on the current tile, the busy line read, the lock und
   await expect(tile("tab-home")).toHaveAttribute("data-ring", "false");
   await page.getByTestId("tab-cas").tap();
   await tap(page, ["alpha", "alpha"]);
+  await hwOn(page); // R783: the badge with a hardware keyboard in use
   await expect(page.getByTestId("mod-alpha")).toHaveText("a");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "true");
   expect(await page.evaluate(() => getComputedStyle(document.querySelector('[data-testid="mod-alpha"]')!).boxShadow)).not.toBe("none");

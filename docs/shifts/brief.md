@@ -71,7 +71,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 |---|---|---|---|---|
 | 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19); NOT MERGED after two rounds: its work is on `p1/ron-sheetsview` (8ae3dde8), pass 221's FIX R770f1 finishes it | ron, Sonnet (Opus is capped, A262) | `p1/ron-sheetsview-f1` | – |
 | 885m | R778 a window that scrolls gets a corner button that fills the whole screen (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfull` | R770 |
-| 885p | [R783](packages/R783.md) the bar's right anchor: the angle icon (π or °) and ☰; no ⇧ α slot while the keys are up (owner, 2026-11-20) | ron, Sonnet | `p1/ron-barangle` | R778 |
+| 885p | R783 the bar's right anchor: the angle icon (π or °) and ☰; no ⇧ α slot while the keys are up (owner, 2026-11-20) | ron, Sonnet | `p1/ron-barangle` | R778 |
 | 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰ | ron, Sonnet | `p1/ron-barbay` | R783 |
 | 885r | [R786](packages/R786.md) ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
 | 885s | [R782](packages/R782.md) the left side: APP▾, Home fixed, slot 2 reassignable by a second tap; stops if the bar does not fit 356 dp | ron, Sonnet | `p1/ron-barslots` | R786 |

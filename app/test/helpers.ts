@@ -46,6 +46,23 @@ export async function tap(page: Page, ids: string[]): Promise<void> {
   }
 }
 
+/** R783: a hardware keyboard is in use (input/hwSeen.svelte.ts): the ⇧ α badge shows on the unfolded bar too. A touch on the
+ *  screen turns it off again, so a test that taps keys and reads the badge uses `tapHw`. */
+export async function hwOn(page: Page, on = true): Promise<void> {
+  await page.evaluate(async (v) => {
+    const url = "/src/input/hwSeen.svelte.ts";
+    ((await import(/* @vite-ignore */ url)) as typeof import("../src/input/hwSeen.svelte.ts")).hw.keys = v;
+  }, on);
+}
+
+/** `tap`, each key followed by the hardware keyboard being in use again (the badge reads as it did before R783). */
+export async function tapHw(page: Page, ids: string[]): Promise<void> {
+  for (const id of ids) {
+    await tap(page, [id]);
+    await hwOn(page);
+  }
+}
+
 /** How far a tap on the history must lie from the open sheet's box (px): more than the sheet's own margin (8 px at the sides, 4 above),
  *  so the point is the history and not the sheet's margin (R770f1). */
 export const HISTORY_CLEAR = 10;

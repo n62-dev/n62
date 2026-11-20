@@ -35,7 +35,8 @@ describe("i18n", () => {
 const SRC = join(import.meta.dirname, "..");
 const FAMILIES: readonly { prefix: string; suffixes: readonly string[] | "any"; file: string }[] = [
   { prefix: "view.", suffixes: ["home", "cas", "symb", "plot", "num"], file: "apps/shell.svelte.ts" },
-  { prefix: "angle.", suffixes: ["rad", "deg"], file: "views/StatusLine.svelte" },
+  { prefix: "angle.", suffixes: ["rad", "deg"], file: "views/modeSheet.ts" },
+  { prefix: "status.angle.", suffixes: ["rad", "deg"], file: "views/StatusLine.svelte" }, // R783
   { prefix: "engine.", suffixes: ["blink", "gecko", "webkit", "other"], file: "views/aboutItems.ts" }, // R285
   { prefix: "keys.action.", suffixes: ["apps", "menu", "mode", "switch", "symb", "plot", "num", "fold"], file: "keyboard/desktopHelp.ts" }, // R131
   { prefix: "format.", suffixes: ["std", "sci", "eng", "pfx"], file: "views/StatusLine.svelte" },

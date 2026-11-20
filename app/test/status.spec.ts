@@ -2,7 +2,7 @@
 // R8, R722: the bar on the keypad (docs/05 3.2; the status line before R722), the Mode sheet (the chips since R15c2) and Settings (Mode's last row) (3.4). The
 // real engine for the angle test (GIAC_OUT); the fake one for the rest.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, sheet, sheetKey, tap } from "./helpers.ts";
+import { entryValue, hwOn, open, sheet, sheetKey, tap, tapHw } from "./helpers.ts";
 
 const lastText = (page: Page) => page.locator('[data-testid="result"] .result').last();
 const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
@@ -51,7 +51,7 @@ for (const [width, height, key] of [[360, 740, 43], [412, 839, 43], [800, 1148, 
 test("the bar shows the place, the angle unit, the format and digits", async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: Home\./);
-  await expect(page.getByTestId("chip-angle")).toHaveText("RAD");
+  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "rad"); // R783: the icon with π
   await expect(page.getByTestId("chip-format")).toHaveText("STD");
   await expect(page.getByTestId("chip-digits")).toHaveText("12");
   await tap(page, ["@cas"]);
@@ -154,51 +154,52 @@ test("the bar fits at 360 px in an app with the chips and ☰, and the targets k
   expect((m.digits?.right ?? 999) <= (m.menu?.left ?? 0)).toBe(true);
 });
 
-test("Shift and Alpha show on the bar: one tap each, twice for the lock, a third ends it", async ({ page }) => {
+test("with a hardware keyboard in use Shift and Alpha show on the bar: one tap each, twice for the lock, a third ends it (R783)", async ({ page }) => {
   await open(page);
+  await hwOn(page);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0);
-  await tap(page, ["shift"]);
+  await tapHw(page, ["shift"]);
   await expect(page.getByTestId("mod-shift")).toHaveText("⇧");
   await expect(page.getByTestId("mod-shift")).toHaveAttribute("data-lock", "false");
-  await tap(page, ["shift"]); // R726: a second tap locks Shift, as Alpha's does
+  await tapHw(page, ["shift"]); // R726: a second tap locks Shift, as Alpha's does
   await expect(page.getByTestId("mod-shift")).toHaveAttribute("data-lock", "true");
-  await tap(page, ["shift"]);
+  await tapHw(page, ["shift"]);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0);
-  await tap(page, ["alpha"]);
+  await tapHw(page, ["alpha"]);
   await expect(page.getByTestId("mod-shift")).toHaveCount(0); // one slot (R82f2): α once
   await expect(page.getByTestId("mod-alpha")).toHaveText("α");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "false");
-  await tap(page, ["alpha"]);
+  await tapHw(page, ["alpha"]);
   await expect(page.getByTestId("mod-alpha")).toHaveText("α");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "true");
-  await tap(page, ["alpha"]);
+  await tapHw(page, ["alpha"]);
   await expect(page.getByTestId("mod-alpha")).toHaveCount(0);
-  await tap(page, ["shift", "alpha", "alpha"]); // Shift, Alpha, Alpha: the lower-case lock
+  await tapHw(page, ["shift", "alpha", "alpha"]); // Shift, Alpha, Alpha: the lower-case lock
   await expect(page.getByTestId("mod-alpha")).toHaveText("a");
   await expect(page.getByTestId("mod-alpha")).toHaveAttribute("data-lock", "true");
 });
 
 test("in CAS the slot shows what Alpha types: a for lower case (Alpha alone), α for capitals (Shift + Alpha), the locks likewise (R101)", async ({ page }) => {
   await open(page);
-  await tap(page, ["@cas"]);
+  await tapHw(page, ["@cas"]);
   const slot = page.getByTestId("mod-alpha");
   const typed = async (): Promise<string> => { // the letter the sin key (Alpha: G) types now: the line's last character
-    await tap(page, ["sin"]);
+    await tapHw(page, ["sin"]);
     return (await entryValue(page)).slice(-1);
   };
-  await tap(page, ["alpha"]); // Alpha alone: lower case
+  await tapHw(page, ["alpha"]); // Alpha alone: lower case
   await expect(slot).toHaveText("a");
   await expect(slot).toHaveAttribute("data-lock", "false");
   expect(await typed()).toBe("g");
-  await tap(page, ["shift", "alpha"]); // Shift + Alpha: capitals
+  await tapHw(page, ["shift", "alpha"]); // Shift + Alpha: capitals
   await expect(slot).toHaveText("α");
   expect(await typed()).toBe("G");
-  await tap(page, ["alpha", "alpha"]); // the lock that keeps Alpha alone: lower case
+  await tapHw(page, ["alpha", "alpha"]); // the lock that keeps Alpha alone: lower case
   await expect(slot).toHaveText("a");
   await expect(slot).toHaveAttribute("data-lock", "true");
   expect(await typed()).toBe("g");
-  await tap(page, ["alpha"]);
-  await tap(page, ["shift", "alpha", "alpha"]); // the lock with Shift: capitals
+  await tapHw(page, ["alpha"]);
+  await tapHw(page, ["shift", "alpha", "alpha"]); // the lock with Shift: capitals
   await expect(slot).toHaveText("α");
   await expect(slot).toHaveAttribute("data-lock", "true");
   expect(await typed()).toBe("G");
@@ -207,16 +208,18 @@ test("in CAS the slot shows what Alpha types: a for lower case (Alpha alone), α
 test("tap RAD → DEG changes the next result; sin 90 is 1 in degrees", async ({ page }) => {
   await open(page, "");
   await ready(page);
-  await tap(page, ["sin", "d9", "d0", "enter"]);
+  await tapHw(page, ["sin", "d9", "d0", "enter"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "0.893996663601"); // oracle: sin(90 rad) = 0.8939966636005579 (12 digits round up)
   await page.getByTestId("chip-angle").tap();
-  await expect(page.getByTestId("chip-angle")).toHaveText("DEG");
+  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "deg");
+  await expect(page.getByTestId("chip-angle")).toHaveText("°");
   await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-changed", "true");
   expect(await angle(page)).toBe("deg");
-  await tap(page, ["sin", "d9", "d0", "enter"]);
+  await tapHw(page, ["sin", "d9", "d0", "enter"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "1");
   await page.getByTestId("chip-angle").tap();
-  await expect(page.getByTestId("chip-angle")).toHaveText("RAD");
+  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "rad");
+  await expect(page.getByTestId("chip-angle")).toHaveText("π");
 });
 
 /** R15c: Mode has no key of its own; a user key may hold it (the keys-only path, decisions.md "R15c" costs). */
@@ -329,5 +332,5 @@ test("the sheets work inside an app, and the angle unit set there is the one the
   await sheetKey(page, ["right", "enter"]);
   expect(await angle(page)).toBe("deg");
   await expect(page.getByTestId("place")).toHaveAttribute("data-view", "plot");
-  await expect(page.getByTestId("chip-angle")).toHaveText("DEG");
+  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "deg");
 });
