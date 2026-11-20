@@ -31,7 +31,7 @@ function ctx(items: Row[] = [], app: string | null = null) {
     taps: { tap() {} },
     clearModifiers() {},
     hasResult: () => false,
-    cycleFormat: async () => void log.push("cycleFormat"),
+    formKey: async (k: string) => void log.push(k),
   };
   const shell = { app, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, nav: () => false, toggleMenu: () => (log.push("toggleMenu"), true) };
   // ClipActions.keyCopy (clipboard/actions.test.ts holds its rule): here it says what it was given, and calls the dead press when it has nothing to copy

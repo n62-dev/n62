@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key (fmt) and the key vibration settings. Uses the real engine (GIAC_OUT).
 import { expect, test, type Page } from "@playwright/test";
-import { open, sheet, sheetKey, tap, tapTwice } from "./helpers.ts";
+import { open, recordVibrations, sheet, sheetKey, tap, tapTwice, vibrations } from "./helpers.ts";
 
 const lastText = (page: Page) => page.locator('[data-testid="result"] .result').last();
 const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
@@ -186,4 +186,98 @@ test("marks: an un-audited float is ⚠ with no count and shows only the confirm
   await page.evaluate(() => window.n62.session.submit("\\operatorname{BesselJ}\\left(1,2\\right)"));
   await expect(lastText(page)).toHaveAttribute("data-text", "0.57672480775687");
   await expect(markOfLast(page)).toHaveText("⚠");
+});
+
+// R775: Fmt and a b/c take Copy's row: the picked row, else the newest finished one
+const texts = (page: Page) => page.locator('[data-testid="result"] .result');
+const errors = (page: Page) => page.locator('[data-status="error"]');
+/** One error row (1ᴇ2.5) after the rows so far, the line empty again. */
+async function errorRow(page: Page): Promise<void> {
+  const before = await errors(page).count();
+  await tap(page, ["d1", "emark", "d2", "dot", "d5", "enter"]);
+  await expect(errors(page)).toHaveCount(before + 1);
+  await page.evaluate(() => window.n62.entry.clear());
+}
+
+test("R775: Fmt after a refused line acts on the newest finished row", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await tap(page, ["d5", "d0", "d0", "d0", "d0", "enter"]);
+  await expect(texts(page).last()).toHaveAttribute("data-text", "50000");
+  await errorRow(page);
+  await tap(page, ["fmt"]);
+  await expect(texts(page).first()).toHaveAttribute("data-text", "5.00000000000E4");
+  await expect(texts(page).first().locator(".math")).toHaveAttribute("data-latex", /times10\^\{4\}/);
+});
+
+test("R775: Fmt on a picked older row changes that row, not the last", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await tap(page, ["d3", "enter"]);
+  await expect(texts(page)).toHaveCount(1);
+  await tap(page, ["d4", "enter"]);
+  await expect(texts(page)).toHaveCount(2);
+  await tap(page, ["d5", "d0", "d0", "d0", "d0", "enter"]); // 50000 last, so rows 1 and 2 stay plain
+  await expect(texts(page)).toHaveCount(3);
+  await tap(page, ["up", "up", "up"]); // picks row 1 (3)
+  await expect(page.locator('article.item[data-selected="true"]')).toHaveCount(1);
+  await tap(page, ["fmt"]);
+  await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3.00000000000E0");
+  await expect(texts(page).nth(1)).toHaveAttribute("data-text", "4");
+  await expect(texts(page).nth(2)).toHaveAttribute("data-text", "50000");
+  // the pick stays, so a second press goes on round the cycle on the same row
+  await tap(page, ["fmt"]);
+  await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3.00000000000E0");
+  await expect(texts(page).nth(2)).toHaveAttribute("data-text", "50000");
+});
+
+test("R775: a b/c after a refused line acts on the newest finished row", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await tap(page, ["d0", "dot", "d5", "enter"]);
+  await expect(texts(page).last()).toHaveAttribute("data-text", "0.5");
+  await errorRow(page);
+  await tap(page, ["frac"]);
+  await expect(texts(page).first()).toHaveAttribute("data-text", "1/2");
+});
+
+test("R775: a b/c on a picked older row changes that row, not the last", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await tap(page, ["d0", "dot", "d5", "enter"]);
+  await expect(texts(page)).toHaveCount(1);
+  await tap(page, ["d0", "dot", "d2", "d5", "enter"]);
+  await expect(texts(page)).toHaveCount(2);
+  await tap(page, ["up", "up", "frac"]);
+  await expect(texts(page).nth(0)).toHaveAttribute("data-text", "1/2");
+  await expect(texts(page).nth(1)).toHaveAttribute("data-text", "0.25");
+});
+
+test("R775: a picked error row: Fmt and a b/c do nothing and are dead presses", async ({ page }) => {
+  await recordVibrations(page);
+  await open(page, "");
+  await ready(page);
+  await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+  await tap(page, ["d0", "dot", "d5", "enter"]);
+  await expect(texts(page)).toHaveCount(1);
+  await errorRow(page);
+  await tap(page, ["up"]); // picks the newest row, the error
+  await expect(page.locator('article.item[data-selected="true"][data-status="error"]')).toHaveCount(1);
+  const v1 = (await vibrations(page)).length;
+  await tap(page, ["fmt"]);
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3); // the key and the dead pulse
+  await tap(page, ["frac"]);
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(6);
+  await expect(texts(page).first()).toHaveAttribute("data-text", "0.5");
+});
+
+test("R775 control: Fmt on the last row, nothing picked, as before", async ({ page }) => {
+  await open(page, "");
+  await ready(page);
+  await tap(page, ["d3", "enter"]);
+  await tap(page, ["d5", "d0", "d0", "d0", "d0", "enter"]);
+  await expect(texts(page)).toHaveCount(2);
+  await tap(page, ["fmt"]);
+  await expect(texts(page).nth(1)).toHaveAttribute("data-text", "5.00000000000E4");
+  await expect(texts(page).nth(0)).toHaveAttribute("data-text", "3");
 });

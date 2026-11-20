@@ -65,7 +65,7 @@ function ctx(stored = true) {
     },
     hasResult: () => stored,
     undoRemoved: () => false,
-    cycleForm: async () => true,
+    formKey: async () => true,
   };
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true };
   /** The line each Enter sent. */

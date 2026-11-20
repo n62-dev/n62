@@ -39,11 +39,11 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     await s.submit("\\frac12");
     await s.submit("\\frac13");
     expect(text(s)).toBe("0.333333333333");
-    expect(await s.cycleFormat()).toBe(true);
+    expect(await s.formKey("cycleFormat")).toBe(true);
     expect(text(s)).toBe("3.33333333333E-1");
-    await s.cycleFormat();
+    await s.formKey("cycleFormat");
     expect(text(s)).toBe("333.333333333E-3");
-    await s.cycleFormat();
+    await s.formKey("cycleFormat");
     expect(text(s)).toBe("0.333333333333");
     expect(text(s, 0)).toBe("0.5"); // only the last result moved
     expect(s.settings.format).toBe("std"); // and not the global setting
@@ -55,20 +55,20 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     await s.submit("\\frac73");
     const seen: string[] = [];
     for (let i = 0; i < 4; i++) {
-      await s.cycleFormat();
+      await s.formKey("cycleFormat");
       seen.push(text(s));
     }
     // from Standard: sci, eng, fix, std (derived: 7/3 = 2.3333…, exponent 0)
     expect(seen).toEqual(["2.33333333333E0", "2.33333333333E0", "2.3333", "2.33333333333"]);
     const forms: string[] = [];
     for (let i = 0; i < 2; i++) {
-      await s.cycleForm();
+      await s.formKey("cycleForm");
       forms.push(text(s));
     }
     expect(forms).toEqual(["7/3", "2.33333333333"]);
     // the Format key leaves a form: back to the number in its notation
-    await s.cycleForm();
-    await s.cycleFormat();
+    await s.formKey("cycleForm");
+    await s.formKey("cycleFormat");
     expect(text(s)).toBe("2.33333333333");
   });
 
@@ -76,12 +76,12 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     const s = new Session(await engineCalc(), fakeKv());
     await s.submit("\\frac52");
     expect(text(s)).toBe("2.5");
-    expect(await s.cycleForm()).toBe(true);
+    expect(await s.formKey("cycleForm")).toBe(true);
     expect(text(s)).toBe("5/2");
-    expect(await s.cycleForm()).toBe(true);
+    expect(await s.formKey("cycleForm")).toBe(true);
     expect(text(s)).toBe("2.5");
     await s.submit("2+3");
-    expect(await s.cycleForm()).toBe(false);
+    expect(await s.formKey("cycleForm")).toBe(false);
     expect(text(s)).toBe("5");
   });
 
@@ -91,9 +91,9 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     const cas = (x: Session): string => x.display(x.cas.at(-1)!).text;
     await s.submit("\\frac52");
     expect(cas(s)).toBe("5/2");
-    await s.cycleForm();
+    await s.formKey("cycleForm");
     expect(cas(s)).toBe("2.5");
-    await s.cycleForm();
+    await s.formKey("cycleForm");
     expect(cas(s)).toBe("5/2");
   });
 
@@ -101,12 +101,12 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     const s = new Session(await engineCalc(), fakeKv());
     await s.submit("3+4\\mathrm{i}", "3+4*i");
     expect(text(s)).toBe("3+4*i");
-    await s.cycleForm(); // -> polar
+    await s.formKey("cycleForm"); // -> polar
     expect(text(s)).toBe("5∡0.927295218002"); // oracle: atan(4/3)
-    await s.cycleForm(); // -> a+b*i
+    await s.formKey("cycleForm"); // -> a+b*i
     expect(text(s)).toBe("3+4*i");
     s.setAngle("deg");
-    await s.cycleForm(); // -> polar, now in degrees
+    await s.formKey("cycleForm"); // -> polar, now in degrees
     expect(text(s)).toBe("5∡53.1301023542"); // oracle: atan(4/3) in degrees
   });
 
@@ -122,7 +122,7 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     await a.restoreHistory();
     a.setFmtMode("eng", false);
     await a.submit("\\frac13");
-    await a.cycleFormat();
+    await a.formKey("cycleFormat");
     expect(text(a)).toBe("3.33333333333E-1");
     a.flushHistory();
     const b = new Session(await engineCalc(), kv);
@@ -154,7 +154,7 @@ describe.skipIf(!giacAvailable())("Format key (real Giac)", () => {
     await b.restore();
     expect(text(b, -2)).toBe("0xFFFFFFFFFFFFFFFF");
     expect(text(b)).toBe("0o377");
-    expect(await b.cycleFormat()).toBe(true);
+    expect(await b.formKey("cycleFormat")).toBe(true);
     expect(text(b)).toBe("255");
     await b.submit("-1");
     b.home.at(-1)!.fmt = "bin"; // outside the unsigned word: the number keeps its form
@@ -166,10 +166,10 @@ describe("Format key (stub engine)", () => {
   it("does nothing when the last result is not a number, and in a CAS result that is symbolic", async () => {
     const s = new Session(new FakeCalc(), fakeKv());
     await s.submit("x");
-    expect(await s.cycleFormat()).toBe(false);
+    expect(await s.formKey("cycleFormat")).toBe(false);
     s.setView("cas");
     await s.submit("x");
-    expect(await s.cycleFormat()).toBe(false);
+    expect(await s.formKey("cycleFormat")).toBe(false);
   });
 
   it("a CAS number cycles from its exact form through the modes and returns to it", async () => {
@@ -181,7 +181,7 @@ describe("Format key (stub engine)", () => {
     expect(shown()).toBe("1/4");
     const seen: string[] = [];
     for (let i = 0; i < 4; i++) {
-      await s.cycleFormat();
+      await s.formKey("cycleFormat");
       seen.push(shown());
     }
     expect(seen).toEqual(["0.25", "2.50000000000E-1", "250.000000000E-3", "1/4"]);

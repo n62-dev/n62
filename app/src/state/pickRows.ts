@@ -25,3 +25,8 @@ export const canPick = (items: readonly Row[], i: number): boolean => pickable(i
 /** R147 (the G2's way): what a tap on row `index`'s entry or result does while `selected` is picked: the first tap
  *  picks the row ("pick"), a tap on the picked row recalls or inserts ("act"). */
 export const rowTap = (selected: number | null, index: number): "pick" | "act" => (index === selected ? "act" : "pick");
+
+/** The row an action means (Copy's rule, R775): the given (picked) one when it is finished, none when it is not; with no
+ *  row given, the newest finished one. Copy, Fmt and a b/c share it. */
+export const targetRow = <T extends Row>(items: readonly T[], row?: T): T | undefined =>
+  (row ? [row] : [...items].reverse()).find((i) => i.status === "done");
