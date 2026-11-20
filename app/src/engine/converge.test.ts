@@ -5,7 +5,7 @@
 import { engineGiac, type EngineGiac } from "./nodeGiac.ts";
 import { fakeGiac } from "./fakeGiac.ts";
 import { beforeAll, describe, expect, it } from "vitest";
-import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, integratedNumerically, refusalOf } from "./converge.ts";
+import { callsIn, errorRefusal, floatBounds, giacPair, hasDefiniteIntegral, hasNestedIntegral, integratedNumerically, refusalOf } from "./converge.ts";
 import { EngineHost, type GiacApi } from "./host.ts";
 import type { GiacBridge } from "./bridge.ts";
 import { defaultHomeSettings, precisionFacts } from "./homeEval.ts";
@@ -28,6 +28,15 @@ describe("converge helpers", () => {
     expect(hasDefiniteIntegral("int(1/(1+x^2),x,0,1)")).toBe(true);
     expect(hasDefiniteIntegral("int(1/(1+x^2),x)")).toBe(false);
     expect(hasDefiniteIntegral("[int(x,x,0,1),evalf(pi)]")).toBe(false);
+  });
+  it("G771: a nested integral's pair holds two numbers; only the input with an integral inside an integral reads it so", () => {
+    const nested = "[1.6235826468788-5.78E-41*i,1.35506364264]";
+    expect(giacPair(nested, true)).toEqual({ exact: "1.6235826468788-5.78E-41*i", numeric: "1.35506364264" });
+    expect(giacPair("[0.5,0.785398163397]", true)).toEqual({ exact: "0.5", numeric: "0.785398163397" });
+    expect(giacPair(nested)).toBeNull();
+    expect(giacPair("[x+0.5,0.785398163397]", true)).toBeNull();
+    expect(hasNestedIntegral("int(int(x*y,y,0,1),x,0,1)")).toBe(true);
+    expect(hasNestedIntegral("int(x*sum(1/k,k,1,3),x,0,1)+int(x,x,0,1)")).toBe(false);
   });
   it("G90: makes every definite integral's bounds floats, nested ones too, and leaves the rest alone", () => {
     expect(floatBounds("int(asin(x)*12^x,x,0,1)")).toBe("int(asin(x)*12^x,x,evalf(0),evalf(1))");
@@ -165,6 +174,30 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
   const home = (input: string, angle: "rad" | "deg" = "rad") => host.home(rewriteAngles(input, "typed"), { ...defaultHomeSettings, angle, budgetSteps: 20 * defaultHomeSettings.budgetSteps }).result;
   const cas = (input: string, angle: "rad" | "deg" = "rad") => host.cas(rewriteAngles(input, "typed"), { ...defaultCasSettings, angle }).result;
 
+  it("G771 (F471): an inner integral and one with a free name are checked at generic points; the divergent ones are refused, in Home and CAS", () => {
+    for (const input of ["int(int(x/y^2,y,-1,1),x,1,2)", "int(x/y,y,-1,1)", "int(x/y^2,y,-1,1)", "int(int(1/(x-y),y,0,1),x,0,1)", "int(int(int(1/(x-z),z,0,1),y,5,6),x,0,1)"]) {
+      expect(home(input), input).toMatchObject({ ok: false, error: "integralDiverges" });
+      expect(cas(input), input).toMatchObject({ ok: false, error: "integralDiverges" });
+    }
+  });
+  it("G771: a divergence only at the midpoint, a convergent inner integral and a free name that converges keep their answers", () => {
+    expect(home("int(int(1/(abs(x-1/2)+y),y,0,1),x,0,1)")).toMatchObject({ ok: true, display: "1.90954250488" });
+    expect(home("int(int(x^2+y^2,y,0,3),x,0,2)")).toMatchObject({ ok: true, display: "26" });
+    expect(home("int(int(1/sqrt(abs(x-y)),y,0,1),x,0,1)")).toMatchObject({ ok: true, display: "2.66666666667" });
+    expect(home("int(x^2,x,0,a)")).toMatchObject({ ok: true, display: "a^3/3" });
+    expect(cas("int(1/(y-a),y,2,3)")).toMatchObject({ ok: true });
+    // fix round 1: a free name is also tried beyond the interval's ends (1.38 and −2.72 lie inside (−5, 5) and (0, 10)):
+    // it converges for |a| > 5 (a = 10: ln(5/15)), so Giac's algebra stays; x/y^2 diverges at every value of y
+    expect(home("int(1/(y-a),y,-5,5)")).toMatchObject({ ok: true });
+    expect(cas("int(1/(y-a),y,-5,5)")).toMatchObject({ ok: true });
+    expect(home("int(1/(x-a),x,0,10)")).toMatchObject({ ok: true });
+    expect(home("int(x/y^2,y,-1,1)")).toMatchObject({ ok: false, error: "integralDiverges" });
+  });
+  it("G771: a nested integral's two-number pair is no list: one value, no confirmed digit", () => {
+    const r = home("int(int(abs(y-sin(10^50)),y,-1,1),x,0,1)");
+    expect(r).toMatchObject({ ok: true, display: "1", approximate: true, facts: { reliableDigits: 0 } });
+    expect(r).not.toHaveProperty("items");
+  });
   it("G178: at Home's own budget a divergent integral inside a larger input is refused like the bare one", () => {
     for (const input of ["int(1/x,x,-1,1)", "3*int(1/x,x,-1,1)+1", "int(1/x,x,-1,1)^2+sin(1)"]) {
       expect(host.home(rewriteAngles(input, "typed"), defaultHomeSettings).result).toMatchObject({ ok: false, error: "integralDiverges" });
