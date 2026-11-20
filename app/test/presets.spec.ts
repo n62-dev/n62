@@ -108,9 +108,9 @@ test("C while naming clears the name only: the line comes back after the prompt 
   await hidden(page, false);
   await tap(page, ["@mode", "d5", "d1"]);
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
-  await tap(page, ["alpha", "vars", "alpha", "math"]); // a return drops the focus: the name by keys (A, B)
-  expect(await entryValue(page)).toBe("AB");
-  await tap(page, ["shift", "esc"]); // C
+  await tap(page, ["vars", "math"]); // a return drops the focus: the name by keys (a, b: Alpha is locked in lower case, R776)
+  expect(await entryValue(page)).toBe("ab");
+  await tap(page, ["alpha", "shift", "esc"]); // C (the Alpha lock off first: under it Esc is the alpha layer's)
   expect(await entryValue(page)).toBe("");
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
   await tap(page, ["esc"]);

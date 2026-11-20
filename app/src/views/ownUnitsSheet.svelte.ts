@@ -108,6 +108,7 @@ function openForm(env: SettingsEnv, mark: () => DecimalMark, start: Draft): void
         () => "",
         entry,
         read,
+        true, // R776: a field of the form is not a name prompt: no Alpha lock, no hint
       ),
   });
   const fail = (message: string): void => void (d.refusal = message);

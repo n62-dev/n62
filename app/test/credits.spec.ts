@@ -14,7 +14,7 @@ async function asked(page: Page, view: "home" | "cas"): Promise<void> {
   expect((await entryValue(page)).toLowerCase()).toBe("n62");
   await tap(page, ["enter"]);
   await expect(credits(page)).toBeVisible();
-  await expect(credits(page)).toContainText("N for number, 6 first perfect number, 2 first prime number");
+  await expect(credits(page)).toContainText("N62 stands for \"Number Six Two\": six is the first perfect number, and two is the first prime number.");
   await expect(credits(page)).toContainText("Giac");
   await expect(credits(page)).toContainText("MathLive");
   await expect(page.getByTestId("sheet-title")).toHaveText("N62");

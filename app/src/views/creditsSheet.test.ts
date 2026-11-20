@@ -8,7 +8,7 @@ describe("creditBlocks", () => {
   const blocks = creditBlocks(about.parts);
   const text = blocks.map((b) => ("heading" in b ? b.heading : b.text));
   it("starts with the owner's story, then Made with", () => {
-    expect(text[0]).toBe("N for number, 6 first perfect number, 2 first prime number");
+    expect(text[0]).toBe("N62 stands for \"Number Six Two\": six is the first perfect number, and two is the first prime number.");
     expect(text[1]).toBe("Made with");
   });
   it("names Giac and MathLive with their copyright lines as THIRD_PARTY.md has them", () => {

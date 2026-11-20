@@ -14,7 +14,7 @@ import { Session } from "../state/session.svelte.ts";
 import { DATA_VERSION } from "../state/storage.ts";
 import type { RawRecord } from "../state/storageRaw.ts";
 import { UnitCells } from "../units/userCells.svelte.ts";
-import { groupValue, nameFrom, presetRow, setPresetsModel, summary } from "./presetsView.svelte.ts";
+import { askName, groupValue, nameFrom, presetRow, setPresetsModel, summary } from "./presetsView.svelte.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 
 function store(rec?: RawRecord): PresetStore {
@@ -219,5 +219,45 @@ describe("Mode's Preset row", () => {
     expect(line).toBe("12");
     shell.prompt?.cancel(); // nothing to end
     expect(line).toBe("12");
+  });
+  it("R776: a name prompt locks Alpha at its start, has its hint while open, and lets Alpha go at its end (Enter, Esc, a key that goes elsewhere, Save again)", async () => {
+    const { session, presets } = await setup();
+    const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
+    let line = "12";
+    const entry = { get value() { return line; }, chips: {}, set: (latex: string) => void (line = latex), run: (a: ActionBody) => void (line += a.kind === "type" ? a.text : ""), clear: () => void (line = "") };
+    const locks: boolean[] = [];
+    const host = { shell, entry, alpha: (on: boolean) => void locks.push(on), data: (run: (c: ClipActions) => void) => run({ say: () => {} } as unknown as ClipActions) };
+    const save = () => items(presetRow(session, host)).find((r) => r.id === "save")?.run?.();
+    const key = (a: ActionBody): boolean | undefined => shell.prompt?.key(a);
+    save();
+    expect(locks).toEqual([true]);
+    expect(shell.prompt?.hint).toBe("Type a name. Enter saves, Esc cancels.");
+    key({ kind: "type", text: "ab" });
+    key({ kind: "special", name: "enter" });
+    expect(locks).toEqual([true, false]);
+    expect(shell.prompt).toBeNull();
+    save();
+    key({ kind: "special", name: "esc" });
+    expect(locks).toEqual([true, false, true, false]);
+    expect(line).toBe("12");
+    save();
+    key({ kind: "special", name: "mode" }); // goes elsewhere: ends first
+    expect(locks.slice(-2)).toEqual([true, false]);
+    save();
+    save(); // Save again: the first ends (Alpha let go), the second locks again
+    expect(locks.slice(-3)).toEqual([true, false, true]);
+    shell.prompt?.cancel();
+    expect(locks.at(-1)).toBe(false);
+    expect(presets.list.map((p) => p.name)).toEqual(["ab"]);
+  });
+  it("R776: a plain prompt (a field of the unit form) has no hint and leaves Alpha as it is", async () => {
+    const shell = { prompt: null as EntryPrompt | null, sheet: null, app: null, view: "symb" };
+    let line = "";
+    const entry = { get value() { return line; }, chips: {}, set: (latex: string) => void (line = latex), run: () => {}, clear: () => {} };
+    const locks: boolean[] = [];
+    askName({ shell, entry, alpha: (on: boolean) => void locks.push(on) }, "", () => {}, () => "", "Factor", undefined, true);
+    expect(shell.prompt?.hint).toBeUndefined();
+    shell.prompt?.key({ kind: "special", name: "esc" });
+    expect(locks).toEqual([]);
   });
 });

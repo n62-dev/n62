@@ -42,6 +42,8 @@ const PALETTE_IDS: readonly string[] = ["tmpl", "rel", "sym", "chars"] satisfies
  *  the line it set aside, the one a hide keeps (R34, R123): the name on the line is never kept. */
 export interface EntryPrompt {
   readonly label: string;
+  /** R776: a line under the entry, shown for as long as the prompt is open (App.svelte). */
+  readonly hint?: string;
   readonly aside: { readonly latex: string; readonly chips: ChipTable };
   key(action: ActionBody): boolean;
   cancel(): void;

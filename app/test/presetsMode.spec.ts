@@ -55,17 +55,17 @@ test.describe("by keys", () => {
     await expect(sheet(page)).toHaveCount(0);
     await expect(label(page)).toHaveText("Preset name");
     expect(await entryValue(page)).toBe("");
-    await tap(page, ["alpha", "vars", "alpha", "math"]);
-    expect(await entryValue(page)).toBe("AB");
+    await tap(page, ["vars", "math"]); // Alpha is locked in lower case from the prompt's start (R776)
+    expect(await entryValue(page)).toBe("ab");
     await tap(page, ["enter"]);
-    await expect(notice(page)).toHaveText("Saved AB");
+    await expect(notice(page)).toHaveText("Saved ab");
     await expect(label(page)).toHaveCount(0);
     expect(await entryValue(page)).toBe("12"); // the line as it was before the name
     expect(await historyRows(page)).toBe(0);
     await tap(page, ["@mode"]);
     await sheetKey(page, ["down", "down", "down", "down"]);
     await expect(active(page)).toHaveAttribute("data-id", "preset");
-    await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("AB");
+    await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("ab");
     await expect(row(page, "preset").getByTestId("row-hint")).toHaveText("RAD · STD 12 · point · no keys");
     await tap(page, ["enter"]); // Enter on the row lists the presets
     await expect(title(page)).toHaveText("Mode › Presets");

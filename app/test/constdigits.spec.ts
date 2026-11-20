@@ -129,8 +129,8 @@ test("a tap on the row shows its σ line, a second hides it; with Muted digits a
   await tap(page, ["@mode", "d5"]);
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="save"]').tap();
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
-  await tap(page, ["alpha", "emark", "enter"]); // the name "P" (Alpha on the ᴇ key)
-  await expect(page.getByTestId("notice")).toHaveText("Saved P");
+  await tap(page, ["emark", "enter"]); // the name "p" (the ᴇ key's Alpha letter, locked in lower case, R776)
+  await expect(page.getByTestId("notice")).toHaveText("Saved p");
   await page.evaluate(() => (window.n62.session.settings.uncertainty = "sigma"));
   await tap(page, ["@mode", "d5"]);
   await page.getByTestId("menu").locator('[role="menuitem"][data-id="p1"]').tap();
