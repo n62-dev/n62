@@ -82,6 +82,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look | ron, Sonnet | `p1/ron-deadquiet` | R770 |
 | 885n | [R779](packages/R779.md) the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
 | 885o | [R780](packages/R780.md) every menu row has a number the keypad reaches, past row 10 too (measure first) | ron, Sonnet | `p1/ron-rowsnumbers` | R777 |
+| 885zc | [R820](packages/R820.md) while a sheet takes letters, the faces and the pop show the letter typed (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfaces` | R729 |
 | 885y | [R801](packages/R801.md) a tap on a unit slot makes it active; the keys stay with the view (B4) | ron, Sonnet | `p1/ron-unittap` | R780 |
 | 885z | [R802](packages/R802.md) the Math key reads Find (B2) | ron, Sonnet | `p1/ron-findface` | – |
 | 885za | [R803](packages/R803.md) the unit pad's powers read x², x³, x⁴, x⁻¹, √x (B3) | ron, Sonnet | `p1/ron-unitpowers` | – |
