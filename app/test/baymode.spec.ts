@@ -70,7 +70,8 @@ for (const width of [360, 392, 412] as const)
       await rows.first().waitFor();
       const ids = await rows.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["id"]));
       expect(ids[ids.length - 1]).toBe("mode");
-      await tap(page, [`d${ids.length}`]);
+      expect(ids.length).toBe(10); // Mode is the tenth row of Plot's ☰ with or without an answer
+      await tap(page, ["d0"]);
       await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
       expect(await fits(page)).toEqual([]);
     });

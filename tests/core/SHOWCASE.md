@@ -32,7 +32,7 @@ before the HP layout because the slot kinds are fixed. The headlines and the cap
 | 1,000+ functions | 1 | s7: d/dx x² (CAS) | `2x` |
 | | 2–3 | F: solve(x² = 16) from Find (CAS) | `{-4,4}` |
 | | 4 | s5: √200 (CAS) | `10√2` |
-| Up to 30 digits | 5 | s13: the STD|12 chip, digits 12 → 30, then √2 | `≈ 1.41421356237309504880168872421` |
+| Up to 30 digits | 5 | s13: the STD\|12 chip, digits 12 → 30, then √2 | `≈ 1.41421356237309504880168872421` |
 | | 6–7 | K: π, then e^(π√163), at 30 digits | `≈ 262537412640768743.999999999999` |
 | HP Prime key layout | 8–9 | A: Σ K², K = 1 to 10 | `= 385` |
 | | 10 / 11 | s10 / s11: F1 = x³ − 2 / Plot, Root | `x = 1.25992104989` |

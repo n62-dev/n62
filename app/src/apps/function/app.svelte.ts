@@ -213,10 +213,9 @@ export class FunctionApp implements AppInstance {
         { id: "default", label: numText("plot.defaultWindow"), run: () => this.defaultWindow() },
         { id: "copy", label: tc("clip.copy"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine()) },
         { id: "shown", label: tc("clip.asShown"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine(), true) },
-        // R262: the ninth row only with an answer: at the 36 px floor nine rows with a reason line do not fit over the keys
-        // (412 × 915, the Fairphone: R145, R82f1), and as the last row it moves no other row's number (docs/05 3.1)
-        ...(this.copyLine() ? [{ id: "tohome", count: "tohome", label: numText("app.toHome"), run: () => void this.toHome(this.copyLine()) }] : []),
-        modeRow(this.host), // R785: last; the row after To Home, so To Home keeps its digit
+        // R262, R785: To Home is always the ninth row, off with its reason (the same one Copy and As shown say, so said once) while there is no answer, so Mode keeps its tenth place (docs/06 3b)
+        { id: "tohome", count: "tohome", label: numText("app.toHome"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.toHome(this.copyLine()) },
+        modeRow(this.host), // R785: last, the tenth row in both states
       ];
     }
     if (view === "num")
