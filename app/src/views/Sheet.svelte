@@ -1,11 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  // One sheet for every list (docs/05 3.1, decisions.md "R21"). A pick sheet (`over: "keypad"`) rises over the
-  // keypad's maths rows, anchored at its bottom edge and as tall as its rows need, in a layer App.svelte places there;
-  // its rows and cells shrink to the room down to a floor, and only below the floor does it scroll (sheetFit.ts). A
-  // grid whose cells are picked by keys (Shift + 6) draws each cell over its key. A list that takes letters
-  // (`over: "view"`) stays above the keypad, over the history or view. The keys drive it through App.svelte and
-  // sheetKeys.ts; touch is a shortcut: a tap on a row picks it, ◀ ▶ step a value, ‹ goes back a level, × closes it.
+  // One sheet for every list (docs/05 3.1, decisions.md "R21", R770). Every sheet is drawn in the viewport, over the history
+  // or view, rising from just above the keypad (the entry line's room is kept free while the rows fit above it); the keys stay
+  // live below it and drive it through App.svelte and sheetKeys.ts. A sheet taller than the room scrolls inside its box.
+  // Touch is a shortcut: a tap on a row picks it, ◀ ▶ step a value, ‹ goes back a level, × closes it.
   import { t } from "../i18n/index.ts";
   import { pressFlag } from "../input/pressFlag.ts";
   import { sheetText } from "../i18n/enSheet.ts";
@@ -16,7 +14,7 @@
   import SheetCells from "./SheetCells.svelte";
   import type { MenuItem } from "../apps/types.ts";
   import type { Row, Sheet } from "./sheet.svelte.ts";
-  import { fitCell, fitRow, hasOptions, hasSteps, ROW, rowHeight, showsReason, twoLines } from "./sheetFit.ts";
+  import { hasOptions, hasSteps, ROW, rowHeight, showsReason, twoLines } from "./sheetFit.ts";
   import { builtRows, keyedById, plainRow, rowKey, sameRows } from "./sheetWindow.ts";
 
   /** R145: the ⚙ in a ☰ sheet's title row (drawn, not the emoji glyph, which Android paints in colour). Here, not in
@@ -38,9 +36,7 @@
     onback,
     ongear,
     onclose,
-    over = "view",
     below = 0,
-    keyBox,
   }: {
     sheet: Sheet;
     testid: string;
@@ -52,12 +48,8 @@
     /** The ⚙ in the root level's title row (R145): Settings as the next level. */
     ongear: () => void;
     onclose: () => void;
-    /** Over the keypad (a pick sheet) or above it, over the history or view (a list that takes letters). */
-    over?: "keypad" | "view";
-    /** Over the view: the height of the entry line under the sheet, kept free while the rows fit above it. */
+    /** The height of the entry line under the sheet, kept free while the rows fit above it. */
     below?: number;
-    /** Over the keypad: a key's box on screen, for the cells drawn over the key that picks them. */
-    keyBox?: (id: string) => DOMRect | undefined;
   } = $props();
 
   const level = $derived(sheet.level);
@@ -71,50 +63,12 @@
   /** The palettes' normal cell height: Tmpl's templates need more than the Shift palettes' one symbol or word. */
   const normalCell = $derived(sheet.id === "rel" || sheet.id === "sym" || sheet.id === "chars" ? 46 : 58);
 
-  // ---- fit (R21a): one measure per resize or change of rows, no per-frame work
   let overlay: HTMLDivElement | undefined = $state();
   let panel: HTMLDivElement | undefined = $state();
   let list: HTMLDivElement | undefined = $state();
-  let row = $state(ROW);
-  let cell = $state(0);
-  /** The cells over their keys: the panel's top in the layer, the cells' boxes in the grid. */
-  let placed = $state.raw<{ top: number; height: number; cells: { x: number; y: number; w: number; h: number }[] } | null>(null);
-
-  function fit(): void {
-    if (over !== "keypad" || !overlay || !panel || !list) {
-      row = ROW;
-      cell = normalCell;
-      placed = null;
-      return;
-    }
-    if (columns !== undefined && keyBox && items.length > 0 && items.every((x) => x.pick)) {
-      const boxes = items.map((x) => keyBox(x.pick?.key ?? ""));
-      if (boxes.every((b) => b !== undefined && b.height > 0)) {
-        const bs = boxes as DOMRect[];
-        const top = Math.min(...bs.map((b) => b.top));
-        const [o, p, g] = [overlay.getBoundingClientRect(), panel.getBoundingClientRect(), list.getBoundingClientRect()];
-        placed = {
-          top: top - o.top - (g.top - p.top),
-          height: Math.max(...bs.map((b) => b.bottom)) - top,
-          cells: bs.map((b) => ({ x: b.left - g.left, y: b.top - top, w: b.width, h: b.height })),
-        };
-        return;
-      }
-    }
-    placed = null;
-    const room = overlay.clientHeight - (panel.offsetHeight - list.offsetHeight);
-    if (columns !== undefined) cell = fitCell(room, Math.ceil(items.length / columns), normalCell);
-    else row = fitRow(room, items.map((item, i) => ({ reason: twoLines(items, i), steps: hasSteps(item), options: hasOptions(item) })));
-  }
-  $effect(() => {
-    void items;
-    void columns;
-    fit();
-    if (!overlay || typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(fit);
-    ro.observe(overlay);
-    return () => ro.disconnect();
-  });
+  /** A list row's and a grid cell's height: the normal one; a sheet taller than its room scrolls (R770: no fit over the keys). */
+  const row = ROW;
+  const cell = $derived(normalCell);
 
   // A search's hits (Find, R132, docs/04 3.2 E3): only the rows the room shows plus a margin are built, the rest as the
   // list is scrolled or the highlight moves down, under a spacer as tall as they are (sheetWindow.ts); keyed by item.
@@ -156,8 +110,6 @@
   $effect(() => {
     void rows.length;
     void level;
-    void row;
-    void cell;
     measure();
     if (!list || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(measure);
@@ -181,9 +133,8 @@
 
   /** Keep the caret in the entry line: nothing in the sheet takes focus. */
   const noFocus = (e: Event): void => e.preventDefault();
-  // Over the keypad a key that opens the sheet fires when the finger lifts, and the browser's click that follows lands
-  // on whatever is now under the finger: the cell or row the sheet put over that key (Shift + 6 over 6). Only a click
-  // whose press began on the sheet counts.
+  // A sheet opened by a press fires when the finger lifts (a hold on a history row, a tap on a result), and the browser's click
+  // that follows lands on whatever is now under the finger: a row of the sheet. Only a click whose press began on the sheet counts.
   let pressed = false;
   function onlyPressed(e: MouseEvent): void {
     if (!pressed) {
@@ -199,25 +150,23 @@
   const px = (n: number | undefined): string | undefined => (n === undefined ? undefined : `${n}px`);
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the keypad drives the sheet; a tap beside it closes it) -->
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the keys drive the sheet; a tap on the history beside it closes it) -->
 <div
   class="overlay"
-  class:keypad={over === "keypad"}
-  class:matrix={over === "view" && level.grid !== undefined}
-  class:edits={over === "view" && level.grid?.editing != null}
+  class:matrix={level.grid !== undefined}
+  class:edits={level.grid?.editing != null}
   style:--room="{below}px"
   data-testid={testid}
   bind:this={overlay}
   onpointerdown={noFocus}
-  onclick={(e) => over === "view" && e.target === e.currentTarget && onclose()}
+  onclick={(e) => e.target === e.currentTarget && onclose()}
 >
-  {#if over === "keypad"}<div class="dim" data-testid="sheet-dim"></div>{/if}
   <!-- svelte-ignore a11y_interactive_supports_focus (nothing in a sheet takes focus: the caret stays in the entry line) -->
-  <div class="sheet" class:placed={placed !== null} role="menu" aria-label={level.title} data-depth={sheet.depth} bind:this={panel} style:top={px(placed?.top)} onpointerdowncapture={() => (pressed = true)} onpointercancel={() => (pressed = false)} onclickcapture={onlyPressed}>
+  <div class="sheet" role="menu" aria-label={level.title} data-depth={sheet.depth} bind:this={panel} onpointerdowncapture={() => (pressed = true)} onpointercancel={() => (pressed = false)} onclickcapture={onlyPressed}>
     {#if columns !== undefined}
       <!-- a grid (the palettes, R10 and R18): no title row; the title, the highlighted cell's name and × share the hint
            line. Each cell is drawn as math, no numbers; a cell picked by the key at its place shows that key in its
-           corner and, over the keypad, sits on that key (Shift + 6). -->
+           corner. -->
       <div class="head">
         <span class="gtitle" data-testid="sheet-title">{sheet.path}</span>
         <span class="hint" data-testid="sheet-hint">{level.current?.label ?? ""}</span>
@@ -228,13 +177,11 @@
         class="grid"
         data-grid={sheet.id}
         style:grid-template-columns="repeat({columns}, minmax(0, 1fr))"
-        style:height={px(placed?.height)}
         style:--cell={px(cell || normalCell)}
         bind:this={list}
         onscroll={measure}
       >
         {#each rows as r, i (r.index)}
-          {@const c = placed?.cells[i]}
           <button
             type="button"
             role="menuitem"
@@ -244,10 +191,6 @@
             data-active={r.index === level.highlight}
             data-id={r.item.id}
             data-count={r.item.count ?? "row"}
-            style:left={px(c?.x)}
-            style:top={px(c?.y)}
-            style:width={px(c?.w)}
-            style:height={px(c?.h)}
             onclick={() => ontap(r.index)}
           >{#if r.item.pick}<span class="pick" data-testid="cell-key">{r.item.pick.legend}</span>{:else if level.digits}<span class="pick" data-testid="cell-digit">{(r.index % columns + 1) % 10}</span>{/if}<MathView latex={r.item.latex ?? r.item.label} label={r.item.label} /></button>
         {/each}
@@ -314,8 +257,8 @@
       {#if level.current?.put}<button type="button" class="put" data-testid="find-put" onclick={() => level.current?.put?.run()}>{level.current.put.label} ▶</button>{/if}
     {/if}
   </div>
-  <!-- over the view: shrinks first (flex-shrink weighs by size: 1000 × its height against the sheet's 1 × its own) -->
-  {#if over === "view"}<div class="room" style:flex-basis="{below}px"></div>{/if}
+  <!-- shrinks first (flex-shrink weighs by size: 1000 × its height against the sheet's 1 × its own) -->
+  <div class="room" style:flex-basis="{below}px"></div>
 </div>
 
 <style>
@@ -342,17 +285,6 @@
   .overlay.matrix > .room {
     flex-shrink: 0;
   }
-  /* over the keypad: the maths keys a short sheet leaves visible stay live (their sheet job), dimmed */
-  .overlay.keypad {
-    background: none;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .dim {
-    position: absolute;
-    inset: 0;
-    background: color-mix(in srgb, var(--panel) 60%, transparent);
-  }
   .room {
     flex-grow: 0;
     flex-shrink: 1000;
@@ -373,34 +305,6 @@
     max-height: calc(100% - var(--sp-2));
     min-height: 0;
     flex: 0 1 auto;
-  }
-  /* over the keypad: the keypad's width, square at its bottom edge */
-  .keypad .sheet {
-    width: 100%;
-    margin: 0;
-    max-height: 100%;
-    border-bottom: 0;
-    border-radius: var(--radius-l) var(--radius-l) 0 0;
-    /* R82f1 (F117): at the keypad's bottom edge, with no border there, 2 px below the last row are enough; the 4 px
-       this saves let Plot's nine Menu rows fit at their floor on the Fairphone 6 (380 px of room), so none is cut */
-    padding-bottom: var(--sp-05);
-    pointer-events: auto;
-    box-shadow: var(--shadow-sheet) color-mix(in srgb, var(--bg) 50%, transparent);
-  }
-  /* R148f1: with the keypad's short rows the sheet's top padding is 3 px, the border's 1 px making up the 4: Mode with its six
-     rows at their floor (36 px, the longest preset name) fits the 326 px of room at 360 × 740. Keypad.svelte decides the
-     breakpoint (under 1000 px tall since R722) and this query follows it (R722f1) */
-  @media (max-height: 999px) {
-    .keypad .sheet {
-      padding-top: calc(var(--sp-1) - var(--stroke-thin));
-    }
-  }
-  .keypad .sheet.placed {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-height: none;
   }
   .head {
     display: flex;
@@ -713,17 +617,6 @@
     border: var(--stroke-thin) solid var(--line);
     font-size: var(--fs-cell); /* the widest template (piecewise) fits a sixth of a phone's width */
     cursor: pointer;
-  }
-  /* the cells over their keys (Shift + 6): each at its key's box */
-  .placed .grid {
-    display: block;
-    position: relative;
-    overflow: visible;
-    flex: none;
-  }
-  .placed button.cell {
-    position: absolute;
-    background: var(--panel);
   }
   /* the Shift palettes hold one symbol or word per cell: larger type in lower cells */
   .grid:is([data-grid="rel"], [data-grid="sym"], [data-grid="chars"]) button.cell {
