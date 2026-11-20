@@ -80,6 +80,8 @@ export class Level {
   /** R725, the Chars sheet: a grid whose cells carry their digit (1-9, 0 the tenth) in the corner; a digit key picks that
    *  cell of the row with the focus, and no cell is picked by the key at its place (pickKey). */
   readonly digits: boolean;
+  /** R800, Memory: a digit key moves the highlight to the numbered row instead of picking it (a pick deletes there). */
+  readonly digitPick: "highlight" | undefined;
   /** R281: the items marked `cell` are drawn as a grid of this many columns above the list (the store sheet's letters);
    *  ▲ ▼ move a row of the grid, ◀ ▶ one cell, and no row has a number (a digit types into the name). */
   readonly cells: number | undefined;
@@ -97,6 +99,7 @@ export class Level {
     this.remember = opts?.remember ?? true;
     this.columns = opts?.columns;
     this.digits = memo === CHARS_SHEET && opts?.columns !== undefined;
+    this.digitPick = opts?.digitPick;
     this.cells = opts?.cells;
     this.typed = opts?.typed;
     this.note = opts?.note;
@@ -258,6 +261,8 @@ export interface SheetOptions {
   unc?: UncHead;
   /** Several lines for the preview (see Level.longPreview). */
   longPreview?: boolean;
+  /** R800: a digit key only highlights its row (see Level.digitPick). */
+  digitPick?: "highlight";
   /** A letter grid above the list, of this many columns (see Level.cells). */
   cells?: number;
   /** What Enter runs for the letters typed (see Level.typed). */
@@ -341,6 +346,10 @@ export class Sheet {
       return i < grid.items.length ? this.activate(i) : STAY;
     }
     const row = this.level.rows.find((r) => r.n === n);
+    if (row && grid.digitPick === "highlight") {
+      grid.highlight = row.index;
+      return STAY;
+    }
     return row ? this.activate(row.index) : STAY;
   }
 

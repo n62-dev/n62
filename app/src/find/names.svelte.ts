@@ -197,6 +197,7 @@ export function showNames(shell: { sheet: Sheet | null }, entry: EntryController
   shell.sheet = new Sheet("find", t(memory ? "memory.title" : "vars.title"), () => (memory && names().length ? [...all(), clearAll] : listed()), {
     search: found,
     remember: false,
-    ...(memory ? {} : { cells: NAME_COLUMNS, ...(newest() ? { at: newest() as string } : {}) }),
+    // R800: a digit key only highlights a Memory row (Enter deletes); it never deletes a name or arms Clear all
+    ...(memory ? { digitPick: "highlight" as const } : { cells: NAME_COLUMNS, ...(newest() ? { at: newest() as string } : {}) }),
   });
 }
