@@ -72,7 +72,8 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19); NOT MERGED after two rounds: its work is on `p1/ron-sheetsview` (8ae3dde8), pass 221's FIX R770f1 finishes it | ron, Sonnet (Opus is capped, A262) | `p1/ron-sheetsview-f1` | – |
 | 885m | R778 a window that scrolls gets a corner button that fills the whole screen (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfull` | R770 |
 | 885p | R783 the bar's right anchor: the angle icon (π or °) and ☰; no ⇧ α slot while the keys are up (owner, 2026-11-20) | ron, Sonnet | `p1/ron-barangle` | R778 |
-| 885q | R785 the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰ | ron, Sonnet | `p1/ron-barbay` | R783 |
+| 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰ | ron, Sonnet | `p1/ron-barbay` | R783 |
+| 885x | [R800](packages/R800.md) Memory's number keys highlight, never delete (owner's walk 2026-11-20, B1: data loss, first) | ron, Sonnet | `p1/ron-memdigits` | – |
 | 885r | [R786](packages/R786.md) ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
 | 885s | [R782](packages/R782.md) the left side: APP▾, Home fixed, slot 2 reassignable by a second tap; stops if the bar does not fit 356 dp | ron, Sonnet | `p1/ron-barslots` | R786 |
 | 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R782 |
@@ -81,6 +82,10 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look | ron, Sonnet | `p1/ron-deadquiet` | R770 |
 | 885n | [R779](packages/R779.md) the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
 | 885o | [R780](packages/R780.md) every menu row has a number the keypad reaches, past row 10 too (measure first) | ron, Sonnet | `p1/ron-rowsnumbers` | R777 |
+| 885y | [R801](packages/R801.md) a tap on a unit slot makes it active; the keys stay with the view (B4) | ron, Sonnet | `p1/ron-unittap` | R780 |
+| 885z | [R802](packages/R802.md) the Math key reads Find (B2) | ron, Sonnet | `p1/ron-findface` | – |
+| 885za | [R803](packages/R803.md) the unit pad's powers read x², x³, x⁴, x⁻¹, √x (B3) | ron, Sonnet | `p1/ron-unitpowers` | – |
+| 885zb | [R804](packages/R804.md) Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Sonnet | `p1/ron-storeline` | – |
 | 885t | [R790](packages/R790.md) the unit view's → Check stays put under the reading (owner's list 2026-11-20, U1) | ron, Sonnet | `p1/ron-unitcheckfixed` | R780 |
 | 885u | [R791](packages/R791.md) the Å cell draws Å, not a red `\AA` (P2) | ron, Sonnet | `p1/ron-angstromglyph` | R790 |
 | 885v | [R792](packages/R792.md) High contrast's outline off the Shift legends (K5) | ron, Sonnet | `p1/ron-hclegend` | R791 |
@@ -88,7 +93,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R780 |
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
-**Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R314, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
+**Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
@@ -109,6 +114,18 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 904 | [R795](packages/R795.md) Plain keys keeps the family's key colours (K3) | ron, Sonnet | `p1/ron-plainfills` | – |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Sonnet | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies the unit view's reading, message or result (U7) | ron, Sonnet | `p1/ron-unitholdcopy` | R790 |
+| 907 | [R806](packages/R806.md) a unit slot gets a caret: the model (owner's walk 2026-11-20, C1) | ron, Sonnet | `p1/ron-unitcaret` | R801 |
+| 908 | [R807](packages/R807.md) the slot draws its caret and its marks (C2) | ron, Sonnet | `p1/ron-unitcaretdraw` | R806 |
+| 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Sonnet | `p1/ron-unitcaretmove` | R807 |
+| 910 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
+| 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Sonnet | `p1/ron-memswipe` | R314 |
+| 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes the highlighted name (C6) | ron, Sonnet | `p1/ron-memdelkey` | R813 |
+| 913 | [R815](packages/R815.md) Memory: tap, Enter, hold and Copy copy the full value (C6) | ron, Sonnet | `p1/ron-memcopy` | R814 |
+| 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Sonnet | `p1/ron-mempaste` | R815 |
+| 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Sonnet | `p1/ron-namekinds` | – |
+| 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Sonnet | `p1/ron-namechips` | R818 |
+| 917 | [R810](packages/R810.md) Shift + ◀ ▶ jump a block (C8); not before the owner's yes on docs/06 | ron, Sonnet | `p1/ron-shiftarrows` | R808 |
+| 918 | [R811](packages/R811.md) a Shift flick down: block mode (C5); not before the owner's answers | ron, Sonnet | `p1/ron-blockmode` | R810 |
 
 **Not queue rows** (henri never starts them; a session moves a row in when its condition is met). While Ultra lasts (owner, 2026-11-16, to the stop) every lane row runs on Opus, and a second factory, the clone `../n62-next` with its own `.coord` and `.tasks` (merge queue, locks, run counter), runs this paragraph's after-tag rows G389 to R351 and R367 to G407 in two lanes of its own, from its own brief, with no device; its phase-1 takes this phase-1 in every two hours and merges back once after the tag, which ticks those rows here. No 05:00 close (owner, 2026-11-15): `.tasks/keep-lanes/keep-lanes3.sh` restarted each lane without `--until` until Tue 11-17 14:00, then stopped both; the closing passes were skipped (owner, 2026-11-17: usage at 96%). A lane whose queue ran out (SHIFT DONE) stays off until a session adds rows and touches `.tasks/keep-lanes/restart-<lane>`. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). From the stop: one lane, "The queue" above, in the order of [release-0.1.0.md](../release-0.1.0.md)'s freeze row (owner, 2026-11-17: before the tag only what the layout lock pins, then R744 and the beta tag, not before; the release candidate Mon 11-23, the tag Tue 11-24; the rest is v0.1.1); by day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
