@@ -128,7 +128,7 @@
     <span class="sep" aria-hidden="true"></span>
     {#if shell.app === null}
       <!-- R785: the bay in Home and CAS: the format, a divider and the significant digits as one chip (`STD|12`); it opens Mode on Format, Significant digits the next row -->
-      <button type="button" class="chip mode" data-testid="chip-format" data-item="format" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
+      <button type="button" class="chip mode" data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
     {:else}
       <span class="seg" role="tablist" aria-label={t("status.views")}>
         {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}

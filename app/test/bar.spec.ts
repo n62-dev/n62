@@ -59,7 +59,7 @@ test("the bar's controls stand in the lock's order, left to right (spec/layout-l
   expect(items.every((it, i) => i === 0 || it.x > (items[i - 1]?.x ?? 0))).toBe(true);
 });
 
-test("the place opens Apps; in Function it shows the app's glyph and its views (R722)", async ({ page }) => {
+test("the place opens Apps; in Function it shows the app's glyph and, after the tabs, its views (R722, R785)", async ({ page }) => {
   await open(page);
   await page.getByTestId("place").tap();
   await expect(page.getByTestId("apps")).toBeVisible();
@@ -70,7 +70,7 @@ test("the place opens Apps; in Function it shows the app's glyph and its views (
   const place = (await box(page, '[data-testid="place"]'))!;
   const symb = (await box(page, '[data-testid="tab-symb"]'))!;
   const home = (await box(page, '[data-testid="tab-home"]'))!;
-  expect(place.right <= symb.left + 0.5 && symb.right <= home.left + 0.5).toBe(true); // glyph ▾, views, then the tabs
+  expect(place.right <= home.left + 0.5 && home.right <= symb.left + 0.5).toBe(true); // glyph ▾, the tabs, the hairline, then the views (the bay)
 });
 
 test("the STD|12 chip is one target with no ▾ and opens Mode on Format (R722, R785)", async ({ page }) => {
