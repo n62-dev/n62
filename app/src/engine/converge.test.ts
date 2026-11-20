@@ -186,6 +186,12 @@ describe.skipIf(!giacAvailable())("G39 on the real engine", () => {
     expect(home("int(int(1/sqrt(abs(x-y)),y,0,1),x,0,1)")).toMatchObject({ ok: true, display: "2.66666666667" });
     expect(home("int(x^2,x,0,a)")).toMatchObject({ ok: true, display: "a^3/3" });
     expect(cas("int(1/(y-a),y,2,3)")).toMatchObject({ ok: true });
+    // fix round 1: a free name is also tried beyond the interval's ends (1.38 and −2.72 lie inside (−5, 5) and (0, 10)):
+    // it converges for |a| > 5 (a = 10: ln(5/15)), so Giac's algebra stays; x/y^2 diverges at every value of y
+    expect(home("int(1/(y-a),y,-5,5)")).toMatchObject({ ok: true });
+    expect(cas("int(1/(y-a),y,-5,5)")).toMatchObject({ ok: true });
+    expect(home("int(1/(x-a),x,0,10)")).toMatchObject({ ok: true });
+    expect(home("int(x/y^2,y,-1,1)")).toMatchObject({ ok: false, error: "integralDiverges" });
   });
   it("G771: a nested integral's two-number pair is no list: one value, no confirmed digit", () => {
     const r = home("int(int(abs(y-sin(10^50)),y,-1,1),x,0,1)");

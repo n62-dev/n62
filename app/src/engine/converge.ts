@@ -12,7 +12,7 @@
 //   refused "sumUnchecked" (Giac's sum of a rational function is wrong for some; G619 has the causes).
 // Only inputs that hold one of these calls pay, and an integral pays for the second integral only when f has a real
 // singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
-import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
+import { hasFloat, namesOf, valuePrecision, withDigits, type Giac } from "./numeric.ts";
 import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
 import { statsRefusal, type StatsRefusal } from "./stats.ts";
 import { wordRefusal, type WordRefusal } from "./wordOps.ts";
@@ -262,12 +262,8 @@ function integralCheck(giac: Giac, c: Call): Verdict {
   return verdict;
 }
 
-/** Giac's free names of `e` (without ∞); null when Giac could not say. */
-function namesOf(giac: Giac, e: string): string[] | null {
-  const t = giac.eval(`lname(${e})`);
-  const names = isError(t) ? null : splitList(t);
-  return names === null ? null : names.filter((n) => n !== "infinity");
-}
+/** The free names of `e` (without ∞), by the bridge (numeric.ts namesOf); null when Giac could not say. */
+const freeNamesOf = (giac: Giac, e: string): string[] | null => namesOf(giac, e)?.filter((n) => n !== "infinity") ?? null;
 
 /**
  * G771 (F471): generic interior fractions of an enclosing variable's interval, two per nesting depth (sample 0 and 1).
@@ -282,9 +278,10 @@ const FRACTIONS: readonly (readonly [string, string])[] = [
   ["314159265/1000000000", "577350269/1000000000"],
 ];
 
-/** A generic value for a free name (sample 0 positive, 1 negative: e^(a·y) converges for a < 0), distinct per name `j`. */
-const freeValue = (j: number, sample: number): string =>
-  sample === 0 ? `(${13819660113 + 1234567 * j}/10000000000)` : `(-${27236067977 + 2345679 * j}/10000000000)`;
+/** A generic value for a free name (sample 0 positive, 1 negative: e^(a·y) converges for a < 0), distinct per name `j`,
+ *  times `scale` (1 for the first two samples; 1 + |a| + |b| for the two beyond the interval's ends). */
+const freeValue = (j: number, sample: number, scale = "1"): string =>
+  sample % 2 === 0 ? `(${scale}*${13819660113 + 1234567 * j}/10000000000)` : `(-${scale}*${27236067977 + 2345679 * j}/10000000000)`;
 
 /** A point inside the interval from `lo` to `hi` (Giac's texts) at the fraction `t`: null when an end is not a real
  *  number or ±∞. An infinite end gives t/(1−t) away from the finite end (both infinite: (2t−1)/(t(1−t))). */
@@ -307,10 +304,11 @@ const substIn = (giac: Giac, e: string, subs: readonly (readonly [string, string
  * G771 (F471): the check of an integral that holds a name besides its own variable: an enclosing integral's variable (the
  * inner of a double integral) or a free name (∫₋₁¹ x/y² dy). Both skipped the check (converge.ts onlyNames), so
  * ∫₁²∫₋₁¹ x/y² dy dx showed −3 with "=" (true +∞) and ∫₀¹∫₀¹ 1/(x−y) dy dx showed 0 (its principal value).
- * The integral is checked as a numeric one with each name set to a generic value, twice (sample 0 and 1):
+ * The integral is checked as a numeric one with each name set to a generic value, twice (sample 0 and 1; a free name
+ * also at two samples beyond the interval's ends):
  * - an enclosing variable at two generic interior points of its interval (FRACTIONS): a divergence at either refuses;
- * - a free name has no interval: two generic values of opposite sign; refused only when it diverges at both, as the
- *   integral then diverges for every value of the name tried (∫₋₁¹ x/y² dy), and one that converges for some keeps
+ * - a free name has no interval: generic values of both signs, inside and beyond the ends; refused only when it diverges
+ *   at every one, as the integral then diverges for every value of the name tried (∫₋₁¹ x/y² dy), and one that converges for some keeps
  *   Giac's algebra (∫₀^∞ e^(a·y) dy, a < 0).
  * An error or Giac's interruption at a point is "unchecked" (⚠), never ok. null: nothing to check here (the integrand
  * holds an integral of its own: the integral inside it is checked on its own, as before).
@@ -318,7 +316,7 @@ const substIn = (giac: Giac, e: string, subs: readonly (readonly [string, string
 function sampledCheck(giac: Giac, c: Call, calls: Call[]): Verdict | null {
   const [body, v, a, b] = c.args as [string, string, string, string];
   if (calls.some((k) => k !== c && k.kind === "int" && k.at >= c.at && k.end <= c.end)) return null;
-  const own = [body, a, b].map((e) => namesOf(giac, e));
+  const own = [body, a, b].map((e) => freeNamesOf(giac, e));
   if (own.some((n) => n === null)) return "unchecked";
   const needed = new Set(own.flatMap((n) => n!).filter((n) => n !== v));
   // The integrals this one is inside the integrand of, outermost first; one counts when its variable is needed.
@@ -327,7 +325,7 @@ function sampledCheck(giac: Giac, c: Call, calls: Call[]): Verdict | null {
   for (let i = around.length - 1; i >= 0; i--) {
     const k = around[i]!;
     if (!needed.has(k.args[1]!) || used.some((u) => u.args[1] === k.args[1])) continue;
-    const ends = [k.args[2]!, k.args[3]!].map((e) => namesOf(giac, e));
+    const ends = [k.args[2]!, k.args[3]!].map((e) => freeNamesOf(giac, e));
     if (ends.some((n) => n === null)) return "unchecked";
     for (const n of ends.flatMap((e) => e!)) if (n !== k.args[1]) needed.add(n);
     used.unshift(k);
@@ -337,13 +335,21 @@ function sampledCheck(giac: Giac, c: Call, calls: Call[]): Verdict | null {
   const free = [...needed].filter((n) => !vars.includes(n));
   if (!needed.size) return null;
   const verdicts: Verdict[] = [];
-  for (const sample of [0, 1]) {
-    const subs: [string, string][] = free.map((n, j) => [n, freeValue(j, sample)]);
+  // Values 1.38 and −2.72 fall inside most intervals, where 1/(y−a) diverges for them; for |a| beyond the ends (a = 10 on
+  // (−5, 5): ln(5/15)) it converges. So a free name is also tried at ±(1 + |a| + |b|)·1.38…, outside the interval, and the
+  // integral is refused only when it diverges at every sample (the verdicts below), never for a name that has a good value.
+  let scale = "1";
+  if (free.length) {
+    const ends = [a, b].map((e) => realOf(giac, substIn(giac, e, free.map((n, j) => [n, freeValue(j, 0)]))));
+    scale = `(1+${ends.reduce<number>((s, x) => s + (x !== null && Number.isFinite(x) ? Math.abs(x) : 0), 0)})`;
+  }
+  for (const sample of free.length ? [0, 1, 2, 3] : [0, 1]) {
+    const subs: [string, string][] = free.map((n, j) => [n, freeValue(j, sample, sample < 2 ? "1" : scale)]);
     let skipped = false;
     for (const [d, k] of used.entries()) {
       const lo = substIn(giac, k.args[2]!, subs);
       const hi = substIn(giac, k.args[3]!, subs);
-      const point = isError(lo) || isError(hi) ? null : samplePoint(giac, lo, hi, FRACTIONS[d]![sample]!);
+      const point = isError(lo) || isError(hi) ? null : samplePoint(giac, lo, hi, FRACTIONS[d]![sample % 2]!);
       if (point === null) skipped = true;
       else subs.push([k.args[1]!, point]);
     }

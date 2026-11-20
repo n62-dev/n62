@@ -49,6 +49,12 @@ export interface Giac {
   value(text: string, precisions: readonly number[], tree?: boolean): GiacValue;
 }
 
+/** Giac's lname of `expr` (the names in it, ∞ as `infinity`), from bridge-3's elements (not Giac's text, P20); null when it is no list (an error). */
+export function namesOf(giac: Giac, expr: string): string[] | null {
+  const v = giac.value(`lname(${expr})`, []);
+  return v.kind === "list" || v.kind === "matrix" ? (v.elements ?? null) : null;
+}
+
 /** Digits a Giac double prints with (Digits ≤ 14 selects doubles; they never print more than 14). */
 export const DOUBLE_DIGITS = 14;
 
