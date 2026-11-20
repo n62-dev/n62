@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **R770, a sheet on a very short screen:** the view above the keys is about 250 px at 360 × 740 and 88 px at 372 × 560 (Plot's floor), too small for a 42 px row there. Recommended: nothing now; after the tag a "touch vs keypad" setting may put sheets over the keys again. Now: it scrolls, the highlighted row in view.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals

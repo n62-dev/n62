@@ -255,7 +255,7 @@ test.describe("by touch", () => {
 });
 
 for (const [w, h] of [[360, 740], [372, 767]] as const)
-  test(`fit at ${w} × ${h}: Mode with DEG, PFX 30, one line and a long preset name shows all six rows`, async ({ page }) => {
+  test(`fit at ${w} × ${h}: Mode with DEG, PFX 30, one line and a long preset name has all six rows, none off the screen`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.evaluate(() => {
       const s = window.n62.session;
@@ -267,9 +267,11 @@ for (const [w, h] of [[360, 740], [372, 767]] as const)
     await saveAs(page, "Lab bench: strain-gauge calibration");
     await tap(page, ["@mode"]);
     expect(await rowIds(page)).toEqual(["angle", "format", "digits", "entry", "preset", "settings"]);
-    const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-    expect(m.scroll).toBeLessThanOrEqual(m.client);
-    await expect(page.getByTestId("sheet-count")).toHaveCount(0);
+    // R770: the sheet is in the viewport (about 250 px): the six rows scroll inside its box, the last scrolls into view
+    const last = sheet(page).getByRole("menuitem").last();
+    await last.scrollIntoViewIfNeeded();
+    const [list, end] = await Promise.all([sheet(page).locator(".list").boundingBox(), last.boundingBox()]);
+    expect(end && list && end.y + end.height <= list.y + list.height + 0.5 && end.y >= list.y - 0.5).toBe(true);
     const box = await row(page, "preset").boundingBox();
     expect(box && box.x + box.width).toBeLessThanOrEqual(w); // no row runs off the screen
   });

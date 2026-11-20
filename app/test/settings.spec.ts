@@ -111,7 +111,7 @@ test.describe("by touch", () => {
     await expect(title(page)).toHaveText("Mode › Settings › Counters");
     await sheet(page).getByRole("button", { name: "Back" }).tap();
     await expect(title(page)).toHaveText("Mode › Settings");
-    await page.locator(".screen").click({ position: { x: 20, y: 20 } });
+    await page.locator(".screen").click({ position: { x: 2, y: 2 } });
     await expect(sheet(page)).toHaveCount(0);
   });
 
@@ -223,7 +223,7 @@ test.describe("Android back (history.back())", () => {
     const before = await historyLength(page);
     const closes = [
       () => tap(page, ["esc", "esc", "esc"]),
-      () => page.locator(".screen").click({ position: { x: 20, y: 20 } }),
+      () => page.locator(".screen").click({ position: { x: 2, y: 2 } }),
       async () => {
         await back(page);
         await expect(title(page)).toHaveText("Mode › Settings");
@@ -257,27 +257,19 @@ const LEVELS: Record<string, string[]> = {
   "Mode › Settings › Data": ["@mode", "d6", "d5"],
   "Mode › Settings › Counters": ["@mode", "d6", "d6"],
 };
-/** The levels that scroll under 1000 px tall (decisions.md, R148f1: a sheet that cannot fit at its floor scrolls), with how
- *  far: Appearance needs 304 px, the room is 287 at 360 × 740 and 294 with R722's 43 px rows; Numbers has seven rows since
- *  R194 (Word), 308 px. Before R722 only 360 × 740 had the short rows; now every phone under 1000 px tall has them. */
-const SCROLLS: Readonly<Record<string, number>> = { "Mode › Settings › Appearance": 17, "Mode › Settings › Numbers": 24 };
 for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
-  test(`fit at ${w} × ${h}: every Settings level shows all its rows, the top cluster uncovered`, async ({ page }) => {
+  test(`fit at ${w} × ${h}: every Settings level reaches all its rows, the keys uncovered`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     for (const [path, keys] of Object.entries(LEVELS)) {
       await tap(page, keys);
       await expect(title(page)).toHaveText(path);
       if (path.endsWith("Key vibration")) await row(page, "haptics").tap(); // on: no reason line, but ◀ ▶ rows
       const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      if (h < 1000 && path in SCROLLS) {
-        // R148f1 (decisions.md): its rows need more than the room at the floor (Appearance 304 px for 287 or 288): it scrolls
-        expect(m.scroll - m.client, path).toBeLessThanOrEqual(SCROLLS[path] ?? 0);
+      if (m.scroll > m.client) {
+        // R770: the sheet is in the viewport (about 250 px), so a level taller than its box scrolls and its last row scrolls into view
         await sheet(page).getByRole("menuitem").last().scrollIntoViewIfNeeded();
         const [list, last] = await Promise.all([sheet(page).locator(".list").boundingBox(), sheet(page).getByRole("menuitem").last().boundingBox()]);
         expect(last && list && last.y + last.height <= list.y + list.height + 0.5 && last.y >= list.y - 0.5, `${path}: its last row scrolls into view`).toBe(true);
-      } else {
-        expect(m.scroll, path).toBeLessThanOrEqual(m.client);
-        await expect(page.getByTestId("sheet-count")).toHaveCount(0);
       }
       const hits = await page.evaluate((ids) =>
         ids.map((id) => {
@@ -285,7 +277,7 @@ for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
           return r ? document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest<HTMLElement>("[data-key]")?.dataset["key"] : undefined;
         }), ["up", "down", "left", "right", "esc"]);
       expect(hits).toEqual(["up", "down", "left", "right", "esc"]);
-      await page.locator(".screen").click({ position: { x: 20, y: 20 } });
+      await page.locator(".screen").click({ position: { x: 2, y: 2 } });
       await expect(sheet(page)).toHaveCount(0);
     }
   });

@@ -47,14 +47,16 @@ for (const [name, width, height] of SIZES)
 // R82f1 (F117): Plot's ☰ at the Fairphone's size. Every entry is on screen and uncovered without scrolling at 372×828
 // and at 372×767 (the WebView's height there, bars taken off: CORE DEVICE's log); on the short screen each one is
 // reachable: on screen, or the count cue shown and scrolled to. Phase-1 cut Settings, the ninth row, by 3 px at both.
+// R770: every sheet is in the viewport now, so under 1000 px tall the Menu scrolls inside it and each row is scrolled to.
 // R722: under 1000 px tall the rows are 43 px (owner, 2026-11-17), so the Fairphone's Menu scrolls at its floor (every row
 // reachable, the cue showing); a phone 1000 px tall has the full rows and shows them all
 const MENU_SIZES = [
   ["Fairphone 6", 372, 828, false],
   ["Fairphone 6 WebView", 372, 767, false],
-  ["Fairphone 6 width, short", 372, 560, false],
   ["a tall phone", 412, 1000, true],
 ] as const;
+// R770: the Menu is a sheet in the viewport, which at 372×560 is the 88 px the Plot view's floor leaves above the keys: a sheet that small
+// cannot show a 42 px row whole, so that size has no case here (decisions.md, Needs the user)
 for (const [name, width, height, all] of MENU_SIZES)
   test(`Plot's Menu entries are all ${all ? "on screen" : "reachable"} at ${name} (${width}×${height})`, async ({ browser }) => {
     if (!c46) throw new Error("c46 is not in core.yaml");

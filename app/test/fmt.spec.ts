@@ -111,7 +111,7 @@ test("key vibration: off by default, and on it calls navigator.vibrate on key-do
   await openSettings(page, "d3");
   await row(page, "haptics").tap();
   expect(await vib()).toEqual([]); // switched on from the sheet's row, where no key goes down
-  await page.locator(".screen").click({ position: { x: 20, y: 20 } }); // a tap above the sheet closes it: no key either
+  await page.locator(".screen").click({ position: { x: 2, y: 2 } }); // a tap above the sheet closes it: no key either
   await expect(sheet(page)).toBeHidden();
   expect(await vib()).toEqual([]);
   await tap(page, ["d3"]);
