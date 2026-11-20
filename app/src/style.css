@@ -115,6 +115,7 @@
   --menu-w: 36px;
   --icon-w: 16px;
   --icon-h: 14px;
+  --fill-icon: 16px; /* R778: the corner button that fills the screen */
   --dot: 10px;
   /* R328: the uncertainty sheet's rows: the share column, a row's least height, the bar under a share */
   --share-w: 6.5em;
