@@ -5,7 +5,7 @@
 // derived from the rule: the sheet's box lies inside the screen area and clear of the keypad; ☰'s rows are numbered
 // 1…9, 0 in order (1 Insert … Copy › is 2, docs/05 3.2). Run at 360 × 740 and 412 × 915.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, tap } from "./helpers.ts";
+import { entryValue, open, recordVibrations, tap, vibrations } from "./helpers.ts";
 
 const LINREG = "\\operatorname{linreg}\\left(\\left\\{1,2,3,4\\right\\},\\left\\{2.1,3.9,6.2,7.8\\right\\}\\right)";
 
@@ -90,14 +90,35 @@ for (const size of SIZES) {
       await expect(page.getByTestId("sheet-title")).toHaveText(title ?? "");
       await page.locator('[data-key="esc"]').tap();
       await expect(panel(page)).toHaveCount(0);
+      // criterion 1(b): in a known state (one result on the history) ☰'s rows are Store, Copy ›, Delete, Paste, … in that order;
+      // the digit 3 picks the third by its effect (Delete drops the one history row) and the sheet closes
+      const items = (): Promise<number> => page.evaluate(() => window.n62.session.items.length);
       await tap(page, ["@menu"]);
+      await expect(rows.first()).toBeVisible();
       const ids = await rows.evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
-      const k = ids.indexOf(await menu.locator('[data-active="true"]').getAttribute("data-id"));
+      expect(ids.slice(0, 4)).toEqual(["store", "copy", "delete", "paste"]);
+      await expect(rows.nth(2)).toContainText("Delete");
+      expect(await items()).toBe(1);
+      const at = async (): Promise<number> => ids.indexOf(await menu.locator('[data-active="true"]').getAttribute("data-id"));
+      if ((await at()) === 2) await page.locator('[data-key="down"]').tap(); // the sheet remembers the last pick: the highlight must not already sit on row 3
+      expect(await at()).not.toBe(2);
+      await page.locator('[data-key="d3"]').tap();
+      await expect(panel(page)).toHaveCount(0);
+      expect(await items()).toBe(0); // the third row ran, not the first (Store opens a sheet) or the second (Copy ›)
+      // ▼ ▼ Enter from the highlighted row (the first) picks the row two below it, the third: again a state with one result
+      await tap(page, ["d1", "add", "d1", "enter"]);
+      await expect(page.locator("[data-status]")).toHaveCount(1);
+      await tap(page, ["@menu"]);
+      await expect(rows.first()).toBeVisible();
+      for (let i = await at(); i > 0; i--) await page.locator('[data-key="up"]').tap(); // the sheet opens on the last pick (Delete): ▲ to the first row
+      await expect(menu.locator('[data-active="true"]')).toHaveAttribute("data-id", ids[0] ?? "");
       await page.locator('[data-key="down"]').tap();
       await page.locator('[data-key="down"]').tap();
-      await expect(menu.locator('[data-active="true"]')).toHaveAttribute("data-id", ids[(k + 2) % ids.length] ?? "");
-      await page.locator('[data-key="enter"]').tap(); // the highlighted row is picked: a submenu opens or the sheet closes
-      await expect.poll(async () => (await panel(page).count()) === 0 || (await page.getByTestId("sheet-title").textContent()) !== title).toBe(true);
+      await expect(menu.locator('[data-active="true"]')).toHaveAttribute("data-id", ids[2] ?? ""); // two below the first row
+      await expect(menu.locator('[data-active="true"]')).toContainText("Delete");
+      await page.locator('[data-key="enter"]').tap(); // the highlighted row is picked: Delete drops the history row, the sheet closes
+      await expect(panel(page)).toHaveCount(0);
+      expect(await items()).toBe(0);
     });
 
     test("(c) Mode: its last row is reached by ▼ and scrolled into view", async ({ page }) => {
@@ -140,5 +161,47 @@ test.describe("controls", () => {
     await expect(panel(page)).toBeVisible();
     const [p, keys] = [await box(page, '[role="menu"]'), await box(page, '[data-testid="keys"]')];
     expect(p.y + p.height).toBeLessThanOrEqual(keys.y + 1);
+  });
+});
+
+// R770f1: a key the sheet does not use gives the dead key's feedback (route.ts c.dead(): the double pulse after the key's own),
+// and ⌫ on an empty filter too; the sheet stays and the line is as it was. A key the sheet uses gives the key's pulse alone.
+test.describe("☰ open: the dead key's pulses", () => {
+  test.beforeEach(async ({ page }) => {
+    await recordVibrations(page);
+    await open(page);
+    await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+    await tap(page, ["d1", "add", "d1", "enter", "d7"]);
+    await expect(page.locator("[data-status]")).toHaveCount(1);
+    await tap(page, ["@menu"]);
+    await expect(page.getByTestId("menu").getByRole("menuitem").first()).toBeVisible();
+  });
+  const stays = async (page: Page): Promise<void> => {
+    await expect(panel(page)).toBeVisible();
+    expect(await entryValue(page)).toBe("7");
+    expect(await page.evaluate(() => window.n62.session.items.length)).toBe(1);
+  };
+  const pulses = async (page: Page, press: () => Promise<unknown>): Promise<number> => {
+    const v0 = (await vibrations(page)).length;
+    await press();
+    await page.waitForTimeout(250); // the pulses of one press have all been sent
+    return (await vibrations(page)).length - v0;
+  };
+  test("a key the sheet uses (▼) gives the key's pulse alone", async ({ page }) => {
+    expect(await pulses(page, () => page.locator('[data-key="down"]').tap())).toBe(1);
+    await stays(page);
+  });
+  test("a tap on sin gives the key's pulse and the dead pulses, and nothing else happens", async ({ page }) => {
+    expect(await pulses(page, () => page.locator('[data-key="sin"]').tap())).toBe(3);
+    await stays(page);
+  });
+  test("a tap on Undo gives the key's pulse and the dead pulses, and nothing else happens", async ({ page }) => {
+    expect(await pulses(page, () => page.locator('[data-key="undo"]').tap())).toBe(3);
+    await stays(page);
+  });
+  test("⌫ with an empty filter gives the key's pulse and the dead pulses; the sheet stays and the line is unchanged", async ({ page }) => {
+    await expect(page.getByTestId("sheet-filter")).toHaveCount(0); // no filter typed
+    expect(await pulses(page, () => page.locator('[data-key="bksp"]').tap())).toBe(3);
+    await stays(page);
   });
 });

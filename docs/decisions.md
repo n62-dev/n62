@@ -143,7 +143,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **One-line mode:** `^` is literal and the exponent is the next signed factor. **Results are insertable**, bracketed when a sum. **Default angle mode: radians.**
 - **R98, Clear and Delete (Opus pass 50):** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
-- **R144, R146 (Opus pass 85), changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet: digits pick, ▲ ▼ move, Enter picks, Esc goes back, any other key is dead and the sheet stays; a tap on the history outside it, Esc or Back close it. Archived, "Opus pass 132".
+- **R144, R146 (Opus pass 85), changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet: digits pick, ▲ ▼ move, Enter picks, Esc goes back, any other key is dead and the sheet stays; a tap on the history closes it, a full-view sheet (Mode, ☰ at 360) by Esc, Back or ×. Archived, "Opus pass 132".
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is the colour logo (R745), 22 × 22 in the 30 × 22 tile, never cropped (Opus pass 218). Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
 - **The tips' text stops at 17 px** (Opus pass 110, R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
