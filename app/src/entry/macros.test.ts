@@ -15,11 +15,11 @@ describe("chip macros (MathLive 0.111.1)", () => {
 
   it("draw what the chip shows on the accent background, not the macro", () => {
     const m = convertLatexToMarkup(resChip(1, "0.333333333333"), { macros });
-    expect(m).toContain("var(--chip-bg)");
+    expect(m).toContain("var(--chip-tint)");
     expect(m).not.toContain("\\res");
     expect(m.replace(/<[^>]*>/g, "")).toContain("0.333333333333");
     expect(convertLatexToMarkup("\\ans", { macros }).replace(/<[^>]*>/g, "")).toContain("Ans");
-    expect(convertLatexToMarkup(constChip("G", "G"), { macros })).toContain("var(--chip-bg)");
+    expect(convertLatexToMarkup(constChip("G", "G"), { macros })).toContain("var(--chip-tint)");
   });
 
   it("draw constants and Ans upright (not as an italic variable)", () => {

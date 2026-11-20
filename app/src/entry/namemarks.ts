@@ -16,7 +16,7 @@ const MARK = "var(--name-mark)";
 function isWholeName(s: HTMLElement): boolean {
   const next = s.nextElementSibling;
   if (next?.classList.contains("ML__msubsup") && next.querySelector(".ML__vlist-t2")) return false; // a subscript: two rows
-  return s.closest('[style*="--chip-bg"]') === null;
+  return s.closest('[style*="--chip-tint"]') === null;
 }
 
 export class NameMarks {

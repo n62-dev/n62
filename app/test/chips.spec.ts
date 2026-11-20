@@ -11,7 +11,7 @@ const ready = (page: Page) =>
 function looks(page: Page): Promise<{ chipBg: string; chipGlyph: string; varGlyph: string; plainBg: string }> {
   return page.evaluate(() => {
     const root = window.n62.entry.field?.shadowRoot;
-    const chip = root?.querySelector<HTMLElement>('[style*="--chip-bg"]');
+    const chip = root?.querySelector<HTMLElement>('[style*="--chip-tint"]');
     const glyphs = [...(root?.querySelectorAll<HTMLElement>(".ML__cmr, .ML__mathit") ?? [])];
     const x = glyphs.find((g) => g.textContent === "x" && !chip?.contains(g));
     return {

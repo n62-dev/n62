@@ -69,7 +69,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885 | [R748](packages/R748.md) a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
+| 885 | R748 a chip's background lets the selection show and covers tall content | ron, Sonnet | `p1/ron-chiptint` | R746 |
 | 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19) | ron, Opus | `p1/ron-sheetsview` | R748 |
 | 885h | [R771](packages/R771.md) the tabs: the house and names at one fixed width, the current one filled; STD cycles the format | ron, Opus | `p1/ron-tabsstd` | R770 |
 | 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R771 |
