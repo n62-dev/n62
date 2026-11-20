@@ -2,7 +2,7 @@
 // One sheet for every list (R7, docs/05 3.1 with section 7): one test per key of the 3.1 table, plus last pick, the
 // scroll cue, disabled rows with their reason, touch, and no key going through the sheet.
 import { expect, test, type Page } from "@playwright/test";
-import { drag, entryValue, open, sheet, sheetKey, tap } from "./helpers.ts";
+import { drag, entryValue, open, sheet, sheetKey, tap, tapHistory, closeSheet } from "./helpers.ts";
 
 test.beforeEach(async ({ page }) => {
   await open(page);
@@ -47,10 +47,11 @@ test("▲ ▼ move the highlight round the ends; Enter picks the highlighted row
   expect(await entryValue(page)).toBe("");
 });
 
-test("the arrow trackpad closes the sheet and picks nothing (R144: the hardware arrows move the highlight)", async ({ page }) => {
+test("the arrow trackpad moves the highlight and picks nothing (R770: the keys stay live below the sheet)", async ({ page }) => {
   await list(page, "Test", FIVE);
-  await drag(page, "down", 0, 30); // two 12 px steps: the first closes the sheet, the second steps nothing
-  await expect(sheet(page)).toHaveCount(0);
+  await drag(page, "down", 0, 30); // two 12 px steps: ▼ ▼
+  await expect(sheet(page)).toBeVisible();
+  await expect(active(page)).toHaveAttribute("data-id", "three");
   expect(await ran(page)).toEqual([]);
 });
 
@@ -199,16 +200,17 @@ test("touch: a tap on a row picks it, ‹ goes back, a tap beside the sheet clos
   await sheet(page).getByRole("menuitem", { name: "2 y" }).click();
   expect(await ran(page)).toEqual(["y"]);
   await expect(sheet(page)).toHaveCount(0);
+  await page.setViewportSize({ width: 412, height: 915 }); // room for history above a 5-row list
   await list(page, "Test", FIVE);
-  await page.getByTestId("sheet-catch").click({ position: { x: 5, y: 5 } }); // the viewport, above the keypad
+  await tapHistory(page); // a point of the history, computed outside the sheet's box
   await expect(sheet(page)).toHaveCount(0);
   await list(page, "Units", UNITS); // a list that takes letters, over the view: the dimmed area above it
-  await sheet(page).click({ position: { x: 5, y: 5 } });
+  await closeSheet(page); // a history tap where the list leaves room, else its × (docs/05 3.1)
   await expect(sheet(page)).toHaveCount(0);
   expect(await ran(page)).toEqual([]);
 });
 
-test("a short list goes over the keypad; a list that takes letters stays above it and takes the entry line's room when its rows need it", async ({ page }) => {
+test("every list stands above the keypad and takes the entry line's room when its rows need it (R770)", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" }); // no rise animation: the boxes are final at once
   const bottoms = async () => {
     const [s, e, k] = await Promise.all([sheet(page).getByRole("menu").boundingBox(), page.locator(".entry").boundingBox(), page.locator(".pad").boundingBox()]);
@@ -217,10 +219,11 @@ test("a short list goes over the keypad; a list that takes letters stays above i
   };
   await list(page, "Test", ["one", "two"]);
   let b = await bottoms();
-  expect(b.sheet).toBeGreaterThan(b.keypadTop + 100); // over the keypad (R21a; fit.spec.ts has the details)
+  expect(b.sheet).toBeLessThanOrEqual(b.keypadTop + 1); // a short list never covers the keypad either
+  expect(b.sheet).toBeLessThanOrEqual(b.entryTop + 1); // and keeps the entry line free while its rows fit above it
   await tap(page, ["esc"]);
   await list(page, "Units", UNITS);
   b = await bottoms();
-  expect(b.sheet).toBeGreaterThan(b.entryTop + 10);
-  expect(b.sheet).toBeLessThanOrEqual(b.keypadTop + 1); // a list that takes letters never covers the keypad
+  expect(b.sheet).toBeGreaterThan(b.entryTop + 10); // a long list takes the line's room
+  expect(b.sheet).toBeLessThanOrEqual(b.keypadTop + 1);
 });

@@ -8,6 +8,7 @@ Phase 0 decisions (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md)
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
+- **R770, a sheet on a very short screen:** the view above the keys is about 250 px at 360 × 740 and 88 px at 372 × 560 (Plot's floor). Under 120 px the sheet drops its margins (Sheet.svelte, a container query) and keeps its title row and a 48 px list: one 42 px row whole, a row with a reason line (58 px) cut and scrolled to. After the tag a "touch vs keypad" setting may put sheets over the keys again.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
@@ -40,7 +41,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); Android's splash and bars Dark (A59). Archived. Would change if: users want the system switch to mute the keys.
 - **R4b's four defaults, as built (Opus pass 18):** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
 - **Settings in the Mode sheet, and presets (owner, 2026-10-27; built by R49, R85–R89).** Settings is a level of the pick sheet; a preset snapshots any user settings. Rule: docs/05 3.4. Archived. Would change if: presets are switched under 5 times in 4 weeks (they go).
-- **R15c1 menus (owner, 2026-10-20): a long menu scrolls** over the keypad (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
+- **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
 - **M4-2 (owner, 2026-10-20):** the task budgets (t02 9 presses, t04 12, t10 25, t05 4), t09's two deviations, ± on Shift + `,` (R71), the unit result as its mockup (R62). Archived. Your hand timing stays the gate.
 - **S8 (owner, 2026-10-20):** every press is counted (R70); Android's backup is off (A23). Archived, "Opus pass 96".
 - **S6 (owner, 2026-10-20; A11, R38a, R38b): the backup** leaves by Android's "Save to" screen and returns by a file picker; restore checks the whole file. Archived. Would change if: a supported WebView has no Save-to screen.
@@ -55,7 +56,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P16 (2026-10-18, 2026-11-06): results mode folds the keypad** by a swipe down on the entry line (R53; R283 took the handle; Home and CAS), ⌄ and the folded bar (owner, 2026-11-17, R724; reverses R283's "nothing else"). Would change if: under 14 folds or 10 actions while folded in 14 days; ⌄ makes under 5 % of folds in four weeks (`fold.tap`; then ⌄ goes, the bar stays). Archived.
   - **⌄'s touch box (Opus pass 218, R724's question):** 48 × 48, but over the field only left of the text (32 px wide), so a tap on the first term stays the line's. Would change if: annabell's Fairphone check finds ⌄ hard to hit.
   - **Store ▶ keeps the fold (owner, 2026-11-17, R740):** the sheet "Store in" opens over the history with the keys down; a folded sheet ends with New name…, which brings them up. Would change if `store.new` is over half of folded stores in four weeks (then Store ▶ unfolds again).
-- **R21 (2026-10-14): pick sheets rise over the keypad's rows 3–9, Settings too;** 36 px rows, 44 px cells, then scroll. Archived.
+- **R21 (2026-10-14), changed by R770 (owner, 2026-11-19: every window in the viewport): every sheet rises in the viewport over the history, Settings too, never over the keys;** a sheet taller than the viewport scrolls inside its box. Archived.
 - **Engine defaults, not G2 copies (owner, 2026-10-19):** a G2 special case stays only for a silent wrong number or a saved keystroke. Archived.
 - **P12 (2026-10-13): the keypad against the G2.** Rule: docs/04 5.1 and [06-keypad-vs-g2.md](06-keypad-vs-g2.md). Archived, "Opus pass 96".
 - **P11 (2026-10-13): back to the G2's flow; milestone 4a before the rest of milestone 4.** Departures sit on top of the G2 way, never instead of it (docs/03 rules 5–13). Archived.
@@ -142,7 +143,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **One-line mode:** `^` is literal and the exponent is the next signed factor. **Results are insertable**, bracketed when a sum. **Default angle mode: radians.**
 - **R98, Clear and Delete (Opus pass 50):** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112 (Opus pass 50): a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
-- **R144, R146 (Opus pass 85):** keys beside a pick sheet stay dimmed (a tap only closes it). Archived, "Opus pass 132".
+- **R144, R146 (Opus pass 85), changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet: digits pick, ▲ ▼ move, Enter picks, Esc goes back, any other key is dead and the sheet stays; a tap on the history closes it, a full-view sheet (Mode, ☰ at 360) by Esc, Back or ×. Archived, "Opus pass 132".
 - **R157, the mark (Opus pass 122):** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is the colour logo (R745), 22 × 22 in the 30 × 22 tile, never cropped (Opus pass 218). Archived, "Opus pass 123". Would change if: the mark cannot be seen on a device.
 - **R153–R155 (Opus pass 96):** the generator's moves stand. Archived, "Opus pass 135". Would change if: the owner's look after R24d.
 - **The tips' text stops at 17 px** (Opus pass 110, R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.

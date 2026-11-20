@@ -3,7 +3,7 @@
 // over the keypad's maths rows, opened by Mode's last row and by the ⚙ in every ☰ menu's title row (R145), with its path in the title.
 // By touch, by keys and by Android back (`history.back()`); the history never grows. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, recordVibrations, sheet, sheetKey, tap, vibrations } from "./helpers.ts";
+import { entryValue, open, recordVibrations, sheet, sheetKey, tap, vibrations, tapHistory, closeSheet } from "./helpers.ts";
 
 const title = (page: Page) => page.getByTestId("sheet-title");
 const row = (page: Page, id: string) => sheet(page).locator(`[role="menuitem"][data-id="${id}"]`);
@@ -103,6 +103,7 @@ test.describe("by keys", () => {
 
 test.describe("by touch", () => {
   test("Mode's Settings row shows ›; a tap opens it, a section's tap opens it, ‹ goes back, a tap above the sheet closes it", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 }); // a sheet that leaves room above it (at 360 × 740 it fills the view)
     await page.getByTestId("chip-format").tap();
     await expect(row(page, "settings").locator(".more")).toHaveText("›");
     await row(page, "settings").tap();
@@ -111,7 +112,7 @@ test.describe("by touch", () => {
     await expect(title(page)).toHaveText("Mode › Settings › Counters");
     await sheet(page).getByRole("button", { name: "Back" }).tap();
     await expect(title(page)).toHaveText("Mode › Settings");
-    await page.locator(".screen").click({ position: { x: 20, y: 20 } });
+    await tapHistory(page);
     await expect(sheet(page)).toHaveCount(0);
   });
 
@@ -220,23 +221,22 @@ test.describe("Android back (history.back())", () => {
   });
 
   test("opening Settings and closing it five ways leaves the history as it was", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 }); // room above the sheet for the tap on the history
     const before = await historyLength(page);
     const closes = [
-      () => tap(page, ["esc", "esc", "esc"]),
-      () => page.locator(".screen").click({ position: { x: 20, y: 20 } }),
+      () => tap(page, ["esc", "esc"]),
+      () => tapHistory(page), // Settings' first level leaves history above it at 412 × 915 (Numbers does not)
       async () => {
-        await back(page);
-        await expect(title(page)).toHaveText("Mode › Settings");
         await back(page);
         await expect(title(page)).toHaveText("Mode");
         await back(page);
       },
       () => sheet(page).getByRole("button", { name: "Close" }).tap(),
-      () => page.keyboard.press("Escape").then(() => page.keyboard.press("Escape")).then(() => page.keyboard.press("Escape")),
+      () => page.keyboard.press("Escape").then(() => page.keyboard.press("Escape")),
     ];
     for (const close of closes) {
-      await tap(page, ["@mode", "d6", "d2"]);
-      await expect(title(page)).toHaveText("Mode › Settings › Numbers");
+      await tap(page, ["@mode", "d6"]);
+      await expect(title(page)).toHaveText("Mode › Settings");
       await close();
       await expect(sheet(page)).toHaveCount(0);
     }
@@ -257,27 +257,19 @@ const LEVELS: Record<string, string[]> = {
   "Mode › Settings › Data": ["@mode", "d6", "d5"],
   "Mode › Settings › Counters": ["@mode", "d6", "d6"],
 };
-/** The levels that scroll under 1000 px tall (decisions.md, R148f1: a sheet that cannot fit at its floor scrolls), with how
- *  far: Appearance needs 304 px, the room is 287 at 360 × 740 and 294 with R722's 43 px rows; Numbers has seven rows since
- *  R194 (Word), 308 px. Before R722 only 360 × 740 had the short rows; now every phone under 1000 px tall has them. */
-const SCROLLS: Readonly<Record<string, number>> = { "Mode › Settings › Appearance": 17, "Mode › Settings › Numbers": 24 };
 for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
-  test(`fit at ${w} × ${h}: every Settings level shows all its rows, the top cluster uncovered`, async ({ page }) => {
+  test(`fit at ${w} × ${h}: every Settings level reaches all its rows, the keys uncovered`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     for (const [path, keys] of Object.entries(LEVELS)) {
       await tap(page, keys);
       await expect(title(page)).toHaveText(path);
       if (path.endsWith("Key vibration")) await row(page, "haptics").tap(); // on: no reason line, but ◀ ▶ rows
       const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      if (h < 1000 && path in SCROLLS) {
-        // R148f1 (decisions.md): its rows need more than the room at the floor (Appearance 304 px for 287 or 288): it scrolls
-        expect(m.scroll - m.client, path).toBeLessThanOrEqual(SCROLLS[path] ?? 0);
+      if (m.scroll > m.client) {
+        // R770: the sheet is in the viewport (about 250 px), so a level taller than its box scrolls and its last row scrolls into view
         await sheet(page).getByRole("menuitem").last().scrollIntoViewIfNeeded();
         const [list, last] = await Promise.all([sheet(page).locator(".list").boundingBox(), sheet(page).getByRole("menuitem").last().boundingBox()]);
         expect(last && list && last.y + last.height <= list.y + list.height + 0.5 && last.y >= list.y - 0.5, `${path}: its last row scrolls into view`).toBe(true);
-      } else {
-        expect(m.scroll, path).toBeLessThanOrEqual(m.client);
-        await expect(page.getByTestId("sheet-count")).toHaveCount(0);
       }
       const hits = await page.evaluate((ids) =>
         ids.map((id) => {
@@ -285,7 +277,7 @@ for (const [w, h] of [[360, 740], [372, 767], [412, 915]] as const)
           return r ? document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest<HTMLElement>("[data-key]")?.dataset["key"] : undefined;
         }), ["up", "down", "left", "right", "esc"]);
       expect(hits).toEqual(["up", "down", "left", "right", "esc"]);
-      await page.locator(".screen").click({ position: { x: 20, y: 20 } });
+      await closeSheet(page); // a tap on the history where the level leaves room, else its × (docs/05 3.1)
       await expect(sheet(page)).toHaveCount(0);
     }
   });

@@ -111,16 +111,18 @@ for (const [w, h] of [
   [360, 767],
   [372, 767],
 ] as const)
-  test(`at ${w} × ${h}: every button is at least 44 × 44 px and Mode fits without a scroll`, async ({ page }) => {
+  test(`at ${w} × ${h}: every button is at least 44 × 44 px and Mode scrolls to its last row`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
     await page.getByTestId("chip-format").tap();
     const buttons = sheet(page).locator("[data-option]");
     await expect(buttons).toHaveCount(8); // 2 + 4 + 2
     for (const b of await buttons.evaluateAll((els) => els.map((e) => e.getBoundingClientRect())))
       expect(b.width >= 44 && b.height >= 44).toBe(true);
-    const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-    expect(m.scroll).toBeLessThanOrEqual(m.client);
-    await expect(page.getByTestId("sheet-count")).toHaveCount(0);
+    // R770: the sheet is in the viewport (about 250 px at 360 × 767): the list scrolls inside its box and its last row scrolls into view
+    const last = sheet(page).getByRole("menuitem").last();
+    await last.scrollIntoViewIfNeeded();
+    const [list, row] = await Promise.all([sheet(page).locator(".list").boundingBox(), last.boundingBox()]);
+    expect(row && list && row.y + row.height <= list.y + list.height + 0.5 && row.y >= list.y - 0.5).toBe(true);
     const overflow = await sheet(page).locator(".row").evaluateAll((rows) => rows.map((r) => r.scrollWidth - r.clientWidth));
     expect(Math.max(...overflow)).toBeLessThanOrEqual(0);
   });

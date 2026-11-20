@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key (fmt) and the key vibration settings. Uses the real engine (GIAC_OUT).
 import { expect, test, type Page } from "@playwright/test";
-import { open, recordVibrations, sheet, sheetKey, tap, tapTwice, vibrations } from "./helpers.ts";
+import { open, recordVibrations, sheet, sheetKey, tap, tapTwice, vibrations, tapHistory } from "./helpers.ts";
 
 const lastText = (page: Page) => page.locator('[data-testid="result"] .result').last();
 const ready = (page: Page) => page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
@@ -105,13 +105,14 @@ test("key vibration: off by default, and on it calls navigator.vibrate on key-do
     Object.defineProperty(navigator, "vibrate", { configurable: true, value: (p: unknown) => (calls.push(p), true) });
   });
   const vib = () => page.evaluate(() => (window as unknown as { __vib: unknown[] }).__vib);
+  await page.setViewportSize({ width: 412, height: 915 }); // the Settings sheet leaves history above it
   await open(page);
   await tap(page, ["d1", "d2"]);
   expect(await vib()).toEqual([]);
   await openSettings(page, "d3");
   await row(page, "haptics").tap();
   expect(await vib()).toEqual([]); // switched on from the sheet's row, where no key goes down
-  await page.locator(".screen").click({ position: { x: 20, y: 20 } }); // a tap above the sheet closes it: no key either
+  await tapHistory(page); // a tap above the sheet closes it: no key either
   await expect(sheet(page)).toBeHidden();
   expect(await vib()).toEqual([]);
   await tap(page, ["d3"]);

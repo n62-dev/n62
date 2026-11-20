@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R21a (decisions.md "R21", docs/05 3.1): the pick sheets rise over the keypad's maths rows (3–9), anchored at its
-// bottom edge, and fit their rows without a scroll; no key moves, and the top cluster stays uncovered and live.
-// Shift + 6 draws each cell over the key that picks it. The fake engine, except for the Tmpl flow.
+// R770 (decisions.md "R21", docs/05 3.1): every sheet is in the viewport, the keys never move under it, and a sheet taller than the
+// viewport scrolls inside its box with its last row reachable. Where each sheet sits is sheetsview.spec.ts. The fake engine,
+// except for the Tmpl flow.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, open, sheetKey, tap } from "./helpers.ts";
+import { entryValue, open, sheetKey, tap, tapHistory } from "./helpers.ts";
 
 // Not helpers.sheet: this one is every element with role menu, not the `menu` test id.
 const sheet = (page: Page) => page.locator('[role="menu"]');
@@ -50,6 +50,10 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
     await tap(page, ["@mode", "d6"]);
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
   },
+  "mode settings appearance": async (page) => {
+    await tap(page, ["@mode", "d6", "d1"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Appearance");
+  },
   "mode settings numbers": async (page) => {
     await tap(page, ["@mode", "d6", "d2"]);
     await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Numbers");
@@ -66,6 +70,31 @@ async function openSheet(page: Page, name: string): Promise<void> {
 
 test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" }); // no rise animation: the boxes are final at once
+});
+
+/** The sheet's last row can be scrolled into the box of its list or grid and lies inside it then. */
+async function lastRowReachable(page: Page): Promise<void> {
+  const box = sheet(page).locator(".list, .grid");
+  const last = sheet(page).getByRole("menuitem").last();
+  await last.scrollIntoViewIfNeeded();
+  const [list, row] = await Promise.all([box.boundingBox(), last.boundingBox()]);
+  expect(row && list && row.y + row.height <= list.y + list.height + 0.5 && row.y >= list.y - 0.5).toBe(true);
+}
+
+// R770: at 360 × 740 the viewport leaves a sheet about 250 px; these three are taller than that, so each scrolls inside its box
+// (scroll height above client height: a sheet that does not scroll fails here) and its last row is reached
+test.describe("at 360 × 740", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await open(page);
+  });
+  for (const name of ["function plot menu", "mode settings numbers", "mode settings appearance"])
+    test(`scroll: ${name} is taller than its box, scrolls inside it to its last row`, async ({ page }) => {
+      await openSheet(page, name);
+      const m = await sheet(page).locator(".list, .grid").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
+      expect(m.scroll).toBeGreaterThan(m.client);
+      await lastRowReachable(page);
+    });
 });
 
 test.describe("at 412 × 915", () => {
@@ -93,77 +122,24 @@ test.describe("at 412 × 915", () => {
       expect(await keyBoxes(page)).toEqual(before);
     });
 
-  // R722f1: Keypad.svelte decides the short-row breakpoint (under 1000 px tall) and Sheet.svelte's top padding follows it, so at
-  // 412 × 915 (the Fairphone 6) a sheet over the short keys has the short padding: sp-1 less the border, 3 px (was 4 px here)
-  test("R722f1: a sheet over the short keys at 412 × 915 has the short top padding (sp-1 − stroke-thin)", async ({ page }) => {
-    await openSheet(page, "mode");
-    const got = await page.evaluate(() => {
-      const root = getComputedStyle(document.documentElement);
-      const short = parseFloat(root.getPropertyValue("--sp-1")) - parseFloat(root.getPropertyValue("--stroke-thin"));
-      const menu = document.querySelector('[role="menu"]');
-      return { pad: menu ? getComputedStyle(menu).paddingTop : "missing", short: `${short}px` };
-    });
-    expect(got.short).toBe("3px");
-    expect(got.pad).toBe(got.short);
+  // R770: a sheet taller than its room scrolls inside its box, and its last row scrolls into view; "mode digits" has the
+  // room at 412 × 915 and is only checked for its last row, the three of the 360 × 740 block below are taller than the box
+  test("scroll: mode digits scrolls inside its box to its last row", async ({ page }) => {
+    await openSheet(page, "mode digits");
+    await lastRowReachable(page);
   });
 
-  for (const name of Object.keys(OPENERS))
-    test(`where: ${name} sits over the maths rows, at the keypad's bottom edge; the top cluster stays live`, async ({ page }) => {
-      await openSheet(page, name);
-      const [s, pad, row3] = await Promise.all([boxOf(page, '[role="menu"]'), boxOf(page, ".pad"), boxOf(page, '[data-key="vars"]')]);
-      expect(Math.abs(s.y + s.height - (pad.y + pad.height))).toBeLessThanOrEqual(1);
-      expect(s.y).toBeGreaterThanOrEqual(row3.y - 4 - 1); // R148: from the 4 px gap above row 3, which covers no key
-      const hits = await page.evaluate((ids) => {
-        return ids.map((id) => {
-          const r = document.querySelector(`[data-key="${id}"]`)?.getBoundingClientRect();
-          if (!r) return "missing";
-          const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-          return el?.closest<HTMLElement>("[data-key]")?.dataset["key"] ?? el?.className ?? "nothing";
-        });
-      }, ["up", "down", "left", "right", "help", "esc", "undo", "redo", "select", "deselect"]);
-      expect(hits).toEqual(["up", "down", "left", "right", "help", "esc", "undo", "redo", "select", "deselect"]);
-    });
-
-  // R145: Settings is the ⚙ in the title row: the Plot menu (8, two lines of reasons) fits the room over the maths rows at
-  // 412 × 915 like every other pick sheet. The Home menu has seven rows (R720): the test below too, at both phone sizes.
-  // R722: the rows are 43 px under 1000 px tall (owner, 2026-11-17), so the room over them at 412 × 915 is 290–294 px, as
-  // small as at 360 × 740: these sheets scroll at their floor there (decisions.md "A sheet that cannot fit at its floor
-  // scrolls"), by at most this many px, and their last row scrolls into view. Every other sheet still fits whole.
-  const SCROLLS: Readonly<Record<string, number>> = { "function plot menu": 30, "mode digits": 30, "mode settings numbers": 14 };
-  for (const name of Object.keys(OPENERS))
-    test(`fit: ${name} ${name in SCROLLS ? "scrolls at its floor to its last row" : "shows all its items without a scroll"}`, async ({ page }) => {
-      await openSheet(page, name);
-      const box = sheet(page).locator(".list, .grid");
-      const m = await box.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      if (name in SCROLLS) {
-        expect(m.scroll - m.client).toBeGreaterThan(0);
-        expect(m.scroll - m.client).toBeLessThanOrEqual(SCROLLS[name] ?? 0);
-        const last = sheet(page).getByRole("menuitem").last();
-        await last.scrollIntoViewIfNeeded();
-        const [list, row] = await Promise.all([box.boundingBox(), last.boundingBox()]);
-        expect(row && list && row.y + row.height <= list.y + list.height + 0.5 && row.y >= list.y - 0.5).toBe(true);
-        return;
-      }
-      expect(m.scroll).toBeLessThanOrEqual(m.client);
-      await expect(page.getByTestId("sheet-count")).toHaveCount(0);
-    });
-
-  // R720: seven rows, Export › last as 7: all show without a scroll at both phone sizes, no count, and key 7 opens Export
+  // R720: seven rows, Export › last as 7: key 7 opens Export › at both phone sizes (R770: the rows scroll in the viewport, none below the floor)
   for (const [width, height] of [[412, 915], [360, 740]] as const)
-    test(`the Home menu's seven rows show whole without a scroll at ${width} × ${height}, key 7 opens Export › (R720)`, async ({ page }) => {
+    test(`the Home menu's seven rows keep their floor at ${width} × ${height}, key 7 opens Export › (R720)`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await open(page);
       await tap(page, ["d1", "add", "d2", "enter"]); // a result, so Export › is on
       await expect(page.locator('[data-testid="result"]')).toHaveCount(1);
       await openSheet(page, "home menu");
-      const list = await boxOf(page, '[role="menu"] .list');
       const rows = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getBoundingClientRect()));
       expect(rows).toHaveLength(7);
       for (const r of rows) expect(r.height).toBeGreaterThanOrEqual(36);
-      for (const r of rows) expect(r.y + r.height).toBeLessThanOrEqual(list.y + list.height + 0.5);
-      const m = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      expect(m.scroll).toBeLessThanOrEqual(m.client);
-      await expect(page.getByTestId("sheet-count")).toHaveCount(0);
       await tap(page, ["d7"]);
       await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
     });
@@ -192,36 +168,23 @@ test.describe("at 412 × 915", () => {
     expect(Math.abs(mid(title) - mid(close))).toBeLessThanOrEqual(3);
   });
 
-  test("Shift + 6: each cell is drawn over the key that picks it (≤ over 8)", async ({ page }) => {
+  test("Shift + 6: each cell shows the key that picks it in its corner, and a tap on that key picks it (R770: the keys stay live)", async ({ page }) => {
     await openSheet(page, "shift 6");
-    for (const [cell, key] of [["le", "d8"], ["lt", "d7"], ["ge", "div"], ["or", "mul"], ["not", "d1"], ["eq", "d3"]]) {
-      const [c, k] = await Promise.all([boxOf(page, `[role="menu"] [data-id="${cell}"]`), boxOf(page, `[data-key="${key}"]`)]);
-      expect(c.x).toBeLessThanOrEqual(k.x + 1);
-      expect(c.y).toBeLessThanOrEqual(k.y + 1);
-      expect(c.x + c.width).toBeGreaterThanOrEqual(k.x + k.width - 1);
-      expect(c.y + c.height).toBeGreaterThanOrEqual(k.y + k.height - 1);
-    }
+    await expect(sheet(page).locator('[data-testid="cell-key"]')).toHaveCount(11);
+    await expect(sheet(page).locator('[data-id="le"] [data-testid="cell-key"]')).toBeVisible();
+    await page.locator('[data-key="d8"]').tap(); // ≤
+    await expect(sheet(page)).toHaveCount(0);
+    expect(await entryValue(page)).toContain("le");
   });
 
-  test("a short sheet leaves the maths keys above it visible and dimmed; a tap on one closes it (R144), a typed key keeps its sheet job; nothing types into the line", async ({ page }) => {
+  test("a key the sheet does not use is dead: the Apps sheet stays and nothing types into the line (R770)", async ({ page }) => {
     await openSheet(page, "apps");
-    const hits = await page.evaluate((ids) =>
-      ids.map((id) => {
-        const r = document.querySelector(`[data-key="${id}"]`)?.getBoundingClientRect();
-        return r ? document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest<HTMLElement>("[data-key]")?.dataset["key"] : undefined;
-      }), ["sq", "sin", "tmpl"]);
-    expect(hits).toEqual(["sq", "sin", "tmpl"]); // the Apps sheet is four rows high (Home, CAS, the two apps; R15b)
-    await expect(page.getByTestId("sheet-dim")).toBeVisible();
-    await sheetKey(page, ["sq", "sin"]); // neither has a job in a short list
+    await tap(page, ["sq", "sin"]); // neither has a job in a short list
     await expect(sheet(page)).toBeVisible();
     expect(await entryValue(page)).toBe("");
-    await sheetKey(page, ["tmpl"]); // Tmpl keeps its job: it opens its palette in place of Apps
+    await tap(page, ["tmpl"]); // Tmpl keeps its job: it opens its palette in place of Apps
     await expect(page.getByTestId("sheet-hint")).toHaveText("Fraction");
-    await tap(page, ["tmpl"]); // a tap outside the sheet closes it and does nothing else (R144)
-    await expect(sheet(page)).toHaveCount(0);
-    expect(await entryValue(page)).toBe("");
-    await openSheet(page, "apps");
-    await tap(page, ["sq"]);
+    await tap(page, ["tmpl"]); // and toggles it shut
     await expect(sheet(page)).toHaveCount(0);
     expect(await entryValue(page)).toBe("");
   });
@@ -233,13 +196,14 @@ test.describe("at 412 × 915", () => {
   });
 
   test("a tap in the viewport closes the sheet; nothing is picked", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 }); // the sheet leaves history above it
     await openSheet(page, "home menu");
-    await page.locator(".screen").click({ position: { x: 20, y: 20 } });
+    await tapHistory(page);
     await expect(sheet(page)).toHaveCount(0);
     await expect(page.locator('[data-app="function"]')).toHaveCount(0);
   });
 
-  test("a list that takes letters stays above the keypad", async ({ page }) => {
+  test("a list stays above the keypad, whatever it takes", async ({ page }) => {
     await page.evaluate(() => {
       const items = Array.from({ length: 14 }, (_, i) => ({ id: `u${i}`, label: `unit ${i}` }));
       window.n62.shell.showMenu("Units", items);
@@ -249,26 +213,10 @@ test.describe("at 412 × 915", () => {
   });
 });
 
-test.describe("at 360 × 740", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setViewportSize({ width: 360, height: 740 });
-    await open(page);
-  });
-  for (const name of ["tmpl", "shift 6", "shift 9", "mode", "mode settings"])
-    test(`fit: ${name} shows all its items without a scroll`, async ({ page }) => {
-      await openSheet(page, name);
-      const box = sheet(page).locator(".list, .grid");
-      const m = await box.evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-      expect(m.scroll).toBeLessThanOrEqual(m.client);
-      const [s, pad] = await Promise.all([boxOf(page, '[role="menu"]'), boxOf(page, ".pad")]);
-      expect(Math.abs(s.y + s.height - (pad.y + pad.height))).toBeLessThanOrEqual(1);
-    });
-});
-
 // R194f1: Numbers has seven rows (the Word row is the last), two of them with a button per value; at 360 × 740 they need
 // 308 px of the 288 the room gives, so the list scrolls (decisions.md "A sheet that cannot fit at its floor scrolls", as
 // Appearance does) and its last row is still reached. With the full rows (1000 px tall and more since R722) it fits whole.
-test("R194f1: Numbers at 360 × 740 scrolls to its Word row; at 412 × 1000 it shows all seven without a scroll", async ({ page }) => {
+test("R194f1: Numbers at 360 × 740 scrolls to its Word row", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await open(page);
   await openSheet(page, "mode settings numbers");
@@ -276,9 +224,6 @@ test("R194f1: Numbers at 360 × 740 scrolls to its Word row; at 412 × 1000 it s
   expect(m.scroll).toBeGreaterThan(m.client); // it scrolls: no floor gives way
   await sheet(page).locator('[data-id="word"]').scrollIntoViewIfNeeded();
   await expect(sheet(page).locator('[data-id="word"]')).toBeInViewport();
-  await page.setViewportSize({ width: 412, height: 1000 });
-  const big = await sheet(page).locator(".list").evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
-  expect(big.scroll).toBeLessThanOrEqual(big.client);
 });
 
 // R281: the store sheet takes letters, so it stays above the keypad (Alpha and a letter key type a name as on the G2). At

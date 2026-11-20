@@ -19,7 +19,7 @@ async function statusTap(page: Page, id: string): Promise<void> {
   if (id === "@mode") {
     await page.getByTestId("chip-format").tap();
     await page.getByTestId("menu").getByRole("menuitem").first().waitFor();
-    return sheetKey(page, ["up"]); // (R144: an on-screen ▲ would close the sheet)
+    return sheetKey(page, ["up"]);
   }
   const view = id.slice(1);
   if (!["symb", "plot", "num"].includes(view)) throw new Error(`no bar control ${id}`);
@@ -29,45 +29,53 @@ async function statusTap(page: Page, id: string): Promise<void> {
 }
 
 /** Press keys the way a hardware keyboard does (R31: the keypad key with that character, in the current Shift/Alpha
- *  state), the path that steps an open pick sheet (R144: an on-screen tap on the top cluster closes it instead). */
+ *  state), the path that steps an open sheet from a hardware keyboard. */
 export async function sheetKey(page: Page, ids: string[]): Promise<void> {
   for (const id of ids) await page.evaluate((id) => window.n62.entry.onKey(id, undefined as never, false), id);
 }
 
 /**
- * Tap keys by their id in spec/keyboard.yaml (d0..d9, div, frac, shift, enter, ...). A key under an open pick sheet
- * (R21a: the sheet is drawn over the maths rows, Settings too since R49) cannot be touched: the sheet's row or cell is where it was, and
- * fit.spec.ts taps those. Its key path stays for a hardware keyboard (docs/05 2 rule 1), so such a key is pressed the
- * way a hardware key is (R31: the keypad key with that character), in the current Shift/Alpha state. An id that
- * starts with `@` is a bar control (statusTap).
+ * Tap keys by their id in spec/keyboard.yaml (d0..d9, div, frac, shift, enter, ...). A sheet is in the viewport and never
+ * over the keys (R770), so every key is tapped where it is, a sheet open or not. An id that starts with `@` is a bar
+ * control (statusTap).
  */
 export async function tap(page: Page, ids: string[]): Promise<void> {
-  const covered = (id: string): Promise<boolean> =>
-    page.evaluate((id) => {
-      const k = document.querySelector(`[data-key="${id}"]`);
-      if (!k) return false;
-      const r = k.getBoundingClientRect();
-      const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-      return el !== null && !k.contains(el) && el.closest('[role="menu"]') !== null;
-    }, id);
-  const press = (id: string): Promise<void> => sheetKey(page, [id]);
   for (const id of ids) {
-    if (id.startsWith("@")) {
-      await statusTap(page, id);
-      continue;
-    }
-    if (await covered(id)) {
-      await press(id);
-      continue;
-    }
-    try {
-      await page.locator(`[data-key="${id}"]`).tap({ timeout: 3000 });
-    } catch (e) {
-      // a sheet whose code was still loading (the Mode sheet, R35) rose over the key meanwhile
-      if (!(await covered(id))) throw e;
-      await press(id);
-    }
+    if (id.startsWith("@")) await statusTap(page, id);
+    else await page.locator(`[data-key="${id}"]`).tap({ timeout: 3000 });
   }
+}
+
+/** How far a tap on the history must lie from the open sheet's box (px): more than the sheet's own margin (8 px at the sides, 4 above),
+ *  so the point is the history and not the sheet's margin (R770f1). */
+export const HISTORY_CLEAR = 10;
+
+type Pt = { x: number; y: number };
+/** A point of the history area (section.history) that lies outside the open sheet by HISTORY_CLEAR px: the old (20, 20) where it
+ *  is outside, else the first of a coarse scan. Null when the sheet fills the view or the view has no history (Plot) and leaves nothing to tap (Mode, Settings
+ *  levels and ☰ at 360 × 740; docs/05 3.1). Page coordinates. */
+export async function historyPoint(page: Page): Promise<Pt | null> {
+  if ((await page.locator("section.history").count()) === 0) return null; // an app's view (Plot) has no history at all
+  const [h, s] = [await page.locator("section.history").first().boundingBox(), await page.locator('[role="menu"]').first().boundingBox()];
+  if (!h || !s) throw new Error("no history or no open sheet to measure");
+  const away = (p: Pt): number => Math.hypot(Math.max(s.x - p.x, 0, p.x - (s.x + s.width)), Math.max(s.y - p.y, 0, p.y - (s.y + s.height)));
+  const xs = [20, h.width / 2, h.width - 20];
+  const cands: Pt[] = [{ x: h.x + 20, y: h.y + 20 }];
+  for (let y = 4; y < h.height; y += 16) for (const x of xs) cands.push({ x: h.x + x, y: h.y + y });
+  return cands.find((p) => p.x >= h.x && p.x <= h.x + h.width && p.y >= h.y && p.y <= h.y + h.height && away(p) >= HISTORY_CLEAR) ?? null;
+}
+/** Tap the history outside the open sheet (a mouse click at that point); throws when the sheet leaves no history to tap. */
+export async function tapHistory(page: Page): Promise<void> {
+  const p = await historyPoint(page);
+  if (!p) throw new Error("the sheet fills the view: no history point to tap");
+  await page.mouse.click(p.x, p.y);
+}
+
+/** Close the open sheet the way its size allows: a tap on the history where the sheet leaves room, else its × button. */
+export async function closeSheet(page: Page): Promise<void> {
+  const p = await historyPoint(page);
+  if (p) await page.mouse.click(p.x, p.y);
+  else await page.locator('[role="menu"]').first().getByRole("button", { name: "Close" }).tap();
 }
 
 export const entryValue = (page: Page): Promise<string> => page.evaluate(() => window.n62.entry.value);

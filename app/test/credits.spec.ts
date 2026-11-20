@@ -2,7 +2,7 @@
 // R149: N62, then Enter, opens the credits sheet over the keypad (a sheet like any other); the line is cleared and nothing
 // is submitted. With a stored N (N62 reads as N times 62) it is a calculation. The text rolls, and not under reduced motion.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, lastResult, open, tap } from "./helpers.ts";
+import { entryValue, lastResult, open, tap, historyPoint } from "./helpers.ts";
 
 const credits = (page: Page) => page.getByTestId("credits");
 const rows = (page: Page) => page.locator('[data-testid="result"]');
@@ -34,9 +34,10 @@ test.describe("fake engine", () => {
     await expect(credits(page)).toHaveCount(0);
   });
 
-  test("a tap on the history closes it", async ({ page }) => {
+  test("it fills the view, so no history is left to tap; its × closes it", async ({ page }) => {
     await asked(page, "home");
-    await page.getByTestId("sheet-catch").tap({ position: { x: 20, y: 20 } });
+    expect(await historyPoint(page)).toBeNull(); // R770f1: a sheet that fills the whole view closes by Esc, Back or ×, docs/05 3.1
+    await page.locator('[role="menu"]').getByRole("button", { name: "Close" }).tap();
     await expect(credits(page)).toHaveCount(0);
   });
 

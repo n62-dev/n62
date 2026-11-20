@@ -3,7 +3,7 @@
 // open, type, pick by digit, pick by Enter, Esc, Android back, the preview. Find takes letters, so it stays above the
 // keypad, over the history. The fake engine; the full generated index (`npm run index`).
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, flick, open, tap } from "./helpers.ts";
+import { closeSheet, entryValue, flick, open, tap } from "./helpers.ts";
 
 const find = (page: Page) => page.getByTestId("find");
 const rows = (page: Page) => find(page).getByRole("menuitem");
@@ -148,7 +148,7 @@ test.describe("by touch", () => {
     await page.locator('[data-key="frac"]').tap();
     await page.locator('[data-key="div"]').tap();
     await expect(find(page).getByTestId("find-preview")).toContainText("det(M)");
-    await find(page).tap({ position: { x: 5, y: 5 } });
+    await closeSheet(page); // a tap on the history beside the sheet where room is left, else its × (docs/05 3.1)
     await expect(find(page)).toBeHidden();
     expect(await entryValue(page)).toBe("");
   });
