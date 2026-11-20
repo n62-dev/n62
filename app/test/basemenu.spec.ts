@@ -38,6 +38,7 @@ test("255, Shift + −: HEX shows 0xFF, DEC goes back", async ({ page }) => {
 test("the digits pick a row with the keypad (1 HEX, 4 DEC)", async ({ page }) => {
   await calc(page, ["d2", "d5", "d5"]);
   await tap(page, ["shift", "sub"]);
+  await expect(page.getByTestId("sheet-title")).toHaveText("Base"); // the sheet is open before the digit (under load its code arrives late)
   await sheetKey(page, ["d1"]);
   await expect(last(page)).toHaveAttribute("data-text", "0xFF");
 });
