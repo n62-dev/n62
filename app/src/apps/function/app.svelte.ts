@@ -213,7 +213,8 @@ export class FunctionApp implements AppInstance {
         { id: "default", label: numText("plot.defaultWindow"), run: () => this.defaultWindow() },
         { id: "copy", label: tc("clip.copy"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine()) },
         { id: "shown", label: tc("clip.asShown"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.copyReadout(this.copyLine(), true) },
-        // R262, R785: To Home is always the ninth row, off with its reason (the same one Copy and As shown say, so said once) while there is no answer, so Mode keeps its tenth place (docs/06 3b)
+        // R785 and pass 222 replace R262's rule of a ninth row only with an answer: To Home is always the ninth row, off with its reason
+        // (the one Copy and As shown say, so said once) while there is no answer, so Mode keeps its tenth place (docs/06 3b)
         { id: "tohome", count: "tohome", label: numText("app.toHome"), disabled: !this.copyLine(), reason: tc("clip.noResult"), run: () => void this.toHome(this.copyLine()) },
         modeRow(this.host), // R785: last, the tenth row in both states
       ];

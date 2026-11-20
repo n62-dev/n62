@@ -181,9 +181,13 @@ test("disabled rows stay in place with their number and say why; picking one doe
   const rows = sheet(page).getByRole("menuitem");
   await expect(rows).toHaveCount(10); // R145: Settings is the ⚙ in the title row, not a row; R785: To Home is off, Mode is the tenth row
   await expect(rows.first()).toBeDisabled();
-  // five neighbouring rows share their reason: it is said once, under the last of them (R21a, R7 open point 5)
+  // neighbouring rows share their reason, said once under the last of them (R21a, R7 open point 5): the five from Root to
+  // Signed area "Define a function first"; Copy, As shown and To Home (R785: always the ninth row) "No result yet"
   await expect(sheet(page).locator(".reason")).toHaveText(["Define a function first", "No result yet"]);
   await expect(rows.nth(4).locator(".reason")).toHaveText("Define a function first");
+  await expect(rows.nth(8).locator(".reason")).toHaveText("No result yet");
+  await expect(rows.nth(6).locator(".reason")).toHaveCount(0);
+  await expect(rows.nth(7).locator(".reason")).toHaveCount(0);
   await expect(sheet(page).getByRole("menuitem", { name: "6 Default window" })).toBeEnabled();
   await expect(active(page)).toHaveAttribute("data-id", "default"); // the highlight starts on the first live row
   await tap(page, ["d1"]);
