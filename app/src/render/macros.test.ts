@@ -32,10 +32,10 @@ describe("the history renderer's macro table (R152)", () => {
   });
   it("the chips and the exponent mark still draw", () => {
     const res = convertLatexToMarkup(resChip(1, "0.333"), merged);
-    expect(res).toContain("var(--chip-bg)");
+    expect(res).toContain("var(--chip-tint)");
     expect(text(res)).toContain("0.333");
     expect(text(convertLatexToMarkup("\\ans", merged))).toContain("Ans");
-    expect(convertLatexToMarkup(constChip("c", "c"), merged)).toContain("var(--chip-bg)");
+    expect(convertLatexToMarkup(constChip("c", "c"), merged)).toContain("var(--chip-tint)");
     expect(text(convertLatexToMarkup("1.5\\emark-3", merged))).toMatch(/^1\.5ᴇ[−-]3$/);
     for (const k of Object.keys(CHIP_MACROS)) expect(merged.macros).toHaveProperty(k);
   });

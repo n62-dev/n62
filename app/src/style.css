@@ -8,6 +8,8 @@
 :root {
   /* R33: a name that holds a value, on the entry line (entry/namemarks.ts); the ≈ colour until a theme gets its own */
   --name-mark: var(--approx);
+  /* R748: a chip on the entry line, see-through, so MathLive's selection shows through it */
+  --chip-tint: color-mix(in srgb, var(--chip-bg) 70%, transparent);
   /* a key that does nothing in the layer shown is dimmed (--text-dead), still at least 3:1 */
   /* keypad legend line above each key face, and the key side padding */
   --legend-h: 12px;

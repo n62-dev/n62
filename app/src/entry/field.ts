@@ -117,6 +117,17 @@ export interface FieldEvents {
   paste(text: string): void;
 }
 
+/**
+ * R748: a selected chip is drawn in the selection colour over its whole box (inline `background` in macros.ts, hence
+ * `!important`). MathLive's own selection box is the height of the line, so a tall chip (a matrix) would show white
+ * glyphs on the pale field outside it; this way --on-sel (R274) always sits on --sel, as on any other selected text.
+ */
+function chipSelectionStyle(): HTMLStyleElement {
+  const style = document.createElement("style");
+  style.textContent = '.ML__focused [style*="--chip-tint"].ML__selected { background: var(--sel) !important; }';
+  return style;
+}
+
 /** Make the field in `host`, set its options and listeners; resolves with it once it is mounted and laid out. */
 export async function makeField(Field: typeof MathfieldElement, host: HTMLElement | undefined, on: FieldEvents): Promise<MathfieldElement> {
   // Fonts come from mathlive/static.css (bundled by Vite), not from a fonts folder at run time.
@@ -145,6 +156,7 @@ export async function makeField(Field: typeof MathfieldElement, host: HTMLElemen
   // letter's style, on the side its hidden style bias picked: 2\mathrm{i} 7 became \mathrm{i7}, one unknown name.
   mf.onInsertStyle = () => ({});
   mf.macros = withEntryMacros(mf.macros);
+  mf.shadowRoot?.append(chipSelectionStyle()); // R748
   const enforce = (): void => forceNoSystemKeyboard(mf);
   void customElements.whenDefined("math-field").then(() => requestAnimationFrame(enforce));
   mf.addEventListener("focusin", enforce);

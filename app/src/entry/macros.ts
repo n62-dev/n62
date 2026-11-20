@@ -3,10 +3,10 @@
 // renderer. `captureSelection` makes each chip one unit the cursor steps over and ⌫ deletes whole; `expand: false`
 // keeps the macro itself in the field's value, so the parser sees `\res{k}{…}`, not the digits drawn.
 // The first argument names the chip (the key in the entry's chip table, input/chips.ts), the second is only what
-// it shows. Drawn upright on the accent background (--chip-bg in style.css), so a chip never looks like a variable.
+// it shows. Drawn upright on the see-through tint (--chip-tint in style.css, R748), so a chip never looks like a variable.
 // Plain data: importing this does not load MathLive.
 
-const CHIP_STYLE = "background:var(--chip-bg);border-radius:4px;padding:0 3px";
+const CHIP_STYLE = "background:var(--chip-tint);border-radius:4px;padding:0 3px;display:inline-block";
 
 /** MathLive's MacroDefinition, written out so this module needs no MathLive import. */
 interface ChipMacro {
