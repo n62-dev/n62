@@ -178,6 +178,7 @@ copy_node_modules() {
   local d="$1/app/node_modules" tmp="$1/app/node_modules.tmp.$$" old="$1/app/node_modules.old.$$"
   [[ $nodemods_held -eq 1 ]] || die "copy_node_modules without the nodemods lock"
   rm -rf "$tmp" "$old"
+  nm_selflink_drop "$integ"
   cp -al "$integ/app/node_modules" "$tmp" || { rm -rf "$tmp"; die "could not copy node_modules into $1"; }
   if [[ -e "$d" || -L "$d" ]]; then mv -T "$d" "$old"; fi
   mv -T "$tmp" "$d"; rm -rf "$old"

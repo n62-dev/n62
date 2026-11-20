@@ -345,6 +345,18 @@ own_wait() {
   return $rc
 }
 
+# nm_selflink_drop <worktree>: A265: a symlink <worktree>/app/node_modules/node_modules is unlinked and logged (run log, when there is
+# one), before every copy of that tree: it came from outside the pipeline, pointed back at node_modules itself, and every hard-link copy
+# carried it; Node then loaded a second @playwright/test from the phase-1 worktree and every e2e spec failed. A real directory of that
+# name, in a package or at the top, is left alone. Never fails.
+nm_selflink_drop() {
+  local l="$1/app/node_modules/node_modules" to
+  [[ -L "$l" ]] || return 0
+  to="$(readlink "$l" 2>/dev/null || true)"
+  if rm -f "$l" && declare -F runlog >/dev/null; then runlog "unlinked the self-link $l -> $to before copying node_modules"; fi
+  return 0
+}
+
 # device_tree <phase-1 worktree> <sha> <dir> (A56): the device runner's own tree, so nothing it reads moves under it: the files
 # tracked at <sha> (git archive) and a hard-link copy of the worktree's app/node_modules; nodemods must be held (the copy reads
 # the phase-1 worktree's node_modules, as a worker start does). Prints "<size of the files> in <s> s"; 1 on a failure.
@@ -354,6 +366,7 @@ device_tree() {
   [[ -d "$src/app/node_modules" ]] || { echo "no node_modules in $src/app" >&2; return 1; }
   rm -rf "$d" && mkdir -p "$d" || return 1
   git -C "$src" archive "$sha" | tar -x -C "$d" || return 1
+  nm_selflink_drop "$src"
   mkdir -p "$d/app" && cp -al "$src/app/node_modules" "$d/app/node_modules" || return 1
   echo "$(du -sh --exclude=node_modules "$d" | cut -f1) in $((SECONDS - t0)) s"
 }
@@ -656,7 +669,7 @@ red_first() {
     [[ -n "$f" ]] || continue
     mkdir -p "$scratch/$(dirname "$f")"; git -C "$wt" show "HEAD:$f" > "$scratch/$f"
   done
-  [[ ! -d "$wt/app/node_modules" ]] || ln -s "$wt/app/node_modules" "$scratch/app/node_modules"
+  [[ ! -d "$wt/app/node_modules" ]] || ln -sT "$wt/app/node_modules" "$scratch/app/node_modules"
   [[ ! -d "$wt/app/src/find/_gen" ]] || { mkdir -p "$scratch/app/src/find"; cp -a "$wt/app/src/find/_gen" "$scratch/app/src/find/"; }
   local -a vfiles=("${files[@]}" "${edits[@]}")  # the edited files run beside the counted ones; any red file satisfies the stage
   if [[ ${#vfiles[@]} -gt 0 ]]; then
