@@ -33,6 +33,7 @@ function ctx(stored = true) {
     clearModifiers() {},
     hasResult: () => stored,
     undoRemoved: () => (log.push("undoRemoved"), false),
+    formRow: (row?: unknown) => row ?? { status: "done" },
     cycleForm: async () => (log.push("cycleForm"), true),
   };
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true };

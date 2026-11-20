@@ -8,6 +8,7 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import { loadForms, type HistoryItem, type Session } from "../state/session.svelte.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
+import { targetRow } from "../state/pickRows.ts";
 import { commaResult } from "../state/displayMode.ts";
 import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
@@ -122,10 +123,7 @@ export class ClipActions {
 
   /** The row an action means: the given one, else the newest finished result of the open view. */
   target(item?: HistoryItem): HistoryItem | undefined {
-    if (item) return item.status === "done" ? item : undefined;
-    const items = this.session.items;
-    for (let i = items.length - 1; i >= 0; i--) if (items[i]?.status === "done") return items[i];
-    return undefined;
+    return targetRow(this.session.items, item);
   }
 
   /** Put text on the clipboard and say so. */

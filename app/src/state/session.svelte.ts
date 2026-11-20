@@ -33,6 +33,7 @@ import type { UseCounter, UseKey } from "./uses.svelte.ts";
 import { commaInput } from "../entry/commaInput.ts";
 import { chipOf, HISTORY_LIMIT, rowUid, withUnit } from "./results.ts";
 import { itemsOr, prefetchItems } from "./itemLoad.ts";
+import { targetRow } from "./pickRows.ts";
 import { onTidy, prefetchTidy, tidyOr } from "./tidyLoad.ts";
 import { storedReader } from "./storedLoad.ts";
 export { loadTidy } from "./tidyLoad.ts";
@@ -653,21 +654,26 @@ export class Session {
     return { format: s.format, digits: s.digits, fixDecimals: s.fixDecimals, angle: s.angle, ...(this.decimalComma ? { decimalComma: true } : {}), groupSep: s.groupSep, mute: sigmaCode?.muter };
   }
 
-  /** The Format key (cycleForms.ts): the last result of the open view in the next ticked mode. Resolves true when the display changed. */
-  cycleFormat(): Promise<boolean> {
-    return this.formKey("cycleFormat");
+  /** The row the Format and a b/c keys mean (R775, Copy's rule): the picked `row` when it is finished, else the open view's newest finished row. */
+  formRow(row?: HistoryItem): HistoryItem | undefined {
+    return targetRow(this.items, row);
   }
 
-  /** The a b/c key on an empty line (R10, cycleForms.ts): the last result in its other form. Resolves true when the display changed. */
-  cycleForm(): Promise<boolean> {
-    return this.formKey("cycleForm");
+  /** The Format key (cycleForms.ts): the picked `row`, else the last finished result of the open view, in the next ticked mode. Resolves true when the display changed. */
+  cycleFormat(row?: HistoryItem): Promise<boolean> {
+    return this.formKey("cycleFormat", row);
   }
 
-  /** Either key on the open view's last row, when it is done and nothing runs, taken at the press before any await: a
-   *  later row must not take the act (R135f1). The code loaded: no await, the act is done before the next key. */
-  private async formKey(key: "cycleFormat" | "cycleForm"): Promise<boolean> {
-    const item = this.items.at(-1);
-    if (!item || item.status !== "done" || this.busy) return false;
+  /** The a b/c key on an empty line (R10, cycleForms.ts): the picked `row`, else the last finished result, in its other form. Resolves true when the display changed. */
+  cycleForm(row?: HistoryItem): Promise<boolean> {
+    return this.formKey("cycleForm", row);
+  }
+
+  /** Either key on its row (formRow), when nothing runs, taken at the press before any await: a later row must not take
+   *  the act (R135f1). The code loaded: no await, the act is done before the next key. */
+  private async formKey(key: "cycleFormat" | "cycleForm", row?: HistoryItem): Promise<boolean> {
+    const item = this.formRow(row);
+    if (!item || this.busy) return false;
     const m = formsCode ?? (await loadForms());
     return m ? m[key](this, this.calc, item) : false;
   }

@@ -31,6 +31,7 @@ function ctx(items: Row[] = [], app: string | null = null) {
     taps: { tap() {} },
     clearModifiers() {},
     hasResult: () => false,
+    formRow: (row?: unknown) => row ?? { status: "done" },
     cycleFormat: async () => void log.push("cycleFormat"),
   };
   const shell = { app, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, nav: () => false, toggleMenu: () => (log.push("toggleMenu"), true) };
