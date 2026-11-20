@@ -37,8 +37,9 @@ test("255, Shift + −: HEX shows 0xFF, DEC goes back", async ({ page }) => {
 
 test("the digits pick a row with the keypad (1 HEX, 4 DEC)", async ({ page }) => {
   await calc(page, ["d2", "d5", "d5"]);
+  await expect(last(page)).toHaveAttribute("data-text", "255"); // the result is in: with none, Shift + − is a dead press (under load it arrives late)
   await tap(page, ["shift", "sub"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Base"); // the sheet is open before the digit (under load its code arrives late)
+  await expect(page.getByTestId("sheet-title")).toHaveText("Base"); // the sheet is open before the digit (its code arrives late too)
   await sheetKey(page, ["d1"]);
   await expect(last(page)).toHaveAttribute("data-text", "0xFF");
 });
