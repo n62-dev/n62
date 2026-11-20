@@ -12,7 +12,8 @@
 //   refused "sumUnchecked" (Giac's sum of a rational function is wrong for some; G619 has the causes).
 // Only inputs that hold one of these calls pay, and an integral pays for the second integral only when f has a real
 // singular point in [a, b]. The checks run next to the engine, synchronously; only erasable TypeScript syntax.
-import { hasFloat, namesOf, valuePrecision, withDigits, type Giac } from "./numeric.ts";
+import { hasFloat, valuePrecision, withDigits, type Giac } from "./numeric.ts";
+import { namesOf } from "./lname.ts";
 import { callsOf, functionsIn, isError, isName, isTimeout, splitList, topLevelArgs, wordsOf } from "./giacPrint.ts";
 import { statsRefusal, type StatsRefusal } from "./stats.ts";
 import { wordRefusal, type WordRefusal } from "./wordOps.ts";
@@ -262,7 +263,7 @@ function integralCheck(giac: Giac, c: Call): Verdict {
   return verdict;
 }
 
-/** The free names of `e` (without ∞), by the bridge (numeric.ts namesOf); null when Giac could not say. */
+/** The free names of `e` (without ∞), by the bridge (lname.ts namesOf); null when Giac could not say. */
 const freeNamesOf = (giac: Giac, e: string): string[] | null => namesOf(giac, e)?.filter((n) => n !== "infinity") ?? null;
 
 /**

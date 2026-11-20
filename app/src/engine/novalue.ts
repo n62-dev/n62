@@ -17,7 +17,8 @@
 //   and of an answer with no free name whose evalf is no number (lostCas).
 // Runs synchronously next to the engine; only erasable TypeScript syntax.
 import { callsIn, type Refusal } from "./converge.ts";
-import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, namesOf, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { namesOf } from "./lname.ts";
 import { callsOf, firstNameIn, functionsIn, isError, isTimeout, LIST_TYPE, names, parsePrinted, topLevelArgs, type PrintedNode, type Quoting, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import type { ParseNode } from "./bridge.ts";
