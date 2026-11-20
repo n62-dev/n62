@@ -60,12 +60,11 @@ describe("R83 the Menu says whose it is", () => {
       await s.open("function", "symb");
       (s.instance as FunctionApp).define(0, "x^2");
       s.toggleMenu();
-      expect(ids(s)).toEqual(["clear", "paste", "in-plot"]); // R261: Clear is a slot row, so the pointer stays (R278f1: Paste too)
-      expect(s.sheet?.level.items[2]?.label).toBe("Root, extremum … in Plot");
-      if (pick === "digit") expect(s.pick(3)).toBe(true);
+      expect(ids(s)).toEqual(["clear", "paste", "mode", "in-plot"]); // R261: Clear is a slot row, so the pointer stays (R278f1: Paste too; R785: Mode too, a slot row)
+      expect(s.sheet?.level.items[3]?.label).toBe("Root, extremum … in Plot");
+      if (pick === "digit") expect(s.pick(4)).toBe(true);
       else {
-        s.sheet!.level.move(1);
-        s.sheet!.level.move(1);
+        for (let i = 0; i < 3; i++) s.sheet!.level.move(1);
         s.picked(s.sheet!.enter());
       }
       await Promise.resolve();
@@ -81,10 +80,10 @@ describe("R83 the Menu says whose it is", () => {
     const s = shell();
     await s.open("solve", "symb");
     s.toggleMenu();
-    expect(ids(s)).toEqual(["clear", "paste", "in-num"]);
+    expect(ids(s)).toEqual(["clear", "paste", "mode", "in-num"]);
     expect(s.sheet?.level.items[0]?.disabled).toBe(true); // R261: E1 is empty, nothing to clear
-    expect(s.sheet?.level.items[2]?.label).toBe("Solve, polynomial roots … in Num");
-    s.pick(3);
+    expect(s.sheet?.level.items[3]?.label).toBe("Solve, polynomial roots … in Num");
+    s.pick(4);
     await Promise.resolve();
     await Promise.resolve();
     expect(s.view).toBe("num");

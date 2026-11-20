@@ -84,6 +84,7 @@
      width) and the dots of the Apps tile */
   --bar-h: 28px;
   --view-w: 32px;
+  --bay-view-w: 36px; /* R785: an app's view icons in the bay */
   --grid-dot: 7px;
   --touch: 44px;
   --touch-big: 48px; /* R145: the ⚙ in a sheet head */

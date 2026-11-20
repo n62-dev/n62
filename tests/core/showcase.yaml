@@ -20,11 +20,11 @@ clips:
   - { id: s5, blocks: [4], title: "√200 = 10√2 (CAS)", setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc, "@cas"],
       presses: [shift, sq, d2, d0, d0, right], eval: enter, expect: { result: "10*sqrt(2)" } }
   # up to 30 digits
-  - { id: s13, blocks: [5], title: "the digits chip 12 → 30, then √2", setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc],
-      presses: [{tap: '[data-testid="chip-digits"]'}, d9, shift, sq, d2, right], eval: enter,
+  - { id: s13, blocks: [5], title: "the STD|12 chip, digits 12 → 30, then √2", setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc],
+      presses: [{tap: '[data-testid="chip-format"]'}, d3, d9, shift, sq, d2], eval: enter,
       expect: { result: "1.41421356237309504880168872421", mark: "≈" } }                      # √2 at 30 digits (c18's oracle value)
   - { id: K, blocks: [6, 7], title: "π, then e^(π√163), at 30 digits",
-      setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc, {tap: '[data-testid="chip-digits"]'}, d9],
+      setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc, {tap: '[data-testid="chip-format"]'}, d3, d9],
       presses: [shift, d3, enter, shift, ln, shift, d3, shift, sq, d1, d6, d3, right], eval: enter,
       expect: { result: "262537412640768743.999999999999", mark: "≈" } }                      # e^(π√163) = 262537412640768743.99999999999925…
   # HP Prime key layout

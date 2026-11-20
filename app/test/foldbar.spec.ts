@@ -106,7 +106,7 @@ test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, th
   for (const id of ["fold-slice", "tab-home", "tab-cas", "mod-slot", "menu-button"]) await expect(fbar(page).getByTestId(id)).toBeVisible();
   await expect(page.locator('[data-testid="bar"]')).toHaveCount(1); // one bar: the folded row's
   await expect(fbar(page).getByTestId("bar")).toHaveCount(1);
-  for (const id of ["chip-angle", "chip-format", "chip-digits", "place"]) await expect(fbar(page).getByTestId(id)).toBeHidden(); // no chips, no Apps ▾
+  for (const id of ["chip-angle", "chip-format", "place"]) await expect(fbar(page).getByTestId(id)).toBeHidden(); // no chips, no Apps ▾
   expect((await box(page, ".keys")).height).toBe(44);
   const screen = await page.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
   console.log(`folded history height at 412 × 815: ${screen}`);

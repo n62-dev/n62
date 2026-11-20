@@ -16,25 +16,26 @@ const host = (paste: () => void = () => undefined): AppHost =>
     copy: () => undefined,
     notice: () => undefined,
     paste,
+    mode: () => undefined,
   }) as unknown as AppHost;
 
 const ids = (app: FunctionApp | SolveApp, view: ViewId): string[] => app.menu(view).map((m) => m.id);
 
 describe("☰ → Paste in the apps (R278f1)", () => {
-  it("Function: Symb and Num have it, as the last row; Plot (no entry line) has none", () => {
+  it("Function: Symb and Num have it, before Mode, the last row (R785); Plot (no entry line) has none", () => {
     const app = new FunctionApp(host());
-    expect(ids(app, "symb")).toEqual(["clear", "paste"]);
-    expect(ids(app, "num").at(-1)).toBe("paste");
+    expect(ids(app, "symb")).toEqual(["clear", "paste", "mode"]);
+    expect(ids(app, "num").at(-2)).toBe("paste");
     expect(ids(app, "plot")).not.toContain("paste");
     expect(app.entryLabel("plot")).toBeUndefined();
   });
   it("Solve: Symb has it; Num has it once an unknown is selected, and not while the view has no line", () => {
     const app = new SolveApp(host());
-    expect(ids(app, "symb")).toEqual(["clear", "paste"]);
+    expect(ids(app, "symb")).toEqual(["clear", "paste", "mode"]);
     expect(app.entryLabel("num")).toBeUndefined(); // no unknown: no line
     expect(ids(app, "num")).not.toContain("paste");
     app.selected = "x";
-    expect(ids(app, "num").at(-1)).toBe("paste");
+    expect(ids(app, "num").at(-2)).toBe("paste");
   });
   it("the item takes the host's paste path", () => {
     let n = 0;

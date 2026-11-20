@@ -30,7 +30,8 @@ for (const width of [360, 392, 412] as const)
   test.describe(`at ${width} px`, () => {
     test.beforeEach(async ({ page }) => {
       await page.setViewportSize({ width, height: 800 });
-      await open(page);
+      await open(page, "");
+      await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
     });
 
     test("Home: one chip-format `STD|12` and no chip-digits; Mode's SCI and 6 show as SCI|6; a tap opens Mode on Format, Significant digits next", async ({ page }) => {
@@ -65,7 +66,8 @@ for (const width of [360, 392, 412] as const)
       expect(plot.x + plot.width).toBeLessThanOrEqual(num.x + 0.5);
       for (const v of [symb, plot, num]) expect(v.width).toBeGreaterThanOrEqual(28);
       await page.getByTestId("menu-button").tap();
-      const rows = sheet(page).getByRole("menuitem");
+      const rows = sheet(page).locator('[role="menuitem"][data-id]');
+      await rows.first().waitFor();
       const ids = await rows.evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset["id"]));
       expect(ids[ids.length - 1]).toBe("mode");
       await tap(page, [`d${ids.length}`]);
@@ -78,11 +80,11 @@ for (const width of [360, 392, 412] as const)
       await inApp(page);
       await tap(page, ["@mode"]); // in an app: ☰ and Mode
       await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
-      await sheet(page).locator('[data-id="format"] [aria-pressed]', { hasText: "SCI" }).tap();
+      await sheet(page).locator('[data-id="format"] [aria-pressed]', { hasText: "PFX" }).tap();
       await tap(page, ["@home"]);
-      await expect(page.getByTestId("chip-format")).toHaveText("SCI|12");
-      await tap(page, ["d1", "d2", "d3", "enter"]);
-      await expect(page.locator('[data-testid="result"] .result').last()).toHaveAttribute("data-text", /e/i);
+      await expect(page.getByTestId("chip-format")).toHaveText("PFX|12");
+      await tap(page, ["d1", "d2", "d0", "d0", "d0", "enter"]);
+      await expect(page.locator('[data-testid="result"] .result').last()).toHaveAttribute("data-text", /^12.k$/); // (a no-break space before the prefix)
     });
 
     test("DEG PFX 30 fits in Home and in Function: no target under 28 × 28, no overlap", async ({ page }) => {
