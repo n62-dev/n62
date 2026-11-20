@@ -65,7 +65,7 @@ test.describe("by keys", () => {
     await tap(page, ["@mode"]);
     await sheetKey(page, ["down", "down", "down", "down"]);
     await expect(active(page)).toHaveAttribute("data-id", "preset");
-    await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("AB");
+    await expect(row(page, "preset").getByTestId("sheet-value")).toHaveText("ab");
     await expect(row(page, "preset").getByTestId("row-hint")).toHaveText("RAD · STD 12 · point · no keys");
     await tap(page, ["enter"]); // Enter on the row lists the presets
     await expect(title(page)).toHaveText("Mode › Presets");

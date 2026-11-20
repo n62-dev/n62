@@ -44,12 +44,11 @@ async function openDeviceName(page: Page): Promise<void> {
   await row(page, "sync").tap();
   await row(page, "device").tap();
 }
-const deviceValue = async (page: Page): Promise<string> => {
+/** Settings › Sync reopened: the Device name row (its kept name is read on the level's first draw, so a test waits on the row). */
+const deviceRow = async (page: Page) => {
   await tap(page, ["@mode", "d6", "d5"]);
   await row(page, "sync").tap();
-  const v = (await row(page, "device").getByTestId("sheet-value").textContent()) ?? "";
-  await tap(page, ["esc", "esc", "esc", "esc"]);
-  return v;
+  return row(page, "device").getByTestId("sheet-value");
 };
 
 test("Settings › Sync › Device name: Alpha is locked, the hint shows, abc types without an Alpha press, Enter saves it", async ({ page }) => {
@@ -60,7 +59,7 @@ test("Settings › Sync › Device name: Alpha is locked, the hint shows, abc ty
   await tap(page, ["enter"]);
   await expectClosed(page);
   expect(await entryValue(page)).toBe("2+3"); // the line that was there
-  await expect.poll(() => deviceValue(page)).toBe("abc");
+  await expect(await deviceRow(page)).toHaveText("abc");
 });
 
 test("Settings › Sync › Device name: Esc leaves the old name and the old line, and Alpha is off", async ({ page }) => {
@@ -69,7 +68,9 @@ test("Settings › Sync › Device name: Esc leaves the old name and the old lin
   await tap(page, ["esc"]);
   await expectClosed(page);
   expect(await entryValue(page)).toBe("2+3");
-  expect(await deviceValue(page)).toBe("made at the first write");
+  const value = await deviceRow(page);
+  await page.waitForTimeout(500); // (the record is read on the first draw: an Esc that saved would show its name by now)
+  await expect(value).toHaveText("made at the first write");
 });
 
 test("Presets › Save: the same prompt; letters type with no Alpha press, and a number once Alpha is tapped off", async ({ page }) => {
