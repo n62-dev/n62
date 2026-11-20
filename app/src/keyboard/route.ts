@@ -19,7 +19,7 @@ import type { SheetKey } from "../views/sheetKeys.ts";
 /** Shift and Alpha as one key would see them: the session's state, or the layer a gesture chose. */
 export type Mods = { shift: boolean; alpha: boolean };
 /** A key (or a hardware letter, R45) waiting for an app's or a sheet's code. */
-export type Waiting = { key: Key; mods: Mods; layer?: Layer; screen?: boolean; line?: boolean } | { letter: string };
+export type Waiting = { key: Key; mods: Mods; layer?: Layer; line?: boolean } | { letter: string };
 
 /** What the routing reads and calls: the models, the App-owned state (as accessors) and the App-owned actions. */
 export interface RouteCtx {
@@ -280,10 +280,10 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   return false;
 }
 
-/** A key while a sheet is open (docs/05 3.1); `screen`: a tap on the on-screen keypad (R144). Shift and Alpha are
- *  ignored, and the sheet leaves them as they are; no key goes through to the entry line. A flick down types the key's letter into the filter, on any key (digits
+/** A key while a sheet is open (docs/05 3.1; every sheet is in the viewport with the keys live below it, R770). Shift and Alpha are
+ *  ignored, and the sheet leaves them as they are; no key goes through to the entry line; a key the sheet does not use is dead. A flick down types the key's letter into the filter, on any key (digits
  *  too; docs/05 section 7 point 6); a flick up does nothing there. False: no sheet is open. */
-export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, screen?: boolean, mods?: Mods): boolean {
+export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean {
   const shell = c.shell;
   const sheet = shell.sheet;
   if (!sheet) return false;
@@ -294,12 +294,6 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
   const cell = level.grid?.key(c, key, layer); // R189: a matrix grid's cell is edited on the line (matrixGrid.svelte.ts)
   if (cell === true && layer === undefined) c.session.clearModifiers(); // R300: a key the grid takes (Clear, Store ▶) uses a one-shot Shift up, as on the line
   if (cell !== undefined) return cell;
-  // R144 (owner, 2026-11-06): any other tap on the on-screen keypad outside a pick sheet closes it and does nothing
-  // else, the press used up; Esc keeps its job (back one level), and a sheet that takes letters (Find, Vars) its keys
-  if (screen && !sheet.letters && key.id !== "esc") {
-    shell.closeSheet();
-    return true;
-  }
   // a grid whose cells show keys (Shift + 6, R18): a tap on such a key picks its cell, before its usual sheet job
   const byPlace = layer === "alpha" || layer === "shift" ? undefined : sheet.pickKey(key.id);
   if (byPlace) {
@@ -342,7 +336,10 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       return true;
     case "backspace":
       // in Find ⌫ on an empty query goes back from a category to the list of categories
-      if (!level.backspace() && find) sheet.back();
+      if (!level.backspace()) {
+        if (find) sheet.back();
+        else c.dead(); // R770: nothing to delete here
+      }
       return true;
     case "line":
       // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
@@ -352,6 +349,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, scre
       shell.closeSheet();
       return false;
     case "none":
+      c.dead(); // R770: a key the sheet does not use is dead (docs/05 3.7); the sheet stays
       return true;
     case "pass": {
       // read by what the key is, not by the layer: ☰, the place name and Tmpl toggle their sheet, a control that
@@ -423,7 +421,7 @@ function replay(c: RouteCtx): void {
   for (const w of keys)
     if (c.waiting.length > 0 || c.shell.loading !== null || c.sheetLoad !== null || c.shell.sheetPending !== null || forLine(c, w)) wait(c, w); // another app or sheet started loading meanwhile (or the field is still to come), and all after it
     else if ("letter" in w) typeLetter(c, w.letter);
-    else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.screen, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
+    else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
 
 /** R281: a key in the store sheet (sheetKeys.ts storeKey). A key that types a letter on the line types the same letter
@@ -470,14 +468,14 @@ function rowsLoading(c: RouteCtx, key?: Key): boolean {
 }
 
 /** A key fires. `layer` overrides the Shift/Alpha state for this key only: a trackpad step ("primary"), a flick up
- *  ("shift") or down ("alpha"). `screen`: a press of the on-screen keypad (R144: it closes an open pick sheet). */
-export function press(c: RouteCtx, key: Key, layer?: Layer, screen?: boolean): void {
+ *  ("shift") or down ("alpha"). */
+export function press(c: RouteCtx, key: Key, layer?: Layer): void {
   const p = key.actions.primary;
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return modifier(c, p.name, layer);
   // (F42: a tap on a sheet that is open but not drawn yet keeps its flag and closes it once drawn; a key pressed before a
   // sheet opens waits as typed, R8)
-  if (sheetUndrawn(c) || rowsLoading(c, key)) return wait(c, { key, mods: modsFor(c, layer), layer, screen });
-  if (c.shell.sheet && sheetPress(c, key, layer, screen)) return;
+  if (sheetUndrawn(c) || rowsLoading(c, key)) return wait(c, { key, mods: modsFor(c, layer), layer });
+  if (c.shell.sheet && sheetPress(c, key, layer)) return;
   const mods = modsFor(c, layer);
   if (sheetChunk.pad?.route(c, key, mods)) return; // the unit pad's cell (R24b)
   c.session.clearModifiers(); // a one-shot Shift or Alpha is used up by this key, a tap or a flick

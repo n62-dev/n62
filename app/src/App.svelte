@@ -12,7 +12,7 @@
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
-  import { keyboard, MATHS_ROW, type Key, type Layer } from "./keyboard/keyboard.ts";
+  import { keyboard, type Key, type Layer } from "./keyboard/keyboard.ts";
   import * as route from "./keyboard/route.ts";
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
@@ -119,35 +119,6 @@
   $effect(() => void (session.engineState === "failed" && import("./views/EngineFailed.svelte").then((m) => (EngineFailed = m.default), () => {})));
   let host: HTMLElement | undefined = $state();
   let entryHeight = $state(0);
-
-  // The pick sheets' layer (R21a): from the gap above the first maths row to the keypad's bottom edge, measured once per
-  // resize of the keypad.
-  let keysEl: HTMLDivElement | undefined = $state();
-  let mathsTop = $state(0);
-  /** A tap in the viewport closes a pick sheet; a click left over from the press that opened it does not. */
-  let catchPressed = false;
-  $effect(() => {
-    void shell.sheet;
-    catchPressed = false;
-  });
-  const firstMaths = keyboard.keys.find((k) => k.row === MATHS_ROW);
-  const keyBox = (id: string): DOMRect | undefined => keysEl?.querySelector(`[data-key="${id}"]`)?.getBoundingClientRect();
-  $effect(() => {
-    const el = keysEl;
-    if (!el || !firstMaths) return;
-    const place = (): void => {
-      const k = keyBox(firstMaths.id);
-      // R148: from the gap above the first maths row (the keypad's 4 px gap covers no key): the Home menu's nine rows at the
-      // floor still fit at 412 × 915 with the tighter keypad
-      const gap = parseFloat(getComputedStyle(el.querySelector(".pad") ?? el).rowGap) || 0;
-      if (k) mathsTop = k.top - gap - el.getBoundingClientRect().top;
-    };
-    place();
-    if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(place);
-    ro.observe(el);
-    return () => ro.disconnect();
-  });
 
   /** Run now when loaded, else as soon as the code has arrived (a key pressed before the idle load), with the keys
    *  meanwhile in the queue (decisions.md R8). The Mode code comes too: every Menu's last row is Settings, its submenu (R49). */
@@ -457,18 +428,15 @@
     dead,
     unfold,
   };
-  const press = (key: Key, layer?: Layer, screen?: boolean): void => {
+  const press = (key: Key, layer?: Layer): void => {
     edited = true;
-    route.press(ctx, key, layer, screen);
+    route.press(ctx, key, layer);
   };
   const typeLetter = (ch: string): void => {
     edited = true;
     route.typeLetter(ctx, ch);
   };
   const cancel = (): Promise<void> => route.escape(ctx);
-
-  /** A tap on the catch strip is not a place for typing: it must not take the caret out of the entry line. */
-  const noFocus = (e: Event): void => e.preventDefault();
 
   const busy = $derived(session.busy || shell.busy);
   /** R155: a job runs or the engine starts; the dash round the entry outline shows once that has lasted 150 ms. */
@@ -538,23 +506,14 @@
       </div>
     </div>
 
-    <!-- a list that takes letters rises from just above the entry line, over the history or view, and takes the entry
-         line's room only when its rows need it; while a pick sheet is over the keypad, a tap in the viewport closes it
-         (docs/05 3.1) -->
-    {#if shell.sheet && (shell.sheet.letters || folded)}
-      <!-- R53: folded, every sheet rises from the slice's top edge over the history (a list that takes letters keeps the line) -->
-      {@render sheetView(shell.sheet, "view", shell.sheet.letters ? entryHeight : 0)}
-    {:else if shell.sheet}
-      <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (the Esc and Cancel keys close it too) -->
-      <div class="catch" data-testid="sheet-catch" onpointerdown={(e) => { noFocus(e); catchPressed = true; }} onclick={() => {
-        if (catchPressed) shell.closeSheet();
-        catchPressed = false;
-      }}></div>
-    {/if}
+    <!-- R770: every sheet rises from just above the entry line, over the history or view, and takes the entry line's room only
+         when its rows need it; the keys stay live below it (docs/05 3.1). R53: folded, a sheet that takes no letters rises from the
+         slice's top edge over the history, the line covered -->
+    {#if shell.sheet}{@render sheetView(shell.sheet, folded && !shell.sheet.letters ? 0 : entryHeight)}{/if}
   </div>
 
   {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} onpress={press} onmode={openMode} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar -->
-  <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined} bind:this={keysEl}>
+  <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined}>
     <!-- R53, R724: folded, the 44 px folded bar over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
     {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}
       {ctx} {busy} onpress={press} />{/if}
@@ -569,27 +528,20 @@
       cas={casKeys} app={shell.app !== null}
       sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store" } : undefined}
       pops={session.settings.look.pops}
-      onpress={(key, layer) => press(key, layer, true)}
+      onpress={press}
       oncount={session.taps.touch}
       ontouch={touched}
     />
     </div>
-    <!-- a pick sheet rises over the maths rows (3–9), anchored at the keypad's bottom edge; the top cluster stays
-         uncovered, a tap on it closes the sheet (R144), and no key moves (decisions.md "R21") -->
-    {#if shell.sheet && !shell.sheet.letters && !folded}
-      <div class="layer" style:top="{mathsTop}px">{@render sheetView(shell.sheet, "keypad")}</div>
-    {/if}
   </div>
 </main>
 
-{#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, over: "keypad" | "view", below = entryHeight)}
+{#snippet sheetView(sheet: NonNullable<typeof shell.sheet>, below: number)}
   {#if sheetChunk.C}
   <sheetChunk.C
     {sheet}
-    {over}
     testid={shell.switcherOpen ? "apps" : sheet.id === "find" || sheet.id === "store" ? sheet.id : "menu"}
     {below}
-    {keyBox}
     ontap={(i) => shell.picked(sheet.activate(i))}
     onoption={(i, o) => shell.picked(sheet.pickOption(i, o))}
     onback={() => sheet.back()}
@@ -689,19 +641,6 @@
   }
   .keys.folded .pad-wrap {
     visibility: hidden;
-  }
-  .layer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 5;
-    pointer-events: none; /* the keys a short sheet leaves visible stay live (a tap closes it, R144); the sheet itself takes its taps */
-  }
-  .catch {
-    position: absolute;
-    inset: 0;
-    z-index: 5;
   }
   .loading {
     margin: auto;

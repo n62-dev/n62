@@ -3,8 +3,8 @@
 // (style.css and src/theme/*.css, R50b–R50d), sizes, type, radii and motion from the tokens in style.css. This test
 // reads every src/**/*.svelte and lists each literal it finds: a length or duration with a unit (px, em, rem, vh, vw,
 // pt, ms, s), a #hex, rgb() or hsl() colour, or a named colour in a style. Allowed: 0, unitless numbers (line-height,
-// flex, opacity), percentages, fr and ch, a value built from tokens, and a media query's condition (CSS cannot read a
-// custom property there).
+// flex, opacity), percentages, fr and ch, a value built from tokens, and a media or container query's condition (CSS cannot
+// read a custom property there).
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,7 +35,7 @@ export function hardCoded(file: string, source: string): string[] {
   const styleLine = src.slice(0, Math.max(0, src.indexOf("<style"))).split("\n").length - 1;
   const out: string[] = [];
   src.split("\n").forEach((line, i) => {
-    if (/^\s*@media\b/.test(line)) return;
+    if (/^\s*@(?:media|container)\b/.test(line)) return;
     const inStyle = src.includes("<style") && i >= styleLine;
     const named = inStyle ? [...line.matchAll(NAMED)].map((m) => m[1] as string) : [];
     const found = [...[...line.matchAll(LENGTH), ...line.matchAll(COLOUR)].map((m) => m[0]), ...named];
@@ -50,12 +50,12 @@ describe("design tokens (R12b)", () => {
       "<script>const a = 3; // 12px in a comment", "const t = `${n}px`;</script>",
       "<div style:width={`${w}px`} style:height=\"12px\"></div>",
       "<style>", "  .a { padding: 0 var(--sp-2); width: 50%; flex: 1 1 0; line-height: 1.1; }", "  /* 8px here is a comment */",
-      "  .b { margin: 4px; color: #fff; background: rgb(0 0 0); border-color: black; }", "  @media (max-height: 700px) {", "  .c { animation: x 100ms; font-size: 0.94em; }",
+      "  .b { margin: 4px; color: #fff; background: rgb(0 0 0); border-color: black; }", "  @media (max-height: 700px) {", "  @container (max-height: 120px) {", "  .c { animation: x 100ms; font-size: 0.94em; }",
       "  .d { margin: 0 -8px; transform: translate(-50%, calc(-100% - 6px)); gap: var(--sp-2); }", "</style>",
     ].join("\n");
     expect(hardCoded("x.svelte", sample)).toEqual([
-      "x.svelte:3: 12px", "x.svelte:7: 4px", "x.svelte:7: #fff", "x.svelte:7: rgb(", "x.svelte:7: black", "x.svelte:9: 100ms", "x.svelte:9: 0.94em",
-      "x.svelte:10: -8px", "x.svelte:10: 6px",
+      "x.svelte:3: 12px", "x.svelte:7: 4px", "x.svelte:7: #fff", "x.svelte:7: rgb(", "x.svelte:7: black", "x.svelte:10: 100ms", "x.svelte:10: 0.94em",
+      "x.svelte:11: -8px", "x.svelte:11: 6px",
     ]);
   });
   it("no colour or size is written directly in any .svelte file", () => {

@@ -38,7 +38,7 @@ export type HwKind = (typeof HW_KINDS)[number];
 export const hwKind = (kind: HwKind): string => `hw:${kind}`;
 
 /** What a finger can tap on the screen outside the keypad. */
-const TAPPABLE = "button, [role=menuitem], [role=button], [data-testid=sheet-catch]";
+const TAPPABLE = "button, [role=menuitem], [role=button]";
 const KEYPAD = "[data-key], [data-trackpad]";
 
 /** Whether a click is a screen tap that counts: on a button or a row, and not on a keypad key (its gesture counts it). */

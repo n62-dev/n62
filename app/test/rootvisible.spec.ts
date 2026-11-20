@@ -47,6 +47,7 @@ for (const [name, width, height] of SIZES)
 // R82f1 (F117): Plot's ☰ at the Fairphone's size. Every entry is on screen and uncovered without scrolling at 372×828
 // and at 372×767 (the WebView's height there, bars taken off: CORE DEVICE's log); on the short screen each one is
 // reachable: on screen, or the count cue shown and scrolled to. Phase-1 cut Settings, the ninth row, by 3 px at both.
+// R770: every sheet is in the viewport now, so under 1000 px tall the Menu scrolls inside it and each row is scrolled to.
 // R722: under 1000 px tall the rows are 43 px (owner, 2026-11-17), so the Fairphone's Menu scrolls at its floor (every row
 // reachable, the cue showing); a phone 1000 px tall has the full rows and shows them all
 const MENU_SIZES = [
@@ -74,6 +75,14 @@ for (const [name, width, height, all] of MENU_SIZES)
         if (!all && (await seen(page, sel)) !== "") {
           await expect(cue, `${id} is cut, so the cue shows`).toBeVisible();
           await page.locator(sel).evaluate((e) => e.scrollIntoView({ block: "nearest" }));
+        }
+        // R770: at 372×560 the sheet is the 88 px above the keys, its list 48 px: a row with a reason line (58 px) cannot be whole
+        // there, so such a row is reached when it fills the list's box (the row is the picked one; its text is in sight)
+        const [row, list] = await Promise.all([page.locator(sel).boundingBox(), page.locator('[data-testid="menu"] .list').boundingBox()]);
+        if (!all && row && list && row.height > list.height) {
+          expect(row.y, `${id} fills the list at ${width}×${height}`).toBeLessThanOrEqual(list.y + 0.5);
+          expect(row.y + row.height, `${id} fills the list at ${width}×${height}`).toBeGreaterThanOrEqual(list.y + list.height - 0.5);
+          continue;
         }
         await expect.poll(() => seen(page, sel), { message: `Menu row ${id} at ${width}×${height}`, timeout: 2000 }).toBe("");
       }
