@@ -2,7 +2,7 @@
 // One sheet for every list (R7, docs/05 3.1 with section 7): one test per key of the 3.1 table, plus last pick, the
 // scroll cue, disabled rows with their reason, touch, and no key going through the sheet.
 import { expect, test, type Page } from "@playwright/test";
-import { drag, entryValue, open, sheet, sheetKey, tap, tapHistory } from "./helpers.ts";
+import { drag, entryValue, open, sheet, sheetKey, tap, tapHistory, closeSheet } from "./helpers.ts";
 
 test.beforeEach(async ({ page }) => {
   await open(page);
@@ -205,7 +205,7 @@ test("touch: a tap on a row picks it, ‹ goes back, a tap beside the sheet clos
   await tapHistory(page); // a point of the history, computed outside the sheet's box
   await expect(sheet(page)).toHaveCount(0);
   await list(page, "Units", UNITS); // a list that takes letters, over the view: the dimmed area above it
-  await sheet(page).click({ position: { x: 5, y: 5 } });
+  await closeSheet(page); // a history tap where the list leaves room, else its × (docs/05 3.1)
   await expect(sheet(page)).toHaveCount(0);
   expect(await ran(page)).toEqual([]);
 });
