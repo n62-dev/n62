@@ -123,6 +123,7 @@ test("a name prompt takes every cell: Chars in a preset's name types the charact
   await tap(page, ["d2", "add", "d3"]);
   await tap(page, ["@mode", "d5", "d1"]);
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name");
+  await tap(page, ["alpha"]); // R776: the name prompt starts with Alpha locked; under it Shift + Vars would type a letter
   await tap(page, CHARS);
   await sheet(page).locator('[data-id="theta"]').tap();
   await expect(page.getByTestId("entry-label")).toHaveText("Preset name"); // the prompt stays

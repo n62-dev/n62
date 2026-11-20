@@ -16,6 +16,8 @@ export const enPresets = {
   "newer": "Saved by a newer N62: kept as it is",
   "unreadable": "Could not be read: kept as it is",
   "name": "Preset name",
+  /** R776: shown for as long as a name prompt is open (Save, Rename, Device name). */
+  "hint": "Type a name. Enter saves, Esc cancels.",
   "saved": "Saved {name}",
   "renamed": "Renamed to {name}",
   "updated": "{name} updated",

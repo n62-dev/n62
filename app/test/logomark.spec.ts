@@ -182,7 +182,7 @@ test.describe("fake engine", () => {
       test("a tap on it opens the credits sheet, nothing is submitted", async ({ page }) => {
         await page.locator(".faint").tap();
         await expect(credits(page)).toBeVisible();
-        await expect(credits(page)).toContainText("N for number, 6 first perfect number, 2 first prime number");
+        await expect(credits(page)).toContainText("N62 stands for \"Number Six Two\": six is the first perfect number, and two is the first prime number.");
         expect(await page.evaluate(() => window.n62.session.items.length)).toBe(0);
       });
     });

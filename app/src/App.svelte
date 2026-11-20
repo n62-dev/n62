@@ -258,7 +258,9 @@
   }
   /** What Settings › Your keys needs (R4b): the slots, and Find to pick a slot's content from. */
   // svelte-ignore state_referenced_locally (main.ts mounts App once; shell and entry are never replaced)
-  const settingsEnv = { get userKeys() { return userKeys; }, shell, entry, tips: showTips, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a hold on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
+  const settingsEnv = { get userKeys() { return userKeys; }, shell, entry,
+    alpha: (on: boolean): void => { session.releaseModifiers(); if (on) session.flickAlphaLock(!casKeys); }, // R776: a name prompt types lower case (CAS: Alpha alone, Home: Shift + Alpha, R58)
+    tips: showTips, chooseFor: (id: string, layer: Layer): void => openFind({ id, layer }), data: withClip }; // data: Settings › Data (R38a, R38b; as a hold on a history row: waits for the clipboard and Mode code if the sheet opened before they came; no import of its own in the start chunk)
   /** Settings as the ☰ menus' last row opens it (R49): one per session, its rows read the settings on every draw. */
   let settingsMenu: SubMenu | undefined;
   /** A user key that holds Settings, or a ☰ menu's last row before the Mode code is in: Mode › Settings, on its first
@@ -491,7 +493,8 @@
       {/if}
     </div>
 
-    {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>{/if}
+    {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>
+    {:else if shell.prompt?.hint}<div class="notice" role="status" data-testid="prompt-hint">{shell.prompt.hint}</div>{/if}
 
     <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code); folded, its why line alone (R724: the buttons are in the folded bar) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
@@ -500,7 +503,7 @@
     {/if}
 
     <div class="entry" class:hidden={!shell.showsEntry} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
-      {#if shell.entryLabel}<span class="entrylabel" data-testid="entry-label">{shell.entryLabel}</span>{/if}
+      {#if shell.entryLabel}<span class="entrylabel" class:asking={!!shell.prompt} data-testid="entry-label">{shell.entryLabel}</span>{/if}
       <!-- R155: one flat dash on the outline's path while a job runs (aria-hidden: the hidden status line names the job); in the
            field's box, where the unit view (units/open.ts) hides it with the field -->
       <div class="field" bind:this={host}>
@@ -685,6 +688,9 @@
   .entrylabel {
     color: var(--muted);
     white-space: nowrap;
+  }
+  .entrylabel.asking {
+    color: var(--text); /* R776: a name prompt's label is the question, not a hint */
   }
   .field {
     position: relative;
