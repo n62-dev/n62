@@ -9,6 +9,8 @@ export const enSheet = {
   "sheet.stepDown": "Previous value",
   "sheet.stepUp": "Next value",
   "sheet.noMatch": "No match",
+  "sheet.fill": "Fill the screen",
+  "sheet.unfill": "Back to the small window",
 } as const;
 
 export type SheetKey = keyof typeof enSheet;

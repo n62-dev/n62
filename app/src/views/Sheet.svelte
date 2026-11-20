@@ -26,6 +26,11 @@
    *  icons.ts: StatusLine draws the N62 mark now, and icons.ts rides with the first app's opening (R362). The markup is the same as ICONS.home was. */
   const HOME =
     '<svg viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 7.5 8 2.5l5.5 5M4 6.5v6h8v-6" stroke-linejoin="round"/></svg>';
+  /** R778: the corner button's drawn marks, the corners pulled apart (fill the screen) or together (back); in `--muted`, no fill. */
+  const FILL =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5h3.5V6M6 13.5H2.5V10M13.5 2.5 9.5 6.5M2.5 13.5l4-4"/></svg>';
+  const UNFILL =
+    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6H9.5V2.5M3 10h3.5v3.5M9.5 6.5l4-4M6.5 9.5l-4 4"/></svg>';
   const icon = (id: IconId): string => (id === "home" ? HOME : ICONS[id]);
 
   let {
@@ -127,6 +132,7 @@
   $effect(() => {
     void level.highlight;
     void rows.length;
+    void sheet.full; // R778: the box changed size: the picked row is brought into view again
     list?.querySelector<HTMLElement>('[data-active="true"]')?.scrollIntoView({ block: "nearest" });
     measure();
   });
@@ -155,6 +161,7 @@
   class="overlay"
   class:matrix={level.grid !== undefined}
   class:edits={level.grid?.editing != null}
+  class:full={sheet.full}
   style:--room="{below}px"
   data-testid={testid}
   bind:this={overlay}
@@ -256,6 +263,8 @@
       {#if note}<div class="preview" class:long={level.longPreview} data-testid="find-preview">{note}</div>{/if}
       {#if level.current?.put}<button type="button" class="put" data-testid="find-put" onclick={() => level.current?.put?.run()}>{level.current.put.label} ▶</button>{/if}
     {/if}
+    <!-- R778: a sheet with no fixed size (sheet.fillable) fills the whole screen, keypad area included, and back; a touch view -->
+    {#if sheet.fillable || sheet.full}<button type="button" class="fill" data-sheet-full aria-pressed={sheet.full} aria-label={sheetText(sheet.full ? "sheet.unfill" : "sheet.fill")} onclick={() => (sheet.full = !sheet.full)}>{@html sheet.full ? UNFILL : FILL}</button>{/if}
   </div>
   <!-- shrinks first (flex-shrink weighs by size: 1000 × its height against the sheet's 1 × its own) -->
   <div class="room" style:flex-basis="{below}px"></div>
@@ -306,6 +315,43 @@
     max-height: calc(100% - var(--sp-2));
     min-height: 0;
     flex: 0 1 auto;
+  }
+  /* R778: the whole screen, the keypad under it; the sheet is its box (no margin, no corners) */
+  .overlay.full {
+    position: fixed;
+    z-index: 50;
+    background: var(--panel);
+  }
+  .overlay.full > .sheet {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    flex: 1 1 auto;
+  }
+  .overlay.full > .room {
+    display: none;
+  }
+  .fill {
+    all: unset;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: var(--touch);
+    height: var(--touch);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--muted);
+    opacity: 0.8;
+  }
+  .fill :global(svg) {
+    width: 16px;
+    height: 16px;
   }
   .head {
     display: flex;

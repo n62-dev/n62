@@ -51,6 +51,26 @@ export function lookShots(someHistory: (p: Page) => Promise<void>): LookShot[] {
     { id: "look-bw-plain", group: "Themes (R50e): the switches", title: "Black & White, Plain keys", setup: set({ family: "bw", plain: true }) },
     { id: "look-bw-both", group: "Themes (R50e): the switches", title: "Black & White, High contrast and Plain keys together", setup: set({ family: "bw", contrast: true, plain: true }) },
     { id: "look-both", group: "Themes (R50e): the switches", title: "N62, High contrast and Plain keys together", setup: set({ contrast: true, plain: true }) },
+    // R778: Find's corner button (fills the screen), in each family, then the sheet full (the button's other mark)
+    ...FAMILIES.map((family) => ({
+      id: `fill-${family}`,
+      group: "Find's corner button (R778): fill the screen",
+      title: `${name(family)}: Math's Find at the small size, the button at the sheet's bottom right`,
+      setup: async (p: Page) => {
+        await setLook(p, { family, brightness: "system" });
+        await tap(p, ["math"]);
+        await p.waitForSelector("[data-sheet-full]");
+      },
+    })),
+    {
+      id: "fill-full",
+      group: "Find's corner button (R778): fill the screen",
+      title: "N62: the sheet full, the keypad under it, the same button back",
+      setup: async (p: Page) => {
+        await tap(p, ["math"]);
+        await p.locator("[data-sheet-full]").tap();
+      },
+    },
     // R156: every shot above has Key shadows on (the default); this one is N62 flat, to set beside "N62"
     { id: "look-n62-flat", group: "Themes (R50e): the switches", title: "N62, Key shadows off (R156: beside N62 above, which has them on)", setup: set({ shadow: false }) },
   ];
