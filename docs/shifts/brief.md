@@ -67,18 +67,15 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885e | [R770](packages/R770.md) every window opens in the viewport, never over the keys (owner, 2026-11-19); NOT MERGED after two rounds: its work is on `p1/ron-sheetsview` (8ae3dde8), pass 221's FIX R770f1 finishes it | ron, Sonnet (Opus is capped, A262) | `p1/ron-sheetsview-f1` | – |
-| 885m | R778 a window that scrolls gets a corner button that fills the whole screen (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfull` | R770 |
-| 885p | R783 the bar's right anchor: the angle icon (π or °) and ☰; no ⇧ α slot while the keys are up (owner, 2026-11-20) | ron, Sonnet | `p1/ron-barangle` | R778 |
-| 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰ | ron, Sonnet | `p1/ron-barbay` | R783 |
-| 885x | [R800](packages/R800.md) Memory's number keys highlight, never delete (owner's walk 2026-11-20, B1: data loss, first) | ron, Sonnet | `p1/ron-memdigits` | – |
+| 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰; NOT MERGED after two rounds: its work is on `p1/ron-barbay` (bc4bc983), pass 222's FIX R785f1 finishes it | ron, Sonnet | `p1/ron-barbay-f1` | – |
+| 885x | [R800](packages/R800.md) Memory's number keys highlight, never delete (owner's walk 2026-11-20, B1: data loss, first); NOT MERGED (its e2e never ran: the node_modules self-link, A265): its work is on `p1/ron-memdigits` (90518172), pass 222's FIX R800f1 finishes it | ron, Sonnet | `p1/ron-memdigits-f1` | – |
+| 885x2 | [A265](packages/A265.md) the pipeline drops a node_modules self-link before it copies node_modules (pass 222) | annabell, Sonnet | `p1/annabell-nmselflink` | – |
 | 885r | [R786](packages/R786.md) ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
 | 885s | [R782](packages/R782.md) the left side: APP▾, Home fixed, slot 2 reassignable by a second tap; stops if the bar does not fit 356 dp | ron, Sonnet | `p1/ron-barslots` | R786 |
 | 885sa | [R830](packages/R830.md) Home and CAS ☰: 1 Delete, 2 Share, 3 Clear, 4 Export › (owner, 2026-11-20 night, H1; reverses R720) | ron, Sonnet | `p1/ron-homemenu4` | R782 |
 | 885sb | [R832](packages/R832.md) a tap lights the input, the result or the whole row; Copy, Store, insert act on it (H2; takes in R741) | ron, Sonnet | `p1/ron-rowpart` | R830 |
 | 885i | [R773](packages/R773.md) the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R782 |
 | 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
-| 885k | R776 a name prompt says what it wants and starts in Alpha | ron, Sonnet | `p1/ron-nameprompt` | R770 |
 | 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look | ron, Sonnet | `p1/ron-deadquiet` | R770 |
 | 885n | [R779](packages/R779.md) the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
 | 885o | [R780](packages/R780.md) every menu row has a number the keypad reaches, past row 10 too (measure first) | ron, Sonnet | `p1/ron-rowsnumbers` | R777 |
