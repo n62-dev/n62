@@ -139,6 +139,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **The tips' text stops at 17 px** (R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived.
   - **Under 1000 px tall with R722's 43 px rows too (R722's question):** Plot's ☰ after a Root, Mode › Digits, Numbers and Appearance scroll at their floor at 412 × 915 and on the Fairphone 6. Would change if: the owner's look at the beta wants them whole (a 32 px floor, measured by R722, brings back Plot's ☰ and Digits).
+  - **Plot's ☰ keeps its numbers (R785, pass 222):** To Home is always the ninth row, off with "No result yet" until a Root or other answer, and Mode the tenth, so no row's number moves with the state (docs/06 3b); R262's ninth row shown only with an answer goes. With ten rows Plot's ☰ may scroll at 412 × 1000 too; a test asserts what the real size does, never a viewport picked to pass. Would change if: the owner's look at the beta wants Plot's ☰ whole at 1000 px tall.
 
 **Engine, precision and formats**
 - **Honest precision** (G2): rule: docs/04 2.4 rules 2–3; assignments evaluated once. **G44, G23:** the inverse distributions are solved against our MPFR forward functions, every fallback keeps ⚠. Archived. Would change if: a G2 user types Giac's aliases.
