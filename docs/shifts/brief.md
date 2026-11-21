@@ -68,7 +68,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 885za | R803 the unit pad's powers read x², x³, x⁴, x⁻¹, √x (B3) | ron, Opus | `p1/ron-unitpowers` | – |
-| 885zb | [R804](packages/R804.md) Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
+| 885zb | R804 Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
 | 885t | [R790](packages/R790.md) the unit view's → Check stays put under the reading (owner's list 2026-11-20, U1) | ron, Opus | `p1/ron-unitcheckfixed` | R780 |
 | 885u | [R791](packages/R791.md) the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
 | 885v | [R792](packages/R792.md) High contrast's outline off the Shift legends (K5) | ron, Opus | `p1/ron-hclegend` | R791 |
