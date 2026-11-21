@@ -117,7 +117,7 @@ test('a "Copied" notice moves no history row', async ({ page }) => {
   await page.waitForTimeout(500);
   const before = await tops();
   await tap(page, COPY);
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText(/^Copied/); // (R832: it names the copy, "Copied: …")
   expect(await tops()).toEqual(before);
   const n = await page.getByTestId("notice").boundingBox();
   const h = await page.getByTestId("entry").boundingBox();

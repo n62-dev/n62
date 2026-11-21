@@ -198,6 +198,7 @@ for (const width of [412, 360]) {
       await rows(page).nth(1).locator(".in").tap();
       expect(await part(page)).toBe("input");
       await tap(page, ["enter"]);
+      await expect.poll(async () => ((await entryValue(page)).match(/\\res\{/g) ?? []).length).toBe(2); // (the input goes in through the clipboard chunk: not at once)
       const line = await entryValue(page);
       const chips = await page.evaluate(() => window.n62.entry.chips);
       const keys = [...line.matchAll(/\\res\{(\d+)\}\{([^}]*)\}/g)].map((m) => [m[1], m[2]]);
