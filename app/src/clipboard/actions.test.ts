@@ -122,6 +122,21 @@ describe("ClipActions row buttons and the hold", () => {
     await vi.waitFor(() => expect(clip()).toBe("1/3"));
     expect(acted).toEqual(["copy"]);
   });
+  // R832 round 2: each of Copy ›'s first three rows names what it copied in the notice (the shown text, grouped as the row draws it)
+  it("Copy › Full value, As shown and Exact each name the copy in the notice", async () => {
+    const { c, item } = make();
+    const rows = c.copyItem(item).submenu?.items ?? [];
+    const say = async (id: string): Promise<string | null> => {
+      rows.find((r) => r.id === id)?.run?.();
+      await vi.waitFor(() => expect(c.notice).not.toBeNull());
+      const n = c.notice;
+      c.notice = null;
+      return n;
+    };
+    expect(await say("full")).toBe("Copied: 0.333\u2009333\u2009333\u2009333"); // (what the row shows; the clipboard holds 1/3)
+    expect(await say("shown")).toBe("Copied: 0.333\u2009333\u2009333\u2009333");
+    expect(await say("exact")).toBe("Copied: 1/3");
+  });
   it("a hold on the input copies the entry as plain text, on the result Copy's full value; each counts as copy", async () => {
     const { c, item, acted, clip } = make();
     await c.holdCopy(item, "input", "\\sqrt{2}+3"); // (the input as drawn, given by History)
