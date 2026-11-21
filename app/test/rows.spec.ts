@@ -152,12 +152,13 @@ test("The picked row's Copy › opens full value, as shown, exact, LaTeX, Python
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 1);
   await tap(page, ["up"]);
-  await bar(page).getByRole("button", { name: /Copy/ }).tap();
+  await bar(page).getByRole("button", { name: /Copy/ }).tap({ timeout: 5000 });
   await expect(page.getByTestId("sheet-title")).toHaveText(/Copy$/);
   await expect(page.getByTestId("menu").getByRole("menuitem")).toHaveText(["1Full value", "2As shown", "3Exact", "4LaTeX", "5Python"]);
   await tap(page, ["d3"]);
   await expect.poll(() => clipboard(page)).toBe("1/3");
-  await bar(page).getByRole("button", { name: /Copy/ }).tap();
+  await tap(page, ["up"]); // the pick ended with the button: pick the row again
+  await bar(page).getByRole("button", { name: /Copy/ }).tap({ timeout: 5000 });
   await tap(page, ["d1"]);
   await expect.poll(() => clipboard(page)).toBe("0." + "3".repeat(40));
   const held = page.locator('[data-testid="result"] .result').first();
@@ -193,10 +194,12 @@ test("with an empty history the actions are disabled; with only an error row the
   await expect(item(page, /^3 ?Clear history/)).toBeDisabled();
   await tap(page, ["esc", "d1", "emark", "d2", "dot", "d5", "enter"]); // 1ᴇ2.5: an error row: there are rows, but no result
   await expect(page.locator('[data-status="error"]')).toHaveCount(1);
-  await tap(page, ["@menu"]);
-  await expect(item(page, /^2 ?Share session/)).toBeDisabled();
-  await expect(page.getByTestId("menu")).toContainText("No result yet");
-  await expect(item(page, /^4 ?Export/)).toBeDisabled();
+  await tap(page, ["up"]); // the error row is picked: the bar's Store ▶ and Copy › have no result to act on
+  await expect(bar(page).getByRole("button")).toHaveText(["Store ▶", "Copy ›"]);
+  for (const b of await bar(page).getByRole("button").all()) await expect(b).toBeDisabled();
+  await tap(page, ["@menu"]); // R830: the finished rows include the error row, so Share and Export › are on
+  await expect(item(page, /^1 ?Delete/)).toBeEnabled();
+  await expect(item(page, /^2 ?Share session/)).toBeEnabled();
 });
 
 test("the row buttons cost no viewport: on an empty line no history pixel and no key moves (R3, R147)", async ({ page }) => {
