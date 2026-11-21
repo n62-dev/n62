@@ -9,7 +9,7 @@ type Front = typeof import("./backLayerFront.ts");
 
 /** What the mocked openLayer did: it runs `close` at once (so a test reads the push order) and logs the open and the release. */
 const log = vi.hoisted((): string[] => []);
-vi.mock("./backLayer.ts", () => ({ openLayer: (close: () => void) => (close(), log.push("open"), () => log.push("release")) }));
+vi.mock("./backLayer.ts", () => ({ adoptGuard: () => undefined, openLayer: (close: () => void) => (close(), log.push("open"), () => log.push("release")) }));
 
 /** A fresh front: its `code` is unset, so a layer opened now is opened before the code is in. */
 async function freshFront(): Promise<{ front: Front; log: string[] }> {

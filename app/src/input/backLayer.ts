@@ -47,13 +47,33 @@ function atTaskEnd(): void {
 function settle(): void {
   due = false;
   takeBack();
-  if (!popping) for (const l of opening.splice(0)) push(l);
+  if (popping) return;
+  if (opening.length === 0 && guard) {
+    guard = false; // every layer that waited was released: the guard goes back
+    popping = true;
+    history.go(-1);
+    return;
+  }
+  for (const l of opening.splice(0)) push(l);
 }
 let listening = false;
+/** backLayerFront.ts put a guard entry on the history before this code was in: the first layer pushed replaces it, and
+ *  when none is left to push it goes back (one traversal of ours, so onPop closes nothing). */
+let guard = false;
+
+/** The guard of the front is on the history now (called once, when the code arrives, before the waiting layers open). */
+export function adoptGuard(): void {
+  guard = true;
+  listen();
+  atTaskEnd();
+}
 
 function push(layer: Layer): void {
   try {
-    history.pushState({ n62Layer: stack.length }, "");
+    const state = { n62Layer: stack.length };
+    if (guard) history.replaceState(state, "");
+    else history.pushState(state, "");
+    guard = false;
   } catch {
     // no history here (a sandboxed frame): the layer works, back just leaves
   }
@@ -71,12 +91,16 @@ function onPop(): void {
   takeBack(); // a released layer it lay over goes too
 }
 
-/** Open a layer: `close` runs when the platform's back pops it. Returns `release`, to call when the layer closes some other way. */
-export function openLayer(close: () => void): () => void {
+function listen(): void {
   if (!listening && typeof window !== "undefined") {
     window.addEventListener("popstate", onPop);
     listening = true;
   }
+}
+
+/** Open a layer: `close` runs when the platform's back pops it. Returns `release`, to call when the layer closes some other way. */
+export function openLayer(close: () => void): () => void {
+  listen();
   const layer: Layer = { close };
   opening.push(layer);
   atTaskEnd();
