@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: the unit view's panel in the entry line's place (docs/04 4.3): the read-only formula with its slots (the
-// field, made by units/open.ts), → Check (R349: the end slot on and off), the reading of the active slot in words under it, then a refusal or the result as
-// Calc.units() returns it (R62: the value line, σ, the note and the alternatives row, units/result.ts). Plain DOM over the
-// view's state (a change calls `draw`).
+// field, made by units/open.ts), the reading of the active slot in words under it, then a refusal or the result as
+// Calc.units() returns it (R62: the value line, σ, the note and the alternatives row, units/result.ts), and last → Check
+// (R349: the end slot on and off; R790: the panel's last row, directly above the keys, so what is above it never moves it).
+// Plain DOM over the view's state (a change calls `draw`).
 // Loaded with the unit view.
 import "./panel.css";
 import { unitText } from "../i18n/enUnits.ts";
@@ -131,7 +132,8 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   const said = el("div", "said", "unit-store-note");
   said.setAttribute("role", "alert");
   said.hidden = true;
-  element.append(formula, check, reading, below, said);
+  // R790: the panel grows upward from the keys, so → Check last keeps one height whatever the reading, message or result hold
+  element.append(formula, reading, below, said, check);
   /** Hide the chips that do not fit beside "More…" (at least as many as the view can use) and tell the view how many fit. */
   const fitRow = (row: HTMLElement): void => {
     const v = view();
