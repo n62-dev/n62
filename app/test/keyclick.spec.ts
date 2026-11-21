@@ -3,7 +3,7 @@
 // steps or flicks; a dead key's double pulse has one click); Settings › Key vibration › Key click is a switch that
 // survives a relaunch and goes into a preset's Key vibration group and a backup. The web click is one oscillator started.
 import { expect, test, type Page } from "@playwright/test";
-import { drag, entryValue, flick, open, recordVibrations, savedText, savePicker, tap, vibrations } from "./helpers.ts";
+import { drag, entryValue, flick, open, recordVibrations, savedText, savePicker, tap, touch, vibrations } from "./helpers.ts";
 
 /** Count the Web Audio clicks: every oscillator started (haptics.ts makes one per click). */
 async function recordClicks(page: Page): Promise<void> {
@@ -69,6 +69,57 @@ test.describe("the click at finger-down", () => {
     await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
     await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
     expect(await since(page, () => tap(page, ["fmt"]))).toEqual({ clicks: 1, pulses: 3 }); // the double pulse stays
+  });
+});
+
+// R777 (docs/05 3.7): a key drawn dead has no click, no press look and no pop at finger-down; it gives the dead key's double
+// pulse and nothing else. A live key keeps its click, its one pulse and the look.
+test.describe("a key drawn dead: no click, no look, the double pulse", () => {
+  test.beforeEach(async ({ page }) => {
+    await recordVibrations(page);
+    await recordClicks(page);
+    await open(page);
+    await clickOn(page);
+    await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+  });
+  /** A finger down on the key: what is lit and popped while it is held, then the clicks and pulses once the lift and the dead pulses are in. */
+  const press = async (page: Page, id: string): Promise<{ lit: number; pop: number; clicks: number; pulses: number }> => {
+    await expect(page.locator(".pad [data-down]")).toHaveCount(0); // (the last press shows out its 80 ms first, R161)
+    const [c, p] = [await clicks(page), (await vibrations(page)).length];
+    const f = await touch(page, id);
+    const lit = await page.locator(".pad [data-down]").count();
+    const pop = await page.getByTestId("key-pop").count();
+    await f.end();
+    await page.waitForTimeout(300);
+    return { lit, pop, clicks: (await clicks(page)) - c, pulses: (await vibrations(page)).length - p };
+  };
+  const DEAD = { lit: 0, pop: 0, clicks: 0, pulses: 2 };
+
+  test("Find open: Help is drawn dead and is a dead press", async ({ page }) => {
+    await tap(page, ["math"]);
+    await expect(page.getByTestId("find")).toBeVisible();
+    await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
+    expect(await press(page, "help")).toEqual(DEAD);
+  });
+  test("Find open: an empty free key (U1) is a dead press", async ({ page }) => {
+    await tap(page, ["math"]);
+    await expect(page.getByTestId("find")).toBeVisible();
+    await expect(page.locator('[data-key="u1"]')).toHaveAttribute("data-dead", "true");
+    expect(await press(page, "u1")).toEqual(DEAD);
+  });
+  test("☰ open: sin is a dead press and the sheet stays", async ({ page }) => {
+    await tap(page, ["@menu"]);
+    await expect(page.getByTestId("menu").getByRole("menuitem").first()).toBeVisible();
+    expect(await press(page, "sin")).toEqual(DEAD);
+    await expect(page.getByTestId("menu")).toBeVisible();
+  });
+  test("controls: a live key has the look, the pop, one click and one pulse; Find's letter keys do too", async ({ page }) => {
+    expect(await press(page, "d7")).toEqual({ lit: 1, pop: 1, clicks: 1, pulses: 1 });
+    await tap(page, ["math"]);
+    await expect(page.getByTestId("find")).toBeVisible();
+    const before = await clicks(page);
+    expect(await press(page, "sin")).toMatchObject({ lit: 1, clicks: 1, pulses: 1 }); // Find types its letters
+    expect((await clicks(page)) - before).toBe(1);
   });
 });
 

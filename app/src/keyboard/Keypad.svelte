@@ -137,7 +137,7 @@
   // or a long hold is still a tap. ⌫ fires on touch and repeats while held instead; the trackpad has no flicks.
   type Gesture =
     | { kind: "pad"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; steps: Stepper; open: unknown }
-    | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker }
+    | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker; felt?: boolean }
     | { kind: "repeat"; el: HTMLElement | undefined; repeat: Repeat };
 
   // The press look (R161, F191): the app's own flag `data-down` on the touched key, never CSS :active (input/pressFlag.ts: set
@@ -257,9 +257,14 @@
     for (const g of gestures.values()) finish(g);
     gestures.clear();
     const { target, el } = targetOf(ev);
-    light(el);
-    showPop(target, el);
-    if (target) ontouch();
+    // R777 (docs/05 3.7): a key drawn dead has no press look, no pop and no click at finger-down; its tap gives the dead key's
+    // double pulse (route.ts c.dead()). A flick that arms on it and types something is felt then (move()).
+    const inert = target !== undefined && target !== "pad" && dead(target);
+    if (!inert) {
+      light(el);
+      showPop(target, el);
+      if (target) ontouch();
+    }
     // a mouse has no implicit capture (a touch has): without it the release outside the pad is never seen
     try {
       padEl?.setPointerCapture(ev.pointerId);
@@ -292,7 +297,16 @@
     } else if (g.kind === "key" && g.key) {
       const before = g.flick.state;
       g.flick.move(ev.clientX - g.x0, ev.clientY - g.y0);
-      if (g.flick.state !== before) showBubble(ev.pointerId, g);
+      if (g.flick.state !== before) {
+        showBubble(ev.pointerId, g);
+        // a drawn-dead key that was given no feedback at finger-down: a flick that arms with a function is felt as a key press
+        const st = g.flick.state;
+        if (!g.felt && (st === "up" || st === "down") && g.el && dead(g.key) && flickText(g.key, st) !== "") {
+          g.felt = true;
+          light(g.el);
+          ontouch();
+        }
+      }
     }
   }
 
