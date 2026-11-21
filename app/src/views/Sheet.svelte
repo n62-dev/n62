@@ -178,7 +178,7 @@
         <span class="gtitle" data-testid="sheet-title">{sheet.path}</span>
         <span class="hint" data-testid="sheet-hint">{level.current?.label ?? ""}</span>
         {#if cutTop || cutBottom}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
-        <button type="button" class="icon" aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
+        <button type="button" class="icon" use:pressFlag aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
       <div
         class="grid"
@@ -193,6 +193,7 @@
             type="button"
             role="menuitem"
             class="cell"
+            use:pressFlag
             aria-label={r.item.pick ? `${r.item.pick.legend} ${r.item.label}` : r.item.label}
             disabled={r.item.disabled}
             data-active={r.index === level.highlight}
@@ -204,12 +205,12 @@
       </div>
     {:else}
       <div class="head">
-        {#if sheet.depth > 1}<button type="button" class="icon" aria-label={sheetText("sheet.back")} onclick={onback}>‹</button>{/if}
+        {#if sheet.depth > 1}<button type="button" class="icon" use:pressFlag aria-label={sheetText("sheet.back")} onclick={onback}>‹</button>{/if}
         {#if sheet.icon}<span class="ticon" aria-hidden="true">{@html icon(sheet.icon)}</span>{/if}<span class="title" data-testid="sheet-title">{sheet.path}</span>
         {#if level.filter !== ""}<span class="filter" data-testid="sheet-filter">{level.filter}</span>{/if}
         {#if (cutTop || cutBottom) && level.text === undefined && !level.grid}<span class="count" data-testid="sheet-count">{sheetText("sheet.count", { n: String(rows.length) })}</span>{/if}
-        {#if sheet.hasSettings}<button type="button" class="icon gear" data-testid="sheet-gear" aria-label={t("key.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
-        <button type="button" class="icon" aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
+        {#if sheet.hasSettings}<button type="button" class="icon gear" use:pressFlag data-testid="sheet-gear" aria-label={t("key.settings")} onclick={ongear}>{@html GEAR}</button>{/if}
+        <button type="button" class="icon" use:pressFlag aria-label={sheetText("apps.close")} onclick={onclose}>×</button>
       </div>
       {#if level.grid}
         <!-- R188: a stored matrix's grid (matrixGrid.svelte.ts), its view a chunk of its own -->
@@ -261,10 +262,10 @@
       {/if}
       <!-- Find (R4a): the highlighted item's details (docs/04 3.6) -->
       {#if note}<div class="preview" class:long={level.longPreview} data-testid="find-preview">{note}</div>{/if}
-      {#if level.current?.put}<button type="button" class="put" data-testid="find-put" onclick={() => level.current?.put?.run()}>{level.current.put.label} ▶</button>{/if}
+      {#if level.current?.put}<button type="button" class="put" use:pressFlag data-testid="find-put" onclick={() => level.current?.put?.run()}>{level.current.put.label} ▶</button>{/if}
     {/if}
     <!-- R778: a sheet with no fixed size (sheet.fillable) fills the whole screen, keypad area included, and back; a touch view -->
-    {#if sheet.fillable || sheet.full}<button type="button" class="fill" data-sheet-full aria-pressed={sheet.full} aria-label={sheetText(sheet.full ? "sheet.unfill" : "sheet.fill")} onclick={() => (sheet.full = !sheet.full)}>{@html sheet.full ? UNFILL : FILL}</button>{/if}
+    {#if sheet.fillable || sheet.full}<button type="button" class="fill" use:pressFlag data-sheet-full aria-pressed={sheet.full} aria-label={sheetText(sheet.full ? "sheet.unfill" : "sheet.fill")} onclick={() => (sheet.full = !sheet.full)}>{@html sheet.full ? UNFILL : FILL}</button>{/if}
   </div>
   <!-- shrinks first (flex-shrink weighs by size: 1000 × its height against the sheet's 1 × its own) -->
   <div class="room" style:flex-basis="{below}px"></div>
@@ -352,6 +353,14 @@
   .fill :global(svg) {
     width: var(--fill-icon);
     height: var(--fill-icon);
+  }
+  /* R774: a pressed button of the sheet fills with its own shape, as the bar's controls do (the Android tap box is off, style.css) */
+  :is(.icon, .put, .fill, button.cell):global([data-down]) {
+    background: var(--key-nav);
+    border-radius: var(--radius-s);
+  }
+  button.cell:global([data-down]) {
+    border-radius: var(--radius);
   }
   .head {
     display: flex;

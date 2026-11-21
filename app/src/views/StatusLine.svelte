@@ -100,7 +100,7 @@
   <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
     <!-- R786: ⌄ is the bar's first control, in a 28 px cell that is empty where folding does not exist -->
     <span class="foldcell">
-      {#if onfold}<button type="button" class="fold" data-testid="fold-chevron" data-item="fold" aria-label={t("status.fold")} onclick={onfold}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5 8 10.5l5-5" /></svg></button>{/if}
+      {#if onfold}<button type="button" class="fold" use:pressFlag data-testid="fold-chevron" data-item="fold" aria-label={t("status.fold")} onclick={onfold}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5 8 10.5l5-5" /></svg></button>{/if}
     </span>
     <button
       type="button"
@@ -150,7 +150,7 @@
     <span class="sep" aria-hidden="true"></span>
     {#if shell.app === null}
       <!-- R785: the bay in Home and CAS: the format, a divider and the significant digits as one chip (`STD|12`); it opens Mode on Format, Significant digits the next row -->
-      <button type="button" class="chip mode" data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
+      <button type="button" class="chip mode" use:pressFlag data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
     {:else}
       <!-- the bay's view icons (R362, R782): a part of the shell's app-opening chunk, drawn once it is in -->
       {#if shell.code}<shell.code.AppViews {shell} {onpress} />{/if}
@@ -160,7 +160,7 @@
       <span class="slot" data-testid="mod-slot">
         {#if mod}
           <!-- R726: while Shift or Alpha is on, the sign is a button: a tap ends it, armed or locked (the bar's guard applies) -->
-          <button type="button" class="mod"
+          <button type="button" class="mod" use:pressFlag
             data-testid="mod-{mod.id}"
             data-lock={mod.lock}
             aria-label={t("status.modOff", { mod: t(`key.${mod.id}`) })}
@@ -172,6 +172,7 @@
     <button
       type="button"
       class="chip angle"
+      use:pressFlag
       data-testid="chip-angle"
       data-item="angle"
       data-angle={angle}
@@ -264,9 +265,21 @@
     font-family: "STIX Two Math", "Cambria Math", "Times New Roman", serif;
     font-style: italic;
   }
+  /* R774: a pressed control fills with its own shape (the Android tap box is off, style.css): the chips keep their radius, the
+     others get the small one, and a tab fills its face, inside the track, not the 56 px button */
   .bar :global([data-down]) {
     background: var(--key-nav);
     color: var(--key-text);
+    border-radius: var(--radius-s);
+  }
+  .bar .chip:global([data-down]) {
+    border-radius: calc(var(--radius-s) + var(--stroke-thin));
+  }
+  .bar .ptab:global([data-down]) {
+    background: none;
+  }
+  .bar .ptab:not(.cur):global([data-down]) .pface {
+    background: var(--key-nav);
   }
   /* ⌄ (R786): a 28 × 28 target at the bar's left end; its cell keeps the width where there is no button */
   .foldcell {

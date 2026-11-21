@@ -496,10 +496,10 @@
       {:else}
         <p class="loading">{t("apps.loading")}</p>
       {/if}
+      <!-- R774: a notice draws over the history's foot (as RowBar.svelte's .rowslot.over), so no row moves while it shows -->
+      {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>
+      {:else if shell.prompt?.hint}<div class="notice" role="status" data-testid="prompt-hint">{shell.prompt.hint}</div>{/if}
     </div>
-
-    {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>
-    {:else if shell.prompt?.hint}<div class="notice" role="status" data-testid="prompt-hint">{shell.prompt.hint}</div>{/if}
 
     <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code); folded, its why line alone (R724: the buttons are in the folded bar) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
@@ -658,9 +658,14 @@
     color: var(--muted);
   }
   .notice {
-    position: relative;
-    align-self: center;
-    margin: 0 var(--sp-3) var(--sp-1);
+    position: absolute;
+    z-index: 3; /* over the rows, under a sheet (z-index 5) and the picked row's bar (4) */
+    left: 50%;
+    bottom: var(--sp-1);
+    transform: translateX(-50%);
+    max-width: calc(100% - 2 * var(--sp-3));
+    pointer-events: none;
+    margin: 0;
     padding: var(--sp-15) var(--sp-35);
     border-radius: var(--radius-pill);
     background: var(--panel);
