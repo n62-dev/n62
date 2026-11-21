@@ -330,7 +330,7 @@ for (const [width, height] of [[360, 740], [412, 839]] as const)
     expect(g.y + g.height).toBeLessThanOrEqual(height);
     expect(g.x + g.width).toBeLessThanOrEqual(width);
     expect(Math.abs(g.y + g.height / 2 - (head.y + head.height / 2))).toBeLessThanOrEqual(3);
-    expect(await sheet(page).getByRole("menuitem").count()).toBe(7); // R720: item 7 is Export ›
+    expect(await sheet(page).getByRole("menuitem").count()).toBe(4); // R830: item 4 is Export ›
     await expect(sheet(page).locator('[data-id="settings"]')).toHaveCount(0);
     await gear.tap();
     await expect(page.getByTestId("sheet-title")).toHaveText("Home menu › Settings");

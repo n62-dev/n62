@@ -494,5 +494,5 @@ test("a hold, a swipe and the bar's Copy › each count their action once while 
   await sheet(page).locator('[data-id="full"]').tap();
   await expect(sheet(page)).toBeHidden();
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));
-  expect(counts).toEqual({ "fold.swipe": 1, copy: 2, delete: 1 });
+  expect(counts).toEqual({ "fold.swipe": 1, copy: 2, delete: 1, pick: 1 });
 });

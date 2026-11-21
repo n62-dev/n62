@@ -132,7 +132,7 @@ test("☰ on a picked history row opens the row's menu (R15c1)", async ({ page }
   await tap(page, ["up"]);
   await page.getByTestId("menu-button").tap();
   await expect(sheet(page)).toBeVisible();
-  await expect(sheet(page).getByRole("menuitem").first()).toContainText("Store ▶");
+  await expect(sheet(page).getByRole("menuitem").first()).toContainText("Delete"); // R830: Delete is the first row; Store ▶ is on the picked row's bar
 });
 
 test("the bar fits at 360 px in an app with the chips and ☰, and the targets keep their size (R15c1, R722)", async ({ page }) => {

@@ -39,7 +39,7 @@ const pickMenu = async (page: Page, label: string): Promise<void> => {
 /** The picked row's bar → Copy › (R830: ☰ has no Copy row; a pick is made first, the last row, when none is) → the item. */
 const openCopyAs = async (page: Page): Promise<void> => {
   if ((await page.getByTestId("row-actions").count()) === 0) await tap(page, ["up"]);
-  await page.getByTestId("row-actions").getByRole("button", { name: /Copy/ }).tap();
+  await page.getByTestId("row-actions").getByRole("button", { name: /Copy/ }).tap({ timeout: 5000 });
   await expect(page.getByTestId("menu")).toBeVisible();
 };
 const pickCopyAs = async (page: Page, label: string): Promise<void> => {
