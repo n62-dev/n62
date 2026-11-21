@@ -8,7 +8,7 @@
   import { MAX_DRAWN_LATEX } from "../render/longResult.ts";
   import { typedName } from "../render/home.ts";
   import { markText, noDigit as hasNoDigit } from "../state/displayMode.ts";
-  import { rowTap } from "../state/pickRows.ts";
+  import { drawnInput, HOLD_MS, rowTap, type PickPart } from "../state/pickRows.ts";
   import { edgeFade } from "./edgeFade.ts";
   import { rowHold, rowSwipe } from "./rowGestures.ts";
   import type { MarkInfo } from "../engine/format.ts";
@@ -34,6 +34,7 @@
     undo = null,
     onundo,
     selected = null,
+    part = "row",
     engineState,
     oncredits,
   }: {
@@ -45,6 +46,8 @@
     items: HistoryItem[];
     /** P4: the row picked with Up from an empty entry line (index into items), or null. */
     selected?: number | null;
+    /** R832: what the picked row has lit: the whole row, its input or its result. */
+    part?: PickPart;
     display: (item: HistoryItem) => Drawn;
     /** The input as drawn (R100: `;` for its argument commas in comma mode); by default as stored. */
     input?: (item: HistoryItem) => string;
@@ -64,9 +67,10 @@
     onrecall: (item: HistoryItem) => void;
     /** L5: a second tap on the picked row's result puts it on the entry line at the cursor, as a chip (docs/04 2.8, R147). */
     oninsert: (item: HistoryItem) => void;
-    /** R147 (the G2's way): a first tap on a row's entry or result picks the row (its index into items), as ▲ does; a tap
-     *  on the history's empty part drops the pick (null). */
-    onpick: (index: number | null) => void;
+    /** R147 (the G2's way), R832: a first tap on a row picks it (its index into items), lighting its input, its result or, anywhere
+     *  else on it, the whole row (`part`), as ▲ does for the whole row; a tap that drops the pick, or on the history's empty part,
+     *  gives null. */
+    onpick: (index: number | null, part?: PickPart) => void;
     oncancel: () => void;
     /** R276: a hold (500 ms) on a finished row's input (`latex`: as drawn) or result copies that part (docs/04 2.6). */
     onhold?: (item: HistoryItem, part: "input" | "result", latex: string) => void;
@@ -82,33 +86,59 @@
   // never picks); a swipe deletes the row (rowSwipe.ts, which swallows a drag's click too). Both come lazily (rowGestures.ts).
   /** The input's hold: a finished row's (a running one has nothing to copy yet). */
   const holdInput = (item: HistoryItem): (() => void) | undefined =>
-    onhold && item.status !== "pending" ? () => onhold(item, "input", drawnInput(item)) : undefined;
-  /** R147: a tap on a row's entry or result picks the row; on the picked row it recalls or inserts (`act`). A scroll
-   *  drag never reaches here: the browser cancels the pointer and sends no click. */
-  function tapRow(index: number, act: () => void): void {
-    if (rowTap(selected, index) === "act") act();
-    else onpick(index);
+    onhold && item.status !== "pending" ? () => onhold(item, "input", drawn(item)) : undefined;
+  // R832: the whole row takes the tap and reads where it landed (its `.in`, its `.result`, else the row): the first tap lights that
+  // part, the next acts on it, moves the light or drops the pick (rowTap). A scroll drag never reaches here: the browser cancels the
+  // pointer and sends no click. A press of HOLD_MS or more is a hold (the input's and the result's copy, apps/longpress.ts, which
+  // swallows their click); on the rest of the row it picks nothing either.
+  let heldFor = false;
+  let downAt = 0;
+  let released: ReturnType<typeof setTimeout> | undefined;
+  function pressed(e: PointerEvent): void {
+    clearTimeout(released);
+    heldFor = false;
+    downAt = e.timeStamp;
+  }
+  function lifted(e: PointerEvent): void {
+    heldFor = e.type === "pointerup" && e.timeStamp - downAt >= HOLD_MS;
+    clearTimeout(released);
+    if (heldFor) released = setTimeout(() => (heldFor = false), 400); // (the click follows the lift at once; a later keyboard click is no hold)
+  }
+  function tapRowBody(e: MouseEvent, item: HistoryItem, at: number): void {
+    const held = heldFor;
+    heldFor = false;
+    if (held) return;
+    const target = e.target as Element;
+    if (target.closest(".reason")) {
+      reasonOpen = reasonOpen === item.id ? null : item.id; // R124: the line's text opens, nothing is picked
+      return;
+    }
+    if (target.closest("button.cancel")) return; // Cancel keeps its own tap (D3)
+    const tapped: PickPart = target.closest(".in") ? "input" : target.closest("button.result") ? "result" : "row";
+    const next = rowTap(selected, part, at, tapped);
+    if (next.kind === "act") {
+      sigmaOpen = null;
+      (next.part === "input" ? onrecall : oninsert)(item);
+    } else if (next.kind === "drop") {
+      sigmaOpen = null; // R40: the tap that drops the pick hides the σ line
+      onpick(null);
+    } else {
+      if (at !== selected) sigmaOpen = sigma(item) ? item.id : null; // R40: the picking tap shows the σ line (a move of the light keeps it as it is)
+      onpick(at, next.part);
+    }
   }
   /** R147: a tap on the history outside every row (its empty part) drops the pick. */
   function tapHistory(e: MouseEvent): void {
     if (!(e.target as Element).closest(".item")) onpick(null);
   }
 
-  // R40: a tap on a row with a σ line (not on its entry or result, which pick and then recall or insert, R147) shows it; a second hides it
+  // R40, R832: the tap that picks a row with a σ line shows it, the tap that drops the pick hides it (tapRowBody)
   let sigmaOpen = $state<number | null>(null);
   // R124: a tap on a ⚠ row's reason line shows its full text (it wraps); a second tap ellipses it again
   let reasonOpen = $state<number | null>(null);
-  function toggleSigma(e: MouseEvent, item: HistoryItem): void {
-    const at = e.target as Element;
-    if (at.closest(".reason")) reasonOpen = reasonOpen === item.id ? null : item.id;
-    else if (!at.closest("button") && sigma(item)) sigmaOpen = sigmaOpen === item.id ? null : item.id;
-  }
 
   /** R63: a unit row draws its request with the units in it (the line itself, recalled, has none: Home has no units). */
-  function drawnInput(item: HistoryItem): string {
-    const u = item.units?.input;
-    return input(typeof u === "string" ? { ...item, latex: u } : item);
-  }
+  const drawn = (item: HistoryItem): string => drawnInput(item, input);
   // F28: the stored values a CAS result read, in one muted line: at most three names, then "+n". When all come from
   // one view it is said once at the end; otherwise after each name. Each name as typed (R260: β, not beta_).
   const USES_SHOWN = 3;
@@ -208,11 +238,15 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (R40: the σ line is a touch extra; a picked row's why-line, R36, serves the keys) -->
     <article class="item" data-status={item.status}
       use:rowSwipe={{ enabled: onswipe !== undefined && item.status !== "pending", onswipe: () => onswipe?.(item) ?? false }}
-      onclick={(e) => toggleSigma(e, item)}
+      onclick={(e) => tapRowBody(e, item, at)}
+      onpointerdown={pressed}
+      onpointerup={lifted}
+      onpointercancel={lifted}
       oncontextmenu={(e) => e.preventDefault()}
-      data-selected={at === selected ? "true" : undefined}>
-      <button type="button" class="in" title={t("history.recall")} use:edgeFade use:rowHold={holdInput(item)} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => onrecall(item))}>
-        <Math latex={drawnInput(item)} />
+      data-selected={at === selected ? "true" : undefined}
+      data-part={at === selected ? part : undefined}>
+      <button type="button" class="in" title={t("history.recall")} use:edgeFade use:rowHold={holdInput(item)} onpointerdown={(e) => e.preventDefault()}>
+        <Math latex={drawn(item)} />
       </button>
       <div class="out" data-testid="result" use:edgeFade={item.status}>
         {#if item.status === "pending"}
@@ -234,12 +268,12 @@
           {#if d.wrap && !noDigit && d.latex.length <= MAX_DRAWN_LATEX}
             <!-- R158: a plain number: its groups, each unbreakable, wrap at a gap when the row is too narrow for the whole; the mark stays beside the first line -->
             <button type="button" class="result wrapped" data-text={d.text} title={t("history.insert")}
-              use:rowHold={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
+              use:rowHold={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()}>
               <Math latex={d.latex} pieces={d.wrap} gap={d.gap === true} size={d.text.length} />
             </button>
           {:else}
             <button type="button" class="result" data-text={d.latex.length > MAX_DRAWN_LATEX ? "" : d.text} title={t("history.insert")}
-              use:rowHold={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()} onclick={() => tapRow(at, () => oninsert(item))}>
+              use:rowHold={onhold && (() => onhold(item, "result", d.latex))} onpointerdown={(e) => e.preventDefault()}>
               {#if !noDigit}<Math latex={d.latex} size={d.text.length} />{/if}
             </button>
           {/if}
@@ -346,6 +380,20 @@
     border-radius: var(--radius);
     background: var(--pick);
     outline: var(--stroke) solid var(--focus);
+  }
+  /* R832: a tap on the input or the result lights that half alone: the whole row's ground and outline move to its box (inside it, so the
+     data-cut fade, which masks to the box, never cuts the line) */
+  .item[data-selected="true"][data-part="input"],
+  .item[data-selected="true"][data-part="result"] {
+    background: none;
+    outline: none;
+  }
+  .item[data-part="input"] .in,
+  .item[data-part="result"] .result {
+    border-radius: var(--radius);
+    background: var(--pick);
+    outline: var(--stroke) solid var(--focus);
+    outline-offset: calc(-1 * var(--stroke));
   }
   .in {
     all: unset;

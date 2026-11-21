@@ -6,6 +6,7 @@
   import type { SubMenu } from "./apps/types.ts";
   import type { ClipActions } from "./clipboard/actions.svelte.ts";
   import type { RowBarView } from "./appLoaders.ts";
+  import type { PickPart } from "./state/pickRows.ts";
   import type { EntryController } from "./entry/controller.ts";
   import { t } from "./i18n/index.ts";
   import { openLayer } from "./input/backLayerFront.ts";
@@ -51,6 +52,7 @@
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),
+    putInput,
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -334,10 +336,15 @@
 
   /** The picked history row (P4: Up on an empty line; route.ts walks it; R147: a first tap on a row). */
   let picked = $state<number | null>(null);
+  /** R832: what the picked row has lit: a tap on its input or result lights that half, anything else (a key, a tap elsewhere on
+   *  it) the whole row. Set with `pick`; a key's pick (the ctx below) resets it to the whole row. */
+  let pickedPart = $state<PickPart>("row");
   /** R147: a tap picks a row (History draws no note row as one, so every index it gives can be picked; null drops
    *  the pick); its buttons come with the clipboard code, as after ▲. */
-  function pick(i: number | null): void {
-    if ((picked = i) !== null) void loadClip();
+  function pick(i: number | null, part: PickPart = "row"): void {
+    pickedPart = i === null ? "row" : part;
+    picked = i;
+    if (i !== null) void loadClip();
     if (i !== null && folded) countUse("pick"); // R53
   }
   // R700 (F381): Android back drops a picked row as Esc does. One layer for as long as some row is picked (a move to another row
@@ -401,6 +408,16 @@
     shell.prompt?.cancel();
     if (entry.empty) onLine(item, true); // R298: before the field the queued keys are text too (entry.value is not the line yet)
   }
+  /** R832: a row's input onto the line (Enter on a lit input, a second tap on it: the recall; Store ▶: `stay`). An empty line takes it as
+   *  the recall, with its chips and angle; text on the line keeps it and the input goes in at the caret. */
+  function putInput(item: HistoryItem, stay = false): void {
+    edited = true;
+    picked = null;
+    shell.prompt?.cancel();
+    if (entry.empty) return onLine(item, true, !stay, false, stay);
+    if (!stay) folded = false;
+    entry.insert(session.input(item));
+  }
   /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
    *  as Delete while folded (R53). */
   function swiped(item: HistoryItem): Promise<boolean> {
@@ -414,7 +431,8 @@
     get shell() { return shell; },
     get entry() { return entry; },
     get picked() { return picked; },
-    set picked(v) { picked = v; },
+    set picked(v) { picked = v; pickedPart = "row"; },
+    get part() { return pickedPart; },
     get sheetLoad() { return sheetLoad; },
     set sheetLoad(v) { sheetLoad = v; },
     waiting: [],
@@ -422,6 +440,7 @@
     enter,
     insertResult: (item) => onLine(item, false),
     recallRow: (item) => onLine(item, true),
+    insertInput: (item) => putInput(item),
     goTo,
     clearKey,
     openSettings,
@@ -472,6 +491,7 @@
         <History
           items={session.items}
           selected={picked}
+          part={pickedPart}
           engineState={session.engineState}
           oncredits={openCredits}
           display={(item) => session.display(item, true)}
@@ -498,13 +518,13 @@
       {/if}
     </div>
 
-    {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>
+    {#if clip?.notice}<div class="notice" class:one={clip.noticeOne} role="status" data-testid="notice">{clip.notice}</div>
     {:else if shell.prompt?.hint}<div class="notice" role="status" data-testid="prompt-hint">{shell.prompt.hint}</div>{/if}
 
     <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code); folded, its why line alone (R724: the buttons are in the folded bar) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
       {@const Bar = rowBar}
-      <Bar {clip} {entry} row={session.items[picked]!} height={entryHeight} {folded} onaction={() => (picked = null)} />
+      <Bar {clip} {entry} row={session.items[picked]!} part={pickedPart} height={entryHeight} {folded} onaction={() => (picked = null)} />
     {/if}
 
     <div class="entry" class:hidden={!shell.showsEntry} data-testid="entry" data-ring={ring} data-running={dash} aria-label={t("entry.label")} bind:clientHeight={entryHeight} bind:this={entryBox}>
@@ -667,6 +687,13 @@
     border: var(--stroke-thin) solid var(--line);
     color: var(--text);
     font-size: var(--fs-note);
+  }
+  /* R832: a notice that names a copy ("Copied: 0.333 333 333 333") stays on one line; a longer text is ellipsed */
+  .notice.one {
+    max-width: calc(100% - 2 * var(--sp-3));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .entry {
     display: flex;

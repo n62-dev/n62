@@ -140,8 +140,10 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
     const shell = { app, showsEntry: true } as unknown as AppShell;
     const acted: string[] = [];
-    const c = new ClipActions({ items } as unknown as Session, shell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port);
-    return { c, clip: () => clip, acted };
+    // (R832: the notice names the copy by the row's shown text, so the session shows the row)
+    const session = { items, display: (r: { full?: string }) => ({ text: r.full ?? "", latex: "" }), input: (r: { latex: string }) => r.latex } as unknown as Session;
+    const c = new ClipActions(session, shell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port);
+    return { c, clip: () => clip, acted, say: () => c.notice };
   };
   const row = (full: string, status = "done") => ({ status, latex: full, full, fullExact: true, rational: undefined, facts: {} });
   it("copies the given row's full value, as a hold on its result, and counts as copy", async () => {
@@ -152,6 +154,21 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     expect(dead).not.toHaveBeenCalled();
     await vi.waitFor(() => expect(m.clip()).toBe("1/3"));
     expect(m.acted).toEqual(["copy"]);
+  });
+  it("R832: the notice names the copy (one line); the lit input is copied as a hold on it does, the result lit or the row as before", async () => {
+    const rows = [{ ...row("1/3"), latex: "\\frac{2}{3}" }];
+    const m = make(rows);
+    m.c.keyCopy(vi.fn(), rows[0] as never);
+    await vi.waitFor(() => expect(m.clip()).toBe("1/3"));
+    expect(m.say()).toBe("Copied: 1/3");
+    expect(m.c.noticeOne).toBe(true);
+    m.c.keyCopy(vi.fn(), rows[0] as never, undefined, "input");
+    await vi.waitFor(() => expect(m.clip()).toBe("2/3")); // (the input \frac{2}{3} as plain text)
+    expect(m.say()).toBe("Copied: 2/3");
+    const long = [row("0.3333333333333333333333333333333333333333")];
+    const l = make(long);
+    l.c.keyCopy(vi.fn(), long[0] as never);
+    await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.3333333333333333333333…")); // 24 characters, then …
   });
   it("with no row given, the last finished row", async () => {
     const m = make([row("1/3"), row("2/3"), row("x", "error")]);

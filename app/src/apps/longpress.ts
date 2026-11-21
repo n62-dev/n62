@@ -3,7 +3,7 @@
 // input or result (R276: the one long-press code of the app). A Svelte action; the click that follows the lift is
 // swallowed so the press does not also pick, select or edit. A finger that moves more than MOVE_PX is a drag (a row's
 // swipe, R276), not a press.
-const LONG_PRESS_MS = 500;
+import { HOLD_MS } from "../state/pickRows.ts";
 const MOVE_PX = 8; // (below rowSwipe.ts's 10 px that decides a drag: a swipe always ends the press first)
 
 export function longpress(node: HTMLElement, run: (() => void) | undefined): { update(r: (() => void) | undefined): void; destroy(): void } {
@@ -26,7 +26,7 @@ export function longpress(node: HTMLElement, run: (() => void) | undefined): { u
       timer = undefined;
       fired = true;
       act?.();
-    }, LONG_PRESS_MS);
+    }, HOLD_MS);
   };
   const move = (e: PointerEvent): void => {
     if (timer !== undefined && Math.hypot(e.clientX - x0, e.clientY - y0) > MOVE_PX) stop();

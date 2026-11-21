@@ -10,7 +10,7 @@ import type { ClipActions } from "../clipboard/actions.svelte.ts";
 import { startsWithAns } from "../entry/ans.ts";
 import type { EntryController } from "../entry/controller.ts";
 import { ANS_CHIP } from "../entry/macros.ts";
-import { canPick, pickAfter, pickAtOrBefore, targetRow } from "../state/pickRows.ts";
+import { canPick, pickAfter, pickAtOrBefore, targetRow, type PickPart } from "../state/pickRows.ts";
 import type { HistoryItem, Session, View } from "../state/session.svelte.ts";
 import { sheetChunk, loadSheetView } from "../views/sheetView.svelte.ts";
 import { actionFor, keyboard, OPENS_SHEET, type ActionBody, type Key, type Layer, type Special } from "./keyboard.ts";
@@ -28,6 +28,8 @@ export interface RouteCtx {
   readonly entry: EntryController;
   /** The picked history row (P4), or null. */
   picked: number | null;
+  /** R832: what the picked row has lit: the whole row (a key picked it), its input or its result (a tap did). Reads "row" once `picked` is set by a key. */
+  readonly part: PickPart;
   /** Set while the first Mode or Settings open (or the sheet's view) waits for its code. */
   sheetLoad: Promise<void> | null;
   /** The keys waiting for code to load (R8), in the order pressed. */
@@ -36,6 +38,8 @@ export interface RouteCtx {
   readonly casKeys: boolean;
   enter(): void;
   insertResult(item: HistoryItem): void;
+  /** R832: Enter on a picked row whose input is lit: it goes at the caret (an empty line: the recall, with its chips). */
+  insertInput(item: HistoryItem): void;
   /** A row's entry back on the line (Enter on a pick without a result). */
   recallRow(item: HistoryItem): void;
   goTo(view: View): void;
@@ -216,7 +220,10 @@ export function lazy(c: RouteCtx, job: Promise<unknown>): void {
 
 /** Shift + Select (R723): Copy, the line's selection (R727), else the picked `row`, else the last finished row (clipboard/actions.svelte.ts keyCopy); none, or
  *  an app, is a dead press with no clipboard write. */
-const copyKey = (c: RouteCtx, row?: HistoryItem): void => c.withClip((x) => x.keyCopy(c.dead, row, () => (c.picked = null)));
+const copyKey = (c: RouteCtx, row?: HistoryItem): void => {
+  const lit = c.part; // (read before the pick is let go: the setter resets it)
+  c.withClip((x) => x.keyCopy(c.dead, row, () => (c.picked = null), lit));
+};
 
 /** Shift + 1 (R327): the uncertainty sheet of the picked row, else the last (views/tmplSheet.ts, the sheet's code: the press
  *  waited for it, as for Base); no row, an app, or a row without σ is a dead press there. */
@@ -231,6 +238,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   const n = items.length;
   const isCmd = (name: string) => action.kind === "cmd" && action.name === name;
   const picked = c.picked;
+  const lit = c.part; // (R832: read before a key drops the pick, which resets it)
   // a "note" row (the safe-start line) is drawn without a pick, so it is never picked
   if (picked === null || picked >= n || !canPick(items, picked)) {
     c.picked = null;
@@ -265,7 +273,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   if (action.kind === "insert" && action.latex === STORE_ARROW && item) {
     // R280 (sd-2): Store ▶ (Shift + ᴇ, its flick, a user key) stores the picked row as the row bar's Store ▶ does: its
     // chip and ▶ on the line; a row without a result has nothing to store (the bar's Store ▶ is off there: deadPress)
-    c.withClip((x) => void x.storeRow(item));
+    c.withClip((x) => void x.storeRow(item, lit));
     return true;
   }
   if (action.kind !== "special") return false;
@@ -283,7 +291,8 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     return true;
   }
   if (action.name === "enter" && item) {
-    if (item.status === "done") c.insertResult(item);
+    if (lit === "input") c.insertInput(item); // R832: the lit input, at the caret (an empty line: the recall)
+    else if (item.status === "done") c.insertResult(item);
     else if (c.entry.empty) c.recallRow(item); // an empty line: the entry comes back with its chips
     // (R273: text on the line stays; the pick is dropped above)
     return true;
@@ -315,7 +324,7 @@ export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefin
   const items = session.items;
   const at = c.picked;
   const row = at !== null && at < items.length && canPick(items, at) ? items[at] : undefined;
-  if (row) return action.kind === "cmd" && action.name === "moveToPreviousChar" ? entry.empty && row.status === "pending" : isStore(action) && row.status !== "done";
+  if (row) return action.kind === "cmd" && action.name === "moveToPreviousChar" ? entry.empty && row.status === "pending" : isStore(action) && (c.part === "input" ? row.status === "pending" : row.status !== "done");
   return isStore(action) && entry.empty && !session.hasResult();
 }
 

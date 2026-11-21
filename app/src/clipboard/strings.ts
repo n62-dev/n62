@@ -20,6 +20,7 @@ const clip = {
   "clip.clear": "Clear history",
   "clip.csv": "Copy table as CSV",
   "clip.copied": "Copied",
+  "clip.copiedWhat": "Copied: {what}",
   "clip.copiedTable": "Copied the table as CSV",
   "clip.nothing": "Nothing to copy",
   "clip.noExact": "No exact form",

@@ -22,9 +22,30 @@ export function pickAfter(items: readonly Row[], from: number): number | null {
 /** True when `i` is a row that can be picked. */
 export const canPick = (items: readonly Row[], i: number): boolean => pickable(items, i);
 
-/** R147 (the G2's way): what a tap on row `index`'s entry or result does while `selected` is picked: the first tap
- *  picks the row ("pick"), a tap on the picked row recalls or inserts ("act"). */
-export const rowTap = (selected: number | null, index: number): "pick" | "act" => (index === selected ? "act" : "pick");
+/** R832: what a picked row has lit: the whole row (a tap elsewhere on it, or ▲), its input, or its result. */
+export type PickPart = "row" | "input" | "result";
+
+/** A press this long (ms) or longer on a row is a hold, not a tap (apps/longpress.ts copies at it; the row's own body ignores it). */
+export const HOLD_MS = 500;
+
+/** R832: what a tap on part `tapped` of row `index` does while `selected` is picked with `lit` lit. A different row (or none
+ *  picked): pick it, lighting what was tapped. The picked row, whole: the input recalls, the result inserts (R147, the G2's
+ *  way), elsewhere the pick drops. The picked row with a half lit: that half does its job, the other half becomes lit,
+ *  elsewhere the whole row is picked. */
+export type TapOutcome = { kind: "act"; part: "input" | "result" } | { kind: "pick"; part: PickPart } | { kind: "drop" };
+export function rowTap(selected: number | null, lit: PickPart, index: number, tapped: PickPart): TapOutcome {
+  if (index !== selected) return { kind: "pick", part: tapped };
+  if (lit === "row") return tapped === "row" ? { kind: "drop" } : { kind: "act", part: tapped };
+  if (tapped === "row") return { kind: "pick", part: "row" };
+  return tapped === lit ? { kind: "act", part: tapped } : { kind: "pick", part: tapped };
+}
+
+/** R63: the input as a row draws and copies it: a unit row's request with the units in it, else `input` (the line as drawn,
+ *  R100). The recall puts back the line itself (Home has no units). */
+export function drawnInput(item: HistoryItem, input: (i: HistoryItem) => string): string {
+  const u = item.units?.input;
+  return input(typeof u === "string" ? { ...item, latex: u } : item);
+}
 
 /** The row an action means (Copy's rule, R775): the given (picked) one when it is finished, none when it is not; with no
  *  row given, the newest finished one. Copy, Fmt and a b/c share it. */
