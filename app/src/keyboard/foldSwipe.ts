@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R53 (P16): the swipe on the entry line that folds the keypad into results mode, and back. A pointer that starts on the
-// line and moves at least FOLD_PX down (up: unfold), mostly vertical (|dy| > 2 |dx|) and within SWIPE_MS, is the
-// swipe, whichever way the keypad is (down on a folded keypad does nothing, and changes nothing on the line either);
+// R53 (P16), R773: the swipe on the entry line that folds the keypad into results mode, and back. A pointer that starts on
+// the line and moves at least FOLD_PX down (up: unfold), mostly vertical (|dy| > 2 |dx|) and within SWIPE_MS arms the
+// swipe; it acts on the lift, if the pointer is then still FOLD_PX past its start, and a pointer that comes back to within
+// BACK_PX of its start cancels it (owner, 2026-11-19). The same goes whichever way the keypad is (down on a folded keypad does nothing, and changes nothing on the line either);
 // every other pointer stays the line's (a finger: entry/lineTouch.ts, R277, a tap places the caret, a sideways drag
 // scrolls, a hold selects; a mouse: MathLive's, a drag selects). A mouse's pointerdown reaches MathLive, so the caret it
 // placed there, and any selection the drag made before it was recognized, are put back from the snapshot taken at the
@@ -10,6 +11,8 @@
 
 export const FOLD_PX = 24;
 export const SWIPE_MS = 400;
+/** An armed swipe whose pointer comes back to within this of its start is cancelled. */
+export const BACK_PX = 12;
 
 export type Swipe = "down" | "up";
 
@@ -19,6 +22,12 @@ export function swipeOf(dx: number, dy: number, ms: number): Swipe | "drop" | un
   if (vertical && Math.abs(dy) >= FOLD_PX && ms <= SWIPE_MS) return dy > 0 ? "down" : "up";
   if (ms > SWIPE_MS || (!vertical && Math.abs(dx) >= FOLD_PX / 2)) return "drop"; // too slow, or sideways: a hold, a scroll of the line or a mouse's selection
   return undefined;
+}
+
+/** Where the pointer is at its lift: the swipe it still is (FOLD_PX past its start, mostly vertical), else undefined. */
+export function liftOf(dx: number, dy: number): Swipe | undefined {
+  if (Math.abs(dy) < FOLD_PX || Math.abs(dy) <= 2 * Math.abs(dx)) return undefined;
+  return dy > 0 ? "down" : "up";
 }
 
 export interface SwipeEnv {
@@ -32,23 +41,28 @@ export interface SwipeEnv {
 
 /** Listen on `el` (the entry line's box); returns the remover. */
 export function foldSwipe(el: HTMLElement, env: SwipeEnv): () => void {
-  let track: { id: number; x: number; y: number; t: number; snap: unknown; done: boolean } | undefined;
+  // `done`: the pointer was recognized as a swipe (the field no longer gets it); `armed`: it still counts, so the lift acts
+  let track: { id: number; x: number; y: number; t: number; snap: unknown; done: boolean; armed: Swipe | undefined } | undefined;
   const down = (e: PointerEvent): void => {
     track = undefined;
     if (!e.isPrimary || (e.pointerType === "mouse" && e.button !== 0)) return;
-    if (env.on()) track = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, snap: env.snapshot(), done: false };
+    if (env.on()) track = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, snap: env.snapshot(), done: false, armed: undefined };
   };
   const move = (e: PointerEvent): void => {
     const t = track;
     if (!t || e.pointerId !== t.id) return;
-    if (t.done) return void e.stopPropagation(); // the field's drag must not select
+    if (t.done) {
+      e.stopPropagation(); // the field's drag must not select
+      if (t.armed && Math.abs(e.clientY - t.y) < BACK_PX) t.armed = undefined; // back at the start: cancelled for good
+      return;
+    }
     const s = swipeOf(e.clientX - t.x, e.clientY - t.y, e.timeStamp - t.t);
     if (s === undefined) return;
     if (s === "drop") return void (track = undefined);
     t.done = true;
+    t.armed = s;
     e.stopPropagation();
     env.restore(t.snap);
-    env.fire(s);
   };
   /** A swipe's touch ends with no click and no tap (the browser's gesture code saw it as one in tests, and then took
    *  the next tap within its double-tap time). */
@@ -58,8 +72,14 @@ export function foldSwipe(el: HTMLElement, env: SwipeEnv): () => void {
     if (!t || e.pointerId !== t.id) return;
     track = undefined;
     swiped = t.done && e.pointerType === "touch";
-    // the field ends its own drag on this event; the line is put back after it
-    if (t.done) setTimeout(() => env.restore(t.snap));
+    if (!t.done) return;
+    if (e.type === "pointerup" && t.armed && liftOf(e.clientX - t.x, e.clientY - t.y) === t.armed) {
+      env.restore(t.snap);
+      env.fire(t.armed);
+    }
+    // a mouse: the field ends its own drag on this event, and the line is put back after it (a touch is no field drag, and
+    // a later restore would undo what is typed the moment the keys are down)
+    if (e.pointerType !== "touch") setTimeout(() => env.restore(t.snap));
   };
   const touchEnd = (e: TouchEvent): void => {
     if (swiped && e.cancelable) e.preventDefault();
@@ -76,8 +96,9 @@ export function foldSwipe(el: HTMLElement, env: SwipeEnv): () => void {
   const opts = { capture: true };
   el.addEventListener("pointerdown", down, opts);
   el.addEventListener("pointermove", move, opts);
-  el.addEventListener("pointerup", end, opts);
-  el.addEventListener("pointercancel", end, opts);
+  // on the window: a mouse's lift may be anywhere
+  addEventListener("pointerup", end, opts);
+  addEventListener("pointercancel", end, opts);
   el.addEventListener("touchend", touchEnd, { capture: true, passive: false });
   el.addEventListener("touchmove", touchMove, { capture: true, passive: false });
   return () => {
@@ -85,7 +106,7 @@ export function foldSwipe(el: HTMLElement, env: SwipeEnv): () => void {
     el.removeEventListener("touchmove", touchMove, opts);
     el.removeEventListener("pointerdown", down, opts);
     el.removeEventListener("pointermove", move, opts);
-    el.removeEventListener("pointerup", end, opts);
-    el.removeEventListener("pointercancel", end, opts);
+    removeEventListener("pointerup", end, opts);
+    removeEventListener("pointercancel", end, opts);
   };
 }

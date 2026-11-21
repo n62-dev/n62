@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import { FOLD_PX, SWIPE_MS, swipeOf } from "./foldSwipe.ts";
+import { BACK_PX, FOLD_PX, SWIPE_MS, liftOf, swipeOf } from "./foldSwipe.ts";
 
 describe("the entry line's swipe (R53)", () => {
   it("is 24 px down or up, mostly vertical, within 400 ms", () => {
@@ -19,5 +19,13 @@ describe("the entry line's swipe (R53)", () => {
     expect(swipeOf(30, 20, 50)).toBe("drop");
     expect(swipeOf(0, 10, 401)).toBe("drop");
     expect(swipeOf(0, 40, 401)).toBe("drop");
+  });
+  it("acts on the lift only while the pointer is still FOLD_PX past its start and mostly vertical (R773)", () => {
+    expect(BACK_PX).toBe(12);
+    expect(liftOf(0, 24)).toBe("down");
+    expect(liftOf(5, -30)).toBe("up");
+    expect(liftOf(0, 23)).toBeUndefined();
+    expect(liftOf(0, 0)).toBeUndefined();
+    expect(liftOf(20, 30)).toBeUndefined(); // gone sideways
   });
 });
