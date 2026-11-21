@@ -89,8 +89,7 @@
     onhold && item.status !== "pending" ? () => onhold(item, "input", drawn(item)) : undefined;
   // R832: the whole row takes the tap and reads where it landed (its `.in`, its `.result`, else the row): the first tap lights that
   // part, the next acts on it, moves the light or drops the pick (rowTap). A scroll drag never reaches here: the browser cancels the
-  // pointer and sends no click. A press of HOLD_MS or more is a hold (the input's and the result's copy, apps/longpress.ts, which
-  // swallows their click); on the rest of the row it picks nothing either.
+  // pointer and sends no click. A press of HOLD_MS or more on the rest of the row is a hold too: it picks nothing.
   let heldFor = false;
   let downAt = 0;
   let released: ReturnType<typeof setTimeout> | undefined;
@@ -107,7 +106,6 @@
   function tapRowBody(e: MouseEvent, item: HistoryItem, at: number): void {
     const held = heldFor;
     heldFor = false;
-    if (held) return;
     const target = e.target as Element;
     if (target.closest(".reason")) {
       reasonOpen = reasonOpen === item.id ? null : item.id; // R124: the line's text opens, nothing is picked
@@ -115,6 +113,7 @@
     }
     if (target.closest("button.cancel")) return; // Cancel keeps its own tap (D3)
     const tapped: PickPart = target.closest(".in") ? "input" : target.closest("button.result") ? "result" : "row";
+    if (held && tapped === "row") return; // (a hold on the input or the result is theirs: longpress.ts swallows its click once its chunk is in, else it is a tap)
     const next = rowTap(selected, part, at, tapped);
     if (next.kind === "act") {
       sigmaOpen = null;

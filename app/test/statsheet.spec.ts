@@ -84,7 +84,7 @@ test("a second tap on the input recalls it; a hold copies the whole result; a sw
   await page.evaluate(() => window.n62.entry.clear());
   await setClipboard(page, "before");
   await finger(page, "result:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText(/^Copied: \S/); // (R832: the notice names the copy, cut to one line)
   await expect.poll(() => clipboard(page)).toBe("{97/50,3/20,9409/9450}"); // the whole result, exact (Copy, docs/04 2.6)
   await expect(menu(page)).toHaveCount(0);
   const width = (await rows(page).last().boundingBox())?.width ?? 0;
