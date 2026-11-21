@@ -137,7 +137,7 @@
   // or a long hold is still a tap. ⌫ fires on touch and repeats while held instead; the trackpad has no flicks.
   type Gesture =
     | { kind: "pad"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; steps: Stepper; open: unknown }
-    | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker; felt?: boolean }
+    | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker; felt: boolean }
     | { kind: "repeat"; el: HTMLElement | undefined; repeat: Repeat };
 
   // The press look (R161, F191): the app's own flag `data-down` on the touched key, never CSS :active (input/pressFlag.ts: set
@@ -146,7 +146,6 @@
   const flag = createPressFlag((el) => {
     if (popEl === el) hidePop(); // (only its own key's: a newer key's pop stays)
   });
-  const light = (el: HTMLElement | undefined): void => flag.light(el);
   const unlight = (el: HTMLElement | undefined): void => flag.unlight(el);
   function unlightAll(): void {
     flag.clearAll();
@@ -163,8 +162,8 @@
     popEl = undefined;
   }
   function showPop(target: Key | "pad" | undefined, el: HTMLElement | undefined): void {
-    // (a key that does nothing in this layer, drawn dimmed, types nothing: no pop)
-    const text = pops && target && target !== "pad" && el && !isPadKey(target) && !dead(target) ? face(target) : "";
+    // (a key that does nothing is never shown a pop: down() skips it, R777)
+    const text = pops && target && target !== "pad" && el && !isPadKey(target) ? face(target) : "";
     if (!el || text === "") return hidePop();
     popEl = el;
     pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typesVariable(act(target as Key)) };
@@ -259,9 +258,9 @@
     const { target, el } = targetOf(ev);
     // R777 (docs/05 3.7): a key drawn dead has no press look, no pop and no click at finger-down; its tap gives the dead key's
     // double pulse (route.ts c.dead()). A flick that arms on it and types something is felt then (move()).
-    const inert = target !== undefined && target !== "pad" && dead(target);
+    const inert = typeof target === "object" && dead(target);
     if (!inert) {
-      light(el);
+      flag.light(el);
       showPop(target, el);
       if (target) ontouch();
     }
@@ -285,7 +284,7 @@
     const [x0, y0] = [ev.clientX, ev.clientY];
     if (target === "pad" || (target && isPadKey(target)))
       gestures.set(ev.pointerId, { kind: "pad", key: target === "pad" ? undefined : target, el, x0, y0, steps: new Stepper(), open: sheet });
-    else gestures.set(ev.pointerId, { kind: "key", key: target, el, x0, y0, flick: new FlickTracker() });
+    else gestures.set(ev.pointerId, { kind: "key", key: target, el, x0, y0, flick: new FlickTracker(), felt: !inert });
   }
 
   function move(ev: PointerEvent): void {
@@ -297,13 +296,13 @@
     } else if (g.kind === "key" && g.key) {
       const before = g.flick.state;
       g.flick.move(ev.clientX - g.x0, ev.clientY - g.y0);
-      if (g.flick.state !== before) {
+      const st = g.flick.state;
+      if (st !== before) {
         showBubble(ev.pointerId, g);
         // a drawn-dead key that was given no feedback at finger-down: a flick that arms with a function is felt as a key press
-        const st = g.flick.state;
-        if (!g.felt && (st === "up" || st === "down") && g.el && dead(g.key) && flickText(g.key, st) !== "") {
+        if (!g.felt && st !== "tap" && st !== "cancelled" && flickText(g.key, st)) {
           g.felt = true;
-          light(g.el);
+          flag.light(g.el);
           ontouch();
         }
       }
