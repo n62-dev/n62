@@ -9,7 +9,7 @@ type Front = typeof import("./backLayerFront.ts");
 
 /** What the mocked openLayer did: it runs `close` at once (so a test reads the push order) and logs the open and the release. */
 const log = vi.hoisted((): string[] => []);
-vi.mock("./backLayer.ts", () => ({ adoptGuard: () => undefined, openLayer: (close: () => void) => (close(), log.push("open"), () => log.push("release")) }));
+vi.mock("./backLayer.ts", () => ({ adopt: () => undefined, openLayer: (close: () => void) => (close(), log.push("open"), () => log.push("release")) }));
 
 /** A fresh front: its `code` is unset, so a layer opened now is opened before the code is in. */
 async function freshFront(): Promise<{ front: Front; log: string[] }> {
@@ -27,7 +27,8 @@ describe("backLayerFront", () => {
   const pushState = vi.fn();
   beforeEach(() => {
     pushState.mockClear();
-    vi.stubGlobal("history", { pushState });
+    const h = { state: null as unknown, pushState: (s: unknown) => ((h.state = s), pushState(s)) };
+    vi.stubGlobal("history", h);
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -67,10 +68,14 @@ describe("backLayerFront", () => {
     expect(pushState).toHaveBeenCalledTimes(1);
   });
 
-  it("a layer released after the code is in releases the real layer", async () => {
+  it("a layer opened after the code is in is opened a microtask later, and released with the real layer", async () => {
     const { front, log } = await freshFront();
     await loaded(front);
+    front.openLayer(() => {})();
+    await Promise.resolve();
+    expect(log).toEqual([]); // released in the task it opened in: it never had an entry
     const off = front.openLayer(() => {});
+    await loaded(front);
     off();
     expect(log).toEqual(["open", "release"]);
     expect(pushState).not.toHaveBeenCalled();

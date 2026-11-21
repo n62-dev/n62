@@ -13,6 +13,9 @@ function stubHistory(): { stack: unknown[]; index: () => number } {
   const win = new EventTarget();
   vi.stubGlobal("window", win);
   vi.stubGlobal("history", {
+    get state(): unknown {
+      return stack[i];
+    },
     pushState: (s: unknown) => {
       stack.splice(i + 1);
       stack.push(s);
@@ -21,7 +24,7 @@ function stubHistory(): { stack: unknown[]; index: () => number } {
     replaceState: (s: unknown) => void (stack[i] = s),
     go: (n: number) => {
       i = Math.max(0, i + n);
-      setTimeout(() => win.dispatchEvent(new Event("popstate")));
+      queueMicrotask(() => win.dispatchEvent(new Event("popstate"))); // (the platform fires it in a later task; before the import settles is all the tests need)
     },
   });
   return { stack, index: () => i };
@@ -77,17 +80,21 @@ describe("backLayerFront hands its guard entry to backLayer", () => {
     expect(h.index()).toBe(0);
   });
 
-  it("back before the load closes the newest waiting layer and keeps a guard for the rest", async () => {
+  it("back before the load uses the guard up and closes nothing; the layers get their entries at the load", async () => {
     const front = await fresh();
     const closed: string[] = [];
     front.openLayer(() => closed.push("fold"));
     front.openLayer(() => closed.push("sheet"));
     history.go(-1);
-    await tick();
-    expect(closed).toEqual(["sheet"]);
-    expect(h.index()).toBe(1); // the guard again, under the fold
+    await Promise.resolve(); // (the popstate is in; the import of the real code is not)
+    await Promise.resolve();
+    expect(closed).toEqual([]);
+    expect(h.index()).toBe(0); // the app is still here
     await loaded(front);
-    expect(h.index()).toBe(1);
+    expect(h.index()).toBe(2); // one entry per layer, none under them
+    history.go(-1);
+    await tick();
+    expect(closed).toEqual(["sheet"]); // (the sheet, the newest, closes first)
     history.go(-1);
     await tick();
     expect(closed).toEqual(["sheet", "fold"]);

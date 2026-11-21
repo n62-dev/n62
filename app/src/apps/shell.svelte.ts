@@ -251,21 +251,18 @@ export class AppShell {
       this.openSheet(
         (S) =>
           new S(id, t(slot ? "apps.slot" : "apps.title"), () =>
-            (["home", "cas", ...APPS.map((a) => a.id)] as const).map((p) => {
-              const place = p === "home" || p === "cas";
-              return {
-                id: p,
-                label: place ? t(`view.${p}`) : t(appEntry(p).name),
-                glyph: placeGlyph(p),
-                disabled: slot && p === "home",
-                selected: slot && this.barSlot?.() === p,
-                run: () => {
-                  if (slot) this.setBarSlot?.(p as BarSlot);
-                  if (place) this.goTo?.(p);
-                  else void this.open(p);
-                },
-              };
-            }),
+            (["home", "cas", ...APPS.map((a) => a.id)] as const).map((p) => ({
+              id: p,
+              label: t(p === "home" || p === "cas" ? `view.${p}` : appEntry(p).name),
+              glyph: placeGlyph(p),
+              disabled: slot && p === "home",
+              selected: slot && this.barSlot?.() === p,
+              run: () => {
+                if (slot) this.setBarSlot?.(p as BarSlot);
+                if (p === "home" || p === "cas") this.goTo?.(p);
+                else void this.open(p);
+              },
+            })),
           ),
       );
   }

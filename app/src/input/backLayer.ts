@@ -57,15 +57,18 @@ function settle(): void {
   for (const l of opening.splice(0)) push(l);
 }
 let listening = false;
-/** backLayerFront.ts put a guard entry on the history before this code was in: the first layer pushed replaces it, and
- *  when none is left to push it goes back (one traversal of ours, so onPop closes nothing). */
+/** backLayerFront.ts put a guard entry on the history before this code was in (adopt): see there. */
 let guard = false;
 
-/** The guard of the front is on the history now (called once, when the code arrives, before the waiting layers open). */
-export function adoptGuard(): void {
+/** Called once, when the code arrives, before the layers that waited open (backLayerFront.ts). If the front put a guard entry
+ *  on the history (state 1; it is the current entry unless a back has used it up), the first layer pushed replaces it, and
+ *  when none is left to push it goes back (one traversal of ours, so onPop closes nothing). A task later, so those layers
+ *  have opened. A guard left by a reload is taken the same way: it only goes back to the app's own entry. */
+export function adopt(): void {
+  if (history.state !== 1) return; // (no guard, or a back before the code was in has used it up: the current entry is not it)
   guard = true;
   listen();
-  atTaskEnd();
+  setTimeout(settle);
 }
 
 function push(layer: Layer): void {
