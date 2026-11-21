@@ -59,12 +59,12 @@ const spec = raw as unknown as RawSpec;
 
 const OPS: Readonly<Record<string, { text: string; emit: PadEmit }>> = {
   per: { text: "÷", emit: { do: "per" } },
-  inverse: { text: "⁻¹", emit: { do: "power", n: -1 } },
+  inverse: { text: "x⁻¹", emit: { do: "power", n: -1 } },
   product: { text: "×", emit: { do: "times" } },
-  square: { text: "²", emit: { do: "power", n: 2 } },
-  sqrt: { text: "√", emit: { do: "sqrt" } },
-  cube: { text: "³", emit: { do: "power", n: 3 } },
-  fourth: { text: "⁴", emit: { do: "power", n: 4 } },
+  square: { text: "x²", emit: { do: "power", n: 2 } },
+  sqrt: { text: "√x", emit: { do: "sqrt" } },
+  cube: { text: "x³", emit: { do: "power", n: 3 } },
+  fourth: { text: "x⁴", emit: { do: "power", n: 4 } },
 };
 const KEEP: Readonly<Record<string, { text: () => string; emit: PadEmit }>> = {
   find: { text: () => unitText("units.pad.find"), emit: { do: "find" } },

@@ -149,3 +149,29 @@ test("every legend and face fits its key within the fit code's floor at 360 px",
     if (state.length) await tap(page, state); // off again
   }
 });
+
+// R803: the power keys read x², √x, x³, x⁴, ÷ and x⁻¹ (upright, as the main keypad's x²), whole at both phone widths
+for (const [w, h] of [[412, 915], [360, 740]] as const)
+  test(`the power cells read x², x³, x⁴, x⁻¹ and √x, whole and upright at ${w} × ${h}`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    const part = (id: string, cls: string) => page.locator(`[data-key="${id}"] .${cls}`);
+    await expect(part("sq", "main")).toHaveText("x²");
+    await expect(part("sq", "shiftlegend")).toHaveText("√x");
+    await expect(part("pow", "main")).toHaveText("x³");
+    await expect(part("pow", "shiftlegend")).toHaveText("x⁴");
+    await expect(part("div", "shiftlegend")).toHaveText("x⁻¹");
+    const bad = await page.evaluate(() => {
+      const out: string[] = [];
+      for (const [id, cls] of [["sq", "main"], ["sq", "shiftlegend"], ["pow", "main"], ["pow", "shiftlegend"], ["div", "shiftlegend"]] as const) {
+        const el = document.querySelector<HTMLElement>(`[data-key="${id}"] .${cls}`);
+        if (!el) out.push(`${id} ${cls} missing`);
+        else if (el.scrollWidth > el.clientWidth || getComputedStyle(el).fontStyle === "italic") out.push(`${id} ${cls} ${el.scrollWidth}/${el.clientWidth} ${getComputedStyle(el).fontStyle}`);
+      }
+      return out;
+    });
+    expect(bad).toEqual([]);
+    await tap(page, ["shift"]);
+    await expect(part("sq", "main")).toHaveText("√x");
+    await expect(part("pow", "main")).toHaveText("x⁴");
+    await expect(part("div", "main")).toHaveText("x⁻¹");
+  });
