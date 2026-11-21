@@ -10,12 +10,12 @@ test.beforeEach(async ({ page }) => {
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
 });
 
-test("☰ 7 opens Export ›, and Work report saves the view's steps as n62-work-<date>.md (R130)", async ({ page }) => {
+test("☰ 4 opens Export ›, and Work report saves the view's steps as n62-work-<date>.md (R130)", async ({ page }) => {
   await tap(page, ["d1", "div", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["d2", "add", "d3", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(2);
-  await tap(page, ["@menu", "d7"]);
+  await tap(page, ["@menu", "d4"]);
   await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
   await expect(page.getByRole("menuitem")).toHaveText([/^1\s*Work report/, /^2\s*CSV/, /^3\s*LaTeX/, /^4\s*Python/]);
   await tap(page, ["d1"]);

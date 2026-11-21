@@ -36,7 +36,7 @@ const paths: { name: string; act: (page: Page) => Promise<void>; left: string[];
     act: async (page) => {
       await tap(page, ["up", "up"]); // the middle row
       await tap(page, ["@menu"]);
-      await menuItem(page, /^3 ?Delete$/).click();
+      await menuItem(page, /^1 ?Delete$/).click();
     },
     left: ["1", "3"],
     text: "Row deleted · Undo",

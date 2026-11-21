@@ -41,7 +41,7 @@
 #                                  controls, R15c1, and what a user key may hold; selectGrow, selectShrink: Select grows
 #                                  the entry line's selection by the box model, Deselect walks it back, R279, entry/grow.ts;
 #                                  help: the syntax and example of the function at the cursor, else Find, R197;
-#                                  copy: what a hold on the picked or last row's result copies, R723; paste: ☰ → Paste's path;
+#                                  copy: what a hold on the picked or last row's result copies, R723; paste: Shift + Deselect, Paste's own path (paste.ts);
 #                                  uncertainty: the uncertainty sheet of a result with σ, R327)
 # User keys (R15b, R15c): a key with `user: true` is a free key (U1-U6). Its layers here are only its defaults: the
 # user's own action for a layer (Settings > User keys, from Find, R4b) replaces the default, stored with a stamp in
@@ -89,7 +89,7 @@ keys:
   # Clear, ⇤ | ⇥, Copy | Paste on Shift (a flick up reaches each). ☰, Apps and the views are on the bar (R15c1, R722); Mode is
   # on its STD and 12 chips (no key); results mode is the swipe on the entry line, so there is no View key. There is no Cancel
   # key: Esc stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line. Copy is
-  # also ☰ 2 and a hold on a row, Paste ☰ 4. Only Esc (r1c5) and the pad keep their G2 cells; every other key here is ours
+  # also the bar's Copy › and a hold on a row, Paste any system paste. Only Esc (r1c5) and the pad keep their G2 cells; every other key here is ours
   # (`assumed`). From the v0.1.0 tag the cluster is fixed like the maths keys (docs/06 3b).
   - { id: u1, row: 0, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: u2, row: 0, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
@@ -119,9 +119,9 @@ keys:
   - { id: down, row: 2, col: 2, span: 2, cls: ctl, label: { primary: "▼" }, primary: { cmd: moveDown }, source: virtual-calc }  # pad down
   # Select | Deselect (R279, docs/04 5.1): Select grows the entry line's selection by the box model, Deselect walks it back.
   # Shift + Select is Copy (R723, owner 2026-11-17): the line's selection when it is not collapsed (R727: its plain
-  # text, as a hold on an input copies; the Select chain stays), else what a hold on the row's result copies (R276; ☰ → Copy ›
-  # Full value, R720), of the picked row, else the last finished row; none of these, or an app with no selection, is a dead press. Shift + Deselect is Paste: ☰ →
-  # Paste's path, the clipboard as one number onto the entry line (keys pressed meanwhile wait for it); where no entry line
+  # text, as a hold on an input copies; the Select chain stays), else what a hold on the row's result copies (R276; the bar's Copy ›
+  # Full value), of the picked row, else the last finished row; none of these, or an app with no selection, is a dead press. Shift + Deselect is Paste: the
+  # clipboard as one number onto the entry line (keys pressed meanwhile wait for it); where no entry line
   # shows, a dead press. Neither opens a sheet. (Help was here from R197, Mode from R322 until R723.)
   - { id: select, row: 2, col: 4, cls: nav, label: { primary: "$key.select", shift: "$key.copy" },
       primary: { special: selectGrow }, shift: { special: copy }, source: assumed }

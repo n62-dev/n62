@@ -288,7 +288,7 @@ test("the units key on the row max(1,5), typed in point mode, puts max(1;5) on t
 
 // R100 (vr-1, P5): a root copied from an app in comma mode pastes into Home as the same value. Expected: the readout
 // itself (the oracle's sqrt(2) = 1.41421356237309504880… is appcopy.spec's).
-test("Function: Plot › ☰ Root, ☰ → Copy, then Home, ☰ → Paste, Enter gives the same root", async ({ page }) => {
+test("Function: Plot › ☰ Root, ☰ → Copy, then Home, Shift + Deselect (Paste), Enter gives the same root", async ({ page }) => {
   await tap(page, ["@symb"]);
   await expect(page.getByTestId("entry-label")).toHaveText("F1(x)=");
   await tap(page, ["x", "pow", "d2", "right", "sub", "d2", "enter", "@plot"]);

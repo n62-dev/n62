@@ -36,14 +36,18 @@ const pickMenu = async (page: Page, label: string): Promise<void> => {
   await page.getByRole("menuitem", { name: new RegExp(`^\\d ${label}$`) }).click();
 };
 
-/** Menu → 2 Copy › → the item. */
-const pickCopyAs = async (page: Page, label: string): Promise<void> => {
-  await tap(page, ["@menu", "d2"]);
+/** The picked row's bar → Copy › (R830: ☰ has no Copy row; a pick is made first, the last row, when none is) → the item. */
+const openCopyAs = async (page: Page): Promise<void> => {
+  if ((await page.getByTestId("row-actions").count()) === 0) await tap(page, ["up"]);
+  await page.getByTestId("row-actions").getByRole("button", { name: /Copy/ }).tap({ timeout: 5000 });
   await expect(page.getByTestId("menu")).toBeVisible();
+};
+const pickCopyAs = async (page: Page, label: string): Promise<void> => {
+  await openCopyAs(page);
   await page.getByRole("menuitem", { name: new RegExp(`^\\d ${label}$`) }).click();
 };
 
-test("☰ → Copy copies the full value of the last result, not the 12 shown digits", async ({ page }) => {
+test("Shift + Select (COPY) copies the full value of the last result, not the 12 shown digits", async ({ page }) => {
   await thirds(page);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.666666666667");
   await tap(page, COPY);
@@ -51,7 +55,7 @@ test("☰ → Copy copies the full value of the last result, not the 12 shown di
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
 
-test("☰ → Copy copies the picked row (Up on an empty line)", async ({ page }) => {
+test("Shift + Select (COPY) copies the picked row (Up on an empty line)", async ({ page }) => {
   await thirds(page);
   await tap(page, ["up", "up", ...COPY]);
   await expect.poll(() => clipboard(page)).toBe(THIRD);
@@ -114,7 +118,7 @@ test("Shift + Deselect pastes the clipboard's number onto the line", async ({ pa
   await expect.poll(() => entryValue(page)).toBe("42");
 });
 
-test("☰ → Paste pastes a number as the keyboard's own LaTeX", async ({ page }) => {
+test("Shift + Deselect (PASTE) pastes a number as the keyboard's own LaTeX", async ({ page }) => {
   await setClipboard(page, "1.5E-3");
   await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("1.5\\emark-3"); // drawn 1.5ᴇ-3, as the exponent key types it (R14)
@@ -167,13 +171,13 @@ test("Menu: Copy as › Python gives the row as a sympy script (R181)", async ({
   expect((await clipboard(page)).split("\n")[0]).toMatch(/^# N62 .*Copy as Python/);
 });
 
-test("☰ 7 Export › Python saves the session as n62-<date>.py (R181)", async ({ page }) => {
+test("☰ 4 Export › Python saves the session as n62-<date>.py (R181)", async ({ page }) => {
   await savePicker(page, "fake");
   await open(page, "");
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 1);
-  await tap(page, ["@menu", "d7"]);
+  await tap(page, ["@menu", "d4"]);
   await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
   await page.getByRole("menuitem", { name: /^\d Python$/ }).click();
   await expect(page.getByTestId("notice")).toHaveText("Python saved");
@@ -185,11 +189,12 @@ test("☰ 7 Export › Python saves the session as n62-<date>.py (R181)", async 
 test("Menu: Copy exact is on for an exact result and off for one that is only digits", async ({ page }) => {
   await tap(page, ["d2", "sq", "enter"]);
   await done(page, 1);
-  await tap(page, ["@menu", "d2"]);
+  await openCopyAs(page);
   await expect(page.getByRole("menuitem", { name: /Exact$/ })).toBeEnabled(); // 2² = 4
-  await tap(page, ["esc", "esc", "shift", "enter", "d1", "div", "d3", "enter"]); // back out of Copy as and the Menu; approx(1/3)
+  await tap(page, ["esc", "esc", "shift", "enter", "d1", "div", "d3", "enter"]); // back out of Copy › and let the pick go; approx(1/3)
   await done(page, 2);
-  await tap(page, ["@menu", "d2"]);
+  await tap(page, ["esc"]);
+  await openCopyAs(page);
   await expect(page.getByRole("menuitem", { name: /Exact$/ })).toBeDisabled(); // approx(1/3) is digits only
 });
 
@@ -260,7 +265,7 @@ test("Num: the table as CSV with full values, from ☰ → Copy table as CSV (R2
   expect(csv.slice(0, 4)).toEqual(["x,F1", "0,NaN", "0.1,10", "0.2,5"]);
 });
 
-test("a key right after ☰ → Paste waits for the pasted number: ÷ with a slow clipboard divides 1.5 (R8, R57f1)", async ({ page }) => {
+test("a key right after Paste waits for the pasted number: ÷ with a slow clipboard divides 1.5 (R8, R57f1)", async ({ page }) => {
   await setClipboard(page, "1.5");
   // the clipboard answers late, as on a loaded phone: ÷ is pressed before the read is back
   await page.evaluate(() => {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copy, paste and share as the menus and gestures use them (docs/04 section 2.6): the Home/CAS ☰ menu (Copy and Paste
-// are items of it since R278 took their keys away), the picked row's buttons, a hold on a history row's input or result (R276), and the Num table. The texts come from text.ts and paste.ts; the delivery is the
+// Copy, paste and share as the menus and gestures use them (docs/04 section 2.6): the Home/CAS ☰ menu (four rows, R830; Copy and Paste
+// have Shift + Select and Shift + Deselect since R723), the picked row's buttons, a hold on a history row's input or result (R276), and the Num table. The texts come from text.ts and paste.ts; the delivery is the
 // ClipboardPort. Every action ends in a short notice, so a refusal is never silent.
 import type { EntryController } from "../entry/controller.ts";
 import { tc } from "./strings.ts";
@@ -374,26 +374,30 @@ export class ClipActions {
     return this.session.removeItem(i);
   }
 
-  /** The Home/CAS Menu (docs/05 3.3, S2 rule M2; R720): seven rows, the same numbers with or without a picked row, acting
-   *  on that row, else on the last result. The picked row's buttons are items 1 and 2 (R276). Item 2 is Copy ›, whose first
-   *  item is what a hold copies; item 7 is Export ›, whose submenu R130, R181 and R200 share. Insert and Recall are gone (Enter
-   *  and ◀ on the pick do their jobs, route.ts); 8, 9 and 0 are blank, and a new row takes the next digit (the layout lock). */
-  menu(row?: HistoryItem): MenuItem[] {
-    const i = this.target(row);
-    const none = i === undefined;
-    // A disabled item says why on its second line (docs/05 3.1). With an empty history it says nothing: the screen says
-    // "Type a calculation" already, and the rows with a reason line do not fit over the keypad (fit.spec.ts).
-    const empty = this.session.items.length === 0;
-    const why = empty ? undefined : tc("clip.noResult");
-    const last = row ?? this.session.items.at(-1);
-    const noLine = !this.shell.showsEntry;
-    /** A row action: told to the app first, while the keypad is as the user left it (the row buttons share these items). */
-    const act = (id: string, run: () => unknown) => (): void => {
+  /** A row action: told to the app first, while the keypad is as the user left it (the row buttons share these items). */
+  private act(id: string, run: () => unknown): () => void {
+    return () => {
       this.ops.acted?.(id);
       void run();
     };
+  }
+  /** A disabled item says why on its second line (docs/05 3.1). With an empty history it says nothing: the screen says
+   *  "Type a calculation" already, and the rows with a reason line do not fit over the keypad (fit.spec.ts). */
+  private why(): string | undefined {
+    return this.session.items.length === 0 ? undefined : tc("clip.noResult");
+  }
+
+  /** The picked row's Store ▶ button (R276; not in ☰ since R830). */
+  storeItem(row?: HistoryItem): MenuItem {
+    return { id: "store", label: tc("clip.store"), disabled: this.target(row) === undefined || !this.shell.showsEntry, reason: this.why(), run: this.act("store", () => this.storeRow(row)) };
+  }
+  /** The picked row's Copy › button, with the five rows it opens (the first is what a hold copies). */
+  copyItem(row?: HistoryItem): MenuItem {
+    const i = this.target(row);
+    const none = i === undefined;
+    const why = this.why();
     const copies: MenuItem[] = [
-      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: act("copy", () => this.copy(row)) },
+      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: this.act("copy", () => this.copy(row)) },
       { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row) },
       {
         id: "exact",
@@ -405,18 +409,26 @@ export class ClipActions {
       { id: "latex", label: tc("clip.subLatex"), disabled: none, reason: why, run: () => void this.copyLatex(row) },
       { id: "python", label: tc("clip.subPython"), disabled: none, reason: why, run: () => void this.copyPython(row) },
     ];
+    return { id: "copy", label: tc("clip.copy"), disabled: none, reason: why, submenu: { title: tc("clip.copy"), items: copies } };
+  }
+
+  /** The Home/CAS Menu (docs/05 3.3, S2 rule M2; R830, which cut R720's seven): four rows, the same numbers with or without a
+   *  picked row, acting on that row, else on the last result: 1 Delete (what a swipe does, kept for TalkBack), 2 Share session,
+   *  3 Clear history, 4 Export ›, whose submenu R130, R181 and R200 share. Store ▶ and Copy › are the picked row's buttons
+   *  (`rowButtons`), Paste is Shift + Deselect; 5 to 9 and 0 are blank, and a new row takes the next digit (the layout lock). */
+  menu(row?: HistoryItem): MenuItem[] {
+    const why = this.why();
+    const empty = this.session.items.length === 0;
+    const last = row ?? this.session.items.at(-1);
     const finished = this.session.items.some((x) => x.status === "done" || x.status === "error");
     return [
-      { id: "store", label: tc("clip.store"), disabled: none || noLine, reason: why, run: act("store", () => this.storeRow(row)) },
-      { id: "copy", label: tc("clip.copy"), disabled: none, reason: why, submenu: { title: tc("clip.copy"), items: copies } },
       {
         id: "delete",
         label: tc("clip.delete"),
         disabled: last === undefined || last.status === "pending",
         reason: last === undefined ? undefined : tc("clip.working"),
-        run: act("delete", () => this.deleteRow(row)),
+        run: this.act("delete", () => this.deleteRow(row)),
       },
-      { id: "paste", label: tc("clip.paste"), run: () => this.pasteHeld() },
       { id: "share", label: tc("clip.share"), disabled: !finished, reason: why, run: () => void this.shareSession() },
       { id: "clear", label: tc("clip.clear"), disabled: empty, run: () => void this.session.clearHistory() },
       {
@@ -437,17 +449,12 @@ export class ClipActions {
     ];
   }
 
-  /** The row buttons above the entry line (R276): Store ▶ and Copy › of the list, for the picked row; Copy › opens
-   *  its five on the sheet. The second tap inserts or recalls, a hold copies, a swipe deletes (History.svelte). */
+  /** The row buttons above the entry line (R276): Store ▶ and Copy › for the picked row; Copy › opens its five on the
+   *  sheet. The second tap inserts or recalls, a hold copies, a swipe deletes (History.svelte). */
   rowButtons(row: HistoryItem): MenuItem[] {
-    const all = this.menu(row);
-    const store = all.find((b) => b.id === "store");
-    const as = all.find((b) => b.id === "copy");
-    const buttons: MenuItem[] = store ? [store] : [];
-    if (as?.submenu) {
-      const { submenu: sub, ...button } = as;
-      buttons.push({ ...button, label: `${as.label} ›`, run: () => this.shell.showMenu(sub.title, sub.items, { remember: false }) });
-    }
+    const buttons: MenuItem[] = [this.storeItem(row)];
+    const { submenu: sub, ...button } = this.copyItem(row);
+    if (sub) buttons.push({ ...button, label: `${button.label} ›`, run: () => this.shell.showMenu(sub.title, sub.items, { remember: false }) });
     return buttons;
   }
 

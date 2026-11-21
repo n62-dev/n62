@@ -12,7 +12,7 @@
 # a live line pinned there is missing or edited.
 #
 # Sections (`section/slot`): layers `<key id>.<layer>` = `<kind> <name>` | reserved; tmpl, relations, symbols, chars (the palettes of
-# Tmpl, Shift + 6, Shift + 9, Shift + Vars): `row,col` = the cell's id; home-menu, home-copy (☰ in Home and CAS; R720), mode (Mode's rows),
+# Tmpl, Shift + 6, Shift + 9, Shift + Vars): `row,col` = the cell's id; home-menu, home-copy (☰ in Home and CAS, four rows since R830, and the picked row's Copy ›), mode (Mode's rows),
 # settings (Settings' sections: Your keys and Data are in the shipped app, so all seven are pinned), apps, base (Shift + −),
 # matrix (Shift + 4; New is row 9), function-symb / function-plot / function-num and solve-symb / solve-num (each app view's ☰, Plot
 # with an answer and Solve with an unknown selected, so their last rows are there), stat-linreg and stat-stats1 (R184's sheets),
@@ -244,13 +244,10 @@ chars:
   "4,4": "micro"
   "4,5": "angstrom"
 home-menu:
-  "1": "store"
-  "2": "copy"
-  "3": "delete"
-  "4": "paste"
-  "5": "share"
-  "6": "clear"
-  "7": "export"
+  "1": "delete"
+  "2": "share"
+  "3": "clear"
+  "4": "export"
 home-copy:
   "1": "full"
   "2": "shown"

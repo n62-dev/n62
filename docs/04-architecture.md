@@ -119,7 +119,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 ### 2.6 Decision: copy and paste
 
-| What | Full value (☰ 2 › 1; a hold on a history row's result) | ☰ 2 › 2, As shown | Copy › Exact | Copy › LaTeX |
+| What | Full value (Copy › 1; Shift + Select; a hold on a history row's result) | Copy › As shown | Copy › Exact | Copy › LaTeX |
 |---|---|---|---|---|
 | Home or CAS number | full value: every confirmed digit up to P (40), trailing zeros dropped, `.` (`,` with the decimal-comma setting), plain for 1E-4 ≤ \|x\| < 1E21, else `d.ddd…E±k` | display text, without the mark | Giac's exact text when it exists (`1/3`, `sqrt(2)`) | the result LaTeX |
 | Complex | `a+b*i`, each part as above | yes | yes | yes |
@@ -131,7 +131,7 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text.
 
-**Paste** (☰ 4; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal).
+**Paste** (Shift + Deselect; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal).
 **Session line, Copy as Python, mechanics** (G210, G213, G214, G216, G217): `state/sessionLine.ts`, `clipboard/python.ts`; as they stood: [archive](archive/04-built-2026-11.md) section 7.
 
 ### 2.7 Decision: SI prefix display, and prefix entry
@@ -285,8 +285,8 @@ Positions use our rows and columns (`spec/keyboard.yaml`); the reference's id is
 | Shift + 6, Shift + 9 | the G2's palettes: relations and logic; symbols and Greek with `!` and ∞ | P12 |
 | Help (row 0, col 4, id `help`) [the G2's Help on this cell] | the syntax and example of the function at the cursor, else Find (R197; Insert replaces the call, R324); Shift = Settings (R146). The ☰ key (id `menu`, R278) retired with R723: ☰ is on the bar | R197, R723; docs/06 3b |
 | Esc (row 0, col 5), Undo \| Redo (row 1, cols 4–5) | Esc stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line (also the hardware Escape); Undo and Redo are dead without an entry line; Shift cells: docs/06 3b; [archive](archive/04-built-2026-11.md) section 5 | R15c, R15c2, R146 |
-| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back; Shift + Select = Copy (the line's selection, else what a hold on the picked row's result copies, else the last finished row's; a dead press with none or in an app with nothing selected); Shift + Deselect = Paste (☰ 4's path). Copy is also ☰ 2 › 1 and a hold on a row's input or result, Paste ☰ 4 and any system paste | R279, R723, R727 |
-| ☰ on the bar (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of seven on the picked row, else the last result (decisions.md S2, R720); item 2 is Copy › | P8, S2, S9 |
+| Select \| Deselect (row 2, cols 4–5, ids `select`, `deselect`) | Select grows the entry line's selection by the box model, Deselect walks it back; Shift + Select = Copy (the line's selection, else what a hold on the picked row's result copies, else the last finished row's; a dead press with none or in an app with nothing selected); Shift + Deselect = Paste (Paste's own path, `paste.ts`). Copy is also the bar's Copy › and a hold on a row's input or result; Paste is any system paste | R279, R723, R727 |
+| ☰ on the bar (the G2's Menu key [r3c4]) | app menus; Home/CAS: one numbered list of four (Delete, Share, Clear, Export ›; R830) on the picked row, else the last result (decisions.md S2); Store ▶ and Copy › on the picked row's bar | P8, S2, S9 |
 | User keys | U1–U6, all empty, with tap, Shift and Alpha (an empty Alpha slot is the tap; stored slots of U1–U3 and two-layer records stay valid); set in Settings › Your keys from Find, a place or a sheet | R15b, R15c |
 | Shift + `+` [r10c5] | Ans (`\ans`, built, R2) | reference |
 | Shift + `−` [r9c5] | the Base menu (5.4) | reference: Base |

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R723 (the owner, 2026-11-17): Shift + Deselect is Paste (R329 had it on Shift + Vars, now reserved for Chars, R725). It
-// takes ☰ → Paste's path (the clipboard as one number onto the entry line, clipboard/actions.svelte.ts paste), the keys
+// takes Paste's own path (the clipboard as one number onto the entry line, clipboard/actions.svelte.ts paste), the keys
 // pressed meanwhile wait for it (holdKeys), and where no entry line shows it is a dead press (R127). It opens no sheet (no
 // ▾). Deselect's tap stays Deselect (R279). The real route.press, a stub context (no MathLive).
 import { describe, expect, test, vi } from "vitest";
@@ -78,7 +78,7 @@ describe("R723: Shift + Deselect is Paste", () => {
     expect(desktop.byName.get("Alt+V")).toEqual({ key: "vars", layer: "primary" });
   });
 
-  test("in Home it pastes the clipboard (☰ → Paste's path), and a key pressed meanwhile waits for it (holdKeys)", async () => {
+  test("in Home it pastes the clipboard (Paste's own path), and a key pressed meanwhile waits for it (holdKeys)", async () => {
     const { c, log, press, finish } = ctx();
     press("deselect", "shift");
     expect(log).toEqual(["paste:clipboard"]);
