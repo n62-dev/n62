@@ -487,3 +487,21 @@ test("CAS: Alpha T types t, Shift Alpha T types T; Home the reverse; the faces s
   await tap(page, ["vars"]);
   expect(await entryValue(page)).toBe("A");
 });
+
+// R802: the Math key's tap is Find, so its face and its accessible name say Find (the ▾ stays: it opens a sheet).
+test("the Math key reads Find on its face and to a screen reader, and the face fits at 360 px", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  const main = page.locator("[data-key=math] .main");
+  await expect(main).toHaveText("Find");
+  await expect(main).toHaveAttribute("data-opens", "true");
+  await expect(page.locator("[data-key=math]")).toHaveAccessibleName(/Find/);
+  await expect(page.locator("[data-key=math] .shiftlegend")).toHaveText("Mem");
+  // no clipping: the face with its hanging mark ▾ (scrollWidth counts it, R143) is within the key (fit.ts lets a maths key's mark use 6 px of its padding)
+  const fits = await main.evaluate((el) => {
+    const key = el.closest<HTMLElement>("[data-key]");
+    return key !== null && el.scrollWidth <= key.clientWidth && el.getBoundingClientRect().right <= key.getBoundingClientRect().right;
+  });
+  expect(fits).toBe(true);
+  await tap(page, ["math"]);
+  await expect(page.getByTestId("find")).toBeVisible();
+});
