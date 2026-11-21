@@ -67,7 +67,7 @@ test("a pick of Slope counts as screen:stat-sheet, not screen:row (R184f1)", asy
 test("Enter on the picked row opens the same sheet (R720: ☰ has no Insert)", async ({ page }) => {
   await ready(page);
   await regress(page);
-  await inputs(page).last().tap(); // picks
+  await results(page).last().tap(); // lights the result (R832: a tap on the input would light the input, whose Enter puts it on the line)
   await tap(page, ["enter"]);
   await expect(menu(page)).toContainText("Slope");
   await sheetKey(page, ["d2"]);
@@ -84,7 +84,7 @@ test("a second tap on the input recalls it; a hold copies the whole result; a sw
   await page.evaluate(() => window.n62.entry.clear());
   await setClipboard(page, "before");
   await finger(page, "result:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText(/^Copied: \S/); // (R832: the notice names the copy, cut to one line)
   await expect.poll(() => clipboard(page)).toBe("{97/50,3/20,9409/9450}"); // the whole result, exact (Copy, docs/04 2.6)
   await expect(menu(page)).toHaveCount(0);
   const width = (await rows(page).last().boundingBox())?.width ?? 0;

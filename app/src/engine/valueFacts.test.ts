@@ -2,7 +2,8 @@
 // G76: one ValueFacts type. The fact types of one value are it (plus their own fields), checked by typecheck; stored
 // items written before G76 (history `exactRational`, definitions without `exact`) read back through readValueFacts.
 import { describe, expect, it } from "vitest";
-import { readValueFacts, valueFactsOf, type ChipEntry, type HomeResult, type CasResult, type ValueFacts } from "./types.ts";
+import { valueFactsOf, type ChipEntry, type HomeResult, type CasResult, type ValueFacts } from "./types.ts";
+import { readValueFacts } from "./readFacts.ts";
 import type { NameFacts } from "./defs.ts";
 import { validDefs } from "./defsCheck.ts";
 import type { ElementFacts } from "./numeric.ts";

@@ -24,6 +24,8 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `formatBase.ts` | G228: `formatBase()` writes an integer text as `0x…`, `0b…` or `0o…` in a word of n bits (BigInt on the digits, never `Number`; an error value for a non-integer or a value outside the word); pure, loaded lazily by the base display |
 | `defs.ts` | the definitions log (docs/04 6.2): plain data and pure functions used on both sides; called by `workerEngine.ts`, `host.ts`, `find/`; the stored log's load check `validDefs` is `defsCheck.ts` |
 | `defsCheck.ts` | R782: `validDefs`, the stored log's load check, out of `defs.ts` so the start chunk does not carry it; `workerEngine.ts` imports it dynamically while the store is read; `state/backup.ts` calls it too |
+| `rational.ts` | R832: `decimalFromRational`, a rational as a DecimalValue, out of `format.ts` so the start chunk does not carry it; called by `numeric.ts`, `homeEval.ts`, `polarDigits.ts`, `state/resultItem.ts`, `clipboard/text.ts` |
+| `readFacts.ts` | R832: `readValueFacts`, stored facts read back as ValueFacts, out of `types.ts` so the start chunk does not carry it; called by `defsCheck.ts` and `state/storedItem.ts` |
 | `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists, G363's arithmetic tree `arithmeticOf`); imports only `giacPrintStart.ts`, its own part; used by nearly every module here and by `state/resultItem.ts`, `units/` |
 | `giacPrintStart.ts` | R264: `giacPrint.ts`'s part the start chunk reads (the string skip, the walk, the name pattern, `balanced`, `isName`, `names`, `mapNames`, `RATIONAL`), re-exported by `giacPrint.ts`; no imports; used at start by `render/home.ts`, `state/results.ts` |
 

@@ -4,7 +4,6 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   confirmedDigits,
-  decimalFromRational,
   decimalFromString,
   formatComplex,
   formatConfirmed,
@@ -20,6 +19,7 @@ import {
   type FormatOptions,
   type NumberFormat,
 } from "./format.ts";
+import { decimalFromRational } from "./rational.ts";
 
 const q = (p: bigint, d: bigint = 1n) => decimalFromRational(p, d);
 const fmt = (p: bigint, d: bigint, format: NumberFormat, digits: number) => toText(formatReal(q(p, d), { format, digits }));

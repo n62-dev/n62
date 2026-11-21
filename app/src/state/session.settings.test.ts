@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
 import { defaultSettings, migrateSettings, MAX_DIGITS, Session, SETTINGS_SCHEMA } from "./session.svelte.ts";
 import { t } from "../i18n/index.ts";
-import { decimalFromRational } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import { renderNumeric } from "./displayMode.ts";
 import { fakeKv } from "./fakeKv.ts";
 

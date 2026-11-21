@@ -47,7 +47,7 @@ test("12+34, Select until 34, Shift + Select: the clipboard holds 34, the line a
   await selectUntil(page, "34");
   await setClipboard(page, "untouched");
   await tap(page, KEYCOPY);
-  await expect(notice(page)).toHaveText("Copied");
+  await expect(notice(page)).toHaveText("Copied: 34");
   await expect.poll(() => clipboard(page)).toBe("34");
   expect(await entryValue(page)).toBe("12+34");
   expect(await selected(page)).toBe("34");
@@ -147,7 +147,7 @@ test("Function, Symb line: x^2 selected, Shift + Select copies x^2; with nothing
   await selectUntil(page, "x^2");
   await tap(page, KEYCOPY);
   await expect.poll(() => clipboard(page)).toBe("x^2");
-  await expect(notice(page)).toHaveText("Copied");
+  await expect(notice(page)).toHaveText("Copied: x^2");
 });
 
 test("Function: a selection on the field while Plot hides the line (no entry line): Shift + Select is a dead press", async ({ page }) => {

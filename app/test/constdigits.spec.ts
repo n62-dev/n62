@@ -57,7 +57,7 @@ test("G × 5.972ᴇ24: the digits past uncDigits are muted, the mark is ≈, Cop
   });
   expect(await color('[data-testid="result"] .result .unc')).toBe(mutedColor);
   await tap(page, COPY);
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 3.985 891 96E14");
   await expect.poll(async () => digitsOf(await page.evaluate(() => navigator.clipboard.readText()))).toMatch(/^398589196/);
   await page.evaluate(() => window.n62.session.setDigits(30));
   await gTimesEarth(page, 2);

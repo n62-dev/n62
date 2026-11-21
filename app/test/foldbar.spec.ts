@@ -122,7 +122,7 @@ test("a pick while folded: Store ▶ · Copy › in the folded bar; Copy › Ful
   await rows(page);
   await fold(page);
   await finger(page, "result:last", { ms: 700 }); // a hold copies
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText(/^Copied: \d/);
   const held = await clipboard(page);
   await page.evaluate(() => navigator.clipboard.writeText("-"));
   await results(page).last().tap();

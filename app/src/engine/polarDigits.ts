@@ -2,12 +2,13 @@
 // G312: how many digits of a polar form r∡θ the confirmed digits of the value it was computed from confirm. Out of the
 // start chunk: cycleForms.ts (fetched when idle) runs it once, where the engine computes r and θ, and the history item
 // keeps the counts (Polar.confirmed), which displayMode.ts draws. Our own decimal arithmetic, never JS Number.
-import { DECIMAL_KEEP, decimalFromRational, isZero, roundSignificant, type ComplexValue, type DecimalValue } from "./format.ts";
+import { DECIMAL_KEEP, isZero, roundSignificant, type ComplexValue, type DecimalValue } from "./format.ts";
+import { decimalFromRational } from "./rational.ts";
 
 const pow10 = (k: number): bigint => 10n ** BigInt(k);
 
 // scaled as format.ts has it for confirmedDigits (which runs in the Worker): kept here, so that the start chunk, which
-// holds format.ts, does not carry it for this lazy module; fromScaled reads decimalFromRational, which the start has
+// holds format.ts, does not carry it for this lazy module; fromScaled reads decimalFromRational (rational.ts, lazy too)
 /** v as m·10^e (m a signed BigInt). */
 function scaled(v: DecimalValue): { m: bigint; e: number } {
   if (isZero(v)) return { m: 0n, e: 0 };

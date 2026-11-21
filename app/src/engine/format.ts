@@ -65,29 +65,12 @@ export interface ComplexValue {
   im: DecimalValue;
 }
 
-function pow10(k: number): bigint {
+export function pow10(k: number): bigint {
   return 10n ** BigInt(k);
 }
 
-function trimZeros(digits: string): string {
+export function trimZeros(digits: string): string {
   return digits.replace(/0+$/, "");
-}
-
-/** p/q (q > 0) as a DecimalValue, exactly (BigInt long division). */
-export function decimalFromRational(p: bigint, q: bigint, keep: number = DECIMAL_KEEP): DecimalValue {
-  if (q <= 0n) throw new RangeError("denominator must be positive");
-  if (p === 0n) return ZERO_VALUE;
-  const neg = p < 0n;
-  if (neg) p = -p;
-  let e = p.toString().length - q.toString().length;
-  // Make 10^e ≤ p/q < 10^(e+1).
-  const below = (k: number) => (k >= 0 ? p < q * pow10(k) : p * pow10(-k) < q);
-  if (below(e)) e -= 1;
-  const shift = keep - 1 - e;
-  const N = shift >= 0 ? p * pow10(shift) : p;
-  const D = shift >= 0 ? q : q * pow10(-shift);
-  const m = N / D;
-  return { neg, digits: trimZeros(m.toString()), exp: e, sticky: N % D !== 0n };
 }
 
 /** A printed Giac float (`-0.3141e6`, `1.414…`, `2.5e-07`) as a DecimalValue; null if it is not one. */

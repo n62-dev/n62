@@ -9,12 +9,15 @@
   import type { ClipActions } from "../clipboard/actions.svelte.ts";
   import type { EntryController } from "../entry/controller.ts";
   import { t } from "../i18n/index.ts";
+  import type { PickPart } from "../state/pickRows.ts";
   import type { HistoryItem } from "../state/session.svelte.ts";
 
-  let { clip, entry, row, height, folded = false, onaction }: {
+  let { clip, entry, row, part = "row", height, folded = false, onaction }: {
     clip: ClipActions;
     entry: EntryController;
     row: HistoryItem;
+    /** R832: what the pick has lit: the input shows Store ▶ and Copy (no ›), the result or the whole row Store ▶ and Copy ›. */
+    part?: PickPart;
     /** The entry line's height (px): the slot it covers when `over`. */
     height: number;
     /** The keypad is folded (R53): the why line alone, over the line's bottom edge; the buttons in the folded bar (R724). */
@@ -47,7 +50,7 @@
 <div class="rowslot" class:over style:min-height={over && !folded ? `${height}px` : undefined}>
   {#if why}<div class="rowwhy" data-testid="row-why">{why}</div>{/if}
   <div class="rowbar" class:inbar={folded} role="toolbar" aria-label={t("history.actions")} data-testid="row-actions" use:bar={folded}>
-    {#each clip.rowButtons(row) as b (b.id)}
+    {#each clip.rowButtons(row, part) as b (b.id)}
       <button type="button" data-item={b.id} disabled={b.disabled} onpointerdown={noFocus} onclick={() => { onaction(b.id); b.run?.(); }}>{b.label}</button>
     {/each}
   </div>

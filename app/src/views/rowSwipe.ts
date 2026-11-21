@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import { LONG_PRESS_MS } from "../apps/longpress.ts";
 import { vibrate } from "../input/haptics.ts";
 import { rowText } from "../i18n/enRows.ts";
 import "./swipeStrip.css";
@@ -80,12 +81,13 @@ export interface SwipeOptions {
 }
 
 /** "arm": the drag went past SWIPE_SHARE to the left: one 10 ms key pulse when Key vibration is on. "right": a drag to the
- *  right was lifted with the row given at least DECIDE_PX (it does nothing): counted as `swipe.right` (R70). Read from the
- *  app's session, so the start chunk, which is pinned, carries none of it. */
-function note(what: "arm" | "right"): void {
+ *  right was lifted with the row given at least DECIDE_PX (it does nothing): counted as `swipe.right` (R70). "left": a swipe
+ *  left deleted the row: counted as `swipe.left` (R832; one that springs back counts nothing). Read from the app's session, so
+ *  the start chunk, which is pinned, carries none of it. */
+function note(what: "arm" | "right" | "left"): void {
   const session = window.n62?.session;
   if (!session) return;
-  if (what === "right") void session.uses().then((c) => c.count("swipe.right"));
+  if (what !== "arm") void session.uses().then((c) => c.count(`swipe.${what}`));
   else if (session.settings.haptics.on) vibrate(session.settings.haptics.strength / 100, 10);
 }
 
@@ -194,6 +196,10 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     const first = moves[0];
     const speed = first && e.timeStamp > first.t ? (e.clientX - first.x) / (e.timeStamp - first.t) : 0;
     reset();
+    if (was === "wait" && first && e.timeStamp - first.t >= LONG_PRESS_MS && !(e.target as Element).closest(".in, .result")) {
+      swallow = true; // R832: a hold on the row's gap picks nothing (a hold on the input or the result is theirs, longpress.ts)
+      setTimeout(() => (swallow = false), SWALLOW_MS);
+    }
     if (was !== "drag") return;
     swallow = true;
     setTimeout(() => (swallow = false), SWALLOW_MS); // (a touch drag sends no click: the next tap is a tap)
@@ -208,7 +214,7 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     setTimeout(() => {
       phase = "idle";
       void Promise.resolve(opts.onswipe()).then(
-        (gone) => void (gone === false && back()),
+        (gone) => (gone === false ? back() : note("left")),
         () => back(),
       );
     }, OUT_MS);

@@ -124,7 +124,9 @@ function presetShots(): Shot[] {
         await settle(p);
       },
     },
-    { id: "picked-tap", title: "A row picked by a tap on its result (R147): its buttons over the empty entry line (R3), the history and the keys unmoved", setup: async (p) => { await someHistory(p); await p.locator('[data-testid="result"] .result').last().tap(); await p.getByTestId("row-actions").waitFor(); } },
+    { id: "picked-tap", title: "A row's result lit by a tap on it (R147, R832): its buttons over the empty entry line (R3), the history and the keys unmoved", setup: async (p) => { await someHistory(p); await p.locator('[data-testid="result"] .result').last().tap(); await p.getByTestId("row-actions").waitFor(); } },
+    { id: "picked-input", title: "R832: a tap on a row's input lights the input alone (the --pick ground and a 2 px --focus outline on its box); the bar offers Store ▶ and Copy", setup: async (p) => { await someHistory(p); await p.locator("article.item .in").last().tap(); await p.getByTestId("row-actions").waitFor(); } },
+    { id: "picked-row", title: "R832: a tap on the gap of a row (right of its input) lights the whole row; the bar offers Store ▶ and Copy ›", setup: async (p) => { await someHistory(p); const row = await p.locator("article.item").last().boundingBox(); const inp = await p.locator("article.item .in").last().boundingBox(); if (!row || !inp) throw new Error("no row"); await p.touchscreen.tap(row.x + row.width - 8, inp.y + inp.height / 2); await p.getByTestId("row-actions").waitFor(); } },
   ];
   const sizes = [
     { tag: "small", group: "Small phone (360 × 740)", viewport: { width: 360, height: 740 } },
