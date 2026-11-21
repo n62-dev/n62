@@ -8,7 +8,7 @@
   import type { RowBarView } from "./appLoaders.ts";
   import type { EntryController } from "./entry/controller.ts";
   import { t } from "./i18n/index.ts";
-  import { openLayer } from "./input/backLayer.ts";
+  import { openLayer } from "./input/backLayerFront.ts";
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";
@@ -87,6 +87,11 @@
       key ? press(userKeys.resolve(key), layer) : unfold() || (canFold && !shell.sheet ? fold("fold.hw") : dead()));
     entry.onLetter = counted(hwOther("letter"), typeLetter);
     shell.goTo = goTo; // the Apps sheet's Home and CAS rows
+    shell.barSlot = () => session.settings.barSlot; // R782: slot 2's sheet marks the place it holds
+    shell.setBarSlot = (slot) => {
+      session.settings.barSlot = slot;
+      session.save();
+    };
     shell.openSettings = openSettings;
     shell.openMode = () => openMode("format"); // R785: an app's ☰ › Mode opens as the chip does
     shell.settingsMenu = () => (loaders.modeSheet ? (settingsMenu ??= loaders.modeSheet.settingsMenu(session, settingsEnv)) : undefined); // (R49)

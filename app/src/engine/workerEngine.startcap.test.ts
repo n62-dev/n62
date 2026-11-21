@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G318: an engine that cannot start stops after two tries and says so (stand-in workers).
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import type { Request, Response } from "./protocol.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { deadEngine, startDead } from "./dead.ts";
@@ -8,6 +8,10 @@ import { createRequestHandler } from "./host.ts";
 import { EngineCrashError, EngineLoadError, EngineMemoryError } from "./types.ts";
 import { WorkerEngine, type DefsStore, type WorkerLike } from "./workerEngine.ts";
 import type { DefEntry } from "./defs.ts";
+
+// R782: the stored log's check (defsCheck.ts) is a lazy chunk; the app has it in its precache, so it is in at once. Here it is
+// loaded first, or its first fetch (a module transform, ms) would be what a start that fails in the next tick races against.
+beforeAll(() => import("./defsCheck.ts"));
 
 /** How a start fails: a fatal reply to init (with `dead` as host.ts marks it, startDead), or a worker error event. */
 type Fail = { fatal: string; dead?: "memory" | "crash" | "load" } | { error?: string };

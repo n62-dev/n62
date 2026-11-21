@@ -40,6 +40,7 @@ export { loadTidy } from "./tidyLoad.ts";
 import type { Copies, RemovedKind, RemovedRows } from "./removedRows.ts";
 import type { UnitRow } from "../units/types.ts";
 import type { WordSetting } from "./wordSetting.ts";
+import { isBarSlot, type BarSlot } from "../apps/registry.ts";
 
 export type View = "home" | "cas";
 export type EntryMode = "textbook" | "line" | "rpn"; // R253: rpn is kept, no key reads it yet (R343)
@@ -74,10 +75,12 @@ export interface Settings extends CalcSettings {
   haptics: HapticsSettings;
   /** Settings › Appearance (R50e): family, brightness, High contrast, Plain keys. */
   look: Look;
+  /** R782: the bar's second place beside Home: CAS, or an app (a second tap on it chooses; views/StatusLine.svelte). */
+  barSlot: BarSlot;
 }
 /** The stored settings' version (docs/04 6.2): 1 = no field (digits ≤ 15, formats std/sci/eng), 2 = digits ≤ 30, pfx,
- *  3 = `look` (R50e), 4 = the decimal mark (R57). Raising it raises DATA_VERSION too (storage.ts SETTINGS_SINCE, R94). */
-export const SETTINGS_SCHEMA = 4;
+ *  3 = `look` (R50e), 4 = the decimal mark (R57), 5 = the bar's second place `barSlot` (R782). Raising it raises DATA_VERSION too (storage.ts SETTINGS_SINCE, R94). */
+export const SETTINGS_SCHEMA = 5;
 /** Most significant digits the setting allows (docs/04 2.5). */
 export const MAX_DIGITS = 30;
 export const defaultSettings: Settings = {
@@ -93,6 +96,7 @@ export const defaultSettings: Settings = {
   groupSep: "thin", // R125
   haptics: { on: false, strength: 50, ms: 15, click: false },
   look: defaultLook(),
+  barSlot: "cas",
 };
 
 /** "note" is a line the app says itself (G19's safe start): text only, no entry and no result, and never stored. */
@@ -219,6 +223,7 @@ export function migrateSettings(saved: unknown, firstLook: Look = defaultSetting
   if (typeof x["fixDecimals"] === "number" && Number.isFinite(x["fixDecimals"])) s.fixDecimals = clamp(x["fixDecimals"], 0, 12);
   s.haptics = hapticsOf((x["haptics"] ?? {}) as Partial<HapticsSettings>); // (no record, or one from before A66: the defaults, click off)
   s.look = validLook(x["look"], firstLook);
+  if (isBarSlot(x["barSlot"])) s.barSlot = x["barSlot"]; // R782: an id this build does not know (an older or newer build) is CAS
   const newer = typeof x["schema"] === "number" && x["schema"] > SETTINGS_SCHEMA;
   return { settings: s, migrated: !newer && x["schema"] !== SETTINGS_SCHEMA, newer };
 }

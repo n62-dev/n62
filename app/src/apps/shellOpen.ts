@@ -11,6 +11,7 @@ import { appEntry } from "./registry.ts";
 import type { AppHost, AppId, AppInstance, LoadedApp, MenuItem, ViewId } from "./types.ts";
 
 export { ICONS } from "../views/icons.ts";
+export { default as AppViews } from "../views/AppViews.svelte"; // R782: the bay's view icons
 
 /** What an app reaches of the shell. */
 function host(s: AppShell): AppHost {

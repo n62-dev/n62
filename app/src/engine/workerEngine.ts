@@ -2,7 +2,7 @@
 // MathEngine backed by giac.worker.ts. State that must survive a Cancel or a relaunch (variable and function
 // definitions) is logged here, outside the worker, stored, and replayed into a fresh worker (D2; docs/04 section 6.2).
 import type { Request, Response } from "./protocol.ts";
-import { applyDefChanges, validDefs, type DefChange, type DefEntry } from "./defs.ts";
+import { applyDefChanges, type DefChange, type DefEntry } from "./defs.ts";
 import {
   EngineCancelled,
   EngineCrashError,
@@ -165,11 +165,13 @@ export class WorkerEngine implements MathEngine {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<"timeout">((resolve) => (timer = setTimeout(() => resolve("timeout"), DEFS_LOAD_TIMEOUT_MS)));
     try {
-      const x = await Promise.race([Promise.all([this.store.load(), this.store.loadStarts?.() ?? 0]), timeout]);
+      const x = await Promise.race([Promise.all([this.store.load(), this.store.loadStarts?.() ?? 0, import("./defsCheck.ts")]), timeout]); // (the load check is fetched while the store is read, R782)
       if (x === "timeout") return [];
+      const defs = x[2].validDefs(x[0]);
+      // a check chunk that fails to load lands in the catch before here: the store stays unwritten (a write would replace the whole stored log)
       this.storeOk = true;
       this.attempts += this.logFails = typeof x[1] === "number" && x[1] > 0 ? Math.trunc(x[1]) : 0;
-      return validDefs(x[0]);
+      return defs;
     } catch {
       return [];
     } finally {

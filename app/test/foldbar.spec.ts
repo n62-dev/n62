@@ -46,7 +46,7 @@ test("⌄ is the bar's first control in Home and CAS at 360, 392 and 412: at its
   for (const width of [360, 392, 412]) {
     await page.setViewportSize({ width, height: 800 });
     for (const view of ["home", "cas"]) {
-      await page.getByTestId(`tab-${view}`).tap();
+      await page.getByTestId(view === "home" ? "tab-home" : "tab-slot").tap(); // R782: slot 2 holds CAS
       await expect.poll(() => page.evaluate(() => window.n62.session.view)).toBe(view);
       const chev = page.locator(CHEV);
       await expect(chev).toHaveAccessibleName("Fold the keys");
@@ -96,7 +96,7 @@ test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, th
   const b = await box(page, FBAR);
   expect(b.height).toBe(44);
   expect(b.y + b.height).toBe(815);
-  for (const id of ["fold-slice", "tab-home", "tab-cas", "mod-slot", "menu-button"]) await expect(fbar(page).getByTestId(id)).toBeVisible();
+  for (const id of ["fold-slice", "tab-home", "tab-slot", "mod-slot", "menu-button"]) await expect(fbar(page).getByTestId(id)).toBeVisible();
   await expect(page.locator('[data-testid="bar"]')).toHaveCount(1); // one bar: the folded row's
   await expect(fbar(page).getByTestId("bar")).toHaveCount(1);
   for (const id of ["chip-angle", "chip-format", "place"]) await expect(fbar(page).getByTestId(id)).toBeHidden(); // no chips, no Apps ▾
@@ -187,11 +187,11 @@ test("at 360 × 740 the folded bar fits with a pick: every target at least 44 px
   const boxes = await fbar(page).locator("button").evaluateAll((els) => els.map((e) => {
     const r = e.getBoundingClientRect();
     return { id: (e as HTMLElement).dataset["testid"] ?? e.textContent ?? "", x: r.x, y: r.y, width: r.width, height: r.height };
-  }).filter((b) => b.width > 0).sort((a, b) => a.x - b.x));
-  expect(boxes.length).toBe(6); // ⌃, Home, CAS, Store ▶, Copy ›, ☰
+  }).filter((b, i) => b.width > 0 && (els[i] as HTMLElement).checkVisibility({ visibilityProperty: true })).sort((a, b) => a.x - b.x));
+  expect(boxes.length).toBe(6); // ⌃, Home, slot 2, Store ▶, Copy ›, ☰
   const items = await fbar(page).locator("[data-item]").evaluateAll((els) =>
-    els.map((e) => ({ n: (e as HTMLElement).dataset["item"], r: e.getBoundingClientRect() })).filter((e) => e.r.width > 0).sort((a, b) => a.r.x - b.r.x).map((e) => e.n));
-  expect(items).toEqual(["unfold", "home", "cas", "store", "copy", "menu"]); // the lock's folded-bar: (barItems.ts FOLDED_BAR_ITEMS)
+    els.filter((e) => (e as HTMLElement).checkVisibility({ visibilityProperty: true })).map((e) => ({ n: (e as HTMLElement).dataset["item"], r: e.getBoundingClientRect() })).filter((e) => e.r.width > 0).sort((a, b) => a.r.x - b.r.x).map((e) => e.n));
+  expect(items).toEqual(["unfold", "home", "slot", "store", "copy", "menu"]); // the lock's folded-bar: (barItems.ts FOLDED_BAR_ITEMS)
   for (const b of boxes) {
     expect(b.height, b.id).toBeGreaterThanOrEqual(44);
     expect(b.width, b.id).toBeGreaterThanOrEqual(32);
@@ -199,7 +199,7 @@ test("at 360 × 740 the folded bar fits with a pick: every target at least 44 px
     expect(b.x + b.width, b.id).toBeLessThanOrEqual(360.5);
   }
   for (let i = 1; i < boxes.length; i++) expect(boxes[i]!.x, boxes[i]!.id).toBeGreaterThanOrEqual(boxes[i - 1]!.x + boxes[i - 1]!.width - 0.5);
-  await expect(fbar(page).getByTestId("tab-cas").locator(".nm")).toBeHidden(); // the other tab: its glyph only
+  await expect(fbar(page).getByTestId("tab-slot").locator(".nm")).toBeVisible(); // R782: each pill is its glyph and a short name
   await expect(fbar(page).getByTestId("tab-home").locator(".nm")).toBeVisible();
   const screen = await page.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
   console.log(`folded history height at 360 × 740: ${screen}`);
@@ -234,7 +234,7 @@ test("a drag up that unfolds leaves no stale drag: Alt+K folds, Tab to ⌃, Ente
   await isFolded(page, false);
 });
 
-test("Tab walks the folded bar with a pick in its pinned order: ⌃, Home, CAS, Store ▶, Copy ›, ☰", async ({ page }) => {
+test("Tab walks the folded bar with a pick in its pinned order: ⌃, Home, slot 2, Store ▶, Copy ›, ☰", async ({ page }) => {
   await rows(page);
   await fold(page);
   await results(page).last().tap();
@@ -246,5 +246,5 @@ test("Tab walks the folded bar with a pick in its pinned order: ⌃, Home, CAS, 
     await page.keyboard.press("Tab");
     walk.push(await focused(page));
   }
-  expect(walk).toEqual(["unfold", "home", "cas", "store", "copy", "menu"]);
+  expect(walk).toEqual(["unfold", "home", "slot", "store", "copy", "menu"]);
 });

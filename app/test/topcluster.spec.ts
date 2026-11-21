@@ -305,7 +305,7 @@ test("the place's target is the bar's full height after ⌄'s cell; the entry li
   const bar = (await page.getByTestId("bar").boundingBox())!;
   expect(box.x).toBeGreaterThanOrEqual(bar.x + 28); // ⌄'s 28 px cell, then the bar's 2 px gap
   expect(box.x).toBeLessThanOrEqual(bar.x + 30);
-  expect(box.width).toBeGreaterThanOrEqual(40);
+  expect(box.width).toBeGreaterThanOrEqual(28); // R782: APP▾ is 36 px
   expect(box.height).toBe(28);
   expect(box.y).toBe(bar.y);
   await page.touchscreen.tap(box.x + box.width - 3, box.y + 14);

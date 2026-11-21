@@ -11,7 +11,8 @@ import { fakeIndexedDb } from "./fakeIdb.ts";
 import { restoreParts } from "./restore.ts";
 import { Session } from "./session.svelte.ts";
 import { DATA_VERSION, idbKv } from "./storage.ts";
-import { validDefs, type DefEntry } from "../engine/defs.ts";
+import type { DefEntry } from "../engine/defs.ts";
+import { validDefs } from "../engine/defsCheck.ts";
 
 type File = { dataVersion: number; parts: Record<string, { "@n62": number; value: unknown }> };
 const FIXTURES = ["backup-2026-11.json"] as const;

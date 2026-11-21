@@ -19,6 +19,9 @@ export const MIGRATIONS: Migrations = {
   // nothing to rewrite (an old entry has neither, and a missing fact claims nothing): the stamp guards the log from
   // builds that would drop them.
   4: {},
+  // 5 → 6 (R782): settings schema 5 holds `barSlot`; nothing to rewrite (a missing one is CAS): the stamp guards the field from
+  // builds that would drop it.
+  5: {},
 };
 
 /** Plain text (a library file, G33) written in `from`, brought up to DATA_VERSION by the same steps as the stored `defs`. */

@@ -3,7 +3,7 @@
 // start chunk does not carry it. English only so far. (The Settings row's label is "tips.row" in enAbout.ts.)
 export const enTips = {
   "tips.title": "First-start tips",
-  "tips.place": "Tap Apps ▾ for your apps; Home and CAS are the tabs beside it",
+  "tips.place": "Tap ⊞▾ for your apps. Home stays; a second tap on CAS puts another app in its place",
   "tips.menu": "Tap ☰ on the bar for Paste and each app's menu",
   "tips.rows": "On a history row, tap to pick it, hold to copy and swipe left to delete",
   "tips.fold": "Tap ⌄ on the bar or swipe down on the line to fold the keypad",

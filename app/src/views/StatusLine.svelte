@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  import { APPS, placeGlyph } from "../apps/registry.ts";
+  import { appEntry, placeGlyph } from "../apps/registry.ts";
+  import type { AppId } from "../apps/types.ts";
   import type { AppShell } from "../apps/shell.svelte.ts";
-  import { t, type MessageKey } from "../i18n/index.ts";
+  import { t } from "../i18n/index.ts";
   import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
@@ -29,16 +30,25 @@
   } = $props();
 
   /** A bar control as a key (R15b, R15c1, R722): its tap takes the same path as a key press (an open sheet gives way, it runs at once while an app loads, and waits while a sheet's code loads). */
-  const barKey = (id: string, name: "apps" | "home" | "cas" | "symb" | "plot" | "num" | "menu"): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
+  const barKey = (id: string, name: "apps" | "home" | "slot" | "menu"): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
   const PLACE_KEY = barKey("place", "apps"), MENU_KEY = barKey("menu-status", "menu");
-  const TABS = (["symb", "plot", "num"] as const).map((v) => ({ view: v, name: t(`view.${v}`), key: barKey(`tab-${v}`, v) }));
-  const PLACES = (["home", "cas"] as const).map((v) => ({ view: v, name: t(`view.${v}`), glyph: placeGlyph(v), key: barKey(`tab-${v}`, v) }));
+  const HOME_KEY = barKey("tab-home", "home"), SLOT_KEY = barKey("tab-slot", "slot");
 
-  const appName = $derived(shell.app ? t(APPS.find((a) => a.id === shell.app)?.name as MessageKey) : "");
+  /** A place's name: Home, CAS or an app's. */
+  const nameOf = (p: string): string => (p === "home" || p === "cas" ? t(`view.${p}`) : t(appEntry(p as AppId).name));
   /** Where you are (docs/05 3.2): Home, CAS, or an app and its view. */
-  const place = $derived(shell.app === null ? t(`view.${session.view}`) : appName);
+  const place = $derived(nameOf(shell.app ?? session.view));
   const angle = $derived(session.settings.angle);
-  const glyph = $derived(shell.app === null ? null : placeGlyph(shell.app));
+  /** R782: slot 2 holds CAS or an app (Settings.barSlot); Home is fixed. Each pill is its glyph and a short name, one width everywhere. */
+  const barSlot = $derived(session.settings.barSlot);
+  const slotCur = $derived(shell.app === null ? barSlot === "cas" && session.view === "cas" : shell.app === barSlot);
+  /** APP▾ shows a place's glyph, highlighted and with the ring, when that place is current and not in a pill: an app that is not in slot 2, or CAS once slot 2 holds an app. */
+  const appCur = $derived(shell.app !== null ? shell.app !== barSlot : session.view === "cas" && barSlot !== "cas");
+  const glyph = $derived(appCur ? placeGlyph(shell.app ?? "cas") : null);
+  const PILLS = $derived([
+    { id: "home", key: HOME_KEY, cur: shell.app === null && session.view === "home", place: "home", name: t("view.home"), label: t("view.home") },
+    { id: "slot", key: SLOT_KEY, cur: slotCur, place: barSlot, name: barSlot === "cas" ? t("view.cas") : t(appEntry(barSlot).short), label: t("status.slot", { place: nameOf(barSlot) }) },
+  ] as const);
   /** The current tile's ring: a job running, or the engine starting (R82f2: the ⟳ went). */
   const ring = $derived(busy || session.engineState === "starting");
   /** The ⇧ α slot: one sign, underlined when locked; `a` when Alpha types lower case here, `α` when it types capitals (R101). */
@@ -82,8 +92,8 @@
   };
 </script>
 
-  <!-- the bar (docs/05 3.2, R722): on the keypad's top edge, 28 px, its targets its full height. Apps ▾ (in an app its
-       glyph ▾), the Home and CAS tabs, the hairline, the bay (the format and digits chip in Home and CAS, an app's view icons), the ⇧ α slot, the angle, ☰; the order
+  <!-- the bar (docs/05 3.2, R722): on the keypad's top edge, 28 px, its targets its full height. ⌄, APP▾ (⊞▾; an app opened
+       through it shows its glyph, highlighted), the track of Home and slot 2 (R782), the hairline, the bay (the format and digits chip in Home and CAS, an app's view icons), the ⇧ α slot, the angle, ☰; the order
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
@@ -100,6 +110,7 @@
       data-item="apps"
       data-tip="place"
       data-app={shell.app ?? ""}
+      data-cur={appCur}
       data-view={shell.app === null ? session.view : shell.view}
       aria-label={t("status.place", { place })}
       onclick={() => onpress(PLACE_KEY, "primary")}>
@@ -111,23 +122,28 @@
       {/if}
       <span class="caret" aria-hidden="true">▾</span>
     </button>
-    <span class="places" role="tablist" aria-label={t("status.places")}>
-      {#each PLACES as p (p.view)}
-        {@const cur = shell.app === null && session.view === p.view}
+    <!-- R782: the recessed track: Home (fixed) and slot 2 (CAS until a second tap on it chooses another place); ◢ marks the current slot 2 -->
+    <span class="track" role="tablist" aria-label={t("status.places")}>
+      {#each PILLS as p (p.id)}
+        {@const g = placeGlyph(p.place)}
         <!-- Home's tile is the colour logo, the app icon (R745): the one file icons/icon.svg, the same in every theme -->
         <button
           type="button"
           class="ptab"
-          class:cur
+          class:cur={p.cur}
           role="tab"
           use:pressFlag
-          data-testid="tab-{p.view}"
-          data-item={p.view}
-          aria-selected={cur}
-          aria-label={p.name}
+          data-testid="tab-{p.id}"
+          data-item={p.id}
+          data-place={p.place}
+          aria-selected={p.cur}
+          aria-label={p.label}
           onclick={() => onpress(p.key, "primary")}>
-          <span class="tile math" data-ring={cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<img src="{import.meta.env.BASE_URL}icons/icon.svg" alt="" role="presentation" />{:else}{p.glyph.text}{/if}</span>
-          <span class="nm" aria-hidden="true">{p.name}</span>
+          <span class="pface">
+            <span class="tile math" class:small={"text" in g && g.text.length > 1} data-ring={p.cur && ring} aria-hidden="true">{#if "icon" in g}<img src="{import.meta.env.BASE_URL}icons/icon.svg" alt="" role="presentation" />{:else}{g.text}{/if}</span>
+            <span class="nm" aria-hidden="true">{p.name}</span>
+            {#if p.id === "slot" && p.cur}<span class="mark" data-testid="slot-mark" aria-hidden="true">◢</span>{/if}
+          </span>
         </button>
       {/each}
     </span>
@@ -136,22 +152,8 @@
       <!-- R785: the bay in Home and CAS: the format, a divider and the significant digits as one chip (`STD|12`); it opens Mode on Format, Significant digits the next row -->
       <button type="button" class="chip mode" data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
     {:else}
-      <span class="seg" role="tablist" aria-label={t("status.views")}>
-        {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}
-          <!-- the icons are our own markup (ICONS, views/icons.ts), never user text; they ride in the shell's app-opening chunk (R362), so a tab is drawn empty until it is in -->
-          <button
-            type="button"
-            class="tab"
-            role="tab"
-            data-testid="tab-{tab.view}"
-            aria-selected={shell.view === tab.view}
-            aria-label={tab.name}
-            title={tab.name}
-            onclick={() => onpress(tab.key, "primary")}>
-            <span class="face">{@html shell.code?.ICONS[tab.view] ?? ""}</span>
-          </button>
-        {/each}
-      </span>
+      <!-- the bay's view icons (R362, R782): a part of the shell's app-opening chunk, drawn once it is in -->
+      {#if shell.code}<shell.code.AppViews {shell} {onpress} />{/if}
     {/if}
     {#if folded || hw}
       <!-- R783: the ⇧ α badge is on the folded bar and with a hardware keyboard in use; with the keys up the Shift and Alpha keys show the state -->
@@ -191,7 +193,8 @@
     flex: none;
     display: flex;
     align-items: stretch;
-    gap: var(--sp-05);
+    --bar-gap: var(--sp-05);
+    gap: var(--bar-gap);
     box-sizing: border-box;
     height: var(--bar-h);
     background: var(--panel);
@@ -199,20 +202,27 @@
     font-size: var(--fs-note);
     line-height: 1;
   }
-  /* R724: folded, the row is Fold.svelte's (44 px): ⌃ 0, the tabs 1, the free stretch 2, the slot 3, the row buttons 4, ☰ 5;
-     every target the row's height, at least 32 px wide; no Apps ▾, no views, no chips */
+  /* R724, R782: folded, the row is Fold.svelte's (44 px): ⌃ 0, the track 1, the free stretch 2, the slot 3, the row buttons 4, ☰ 5;
+     every target the row's height, at least 32 px wide; no views, no chips. APP▾ is not drawn but keeps its room (and ⌃ is as wide
+     as ⌄'s cell and APP▾ made up, less the 4 px ⌃ is wider: Fold.svelte's --unfold-w), so Home and slot 2 stand where they do open. */
   .bar.folded {
     display: contents;
   }
   .folded .foldcell,
-  .folded .place,
-  .folded .seg,
   .folded .sep,
   .folded .chip {
     display: none;
   }
-  .folded .places {
+  .folded .place {
+    order: 0;
+    visibility: hidden;
+    margin-left: calc(var(--bar-h) - var(--unfold-w, var(--bar-h)) + 2 * var(--bar-gap)); /* (the open bar's two gaps: ⌄ | APP▾ | track) */
+  }
+  .folded .track {
     order: 1;
+  }
+  .folded .track::before {
+    inset: calc((100% - var(--bar-h)) / 2 + var(--sp-05)) 0;
   }
   .folded .slot {
     order: 3;
@@ -279,16 +289,22 @@
   /* the place (R15b, R82f2, R722): Apps (a grid tile) or the app's glyph tile, and ▾; it opens Apps. After ⌄'s cell (R786: 28 px; empty in an app), from the screen's
      left edge. */
   .place {
+    width: var(--app-w);
     gap: var(--sp-05);
-    padding: 0 var(--sp-05) 0 var(--sp-15);
+    padding: 0;
     color: var(--text);
+  }
+  /* R782: in an app opened through APP▾ (not slot 2's) its glyph tile is highlighted, as the current pill is */
+  .place[data-cur="true"] .tile {
+    background: var(--key-on);
+    color: var(--on-key-on);
   }
   .tile {
     position: relative;
     flex: none;
     box-sizing: border-box;
-    width: var(--tile-w);
-    height: var(--tile-h);
+    width: var(--pill-tile-w);
+    height: var(--pill-tile-h);
     border-radius: var(--radius-s);
     background: var(--chip-bg);
     color: var(--text);
@@ -338,84 +354,71 @@
     font-size: var(--fs-caption);
     color: var(--muted);
   }
-  /* the views as icons, one segmented control drawn inside the bar's height; the selected one filled */
-  .seg {
-    flex: none;
-    position: relative;
-    display: flex;
-  }
-  .seg::before {
-    content: "";
-    position: absolute;
-    inset: var(--sp-05) 0;
-    border: var(--stroke-thin) solid var(--line);
-    border-radius: calc(var(--radius-s) + var(--stroke-thin));
-    pointer-events: none;
-  }
-  .tab {
-    width: var(--bay-view-w);
-    color: var(--muted);
-    font-size: var(--fs-ui);
-  }
-  .face {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: calc(100% - 2 * var(--sp-05));
-    height: var(--tab-h);
-    border-radius: calc(var(--radius-s) - var(--stroke-thin));
-  }
-  .tab[aria-selected="true"] {
-    color: var(--text);
-  }
-  .tab[aria-selected="true"] .face {
-    background: var(--chip-bg);
-  }
   .sep {
     flex: none;
     width: var(--stroke-thin);
     margin: var(--sp-2) var(--sp-05);
-    background: var(--line);
+    background: var(--bar-hair);
   }
-  /* Home and CAS: a tile and the name; the current one on the nav ground, underlined in --key-on */
-  .places {
+  /* R782: the recessed track (--bar-track) of Home and slot 2: each pill a glyph and a short name, one width in every place; the
+     buttons keep the bar's full height, the track and the highlight are drawn inside it */
+  .track {
+    position: relative;
+    flex: none;
     display: flex;
-    gap: var(--sp-05);
-    min-width: 0;
+    gap: var(--stroke-thin);
   }
-  /* at a large font scale the name is what gives way (R41: the chips stay whole), down to the tile */
+  .track::before {
+    content: "";
+    position: absolute;
+    inset: var(--sp-05) 0;
+    background: var(--bar-track);
+    border-radius: calc(var(--radius-s) + var(--stroke-thin));
+    pointer-events: none;
+  }
   .ptab {
-    flex-shrink: 1;
-    min-width: calc(var(--tile-w) + 2 * var(--sp-1));
-    gap: var(--sp-1);
-    padding: 0 var(--sp-1);
+    position: relative;
+    width: var(--pill-w);
     color: var(--muted);
-    font-weight: 700;
     white-space: nowrap;
+  }
+  .pface {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-05);
+    box-sizing: border-box;
+    width: calc(100% - 2 * var(--sp-05));
+    height: calc(var(--bar-h) - 2 * var(--sp-05)); /* the logo's 22 px (R745) and the track's inset */
+    border-radius: var(--radius-s);
+    font-size: var(--fs-cell);
+  }
+  .place .tile.small,
+  .pface .tile.small {
+    font-size: var(--fs-cell);
   }
   .nm {
     min-width: 0;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
   .ptab .tile {
-    opacity: 0.75;
+    background: none;
   }
   .ptab.cur {
-    color: var(--text);
-    background: var(--key-nav);
-    box-shadow: inset 0 calc(-1 * var(--stroke-thick)) 0 var(--key-on);
+    color: var(--on-key-on);
   }
-  .ptab.cur .tile {
-    opacity: 1;
+  .ptab.cur .pface {
+    background: var(--key-on);
   }
-  /* in an app neither is current: the glyphs only */
-  .inapp .nm {
-    display: none;
-  }
-  .inapp .ptab {
-    min-width: var(--tile-w);
-    padding: 0;
+  /* ◢ on the current slot 2: the corner of its pill, over the room it already has (the pill's width never changes) */
+  .mark {
+    position: absolute;
+    right: var(--stroke-thin);
+    bottom: var(--stroke-thin);
+    font-size: var(--fs-cell);
+    line-height: 1;
+    opacity: 0.8;
   }
   /* the fixed ⇧ α slot (the folded bar, a hardware keyboard in use): always 16 px, so Shift or Alpha moves nothing; it takes the
      room left over, else the angle icon does (R783: the right anchor stands at the same x in every place) */
@@ -494,23 +497,12 @@
   /* narrow (a phone under 400 px wide): the tab that is not current shows its glyph only; in an app the views keep their
      36 px, the room is won from the gaps (the right side the same in every place, R783) */
   @media (max-width: 400px) {
-    .ptab:not(.cur) .nm {
-      display: none;
-    }
-    .ptab:not(.cur) {
-      min-width: var(--tile-w);
-      padding: 0;
-    }
-    .folded .ptab:not(.cur) {
-      min-width: var(--view-w);
-    }
     .inapp .sep {
       margin: var(--sp-2) 0;
     }
     /* the right side is the same in every place (R783: the angle icon and ☰ stand at the same x), so these are not .inapp's alone */
-    .bar,
-    .inapp .places {
-      gap: var(--stroke-thin);
+    .bar {
+      --bar-gap: var(--stroke-thin);
     }
     .menubtn {
       width: var(--bar-h);

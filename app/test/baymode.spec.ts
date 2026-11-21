@@ -59,7 +59,7 @@ for (const width of [360, 392, 412] as const)
       await inApp(page);
       await expect(page.getByTestId("chip-format")).toHaveCount(0);
       const b = async (id: string) => (await page.getByTestId(id).boundingBox())!;
-      const [home, cas, symb, plot, num] = [await b("tab-home"), await b("tab-cas"), await b("tab-symb"), await b("tab-plot"), await b("tab-num")];
+      const [home, cas, symb, plot, num] = [await b("tab-home"), await b("tab-slot"), await b("tab-symb"), await b("tab-plot"), await b("tab-num")];
       expect(cas.x + cas.width).toBeLessThanOrEqual(symb.x + 0.5); // the places, the hairline, then the views
       expect(home.x).toBeLessThan(cas.x);
       expect(symb.x + symb.width).toBeLessThanOrEqual(plot.x + 0.5);

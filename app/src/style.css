@@ -10,6 +10,9 @@
   --name-mark: var(--approx);
   /* R748: a chip on the entry line, see-through, so MathLive's selection shows through it */
   --chip-tint: color-mix(in srgb, var(--chip-bg) 70%, transparent);
+  /* R782: the bar's recessed track under Home and slot 2, and the hairline after it: the screen's ground and the line, in every look */
+  --bar-track: var(--bg);
+  --bar-hair: var(--line);
   /* a key that does nothing in the layer shown is dimmed (--text-dead), still at least 3:1 */
   /* keypad legend line above each key face, and the key side padding */
   --legend-h: 12px;
@@ -106,6 +109,11 @@
   --entry-h: calc(var(--field-h) + 2 * var(--sp-2));
   --doc-min: 120px;
   --tile-w: 30px;
+  /* R782: the bar's left side: APP▾ (its glyph tile and ▾), and each pill of the track (a glyph tile and a short name) */
+  --app-w: 36px;
+  --pill-w: 56px;
+  --pill-tile-w: 22px;
+  --pill-tile-h: 22px;
   --tile-h: 22px;
   --tab-h: 20px;
   --row-tile-w: 36px;
