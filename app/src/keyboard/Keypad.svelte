@@ -11,6 +11,7 @@
   import { createPressFlag } from "../input/pressFlag.ts";
   import type { FinishedTouch } from "../state/pressCount.ts";
   import { sheetChunk } from "../views/sheetView.svelte.ts";
+  import type { SheetCtx } from "../views/sheetKeys.ts";
   import type { UserKeys } from "./userKeys.svelte.ts";
 
   let {
@@ -41,9 +42,10 @@
     cas: boolean;
     /** An app is under the keys (R71): ±, which only the unit view's line reads, is dimmed. */
     app: boolean;
-    /** A sheet is open (docs/05 3.1): keys are read by sheetKeys.ts, and the ones that do nothing there look dead.
-     *  `filter`: the open list takes letters. */
-    sheet?: { filter: boolean; store?: boolean; numbered?: number } | undefined;
+    /** A sheet is open (docs/05 3.1): keys are read by sheetKeys.ts (R820 sheetFace): a key that types a character there shows it, the
+     *  ones that do nothing look dead. `kind`: Find (with Vars and Memory), the store sheet or another list; `filter`: the open list
+     *  takes letters; `numbered`: its numbered rows; `empty`: its query is empty. */
+    sheet?: Omit<SheetCtx, "cas"> | undefined;
     /** Key pop-ups (R163, Appearance): false draws no bubble over the pad, neither the key pop nor the flick bubble; the
      *  flicks still fire. */
     pops: boolean;
@@ -67,10 +69,25 @@
   /** The keys as drawn and fired: the free keys with the user's slots. */
   /** The unit pad is up (R24b): a key that is one of its cells is the cell, in the same face and legends. */
   const keys = $derived(keyboard.keys.map((k) => sheetChunk.pad?.key(k, sheet) ?? userKeys.resolve(k)));
+  /** R820: a key as the open sheet reads it (sheetKeys.ts sheetFace), in the keypad's own layer or, for a flick, the one it fires; none
+   *  while no sheet is open or its code is not in yet (the faces stay as they are till then). */
+  const sheetOf = (k: Key, layer?: Layer): { text?: string; dead: boolean } | undefined =>
+    sheet && sheetChunk.keys?.sheetFace(k, { ...sheet, cas }, layer ? { shift: layer === "shift", alpha: layer === "alpha" } : { shift, alpha }, layer);
+  /** The character a tap on the key types in the open sheet, as drawn (the space bar's is a blank: ␣). */
+  const typed = (k: Key): string | undefined => {
+    const t = sheetOf(k)?.text;
+    return t === " " ? "␣" : t;
+  };
   const face = (k: Key): string =>
-    legend(labelFor(k, shift, alpha, cas) || k.label.primary || "");
+    typed(k) ?? legend(labelFor(k, shift, alpha, cas) || k.label.primary || "");
   const hint = (k: Key): string => (shift && !alpha) || !k.label.shift ? "" : legend(k.label.shift);
-  const alphaHint = (k: Key): string => (alpha || !k.label.alpha ? "" : k.label.alpha);
+  // (R820: while the face shows the key's letter, its letter line is empty: the letter is not drawn twice)
+  const alphaHint = (k: Key): string => (alpha || !k.label.alpha || typed(k)?.toLowerCase() === k.label.alpha.toLowerCase() ? "" : k.label.alpha);
+  // R820: a letter typed into a query is upright (R142 is for a variable on the line): the data-v layers it would italicise are left out
+  const varsOf = (k: Key): string | undefined => {
+    const v = varLayers(k);
+    return v !== undefined && typed(k) !== undefined ? v.replace(shift ? /[pas]/g : /[pa]/g, "") || undefined : v;
+  };
   // R143: a legend whose layer opens a sheet carries the mark ▾ (CSS, on data-opens); the letter line never does
   // R142: a legend is italic, in every mode, exactly when its action types one letter (a variable, ISO 80000-2; variable.ts):
   // the key says which layers type one (data-v), the CSS picks the face or legend that shows that layer
@@ -83,8 +100,8 @@
   const act = (k: Key) => actionFor(k, shift, alpha, false, cas);
   /** A key that does nothing in the current layer (a key we don't have yet, or a layer it has no function in). */
   const dead = (k: Key): boolean => {
-    // (not drawn dead before the sheet's code is in; R281: in the store sheet a key that types no name acts on the line)
-    if (sheet) return !sheet.store && sheetChunk.keys?.sheetKey(k, sheet.filter, sheet.numbered).kind === "none";
+    // (not drawn dead before the sheet's code is in; R820: the keys that do nothing there, from the function that routes the tap)
+    if (sheet) return sheetOf(k)?.dead === true;
     const p = k.actions.primary;
     if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return false; // the modifiers work in every layer
     const a = act(k);
@@ -105,6 +122,8 @@
     void shift;
     void alpha;
     void cas;
+    // R820: and when a sheet opens or closes, its code comes in or its query empties or fills (the faces change with them)
+    void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys];
     if (!padEl) return;
     const pad = padEl;
     fitLegends(pad);
@@ -169,7 +188,7 @@
     const text = pops && typeof target === "object" && el && !isPadKey(target) ? face(target) : "";
     if (!el || text === "") return hidePop();
     popEl = el;
-    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typesVariable(act(target as Key)) };
+    pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typed(target as Key) === undefined && typesVariable(act(target as Key)) };
   }
   // the pop stays inside the pad's width (a key at the edge): measured once the pop is drawn, before it is painted
   $effect(() => {
@@ -196,7 +215,11 @@
       const named = lower !== cas;
       return alphaLock && capsLock === lower ? t("flick.unlock") : t(named ? "flick.lowerLock" : "flick.capsLock");
     }
-    if (sheet) return dir === "down" && sheet.filter ? (sheetChunk.keys?.letterOf(k) ?? "") : "";
+    if (sheet) {
+      // R820: what the flick types in the sheet (Find: a, the store sheet in Home: A), the key's own character up in Find
+      const t = sheetOf(k, dir === "down" ? "alpha" : "shift")?.text;
+      return t === " " ? "␣" : (t ?? "");
+    }
     const [sh, al] = dir === "up" ? [true, false] : [false, true];
     const a = actionFor(k, sh, al, false, cas);
     if (!a || (a.kind === "special" && a.name === "none")) return "";
@@ -213,7 +236,7 @@
     bubbleOwner = id;
     hidePop(); // (the flick bubble shows alone)
     // (the bubble's letter follows the same flag as the legend it shows; ✕ is none)
-    const variable = text !== "" && typesVariable(actionFor(g.key, st === "up", st === "down", false, cas));
+    const variable = !sheet && text !== "" && typesVariable(actionFor(g.key, st === "up", st === "down", false, cas));
     bubble = { x: g.el.offsetLeft + g.el.offsetWidth / 2, y: g.el.offsetTop, dir: st, text: text || "✕", none: text === "", variable };
   }
   const gestures = new Map<number, Gesture>();
@@ -402,10 +425,10 @@
       data-letters={lettered ? "true" : undefined}
       data-user={key.user ? (userKeys.isEmpty(key) ? "empty" : "set") : undefined}
       data-pad={key.pad}
-      data-v={varLayers(key)}
+      data-v={varsOf(key)}
     >
       <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined}>{hint(key)}</span>
-      <span class="main" data-fit="face" data-opens={opensSheet(act(key)) || undefined}>{face(key)}</span>
+      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>
       {#if lettered}<span class="alphalegend" data-fit="legend">{alphaHint(key)}</span>{/if}
     </button>
   {/each}

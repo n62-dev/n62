@@ -127,6 +127,31 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
   return k && k.kind !== "none" ? k : { kind: "line" };
 }
 
+/** The open sheet as the keys read it (R820): its kind (`find`: Vars, Find and Memory; `store`; `other`: the rest), whether the open level
+ *  takes letters (`filter`), how many rows it numbers, whether its query is empty, and whether the CAS view is under the keys (the
+ *  store sheet's letter case, R58). */
+export type SheetCtx = { kind: "find" | "store" | "other"; filter: boolean; numbered: number; empty: boolean; cas: boolean };
+
+/** What a tap (`layer` undefined, with the modifiers `mods` it is pressed in) or a flick (`layer`) on a key does in the open sheet: the one
+ *  choice among Find, Store and the other lists, which sheetAct acts on and the keypad draws (sheetFace). Shift and Alpha keep their job
+ *  in every sheet (route.ts takes them before the sheet does). */
+export function sheetJob(key: Key, s: SheetCtx, mods: Mods, layer: Layer | undefined): SheetKey {
+  const p = key.actions.primary;
+  if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return { kind: "pass" };
+  if (s.kind === "find") return findKey(key, layer, mods.shift, s.empty, s.numbered);
+  if (s.kind === "store") return storeKey(key, mods.shift, mods.alpha, s.cas, s.empty);
+  return layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", s.filter) : sheetKey(key, s.filter, s.numbered);
+}
+
+/** R820: how the keypad draws a key while a sheet is open. `text`: the character a tap types there, in the case it types it (the face, the
+ *  pop and the flick bubble show it); `dead`: the key does nothing there (drawn dimmed, its face kept). Any other job (a pick, ▲ ▼ ◀ ▶,
+ *  Enter, Esc, ⌫, a key that passes or goes on to the line): the key's own face, lit. */
+export function sheetFace(key: Key, s: SheetCtx, mods: Mods, layer?: Layer): { text?: string; dead: boolean } {
+  const job = sheetJob(key, s, mods, layer);
+  if (job.kind === "letter") return { text: job.ch, dead: false };
+  return { dead: job.kind === "none" };
+}
+
 /** What a key does in the open sheet (route.ts sheetPress, once the grid, a free key's slot and a cell's place have not taken it; here, in
  *  the sheet's own code, so the start chunk does not carry it). `layer`: the one a gesture chose; `mods`: the modifiers a queued key was
  *  pressed with (R8). True: the key was used up. */
@@ -135,16 +160,13 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
   const sheet = shell.sheet!;
   const level = sheet.level;
   const find = sheet.id === "find";
-  let k: SheetKey;
-  if (find) k = findKey(key, layer, c.session.shift, level.filter === "", level.numbered);
-  else if (sheet.id === "store") {
-    // R281: a key that types a letter on the line types the same letter into the name (x alone, Alpha + Vars A, lower case in CAS,
-    // R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to the line (`line`) with its
-    // Shift or Alpha, and one the sheet takes uses a one-shot Shift or Alpha up, as on the line
-    const m = mods ?? modsFor(c, layer);
-    k = storeKey(key, m.shift, m.alpha, c.casKeys, level.filter === "");
-    if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
-  } else k = layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", level.filterable) : sheetKey(key, level.filterable, level.numbered);
+  const store = sheet.id === "store";
+  // Find reads the session's Shift; R281: a key that types a letter on the line types the same letter into the store sheet's name (x alone,
+  // Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to
+  // the line (`line`) with its Shift or Alpha, and one the sheet takes uses a one-shot Shift or Alpha up, as on the line
+  const m = find ? { shift: c.session.shift, alpha: c.session.alpha } : (mods ?? modsFor(c, layer));
+  const k = sheetJob(key, { kind: find ? "find" : store ? "store" : "other", filter: level.filterable, numbered: level.numbered, empty: level.filter === "", cas: c.casKeys }, m, layer);
+  if (store && k.kind !== "line" && layer === undefined) c.session.clearModifiers();
   // in Find a one-shot Shift is used up by the key it types (its lock stays); elsewhere a sheet leaves it as it is
   if (find && c.session.shift && !c.session.shiftLock) c.session.clearModifiers();
   switch (k.kind) {
