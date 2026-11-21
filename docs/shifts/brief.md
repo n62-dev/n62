@@ -68,7 +68,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 885za | R803 the unit pad's powers read x², x³, x⁴, x⁻¹, √x (B3) | ron, Opus | `p1/ron-unitpowers` | – |
-| 885zb | [R804](packages/R804.md) Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
+| 885zb | R804 Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
 | 917a | [R845](packages/R845.md) super mode's green: one mock-up in N62 Dark, Light, High contrast | ron, Opus | `p1/ron-supermock` | – |
 | 927 | [R842](packages/R842.md) N62 Light, Enter orange: one mock-up for the owner (K7) | ron, Opus | `p1/ron-enterorangemock` | – |
 | 885t | [R790](packages/R790.md) the unit view's → Check stays put under the reading (owner's list 2026-11-20, U1) | ron, Opus | `p1/ron-unitcheckfixed` | R780 |
