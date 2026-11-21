@@ -79,7 +79,7 @@ test("the keypad's top edge folds nothing: a tap where the handle was is the ent
   await expect(page.locator(HANDLE)).toHaveCount(0);
 });
 
-test("a drag up on the slice unfolds at once; a short drag does not", async ({ page }) => {
+test("a drag up on the slice unfolds on the lift; a short drag does not (R773)", async ({ page }) => {
   await fold(page);
   let f = await touch(page, SLICE);
   await f.move(0, -12, 3);
@@ -87,8 +87,10 @@ test("a drag up on the slice unfolds at once; a short drag does not", async ({ p
   await isFolded(page, true);
   f = await touch(page, SLICE);
   await f.move(0, -30, 4);
-  await isFolded(page, false); // at once, before the lift
+  await page.waitForTimeout(150);
+  await isFolded(page, true); // armed, the finger still down
   await f.end();
+  await isFolded(page, false);
 });
 
 test("a swipe down on the line folds and leaves its text, caret and selection; a sideways drag and a tap stay the line's", async ({ page }) => {

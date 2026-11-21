@@ -1,10 +1,10 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- R53 (decisions.md P16), R283, R724: results mode's controls, in the keypad's box (App.svelte `.keys`). The swipe on the
      entry line (foldSwipe.ts) folds and unfolds; ⌄ at the bar's left end (views/StatusLine.svelte, R786) folds by a tap. Folded: the folded
-     bar, one 44 px row over the hidden keypad: ⌃, the bar's tabs (views/StatusLine.svelte with `folded`), a free stretch,
-     the bar's ⇧ α slot, the picked row's Store ▶ · Copy › (views/RowBar.svelte moves them in), the bar's ☰. ⌃ or a tap on
-     the free stretch unfolds, and so does a drag up of FOLD_PX begun anywhere on the row (it drops the click of the button
-     it began on). Its own chunk, loaded when the browser is idle after the start, so the start chunk carries only the fold's state. -->
+     bar, one 44 px row over the hidden keypad: ⌃, the bar's tabs (views/StatusLine.svelte with `folded`), a free stretch
+     (a tap on it does nothing, R773), the bar's ⇧ α slot, the picked row's Store ▶ · Copy › (views/RowBar.svelte moves them
+     in), the bar's ☰. ⌃ unfolds, and so does a drag up of FOLD_PX begun anywhere on the row, on its lift (it drops the click
+     of the button it began on). Its own chunk, loaded when the browser is idle after the start, so the start chunk carries only the fold's state. -->
 <script lang="ts">
   import { tick } from "svelte";
   import type { Key, Layer } from "./keyboard.ts";
@@ -12,7 +12,7 @@
   import type { RouteCtx } from "./route.ts";
   import { keyFeelText as t } from "../i18n/enKeyFeel.ts";
   import StatusLine from "../views/StatusLine.svelte";
-  import { FOLD_PX, foldSwipe } from "./foldSwipe.ts";
+  import { BACK_PX, foldSwipe, liftOf, swipeOf } from "./foldSwipe.ts";
 
   let { folded, line, entry, swipes, onfold, onunfold, ctx, busy, onpress }: {
     folded: boolean;
@@ -29,29 +29,39 @@
     onpress: (key: Key, layer: Layer) => void;
   } = $props();
 
-  /** A drag up anywhere on the row unfolds at once; the click of the button it began on is dropped. */
-  let from: { id: number; y: number } | undefined;
+  /** A drag up anywhere on the row arms the unfold when it is FOLD_PX up and mostly vertical; the lift acts if the finger is
+   *  still that far up, and a finger back within BACK_PX of its start cancels (R773). The click of the button the drag began
+   *  on is dropped, armed or cancelled. */
+  let from: { id: number; x: number; y: number; armed: boolean } | undefined;
   let dragged = false;
   const start = (e: PointerEvent): void => {
     e.preventDefault(); // the caret stays in the line
-    from = { id: e.pointerId, y: e.clientY };
+    if (!e.isPrimary) return;
+    from = { id: e.pointerId, x: e.clientX, y: e.clientY, armed: false };
     dragged = false;
-  };
-  const drag = (e: PointerEvent): void => {
-    if (!from || from.id !== e.pointerId || e.clientY - from.y > -FOLD_PX) return;
-    from = undefined;
-    dragged = true;
-    // the flag lives only for the click this gesture may still send: a moved touch sends none, and the row is gone by its
-    // lift, so it is cleared on the window after the lift's click task (else a keyboard or screen-reader click, which has
-    // no pointerdown, would be eaten the next time the keys are down)
-    const lift = (): void => {
+    // the lift is heard on the window: the row is the pointer's until it ends, and `dragged` lives only for the click this
+    // gesture may still send (a moved touch sends none), so it is cleared after the lift's click task (else a keyboard or
+    // screen-reader click, which has no pointerdown, would be eaten the next time the keys are down)
+    const lift = (u: PointerEvent): void => {
+      if (from && u.pointerId !== from.id) return;
       removeEventListener("pointerup", lift, true);
       removeEventListener("pointercancel", lift, true);
+      const f = from;
+      from = undefined;
       setTimeout(() => (dragged = false));
+      if (f?.armed && u.type === "pointerup" && liftOf(u.clientX - f.x, u.clientY - f.y) === "up") onunfold();
     };
     addEventListener("pointerup", lift, true);
     addEventListener("pointercancel", lift, true);
-    onunfold();
+  };
+  const drag = (e: PointerEvent): void => {
+    if (!from || from.id !== e.pointerId) return;
+    const dy = e.clientY - from.y;
+    if (from.armed) {
+      if (Math.abs(dy) < BACK_PX) from.armed = false; // back at the start: cancelled
+    } else if (!dragged && swipeOf(e.clientX - from.x, dy, 0) === "up") {
+      from.armed = dragged = true;
+    }
   };
   const eat = (e: MouseEvent): void => {
     if (dragged) e.stopPropagation();
@@ -76,7 +86,7 @@
     if (folded) dragged = false;
   });
 
-  // The swipe on the entry line: down folds, up unfolds; any other pointer is MathLive's
+  // The swipe on the entry line: down folds, up unfolds, both on the lift; any other pointer is MathLive's
   $effect(() => {
     if (!line) return;
     return foldSwipe(line, {
@@ -97,8 +107,7 @@
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 10.5 8 5.5l5 5" /></svg>
     </button>
     <StatusLine session={ctx.session} shell={ctx.shell} {busy} cas={ctx.casKeys} {onpress} onmode={(at) => ctx.openMode(at)} folded />
-    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (⌃ is the control; this is room a tap may land on) -->
-    <span class="free" data-testid="fold-free" aria-hidden="true" onclick={() => onunfold()}></span>
+    <span class="free" data-testid="fold-free" aria-hidden="true"></span>
     <!-- the picked row's Store ▶ · Copy ›: views/RowBar.svelte moves its buttons in here while folded -->
     <span class="acts" data-fold-acts use:beforeMenu></span>
   </div>

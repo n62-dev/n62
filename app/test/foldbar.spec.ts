@@ -141,21 +141,23 @@ test("a pick while folded: Store ▶ · Copy › in the folded bar; Copy › Ful
   await isFolded(page, true);
 });
 
-test("unfolding from the folded bar: ⌃, the free stretch, and a 30 px drag up from Copy › that copies nothing", async ({ page }) => {
+test("unfolding from the folded bar: ⌃ and a 30 px drag up from Copy › that copies nothing, on the lift; a tap on the free stretch does nothing (R773)", async ({ page }) => {
   await rows(page);
   await fold(page);
   await fbar(page).getByTestId("fold-slice").tap();
   await isFolded(page, false);
   await fold(page);
   await fbar(page).getByTestId("fold-free").tap();
-  await isFolded(page, false);
-  await fold(page);
+  await page.waitForTimeout(200);
+  await isFolded(page, true); // owner, 2026-11-19: the free stretch is no control
   await page.evaluate(() => navigator.clipboard.writeText("-"));
   await results(page).last().tap();
   const f = await touch(page, `${FBAR} [data-testid="row-actions"] button:last-child`);
   await f.move(0, -30, 4);
-  await isFolded(page, false);
+  await page.waitForTimeout(150);
+  await isFolded(page, true); // armed, not acted: the finger is still down
   await f.end();
+  await isFolded(page, false);
   await page.waitForTimeout(200);
   await expect(sheet(page)).toBeHidden(); // no Copy › list
   expect(await clipboard(page)).toBe("-");
@@ -223,8 +225,8 @@ test("a drag up that unfolds leaves no stale drag: Alt+K folds, Tab to ⌃, Ente
   await results(page).last().tap();
   const f = await touch(page, `${FBAR} [data-testid="row-actions"] button:last-child`);
   await f.move(0, -30, 4);
-  await isFolded(page, false);
   await f.end(); // a moved touch: no click follows
+  await isFolded(page, false);
   await page.waitForTimeout(100);
   await page.evaluate(() => window.n62.entry.focus());
   await page.keyboard.press("Alt+KeyK");
@@ -247,4 +249,67 @@ test("Tab walks the folded bar with a pick in its pinned order: ⌃, Home, slot 
     walk.push(await focused(page));
   }
   expect(walk).toEqual(["unfold", "home", "slot", "store", "copy", "menu"]);
+});
+
+test("the swipe down on the line acts on the lift: still folded-not while the finger is down; back to the start and lifting cancels (R773)", async ({ page }) => {
+  let f = await touch(page, LINE);
+  await f.move(0, 30, 4);
+  await page.waitForTimeout(150);
+  await isFolded(page, false); // armed, the finger still down
+  await f.end();
+  await isFolded(page, true);
+  await page.getByTestId("fold-slice").tap();
+  await isFolded(page, false);
+  f = await touch(page, LINE);
+  await f.move(0, 30, 4);
+  await f.move(0, 0, 4); // back at the start
+  await f.end();
+  await page.waitForTimeout(200);
+  await isFolded(page, false);
+  f = await touch(page, LINE); // between 12 and 24 px at the lift: nothing either
+  await f.move(0, 30, 4);
+  await f.move(0, 18, 2);
+  await f.end();
+  await page.waitForTimeout(200);
+  await isFolded(page, false);
+});
+
+test("the drag up on the folded bar acts on the lift; back to the start and lifting leaves it folded (R773)", async ({ page }) => {
+  await rows(page);
+  await fold(page);
+  let f = await touch(page, `${FBAR} [data-testid="fold-free"]`);
+  await f.move(0, -30, 4);
+  await page.waitForTimeout(150);
+  await isFolded(page, true);
+  await f.move(0, 0, 4);
+  await f.end();
+  await page.waitForTimeout(200);
+  await isFolded(page, true);
+  f = await touch(page, `${FBAR} [data-testid="fold-free"]`);
+  await f.move(0, -30, 4);
+  await f.end();
+  await isFolded(page, false);
+});
+
+test("the folded bar's other ways back: Esc and Back unfold; the history still scrolls with a vertical drag, folded (R773)", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 600 }); // nine rows overflow the history
+  await rows(page, 9);
+  await fold(page);
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.press("Escape");
+  await isFolded(page, false);
+  await fold(page);
+  await page.goBack();
+  await isFolded(page, false);
+  await fold(page);
+  const history = page.locator("section.history").first();
+  await history.evaluate((el) => (el.scrollTop = el.scrollHeight));
+  const before = await history.evaluate((el) => el.scrollTop);
+  const f = await touch(page, page.locator('[data-status="done"]').last());
+  await f.move(0, 60, 6);
+  await f.end();
+  await page.waitForTimeout(300);
+  expect(before).toBeGreaterThan(0);
+  expect(await history.evaluate((el) => el.scrollTop)).toBeLessThan(before);
+  await isFolded(page, true);
 });
