@@ -163,14 +163,18 @@ export class WorkerEngine implements MathEngine {
   private async loadStored(): Promise<DefEntry[]> {
     if (!this.store) return [];
     const check = import("./defsCheck.ts"); // the load check, fetched while the store is read (R782: out of the start chunk)
+    check.catch(() => {}); // (awaited below only when the store answered in time; a failed fetch then lands in the catch)
     let timer: ReturnType<typeof setTimeout> | undefined;
     const timeout = new Promise<"timeout">((resolve) => (timer = setTimeout(() => resolve("timeout"), DEFS_LOAD_TIMEOUT_MS)));
     try {
       const x = await Promise.race([Promise.all([this.store.load(), this.store.loadStarts?.() ?? 0]), timeout]);
       if (x === "timeout") return [];
+      const defs = (await check).validDefs(x[0]);
+      // only now is the stored log known to be read: a check chunk that fails to load leaves the store unwritten (a write
+      // would replace the whole stored log with what this run defines)
       this.storeOk = true;
       this.attempts += this.logFails = typeof x[1] === "number" && x[1] > 0 ? Math.trunc(x[1]) : 0;
-      return (await check).validDefs(x[0]);
+      return defs;
     } catch {
       return [];
     } finally {
