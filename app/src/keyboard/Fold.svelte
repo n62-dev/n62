@@ -111,6 +111,7 @@
     inset: 0;
     display: flex;
     align-items: stretch;
+    --unfold-w: calc(2 * var(--sp-3) + var(--icon-w)); /* ⌃'s width; views/StatusLine.svelte keeps APP▾'s room less its difference from ⌄'s cell */
     background: var(--panel);
     box-shadow: inset 0 var(--stroke-thin) 0 var(--line);
     touch-action: none;
@@ -119,7 +120,7 @@
   /* in ⌄'s spot (R786): the bar's left end, its icon centred where ⌄'s is (the middle of the 28 px cell) */
   .unfold {
     flex: none;
-    width: calc(2 * var(--sp-3) + var(--icon-w));
+    width: var(--unfold-w);
     padding: 0 0 0 calc((var(--bar-h) - var(--icon-w)) / 2);
     border: 0;
     background: none;

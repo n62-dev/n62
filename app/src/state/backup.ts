@@ -2,6 +2,7 @@
 // The backup (R11 section 3, docs/04 6.2): one JSON file with each stored key's record as stored, stamp included, and
 // the check a restore runs on it before it writes anything (R38b, r11 section 3.4). Loaded only when the user saves or
 // restores one (never in the start chunk).
+import { isBarSlot } from "../apps/registry.ts";
 import { validDefs } from "../engine/defs.ts";
 import { dataText, enData, type DataKey } from "../i18n/enData.ts";
 import { KeyboardSpecError, keyboard, parseAction } from "../keyboard/keyboard.ts";
@@ -163,6 +164,7 @@ export const SETTING_RULES: Readonly<Record<string, (x: unknown) => boolean>> = 
   uncertainty: (x) => x === "sigma" || x === "muted", // R40
   marks: (x) => x === "muted" || x === "colour" || x === "reason", // R124
   groupSep: (x) => x === "thin" || x === "apos" || x === "comma", // R125
+  barSlot: isBarSlot, // R782
   fmtCycle: (x) => Array.isArray(x) && canon(normalizeCycle(x.filter(isFmtMode))) === canon(x),
   // R122: the nested groups check the fields they hold; a field missing (an older file) is filled by migrateSettings
   // at the next start, as it fills one missing from a stored record. A field this version does not know is a fault.

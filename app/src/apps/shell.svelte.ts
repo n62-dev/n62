@@ -11,10 +11,13 @@ import type { IconId } from "../views/icons.ts";
 import type { CreditBlock, Picked, Sheet, UncHead } from "../views/sheet.svelte.ts";
 import { loadSheetModel, sheetChunk } from "../views/sheetView.svelte.ts";
 import type * as ShellOpenCode from "./shellOpen.ts";
-import { APPS, isAppId, placeGlyph } from "./registry.ts";
+import { APPS, appEntry, isAppId, placeGlyph, type BarSlot } from "./registry.ts";
 import { VIEW_IDS, type AppHost, type AppId, type AppInstance, type LoadedApp, type MenuItem, type NavDir, type SubMenu, type ViewId } from "./types.ts";
 
 type ShellOpen = typeof ShellOpenCode;
+
+/** R782: the Apps sheet of a second tap on the bar's slot 2 (a sheet id of its own, so APP▾'s and the slot's toggle apart). */
+const SLOT_SHEET = "apps:slot";
 
 /** The entry line as the shell sees it (EntryController in the app, a stub in tests). */
 export interface EntryLine {
@@ -220,10 +223,14 @@ export class AppShell {
 
   // ---- sheets (docs/05 3.1)
   get switcherOpen(): boolean {
-    return this.sheet?.id === "apps";
+    return this.sheet?.id === "apps" || this.slotOpen;
+  }
+  /** R782: the Apps sheet titled "Slot 2" (a second tap on the bar's current slot-2 place) is open. */
+  get slotOpen(): boolean {
+    return this.sheet?.id === SLOT_SHEET;
   }
   get menuOpen(): boolean {
-    return this.sheet !== null && this.sheet.id !== "apps" && !this.paletteOpen;
+    return this.sheet !== null && !this.switcherOpen && !this.paletteOpen;
   }
   /** One of the palettes is open: Tmpl, or the Shift palettes `rel` and `sym` (R18). */
   get paletteOpen(): boolean {
@@ -231,9 +238,32 @@ export class AppShell {
   }
   /** Home and CAS, the first two rows of the Apps sheet (S2 point 4, R15b): set by the app shell (App.svelte). */
   goTo: ((view: "home" | "cas") => void) | undefined;
-  /** Apps key: the Apps sheet (1 Home, 2 CAS, then the apps), or close it when it is open. */
-  toggleApps(): void {
-    if (this.switcherOpen) this.sheet = null;
+  /** The bar's second place (R782): read from the settings and written to them by App.svelte. */
+  barSlot: (() => BarSlot) | undefined;
+  setBarSlot: ((slot: BarSlot) => void) | undefined;
+  /** Apps key: the Apps sheet (1 Home, 2 CAS, then the apps), or close it when it is open. `slot` (R782, a second tap on the
+   *  current slot-2 place): the same sheet titled "Slot 2", where a pick puts that place in slot 2 and opens it, Home's row is
+   *  dead and the CAS row puts CAS back; a tap on the slot again closes it. */
+  toggleApps(slot = false): void {
+    if (slot ? this.slotOpen : this.sheet?.id === "apps") this.sheet = null;
+    else if (slot)
+      this.openSheet(
+        (S) =>
+          new S(SLOT_SHEET, t("apps.slot"), () => [
+            { id: "home", label: t("view.home"), glyph: placeGlyph("home"), disabled: true },
+            ...(["cas", ...APPS.map((a) => a.id)] as const).map((p) => ({
+              id: p,
+              label: p === "cas" ? t("view.cas") : t(appEntry(p).name),
+              glyph: placeGlyph(p),
+              selected: this.barSlot?.() === p,
+              run: () => {
+                this.setBarSlot?.(p);
+                if (p === "cas") this.goTo?.("cas");
+                else void this.open(p);
+              },
+            })),
+          ]),
+      );
     else
       this.openSheet(
         (S) =>

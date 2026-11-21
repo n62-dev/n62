@@ -65,7 +65,7 @@ const unitFind = (): Promise<typeof import("./find.ts")> =>
 const STORE_ARROW = "\\blacktriangleright";
 
 /** Keys that change place: the unit view closes first, then they do their job. */
-const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "symb", "plot", "num", "settings", "mode"];
+const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "slot", "symb", "plot", "num", "settings", "mode"];
 
 /** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
 export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {

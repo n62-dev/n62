@@ -120,11 +120,11 @@ describe("the jobs", () => {
     const f = aiFormat();
     expect(f).toContain("- Line 1 is exactly `// n62 library 3`.");
     expect(formatExample(f).split("\n")[0]).toBe("// n62 library 3");
-    expect(f).toContain("or a version newer than 5.");
-    expect(f).toContain('"dataVersion": 5,');
-    expect(f.match(/"@n62": 5/g)).toHaveLength(4);
+    expect(f).toContain("or a version newer than 6.");
+    expect(f).toContain('"dataVersion": 6,');
+    expect(f.match(/"@n62": 6/g)).toHaveLength(4);
     expect(f).not.toMatch(/\{libraryVersion\}|\{version\}/);
-    expect(f).not.toContain("// n62 library 5"); // G371: the store at 5, the library text still 3
+    expect(f).not.toContain("// n62 library 6"); // G371, R782: the store at 6, the library text still 3
     expect(aiFormat("a {version} b {libraryVersion}\n", 9, 2)).toBe("a 9 b 2\n");
   });
   it("no engine (the fake one): says so", async () => {

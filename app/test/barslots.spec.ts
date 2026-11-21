@@ -84,7 +84,7 @@ test("a second tap on the current slot 2 opens \"Slot 2\": Solve fills it, the C
   await slot(page).tap(); // a second tap, on the current place
   await expect(apps(page)).toBeVisible();
   await expect(apps(page)).toContainText("Slot 2");
-  await row(page, "home").tap(); // Home's row is dead there
+  await row(page, "home").tap({ force: true }); // Home's row is dead there (a disabled row: no actionability wait)
   await expect(apps(page)).toBeVisible();
   expect(await state(page)).toEqual({ app: null, view: "cas", slot: "cas" });
   await row(page, "solve").tap();

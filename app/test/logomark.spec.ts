@@ -98,9 +98,11 @@ test.describe("fake engine", () => {
     test(`the logo fits Home's tile at ${width} px, the ring still shows while busy`, async ({ page }) => {
       await page.setViewportSize({ width, height: 815 });
       const img = await logoImg(page);
-      expect(img.tile.w).toBe(30);
-      expect(img.tile.w).toBeGreaterThanOrEqual(28);
-      expect(img.tile.h).toBeGreaterThanOrEqual(22); // the tile keeps its size
+      expect(img.tile.w).toBe(18); // R782: the pill's glyph tile (--pill-tile-w); the target is the pill's 56 × 28 (tab-home)
+      expect(img.tile.h).toBe(18);
+      const target = (await page.getByTestId("tab-home").boundingBox())!;
+      expect(target.width).toBeGreaterThanOrEqual(28);
+      expect(target.height).toBeGreaterThanOrEqual(28);
       const eps = 0.5;
       expect(img.box.l).toBeGreaterThanOrEqual(img.tile.l - eps);
       expect(img.box.t).toBeGreaterThanOrEqual(img.tile.t - eps);
@@ -127,7 +129,7 @@ test.describe("fake engine", () => {
   test("CAS and an app keep their glyphs; the busy ring still draws over Home's tile", async ({ page }) => {
     await expect(tile(page).locator("img")).toHaveCount(1);
     await page.evaluate(() => window.n62.session.setView("cas"));
-    const cas = page.getByTestId("tab-cas").locator(".tile");
+    const cas = page.getByTestId("tab-slot").locator(".tile");
     await expect(cas.locator(".logomark")).toHaveCount(0);
     await expect(cas).toHaveText("∫");
     await page.evaluate(() => window.n62.shell.open("function", "symb"));

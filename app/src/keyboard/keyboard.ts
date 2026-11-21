@@ -10,6 +10,8 @@ export type Special =
   | "apps" | "symb" | "plot" | "num" | "menu"
   /** Places (R15b): Home, CAS (from an app too), and the status line's switch: Home ↔ CAS, or back from an app. */
   | "home" | "cas" | "switch"
+  /** R782: the bar's second place (views/StatusLine.svelte only; no key holds it): its place, or its sheet on a second tap. */
+  | "slot"
   /** The Shift palettes (R18): Shift + 6 relations and logic, Shift + 9 symbols and Greek; Shift + Vars Chars (R725). */
   | "relations" | "symbols" | "chars"
   /** Math (R4a): Find, everything (docs/04 3.5–3.7). */
@@ -37,7 +39,7 @@ export type Special =
 /** The specials that open a sheet (a list or a grid) instead of acting (R143: their legend carries the mark ▾; opens.ts). */
 export const OPENS_SHEET: readonly Special[] = ["settings", "mode", "apps", "menu", "tmpl", "relations", "symbols", "chars", "find", "vars", "memory", "base", "help", "matrix", "uncertainty"];
 export const SPECIALS: readonly Special[] = [
-  "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "units", "selectGrow", "selectShrink", "paste", "copy", "none", ...OPENS_SHEET,
+  "shift", "alpha", "enter", "clear", "esc", "symb", "plot", "num", "fmt", "home", "cas", "switch", "slot", "units", "selectGrow", "selectShrink", "paste", "copy", "none", ...OPENS_SHEET,
 ];
 
 /** The first of the maths rows (3–9): a pick sheet is drawn over them, never over the top cluster (rows 0–2), whose

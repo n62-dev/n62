@@ -88,6 +88,19 @@ export async function escape(c: RouteCtx): Promise<void> {
   c.entry.clear();
 }
 
+/** R782: the bar's second place. Its place when it is not the current one; the current one's second tap is the Apps sheet
+ *  titled "Slot 2" (a tap on it again closes it). Any other open sheet gives way. */
+function slotKey(c: RouteCtx): void {
+  const { shell, session } = c;
+  if (shell.slotOpen) return shell.closeSheet();
+  const slot = session.settings.barSlot;
+  const here = slot === "cas" ? shell.app === null && session.view === "cas" : shell.app === slot;
+  if (here) return shell.toggleApps(true);
+  shell.closeSheet();
+  if (slot === "cas") c.goTo("cas");
+  else void shell.open(slot);
+}
+
 export function special(c: RouteCtx, name: Special): void {
   switch (name) {
     case "enter":
@@ -117,6 +130,9 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "apps":
       c.shell.toggleApps();
+      break;
+    case "slot":
+      slotKey(c);
       break;
     case "symb":
     case "plot":
@@ -356,7 +372,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
       // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
       const p = key.actions.primary;
       if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
-      if (p.name !== "menu" && p.name !== "apps" && p.name !== "tmpl") shell.closeSheet();
+      if (p.name !== "menu" && p.name !== "apps" && p.name !== "slot" && p.name !== "tmpl") shell.closeSheet();
       special(c, p.name);
       return true;
     }
@@ -369,7 +385,7 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
 // the status line's controls too (they go through press(), R15b, R15c1), and a user key while it holds Home or CAS; a
 // user key that holds anything else waits like the key it stands for. The exception is a view key (Symb, Plot, Num):
 // it runs at once only when no key is waiting, else it joins the queue behind the typing it would overtake (R148f2).
-const AT_ONCE: readonly string[] = ["esc", "home", "cas", "switch", "apps", "symb", "plot", "num", "settings", "mode"];
+const AT_ONCE: readonly string[] = ["esc", "home", "cas", "switch", "apps", "slot", "symb", "plot", "num", "settings", "mode"];
 const VIEW_KEYS: readonly string[] = ["symb", "plot", "num"];
 /** During a load: does this action run at once? (AT_ONCE; a view key only when no key is waiting.) */
 const runsAtOnce = (c: RouteCtx, name: string): boolean => AT_ONCE.includes(name) && (c.waiting.length === 0 || !VIEW_KEYS.includes(name));

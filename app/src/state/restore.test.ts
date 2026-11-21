@@ -187,6 +187,7 @@ describe("the repeated rules agree with the start's readers", () => {
     uncertainty: ["sigma", "muted", "concise", 1, null], // R40
     marks: ["muted", "colour", "reason", "color", "", 1, null], // R124
     groupSep: ["thin", "apos", "comma", "'", ",", "", 1, null], // R125
+    barSlot: ["cas", "function", "solve", "nosuchapp", "home", "", 1, null], // R782
     fmtCycle: [["std", "sci", "eng"], ["std"], ["sci", "std"], [], ["std", "std"], ["frac"], ["std", "frac"], "std", ["pfx", "fix"], ["fix", "pfx"]],
     haptics: [
       { on: true, strength: 50, ms: 15 },

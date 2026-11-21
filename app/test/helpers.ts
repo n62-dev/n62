@@ -5,7 +5,7 @@ import { test, type Locator, type Page } from "@playwright/test";
 
 /** The bar's controls (R15c1, R15c2, R722), for keys that left the cluster: `@place` (Apps ▾, the Apps sheet), `@menu`
  *  (☰), `@symb` / `@plot` / `@num` (the view tab; from Home or CAS the last app is opened first from the Apps sheet, as
- *  the old view keys did), `@home` and `@cas` (the bar's Home and CAS tabs, one tap), `@mode` (the Mode sheet on its
+ *  the old view keys did), `@home` and `@cas` (the bar's Home tab, and slot 2 when it holds CAS, one tap; else APP▾ › CAS), `@mode` (the Mode sheet on its
  *  Angle row, as Shift + Apps opened it before R15c2: in Home and CAS the format chip, in an app ☰ › Mode (R785), then ▲). */
 async function statusTap(page: Page, id: string): Promise<void> {
   const apps = page.getByTestId("apps");
@@ -15,7 +15,12 @@ async function statusTap(page: Page, id: string): Promise<void> {
   };
   if (id === "@place") return page.getByTestId("place").tap();
   if (id === "@menu") return page.getByTestId("menu-button").tap();
-  if (id === "@home" || id === "@cas") return page.getByTestId(`tab-${id.slice(1)}`).tap();
+  if (id === "@home") return page.getByTestId("tab-home").tap();
+  if (id === "@cas") {
+    // R782: slot 2 holds CAS by default (one tap); when it holds an app, CAS is APP▾ › CAS. A tap on slot 2 while CAS is current is the sheet, never taken here.
+    if ((await page.evaluate(() => window.n62.session.settings.barSlot)) === "cas") return page.getByTestId("tab-slot").tap();
+    return fromApps("cas");
+  }
   if (id === "@mode") {
     // R785: in Home and CAS the format and digits chip; in an app (no chip) ☰ and its Mode row
     if (await page.evaluate(() => window.n62.shell.app !== null)) {

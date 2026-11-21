@@ -87,6 +87,11 @@
       key ? press(userKeys.resolve(key), layer) : unfold() || (canFold && !shell.sheet ? fold("fold.hw") : dead()));
     entry.onLetter = counted(hwOther("letter"), typeLetter);
     shell.goTo = goTo; // the Apps sheet's Home and CAS rows
+    shell.barSlot = () => session.settings.barSlot; // R782: slot 2's sheet marks the place it holds
+    shell.setBarSlot = (slot) => {
+      session.settings.barSlot = slot;
+      session.save();
+    };
     shell.openSettings = openSettings;
     shell.openMode = () => openMode("format"); // R785: an app's ☰ › Mode opens as the chip does
     shell.settingsMenu = () => (loaders.modeSheet ? (settingsMenu ??= loaders.modeSheet.settingsMenu(session, settingsEnv)) : undefined); // (R49)

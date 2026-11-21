@@ -37,7 +37,7 @@ const BY_ID: Readonly<Record<string, SheetKey>> = {
   esc: { kind: "back" },
   bksp: { kind: "backspace" },
 };
-const PASS: readonly string[] = ["shift", "alpha", "menu", "apps", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
+const PASS: readonly string[] = ["shift", "alpha", "menu", "apps", "slot", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
 
 /** The key's letter: its Alpha layer when that types one letter (A on Vars … Z on 2). A free key has none: its Alpha
  *  slot is the user's own (R15c3), and the letters of the sheet's filter stay where they are. */
@@ -66,7 +66,7 @@ export function sheetFlick(key: Key, down: boolean, filter: boolean): SheetKey {
 }
 
 /** The status line's controls keep their job in Find: they close it and go there, or toggle their sheet. */
-const FIND_PASS: readonly string[] = ["menu", "apps", "home", "cas", "switch", "symb", "plot", "num"];
+const FIND_PASS: readonly string[] = ["menu", "apps", "slot", "home", "cas", "switch", "symb", "plot", "num"];
 
 /**
  * A key in Find (R4a, docs/04 3.7, decisions.md S2 rule M1). Every key types its letter in lower case, Tmpl and Math

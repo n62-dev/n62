@@ -25,7 +25,7 @@ for (const [width, height] of [[412, 915], [412, 839], [360, 740]] as const)
       const tabs = [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] [role="tab"]')].map((e) => e.dataset["testid"]);
       return { header: h?.height ?? 0, screen: v?.height ?? 0, window: window.innerHeight, tabs };
     });
-    expect(m.tabs).toEqual(["tab-home", "tab-cas"]);
+    expect(m.tabs).toEqual(["tab-home", "tab-slot"]);
     expect(m.header).toBe(28);
     const share = m.screen / m.window;
     console.log(`viewport share at ${width} × ${height}: ${share.toFixed(4)} (screen ${m.screen} of ${m.window} px, bar ${m.header} px)`);
@@ -149,7 +149,7 @@ test("the bar fits at 360 px in an app with the chips and ☰, and the targets k
   expect(m.header).toBeLessThanOrEqual(28);
   expect(m.menu?.width ?? 0).toBeGreaterThanOrEqual(28); // R722: at least 28 × 28 (docs/05 3.2)
   expect(m.menu?.height ?? 0).toBeGreaterThanOrEqual(28);
-  expect(m.place?.width ?? 0).toBeGreaterThanOrEqual(40); // R82f2: the glyph tile and ▾ (R15b had 96 px for the name)
+  expect(m.place?.width ?? 0).toBeGreaterThanOrEqual(28); // R782: APP▾, the glyph tile and ▾ (36 px); a target of at least 28 × 28
   expect((m.num?.right ?? 999) <= (m.menu?.left ?? 0)).toBe(true); // R785: the view icons are the bay, no chip in an app
 });
 

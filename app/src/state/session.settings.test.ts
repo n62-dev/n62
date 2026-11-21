@@ -23,9 +23,9 @@ describe("migrateSettings", () => {
     expect(migrated).toBe(true);
     expect(settings).toMatchObject({ digits: 30, format: "pfx", decimalMark: "point" });
   });
-  it("version 4 holds the decimal mark and needs no migration", () => {
+  it("the current version holds the decimal mark and needs no migration", () => {
     const { settings, migrated } = migrateSettings({ schema: SETTINGS_SCHEMA, digits: 30, format: "pfx", decimalMark: "comma" });
-    expect(SETTINGS_SCHEMA).toBe(4);
+    expect(SETTINGS_SCHEMA).toBe(5); // R782: barSlot
     expect(settings.decimalMark).toBe("comma");
     expect(migrated).toBe(false);
     expect(settings.digits).toBe(30);
