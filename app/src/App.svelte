@@ -541,6 +541,7 @@
       onpress={press}
       oncount={session.taps.touch}
       ontouch={touched}
+      quiet={(k, d) => route.quietDown(ctx, k, d)}
     />
     </div>
   </div>

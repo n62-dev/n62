@@ -6,6 +6,8 @@ import type { MenuItem, SubMenu } from "../apps/types.ts";
 import type { IconId } from "./icons.ts";
 import type { MatrixGrid } from "./matrixGrid.svelte.ts";
 import { lastPicks } from "./picks.ts";
+import { sheetKey } from "./sheetKeys.ts";
+import type { Key } from "../keyboard/keyboard.ts";
 
 /** Lists with more items than this get the letter filter (docs/05 3.1: "for lists longer than 10 items"). */
 export const FILTER_ABOVE = 10;
@@ -368,6 +370,20 @@ export class Sheet {
     if (i < 0) return false;
     this.level.highlight = i;
     return true;
+  }
+
+  /** R777: does the open level take a tap on this key for a job of its own, before the usual sheet reading (sheetPress): a grid's
+   *  cells (R189), a free key's slot it lists (goKey), a key at a grid cell's place (pickKey)? Asked without acting. `layer`: the keypad's. */
+  takes(key: Key, layer: string): boolean {
+    const l = this.level;
+    return !!l.grid || (!!key.user && l.items.some((x) => x.slot?.key === key.id && x.slot.layer === layer)) || (l.columns !== undefined && !l.digits && l.items.some((x) => x.pick?.key === key.id));
+  }
+
+  /** R777 (route.ts deadPress): is a tap on this key a dead press here, without acting: ⌫ with nothing typed (R770) in a list that
+   *  takes no ⌫ of its own (Find goes back a level, the store sheet's line job) and not a key the level takes (takes)? */
+  deadKey(key: Key, layer: string): boolean {
+    const l = this.level;
+    return this.id !== "find" && this.id !== "store" && !l.loading() && l.filter === "" && sheetKey(key, l.filterable).kind === "backspace" && !this.takes(key, layer);
   }
 
   /** Enter: the highlighted item. A setting changed in place (`adjust`) is picked as it stands: the sheet closes. */
