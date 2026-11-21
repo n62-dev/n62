@@ -33,6 +33,7 @@ Every sheet (Apps, every Menu, Mode, Settings, Tmpl, the Shift palettes, Find, V
 |---|---|
 | ▲ ▼ | Move the highlight; the list scrolls to keep it in view |
 | 1…9, 0 | Pick item 1–10 directly (Shift and Alpha are ignored while a sheet is open) |
+| `.`, space bar | Pick item 11 and 12, the two keys after 0 (R780): a list of at most 12 rows numbers every row, the number drawn as the key's face (`.`, `␣`); a longer list numbers 1–10 only and these two keys are dead there |
 | Enter | Pick the highlighted item |
 | ▶ | Open a submenu (shown with `›`) |
 | ◀ or Esc | Back one level (submenus stack; the title shows the path, e.g. `Plot › Intersection`) |

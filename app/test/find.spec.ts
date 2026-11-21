@@ -16,14 +16,14 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe("by keys", () => {
-  test("open: Math shows the Math menu, twelve categories, the first ten numbered 1…9, 0, above the keypad", async ({ page }) => {
+  test("open: Math shows the Math menu, twelve categories, numbered 1…9, 0, then the keys after 0 (R780), above the keypad", async ({ page }) => {
     await tap(page, ["math"]);
     await expect(find(page)).toBeVisible();
     await expect(rows(page)).toHaveCount(12);
     await expect(rows(page).first()).toHaveAttribute("aria-label", "1 Arithmetic");
     await expect(rows(page).nth(9)).toHaveAttribute("aria-label", "0 Units and prefixes");
-    await expect(rows(page).nth(10)).toHaveAttribute("aria-label", "Bits and words"); // the eleventh: no digit
-    await expect(rows(page).last()).toHaveAttribute("aria-label", "Complex numbers"); // the twelfth (G362)
+    await expect(rows(page).nth(10)).toHaveAttribute("aria-label", "Decimal point key Bits and words"); // the eleventh: the . key (R780)
+    await expect(rows(page).last()).toHaveAttribute("aria-label", "Space key Complex numbers"); // the twelfth (G362): the space bar (R780)
     // a list that takes letters is not drawn over the keypad: the keys stay where they are and visible
     const sheetBottom = await find(page).locator('[role="menu"]').evaluate((e) => e.getBoundingClientRect().bottom);
     const keypadTop = await page.locator('[data-key="vars"]').evaluate((e) => e.getBoundingClientRect().top);
