@@ -66,6 +66,25 @@ for (const id of ["up", "down", "left", "right"])
     expect(delta, `rest ${rest} held ${held}`).toBeGreaterThanOrEqual(16);
   });
 
+test("an arrow pressed before the key names are in draws no dot (none on the hub)", async ({ page }) => {
+  await page.addInitScript(() => {
+    const idle = window.requestIdleCallback.bind(window); // hold the key names' idle load back
+    window.requestIdleCallback = (cb, o) => setTimeout(() => idle(cb, o), 4000) as unknown as number;
+  });
+  await page.goto("/?engine=fake&tips=off");
+  const arrow = page.locator('.pad [data-key="up"] .main');
+  await arrow.waitFor();
+  expect(await page.locator('.pad [data-key="sin"]').getAttribute("aria-description")).toBeNull(); // (the names are not in)
+  const box = await arrow.boundingBox();
+  if (!box) throw new Error("no arrow");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(page.locator('.pad [data-key="up"][data-down]')).toHaveCount(1);
+  const dot = await page.locator(".pad .trackpad").evaluate((el) => getComputedStyle(el, "::after").visibility);
+  await page.mouse.up();
+  expect(dot).toBe("hidden");
+});
+
 test("a locked Shift's ring lies within its key and the screen, in N62 High contrast", async ({ page }) => {
   await open(page);
   await page.evaluate(async () => {

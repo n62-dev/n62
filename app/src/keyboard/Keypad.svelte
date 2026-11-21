@@ -646,6 +646,7 @@
     height: var(--pad-dot);
     margin: calc(var(--pad-dot) / -2);
     translate: var(--dot-at, 0 0);
+    visibility: var(--dot-on, hidden); /* placeDot sets both: before it has run (an arrow pressed before the key names are in) no dot, not one on the hub */
     border-radius: 50%;
     background: color-mix(in srgb, var(--key-text) 32%, transparent);
   }

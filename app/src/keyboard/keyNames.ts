@@ -70,9 +70,11 @@ export function labelKeys(pad: HTMLElement, keys: readonly Key[], shift: boolean
 /**
  * R774: the dot behind a pressed arrow of the round pad: `--dot-at` on the pad is the arrow glyph's centre as an offset from the
  * round pad's centre (Keypad.svelte draws the dot). Here with the key names, which come after the first paint, so the start chunk
- * (at its pin) carries none of it; an arrow pressed before they are in shows no dot, only its full opacity.
+ * (at its pin) carries none of it; an arrow pressed before they are in shows no dot (the CSS keeps it hidden until `--dot-on` is set), only its full opacity.
  */
 export function placeDot(pad: HTMLElement | undefined, zone: HTMLElement | undefined): void {
   const [m, t] = [zone?.querySelector(".main"), pad?.querySelector(".trackpad")].map((e) => e?.getBoundingClientRect());
-  if (m && t) pad?.style.setProperty("--dot-at", `${m.x + (m.width - t.width) / 2 - t.x}px ${m.y + (m.height - t.height) / 2 - t.y}px`);
+  if (!m || !t || !pad) return;
+  pad.style.setProperty("--dot-at", `${m.x + (m.width - t.width) / 2 - t.x}px ${m.y + (m.height - t.height) / 2 - t.y}px`);
+  pad.style.setProperty("--dot-on", "visible");
 }
