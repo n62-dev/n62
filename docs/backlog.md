@@ -21,8 +21,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 6. **v0.1.0** (the days: [release-0.1.0.md](release-0.1.0.md)): now your look at the UI on the Tab One (R224's wide layout turned sideways; N62, Black & White, Solarized in Dark, Light, High contrast and Plain keys; the round pad, italic letters, ▾, ⚙; a selected and a matrix chip, R748 (no eye on its shots yet); A82's list); the video on the release candidate; after the push, the issue forms on GitHub's New issue page (A81).
 7. **T1's hands-on items (2026-11-16):** A202 (the key click with the system touch sounds off, the Tab One); A210's feel after it merges (30 % against 90 % on the Fairphone); G9 waits on item 2.
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
-9. **G369, a % chip in Home:** its pure number (0.0042) or the number shown (0.42)? See decisions.md.
-10. **R128, R780, R779** (decisions.md): the backup offer; paging past row 12; the line's drag on the Fairphone.
+9. **R779** (decisions.md): the line's drag on the Fairphone.
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.

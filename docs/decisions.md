@@ -7,11 +7,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-- **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
-- **R770, a sheet on a very short screen:** the view above the keys is about 250 px at 360 × 740 and 88 px at 372 × 560 (Plot's floor). Under 120 px the sheet drops its margins (Sheet.svelte, a container query) and keeps its title row and a 48 px list: one 42 px row whole, a row with a reason line (58 px) cut and scrolled to. After the tag a "touch vs keypad" setting may put sheets over the keys again.
-- **R780, lists of more than 12 rows:** the longest fixed menus (Find's and Help's 12 categories, Find › Arithmetic) now number all 12 rows (`.` row 11, the space bar row 12). Lists that take letters and run longer (Your keys 21, Unit pad cells 19, Probability and statistics 17, the licence parts 48, Constants, Units) number rows 1–10 only and reach the rest by letters, as the package says; and a menu that grows past 12 (the matrix sheet with 4 stored matrices) falls back to 1–10. Recommended (as built); else give those lists a paging key.
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
-- **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals
 
@@ -35,6 +31,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Small packages (2026-10-14, the owner's rule).** One concern each, about a day or less, with its own reading list; placed by importance, then dependencies.
 
 ### Feel, keys and screen (milestone 4a)
+- **Super mode's lines (owner, 2026-11-21, R810 and R811):** yes to the exact lines: docs/06 :60 (point 8, ◀ ▶ get a Shift layer, a block jump), :80 (Shift + Fmt is super mode), :92 (Fmt leaves "Reserved at the tag"), :99 (growth rule 1: "except super mode, a state the keypad draws") and docs/03 rule 7 (the flick down on Shift is a mode, not a layer). R810 and R811 edit them in their own diffs.
+- **Owner answers of 2026-11-21, night:** R128: another device's newer backup is offered as soon as the folder is chosen (the same one offer; a package to write). R770: a sheet under 120 px drops its margins, as built. R780: `.` and the space bar pick rows 11 and 12; longer lists number 1–10 and take letters, as built. G369: a % chip in Home is its pure number (0.42 % is 0.0042; a package to write).
 - **Touch, keys and Store (owner, 2026-11-10; the keys 2026-11-12):** as built (docs/05 3.5; docs/04 5.5); the keys: [06-keypad-vs-g2.md](06-keypad-vs-g2.md) section 3b. Archived. Would change if: A139 shows the gestures clash on a real WebView.
 - **Built, archived ("2026-11-12, evening"):** A73f1; R140–R150, R53; R95, R100, R94, R110; S12 (R66–R68, G45); R34, R43, R7, A4a points 3 and 4.
 - **Built, archived ("2026-11-17, the fix lane"):** R41 at font scale 2.0; R140's colour-vision floors (owner, 2026-11-07); R50 (owner 2026-11-07): three themes; Redo after ⌫ (R15c2).

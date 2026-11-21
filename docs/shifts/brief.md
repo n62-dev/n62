@@ -63,12 +63,14 @@ Start from the phase-1 worktree: `setsid nohup scripts/night.sh [--lane A|B] [--
 `ANDROID_SERIAL=HA24BZ2Y`, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### The queue (one lane, from the stop of Tue 11-17; owner, 2026-11-17)
-One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--lane` (rule 12's form), from the phase-1 worktree. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. The tag has no date (owner, 2026-11-21): it follows the last UI row and S57. From 2026-11-19 on Pro every worker and pass runs on Sonnet, whatever a row says, and every audit but a maths diff's (`.coord/model-cap`, A262); `--audit-model auto` as always.
+One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--lane` (rule 12's form), from the phase-1 worktree. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. The tag has no date (owner, 2026-11-21): it follows the last UI row and S57. On Max (owner, 2026-11-21) each row runs on the model its row names; `.coord/model-cap` holding `sonnet` caps every worker and pass to Sonnet again (A262); `--audit-model auto` as always.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 885za | R803 the unit pad's powers read x², x³, x⁴, x⁻¹, √x (B3) | ron, Opus | `p1/ron-unitpowers` | – |
-| 885zb | R804 Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
+| 885zb | [R804](packages/R804.md) Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
+| 917a | [R845](packages/R845.md) super mode's green: one mock-up in N62 Dark, Light, High contrast | ron, Opus | `p1/ron-supermock` | – |
+| 927 | [R842](packages/R842.md) N62 Light, Enter orange: one mock-up for the owner (K7) | ron, Opus | `p1/ron-enterorangemock` | – |
 | 885t | [R790](packages/R790.md) the unit view's → Check stays put under the reading (owner's list 2026-11-20, U1) | ron, Opus | `p1/ron-unitcheckfixed` | R780 |
 | 885u | [R791](packages/R791.md) the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
 | 885v | [R792](packages/R792.md) High contrast's outline off the Shift legends (K5) | ron, Opus | `p1/ron-hclegend` | R791 |
@@ -105,9 +107,8 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Opus | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Opus | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Opus | `p1/ron-namechips` | R818 |
-| 917 | [R810](packages/R810.md) Shift + ◀ ▶ jump a block (C8); not before the owner's yes on docs/06 | ron, Opus | `p1/ron-shiftarrows` | R808 |
-| 917a | [R845](packages/R845.md) super mode's green: one mock-up in N62 Dark, Light, High contrast | ron, Opus | `p1/ron-supermock` | – |
-| 918 | [R811](packages/R811.md) super mode's state and keys: Shift flick down once, Shift + Fmt held; after the owner's yes on the docs/06 lines | ron, Opus | `p1/ron-supermode` | R810 |
+| 917 | [R810](packages/R810.md) Shift + ◀ ▶ jump a block (C8); the owner's yes on docs/06 given 2026-11-21 | ron, Opus | `p1/ron-shiftarrows` | R808 |
+| 918 | [R811](packages/R811.md) super mode's state and keys: Shift flick down once, Shift + Fmt held; the owner's yes on the docs/06 lines given 2026-11-21 | ron, Opus | `p1/ron-supermode` | R810 |
 | 918a | [R850](packages/R850.md) super mode drawn green (`--key-super`); after the owner's yes on R845 | ron, Opus | `p1/ron-supergreen` | R811, R845 |
 | 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Opus | `p1/ron-userkeyalpha` | R729 |
 | 920 | [R822](packages/R822.md) Store: a tap types the case Alpha types; (owner's rule yes, 2026-11-21) | ron, Opus | `p1/ron-storecase` | R820 |
@@ -117,7 +118,6 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 924 | [R836](packages/R836.md) the row draws and copies the value Ans had: `[5]² = 25` | ron, Opus | `p1/ron-ansvalue` | G642 |
 | 925 | [R838](packages/R838.md) Settings and Mode open over the unit view and close back onto it (U2) | ron, Opus | `p1/ron-unitsettings` | R770 |
 | 926 | [R840](packages/R840.md) every pop-up window: a 2 px edge in the theme's accent (P1) | ron, Opus | `p1/ron-sheetedge` | R770 |
-| 927 | [R842](packages/R842.md) N62 Light, Enter orange: one mock-up for the owner (K7) | ron, Opus | `p1/ron-enterorangemock` | – |
 | 928 | [R843](packages/R843.md) N62 Light's Enter in the picked orange; after the owner's pick | ron, Opus | `p1/ron-enterorange` | R842 |
 | 929 | [R847](packages/R847.md) Find for a user-key slot: titled "U1 ⇧", Places, Back returns (Y1) | ron, Opus | `p1/ron-slotfind` | R811, R821 |
 | 930 | [R848](packages/R848.md) a tap on an empty user key opens its own slot sheet (Y1; reworks R705) | ron, Opus | `p1/ron-keysheet` | R705, R811, R821, R847 |
