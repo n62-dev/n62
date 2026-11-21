@@ -35,7 +35,7 @@ test("the order at 412 × 815: the entry line, the bar and the pad touch, and th
 test("Home shows the Home tab selected and the CAS tab; one tap switches; Home from Function › Plot is one tap (R722)", async ({ page }) => {
   await open(page);
   const home = page.getByTestId("tab-home");
-  const cas = page.getByTestId("tab-cas");
+  const cas = page.getByTestId("tab-slot");
   await expect(home).toHaveAttribute("role", "tab");
   await expect(home).toHaveAttribute("aria-selected", "true");
   await expect(cas).toHaveAttribute("aria-selected", "false");
@@ -117,7 +117,7 @@ test("the states: the ring on the current tile, the busy line read, the lock und
   await expect(page.locator(BAR)).toHaveAttribute("data-busy", "true");
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await expect(tile("tab-home")).toHaveAttribute("data-ring", "false");
-  await page.getByTestId("tab-cas").tap();
+  await page.getByTestId("tab-slot").tap();
   await tap(page, ["alpha", "alpha"]);
   await hwOn(page); // R783: the badge with a hardware keyboard in use
   await expect(page.getByTestId("mod-alpha")).toHaveText("a");

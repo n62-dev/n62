@@ -21,8 +21,8 @@ describe("the first-start tips (R290)", () => {
     expect(drawn.length).toBe(7);
     expect(Object.keys(enTips).filter((k) => k !== "tips.title" && k !== "tips.gotIt").sort()).toEqual([...drawn].sort());
   });
-  it("keep the two ringed cards (Apps ▾ and the bar's ☰, R722) and the marks card", () => {
-    expect(cards[0]).toMatch(/Apps ▾.*Home and CAS/);
+  it("keep the two ringed cards (⊞▾ and the bar's ☰, R722) and the marks card", () => {
+    expect(cards[0]).toMatch(/⊞▾.*Home.*second tap on CAS/); // R782
     expect(cards[1]).toMatch(/☰/);
     card(/= exact\. ≈ rounded.*⚠/);
   });

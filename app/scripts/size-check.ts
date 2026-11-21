@@ -219,8 +219,12 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  (state/tapsFront.svelte.ts); and S58's five, of which three sit inside another lazy chunk (lazyFailures reads
  *  chunk-modules.json): views/statSheet.ts, views/helpSheet.ts, views/matrixGrid.svelte.ts (the matrix sheet's chunk),
  *  entry/cursorFn.ts (helpSheet's), engine/decimalLatex.ts (solve's). R362 (S58 cuts 1 and 4): the shell's app-opening part
- *  (apps/shellOpen.ts) with the view tabs' icons (views/icons.ts), loaded by the first app key. */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts"];
+ *  (apps/shellOpen.ts) with the view tabs' icons (views/icons.ts), loaded by the first app key. R782 (S58 cut 3 and the bar's
+ *  left side): Android back's layers (input/backLayer.ts, behind input/backLayerFront.ts, loaded when idle); the bay's view
+ *  icons (views/AppViews.svelte, drawn only in an open app, so it rides in the shell's app-opening chunk); the stored log's
+ *  load check (engine/defsCheck.ts, split from defs.ts: the engine reads the stored log in parallel with the store, the
+ *  start chunk keeps only the log's own functions). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.

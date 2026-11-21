@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { readValueFacts, valueFactsOf, type ChipEntry, type HomeResult, type CasResult, type ValueFacts } from "./types.ts";
 import type { NameFacts } from "./defs.ts";
-import { validDefs } from "./defs.ts";
+import { validDefs } from "./defsCheck.ts";
 import type { ElementFacts } from "./numeric.ts";
 import type { PrecisionFacts } from "./format.ts";
 import type { ResultFacts } from "../state/displayMode.ts";

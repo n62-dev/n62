@@ -29,14 +29,14 @@ export const USER_KEYS = "userKeys";
  * of stored text changes: definitions are Giac text that holds our internal names (R18f1 renamed Φ and Ψ to Phi_ and
  * Psi_), so a rename or a parser fix must rewrite what older versions stored. 0 = stored before versions (2026-10-14).
  */
-export const DATA_VERSION = 5;
+export const DATA_VERSION = 6;
 /**
  * The data version from which each settings schema (`SETTINGS_SCHEMA`, state/session.svelte.ts) is stamped (R94). A
  * new schema raises DATA_VERSION with it (storage.test.ts holds the two together): a build that knows only the stamp
  * then refuses to write over the newer record (kvSet), so it never drops the fields it does not know. Schemas 1–3 were
- * written before this pairing; schema 4 was first stamped 3 and is guarded from 4 on.
+ * written before this pairing; schema 4 was first stamped 3 and is guarded from 4 on; schema 5 (R782's `barSlot`) comes with data version 6.
  */
-export const SETTINGS_SINCE: Readonly<Record<number, number>> = { 4: 4 };
+export const SETTINGS_SINCE: Readonly<Record<number, number>> = { 4: 4, 5: 6 };
 /** The stamp's field; no value stored before versions has it. The store under the name N62 starts empty (R138): the
  *  field before it, `@pascaline`, comes only in an old backup file, whose check (state/backup.ts) reads it. */
 const STAMP = "@n62";
@@ -47,7 +47,7 @@ export type Migrations = Record<number, Record<string, (value: unknown) => unkno
 
 /** The keys that have a step from version n to n+1: MIGRATIONS's own keys (storage.test.ts holds the two together), so a
  *  read knows whether to load the steps without loading them. */
-export const STEP_KEYS: Readonly<Record<number, readonly string[]>> = { 0: [], 1: [], 2: ["defs", "library"], 3: [], 4: [] };
+export const STEP_KEYS: Readonly<Record<number, readonly string[]>> = { 0: [], 1: [], 2: ["defs", "library"], 3: [], 4: [], 5: [] };
 
 /** The version a stored record was written in (0 before versions). */
 function storedVersion(stored: unknown): number {

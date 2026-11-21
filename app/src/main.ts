@@ -8,6 +8,7 @@ import "./style.css";
 import App from "./App.svelte";
 import { createCalc } from "./calc/index.ts";
 import type { Calc } from "./calc/port.ts";
+import { loadBackLayer } from "./input/backLayerFront.ts";
 import { loadSheetView } from "./views/sheetView.svelte.ts";
 import { EntryController } from "./entry/controller.ts";
 import { lineKeeper, lineRecord, type KeptLine } from "./entry/keep.ts";
@@ -126,6 +127,7 @@ requestAnimationFrame(() =>
     idle(() => void loadTidy().catch(() => {})); // the result tidy-up (R91), likewise
     idle(() => void loadForms()); // the Format and a b/c keys (R135), likewise
     idle(() => void loadRemoved()); // the Undo copy of Clear and Delete (R98), likewise
+    idle(() => void loadBackLayer()); // Android back's layers (R782), likewise
     // The history is read after the keypad is up, so it does not compete with the first paint. The kept line comes
     // after it (an Ans on it is the restored last result) and only into the view it was typed in.
     const history = session.restoreHistory();
