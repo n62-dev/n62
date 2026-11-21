@@ -182,6 +182,9 @@ export class Level {
 
   private firstRow(): number {
     const rows = this.rows;
+    // R804: letters typed that equal one row's label (a stored name) highlight that row, wherever it stands in the order
+    const exact = this.typed && this.filter !== "" ? rows.find((r) => r.item.label === this.filter && !r.item.disabled) : undefined;
+    if (exact) return exact.index;
     return (rows.find((r) => !r.item.disabled) ?? rows[0])?.index ?? -1;
   }
 
@@ -409,7 +412,12 @@ export class Sheet {
   /** Enter: the highlighted item. A setting changed in place (`adjust`) is picked as it stands: the sheet closes. */
   enter(): Picked {
     const typed = this.level.typed;
-    if (typed && this.level.filter !== "") return { kind: "run", item: typed(this.level.filter) };
+    if (typed && this.level.filter !== "") {
+      const item = typed(this.level.filter);
+      // R804: a typed name that asks first (a stored one) takes the armed path of its row: the first Enter arms, the second runs
+      const at = item.confirm ? this.level.items.findIndex((x) => x.id === item.id) : -1;
+      return at >= 0 ? this.activate(at, true) : { kind: "run", item };
+    }
     return this.activate(this.level.highlight, true);
   }
 

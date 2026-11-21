@@ -74,7 +74,7 @@ test("typed letters filter and Enter stores the typed name, digits after a lette
   await expect(store(page).getByTestId("sheet-cells").getByRole("menuitem")).toHaveCount(1); // only A is left
   await tap(page, ["d1"]);
   await expect(store(page).getByTestId("sheet-filter")).toHaveText("A1");
-  await expect(store(page).getByTestId("find-preview")).toHaveText("Enter stores A1");
+  await expect(store(page).getByTestId("find-preview")).toHaveText("A1 is free · Enter stores 3 in A1 · keep typing for a longer name");
   await tap(page, ["enter"]);
   await expect(done(page)).toHaveCount(1);
   expect(await names(page)).toEqual(["A1"]);
@@ -163,4 +163,60 @@ test("R301: Store ▶ on a linreg row opens only Store in, titled with the whole
   await expect(done(page)).toHaveCount(2);
   await expect(lastResult(page)).toHaveAttribute("data-text", list);
   expect(await names(page)).toEqual(["A"]);
+});
+
+// R804 (owner, 2026-11-20, walk point B5): the line says what a typed letter does, and a typed name that is stored asks before
+// Enter replaces it, as a tap does. `alpha d5` is V.
+test("R804 (a): 4 ▶ Alpha 5: V is free, the line says Enter stores 4 in V and that a longer name can follow; Enter stores V = 4", async ({ page }) => {
+  await tap(page, ["d4", "shift", "emark", "alpha", "d5"]);
+  await expect(store(page).getByTestId("sheet-filter")).toHaveText("V");
+  await expect(store(page).getByTestId("find-preview")).toHaveText("V is free · Enter stores 4 in V · keep typing for a longer name");
+  await tap(page, ["enter"]);
+  await expect(done(page)).toHaveCount(1);
+  expect(await names(page)).toEqual(["V"]);
+  await tap(page, ["alpha", "d5", "enter"]);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "4");
+});
+
+test("R804 (b): V = 4 stored; 9 ▶ Alpha 5 Enter asks first (V armed, Enter again replaces it with 9); the second Enter stores", async ({ page }) => {
+  await tap(page, ["d4", "shift", "emark", "alpha", "d5", "enter"]);
+  await expect(done(page)).toHaveCount(1);
+  await tap(page, ["d9", "shift", "emark", "alpha", "d5"]);
+  await expect(cell(page, "V")).toHaveAttribute("data-active", "true");
+  await tap(page, ["enter"]);
+  await expect(store(page)).toBeVisible();
+  await expect(done(page)).toHaveCount(1); // nothing stored yet
+  await expect(cell(page, "V")).toHaveAttribute("data-armed", "true");
+  await expect(cell(page, "V")).toContainText("= 4 · again?");
+  await expect(store(page).getByTestId("find-preview")).toHaveText("V = 4. Enter again replaces it with 9");
+  await tap(page, ["enter"]);
+  await expect(store(page)).toBeHidden();
+  await expect(done(page)).toHaveCount(2);
+  await tap(page, ["alpha", "d5", "enter"]);
+  await expect(lastResult(page)).toHaveAttribute("data-text", "9");
+});
+
+test("R804 (c): Vin = 9 stored; 2 ▶ V i n: Enter arms Vin; with only V typed, V is free and Enter stores V", async ({ page }) => {
+  await tap(page, ["d9", "shift", "emark", "alpha", "d5"]);
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.type("in");
+  await expect(store(page).getByTestId("sheet-filter")).toHaveText("Vin");
+  await tap(page, ["enter"]); // Vin is free: stores at once
+  await expect(done(page)).toHaveCount(1);
+  expect(await names(page)).toEqual(["Vin"]);
+  await tap(page, ["d2", "shift", "emark", "alpha", "d5"]);
+  await expect(store(page).getByTestId("find-preview")).toHaveText("V is free · Enter stores 2 in V · keep typing for a longer name");
+  await page.evaluate(() => window.n62.entry.focus());
+  await page.keyboard.type("in");
+  await expect(store(page).getByTestId("sheet-filter")).toHaveText("Vin");
+  await tap(page, ["enter"]);
+  await expect(store(page)).toBeVisible();
+  await expect(done(page)).toHaveCount(1);
+  await expect(store(page).getByTestId("find-preview")).toHaveText("Vin = 9. Enter again replaces it with 2");
+  await tap(page, ["enter"]);
+  await expect(done(page)).toHaveCount(2);
+  // with only V typed: V is free and Enter stores V at once
+  await tap(page, ["d2", "shift", "emark", "alpha", "d5", "enter"]);
+  await expect(done(page)).toHaveCount(3);
+  expect(await names(page)).toEqual(["V", "Vin"]);
 });

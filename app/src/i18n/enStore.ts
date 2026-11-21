@@ -8,7 +8,12 @@ export const enStore = {
   "store.again": "{value} · again?",
   "store.holds": "{what}. Tap {name} again to replace it",
   "store.holdsWith": "{what}. Tap {name} again to replace it with {with}",
-  "store.typed": "Enter stores {name}",
+  // R804: letters typed. A free name says what Enter does and that more letters make a longer name; a stored one asks first.
+  "store.typedFree": "{name} is free · Enter stores in {name} · keep typing for a longer name",
+  "store.typedFreeWith": "{name} is free · Enter stores {with} in {name} · keep typing for a longer name",
+  "store.typedHeld": "{name} is stored · Enter asks before it is replaced",
+  "store.holdsTyped": "{what}. Enter again replaces it",
+  "store.holdsTypedWith": "{what}. Enter again replaces it with {with}",
   "store.new": "New name…",
 } as const;
 

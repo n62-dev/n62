@@ -49,12 +49,18 @@ export function storedText(session: Session, row: HistoryItem | undefined, line:
   return import("../clipboard/plaintext.ts").then((m) => m.entryText(before, session.decimalComma ? { decimalComma: true } : {}).trim(), () => "");
 }
 
+/** R804: the stored name that `typed` equals, as written or as the keys type it (`e_`), else undefined. The one rule for the line
+ *  the store types (typedLatex) and for the question Enter asks (the sheet's `typed`). */
+export function findHeld(typed: string, names: readonly UserName[]): UserName | undefined {
+  return names.find((u) => u.name === typed || typedName(u.name) === typed);
+}
+
 /** The name the store types for `typed` (letters and digits from the filter, or a stored name as drawn): one letter as
  *  its key types it (e and i become e_ and i_ in the parser, as typed), a stored name as Vars inserts it, else one name
  *  (`rate`, `A1`). */
 export function typedLatex(typed: string, names: readonly UserName[]): string {
   if (/^\p{L}$/u.test(typed)) return typed;
-  const n = names.find((u) => u.name === typed || typedName(u.name) === typed);
+  const n = findHeld(typed, names);
   return n ? nameLatex(n.name) : `\\operatorname{${typed}}`;
 }
 
@@ -75,13 +81,15 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
     const what = n.kind === "fn" ? `${name}(…)` : `${name} ${held}`;
     return {
       ...row,
-      confirm: { cell: t("store.again", { value: held }), note: shown.value ? t("store.holdsWith", { name, what, with: shown.value }) : t("store.holds", { name, what }) },
+      // R804: the line says Enter only when this name is the one typed (Enter runs the typed name, whatever was tapped), else Tap
+      confirm: { cell: t("store.again", { value: held }), note: findHeld(env.shell.sheet?.level.filter ?? "", [n]) ? (shown.value ? t("store.holdsTypedWith", { what, with: shown.value }) : t("store.holdsTyped", { what })) : shown.value ? t("store.holdsWith", { name, what, with: shown.value }) : t("store.holds", { name, what }) },
       run: () => env.store(typedLatex(name, [n])),
     };
   };
   const free = (letter: string): MenuItem => ({ id: `name:${letter}`, label: letter, cell: true, preview: t("store.free", { name: letter }), run: () => env.store(letter) });
   /** R740: folded, a last row that brings the keys up for a longer name (the grid has no room for it); unfolded the keys are there. */
   const fresh: MenuItem = { id: "new", label: t("store.new"), keep: true, run: () => env.newName() };
+  const heldBy = (typed: string): UserName | undefined => findHeld(typed, session.userNames);
   const items = (): MenuItem[] => [...nameItems(session.userNames, filled, free), ...(env.folded() ? [fresh] : [])];
   const firstFree = NAME_LETTERS.find((l) => !session.userNames.some((n) => n.name === l));
   const sheet = new Sheet(STORE_SHEET, shown.value ? t("store.title", { value: shown.value }) : t("store.titleBare"), items, {
@@ -89,10 +97,16 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
     filterable: true,
     remember: false,
     at: `name:${firstFree ?? "A"}`,
-    typed: (name) => store(typedLatex(name, session.userNames)),
+    // R804: a typed name that is stored is that name's own item, so Enter asks as a tap does (Sheet.enter); a free one stores at once
+    typed: (name) => {
+      const n = heldBy(name);
+      return n ? filled(n, NAME_LETTERS.includes(n.name)) : store(typedLatex(name, session.userNames));
+    },
     note: () => {
       const f = env.shell.sheet?.level.filter ?? "";
-      return f === "" ? undefined : t("store.typed", { name: f });
+      if (f === "") return undefined;
+      if (heldBy(f)) return t("store.typedHeld", { name: f });
+      return shown.value ? t("store.typedFreeWith", { name: f, with: shown.value }) : t("store.typedFree", { name: f });
     },
   });
   env.shell.sheet = sheet;
