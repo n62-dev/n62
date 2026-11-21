@@ -87,7 +87,7 @@ describe("ClipActions paste of a given text", () => {
   });
 });
 
-// R276: the picked row's buttons are Store ▶ and Copy › (its five on a sheet; R720); a hold copies the input as plain text
+// R276: the picked row's buttons are Store ▶ and Copy › (its five on a sheet; R830: ☰ has neither); a hold copies the input as plain text
 // or the result as Copy does, each a row action (R53's count).
 describe("ClipActions row buttons and the hold", () => {
   const make = () => {
@@ -109,14 +109,14 @@ describe("ClipActions row buttons and the hold", () => {
     buttons[1]?.run?.();
     expect(menus).toEqual([{ title: "Copy", ids: ["full", "shown", "exact", "latex", "python"] }]);
   });
-  it("☰ has seven rows in this order, Export › the seventh (R720)", () => {
+  it("☰ has four rows in this order, Export › the fourth; Store ▶, Copy › and Paste are not rows (R830)", () => {
     const { c, item } = make();
-    expect(c.menu(item).map((m) => m.id)).toEqual(["store", "copy", "delete", "paste", "share", "clear", "export"]);
+    expect(c.menu(item).map((m) => m.id)).toEqual(["delete", "share", "clear", "export"]);
   });
   it("Copy › Full value writes what a hold on the result does and counts as copy (R720)", async () => {
     const { c, item, acted, clip, port } = make();
     await port.writeText("x"); // (a sentinel: only the run's own write can change it)
-    const full = c.menu(item).find((m) => m.id === "copy")?.submenu?.items[0];
+    const full = c.copyItem(item).submenu?.items[0];
     expect(full).toMatchObject({ id: "full", label: "Full value" });
     full?.run?.();
     await vi.waitFor(() => expect(clip()).toBe("1/3"));
@@ -172,17 +172,17 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
   });
 });
 
-// R130, R720: ☰ Home/CAS has seven rows (their digits are learned); item 7 is Export ›, with the work report in it.
-describe("ClipActions menu: Export › is item 7", () => {
+// R130, R830: ☰ Home/CAS has four rows (their digits are learned); item 4 is Export ›, with the work report in it.
+describe("ClipActions menu: Export › is item 4", () => {
   const menuOf = (items: object[]) => {
     const session = { items } as unknown as Session;
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     return new ClipActions(session, shell, {} as EntryController, { insert() {} }).menu();
   };
-  it("the seven rows keep their ids and order; the seventh opens Export › with the work report", () => {
+  it("the four rows keep their ids and order; the fourth opens Export › with the work report", () => {
     const m = menuOf([{ status: "done", latex: "2", text: "2", facts: {} }]);
-    expect(m.map((i) => i.id)).toEqual(["store", "copy", "delete", "paste", "share", "clear", "export"]);
-    const exp = m[6]!;
+    expect(m.map((i) => i.id)).toEqual(["delete", "share", "clear", "export"]);
+    const exp = m[3]!;
     expect(exp.label).toBe("Export");
     expect(exp.disabled).toBe(false);
     expect(exp.submenu?.items.map((i) => [i.id, i.label, i.disabled])).toEqual([
@@ -193,8 +193,8 @@ describe("ClipActions menu: Export › is item 7", () => {
     ]);
   });
   it("with nothing finished Export › is off, and an empty history gives it no reason line (fit.spec.ts)", () => {
-    expect(menuOf([])[6]).toMatchObject({ id: "export", disabled: true, reason: undefined });
-    expect(menuOf([{ status: "pending", latex: "2", text: "" }])[6]).toMatchObject({ id: "export", disabled: true, reason: "No result yet" });
+    expect(menuOf([])[3]).toMatchObject({ id: "export", disabled: true, reason: undefined });
+    expect(menuOf([{ status: "pending", latex: "2", text: "" }])[3]).toMatchObject({ id: "export", disabled: true, reason: "No result yet" });
   });
 });
 
