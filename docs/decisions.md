@@ -11,6 +11,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R845, super mode's green and sign:** pick from [mockups/super-mode.html](mockups/super-mode.html): the green on OKLCH hue 130° (Dark `#bcff6b`, Light `#547331`, High contrast `#aaff1b`; all contrast floors met) and the sign ⇟ or ▣. N62 Light's green stays 0.093 from Alpha's teal for tritanopia (below the 0.12 Shift-to-Alpha floor; no green on 130°–150° reaches it at 4.5:1 on the light keys): accept it, as the shape (ring, fill, glow on keys with no Alpha legend) tells super mode apart, or ask for another hue. R850 starts on the answer.
 
+- **R842, N62 Light's Enter in orange (K7):** pick from [mockups/enter-orange-light.html](mockups/enter-orange-light.html): A `#c26a00` (sandra's, black label 5.36:1, fill 3.26:1 on the keys round it), B `#b26206` (white label 4.52:1, fill 3.76:1; 0.099 from the error red for deuteranopia, and in High contrast it moves to `#864a05`, 0.009 from Shift: reads as Shift), C `#d55800` (the most vivid that meets every floor: black label 5.23:1, fill 3.34:1; recommended), or none (Enter stays teal, whose fill is 2.75:1 today). A and C stand ≥ 0.24 from Light's drawn Shift `#5b2400` for every colour-vision view; in High contrast their fill lightens to 7:1 for the label and falls to 2.8:1 on the keys, as the teal's does today. R843 starts on the answer.
+
 ## Decided proposals
 
 ### Pipeline and process
