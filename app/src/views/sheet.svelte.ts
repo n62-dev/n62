@@ -11,13 +11,20 @@ import type { Key } from "../keyboard/keyboard.ts";
 
 /** Lists with more items than this get the letter filter (docs/05 3.1: "for lists longer than 10 items"). */
 export const FILTER_ABOVE = 10;
+/** R780: a fixed menu of up to this many rows numbers every row: 1…9 and 0 for rows 1…10, and the two keys after 0 on the pad,
+ *  `.` and the space bar, for rows 11 and 12. A longer list (a data list that takes letters) numbers rows 1…10 only. */
+export const NUMBERED_MAX = 12;
+
+/** The face of row number `n` (1…12) as the row draws it and a screen reader says it: the digit key's face (0 for 10), then the
+ *  faces of the two keys after it. */
+export const numberFace = (n: number): string => (n === 11 ? "." : n === 12 ? "␣" : String(n % 10));
 
 /** An item as the sheet shows it: its place in the full list and the number a digit key picks it with. */
 export interface Row {
   readonly item: MenuItem;
   /** Index in the level's full list. */
   readonly index: number;
-  /** 1…10 (shown as 1…9, 0); undefined past the tenth row. */
+  /** 1…10 (shown as 1…9, 0), 11 and 12 (shown as `.` and `␣`, R780) in a list of at most 12 rows; undefined past the last numbered row. */
   readonly n: number | undefined;
 }
 
@@ -137,9 +144,22 @@ export class Level {
     this.items.forEach((item, index) => {
       if (!matches(item.label, this.filter)) return;
       const k = out.length + 1;
-      out.push({ item, index, n: k <= 10 && this.cells === undefined ? k : undefined });
+      out.push({ item, index, n: k <= this.numberCap && this.cells === undefined ? k : undefined });
     });
     return out;
+  }
+
+  /** R780: how many rows take a number: all of a fixed list of at most 12 rows, else the first 10. */
+  private get numberCap(): number {
+    return this.items.length <= NUMBERED_MAX ? NUMBERED_MAX : 10;
+  }
+
+  /** R780: how many rows a pad key reaches here (the keypad draws `.` and the space bar live when this is 11 and 12): none in a
+   *  grid (its digits pick cells, Chars) or a search's hits, else the numbered rows of a list, matches only once letters are typed. */
+  get numbered(): number {
+    if (this.columns !== undefined || this.searching || this.cells !== undefined) return 10;
+    const n = this.filter === "" ? this.items.length : this.rows.length;
+    return Math.min(n, this.numberCap);
   }
 
   get current(): MenuItem | undefined {
@@ -338,7 +358,7 @@ export class Sheet {
     return this.levels.slice(-3).map((l) => l.title).join(" › ");
   }
 
-  /** Digit keys and taps: the row numbered `n` (1…10) on screen. A grid has no numbers: a digit does nothing there, but in
+  /** Digit keys and taps: the row numbered `n` (1…10; 11 and 12 in a list of at most 12 rows, R780) on screen. A grid has no numbers: a digit does nothing there, but in
    *  a grid with `digits` (Chars, R725) it picks the n-th cell of the row with the focus (0 is the tenth). */
   pickNumber(n: number): Picked {
     const grid = this.level;

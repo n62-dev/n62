@@ -11,6 +11,8 @@ export const enSheet = {
   "sheet.noMatch": "No match",
   "sheet.fill": "Fill the screen",
   "sheet.unfill": "Back to the small window",
+  "sheet.row11": "Decimal point key",
+  "sheet.row12": "Space key",
 } as const;
 
 export type SheetKey = keyof typeof enSheet;

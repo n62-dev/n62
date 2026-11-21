@@ -63,7 +63,7 @@ describe.skipIf(!raw.some((it) => it.kind === "unit"))("the matrix sheet's order
       expect([rows[8]?.n, rows[8]?.item.id, rows[8]?.item.label, rows[8]?.item.disabled]).toEqual([9, MATRIX_NEW, "New", undefined]); // R190: live in its place
       expect(rows[8]?.item.reason).toBeUndefined();
       expect(rows.slice(9).map((r) => [r.item.id, r.item.label, r.item.value])).toEqual(stored.map((m) => [`matrix:${m.name}`, m.name, `${m.rows}×${m.cols}`]));
-      expect(rows.slice(9).map((r) => r.n)).toEqual(stored.map((_, i) => (i === 0 ? 10 : undefined)));
+      expect(rows.slice(9).map((r) => r.n)).toEqual(stored.map((_, i) => (i < 3 ? 10 + i : undefined))); // R780: rows 11 and 12 take the keys after 0, a list of more than 12 numbers 1…10 only
       // key 9 (New) makes the matrix and the sheet stays (it opens again with the new one); key 0 opens the first matrix's grid
       made = 0;
       expect(sheet.pickNumber(9).kind).toBe("stay");

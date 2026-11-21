@@ -71,12 +71,29 @@ describe("Sheet: picking", () => {
     expect(s.back()).toBe(false);
   });
 
-  it("0 picks the tenth row; rows past the tenth have no number", () => {
+  it("0 picks the tenth row; rows 11 and 12 are numbered 11 and 12 (R780: the keys after 0)", () => {
     const s = new Sheet("t", "Long", () => Array.from({ length: 12 }, (_, i) => item(`i${i + 1}`)));
     const rows = s.level.rows;
-    expect(rows.map((r) => r.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, undefined, undefined]);
+    expect(rows.map((r) => r.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(s.level.numbered).toBe(12);
     expect(s.pickNumber(10)).toMatchObject({ item: { id: "i10" } });
-    expect(s.activate(11)).toMatchObject({ item: { id: "i12" } }); // a tap reaches it
+    expect(s.pickNumber(11)).toMatchObject({ item: { id: "i11" } });
+    expect(s.pickNumber(12)).toMatchObject({ item: { id: "i12" } });
+  });
+
+  it("a list of more than 12 rows numbers 1…10 only; a tap still reaches the rest", () => {
+    const s = new Sheet("t", "Longer", () => Array.from({ length: 13 }, (_, i) => item(`i${i + 1}`)));
+    expect(s.level.rows.map((r) => r.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, undefined, undefined, undefined]);
+    expect(s.level.numbered).toBe(10);
+    expect(s.pickNumber(11)).toEqual({ kind: "stay" });
+    expect(s.activate(12)).toMatchObject({ item: { id: "i13" } });
+  });
+
+  it("a typed filter numbers the matches in order, up to 12 in a list of at most 12 rows", () => {
+    const s = new Sheet("t", "Long", () => Array.from({ length: 12 }, (_, i) => item(`i${i + 1}`)));
+    s.level.filter = "i1";
+    expect(s.level.rows.map((r) => [r.item.id, r.n])).toEqual([["i1", 1], ["i10", 2], ["i11", 3], ["i12", 4]]);
+    expect(s.level.numbered).toBe(4);
   });
 });
 
@@ -228,6 +245,10 @@ describe("sheet keys (docs/05 3.1)", () => {
   it("digits pick 1…9 and 0 = 10, whatever the layer", () => {
     expect(sheetKey(key("d1"), false)).toEqual({ kind: "pick", n: 1 });
     expect(sheetKey(key("d0"), true)).toEqual({ kind: "pick", n: 10 });
+    expect(sheetKey(key("dot"), true, 12)).toEqual({ kind: "pick", n: 11 }); // R780: the keys after 0 pick rows 11 and 12 where they are numbered
+    expect(sheetKey(key("space"), true, 12)).toEqual({ kind: "pick", n: 12 });
+    expect(sheetKey(key("space"), true, 11)).toEqual({ kind: "none" });
+    expect(sheetKey(key("dot"), false)).toEqual({ kind: "none" });
   });
   it("arrows move and go back/forward, Enter picks, Esc and ◀ go back, ⌫ edits the filter; no close-all key (R15c)", () => {
     expect(sheetKey(key("up"), false)).toEqual({ kind: "move", by: -1 });

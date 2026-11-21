@@ -527,7 +527,7 @@
       capsLock={session.capsLock}
       shiftLock={session.shiftLock}
       cas={casKeys} app={shell.app !== null}
-      sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store" } : undefined}
+      sheet={shell.sheet ? { filter: shell.sheet.level.filterable, store: shell.sheet.id === "store", numbered: shell.sheet.level.numbered } : undefined}
       pops={session.settings.look.pops}
       onpress={press}
       oncount={session.taps.touch}

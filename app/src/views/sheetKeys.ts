@@ -6,7 +6,7 @@ import { deadPress, isSelect, modsFor, special, type Mods, type RouteCtx } from 
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
-  /** Digit keys: the row numbered 1…10 (0 picks the tenth). */
+  /** Digit keys: the row numbered 1…10 (0 picks the tenth); the two keys after 0, `.` and the space bar, pick rows 11 and 12 (R780). */
   | { kind: "pick"; n: number }
   | { kind: "enter" }
   /** ▶: open the highlighted submenu. */
@@ -47,10 +47,20 @@ export function letterOf(key: Key): string | undefined {
   return a?.kind === "type" && /^\p{L}$/u.test(a.text) ? a.text : undefined;
 }
 
-/** A key's job in a sheet. `filter`: the open level takes letters (long lists). */
-export function sheetKey(key: Key, filter: boolean): SheetKey {
+/** R780: the row a pad key picks beyond the ten digits: the two keys after 0 (spec/keyboard.yaml row 9), `.` row 11 and the space bar row 12. */
+const KEY_OF_ROW: Readonly<Record<string, number>> = { dot: 11, space: 12 };
+/** R780: the pick of a key after 0 (`.` row 11, the space bar row 12) when the open level numbers that many rows (`numbered`), else undefined. */
+const afterZero = (key: Key, numbered: number): SheetKey | undefined => {
+  const n = KEY_OF_ROW[key.id];
+  return n !== undefined && n <= numbered ? { kind: "pick", n } : undefined;
+};
+
+/** A key's job in a sheet. `filter`: the open level takes letters (long lists); `numbered`: how many rows the open level numbers (Level.numbered). */
+export function sheetKey(key: Key, filter: boolean, numbered = 10): SheetKey {
   const d = DIGIT.exec(key.id);
   if (d) return { kind: "pick", n: Number(d[1]) || 10 };
+  const more = afterZero(key, numbered);
+  if (more) return more;
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
   const p = key.actions.primary;
@@ -77,9 +87,11 @@ const FIND_PASS: readonly string[] = ["menu", "apps", "slot", "home", "cas", "sw
  * category, ◀ and Esc go back a level (the top closes), ⌫ deletes. `shift`: Shift is on for this tap; `empty`: the
  * open level's query is empty.
  */
-export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empty: boolean): SheetKey {
+export function findKey(key: Key, layer: Layer | undefined, shift: boolean, empty: boolean, numbered = 10): SheetKey {
   const fixed = BY_ID[key.id];
   if (fixed) return fixed;
+  const more = empty && layer !== "alpha" && layer !== "shift" && !(layer === undefined && shift) ? afterZero(key, numbered) : undefined; // R780: `.` and the space bar pick rows 11 and 12 of the empty query's list
+  if (more) return more;
   const p = key.actions.primary;
   if (p?.kind === "special" && FIND_PASS.includes(p.name)) return { kind: "pass" };
   const own = p?.kind === "type" && [...p.text].length === 1 ? p.text : undefined;
@@ -124,7 +136,7 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
   const level = sheet.level;
   const find = sheet.id === "find";
   let k: SheetKey;
-  if (find) k = findKey(key, layer, c.session.shift, level.filter === "");
+  if (find) k = findKey(key, layer, c.session.shift, level.filter === "", level.numbered);
   else if (sheet.id === "store") {
     // R281: a key that types a letter on the line types the same letter into the name (x alone, Alpha + Vars A, lower case in CAS,
     // R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to the line (`line`) with its
@@ -132,7 +144,7 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
     const m = mods ?? modsFor(c, layer);
     k = storeKey(key, m.shift, m.alpha, c.casKeys, level.filter === "");
     if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
-  } else k = layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", level.filterable) : sheetKey(key, level.filterable);
+  } else k = layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", level.filterable) : sheetKey(key, level.filterable, level.numbered);
   // in Find a one-shot Shift is used up by the key it types (its lock stays); elsewhere a sheet leaves it as it is
   if (find && c.session.shift && !c.session.shiftLock) c.session.clearModifiers();
   switch (k.kind) {

@@ -25,6 +25,14 @@ describe("findKey: every key types its letter, digits pick only on an empty quer
     expect(findKey(key("d0"), undefined, false, true)).toEqual({ kind: "pick", n: 10 });
     expect(findKey(key("d0"), undefined, false, false)).toEqual({ kind: "letter", ch: "0" });
   });
+  it("R780: . and the space bar pick rows 11 and 12 of an empty query's list that numbers them, else they stay as they were", () => {
+    expect(findKey(key("dot"), undefined, false, true, 12)).toEqual({ kind: "pick", n: 11 });
+    expect(findKey(key("space"), "primary", false, true, 12)).toEqual({ kind: "pick", n: 12 });
+    expect(findKey(key("dot"), undefined, false, true, 10)).toEqual({ kind: "none" });
+    expect(findKey(key("space"), undefined, false, true, 11)).toEqual({ kind: "none" });
+    expect(findKey(key("dot"), undefined, false, false, 12)).toEqual({ kind: "none" }); // a typed query: its hits have no numbers
+    expect(findKey(key("dot"), "shift", false, true, 12)).toEqual({ kind: "letter", ch: "." });
+  });
   it("a flick down types the letter on any key, digits included", () => {
     expect(findKey(key("d9"), "alpha", false, true)).toEqual({ kind: "letter", ch: "s" });
   });
