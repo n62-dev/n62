@@ -496,10 +496,9 @@
       {:else}
         <p class="loading">{t("apps.loading")}</p>
       {/if}
+      <!-- R774: a notice ("Copied") draws over the history's foot, so no row moves. R776: the name prompt's hint stays in the flow under the history (it is up as long as the prompt, and covers no row); a notice during a prompt takes the hint's place -->
+      {#if clip?.notice || shell.prompt?.hint}<div class="notice" class:over={!shell.prompt?.hint} role="status" data-testid={clip?.notice ? "notice" : "prompt-hint"}>{clip?.notice ?? shell.prompt?.hint}</div>{/if}
     </div>
-
-    {#if clip?.notice}<div class="notice" role="status" data-testid="notice">{clip.notice}</div>
-    {:else if shell.prompt?.hint}<div class="notice" role="status" data-testid="prompt-hint">{shell.prompt.hint}</div>{/if}
 
     <!-- R11, R276: the picked row's actions, Store ▶ and Copy › (docs/05 3.3); shown only while a row is picked (RowBar.svelte, with the clipboard code); folded, its why line alone (R724: the buttons are in the folded bar) -->
     {#if clip && rowBar && shell.app === null && picked !== null && session.items[picked]}
@@ -658,7 +657,6 @@
     color: var(--muted);
   }
   .notice {
-    position: relative;
     align-self: center;
     margin: 0 var(--sp-3) var(--sp-1);
     padding: var(--sp-15) var(--sp-35);
@@ -667,6 +665,16 @@
     border: var(--stroke-thin) solid var(--line);
     color: var(--text);
     font-size: var(--fs-note);
+  }
+  .notice.over {
+    position: absolute;
+    z-index: 3; /* over the rows, under a sheet (z-index 5) and the picked row's bar (4) */
+    left: 50%;
+    bottom: var(--sp-1);
+    translate: -50%;
+    max-width: calc(100% - 2 * var(--sp-3));
+    pointer-events: none;
+    margin: 0;
   }
   .entry {
     display: flex;

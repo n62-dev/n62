@@ -4,6 +4,7 @@
   import type { AppShell } from "../apps/shell.svelte.ts";
   import { t } from "../i18n/index.ts";
   import { ICONS } from "./icons.ts";
+  import { pressFlag } from "../input/pressFlag.ts";
 
   // R782 (a start-chunk cut): the bay's view icons in an open app, out of views/StatusLine.svelte (which is in the start chunk);
   // this part comes in with the shell's app-opening chunk (apps/shellOpen.ts), so the bay is drawn once an app is opening.
@@ -23,6 +24,7 @@
       type="button"
       class="tab"
       role="tab"
+      use:pressFlag
       data-testid="tab-{tab.view}"
       aria-selected={shell.view === tab.view}
       aria-label={tab.name}
@@ -71,6 +73,13 @@
     width: calc(100% - 2 * var(--sp-05));
     height: var(--tab-h);
     border-radius: calc(var(--radius-s) - var(--stroke-thin));
+  }
+  /* R774: a pressed view fills its face, inside the track (the bar's [data-down] rule, StatusLine.svelte, would fill the whole button) */
+  :global(.bar) .tab:global([data-down]) {
+    background: none;
+  }
+  :global(.bar) .tab:not([aria-selected="true"]):global([data-down]) .face {
+    background: var(--key-nav);
   }
   .tab[aria-selected="true"] {
     color: var(--text);

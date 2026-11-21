@@ -76,6 +76,11 @@ const prepare = async (page: Page, before: string): Promise<void> => {
   if (before === "mode") {
     await page.getByTestId("chip-format").tap();
     await expect(page.getByTestId("menu")).toBeVisible();
+    await expect(page.locator("[data-down]")).toHaveCount(0); // (R774: the chip's own press look shows out its 80 ms first)
+    await page.evaluate(() => {
+      const { log } = (window as unknown as { __pv: Pf }).__pv;
+      log.downs.length = log.offs.length = 0; // (and its down and off are not the target's)
+    });
   }
 };
 

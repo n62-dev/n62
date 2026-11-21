@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R41: the names a screen reader gets for a key: its aria-label (what a tap gives in the layer that is on) and its
-// aria-description (the other layers). The chunk of its own, loaded after the first paint (keyNamesLoader.svelte.ts).
+// aria-description (the other layers), and the press dot of the round pad (placeDot). The chunk of its own, loaded after the first paint (keyNamesLoader.svelte.ts).
 import { enKeyNames, type KeyNameKey } from "../i18n/enKeyNames.ts";
 import { legend } from "../i18n/index.ts";
 import { keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
@@ -65,4 +65,16 @@ export function labelKeys(pad: HTMLElement, keys: readonly Key[], shift: boolean
     if (description) el.setAttribute("aria-description", description);
     else el.removeAttribute("aria-description");
   }
+}
+
+/**
+ * R774: the dot behind a pressed arrow of the round pad: `--dot-at` on the pad is the arrow glyph's centre as an offset from the
+ * round pad's centre (Keypad.svelte draws the dot). Here with the key names, which come after the first paint, so the start chunk
+ * (at its pin) carries none of it; an arrow pressed before they are in shows no dot (the CSS keeps it hidden until `--dot-on` is set), only its full opacity.
+ */
+export function placeDot(pad: HTMLElement | undefined, zone: HTMLElement | undefined): void {
+  const [m, t] = [zone?.querySelector(".main"), pad?.querySelector(".trackpad")].map((e) => e?.getBoundingClientRect());
+  if (!m || !t || !pad) return;
+  pad.style.setProperty("--dot-at", `${m.x + (m.width - t.width) / 2 - t.x}px ${m.y + (m.height - t.height) / 2 - t.y}px`);
+  pad.style.setProperty("--dot-on", "visible");
 }

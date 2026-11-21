@@ -266,6 +266,7 @@
     if (inert) hidePop(); // (the next key's down still replaces the last key's pop at once)
     else {
       flag.light(el);
+      if (typeof target === "object" && isPadKey(target)) keyNames()?.placeDot(padEl, el); // R774 (the code comes with the key names: after the first paint)
       showPop(target, el);
       if (target) ontouch();
     }
@@ -631,6 +632,24 @@
   .key[data-zone="true"]:global([data-down])::after {
     content: none;
   }
+  /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
+     it: placeDot (keyNames.ts) sets --dot-at, the arrow's offset from the pad's centre */
+  .trackpad {
+    position: relative;
+    overflow: hidden;
+  }
+  .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: var(--pad-dot);
+    height: var(--pad-dot);
+    margin: calc(var(--pad-dot) / -2);
+    translate: var(--dot-at, 0 0);
+    visibility: var(--dot-on, hidden); /* placeDot sets both: before it has run (an arrow pressed before the key names are in) no dot, not one on the hub */
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--key-text) 32%, transparent);
+  }
   /* a key that does nothing in this layer (and only in this layer) is dimmed, still readable */
   .key[data-dead="true"] .main {
     color: var(--key-text-dead);
@@ -687,7 +706,7 @@
   .key[data-key="shift"][data-locked="true"],
   .key[data-key="alpha"][data-locked="true"] {
     outline: var(--stroke-thick) solid var(--alpha);
-    outline-offset: var(--sp-05);
+    outline-offset: calc(-1 * var(--stroke-thick)); /* R774: inside the key (it crossed the 4 px gap and left the screen); R729 replaces it with a fill */
   }
   .key[data-key="shift"][data-locked="true"] {
     outline-color: var(--shift);
