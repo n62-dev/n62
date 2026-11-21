@@ -8,6 +8,7 @@ const route = await import("./route.ts");
 const { keyboard } = await import("./keyboard.ts");
 const { sheetChunk } = await import("../views/sheetView.svelte.ts");
 const sheetKeys = await import("../views/sheetKeys.ts");
+const { Sheet } = await import("../views/sheet.svelte.ts");
 
 type Mods = { shift: boolean; alpha: boolean };
 const PLAIN: Mods = { shift: false, alpha: false };
@@ -45,7 +46,7 @@ function ctx(opts: { statuses?: string[]; app?: boolean; showsEntry?: boolean; f
     loading: () => null,
     backspace: () => (log.push("backspace"), false),
   };
-  const sheet = { id: "menu", level, disarm() {}, goKey: () => false, pickKey: () => undefined };
+  const sheet = { id: "menu", level, disarm() {}, goKey: () => false, pickKey: () => undefined, takes: Sheet.prototype.takes, deadKey: Sheet.prototype.deadKey };
   const shell = {
     app: opts.app ? "plot" : null,
     sheet: opts.filter === undefined ? null : sheet,

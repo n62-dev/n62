@@ -65,10 +65,10 @@ export interface RouteCtx {
 /** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml). */
 const STORE_ARROW = "\\blacktriangleright";
 /** Select, Deselect (R279: they act on the entry line only) or Copy (R727: it leaves the selection and its Select chain as they are). */
-const isSelect = (a?: ActionBody): a is { kind: "special"; name: "selectGrow" | "selectShrink" | "copy" } => a?.kind === "special" && /^(select|copy)/.test(a.name);
-const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
+export const isSelect = (a?: ActionBody): a is { kind: "special"; name: "selectGrow" | "selectShrink" | "copy" } => a?.kind === "special" && /^(select|copy)/.test(a.name);
+export const modsFor = (c: RouteCtx, layer: Layer | undefined): Mods =>
   layer === undefined ? { shift: c.session.shift, alpha: c.session.alpha } : { shift: layer === "shift", alpha: layer === "alpha" };
-const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");
+export const layerOf = (m: Mods): Layer => (m.alpha ? "alpha" : m.shift ? "shift" : "primary");
 
 const NAV: Record<string, NavDir> = {
   moveUp: "up",
@@ -291,18 +291,8 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   return false;
 }
 
+const NEEDS_LINE = /^(select|paste|find|help|matrix|vars|tmpl|relations|symbols|chars)/;
 const isStore = (a: ActionBody): boolean => a.kind === "insert" && a.latex === STORE_ARROW;
-
-/** Does the open sheet take a tap on `key` for a job of its own, before its usual key reading (sheetPress)? Without acting: a free
- *  key whose slot the level lists (R4b), a key at a grid cell's place (R18: pickKey), the matrix grid's cells (R189). */
-function sheetTakes(c: RouteCtx, key: Key): boolean {
-  const level = c.shell.sheet?.level;
-  if (!level) return false;
-  if (level.grid) return true;
-  const layer = layerOf(modsFor(c, undefined));
-  if (key.user && level.items.some((x) => x.slot?.key === key.id && x.slot.layer === layer)) return true;
-  return level.columns !== undefined && !level.digits && level.items.some((x) => x.pick?.key === key.id);
-}
 
 /** R777 (docs/05 3.7): the one rule of a press that does nothing by the state it lands in, asked without acting. `run` and
  *  `sheetPress` call c.dead() where it says true, and Keypad asks it at finger-down (quietDown), so such a press gets no look,
@@ -314,37 +304,12 @@ function sheetTakes(c: RouteCtx, key: Key): boolean {
  *  unit pad's own dead presses are not asked (its cells take keys before run: three pulses, R112's form, docs/05 3.7). */
 export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefined)): boolean {
   const { session, shell, entry } = c;
-  const sheet = shell.sheet;
-  if (sheet) {
-    const keys = sheetChunk.keys;
-    const level = sheet.level;
-    if (!keys || level.loading() || sheet.id === FIND_SHEET || sheet.id === STORE_SHEET || sheetTakes(c, key)) return false;
-    return level.filter === "" && keys.sheetKey(key, level.filterable).kind === "backspace";
-  }
+  if (shell.sheet) return sheetChunk.keys !== null && shell.sheet.deadKey(key, layerOf(modsFor(c, undefined)));
   const action = actionFor(key, mods.shift, mods.alpha, session.settings.entry === "line", c.casKeys);
   if (!action) return false;
   const app = shell.app !== null;
   const noLine = app && !shell.showsEntry; // Plot
-  if (action.kind === "special") {
-    switch (action.name) {
-      case "fmt":
-        return app || !targetRow(session.items, session.items[c.picked ?? -1]);
-      case "selectGrow":
-      case "selectShrink":
-      case "paste":
-      case "find":
-      case "help":
-      case "matrix":
-      case "vars":
-      case "tmpl":
-      case "relations":
-      case "symbols":
-      case "chars":
-        return noLine; // (they open a sheet or edit the line, and Plot has none)
-      default:
-        return false;
-    }
-  }
+  if (action.kind === "special") return action.name === "fmt" ? app || !targetRow(session.items, session.items[c.picked ?? -1]) : noLine && NEEDS_LINE.test(action.name); // (the rest open a sheet or edit the line, and Plot has none)
   if (noLine) return action.kind !== "cmd" || NAV[action.name] === undefined;
   if (app) return action.kind === "insert" && (action.latex === ANS_CHIP || action.units === true);
   const items = session.items;
@@ -355,11 +320,11 @@ export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefin
 }
 
 /** Keypad at finger-down (R777): is a tap on `key` a dead press, to be given no look, pop or click? `drawnDead`: the key is drawn
- *  dead (its layer, or the sheet's reading); the open sheet still acts on it when it takes the key (sheetTakes). Otherwise the rule
+ *  dead (its layer, or the sheet's reading); the open sheet still acts on it when it takes the key (Sheet.takes). Otherwise the rule
  *  (deadPress), unless the press would wait (a load, the field to come, keys queued: false leaves it its feedback) or a name prompt may take it. */
 export function quietDown(c: RouteCtx, key: Key, drawnDead: boolean): boolean {
   const { shell, entry } = c;
-  if (drawnDead) return !(shell.sheet && sheetTakes(c, key));
+  if (drawnDead) return !shell.sheet?.takes(key, layerOf(modsFor(c, undefined)));
   if (c.sheetLoad !== null || shell.loading !== null || entry.fieldPending || c.waiting.length > 0 || shell.prompt) return false;
   return deadPress(c, key);
 }
@@ -384,68 +349,8 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
     shell.picked(byPlace);
     return true;
   }
-  const find = sheet.id === FIND_SHEET;
   const keys = sheetChunk.keys; // (an open sheet has it: sheetUndrawn above holds the keys until the chunk is in)
-  if (!keys) return false;
-  const k = find
-    ? keys.findKey(key, layer, c.session.shift, level.filter === "")
-    : sheet.id === STORE_SHEET
-      ? storeKey(c, keys, key, layer, mods ?? modsFor(c, layer))
-      : layer === "alpha" || layer === "shift"
-      ? keys.sheetFlick(key, layer === "alpha", level.filterable)
-      : keys.sheetKey(key, level.filterable);
-  // in Find a one-shot Shift is used up by the key it types (its lock stays); elsewhere a sheet leaves it as it is
-  if (find && c.session.shift && !c.session.shiftLock) c.session.clearModifiers();
-  switch (k.kind) {
-    case "move":
-      level.move(k.by);
-      return true;
-    case "pick":
-      shell.picked(sheet.pickNumber(k.n));
-      return true;
-    case "enter":
-      shell.picked(sheet.enter());
-      return true;
-    case "right":
-      shell.picked(sheet.right());
-      return true;
-    case "left":
-      if (!sheet.left() && !sheet.back()) shell.closeSheet();
-      return true;
-    case "back":
-      if (!sheet.back()) shell.closeSheet();
-      return true;
-    case "letter":
-      level.type(k.ch);
-      return true;
-    case "backspace":
-      // in Find ⌫ on an empty query goes back from a category to the list of categories; elsewhere nothing to delete is a dead
-      // press (R770; deadPress)
-      if (find) {
-        if (!level.backspace()) sheet.back();
-      } else if (deadPress(c, key)) c.dead();
-      else level.backspace();
-      return true;
-    case "line":
-      // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
-      // R281f1: what was typed into the filter goes on the line first, one character at a time as typeLetter types it
-      // (digits too), so the key meets the line it met before the sheet (x, Shift + space is x_)
-      for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
-      shell.closeSheet();
-      return false;
-    case "none":
-      c.dead(); // R770: a key the sheet does not use is dead (docs/05 3.7); the sheet stays
-      return true;
-    case "pass": {
-      // read by what the key is, not by the layer: ☰, the place name and Tmpl toggle their sheet, a control that
-      // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
-      const p = key.actions.primary;
-      if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
-      if (p.name !== "menu" && p.name !== "apps" && p.name !== "slot" && p.name !== "tmpl") shell.closeSheet();
-      special(c, p.name);
-      return true;
-    }
-  }
+  return keys ? keys.sheetAct(c, key, layer, mods) : false;
 }
 
 // Keys pressed while an app's code is loading wait for it, so nothing typed is lost (like MathLive's queue). Each
@@ -508,18 +413,6 @@ function replay(c: RouteCtx): void {
     else if ("letter" in w) typeLetter(c, w.letter);
     else if (!(c.shell.sheet && sheetPress(c, w.key, w.layer, w.mods)) && !sheetChunk.pad?.route(c, w.key, w.mods)) run(c, w.key, w.mods); // a sheet or the unit pad opened meanwhile takes its keys
 }
-
-/** R281: a key in the store sheet (sheetKeys.ts storeKey). A key that types a letter on the line types the same letter
- *  into the name (x alone, Alpha + Vars A, lower case in CAS, R58; a flick as its layer), so the typed path stores as
- *  before; a key that types no name goes on to the line (`line`) with its Shift or Alpha, and one the sheet takes uses a
- *  one-shot Shift or Alpha up, as on the line. `m`: the modifiers the key was pressed with (a queued key's, R8). */
-function storeKey(c: RouteCtx, keys: NonNullable<typeof sheetChunk.keys>, key: Key, layer: Layer | undefined, m: Mods): SheetKey {
-  const k = keys.storeKey(key, m.shift, m.alpha, c.casKeys, c.shell.sheet?.level.filter === "");
-  if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
-  return k;
-}
-/** The store sheet's id (views/storeSheet.svelte.ts STORE_SHEET; not imported: that module is a lazy chunk). */
-const STORE_SHEET = "store";
 
 const SHEET_KEYS: readonly string[] = OPENS_SHEET.slice(2); // all but settings and mode (OPENS_SHEET lists those two first)
 /** The open sheet is Find (R4a): its keys follow docs/04 3.7 (sheetKeys.ts findKey). */

@@ -2,6 +2,7 @@
 // What a key does while a sheet is open (docs/05 3.1 with section 7). Shift and Alpha are ignored for picking: a key
 // is read by what it is, never by the layer, so no key goes through the sheet into the entry line (rule 4).
 import { actionFor, type Key, type Layer } from "../keyboard/keyboard.ts";
+import { deadPress, isSelect, modsFor, special, type Mods, type RouteCtx } from "../keyboard/route.ts";
 
 export type SheetKey =
   | { kind: "move"; by: 1 | -1 }
@@ -112,4 +113,76 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
   if (d && !layered) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
   const k = layered ? undefined : sheetKey(key, true);
   return k && k.kind !== "none" ? k : { kind: "line" };
+}
+
+/** What a key does in the open sheet (route.ts sheetPress, once the grid, a free key's slot and a cell's place have not taken it; here, in
+ *  the sheet's own code, so the start chunk does not carry it). `layer`: the one a gesture chose; `mods`: the modifiers a queued key was
+ *  pressed with (R8). True: the key was used up. */
+export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?: Mods): boolean {
+  const shell = c.shell;
+  const sheet = shell.sheet!;
+  const level = sheet.level;
+  const find = sheet.id === "find";
+  let k: SheetKey;
+  if (find) k = findKey(key, layer, c.session.shift, level.filter === "");
+  else if (sheet.id === "store") {
+    // R281: a key that types a letter on the line types the same letter into the name (x alone, Alpha + Vars A, lower case in CAS,
+    // R58; a flick as its layer), so the typed path stores as before; a key that types no name goes on to the line (`line`) with its
+    // Shift or Alpha, and one the sheet takes uses a one-shot Shift or Alpha up, as on the line
+    const m = mods ?? modsFor(c, layer);
+    k = storeKey(key, m.shift, m.alpha, c.casKeys, level.filter === "");
+    if (k.kind !== "line" && layer === undefined) c.session.clearModifiers();
+  } else k = layer === "alpha" || layer === "shift" ? sheetFlick(key, layer === "alpha", level.filterable) : sheetKey(key, level.filterable);
+  // in Find a one-shot Shift is used up by the key it types (its lock stays); elsewhere a sheet leaves it as it is
+  if (find && c.session.shift && !c.session.shiftLock) c.session.clearModifiers();
+  switch (k.kind) {
+    case "move":
+      level.move(k.by);
+      return true;
+    case "pick":
+      shell.picked(sheet.pickNumber(k.n));
+      return true;
+    case "enter":
+      shell.picked(sheet.enter());
+      return true;
+    case "right":
+      shell.picked(sheet.right());
+      return true;
+    case "left":
+      if (!sheet.left() && !sheet.back()) shell.closeSheet();
+      return true;
+    case "back":
+      if (!sheet.back()) shell.closeSheet();
+      return true;
+    case "letter":
+      level.type(k.ch);
+      return true;
+    case "backspace":
+      // in Find ⌫ on an empty query goes back from a category to the list of categories; elsewhere nothing to delete is a dead
+      // press (R770; deadPress)
+      if (find) {
+        if (!level.backspace()) sheet.back();
+      } else if (deadPress(c, key)) c.dead();
+      else level.backspace();
+      return true;
+    case "line":
+      // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
+      // R281f1: what was typed into the filter goes on the line first, one character at a time as typeLetter types it
+      // (digits too), so the key meets the line it met before the sheet (x, Shift + space is x_)
+      for (const ch of level.filter) c.entry.run({ kind: "type", text: ch });
+      shell.closeSheet();
+      return false;
+    case "none":
+      c.dead(); // R770: a key the sheet does not use is dead (docs/05 3.7); the sheet stays
+      return true;
+    case "pass": {
+      // read by what the key is, not by the layer: ☰, the place name and Tmpl toggle their sheet, a control that
+      // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
+      const p = key.actions.primary;
+      if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
+      if (p.name !== "menu" && p.name !== "apps" && p.name !== "slot" && p.name !== "tmpl") shell.closeSheet();
+      special(c, p.name);
+      return true;
+    }
+  }
 }
