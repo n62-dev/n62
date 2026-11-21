@@ -114,10 +114,13 @@ describe("Mode has no key (R723); Shift + Fmt is reserved (Shift + Vars is Chars
     press("deselect", "shift");
     expect(log.some((l) => l.startsWith("mode"))).toBe(false);
   });
-  test("Fmt's tap still cycles the last result's format", () => {
-    const { press, log } = ctx();
+  test("Fmt's tap still cycles the last result's format; with no row to take it is a dead press (deadPress)", () => {
+    const { press, log } = ctx([done("1")]);
     press("fmt");
     expect(log).toEqual(["cycleFormat"]);
+    const none = ctx();
+    none.press("fmt");
+    expect(none.log).toEqual(["dead"]);
   });
   for (const id of ["fmt"])
     test(`Shift + ${id} is dead and changes nothing on the line: no action, no legend`, () => {
