@@ -134,6 +134,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **One-line mode:** `^` is literal and the exponent is the next signed factor. **Results are insertable**, bracketed when a sum. **Default angle mode: radians.**
 - **R98, Clear and Delete:** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112: a dead key gives three pulses,** the touch's at finger-down, then its double (docs/05 3.7).
+  - **R777's question (pass 223): one rule at finger-down, not a later click and not more dimmed keys.** The look, pop and click stay at finger-down; a key drawn dead, or a press that one predicate in route.ts says is dead (route() takes its dead branches through it, so no second copy), gets only the double pulse; a press only the route's later steps find dead (the unit pad) keeps R112's three pulses. Would change if: the owner hears a click on a key that does nothing.
 - **R144, R146, changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet and drive it; a key it does not use is dead and the sheet stays. Rule: docs/05 3.1. Archived.
 - **R157, the mark:** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is the colour logo (R745), 22 × 22 in the 30 × 22 tile, never cropped. Archived. Would change if: the mark cannot be seen on a device.
 - **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.
@@ -185,6 +186,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R87:** no ISC or UIUC text in `LICENSES/`: yaml is build-time only, Emscripten's runtime ships under MIT (THIRD_PARTY.md). Would change if: a shipped part needs another licence's text.
 - **G116, the sweep oracle:** on atanh's cut it takes Giac's side (+π/2·i for a real x > 1), and an argument on a cut within noise is a skip. Would change if: a case shows Giac off the textbook side.
 - **Start chunk room (owner, 2026-11-09):** a package over the pin raises it as docs/04 8.3 says; one over the 63 kB budget gets a cut, never an allowance. Would change if: the owner moves the budget.
+  - **A cut in a feature package (R782, pass 223):** the budget's cut belongs to the package that needs it, not to scope creep; a cut whose chunk can fail to load leaves stored data unwritten, with a test (R782's stored log check).
 - **R163, Key pop-ups (ron, run 763):** one switch for both bubbles over the keypad; a look stored before R163 has it on. Would change if: the owner wants the pop and the flick bubble apart.
 - **R53, R159:** Counters: Shift and Alpha share a row (seven rows); `uses` is not backed up. Would change if: the owner wants the counts apart.
 - **G618 (run 1361):** Σ to ∞ is checked against its terms only for a term rational in k, or (−1)^k times one, poles left of start + 100. Archived. Would change if: the owner wants every term estimated.
