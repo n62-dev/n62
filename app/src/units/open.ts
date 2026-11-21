@@ -194,10 +194,12 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
       else close();
     });
   };
+  let untap = (): void => {};
   const close = (): void => {
     if (current?.view !== view) return;
     current = null;
     unlayer();
+    untap();
     view.keep();
     unitPad.model = null;
     unitPad.on = () => {};
@@ -212,6 +214,21 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   window.n62.unitView = current;
   // every press keeps the focus on the view (as the entry line's keys keep it on the line), for the hardware keys
   const keep = (): void => element.focus({ preventScroll: true });
+  /** R801: a tap on the screen while the view is up (no sheet over it): on a slot's box it makes that slot the active one
+   *  (refused as ◀ ▶ is, view.goTo); wherever it lands the focus comes back to the view, so the next hardware key goes
+   *  to the view. A hold stays R797's: it gives no click. */
+  const tapped = (ev: MouseEvent): void => {
+    if (current?.view !== view || c.shell.sheet !== null) return;
+    if (!(ev.target instanceof Element) || !ev.target.closest(".screen")) return; // (the pads and bars keep their own paths)
+    if (ev.composedPath().includes(mf)) {
+      const id = slotAt(mf, view.ids, ev.clientX, ev.clientY);
+      if (id !== undefined) view.goTo(id);
+    }
+    keep();
+    setTimeout(() => current?.view === view && c.shell.sheet === null && keep(), 0); // (MathLive moves the focus on its own pointer events)
+  };
+  document.addEventListener("click", tapped, { capture: true });
+  untap = () => document.removeEventListener("click", tapped, { capture: true });
   unitPad.on = (e) => {
     view.apply(e);
     if (current?.view === view && e.do !== "find") keep();
@@ -244,8 +261,24 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   element.focus();
 }
 
-/** The field's value with its prompts locked: MathLive edits no prompt itself (and gives a tap on the field no focus);
- *  setPromptValue still writes. Set once at the start and again when the end slot goes on or off (R349). */
+/** R801: the slot whose box holds the point, or none. The box is found by geometry (MathLive draws one `.ML__prompt` box per
+ *  prompt) but its slot by the model, never by the order of the boxes in the shadow DOM: a stacked layout (a fraction)
+ *  draws its boxes bottom to top. The offset MathLive gives at the box's centre lies in the prompt's range or just after
+ *  its atom (probe, R801: [start, end + 1]); the slot whose window is nearest to it is the box's. */
+function slotAt(mf: MathfieldElement, ids: readonly string[], x: number, y: number): string | undefined {
+  const box = [...(mf.shadowRoot?.querySelectorAll(".ML__prompt") ?? [])]
+    .map((b) => b.getBoundingClientRect())
+    .find((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
+  const at = box ? mf.getOffsetFromPoint(box.left + box.width / 2, box.top + box.height / 2) : -1;
+  const gap = (id: string): number => {
+    const r = mf.getPromptRange(id);
+    return r ? Math.max(r[0] - at, at - r[1] - 1, 0) : Infinity;
+  };
+  return at < 0 ? undefined : ids.reduce((a, b) => (gap(b) < gap(a) ? b : a));
+}
+
+/** The field's value with its prompts locked: MathLive edits no prompt itself (a tap on it still moves the focus onto the
+ *  field, and a tap makes a slot the active one through `slotAt`, R801); setPromptValue still writes. Set once at the start and again when the end slot goes on or off (R349). */
 function lockedValue(mf: MathfieldElement, latex: string, ids: readonly string[]): void {
   mf.value = latex;
   for (const id of ids) mf.setPromptState(id, "undefined", true);

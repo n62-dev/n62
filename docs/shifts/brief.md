@@ -71,7 +71,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885n | R779 the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
 | 885o | R780 every menu row has a number the keypad reaches, past row 10 too (measure first) | ron, Sonnet | `p1/ron-rowsnumbers` | R777 |
 | 885zc | R820 while a sheet takes letters, the faces and the pop show the letter typed (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfaces` | R780 |
-| 885y | [R801](packages/R801.md) a tap on a unit slot makes it active; the keys stay with the view (B4) | ron, Sonnet | `p1/ron-unittap` | R780 |
+| 885y | R801 a tap on a unit slot makes it active; the keys stay with the view (B4) | ron, Sonnet | `p1/ron-unittap` | R780 |
 | 885z | [R802](packages/R802.md) the Math key reads Find (B2) | ron, Sonnet | `p1/ron-findface` | – |
 | 885za | [R803](packages/R803.md) the unit pad's powers read x², x³, x⁴, x⁻¹, √x (B3) | ron, Sonnet | `p1/ron-unitpowers` | – |
 | 885zb | [R804](packages/R804.md) Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Sonnet | `p1/ron-storeline` | – |
