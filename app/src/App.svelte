@@ -52,7 +52,7 @@
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),
-    putInput,
+    putInput: (item, stay) => recallTapped(item, true, stay),
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -336,8 +336,7 @@
 
   /** The picked history row (P4: Up on an empty line; route.ts walks it; R147: a first tap on a row). */
   let picked = $state<number | null>(null);
-  /** R832: what the picked row has lit: a tap on its input or result lights that half, anything else (a key, a tap elsewhere on
-   *  it) the whole row. Set with `pick`; a key's pick (the ctx below) resets it to the whole row. */
+  /** R832: what the picked row has lit: a tap's half, else the whole row (`pick`; a key's pick resets it, ctx below). */
   let pickedPart = $state<PickPart>("row");
   /** R147: a tap picks a row (History draws no note row as one, so every index it gives can be picked; null drops
    *  the pick); its buttons come with the clipboard code, as after ▲. */
@@ -401,22 +400,15 @@
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
   /** A second tap on a picked input row (R147): its entry goes on an empty line; text on the line stays and the pick is
-   *  dropped (R273, owner 2026-11-09), as for Enter on a pick (keyboard/route.ts). */
-  function recallTapped(item: HistoryItem): void {
+   *  dropped (R273, owner 2026-11-09), as for Enter on a pick (keyboard/route.ts). R832, `caret` (Enter or Store ▶ on a lit input):
+   *  text on the line takes the input at the caret; `stay`: Store ▶ keeps a folded keypad down. */
+  function recallTapped(item: HistoryItem, caret = false, stay = false): void {
     edited = true;
     picked = null;
     shell.prompt?.cancel();
-    if (entry.empty) onLine(item, true); // R298: before the field the queued keys are text too (entry.value is not the line yet)
-  }
-  /** R832: a row's input onto the line (Enter on a lit input, a second tap on it: the recall; Store ▶: `stay`). An empty line takes it as
-   *  the recall, with its chips and angle; text on the line keeps it and the input goes in at the caret. */
-  function putInput(item: HistoryItem, stay = false): void {
-    edited = true;
-    picked = null;
-    shell.prompt?.cancel();
-    if (entry.empty) return onLine(item, true, !stay, false, stay);
-    if (!stay) folded = false;
-    entry.insert(session.input(item));
+    if (entry.empty) onLine(item, true, !stay, false, stay); // R298: before the field the queued keys are text too (entry.value is not the line yet)
+    else if (caret) entry.insert(session.input(item));
+    if (caret && !stay) folded = false;
   }
   /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
    *  as Delete while folded (R53). */
@@ -440,7 +432,7 @@
     enter,
     insertResult: (item) => onLine(item, false),
     recallRow: (item) => onLine(item, true),
-    insertInput: (item) => putInput(item),
+    insertInput: (item) => recallTapped(item, true),
     goTo,
     clearKey,
     openSettings,
@@ -687,13 +679,6 @@
     border: var(--stroke-thin) solid var(--line);
     color: var(--text);
     font-size: var(--fs-note);
-  }
-  /* R832: a notice that names a copy ("Copied: 0.333 333 333 333") stays on one line; a longer text is ellipsed */
-  .notice.one {
-    max-width: calc(100% - 2 * var(--sp-3));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   .entry {
     display: flex;

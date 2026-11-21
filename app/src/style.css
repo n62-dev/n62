@@ -246,3 +246,11 @@ body {
     visibility: hidden;
   }
 }
+
+/* R832: a notice that names a copy ("Copied: 0.333 333 333 333", App.svelte) stays on one line; a longer text is ellipsed */
+.notice.one {
+  max-width: calc(100% - 2 * var(--sp-3));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
