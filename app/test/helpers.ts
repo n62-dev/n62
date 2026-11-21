@@ -18,7 +18,9 @@ async function statusTap(page: Page, id: string): Promise<void> {
   if (id === "@home") return page.getByTestId("tab-home").tap();
   if (id === "@cas") {
     // R782: slot 2 holds CAS by default (one tap); when it holds an app, CAS is APP▾ › CAS. A tap on slot 2 while CAS is current is the sheet, never taken here.
-    if ((await page.evaluate(() => window.n62.session.settings.barSlot)) === "cas") return page.getByTestId("tab-slot").tap();
+    const now = await page.evaluate(() => ({ slot: window.n62.session.settings.barSlot, here: window.n62.shell.app === null && window.n62.session.view === "cas" }));
+    if (now.here) return; // already in CAS (a relaunch keeps the view): a second tap on slot 2 would open its sheet
+    if (now.slot === "cas") return page.getByTestId("tab-slot").tap();
     return fromApps("cas");
   }
   if (id === "@mode") {

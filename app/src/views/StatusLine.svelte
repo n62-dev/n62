@@ -94,8 +94,8 @@
   };
 </script>
 
-  <!-- the bar (docs/05 3.2, R722): on the keypad's top edge, 28 px, its targets its full height. Apps ▾ (in an app its
-       glyph ▾), the Home and CAS tabs, the hairline, the bay (the format and digits chip in Home and CAS, an app's view icons), the ⇧ α slot, the angle, ☰; the order
+  <!-- the bar (docs/05 3.2, R722): on the keypad's top edge, 28 px, its targets its full height. ⌄, APP▾ (⊞▾; an app opened
+       through it shows its glyph, highlighted), the track of Home and slot 2 (R782), the hairline, the bay (the format and digits chip in Home and CAS, an app's view icons), the ⇧ α slot, the angle, ☰; the order
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
@@ -443,6 +443,7 @@
     border-radius: var(--radius-s);
     font-size: var(--fs-legend);
   }
+  .place .tile.small,
   .pface .tile.small {
     font-size: var(--fs-cell);
   }
