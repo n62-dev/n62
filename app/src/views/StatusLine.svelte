@@ -8,7 +8,7 @@
   import { pressFlag } from "../input/pressFlag.ts";
 
   // R97, R722: the bar on the keypad's top edge, out of App.svelte. Props in, events out; no store of its own.
-  let { session, shell, busy, cas, onpress, onmode, hw = false, folded = false }: {
+  let { session, shell, busy, cas, onpress, onmode, onfold, hw = false, folded = false }: {
     session: Session;
     shell: AppShell;
     /** A job runs (session or app). */
@@ -19,6 +19,8 @@
     onpress: (key: Key, layer: Layer) => void;
     /** A tap on a mode chip: the Mode sheet, on that row. */
     onmode: (at: string) => void;
+    /** R786: ⌄ at the bar's left end folds the keypad (Home and CAS, not wide, the fold's code in). Not given: the 28 px cell stays empty, so nothing to its right moves. */
+    onfold?: () => void;
     /** R783: a hardware keyboard is in use (input/hwSeen.svelte.ts): the ⇧ α badge shows with the keys up too. */
     hw?: boolean;
     /** R724: in the folded bar (keyboard/Fold.svelte): the nav lays out as Fold's row (display: contents), and only the
@@ -86,6 +88,10 @@
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
   <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
+    <!-- R786: ⌄ is the bar's first control, in a 28 px cell that is empty where folding does not exist -->
+    <span class="foldcell">
+      {#if onfold}<button type="button" class="fold" data-testid="fold-chevron" data-item="fold" aria-label={t("status.fold")} onclick={onfold}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5 8 10.5l5-5" /></svg></button>{/if}
+    </span>
     <button
       type="button"
       class="place"
@@ -198,6 +204,7 @@
   .bar.folded {
     display: contents;
   }
+  .folded .foldcell,
   .folded .place,
   .folded .seg,
   .folded .sep,
@@ -251,7 +258,25 @@
     background: var(--key-nav);
     color: var(--key-text);
   }
-  /* the place (R15b, R82f2, R722): Apps (a grid tile) or the app's glyph tile, and ▾; it opens Apps. From the screen's
+  /* ⌄ (R786): a 28 × 28 target at the bar's left end; its cell keeps the width where there is no button */
+  .foldcell {
+    flex: none;
+    display: flex;
+    width: var(--bar-h);
+  }
+  .fold {
+    width: var(--bar-h);
+    height: var(--bar-h);
+    color: var(--muted);
+  }
+  .fold svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: var(--chev-stroke);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* the place (R15b, R82f2, R722): Apps (a grid tile) or the app's glyph tile, and ▾; it opens Apps. After ⌄'s cell (R786: 28 px; empty in an app), from the screen's
      left edge. */
   .place {
     gap: var(--sp-05);

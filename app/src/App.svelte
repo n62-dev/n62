@@ -357,7 +357,7 @@
   });
   /** The counter of P16's removal test (state/uses.svelte.ts, its own chunk, fetched on the first fold). */
   const countUse = (name: string): void => void session.uses().then((c) => c.count(name));
-  /** Fold the keypad: by the line's swipe, (R131) the desktop key or (R724) ⌄, counted apart (`fold.swipe`, `fold.hw`, `fold.tap`). */
+  /** Fold the keypad: by the line's swipe, (R131) the desktop key or (R724, R786) ⌄ on the bar, counted apart (`fold.swipe`, `fold.hw`, `fold.tap`). */
   function fold(as: "fold.swipe" | "fold.hw" | "fold.tap" = "fold.swipe"): void {
     if (folded || !canFold) return;
     folded = true;
@@ -383,7 +383,7 @@
   $effect(() => {
     if (folded) return openLayer(() => (folded = false));
   });
-  /** The folded bar, ⌄ and the line's swipe (keyboard/Fold.svelte): their own chunk, fetched when idle after the start. */
+  /** The folded bar and the line's swipe (keyboard/Fold.svelte; ⌄ is the bar's, views/StatusLine.svelte): their own chunk, fetched when idle after the start. */
   let Fold = $state.raw<typeof import("./keyboard/Fold.svelte").default | undefined>();
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
@@ -517,7 +517,7 @@
     {#if shell.sheet}{@render sheetView(shell.sheet, folded && !shell.sheet.letters ? 0 : entryHeight)}{/if}
   </div>
 
-  {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} hw={hw.keys} onpress={press} onmode={openMode} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar -->
+  {#if !folded || !Fold}<StatusLine {session} {shell} {busy} cas={casKeys} hw={hw.keys} onpress={press} onmode={openMode} onfold={Fold && canFold && !shell.sheet ? () => fold("fold.tap") : undefined} />{/if}<!-- R722: on the keys; R724: folded, it is the folded bar; R786: ⌄ is its first control (an empty cell where the keys cannot fold, or a sheet is open) -->
   <div class="keys" class:folded data-testid="keys" data-folded={folded} data-fold-ready={Fold !== undefined}>
     <!-- R53, R724: folded, the 44 px folded bar over the keypad, drawn as it was (no key reflows) and hidden (keyboard/Fold.svelte) -->
     {#if Fold}<Fold {folded} line={entryBox} {entry} swipes={() => canFold && (folded || !shell.sheet)} onfold={fold} onunfold={unfold}
@@ -672,15 +672,9 @@
     /* R53: a vertical swipe on the line folds or unfolds the keypad; the browser pans nothing vertically here */
     touch-action: pan-x;
   }
-  /* R724: ⌄ (keyboard/foldChevron.ts) on the field's corner in Home and CAS; no text under it (in an app too: no line moves) */
+  /* (R786: ⌄ is on the bar, so the field keeps no room for it; the row stays the containing block of what sits on it) */
   .entry {
     position: relative;
-  }
-  .entry > .field :global(math-field) {
-    padding-left: var(--chev-pad);
-  }
-  .entry:has(> :global(.unitview)) > :global([data-testid="fold-chevron"]) {
-    display: none; /* the unit view (units/open.ts) holds the row */
   }
   .entry.hidden {
     display: none;

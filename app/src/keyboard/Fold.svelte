@@ -1,6 +1,6 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <!-- R53 (decisions.md P16), R283, R724: results mode's controls, in the keypad's box (App.svelte `.keys`). The swipe on the
-     entry line (foldSwipe.ts) folds and unfolds; ⌄ on the field's corner (foldChevron.ts) folds by a tap. Folded: the folded
+     entry line (foldSwipe.ts) folds and unfolds; ⌄ at the bar's left end (views/StatusLine.svelte, R786) folds by a tap. Folded: the folded
      bar, one 44 px row over the hidden keypad: ⌃, the bar's tabs (views/StatusLine.svelte with `folded`), a free stretch,
      the bar's ⇧ α slot, the picked row's Store ▶ · Copy › (views/RowBar.svelte moves them in), the bar's ☰. ⌃ or a tap on
      the free stretch unfolds, and so does a drag up of FOLD_PX begun anywhere on the row (it drops the click of the button
@@ -12,12 +12,11 @@
   import type { RouteCtx } from "./route.ts";
   import { keyFeelText as t } from "../i18n/enKeyFeel.ts";
   import StatusLine from "../views/StatusLine.svelte";
-  import { foldChevron } from "./foldChevron.ts";
   import { FOLD_PX, foldSwipe } from "./foldSwipe.ts";
 
   let { folded, line, entry, swipes, onfold, onunfold, ctx, busy, onpress }: {
     folded: boolean;
-    /** The entry line's box, where the swipe starts and ⌄ sits. */
+    /** The entry line's box, where the swipe starts. */
     line: HTMLElement | undefined;
     entry: EntryController;
     /** The line's swipes are taken now (Home and CAS, not wide, no sheet over the keys while unfolded). */
@@ -77,11 +76,6 @@
     if (folded) dragged = false;
   });
 
-  // ⌄ (R724) in the entry line's box while the keys are up and the swipes are taken
-  $effect(() => {
-    if (line && !folded && swipes()) return foldChevron(line, t("keys.fold"), () => onfold("fold.tap"));
-  });
-
   // The swipe on the entry line: down folds, up unfolds; any other pointer is MathLive's
   $effect(() => {
     if (!line) return;
@@ -122,17 +116,17 @@
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
   }
-  /* in ⌄'s spot: its icon over the field's left edge */
+  /* in ⌄'s spot (R786): the bar's left end, its icon centred where ⌄'s is (the middle of the 28 px cell) */
   .unfold {
     flex: none;
     width: calc(2 * var(--sp-3) + var(--icon-w));
-    padding: 0;
+    padding: 0 0 0 calc((var(--bar-h) - var(--icon-w)) / 2);
     border: 0;
     background: none;
     color: var(--muted);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     font: inherit;
   }
   /* the row's order (views/StatusLine.svelte places the tabs 1, the slot 3 and ☰ 5; `beforeMenu` puts the row buttons'
@@ -149,32 +143,7 @@
     order: 4;
     display: flex;
   }
-  /* ⌄ (foldChevron.ts) in the entry line's box: a 48 × 48 touch box from the row's lower-left corner, its icon centred on
-     the field's corner (the row's padding from the box's edges); over the field the box takes taps only left of the text
-     (clip-path: 32 px wide there, 48 below the field), so a tap on the line's first term still places the caret */
-  :global(.fold-chevron) {
-    position: absolute;
-    z-index: 1;
-    left: 0;
-    bottom: 0;
-    width: var(--chev-hit);
-    height: var(--chev-hit);
-    padding: 0;
-    border: 0;
-    background: none;
-    color: var(--muted);
-    -webkit-tap-highlight-color: transparent;
-    clip-path: polygon(0 0, var(--chev-take) 0, var(--chev-take) calc(100% - var(--sp-2)), 100% calc(100% - var(--sp-2)), 100% 100%, 0 100%);
-  }
-  :global(.fold-chevron svg) {
-    position: absolute;
-    left: calc(var(--sp-3) - var(--icon-w) / 2);
-    bottom: calc(var(--sp-2) - var(--icon-w) / 2);
-    border-radius: 50%;
-    background: var(--bg);
-  }
-  svg,
-  :global(.fold-chevron svg) {
+  svg {
     width: var(--icon-w);
     height: var(--icon-w);
     fill: none;

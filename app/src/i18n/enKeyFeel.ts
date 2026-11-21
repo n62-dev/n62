@@ -18,10 +18,9 @@ export const enKeyFeel = {
   "settings.taps.since": "Counted on this device since",
   "settings.taps.export": "Export the counts",
   "settings.taps.reset": "Reset the counter",
-  /** R53, R724: the swipe on the entry line or ⌄ on its corner folds the keypad into results mode; ⌃ on the folded bar
-   *  brings it back (keyboard/Fold.svelte, FoldChevron.svelte, their own chunk). */
+  /** R53, R724: the swipe on the entry line or ⌄ on the bar (en.ts "status.fold") folds the keypad into results mode; ⌃ on the
+   *  folded bar brings it back (keyboard/Fold.svelte, its own chunk). */
   "keys.unfold": "Show keypad",
-  "keys.fold": "Fold the keys",
   /** R722: Counters' row and level of the removal tests' counts (results mode, the angle chip; docs/03 rule 11). */
   "settings.tests": "Removal tests",
   /** R53: the results mode's counts (decisions.md P16), one row in Counters and its own level. */
