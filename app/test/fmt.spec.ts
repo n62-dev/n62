@@ -266,9 +266,9 @@ test("R775: a picked error row: Fmt and a b/c do nothing and are dead presses", 
   await expect(page.locator('article.item[data-selected="true"][data-status="error"]')).toHaveCount(1);
   const v1 = (await vibrations(page)).length;
   await tap(page, ["fmt"]);
-  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3); // the key and the dead pulse
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(2); // the dead pulse alone (R777: no row to take)
   await tap(page, ["frac"]);
-  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(6);
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(4);
   await expect(texts(page).first()).toHaveAttribute("data-text", "0.5");
 });
 

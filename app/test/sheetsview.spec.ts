@@ -165,7 +165,7 @@ test.describe("controls", () => {
 });
 
 // R770f1: a key the sheet does not use gives the dead key's feedback (route.ts c.dead(): the double pulse; R777: alone when the key is
-// drawn dead, after the key's own pulse for ⌫ on an empty filter); the sheet stays and the line is as it was. A key the sheet uses gives the key's pulse alone.
+// alone for ⌫ on an empty filter too, which the route turns into nothing); the sheet stays and the line is as it was. A key the sheet uses gives the key's pulse alone.
 test.describe("☰ open: the dead key's pulses", () => {
   test.beforeEach(async ({ page }) => {
     await recordVibrations(page);
@@ -199,9 +199,9 @@ test.describe("☰ open: the dead key's pulses", () => {
     expect(await pulses(page, () => page.locator('[data-key="undo"]').tap())).toBe(2);
     await stays(page);
   });
-  test("⌫ with an empty filter gives the key's pulse and the dead pulses; the sheet stays and the line is unchanged", async ({ page }) => {
+  test("⌫ with an empty filter gives the dead pulses alone (R777); the sheet stays and the line is unchanged", async ({ page }) => {
     await expect(page.getByTestId("sheet-filter")).toHaveCount(0); // no filter typed
-    expect(await pulses(page, () => page.locator('[data-key="bksp"]').tap())).toBe(3);
+    expect(await pulses(page, () => page.locator('[data-key="bksp"]').tap())).toBe(2);
     await stays(page);
   });
 });

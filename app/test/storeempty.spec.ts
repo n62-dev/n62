@@ -24,7 +24,7 @@ test("(a) an empty history and an empty line: Shift + ᴇ is a dead press, no sh
   await tap(page, ["shift"]);
   const v = (await vibrations(page)).length;
   await tap(page, ["emark"]);
-  await expect.poll(async () => (await vibrations(page)).length - v).toBe(3); // the touch, then the double (onepulse.spec.ts)
+  await expect.poll(async () => (await vibrations(page)).length - v).toBe(2); // the double alone (R777: no value, no result)
   await expect.poll(async () => (await keys(page))["emark:shift"] ?? 0).toBe((base["emark:shift"] ?? 0) + 1);
   await page.waitForTimeout(300); // ("Store in" comes with Vars' chunk: give it the time it would take)
   await expect(store(page)).toHaveCount(0);

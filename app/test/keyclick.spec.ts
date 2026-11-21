@@ -3,7 +3,7 @@
 // steps or flicks; a dead key's double pulse has one click); Settings › Key vibration › Key click is a switch that
 // survives a relaunch and goes into a preset's Key vibration group and a backup. The web click is one oscillator started.
 import { expect, test, type Page } from "@playwright/test";
-import { drag, entryValue, flick, open, recordVibrations, savedText, savePicker, tap, touch, vibrations } from "./helpers.ts";
+import { drag, entryValue, flick, lastResult, open, recordVibrations, savedText, savePicker, tap, touch, vibrations } from "./helpers.ts";
 
 /** Count the Web Audio clicks: every oscillator started (haptics.ts makes one per click). */
 async function recordClicks(page: Page): Promise<void> {
@@ -59,7 +59,7 @@ test.describe("the click at finger-down", () => {
     expect(await since(page, () => tap(page, ["d8"]))).toEqual({ clicks: 1, pulses: 1 });
   });
 
-  test("on: a flick and a pad drag are one click each, and still fire; a dead key is one click", async ({ page }) => {
+  test("on: a flick and a pad drag are one click each, and still fire; a dead key is the double pulse and no click (R777)", async ({ page }) => {
     await clickOn(page);
     await tap(page, ["d1", "d2", "d3", "d4", "d5", "d6"]);
     expect((await since(page, () => drag(page, "left", -64, 0))).clicks).toBe(1); // five steps
@@ -68,7 +68,7 @@ test.describe("the click at finger-down", () => {
     await tap(page, ["@symb"]);
     await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
     await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
-    expect(await since(page, () => tap(page, ["fmt"]))).toEqual({ clicks: 1, pulses: 3 }); // the double pulse stays
+    expect(await since(page, () => tap(page, ["fmt"]))).toEqual({ clicks: 0, pulses: 2 }); // R777: the app has no Fmt: the double pulse alone
   });
 });
 
@@ -112,6 +112,26 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     await expect(page.getByTestId("menu").getByRole("menuitem").first()).toBeVisible();
     expect(await press(page, "sin")).toEqual(DEAD);
     await expect(page.getByTestId("menu")).toBeVisible();
+  });
+  // the route turns these into nothing (the state decides, keyboard/quiet.ts): the same as a key drawn dead
+  test("Fmt on an empty Home is a dead press: no look, no click, the double pulse", async ({ page }) => {
+    await expect(page.locator('[data-key="fmt"]')).not.toHaveAttribute("data-dead", "true");
+    expect(await press(page, "fmt")).toEqual(DEAD);
+  });
+  test("☰ open: ⌫ on an empty filter is a dead press: no look, no click, the double pulse; with a letter typed it is live", async ({ page }) => {
+    await tap(page, ["@menu"]);
+    await expect(page.getByTestId("menu").getByRole("menuitem").first()).toBeVisible();
+    await expect(page.locator('[data-key="bksp"]')).not.toHaveAttribute("data-dead", "true");
+    expect(await press(page, "bksp")).toEqual(DEAD);
+    await expect(page.getByTestId("menu")).toBeVisible();
+  });
+  test("Fmt is live once Home has a result; in Plot a digit is a dead press", async ({ page }) => {
+    await tap(page, ["d2", "enter"]);
+    await expect(lastResult(page)).toBeVisible();
+    expect(await press(page, "fmt")).toMatchObject({ lit: 1, clicks: 1, pulses: 1 });
+    await tap(page, ["@plot"]);
+    await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
+    expect(await press(page, "d7")).toEqual(DEAD);
   });
   test("controls: a live key has the look, the pop, one click and one pulse; Find's letter keys do too", async ({ page }) => {
     expect(await press(page, "d7")).toEqual({ lit: 1, pop: 1, clicks: 1, pulses: 1 });

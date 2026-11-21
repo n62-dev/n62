@@ -17,44 +17,47 @@
     userKeys,
     shift,
     alpha,
-    alphaLock = false,
-    capsLock = false,
-    shiftLock = false,
-    cas = false,
-    app = false,
+    alphaLock,
+    capsLock,
+    shiftLock,
+    cas,
+    app,
     sheet,
-    pops = true,
+    pops,
     onpress,
-    oncount = () => {},
-    ontouch = () => {},
+    oncount,
+    ontouch,
+    quiet,
   }: {
     /** The free keys' slots (U1–U6, R15b, R15c): drawn and fired with the user's actions over the defaults. */
     userKeys: UserKeys;
     shift: boolean;
     alpha: boolean;
-    alphaLock?: boolean;
+    alphaLock: boolean;
     /** The alpha lock is the lower-case one. */
-    capsLock?: boolean;
-    shiftLock?: boolean;
+    capsLock: boolean;
+    shiftLock: boolean;
     /** The CAS view is under the keys: the letter layer's case is swapped (R58). */
-    cas?: boolean;
+    cas: boolean;
     /** An app is under the keys (R71): ±, which only the unit view's line reads, is dimmed. */
-    app?: boolean;
+    app: boolean;
     /** A sheet is open (docs/05 3.1): keys are read by sheetKeys.ts, and the ones that do nothing there look dead.
      *  `filter`: the open list takes letters. */
     sheet?: { filter: boolean; store?: boolean } | undefined;
     /** Key pop-ups (R163, Appearance): false draws no bubble over the pad, neither the key pop nor the flick bubble; the
      *  flicks still fire. */
-    pops?: boolean;
+    pops: boolean;
     /** A key fires; `layer` overrides the Shift/Alpha state: "primary" for a trackpad step, "shift" for a flick up,
      *  "alpha" for a flick down (on Shift and Alpha themselves: the lock flicks). A press that closes an open sheet
      *  (R144) is the gesture's last: a drag steps nothing more and a held ⌫ does not repeat until the finger lifts. */
     onpress: (key: Key, layer?: Layer) => void;
     /** A touch ended (a held ⌫: went down, as a tap), with the layer the pad showed: the counter (R70, R127) counts and
      *  names it (R320: in its lazy chunk, state/pressCount.ts; a touch that is no press counts nothing). */
-    oncount?: (touch: FinishedTouch, layer: { shift: boolean; alpha: boolean }) => void;
+    oncount: (touch: FinishedTouch, layer: { shift: boolean; alpha: boolean }) => void;
     /** A finger went down on the pad: the key vibration, one pulse per touch (R112). A drag step or an armed flick makes none. */
-    ontouch?: () => void;
+    ontouch: () => void;
+    /** A tap on this key would be a dead press where it lands (keyboard/quiet.ts, R777): it gets no look, pop or click, as a key drawn dead. */
+    quiet: (key: Key) => boolean | undefined;
   } = $props();
 
   // The face shows what a tap gives (the active layer). The legends show what the flicks give (P7 point 2): the shift
@@ -137,7 +140,7 @@
   // or a long hold is still a tap. ⌫ fires on touch and repeats while held instead; the trackpad has no flicks.
   type Gesture =
     | { kind: "pad"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; steps: Stepper; open: unknown }
-    | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker; felt: boolean }
+    | { kind: "key"; key: Key | undefined; el: HTMLElement | undefined; x0: number; y0: number; flick: FlickTracker }
     | { kind: "repeat"; el: HTMLElement | undefined; repeat: Repeat };
 
   // The press look (R161, F191): the app's own flag `data-down` on the touched key, never CSS :active (input/pressFlag.ts: set
@@ -146,7 +149,6 @@
   const flag = createPressFlag((el) => {
     if (popEl === el) hidePop(); // (only its own key's: a newer key's pop stays)
   });
-  const unlight = (el: HTMLElement | undefined): void => flag.unlight(el);
   function unlightAll(): void {
     flag.clearAll();
     hidePop();
@@ -163,7 +165,7 @@
   }
   function showPop(target: Key | "pad" | undefined, el: HTMLElement | undefined): void {
     // (a key that does nothing is never shown a pop: down() skips it, R777)
-    const text = pops && target && target !== "pad" && el && !isPadKey(target) ? face(target) : "";
+    const text = pops && typeof target === "object" && el && !isPadKey(target) ? face(target) : "";
     if (!el || text === "") return hidePop();
     popEl = el;
     pop = { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop, text, variable: typesVariable(act(target as Key)) };
@@ -256,10 +258,12 @@
     for (const g of gestures.values()) finish(g);
     gestures.clear();
     const { target, el } = targetOf(ev);
-    // R777 (docs/05 3.7): a key drawn dead has no press look, no pop and no click at finger-down; its tap gives the dead key's
-    // double pulse (route.ts c.dead()). A flick that arms on it and types something is felt then (move()).
-    const inert = typeof target === "object" && dead(target);
-    if (!inert) {
+    // R777 (docs/05 3.7): a key drawn dead, or one the route will turn into nothing (quiet), has no press look, no pop and no click
+    // at finger-down; its tap gives the dead key's double pulse (route.ts c.dead()). A flick that arms on it and types something
+    // is felt then (move()).
+    const inert = typeof target === "object" && (dead(target) || quiet(target));
+    if (inert) hidePop(); // (the next key's down still replaces the last key's pop at once)
+    else {
       flag.light(el);
       showPop(target, el);
       if (target) ontouch();
@@ -276,7 +280,7 @@
       oncount({ kind: "key", key: target, flick: { state: "tap" } }, { shift, alpha });
       const open = sheet;
       onpress(target);
-      if (open && !sheet) return unlight(el); // (R144: the tap closed a sheet; nothing repeats)
+      if (open && !sheet) return flag.unlight(el); // (R144: the tap closed a sheet; nothing repeats)
       const layer: Layer = alpha ? "alpha" : shift ? "shift" : "primary";
       gestures.set(ev.pointerId, { kind: "repeat", el, repeat: new Repeat(() => onpress(target, layer)) });
       return;
@@ -284,7 +288,7 @@
     const [x0, y0] = [ev.clientX, ev.clientY];
     if (target === "pad" || (target && isPadKey(target)))
       gestures.set(ev.pointerId, { kind: "pad", key: target === "pad" ? undefined : target, el, x0, y0, steps: new Stepper(), open: sheet });
-    else gestures.set(ev.pointerId, { kind: "key", key: target, el, x0, y0, flick: new FlickTracker(), felt: !inert });
+    else gestures.set(ev.pointerId, { kind: "key", key: target, el, x0, y0, flick: new FlickTracker() });
   }
 
   function move(ev: PointerEvent): void {
@@ -300,8 +304,7 @@
       if (st !== before) {
         showBubble(ev.pointerId, g);
         // a drawn-dead key that was given no feedback at finger-down: a flick that arms with a function is felt as a key press
-        if (!g.felt && st !== "tap" && st !== "cancelled" && flickText(g.key, st)) {
-          g.felt = true;
+        if (g.el && !g.el.hasAttribute("data-down") && st !== "tap" && st !== "cancelled" && flickText(g.key, st)) {
           flag.light(g.el);
           ontouch();
         }
@@ -334,7 +337,7 @@
    * touch is the key, ⌫ stops repeating.
    */
   function finish(g: Gesture): void {
-    unlight(g.el);
+    flag.unlight(g.el);
     oncount(g, { shift, alpha });
     if (g.kind === "pad") {
       if (g.steps.count === 0 && g.key) onpress(g.key);

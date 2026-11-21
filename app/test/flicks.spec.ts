@@ -65,13 +65,14 @@ test("a key that does nothing in the open view gives a double haptic: Tmpl in Pl
   await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
   await tap(page, ["@symb"]); // the last app (Function) opens on its Symb view
   await expect(page.getByTestId("place")).toHaveAttribute("data-view", "symb");
+  await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined); // (R777: a press while the app loads waits, it is not dead yet)
   const before = (await vibrations(page)).length;
   await tap(page, ["fmt"]);
-  await expect.poll(async () => (await vibrations(page)).length - before).toBe(3); // key down + the double
+  await expect.poll(async () => (await vibrations(page)).length - before).toBe(2); // the double alone (R777)
   await tap(page, ["@plot"]);
   const b2 = (await vibrations(page)).length;
   await tap(page, ["tmpl"]);
-  await expect.poll(async () => (await vibrations(page)).length - b2).toBe(3);
+  await expect.poll(async () => (await vibrations(page)).length - b2).toBe(2);
 });
 
 test("while sliding, the bubble shows what will fire, no tick at the threshold (R112); back to the middle cancels", async ({ page }) => {

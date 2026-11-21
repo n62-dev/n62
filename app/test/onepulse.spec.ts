@@ -37,7 +37,7 @@ test("a dead key keeps its double pulse after the touch", async ({ page }) => {
   await tap(page, ["@symb"]);
   // Fmt is dead only once the app is in (it opens async; before that Fmt cycles the format)
   await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
-  expect(await since(page, () => tap(page, ["fmt"]))).toBe(3); // the touch, then the double
+  expect(await since(page, () => tap(page, ["fmt"]))).toBe(2); // the double alone (R777)
 });
 
 test("a flick armed, slid back and lifted is one pulse and fires nothing", async ({ page }) => {

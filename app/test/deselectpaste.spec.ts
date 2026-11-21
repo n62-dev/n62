@@ -70,7 +70,7 @@ test("Function Plot (no entry line): Shift + Deselect is a dead press (the doubl
   await tap(page, ["shift"]);
   const v1 = (await vibrations(page)).length;
   await tap(page, ["deselect"]);
-  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3); // the tap's pulse and the dead key's double one
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(2); // drawn live but dead here (R777): the dead key's double pulse alone
   await expect(page.getByTestId("notice")).toHaveCount(0);
   expect(await entryValue(page)).toBe("");
 });
