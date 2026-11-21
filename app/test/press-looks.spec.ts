@@ -124,3 +124,42 @@ test('a "Copied" notice moves no history row', async ({ page }) => {
   if (!n || !h) throw new Error("no boxes");
   expect(n.y + n.height, "the notice lies over the history's foot, above the entry line").toBeLessThanOrEqual(h.y + 0.5);
 });
+
+test("the name prompt's hint covers no row: the last result's box and the hint's do not intersect", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await open(page);
+  await tap(page, ["d2", "add", "d3", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  await tap(page, ["d4", "add", "d5"]);
+  await tap(page, ["@mode", "d5", "d1"]); // Presets › Save: the name prompt
+  await expect(page.getByTestId("prompt-hint")).toBeVisible();
+  const hint = await page.getByTestId("prompt-hint").boundingBox();
+  const result = await lastResult(page).boundingBox();
+  if (!hint || !result) throw new Error("no boxes");
+  expect(result.y + result.height, "the hint lies below the history's last row").toBeLessThanOrEqual(hint.y + 0.5);
+});
+
+test("a pressed view tab inside an app shows its own fill, inside the track (data-down and a changed pixel)", async ({ page }) => {
+  await open(page);
+  await tap(page, ["@place", "d4"]); // Apps → Solve
+  await expect(page.locator('[data-app="solve"]')).toBeVisible();
+  await tap(page, ["@symb"]);
+  await expect(page.getByTestId("entry-label")).toHaveText("E1:"); // (the bar settles once the app is in)
+  const tab = page.getByTestId("tab-num");
+  await expect(tab).toBeVisible();
+  await page.waitForTimeout(300);
+  const box = await tab.boundingBox();
+  if (!box) throw new Error("no tab");
+  const [cx, cy] = [box.x + box.width / 2, box.y + box.height / 2];
+  const [x, y] = [cx - 12, cy]; // inside the face (its icon is 16 px wide), off the glyph
+  const ex = box.x + 0.5; // the button's own edge, outside the face (the face is inset by 2 px): not filled
+  const [rest, restEdge] = [await pixel(page, x, y), await pixel(page, ex, cy)];
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await expect(page.locator('.bar [data-testid="tab-num"][data-down]')).toHaveCount(1);
+  const [held, heldEdge] = [await pixel(page, x, y), await pixel(page, ex, cy)];
+  await page.mouse.up();
+  const diff = (a: number[], b: number[]): number => Math.max(...a.slice(0, 3).map((v, i) => Math.abs(v - (b[i] ?? v))));
+  expect(diff(rest, held), `rest ${rest} held ${held}`).toBeGreaterThanOrEqual(6);
+  expect(diff(restEdge, heldEdge), "the button itself is not filled, only its face").toBeLessThan(3);
+});
