@@ -47,11 +47,14 @@ function ctx(cas = false) {
 }
 
 describe("the store sheet's keys (R281)", () => {
-  test("Alpha, A, Enter: the typed path stores A, and the one-shot Alpha is used up", () => {
+  test("Alpha, A, Enter: A is stored, so the first Enter asks (R804) and the second stores A; the one-shot Alpha is used up", () => {
     const { session, shell, stored, alpha, press } = ctx();
     alpha("vars");
     expect(session.alpha).toBe(false);
     expect(shell.sheet?.level.filter).toBe("A");
+    press("enter");
+    expect(stored).toEqual([]);
+    expect(shell.sheet?.armed).toBe("name:A");
     press("enter");
     expect(stored).toEqual(["A"]);
     expect(shell.sheet).toBeNull();

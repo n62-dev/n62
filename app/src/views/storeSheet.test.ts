@@ -8,7 +8,7 @@ import { FakeCalc } from "../calc/fake.ts";
 import type { UserName } from "../engine/defs.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import type { Kv } from "../state/storage.ts";
-import type { Sheet } from "./sheet.svelte.ts";
+import type { Picked, Sheet } from "./sheet.svelte.ts";
 import { showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.svelte.ts";
 
 const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promise.resolve() });
@@ -120,7 +120,7 @@ describe("the store sheet (R281)", () => {
     expect(stored).toEqual(["A", "B"]);
   });
 
-  it("letters typed filter; Enter stores the typed name, filled or new, with no question (the G2's typed path)", () => {
+  it("letters typed filter; Enter stores a new typed name at once, a stored one asks first (R804)", () => {
     const { sheet, stored } = setup();
     const enter = (): void => {
       const p = sheet.enter();
@@ -128,6 +128,11 @@ describe("the store sheet (R281)", () => {
     };
     sheet.level.type("A");
     expect(sheet.level.rows.map((r) => r.item.label)).toEqual(["A"]);
+    enter(); // A is stored: the first Enter arms it, as a tap does
+    expect(stored).toEqual([]);
+    expect(sheet.armed).toBe("name:A");
+    expect(sheet.level.note?.()).toBe("A is stored · Enter asks before it is replaced");
+    expect(sheet.level.items[0]?.confirm?.note).toBe("A = 5. Enter again replaces it with ≈ 0.333333333333");
     enter();
     expect(stored).toEqual(["A"]);
     sheet.level.filter = "";
@@ -152,6 +157,43 @@ describe("the store sheet (R281)", () => {
     sheet.level.highlight = 23; // X, the grid's last row (V W X Y Z)
     sheet.level.move(1);
     expect(at()).toBe("R2"); // past Z: on to the names, the newest first
+  });
+});
+
+describe("letters typed in the store sheet (R804)", () => {
+  const enter = (sheet: Sheet): Picked => sheet.enter();
+  it("a name that equals no stored one: the line says it is free and what Enter does; Enter stores at once", () => {
+    const { sheet, stored } = setup();
+    sheet.level.type("Q");
+    expect(sheet.level.note?.()).toBe("Q is free · Enter stores ≈ 0.333333333333 in Q · keep typing for a longer name");
+    const p = enter(sheet);
+    if (p.kind === "run") p.item.run?.();
+    expect(stored).toEqual(["Q"]);
+  });
+  it("a longer stored name typed in full highlights its row and asks first; part of it is free", () => {
+    const { sheet, stored } = setup();
+    for (const ch of "rat") sheet.level.type(ch);
+    expect(sheet.level.note?.()).toBe("rat is free · Enter stores ≈ 0.333333333333 in rat · keep typing for a longer name");
+    sheet.level.type("e");
+    expect(sheet.level.current?.id).toBe("name:rate");
+    expect(sheet.level.note?.()).toBe("rate is stored · Enter asks before it is replaced");
+    expect(enter(sheet).kind).toBe("stay");
+    expect(sheet.armed).toBe("name:rate");
+    const p = enter(sheet);
+    if (p.kind === "run") p.item.run?.();
+    expect(stored).toEqual(["\\operatorname{rate}"]);
+  });
+  it("any other press disarms it, and a letter after it goes on typing the name", () => {
+    const { sheet, stored } = setup();
+    sheet.level.type("A");
+    enter(sheet);
+    expect(sheet.armed).toBe("name:A");
+    sheet.disarm(); // route.ts: any key but Enter
+    sheet.level.type("1");
+    expect(sheet.level.filter).toBe("A1");
+    const p = enter(sheet); // A1 is free
+    if (p.kind === "run") p.item.run?.();
+    expect(stored).toEqual(["\\operatorname{A1}"]);
   });
 });
 
