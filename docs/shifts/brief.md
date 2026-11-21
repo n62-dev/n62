@@ -71,7 +71,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885sa | R830 Home and CAS ☰: 1 Delete, 2 Share, 3 Clear, 4 Export › (owner, 2026-11-20 night, H1; reverses R720) | ron, Sonnet | `p1/ron-homemenu4` | R782 |
 | 885sb | [R832](packages/R832.md) a tap lights the input, the result or the whole row; Copy, Store, insert act on it (H2; takes in R741) | ron, Sonnet | `p1/ron-rowpart` | R830 |
 | 885i | R773 the fold swipes act on the lift and cancel; a tap on the folded bar no longer unfolds | ron, Sonnet | `p1/ron-foldonlift` | R782 |
-| 885j | [R774](packages/R774.md) press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
+| 885j | R774 press looks: no blue tap boxes, the d-pad press, the locked ring inside, "Copied" does not move the rows | ron, Sonnet | `p1/ron-presslooks` | R773 |
 | 885l | [R777](packages/R777.md) a key that does nothing gives no click and no press look; NOT MERGED after three rounds: its work is on `p1/ron-deadquiet` (dbfdfc88), pass 223's FIX R777f1 finishes it (one rule in route.ts) | ron, Sonnet | `p1/ron-deadquiet-f1` | – |
 | 885n | [R779](packages/R779.md) the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
 | 885o | [R780](packages/R780.md) every menu row has a number the keypad reaches, past row 10 too (measure first) | ron, Sonnet | `p1/ron-rowsnumbers` | R777 |
