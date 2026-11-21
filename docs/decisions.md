@@ -9,6 +9,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 
+- **R845, super mode's green and sign:** pick from [mockups/super-mode.html](mockups/super-mode.html): the green on OKLCH hue 130° (Dark `#bcff6b`, Light `#547331`, High contrast `#aaff1b`; all contrast floors met) and the sign ⇟ or ▣. N62 Light's green stays 0.093 from Alpha's teal for tritanopia (below the 0.12 Shift-to-Alpha floor; no green on 130°–150° reaches it at 4.5:1 on the light keys): accept it, as the shape (ring, fill, glow on keys with no Alpha legend) tells super mode apart, or ask for another hue. R850 starts on the answer.
+
 ## Decided proposals
 
 ### Pipeline and process
