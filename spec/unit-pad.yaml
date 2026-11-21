@@ -13,9 +13,9 @@
 # previous and next slot, Esc leaves the unit view, Cancel as always.
 #
 #   row 3   mi ↑yd ↓mil | Find      | knot ↑mph | Hz ↑rpm   | ° ↑rad    | ⌫
-#   row 4   ³ ↑⁴        | A         | V         | Ω ↑S      | F         | T
-#   row 5   ² ↑√        | J ↑Wh ↓Btu| W ↑hp ↓TR | L ↑gal_US ↓bbl | Enter (next slot; ↑ evaluate now)
-#   row 6   mol         | G ↑T      | M         | m ↑ft ↓in | ÷ per ↑⁻¹
+#   row 4   x³ ↑x⁴      | A         | V         | Ω ↑S      | F         | T
+#   row 5   x² ↑√x      | J ↑Wh ↓Btu| W ↑hp ↓TR | L ↑gal_US ↓bbl | Enter (next slot; ↑ evaluate now)
+#   row 6   mol         | G ↑T      | M         | m ↑ft ↓in | ÷ per ↑x⁻¹
 #   row 7   Alpha       | k ↓h      | c         | g ↑lb ↓t  | × ·
 #   row 8   Shift       | m         | µ         | s ↑h ↓min | N ↑lbf
 #   row 9   atm ↑ksi ↓Torr | n      | p ↓f      | K ↑°C ↓°F | Pa ↑bar ↓psi
@@ -34,8 +34,9 @@
 #
 # Rules (r9 section 2): a prefix arms (highlighted) and the next unit takes it; another prefix replaces it, the same
 # one again disarms it; units in a row multiply (no × needed: m then s is m·s, the prefix m then s is ms); ÷ makes the
-# rest of the slot the denominator (one ÷ per slot, the SI's one-solidus rule); ², ³, ⁴ and ⁻¹ act on the unit
-# before, √ on the unit after; ⌫ removes the last token. The slot fills as you press and its reading in words shows
+# rest of the slot the denominator (one ÷ per slot, the SI's one-solidus rule); the keys x², x³, x⁴ and x⁻¹ act on the unit
+# before, √x on the unit after (R803: drawn as on the main keypad, the x is the unit's place);
+# ⌫ removes the last token. The slot fills as you press and its reading in words shows
 # under the formula (S1 guard 2: it still catches a slip from M to m). Enter goes to the next slot (an empty slot
 # means no unit); after the last unit slot comes the end slot "→ should be", where Enter evaluates; a flick up on
 # Enter (Shift + Enter) evaluates from any slot. Math opens Find on units, for everything not on the pad; with an
