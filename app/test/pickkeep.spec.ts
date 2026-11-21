@@ -22,12 +22,20 @@ async function errorRow(page: Page): Promise<void> {
   expect(await entryValue(page)).toBe("");
 }
 
-/** `2+3` on the line, then a tap on the error row picks it. */
+/** A tap on the row itself, right of its input (R832: a tap on the input lights only the input; the gap picks the whole row). */
+async function tapGap(page: Page): Promise<void> {
+  const row = await page.locator("article.item").first().boundingBox();
+  const inp = await inputs(page).first().boundingBox();
+  if (!row || !inp) throw new Error("no row");
+  await page.touchscreen.tap(row.x + row.width - 8, inp.y + inp.height / 2);
+}
+
+/** `2+3` on the line, then a tap on the error row's gap picks it whole. */
 async function typedThenPicked(page: Page): Promise<void> {
   await errorRow(page);
   await tap(page, ["d2", "add", "d3"]);
   expect(await entryValue(page)).toBe("2+3");
-  await inputs(page).first().tap();
+  await tapGap(page);
   await expect(selected(page)).toHaveCount(1);
   expect(await entryValue(page)).toBe("2+3");
 }
@@ -74,11 +82,22 @@ test("a row with a result: Enter inserts the result next to the typed line", asy
   await tap(page, ["d7", "enter"]);
   await expect(page.locator('[data-status="done"]')).toHaveCount(1);
   await tap(page, ["d2", "add", "d3"]);
-  await inputs(page).first().tap();
+  await tapGap(page);
   await expect(selected(page)).toHaveCount(1);
   await tap(page, ["enter"]);
   const v = await entryValue(page);
   expect(v).toContain("2+3");
   expect(v).toMatch(/\\res\{\d+\}\{7\}/);
+  await expect(selected(page)).toHaveCount(0);
+});
+
+test("a row with a result, its input lit (R832): Enter puts the input at the caret", async ({ page }) => {
+  await tap(page, ["d7", "enter"]);
+  await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+  await tap(page, ["d2", "add", "d3"]);
+  await inputs(page).first().tap();
+  await expect(selected(page)).toHaveAttribute("data-part", "input");
+  await tap(page, ["enter"]);
+  await expect.poll(() => entryValue(page)).toBe("2+37");
   await expect(selected(page)).toHaveCount(0);
 });

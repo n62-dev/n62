@@ -37,7 +37,7 @@ test("a fresh profile shows the tips; a reload does not", async ({ page }) => {
   await expect(tips(page)).toBeVisible();
   await expect(tips(page)).toContainText("Tap ⊞▾ for your apps. Home stays; a second tap on CAS puts another app in its place");
   await expect(tips(page)).toContainText("Tap ☰ for Delete, Share and Export; ⚙ for Settings");
-  await expect(tips(page)).toContainText("Tap a row's input or result to pick it, hold to copy, swipe left to delete");
+  await expect(tips(page)).toContainText("On a history row, tap the input or the result to pick it, hold to copy and swipe left to delete");
   await expect(tips(page)).toContainText("Tap ⌄ on the bar or swipe down on the line to fold the keypad");
   await expect(tips(page)).toContainText("On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it");
   await expect(tips(page)).toContainText("= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.");

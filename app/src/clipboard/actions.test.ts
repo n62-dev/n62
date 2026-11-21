@@ -94,7 +94,7 @@ describe("ClipActions row buttons and the hold", () => {
     let clip = "";
     const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
     const item = { id: 1, status: "done", latex: "\\frac{1}{3}", full: "1/3", fullExact: true, rational: { n: "1", d: "3" } };
-    const session = { items: [item], display: () => ({ text: "0.333333333333", latex: "0.333333333333" }) } as unknown as Session;
+    const session = { items: [item], display: () => ({ text: "0.333333333333", latex: "0.333333333333" }), mark: () => null } as unknown as Session;
     const menus: { title: string; ids: string[] }[] = [];
     const shell = { app: null, showsEntry: true, showMenu: (title: string, items: { id: string }[]) => void menus.push({ title, ids: items.map((i) => i.id) }) } as unknown as AppShell;
     const entry = { insert() {} } as unknown as EntryController;
@@ -135,13 +135,13 @@ describe("ClipActions row buttons and the hold", () => {
 // R723: Shift + Select (keyCopy) writes what a hold on the row's result does: the given row, else the last finished one;
 // with none, or in an app, nothing is written and it is a dead press.
 describe("ClipActions keyCopy (Shift + Select, R723)", () => {
-  const make = (items: object[], app: string | null = null) => {
+  const make = (items: object[], app: string | null = null, mark: object | null = null) => {
     let clip = "untouched";
     const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
     const shell = { app, showsEntry: true } as unknown as AppShell;
     const acted: string[] = [];
     // (R832: the notice names the copy by the row's shown text, so the session shows the row)
-    const session = { items, display: (r: { full?: string }) => ({ text: r.full ?? "", latex: "" }), input: (r: { latex: string }) => r.latex } as unknown as Session;
+    const session = { items, display: (r: { full?: string }) => ({ text: r.full ?? "", latex: "" }), mark: () => mark, input: (r: { latex: string }) => r.latex } as unknown as Session;
     const c = new ClipActions(session, shell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port);
     return { c, clip: () => clip, acted, say: () => c.notice };
   };
@@ -169,6 +169,13 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     const l = make(long);
     l.c.keyCopy(vi.fn(), long[0] as never);
     await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.3333333333333333333333…")); // 24 characters, then …
+  });
+  it("R832: a row drawn as ⚠ (no digit confirmed) is named ⚠ in the notice, not by the digit it hides", async () => {
+    const rows = [row("0.001")];
+    const m = make(rows, null, { mark: "⚠", n: 0, warn: false });
+    m.c.keyCopy(vi.fn(), rows[0] as never);
+    await vi.waitFor(() => expect(m.say()).toContain("Copied"));
+    expect(m.say()).toBe("Copied: ⚠");
   });
   it("with no row given, the last finished row", async () => {
     const m = make([row("1/3"), row("2/3"), row("x", "error")]);

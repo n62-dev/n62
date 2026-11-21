@@ -5,7 +5,7 @@ export const enTips = {
   "tips.title": "First-start tips",
   "tips.place": "Tap ⊞▾ for your apps. Home stays; a second tap on CAS puts another app in its place",
   "tips.menu": "Tap ☰ for Delete, Share and Export; ⚙ for Settings",
-  "tips.rows": "Tap a row's input or result to pick it, hold to copy, swipe left to delete",
+  "tips.rows": "On a history row, tap the input or the result to pick it, hold to copy and swipe left to delete",
   "tips.fold": "Tap ⌄ on the bar or swipe down on the line to fold the keypad",
   "tips.line": "On the line, drag to scroll and hold to select a term. Select and Deselect grow and shrink it",
   "tips.marks": "= exact. ≈ rounded, every digit shown is right. ⚠ could not be checked.",

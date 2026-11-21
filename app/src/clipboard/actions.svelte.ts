@@ -193,7 +193,9 @@ export class ClipActions {
   private async copyNow(item: HistoryItem | undefined, named: boolean): Promise<boolean> {
     const i = this.target(item);
     const m = i ? await impl() : undefined;
-    return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(m.withoutMark(this.session.display(i).text)) : undefined, named);
+    // (the notice names what the row shows: a row with no confirmed digit shows ⚠, never the digit it hides)
+    const shown = i && m ? (noDigit(this.session.mark(i)) ? "⚠" : m.withoutMark(this.session.display(i).text)) : "";
+    return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(shown) : undefined, named);
   }
   copyShown(item?: HistoryItem): Promise<boolean> {
     return this.serial(async () => {

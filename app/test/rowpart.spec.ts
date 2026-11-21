@@ -177,6 +177,36 @@ for (const width of [412, 360]) {
       await expect(page.getByTestId("store").getByTestId("sheet-title")).toHaveText("Store = 5 in");
     });
 
+    test("input lit, a line with text, the input carries a result chip: Enter takes the chip in with its own value (R832)", async ({ page }) => {
+      await enter(page, ["d1", "div", "d3"]);
+      await resultOf(page).tap();
+      await resultOf(page).tap(); // 1/3 as a chip on the line (the first tap picks, the second inserts)
+      await expect.poll(() => entryValue(page)).toContain("\\res");
+      await tap(page, ["mul", "d3", "enter"]);
+      await done(page, 2);
+      await enter(page, ["d2", "div", "d7"]);
+      await page.waitForTimeout(900); // the writes are debounced and asynchronous
+      await page.reload(); // the chip numbers start again: the next chip taken is the key the second row's input already names
+      await page.waitForFunction(() => window.n62 !== undefined);
+      await page.evaluate(() => window.n62.entry.ready);
+      await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+      await done(page, 3);
+      await tap(page, ["d1", "add"]);
+      await resultOf(page).tap();
+      await resultOf(page).tap(); // 2/7 as a chip: the line is `1+` and it
+      await expect.poll(() => entryValue(page)).toContain("\\res");
+      await rows(page).nth(1).locator(".in").tap();
+      expect(await part(page)).toBe("input");
+      await tap(page, ["enter"]);
+      const line = await entryValue(page);
+      const chips = await page.evaluate(() => window.n62.entry.chips);
+      const keys = [...line.matchAll(/\\res\{(\d+)\}\{([^}]*)\}/g)].map((m) => [m[1], m[2]]);
+      expect(keys.length).toBe(2);
+      expect(new Set(keys.map((k) => k[0])).size).toBe(2); // two chips, two keys
+      // each chip is worth what it is drawn as: the second row's `0.333…`, the line's own `0.2857…`
+      for (const [k, shown] of keys) expect(chips[`res:${k}`]?.value, `res:${k} drawn ${shown}`).toMatch(shown!.startsWith("0.2857") ? /^(0\.2857|2\/7)/ : /^(0\.3333|1\/3)/);
+    });
+
     test("input lit: ☰ 1 deletes the whole row and Undo brings it back; ▲ from an empty line picks the whole row", async ({ page }) => {
       await enter(page, ["d2", "add", "d3"], ["d7"]);
       await tap(page, ["up"]);

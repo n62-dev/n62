@@ -191,6 +191,16 @@ describe("controls", () => {
     press("sub", "d1");
     expect(entry.value).toBe(`23${resChip(1, "5")}-1`);
   });
+  test("R832: a recalled input put at the caret takes its chips in, renumbered when its key holds another value", async () => {
+    const { entry, up } = ctx();
+    await up();
+    entry.insertResult("5", chip); // res:1 = 5 on the line
+    const third = { value: "0.3333333333333333", exact: false };
+    entry.insertRecalled(`${resChip(1, "0.333")}\\times3`, { "res:1": third }); // a row's input whose res:1 was 0.333… before a reload
+    expect(entry.value).toBe(`${resChip(1, "5")}${resChip(2, "0.333")}\\times3`);
+    expect(entry.chips["res:1"]?.value).toBe("5");
+    expect(entry.chips["res:2"]?.value).toBe("0.3333333333333333");
+  });
   test("after the field is up, the store sheet's Enter sends at once", async () => {
     const { c, entry, up, sent } = ctx();
     await up();

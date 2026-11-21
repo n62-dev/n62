@@ -389,7 +389,7 @@
     shell.prompt?.cancel();
     if (!input) onLine(item, false);
     else if (entry.empty) onLine(item, true, !stay, false, stay); // R298: before the field the queued keys are text too (entry.value is not the line yet)
-    else if (caret) (entry.insert(session.input(item)), (folded &&= stay));
+    else if (caret) (entry.insertRecalled(session.input(item), item.chips), (folded &&= stay));
   }
   /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
    *  as Delete while folded (R53). */
