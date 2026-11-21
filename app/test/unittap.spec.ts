@@ -24,6 +24,20 @@ async function tapSlot(page: Page, index: number, dx = 0): Promise<void> {
   await page.touchscreen.tap(box.x + dx * box.w, box.y);
 }
 
+/** A tap in the middle of the prompt box that is the `n`-th from the top (stacked boxes are drawn bottom to top in the
+ *  shadow DOM, so the order of the boxes there says nothing about the slots). */
+async function tapFromTop(page: Page, n: number): Promise<void> {
+  const boxes = await page.evaluate(() =>
+    [...(window.n62.unitView?.field.shadowRoot?.querySelectorAll(".ML__prompt") ?? [])].map((b) => {
+      const r = b.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }),
+  );
+  const box = boxes.sort((a, b) => a.y - b.y)[n];
+  if (!box) throw new Error(`no prompt box ${n} from the top`);
+  await page.touchscreen.tap(box.x, box.y);
+}
+
 for (const [w, h] of [[412, 915], [360, 740]] as const) {
   test.describe(`R801: a tap on a unit slot, ${w} × ${h}`, () => {
     test.beforeEach(async ({ page }) => {
@@ -90,6 +104,28 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
       expect(await focusOnView(page)).toBe(true);
       await page.keyboard.press("m");
       expect(await slot(page, "u1")).toBe("m");
+    });
+
+    // audit, fix round 3: the boxes of a fraction are drawn bottom to top, so the n-th box is not the n-th slot
+    test("a fraction: a tap on the numerator's slot makes u1 active, a tap on the denominator's makes u2", async ({ page }) => {
+      await tap(page, ["esc"]);
+      await page.waitForFunction(() => window.n62.unitView === undefined);
+      await page.evaluate(() => window.n62.entry.clear());
+      await tap(page, ["d3", "div", "d4"]);
+      await flick(page, "tmpl", "up");
+      await up(page);
+      expect(await page.evaluate(() => window.n62.unitView?.view.ids)).toEqual(["u1", "u2"]);
+      expect(await activeId(page)).toBe("u1");
+      await tapFromTop(page, 1); // the denominator
+      await expect.poll(() => activeId(page)).toBe("u2");
+      await tapFromTop(page, 0); // the numerator
+      await expect.poll(() => activeId(page)).toBe("u1");
+      await tapFromTop(page, 1);
+      await expect.poll(() => activeId(page)).toBe("u2");
+      await tap(page, ["d4", "d9"]);
+      expect(await slot(page, "u2")).toBe("k:m");
+      expect(await slot(page, "u1")).toBe("");
+      expect(await focusOnView(page)).toBe(true);
     });
   });
 }

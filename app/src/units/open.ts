@@ -261,15 +261,20 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   element.focus();
 }
 
-/** R801: the slot whose box holds the point (MathLive draws one `.ML__prompt` box per prompt, in the order of the ids), or
- *  none. */
+/** R801: the slot whose box holds the point, or none. The box is found by geometry (MathLive draws one `.ML__prompt` box per
+ *  prompt) but its slot by the model, never by the order of the boxes in the shadow DOM: a stacked layout (a fraction)
+ *  draws its boxes bottom to top. The offset MathLive gives at the box's centre lies in the prompt's range or just after
+ *  its atom (probe, R801: [start, end + 1]); the slot whose window is nearest to it is the box's. */
 function slotAt(mf: MathfieldElement, ids: readonly string[], x: number, y: number): string | undefined {
-  const boxes = [...(mf.shadowRoot?.querySelectorAll(".ML__prompt") ?? [])];
-  const at = boxes.findIndex((b) => {
-    const r = b.getBoundingClientRect();
-    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-  });
-  return ids[at];
+  const box = [...(mf.shadowRoot?.querySelectorAll(".ML__prompt") ?? [])]
+    .map((b) => b.getBoundingClientRect())
+    .find((r) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom);
+  const at = box ? mf.getOffsetFromPoint(box.left + box.width / 2, box.top + box.height / 2) : -1;
+  const gap = (id: string): number => {
+    const r = mf.getPromptRange(id);
+    return r ? Math.max(r[0] - at, at - r[1] - 1, 0) : Infinity;
+  };
+  return at < 0 ? undefined : ids.reduce((a, b) => (gap(b) < gap(a) ? b : a));
 }
 
 /** The field's value with its prompts locked: MathLive edits no prompt itself (a tap on it still moves the focus onto the
