@@ -25,9 +25,6 @@ export const canPick = (items: readonly Row[], i: number): boolean => pickable(i
 /** R832: what a picked row has lit: the whole row (a tap elsewhere on it, or ▲), its input, or its result. */
 export type PickPart = "row" | "input" | "result";
 
-/** A press this long (ms) or longer on a row is a hold, not a tap (apps/longpress.ts copies at it; the row's own body ignores it). */
-export const HOLD_MS = 500;
-
 /** R832: what a tap on part `tapped` of row `index` does while `selected` is picked with `lit` lit. A different row (or none
  *  picked): pick it, lighting what was tapped. The picked row, whole: the input recalls, the result inserts (R147, the G2's
  *  way), elsewhere the pick drops. The picked row with a half lit: that half does its job, the other half becomes lit,

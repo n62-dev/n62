@@ -38,8 +38,6 @@ export interface RouteCtx {
   readonly casKeys: boolean;
   enter(): void;
   insertResult(item: HistoryItem): void;
-  /** R832: Enter on a picked row whose input is lit: it goes at the caret (an empty line: the recall, with its chips). */
-  insertInput(item: HistoryItem): void;
   /** A row's entry back on the line (Enter on a pick without a result). */
   recallRow(item: HistoryItem): void;
   goTo(view: View): void;
@@ -291,7 +289,7 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     return true;
   }
   if (action.name === "enter" && item) {
-    if (lit === "input") c.insertInput(item); // R832: the lit input, at the caret (an empty line: the recall)
+    if (lit === "input") c.withClip((x) => x.enterInput(item)); // R832: the lit input, at the caret (an empty line: the recall)
     else if (item.status === "done") c.insertResult(item);
     else if (c.entry.empty) c.recallRow(item); // an empty line: the entry comes back with its chips
     // (R273: text on the line stays; the pick is dropped above)

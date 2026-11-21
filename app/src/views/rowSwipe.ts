@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import { LONG_PRESS_MS } from "../apps/longpress.ts";
 import { vibrate } from "../input/haptics.ts";
 import { rowText } from "../i18n/enRows.ts";
 import "./swipeStrip.css";
@@ -195,6 +196,10 @@ export function rowSwipe(node: HTMLElement, options: SwipeOptions): { update(o: 
     const first = moves[0];
     const speed = first && e.timeStamp > first.t ? (e.clientX - first.x) / (e.timeStamp - first.t) : 0;
     reset();
+    if (was === "wait" && first && e.timeStamp - first.t >= LONG_PRESS_MS && !(e.target as Element).closest(".in, .result")) {
+      swallow = true; // R832: a hold on the row's gap picks nothing (a hold on the input or the result is theirs, longpress.ts)
+      setTimeout(() => (swallow = false), SWALLOW_MS);
+    }
     if (was !== "drag") return;
     swallow = true;
     setTimeout(() => (swallow = false), SWALLOW_MS); // (a touch drag sends no click: the next tap is a tap)

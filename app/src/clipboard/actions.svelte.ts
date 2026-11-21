@@ -394,6 +394,10 @@ export class ClipActions {
     this.ops.stored?.(); // the line is what is stored
     return true;
   }
+  /** R832: Enter on a lit input: it goes at the caret (an empty line: the recall, with its chips); the pick is let go. */
+  enterInput(row: HistoryItem): void {
+    this.ops.putInput?.(row);
+  }
   /** Delete: the picked row, else the last row of the view. A running row is not deleted; when the Undo code does not
    *  load, nothing is deleted and the history says so (R98). */
   deleteRow(row?: HistoryItem): Promise<boolean> {

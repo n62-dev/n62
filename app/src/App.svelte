@@ -432,7 +432,6 @@
     enter,
     insertResult: (item) => onLine(item, false),
     recallRow: (item) => onLine(item, true),
-    insertInput: (item) => recallTapped(item, true),
     goTo,
     clearKey,
     openSettings,

@@ -8,7 +8,7 @@
   import { MAX_DRAWN_LATEX } from "../render/longResult.ts";
   import { typedName } from "../render/home.ts";
   import { markText, noDigit as hasNoDigit } from "../state/displayMode.ts";
-  import { drawnInput, HOLD_MS, rowTap, type PickPart } from "../state/pickRows.ts";
+  import { drawnInput, rowTap, type PickPart } from "../state/pickRows.ts";
   import { edgeFade } from "./edgeFade.ts";
   import { rowHold, rowSwipe } from "./rowGestures.ts";
   import type { MarkInfo } from "../engine/format.ts";
@@ -89,23 +89,8 @@
     onhold && item.status !== "pending" ? () => onhold(item, "input", drawn(item)) : undefined;
   // R832: the whole row takes the tap and reads where it landed (its `.in`, its `.result`, else the row): the first tap lights that
   // part, the next acts on it, moves the light or drops the pick (rowTap). A scroll drag never reaches here: the browser cancels the
-  // pointer and sends no click. A press of HOLD_MS or more on the rest of the row is a hold too: it picks nothing.
-  let heldFor = false;
-  let downAt = 0;
-  let released: ReturnType<typeof setTimeout> | undefined;
-  function pressed(e: PointerEvent): void {
-    clearTimeout(released);
-    heldFor = false;
-    downAt = e.timeStamp;
-  }
-  function lifted(e: PointerEvent): void {
-    heldFor = e.type === "pointerup" && e.timeStamp - downAt >= HOLD_MS;
-    clearTimeout(released);
-    if (heldFor) released = setTimeout(() => (heldFor = false), 400); // (the click follows the lift at once; a later keyboard click is no hold)
-  }
+  // pointer and sends no click. A hold on the rest of the row picks nothing (rowSwipe.ts swallows its click).
   function tapRowBody(e: MouseEvent, item: HistoryItem, at: number): void {
-    const held = heldFor;
-    heldFor = false;
     const target = e.target as Element;
     if (target.closest(".reason")) {
       reasonOpen = reasonOpen === item.id ? null : item.id; // R124: the line's text opens, nothing is picked
@@ -113,7 +98,6 @@
     }
     if (target.closest("button.cancel")) return; // Cancel keeps its own tap (D3)
     const tapped: PickPart = target.closest(".in") ? "input" : target.closest("button.result") ? "result" : "row";
-    if (held && tapped === "row") return; // (a hold on the input or the result is theirs: longpress.ts swallows its click once its chunk is in, else it is a tap)
     const next = rowTap(selected, part, at, tapped);
     if (next.kind === "act") {
       sigmaOpen = null;
@@ -238,9 +222,6 @@
     <article class="item" data-status={item.status}
       use:rowSwipe={{ enabled: onswipe !== undefined && item.status !== "pending", onswipe: () => onswipe?.(item) ?? false }}
       onclick={(e) => tapRowBody(e, item, at)}
-      onpointerdown={pressed}
-      onpointerup={lifted}
-      onpointercancel={lifted}
       oncontextmenu={(e) => e.preventDefault()}
       data-selected={at === selected ? "true" : undefined}
       data-part={at === selected ? part : undefined}>
