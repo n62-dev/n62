@@ -13,14 +13,15 @@ const slot = (page: Page, id: string): Promise<string> =>
     return (s?.tokens ?? []).map((t) => `${t.prefix ? `${t.prefix}:` : ""}${t.unit}`).join(" ");
   }, id);
 const focusOnView = (page: Page): Promise<boolean> => page.evaluate(() => document.activeElement === window.n62.unitView?.element);
-/** A tap in the middle of the slot's box (MathLive draws each prompt as a `.ML__prompt` span in the field's shadow root). */
+/** A tap in the slot's box (MathLive draws each prompt as a `.ML__prompt` span in the field's shadow root): in the middle,
+ *  or `dx` box widths off the middle (-0.33: left of it, still inside the box). */
 async function tapSlot(page: Page, index: number, dx = 0): Promise<void> {
   const box = await page.evaluate((i) => {
     const r = window.n62.unitView?.field.shadowRoot?.querySelectorAll(".ML__prompt")[i]?.getBoundingClientRect();
-    return r && { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    return r && { x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width };
   }, index);
   if (!box) throw new Error(`no prompt box ${index}`);
-  await page.touchscreen.tap(box.x + dx, box.y);
+  await page.touchscreen.tap(box.x + dx * box.w, box.y);
 }
 
 for (const [w, h] of [[412, 915], [360, 740]] as const) {
@@ -36,17 +37,24 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
 
     test("a tap on the second slot's box makes it active, and the pad's k, m fill it", async ({ page }) => {
       expect(await activeId(page)).toBe("u1");
+      await tap(page, ["d9"]); // m in u1, so that a tap on a filled slot is tested too
       await tapSlot(page, 1);
       await expect.poll(() => activeId(page)).toBe("u2");
       expect(await focusOnView(page)).toBe(true);
       await tap(page, ["d4", "d9"]);
       expect(await slot(page, "u2")).toBe("k:m");
-      expect(await slot(page, "u1")).toBe("");
-      // a tap on a filled slot makes it active too, and a tap on the active one changes nothing
+      expect(await slot(page, "u1")).toBe("m");
+      // a tap on a filled slot makes it active, in the middle of its box and off the middle of it
       await tapSlot(page, 0);
       await expect.poll(() => activeId(page)).toBe("u1");
+      await tapSlot(page, 1, -0.33);
+      await expect.poll(() => activeId(page)).toBe("u2");
+      await tapSlot(page, 0, 0.33);
+      await expect.poll(() => activeId(page)).toBe("u1");
+      // a tap on the active one changes nothing
       await tapSlot(page, 0);
       expect(await activeId(page)).toBe("u1");
+      expect(await slot(page, "u1")).toBe("m");
       expect(await page.getByTestId("unit-message").count()).toBe(0);
     });
 
