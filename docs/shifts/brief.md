@@ -71,7 +71,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885zb | R804 Store in says what a typed letter does; a stored name asks before Enter (B5) | ron, Opus | `p1/ron-storeline` | – |
 | 917a | R845 super mode's green: one mock-up in N62 Dark, Light, High contrast | ron, Opus | `p1/ron-supermock` | – |
 | 927 | R842 N62 Light, Enter orange: one mock-up for the owner (K7) | ron, Opus | `p1/ron-enterorangemock` | – |
-| 885t | [R790](packages/R790.md) the unit view's → Check stays put under the reading (owner's list 2026-11-20, U1) | ron, Opus | `p1/ron-unitcheckfixed` | R780 |
+| 885t | R790 the unit view's → Check stays put under the reading (owner's list 2026-11-20, U1) | ron, Opus | `p1/ron-unitcheckfixed` | R780 |
 | 885u | [R791](packages/R791.md) the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
 | 885v | [R792](packages/R792.md) High contrast's outline off the Shift legends (K5) | ron, Opus | `p1/ron-hclegend` | R791 |
 | 885w | [R793](packages/R793.md) the ＋ of an empty user key centred (K10) | ron, Opus | `p1/ron-userplus` | R792 |
