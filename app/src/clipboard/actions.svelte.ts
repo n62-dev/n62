@@ -161,11 +161,21 @@ export class ClipActions {
     return ok;
   }
 
+  /** R832f2: a finished row with no confirmed digit (mark ⚠ n 0) shows no number, so what shows a number (Full value, As shown, LaTeX,
+   *  a hold on the result, Shift + Select) writes nothing: the notice says why, the clipboard stays as it was, the copy is not counted. */
+  private noNumber(i: HistoryItem | undefined): boolean {
+    return i !== undefined && i.status === "done" && noDigit(this.session.mark(i));
+  }
+  private refuseNoDigit(): false {
+    this.say(tc("clip.noDigit"));
+    return false;
+  }
+
   /** R276: a hold on a history row's input (`latex`, as drawn: its plain text) or result (Copy's full value) copies
    *  it; a row action (counted as Menu's Copy is). */
   holdCopy(item: HistoryItem, part: "input" | "result", latex: string): Promise<boolean> {
     if (part === "result") {
-      if (item.status === "done") this.ops.acted?.("copy");
+      if (item.status === "done" && !this.noNumber(item)) this.ops.acted?.("copy");
       return this.copy(item, true);
     }
     this.ops.acted?.("copy");
@@ -200,14 +210,15 @@ export class ClipActions {
   private async copyNow(item: HistoryItem | undefined, named: boolean): Promise<boolean> {
     const i = this.target(item);
     const m = i ? await impl() : undefined;
-    // (the notice names what the row shows: a row with no confirmed digit shows ⚠, never the digit it hides)
-    const shown = i && m ? (noDigit(this.session.mark(i)) ? "⚠" : m.withoutMark(this.session.display(i).text)) : "";
+    if (this.noNumber(i)) return this.refuseNoDigit();
+    const shown = i && m ? m.withoutMark(this.session.display(i).text) : "";
     return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named);
   }
   /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
   copyShown(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
+      if (this.noNumber(i)) return this.refuseNoDigit();
       const text = i ? (await impl()).withoutMark(this.session.display(i).text) : undefined;
       return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named);
     });
@@ -241,6 +252,7 @@ export class ClipActions {
   copyLatex(item?: HistoryItem): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
+      if (this.noNumber(i)) return this.refuseNoDigit();
       return this.put(i ? this.session.display(i).latex : undefined);
     });
   }
@@ -459,13 +471,18 @@ export class ClipActions {
     const none = lit === "input" && row ? row.status === "pending" : this.target(row) === undefined; // (the input of a finished row is there even when it has no result)
     return { id: "store", label: tc("clip.store"), disabled: none || !this.shell.showsEntry, reason: this.why(), run: this.act("store", () => this.storeRow(row, lit)) };
   }
+  /** Copy › Full value: a row action (R53's count), unless the row has no digit to copy (R832f2: not counted). */
+  private copyFullRow(row?: HistoryItem): void {
+    if (!this.noNumber(this.target(row))) this.ops.acted?.("copy");
+    void this.copy(row, true);
+  }
   /** The picked row's Copy › button, with the five rows it opens (the first is what a hold copies). */
   copyItem(row?: HistoryItem): MenuItem {
     const i = this.target(row);
     const none = i === undefined;
     const why = this.why();
     const copies: MenuItem[] = [
-      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: this.act("copy", () => this.copy(row, true)) },
+      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: () => this.copyFullRow(row) },
       { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row, true) },
       {
         id: "exact",
