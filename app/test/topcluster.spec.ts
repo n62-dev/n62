@@ -103,17 +103,17 @@ test("R725: Shift + Vars is Chars (R723 had reserved it): the legend Chars, live
   await expect(vars).toHaveAttribute("aria-description", "Shift: Characters. Alpha: A");
 });
 
-test.describe("R278: ☰ → Paste is how a number comes in from another app", () => {
+test.describe("R278, R830: Shift + Deselect (Paste) is how a number comes in from another app", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   useClipboardLock();
-  test("☰ → Paste puts the clipboard's number on the line", async ({ page }) => {
+  test("Shift + Deselect puts the clipboard's number on the line", async ({ page }) => {
     await setClipboard(page, "42");
     await tap(page, PASTE);
     await expect.poll(() => entryValue(page)).toBe("42");
   });
 });
 
-test("the bar's ☰ opens each view's menu: Home's seven rows, CAS, and each view of Function and Solve", async ({ page }) => {
+test("the bar's ☰ opens each view's menu: Home's four rows, CAS, and each view of Function and Solve", async ({ page }) => {
   const title = async (): Promise<string> => {
     await tap(page, ["@menu"]);
     await expect(sheet(page)).toBeVisible();
@@ -124,7 +124,7 @@ test("the bar's ☰ opens each view's menu: Home's seven rows, CAS, and each vie
   };
   await tap(page, ["@menu"]);
   await expect(page.getByTestId("sheet-title")).toHaveText("Home menu");
-  await expect(sheet(page).getByRole("menuitem")).toHaveCount(7);
+  await expect(sheet(page).getByRole("menuitem")).toHaveCount(4);
   await tap(page, ["@menu"]); // a second tap closes it
   await expect(sheet(page)).toBeHidden();
   await tap(page, ["@cas"]);

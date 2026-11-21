@@ -84,6 +84,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
   const env = { userKeys: new UserKeys(fakeKv()), data: () => {} };
   const clip = new ClipActions({ items: [] } as unknown as Session, { showsEntry: true } as unknown as AppShell, {} as EntryController, { insert() {} });
   const menu = clip.menu();
+  const copy = clip.copyItem({ status: "done" } as HistoryItem); // R830: Copy › is the picked row's button
   const shell = new AppShell({} as Calc, fakeKv(), { value: "", set() {}, clear() {} }, () => session.settings);
   shell.toggleApps();
   await shell.sheetPending;
@@ -103,7 +104,7 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     symbols: paletteSlots(kb.symbols),
     chars: paletteSlots(kb.chars),
     "home-menu": ids(menu),
-    "home-copy": ids(menu.find((r) => r.id === "copy")?.submenu?.items ?? []),
+    "home-copy": ids(copy.submenu?.items ?? []),
     mode: ids(modeItems(session, env)),
     settings: ids(settingsSections(session, env)),
     apps: ids(shell.sheet?.level.items ?? []),
@@ -278,8 +279,8 @@ describe("a pinned key layer cannot change unnoticed (altered copies of the spec
 describe("a numbered list cannot change unnoticed (altered copies of the lists)", () => {
   const rows = (section: string): string[] => Object.values(actual[section] ?? {});
   it("a row gone names its slot, and the rows after it shift into the gap", () => {
-    const p = problems(with_("home-menu", (s) => listSlots(rows("home-menu").filter((r) => r !== "copy"))));
-    expect(p[0]).toBe('home-menu/2: pinned "copy", now "delete"');
+    const p = problems(with_("home-menu", (s) => listSlots(rows("home-menu").filter((r) => r !== "share"))));
+    expect(p[0]).toBe('home-menu/2: pinned "share", now "clear"');
     expect(p.length).toBeGreaterThan(1);
   });
   it("a row inserted before a pinned row moves it", () => {

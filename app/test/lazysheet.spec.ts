@@ -37,13 +37,13 @@ test("Tmpl, then Enter, typed before the chunk is in, inserts the fraction once 
   await expect(sheet(page)).toBeHidden();
 });
 
-test("Menu, then 6, typed before the chunk is in, picks the sixth row (Clear history) once it is", async ({ page }) => {
+test("Menu, then 6, typed before the chunk is in, picks the third row (Clear history) once it is", async ({ page }) => {
   const release = await hold(page);
   await open(page);
   await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   await tap(page, ["d1", "enter"]);
   await expect(page.locator('[data-testid="result"]')).toHaveCount(1);
-  await tap(page, ["@menu", "d6"]);
+  await tap(page, ["@menu", "d3"]);
   expect(await entryValue(page)).toBe(""); // the 9 was not typed into the line
   await expect(page.locator('[data-testid="result"]')).toHaveCount(1);
   release();

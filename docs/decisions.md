@@ -64,7 +64,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Start chunk: 180 kB raw, 63 kB gzip (owner, 2026-10-27; raised 2026-11-09), pinned** (size-check.ts). Rule: docs/04 8.3. Archived. Would change if: the Tab One's keyboard-usable time passes 738 ms.
 - **The Ultra terminals' answers (owner, 2026-11-16; T1 to T6):** [the archive](archive/owner-answers-2026-11-16.md); each package file and the brief's rows state the answer they build.
 - **The release key (owner, 2026-11-16):** alias `n62` (`android/release-cert.sha256`) replaces the Pascaline one before any release; the four secrets keep their names.
-- **Home/CAS ☰ of seven rows (owner, 2026-11-17, R720):** Insert and Recall went (Enter and ◀ on a pick do their jobs). Rule: docs/05 3.3, 3.5. Would change if: keys-only Copy proves frequent (then Ctrl+C on a pick).
+- **Home/CAS ☰ of four rows (owner, 2026-11-20, R830; R720 had seven):** 1 Delete, 2 Share session, 3 Clear history, 4 Export ›. Store, Copy and Paste left because each has a route of equal or lower cost (the picked row's bar, Shift + Select, Shift + Deselect, Ctrl + V); Delete is first because it is TalkBack's only route (a swipe needs a gesture TalkBack does not pass on). Insert and Recall went in R720 (Enter and ◀ on a pick do their jobs). Rule: docs/05 3.3, 3.5. Would change if: the counters show keys-only users missing Copy or Paste on ☰.
 
 ### Precision, engine and parser
 - **G141: a literal past `MAX_EVAL_DIGITS` makes the value ⚠ unchecked,** a power of ten too; G126's and G153's rows turn ⚠ until S20.

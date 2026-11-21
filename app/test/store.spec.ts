@@ -5,7 +5,7 @@
 // second tap stores; any other press disarms. Typed letters (digits after a letter too) and Enter store the typed name;
 // Esc leaves `value ▶` on the line. The real engine.
 import { expect, test, type Page } from "@playwright/test";
-import { entryValue, lastResult, open, sheetKey, tap } from "./helpers.ts";
+import { entryValue, lastResult, open, tap } from "./helpers.ts";
 
 const store = (page: Page) => page.getByTestId("store");
 const cell = (page: Page, letter: string) => store(page).locator(`[data-id="name:${letter}"]`);
@@ -131,9 +131,10 @@ test("R301: 2+, a picked row of 5, Store ▶: the title names 2+5, A stores 7, a
   await expect(done(page)).toHaveCount(2);
   await expect(lastResult(page)).toHaveAttribute("data-text", "7");
   expect(await names(page)).toEqual(["A"]);
-  // ☰ 1 with no pick acts on the last result (7) the same way, and the filled A's question repeats the title's text
-  await tap(page, ["d2", "add", "@menu"]);
-  await sheetKey(page, ["d1"]);
+  // the picked last row (7) stores the same way (R830: ☰ has no Store row), and the filled A's question repeats the title's text
+  await tap(page, ["d2", "add"]);
+  await lastResult(page).tap();
+  await page.getByTestId("row-actions").getByRole("button", { name: "Store ▶" }).tap();
   await expect(store(page).getByTestId("sheet-title")).toHaveText("Store 2+7 in");
   await cell(page, "A").tap();
   await expect(store(page).getByTestId("find-preview")).toHaveText("A = 7. Tap A again to replace it with 2+7");

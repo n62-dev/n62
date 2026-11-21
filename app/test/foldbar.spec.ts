@@ -108,11 +108,11 @@ test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, th
   expect(s.x).toBeLessThan(b.x + 1); // ⌃ in ⌄'s spot, at the bar's left end
 });
 
-test("☰ while folded opens Home's seven rows with the keys still down", async ({ page }) => {
+test("☰ while folded opens Home's four rows with the keys still down", async ({ page }) => {
   await rows(page);
   await fold(page);
   await fbar(page).getByTestId("menu-button").tap();
-  await expect(sheet(page).getByRole("menuitem")).toHaveCount(7);
+  await expect(sheet(page).getByRole("menuitem")).toHaveCount(4);
   await isFolded(page, true);
   const m = await box(page, '[data-testid="menu"]');
   expect(m.y + m.height).toBeLessThanOrEqual((await box(page, FBAR)).y + 1); // over the history, the folded bar uncovered

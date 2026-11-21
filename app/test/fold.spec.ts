@@ -270,16 +270,6 @@ test("R740: folded, Store ▶ keeps the keys down; a tap on a free letter stores
   await expect(page.locator("article.item .in").last()).toContainText("B"); // (the fake engine keeps no names: the row's input is the store)
 });
 
-test("R740: folded, ☰ then Store ▶ keeps the keys down too", async ({ page }) => {
-  await rows(page, 2);
-  await fold(page);
-  await results(page).last().tap();
-  await page.getByTestId("menu-button").tap();
-  await sheet(page).locator('[data-id="store"]').tap();
-  await expect(storeSheet(page)).toBeVisible();
-  await isFolded(page, true);
-});
-
 test("R740: folded, the sheet's last row is New name…: it brings the keys up, the sheet stays, letters type the name", async ({ page }) => {
   await foldedStore(page);
   const last = storeSheet(page).getByRole("menuitem").last();
@@ -362,7 +352,7 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
   await expect.poll(async () => (await counts())["recall"]).toBe(1);
 });
 
-test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back, Store ▶ from the list", async ({ page }) => {
+test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back", async ({ page }) => {
   const layer = () => page.evaluate(() => (history.state as { n62Layer?: number } | null)?.n62Layer);
   await rows(page);
   // the slice under an open sheet, then Esc
@@ -383,15 +373,7 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await page.evaluate(() => history.back());
   await expect(sheet(page)).toBeHidden();
   await expect.poll(layer).toBeUndefined();
-  // Store ▶ from the list over the fold (R720: ☰ has no Insert): the list closes, the store sheet opens, the keys stay down (R740)
   await fold(page);
-  await page.getByTestId("menu-button").tap();
-  await sheet(page).locator('[data-id="store"]').tap();
-  await isFolded(page, true); // R740: the keys stay down
-  await expect(page.getByTestId("store")).toBeVisible();
-  await page.keyboard.press("Escape"); // (the store sheet is a layer of its own while it is open)
-  await expect(sheet(page)).toBeHidden();
-  await isFolded(page, true);
   await clearLine(page);
   await page.locator(SLICE).tap();
   await expect.poll(layer).toBeUndefined();
@@ -500,15 +482,15 @@ test("every counter counts (uses: folds by a swipe, picks, each action while fol
   await expect(sheet(page).locator('[data-id="handle"]')).toHaveCount(0); // R283: no row for the handle
 });
 
-test("a hold, a swipe and ☰'s list each count their action once while folded (R276)", async ({ page }) => {
+test("a hold, a swipe and the bar's Copy › each count their action once while folded (R276; R830: ☰ has no Copy row)", async ({ page }) => {
   await rows(page, 4);
   await fold(page);
   await holdLast(page);
   await expect(page.getByTestId("notice")).toHaveText("Copied");
   await swipeLast(page);
   await expect(page.locator('[data-status="done"]')).toHaveCount(3);
-  await page.getByTestId("menu-button").tap(); // ☰ with no row: the list, on the last result
-  await sheet(page).locator('[data-id="copy"]').tap();
+  await results(page).last().tap(); // a pick: the bar's Copy ›
+  await bar(page).getByRole("button", { name: /Copy/ }).tap();
   await sheet(page).locator('[data-id="full"]').tap();
   await expect(sheet(page)).toBeHidden();
   const counts = await page.evaluate(async () => ({ ...(await window.n62.session.uses()).state.counts }));

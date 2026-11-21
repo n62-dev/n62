@@ -403,12 +403,12 @@ test.describe("R298: inserts before the field", () => {
   test.use({ permissions: ["clipboard-read", "clipboard-write"] });
   test.describe.configure({ mode: "serial" }); // (one system clipboard for the whole browser)
   useClipboardLock();
-  test("R298: 2, then ☰ Paste of 3 before the field: Enter gives 23", async ({ page }) => {
+  test("R298: 2, then Paste of 3 before the field: Enter gives 23", async ({ page }) => {
     const { next, release, releaseAlso } = await heldStart(page, ["d5"], [], /\/src\/clipboard\/actions\.svelte\.ts/);
     await setClipboard(next, "3");
     await tap(next, ["d2", ...PASTE, "enter"]);
     releaseAlso();
-    // ☰ waited for its code with 7 and Enter behind it; the paste has landed in the entry's queue and its hold (route.ts
+    // Paste waited for its code with Enter behind it; the paste has landed in the entry's queue and its hold (route.ts
     // holdKeys) is over before the field: the queued Enter must still wait for the field (the order run 1195's load gave)
     await next.waitForFunction(() => (window.n62.entry as unknown as { queue: { kind: string }[] }).queue.some((a) => a.kind === "put"), undefined, { timeout: 20_000 });
     await expect(sheet(next)).toHaveCount(0);

@@ -129,18 +129,18 @@ test.describe("at 412 × 915", () => {
     await lastRowReachable(page);
   });
 
-  // R720: seven rows, Export › last as 7: key 7 opens Export › at both phone sizes (R770: the rows scroll in the viewport, none below the floor)
+  // R830: four rows, Export › last as 4: key 4 opens Export › at both phone sizes (R770: the rows scroll in the viewport, none below the floor)
   for (const [width, height] of [[412, 915], [360, 740]] as const)
-    test(`the Home menu's seven rows keep their floor at ${width} × ${height}, key 7 opens Export › (R720)`, async ({ page }) => {
+    test(`the Home menu's four rows keep their floor at ${width} × ${height}, key 4 opens Export › (R830)`, async ({ page }) => {
       await page.setViewportSize({ width, height });
       await open(page);
       await tap(page, ["d1", "add", "d2", "enter"]); // a result, so Export › is on
       await expect(page.locator('[data-testid="result"]')).toHaveCount(1);
       await openSheet(page, "home menu");
       const rows = await sheet(page).getByRole("menuitem").evaluateAll((els) => els.map((e) => e.getBoundingClientRect()));
-      expect(rows).toHaveLength(7);
+      expect(rows).toHaveLength(4);
       for (const r of rows) expect(r.height).toBeGreaterThanOrEqual(36);
-      await tap(page, ["d7"]);
+      await tap(page, ["d4"]);
       await expect(page.getByTestId("sheet-title")).toHaveText(/› Export$/);
     });
 
@@ -346,7 +346,7 @@ test("R145: CAS's ☰ and the ☰ on a picked row have the ⚙ and no Settings r
   await tap(page, ["up", "@menu"]); // a picked row: its menu, with the ⚙
   await expect(page.getByTestId("sheet-gear")).toBeVisible();
   await expect(sheet(page).locator('[data-id="settings"]')).toHaveCount(0);
-  await expect(sheet(page).getByRole("menuitem")).toHaveCount(7); // R720: item 7 is Export ›
+  await expect(sheet(page).getByRole("menuitem")).toHaveCount(4); // R830: item 4 is Export ›
   await page.getByTestId("sheet-gear").tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("Menu › Settings");
   await tap(page, ["esc", "esc"]);

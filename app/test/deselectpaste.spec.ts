@@ -3,7 +3,7 @@
 // takes ☰ → Paste's path (clipboard/actions.svelte.ts paste: the clipboard as one number onto the entry line), so a hold on
 // a result then a flick up on Deselect puts that result on the line, in Home and in Solve Symb; the keys pressed meanwhile
 // wait for the paste (holdKeys), and where no entry line shows (Plot) it is a dead press. Controls: Vars' tap still opens
-// Find on the user's names, ☰ 4 still pastes (the core list's cases), and Shift + a b/c, 7, Fmt and Vars are reserved. Key
+// Find on the user's names, Shift + Deselect pastes (the core list's cases), and Shift + a b/c, 7, Fmt and Vars are reserved. Key
 // sequences on the real engine; the expected values are derived (9 + 1 = 10, 12 ÷ 4 = 3).
 import { expect, test, type Page } from "@playwright/test";
 import { finger } from "./core-lib.ts";
@@ -85,7 +85,7 @@ test("Deselect's Shift legend reads Paste and fits its face, no ▾ (it opens no
   await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true");
 });
 
-test("controls: Vars' tap opens Find on your names; ☰ 4 still pastes; Shift + a b/c, 7 and Fmt are reserved (dimmed), Vars is Chars (R725)", async ({ page }) => {
+test("controls: Vars' tap opens Find on your names; Shift + Deselect pastes; Shift + a b/c, 7 and Fmt are reserved (dimmed), Vars is Chars (R725)", async ({ page }) => {
   await tap(page, ["vars"]);
   await expect(page.getByTestId("find")).toBeVisible();
   await tap(page, ["esc"]);

@@ -118,14 +118,14 @@ export async function tapTwice(l: Locator, how: "tap" | "click" = "tap"): Promis
 }
 /** The open pick sheet (the `menu` test id). */
 export const sheet = (page: Page): Locator => page.getByTestId("menu");
-/** ☰ → Copy › → Full value and ☰ → Paste on Home and CAS (R278: the Copy and Paste keys are gone; R720: the Menu's items 2 › 1 and 4). Copy takes the
- *  picked row, else the last result; Paste puts the clipboard's number on the line, and the keys after it wait for it. */
-export const COPY: string[] = ["@menu", "d2", "d1"];
-export const PASTE: string[] = ["@menu", "d4"];
-/** Shift + Select, the Copy key (R723): what a hold on the picked row's result copies, else the last finished row's. */
+/** Shift + Select, the Copy key (R723; R830: ☰ has no Copy row now): what a hold on the picked row's result copies (the Full value),
+ *  else the last finished row's. */
 export const KEYCOPY: string[] = ["shift", "select"];
-/** Shift + Deselect, the Paste key (R723): ☰ → Paste's path. */
+/** Shift + Deselect, the Paste key (R723): the clipboard as one number onto the line, the keys after it waiting for it. */
 export const KEYPASTE: string[] = ["shift", "deselect"];
+/** The names the specs used before R830 took Copy and Paste off ☰ in Home and CAS. */
+export const COPY: string[] = KEYCOPY;
+export const PASTE: string[] = KEYPASTE;
 
 /** ☰ and the view's own item `id` (an app's Copy or CSV: the app menus have no numbers a test can rely on). */
 export async function menuItem(page: Page, id: string): Promise<void> {

@@ -3,7 +3,7 @@
 // the viewport (over the history, in Find's place), never over the keys; the keys stay live below it. Digits pick a
 // numbered row, ▲ ▼ move, Enter picks, Esc goes back, any other key is dead and the sheet stays. Expected values are
 // derived from the rule: the sheet's box lies inside the screen area and clear of the keypad; ☰'s rows are numbered
-// 1…9, 0 in order (1 Insert … Copy › is 2, docs/05 3.2). Run at 360 × 740 and 412 × 915.
+// 1…9, 0 in order (R830: ☰ has four rows, docs/05 3.3). Run at 360 × 740 and 412 × 915.
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, recordVibrations, tap, vibrations } from "./helpers.ts";
 
@@ -31,7 +31,10 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   Apps: (page) => tap(page, ["@place"]),
   Tmpl: (page) => tap(page, ["tmpl"]),
   "Shift + 6": (page) => tap(page, ["shift", "d6"]),
-  "Copy ›": (page) => tap(page, ["@menu", "d2"]),
+  "Copy ›": async (page) => {
+    await tap(page, ["up"]); // the picked row's bar (R830: ☰ has no Copy row)
+    await page.getByTestId("row-actions").getByRole("button", { name: /Copy/ }).tap();
+  },
   Base: (page) => tap(page, ["shift", "sub"]),
   "matrix size": (page) => tap(page, ["shift", "d4"]),
 };
@@ -84,39 +87,39 @@ for (const size of SIZES) {
       await page.locator('[data-key="sin"]').tap();
       await expect(panel(page)).toBeVisible(); // a key beside the sheet is dead: the sheet stays, nothing typed
       expect(await entryValue(page)).toBe("");
-      await page.locator('[data-key="d2"]').tap(); // 2 picks the second row (Copy ›)
-      await expect(page.getByTestId("sheet-title")).toContainText("Copy");
+      await page.locator('[data-key="d4"]').tap(); // 4 picks the fourth row (Export ›, R830)
+      await expect(page.getByTestId("sheet-title")).toContainText("Export");
       await page.locator('[data-key="esc"]').tap(); // Esc: back one level
       await expect(page.getByTestId("sheet-title")).toHaveText(title ?? "");
       await page.locator('[data-key="esc"]').tap();
       await expect(panel(page)).toHaveCount(0);
-      // criterion 1(b): in a known state (one result on the history) ☰'s rows are Store, Copy ›, Delete, Paste, … in that order;
-      // the digit 3 picks the third by its effect (Delete drops the one history row) and the sheet closes
+      // criterion 1(b): in a known state (one result on the history) ☰'s rows are Delete, Share, Clear, Export › in that order (R830);
+      // the digit 1 picks the first by its effect (Delete drops the one history row) and the sheet closes
       const items = (): Promise<number> => page.evaluate(() => window.n62.session.items.length);
       await tap(page, ["@menu"]);
       await expect(rows.first()).toBeVisible();
       const ids = await rows.evaluateAll((els) => els.map((e) => e.getAttribute("data-id")));
-      expect(ids.slice(0, 4)).toEqual(["store", "copy", "delete", "paste"]);
-      await expect(rows.nth(2)).toContainText("Delete");
+      expect(ids).toEqual(["delete", "share", "clear", "export"]);
+      await expect(rows.nth(0)).toContainText("Delete");
       expect(await items()).toBe(1);
       const at = async (): Promise<number> => ids.indexOf(await menu.locator('[data-active="true"]').getAttribute("data-id"));
-      if ((await at()) === 2) await page.locator('[data-key="down"]').tap(); // the sheet remembers the last pick: the highlight must not already sit on row 3
-      expect(await at()).not.toBe(2);
-      await page.locator('[data-key="d3"]').tap();
+      if ((await at()) === 0) await page.locator('[data-key="down"]').tap(); // the sheet remembers the last pick: the highlight must not already sit on row 1
+      expect(await at()).not.toBe(0);
+      await page.locator('[data-key="d1"]').tap();
       await expect(panel(page)).toHaveCount(0);
-      expect(await items()).toBe(0); // the third row ran, not the first (Store opens a sheet) or the second (Copy ›)
-      // ▼ ▼ Enter from the highlighted row (the first) picks the row two below it, the third: again a state with one result
+      expect(await items()).toBe(0); // the first row ran (Delete), not the second (Share) or the fourth (Export ›)
+      // ▼ ▼ Enter from the highlighted row (the first) picks the row two below it, the third (Clear history): again a state with one result
       await tap(page, ["d1", "add", "d1", "enter"]);
       await expect(page.locator("[data-status]")).toHaveCount(1);
       await tap(page, ["@menu"]);
       await expect(rows.first()).toBeVisible();
-      for (let i = await at(); i > 0; i--) await page.locator('[data-key="up"]').tap(); // the sheet opens on the last pick (Delete): ▲ to the first row
+      for (let i = await at(); i > 0; i--) await page.locator('[data-key="up"]').tap(); // the sheet opens on the last pick: ▲ to the first row
       await expect(menu.locator('[data-active="true"]')).toHaveAttribute("data-id", ids[0] ?? "");
       await page.locator('[data-key="down"]').tap();
       await page.locator('[data-key="down"]').tap();
       await expect(menu.locator('[data-active="true"]')).toHaveAttribute("data-id", ids[2] ?? ""); // two below the first row
-      await expect(menu.locator('[data-active="true"]')).toContainText("Delete");
-      await page.locator('[data-key="enter"]').tap(); // the highlighted row is picked: Delete drops the history row, the sheet closes
+      await expect(menu.locator('[data-active="true"]')).toContainText("Clear");
+      await page.locator('[data-key="enter"]').tap(); // the highlighted row is picked: Clear history empties the history, the sheet closes
       await expect(panel(page)).toHaveCount(0);
       expect(await items()).toBe(0);
     });
