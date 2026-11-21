@@ -1063,6 +1063,35 @@ grep -oE 'Q[1-4]: integ released after [0-9]+ s in the queue' "$mq/.coord/log.md
 [[ "$(wc -l < "$tmp/serial")" -eq 5 ]] || fail "A47b: not every queue entry logs its serial time: $(cat "$tmp/serial")"
 echo "A47b serial times: $(sed 's/: integ released after / /; s/ s in the queue/ s/' "$tmp/serial" | paste -sd, - | sed 's/,/, /g')"
 
+# A265: a node_modules self-link (app/node_modules/node_modules -> itself) never reaches a copy: copy_node_modules and device_tree
+# unlink it in the source first and say so once in the run log; a real directory of that name inside a package is left alone
+if ! declare -F nm_selflink_drop >/dev/null; then fail "A265: nm_selflink_drop is not defined in pipeline-lib.sh"; else
+  sl="$tmp/selflink"; rm -rf "$sl"; mkdir -p "$sl/integ/app/node_modules/pkg/node_modules/inner" "$sl/wt/app"
+  echo p > "$sl/integ/app/node_modules/pkg/package.json"; echo i > "$sl/integ/app/node_modules/pkg/node_modules/inner/package.json"
+  ln -s "$sl/integ/app/node_modules" "$sl/integ/app/node_modules/node_modules"
+  sl_log="$sl/run.log"; runlog() { echo "$*" >> "$sl_log"; }
+  sl_die() { echo "die: $*" >&2; return 1; }
+  # copy_node_modules is pipeline.sh's own function: taken from its text, with this test's integ, die and lock flag
+  ( eval "$(sed -n '/^copy_node_modules() {/,/^}/p' "$here/pipeline.sh")"
+    die() { sl_die "$@"; exit 1; }; integ="$sl/integ"; nodemods_held=1
+    copy_node_modules "$sl/wt" ) || fail "A265: copy_node_modules failed on a tree holding a self-link"
+  [[ -f "$sl/wt/app/node_modules/pkg/package.json" ]] || fail "A265: the copy lacks the package"
+  [[ ! -e "$sl/wt/app/node_modules/node_modules" && ! -L "$sl/wt/app/node_modules/node_modules" ]] || fail "A265: the copy holds the self-link"
+  [[ ! -L "$sl/integ/app/node_modules/node_modules" ]] || fail "A265: the source keeps the self-link"
+  [[ "$(grep -c 'unlinked the self-link' "$sl_log" 2>/dev/null)" -eq 1 ]] || fail "A265: the run log has not one line about the unlink: $(cat "$sl_log" 2>/dev/null)"
+  [[ -f "$sl/wt/app/node_modules/pkg/node_modules/inner/package.json" && -f "$sl/integ/app/node_modules/pkg/node_modules/inner/package.json" ]] || fail "A265: a real node_modules inside a package was touched"
+  # device_tree, with the link back in the source
+  ln -s "$sl/integ/app/node_modules" "$sl/integ/app/node_modules/node_modules"
+  git -C "$sl/integ" init -q -b main; echo t > "$sl/integ/tracked"; git -C "$sl/integ" add tracked; gc "$sl/integ" init
+  nodemods_held=1; : > "$sl_log"
+  device_tree "$sl/integ" "$(git -C "$sl/integ" rev-parse HEAD)" "$sl/dev" >/dev/null 2>&1 || fail "A265: device_tree failed on a tree holding a self-link"
+  [[ -f "$sl/dev/app/node_modules/pkg/package.json" && ! -L "$sl/dev/app/node_modules/node_modules" && ! -L "$sl/integ/app/node_modules/node_modules" ]] || fail "A265: device_tree copied the self-link or left it in the source"
+  [[ -f "$sl/dev/app/node_modules/pkg/node_modules/inner/package.json" ]] || fail "A265: device_tree lost a real node_modules inside a package"
+  [[ "$(grep -c 'unlinked the self-link' "$sl_log")" -eq 1 ]] || fail "A265: device_tree: the run log has not one line about the unlink"
+  nodemods_held=0; unset -f runlog
+fi
+grep -q 'ln -sT "$wt/app/node_modules" "$scratch/app/node_modules"' "$here/pipeline-lib.sh" || fail "A265: red-first's scratch link is not made with ln -sT"
+
 # A51: a timing rerun waits for a quiet host: 1-minute load under half of nproc, checked every 15 s, at most 600 s, then reruns anyway
 declare -F quiet_wait >/dev/null || fail "A51: quiet_wait is not defined in pipeline-lib.sh"
 if declare -F quiet_wait >/dev/null; then
