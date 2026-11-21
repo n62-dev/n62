@@ -63,7 +63,7 @@ Start from the phase-1 worktree: `setsid nohup scripts/night.sh [--lane A|B] [--
 `ANDROID_SERIAL=HA24BZ2Y`, from the phase-1 worktree. The Tab One stays plugged in and unlocked (`tools/stay-awake.sh HA24BZ2Y --restore`, STAY_ON=7). CORE DEVICE after each pass. A new Giac patch takes the next free number after phase-1 is merged into its branch; a clash is a fix round. In "After", "–" is merged; a step whose "After" is not merged is refused by the pipeline (`RESULT #<n> <ID>: WAITS for <ids>`, exit 2, no worker; A127): henri takes the next row and comes back once the After has merged, and a second WAITS of one command with no MERGED since is SKIPPED. Follow each Opus pass as written (rule 3).
 
 ### The queue (one lane, from the stop of Tue 11-17; owner, 2026-11-17)
-One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--lane` (rule 12's form), from the phase-1 worktree. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. After R744 the owner tags `v0.1.0-beta.1`; the release candidate is Mon 11-23, the tag Tue 11-24. From 2026-11-19 on Pro every worker and pass runs on Sonnet, whatever a row says, and every audit but a maths diff's (`.coord/model-cap`, A262); `--audit-model auto` as always.
+One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--lane` (rule 12's form), from the phase-1 worktree. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. The tag has no date (owner, 2026-11-21): it follows the last UI row and S57. From 2026-11-19 on Pro every worker and pass runs on Sonnet, whatever a row says, and every audit but a maths diff's (`.coord/model-cap`, A262); `--audit-model auto` as always.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
@@ -84,10 +84,9 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885u | [R791](packages/R791.md) the Å cell draws Å, not a red `\AA` (P2) | ron, Sonnet | `p1/ron-angstromglyph` | R790 |
 | 885v | [R792](packages/R792.md) High contrast's outline off the Shift legends (K5) | ron, Sonnet | `p1/ron-hclegend` | R791 |
 | 885w | [R793](packages/R793.md) the ＋ of an empty user key centred (K10) | ron, Sonnet | `p1/ron-userplus` | R792 |
-| 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R780 |
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
-**Held until the v0.1.0 tag:** henri starts no row of this table before a session deletes this sentence after the tag. Then the rest of the freeze row's list, in its order. The lanes' other rows still open at the stop (R585, R576, G551, G554, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files for after the tag.
+**Released before the tag (owner, 2026-11-21: all UI work first, no time pressure):** henri takes this table's rows in order after the first table; a row with an owner condition in its text or After column waits for it. S57 now follows R849. The rest of the freeze row's list and the lanes' other rows still open at the stop (R585, R576, G551, G554, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files.
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
@@ -122,7 +121,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 918 | [R811](packages/R811.md) super mode's state and keys: Shift flick down once, Shift + Fmt held; after the owner's yes on the docs/06 lines | ron, Sonnet | `p1/ron-supermode` | R810 |
 | 918a | [R850](packages/R850.md) super mode drawn green (`--key-super`); after the owner's yes on R845 | ron, Sonnet | `p1/ron-supergreen` | R811, R845 |
 | 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Sonnet | `p1/ron-userkeyalpha` | R729 |
-| 920 | [R822](packages/R822.md) Store: a tap types the case Alpha types; after the owner's answer | ron, Sonnet | `p1/ron-storecase` | R820 |
+| 920 | [R822](packages/R822.md) Store: a tap types the case Alpha types; (owner's rule yes, 2026-11-21) | ron, Sonnet | `p1/ron-storecase` | R820 |
 | 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Sonnet | `p1/ron-rowx` | R832, R742 |
 | 922 | [G640](packages/G640.md) Ans frozen in history, live on the line: the tests, known-fail until G642 and R836 | gorge, Sonnet | `p1/gorge-anstests` | – |
 | 923 | [G642](packages/G642.md) a row that used Ans keeps its snapshot (chip, shown LaTeX, source row) | gorge, Sonnet | `p1/gorge-anssnapshot` | G640 |
@@ -134,6 +133,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 929 | [R847](packages/R847.md) Find for a user-key slot: titled "U1 ⇧", Places, Back returns (Y1) | ron, Sonnet | `p1/ron-slotfind` | R811, R821 |
 | 930 | [R848](packages/R848.md) a tap on an empty user key opens its own slot sheet (Y1; reworks R705) | ron, Sonnet | `p1/ron-keysheet` | R705, R811, R821, R847 |
 | 931 | [R849](packages/R849.md) super mode: a tap or hold on any user key opens its sheet (Y1) | ron, Sonnet | `p1/ron-superkeys` | R811, R850, R848 |
+| 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R849 |
 
 **Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The Ultra clone `../n62-next` ran the after-tag rows G389 to R351 and R367 to G407 from its own brief and stopped; its phase-1 merges back once after the tag, which ticks those rows here. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
