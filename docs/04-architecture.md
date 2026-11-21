@@ -339,7 +339,7 @@ One IndexedDB database `n62`, store `kv` (`state/storage.ts`). Keys:
 
 | Key | Holds |
 |---|---|
-| `settings` | `schema: 4`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep; each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
+| `settings` | `schema: 5`: digits ≤ 30, format (`std`, `sci`, `eng`, `pfx`), fixDecimals, fmtCycle (with Fixed), entry, decimalMark (missing or invalid: the point), haptics, look, angle, uncertainty, marks, groupSep, barSlot (`cas` or an app id of the registry; an unknown id: CAS; R782); each field checked (`migrateSettings`, `state/session.svelte.ts`). A newer schema is read, never written back; each schema bump raises `DATA_VERSION` (`SETTINGS_SINCE`, `state/storage.ts`) |
 | `view`, `place`, `entry` | the open view and app; the half-typed line |
 | `history` | ≤ 200 items per view, with `full` (≤ 2 kB) and the mark facts |
 | `defs` | the definitions log (`engine/defs.ts`; `:=`, ▶, `purge`): per name its kind, commands, mark facts, σ, unit, preview, view, time; ≤ 500 lines. **Variables are kept as their value** (`B:=romberg(…)` is stored as `B:=(evalf(<exact>,k))`); functions and `assume` keep their command. `restore()` replays them (`engine/host.ts`, `stores.ts`): functions pending until used (G83), names stored through an argument, Giac's own names, `restart` (G174) |
