@@ -190,3 +190,62 @@ test("a hold on empty space or on an operator selects nothing and leaves the car
   expect(await collapsed(page)).toBe(true);
   expect(await caret(page)).toBe(5);
 });
+
+// R779 (owner, 2026-11-19, Fairphone 6): a long line's drag worked once and stopped after the arrow keys. Each case: drag the
+// line (scrollLeft changes), use keys, drag again (scrollLeft changes again); then once more after a second round of keys.
+const SUM = Array.from({ length: 60 }, (_, i) => String(i + 11)).join("+");
+const dragRight = async (page: Page, dx = 150): Promise<number> => {
+  const f = await field(page);
+  const before = (await scrolled(page))?.left ?? 0;
+  await finger(page, (f.left + f.right) / 2, (f.top + f.bottom) / 2, { dx, steps: 15 });
+  return before - ((await scrolled(page))?.left ?? 0);
+};
+for (const [name, line] of [["digits", LONG], ["a 60-term sum", SUM]] as const)
+  for (const key of ["left", "right"] as const)
+    test(`R779: a drag still scrolls the ${name} after ${key === "left" ? "◀" : "▶"} presses`, async ({ page }) => {
+      await setLine(page, line);
+      expect(await dragRight(page), "the first drag").toBeGreaterThan(100);
+      for (let round = 0; round < 2; round++) {
+        await tap(page, [key, key, key]);
+        await page.waitForTimeout(150);
+        expect(await dragRight(page), `a drag after the keys, round ${round}`).toBeGreaterThan(100);
+      }
+    });
+
+test("R779: a drag scrolls after Enter and a new long line, and a tap still puts the caret at the touched term", async ({ page }) => {
+  await setLine(page, LONG);
+  expect(await dragRight(page)).toBeGreaterThan(100);
+  await tap(page, ["enter"]);
+  await setLine(page, SUM);
+  await tap(page, ["left", "left"]);
+  expect(await dragRight(page), "a drag on the new line").toBeGreaterThan(100);
+  // control: a tap on the first term after the drag
+  await page.evaluate(() => void (window.n62.entry.field?.shadowRoot?.querySelector<HTMLElement>("[part=content]")?.scrollTo({ left: 0 })));
+  expect((await scrolled(page))?.left).toBe(0);
+  const two = await boxOf(page, 2); // "11" is offsets 1 and 2
+  await page.waitForTimeout(550);
+  await finger(page, two.right - 2, (two.top + two.bottom) / 2);
+  await expect.poll(() => caret(page)).toBe(2);
+});
+
+// R779's one mechanism that can switch the drag off for good: a touch whose lift or cancel never reached the line (lineTouch.ts
+// kept it as "the" touch and ignored every later one). Chromium's touch emulation did not reproduce the owner's sequence (drag,
+// arrow keys, drag: the cases above pass on phase-1), so these two make the lost end by hand.
+const lostEnd = (page: Page, how: "no-end" | "up-elsewhere"): Promise<void> =>
+  page.evaluate((h) => {
+    const mf = window.n62.entry.field;
+    if (!mf) throw new Error("no field");
+    const r = mf.getBoundingClientRect();
+    const init = { pointerId: 77, pointerType: "touch", isPrimary: true, bubbles: true, composed: true, cancelable: true, clientX: r.left + 40, clientY: r.top + r.height / 2 };
+    mf.dispatchEvent(new PointerEvent("pointerdown", init));
+    if (h === "up-elsewhere") document.body.dispatchEvent(new PointerEvent("pointerup", init));
+  }, how);
+for (const how of ["no-end", "up-elsewhere"] as const)
+  test(`R779: a touch whose lift never reached the line (${how}) does not stop the next drag`, async ({ page }) => {
+    await setLine(page, SUM);
+    await lostEnd(page, how);
+    await page.waitForTimeout(700); // past the hold: the stale touch has selected its term, or not
+    await tap(page, ["right"]);
+    expect(await dragRight(page), "a drag after the lost end").toBeGreaterThan(100);
+    expect(await dragRight(page)).toBeGreaterThan(100);
+  });

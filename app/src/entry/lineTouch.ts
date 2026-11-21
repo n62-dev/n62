@@ -90,7 +90,10 @@ export function lineTouch(mf: MathfieldElement, host: HTMLElement, scroll: (dx: 
       // MathLive never sees this pointer: no caret of its own, no selection by drag, no caret again on the lift
       e.preventDefault();
       e.stopPropagation();
-      if (t || !e.isPrimary) return; // a second finger does nothing
+      if (!e.isPrimary) return; // a second finger does nothing
+      // R779: a new first finger means the last touch is over; one whose lift or cancel never reached the line (it ended on
+      // another element, or the event was lost) must not stay "the" touch and swallow every drag and tap after it
+      end();
       rerender(mf);
       const id = e.pointerId;
       const [x, y] = [e.clientX, e.clientY];
@@ -139,6 +142,13 @@ export function lineTouch(mf: MathfieldElement, host: HTMLElement, scroll: (dx: 
     },
     opts,
   );
+  // R779: a touch's end anywhere else (the window: the finger went up off the line, or another listener took the event)
+  // ends it too; a lift on the line is the handler above's (it must run first: it puts a tap's caret)
+  const away = (e: PointerEvent): void => {
+    if (t && e.pointerId === t.id && !(e.target instanceof Node && host.contains(e.target))) end();
+  };
+  addEventListener("pointerup", away, opts);
+  addEventListener("pointercancel", away, opts);
   // a long press's context menu (Chrome's, on Android) is no menu here: the hold is the line's
   host.addEventListener(
     "contextmenu",
