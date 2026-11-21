@@ -49,7 +49,7 @@ test("⇤ ⇥, Undo and Redo are dead in a view without an entry line (Plot)", a
       await tap(page, keys.slice(0, -1));
       const before = (await vibrations(page)).length;
       await tap(page, [id]);
-      await expect.poll(async () => (await vibrations(page)).length - before, keys.join(" ")).toBe(3); // the touch, then the double dead-key buzz
+      await expect.poll(async () => (await vibrations(page)).length - before, keys.join(" ")).toBe(2); // the double dead-key buzz alone: the route turns these into nothing (route.ts deadPress, R777)
     }
 });
 
