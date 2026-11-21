@@ -9,6 +9,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R128, an offer on Choose folder:** offer another device's newer backup as soon as the folder is chosen, not only at the next start? Recommended (the same one offer); now the next start.
 - **R770, a sheet on a very short screen:** the view above the keys is about 250 px at 360 × 740 and 88 px at 372 × 560 (Plot's floor). Under 120 px the sheet drops its margins (Sheet.svelte, a container query) and keeps its title row and a 48 px list: one 42 px row whole, a row with a reason line (58 px) cut and scrolled to. After the tag a "touch vs keypad" setting may put sheets over the keys again.
+- **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 - **G369, a % chip in Home:** a chip in one ratio unit is its pure number (0.42 % is 0.0042, as typed)? Recommended; now 0.42, "unit dropped" (R61).
 
 ## Decided proposals

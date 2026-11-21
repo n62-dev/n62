@@ -68,7 +68,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 885sb | [R832](packages/R832.md) a tap lights the input, the result or the whole row; Copy, Store, insert act on it (H2; takes in R741); NOT MERGED after three rounds: its work is on `p1/ron-rowpart` (e98db67c), pass 224's FIX R832f1 finishes it (a test's group spaces) | ron, Sonnet | `p1/ron-rowpart-f1` | – |
-| 885n | [R779](packages/R779.md) the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
+| 885n | R779 the line's touch drag works again after the arrow keys (probe first) | ron, Sonnet | `p1/ron-dragafterarrows` | R777 |
 | 885o | [R780](packages/R780.md) every menu row has a number the keypad reaches, past row 10 too (measure first) | ron, Sonnet | `p1/ron-rowsnumbers` | R777 |
 | 885zc | [R820](packages/R820.md) while a sheet takes letters, the faces and the pop show the letter typed (owner, 2026-11-20) | ron, Sonnet | `p1/ron-sheetfaces` | R780 |
 | 885y | [R801](packages/R801.md) a tap on a unit slot makes it active; the keys stay with the view (B4) | ron, Sonnet | `p1/ron-unittap` | R780 |
