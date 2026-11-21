@@ -9,7 +9,7 @@ import type { UserName } from "../engine/defs.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";
 import type { Kv } from "../state/storage.ts";
 import type { Picked, Sheet } from "./sheet.svelte.ts";
-import { showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.svelte.ts";
+import { findHeld, showStore, STORE_SHEET, storedText, typedLatex } from "./storeSheet.svelte.ts";
 
 const kv = (): Kv => ({ get: () => Promise.resolve(undefined), set: () => Promise.resolve() });
 const name = (n: string, preview: string, time: number, kind: UserName["kind"] = "var"): UserName => ({ name: n, kind, preview, view: "home", time, mark: "=" });
@@ -183,6 +183,20 @@ describe("letters typed in the store sheet (R804)", () => {
     if (p.kind === "run") p.item.run?.();
     expect(stored).toEqual(["\\operatorname{rate}"]);
   });
+  it("a tap on a cell that is not the typed name says Tap, not Enter, and the second tap replaces that cell", () => {
+    const { sheet, stored, tap } = setup();
+    sheet.level.type("R"); // R is free; R2 and rate are stored and match
+    expect(sheet.level.rows.map((r) => r.item.label)).toEqual(["R", "R2", "rate"]);
+    tap("name:R2");
+    expect(sheet.armed).toBe("name:R2");
+    expect(sheet.level.items.find((x) => x.id === "name:R2")?.confirm?.note).toBe("R2 = 10000. Tap R2 again to replace it with ≈ 0.333333333333");
+    expect(stored).toEqual([]);
+    tap("name:R2");
+    expect(stored).toEqual(["\\operatorname{R2}"]);
+    // with R2 typed in full the line is Enter's
+    sheet.level.type("2");
+    expect(sheet.level.items.find((x) => x.id === "name:R2")?.confirm?.note).toBe("R2 = 10000. Enter again replaces it with ≈ 0.333333333333");
+  });
   it("any other press disarms it, and a letter after it goes on typing the name", () => {
     const { sheet, stored } = setup();
     sheet.level.type("A");
@@ -199,6 +213,11 @@ describe("letters typed in the store sheet (R804)", () => {
 
 describe("the name typed after ▶ (R281)", () => {
   const names = [name("e_", "2", 1), name("rate", "1", 2)];
+  it("findHeld: the stored name typed as written or as the keys type it, else none (R804)", () => {
+    expect(findHeld("rate", names)?.name).toBe("rate");
+    expect(findHeld("e", names)?.name).toBe("e_");
+    expect(findHeld("rat", names)).toBeUndefined();
+  });
   it("a stored name as Vars inserts it; one new letter as its key types it; else one name", () => {
     expect(typedLatex("A", names)).toBe("A");
     expect(typedLatex("e", names)).toBe("e"); // the stand-in e_ is typed as e (the parser renames it, as typed)

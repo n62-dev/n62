@@ -398,8 +398,9 @@ test("Function: a Root readout, Menu › To Home: one chip on Home's line; ×2 g
 
 // R601 (F414): a Num cell reads the names in its function as they are now: Home stores a new A, Num shows the new value.
 test("Function: Home 3▶A, F1 = A·x, Num at x = 1 is 3; Home 5▶A, back to Num: 5 (R601, derived)", async ({ page }) => {
-  const storeA = async (d: string, n: number): Promise<void> => {
+  const storeA = async (d: string, n: number, replace = false): Promise<void> => {
     await tap(page, ["@home", d, "shift", "emark", "alpha", "vars", "enter"]); // d▶A
+    if (replace) await tap(page, ["enter"]); // R804: a typed name that is stored asks first; the second Enter replaces it
     await expect(page.locator('[data-status="done"]')).toHaveCount(n);
     await page.waitForFunction((v) => window.n62.session.userNames.some((u) => u.name === "A" && u.preview === v), d.slice(1));
   };
@@ -412,7 +413,7 @@ test("Function: Home 3▶A, F1 = A·x, Num at x = 1 is 3; Home 5▶A, back to Nu
   await tap(page, ["@menu", "d2", "d1", "enter"]); // step 1
   const cell = page.locator('[data-testid="num-table"] tr:has(td[data-x="1"]) td').nth(1);
   await expect(cell).toHaveAttribute("data-text", "3");
-  await storeA("d5", 2);
+  await storeA("d5", 2, true);
   await tap(page, ["@num"]); // back to the app, Num view
   await expect(page.locator('[data-app="function"]')).toBeVisible();
   await expect(cell).toHaveAttribute("data-text", "5");
@@ -422,8 +423,9 @@ test("Function: Home 3▶A, F1 = A·x, Num at x = 1 is 3; Home 5▶A, back to Nu
 // engine's value (bridge-3's parts), and says what it did with a σ, a unit or a value it cannot draw. Expected values
 // derived: A·x² at x = 1 is A (3, then 5); the Root of A·x² − 12 near 1 is 2 (3x² = 12).
 test.describe("the Plot draws a stored value (R361)", () => {
-  const storeIn = async (page: Page, keys: string[], name: string[], n: number): Promise<void> => {
+  const storeIn = async (page: Page, keys: string[], name: string[], n: number, replace = false): Promise<void> => {
     await tap(page, ["@home", ...keys, "shift", "emark", ...name, "enter"]); // keys ▶ name
+    if (replace) await tap(page, ["enter"]); // R804: a typed name that is stored asks first; the second Enter replaces it
     await expect(page.locator('[data-status="done"]')).toHaveCount(n);
   };
   const A = ["alpha", "vars"];
@@ -458,7 +460,7 @@ test.describe("the Plot draws a stored value (R361)", () => {
     await expect(notes(page)).toHaveCount(0); // a plain real value: drawn, nothing to say
     await expect.poll(async () => (await keys(page))["event:plot-stored"]).toBe(1);
     expect((await keys(page))["event:plot-open"]).toBe(1);
-    await storeIn(page, ["d5"], A, 2);
+    await storeIn(page, ["d5"], A, 2, true);
     await tap(page, ["@plot"]); // back to the app, Plot view
     await page.waitForFunction(() => window.n62.plot.board !== undefined);
     await expect.poll(() => curveY(page, 1)).toBe(5);
@@ -472,7 +474,7 @@ test.describe("the Plot draws a stored value (R361)", () => {
     expect(exported.keys["event:plot-open"]).toBe(2);
     expect(exported.keys["event:plot-stored"]).toBe(2);
     // control: the engine's Root of A·x² − 12 near 1 is 2 (A = 3: Home 3 ▶ A again)
-    await storeIn(page, ["d3"], A, 3);
+    await storeIn(page, ["d3"], A, 3, true);
     await tap(page, ["@symb", "down"]);
     await expect(page.getByTestId("entry-label")).toHaveText("F2(x)=");
     await tap(page, ["alpha", "vars", "x", "pow", "d2", "right", "sub", "d1", "d2", "enter"]); // F2 = A·x² − 12
