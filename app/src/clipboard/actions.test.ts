@@ -168,7 +168,7 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     const long = [row("0.3333333333333333333333333333333333333333")];
     const l = make(long);
     l.c.keyCopy(vi.fn(), long[0] as never);
-    await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.333 333 333 333 333 33…")); // grouped as the row draws it, 24 characters, then …
+    await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.333\u2009333\u2009333\u2009333\u2009333\u200933…")); // grouped as the row draws it (thin spaces, U+2009), 24 characters, then …
   });
   it("R832: a row drawn as ⚠ (no digit confirmed) is named ⚠ in the notice, not by the digit it hides", async () => {
     const rows = [row("0.001")];
