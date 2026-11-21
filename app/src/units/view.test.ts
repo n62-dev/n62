@@ -423,3 +423,71 @@ describe("R349: the end slot only after → Check", () => {
     expect(h.dead()).toBe(1);
   });
 });
+
+// R801: a tap on a slot makes it the active slot, as ◀ ▶ would reach it, with their refusal
+describe("R801: goTo(id), a tap on a slot", () => {
+  /** A host that records the prompts written (a draw is one write). */
+  function drawn(): { h: ReturnType<typeof host>; writes: string[] } {
+    const h = host();
+    const writes: string[] = [];
+    h.host.write = (id) => void writes.push(id);
+    return { h, writes };
+  }
+
+  it("from u1 to u2 makes u2 active and draws both", () => {
+    const { h, writes } = drawn();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    writes.length = 0;
+    view.goTo("u2");
+    expect(view.activeId).toBe("u2");
+    expect(writes.sort()).toEqual(["u1", "u2"]);
+    expect(h.dead()).toBe(0);
+    view.goTo("u1"); // and back: any slot, not only the next
+    expect(view.activeId).toBe("u1");
+  });
+
+  it("a tap on the active slot changes nothing: nothing is drawn", () => {
+    const { h, writes } = drawn();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    writes.length = 0;
+    view.goTo("u1");
+    expect(view.activeId).toBe("u1");
+    expect(writes).toEqual([]);
+    expect(h.dead()).toBe(0);
+  });
+
+  it("with a prefix armed in u1 it is refused as ▶ refuses it: the message, a dead key, the slot unchanged", () => {
+    const { h, writes } = drawn();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    view.apply({ do: "prefix", id: "k" } as PadAction);
+    writes.length = 0;
+    view.goTo("u2");
+    expect(view.activeId).toBe("u1");
+    expect(writes).toEqual([]);
+    expect(h.dead()).toBe(1);
+    const shown = view.shown;
+    expect(shown.kind).toBe("message");
+    const b = drawn();
+    const same = new UnitView(CAT, "1+2", {}, b.h.host);
+    same.start();
+    same.apply({ do: "prefix", id: "k" } as PadAction);
+    same.move(1);
+    expect(same.shown).toEqual(shown); // ◀ ▶'s own refusal
+  });
+
+  it("an id that is no slot is ignored; the end slot is reached while Check is on", () => {
+    const { h } = drawn();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    view.goTo("end");
+    expect(view.activeId).toBe("u1");
+    expect(h.dead()).toBe(0);
+    view.setChecking(true);
+    view.goTo("u2");
+    view.goTo("end");
+    expect(view.activeId).toBe("end");
+  });
+});

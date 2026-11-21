@@ -414,10 +414,24 @@ export class UnitView {
     this.#move(-1);
   }
 
+  /** R801: a tap on a slot makes it the active slot, as ◀ ▶ would reach it (the same refusal when the active slot cannot
+   *  be left); a tap on the active slot, or on an id that is no slot, changes nothing. */
+  goTo(id: string): void {
+    const to = this.ids.indexOf(id);
+    if (to < 0 || to === this.active) return;
+    if (this.#row >= 0) this.up();
+    this.#go(to);
+  }
+
   #move(by: -1 | 1): void {
+    this.#go(this.active + by);
+  }
+
+  /** The active slot becomes slot `to` (an index into `ids`), both slots drawn and the reading follows. */
+  #go(to: number): void {
     if (!this.#leavable()) return;
     const was = this.activeId;
-    this.active += by;
+    this.active = to;
     this.#draw(was);
     this.#draw(this.activeId);
     this.#read();
