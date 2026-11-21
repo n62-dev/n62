@@ -9,7 +9,8 @@ import type { MenuItem } from "../apps/types.ts";
 import { loadForms, type HistoryItem, type Session } from "../state/session.svelte.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
 import { drawnInput, targetRow, type PickPart } from "../state/pickRows.ts";
-import { commaResult } from "../state/displayMode.ts";
+import { commaResult, noDigit } from "../state/displayMode.ts";
+import { tooLongToInsert, tooLongToInsertNote } from "../render/longInsert.ts";
 import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
 import { entryText } from "./plaintext.ts";
@@ -393,6 +394,24 @@ export class ClipActions {
     this.entry.insert("\\blacktriangleright");
     this.ops.stored?.(); // the line is what is stored
     return true;
+  }
+  /** L5 and docs/04 2.8: a tapped or picked result goes on the line as a chip that carries its full value; R746: an exact
+   *  result drawn as its exact value (`=`, or CAS's own unmarked maths) with a fraction, root, power or matrix goes as that
+   *  maths, editable, one term (render/exactMaths.ts, entry/oneTerm.ts; decided as it goes on the field). It lives here, not in
+   *  App, since a row is picked (and this code loaded) before its result is tapped (the start chunk is pinned). */
+  insertResult(item: HistoryItem, whole = false): void {
+    // R184: linreg and stats1 ask which value (showStats); an answer with no such list goes in whole
+    if (!whole && /linreg|stats1/.test(item.latex)) return void this.showStats(item).catch(() => false).then((ok) => void (ok || this.insertResult(item, true)));
+    // a result with no confirmed digit goes on the line as the bare warning mark, never as its unconfirmed number
+    const { session, entry } = this;
+    const chip = session.chipFor(item);
+    // a unit row with no chip (R63f1): Home's number alone, never its σ or unit (Home has no units); its chip shows both
+    const { units, ...number } = item;
+    const mark = session.mark(item);
+    const shown = noDigit(mark) ? "⚠" : session.display(units && !chip ? number : item).latex;
+    if (chip) entry.insertResult(shown, chip, !!chip.exact && !chip.unc && !units && (mark ? mark.mark === "=" : item.view === "cas"));
+    else if (tooLongToInsert(shown, false)) this.say(tooLongToInsertNote()); // R135f2: too long to draw, so to insert
+    else entry.insert(shown, true); // too long for a chip: as drawn (render/insertable.ts), one term
   }
   /** R832: Enter on a lit input: it goes at the caret (an empty line: the recall, with its chips); the pick is let go. */
   enterInput(row: HistoryItem): void {

@@ -99,15 +99,15 @@
     if (target.closest("button.cancel")) return; // Cancel keeps its own tap (D3)
     const tapped: PickPart = target.closest(".in") ? "input" : target.closest("button.result") ? "result" : "row";
     const next = rowTap(selected, part, at, tapped);
-    if (next.kind === "act") {
+    if (next === "act") {
       sigmaOpen = null;
-      (next.part === "input" ? onrecall : oninsert)(item);
-    } else if (next.kind === "drop") {
+      (tapped === "input" ? onrecall : oninsert)(item);
+    } else if (next === "drop") {
       sigmaOpen = null; // R40: the tap that drops the pick hides the σ line
       onpick(null);
     } else {
       if (at !== selected) sigmaOpen = sigma(item) ? item.id : null; // R40: the picking tap shows the σ line (a move of the light keeps it as it is)
-      onpick(at, next.part);
+      onpick(at, tapped);
     }
   }
   /** R147: a tap on the history outside every row (its empty part) drops the pick. */

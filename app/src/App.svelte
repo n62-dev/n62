@@ -18,9 +18,7 @@
   import type { RouteCtx } from "./keyboard/route.ts";
   import { creditsAsked } from "./entry/credits.ts";
   import { ringState } from "./entry/ringState.ts";
-  import { tooLongToInsert, tooLongToInsertNote } from "./render/longResult.ts";
   import type { UserKeys } from "./keyboard/userKeys.svelte.ts";
-  import { noDigit } from "./state/displayMode.ts";
   import type { HistoryItem, Session, View } from "./state/session.svelte.ts";
   import { counted } from "./state/tapsFront.svelte.ts";
   import { createLoaders, type FindCode, type ModeSheetCode } from "./appLoaders.ts";
@@ -52,7 +50,7 @@
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),
-    putInput: (item, stay) => recallTapped(item, true, stay),
+    putInput: (item, stay) => tapped(item, true, true, stay),
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -179,23 +177,6 @@
       editedSinceEnter: edited,
     }),
   );
-
-  /** L5 and docs/04 2.8: a tapped or picked result goes on the line as a chip that carries its full value; R746: an exact
-   *  result drawn as its exact value (`=`, or CAS's own unmarked maths) with a fraction, root, power or matrix goes as that
-   *  maths, editable, one term (render/exactMaths.ts, entry/oneTerm.ts; decided as it goes on the field). */
-  function insertResult(item: HistoryItem, whole = false): void {
-    // R184: linreg and stats1 ask which value (clipboard/actions.svelte.ts, lazy); an answer with no such list goes in whole
-    if (!whole && /linreg|stats1/.test(item.latex)) return withClip((c) => c.showStats(item).catch(() => false).then((ok) => void (ok || insertResult(item, true))));
-    // a result with no confirmed digit goes on the line as the bare warning mark, never as its unconfirmed number
-    const chip = session.chipFor(item);
-    // a unit row with no chip (R63f1): Home's number alone, never its σ or unit (Home has no units); its chip shows both
-    const { units, ...number } = item;
-    const mark = session.mark(item);
-    const shown = noDigit(mark) ? "⚠" : session.display(units && !chip ? number : item).latex;
-    if (chip) entry.insertResult(shown, chip, !!chip.exact && !chip.unc && !units && (mark ? mark.mark === "=" : item.view === "cas"));
-    else if (tooLongToInsert(shown, false)) withClip((c) => c.say(tooLongToInsertNote())); // R135f2: too long to draw, so to insert
-    else entry.insert(shown, true); // too long for a chip: as drawn (render/insertable.ts), one term
-  }
 
   /** Home or CAS, from anywhere (an app too). */
   function goTo(view: View): void {
@@ -341,9 +322,8 @@
   /** R147: a tap picks a row (History draws no note row as one, so every index it gives can be picked; null drops
    *  the pick); its buttons come with the clipboard code, as after ▲. */
   function pick(i: number | null, part: PickPart = "row"): void {
-    pickedPart = i === null ? "row" : part;
-    picked = i;
-    if (i !== null) void loadClip();
+    pickedPart = part;
+    if ((picked = i) !== null) void loadClip();
     if (i !== null && folded) countUse("pick"); // R53
   }
   // R700 (F381): Android back drops a picked row as Esc does. One layer for as long as some row is picked (a move to another row
@@ -388,7 +368,8 @@
     if (recall) {
       entry.set(session.input(item), item.chips, item.readsAngle && item.angle ? item.angle : null);
     }
-    else insertResult(item, whole);
+    else if (clip) clip.insertResult(item, whole); // (the clipboard code, R832: its chunk holds the rule; a call from it finds it loaded)
+    else withClip((c) => c.insertResult(item, whole));
   }
   // Android back brings the keys back (a sheet opened over the fold is a later layer: back closes it first)
   $effect(() => {
@@ -399,16 +380,16 @@
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
-  /** A second tap on a picked input row (R147): its entry goes on an empty line; text on the line stays and the pick is
-   *  dropped (R273, owner 2026-11-09), as for Enter on a pick (keyboard/route.ts). R832, `caret` (Enter or Store ▶ on a lit input):
-   *  text on the line takes the input at the caret; `stay`: Store ▶ keeps a folded keypad down. */
-  function recallTapped(item: HistoryItem, caret = false, stay = false): void {
+  /** A second tap on a picked row's input (R147: its entry goes on an empty line; text on the line stays and the pick is dropped, R273,
+   *  owner 2026-11-09, as for Enter on a pick, keyboard/route.ts) or on its result (it goes on the line, L5). R832, `caret` (Enter or
+   *  Store ▶ on a lit input): text on the line takes the input at the caret; `stay`: Store ▶ keeps a folded keypad down. */
+  function tapped(item: HistoryItem, input: boolean, caret = false, stay = false): void {
     edited = true;
     picked = null;
     shell.prompt?.cancel();
-    if (entry.empty) onLine(item, true, !stay, false, stay); // R298: before the field the queued keys are text too (entry.value is not the line yet)
-    else if (caret) entry.insert(session.input(item));
-    if (caret && !stay) folded = false;
+    if (!input) onLine(item, false);
+    else if (entry.empty) onLine(item, true, !stay, false, stay); // R298: before the field the queued keys are text too (entry.value is not the line yet)
+    else if (caret) (entry.insert(session.input(item)), (folded &&= stay));
   }
   /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
    *  as Delete while folded (R53). */
@@ -493,8 +474,8 @@
           marks={session.settings.marks}
           angle={session.settings.angle}
           onpick={pick}
-          onrecall={recallTapped}
-          oninsert={(item) => { edited = true; picked = null; shell.prompt?.cancel(); onLine(item, false); }}
+          onrecall={(item) => tapped(item, true)}
+          oninsert={(item) => tapped(item, false)}
           oncancel={() => void cancel()}
           onhold={(item, part, latex) => withClip((c) => void c.holdCopy(item, part, latex))}
           onswipe={swiped}

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The Format key: cycle logic and the display modes. Expected values are `derived` (decimal arithmetic by hand).
 import { describe, expect, it } from "vitest";
-import { decimalFromRational, decimalFromString, type ComplexValue, type DecimalValue } from "../engine/format.ts";
+import { decimalFromString, type ComplexValue, type DecimalValue } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import {
   DEFAULT_FMT_CYCLE,
   factsOf,

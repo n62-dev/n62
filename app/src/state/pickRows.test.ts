@@ -36,21 +36,21 @@ describe("pickRows (P4, G19): a note row is never picked", () => {
 
 describe("rowTap (R147, R832): a first tap picks what it touches, the next acts on the lit part or moves the light", () => {
   it("a tap on a row with nothing picked, or on another row, picks it with the part tapped", () => {
-    expect(rowTap(null, "row", 2, "input")).toEqual({ kind: "pick", part: "input" });
-    expect(rowTap(1, "result", 2, "result")).toEqual({ kind: "pick", part: "result" });
-    expect(rowTap(2, "input", 0, "row")).toEqual({ kind: "pick", part: "row" });
+    expect(rowTap(null, "row", 2, "input")).toBe("pick");
+    expect(rowTap(1, "result", 2, "result")).toBe("pick");
+    expect(rowTap(2, "input", 0, "row")).toBe("pick");
   });
   it("a whole-picked row: the input recalls, the result inserts, elsewhere drops the pick (R147)", () => {
-    expect(rowTap(2, "row", 2, "input")).toEqual({ kind: "act", part: "input" });
-    expect(rowTap(0, "row", 0, "result")).toEqual({ kind: "act", part: "result" });
-    expect(rowTap(2, "row", 2, "row")).toEqual({ kind: "drop" });
+    expect(rowTap(2, "row", 2, "input")).toBe("act");
+    expect(rowTap(0, "row", 0, "result")).toBe("act");
+    expect(rowTap(2, "row", 2, "row")).toBe("drop");
   });
   it("a part-lit row: the lit part does its job, the other part becomes lit, elsewhere picks the whole row", () => {
-    expect(rowTap(2, "input", 2, "input")).toEqual({ kind: "act", part: "input" });
-    expect(rowTap(2, "result", 2, "result")).toEqual({ kind: "act", part: "result" });
-    expect(rowTap(2, "input", 2, "result")).toEqual({ kind: "pick", part: "result" });
-    expect(rowTap(2, "result", 2, "input")).toEqual({ kind: "pick", part: "input" });
-    expect(rowTap(2, "input", 2, "row")).toEqual({ kind: "pick", part: "row" });
-    expect(rowTap(2, "result", 2, "row")).toEqual({ kind: "pick", part: "row" });
+    expect(rowTap(2, "input", 2, "input")).toBe("act");
+    expect(rowTap(2, "result", 2, "result")).toBe("act");
+    expect(rowTap(2, "input", 2, "result")).toBe("pick");
+    expect(rowTap(2, "result", 2, "input")).toBe("pick");
+    expect(rowTap(2, "input", 2, "row")).toBe("pick");
+    expect(rowTap(2, "result", 2, "row")).toBe("pick");
   });
 });

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
+import { decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import { latexToGiac } from "../input/latex-to-giac.ts";
 import { parsePastedNumber } from "./paste.ts";
 import { complexText } from "./text.ts";

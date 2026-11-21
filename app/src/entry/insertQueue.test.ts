@@ -209,7 +209,7 @@ describe("controls", () => {
 });
 
 // vr-5: before the field `entry.value` is not the line (the queued keys are not in it); R255 moved every empty-line
-// reader to `entry.empty`, and R298 the last two (App.svelte's recallTapped, route.ts's Enter on a pick)
+// reader to `entry.empty`, and R298 the last two (App.svelte's tapped, route.ts's Enter on a pick)
 test('no code in app/src tests `entry.value === ""` (R298: the empty line is `entry.empty`)', () => {
   const src = new URL("..", import.meta.url).pathname;
   const hits: string[] = [];

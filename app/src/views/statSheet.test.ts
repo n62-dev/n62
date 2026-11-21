@@ -3,7 +3,7 @@
 // g223-linreg: slope 97/50, intercept 3/20, r² 9409/9450; g223-stats1: 4, 5/2, sqrt(5/3), sqrt(5)/2, 1, 4).
 import { describe, expect, it } from "vitest";
 import { FakeCalc } from "../calc/fake.ts";
-import { decimalFromRational } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import type { Chip } from "../input/chips.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import { Session, type HistoryItem } from "../state/session.svelte.ts";

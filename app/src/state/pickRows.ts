@@ -25,17 +25,12 @@ export const canPick = (items: readonly Row[], i: number): boolean => pickable(i
 /** R832: what a picked row has lit: the whole row (a tap elsewhere on it, or ▲), its input, or its result. */
 export type PickPart = "row" | "input" | "result";
 
-/** R832: what a tap on part `tapped` of row `index` does while `selected` is picked with `lit` lit. A different row (or none
- *  picked): pick it, lighting what was tapped. The picked row, whole: the input recalls, the result inserts (R147, the G2's
- *  way), elsewhere the pick drops. The picked row with a half lit: that half does its job, the other half becomes lit,
- *  elsewhere the whole row is picked. */
-export type TapOutcome = { kind: "act"; part: "input" | "result" } | { kind: "pick"; part: PickPart } | { kind: "drop" };
-export function rowTap(selected: number | null, lit: PickPart, index: number, tapped: PickPart): TapOutcome {
-  if (index !== selected) return { kind: "pick", part: tapped };
-  if (lit === "row") return tapped === "row" ? { kind: "drop" } : { kind: "act", part: tapped };
-  if (tapped === "row") return { kind: "pick", part: "row" };
-  return tapped === lit ? { kind: "act", part: tapped } : { kind: "pick", part: tapped };
-}
+/** R832: what a tap on part `tapped` of row `index` does while `selected` is picked with `lit` lit. "pick": the row is picked (or the
+ *  light moves) with the part tapped lit; a different row, or none picked, always. "act": the tapped part does its job (the input
+ *  recalls, the result inserts, R147, the G2's way): on the whole-picked row, or on the lit half. "drop": a tap elsewhere on the
+ *  whole-picked row drops the pick (on a lit half it picks the whole row). */
+export const rowTap = (selected: number | null, lit: PickPart, index: number, tapped: PickPart): "pick" | "act" | "drop" =>
+  index !== selected ? "pick" : tapped === "row" ? (lit === "row" ? "drop" : "pick") : lit === "row" || lit === tapped ? "act" : "pick";
 
 /** R63: the input as a row draws and copies it: a unit row's request with the units in it, else `input` (the line as drawn,
  *  R100). The recall puts back the line itself (Home has no units). */

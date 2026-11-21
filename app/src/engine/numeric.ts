@@ -18,7 +18,6 @@
 import type { ValueFacts } from "./types.ts";
 import {
   confirmedDigits,
-  decimalFromRational,
   decimalFromString,
   isZero,
   roundSignificant,
@@ -27,6 +26,7 @@ import {
   type PrecisionWarn,
   type PrecisionWhy,
 } from "./format.ts";
+import { decimalFromRational } from "./rational.ts";
 import { binary64Of } from "./binary64.ts";
 import { isAlias } from "./decisionAlias.ts";
 import { ICDF_DIGITS, ICDF_FAILED, erfValueText, icdfCalls, icdfPolished } from "./icdf.ts";

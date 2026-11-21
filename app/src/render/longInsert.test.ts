@@ -2,7 +2,8 @@
 // R135f2: a result too long to draw is not put on the entry line (its LaTeX made MathLive overflow its stack at 1.77 MB).
 // A chip stands for any result, and a result at or under the cut goes in as drawn.
 import { describe, expect, it } from "vitest";
-import { MAX_DRAWN_LATEX, tooLongToInsert, tooLongToInsertNote } from "./longResult.ts";
+import { tooLongToInsert, tooLongToInsertNote } from "./longInsert.ts";
+import { MAX_DRAWN_LATEX } from "./longResult.ts";
 
 describe("tooLongToInsert (R135f2)", () => {
   it("no chip and just over the cut: refused", () => {

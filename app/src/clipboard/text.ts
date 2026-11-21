@@ -4,7 +4,6 @@
 // (actions.svelte.ts) pick the text and the port (port.ts) delivers it.
 import {
   DECIMAL_KEEP,
-  decimalFromRational,
   decimalFromString,
   isZero,
   roundSignificant,
@@ -14,6 +13,7 @@ import {
   type MarkInfo,
   type PrecisionWarn,
 } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { withUnit } from "../state/results.ts";
 import { commaResult, markFor, modeOf, renderNumeric, type DisplayContext, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
