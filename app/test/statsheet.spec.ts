@@ -67,7 +67,7 @@ test("a pick of Slope counts as screen:stat-sheet, not screen:row (R184f1)", asy
 test("Enter on the picked row opens the same sheet (R720: ☰ has no Insert)", async ({ page }) => {
   await ready(page);
   await regress(page);
-  await inputs(page).last().tap(); // picks
+  await results(page).last().tap(); // lights the result (R832: a tap on the input would light the input, whose Enter puts it on the line)
   await tap(page, ["enter"]);
   await expect(menu(page)).toContainText("Slope");
   await sheetKey(page, ["d2"]);

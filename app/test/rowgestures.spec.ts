@@ -44,7 +44,7 @@ test("a hold on a result copies its full value and says so; no menu opens, the r
   await enter(page, ["d2", "add", "d3"], ["d1", "div", "d3"]);
   await setClipboard(page, "before");
   await finger(page, "result:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.333333333333");
   await expect.poll(() => clipboard(page)).toBe("0.3333333333333333333333333333333333333333"); // Copy: every confirmed digit to P (docs/04 2.6)
   await page.waitForTimeout(300);
   await expect(menu(page)).toHaveCount(0); // the nine-item menu on a hold is gone
@@ -57,7 +57,7 @@ test("a hold on an input copies the entry text", async ({ page }) => {
   await enter(page, ["d2", "add", "d3"]);
   await setClipboard(page, "before");
   await finger(page, "input:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 2+3");
   await expect.poll(() => clipboard(page)).toBe("2+3");
   await expect(menu(page)).toHaveCount(0);
   expect(await entryValue(page)).toBe(""); // not recalled either
@@ -78,7 +78,7 @@ test("before the gestures' chunk is in a hold is a tap; the row is marked once i
   await expect(page.getByTestId("notice")).toHaveCount(0);
   await expect(page.locator(input)).toHaveAttribute("data-gestures", "", { timeout: 15_000 });
   await finger(page, "input:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 2+3");
   await expect.poll(() => clipboard(page)).toBe("2+3");
 });
 

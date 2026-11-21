@@ -30,7 +30,7 @@ test("Home: a hold on a result copies it, a flick up on Deselect puts it on the 
   await tap(page, ["d9", "enter"]);
   await resultIs(page, "9", 1);
   await finger(page, "result:last", { ms: 700 }); // a hold copies the result (R276)
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 9");
   await tap(page, ["d5", "enter"]);
   await resultIs(page, "5", 2);
   await flick(page, "deselect", "up");
@@ -51,7 +51,7 @@ test("Solve Symb: the copied result goes on the equation's line, as its ☰ Past
   await tap(page, ["d7", "enter"]);
   await resultIs(page, "7", 1);
   await finger(page, "result:last", { ms: 700 });
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 7");
   await tap(page, ["@place", "d4"]);
   await expect(page.locator('[data-app="solve"]')).toBeVisible();
   await tap(page, ["@symb"]);

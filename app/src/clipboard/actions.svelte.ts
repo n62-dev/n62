@@ -175,7 +175,8 @@ export class ClipActions {
     const selection = mf && !mf.selectionIsCollapsed ? mf.getValue(mf.selection, "latex") : "";
     if (selection) {
       this.ops.acted?.("copy"); // as a hold on an input counts, and copies its plain text
-      void this.copyRaw(entryText(selection, this.opts));
+      const text = entryText(selection, this.opts);
+      void this.copyRaw(text, text ? this.named(text) : undefined, true); // R832: the notice names it
       return;
     }
     letGo?.(); // no selection: the picked row is let go (R723)

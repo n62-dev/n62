@@ -51,7 +51,7 @@ test("Shift + Select (COPY) copies the full value of the last result, not the 12
   await thirds(page);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.666666666667");
   await tap(page, COPY);
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.666666666667");
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
 
@@ -82,7 +82,7 @@ test("Shift + Select copies the picked row's full value, what a hold on that res
   await setClipboard(page, "");
   await tap(page, ["up", "up"]); // 1÷3 picked
   await tap(page, KEYCOPY);
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.333333333333");
   await expect.poll(() => clipboard(page)).toBe(THIRD);
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 3);
