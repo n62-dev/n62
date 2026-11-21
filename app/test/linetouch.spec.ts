@@ -113,7 +113,6 @@ test("a tap puts the caret at the touched term, on a scrolled line too", async (
   // a long line scrolled to its start: a tap on its tenth digit puts the caret after it
   await setLine(page, LONG);
   const f = await field(page);
-  // (from 30 px in: the field's first 20 px over its lower part are ⌄'s touch box, R724)
   for (let k = 0; k < 2; k++) await finger(page, f.left + 30, (f.top + f.bottom) / 2, { dx: f.right - f.left - 50, steps: 20 });
   expect((await scrolled(page))?.left).toBe(0);
   const tenth = await boxOf(page, 10);
@@ -121,6 +120,17 @@ test("a tap puts the caret at the touched term, on a scrolled line too", async (
   await finger(page, tenth.right - 2, (tenth.top + tenth.bottom) / 2);
   await expect.poll(() => caret(page)).toBe(10);
   expect(await collapsed(page)).toBe(true);
+});
+
+test("a tap at the field's left edge, low or mid-height, puts the caret before the first term (R786: ⌄ is on the bar, no touch box over the line)", async ({ page }) => {
+  await setLine(page, "123+456");
+  const f = await field(page);
+  for (const y of [(f.top + f.bottom) / 2, f.bottom - 6]) {
+    await setLine(page, "123+456");
+    await finger(page, f.left + 4, y);
+    await expect.poll(() => caret(page)).toBe(0);
+    await expect(page.getByTestId("keys")).toHaveAttribute("data-folded", "false");
+  }
 });
 
 test("a hold selects the term under the finger; ⌫ deletes it, x² raises it", async ({ page }) => {

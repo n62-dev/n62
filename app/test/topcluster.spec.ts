@@ -298,12 +298,13 @@ test("an empty free key gives the dead-key haptic and types nothing", async ({ p
   expect(await view(page)).toBe("home");
 });
 
-// R722: the place (Apps ▾) is the bar's left end, on the keys: its target is the bar's full height from the screen's left
-// edge, and it reaches neither into the entry line above it nor into the keys below it.
-test("the place's target is the bar's full height from the left edge; the entry line above and the keys below keep their taps", async ({ page }) => {
+// R722, R786: the place (Apps ▾) follows ⌄'s 28 px cell at the bar's left end, on the keys: its target is the bar's full height,
+// and it reaches neither into the entry line above it nor into the keys below it.
+test("the place's target is the bar's full height after ⌄'s cell; the entry line above and the keys below keep their taps", async ({ page }) => {
   const box = (await place(page).boundingBox())!;
   const bar = (await page.getByTestId("bar").boundingBox())!;
-  expect(box.x).toBe(0);
+  expect(box.x).toBeGreaterThanOrEqual(bar.x + 28); // ⌄'s 28 px cell, then the bar's 2 px gap
+  expect(box.x).toBeLessThanOrEqual(bar.x + 30);
   expect(box.width).toBeGreaterThanOrEqual(40);
   expect(box.height).toBe(28);
   expect(box.y).toBe(bar.y);
@@ -314,7 +315,7 @@ test("the place's target is the bar's full height from the left edge; the entry 
   const at = (y: number) => page.evaluate(([x, y]) => {
     const el = document.elementFromPoint(x, y);
     return el?.closest("[data-testid='place']") ? "place" : el?.closest("[data-key]") ? "key" : el?.closest("[data-testid='entry']") ? "entry" : "other";
-  }, [20, y] as const);
+  }, [box.x + 20, y] as const);
   expect(await at(box.y - 3)).toBe("entry");
   expect(await at(box.y + box.height + 6)).toBe("key");
   expect(await view(page)).toBe("home");

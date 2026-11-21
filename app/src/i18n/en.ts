@@ -106,6 +106,7 @@ export const en = {
   "status.places": "Home and CAS",
   "status.bar": "Places and modes",
   "status.menu": "Menu",
+  "status.fold": "Fold the keys",
   "status.angle.rad": "Angle: radians",
   "status.angle.deg": "Angle: degrees",
   "status.format": "Number format and digits: {format}, {digits} digits. Tap to open Mode.",

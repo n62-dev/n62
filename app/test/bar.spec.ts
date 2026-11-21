@@ -50,8 +50,9 @@ test("Home shows the Home tab selected and the CAS tab; one tap switches; Home f
   expect(await page.evaluate(() => [window.n62.shell.app, window.n62.session.view])).toEqual([null, "home"]);
 });
 
-test("the bar's controls stand in the lock's order, left to right (spec/layout-lock.yaml bar:, R722)", async ({ page }) => {
+test("the bar's controls stand in the lock's order, left to right (spec/layout-lock.yaml bar:, R722, R786: ⌄ first)", async ({ page }) => {
   await open(page);
+  await expect(page.getByTestId("keys")).toHaveAttribute("data-fold-ready", "true"); // ⌄ comes with the fold's chunk
   const items = await page.evaluate(() =>
     [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] [data-item]')].map((e) => ({ n: e.dataset["item"], x: e.getBoundingClientRect().left })),
   );

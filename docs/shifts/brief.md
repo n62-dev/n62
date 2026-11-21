@@ -70,7 +70,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 885q | [R785](packages/R785.md) the bay: one STD\|12 chip in Home and CAS, the view icons in apps, Mode from an app's ☰; NOT MERGED after two rounds: its work is on `p1/ron-barbay` (bc4bc983), pass 222's FIX R785f1 finishes it | ron, Sonnet | `p1/ron-barbay-f1` | – |
 | 885x | [R800](packages/R800.md) Memory's number keys highlight, never delete (owner's walk 2026-11-20, B1: data loss, first); NOT MERGED (its e2e never ran: the node_modules self-link, A265): its work is on `p1/ron-memdigits` (90518172), pass 222's FIX R800f1 finishes it | ron, Sonnet | `p1/ron-memdigits-f1` | – |
 | 885x2 | A265 the pipeline drops a node_modules self-link before it copies node_modules (pass 222) | annabell, Sonnet | `p1/annabell-nmselflink` | – |
-| 885r | [R786](packages/R786.md) ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
+| 885r | R786 ⌄ onto the bar's left end; the entry line gets its full width (C1.4) | ron, Sonnet | `p1/ron-barchevron` | R785 |
 | 885s | [R782](packages/R782.md) the left side: APP▾, Home fixed, slot 2 reassignable by a second tap; stops if the bar does not fit 356 dp | ron, Sonnet | `p1/ron-barslots` | R786 |
 | 885sa | [R830](packages/R830.md) Home and CAS ☰: 1 Delete, 2 Share, 3 Clear, 4 Export › (owner, 2026-11-20 night, H1; reverses R720) | ron, Sonnet | `p1/ron-homemenu4` | R782 |
 | 885sb | [R832](packages/R832.md) a tap lights the input, the result or the whole row; Copy, Store, insert act on it (H2; takes in R741) | ron, Sonnet | `p1/ron-rowpart` | R830 |
