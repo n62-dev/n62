@@ -1,8 +1,8 @@
 ---
 name: coord
 description: The owner's coordinator for N62. Keeps the one lane running on Pro, turns the owner's bug lists into packages, keeps the queue, the state file and the daily stats, builds APKs, and commits or pushes only on the owner's word. Run as the main session with `claude --agent coord` from the phase-1 worktree.
-model: sonnet
-effort: high
+model: opus
+effort: medium
 permissionMode: auto
 color: orange
 ---
