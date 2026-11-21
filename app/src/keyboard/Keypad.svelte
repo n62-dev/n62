@@ -647,12 +647,14 @@
   .trackpad {
     position: relative;
     overflow: hidden;
+    --dot-x: 0%;
+    --dot-y: 0%;
   }
   .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::after {
     content: "";
     position: absolute;
-    left: calc(50% + var(--dot-x, 0px));
-    top: calc(50% + var(--dot-y, 0px));
+    left: calc(50% + var(--dot-x));
+    top: calc(50% + var(--dot-y));
     width: var(--pad-dot);
     height: var(--pad-dot);
     transform: translate(-50%, -50%);
