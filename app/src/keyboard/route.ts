@@ -143,9 +143,9 @@ export function special(c: RouteCtx, name: Special): void {
       }); // the Home/CAS menu comes with the clipboard code
       break;
     case "fmt":
-      // Format key: Home and CAS show the last result in the next mode; the apps have no such result.
-      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked, c.dead);
-      else c.dead();
+      // Format key: Home and CAS show the last result in the next mode; the apps have no such result, and a press with no row
+      // to take is dead (deadPress, asked by run)
+      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked);
       break;
     case "tmpl":
       c.openShiftPalette("tmpl");
@@ -182,8 +182,8 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "selectGrow":
     case "selectShrink":
-      // R279: the entry line only; a view without one (Plot) has nothing to select
-      if ((c.shell.app !== null && !c.shell.showsEntry) || !c.entry.select(name === "selectGrow")) c.dead();
+      // R279: the entry line only (a view without one, Plot, is a dead press: deadPress)
+      if (!c.entry.select(name === "selectGrow")) c.dead();
       break;
     case "vars":
     case "memory":
@@ -191,9 +191,8 @@ export function special(c: RouteCtx, name: Special): void {
       break;
     case "paste":
       // R723: Shift + Deselect (R329 had it on Shift + Vars), ☰ → Paste's path (the keys pressed meanwhile wait for it); a
-      // view without an entry line (Plot) has nowhere to put it: a dead press, no clipboard read
-      if (c.shell.app !== null && !c.shell.showsEntry) c.dead();
-      else pasteText(c);
+      // view without an entry line (Plot) has nowhere to put it: a dead press, no clipboard read (deadPress)
+      pasteText(c);
       break;
     case "shift":
     case "alpha":
@@ -259,16 +258,14 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
   c.picked = null;
   if (isCmd("moveToPreviousChar") && item && c.entry.empty) {
     // R720: ◀ on a pick with an empty line gives the row's input back (Recall's job since ☰ lost its row); a running row is a dead
-    // press. With text on the line ◀ keeps its job (the caret), as Enter keeps its (R273).
-    if (item.status === "pending") c.dead();
-    else c.recallRow(item);
+    // press (deadPress, asked by run). With text on the line ◀ keeps its job (the caret), as Enter keeps its (R273).
+    c.recallRow(item);
     return true;
   }
   if (action.kind === "insert" && action.latex === STORE_ARROW && item) {
     // R280 (sd-2): Store ▶ (Shift + ᴇ, its flick, a user key) stores the picked row as the row bar's Store ▶ does: its
-    // chip and ▶ on the line; a row without a result has nothing to store (the bar's Store ▶ is off there)
-    if (item.status === "done") c.withClip((x) => void x.storeRow(item));
-    else c.dead();
+    // chip and ▶ on the line; a row without a result has nothing to store (the bar's Store ▶ is off there: deadPress)
+    c.withClip((x) => void x.storeRow(item));
     return true;
   }
   if (action.kind !== "special") return false;
@@ -292,6 +289,79 @@ export function historyKey(c: RouteCtx, action: ActionBody): boolean {
     return true;
   }
   return false;
+}
+
+const isStore = (a: ActionBody): boolean => a.kind === "insert" && a.latex === STORE_ARROW;
+
+/** Does the open sheet take a tap on `key` for a job of its own, before its usual key reading (sheetPress)? Without acting: a free
+ *  key whose slot the level lists (R4b), a key at a grid cell's place (R18: pickKey), the matrix grid's cells (R189). */
+function sheetTakes(c: RouteCtx, key: Key): boolean {
+  const level = c.shell.sheet?.level;
+  if (!level) return false;
+  if (level.grid) return true;
+  const layer = layerOf(modsFor(c, undefined));
+  if (key.user && level.items.some((x) => x.slot?.key === key.id && x.slot.layer === layer)) return true;
+  return level.columns !== undefined && !level.digits && level.items.some((x) => x.pick?.key === key.id);
+}
+
+/** R777 (docs/05 3.7): the one rule of a press that does nothing by the state it lands in, asked without acting. `run` and
+ *  `sheetPress` call c.dead() where it says true, and Keypad asks it at finger-down (quietDown), so such a press gets no look,
+ *  no pop and no click, only the double pulse. Home and CAS: Fmt with no row to take (Session.formKey), Store ▶ with no value on
+ *  the line and no result to store (R702, a picked row that is not done too, R280), ◀ on a picked row still running with an empty
+ *  line (R720). An app: Fmt, and Ans (± too, R71: the unit view's line reads it); Plot (no entry line, R279) also the keys that
+ *  need the line (Select, Deselect, Paste, Find, Help, the matrix, Vars, the palettes) and every command (⌫, Del, Undo, Redo, ⇤ ⇥),
+ *  not the four arrows, which the shell may take (nav). A sheet: ⌫ with nothing typed in a list that is not Find's (R770). The
+ *  unit pad's own dead presses are not asked (its cells take keys before run: three pulses, R112's form, docs/05 3.7). */
+export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefined)): boolean {
+  const { session, shell, entry } = c;
+  const sheet = shell.sheet;
+  if (sheet) {
+    const keys = sheetChunk.keys;
+    const level = sheet.level;
+    if (!keys || level.loading() || sheet.id === FIND_SHEET || sheet.id === STORE_SHEET || sheetTakes(c, key)) return false;
+    return level.filter === "" && keys.sheetKey(key, level.filterable).kind === "backspace";
+  }
+  const action = actionFor(key, mods.shift, mods.alpha, session.settings.entry === "line", c.casKeys);
+  if (!action) return false;
+  const app = shell.app !== null;
+  const noLine = app && !shell.showsEntry; // Plot
+  if (action.kind === "special") {
+    switch (action.name) {
+      case "fmt":
+        return app || !targetRow(session.items, session.items[c.picked ?? -1]);
+      case "selectGrow":
+      case "selectShrink":
+      case "paste":
+      case "find":
+      case "help":
+      case "matrix":
+      case "vars":
+      case "tmpl":
+      case "relations":
+      case "symbols":
+      case "chars":
+        return noLine; // (they open a sheet or edit the line, and Plot has none)
+      default:
+        return false;
+    }
+  }
+  if (noLine) return action.kind !== "cmd" || NAV[action.name] === undefined;
+  if (app) return action.kind === "insert" && (action.latex === ANS_CHIP || action.units === true);
+  const items = session.items;
+  const at = c.picked;
+  const row = at !== null && at < items.length && canPick(items, at) ? items[at] : undefined;
+  if (row) return action.kind === "cmd" && action.name === "moveToPreviousChar" ? entry.empty && row.status === "pending" : isStore(action) && row.status !== "done";
+  return isStore(action) && entry.empty && !session.hasResult();
+}
+
+/** Keypad at finger-down (R777): is a tap on `key` a dead press, to be given no look, pop or click? `drawnDead`: the key is drawn
+ *  dead (its layer, or the sheet's reading); the open sheet still acts on it when it takes the key (sheetTakes). Otherwise the rule
+ *  (deadPress), unless the press would wait (a load, the field to come, keys queued: false leaves it its feedback) or a name prompt may take it. */
+export function quietDown(c: RouteCtx, key: Key, drawnDead: boolean): boolean {
+  const { shell, entry } = c;
+  if (drawnDead) return !(shell.sheet && sheetTakes(c, key));
+  if (c.sheetLoad !== null || shell.loading !== null || entry.fieldPending || c.waiting.length > 0 || shell.prompt) return false;
+  return deadPress(c, key);
 }
 
 /** A key while a sheet is open (docs/05 3.1; every sheet is in the viewport with the keys live below it, R770). Shift and Alpha are
@@ -349,11 +419,12 @@ export function sheetPress(c: RouteCtx, key: Key, layer: Layer | undefined, mods
       level.type(k.ch);
       return true;
     case "backspace":
-      // in Find ⌫ on an empty query goes back from a category to the list of categories
-      if (!level.backspace()) {
-        if (find) sheet.back();
-        else c.dead(); // R770: nothing to delete here
-      }
+      // in Find ⌫ on an empty query goes back from a category to the list of categories; elsewhere nothing to delete is a dead
+      // press (R770; deadPress)
+      if (find) {
+        if (!level.backspace()) sheet.back();
+      } else if (deadPress(c, key)) c.dead();
+      else level.backspace();
       return true;
     case "line":
       // R281: a key that types no name after ▶ (⌫ with nothing typed too, sheetKeys.ts storeKey): its job on the line.
@@ -555,6 +626,11 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   if (!isSelect(action)) entry.endSelect();
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
+  // R777: the one rule of the presses that do nothing by the state they land in (a pick the key would drop is dropped; Fmt keeps it)
+  if (deadPress(c, key, mods)) {
+    if (action.kind !== "special") c.picked = null;
+    return c.dead();
+  }
   // R775: Fmt and a b/c on an empty line act on the picked row and keep the pick (Session.formKey), so the next press goes on round on the same row
   const abc = entry.empty && key.id === "frac" && layerOf(mods) === "primary";
   if (shell.app === null && !cell && !abc && !(action.kind === "special" && action.name === "fmt") && historyKey(c, action)) return;
@@ -562,10 +638,10 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   if (shell.app !== null) {
     const dir = action.kind === "cmd" ? NAV[action.name] : undefined;
     if (dir && shell.nav(dir)) return;
-    if (!shell.showsEntry) return c.dead(); // a view without an entry line (Plot) ignores typing, ⇤ ⇥ and Undo
+    if (dir && !shell.showsEntry) return c.dead(); // an arrow the shell did not take: the one Plot press deadPress cannot know
+    // (a view without an entry line (Plot) ignores typing, ⇤ ⇥, Undo and Redo, and Ans belongs to Home and CAS, ± (R71) to the unit
+    // view's line: deadPress)
     if (action.kind === "cmd" && action.name === "undo" && shell.undo()) return; // R261: what Menu › Clear took
-    // Ans belongs to Home and CAS; ± (R71) is read by the unit view, from the Home or CAS line
-    if (action.kind === "insert" && (action.latex === ANS_CHIP || action.units)) return c.dead();
   } else if (cell) {
     // (the cell's line: the key runs on it as typed)
   } else if (entry.empty && action.kind === "cmd" && action.name === "undo" && session.undoRemoved()) {
@@ -576,9 +652,7 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
     void c.session.formKey("cycleForm", c.picked, c.dead);
     return;
   }
-  const store = shell.app === null && action.kind === "insert" && action.latex === STORE_ARROW;
-  // R702: Store ▶ with no value on the line and no result to store is a dead press (as Base's, baseSheet.ts)
-  if (store && !cell && entry.empty && !session.hasResult()) return c.dead();
+  const store = isStore(action) && shell.app === null;
   const ans = shell.app === null && !cell && entry.empty && startsWithAns(key.id, layerOf(mods)) && session.hasResult();
   if (ans) entry.insertAns(); // docs/04 2.8: an operator (or Store ▶) on an empty line starts with Ans
   entry.run(action);

@@ -183,6 +183,19 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     await tap(page, ["shift"]);
     expect(await press(page, "deselect"), "paste").toEqual(DEAD); // Shift + Deselect
   });
+  // route.ts deadPress: every command the route turns dead in Plot is quiet, not the four arrows (the shell may take them)
+  test("in Plot ⌫, Undo and Shift + ⌫ are dead presses (no look, no click, the double pulse); on Home with text they are live", async ({ page }) => {
+    await tap(page, ["d1", "d2"]);
+    for (const id of ["bksp", "undo"]) expect(await press(page, id), id).toMatchObject(LIVE);
+    await tap(page, ["esc", "esc"]);
+    await tap(page, ["@plot"]);
+    await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
+    expect(await press(page, "bksp")).toEqual(DEAD);
+    expect(await press(page, "undo")).toEqual(DEAD);
+    await tap(page, ["shift"]);
+    expect(await press(page, "bksp"), "Shift + ⌫").toEqual(DEAD);
+    expect(await press(page, "up"), "an arrow is not asked: the shell takes it").toMatchObject(LIVE);
+  });
   test("controls: a live key has the look, the pop, one click and one pulse; Find's letter keys do too", async ({ page }) => {
     expect(await press(page, "d7")).toEqual({ lit: 1, pop: 1, clicks: 1, pulses: 1 });
     await tap(page, ["math"]);
