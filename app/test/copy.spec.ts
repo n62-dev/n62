@@ -51,7 +51,7 @@ test("Shift + Select (COPY) copies the full value of the last result, not the 12
   await thirds(page);
   await expect(lastResult(page)).toHaveAttribute("data-text", "0.666666666667");
   await tap(page, COPY);
-  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.666666666667");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.666 666 666 667");
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
 
@@ -70,7 +70,7 @@ test("Menu with a picked row copies that row, not the last result (R13, S2 I1)",
   await done(page, 3);
   await tap(page, ["up", "up"]);
   await pickCopyAs(page, "Full value");
-  await expect(page.getByTestId("notice")).toHaveText("Copied");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.666 666 666 667");
   await expect.poll(() => clipboard(page)).toBe(TWO_THIRDS);
 });
 
@@ -82,7 +82,7 @@ test("Shift + Select copies the picked row's full value, what a hold on that res
   await setClipboard(page, "");
   await tap(page, ["up", "up"]); // 1÷3 picked
   await tap(page, KEYCOPY);
-  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.333333333333");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.333 333 333 333");
   await expect.poll(() => clipboard(page)).toBe(THIRD);
   await tap(page, ["d1", "div", "d3", "enter"]);
   await done(page, 3);
@@ -155,8 +155,10 @@ test("Menu: Copy as › As shown, Exact, LaTeX", async ({ page }) => {
   await done(page, 1);
   await pickCopyAs(page, "As shown");
   await expect.poll(() => clipboard(page)).toBe("0.333333333333");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 0.333 333 333 333"); // R832: the bar's rows name the copy
   await pickCopyAs(page, "Exact");
   await expect.poll(() => clipboard(page)).toBe("1/3");
+  await expect(page.getByTestId("notice")).toHaveText("Copied: 1/3");
   await pickCopyAs(page, "LaTeX");
   await expect.poll(() => clipboard(page)).toContain("0.333333333333");
   await pickCopyAs(page, "Full value");

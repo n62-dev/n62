@@ -10,6 +10,8 @@ import { loadForms, type HistoryItem, type Session } from "../state/session.svel
 import type { TapCounts } from "../state/taps.svelte.ts";
 import { drawnInput, targetRow, type PickPart } from "../state/pickRows.ts";
 import { commaResult, noDigit } from "../state/displayMode.ts";
+import { groupMarked } from "../render/groupText.ts";
+import { groupSepFor } from "../render/home.ts";
 import { tooLongToInsert, tooLongToInsertNote } from "../render/longInsert.ts";
 import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
@@ -141,8 +143,13 @@ export class ClipActions {
   }
   /** R832: "Copied: <what>", the text on one line (a long one cut with …). */
   private named(what: string): string {
-    const chars = [...what.replace(/\s+/g, " ").trim()];
+    const chars = [...what.replace(/[ \t\r\n]+/g, " ").trim()]; // (not \s: the thin space of the digit groups stays)
     return tc("clip.copiedWhat").replace("{what}", chars.length > NAMED_MAX ? `${chars.slice(0, NAMED_MAX).join("")}…` : chars.join(""));
+  }
+  /** R832: a shown result as the row draws it, the digits in groups (R55, R125: the setting's separator), for a notice. */
+  private grouped(text: string): string {
+    const ctx = this.session.displayContext();
+    return groupMarked(text, groupSepFor(ctx.groupSep, ctx.decimalComma), ctx.decimalComma === true);
   }
   private async put(text: string | undefined, done: string = tc("clip.copied"), one = false): Promise<boolean> {
     if (text === undefined || text === "") {
@@ -195,15 +202,17 @@ export class ClipActions {
     const m = i ? await impl() : undefined;
     // (the notice names what the row shows: a row with no confirmed digit shows ⚠, never the digit it hides)
     const shown = i && m ? (noDigit(this.session.mark(i)) ? "⚠" : m.withoutMark(this.session.display(i).text)) : "";
-    return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(shown) : undefined, named);
+    return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named);
   }
-  copyShown(item?: HistoryItem): Promise<boolean> {
+  /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
+  copyShown(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
-      return this.put(i ? (await impl()).withoutMark(this.session.display(i).text) : undefined);
+      const text = i ? (await impl()).withoutMark(this.session.display(i).text) : undefined;
+      return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named);
     });
   }
-  copyExact(item?: HistoryItem): Promise<boolean> {
+  copyExact(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
       const exact = i ? copyExact(i) : undefined;
@@ -212,7 +221,8 @@ export class ClipActions {
         return false;
       }
       // R100: an exact list ({3/2,2}) with the decimal comma separates its elements by `;`, as Copy does
-      return this.put(exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact);
+      const text = exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact;
+      return this.put(text, named && text ? this.named(text) : undefined, named);
     });
   }
   /** R181: Copy › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
@@ -455,14 +465,14 @@ export class ClipActions {
     const none = i === undefined;
     const why = this.why();
     const copies: MenuItem[] = [
-      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: this.act("copy", () => this.copy(row)) },
-      { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row) },
+      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: this.act("copy", () => this.copy(row, true)) },
+      { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row, true) },
       {
         id: "exact",
         label: tc("clip.subExact"),
         disabled: none || copyExact(i) === undefined,
         reason: none ? why : tc("clip.noExact"),
-        run: () => void this.copyExact(row),
+        run: () => void this.copyExact(row, true),
       },
       { id: "latex", label: tc("clip.subLatex"), disabled: none, reason: why, run: () => void this.copyLatex(row) },
       { id: "python", label: tc("clip.subPython"), disabled: none, reason: why, run: () => void this.copyPython(row) },

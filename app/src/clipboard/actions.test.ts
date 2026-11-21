@@ -94,7 +94,7 @@ describe("ClipActions row buttons and the hold", () => {
     let clip = "";
     const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
     const item = { id: 1, status: "done", latex: "\\frac{1}{3}", full: "1/3", fullExact: true, rational: { n: "1", d: "3" } };
-    const session = { items: [item], display: () => ({ text: "0.333333333333", latex: "0.333333333333" }), mark: () => null } as unknown as Session;
+    const session = { items: [item], display: () => ({ text: "0.333333333333", latex: "0.333333333333" }), mark: () => null, displayContext: () => ({}) } as unknown as Session;
     const menus: { title: string; ids: string[] }[] = [];
     const shell = { app: null, showsEntry: true, showMenu: (title: string, items: { id: string }[]) => void menus.push({ title, ids: items.map((i) => i.id) }) } as unknown as AppShell;
     const entry = { insert() {} } as unknown as EntryController;
@@ -141,7 +141,7 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     const shell = { app, showsEntry: true } as unknown as AppShell;
     const acted: string[] = [];
     // (R832: the notice names the copy by the row's shown text, so the session shows the row)
-    const session = { items, display: (r: { full?: string }) => ({ text: r.full ?? "", latex: "" }), mark: () => mark, input: (r: { latex: string }) => r.latex } as unknown as Session;
+    const session = { items, display: (r: { full?: string }) => ({ text: r.full ?? "", latex: "" }), mark: () => mark, input: (r: { latex: string }) => r.latex, displayContext: () => ({}) } as unknown as Session;
     const c = new ClipActions(session, shell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port);
     return { c, clip: () => clip, acted, say: () => c.notice };
   };
@@ -168,7 +168,7 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     const long = [row("0.3333333333333333333333333333333333333333")];
     const l = make(long);
     l.c.keyCopy(vi.fn(), long[0] as never);
-    await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.3333333333333333333333…")); // 24 characters, then …
+    await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.333 333 333 333 333 33…")); // grouped as the row draws it, 24 characters, then …
   });
   it("R832: a row drawn as ⚠ (no digit confirmed) is named ⚠ in the notice, not by the digit it hides", async () => {
     const rows = [row("0.001")];
