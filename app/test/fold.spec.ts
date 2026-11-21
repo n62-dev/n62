@@ -270,6 +270,15 @@ test("R740: folded, Store ▶ keeps the keys down; a tap on a free letter stores
   await expect(page.locator("article.item .in").last()).toContainText("B"); // (the fake engine keeps no names: the row's input is the store)
 });
 
+test("R740: folded, the bar's Store ▶ on a pick keeps the keys down too (R830: ☰ has no Store row)", async ({ page }) => {
+  await rows(page, 2);
+  await fold(page);
+  await results(page).last().tap();
+  await bar(page).getByRole("button", { name: "Store ▶" }).tap();
+  await expect(storeSheet(page)).toBeVisible();
+  await isFolded(page, true);
+});
+
 test("R740: folded, the sheet's last row is New name…: it brings the keys up, the sheet stays, letters type the name", async ({ page }) => {
   await foldedStore(page);
   const last = storeSheet(page).getByRole("menuitem").last();
@@ -352,7 +361,7 @@ test("by keys: Enter on a pick inserts, or recalls a row without a result, bring
   await expect.poll(async () => (await counts())["recall"]).toBe(1);
 });
 
-test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back", async ({ page }) => {
+test("a layer closed under a sheet leaves no history entry: the slice or its swipe with ☰ open, Android back, the bar's Store ▶", async ({ page }) => {
   const layer = () => page.evaluate(() => (history.state as { n62Layer?: number } | null)?.n62Layer);
   await rows(page);
   // the slice under an open sheet, then Esc
@@ -373,7 +382,15 @@ test("a layer closed under a sheet leaves no history entry: the slice or its swi
   await page.evaluate(() => history.back());
   await expect(sheet(page)).toBeHidden();
   await expect.poll(layer).toBeUndefined();
+  // the bar's Store ▶ over the fold (R830: ☰ has no Store row): the store sheet opens, the keys stay down (R740)
   await fold(page);
+  await results(page).last().tap();
+  await bar(page).getByRole("button", { name: "Store ▶" }).tap();
+  await isFolded(page, true); // R740: the keys stay down
+  await expect(page.getByTestId("store")).toBeVisible();
+  await page.keyboard.press("Escape"); // (the store sheet is a layer of its own while it is open)
+  await expect(page.getByTestId("store")).toBeHidden();
+  await isFolded(page, true);
   await clearLine(page);
   await page.locator(SLICE).tap();
   await expect.poll(layer).toBeUndefined();

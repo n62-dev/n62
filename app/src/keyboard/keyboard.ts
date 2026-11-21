@@ -30,7 +30,7 @@ export type Special =
   | "matrix"
   /** Shift + 1 (R327): the uncertainty sheet of the picked or last result with σ, or the unit view's (views/uncSheet.ts). */
   | "uncertainty"
-  /** Shift + Deselect (R723; Shift + Vars from R329): ☰ → Paste's path, the clipboard as one number onto the entry line; it opens no sheet. */
+  /** Shift + Deselect (R723; Shift + Vars from R329): Paste's own path, the clipboard as one number onto the entry line; it opens no sheet. */
   | "paste"
   /** Shift + Select (R723): what a hold on the picked row's result copies, else the last finished row's; it opens no sheet. */
   | "copy"

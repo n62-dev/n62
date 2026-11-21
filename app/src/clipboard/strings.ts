@@ -30,7 +30,7 @@ const clip = {
   "clip.shared": "Shared",
   "clip.sharedAsCopy": "This device cannot share: copied instead",
   "clip.sessionTitle": "N62 session",
-  // R130: ☰ › Export › (item 7, shared with R181 and R200) and the work report it saves (workReport.ts)
+  // R130: ☰ › Export › (item 4, R830, shared with R181 and R200) and the work report it saves (workReport.ts)
   "clip.export": "Export",
   "export.work": "Work report",
   "export.nothing": "Nothing to export",

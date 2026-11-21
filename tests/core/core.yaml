@@ -436,7 +436,7 @@ cases:
 
   - id: c49
     area: entry
-    title: "A hold copies the result, Shift + Deselect (Paste) puts it on the line: d9 and a second result 5 are on screen, so a failed hold or paste gives 6 and a Paste that does nothing gives 5, not 10 (R278f1; R278: the Copy and Paste keys left the keypad)"
+    title: "A hold copies the result, Shift + Deselect (Paste) puts it on the line: d9 and a second result 5 are on screen, so a failed hold or paste gives 6, not 10 (R278f1; R278: the Copy and Paste keys left the keypad)"
     keys: [d9, enter, {hold: "result:last"}, d5, enter, shift, deselect, add, d1, enter]
     expect: { result: "10", mark: "=" }
     value: "10"
@@ -452,7 +452,7 @@ cases:
 
   - id: c71
     area: entry
-    title: "a hold on the last result copies it; Shift + Deselect (Paste) puts it on the line: 20 is copied and a second result 3 is on screen, so a failed hold or paste gives 4 and a Paste that does nothing gives 5, not 21 (R276, owner 2026-11-10; R278f2)"
+    title: "a hold on the last result copies it; Shift + Deselect (Paste) puts it on the line: 20 is copied and a second result 3 is on screen, so a failed hold or paste gives 4, not 21 (R276, owner 2026-11-10; R278f2)"
     keys: [d4, mul, d5, enter, {hold: "result:last"}, d3, enter, shift, deselect, add, d1, enter]
     expect: { result: "21", mark: "=" }
     value: "21"

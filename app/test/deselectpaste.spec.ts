@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R723 (the owner, 2026-11-17): Shift + Deselect is Paste (R329 had it on Shift + Vars, now Chars, R725). It
-// takes ☰ → Paste's path (clipboard/actions.svelte.ts paste: the clipboard as one number onto the entry line), so a hold on
+// takes Paste's own path (clipboard/actions.svelte.ts paste: the clipboard as one number onto the entry line), so a hold on
 // a result then a flick up on Deselect puts that result on the line, in Home and in Solve Symb; the keys pressed meanwhile
 // wait for the paste (holdKeys), and where no entry line shows (Plot) it is a dead press. Controls: Vars' tap still opens
 // Find on the user's names, Shift + Deselect pastes (the core list's cases), and Shift + a b/c, 7, Fmt and Vars are reserved. Key

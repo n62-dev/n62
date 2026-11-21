@@ -107,7 +107,7 @@
     entry.onPaste = (text) => {
       edited = true;
       picked = null; // a paste types too: it drops the pick (R147), so its buttons never cover the pasted text
-      route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take ☰ → Paste's path
+      route.pasteText(ctx, text); // R114: Ctrl+V and every system paste take Paste's own path
     };
     const loadFold = (): void => {
       void import("./keyboard/Fold.svelte").then((m) => (Fold = m.default), () => {}), session.taps.load(); // R53, R724; R320: the press counters (presses wait in the session's front)
