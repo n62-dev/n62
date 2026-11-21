@@ -31,7 +31,8 @@ export const en = {
   "key.copy": "Copy",
   /** Shift + Deselect (R723): ☰ → Paste on a key. */
   "key.paste": "Paste",
-  "key.math": "Math",
+  /** The Math key opens Find (R4a); its face says so (R802, owner 2026-11-20). The id `math` stays. */
+  "key.math": "Find",
   "key.memory": "Mem",
   "key.tmpl": "Tmpl",
   "key.units": "Units",

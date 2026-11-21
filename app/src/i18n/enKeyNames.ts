@@ -32,7 +32,7 @@ export const enKeyNames = {
   // the maths rows
   vars: "Variables",
   "vars.shift": "Characters",
-  math: "Math",
+  math: "Find",
   "math.shift": "Memory",
   tmpl: "Templates",
   "tmpl.shift": "Units",
