@@ -229,6 +229,11 @@ export class EntryController {
     if (!this.mf) return void this.queue.push({ kind: "put", latex, term, ...(consts ? { consts } : {}) }); // R298: in its place among the queued keys
     this.put(latex, term, consts);
   }
+  /** A previous entry at the caret, with the values of its chips (R832: a lit input put on a line that has text): the chips are taken
+   *  into the table first and renumbered as `set` does, so a `\res{k}` in it never reads another value. */
+  insertRecalled(latex: string, chips: ChipTable = {}): void {
+    this.insert(this.adopt(latex, chips));
+  }
   private put(latex: string, term: Term = false, consts?: ChipTable): void {
     this.onLine?.(this, latex, term, consts);
   }

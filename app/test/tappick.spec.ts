@@ -228,9 +228,16 @@ test("after a click on an input a hardware Escape drops the pick", async ({ page
   expect(await entryValue(page)).toBe("");
 });
 
-test("after a click on an input a hardware Enter inserts its result as a chip, as after ▲", async ({ page }) => {
+test("R832: after a click on an input a hardware Enter puts its input on the line; after a click on its result, its result as a chip, as after ▲", async ({ page }) => {
   await two(page);
   await inputs(page).first().click();
+  await expect(selected(page)).toHaveCount(1);
+  await page.keyboard.press("Enter");
+  await expect.poll(() => entryValue(page)).not.toBe("");
+  expect(await entryValue(page)).not.toContain("\\res"); // the input's text, not a chip
+  await expect(bar(page)).toHaveCount(0);
+  await page.evaluate(() => window.n62.entry.clear());
+  await results(page).first().click();
   await expect(selected(page)).toHaveCount(1);
   await page.keyboard.press("Enter");
   await expect.poll(() => entryValue(page)).toMatch(/^\\res\{\d+\}\{7\}$/);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // A history row read back from IndexedDB (split out of session.svelte.ts by R98): its fields are kept when they have
 // their shape, else dropped. The history's start read and the stored Undo copy of Clear and Delete (removedRows.ts) use it.
-import { readValueFacts } from "../engine/types.ts";
+import { readValueFacts } from "../engine/readFacts.ts";
 import type { ComplexValue, PrecisionFacts } from "../engine/format.ts";
 import { validChips } from "../input/chips.ts";
 import { isFormStep, type ResultFacts } from "./displayMode.ts";

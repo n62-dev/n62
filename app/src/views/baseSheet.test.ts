@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R193: the Base menu's rows (views/baseSheet.ts). Expected texts are derived (255 = 0xFF; 2^64 does not fit a 64-bit word).
 import { describe, expect, it } from "vitest";
-import { decimalFromRational } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { baseItems } from "./baseSheet.ts";
 

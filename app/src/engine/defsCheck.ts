@@ -4,7 +4,7 @@
 // keeps only the log's own functions (defs.ts). Only erasable TypeScript syntax.
 import { DESC_MAX, MAX_DEFS, PREVIEW_MAX, type DefEntry, type DefKind, type NameFacts, type NameUnit } from "./defs.ts";
 import { isName } from "./giacPrintStart.ts";
-import { readValueFacts } from "./types.ts";
+import { readValueFacts } from "./readFacts.ts";
 
 const KINDS: readonly DefKind[] = ["var", "fn", "assume", "other"];
 

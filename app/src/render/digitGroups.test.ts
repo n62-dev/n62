@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R55: digit groups in a drawn result. Expected values are `derived` (groups of three from the decimal point outward).
 import { describe, expect, it } from "vitest";
-import { decimalFromRational, type ComplexValue } from "../engine/format.ts";
+import { type ComplexValue } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import { commaResult, renderNumeric, type DisplayContext, type NumericResult } from "../state/displayMode.ts";
 import { groupMarked, groupText } from "./groupText.ts";
 import { GROUP_LATEX, groupDigits, groupSepFor } from "./home.ts";

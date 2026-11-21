@@ -8,8 +8,11 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import { loadForms, type HistoryItem, type Session } from "../state/session.svelte.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
-import { targetRow } from "../state/pickRows.ts";
-import { commaResult } from "../state/displayMode.ts";
+import { drawnInput, targetRow, type PickPart } from "../state/pickRows.ts";
+import { commaResult, noDigit } from "../state/displayMode.ts";
+import { groupMarked } from "../render/groupText.ts";
+import { groupSepFor } from "../render/home.ts";
+import { tooLongToInsert, tooLongToInsertNote } from "../render/longInsert.ts";
 import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
 import { entryText } from "./plaintext.ts";
@@ -28,12 +31,17 @@ const impl = () => import("./impl.ts");
 const pasteUnit = () => import("./pasteUnit.ts");
 
 const NOTICE_MS = 2200;
+/** R832: the most characters of a copied text the notice names ("Copied: 0.333 333 333 333"); the whole is on the clipboard. */
+const NAMED_MAX = 24;
 
 /** What the row actions do on the entry line; App owns these (a tap on a row uses them before this code has loaded). */
 export interface RowOps {
   /** Put the result on the line as a chip (a tap on it); `whole`: a linreg or stats1 list too, with no value sheet (R301);
    *  `stay`: a folded keypad stays down (Store ▶, R740: its sheet takes the name). */
   insert(item: HistoryItem, whole?: boolean, stay?: boolean): void;
+  /** R832: a row's input goes on the line: on an empty one it is the recall (chips and all), else at the caret; `stay`: a folded keypad
+   *  stays down (Store ▶: its sheet takes the name). */
+  putInput?(item: HistoryItem, stay?: boolean): void;
   /** One of the Menu's row actions (store, copy, delete) runs, by a button, a list, a hold or a swipe (R53's count). */
   acted?(id: string): void;
   /** ☰ → Paste reads the clipboard: the keys pressed meanwhile wait for it (route.ts holdKeys), so Paste then ÷ divides the pasted number. */
@@ -45,6 +53,8 @@ export interface RowOps {
 export class ClipActions {
   /** The short message on screen ("Copied"), or null. */
   notice = $state<string | null>(null);
+  /** R832: the notice names a copy and stays on one line (App draws it ellipsed). */
+  noticeOne = $state(false);
   private timer: ReturnType<typeof setTimeout> | undefined;
 
   private readonly session: Session;
@@ -82,8 +92,9 @@ export class ClipActions {
     return this.givenPort ?? (this.chosen ??= (await impl()).choosePort());
   }
 
-  say(message: string, ms = NOTICE_MS): void {
+  say(message: string, ms = NOTICE_MS, one = false): void {
     this.notice = message;
+    this.noticeOne = one;
     if (this.timer !== undefined) clearTimeout(this.timer);
     this.timer = setTimeout(() => (this.notice = null), ms);
   }
@@ -127,16 +138,26 @@ export class ClipActions {
   }
 
   /** Put text on the clipboard and say so. */
-  copyRaw(text: string | undefined, done: string = tc("clip.copied")): Promise<boolean> {
-    return this.serial(() => this.put(text, done));
+  copyRaw(text: string | undefined, done: string = tc("clip.copied"), one = false): Promise<boolean> {
+    return this.serial(() => this.put(text, done, one));
   }
-  private async put(text: string | undefined, done: string = tc("clip.copied")): Promise<boolean> {
+  /** R832: "Copied: <what>", the text on one line (a long one cut with …). */
+  private named(what: string): string {
+    const chars = [...what.replace(/[ \t\r\n]+/g, " ").trim()]; // (not \s: the thin space of the digit groups stays)
+    return tc("clip.copiedWhat").replace("{what}", chars.length > NAMED_MAX ? `${chars.slice(0, NAMED_MAX).join("")}…` : chars.join(""));
+  }
+  /** R832: a shown result as the row draws it, the digits in groups (R55, R125: the setting's separator), for a notice. */
+  private grouped(text: string): string {
+    const ctx = this.session.displayContext();
+    return groupMarked(text, groupSepFor(ctx.groupSep, ctx.decimalComma), ctx.decimalComma === true);
+  }
+  private async put(text: string | undefined, done: string = tc("clip.copied"), one = false): Promise<boolean> {
     if (text === undefined || text === "") {
       this.say(tc("clip.nothing"));
       return false;
     }
     const ok = await (await this.port()).writeText(text);
-    this.say(ok ? done : tc("clip.unavailable"));
+    this.say(ok ? done : tc("clip.unavailable"), NOTICE_MS, ok && one);
     return ok;
   }
 
@@ -145,40 +166,53 @@ export class ClipActions {
   holdCopy(item: HistoryItem, part: "input" | "result", latex: string): Promise<boolean> {
     if (part === "result") {
       if (item.status === "done") this.ops.acted?.("copy");
-      return this.copy(item);
+      return this.copy(item, true);
     }
     this.ops.acted?.("copy");
-    return this.copyRaw(entryText(latex, this.opts));
+    const text = entryText(latex, this.opts);
+    return this.copyRaw(text, text ? this.named(text) : undefined, true);
+  }
+  /** What a hold on the row's input copies: its plain text, the units in it (R63); the row's own, not Home's recall. */
+  private inputLatex(item: HistoryItem): string {
+    return drawnInput(item, (i) => this.session.input(i));
   }
   /** Shift + Select (R723): the entry line's selection (R727) as plain text, else what a hold on the row's result copies, of `row` (the picked one), else of the last finished
    *  row; `dead` (the dead press), and nothing written, when there is no such row or an app is open (its rows are not Home's). */
-  keyCopy(dead: () => void, row?: HistoryItem, letGo?: () => void): void {
+  keyCopy(dead: () => void, row?: HistoryItem, letGo?: () => void, lit: PickPart = "row"): void {
     const mf = this.shell.app === null || this.shell.showsEntry ? this.entry.field : null;
     const selection = mf && !mf.selectionIsCollapsed ? mf.getValue(mf.selection, "latex") : "";
     if (selection) {
       this.ops.acted?.("copy"); // as a hold on an input counts, and copies its plain text
-      void this.copyRaw(entryText(selection, this.opts));
+      const text = entryText(selection, this.opts);
+      void this.copyRaw(text, text ? this.named(text) : undefined, true); // R832: the notice names it
       return;
     }
     letGo?.(); // no selection: the picked row is let go (R723)
+    if (lit === "input" && row && row.status !== "pending" && this.shell.app === null) return void this.holdCopy(row, "input", this.inputLatex(row)); // R832: the lit input, as a hold on it
     const i = this.shell.app === null ? this.target(row) : undefined;
     if (i) void this.holdCopy(i, "result", "");
     else dead();
   }
-  copy(item?: HistoryItem): Promise<boolean> {
-    return this.serial(() => this.copyNow(item));
+  /** `named` (R832): the notice says what was copied, as a hold's does. */
+  copy(item?: HistoryItem, named = false): Promise<boolean> {
+    return this.serial(() => this.copyNow(item, named));
   }
-  private async copyNow(item?: HistoryItem): Promise<boolean> {
+  private async copyNow(item: HistoryItem | undefined, named: boolean): Promise<boolean> {
     const i = this.target(item);
-    return this.put(i ? (await impl()).copyFull(source(i), this.opts) : undefined);
+    const m = i ? await impl() : undefined;
+    // (the notice names what the row shows: a row with no confirmed digit shows ⚠, never the digit it hides)
+    const shown = i && m ? (noDigit(this.session.mark(i)) ? "⚠" : m.withoutMark(this.session.display(i).text)) : "";
+    return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named);
   }
-  copyShown(item?: HistoryItem): Promise<boolean> {
+  /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
+  copyShown(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
-      return this.put(i ? (await impl()).withoutMark(this.session.display(i).text) : undefined);
+      const text = i ? (await impl()).withoutMark(this.session.display(i).text) : undefined;
+      return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named);
     });
   }
-  copyExact(item?: HistoryItem): Promise<boolean> {
+  copyExact(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
       const exact = i ? copyExact(i) : undefined;
@@ -187,7 +221,8 @@ export class ClipActions {
         return false;
       }
       // R100: an exact list ({3/2,2}) with the decimal comma separates its elements by `;`, as Copy does
-      return this.put(exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact);
+      const text = exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact;
+      return this.put(text, named && text ? this.named(text) : undefined, named);
     });
   }
   /** R181: Copy › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
@@ -353,7 +388,8 @@ export class ClipActions {
   /** Store ▶: the result and the store arrow on the line, the cursor ready for the variable's name (value ▶ name).
    *  R301: a linreg or stats1 row goes in whole (its value sheet would open beside "Store in"); onto a line with text,
    *  the line is what is stored, so "Store in" opens on the typed path (its title the line before ▶, `2+5`). */
-  storeRow(row?: HistoryItem): boolean {
+  storeRow(row?: HistoryItem, lit: PickPart = "row"): boolean {
+    if (lit === "input" && row) return this.storeInput(row);
     const i = this.target(row);
     if (!i || !this.shell.showsEntry) return false;
     const typed = !this.entry.empty;
@@ -361,6 +397,37 @@ export class ClipActions {
     this.entry.insert("\\blacktriangleright");
     this.ops.stored?.(typed ? undefined : i); // R281: "Store in" opens
     return true;
+  }
+  /** R832: Store ▶ with the input lit: the input on the line (an empty line: the recall) and ▶, "Store in" open on that line (`2+3▶`);
+   *  a running row has no input to store yet. */
+  private storeInput(row: HistoryItem): boolean {
+    if (row.status === "pending" || !this.shell.showsEntry) return false;
+    this.ops.putInput?.(row, true); // (folded, the keys stay down, R740)
+    this.entry.insert("\\blacktriangleright");
+    this.ops.stored?.(); // the line is what is stored
+    return true;
+  }
+  /** L5 and docs/04 2.8: a tapped or picked result goes on the line as a chip that carries its full value; R746: an exact
+   *  result drawn as its exact value (`=`, or CAS's own unmarked maths) with a fraction, root, power or matrix goes as that
+   *  maths, editable, one term (render/exactMaths.ts, entry/oneTerm.ts; decided as it goes on the field). It lives here, not in
+   *  App, since a row is picked (and this code loaded) before its result is tapped (the start chunk is pinned). */
+  insertResult(item: HistoryItem, whole = false): void {
+    // R184: linreg and stats1 ask which value (showStats); an answer with no such list goes in whole
+    if (!whole && /linreg|stats1/.test(item.latex)) return void this.showStats(item).catch(() => false).then((ok) => void (ok || this.insertResult(item, true)));
+    // a result with no confirmed digit goes on the line as the bare warning mark, never as its unconfirmed number
+    const { session, entry } = this;
+    const chip = session.chipFor(item);
+    // a unit row with no chip (R63f1): Home's number alone, never its σ or unit (Home has no units); its chip shows both
+    const { units, ...number } = item;
+    const mark = session.mark(item);
+    const shown = noDigit(mark) ? "⚠" : session.display(units && !chip ? number : item).latex;
+    if (chip) entry.insertResult(shown, chip, !!chip.exact && !chip.unc && !units && (mark ? mark.mark === "=" : item.view === "cas"));
+    else if (tooLongToInsert(shown, false)) this.say(tooLongToInsertNote()); // R135f2: too long to draw, so to insert
+    else entry.insert(shown, true); // too long for a chip: as drawn (render/insertable.ts), one term
+  }
+  /** R832: Enter on a lit input: it goes at the caret (an empty line: the recall, with its chips); the pick is let go. */
+  enterInput(row: HistoryItem): void {
+    this.ops.putInput?.(row);
   }
   /** Delete: the picked row, else the last row of the view. A running row is not deleted; when the Undo code does not
    *  load, nothing is deleted and the history says so (R98). */
@@ -388,8 +455,9 @@ export class ClipActions {
   }
 
   /** The picked row's Store ▶ button (R276; not in ☰ since R830). */
-  storeItem(row?: HistoryItem): MenuItem {
-    return { id: "store", label: tc("clip.store"), disabled: this.target(row) === undefined || !this.shell.showsEntry, reason: this.why(), run: this.act("store", () => this.storeRow(row)) };
+  storeItem(row?: HistoryItem, lit: PickPart = "row"): MenuItem {
+    const none = lit === "input" && row ? row.status === "pending" : this.target(row) === undefined; // (the input of a finished row is there even when it has no result)
+    return { id: "store", label: tc("clip.store"), disabled: none || !this.shell.showsEntry, reason: this.why(), run: this.act("store", () => this.storeRow(row, lit)) };
   }
   /** The picked row's Copy › button, with the five rows it opens (the first is what a hold copies). */
   copyItem(row?: HistoryItem): MenuItem {
@@ -397,14 +465,14 @@ export class ClipActions {
     const none = i === undefined;
     const why = this.why();
     const copies: MenuItem[] = [
-      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: this.act("copy", () => this.copy(row)) },
-      { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row) },
+      { id: "full", label: tc("clip.subFull"), disabled: none, reason: why, run: this.act("copy", () => this.copy(row, true)) },
+      { id: "shown", label: tc("clip.subShown"), disabled: none, reason: why, run: () => void this.copyShown(row, true) },
       {
         id: "exact",
         label: tc("clip.subExact"),
         disabled: none || copyExact(i) === undefined,
         reason: none ? why : tc("clip.noExact"),
-        run: () => void this.copyExact(row),
+        run: () => void this.copyExact(row, true),
       },
       { id: "latex", label: tc("clip.subLatex"), disabled: none, reason: why, run: () => void this.copyLatex(row) },
       { id: "python", label: tc("clip.subPython"), disabled: none, reason: why, run: () => void this.copyPython(row) },
@@ -451,7 +519,12 @@ export class ClipActions {
 
   /** The row buttons above the entry line (R276): Store ▶ and Copy › for the picked row; Copy › opens its five on the
    *  sheet. The second tap inserts or recalls, a hold copies, a swipe deletes (History.svelte). */
-  rowButtons(row: HistoryItem): MenuItem[] {
+  rowButtons(row: HistoryItem, lit: PickPart = "row"): MenuItem[] {
+    if (lit === "input") {
+      // R832: the lit input: Store ▶ puts it on the line with ▶; Copy (no ›: it has one form) copies its plain text, as a hold does
+      const run = (): void => void this.holdCopy(row, "input", this.inputLatex(row));
+      return [this.storeItem(row, lit), { id: "copy", label: tc("clip.copy"), disabled: row.status === "pending", reason: this.why(), run }];
+    }
     const buttons: MenuItem[] = [this.storeItem(row)];
     const { submenu: sub, ...button } = this.copyItem(row);
     if (sub) buttons.push({ ...button, label: `${button.label} ›`, run: () => this.shell.showMenu(sub.title, sub.items, { remember: false }) });

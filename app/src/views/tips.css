@@ -47,14 +47,14 @@
   margin-inline: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 .tips .tip {
   display: flex;
   align-items: center;
   gap: 10px;
   margin: 0;
-  padding: 8px 14px;
+  padding: 7px 14px; /* (R832: the rows card says a line more; 1 px each of the gap and the padding keep seven cards in 360 × 740 at scale 2.0) */
   background: var(--panel);
   color: var(--text);
   border: 1px solid var(--line);

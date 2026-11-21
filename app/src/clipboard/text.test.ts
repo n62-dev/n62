@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Expected values are derived (mathematically provable decimal expansions) or follow docs/04 section 2.6 literally.
 import { describe, expect, it } from "vitest";
-import { decimalFromRational, decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
+import { decimalFromString, ZERO_VALUE, type ComplexValue } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import { complexText, copyExact, copyFull, copyMark, entryText, realText, sessionCsv, sessionLatex, sessionText, tableCsv, withoutMark, type CopySource } from "./text.ts";
 import { markFor, modeOf, renderNumeric, type DisplayContext } from "../state/displayMode.ts";
 import { unitLatex } from "../input/chipUnit.ts";

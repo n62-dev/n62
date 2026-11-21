@@ -16,7 +16,7 @@ import type { Cell } from "../apps/function/engineApi.ts";
 import { AppShell } from "../apps/shell.svelte.ts";
 import { SolveApp } from "../apps/solve/app.svelte.ts";
 import type { AppHost, MenuItem } from "../apps/types.ts";
-import { decimalFromRational } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { IndexItem } from "../find/types.ts";
 import { unitsMenu } from "../units/menu.ts";

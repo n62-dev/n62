@@ -2,7 +2,8 @@
 // R155f2: what a history item keeps of an engine result (G86's rule, docs/04 2.8), split from state/results.ts: it runs once
 // a result is in, never at the first frame or the first key, so it is a lazy chunk (state/itemLoad.ts) and the decimal
 // code of engine/format.ts it reads stays out of the start chunk. Pure TypeScript, no runes; the golden runner calls it too.
-import { decimalFromRational, decimalFromString } from "../engine/format.ts";
+import { decimalFromString } from "../engine/format.ts";
+import { decimalFromRational } from "../engine/rational.ts";
 import { PASDEG } from "../engine/pasdeg.ts";
 import { bracesOf } from "../engine/giacPrint.ts";
 import { FULL_LIMIT, ITEMS_LIMIT, rationalOf, rowUid, type CasIn, type FactsSource, type HomeIn, type ItemResult } from "./results.ts";
