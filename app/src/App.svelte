@@ -541,7 +541,7 @@
       onpress={press}
       oncount={session.taps.touch}
       ontouch={touched}
-      quiet={(k) => quietCode?.quiet(ctx, k)}
+      quiet={(k, d) => quietCode?.quiet(ctx, k, d)}
     />
     </div>
   </div>

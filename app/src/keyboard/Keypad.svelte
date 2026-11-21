@@ -56,8 +56,9 @@
     oncount: (touch: FinishedTouch, layer: { shift: boolean; alpha: boolean }) => void;
     /** A finger went down on the pad: the key vibration, one pulse per touch (R112). A drag step or an armed flick makes none. */
     ontouch: () => void;
-    /** A tap on this key would be a dead press where it lands (keyboard/quiet.ts, R777): it gets no look, pop or click, as a key drawn dead. */
-    quiet: (key: Key) => boolean | undefined;
+    /** A tap on this key would be a dead press where it lands (keyboard/quiet.ts, R777): it gets no look, pop or click, as a key drawn
+     *  dead. `drawnDead` keys the sheet takes for a job of its own answer false. Undefined (its chunk is not in): the drawing decides. */
+    quiet: (key: Key, drawnDead: boolean) => boolean | undefined;
   } = $props();
 
   // The face shows what a tap gives (the active layer). The legends show what the flicks give (P7 point 2): the shift
@@ -261,7 +262,7 @@
     // R777 (docs/05 3.7): a key drawn dead, or one the route will turn into nothing (quiet), has no press look, no pop and no click
     // at finger-down; its tap gives the dead key's double pulse (route.ts c.dead()). A flick that arms on it and types something
     // is felt then (move()).
-    const inert = typeof target === "object" && (dead(target) || quiet(target));
+    const inert = typeof target === "object" && (quiet(target, dead(target)) ?? dead(target));
     if (inert) hidePop(); // (the next key's down still replaces the last key's pop at once)
     else {
       flag.light(el);

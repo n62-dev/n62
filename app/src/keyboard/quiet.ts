@@ -14,9 +14,22 @@ const STORE_ARROW = "\\blacktriangleright";
 const FIND = "find";
 const STORE = "store";
 
-/** Would a tap on `key` now be a dead press (route.ts calls c.dead())? */
-export function quiet(c: RouteCtx, key: Key): boolean {
+/** Does the open sheet take a tap on `key` for a job of its own, before its usual key reading (route.ts sheetPress)? Without
+ *  acting: a free key whose slot the level lists (R4b), a key at a grid cell's place (R18: pickKey), the matrix grid's cells. */
+function takes(c: RouteCtx, key: Key): boolean {
+  const level = c.shell.sheet?.level;
+  if (!level) return false;
+  if (level.grid) return true;
+  const layer = c.session.alpha ? "alpha" : c.session.shift ? "shift" : "primary";
+  if (key.user && level.items.some((x) => x.slot?.key === key.id && x.slot.layer === layer)) return true;
+  return level.columns !== undefined && !level.digits && level.items.some((x) => x.pick?.key === key.id);
+}
+
+/** Would a tap on `key` now be a dead press (route.ts calls c.dead())? `drawnDead`: Keypad draws the key dead (its layer, or the
+ *  sheet's reading), which the route still acts on when the sheet takes the key. */
+export function quiet(c: RouteCtx, key: Key, drawnDead: boolean): boolean {
   const { session, shell, entry } = c;
+  if (drawnDead) return !(shell.sheet && takes(c, key));
   if (c.sheetLoad !== null || shell.loading !== null || entry.fieldPending || c.waiting.length > 0) return false;
   const p = key.actions.primary;
   if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return false;
@@ -26,7 +39,7 @@ export function quiet(c: RouteCtx, key: Key): boolean {
     // hands the key to the line); a free key, a grid and a key that picks a cell have their own jobs
     const keys = sheetChunk.keys;
     const level = sheet.level;
-    if (!keys || key.user || level.grid || level.loading() || sheet.id === FIND || sheet.id === STORE || sheet.pickKey(key.id)) return false;
+    if (!keys || level.loading() || sheet.id === FIND || sheet.id === STORE || takes(c, key)) return false;
     return level.filter === "" && keys.sheetKey(key, level.filterable).kind === "backspace";
   }
   const action = actionFor(key, session.shift, session.alpha, session.settings.entry === "line", c.casKeys);

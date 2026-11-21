@@ -3,7 +3,7 @@
 // steps or flicks; a dead key's double pulse has one click); Settings › Key vibration › Key click is a switch that
 // survives a relaunch and goes into a preset's Key vibration group and a backup. The web click is one oscillator started.
 import { expect, test, type Page } from "@playwright/test";
-import { drag, entryValue, flick, lastResult, open, recordVibrations, savedText, savePicker, tap, touch, vibrations } from "./helpers.ts";
+import { drag, entryValue, flick, lastResult, open, recordVibrations, savedText, savePicker, sheet, tap, touch, vibrations } from "./helpers.ts";
 
 /** Count the Web Audio clicks: every oscillator started (haptics.ts makes one per click). */
 async function recordClicks(page: Page): Promise<void> {
@@ -132,6 +132,56 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     await tap(page, ["@plot"]);
     await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
     expect(await press(page, "d7")).toEqual(DEAD);
+  });
+  const LIVE = { lit: 1, clicks: 1, pulses: 1 };
+  // keys the sheet reads for a job of its own are drawn dead by the sheet's key table, yet act: their feedback stays (route.ts sheetPress)
+  test("Shift + 6: ÷ sits at a grid cell's place and picks it: the look, one click, one pulse", async ({ page }) => {
+    await tap(page, ["shift", "d6"]);
+    await expect(page.getByTestId("sheet-title")).toBeVisible();
+    expect(await press(page, "div")).toMatchObject(LIVE);
+    expect(await entryValue(page)).not.toBe(""); // (the cell is inserted)
+  });
+  test("Settings › Your keys: a free key goes to its row, with the feedback", async ({ page }) => {
+    await tap(page, ["@mode", "d6", "d4"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings › Your keys");
+    expect(await press(page, "u1")).toMatchObject(LIVE);
+    await expect(sheet(page).locator('[data-active="true"]')).toHaveAttribute("data-id", "u1:primary");
+  });
+  test("Store ▶ (Shift + ᴇ): with no result a dead press, with a result live and the store sheet opens", async ({ page }) => {
+    await tap(page, ["shift"]);
+    expect(await press(page, "emark")).toEqual(DEAD);
+    await tap(page, ["d2", "enter"]);
+    await expect(lastResult(page)).toBeVisible();
+    await tap(page, ["shift"]);
+    expect(await press(page, "emark")).toMatchObject(LIVE);
+    await expect(page.getByTestId("store")).toBeVisible();
+  });
+  test("◀ on a picked row with an empty line: a running row is a dead press, a finished one gives its input back", async ({ page }) => {
+    await tap(page, ["d2", "enter"]);
+    await expect(lastResult(page)).toBeVisible();
+    await tap(page, ["up"]);
+    expect(await press(page, "left")).toMatchObject(LIVE);
+    await expect.poll(() => entryValue(page)).toBe("2");
+    await open(page, "engine=fake&delay=3000"); // a job that runs for a while
+    await clickOn(page);
+    await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+    await tap(page, ["d2", "enter"]);
+    await expect(page.locator('[data-status="pending"]')).toHaveCount(1);
+    await tap(page, ["up"]);
+    expect(await press(page, "left")).toEqual(DEAD);
+  });
+  test("in Plot the keys that need the entry line are dead presses; on Home each is live", async ({ page }) => {
+    const needs = ["math", "help", "tmpl", "vars", "select", "deselect"];
+    for (const id of needs.slice(0, 5)) { // (Deselect with nothing selected is the line's own dead press, not asked)
+      await tap(page, ["d1", "d2"]); // (something to select)
+      expect(await press(page, id), id).toMatchObject(LIVE);
+      await tap(page, ["esc", "esc"]);
+    }
+    await tap(page, ["@plot"]);
+    await page.waitForFunction(() => window.n62.shell.app !== null && window.n62.shell.current !== undefined);
+    for (const id of needs) expect(await press(page, id), id).toEqual(DEAD);
+    await tap(page, ["shift"]);
+    expect(await press(page, "deselect"), "paste").toEqual(DEAD); // Shift + Deselect
   });
   test("controls: a live key has the look, the pop, one click and one pulse; Find's letter keys do too", async ({ page }) => {
     expect(await press(page, "d7")).toEqual({ lit: 1, pop: 1, clicks: 1, pulses: 1 });
