@@ -23,6 +23,7 @@ const clip = {
   "clip.copiedWhat": "Copied: {what}",
   "clip.copiedTable": "Copied the table as CSV",
   "clip.nothing": "Nothing to copy",
+  "clip.noDigit": "No digit confirmed",
   "clip.noExact": "No exact form",
   "clip.noResult": "No result yet",
   "clip.notNumber": "Paste: not a number",

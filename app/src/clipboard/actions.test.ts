@@ -20,7 +20,7 @@ describe("ClipActions order", () => {
       share: async () => false,
     };
     const item = { status: "done", latex: "2", facts: {} };
-    const session = { items: [item], display: () => ({ text: "2", latex: "2" }), displayContext: () => ({}) } as unknown as Session;
+    const session = { items: [item], display: () => ({ text: "2", latex: "2" }), mark: () => null, displayContext: () => ({}) } as unknown as Session;
     const inserted: string[] = [];
     const shell = { app: null, showsEntry: true } as unknown as AppShell;
     const entry = { insert: (l: string) => void inserted.push(l) } as unknown as EntryController;
@@ -185,12 +185,12 @@ describe("ClipActions keyCopy (Shift + Select, R723)", () => {
     l.c.keyCopy(vi.fn(), long[0] as never);
     await vi.waitFor(() => expect(l.say()).toBe("Copied: 0.333\u2009333\u2009333\u2009333\u2009333\u200933…")); // grouped as the row draws it (thin spaces, U+2009), 24 characters, then …
   });
-  it("R832: a row drawn as ⚠ (no digit confirmed) is named ⚠ in the notice, not by the digit it hides", async () => {
+  it("R832f2: a row drawn as ⚠ (no digit confirmed) writes nothing and the notice says so, not the digit it hides", async () => {
     const rows = [row("0.001")];
     const m = make(rows, null, { mark: "⚠", n: 0, warn: false });
     m.c.keyCopy(vi.fn(), rows[0] as never);
-    await vi.waitFor(() => expect(m.say()).toContain("Copied"));
-    expect(m.say()).toBe("Copied: ⚠");
+    await vi.waitFor(() => expect(m.say()).toBe("No digit confirmed"));
+    expect(m.clip()).toBe("untouched");
   });
   it("with no row given, the last finished row", async () => {
     const m = make([row("1/3"), row("2/3"), row("x", "error")]);
@@ -391,5 +391,60 @@ describe("ClipActions copyPython and savePython", () => {
     const d = actions([third]);
     await d.savePython();
     expect(d.notice).toBe("The Python could not be saved");
+  });
+});
+
+// R832f2 (principle 3): a row with no confirmed digit (mark ⚠ n 0) shows no number, so Full value, As shown, LaTeX, a hold on the
+// result and Shift + Select write nothing: the clipboard stays untouched, the notice says why and the copy is not counted.
+// Exact and Python stay as they are.
+describe("ClipActions on a row with no confirmed digit", () => {
+  const make = () => {
+    let clip = "untouched";
+    const port: ClipboardPort = { writeText: async (t) => ((clip = t), true), readText: async () => clip, share: async () => false };
+    const item = { id: 1, status: "done", latex: "\\sin\\left(10^{2000}\\right)", text: "0.001", full: "0.001", fullExact: false, facts: { reliableDigits: 0 } };
+    const session = { items: [item], display: () => ({ text: "0.001", latex: "0.001" }), mark: () => ({ mark: "⚠", n: 0, warn: false }), input: (r: { latex: string }) => r.latex, displayContext: () => ({}) } as unknown as Session;
+    const shell = { app: null, showsEntry: true } as unknown as AppShell;
+    const acted: string[] = [];
+    const c = new ClipActions(session, shell, {} as EntryController, { insert() {}, acted: (id) => void acted.push(id) }, port);
+    return { c, item: item as never, acted, clip: () => clip };
+  };
+  const NOTE = "No digit confirmed";
+  const paths: [string, (m: ReturnType<typeof make>) => Promise<boolean>][] = [
+    ["copy (Full value)", (m) => m.c.copy(m.item, true)],
+    ["copyShown (As shown)", (m) => m.c.copyShown(m.item, true)],
+    ["copyLatex (LaTeX)", (m) => m.c.copyLatex(m.item)],
+    ["a hold on the result", (m) => m.c.holdCopy(m.item, "result", "")],
+  ];
+  for (const [name, run] of paths)
+    it(`${name} writes nothing and says so`, async () => {
+      const m = make();
+      expect(await run(m)).toBe(false);
+      expect(m.clip()).toBe("untouched");
+      expect(m.c.notice).toBe(NOTE);
+      expect(m.acted).toEqual([]); // not counted
+    });
+  it("the bar's Copy › Full value, As shown and LaTeX write nothing and are not counted", async () => {
+    const m = make();
+    for (const id of ["full", "shown", "latex"]) {
+      m.c.copyItem(m.item).submenu?.items.find((i) => i.id === id)?.run?.();
+      await vi.waitFor(() => expect(m.c.notice).toBe(NOTE));
+      m.c.notice = null;
+    }
+    expect(m.clip()).toBe("untouched");
+    expect(m.acted).toEqual([]);
+  });
+  it("Shift + Select (keyCopy) writes nothing, is no dead press and is not counted", async () => {
+    const m = make();
+    const dead = vi.fn();
+    m.c.keyCopy(dead, m.item);
+    await vi.waitFor(() => expect(m.c.notice).toBe(NOTE));
+    expect(dead).not.toHaveBeenCalled();
+    expect([m.clip(), m.acted]).toEqual(["untouched", []]);
+  });
+  it("Copy › Exact still copies the exact form", async () => {
+    const m = make();
+    const item = { ...(m.item as object), fullExact: true, full: "sin(10^2000)", facts: {} };
+    expect(await m.c.copyExact(item as never)).toBe(true);
+    expect(m.clip()).not.toBe("untouched");
   });
 });
