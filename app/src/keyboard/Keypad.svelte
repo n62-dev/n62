@@ -251,16 +251,6 @@
     return { target, el: target ? el : undefined };
   }
 
-  /** R774: the dot of a pressed arrow goes behind its glyph: the glyph's centre, as an offset from the round pad's centre. */
-  function placeDot(el: HTMLElement | undefined): void {
-    const tp = padEl?.querySelector<HTMLElement>(".trackpad");
-    const main = el?.querySelector<HTMLElement>(".main");
-    if (!tp || !main) return;
-    const [t, m] = [tp.getBoundingClientRect(), main.getBoundingClientRect()];
-    tp.style.setProperty("--dot-x", `${m.left + m.width / 2 - (t.left + t.width / 2)}px`);
-    tp.style.setProperty("--dot-y", `${m.top + m.height / 2 - (t.top + t.height / 2)}px`);
-  }
-
   function down(ev: PointerEvent): void {
     // the keys never take focus, so the caret stays in the entry line
     ev.preventDefault();
@@ -276,7 +266,7 @@
     if (inert) hidePop(); // (the next key's down still replaces the last key's pop at once)
     else {
       flag.light(el);
-      if (typeof target === "object" && isPadKey(target)) placeDot(el);
+      if (typeof target === "object" && isPadKey(target)) keyNames()?.placeDot(padEl, el); // R774 (the code comes with the key names: after the first paint)
       showPop(target, el);
       if (target) ontouch();
     }
@@ -643,21 +633,19 @@
     content: none;
   }
   /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
-     it: down() sets --dot-x and --dot-y, the arrow's offset from the pad's centre */
+     it: placeDot (keyNames.ts) sets --dot-at, the arrow's offset from the pad's centre */
   .trackpad {
     position: relative;
     overflow: hidden;
-    --dot-x: 0%;
-    --dot-y: 0%;
   }
   .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::after {
     content: "";
     position: absolute;
-    left: calc(50% + var(--dot-x));
-    top: calc(50% + var(--dot-y));
+    inset: 50% auto auto 50%;
     width: var(--pad-dot);
     height: var(--pad-dot);
-    transform: translate(-50%, -50%);
+    margin: calc(var(--pad-dot) / -2);
+    translate: var(--dot-at, 0 0);
     border-radius: 50%;
     background: color-mix(in srgb, var(--key-text) 32%, transparent);
   }

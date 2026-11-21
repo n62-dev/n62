@@ -49,6 +49,8 @@ const pixel = async (page: Page, x: number, y: number): Promise<number[]> => {
 for (const id of ["up", "down", "left", "right"])
   test(`a held ${id} arrow shows a dot behind it: the pixel beside the glyph differs from rest`, async ({ page }) => {
     await open(page);
+    // the dot's code comes with the key names, after the first paint (keyNames.ts placeDot): wait for them (sin's description is theirs)
+    await expect(page.locator('.pad [data-key="sin"]')).toHaveAttribute("aria-description", /Shift/);
     const box = await page.locator(`.pad [data-key="${id}"] .main`).boundingBox();
     if (!box) throw new Error("no arrow");
     // 14 px from the glyph's centre, along the circle's tangent: off the ink, inside a 40 px dot
