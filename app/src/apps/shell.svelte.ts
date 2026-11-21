@@ -245,32 +245,28 @@ export class AppShell {
    *  current slot-2 place): the same sheet titled "Slot 2", where a pick puts that place in slot 2 and opens it, Home's row is
    *  dead and the CAS row puts CAS back; a tap on the slot again closes it. */
   toggleApps(slot = false): void {
-    if (slot ? this.slotOpen : this.sheet?.id === "apps") this.sheet = null;
-    else if (slot)
-      this.openSheet(
-        (S) =>
-          new S(SLOT_SHEET, t("apps.slot"), () => [
-            { id: "home", label: t("view.home"), glyph: placeGlyph("home"), disabled: true },
-            ...(["cas", ...APPS.map((a) => a.id)] as const).map((p) => ({
-              id: p,
-              label: p === "cas" ? t("view.cas") : t(appEntry(p).name),
-              glyph: placeGlyph(p),
-              selected: this.barSlot?.() === p,
-              run: () => {
-                this.setBarSlot?.(p);
-                if (p === "cas") this.goTo?.("cas");
-                else void this.open(p);
-              },
-            })),
-          ]),
-      );
+    const id = slot ? SLOT_SHEET : "apps";
+    if (this.sheet?.id === id) this.sheet = null;
     else
       this.openSheet(
         (S) =>
-          new S("apps", t("apps.title"), () => [
-            ...(["home", "cas"] as const).map((v) => ({ id: v, label: t(`view.${v}`), glyph: placeGlyph(v), run: () => this.goTo?.(v) })),
-            ...APPS.map((a) => ({ id: a.id, label: t(a.name), glyph: a.glyph, run: () => void this.open(a.id) })),
-          ]),
+          new S(id, t(slot ? "apps.slot" : "apps.title"), () =>
+            (["home", "cas", ...APPS.map((a) => a.id)] as const).map((p) => {
+              const place = p === "home" || p === "cas";
+              return {
+                id: p,
+                label: place ? t(`view.${p}`) : t(appEntry(p).name),
+                glyph: placeGlyph(p),
+                disabled: slot && p === "home",
+                selected: slot && this.barSlot?.() === p,
+                run: () => {
+                  if (slot) this.setBarSlot?.(p as BarSlot);
+                  if (place) this.goTo?.(p);
+                  else void this.open(p);
+                },
+              };
+            }),
+          ),
       );
   }
   /** Menu key: the open view's menu, or close the open sheet. False when the view has no menu (a dead key). */

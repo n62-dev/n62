@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The definitions log (docs/04 6.2) and the helpers the engine uses to build it and to check evalf(e,n) (M4-6).
 import { describe, expect, it } from "vitest";
-import { applyDefChanges, MAX_DEFS, replayOrder, userNamesOf, validDefs, type DefEntry } from "./defs.ts";
+import { applyDefChanges, MAX_DEFS, replayOrder, userNamesOf, type DefEntry } from "./defs.ts";
+import { validDefs } from "./defsCheck.ts";
 import { floatsAsEvalf } from "./homeEval.ts";
 import { askedDigits, withAskedPrecision } from "./numeric.ts";
 import { namesIn } from "./giacPrint.ts";

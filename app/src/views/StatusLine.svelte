@@ -1,8 +1,9 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  import { APPS, appEntry, placeGlyph } from "../apps/registry.ts";
+  import { appEntry, placeGlyph } from "../apps/registry.ts";
+  import type { AppId } from "../apps/types.ts";
   import type { AppShell } from "../apps/shell.svelte.ts";
-  import { t, type MessageKey } from "../i18n/index.ts";
+  import { t } from "../i18n/index.ts";
   import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
@@ -29,28 +30,25 @@
   } = $props();
 
   /** A bar control as a key (R15b, R15c1, R722): its tap takes the same path as a key press (an open sheet gives way, it runs at once while an app loads, and waits while a sheet's code loads). */
-  const barKey = (id: string, name: "apps" | "home" | "slot" | "symb" | "plot" | "num" | "menu"): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
+  const barKey = (id: string, name: "apps" | "home" | "slot" | "menu"): Key => ({ id, row: 0, col: 0, span: 1, cls: "nav", label: { primary: "" }, actions: { primary: { kind: "special", name } } });
   const PLACE_KEY = barKey("place", "apps"), MENU_KEY = barKey("menu-status", "menu");
-  const TABS = (["symb", "plot", "num"] as const).map((v) => ({ view: v, name: t(`view.${v}`), key: barKey(`tab-${v}`, v) }));
   const HOME_KEY = barKey("tab-home", "home"), SLOT_KEY = barKey("tab-slot", "slot");
 
-  const appName = $derived(shell.app ? t(APPS.find((a) => a.id === shell.app)?.name as MessageKey) : "");
+  /** A place's name: Home, CAS or an app's. */
+  const nameOf = (p: string): string => (p === "home" || p === "cas" ? t(`view.${p}`) : t(appEntry(p as AppId).name));
   /** Where you are (docs/05 3.2): Home, CAS, or an app and its view. */
-  const place = $derived(shell.app === null ? t(`view.${session.view}`) : appName);
+  const place = $derived(nameOf(shell.app ?? session.view));
   const angle = $derived(session.settings.angle);
   /** R782: slot 2 holds CAS or an app (Settings.barSlot); Home is fixed. Each pill is its glyph and a short name, one width everywhere. */
   const barSlot = $derived(session.settings.barSlot);
-  const slotName = $derived(barSlot === "cas" ? t("view.cas") : t(appEntry(barSlot).short));
-  const slotLabel = $derived(barSlot === "cas" ? t("view.cas") : t(appEntry(barSlot).name));
-  const homeCur = $derived(shell.app === null && session.view === "home");
-  const slotCur = $derived(barSlot === "cas" ? shell.app === null && session.view === "cas" : shell.app === barSlot);
+  const slotCur = $derived(shell.app === null ? barSlot === "cas" && session.view === "cas" : shell.app === barSlot);
   /** APP▾ shows a place's glyph, highlighted, when that place was opened through it: an app that is not in slot 2. */
   const appCur = $derived(shell.app !== null && shell.app !== barSlot);
   const glyph = $derived(appCur && shell.app !== null ? placeGlyph(shell.app) : null);
   const PILLS = $derived([
-    { id: "home", key: HOME_KEY, cur: homeCur, glyph: placeGlyph("home"), name: t("view.home"), label: t("view.home"), place: "home" },
-    { id: "slot", key: SLOT_KEY, cur: slotCur, glyph: placeGlyph(barSlot), name: slotName, label: t("status.slot", { place: slotLabel }), place: barSlot },
-  ]);
+    { id: "home", key: HOME_KEY, cur: shell.app === null && session.view === "home", place: "home", name: t("view.home"), label: t("view.home") },
+    { id: "slot", key: SLOT_KEY, cur: slotCur, place: barSlot, name: barSlot === "cas" ? t("view.cas") : t(appEntry(barSlot).short), label: t("status.slot", { place: nameOf(barSlot) }) },
+  ] as const);
   /** The current tile's ring: a job running, or the engine starting (R82f2: the ⟳ went). */
   const ring = $derived(busy || session.engineState === "starting");
   /** The ⇧ α slot: one sign, underlined when locked; `a` when Alpha types lower case here, `α` when it types capitals (R101). */
@@ -127,6 +125,7 @@
     <!-- R782: the recessed track: Home (fixed) and slot 2 (CAS until a second tap on it chooses another place); ◢ marks the current slot 2 -->
     <span class="track" role="tablist" aria-label={t("status.places")}>
       {#each PILLS as p (p.id)}
+        {@const g = placeGlyph(p.place)}
         <!-- Home's tile is the colour logo, the app icon (R745): the one file icons/icon.svg, the same in every theme -->
         <button
           type="button"
@@ -141,7 +140,7 @@
           aria-label={p.label}
           onclick={() => onpress(p.key, "primary")}>
           <span class="pface">
-            <span class="tile math" class:small={"text" in p.glyph && p.glyph.text.length > 1} data-ring={p.cur && ring} aria-hidden="true">{#if "icon" in p.glyph}<img src="{import.meta.env.BASE_URL}icons/icon.svg" alt="" role="presentation" />{:else}{p.glyph.text}{/if}</span>
+            <span class="tile math" class:small={"text" in g && g.text.length > 1} data-ring={p.cur && ring} aria-hidden="true">{#if "icon" in g}<img src="{import.meta.env.BASE_URL}icons/icon.svg" alt="" role="presentation" />{:else}{g.text}{/if}</span>
             <span class="nm" aria-hidden="true">{p.name}</span>
             {#if p.id === "slot" && p.cur}<span class="mark" data-testid="slot-mark" aria-hidden="true">◢</span>{/if}
           </span>
@@ -153,22 +152,8 @@
       <!-- R785: the bay in Home and CAS: the format, a divider and the significant digits as one chip (`STD|12`); it opens Mode on Format, Significant digits the next row -->
       <button type="button" class="chip mode" data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span class="dv" aria-hidden="true">|</span><span>{session.settings.digits}</span></button>
     {:else}
-      <span class="seg" role="tablist" aria-label={t("status.views")}>
-        {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}
-          <!-- the icons are our own markup (ICONS, views/icons.ts), never user text; they ride in the shell's app-opening chunk (R362), so a tab is drawn empty until it is in -->
-          <button
-            type="button"
-            class="tab"
-            role="tab"
-            data-testid="tab-{tab.view}"
-            aria-selected={shell.view === tab.view}
-            aria-label={tab.name}
-            title={tab.name}
-            onclick={() => onpress(tab.key, "primary")}>
-            <span class="face">{@html shell.code?.ICONS[tab.view] ?? ""}</span>
-          </button>
-        {/each}
-      </span>
+      <!-- the bay's view icons (R362, R782): a part of the shell's app-opening chunk, drawn once it is in -->
+      {#if shell.code}<shell.code.AppViews {shell} {onpress} />{/if}
     {/if}
     {#if folded || hw}
       <!-- R783: the ⇧ α badge is on the folded bar and with a hardware keyboard in use; with the keys up the Shift and Alpha keys show the state -->
@@ -224,7 +209,6 @@
     display: contents;
   }
   .folded .foldcell,
-  .folded .seg,
   .folded .sep,
   .folded .chip {
     display: none;
@@ -369,39 +353,6 @@
   .caret {
     font-size: var(--fs-caption);
     color: var(--muted);
-  }
-  /* the views as icons, one segmented control drawn inside the bar's height; the selected one filled */
-  .seg {
-    flex: none;
-    position: relative;
-    display: flex;
-  }
-  .seg::before {
-    content: "";
-    position: absolute;
-    inset: var(--sp-05) 0;
-    border: var(--stroke-thin) solid var(--line);
-    border-radius: calc(var(--radius-s) + var(--stroke-thin));
-    pointer-events: none;
-  }
-  .tab {
-    width: var(--bay-view-w);
-    color: var(--muted);
-    font-size: var(--fs-ui);
-  }
-  .face {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: calc(100% - 2 * var(--sp-05));
-    height: var(--tab-h);
-    border-radius: calc(var(--radius-s) - var(--stroke-thin));
-  }
-  .tab[aria-selected="true"] {
-    color: var(--text);
-  }
-  .tab[aria-selected="true"] .face {
-    background: var(--chip-bg);
   }
   .sep {
     flex: none;

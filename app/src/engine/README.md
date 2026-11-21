@@ -22,9 +22,10 @@ One line per module: what it owns, who calls it. Groups as in docs/04 section 6.
 | `format.ts` | Home number formatter (D5): STD/SCI/ENG/FIX/PFX from a BigInt-derived `DecimalValue`, no engine round trip; `markOf()` and `formatConfirmed()` turn the engine's facts into the mark and the digits shown; called by `state/`, `render/`, `apps/`, `clipboard/` |
 | `polarDigits.ts` | G312: how many digits of r and θ of a polar form the confirmed digits of its value confirm (an error bound carried through abs and arg); out of the start chunk, run by `state/cycleForms.ts` where r and θ are computed, the counts kept in the history item |
 | `formatBase.ts` | G228: `formatBase()` writes an integer text as `0x…`, `0b…` or `0o…` in a word of n bits (BigInt on the digits, never `Number`; an error value for a non-integer or a value outside the word); pure, loaded lazily by the base display |
-| `defs.ts` | the definitions log (docs/04 6.2): plain data and pure functions used on both sides; called by `workerEngine.ts`, `host.ts`, `find/`, `state/backup.ts` |
+| `defs.ts` | the definitions log (docs/04 6.2): plain data and pure functions used on both sides; called by `workerEngine.ts`, `host.ts`, `find/`; the stored log's load check `validDefs` is `defsCheck.ts` |
+| `defsCheck.ts` | R782: `validDefs`, the stored log's load check, out of `defs.ts` so the start chunk does not carry it; `workerEngine.ts` imports it dynamically while the store is read; `state/backup.ts` calls it too |
 | `giacPrint.ts` | G105: the one reader of Giac text (string skip, bracket walk, names, lists, G363's arithmetic tree `arithmeticOf`); imports only `giacPrintStart.ts`, its own part; used by nearly every module here and by `state/resultItem.ts`, `units/` |
-| `giacPrintStart.ts` | R264: `giacPrint.ts`'s part the start chunk reads (the string skip, the walk, the name pattern, `balanced`, `isName`, `names`, `mapNames`, `RATIONAL`), re-exported by `giacPrint.ts`; no imports; used at start by `defs.ts`, `render/home.ts`, `state/results.ts` |
+| `giacPrintStart.ts` | R264: `giacPrint.ts`'s part the start chunk reads (the string skip, the walk, the name pattern, `balanced`, `isName`, `names`, `mapNames`, `RATIONAL`), re-exported by `giacPrint.ts`; no imports; used at start by `render/home.ts`, `state/results.ts` |
 
 **Worker side: the host and the Home pipeline**
 

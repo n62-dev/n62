@@ -8,7 +8,7 @@
   import type { RowBarView } from "./appLoaders.ts";
   import type { EntryController } from "./entry/controller.ts";
   import { t } from "./i18n/index.ts";
-  import { openLayer } from "./input/backLayer.ts";
+  import { openLayer } from "./input/backLayerFront.ts";
   import { loadClick, vibrate } from "./input/haptics.ts";
   import Keypad from "./keyboard/Keypad.svelte";
   import { loadShiftPalettes, shiftPalettes } from "./keyboard/palettes.ts";

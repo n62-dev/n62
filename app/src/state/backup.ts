@@ -3,7 +3,7 @@
 // the check a restore runs on it before it writes anything (R38b, r11 section 3.4). Loaded only when the user saves or
 // restores one (never in the start chunk).
 import { isBarSlot } from "../apps/registry.ts";
-import { validDefs } from "../engine/defs.ts";
+import { validDefs } from "../engine/defsCheck.ts";
 import { dataText, enData, type DataKey } from "../i18n/enData.ts";
 import { KeyboardSpecError, keyboard, parseAction } from "../keyboard/keyboard.ts";
 import { USER_LAYERS } from "../keyboard/userKeys.svelte.ts";

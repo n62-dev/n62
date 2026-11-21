@@ -92,10 +92,8 @@ export async function escape(c: RouteCtx): Promise<void> {
  *  titled "Slot 2" (a tap on it again closes it). Any other open sheet gives way. */
 function slotKey(c: RouteCtx): void {
   const { shell, session } = c;
-  if (shell.slotOpen) return shell.closeSheet();
   const slot = session.settings.barSlot;
-  const here = slot === "cas" ? shell.app === null && session.view === "cas" : shell.app === slot;
-  if (here) return shell.toggleApps(true);
+  if (shell.slotOpen || (slot === "cas" ? shell.app === null && session.view === "cas" : shell.app === slot)) return shell.toggleApps(true);
   shell.closeSheet();
   if (slot === "cas") c.goTo("cas");
   else void shell.open(slot);
