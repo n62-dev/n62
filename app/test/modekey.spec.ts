@@ -72,7 +72,7 @@ test("Shift + Fmt is reserved: dimmed in the Shift layer only, a tap or a flick 
   await expect(page.locator('[data-key="deselect"]')).not.toHaveAttribute("data-dead", "true"); // Paste is live there
   const v1 = (await vibrations(page)).length;
   await tap(page, ["fmt"]); // Shift + Fmt: reserved
-  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(3); // the dead key's double pulse
+  await expect.poll(async () => (await vibrations(page)).length - v1).toBe(2); // drawn dead (R777): the double pulse alone, no key pulse
   await expect(sheet(page)).toHaveCount(0);
   await flick(page, "fmt", "up");
   await expect.poll(async () => (await keys())["fmt:up"] ?? 0).toBe(1);

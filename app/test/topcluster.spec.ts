@@ -291,7 +291,7 @@ test("an empty free key gives the dead-key haptic and types nothing", async ({ p
   for (const id of ["u1", "u6"]) {
     const before = (await vibrations(page)).length;
     await tap(page, [id]);
-    await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(3); // key down + the double
+    await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(2); // drawn dead (R777): the double alone
   }
   await flick(page, "u2", "up"); // U2's Shift slot ships empty
   expect(await entryValue(page)).toBe("");

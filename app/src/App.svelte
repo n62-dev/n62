@@ -316,6 +316,11 @@
   let click: (() => void) | undefined;
   $effect(() => void (session.settings.haptics.click && loadClick().then((f) => (click = f))));
 
+  /** R777: what makes a press a dead one by the state it lands in (keyboard/quiet.ts), a chunk of its own (the start chunk's pin); a
+   *  tap before it is in gets its feedback as a live key's. */
+  let quietCode: typeof import("./keyboard/quiet.ts") | undefined;
+  void import("./keyboard/quiet.ts").then((m) => (quietCode = m));
+
   /** A finger went down on the keypad: vibrate and click when switched on in Settings (one pulse and one click per touch,
    *  R112, A66). */
   function touched(): void {
@@ -541,6 +546,7 @@
       onpress={press}
       oncount={session.taps.touch}
       ontouch={touched}
+      quiet={(k, d) => quietCode?.quiet(ctx, k, d)}
     />
     </div>
   </div>

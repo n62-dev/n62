@@ -330,7 +330,7 @@ test("⌫ on an empty slot steps back to the slot before (as ⌫ at the start of
   await unitsKey(page);
   await tap(page, ["d4", "d9", "enter"]);
   expect(await activeId(page)).toBe("u2");
-  /** The pulses `keys` give: one per key down, two more for a dead key. */
+  /** The pulses `keys` give: one per key down, two more for a dead one; a key drawn dead gives only the two (R777). */
   const pulses = async (keys: string[]): Promise<number> => {
     const before = (await vibrations(page)).length;
     await tap(page, keys);
@@ -348,7 +348,7 @@ test("⌫ on an empty slot steps back to the slot before (as ⌫ at the start of
   expect(await activeId(page)).toBe("u1");
   await tap(page, ["d9", "enter"]);
   await tap(page, ["shift"]);
-  expect(await pulses(["bksp"]), "Shift + ⌫ (Del): a slot has nothing after its last token").toBe(3);
+  expect(await pulses(["bksp"]), "Shift + ⌫ (Del): a slot has nothing after its last token").toBe(2);
   expect(await activeId(page)).toBe("u2");
   await expect(shown(page)).toBeVisible();
 });
