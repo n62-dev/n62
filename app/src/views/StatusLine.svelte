@@ -42,9 +42,9 @@
   /** R782: slot 2 holds CAS or an app (Settings.barSlot); Home is fixed. Each pill is its glyph and a short name, one width everywhere. */
   const barSlot = $derived(session.settings.barSlot);
   const slotCur = $derived(shell.app === null ? barSlot === "cas" && session.view === "cas" : shell.app === barSlot);
-  /** APP▾ shows a place's glyph, highlighted, when that place was opened through it: an app that is not in slot 2. */
-  const appCur = $derived(shell.app !== null && shell.app !== barSlot);
-  const glyph = $derived(appCur && shell.app !== null ? placeGlyph(shell.app) : null);
+  /** APP▾ shows a place's glyph, highlighted and with the ring, when that place is current and not in a pill: an app that is not in slot 2, or CAS once slot 2 holds an app. */
+  const appCur = $derived(shell.app !== null ? shell.app !== barSlot : session.view === "cas" && barSlot !== "cas");
+  const glyph = $derived(appCur ? placeGlyph(shell.app ?? "cas") : null);
   const PILLS = $derived([
     { id: "home", key: HOME_KEY, cur: shell.app === null && session.view === "home", place: "home", name: t("view.home"), label: t("view.home") },
     { id: "slot", key: SLOT_KEY, cur: slotCur, place: barSlot, name: barSlot === "cas" ? t("view.cas") : t(appEntry(barSlot).short), label: t("status.slot", { place: nameOf(barSlot) }) },
@@ -390,9 +390,9 @@
     gap: var(--sp-05);
     box-sizing: border-box;
     width: calc(100% - 2 * var(--sp-05));
-    height: var(--tab-h);
+    height: calc(var(--bar-h) - 2 * var(--sp-05)); /* the logo's 22 px (R745) and the track's inset */
     border-radius: var(--radius-s);
-    font-size: var(--fs-legend);
+    font-size: var(--fs-cell);
   }
   .place .tile.small,
   .pface .tile.small {

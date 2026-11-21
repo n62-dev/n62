@@ -107,7 +107,7 @@ export const en = {
   "status.place": "Place: {place}. Tap to open the apps list.",
   "status.views": "Views",
   "status.places": "Home and slot 2",
-  "status.slot": "{place}, slot 2. A second tap chooses another place for it.",
+  "status.slot": "{place}, slot 2; a second tap changes it",
   "status.bar": "Places and modes",
   "status.menu": "Menu",
   "status.fold": "Fold the keys",

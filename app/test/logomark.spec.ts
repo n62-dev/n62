@@ -98,8 +98,8 @@ test.describe("fake engine", () => {
     test(`the logo fits Home's tile at ${width} px, the ring still shows while busy`, async ({ page }) => {
       await page.setViewportSize({ width, height: 815 });
       const img = await logoImg(page);
-      expect(img.tile.w).toBe(18); // R782: the pill's glyph tile (--pill-tile-w); the target is the pill's 56 × 28 (tab-home)
-      expect(img.tile.h).toBe(18);
+      expect(img.tile.w).toBe(22); // R745, R157: the logo stays 22 × 22 (R782: the pill's glyph tile, --pill-tile-w); the target is the pill's 56 × 28 (tab-home)
+      expect(img.tile.h).toBe(22);
       const target = (await page.getByTestId("tab-home").boundingBox())!;
       expect(target.width).toBeGreaterThanOrEqual(28);
       expect(target.height).toBeGreaterThanOrEqual(28);

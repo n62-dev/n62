@@ -112,8 +112,8 @@
   /* R782: the bar's left side: APP▾ (its glyph tile and ▾), and each pill of the track (a glyph tile and a short name) */
   --app-w: 36px;
   --pill-w: 56px;
-  --pill-tile-w: 18px;
-  --pill-tile-h: 18px;
+  --pill-tile-w: 22px;
+  --pill-tile-h: 22px;
   --tile-h: 22px;
   --tab-h: 20px;
   --row-tile-w: 36px;

@@ -36,6 +36,7 @@ Ranked by measured bytes. "Realistic" is what a cut that keeps the app working c
 3. **`input/backLayer.ts`: 195 B gzip (467 B raw).** It is Android back's history layers. It is used when a sheet opens (`App.svelte:313`) and when results mode folds (`:403`).
    - Cut: it rides with the sheet's model (`views/sheet.svelte.ts`, already lazy: a sheet waits for it anyway) and with the fold.
    - Risk: back pressed in the first instant of a fold, before the chunk is in (to verify by the package). No key waits.
+   - **Done by R782:** the front is `input/backLayerFront.ts` (idle load by `main.ts`; one load for every waiting layer). Verified by `backLayerFront.test.ts`: a layer opened before the code is in is pushed once it is, in the order opened; one released before is never pushed; and the first such layer puts one guard entry on the history at once, so back before the push pops that and does not leave the app.
 4. **The update line: `state/updateOffer.svelte.ts` with `views/icons.ts`: 147 B gzip (124 B raw).**
    - The icons are drawn only in an open app's view tabs (`StatusLine.svelte:77-90`, `shell.app !== null`), so they can ride with cut 1.
    - `updateOffer` is a four-line state the status line reads at start (95 B gzipped alone, source estimate). It is not worth a cut alone.

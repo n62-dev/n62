@@ -56,6 +56,32 @@ for (const width of WIDTHS)
     }
   });
 
+test("the pills' glyph tiles are 22 × 22 and no name is cut, whatever slot 2 holds, at 360 px (R782, R745)", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 360, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
+  const page = await ctx.newPage();
+  try {
+    await open(page);
+    for (const barSlot of ["cas", "function", "solve"]) {
+      await page.evaluate((s) => (window.n62.session.settings.barSlot = s as "cas" | "function" | "solve"), barSlot);
+      const m = await page.evaluate(() =>
+        ["tab-home", "tab-slot"].map((id) => {
+          const nm = document.querySelector(`[data-testid="${id}"] .nm`) as HTMLElement;
+          const tile = document.querySelector(`[data-testid="${id}"] .tile`)!.getBoundingClientRect();
+          const face = document.querySelector(`[data-testid="${id}"] .pface`)!.getBoundingClientRect();
+          return { id, cut: nm.scrollWidth - nm.clientWidth, tile: [tile.width, tile.height], face: face.height };
+        }),
+      );
+      for (const x of m) {
+        expect(x.cut, `${x.id}, slot ${barSlot}`).toBeLessThanOrEqual(0);
+        expect(x.tile, `${x.id}, slot ${barSlot}`).toEqual([22, 22]);
+        expect(x.face).toBeGreaterThanOrEqual(22);
+      }
+    }
+  } finally {
+    await ctx.close();
+  }
+});
+
 test("APP▾ is a neutral ⊞▾ in Home and CAS; in Function opened from it, ƒ with the highlight, and the slot stays at CAS (R782)", async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("place").locator(".tile.grid")).toHaveCount(1);
@@ -106,6 +132,24 @@ test("a second tap on the current slot 2 opens \"Slot 2\": Solve fills it, the C
   await page.waitForFunction(() => window.n62.shell.app === null);
   expect(await state(page)).toEqual({ app: null, view: "cas", slot: "cas" });
   await expect(slot(page)).toHaveAttribute("data-place", "cas");
+});
+
+test("slot 2 holds Solve, CAS opened from APP▾: APP▾ shows ∫, highlighted, with the ring (R782)", async ({ page }) => {
+  await open(page);
+  await page.evaluate(() => (window.n62.session.settings.barSlot = "solve"));
+  await page.getByTestId("place").tap();
+  await row(page, "cas").tap();
+  await page.waitForFunction(() => window.n62.shell.app === null && window.n62.session.view === "cas");
+  const place = page.getByTestId("place");
+  await expect(place.locator(".tile.grid")).toHaveCount(0);
+  await expect(place.locator(".tile")).toHaveText("∫");
+  await expect(place).toHaveAttribute("data-cur", "true");
+  await expect(slot(page)).toHaveAttribute("aria-selected", "false");
+  await expect(page.getByTestId("tab-home")).toHaveAttribute("aria-selected", "false");
+  await expect(place.locator(".tile")).toHaveAttribute("data-ring", "false");
+  await page.evaluate(() => (window.n62.session.engineState = "starting")); // a running job or the engine starting
+  await expect(place.locator(".tile")).toHaveAttribute("data-ring", "true");
+  expect((await state(page)).slot).toBe("solve");
 });
 
 test("◢ shows only on the current slot 2, never on Home, and not for a place opened from APP▾ (R782)", async ({ page }) => {
