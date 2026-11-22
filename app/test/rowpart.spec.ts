@@ -2,7 +2,8 @@
 // R832 (owner, 2026-11-20; takes in R741): a tap on a history row's input lights the input, on its result the result, anywhere
 // else the whole row (`data-part` "input", "result", "row" on the picked article). What is lit decides: Copy, Store ▶ and Enter
 // take the result when the result or the row is lit, the input's text when the input is. A second tap on the lit part does its
-// job (the input recalls, the result inserts), on the other part moves the light; on a whole-picked row it recalls or inserts,
+// job (the input recalls, the result inserts; R858: text on the line takes the input at the caret, as Enter), on the other part
+// moves the light; on a whole-picked row it recalls or inserts,
 // elsewhere it drops the pick. A hold on the gap picks and copies nothing; a swipe or a drag never picks. Values are derived
 // (1/3 = 0.333…, 2+3 = 5). Real engine (1/3 to 40 digits); the two phone widths of the app.
 import { expect, test, type Page } from "@playwright/test";
@@ -148,6 +149,46 @@ for (const width of [412, 360]) {
       await inputOf(page).tap();
       await expect.poll(() => entryValue(page)).toBe("2+3");
       await expect(picked(page)).toHaveCount(0);
+    });
+
+    test("R858: with text on the line the second tap on a lit input puts it at the caret, as Enter does; the pick drops", async ({ page }) => {
+      await enter(page, ["d5"]);
+      await inputOf(page).tap();
+      await inputOf(page).tap(); // an empty line: the recall
+      await expect.poll(() => entryValue(page)).toBe("5");
+      await inputOf(page).tap();
+      expect(await part(page)).toBe("input");
+      await inputOf(page).tap(); // text on the line: at the caret (it used to keep `5` and drop the pick)
+      await expect.poll(() => entryValue(page)).toBe("55");
+      await expect(picked(page)).toHaveCount(0);
+    });
+
+    test("R858: `7` on the line, the caret after it: two taps on the input of row 5 give 75", async ({ page }) => {
+      await enter(page, ["d5"]);
+      await tap(page, ["d7"]);
+      await inputOf(page).tap();
+      await inputOf(page).tap();
+      await expect.poll(() => entryValue(page)).toBe("75");
+    });
+
+    test("R858: a whole-picked row with text on the line: a tap on its input puts it at the caret", async ({ page }) => {
+      await enter(page, ["d5"]);
+      await tap(page, ["d7"]); // (▲ picks the whole row from an empty line only; with text on the line the gap's tap does)
+      await tapGap(page);
+      expect(await part(page)).toBe("row");
+      await inputOf(page).tap();
+      await expect.poll(() => entryValue(page)).toBe("75");
+      await expect(picked(page)).toHaveCount(0);
+    });
+
+    test("R858: folded, text on the line: the second tap on the input puts it at the caret and the keys come back", async ({ page }) => {
+      await enter(page, ["d5"]);
+      await tap(page, ["d7"]);
+      await fold(page);
+      await inputOf(page).tap();
+      await inputOf(page).tap();
+      await expect.poll(() => entryValue(page)).toBe("75");
+      await expect(page.getByTestId("keys")).toHaveAttribute("data-folded", "false");
     });
 
     test("input lit: Store ▶ puts the input and ▶ on the line and opens Store in; the bar's Copy copies the input", async ({ page }) => {
