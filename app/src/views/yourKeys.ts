@@ -88,7 +88,7 @@ export function yourKeysItems(env: SettingsEnv, mark: () => DecimalMark = () => 
       label: t("keys.reset"),
       keep: true,
       get confirm() {
-        return asks("keys.reset", USER_KEY_IDS.flatMap((id, i) => USER_LAYERS.filter((l) => u.labelOf(id, l) !== undefined).map((l) => `U${i + 1}${MARK[l]}`)));
+        return asks(RESET_KEYS, USER_KEY_IDS.flatMap((id, i) => USER_LAYERS.filter((l) => u.labelOf(id, l) !== undefined).map((l) => `U${i + 1}${MARK[l]}`)));
       },
       run: () => u.reset(),
     },
@@ -97,10 +97,12 @@ export function yourKeysItems(env: SettingsEnv, mark: () => DecimalMark = () => 
 
 /** R857 (owner, 2026-11-22): a reset that clears many slots asks once (MenuItem.confirm, R281): its armed label, and a note
  *  that names the slots that go (`names`); one slot's Empty or Back to the default does not ask. */
-function asks(key: "keys.reset" | "keys.resetCells", names: readonly string[]): NonNullable<MenuItem["confirm"]> {
-  const note: FindMessageKey = names.length === 0 ? `${key}.none` : names.length === 1 ? `${key}.note1` : `${key}.note`;
-  return { cell: "", label: t(`${key}.armed`), note: t(note, { n: String(names.length), names: names.join(", ") }) };
+function asks(keys: readonly [armed: FindMessageKey, none: FindMessageKey, one: FindMessageKey, many: FindMessageKey], names: readonly string[]): NonNullable<MenuItem["confirm"]> {
+  const [armed, none, one, many] = keys;
+  return { cell: "", label: t(armed), note: t(names.length === 0 ? none : names.length === 1 ? one : many, { n: String(names.length), names: names.join(", ") }) };
 }
+const RESET_KEYS = ["keys.reset.armed", "keys.reset.none", "keys.reset.note1", "keys.reset.note"] as const;
+const RESET_CELLS = ["keys.resetCells.armed", "keys.resetCells.none", "keys.resetCells.note1", "keys.resetCells.note"] as const;
 
 /** The section's value: how many slots are set. */
 export function yourKeysValue(env: SettingsEnv): string {
@@ -149,7 +151,7 @@ function unitCellsItem(env: SettingsEnv): MenuItem {
           label: t("keys.resetCells"),
           keep: true,
           get confirm() {
-            return asks("keys.resetCells", CELL_KEYS.flatMap((key, i) => LAYERS.filter((l) => unitCells.isSet(key, LEG_OF[l])).map((l) => `U${i + 1}${MARK[l]}`)));
+            return asks(RESET_CELLS, CELL_KEYS.flatMap((key, i) => LAYERS.filter((l) => unitCells.isSet(key, LEG_OF[l])).map((l) => `U${i + 1}${MARK[l]}`)));
           },
           run: () => unitCells.reset(),
         },
