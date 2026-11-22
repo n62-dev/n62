@@ -12,18 +12,18 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 **Auto or hands-on, around the clock (owner, 2026-11-08; P25).** win99 runs the queue 24/7; "night" in names and docs (`night.sh`, `/night-review`, this brief) means auto. A package is hands-on only when it needs the owner's input or a physical act (a decision, an eye on a look, a key, a tag, the phone); automated device lists stay auto, with the Tab One plugged in. **On Pro since Ultra ended (owner, 2026-11-17):** a twentieth of Ultra's usage, about 13 to 20 merges a week; one lane, started only when it has rows. How the lane runs on Pro (owner, 2026-11-17):
 - Workers run on the model of their row; `.coord/model-cap` (A262) caps them to Sonnet while it exists (lifted 2026-11-20). `--audit-model auto` gives Opus to gorge packages and to diffs in the engine, input or units. Every package keeps its own audit.
 - An Opus pass runs after every six packages (A260).
-- No hourly monitor sessions, and no `/night-review` until a Pro week is measured.
+- No hourly monitor sessions, and no `/night-review` for now (rules 4a).
 - A256 and A257 wait until after the tag.
 
 **The daily stop** (rules section 4a): usage limits are waited out (rule 7); the stop covers planned reboots and Windows updates; a lane lost to an unplanned reboot restarts at the next stop.
 
-**Lanes** (decisions.md P17): night.sh can run lane A (ron's UI) and lane B (the release, then the engine) side by side, merged through one queue (A47b); on Pro one lane runs (above). ron's packages run auto too: a package's "owner's eye" item joins the next milestone review ([release-0.1.0.md](../release-0.1.0.md), end). v0.1.0 (the APK and the website from one tag) waits for its bar in [release-0.1.0.md](../release-0.1.0.md) (owner, 2026-11-10).
+**Lanes** (decisions.md P17): night.sh can run lane A (ron's UI) and lane B (the release, then the engine) side by side, merged through one queue (A47b); how many run: "The queue" below. ron's packages run auto too: a package's "owner's eye" item joins the next milestone review ([release-0.1.0.md](../release-0.1.0.md), end). v0.1.0 (the APK and the website from one tag) waits for its bar in [release-0.1.0.md](../release-0.1.0.md) (owner, 2026-11-10).
 
 **Before a release tag, not daily (P25):** the owner's hand check (MORNING.md, on the device of the last automatic run, about 10 minutes). The next session writes each failed step as a backlog bug line on phase-1 and logs one line in `.coord/log.md`: `- HH:MM morning <date>: clean` or `- HH:MM morning <date>: fails <ids>`.
 
-**The weekly extreme night** (owner, 2026-10-29): paused until after the v0.1.0 tag (one lane; owner, 2026-11-20). Then lane B runs G306–G308 and the fuzz G309 once a week in 10-minute slices (G138's package file at d1278849 holds the slice commands and the triage); the Opus pass files the backlog lines. Wrong numbers of everyday or medium reach run any time, by reach.
+**The weekly extreme night** (owner, 2026-10-29): paused until after the v0.1.0 tag (owner, 2026-11-20). Then lane B runs G306–G308 and the fuzz G309 once a week in 10-minute slices (G138's package file at d1278849 holds the slice commands and the triage); the Opus pass files the backlog lines. Wrong numbers of everyday or medium reach run any time, by reach.
 
-**The night review** (owner, 2026-11-01; `/night-review`, `.claude/skills/night-review/`): none on Pro for now (above); its packages wait in its open note (`docs/research/night-review-<date>`, section 2), and section 0c takes them a few rows at a time.
+**The night review** (owner, 2026-11-01; `/night-review`, `.claude/skills/night-review/`): none for now (above); its packages wait in its open note (`docs/research/night-review-<date>`, section 2), and section 0c takes them a few rows at a time.
 
 **Why this order:** silent wrong numbers by reach first (owner, 2026-10-29).
 
@@ -56,7 +56,7 @@ Start from the phase-1 worktree: `setsid nohup scripts/night.sh [--lane A|B] [--
 ### The queue (two lanes from 2026-11-22; owner, 2026-11-17 and 2026-11-22)
 Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh --lane A` and `--lane B`, from the phase-1 worktree; lane A runs ron's UI rows, lane B gorge's maths fixes, wrong answers first; an After may name the other lane's row. The order is [release-0.1.0.md](../release-0.1.0.md)'s freeze row: before the tag only what the layout lock pins. The tag has no date (owner, 2026-11-21): it follows the last UI row and S57. On Max (owner, 2026-11-21) each row runs on the model its row names; `.coord/model-cap` holding `sonnet` caps every worker and pass to Sonnet again (A262); `--audit-model auto` as always.
 
-### Lane A queue (v0.1.1 rows; owner, 2026-11-17)
+### Lane A queue (ron's UI before the tag; owner, 2026-11-17 and 2026-11-21)
 **Released before the tag (owner, 2026-11-21: all UI work first, no time pressure):** henri takes this table's rows in order; a row with an owner condition in its text or After column waits for it. S57 now follows R849. The rest of the freeze row's list and the lanes' other rows still open at the stop (R585, R576, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, R363 to R366, G617, G387, A73f2, A161, A162) wait in their package files.
 
 | Step | What | Agent, model | Branch | After |
@@ -64,10 +64,11 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 886a | R856 the bar's final look: house on Home, one size in every place, `STD 12 ▾ │ DEG` with no angle icon (owner, 2026-11-22) | ron, Opus | `p1/ron-barfinal` | R703f1 |
 | 886b | R857 the bulk resets ask once before they wipe (data loss; owner's list 2026-11-22, as below) | ron, Opus | `p1/ron-resetask` | – |
 | 886c | R858 a second tap on a lit input inserts at the caret, as Enter | ron, Opus | `p1/ron-inputtapcaret` | – |
-| 886d | [R860](packages/R860.md) the big N62 mark shows whenever the view is empty | ron, Opus | `p1/ron-emptymark` | R856 |
+| 886d | R860 the big N62 mark shows whenever the view is empty | ron, Opus | `p1/ron-emptymark` | R856 |
 | 886e | [R861](packages/R861.md) the unit view's Find keeps its ▾ | ron, Opus | `p1/ron-unitfindmark` | – |
 | 886f | [R838](packages/R838.md) Settings and Mode open over the unit view and close back onto it (U2) | ron, Opus | `p1/ron-unitsettings` | R770 |
 | 886g | [R862](packages/R862.md) ☰ in the unit view opens its tools menu | ron, Opus | `p1/ron-unitmenu` | R838 |
+| 886h | [A267](packages/A267.md) docs-check refuses git conflict markers (owner, 2026-11-22) | annabell, Sonnet | `p1/annabell-markercheck` | – |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
 | 888a | [A266](packages/A266.md) Android's status and navigation bars follow the look | annabell, Sonnet | `p1/annabell-barsfollow` | – |

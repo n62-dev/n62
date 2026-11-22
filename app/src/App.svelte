@@ -466,6 +466,7 @@
           part={pickedPart}
           engineState={session.engineState}
           oncredits={openCredits}
+          historyRead={session.historyRead}
           display={(item) => session.display(item, true)}
           input={(item) => session.input(item)}
           mark={(item) => session.mark(item)}
@@ -479,7 +480,7 @@
           oncancel={() => void cancel()}
           onhold={(item, part, latex) => withClip((c) => void c.holdCopy(item, part, latex))}
           onswipe={swiped}
-          undo={session.undoCopy?.kind ?? null}
+          undo={session.undoCopy?.kind}
           onundo={() => { picked = null; session.undoRemoved(); }}
         />
       {:else if shell.current}
