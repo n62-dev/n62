@@ -24,7 +24,7 @@ export function chipUnit(c: Chip | undefined): ChipUnit | undefined {
  *  unit (ratioChip.ts ratioPower; dimension key "", which chipUnit refuses), so its factor is kept, and G369 drops the
  *  ratio beside another unit (0.42 % × 200 m is 0.84 m); else undefined (a rev chip's slot starts empty, as before). */
 export const chipSlot = (c: Chip | undefined): UnitSlot | undefined =>
-  chipUnit(c)?.slot ?? (ratioPower(c) !== undefined ? validSlot(c?.unit?.slot) : undefined);
+  chipUnit(c)?.slot ?? (ratioPower(c) ? c!.unit!.slot : undefined); // (ratioSlotPower checked each field the slot model reads)
 
 /** R271: a result chip read as σ after ± (UnitsInfo.sigmas), as the unit view's request takes it: the value's slot,
  *  the chip's checked unit, and the facts it was shown with (an exact chip limits nothing). */

@@ -38,9 +38,7 @@ export function quantityChip(q: Quantity | UnitError): Chip | undefined {
  *  G782f1: a chip in one ratio unit stores as its pure number with its σ (input/ratioChip.ts pureChip), as Home takes it. */
 export function storeChip(chip: Chip | undefined, unit: string, unc?: { text: string }): Chip | undefined {
   // (a rev chip's unit has no dimension key, which a stored name's unit needs, G371: not stored, as before G782)
-  const ratio = ratioPower(chip) !== undefined;
-  if (!chip || (unit !== "" && !chip.unit?.dim && !ratio)) return undefined;
-  if (unc && !isZeroText(unc.text) && chip.unc === undefined) return undefined;
-  return ratio ? pureChip(chip) : chip;
+  if (!chip || (unit !== "" && !chip.unit?.dim && !ratioPower(chip))) return undefined;
+  return unc && !isZeroText(unc.text) && chip.unc === undefined ? undefined : pureChip(chip); // (any other chip as it is)
 }
 

@@ -169,8 +169,12 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  0.01 kB.
  *  79.10 → 79.57 kB (R853): phase-1 3c5f2ac5 measures 79.08 kB, the branch 79.52 kB (+0.44 kB, all in the unit view's
  *  entry: the panel's ← and → buttons with their state and names, view.ts's step and four i18n strings). Cut made: the
- *  press gives the focus back through open.ts's tap handler, not its own call, −0.03 kB. 79.52 kB + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 79_570;
+ *  press gives the focus back through open.ts's tap handler, not its own call, −0.03 kB. 79.52 kB + 0.05 kB.
+ *  79.57 → 79.64 kB (G782f1): the branch's base 3d6a5b97 measures 79.53 kB, the branch 79.59 kB (+0.06 kB: view.ts starts a
+ *  ratio chip's slot with its ratio unit, chipUnit.ts chipSlot; storeChip stores its pure number, ratioChip.ts pureChip).
+ *  Cuts made: storeChip returns pureChip(chip) for every chip (any other comes back as it is), chipSlot takes the slot
+ *  ratioSlotPower checked, not a second validSlot copy, −0.02 kB. 79.59 kB + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 79_640;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
