@@ -20,6 +20,9 @@ export function cut(el: HTMLElement, on: boolean): void {
 
 /** Smallest drawn size (px) of the bar's text; below it the text is ellipsed (its control keeps its name for the screen reader). */
 export const MIN_BAR_PX = 8;
+/** A text passes its box when its extent is over this many times the box (half a pixel in the bar's 28); the fit's rounds. */
+const SLACK = 1.005;
+const ROUNDS = 4;
 
 /** The fixed controls and the text in each that shrinks (a control and its text may be one element). */
 const FIXED: [box: string, text: string][] = [
@@ -61,15 +64,29 @@ export function fitBar(bar: HTMLElement): void {
     }
   const z = textZoom(bar.ownerDocument);
   if (z === 1) return;
-  // two rounds each: a part that does not scale with the text (a chip's padding, the tile beside ▾) leaves it a little wide
-  for (let round = 0; round < 2; round++) {
+  // rounds until nothing passes its box (R703f1: two rounds at 1 % left ☰ and π 0.4 px over at 2.0): a part that does not scale
+  // with the text (a chip's padding, the tile beside ▾) leaves it a little wide, each round reads it again
+  for (let round = 0; round < ROUNDS; round++) {
+    let moved = false;
     // the chip: the bar's overflow and its own height come out of its text
     if (chip && bar.clientWidth > 0) {
       const extra = bar.scrollWidth - bar.clientWidth;
       const f = Math.min(extra > 0.5 && chip.scrollWidth > 0 ? 1 - (extra + 1) / chip.scrollWidth : 1, 1 / over(chip));
-      if (f < 1) shrink(chip, f, z);
+      if (f < 1) {
+        shrink(chip, f, z);
+        moved = true;
+      }
     }
     const reads = pairs.map((p) => ({ ...p, o: over(p.box) }));
-    for (const r of reads) if (r.o > 1.01) shrink(r.text, 1 / r.o, z);
+    for (const r of reads)
+      if (r.o > SLACK) {
+        shrink(r.text, 0.995 / r.o, z);
+        moved = true;
+      }
+    if (!moved) return;
   }
+  // R703f1: what still passes its box sits at a floor, ours or the WebView's own minimum font size (8 CSS px before the zoom, so
+  // 16 px drawn at font scale 2.0: a size written under it is drawn at it): it ends in …
+  if (chip && over(chip) > SLACK) cut(chip, true);
+  for (const p of pairs) if (over(p.box) > SLACK) cut(p.text, true);
 }

@@ -50,4 +50,6 @@ function fitBarOf(doc: Document): void {
   if (watched.has(bar) || typeof MutationObserver === "undefined") return;
   watched.add(bar);
   new MutationObserver(() => fitBar(bar)).observe(bar, { subtree: true, childList: true, characterData: true });
+  // and once the fonts are in (R703f1): a glyph drawn in a fallback font at the first fit measures otherwise
+  void doc.fonts?.ready.then(() => fitBar(bar));
 }
