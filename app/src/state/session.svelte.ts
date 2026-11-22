@@ -272,8 +272,11 @@ export class Session {
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
   /** R106: the stored history has been read and merged in. Until then nothing writes `history`: the lists in memory
    *  hold only what was typed since launch, so a write (a hide or close before the read, docs/04 6.2) would drop the
-   *  stored rows. A save asked for meanwhile is kept pending and runs once the read is in. */
-  private historyRead = false;
+   *  stored rows. A save asked for meanwhile is kept pending and runs once the read is in. R860: History's empty state waits for it. */
+  #read = $state(false);
+  get historyRead(): boolean {
+    return this.#read;
+  }
   private savePending = false;
   /** R94: the stored settings are from a newer schema. They are read and kept in memory, never written. */
   private settingsNewer = false;
@@ -356,7 +359,7 @@ export class Session {
     return this.view === "home" ? this.home : this.cas;
   }
   get busy(): boolean {
-    return this.home.some((i) => i.status === "pending") || this.cas.some((i) => i.status === "pending");
+    return this.pending !== undefined; // (R860: one test for a running row, the pending getter's)
   }
   get pending(): HistoryItem | undefined {
     return [...this.home, ...this.cas].find((i) => i.status === "pending");
@@ -741,7 +744,7 @@ export class Session {
   }
   /** Entry LaTeX, result LaTeX and the Home numeric value of finished entries; nothing that needs the engine. */
   saveHistory(): void {
-    if (!this.historyRead) {
+    if (!this.#read) {
       // Writing now would overwrite the stored history with only the entries typed since launch.
       this.savePending = true;
       return;
@@ -758,7 +761,7 @@ export class Session {
   flushHistory(): void {
     if (this.saveTimer !== undefined) clearTimeout(this.saveTimer);
     this.saveTimer = undefined;
-    if (!this.historyRead) {
+    if (!this.#read) {
       this.savePending = true;
       return;
     }
@@ -790,7 +793,7 @@ export class Session {
       if (m && !this.savePending) this.copies = m.withStored(this.copies, hist.undo, (i) => r.restoredItem(i, next()), HISTORY_LIMIT);
       if (gained) this.savePending = true;
     }
-    this.historyRead = true;
+    this.#read = true;
     if (this.savePending) {
       this.savePending = false;
       this.saveHistory();
