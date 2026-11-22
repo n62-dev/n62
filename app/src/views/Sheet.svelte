@@ -16,6 +16,7 @@
   import { numberFace, type Row, type Sheet } from "./sheet.svelte.ts";
   import { hasOptions, hasSteps, ROW, rowHeight, showsReason, twoLines } from "./sheetFit.ts";
   import { builtRows, keyedById, plainRow, rowKey, sameRows } from "./sheetWindow.ts";
+  import { fitRows } from "./rowFit.ts";
 
   /** R145: the ⚙ in a ☰ sheet's title row (drawn, not the emoji glyph, which Android paints in colour). Here, not in
    *  icons.ts: only this lazy chunk draws it, and icons.ts rides with the first app's opening (R145f1, R362). */
@@ -120,6 +121,11 @@
     const ro = new ResizeObserver(measure);
     ro.observe(list);
     return () => ro.disconnect();
+  });
+  // R703: under the WebView's text zoom a row's texts shrink until its label fits (not Find's hits: a long name ends in …)
+  $effect(() => {
+    void [shown, room, columns];
+    if (list && !searching && columns === undefined) fitRows(list);
   });
   // a text level: ▲ ▼ page through it (Level.nudge counts the pages asked for)
   $effect(() => {

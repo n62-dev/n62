@@ -2,7 +2,8 @@
 // Keypad text never gets cut and never overlaps (docs/05 3.7, U0): every face and legend marked `data-fit` is
 // shrunk until it fits its key. One rule for all keys and layers; no per-key sizes.
 
-/** Smallest size (px) a face or legend may shrink to. Anything that still does not fit at this size is a bug in the layout, which the keypad e2e test catches. */
+/** Smallest size (px, as drawn) a face or legend may shrink to. Text that still does not fit at this size is ellipsed (R703),
+ *  its whole text kept in the DOM for the screen reader; at the font scales Android offers no key reaches it. */
 export const MIN_FACE_PX = 9;
 export const MIN_LEGEND_PX = 8;
 
@@ -10,28 +11,37 @@ export const MIN_LEGEND_PX = 8;
 const LEGEND_MAX_EM = 1.1;
 
 /**
+ * The text zoom the browser applies after the CSS sizes (R703, F383): Android's WebView draws every font at the system font
+ * scale times its CSS size, the sizes the app writes too, and reports the zoomed size in getComputedStyle. Read off the body,
+ * whose CSS size is 16 px (style.css; a user's default font size does not reach it): 1 in a browser, and 1 where the body's
+ * size cannot be read (no style sheet: an empty fontSize), so no fit ever writes NaN.
+ */
+export const textZoom = (doc: Document): number => parseFloat(getComputedStyle(doc.body).fontSize) / 16 || 1;
+
+/**
  * Fit the faces and legends of every key under `pad`. A face and each legend may use the key's width minus its side
  * padding, and (R41, the Android font scale) its own line: a face the room between the two legend lines of a key, a
  * legend its line's height, so a larger system font never makes a face rise into a legend or a legend overlap its face.
  * Passes, so the browser lays out as seldom as it can: reset with the faces shrunk to nothing and measure the room,
- * reset and measure the text, write.
+ * reset and measure the text, write. Every size is measured as drawn and written through the text zoom (R703); under a
+ * zoom, a text the ▾ mark or the font's hinting keeps too wide is measured again and shrunk once more, and a text that
+ * does not fit at the floor is ellipsed (`data-cut`), and the bar is fitted too: zoomFit.ts, loaded then.
  */
 export function fitLegends(pad: HTMLElement): void {
   const keys = [...pad.querySelectorAll<HTMLElement>(".key")];
-  const items: { el: HTMLElement; legend: boolean; key: HTMLElement; base: number }[] = [];
+  const items: { el: HTMLElement; legend: boolean; base: number }[] = [];
   for (const key of keys)
     for (const el of key.querySelectorAll<HTMLElement>("[data-fit]")) {
       const legend = el.dataset["fit"] === "legend";
       el.style.fontSize = legend ? "" : "1px"; // a face of 1 px leaves the key at its own height
-      items.push({ el, legend, key, base: 0 });
+      items.push({ el, legend, base: 0 });
     }
   // measure the room: the key's height less its padding and its legend lines is the face's line
   const lineH = new Map<HTMLElement, number>();
   for (const key of keys) {
     const cs = getComputedStyle(key);
     let room = key.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-    const legends = [...key.querySelectorAll<HTMLElement>("[data-fit='legend']")];
-    for (const el of legends) {
+    for (const el of key.querySelectorAll<HTMLElement>("[data-fit='legend']")) {
       const h = el.getBoundingClientRect().height;
       room -= h;
       lineH.set(el, h * LEGEND_MAX_EM);
@@ -39,7 +49,7 @@ export function fitLegends(pad: HTMLElement): void {
     for (const el of key.querySelectorAll<HTMLElement>("[data-fit='face']")) lineH.set(el, room);
   }
   for (const it of items) if (!it.legend) it.el.style.fontSize = "";
-  // measure the text
+  // measure the text (as drawn: under a text zoom the computed size is the zoomed one)
   const natural = new Map<HTMLElement, number>();
   const cap = new Map<HTMLElement, number>();
   for (const it of items) {
@@ -65,6 +75,7 @@ export function fitLegends(pad: HTMLElement): void {
     const lettered = key.dataset["letters"];
     for (const el of key.querySelectorAll<HTMLElement>("[data-fit]")) avail.set(el, inner + (lettered && el.dataset["opens"] ? 6 : 0));
   }
+  const z = textZoom(document);
   // write
   for (const it of items) {
     const w = natural.get(it.el) ?? 0;
@@ -77,6 +88,7 @@ export function fitLegends(pad: HTMLElement): void {
     if (line > 0) size = Math.min(size, line);
     size = Math.floor(size * 10) / 10;
     if (size >= it.base) continue;
-    it.el.style.fontSize = `${Math.max(it.legend ? MIN_LEGEND_PX : MIN_FACE_PX, size)}px`;
+    it.el.style.fontSize = `${Math.max(it.legend ? MIN_LEGEND_PX : MIN_FACE_PX, size) / z}px`;
   }
+  if (z !== 1) void import("./zoomFit.ts").then((m) => m.refit(pad, z));
 }

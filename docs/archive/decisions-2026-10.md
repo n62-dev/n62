@@ -41,7 +41,7 @@ History only: read it when a decision is questioned. What still binds is in [../
 - **G33:** a definition's description is the comment line above it; G30's E-series tables are checked against round(10^(2+k/n)) with the one published exception (9.20 at E192).
 
 ### Grouped on 2026-11-17 to make room for the fix lane's entries, as they stood
-- **R41 at font scale 2.0:** the owner's hand check (A139; backlog). Archived, "Opus pass 96". Would change if: the device clips Mode or ☰.
+- **R41 at font scale 2.0:** the device clipped Mode and ☰ (F383), so R703 rebuilt it; the entry as built is in [../decisions.md](../decisions.md), "R41 at font scale 2.0, as built by R703".
 - **R140's colour-vision floors (owner, 2026-11-07):** Shift and Alpha 0.12 apart, ⚠ 0.08 from Shift (High contrast 0.10, 0.06). Archived, "Opus pass 97". Would change if: a colour-vision test fails.
 - **R50 (owner 2026-11-07): three themes;** docs/05 3.10. Archived, "Opus pass 155".
 - **Redo after ⌫ (Opus pass 44; R15c2):** Redo does not delete again (MathLive [#3125](https://github.com/arnog/mathlive/issues/3125)); no workaround of ours. Archived.
