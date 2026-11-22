@@ -491,3 +491,85 @@ describe("R801: goTo(id), a tap on a slot", () => {
     expect(view.activeId).toBe("end");
   });
 });
+
+// R853 (owner, 2026-11-22): ← and → beside → Check move one whole slot, as a tap on that slot would (R801)
+describe("R853: step(by), the ← and → buttons", () => {
+  it("→ makes the next slot active, ← the one before, and both draw their slots", () => {
+    const h = host();
+    const writes: string[] = [];
+    h.host.write = (id) => void writes.push(id);
+    const view = new UnitView(CAT, "1+2+3", {}, h.host);
+    view.start();
+    view.apply(U("km")); // a filled slot is left like an empty one
+    writes.length = 0;
+    view.step(1);
+    expect(view.activeId).toBe("u2");
+    expect(writes.sort()).toEqual(["u1", "u2"]);
+    view.step(1);
+    expect(view.activeId).toBe("u3");
+    view.step(-1);
+    view.step(-1);
+    expect(view.activeId).toBe("u1");
+    expect(h.dead()).toBe(0);
+  });
+
+  it("is refused with a prefix armed: the message of ▶, a dead press, the slot and the prefix kept", () => {
+    const h = host();
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    view.apply({ do: "prefix", id: "k" } as PadAction);
+    view.step(1);
+    expect(view.activeId).toBe("u1");
+    expect(h.dead()).toBe(1);
+    expect(view.shown.kind).toBe("message");
+    const b = host();
+    const same = new UnitView(CAT, "1+2", {}, b.host);
+    same.start();
+    same.apply({ do: "prefix", id: "k" } as PadAction);
+    same.move(1);
+    expect(view.shown).toEqual(same.shown);
+    view.apply(U("m"));
+    expect(view.model("u1")?.slot.tokens).toEqual([{ prefix: "k", unit: "m" }]);
+  });
+
+  it("is a dead press at the first and the last slot (the end slot while Check is on), and nothing changes", () => {
+    const h = host();
+    const writes: string[] = [];
+    h.host.write = (id) => void writes.push(id);
+    const view = new UnitView(CAT, "1+2", {}, h.host);
+    view.start();
+    writes.length = 0;
+    view.step(-1);
+    expect(view.activeId).toBe("u1");
+    expect(h.dead()).toBe(1);
+    view.step(1);
+    view.step(1);
+    expect(view.activeId).toBe("u2");
+    expect(h.dead()).toBe(2);
+    view.setChecking(true);
+    view.step(1);
+    expect(view.activeId).toBe("end");
+    expect(h.dead()).toBe(2);
+    view.step(1);
+    expect(h.dead()).toBe(3);
+    expect(view.shown).toEqual({ kind: "none" });
+  });
+
+  it("from the chip row it leaves the row first, then moves", async () => {
+    const h = host();
+    const view = new UnitView(CAT, "72", {}, h.host);
+    view.start();
+    view.apply(U("km"));
+    view.setChecking(true);
+    view.apply(U("m"));
+    const done = view.next();
+    h.answer({ ...RESULT, dimension: "m1" } as unknown as Quantity);
+    await done;
+    expect(view.shown.kind).toBe("result");
+    view.down();
+    expect(view.row).toBe(0);
+    view.step(-1);
+    expect(view.row).toBe(-1);
+    expect(view.activeId).toBe("u1");
+  });
+});
