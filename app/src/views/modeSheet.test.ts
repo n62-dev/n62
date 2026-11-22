@@ -745,6 +745,7 @@ describe("Settings › Counters: the three resets ask once (R857)", () => {
     await session.taps.load();
     await (await session.uses()).ready;
     await (await session.uses("bar-uses")).ready;
+    session.taps.press(); // (a count starts the since)
     const s = settings(4);
     const counters = byId(s, "reset");
     expect(counters?.confirm?.label).toBe("Reset the counter?");

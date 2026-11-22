@@ -86,7 +86,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
       await expect(label(page, "reset")).toHaveText("Reset all your keys?");
       await tap(page, ["up"]);
       await expect(label(page, "reset")).toHaveText("Reset all your keys");
-      await expect(note(page)).not.toHaveText(/Tap again/);
+      await expect(note(page).filter({ hasText: /Tap again/ })).toHaveCount(0); // (no note at all, or the row's own)
       // each time the next tap only armed: nothing was cleared
       await row(page, "reset").tap();
       expect([await placeOf(page, "u1"), await placeOf(page, "u3")]).toEqual(["home", "cas"]);

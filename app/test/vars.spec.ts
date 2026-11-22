@@ -288,6 +288,7 @@ test.describe("Your keys", () => {
     await expect(mrow(page, "u1:primary")).toContainText("Empty");
     await tap(page, ["d2", "d2", "esc"]); // U1 ⇧, Home, back
     await expect(mrow(page, "u1:shift")).toContainText("Home");
+    await mrow(page, "reset").tap(); // R857: the first tap arms, the second clears
     await mrow(page, "reset").tap();
     await expect(mrow(page, "u1:shift")).toContainText("Empty");
   });

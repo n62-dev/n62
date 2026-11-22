@@ -262,6 +262,7 @@ test("Shift and Alpha taps stay as on the G2 (one-shot, Alpha twice locks) and a
   const value = (id: string) => page.getByTestId("menu").locator(`[data-id="${id}"]`).getByTestId("sheet-value");
   await expect(value("taps")).toHaveText("3 / 5"); // Shift / Alpha (R53: one row); the Shift that opened Settings counts too
   await expect(value("since")).toHaveText(/^\d{4}-\d\d-\d\d$/);
+  await page.getByTestId("menu").locator('[data-id="reset"]').tap(); // R857: the first tap arms, the second clears
   await page.getByTestId("menu").locator('[data-id="reset"]').tap();
   await expect(value("taps")).toHaveText("0 / 0");
   // stored on the device: still zero after a relaunch (the write waits a second)

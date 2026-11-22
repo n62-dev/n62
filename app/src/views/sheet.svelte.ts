@@ -474,6 +474,7 @@ export class Sheet {
 
   /** A tap on a row's ◀ or ▶ button (R21a): step that setting and highlight its row. */
   adjustAt(index: number, by: 1 | -1): void {
+    this.disarm(); // R857: a tap on another row's ◀ ▶ is another press
     const item = this.level.items[index];
     if (!item || item.disabled || !item.adjust) return;
     this.level.highlight = index;
@@ -482,6 +483,7 @@ export class Sheet {
 
   /** A tap on one of a row's value buttons (R86): the value is set and the sheet closes, as a pick of that value. */
   pickOption(index: number, optionId: string): Picked {
+    this.disarm(); // R857
     const item = this.level.items[index];
     const option = item?.options?.find((o) => o.id === optionId);
     if (!item || item.disabled || !option || option.disabled) return STAY;
@@ -502,6 +504,7 @@ export class Sheet {
 
   /** ◀ and Esc: back one level; a full sheet goes back to the viewport first. False at the root: the caller closes the sheet. */
   back(): boolean {
+    this.disarm(); // R857: ‹ and ◀ are other presses (ids repeat across levels: Settings' resets are all `reset`)
     if (this.full) {
       this.full = false;
       return true;
@@ -540,6 +543,7 @@ export class Sheet {
 
   /** A submenu on top of `level`, from the item `id`. */
   private push(level: Level, id: string, sub: SubMenu): void {
+    this.disarm(); // R857: an armed id stays with its level
     const base: SheetOptions = sub.search ? { search: sub.search, remember: false } : { remember: sub.remember ?? true };
     const opts: SheetOptions = { ...base, ...(sub.text === undefined ? {} : { text: sub.text }), ...(sub.longPreview ? { longPreview: true } : {}), ...(sub.loading ? { loading: sub.loading } : {}), ...(sub.at === undefined ? {} : { at: sub.at }), ...(sub.grid ? { grid: sub.grid } : {}), ...(sub.note ? { note: sub.note } : {}) };
     sub.grid?.open(); // R188: the matrix is read (again) each time its grid opens

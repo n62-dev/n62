@@ -8,7 +8,7 @@ import { ownUnitsItem } from "./ownUnitsRow.svelte.ts";
 import type { MenuItem } from "../apps/types.ts";
 import type { AppShell } from "../apps/shell.svelte.ts";
 import type { ClipActions } from "../clipboard/actions.svelte.ts";
-import { findText as t } from "../i18n/enFind.ts";
+import { findText as t, type FindMessageKey } from "../i18n/enFind.ts";
 import { legend, t as tr } from "../i18n/index.ts";
 import type { Layer, Special } from "../keyboard/keyboard.ts";
 import type { DecimalMark } from "../state/session.svelte.ts";
@@ -38,6 +38,8 @@ const PLACES: readonly { name: Special; label: () => string }[] = [
   { name: "settings", label: () => tr("key.settings") },
 ];
 const MARK: Record<Layer, string> = { primary: "", shift: " ⇧", alpha: " α" };
+/** A unit pad cell's three legs, as the layers that reach them. */
+const LAYERS = ["primary", "shift", "alpha"] as const;
 
 /** How many slots hold something, for the section's row. */
 export function slotsSet(u: UserKeys): number {
@@ -81,8 +83,23 @@ export function yourKeysItems(env: SettingsEnv, mark: () => DecimalMark = () => 
     ...USER_KEY_IDS.flatMap((id, i) => USER_LAYERS.map((layer) => slot(id, i + 1, layer))),
     unitCellsItem(env),
     ownUnitsItem(env, mark), // R201
-    { id: "reset", label: t("keys.reset"), keep: true, run: () => u.reset() },
+    {
+      id: "reset",
+      label: t("keys.reset"),
+      keep: true,
+      get confirm() {
+        return asks("keys.reset", USER_KEY_IDS.flatMap((id, i) => USER_LAYERS.filter((l) => u.labelOf(id, l) !== undefined).map((l) => `U${i + 1}${MARK[l]}`)));
+      },
+      run: () => u.reset(),
+    },
   ];
+}
+
+/** R857 (owner, 2026-11-22): a reset that clears many slots asks once (MenuItem.confirm, R281): its armed label, and a note
+ *  that names the slots that go (`names`); one slot's Empty or Back to the default does not ask. */
+function asks(key: "keys.reset" | "keys.resetCells", names: readonly string[]): NonNullable<MenuItem["confirm"]> {
+  const note: FindMessageKey = names.length === 0 ? `${key}.none` : names.length === 1 ? `${key}.note1` : `${key}.note`;
+  return { cell: "", label: t(`${key}.armed`), note: t(note, { n: String(names.length), names: names.join(", ") }) };
 }
 
 /** The section's value: how many slots are set. */
@@ -126,8 +143,16 @@ function unitCellsItem(env: SettingsEnv): MenuItem {
       title: t("keys.unitCells"),
       loading: () => (loaded ? null : unitCells.restore().then(() => void (loaded = true))),
       items: [
-        ...CELL_KEYS.flatMap((key, i) => (["primary", "shift", "alpha"] as const).map((layer) => leg(key, i + 1, layer))),
-        { id: "reset", label: t("keys.resetCells"), keep: true, run: () => unitCells.reset() },
+        ...CELL_KEYS.flatMap((key, i) => LAYERS.map((layer) => leg(key, i + 1, layer))),
+        {
+          id: "reset",
+          label: t("keys.resetCells"),
+          keep: true,
+          get confirm() {
+            return asks("keys.resetCells", CELL_KEYS.flatMap((key, i) => LAYERS.filter((l) => unitCells.isSet(key, LEG_OF[l])).map((l) => `U${i + 1}${MARK[l]}`)));
+          },
+          run: () => unitCells.reset(),
+        },
       ],
     },
   };

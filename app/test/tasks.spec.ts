@@ -151,6 +151,7 @@ test.describe("replay", () => {
     await expect(page.getByTestId("sheet-title")).toHaveText("Home menu › Settings › Counters");
     const value = page.getByTestId("menu").locator('[data-id="presses"]').getByTestId("sheet-value");
     await expect(value).toHaveText("7");
+    await page.getByTestId("menu").locator('[data-id="reset"]').tap(); // R857: the first tap arms, the second clears
     await page.getByTestId("menu").locator('[data-id="reset"]').tap();
     await expect(value).toHaveText("0");
   });
