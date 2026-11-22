@@ -5,6 +5,7 @@
 // as its label and slot. Home has no units (P8): the unit never reaches the arithmetic. Pure; only erasable TypeScript.
 import { isZeroText } from "../engine/constBasis.ts";
 import type { Chip } from "../input/chips.ts";
+import { pureChip, ratioPower } from "../input/ratioChip.ts";
 import { chipOf, FULL_LIMIT } from "../state/results.ts";
 import { homeItem } from "../state/resultItem.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
@@ -33,10 +34,11 @@ export function quantityChip(q: Quantity | UnitError): Chip | undefined {
 
 /** R353: the chip Store ▶ in the unit view stores: `chip` when it carries the unit and the σ the result shows (`unit`, as
  *  Quantity.unit; `unc`, σ's text when there is one), else undefined, so the bare number is never stored in its place
- *  (quantityChip leaves the unit out for no shown slot or a unit text over 40 characters; a σ of 0 is dropped there). */
+ *  (quantityChip leaves the unit out for no shown slot or a unit text over 40 characters; a σ of 0 is dropped there).
+ *  G782f1: a chip in one ratio unit stores as its pure number with its σ (input/ratioChip.ts pureChip), as Home takes it. */
 export function storeChip(chip: Chip | undefined, unit: string, unc?: { text: string }): Chip | undefined {
-  // (G782: a ratio chip's unit has no dimension key, which a stored name's unit needs, G371: not stored, as before G782)
-  if (!chip || (unit !== "" && !chip.unit?.dim)) return undefined;
-  return unc && !isZeroText(unc.text) && chip.unc === undefined ? undefined : chip;
+  // (a rev chip's unit has no dimension key, which a stored name's unit needs, G371: not stored, as before G782)
+  if (!chip || (unit !== "" && !chip.unit?.dim && !ratioPower(chip))) return undefined;
+  return unc && !isZeroText(unc.text) && chip.unc === undefined ? undefined : pureChip(chip); // (any other chip as it is)
 }
 

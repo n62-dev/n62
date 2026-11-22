@@ -7,15 +7,18 @@ import { EngineHost } from "../engine/host.ts";
 import { defaultHomeSettings } from "../engine/homeEval.ts";
 import { giacAvailable, loadNodeGiac } from "../engine/nodeGiac.ts";
 import type { IndexItem } from "../find/types.ts";
+import type { Chip } from "../input/chips.ts";
 import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 import { buildJob } from "./build.ts";
 import { quantityChip, storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
+import { slotCatalogue } from "./slot.ts";
+import { UnitView, type ViewHost } from "./view.ts";
 import { isUnitError, type Quantity, type UnitError, type UnitRequest } from "./types.ts";
 
 const item = (kind: string, id: string, x: Record<string, string>): IndexItem =>
   ({ id: `${kind}:${id}`, kind, names: [id], title: id, tier: 0, insert: "", ...x }) as unknown as IndexItem;
-const TABLE = factorTable([
+const ITEMS = [
   item("unit", "m", { dim: "m1", si: "1" }),
   item("unit", "s", { dim: "s1", si: "1" }),
   item("unit", "h", { dim: "s1", si: "3600" }),
@@ -25,7 +28,9 @@ const TABLE = factorTable([
   item("pfx", "k", { si: "1000" }),
   item("pfx", "m", { si: "1/1000" }),
   item("const", "G", { value: "6.67430E-11", unc: "0.00015E-11", dim: "kg-1m3s-2" }),
-]);
+  { ...item("unit", "ppm", { dim: "", si: "1/1000000" }), ratio: true } as IndexItem,
+];
+const TABLE = factorTable(ITEMS);
 const KMH = { tokens: [{ prefix: "k", unit: "m" }, { unit: "h" }], per: 1 };
 
 describe.skipIf(!giacAvailable())("quantityChip (R61, real Giac)", () => {
@@ -109,16 +114,64 @@ describe.skipIf(!giacAvailable())("quantityChip (R61, real Giac)", () => {
   });
 
   // G782: a pure number in a unit keeps it (dimension key ""), so Home takes a ratio's pure number (input/ratioChip.ts)
-  // and says rev was dropped; Store ▶ stays off for both, as before G782 (a stored name's unit needs a dimension key, G371)
+  // and says rev was dropped; Store ▶ stays off for rev (a stored name's unit needs a dimension key, G371) and, since
+  // G782f1, stores the % one's pure number (derived: 0.42 % = 0.0042)
   it("0.0042 ▶ %: 0.42 with the unit %; 3 rev with rev", () => {
     const q = units({ formula: "0.0042", slots: [], end: { tokens: [{ unit: "percent" }] } }) as Quantity;
     expect(q.unit).toBe("%");
     expect(quantityChip(q)).toEqual({ value: "21/50", exact: true, unit: { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } } });
-    expect(storeChip(quantityChip(q), q.unit, q.unc)).toBeUndefined();
+    expect(storeChip(quantityChip(q), q.unit, q.unc)).toEqual({ value: "(21/50)/10^2", exact: true }); // G782f1: its pure number
     const rev = units({ formula: "3*pasu1", slots: [{ tokens: [{ unit: "rev" }] }], end: { tokens: [{ unit: "rev" }] } }) as Quantity;
     expect(rev.unit).toBe("rev");
     expect(quantityChip(rev)).toEqual({ value: "3", exact: true, unit: { text: "rev", dim: "", slot: { tokens: [{ unit: "rev" }] } } });
     expect(storeChip(quantityChip(rev), rev.unit, rev.unc)).toBeUndefined();
+  });
+
+  // G782f1: in the unit view the slot after a ratio chip starts with its unit, so chip × 200 m keeps the factor and G369
+  // drops the ratio beside m. Derived: 0.42 % × 200 m = 0.0042 · 200 m = 0.84 m; 35 ppm × 200 m = 0.007 m; (0.42 ± 0.01) %
+  // × 200 m = 0.84 ± 0.02 m (σ scales with the value). Before G782f1 the slot started empty: 84 m, 7000 m, 84 ± 2 m.
+  describe("a ratio chip × 200 m in the unit view (G782f1)", () => {
+    const CAT = slotCatalogue(ITEMS);
+    const M = { tokens: [{ unit: "m" }] };
+    /** The view on `chip × 200` with the 200's slot (u2) filled with m, its chip's slot (u1) as the view starts it. */
+    const times200 = (c: Chip) => {
+      const view = new UnitView(CAT, "\\res{1}{x}\\times200", { "res:1": c }, {} as ViewHost, { u2: M });
+      return { view, q: units(view.request()) as Quantity };
+    };
+    const pct = (): Chip => quantityChip(units({ formula: "0.0042", slots: [], end: { tokens: [{ unit: "percent" }] } }) as Quantity)!;
+    it("0.0042 ▶ %, its chip × 200 m: 0.84 m (exact 21/25); the chip's slot holds %", () => {
+      const { view, q } = times200(pct());
+      expect(view.model("u1")?.slot).toEqual({ tokens: [{ unit: "percent" }] });
+      expect(q.unit).toBe("m");
+      expect(q.value.display).toBe("0.84");
+      expect(quantityChip(q)).toEqual({ value: "21/25", exact: true, unit: { text: "m", dim: "m1", slot: M } });
+    });
+    it("35 ppm × 200 m: 0.007 m", () => {
+      const ppm = quantityChip(units({ formula: "35*pasu1", slots: [{ tokens: [{ unit: "ppm" }] }] }) as Quantity)!;
+      expect(ppm.unit?.text).toBe("ppm");
+      const { q } = times200(ppm);
+      expect(q.unit).toBe("m");
+      expect(quantityChip(q)).toMatchObject({ value: "7/1000", exact: true });
+    });
+    it("(0.42 ± 0.01) % × 200 m: 0.84 ± 0.02 m", () => {
+      const c = quantityChip(units({ formula: "pasupm(0.42,0.01)*pasu1", slots: [{ tokens: [{ unit: "percent" }] }] }) as Quantity)!;
+      expect(c).toMatchObject({ exact: false, unit: { text: "%" } });
+      const { q } = times200(c);
+      expect(q.unit).toBe("m");
+      expect(q.unc?.shown).toBe("0.840 ± 0.020");
+      expect(quantityChip(q)).toEqual({ value: "21/25", exact: false, reliableDigits: null, unc: "1/50", unit: { text: "m", dim: "m1", slot: M } });
+    });
+    it("Store ▶ on (0.42 ± 0.01) %: the pure number 0.0042 with σ 0.0001", () => {
+      const q = units({ formula: "pasupm(0.42,0.01)*pasu1", slots: [{ tokens: [{ unit: "percent" }] }] }) as Quantity;
+      const s = storeChip(quantityChip(q), q.unit, q.unc);
+      expect(s).toEqual({ value: "(21/50)/10^2", exact: false, reliableDigits: null, unc: "(1/100)/10^2" }); // 0.0042 ± 0.0001, no unit
+    });
+    it("controls: a rev chip's slot starts empty (3 rev × 200 m is 600 m, the rev dropped as before)", () => {
+      const rev = quantityChip(units({ formula: "3*pasu1", slots: [{ tokens: [{ unit: "rev" }] }], end: { tokens: [{ unit: "rev" }] } }) as Quantity)!;
+      const { view, q } = times200(rev);
+      expect(view.model("u1")?.empty).toBe(true);
+      expect(quantityChip(q)).toMatchObject({ value: "600", unit: { text: "m" } });
+    });
   });
 
   // R353: Store ▶ in the unit view stores the chip only when it carries the unit and σ the view shows; the bare number never

@@ -4,6 +4,7 @@
 // the unit is used, off the start chunk (R91's pin): do not import this file from code loaded at start. Pure; only erasable TypeScript.
 import type { SigmaChip, SigmaFacts, UnitSlot } from "../units/types.ts";
 import { chipKeysIn, type Chip, type ChipTable, type ChipUnit } from "./chips.ts";
+import { ratioPower } from "./ratioChip.ts";
 
 /** A stored text of this form (a non-string never passes). */
 const str = (x: unknown, re: RegExp): x is string => typeof x === "string" && re.test(x);
@@ -18,6 +19,12 @@ export function chipUnit(c: Chip | undefined): ChipUnit | undefined {
   const s = validSlot(slot);
   return s && { text, dim, slot: s };
 }
+
+/** R63: the slot the unit view starts a result chip's slot with: its checked unit's (chipUnit), or G782f1's one ratio
+ *  unit (ratioChip.ts ratioPower; dimension key "", which chipUnit refuses), so its factor is kept, and G369 drops the
+ *  ratio beside another unit (0.42 % × 200 m is 0.84 m); else undefined (a rev chip's slot starts empty, as before). */
+export const chipSlot = (c: Chip | undefined): UnitSlot | undefined =>
+  chipUnit(c)?.slot ?? (ratioPower(c) ? c!.unit!.slot : undefined); // (ratioSlotPower checked each field the slot model reads)
 
 /** R271: a result chip read as σ after ± (UnitsInfo.sigmas), as the unit view's request takes it: the value's slot,
  *  the chip's checked unit, and the facts it was shown with (an exact chip limits nothing). */

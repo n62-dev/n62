@@ -170,12 +170,16 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  79.10 → 79.57 kB (R853): phase-1 3c5f2ac5 measures 79.08 kB, the branch 79.52 kB (+0.44 kB, all in the unit view's
  *  entry: the panel's ← and → buttons with their state and names, view.ts's step and four i18n strings). Cut made: the
  *  press gives the focus back through open.ts's tap handler, not its own call, −0.03 kB. 79.52 kB + 0.05 kB.
- *  79.57 → 80.22 kB (R838): phase-1 c1eca577 measures 79,562 B, the branch 80,168 B (+606 B, all in open: 30,314 → 30,920 B):
+ *  79.57 → 79.64 kB (G782f1): the branch's base 3d6a5b97 measures 79.53 kB, the branch 79.59 kB (+0.06 kB: view.ts starts a
+ *  ratio chip's slot with its ratio unit, chipUnit.ts chipSlot; storeChip stores its pure number, ratioChip.ts pureChip).
+ *  Cuts made: storeChip returns pureChip(chip) for every chip (any other comes back as it is), chipSlot takes the slot
+ *  ratioSlotPower checked, not a second validSlot copy, −0.02 kB. 79.59 kB + 0.05 kB.
+ *  79.64 → 80.28 kB (R838): phase-1 c1eca577 measures 79,562 B, the branch 80,168 B (+606 B, all in open: 30,314 → 30,920 B):
  *  Settings and Mode open over the view, which watches the sheet close (padView watchSheet) to take the focus back and draw a
  *  changed setting again with no request (view.ts redraw, 177 B) or recompute after an angle change. Cuts made: the watcher
- *  sees only the close, the angle is read with the result, the redraw keeps its state in a tuple, −182 B. 80,168 B + 0.05 kB,
- *  rounded up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 80_220;
+ *  sees only the close, the angle is read with the result, the redraw keeps its state in a tuple, −182 B. Merged with phase-1
+ *  0f5ce229 (G782f1) the branch measures 80,228 B; 80,228 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 80_280;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
