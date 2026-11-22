@@ -144,7 +144,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R144, R146, changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet and drive it; a key it does not use is dead and the sheet stays. Rule: docs/05 3.1. Archived.
 - **R157, the mark:** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's tile is the colour logo (R745), 22 × 22 in its glyph tile (the bar's pill, R782), never cropped. Archived. Would change if: the mark cannot be seen on a device.
 - **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.
-- **R795, Plain keys (owner K3, 2026-11-20):** the keys keep their family's fills; only the legends' colour coding goes (it reverses R50's "one neutral tone"). Would change if: the owner's look on his phone.
+- **R795, Plain keys (owner K3, 2026-11-20):** the keys keep their family's fills (Black & White its two neutral tones, unchanged); only the legends' colour coding goes (it reverses R50's "one neutral tone"). Would change if: the owner's look on his phone.
 - **The tips' text stops at 17 px** (R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived.
   - **Under 1000 px tall with R722's 43 px rows too (R722's question):** Plot's ☰ after a Root, Mode › Digits, Numbers and Appearance scroll at their floor at 412 × 915 and on the Fairphone 6. Would change if: the owner's look at the beta wants them whole (a 32 px floor, measured by R722, brings back Plot's ☰ and Digits).

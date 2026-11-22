@@ -62,6 +62,10 @@ function hsl2hex([h, s, l]: [number, number, number]): string {
   const p = 2 * l - q;
   return rgb2hex([f(p, q, h + 1 / 3), f(p, q, h), f(p, q, h - 1 / 3)].map((v) => v * 255));
 }
+function desat(h: string, k: number): string {
+  const [hh, s, l] = rgb2hsl(h);
+  return hsl2hex([hh, s * k, l]);
+}
 /** Move fg's lightness away from the backgrounds (hue and saturation kept) until it reaches min on all of them. */
 function ensure(fg: string, bgs: string[], min: number, dark: boolean): string {
   if (bgs.every((b) => cr(fg, b) >= min)) return fg;
@@ -190,13 +194,22 @@ export function highContrast(t: Palette): Palette {
 // --- Plain keys: no colour coding of the legends. Every key keeps its family's fill (R795, owner 2026-11-20: the keys
 // are not greyed), legends in the text colour (Shift bold, Alpha italic), Enter inverted. ⚠ and errors keep their colour.
 // The key legends use `key-text`, the screen's marks `text`.
-export function plain(t: Palette): Palette {
+// Black & White keeps its two neutral tones from before R795 (the digit block one step brighter, the rest a mix toward
+// --bg): R795's criteria leave it unchanged, so its Plain keys output stays byte for byte what phase-1 drew.
+export const PLAIN_TWO_TONE: readonly string[] = ["bw"];
+export function plain(t: Palette, twoTone = false): Palette {
   const o: Palette = { ...t };
   const sd = lightInk(t);
   const kd = lightKeyInk(t);
   const split = isSplit(t, "text");
-  const k1 = get(t, "key-num");
-  const fills = getAll(t, KEYS);
+  if (twoTone) {
+    const n = desat(get(t, "key-num"), 0.35);
+    const rest = desat(mix(get(t, "key-num"), get(t, "bg"), 0.5), 0.35);
+    o["key-num"] = n;
+    for (const k of ["key-op", "key-fn", "key-ctl", "key-nav"]) o[k] = rest;
+  }
+  const k1 = get(o, "key-num");
+  const fills = twoTone ? [k1, get(o, "key-op")] : getAll(t, KEYS);
   o["shift"] = get(t, "text");
   o["alpha"] = get(t, "text");
   o["key-shift"] = get(t, "key-text");
@@ -207,7 +220,7 @@ export function plain(t: Palette): Palette {
   o["key-on"] = get(t, "key-text");
   o["on-key-on"] = split ? k1 : get(t, "bg");
   o["focus"] = get(t, "text");
-  o["chip-bg"] = split ? get(t, "chip-bg") : get(t, "key-op");
+  o["chip-bg"] = split ? get(t, "chip-bg") : get(o, "key-op");
   o["pick"] = mix(get(t, "bg"), get(t, "text"), 0.1);
   // text-dead must stay dimmer than live text but readable on every key
   if (isSplit(t, "text-dead")) {
@@ -415,7 +428,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   const dark = c.brightness === "dark";
   const { t, fixes } = base(fam, c.brightness);
   let o = t;
-  if (c.plain) o = plain(o);
+  if (c.plain) o = plain(o, PLAIN_TWO_TONE.includes(c.family));
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
   return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high), c.high), dark)), c.high), dark), dark), fixes };

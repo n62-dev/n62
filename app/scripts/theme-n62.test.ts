@@ -86,15 +86,16 @@ describe("R795: Plain keys keeps each family's key colours", () => {
     });
 });
 
-// R795 for Black & White: its Plain keys now keeps the family's own fills too (phase-1 drew the second tone as a mix of
-// --key-num and --bg: Light #fafbfb, now #e6ecec; Dark #0f1010, now #121718). Pinned until the owner confirms it on his phone.
+// R795 for Black & White: the criteria say "Black & White is unchanged", so its Plain keys keeps phase-1's two neutral
+// tones (theme-gen.ts PLAIN_TWO_TONE). The values are phase-1's, from `git show phase-1:app/src/theme/bw.css` (the four
+// [data-keys="plain"] blocks, before R795); a change here is the owner's call (decisions.md "Needs the user").
 const BW_PLAIN: Record<string, Record<string, string>> = {
-  "dark normal": { "key-num": "#1b2122", "key-op": "#121718", "key-fn": "#121718", "key-ctl": "#121718", "key-nav": "#121718", "chip-bg": "#121718", line: "#2a3536" },
-  "dark high": { "key-num": "#0f1213", "key-op": "#0a0d0d", "key-fn": "#0a0d0d", "key-ctl": "#0a0d0d", "key-nav": "#0a0d0d", "chip-bg": "#0c0f10", line: "#5f6868" },
-  "light normal": { "key-num": "#ffffff", "key-op": "#e6ecec", "key-fn": "#e6ecec", "key-ctl": "#e6ecec", "key-nav": "#e6ecec", "chip-bg": "#e6ecec", line: "#b9c6c6" },
-  "light high": { "key-num": "#ffffff", "key-op": "#f5f7f7", "key-fn": "#f5f7f7", "key-ctl": "#f5f7f7", "key-nav": "#f5f7f7", "chip-bg": "#eff3f3", line: "#879191" },
+  "dark normal": { "key-num": "#1d1f20", "key-op": "#0f1010", "key-fn": "#0f1010", "key-ctl": "#0f1010", "key-nav": "#0f1010", "chip-bg": "#0f1010", line: "#2a3536" },
+  "dark high": { "key-num": "#101112", "key-op": "#080909", "key-fn": "#080909", "key-ctl": "#080909", "key-nav": "#080909", "chip-bg": "#0a0a0a", line: "#5f6868" },
+  "light normal": { "key-num": "#ffffff", "key-op": "#fafbfb", "key-fn": "#fafbfb", "key-ctl": "#fafbfb", "key-nav": "#fafbfb", "chip-bg": "#fafbfb", line: "#b9c6c6" },
+  "light high": { "key-num": "#ffffff", "key-op": "#fdfdfd", "key-fn": "#fdfdfd", "key-ctl": "#fdfdfd", "key-nav": "#fdfdfd", "chip-bg": "#fcfcfc", line: "#8a9494" },
 };
-describe("R795: Black & White's Plain keys, pinned", () => {
+describe("R795: Black & White's Plain keys is phase-1's, pinned", () => {
   const bw = combos().filter((x) => x.plain && x.family === "bw");
   it("covers the four combinations", () => expect(bw).toHaveLength(4));
   for (const c of bw)
