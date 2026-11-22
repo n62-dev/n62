@@ -424,8 +424,9 @@
   .ptab.cur .pface {
     background: var(--key-on);
   }
-  /* ◢ on the current slot 2: the corner of its pill, over the room it already has (the pill's width never changes) */
-  .mark {
+  /* ◢ on the current slot 2: the corner of its pill, over the room it already has (the pill's width never changes); R703: the pill's
+     own, not the angle chip's π, which this rule put at the bar's right end, under ☰ */
+  .pface .mark {
     position: absolute;
     right: var(--stroke-thin);
     bottom: var(--stroke-thin);
