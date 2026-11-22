@@ -88,9 +88,7 @@ export function fitLegends(pad: HTMLElement): void {
     if (line > 0) size = Math.min(size, line);
     size = Math.floor(size * 10) / 10;
     if (size >= it.base) continue;
-    const floor = it.legend ? MIN_LEGEND_PX : MIN_FACE_PX;
-    size = Math.max(floor, size);
-    it.el.style.fontSize = `${size / z}px`;
+    it.el.style.fontSize = `${Math.max(it.legend ? MIN_LEGEND_PX : MIN_FACE_PX, size) / z}px`;
   }
   if (z !== 1) void import("./zoomFit.ts").then((m) => m.refit(pad, z));
 }
