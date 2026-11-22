@@ -624,6 +624,9 @@ export const PATCHED_IDS = new Map([
   // G398 (be-4): usual.cc ln(inv(f)) = -ln(f) and sqrt(inv(f)) = inv(sqrt(f)) took the conjugate for a negative real f; the
   // g398-keep-* rows pass on stock and stay in the check file
   ...["ln-inv-1-minus-sqrt2-12", "ln-inv-1-minus-sqrt2-30", "log10-inv-1-minus-sqrt2-12", "log10-inv-1-minus-sqrt2-30", "sqrt-inv-pi-minus-4-12", "sqrt-inv-pi-minus-4-30", "sqrt-sec2-12", "sqrt-sec2-30", "ln-sec2-12", "ln-sec2-30", "sqrt-csc4-12", "sqrt-csc4-30", "log10-sec2-12", "sqrt-inv-e-minus-3-12", "ln-inv-sqrt2-minus-2-12", "ln-inv-neg2-12"].map((k) => [`g398-${k}`, "0057-ln-sqrt-inv-negative-real.patch"]),
+  // G786: permu.cc ascsort read an MPFR element as 0, so median, quartile1, quartile3 and quantile of a float list above 14 digits
+  // were 0; the g786-keep-* row (an exact list) passes on stock and stays in the check file
+  ...["quartile3-approx-list", "quartile1-approx-list-30", "median-approx-list-30", "quantile-approx-list-30", "quartile1-approx-list-12", "median-approx-list-12", "quantile-approx-list-12", "median-approx-third-30", "quartiles-approx-list-30", "median-approx-matrix-30"].map((k) => [`g786-${k}`, "0058-ascsort-mpfr-elements.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -891,6 +894,16 @@ export function build(cases) {
   // gives ln(-1/2) = -ln(2)+pi*i, the principal value; stock rewrote ln(1/y) as -ln(y), -ln(-2) = -ln(2)-pi*i
   patched.push("// patch 0057-ln-sqrt-inv-negative-real.patch", "// g398-assumed-neg-ln-inv (derived: ln(-1/2) = -ln(2)+i*pi)", 'assume(g398y<0):; Digits:=40:; pc("g398-assumed-neg-ln-inv",\'subst(ln(1/g398y),g398y=-2)\',-ln(2)+pi*i,1/10^35);'); // g398y is used by this line only, so its assumption stays
   nPatched++;
+  // Patch 0058 (G786), written lines: the forms the golden rows leave out (a list result, a matrix, a typed decimal beside integers);
+  // expected values are Giac's own at Digits 12 (quartiles([3/2,-2,7,13/4,1/2,4]) = [[-2],[1/2],[3/2],[4],[7]], the column medians [2,5])
+  for (const [id, input, value, why] of [
+    ["g786-quartiles-evalf-list-20", "l2norm(quartiles(evalf([3/2,-2,7,13/4,1/2,4]))-[[-2],[1/2],[3/2],[4],[7]])", "0", "Giac at Digits 12: [[-2.0],[0.5],[1.5],[4.0],[7.0]]"],
+    ["g786-median-evalf-matrix-20", "l2norm(median(evalf([[1,5],[3,2],[2,8]]))-[2,5])", "0", "Giac at Digits 12: [2.0,5.0], each column's median"],
+    ["g786-quartile1-decimal-beside-integers-20", "quartile1([1.5,-2,7,3.25,0.5,4])", "1/2", "sorted -2, 0.5, 1.5, 3.25, 4, 7: the second; a typed 0.5 is MPFR at Digits 20, the integers doubles"],
+  ]) {
+    patched.push("// patch 0058-ascsort-mpfr-elements.patch", `// ${id} (derived: ${why})`, `Digits:=20:; pc("${id}",'${input}',${value},1/10^15);`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
