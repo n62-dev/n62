@@ -6,12 +6,31 @@
 import { expect, test, type Page } from "@playwright/test";
 import { entryValue, open, tap } from "./helpers.ts";
 
-const set = (page: Page, brightness: string): Promise<void> =>
-  page.evaluate(async (brightness) => {
+const set = (page: Page, brightness: string, theme: Record<string, string> = {}): Promise<void> =>
+  page.evaluate(async (t) => {
     const url = "/src/theme/apply.ts";
     const m = (await import(/* @vite-ignore */ url)) as typeof import("../src/theme/apply.ts");
-    await m.applyTheme({ family: "n62", brightness, contrast: "normal", keys: "colour" } as never, document.documentElement);
-  }, brightness);
+    await m.applyTheme({ family: "n62", contrast: "normal", keys: "colour", ...t } as never, document.documentElement);
+  }, { brightness, ...theme });
+
+const IDS = ["up", "down", "left", "right"];
+
+/** Each arrow path's computed fill, and the token colours it may take (resolved by a probe in the pad). */
+const fills = (page: Page): Promise<{ fills: Record<string, string>; text: string; dead: string; alpha: string }> =>
+  page.locator(".pad").evaluate((pad) => {
+    const tone = (v: string): string => {
+      const probe = document.createElement("span");
+      probe.style.color = `var(${v})`;
+      pad.append(probe);
+      const c = getComputedStyle(probe).color;
+      probe.remove();
+      return c;
+    };
+    const fills: Record<string, string> = {};
+    for (const p of pad.querySelectorAll<SVGPathElement>(".trackpad svg.arrows path[data-arrow]"))
+      fills[p.dataset["arrow"] ?? "?"] = getComputedStyle(p).fill;
+    return { fills, text: tone("--key-text"), dead: tone("--key-text-dead"), alpha: tone("--key-alpha") };
+  });
 
 type Ink = { cx: number; cy: number; along: number; across: number; max: number };
 
@@ -161,36 +180,55 @@ for (const viewport of [
       expect(r.fill).toBe(r.text);
       expect(r.hidden).toBe("true");
       expect(r.masked).toEqual([]);
-      for (const id of ["up", "down", "left", "right"]) await expect(page.locator(`.pad [data-key="${id}"] .main`)).toBeHidden();
+      // (R794f1: transparent, not visibility hidden, so the glyph stays in the accessibility tree)
+      for (const id of IDS) await expect(page.locator(`.pad [data-key="${id}"] .main`)).toHaveCSS("opacity", "0");
+    });
+
+    // R794f1: the arrows take the layer's colour as the zones' faces did on phase-1 (Alpha's under Alpha), and Plain keys' text
+    // colour there; the dead colour still wins (the Shift test below)
+    test("Alpha on fills the four arrows with the Alpha colour; under Plain keys with the key text colour", async ({ page }) => {
+      await open(page);
+      await tap(page, ["alpha"]);
+      await expect(page.locator(".pad.alphaed")).toHaveCount(1);
+      const on = await fills(page);
+      expect(on.alpha).not.toBe(on.text);
+      for (const id of IDS) expect(on.fills[id], `${id} with Alpha`).toBe(on.alpha);
+      // (Solarized dark with High contrast: the one Plain keys palette whose Alpha colour is not its key text colour, so the
+      // rule in modes.css is what makes the arrows plain, not the palette)
+      await set(page, "dark", { family: "solarized", contrast: "high", keys: "plain" });
+      await expect(page.locator(":root[data-keys='plain'][data-family='solarized']")).toHaveCount(1);
+      const plain = await fills(page);
+      expect(plain.alpha).not.toBe(plain.text);
+      for (const id of IDS) expect(plain.fills[id], `${id} with Alpha under Plain keys`).toBe(plain.text);
+      for (const id of IDS) await expect(page.locator(`.pad [data-key="${id}"] .main`)).toHaveCSS("color", plain.text); // (as the zones' faces)
+    });
+
+    // R794f1: a zone's face is transparent, not hidden, so before keyNames.ts labels it the arrow still names it
+    test("a zone without its aria-label is named by its arrow", async ({ page }) => {
+      await open(page);
+      await expect(page.locator('.pad [data-key="sin"]')).toHaveAttribute("aria-description", /Shift/); // (the key names are in)
+      const glyph: Record<string, string> = { up: "▲", down: "▼", left: "◀", right: "▶" };
+      for (const id of IDS) {
+        const zone = page.locator(`.pad [data-key="${id}"]`);
+        await zone.evaluate((el) => el.removeAttribute("aria-label"));
+        await expect(zone).toHaveAccessibleName(new RegExp(glyph[id] ?? "?"));
+      }
     });
 
     // an arrow whose zone does nothing in this layer is dimmed, as the zone's glyph was on phase-1: Shift gives no arrow an action
     test("Shift on dims the four arrows to the dead text colour; Shift off brings the text colour back", async ({ page }) => {
       await open(page);
-      const fills = (): Promise<{ fills: Record<string, string>; text: string; dead: string }> =>
-        page.locator(".pad").evaluate((pad) => {
-          const probe = document.createElement("span");
-          probe.style.color = "var(--key-text-dead)";
-          pad.append(probe);
-          const dead = getComputedStyle(probe).color;
-          probe.remove();
-          const fills: Record<string, string> = {};
-          for (const p of pad.querySelectorAll<SVGPathElement>(".trackpad svg.arrows path[data-arrow]"))
-            fills[p.dataset["arrow"] ?? "?"] = getComputedStyle(p).fill;
-          const key = pad.querySelector<HTMLElement>('[data-key="up"]');
-          return { fills, text: key ? getComputedStyle(key).color : "?", dead };
-        });
-      const ids = ["up", "down", "left", "right"];
-      const off = await fills();
+      const ids = IDS;
+      const off = await fills(page);
       expect(off.dead).not.toBe(off.text);
       for (const id of ids) expect(off.fills[id], `${id} before Shift`).toBe(off.text);
       await tap(page, ["shift"]);
       for (const id of ids) await expect(page.locator(`.pad [data-key="${id}"]`)).toHaveAttribute("data-dead", "true");
-      const on = await fills();
+      const on = await fills(page);
       for (const id of ids) expect(on.fills[id], `${id} with Shift`).toBe(on.dead);
       await page.evaluate(() => window.n62.session.clearModifiers()); // (a second Shift tap locks it, R726)
       for (const id of ids) await expect(page.locator(`.pad [data-key="${id}"]`)).not.toHaveAttribute("data-dead", "true");
-      const back = await fills();
+      const back = await fills(page);
       for (const id of ids) expect(back.fills[id], `${id} after Shift`).toBe(back.text);
     });
 

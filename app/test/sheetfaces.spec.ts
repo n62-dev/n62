@@ -51,8 +51,9 @@ for (const width of [412, 360]) {
       await expect(main(page, "x")).toHaveText("d");
       await expect(main(page, "d7")).toHaveText("7");
       await expect(main(page, "enter")).not.toHaveText("");
-      // R794: ▲ is the round pad's drawing (the inline SVG in Keypad.svelte); the zone's face stays in the layout, hidden
-      await expect(main(page, "up")).toBeHidden();
+      // R794: ▲ is the round pad's drawing (the inline SVG in Keypad.svelte); the zone keeps its face, transparent (R794f1: it names the zone)
+      await expect(main(page, "up")).not.toHaveText("");
+      await expect(main(page, "up")).toHaveCSS("opacity", "0");
       await expect(page.locator(".pad .trackpad svg.arrows path")).toHaveCount(4);
       await expect(letterLine(page, "vars")).toHaveText("");
       expect(await popOf(page, "sin")).toBe("g");
