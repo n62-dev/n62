@@ -175,8 +175,8 @@ test("a trackpad zone gets the flag (the arrows' full opacity, R794: drawn by th
   const r = await page.evaluate(async () => {
     const pf = (window as unknown as { __pf: Pf }).__pf;
     const sleep = (ms: number): Promise<void> => new Promise((res) => setTimeout(res, ms));
-    const pad = document.querySelector<HTMLElement>(".pad .trackpad") as HTMLElement;
-    const arrows = (): string => getComputedStyle(pad, "::before").opacity;
+    const svg = document.querySelector(".pad .trackpad .arrows") as Element;
+    const arrows = (): string => getComputedStyle(svg).opacity;
     const rest = arrows();
     pf.fire("pointerdown", "up", 1);
     const lit = pf.lit();

@@ -406,7 +406,9 @@
   onclick={(ev) => ev.preventDefault()}
   role="presentation"
 >
-  {#if padArea}<div class="trackpad" data-trackpad style:grid-row={padArea.rows} style:grid-column={padArea.cols}></div>{/if}
+  {#if padArea}<div class="trackpad" data-trackpad style:grid-row={padArea.rows} style:grid-column={padArea.cols}>
+      <svg class="arrows" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12l5 10H45zM50 88l5-10H45zM12 50l10-5v10zM88 50l-10-5v10z" /></svg>
+    </div>{/if}
   {#each keys as key (key.id)}
     <!-- the letter line: the row's, or a pad cell's own flick down (the cluster has none otherwise) -->
     {@const lettered = letterRows.has(key.row) || (key.pad && key.label.alpha)}
@@ -429,8 +431,7 @@
       data-v={varsOf(key)}
     >
       <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined}>{hint(key)}</span>
-      <!-- (R794: a trackpad zone draws no glyph: the round pad draws its four arrows) -->
-      {#if !isPadKey(key)}<span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>{/if}
+      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>
       {#if lettered}<span class="alphalegend" data-fit="legend">{alphaHint(key)}</span>{/if}
     </button>
   {/each}
@@ -654,31 +655,37 @@
     background: transparent;
     box-shadow: none;
   }
+  /* R794: a zone draws no glyph (the round pad draws the four arrows); its face stays in the layout, hidden, so the zone
+     keeps the height of its rows and the keys beside the pad do not move */
+  .key[data-zone="true"] .main {
+    visibility: hidden;
+  }
   /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle) */
   .key[data-zone="true"]:global([data-down])::after {
     content: none;
   }
   /* R794 (owner's K9): the four arrows are the round pad's own drawing, not the zones' glyphs (a glyph sat in its zone's face
-     row, under the legend row, in zones that are not symmetric about the circle): one SVG of four equal triangles as a mask
-     over the key's text colour, each 10 % of the diameter on a side, centred on an axis at 33 % of the diameter from the
-     centre (placeDot in keyNames.ts puts the press dot on the same four points). At 0.7 opacity, full while a zone is held. */
+     row, under the legend row, in zones that are not symmetric about the circle): one inline SVG of four equal triangles in
+     the key's text colour, each 10 % of the diameter on a side, centred on an axis at 33 % of the diameter from the centre
+     (placeDot in keyNames.ts puts the press dot on the same four points). At 0.7 opacity, full while a zone is held. Not a
+     CSS mask: Chromium reads the bare mask only from 120 (the WebView floor is 111), and a masked layer moved the user
+     keys' faces 1.2 px in the screenshots of userplus.spec.ts (audit and checks, round 1). */
   .trackpad {
     position: relative;
     overflow: hidden;
     isolation: isolate;
   }
-  .trackpad::before {
-    content: "";
+  .arrows {
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: var(--key-text);
+    width: 100%;
+    height: 100%;
+    fill: var(--key-text);
     opacity: 0.7;
-    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 12l5 10H45zM50 88l5-10H45zM12 50l10-5v10zM88 50l-10-5v10z'/%3E%3C/svg%3E")
-      center / 100% 100% no-repeat;
     pointer-events: none;
   }
-  .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::before {
+  .pad:has(.key[data-zone="true"]:global([data-down])) .arrows {
     opacity: 1;
   }
   /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips

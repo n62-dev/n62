@@ -134,6 +134,36 @@ for (const viewport of [
         }
       });
 
+    // the arrows are an inline SVG filled with the key's text colour, not a CSS mask: Chromium reads the bare mask only from
+    // 120, the WebView floor is 111 (decisions.md), where a masked layer would be a solid disc (audit, round 1); and no
+    // element of the keypad carries a mask (a masked layer moved the user keys' faces 1.2 px, userplus.spec.ts)
+    test("the arrows are an inline SVG in the text colour, no mask anywhere in the keypad; the zones' glyphs are hidden", async ({ page }) => {
+      await open(page);
+      const r = await page.locator(".pad").evaluate((pad) => {
+        const svg = pad.querySelector(".trackpad svg.arrows");
+        const masked: string[] = [];
+        for (const el of [pad, ...pad.querySelectorAll("*")])
+          for (const pseudo of [null, "::before", "::after"]) {
+            const c = getComputedStyle(el, pseudo) as CSSStyleDeclaration & { webkitMaskImage?: string };
+            if ((c.maskImage && c.maskImage !== "none") || (c.webkitMaskImage && c.webkitMaskImage !== "none"))
+              masked.push(`${el.tagName.toLowerCase()}.${el.getAttribute("class") ?? ""}${pseudo ?? ""}`);
+          }
+        const key = pad.querySelector<HTMLElement>('[data-key="up"]');
+        return {
+          paths: svg?.querySelectorAll("path").length ?? 0,
+          fill: svg ? getComputedStyle(svg).fill : "",
+          text: key ? getComputedStyle(key).color : "?",
+          hidden: svg?.getAttribute("aria-hidden"),
+          masked,
+        };
+      });
+      expect(r.paths).toBe(1);
+      expect(r.fill).toBe(r.text);
+      expect(r.hidden).toBe("true");
+      expect(r.masked).toEqual([]);
+      for (const id of ["up", "down", "left", "right"]) await expect(page.locator(`.pad [data-key="${id}"] .main`)).toBeHidden();
+    });
+
     // controls: the zones keep their boxes (the four keys tile the pad's grid area as before) and their spoken names
     test("the four zones keep their hit boxes and names; a tap on each moves the cursor", async ({ page }) => {
       await open(page);
