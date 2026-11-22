@@ -432,11 +432,12 @@
     line-height: 1;
     opacity: 0.8;
   }
-  /* the fixed ⇧ α slot (the folded bar, a hardware keyboard in use): 16 px, so Shift or Alpha moves nothing; it takes the room
-     left over before the modes (R783, R856: the word and ☰ stand at the same x in every place); narrow in an app it gives up its room */
+  /* the fixed ⇧ α slot (the folded bar, a hardware keyboard in use): 16 px in every place, so Shift or Alpha moves nothing and its
+     sign is never covered; it takes the room left over before the modes (R783, R856: the word and ☰ stand at the same x in every
+     place; the narrow rule at the end makes the room for it in an app at 360) */
   .slot {
-    flex: 0 1 var(--icon-w);
-    min-width: 0;
+    flex: none;
+    width: var(--icon-w);
     margin-left: auto;
     display: flex;
     align-items: center;
@@ -518,10 +519,16 @@
     font-size: var(--fs-key-fn);
     color: var(--text);
   }
-  /* narrow (a phone under 400 px wide): one gap of 1 px and ☰ 32 px, the same in every place, so an app's views fit at 360 */
+  /* narrow (a phone under 400 px wide): one gap of 1 px, the track's inset and gap 1 px, the word 33 px and ☰ 32 px, the same in
+     every place, so an app's views and the 16 px ⇧ α slot fit at 360 (R856: 359 px in Function with a hardware keyboard) */
   @media (max-width: 400px) {
     .bar {
       --bar-gap: var(--stroke-thin);
+      --angle-w: 33px;
+    }
+    .track {
+      gap: var(--stroke-thin);
+      padding: 0 var(--stroke-thin);
     }
     .menubtn {
       width: var(--view-w);

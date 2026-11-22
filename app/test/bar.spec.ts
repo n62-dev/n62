@@ -216,6 +216,36 @@ for (const [width, height] of [[360, 740], [412, 915]] as const) {
       else expect(now, `${p}: a control moved or changed width`).toEqual(base);
       expect(await overflow(page), p).toEqual([]);
     }
+    // a hardware keyboard in use with Shift locked (R783, R726): the ⇧ slot keeps its 16 px, moves nothing, its sign clear of the
+    // views and the modes (both drawn over the slot's edges) and taken by a tap at its centre, which ends Shift
+    await goTo(page, "home");
+    await tap(page, ["shift", "shift"]);
+    await hwOn(page);
+    for (const p of PLACES) {
+      await goTo(page, p);
+      await expect(page.getByTestId("mod-shift"), p).toHaveAttribute("data-lock", "true");
+      expect(await xw(page, IDS), `${p}, ⇧ shown: a control moved or changed width`).toEqual(base);
+      expect(await overflow(page), `${p}, ⇧ shown`).toEqual([]);
+      const sign = await page.evaluate(() => {
+        const b = document.querySelector<HTMLElement>('[data-testid="mod-shift"]')!;
+        const range = document.createRange();
+        range.selectNodeContents(b);
+        const g = range.getBoundingClientRect();
+        const slot = document.querySelector('[data-testid="mod-slot"]')!.getBoundingClientRect();
+        const before = (document.querySelector('[data-testid="tab-num"]') ?? document.querySelector('[data-testid="tab-slot"]'))!.getBoundingClientRect();
+        const after = (document.querySelector('[data-testid="chip-format"]') ?? document.querySelector('[data-testid="chip-angle"]'))!.getBoundingClientRect();
+        const hit = document.elementFromPoint((g.left + g.right) / 2, (g.top + g.bottom) / 2);
+        return { slot: slot.width, clearLeft: g.left - before.right, clearRight: after.left - g.right, hit: hit === b || b.contains(hit) };
+      });
+      expect(sign.slot, `${p}: the ⇧ slot's width`).toBe(16);
+      expect(sign.clearLeft, `${p}: ⇧ clear of what stands before it`).toBeGreaterThanOrEqual(0);
+      expect(sign.clearRight, `${p}: ⇧ clear of the modes`).toBeGreaterThanOrEqual(0);
+      expect(sign.hit, `${p}: a tap on ⇧ lands on it`).toBe(true);
+    }
+    await page.getByTestId("mod-shift").tap();
+    expect(await page.evaluate(() => [window.n62.session.shift, window.n62.session.shiftLock])).toEqual([false, false]);
+    await expect(page.getByTestId("mod-shift")).toHaveCount(0);
+    await hwOn(page, false);
     await goTo(page, "home");
     await page.getByTestId("fold-chevron").tap();
     await expect(page.getByTestId("folded-bar")).toBeVisible();

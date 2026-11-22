@@ -124,7 +124,7 @@
   --row-tile-w: 36px;
   --row-tile-h: 28px;
   --menu-w: 36px;
-  --angle-w: 44px; /* R856: the angle word RAD or DEG, the bar's one control for the angle */
+  --angle-w: 44px; /* R856: the angle word RAD or DEG, the bar's one control for the angle (33 px under 400 px wide, views/StatusLine.svelte) */
   --icon-w: 16px;
   --icon-h: 14px;
   --fill-icon: 16px; /* R778: the corner button that fills the screen */
