@@ -68,7 +68,7 @@ export function labelKeys(pad: HTMLElement, keys: readonly Key[], shift: boolean
 }
 
 /** R794: each arrow's centre in the round pad (x, y), on its axes at 33 % of the diameter from the centre: the points of
- *  the arrows the pad draws (its mask in Keypad.svelte). */
+ *  the arrows the pad draws (the inline SVG in Keypad.svelte). */
 const ARROW_AT: Readonly<Record<string, readonly [string, string]>> = {
   up: ["50%", "17%"],
   down: ["50%", "83%"],

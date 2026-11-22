@@ -157,11 +157,41 @@ for (const viewport of [
           masked,
         };
       });
-      expect(r.paths).toBe(1);
+      expect(r.paths).toBe(4);
       expect(r.fill).toBe(r.text);
       expect(r.hidden).toBe("true");
       expect(r.masked).toEqual([]);
       for (const id of ["up", "down", "left", "right"]) await expect(page.locator(`.pad [data-key="${id}"] .main`)).toBeHidden();
+    });
+
+    // an arrow whose zone does nothing in this layer is dimmed, as the zone's glyph was on phase-1: Shift gives no arrow an action
+    test("Shift on dims the four arrows to the dead text colour; Shift off brings the text colour back", async ({ page }) => {
+      await open(page);
+      const fills = (): Promise<{ fills: Record<string, string>; text: string; dead: string }> =>
+        page.locator(".pad").evaluate((pad) => {
+          const probe = document.createElement("span");
+          probe.style.color = "var(--key-text-dead)";
+          pad.append(probe);
+          const dead = getComputedStyle(probe).color;
+          probe.remove();
+          const fills: Record<string, string> = {};
+          for (const p of pad.querySelectorAll<SVGPathElement>(".trackpad svg.arrows path[data-arrow]"))
+            fills[p.dataset["arrow"] ?? "?"] = getComputedStyle(p).fill;
+          const key = pad.querySelector<HTMLElement>('[data-key="up"]');
+          return { fills, text: key ? getComputedStyle(key).color : "?", dead };
+        });
+      const ids = ["up", "down", "left", "right"];
+      const off = await fills();
+      expect(off.dead).not.toBe(off.text);
+      for (const id of ids) expect(off.fills[id], `${id} before Shift`).toBe(off.text);
+      await tap(page, ["shift"]);
+      for (const id of ids) await expect(page.locator(`.pad [data-key="${id}"]`)).toHaveAttribute("data-dead", "true");
+      const on = await fills();
+      for (const id of ids) expect(on.fills[id], `${id} with Shift`).toBe(on.dead);
+      await page.evaluate(() => window.n62.session.clearModifiers()); // (a second Shift tap locks it, R726)
+      for (const id of ids) await expect(page.locator(`.pad [data-key="${id}"]`)).not.toHaveAttribute("data-dead", "true");
+      const back = await fills();
+      for (const id of ids) expect(back.fills[id], `${id} after Shift`).toBe(back.text);
     });
 
     // controls: the zones keep their boxes (the four keys tile the pad's grid area as before) and their spoken names

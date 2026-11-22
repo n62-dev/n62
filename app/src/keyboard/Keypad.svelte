@@ -407,7 +407,8 @@
   role="presentation"
 >
   {#if padArea}<div class="trackpad" data-trackpad style:grid-row={padArea.rows} style:grid-column={padArea.cols}>
-      <svg class="arrows" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 12l5 10H45zM50 88l5-10H45zM12 50l10-5v10zM88 50l-10-5v10z" /></svg>
+      <svg class="arrows" viewBox="0 0 100 100" aria-hidden="true"><path data-arrow="up" d="M50 12l5 10H45z" /><path data-arrow="down" d="M50 88l5-10H45z" />
+        <path data-arrow="left" d="M12 50l10-5v10z" /><path data-arrow="right" d="M88 50l-10-5v10z" /></svg>
     </div>{/if}
   {#each keys as key (key.id)}
     <!-- the letter line: the row's, or a pad cell's own flick down (the cluster has none otherwise) -->
@@ -664,12 +665,10 @@
   .key[data-zone="true"]:global([data-down])::after {
     content: none;
   }
-  /* R794 (owner's K9): the four arrows are the round pad's own drawing, not the zones' glyphs (a glyph sat in its zone's face
-     row, under the legend row, in zones that are not symmetric about the circle): one inline SVG of four equal triangles in
-     the key's text colour, each 10 % of the diameter on a side, centred on an axis at 33 % of the diameter from the centre
-     (placeDot in keyNames.ts puts the press dot on the same four points). At 0.7 opacity, full while a zone is held. Not a
-     CSS mask: Chromium reads the bare mask only from 120 (the WebView floor is 111), and a masked layer moved the user
-     keys' faces 1.2 px in the screenshots of userplus.spec.ts (audit and checks, round 1). */
+  /* R794 (owner's K9): the arrows are the round pad's drawing, not the zones' glyphs (those sat off centre): an inline SVG of
+     four equal triangles in the key's text colour, 10 % of the diameter, on the axes at 33 % from the centre (placeDot in
+     keyNames.ts puts the press dot there); 0.7 opacity, full while a zone is held, a dead zone's arrow dimmed. Not a CSS
+     mask: Chromium reads the bare mask only from 120 (WebView floor 111), and it moved the user keys' faces 1.2 px. */
   .trackpad {
     position: relative;
     overflow: hidden;
@@ -687,6 +686,12 @@
   }
   .pad:has(.key[data-zone="true"]:global([data-down])) .arrows {
     opacity: 1;
+  }
+  .pad:has(.key[data-key="up"][data-dead="true"]) .arrows [data-arrow="up"],
+  .pad:has(.key[data-key="down"][data-dead="true"]) .arrows [data-arrow="down"],
+  .pad:has(.key[data-key="left"][data-dead="true"]) .arrows [data-arrow="left"],
+  .pad:has(.key[data-key="right"][data-dead="true"]) .arrows [data-arrow="right"] {
+    fill: var(--key-text-dead);
   }
   /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
      it: placeDot (keyNames.ts) sets --dot-x and --dot-y, the arrow's centre in the pad */
