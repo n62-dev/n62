@@ -149,3 +149,214 @@ test("wide: at 1280 × 716 the bar heads the keypad column and the stage starts 
   expect(bar.top).toBe(0);
   expect(stage.top).toBe(0);
 });
+
+// R856 (owner, 2026-11-22, the mock-up bar-final.html): Home and slot 2 one track of segments, one width and x in every place and
+// folded; Home's glyph is a house; the modes one outlined group `STD 12 ▾ │ RAD`, the word last, never filled; in an app the word alone.
+type Look = { family: "n62"; brightness: "dark" | "light"; contrast: false; plain: false };
+const look = (page: Page, brightness: "dark" | "light"): Promise<void> =>
+  page.evaluate(async (l) => {
+    const url = "/src/theme/lookApply.ts";
+    const m = (await import(/* @vite-ignore */ url)) as typeof import("../src/theme/lookApply.ts");
+    await m.applyLook({ ...l, shadow: true, pops: true });
+  }, { family: "n62", brightness, contrast: false, plain: false } satisfies Look);
+const PLACES = ["home", "cas", "function:symb", "function:plot", "function:num"] as const;
+async function goTo(page: Page, place: (typeof PLACES)[number]): Promise<void> {
+  await page.evaluate(async (p) => {
+    const { session, shell } = window.n62;
+    if (p === "home" || p === "cas") {
+      shell.close();
+      session.view = p;
+      return;
+    }
+    const [app, view] = p.split(":") as ["function", "symb" | "plot" | "num"];
+    await shell.open(app, view);
+  }, place);
+  await page.waitForFunction(() => window.n62.shell.loading === null && (window.n62.shell.app === null || window.n62.shell.current !== null));
+  await page.waitForFunction(() => window.n62.shell.app === null || document.querySelector('[data-testid="tab-symb"]') !== null);
+}
+/** x and width of each control, rounded to 0.1 px ("missing" when not drawn). */
+const xw = (page: Page, ids: readonly string[]): Promise<string[]> =>
+  page.evaluate((list) => list.map((i) => {
+    const e = document.querySelector<HTMLElement>(`[data-testid="${i}"]`);
+    if (!e || !e.checkVisibility({ visibilityProperty: true })) return `${i} missing`;
+    const r = e.getBoundingClientRect();
+    return `${i} ${r.left.toFixed(1)},${r.width.toFixed(1)}`;
+  }), ids);
+/** Every bar control whose text runs past its box, and the bar's own overflow (the folded row's when folded). */
+const overflow = (page: Page): Promise<string[]> =>
+  page.evaluate(() => {
+    const out: string[] = [];
+    const bar = document.querySelector<HTMLElement>('[data-testid="folded-bar"]') ?? document.querySelector<HTMLElement>('[data-testid="bar"]')!;
+    for (const b of bar.querySelectorAll<HTMLElement>("button")) {
+      if (!b.checkVisibility({ visibilityProperty: true })) continue;
+      if (b.scrollWidth > b.clientWidth) out.push(`${b.dataset["testid"] ?? b.textContent}: ${b.scrollWidth} > ${b.clientWidth}`);
+    }
+    if (bar.scrollWidth > bar.clientWidth) out.push(`bar: ${bar.scrollWidth} > ${bar.clientWidth}`);
+    const right = bar.getBoundingClientRect().right;
+    for (const e of bar.querySelectorAll<HTMLElement>("*")) {
+      const r = e.getBoundingClientRect();
+      if (r.width > 0 && e.checkVisibility({ visibilityProperty: true }) && r.right > right + 0.5) out.push(`${e.dataset["testid"] ?? e.className} ends at ${r.right} > ${right}`);
+    }
+    return out;
+  });
+
+for (const [width, height] of [[360, 740], [412, 915]] as const) {
+  test(`one size, one place: APP▾, Home, slot 2, the angle word and ☰ keep x and width in Home, CAS, Function's views and folded; nothing overflows at ${width} × ${height} (R856)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await open(page);
+    await expect(page.getByTestId("keys")).toHaveAttribute("data-fold-ready", "true");
+    const IDS = ["place", "tab-home", "tab-slot", "chip-angle", "menu-button"] as const;
+    let base: string[] | undefined;
+    for (const p of PLACES) {
+      await goTo(page, p);
+      const now = await xw(page, IDS);
+      expect(now.join(" "), p).not.toContain("missing");
+      if (base === undefined) base = now;
+      else expect(now, `${p}: a control moved or changed width`).toEqual(base);
+      expect(await overflow(page), p).toEqual([]);
+    }
+    await goTo(page, "home");
+    await page.getByTestId("fold-chevron").tap();
+    await expect(page.getByTestId("folded-bar")).toBeVisible();
+    const FOLDED = ["tab-home", "tab-slot", "chip-angle", "menu-button"] as const;
+    expect(await xw(page, FOLDED), "folded").toEqual(base!.filter((s) => FOLDED.some((id) => s.startsWith(`${id} `))));
+    expect(await overflow(page), "folded").toEqual([]);
+  });
+}
+
+test("Home's glyph is a house drawn in currentColor, on the bar's tab and in the Apps sheet's Home row; ⊞▾ stays the Apps button (R856)", async ({ page }) => {
+  await open(page);
+  const house = (sel: string) =>
+    page.evaluate((s) => {
+      const host = document.querySelector<HTMLElement>(s);
+      const svg = host?.querySelector("svg");
+      const path = svg?.querySelector("path");
+      if (!host || !svg || !path) return null;
+      return { img: host.querySelectorAll("img").length, d: path.getAttribute("d"), stroke: getComputedStyle(path).stroke, color: getComputedStyle(host).color };
+    }, sel);
+  const tab = await house('[data-testid="tab-home"] .tile');
+  expect(tab, "the tab's house").not.toBeNull();
+  expect(tab!.img).toBe(0); // not the logo
+  expect(tab!.stroke).toBe(tab!.color); // currentColor
+  await expect(page.getByTestId("place").locator(".tile.grid i")).toHaveCount(4); // ⊞▾: the four boxes
+  await page.getByTestId("place").tap();
+  const row = await house('[data-testid="apps"] [role="menuitem"][data-id="home"] [data-testid="row-glyph"]');
+  expect(row, "the Apps row's house").not.toBeNull();
+  expect(row!.img).toBe(0);
+  expect(row!.d).toBe(tab!.d); // one house
+  expect(row!.stroke).toBe(row!.color);
+});
+
+const bg = (page: Page, sel: string): Promise<string> => page.evaluate((s) => getComputedStyle(document.querySelector(s)!).backgroundColor, sel);
+/** The background the eye sees under an element: the first ancestor (or its ::before, the tracks') that paints one. */
+const under = (page: Page, sel: string): Promise<string> =>
+  page.evaluate((s) => {
+    const clear = (c: string): boolean => c === "transparent" || /rgba\(.*,\s*0\)$/.test(c);
+    for (let e: Element | null = document.querySelector(s); e; e = e.parentElement) {
+      const own = getComputedStyle(e).backgroundColor;
+      if (!clear(own)) return own;
+      const b = getComputedStyle(e, "::before");
+      if (b.content !== "none" && !clear(b.backgroundColor)) return b.backgroundColor;
+    }
+    return getComputedStyle(document.body).backgroundColor;
+  }, sel);
+
+test("the modes are one outlined group: STD 12 ▾, a divider, the word RAD or DEG; neither half ever filled; in an app the word alone, nothing between it and ☰ (R856)", async ({ page }) => {
+  await open(page);
+  const fmt = page.getByTestId("chip-format");
+  const word = page.getByTestId("chip-angle");
+  const group = page.getByTestId("bar-modes");
+  for (const p of ["home", "cas"] as const) {
+    await goTo(page, p);
+    await expect(group.getByTestId("chip-format")).toHaveCount(1);
+    await expect(group.getByTestId("chip-angle")).toHaveCount(1);
+    expect((await fmt.innerText()).replace(/\s+/g, " ").trim()).toBe("STD 12 ▾");
+    await expect(word).toHaveText("RAD");
+    await expect(word.locator("svg")).toHaveCount(0); // a word, not an icon
+    const f = (await fmt.boundingBox())!;
+    const w = (await word.boundingBox())!;
+    expect(f.x + f.width).toBeLessThanOrEqual(w.x + 0.5); // the word last
+    expect(await fmt.evaluate((e) => getComputedStyle(e).borderRightWidth)).toBe("1px"); // the divider
+    expect(await group.evaluate((e) => getComputedStyle(e).boxShadow)).not.toBe("none"); // outlined
+  }
+  const barBg = await bg(page, BAR);
+  for (const a of ["rad", "deg"] as const) {
+    if ((await angle(page)) !== a) await word.tap();
+    await expect(word).toHaveText(a.toUpperCase());
+    for (const sel of ['[data-testid="chip-angle"]', '[data-testid="chip-format"]']) expect(await under(page, sel), `${sel} in ${a}`).toBe(barBg);
+  }
+  await word.tap(); // back to RAD
+  await goTo(page, "function:symb");
+  await expect(fmt).toHaveCount(0);
+  await expect(group.getByTestId("chip-angle")).toHaveText("RAD");
+  const gap = await page.evaluate(() => {
+    const a = document.querySelector('[data-testid="chip-angle"]')!.getBoundingClientRect();
+    const m = document.querySelector('[data-testid="menu-button"]')!.getBoundingClientRect();
+    const between = [...document.querySelectorAll<HTMLElement>('[data-testid="bar"] *')].filter((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width > 0 && r.left >= a.right - 0.5 && r.right <= m.left + 0.5;
+    });
+    const cs = getComputedStyle(document.querySelector('[data-testid="chip-angle"]')!);
+    const ms = getComputedStyle(document.querySelector('[data-testid="menu-button"]')!);
+    return { between: between.length, borders: [cs.borderLeftWidth, cs.borderRightWidth, ms.borderLeftWidth] };
+  });
+  expect(gap).toEqual({ between: 0, borders: ["0px", "0px", "0px"] });
+});
+
+test("taps: the word switches RAD ↔ DEG in one tap and counts bar.angle; STD 12 opens Mode on Format; the spoken names stay (R856)", async ({ page }) => {
+  await open(page);
+  const word = page.getByTestId("chip-angle");
+  await expect(word).toHaveAccessibleName("Angle: radians");
+  await expect(page.getByTestId("chip-format")).toHaveAccessibleName(/STD|Standard/i);
+  await word.tap();
+  await expect(word).toHaveText("DEG");
+  await expect(word).toHaveAccessibleName("Angle: degrees");
+  expect(await angle(page)).toBe("deg");
+  await expect.poll(() => page.evaluate(() => window.n62.session.useCounters["bar-uses"]?.get("bar.angle") ?? 0)).toBe(1);
+  await page.getByTestId("chip-format").tap();
+  await expect(sheet(page).locator('[role="menuitem"][data-active="true"]')).toHaveAttribute("data-id", "format");
+});
+
+/** WCAG contrast of two rgb() colours. */
+const contrast = (a: string, b: string): number => {
+  const lum = (c: string): number => {
+    const [r, g, bl] = (c.match(/[\d.]+/g) ?? []).slice(0, 3).map((v) => {
+      const s = Number(v) / 255;
+      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    }) as [number, number, number];
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p) as [number, number];
+  return (x + 0.05) / (y + 0.05);
+};
+/** Every drawn text of the bar (a leaf with text) and the colour it is drawn in. */
+const texts = (page: Page): Promise<{ sel: string; text: string }[]> =>
+  page.evaluate(() => {
+    const out: { sel: string; text: string }[] = [];
+    let n = 0;
+    for (const e of document.querySelectorAll<HTMLElement>('[data-testid="bar"] *')) {
+      const own = [...e.childNodes].some((c) => c.nodeType === Node.TEXT_NODE && (c.textContent ?? "").trim() !== "");
+      if (!own || !e.checkVisibility({ visibilityProperty: true, opacityProperty: true }) || e.closest(".sr")) continue;
+      e.dataset["ctext"] = String(n);
+      out.push({ sel: `[data-ctext="${n++}"]`, text: (e.textContent ?? "").trim() });
+    }
+    return out;
+  });
+
+for (const brightness of ["dark", "light"] as const)
+  test(`contrast in N62 ${brightness === "dark" ? "Dark" : "Light"}: the current place's and the current view's fill ≥ 3:1 on the bar, every text ≥ 4.5:1 (R856)`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await open(page);
+    await look(page, brightness);
+    const barBg = await bg(page, BAR);
+    for (const p of ["home", "cas", "function:plot"] as const) {
+      await goTo(page, p);
+      const cur = p === "home" ? '[data-testid="tab-home"] .pface' : p === "cas" ? '[data-testid="tab-slot"] .pface' : '[data-testid="tab-plot"] .face';
+      expect(contrast(await bg(page, cur), barBg), `${p}: the current fill`).toBeGreaterThanOrEqual(3);
+      if (p === "function:plot") expect(contrast(await bg(page, '[data-testid="place"] .tile'), barBg), "the app's glyph tile").toBeGreaterThanOrEqual(3);
+      for (const t of await texts(page)) {
+        const color = await page.evaluate((s) => getComputedStyle(document.querySelector(s)!).color, t.sel);
+        expect(contrast(color, await under(page, t.sel)), `${p}: "${t.text}"`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });

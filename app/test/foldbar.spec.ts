@@ -313,3 +313,30 @@ test("the folded bar's other ways back: Esc and Back unfold; the history still s
   expect(await history.evaluate((el) => el.scrollTop)).toBeLessThan(before);
   await isFolded(page, true);
 });
+
+for (const [width, height] of [[360, 740], [412, 915]] as const)
+  test(`R856: folded, the modes group stands in the free stretch, the word at the open bar's x; a pick gives it way to Store ▶ · Copy › at ${width} × ${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await rows(page);
+    const open = await box(page, '[data-testid="chip-angle"]');
+    await fold(page);
+    const group = fbar(page).getByTestId("bar-modes");
+    await expect(group.getByTestId("chip-format")).toBeVisible();
+    await expect(group.getByTestId("chip-angle")).toHaveText("RAD");
+    const word = await box(page, `${FBAR} [data-testid="chip-angle"]`);
+    expect([word.x, word.width]).toEqual([open.x, open.width]);
+    const free = await box(page, '[data-testid="fold-free"]');
+    const slot = await box(page, `${FBAR} [data-testid="tab-slot"]`);
+    const fmt = await box(page, `${FBAR} [data-testid="chip-format"]`);
+    expect(free.x).toBeGreaterThanOrEqual(slot.x + slot.width - 0.5); // the stretch, then the group
+    expect(fmt.x).toBeGreaterThanOrEqual(free.x + free.width - 0.5);
+    const items = await fbar(page).locator("[data-item]").evaluateAll((els) =>
+      els.filter((e) => (e as HTMLElement).checkVisibility({ visibilityProperty: true })).map((e) => ({ n: (e as HTMLElement).dataset["item"], x: e.getBoundingClientRect().x })).sort((a, b) => a.x - b.x).map((e) => e.n));
+    expect(items).toEqual(["unfold", "home", "slot", "mode", "angle", "menu"]);
+    await fbar(page).getByTestId("chip-angle").tap(); // a tap on the word works folded too
+    await expect(fbar(page).getByTestId("chip-angle")).toHaveText("DEG");
+    await results(page).last().tap();
+    await expect(fbar(page).getByTestId("row-actions").getByRole("button")).toHaveCount(2);
+    await expect(group).toBeHidden();
+    await expect(fbar(page).getByTestId("chip-angle")).toBeHidden();
+  });
