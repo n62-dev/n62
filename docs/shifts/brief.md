@@ -74,6 +74,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 885ze | R853 ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
 | 885zf | R855 Choose folder offers another device's newer backup at once (R128; owner, 2026-11-21) | ron, Opus | `p1/ron-pickoffer` | – |
 | 886 | [R703f1](packages/R703f1.md) R703's font-scale test on the lane's device and its audit's points (R703 not merged, run 1470; owner, 2026-11-22) | ron, Opus | `p1/ron-textzoom` | – |
+| 886a | [R856](packages/R856.md) the bar's final look: house on Home, one size in every place, `STD 12 ▾ │ DEG` with no angle icon (owner, 2026-11-22) | ron, Opus | `p1/ron-barfinal` | R703f1 |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
