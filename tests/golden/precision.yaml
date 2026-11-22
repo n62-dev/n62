@@ -1694,3 +1694,11 @@ cases:
   - { id: "g398-cas-keep-ln-inv-x", kind: "cas", input: "ln(1/x)", expect: "-ln(x)", source: "derived", note: "guard: a free name keeps Giac's rewrite (its sign is not known)" }
   - { id: "g398-cas-keep-sqrt-inv-x", kind: "cas", input: "sqrt(1/x)", expect: "1/sqrt(x)", source: "derived", note: "guard: a free name keeps Giac's rewrite" }
   - { id: "g398-cas-keep-ln-inv-x2-plus-1", kind: "cas", input: "ln(1/(x^2+1))", expect: "-ln(x^2+1)", source: "derived", note: "guard: a free expression keeps Giac's rewrite" }
+  # --- G398 fix round 2: the steps stage's g42-quartile1-six showed 0 on the 8× clock (runs 1377 and 1472, under load). Cause: Giac's
+  # ascsort (permu.cc ascsort, under median, quartile1, quartile3, quantile, quartiles) puts 0 for every element whose evalf is not a
+  # _DOUBLE_, and at Digits > 14 a float element is MPFR: quartile1(evalf([1,2,3,4,5,6])) = 0.0 at Digits 15 to 40, 2.0 at 14. Home's
+  # float path (after the exact path's time-out) and a stored float list reach it. Pending until a patch; the expected values are
+  # Giac's own convention at Digits 12 (g42-quartile1-six: 2; quartile3 of the same list 5.0), not a new definition.
+  - { id: "g398f2-quartile1-stored-float-list", input: "quartile1(Lq398)", before: ["Lq398:=approx([1,2,3,4,5,6])"], expect: "2", mark: "⚠", source: "derived", status: "pending", note: "shows ⚠ 0 (38 digits confirmed): the stored list holds MPFR floats at P, which ascsort reads as 0" }
+  - { id: "g398f2-quartile3-approx-list", input: "quartile3(approx([1,2,3,4,5,6]))", expect: "5", mark: "⚠", source: "derived", status: "pending", note: "shows ⚠ 0, as quartile1 of a stored float list" }
+  - { id: "g398f2-quartile1-approx-list-30", input: "quartile1(approx([1,2,3,4,5,6]))", settings: { digits: 30 }, expect: "2", mark: "⚠", source: "derived", status: "pending", note: "shows ⚠ 0 at 30 digits too" }
