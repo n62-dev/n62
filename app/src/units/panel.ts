@@ -128,12 +128,10 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   const formula = el("div", "formula");
   // R349: → Check puts the end slot on (active, empty), ✕ Check takes it off; hidden where it cannot go (no number slot)
   const check = tapped(el("button", "check", "unit-check"), () => view()?.setChecking(!view()?.checking));
-  // R853: ← and → step one whole slot, as a tap on it (R801); dim and dead at the ends; the focus stays on the view
+  // R853: ← and → step one whole slot, as a tap on it (R801); dim and dead at the ends (the focus comes back to the view
+  // as after any tap, units/open.ts)
   const step = (by: -1 | 1, testid: string, face: UnitMessageKey, label: UnitMessageKey): HTMLElement => {
-    const b = tapped(el("button", "step", testid, unitText(face)), () => {
-      view()?.step(by);
-      element.focus({ preventScroll: true });
-    });
+    const b = tapped(el("button", "step", testid, unitText(face)), () => view()?.step(by));
     b.setAttribute("aria-label", unitText(label));
     return b;
   };
