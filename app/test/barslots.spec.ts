@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R782 (owner, 2026-11-20): the bar's left side never shifts: ⌄ · APP▾ · [Home | slot 2] · hairline. APP▾ is outside the
+// R782 (owner, 2026-11-20): the bar's left side never shifts: ⌄ · APP▾ · [Home | slot 2] (R856: segments, no hairline). APP▾ is outside the
 // track (a neutral ⊞▾ in Home and CAS, the app's glyph in a place opened through it); Home is fixed; slot 2 is CAS until a
 // second tap on it (while it is the current place) opens the Apps sheet titled "Slot 2" and a pick puts that place there.
 // The fake engine. Widths 360, 392 and 412.

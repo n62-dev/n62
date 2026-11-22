@@ -72,7 +72,7 @@ test("R146, R723: one press for Redo; Help's tap opens Help, Shift + Help Settin
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
 });
 
-test("R723, R785: Mode opens from the STD|12 chip and from a free key that holds it; Shift + Deselect does not open it", async ({ page }) => {
+test("R723, R785: Mode opens from the STD 12 ▾ chip and from a free key that holds it; Shift + Deselect does not open it", async ({ page }) => {
   await page.getByTestId("chip-format").tap();
   await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
   await tap(page, ["esc"]);
