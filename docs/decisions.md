@@ -8,9 +8,6 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
-- **G398, a free name's ln(1/x) before a subst:** patch 0057 keeps `ln(1/f)`, `sqrt(1/f)` where Giac's sign proves f < 0 (a constant, or a name under `assume(y<0)`); a free name keeps Giac's `ln(1/x)` = `-ln(x)`, so `subst(ln(1/y),y=-2)` is `-ln(-2)`, the conjugate of ln(-1/2); a stored y or `f(x):=ln(1/x)` gets ln(-1/2). Owner 2026-11-22, "fix it": G783.
-
-- **G782, a ratio chip outside Home and CAS (gorge, run 1475):** Home and CAS take a chip in %, ‰, ppm or ppb as its pure number; two paths keep their old behaviour, each a value off by the ratio's factor or a refusal: in the unit view the chip's slot starts empty (its unit has no dimension key, which `chipUnit` needs), so unless % is put in it `chip × 200 m` is 84 m, not 0.84 m; and Store ▶ on such a result stays dead ("no unit"). Default taken (the unit view's size pin): every chip of a pure number shown in a unit keeps that unit, so a rev chip's Home row now says "unit dropped" (it was silent; the value is the same), and Ans of such a result (%, rev) is refused in the unit view, as any Ans with a unit (R259; a % one went in as 0.42 before, a rev one as 3). Recommendation: a small package that fills the slot with the ratio (a unit view result 0.42 % × 200 m = 0.84 m) and stores the pure number. Would change if: the owner wants the ratio dropped in the unit view too.
 
 - **R860, the hint in a landscape phone's history (ron, run 1489):** at 915 × 412 the history is 16 px, under the hint's 21 px line, so the hint cannot lie inside it (R860 leaves the mark out there and keeps the hint's whole line in the scroller, mostly hidden). Should a short history give the hint up too, or should the landscape layout give the history at least one line? Recommendation: a landscape layout package (the keypad beside the history), the hint left as it is until then.
 
@@ -92,6 +89,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R18f1, R18f2 (2026-10-14): tests.** An exact true/false carries no mark; a test with a float side runs again at 14 and at P digits (true ≈, false ≈, or as typed). Archived. Would change if: a function is audited.
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
 - **P10 (2026-10-12): Giac's English help lines in Find.** Confirmed by B. Parisse (email, 2026-10-19): `aide_cas` is entirely GPL; the non-GPL French documentation means R. De Graeve's LaTeX/PDF manuals.
+- **G398's free name (owner, 2026-11-22, "fix it"):** patch 0057 keeps `ln(1/f)`, `sqrt(1/f)` where Giac's sign proves f < 0 (a constant, or a name under `assume(y<0)`); a free name's `ln(1/x)` = `-ln(x)`, so `subst(ln(1/y),y=-2)` = `-ln(-2)`, is G783's (lane B).
 - **K22 (owner, 2026-11-17):** the unit view's refusal of `80 °C − 5 K` and its words wait for G385, after the tag.
 - **P5 (2026-10-11; owner, 2026-11-16): behaviour against the reference.** The maths is Giac's wherever possible; it departs only where Giac gives a silent wrong answer. The G2 guides the keys and the flow, not the maths: its Home is HP's own engine, so a G2 result alone never changes a result, and no G2 question asks about maths. Home keeps Giac's principal root (complex `sqrt(-4)`, `asin(2)`), the ∛ template, Function and Solve the real odd root (R39). Archived.
 - **P8 (2026-10-12): the engineer core:** milestones 4, 5, 6, each with benchmark tasks; fewer features done well beat G2 parity.
@@ -165,6 +163,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 
 - **The deep check of 2026-10-19 (G38, G57, G48, G39).** Rule: docs/04 2.4. Archived. **G328 (pass 153):** a name set beside the result takes the facts of what sets it; after a decision on the line, the line's (G48).
 - **`full` of a result that is not exact (G302):** the rpn stage compares it by value, an exact one as text. Archived. Would change if: a user sees the two forms differ.
+- **A complex element in median and the quartiles (pass 229, principle 3):** refused, never sorted as 0 (Giac's ascsort; `median([1+i,2+i,3+i])` showed 0, `quartile1([1,2,3,4,5,6.0+i])` 1); G786f1. Would change if: the owner wants an order on complex data.
 - **arg(0) and atan2(0, 0) (G362):** both are 0, as Giac gives them and as C's atan2 and Python's cmath.phase do; Find's lines say so. Would change if: the owner wants the angle of 0 refused.
 
 **Units**
@@ -177,6 +176,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R201, R353:** Made of is typed text; a unit is not renamed; Store ▶'s title keeps the mark. Archived. Would change if: the owner, after his try on the phone.
 - **G370's shape:** `T1 − T2` is the whole formula; a bracketed difference inside a longer one stays refused. Archived. Would change if: G385.
 
+- **A ratio chip (G369, G782; pass 229):** a chip in one ratio unit (%, ‰, ppm, ppb) is its pure number wherever it goes: Home and CAS (G782); in the unit view its slot holds the ratio (`chip × 200 m` with 0.42 % is 0.84 m, not 84 m) and Store ▶ stores the pure number with its σ (G782f1). A pure number in another unit (rev) keeps "unit dropped" in Home; Ans of a % or rev result is refused in the unit view (R259). Would change if: the owner wants the ratio dropped in the unit view.
 - **The check of 2026-10-19:** a zero term keeps its dimension for the unit check (G35). Would change if: the per-term check costs more than the 5 ms p95 bar.
 
 
