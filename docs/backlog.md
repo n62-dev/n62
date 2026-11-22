@@ -62,7 +62,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584.
 - **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G600–G608, R600; T6b: G613–G624; unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
 - **F472 (G782's report; G782f1).** A % chip in the unit view counts as its number: `chip × 200 m` with 0.42 % is 84 m (right 0.84 m), the slot starts empty; Store ▶ on a ratio result is dead. Family 1.
-- **F473 (G786's report; G786f1).** Giac's ascsort (patch 0058) still reads an element with no real value as 0: Home `median([1+i,2+i,3+i])` shows 0, `quartile1([1,2,3,4,5,6.0+i])` 1, stock too. Family 5.
 - **F357, no package (T4, S14).** Function Symb: Enter keeps the line on F1 (the owner's G2 check).
 
 ### Background stream (extreme inputs; at night, by reach)
