@@ -8,6 +8,7 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
+- **G398, a free name's ln(1/x) before a substitution:** patch 0056 keeps `ln(1/f)` and `sqrt(1/f)` where Giac's sign proves f < 0 (a constant, or a name under `assume(y<0)`); a free name keeps Giac's `ln(1/x)` = `-ln(x)` as the package asked, so `subst(ln(1/y),y=-2)` is `-ln(-2)`, ≈ -0.69314718056-3.14159265359·i (right ln(-1/2) = -0.69314718056+3.14159265359·i, mpmath). Recommendation: keep it (the CAS forms `-ln(x)`, `1/sqrt(x)` are what users expect for a free x; a stored y and a function `f(x):=ln(1/x)` put the value in before ln, `f(-2)` = `ln(-1/2)`, probe on the patched engine); the other way is a package that keeps `ln(1/x)` for every free x.
 
 
 
