@@ -47,21 +47,26 @@
     justify-content: center;
     min-width: var(--bar-h);
   }
-  /* the views as icons, one segmented control drawn inside the bar's height; the selected one filled */
+  /* R856: the views as icons, one track of segments drawn inside the bar's height, as Home and slot 2's (StatusLine.svelte):
+     the recessed track, the current view filled in --key-on (3:1 on the bar; the old --chip-bg fill was 1.1:1) */
   .seg {
     flex: none;
     position: relative;
     display: flex;
+    gap: var(--sp-05);
+    padding: 0 var(--sp-05);
   }
   .seg::before {
     content: "";
     position: absolute;
     inset: var(--sp-05) 0;
-    border: var(--stroke-thin) solid var(--line);
+    background: var(--bar-track);
+    box-shadow: inset 0 0 0 var(--stroke-thin) color-mix(in srgb, var(--line) 55%, transparent);
     border-radius: calc(var(--radius-s) + var(--stroke-thin));
     pointer-events: none;
   }
   .tab {
+    position: relative;
     width: var(--bay-view-w);
     color: var(--muted);
     font-size: var(--fs-ui);
@@ -70,7 +75,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: calc(100% - 2 * var(--sp-05));
+    width: 100%;
     height: var(--tab-h);
     border-radius: calc(var(--radius-s) - var(--stroke-thin));
   }
@@ -82,9 +87,9 @@
     background: var(--key-nav);
   }
   .tab[aria-selected="true"] {
-    color: var(--text);
+    color: var(--on-key-on);
   }
   .tab[aria-selected="true"] .face {
-    background: var(--chip-bg);
+    background: var(--key-on);
   }
 </style>

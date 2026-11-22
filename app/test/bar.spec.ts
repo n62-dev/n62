@@ -276,13 +276,15 @@ test("the modes are one outlined group: STD 12 ▾, a divider, the word RAD or D
     const f = (await fmt.boundingBox())!;
     const w = (await word.boundingBox())!;
     expect(f.x + f.width).toBeLessThanOrEqual(w.x + 0.5); // the word last
-    expect(await fmt.evaluate((e) => getComputedStyle(e).borderRightWidth)).toBe("1px"); // the divider
-    expect(await group.evaluate((e) => getComputedStyle(e).boxShadow)).not.toBe("none"); // outlined
+    // the divider (drawn inside the outline's height, so the targets keep the bar's 28 px) and the outline
+    expect(await fmt.evaluate((e) => { const a = getComputedStyle(e, "::after"); return a.content !== "none" ? a.width : "none"; })).toBe("1px");
+    expect(await group.evaluate((e) => getComputedStyle(e, "::before").boxShadow)).toMatch(/inset/);
   }
   const barBg = await bg(page, BAR);
   for (const a of ["rad", "deg"] as const) {
     if ((await angle(page)) !== a) await word.tap();
     await expect(word).toHaveText(a.toUpperCase());
+    await expect(page.locator('[data-testid="bar"] [data-down]')).toHaveCount(0); // the press's own fill is over
     for (const sel of ['[data-testid="chip-angle"]', '[data-testid="chip-format"]']) expect(await under(page, sel), `${sel} in ${a}`).toBe(barBg);
   }
   await word.tap(); // back to RAD
@@ -298,9 +300,10 @@ test("the modes are one outlined group: STD 12 ▾, a divider, the word RAD or D
     });
     const cs = getComputedStyle(document.querySelector('[data-testid="chip-angle"]')!);
     const ms = getComputedStyle(document.querySelector('[data-testid="menu-button"]')!);
-    return { between: between.length, borders: [cs.borderLeftWidth, cs.borderRightWidth, ms.borderLeftWidth] };
+    const after = getComputedStyle(document.querySelector('[data-testid="chip-angle"]')!, "::after").content;
+    return { between: between.length, borders: [cs.borderLeftWidth, cs.borderRightWidth, ms.borderLeftWidth], after };
   });
-  expect(gap).toEqual({ between: 0, borders: ["0px", "0px", "0px"] });
+  expect(gap).toEqual({ between: 0, borders: ["0px", "0px", "0px"], after: "none" });
 });
 
 test("taps: the word switches RAD ↔ DEG in one tap and counts bar.angle; STD 12 opens Mode on Format; the spoken names stay (R856)", async ({ page }) => {
