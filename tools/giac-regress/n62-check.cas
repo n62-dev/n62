@@ -607,6 +607,8 @@ Digits:=40:; pc("g576-half^1e6",'((1/2)^(10^6))',(10100340592/10^301040),5/10^30
 Digits:=40:; pc("g576-keep-daily-10y",'((1+1/365)^3650)',(217273331461/10^7),5/10^8);
 // g576-keep-2^100000 (home.yaml, oracle)
 Digits:=40:; pc("g576-keep-2^100000",'(2^100000)',(999002093014*10^30091),5*10^30090);
+// g620-keep-limit-exp-at-1 (home.yaml, derived)
+Digits:=40:; pc("g620-keep-limit-exp-at-1",'(limit((exp(1+x)-exp(1))/x,x,0))',(271828182846/10^11),5/10^12);
 // prec-20-sqrt2 (precision.yaml, oracle)
 Digits:=40:; pc("prec-20-sqrt2",'(sqrt(2))',(14142135623730950488/10^19),5/10^20);
 // prec-20-third (precision.yaml, oracle)

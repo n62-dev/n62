@@ -119,7 +119,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B1a | [G783](packages/G783.md) a free name's ln(1/x) and √(1/x) keep their form, so a later value gets the principal branch (owner, 2026-11-22) | gorge, Opus | `p1/gorge-invfree` | G398 |
 | B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
 | B2a | [G782](packages/G782.md) a %, ‰, ppm or ppb chip in Home is its pure number (G369; owner, 2026-11-21) | gorge, Opus | `p1/gorge-ratiochip` | – |
-| B3 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a finite point is their value, never infinity | gorge, Opus | `p1/gorge-hyplimit` | – |
+| B3 | G620 a limit of sinh, cosh or tanh at a finite point is their value, never infinity | gorge, Opus | `p1/gorge-hyplimit` | – |
+| B3a | [G782](packages/G782.md) once more, review-only: `scripts/pipeline.sh gorge "G782" --no-worker --audit-model auto` (its NOT MERGED of 11-22 16:11 was golden under two lanes' load, audits APPROVED; owner, 2026-11-22: rerun once; done at its next result line) | gorge, Opus | `p1/gorge-ratiochip` | – |
 | B4 | [G553](packages/G553.md) floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
 | B5 | [G551](packages/G551.md) bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
 | B6 | [G554](packages/G554.md) exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
