@@ -416,7 +416,9 @@ describe("Settings, a level of the sheet (R49)", () => {
     session.taps.press();
     expect(byId(s, "presses")?.value).toBe("1");
     expect(byId(s, "taps")?.value).toBe("4 / 0");
-    expect(s.activate(at(s, "reset"))).toEqual({ kind: "stay" });
+    expect(s.activate(at(s, "reset"))).toEqual({ kind: "stay" }); // R857: the first pick arms, the counts stay
+    expect(session.taps.counts.shift).toBe(4);
+    expect(s.activate(at(s, "reset"))).toEqual({ kind: "stay" }); // the second clears
     expect(session.taps.counts.shift).toBe(0);
     expect(byId(s, "presses")?.value).toBe("0");
   });
@@ -726,10 +728,37 @@ describe("Settings › Counters › Removal tests › Angle chip (R722)", () => 
     expect(s.level.items.map((x) => x.id)).toEqual(["angle", "undo", "since", "reset"]);
     expect([byId(s, "angle")?.value, byId(s, "undo")?.value]).toEqual(["2", "1"]);
     expect(byId(s, "since")?.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    s.activate(at(s, "reset")); // R857: the first pick arms
+    await session.uses("bar-uses");
+    expect(byId(s, "angle")?.value).toBe("2");
     const reset = s.activate(at(s, "reset"));
     if (reset.kind === "run") reset.item.run?.();
     await session.uses("bar-uses");
     expect(byId(s, "angle")?.value).toBe("0");
     expect(results.state.since).toBe(""); // the angle chip's Reset is its own
+  });
+});
+
+describe("Settings › Counters: the three resets ask once (R857)", () => {
+  it("Counters, Results mode and Angle chip carry confirm, its note the counts' since; the label turns to its armed text", async () => {
+    session = new Session(new FakeCalc(), fakeKv([["uses", { counts: { "fold.swipe": 2 }, since: "2026-11-01" }]]));
+    await session.taps.load();
+    await (await session.uses()).ready;
+    await (await session.uses("bar-uses")).ready;
+    session.taps.press(); // (a count starts the since)
+    const s = settings(4);
+    const counters = byId(s, "reset");
+    expect(counters?.confirm?.label).toBe("Reset the counter?");
+    expect(counters?.confirm?.note).toMatch(/^Clears the counts since \d{4}-\d\d-\d\d\. Tap again\.$/);
+    s.activate(at(s, "uses"));
+    s.activate(at(s, "results"));
+    expect(byId(s, "reset")?.confirm?.note).toBe("Clears the counts since 2026-11-01. Tap again.");
+    s.activate(at(s, "reset"));
+    expect(s.armed).toBe("reset");
+    expect(byId(s, "swipe")?.value).toBe("2");
+    s.back(); // a level change disarms: the Angle chip's reset (the same id) is not armed
+    expect(s.armed).toBe(null);
+    s.activate(at(s, "bar"));
+    expect(byId(s, "reset")?.confirm?.note).toBe("Clears the counts. Tap again."); // nothing counted yet: no since
   });
 });

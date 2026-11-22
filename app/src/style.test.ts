@@ -89,6 +89,10 @@ for (const [sel, t] of allThemeBlocks()) {
         expect(contrast(t[fg] as string, t["pick"] as string), `--${fg} on --pick`).toBeGreaterThanOrEqual(4.5);
       expect(contrast(t["focus"] as string, t["panel"] as string), "--focus on --panel").toBeGreaterThanOrEqual(3);
     });
+    it("an armed row (R857, Sheet.svelte data-armed): --error on --panel and on --pick at least 4.5:1", () => {
+      for (const bg of ["panel", "pick"] as const)
+        expect(contrast(t["error"] as string, t[bg] as string), `--error on --${bg}`).toBeGreaterThanOrEqual(4.5);
+    });
   });
 }
 

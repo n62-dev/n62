@@ -462,8 +462,23 @@ function tapsItems(session: Session, env: SettingsEnv): MenuItem[] {
     { id: "since", label: keyFeelText("settings.taps.since"), keep: true, get value() { return taps.counts.since || "—"; } },
     // R127: the counts per key and layer as a file (R128 writes the same text into the sync folder); only where the app gives the file port
     ...(env.data ? [{ id: "export", label: keyFeelText("settings.taps.export"), run: () => env.data?.((c) => c.saveCounts(taps.counts)) }] : []),
-    { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => taps.reset() },
+    resetRow(() => taps.counts.since, () => taps.reset()),
   ];
+}
+
+/** A counter's Reset (R857, owner 2026-11-22: a bulk reset asks once): the first pick arms it (MenuItem.confirm, R281), its
+ *  label asks and the note under the list says the counts since `since` go; the second pick runs `run`. */
+function resetRow(since: () => string, run: () => void): MenuItem {
+  return {
+    id: "reset",
+    label: keyFeelText("settings.taps.reset"),
+    keep: true,
+    get confirm() {
+      const d = since();
+      return { cell: "", label: keyFeelText("settings.taps.reset.armed"), note: d ? keyFeelText("settings.taps.reset.note", { since: d }) : keyFeelText("settings.taps.reset.noteAll") };
+    },
+    run,
+  };
 }
 
 /** "Removal tests ›" (R722): one row in Counters, its value the folds (P16), its level a row per counted removal test, each
@@ -504,7 +519,7 @@ function usesRow(session: Session): MenuItem {
         row("pick", keyFeelText("settings.uses.pick"), n((c) => c.get("pick"))),
         row("actions", keyFeelText("settings.uses.actions"), n((c) => c.actions)),
         row("since", keyFeelText("settings.taps.since"), () => u()?.state.since || "—"),
-        { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => void session.uses().then((c) => c.reset()) },
+        resetRow(() => u()?.state.since ?? "", () => void session.uses().then((c) => c.reset())),
       ],
     },
   };
@@ -530,7 +545,7 @@ function barRow(session: Session): MenuItem {
         row("angle", keyFeelText("settings.bar.angle"), n("bar.angle")),
         row("undo", keyFeelText("settings.bar.undo"), n("bar.angle.undo")),
         row("since", keyFeelText("settings.taps.since"), () => session.useCounters["bar-uses"]?.state.since || "—"),
-        { id: "reset", label: keyFeelText("settings.taps.reset"), keep: true, run: () => void session.uses("bar-uses").then((c) => c.reset()) },
+        resetRow(() => session.useCounters["bar-uses"]?.state.since ?? "", () => void session.uses("bar-uses").then((c) => c.reset())),
       ],
     },
   };

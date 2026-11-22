@@ -112,8 +112,9 @@ export interface MenuItem {
    *  letter, `value` the line under it. */
   readonly cell?: true;
   /** R281: picking the item arms it first and a second pick runs it; any other press disarms (Sheet.armed). `cell`
-   *  stands in the cell's value line while armed (`5 · again?`), `note` under the list (already translated). */
-  readonly confirm?: { readonly cell: string; readonly note: string };
+   *  stands in the cell's value line while armed (`5 · again?`), `note` under the list, `label` (R857) for a row's label
+   *  while armed (already translated). */
+  readonly confirm?: { readonly cell: string; readonly note: string; readonly label?: string };
 }
 
 export interface SubMenu {

@@ -160,6 +160,7 @@ test.describe("by touch", () => {
     await expect(row(page, "taps").getByTestId("sheet-value")).toHaveText("2 / 2"); // Shift / Alpha (R53: one row)
     await expect(row(page, "presets").getByTestId("sheet-value")).toHaveText("0");
     await expect(row(page, "since").getByTestId("sheet-value")).toHaveText(/^\d{4}-\d\d-\d\d$/);
+    await row(page, "reset").tap(); // R857: the first tap arms, the second clears
     await row(page, "reset").tap();
     await expect(row(page, "taps").getByTestId("sheet-value")).toHaveText("0 / 0");
     await expect(title(page)).toHaveText("Mode › Settings › Counters");

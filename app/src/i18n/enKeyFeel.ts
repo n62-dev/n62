@@ -18,6 +18,10 @@ export const enKeyFeel = {
   "settings.taps.since": "Counted on this device since",
   "settings.taps.export": "Export the counts",
   "settings.taps.reset": "Reset the counter",
+  /** R857: the three resets of the counts ask once (MenuItem.confirm): the label while armed, the note under the list. */
+  "settings.taps.reset.armed": "Reset the counter?",
+  "settings.taps.reset.note": "Clears the counts since {since}. Tap again.",
+  "settings.taps.reset.noteAll": "Clears the counts. Tap again.",
   /** R53, R724: the swipe on the entry line or ⌄ on the bar (en.ts "status.fold") folds the keypad into results mode; ⌃ on the
    *  folded bar brings it back (keyboard/Fold.svelte, its own chunk). */
   "keys.unfold": "Show keypad",
