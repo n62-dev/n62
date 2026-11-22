@@ -3,7 +3,8 @@
 // (the field's value keeps the macro) needs a browser: app/test/chips.spec.ts. Uses MathLive's own SSR build.
 import { convertLatexToMarkup, validateLatex } from "mathlive/ssr";
 import { describe, expect, it } from "vitest";
-import { CHIP_MACROS, ENTRY_MACROS, constChip, resChip } from "./macros.ts";
+import { CHIP_MACROS, ENTRY_MACROS } from "./macroTable.ts";
+import { constChip, resChip } from "./macros.ts";
 
 const macros = CHIP_MACROS;
 

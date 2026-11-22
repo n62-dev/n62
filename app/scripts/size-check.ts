@@ -233,8 +233,9 @@ export const LAZY_VIEWS = ["src/views/Sheet.svelte"];
  *  left side): Android back's layers (input/backLayer.ts, behind input/backLayerFront.ts, loaded when idle); the bay's view
  *  icons (views/AppViews.svelte, drawn only in an open app, so it rides in the shell's app-opening chunk); the stored log's
  *  load check (engine/defsCheck.ts, split from defs.ts: the engine reads the stored log in parallel with the store, the
- *  start chunk keeps only the log's own functions). */
-export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts"];
+ *  start chunk keeps only the log's own functions). R791 (fix round 1): the renderer's macro table (render/macros.ts with
+ *  entry/macroTable.ts), loaded with MathLive (render/mathlive.svelte.ts). */
+export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "src/render/tidy.ts", "src/keyboard/shiftPalettes.ts", "src/units/open.ts", "src/entry/field.ts", "src/state/handOver.ts", "src/views/UpdateNote.svelte", "src/views/tipsHost.ts", "src/state/migrations.ts", "src/keyboard/keyNames.ts", "src/views/sheet.svelte.ts", "src/input/click.ts", "src/state/resultItem.ts", "src/state/storedItem.ts", "src/engine/giacPrint.ts", "src/views/rowGesturesCode.ts", "src/apps/longpress.ts", "src/state/taps.svelte.ts", "src/state/pressCount.ts", "src/views/statSheet.ts", "src/views/helpSheet.ts", "src/views/matrixGrid.svelte.ts", "src/entry/cursorFn.ts", "src/engine/decimalLatex.ts", "src/apps/shellOpen.ts", "src/views/icons.ts", "src/input/backLayer.ts", "src/views/AppViews.svelte", "src/engine/defsCheck.ts", "src/engine/rational.ts", "src/engine/readFacts.ts", "src/render/longInsert.ts", "src/render/macros.ts", "src/entry/macroTable.ts"];
 
 /** R91's pin: the start chunk is at most this many bytes gzip, under the budget of 63 kB (the pin kept its value when the
  *  budget was raised from 61 kB, 2026-11-09). A package that needs more raises the pin with a reason, here and in docs/04 8.3.
@@ -585,8 +586,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (route.ts: `isSelect` takes the `copy` special, so the one test in `run` and the one in `historyKey` carry it; the
  *  rule itself is ClipActions.keyCopy, in the clipboard chunk). Phase-1 3ea24712 measures 62.98 kB gzip (177.77 kB raw), the
  *  branch 62,995 B (177.77 kB raw): the first build measured 63.05 kB, over the budget, cut by folding the Copy tests into
- *  `isSelect` and dropping the controller's getter. The pin is the budget itself: nothing is left under it. */
-export const START_PIN_GZIP = 63_000;
+ *  `isSelect` and dropping the controller's getter. The pin is the budget itself: nothing is left under it.
+ *  63,000 → 62,800 B (R791 fix round 1, a cut): the entry line's `\AA` macro (an upright Å) is in the macro table, and the
+ *  table (entry/macroTable.ts, split from entry/macros.ts) with the renderer's options (render/macros.ts) now loads with
+ *  MathLive (render/mathlive.svelte.ts); Math.svelte draws plain text until then, as before. The branch first measured
+ *  63,019 B (177,128 B raw), over the budget; split, 62,742 B (176,235 B raw; −277 B): + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_800;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

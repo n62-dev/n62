@@ -4,7 +4,6 @@
   // Until MathLive has loaded the LaTeX is shown as plain text. A LaTeX over MAX_DRAWN_LATEX, or one MathLive refuses,
   // is a note instead (R135): LaTeX source is never shown for a result, and a too long one never reaches MathLive.
   import { MAX_DRAWN_LATEX, tooLongNote } from "./longResult.ts";
-  import { renderOptions } from "./macros.ts";
   import { mathlive, renderStats } from "./mathlive.svelte.ts";
 
   /** `size`: the length of the result's text, for the note (default: the LaTeX's own). R158: `pieces` are `latex` cut at
@@ -18,8 +17,8 @@
     try {
       renderStats.count++;
       // chips in a history entry (\res, \ans, \const) and the exponent mark ᴇ draw as on the entry line, MathLive's own
-      // macros (\exponentialE, \imaginaryI) beside them (R152)
-      return lib.convertLatexToMarkup(l, renderOptions(lib));
+      // macros (\exponentialE, \imaginaryI) beside them (R152); the options load with MathLive (render/mathlive.svelte.ts)
+      return lib.convertLatexToMarkup(l, mathlive.options?.(lib));
     } catch {
       return null;
     }

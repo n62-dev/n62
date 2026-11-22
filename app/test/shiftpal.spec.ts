@@ -278,6 +278,10 @@ test("& and Å are refused with a message, never read as something else", async 
   await expect(lastRow(page).getByRole("alert")).toContainText("& has no meaning here yet");
   await tap(page, ["d5"]);
   await tapCell(page, "d9", "aring");
+  // R791: the line draws Å, never the raw \AA in MathLive's red error style; its value stays \AA for the parser
+  await expect(page.locator("math-field").first().locator(".ML__error")).toHaveCount(0);
+  await expect(page.locator("math-field").first().locator(".ML__content")).toContainText("5\u00C5");
+  expect(await entryValue(page)).toBe("5\\AA");
   await tap(page, ["enter"]);
   await expect(lastRow(page).getByRole("alert")).toContainText("Å is a unit");
 });

@@ -5,7 +5,7 @@
 // the field (entry/field.ts) and for Math.svelte. MathLive exports no default table (0.111.1): a mounted field's
 // `macros` is the reference, so the defaults are read from one throw-away field, once.
 import type * as MathLive from "mathlive";
-import { ENTRY_MACROS } from "../entry/macros.ts";
+import { ENTRY_MACROS } from "../entry/macroTable.ts";
 
 type Macros = NonNullable<NonNullable<Parameters<typeof MathLive.convertLatexToMarkup>[1]>["macros"]>;
 
