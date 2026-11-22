@@ -113,8 +113,8 @@ describe("chips in the parser", () => {
       expect(r.giac).toBe("pasr_1");
       expect(r.named).toEqual({ "1": { value: "0.0042", exact: false, unc: "0.0001" } });
     });
-    it("any other unit keeps today's rule: the number shown, the unit dropped (%·m, m, k%, %²)", () => {
-      for (const unit of [u("%·m", { unit: "percent" }, { unit: "m" }), u("m", { unit: "m" }), u("k%", { prefix: "k", unit: "percent" }), u("%²", { unit: "percent", power: "2" })]) {
+    it("any other unit keeps today's rule: the number shown, the unit dropped (%·m, m, k%, %², rev)", () => {
+      for (const unit of [u("%·m", { unit: "percent" }, { unit: "m" }), u("m", { unit: "m" }), u("k%", { prefix: "k", unit: "percent" }), u("%²", { unit: "percent", power: "2" }), u("rev", { unit: "rev" })]) {
         const c = chip("0.42", unit);
         expect(latexToGiac("\\res{1}{0.42}", { chips: c })).toBe("(42/10^2)");
         expect(latexToGiacInfo("\\res{1}{0.42}", { chips: c }).unitDropped).toBe(true);

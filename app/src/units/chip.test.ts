@@ -108,16 +108,17 @@ describe.skipIf(!giacAvailable())("quantityChip (R61, real Giac)", () => {
     expect(quantityChip(q)).toEqual({ value: "3", exact: true });
   });
 
-  // G782: a pure number in one ratio unit keeps it (dimension key ""), so Home takes its pure number (input/ratioChip.ts);
-  // Store ▶ stays off for it, as before G782 (a stored name's unit needs a dimension key, G371). Any other pure number as before.
-  it("0.0042 ▶ %: 0.42 with the unit %; rev keeps no unit", () => {
+  // G782: a pure number in a unit keeps it (dimension key ""), so Home takes a ratio's pure number (input/ratioChip.ts)
+  // and says rev was dropped; Store ▶ stays off for both, as before G782 (a stored name's unit needs a dimension key, G371)
+  it("0.0042 ▶ %: 0.42 with the unit %; 3 rev with rev", () => {
     const q = units({ formula: "0.0042", slots: [], end: { tokens: [{ unit: "percent" }] } }) as Quantity;
     expect(q.unit).toBe("%");
     expect(quantityChip(q)).toEqual({ value: "21/50", exact: true, unit: { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } } });
     expect(storeChip(quantityChip(q), q.unit, q.unc)).toBeUndefined();
     const rev = units({ formula: "3*pasu1", slots: [{ tokens: [{ unit: "rev" }] }], end: { tokens: [{ unit: "rev" }] } }) as Quantity;
     expect(rev.unit).toBe("rev");
-    expect(quantityChip(rev)).toEqual({ value: "3", exact: true });
+    expect(quantityChip(rev)).toEqual({ value: "3", exact: true, unit: { text: "rev", dim: "", slot: { tokens: [{ unit: "rev" }] } } });
+    expect(storeChip(quantityChip(rev), rev.unit, rev.unc)).toBeUndefined();
   });
 
   // R353: Store ▶ in the unit view stores the chip only when it carries the unit and σ the view shows; the bare number never

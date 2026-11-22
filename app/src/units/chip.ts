@@ -8,7 +8,6 @@ import type { Chip } from "../input/chips.ts";
 import { chipOf, FULL_LIMIT } from "../state/results.ts";
 import { homeItem } from "../state/resultItem.ts";
 import { isUnitError, type Quantity, type UnitError } from "./types.ts";
-import { ratioSlotPower } from "../input/ratioChip.ts";
 
 /** The chip of a unit result; undefined for a refusal, or a value or σ with no chip text (as Home's: insert as drawn). */
 export function quantityChip(q: Quantity | UnitError): Chip | undefined {
@@ -26,9 +25,9 @@ export function quantityChip(q: Quantity | UnitError): Chip | undefined {
   if (q.unc && (!q.unc.value.ok || !sigma || sigma.length > FULL_LIMIT)) return undefined;
   if (sigma !== undefined && !isZeroText(sigma)) Object.assign(chip, { unc: sigma }, limit ? { uncFacts: limit } : {});
   // the loader keeps a unit text of up to 40 characters (input/chips.ts validChips)
-  // G782: a pure number in one ratio unit keeps it too, so Home and CAS take its pure number (input/ratioChip.ts)
-  const ratio = q.dimension === "" && ratioSlotPower(q.shownSlot) !== undefined;
-  if (q.unit !== "" && q.unit.length <= 40 && (q.dimension || ratio) && q.shownSlot) chip.unit = { text: q.unit, dim: q.dimension ?? "", slot: q.shownSlot };
+  // G782: a pure number in a unit (%, rev: dimension key "") keeps it too: Home and CAS take a ratio's pure number
+  // (input/ratioChip.ts) and say any other unit was dropped
+  if (q.unit !== "" && q.unit.length <= 40 && q.dimension !== null && q.shownSlot) chip.unit = { text: q.unit, dim: q.dimension, slot: q.shownSlot };
   return chip;
 }
 
