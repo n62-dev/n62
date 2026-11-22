@@ -7,8 +7,9 @@
 .unitview .why, .unitview .note, .unitview .working { color: var(--muted); font-size: 14px; min-height: 1.2em; }
 /* R852: the last row, the reading (it wraps upward) then → Check, bottoms aligned */
 .unitview .last { display: flex; align-items: flex-end; gap: 6px; }
-.unitview .reading { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: flex-end; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
-.unitview .reading .words { min-width: 0; }
+/* the reading fills its row's height (an empty one is still a tap target) and its parts sit at the bottom, a space's width apart */
+.unitview .reading { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-wrap: wrap; align-content: flex-end; column-gap: 0.28em; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.unitview .reading > span { min-width: 0; }
 .unitview .rare, .unitview .warn { color: var(--warn, var(--error)); }
 .unitview .message { color: var(--error); font-size: 14px; }
 .unitview .result { font-size: 20px; display: flex; gap: 6px; align-items: baseline; }

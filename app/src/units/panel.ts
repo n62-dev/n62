@@ -134,7 +134,7 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   said.hidden = true;
   // R790: the panel grows upward from the keys, so → Check last keeps one height whatever the reading, message or result hold;
   // R852: the reading beside it in that row (it wraps upward), and no height for what is not shown
-  const last = el("div", "last", "unit-last");
+  const last = el("div", "last");
   last.append(reading, check);
   element.append(formula, below, said, last);
   /** Hide the chips that do not fit beside "More…" (at least as many as the view can use) and tell the view how many fit. */
@@ -174,9 +174,7 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
     check.textContent = unitText(v.checking ? "units.check.off" : "units.check.on");
     check.setAttribute("aria-label", unitText(v.checking ? "units.check.offLabel" : "units.check.onLabel"));
     check.setAttribute("aria-pressed", `${v.checking}`);
-    const words = el("span", "words"); // (R852: the reading fills its row's height, so a tap finds it empty too; its words sit at the bottom)
-    words.append(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)]));
-    reading.replaceChildren(words);
+    reading.replaceChildren(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)])); // (R852: a flex box draws no " ": panel.css's gap)
     const why = store?.said();
     said.hidden = why === undefined;
     said.textContent = why ?? "";
