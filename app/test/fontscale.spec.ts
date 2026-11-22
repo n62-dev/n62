@@ -2,7 +2,11 @@
 // R41 (A4a point 4): at the Android font scale 1.5 and 2.0 the keypad's text still fits: a face stays between its two legend
 // lines, a legend inside its own line, nothing is cut by the key edge, in Home and CAS and in every layer. The bar
 // keeps its chips on one line at 1.5 (at 2.0 its fixed 28 px bar cannot hold the text: R41's report). (The scale is emulated: helpers.ts setFontScale.)
+// R703 (F383): the emulation scales only the app's --fs-* tokens; Android's WebView zooms every text after the CSS sizes, the
+// sizes fit.ts writes too, and this test cannot see that. The gate for the phone is the device test,
+// test-device/fontscale.device.ts (tools/fontscale-device.sh, at font_scale 1.3, 1.5 and 2.0).
 import { expect, test } from "@playwright/test";
+import { measure, walk } from "../test-device/fontscale-lib.ts";
 import { open, setFontScale, tap } from "./helpers.ts";
 
 const LAYERS: [string, string[]][] = [
@@ -72,3 +76,19 @@ for (const scale of [1.5])
     const m = await line.evaluate((el) => ({ scroll: el.scrollWidth, client: el.clientWidth, height: el.getBoundingClientRect().height }));
     expect(m.scroll).toBeLessThanOrEqual(m.client + 1);
   });
+
+// R703: the device test's walk and checks (test-device/fontscale-lib.ts) at the browser's scale 1.0 (no text zoom): they pass, so a
+// red on the device is the WebView's zoom, not a check that sees a problem everywhere
+// (412 × 915, the probe emulator's Pixel 7: at 360 px Mode's "Number format" ends in … at every scale, by design)
+test("the font-scale device checks pass in the browser at scale 1.0", async ({ page }) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await open(page, "engine=fake&tips=on");
+  const problems: string[] = [];
+  await walk(page, async (screen) => {
+    await page.waitForTimeout(150);
+    const m = await measure(page);
+    expect(m.zoom).toBe(1);
+    problems.push(...m.out.map((p) => `${screen}: ${p}`));
+  });
+  expect(problems).toEqual([]);
+});

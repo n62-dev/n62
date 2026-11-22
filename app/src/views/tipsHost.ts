@@ -114,8 +114,13 @@ export function showTips(): void {
       Object.assign(rest.style, { position: "static", top: "", bottom: "" });
     }
   };
+  // R703: a list that scrolls says so (data-more: the fade above "Got it", tips.css) until its end is in view
+  const more = (list: HTMLElement): void => void list.toggleAttribute("data-more", list.scrollTop + list.clientHeight < list.scrollHeight - 1);
+  const cues = (): void => [cards, rest].forEach(more);
+  for (const list of [cards, rest]) list.addEventListener("scroll", () => more(list), { passive: true });
   measure();
-  const ro = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(measure);
+  cues();
+  const ro = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(() => (measure(), cues()));
   ro?.observe(document.documentElement);
 
   const close = (): void => {
