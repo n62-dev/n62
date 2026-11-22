@@ -225,7 +225,10 @@ const CANARIES: [string, string, RegExp, string][] = [
   ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\.is_symb_of_sommet\(at_inv\)\)\s*return inv\(sqrt\(e\._SYMBptr->feuille,contextptr\),contextptr\);/, "return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));"],
   // G786, patch 0058: ascsort (under median, quartile1, quartile3, quantile, quartiles) writes 0 for an element whose evalf is no double,
   // so a float list above 14 digits (MPFR elements) sorted as zeros (quartile1(evalf([1,2,3,4,5,6])) = 0.0 at Digits 20)
+  // G786f1: the same 0 for an element with no real value (a complex: median([1+i,2+i,3+i]) = 0.0), and median, quartile1,
+  // quartile3, quantile and quartiles (misc.cc) take ascsort's rows as they come, with no error
   ["0058-ascsort-mpfr-elements.patch", "giac-2.1.0/src/permu.cc", /tmp=evalf\(tmp,1,0\);\s*if \(tmp\.type!=_DOUBLE_\)\s*vv\[j\]=0;/, "matrice ascsort(const matrice & m,bool column){"],
+  ["0058-ascsort-mpfr-elements.patch", "giac-2.1.0/src/misc.cc", /return mtran\(ascsort\(mtran\(vecteur\(1,v\)\),true\)\)\[int\(std::ceil\(v\.size\(\)\/4\.0\)\)-1\]\[0\];/, "gen _quartile1(const gen & g,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);
