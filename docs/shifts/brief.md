@@ -127,8 +127,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B0 | [G398f1](packages/G398f1.md) G398 merges; its quartile finding moves to G786 (owner, 2026-11-22: first) | gorge, Opus | `p1/gorge-invcut` | – |
-| B0a | G786 median and the quartiles of a float list are never 0 above 14 digits | gorge, Opus | `p1/gorge-floatsort` | G398 |
 | B1a | [G783](packages/G783.md) a free name's ln(1/x) and √(1/x) keep their form, so a later value gets the principal branch (owner, 2026-11-22) | gorge, Opus | `p1/gorge-invfree` | G398 |
 | B1b | [G787](packages/G787.md) the patch statuses after Parisse's 22 Nov tarball; every patch applies at fuzz 0 | gorge, Opus | `p1/gorge-patchstatus` | G783 |
 | B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
