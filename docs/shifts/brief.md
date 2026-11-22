@@ -29,16 +29,7 @@ State: the newest night report in this folder. Every merge: `git log --merges --
 
 ### The day's packages (a device or an owner's act; the rest is in section 0c's tables)
 
-| # | Package | Agent, model | Lane | Starts when merged | Size |
-|---|---|---|---|---|---|
-| [A61](packages/A61.md) | What the WebView answers to `persisted()` | annabell, Sonnet | day (the Fairphone) | R96f1 | ~0.2 d |
-| [S33](packages/S33.md) | One place per pipeline rule: brief 0c against rules section 4 | sandra, Opus | day, no lane running | A75 | ~0.5 d |
-| [A141](packages/A141.md) | The device step runs beside the lane | annabell, Sonnet | day, no lane running (owner, 11-12: moved from the freeze day) | the v0.1.0 tag | ~0.5 d |
-| [A142](packages/A142.md) | The lane queues in a file of their own | annabell, Sonnet | day, no lane running | the v0.1.0 tag | ~0.5 d |
-| [A143](packages/A143.md) | night.sh picks the plain step; henri the rest | annabell, Opus | day, no lane running | A142 | ~1 d |
-| [A76](packages/A76.md) | The release builds only what ships; the update test from the last release | annabell, Sonnet | day | the v0.1.0 tag | ~0.3 d |
-| [A82](packages/A82.md) | Store and README screenshots in the final look | annabell, Sonnet | day, on the release candidate (the Fairphone) | R140, R146, R147, R53, R153–R157, R722–R725 | ~0.2 d |
-| [R292](packages/R292.md) | The v0.1.0 data fixtures and the rule they pin | ron, Sonnet | day, the release candidate (Mon 11-23), after R725 | the freeze | ~0.5 d |
+Their rows and conditions are in section 0c's "Not queue rows" (A61, S33, A141 to A143, A76, A82, R292); each package file names its model, lane and size.
 
 **Why these models:** Opus where a slip breaks entry, the unit chain or stored data for every later package, or gives a wrong number (P17: the engine, input and units); sandra and sofia run Opus; Sonnet elsewhere (an existing pattern, pinned by tests); the audit model follows P17.
 
@@ -103,7 +94,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 896 | [A256](packages/A256.md) a sync run is audited by its conflict resolutions | annabell, Sonnet | `p1/annabell-syncaudit` | – |
 | 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
-| 903 | R794 the round pad's arrows at one radius, one size (K9) | ron, Opus | `p1/ron-padarrows` | R774 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies the unit view's reading, message or result (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 907 | [R806](packages/R806.md) a unit slot gets a caret: the model (owner's walk 2026-11-20, C1) | ron, Opus | `p1/ron-unitcaret` | R801 |
