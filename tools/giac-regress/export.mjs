@@ -904,6 +904,15 @@ export function build(cases) {
     patched.push("// patch 0058-ascsort-mpfr-elements.patch", `// ${id} (derived: ${why})`, `Digits:=20:; pc("${id}",'${input}',${value},1/10^15);`);
     nPatched++;
   }
+  // Patch 0058 (G786f1, F473), written lines: an element with no real value (a complex; a name in a matrix) is refused by each caller
+  // of ascsort, list and matrix forms (stock sorted it as 0: median([1+i,2+i,3+i]) = 0.0, quartile1([1,2,3,4,5,6+i]) = 1.0,
+  // median([1,2,3+i]) = 1.0). A line passes when the input is an error (pasr 1); stock answers a number (pasr stays 0).
+  const g786f1 = [["median-all-complex", "median([1+i,2+i,3+i])"], ["quartile1-complex-sixth", "quartile1([1,2,3,4,5,6+i])"], ["median-name-in-matrix", "median([[1,2],[3,g786fx],[5,6]])"], ["median-float-complex-30", "median(evalf([1+i,2+i,3+i]))"]];
+  for (const f of ["median", "quartile1", "quartile3", "quantile", "quartiles"]) for (const [form, data] of [["list", "[1,2,3+i]"], ["matrix", "[[1,2],[3,i],[5,6]]"]]) g786f1.push([`${f}-complex-${form}`, `${f}(${data}${f === "quantile" ? ",1/2" : ""})`]);
+  for (const [k, input] of g786f1) {
+    patched.push("// patch 0058-ascsort-mpfr-elements.patch", `// g786f1-${k}-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")`, `Digits:=${k.endsWith("-30") ? 30 : 40}:; pasr:=0:; try { ${input}; } catch (err) { pasr:=1; }:; pc("g786f1-${k}-refused",'pasr',1,1/10^30);`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],

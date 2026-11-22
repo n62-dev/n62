@@ -1334,6 +1334,48 @@ Digits:=20:; pc("g786-median-evalf-matrix-20",'l2norm(median(evalf([[1,5],[3,2],
 // patch 0058-ascsort-mpfr-elements.patch
 // g786-quartile1-decimal-beside-integers-20 (derived: sorted -2, 0.5, 1.5, 3.25, 4, 7: the second; a typed 0.5 is MPFR at Digits 20, the integers doubles)
 Digits:=20:; pc("g786-quartile1-decimal-beside-integers-20",'quartile1([1.5,-2,7,3.25,0.5,4])',1/2,1/10^15);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-median-all-complex-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { median([1+i,2+i,3+i]); } catch (err) { pasr:=1; }:; pc("g786f1-median-all-complex-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartile1-complex-sixth-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartile1([1,2,3,4,5,6+i]); } catch (err) { pasr:=1; }:; pc("g786f1-quartile1-complex-sixth-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-median-name-in-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { median([[1,2],[3,g786fx],[5,6]]); } catch (err) { pasr:=1; }:; pc("g786f1-median-name-in-matrix-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-median-float-complex-30-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=30:; pasr:=0:; try { median(evalf([1+i,2+i,3+i])); } catch (err) { pasr:=1; }:; pc("g786f1-median-float-complex-30-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-median-complex-list-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { median([1,2,3+i]); } catch (err) { pasr:=1; }:; pc("g786f1-median-complex-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-median-complex-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { median([[1,2],[3,i],[5,6]]); } catch (err) { pasr:=1; }:; pc("g786f1-median-complex-matrix-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartile1-complex-list-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartile1([1,2,3+i]); } catch (err) { pasr:=1; }:; pc("g786f1-quartile1-complex-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartile1-complex-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartile1([[1,2],[3,i],[5,6]]); } catch (err) { pasr:=1; }:; pc("g786f1-quartile1-complex-matrix-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartile3-complex-list-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartile3([1,2,3+i]); } catch (err) { pasr:=1; }:; pc("g786f1-quartile3-complex-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartile3-complex-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartile3([[1,2],[3,i],[5,6]]); } catch (err) { pasr:=1; }:; pc("g786f1-quartile3-complex-matrix-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quantile-complex-list-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quantile([1,2,3+i],1/2); } catch (err) { pasr:=1; }:; pc("g786f1-quantile-complex-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quantile-complex-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quantile([[1,2],[3,i],[5,6]],1/2); } catch (err) { pasr:=1; }:; pc("g786f1-quantile-complex-matrix-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartiles-complex-list-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartiles([1,2,3+i]); } catch (err) { pasr:=1; }:; pc("g786f1-quartiles-complex-list-refused",'pasr',1,1/10^30);
+// patch 0058-ascsort-mpfr-elements.patch
+// g786f1-quartiles-complex-matrix-refused (derived: no order on a value that is not real, decisions.md "A complex element in median and the quartiles")
+Digits:=40:; pasr:=0:; try { quartiles([[1,2],[3,i],[5,6]]); } catch (err) { pasr:=1; }:; pc("g786f1-quartiles-complex-matrix-refused",'pasr',1,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

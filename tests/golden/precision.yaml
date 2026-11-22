@@ -1727,3 +1727,11 @@ cases:
   - { id: "g786-keep-median-exact-list", input: "median([3,1,2])", expect: "2", mark: "⚠", source: "derived", note: "control: an exact list" }
   - { id: "g786-cas-keep-median-exact-list-30", kind: "cas", input: "median([3,1,2])", settings: { digits: 30 }, expect: "2", mark: "⚠", source: "derived", note: "control: an exact list at 30 digits sorts doubles, as before" }
   - { id: "g786-cas-keep-quartile1-symbol", kind: "cas", input: "quartile1([3,x,1,2])", settings: { digits: 30 }, expect: "1", source: "derived", note: "control: a list with a name takes Giac's other path (islesscomplexthanf_sort), unchanged" }
+  # --- G786f1 (F473): ascsort (patch 0058) still sorted an element with no real value (a complex) as 0, so a typed median or
+  # quartile of a list with a complex element showed a number under ⚠ (decisions.md "A complex element in median and the
+  # quartiles": refused, principle 3). Patch 0058 now stops at it and median, quartile1, quartile3, quantile and quartiles return
+  # an error. Controls: the g786-keep-* rows above (median([3,1,2]) = 2, the list with a name) and the frequency form.
+  - { id: "g786f1-median-complex-list", input: "median([1+i,2+i,3+i])", expect: "error: GIAC_ERROR: median: the data must be real numbers Error: Bad Argument Value", source: "derived", note: "complex numbers have no order; showed ⚠ 0" }
+  - { id: "g786f1-quartile1-complex-sixth", input: "quartile1([1,2,3,4,5,6.0+i])", expect: "error: GIAC_ERROR: quartile1: the data must be real numbers Error: Bad Argument Value", source: "derived", note: "one complex element has no place in the order; showed ⚠ 1 (6.0+i sorted as 0)" }
+  - { id: "g786f1-median-one-complex", input: "median([1,2,3+i])", expect: "error: GIAC_ERROR: median: the data must be real numbers Error: Bad Argument Value", source: "derived", note: "showed ⚠ 1 (3+i sorted as 0, the middle of 0, 1, 2)" }
+  - { id: "g786f1-keep-median-frequency", input: "median([1,2,3],[1,1,1])", expect: "2", source: "derived", note: "control: the frequency form (freq_quantile) is unchanged; equal weights, the middle of 1, 2, 3" }

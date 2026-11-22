@@ -1,14 +1,145 @@
-# Upstream: giac 2.1.0 permu.cc ascsort (under median, quartile1, quartile3, quantile and quartiles in misc.cc, list and matrix forms) took evalf of each element and wrote 0 for every one whose evalf is not a _DOUBLE_; above 14 digits a float element is MPFR (_REAL), so a float list sorted as zeros: at Digits 20 quartile1(evalf([1,2,3,4,5,6])) = 0.0 (2.0 at Digits 12), median(evalf([3,1,2])) = 0.0, quantile(evalf([1,2,3,4,5,6]),0.5) = 0.0, quartiles(evalf([1.5,-2,7,3.25,0.5,4])) = [[0.0],...], median(evalf([[1,5],[3,2],[2,8]])) = [0.0,0.0]; a typed decimal beside integers sorted as 0 too (quartiles([1.5,-2,7,3.25,0.5,4]) at Digits 20 = [[-2.0],[0.0],[0.0],[4.0],[7.0]]). Now a row that holds a real float that is no double (an MPFR value, a _FLOAT_) is sorted by value (MPFR compared exactly with mpfr_cmp and mpfr_cmp_d, stable for equal values) and each element is written back as it is, so an MPFR element keeps its digits; an element with no real float value (a complex, a NaN) is a double 0 as before. A row of doubles and exact numbers keeps the stock double sort.
+# Upstream: giac 2.1.0 permu.cc ascsort (under median, quartile1, quartile3, quantile and quartiles in misc.cc, list and matrix forms) took evalf of each element and wrote 0 for every one whose evalf is not a _DOUBLE_; above 14 digits a float element is MPFR (_REAL), so a float list sorted as zeros: at Digits 20 quartile1(evalf([1,2,3,4,5,6])) = 0.0 (2.0 at Digits 12), median(evalf([3,1,2])) = 0.0, quantile(evalf([1,2,3,4,5,6]),0.5) = 0.0, quartiles(evalf([1.5,-2,7,3.25,0.5,4])) = [[0.0],...], median(evalf([[1,5],[3,2],[2,8]])) = [0.0,0.0]; a typed decimal beside integers sorted as 0 too (quartiles([1.5,-2,7,3.25,0.5,4]) at Digits 20 = [[-2.0],[0.0],[0.0],[4.0],[7.0]]). Now a row that holds a real float that is no double (an MPFR value, a _FLOAT_) is sorted by value (MPFR compared exactly with mpfr_cmp and mpfr_cmp_d, stable for equal values) and each element is written back as it is, so an MPFR element keeps its digits; A row of doubles and exact numbers keeps the stock double sort. G786f1: an element whose evalf is no real float (a complex, a NaN, undef, a name in a matrix) was sorted as 0 too (median([1+i,2+i,3+i]) = 0.0, quartile1([1,2,3,4,5,6.0+i]) = 1.0, median([1,2,3+i]) = 1.0); now ascsort stops at it (a second form of ascsort with a nonreal flag, declared in permu.h) and median, quartile1, quartile3, quantile and quartiles (misc.cc, list and matrix forms) return an error ("median: the data must be real numbers"). The frequency forms and the path for a list that is not fully numeric (islesscomplexthanf_sort) are unchanged.
 # Changed by Pascaline contributors, 2026-11-22
+--- a/src/misc.cc
++++ b/src/misc.cc
+@@ -3105,6 +3105,11 @@
+     }
+     return undef;
+   }
++  // G786f1: ascsort set nonreal, an element's evalf is no real float (a complex, a NaN, undef, a name in a matrix); the
++  // order has no place for it (stock sorted it as 0: median([1+i,2+i,3+i]) was 0.0, quartile1([1,2,3,4,5,6.0+i]) 1.0)
++  static gen ascsort_nonreal_err(const char * f){
++    return gensizeerr(string(f)+gettext(": the data must be real numbers"));
++  }
+   gen _median(const gen & g,GIAC_CONTEXT){
+     if ( g.type==_STRNG && g.subtype==-1) return  g;
+     vecteur v(gen2vecteur(g));
+@@ -3115,13 +3120,21 @@
+ 	islesscomplexthanf_sort(v.begin(),v.end());
+ 	return v[int(std::ceil(v.size()/2.0))-1]; // v[(v.size()-1)/4];
+       }
+-      matrice mt=mtran(ascsort(mtran(vecteur(1,v)),true));
++      bool nonreal;
++      matrice mt=ascsort(mtran(vecteur(1,v)),true,nonreal);
++      if (nonreal)
++	return ascsort_nonreal_err("median");
++      mt=mtran(mt);
+       if ( (calc_mode(contextptr)==1 || abs_calc_mode(contextptr)==38) && !v.empty() && !(v.size()%2))
+ 	return (mt[v.size()/2][0]+mt[v.size()/2-1][0])/2;
+       return mt[int(std::ceil(v.size()/2.0))-1][0];
+     }
+-    else
+-      v=ascsort(v,true);
++    else {
++      bool nonreal;
++      v=ascsort(v,true,nonreal);
++      if (nonreal)
++	return ascsort_nonreal_err("median");
++    }
+     v=mtran(v);
+     if ( (calc_mode(contextptr)==1 || abs_calc_mode(contextptr)==38) && !v.empty() && !(v.size()%2))
+       return (v[v.size()/2]+v[v.size()/2-1])/2;
+@@ -3141,10 +3154,19 @@
+ 	islesscomplexthanf_sort(v.begin(),v.end());
+ 	return v[int(std::ceil(v.size()/4.0))-1]; // v[(v.size()-1)/4];
+       }
+-      return mtran(ascsort(mtran(vecteur(1,v)),true))[int(std::ceil(v.size()/4.0))-1][0];
++      bool nonreal;
++      matrice mt=ascsort(mtran(vecteur(1,v)),true,nonreal);
++      if (nonreal)
++	return ascsort_nonreal_err("quartile1");
++      mt=mtran(mt);
++      return mt[int(std::ceil(v.size()/4.0))-1][0];
++    }
++    else {
++      bool nonreal;
++      v=ascsort(v,true,nonreal);
++      if (nonreal)
++	return ascsort_nonreal_err("quartile1");
+     }
+-    else
+-      v=ascsort(v,true);
+     v=mtran(v);
+     return v[int(std::ceil(v.size()/4.0))-1]; // v[(v.size()-1)/4];
+   }
+@@ -3162,10 +3184,19 @@
+ 	islesscomplexthanf_sort(v.begin(),v.end());
+ 	return v[int(std::ceil(3*v.size()/4.0))-1]; // v[(v.size()-1)/4];
+       }
+-      return mtran(ascsort(mtran(vecteur(1,v)),true))[int(std::ceil(3*v.size()/4.0))-1][0];
++      bool nonreal;
++      matrice mt=ascsort(mtran(vecteur(1,v)),true,nonreal);
++      if (nonreal)
++	return ascsort_nonreal_err("quartile3");
++      mt=mtran(mt);
++      return mt[int(std::ceil(3*v.size()/4.0))-1][0];
++    }
++    else {
++      bool nonreal;
++      v=ascsort(v,true,nonreal);
++      if (nonreal)
++	return ascsort_nonreal_err("quartile3");
+     }
+-    else
+-      v=ascsort(v,true);
+     v=mtran(v);
+     return v[int(std::ceil(3*v.size()/4.0))-1]; // v[(3*(v.size()-1))/4];
+   }
+@@ -3192,7 +3223,7 @@
+     bool vect=v.back().type==_VECT;
+     vecteur w=gen2vecteur(v.back()),res;
+     v=*v.front()._VECTptr;
+-    bool matrix=true;
++    bool matrix=true,nonreal;
+     if (!ckmatrix(v)){
+       matrix=false;
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+@@ -3206,10 +3237,12 @@
+ 	}
+ 	return vect?res:res.front(); 
+       }
+-      v=ascsort(mtran(vecteur(1,v)),true);
++      v=ascsort(mtran(vecteur(1,v)),true,nonreal);
+     }
+     else
+-      v=ascsort(v,true);
++      v=ascsort(v,true,nonreal);
++    if (nonreal)
++      return ascsort_nonreal_err("quantile");
+     v=mtran(v);
+     for (unsigned j=0;j<w.size();++j){
+       gen tmp=evalf_double(w[j],1,contextptr);
+@@ -3233,16 +3266,19 @@
+     vecteur v(gen2vecteur(g));
+     if (g.type==_VECT && g.subtype==_SEQ__VECT && v.size()==2)
+       return makevecteur(freq_quantile(v,0.0,contextptr),freq_quantile(v,0.25,contextptr),freq_quantile(v,0.5,contextptr),freq_quantile(v,0.75,contextptr),freq_quantile(v,1.0,contextptr));
++    bool nonreal;
+     if (!ckmatrix(v)){
+       if (!is_fully_numeric(evalf(v,1,contextptr))){
+ 	islesscomplexthanf_sort(v.begin(),v.end());
+ 	int s=int(v.size());
+ 	return makevecteur(v[0],v[int(std::ceil(s/4.))-1],v[int(std::ceil(s/2.))-1],v[int(std::ceil(3*s/4.))-1],v[s-1]);
+       }
+-      v=ascsort(mtran(vecteur(1,v)),true);
++      v=ascsort(mtran(vecteur(1,v)),true,nonreal);
+     }
+     else
+-      v=ascsort(v,true);
++      v=ascsort(v,true,nonreal);
++    if (nonreal)
++      return ascsort_nonreal_err("quartiles");
+     v=mtran(v);
+     int s=int(v.size());
+     if (s==0)
 --- a/src/permu.cc
 +++ b/src/permu.cc
-@@ -1583,6 +1583,55 @@
+@@ -1583,7 +1583,62 @@
      return res;
    }
  
 +  // G786: ascsort's sort of a row that holds a real float that is no double (an MPFR value above 14 digits, a _FLOAT_): each
-+  // element is kept and sorted by its value (MPFR compared exactly, mpfr_cmp and mpfr_cmp_d); an element with no real float
-+  // value (a complex, a NaN) is a double 0, as before.
++  // element is kept and sorted by its value (MPFR compared exactly, mpfr_cmp and mpfr_cmp_d). Every element is a real float
++  // here: ascsort stops at one that is not (G786f1, below).
 +  struct ascsort_elem {
 +    gen key; // a _DOUBLE_ or a _REAL that is no NaN
 +    gen val; // the element as written back
@@ -29,36 +160,43 @@
 +    int n=int(vf.size());
 +    vector<ascsort_elem> w(n);
 +    for (int j=0;j<n;++j){
-+      const gen & t=vf[j];
-+      w[j].key=0.0;
-+      w[j].val=0.0;
-+      if (t.type==_DOUBLE_){
-+	if (t._DOUBLE_val==t._DOUBLE_val)
-+	  w[j].key=w[j].val=t;
-+      }
-+#ifdef HAVE_LIBMPFR
-+      else if (t.type==_REAL){
-+	if (!mpfr_nan_p(t._REALptr->inf))
-+	  w[j].key=w[j].val=t;
-+      }
-+#endif
-+      else if (t.type==_FLOAT_){
-+	gen d=evalf_double(t,1,context0);
-+	if (d.type==_DOUBLE_ && d._DOUBLE_val==d._DOUBLE_val){
-+	  w[j].key=d;
-+	  w[j].val=t;
-+	}
-+      }
++      const gen & t=vf[j]; // a real float: ascsort_real held for it (G786f1)
++      w[j].val=t;
++      w[j].key=t.type==_FLOAT_?evalf_double(t,1,context0):t;
 +    }
 +    std::stable_sort(w.begin(),w.end(),ascsort_less);
 +    for (int j=0;j<n;++j)
 +      v[j]=w[j].val;
 +  }
 +
++  // G786f1: an element whose evalf is no real float (a complex, a NaN, undef, a name in a matrix) has no place in the
++  // order; stock wrote it as 0. ascsort stops and sets nonreal, and its callers in misc.cc (median, quartile1,
++  // quartile3, quantile, quartiles) return an error.
++  static bool ascsort_real(const gen & t){
++    if (t.type==_DOUBLE_)
++      return t._DOUBLE_val==t._DOUBLE_val;
++#ifdef HAVE_LIBMPFR
++    if (t.type==_REAL)
++      return !mpfr_nan_p(t._REALptr->inf);
++#endif
++    if (t.type==_FLOAT_){
++      gen d=evalf_double(t,1,context0);
++      return d.type==_DOUBLE_ && d._DOUBLE_val==d._DOUBLE_val;
++    }
++    return false;
++  }
++
    matrice ascsort(const matrice & m,bool column){
++    bool nonreal;
++    return ascsort(m,column,nonreal);
++  }
++
++  matrice ascsort(const matrice & m,bool column,bool & nonreal){
++    nonreal=false;
      matrice mt;
      if (column)
-@@ -1601,17 +1650,29 @@
+       mt=mtran(m);
+@@ -1601,17 +1656,33 @@
        const_iterateur jt=v.begin(),jtend=v.end();
        int n=int(jtend-jt);
        vector<double> vv(n);
@@ -70,6 +208,10 @@
  	else
  	  tmp=*jt;
  	tmp=evalf(tmp,1,0);
++	if (!ascsort_real(tmp)){
++	  nonreal=true;
++	  return matrice();
++	}
 +	vf[j]=tmp;
 +	if (tmp.type==_REAL || tmp.type==_FLOAT_)
 +	  hasfloat=true;
@@ -88,3 +230,14 @@
        sort(vv.begin(),vv.end());
        for (int j=0;j<n;++j)
  	v[j]=vv[j];
+--- a/src/permu.h
++++ b/src/permu.h
+@@ -129,6 +129,8 @@
+   vecteur mean(const matrice & m,bool column=true);
+   vecteur stddev(const matrice & m,bool column=true,int variance=1);
+   matrice ascsort(const matrice & m,bool column=true);
++  // G786f1: nonreal is set (and an empty matrix returned) when an element's evalf is no real float
++  matrice ascsort(const matrice & m,bool column,bool & nonreal);
+ 
+   vecteur hermite(int n);
+   gen _divergence(const gen &,GIAC_CONTEXT);  
