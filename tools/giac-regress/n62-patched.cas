@@ -1049,6 +1049,54 @@ Digits:=40:; pc("g331-evalf-simplify-sqrt-ln-nested-root-30",'(evalf(simplify(sq
 // patch 0047-tsimplify-ln-undef-arg.patch
 // g331-evalf-simplify-asinh-cbrt2-pow-pi-30 (precision.yaml, oracle)
 Digits:=40:; pc("g331-evalf-simplify-asinh-cbrt2-pow-pi-30",'(evalf(simplify(asinh(2^(1/3))^pi)))',(117886883625147806170303369803/10^29),5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-ln-inv-1-minus-sqrt2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-ln-inv-1-minus-sqrt2-12",'(ln(1/(1-sqrt(2))))',(88137358702/10^11)+(314159265359/10^11)*i,5/10^13+5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-ln-inv-1-minus-sqrt2-30 (precision.yaml, oracle)
+Digits:=40:; pc("g398-ln-inv-1-minus-sqrt2-30",'(ln(1/(1-sqrt(2))))',(88137358701954302523260932498/10^29)+(314159265358979323846264338328/10^29)*i,5/10^31+5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-log10-inv-1-minus-sqrt2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-log10-inv-1-minus-sqrt2-12",'(log10(1/(1-sqrt(2))))',(382775685338/10^12)+(136437635384/10^11)*i,5/10^13+5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-log10-inv-1-minus-sqrt2-30 (precision.yaml, oracle)
+Digits:=40:; pc("g398-log10-inv-1-minus-sqrt2-30",'(log10(1/(1-sqrt(2))))',(382775685337863078319399524192/10^30)+(136437635384184134748578362543/10^29)*i,5/10^31+5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-inv-pi-minus-4-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-inv-pi-minus-4-12",'(sqrt(1/(pi-4)))',(107932761087/10^11)*i,5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-inv-pi-minus-4-30 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-inv-pi-minus-4-30",'(sqrt(1/(pi-4)))',(107932761086769753942770805121/10^29)*i,5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-sec2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-sec2-12",'(sqrt(sec(2)))',(155016062449/10^11)*i,5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-sec2-30 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-sec2-30",'(sqrt(sec(2)))',(155016062449101737908467939993/10^29)*i,5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-ln-sec2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-ln-sec2-12",'(ln(sec(2)))',(876717108532/10^12)+(314159265359/10^11)*i,5/10^13+5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-ln-sec2-30 (precision.yaml, oracle)
+Digits:=40:; pc("g398-ln-sec2-30",'(ln(sec(2)))',(876717108531908445235926001552/10^30)+(314159265358979323846264338328/10^29)*i,5/10^31+5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-csc4-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-csc4-12",'(sqrt(csc(4)))',(114949932963/10^11)*i,5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-csc4-30 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-csc4-30",'(sqrt(csc(4)))',(114949932962612134691588141645/10^29)*i,5/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-log10-sec2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-log10-sec2-12",'(log10(sec(2)))',(380753402426/10^12)+(136437635384/10^11)*i,5/10^13+5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-sqrt-inv-e-minus-3-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-sqrt-inv-e-minus-3-12",'(sqrt(1/(e-3)))',(18840506305/10^10)*i,5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-ln-inv-sqrt2-minus-2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-ln-inv-sqrt2-minus-2-12",'(ln(1/(sqrt(2)-2)))',(53479999674/10^11)+(314159265359/10^11)*i,5/10^13+5/10^12);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-ln-inv-neg2-12 (precision.yaml, oracle)
+Digits:=40:; pc("g398-ln-inv-neg2-12",'(ln(inv(-2)))',-(69314718056/10^11)+(314159265359/10^11)*i,5/10^13+5/10^12);
 // patch 0006-reim-root-of-unknown-sign.patch
 // g96-cas-im-2sqrt (bench.yaml, derived)
 Digits:=40:; pc("g96-cas-im-2sqrt",'subst(im(2*sqrt(x)),x,-1)',2,1/10^30);
@@ -1226,6 +1274,9 @@ Digits:=40:; pc("g308-times-x-1e-15-40",'subst(evalf(1+i/10^15)*x,x,3)',3+3/10^1
 // patch 0054-alternating-sum-start.patch
 // g617-normal-sum-alt-sq-from-2 (derived: sum((-1)^k/k^2,k,1,inf) = -pi^2/12 less the term k = 1)
 Digits:=40:; pc("g617-normal-sum-alt-sq-from-2",'normal(sum((-1)^k/k^2,k,2,inf)-(1-pi^2/12))',0,1/10^30);
+// patch 0056-ln-sqrt-inv-negative-real.patch
+// g398-assumed-neg-ln-inv (derived: ln(-1/2) = -ln(2)+i*pi)
+assume(g398y<0):; Digits:=40:; pc("g398-assumed-neg-ln-inv",'subst(ln(1/g398y),g398y=-2)',-ln(2)+pi*i,1/10^35);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);
