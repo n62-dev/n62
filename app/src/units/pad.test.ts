@@ -9,6 +9,8 @@ import { parse } from "yaml";
 import { describe, expect, it } from "vitest";
 import type { IndexItem } from "../find/types.ts";
 import { actionFor, keyboard, labelFor, MATHS_ROW, type Key } from "../keyboard/keyboard.ts";
+import { keyLabels } from "../keyboard/keyNames.ts";
+import { opensSheet } from "../keyboard/opens.ts";
 import { UnitPad, defaultUser } from "./pad.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -123,6 +125,21 @@ describe("what a cell shows and emits", () => {
     expect(pad.press("shift", "primary")).toBeUndefined();
     expect(pad.press("alpha", "primary")).toBeUndefined();
     expect(pad.press("esc", "primary")).toBeUndefined();
+  });
+
+  it("R861: draws the Math cell as Find, a sheet (its face carries ▾); no other cell's layer opens one but σ, and Find stays its name", () => {
+    const marked: string[] = [];
+    for (const c of pad.cells) {
+      const k = pad.key(keyboard.byId.get(c.key) as Key, undefined) as Key;
+      for (const layer of ["primary", "shift", "alpha"] as const) if (opensSheet(k.actions[layer])) marked.push(`${c.key} ${layer}`);
+    }
+    expect(marked).toEqual(["math primary", "d1 shift"]);
+    const math = pad.key(keyboard.byId.get("math") as Key, undefined) as Key;
+    expect(keyLabels(math, false, false, false).label).toBe("Find");
+    expect(shown(pad, "math", false, false)).toMatchObject({ face: "Find", dead: false });
+    // an empty user cell opens Find for its slot (R24d) but has no leg: its "+" is drawn with no mark
+    const empty = new UnitPad({}).key(keyboard.byId.get("u1") as Key, undefined) as Key;
+    expect([empty.label.primary, empty.pad, opensSheet(empty.actions.primary)]).toEqual(["+", "empty", false]);
   });
 
   it("is dead where a cell has nothing: null, and the legends say so", () => {

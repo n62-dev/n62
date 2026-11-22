@@ -175,3 +175,35 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
     await expect(part("pow", "main")).toHaveText("x⁴");
     await expect(part("div", "main")).toHaveText("x⁻¹");
   });
+
+// R861: the Math cell's face "Find" ends in ▾ (it opens Find on units, R143), and at 360 px face and mark fit its key at (within 5 %
+// of) the size of the main keypad's Find, as menumark.spec.ts asks of the main pad (the per-key fit test above holds every cell to
+// its key's room, the mark included)
+test("the Find cell carries ▾ and fits at 360 px at the main keypad's size", async ({ page }) => {
+  const size = (p: Page) =>
+    p.evaluate(() => {
+      const el = document.querySelector<HTMLElement>('[data-key="math"] .main');
+      const key = el?.closest(".key")?.getBoundingClientRect();
+      if (!el || !key) return null;
+      const px = parseFloat(getComputedStyle(el).fontSize);
+      // the text fits its box (scrollWidth counts the mark, which hangs out of the flow in the key's side padding, on the main
+      // keypad too: 42/34 px there at 360), and text plus mark (about half an em after it) end inside the key
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const fits = range.getBoundingClientRect().width <= el.clientWidth + 0.5;
+      return { text: el.textContent, opens: el.dataset["opens"], after: getComputedStyle(el, "::after").content, px, fits, past: el.getBoundingClientRect().right + 0.55 * px - key.right };
+    });
+  const main = await page.context().newPage();
+  await main.setViewportSize({ width: 360, height: 740 });
+  await open(main);
+  const want = await size(main);
+  await main.close();
+  expect(want?.opens, "the main keypad's Find").toBe("true");
+  const got = await size(page);
+  expect(got?.text).toBe("Find");
+  expect(got?.opens, "the Find cell opens a sheet").toBe("true");
+  expect(got?.after).toBe('"▾"');
+  expect(got?.fits, "Find fits its key").toBe(true);
+  expect(got?.past ?? 1, "the mark ends inside its key").toBeLessThanOrEqual(0);
+  expect(got?.px ?? 0).toBeGreaterThanOrEqual((want?.px ?? 0) * 0.95);
+});
