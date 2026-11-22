@@ -1,0 +1,34 @@
+# Upstream: giac 2.1.0 series.cc in_limit, the "Rewrite constants" step (G620, F434): tsimplify writes each numeric constant variable of the expression in its own form, a constant cosh(1) as (exp(1)^2+1)/(2*exp(1)), sinh(2) as (exp(1)^4-1)/(2*exp(1)^2), while a sinh, cosh or tanh that depends on x stays, and its series at a finite point starts with the constant cosh(1), sinh(1), ..., which normal does not see equal to the exponential form. So the leading term of cosh(1+x)-cosh(1) was a non-zero constant and the quotient's a pole: limit((cosh(1+x)-cosh(1))/x,x,0) = infinity (right sinh(1)), also limit((sinh(x)-sinh(2))/(x-2),x,2) (right cosh(2)), limit((tanh(2+x)-tanh(2))/x,x,0) (right 1/cosh(2)^2), limit((sinh(cos(x))-sinh(1))/x^2,x,0) (right -cosh(1)/2), one-sided too, and limit((cosh(1+x)-(exp(1)+exp(-1))/2)/x,x,0), where no tsimplify is needed for the mismatch. Now, when the expression holds a numeric constant and a sinh, cosh or tanh that depends on x, every sinh, cosh and tanh is written with exponentials (hyp2exp) before the constants are rewritten, as limit_symbolic_preprocess already does for one whose argument tends to an infinity. A free name (limit((cosh(a+x)-cosh(a))/x,x,0) = sinh(a)), no constant (limit((cosh(1+x)-cosh(1-x))/x,x,0) = 2*sinh(1)) and a limit the first substitution decides keep their answers; where the rewrite runs, a constant answer is printed with exponentials (cosh(2) as (exp(2)^2+1)/(2*exp(2))).
+# Changed by Pascaline contributors, 2026-11-22
+--- a/src/series.cc
++++ b/src/series.cc
+@@ -2797,6 +2797,29 @@
+       if (evalf(rv[i],1,contextptr).type<_CPLX)
+ 	cv.push_back(rv[i]);
+     }
++    // N62 (patch 0056): tsimplify below writes a constant cosh(1) as (exp(1)^2+1)/(2*exp(1)), while the series of
++    // cosh(1+x) starts with cosh(1), which normal does not see equal to it: the leading term of cosh(1+x)-cosh(1) was
++    // not 0 and limit((cosh(1+x)-cosh(1))/x,x,0) gave infinity. With a numeric constant beside a sinh, cosh or tanh that
++    // depends on x, all of them are written as exponentials first, as for an infinite argument (limit_symbolic_preprocess).
++    if (!cv.empty()){
++      vecteur vx=rlvarx(e_copy,x);
++      bool hyp=false;
++      for (int i=0;i<vx.size();++i){
++	if (vx[i].is_symb_of_sommet(at_sinh) || vx[i].is_symb_of_sommet(at_cosh) || vx[i].is_symb_of_sommet(at_tanh)){
++	  hyp=true;
++	  break;
++	}
++      }
++      if (hyp){
++	e_copy=hyp2exp(e_copy,contextptr);
++	rv=rlvar(e_copy,false);
++	cv.clear();
++	for (int i=0;i<rv.size();++i){
++	  if (evalf(rv[i],1,contextptr).type<_CPLX)
++	    cv.push_back(rv[i]);
++	}
++      }
++    }
+     if (!cv.empty()){
+       gen cvg=tsimplify(cv,contextptr);
+       if (!has_i(cvg) && cvg.type==_VECT && cvg._VECTptr->size()==cv.size())
