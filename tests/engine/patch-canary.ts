@@ -223,6 +223,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // for a negative real f (ln(1/(1-sqrt(2))) = -ln(1-sqrt(2)), 0.881-pi*i; sqrt(1/(pi-4)) = 1/sqrt(pi-4), -1.079*i)
   ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\._SYMBptr->sommet==at_inv && e\._SYMBptr->feuille\.type!=_VECT\)\s*return -ln\(e\._SYMBptr->feuille,contextptr\);[\s\S]{0,400}?if \(e\.type==_FRAC && e\._FRACptr->num==1\)\s*return -ln\(e\._FRACptr->den,contextptr\);/, "return apply_to_equal(e,ln,contextptr);"],
   ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\.is_symb_of_sommet\(at_inv\)\)\s*return inv\(sqrt\(e\._SYMBptr->feuille,contextptr\),contextptr\);/, "return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));"],
+  // G786, patch 0058: ascsort (under median, quartile1, quartile3, quantile, quartiles) writes 0 for an element whose evalf is no double,
+  // so a float list above 14 digits (MPFR elements) sorted as zeros (quartile1(evalf([1,2,3,4,5,6])) = 0.0 at Digits 20)
+  ["0058-ascsort-mpfr-elements.patch", "giac-2.1.0/src/permu.cc", /tmp=evalf\(tmp,1,0\);\s*if \(tmp\.type!=_DOUBLE_\)\s*vv\[j\]=0;/, "matrice ascsort(const matrice & m,bool column){"],
 ];
 
 const tar = tarball(SOURCES.giac);
