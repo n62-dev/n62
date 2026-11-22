@@ -74,6 +74,8 @@ const KEEP: Readonly<Record<string, { text: () => string; emit: PadEmit }>> = {
 };
 
 const DRAWN: Action = { kind: "cmd", name: "unitPad" };
+/** R861: the keep cell Find (Math) opens a sheet, Find on units: drawn as Find, so its face carries the mark ▾ (R143, opens.ts). */
+const FIND: Action = { kind: "special", name: "find" };
 /** R327: the key's Shift layer is the uncertainty sheet (Shift + 1; the drawn cell key carries it too, `key` below). */
 const isUncKey = (k: Key): boolean => k.actions.shift?.kind === "special" && k.actions.shift.name === "uncertainty";
 /** R353: the key's Shift layer is Store ▶ (Shift + ᴇ, spec/keyboard.yaml): the view stores its result with its unit. */
@@ -131,8 +133,9 @@ export class UnitPad {
     for (const layer of ["primary", "shift", "alpha"] as const) {
       const leg = c[LEG[layer]];
       if (leg) label[layer] = leg.text;
-      // (only whether a layer has an action matters to the drawing: the press goes to `route`)
-      actions[layer] = leg ? DRAWN : NONE;
+      // (the drawing reads only whether a layer has an action and, for the mark ▾, whether it opens a sheet: Find, R861; the
+      // press goes to `route`. An empty user cell's Find, R24d, is no leg: its "+" carries no mark)
+      actions[layer] = !leg ? NONE : c.kind === "keep" && leg.emit.do === "find" ? FIND : DRAWN;
     }
     // R327: Shift + 1, the uncertainty sheet, stays on its key over the pad (the d1 cell has no Shift leg): drawn and live;
     // R353: Shift + ᴇ, Store ▶, too (the mol cell has none)
