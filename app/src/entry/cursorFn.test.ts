@@ -10,7 +10,7 @@ import { parseLatex } from "../input/parse.ts";
 import { FUNCS, GREEK, INVERSE } from "../input/parseTables.ts";
 import { isInfixWord } from "./boxes.ts";
 import { functionAt as scanAt } from "./cursorFn.ts";
-import { CHIP_MACROS } from "./macros.ts";
+import { CHIP_MACROS } from "./macroTable.ts";
 
 /** R197: the words the scan reads, from their source (cursorFn.ts FnWords). */
 const functionAt = (latex: string, offset: number): string | null => scanAt(latex, offset, { funcs: FUNCS, inverse: INVERSE, greek: GREEK, isInfixWord });

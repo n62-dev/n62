@@ -6,7 +6,8 @@
 import { convertLatexToMarkup, validateLatex } from "mathlive/ssr";
 import type * as MathLive from "mathlive";
 import { describe, expect, it } from "vitest";
-import { CHIP_MACROS, ENTRY_MACROS, constChip, resChip } from "../entry/macros.ts";
+import { CHIP_MACROS, ENTRY_MACROS } from "../entry/macroTable.ts";
+import { constChip, resChip } from "../entry/macros.ts";
 import { keyboard } from "../keyboard/keyboard.ts";
 import { renderOptions, withEntryMacros } from "./macros.ts";
 

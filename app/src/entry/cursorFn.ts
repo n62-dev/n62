@@ -11,7 +11,7 @@
 // chip shows (a history result's `\sin…`) is never read as a function.
 // What it reads as a function, by the LaTeX a key or Find puts on the line: FUNCS' commands, `\operatorname{…}`, and the
 // templates of find/where.yaml `links` (each slot checked by cursorFn.test.ts against that file and find/functions.yaml).
-import { CHIP_MACROS } from "./macros.ts";
+import { CHIP_MACROS } from "./macroTable.ts";
 
 /** What the scan reads from the parser and the box model: FUNCS, INVERSE and GREEK (input/parseTables.ts) and
  *  isInfixWord (boxes.ts). R197: the caller gives them, so the Help key's chunk takes them from the chunks that hold them
@@ -34,7 +34,7 @@ const INVERSE_ID: Readonly<Record<string, string>> = {
 };
 /** The operators whose bounds are their scripts and whose body is the bracket after them (boxes.ts BIGOP but ∫). */
 const BIG_OP: Readonly<Record<string, string>> = { lim: "fn:limit", sum: "fn:sum", prod: "fn:product" };
-/** The argument count of the chip macro `cmd` (entry/macros.ts CHIP_MACROS), or undefined: no chip. */
+/** The argument count of the chip macro `cmd` (entry/macroTable.ts CHIP_MACROS), or undefined: no chip. */
 const chipArgs = (cmd: string): number | undefined => (Object.hasOwn(CHIP_MACROS, cmd) ? CHIP_MACROS[cmd as keyof typeof CHIP_MACROS].args : undefined);
 const PLACEHOLDER = "\\placeholder";
 
