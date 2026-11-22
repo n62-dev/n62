@@ -12,6 +12,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **G782, a ratio chip outside Home and CAS (gorge, run 1475):** Home and CAS take a chip in %, ‰, ppm or ppb as its pure number; two paths keep their old behaviour, each a value off by the ratio's factor or a refusal: in the unit view the chip's slot starts empty (its unit has no dimension key, which `chipUnit` needs), so unless % is put in it `chip × 200 m` is 84 m, not 0.84 m; and Store ▶ on such a result stays dead ("no unit"). Default taken (the unit view's size pin): every chip of a pure number shown in a unit keeps that unit, so a rev chip's Home row now says "unit dropped" (it was silent; the value is the same), and Ans of such a result (%, rev) is refused in the unit view, as any Ans with a unit (R259; a % one went in as 0.42 before, a rev one as 3). Recommendation: a small package that fills the slot with the ratio (a unit view result 0.42 % × 200 m = 0.84 m) and stores the pure number. Would change if: the owner wants the ratio dropped in the unit view too.
 
+- **R860, the hint in a landscape phone's history (ron, run 1489):** at 915 × 412 the history is 16 px, under the hint's 21 px line, so the hint cannot lie inside it (R860 leaves the mark out there and keeps the hint's whole line in the scroller, mostly hidden). Should a short history give the hint up too, or should the landscape layout give the history at least one line? Recommendation: a landscape layout package (the keypad beside the history), the hint left as it is until then.
 
 ## Decided proposals
 
@@ -142,7 +143,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R98, Clear and Delete:** rule: docs/05 3.5 (cancelled and note rows too; one Undo copy per view; a backup never holds it). Archived.
 - **R112: a key drawn dead, or a press the route's one rule finds dead (route.ts deadPress), gives the double pulse alone, no look, pop or click; every other key gives one pulse at finger-down.** The unit pad's dead presses keep three (the touch's, then the double; docs/05 3.7).
 - **R144, R146, changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet and drive it; a key it does not use is dead and the sheet stays. Rule: docs/05 3.1. Archived.
-- **R157, the mark:** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's glyph is a house (owner, 2026-11-22, R856), 16 × 16 on the bar and in the Apps sheet. Archived. Would change if: the mark cannot be seen on a device.
+- **R157, the mark:** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's glyph is a house (owner, 2026-11-22, R856), 16 × 16 on the bar and in the Apps sheet; shown whenever the view is empty (R860). Archived. Would change if: the mark cannot be seen on a device.
 - **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.
 - **R795, Plain keys (owner K3, 2026-11-20):** the keys keep their family's fills (Black & White its two neutral tones, unchanged); only the legends' colour coding goes (it reverses R50's "one neutral tone"). Would change if: the owner's look on his phone.
 - **The tips' text stops at 17 px** (R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.

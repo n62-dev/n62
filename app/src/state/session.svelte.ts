@@ -274,9 +274,7 @@ export class Session {
    *  hold only what was typed since launch, so a write (a hide or close before the read, docs/04 6.2) would drop the
    *  stored rows. A save asked for meanwhile is kept pending and runs once the read is in. R860: History's empty state waits for it. */
   #read = $state(false);
-  get historyRead(): boolean {
-    return this.#read;
-  }
+  get historyRead(): boolean { return this.#read; }
   private savePending = false;
   /** R94: the stored settings are from a newer schema. They are read and kept in memory, never written. */
   private settingsNewer = false;
@@ -358,9 +356,7 @@ export class Session {
   get items(): HistoryItem[] {
     return this.view === "home" ? this.home : this.cas;
   }
-  get busy(): boolean {
-    return this.pending !== undefined; // (R860: one test for a running row, the pending getter's)
-  }
+  get busy(): boolean { return this.pending !== undefined; } // (R860: one test for a running row, the pending getter's)
   get pending(): HistoryItem | undefined {
     return [...this.home, ...this.cas].find((i) => i.status === "pending");
   }
