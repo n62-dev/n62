@@ -626,7 +626,7 @@ export const PATCHED_IDS = new Map([
   ...["ln-inv-1-minus-sqrt2-12", "ln-inv-1-minus-sqrt2-30", "log10-inv-1-minus-sqrt2-12", "log10-inv-1-minus-sqrt2-30", "sqrt-inv-pi-minus-4-12", "sqrt-inv-pi-minus-4-30", "sqrt-sec2-12", "sqrt-sec2-30", "ln-sec2-12", "ln-sec2-30", "sqrt-csc4-12", "sqrt-csc4-30", "log10-sec2-12", "sqrt-inv-e-minus-3-12", "ln-inv-sqrt2-minus-2-12", "ln-inv-neg2-12"].map((k) => [`g398-${k}`, "0057-ln-sqrt-inv-negative-real.patch"]),
   // G786: permu.cc ascsort read an MPFR element as 0, so median, quartile1, quartile3 and quantile of a float list above 14 digits
   // were 0; the g786-keep-* row (an exact list) passes on stock and stays in the check file
-  ...["quartile3-approx-list", "quartile1-approx-list-30", "median-approx-list-30", "quantile-approx-list-30", "quartile1-approx-list-12", "median-approx-list-12", "quantile-approx-list-12", "median-approx-third-30"].map((k) => [`g786-${k}`, "0058-ascsort-mpfr-elements.patch"]),
+  ...["quartile3-approx-list", "quartile1-approx-list-30", "median-approx-list-30", "quantile-approx-list-30", "quartile1-approx-list-12", "median-approx-list-12", "quantile-approx-list-12", "median-approx-third-30", "quartiles-approx-list-30", "median-approx-matrix-30"].map((k) => [`g786-${k}`, "0058-ascsort-mpfr-elements.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
