@@ -103,7 +103,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 896 | [A256](packages/A256.md) a sync run is audited by its conflict resolutions | annabell, Sonnet | `p1/annabell-syncaudit` | – |
 | 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
-| 903 | R794 the round pad's arrows at one radius, one size (K9) | ron, Opus | `p1/ron-padarrows` | R774 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies the unit view's reading, message or result (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 907 | [R806](packages/R806.md) a unit slot gets a caret: the model (owner's walk 2026-11-20, C1) | ron, Opus | `p1/ron-unitcaret` | R801 |
