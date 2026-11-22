@@ -48,7 +48,9 @@ export const measure = (page: Page) =>
         if (!visible(c)) continue;
         const cb = c.getBoundingClientRect();
         inside(cb, bb, "bar", c);
-        if (!c.matches("[data-cut]") && !c.querySelector("[data-cut]")) inside(textBox(c), cb, "control", c); // (☰ is its own text)
+        const cuts = c.querySelectorAll("[data-cut]").length + (c.matches("[data-cut]") ? 1 : 0); // (☰ is its own text)
+        cut += cuts;
+        if (cuts === 0) inside(textBox(c), cb, "control", c);
       }
     }
     // an open sheet: each row label whole or ellipsed below the floor (data-cut), each row and value button on the screen
