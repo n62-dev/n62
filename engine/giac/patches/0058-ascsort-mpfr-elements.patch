@@ -1,0 +1,90 @@
+# Upstream: giac 2.1.0 permu.cc ascsort (under median, quartile1, quartile3, quantile and quartiles in misc.cc, list and matrix forms) took evalf of each element and wrote 0 for every one whose evalf is not a _DOUBLE_; above 14 digits a float element is MPFR (_REAL), so a float list sorted as zeros: at Digits 20 quartile1(evalf([1,2,3,4,5,6])) = 0.0 (2.0 at Digits 12), median(evalf([3,1,2])) = 0.0, quantile(evalf([1,2,3,4,5,6]),0.5) = 0.0, quartiles(evalf([1.5,-2,7,3.25,0.5,4])) = [[0.0],...], median(evalf([[1,5],[3,2],[2,8]])) = [0.0,0.0]; a typed decimal beside integers sorted as 0 too (quartiles([1.5,-2,7,3.25,0.5,4]) at Digits 20 = [[-2.0],[0.0],[0.0],[4.0],[7.0]]). Now a row that holds a real float that is no double (an MPFR value, a _FLOAT_) is sorted by value (MPFR compared exactly with mpfr_cmp and mpfr_cmp_d, stable for equal values) and each element is written back as it is, so an MPFR element keeps its digits; an element with no real float value (a complex, a NaN) is a double 0 as before. A row of doubles and exact numbers keeps the stock double sort.
+# Changed by Pascaline contributors, 2026-11-22
+--- a/src/permu.cc
++++ b/src/permu.cc
+@@ -1583,6 +1583,55 @@
+     return res;
+   }
+ 
++  // G786: ascsort's sort of a row that holds a real float that is no double (an MPFR value above 14 digits, a _FLOAT_): each
++  // element is kept and sorted by its value (MPFR compared exactly, mpfr_cmp and mpfr_cmp_d); an element with no real float
++  // value (a complex, a NaN) is a double 0, as before.
++  struct ascsort_elem {
++    gen key; // a _DOUBLE_ or a _REAL that is no NaN
++    gen val; // the element as written back
++  };
++  static bool ascsort_less(const ascsort_elem & A,const ascsort_elem & B){
++    const gen & a=A.key, & b=B.key;
++#ifdef HAVE_LIBMPFR
++    if (a.type==_REAL && b.type==_REAL)
++      return mpfr_cmp(a._REALptr->inf,b._REALptr->inf)<0;
++    if (a.type==_REAL)
++      return mpfr_cmp_d(a._REALptr->inf,b._DOUBLE_val)<0;
++    if (b.type==_REAL)
++      return mpfr_cmp_d(b._REALptr->inf,a._DOUBLE_val)>0;
++#endif
++    return a._DOUBLE_val<b._DOUBLE_val;
++  }
++  static void ascsort_floats(vecteur & v,const vector<gen> & vf){
++    int n=int(vf.size());
++    vector<ascsort_elem> w(n);
++    for (int j=0;j<n;++j){
++      const gen & t=vf[j];
++      w[j].key=0.0;
++      w[j].val=0.0;
++      if (t.type==_DOUBLE_){
++	if (t._DOUBLE_val==t._DOUBLE_val)
++	  w[j].key=w[j].val=t;
++      }
++#ifdef HAVE_LIBMPFR
++      else if (t.type==_REAL){
++	if (!mpfr_nan_p(t._REALptr->inf))
++	  w[j].key=w[j].val=t;
++      }
++#endif
++      else if (t.type==_FLOAT_){
++	gen d=evalf_double(t,1,context0);
++	if (d.type==_DOUBLE_ && d._DOUBLE_val==d._DOUBLE_val){
++	  w[j].key=d;
++	  w[j].val=t;
++	}
++      }
++    }
++    std::stable_sort(w.begin(),w.end(),ascsort_less);
++    for (int j=0;j<n;++j)
++      v[j]=w[j].val;
++  }
++
+   matrice ascsort(const matrice & m,bool column){
+     matrice mt;
+     if (column)
+@@ -1601,17 +1650,29 @@
+       const_iterateur jt=v.begin(),jtend=v.end();
+       int n=int(jtend-jt);
+       vector<double> vv(n);
++      vector<gen> vf(n);
++      bool hasfloat=false;
+       for (int j=0;jt!=jtend;++jt,++j){
+ 	if ( (jt->type==_VECT) && (jt->_VECTptr->size()==3) )
+ 	  tmp=(*jt->_VECTptr)[1];
+ 	else
+ 	  tmp=*jt;
+ 	tmp=evalf(tmp,1,0);
++	vf[j]=tmp;
++	if (tmp.type==_REAL || tmp.type==_FLOAT_)
++	  hasfloat=true;
+ 	if (tmp.type!=_DOUBLE_)
+ 	  vv[j]=0;
+ 	else
+ 	  vv[j]=tmp._DOUBLE_val;
+       }
++      if (hasfloat){
++	// G786: an MPFR element was 0 here (vv[j]=0 above), so a float list above 14 digits sorted as zeros
++	// (quartile1(evalf([1,2,3,4,5,6])) = 0.0 at Digits 20); sort the elements by value instead
++	ascsort_floats(v,vf);
++	*it=v;
++	continue;
++      }
+       sort(vv.begin(),vv.end());
+       for (int j=0;j<n;++j)
+ 	v[j]=vv[j];
