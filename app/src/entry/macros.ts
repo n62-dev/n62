@@ -39,10 +39,17 @@ export const CHIP_MACROS: Record<"res" | "ans" | "const" | "unit" | "pfx", ChipM
 export const EMARK = "\\emark";
 const EMARK_MACRO: ChipMacro = { def: "\\mathopen{\u1D07}", args: 0, captureSelection: true, expand: false };
 
+/**
+ * The ångström sign of Shift + 9 and Chars (R791): MathLive has no `\AA` and drew the raw name in its error style. Drawn
+ * an upright Å; `expand: false` keeps `\AA` in the field's value, so the parser still refuses it as a unit (parse.ts).
+ */
+const AA_MACRO: ChipMacro = { def: "\\mathrm{\u00C5}", args: 0, captureSelection: true, expand: false };
+
 /** Every macro of the entry line, for the field and for the static renderer. */
-export const ENTRY_MACROS: Record<"res" | "ans" | "const" | "unit" | "pfx" | "emark", ChipMacro> = {
+export const ENTRY_MACROS: Record<"res" | "ans" | "const" | "unit" | "pfx" | "emark" | "AA", ChipMacro> = {
   ...CHIP_MACROS,
   emark: EMARK_MACRO,
+  AA: AA_MACRO,
 };
 
 /** A history result as a chip: `shown` is the result's display LaTeX. */
