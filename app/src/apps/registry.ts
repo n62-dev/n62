@@ -15,7 +15,8 @@ export interface AppEntry {
   load(host: AppHost): Promise<LoadedApp>;
 }
 
-/** Home and CAS have no app entry; their glyphs stand beside the apps' so all places are in one table. */
+/** Home and CAS have no app entry; their glyphs stand beside the apps' so all places are in one table. Home's icon is the
+ *  house (views/house.ts, R856), on the bar and in the Apps sheet. */
 export const HOME_GLYPHS: Readonly<Record<"home" | "cas", Glyph>> = { home: { icon: "home" }, cas: { text: "∫" } };
 
 export const APPS: readonly AppEntry[] = [

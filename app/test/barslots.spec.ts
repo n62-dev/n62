@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R782 (owner, 2026-11-20): the bar's left side never shifts: ⌄ · APP▾ · [Home | slot 2] · hairline. APP▾ is outside the
+// R782 (owner, 2026-11-20): the bar's left side never shifts: ⌄ · APP▾ · [Home | slot 2] (R856: segments, no hairline). APP▾ is outside the
 // track (a neutral ⊞▾ in Home and CAS, the app's glyph in a place opened through it); Home is fixed; slot 2 is CAS until a
 // second tap on it (while it is the current place) opens the Apps sheet titled "Slot 2" and a pick puts that place there.
 // The fake engine. Widths 360, 392 and 412.
@@ -56,7 +56,7 @@ for (const width of WIDTHS)
     }
   });
 
-test("the pills' glyph tiles are 22 × 22 and no name is cut, whatever slot 2 holds, at 360 px (R782, R745)", async ({ browser }) => {
+test("the segments' glyphs are 16 × 16 in a 20 px face and no name is cut, whatever slot 2 holds, at 360 px (R782, R856)", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   try {
@@ -73,8 +73,8 @@ test("the pills' glyph tiles are 22 × 22 and no name is cut, whatever slot 2 ho
       );
       for (const x of m) {
         expect(x.cut, `${x.id}, slot ${barSlot}`).toBeLessThanOrEqual(0);
-        expect(x.tile, `${x.id}, slot ${barSlot}`).toEqual([22, 22]);
-        expect(x.face).toBeGreaterThanOrEqual(22);
+        expect(x.tile, `${x.id}, slot ${barSlot}`).toEqual([16, 16]);
+        expect(x.face).toBe(20);
       }
     }
   } finally {

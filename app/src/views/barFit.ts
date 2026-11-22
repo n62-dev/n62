@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R703 (F383): the bar's text under the Android WebView's text zoom. The bar keeps its 28 px and its controls their widths
 // (docs/03 rule 9, R782: nothing moves under the finger); the text inside them shrinks to fit, the format and digits chip
-// first (it is the one control whose width follows its text), then each fixed control's own text. Without a zoom nothing is
-// written: the CSS sizes fit (fontscale.spec.ts).
+// first (it is the one control whose width follows its text), then each fixed control's own text. A place tab's name is never
+// shrunk or cut: where it does not fit, the tab shows its glyph only, its box unchanged (owner, 2026-11-22, R856). Without a
+// zoom nothing is written: the CSS sizes fit (fontscale.spec.ts).
 import { textZoom } from "../keyboard/fit.ts";
 
 /** A text that does not fit at its floor ends in … (`data-cut`, a rule this chunk adds once), inside its box; its whole text
@@ -26,10 +27,9 @@ const ROUNDS = 4;
 
 /** The fixed controls and the text in each that shrinks (a control and its text may be one element). */
 const FIXED: [box: string, text: string][] = [
-  [".nm", ""],
   [".tile.math", ""],
   [".place", ".caret"],
-  [".chip.angle", ".mark"],
+  [".modes .angle", ""],
   [".menubtn", ""],
   ["button.mod", ""],
 ];
@@ -62,8 +62,13 @@ export function fitBar(bar: HTMLElement): void {
       el.style.fontSize = "";
       cut(el, false);
     }
+  const names = [...bar.querySelectorAll<HTMLElement>(".ptab .nm")];
+  for (const nm of names) nm.hidden = false;
   const z = textZoom(bar.ownerDocument);
   if (z === 1) return;
+  // R856: a tab whose name does not fit shows its glyph only (the name stays its aria-label), never a shrunk name or "Ho…"
+  const wide = names.filter((nm) => nm.scrollWidth > nm.clientWidth + 0.5);
+  for (const nm of wide) nm.hidden = true;
   // rounds until nothing passes its box (R703f1: two rounds at 1 % left ☰ and π 0.4 px over at 2.0): a part that does not scale
   // with the text (a chip's padding, the tile beside ▾) leaves it a little wide, each round reads it again
   for (let round = 0; round < ROUNDS; round++) {

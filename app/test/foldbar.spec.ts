@@ -90,7 +90,7 @@ test("the entry line has its full width: no left padding is kept for ⌄ (the fi
   expect(pad).toBeLessThanOrEqual(12); // the field's own --sp-25, not --chev-pad (24)
 });
 
-test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, the slot and ☰; no separate slice; the screen is 771 px", async ({ page }) => {
+test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, the slot, the modes and ☰; no separate slice; the screen is 771 px", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 815 });
   await fold(page);
   const b = await box(page, FBAR);
@@ -99,7 +99,8 @@ test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, th
   for (const id of ["fold-slice", "tab-home", "tab-slot", "mod-slot", "menu-button"]) await expect(fbar(page).getByTestId(id)).toBeVisible();
   await expect(page.locator('[data-testid="bar"]')).toHaveCount(1); // one bar: the folded row's
   await expect(fbar(page).getByTestId("bar")).toHaveCount(1);
-  for (const id of ["chip-angle", "chip-format", "place"]) await expect(fbar(page).getByTestId(id)).toBeHidden(); // no chips, no Apps ▾
+  for (const id of ["chip-format", "chip-angle"]) await expect(fbar(page).getByTestId(id)).toBeVisible(); // R856: the modes group
+  await expect(fbar(page).getByTestId("place")).toBeHidden(); // no Apps ▾
   expect((await box(page, ".keys")).height).toBe(44);
   const screen = await page.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
   console.log(`folded history height at 412 × 815: ${screen}`);
@@ -313,3 +314,30 @@ test("the folded bar's other ways back: Esc and Back unfold; the history still s
   expect(await history.evaluate((el) => el.scrollTop)).toBeLessThan(before);
   await isFolded(page, true);
 });
+
+for (const [width, height] of [[360, 740], [412, 915]] as const)
+  test(`R856: folded, the modes group stands in the free stretch, the word at the open bar's x; a pick gives it way to Store ▶ · Copy › at ${width} × ${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await rows(page);
+    const open = await box(page, '[data-testid="chip-angle"]');
+    await fold(page);
+    const group = fbar(page).getByTestId("bar-modes");
+    await expect(group.getByTestId("chip-format")).toBeVisible();
+    await expect(group.getByTestId("chip-angle")).toHaveText("RAD");
+    const word = await box(page, `${FBAR} [data-testid="chip-angle"]`);
+    expect([word.x, word.width]).toEqual([open.x, open.width]);
+    const free = await box(page, '[data-testid="fold-free"]');
+    const slot = await box(page, `${FBAR} [data-testid="tab-slot"]`);
+    const fmt = await box(page, `${FBAR} [data-testid="chip-format"]`);
+    expect(free.x).toBeGreaterThanOrEqual(slot.x + slot.width - 0.5); // the stretch, then the group
+    expect(fmt.x).toBeGreaterThanOrEqual(free.x + free.width - 0.5);
+    const items = await fbar(page).locator("[data-item]").evaluateAll((els) =>
+      els.filter((e) => (e as HTMLElement).checkVisibility({ visibilityProperty: true })).map((e) => ({ n: (e as HTMLElement).dataset["item"], x: e.getBoundingClientRect().x })).sort((a, b) => a.x - b.x).map((e) => e.n));
+    expect(items).toEqual(["unfold", "home", "slot", "mode", "angle", "menu"]);
+    await fbar(page).getByTestId("chip-angle").tap(); // a tap on the word works folded too
+    await expect(fbar(page).getByTestId("chip-angle")).toHaveText("DEG");
+    await results(page).last().tap();
+    await expect(fbar(page).getByTestId("row-actions").getByRole("button")).toHaveCount(2);
+    await expect(group).toBeHidden();
+    await expect(fbar(page).getByTestId("chip-angle")).toBeHidden();
+  });

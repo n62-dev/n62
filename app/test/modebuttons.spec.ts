@@ -21,7 +21,7 @@ test.describe("by touch", () => {
     await opt(page, "format", "sci").tap();
     await expect(sheet(page)).toHaveCount(0);
     expect(await setting(page, "format")).toBe("sci");
-    await expect(page.getByTestId("chip-format")).toHaveText("SCI|12");
+    await expect(page.getByTestId("chip-format")).toHaveText("SCI 12 ▾");
   });
 
   test("STD → PFX in 2 taps", async ({ page }) => {
