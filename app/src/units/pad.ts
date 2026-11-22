@@ -81,6 +81,8 @@ const isStoreKey = (k: Key): boolean => k.actions.shift?.kind === "insert" && k.
 /** A key whose Shift layer is the view's own where its cell has no up item: drawn and live over the pad. */
 const passes = (k: Key): boolean => isUncKey(k) || isStoreKey(k);
 const NONE: Action = { kind: "special", name: "none" };
+/** R861: the keep cell Find (Math) opens a sheet, Find on units: drawn as Find, so its face carries the mark ▾ (R143, opens.ts). */
+const FIND: Action = { ...NONE, name: "find" };
 const LEG = { primary: "tap", shift: "up", alpha: "down" } as const;
 
 function fail(what: string): never {
@@ -128,11 +130,12 @@ export class UnitPad {
     if (!c || sheet) return undefined; // (a sheet over the keys: the keypad's own)
     const label: Partial<Record<PadLayer, string>> = {};
     const actions: Partial<Record<PadLayer, Action>> = {};
-    for (const layer of ["primary", "shift", "alpha"] as const) {
+    for (const layer of Object.keys(LEG) as PadLayer[]) {
       const leg = c[LEG[layer]];
       if (leg) label[layer] = leg.text;
-      // (only whether a layer has an action matters to the drawing: the press goes to `route`)
-      actions[layer] = leg ? DRAWN : NONE;
+      // (the drawing reads only whether a layer has an action and, for the mark ▾, whether it opens a sheet: the keep cell Find,
+      // the one leg that emits it, R861; the press goes to `route`. An empty user cell's Find, R24d, is no leg: its "+" has no mark)
+      actions[layer] = leg ? (leg.emit.do === "find" ? FIND : DRAWN) : NONE;
     }
     // R327: Shift + 1, the uncertainty sheet, stays on its key over the pad (the d1 cell has no Shift leg): drawn and live;
     // R353: Shift + ᴇ, Store ▶, too (the mol cell has none)
