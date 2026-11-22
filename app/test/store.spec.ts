@@ -85,6 +85,7 @@ test("one of N62's own names typed in the sheet is refused: 7 ▶ sigfig says wh
   await page.evaluate(() => window.n62.entry.focus()); // the field keeps focus while a sheet is open (hardware letters)
   await page.keyboard.type("sigfig");
   await expect(store(page).getByTestId("sheet-filter")).toHaveText("sigfig");
+  await expect(store(page).getByTestId("find-preview")).toHaveText("sigfig is one of N62's own names"); // R804f1: the preview reads the refusal before Enter
   await tap(page, ["enter"]);
   await expect(page.getByText("sigfig is one of N62's own names")).toBeVisible();
   expect(await names(page)).toEqual([]); // nothing reached the engine: sigfig:=7 would replace our definition

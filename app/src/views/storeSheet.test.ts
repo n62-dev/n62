@@ -170,6 +170,24 @@ describe("letters typed in the store sheet (R804)", () => {
     if (p.kind === "run") p.item.run?.();
     expect(stored).toEqual(["Q"]);
   });
+  it("R804f1: a name N62 refuses reads the parser's reason, never \"is free\"; Q stays free; mean (Giac's) is refused at Enter only (G354)", () => {
+    const refusal: Record<string, string> = {
+      sigfig: "sigfig is one of N62's own names",
+      sin: "sin is a built-in name: store into another name",
+      pi: "pi is a built-in name: store into another name",
+    };
+    for (const [typed, line] of Object.entries(refusal)) {
+      const { sheet } = setup();
+      for (const ch of typed) sheet.level.type(ch);
+      expect(sheet.level.note?.()).toBe(line);
+    }
+    const { sheet } = setup();
+    sheet.level.type("Q");
+    expect(sheet.level.note?.()).toMatch(/^Q is free · Enter stores /);
+    const m = setup().sheet;
+    for (const ch of "mean") m.level.type(ch);
+    expect(m.level.note?.()).toMatch(/^mean is free/);
+  });
   it("a longer stored name typed in full highlights its row and asks first; part of it is free", () => {
     const { sheet, stored } = setup();
     for (const ch of "rat") sheet.level.type(ch);

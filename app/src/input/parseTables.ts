@@ -55,14 +55,23 @@ export const FACTOR_CMDS = new Set([
   "operatorname", "mathrm", "mathit", "res", "ans", "const",
 ]);
 
-/** R281: a name after ▶ (the store sheet's `\operatorname{rate}`) that is one of N62's own (`sigfig:=7` would replace our
+/** R281, R804f1: a name after ▶ (the store sheet's `\operatorname{rate}`) that is one of N62's own (`sigfig:=7` would replace our
  *  definition, ourNames.ts isOwnName: the library reader's test too) or a word of these tables (`sin`, `pi`) is refused
  *  with the reason. Giac's other functions are not listed here: Giac answers `mean:=5` with a value (its warning and 5),
  *  not an error, and stores nothing, which the engine host refuses with these words (G354, host.ts unstored); a name
  *  Giac lets take a value (`D`, `E`, `I`, `O`) stores. */
+export function storeRefusal(name: string): { key: "parse.ourName" | "parse.builtInName"; vars: { name: string } } | undefined {
+  if (isOwnName(name)) return { key: "parse.ourName", vars: { name } };
+  if ([FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) return { key: "parse.builtInName", vars: { name } };
+  return undefined;
+}
+/** The refusal as the parser throws it (storeRefusal), at Enter. */
 export function refuseStore(name: string): void {
-  if (isOwnName(name)) throw parseError("parse.ourName", { name });
-  if ([FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) throw parseError("parse.builtInName", { name });
+  const r = storeRefusal(name);
+  if (r) {
+    const { key, vars } = r;
+    throw parseError(key, vars);
+  }
 }
 
 /** Letters that start a base prefix after a lone 0 (0x, 0b, 0o, docs/04 5.4), and their base; parse.ts reads the
