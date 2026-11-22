@@ -100,12 +100,67 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
       expect.soft(prev.right, "← and →'s hit boxes do not overlap").toBeLessThanOrEqual(next.left);
       const check = await box(page, "unit-check");
       expect.soft(next.right, "→'s hit box left of → Check").toBeLessThanOrEqual(check.left);
+      // audit fix 2: the reading ends before ←'s hit box, and at 360 × 740 it keeps about 150 px (sandra: 179 of 336 px for the buttons)
+      const reading = await box(page, "unit-reading");
+      expect.soft(reading.right, "the reading lies left of ←'s hit box").toBeLessThanOrEqual(prev.left);
+      if (w === 360) expect.soft(reading.right - reading.left, "the reading's width at 360 px").toBeGreaterThanOrEqual(145);
+      // audit fix 1: with nothing shown above the last row the touch area reaches only the field's blank bottom, no slot's box
+      const slots = await page.evaluate(() => Math.max(...[...(window.n62.unitView?.field.shadowRoot?.querySelectorAll(".ML__prompt") ?? [])].map((b) => b.getBoundingClientRect().bottom)));
+      for (const [id, hit] of [["unit-prev", prev], ["unit-next", next]] as const) expect.soft(hit.top, `${id}'s hit box below the slots' boxes (${slots})`).toBeGreaterThanOrEqual(slots);
       // R790: → Check's top with the buttons is its top without them
       await page.evaluate(() => document.querySelectorAll<HTMLElement>('[data-testid="unit-prev"], [data-testid="unit-next"]').forEach((b) => (b.style.display = "none")));
       const without = await box(page, "unit-check");
       expect.soft(check.top, "→ Check's top with the buttons and without them").toBe(without.top);
-      const reading = await box(page, "unit-reading");
-      expect.soft(reading.right, "the reading lies left of ←").toBeLessThanOrEqual(check.left);
     });
   });
+}
+
+// audit fix 1: the touch areas reached about 12 px above the buttons, over the bottom of the alternatives row, and a tap on a
+// chip's lower edge there stepped the slot instead (the step button was found at the point). 72 km/h evaluated at once keeps
+// the reading on one line, so the row above the buttons is the chips' row.
+for (const [w, h] of [[412, 915], [360, 740]] as const) {
+  for (const id of ["unit-prev", "unit-next"] as const) {
+    test(`R853 at ${w} × ${h}: a tap 2 px above a chip's bottom over ${id === "unit-prev" ? "←" : "→"} picks the chip, not the button`, async ({ page }) => {
+      test.setTimeout(60_000);
+      await page.setViewportSize({ width: w, height: h });
+      await open(page, "");
+      await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+      await tap(page, ["d7", "d2"]);
+      await flick(page, "tmpl", "up");
+      await up(page);
+      await tap(page, ["d4", "d9", "div"]);
+      await flick(page, "d3", "up");
+      await flick(page, "enter", "up"); // 72 km/h at once
+      await expect(page.getByTestId("unit-alts")).toHaveAttribute("data-fit", /^\d+$/);
+      const alts = await box(page, "unit-alts");
+      const hit = await hitBox(page, id);
+      // nowhere across the button's hit box does a point 2 px above the row's bottom find the button
+      const found = await page.evaluate(({ id, y, from, to }) => {
+        const b = document.querySelector(`[data-testid="${id}"]`);
+        const out: number[] = [];
+        for (let x = Math.ceil(from); x <= to; x += 2) {
+          const at = document.elementFromPoint(x, y);
+          if (at !== null && b !== null && (at === b || b.contains(at))) out.push(x);
+        }
+        return out;
+      }, { id, y: alts.bottom - 2, from: hit.left, to: hit.right });
+      expect(found, `x where the button is found 2 px above the chips' bottom (${alts.bottom})`).toEqual([]);
+      // a real tap on the chip (or More…) over the button picks it, where its lower edge is straight
+      const chip = await page.evaluate(({ from, to }) => {
+        for (const c of document.querySelectorAll<HTMLElement>(".unitview .alt:not([hidden])")) {
+          const r = c.getBoundingClientRect();
+          const round = parseFloat(getComputedStyle(c).borderBottomLeftRadius) || 0; // (Chromium hit-tests the rounded corners)
+          const l = Math.max(r.left + round, from);
+          const ri = Math.min(r.right - round, to);
+          if (ri - l >= 4) return { x: (l + ri) / 2, bottom: r.bottom, more: c.classList.contains("more"), text: c.textContent ?? "" };
+        }
+        return undefined;
+      }, { from: hit.left, to: hit.right });
+      test.skip(chip === undefined, `no chip over ${id} at ${w} px (the sweep above still ran)`);
+      if (!chip) return;
+      await page.touchscreen.tap(chip.x, chip.bottom - 2); // (the button there would make a dead press: one slot, no Check)
+      if (chip.more) await expect(page.getByTestId("find")).toBeVisible();
+      else await expect(page.getByTestId("unit-result")).toHaveAttribute("data-unit", chip.text);
+    });
+  }
 }

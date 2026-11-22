@@ -39,6 +39,10 @@
    from 8 px under it (the entry line's padding, never the bar) up. Dim at the first or last slot (aria-disabled). */
 .unitview .step { position: relative; flex: none; min-width: var(--touch); font: inherit; font-size: 14px; color: var(--text); background: none; border: 1px solid var(--muted); border-radius: 14px; padding: 2px 10px; white-space: nowrap; cursor: pointer; }
 .unitview .step::before { content: ""; position: absolute; left: -1px; right: -1px; bottom: -9px; height: var(--touch); }
+/* R853 fix round 1: with something shown above the last row (a result's chips and Store ▶, a message) the row is at least the
+   touch area's height less the 8 px under it, so the touch area stays in the row and reaches nothing above. With nothing
+   shown the field is above: R852 keeps it within 40 px of the bar, so the area reaches its blank bottom (no slot's box). */
+.unitview .below:not(:empty) ~ .last { min-height: calc(var(--touch) - 8px); }
 .unitview .step[aria-disabled="true"] { color: var(--text-dead); border-color: var(--text-dead); cursor: default; }
 .unitview .said { font-size: 13px; color: var(--warn); margin-inline-start: 1.9em; }
 .unitview .alt[data-focus] { outline: 2px solid var(--focus); outline-offset: 1px; }
