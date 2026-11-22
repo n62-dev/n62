@@ -13,6 +13,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R842, N62 Light's Enter in orange (K7):** pick from [mockups/enter-orange-light.html](mockups/enter-orange-light.html): A `#c26a00` (sandra's, black label 5.36:1, fill 3.26:1 on the keys round it), B `#b26206` (white label 4.52:1, fill 3.76:1; 0.099 from the error red for deuteranopia, and in High contrast it moves to `#864a05`, 0.009 from Shift: reads as Shift), C `#d55800` (the most vivid that meets every floor: black label 5.23:1, fill 3.34:1; recommended), or none (Enter stays teal, whose fill is 2.75:1 today). A and C stand ≥ 0.24 from Light's drawn Shift `#5b2400` for every colour-vision view; in High contrast their fill lightens to 7:1 for the label and falls to 2.8:1 on the keys, as the teal's does today. R843 starts on the answer.
 
+- **R703, the font-scale device run:** the device test (`tools/fontscale-device.sh`, font_scale 1.3, 1.5, 2.0) did not run: no emulator on this machine, and changing a device's font scale is outside the device rules (section 3). Recommended: annabell runs it on an emulator (Pixel 7, as the T5 probe) after the merge, or the owner allows the night's device (`FONTSCALE_DEVICE_OK=1`; the script puts the old scale back). The owner's eye at 1.5 on the phone joins the next milestone review.
+
 ## Decided proposals
 
 ### Pipeline and process
