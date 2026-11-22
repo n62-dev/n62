@@ -79,6 +79,8 @@ export class UnitView {
   /** R62: the chip last tapped: while the end slot is still its slot, the result reads the unit as the chip did ("ton", "cal"). */
   #picked: Alternative | undefined;
   #fit: number | undefined;
+  /** R838: what the result shown was drawn from (the engine's answer, its row and the format as JSON), for a redraw with no request. */
+  #result: [Quantity | UnitError, readonly Alternative[], string] | undefined;
 
   /** R62: how many of the row's chips fit (the panel measures); undefined: all. A smaller number moves a focus on a hidden chip to "More…". */
   get fit(): number | undefined {
@@ -490,11 +492,27 @@ export class UnitView {
       const p = this.#picked;
       const q = !("error" in got) && p && got.shownSlot && JSON.stringify(got.shownSlot) === JSON.stringify(p.slot) ? { ...got, unit: p.text } : got;
       if (run !== this.#run) return;
-      this.shown = shownOf(q, this.#host.format(), alts);
+      const f = this.#host.format();
+      this.shown = shownOf(q, f, alts);
+      this.#result = [q, alts, JSON.stringify(f)];
       if (!("error" in q)) this.#host.result?.(q);
     } catch (e) {
       if (run === this.#run) this.shown = { kind: "message", text: unitText("units.engine") };
     }
+  }
+
+  /** R838: a setting the result is only drawn with changed (the format, the decimal mark, the digit groups; Settings or Mode
+   *  over the view; a digits change asks again, units/open.ts): the result shown is drawn again from the engine's answer, with no new request, and a focused chip
+   *  stays focused (the caller draws the panel). Nothing when no result is shown or its format is unchanged. */
+  redraw(): void {
+    const r = this.#result;
+    const f = this.#host.format();
+    const s = JSON.stringify(f);
+    const row = this.#row;
+    if (this.#shown.kind !== "result" || !r || s === r[2]) return;
+    r[2] = s;
+    this.shown = shownOf(r[0], f, r[1]);
+    this.#row = Math.min(row, this.chips);
   }
 
   /** Esc: the line keeps its slots. */

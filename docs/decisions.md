@@ -9,8 +9,6 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 
-- **R860, the hint in a landscape phone's history (ron, run 1489):** at 915 × 412 the history is 16 px, under the hint's 21 px line, so the hint cannot lie inside it (R860 leaves the mark out there and keeps the hint's whole line in the scroller, mostly hidden). Should a short history give the hint up too, or should the landscape layout give the history at least one line? Recommendation: a landscape layout package (the keypad beside the history), the hint left as it is until then.
-
 ## Decided proposals
 
 ### Pipeline and process
@@ -41,7 +39,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **Built, archived ("2026-11-17, the fix lane"):** R140's colour-vision floors (owner, 2026-11-07); R50 (owner 2026-11-07): three themes; Redo after ⌫ (R15c2).
 - **Owner answers of 2026-11-02 (vision; interview with sandra).** A working engineer, phone first; units and constants first; no AI in the app; marks, σ and digit groups each a setting. Archived. Would change if: an outside round shows another first user.
 - **Owner answers of 2026-11-02.** Stored names (R33) get a colour token per theme; the app's switch alone decides key vibration (A9, R112); Android's splash and bars Dark (A59). Archived. Would change if: users want the system switch to mute the keys.
-- **Bulk resets ask once (owner, 2026-11-22, R857); one-slot clears do not.** Reset all your keys, Reset the unit pad cells and the three Reset the counter rows arm on the first pick (R281's ask: the armed label, the row in `--error`, a note naming what goes); Empty this slot and Back to the default clear at once. Rule: docs/05 3.4.
+- **Bulk resets ask once (owner, 2026-11-22, R857); one-slot clears do not.** Reset all your keys, Reset the unit pad cells and the three Reset the counter rows arm on the first pick (R281's ask: the armed label, the row in `--error`, a note naming what goes); Empty this slot and Back to the default clear at once. A digit key arms the reset and never runs it (R281's rule: every key but Enter disarms first; pass 230); Enter or a second tap runs it. Rule: docs/05 3.4.
 - **R4b's four defaults, as built:** Memory deletes a name without asking (Clear all asks once); a Find pick for a slot closes the sheets; a key's constant keeps its value and σ; Vars is dead without an entry line. Archived.
 - **Settings in the Mode sheet, and presets (owner, 2026-10-27; built by R49, R85–R89).** Settings is a level of the pick sheet; a preset snapshots any user settings. Rule: docs/05 3.4. Archived. Would change if: presets are switched under 5 times in 4 weeks (they go).
 - **R15c1 menus (owner, 2026-10-20): a long menu scrolls** in the viewport (docs/05 3.1); the ⚙ in its title opens Settings (R145). Would change if: the scroll feels slow on the APK.
@@ -106,6 +104,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **P14 (2026-10-14) and the P14 arrangement (2026-10-18, S5): the unit pad.** Rule: [archive/r9-unit-pad.md](archive/r9-unit-pad.md), `spec/unit-pad.yaml`; a hardware keyboard types a unit symbol in a slot (R313). Archived. Would change if: the owner's units take ≥ 3 presses; R24b's reach costs.
 - **S1 (2026-10-13): the unit slots.** The number comes before the units key; digits in a slot are only exponents; a live reading under the slot. Archived.
 - **S4 (2026-10-18): a library file carries definitions only;** settings and key slots go only in the backup. Archived. Would change if: keyboard set-ups are shared (a `// key:` line).
+- **U1–U6 over the unit pad (R838; pass 230):** while the pad is up they are its cells (R24d), so a user key that holds Settings or Mode does not open it there; Shift + Help, the bar's chip and Alt + Shift + O do. Would change if: the owner wants his user keys over the pad.
 - **Formula, then units (owner, 2026-11-16):** letters get unit slots; → Check turns the end slot on (R349); Store ▶ in the view (R353); SI names, no J or Hz (G389).
 
 ## Defaults
@@ -124,6 +123,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **History pick by part (owner, 2026-11-20, R832):** a tap on a row's input lights the input, on its result the result, elsewhere the whole row; Copy, Store ▶, Shift + Select and Enter act on what is lit, Delete and Share on the row (docs/05 3.5); with text on the line, Enter, Store ▶ or the second tap on a lit input puts it at the caret (pass 225; R858, owner 2026-11-22). Would change if: keys-only users cannot light an input (then ◀ ▶ on a pick switch the part).
 - **R198's typed names:** a typed FUNCS or Find function name before `(` is the function, drawn by name; Giac's program words stay letters (R198f1). Archived.
 - **R224's wide layout:** the keypad in a 42 % column of 400–560 px (`--keys-wide`). Archived. Would change if: the owner's look on the Tab One.
+- **A phone held sideways (R860; pass 230):** no layout of its own (mh-C decision 5: the wide layout is for tablets and desktops); at 915 × 412 the history is 16 px, the mark is left out and the hint's line sits mostly out of sight. Would change if: the owner uses a phone sideways.
 - **Nothing takes focus while the app is away** (R25a–c) and **Focus on return:** MathLive's own restore is off (R22). Would change if: a desktop browser loses the caret after switching windows.
 - **Flicks** (R9): arm at 20 px, cancel within 12 px; **Alpha lock:** Alpha twice locks capitals, Shift Alpha Alpha lower case. Archived.
 - **R58: in the CAS view Alpha types lower case.** Archived.
