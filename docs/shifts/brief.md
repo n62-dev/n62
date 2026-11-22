@@ -70,6 +70,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
+| 885zd | [R852](packages/R852.md) the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
+| 885ze | [R853](packages/R853.md) ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
 | 886 | [R703](packages/R703.md) the keypad, the bar and Mode fit at font scale 1.5 and 2.0 (F383), if not merged by the stop | ron, Opus | `p1/ron-textzoom` | R700, R722 |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
@@ -95,20 +97,16 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Opus | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Opus | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Opus | `p1/ron-namechips` | R818 |
-| 917 | [R810](packages/R810.md) Shift + ◀ ▶ jump a block (C8); the owner's yes on docs/06 given 2026-11-21 | ron, Opus | `p1/ron-shiftarrows` | R808 |
-| 918 | [R811](packages/R811.md) super mode's state and keys: Shift flick down once, Shift + Fmt held; the owner's yes on the docs/06 lines given 2026-11-21 | ron, Opus | `p1/ron-supermode` | R810 |
-| 918a | [R850](packages/R850.md) super mode drawn green (`--key-super`); after the owner's yes on R845 | ron, Opus | `p1/ron-supergreen` | R811, R845 |
 | 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Opus | `p1/ron-userkeyalpha` | R729 |
 | 920 | [R822](packages/R822.md) Store: a tap types the case Alpha types; (owner's rule yes, 2026-11-21) | ron, Opus | `p1/ron-storecase` | R820 |
 | 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Opus | `p1/ron-rowx` | R832, R742 |
 | 924 | [R836](packages/R836.md) the row draws and copies the value Ans had: `[5]² = 25` | ron, Opus | `p1/ron-ansvalue` | G642 |
 | 925 | [R838](packages/R838.md) Settings and Mode open over the unit view and close back onto it (U2) | ron, Opus | `p1/ron-unitsettings` | R770 |
 | 926 | [R840](packages/R840.md) every pop-up window: a 2 px edge in the theme's accent (P1) | ron, Opus | `p1/ron-sheetedge` | R770 |
-| 928 | [R843](packages/R843.md) N62 Light's Enter in the picked orange; after the owner's pick | ron, Opus | `p1/ron-enterorange` | R842 |
+| 928 | [R843](packages/R843.md) N62 Light's Enter in orange A `#c26a00` (owner's pick, 2026-11-22) | ron, Opus | `p1/ron-enterorange` | R842 |
 | 929 | [R847](packages/R847.md) Find for a user-key slot: titled "U1 ⇧", Places, Back returns (Y1) | ron, Opus | `p1/ron-slotfind` | R811, R821 |
 | 930 | [R848](packages/R848.md) a tap on an empty user key opens its own slot sheet (Y1; reworks R705) | ron, Opus | `p1/ron-keysheet` | R705, R811, R821, R847 |
-| 931 | [R849](packages/R849.md) super mode: a tap or hold on any user key opens its sheet (Y1) | ron, Opus | `p1/ron-superkeys` | R811, R850, R848 |
-| 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R849 |
+| 885b | [S57](packages/S57.md) a bug hunt on the everyday maths through the new layout; rows after it (R760–R769, G760–G769) | sandra, Opus | `p1/sandra-hunt-maths` | R848, R843 |
 
 ### Lane B queue (owner, 2026-11-22: gorge's maths fixes, wrong answers first)
 
@@ -136,7 +134,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B20 | [G401](packages/G401.md) Find knows the engineers' words for functions it has | gorge, Opus | `p1/gorge-findwords` | – |
 | B21 | [G402](packages/G402.md) Find in a unit slot reads a compound unit as the slot does | gorge, Opus | `p1/gorge-findcompound` | G401 |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The Ultra clone `../n62-next` ran the after-tag rows G389 to R351 and R367 to G407 from its own brief and stopped; its phase-1 merges back once after the tag, which ticks those rows here. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The Ultra clone `../n62-next` ran the after-tag rows G389 to R351 and R367 to G407 from its own brief and stopped; its phase-1 merges back once after the tag, which ticks those rows here. Waiting for the owner: R849 (Your keys as a picture of U1–U6; his feedback on the mock-up, 2026-11-22), R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
