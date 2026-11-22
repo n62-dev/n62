@@ -524,7 +524,7 @@
   @media (max-width: 400px) {
     .bar {
       --bar-gap: var(--stroke-thin);
-      --angle-w: 33px;
+      --angle-w: var(--angle-w-narrow);
     }
     .track {
       gap: var(--stroke-thin);
