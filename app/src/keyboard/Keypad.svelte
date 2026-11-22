@@ -567,6 +567,11 @@
     background: transparent;
     box-shadow: inset 0 0 0 var(--stroke-thin) var(--line);
   }
+  /* R793 (owner's K10): its ＋ sits in the face row under an empty legend line, so it is lifted by half the difference of
+     that line and the bottom padding, into the key's centre */
+  .key[data-user="empty"] .main {
+    translate: 0 calc((var(--sp-05) - var(--legend-h)) / 2);
+  }
   .key[data-user="set"] {
     box-shadow: inset 0 0 0 var(--stroke-thin) var(--key-muted), var(--key-drop);
   }

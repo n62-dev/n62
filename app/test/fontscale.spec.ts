@@ -42,7 +42,10 @@ for (const scale of [1.5, 2.0])
             const m = main?.getBoundingClientRect();
             const s = sh?.getBoundingClientRect();
             const a = al?.getBoundingClientRect();
-            if (m && s && m.top < s.bottom - 0.5) out.push(`${id}: the face (${getComputedStyle(main!).fontSize}) rises into the shift legend line`);
+            // an empty user key's legend line is always empty and its ＋ is lifted to the key's centre (R793): it stays in the key
+            const empty = key.dataset["user"] === "empty";
+            if (m && s && !empty && m.top < s.bottom - 0.5) out.push(`${id}: the face (${getComputedStyle(main!).fontSize}) rises into the shift legend line`);
+            if (m && empty && m.top < kb.top - 0.5) out.push(`${id}: the face is cut at the key's top`);
             if (m && a && m.bottom > a.top + 0.5) out.push(`${id}: the face sinks into the letter line`);
             if (m && m.bottom > kb.bottom + 0.5) out.push(`${id}: the face is cut at the key's bottom`);
             // a legend's font is at most 1.1 times its own line (fit.ts LEGEND_MAX_EM, the design's ratio)
