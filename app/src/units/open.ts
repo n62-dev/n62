@@ -66,10 +66,8 @@ const unitFind = (): Promise<typeof import("./find.ts")> =>
 const STORE_ARROW = "\\blacktriangleright";
 
 /** Keys that change place: the unit view closes first, then they do their job. Settings and Mode are none (R838): their
- *  sheet opens over the view, which stays as it is (OVER). */
+ *  sheet opens over the view, which stays as it is (`unitPad.other`). */
 const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "slot", "symb", "plot", "num"];
-/** R838: keys whose sheet opens over the view: they do their job as on the line, and the view stays. */
-const OVER: readonly string[] = ["settings", "mode"];
 
 /** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
 export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
@@ -100,6 +98,8 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const seed = row ? rowSlots(row) : undefined;
   /** The Home row of this visit's result (R63): a later result takes its place. */
   let rowId: number | undefined;
+  /** R838: the angle unit the result shown was computed in. */
+  let angle = c.session.settings.angle;
   const mf = new Field();
   mf.dataset["testid"] = "unit-field";
   const host: ViewHost = {
@@ -121,7 +121,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     values: () => userValuesOf(c.session.userNames),
     changed: () => panel.draw(),
     reset: (latex, ids) => lockedValue(mf, latex, ids),
-    result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId)),
+    result: (q) => void ((angle = c.session.settings.angle), (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId))),
   };
   /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
    *  keeping its slots, they go with the new line text, and the view opens again on it. */
@@ -236,27 +236,23 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   document.addEventListener("click", tapped, { capture: true });
   untap = () => document.removeEventListener("click", tapped, { capture: true });
   /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
-   *  and a setting changed there shows: an angle unit recomputes the result as the line would, a setting it is only drawn
-   *  with (the digits, the format, the decimal mark, the digit groups, the marks) draws it again with no request. */
-  let angle = c.session.settings.angle;
-  unwatch = watchSheet(c.shell, {
-    opened: () => void (angle = c.session.settings.angle),
-    closed: () => {
-      if (current?.view !== view) return;
-      if (angle !== c.session.settings.angle && view.shown.kind === "result") void view.evaluate();
-      else view.redraw();
-      panel.draw();
-      keep();
-    },
+   *  and a setting changed there shows: an angle unit other than the result's recomputes it as the line would, a setting it is
+   *  only drawn with (the digits, the format, the decimal mark, the digit groups, the marks) draws it again with no request. */
+  unwatch = watchSheet(c.shell, () => {
+    if (current?.view !== view) return;
+    if (angle !== c.session.settings.angle && view.shown.kind === "result") void view.evaluate();
+    else view.redraw();
+    panel.draw();
+    keep();
   });
   unitPad.on = (e) => {
     view.apply(e);
     if (current?.view === view && e.do !== "find") keep();
   };
   unitPad.other = (c2, key, mods) => {
-    if (c2.shell.sheet) return false; // (a sheet over the view takes the keys, as over the cells: UnitPad.route)
     const a = layerAction(key, mods);
-    if (a?.kind === "special" && OVER.includes(a.name)) return false; // R838: the key does its job, its sheet over the view
+    // a sheet over the view takes the keys, as over the cells (UnitPad.route); R838: Settings and Mode do their job, over the view
+    if (c2.shell.sheet || (a?.kind === "special" && (a.name === "settings" || a.name === "mode"))) return false;
     if (a?.kind === "special" && PLACES.includes(a.name)) {
       close();
       return false; // the key does its job

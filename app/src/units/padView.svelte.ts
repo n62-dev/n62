@@ -32,14 +32,14 @@ export const unitPad: {
   on: () => {},
 };
 
-/** R838: `opened` runs when a sheet opens over the unit view (Settings, Mode, Find on units), `closed` when the last one goes
- *  (Esc, Back, ×, a pick that closes it; a sheet that gives way to another in the same update is no close). Returns the stop. */
-export function watchSheet(shell: AppShell, on: { opened(): void; closed(): void }): () => void {
-  let open = untrack(() => shell.sheet !== null);
+/** R838: `closed` runs when the last sheet over the unit view goes (Settings, Mode, Find on units: Esc, Back, ×, a pick that
+ *  closes it; a sheet that gives way to another in the same update is no close). Returns the stop. */
+export function watchSheet(shell: AppShell, closed: () => void): () => void {
+  let open = false;
   return $effect.root(() => {
     $effect(() => {
       const now = shell.sheet !== null;
-      if (now !== open) untrack(now ? on.opened : on.closed);
+      if (open && !now) untrack(closed);
       open = now;
     });
   });
