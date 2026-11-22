@@ -90,7 +90,7 @@ test("the entry line has its full width: no left padding is kept for ⌄ (the fi
   expect(pad).toBeLessThanOrEqual(12); // the field's own --sp-25, not --chev-pad (24)
 });
 
-test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, the slot and ☰; no separate slice; the screen is 771 px", async ({ page }) => {
+test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, the slot, the modes and ☰; no separate slice; the screen is 771 px", async ({ page }) => {
   await page.setViewportSize({ width: 412, height: 815 });
   await fold(page);
   const b = await box(page, FBAR);
@@ -99,7 +99,8 @@ test("folded at 412 × 815: one 44 px row at the bottom holds ⌃, Home, CAS, th
   for (const id of ["fold-slice", "tab-home", "tab-slot", "mod-slot", "menu-button"]) await expect(fbar(page).getByTestId(id)).toBeVisible();
   await expect(page.locator('[data-testid="bar"]')).toHaveCount(1); // one bar: the folded row's
   await expect(fbar(page).getByTestId("bar")).toHaveCount(1);
-  for (const id of ["chip-angle", "chip-format", "place"]) await expect(fbar(page).getByTestId(id)).toBeHidden(); // no chips, no Apps ▾
+  for (const id of ["chip-format", "chip-angle"]) await expect(fbar(page).getByTestId(id)).toBeVisible(); // R856: the modes group
+  await expect(fbar(page).getByTestId("place")).toBeHidden(); // no Apps ▾
   expect((await box(page, ".keys")).height).toBe(44);
   const screen = await page.evaluate(() => document.querySelector(".screen")?.getBoundingClientRect().height ?? 0);
   console.log(`folded history height at 412 × 815: ${screen}`);

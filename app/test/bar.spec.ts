@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R722: the bar on the keypad's top edge (docs/05 3.2): Apps ▾ · Home | CAS · ⇧/α · RAD · STD ▾ · 12 ▾ · ☰, 28 px, flush
+// R722, R856: the bar on the keypad's top edge (docs/05 3.2): ⌄ · ⊞▾ · Home | CAS · STD 12 ▾ │ RAD · ☰, 28 px, flush
 // on the keys; the short key rows a notch taller (43 / 33 px under 1000 px tall). The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { BAR_ITEMS } from "../src/views/barItems.ts";
@@ -74,9 +74,9 @@ test("the place opens Apps; in Function it shows the app's glyph and, after the 
   expect(place.right <= home.left + 0.5 && home.right <= symb.left + 0.5).toBe(true); // glyph ▾, the tabs, the hairline, then the views (the bay)
 });
 
-test("the STD|12 chip is one target with no ▾ and opens Mode on Format (R722, R785)", async ({ page }) => {
+test("STD 12 ▾ is one target and opens Mode on Format (R722, R785, R856)", async ({ page }) => {
   await open(page);
-  expect(await page.evaluate(() => getComputedStyle(document.querySelector('[data-testid="chip-format"]')!, "::after").content)).toBe("none");
+  await expect(page.getByTestId("chip-format").locator("button")).toHaveCount(0);
   await page.getByTestId("chip-format").tap();
   await expect(sheet(page).locator('[role="menuitem"][data-active="true"]')).toHaveAttribute("data-id", "format");
   await tap(page, ["esc"]);

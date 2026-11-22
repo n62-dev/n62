@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R785 (owner, 2026-11-20): the bar's middle bay. Home and CAS: one chip, the format and the significant digits (`STD|12`),
-// a tap opens Mode on Format with Significant digits the next row. An app with views: its view icons after the hairline, no
-// chip; Mode is the last row of every app view's ☰. Every bar target at least 28 × 28 and nothing overlaps at 360 with DEG PFX 30.
+// R785 (owner, 2026-11-20), R856: Home and CAS: one target, the format and the significant digits (`STD 12 ▾`, the first half of
+// the modes group), a tap opens Mode on Format with Significant digits the next row. An app with views: its view icons after
+// the track, no format; Mode is the last row of every app view's ☰. Every bar target at least 28 × 28 and nothing overlaps at 360 with DEG PFX 30.
 import { expect, test, type Page } from "@playwright/test";
 import { open, sheet, tap } from "./helpers.ts";
 
@@ -34,33 +34,33 @@ for (const width of [360, 392, 412] as const)
       await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
     });
 
-    test("Home: one chip-format `STD|12` and no chip-digits; Mode's SCI and 6 show as SCI|6; a tap opens Mode on Format, Significant digits next", async ({ page }) => {
+    test("Home: one chip-format `STD 12 ▾` and no chip-digits; Mode's SCI and 6 show as SCI 6 ▾; a tap opens Mode on Format, Significant digits next", async ({ page }) => {
       await expect(page.getByTestId("chip-format")).toHaveCount(1);
       await expect(page.getByTestId("chip-digits")).toHaveCount(0);
-      await expect(page.getByTestId("chip-format")).toHaveText("STD|12");
+      await expect(page.getByTestId("chip-format")).toHaveText("STD 12 ▾");
       await page.getByTestId("chip-format").tap();
       await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
       await expect(active(page)).toHaveAttribute("data-id", "format");
       await expect(active(page).locator("xpath=following-sibling::*[1]")).toHaveAttribute("data-id", "digits");
       await sheet(page).locator('[data-id="format"] [aria-pressed]', { hasText: "SCI" }).tap();
       await page.evaluate(() => window.n62.session.setDigits(6));
-      await expect(page.getByTestId("chip-format")).toHaveText("SCI|6");
+      await expect(page.getByTestId("chip-format")).toHaveText("SCI 6 ▾");
       expect(await fits(page)).toEqual([]);
     });
 
     test("CAS has the same chip", async ({ page }) => {
       await tap(page, ["@cas"]);
-      await expect(page.getByTestId("chip-format")).toHaveText("STD|12");
+      await expect(page.getByTestId("chip-format")).toHaveText("STD 12 ▾");
       await expect(page.getByTestId("chip-digits")).toHaveCount(0);
     });
 
-    test("Function: the bay holds the three view icons after the hairline and no chip-format; ☰ in Plot ends in Mode, its digit picks it", async ({ page }) => {
+    test("Function: the bay holds the three view icons after the track and no chip-format; ☰ in Plot ends in Mode, its digit picks it", async ({ page }) => {
       await tap(page, ["@plot"]);
       await inApp(page);
       await expect(page.getByTestId("chip-format")).toHaveCount(0);
       const b = async (id: string) => (await page.getByTestId(id).boundingBox())!;
       const [home, cas, symb, plot, num] = [await b("tab-home"), await b("tab-slot"), await b("tab-symb"), await b("tab-plot"), await b("tab-num")];
-      expect(cas.x + cas.width).toBeLessThanOrEqual(symb.x + 0.5); // the places, the hairline, then the views
+      expect(cas.x + cas.width).toBeLessThanOrEqual(symb.x + 0.5); // the places, then the views
       expect(home.x).toBeLessThan(cas.x);
       expect(symb.x + symb.width).toBeLessThanOrEqual(plot.x + 0.5);
       expect(plot.x + plot.width).toBeLessThanOrEqual(num.x + 0.5);
@@ -83,7 +83,7 @@ for (const width of [360, 392, 412] as const)
       await expect(page.getByTestId("sheet-title")).toHaveText("Mode");
       await sheet(page).locator('[data-id="format"] [aria-pressed]', { hasText: "PFX" }).tap();
       await tap(page, ["@home"]);
-      await expect(page.getByTestId("chip-format")).toHaveText("PFX|12");
+      await expect(page.getByTestId("chip-format")).toHaveText("PFX 12 ▾");
       await tap(page, ["d1", "d2", "d0", "d0", "d0", "enter"]);
       await expect(page.locator('[data-testid="result"] .result').last()).toHaveAttribute("data-text", /^12.k$/); // (a no-break space before the prefix)
     });
@@ -95,7 +95,7 @@ for (const width of [360, 392, 412] as const)
         s.settings.format = "pfx";
         s.settings.digits = 30;
       });
-      await expect(page.getByTestId("chip-format")).toHaveText("PFX|30");
+      await expect(page.getByTestId("chip-format")).toHaveText("PFX 30 ▾");
       expect(await fits(page)).toEqual([]);
       await tap(page, ["@plot"]);
       await inApp(page);

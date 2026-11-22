@@ -170,7 +170,7 @@
          angle as a word, RAD or DEG, last, so it stands at the same x in every place and folded; a tap on it switches. Never filled. -->
     <span class="modes" data-testid="bar-modes">
       {#if shell.app === null}
-        <button type="button" class="mode" use:pressFlag data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span><span>{session.settings.digits}</span><span class="cv" aria-hidden="true">▾</span></button>
+        <button type="button" class="mode" use:pressFlag data-testid="chip-format" data-item="mode" aria-label={t("status.format", { format: t(`format.${session.settings.format}`), digits: String(session.settings.digits) })} onclick={() => onmode("format")}><span>{session.settings.format.toUpperCase()}</span> <span>{session.settings.digits}</span> <span class="cv" aria-hidden="true">▾</span></button>
       {/if}
       <button type="button" class="angle" use:pressFlag data-testid="chip-angle" data-item="angle" data-angle={angle} aria-label={t(`status.angle.${angle}`)} onclick={switchAngle}>{angle.toUpperCase()}</button>
     </span>
@@ -512,7 +512,6 @@
   }
   .angle {
     width: var(--angle-w);
-    letter-spacing: 0.04em;
   }
   .menubtn {
     width: var(--menu-w);

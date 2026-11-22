@@ -56,7 +56,7 @@ for (const width of WIDTHS)
     }
   });
 
-test("the pills' glyph tiles are 22 × 22 and no name is cut, whatever slot 2 holds, at 360 px (R782, R745)", async ({ browser }) => {
+test("the segments' glyphs are 16 × 16 in a 20 px face and no name is cut, whatever slot 2 holds, at 360 px (R782, R856)", async ({ browser }) => {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 800 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   try {
@@ -73,8 +73,8 @@ test("the pills' glyph tiles are 22 × 22 and no name is cut, whatever slot 2 ho
       );
       for (const x of m) {
         expect(x.cut, `${x.id}, slot ${barSlot}`).toBeLessThanOrEqual(0);
-        expect(x.tile, `${x.id}, slot ${barSlot}`).toEqual([22, 22]);
-        expect(x.face).toBeGreaterThanOrEqual(22);
+        expect(x.tile, `${x.id}, slot ${barSlot}`).toEqual([16, 16]);
+        expect(x.face).toBe(20);
       }
     }
   } finally {
