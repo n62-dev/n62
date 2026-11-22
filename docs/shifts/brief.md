@@ -69,7 +69,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 |---|---|---|---|---|
 | 885u | R791 the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
 | 885v | R792 High contrast's outline off the Shift legends (K5) | ron, Opus | `p1/ron-hclegend` | R791 |
-| 885w | [R793](packages/R793.md) the ＋ of an empty user key centred (K10) | ron, Opus | `p1/ron-userplus` | R792 |
+| 885w | R793 the ＋ of an empty user key centred (K10) | ron, Opus | `p1/ron-userplus` | R792 |
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
 **Released before the tag (owner, 2026-11-21: all UI work first, no time pressure):** henri takes this table's rows in order after the first table; a row with an owner condition in its text or After column waits for it. S57 now follows R849. The rest of the freeze row's list and the lanes' other rows still open at the stop (R585, R576, G551, G554, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files.
