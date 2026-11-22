@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { basisOf } from "../engine/constBasis.ts";
 import { chipToGiac } from "./chip-giac.ts";
-import { pruneChips, validChips, type ChipTable } from "./chips.ts";
+import { pruneChips, validChips, type Chip, type ChipTable } from "./chips.ts";
 import { SerializeError } from "./emit.ts";
 import { EQ_INEXACT_FLAG } from "../engine/ourNames.ts";
 import { latexToGiac, latexToGiacInfo } from "./latex-to-giac.ts";
@@ -86,6 +86,45 @@ describe("chips in the parser", () => {
     expect(latexToGiac("0xFF")).toBe("255");
     expect(() => latexToGiac("0xFF\\res{1}{0.5}", { chips: { "res:1": { value: "1/2", exact: true } } })).toThrow(/between a result and a number/);
     expect(latexToGiac("0x+1")).toBe("0*x+1");
+  });
+  // G782 (G369): a chip in one ratio unit goes in as its pure number, exact as its value is; derived: 0.42 % = 0.42/100
+  describe("a chip in one ratio unit is its pure number (G782)", () => {
+    const u = (text: string, ...tokens: Record<string, string>[]) => ({ text, dim: tokens.length === 1 && !tokens[0]!.unit!.startsWith("m") ? "" : "m1", slot: { tokens } as never });
+    const chip = (value: string, unit: ReturnType<typeof u>, more: Partial<Chip> = {}): ChipTable => ({ "res:1": { value, exact: true, unit, ...more } });
+    const ratios = [["%", "percent", "(42/10^4)"], ["‰", "permille", "(42/10^5)"], ["ppm", "ppm", "(42/10^8)"], ["ppb", "ppb", "(42/10^11)"]] as const;
+    it("%, ‰, ppm, ppb: the value over 100, 1000, 10⁶, 10⁹; no unit dropped, in Home and CAS", () => {
+      for (const [text, id, giac] of ratios) {
+        const c = chip("0.42", u(text, { unit: id }));
+        expect(latexToGiac("\\res{1}{0.42}", { chips: c })).toBe(giac);
+        expect(latexToGiacInfo("\\res{1}{0.42}", { chips: c, chipNames: true })).toEqual({ giac, inexact: false });
+      }
+      expect(latexToGiac("\\res{1}{35}\\times10^6", { chips: chip("35", u("ppm", { unit: "ppm" })) })).toBe("(35/10^6)*10^6");
+      expect(latexToGiac("\\res{1}{x}", { chips: chip("21/50", u("%", { unit: "percent" })) })).toBe("((21/50)/10^2)");
+    });
+    it("Ans in a ratio unit too; an inexact chip goes by name with its pure value and facts", () => {
+      expect(latexToGiac("\\ans\\times100", { chips: { ans: { value: "0.42", exact: true, unit: u("%", { unit: "percent" }) } } })).toBe("(42/10^4)*100");
+      const c = chip("3.5E1", u("ppm", { unit: "ppm" }), { exact: false, reliableDigits: 2 });
+      const r = latexToGiacInfo("\\res{1}{35}", { chips: c, chipNames: true });
+      expect(r.named).toEqual({ "1": { value: "3.5E-5", exact: false, reliableDigits: 2 } });
+      expect(r.unitDropped).toBeUndefined();
+    });
+    it("a σ chip, 0.42 ± 0.01 %: 0.0042 ± 0.0001", () => {
+      const r = latexToGiacInfo("\\res{1}{0.42}", { chips: chip("0.42", u("%", { unit: "percent" }), { exact: false, unc: "0.01" }), chipNames: true });
+      expect(r.giac).toBe("pasr_1");
+      expect(r.named).toEqual({ "1": { value: "0.0042", exact: false, unc: "0.0001" } });
+    });
+    it("any other unit keeps today's rule: the number shown, the unit dropped (%·m, m, k%, %²)", () => {
+      for (const unit of [u("%·m", { unit: "percent" }, { unit: "m" }), u("m", { unit: "m" }), u("k%", { prefix: "k", unit: "percent" }), u("%²", { unit: "percent", power: "2" })]) {
+        const c = chip("0.42", unit);
+        expect(latexToGiac("\\res{1}{0.42}", { chips: c })).toBe("(42/10^2)");
+        expect(latexToGiacInfo("\\res{1}{0.42}", { chips: c }).unitDropped).toBe(true);
+      }
+      expect(latexToGiacInfo("\\res{1}{0.42}", { chips: chip("0.42", u("m", { unit: "m" })), chipNames: true }).named?.["1"]?.unit?.text).toBe("m");
+      expect(latexToGiacInfo("\\res{1}{0.42}", { chips: chip("0.42", { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }], per: 0 } as never }) }).unitDropped).toBe(true);
+    });
+    it("the unit view keeps the chip as it is (its slot holds the unit, R63)", () => {
+      expect(latexToGiac("\\res{1}{0.42}", { chips: chip("0.42", u("%", { unit: "percent" })), units: true })).toBe("(42/10^2)");
+    });
   });
 });
 

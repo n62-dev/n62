@@ -5,6 +5,7 @@
 import { parseError, parseText, type ParseKey, type ParseVars } from "../i18n/enParser.ts";
 import { ANS_KEY, constKey, resKey, type ChipTable } from "./chips.ts";
 import { chipName, chipToGiac } from "./chip-giac.ts";
+import { pureChip } from "./ratioChip.ts";
 import type { Json } from "./emit.ts";
 import { CAS_ANS, isOurName } from "../engine/ourNames.ts";
 import { bigOp, integral, limit, matrix, tryDerivative, tryPartial, type CalcParser } from "./parseCalculus.ts";
@@ -35,8 +36,9 @@ class Parser implements CalcParser {
   private readonly chips: ChipTable;
   /** R28: units mode and what it found (null outside units mode). */
   readonly units: UnitsInfo | null;
-  /** Set when a chip with an inexact value is used. */
+  /** Set when a chip with an inexact value is used; unitDropped (R63) when a chip's unit was dropped, not a ratio's (G782). */
   inexact = false;
+  unitDropped = false;
   /** R65: the chips put in by name (chipNames), keyed by that name (`pasr_<k>`, R40 `pasc_<id>`); null when names are off. */
   readonly named: ChipTable | null;
   /** F25 (R29): the token index right after the last number literal, and right after the last result chip. */
@@ -653,9 +655,10 @@ class Parser implements CalcParser {
 
   /** The value of a chip from the table, as one factor; a missing chip is an error, never a guess. */
   private chip(key: string, what: string): Json {
-    const c = this.chips[key];
+    const c = this.chips[key] && (this.units ? this.chips[key] : pureChip(this.chips[key])); // G782: a ratio's pure number, outside the unit view
     if (!c) throw key === ANS_KEY ? parseError("parse.ansNone") : parseError("parse.valueMissing", { what });
     if (!c.exact) this.inexact = true;
+    if (c.unit && !this.units) this.unitDropped = true;
     // a value with an == or ≠ test in it stays a value (R18f3); R353: an exact chip with a unit goes by name, so a store keeps its unit (G371)
     const name = (!c.exact || c.unit !== undefined) && this.named && !/==|<>|!=/.test(c.value) ? chipName(key) : undefined;
     if (name && this.named) {
@@ -900,5 +903,5 @@ export function parseLatex(latex: string, o: ParseOptions = {}): Json {
 export function parseLatexInfo(latex: string, o: ParseOptions = {}): ParseInfo {
   const p = new Parser(tokenize(latex), o);
   const json = p.parseAll();
-  return { json, inexact: p.inexact, ...(p.named && Object.keys(p.named).length ? { named: p.named } : {}), ...(p.units ? { units: p.units } : {}) };
+  return { json, inexact: p.inexact, ...(p.unitDropped ? { unitDropped: true } : {}), ...(p.named && Object.keys(p.named).length ? { named: p.named } : {}), ...(p.units ? { units: p.units } : {}) };
 }

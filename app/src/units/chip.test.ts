@@ -20,6 +20,8 @@ const TABLE = factorTable([
   item("unit", "s", { dim: "s1", si: "1" }),
   item("unit", "h", { dim: "s1", si: "3600" }),
   item("unit", "kg", { dim: "kg1", si: "1" }),
+  { ...item("unit", "percent", { dim: "", si: "1/100", insert: "\\unit{percent}{\\mathrm{\\%}}" }), ratio: true } as IndexItem,
+  item("unit", "rev", { dim: "", si: "1" }),
   item("pfx", "k", { si: "1000" }),
   item("pfx", "m", { si: "1/1000" }),
   item("const", "G", { value: "6.67430E-11", unc: "0.00015E-11", dim: "kg-1m3s-2" }),
@@ -104,6 +106,18 @@ describe.skipIf(!giacAvailable())("quantityChip (R61, real Giac)", () => {
     const q = units({ formula: "pasu1/pasu2*3", slots: [{ tokens: [{ unit: "m" }] }, { tokens: [{ unit: "m" }] }] }) as Quantity;
     expect(q.unit).toBe("");
     expect(quantityChip(q)).toEqual({ value: "3", exact: true });
+  });
+
+  // G782: a pure number in one ratio unit keeps it (dimension key ""), so Home takes its pure number (input/ratioChip.ts);
+  // Store ▶ stays off for it, as before G782 (a stored name's unit needs a dimension key, G371). Any other pure number as before.
+  it("0.0042 ▶ %: 0.42 with the unit %; rev keeps no unit", () => {
+    const q = units({ formula: "0.0042", slots: [], end: { tokens: [{ unit: "percent" }] } }) as Quantity;
+    expect(q.unit).toBe("%");
+    expect(quantityChip(q)).toEqual({ value: "21/50", exact: true, unit: { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } } });
+    expect(storeChip(quantityChip(q), q.unit, q.unc)).toBeUndefined();
+    const rev = units({ formula: "3*pasu1", slots: [{ tokens: [{ unit: "rev" }] }], end: { tokens: [{ unit: "rev" }] } }) as Quantity;
+    expect(rev.unit).toBe("rev");
+    expect(quantityChip(rev)).toEqual({ value: "3", exact: true });
   });
 
   // R353: Store ▶ in the unit view stores the chip only when it carries the unit and σ the view shows; the bare number never
