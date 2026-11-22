@@ -2,8 +2,8 @@
 <!-- R53 (decisions.md P16), R283, R724: results mode's controls, in the keypad's box (App.svelte `.keys`). The swipe on the
      entry line (foldSwipe.ts) folds and unfolds; ⌄ at the bar's left end (views/StatusLine.svelte, R786) folds by a tap. Folded: the folded
      bar, one 44 px row over the hidden keypad: ⌃, the bar's tabs (views/StatusLine.svelte with `folded`), a free stretch
-     (a tap on it does nothing, R773), the bar's ⇧ α slot, the picked row's Store ▶ · Copy › (views/RowBar.svelte moves them
-     in), the bar's ☰. ⌃ unfolds, and so does a drag up of FOLD_PX begun anywhere on the row, on its lift (it drops the click
+     (a tap on it does nothing, R773), the bar's ⇧ α slot and modes group (R856: `STD 12 ▾ │ RAD`, the word where it stands open;
+     hidden while a row is picked), the picked row's Store ▶ · Copy › (views/RowBar.svelte moves them in), the bar's ☰. ⌃ unfolds, and so does a drag up of FOLD_PX begun anywhere on the row, on its lift (it drops the click
      of the button it began on). Its own chunk, loaded when the browser is idle after the start, so the start chunk carries only the fold's state. -->
 <script lang="ts">
   import { tick } from "svelte";
@@ -75,8 +75,8 @@
     if (was) void tick().then(() => entry.focus());
   };
 
-  /** The row buttons' slot goes just before the bar's ☰, so the page order (Tab, TalkBack) is the row's: ⌃, Home, CAS,
-   *  Store ▶, Copy ›, ☰ (the lock's `folded-bar:`). Done here, not in StatusLine, which is in the start chunk. */
+  /** The row buttons' slot goes just before the bar's ☰, so the page order (Tab, TalkBack) is the row's: ⌃, Home, CAS, the
+   *  modes (R856), Store ▶, Copy ›, ☰ (the lock's `folded-bar:`; the modes are hidden while the row buttons are in). Done here, not in StatusLine, which is in the start chunk. */
   const beforeMenu = (node: HTMLElement): void => {
     node.parentElement?.querySelector('[data-testid="menu-button"]')?.before(node);
   };
@@ -139,7 +139,7 @@
     justify-content: flex-start;
     font: inherit;
   }
-  /* the row's order (views/StatusLine.svelte places the tabs 1, the slot 3 and ☰ 5; `beforeMenu` puts the row buttons'
+  /* the row's order (views/StatusLine.svelte places the tabs 1, the slot and the modes 3 and ☰ 5; `beforeMenu` puts the row buttons'
      slot just before ☰, so the page order is the row's but for the free stretch, which no focus reaches) */
   .unfold {
     order: 0;
@@ -152,6 +152,10 @@
   .acts {
     order: 4;
     display: flex;
+  }
+  /* R856: a picked row's Store ▶ · Copy › take the modes' room */
+  .folded:has(.acts :global([data-testid="row-actions"])) :global([data-testid="bar-modes"]) {
+    display: none;
   }
   svg {
     width: var(--icon-w);

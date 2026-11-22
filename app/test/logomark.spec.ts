@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R157, R745 (owner, 2026-11-17): Home's tile is the colour logo, the app icon (icons/icon.svg), the same file in every theme;
-// CAS and the apps keep their glyphs; and faint on an
+// R157, R856 (owner, 2026-11-22): Home's tile is the house in the segment's colour (R745's colour logo left the bar);
+// CAS and the apps keep their glyphs; the N62 mark is faint on an
 // empty history (--mark-faint, at most 1.3:1 on --bg), gone after one result, a tap on it opens the credits sheet. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { open, tap } from "./helpers.ts";
@@ -61,53 +61,45 @@ test.describe("fake engine", () => {
     await open(page);
   });
 
-  /** The image of Home's tile: its source, whether it loaded, its box and the tile's. */
-  const logoImg = (page: Page) =>
-    tile(page).locator("img").evaluate((el) => {
-      const i = el as HTMLImageElement;
-      const t = i.parentElement as HTMLElement;
-      const b = i.getBoundingClientRect();
+  /** Home's glyph (R856: the house, not the logo): its stroke against the tile's colour, its box and the tile's. */
+  const house = (page: Page) =>
+    tile(page).locator("svg").evaluate((el) => {
+      const t = el.parentElement as HTMLElement;
+      const b = el.getBoundingClientRect();
       const tb = t.getBoundingClientRect();
-      return { src: i.getAttribute("src") ?? "", loaded: i.complete && i.naturalWidth > 0, box: { l: b.left, t: b.top, r: b.right, b: b.bottom }, tile: { l: tb.left, t: tb.top, r: tb.right, b: tb.bottom, w: tb.width, h: tb.height } };
+      return { stroke: getComputedStyle(el.querySelector("path")!).stroke, color: getComputedStyle(t).color, box: { l: b.left, t: b.top, r: b.right, b: b.bottom }, tile: { l: tb.left, t: tb.top, r: tb.right, b: tb.bottom, w: tb.width, h: tb.height } };
     });
 
-  test("Home's tile is the colour logo, the app icon", async ({ page }) => {
-    await expect(tile(page).locator("img")).toHaveCount(1);
-    await expect(tile(page).locator(".logomark")).toHaveCount(0);
-    const img = await logoImg(page);
-    expect(img.src).toMatch(/icons\/icon\.svg$/);
-    expect(img.loaded).toBe(true);
+  test("Home's tile is the house, not the logo (R856)", async ({ page }) => {
+    await expect(tile(page).locator("svg")).toHaveCount(1);
+    await expect(tile(page).locator("img")).toHaveCount(0);
     await expect(tile(page)).toHaveAttribute("aria-hidden", "true");
     await expect(page.getByTestId("tab-home")).toHaveAttribute("aria-label", "Home");
   });
 
-  test("the logo is the same file in N62, N62 Dark and Black & White", async ({ page }) => {
-    const srcs: string[] = [];
+  test("the house is drawn in the segment's colour in N62, N62 Dark and Black & White (R856)", async ({ page }) => {
     for (const look of [LOOKS[1]!, LOOKS[0]!, LOOKS[2]!]) {
       await show(page, look);
       await expect(page.locator(":root")).toHaveAttribute("data-family", look.family);
-      const img = await logoImg(page);
-      expect(img.loaded).toBe(true);
-      srcs.push(img.src);
+      const h = await house(page);
+      expect(h.stroke).toBe(h.color);
     }
-    expect(new Set(srcs).size).toBe(1);
-    expect(srcs[0]).toMatch(/icons\/icon\.svg$/);
   });
 
   for (const width of [360, 412])
-    test(`the logo fits Home's tile at ${width} px, the ring still shows while busy`, async ({ page }) => {
+    test(`the house fits Home's 16 px glyph at ${width} px, the ring still shows while busy`, async ({ page }) => {
       await page.setViewportSize({ width, height: 815 });
-      const img = await logoImg(page);
-      expect(img.tile.w).toBe(22); // R745, R157: the logo stays 22 × 22 (R782: the pill's glyph tile, --pill-tile-w); the target is the pill's 56 × 28 (tab-home)
-      expect(img.tile.h).toBe(22);
+      const h = await house(page);
+      expect(h.tile.w).toBe(16); // R856: the segment's glyph (--pill-tile-w); the target is the segment's 54 × 28 (tab-home)
+      expect(h.tile.h).toBe(16);
       const target = (await page.getByTestId("tab-home").boundingBox())!;
       expect(target.width).toBeGreaterThanOrEqual(28);
       expect(target.height).toBeGreaterThanOrEqual(28);
       const eps = 0.5;
-      expect(img.box.l).toBeGreaterThanOrEqual(img.tile.l - eps);
-      expect(img.box.t).toBeGreaterThanOrEqual(img.tile.t - eps);
-      expect(img.box.r).toBeLessThanOrEqual(img.tile.r + eps);
-      expect(img.box.b).toBeLessThanOrEqual(img.tile.b + eps);
+      expect(h.box.l).toBeGreaterThanOrEqual(h.tile.l - eps);
+      expect(h.box.t).toBeGreaterThanOrEqual(h.tile.t - eps);
+      expect(h.box.r).toBeLessThanOrEqual(h.tile.r + eps);
+      expect(h.box.b).toBeLessThanOrEqual(h.tile.b + eps);
       await page.evaluate(() => (window.n62.session.engineState = "starting"));
       await expect(tile(page)).toHaveAttribute("data-ring", "true");
       const ring = await tile(page).evaluate((el) => getComputedStyle(el, "::after").borderTopWidth);
@@ -127,7 +119,7 @@ test.describe("fake engine", () => {
   });
 
   test("CAS and an app keep their glyphs; the busy ring still draws over Home's tile", async ({ page }) => {
-    await expect(tile(page).locator("img")).toHaveCount(1);
+    await expect(tile(page).locator("svg")).toHaveCount(1);
     await page.evaluate(() => window.n62.session.setView("cas"));
     const cas = page.getByTestId("tab-slot").locator(".tile");
     await expect(cas.locator(".logomark")).toHaveCount(0);
@@ -141,7 +133,7 @@ test.describe("fake engine", () => {
       window.n62.session.engineState = "starting";
     });
     await expect(tile(page)).toHaveAttribute("data-ring", "true");
-    await expect(tile(page).locator("img")).toHaveCount(1);
+    await expect(tile(page).locator("svg")).toHaveCount(1);
     const ring = await tile(page).evaluate((el) => {
       const s = getComputedStyle(el, "::after");
       return { w: s.borderTopWidth, c: s.borderTopColor, content: s.content };

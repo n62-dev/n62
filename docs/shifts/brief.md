@@ -61,7 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 886a | [R856](packages/R856.md) the bar's final look: house on Home, one size in every place, `STD 12 ▾ │ DEG` with no angle icon (owner, 2026-11-22) | ron, Opus | `p1/ron-barfinal` | R703f1 |
+| 886a | R856 the bar's final look: house on Home, one size in every place, `STD 12 ▾ │ DEG` with no angle icon (owner, 2026-11-22) | ron, Opus | `p1/ron-barfinal` | R703f1 |
 | 886b | [R857](packages/R857.md) the bulk resets ask once before they wipe (data loss; owner's list 2026-11-22, as below) | ron, Opus | `p1/ron-resetask` | – |
 | 886c | [R858](packages/R858.md) a second tap on a lit input inserts at the caret, as Enter | ron, Opus | `p1/ron-inputtapcaret` | – |
 | 886d | [R860](packages/R860.md) the big N62 mark shows whenever the view is empty | ron, Opus | `p1/ron-emptymark` | R856 |

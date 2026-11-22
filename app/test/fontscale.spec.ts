@@ -5,7 +5,7 @@
 // R703 (F383): the emulation scales only the app's --fs-* tokens; Android's WebView zooms every text after the CSS sizes, the
 // sizes fit.ts writes too, and this test cannot see that. The gate for the phone is the device test,
 // test-device/fontscale.device.ts (tools/fontscale-device.sh, at font_scale 1.3, 1.5 and 2.0).
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { measure, walk } from "../test-device/fontscale-lib.ts";
 import { open, setFontScale, tap } from "./helpers.ts";
 
@@ -91,4 +91,64 @@ test("the font-scale device checks pass in the browser at scale 1.0", async ({ p
     problems.push(...m.out.map((p) => `${screen}: ${p}`));
   });
   expect(problems).toEqual([]);
+});
+
+/** R856: the WebView's text zoom as the bar's fit reads it (keyboard/fit.ts textZoom: the body's 16 px, zoomed), with the
+ *  tokens scaled as setFontScale does, so views/barFit.ts runs. (A size the fit writes is not zoomed again here, so a shrunk
+ *  text is drawn smaller than on the phone: these cases check what is fitted and how, the device test the drawn sizes.) */
+async function zoomText(page: Page, scale: number): Promise<void> {
+  await page.evaluate((s) => (document.body.style.fontSize = `${16 * s}px`), scale);
+  await setFontScale(page, scale);
+}
+const boxOf = (page: Page, id: string) =>
+  page.evaluate((i) => {
+    const r = document.querySelector(`[data-testid="${i}"]`)?.getBoundingClientRect();
+    return r ? `${r.left.toFixed(1)},${r.width.toFixed(1)}` : "";
+  }, id);
+
+for (const place of ["home", "function"] as const)
+  test(`at font scale 1.5 a tab whose name does not fit shows its glyph only, its box as at 1.0, never "Ho…" (R856, ${place})`, async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await open(page);
+    if (place === "function") {
+      await page.evaluate(() => window.n62.shell.open("function", "symb"));
+      await page.waitForFunction(() => window.n62.shell.loading === null && window.n62.shell.current !== null);
+    }
+    const at1 = { home: await boxOf(page, "tab-home"), slot: await boxOf(page, "tab-slot") };
+    await zoomText(page, 1.5);
+    await expect(page.locator('[data-testid="tab-home"] .nm')).toBeHidden();
+    expect({ home: await boxOf(page, "tab-home"), slot: await boxOf(page, "tab-slot") }).toEqual(at1);
+    const names = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>(".ptab .nm")].map((nm) => ({
+        text: nm.textContent,
+        shown: !nm.hidden,
+        cut: nm.hasAttribute("data-cut") || nm.style.fontSize !== "" || nm.scrollWidth > nm.clientWidth + 0.5,
+      })),
+    );
+    expect(names.filter((n) => n.shown && n.cut), "a name shown is whole, at its own size").toEqual([]);
+    await expect(page.locator('[data-testid="tab-home"] svg')).toBeVisible(); // the house stays
+    await expect(page.getByTestId("tab-home")).toHaveAttribute("aria-label", "Home");
+  });
+
+test("at font scale 2.0 the angle word is fitted inside its box, and STD 12 ▾ and the bar fit (R703, R856)", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  await open(page);
+  await page.evaluate(() => (window.n62.session.settings.angle = "deg"));
+  await zoomText(page, 2.0);
+  await expect(page.getByTestId("chip-angle")).toHaveText("DEG");
+  const m = await page.evaluate(() => {
+    const over = (el: HTMLElement): number => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getBoundingClientRect().width - el.clientWidth;
+    };
+    const word = document.querySelector<HTMLElement>('[data-testid="chip-angle"]')!;
+    const fmt = document.querySelector<HTMLElement>('[data-testid="chip-format"]')!;
+    const bar = document.querySelector<HTMLElement>('[data-testid="bar"]')!;
+    return { word: over(word), fitted: word.style.fontSize !== "", fmt: over(fmt), bar: bar.scrollWidth - bar.clientWidth };
+  });
+  expect(m.fitted, "the word is one of the bar's fitted texts").toBe(true);
+  expect(m.word).toBeLessThanOrEqual(0.5);
+  expect(m.fmt).toBeLessThanOrEqual(0.5);
+  expect(m.bar).toBeLessThanOrEqual(0);
 });

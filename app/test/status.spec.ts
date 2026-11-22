@@ -51,8 +51,8 @@ for (const [width, height, key] of [[360, 740, 43], [412, 839, 43], [800, 1148, 
 test("the bar shows the place, the angle unit, the format and digits", async ({ page }) => {
   await open(page);
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: Home\./);
-  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "rad"); // R783: the icon with π
-  await expect(page.getByTestId("chip-format")).toHaveText("STD|12"); // R785: one chip, the format and the digits
+  await expect(page.getByTestId("chip-angle")).toHaveText("RAD"); // R856: the word
+  await expect(page.getByTestId("chip-format")).toHaveText("STD 12 ▾"); // R785, R856: one target, the format and the digits
   await tap(page, ["@cas"]);
   await expect(page.getByTestId("place")).toHaveAccessibleName(/^Place: CAS\./);
   await tap(page, ["@plot"]);
@@ -211,14 +211,13 @@ test("tap RAD → DEG changes the next result; sin 90 is 1 in degrees", async ({
   await expect(lastText(page)).toHaveAttribute("data-text", "0.893996663601"); // oracle: sin(90 rad) = 0.8939966636005579 (12 digits round up)
   await page.getByTestId("chip-angle").tap();
   await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "deg");
-  await expect(page.getByTestId("chip-angle")).toHaveText("°");
-  await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-changed", "true");
+  await expect(page.getByTestId("chip-angle")).toHaveText("DEG");
   expect(await angle(page)).toBe("deg");
   await tapHw(page, ["sin", "d9", "d0", "enter"]);
   await expect(lastText(page)).toHaveAttribute("data-text", "1");
   await page.getByTestId("chip-angle").tap();
   await expect(page.getByTestId("chip-angle")).toHaveAttribute("data-angle", "rad");
-  await expect(page.getByTestId("chip-angle")).toHaveText("π");
+  await expect(page.getByTestId("chip-angle")).toHaveText("RAD");
 });
 
 /** R15c: Mode has no key of its own; a user key may hold it (the keys-only path, decisions.md "R15c" costs). */
@@ -269,7 +268,7 @@ test("digits to 20: Mode, 3, 7", async ({ page }) => {
   await expect(sheet(page).locator('[data-id="12"]')).toHaveAttribute("data-selected", "true");
   await tap(page, ["d7"]);
   await expect(sheet(page)).toBeHidden();
-  await expect(page.getByTestId("chip-format")).toHaveText("STD|20");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD 20 ▾");
   expect(await page.evaluate(() => window.n62.session.settings.digits)).toBe(20);
 });
 
@@ -278,16 +277,16 @@ test("the format and digits chip opens the Mode sheet on Format; ◀ ▶ change 
   await page.getByTestId("chip-format").tap();
   await expect(active(page)).toHaveAttribute("data-id", "format");
   await sheetKey(page, ["right"]);
-  await expect(page.getByTestId("chip-format")).toHaveText("SCI|12");
+  await expect(page.getByTestId("chip-format")).toHaveText("SCI 12 ▾");
   await sheetKey(page, ["left"]);
-  await expect(page.getByTestId("chip-format")).toHaveText("STD|12");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD 12 ▾");
   await expect(sheet(page)).toBeVisible(); // ◀ on a setting steps it, it does not go back
   await tap(page, ["esc"]);
   await page.getByTestId("chip-format").tap(); // R785: Format is active, Significant digits the next row
   await sheetKey(page, ["down"]);
   await expect(active(page)).toHaveAttribute("data-id", "digits");
   await sheetKey(page, ["right", "right"]);
-  await expect(page.getByTestId("chip-format")).toHaveText("STD|14");
+  await expect(page.getByTestId("chip-format")).toHaveText("STD 14 ▾");
   await sheet(page).locator('[data-id="entry"]').tap(); // a tap steps the row forward and the sheet stays
   expect(await page.evaluate(() => window.n62.session.settings.entry)).toBe("line");
   await expect(sheet(page)).toBeVisible();

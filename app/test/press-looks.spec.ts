@@ -157,7 +157,7 @@ test("a pressed view tab inside an app shows its own fill, inside the track (dat
   if (!box) throw new Error("no tab");
   const [cx, cy] = [box.x + box.width / 2, box.y + box.height / 2];
   const [x, y] = [cx - 12, cy]; // inside the face (its icon is 16 px wide), off the glyph
-  const ex = box.x + 0.5; // the button's own edge, outside the face (the face is inset by 2 px): not filled
+  const ex = box.x + 0.5; // the button's own edge, outside the face (R856: the face is inset by 1 px): not filled
   const [rest, restEdge] = [await pixel(page, x, y), await pixel(page, ex, cy)];
   await page.mouse.move(cx, cy);
   await page.mouse.down();
