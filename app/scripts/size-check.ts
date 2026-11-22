@@ -594,8 +594,13 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  62,800 → 62,920 B (R794 fix round 2): the round pad draws its four arrows itself, one inline SVG in Keypad.svelte's
  *  trackpad template (the zones keep their faces, hidden; the press dot's points are in keyNames.ts, out of start). Phase-1
  *  13bd8c47 measures 62,774 B gzip (176,318 B raw), the branch 62,869 B (176,479 B raw; +95 B, the SVG's markup alone):
- *  62,869 B + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_920;
+ *  62,869 B + 0.05 kB, rounded up to the next 10 B.
+ *  62,920 → 63,000 B (R703): under Android's font scale the WebView zooms every text after the CSS sizes, the sizes the fit
+ *  writes too (F383): fitLegends reads the zoom off the body's 16 px, writes through it, and loads keyboard/zoomFit.ts (the
+ *  second pass, the bar's fit and the ellipsis) only under a zoom. Phase-1 464bd957 measures 62.90 kB gzip (176.72 kB raw), the
+ *  branch 62,998 B (176,936 B raw): it first measured 63.88 kB with the bar's fit in StatusLine.svelte, then cut to the zoom
+ *  read, the write and the import. The pin is the budget itself: nothing is left under it. */
+export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its

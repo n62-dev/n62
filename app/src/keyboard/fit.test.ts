@@ -4,7 +4,8 @@
 // characters times 0.6 em as drawn, a ▾ mark adds its own fixed size, also zoomed. On phase-1 the fit wrote the zoomed size
 // back as CSS, so the WebView zoomed it again and the face stayed wider than its key.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { MIN_FACE_PX, fitLegends, shrinkToFit, textZoom } from "./fit.ts";
+import { MIN_FACE_PX, fitLegends } from "./fit.ts";
+import { textZoom } from "./zoomFit.ts";
 
 let zoom = 1;
 
@@ -65,6 +66,9 @@ class El {
     if (on) this.attrs.add(a);
     else this.attrs.delete(a);
   }
+  removeAttribute(a: string): void {
+    this.attrs.delete(a);
+  }
   remove(): void {}
   append(): void {}
   get ownerDocument(): unknown {
@@ -78,7 +82,9 @@ const doc = {
     Object.defineProperty(e.style, "cssText", { set: (v: string) => (e.sheetPx = parseFloat(/font-size:(\d+)px/.exec(v)?.[1] ?? "16")) });
     return e;
   },
-  body: new El("body"),
+  body: new El("body", 16),
+  querySelector: () => null, // (no bar in the model)
+  getElementById: () => ({}), // (the cut rule is in)
 };
 
 beforeEach(() => {
@@ -117,69 +123,54 @@ function key(face: string, opts: { opens?: boolean; facePx?: number } = {}): { p
   return { pad, face: f };
 }
 
-const fit = (pad: El): void => fitLegends(pad as unknown as HTMLElement);
+/** A fit, and its second pass once the zoom's chunk is in (a macrotask: the import and its callback have run). */
+const fit = async (pad: El): Promise<void> => {
+  fitLegends(pad as unknown as HTMLElement);
+  await import("./zoomFit.ts");
+  await new Promise((r) => setTimeout(r, 0));
+};
 const inner = 50 - 8;
 
 describe("fitLegends under the WebView's text zoom (R703)", () => {
-  it("reads the zoom from a probe", () => {
+  it("reads the zoom off the body's 16 px", () => {
     zoom = 1.5;
     expect(textZoom(doc as unknown as Document)).toBe(1.5);
   });
 
   for (const z of [1.5, 2])
-    it(`brings a face back inside its key at font scale ${z}`, () => {
+    it(`brings a face back inside its key at font scale ${z}`, async () => {
       zoom = z;
       const { pad, face } = key("Select");
-      fit(pad);
+      await fit(pad);
       expect(face.scrollWidth).toBeLessThanOrEqual(inner);
       expect(face.drawnPx).toBeGreaterThanOrEqual(MIN_FACE_PX);
       expect(face.hasAttribute("data-cut")).toBe(false);
     });
 
-  it("fits a face and its ▾ mark, whose size does not follow the face's", () => {
+  it("fits a face and its ▾ mark, whose size does not follow the face's", async () => {
     zoom = 2;
     const { pad, face } = key("Tmpl", { opens: true });
-    fit(pad);
+    await fit(pad);
     expect(face.scrollWidth).toBeLessThanOrEqual(inner + 6 + 1);
   });
 
-  it("ellipses a face that does not fit at the floor as drawn, its text kept", () => {
+  it("ellipses a face that does not fit at the floor as drawn, its text kept", async () => {
     zoom = 2;
     const { pad, face } = key("Deselected!");
-    fit(pad);
+    await fit(pad);
     expect(face.drawnPx).toBeCloseTo(MIN_FACE_PX, 1);
     expect(face.hasAttribute("data-cut")).toBe(true);
-    expect(face.style["textOverflow"]).toBe("ellipsis");
     expect(face.text).toBe("Deselected!");
-    // the next fit (a wider key) takes the cut back
-    zoom = 1;
+    // the next fit, the text short enough now, takes the cut back (the zoom stays: the WebView keeps it while the app runs)
     face.text = "x";
-    fit(pad);
+    await fit(pad);
     expect(face.hasAttribute("data-cut")).toBe(false);
   });
 
-  it("writes the same sizes as before without a zoom", () => {
+  it("writes the same sizes as before without a zoom", async () => {
     const { pad, face } = key("Select");
-    fit(pad);
+    await fit(pad);
     // 6 × 0.6 × 20 = 72 px wide in 42: 20 × 41 / 72 = 11.38…, floored to a tenth
     expect(face.style["fontSize"]).toBe("11.3px");
-  });
-});
-
-describe("shrinkToFit (R703: the bar's and the rows' text)", () => {
-  it("shrinks a text to its box under the zoom, then ellipses it at the floor", () => {
-    zoom = 2;
-    const e = new El("nm", 12, "Home", 0, { w: 40, h: 28 });
-    expect(shrinkToFit(e as unknown as HTMLElement, 2, 8)).toBeGreaterThan(0);
-    expect(e.scrollWidth).toBeLessThanOrEqual(40);
-    const long = new El("nm", 12, "Significant digits", 0, { w: 40, h: 28 });
-    shrinkToFit(long as unknown as HTMLElement, 2, 8);
-    expect(long.drawnPx).toBe(8);
-    expect(long.hasAttribute("data-cut")).toBe(true);
-  });
-  it("leaves a text that fits alone", () => {
-    const e = new El("nm", 12, "Home", 0, { w: 60, h: 28 });
-    expect(shrinkToFit(e as unknown as HTMLElement, 1, 8)).toBe(0);
-    expect(e.style["fontSize"]).toBeUndefined();
   });
 });

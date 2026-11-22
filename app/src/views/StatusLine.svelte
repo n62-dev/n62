@@ -7,7 +7,6 @@
   import { alphaLower, type Key, type Layer } from "../keyboard/keyboard.ts";
   import type { Session } from "../state/session.svelte.ts";
   import { pressFlag } from "../input/pressFlag.ts";
-  import { fitBar } from "./barFit.ts";
 
   // R97, R722: the bar on the keypad's top edge, out of App.svelte. Props in, events out; no store of its own.
   let { session, shell, busy, cas, onpress, onmode, onfold, hw = false, folded = false }: {
@@ -84,23 +83,6 @@
     if (!ok) e.stopPropagation();
   };
 
-  // R703: under the WebView's text zoom (Android's font scale) the text shrinks into the controls, which keep their widths;
-  // again when what it shows or the bar's width changes
-  let barEl: HTMLElement | undefined = $state();
-  $effect(() => {
-    void [session.settings.format, session.settings.digits, place, glyph, mod, folded, hw, PILLS, angle];
-    if (!barEl) return;
-    const bar = barEl;
-    fitBar(bar);
-    if (typeof ResizeObserver === "undefined") return;
-    let width = bar.clientWidth;
-    const ro = new ResizeObserver(() => {
-      if (bar.clientWidth !== width) fitBar(bar), (width = bar.clientWidth);
-    });
-    ro.observe(bar);
-    return () => ro.disconnect();
-  });
-
   /** R722: `bar.angle` counts each angle-chip tap, `bar.angle.undo` a tap within 3 s of the one before, which takes it back
    *  (uses.svelte.ts countTap, under its own key; decisions.md "The bar on the keypad"). */
   const switchAngle = (): void => {
@@ -115,7 +97,7 @@
        is the lock's `bar:` list (barItems.ts). Nothing in it changes width with Shift, Alpha or the engine's state, so a
        press never moves a control from under the finger; the engine's and the update's notes show in the stage. -->
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions (only keeps the caret in the entry line and arms the guard; the buttons inside are the controls) -->
-  <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} bind:this={barEl} onpointerdown={down} onclickcapture={guard}>
+  <nav class="bar" class:inapp={shell.app !== null} class:folded data-testid="bar" data-engine={session.engineState} data-busy={busy} aria-label={t("status.bar")} onpointerdown={down} onclickcapture={guard}>
     <!-- R786: ⌄ is the bar's first control, in a 28 px cell that is empty where folding does not exist -->
     <span class="foldcell">
       {#if onfold}<button type="button" class="fold" use:pressFlag data-testid="fold-chevron" data-item="fold" aria-label={t("status.fold")} onclick={onfold}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5.5 8 10.5l5-5" /></svg></button>{/if}

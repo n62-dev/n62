@@ -3,7 +3,7 @@
 // (docs/03 rule 9, R782: nothing moves under the finger); the text inside them shrinks to fit, the format and digits chip
 // first (it is the one control whose width follows its text), then each fixed control's own text. Without a zoom nothing is
 // written: the CSS sizes fit (fontscale.spec.ts).
-import { cut, textZoom } from "../keyboard/fit.ts";
+import { cut, textZoom } from "../keyboard/zoomFit.ts";
 
 /** Smallest drawn size (px) of the bar's text; below it the text is ellipsed (its control keeps its name for the screen reader). */
 export const MIN_BAR_PX = 8;
