@@ -114,7 +114,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B1 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
+| B1 | G398 ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
 | B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
 | B2a | [G782](packages/G782.md) a %, ‰, ppm or ppb chip in Home is its pure number (G369; owner, 2026-11-21) | gorge, Opus | `p1/gorge-ratiochip` | – |
 | B3 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a finite point is their value, never infinity | gorge, Opus | `p1/gorge-hyplimit` | – |
