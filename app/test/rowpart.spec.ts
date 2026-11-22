@@ -2,7 +2,8 @@
 // R832 (owner, 2026-11-20; takes in R741): a tap on a history row's input lights the input, on its result the result, anywhere
 // else the whole row (`data-part` "input", "result", "row" on the picked article). What is lit decides: Copy, Store ▶ and Enter
 // take the result when the result or the row is lit, the input's text when the input is. A second tap on the lit part does its
-// job (the input recalls, the result inserts), on the other part moves the light; on a whole-picked row it recalls or inserts,
+// job (the input recalls, the result inserts; R858: text on the line takes the input at the caret, as Enter), on the other part
+// moves the light; on a whole-picked row it recalls or inserts,
 // elsewhere it drops the pick. A hold on the gap picks and copies nothing; a swipe or a drag never picks. Values are derived
 // (1/3 = 0.333…, 2+3 = 5). Real engine (1/3 to 40 digits); the two phone widths of the app.
 import { expect, test, type Page } from "@playwright/test";

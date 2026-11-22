@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R273 (owner, 2026-11-09): a typed line stays when a picked row without a result is entered or tapped a second time;
-// the pick is dropped instead. With an empty line both recall the row's entry as before (R147), and on a row with a
-// result Enter still inserts the result. 1ᴇ2.5 fails to parse, so its row is an error row with no result.
+// R273 (owner, 2026-11-09): a typed line stays when a picked row without a result is entered; the pick is dropped instead.
+// R858 (owner, 2026-11-22): a tap on its input puts the input at the caret, as Enter on a lit input does. With an empty line
+// both recall the row's entry as before (R147), and on a row with a result Enter still inserts the result. 1ᴇ2.5 fails to
+// parse, so its row is an error row with no result.
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { entryValue, open, tap } from "./helpers.ts";
 
@@ -49,10 +50,10 @@ test("text on the line: Enter on a picked error row leaves the line and drops th
   await expect(page.locator("article.item")).toHaveCount(1); // Enter submitted nothing
 });
 
-test("text on the line: a second tap on a picked error row leaves the line and drops the pick", async ({ page }) => {
+test("text on the line: a tap on a picked error row's input puts it at the caret (R858) and drops the pick", async ({ page }) => {
   await typedThenPicked(page);
   await inputs(page).first().tap();
-  expect(await entryValue(page)).toBe("2+3");
+  await expect.poll(() => entryValue(page)).toBe("2+31\\emark2.5");
   await expect(selected(page)).toHaveCount(0);
   await expect(bar(page)).toHaveCount(0);
 });

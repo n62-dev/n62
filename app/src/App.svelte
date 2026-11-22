@@ -50,7 +50,7 @@
     acted: (id) => void (folded && countUse(id)), // R53: each row action while folded (P16's removal test), before it runs
     hold: (job) => void route.holdKeys(ctx, job),
     stored: (item) => openStore(item),
-    putInput: (item, stay) => tapped(item, true, true, stay),
+    putInput: (item, stay) => tapped(item, true, stay),
     onClip: (c, bar) => {
       rowBar = bar;
       clip = c;
@@ -380,16 +380,16 @@
   let entryBox: HTMLDivElement | undefined = $state();
   /** The CAS view is under the keys (no app on top): Alpha types lower case there (R58). */
   const casKeys = $derived(session.view === "cas" && shell.app === null);
-  /** A second tap on a picked row's input (R147: its entry goes on an empty line; text on the line stays and the pick is dropped, R273,
-   *  owner 2026-11-09, as for Enter on a pick, keyboard/route.ts) or on its result (it goes on the line, L5). R832, `caret` (Enter or
-   *  Store ▶ on a lit input): text on the line takes the input at the caret; `stay`: Store ▶ keeps a folded keypad down. */
-  function tapped(item: HistoryItem, input: boolean, caret = false, stay = false): void {
+  /** A second tap on a picked row's input, Enter or Store ▶ on a lit input (R147: its entry goes on an empty line; R832, R858: text on
+   *  the line takes the input at the caret, the tap as Enter, owner 2026-11-22) or a second tap on its result (it goes on the line, L5).
+   *  `stay`: Store ▶ keeps a folded keypad down. */
+  function tapped(item: HistoryItem, input: boolean, stay = false): void {
     edited = true;
     picked = null;
     shell.prompt?.cancel();
     if (!input) onLine(item, false);
     else if (entry.empty) onLine(item, true, !stay, false, stay); // R298: before the field the queued keys are text too (entry.value is not the line yet)
-    else if (caret) (entry.insertRecalled(session.input(item), item.chips), (folded &&= stay));
+    else (entry.insertRecalled(session.input(item), item.chips), (folded &&= stay));
   }
   /** R276: a row swiped out is deleted (R98's path: the Undo note row comes); the pick drops, as for Delete. Counted
    *  as Delete while folded (R53). */
