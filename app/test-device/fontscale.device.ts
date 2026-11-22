@@ -17,6 +17,9 @@ let before = "";
 test.beforeAll(async () => {
   const serial = process.env["ANDROID_SERIAL"];
   if (!serial) throw new Error("ANDROID_SERIAL is not set");
+  // R703f1: the script's rule, here too, before any setting changes (a run of this file without the script)
+  if (!serial.startsWith("emulator-") && process.env["FONTSCALE_DEVICE_OK"] !== "1")
+    throw new Error(`${serial} is not an emulator: changing its font scale needs the owner's word (FONTSCALE_DEVICE_OK=1)`);
   const found = (await android.devices()).find((d) => d.serial() === serial);
   if (!found) throw new Error(`device ${serial} not attached`);
   device = found;
