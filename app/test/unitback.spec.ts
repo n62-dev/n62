@@ -160,6 +160,35 @@ test.describe("the way back from the unit view (R63)", () => {
     await expect(lastRow(page).getByTestId("unit-dropped")).toHaveCount(0);
   });
 
+  // G782f1: in the unit view the slot after the % chip starts with %, so G369 drops it beside m (derived: 0.42 % × 200 m =
+  // 0.0042 × 200 m = 0.84 m; with the slot empty, as before, the chip went in as 0.42 and gave 84 m)
+  test("0.0042 ▶ %, its chip × 200 with m in the unit view is 0.84 m: the chip's slot starts with %", async ({ page }) => {
+    const find = page.getByTestId("find");
+    await tap(page, ["d0", "dot", "d0", "d0", "d4", "d2"]);
+    await unitsKey(page);
+    await check(page).tap();
+    await expect.poll(() => checking(page)).toBe(true);
+    await tap(page, ["math"]);
+    await expect(find).toBeVisible();
+    await find.locator('[role="menuitem"][data-id="ucat:Ratio"]').tap();
+    await find.locator('[role="menuitem"][data-id="unit:percent"]').tap();
+    await expect(find).toBeHidden();
+    await flick(page, "enter", "up");
+    await expect(result(page)).toHaveAttribute("data-unit", "%");
+    await leaveView(page);
+    await pickLast(page);
+    await tap(page, ["mul", "d2", "d0", "d0"]);
+    await unitsKey(page);
+    expect(await checking(page)).toBe(false);
+    expect(await slotText(page, "u1")).toBe("percent");
+    expect(await slotText(page, "u2")).toBe("");
+    await tap(page, ["enter", "d9"]); // the 200's slot: m
+    expect(await slotText(page, "u2")).toBe("m");
+    await flick(page, "enter", "up");
+    await expect(result(page)).toHaveAttribute("data-text", "0.84");
+    await expect(page.getByTestId("unit-unit")).toHaveText("m");
+  });
+
   test("R121: 4700 ▶ R, then R × 2 with A shows = 9400 A with the note R has no unit, in the view and in its Home row (derived)", async ({ page }) => {
     await tap(page, ["d4", "d7", "d0", "d0", "shift", "emark", "alpha", "d8", "enter"]);
     await expect(page.locator('[data-status="done"]')).toHaveCount(1);
