@@ -89,7 +89,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 903 | [R794](packages/R794.md) the round pad's arrows at one radius, one size (K9) | ron, Opus | `p1/ron-padarrows` | R774 |
-| 904 | [R795](packages/R795.md) Plain keys keeps the family's key colours (K3) | ron, Opus | `p1/ron-plainfills` | – |
+| 904 | R795 Plain keys keeps the family's key colours (K3) | ron, Opus | `p1/ron-plainfills` | – |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies the unit view's reading, message or result (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 907 | [R806](packages/R806.md) a unit slot gets a caret: the model (owner's walk 2026-11-20, C1) | ron, Opus | `p1/ron-unitcaret` | R801 |
