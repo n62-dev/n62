@@ -618,6 +618,9 @@ export const PATCHED_IDS = new Map([
   // G617 (F431): intgab.cc in_sumab took c*(-1)^k/k^p from an even start with the sign flipped, and for p = 1 took the harmonic sum
   // off ln(2); the g617-keep-* rows (odd starts, a = 1, p = 1 from 2) pass on stock and stay in the check file
   ...["alt-sq-from-2", "alt-sq-from-4", "alt-cube-from-2", "alt-4th-from-2", "alt-6th-from-2", "alt-plus-one-from-2", "cos-kpi-from-2", "alt-harmonic-from-3", "alt-harmonic-from-4", "alt-harmonic-from-5", "alt-sq-coeff-from-2", "alt-harmonic-coeff-from-3"].map((k) => [`g617-sum-${k}`, "0054-alternating-sum-start.patch"]),
+  // G620 (F434): series.cc in_limit wrote a numeric constant cosh(1) with exponentials beside an x-dependent cosh(1+x), whose series
+  // starts with cosh(1), so the leading term did not cancel (infinity); the g620-keep-* rows pass on stock and stay in the check file
+  ...["sinh-at-2", "cosh-at-1", "cosh-at-1-right", "cosh-exp-constant", "tanh-at-2", "sinh-cos"].map((k) => [`g620-limit-${k}`, "0056-limit-hyperbolic-constants.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
