@@ -595,6 +595,9 @@ cases:
   # where a number ends at a chip (R29, F25): the result chip shows its digits, so [0.5]3 reads as 0.53 (on the G2 a
   # digit typed after an inserted result extends it, G2 item 56); a number beside a result chip, or two result chips
   # side by side, is an error. Ans and a constant draw a name, not digits, so they multiply as 2x does.
+  # G782 (G369): a chip in one ratio unit (%, ‰, ppm, ppb) is its pure number, as typed (derived: 0.42/100·200, 35/10⁶·10⁶)
+  - { id: "g782-percent-x200", latex: "\\res{1}{0.42}\\times200", expect: "21/25", chips: { "res:1": { value: "0.42", exact: true, unit: { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } } } }, source: "derived", group: "chips", note: "0.42 % × 200 = 0.84, not 84 (the unit was dropped before G782)" }
+  - { id: "g782-ppm-x10e6", latex: "\\res{1}{35}\\times10^{6}", expect: "35", chips: { "res:1": { value: "35", exact: false, unit: { text: "ppm", dim: "", slot: { tokens: [{ unit: "ppm" }] } } } }, source: "derived", group: "chips", note: "35 ppm × 10⁶ = 35; an inexact chip too" }
   - { id: "chip-res-e01", latex: "\\res{1}{0.5}3", error: true, chips: { "res:1": { value: "1/2", exact: true } }, source: "derived", group: "chips", note: "was (1/2)*3 (F25)" }
   - { id: "chip-res-e02", latex: "3\\res{1}{0.5}", error: true, chips: { "res:1": { value: "1/2", exact: true } }, source: "derived", group: "chips", note: "was 3*(1/2)" }
   - { id: "chip-res-e03", latex: "\\res{1}{0.5}\\res{2}{0.25}", error: true, chips: { "res:1": { value: "1/2", exact: true }, "res:2": { value: "1/4", exact: true } }, source: "derived", group: "chips", note: "was (1/2)*(1/4)" }

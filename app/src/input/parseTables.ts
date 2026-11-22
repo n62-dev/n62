@@ -110,6 +110,8 @@ export interface ParseInfo {
   json: Json;
   /** A chip whose value is not exact was used, so the result cannot be marked "=" (docs/04 2.4). */
   inexact: boolean;
+  /** R63: a chip's unit was dropped (Home has no units); a ratio unit is not, its chip is its pure number (G782). */
+  unitDropped?: true;
   /** With `chipNames`: the chips that went in by name, keyed by that name (`pasr_<k>`, R40 `pasc_<id>`). */
   named?: ChipTable;
   /** Units mode only. */
