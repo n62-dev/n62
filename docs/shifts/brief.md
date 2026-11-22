@@ -67,7 +67,7 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885u | [R791](packages/R791.md) the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
+| 885u | R791 the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
 | 885v | [R792](packages/R792.md) High contrast's outline off the Shift legends (K5) | ron, Opus | `p1/ron-hclegend` | R791 |
 | 885w | [R793](packages/R793.md) the ＋ of an empty user key centred (K10) | ron, Opus | `p1/ron-userplus` | R792 |
 
