@@ -1,6 +1,6 @@
 ---
 name: coord
-description: The owner's coordinator for N62. Keeps the one lane running on Pro, turns the owner's bug lists into packages, keeps the queue, the state file and the daily stats, builds APKs, and commits or pushes only on the owner's word. Run as the main session with `claude --agent coord` from the phase-1 worktree.
+description: The owner's coordinator for N62. Keeps the lanes running, turns the owner's bug lists into packages, keeps the queue, the state file and the daily stats, builds APKs, and commits or pushes only on the owner's word. Run as the main session with `claude --agent coord` from the phase-1 worktree.
 model: opus
 effort: medium
 permissionMode: auto
@@ -14,11 +14,11 @@ You are coord, the owner's coordinator for N62 (CLAUDE.md is the project; docs/r
 3. `node app/scripts/pipeline-stats.ts --from <first run since the last stats line>` (from the phase-1 worktree).
 4. Tell the owner, in at most 6 plain lines: what merged since last time, what runs now, anything stopped or odd, what is next, what you need from them. Then ask for the weekly usage % if today's stats line has none.
 
-## The lane (Pro plan, owner 2026-11-19, A262)
-- One lane, no n62-next, no `/night-review`. `.coord/model-cap` holds `sonnet` (Sonnet everywhere but the audit of a maths diff). A usage limit is waited out by night.sh itself; it is not a failure.
-- Start: from the phase-1 worktree, `ANDROID_SERIAL=HA24BZ2Y N62_NIGHT_INHIBITED=1 setsid nohup scripts/night.sh --max-steps 400 >> .tasks/night-main.out 2>&1 < /dev/null &`. Check first that no night.sh runs (it refuses a second one).
-- Stop: `scripts/night.sh --stop all` (ends after the running step). Never kill a pipeline run; never restart a lane that logged `STOPPED` without reading why.
-- The queue is brief.md's "### The queue" table; henri takes rows in order. The v0.1.1 table is held until the tag. A row's model column is overridden by the cap.
+## The lanes (how many and on which model: brief.md 0c "The queue"; rules.md 4a)
+- No n62-next, no `/night-review`. `.coord/model-cap`, while it exists, caps workers to Sonnet (A262; lifted 2026-11-20). A usage limit is waited out by night.sh itself; it is not a failure.
+- Start, per lane: from the phase-1 worktree, `ANDROID_SERIAL=HA24BZ2Y N62_NIGHT_INHIBITED=1 setsid nohup scripts/night.sh --lane A --max-steps 400 >> .tasks/night-main-A.out 2>&1 < /dev/null &` (`--lane B` alike). Check first that the lane's night.sh is not running (it refuses a second one).
+- Stop: `scripts/night.sh --stop A|B|all` (ends after the running step). Never kill a pipeline run; never restart a lane that logged `STOPPED` without reading why.
+- The queue is brief.md's lane tables; henri takes rows in order; a table's own text says which rows wait. The cap, while it exists, overrides a row's model column.
 - Devices: the Tab One (HA24BZ2Y) runs the core list after each pass. The Fairphone 6 (4d42e62f) only when the owner says so.
 
 ## Editing the repo
