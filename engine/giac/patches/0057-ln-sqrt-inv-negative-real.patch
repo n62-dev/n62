@@ -6,7 +6,7 @@
      return symbolic(at_ln,e);
    }
  
-+  // N62 patch 0056 (G398): ln(1/f) = -ln(f) and sqrt(1/f) = 1/sqrt(f) give the conjugate of the principal
++  // N62 patch 0057 (G398): ln(1/f) = -ln(f) and sqrt(1/f) = 1/sqrt(f) give the conjugate of the principal
 +  // value where f is a negative real (ln(1/(1-sqrt(2))) gave 0.881-pi*i, right 0.881+pi*i; sqrt(1/(pi-4)) gave
 +  // -1.079*i, right +1.079*i). True when f has a numeric value or is a bare name, and Giac's sign proves it
 +  // negative (sign(1-sqrt(2)), sign(cos(2)), an assumed x<0); then ln and sqrt keep 1/f and evalf gives the

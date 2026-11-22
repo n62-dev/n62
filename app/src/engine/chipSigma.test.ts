@@ -9,6 +9,7 @@ import { uncDigitsOf } from "./constUnc.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 import { chipOf } from "../state/results.ts";
 import { chipFactsOf, homeItem } from "../state/resultItem.ts";
+import { latexToGiacInfo } from "../input/latex-to-giac.ts";
 
 describe.skipIf(!giacAvailable())("EngineHost (real Giac)", () => {
   let host: EngineHost;
@@ -70,6 +71,15 @@ describe("a chip with σ (R61)", () => {
     expect(Number(r.facts.uncSigma).toPrecision(8)).toBe("0.030897539");
     expect(r.facts.uncDigits).toBe(5);
     expect(markOf(precisionFacts(r), o)?.mark).toBe("≈");
+  });
+
+  // G782: a unit row's chip of 0.42 ± 0.01 % enters as its pure number, 0.0042 ± 0.0001: × 200 is 0.84 ± 0.02 (derived)
+  it("a chip in % with σ, × 200: 0.84 ± 0.02, both over 100", () => {
+    const unit = { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } };
+    const p = latexToGiacInfo("\\res{1}{0.42}\\times200", { chips: { "res:1": { value: "0.42", exact: false, reliableDigits: null, unc: "0.01", unit } }, chipNames: true });
+    const r = home(p.giac, chipFactsOf(p.named!));
+    expect(r.display).toBe("0.84");
+    expect(Number(r.facts.uncSigma)).toBeCloseTo(0.02, 20);
   });
 
   it("an exact chip that says it has σ is still not exact: never =", () => {

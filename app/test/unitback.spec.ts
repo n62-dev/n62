@@ -126,6 +126,40 @@ test.describe("the way back from the unit view (R63)", () => {
     await expect(lastRow(page).getByTestId("unit-dropped")).toHaveText("unit dropped: Home has no units");
   });
 
+  // G782 (G369): a chip in one ratio unit is its pure number in Home (derived: 0.0042 = 0.42 %, 0.42 % × 100 = 0.42)
+  test("0.0042 ▶ % is 0.42 %; its chip × 100 in Home is 0.42 with no unit-dropped note, and Ans × 100 too", async ({ page }) => {
+    const find = page.getByTestId("find");
+    await tap(page, ["d0", "dot", "d0", "d0", "d4", "d2"]);
+    await unitsKey(page);
+    await page.getByTestId("unit-check").tap(); // → Check: the end slot (R349)
+    await expect.poll(() => page.evaluate(() => window.n62.unitView?.view.checking)).toBe(true);
+    await tap(page, ["math"]); // Find on units
+    await expect(find).toBeVisible();
+    await find.locator('[role="menuitem"][data-id="ucat:Ratio"]').tap();
+    await find.locator('[role="menuitem"][data-id="unit:percent"]').tap();
+    await expect(find).toBeHidden();
+    await flick(page, "enter", "up");
+    await expect(result(page)).toHaveAttribute("data-text", "0.42");
+    await expect(result(page)).toHaveAttribute("data-unit", "%");
+    await leaveView(page);
+    await pickLast(page);
+    // the chip shows 0.42 with % set apart, and keeps its unit (its value as shown, R61)
+    expect(await entryValue(page)).toMatch(/^\\res\{\d+\}\{0\.42\\htmlStyle\{[^}]*\}\{\\,\\text\{\\%\}\}\}$/);
+    expect(await lineChip(page)).toEqual({ value: "21/50", exact: true, unit: { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } } });
+    await tap(page, ["mul", "d1", "d0", "d0", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    await expect(lastRow(page).locator(".result")).toHaveAttribute("data-text", "0.42");
+    await expect(lastRow(page).getByTestId("mark")).toHaveText("=");
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveCount(0);
+    // the unit row is the last result again: × on an empty line starts with Ans, its chip, also the pure number
+    await page.evaluate(() => window.n62.session.home.splice(-1, 1));
+    await page.evaluate(() => window.n62.entry.clear());
+    await tap(page, ["mul", "d1", "d0", "d0", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(2);
+    await expect(lastRow(page).locator(".result")).toHaveAttribute("data-text", "0.42");
+    await expect(lastRow(page).getByTestId("unit-dropped")).toHaveCount(0);
+  });
+
   test("R121: 4700 ▶ R, then R × 2 with A shows = 9400 A with the note R has no unit, in the view and in its Home row (derived)", async ({ page }) => {
     await tap(page, ["d4", "d7", "d0", "d0", "shift", "emark", "alpha", "d8", "enter"]);
     await expect(page.locator('[data-status="done"]')).toHaveCount(1);

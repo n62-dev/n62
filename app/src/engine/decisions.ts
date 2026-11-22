@@ -3,7 +3,7 @@
 // integers, a branch), and their second run at P + 20 and P + 40. Split out of numeric.ts (G71). Synchronous, UI-free;
 // only erasable TypeScript syntax.
 import { literalPastCap, literalStart } from "./literalPrec.ts";
-import { DOUBLE_DIGITS, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Shape } from "./numeric.ts";
+import { DOUBLE_DIGITS, doubleChecked, hasFloat, MAX_EVAL_DIGITS, namePrint, numbersAt, shapeOfValue, size, valuePrecision, withDigits, type ElementFacts, type Giac, type Parts, type Shape } from "./numeric.ts";
 import { callsOf, closing, functionsIn, isError, isName, isNameChar, LIST_TYPE, names, namesIn, numbers, type Quoting, RATIONAL, topLevelArgs, UNCLOSED, walk, withoutStrings } from "./giacPrint.ts";
 import { decimalFromString, isZero, type DecimalValue } from "./format.ts";
 import { toExactLiterals } from "./exactLiterals.ts";
@@ -622,7 +622,9 @@ export function decideTwice(giac: Giac, expr: string, text: string, digits: numb
  * text and doubleFallback reads it. Every decision is then made at the double and nothing confirms it: a number comes
  * back as facts with warn "unaudited" (its digits are the double's, at most DOUBLE_DIGITS), any other result (true,
  * false) as its text. Null when the double fails too, or when it gives no number and no plain text (a symbolic
- * result keeps the error).
+ * result keeps the error). G782 fix round 2: when `expr` has a number at P after all (the runs at P and W were stopped
+ * by the clock under load, not refused), a double that differs from it confirms only the digits the two share
+ * (numeric.ts doubleChecked; student_icdf(i,0.5) showed 12 digits of noise here, 2 on the exact path).
  */
 export function decidedAtDouble(
   giac: Giac,
@@ -630,6 +632,18 @@ export function decidedAtDouble(
   expr: string,
   digits: number,
 ): { facts: ElementFacts[]; shape: Shape } | { text: string } | null {
+  const out = atDoubleOnly(giac, name, expr, digits);
+  if (!out || !("facts" in out)) return out;
+  const { parts, facts, shape } = out;
+  const P = valuePrecision(digits);
+  const v = withDigits(giac, P, digits, () => giac.value(`pasdp:=(${expr})`, [P]));
+  giac.eval("purge(pasdp)");
+  const s = shapeOfValue(v);
+  const M = s && s.kind === shape.kind && size(s) === size(shape) ? numbersAt(v, P, P + 2, size(s)) : null;
+  return { facts: M ? doubleChecked(M.map((m) => ({ ...m, double: true as const })), facts, () => parts) : facts, shape };
+}
+
+function atDoubleOnly(giac: Giac, name: string, expr: string, digits: number): { facts: ElementFacts[]; shape: Shape; parts: Parts[] } | { text: string } | null {
   return withDigits(giac, DOUBLE_DIGITS, digits, () => {
     // G103: stored and read in one call (bridge-3)
     const v = giac.value(`${name}:=(${expr})`, [DOUBLE_DIGITS]);
@@ -639,7 +653,7 @@ export function decidedAtDouble(
     const parts = shape ? numbersAt(v, DOUBLE_DIGITS, DOUBLE_DIGITS, size(shape)) : null;
     if (shape && parts) {
       const facts = parts.map((v): ElementFacts => ({ value: { re: v.re, im: v.im }, exact: false, reliableDigits: Math.min(digits, DOUBLE_DIGITS), warn: "unaudited", big: false }));
-      return { facts, shape };
+      return { facts, shape, parts };
     }
     return t.trim() === "true" || t.trim() === "false" ? { text: t.trim() } : null;
   });

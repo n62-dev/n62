@@ -618,9 +618,12 @@ export const PATCHED_IDS = new Map([
   // G617 (F431): intgab.cc in_sumab took c*(-1)^k/k^p from an even start with the sign flipped, and for p = 1 took the harmonic sum
   // off ln(2); the g617-keep-* rows (odd starts, a = 1, p = 1 from 2) pass on stock and stay in the check file
   ...["alt-sq-from-2", "alt-sq-from-4", "alt-cube-from-2", "alt-4th-from-2", "alt-6th-from-2", "alt-plus-one-from-2", "cos-kpi-from-2", "alt-harmonic-from-3", "alt-harmonic-from-4", "alt-harmonic-from-5", "alt-sq-coeff-from-2", "alt-harmonic-coeff-from-3"].map((k) => [`g617-sum-${k}`, "0054-alternating-sum-start.patch"]),
+  // G620 (F434): series.cc in_limit wrote a numeric constant cosh(1) with exponentials beside an x-dependent cosh(1+x), whose series
+  // starts with cosh(1), so the leading term did not cancel (infinity); the g620-keep-* rows pass on stock and stay in the check file
+  ...["sinh-at-2", "cosh-at-1", "cosh-at-1-right", "cosh-exp-constant", "tanh-at-2", "sinh-cos"].map((k) => [`g620-limit-${k}`, "0056-limit-hyperbolic-constants.patch"]),
   // G398 (be-4): usual.cc ln(inv(f)) = -ln(f) and sqrt(inv(f)) = inv(sqrt(f)) took the conjugate for a negative real f; the
   // g398-keep-* rows pass on stock and stay in the check file
-  ...["ln-inv-1-minus-sqrt2-12", "ln-inv-1-minus-sqrt2-30", "log10-inv-1-minus-sqrt2-12", "log10-inv-1-minus-sqrt2-30", "sqrt-inv-pi-minus-4-12", "sqrt-inv-pi-minus-4-30", "sqrt-sec2-12", "sqrt-sec2-30", "ln-sec2-12", "ln-sec2-30", "sqrt-csc4-12", "sqrt-csc4-30", "log10-sec2-12", "sqrt-inv-e-minus-3-12", "ln-inv-sqrt2-minus-2-12", "ln-inv-neg2-12"].map((k) => [`g398-${k}`, "0056-ln-sqrt-inv-negative-real.patch"]),
+  ...["ln-inv-1-minus-sqrt2-12", "ln-inv-1-minus-sqrt2-30", "log10-inv-1-minus-sqrt2-12", "log10-inv-1-minus-sqrt2-30", "sqrt-inv-pi-minus-4-12", "sqrt-inv-pi-minus-4-30", "sqrt-sec2-12", "sqrt-sec2-30", "ln-sec2-12", "ln-sec2-30", "sqrt-csc4-12", "sqrt-csc4-30", "log10-sec2-12", "sqrt-inv-e-minus-3-12", "ln-inv-sqrt2-minus-2-12", "ln-inv-neg2-12"].map((k) => [`g398-${k}`, "0057-ln-sqrt-inv-negative-real.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -884,9 +887,9 @@ export function build(cases) {
   // a difference of pi^2/6-2)
   patched.push("// patch 0054-alternating-sum-start.patch", "// g617-normal-sum-alt-sq-from-2 (derived: sum((-1)^k/k^2,k,1,inf) = -pi^2/12 less the term k = 1)", 'Digits:=40:; pc("g617-normal-sum-alt-sq-from-2",\'normal(sum((-1)^k/k^2,k,2,inf)-(1-pi^2/12))\',0,1/10^30);');
   nPatched++;
-  // Patch 0056 (G398), written line: a name assumed negative keeps ln(1/y) (sign(y) = -1 reads the assumption), so a later subst
+  // Patch 0057 (G398), written line: a name assumed negative keeps ln(1/y) (sign(y) = -1 reads the assumption), so a later subst
   // gives ln(-1/2) = -ln(2)+pi*i, the principal value; stock rewrote ln(1/y) as -ln(y), -ln(-2) = -ln(2)-pi*i
-  patched.push("// patch 0056-ln-sqrt-inv-negative-real.patch", "// g398-assumed-neg-ln-inv (derived: ln(-1/2) = -ln(2)+i*pi)", 'assume(g398y<0):; Digits:=40:; pc("g398-assumed-neg-ln-inv",\'subst(ln(1/g398y),g398y=-2)\',-ln(2)+pi*i,1/10^35);'); // g398y is used by this line only, so its assumption stays
+  patched.push("// patch 0057-ln-sqrt-inv-negative-real.patch", "// g398-assumed-neg-ln-inv (derived: ln(-1/2) = -ln(2)+i*pi)", 'assume(g398y<0):; Digits:=40:; pc("g398-assumed-neg-ln-inv",\'subst(ln(1/g398y),g398y=-2)\',-ln(2)+pi*i,1/10^35);'); // g398y is used by this line only, so its assumption stays
   nPatched++;
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],

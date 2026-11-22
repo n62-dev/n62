@@ -147,7 +147,7 @@ export interface HistoryItem {
   settingReset?: true;
   /** R63: a unit-view result (units/row.ts): its request, Quantity summary and chip. Read back unchecked (see UnitRow). */
   units?: UnitRow;
-  /** R63: a unit result's chip (Ans too) went into the input; Home has no units: a line under the result says so. */
+  /** R63: a unit result's chip (Ans too) went into the input; Home has no units: a line under the result says so (G782: not for a ratio unit's, entered as its pure number). */
   unitDropped?: true;
   /** G211: the row's identity across runs (never `id`, results.ts rowUid); its job's Giac text, angle, digits, word (R194); `at`: finished. */
   uid?: string;
@@ -488,7 +488,6 @@ export class Session {
       ...(Object.keys(kept).length ? { chips: kept } : {}),
       ...(typedIn ? { typedIn } : {}), // R265 (the caller passes it only when it differs from the mode on show)
       ...(usesAns && ans ? { ans } : {}), // G213f1: not in `chips` (a recall resolves Ans again); the line and the store keep value and exact
-      ...(Object.values(kept).some((c) => c.unit) || (ans?.unit && usesAns) ? { unitDropped: true } : {}), // R63: a chip on the line, or Ans used
       startedAt: performance.now(),
     });
     // Read and write through the proxy in the list from here on.
@@ -548,6 +547,7 @@ export class Session {
         giac = p.giac;
         defines = p.defines;
         if (p.inexact) live.inexactInput = true;
+        if (p.unitDropped) live.unitDropped = true; // R63: a chip's unit (Ans's too) dropped; G782: a ratio's never is, its chip is its pure number
         named = p.named; // (G211: its facts are read in the item chunk, resultItem.ts chipFactsOf)
         consts = p.consts; // R40: G26's uncDigits (and σ) come back for them
       }

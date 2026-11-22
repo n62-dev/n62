@@ -72,7 +72,7 @@ describe("giac-regress exporter", () => {
     // (G169: one element of a distribution's list x, 7 lines), patch 0040 (G186: simplify of a root of 10^330+7, an acosh of
     // 10^-300 in an abs), patch 0041 (G187: a double power past the int range, normal of such a power), patch 0042 (G170:
     // VARS() keeps its size after ilaplace), patch 0043 (G322: solve keeps the real root of a cubic, 6 lines; G364: only that root when two roots are close, 6 lines), patch 0047 (G331: simplify of an ln
-    // of a nested root, 3 lines), patch 0048 (G308: a power and a product of 1+eps*i, 5 lines), patch 0050 (G359: a cubic with a 10^-30 term, 5 lines; G364: the 10^-80 form at Digits 12 and 30, 2 lines), patch 0054 (G617: normal of an alternating sum from 2 less 1-pi^2/12), patch 0056 (G398: ln(1/y) of an assumed y < 0 at y = -2); the check file gets G149's written line for the CAS view's exact forms
+    // of a nested root, 3 lines), patch 0048 (G308: a power and a product of 1+eps*i, 5 lines), patch 0050 (G359: a cubic with a 10^-30 term, 5 lines; G364: the 10^-80 form at Digits 12 and 30, 2 lines), patch 0054 (G617: normal of an alternating sum from 2 less 1-pi^2/12), patch 0057 (G398: ln(1/y) of an assumed y < 0 at y = -2); the check file gets G149's written line for the CAS view's exact forms
     expect([r.nCheck, r.nPatched]).toEqual([1, 65]);
     expect(r.patched.match(/\/\/ patch 0050-proot-huge-coefficients\.patch\n/g)).toHaveLength(17);
     expect(r.patched).toContain('// g359-rootof-1e400-error-or-right-20 (oracle: mpmath findroot, -10^-400; an error passes)\nDigits:=20:; pasr:=0:; try {');

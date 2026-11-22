@@ -216,10 +216,13 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G770 (F470), patch 0055: _integrate's 4-argument branch previews the integrand numerically for its log, which integrates an inner
   // integral at every sample point (int(int(x^2+y^2,y,0,3),x,0,2): 1.7 million interrupt checks)
   ["0055-nested-integral-no-preview.patch", "giac-2.1.0/src/intg.cc", /if \(x\.type==_IDNT && a\.type!=_DOUBLE_ && b\.type!=_DOUBLE_\)\{\s*gen v0=evalf_double\(v\[0\],1,contextptr\),resapprox,tmp;/, "gen _integrate(const gen & args_,GIAC_CONTEXT){"],
-  // G398, patch 0056: ln(inv(f)) = -ln(f) (and ln of the fraction 1/d, -ln(d)) and sqrt(inv(f)) = inv(sqrt(f)) for any f, the conjugate
+  // G620 (F434), patch 0056: in_limit's "Rewrite constants" step tsimplifies the numeric constants (cosh(1) to exponentials) and leaves
+  // an x-dependent cosh(1+x), whose series starts with cosh(1): limit((cosh(1+x)-cosh(1))/x,x,0) = infinity
+  ["0056-limit-hyperbolic-constants.patch", "giac-2.1.0/src/series.cc", /cv\.push_back\(rv\[i\]\);\s*\}\s*if \(!cv\.empty\(\)\)\{\s*gen cvg=tsimplify\(cv,contextptr\);/, "// Rewrite constants"],
+  // G398, patch 0057: ln(inv(f)) = -ln(f) (and ln of the fraction 1/d, -ln(d)) and sqrt(inv(f)) = inv(sqrt(f)) for any f, the conjugate
   // for a negative real f (ln(1/(1-sqrt(2))) = -ln(1-sqrt(2)), 0.881-pi*i; sqrt(1/(pi-4)) = 1/sqrt(pi-4), -1.079*i)
-  ["0056-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\._SYMBptr->sommet==at_inv && e\._SYMBptr->feuille\.type!=_VECT\)\s*return -ln\(e\._SYMBptr->feuille,contextptr\);[\s\S]{0,400}?if \(e\.type==_FRAC && e\._FRACptr->num==1\)\s*return -ln\(e\._FRACptr->den,contextptr\);/, "return apply_to_equal(e,ln,contextptr);"],
-  ["0056-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\.is_symb_of_sommet\(at_inv\)\)\s*return inv\(sqrt\(e\._SYMBptr->feuille,contextptr\),contextptr\);/, "return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));"],
+  ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\._SYMBptr->sommet==at_inv && e\._SYMBptr->feuille\.type!=_VECT\)\s*return -ln\(e\._SYMBptr->feuille,contextptr\);[\s\S]{0,400}?if \(e\.type==_FRAC && e\._FRACptr->num==1\)\s*return -ln\(e\._FRACptr->den,contextptr\);/, "return apply_to_equal(e,ln,contextptr);"],
+  ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\.is_symb_of_sommet\(at_inv\)\)\s*return inv\(sqrt\(e\._SYMBptr->feuille,contextptr\),contextptr\);/, "return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));"],
 ];
 
 const tar = tarball(SOURCES.giac);

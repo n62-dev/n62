@@ -38,5 +38,6 @@ describe("golden speed (G82, G137)", () => {
     expect(SPEED_KNOWN["home/g340-normal-sqrt-root4-2"]).toBe("HOME_CLOCK_S");
     expect(SPEED_KNOWN["home/g340-simplify-sqrt-root4-2"]).toBe("HOME_CLOCK_S");
     expect(SPEED_KNOWN["precision/g331-evalf-simplify-sqrt-ln-nested-root-30"]).toBe("HOME_CLOCK_S");
+    expect(SPEED_KNOWN["precision/g186-cos-tanh-acosh-1e-1000-12"]).toBe("HOME_CLOCK_S"); // G782 fix round 1: the RAD twin, under load
   });
 });
