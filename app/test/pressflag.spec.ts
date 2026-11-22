@@ -171,18 +171,19 @@ test("a pointercancel and the page hidden clear every flag at once", async ({ pa
   expect(r.hidden).toEqual([]);
 });
 
-test("a trackpad zone gets the flag (its full opacity), the hub none", async ({ page }) => {
+test("a trackpad zone gets the flag (the arrows' full opacity, R794: drawn by the round pad), the hub none", async ({ page }) => {
   const r = await page.evaluate(async () => {
     const pf = (window as unknown as { __pf: Pf }).__pf;
     const sleep = (ms: number): Promise<void> => new Promise((res) => setTimeout(res, ms));
-    const zone = document.querySelector<HTMLElement>('.pad [data-key="up"]') as HTMLElement;
-    const rest = getComputedStyle(zone).opacity;
+    const pad = document.querySelector<HTMLElement>(".pad .trackpad") as HTMLElement;
+    const arrows = (): string => getComputedStyle(pad, "::before").opacity;
+    const rest = arrows();
     pf.fire("pointerdown", "up", 1);
     const lit = pf.lit();
-    const held = getComputedStyle(zone).opacity;
+    const held = arrows();
     pf.fire("pointerup", "up", 1);
     await sleep(150);
-    const after = getComputedStyle(zone).opacity;
+    const after = arrows();
     pf.fire("pointerdown", '[data-testid="pad-hub"]', 1);
     const hub = pf.lit();
     pf.fire("pointerup", '[data-testid="pad-hub"]', 1);

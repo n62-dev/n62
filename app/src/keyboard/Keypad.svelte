@@ -429,7 +429,8 @@
       data-v={varsOf(key)}
     >
       <span class="shiftlegend" data-fit="legend" data-opens={opensSheet(key.actions.shift) || undefined}>{hint(key)}</span>
-      <span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>
+      <!-- (R794: a trackpad zone draws no glyph: the round pad draws its four arrows) -->
+      {#if !isPadKey(key)}<span class="main" data-fit="face" data-opens={(typed(key) === undefined && opensSheet(act(key))) || undefined}>{face(key)}</span>{/if}
       {#if lettered}<span class="alphalegend" data-fit="legend">{alphaHint(key)}</span>{/if}
     </button>
   {/each}
@@ -652,30 +653,43 @@
   .key[data-zone="true"] {
     background: transparent;
     box-shadow: none;
-    opacity: 0.7;
   }
-  /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle),
-     the glyph going from 0.7 to full opacity is its press */
-  .key[data-zone="true"]:global([data-down]) {
-    opacity: 1;
-  }
+  /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle) */
   .key[data-zone="true"]:global([data-down])::after {
     content: none;
   }
-  /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
-     it: placeDot (keyNames.ts) sets --dot-at, the arrow's offset from the pad's centre */
+  /* R794 (owner's K9): the four arrows are the round pad's own drawing, not the zones' glyphs (a glyph sat in its zone's face
+     row, under the legend row, in zones that are not symmetric about the circle): one SVG of four equal triangles as a mask
+     over the key's text colour, each 10 % of the diameter on a side, centred on an axis at 33 % of the diameter from the
+     centre (placeDot in keyNames.ts puts the press dot on the same four points). At 0.7 opacity, full while a zone is held. */
   .trackpad {
     position: relative;
     overflow: hidden;
+    isolation: isolate;
   }
+  .trackpad::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--key-text);
+    opacity: 0.7;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 12l5 10H45zM50 88l5-10H45zM12 50l10-5v10zM88 50l-10-5v10z'/%3E%3C/svg%3E")
+      center / 100% 100% no-repeat;
+    pointer-events: none;
+  }
+  .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::before {
+    opacity: 1;
+  }
+  /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
+     it: placeDot (keyNames.ts) sets --dot-x and --dot-y, the arrow's centre in the pad */
   .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::after {
     content: "";
     position: absolute;
-    inset: 50% auto auto 50%;
+    inset: var(--dot-y, 50%) auto auto var(--dot-x, 50%);
     width: var(--pad-dot);
     height: var(--pad-dot);
     margin: calc(var(--pad-dot) / -2);
-    translate: var(--dot-at, 0 0);
     visibility: var(--dot-on, hidden); /* placeDot sets both: before it has run (an arrow pressed before the key names are in) no dot, not one on the hub */
     border-radius: 50%;
     background: color-mix(in srgb, var(--key-text) 32%, transparent);

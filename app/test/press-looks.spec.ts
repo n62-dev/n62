@@ -46,18 +46,25 @@ const pixel = async (page: Page, x: number, y: number): Promise<number[]> => {
   }, png.toString("base64"));
 };
 
+/** R794: an arrow's centre (CSS px): the round pad draws the four, on its axes at 33 % of its diameter from its centre. */
+const arrowAt = async (page: Page, id: string): Promise<{ x: number; y: number }> => {
+  const t = await page.locator(".pad .trackpad").boundingBox();
+  if (!t) throw new Error("no trackpad");
+  const [ux, uy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[id] ?? [0, 0];
+  return { x: t.x + t.width * (0.5 + 0.33 * (ux ?? 0)), y: t.y + t.height * (0.5 + 0.33 * (uy ?? 0)) };
+};
+
 for (const id of ["up", "down", "left", "right"])
-  test(`a held ${id} arrow shows a dot behind it: the pixel beside the glyph differs from rest`, async ({ page }) => {
+  test(`a held ${id} arrow shows a dot behind it: the pixel beside the arrow differs from rest`, async ({ page }) => {
     await open(page);
     // the dot's code comes with the key names, after the first paint (keyNames.ts placeDot): wait for them (sin's description is theirs)
     await expect(page.locator('.pad [data-key="sin"]')).toHaveAttribute("aria-description", /Shift/);
-    const box = await page.locator(`.pad [data-key="${id}"] .main`).boundingBox();
-    if (!box) throw new Error("no arrow");
-    // 14 px from the glyph's centre, along the circle's tangent: off the ink, inside a 40 px dot
+    const at = await arrowAt(page, id);
+    // 14 px from the arrow's centre, along the circle's tangent: off the ink, inside a 40 px dot
     const [dx, dy] = id === "up" || id === "down" ? [14, 0] : [0, 14];
-    const [x, y] = [box.x + box.width / 2 + dx, box.y + box.height / 2 + dy];
+    const [x, y] = [at.x + dx, at.y + dy];
     const rest = await pixel(page, x, y);
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.move(at.x, at.y);
     await page.mouse.down();
     await expect(page.locator(`.pad [data-key="${id}"][data-down]`)).toHaveCount(1);
     const held = await pixel(page, x, y);
@@ -72,12 +79,10 @@ test("an arrow pressed before the key names are in draws no dot (none on the hub
     window.requestIdleCallback = (cb, o) => setTimeout(() => idle(cb, o), 4000) as unknown as number;
   });
   await page.goto("/?engine=fake&tips=off");
-  const arrow = page.locator('.pad [data-key="up"] .main');
-  await arrow.waitFor();
+  await page.locator('.pad [data-key="up"]').waitFor();
   expect(await page.locator('.pad [data-key="sin"]').getAttribute("aria-description")).toBeNull(); // (the names are not in)
-  const box = await arrow.boundingBox();
-  if (!box) throw new Error("no arrow");
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  const at = await arrowAt(page, "up");
+  await page.mouse.move(at.x, at.y);
   await page.mouse.down();
   await expect(page.locator('.pad [data-key="up"][data-down]')).toHaveCount(1);
   const dot = await page.locator(".pad .trackpad").evaluate((el) => getComputedStyle(el, "::after").visibility);

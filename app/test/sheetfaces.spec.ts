@@ -51,7 +51,9 @@ for (const width of [412, 360]) {
       await expect(main(page, "x")).toHaveText("d");
       await expect(main(page, "d7")).toHaveText("7");
       await expect(main(page, "enter")).not.toHaveText("");
-      await expect(main(page, "up")).not.toHaveText("");
+      // R794: ▲ is the round pad's drawing (its mask), not a face, so a sheet cannot change it
+      await expect(main(page, "up")).toHaveCount(0);
+      expect(await page.locator(".pad .trackpad").evaluate((el) => getComputedStyle(el, "::before").maskImage)).toContain("svg");
       await expect(letterLine(page, "vars")).toHaveText("");
       expect(await popOf(page, "sin")).toBe("g");
       expect(await overflows(page)).toEqual([]);

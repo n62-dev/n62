@@ -19,7 +19,8 @@ type Ink = { cx: number; cy: number; along: number; across: number; max: number 
 async function arrows(page: Page): Promise<{ d: number; ink: Record<string, Ink> }> {
   const box = await page.locator(".pad .trackpad").boundingBox();
   if (!box) throw new Error("no trackpad");
-  const clip = { x: Math.floor(box.x), y: Math.floor(box.y), width: Math.ceil(box.width) + 2, height: Math.ceil(box.height) + 2 };
+  // (2 px either side: at 360 px the circle fills its grid area's width, and the keys' gap is 4 px)
+  const clip = { x: Math.floor(box.x) - 2, y: Math.floor(box.y), width: Math.ceil(box.width) + 5, height: Math.ceil(box.height) + 2 };
   const png = await page.screenshot({ clip, scale: "device" });
   return page.evaluate(
     async ({ b64, clip, box }) => {
@@ -32,10 +33,35 @@ async function arrows(page: Page): Promise<{ d: number; ink: Record<string, Ink>
       g.drawImage(bmp, 0, 0);
       const px = g.getImageData(0, 0, bmp.width, bmp.height).data;
       const s = bmp.width / clip.width; // device px per CSS px
-      const [ox, oy] = [(box.x + box.width / 2 - clip.x) * s, (box.y + box.height / 2 - clip.y) * s]; // the circle's centre
-      const r = (box.width / 2) * s;
       const at = (x: number, y: number): number[] => [...px.slice((y * bmp.width + x) * 4, (y * bmp.width + x) * 4 + 3)];
-      const bg = at(Math.round(ox), Math.round(oy)); // the hub draws nothing: the pad's own colour
+      // the circle as drawn (it may sit a fraction of a px off its layout box): where a pixel is half the way from the page's
+      // colour to the pad's, on two rows, the one through the layout box's centre and one 0.7 of the radius above it (the
+      // drop shadow is a copy moved down, hidden at the sides on and above the centre): the centre from the two chords
+      const [bx, by] = [Math.round((box.x + box.width / 2 - clip.x) * s), Math.round((box.y + box.height / 2 - clip.y) * s)];
+      const bg = at(bx, by); // the hub draws nothing: the pad's own colour
+      const page = at(0, by);
+      const t = (p: number[]): number => {
+        const v = bg.map((b, i) => b - (page[i] ?? 0));
+        const n = v.reduce((a, b) => a + b * b, 0);
+        return v.reduce((a, b, i) => a + b * ((p[i] ?? 0) - (page[i] ?? 0)), 0) / n;
+      };
+      const edge = (from: number, step: number, pt: (i: number) => number[]): number => {
+        for (let i = from; i + step >= 0 && i + step < bmp.width; i += step) {
+          const [a, b] = [t(pt(i)), t(pt(i + step))];
+          if (b >= 0.5) return i + 0.5 + (step * (0.5 - a)) / (b - a || 1); // between the two pixels' centres, where t is one half
+        }
+        throw new Error("no edge of the circle");
+      };
+      const chord = (y: number): [number, number] => {
+        const [l, r] = [edge(0, 1, (x) => at(x, y)), edge(bmp.width - 1, -1, (x) => at(x, y))];
+        return [(l + r) / 2, (r - l) / 2];
+      };
+      const [ox, ca] = chord(by);
+      const yb = Math.round(by - 0.7 * ca);
+      const [, cb] = chord(yb);
+      const [ya, yc] = [by + 0.5, yb + 0.5]; // the rows' centres
+      const oy = (yc * yc - ya * ya - (ca * ca - cb * cb)) / (2 * (yc - ya));
+      const r = Math.sqrt(ca * ca + (ya - oy) ** 2); // the circle's centre and radius, in device px of the clip
       const sectors: Record<string, { diff: number; x: number; y: number }[]> = { up: [], down: [], left: [], right: [] };
       for (let y = 0; y < bmp.height; y++)
         for (let x = 0; x < bmp.width; x++) {
@@ -56,7 +82,7 @@ async function arrows(page: Page): Promise<{ d: number; ink: Record<string, Ink>
         const vertical = id === "up" || id === "down";
         ink[id] = { cx: ((x0 + x1) / 2 - ox) / s, cy: ((y0 + y1) / 2 - oy) / s, along: vertical ? h : w, across: vertical ? w : h, max };
       }
-      return { d: box.width, ink };
+      return { d: (2 * r) / s, ink };
     },
     { b64: png.toString("base64"), clip, box },
   );
@@ -89,6 +115,22 @@ for (const viewport of [
         for (const k of ["along", "across"] as const) {
           const v = all.map(([, a]) => a[k]);
           expect(Math.max(...v) - Math.min(...v), `one size, ${k} ${said}`).toBeLessThanOrEqual(0.5);
+        }
+        // R774's press dot centres on the arrow: its centre (the pad's ::after, laid out from the circle's box) within 0.5 px of the ink's
+        await expect(page.locator('.pad [data-key="sin"]')).toHaveAttribute("aria-description", /Shift/); // (placeDot comes with the key names)
+        for (const [id, a] of all) {
+          const zone = await page.locator(`.pad [data-key="${id}"]`).boundingBox();
+          if (!zone) throw new Error(`no ${id}`);
+          await page.mouse.move(zone.x + zone.width / 2, zone.y + zone.height / 2);
+          await page.mouse.down();
+          await expect(page.locator(`.pad [data-key="${id}"][data-down]`)).toHaveCount(1);
+          const dot = await page.locator(".pad .trackpad").evaluate((el) => {
+            const c = getComputedStyle(el, "::after");
+            return { x: parseFloat(c.left) - el.clientWidth / 2, y: parseFloat(c.top) - el.clientHeight / 2, on: c.visibility };
+          });
+          await page.mouse.up();
+          expect(dot.on, `${id}: dot shown`).toBe("visible");
+          expect(Math.hypot(dot.x - a.cx, dot.y - a.cy), `${id}: dot at (${ROUND(dot.x)}, ${ROUND(dot.y)}) ${said}`).toBeLessThanOrEqual(0.5);
         }
       });
 
