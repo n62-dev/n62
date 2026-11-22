@@ -60,19 +60,15 @@ export const FACTOR_CMDS = new Set([
  *  with the reason. Giac's other functions are not listed here: Giac answers `mean:=5` with a value (its warning and 5),
  *  not an error, and stores nothing, which the engine host refuses with these words (G354, host.ts unstored); a name
  *  Giac lets take a value (`D`, `E`, `I`, `O`) stores. */
-export function storeRefusal(name: string): { key: "parse.ourName" | "parse.builtInName"; vars: { name: string } } | undefined {
-  if (isOwnName(name)) return { key: "parse.ourName", vars: { name } };
-  if ([FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) return { key: "parse.builtInName", vars: { name } };
-  return undefined;
-}
+export const storeRefusal = (name: string): ["parse.ourName" | "parse.builtInName", { name: string }] | undefined => {
+  const own = isOwnName(name);
+  if (own || [FUNCS, CONSTS, LOGIC_FUNCS, ABS_LIKE, CALL_NAME].some((t) => Object.hasOwn(t, name)) || NAMED_FUNCS.has(name)) return [own ? "parse.ourName" : "parse.builtInName", { name }];
+};
 /** The refusal as the parser throws it (storeRefusal), at Enter. */
-export function refuseStore(name: string): void {
-  const r = storeRefusal(name);
-  if (r) {
-    const { key, vars } = r;
-    throw parseError(key, vars);
-  }
-}
+export const refuseStore = (name: string): void => {
+  const [key, vars] = storeRefusal(name) ?? [];
+  if (key) throw parseError(key, vars);
+};
 
 /** Letters that start a base prefix after a lone 0 (0x, 0b, 0o, docs/04 5.4), and their base; parse.ts reads the
  *  capital as the same prefix (R304). */

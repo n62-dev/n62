@@ -162,8 +162,12 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  draw and read). 78,743 B + 0.05 kB, rounded up to the next 0.01 kB.
  *  78.80 → 78.97 kB (R801 fix round 3): the branch measures 78.91 kB (+0.17 kB: slotAt finds a box's slot by the model,
  *  getOffsetFromPoint and getPromptRange, not by the order of the boxes, which a fraction draws bottom to top). Cut tried:
- *  one reduce over the ids instead of a loop, −0.03 kB. 78.91 kB + 0.05 kB. */
-export const UNIT_VIEW_PIN_RAW = 78_970;
+ *  one reduce over the ids instead of a loop, −0.03 kB. 78.91 kB + 0.05 kB.
+ *  78.97 → 79.10 kB (R804f1): phase-1 71292ca4 measures 78.92 kB, the branch 79,046 B (+0.13 kB, all in the Find chunk that
+ *  holds the store sheet, 15.84 → 15.96 kB): the typed-name line asks the parser's own rule (storeRefusal) before it says
+ *  a name is free, and words the refusal with the parser's table (parseText). 79,046 B + 0.05 kB, rounded up to the next
+ *  0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 79_100;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {

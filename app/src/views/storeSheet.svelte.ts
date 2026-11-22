@@ -109,7 +109,7 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
       if (f === "") return undefined;
       // R804f1: a name the parser refuses at Enter shows its reason now (the same words), not "is free"
       const refused = storeRefusal(f);
-      if (refused) return parseText(refused.key, refused.vars);
+      if (refused) return parseText(...refused);
       if (heldBy(f)) return t("store.typedHeld", { name: f });
       return shown.value ? t("store.typedFreeWith", { name: f, with: shown.value }) : t("store.typedFree", { name: f });
     },
