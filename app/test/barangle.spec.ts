@@ -7,6 +7,15 @@ import { open, tap, touch } from "./helpers.ts";
 
 const chip = (p: Page) => p.getByTestId("chip-angle");
 const angle = (p: Page) => p.evaluate(() => window.n62.session.settings.angle);
+/** R703f1: the mark π or ° is drawn inside the angle chip's box (a `.mark` rule of the slot pill's ◢ once put it at the bar's right end, under ☰). */
+async function markInside(p: Page): Promise<void> {
+  const [c, m] = await Promise.all([chip(p).boundingBox(), chip(p).locator(".mark").boundingBox()]);
+  if (c === null || m === null) throw new Error("the angle chip or its mark is not drawn");
+  expect(m.x, "the mark's left").toBeGreaterThanOrEqual(c.x - 0.5);
+  expect(m.y, "the mark's top").toBeGreaterThanOrEqual(c.y - 0.5);
+  expect(m.x + m.width, "the mark's right").toBeLessThanOrEqual(c.x + c.width + 0.5);
+  expect(m.y + m.height, "the mark's bottom").toBeLessThanOrEqual(c.y + c.height + 0.5);
+}
 const uses = (p: Page, name: string) => p.evaluate((n) => window.n62.session.useCounters["bar-uses"]?.get(n) ?? 0, name);
 
 for (const width of [360, 392, 412] as const) {
@@ -18,10 +27,12 @@ for (const width of [360, 392, 412] as const) {
     await expect(chip(page)).toHaveText("π");
     await expect(chip(page)).toHaveAttribute("data-angle", "rad");
     await expect(chip(page)).toHaveAttribute("aria-label", "Angle: radians");
+    await markInside(page);
     await chip(page).tap();
     await expect(chip(page)).toHaveText("°");
     await expect(chip(page)).toHaveAttribute("data-angle", "deg");
     await expect(chip(page)).toHaveAttribute("aria-label", "Angle: degrees");
+    await markInside(page);
     expect(await angle(page)).toBe("deg");
     expect((await chip(page).innerText()).toUpperCase()).not.toMatch(/RAD|DEG/);
     await chip(page).tap();
