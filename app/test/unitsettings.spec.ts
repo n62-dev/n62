@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R838: Settings and Mode open as sheets over the unit view and close back onto it (docs/05, the unit view): the slots, the
 // active slot, an armed prefix and the result stay; while the sheet is open every key is the sheet's; on close the focus is
-// on the view again (a hardware ← moves between slots) and a changed setting the view shows (the digits) redraws its result.
+// on the view again (a hardware ← moves between slots) and a changed setting the view shows redraws its result (the decimal mark,
+// no engine call) or asks for it again (the digits, which the engine's answer holds).
 // Home, CAS and Apps stay places: they close the view. Expected values: derived (2π·25 = 157.0796326794896…, from the
 // oracle value of tasks.yaml t04, 2π·0.025 = 0.1570796326794896…; at 6 significant digits 157.080).
 import { expect, test, type Page } from "@playwright/test";
@@ -138,7 +139,8 @@ test.describe("a setting changed over the unit view redraws its result (R838)", 
     await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
   });
 
-  test("2π·25 mm: Mode › Significant digits 6 over the result, and on close the result shows 157.08 with no new engine call", async ({ page }) => {
+  /** 2π·25 mm in the unit view, its result shown at 12 digits; the engine's unit calls counted from here (window.unitCalls). */
+  async function twoPi(page: Page): Promise<() => Promise<string>> {
     await tap(page, ["d2", "mul"]);
     await flick(page, "d3", "up");
     await tap(page, ["mul", "d2", "d5"]);
@@ -158,12 +160,34 @@ test.describe("a setting changed over the unit view redraws its result (R838)", 
         return units(...a);
       };
     });
+    return plain;
+  }
+  const calls = (page: Page): Promise<number> => page.evaluate(() => (window as unknown as { unitCalls: number }).unitCalls);
+  const dataText = (page: Page): Promise<string | undefined> => page.evaluate(() => document.querySelector<HTMLElement>('[data-testid="unit-result"]')?.dataset["text"]);
+
+  test("2π·25 mm: Mode › Significant digits 6 over the result asks again: the screen, Copy's text and the Home row show 157.080", async ({ page }) => {
+    const plain = await twoPi(page);
     await page.keyboard.press("Alt+Shift+O"); // Mode
     await expect(page.getByTestId("menu")).toBeVisible();
     await tap(page, ["d3", "d2"]); // › Significant digits › 6: the pick closes the sheet
     await backOnView(page);
+    // the digits are in the engine's answer (its facts, σ's text, the Home row), so the result is asked for again, once
     await expect.poll(plain).toMatch(/^157\.080?$/);
+    await expect.poll(() => dataText(page)).toMatch(/^157\.080?$/);
     await expect(page.getByTestId("unit-unit")).toHaveText("mm");
-    expect(await page.evaluate(() => (window as unknown as { unitCalls: number }).unitCalls)).toBe(0);
+    expect(await page.evaluate(() => window.n62.session.home.at(-1)?.text)).toMatch(/^157\.080?$/); // the visit's Home row
+    expect(await calls(page)).toBe(1);
+  });
+
+  test("2π·25 mm: the decimal mark changed over the result draws it again with no engine call", async ({ page }) => {
+    const plain = await twoPi(page);
+    await page.keyboard.press("Alt+Shift+O"); // Mode
+    await expect(page.getByTestId("menu")).toBeVisible();
+    await page.evaluate(() => window.n62.session.setDecimalMark("comma")); // (Settings › Numbers › Decimal mark, while the sheet is open)
+    await tap(page, ["esc"]);
+    await backOnView(page);
+    await expect.poll(plain).toBe("157,079632679");
+    await expect.poll(() => dataText(page)).toBe("157,079632679");
+    expect(await calls(page)).toBe(0);
   });
 });

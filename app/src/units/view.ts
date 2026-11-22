@@ -501,8 +501,8 @@ export class UnitView {
     }
   }
 
-  /** R838: a setting the result is drawn with changed (the digits, the format, the decimal mark, the digit groups; Settings or
-   *  Mode over the view): the result shown is drawn again from the engine's answer, with no new request, and a focused chip
+  /** R838: a setting the result is only drawn with changed (the format, the decimal mark, the digit groups; Settings or Mode
+   *  over the view; a digits change asks again, units/open.ts): the result shown is drawn again from the engine's answer, with no new request, and a focused chip
    *  stays focused (the caller draws the panel). Nothing when no result is shown or its format is unchanged. */
   redraw(): void {
     const r = this.#result;

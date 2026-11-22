@@ -98,8 +98,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const seed = row ? rowSlots(row) : undefined;
   /** The Home row of this visit's result (R63): a later result takes its place. */
   let rowId: number | undefined;
-  /** R838: the angle unit the result shown was computed in. */
+  /** R838: the angle unit and the digits the result shown was computed with (the engine's facts, σ's text and the Home row
+   *  take the digits, units/evaluate.ts): a change of either asks again. */
   let angle = c.session.settings.angle;
+  let digits = c.session.settings.digits;
   const mf = new Field();
   mf.dataset["testid"] = "unit-field";
   const host: ViewHost = {
@@ -121,7 +123,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     values: () => userValuesOf(c.session.userNames),
     changed: () => panel.draw(),
     reset: (latex, ids) => lockedValue(mf, latex, ids),
-    result: (q) => void ((angle = c.session.settings.angle), (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId))),
+    result: (q) => void ((angle = c.session.settings.angle), (digits = c.session.settings.digits), (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId))),
   };
   /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
    *  keeping its slots, they go with the new line text, and the view opens again on it. */
@@ -236,11 +238,12 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   document.addEventListener("click", tapped, { capture: true });
   untap = () => document.removeEventListener("click", tapped, { capture: true });
   /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
-   *  and a setting changed there shows: an angle unit other than the result's recomputes it as the line would, a setting it is
-   *  only drawn with (the digits, the format, the decimal mark, the digit groups, the marks) draws it again with no request. */
+   *  and a setting changed there shows: an angle unit or digits other than the result's recompute it as the line would (the
+   *  digits are in the engine's answer, σ's text and the Home row too), a setting it is only drawn with (the format, the decimal
+   *  mark, the digit groups, the marks) draws it again with no request. */
   unwatch = watchSheet(c.shell, () => {
     if (current?.view !== view) return;
-    if (angle !== c.session.settings.angle && view.shown.kind === "result") void view.evaluate();
+    if ((angle !== c.session.settings.angle || digits !== c.session.settings.digits) && view.shown.kind === "result") void view.evaluate();
     else view.redraw();
     panel.draw();
     keep();
