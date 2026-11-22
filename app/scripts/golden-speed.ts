@@ -58,6 +58,10 @@ export const SPEED_KNOWN: Record<string, string> = {
   // desktop shows Overflow)
   "precision/g186-abs-cos-acosh-1e-300-30": "HOME_CLOCK_S",
   "precision/g186-deg-cos-tanh-acosh-1e-1000-12": "HOME_CLOCK_S",
+  // its RAD row, the same Giac text: Home's exact path is 33-55 ms on a quiet host (5 fresh engines, key-e466fa36e786613f,
+  // 2026-11-22) and keeps Overflow up to a clock ×40, No value found from ×48 on (3 fresh engines each); so at ×8 it differs
+  // only on a host 5-6× slower than quiet, under the load of other runs' checks (runs 1054 and 1475)
+  "precision/g186-cos-tanh-acosh-1e-1000-12": "HOME_CLOCK_S",
   // G340 (F228, patch 0045): normal and simplify of sqrt(2^(1/3)+3^(2/3)) are one Giac call of 171-225 ms (about 98,800
   // checks, step-budget.ts BUDGET=home, 2026-11-13), the degree-18 rootof of the nested root; 8× slower that is 1.4-1.8 s
   // against HOME_CLOCK_S (1.5 s), so under load the Tab One shows the time-out (normal) or the input back (simplify)

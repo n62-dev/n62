@@ -84,6 +84,18 @@ describe("slotFormula (R24c)", () => {
     expect(() => ansGiac("\\ans\\times2", { value: "5", exact: false, unc: "0.25" })).toThrow("Ans has a σ here: use its row's chip");
     expect(latexToGiacInfo("\\ans\\times2", { chips: { [ANS_KEY]: { value: "3", exact: true, unit } } }).giac).toBe("(3)*2"); // Home: the unit dropped, as R63
   });
+  // G782 (audit, fix round 1): a pure number shown in a unit keeps it on its chip (units/chip.test.ts pins these two chips:
+  // 0.0042 ▶ % and 3 rev), so its Ans is refused in the unit view as R259 refuses any Ans with a unit; before G782 the %
+  // one went in as 0.42 (off by 100) and the rev one as 3. Home takes the % one's pure number (21/50/100 = 0.0042, derived)
+  // and drops rev, as R63
+  it("G782: Ans of a % or a rev result is refused in the unit view; Home takes the % one's pure number", () => {
+    const pct: Chip = { value: "21/50", exact: true, unit: { text: "%", dim: "", slot: { tokens: [{ unit: "percent" }] } } };
+    const rev: Chip = { value: "3", exact: true, unit: { text: "rev", dim: "", slot: { tokens: [{ unit: "rev" }] } } };
+    for (const c of [pct, rev]) expect(() => ansGiac("\\ans\\times2", c)).toThrow("Ans has a unit here: use its row's chip");
+    const home = (c: Chip) => latexToGiacInfo("\\ans\\times2", { chips: { [ANS_KEY]: c } });
+    expect(home(pct)).toEqual({ giac: "((21/50)/10^2)*2", inexact: false });
+    expect(home(rev)).toEqual({ giac: "(3)*2", inexact: false, unitDropped: true });
+  });
   // vfh-1 (R271 made the parser's side): a σ that is no number keeps its slot before ±, and the parser says σ is the fault
   it("R259: ± followed by no plain number, through slotFormula, is parse.pmNeedsSigma; a typed σ and a result chip stay valid", () => {
     for (const l of ["10\\pm\\left(0.5\\right)", "10\\pm x", "10\\pm\\sqrt{2}"]) expect(() => giac(l)).toThrow("± needs a plain number after it");
