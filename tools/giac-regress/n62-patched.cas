@@ -266,6 +266,24 @@ Digits:=40:; pc("g129-tan-half-atan-2i",'(tan(atan(2*i)/2))',(866025403784/10^12
 // patch 0019-atan-exact-cut.patch
 // g129-tan-half-atan-2i-sum (home.yaml, oracle)
 Digits:=40:; pc("g129-tan-half-atan-2i-sum",'(tan(atan(2*i)/2)+atan(2*i))',(243682173058/10^11)+(104930614433/10^11)*i,5/10^12+5/10^12);
+// patch 0056-limit-hyperbolic-constants.patch
+// g620-limit-sinh-at-2 (home.yaml, derived)
+Digits:=40:; pc("g620-limit-sinh-at-2",'(limit((sinh(x)-sinh(2))/(x-2),x,2))',(376219569108/10^11),5/10^12);
+// patch 0056-limit-hyperbolic-constants.patch
+// g620-limit-cosh-at-1 (home.yaml, derived)
+Digits:=40:; pc("g620-limit-cosh-at-1",'(limit((cosh(1+x)-cosh(1))/x,x,0))',(117520119364/10^11),5/10^12);
+// patch 0056-limit-hyperbolic-constants.patch
+// g620-limit-cosh-at-1-right (home.yaml, derived)
+Digits:=40:; pc("g620-limit-cosh-at-1-right",'(limit((cosh(1+h)-cosh(1))/h,h,0,1))',(117520119364/10^11),5/10^12);
+// patch 0056-limit-hyperbolic-constants.patch
+// g620-limit-cosh-exp-constant (home.yaml, derived)
+Digits:=40:; pc("g620-limit-cosh-exp-constant",'(limit((cosh(1+x)-(exp(1)+exp(-1))/2)/x,x,0))',(117520119364/10^11),5/10^12);
+// patch 0056-limit-hyperbolic-constants.patch
+// g620-limit-tanh-at-2 (home.yaml, derived)
+Digits:=40:; pc("g620-limit-tanh-at-2",'(limit((tanh(2+x)-tanh(2))/x,x,0))',(706508248532/10^13),5/10^14);
+// patch 0056-limit-hyperbolic-constants.patch
+// g620-limit-sinh-cos (home.yaml, derived)
+Digits:=40:; pc("g620-limit-sinh-cos",'(limit((sinh(cos(x))-sinh(1))/x^2,x,0))',-(771540317408/10^12),5/10^13);
 // patch 0003-complex-tanh-mpfr.patch
 // prec-g50-tanh(i)-12 (precision.yaml, oracle)
 Digits:=40:; pc("prec-g50-tanh(i)-12",'(tanh(i))',(155740772465/10^11)*i,5/10^12);

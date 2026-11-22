@@ -216,6 +216,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G770 (F470), patch 0055: _integrate's 4-argument branch previews the integrand numerically for its log, which integrates an inner
   // integral at every sample point (int(int(x^2+y^2,y,0,3),x,0,2): 1.7 million interrupt checks)
   ["0055-nested-integral-no-preview.patch", "giac-2.1.0/src/intg.cc", /if \(x\.type==_IDNT && a\.type!=_DOUBLE_ && b\.type!=_DOUBLE_\)\{\s*gen v0=evalf_double\(v\[0\],1,contextptr\),resapprox,tmp;/, "gen _integrate(const gen & args_,GIAC_CONTEXT){"],
+  // G620 (F434), patch 0056: in_limit's "Rewrite constants" step tsimplifies the numeric constants (cosh(1) to exponentials) and leaves
+  // an x-dependent cosh(1+x), whose series starts with cosh(1): limit((cosh(1+x)-cosh(1))/x,x,0) = infinity
+  ["0056-limit-hyperbolic-constants.patch", "giac-2.1.0/src/series.cc", /cv\.push_back\(rv\[i\]\);\s*\}\s*if \(!cv\.empty\(\)\)\{\s*gen cvg=tsimplify\(cv,contextptr\);/, "// Rewrite constants"],
 ];
 
 const tar = tarball(SOURCES.giac);
