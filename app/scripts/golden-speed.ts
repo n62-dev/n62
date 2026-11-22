@@ -78,6 +78,10 @@ export const SPEED_KNOWN: Record<string, string> = {
   // against HOME_CLOCK_S (1.5 s): in time it shows ⚠ 12 0.957920253119 (simplify unaudited, its double and P agree to 12
   // digits), past it the float path's ⚠ 0.957920253118554998403493714904; both are the oracle's digits
   "precision/g331-evalf-simplify-sqrt-ln-nested-root-30": "HOME_CLOCK_S",
+  // G331 (F214): simplify of asinh(surd(1/2,3))^… is a Home case of 250 ms on a quiet host (5 fresh engines each,
+  // key-4361f213c1035daa, 2026-11-22); it keeps Underflow at a clock ×8 and stops (took too long, ≈) from ×10 on, so ×8
+  // differs on a host only 1.25× slower than quiet, under the load of other runs' checks (runs 1475 and 1490)
+  "precision/g331-simplify-f214-12": "HOME_CLOCK_S",
 };
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
