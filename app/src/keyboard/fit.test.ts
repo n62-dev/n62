@@ -4,8 +4,7 @@
 // characters times 0.6 em as drawn, a ▾ mark adds its own fixed size, also zoomed. On phase-1 the fit wrote the zoomed size
 // back as CSS, so the WebView zoomed it again and the face stayed wider than its key.
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { MIN_FACE_PX, fitLegends } from "./fit.ts";
-import { textZoom } from "./zoomFit.ts";
+import { MIN_FACE_PX, fitLegends, textZoom } from "./fit.ts";
 
 let zoom = 1;
 
@@ -165,6 +164,16 @@ describe("fitLegends under the WebView's text zoom (R703)", () => {
     face.text = "x";
     await fit(pad);
     expect(face.hasAttribute("data-cut")).toBe(false);
+  });
+
+  it("reads a zoom of 1 where the body's size cannot be read, and writes no NaN (a page without style.css)", async () => {
+    const g = globalThis as Record<string, unknown>;
+    const styles = g["getComputedStyle"] as (e: El) => Record<string, string>;
+    g["getComputedStyle"] = (e: El) => (e === doc.body ? { ...styles(e), fontSize: "" } : styles(e));
+    expect(textZoom(doc as unknown as Document)).toBe(1);
+    const { pad, face } = key("Select");
+    await fit(pad);
+    expect(face.style["fontSize"]).toBe("11.3px");
   });
 
   it("writes the same sizes as before without a zoom", async () => {

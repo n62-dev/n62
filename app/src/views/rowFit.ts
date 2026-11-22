@@ -4,7 +4,8 @@
 // The row keeps its height and its 44 px targets; its texts shrink together until the label fits, down to the floor, and
 // below it the label is ellipsed as before (its row keeps the whole name for the screen reader). Without a zoom nothing is
 // written: a long name in a list ends in … by design (Find).
-import { cut, textZoom } from "../keyboard/zoomFit.ts";
+import { textZoom } from "../keyboard/fit.ts";
+import { cut } from "../keyboard/zoomFit.ts";
 
 /** Smallest drawn size (px) of a row's label, and of its other texts. */
 export const MIN_LABEL_PX = 12;

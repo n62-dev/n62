@@ -11,7 +11,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 
 
-- **R703, the font-scale device run:** the device test (`tools/fontscale-device.sh`, font_scale 1.3, 1.5, 2.0) did not run: no emulator on this machine, and changing a device's font scale is outside the device rules (section 3). Recommended: annabell runs it on an emulator (Pixel 7, as the T5 probe) after the merge, or the owner allows the night's device (`FONTSCALE_DEVICE_OK=1`; the script puts the old scale back). The owner's eye at 1.5 on the phone joins the next milestone review.
+- **R703, the font-scale device run:** the device test (`tools/fontscale-device.sh`, font_scale 1.3, 1.5, 2.0) did not run: no emulator on this machine, and changing a device's font scale is outside the device rules (section 3). The branch `p1/ron-textzoom` stays unmerged until it has run: annabell runs it on an emulator (Pixel 7, as the T5 probe; this machine's SDK has no emulator or system image yet) against a phase-1 test build (it must fail at 1.5 and 2.0) and against the branch (1.3, 1.5 and 2.0 pass), or the owner allows the night's device (`FONTSCALE_DEVICE_OK=1`; the script puts the old scale back); the `FONTSCALE` lines go into "R41 at font scale 2.0" below, this item goes, and the merge is `scripts/pipeline.sh ron "R703" --no-worker --branch p1/ron-textzoom`. The owner's eye at 1.5 on the phone joins the next milestone review.
 
 ## Decided proposals
 

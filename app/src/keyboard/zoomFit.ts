@@ -5,13 +5,6 @@
 import { fitBar } from "../views/barFit.ts";
 import { MIN_FACE_PX, MIN_LEGEND_PX } from "./fit.ts";
 
-/**
- * The text zoom the browser applies after the CSS sizes (R703, F383): Android's WebView draws every font at the system font
- * scale times its CSS size, the sizes the app writes too, and reports the zoomed size in getComputedStyle. Read off the body,
- * whose CSS size is 16 px (style.css; a user's default font size does not reach it): 1 in a browser. (fit.ts reads it inline.)
- */
-export const textZoom = (doc: Document = document): number => parseFloat(getComputedStyle(doc.body).fontSize) / 16 || 1;
-
 /** A text that does not fit at its floor ends in … (`data-cut`, a rule this chunk adds once), inside its box; its whole text
  *  stays in the DOM for the screen reader. `false` takes it back. */
 export function cut(el: HTMLElement, on: boolean): void {
