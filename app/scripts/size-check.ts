@@ -602,10 +602,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  writes too (F383): fitLegends reads the zoom off the body's 16 px, writes through it, and loads keyboard/zoomFit.ts (the
  *  second pass, the bar's fit and the ellipsis) only under a zoom. It first measured 63.88 kB with the bar's fit in
  *  StatusLine.svelte, then cut to the zoom read, the write and the import (62,998 B on phase-1 464bd957). R703f1: phase-1
- *  95028148 measures 62,914 B gzip (176,716 B raw), the branch 62,965 B (176,861 B raw; +51 B): cut from 63,017 B by
- *  loading zoomFit.ts as a plain dynamic import (no other chunk imports from it, so no namespace object is built at run time,
- *  −36 B) and the floor inline in the write (−16 B). The usual + 0.05 kB would pass the 63.00 kB budget (docs/04 8.3), so the
- *  pin is the budget itself, 35 B over the measure; the next start-chunk growth needs a split. */
+ *  95028148 measures 62.91 kB gzip (62,914 B, 176,716 B raw, in a bare vite build), the branch 62,973 B (176,861 B raw, npm
+ *  run build): cut from 63,017 B (bare) by loading zoomFit.ts as a plain dynamic import (no other chunk imports from it, so
+ *  no namespace object is built at run time, −36 B) and the floor inline in the write (−16 B). The usual + 0.05 kB would pass
+ *  the 63.00 kB budget (docs/04 8.3), so the pin is the budget itself, 27 B over the measure; the next start-chunk growth
+ *  needs a split. */
 export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
