@@ -9,6 +9,8 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
 
+- **R838, a user key that holds Settings or Mode over the unit view (ron, run 1492):** there U1–U6 are the unit pad's own cells (R24d, every layer: an empty leg opens Find to set it), so such a user key never reaches its sheet in the view; Shift + Help, the bar's chip and Alt + Shift + O do. Should a user key that holds a sheet keep its job over the pad? Recommendation: no, the pad keeps U1–U6 (one meaning per key while the pad is up).
+
 - **R860, the hint in a landscape phone's history (ron, run 1489):** at 915 × 412 the history is 16 px, under the hint's 21 px line, so the hint cannot lie inside it (R860 leaves the mark out there and keeps the hint's whole line in the scroller, mostly hidden). Should a short history give the hint up too, or should the landscape layout give the history at least one line? Recommendation: a landscape layout package (the keypad beside the history), the hint left as it is until then.
 
 ## Decided proposals
