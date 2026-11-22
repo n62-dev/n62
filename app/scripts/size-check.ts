@@ -590,8 +590,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  63,000 → 62,800 B (R791 fix round 1, a cut): the entry line's `\AA` macro (an upright Å) is in the macro table, and the
  *  table (entry/macroTable.ts, split from entry/macros.ts) with the renderer's options (render/macros.ts) now loads with
  *  MathLive (render/mathlive.svelte.ts); Math.svelte draws plain text until then, as before. The branch first measured
- *  63,019 B (177,128 B raw), over the budget; split, 62,742 B (176,235 B raw; −277 B): + 0.05 kB, rounded up to the next 10 B. */
-export const START_PIN_GZIP = 62_800;
+ *  63,019 B (177,128 B raw), over the budget; split, 62,742 B (176,235 B raw; −277 B): + 0.05 kB, rounded up to the next 10 B.
+ *  62,800 → 62,920 B (R794 fix round 2): the round pad draws its four arrows itself, one inline SVG in Keypad.svelte's
+ *  trackpad template (the zones keep their faces, hidden; the press dot's points are in keyNames.ts, out of start). Phase-1
+ *  13bd8c47 measures 62,774 B gzip (176,318 B raw), the branch 62,869 B (176,479 B raw; +95 B, the SVG's markup alone):
+ *  62,869 B + 0.05 kB, rounded up to the next 10 B. */
+export const START_PIN_GZIP = 62_920;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
  *  (R50e) and the too-old WebView check. Their gzip sizes, each script alone and summed (as the start chunk sums its
