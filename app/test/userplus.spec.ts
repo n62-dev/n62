@@ -93,4 +93,17 @@ for (const [width, height] of [
     expect(place.translate).toBe("none");
     expect(Math.abs(place.dy)).toBeLessThan(0.5);
     expect(Math.abs(place.dx)).toBeLessThan(0.5);
+    // the second control (audit, round 1): an empty user key whose Shift slot is set draws that legend in its legend line,
+    // so its ＋ is not lifted into it (P7 point 2)
+    await page.evaluate(() => window.n62.userKeys.set("u2", "shift", { label: "Settings", action: { special: "settings" } }));
+    const u2 = page.locator('[data-key="u2"]');
+    await expect(u2).toHaveAttribute("data-user", "empty");
+    await expect(u2.locator(".shiftlegend")).toHaveText(/\S/);
+    const shifted = await u2.evaluate((key) => {
+      const main = key.querySelector<HTMLElement>(".main")!;
+      const legend = key.querySelector<HTMLElement>(".shiftlegend")!;
+      return { translate: getComputedStyle(main).translate, gap: main.getBoundingClientRect().top - legend.getBoundingClientRect().bottom };
+    });
+    expect(shifted.translate).toBe("none");
+    expect(shifted.gap).toBeGreaterThanOrEqual(-0.5);
   });

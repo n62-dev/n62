@@ -67,7 +67,12 @@ for (const width of [412, 360, 320]) {
           const main = key.querySelector(".main")?.getBoundingClientRect();
           const sh = key.querySelector(".shiftlegend")?.getBoundingClientRect();
           const al = key.querySelector(".alphalegend")?.getBoundingClientRect();
-          if (main && sh && sh.bottom > main.top + 0.5) out.push(`${id}: the face rises into the shift legend line`);
+          // R793: an empty user key with no Shift legend lifts its ＋ into the key's centre (data-lift): only over an empty line
+          const lift = key.dataset["lift"] === "true";
+          const shText = (key.querySelector(".shiftlegend")?.textContent ?? "").trim();
+          if (lift && (shText !== "" || key.dataset["user"] !== "empty")) out.push(`${id}: lifted over a legend "${shText}"`);
+          if (main && sh && !lift && sh.bottom > main.top + 0.5) out.push(`${id}: the face rises into the shift legend line`);
+          if (main && lift && main.top < kb.y - 0.5) out.push(`${id}: the lifted face is cut at the key's top`);
           if (main && al && al.top < main.bottom - 0.5) out.push(`${id}: the face sinks into the letter line`);
           if (sh && sh.left > kb.x + 8) out.push(`${id}: the shift legend is not at the left`);
           if (al && al.left > kb.x + 8) out.push(`${id}: the letter is not at the left`);
@@ -88,6 +93,8 @@ test("every key reserves a legend line above its face, and every key in a row wi
       const legend = key.querySelector(".shiftlegend")?.getBoundingClientRect();
       const main = key.querySelector(".main")?.getBoundingClientRect();
       if (!legend || !main) throw new Error(`key ${key.dataset["key"]} has no legend line or face`);
+      // R793: an empty user key's ＋ over an empty legend line is lifted to the key's centre (u0 test above checks the line is empty)
+      if (key.dataset["lift"] === "true") continue;
       if (main.top < legend.bottom - 0.5) out[key.dataset["key"] ?? "?"] = [legend.bottom, main.top];
       const top = Math.round(key.getBoundingClientRect().top);
       // the face's centre relative to its key: level across a row of keys of one height

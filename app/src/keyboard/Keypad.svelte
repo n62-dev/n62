@@ -424,6 +424,7 @@
       data-zone={isPadKey(key) ? "true" : undefined}
       data-letters={lettered ? "true" : undefined}
       data-user={key.user ? (userKeys.isEmpty(key) ? "empty" : "set") : undefined}
+      data-lift={(key.user && userKeys.isEmpty(key) && hint(key) === "") || undefined}
       data-pad={key.pad}
       data-v={varsOf(key)}
     >
@@ -567,9 +568,10 @@
     background: transparent;
     box-shadow: inset 0 0 0 var(--stroke-thin) var(--line);
   }
-  /* R793 (owner's K10): its ＋ sits in the face row under an empty legend line, so it is lifted by half the difference of
-     that line and the bottom padding, into the key's centre */
-  .key[data-user="empty"] .main {
+  /* R793 (owner's K10): its ＋ sits in the face row under the legend line, so when that line is empty (data-lift: no Shift
+     legend shown) it is lifted by half the difference of that line and the bottom padding, into the key's centre; a Shift
+     legend keeps the face below it (P7 point 2) */
+  .key[data-lift="true"] .main {
     translate: 0 calc((var(--sp-05) - var(--legend-h)) / 2);
   }
   .key[data-user="set"] {
