@@ -70,7 +70,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885zd | [R852](packages/R852.md) the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
+| 885zd | R852 the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
 | 885ze | [R853](packages/R853.md) ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
 | 885zf | [R855](packages/R855.md) Choose folder offers another device's newer backup at once (R128; owner, 2026-11-21) | ron, Opus | `p1/ron-pickoffer` | – |
 | 886 | [R703](packages/R703.md) the keypad, the bar and Mode fit at font scale 1.5 and 2.0 (F383), if not merged by the stop | ron, Opus | `p1/ron-textzoom` | R700, R722 |
