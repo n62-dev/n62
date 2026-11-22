@@ -1704,3 +1704,26 @@ cases:
   - { id: "g620-cas-keep-limit-cosh-symmetric", kind: "cas", input: "limit((cosh(1+x)-cosh(1-x))/x,x,0)", expect: "2*sinh(1)", source: "derived", note: "control: no constant to rewrite, Giac's text stays" }
   - { id: "g620-cas-keep-limit-inv", kind: "cas", input: "limit(1/x,x,0)", expect: "infinity", source: "derived", note: "control: Giac's unsigned infinity (backlog F198), unchanged" }
   - { id: "g620-cas-keep-limit-sin-inv", kind: "cas", input: "limit(sin(1/x),x,0)", expect: "error: noLimit", source: "derived", note: "control: no limit, refused as before" }
+  # --- G786 (G398f1; G398's fix round 2): Giac's ascsort (permu.cc, under median, quartile1, quartile3, quantile and quartiles) put 0
+  # for every element whose evalf is not a _DOUBLE_, and above 14 digits a float element is MPFR, so a float list sorted as zeros
+  # (quartile1(evalf([1,2,3,4,5,6])) = 0.0 at Digits 15 to 40, 2.0 at 14). Home's P is 40, so a stored or approx list met it at every
+  # setting, and the golden steps stage met it on the 8x clock (g42-quartile1-six, runs 1377 and 1472). Patch 0058. The expected values
+  # are Giac's own at Digits 12 (raw: quartile1 2.0, quartile3 5.0, median([3,1,2]) 2.0, quantile(…,0.5) 3.0, quartiles
+  # [-2.0,0.5,1.5,4.0,7.0]; Giac's median takes the lower middle, g2.yaml question 67), not a new definition.
+  - { id: "g786-quartile1-stored-float-list", input: "quartile1(Lq786)", before: ["Lq786:=approx([1,2,3,4,5,6])"], expect: "2", mark: "⚠", source: "derived", note: "showed ⚠ 0 (38 digits confirmed): the stored list holds MPFR floats at P, which ascsort read as 0" }
+  - { id: "g786-quartile3-approx-list", input: "quartile3(approx([1,2,3,4,5,6]))", expect: "5", mark: "⚠", source: "derived", note: "showed ⚠ 0" }
+  - { id: "g786-quartile1-approx-list-30", input: "quartile1(approx([1,2,3,4,5,6]))", settings: { digits: 30 }, expect: "2", mark: "⚠", source: "derived", note: "showed ⚠ 0" }
+  - { id: "g786-median-approx-list-30", input: "median(approx([3,1,2]))", settings: { digits: 30 }, expect: "2", mark: "⚠", source: "derived", note: "Giac's median (a typed input reaches it; the keys' median is ours, pasmedian, G42); showed ⚠ 0" }
+  - { id: "g786-quantile-approx-list-30", input: "quantile(approx([1,2,3,4,5,6]),0.5)", settings: { digits: 30 }, expect: "3", mark: "⚠", source: "derived", note: "showed ⚠ 0" }
+  - { id: "g786-quartiles-approx-list-30", input: "quartiles(approx([1.5,-2,7,3.25,0.5,4]))", settings: { digits: 30 }, expect: "[[-2],[0.5],[1.5],[4],[7]]", mark: "⚠", source: "derived", note: "showed ⚠ [[0],[0],[0],[0],[0]]" }
+  - { id: "g786-cas-quartile1-evalf-list-30", kind: "cas", input: "quartile1(evalf([1,2,3,4,5,6]))", settings: { digits: 30 }, expect: "2", mark: "⚠", source: "derived", note: "showed ⚠ 0" }
+  - { id: "g786-quartile1-approx-list-12", input: "quartile1(approx([1,2,3,4,5,6]))", expect: "2", mark: "⚠", source: "derived", note: "showed ⚠ 0: Home evaluates at P = 40 at the 12-digit setting too" }
+  - { id: "g786-median-approx-list-12", input: "median(approx([3,1,2]))", expect: "2", mark: "⚠", source: "derived", note: "showed ⚠ 0 (P = 40)" }
+  - { id: "g786-quantile-approx-list-12", input: "quantile(approx([1,2,3,4,5,6]),0.5)", expect: "3", mark: "⚠", source: "derived", note: "showed ⚠ 0 (P = 40)" }
+  - { id: "g786-quartiles-approx-list-12", input: "quartiles(approx([1.5,-2,7,3.25,0.5,4]))", expect: "[[-2],[0.5],[1.5],[4],[7]]", mark: "⚠", source: "derived", note: "showed ⚠ [[0],[0],[0],[0],[0]] (P = 40)" }
+  - { id: "g786-cas-quartile1-evalf-list-12", kind: "cas", input: "quartile1(evalf([1,2,3,4,5,6]))", expect: "2", mark: "⚠", source: "derived", note: "showed ⚠ 0: the CAS view evaluates at P = 40 too" }
+  - { id: "g786-median-approx-third-30", input: "median(approx([2,1/3,1/7]))", settings: { digits: 30 }, expect: "0.333333333333333333333333333333", mark: "⚠", source: "derived", note: "the middle of 1/7 < 1/3 < 2 is 1/3, kept at its 30 digits (a double written back would hold 16); showed ⚠ 0" }
+  - { id: "g786-median-approx-matrix-30", input: "median(approx([[1,5],[3,2],[2,8]]))", settings: { digits: 30 }, expect: "[2,5]", mark: "⚠", source: "derived", note: "a matrix takes the median of each column (Giac at Digits 12: [2.0,5.0]); showed ⚠ [0,0]" }
+  - { id: "g786-keep-median-exact-list", input: "median([3,1,2])", expect: "2", mark: "⚠", source: "derived", note: "control: an exact list" }
+  - { id: "g786-cas-keep-median-exact-list-30", kind: "cas", input: "median([3,1,2])", settings: { digits: 30 }, expect: "2", mark: "⚠", source: "derived", note: "control: an exact list at 30 digits sorts doubles, as before" }
+  - { id: "g786-cas-keep-quartile1-symbol", kind: "cas", input: "quartile1([3,x,1,2])", settings: { digits: 30 }, expect: "1", source: "derived", note: "control: a list with a name takes Giac's other path (islesscomplexthanf_sort), unchanged" }
