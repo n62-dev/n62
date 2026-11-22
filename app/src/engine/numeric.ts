@@ -986,24 +986,51 @@ function floatPathFactsOf(
   const vB = run(W + 20, name);
   const sB = shapeOfValue(vB);
   const B = sB && sB.kind === shape.kind && size(sB) === size(shape) ? numbersAt(vB, W + 20, valuePrecision(digits), size(shape)) : null;
+  // G782 fix round 2: a double at W is checked against Giac's own read at the double's precision, as floatFacts' unaudited
+  // branch does (doubleChecked; student_icdf(i,0.5) took this path under load and showed 12 digits of noise)
+  const D = (): Parts[] | null => readAtDouble(giac, safe, shape, digits);
   if (!B) {
     giac.eval(`${name}:=pasf`);
-    return { facts: A.map((value) => ({ value: { re: value.re, im: value.im }, exact: false, reliableDigits: Math.min(digits, W - 10, value.short ?? W), warn: "unchecked", big: false })), shape };
+    return { facts: doubleChecked(A, A.map((value) => ({ value: { re: value.re, im: value.im }, exact: false, reliableDigits: Math.min(digits, W - 10, value.short ?? W), warn: "unchecked", big: false })), D), shape };
   }
-  return {
-    facts: B.map((b, k) => {
-      const value = denoised(A[k]!, b, W);
-      // G140: a double at W or W + 20 agrees with itself (agreedFacts)
-      if (isDouble(A[k]!, b) || b.double) return doubleFacts(A[k]!, b, { re: value.re, im: value.im });
-      return zeroUnconfirmed({
-        value: { re: value.re, im: value.im },
-        exact: false,
-        reliableDigits: Math.min(confirmedComplex(A[k]!, b, W, W), valuePrecision(digits), A[k]!.short ?? W, b.short ?? W),
-        big: false,
-      });
-    }),
-    shape,
+  const read = (b: Parts, k: number): ElementFacts => {
+    const value = denoised(A[k]!, b, W);
+    // G140: a double at W or W + 20 agrees with itself (agreedFacts)
+    if (isDouble(A[k]!, b) || b.double) return doubleFacts(A[k]!, b, { re: value.re, im: value.im });
+    return zeroUnconfirmed({
+      value: { re: value.re, im: value.im },
+      exact: false,
+      reliableDigits: Math.min(confirmedComplex(A[k]!, b, W, W), valuePrecision(digits), A[k]!.short ?? W, b.short ?? W),
+      big: false,
+    });
   };
+  return { facts: doubleChecked(B, B.map(read), D), shape };
+}
+
+/** G782 fix round 2: `text` read at the double's precision (DOUBLE_DIGITS), each element's parts; null when it is no
+ *  number of `shape`. */
+function readAtDouble(giac: Giac, text: string, shape: Shape, digits: number): Parts[] | null {
+  const v = withDigits(giac, DOUBLE_DIGITS, digits, () => giac.value(`pasfd:=(${text})`, [DOUBLE_DIGITS]));
+  giac.eval("purge(pasfd)");
+  const s = shapeOfValue(v);
+  return s && s.kind === shape.kind && size(s) === size(shape) ? numbersAt(v, DOUBLE_DIGITS, DOUBLE_DIGITS + 2, size(shape)) : null;
+}
+
+/** G782 fix round 2 (G140): the facts of the elements of `at` (a float path's read at W or above) that are a double: one
+ *  that is Giac's own double at the double's precision too (BesselJ, Zeta) keeps its facts; one that differs from it
+ *  confirms only the digits the two share, as floatFacts' unaudited branch counts them (student_icdf(i,0.5) is
+ *  -1.8888…E-19 at 14 digits, -1.9042…E-19 at 30, noise from the 10th digit on each call: 2 digits, as the exact path,
+ *  not 12 of noise); a difference in the double's last two digits is its own rounding and changes nothing. `atDouble`
+ *  is read once, only when an element is a double. */
+export function doubleChecked(at: readonly Parts[], facts: ElementFacts[], atDouble: () => Parts[] | null): ElementFacts[] {
+  if (!at.some((x) => x.double)) return facts;
+  const D = atDouble();
+  return facts.map((f, k) => {
+    const d = D?.[k];
+    if (!d || !at[k]!.double || f.exact) return f;
+    const c = confirmedComplex(d, at[k]!, DOUBLE_DIGITS, DOUBLE_DIGITS);
+    return c < (f.reliableDigits ?? DOUBLE_DIGITS) && c < DOUBLE_DIGITS - 2 ? { ...f, reliableDigits: c } : f;
+  });
 }
 
 /**

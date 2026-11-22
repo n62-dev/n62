@@ -74,10 +74,10 @@ function byKind(names: ChipTable): { named?: ChipTable; consts?: ChipTable } {
 export function latexToGiacInfo(
   latex: string,
   o: LatexToGiacOptions = {},
-): { giac: string; inexact: boolean; named?: ChipTable; consts?: ChipTable; defines?: string; units?: UnitsInfo } {
+): { giac: string; inexact: boolean; unitDropped?: true; named?: ChipTable; consts?: ChipTable; defines?: string; units?: UnitsInfo } {
   if (latex.trim() === "") throw parseError("parse.emptyInput");
   const user = o.userFunctions ?? DEFAULT_USER_FUNCTIONS;
-  const { json, inexact, named, units } = parseLatexInfo(latex, {
+  const { json, inexact, unitDropped, named, units } = parseLatexInfo(latex, {
     userFunctions: user,
     ...(o.userValues ? { userValues: o.userValues } : {}),
     ...(o.chips ? { chips: o.chips } : {}),
@@ -86,5 +86,5 @@ export function latexToGiacInfo(
   });
   const giac = mathJsonToGiac(json, { ...o, userFunctions: user });
   const defines = definedFunction(json);
-  return { giac, inexact, ...(named ? byKind(named) : {}), ...(defines ? { defines } : {}), ...(units ? { units } : {}) };
+  return { giac, inexact, ...(unitDropped ? { unitDropped } : {}), ...(named ? byKind(named) : {}), ...(defines ? { defines } : {}), ...(units ? { units } : {}) };
 }

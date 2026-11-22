@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import type { IndexItem } from "../find/types.ts";
 import { shownUnits } from "./build.ts";
 import { factorTable } from "./factors.ts";
+import { RATIO_POWERS } from "../input/ratioChip.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const indexFile = join(here, "../find/_gen/find-index.json");
@@ -27,6 +28,10 @@ describe("G369: the ratio units, one definition", () => {
     const unflagged = defined.filter((d) => d.dim === "" && d.si !== "1" && d.ratio !== true).map((d) => d.id);
     expect(unflagged).toEqual([]);
     expect(defined.filter((d) => d.ratio === true && d.dim !== "").map((d) => d.id)).toEqual([]);
+  });
+  it("G782: the parser's powers of ten (input/ratioChip.ts, no index there) are the yaml's factors", () => {
+    expect(Object.keys(RATIO_POWERS).sort()).toEqual(yamlRatios);
+    for (const d of defined.filter((x) => x.ratio === true)) expect(`${d.id} ${d.si}`).toBe(`${d.id} 1/${10 ** RATIO_POWERS[d.id]!}`);
   });
   it_("the index carries the flag on exactly the yaml's ratios", () => {
     const flagged = items.filter((i) => i.kind === "unit" && i.ratio === true).map((i) => i.id.slice("unit:".length)).sort();
