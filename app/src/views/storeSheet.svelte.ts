@@ -9,7 +9,9 @@
 import type { MenuItem } from "../apps/types.ts";
 import type { UserName } from "../engine/defs.ts";
 import { NAME_COLUMNS, NAME_LETTERS, nameItems, nameLatex, nameRow } from "../find/names.svelte.ts";
+import { parseText } from "../i18n/enParser.ts";
 import { storeText as t } from "../i18n/enStore.ts";
+import { storeRefusal } from "../input/parseTables.ts";
 import { typedName } from "../render/home.ts";
 import { markText, noDigit } from "../state/displayMode.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
@@ -105,6 +107,9 @@ export function showStore(env: StoreEnv, stored: string | Promise<string>): void
     note: () => {
       const f = env.shell.sheet?.level.filter ?? "";
       if (f === "") return undefined;
+      // R804f1: a name the parser refuses at Enter shows its reason now (the same words), not "is free"
+      const refused = storeRefusal(f);
+      if (refused) return parseText(...refused);
       if (heldBy(f)) return t("store.typedHeld", { name: f });
       return shown.value ? t("store.typedFreeWith", { name: f, with: shown.value }) : t("store.typedFree", { name: f });
     },
