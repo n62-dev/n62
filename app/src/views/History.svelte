@@ -37,9 +37,12 @@
     part = "row",
     engineState,
     oncredits,
+    historyRead,
   }: {
     /** R157: a tap on the faint mark of an empty history opens the credits sheet, as N62 then Enter does (R149). */
     oncredits: () => void;
+    /** R860: the view's stored history is read; the mark and the hint of an empty view wait for it (no flash before the rows). */
+    historyRead?: boolean;
     /** R133: while the engine starts only the newest FIRST_PAINT rows are drawn (their cost is on the main thread the
      *  start needs); a frame after it is ready or failed the page grows to PAGE. */
     engineState: "starting" | "ready" | "failed";
@@ -201,13 +204,14 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions (R147: a tap on the empty part drops a pick; Esc does it by keys) -->
 <section class="history" aria-label={t("history.label")} data-marks={marks} bind:this={scroller} onclick={tapHistory}>
-  {#if items.length === 0 && !undo}
+  {#if items.length === 0 && historyRead}
+    <!-- R157: the faint N62 mark; decoration for a screen reader (the credits are reached by N62 then Enter), a tap opens them.
+         R860: also above an Undo note, which stays the last row; .empty is its room, the space left up to --mark-h -->
     <div class="empty">
-      <!-- R157: the faint N62 mark; decoration for a screen reader (the credits are reached by N62 then Enter), a tap opens them -->
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (decoration: the keys open the credits with N62 then Enter) -->
       <div class="faint" aria-hidden="true" onclick={oncredits}></div>
-      <p>{t("history.empty")}</p>
     </div>
+    <p>{t("history.empty")}</p>
   {/if}
   {#if items.length > shown.length}
     <div class="earlier" bind:this={sentinel} aria-hidden="true"></div>
@@ -303,21 +307,32 @@
   .earlier {
     min-height: var(--stroke-thin);
   }
+  /* R860: an empty view: the mark's room, then the hint, centred in the space (above an Undo note: it stays the last row).
+     The room is the space left, up to the mark and its gap to the hint (--sp-4 in all, the history's gap included), so
+     the mark is never cropped; the hint never shrinks. Under 40 px the mark is left out */
   .empty {
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--sp-4);
+    flex: 0 1 calc(var(--mark-h) + var(--sp-4) - var(--between));
+    min-height: 0;
+    margin-top: auto;
+    container-type: size;
+  }
+  .empty + p {
+    margin: 0 0 auto;
     color: var(--muted);
     text-align: center;
   }
-  .empty p {
-    margin: 0;
+  .empty + p + .undone {
+    margin-top: 0;
+  }
+  @container (height < 40px) {
+    .faint {
+      display: none;
+    }
   }
   /* R157: the mark as a mask of the one file (public/n62-mark.svg), in --mark-faint, so one file serves every theme */
   .faint {
-    height: var(--mark-h);
+    height: min(var(--mark-h), 100cqh);
+    margin: 0 auto;
     aspect-ratio: 48.4 / 47;
     background: var(--mark-faint);
     -webkit-mask: url("/n62-mark.svg") center / contain no-repeat;
