@@ -85,3 +85,22 @@ describe("R795: Plain keys keeps each family's key colours", () => {
       if (c.brightness === "dark" && !c.high) for (const k of ["key-num", "key-op"]) expect(oklch(t[k] as string)[0], k).toBeGreaterThanOrEqual(0.03);
     });
 });
+
+// R795 for Black & White: its Plain keys now keeps the family's own fills too (phase-1 drew the second tone as a mix of
+// --key-num and --bg: Light #fafbfb, now #e6ecec; Dark #0f1010, now #121718). Pinned until the owner confirms it on his phone.
+const BW_PLAIN: Record<string, Record<string, string>> = {
+  "dark normal": { "key-num": "#1b2122", "key-op": "#121718", "key-fn": "#121718", "key-ctl": "#121718", "key-nav": "#121718", "chip-bg": "#121718", line: "#2a3536" },
+  "dark high": { "key-num": "#0f1213", "key-op": "#0a0d0d", "key-fn": "#0a0d0d", "key-ctl": "#0a0d0d", "key-nav": "#0a0d0d", "chip-bg": "#0c0f10", line: "#5f6868" },
+  "light normal": { "key-num": "#ffffff", "key-op": "#e6ecec", "key-fn": "#e6ecec", "key-ctl": "#e6ecec", "key-nav": "#e6ecec", "chip-bg": "#e6ecec", line: "#b9c6c6" },
+  "light high": { "key-num": "#ffffff", "key-op": "#f5f7f7", "key-fn": "#f5f7f7", "key-ctl": "#f5f7f7", "key-nav": "#f5f7f7", "chip-bg": "#eff3f3", line: "#879191" },
+};
+describe("R795: Black & White's Plain keys, pinned", () => {
+  const bw = combos().filter((x) => x.plain && x.family === "bw");
+  it("covers the four combinations", () => expect(bw).toHaveLength(4));
+  for (const c of bw)
+    it(`${selector(c)}: key fills, --chip-bg and --line`, () => {
+      const { t } = theme(c);
+      const want = BW_PLAIN[`${c.brightness} ${c.high ? "high" : "normal"}`] ?? {};
+      expect(Object.fromEntries(Object.keys(want).map((k) => [k, t[k]]))).toEqual(want);
+    });
+});
