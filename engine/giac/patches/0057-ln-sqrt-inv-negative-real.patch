@@ -1,0 +1,52 @@
+# Upstream: giac 2.1.0 usual.cc ln and sqrt: ln(inv(f)) returns -ln(f) and sqrt(inv(f)) returns inv(sqrt(f)) for any f, identities that fail on the negative real axis, where they give the conjugate of the principal value: ln(1/(1-sqrt(2))) = -ln(1-sqrt(2)), evalf 0.88137358702-3.14159265359*i (right 0.88137358702+3.14159265359*i), sqrt(1/(pi-4)) = 1/sqrt(pi-4), evalf -1.07932761087*i (right +1.07932761087*i); also sec and csc of an angle where cos or sin is negative (sqrt(sec(2)) = 1/sqrt(cos(2)), ln(sec(2)) = -ln(cos(2))), log10 through ln, and ln of the fraction 1/-2 that inv(-2) and a subst give (ln(inv(-2)) = -ln(-2)). Now the rule is skipped where f has a numeric value (has_evalf) or is a bare name, and sign(f) is -1 (sign(1-sqrt(2)), sign(cos(2)), an assumed x<0), and for a fraction 1/d with d < 0 in ln; ln and sqrt keep inv(f) and evalf gives the principal value. A free expression and an undecided sign keep the rewrite (ln(1/x) = -ln(x), sqrt(1/x) = 1/sqrt(x)).
+# Changed by Pascaline contributors, 2026-11-22
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -375,6 +375,21 @@
+     return symbolic(at_ln,e);
+   }
+ 
++  // N62 patch 0057 (G398): ln(1/f) = -ln(f) and sqrt(1/f) = 1/sqrt(f) give the conjugate of the principal
++  // value where f is a negative real (ln(1/(1-sqrt(2))) gave 0.881-pi*i, right 0.881+pi*i; sqrt(1/(pi-4)) gave
++  // -1.079*i, right +1.079*i). True when f has a numeric value or is a bare name, and Giac's sign proves it
++  // negative (sign(1-sqrt(2)), sign(cos(2)), an assumed x<0); then ln and sqrt keep 1/f and evalf gives the
++  // principal value. The same for ln of a fraction 1/d with d < 0 (inv(-2) is the fraction 1/-2, ln of it was -ln(-2)).
++  // A free expression or an undecided sign keeps the rewrite (ln(1/x) = -ln(x)).
++  static bool inv_of_negative_real(const gen & f,GIAC_CONTEXT){
++    if (f.type!=_IDNT){
++      gen fe;
++      if (f.type==_VECT || !has_evalf(f,fe,1,contextptr))
++        return false;
++    }
++    return is_minus_one(sign(f,contextptr));
++  }
++
+   gen ln(const gen & e,GIAC_CONTEXT){
+     // if (abs_calc_mode(contextptr)==38 && do_lnabs(contextptr) && !complex_mode(contextptr) && (e.type<=_POLY || e.type==_FLOAT_) && !is_positive(e,contextptr)) return gensizeerr(contextptr);
+     if (!escape_real(contextptr) && !complex_mode(contextptr) && (e.type<=_POLY || e.type==_FLOAT_) && !is_positive(e,contextptr)) return gensizeerr(contextptr);
+@@ -470,14 +485,14 @@
+     if (is_equal(e))
+       return apply_to_equal(e,ln,contextptr);
+     if (e.type==_SYMB){
+-      if (e._SYMBptr->sommet==at_inv && e._SYMBptr->feuille.type!=_VECT)
++      if (e._SYMBptr->sommet==at_inv && e._SYMBptr->feuille.type!=_VECT && !inv_of_negative_real(e._SYMBptr->feuille,contextptr))
+ 	return -ln(e._SYMBptr->feuille,contextptr);
+       if (e._SYMBptr->sommet==at_exp){ 
+ 	if (is_real(e._SYMBptr->feuille,contextptr) ) 
+ 	  return e._SYMBptr->feuille;
+       }
+     }
+-    if (e.type==_FRAC && e._FRACptr->num==1)
++    if (e.type==_FRAC && e._FRACptr->num==1 && !inv_of_negative_real(e._FRACptr->den,contextptr))
+       return -ln(e._FRACptr->den,contextptr);
+     gen a,b;
+     if (is_algebraic_program(e,a,b))
+@@ -1505,7 +1520,7 @@
+       return sqrt(e._FRACptr->num*e._FRACptr->den,contextptr)/abs(e._FRACptr->den,contextptr);
+     if (is_algebraic_program(e,a,b))
+       return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));
+-    if (e.is_symb_of_sommet(at_inv))
++    if (e.is_symb_of_sommet(at_inv) && !inv_of_negative_real(e._SYMBptr->feuille,contextptr))
+       return inv(sqrt(e._SYMBptr->feuille,contextptr),contextptr);
+     if (e.type==_SYMB){
+       vecteur v=lvar(e);
