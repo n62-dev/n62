@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 /* R24c: the unit view's panel (units/panel.ts); loaded with it. The panel holds the focus for the hardware keys, so no
    outline: the active slot shows where they go. */
-/* R148f1: the fold handle (Fold.svelte) reaches 20 px above the keypad; 4 px below the last row keep More… (24 px tall, 8 px above
-   the keypad) from lying half under it */
-.unitview { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; outline: none; }
-.unitview .reading, .unitview .why, .unitview .note, .unitview .working { color: var(--muted); font-size: 14px; min-height: 1.2em; }
+/* R852: no height is kept for what is not shown (no bottom padding, no gap for an empty `.below`, no min-height on the reading) */
+.unitview { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; outline: none; }
+.unitview .below:empty { display: none; }
+.unitview .why, .unitview .note, .unitview .working { color: var(--muted); font-size: 14px; min-height: 1.2em; }
+/* R852: the last row, the reading (it wraps upward) then → Check, bottoms aligned */
+.unitview .last { display: flex; align-items: flex-end; gap: 6px; }
+.unitview .reading { flex: 1; min-width: 0; align-self: stretch; display: flex; align-items: flex-end; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.unitview .reading .words { min-width: 0; }
 .unitview .rare, .unitview .warn { color: var(--warn, var(--error)); }
 .unitview .message { color: var(--error); font-size: 14px; }
 .unitview .result { font-size: 20px; display: flex; gap: 6px; align-items: baseline; }
@@ -27,7 +31,7 @@
 .unitview .result .store { margin-left: auto; align-self: center; flex: none; font: inherit; font-size: 14px; color: var(--text); background: none; border: 1px solid var(--muted); border-radius: 14px; padding: 2px 10px; white-space: nowrap; cursor: pointer; }
 .unitview .result .dim + .store { margin-left: 0; }
 /* R349: → Check / ✕ Check at the line's end; R790: the panel's last row, directly above the keys (it never moves) */
-.unitview .check { align-self: flex-end; flex: none; font: inherit; font-size: 14px; color: var(--text); background: none; border: 1px solid var(--muted); border-radius: 14px; padding: 2px 10px; white-space: nowrap; cursor: pointer; }
+.unitview .check { margin-inline-start: auto; flex: none; font: inherit; font-size: 14px; color: var(--text); background: none; border: 1px solid var(--muted); border-radius: 14px; padding: 2px 10px; white-space: nowrap; cursor: pointer; }
 .unitview .check[aria-pressed="true"] { background: var(--chip-bg); }
 .unitview .check[hidden] { display: none; }
 .unitview .said { font-size: 13px; color: var(--warn); margin-inline-start: 1.9em; }

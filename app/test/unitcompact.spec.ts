@@ -2,7 +2,7 @@
 // R852 (owner, 2026-11-22: "the area below the entry field is too tall"): the unit view keeps no height for what it does not
 // show. sandra's probe on phase-1 (Pixel 7 profile): the field's bottom to the bar 65 px in the unit view, 8 px in Home. The
 // reading sits beside → Check in the panel's last row (bottoms aligned), the empty `.below` takes no gap, the panel no bottom
-// padding and the reading no min-height: the gap is about 36 px, and the field does not move when the first unit is typed.
+// padding and the reading no min-height: the gap is about 36 px, and the panel does not move the field when the first unit is typed.
 import { expect, test, type Page } from "@playwright/test";
 import { flick, open, tap } from "./helpers.ts";
 
@@ -46,7 +46,10 @@ for (const size of [
     await tap(page, ["d4", "d6"]); // 5 kg
     await expect(page.getByTestId("unit-reading")).toHaveText("kilogram");
     const typed = await box(page, "unit-field");
-    expect.soft(typed.top - field.top, "the field's top after the first unit").toBe(0);
+    // the panel moves the field no more (its bottom stays); MathLive's slot with a unit in it is 0.64 px taller than the
+    // empty one (km as well as kg), so the top may rise by that much (phase-1: the bottom 1.39 px, the top 2.03 px)
+    expect.soft(typed.bottom - field.bottom, "the field's bottom after the first unit").toBe(0);
+    expect.soft(Math.abs(typed.top - field.top), "the field's top after the first unit").toBeLessThanOrEqual(1);
     expect.soft((await box(page, "bar")).top - typed.bottom, "the field's bottom to the bar's top, a unit typed").toBeLessThanOrEqual(40);
 
     const reading = await box(page, "unit-reading");

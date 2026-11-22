@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: the unit view's panel in the entry line's place (docs/04 4.3): the read-only formula with its slots (the
-// field, made by units/open.ts), the reading of the active slot in words under it, then a refusal or the result as
-// Calc.units() returns it (R62: the value line, σ, the note and the alternatives row, units/result.ts), and last → Check
-// (R349: the end slot on and off; R790: the panel's last row, directly above the keys, so what is above it never moves it).
+// field, made by units/open.ts), a refusal or the result as Calc.units() returns it (R62: the value line, σ, the note and
+// the alternatives row, units/result.ts), and last one row: the reading of the active slot in words, then → Check (R349:
+// the end slot on and off; R790: directly above the keys, so what is above it never moves it; R852: the reading beside it).
 // Plain DOM over the view's state (a change calls `draw`).
 // Loaded with the unit view.
 import "./panel.css";
@@ -132,8 +132,11 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   const said = el("div", "said", "unit-store-note");
   said.setAttribute("role", "alert");
   said.hidden = true;
-  // R790: the panel grows upward from the keys, so → Check last keeps one height whatever the reading, message or result hold
-  element.append(formula, reading, below, said, check);
+  // R790: the panel grows upward from the keys, so → Check last keeps one height whatever the reading, message or result hold;
+  // R852: the reading beside it in that row (it wraps upward), and no height for what is not shown
+  const last = el("div", "last", "unit-last");
+  last.append(reading, check);
+  element.append(formula, below, said, last);
   /** Hide the chips that do not fit beside "More…" (at least as many as the view can use) and tell the view how many fit. */
   const fitRow = (row: HTMLElement): void => {
     const v = view();
@@ -171,7 +174,9 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
     check.textContent = unitText(v.checking ? "units.check.off" : "units.check.on");
     check.setAttribute("aria-label", unitText(v.checking ? "units.check.offLabel" : "units.check.onLabel"));
     check.setAttribute("aria-pressed", `${v.checking}`);
-    reading.replaceChildren(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)]));
+    const words = el("span", "words"); // (R852: the reading fills its row's height, so a tap finds it empty too; its words sit at the bottom)
+    words.append(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)]));
+    reading.replaceChildren(words);
     const why = store?.said();
     said.hidden = why === undefined;
     said.textContent = why ?? "";
