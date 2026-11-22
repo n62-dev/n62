@@ -6,7 +6,7 @@
 // open.ts), never through the entry line. Plain TS (no runes): a change calls `host.changed()`. Evaluation: the parser's units mode (R28) on the formula, the slots' tokens,
 // then Calc.units(). Loaded with the unit view.
 import type { ChipTable } from "../input/chips.ts";
-import { chipUnit } from "../input/chipUnit.ts";
+import { chipSlot } from "../input/chipUnit.ts";
 import { unitText } from "../i18n/enUnits.ts";
 import { END, slotFormula, unitRequest, type SlotFormula } from "../input/unitFormula.ts";
 import type { Alternative } from "./alternatives.ts";
@@ -142,7 +142,7 @@ export class UnitView {
       let m: SlotModel;
       try {
         const key = after[id];
-        m = new SlotModel(catalogue, from?.[id] ?? (key !== undefined ? chipUnit(chips[key])?.slot : undefined));
+        m = new SlotModel(catalogue, from?.[id] ?? (key !== undefined ? chipSlot(chips[key]) : undefined));
       } catch {
         m = new SlotModel(catalogue); // (a kept slot the catalogue no longer reads: empty)
       }

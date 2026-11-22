@@ -8,7 +8,8 @@ import { pruneChips, validChips, type Chip, type ChipTable } from "./chips.ts";
 import { SerializeError } from "./emit.ts";
 import { EQ_INEXACT_FLAG } from "../engine/ourNames.ts";
 import { latexToGiac, latexToGiacInfo } from "./latex-to-giac.ts";
-import { chipUnit } from "./chipUnit.ts";
+import { chipSlot, chipUnit } from "./chipUnit.ts";
+import { slotFormula, unitRequest } from "./unitFormula.ts";
 
 /** Exact SI 2019 constants (derived: exact by definition) and G with an uncertainty: a stand-in until G4's index. */
 const SI: ChipTable = {
@@ -124,6 +125,23 @@ describe("chips in the parser", () => {
     });
     it("the unit view keeps the chip as it is (its slot holds the unit, R63)", () => {
       expect(latexToGiac("\\res{1}{0.42}", { chips: chip("0.42", u("%", { unit: "percent" })), units: true })).toBe("(42/10^2)");
+    });
+    // G782f1: the slot after a ratio chip starts with its ratio unit (before, empty: 0.42 % × 200 m was 84 m, derived 0.84 m)
+    it("G782f1: the unit view's slot after a %, ‰, ppm or ppb chip starts with that unit; rev, k%, %² chips none; %·m, m as R63", () => {
+      for (const [text, id] of ratios) expect(chipSlot(chip("0.42", u(text, { unit: id }))["res:1"])).toEqual({ tokens: [{ unit: id }] });
+      for (const unit of [u("k%", { prefix: "k", unit: "percent" }), u("%²", { unit: "percent", power: "2" }), u("rev", { unit: "rev" })])
+        expect(chipSlot(chip("0.42", unit)["res:1"])).toBeUndefined();
+      for (const unit of [u("%·m", { unit: "percent" }, { unit: "m" }), u("m", { unit: "m" })]) expect(chipSlot(chip("0.42", unit)["res:1"])).toEqual(unit.slot); // R63, as before
+      expect(chipSlot(undefined)).toBeUndefined();
+    });
+    it("G782f1: % chip × 200 with m: the request keeps the chip's % slot (G369 drops it beside m); a σ chip goes in as pasupm", () => {
+      const m = { tokens: [{ unit: "m" }] };
+      const req = (c: ChipTable) => unitRequest(slotFormula("\\res{1}{0.42}\\times200", false), (id) => (id === "u1" ? chipSlot(c["res:1"]) : m), c);
+      expect(req(chip("21/50", u("%", { unit: "percent" })))).toEqual({ formula: "((21/50)*pasu1)*(200*pasu2)", slots: [{ tokens: [{ unit: "percent" }] }, m] });
+      expect(req(chip("35", u("ppm", { unit: "ppm" }))).slots[0]).toEqual({ tokens: [{ unit: "ppm" }] });
+      const sigma = req(chip("0.42", u("%", { unit: "percent" }), { exact: false, unc: "0.01" }));
+      expect(sigma.formula).toBe("(pasupm((42/10^2),(1/10^2),pasr_1)*pasu1)*(200*pasu2)");
+      expect(sigma.slots[0]).toEqual({ tokens: [{ unit: "percent" }] });
     });
   });
 });
