@@ -546,7 +546,8 @@ describe("R853: step(by), the ← and → buttons", () => {
     view.step(1);
     expect(view.activeId).toBe("u2");
     expect(h.dead()).toBe(2);
-    view.setChecking(true);
+    view.setChecking(true); // (the end slot comes active)
+    view.step(-1);
     view.step(1);
     expect(view.activeId).toBe("end");
     expect(h.dead()).toBe(2);

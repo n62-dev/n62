@@ -15,22 +15,28 @@ const box = (page: Page, id: string): Promise<Box> =>
     const r = e.getBoundingClientRect();
     done({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
   })));
-/** Where a tap reaches the button: the points (1 px steps through its middle, across and down) whose hit target is it. */
-const hitBox = (page: Page, id: string): Promise<Box> =>
+/** Where a tap reaches the button: its box joined with its `::before` (the outward touch area), each edge checked by a
+ *  hit test 1 px inside it and 1.5 px outside it (outside: no longer the button; Chromium hit-tests whole pixels). */
+const hitBox = (page: Page, id: string): Promise<Box & { edges: string[] }> =>
   page.getByTestId(id).evaluate((b) => {
     const r = b.getBoundingClientRect();
-    const cx = r.left + r.width / 2;
-    const cy = r.top + r.height / 2;
+    const cs = getComputedStyle(b);
+    const pre = getComputedStyle(b, "::before");
+    const x0 = r.left + parseFloat(cs.borderLeftWidth);
+    const y0 = r.top + parseFloat(cs.borderTopWidth);
+    const pt = y0 + parseFloat(pre.top);
+    const pl = x0 + parseFloat(pre.left);
+    const hit = { top: Math.min(r.top, pt), bottom: Math.max(r.bottom, pt + parseFloat(pre.height)), left: Math.min(r.left, pl), right: Math.max(r.right, pl + parseFloat(pre.width)) };
     const on = (x: number, y: number): boolean => {
       const at = document.elementFromPoint(x, y);
       return at !== null && (at === b || b.contains(at));
     };
-    let top = cy, bottom = cy, left = cx, right = cx;
-    while (on(cx, top - 1)) top--;
-    while (on(cx, bottom + 1)) bottom++;
-    while (on(left - 1, cy)) left--;
-    while (on(right + 1, cy)) right++;
-    return { top, bottom: bottom + 1, left, right: right + 1 };
+    const cx = (hit.left + hit.right) / 2;
+    const cy = (hit.top + hit.bottom) / 2;
+    const edges: string[] = [];
+    for (const [name, x, y, x2, y2] of [["top", cx, hit.top + 1, cx, hit.top - 1.5], ["bottom", cx, hit.bottom - 1, cx, hit.bottom + 1.5], ["left", hit.left + 1, cy, hit.left - 1.5, cy], ["right", hit.right - 1, cy, hit.right + 1.5, cy]] as const)
+      if (!on(x, y) || on(x2, y2)) edges.push(name);
+    return { ...hit, edges };
   });
 
 for (const [w, h] of [[412, 915], [360, 740]] as const) {
@@ -60,7 +66,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
       expect(await focusOnView(page)).toBe(true);
       await expect(prev).toHaveAttribute("aria-disabled", "true");
       await expect(next).not.toHaveAttribute("aria-disabled", "true");
-      await prev.tap(); // dead at the first slot
+      await prev.tap({ force: true }); // dead at the first slot (Playwright waits for an aria-disabled button otherwise)
       expect(await activeId(page)).toBe("u1");
       await expect(page.getByTestId("unit-reading")).toHaveText("kilogram");
       expect(await page.getByTestId("unit-message").count()).toBe(0);
@@ -84,6 +90,7 @@ for (const [w, h] of [[412, 915], [360, 740]] as const) {
       const bar = await box(page, "bar");
       for (const id of ["unit-prev", "unit-next"]) {
         const hit = await hitBox(page, id);
+        expect.soft(hit.edges, `${id}'s hit box edges a tap finds where they are drawn`).toEqual([]);
         expect.soft(hit.bottom - hit.top, `${id}'s hit height`).toBeGreaterThanOrEqual(44);
         expect.soft(hit.right - hit.left, `${id}'s hit width`).toBeGreaterThanOrEqual(44);
         expect.soft(hit.bottom, `${id}'s hit box above the bar's top (${bar.top})`).toBeLessThanOrEqual(bar.top);

@@ -423,6 +423,14 @@ export class UnitView {
     this.#go(to);
   }
 
+  /** R853: ← (-1) and → (+1) beside → Check: the slot before or after, as a tap on it (`goTo`); none there is a dead
+   *  press, and from the chip row they leave it first. */
+  step(by: -1 | 1): void {
+    const to = this.ids[this.active + by];
+    if (to === undefined) return this.#host.dead();
+    this.goTo(to);
+  }
+
   #move(by: -1 | 1): void {
     this.#go(this.active + by);
   }
