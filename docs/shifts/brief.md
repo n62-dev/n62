@@ -72,6 +72,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | 885zd | [R852](packages/R852.md) the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
 | 885ze | [R853](packages/R853.md) ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
+| 885zf | [R855](packages/R855.md) Choose folder offers another device's newer backup at once (R128; owner, 2026-11-21) | ron, Opus | `p1/ron-pickoffer` | – |
 | 886 | [R703](packages/R703.md) the keypad, the bar and Mode fit at font scale 1.5 and 2.0 (F383), if not merged by the stop | ron, Opus | `p1/ron-textzoom` | R700, R722 |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
@@ -115,6 +116,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B1 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
 | B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
+| B2a | [G782](packages/G782.md) a %, ‰, ppm or ppb chip in Home is its pure number (G369; owner, 2026-11-21) | gorge, Opus | `p1/gorge-ratiochip` | – |
 | B3 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a finite point is their value, never infinity | gorge, Opus | `p1/gorge-hyplimit` | – |
 | B4 | [G553](packages/G553.md) floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
 | B5 | [G551](packages/G551.md) bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
