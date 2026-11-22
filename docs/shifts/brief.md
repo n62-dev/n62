@@ -67,9 +67,6 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885u | R791 the Å cell draws Å, not a red `\AA` (P2) | ron, Opus | `p1/ron-angstromglyph` | R790 |
-| 885v | R792 High contrast's outline off the Shift legends (K5) | ron, Opus | `p1/ron-hclegend` | R791 |
-| 885w | R793 the ＋ of an empty user key centred (K10) | ron, Opus | `p1/ron-userplus` | R792 |
 
 #### v0.1.1, after the tag (owner, 2026-11-17)
 **Released before the tag (owner, 2026-11-21: all UI work first, no time pressure):** henri takes this table's rows in order after the first table; a row with an owner condition in its text or After column waits for it. S57 now follows R849. The rest of the freeze row's list and the lanes' other rows still open at the stop (R585, R576, G551, G554, R315, R339, R338, R340, R316, R317, R267, R268, G372 to G374, G365, G315, G314, R363 to R366, G617, G620, G398, G399, G553, G550, G387, G385, G381, G382, A73f2, G400 to G405, A161, A162) wait in their package files.
@@ -89,7 +86,6 @@ One lane on the Tab One: `ANDROID_SERIAL=HA24BZ2Y scripts/night.sh` without `--l
 | 897 | [A257](packages/A257.md) host-cpu goes to the oldest waiter first | annabell, Sonnet | `p1/annabell-fairlock` | A256 |
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 903 | [R794](packages/R794.md) the round pad's arrows at one radius, one size (K9) | ron, Opus | `p1/ron-padarrows` | R774 |
-| 904 | R795 Plain keys keeps the family's key colours (K3) | ron, Opus | `p1/ron-plainfills` | – |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies the unit view's reading, message or result (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
 | 907 | [R806](packages/R806.md) a unit slot gets a caret: the model (owner's walk 2026-11-20, C1) | ron, Opus | `p1/ron-unitcaret` | R801 |
