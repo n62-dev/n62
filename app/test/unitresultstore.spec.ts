@@ -167,6 +167,32 @@ test.describe("Store ▶ in the unit view (R353)", () => {
     expect(await page.evaluate(() => window.n62.session.userNames.length)).toBe(0);
   });
 
+  // G782f1: a result in % (dimension key "") stores its pure number, as Home takes the chip (derived: 0.42 % = 0.0042,
+  // × 200 = 0.84); before G782f1 Store ▶ was dead on it
+  test("0.0042 ▶ %, Store ▶ X: X is 0.0042 with no unit; X × 200 is 0.84", async ({ page }) => {
+    await tap(page, ["d0", "dot", "d0", "d0", "d4", "d2"]);
+    await unitsKey(page);
+    await page.getByTestId("unit-check").tap();
+    await expect.poll(() => page.evaluate(() => window.n62.unitView?.view.checking)).toBe(true);
+    await tap(page, ["math"]);
+    await expect(find(page)).toBeVisible();
+    await find(page).locator('[role="menuitem"][data-id="ucat:Ratio"]').tap();
+    await find(page).locator('[role="menuitem"][data-id="unit:percent"]').tap();
+    await expect(find(page)).toBeHidden();
+    await flick(page, "enter", "up");
+    await expect(result(page)).toHaveAttribute("data-unit", "%");
+    await tap(page, ["shift", "emark"]);
+    await expect(note(page)).toHaveCount(0);
+    await cell(page, "X").tap();
+    await expect(store(page)).toBeHidden();
+    await expect(done(page)).toHaveCount(2); // the unit row, then the store row
+    await expect.poll(async () => (await stored(page, "X")) !== undefined, { timeout: 5000 }).toBe(true);
+    expect((await stored(page, "X"))?.unit).toBeUndefined();
+    await tap(page, ["alpha", "mul", "mul", "d2", "d0", "d0", "enter"]); // X × 200
+    await expect(done(page)).toHaveCount(3);
+    await expect(lastResult(page)).toHaveAttribute("data-text", "0.84");
+  });
+
   // (± typed on Home's line reaching the view, R71, is the σ case above; Home's own Store ▶ is store.spec.ts)
   test("control: ᴇ's tap types mol in a slot", async ({ page }) => {
     await tap(page, ["d2"]);
