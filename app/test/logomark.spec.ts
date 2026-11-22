@@ -181,3 +181,88 @@ test.describe("fake engine", () => {
       });
     });
 });
+
+// R860 (owner's point 17, 2026-11-22): the mark and the hint show whenever the open view has no rows and its stored
+// history is read, also beside the Undo note of a Clear; the mark shrinks to the space left, is left out under 40 px,
+// and is never cropped; the hint is never cut. sandra's S1 probe found it hidden after a Clear, cropped on a short
+// history and in the page for a moment before the stored rows came.
+test.describe("R860: the mark of an empty view", () => {
+  /** How the boxes of the mark and the hint lie in the history: each inside it (0.5 px slack), or absent. */
+  const boxes = (page: Page) =>
+    page.evaluate(() => {
+      const h = document.querySelector<HTMLElement>("section.history")!.getBoundingClientRect();
+      const inside = (sel: string): boolean | null => {
+        const el = document.querySelector<HTMLElement>(sel);
+        if (!el || el.getClientRects().length === 0) return null;
+        const b = el.getBoundingClientRect();
+        return b.height > 0 && b.top >= h.top - 0.5 && b.bottom <= h.bottom + 0.5 && b.left >= h.left - 0.5 && b.right <= h.right + 0.5;
+      };
+      return { history: Math.round(h.height), faint: inside(".history .faint"), hint: inside(".history .empty p") };
+    });
+  const note = (page: Page) => page.getByTestId("undo-note");
+
+  test("after a Clear the mark shows above the Undo note, in Home, back from CAS and after a reload", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await open(page);
+    await tap(page, ["d1", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await tap(page, ["shift", "esc"]);
+    await expect(note(page)).toHaveText("History cleared · Undo");
+    await expect(page.locator(".history .faint")).toBeVisible();
+    expect(await boxes(page)).toMatchObject({ faint: true, hint: true });
+    const [fb, nb] = await Promise.all([page.locator(".history .empty").boundingBox(), note(page).boundingBox()]);
+    expect(fb!.y + fb!.height).toBeLessThanOrEqual(nb!.y); // the note stays the last row, at the foot
+    await tap(page, ["@cas"]);
+    await expect(page.locator(".history .faint")).toBeVisible();
+    await tap(page, ["@home"]);
+    await expect(note(page)).toBeVisible();
+    await expect(page.locator(".history .faint")).toBeVisible();
+    expect(await boxes(page)).toMatchObject({ faint: true, hint: true });
+    await page.waitForTimeout(800); // the store write is debounced (400 ms)
+    await open(page);
+    await expect(note(page)).toHaveText("History cleared · Undo");
+    await expect(page.locator(".history .faint")).toBeVisible();
+    expect(await boxes(page)).toMatchObject({ faint: true, hint: true });
+  });
+
+  test("at 360 × 640 an empty CAS view shows the whole mark and the whole hint", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 640 });
+    await open(page);
+    await page.evaluate(() => window.n62.session.setView("cas"));
+    await expect(page.locator(".history .faint")).toBeVisible();
+    const b = await boxes(page);
+    expect(b.history).toBeLessThan(160); // a short history: the mark has less than its 128 px plus the hint
+    expect(b).toMatchObject({ faint: true, hint: true });
+    const h = (await page.locator(".history .faint").boundingBox())!.height;
+    expect(h).toBeGreaterThanOrEqual(40);
+    expect(h).toBeLessThan(128); // it shrank to the space
+  });
+
+  test("at 915 × 412 the history is too short for the mark: it is left out, the hint stays whole", async ({ page }) => {
+    await page.setViewportSize({ width: 915, height: 412 });
+    await open(page);
+    await page.evaluate(() => window.n62.session.setView("cas"));
+    await expect(page.locator(".history .empty p")).toBeVisible();
+    await expect(page.locator(".history .faint")).toBeHidden();
+    expect(await boxes(page)).toMatchObject({ faint: null, hint: true });
+  });
+
+  test("a start with a stored row never puts the mark in the page", async ({ page }) => {
+    await page.setViewportSize({ width: 412, height: 915 });
+    await open(page);
+    await tap(page, ["d1", "enter"]);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await page.waitForTimeout(800); // the store write is debounced (400 ms)
+    await page.addInitScript(() => {
+      const w = window as unknown as { __faint: number };
+      w.__faint = 0;
+      new MutationObserver(() => {
+        if (document.querySelector(".history .faint")) w.__faint++;
+      }).observe(document, { childList: true, subtree: true });
+    });
+    await open(page);
+    await expect(page.locator('[data-status="done"]')).toHaveCount(1);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => (window as unknown as { __faint: number }).__faint)).toBe(0);
+  });
+});
