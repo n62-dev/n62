@@ -6,7 +6,9 @@
 :root[data-keys="plain"] .shiftlegend,
 :root[data-keys="plain"] .alphalegend,
 :root[data-keys="plain"] .shifted .main,
-:root[data-keys="plain"] .alphaed .main {
+:root[data-keys="plain"] .alphaed .main,
+:root[data-keys="plain"] .shifted .arrows,
+:root[data-keys="plain"] .alphaed .arrows {
   color: var(--key-text);
 }
 /* the flick bubble keeps one colour in both layers */

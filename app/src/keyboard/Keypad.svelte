@@ -406,7 +406,10 @@
   onclick={(ev) => ev.preventDefault()}
   role="presentation"
 >
-  {#if padArea}<div class="trackpad" data-trackpad style:grid-row={padArea.rows} style:grid-column={padArea.cols}></div>{/if}
+  {#if padArea}<div class="trackpad" data-trackpad style:grid-row={padArea.rows} style:grid-column={padArea.cols}>
+      <svg class="arrows" viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><path data-arrow="up" d="M50 12l5 10H45z" /><path data-arrow="down" d="M50 88l5-10H45z" />
+        <path data-arrow="left" d="M12 50l10-5v10z" /><path data-arrow="right" d="M88 50l-10-5v10z" /></svg>
+    </div>{/if}
   {#each keys as key (key.id)}
     <!-- the letter line: the row's, or a pad cell's own flick down (the cluster has none otherwise) -->
     {@const lettered = letterRows.has(key.row) || (key.pad && key.label.alpha)}
@@ -652,36 +655,57 @@
   .key[data-zone="true"] {
     background: transparent;
     box-shadow: none;
-    opacity: 0.7;
   }
-  /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle),
-     the glyph going from 0.7 to full opacity is its press */
-  .key[data-zone="true"]:global([data-down]) {
-    opacity: 1;
+  /* R794: a zone draws no glyph (the round pad draws the four arrows); its face stays, transparent: the zone keeps its rows'
+     height, the keys beside the pad do not move, and its arrow still names it till keyNames.ts labels it (R794f1) */
+  .key[data-zone="true"] .main {
+    opacity: 0;
   }
+  /* a zone is a transparent rectangle over the round trackpad: no press layer (its corners would spill past the circle) */
   .key[data-zone="true"]:global([data-down])::after {
     content: none;
   }
-  /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
-     it: placeDot (keyNames.ts) sets --dot-at, the arrow's offset from the pad's centre */
+  /* R794 (owner's K9): the arrows are the round pad's drawing, not the zones' glyphs (those sat off centre): an inline SVG of
+     four equal triangles in the layer's colour (currentColor), 10 % of the diameter, on the axes at 33 % from the centre (placeDot in
+     keyNames.ts puts the press dot there); 0.7 opacity, full while a zone is held, a dead zone's arrow dimmed. Not a CSS
+     mask: Chromium reads the bare mask only from 120 (WebView floor 111), and it moved the user keys' faces 1.2 px. */
   .trackpad {
     position: relative;
     overflow: hidden;
+    isolation: isolate;
   }
+  .arrows {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    color: var(--key-text);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .pad:has(.key[data-zone="true"]:global([data-down])) .arrows {
+    opacity: 1;
+  }
+  /* R774: and a round dot behind the arrow (40 px, the key's text colour at 32 %), drawn by the round pad itself so its edge clips
+     it: placeDot (keyNames.ts) sets --dot-x and --dot-y, the arrow's centre in the pad */
   .pad:has(.key[data-zone="true"]:global([data-down])) .trackpad::after {
     content: "";
     position: absolute;
-    inset: 50% auto auto 50%;
+    inset: var(--dot-y, 50%) auto auto var(--dot-x, 50%);
     width: var(--pad-dot);
     height: var(--pad-dot);
     margin: calc(var(--pad-dot) / -2);
-    translate: var(--dot-at, 0 0);
     visibility: var(--dot-on, hidden); /* placeDot sets both: before it has run (an arrow pressed before the key names are in) no dot, not one on the hub */
     border-radius: 50%;
     background: color-mix(in srgb, var(--key-text) 32%, transparent);
   }
-  /* a key that does nothing in this layer (and only in this layer) is dimmed, still readable */
-  .key[data-dead="true"] .main {
+  /* a key that does nothing in this layer (and only in this layer) is dimmed, still readable; so is a dead zone's arrow */
+  .key[data-dead="true"] .main,
+  .pad:has(.key[data-key="up"][data-dead="true"]) .arrows [data-arrow="up"],
+  .pad:has(.key[data-key="down"][data-dead="true"]) .arrows [data-arrow="down"],
+  .pad:has(.key[data-key="left"][data-dead="true"]) .arrows [data-arrow="left"],
+  .pad:has(.key[data-key="right"][data-dead="true"]) .arrows [data-arrow="right"] {
     color: var(--key-text-dead);
   }
   .key.enter {
@@ -695,10 +719,12 @@
   .alphalegend {
     color: var(--key-alpha);
   }
-  .shifted .main {
+  .shifted .main,
+  .shifted .arrows {
     color: var(--key-shift);
   }
-  .alphaed .main {
+  .alphaed .main,
+  .alphaed .arrows {
     color: var(--key-alpha);
   }
   /* Enter keeps one colour in every layer: the coloured text would not read on its green */

@@ -67,14 +67,25 @@ export function labelKeys(pad: HTMLElement, keys: readonly Key[], shift: boolean
   }
 }
 
+/** R794: each arrow's centre in the round pad (x, y), on its axes at 33 % of the diameter from the centre: the points of
+ *  the arrows the pad draws (the inline SVG in Keypad.svelte). */
+const ARROW_AT: Readonly<Record<string, readonly [string, string]>> = {
+  up: ["50%", "17%"],
+  down: ["50%", "83%"],
+  left: ["17%", "50%"],
+  right: ["83%", "50%"],
+};
+
 /**
- * R774: the dot behind a pressed arrow of the round pad: `--dot-at` on the pad is the arrow glyph's centre as an offset from the
- * round pad's centre (Keypad.svelte draws the dot). Here with the key names, which come after the first paint, so the start chunk
- * (at its pin) carries none of it; an arrow pressed before they are in shows no dot (the CSS keeps it hidden until `--dot-on` is set), only its full opacity.
+ * R774: the dot behind a pressed arrow of the round pad: `--dot-x` and `--dot-y` on the pad are the arrow's centre in the round
+ * pad (Keypad.svelte draws the dot). Here with the key names, which come after the first paint, so the start chunk (at its pin)
+ * carries none of it; an arrow pressed before they are in shows no dot (the CSS keeps it hidden until `--dot-on` is set), only
+ * the arrows at full opacity.
  */
 export function placeDot(pad: HTMLElement | undefined, zone: HTMLElement | undefined): void {
-  const [m, t] = [zone?.querySelector(".main"), pad?.querySelector(".trackpad")].map((e) => e?.getBoundingClientRect());
-  if (!m || !t || !pad) return;
-  pad.style.setProperty("--dot-at", `${m.x + (m.width - t.width) / 2 - t.x}px ${m.y + (m.height - t.height) / 2 - t.y}px`);
+  const at = ARROW_AT[zone?.dataset["key"] ?? ""];
+  if (!at || !pad) return;
+  pad.style.setProperty("--dot-x", at[0]);
+  pad.style.setProperty("--dot-y", at[1]);
   pad.style.setProperty("--dot-on", "visible");
 }

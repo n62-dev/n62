@@ -66,18 +66,19 @@ for (const family of FAMILIES)
       }
     });
 
-// A trackpad zone is a transparent key over a round surface: its press is the glyph's opacity, no rectangle layer
-// (whose corners would spill past the circle).
+// A trackpad zone is a transparent key over a round surface: its press is the arrows' opacity (R794: the round pad draws
+// them, an inline SVG), no rectangle layer (whose corners would spill past the circle).
 for (const m of MODES)
-  test(`a held trackpad zone changes its opacity and draws no layer: ${m.keys}/${m.contrast}`, async ({ page }) => {
+  test(`a held trackpad zone changes the arrows' opacity and draws no layer: ${m.keys}/${m.contrast}`, async ({ page }) => {
     await open(page);
     await set(page, "n62", "dark", m.keys, m.contrast);
     const state = (): Promise<{ opacity: string; after: string; bg: string }> =>
       page.evaluate(() => {
         const el = document.querySelector<HTMLElement>('.pad [data-key="up"]');
-        if (!el) throw new Error("no key");
+        const pad = document.querySelector(".pad .trackpad .arrows");
+        if (!el || !pad) throw new Error("no key");
         return {
-          opacity: getComputedStyle(el).opacity,
+          opacity: getComputedStyle(pad).opacity,
           after: getComputedStyle(el, "::after").content,
           bg: getComputedStyle(el).backgroundColor,
         };
