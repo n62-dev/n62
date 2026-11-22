@@ -3,7 +3,7 @@
 // logo's hue; the black-and-white family that was N62 stays as Black & White (`bw`); R150's Teal is gone.
 import { describe, expect, it } from "vitest";
 import { FAMILIES } from "./theme-families.ts";
-import { combos, selector, theme } from "./theme-gen.ts";
+import { combos, KEYS, selector, theme } from "./theme-gen.ts";
 
 /** OKLCH chroma and hue (degrees) of #rrggbb (Ottosson's OKLab, polar). */
 function oklch(h: string): [number, number] {
@@ -63,13 +63,25 @@ describe("R153: N62 in teal", () => {
         .map(([r, v]) => [r, v, Math.abs(((oklch(v)[1] - HUE + 540) % 360) - 180)] as const)
         .filter(([, , d]) => d > 8);
       expect(off).toEqual([]);
-      // the screen, the keys and the lines are teal, not grey (Plain keys greys the keys, High contrast nears black or white)
-      if (!c.high) for (const r of ["bg", "line", ...(c.plain ? [] : ["key-fn"])]) expect(oklch(t[r] as string)[0], r).toBeGreaterThanOrEqual(0.02);
+      // the screen, the keys and the lines are teal, not grey (High contrast nears black or white)
+      if (!c.high) for (const r of ["bg", "line", "key-fn"]) expect(oklch(t[r] as string)[0], r).toBeGreaterThanOrEqual(0.02);
     });
   for (const b of ["dark", "light"] as const)
     it(`Black & White ${b} is phase-1's N62 ${b}, role for role`, () => {
       const { t } = theme({ family: "bw", brightness: b, high: false, plain: false });
       const { ring: _ring, "key-edge": _edge, "mark-faint": _mark, sel: _sel, "on-sel": _onSel, ...old } = t; // R154's --ring, R156's --key-edge, R157's --mark-faint and R274's --sel and --on-sel are new; every other role is phase-1's
       expect(old).toEqual(OLD_N62[b]);
+    });
+});
+
+// R795 (owner, 2026-11-20, K3): Plain keys drops only the colour coding of the legends; every key keeps its family's fill,
+// in N62 and Solarized, Dark and Light, normal and High contrast. The dark families' fills keep their colour (OKLCH chroma 0.03 at least).
+describe("R795: Plain keys keeps each family's key colours", () => {
+  for (const c of combos().filter((x) => x.plain && x.family !== "bw"))
+    it(`${selector(c)}: every key fill is the one without Plain keys`, () => {
+      const { t } = theme(c);
+      const { t: own } = theme({ ...c, plain: false });
+      expect(Object.fromEntries(KEYS.map((k) => [k, t[k]]))).toEqual(Object.fromEntries(KEYS.map((k) => [k, own[k]])));
+      if (c.brightness === "dark" && !c.high) for (const k of ["key-num", "key-op"]) expect(oklch(t[k] as string)[0], k).toBeGreaterThanOrEqual(0.03);
     });
 });
