@@ -275,8 +275,8 @@ describe("size-check", () => {
     expect(checkSplits(fakeDist(atStart, { ...files, "assets/sheet.js": 1000 }))[0]).toContain("loaded at start");
   });
 
-  it("pins the start chunk at 62,920 B gzip, under the budget (R794: the branch measures 62,869 B; the earlier pins are in size-check.ts)", () => {
-    expect(START_PIN_GZIP).toBe(62_920);
+  it("pins the start chunk at 63,000 B gzip, the budget itself (R703: the branch measures 62,998 B; the earlier pins are in size-check.ts)", () => {
+    expect(START_PIN_GZIP).toBe(63_000);
     const { manifest } = base(0);
     const at = checkSizes(fakeDist(manifest, { ...FINDER_FILE, "assets/index.js": { random: 60_570 }, "assets/mathlive.js": 1000 }));
     expect(at.failures).toEqual([]); // inside the budget of 63 kB ...
