@@ -444,12 +444,12 @@ test("R298: 5, Store ▶, a tap on A in the store sheet before the field: A hold
   expect(await entryValue(next)).toBe("");
 });
 
-test("R298: 2, then two taps on a row's input before the field: the line stays 2 and the pick drops", async ({ page }) => {
+test("R298, R858: 2, then two taps on a row's input before the field: the 2 is text, the input goes in after it, the pick drops", async ({ page }) => {
   const { next, release } = await heldStart(page, ["d7"]);
   await tap(next, ["d2"]);
   await tapTwice(next.locator("article.item .in").last());
   await fieldUp(next, release);
-  expect(await entryValue(next)).toBe("2");
+  await expect.poll(() => entryValue(next)).toBe("27"); // (no recall over the queued 2: at the caret, as Enter on a lit input)
   await expect(next.locator('article.item[data-selected="true"]')).toHaveCount(0);
   expect(await results(next)).toEqual(["7"]);
 });
