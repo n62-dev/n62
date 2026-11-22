@@ -4,7 +4,19 @@
 // first (it is the one control whose width follows its text), then each fixed control's own text. Without a zoom nothing is
 // written: the CSS sizes fit (fontscale.spec.ts).
 import { textZoom } from "../keyboard/fit.ts";
-import { cut } from "../keyboard/zoomFit.ts";
+
+/** A text that does not fit at its floor ends in … (`data-cut`, a rule this chunk adds once), inside its box; its whole text
+ *  stays in the DOM for the screen reader. `false` takes it back. */
+export function cut(el: HTMLElement, on: boolean): void {
+  el.toggleAttribute("data-cut", on);
+  const doc = el.ownerDocument;
+  if (on && !doc.getElementById("n62-cut")) {
+    const style = doc.createElement("style");
+    style.id = "n62-cut";
+    style.textContent = "[data-cut]{max-width:100%;overflow:hidden;text-overflow:ellipsis}";
+    doc.head.append(style);
+  }
+}
 
 /** Smallest drawn size (px) of the bar's text; below it the text is ellipsed (its control keeps its name for the screen reader). */
 export const MIN_BAR_PX = 8;

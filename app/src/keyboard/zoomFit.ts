@@ -2,21 +2,10 @@
 // R703 (F383): the part of the fit that runs only under the WebView's text zoom (Android's font scale), out of the start chunk:
 // fit.ts loads it once it finds a zoom. The keypad's second pass, the bar's fit (views/barFit.ts, after each keypad fit and
 // whenever the bar's content changes), and the ellipsis below a floor for every fitted text.
-import { fitBar } from "../views/barFit.ts";
+import { cut, fitBar } from "../views/barFit.ts";
 import { MIN_FACE_PX, MIN_LEGEND_PX } from "./fit.ts";
-
-/** A text that does not fit at its floor ends in … (`data-cut`, a rule this chunk adds once), inside its box; its whole text
- *  stays in the DOM for the screen reader. `false` takes it back. */
-export function cut(el: HTMLElement, on: boolean): void {
-  el.toggleAttribute("data-cut", on);
-  const doc = el.ownerDocument;
-  if (on && !doc.getElementById("n62-cut")) {
-    const style = doc.createElement("style");
-    style.id = "n62-cut";
-    style.textContent = "[data-cut]{max-width:100%;overflow:hidden;text-overflow:ellipsis}";
-    doc.head.append(style);
-  }
-}
+// (cut is barFit.ts's, and no other chunk imports from this one: fit.ts's import of it then gets the module as it is, with no
+// namespace object built at run time, which the start chunk paid for, R703f1)
 
 /**
  * The keypad's second pass (after fit.ts fitLegends, which wrote each text it shrank through the zoom). What part of a text does

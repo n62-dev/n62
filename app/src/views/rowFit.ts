@@ -5,7 +5,6 @@
 // below it the label is ellipsed as before (its row keeps the whole name for the screen reader). Without a zoom nothing is
 // written: a long name in a list ends in … by design (Find).
 import { textZoom } from "../keyboard/fit.ts";
-import { cut } from "../keyboard/zoomFit.ts";
 
 /** Smallest drawn size (px) of a row's label, and of its other texts. */
 export const MIN_LABEL_PX = 12;
@@ -22,7 +21,7 @@ export function fitRows(list: HTMLElement): void {
     for (const el of r.parts)
       if (el.style.fontSize || el.hasAttribute("data-cut")) {
         el.style.fontSize = "";
-        cut(el, false);
+        el.removeAttribute("data-cut");
       }
   const z = textZoom(list.ownerDocument);
   if (z === 1) return;
