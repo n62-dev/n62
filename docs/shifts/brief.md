@@ -70,10 +70,10 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885zd | [R852](packages/R852.md) the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
-| 885ze | [R853](packages/R853.md) ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
-| 885zf | [R855](packages/R855.md) Choose folder offers another device's newer backup at once (R128; owner, 2026-11-21) | ron, Opus | `p1/ron-pickoffer` | – |
-| 886 | R703 the keypad, the bar and Mode fit at font scale 1.5 and 2.0 (F383), if not merged by the stop | ron, Opus | `p1/ron-textzoom` | R700, R722 |
+| 885zd | R852 the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
+| 885ze | R853 ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
+| 885zf | R855 Choose folder offers another device's newer backup at once (R128; owner, 2026-11-21) | ron, Opus | `p1/ron-pickoffer` | – |
+| 886 | [R703f1](packages/R703f1.md) R703's font-scale test on the lane's device and its audit's points (R703 not merged, run 1470; owner, 2026-11-22) | ron, Opus | `p1/ron-textzoom` | – |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
@@ -115,6 +115,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | B1 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
+| B1a | [G783](packages/G783.md) a free name's ln(1/x) and √(1/x) keep their form, so a later value gets the principal branch (owner, 2026-11-22) | gorge, Opus | `p1/gorge-invfree` | G398 |
 | B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
 | B2a | [G782](packages/G782.md) a %, ‰, ppm or ppb chip in Home is its pure number (G369; owner, 2026-11-21) | gorge, Opus | `p1/gorge-ratiochip` | – |
 | B3 | [G620](packages/G620.md) a limit of sinh, cosh or tanh at a finite point is their value, never infinity | gorge, Opus | `p1/gorge-hyplimit` | – |

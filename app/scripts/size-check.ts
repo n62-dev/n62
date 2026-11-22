@@ -166,8 +166,11 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  78.97 → 79.10 kB (R804f1): phase-1 71292ca4 measures 78.92 kB, the branch 79,046 B (+0.13 kB, all in the Find chunk that
  *  holds the store sheet, 15.84 → 15.96 kB): the typed-name line asks the parser's own rule (storeRefusal) before it says
  *  a name is free, and words the refusal with the parser's table (parseText). 79,046 B + 0.05 kB, rounded up to the next
- *  0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 79_100;
+ *  0.01 kB.
+ *  79.10 → 79.57 kB (R853): phase-1 3c5f2ac5 measures 79.08 kB, the branch 79.52 kB (+0.44 kB, all in the unit view's
+ *  entry: the panel's ← and → buttons with their state and names, view.ts's step and four i18n strings). Cut made: the
+ *  press gives the focus back through open.ts's tap handler, not its own call, −0.03 kB. 79.52 kB + 0.05 kB. */
+export const UNIT_VIEW_PIN_RAW = 79_570;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {

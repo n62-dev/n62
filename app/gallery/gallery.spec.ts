@@ -164,18 +164,18 @@ function padShots(): Shot[] {
  *  its row, the row entered by keys, σ, σ with ⚠, a note and a refusal. */
 function unitResultShots(): Shot[] {
   const plan = async (p: Page, steps: string): Promise<void> => {
-    for (const s of steps.split(" ")) {
+    for (const s of steps.split(" ").filter(Boolean)) {
       if (s.startsWith("↑")) await flick(p, s.slice(1), "up");
       else if (s === "check") await p.getByTestId("unit-check").tap(); // R349: → Check
       else await tap(p, [s]);
     }
   };
-  const units = async (p: Page, line: string[], steps: string): Promise<void> => {
+  const units = async (p: Page, line: string[], steps: string, shown = true): Promise<void> => {
     await plan(p, line.join(" "));
     await flick(p, "tmpl", "up");
     await p.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);
     await plan(p, steps);
-    await p.waitForFunction(() => document.querySelector('[data-testid="unit-result"], [data-testid="unit-message"]') !== null);
+    if (shown) await p.waitForFunction(() => document.querySelector('[data-testid="unit-result"], [data-testid="unit-message"]') !== null);
   };
   const sizes = [
     { tag: "360", group: "The unit result (R62), 360 × 740", viewport: { width: 360, height: 740 } },
@@ -183,6 +183,8 @@ function unitResultShots(): Shot[] {
   ];
   const pm = ["shift", "comma"];
   const cases: { id: string; title: string; setup: (p: Page) => Promise<void> }[] = [
+    { id: "open", title: "R852: 5, the unit view open: the empty reading and → Check share the panel's last row, no height kept below the field", setup: (p) => units(p, ["d5"], "", false) },
+    { id: "steps", title: "R853: 1 + 2, k g ▶ m, then ←: the first slot active, ← dim, → and → Check beside the reading", setup: async (p) => { await units(p, ["d1", "add", "d2"], "d4 d6 right d9", false); await p.getByTestId("unit-prev").tap(); await p.waitForFunction(() => window.n62.unitView?.view.activeId === "u1"); } },
     { id: "t02", title: "72 km/h with no end slot: the typed unit is kept, L·T⁻¹ on the right, the row m/s, knot … More…", setup: (p) => units(p, ["d7", "d2"], "d4 d9 div ↑d3 ↑enter") },
     { id: "t02-row", title: "The same, ▼ entered the row: the first chip is outlined, ◀ ▶ move, Enter picks", setup: async (p) => { await units(p, ["d7", "d2"], "d4 d9 div ↑d3 ↑enter"); await tap(p, ["down", "right"]); } },
     { id: "t02-tap", title: "After a tap on m/s: = 20 m/s with the end slot filled", setup: async (p) => { await units(p, ["d7", "d2"], "d4 d9 div ↑d3 ↑enter"); await p.getByTestId("unit-alt").filter({ hasText: /^m\/s$/ }).tap(); await p.waitForFunction(() => document.querySelector('[data-testid="unit-result"]')?.getAttribute("data-unit") === "m/s"); } },
@@ -193,7 +195,7 @@ function unitResultShots(): Shot[] {
     { id: "over100-sheet", title: "sin(0 ± 0.2), Shift + 1 (R328): the row at 104.2 % with its bar's stripe, second order −4.2 %, the over-100 line", setup: async (p) => { await units(p, ["sin", "d0", ...pm, "d0", "dot", "d2"], "↑enter"); await tap(p, ["shift", "d1"]); await p.getByTestId("unc-rows").waitFor(); } },
     { id: "warn", title: "σ with ⚠ (G41): the ⚠ sits before σ, the why-line under it in the warn colour", setup: (p) => units(p, ["cos", "d0", ...pm, "d0", "dot", "d1"], "↑enter") },
     { id: "note", title: "A note (G40): one line under the value, which stays", setup: (p) => units(p, ["d3", "d0", "d0", "d0", "mul", "d0", "dot", "d1"], "↑x enter d9 check d9 div d3 ↑enter") },
-    { id: "check-off", title: "R349: 5 kg, Enter: no end slot, = 5 kg in its own unit; → Check between the formula and the reading", setup: (p) => units(p, ["d5"], "d4 d6 enter") },
+    { id: "check-off", title: "R349: 5 kg, Enter: no end slot, = 5 kg in its own unit; the reading beside → Check in the last row (R852)", setup: (p) => units(p, ["d5"], "d4 d6 enter") },
     { id: "end-empty", title: "R349, R352: 5 kg, → Check: the end slot is on, active and empty, its reading says what it does; the button reads ✕ Check", setup: async (p) => {
       await plan(p, "d5"); await flick(p, "tmpl", "up");
       await p.waitForFunction(() => window.n62.unitView !== undefined && document.querySelector('[data-pad="unit"]') !== null);

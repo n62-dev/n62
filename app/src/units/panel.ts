@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R24c: the unit view's panel in the entry line's place (docs/04 4.3): the read-only formula with its slots (the
-// field, made by units/open.ts), the reading of the active slot in words under it, then a refusal or the result as
-// Calc.units() returns it (R62: the value line, σ, the note and the alternatives row, units/result.ts), and last → Check
-// (R349: the end slot on and off; R790: the panel's last row, directly above the keys, so what is above it never moves it).
+// field, made by units/open.ts), a refusal or the result as Calc.units() returns it (R62: the value line, σ, the note and
+// the alternatives row, units/result.ts), and last one row: the reading of the active slot in words, then → Check (R349:
+// the end slot on and off; R790: directly above the keys, so what is above it never moves it; R852: the reading beside it;
+// R853: ← and → before it step one slot).
 // Plain DOM over the view's state (a change calls `draw`).
 // Loaded with the unit view.
 import "./panel.css";
-import { unitText } from "../i18n/enUnits.ts";
+import { unitText, type UnitMessageKey } from "../i18n/enUnits.ts";
 import type { UnitShown } from "./result.ts";
 import type { UnitView } from "./view.ts";
 import type { MarkStyle } from "../state/session.svelte.ts";
@@ -127,13 +128,25 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
   const formula = el("div", "formula");
   // R349: → Check puts the end slot on (active, empty), ✕ Check takes it off; hidden where it cannot go (no number slot)
   const check = tapped(el("button", "check", "unit-check"), () => view()?.setChecking(!view()?.checking));
+  // R853: ← and → step one whole slot, as a tap on it (R801); dim and dead at the ends (the focus comes back to the view
+  // as after any tap, units/open.ts)
+  const step = (by: -1 | 1, testid: string, face: UnitMessageKey, label: UnitMessageKey): HTMLElement => {
+    const b = tapped(el("button", "step", testid, unitText(face)), () => view()?.step(by));
+    b.setAttribute("aria-label", unitText(label));
+    return b;
+  };
+  const prev = step(-1, "unit-prev", "units.step.prev", "units.step.prevLabel");
+  const next = step(1, "unit-next", "units.step.next", "units.step.nextLabel");
   const reading = el("div", "reading", "unit-reading");
   const below = el("div", "below");
   const said = el("div", "said", "unit-store-note");
   said.setAttribute("role", "alert");
   said.hidden = true;
-  // R790: the panel grows upward from the keys, so → Check last keeps one height whatever the reading, message or result hold
-  element.append(formula, reading, below, said, check);
+  // R790: the panel grows upward from the keys, so → Check last keeps one height whatever the reading, message or result hold;
+  // R852: the reading beside it in that row (it wraps upward), and no height for what is not shown
+  const last = el("div", "last");
+  last.append(reading, prev, next, check);
+  element.append(formula, below, said, last);
   /** Hide the chips that do not fit beside "More…" (at least as many as the view can use) and tell the view how many fit. */
   const fitRow = (row: HTMLElement): void => {
     const v = view();
@@ -171,7 +184,9 @@ export function makePanel(view: () => UnitView | undefined, marks: () => MarkSty
     check.textContent = unitText(v.checking ? "units.check.off" : "units.check.on");
     check.setAttribute("aria-label", unitText(v.checking ? "units.check.offLabel" : "units.check.onLabel"));
     check.setAttribute("aria-pressed", `${v.checking}`);
-    reading.replaceChildren(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)]));
+    prev.setAttribute("aria-disabled", `${v.active === 0}`);
+    next.setAttribute("aria-disabled", `${v.active === v.ids.length - 1}`);
+    reading.replaceChildren(...v.reading.parts.flatMap((p, i) => [...(i ? [" "] : []), el("span", p.marked ? "rare" : "", undefined, p.text)])); // (R852: a flex box draws no " ": panel.css's gap)
     const why = store?.said();
     said.hidden = why === undefined;
     said.textContent = why ?? "";
