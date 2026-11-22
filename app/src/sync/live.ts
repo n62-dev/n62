@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R128: the sync folder in the app, the port of sync/backupSync.ts: the folder (clipboard/folder.ts), the store, the
 // counts and the library's export. main.ts calls `leave` on a hide and `onStart` once the history is in (Android only);
-// Settings › Data › Sync folder's rows call `syncJob` (ClipActions.syncJob). The start's offer is a sheet with Restore
-// (the restore sheet's ticks and check, S6) and Not now; the silent restore replaces every part of the file, keeps the
-// old records in `backup.undo`, reloads, and says so in one history line. Lazy: never in the start chunk.
+// Settings › Data › Sync folder's rows call `syncJob` (ClipActions.syncJob; R855: Choose folder looks at once). The
+// start's offer is a sheet with Restore (the restore sheet's ticks and check, S6) and Not now; the silent restore
+// replaces every part of the file, keeps the old records in `backup.undo`, reloads, and says so in one history line.
+// Lazy: never in the start chunk.
 import type { AppShell } from "../apps/shell.svelte.ts";
 import { folderList, folderModel, folderName, folderRead, folderWrite, forgetFolder, pickFolder } from "../clipboard/folder.ts";
 import { dataText, shownTime } from "../i18n/enData.ts";
@@ -58,8 +59,14 @@ export async function onStart(session: Session, shell: Shell, kept: Kept = sessi
     kept.removeItem(NOTE);
     session.note(said);
   }
+  await folder(session, shell).onStart(startUi(session, shell, kept));
+}
+
+/** How the look's outcome shows, for the start and for Choose folder (R855): the offer sheet (Restore, Not now), the
+ *  silent restore (its line kept in `kept` over the reload), a refusal's notice. */
+function startUi(session: Session, shell: Shell, kept: Kept): StartUi {
   const say = sayer(session, shell);
-  const ui: StartUi = {
+  return {
     offer: (from, checked) =>
       shell.showMenu(
         dataText("sync"),
@@ -84,20 +91,24 @@ export async function onStart(session: Session, shell: Shell, kept: Kept = sessi
     },
     refused: (from, why) => say(dataText("sync.refused", { device: from.device, why })),
   };
-  await folder(session, shell).onStart(ui);
 }
 
-/** A row of Settings › Data › Sync folder; returns the notice. */
-export async function syncJob(job: "pick" | "now" | "stop", session: Session, shell: Shell): Promise<string> {
+/** A row of Settings › Data › Sync folder: says its notice (and returns it). R855: a picked folder then gets the
+ *  start's look at the other devices' backups at once, with the start's outcomes (the same one offer: a file the
+ *  start or an earlier pick offered is marked read); the start's waiting line in `kept` is left for the start. */
+export async function syncJob(job: "pick" | "now" | "stop", session: Session, shell: Shell, kept?: Kept): Promise<string> {
+  const say = sayer(session, shell);
   if (job === "pick") {
     const r = await pickFolder();
-    return r === "cancelled" ? dataText("sync.cancelled") : r === "unavailable" ? dataText("sync.unavailable") : dataText("sync.chosen", { name: r.name });
+    const notice = r === "cancelled" ? dataText("sync.cancelled") : r === "unavailable" ? dataText("sync.unavailable") : dataText("sync.chosen", { name: r.name });
+    say(notice);
+    if (typeof r === "object") await folder(session, shell).onStart(startUi(session, shell, kept ?? sessionStorage));
+    return notice;
   }
-  if (job === "stop") {
-    await forgetFolder();
-    return dataText("sync.stopped");
-  }
-  return leaveNotice(await leave(session, shell));
+  if (job === "stop") await forgetFolder();
+  const notice = job === "stop" ? dataText("sync.stopped") : leaveNotice(await leave(session, shell));
+  say(notice);
+  return notice;
 }
 
 /** Write now's notice for what the leave did (one file in the singular, R128f1). */
