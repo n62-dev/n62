@@ -98,10 +98,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const seed = row ? rowSlots(row) : undefined;
   /** The Home row of this visit's result (R63): a later result takes its place. */
   let rowId: number | undefined;
-  /** R838: the angle unit and the digits the result shown was computed with (the engine's facts, σ's text and the Home row
-   *  take the digits, units/evaluate.ts): a change of either asks again. */
-  let angle = c.session.settings.angle;
-  let digits = c.session.settings.digits;
+  /** R838: the angle unit and the digits as one text ("rad12"), those the result shown was computed with in `was` (the
+   *  engine's facts, σ's text and the Home row take the digits, units/evaluate.ts): a change of either asks again. */
+  const asked = (): string => c.session.settings.angle + c.session.settings.digits;
+  let was = asked();
   const mf = new Field();
   mf.dataset["testid"] = "unit-field";
   const host: ViewHost = {
@@ -123,7 +123,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     values: () => userValuesOf(c.session.userNames),
     changed: () => panel.draw(),
     reset: (latex, ids) => lockedValue(mf, latex, ids),
-    result: (q) => void ((angle = c.session.settings.angle), (digits = c.session.settings.digits), (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId))),
+    result: (q) => void ((was = asked()), (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId))),
   };
   /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
    *  keeping its slots, they go with the new line text, and the view opens again on it. */
@@ -243,7 +243,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
    *  mark, the digit groups, the marks) draws it again with no request. */
   unwatch = watchSheet(c.shell, () => {
     if (current?.view !== view) return;
-    if ((angle !== c.session.settings.angle || digits !== c.session.settings.digits) && view.shown.kind === "result") void view.evaluate();
+    if (was !== asked() && view.shown.kind === "result") void view.evaluate();
     else view.redraw();
     panel.draw();
     keep();
