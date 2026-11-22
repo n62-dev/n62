@@ -48,13 +48,14 @@
     min-width: var(--bar-h);
   }
   /* R856: the views as icons, one track of segments drawn inside the bar's height, as Home and slot 2's (StatusLine.svelte):
-     the recessed track, the current view filled in --key-on (3:1 on the bar; the old --chip-bg fill was 1.1:1) */
+     the recessed track, the current view filled in --key-on (3:1 on the bar; the old --chip-bg fill was 1.1:1). Each button is
+     its face and 1 px on each side, so the faces stand 2 px apart and from the track's edge (the mock-up's 30 px segments) and a
+     tap between two faces still lands on one of them */
   .seg {
     flex: none;
     position: relative;
     display: flex;
-    gap: var(--sp-05);
-    padding: 0 var(--sp-05);
+    padding: 0 var(--stroke-thin);
   }
   .seg::before {
     content: "";
@@ -75,7 +76,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    width: calc(100% - 2 * var(--stroke-thin));
     height: var(--tab-h);
     border-radius: calc(var(--radius-s) - var(--stroke-thin));
   }

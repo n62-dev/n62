@@ -89,7 +89,7 @@
      width) and the dots of the Apps tile */
   --bar-h: 28px;
   --view-w: 32px;
-  --bay-view-w: 30px; /* R785, R856: an app's view segments in the bay */
+  --bay-view-w: 32px; /* R785, R856: an app's view segments in the bay (a 30 px face and 1 px each side) */
   --grid-dot: 7px;
   --pad-dot: 40px; /* R774: the pressed arrow's dot */
   --touch: 44px;
