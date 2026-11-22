@@ -20,7 +20,7 @@ clips:
   - { id: s5, blocks: [4], title: "√200 = 10√2 (CAS)", setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc, "@cas"],
       presses: [shift, sq, d2, d0, d0, right], eval: enter, expect: { result: "10*sqrt(2)" } }
   # up to 30 digits
-  - { id: s13, blocks: [5], title: "the STD|12 chip, digits 12 → 30, then √2", setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc],
+  - { id: s13, blocks: [5], title: "the STD 12 ▾ chip, digits 12 → 30, then √2", setup: [{tap: '[data-testid="chip-format"]'}, d6, d1, d1, d1, esc, esc, esc, esc],
       # (6 presses: the chip, Digits, 30 take one more than the old digits chip did, so the closing right is left out; Enter evaluates the radical from inside)
       presses: [{tap: '[data-testid="chip-format"]'}, d3, d9, shift, sq, d2], eval: enter,
       expect: { result: "1.41421356237309504880168872421", mark: "≈" } }                      # √2 at 30 digits (c18's oracle value)
