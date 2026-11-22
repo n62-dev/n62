@@ -220,7 +220,8 @@ const CANARIES: [string, string, RegExp, string][] = [
   // an x-dependent cosh(1+x), whose series starts with cosh(1): limit((cosh(1+x)-cosh(1))/x,x,0) = infinity
   ["0056-limit-hyperbolic-constants.patch", "giac-2.1.0/src/series.cc", /cv\.push_back\(rv\[i\]\);\s*\}\s*if \(!cv\.empty\(\)\)\{\s*gen cvg=tsimplify\(cv,contextptr\);/, "// Rewrite constants"],
   // G398, patch 0057: ln(inv(f)) = -ln(f) (and ln of the fraction 1/d, -ln(d)) and sqrt(inv(f)) = inv(sqrt(f)) for any f, the conjugate
-  // for a negative real f (ln(1/(1-sqrt(2))) = -ln(1-sqrt(2)), 0.881-pi*i; sqrt(1/(pi-4)) = 1/sqrt(pi-4), -1.079*i)
+  // for a negative real f (ln(1/(1-sqrt(2))) = -ln(1-sqrt(2)), 0.881-pi*i; sqrt(1/(pi-4)) = 1/sqrt(pi-4), -1.079*i), and G783: for a free
+  // name before it has a value (ln(1/y) = -ln(y), so subst(ln(1/y),y=-2) = -ln(-2), the conjugate)
   ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\._SYMBptr->sommet==at_inv && e\._SYMBptr->feuille\.type!=_VECT\)\s*return -ln\(e\._SYMBptr->feuille,contextptr\);[\s\S]{0,400}?if \(e\.type==_FRAC && e\._FRACptr->num==1\)\s*return -ln\(e\._FRACptr->den,contextptr\);/, "return apply_to_equal(e,ln,contextptr);"],
   ["0057-ln-sqrt-inv-negative-real.patch", "giac-2.1.0/src/usual.cc", /if \(e\.is_symb_of_sommet\(at_inv\)\)\s*return inv\(sqrt\(e\._SYMBptr->feuille,contextptr\),contextptr\);/, "return symbolic(at_program,gen(makevecteur(a,0,sqrt(b,contextptr)),_SEQ__VECT));"],
   // G786, patch 0058: ascsort (under median, quartile1, quartile3, quantile, quartiles) writes 0 for an element whose evalf is no double,

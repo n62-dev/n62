@@ -89,7 +89,7 @@ The owner's other open items are in [backlog.md](backlog.md), "Needs the user". 
 - **R18f1, R18f2 (2026-10-14): tests.** An exact true/false carries no mark; a test with a float side runs again at 14 and at P digits (true ≈, false ≈, or as typed). Archived. Would change if: a function is audited.
 - **P9 (2026-10-12): typed decimals in the CAS view become exact, as in Home;** `approx()` gives marked decimals.
 - **P10 (2026-10-12): Giac's English help lines in Find.** Confirmed by B. Parisse (email, 2026-10-19): `aide_cas` is entirely GPL; the non-GPL French documentation means R. De Graeve's LaTeX/PDF manuals.
-- **G398's free name (owner, 2026-11-22, "fix it"):** patch 0057 keeps `ln(1/f)`, `sqrt(1/f)` where Giac's sign proves f < 0 (a constant, or a name under `assume(y<0)`); a free name's `ln(1/x)` = `-ln(x)`, so `subst(ln(1/y),y=-2)` = `-ln(-2)`, is G783's (lane B).
+- **G783:** a free name keeps ln(1/x) and sqrt(1/x); the rewrite needs a proven positive argument (owner, 2026-11-22).
 - **K22 (owner, 2026-11-17):** the unit view's refusal of `80 °C − 5 K` and its words wait for G385, after the tag.
 - **P5 (2026-10-11; owner, 2026-11-16): behaviour against the reference.** The maths is Giac's wherever possible; it departs only where Giac gives a silent wrong answer. The G2 guides the keys and the flow, not the maths: its Home is HP's own engine, so a G2 result alone never changes a result, and no G2 question asks about maths. Home keeps Giac's principal root (complex `sqrt(-4)`, `asin(2)`), the ∛ template, Function and Solve the real odd root (R39). Archived.
 - **P8 (2026-10-12): the engineer core:** milestones 4, 5, 6, each with benchmark tasks; fewer features done well beat G2 parity.
