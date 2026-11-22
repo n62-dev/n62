@@ -70,16 +70,33 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 885zd | R852 the unit view's reading beside → Check; no height kept for what is not shown (owner, 2026-11-22) | ron, Opus | `p1/ron-unitcompact` | – |
-| 885ze | R853 ← and → buttons beside → Check step slot to slot (owner, 2026-11-22; replaces R810) | ron, Opus | `p1/ron-unitslotbuttons` | R852 |
-| 885zf | R855 Choose folder offers another device's newer backup at once (R128; owner, 2026-11-21) | ron, Opus | `p1/ron-pickoffer` | – |
-| 886 | [R703f1](packages/R703f1.md) R703's font-scale test on the lane's device and its audit's points (R703 not merged, run 1470; owner, 2026-11-22) | ron, Opus | `p1/ron-textzoom` | – |
 | 886a | [R856](packages/R856.md) the bar's final look: house on Home, one size in every place, `STD 12 ▾ │ DEG` with no angle icon (owner, 2026-11-22) | ron, Opus | `p1/ron-barfinal` | R703f1 |
+| 886b | [R857](packages/R857.md) the bulk resets ask once before they wipe (data loss; owner's list 2026-11-22, as below) | ron, Opus | `p1/ron-resetask` | – |
+| 886c | [R858](packages/R858.md) a second tap on a lit input inserts at the caret, as Enter | ron, Opus | `p1/ron-inputtapcaret` | – |
+| 886d | [R860](packages/R860.md) the big N62 mark shows whenever the view is empty | ron, Opus | `p1/ron-emptymark` | R856 |
+| 886e | [R861](packages/R861.md) the unit view's Find keeps its ▾ | ron, Opus | `p1/ron-unitfindmark` | – |
+| 886f | [R838](packages/R838.md) Settings and Mode open over the unit view and close back onto it (U2) | ron, Opus | `p1/ron-unitsettings` | R770 |
+| 886g | [R862](packages/R862.md) ☰ in the unit view opens its tools menu | ron, Opus | `p1/ron-unitmenu` | R838 |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
+| 888a | [A266](packages/A266.md) Android's status and navigation bars follow the look | annabell, Sonnet | `p1/annabell-barsfollow` | – |
+| 888b | [R843](packages/R843.md) N62 Light's Enter in orange A `#c26a00` (owner's pick, 2026-11-22) | ron, Opus | `p1/ron-enterorange` | R842 |
+| 888c | [R872](packages/R872.md) one Enter rule; B&W and Solarized Enter colours (Solarized Light orange) | ron, Opus | `p1/ron-enterrule` | R843 |
+| 888d | [R873](packages/R873.md) the round pad and the key line stand out in every look | ron, Opus | `p1/ron-padline` | R872 |
+| 888e | [R874](packages/R874.md) the empty-history mark takes the hint's colour, faint | ron, Opus | `p1/ron-markhint` | R860, R873 |
+| 888f | [R863](packages/R863.md) Settings on the tap (⚙), Help on its Shift | ron, Opus | `p1/ron-settingskey` | R856, R838 |
+| 888g | [R866](packages/R866.md) the prefix keys end in a slot line (G_) | ron, Opus | `p1/ron-prefixslot` | – |
+| 888h | [R867](packages/R867.md) a pad drag steps by number or name | ron, Opus | `p1/ron-padtoken` | – |
+| 888i | [R868](packages/R868.md) a tap on the line brings the keys back (results mode) | ron, Opus | `p1/ron-linetapunfold` | R856 |
+| 888j | [R869](packages/R869.md) Help on Find's highlighted row (help sheet or card) | ron, Opus | `p1/ron-helpfind` | – |
+| 888k | [R870](packages/R870.md) Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
+| 888l | [R871](packages/R871.md) Shift + Fmt opens the Fmt cycle's settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
+| 888m | [R881](packages/R881.md) the "rainbow" easter egg | ron, Opus | `p1/ron-rainbow` | A266 |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
 | 891 | [R728](packages/R728.md) the keys say what they do (CAS letters, Alpha colours, docs/06's differences) | ron, Opus | `p1/ron-keyssay` | R723, R726 |
 | 892 | [R729](packages/R729.md) the key legends: armed a ring, locked a fill; Shift and Alpha show their layers (K4) | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
+| 892a | [R864](packages/R864.md) the letter in a template key is italic | ron, Opus | `p1/ron-templateitalic` | R728, R729 |
+| 892b | [R865](packages/R865.md) Find stands out: a lens and a foot bar | ron, Opus | `p1/ron-findlook` | R861, R729, R864 |
 | 893 | [R701](packages/R701.md) the folder plugin (F380) | annabell, Sonnet | `p1/annabell-folderproxy` | – |
 | 894 | [R710](packages/R710.md) Plot draws its axes (F385) | ron, Opus | `p1/ron-plotaxes` | – |
 | 895 | [R709](packages/R709.md) every control has a spoken name (F384) | ron, Opus | `p1/ron-spokennames` | – |
@@ -99,13 +116,18 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Opus | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Opus | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Opus | `p1/ron-namechips` | R818 |
+| 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Opus | `p1/ron-crumbs` | R856, R819 |
+| 916b | [R876](packages/R876.md) setting rows 1: list rows, button rows | ron, Opus | `p1/ron-gotorows` | R875 |
+| 916c | [R877](packages/R877.md) setting rows 2: switches, muted read-only rows | ron, Opus | `p1/ron-switchrows` | R876 |
+| 916d | [R878](packages/R878.md) setting rows 3: an opening row ends in › | ron, Opus | `p1/ron-openmark` | R877 |
+| 916e | [R879](packages/R879.md) ☰ in Home and CAS is the History menu | ron, Opus | `p1/ron-historymenu` | R875 |
+| 916f | [R880](packages/R880.md) the gear in ☰'s title row becomes "Settings ›" | ron, Opus | `p1/ron-settingsword` | R879 |
 | 919 | [R821](packages/R821.md) user keys: two layers, a switch for Alpha | ron, Opus | `p1/ron-userkeyalpha` | R729 |
 | 920 | [R822](packages/R822.md) Store: a tap types the case Alpha types; (owner's rule yes, 2026-11-21) | ron, Opus | `p1/ron-storecase` | R820 |
 | 921 | [R834](packages/R834.md) a faint ✕ on each history row deletes it (H1b) | ron, Opus | `p1/ron-rowx` | R832, R742 |
+| 921a | [R859](packages/R859.md) input and result take a tap across their line | ron, Opus | `p1/ron-rowbands` | R858, R742, R834 |
 | 924 | [R836](packages/R836.md) the row draws and copies the value Ans had: `[5]² = 25` | ron, Opus | `p1/ron-ansvalue` | G642 |
-| 925 | [R838](packages/R838.md) Settings and Mode open over the unit view and close back onto it (U2) | ron, Opus | `p1/ron-unitsettings` | R770 |
-| 926 | [R840](packages/R840.md) every pop-up window: a 2 px edge in the theme's accent (P1) | ron, Opus | `p1/ron-sheetedge` | R770 |
-| 928 | [R843](packages/R843.md) N62 Light's Enter in orange A `#c26a00` (owner's pick, 2026-11-22) | ron, Opus | `p1/ron-enterorange` | R842 |
+| 926 | [R840](packages/R840.md) every pop-up window: a 2 px edge in the theme's accent (P1) | ron, Opus | `p1/ron-sheetedge` | R770, R872 |
 | 929 | [R847](packages/R847.md) Find for a user-key slot: titled "U1 ⇧", Places, Back returns (Y1) | ron, Opus | `p1/ron-slotfind` | R811, R821 |
 | 930 | [R848](packages/R848.md) a tap on an empty user key opens its own slot sheet (Y1; reworks R705) | ron, Opus | `p1/ron-keysheet` | R705, R811, R821, R847 |
 | 931 | [R849](packages/R849.md) Settings › Your keys as one window: the keys in their places, the picked key's slots below, Clear (owner, 2026-11-22) | ron, Opus | `p1/ron-yourkeyswindow` | R848 |
@@ -115,14 +137,12 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B0 | [G398f1](packages/G398f1.md) G398 merges without the quartile finding, which moves to G786 (owner, 2026-11-22: first in lane B) | gorge, Opus | `p1/gorge-invcut` | – |
-| B0a | [G786](packages/G786.md) median and the quartiles of a float list are never 0 above 14 digits (a wrong number) | gorge, Opus | `p1/gorge-floatsort` | G398 |
-| B1 | [G398](packages/G398.md) ln, log10 and √ of 1/x keep the principal branch when x is a negative real | gorge, Opus | `p1/gorge-invcut` | – |
+| B0 | [G398f1](packages/G398f1.md) G398 merges; its quartile finding moves to G786 (owner, 2026-11-22: first) | gorge, Opus | `p1/gorge-invcut` | – |
+| B0a | [G786](packages/G786.md) median and the quartiles of a float list are never 0 above 14 digits | gorge, Opus | `p1/gorge-floatsort` | G398 |
 | B1a | [G783](packages/G783.md) a free name's ln(1/x) and √(1/x) keep their form, so a later value gets the principal branch (owner, 2026-11-22) | gorge, Opus | `p1/gorge-invfree` | G398 |
 | B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
-| B2a | G782 a %, ‰, ppm or ppb chip in Home is its pure number (G369; owner, 2026-11-21) | gorge, Opus | `p1/gorge-ratiochip` | – |
-| B3 | G620 a limit of sinh, cosh or tanh at a finite point is their value, never infinity | gorge, Opus | `p1/gorge-hyplimit` | – |
-| B3a | G782 once more, review-only: `scripts/pipeline.sh gorge "G782" --no-worker --audit-model auto` (its NOT MERGED of 11-22 16:11 was golden under two lanes' load, audits APPROVED; owner, 2026-11-22: rerun once; done at its next result line) | gorge, Opus | `p1/gorge-ratiochip` | – |
+| B2a | [G784](packages/G784.md) Copy writes the names the screen shows, never Giac's stand-ins | gorge, Opus | `p1/gorge-copynames` | – |
+| B2b | [G785](packages/G785.md) Fmt skips a step that draws the same; a press that changes nothing is dead | gorge, Opus | `p1/gorge-fmtskip` | – |
 | B4 | [G553](packages/G553.md) floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
 | B5 | [G551](packages/G551.md) bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
 | B6 | [G554](packages/G554.md) exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
@@ -142,7 +162,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B20 | [G401](packages/G401.md) Find knows the engineers' words for functions it has | gorge, Opus | `p1/gorge-findwords` | – |
 | B21 | [G402](packages/G402.md) Find in a unit slot reads a compound unit as the slot does | gorge, Opus | `p1/gorge-findcompound` | G401 |
 
-**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The Ultra clone `../n62-next` ran the after-tag rows G389 to R351 and R367 to G407 from its own brief and stopped; its phase-1 merges back once after the tag, which ticks those rows here. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
+**Not queue rows** (henri never starts them; a session moves a row in when its condition is met). The Ultra clone `../n62-next` ran the after-tag rows G389 to R351 and R367 to G407 from its own brief and stopped; its phase-1 merges back once after the tag, which ticks those rows here. Waiting for the owner: R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone, Wed 11-18 to Sat 11-21), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16: a defined name of any letters, Greek and digits is one token, through one name registry): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R882 (hints; then R706 onto it). After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16: R250 to R253 ship with no way in, their key and value kept for good), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
 ### The commands henri replies with (one per decision; `scripts/night.sh` runs it)
 - `scripts/pipeline.sh <agent> "<ID>" --model <sonnet|opus> --audit-model auto`: the next queue step not done (the queue's skip rule above); `--audit-model opus` where its row says "audit Opus".
