@@ -41,7 +41,7 @@ async function kmPerH(page: Page): Promise<void> {
 async function sameView(page: Page): Promise<void> {
   await backOnView(page);
   expect(await viewOpen(page)).toBe(true);
-  expect(await page.evaluate(() => window.n62.unitView?.view.line)).toBe("3\\div2");
+  expect(await page.evaluate(() => window.n62.unitView?.view.line)).toBe("\\frac32");
   expect(await slotText(page, "u1")).toBe("k:m");
   expect(await slotText(page, "u2")).toBe("h");
   expect(await active(page)).toBe(1);
@@ -110,19 +110,23 @@ for (const width of [412, 360]) {
       expect(await slotText(page, "u1")).toBe("k:m");
     });
 
-    test("control: Home, CAS and Apps still close the view", async ({ page }) => {
-      // from Home: CAS (slot 2) and Apps; from CAS: Home (a tap on the current Home pill is no press)
-      for (const place of ["@place", "@cas", "@home"]) {
+    test("control: Home, CAS, Apps and the place switch still close the view", async ({ page }) => {
+      // Apps (Alt + A), CAS (slot 2) from Home, Home from CAS, Alt + H (the switch). The pills by a click: a touch tap on
+      // them over the unit view makes no click (phase-1 too, R838 report)
+      const steps: [() => Promise<unknown>, "home" | "cas"][] = [
+        [() => page.keyboard.press("Alt+A"), "home"],
+        [() => page.getByTestId("tab-slot").click(), "cas"],
+        [() => page.getByTestId("tab-home").click(), "home"],
+        [() => page.keyboard.press("Alt+H"), "cas"],
+      ];
+      for (const [go, to] of steps) {
         await page.evaluate(() => window.n62.entry.clear());
         await tap(page, ["d3"]);
         await unitsKey(page);
-        await tap(page, [place]);
+        await go();
         await page.waitForFunction(() => window.n62.unitView === undefined);
-        if (place === "@place") {
-          await expect(page.getByTestId("apps")).toBeVisible();
-          await tap(page, ["esc"]);
-        }
-        expect(await page.evaluate(() => window.n62.session.view)).toBe(place === "@cas" ? "cas" : "home");
+        if (await page.getByTestId("apps").isVisible()) await tap(page, ["esc"]);
+        expect(await page.evaluate(() => window.n62.session.view)).toBe(to);
       }
     });
   });
@@ -142,7 +146,8 @@ test.describe("a setting changed over the unit view redraws its result (R838)", 
     await tap(page, ["enter", "d1", "d9"]);
     await flick(page, "enter", "up");
     const value = page.getByTestId("unit-result").locator(".value");
-    await expect(value).toHaveText("157.079632679");
+    const plain = async (): Promise<string> => ((await value.textContent()) ?? "").replace(/\s/g, ""); // (the screen's digit groups)
+    await expect.poll(plain).toBe("157.079632679");
     await page.evaluate(() => {
       const calc = window.n62.calc;
       const units = calc.units.bind(calc);
@@ -153,9 +158,11 @@ test.describe("a setting changed over the unit view redraws its result (R838)", 
         return units(...a);
       };
     });
-    await tap(page, ["@mode", "d3", "d2"]); // Mode (on Format) › Significant digits › 6: the pick closes the sheet
+    await page.keyboard.press("Alt+Shift+O"); // Mode
+    await expect(page.getByTestId("menu")).toBeVisible();
+    await tap(page, ["d3", "d2"]); // › Significant digits › 6: the pick closes the sheet
     await backOnView(page);
-    await expect(value).toHaveText(/^157\.080?$/);
+    await expect.poll(plain).toMatch(/^157\.080?$/);
     await expect(page.getByTestId("unit-unit")).toHaveText("mm");
     expect(await page.evaluate(() => (window as unknown as { unitCalls: number }).unitCalls)).toBe(0);
   });

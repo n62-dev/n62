@@ -3,7 +3,8 @@
 // `sheetChunk.pad` holds its cells (views/sheetView.svelte.ts: the state the keypad already reads for the sheet's keys):
 // Keypad.svelte draws the keys through it, keyboard/route.ts hands it a press and `on` the result, and `other` the keys
 // that are no cell. The unit view (units/open.ts, R24c) sets them; `?pad=1` (dev only, main.ts) shows the pad alone.
-import { tick } from "svelte";
+import { tick, untrack } from "svelte";
+import type { AppShell } from "../apps/shell.svelte.ts";
 import { fitLegends } from "../keyboard/fit.ts";
 import { sheetChunk } from "../views/sheetView.svelte.ts";
 import type { Key } from "../keyboard/keyboard.ts";
@@ -30,6 +31,19 @@ export const unitPad: {
   },
   on: () => {},
 };
+
+/** R838: `opened` runs when a sheet opens over the unit view (Settings, Mode, Find on units), `closed` when the last one goes
+ *  (Esc, Back, ×, a pick that closes it; a sheet that gives way to another in the same update is no close). Returns the stop. */
+export function watchSheet(shell: AppShell, on: { opened(): void; closed(): void }): () => void {
+  let open = untrack(() => shell.sheet !== null);
+  return $effect.root(() => {
+    $effect(() => {
+      const now = shell.sheet !== null;
+      if (now !== open) untrack(now ? on.opened : on.closed);
+      open = now;
+    });
+  });
+}
 
 /** Load the pad and show it on the keys. */
 export async function showUnitPad(): Promise<void> {

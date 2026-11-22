@@ -3,7 +3,8 @@
 // docs/archive/r9-unit-pad.md 2.1): the line (or a picked row's input) read-only with its slots, the pad up on the
 // keys (R24b). Key owners while it is up (docs/04 5.5): an open sheet (Find on units), then the pad's cells
 // (UnitPad.route), then this view for the keys that are no cell (◀ ▶ between slots, Esc leaves and the line keeps its
-// slots, a key that changes place leaves first, Store ▶ stores the result with its unit, R353; any other key is dead). A hardware key on the field takes the keypad's
+// slots, a key that changes place leaves first, Settings and Mode open over the view and close back onto it, R838, Store ▶
+// stores the result with its unit, R353; any other key is dead). A hardware key on the field takes the keypad's
 // path through the entry line's own map (entry/hwkeys.ts, `onKey`), so it reaches the pad's actions or does nothing, and
 // does on the field what it does on the line; R313: letters first go into the slot as a unit's symbol (units/typed.ts).
 // The view writes a slot only with setPromptValue. What it takes from the start chunk is the route context `c` alone,
@@ -27,7 +28,7 @@ import { storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
 import { userUnitCells } from "./padCells.ts";
 import { UnitPad, padUnitList } from "./pad.ts";
-import { unitPad } from "./padView.svelte.ts";
+import { unitPad, watchSheet } from "./padView.svelte.ts";
 import { slotCatalogue } from "./slot.ts";
 import { makePanel } from "./panel.ts";
 import { ownUnits } from "./ownUnits.ts";
@@ -64,8 +65,11 @@ const unitFind = (): Promise<typeof import("./find.ts")> =>
 /** Store ▶'s LaTeX (Shift + ᴇ, spec/keyboard.yaml). */
 const STORE_ARROW = "\\blacktriangleright";
 
-/** Keys that change place: the unit view closes first, then they do their job. */
-const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "slot", "symb", "plot", "num", "settings", "mode"];
+/** Keys that change place: the unit view closes first, then they do their job. Settings and Mode are none (R838): their
+ *  sheet opens over the view, which stays as it is (OVER). */
+const PLACES: readonly string[] = ["home", "cas", "switch", "apps", "slot", "symb", "plot", "num"];
+/** R838: keys whose sheet opens over the view: they do their job as on the line, and the view stays. */
+const OVER: readonly string[] = ["settings", "mode"];
 
 /** Open the unit view on the line, or on a picked history row's input (it becomes the line). Dead in an app. */
 export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
@@ -195,11 +199,13 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     });
   };
   let untap = (): void => {};
+  let unwatch = (): void => {};
   const close = (): void => {
     if (current?.view !== view) return;
     current = null;
     unlayer();
     untap();
+    unwatch();
     view.keep();
     unitPad.model = null;
     unitPad.on = () => {};
@@ -229,12 +235,28 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   };
   document.addEventListener("click", tapped, { capture: true });
   untap = () => document.removeEventListener("click", tapped, { capture: true });
+  /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
+   *  and a setting changed there shows: an angle unit recomputes the result as the line would, a setting it is only drawn
+   *  with (the digits, the format, the decimal mark, the digit groups, the marks) draws it again with no request. */
+  let angle = c.session.settings.angle;
+  unwatch = watchSheet(c.shell, {
+    opened: () => void (angle = c.session.settings.angle),
+    closed: () => {
+      if (current?.view !== view) return;
+      if (angle !== c.session.settings.angle && view.shown.kind === "result") void view.evaluate();
+      else view.redraw();
+      panel.draw();
+      keep();
+    },
+  });
   unitPad.on = (e) => {
     view.apply(e);
     if (current?.view === view && e.do !== "find") keep();
   };
   unitPad.other = (c2, key, mods) => {
+    if (c2.shell.sheet) return false; // (a sheet over the view takes the keys, as over the cells: UnitPad.route)
     const a = layerAction(key, mods);
+    if (a?.kind === "special" && OVER.includes(a.name)) return false; // R838: the key does its job, its sheet over the view
     if (a?.kind === "special" && PLACES.includes(a.name)) {
       close();
       return false; // the key does its job
