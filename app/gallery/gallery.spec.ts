@@ -184,6 +184,7 @@ function unitResultShots(): Shot[] {
   const pm = ["shift", "comma"];
   const cases: { id: string; title: string; setup: (p: Page) => Promise<void> }[] = [
     { id: "open", title: "R852: 5, the unit view open: the empty reading and → Check share the panel's last row, no height kept below the field", setup: (p) => units(p, ["d5"], "", false) },
+    { id: "steps", title: "R853: 1 + 2, k g ▶ m, then ←: the first slot active, ← dim, → and → Check beside the reading", setup: async (p) => { await units(p, ["d1", "add", "d2"], "d4 d6 right d9", false); await p.getByTestId("unit-prev").tap(); await p.waitForFunction(() => window.n62.unitView?.view.activeId === "u1"); } },
     { id: "t02", title: "72 km/h with no end slot: the typed unit is kept, L·T⁻¹ on the right, the row m/s, knot … More…", setup: (p) => units(p, ["d7", "d2"], "d4 d9 div ↑d3 ↑enter") },
     { id: "t02-row", title: "The same, ▼ entered the row: the first chip is outlined, ◀ ▶ move, Enter picks", setup: async (p) => { await units(p, ["d7", "d2"], "d4 d9 div ↑d3 ↑enter"); await tap(p, ["down", "right"]); } },
     { id: "t02-tap", title: "After a tap on m/s: = 20 m/s with the end slot filled", setup: async (p) => { await units(p, ["d7", "d2"], "d4 d9 div ↑d3 ↑enter"); await p.getByTestId("unit-alt").filter({ hasText: /^m\/s$/ }).tap(); await p.waitForFunction(() => document.querySelector('[data-testid="unit-result"]')?.getAttribute("data-unit") === "m/s"); } },
