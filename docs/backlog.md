@@ -35,6 +35,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 ## Tasks
 
 ### Open bugs (everyday reach; order: brief section 0; family n: [bug-patterns.md](research/bug-patterns.md) section 3; each line names its package, which holds the evidence)
+- **F366–F377 (layers study 2026-11-23, sandra + sofia; `../drafts/2026-11-23-layers-study/`).** Input leaks through a layer over Home. Wrong reading: F368 (the unit view keeps the other angle's result) and F377 (its row has no RAD tag), R915 with F376. F366 F367 R918; F370 F371 R917; F375 R919; F372 F373 R922; F374 R898. F369 (⌄ folds the keys under the view): no package, nothing is lost.
 - **F236 (ron, R338).** history-first.spec.ts "engine not ready: the newest five rows" counts 20 renders against 15 under load: 4 failures on 11-12/13, none before. Find the extra re-format; a looser bound is no fix. G224f1 raised it to 20 (da18fc18): the fix sets 15 again.
 - **F238 (A139; R340).** Shift + Fmt, dead, has no `aria-disabled`: TalkBack does not say it does nothing.
 - **Flaky e2e (reruns pass; find the wait, not a longer timeout):** linetouch.spec.ts "a tap puts the caret at the touched term, on a scrolled line too" (4); enginefail.spec.ts "the wasm does not load: the note says so, with Reload…" (4); store.spec.ts "the row bar's Store ▶ opens it for the picked row…" (3); matrixsize.spec.ts "2 adds a column of zeros at the end…" (3); benchmark.spec.ts "t07 … in binary" (3, showed 60; run 1465).
