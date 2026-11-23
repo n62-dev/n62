@@ -181,6 +181,7 @@
   --on-key-alpha: #000000;
   --key-edge: #000000;
   --mark-faint: #061b1b;
+  --key-pad: #1b403e;
   color-scheme: dark;
 }
 :root[data-family="n62"][data-brightness="light"] {
@@ -224,6 +225,7 @@
   --on-key-alpha: #ffffff;
   --key-edge: #8da1a0;
   --mark-faint: #bcd8d7;
+  --key-pad: #c4dcdb;
   color-scheme: light;
 }
 /* R748: a chip in the history looks like the entry line's (entry/field.ts): inline-block, so its tint covers tall content; the shape is here, not inline (the start chunk is at its pin) */

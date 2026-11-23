@@ -40,6 +40,7 @@
   --ring: #d2f3ef;
   --key-edge: #000000;
   --mark-faint: #212f3f;
+  --key-pad: #435970;
   color-scheme: dark;
 }
 :root[data-family="solarized"][data-brightness="dark"][data-keys="plain"] {
@@ -82,6 +83,7 @@
   --ring: #bdc59e;
   --key-edge: #000000;
   --mark-faint: #212f3f;
+  --key-pad: #435970;
   color-scheme: dark;
 }
 :root[data-family="solarized"][data-brightness="dark"][data-contrast="high"] {
@@ -122,8 +124,9 @@
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
   --ring: #d1f3f0;
-  --key-edge: #000000;
+  --key-edge: #38414b;
   --mark-faint: #0b0f15;
+  --key-pad: #2a3642;
   color-scheme: dark;
 }
 :root[data-family="solarized"][data-brightness="dark"][data-contrast="high"][data-keys="plain"] {
@@ -164,8 +167,9 @@
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
   --ring: #bdc59e;
-  --key-edge: #000000;
+  --key-edge: #38414b;
   --mark-faint: #0b0f15;
+  --key-pad: #2a3642;
   color-scheme: dark;
 }
 :root[data-family="solarized"][data-brightness="light"] {
@@ -208,6 +212,7 @@
   --ring: #0e4642;
   --key-edge: #b3b396;
   --mark-faint: #eef1cc;
+  --key-pad: #dbd7ae;
   color-scheme: light;
 }
 :root[data-family="solarized"][data-brightness="light"][data-keys="plain"] {
@@ -250,6 +255,7 @@
   --ring: #03161b;
   --key-edge: #b3b396;
   --mark-faint: #eef1cc;
+  --key-pad: #dbd7ae;
   color-scheme: light;
 }
 :root[data-family="solarized"][data-brightness="light"][data-contrast="high"] {
@@ -292,6 +298,7 @@
   --ring: #0c3e3a;
   --key-edge: #b3b3a9;
   --mark-faint: #edeee1;
+  --key-pad: #e1dfce;
   color-scheme: light;
 }
 :root[data-family="solarized"][data-brightness="light"][data-contrast="high"][data-keys="plain"] {
@@ -334,5 +341,6 @@
   --ring: #03161b;
   --key-edge: #b3b3a9;
   --mark-faint: #edeee1;
+  --key-pad: #e1dfce;
   color-scheme: light;
 }

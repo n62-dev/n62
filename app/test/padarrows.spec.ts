@@ -234,11 +234,10 @@ for (const viewport of [
 
     // R873 (owner, 2026-11-22, point 4): the round pad is filled with its own role, --key-pad, which stands 1.25:1 from the
     // keypad (theme-gen.test.ts); --key-ctl, which it wore before, sat 1.01 to 1.11 from it
-    for (const look of [{ brightness: "dark" }, { brightness: "light" }, { brightness: "dark", family: "bw" }, { brightness: "light", family: "solarized" }])
-      test(`the round pad's fill is --key-pad, not --key-ctl (${look.family ?? "n62"} ${look.brightness})`, async ({ page }) => {
+    for (const [family, brightness] of [["n62", "dark"], ["n62", "light"], ["bw", "dark"], ["solarized", "light"]] as const)
+      test(`the round pad's fill is --key-pad, not --key-ctl (${family} ${brightness})`, async ({ page }) => {
         await open(page);
-        const { brightness, ...rest } = look;
-        await set(page, brightness, rest);
+        await set(page, brightness, { family });
         const r = await page.locator(".pad").evaluate((pad) => {
           const tone = (v: string): string => {
             const probe = document.createElement("span");
