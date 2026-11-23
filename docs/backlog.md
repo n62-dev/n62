@@ -22,7 +22,8 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 7. **T1's hands-on items (2026-11-16):** A202 (the key click with the system touch sounds off, the Tab One); A210's feel after it merges (30 % against 90 % on the Fairphone); G9 waits on item 2.
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **R779** (decisions.md): the line's drag on the Fairphone.
-10. **G784** (decisions.md): Paste of a copied name (`2*i` pastes as the constant i, a product of names is refused).
+10. **R376** (decisions.md): a letter or bracket after a mark (`5!x`, `30°(1+2)`) stays a product; recommended: leave it.
+11. **G784** (decisions.md): Paste of a copied name (`2*i` pastes as the constant i, a product of names is refused).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
