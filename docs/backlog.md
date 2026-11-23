@@ -22,7 +22,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 7. **T1's hands-on items (2026-11-16):** A202 (the key click with the system touch sounds off, the Tab One); A210's feel after it merges (30 % against 90 % on the Fairphone); G9 waits on item 2.
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **R779** (decisions.md): the line's drag on the Fairphone.
-10. **R376** (decisions.md): a letter or bracket after a mark (`5!x`, `30°(1+2)`) stays a product; recommended: leave it.
+10. **A266's device step:** start adb on Windows (`adb start-server` in a Windows session; A266's worker's `adb kill-server` stopped the server behind the WSL bridge), then A266f1 runs by day (the Tab One: does the WebView run under the bars, the five looks with shots); no gate compiles N62BarsPlugin.java until then.
 11. **G784** (decisions.md): should Paste read a copied name back? (G784f1 refuses one N62 copied; a product of names is refused).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
@@ -83,6 +83,7 @@ Its lines: [research/background-stream.md](research/background-stream.md) (moved
 - **The pipeline (A201 takes red-first's ids and the audit model):** the size test skips CSS; red-first runs vitest on the branch's engine and counts a vitest file by its added test or assertion lines (A67).
 - **Load in the gates (pass 231; G782f1, G783):** the golden steps stage's ×8 clock rows `g331-simplify-f214-12`, `g325f1-acos-…`, `g618-sum-…` went into `SPEED_KNOWN` (golden-speed.ts) because other runs' checks loaded the host, so a real slowdown there is no longer seen; numeric.ts's other lone fallbacks (agreed's `once`, doubleFallback) still show a clock-stopped read's partner alone (G783 fix round 1 only retried floatFactsOf's). Family 4.
 - **Flaky (pass 231):** fold.spec.ts "folded: a tap picks, the second inserts and unfolds; …" has 3 FLAKE lines (R700 twice, G399) and failed in pass 231's e2e at load 24: its `rows` helper (fold.spec.ts:50) saw 2 of 3 rows done in 5 s; alone it passes (5.7 s). Ten fold.spec FLAKE lines since run 1260 share that helper.
+- **A digit on a disabled sheet row (R862; pass 232, decisions.md):** runs nothing with no feedback (`Sheet.activate`); docs/05 rule 4 wants the dead press's short haptic "no", in every sheet (the unit view's ☰ Number into Home and Store in with no result; Tools, Store, Settings rows). Family 7.
 - **C3. CI** (needs your OK);
 
 ### MVP release (docs/02 section 8)
