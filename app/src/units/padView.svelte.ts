@@ -45,6 +45,19 @@ export function watchSheet(shell: AppShell, closed: () => void): () => void {
   });
 }
 
+/** R915: `changed` runs each time `read` gives another value (the angle unit and the digits, as one text), whoever changed
+ *  them: the bar's angle word, a sheet, the Undo of a setting. Returns the stop. */
+export function watchValue(read: () => string, changed: () => void): () => void {
+  let last: string | undefined;
+  return $effect.root(() => {
+    $effect(() => {
+      const now = read();
+      if (last !== undefined && now !== last) untrack(changed);
+      last = now;
+    });
+  });
+}
+
 /** Load the pad and show it on the keys. */
 export async function showUnitPad(): Promise<void> {
   const m = await import("./pad.ts");

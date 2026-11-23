@@ -78,6 +78,16 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     expect(row.inexactInput).toBeUndefined();
   });
 
+  it("R915: the row keeps its request's angle; it reads the angle (R265's tag) only when the Giac text holds the degree factor", () => {
+    const q = t04();
+    const unitRowOf = (formula: string) => unitRow({ line: "", chips: {}, q, slots: {}, input: "", digits: 12, job: { angle: "rad", formula } });
+    expect(unitRowOf("sin(pasdeg*30)")).toMatchObject({ angle: "rad", readsAngle: true });
+    const plain = unitRowOf("2*pi*25*pasu1");
+    expect(plain.angle).toBe("rad");
+    expect(plain.readsAngle).toBeUndefined();
+    expect(t04row(q).readsAngle).toBeUndefined(); // no job given: neither
+  });
+
   it("is saved with the history and read back: the same chip, the number with its unit, the slots checked", async () => {
     const kv = fakeKv([], { cloneReads: true });
     const s = await session(kv);

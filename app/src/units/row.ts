@@ -10,6 +10,8 @@ import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
 import { homeItem, placed } from "../state/resultItem.ts";
 import { uncDigitsOf } from "../engine/constUnc.ts";
+import { PASDEG } from "../engine/pasdeg.ts";
+import type { AngleUnit } from "../calc/port.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { quantityChip } from "./chip.ts";
 import { unitNamesText } from "./messages.ts";
@@ -26,10 +28,13 @@ export interface RowIn {
   input: string;
   /** The digits setting the result was worked out at (σ's `uncDigits` counts the shown value's digits). */
   digits: number;
+  /** R915: the request's angle mode and Giac text: the row keeps the angle it ran in, and reads the angle (the tag in the
+   *  other mode, R265) when the text holds the degree factor, as a line's row does (state/resultItem.ts withJob). */
+  job?: { angle: AngleUnit; formula: string };
 }
 
 /** The row of a unit result (no id yet: putRow gives it one). */
-export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<HistoryItem, "id"> {
+export function unitRow({ line, chips, q, slots, input, digits, job }: RowIn): Omit<HistoryItem, "id"> {
   // a σ (an uncertain input or a constant with one) or a value flagged inexact went in: never "=" (as quantityChip)
   const inexact = q.unc !== undefined || q.value.facts.inexact === true;
   const chip = quantityChip(q);
@@ -62,6 +67,8 @@ export function unitRow({ line, chips, q, slots, input, digits }: RowIn): Omit<H
     ...(inexact ? { inexactInput: true } : {}),
     ...(Object.keys(chips).length ? { chips } : {}),
     units,
+    ...(job ? { angle: job.angle } : {}),
+    ...(job?.formula.includes(PASDEG) ? { readsAngle: true as const } : {}),
     startedAt: performance.now(),
   };
 }

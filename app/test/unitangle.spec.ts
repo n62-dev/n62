@@ -75,6 +75,7 @@ test("the view's row of sin(30) in RAD carries the RAD tag in DEG, as a plain ro
   const tag = (i: number) => rows(page).nth(i).getByTestId("row-angle");
   await expect(tag(0)).toHaveText("RAD");
   await expect(tag(1)).toHaveText("RAD");
+  await page.waitForTimeout(800); // the store write is debounced (as solve.spec's reload)
   await page.reload();
   await page.waitForFunction(() => window.n62?.session?.engineState === "ready", undefined, { timeout: 20_000 });
   await expect(rows(page)).toHaveCount(2);
