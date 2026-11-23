@@ -24,6 +24,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 9. **R779** (decisions.md): the line's drag on the Fairphone.
 10. **A266's device step:** plug the Tab One (HA24BZ2Y) in; `adb devices` from WSL must list it (the adb server restarts itself after `adb kill-server`, a gap of about 6 s). Then A266f1 runs by day (does the WebView run under the bars, the five looks with shots); no gate compiles N62BarsPlugin.java until then.
 11. **G784** (decisions.md): should Paste read a copied name back? (G784f1 refuses one N62 copied; a product of names is refused).
+12. **On the Fairphone at the next APK (pass 234):** R843's orange Enter in N62 Light; R866's slot line on the unit pad's prefix keys; R863's ⚙ draws as text, not a colour emoji (else R863f1: an inline SVG); R867's drag feel per number or name (decisions.md).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
