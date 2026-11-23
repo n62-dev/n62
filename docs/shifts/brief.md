@@ -123,7 +123,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B2c | G789 median and the quartiles refuse undef and a name in a list; ±inf sorted by value | gorge, Opus | `p1/gorge-medianundef` | – |
 | B4 | G553 floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
 | B5 | G551 bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
-| B6 | [G554](packages/G554.md) exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
+| B6 | G554 exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
 | B7 | [G405](packages/G405.md) solve keeps two real roots that are distinct but close | gorge, Opus | `p1/gorge-closeroots` | – |
 | B8 | [G404](packages/G404.md) G358's climb on every path; past its reach is never an overflow | gorge, Opus | `p1/gorge-climball` | – |
 | B9 | [G403](packages/G403.md) a tiny constant without an integer literal raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
