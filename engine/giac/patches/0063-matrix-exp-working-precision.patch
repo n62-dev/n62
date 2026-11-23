@@ -1,0 +1,142 @@
+# Upstream: giac 2.1.0 usual.cc numeric_matrix_exp, reached from exp of a square matrix whose entries are all floats (or pi; is_fully_numeric): the series ran while linfnorm(term)._DOUBLE_val>epsilon, and above Digits 14 the norm is an MPFR real, whose _DOUBLE_val reads other bits of the union as a tiny double, so the loop never ran and the identity came back: exp(evalf([[1,2],[3,4]])) and exp(evalf([[0,1],[-1,0]])) at Digits 15 and 40 = [[1,0],[0,1]] (right [[51.9689561987,74.736564567],[112.104846851,164.073803049]] and [[cos 1,sin 1],[-sin 1,cos 1]], mpmath expm); exp([[pi,pi],[pi,pi]]) the identity at any Digits. At Digits 12 the series was wrong too: the 100 terms of max_numexp did not reach a larger norm and the terms cancelled (exp(evalf([[0,40],[-40,0]])) gave -155.95 for cos 40 = -0.666938061652, exp(evalf([[-30,0],[0,-30]])) 0.00243 for exp(-30) = 9.35762296884e-14), and the last digit of [[1,2],[3,4]] was off (112.10484685); the factor gen(1/j) was a double and epsilon absolute. Two more faults met on the way: Giac's matrix product gives the zero matrix when every entry of a factor is within epsilon (1e-12) of 0 (evalf([[10^-19,0],[0,10^-19]])*evalf([[1,0],[0,1]]) = [[0,0],[0,0]] at Digits 40), and a float matrix times inv(gen(j)) in C++ (operator*, no context) took 1/j as a double. Now scaling and squaring: the matrix is divided by 2^s, s the least with n*max|entry|/2^s <= 1/2, the series runs at the entries' precision plus s+16 bits (53 for doubles), each product entry by entry and each scalar a float of those bits, until a bound of the rest is below the last bit; the sum is squared s times and rounded back to the entries' precision (doubles stay doubles, a complex entry too). An entry with no finite double is refused; a zero matrix still gives the exact identity; exact and symbolic matrices keep analytic_apply.
+# Changed by Pascaline contributors, 2026-11-23
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -941,13 +941,122 @@
+   symbolic symb_exp(const gen & e){
+     return symbolic(at_exp,e);
+   }
+-  static gen numeric_matrix_exp(const gen & e,double eps,GIAC_CONTEXT){
+-    gen res=midn(int(e._VECTptr->size()));
+-    gen eee(e);
+-    for (double j=2;j<max_numexp && linfnorm(eee,contextptr)._DOUBLE_val>eps;++j){
+-      res = res + eee;
+-      eee = gen(1/j) * eee * e ; 
++  // N62 (G554): the largest |re|+|im| of a matrix's entries as a double (finite false when one has no finite double)
++  // and the largest MPFR precision among them in bits (0: doubles only).
++  static void numeric_matrix_exp_scan(const gen & g,double & nrm,int & prec,bool & finite,GIAC_CONTEXT){
++    if (g.type==_VECT){
++      const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
++      for (;it!=itend;++it)
++	numeric_matrix_exp_scan(*it,nrm,prec,finite,contextptr);
++      return;
+     }
++    gen r,i;
++    reim(g,r,i,contextptr);
++    double a=0;
++    for (int k=0;k<2;++k){
++      const gen & p=k?i:r;
++#ifdef HAVE_LIBMPFR
++      if (p.type==_REAL)
++	prec=giacmax(prec,int(mpfr_get_prec(p._REALptr->inf)));
++#endif
++      gen d=evalf_double(p,1,contextptr);
++      if (d.type!=_DOUBLE_ || !(absdouble(d._DOUBLE_val)<=1e300)){
++	finite=false;
++	return;
++      }
++      a+=absdouble(d._DOUBLE_val);
++    }
++    if (a>nrm)
++      nrm=a;
++  }
++  // N62 (G554): the product of two numeric square matrices entry by entry. Giac's matrix product gives the zero matrix
++  // when every entry of a factor is within epsilon (1e-12) of 0 at any Digits (evalf([[10^-19,0],[0,10^-19]])*
++  // evalf([[1,0],[0,1]]) = [[0,0],[0,0]] at Digits 40), which cut the series once its terms were below 1e-12.
++  static gen numeric_matrix_exp_mult(const gen & a,const gen & b){
++    const vecteur & A=*a._VECTptr,& B=*b._VECTptr;
++    int n=int(A.size());
++    vecteur res(n);
++    for (int i=0;i<n;++i){
++      const vecteur & Ai=*A[i]._VECTptr;
++      vecteur row(n);
++      for (int j=0;j<n;++j){
++	gen sum=0;
++	for (int k=0;k<n;++k)
++	  sum=sum+Ai[k]*(*B[k]._VECTptr)[j];
++	row[j]=sum;
++      }
++      res[i]=gen(row);
++    }
++    return gen(res);
++  }
++  // N62 (G554): a matrix of floats back to doubles, entry by entry (evalf_double keeps a complex with MPFR parts).
++  static gen numeric_matrix_exp_double(const gen & g,GIAC_CONTEXT){
++    if (g.type==_VECT){
++      vecteur v(*g._VECTptr);
++      for (size_t k=0;k<v.size();++k)
++	v[k]=numeric_matrix_exp_double(v[k],contextptr);
++      return gen(v,g.subtype);
++    }
++    gen r,i;
++    reim(g,r,i,contextptr);
++    if (is_exactly_zero(i))
++      return evalf_double(r,1,contextptr);
++    return gen(evalf_double(r,1,contextptr),evalf_double(i,1,contextptr));
++  }
++  // N62 (G554): exp of a numeric square matrix by scaling and squaring at the entries' precision. Stock summed the
++  // series while linfnorm(term)._DOUBLE_val>epsilon: above Digits 14 the norm is an MPFR real, whose _DOUBLE_val reads
++  // other bits of the union as a tiny double, so the loop never ran and the identity came back (exp(evalf([[1,2],[3,4]]))
++  // at Digits 15 and 40); the factor gen(1/j) was a double and epsilon absolute; at Digits 12 the 100 terms of max_numexp
++  // did not reach a large norm and the terms cancelled (exp(evalf([[0,40],[-40,0]])) gave -155.95 for cos 40,
++  // exp(evalf([[-30,0],[0,-30]])) 0.0024 for 9.4e-14). Now e is divided by 2^s, s the least with N/2^s <= 1/2 (N =
++  // n*max|entry| bounds the row-sum norm, so the norm of e^j/j! is at most N^j/j!), the series runs at the entries'
++  // precision plus s+16 bits (53 for doubles), each product entry by entry and each scalar a float of those bits, until
++  // the bound of the next term is below 2^-(bits+2); the sum is squared s times and rounded back to the entries'
++  // precision (doubles stay doubles).
++  static gen numeric_matrix_exp(const gen & e0,GIAC_CONTEXT){
++    gen e=evalf(e0,1,contextptr); // pi, which is_fully_numeric admits, to a float ([[pi,pi],[pi,pi]] gave the identity)
++    if (e.type!=_VECT)
++      return gensizeerr(contextptr);
++    int n=int(e._VECTptr->size()),prec=0;
++    double nrm=0;
++    bool finite=true;
++    numeric_matrix_exp_scan(e,nrm,prec,finite,contextptr);
++    if (!finite)
++      return gensizeerr(gettext("exp: a matrix entry is not a finite number"));
++    if (nrm==0)
++      return midn(n);
++    nrm*=n;
++    int s=0;
++    for (;nrm>0.5;++s)
++      nrm/=2;
++    int nbits=giacmax(prec,53)+s+16;
++#ifdef HAVE_LIBMPFR
++    e=accurate_evalf(e,nbits);
++#endif
++    // the scalars as floats of nbits: e*inv(gen(j)) has no context and made 1/j a double (Digits 12)
++    if (s)
++      e=e*accurate_evalf(inv(pow(plus_two,s),contextptr),nbits);
++    gen res=midn(n),term(e);
++    double l2nrm=std::log(nrm)/std::log(2.0),lg=l2nrm; // lg: log2 of the bound of the term in `term`
++    for (int j=2;;++j){
++      control_c();
++      if (interrupted)
++	return gensizeerr(gettext("Stopped by user interruption."));
++      res=res+term;
++      lg+=l2nrm-std::log(double(j))/std::log(2.0);
++      if (lg<-nbits-2) // the rest of the series is below twice this bound (N/2^s <= 1/2)
++	break;
++      term=numeric_matrix_exp_mult(term,e)*accurate_evalf(inv(gen(j),contextptr),nbits);
++    }
++    for (int k=0;k<s;++k){
++      control_c();
++      if (interrupted)
++	return gensizeerr(gettext("Stopped by user interruption."));
++      res=numeric_matrix_exp_mult(res,res);
++    }
++#ifdef HAVE_LIBMPFR
++    res=prec?accurate_evalf(res,prec):numeric_matrix_exp_double(res,contextptr);
++#endif
+     return res;
+   }
+ 
+@@ -997,7 +1106,7 @@
+       if (is_squarematrix(e)){ 
+ 	// check for numeric entries -> numeric exp
+ 	if (is_fully_numeric(e))
+-	  return numeric_matrix_exp(e,epsilon(contextptr),contextptr);
++	  return numeric_matrix_exp(e,contextptr);
+ 	return analytic_apply(at_exp,*e._VECTptr,contextptr);
+       }
+       return apply(e,contextptr,exp);
