@@ -1,16 +1,15 @@
-# Upstream: giac 2.1.0 usual.cc _floor, its MPFR branch: the floor of a negative value is res-1 (res its truncation, real2int) unless is_zero(res-tmp), and is_zero of an MPFR value compares its double with epsilon, an absolute 1e-12 at any Digits (gen.cc is_zero). _ceil is -_floor(-x) and _round is floor(x+1/2), so every value within 1e-12 above an integer had that integer as its ceil, and a negative one within 1e-12 below as its floor, at Digits 12, 40 and 100 alike: ceil(pi*10^-13) = 0 (right 1), ceil(1-cos(10^-6)) = 0 (1), ceil(log10(10^12+1)) = 12 (13), floor(-pi*10^-13) = 0 (-1), round(-2.5-pi*10^-13) = -2 at Digits 40 (-3), ceil(sqrt(10^24+1)) = 10^12 (10^12+1), floor(-sqrt(10^30+1)) = -10^15 (-10^15-1); raw Giac after epsilon:=1e-30 gives the right ones. And a positive value had no such test, so one at rounding noise below an integer took the integer below: floor(sin(1)^2+cos(1)^2) = 0 at Digits 40 (its float is 1-9.2e-41). Now an MPFR value is the integer n next to it (its truncation, or the truncation plus 1 for a positive value) only when n-tmp, which is exact, is 0 or below the rounding of tmp at its own precision (2^(8-prec) of |tmp|), on both sides. Doubles keep giac_floor; is_zero and epsilon are not changed.
+# Upstream: giac 2.1.0 usual.cc _floor, its MPFR branch: the floor of a negative value is res-1 (res its truncation, real2int) unless is_zero(res-tmp), and is_zero of an MPFR value compares its double with epsilon, an absolute 1e-12 at any Digits (gen.cc is_zero). _ceil is -_floor(-x) and _round is floor(x+1/2), so every value within 1e-12 above an integer had that integer as its ceil, and a negative one within 1e-12 below as its floor, at Digits 12, 40 and 100 alike: ceil(pi*10^-13) = 0 (right 1), ceil(1-cos(10^-6)) = 0 (1), ceil(log10(10^12+1)) = 12 (13), floor(-pi*10^-13) = 0 (-1), round(-2.5-pi*10^-13) = -2 at Digits 40 (-3), ceil(sqrt(10^24+1)) = 10^12 (10^12+1), floor(-sqrt(10^30+1)) = -10^15 (-10^15-1); raw Giac after epsilon:=1e-30 gives the right ones. Now the negative value is its truncation only when res-tmp, which is exact, is 0 or below the rounding of tmp at its own precision (2^(8-prec) of |tmp|, a few hundred units of its last bit), so a value at rounding noise of an integer keeps it as before (floor(-(sin(1)^2+cos(1)^2)) = -1). A positive value, doubles (giac_floor), is_zero and epsilon are not changed.
 # Changed by Pascaline contributors, 2026-11-23
 --- a/src/usual.cc
 +++ b/src/usual.cc
-@@ -7642,6 +7642,28 @@ namespace giac {
+@@ -7642,6 +7642,27 @@ namespace giac {
    gen apply_unit(const gen & args,const gen_op_context & f,GIAC_CONTEXT){
      return symbolic(at_unit,gen(makevecteur(f(args._SYMBptr->feuille[0],contextptr),args._SYMBptr->feuille[1]),_SEQ__VECT));  
    }
-+  // N62 (G553): an MPFR tmp is the integer n (its truncation res, or res+1 for a positive tmp) when n-tmp (exact: a float
-+  // minus its integer part, or 1 minus its fraction) is 0 or below the rounding of tmp at its own precision, 2^(8-prec)
-+  // of |tmp|, never within is_zero's absolute epsilon (1e-12 at any Digits): ceil(pi*10^-13) was 0, floor(-pi*10^-13) 0,
-+  // ceil(log10(10^12+1)) 12. A value at rounding noise of an integer is that integer on both sides
-+  // (floor(sin(1)^2+cos(1)^2) at Digits 40, 1-9.2e-41, was 0).
++  // N62 (G553): a negative MPFR tmp is its truncation n when n-tmp (exact: a float minus its integer part) is 0 or below
++  // the rounding of tmp at its own precision, 2^(8-prec) of |tmp|, never within is_zero's absolute epsilon (1e-12 at any
++  // Digits): ceil(pi*10^-13) was 0, floor(-pi*10^-13) 0, ceil(log10(10^12+1)) 12. A value at rounding noise of an
++  // integer keeps it, as before (floor(-(sin(1)^2+cos(1)^2)) = -1); a positive tmp is not asked, as before.
 +  static bool real_is_int(const gen & n,const gen & tmp,GIAC_CONTEXT){
 +#if defined HAVE_LIBMPFR && !defined BF2GMP_H
 +    gen d=n-tmp;
@@ -24,23 +23,19 @@
 +      return false;
 +    return mpfr_get_exp(d._REALptr->inf)<=mpfr_get_exp(tmp._REALptr->inf)-long(mpfr_get_prec(tmp._REALptr->inf))+8;
 +#else
-+    return is_exactly_zero(n-tmp) || (is_strictly_positive(-tmp,contextptr) && is_zero(n-tmp,contextptr));
++    return is_zero(n-tmp,contextptr);
 +#endif
 +  }
 +
    gen _floor(const gen & args,GIAC_CONTEXT){
      if ( args.type==_STRNG && args.subtype==-1) return  args;
      if (is_equal(args))
-@@ -7782,9 +7804,9 @@ namespace giac {
+@@ -7782,7 +7803,7 @@ namespace giac {
        }
  #endif
        gen res=real2int(tmp,contextptr);
 -      if (is_strictly_positive(-tmp,contextptr) && !is_zero(res-tmp,contextptr))
--	return res-1;
--      return res;
-+      if (is_strictly_positive(-tmp,contextptr))
-+	return real_is_int(res,tmp,contextptr)?res:res-1;
-+      return real_is_int(res+1,tmp,contextptr)?res+1:res;
++      if (is_strictly_positive(-tmp,contextptr) && !real_is_int(res,tmp,contextptr))
+ 	return res-1;
+       return res;
      }
-     if (tmp.type==_FLOAT_)
-       return ffloor(tmp._FLOAT_val);

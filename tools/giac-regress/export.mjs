@@ -953,9 +953,9 @@ export function build(cases) {
     nPatched++;
   }
   // Patch 0061 (G553), written lines: the integers whole (Home shows them rounded to 12 digits), the Digits 12 runs, where _floor
-  // raises a double to 100 bits (stock gives 10^12, -10^15, 0 and 12 at both Digits), and a value at rounding noise of an integer;
-  // the check line guards the noise window: 3-pi*10^-36 is far above the rounding at Digits 40, so 2 (stock 2)
-  check.push("// g553-keep-floor-3-pi-1e-36-40 (derived: 2 < 3-pi*10^-36 < 3)", 'Digits:=40:; pc("g553-keep-floor-3-pi-1e-36-40",\'floor(3-pi*10^-36)\',2,1/10^30);');
+  // raises a double to 100 bits, and a value just past the rounding window at Digits 40 (stock gives 10^12, -10^15, 0, 12 and 3);
+  // the check line guards the window from the other side: sin(1)^2+cos(1)^2-2 is -1-9.2E-41 at Digits 40, its rounding noise
+  check.push("// g553-keep-floor-pythagoras-minus-2-40 (derived: sin(1)^2+cos(1)^2 = 1)", 'Digits:=40:; pc("g553-keep-floor-pythagoras-minus-2-40",\'floor(sin(1)^2+cos(1)^2-2)\',-1,1/10^30);');
   nCheck++;
   for (const [k, digits, input, value, why] of [
     ["ceil-sqrt-1e24+1", 40, "ceil(sqrt(10^24+1))", "1000000000001", "sqrt(10^24+1) = 10^12+5E-13"],
@@ -963,8 +963,7 @@ export function build(cases) {
     ["ceil-pi-1e-13-12", 12, "ceil(pi*10^-13)", "1", "0 < pi*10^-13 <= 1"],
     ["ceil-log10-1e12+1-12", 12, "ceil(log10(10^12+1))", "13", "log10(10^12+1) = 12+4.3E-13"],
     ["ceil-sqrt-1e24+1-12", 12, "ceil(sqrt(10^24+1))", "1000000000001", "sqrt(10^24+1) = 10^12+5E-13"],
-    ["floor-pythagoras-40", 40, "floor(sin(1)^2+cos(1)^2)", "1", "exactly 1; its float at Digits 40 is 1-9.2E-41, which stock floored to 0"],
-    ["ceil-neg-pythagoras-40", 40, "ceil(-(sin(1)^2+cos(1)^2))", "-1", "exactly -1; stock gave 0 at Digits 40"],
+    ["ceil-3-pi-1e-36-40", 40, "ceil(3+pi*10^-36)", "4", "3 < 3+pi*10^-36 <= 4, far above the rounding at Digits 40"],
   ]) {
     patched.push("// patch 0061-floor-mpfr-working-precision.patch", `// g553-${k} (derived: ${why})`, `Digits:=${digits}:; pc("g553-${k}",'${input}',${value},1/10^30);`);
     nPatched++;
