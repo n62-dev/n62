@@ -345,23 +345,25 @@ class Parser implements CalcParser {
       } else if (this.isCh("!")) {
         this.pos++;
         base = ["Factorial", base];
-        this.markThen("parse.numberAfterFactorial");
+        this.markThen("!");
       } else if (this.isCmd("%")) {
         this.pos++;
         base = ["Divide", base, { num: "100" }];
-        this.markThen("parse.numberAfterPercent");
+        this.markThen("%");
       } else if (this.isCmd(PERMILLE)) {
         this.pos++; // R725: per mille, read as % is
         base = ["Divide", base, { num: "1000" }];
-        this.markThen("parse.numberAfterPermille");
+        this.markThen("‰");
       } else return base;
     }
   }
 
   /** R376 (be-7): a number right after a mark (30°15, 2%3, 5!3) is refused, naming the mark it lacks; never a product
    *  with no × on the line (the G2 reads 30°15 as 30°15′, G2 checklist row 76). */
-  private markThen(key: ParseKey): void {
-    if (this.peek()?.t === "num") throw parseError(key);
+  private markThen(mark: string): void {
+    if (this.peek()?.t !== "num") return;
+    // ° and ′ name the mark that may follow them; after ″, %, ‰ and ! only × is left (one key with {mark}: start chunk, R91)
+    throw mark === "°" ? parseError("parse.numberAfterDegree") : mark === "′" ? parseError("parse.numberAfterPrime") : parseError("parse.numberAfterMark", { mark });
   }
 
   /**
@@ -371,8 +373,8 @@ class Parser implements CalcParser {
    */
   private dms(deg: Json): Json {
     const parts: Json[] = [deg];
-    let last: ParseKey = "parse.numberAfterDegree";
-    for (const [mark, per, key] of [["prime", "60", "parse.numberAfterPrime"], ["doubleprime", "3600", "parse.numberAfterSeconds"]] as const) {
+    let last = "°";
+    for (const [mark, per, key] of [["prime", "60", "′"], ["doubleprime", "3600", "″"]] as const) {
       const t = this.peek();
       if (t?.t === "num" && this.isCmd(mark, 1)) {
         this.pos += 2;
