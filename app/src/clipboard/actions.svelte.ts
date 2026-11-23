@@ -17,7 +17,7 @@ import { copyExact } from "./exact.ts";
 import { whyLine } from "./whyLine.ts";
 import { entryText } from "./plaintext.ts";
 import type { ClipboardPort } from "./port.ts";
-import type { CopySource, TextOptions } from "./text.ts";
+import type { CopySource, NameSeen, TextOptions } from "./text.ts";
 import type { LibrarySource } from "../views/libraryJobs.ts";
 /** The picked row's buttons draw the row actions below, so they come in this chunk, not the start chunk (R147). */
 export { default as RowBar } from "../views/RowBar.svelte";
@@ -33,6 +33,9 @@ const pasteUnit = () => import("./pasteUnit.ts");
 const NOTICE_MS = 2200;
 /** R832: the most characters of a copied text the notice names ("Copied: 0.333 333 333 333"); the whole is on the clipboard. */
 const NAMED_MAX = 24;
+/** G784f1: the last text a Copy wrote that holds a name (a stand-in as its letter, `2*i` from the name i), which Paste refuses.
+ *  In localStorage, so a relaunch keeps it; no kv record, so no backup holds it. */
+export const COPIED_NAME = "n62.copiedName";
 
 /** What the row actions do on the entry line; App owns these (a tap on a row uses them before this code has loaded). */
 export interface RowOps {
@@ -152,14 +155,39 @@ export class ClipActions {
     const ctx = this.session.displayContext();
     return groupMarked(text, groupSepFor(ctx.groupSep, ctx.decimalComma), ctx.decimalComma === true);
   }
-  private async put(text: string | undefined, done: string = tc("clip.copied"), one = false): Promise<boolean> {
+  /** `named` (G784f1): the text holds a name (a copy writer's NameSeen); a written text is kept for Paste's refusal, any
+   *  other written text clears it. */
+  private async put(text: string | undefined, done: string = tc("clip.copied"), one = false, named = false): Promise<boolean> {
     if (text === undefined || text === "") {
       this.say(tc("clip.nothing"));
       return false;
     }
     const ok = await (await this.port()).writeText(text);
     this.say(ok ? done : tc("clip.unavailable"), NOTICE_MS, ok && one);
+    if (ok) this.keepName(named ? text : null);
     return ok;
+  }
+
+  /** G784f1: the kept text in memory too, for a device whose storage cannot be written (then it lasts this run only). */
+  private nameInMemory: string | null = null;
+  private keepName(text: string | null): void {
+    this.nameInMemory = text;
+    try {
+      if (text === null) localStorage.removeItem(COPIED_NAME);
+      else localStorage.setItem(COPIED_NAME, text);
+    } catch {
+      // no storage: this run only
+    }
+  }
+  /** Whether `clip` is the text a Copy of a row with a name wrote last (this run or the one before). */
+  private copiedName(clip: string): boolean {
+    let kept = this.nameInMemory;
+    try {
+      kept = localStorage.getItem(COPIED_NAME) ?? kept;
+    } catch {
+      // no storage: the memory's
+    }
+    return kept !== null && clip.trim() === kept.trim();
   }
 
   /** R832f2: a finished row with no confirmed digit (mark ⚠ n 0) shows no number, so what shows a number (Full value, As shown, LaTeX,
@@ -213,15 +241,17 @@ export class ClipActions {
     const m = i ? await impl() : undefined;
     if (this.noNumber(i)) return this.refuseNoDigit();
     const shown = i && m ? m.copyShownText(this.session.display(i).text) : "";
-    return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named);
+    const seen: NameSeen = { name: false }; // G784f1
+    return this.put(i && m ? m.copyFull(source(i), this.opts, seen) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named, seen.name);
   }
   /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
   copyShown(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
       if (this.noNumber(i)) return this.refuseNoDigit();
-      const text = i ? (await impl()).copyShownText(this.session.display(i).text) : undefined; // G784: the letters, not i_
-      return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named);
+      const seen: NameSeen = { name: false }; // G784f1
+      const text = i ? (await impl()).copyShownText(this.session.display(i).text, seen) : undefined; // G784: the letters, not i_
+      return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named, seen.name);
     });
   }
   copyExact(item?: HistoryItem, named = false): Promise<boolean> {
@@ -232,8 +262,9 @@ export class ClipActions {
         return false;
       }
       // G784: the stand-ins as their letters; R100: an exact list ({3/2,2}) with the decimal comma separates its elements by `;`, as Copy does
-      const text = i ? (await impl()).copyExactText(source(i), this.opts) : undefined;
-      return this.put(text, named && text ? this.named(text) : undefined, named);
+      const seen: NameSeen = { name: false }; // G784f1
+      const text = i ? (await impl()).copyExactText(source(i), this.opts, seen) : undefined;
+      return this.put(text, named && text ? this.named(text) : undefined, named, seen.name);
     });
   }
   /** R181: Copy › Python: the row (else the last result) as a sympy script, from its session line (pyExport.ts). */
@@ -270,6 +301,11 @@ export class ClipActions {
     const clip = text ?? (await (await this.port()).readText());
     if (clip === null) {
       this.say(tc("clip.unavailable"));
+      return false;
+    }
+    // G784f1: a text N62 copied from a row with a name (`2*i` from the name i) would read as another value (the constant i)
+    if (this.copiedName(clip)) {
+      this.say(tc("clip.copiedName"));
       return false;
     }
     const n = (await impl()).parsePastedNumber(clip, this.opts);

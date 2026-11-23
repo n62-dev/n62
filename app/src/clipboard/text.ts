@@ -100,39 +100,53 @@ function copyDigits(i: CopySource): number {
  * R269: a unit-view row adds its ` ± σ unit` (`39.488 ± 1.2 m²`) through withUnit, the writer of Copy as shown, so the
  * two agree on the unit part. undefined: nothing finished to copy.
  */
-export function copyFull(i: CopySource, o: TextOptions = {}): string | undefined {
-  const v = valueFull(i, o);
+export function copyFull(i: CopySource, o: TextOptions = {}, seen?: NameSeen): string | undefined {
+  const v = valueFull(i, o, seen);
   return v === undefined || !i.units ? v : withUnit({ text: v, latex: "" }, i.units, o.decimalComma ? commaResult : undefined).text;
 }
 
+/** G784f1: set by the copy writers when they turned a stand-in into its letter, so the text holds a name (Paste refuses it). */
+export interface NameSeen {
+  name: boolean;
+}
+
 /** G784: Giac's print with the parser's stand-ins (`i_`, `beta_`, `Pi_`, …; engine/standIns.ts) as the letters the screen
- *  draws (`i`, `β`, `Π`; typedName); any other name, and every string, as it is. */
-export function copyNames(text: string): string {
-  return mapNames(text, (n) => (isStandIn(n.name) ? typedName(n.name) : null), "printed");
+ *  draws (`i`, `β`, `Π`; typedName); any other name, and every string, as it is. `named` (G784f1): a stand-in was turned. */
+export function copyNames(text: string): { text: string; named: boolean } {
+  let named = false;
+  const out = mapNames(text, (n) => (isStandIn(n.name) ? ((named = true), typedName(n.name)) : null), "printed");
+  return { text: out, named };
+}
+
+/** copyNames' text, `seen.name` set when it turned a stand-in. */
+function lettersOf(t: string, seen: NameSeen | undefined): string {
+  const r = copyNames(t);
+  if (r.named && seen) seen.name = true;
+  return r.text;
 }
 
 /** An engine text as Copy writes it: the letters for the stand-ins, then `;` between a list's elements with the decimal comma (R100).
  *  A row read back from storage without its text (not a string) is passed on as it is, as before G784. */
-function engineText(t: string, o: TextOptions): string {
+function engineText(t: string, o: TextOptions, seen?: NameSeen): string {
   if (typeof t !== "string") return t;
-  return o.decimalComma ? commaResult(copyNames(t), false) : copyNames(t);
+  return o.decimalComma ? commaResult(lettersOf(t, seen), false) : lettersOf(t, seen);
 }
 
 /** Copy as shown (docs/04 2.6): the row's display text without its mark, the stand-ins as their letters (G784). */
-export function copyShownText(shown: string): string {
-  return copyNames(withoutMark(shown));
+export function copyShownText(shown: string, seen?: NameSeen): string {
+  return lettersOf(withoutMark(shown), seen);
 }
 
 /** Copy exact: Giac's exact text (exact.ts), the stand-ins as their letters (G784), `;` in a list with the decimal comma. */
-export function copyExactText(i: CopySource, o: TextOptions = {}): string | undefined {
+export function copyExactText(i: CopySource, o: TextOptions = {}, seen?: NameSeen): string | undefined {
   const exact = copyExact(i);
-  return exact === undefined ? undefined : engineText(exact, o);
+  return exact === undefined ? undefined : engineText(exact, o, seen);
 }
 
 /** copyFull's number alone, without a unit row's ` ± σ unit`. */
-function valueFull(i: CopySource, o: TextOptions): string | undefined {
+function valueFull(i: CopySource, o: TextOptions, seen?: NameSeen): string | undefined {
   if (i.status !== "done") return undefined;
-  if (i.drawn !== undefined) return engineText(i.drawn, o); // R100: a list's elements by `;`
+  if (i.drawn !== undefined) return engineText(i.drawn, o, seen); // R100: a list's elements by `;`
   const f = i.full;
   if (f !== undefined && /^-?\d+$/.test(f)) return f; // an exact integer, however long
   // A real the engine wrote as digits (CAS floats too): its confirmed digits, in the notation of docs/04 2.6.
@@ -144,7 +158,7 @@ function valueFull(i: CopySource, o: TextOptions): string | undefined {
     return realText(q, DECIMAL_KEEP, o);
   }
   if (i.value) return complexText(i.value, copyDigits(i), o);
-  return engineText(f ?? i.text, o); // (R57) a list or an expression the engine wrote
+  return engineText(f ?? i.text, o, seen); // (R57) a list or an expression the engine wrote
 }
 
 import { copyExact } from "./exact.ts";
