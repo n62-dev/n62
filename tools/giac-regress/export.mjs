@@ -134,10 +134,12 @@ export const KNOWN_RULES = [
   [/Bessel|Airy|besselj/, "register row no-mpfr-path (G4, G50): no MPFR path, an error at Digits above 14"],
   [/^prec-4-romberg/, "register row no-mpfr-path (G4, G50): romberg works in a double, 30 digits asked"],
   [/^g184-sum-harmonic-1e6$/, "register row no-mpfr-path (G4, G50): Giac's Psi has no MPFR path, so Psi(1000001)+euler_gamma (its closed form of the sum) stays unevaluated at Digits 40; Home shows its double with ⚠ (G184)"],
+  [/^g622-rank-approx-near-singular-1e-39$/, "register row sign-at-digits (G38, G622): patch 0065 takes an MPFR sum within 2^(12-prec) of its larger term for 0, so the rank of a matrix whose determinant is 10^-39 is 1 at Digits 40; Home decides rank again at P + 20 and P + 40 (2)"],
   [/^g140f2-negbinomial_cdf-/, "G140f1: Giac's incomplete Beta (negbinomial_cdf off the integers) is a double at Digits 40; Home shows it as an unaudited double with rule 3's count"],
 ];
 // The ids Giac fails on the pin (run.mjs: every line of the known file fails).
 export const KNOWN_IDS = new Set([
+  "g622-rank-approx-near-singular-1e-39",
   "g220-normald-cdf-neg20-12",
   "g220-normald-cdf-neg40-12",
   "g220-normal-cdf-neg20-12",
