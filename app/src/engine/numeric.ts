@@ -805,8 +805,8 @@ function floatFactsOf(
   // G50: run with the functions Giac gets wrong on complex arguments replaced (forValue), and the names that hold them
   // read through their copies (G50f1, complexReads).
   const run = reads === null ? null : forValue(giac, reads.text, "typed");
-  // G783 fix round 1: the slots of a read Giac's interrupt stopped (its budget or its clock).
-  const stopped = new Set<string>();
+  // G783 fix round 1: a read Giac's interrupt stopped (its budget or its clock).
+  let stopped = false;
   // `asked`: the precision an evalf(e,n) in the input runs at in this evaluation (M4-6).
   // `text`: what is run (`run`, or G44's polished text).
   const at = (
@@ -817,7 +817,7 @@ function floatFactsOf(
   ): Parts[] | null =>
     withDigits(giac, d, restoreDigits, () => {
       const r = valueAt(giac, text === null ? name : `${slot}:=(${withAskedPrecision(text, asked)})`, shape, d, P);
-      if (r.v.kind === "error" && isTimeout(r.v.text)) stopped.add(slot);
+      stopped ||= isTimeout(r.v.text);
       return r.parts;
     });
   // A non-real value that rests on a replaced function not read through our definitions (DEG, complexReads' hidden).
@@ -882,8 +882,10 @@ function floatFactsOf(
     let M = at(P, "pasm");
     // G783 fix round 1: a read Giac's interrupt stopped (its clock, a host stall under load) is read once more before the
     // other is taken alone (min(digits, 14) below): student_icdf(i,0.5) showed 12 digits of noise. A budget stop stops again.
-    if (D && !M && stopped.has("pasm")) M = at(P, "pasm");
-    if (M && !D && stopped.has("pasd")) D = at(DOUBLE_DIGITS, "pasd", () => DOUBLE_DIGITS);
+    if (stopped && !D !== !M) {
+      D ??= at(DOUBLE_DIGITS, "pasd", () => DOUBLE_DIGITS);
+      M ??= at(P, "pasm");
+    }
     const fnWarn: PrecisionWarn = "unaudited";
     if (D && M) {
       // G324: a part 0 in the double and not at P is read once more at P + 20; G60's noise is shown as 0 (rootofNoise.ts)
