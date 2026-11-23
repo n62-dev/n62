@@ -155,7 +155,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | G790 |
-| B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
+| B6c | G792 sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
 | B6d | [G793](packages/G793.md) lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
 | B6e | [G794](packages/G794.md) CAS float lists get a mark | gorge, Opus | `p1/gorge-caslistmark` | – |
 | B6f | [G797](packages/G797.md) the sweep builds matrices | gorge, Opus | `p1/gorge-sweepmatrix` | – |
