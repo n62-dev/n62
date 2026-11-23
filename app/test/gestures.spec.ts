@@ -36,19 +36,23 @@ test("K1 trackpad: a drag steps in 2D with no pulse per step (R112); a tap on an
   await tap(page, ["esc"]);
   await expect(page.locator('[data-selected="true"]')).toHaveCount(0);
 
-  // left/right through the text: no pulse per step (R112)
-  await tap(page, ["d1", "d2", "d3", "d4"]);
+  // left/right through the text: no pulse per step (R112). R867 (owner, 2026-11-22): a drag step goes over a whole number
+  // or name, a tap stays one character, so the steps are counted on single digits between operators
+  await tap(page, ["d1", "add", "d2", "add", "d3", "add", "d4"]);
   const before = (await vibrations(page)).length;
   await drag(page, "left", -40, 0); // three steps (12 px each); the drag leaves the pad, it keeps counting
   expect((await vibrations(page)).length - before).toBe(1); // the touch alone: a step is silent (R112)
   await tap(page, ["d9"]);
-  expect(await entryValue(page)).toBe("19234");
-  await tap(page, ["right", "d5"]); // a tap is one step
-  expect(await entryValue(page)).toBe("192534");
-  await drag(page, "right", 13, 0);
-  await drag(page, "right", -26, 0); // dragging back steps back
+  expect(await entryValue(page)).toBe("1+2+93+4");
+  await tap(page, ["right", "d5"]); // a tap is one step, inside a number too
+  expect(await entryValue(page)).toBe("1+2+935+4");
+  await drag(page, "left", -13, 0); // one drag step crosses the number 935 to its start
   await tap(page, ["d0"]);
-  expect(await entryValue(page)).toBe("1920534");
+  expect(await entryValue(page)).toBe("1+2+0935+4");
+  await drag(page, "right", 13, 0); // to the end of 0935
+  await drag(page, "right", -26, 0); // dragging back steps back: over 0935, then over +
+  await tap(page, ["d7"]);
+  expect(await entryValue(page)).toBe("1+27+0935+4");
 });
 
 test("keys fire when the finger lifts: a slip or a long hold is still the key, a cancel types nothing, no cursor mode", async ({

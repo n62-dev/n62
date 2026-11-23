@@ -67,7 +67,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e | [R874](packages/R874.md) the empty-history mark takes the hint's colour, faint | ron, Opus | `p1/ron-markhint` | R860, R873 |
 | 888f | [R863](packages/R863.md) Settings on the tap (⚙), Help on its Shift | ron, Opus | `p1/ron-settingskey` | R856, R838 |
 | 888g | R866 the prefix keys end in a slot line (G_) | ron, Opus | `p1/ron-prefixslot` | – |
-| 888h | [R867](packages/R867.md) a pad drag steps by number or name | ron, Opus | `p1/ron-padtoken` | – |
+| 888h | R867 a pad drag steps by number or name | ron, Opus | `p1/ron-padtoken` | – |
 | 888i | [R868](packages/R868.md) a tap on the line brings the keys back (results mode) | ron, Opus | `p1/ron-linetapunfold` | R856 |
 | 888j | [R869](packages/R869.md) Help on Find's highlighted row (help sheet or card) | ron, Opus | `p1/ron-helpfind` | – |
 | 888k | [R870](packages/R870.md) Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |

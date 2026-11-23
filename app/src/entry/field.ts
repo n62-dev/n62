@@ -13,7 +13,7 @@ import { withEntryMacros } from "../render/macros.ts";
 import { EMARK, isChipLatex } from "./macros.ts";
 import { lineTouch } from "./lineTouch.ts";
 import { eNumberStart, isNumberLatex, numberRunStart } from "./numberRun.ts";
-import { nextBox, settle } from "./stops.ts";
+import { crossRun, nextBox, settle } from "./stops.ts";
 import { GROW_MATRIX, type Grown } from "./matgrow.ts";
 import { atomStart, latexAt } from "./boxes.ts";
 import { termRange } from "./term.ts";
@@ -332,6 +332,7 @@ function onField(mf: MathfieldElement, a: ActionBody, grown: Grown | undefined, 
   } else apply(mf, a);
   if (a.kind === "insert" && a.latex === GROW_MATRIX) grown?.add(mf); // R185: this matrix grows
   if (a.kind === "cmd") settle(mf, a.name); // R27b (F23): ◀ ▶ ▲ ▼ and the trackpad stop only at a box
+  if (a.kind === "cmd" && "drag" in a) crossRun(mf, a.name); // R867: a drag step goes over a whole number or name
   mf.focus();
 }
 
