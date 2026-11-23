@@ -105,7 +105,7 @@
     const p = k.actions.primary;
     if (p?.kind === "special" && (p.name === "shift" || p.name === "alpha")) return false; // the modifiers work in every layer
     const a = act(k);
-    return !a || (a.kind === "special" && a.name === "none") || (app && a.kind === "insert" && a.units === true);
+    return !a || (a.kind === "special" && a.name === "none") ? !k.user : app && a.kind === "insert" && a.units === true; // R705: an empty free key opens its row in Your keys
   };
 
   let padEl: HTMLDivElement | undefined = $state();

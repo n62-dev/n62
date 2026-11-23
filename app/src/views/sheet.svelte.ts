@@ -395,6 +395,13 @@ export class Sheet {
     return true;
   }
 
+  /** R705: open the submenu of the open level's row `id` (Settings › Your keys for an empty free key). False: no such row. */
+  enterAt(id: string): boolean {
+    const i = this.level.items.findIndex((x) => x.id === id && x.submenu !== undefined && !x.disabled);
+    if (i >= 0) this.activate(i, true);
+    return i >= 0;
+  }
+
   /** R777: does the open level take a tap on this key for a job of its own, before the usual sheet reading (sheetPress): a grid's
    *  cells (R189), a free key's slot it lists (goKey), a key at a grid cell's place (pickKey)? Asked without acting. `layer`: the keypad's. */
   takes(key: Key, layer: string): boolean {
