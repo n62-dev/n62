@@ -12,7 +12,7 @@ import type { MenuItem } from "../apps/types.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { FindItem, IndexItem } from "../find/types.ts";
 import { cellUnitOf, pickActions } from "./find.ts";
-import { productActions, unitsMenu, type ConstPick } from "./menu.ts";
+import { productActions, unitViewMenu, unitsMenu, type ConstPick } from "./menu.ts";
 import { unitTools } from "./tools.ts";
 import { SlotModel, slotCatalogue } from "./slot.ts";
 
@@ -195,11 +195,18 @@ describe.skipIf(!full)("R92: the units menu's Constants and Tools", () => {
   it("Tools has one row per unit tool of the spec, then ours (R353: Store in a name); without a result only the end slot runs, the rest says why", () => {
     const rows = level(menu.categories, "ucat:tools");
     expect(rows.map((r) => r.id)).toEqual(["utool:end", "utool:si", "utool:alts", "utool:unit", "utool:number", "utool:store"]);
-    expect(rows.map((r) => r.label)).toEqual(["The end slot", "The SI form", "The alternatives", "The unit alone", "The number into Home", "Store in a name"]);
+    expect(rows.map((r) => r.label)).toEqual(["Check against a unit", "The SI form", "The alternatives", "The unit alone", "The number into Home", "Store in a name"]);
     expect(rows.map((r) => r.disabled ?? false)).toEqual([false, true, true, true, true, true]);
     expect(rows[1]?.reason).toBe("needs a result first");
     rows[0]?.run?.();
     expect(ran).toEqual(["end"]);
+  });
+
+  it("R862: the unit view's ☰ holds the Tools rows, then Constants ›: the same rows as the units menu's last two", () => {
+    const rows = unitViewMenu(index, tools, (c) => void consts.push(c));
+    expect(rows.map((r) => r.id)).toEqual([...level(menu.categories, "ucat:tools").map((r) => r.id), "ucat:const"]);
+    expect(rows.slice(0, 6).map((r) => r.disabled ?? false)).toEqual([false, true, true, true, true, true]);
+    expect(rows[6]?.submenu?.items.map((r) => r.id)).toEqual(level(menu.categories, "ucat:const").map((r) => r.id));
   });
 
   it("Settings' cell Find and More… have neither row (no constant handler, no tools)", () => {

@@ -5,6 +5,7 @@
 // caller's: units/find.ts turns it into tokens. A product the grids name that Find has no item for (cm^2, Btu/h) is a
 // row too, picked as the factors it is made of. R92: after the categories, so no row moves, Constants (the spec's
 // lists; a pick is the caller's, units/open.ts puts it on Home's line) and Tools (units/tools.ts, the unit view's places).
+// R862: the same Tools rows and Constants are the unit view's ☰ (unitViewMenu).
 // Loaded on the first Math press in a slot (units/find.ts).
 import raw from "../../../spec/units-menu.yaml";
 import type { MenuItem } from "../apps/types.ts";
@@ -152,10 +153,18 @@ function constantsRow(index: FindIndex, pick: (c: ConstPick) => void): MenuItem 
 /** R92: Tools, one row per unit tool (units/tools.ts); a tool that cannot run is disabled with its reason. */
 function toolsRow(tools: readonly UnitTool[]): MenuItem {
   const title = unitText("units.menu.tools");
-  const items = tools.map((t): MenuItem => {
+  return { id: "ucat:tools", label: title, submenu: { title, items: toolRows(tools) } };
+}
+
+function toolRows(tools: readonly UnitTool[]): MenuItem[] {
+  return tools.map((t): MenuItem => {
     const label = unitText(`units.tool.${t.id}`);
     const run = t.run;
     return run ? { id: `utool:${t.id}`, label, count: "units-tools", run } : { id: `utool:${t.id}`, label, count: "units-tools", disabled: true, ...(t.reason ? { reason: t.reason } : {}) };
   });
-  return { id: "ucat:tools", label: title, submenu: { title, items } };
+}
+
+/** R862: the unit view's ☰: the Tools rows, then Constants ›, the same rows the units menu ends with (one list for both). */
+export function unitViewMenu(index: FindIndex, tools: readonly UnitTool[], constant: (c: ConstPick) => void): MenuItem[] {
+  return [...toolRows(tools), constantsRow(index, constant)];
 }

@@ -177,21 +177,22 @@ for (const width of [412, 360]) {
       await expect(page.getByTestId("apps")).toBeVisible();
     });
 
-    test("menu-button does what a mouse click on it does: a dead press (its double pulse), the view stays with its focus", async ({ page }) => {
-      const press = async (how: "click" | "tap"): Promise<number> => {
-        const v0 = (await vibrations(page)).length;
+    test("menu-button does what a mouse click on it does: the Units sheet over the view (R862), a second ☰ closes it onto the view", async ({ page }) => {
+      const press = async (how: "click" | "tap"): Promise<string> => {
         await page.getByTestId("menu-button")[how]();
-        await page.waitForTimeout(400); // (the dead press's second pulse comes after the first, App.svelte dead)
+        await expect(page.getByTestId("menu")).toBeVisible({ timeout: 3000 });
+        const title = (await page.getByTestId("menu").getByTestId("sheet-title").textContent()) ?? "";
+        expect(await viewOpen(page)).toBe(true);
+        await page.getByTestId("menu-button").click();
         await backOnView(page);
         expect(await viewOpen(page)).toBe(true);
-        return (await vibrations(page)).length - v0;
+        return title;
       };
-      await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
       await tap(page, ["d3"]);
       await unitsKey(page);
       await page.waitForTimeout(1000); // (no flick just before: the mouse's own result)
       const byMouse = await press("click");
-      expect(byMouse).toBeGreaterThan(0);
+      expect(byMouse).toBe("Units");
       await tap(page, ["esc"]);
       await page.waitForFunction(() => window.n62.unitView === undefined);
       await unitsKey(page);
