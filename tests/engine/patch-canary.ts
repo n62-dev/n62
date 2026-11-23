@@ -242,6 +242,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G553, patch 0061: _floor's MPFR branch takes a negative value as its truncation when is_zero(res-tmp), an absolute 1e-12 at any
   // Digits, so ceil(pi*10^-13) = 0 and floor(-pi*10^-13) = 0 (ceil is -floor(-x), round floor(x+1/2))
   ["0061-floor-mpfr-working-precision.patch", "giac-2.1.0/src/usual.cc", /gen res=real2int\(tmp,contextptr\);\s*if \(is_strictly_positive\(-tmp,contextptr\) && !is_zero\(res-tmp,contextptr\)\)\s*return res-1;/, "static bool warnfloor=true;"],
+  // G551, patch 0062: bitand, bitor and bitxor set the _INT_ beside a _ZINT with mpz_set_ui, which reads a negative int as 2^32+v
+  // (bitand(-2,2^64-1) = 4294967294, bitor(-1,2^31) = 4294967295); the canary is giac_bitand's _INT___ZINT case
+  ["0062-bitops-signed-small-integer.patch", "giac-2.1.0/src/misc.cc", /case _INT___ZINT:\s*e = new ref_mpz_t;\s*mpz_set_ui\(e->z,a\.val\);\s*mpz_and\(e->z,e->z,\*b\._ZINTptr\);/, "gen giac_bitand(const gen & a,const gen & b){"],
 ];
 
 const tar = tarball(SOURCES.giac);

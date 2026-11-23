@@ -1,0 +1,59 @@
+# Upstream: giac 2.1.0 misc.cc giac_bitand, giac_bitor, giac_bitxor: in the mixed cases (_INT___ZINT and _ZINT__INT_) the small integer was set with mpz_set_ui, which reads a negative int as 2^32+v, so a negative small integer beside a big one gave a wrong exact integer: bitand(-2,18446744073709551615) = 4294967294 (right 18446744073709551614), bitor(-1,2^31) = 4294967295 (right -1), bitxor(-1,2^63) = 9223372041149743103 (right -9223372036854775809), bitand(-1,2^70) = 0 (right 2^70); in a sweep of 24 values from 0 to +-2^100, 282 of the 1728 pairs were wrong, each a negative _INT_ beside a _ZINT. Now mpz_set_si, so the small integer keeps its sign (GMP's and, ior, xor read two's complement, unbounded, as Python's int). Two small or two big integers and bitnot are unchanged. hamdist has the same mpz_set_ui and is not changed here (the Hamming distance of integers of opposite signs is infinite, which mpz_hamdist reports as the largest bit count).
+# Changed by Pascaline contributors, 2026-11-23
+--- a/src/misc.cc
++++ b/src/misc.cc
+@@ -6141,6 +6141,9 @@
+ static define_unary_function_eval (__spline,&_spline,_spline_s);
+   define_unary_function_ptr5( at_spline ,alias_at_spline,&__spline,0,true);
+ 
++  // N62 patch 0062 (G551): the _INT_ beside a _ZINT is set with mpz_set_si, so a negative one keeps its sign (two's complement,
++  // unbounded, as mpz_and, mpz_ior and mpz_xor read it); mpz_set_ui read it as 2^32+v (bitand(-2,2^64-1) = 4294967294,
++  // bitor(-1,2^31) = 4294967295, bitand(-1,2^70) = 0).
+   gen giac_bitand(const gen & a,const gen & b){
+     register unsigned t=(a.type<< _DECALAGE) | b.type;
+     if (!t)
+@@ -6153,12 +6156,12 @@
+       return e;
+     case _INT___ZINT: 
+       e = new ref_mpz_t;
+-      mpz_set_ui(e->z,a.val);
++      mpz_set_si(e->z,a.val);
+       mpz_and(e->z,e->z,*b._ZINTptr);
+       return(e);
+     case _ZINT__INT_:
+       e = new ref_mpz_t;
+-      mpz_set_ui(e->z,b.val);
++      mpz_set_si(e->z,b.val);
+       mpz_and(e->z,*a._ZINTptr,e->z);
+       return(e);
+     }
+@@ -6176,12 +6179,12 @@
+       return(e);
+     case _INT___ZINT: 
+       e = new ref_mpz_t;
+-      mpz_set_ui(e->z,a.val);
++      mpz_set_si(e->z,a.val);
+       mpz_ior(e->z,e->z,*b._ZINTptr);
+       return(e);
+     case _ZINT__INT_:
+       e = new ref_mpz_t;
+-      mpz_set_ui(e->z,b.val);
++      mpz_set_si(e->z,b.val);
+       mpz_ior(e->z,*a._ZINTptr,e->z);
+       return(e);
+     }
+@@ -6199,12 +6202,12 @@
+       return(e);
+     case _INT___ZINT: 
+       e = new ref_mpz_t;
+-      mpz_set_ui(e->z,a.val);
++      mpz_set_si(e->z,a.val);
+       mpz_xor(e->z,e->z,*b._ZINTptr);
+       return(e);
+     case _ZINT__INT_:
+       e = new ref_mpz_t;
+-      mpz_set_ui(e->z,b.val);
++      mpz_set_si(e->z,b.val);
+       mpz_xor(e->z,*a._ZINTptr,e->z);
+       return(e);
+     }
