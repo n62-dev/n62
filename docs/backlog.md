@@ -23,11 +23,11 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **R779** (decisions.md): the line's drag on the Fairphone.
 10. **R376** (decisions.md): a letter or bracket after a mark (`5!x`, `30°(1+2)`) stays a product; recommended: leave it.
-11. **G784** (decisions.md): Paste of a copied name (`2*i` pastes as the constant i, a product of names is refused).
+11. **G784** (decisions.md): should Paste read a copied name back? (G784f1 refuses one N62 copied; a product of names is refused).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
 - **MathLive**, filed 2026-10-19: [#3122](https://github.com/arnog/mathlive/issues/3122) (⌫ at `\left…\right`), [#3123](https://github.com/arnog/mathlive/issues/3123) (touch caret), [#3124](https://github.com/arnog/mathlive/issues/3124) (focus restore); [#3125](https://github.com/arnog/mathlive/issues/3125) (Redo after ⌫, 2026-10-20); M5, M7 (`isImplicitArg` takes no matrix, F68, nor i or e, F184) drafted by R75, R334; M6 (no public sideways scroll; text in `../outreach/upstream-reports.md`) drafted by R277.
-- **Giac** (B. Parisse, by email; the thread: `../outreach/README.md`). 0001–0051 are in his re-published 2026-11-22 tarball (0043 and 0045 without their G364 and G340f1 deltas; `../drafts/2026-11-22-parisse-tarball/REPORT.md`; the Status column of `engine/giac/patches/README.md` says so since G787); email 8 (draft; G783 merged) sends those deltas and 0052–0058; the pin stays giac_2.1.0-1 until a numbered archive (P21; G788). His open points from email 7: `rotate` on an integer (Q34, F241, "probably a bug"), `timeout` without `ckevery` (Q36, unknown); Q30's lower median is intended. Regression files: `tools/giac-regress/` (G89; in the golden gate since G108). `convert(n,b,x)`'s subtype (F240) goes in email 8.
+- **Giac** (B. Parisse, by email; the thread: `../outreach/README.md`). 0001–0051 are in his re-published 2026-11-22 tarball (0043 and 0045 without their G364 and G340f1 deltas; `../drafts/2026-11-22-parisse-tarball/REPORT.md`; the Status column of `engine/giac/patches/README.md` says so since G787); email 8 (draft; G783 merged) sends those deltas and 0052–0059; the pin stays giac_2.1.0-1 until a numbered archive (P21; G788). His open points from email 7: `rotate` on an integer (Q34, F241, "probably a bug"), `timeout` without `ckevery` (Q36, unknown); Q30's lower median is intended. Regression files: `tools/giac-regress/` (G89; in the golden gate since G108). `convert(n,b,x)`'s subtype (F240) goes in email 8.
 
 ## Tasks
 
@@ -52,7 +52,6 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **nr1114-be-2, fixed by G353 (patch 0049).** Left: Giac's weighted forms (misc.cc stddevmean) still sum x² in one pass: stored `L:=approx([1/10,1/10,1/10])`, `variance(L,[1,1,1])` is ⚠ -1E-62, `stddev(L,[1,1,1])` ⚠ 1E-31·i. Family 6.
 - **G353's trace (no package).** Before G353 `stats1(L)` of stored floats was ⚠ alone, ≈ after `linreg(L,…)` (facts.ts inherited's check); cause not traced. Family 2.
 - **F252, no package (S20).** Home `floor((1+10^-100)^(10^100))` shows **= 1**, right 2 (source: derived: the power lies in (2, 3)); G156's raised start misses the loss. An MPFI interval decides 2 ([r22](research/r22-mpfi.md) 4). Family 3.
-- **nr1116-be-1 (S1, `d4bf19bf0`), fixed by G399 (patch 0059); -be-4 fixed by G398 and G783 (patch 0057).** `arg((i*pi)^2)` was ≈ -3.14159265359 (right π). Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-be-1`. Families 4, 5.
 - **nr1116-vg-1, -vg-2, -vg-5 (S1 extreme, `d4bf19bf0`; G403, G405, G404).** A false ≈ 1, a false `=` count, a CAS +2πi. Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-vg-1` (`-vg-2`, `-vg-5`). Family 3.
 - **Night review 2026-11-16:** [the rest](research/night-review-2026-11-16.md).
 - **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F304 G553; F302 G551; F305 G554; F301 G550 (before the freeze); F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
@@ -63,8 +62,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F310, F316, F317, F319, no package (T2, low).** linterp refuses an x inside the table when the end check needs > 40 digits; Ans and the last chip are two σ inputs; `floor(evalf(pi,3)*1000)` = 3139 with `=`; weights summing to 0 give `infinity` unmarked.
 - **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584.
 - **F400–F414, F425–F442 (T6's hunts, 2026-11-16; evidence in each package and `../drafts/2026-11-16-ultra/t6a/`, `t6b/`).** T6a: G600–G608, R600; T6b: G613–G624; unpackaged: F409, F410, F413, F430, F438, F439, F442; F440 stays Giac's (owner).
-- **Copy wrote stand-ins (sofia, 2026-11-22), fixed by G784.** `2i` (hardware i) copied as `2*i_`, `rainbow` as `r*a*i_*n*b*o*w`; Copy, Copy as shown, Copy exact, Share and the CSV now write the letters. Left: Paste of a copied name (decisions, Needs the user). Family 9.
-- **F472 (G782's report; G782f1).** A % chip in the unit view counts as its number: `chip × 200 m` with 0.42 % is 84 m (right 0.84 m), the slot starts empty; Store ▶ on a ratio result is dead. Family 1.
+- **Copy wrote stand-ins (sofia, 2026-11-22), fixed by G784.** `2i` (hardware i) copied as `2*i_`, `rainbow` as `r*a*i_*n*b*o*w`; Copy, Copy as shown, Copy exact, Share and the CSV now write the letters. Left: `2*i` copied from the name i pastes as the constant i, G784f1 (pass 231) refuses it; whether Paste reads names: decisions, Needs the user. Family 9.
 - **F357, no package (T4, S14).** Function Symb: Enter keeps the line on F1 (the owner's G2 check).
 
 ### Background stream (extreme inputs; at night, by reach)
@@ -83,6 +81,8 @@ Its lines: [research/background-stream.md](research/background-stream.md) (moved
 - **G223f1's finds (pass 146):** stats1 of a stored float list shows [..], of a typed one {..} (G381); a stored catch(e) prints as catch(exp(1)).
 - **Flaky (R255f2, pass 137; R339):** persist.spec.ts "R255: a kept 5, then + 3 Enter before the field" gave 3 in 1 of 64 runs at 16 workers; likely the kept-line read outlasts `EntryController.load`'s 1 s cap (`entry/controller.ts:80`).
 - **The pipeline (A201 takes red-first's ids and the audit model):** the size test skips CSS; red-first runs vitest on the branch's engine and counts a vitest file by its added test or assertion lines (A67).
+- **Load in the gates (pass 231; G782f1, G783):** the golden steps stage's ×8 clock rows `g331-simplify-f214-12`, `g325f1-acos-…`, `g618-sum-…` went into `SPEED_KNOWN` (golden-speed.ts) because other runs' checks loaded the host, so a real slowdown there is no longer seen; numeric.ts's other lone fallbacks (agreed's `once`, doubleFallback) still show a clock-stopped read's partner alone (G783 fix round 1 only retried floatFactsOf's). Family 4.
+- **Flaky (pass 231):** fold.spec.ts "folded: a tap picks, the second inserts and unfolds; …" has 3 FLAKE lines (R700 twice, G399) and failed in pass 231's e2e at load 24: its `rows` helper (fold.spec.ts:50) saw 2 of 3 rows done in 5 s; alone it passes (5.7 s). Ten fold.spec FLAKE lines since run 1260 share that helper.
 - **C3. CI** (needs your OK);
 
 ### MVP release (docs/02 section 8)
