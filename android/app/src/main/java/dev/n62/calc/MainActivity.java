@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(N62HapticsPlugin.class); // local plugin; must come before super.onCreate
         registerPlugin(N62FilesPlugin.class);
+        registerPlugin(N62BarsPlugin.class);
         if (!BuildConfig.MEASURE) {
             super.onCreate(savedInstanceState);
             installBack();

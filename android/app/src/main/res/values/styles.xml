@@ -13,7 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- A59: the bars take the default Dark's background, whatever the system mode; light icons on it. -->
+        <!-- A59: the first frame, before the page's JS: the default Dark's background behind the bars, whatever the system mode; light icons.
+             A266: from the page on the bars follow the look (N62BarsPlugin). -->
         <item name="android:statusBarColor">@color/n62_dark_bg</item>
         <item name="android:navigationBarColor">@color/n62_dark_bg</item>
         <!-- From Android 15 the bar colours are ignored (edge to edge): the window behind them must be the Dark background too. -->
