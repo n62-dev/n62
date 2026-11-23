@@ -7,10 +7,8 @@ Phase 0 (D1–D9, P1, P2): [the archive](archive/phase-0-decisions.md). This fil
 
 The owner's other open items are in [backlog.md](backlog.md), "Needs the user". Once decided, an entry moves to "Decided proposals".
 
-- **R862, a digit on a disabled row:** in the unit view's ☰ (and every sheet) it runs nothing and the sheet stays, with no dead double haptic (`Sheet.activate`); R862's text called it a dead press. Recommended: one rule for every sheet, so either leave it, or give every disabled row's digit the dead feedback in a package of its own (sheet-wide, the controls of every sheet).
 - **G784, Paste of a copied name:** Copy writes the letters (`2*i`, `r*a*i*n*b*o*w`, `β*2`); Paste reads one number, so a product of names is refused, and `2*i` copied from the name i came back as the constant i, another value (principle 3): G784f1 (pass 231) refuses a text N62 copied from a row with a stand-in. Recommended: keep Paste a number reader, so a copied name does not paste back; reading expressions is its own package (the letter i against the constant i needs a rule first).
 - **R779, the drag after the arrow keys, on the Fairphone:** Chromium touch emulation could not reproduce "drag, arrow keys, drag" (linetouch.spec.ts, R779 cases, green on phase-1 too); lineTouch.ts now ends a stale touch (a new first finger, a lift off the line). Does the drag work on the Fairphone 6 after it? If not, record `adb` pointer events (down/move/up/cancel with ids) for the sequence.
-- **R376, a name after a mark:** R376 refuses a number right after °, ′, ″, %, ‰ or ! (`30°15`, `2%3`, `5!3`); a letter or a bracket there stays a product, as Giac reads it (`5!x` = 120·x, `2%x`, `30°(1+2)`): the line shows no ×, but no digit runs into a mark either. Recommended: leave it (a name cannot be read as minutes); else one more key per mark in `parse.markThen`.
 
 ## Decided proposals
 
@@ -117,6 +115,8 @@ The defaults that bind code and tests, one line each. A default changes when its
 **Entry and keys**
 - **Built, archived ("2026-11-16, Ultra"):** Shift + 5's matrix (R185, R186); R194's word; The matrix grid (R188, R189, R300); R277's line scroll; R279's Select; R116, the entry's highlights; View keys and the load queue.
 - **R746's exact maths on the line (run 1400):** a result goes as its maths only when its drawing is its exact value (rule: docs/04 2.8, `render/exactMaths.ts`); `\left[…\right]` reads as Giac's vector, a typed bare `[` stays refused. Would change if: the owner wants `\cdot`, or a result kind that should go plain stays a chip.
+- **R376, a letter or bracket after a mark (pass 232, P5):** stays a product as Giac reads it (`5!x` = 120·x, `2%x`, `30°(1+2)`), as `2x` and `2(1+2)` do; only a digit, which runs into the mark, is refused (`parse.ts` `markThen`). Would change if: a user reads `30°(15)` as minutes.
+- **A digit on a disabled sheet row (R862; pass 232, docs/05 rule 4):** a dead press: the short haptic "no" in every sheet (`Sheet.activate` runs nothing today, silently); backlog "Without a package yet". Would change if: the owner wants disabled rows silent.
 - **R299's lock:** `UNPINNED_LISTS` stands; Plot's and Solve Num's ☰ are pinned with their last rows. Would change if: one of those lists gets a fixed row.
 - **R130's tenth ☰ row:** it keeps the 36 px floor and scrolls; rows 1–9 stay, key 0 opens Export › (docs/06 3b rule 2). Would change if: the owner's look on a phone.
 - **⌫ and Del keep a template whole** (R23–R26h, R47): never half a template or a lost box. Archived. Would change if: G2 items 44, 46, 49 or 51 differ (the G2 way wins unless it leaves half a template).
