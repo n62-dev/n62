@@ -4,15 +4,23 @@
 // wrong place. The second test applies patches/*.patch in name order to the pinned tarball's files exactly as the build does.
 //   N62_DL_DIR: the tarball cache (default engine/giac/_downloads), as tests/engine/patch-canary.ts
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { SOURCES, tarball } from "../../tools/find-index/state.mjs";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
 const PATCHES = join(ROOT, "engine/giac/patches");
 const BUILD = readFileSync(join(ROOT, "engine/giac/build-wasm.sh"), "utf8");
+
+/** The pinned tarball in the download cache, named as build-wasm.sh names it (GIAC_TARBALL). */
+function tarball(): string {
+  const pin = (name: string): string => new RegExp(`^${name}="([^"]+)"$`, "m").exec(BUILD)?.[1] ?? "";
+  const file = `giac_${pin("GIAC_VERSION")}-${pin("GIAC_DEBIAN_REVISION")}.tar.gz`;
+  const path = join(process.env["N62_DL_DIR"] ?? join(ROOT, "engine/giac/_downloads"), file);
+  if (!existsSync(path)) throw new Error(`missing ${path} (set N62_DL_DIR)`);
+  return path;
+}
 
 /** The build's patch command: the `patch ` line of stage_giac. */
 function patchLine(): string {
@@ -41,11 +49,11 @@ describe("build-wasm.sh's patch step (G787)", () => {
     for (const f of files)
       for (const m of readFileSync(join(PATCHES, f), "utf8").matchAll(/^\+\+\+ b\/(\S+)/gm)) targets.add(`giac-2.1.0/${m[1]}`);
     // one pass over the tarball for every file a patch touches that it holds (a file a patch creates is not in it)
-    const listed = spawnSync("tar", ["-tzf", tarball(SOURCES.giac)], { encoding: "utf8", maxBuffer: 1 << 28 });
+    const listed = spawnSync("tar", ["-tzf", tarball()], { encoding: "utf8", maxBuffer: 1 << 28 });
     expect(listed.status).toBe(0);
     const inTar = new Set(listed.stdout.split("\n"));
     const take = [...targets].filter((t) => inTar.has(t));
-    const untar = spawnSync("tar", ["-xzf", tarball(SOURCES.giac), "-C", work, ...take], { encoding: "utf8" });
+    const untar = spawnSync("tar", ["-xzf", tarball(), "-C", work, ...take], { encoding: "utf8" });
     expect(untar.status, untar.stderr).toBe(0);
     const src = join(work, "giac-2.1.0");
     const failed: string[] = [];

@@ -134,7 +134,7 @@ describe("the sentences and the trap table", () => {
     const g = f.golden, p = f.patches;
     const n = (x: number): string => x.toLocaleString("en-US");
     expect(s).toContain(`${n(g.answers)} recorded answers, ${n(g.open)} of them open cases. ${n(g.computed)} expected values are computed independently of Giac (${n(g.mpmath)} by mpmath, ${n(g.exact)} by exact arithmetic); ${n(g.crossChecked)} more are hand-derived or reference values cross-checked by machine; the other ${n(g.handOrGuard)} are hand-derived expected results or behaviour guards.`);
-    expect(s).toContain(`${n(p.total)} Giac patches. ${n(p.sent)} sent to the author: he wrote that ${n(p.reported)} should be integrated and applied ${n(p.applied)} in his 7 Nov source, with differences being resolved; ${n(p.waiting)} more wait for his answer; ${n(p.notSent)} not sent.`);
+    expect(s).toContain(`${n(p.total)} Giac patches. ${n(p.sent)} sent to the author: he wrote that ${n(p.reported)} should be integrated and applied ${n(p.applied)} in his 22 Nov source, with differences being resolved; ${n(p.waiting)} more wait for his answer; ${n(p.notSent)} not sent.`);
     expect(s).toContain("When the engine, the parser or the units change, the golden gate re-runs the answers; when a golden file changes, the oracle recomputes the expected values.");
     expect(s).not.toMatch(/2,700|proof|every merge/);
   });
