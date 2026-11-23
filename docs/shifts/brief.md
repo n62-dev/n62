@@ -61,18 +61,21 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e | R874 empty-history mark in the hint colour | ron, Opus | `p1/ron-markhint` | R860, R873 |
-| 888e1 | R887 ⚙ over a sheet opens Settings | ron, Opus | `p1/ron-gearsheet` | – |
 | 888e2 | [R915](packages/R915.md) units follow the angle; their RAD tag | ron, Opus | `p1/ron-unitangle` | – |
 | 888e2a | [R916](packages/R916.md) layer sweep 1: unit view | ron, Opus | `p1/ron-layersweep` | – |
 | 888e2b | [R917](packages/R917.md) unit view opens in one step | ron, Opus | `p1/ron-unitopen` | – |
 | 888e2c | [R918](packages/R918.md) no row taps under units | ron, Opus | `p1/ron-unitrowtap` | R916, R917 |
 | 888e2d | [R919](packages/R919.md) back ends a name prompt | ron, Opus | `p1/ron-promptback` | – |
+| 888e2e | [R925](packages/R925.md) ×10ⁿ takes no unit slot | ron, Opus | `p1/ron-tenpowslot` | R918 |
 | 888e3 | [R889](packages/R889.md) Alpha in a search types its letter | ron, Opus | `p1/ron-sheetalpha` | – |
-| 888e4 | [R891](packages/R891.md) sheets keep the line in sight | ron, Opus | `p1/ron-sheetline` | – |
+| 888e4 | [R891](packages/R891.md) sheets sit on the tab bar | ron, Opus | `p1/ron-sheetline` | – |
+| 888e4a | [R924](packages/R924.md) the mark takes no tap | ron, Opus | `p1/ron-marknotap` | – |
+| 888e4b | [R926](packages/R926.md) back closes an app | ron, Opus | `p1/ron-appback` | R919, R924 |
+| 888e4c | [A271](packages/A271.md) back twice to leave (waits: a device) | annabell, Sonnet | `p1/annabell-backtwice` | R926 |
 | 888e5 | [R892](packages/R892.md) room under the corner button | ron, Opus | `p1/ron-fullroom` | R891 |
 | 888e6 | [R894](packages/R894.md) the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
 | 888e7 | [R893](packages/R893.md) a unit from Find in Home | ron, Opus | `p1/ron-findunithome` | R894, R917 |
+| 888e7a | [R929](packages/R929.md) a constant shows its unit | ron, Opus | `p1/ron-constlabel` | G801 |
 | 888e8 | [R897](packages/R897.md) a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
 | 888e9 | [R898](packages/R898.md) a new line owner ends Undo | ron, Opus | `p1/ron-viewundo` | – |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
@@ -80,6 +83,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e10b | [R922](packages/R922.md) sheets take paste, typing | ron, Opus | `p1/ron-sheetchannels` | – |
 | 888e11 | [R900](packages/R900.md) Paste into a name filter | ron, Opus | `p1/ron-sheetpaste` | R889, R922 |
 | 888e12 | [R901](packages/R901.md) Settings and Mode keep the pick | ron, Opus | `p1/ron-keeppick` | – |
+| 888e12a | [R927](packages/R927.md) Preset on top; Mode in Settings | ron, Opus | `p1/ron-modeorder` | R887, R901 |
 | 888e13 | [R902](packages/R902.md) a dropped unit says so | ron, Opus | `p1/ron-unitdropped` | – |
 | 888e14 | [R903](packages/R903.md) hold on the line copies | ron, Opus | `p1/ron-linehold` | – |
 | 888e15 | [R904](packages/R904.md) Copied notice tells the truth | ron, Opus | `p1/ron-copiednotice` | – |
@@ -92,6 +96,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888e22 | [R914](packages/R914.md) one name per sign | ron, Opus | `p1/ron-signnames` | – |
 | 888e23 | [A270](packages/A270.md) phones stay in portrait | annabell, Sonnet | `p1/annabell-portrait` | – |
 | 888i | [R868](packages/R868.md) a tap on the line unfolds the keys | ron, Opus | `p1/ron-linetapunfold` | R856 |
+| 888i1 | [R928](packages/R928.md) ⌄ folds the keys in Plot | ron, Opus | `p1/ron-plotfold` | R868, R924 |
 | 888j | [R869](packages/R869.md) Help on Find's row | ron, Opus | `p1/ron-helpfind` | – |
 | 888k | [R870](packages/R870.md) Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
 | 888l | [R871](packages/R871.md) Shift + Fmt opens its settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
@@ -118,15 +123,15 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 908 | [R807](packages/R807.md) the slot draws its caret and its marks (C2) | ron, Opus | `p1/ron-unitcaretdraw` | R806 |
 | 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Opus | `p1/ron-unitcaretmove` | R807 |
 | 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Opus | `p1/ron-unitundo` | R808 |
-| 910 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
+| 910 | [R314](packages/R314.md) Memory delete has Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Opus | `p1/ron-memswipe` | R314 |
-| 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes the highlighted name (C6) | ron, Opus | `p1/ron-memdelkey` | R813 |
+| 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes (C6) | ron, Opus | `p1/ron-memdelkey` | R813 |
 | 913 | [R815](packages/R815.md) Memory copies the full value (C6) | ron, Opus | `p1/ron-memcopy` | R814 |
 | 914 | [R816](packages/R816.md) Memory: Paste asks, then replaces a value (C6) | ron, Opus | `p1/ron-mempaste` | R815 |
 | 915 | [R818](packages/R818.md) Vars and Memory rows say what a name holds (C7) | ron, Opus | `p1/ron-namekinds` | – |
 | 916 | [R819](packages/R819.md) filter chips in Vars and Memory (C7) | ron, Opus | `p1/ron-namechips` | R818 |
-| 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Opus | `p1/ron-crumbs` | R856, R819 |
-| 916b | [R876](packages/R876.md) setting rows 1: list rows, button rows | ron, Opus | `p1/ron-gotorows` | R875 |
+| 916a | [R875](packages/R875.md) a sheet title's earlier crumbs are buttons back | ron, Opus | `p1/ron-crumbs` | R856, R819, R927 |
+| 916b | [R876](packages/R876.md) setting rows 1: list rows, button rows | ron, Opus | `p1/ron-gotorows` | R875, R927 |
 | 916b1 | [R909](packages/R909.md) setting labels never cut | ron, Opus | `p1/ron-labelwhole` | R876, R884 |
 | 916c | [R877](packages/R877.md) setting rows 2: switches, muted read-only rows | ron, Opus | `p1/ron-switchrows` | R876 |
 | 916d | [R878](packages/R878.md) setting rows 3: an opening row ends in › | ron, Opus | `p1/ron-openmark` | R877 |
@@ -149,7 +154,6 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6a | G790 a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
 | B6b | [G622](packages/G622.md) float pivots relative to the matrix | gorge, Opus | `p1/gorge-floatrref` | G790 |
 | B6c | [G792](packages/G792.md) sin, cos of a float matrix | gorge, Opus | `p1/gorge-matsincos` | – |
 | B6d | [G793](packages/G793.md) lcm of integers is positive | gorge, Opus | `p1/gorge-lcmsign` | – |
@@ -160,22 +164,23 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | B6i | [G800](packages/G800.md) a unit sweep | gorge, Opus | `p1/gorge-unitsweep` | R885 |
 | B6j | [G795](packages/G795.md) FIX of a long number | gorge, Opus | `p1/gorge-fixlong` | – |
 | B6k | [G796](packages/G796.md) Copy of an unchecked row | gorge, Opus | `p1/gorge-copywarn` | – |
-| B7 | [G405](packages/G405.md) solve keeps two real roots that are distinct but close | gorge, Opus | `p1/gorge-closeroots` | – |
-| B8 | [G404](packages/G404.md) G358's climb on every path; past its reach is never an overflow | gorge, Opus | `p1/gorge-climball` | – |
-| B9 | [G403](packages/G403.md) a tiny constant without an integer literal raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
-| B9a | [G791](packages/G791.md) hamdist reads a negative integer beside a big one as signed; opposite signs are refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
-| B10 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
-| B11 | [G381](packages/G381.md) a stored float list reads back as a list, never a vector | gorge, Opus | `p1/gorge-storedlist` | – |
+| B6l | [G801](packages/G801.md) a constant's own unit (J·s) | gorge, Opus | `p1/gorge-constunit` | – |
+| B7 | [G405](packages/G405.md) solve keeps close real roots | gorge, Opus | `p1/gorge-closeroots` | – |
+| B8 | [G404](packages/G404.md) G358's climb on every path | gorge, Opus | `p1/gorge-climball` | – |
+| B9 | [G403](packages/G403.md) a tiny constant raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
+| B9a | [G791](packages/G791.md) hamdist: signed reads, opposite signs refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
+| B10 | [G385](packages/G385.md) a bracketed ΔT in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
+| B11 | [G381](packages/G381.md) a float list stays a list | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |
 | B13 | [G550](packages/G550.md) a Home row whose σ cannot be carried says so | gorge, Opus | `p1/gorge-sigmalost` | – |
 | B14 | [G400](packages/G400.md) Export › CSV and LaTeX carry a Home row's σ | gorge, Opus | `p1/gorge-exportsigma` | – |
-| B15 | [G640](packages/G640.md) Ans frozen in history, live on the line: the tests, known-fail until G642 and R836 | gorge, Opus | `p1/gorge-anstests` | – |
-| B16 | [G642](packages/G642.md) a row that used Ans keeps its snapshot (chip, shown LaTeX, source row) | gorge, Opus | `p1/gorge-anssnapshot` | G640 |
-| B17 | [G365](packages/G365.md) the Function app reads a cell's kind from the worker | gorge, Opus | `p1/gorge-cellkind` | – |
-| B18 | [G315](packages/G315.md) the one import cycle goes; the Calc port speaks its own errors | gorge, Opus | `p1/gorge-namesmodule` | – |
-| B19 | [G314](packages/G314.md) EngineHost's definitions replay and casRun in their own modules | gorge, Opus | `p1/gorge-hostsplit` | – |
-| B20 | [G401](packages/G401.md) Find knows the engineers' words for functions it has | gorge, Opus | `p1/gorge-findwords` | – |
-| B21 | [G402](packages/G402.md) Find in a unit slot reads a compound unit as the slot does | gorge, Opus | `p1/gorge-findcompound` | G401 |
+| B15 | [G640](packages/G640.md) Ans frozen in history: the tests | gorge, Opus | `p1/gorge-anstests` | – |
+| B16 | [G642](packages/G642.md) a row keeps its Ans snapshot | gorge, Opus | `p1/gorge-anssnapshot` | G640 |
+| B17 | [G365](packages/G365.md) Function reads a cell's kind | gorge, Opus | `p1/gorge-cellkind` | – |
+| B18 | [G315](packages/G315.md) the one import cycle goes | gorge, Opus | `p1/gorge-namesmodule` | – |
+| B19 | [G314](packages/G314.md) EngineHost split in modules | gorge, Opus | `p1/gorge-hostsplit` | – |
+| B20 | [G401](packages/G401.md) Find knows engineers' words | gorge, Opus | `p1/gorge-findwords` | – |
+| B21 | [G402](packages/G402.md) Find reads a compound unit | gorge, Opus | `p1/gorge-findcompound` | G401 |
 
 **Not queue rows** (henri never starts them; a session moves a row in when its condition is met). `../n62-next` ran G389 to R351 and R367 to G407; it merges back after the tag. Waiting for the owner: A266f1 (a device; backlog "Needs the user" 10), R225 (the iPhone check), R223 (the measurements), A61 (the Fairphone), A82 (the release candidate on the Fairphone); after the tag S90 and S95 (after A230), then A231, then A240 (after R700, R701, R709). By day A91, then G406 (no lane running); R292 on the release candidate. With no lane running (a stop the owner calls): S33. After the tag (0.2; owner, 2026-11-16), formula then units, in this order: G389, G391, R347, then the name rule (owner, 2026-11-16; R354's file): R354, R355, G393, G394, G395, R356, R357, R358; then R346, G388, R348, R351. After the tag: R882 (hints; then R706 onto it); R923 (after R808, R896). When Parisse publishes a numbered giac_2.1.0-<n> (a session checks his Debian folder): G788, the re-pin. After the tag: R254 then R343 (RPN's keys and stack view; owner, 2026-11-16), A76, A133 to A135, A141 to A143, A154 to A156. After the tag, the night review of 2026-11-16's R367 to R373 and G407 (n62-next; each file's After).
 
