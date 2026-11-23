@@ -9,7 +9,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { EngineHost } from "./host.ts";
 import { defaultHomeSettings } from "./homeEval.ts";
 import { decidedAtDouble } from "./decisions.ts";
-import { floatPathFacts } from "./numeric.ts";
+import { floatFacts, floatPathFacts, type Giac } from "./numeric.ts";
 import { formatComplex } from "./format.ts";
 import { giacAvailable, loadNodeGiac } from "./nodeGiac.ts";
 
@@ -45,5 +45,45 @@ describe.skipIf(!giacAvailable())("a double that differs from Giac's own double 
     const d = decidedAtDouble(host.giac, "pasg782", "round(BesselJ(1,2)*10^12)", 12);
     host.giac.eval("purge(pasg782)");
     expect(d && "facts" in d ? d.facts.map((x) => x.reliableDigits) : d).toEqual([12]);
+  });
+
+  // G783 fix round 1 (run 1494, invariant (a): RAD ⚠ -1.8888430502E-19, DEG ⚠2 -1.9E-19): on the exact path the unaudited
+  // branch reads the double D and the value M at P; when Giac's interrupt stopped one of them (its clock: a host stall
+  // under load), the other was taken alone with min(digits, 14) digits, 12 of noise. A stopped read is read once more.
+  // The stop is Giac's own (a step budget of 3 for that one call); a budget that stops it again keeps the lone value.
+  const stopOnce = (prefix: string, times = 1): Giac => {
+    const g = host.giac;
+    let left = times;
+    return {
+      eval: (s) => g.eval(s),
+      digits: g.digits?.bind(g),
+      value: (t, p, tree) => {
+        if (left <= 0 || !t.startsWith(prefix)) return g.value(t, p, tree);
+        left--;
+        g.eval("ckbudget 3");
+        try {
+          return g.value(t, p, tree);
+        } finally {
+          g.eval("ckbudget 0");
+        }
+      },
+    };
+  };
+  const exactPath = (giac: Giac) => {
+    host.home(INPUT, defaultHomeSettings);
+    const f = floatFacts(giac, "pasans", INPUT, { kind: "scalar" }, 12, 12, INPUT);
+    return f?.map((x) => [x.reliableDigits, x.warn, shown(x)]);
+  };
+
+  it("the exact path with its read at P stopped once: 2 digits, -1.9E-19, not the double's 12", () => {
+    expect(exactPath(stopOnce("pasm:=(student_icdf("))).toEqual([[2, "unaudited", "-1.9E-19"]]);
+  });
+
+  it("the exact path with its double read stopped once: 2 digits, -1.9E-19, not 12 at P", () => {
+    expect(exactPath(stopOnce("pasd:=(student_icdf("))).toEqual([[2, "unaudited", "-1.9E-19"]]);
+  });
+
+  it("a stop that repeats (the step budget) keeps the lone value, as before", () => {
+    expect(exactPath(stopOnce("pasd:=(student_icdf(", 2))?.map((x) => x[0])).toEqual([12]);
   });
 });
