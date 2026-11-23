@@ -325,9 +325,9 @@ test("G784 controls: 2+3·i with Shift + 2 (the constant) and e² from the eˣ k
   await expect.poll(() => clipboard(page)).toBe("7.38905609893065022723042746057500781318");
 });
 
-// G784, not done (docs/decisions.md, Needs the user): Paste reads one number (docs/04 2.6), so the copies do not come back
-// as their rows. `2*i` is read as the constant (as Copy's `a+b*i` is), not the name i; a product of names is refused.
-test("G784: Paste of the copied names, as it stands: 2*i as the constant i, r*a*i*n*b*o*w and β*2 refused", async ({ page }) => {
+// G784, a known gap, not the wanted behaviour (docs/decisions.md, Needs the user; docs/04 2.6): Paste reads one number, so
+// the copies do not come back as their rows; this pins today's Paste until the owner decides. `2*i` is read as the constant (as Copy's `a+b*i` is), not the name i; a product of names is refused.
+test("G784 known gap, pending the owner (decisions.md): Paste of a copied name does not give the row back: 2*i as the constant i, r*a*i*n*b*o*w and β*2 refused", async ({ page }) => {
   await setClipboard(page, "2*i");
   await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("2\\imaginaryI");

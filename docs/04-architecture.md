@@ -129,9 +129,11 @@ Cost: one `evalf` more (about 1 ms, desktop) per irrational or float result.
 | Units result (m5) | `20 m/s`, `39.488 ± 1.2 m²`: the value full, then the row's own ` ± σ unit` as drawn (As shown and Share too; R269); Paste reads it back (R325) | yes | `(1397/3125) m/s` | yes |
 | Session (Menu, Share) | text: one line per entry, `input = result` with the mark, full values | — | — | — |
 
+**Names as typed** (G784): the stand-ins e_, i_, beta_ … are copied as their letters (`2*i`, `β*2`) in every copy, Share and the CSV; Copy as Python keeps Giac's names.
+
 **Hold on a history row** (R276, docs/05 3.5): on its input, the entry's plain text as Share session writes it (`sqrt(2)+3`); on its result, Copy's text.
 
-**Paste** (Shift + Deselect; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal).
+**Paste** (Shift + Deselect; any system paste): the clipboard is read as one number (`-1.5`, `1,5` with decimal comma, `1.5e-3` or `E`, `i` parts) or a list as Copy writes it (`{1,16}`, `{1,5;2,25}`; with decimal comma `{1,5}`, 1,5 or 1 and 5, is refused), or a unit row's Copy text as its chip, σ and unit (R325); a number enters as the keyboard's own LaTeX (`1.5\emark-3`, drawn `1.5ᴇ-3`), so the parser sees only what our keys produce. Anything else, or a unit Find lacks, is refused (`clipboard/strings.ts`). A result copied from N62 pastes back as the same value (P5; with decimal comma not a list of one decimal), except a copied name until the owner decides (G784, decisions.md): `2*i` with the name i pastes as the constant i, a product of names is refused.
 **Session line, Copy as Python, mechanics** (G210, G213, G214, G216, G217): `state/sessionLine.ts`, `clipboard/python.ts`; as they stood: [archive](archive/04-built-2026-11.md) section 7.
 
 ### 2.7 Decision: SI prefix display, and prefix entry
