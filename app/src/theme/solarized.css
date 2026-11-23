@@ -39,7 +39,7 @@
   --on-key-alpha: #000000;
   --ring: #d2f3ef;
   --key-edge: #000000;
-  --mark-faint: #212f3f;
+  --mark-faint: #3d4f63;
   --key-disc: #435970;
   color-scheme: dark;
 }
@@ -82,7 +82,7 @@
   --on-key-alpha: #000000;
   --ring: #bdc59e;
   --key-edge: #000000;
-  --mark-faint: #212f3f;
+  --mark-faint: #3d4f63;
   --key-disc: #435970;
   color-scheme: dark;
 }
@@ -125,7 +125,7 @@
   --on-key-alpha: #000000;
   --ring: #d1f3f0;
   --key-edge: #38414b;
-  --mark-faint: #0b0f15;
+  --mark-faint: #242a31;
   --key-disc: #2a3642;
   color-scheme: dark;
 }
@@ -168,7 +168,7 @@
   --on-key-alpha: #000000;
   --ring: #bdc59e;
   --key-edge: #38414b;
-  --mark-faint: #0b0f15;
+  --mark-faint: #242a31;
   --key-disc: #2a3642;
   color-scheme: dark;
 }
@@ -211,7 +211,7 @@
   --on-key-alpha: #ffffff;
   --ring: #0e4642;
   --key-edge: #b3b396;
-  --mark-faint: #eef1cc;
+  --mark-faint: #e2e6c4;
   --key-disc: #dbd7ae;
   color-scheme: light;
 }
@@ -254,7 +254,7 @@
   --on-key-alpha: #ffffff;
   --ring: #03161b;
   --key-edge: #b3b396;
-  --mark-faint: #eef1cc;
+  --mark-faint: #e2e6c4;
   --key-disc: #dbd7ae;
   color-scheme: light;
 }
@@ -297,7 +297,7 @@
   --on-key-alpha: #ffffff;
   --ring: #0c3e3a;
   --key-edge: #b3b3a9;
-  --mark-faint: #edeee1;
+  --mark-faint: #e4e6da;
   --key-disc: #e1dfce;
   color-scheme: light;
 }
@@ -340,7 +340,7 @@
   --on-key-alpha: #ffffff;
   --ring: #03161b;
   --key-edge: #b3b3a9;
-  --mark-faint: #edeee1;
+  --mark-faint: #e4e6da;
   --key-disc: #e1dfce;
   color-scheme: light;
 }
