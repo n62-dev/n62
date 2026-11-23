@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // G89: runs n62-check.cas, n62-known.cas and n62-patched.cas line by line on a Giac build (nodeGiac) and counts.
 //   GIAC_OUT=<dir> node tools/giac-regress/run.mjs [file.cas …]     exit 1 when a check line fails, a known line passes, or a patched line fails on the patched build
-// (on a stock build a patched line is expected to fail; one that passes there is reported: patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0042/0043/0044/0045/0046/0047/0048/0050/0051/0052/0053/0054/0056/0057/0058 may no longer be needed)
+// (on a stock build a patched line is expected to fail; one that passes there is reported: patches 0003/0005/0006/0007/0009/0010/0011/0012/0013/0014/0015/0016/0017/0018/0019/0020/0021/0022/0023/0024/0025/0026/0027/0028/0029/0030/0031/0032/0033/0034/0035/0036/0037/0038/0040/0041/0042/0043/0044/0045/0046/0047/0048/0050/0051/0052/0053/0054/0056/0057/0058/0060 may no longer be needed)
 // Each file runs in its own fresh engine (G323: Digits and other settings of one file never reach the next). A line passes when pc() returns 1; a line that errors (or is stopped by the timeout) counts as failed. A line that traps the engine
 // (stock Giac on the g188-int-* lines, G188f2) counts as failed and the run goes on in a fresh engine with the file's preamble (lines.mjs);
 // in the whole-file pass a trap is "trapped (stock)" for the patched file on a stock build (expected) and a failure otherwise.
