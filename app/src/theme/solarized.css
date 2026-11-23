@@ -9,8 +9,8 @@
   --key-fn: #34495f;
   --key-ctl: #34495f;
   --key-nav: #30445a;
-  --key-enter: #1f6fae;
-  --on-enter: #fdf6e3;
+  --key-enter: #4aa3e6;
+  --on-enter: #002b36;
   --text: #eef0e6;
   --text-dead: #97a4b4;
   --muted: #c3ccce;
@@ -93,8 +93,8 @@
   --key-fn: #1d2834;
   --key-ctl: #1d2834;
   --key-nav: #1a2532;
-  --key-enter: #185687;
-  --on-enter: #fdf6e3;
+  --key-enter: #5cace9;
+  --on-enter: #000000;
   --text: #fcfcfa;
   --text-dead: #97a4b4;
   --muted: #c3ccce;
@@ -113,7 +113,7 @@
   --key-text-dead: #97a4b4;
   --key-shift: #f0c040;
   --key-alpha: #95cdf7;
-  --key-pfx: #1f3950;
+  --key-pfx: #253747;
   --sel: #6d9bbc;
   --on-sel: #000000;
   --on-error: #10161e;
@@ -177,7 +177,7 @@
   --key-fn: #f2eec4;
   --key-ctl: #f2eec4;
   --key-nav: #f7f3cc;
-  --key-enter: #1a6aa6;
+  --key-enter: #cb4b16;
   --on-enter: #fffff4;
   --text: #073642;
   --text-dead: #717d7c;
@@ -197,7 +197,7 @@
   --key-text-dead: #717d7c;
   --key-shift: #765800;
   --key-alpha: #1a62a0;
-  --key-pfx: #cddee3;
+  --key-pfx: #f3d4bf;
   --sel: #2f78b6;
   --on-sel: #ffffff;
   --on-error: #ffffff;
@@ -261,7 +261,7 @@
   --key-fn: #faf8e7;
   --key-ctl: #faf8e7;
   --key-nav: #fcfaeb;
-  --key-enter: #175c90;
+  --key-enter: #983811;
   --on-enter: #fffff4;
   --text: #010b0d;
   --text-dead: #697473;

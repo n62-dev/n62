@@ -28,10 +28,10 @@ const TABLE = {
  *  0.099 apart for protanopia (floor 0.12), so Shift moves darker until they are not. The family data keeps the table's value. */
 const MOVED: Record<"dark" | "light", Record<string, string>> = { dark: {}, light: { shift: "#5b2400" } };
 
-/** Phase-1's N62 start blocks (style.css before R153): Black & White must draw exactly these. */
+/** Phase-1's N62 start blocks (style.css before R153): Black & White must draw exactly these, but for Enter (R872: the one white key in Dark, black in Light). */
 const OLD_N62 = {
-  dark: { bg: "#000000", panel: "#0c1011", line: "#2a3536", "key-num": "#1b2122", "key-op": "#121718", "key-fn": "#121718", "key-ctl": "#121718", "key-nav": "#121718", "key-enter": "#529997", "on-enter": "#000000", text: "#eef2f2", "text-dead": "#6f7d7e", muted: "#a7b4b4", shift: "#ff9a33", alpha: "#529997", error: "#ff7b72", "chip-bg": "#163231", approx: "#539b99", warn: "#f2c94c", pick: "#1c2b2b", focus: "#529997", "key-on": "#529997", "on-key-on": "#000000", "key-text": "#eef2f2", "key-muted": "#a7b4b4", "key-text-dead": "#6f7d7e", "key-shift": "#ff9a33", "key-alpha": "#529997", "key-pfx": "#1e2829", "on-error": "#000000", "on-shift": "#000000", "on-alpha": "#000000", "on-key-shift": "#000000", "on-key-alpha": "#000000" },
-  light: { bg: "#f4f6f6", panel: "#e8eded", line: "#b9c6c6", "key-num": "#ffffff", "key-op": "#e6ecec", "key-fn": "#e6ecec", "key-ctl": "#e6ecec", "key-nav": "#e6ecec", "key-enter": "#529997", "on-enter": "#000000", text: "#0b1213", "text-dead": "#687474", muted: "#44504f", shift: "#a14600", alpha: "#2e706e", error: "#aa241d", "chip-bg": "#d6e8e6", approx: "#286160", warn: "#725400", pick: "#b9d6d4", focus: "#2e706e", "key-on": "#2e706e", "on-key-on": "#ffffff", "key-text": "#0b1213", "key-muted": "#44504f", "key-text-dead": "#687474", "key-shift": "#a14600", "key-alpha": "#2e706e", "key-pfx": "#d9e9e8", "on-error": "#ffffff", "on-shift": "#ffffff", "on-alpha": "#ffffff", "on-key-shift": "#ffffff", "on-key-alpha": "#ffffff" },
+  dark: { bg: "#000000", panel: "#0c1011", line: "#2a3536", "key-num": "#1b2122", "key-op": "#121718", "key-fn": "#121718", "key-ctl": "#121718", "key-nav": "#121718", "key-enter": "#e6ebeb", "on-enter": "#000000", text: "#eef2f2", "text-dead": "#6f7d7e", muted: "#a7b4b4", shift: "#ff9a33", alpha: "#529997", error: "#ff7b72", "chip-bg": "#163231", approx: "#539b99", warn: "#f2c94c", pick: "#1c2b2b", focus: "#529997", "key-on": "#529997", "on-key-on": "#000000", "key-text": "#eef2f2", "key-muted": "#a7b4b4", "key-text-dead": "#6f7d7e", "key-shift": "#ff9a33", "key-alpha": "#529997", "key-pfx": "#1e2829", "on-error": "#000000", "on-shift": "#000000", "on-alpha": "#000000", "on-key-shift": "#000000", "on-key-alpha": "#000000" },
+  light: { bg: "#f4f6f6", panel: "#e8eded", line: "#b9c6c6", "key-num": "#ffffff", "key-op": "#e6ecec", "key-fn": "#e6ecec", "key-ctl": "#e6ecec", "key-nav": "#e6ecec", "key-enter": "#1b2122", "on-enter": "#ffffff", text: "#0b1213", "text-dead": "#687474", muted: "#44504f", shift: "#a14600", alpha: "#2e706e", error: "#aa241d", "chip-bg": "#d6e8e6", approx: "#286160", warn: "#725400", pick: "#b9d6d4", focus: "#2e706e", "key-on": "#2e706e", "on-key-on": "#ffffff", "key-text": "#0b1213", "key-muted": "#44504f", "key-text-dead": "#687474", "key-shift": "#a14600", "key-alpha": "#2e706e", "key-pfx": "#d9e9e8", "on-error": "#ffffff", "on-shift": "#ffffff", "on-alpha": "#ffffff", "on-key-shift": "#ffffff", "on-key-alpha": "#ffffff" },
 } as const;
 
 describe("R153: N62 in teal", () => {
@@ -70,7 +70,7 @@ describe("R153: N62 in teal", () => {
   for (const b of ["dark", "light"] as const)
     it(`Black & White ${b} is phase-1's N62 ${b}, role for role`, () => {
       const { t } = theme({ family: "bw", brightness: b, high: false, plain: false });
-      const { ring: _ring, "key-edge": _edge, "mark-faint": _mark, sel: _sel, "on-sel": _onSel, ...old } = t; // R154's --ring, R156's --key-edge, R157's --mark-faint and R274's --sel and --on-sel are new; every other role is phase-1's
+      const { ring: _ring, "key-edge": _edge, "mark-faint": _mark, sel: _sel, "on-sel": _onSel, edge: _accent, ...old } = t; // R872's --edge (the teal the prefix cells keep beside a white or black Enter), R154's --ring, R156's --key-edge, R157's --mark-faint and R274's --sel and --on-sel are new; every other role is phase-1's
       expect(old).toEqual(OLD_N62[b]);
     });
 });

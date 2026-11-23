@@ -105,4 +105,4 @@ Colour values only (no code); lightness adjusted where our contrast rules need i
 |---|---|---|---|---|
 | Solarized | Ethan Schoonover (palette); the grounds #2d4056 and #ffffd6 are the N62 owner's | MIT | https://github.com/altercation/solarized | Copyright © 2011 Ethan Schoonover |
 
-N62's own colours (the logo's teal #529997 at other lightnesses, with an orange Shift; R153) and Black & White (black and white with the logo's teal and an orange accent) are ours, GPL-3.0-or-later; Solarized's two grounds (#2d4056 dark, #ffffd6 light) are the owner's choice and the other Solarized colours are matched to them (R140, R150).
+N62's own colours (the logo's teal #529997 at other lightnesses, with an orange Shift; R153) and Black & White (black and white with the logo's teal on Alpha and an orange Shift; Enter white or black, R872) are ours, GPL-3.0-or-later; Solarized's two grounds (#2d4056 dark, #ffffd6 light) are the owner's choice and the other Solarized colours are matched to them (R140, R150); Solarized Dark's Enter label #002b36 (base03) and Solarized Light's Enter #cb4b16 (orange) are Solarized's own (R872).
