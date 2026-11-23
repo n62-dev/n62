@@ -124,7 +124,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B1a | G783 a free name's ln(1/x) and √(1/x) keep their form, so a later value gets the principal branch (owner, 2026-11-22) | gorge, Opus | `p1/gorge-invfree` | G398 |
 | B1b | G787 the patch statuses after Parisse's 22 Nov tarball; every patch applies at fuzz 0 | gorge, Opus | `p1/gorge-patchstatus` | G783 |
-| B2 | [G399](packages/G399.md) arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
+| B2 | G399 arg of a negative real is π, never −π | gorge, Opus | `p1/gorge-argpi` | G398 |
 | B2a | [G784](packages/G784.md) Copy writes the names the screen shows, never Giac's stand-ins | gorge, Opus | `p1/gorge-copynames` | – |
 | B2b | [G785](packages/G785.md) Fmt skips a step that draws the same; a press that changes nothing is dead | gorge, Opus | `p1/gorge-fmtskip` | – |
 | B4 | [G553](packages/G553.md) floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |

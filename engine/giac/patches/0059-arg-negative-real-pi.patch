@@ -1,0 +1,46 @@
+# Upstream: giac 2.1.0 gen.cc arg: the arg of a power b^e (im(e*ln(b)), gen.cc:4395-4400 stock), of exp(z) (im(z), :4402-4403) and of a product (the sum of its factors' args, :4404-4418) is brought into range by _smod(x,2*pi), which for a modulus that is no integer is x-m*round(x/m) (usual.cc:6577-6578) with round(1/2)=1, so its range is [-pi,pi): smod(pi,2*pi) = pi-2*pi, and the arg of a negative real reached through these paths was -pi, where the principal value in (-pi,pi] is pi (arg(-1) = pi, atan2(0,-1) = pi): arg((i*pi)^2) = 2*pi/2-2*pi, arg(i*pi*i) = pi/2+pi/2-2*pi, also arg(ln(-1)^2), arg(acos(5/4)^2), arg(i*ln(i)), arg(ln(i)^2); evalf -3.14159265359, in degrees -180 (right 180); angle() takes another path and gave pi. Now, after each of the three _smod calls, a result whose double is within 1e-9 of -pi, that holds no float and that recursive_normal proves equal to -pi is pi; any other result (a float, an exact value near -pi but not equal to it, arg(-1-10^-20*i) = atan(10^-20)-pi) is unchanged, and _smod itself is not changed (its symmetric range is its own definition).
+# Changed by Pascaline contributors, 2026-11-23
+--- a/src/gen.cc
++++ b/src/gen.cc
+@@ -4407,6 +4407,18 @@
+     return res;
+   }
+ 
++  // N62 (G399): arg's range is (-pi,pi], _smod's for the modulus 2*pi is [-pi,pi) (x-m*round(x/m), round(1/2)=1), so
++  // pi, the arg of a negative real, came back as -pi. A result whose double is within 1e-9 of -pi, has no float and that
++  // recursive_normal proves equal to -pi is pi; an inexact one (a float, or an exact value not equal to -pi) stays.
++  static gen arg_smod_principal(const gen & g,GIAC_CONTEXT){
++    gen gd=evalf_double(g,1,contextptr);
++    if (gd.type!=_DOUBLE_ || fabs(gd._DOUBLE_val+M_PI)>1e-9 || has_num_coeff(g))
++      return g;
++    if (is_exactly_zero(recursive_normal(g+cst_pi,contextptr)))
++      return cst_pi;
++    return g;
++  }
++
+   gen arg(const gen & a,GIAC_CONTEXT){ 
+     if (a.type==_CPLX && a._CPLXptr->type==_DOUBLE_ && (a._CPLXptr+1)->type==_DOUBLE_){
+       double d=atan2((a._CPLXptr+1)->_DOUBLE_val,a._CPLXptr->_DOUBLE_val);
+@@ -4432,11 +4444,11 @@
+       gen af=a._SYMBptr->feuille;
+       if (af.type==_VECT && af._VECTptr->size()==2){
+ 	gen res=im(ln(af._VECTptr->front(),contextptr)*af._VECTptr->back(),contextptr);
+-	return _smod(makesequence(res,cst_two_pi),contextptr);
++	return arg_smod_principal(_smod(makesequence(res,cst_two_pi),contextptr),contextptr);
+       }
+     }
+     if (a.is_symb_of_sommet(at_exp))
+-      return _smod(makesequence(im(a._SYMBptr->feuille,contextptr),cst_two_pi),contextptr);
++      return arg_smod_principal(_smod(makesequence(im(a._SYMBptr->feuille,contextptr),cst_two_pi),contextptr),contextptr);
+     if (a.is_symb_of_sommet(at_prod)){
+       const gen & af=a._SYMBptr->feuille;
+       if (af.type==_VECT){
+@@ -4451,7 +4463,7 @@
+ 	  }
+ 	}
+ 	if (nonzero>1)
+-	  return _smod(makesequence(res,cst_two_pi),contextptr);	
++	  return arg_smod_principal(_smod(makesequence(res,cst_two_pi),contextptr),contextptr);	
+ 	return res;
+       }
+     }

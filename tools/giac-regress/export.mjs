@@ -630,6 +630,9 @@ export const PATCHED_IDS = new Map([
   // G786: permu.cc ascsort read an MPFR element as 0, so median, quartile1, quartile3 and quantile of a float list above 14 digits
   // were 0; the g786-keep-* row (an exact list) passes on stock and stays in the check file
   ...["quartile3-approx-list", "quartile1-approx-list-30", "median-approx-list-30", "quantile-approx-list-30", "quartile1-approx-list-12", "median-approx-list-12", "quantile-approx-list-12", "median-approx-third-30", "quartiles-approx-list-30", "median-approx-matrix-30"].map((k) => [`g786-${k}`, "0058-ascsort-mpfr-elements.patch"]),
+  // G399 (be-1): gen.cc arg took a power's, exp's and a product's argument through _smod(x,2*pi), whose range is [-pi,pi), so a
+  // negative real gave -pi; the g399-keep-* rows pass on stock and stay in the check file, the DEG and CAS rows are left out
+  ...["arg-i-pi-squared", "arg-i-pi-i", "arg-ln-neg1-squared", "arg-acos-5/4-squared", "arg-i-ln-i"].map((k) => [`g399-${k}`, "0059-arg-negative-real-pi.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
