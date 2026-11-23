@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R157, R856 (owner, 2026-11-22): Home's tile is the house in the segment's colour (R745's colour logo left the bar);
 // CAS and the apps keep their glyphs; the N62 mark is faint on an
-// empty history (--mark-faint, at most 1.3:1 on --bg), gone after one result, a tap on it opens the credits sheet. The fake engine.
+// empty history (--mark-faint, the hint's colour at 1.2 to 1.3:1 on --bg, R874), gone after one result, a tap on it opens the credits sheet. The fake engine.
 import { expect, test, type Page } from "@playwright/test";
 import { open, tap } from "./helpers.ts";
 
@@ -162,7 +162,10 @@ test.describe("fake engine", () => {
           const faintColour = await faint.evaluate((el) => getComputedStyle(el).backgroundColor);
           expect(faintColour).toBe(await role(page, "mark-faint"));
           expect(ratio(faintColour, bg)).toBeLessThanOrEqual(1.3);
-          expect(ratio(faintColour, bg)).toBeGreaterThan(1.03); // seen, faintly
+          expect(ratio(faintColour, bg)).toBeGreaterThanOrEqual(1.2); // R874: seen, faintly (B&W Dark's stood 1.11)
+          // R874: the hint's colour, so on the hint's side of the screen (both lighter, or both darker)
+          const hint = await page.getByText("Type a calculation and press Enter.").evaluate((el) => getComputedStyle(el).color);
+          expect(lum(faintColour) > lum(bg), "the mark on the hint's side of --bg").toBe(lum(hint) > lum(bg));
           expect(await faint.evaluate((el) => getComputedStyle(el).maskImage + getComputedStyle(el).webkitMaskImage)).toContain("n62-mark.svg");
         });
 

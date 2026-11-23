@@ -246,29 +246,41 @@ describe("R873: --key-disc, the round pad's fill", () => {
   });
 });
 
-describe("R157: --mark-faint, the faint mark on an empty history", () => {
+describe("R157, R874: --mark-faint, the faint mark on an empty history", () => {
   const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const mixed = (a: string, b: string, k: number): number[] => rgb(a).map((v, i) => v + ((rgb(b)[i] as number) - v) * k);
-  it("is 30 % black over --bg in a dark combination and 7 % of --text over it in a light one, as an opaque colour, at most 1.3:1 on --bg and not lost", () => {
-    for (const c of combos()) {
+  // R874 (owner, 2026-11-22, point 8: the mark and "Type a calculation and press Enter" should be related): the hint's colour
+  // (--muted) mixed into --bg, at 1.25:1 and never above R157's 1.3:1, lighter on a dark screen and darker on a light one, as the hint
+  for (const c of combos())
+    it(`${selector(c)}: --muted mixed into --bg (one share for the three channels), 1.25 to 1.30:1 from --bg`, () => {
       const { t } = theme(c);
-      const m = t["mark-faint"] ?? "";
-      expect(m, selector(c)).toMatch(/^#[0-9a-f]{6}$/);
-      const r = cr(m, t["bg"] ?? "");
-      expect(r, selector(c)).toBeLessThanOrEqual(1.3);
-      expect(r, selector(c)).toBeGreaterThanOrEqual(1.05);
-      const near = (w: number[]): boolean => rgb(m).every((v, i) => Math.abs(v - (w[i] as number)) <= 0.5);
-      const black = [0.3, 0.29, 0.28, 0.27, 0.26, 0.25, 0.24, 0.23, 0.22, 0.21, 0.2].some((k) => near(mixed(t["bg"] ?? "", "#000000", k)));
-      expect(black || near(mixed(t["bg"] ?? "", t["text"] ?? "", 0.07)), selector(c)).toBe(true);
-      if (c.brightness === "light") expect(black, selector(c)).toBe(false);
-    }
-  });
-  it("N62 Dark's is #061b1b and N62 Light's #bcd8d7, in both start blocks", () => {
-    expect(theme({ family: "n62", brightness: "dark", high: false, plain: false }).t["mark-faint"]).toBe("#061b1b");
-    expect(theme({ family: "n62", brightness: "light", high: false, plain: false }).t["mark-faint"]).toBe("#bcd8d7");
+      const [m, bg, mu] = [t["mark-faint"] ?? "", t["bg"] ?? "", t["muted"] ?? ""];
+      expect(m).toMatch(/^#[0-9a-f]{6}$/);
+      rgb(m).forEach((v, i) => {
+        const [a, b] = [rgb(bg)[i] as number, rgb(mu)[i] as number];
+        expect(v, `channel ${i} between --bg and --muted`).toBeGreaterThanOrEqual(Math.min(a, b));
+        expect(v, `channel ${i} between --bg and --muted`).toBeLessThanOrEqual(Math.max(a, b));
+      });
+      const on = Array.from({ length: 1001 }, (_, i) => i / 1000).some((k) => rgb(m).every((v, i) => Math.abs(v - (mixed(bg, mu, k)[i] as number)) <= 0.5));
+      expect(on, `${m} lies on the line from ${bg} to ${mu}`).toBe(true);
+      const r = cr(m, bg);
+      expect(r).toBeGreaterThanOrEqual(1.25);
+      expect(r).toBeLessThanOrEqual(1.3);
+      expect(lum(m) > lum(bg), "on the hint's side of --bg").toBe(lum(mu) > lum(bg));
+    });
+  it("N62 Dark's is #1a3837 and N62 Light's #b3cfce, in both start blocks (sandra's s1-mark125.mjs)", () => {
+    expect(theme({ family: "n62", brightness: "dark", high: false, plain: false }).t["mark-faint"]).toBe("#1a3837");
+    expect(theme({ family: "n62", brightness: "light", high: false, plain: false }).t["mark-faint"]).toBe("#b3cfce");
     const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
-    expect(css).toContain("--mark-faint: #061b1b;");
-    expect(css).toContain("--mark-faint: #bcd8d7;");
+    expect(css).toContain("--mark-faint: #1a3837;");
+    expect(css).toContain("--mark-faint: #b3cfce;");
+  });
+  it("the other normal looks land on sandra's values", () => {
+    const WANT = { "bw dark": "#1c1e1e", "bw light": "#dadede", "solarized dark": "#3d4f63", "solarized light": "#e2e6c4" } as const;
+    for (const [id, want] of Object.entries(WANT)) {
+      const [family, brightness] = id.split(" ") as [string, "dark" | "light"];
+      expect(theme({ family, brightness, high: false, plain: false }).t["mark-faint"], id).toBe(want);
+    }
   });
   it("style.css holds the mark's height as a token, and no logo colours (R745: Home's tile is the app icon's own file)", () => {
     const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");

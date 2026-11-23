@@ -493,22 +493,24 @@ function withKeyEdge(t: Palette, dark: boolean): Palette {
   throw new Error(`theme-gen: no --key-edge on panel ${panel}`);
 }
 
-/** R157: the faint N62 mark on an empty history (--mark-faint, drawn by History.svelte as a mask): in a dark combination black at 30 % over
- *  the final --bg (N62 Dark #061b1b), less where a brighter --bg would make that more than MARK_MAX apart (Solarized Dark); in a light one
- *  7 % of the final --text over it (N62 Light #bcd8d7). A dark --bg too near black for black to show (Black & White Dark's #000000) takes
- *  the light recipe, so the mark is never fully lost. Set last, from the final colours. */
-export const MARK_DARK = 0.3;
-export const MARK_LIGHT = 0.07;
-export const MARK_SEEN = 1.05;
+/** R157, R874: the faint N62 mark on an empty history (--mark-faint, drawn by History.svelte as a mask) is the hint's colour (--muted)
+ *  mixed into the final --bg (sRGB, as mix()), at the smallest share, in steps of MARK_STEP, where it stands MARK_SEEN from --bg: lighter
+ *  on a dark screen and darker on a light one, as the hint (owner, 2026-11-22, point 8). N62 Dark #1a3837, N62 Light #b3cfce. Never above
+ *  MARK_MAX (R157). Set last, from the final colours. */
+export const MARK_SEEN = 1.25;
 export const MARK_MAX = 1.3;
-function withMarkFaint(t: Palette, dark: boolean): Palette {
+const MARK_STEP = 0.005;
+function withMarkFaint(t: Palette): Palette {
   const bg = get(t, "bg");
-  const light = mix(bg, get(t, "text"), MARK_LIGHT);
-  if (!dark) return { ...t, "mark-faint": light };
-  let share = MARK_DARK;
-  while (share > 0.05 && cr(mix(bg, "#000000", share), bg) > MARK_MAX) share -= 0.01;
-  const black = mix(bg, "#000000", share);
-  return { ...t, "mark-faint": cr(black, bg) >= MARK_SEEN ? black : light };
+  const muted = get(t, "muted");
+  for (let i = 1; i * MARK_STEP <= 1; i++) {
+    const c = mix(bg, muted, i * MARK_STEP);
+    if (cr(c, bg) >= MARK_SEEN) {
+      if (cr(c, bg) > MARK_MAX) break;
+      return { ...t, "mark-faint": c };
+    }
+  }
+  throw new Error(`theme-gen: no --mark-faint between ${bg} and ${muted}`);
 }
 
 export interface Combo {
@@ -534,7 +536,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
   o = withEnter(o, c);
-  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark), dark), c), fixes };
+  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark)), c), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---

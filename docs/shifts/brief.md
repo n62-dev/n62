@@ -61,7 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e | [R874](packages/R874.md) empty-history mark in the hint colour | ron, Opus | `p1/ron-markhint` | R860, R873 |
+| 888e | R874 empty-history mark in the hint colour | ron, Opus | `p1/ron-markhint` | R860, R873 |
 | 888e1 | [R887](packages/R887.md) ⚙ over a sheet opens Settings | ron, Opus | `p1/ron-gearsheet` | – |
 | 888e2 | [R915](packages/R915.md) units follow the angle; their RAD tag | ron, Opus | `p1/ron-unitangle` | – |
 | 888e2a | [R916](packages/R916.md) layer sweep 1: unit view | ron, Opus | `p1/ron-layersweep` | – |

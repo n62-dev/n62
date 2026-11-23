@@ -39,7 +39,7 @@
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
   --key-edge: #000000;
-  --mark-faint: #061b1b;
+  --mark-faint: #1a3837;
   --key-disc: #1b403e;
   color-scheme: dark;
 }
@@ -82,7 +82,7 @@
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
   --key-edge: #293837;
-  --mark-faint: #141f1e;
+  --mark-faint: #182625;
   --key-disc: #192d2c;
   color-scheme: dark;
 }
@@ -125,7 +125,7 @@
   --on-key-shift: #000000;
   --on-key-alpha: #000000;
   --key-edge: #293837;
-  --mark-faint: #141f1e;
+  --mark-faint: #182625;
   --key-disc: #192d2c;
   color-scheme: dark;
 }
@@ -169,7 +169,7 @@
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
   --key-edge: #8da1a0;
-  --mark-faint: #bcd8d7;
+  --mark-faint: #b3cfce;
   --key-disc: #c4dcdb;
   color-scheme: light;
 }
@@ -213,7 +213,7 @@
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
   --key-edge: #a5acac;
-  --mark-faint: #dce5e5;
+  --mark-faint: #d2dede;
   --key-disc: #d6e0df;
   color-scheme: light;
 }
@@ -257,7 +257,7 @@
   --on-key-shift: #ffffff;
   --on-key-alpha: #ffffff;
   --key-edge: #a5acac;
-  --mark-faint: #dce5e5;
+  --mark-faint: #d2dede;
   --key-disc: #d6e0df;
   color-scheme: light;
 }
