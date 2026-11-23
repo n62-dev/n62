@@ -73,6 +73,8 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888k | [R870](packages/R870.md) Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
 | 888l | [R871](packages/R871.md) Shift + Fmt opens the Fmt cycle's settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
 | 888m | [R881](packages/R881.md) the "rainbow" easter egg | ron, Opus | `p1/ron-rainbow` | A266 |
+| 888n | [R883](packages/R883.md) a typed ± mutes the digits past its σ, as a constant's does | ron, Opus | `p1/ron-pmmute` | – |
+| 888o | [R884](packages/R884.md) Settings › Uncertainty: "Rounded to σ" | ron, Opus | `p1/ron-uncround` | R883 |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
 | 891 | [R728](packages/R728.md) the keys say what they do (CAS letters, Alpha colours, docs/06's differences) | ron, Opus | `p1/ron-keyssay` | R723, R726 |
 | 892 | [R729](packages/R729.md) the key legends: armed a ring, locked a fill; Shift and Alpha show their layers (K4) | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
@@ -119,7 +121,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 |---|---|---|---|---|
 | B2b | G785 Fmt skips a step that draws the same; a press that changes nothing is dead | gorge, Opus | `p1/gorge-fmtskip` | – |
 | B2c | G789 median and the quartiles refuse undef and a name in a list; ±inf sorted by value | gorge, Opus | `p1/gorge-medianundef` | – |
-| B4 | [G553](packages/G553.md) floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
+| B4 | G553 floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
 | B5 | [G551](packages/G551.md) bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
 | B6 | [G554](packages/G554.md) exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
 | B7 | [G405](packages/G405.md) solve keeps two real roots that are distinct but close | gorge, Opus | `p1/gorge-closeroots` | – |
