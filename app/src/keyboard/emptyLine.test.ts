@@ -34,6 +34,7 @@ function ctx(stored = true) {
     hasResult: () => stored,
     undoRemoved: () => (log.push("undoRemoved"), false),
     formKey: async (k: string) => (log.push(k), true),
+    formRow: () => (stored ? {} : undefined), // (G785: the row the key takes; the forms code not in)
   };
   const shell = { app: null, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true };
   const c = { session, shell, entry, picked: null as number | null, sheetLoad: null, waiting: [], casKeys: false, enter() {}, insertResult() {}, recallRow() {}, goTo() {}, clearKey() {}, openSettings() {}, openMode() {}, openTemplates() {}, openShiftPalette() {}, openFind() {}, openNames() {}, openStore() {}, withClip() {}, loadClip() {}, dead: () => void log.push("dead"), unfold: () => false };

@@ -5,6 +5,7 @@
 // Paste (deselectPaste.test.ts); Mode has no key (the bar's chips). Shift + Fmt is reserved (Shift + Vars is Chars, R725): no action, no
 // legend, a dead press. The real route.press, a stub context (no MathLive, no field).
 import { describe, expect, test, vi } from "vitest";
+import { targetRow } from "../state/pickRows.ts";
 
 vi.mock("../render/mathlive.svelte.ts", () => ({ mathlive: { load: () => new Promise(() => {}) } }));
 vi.mock("../entry/field.ts", () => ({}));
@@ -32,6 +33,7 @@ function ctx(items: Row[] = [], app: string | null = null) {
     clearModifiers() {},
     hasResult: () => false,
     formKey: async (k: string) => void log.push(k),
+    formRow: (_k: string, at: number | null) => targetRow(items, items[at ?? -1]), // (the forms code not in: the row only, G785)
   };
   const shell = { app, sheet: null, sheetPending: null, loading: null, prompt: null, opening: Promise.resolve(), showsEntry: true, nav: () => false, toggleMenu: () => (log.push("toggleMenu"), true) };
   // ClipActions.keyCopy (clipboard/actions.test.ts holds its rule): here it says what it was given, and calls the dead press when it has nothing to copy

@@ -121,20 +121,42 @@ async function computePolar(s: Session, calc: Calc, item: HistoryItem, v: Comple
   }
 }
 
-/** The Format key: `item` (the last result of the open view at the press, Session.lastForKey) in the next ticked mode
- *  (Settings), that result only. True when the display changed. */
-export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Promise<boolean> {
-  if (item.form !== undefined) {
-    // a form chosen with a b/c: the Format key goes back to the number in its notation
-    delete item.form;
-    s.saveHistory();
-    return true;
-  }
+/** G785: what `item` draws in the form a key leaves it in (the text and the mark, as the row shows them): two steps that
+ *  draw alike are one. */
+const look = (s: Session, item: HistoryItem): string => {
+  const m = s.mark(item);
+  return `${s.display(item).text}\n${m?.mark}${m?.n}${m?.warn}`;
+};
+
+/** G785: the Format key's next step on `item` (Session.lastForKey's row): `item.form` dropped, else the next ticked mode
+ *  (nextMode), past each step that would draw what the row shows now (SCI and ENG draw 5 alike, STD draws a CAS 5 as its
+ *  exact form). Polar, which needs the engine to draw, counts as a change. null: no step changes the row (a dead press). */
+export function fmtStep(s: Session, item: HistoryItem): { mode: FmtMode | undefined } | null {
   const exactBase = item.view === "cas";
-  const next = nextMode(item.fmt ?? (exactBase ? undefined : s.settings.format), s.settings.fmtCycle, factsOf(item), exactBase);
+  const now = look(s, item);
+  let mode = item.fmt;
+  if (item.form !== undefined && look(s, { ...item, form: undefined }) !== now) return { mode };
+  for (let i = 0; i < FMT_MODES.length; i++) {
+    const next = nextMode(mode ?? (exactBase ? undefined : s.settings.format), s.settings.fmtCycle, factsOf(item), exactBase);
+    if (!next) return null;
+    mode = next.mode;
+    if (mode === "polar" || look(s, { ...item, form: undefined, fmt: mode }) !== now) return next;
+  }
+  return null;
+}
+
+/** G785: Fmt (`cycleFormat`) or a b/c (`cycleForm`) on `item` changes nothing (fmtStep, nextForm): a dead press (route.ts deadPress). */
+export const formDead = (s: Session, item: HistoryItem, key: "cycleFormat" | "cycleForm"): boolean =>
+  (key === "cycleFormat" ? fmtStep(s, item) : nextForm(item.form, factsOf(item), item.view === "cas")) === null;
+
+/** The Format key: `item` (the last result of the open view at the press, Session.lastForKey) in the next ticked mode
+ *  (Settings) whose drawing differs (fmtStep), that result only. True when the display changed. */
+export async function cycleFormat(s: Session, calc: Calc, item: HistoryItem): Promise<boolean> {
+  const next = fmtStep(s, item);
   if (!next) return false;
   if (next.mode === "polar" && item.value && polarStale(item, s.settings.angle) && !(await computePolar(s, calc, item, item.value)))
     return false;
+  delete item.form; // a form chosen with a b/c: the Format key goes back to the number in its notation
   item.fmt = next.mode;
   s.saveHistory();
   return true;
