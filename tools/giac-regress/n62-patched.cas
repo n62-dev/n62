@@ -71,6 +71,21 @@ Digits:=40:; pc("g340-simplify-sqrt-cbrt2-plus-root",'(simplify(sqrt(1+2^(1/3)+s
 // patch 0045-algnum-convert-nested-rootof.patch
 // g340-normal-root-times-ln (home.yaml, oracle)
 Digits:=40:; pc("g340-normal-root-times-ln",'(normal(sqrt(1+sqrt(1+2^(1/3)))*ln(1+sqrt(1+sqrt(1+2^(1/3))))))',(150091459624/10^11),5/10^12);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-pi-1e-13 (home.yaml, derived)
+Digits:=40:; pc("g553-ceil-pi-1e-13",'(ceil(pi*10^-13))',1,5/10^12);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-1-cos-1e-6 (home.yaml, derived)
+Digits:=40:; pc("g553-ceil-1-cos-1e-6",'(ceil(1-cos(10^-6)))',1,5/10^12);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-log10-1e12+1 (home.yaml, derived)
+Digits:=40:; pc("g553-ceil-log10-1e12+1",'(ceil(log10(10^12+1)))',13,5/10^11);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-floor-neg-pi-1e-13 (home.yaml, derived)
+Digits:=40:; pc("g553-floor-neg-pi-1e-13",'(floor(-pi*10^-13))',-1,5/10^12);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-round-neg-2.5-pi-1e-13 (home.yaml, derived)
+Digits:=40:; pc("g553-round-neg-2.5-pi-1e-13",'(round(-(25/10^1)-pi*10^-13))',-3,5/10^12);
 // patch 0046-shift-integer-exact.patch
 // g226-shift-1-neg70 (home.yaml, derived)
 Digits:=40:; pc("g226-shift-1-neg70",'(shift(1,-70))',(118059162072*10^10),5*10^9);
@@ -1526,6 +1541,21 @@ Digits:=40:; pc("g789-quartile1-matrix-neg-inf",'when((quartile1([[5,1],[-inf,2]
 // patch 0060-median-list-by-value.patch
 // g789-quartiles-matrix-inf-max (derived: the second column's maximum; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)
 Digits:=40:; pc("g789-quartiles-matrix-inf-max",'when((quartiles([[1,6],[2,5],[3,4],[-inf,3],[5,inf],[6,1]])[4,1])==inf,1,0)',1,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-sqrt-1e24+1 (derived: sqrt(10^24+1) = 10^12+5E-13)
+Digits:=40:; pc("g553-ceil-sqrt-1e24+1",'ceil(sqrt(10^24+1))',1000000000001,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-floor-neg-sqrt-1e30+1 (derived: sqrt(10^30+1) = 10^15+5E-16)
+Digits:=40:; pc("g553-floor-neg-sqrt-1e30+1",'floor(-sqrt(10^30+1))',-1000000000000001,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-pi-1e-13-12 (derived: 0 < pi*10^-13 <= 1)
+Digits:=12:; pc("g553-ceil-pi-1e-13-12",'ceil(pi*10^-13)',1,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-log10-1e12+1-12 (derived: log10(10^12+1) = 12+4.3E-13)
+Digits:=12:; pc("g553-ceil-log10-1e12+1-12",'ceil(log10(10^12+1))',13,1/10^30);
+// patch 0061-floor-mpfr-working-precision.patch
+// g553-ceil-sqrt-1e24+1-12 (derived: sqrt(10^24+1) = 10^12+5E-13)
+Digits:=12:; pc("g553-ceil-sqrt-1e24+1-12",'ceil(sqrt(10^24+1))',1000000000001,1/10^30);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

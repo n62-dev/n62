@@ -637,6 +637,10 @@ export const PATCHED_IDS = new Map([
   // G399 (be-1): gen.cc arg took a power's, exp's and a product's argument through _smod(x,2*pi), whose range is [-pi,pi), so a
   // negative real gave -pi; the g399-keep-* rows pass on stock and stay in the check file, the DEG and CAS rows are left out
   ...["arg-i-pi-squared", "arg-i-pi-i", "arg-ln-neg1-squared", "arg-acos-5/4-squared", "arg-i-ln-i"].map((k) => [`g399-${k}`, "0059-arg-negative-real-pi.patch"]),
+  // G553 (F304): usual.cc _floor took a negative MPFR value within 1e-12 below an integer as that integer (is_zero's absolute
+  // epsilon; ceil and round through it); the g553-keep-* rows pass on stock and stay in the check file, and the two whose 13 and
+  // 16 digits Home shows rounded (a half unit of 5 lets stock pass) are written lines below
+  ...["ceil-pi-1e-13", "ceil-1-cos-1e-6", "ceil-log10-1e12+1", "floor-neg-pi-1e-13", "round-neg-2.5-pi-1e-13"].map((k) => [`g553-${k}`, "0061-floor-mpfr-working-precision.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -946,6 +950,18 @@ export function build(cases) {
     ["quartiles-matrix-inf-max", "quartiles([[1,6],[2,5],[3,4],[-inf,3],[5,inf],[6,1]])[4,1]", "inf", "the second column's maximum"],
   ]) {
     patched.push("// patch 0060-median-list-by-value.patch", `// g789-${k} (derived: ${why}; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)`, `Digits:=40:; pc("g789-${k}",'when((${input})==${value},1,0)',1,1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0061 (G553), written lines: the integers whole (Home shows them rounded to 12 digits) and the Digits 12 runs, where _floor
+  // raises a double to 100 bits; stock gives 10^12, -10^15, 0 and 12 at both Digits
+  for (const [k, digits, input, value, why] of [
+    ["ceil-sqrt-1e24+1", 40, "ceil(sqrt(10^24+1))", "1000000000001", "sqrt(10^24+1) = 10^12+5E-13"],
+    ["floor-neg-sqrt-1e30+1", 40, "floor(-sqrt(10^30+1))", "-1000000000000001", "sqrt(10^30+1) = 10^15+5E-16"],
+    ["ceil-pi-1e-13-12", 12, "ceil(pi*10^-13)", "1", "0 < pi*10^-13 <= 1"],
+    ["ceil-log10-1e12+1-12", 12, "ceil(log10(10^12+1))", "13", "log10(10^12+1) = 12+4.3E-13"],
+    ["ceil-sqrt-1e24+1-12", 12, "ceil(sqrt(10^24+1))", "1000000000001", "sqrt(10^24+1) = 10^12+5E-13"],
+  ]) {
+    patched.push("// patch 0061-floor-mpfr-working-precision.patch", `// g553-${k} (derived: ${why})`, `Digits:=${digits}:; pc("g553-${k}",'${input}',${value},1/10^30);`);
     nPatched++;
   }
   for (const [mode, n, tag, value] of [
