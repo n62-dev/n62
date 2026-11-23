@@ -2,9 +2,9 @@
 // R174: the words of A93's "Why trust it" section, with no node import, so README.md's generator (facts.mts) and the in-app page
 // (app/src/views/aboutItems.ts, from `virtual:about`'s `trust`) build the same sentences from the same counts.
 
-/** The date of the author's source that the sentence names ("his 7 Nov source"); the one constant beside the Status column.
+/** The date of the author's source that the sentence names ("his 22 Nov source"); the one constant beside the Status column.
  *  `aboutTrust` carries it in `patches.authorDate` for the page. */
-export const AUTHOR_SOURCE_DATE = "7 Nov";
+export const AUTHOR_SOURCE_DATE = "22 Nov";
 
 /** The counts the sentences read: facts.mts's `TrustFacts`, and `virtual:about`'s `trust`, both have them. */
 export interface TrustCounts {

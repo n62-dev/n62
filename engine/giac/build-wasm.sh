@@ -239,7 +239,7 @@ stage_giac() {
     [[ -e "$p" ]] || continue
     [[ "$GIAC_PATCHES" != none ]] || { echo "GIAC_PATCHES=none: ${p##*/} not applied"; continue; }
     echo "patch: ${p##*/}"
-    patch -d "$src" -p1 --forward < "$p"
+    patch -d "$src" -p1 --forward -F0 < "$p"  # G787: no fuzz: a moved context or a patch upstream already has stops the build
   done
   local gsl_flag=--disable-gsl
   [[ "$WITH_GSL" == 1 ]] && gsl_flag=--enable-gsl
