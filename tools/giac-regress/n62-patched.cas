@@ -1598,6 +1598,18 @@ Digits:=12:; pc("g554-exp-evalf-rotation40-00-12",'exp(evalf([[0,40],[-40,0]]))[
 // patch 0063-matrix-exp-working-precision.patch
 // g554-exp-evalf-neg30-00-12 (oracle: mpmath)
 Digits:=12:; pc("g554-exp-evalf-neg30-00-12",'exp(evalf([[-30,0],[0,-30]]))[0][0]',935762296884/10^25,1/10^24);
+// patch 0064-mmult-tiny-float-factor.patch
+// g790-mmult-tiny-left-exact-01-40 (derived: the exact product)
+Digits:=40:; pc("g790-mmult-tiny-left-exact-01-40",'(approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])[0][1]',2/10^13,1/10^50);
+// patch 0064-mmult-tiny-float-factor.patch
+// g790-mmult-tiny-left-exact-11-40 (derived: the exact product)
+Digits:=40:; pc("g790-mmult-tiny-left-exact-11-40",'(approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])[1][1]',4/10^13,1/10^50);
+// patch 0064-mmult-tiny-float-factor.patch
+// g790-mmult-tiny-left-approx-00-40 (derived: the exact product)
+Digits:=40:; pc("g790-mmult-tiny-left-approx-00-40",'(approx([[10^-13,10^-13],[0,10^-13]])*approx([[1,2],[3,4]]))[0][0]',4/10^13,1/10^50);
+// patch 0064-mmult-tiny-float-factor.patch
+// g790-mmult-tiny-both-11-40 (derived: the exact product)
+Digits:=40:; pc("g790-mmult-tiny-both-11-40",'(approx([[10^-13,0],[0,10^-13]])*approx([[10^-13,0],[0,10^-13]]))[1][1]',1/10^26,1/10^63);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

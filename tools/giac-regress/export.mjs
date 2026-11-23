@@ -994,6 +994,18 @@ export function build(cases) {
     patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
+  // Patch 0064 (G790, F475), written lines: a matrix product whose left factor holds only floats below 1e-12 (vecteur.cc mmult_atranb's
+  // sparse loop and matrix_density tested entries with is_zero, an absolute 1e-12; the golden g790-* rows are matrices, which the export
+  // leaves out). Stock gave the zero matrix at Digits 40. Expected values: the exact products (derived), at a tolerance far below the entries.
+  for (const [id, input, value, tol] of [
+    ["g790-mmult-tiny-left-exact-01-40", "(approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])[0][1]", "2/10^13", "1/10^50"],
+    ["g790-mmult-tiny-left-exact-11-40", "(approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])[1][1]", "4/10^13", "1/10^50"],
+    ["g790-mmult-tiny-left-approx-00-40", "(approx([[10^-13,10^-13],[0,10^-13]])*approx([[1,2],[3,4]]))[0][0]", "4/10^13", "1/10^50"],
+    ["g790-mmult-tiny-both-11-40", "(approx([[10^-13,0],[0,10^-13]])*approx([[10^-13,0],[0,10^-13]]))[1][1]", "1/10^26", "1/10^63"],
+  ]) {
+    patched.push("// patch 0064-mmult-tiny-float-factor.patch", `// ${id} (derived: the exact product)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
   for (const [mode, n, tag, value] of [
     ["DEG", 0, "deg", "90+(3147292373094538001977241539068588825237/10^38)*i"],
     ["GRAD", 2, "grad", "100+(3496991525660597779974712821187320916930/10^38)*i"],
