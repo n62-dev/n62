@@ -61,7 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888b | [R843](packages/R843.md) N62 Light's Enter in orange A `#c26a00` (owner's pick, 2026-11-22) | ron, Opus | `p1/ron-enterorange` | R842 |
+| 888b | R843 N62 Light's Enter in orange A `#c26a00` (owner's pick, 2026-11-22) | ron, Opus | `p1/ron-enterorange` | R842 |
 | 888c | [R872](packages/R872.md) one Enter rule; B&W and Solarized Enter colours (Solarized Light orange) | ron, Opus | `p1/ron-enterrule` | R843 |
 | 888d | [R873](packages/R873.md) the round pad and the key line stand out in every look | ron, Opus | `p1/ron-padline` | R872 |
 | 888e | [R874](packages/R874.md) the empty-history mark takes the hint's colour, faint | ron, Opus | `p1/ron-markhint` | R860, R873 |
