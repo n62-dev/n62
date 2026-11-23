@@ -303,13 +303,14 @@ const NEEDS_LINE = /^(select|paste|find|help|matrix|vars|tmpl|relations|symbols|
 const isStore = (a: ActionBody): boolean => a.kind === "insert" && a.latex === STORE_ARROW;
 
 /** R777 (docs/05 3.7): the one rule of a press that does nothing by the state it lands in, asked without acting. `run` and
- *  `sheetPress` call c.dead() where it says true, and Keypad asks it at finger-down (quietDown), so such a press gets no look,
- *  no pop and no click, only the double pulse. Home and CAS: Fmt with no row to take (Session.formKey), Store ▶ with no value on
- *  the line and no result to store (R702, a picked row that is not done too, R280), ◀ on a picked row still running with an empty
- *  line (R720). An app: Fmt, and Ans (± too, R71: the unit view's line reads it); Plot (no entry line, R279) also the keys that
- *  need the line (Select, Deselect, Paste, Find, Help, the matrix, Vars, the palettes) and every command (⌫, Del, Undo, Redo, ⇤ ⇥),
- *  not the four arrows, which the shell may take (nav). A sheet: ⌫ with nothing typed in a list that is not Find's (R770). The
- *  unit pad's own dead presses are not asked (its cells take keys before run: three pulses, R112's form, docs/05 3.7). */
+ *  `sheetPress` call c.dead() where it says true, and Keypad asks it at finger-down (quietDown), so such a press gets no look, no
+ *  pop and no click, only the double pulse. Home and CAS: Fmt, and a b/c on an empty line, with no row to take or no step that
+ *  changes it (Session.formRow, G785), Store ▶ with no value on the line and no result to store (R702, a picked row that is not
+ *  done too, R280), ◀ on a picked row still running with an empty line (R720). An app: Fmt, and Ans (± too, R71: the unit view's
+ *  line reads it); Plot (no entry line, R279) also the keys that need the line (Select, Deselect, Paste, Find, Help, the matrix,
+ *  Vars, the palettes) and every command (⌫, Del, Undo, Redo, ⇤ ⇥), not the four arrows, which the shell may take (nav). A sheet:
+ *  ⌫ with nothing typed in a list that is not Find's (R770). The unit pad's own dead presses are not asked (its cells take keys
+ *  before run: three pulses, R112's form, docs/05 3.7). */
 export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefined)): boolean {
   const { session, shell, entry } = c;
   if (shell.sheet) return sheetChunk.keys !== null && shell.sheet.deadKey(key, layerOf(modsFor(c, undefined)));

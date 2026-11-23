@@ -34,8 +34,6 @@ function insertOf(n: UserName): string {
   return nameLatex(n.name);
 }
 
-/** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). R337: a stand-in e_ or i_ (R67)
- *  as the letter the keys type, which the parser reads back as the stand-in (`e_` itself would be e with an empty subscript). */
 /** Memory (R4b): purge these names from the engine and its definitions log. The list drops them at once, then reads
  *  the log again (a purge that failed brings a name back). Here, not in Session, since G785 (the start chunk's room). */
 export async function forget(session: Session, names: readonly string[]): Promise<void> {
@@ -50,6 +48,8 @@ export async function forget(session: Session, names: readonly string[]): Promis
   await session.refreshNames();
 }
 
+/** A variable's name as the line takes it (R258; the store sheet types it after ▶, R281). R337: a stand-in e_ or i_ (R67)
+ *  as the letter the keys type, which the parser reads back as the stand-in (`e_` itself would be e with an empty subscript). */
 export function nameLatex(name: string): string {
   if (Object.values(LETTER_NAMES).includes(name)) return typedName(name);
   const drawn = homeResultToLatex(name);
