@@ -201,6 +201,19 @@ describe("R131: % and the desktop keys", () => {
     expect(run(ev("(", "Digit9", { alt: true, shift: true }), ev(")", "Digit9", { alt: true, shift: true })).got).toEqual(["paren:shift", "paren:shift"]);
     expect(countsOf(ev("(", "Digit9", { alt: true, shift: true }))).toEqual(["hw:Alt+Shift+9"]);
   });
+  it("R867: Ctrl+← → press ◀ ▶ as a drag step (the action marked drag), counted hw:<name>; Ctrl+Shift+→ stays MathLive's", () => {
+    const { t, got, counts } = target();
+    const drags: boolean[] = [];
+    const desk = t.onDesk;
+    t.onDesk = (as, key, layer, repeat) => void (drags.push(!!key && "drag" in (key.actions.primary ?? {})), desk?.(as, key, layer, repeat));
+    const handled = [ev("ArrowRight", "ArrowRight", { ctrl: true }), ev("ArrowLeft", "ArrowLeft", { meta: true }), ev("ArrowRight", "ArrowRight", { ctrl: true, shift: true })].map((e) => hardwareKey(e, t));
+    expect({ handled, got, counts, drags }).toEqual({
+      handled: [true, true, false],
+      got: ["right:primary", "left:primary"],
+      counts: ["hw:Ctrl+ArrowRight", "hw:Ctrl+ArrowLeft"],
+      drags: [true, true],
+    });
+  });
   it("< > ! insert their own symbols", () => {
     expect(run(ev("<"), ev(">"), ev("!")).got).toEqual(["symbol <", "symbol >", "symbol !"]);
   });

@@ -18,10 +18,10 @@ const since = async (page: import("@playwright/test").Page, run: () => Promise<v
 };
 
 test("a drag on the arrow pad over five steps is one pulse, and the cursor still moves", async ({ page }) => {
-  await tap(page, ["d1", "d2", "d3", "d4", "d5", "d6"]);
+  await tap(page, ["d1", "add", "d2", "add", "d3", "add", "d4"]); // (R867: a drag step goes over a whole number)
   expect(await since(page, () => drag(page, "left", -64, 0))).toBe(1); // five steps (12 px each)
   await tap(page, ["d9"]);
-  expect(await entryValue(page)).toBe("1923456"); // five steps left of the end: after the 1
+  expect(await entryValue(page)).toBe("1+92+3+4"); // five steps left of the end: after the first +
 });
 
 test("a flick up or down is one pulse and still fires; a tap is one pulse", async ({ page }) => {
