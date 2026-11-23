@@ -2,7 +2,7 @@
 # Changed by Pascaline contributors, 2026-11-19
 --- a/src/intg.cc
 +++ b/src/intg.cc
-@@ -4693,6 +4693,25 @@
+@@ -4748,6 +4748,25 @@
      return symbolic(at_pow,makesequence(f._VECTptr->front(),f1));
    }
    // "unary" version
@@ -26,9 +26,9 @@
 +  }
 +
    gen _integrate(const gen & args_,GIAC_CONTEXT){
-     bool setcplx=false;
-     if (!complex_mode(contextptr)){
-@@ -4742,7 +4761,10 @@
+     // N62 patch 0039 (G179): the variable of a definite integral is a fresh name whatever it holds. evalf_double of the
+     // integrand below, with a name holding BesselJ(1,2) kept unevaluated at 40 digits, failed with Bad Argument Value;
+@@ -4813,7 +4832,10 @@
      if (args.type==_VECT && args._VECTptr->size()==4){
        vecteur v = *args._VECTptr;
        gen x=v[1],a=v[2],b=v[3];

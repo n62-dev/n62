@@ -93,6 +93,12 @@ describe("About trust facts (A94)", () => {
     expect(about.trust.patches.total).toBeGreaterThan(5);
   });
 
+  it("counts the patches as Parisse's 22 Nov tarball has them (G787): 49 integrated, 0043 and 0045 applied, 0052–0058 not sent", () => {
+    expect(about.trust.patches).toEqual({ total: 58, sent: 51, reported: 49, applied: 2, waiting: 0, notSent: 7, authorDate: "22 Nov" });
+    expect(p.rows.filter((r) => r.status === "applied, with differences").map((r) => r.patch.slice(0, 4))).toEqual(["0043", "0045"]);
+    expect(p.rows.filter((r) => r.status === "not sent").map((r) => r.patch.slice(0, 4))).toEqual(["0052", "0053", "0054", "0055", "0056", "0057", "0058"]);
+  });
+
   it("carries the five traps with the input, expect and mark of their golden rows", () => {
     expect(about.trust.traps.map((t) => t.id)).toEqual(["trust-rump-12", "trust-cos-12", "trust-limit-12", "trust-ramanujan-30", "g39-int-1/x-pv"]);
     for (const t of about.trust.traps) {

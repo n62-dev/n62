@@ -214,8 +214,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   ["0054-alternating-sum-start.patch", "giac-2.1.0/src/intgab.cc", /plus_inf\),contextptr\);\s*res = -res\*subst\(g\/R,x,a,false,contextptr\);/, "// coeff*sum((-1)^k/k^pui,k,a,inf)"],
   ["0054-alternating-sum-start.patch", "giac-2.1.0/src/intgab.cc", /res = res-_sum\(makesequence\(R,x,1,a\.val-1\),contextptr\);\s*res=res\*subst\(g\/R,x,1,false,contextptr\);/, "// coeff*sum((-1)^k/k^pui,k,a,inf)"],
   // G770 (F470), patch 0055: _integrate's 4-argument branch previews the integrand numerically for its log, which integrates an inner
-  // integral at every sample point (int(int(x^2+y^2,y,0,3),x,0,2): 1.7 million interrupt checks)
-  ["0055-nested-integral-no-preview.patch", "giac-2.1.0/src/intg.cc", /if \(x\.type==_IDNT && a\.type!=_DOUBLE_ && b\.type!=_DOUBLE_\)\{\s*gen v0=evalf_double\(v\[0\],1,contextptr\),resapprox,tmp;/, "gen _integrate(const gen & args_,GIAC_CONTEXT){"],
+  // integral at every sample point (int(int(x^2+y^2,y,0,3),x,0,2): 1.7 million interrupt checks); G787: anchored on the 4-argument test, 123
+  // chars before it (from `gen _integrate(` it lies about 2,900 chars on, at the edge of the 3,000-char window in the 22 Nov tree)
+  ["0055-nested-integral-no-preview.patch", "giac-2.1.0/src/intg.cc", /if \(x\.type==_IDNT && a\.type!=_DOUBLE_ && b\.type!=_DOUBLE_\)\{\s*gen v0=evalf_double\(v\[0\],1,contextptr\),resapprox,tmp;/, "if (args.type==_VECT && args._VECTptr->size()==4){"],
   // G620 (F434), patch 0056: in_limit's "Rewrite constants" step tsimplifies the numeric constants (cosh(1) to exponentials) and leaves
   // an x-dependent cosh(1+x), whose series starts with cosh(1): limit((cosh(1+x)-cosh(1))/x,x,0) = infinity
   ["0056-limit-hyperbolic-constants.patch", "giac-2.1.0/src/series.cc", /cv\.push_back\(rv\[i\]\);\s*\}\s*if \(!cv\.empty\(\)\)\{\s*gen cvg=tsimplify\(cv,contextptr\);/, "// Rewrite constants"],
