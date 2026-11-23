@@ -359,9 +359,12 @@ class Parser implements CalcParser {
   }
 
   /** R376 (be-7): a number right after a mark (30°15, 2%3, 5!3) is refused, naming the mark it lacks; never a product
-   *  with no × on the line (the G2 reads 30°15 as 30°15′, G2 checklist row 76). */
+   *  with no × on the line (the G2 reads 30°15 as 30°15′, G2 checklist row 76). A result chip draws its digits (F25),
+   *  so 5![3] reads 5!3 and is refused as a chip beside a number is (R376f1); Ans draws a name and multiplies. */
   private markThen(mark: string): void {
-    if (this.peek()?.t !== "num") return;
+    const t = this.peek();
+    if (t?.t === "cmd" && t.v === "res") throw parseError("parse.timesResultNumber");
+    if (t?.t !== "num") return;
     // ° and ′ name the mark that may follow them; after ″, %, ‰ and ! only × is left (one key with {mark}: start chunk, R91)
     throw mark === "°" ? parseError("parse.numberAfterDegree") : mark === "′" ? parseError("parse.numberAfterPrime") : parseError("parse.numberAfterMark", { mark });
   }
