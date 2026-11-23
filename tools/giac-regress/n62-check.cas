@@ -335,6 +335,8 @@ Digits:=40:; pc("g227-dot-complex",'(dot([1,2*i],[3,4]))',3-8*i,5/10^12+5/10^12)
 Digits:=40:; pc("g227-norm",'(norm([3,4]))',5,5/10^12);
 // g227-norm-irrational (home.yaml, oracle)
 Digits:=40:; pc("g227-norm-irrational",'(norm([1,1]))',(141421356237/10^11),5/10^12);
+// g792-keep-sin-approx-scalar (home.yaml, oracle)
+Digits:=40:; pc("g792-keep-sin-approx-scalar",'(sin(approx(1)))',(841470984808/10^12),5/10^13);
 // g353-keep-variance-double (home.yaml, oracle)
 Digits:=40:; pc("g353-keep-variance-double",'(variance([(15/10^1),(25/10^1),4]))',(105555555556/10^11),5/10^12);
 // g356-lagrange-11-points (home.yaml, oracle)

@@ -251,6 +251,9 @@ const CANARIES: [string, string, RegExp, string][] = [
   // G790 (F475), patch 0064: mmult_atranb's sparse loop skips a left entry with is_zero(acur,context0), an absolute 1e-12 at any Digits
   // (and matrix_density counts zeros the same way), so a left factor of floats below 1e-12 gave the zero matrix at Digits 40
   ["0064-mmult-tiny-float-factor.patch", "giac-2.1.0/src/vecteur.cc", /const gen & acur=\*it;\s*if \(is_zero\(acur,context0\)\)\{\s*int p=1;\s*\+\+it;\s*for \(; \(it!=itend\) && is_zero\(\*it,context0\);/, "double a_density=matrix_density(a),b_density=matrix_density(btran);"],
+  // G792, patch 0065: sin (and cos, sinh, cosh) send a float matrix to analytic_apply, which diagonalises in doubles over the complex
+  // eigenvalues and leaves imaginary noise (sin(evalf([[0,1],[-1,0]])) = [[2.998e-15*i,1.17520119364],…] at Digits 12)
+  ["0065-matrix-trig-series.patch", "giac-2.1.0/src/usual.cc", /if \(is_squarematrix\(e\)\)\s*return analytic_apply\(at_sin,\*e\._VECTptr,contextptr\);/, "gen sin(const gen & e0,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);
