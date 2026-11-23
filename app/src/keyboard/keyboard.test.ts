@@ -61,10 +61,10 @@ describe("keyboard spec", () => {
     expect(actionFor(k("undo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldStart" });
     expect(actionFor(k("redo"), false, false)).toEqual({ kind: "cmd", name: "redo" });
     expect(actionFor(k("redo"), true, false)).toEqual({ kind: "cmd", name: "moveToMathfieldEnd" });
-    // R723: Help at r0c4 (R197; Shift stays Settings), Select | Deselect at r2c4 and r2c5 (R279)
-    expect(actionFor(k("help"), false, false)).toEqual({ kind: "special", name: "help" });
-    expect(actionFor(k("help"), true, false)).toEqual({ kind: "special", name: "settings" });
-    expect(k("help").label).toEqual({ primary: "$key.help", shift: "$key.settings" });
+    // R863 (owner, 2026-11-22): r0c4's tap is Settings (face ⚙), Shift Help (R197, R723); Select | Deselect at r2c4 and r2c5 (R279)
+    expect(actionFor(k("help"), false, false)).toEqual({ kind: "special", name: "settings" });
+    expect(actionFor(k("help"), true, false)).toEqual({ kind: "special", name: "help" });
+    expect(k("help").label).toEqual({ primary: "$key.gear", shift: "$key.help" });
     expect(actionFor(k("select"), false, false)).toEqual({ kind: "special", name: "selectGrow" });
     expect(actionFor(k("deselect"), false, false)).toEqual({ kind: "special", name: "selectShrink" });
     // R723 (owner, 2026-11-17): Shift + Select is Copy, Shift + Deselect is Paste; Mode has no key (the bar's chips)

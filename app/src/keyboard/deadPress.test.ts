@@ -199,7 +199,7 @@ describe("deadPress: an app", () => {
       ["deselect", PLAIN],
       ["deselect", SHIFT], // Paste
       ["math", PLAIN],
-      ["help", PLAIN],
+      ["help", SHIFT], // Help (R863: Shift + the ⚙ key)
     ];
     for (const [id, m] of deadKeys) {
       const name = `${m.shift ? "Shift + " : ""}${id}`;
@@ -209,7 +209,7 @@ describe("deadPress: an app", () => {
     for (const id of ["up", "down", "left", "right"]) {
       expect(p.dead(id), id).toBe(false);
       expect(p.run(id), id).toEqual([`nav ${id}`]);
-    }
+    }    expect(p.dead("help"), "Settings (the ⚙ key's tap, R863)").toBe(false);
   });
   test("an arrow the shell does not take is still a dead press in Plot, called by the route", () => {
     const p = ctx({ app: true, showsEntry: false });

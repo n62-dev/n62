@@ -435,7 +435,7 @@ describe("Help and about (R87)", () => {
     expect(s.path).toBe("Settings › Help and about › Desktop keys");
     const text = s.level.text ?? "";
     expect(text.split("\n")[0]).toMatch(/^A character types its own key/);
-    for (const line of ["Alt+S   sin", "Alt+Shift+S   sin⁻¹", "Alt+U   Units", "Alt+Shift+M   Settings", "Ctrl+Y or Ctrl+Shift+Z   Redo", "Alt+1   User key U1", "Alt+Shift+1   User key U1, Shift", "Alt+K   Fold or unfold the keypad (results mode)", "F2   Symb", "{   { }", "*   ×"])
+    for (const line of ["Alt+S   sin", "Alt+Shift+S   sin⁻¹", "Alt+U   Units", "Alt+Shift+M   Settings", "F1   Help", "Ctrl+Y or Ctrl+Shift+Z   Redo", "Alt+1   User key U1", "Alt+Shift+1   User key U1, Shift", "Alt+K   Fold or unfold the keypad (results mode)", "F2   Symb", "{   { }", "*   ×"])
       expect(text.split("\n"), line).toContain(line);
     expect(text).not.toMatch(/^7 {3}7$/m); // a character that types its own legend is not listed
   });

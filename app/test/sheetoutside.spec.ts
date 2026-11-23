@@ -26,7 +26,11 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
 /** An on-screen tap on a key the sheet does not use. */
 const DEAD: Record<string, (page: Page) => Promise<void>> = {
   Undo: (page) => page.locator('[data-key="undo"]').tap(),
-  "Help (R723)": (page) => page.locator('[data-key="help"]').tap(),
+  "Settings (the ⚙ key's tap, R863)": (page) => page.locator('[data-key="help"]').tap(),
+  "Help (Shift, the ⚙ key; R723, R863)": async (page) => {
+    await tap(page, ["shift"]);
+    await page.locator('[data-key="help"]').tap();
+  },
   Select: (page) => page.locator('[data-key="select"]').tap(),
   Deselect: (page) => page.locator('[data-key="deselect"]').tap(),
   "⇤ (Shift, Undo)": async (page) => {

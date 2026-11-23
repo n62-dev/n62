@@ -65,7 +65,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 888c | [R872](packages/R872.md) one Enter rule; B&W and Solarized Enter colours (Solarized Light orange) | ron, Opus | `p1/ron-enterrule` | R843 |
 | 888d | [R873](packages/R873.md) the round pad and the key line stand out in every look | ron, Opus | `p1/ron-padline` | R872 |
 | 888e | [R874](packages/R874.md) the empty-history mark takes the hint's colour, faint | ron, Opus | `p1/ron-markhint` | R860, R873 |
-| 888f | [R863](packages/R863.md) Settings on the tap (⚙), Help on its Shift | ron, Opus | `p1/ron-settingskey` | R856, R838 |
+| 888f | R863 Settings on the tap (⚙), Help on its Shift | ron, Opus | `p1/ron-settingskey` | R856, R838 |
 | 888g | R866 the prefix keys end in a slot line (G_) | ron, Opus | `p1/ron-prefixslot` | – |
 | 888h | R867 a pad drag steps by number or name | ron, Opus | `p1/ron-padtoken` | – |
 | 888i | [R868](packages/R868.md) a tap on the line brings the keys back (results mode) | ron, Opus | `p1/ron-linetapunfold` | R856 |
