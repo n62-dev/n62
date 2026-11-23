@@ -32,7 +32,7 @@ const setShift = async (page: Page, shift: boolean): Promise<void> => {
   await page.waitForTimeout(120);
 };
 
-interface Seen { key: string; part: string; text: string; opens: string | undefined; after: string; color: string; afterColor: string }
+interface Seen { key: string; pad: string | undefined; part: string; text: string; opens: string | undefined; after: string; color: string; afterColor: string }
 const legends = (page: Page): Promise<Seen[]> =>
   page.evaluate(() => {
     const out: Seen[] = [];
@@ -41,7 +41,7 @@ const legends = (page: Page): Promise<Seen[]> =>
         const el = k.querySelector<HTMLElement>(`.${part}`);
         if (!el) continue;
         out.push({
-          key: k.dataset["key"] ?? "", part, text: el.textContent ?? "", opens: el.dataset["opens"],
+          key: k.dataset["key"] ?? "", pad: k.dataset["pad"], part, text: el.textContent ?? "", opens: el.dataset["opens"],
           after: getComputedStyle(el, "::after").content, color: getComputedStyle(el).color, afterColor: getComputedStyle(el, "::after").color,
         });
       }
@@ -156,7 +156,8 @@ for (const [w, h] of [[412, 915], [360, 740]] as const)
           : s.part === "alphalegend" ? false : s.part === "shiftlegend" ? k?.label?.shift !== undefined && opens(k.shift) : opens(k?.primary);
         expect(s.opens === "true", where).toBe(want);
         if (!want) {
-          expect(["none", "normal"], where).toContain(s.after);
+          // (a prefix cell's face ends in its slot line instead, R866: an empty pseudo-element, unitpad-draw.spec.ts)
+          expect(s.pad === "prefix" && s.part === "main" ? ['""'] : ["none", "normal"], where).toContain(s.after);
           continue;
         }
         if (cells.includes(s.key)) marked.push(`${s.key}/${s.part} ${s.text}`);

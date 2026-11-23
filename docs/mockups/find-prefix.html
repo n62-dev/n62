@@ -1,0 +1,245 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find and prefix keys</title>
+<!-- sandra, chunk s2 of the owner's list of 2026-11-22 (points 12, 9, 19, 16). The colours are the app's own tokens, read
+     from the running app at d4fe4c06 (probe app/test/zz-sandra-s2b.spec.ts, normal contrast). Keys are drawn at 360 px, the
+     narrowest phone, rows 3 to 9 of the keypad (the rows the unit pad covers). Self-contained: no network. -->
+<style>
+:root{--page:#1d2524;--page-text:#e9efee;--page-muted:#b9c8c6}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header,section>.intro,footer{max-width:1180px;margin:0 auto;padding:10px 16px}
+h1{font-size:20px;margin:6px 0}
+h2{font-size:17px;margin:18px 0 4px}
+p{margin:4px 0;color:var(--page-muted)}
+p b,li b{color:var(--page-text)}
+.controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.controls button{font:inherit;font-size:13px;padding:5px 10px;border-radius:7px;border:1px solid #4b5d5b;background:#26302f;color:var(--page-text);cursor:pointer}
+.controls button[aria-pressed="true"]{background:#529997;color:#000;border-color:#529997}
+.controls label{font-size:13px;margin-left:8px;color:var(--page-muted)}
+.cols{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;padding:4px 16px 16px}
+.col{width:360px;max-width:100%;flex:0 0 360px;background:var(--bg);color:var(--key-text);border-radius:6px;overflow:hidden}
+.col h3{font-size:15px;margin:0;padding:9px 10px 2px;color:var(--key-text)}
+.col h3 .rec{font-size:11px;font-weight:600;padding:1px 6px;border-radius:9px;background:var(--ring);color:var(--bg);margin-left:6px;vertical-align:2px}
+.col .cap{margin:0;padding:0 10px 6px;font-size:12px;color:var(--key-muted)}
+.col h4{font-size:12px;font-weight:600;margin:0;padding:6px 10px 3px;color:var(--key-muted)}
+/* the keypad: 30 grid columns, rows 3-5 six keys of 5, rows 6-9 five keys of 6, Enter spans 10 (spec/keyboard.yaml) */
+.pad{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:4px;padding:4px;background:var(--panel)}
+.k{position:relative;display:grid;grid-template-rows:11px 1fr 11px;min-width:0;height:43px;padding:1px 0 1px;border-radius:7px;background:var(--key-fn);color:var(--key-text);font-size:17px;box-shadow:0 2px 0 var(--key-edge)}
+.k.num{background:var(--key-num);font-size:20px}
+.k.op{font-size:20px}
+.k.pfx{background:var(--key-pfx);font-size:20px}
+.k.enter{background:var(--key-enter);color:var(--on-enter);font-size:16px}
+.k.nav{height:33px;grid-template-rows:11px 1fr;font-size:15px}
+.lg{padding:0 4px;font-size:11px;line-height:11px;white-space:nowrap;overflow:hidden}
+.sl{color:var(--key-shift)}
+.al{color:var(--key-alpha)}
+.br{position:absolute;right:4px;bottom:2px;font-size:10px;line-height:10px;color:var(--key-muted)}
+.k.enter .sl,.k.enter .al{color:var(--on-enter)}
+.f{display:flex;align-items:center;justify-content:center;gap:3px;min-width:0;line-height:1;white-space:nowrap}
+.v{font-family:"Times New Roman",Times,serif;font-style:italic}
+.mk::after{content:"▾";font-size:.62em;margin-left:1px}
+.k.shiftkey .f{color:var(--key-shift)}
+.k.alphakey .f{color:var(--key-alpha)}
+.lens{width:1em;height:1em;flex:none}
+/* point 12, way A (recommended): a small lens in the free top-right corner and a bar along the key's foot, both in the entry
+   line's ring colour; the face keeps "Find▾" at its full size */
+.find-a{box-shadow:inset 0 -4px 0 var(--ring),0 2px 0 var(--key-edge)}
+.find-a .corner{position:absolute;top:2px;right:4px;display:flex;color:var(--ring)}
+.find-a .corner .lens{width:13px;height:13px}
+/* way B: the lens alone, large, in the accent; the word is the key's spoken name */
+.find-b .lens{color:var(--ring);width:1.35em;height:1.35em}
+/* way C: an accent-tinted key (shown to compare: it reads as a second Enter) */
+.find-c{background:color-mix(in oklab,var(--key-enter) 42%,var(--key-fn))}
+.find-c .lens{width:.9em;height:.9em}
+/* Plain keys: no colour coding; the shapes (lens, bar) stay */
+.plain .find-a{box-shadow:inset 0 -4px 0 var(--key-text),0 2px 0 var(--key-edge)}
+.plain .find-a .corner,.plain .find-b .lens{color:var(--key-text)}
+.plain .sl,.plain .al,.plain .k.shiftkey .f,.plain .k.alphakey .f{color:var(--key-text)}
+.plain .k.enter{background:var(--key-text);color:var(--bg)}
+.plain .k.enter .sl{color:var(--bg)}
+/* point 9: P1 (the owner's G_, recommended): a slot line after the prefix, drawn by CSS, not the _ character */
+.p1 .k.pfx .f>.t::after{content:"";display:inline-block;width:.42em;height:2px;margin-left:.08em;background:currentColor;opacity:.8;vertical-align:-1px}
+/* P2: the prefix cells outlined (as High contrast already draws them) */
+.p2 .k.pfx{box-shadow:inset 0 0 0 1.5px var(--key-muted),0 2px 0 var(--key-edge)}
+/* P3: the power of ten in the free corner */
+.p3 .k.pfx .br{display:block}
+.k .br{display:none}
+.strip{display:flex;flex-wrap:wrap;gap:6px;padding:6px 8px 10px;background:var(--panel)}
+.strip .k{width:62px}
+.strip .k.wide{width:120px}
+.strip .tag{font-size:11px;color:var(--key-muted);width:100%;margin-top:2px}
+footer{color:var(--page-muted);font-size:13px;padding-bottom:30px}
+ul{margin:4px 0 4px 18px;padding:0}
+li{margin:2px 0;color:var(--page-muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Find and the prefix keys: how to make them stand out</h1>
+  <p>From the owner's list of 2026-11-22: <b>point 12</b> (Find gets lost in the unit view) and <b>point 9</b> (the unit view's prefix keys differ only by colour), plus small strips for <b>19</b> (Settings on the tap, Help on Shift) and <b>16</b> (which letters are italic). Every keypad below is 360 px wide, the narrowest phone, in the app's own colours.</p>
+  <div class="controls" id="themes"></div>
+  <div class="controls"><label><input type="checkbox" id="plain"> Plain keys</label></div>
+</header>
+
+<section>
+  <div class="intro">
+    <h2>Point 12: Find</h2>
+    <p>Find sits on the same key in both views, and for the same reason: it is the tap of the key in the G2's Math position (row 3, column 2), and the unit pad keeps every key where it is, so your thumb knows one Find key. Today nothing marks it. In the unit view it even loses its ▾. The unit pad draws that key as a pad cell, and a pad cell never carries the mark, so this is a bug of its own. Enter stays the only key filled with the accent colour. A ring around a key is out too, because R729 (queued) makes a ring mean "armed".</p>
+  </div>
+  <div class="cols" id="find"></div>
+</section>
+
+<section>
+  <div class="intro">
+    <h2>Point 9: the prefix keys in the unit view</h2>
+    <p>Measured on the running app, a prefix key's colour differs from the unit key beside it by only 1.03 to 1.41 : 1, depending on the theme. In N62 Dark it is 1.11 : 1 (#1e4948 against #194241), so the prefix m and the metre m look almost the same. The usual minimum for telling two controls apart is 3 : 1. Only High contrast adds an outline today. A shape cue works in every theme, in Plain keys and for colour-blind eyes.</p>
+  </div>
+  <div class="cols" id="pfx"></div>
+</section>
+
+<section>
+  <div class="intro">
+    <h2>Both recommendations together</h2>
+  </div>
+  <div class="cols" id="both"></div>
+</section>
+
+<section>
+  <div class="intro">
+    <h2>Point 19: Settings on the tap, Help on Shift</h2>
+    <p>As the tap's face, the word "Settings" is shrunk to 10.7 px to fit the 55 px key at 360 px (measured). That is smaller than the 11 px legends and every other face. The ⚙ is already Settings' sign in every sheet's title row.</p>
+  </div>
+  <div class="cols" id="help"></div>
+</section>
+
+<section>
+  <div class="intro">
+    <h2>Point 16: which letters are italic</h2>
+    <p>The rule (R142): a legend is italic exactly when its key types one letter, because that letter is a variable. Shift and Alpha type nothing, so their words stay upright, like Help or Fmt. The one place where the keypad breaks the spirit of the rule is the letter that stands for "your number" in a template (x², xʸ, ⁿ√, |x|, x⁻¹, eˣ, 10ˣ, a b/c). It is upright, while the x key right beside it draws an italic x.</p>
+  </div>
+  <div class="cols" id="ital"></div>
+</section>
+
+<footer>
+  <p>Mock-up only. The keys are simplified: no press, flick or pop, and fixed sizes where the app fits each legend. The italic face here is Times; the app uses MathLive's math italic.</p>
+</footer>
+
+<script>
+"use strict";
+const THEMES = {
+  "N62 Dark":        {bg:"#092726",panel:"#0e2f2e","key-num":"#194241","key-fn":"#123736","key-pfx":"#1e4948","key-enter":"#529997","on-enter":"#000000","key-text":"#ebf6f6","key-muted":"#abccca","key-shift":"#ffa800","key-alpha":"#6ae5e2",ring:"#529997","key-edge":"#000000"},
+  "N62 Light":       {bg:"#cae6e5",panel:"#e0f3f2","key-num":"#eefaf9","key-fn":"#d7efee","key-pfx":"#b9d9d8","key-enter":"#529997","on-enter":"#000000","key-text":"#062424","key-muted":"#314e4d","key-shift":"#5b2400","key-alpha":"#005b5a",ring:"#368281","key-edge":"#8da1a0"},
+  "Black & White Dark": {bg:"#000000",panel:"#0c1011","key-num":"#1b2122","key-fn":"#121718","key-pfx":"#1e2829","key-enter":"#529997","on-enter":"#000000","key-text":"#eef2f2","key-muted":"#a7b4b4","key-shift":"#ff9a33","key-alpha":"#529997",ring:"#86bebd","key-edge":"#000000"},
+  "Black & White Light": {bg:"#f4f6f6",panel:"#e8eded","key-num":"#ffffff","key-fn":"#e6ecec","key-pfx":"#d9e9e8","key-enter":"#529997","on-enter":"#000000","key-text":"#0b1213","key-muted":"#44504f","key-shift":"#a14600","key-alpha":"#2e706e",ring:"#1b4342","key-edge":"#abacac"},
+  "Solarized Dark":  {bg:"#2d4056",panel:"#354a61","key-num":"#3d556f","key-fn":"#34495f","key-pfx":"#354b63","key-enter":"#1f6fae","on-enter":"#fdf6e3","key-text":"#eef0e6","key-muted":"#c3ccce","key-shift":"#f0c040","key-alpha":"#95cdf7",ring:"#d2f3ef","key-edge":"#000000"},
+  "Solarized Light": {bg:"#ffffd6",panel:"#f4f0c2","key-num":"#fffff4","key-fn":"#f2eec4","key-pfx":"#cddee3","key-enter":"#1a6aa6","on-enter":"#fffff4","key-text":"#073642","key-muted":"#475c63","key-shift":"#765800","key-alpha":"#1a62a0",ring:"#0e4642","key-edge":"#b3b396"},
+};
+const LENS = '<svg class="lens" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="6.6" cy="6.6" r="4.6"/><path d="M10.2 10.2l4.3 4.3"/></svg>';
+const GEAR = '<svg class="lens" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" style="width:1.05em;height:1.05em"><circle cx="8" cy="8" r="2.3"/><path d="M8 1.2v2M8 12.8v2M1.2 8h2M12.8 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/><circle cx="8" cy="8" r="4.6"/></svg>';
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+// a text where *x* is italic (a variable) and ^{…} is raised
+const rich = (s) => esc(s).replace(/\^\{([^}]*)\}/g, "<sup>$1</sup>").replace(/\*([^*]+)\*/g, '<span class="v">$1</span>');
+// k(cls, face, opts): s shift legend, a alpha legend, so/fo the ▾ mark, span grid columns, br corner, find, raw face html
+const k = (cls, face, o = {}) => ({ cls, face, ...o });
+const L = (ch) => `*${ch}*`; // an Alpha letter: italic
+function mainRows(ital) {
+  const P = (plain, it) => (ital ? it : plain);
+  return [
+    [k("fn","Vars",{s:"Chars",so:1,a:L("A"),fo:1}), k("fn","Find",{find:1,s:"Mem",so:1,a:L("B"),fo:1}), k("fn","Tmpl",{s:"Units",a:L("C"),fo:1}), k("fn","*x*",{s:"*y*",a:L("D")}), k("fn",P("a b/c","*a* *b*/*c*"),{a:L("E")}), k("fn","⌫",{s:"Del"})],
+    [k("fn",P("xʸ","*x*^{*y*}"),{s:P("ⁿ√","^{*n*}√"),a:L("F")}), k("fn","sin",{s:"sin⁻¹",a:L("G")}), k("fn","cos",{s:"cos⁻¹",a:L("H")}), k("fn","tan",{s:"tan⁻¹",a:L("I")}), k("fn","ln",{s:P("eˣ","e^{*x*}"),a:L("J")}), k("fn","log",{s:P("10ˣ","10^{*x*}"),a:L("K")})],
+    [k("fn",P("x²","*x*²"),{s:"√",a:L("L")}), k("fn","(−)",{s:P("|x|","|*x*|"),a:L("M")}), k("fn","( )",{s:"∥",a:L("N")}), k("fn",",",{s:"±",a:L("O")}), k("enter","Enter",{s:"≈",span:10})],
+    [k("fn","ᴇ",{s:"Store",a:L("P")}), k("num","7",{a:L("Q")}), k("num","8",{s:"{ }",a:L("R")}), k("num","9",{s:"α∞",so:1,a:L("S")}), k("op","÷",{s:P("x⁻¹","*x*⁻¹"),a:L("T")})],
+    [k("fn alphakey","alpha"), k("num","4",{s:"Mat",so:1,a:L("U")}), k("num","5",{s:"[ ]",a:L("V")}), k("num","6",{s:"≤≠",so:1,a:L("W")}), k("op","×",{s:"∡",a:L("X")})],
+    [k("fn shiftkey","shift"), k("num","1",{s:"σ",so:1,a:L("Y")}), k("num","2",{s:"i",a:L("Z")}), k("num","3",{s:"π",a:"#"}), k("op","−",{s:"Base",so:1,a:":"})],
+    [k("fn","Fmt"), k("num","0",{s:"%"}), k("num",".",{s:"="}), k("num","␣",{s:"_"}), k("op","+",{s:"Ans",a:";"})],
+  ];
+}
+function unitRows(findMark) {
+  return [
+    [k("fn","mi",{s:"yd",a:"mil"}), k("fn","Find",{find:1,fo:findMark}), k("fn","knot",{s:"mph"}), k("fn","Hz",{s:"rpm"}), k("fn","°",{s:"rad"}), k("fn","⌫")],
+    [k("fn","x³",{s:"x⁴"}), k("fn","A"), k("fn","V"), k("fn","Ω",{s:"S"}), k("fn","F"), k("fn","T")],
+    [k("fn","x²",{s:"√x"}), k("fn","J",{s:"Wh",a:"Btu"}), k("fn","W",{s:"hp",a:"TR"}), k("fn","L",{s:"gal US",a:"bbl"}), k("enter","Enter",{s:"Eval",span:10})],
+    [k("fn","mol",{s:"Store"}), k("pfx","G",{s:"T",br:"10⁹"}), k("pfx","M",{br:"10⁶"}), k("num","m",{s:"ft",a:"in"}), k("op","÷",{s:"x⁻¹"})],
+    [k("fn alphakey","alpha"), k("pfx","k",{a:"h",br:"10³"}), k("pfx","c",{br:"10⁻²"}), k("num","g",{s:"lb",a:"t"}), k("op","×")],
+    [k("fn shiftkey","shift"), k("pfx","m",{s:"σ",so:1,br:"10⁻³"}), k("pfx","µ",{br:"10⁻⁶"}), k("num","s",{s:"h",a:"min"}), k("op","N",{s:"lbf"})],
+    [k("fn","atm",{s:"ksi",a:"Torr"}), k("pfx","n",{br:"10⁻⁹"}), k("pfx","p",{a:"f",br:"10⁻¹²"}), k("num","K",{s:"°C",a:"°F"}), k("op","Pa",{s:"bar",a:"psi"})],
+  ];
+}
+function keyHtml(key, findWay, span) {
+  const cls = ["k", ...key.cls.split(" ")];
+  let face = `<span class="t">${rich(key.face)}</span>`;
+  if (key.find && findWay) {
+    cls.push("find-" + findWay);
+    if (findWay === "b") face = LENS;
+    else if (findWay === "c") face = LENS + face;
+  }
+  const mark = key.fo ? ' mk' : '';
+  const sl = key.s ? `<span class="sl${key.so ? " mk" : ""}">${rich(key.s)}</span>` : "";
+  const al = key.a ? `<span class="al">${rich(key.a)}</span>` : "";
+  const br = key.br ? `<span class="br">${key.br}</span>` : "";
+  const label = key.find && findWay === "b" ? ' aria-label="Find"' : "";
+  const corner = key.find && findWay === "a" ? `<span class="corner">${LENS}</span>` : "";
+  return `<div class="${cls.join(" ")}" style="grid-column:span ${key.span ?? span}"${label}><span class="lg">${sl}</span><span class="f${mark}">${face}</span><span class="lg">${al}</span>${br}${corner}</div>`;
+}
+function padHtml(rows, findWay, extra = "") {
+  return `<div class="pad ${extra}">` + rows.map((r) => r.map((key) => keyHtml(key, findWay, r.length === 6 || r.some((x) => x.span) && r.length === 5 && r.indexOf(key) < 4 ? 5 : 6)).join("")).join("") + "</div>";
+}
+// rows 3-5: six keys of 5 columns (row 5: four of 5 and Enter of 10); rows 6-9: five keys of 6
+function col(title, cap, body, rec) {
+  return `<div class="col"><h3>${title}${rec ? '<span class="rec">recommended</span>' : ""}</h3><p class="cap">${cap}</p>${body}</div>`;
+}
+const views = (way, unitMark, pfxClass = "") => `<h4>Main view</h4>${padHtml(mainRows(false), way)}<h4>Unit view</h4>${padHtml(unitRows(unitMark), way, pfxClass)}`;
+
+function render() {
+  document.getElementById("find").innerHTML =
+    col("Today", "Find looks like Vars and Tmpl; in the unit view it has no ▾.", views(null, 0)) +
+    col("A: lens and accent foot", "A small lens in the key's free top-right corner and a 4 px bar along its foot, both in the entry line's ring colour (3.7 : 1 or more against the key in every theme). The face keeps \"Find▾\" at full size. Not a fill and not a ring. The ▾ comes back in the unit view.", views("a", 1), true) +
+    col("B: lens alone", "Only a large lens in the accent; the word stays the spoken name. Strong shape, but the only face on the pad without a word.", views("b", 1)) +
+    col("C: accent tint", "The key tinted toward Enter's colour. Most visible, but it reads as a second Enter, and in Solarized Dark the tint barely differs (1.7 : 1).", views("c", 1));
+  const unitOnly = (cls) => `<h4>Unit view</h4>${padHtml(unitRows(0), null, cls)}`;
+  document.getElementById("pfx").innerHTML =
+    col("Today", "The colour step alone (1.11 : 1 in N62 Dark).", unitOnly("")) +
+    col("P1: G_ (the owner's idea)", "A short slot line after the prefix: \"a unit goes here\". Drawn by CSS, so the cell's text, its spoken name and the tests stay \"G\", and it is never the _ that Shift + Space types.", unitOnly("p1"), true) +
+    col("P2: outlined", "The prefix keys get the outline High contrast already draws. A shape cue, but it says \"different\" without saying \"waits for a unit\".", unitOnly("p2")) +
+    col("P3: power of ten", "The value in the free corner (10⁹ … 10⁻¹²). It teaches, but it adds a third legend to keys that already hold two.", unitOnly("p3"));
+  document.getElementById("both").innerHTML =
+    col("A + P1", "Find with the lens and the accent foot in both views, and the prefix keys with the slot line.", views("a", 1, "p1"), true);
+  const strip = (keys, cap) => `<div class="strip">${keys}<div class="tag">${cap}</div></div>`;
+  const nav = (face, s, so, fo) => `<div class="k nav"><span class="lg"><span class="sl${so ? " mk" : ""}">${s}</span></span><span class="f${fo ? " mk" : ""}">${face}</span></div>`;
+  document.getElementById("help").innerHTML =
+    col("Today", "Help on the tap, Settings on Shift.", strip(nav("Help", "Settings", 1, 1) + nav("Esc", "Clear"), "row 0, columns 4 and 5")) +
+    col("Swapped, the ⚙ as the face", "Settings on the tap, drawn as the sheets' ⚙ (spoken \"Settings\"); Help▾ on Shift, in the 11 px legend size where it fits.", strip(nav(GEAR, "Help", 1, 1) + nav("Esc", "Clear"), "F1 stays Help on a desktop keyboard"), true) +
+    col("Swapped, the word", "Settings as the word, shrunk to fit: 10.7 px, the smallest face on the pad.", strip(nav('<span style="font-size:10.7px">Settings</span>', "Help", 1, 1) + nav("Esc", "Clear"), "measured at 360 px"));
+  const one = (face, s, cls = "fn", a = "") => keyHtml(k(cls, face, { s, a }), null, 5).replace('style="grid-column:span 5"', "");
+  document.getElementById("ital").innerHTML =
+    col("Today", "The template letters are upright beside the italic x and y.", strip(one("*x*", "*y*") + one("xʸ", "ⁿ√") + one("x²", "√") + one("(−)", "|x|") + one("ln", "eˣ") + one("÷", "x⁻¹", "op") + one("a b/c", ""), "row 3 to 6 of the main keypad")) +
+    col("Template letters italic", "Only the letter that stands for your number turns italic; e, 10, √ and the digits stay upright. The unit pad's x², x³, x⁴, √x and x⁻¹ follow, so they still look as on the main keypad (R803).", strip(one("*x*", "*y*") + one("*x*^{*y*}", "^{*n*}√") + one("*x*²", "√") + one("(−)", "|*x*|") + one("ln", "e^{*x*}") + one("÷", "*x*⁻¹", "op") + one("*a* *b*/*c*", ""), "the owner's decision: it widens R142's rule"), true) +
+    col("Shift and Alpha", "Upright today and in the recommendation: they type nothing. R729 (queued) adds a and A to the Alpha key's corners; those show letters the layer types, so they should be italic.", strip(one("shift", "", "fn shiftkey") + one("alpha", "", "fn alphakey") + one("alpha", "*a*", "fn alphakey", "*A*"), "left: today; right: the Alpha key after R729, letters italic"));
+}
+
+const themes = document.getElementById("themes");
+let current = "N62 Dark";
+function apply(name) {
+  current = name;
+  const t = THEMES[name];
+  for (const [n, v] of Object.entries(t)) document.documentElement.style.setProperty("--" + n, v);
+  for (const b of themes.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.textContent === name));
+}
+for (const name of Object.keys(THEMES)) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = name;
+  b.addEventListener("click", () => apply(name));
+  themes.append(b);
+}
+document.getElementById("plain").addEventListener("change", (e) => document.body.classList.toggle("plain", e.target.checked));
+render();
+apply(current);
+</script>
+</body>
+</html>
