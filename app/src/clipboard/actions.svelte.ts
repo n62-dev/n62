@@ -9,7 +9,7 @@ import type { MenuItem } from "../apps/types.ts";
 import { loadForms, type HistoryItem, type Session } from "../state/session.svelte.ts";
 import type { TapCounts } from "../state/taps.svelte.ts";
 import { drawnInput, targetRow, type PickPart } from "../state/pickRows.ts";
-import { commaResult, noDigit } from "../state/displayMode.ts";
+import { noDigit } from "../state/displayMode.ts";
 import { groupMarked } from "../render/groupText.ts";
 import { groupSepFor } from "../render/home.ts";
 import { tooLongToInsert, tooLongToInsertNote } from "../render/longInsert.ts";
@@ -212,7 +212,7 @@ export class ClipActions {
     const i = this.target(item);
     const m = i ? await impl() : undefined;
     if (this.noNumber(i)) return this.refuseNoDigit();
-    const shown = i && m ? m.withoutMark(this.session.display(i).text) : "";
+    const shown = i && m ? m.copyShownText(this.session.display(i).text) : "";
     return this.put(i && m ? m.copyFull(source(i), this.opts) : undefined, named && i && m ? this.named(this.grouped(shown)) : undefined, named);
   }
   /** `named` (R832): the notice names the copy (the bar's rows, Shift + Select, a hold). */
@@ -220,20 +220,19 @@ export class ClipActions {
     return this.serial(async () => {
       const i = this.target(item);
       if (this.noNumber(i)) return this.refuseNoDigit();
-      const text = i ? (await impl()).withoutMark(this.session.display(i).text) : undefined;
+      const text = i ? (await impl()).copyShownText(this.session.display(i).text) : undefined; // G784: the letters, not i_
       return this.put(text, named && text ? this.named(this.grouped(text)) : undefined, named);
     });
   }
   copyExact(item?: HistoryItem, named = false): Promise<boolean> {
     return this.serial(async () => {
       const i = this.target(item);
-      const exact = i ? copyExact(i) : undefined;
-      if (i && exact === undefined) {
+      if (i && copyExact(i) === undefined) {
         this.say(tc("clip.noExact"));
         return false;
       }
-      // R100: an exact list ({3/2,2}) with the decimal comma separates its elements by `;`, as Copy does
-      const text = exact !== undefined && this.opts.decimalComma ? commaResult(exact, false) : exact;
+      // G784: the stand-ins as their letters; R100: an exact list ({3/2,2}) with the decimal comma separates its elements by `;`, as Copy does
+      const text = i ? (await impl()).copyExactText(source(i), this.opts) : undefined;
       return this.put(text, named && text ? this.named(text) : undefined, named);
     });
   }

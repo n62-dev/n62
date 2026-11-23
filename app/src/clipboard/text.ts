@@ -14,6 +14,8 @@ import {
   type PrecisionWarn,
 } from "../engine/format.ts";
 import { decimalFromRational } from "../engine/rational.ts";
+import { mapNames } from "../engine/giacPrintStart.ts";
+import { isStandIn, typedName } from "../engine/standIns.ts";
 import type { ChipTable } from "../input/chips.ts";
 import { withUnit } from "../state/results.ts";
 import { commaResult, markFor, modeOf, renderNumeric, type DisplayContext, type FmtMode, type FormStep, type Rational, type ResultFacts } from "../state/displayMode.ts";
@@ -103,10 +105,34 @@ export function copyFull(i: CopySource, o: TextOptions = {}): string | undefined
   return v === undefined || !i.units ? v : withUnit({ text: v, latex: "" }, i.units, o.decimalComma ? commaResult : undefined).text;
 }
 
+/** G784: Giac's print with the parser's stand-ins (`i_`, `beta_`, `Pi_`, …; engine/standIns.ts) as the letters the screen
+ *  draws (`i`, `β`, `Π`; typedName); any other name, and every string, as it is. */
+export function copyNames(text: string): string {
+  return mapNames(text, (n) => (isStandIn(n.name) ? typedName(n.name) : null), "printed");
+}
+
+/** An engine text as Copy writes it: the letters for the stand-ins, then `;` between a list's elements with the decimal comma (R100).
+ *  A row read back from storage without its text (not a string) is passed on as it is, as before G784. */
+function engineText(t: string, o: TextOptions): string {
+  if (typeof t !== "string") return t;
+  return o.decimalComma ? commaResult(copyNames(t), false) : copyNames(t);
+}
+
+/** Copy as shown (docs/04 2.6): the row's display text without its mark, the stand-ins as their letters (G784). */
+export function copyShownText(shown: string): string {
+  return copyNames(withoutMark(shown));
+}
+
+/** Copy exact: Giac's exact text (exact.ts), the stand-ins as their letters (G784), `;` in a list with the decimal comma. */
+export function copyExactText(i: CopySource, o: TextOptions = {}): string | undefined {
+  const exact = copyExact(i);
+  return exact === undefined ? undefined : engineText(exact, o);
+}
+
 /** copyFull's number alone, without a unit row's ` ± σ unit`. */
 function valueFull(i: CopySource, o: TextOptions): string | undefined {
   if (i.status !== "done") return undefined;
-  if (i.drawn !== undefined) return o.decimalComma ? commaResult(i.drawn, false) : i.drawn; // R100: a list's elements by `;`
+  if (i.drawn !== undefined) return engineText(i.drawn, o); // R100: a list's elements by `;`
   const f = i.full;
   if (f !== undefined && /^-?\d+$/.test(f)) return f; // an exact integer, however long
   // A real the engine wrote as digits (CAS floats too): its confirmed digits, in the notation of docs/04 2.6.
@@ -118,11 +144,11 @@ function valueFull(i: CopySource, o: TextOptions): string | undefined {
     return realText(q, DECIMAL_KEEP, o);
   }
   if (i.value) return complexText(i.value, copyDigits(i), o);
-  const rest = f ?? i.text;
-  return o.decimalComma ? commaResult(rest, false) : rest; // (R57) a list or an expression the engine wrote
+  return engineText(f ?? i.text, o); // (R57) a list or an expression the engine wrote
 }
 
-export { copyExact } from "./exact.ts";
+import { copyExact } from "./exact.ts";
+export { copyExact };
 
 /** A mark glyph (and a count) that R3's display may put before the shown text; Copy as shown leaves it out. */
 const LEADING_MARK = /^(?:[=≈]|⚠(?:\s*\d+(?=\s))?)\s*/;
