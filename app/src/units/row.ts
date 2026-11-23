@@ -8,9 +8,8 @@ import type { ChipTable } from "../input/chips.ts";
 import { unitLatex, validSlots } from "../input/chipUnit.ts";
 import { homeResultToLatex } from "../render/home.ts";
 import { HISTORY_LIMIT } from "../state/results.ts";
-import { homeItem, placed } from "../state/resultItem.ts";
+import { homeItem, placed, readsAngleOf } from "../state/resultItem.ts";
 import { uncDigitsOf } from "../engine/constUnc.ts";
-import { PASDEG } from "../engine/pasdeg.ts";
 import type { AngleUnit } from "../calc/port.ts";
 import type { HistoryItem, Session } from "../state/session.svelte.ts";
 import { quantityChip } from "./chip.ts";
@@ -29,7 +28,7 @@ export interface RowIn {
   /** The digits setting the result was worked out at (σ's `uncDigits` counts the shown value's digits). */
   digits: number;
   /** R915: the request's angle mode and Giac text: the row keeps the angle it ran in, and reads the angle (the tag in the
-   *  other mode, R265) when the text holds the degree factor, as a line's row does (state/resultItem.ts withJob). */
+   *  other mode, R265) by the line's rule (state/resultItem.ts readsAngleOf). */
   job?: { angle: AngleUnit; formula: string };
 }
 
@@ -68,7 +67,7 @@ export function unitRow({ line, chips, q, slots, input, digits, job }: RowIn): O
     ...(Object.keys(chips).length ? { chips } : {}),
     units,
     ...(job ? { angle: job.angle } : {}),
-    ...(job?.formula.includes(PASDEG) ? { readsAngle: true as const } : {}),
+    ...(readsAngleOf(job?.formula) ? { readsAngle: true as const } : {}),
     startedAt: performance.now(),
   };
 }

@@ -15,6 +15,7 @@ import { quantityChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
 import { unitLatex } from "../input/chipUnit.ts";
 import { putRow, rowSlots, unitRow } from "./row.ts";
+import { readsAngleOf } from "../state/resultItem.ts";
 import { isUnitError, type Quantity, type UnitRequest } from "./types.ts";
 import { fakeKv } from "../state/fakeKv.ts";
 import type { AppShell } from "../apps/shell.svelte.ts";
@@ -86,6 +87,17 @@ describe.skipIf(!giacAvailable())("the unit row (R63, real Giac)", () => {
     expect(plain.angle).toBe("rad");
     expect(plain.readsAngle).toBeUndefined();
     expect(t04row(q).readsAngle).toBeUndefined(); // no job given: neither
+  });
+
+  it("R915: a unit row and a line row of the same Giac text get the same tag (one rule, state/resultItem.ts readsAngleOf)", async () => {
+    const q = t04();
+    for (const formula of ["sin(pasdeg*30)", "2*pi*25*pasu1", "cos(pasdeg*x)+1"]) {
+      const s = await session(fakeKv());
+      await s.submit("x", formula);
+      const unit = unitRow({ line: "", chips: {}, q, slots: {}, input: "", digits: 12, job: { angle: "rad", formula } });
+      expect([formula, unit.readsAngle === true]).toEqual([formula, s.home[0]?.readsAngle === true]);
+      expect([formula, unit.readsAngle === true]).toEqual([formula, readsAngleOf(formula)]);
+    }
   });
 
   it("is saved with the history and read back: the same chip, the number with its unit, the slots checked", async () => {
