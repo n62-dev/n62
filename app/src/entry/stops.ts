@@ -7,8 +7,12 @@
 // ▶ in a template goes on to the next empty box (R10), but stops first at the end of the box that holds the template it
 // leaves (R43, bug F34): `nextBox`. Public MathLive API only; offsets and boxes as in boxes.ts (an atom's parts come
 // before it, one level deeper).
+// R867 (owner, 2026-11-22): a drag step on the round pad (and a hardware Ctrl+← →) steps on over the rest of a token:
+// `crossRun`, after `settle`; a tap stays one character.
 import type { MathfieldElement } from "mathlive";
 import { DIFF, THIN, depthAt, dmsMark, endsBox, isName, latexAt } from "./boxes.ts";
+import { EMARK } from "./macros.ts";
+import { isNumberLatex } from "./numberRun.ts";
 
 type Field = Pick<MathfieldElement, "getElementInfo" | "lastOffset" | "position" | "selectionIsCollapsed" | "executeCommand" | "getValue">;
 
@@ -73,6 +77,66 @@ export function settle(mf: Field, cmd: string): void {
     mf.executeCommand(step);
     if (mf.position === at) return;
   }
+}
+
+/** R867: a sign right after the ᴇ mark, and a single letter (a name's letter on one level). */
+const SIGN = /^[+-]$/;
+type Level = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
+const LETTER = /^\p{L}$/u;
+
+/** The offset of the atom after position `c` on its level (its parts skipped), or undefined where its box ends. */
+function nextOn(mf: Level, c: number): number | undefined {
+  const d = depthAt(mf, c);
+  for (let p = c + 1; p <= mf.lastOffset; p++) {
+    const dp = depthAt(mf, p);
+    if (dp < d) return undefined;
+    if (dp === d) return p;
+  }
+  return undefined;
+}
+
+/** The position before the atom at `o`, on its level (its parts, listed before it one level deeper, skipped). */
+function prevOn(mf: Level, o: number): number {
+  const d = depthAt(mf, o);
+  let k = o - 1;
+  while (k > 0 && depthAt(mf, k) > d) k--;
+  return k;
+}
+
+/**
+ * R867: position `c` is strictly inside a token: the atoms on both sides of it, on its level, are one token's. A token is a
+ * run of digits, points and decimal commas (numberRun.ts), the ᴇ mark with the sign after it, or a run of single letters.
+ */
+function inToken(mf: Level, c: number): boolean {
+  if (c < 1) return false;
+  const p = nextOn(mf, c);
+  if (p === undefined) return false;
+  const a = latexAt(mf, c);
+  const b = latexAt(mf, p);
+  return (isNumberLatex(a) && isNumberLatex(b)) || (LETTER.test(a) && LETTER.test(b)) || (a === EMARK && SIGN.test(b));
+}
+
+/**
+ * R867: where the token that holds position `c` ends in direction `dir` (1: right, -1: left): `c` itself where it is
+ * inside none. A box's edge ends every token: the walk stays on c's level.
+ */
+export function runEnd(mf: Level, c: number, dir: 1 | -1): number {
+  let k = c;
+  for (let n = 0; n < 4096 && inToken(mf, k); n++) k = dir > 0 ? (nextOn(mf, k) ?? k) : prevOn(mf, k);
+  return k;
+}
+
+/**
+ * R867: after a drag step `cmd` (◀ ▶ marked `drag` by the Keypad, or a hardware Ctrl+← →) and its `settle`, the cursor
+ * goes on while it is inside a token, then settles again. Up and down, and every other command, are left alone.
+ */
+export function crossRun(mf: Field, cmd: string): void {
+  const dir = cmd === "moveToNextChar" ? 1 : cmd === "moveToPreviousChar" ? -1 : 0;
+  if (dir === 0 || !mf.selectionIsCollapsed) return;
+  const to = runEnd(mf, mf.position, dir);
+  if (to === mf.position) return;
+  mf.position = to;
+  settle(mf, cmd);
 }
 
 /**

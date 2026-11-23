@@ -27,7 +27,7 @@
 // - Counting (R127, R131's removal test): a key the table adds (an Alt chord, Home, F1, Shift+Enter, `{`, `[`) goes to
 //   onDesk with its desktop name, counted `hw:<name>`; the keys R31, R45 and R119 had before it keep onKey (`<key id>:hw`).
 // Loaded with MathLive (EntryController.load), outside the start chunk; R198's names load on the first letter (askIndex).
-// The Ctrl, Alt and Meta combinations the table does not name stay with MathLive and the browser (copy, cut, select
+// R867: Ctrl+← → take the round pad's drag step (wordStep). The Ctrl, Alt and Meta combinations the table does not name stay with MathLive and the browser (copy, cut, select
 // all); a paste, Ctrl+V included, is field.ts's paste listener (R114). AltGr characters count as typed, and so do a Mac's Option characters that are ASCII punctuation
 // (Option + 5 is `[` on a German Mac; R131f1, optionChar).
 import type { MathfieldElement } from "mathlive";
@@ -120,6 +120,20 @@ function isChord(ev: KeyboardEvent): boolean {
   return (ev.ctrlKey || ev.metaKey || ev.altKey) && !ev.getModifierState("AltGraph") && !optionChar(ev);
 }
 
+/** R867: Ctrl+← and Ctrl+→ on the line (Cmd on a Mac) and the pad key whose drag step they take. */
+const WORD_STEPS: Readonly<Record<string, string>> = { "Ctrl+ArrowLeft": "left", "Ctrl+ArrowRight": "right" };
+
+/** R867: Ctrl+← → press ◀ ▶ as a drag on the round pad does (Keypad.svelte step: the action marked `drag`), so the step
+ *  goes over a whole number or name (entry/stops.ts crossRun); counted `hw:<name>`. False: no such chord. */
+function wordStep(ev: KeyboardEvent, tg: HwTarget): boolean {
+  const name = chordOf(ev);
+  const key = name === undefined ? undefined : keyboard.byId.get(WORD_STEPS[name] ?? "");
+  const p = key?.actions.primary;
+  if (name === undefined || !key || !p || !tg.onDesk) return false;
+  tg.onDesk(`hw:${name}`, { ...key, actions: { primary: Object.assign({ drag: true }, p) } }, "primary", ev.repeat);
+  return true;
+}
+
 /** R131: press what the table names for the chord `ev` (Ctrl+Z, Alt+F); false: the table names none (or `only` refuses
  *  its target). */
 function pressChord(ev: KeyboardEvent, tg: HwTarget, only?: (t: DeskTarget) => boolean): boolean {
@@ -157,7 +171,7 @@ export function hardwareKey(ev: KeyboardEvent, tg: HwTarget): boolean {
   const mf = tg.field;
   if (!mf || ev.isComposing) return false;
   // R119, R131: a chord the table names presses its key (Ctrl+Z, Alt+S); every other one stays MathLive's (copy, select all)
-  if (isChord(ev)) return pressChord(ev, tg);
+  if (isChord(ev)) return wordStep(ev, tg) || pressChord(ev, tg);
   if (ch.length !== 1) {
     // a plain Enter or Escape: the field's own listener presses the same keys (EntryController: onKey, R45)
     if ((ch === "Enter" || ch === "Escape") && !ev.shiftKey) return false;
