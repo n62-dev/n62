@@ -1,0 +1,140 @@
+# Upstream: giac 2.1.0 usual.cc sin, cos, sinh and cosh of a square matrix send every matrix to analytic_apply (vecteur.cc), which diagonalises it over its complex eigenvalues, applies the function and transforms back. For a matrix of floats the eigenvectors' round-off stays in the result as imaginary noise, and above Digits 14 the entries come back as doubles: sin(evalf([[0,1],[-1,0]])) = [[2.99760216649e-15*i,1.17520119364],[-1.17520119364,2.99760216649e-15*i]] at Digits 12 and [[-4.3140830754274e-32-2.8865798640254e-15*i,1.1752011936438-7.1960319007501e-17*i],...] at Digits 40 (right [[0,sinh 1],[-sinh 1,0]], real: M^2 = -I, so sin M = M*sinh 1; mpmath sinm), cos(evalf([[0,1],[-1,0]])) = [[1.54308063482,-3.88578058619e-15*i],...] (right cosh 1 times the identity), cos(evalf([[1,2],[3,4]])) at Digits 40 = 14 digits. Now a square matrix of numbers with at least one float entry (integers, fractions and pi beside it) takes numeric_matrix_trig: the matrix (in radians) is divided by 2^s as in numeric_matrix_exp (patch 0063, whose scan, product and rounding it reuses), the series of the even part (cos, cosh) and of the odd part (sin, sinh) run at the entries' precision plus s+16 bits until a bound of the rest is below the last bit, and the double-angle rules S'=2*S*C, C'=C^2-S^2 (cos) or C^2+S^2 (cosh) run s times; the result is rounded back to the entries' precision. A real matrix stays real; a complex one works the same; sinh is not (e^M-e^-M)/2, which cancels for a small entry. The zero matrix gives the exact identity or zero matrix; exact and symbolic matrices keep analytic_apply.
+# Changed by Pascaline contributors, 2026-11-23
+--- a/src/usual.cc
++++ b/src/usual.cc
+@@ -1060,6 +1060,99 @@
+     return res;
+   }
+ 
++  // N62 (G792): true when g holds a float (a double, an MPFR real, a giac float; a complex with one as a part).
++  static bool numeric_matrix_has_float(const gen & g){
++    switch (g.type){
++    case _DOUBLE_: case _REAL: case _FLOAT_:
++      return true;
++    case _CPLX:
++      return numeric_matrix_has_float(*g._CPLXptr) || numeric_matrix_has_float(*(g._CPLXptr+1));
++    case _VECT: {
++      const_iterateur it=g._VECTptr->begin(),itend=g._VECTptr->end();
++      for (;it!=itend;++it){
++	if (numeric_matrix_has_float(*it))
++	  return true;
++      }
++      return false;
++    }
++    default:
++      return false;
++    }
++  }
++  // N62 (G792): a square matrix of numbers (integers, fractions and pi admitted) with at least one float entry: sin, cos,
++  // sinh and cosh take numeric_matrix_trig for it, an exact matrix keeps analytic_apply.
++  static bool is_float_squarematrix(const gen & e){
++    return is_squarematrix(e) && is_fully_numeric(e,num_mask_withint|num_mask_withfrac) && numeric_matrix_has_float(e);
++  }
++  // N62 (G792): sin, cos (hyp false) or sinh, cosh (hyp true) of a numeric square matrix, the odd function when odd, by
++  // numeric_matrix_exp's scaling and squaring (patch 0063). Stock sent a float matrix to analytic_apply, which
++  // diagonalises over the complex eigenvalues and transforms back: the eigenvectors' round-off stayed as imaginary noise
++  // in a real result (sin(evalf([[0,1],[-1,0]])) = [[2.998e-15*i,1.17520119364],[-1.17520119364,2.998e-15*i]] at Digits
++  // 12), and at Digits 40 the entries came back as doubles with that noise (cos(evalf([[1,2],[3,4]])) printed 14 digits).
++  // Now e (in radians) is divided by 2^s as in numeric_matrix_exp; the series of the even part C (cos or cosh) and of the
++  // odd part S (sin or sinh) run at the same bits until the same bound, and the double-angle rules S'=2*S*C, C'=C^2-S^2
++  // (cos) or C^2+S^2 (cosh) run s times (C and S are series in e, so they commute); the result is rounded back to the
++  // entries' precision. A real matrix stays real, and sinh is never (e^M-e^-M)/2, which cancels where an entry is small
++  // (stock's diagonal path gave sinh(evalf([[1,0],[0,10^-20]])) its 1e-20). A zero matrix gives the exact identity (cos,
++  // cosh) or the exact zero matrix (sin, sinh), as exp does.
++  static gen numeric_matrix_trig(const gen & e0,bool hyp,bool odd,GIAC_CONTEXT){
++    gen e=evalf(e0,1,contextptr);
++    if (e.type!=_VECT)
++      return gensizeerr(contextptr);
++    if (!hyp && !angle_radian(contextptr))
++      e=e*evalf(angle_degree(contextptr)?deg2rad_g:grad2rad_g,1,contextptr);
++    if (e.type!=_VECT)
++      return gensizeerr(contextptr);
++    int n=int(e._VECTptr->size()),prec=0;
++    double nrm=0;
++    bool finite=true;
++    numeric_matrix_exp_scan(e,nrm,prec,finite,contextptr);
++    if (!finite)
++      return gensizeerr(gettext("a matrix entry is not a finite number"));
++    if (nrm==0)
++      return odd?gen(vecteur(n,gen(vecteur(n,0))),_MATRIX__VECT):midn(n);
++    nrm*=n;
++    int s=0;
++    for (;nrm>0.5;++s)
++      nrm/=2;
++    int nbits=giacmax(prec,53)+s+16;
++#ifdef HAVE_LIBMPFR
++    e=accurate_evalf(e,nbits);
++#endif
++    if (s)
++      e=e*accurate_evalf(inv(pow(plus_two,s),contextptr),nbits);
++    gen C=accurate_evalf(midn(n),nbits),S(e),term(e);
++    double l2nrm=std::log(nrm)/std::log(2.0),lg=l2nrm; // lg: log2 of the bound of the term in `term`, as in numeric_matrix_exp
++    for (int j=2;;++j){
++      control_c();
++      if (interrupted)
++	return gensizeerr(gettext("Stopped by user interruption."));
++      lg+=l2nrm-std::log(double(j))/std::log(2.0);
++      if (lg<-nbits-2) // the rest of each series is below twice this bound (N/2^s <= 1/2)
++	break;
++      term=numeric_matrix_exp_mult(term,e)*accurate_evalf(inv(gen(j),contextptr),nbits);
++      // e^j/j! goes to C (j even) or S (j odd); cos and sin alternate: + at j = 0 and 1 mod 4
++      bool plus=hyp || j%4<2;
++      if (j%2==0)
++	C=plus?C+term:C-term;
++      else
++	S=plus?S+term:S-term;
++    }
++    for (int k=0;k<s;++k){
++      control_c();
++      if (interrupted)
++	return gensizeerr(gettext("Stopped by user interruption."));
++      gen SC=numeric_matrix_exp_mult(S,C),CC=numeric_matrix_exp_mult(C,C),SS=numeric_matrix_exp_mult(S,S);
++      S=SC+SC;
++      C=hyp?CC+SS:CC-SS;
++    }
++    gen res=odd?S:C;
++#ifdef HAVE_LIBMPFR
++    res=prec?accurate_evalf(res,prec):numeric_matrix_exp_double(res,contextptr);
++#endif
++    return res;
++  }
++
+   gen exp(const gen & e0,GIAC_CONTEXT){
+     if (e0.type==_FLOAT_){
+ #ifdef BCD
+@@ -1832,6 +1925,8 @@
+ 	return e1;
+       }
+     }
++    if (is_float_squarematrix(e)) // N62 (G792)
++      return numeric_matrix_trig(e,false,false,contextptr);
+     if (is_squarematrix(e))
+       return analytic_apply(at_cos,*e._VECTptr,contextptr);
+     if (e.type==_VECT)
+@@ -2092,6 +2187,8 @@
+ 	return res;
+       }
+     }
++    if (is_float_squarematrix(e)) // N62 (G792)
++      return numeric_matrix_trig(e,false,true,contextptr);
+     if (is_squarematrix(e))
+       return analytic_apply(at_sin,*e._VECTptr,contextptr);
+     if (e.type==_VECT)
+@@ -3120,6 +3217,8 @@
+ 	return (g-inv(g,contextptr))/2;
+       }
+     }
++    if (is_float_squarematrix(e)) // N62 (G792)
++      return numeric_matrix_trig(e,true,true,contextptr);
+     if (is_squarematrix(e))
+       return analytic_apply(at_sinh,*e._VECTptr,contextptr);
+     if (e.type==_VECT)
+@@ -3190,6 +3289,8 @@
+ 	return (g+inv(g,contextptr))/2;
+       }
+     }
++    if (is_float_squarematrix(e)) // N62 (G792)
++      return numeric_matrix_trig(e,true,false,contextptr);
+     if (is_squarematrix(e))
+       return analytic_apply(at_cosh,*e._VECTptr,contextptr);
+     if (e.type==_VECT)
