@@ -119,7 +119,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B6a | [G790](packages/G790.md) a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
+| B6a | G790 a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
 | B7 | [G405](packages/G405.md) solve keeps two real roots that are distinct but close | gorge, Opus | `p1/gorge-closeroots` | – |
 | B8 | [G404](packages/G404.md) G358's climb on every path; past its reach is never an overflow | gorge, Opus | `p1/gorge-climball` | – |
 | B9 | [G403](packages/G403.md) a tiny constant without an integer literal raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
