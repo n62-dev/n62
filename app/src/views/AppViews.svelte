@@ -3,6 +3,7 @@
   import type { Key, Layer } from "../keyboard/keyboard.ts";
   import type { AppShell } from "../apps/shell.svelte.ts";
   import { t } from "../i18n/index.ts";
+  import { shellText } from "../i18n/enShell.ts";
   import { ICONS } from "./icons.ts";
   import { pressFlag } from "../input/pressFlag.ts";
 
@@ -18,7 +19,7 @@
 </script>
 
 <!-- the icons are our own markup (ICONS, views/icons.ts), never user text -->
-<span class="seg" role="tablist" aria-label={t("status.views")}>
+<span class="seg" role="tablist" aria-label={shellText("status.views")}>
   {#each TABS.filter((tb) => shell.views.includes(tb.view)) as tab (tab.view)}
     <button
       type="button"

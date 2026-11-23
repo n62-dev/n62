@@ -623,7 +623,11 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  the entry's preload list took phase-1 ebef0cb2's 62,997 B gzip (176,865 B raw) to 63,004 B, over the budget. The update
  *  pill's words and the too-long-to-insert note left the start table (en.ts) for tables their lazy readers import
  *  (i18n/enUpdate.ts, i18n/enInsert.ts): 62,964 B (176,738 B raw). One table for both measured 62,980 B (its own chunk, one
- *  more name in the preload list). */
+ *  more name in the preload list).
+ *  G399 (fix round 2, a cut; the pin stays the budget): Giac patch 0059 adds no app source, but its new engine hash took the start
+ *  chunk to 63,001 B gzip (176,880 B raw). The Menu's "in view" row and the view tabs' group name left the start table (en.ts)
+ *  for i18n/enShell.ts, which only the shell's app-opening chunk reads (apps/shellOpen.ts, views/AppViews.svelte): 62,976 B
+ *  (176,822 B raw). */
 export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look
