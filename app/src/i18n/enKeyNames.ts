@@ -6,13 +6,13 @@
 export const enKeyNames = {
   "layer.shift": "Shift",
   "layer.alpha": "Alpha",
-  // the upper cluster
-  u1: "Free key 1",
-  u2: "Free key 2",
-  u3: "Free key 3",
-  u4: "Free key 4",
-  u5: "Free key 5",
-  u6: "Free key 6",
+  // the upper cluster (R705: a free key's name while its tap is empty; a set one is named by its face, keyNames.ts)
+  u1: "Free key 1, empty: tap to set it",
+  u2: "Free key 2, empty: tap to set it",
+  u3: "Free key 3, empty: tap to set it",
+  u4: "Free key 4, empty: tap to set it",
+  u5: "Free key 5, empty: tap to set it",
+  u6: "Free key 6, empty: tap to set it",
   up: "Up",
   down: "Down",
   left: "Left",
