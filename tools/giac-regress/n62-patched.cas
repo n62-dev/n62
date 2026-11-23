@@ -17,6 +17,57 @@ Digits:=40:; pc("g790-mmult-tiny-left-approx-00-40",'(approx([[10^-13,10^-13],[0
 // patch 0064-mmult-tiny-float-factor.patch
 // g790-mmult-tiny-both-11-40 (derived: the exact product)
 Digits:=40:; pc("g790-mmult-tiny-both-11-40",'(approx([[10^-13,0],[0,10^-13]])*approx([[10^-13,0],[0,10^-13]]))[1][1]',1/10^26,1/10^63);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-evalf-123-15 (derived)
+Digits:=15:; pc("g622-rank-evalf-123-15",'rank(evalf([[1,2,3],[4,5,6],[7,8,9]]))',2,0);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-evalf-123-40 (derived)
+Digits:=40:; pc("g622-rank-evalf-123-40",'rank(evalf([[1,2,3],[4,5,6],[7,8,9]]))',2,0);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rref-evalf-123-02-40 (derived)
+Digits:=40:; pc("g622-rref-evalf-123-02-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][2]',-1,1/10^30);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rref-evalf-123-12-40 (derived)
+Digits:=40:; pc("g622-rref-evalf-123-12-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[1][2]',2,1/10^30);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rref-evalf-123-22-40 (derived)
+Digits:=40:; pc("g622-rref-evalf-123-22-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[2][2]',0,1/10^30);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-ker-evalf-123-size-40 (derived)
+Digits:=40:; pc("g622-ker-evalf-123-size-40",'size(ker(evalf([[1,2,3],[4,5,6],[7,8,9]])))',1,0);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-ker-evalf-123-ratio01-40 (derived)
+Digits:=40:; pc("g622-ker-evalf-123-ratio01-40",'ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][1]/ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][0]',-2,1/10^30);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-ker-evalf-123-ratio21-40 (derived)
+Digits:=40:; pc("g622-ker-evalf-123-ratio21-40",'ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][2]/ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][0]',1,1/10^30);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-evalf-near-singular-40 (derived)
+Digits:=40:; pc("g622-rank-evalf-near-singular-40",'rank(evalf([[1,1],[1,1+10^-20]]))',2,0);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-evalf-zero-line-40 (derived)
+Digits:=40:; pc("g622-rank-evalf-zero-line-40",'rank(evalf([[0,0],[0,1]]))',1,0);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-det-evalf-tiny-40 (derived)
+Digits:=40:; pc("g622-det-evalf-tiny-40",'det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))',-2/10^26,1/10^60);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-inv-evalf-tiny-01-40 (derived)
+Digits:=40:; pc("g622-inv-evalf-tiny-01-40",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[0][1]',10^13,1/10^20);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-inv-evalf-tiny-10-40 (derived)
+Digits:=40:; pc("g622-inv-evalf-tiny-10-40",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[1][0]',15*10^12,1/10^20);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-inv-evalf-tiny-01-12 (derived)
+Digits:=12:; pc("g622-inv-evalf-tiny-01-12",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[0][1]',10^13,10^3);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-det-evalf-tiny-12 (derived)
+Digits:=12:; pc("g622-det-evalf-tiny-12",'det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))',-2/10^26,1/10^36);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-linsolve-evalf-tiny-0-40 (derived)
+Digits:=40:; pc("g622-linsolve-evalf-tiny-0-40",'linsolve(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0]',-10^13,1/10^20);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-linsolve-evalf-tiny-0-12 (derived)
+Digits:=12:; pc("g622-linsolve-evalf-tiny-0-12",'linsolve(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0]',-10^13,10^3);
 // patch 0044-sqrt-complex-real-part-normal.patch
 // g325-asin-sqrt-neg2-1e35 (home.yaml, oracle)
 Digits:=40:; pc("g325-asin-sqrt-neg2-1e35",'(asin(sqrt(-2)-10^35))',-(157079632679/10^11)+(812836254354/10^10)*i,5/10^12+5/10^11);
@@ -98,6 +149,15 @@ Digits:=40:; pc("g553-floor-neg-pi-1e-13",'(floor(-pi*10^-13))',-1,5/10^12);
 // patch 0061-floor-mpfr-working-precision.patch
 // g553-round-neg-2.5-pi-1e-13 (home.yaml, derived)
 Digits:=40:; pc("g553-round-neg-2.5-pi-1e-13",'(round(-(25/10^1)-pi*10^-13))',-3,5/10^12);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-approx-123 (home.yaml, derived)
+Digits:=40:; pc("g622-rank-approx-123",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]])))',2,5/10^12);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-approx-near-singular-1e-20 (home.yaml, derived)
+Digits:=40:; pc("g622-rank-approx-near-singular-1e-20",'(rank(approx([[1,1],[1,1+10^-20]])))',2,5/10^12);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-det-approx-tiny (home.yaml, derived)
+Digits:=40:; pc("g622-det-approx-tiny",'(det(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])))',-(2/10^26),5/10^38);
 // patch 0046-shift-integer-exact.patch
 // g226-shift-1-neg70 (home.yaml, derived)
 Digits:=40:; pc("g226-shift-1-neg70",'(shift(1,-70))',(118059162072*10^10),5*10^9);
@@ -1253,6 +1313,18 @@ Digits:=40:; pc("g399-arg-acos-5/4-squared",'(arg(acos(5/4)^2))',(314159265359/1
 // patch 0059-arg-negative-real-pi.patch
 // g399-arg-i-ln-i (precision.yaml, derived)
 Digits:=40:; pc("g399-arg-i-ln-i",'(arg(i*ln(i)))',(314159265359/10^11),5/10^12);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-inv-approx-tiny-10-20 (precision.yaml, derived)
+Digits:=40:; pc("g622-inv-approx-tiny-10-20",'(inv(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[1][0])',(15*10^12),5/10^7);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-linsolve-approx-tiny-0-20 (precision.yaml, derived)
+Digits:=40:; pc("g622-linsolve-approx-tiny-0-20",'(linsolve(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0])',-(1*10^13),5/10^7);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-det-approx-tiny-20 (precision.yaml, derived)
+Digits:=40:; pc("g622-det-approx-tiny-20",'(det(approx([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])))',-(2/10^26),5/10^46);
+// patch 0065-float-rref-cancelled-pivot.patch
+// g622-rank-approx-123-20 (precision.yaml, derived)
+Digits:=40:; pc("g622-rank-approx-123-20",'(rank(approx([[1,2,3],[4,5,6],[7,8,9]])))',2,5/10^20);
 // patch 0006-reim-root-of-unknown-sign.patch
 // g96-cas-im-2sqrt (bench.yaml, derived)
 Digits:=40:; pc("g96-cas-im-2sqrt",'subst(im(2*sqrt(x)),x,-1)',2,1/10^30);
@@ -1610,57 +1682,6 @@ Digits:=12:; pc("g554-exp-evalf-rotation40-00-12",'exp(evalf([[0,40],[-40,0]]))[
 // patch 0063-matrix-exp-working-precision.patch
 // g554-exp-evalf-neg30-00-12 (oracle: mpmath)
 Digits:=12:; pc("g554-exp-evalf-neg30-00-12",'exp(evalf([[-30,0],[0,-30]]))[0][0]',935762296884/10^25,1/10^24);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rank-evalf-123-15 (derived)
-Digits:=15:; pc("g622-rank-evalf-123-15",'rank(evalf([[1,2,3],[4,5,6],[7,8,9]]))',2,0);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rank-evalf-123-40 (derived)
-Digits:=40:; pc("g622-rank-evalf-123-40",'rank(evalf([[1,2,3],[4,5,6],[7,8,9]]))',2,0);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rref-evalf-123-02-40 (derived)
-Digits:=40:; pc("g622-rref-evalf-123-02-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][2]',-1,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rref-evalf-123-12-40 (derived)
-Digits:=40:; pc("g622-rref-evalf-123-12-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[1][2]',2,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rref-evalf-123-22-40 (derived)
-Digits:=40:; pc("g622-rref-evalf-123-22-40",'rref(evalf([[1,2,3],[4,5,6],[7,8,9]]))[2][2]',0,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-ker-evalf-123-size-40 (derived)
-Digits:=40:; pc("g622-ker-evalf-123-size-40",'size(ker(evalf([[1,2,3],[4,5,6],[7,8,9]])))',1,0);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-ker-evalf-123-ratio01-40 (derived)
-Digits:=40:; pc("g622-ker-evalf-123-ratio01-40",'ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][1]/ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][0]',-2,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-ker-evalf-123-ratio21-40 (derived)
-Digits:=40:; pc("g622-ker-evalf-123-ratio21-40",'ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][2]/ker(evalf([[1,2,3],[4,5,6],[7,8,9]]))[0][0]',1,1/10^30);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rank-evalf-near-singular-40 (derived)
-Digits:=40:; pc("g622-rank-evalf-near-singular-40",'rank(evalf([[1,1],[1,1+10^-20]]))',2,0);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-rank-evalf-zero-line-40 (derived)
-Digits:=40:; pc("g622-rank-evalf-zero-line-40",'rank(evalf([[0,0],[0,1]]))',1,0);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-det-evalf-tiny-40 (derived)
-Digits:=40:; pc("g622-det-evalf-tiny-40",'det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))',-2/10^26,1/10^60);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-inv-evalf-tiny-01-40 (derived)
-Digits:=40:; pc("g622-inv-evalf-tiny-01-40",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[0][1]',10^13,1/10^20);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-inv-evalf-tiny-10-40 (derived)
-Digits:=40:; pc("g622-inv-evalf-tiny-10-40",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[1][0]',15*10^12,1/10^20);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-inv-evalf-tiny-01-12 (derived)
-Digits:=12:; pc("g622-inv-evalf-tiny-01-12",'inv(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))[0][1]',10^13,10^3);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-det-evalf-tiny-12 (derived)
-Digits:=12:; pc("g622-det-evalf-tiny-12",'det(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]))',-2/10^26,1/10^36);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-linsolve-evalf-tiny-0-40 (derived)
-Digits:=40:; pc("g622-linsolve-evalf-tiny-0-40",'linsolve(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0]',-10^13,1/10^20);
-// patch 0065-float-rref-cancelled-pivot.patch
-// g622-linsolve-evalf-tiny-0-12 (derived)
-Digits:=12:; pc("g622-linsolve-evalf-tiny-0-12",'linsolve(evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]]),[1,1])[0]',-10^13,10^3);
 // patch 0019-atan-exact-cut.patch
 // g135-deg-atan-2i (DEG, oracle)
 angle_radian:=0:; Digits:=40:; pc("g135-deg-atan-2i",'atan(2*i)',90+(3147292373094538001977241539068588825237/10^38)*i,1/10^35);

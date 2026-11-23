@@ -644,6 +644,10 @@ export const PATCHED_IDS = new Map([
   // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
   // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
   ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
+  // G622 (F436): the float row reduction (patch 0065); the g622-keep-* rows pass on stock and stay in the check file. The det, inv and
+  // near-singular rank rows fail on a build without 0065 alone; in this file a line before them leaves context0's epsilon at 1e-180
+  // (F478), which masks their is_zero fault there, so the written g622-* lines, first in the file, test the same inputs
+  ...["rank-approx-123", "linsolve-approx-tiny-0-20", "rank-approx-123-20", "rank-approx-near-singular-1e-20", "det-approx-tiny", "inv-approx-tiny-10-20", "det-approx-tiny-20"].map((k) => [`g622-${k}`, "0065-float-rref-cancelled-pivot.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -700,6 +704,36 @@ export function build(cases) {
     ["g790-mmult-tiny-both-11-40", "(approx([[10^-13,0],[0,10^-13]])*approx([[10^-13,0],[0,10^-13]]))[1][1]", "1/10^26", "1/10^63"],
   ]) {
     patched.push("// patch 0064-mmult-tiny-float-factor.patch", `// ${id} (derived: the exact product)`, `Digits:=40:; pc("${id}",'${input}',${value},${tol});`);
+    nPatched++;
+  }
+  // Patch 0065 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
+  // linear_combination, is_blockmatrix, in_doublerref, mker; solve.cc _linsolve; misc.cc _rank; the golden g622-* rows are matrices
+  // or Home's values at P). First in the file with the g790 lines, for the same reason (context0's epsilon, F478). Stock at Digits 15 and up kept a cancelled pivot (rank 0, rref the identity, ker []) and took entries
+  // near 1e-13 for 0 at any Digits. Expected values: derived by hand (row 3 = 2*row 2 - row 1, rows 1 and 2 independent, so rank 2,
+  // rref [[1,0,-1],[0,1,2],[0,0,0]] and the kernel the line through [1,-2,1]; N = [[1,2],[3,4]]/10^13 has det -2/10^26 and inverse
+  // 10^13*[[-2,1],[3/2,-1/2]], so N.x = [1,1] at x = 10^13*[-1,1]); a size or a ratio where Giac's scale is its own.
+  const M3 = "evalf([[1,2,3],[4,5,6],[7,8,9]])";
+  const N2 = "evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])";
+  for (const [id, digits, input, value, tol] of [
+    ["g622-rank-evalf-123-15", 15, `rank(${M3})`, "2", "0"],
+    ["g622-rank-evalf-123-40", 40, `rank(${M3})`, "2", "0"],
+    ["g622-rref-evalf-123-02-40", 40, `rref(${M3})[0][2]`, "-1", "1/10^30"],
+    ["g622-rref-evalf-123-12-40", 40, `rref(${M3})[1][2]`, "2", "1/10^30"],
+    ["g622-rref-evalf-123-22-40", 40, `rref(${M3})[2][2]`, "0", "1/10^30"],
+    ["g622-ker-evalf-123-size-40", 40, `size(ker(${M3}))`, "1", "0"],
+    ["g622-ker-evalf-123-ratio01-40", 40, `ker(${M3})[0][1]/ker(${M3})[0][0]`, "-2", "1/10^30"],
+    ["g622-ker-evalf-123-ratio21-40", 40, `ker(${M3})[0][2]/ker(${M3})[0][0]`, "1", "1/10^30"],
+    ["g622-rank-evalf-near-singular-40", 40, "rank(evalf([[1,1],[1,1+10^-20]]))", "2", "0"],
+    ["g622-rank-evalf-zero-line-40", 40, "rank(evalf([[0,0],[0,1]]))", "1", "0"],
+    ["g622-det-evalf-tiny-40", 40, `det(${N2})`, "-2/10^26", "1/10^60"],
+    ["g622-inv-evalf-tiny-01-40", 40, `inv(${N2})[0][1]`, "10^13", "1/10^20"],
+    ["g622-inv-evalf-tiny-10-40", 40, `inv(${N2})[1][0]`, "15*10^12", "1/10^20"],
+    ["g622-inv-evalf-tiny-01-12", 12, `inv(${N2})[0][1]`, "10^13", "10^3"],
+    ["g622-det-evalf-tiny-12", 12, `det(${N2})`, "-2/10^26", "1/10^36"],
+    ["g622-linsolve-evalf-tiny-0-40", 40, `linsolve(${N2},[1,1])[0]`, "-10^13", "1/10^20"],
+    ["g622-linsolve-evalf-tiny-0-12", 12, `linsolve(${N2},[1,1])[0]`, "-10^13", "10^3"],
+  ]) {
+    patched.push("// patch 0065-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   for (const [file, c] of cases) {
@@ -1006,36 +1040,6 @@ export function build(cases) {
     ["g554-exp-evalf-neg30-00-12", 12, "exp(evalf([[-30,0],[0,-30]]))[0][0]", "935762296884/10^25", "1/10^24"],
   ]) {
     patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
-    nPatched++;
-  }
-  // Patch 0065 (G622, F436), written lines: the float row reduction under rank, rref, ker, det, inv and linsolve (vecteur.cc mrref,
-  // linear_combination, is_blockmatrix, in_doublerref, mker; solve.cc _linsolve; misc.cc _rank; the golden g622-* rows are matrices
-  // or Home's values at P). Stock at Digits 15 and up kept a cancelled pivot (rank 0, rref the identity, ker []) and took entries
-  // near 1e-13 for 0 at any Digits. Expected values: derived by hand (row 3 = 2*row 2 - row 1, rows 1 and 2 independent, so rank 2,
-  // rref [[1,0,-1],[0,1,2],[0,0,0]] and the kernel the line through [1,-2,1]; N = [[1,2],[3,4]]/10^13 has det -2/10^26 and inverse
-  // 10^13*[[-2,1],[3/2,-1/2]], so N.x = [1,1] at x = 10^13*[-1,1]); a size or a ratio where Giac's scale is its own.
-  const M3 = "evalf([[1,2,3],[4,5,6],[7,8,9]])";
-  const N2 = "evalf([[10^-13,2*10^-13],[3*10^-13,4*10^-13]])";
-  for (const [id, digits, input, value, tol] of [
-    ["g622-rank-evalf-123-15", 15, `rank(${M3})`, "2", "0"],
-    ["g622-rank-evalf-123-40", 40, `rank(${M3})`, "2", "0"],
-    ["g622-rref-evalf-123-02-40", 40, `rref(${M3})[0][2]`, "-1", "1/10^30"],
-    ["g622-rref-evalf-123-12-40", 40, `rref(${M3})[1][2]`, "2", "1/10^30"],
-    ["g622-rref-evalf-123-22-40", 40, `rref(${M3})[2][2]`, "0", "1/10^30"],
-    ["g622-ker-evalf-123-size-40", 40, `size(ker(${M3}))`, "1", "0"],
-    ["g622-ker-evalf-123-ratio01-40", 40, `ker(${M3})[0][1]/ker(${M3})[0][0]`, "-2", "1/10^30"],
-    ["g622-ker-evalf-123-ratio21-40", 40, `ker(${M3})[0][2]/ker(${M3})[0][0]`, "1", "1/10^30"],
-    ["g622-rank-evalf-near-singular-40", 40, "rank(evalf([[1,1],[1,1+10^-20]]))", "2", "0"],
-    ["g622-rank-evalf-zero-line-40", 40, "rank(evalf([[0,0],[0,1]]))", "1", "0"],
-    ["g622-det-evalf-tiny-40", 40, `det(${N2})`, "-2/10^26", "1/10^60"],
-    ["g622-inv-evalf-tiny-01-40", 40, `inv(${N2})[0][1]`, "10^13", "1/10^20"],
-    ["g622-inv-evalf-tiny-10-40", 40, `inv(${N2})[1][0]`, "15*10^12", "1/10^20"],
-    ["g622-inv-evalf-tiny-01-12", 12, `inv(${N2})[0][1]`, "10^13", "10^3"],
-    ["g622-det-evalf-tiny-12", 12, `det(${N2})`, "-2/10^26", "1/10^36"],
-    ["g622-linsolve-evalf-tiny-0-40", 40, `linsolve(${N2},[1,1])[0]`, "-10^13", "1/10^20"],
-    ["g622-linsolve-evalf-tiny-0-12", 12, `linsolve(${N2},[1,1])[0]`, "-10^13", "10^3"],
-  ]) {
-    patched.push("// patch 0065-float-rref-cancelled-pivot.patch", `// ${id} (derived)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   for (const [mode, n, tag, value] of [
