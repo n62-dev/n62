@@ -691,8 +691,8 @@ export function build(cases) {
   // Patch 0064 (G790, F475), written lines: a matrix product whose left factor holds only floats below 1e-12 (vecteur.cc mmult_atranb's
   // sparse loop and matrix_density tested entries with is_zero, an absolute 1e-12; the golden g790-* rows are matrices, which the export
   // leaves out). Stock gave the zero matrix at Digits 40. Expected values: the exact products (derived), at a tolerance far below the entries.
-  // First in the file, before any case line: normal of a nested root (g340-normal-sqrt-cbrt2) leaves context0's epsilon at 1e-180,
-  // which pc()'s epsilon:=1e-12 does not reset, and the product's is_zero(…,context0) then saw no fault (the lines passed on phase-1).
+  // First in the file, before any case line: normal of a nested root (g340-normal-sqrt-cbrt2) leaves context0's epsilon at 1e-180 (F478,
+  // docs/backlog.md), which pc()'s epsilon:=1e-12 does not reset, so the product's is_zero(…,context0) saw no fault (passed on phase-1).
   for (const [id, input, value, tol] of [
     ["g790-mmult-tiny-left-exact-01-40", "(approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])[0][1]", "2/10^13", "1/10^50"],
     ["g790-mmult-tiny-left-exact-11-40", "(approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]])[1][1]", "4/10^13", "1/10^50"],
