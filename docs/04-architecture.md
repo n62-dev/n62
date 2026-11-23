@@ -312,7 +312,7 @@ Every press counts 1: a key (Shift, Alpha and Enter too), each letter typed in F
 ### 5.4 Decision: number bases (EN6)
 - **A base is a display mode of an integer result** (R192), like the Format key's modes, not a property of the value. Shift + `−` opens the Base menu (HEX, BIN, OCT, DEC for the last result, R193). Word size (8 to 64 bits) and signed are settings (R194, key `word`). Drawn whole, unpadded (`0xA`), marked as a fraction (`=` if exact); a non-integer or a value outside the word (negative, if unsigned) keeps its notation.
 - **Entry:** `0x…`, `0b…`, `0o…`, the prefix in either case (R304), are one whole number (R191), written in decimal; hex digits A–F (either case) are the Alpha letters, the run greedy (`0xFFx` is 255·x); a digit outside the base, a point, an ᴇ, spacing inside it (R191f1) or a prefix at the end is refused; `0x+1` stays 0·x+1.
-- **Bitwise:** `bitand`, `bitor`, `bitxor` work; shifts and rotations are EN7 definitions in the word size.
+- **Bitwise:** `bitand`, `bitor`, `bitxor` work, on big and negative integers too (two's complement, unbounded; patch 0062, G551); shifts and rotations are EN7 definitions in the word size.
 
 ### 5.5 Decision: the entry line, one key path and one box model
 
