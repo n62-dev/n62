@@ -111,3 +111,39 @@ test("a source comment naming a missing docs path fails (G145), one naming a rea
   const ok = run({ ...base, "app/src/x.ts": "// see docs/research/r9.md section 2\nexport {};\n" });
   assert.equal(ok.code, 0, ok.out);
 });
+
+const conflict = "intro\n<<<<<<< HEAD\nours\n=======\ntheirs\n>>>>>>> p1/branch\noutro\n";
+
+test("conflict markers in a tracked doc fail with path:line (A267)", () => {
+  const r = run({ ...base, "docs/x.md": conflict, "docs/README.md": "[b](backlog.md) [r](research/r9.md) [x](x.md)\n" });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /markers: docs\/x\.md:2\b/);
+  assert.match(r.out, /markers: docs\/x\.md:4\b/);
+  assert.match(r.out, /markers: docs\/x\.md:6\b/);
+});
+
+test("conflict markers in a tracked source file fail (A267)", () => {
+  const r = run({ ...base, "app/src/x.ts": "export {};\n" + conflict });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /markers: app\/src\/x\.ts:3\b/);
+});
+
+test("a lone ======= line (a setext heading underline) passes (A267)", () => {
+  const r = run({ ...base, "docs/research/r9.md": note + "\nTitle\n=======\ntext\n" });
+  assert.equal(r.code, 0, r.out);
+});
+
+test("markers inside a .patch file pass (A267)", () => {
+  const r = run({ ...base, "engine/giac/patches/0001.patch": conflict });
+  assert.equal(r.code, 0, r.out);
+});
+
+test("a line that holds <<<<<<< only after other text passes (A267)", () => {
+  const r = run({ ...base, "app/src/x.ts": "// a line with <<<<<<< HEAD inside\n  <<<<<<< HEAD\n// >>>>>>> x\nexport {};\n" });
+  assert.equal(r.code, 0, r.out);
+});
+
+test("conflict markers under docs/archive/ pass (A267)", () => {
+  const r = run({ ...base, "docs/archive/old.md": conflict });
+  assert.equal(r.code, 0, r.out);
+});

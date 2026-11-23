@@ -62,7 +62,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
 | 886g | R862 ☰ in the unit view opens its tools menu | ron, Opus | `p1/ron-unitmenu` | R838 |
-| 886h | [A267](packages/A267.md) docs-check refuses git conflict markers (owner, 2026-11-22) | annabell, Sonnet | `p1/annabell-markercheck` | – |
+| 886h | A267 docs-check refuses git conflict markers (owner, 2026-11-22) | annabell, Sonnet | `p1/annabell-markercheck` | – |
 | 887 | [R705](packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Opus | `p1/ron-emptyuserkey` | – |
 | 888 | [R376](packages/R376.md) a number right after °, ′, ″, % or ! is refused, if not merged by the stop | ron, Opus | `p1/ron-markthen` | – |
 | 888a | [A266](packages/A266.md) Android's status and navigation bars follow the look | annabell, Sonnet | `p1/annabell-barsfollow` | – |
