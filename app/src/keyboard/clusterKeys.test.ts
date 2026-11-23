@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// R723 (the owner, 2026-11-17): the cluster's cells. Row 0, col 4 is Help (its own id `help`, R197), Shift Settings; the
+// R723 (the owner, 2026-11-17): the cluster's cells. Row 0, col 4 (its own id `help`, R197) is Settings, Shift Help (R863, the
+// owner 2026-11-22); the
 // id `menu` is retired (☰ is on the bar, R722). Shift + Select is Copy (what a hold on the row's result copies, R276, R720):
 // the picked row, else the last finished row; no row, or an app, is a dead press with no clipboard write. Shift + Deselect is
 // Paste (deselectPaste.test.ts); Mode has no key (the bar's chips). Shift + Fmt is reserved (Shift + Vars is Chars, R725): no action, no
@@ -58,18 +59,20 @@ function ctx(items: Row[] = [], app: string | null = null) {
   return { c, entry, log, press };
 }
 
-describe("row 0, col 4 is Help; Shift Settings (R723)", () => {
-  test("the key in that cell has the id help, its face Help and its legend Settings; no key has the id menu", () => {
+describe("row 0, col 4 is Settings; Shift Help (R863, after R723)", () => {
+  test("the key in that cell has the id help, its face ⚙ and its legend Help; no key has the id menu", () => {
     const k = keyboard.keys.find((x) => x.row === 0 && x.col === 4);
     expect(k?.id).toBe("help");
-    expect(k?.label).toEqual({ primary: "$key.help", shift: "$key.settings" });
+    expect(k?.label).toEqual({ primary: "$key.gear", shift: "$key.help" });
+    expect(k?.actions.primary).toEqual({ kind: "special", name: "settings" });
+    expect(k?.actions.shift).toEqual({ kind: "special", name: "help" });
     expect(keyboard.byId.has("menu")).toBe(false);
   });
-  test("its tap opens Help (R197), Shift + it (and a flick up) Settings", () => {
+  test("its tap opens Settings, Shift + it (and a flick up) Help (R197)", () => {
     const { press, log } = ctx();
     press("help");
     press("help", "shift");
-    expect(log).toEqual(["help", "settings"]);
+    expect(log).toEqual(["settings", "help"]);
   });
 });
 
