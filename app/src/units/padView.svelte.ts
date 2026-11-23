@@ -33,27 +33,18 @@ export const unitPad: {
 };
 
 /** R838: `closed` runs when the last sheet over the unit view goes (Settings, Mode, Find on units: Esc, Back, ×, a pick that
- *  closes it; a sheet that gives way to another in the same update is no close). Returns the stop. */
-export function watchSheet(shell: AppShell, closed: () => void): () => void {
+ *  closes it; a sheet that gives way to another in the same update is no close). R915: and each time `read` gives another
+ *  value (the angle unit and the digits), whoever changed them: the bar's angle word, a sheet, an Undo. Returns the stop. */
+export function watchSheet(shell: AppShell, read: () => string, closed: () => void): () => void {
   let open = false;
-  return $effect.root(() => {
-    $effect(() => {
-      const now = shell.sheet !== null;
-      if (open && !now) untrack(closed);
-      open = now;
-    });
-  });
-}
-
-/** R915: `changed` runs each time `read` gives another value (the angle unit and the digits, as one text), whoever changed
- *  them: the bar's angle word, a sheet, the Undo of a setting. Returns the stop. */
-export function watchValue(read: () => string, changed: () => void): () => void {
   let last: string | undefined;
   return $effect.root(() => {
     $effect(() => {
-      const now = read();
-      if (last !== undefined && now !== last) untrack(changed);
-      last = now;
+      const now = shell.sheet !== null;
+      const v = read();
+      if ((open && !now) || (last !== undefined && v !== last)) untrack(closed);
+      open = now;
+      last = v;
     });
   });
 }

@@ -28,12 +28,12 @@ import { storeChip } from "./chip.ts";
 import { factorTable } from "./factors.ts";
 import { userUnitCells } from "./padCells.ts";
 import { UnitPad, padUnitList } from "./pad.ts";
-import { unitPad, watchSheet, watchValue } from "./padView.svelte.ts";
+import { unitPad, watchSheet } from "./padView.svelte.ts";
 import { slotCatalogue } from "./slot.ts";
 import { makePanel } from "./panel.ts";
 import { ownUnits } from "./ownUnits.ts";
 import { unitCells } from "./userCells.svelte.ts";
-import { putRow, rowSlots, unitRow } from "./row.ts";
+import { putRow, rowSlots, unitRow, type RowIn } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
 import { unitTools, type UnitTool } from "./tools.ts";
 import { HwTyping } from "./typed.ts";
@@ -103,7 +103,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
    *  angle and Giac text, for its row (the angle tag, units/row.ts); only the last request's result is shown (view.ts). */
   const asked = (): string => c.session.settings.angle + c.session.settings.digits;
   let was = asked();
-  let job = { angle: c.session.settings.angle, formula: "" };
+  let job: RowIn["job"];
   const mf = new Field();
   mf.dataset["testid"] = "unit-field";
   const host: ViewHost = {
@@ -211,14 +211,12 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   };
   let untap = (): void => {};
   let unwatch = (): void => {};
-  let unfollow = (): void => {};
   const close = (): void => {
     if (current?.view !== view) return;
     current = null;
     unlayer();
     untap();
     unwatch();
-    unfollow();
     view.keep();
     unitPad.model = null;
     unitPad.on = () => {};
@@ -248,26 +246,17 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   };
   document.addEventListener("click", tapped, { capture: true });
   untap = () => document.removeEventListener("click", tapped, { capture: true });
-  /** R915: the angle unit or the digits changed, whoever changed them (the bar's angle word, a sheet over the view, an Undo):
-   *  a result shown, or being asked for, is asked for again as the line would be. A sheet's close (below) then finds
-   *  nothing to ask and only draws again (the drawing settings). */
-  unfollow = watchValue(asked, () => {
-    if (current?.view !== view || was === asked()) return;
-    if (view.shown.kind === "result" || view.shown.kind === "working") {
-      void view.evaluate();
-      panel.draw();
-    }
-  });
   /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
-   *  and a setting changed there shows: an angle unit or digits other than the result's recompute it as the line would (the
-   *  digits are in the engine's answer, σ's text and the Home row too), a setting it is only drawn with (the format, the decimal
-   *  mark, the digit groups, the marks) draws it again with no request. */
-  unwatch = watchSheet(c.shell, () => {
+   *  and a setting changed there shows. R915: the angle unit or the digits changed, whoever changed them (the bar's angle word
+   *  too, at once, a sheet still open or not): a result shown or being asked for is asked for again as the line would be (the
+   *  digits are in the engine's answer, σ's text and the Home row too); a setting the result is only drawn with (the format,
+   *  the decimal mark, the digit groups, the marks) draws it again with no request. The focus comes back once no sheet is up. */
+  unwatch = watchSheet(c.shell, asked, () => {
     if (current?.view !== view) return;
-    if (was !== asked() && view.shown.kind === "result") void view.evaluate();
+    if (was !== asked() && (view.shown.kind === "result" || view.shown.kind === "working")) void view.evaluate();
     else view.redraw();
     panel.draw();
-    keep();
+    if (c.shell.sheet === null) keep();
   });
   unitPad.on = (e) => {
     view.apply(e);
