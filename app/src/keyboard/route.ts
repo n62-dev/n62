@@ -148,7 +148,7 @@ export function special(c: RouteCtx, name: Special): void {
     case "fmt":
       // Format key: Home and CAS show the last result in the next mode; the apps have no such result, and a press with no row
       // to take is dead (deadPress, asked by run)
-      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked);
+      if (c.shell.app === null) void c.session.formKey("cycleFormat", c.picked, c.dead);
       break;
     case "tmpl":
       c.openShiftPalette("tmpl");
@@ -317,9 +317,10 @@ export function deadPress(c: RouteCtx, key: Key, mods: Mods = modsFor(c, undefin
   if (!action) return false;
   const app = shell.app !== null;
   const noLine = app && !shell.showsEntry; // Plot
-  if (action.kind === "special") return action.name === "fmt" ? app || !targetRow(session.items, session.items[c.picked ?? -1]) : noLine && NEEDS_LINE.test(action.name); // (the rest open a sheet or edit the line, and Plot has none)
+  if (action.kind === "special") return action.name === "fmt" ? app || !session.formRow("cycleFormat", c.picked) : noLine && NEEDS_LINE.test(action.name); // (the rest open a sheet or edit the line, and Plot has none)
   if (noLine) return action.kind !== "cmd" || NAV[action.name] === undefined;
   if (app) return action.kind === "insert" && (action.latex === ANS_CHIP || action.units === true);
+  if (entry.empty && key.id === "frac" && layerOf(mods) === "primary") return !session.formRow("cycleForm", c.picked); // a b/c on an empty line (G785)
   const items = session.items;
   const at = c.picked;
   const row = at !== null && at < items.length && canPick(items, at) ? items[at] : undefined;
@@ -530,13 +531,13 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   if (key.user && (!action || (action.kind === "special" && action.name === "none")) && !shell.prompt) return c.openSettings({ id: key.id, layer: layerOf(mods) });
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
-  // R777: the one rule of the presses that do nothing by the state they land in (a pick the key would drop is dropped; Fmt keeps it)
-  if (deadPress(c, key, mods)) {
-    if (action.kind !== "special") c.picked = null;
-    return c.dead();
-  }
   // R775: Fmt and a b/c on an empty line act on the picked row and keep the pick (Session.formKey), so the next press goes on round on the same row
   const abc = entry.empty && key.id === "frac" && layerOf(mods) === "primary";
+  // R777: the one rule of the presses that do nothing by the state they land in (a pick the key would drop is dropped; Fmt and a b/c keep it)
+  if (deadPress(c, key, mods)) {
+    if (action.kind !== "special" && !abc) c.picked = null;
+    return c.dead();
+  }
   if (shell.app === null && !cell && !abc && !(action.kind === "special" && action.name === "fmt") && historyKey(c, action)) return;
   if (action.kind === "special") return special(c, action.name);
   if (shell.app !== null) {

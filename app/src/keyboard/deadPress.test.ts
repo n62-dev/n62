@@ -2,6 +2,7 @@
 // R777f1: the route's one rule of a dead press (route.ts deadPress). For each branch: where it says true, route.run calls the context's
 // dead and nothing else; where it says false, the key acts. The real route.run over a stub context, as recallKey.test.ts.
 import { describe, expect, test } from "vitest";
+import { targetRow } from "../state/pickRows.ts";
 import type { HistoryItem } from "../state/session.svelte.ts";
 
 const route = await import("./route.ts");
@@ -14,7 +15,7 @@ type Mods = { shift: boolean; alpha: boolean };
 const PLAIN: Mods = { shift: false, alpha: false };
 const SHIFT: Mods = { shift: true, alpha: false };
 
-function ctx(opts: { statuses?: string[]; app?: boolean; showsEntry?: boolean; filter?: string } = {}) {
+function ctx(opts: { statuses?: string[]; app?: boolean; showsEntry?: boolean; filter?: string; formsDead?: boolean } = {}) {
   const log: string[] = [];
   const items = (opts.statuses ?? []).map((status, i) => ({ id: i + 1, status, latex: String(i + 1), result: status === "done" ? "r" : undefined }));
   const entry = {
@@ -35,6 +36,8 @@ function ctx(opts: { statuses?: string[]; app?: boolean; showsEntry?: boolean; f
     clearModifiers() {},
     hasResult: () => items.some((i) => i.status === "done"),
     formKey: (k: string) => (log.push(`formKey ${k}`), Promise.resolve(true)),
+    // Session.formRow: the row Fmt or a b/c takes; `formsDead` (G785): the forms code is in and says the press changes nothing
+    formRow: (_k: string, at: number | null) => (opts.formsDead ? undefined : targetRow(items, items[at ?? -1])),
   };
   const level = {
     filter: opts.filter ?? "",
@@ -108,6 +111,27 @@ describe("deadPress: Home and CAS", () => {
     const b = ctx({ statuses: ["done"] });
     expect(b.dead("fmt")).toBe(false);
     expect(b.run("fmt")).toEqual(["formKey cycleFormat"]);
+  });
+  test("G785: Fmt and a b/c that would change nothing (Session.formRow) are dead, and a picked row stays picked", () => {
+    const a = ctx({ statuses: ["done", "done"], formsDead: true });
+    expect(a.dead("fmt")).toBe(true);
+    expect(a.dead("frac")).toBe(true);
+    a.c.picked = 0;
+    expect(a.run("frac")).toEqual(["dead"]);
+    expect(a.c.picked).toBe(0);
+    expect(a.run("fmt")).toEqual(["dead"]);
+    expect(a.c.picked).toBe(0);
+    // controls: with text on the line a b/c types the fraction; Shift + a b/c is not the form key
+    a.entry.empty = false;
+    expect(a.dead("frac")).toBe(false);
+    a.entry.empty = true;
+    expect(a.dead("frac", SHIFT)).toBe(false);
+  });
+  test("G785 control: a b/c with a row whose form changes is no dead press and runs formKey", () => {
+    const b = ctx({ statuses: ["done"] });
+    expect(b.dead("frac")).toBe(false);
+    expect(b.run("frac")).toEqual(["formKey cycleForm"]);
+    expect(ctx().dead("frac")).toBe(true); // no row at all
   });
   test("Store ▶ with nothing on the line and no result is dead; with a result, or text on the line, it acts", () => {
     const a = ctx();
