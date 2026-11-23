@@ -68,7 +68,8 @@ export interface Case {
   /** precision.yaml (G67): after the `before…` inputs, the definitions log they left is replayed into a fresh engine (a
    *  relaunch), and the case's input runs there. */
   relaunch?: boolean;
-  /** precision.yaml (G303): the case stores a name later cases read free (a one-letter name), so it runs on its own engine. */
+  /** precision.yaml (G303): the case stores a name later cases read free (a one-letter name), so it runs on its own engine;
+   *  home.yaml and precision.yaml (G790): the case must not read a context an earlier case left (F478: epsilon at 1e-180). */
   own?: boolean;
   /** home.yaml (G34): a sequence of lines, each in its own angle mode; the last one is checked against expect and mark. */
   steps?: Step[];
@@ -219,6 +220,7 @@ export async function runHomeCase(c: Case, host: EngineHost, fresh: () => Promis
     return inexactConstsIn(c.input, table).length > 0 ? { ...r, inexactInput: true } : r;
   }
   const s: HomeSettings = { ...defaultHomeSettings, angle: c.settings?.angle ?? "rad" };
+  if (c.own) host = await fresh(); // G790: a fresh engine, so no context an earlier case left (F478) decides the result
   // A case written as `latex` goes through our parser with Home's options (no realOddRoots since R66), its `before` too
   const giacOf = (t: string): string => (c.latex !== undefined ? giacOfEntry(t, "home").giac : t);
   for (const b of c.before ?? []) host.home(giacOf(b), s);
