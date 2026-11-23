@@ -640,7 +640,8 @@ export const PATCHED_IDS = new Map([
   // G553 (F304): usual.cc _floor took a negative MPFR value within 1e-12 below an integer as that integer (is_zero's absolute
   // epsilon; ceil and round through it); the g553-keep-* rows pass on stock and stay in the check file, and the two whose 13 and
   // 16 digits Home shows rounded (a half unit of 5 lets stock pass) are written lines below
-  ...["ceil-pi-1e-13", "ceil-1-cos-1e-6", "ceil-log10-1e12+1", "floor-neg-pi-1e-13", "round-neg-2.5-pi-1e-13"].map((k) => [`g553-${k}`, "0061-floor-mpfr-working-precision.patch"]),  // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
+  ...["ceil-pi-1e-13", "ceil-1-cos-1e-6", "ceil-log10-1e12+1", "floor-neg-pi-1e-13", "round-neg-2.5-pi-1e-13"].map((k) => [`g553-${k}`, "0061-floor-mpfr-working-precision.patch"]),
+  // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
   // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
   ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
 ]);
