@@ -68,7 +68,7 @@ describe("key names (R41)", () => {
     const comma: Key = { ...dot, label: { ...dot.label, primary: "," } };
     expect(keyLabels(comma, false, false, false)).toEqual({ label: ",", description: "Shift: Equals" });
     const u1 = keyboard.byId.get("u1") as Key;
-    expect(keyLabels(u1, false, false, false)).toEqual({ label: "Free key 1", description: "" });
+    expect(keyLabels(u1, false, false, false)).toEqual({ label: "Free key 1, empty: tap to set it", description: "" });
     const set: Key = { ...u1, label: { primary: "kN" }, actions: { primary: { kind: "type", text: "kN" } } };
     expect(keyLabels(set, false, false, false)).toEqual({ label: "kN", description: "" });
   });

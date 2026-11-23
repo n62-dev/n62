@@ -67,7 +67,7 @@ In the brief's table form. The steps are left for the owner to number. "Fix" row
 | – | R702 Store ▶ with nothing to store is a dead press; a lone ▶ says what it needs (fix, F382) | ron, Sonnet | `p1/ron-storeempty` | – |
 | – | R703 the keypad, the status line and Mode fit at font scale 1.5 and 2.0 on a real WebView (fix, F383) | ron, Opus | `p1/ron-textzoom` | R700 |
 | – | [R708](../../shifts/packages/R708.md) the small controls get 48 dp touch boxes without changing their look | ron, Sonnet | `p1/ron-touchboxes` | – |
-| – | [R705](../../shifts/packages/R705.md) a tap on an empty user key opens Your keys on its row | ron, Sonnet | `p1/ron-emptyuserkey` | – |
+| – | R705 a tap on an empty user key opens Your keys on its row | ron, Sonnet | `p1/ron-emptyuserkey` | – |
 | – | [R707](../../shifts/packages/R707.md) the status line names the unit view while it is open | ron, Sonnet | `p1/ron-unitplace` | R700 |
 | – | [R704](../../shifts/packages/R704.md) a sheet opened at a deep level closes on Back and Esc (the owner's yes) | ron, Sonnet | `p1/ron-deepback` | R700 |
 | – | [R706](../../shifts/packages/R706.md) the first start shows two tips; five come at their moment (the owner's yes; after the tag) | ron, Opus | `p1/ron-tipsinplace` | – |

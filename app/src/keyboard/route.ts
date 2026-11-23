@@ -42,7 +42,8 @@ export interface RouteCtx {
   recallRow(item: HistoryItem): void;
   goTo(view: View): void;
   clearKey(): void;
-  openSettings(): void;
+  /** Settings (Mode › Settings); `slot` (R705): its Your keys level, on that free key's slot row. */
+  openSettings(slot?: { id: string; layer: Layer }): void;
   openMode(at?: string): void;
   openShiftPalette(id: "tmpl" | "rel" | "sym" | "chars"): void;
   /** Math (R4a): open Find (inside Find, Math types b; docs/04 3.7). */
@@ -524,6 +525,9 @@ export function run(c: RouteCtx, key: Key, mods: Mods): void {
   const cell = shell.sheet?.level.grid?.editing != null;
   // R279: any other key ends the chain of Select presses
   if (!isSelect(action)) entry.endSelect();
+  // R705 (docs/05 3.4): a free key's empty slot (its tap, or a Shift slot it lacks; Alpha falls back to the tap, docs/04 5.1) opens
+  // Settings › Your keys on that slot's row, no dead press; a name prompt keeps its own reading
+  if (key.user && (!action || (action.kind === "special" && action.name === "none")) && !shell.prompt) return c.openSettings({ id: key.id, layer: layerOf(mods) });
   if (!action) return c.dead();
   if (shell.prompt?.key(action)) return; // a name on the line (R89)
   // R777: the one rule of the presses that do nothing by the state they land in (a pick the key would drop is dropped; Fmt keeps it)
