@@ -703,6 +703,14 @@ cases:
   - { id: "pal-deg-01", latex: "30\\degree", expect: "pi/6", source: "derived", group: "palettes", note: "R10's degree rule: degrees in every angle mode" }
   - { id: "pal-deg-02", latex: "30\\degree15\\prime", expect: "121*pi/720", source: "derived", group: "palettes", note: "30.25 degrees" }
   - { id: "pal-deg-03", latex: "30\\degree36\\doubleprime", expect: "3001*pi/18000", source: "derived", group: "palettes", note: "30.01 degrees" }
+  - { id: "pal-deg-04", latex: "30\\degree15", error: true, source: "derived", group: "palettes", note: "R376: a number after ° names ′ or ×, never 30·15 (G2 checklist row 76 reads 30°15′)" }
+  - { id: "pal-deg-05", latex: "1\\degree2\\prime3", error: true, source: "derived", group: "palettes", note: "R376: ″ or × missing" }
+  - { id: "pal-deg-06", latex: "30\\degree15\\prime36\\doubleprime2", error: true, source: "derived", group: "palettes", note: "R376: × missing after ″" }
+  - { id: "pal-deg-07", latex: "30\\degree\\times15", expect: "5*pi/2", source: "derived", group: "palettes", note: "R376: with its × the product stays, 450 degrees" }
+  - { id: "pal-pct-03", latex: "2\\%3", error: true, source: "derived", group: "palettes", note: "R376: × missing after %, never 0.06" }
+  - { id: "pal-pct-04", latex: "2\\permille3", error: true, source: "derived", group: "palettes", note: "R376: × missing after ‰" }
+  - { id: "pal-fact-03", latex: "5!3", error: true, source: "derived", group: "palettes", note: "R376: × missing after !, never 360" }
+  - { id: "pal-fact-04", latex: "5!\\cdot3", expect: "360", source: "derived", group: "palettes", note: "R376: with its × the product stays" }
   - { id: "pal-amp-01", latex: "1\\&2", error: true, source: "derived", group: "palettes", note: "& is refused until its meaning is settled (G2 checklist)" }
   - { id: "pal-aring-01", latex: "5\\AA", error: true, source: "derived", group: "palettes", note: "Å is a unit; Home is unit-free (P8)" }
   - { id: "pal-aring-02", latex: "5Å", error: true, source: "derived", group: "palettes", note: "a pasted Å too" }
