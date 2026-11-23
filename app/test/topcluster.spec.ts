@@ -286,14 +286,19 @@ test("a free key's Alpha slot: a flick down and Alpha + tap fire it, the face an
   expect(await entryValue(page)).toBe(wanted);
 });
 
-test("an empty free key gives the dead-key haptic and types nothing", async ({ page }) => {
+test("an empty free key is no dead press (R705): the key-down pulse, Your keys on its row, nothing typed", async ({ page }) => {
   await page.evaluate(() => window.n62.session.setHaptics({ on: true, ms: 10 }));
+  const active = sheet(page).locator('[role="menuitem"][data-active="true"]');
   for (const id of ["u1", "u6"]) {
     const before = (await vibrations(page)).length;
     await tap(page, [id]);
-    await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(2); // drawn dead (R777): the double alone
+    await expect(active).toHaveAttribute("data-id", `${id}:primary`);
+    await expect.poll(async () => (await vibrations(page)).length - before, id).toBe(1); // drawn live: one pulse, never the dead double (R777)
+    await tap(page, ["esc", "esc", "esc"]); // Your keys, Settings, Mode
+    await expect(sheet(page)).toHaveCount(0);
   }
-  await flick(page, "u2", "up"); // U2's Shift slot ships empty
+  await flick(page, "u2", "up"); // U2's Shift slot ships empty: its Shift row
+  await expect(active).toHaveAttribute("data-id", "u2:shift");
   expect(await entryValue(page)).toBe("");
   expect(await view(page)).toBe("home");
 });
