@@ -137,6 +137,7 @@
   --key-nav: #d7efee;
   --key-enter: #062424;
   --on-enter: #cae6e5;
+  --edge: #529997;
   --text: #062424;
   --text-dead: #587271;
   --muted: #314e4d;
@@ -177,8 +178,9 @@
   --key-fn: #eff9f8;
   --key-ctl: #eff9f8;
   --key-nav: #eff9f8;
-  --key-enter: #57a3a1;
+  --key-enter: #e17b00;
   --on-enter: #000000;
+  --edge: #529997;
   --text: #010707;
   --text-dead: #587271;
   --muted: #2d4746;
@@ -221,6 +223,7 @@
   --key-nav: #eff9f8;
   --key-enter: #062424;
   --on-enter: #cae6e5;
+  --edge: #529997;
   --text: #010707;
   --text-dead: #587271;
   --muted: #2d4746;

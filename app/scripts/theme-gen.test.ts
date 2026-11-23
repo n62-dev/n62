@@ -213,10 +213,11 @@ describe("R157: --mark-faint, the faint mark on an empty history", () => {
 });
 
 // R843 (owner, 2026-11-20; his pick from R842's page, 2026-11-22: A): N62 Light's Enter is orange #c26a00 with a black label;
-// N62 Dark keeps the logo's teal. R842 measured A at 0.269 from Shift's drawn #5b2400 (protanopia, the smallest of normal
-// vision and the three deficiencies; docs/mockups/enter-orange-light.html), so it may not come closer than that rounding allows.
+// N62 Dark keeps the logo's teal. R842 measured A at 0.269 from Shift's drawn #5b2400 (protanopia) and, in High contrast, its
+// #e17b00 at 0.225 from #913900 (tritanopia): the smallest of normal vision and the three deficiencies
+// (docs/mockups/enter-orange-light.html). Enter may not come closer than those values, rounded to three places, allow.
 describe("R843: N62 Light's Enter is the owner's orange", () => {
-  const R842_APART = 0.2685;
+  const R842_APART = { normal: 0.2685, high: 0.2245 } as const;
   const hue = (h: string): number => {
     const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255) as [number, number, number];
     const mx = Math.max(r, g, b);
@@ -236,11 +237,16 @@ describe("R843: N62 Light's Enter is the owner's orange", () => {
     expect(cr(t["on-enter"] as string, t["key-enter"] as string)).toBeGreaterThanOrEqual(7);
     expect(Math.abs(hue(t["key-enter"] as string) - hue("#c26a00"))).toBeLessThanOrEqual(2);
   });
-  it(`N62 Light's Enter stands at least ${R842_APART} from --key-shift for normal vision and the three deficiencies`, () => {
+  it(`N62 Light's Enter stands at least ${R842_APART.normal} (High contrast ${R842_APART.high}) from --key-shift for normal vision and the three deficiencies`, () => {
     for (const high of [false, true]) {
       const t = n62("light", high);
-      for (const m of [null, ...Object.values(CVD)]) expect(apart(t["key-enter"] as string, t["key-shift"] as string, m), `high ${high}`).toBeGreaterThanOrEqual(R842_APART);
+      for (const m of [null, ...Object.values(CVD)]) expect(apart(t["key-enter"] as string, t["key-shift"] as string, m), `high ${high}`).toBeGreaterThanOrEqual(R842_APART[high ? "high" : "normal"]);
     }
+  });
+  it("the unit pad's prefix cells stay teal: they take N62 Light's `edge`, not its orange Enter (Plain keys: the inverted Enter, as before)", () => {
+    expect(n62("light", false)["key-pfx"]).toBe("#b9d9d8");
+    expect(theme({ family: "n62", brightness: "light", high: false, plain: true }).t["key-pfx"]).toBe("#bbcbca");
+    expect(Math.abs(hue(n62("light", false)["key-pfx"] as string) - hue("#529997"))).toBeLessThanOrEqual(10);
   });
   it("N62 Dark's Enter is still the logo's teal #529997", () => {
     expect(n62("dark", false)["key-enter"]).toBe("#529997");

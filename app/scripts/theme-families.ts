@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // The three theme families' own colour values (R50c, R150, R153), moved from tools/probes/themes-audit.mjs. Each gives a value for
 // every role except --on-error and the derived ones, which theme-gen.ts adds (--ring too when a family gives none: R154; Black & White's must differ from its Alpha, the logo's teal, so it is a lighter or deeper teal); credit and licence in `src`
-// (THIRD_PARTY.md "Theme colours"). Edit here, then `npm run themes` rewrites the generated CSS.
+// (THIRD_PARTY.md "Theme colours"). `edge` names the family's accent where its Enter wears another colour (N62 Light, R843: Enter orange,
+// the prefix cells and R840's window edge teal). Edit here, then `npm run themes` rewrites the generated CSS.
 
 export type Palette = Record<string, string>;
 export interface Family {
@@ -14,11 +15,11 @@ export interface Family {
 }
 
 export const FAMILIES: readonly Family[] = [
-  { id: 'n62', name: 'N62', src: 'Ours (owner, 2026-11-07, docs/archive/mockups/n62-teal-2026-11-07.html): every colour the logo\'s teal #529997 (OKLCH hue 193°) at another lightness; only Shift\'s orange, the warning and the error outside it.',
-    idea: 'One colour family: deep teal (Dark) or pale teal (Light) screen and keys, the number keys a step lighter, Enter the logo\'s teal in both; Shift is orange, Alpha a bright (Dark) or deep (Light) teal.',
+  { id: 'n62', name: 'N62', src: 'Ours (owner, 2026-11-07, docs/archive/mockups/n62-teal-2026-11-07.html): every colour the logo\'s teal #529997 (OKLCH hue 193°) at another lightness; only Shift\'s orange, Light\'s Enter (owner, 2026-11-20, R843), the warning and the error outside it.',
+    idea: 'One colour family: deep teal (Dark) or pale teal (Light) screen and keys, the number keys a step lighter, Enter the logo\'s teal (Dark) or orange (Light); Shift is orange, Alpha a bright (Dark) or deep (Light) teal.',
     dark: { bg: '#092726', panel: '#0e2f2e', line: '#335b59', 'key-num': '#194241', 'key-op': '#123736', 'key-fn': '#123736', 'key-ctl': '#123736', 'key-nav': '#123736', 'key-enter': '#529997', 'on-enter': '#000000',
       text: '#ebf6f6', 'text-dead': '#749392', muted: '#abccca', shift: '#ffa800', alpha: '#6ae5e2', error: '#ff8a7a', 'chip-bg': '#123736', approx: '#6ae5e2', warn: '#f2c94c', pick: '#134948', focus: '#529997', ring: '#529997', 'key-on': '#529997', 'on-key-on': '#000000' },
-    light: { bg: '#cae6e5', panel: '#e0f3f2', line: '#88adab', 'key-num': '#eefaf9', 'key-op': '#d7efee', 'key-fn': '#d7efee', 'key-ctl': '#d7efee', 'key-nav': '#d7efee', 'key-enter': '#529997', 'on-enter': '#000000',
+    light: { bg: '#cae6e5', panel: '#e0f3f2', line: '#88adab', 'key-num': '#eefaf9', 'key-op': '#d7efee', 'key-fn': '#d7efee', 'key-ctl': '#d7efee', 'key-nav': '#d7efee', 'key-enter': '#c26a00', 'on-enter': '#000000', edge: '#529997',
       text: '#062424', 'text-dead': '#587271', muted: '#314e4d', shift: '#a03f00', alpha: '#005b5a', error: '#a8231b', 'chip-bg': '#d7efee', approx: '#005b5a', warn: '#755600', pick: '#a9d9d7', focus: '#368281', ring: '#368281', 'key-on': '#005b5a', 'on-key-on': '#ffffff' } },
   { id: 'bw', name: 'Black & White', src: 'Ours: the N62 family before R153 (black and white with the logo\'s teal #529997 and an orange accent), kept under its own name (owner, 2026-11-07).',
     idea: 'A black (Dark) or white (Light) screen with grey keys; the logo\'s teal only on Enter and Alpha, Shift orange.',
