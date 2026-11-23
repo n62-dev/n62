@@ -3,8 +3,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { FAMILIES } from "./theme-families.ts";
-import { apart, CVD, type Mat } from "./cvd.ts";
-import { LAYER_APART, WARN_APART, block, checks, combos, cr, dimmedOk, expected, familyPath, outOfDate, selector, styleFile, theme } from "./theme-gen.ts";
+import { apart, CVD, oklabOf, type Mat } from "./cvd.ts";
+import { LAYER_APART, WARN_APART, block, checks, combos, cr, dimmedOk, expected, familyPath, lum, outOfDate, selector, styleFile, theme } from "./theme-gen.ts";
 
 describe("generated theme files", () => {
   it("are up to date (run npm run themes)", () => {
@@ -25,6 +25,15 @@ describe("generated theme files", () => {
     const src = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
     expect(styleFile(src)).toBe(src);
     expect(expected().size).toBe(4); // style.css and the three families
+  });
+  // R873 round 1: a role named --key-pad overrode style.css's 4 px key padding of the same name in every look (keys' text cut,
+  // the user keys' ＋ 1.2 px off): no generated role may share a name with a token of style.css's own :root block
+  it("no generated role takes the name of a token style.css's :root block sets (sizes, mixes)", () => {
+    const src = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    const own = new Set([...(/^:root \{([^}]*)\}/m.exec(src)?.[1] ?? "").matchAll(/^\s*--([a-z0-9-]+):/gm)].map((m) => m[1] as string));
+    expect(own.has("key-pad"), "the start :root block is read").toBe(true);
+    const roles = new Set(combos().flatMap((c) => Object.keys(theme(c).t)));
+    expect([...roles].filter((r) => own.has(r))).toEqual([]);
   });
 });
 
@@ -163,14 +172,32 @@ describe("R150: key-text and the other key twins", () => {
 
 describe("R156: --key-edge, the line under each key (Key shadows)", () => {
   const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  it("is black in every dark combination and black at 30 % over the final --bg in every light one, as an opaque colour", () => {
+  const mixed = (a: string, b: string, k: number): number[] => rgb(a).map((v, i) => v + ((rgb(b)[i] as number) - v) * k);
+  it("is black in a dark combination where black stands 1.45:1 from --panel, else --panel mixed toward --text (R873); black at 30 % over the final --bg in every light one, as an opaque colour", () => {
     for (const c of combos()) {
       const { t } = theme(c);
       const edge = t["key-edge"] ?? "";
+      const panel = t["panel"] ?? "";
       expect(edge, selector(c)).toMatch(/^#[0-9a-f]{6}$/);
-      if (c.brightness === "dark") expect(edge, selector(c)).toBe("#000000");
-      else rgb(edge).forEach((v, i) => expect(Math.abs(v - (rgb(t["bg"] ?? "")[i] as number) * 0.7), selector(c)).toBeLessThanOrEqual(0.5));
+      if (c.brightness === "light") rgb(edge).forEach((v, i) => expect(Math.abs(v - (rgb(t["bg"] ?? "")[i] as number) * 0.7), selector(c)).toBeLessThanOrEqual(0.5));
+      else if (cr("#000000", panel) >= 1.45) expect(edge, selector(c)).toBe("#000000");
+      else {
+        expect(lum(edge), `${selector(c)}: lighter than the keypad`).toBeGreaterThan(lum(panel));
+        const on = Array.from({ length: 101 }, (_, i) => i / 100).some((k) => rgb(edge).every((v, i) => Math.abs(v - (mixed(panel, t["text"] ?? "", k)[i] as number)) <= 0.5));
+        expect(on, `${selector(c)}: ${edge} is --panel mixed toward --text`).toBe(true);
+      }
     }
+  });
+  // R873 (owner, 2026-11-22, point 8: "key shadows on black theme are not visible"): B&W Dark's black line stood 1.10:1
+  for (const c of combos())
+    it(`${selector(c)}: the line stands at least 1.45:1 from the keypad's --panel (R873)`, () => {
+      const { t } = theme(c);
+      expect(cr(t["key-edge"] ?? "", t["panel"] ?? "")).toBeGreaterThanOrEqual(1.45);
+    });
+  it("B&W Dark's is a grey lighter than its keypad, near sandra's #2e3233 (R873)", () => {
+    const { t } = theme({ family: "bw", brightness: "dark", high: false, plain: false });
+    expect(t["key-edge"]).not.toBe("#000000");
+    expect(apart(t["key-edge"] ?? "", "#2e3233")).toBeLessThan(0.02);
   });
   it("N62 Light's is #8da1a0, and both start blocks carry it", () => {
     expect(theme({ family: "n62", brightness: "light", high: false, plain: false }).t["key-edge"]).toBe("#8da1a0");
@@ -178,6 +205,44 @@ describe("R156: --key-edge, the line under each key (Key shadows)", () => {
     expect(css).toContain("--key-edge: #000000;");
     expect(css).toContain("--key-edge: #8da1a0;");
     expect(css).toMatch(/--key-shadow: 2px;/);
+  });
+});
+
+// R873 (owner, 2026-11-22, point 4: "solarized and black&white: the arrow pad is not different enough to the background"):
+// --key-disc, the round pad's fill, is --key-ctl with its OKLCH lightness moved away from the keypad's --panel (hue and chroma
+// kept) until it stands 1.25:1 from it, lighter in a dark look and darker in a light one; the arrows (--key-text at 70 %) read on it.
+describe("R873: --key-disc, the round pad's fill", () => {
+  const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  // Solarized's normal looks cannot keep 4.5:1 on a pad 1.25:1 from their keypad: held to their measured values (decisions.md, "Needs the user")
+  const HELD: Record<string, number> = { "solarized dark": 4.03, "solarized light": 4.28 };
+  const over = (bg: string, fg: string, k: number): string => "#" + rgb(bg).map((v, i) => Math.round(v + ((rgb(fg)[i] as number) - v) * k).toString(16).padStart(2, "0")).join("");
+  for (const c of combos())
+    it(`${selector(c)}: 1.25:1 from --panel on the far side of it, the arrows at least 4.5:1 on it`, () => {
+      const { t } = theme(c);
+      const pad = t["key-disc"] ?? "";
+      const panel = t["panel"] ?? "";
+      expect(pad, "--key-disc").toMatch(/^#[0-9a-f]{6}$/);
+      expect(cr(pad, panel), "pad : keypad").toBeGreaterThanOrEqual(1.25);
+      expect(lum(pad) > lum(panel), c.brightness === "dark" ? "lighter than --panel" : "darker than --panel").toBe(c.brightness === "dark");
+      expect(cr(over(pad, t["key-text"] ?? "", 0.7), pad), "arrows (--key-text at 0.7)").toBeGreaterThanOrEqual(c.high ? 4.5 : (HELD[`${c.family} ${c.brightness}`] ?? 4.5));
+    });
+  it("keeps --key-ctl's hue and chroma (OKLab a and b within rounding) where the move stays in gamut", () => {
+    for (const c of combos().filter((x) => !x.plain && !x.high)) {
+      const { t } = theme(c);
+      const [p, k] = [oklabOf(t["key-disc"] ?? ""), oklabOf(t["key-ctl"] ?? "")];
+      expect(Math.hypot((p[1] as number) - (k[1] as number), (p[2] as number) - (k[2] as number)), selector(c)).toBeLessThan(0.006);
+    }
+  });
+  it("the normal looks land near sandra's candidates (s1-cands.mjs)", () => {
+    const CANDS = { "n62 dark": "#1d4140", "n62 light": "#c2dbda", "bw dark": "#242929", "bw light": "#ced4d4", "solarized dark": "#475a6d", "solarized light": "#d6d8b4" } as const;
+    for (const [id, want] of Object.entries(CANDS)) {
+      const [family, brightness] = id.split(" ") as [string, "dark" | "light"];
+      expect(apart(theme({ family, brightness, high: false, plain: false }).t["key-disc"] ?? "", want), id).toBeLessThan(0.02);
+    }
+  });
+  it("N62's two start blocks in style.css carry it", () => {
+    const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    for (const b of ["dark", "light"] as const) expect(css).toContain(`--key-disc: ${theme({ family: "n62", brightness: b, high: false, plain: false }).t["key-disc"]};`);
   });
 });
 

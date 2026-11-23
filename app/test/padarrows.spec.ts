@@ -232,6 +232,29 @@ for (const viewport of [
       for (const id of ids) expect(back.fills[id], `${id} after Shift`).toBe(back.text);
     });
 
+    // R873 (owner, 2026-11-22, point 4): the round pad is filled with its own role, --key-disc, which stands 1.25:1 from the
+    // keypad (theme-gen.test.ts); --key-ctl, which it wore before, sat 1.01 to 1.11 from it
+    for (const [family, brightness] of [["n62", "dark"], ["n62", "light"], ["bw", "dark"], ["solarized", "light"]] as const)
+      test(`the round pad's fill is --key-disc, not --key-ctl (${family} ${brightness})`, async ({ page }) => {
+        await open(page);
+        await set(page, brightness, { family });
+        const r = await page.locator(".pad").evaluate((pad) => {
+          const tone = (v: string): string => {
+            const probe = document.createElement("span");
+            probe.style.backgroundColor = `var(${v}, rgb(1, 2, 3))`;
+            pad.append(probe);
+            const c = getComputedStyle(probe).backgroundColor;
+            probe.remove();
+            return c;
+          };
+          const tp = pad.querySelector(".trackpad");
+          return { fill: tp ? getComputedStyle(tp).backgroundColor : "no pad", pad: tone("--key-disc"), ctl: tone("--key-ctl") };
+        });
+        expect(r.pad, "--key-disc is set").not.toBe("rgb(1, 2, 3)");
+        expect(r.pad, "--key-disc differs from --key-ctl").not.toBe(r.ctl);
+        expect(r.fill).toBe(r.pad);
+      });
+
     // controls: the zones keep their boxes (the four keys tile the pad's grid area as before) and their spoken names
     test("the four zones keep their hit boxes and names; a tap on each moves the cursor", async ({ page }) => {
       await open(page);
