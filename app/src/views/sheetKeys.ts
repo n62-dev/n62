@@ -18,9 +18,10 @@ export type SheetKey =
   /** A tap on a key that is not a digit types its letter into the filter (no Alpha press needed). */
   | { kind: "letter"; ch: string }
   | { kind: "backspace" }
-  /** The key keeps its own job: Shift and Alpha (their state is kept as it is), and the controls that change place
-   *  (the status line's ☰ and place name, and Tmpl, toggle their sheet; its view tabs and a user key that holds Home,
-   *  CAS, Apps, Menu or a view close it and go there). A user key that holds anything else does nothing in a sheet. */
+  /** The key keeps its own job: Shift and Alpha (their state is kept as it is), the ⚙ key (Settings as the sheet's next
+   *  level, R887), and the controls that change place (the status line's ☰ and place name, and Tmpl, toggle their sheet;
+   *  its view tabs and a user key that holds Home, CAS, Apps, Menu or a view close it and go there). A user key that
+   *  holds anything else does nothing in a sheet. */
   | { kind: "pass" }
   /** Does nothing in a sheet. */
   | { kind: "none" }
@@ -38,7 +39,7 @@ const BY_ID: Readonly<Record<string, SheetKey>> = {
   esc: { kind: "back" },
   bksp: { kind: "backspace" },
 };
-const PASS: readonly string[] = ["shift", "alpha", "menu", "apps", "slot", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
+const PASS: readonly string[] = ["shift", "alpha", "settings", "menu", "apps", "slot", "tmpl", "home", "cas", "switch", "symb", "plot", "num"];
 
 /** The key's letter: its Alpha layer when that types one letter (A on Vars … Z on 2). A free key has none: its Alpha
  *  slot is the user's own (R15c3), and the letters of the sheet's filter stay where they are. */
@@ -77,7 +78,7 @@ export function sheetFlick(key: Key, down: boolean, filter: boolean): SheetKey {
 }
 
 /** The status line's controls keep their job in Find: they close it and go there, or toggle their sheet. */
-const FIND_PASS: readonly string[] = ["menu", "apps", "slot", "home", "cas", "switch", "symb", "plot", "num"];
+const FIND_PASS: readonly string[] = ["settings", "menu", "apps", "slot", "home", "cas", "switch", "symb", "plot", "num"];
 
 /**
  * A key in Find (R4a, docs/04 3.7, decisions.md S2 rule M1). Every key types its letter in lower case, Tmpl and Math
@@ -124,6 +125,8 @@ export function storeKey(key: Key, shift: boolean, alpha: boolean, cas: boolean,
   const d = DIGIT.exec(key.id);
   if (d && !layered) return empty ? { kind: "none" } : { kind: "letter", ch: d[1] as string };
   const k = layered ? undefined : sheetKey(key, true);
+  const p = key.actions.primary;
+  if (p?.kind === "special" && p.name === "settings") return { kind: "line" }; // the ⚙ key: Settings from the line, as before R887
   return k && k.kind !== "none" ? k : { kind: "line" };
 }
 
@@ -214,6 +217,13 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
       // changes place (a view tab, a user key that holds Home or CAS) closes it and goes there
       const p = key.actions.primary;
       if (p?.kind !== "special" || isSelect(p)) return true; // (R279: Select and Deselect act on the line only)
+      if (p.name === "settings") {
+        // R887: as the head's ⚙ (R145): Settings as the next level of the open sheet, on any level, so Esc goes back to it;
+        // with Settings already open in the sheet there is nothing to open
+        if (sheet.settingsOpen) c.dead();
+        else shell.settingsOnSheet();
+        return true;
+      }
       if (p.name !== "menu" && p.name !== "apps" && p.name !== "slot" && p.name !== "tmpl") shell.closeSheet();
       special(c, p.name);
       return true;

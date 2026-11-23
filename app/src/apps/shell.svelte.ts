@@ -93,6 +93,8 @@ export class AppShell {
   openSettings: (() => void) | undefined;
   /** R785: an app's ☰ › Mode: the Mode sheet on Format, as the bar's chip opens it in Home and CAS (set by App.svelte). */
   openMode: (() => void) | undefined;
+  /** R887: runs `then` once the Mode code (and the sheet's view) is in, loading it first when it is not (set by App.svelte). */
+  withModeCode: ((then: () => void) => void) | undefined;
   /** R361: counts an app's event that is no press (set by main.ts: the press counts' event). */
   declare onEvent: ((name: string) => void) | undefined;
   /** Which of Home and CAS is under the keys (set by App.svelte); names the Menu there (R83). */
@@ -280,6 +282,17 @@ export class AppShell {
       (sheet) => this.menuItems.length === 0 && this.picked(sheet.openSettings()),
     );
     return true;
+  }
+  /** R887: the ⚙ key over the open sheet: Settings as its next level on whatever level is open, as the head's ⚙ (R145), so Esc goes
+   *  back to it. Before the Mode code is in it loads first; a sheet closed or changed meanwhile gets nothing. */
+  settingsOnSheet(): void {
+    const s = this.sheet;
+    if (!s) return;
+    const push = (): void => {
+      if (this.sheet === s && !s.settingsOpen) this.picked(s.openSettings(this.toSettings()));
+    };
+    if (this.settingsMenu?.() || !this.withModeCode) push();
+    else this.withModeCode(push);
   }
   /** Open a list of items over the view (a long press on a history row): same sheet and keys as the Menu key.
    *  `settings`: the ⚙ in its title row opens Settings (R145). */
