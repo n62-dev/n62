@@ -40,7 +40,7 @@ describe("all 24 combinations", () => {
     describe(selector(c), () => {
       const { t } = theme(c);
       it("meets every pair of the contrast rules and keeps a dead face dimmer", () => {
-        const bad = checks(t, c.high).filter((x) => x.v < x.min);
+        const bad = checks(t, c).filter((x) => x.v < x.min);
         expect(bad.map((x) => `${x.l} ${x.v.toFixed(2)} < ${x.min}`)).toEqual([]);
         expect(dimmedOk(t)).toBe(true);
       });
@@ -155,7 +155,8 @@ describe("R150: key-text and the other key twins", () => {
     }
   });
   it("the key-text role checked against the keys is in the audit", () => {
-    const cs = checks(theme({ family: "n62", brightness: "dark", high: false, plain: false }).t, false);
+    const n62Dark = { family: "n62", brightness: "dark", high: false, plain: false } as const;
+    const cs = checks(theme(n62Dark).t, n62Dark);
     expect(cs.some((x) => x.f === "key-text" && x.b === "key-num")).toBe(true);
   });
 });
@@ -253,5 +254,44 @@ describe("R843: N62 Light's Enter is the owner's orange", () => {
   it("N62 Dark's Enter is still the logo's teal #529997", () => {
     expect(n62("dark", false)["key-enter"]).toBe("#529997");
     expect(FAMILIES.find((f) => f.id === "n62")?.dark["key-enter"]).toBe("#529997");
+  });
+});
+
+// R872 (owner, 2026-11-22; sandra's S1, numbers confirmed by sofia): Enter stands out in every look. Its fill at least 3:1 from
+// the keypad's --panel; its label at least 4.5:1 (7:1 in High contrast); and, where the layers have colours (not Plain keys,
+// which draws Shift, Alpha and Enter in the text colour on purpose), at least LAYER_APART from --key-shift and --key-alpha in the
+// worst of normal vision and the three deficiencies (cvd.ts). The owner's two orange Enters sit nearer their Shift: each is held
+// to its measured value, rounded down (N62 Light: R842's, as R843; Solarized Light: 0.0386, High contrast 0.0263). N62 Light in
+// High contrast cannot meet 3:1 from its --panel at all with a 7:1 black label (the fill would need a luminance of at least 0.30
+// and at most 0.277): it is held to its measured 2.789 (decisions.md, "Needs the user").
+describe("R872: Enter stands out", () => {
+  const SEEN = [null, ...Object.values(CVD)];
+  const worst = (a: string, b: string): number => Math.min(...SEEN.map((m) => apart(a, b, m)));
+  const SHIFT_FLOOR: Record<string, { normal: number; high: number }> = { "n62 light": { normal: 0.2685, high: 0.2245 }, "solarized light": { normal: 0.0385, high: 0.026 } };
+  const PANEL_FLOOR: Record<string, number> = { "n62 light high": 2.785 };
+  for (const c of combos())
+    it(`${selector(c)}: Enter 3:1 from --panel, its label ${c.high ? 7 : 4.5}:1${c.plain ? "" : ", apart from Shift and Alpha"}`, () => {
+      const { t } = theme(c);
+      const e = t["key-enter"] as string;
+      const k = c.high ? "high" : "normal";
+      expect(cr(e, t["panel"] as string), "Enter on --panel").toBeGreaterThanOrEqual(PANEL_FLOOR[`${c.family} ${c.brightness}${c.high ? " high" : ""}`] ?? 3);
+      expect(cr(t["on-enter"] as string, e), "Enter's label").toBeGreaterThanOrEqual(c.high ? 7 : 4.5);
+      if (c.plain) return;
+      expect(worst(e, t["key-shift"] as string), "from --key-shift").toBeGreaterThanOrEqual(SHIFT_FLOOR[`${c.family} ${c.brightness}`]?.[k] ?? LAYER_APART[k]);
+      expect(worst(e, t["key-alpha"] as string), "from --key-alpha").toBeGreaterThanOrEqual(LAYER_APART[k]);
+    });
+  const VALUES = { "bw dark": ["#e6ebeb", "#000000"], "bw light": ["#1b2122", "#ffffff"], "solarized dark": ["#4aa3e6", "#002b36"], "solarized light": ["#cb4b16", "#fffff4"] } as const;
+  for (const [id, pair] of Object.entries(VALUES))
+    it(`${id}: Enter is ${pair[0]} with a ${pair[1]} label, in the family data and drawn`, () => {
+      const [family, brightness] = id.split(" ") as [string, "dark" | "light"];
+      const { t } = theme({ family, brightness, high: false, plain: false });
+      expect([t["key-enter"], t["on-enter"]]).toEqual(pair);
+      const fam = FAMILIES.find((f) => f.id === family)?.[brightness] ?? {};
+      expect([fam["key-enter"], fam["on-enter"]]).toEqual(pair);
+    });
+  it("the generator's audit names the Enter floors (npm run themes refuses a family that breaks them)", () => {
+    const c = { family: "bw", brightness: "dark", high: false, plain: false } as const;
+    const ls = checks(theme(c).t, c).map((x) => x.l);
+    for (const l of ["Enter on the keypad (non-text)", "Enter apart from Shift", "Enter apart from Alpha"]) expect(ls, l).toContain(l);
   });
 });

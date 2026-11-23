@@ -3,7 +3,7 @@
 // the two switches on Home; R116, the entry line's highlights in every family's Dark and Light; R124, the mark styles;
 // R125, the digit-group separators.
 import type { Page } from "@playwright/test";
-import { tap } from "../test/helpers.ts";
+import { sheetKey, tap } from "../test/helpers.ts";
 
 export interface LookShot {
   readonly id: string;
@@ -50,6 +50,19 @@ export function lookShots(someHistory: (p: Page) => Promise<void>): LookShot[] {
     { id: "look-bw-contrast", group: "Themes (R50e): the switches", title: "Black & White, High contrast (R153: N62 before it turned teal)", setup: set({ family: "bw", contrast: true }) },
     { id: "look-bw-plain", group: "Themes (R50e): the switches", title: "Black & White, Plain keys", setup: set({ family: "bw", plain: true }) },
     { id: "look-bw-both", group: "Themes (R50e): the switches", title: "Black & White, High contrast and Plain keys together", setup: set({ family: "bw", contrast: true, plain: true }) },
+    // R872: the new Enters (Black & White white or black, Solarized blue or orange): the keypad at rest, Shift armed, Alpha locked
+    ...(["bw", "solarized"] as const).flatMap((family) =>
+      ([["rest", "at rest", []], ["shift", "Shift armed", ["shift"]], ["alpha-lock", "Alpha locked", ["alpha", "alpha"]]] as const).map(([k, t, keys]) => ({
+        id: `enter-${family}-${k}`,
+        group: "Enter stands out (R872)",
+        title: `${name(family)}, the keypad ${t}`,
+        element: ".pad",
+        setup: async (p: Page) => {
+          await sheetKey(p, [...keys]); // the keys' own handler: a tap on Shift waits out "visible and stable" here (sixkeys-412-shift too)
+          await setLook(p, { family, brightness: "system" });
+        },
+      })),
+    ),
     { id: "look-both", group: "Themes (R50e): the switches", title: "N62, High contrast and Plain keys together", setup: set({ contrast: true, plain: true }) },
     // R778: Find's corner button (fills the screen), in each family, then the sheet full (the button's other mark)
     ...FAMILIES.map((family) => ({

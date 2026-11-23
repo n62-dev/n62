@@ -9,8 +9,9 @@
   --key-fn: #121718;
   --key-ctl: #121718;
   --key-nav: #121718;
-  --key-enter: #529997;
+  --key-enter: #e6ebeb;
   --on-enter: #000000;
+  --edge: #529997;
   --text: #eef2f2;
   --text-dead: #6f7d7e;
   --muted: #a7b4b4;
@@ -53,6 +54,7 @@
   --key-nav: #0f1010;
   --key-enter: #eef2f2;
   --on-enter: #000000;
+  --edge: #529997;
   --text: #eef2f2;
   --text-dead: #6f7d7e;
   --muted: #a7b4b4;
@@ -93,8 +95,9 @@
   --key-fn: #0a0d0d;
   --key-ctl: #0a0d0d;
   --key-nav: #0a0d0d;
-  --key-enter: #57a3a1;
+  --key-enter: #e6ebeb;
   --on-enter: #000000;
+  --edge: #529997;
   --text: #fcfcfc;
   --text-dead: #718081;
   --muted: #a7b4b4;
@@ -137,6 +140,7 @@
   --key-nav: #080909;
   --key-enter: #eef2f2;
   --on-enter: #000000;
+  --edge: #529997;
   --text: #fcfcfc;
   --text-dead: #718081;
   --muted: #a7b4b4;
@@ -177,8 +181,9 @@
   --key-fn: #e6ecec;
   --key-ctl: #e6ecec;
   --key-nav: #e6ecec;
-  --key-enter: #529997;
-  --on-enter: #000000;
+  --key-enter: #1b2122;
+  --on-enter: #ffffff;
+  --edge: #529997;
   --text: #0b1213;
   --text-dead: #687474;
   --muted: #44504f;
@@ -221,6 +226,7 @@
   --key-nav: #fafbfb;
   --key-enter: #0b1213;
   --on-enter: #f4f6f6;
+  --edge: #529997;
   --text: #0b1213;
   --text-dead: #687474;
   --muted: #44504f;
@@ -261,8 +267,9 @@
   --key-fn: #f5f7f7;
   --key-ctl: #f5f7f7;
   --key-nav: #f5f7f7;
-  --key-enter: #57a3a1;
-  --on-enter: #000000;
+  --key-enter: #1b2122;
+  --on-enter: #ffffff;
+  --edge: #529997;
   --text: #020404;
   --text-dead: #677373;
   --muted: #3a4443;
@@ -282,7 +289,7 @@
   --key-text-dead: #677373;
   --key-shift: #8a3c00;
   --key-alpha: #265c5a;
-  --key-pfx: #f2f8f7;
+  --key-pfx: #f1f7f7;
   --sel: #385f5f;
   --on-sel: #ffffff;
   --on-error: #ffffff;
@@ -305,6 +312,7 @@
   --key-nav: #fdfdfd;
   --key-enter: #0b1213;
   --on-enter: #f4f6f6;
+  --edge: #529997;
   --text: #020404;
   --text-dead: #677373;
   --muted: #3a4343;

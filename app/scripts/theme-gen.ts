@@ -386,6 +386,55 @@ function withRing(t: Palette, hc: boolean): Palette {
   throw new Error("theme-gen: no --ring for " + get(t, "bg"));
 }
 
+/** R872: Enter's fill stands at least this far (WCAG non-text) from the keypad's --panel, in every combination. */
+export const ENTER_PANEL = 3;
+/**
+ * R872: the owner's two orange Enters sit nearer their Shift than LAYER_APART; each is held to its measured value, the worst of
+ * normal vision and the three deficiencies rounded down: N62 Light's R842 values (R843), Solarized Light's #cb4b16 beside #765800
+ * (owner, 2026-11-22). Every other Enter keeps LAYER_APART from Shift, and every Enter from Alpha.
+ */
+export const ENTER_SHIFT_APART: Readonly<Record<string, { normal: number; high: number }>> = {
+  "n62 light": { normal: 0.2685, high: 0.2245 },
+  "solarized light": { normal: 0.0385, high: 0.026 },
+};
+/**
+ * R872: N62 Light in High contrast cannot meet ENTER_PANEL with a 7:1 black label: its --panel #f0f9f9 needs a fill of luminance
+ * 0.277 at most, the label one of 0.30 at least. Held to its measured 2.789 until the owner decides (decisions.md, "Needs the user").
+ */
+export const ENTER_PANEL_HIGH: Readonly<Record<string, number>> = { "n62 light": 2.785 };
+/** The floors Enter meets in combination `c` (R872): from --panel, and (not Plain keys) apart from --key-shift and --key-alpha. */
+export function enterFloors(c: Combo): { panel: number; shift: number; alpha: number } {
+  const id = `${c.family} ${c.brightness}`;
+  const k = c.high ? "high" : "normal";
+  return { panel: (c.high ? ENTER_PANEL_HIGH[id] : undefined) ?? ENTER_PANEL, shift: ENTER_SHIFT_APART[id]?.[k] ?? LAYER_APART[k], alpha: LAYER_APART[k] };
+}
+/** The worst OKLab distance of two colours for normal vision and the three deficiencies (cvd.ts). */
+const worstApart = (a: string, b: string): number => Math.min(...SEEN.map((m) => apart(a, b, m)));
+/**
+ * R872: Enter stands out. When its fill or label misses a floor of enterFloors (or the label its 4.5:1, 7:1 in High contrast),
+ * the fill's lightness moves (hue and saturation kept, as withRing moves --ring), the nearest step first; at each step the family's
+ * label is tried before that label at black or white. The first pair that meets every floor wins. None: the colours stay, and
+ * checks() names the miss, so npm run themes refuses to write (Solarized Dark in High contrast moves: the blue High contrast
+ * lightens for its label comes within 0.062 of Alpha, so it steps back toward the family's blue under a black label).
+ */
+function withEnter(t: Palette, c: Combo): Palette {
+  const f = enterFloors(c);
+  const ok = (fill: string, label: string): boolean =>
+    cr(label, fill) >= (c.high ? 7 : 4.5) &&
+    cr(fill, get(t, "panel")) >= f.panel &&
+    (c.plain || (worstApart(fill, get(t, "key-shift")) >= f.shift && worstApart(fill, get(t, "key-alpha")) >= f.alpha));
+  const label = get(t, "on-enter");
+  if (ok(get(t, "key-enter"), label)) return t;
+  const [h, s, l0] = rgb2hsl(get(t, "key-enter"));
+  for (let i = 0; i <= 200; i++)
+    for (const lab of [label, lum(label) < 0.5 ? "#000000" : "#ffffff"])
+      for (const d of [-1, 1]) {
+        const fill = hsl2hex([h, s, Math.min(1, Math.max(0, l0 + d * i * 0.005))]);
+        if (ok(fill, lab)) return { ...t, "key-enter": fill, "on-enter": lab };
+      }
+  return t;
+}
+
 /** R156: the line under each key (Key shadows): black in a dark combination; in a light one black at 30 % over the final
  *  --bg, written as the opaque mix (N62 Light #8da1a0). Set last, from the final colours. */
 export const KEY_EDGE_LIGHT = 0.3;
@@ -433,6 +482,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.plain) o = plain(o, PLAIN_TWO_TONE.includes(c.family));
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
+  o = withEnter(o, c);
   return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark), dark), fixes };
 }
 
@@ -445,7 +495,8 @@ export interface Check {
   min: number;
   v: number;
 }
-export function checks(t: Palette, hc: boolean): Check[] {
+export function checks(t: Palette, c: Combo): Check[] {
+  const hc = c.high;
   const out: Check[] = [];
   const T = hc ? 7 : 4.5;
   const D = hc ? 4.5 : 3;
@@ -477,6 +528,12 @@ export function checks(t: Palette, hc: boolean): Check[] {
     add("Keys", `dead face on ${k}`, "key-text-dead", k, D);
   }
   add("Keys", "Enter label", "on-enter", "key-enter", T);
+  // R872: Enter stands out: from the keypad, and from the layers' colours (Plain keys draws all three in the text colour)
+  const ef = enterFloors(c);
+  add("Keys", "Enter on the keypad (non-text)", "key-enter", "panel", ef.panel);
+  if (!c.plain)
+    for (const [r, l, min] of [["key-shift", "Enter apart from Shift", ef.shift], ["key-alpha", "Enter apart from Alpha", ef.alpha]] as const)
+      out.push({ g: "Keys", l, f: "key-enter", b: r, min, v: worstApart(get(t, "key-enter"), get(t, r)) });
   add("Keys", "label of a key that is on", "on-key-on", "key-on", T);
   add("Screen", "label on an error ground (Cancel)", "on-error", "error", 4.5);
   add("Keys", "label of the armed Shift key", "on-shift", "shift", 4.5);
@@ -547,7 +604,7 @@ if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.
     const all = combos();
     for (const c of all) {
       const { t } = theme(c);
-      const cs = checks(t, c.high);
+      const cs = checks(t, c);
       const bad = cs.filter((x) => x.v < x.min);
       const ok = bad.length === 0 && dimmedOk(t);
       if (ok) pass++;
@@ -562,6 +619,12 @@ if (process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.
       process.exitCode = 1;
     } else console.log("theme-gen: up to date");
   } else {
+    // R872: a family that breaks a floor is refused rather than written (npm run themes -- --audit lists every pair)
+    const bad = combos().flatMap((c) => checks(theme(c).t, c).filter((x) => x.v < x.min).map((x) => `${selector(c)} ${x.l} ${x.v.toFixed(3)} < ${x.min}`));
+    if (bad.length > 0) {
+      console.error(`theme-gen: not written, a family breaks the contrast rules:\n${bad.join("\n")}`);
+      process.exit(1);
+    }
     mkdirSync(THEME_DIR, { recursive: true });
     for (const [p, content] of expected()) writeFileSync(p, content);
     console.log(`theme-gen: wrote ${expected().size} files`);
