@@ -22,7 +22,7 @@ function oklch(h: string): [number, number] {
 /** The owner's table (R153), the roles the plain blocks must carry. */
 const TABLE = {
   dark: { bg: "#092726", "key-num": "#194241", "key-fn": "#123736", "key-enter": "#529997", text: "#ebf6f6", shift: "#ffa800", alpha: "#6ae5e2" },
-  light: { bg: "#cae6e5", "key-num": "#eefaf9", "key-fn": "#d7efee", "key-enter": "#529997", text: "#062424", shift: "#a03f00", alpha: "#005b5a" },
+  light: { bg: "#cae6e5", "key-num": "#eefaf9", "key-fn": "#d7efee", "key-enter": "#c26a00", text: "#062424", shift: "#a03f00", alpha: "#005b5a" },
 } as const;
 /** The generator's moves of the table's roles above (theme-gen.ts, R140): N62 Light's Shift #a03f00 and Alpha #005b5a are
  *  0.099 apart for protanopia (floor 0.12), so Shift moves darker until they are not. The family data keeps the table's value. */
@@ -47,19 +47,20 @@ describe("R153: N62 in teal", () => {
       const fam = FAMILIES.find((f) => f.id === "n62")?.[b] ?? {};
       expect(Object.fromEntries(Object.keys(TABLE[b]).map((r) => [r, fam[r]]))).toEqual(TABLE[b]); // the source holds the table
     });
-  it("Enter is the logo teal #529997 with a black label in both", () => {
-    for (const b of ["dark", "light"] as const) {
+  it("Enter is the logo teal #529997 in Dark and the owner's orange #c26a00 in Light (R843), each with a black label", () => {
+    for (const [b, fill] of [["dark", "#529997"], ["light", "#c26a00"]] as const) {
       const { t } = theme({ family: "n62", brightness: b, high: false, plain: false });
-      expect([t["key-enter"], t["on-enter"]], b).toEqual(["#529997", "#000000"]);
+      expect([t["key-enter"], t["on-enter"]], b).toEqual([fill, "#000000"]);
     }
   });
   const [, HUE] = oklch("#529997");
   const OUTSIDE = /^(shift|key-shift|warn|error)$|^on-/;
   for (const c of combos().filter((x) => x.family === "n62"))
-    it(`${selector(c)}: every coloured role but Shift, ⚠ and the error has the logo's hue (within 8°)`, () => {
+    it(`${selector(c)}: every coloured role but Shift, ⚠, the error${c.brightness === "light" && !c.plain ? " and Enter (R843)" : ""} has the logo's hue (within 8°)`, () => {
       const { t } = theme(c);
+      const enterOut = c.brightness === "light" && !c.plain; // R843: Light's Enter is orange; Plain keys draws Enter in the text colour
       const off = Object.entries(t)
-        .filter(([r, v]) => !OUTSIDE.test(r) && v !== "#000000" && v !== "#ffffff" && oklch(v)[0] >= 0.02)
+        .filter(([r, v]) => !OUTSIDE.test(r) && !(enterOut && r === "key-enter") && v !== "#000000" && v !== "#ffffff" && oklch(v)[0] >= 0.02)
         .map(([r, v]) => [r, v, Math.abs(((oklch(v)[1] - HUE + 540) % 360) - 180)] as const)
         .filter(([, , d]) => d > 8);
       expect(off).toEqual([]);

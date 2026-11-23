@@ -148,6 +148,7 @@ The defaults that bind code and tests, one line each. A default changes when its
 - **R144, R146, changed by R770 (owner, 2026-11-19: every window in the viewport):** the keys stay live below an open sheet and drive it; a key it does not use is dead and the sheet stays. Rule: docs/05 3.1. Archived.
 - **R157, the mark:** `--mark-faint` keeps the mark at most 1.3:1 on `bg`; Home's glyph is a house (owner, 2026-11-22, R856), 16 × 16 on the bar and in the Apps sheet; shown whenever the view is empty (R860). Archived. Would change if: the mark cannot be seen on a device.
 - **R153–R155:** the generator's moves stand. Archived. Would change if: the owner's look after R24d.
+- **N62 Light's Enter orange (owner, 2026-11-20, R843):** #c26a00 with a black label (his pick A from R842's page, 2026-11-22); Dark keeps #529997. The family's `edge` (#529997) keeps the unit pad's prefix cells teal (and R840's window edge). Would change if: users press Shift for Enter (or the reverse) in Light.
 - **R795, Plain keys (owner K3, 2026-11-20):** the keys keep their family's fills (Black & White its two neutral tones, unchanged); only the legends' colour coding goes (it reverses R50's "one neutral tone"). Would change if: the owner's look on his phone.
 - **The tips' text stops at 17 px** (R171, R722): seven cards (R352) fit 360 × 740 at scale 2.0 with a 6 px gap, 8 px padding. Would change if: the owner wants them to scroll.
 - **A sheet that cannot fit at its floor scrolls, at 360 × 740 too** (R148f1; docs/05 3.1). Archived.

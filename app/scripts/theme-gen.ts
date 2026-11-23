@@ -235,15 +235,17 @@ export function plain(t: Palette, twoTone = false): Palette {
 
 /**
  * The unit pad's prefix cells (R24b) get their own key colour, derived last from the final key colours: the Enter
- * colour in the digit key's, as much as the legends allow (34 % down); where the Enter colour leaves no room (a dark
+ * colour (the family's `edge` when it names one and Enter wears the family's colour, not Plain keys' inverted one: R843's
+ * orange Enter in N62 Light keeps teal prefix cells) in the
+ * digit key's, as much as the legends allow (34 % down); where the Enter colour leaves no room (a dark
  * theme with a bright Enter), the digit key moved toward --bg. Either way text, Shift, Alpha and a dead face keep the
  * floors of every other key, so no theme can fall below them; --key-num itself is the last resort.
  */
-function withPfx(t: Palette, hc: boolean): Palette {
+function withPfx(t: Palette, hc: boolean, plainKeys: boolean): Palette {
   const [floor, dead] = hc ? [7, 4.5] : [4.5, 3];
   const ok = (c: string): boolean =>
     ["text", "shift", "alpha"].every((f) => cr(get(t, keyOf(f)), c) >= floor) && cr(get(t, "key-text-dead"), c) >= dead && cr(get(t, "key-text-dead"), c) <= cr(get(t, "key-text"), c) - 1;
-  for (const to of ["key-enter", "bg"])
+  for (const to of [t["edge"] === undefined || plainKeys ? "key-enter" : "edge", "bg"])
     for (let share = to === "bg" ? 0.5 : 0.34; share > 0.05; share -= 0.02) {
       const c = mix(get(t, "key-num"), get(t, to), share);
       if (ok(c)) return { ...t, "key-pfx": c };
@@ -431,7 +433,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.plain) o = plain(o, PLAIN_TWO_TONE.includes(c.family));
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
-  return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high), c.high), dark)), c.high), dark), dark), fixes };
+  return { t: withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark), dark), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---
