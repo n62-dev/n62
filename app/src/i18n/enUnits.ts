@@ -37,6 +37,8 @@ export const enUnits = {
   "units.step.nextLabel": "Next unit slot",
   "units.store.first": "Eval first, then Store ▶",
   "units.store.noUnit": "This result cannot be stored with its unit",
+  // R915 (F376): the result's Home row was deleted while the view showed it.
+  "units.store.rowGone": "Its Home row is gone: Eval again, then Store ▶",
   "units.engine": "The unit view could not evaluate this",
   // G40: the notes under a result (decisions.md "Angles in the unit view").
   "units.note.radDropped": "rad = 1 dropped",

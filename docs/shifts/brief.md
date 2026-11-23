@@ -61,7 +61,7 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888e2 | [R915](packages/R915.md) units follow the angle; their RAD tag | ron, Opus | `p1/ron-unitangle` | – |
+| 888e2 | R915 units follow the angle; their RAD tag | ron, Opus | `p1/ron-unitangle` | – |
 | 888e2a | [R916](packages/R916.md) layer sweep 1: unit view | ron, Opus | `p1/ron-layersweep` | – |
 | 888e2b | [R917](packages/R917.md) unit view opens in one step | ron, Opus | `p1/ron-unitopen` | – |
 | 888e2c | [R918](packages/R918.md) no row taps under units | ron, Opus | `p1/ron-unitrowtap` | R916, R917 |

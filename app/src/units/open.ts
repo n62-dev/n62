@@ -33,7 +33,7 @@ import { slotCatalogue } from "./slot.ts";
 import { makePanel } from "./panel.ts";
 import { ownUnits } from "./ownUnits.ts";
 import { unitCells } from "./userCells.svelte.ts";
-import { putRow, rowSlots, unitRow } from "./row.ts";
+import { putRow, rowSlots, unitRow, type RowIn } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
 import { unitTools, type UnitTool } from "./tools.ts";
 import { HwTyping } from "./typed.ts";
@@ -98,15 +98,21 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   const seed = row ? rowSlots(row) : undefined;
   /** The Home row of this visit's result (R63): a later result takes its place. */
   let rowId: number | undefined;
-  /** R838: the angle unit and the digits as one text ("rad12"), those the result shown was computed with in `was` (the
-   *  engine's facts, σ's text and the Home row take the digits, units/evaluate.ts): a change of either asks again. */
+  /** R838: the angle unit and the digits as one text ("rad12"), those of the last request in `was` (the engine's facts, σ's
+   *  text and the Home row take the digits, units/evaluate.ts): a change of either asks again. R915: `job` is that request's
+   *  angle and Giac text, for its row (the angle tag, units/row.ts); only the last request's result is shown (view.ts). */
   const asked = (): string => c.session.settings.angle + c.session.settings.digits;
   let was = asked();
+  let job: RowIn["job"];
   const mf = new Field();
   mf.dataset["testid"] = "unit-field";
   const host: ViewHost = {
     write: (id, latex) => mf.setPromptValue(id, latex, {}),
-    evaluate: (req) => c.shell.calc.units(req, c.session.settings),
+    evaluate: (req) => {
+      was = asked();
+      job = { angle: c.session.settings.angle, formula: req.formula };
+      return c.shell.calc.units(req, c.session.settings);
+    },
     find: (into, dim) =>
       void unitFind().then((m) => {
         if (current?.view !== view) return;
@@ -123,7 +129,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     values: () => userValuesOf(c.session.userNames),
     changed: () => panel.draw(),
     reset: (latex, ids) => lockedValue(mf, latex, ids),
-    result: (q) => void ((was = asked()), (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits }), rowId))),
+    result: (q) => void (rowId = putRow(c.session, unitRow({ line, chips, q, slots: view.filled(), input: view.drawn(), digits: c.session.settings.digits, job }), rowId)),
   };
   /** R92: a constant from the units menu goes on Home's line at its cursor (Find's own pick path); the view leaves
    *  keeping its slots, they go with the new line text, and the view opens again on it. */
@@ -149,7 +155,8 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     rowId === undefined || view.shown.kind !== "result" ? undefined : c.session.home.find((r) => r.id === rowId && r.status === "done");
   const storeRefused = (): string | undefined => {
     const item = resultRow();
-    if (!item) return unitText("units.store.first");
+    // R915 (F376): a result is shown but its Home row was deleted (a swipe, Delete): say so, not "Eval first"
+    if (!item) return unitText(rowId !== undefined && view.shown.kind === "result" ? "units.store.rowGone" : "units.store.first");
     return storeChip(c.session.chipFor(item), item.units?.unit ?? "", item.units?.unc) ? undefined : unitText("units.store.noUnit");
   };
   /** R353: the refusal of the last Store ▶, shown while what it was pressed on stands. */
@@ -240,15 +247,16 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
   document.addEventListener("click", tapped, { capture: true });
   untap = () => document.removeEventListener("click", tapped, { capture: true });
   /** R838: a sheet over the view (Settings, Mode, Find on units) took the keys; once it is gone the focus is the view's again
-   *  and a setting changed there shows: an angle unit or digits other than the result's recompute it as the line would (the
-   *  digits are in the engine's answer, σ's text and the Home row too), a setting it is only drawn with (the format, the decimal
-   *  mark, the digit groups, the marks) draws it again with no request. */
-  unwatch = watchSheet(c.shell, () => {
+   *  and a setting changed there shows. R915: the angle unit or the digits changed, whoever changed them (the bar's angle word
+   *  too, at once, a sheet still open or not): a result shown or being asked for is asked for again as the line would be (the
+   *  digits are in the engine's answer, σ's text and the Home row too); a setting the result is only drawn with (the format,
+   *  the decimal mark, the digit groups, the marks) draws it again with no request. The focus comes back once no sheet is up. */
+  unwatch = watchSheet(c.shell, asked, () => {
     if (current?.view !== view) return;
-    if (was !== asked() && view.shown.kind === "result") void view.evaluate();
+    if (was !== asked() && (view.shown.kind === "result" || view.shown.kind === "working")) void view.evaluate();
     else view.redraw();
     panel.draw();
-    keep();
+    if (c.shell.sheet === null) keep();
   });
   unitPad.on = (e) => {
     view.apply(e);
