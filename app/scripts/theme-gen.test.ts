@@ -40,7 +40,7 @@ describe("all 24 combinations", () => {
     describe(selector(c), () => {
       const { t } = theme(c);
       it("meets every pair of the contrast rules and keeps a dead face dimmer", () => {
-        const bad = checks(t, c.high).filter((x) => x.v < x.min);
+        const bad = checks(t, c).filter((x) => x.v < x.min);
         expect(bad.map((x) => `${x.l} ${x.v.toFixed(2)} < ${x.min}`)).toEqual([]);
         expect(dimmedOk(t)).toBe(true);
       });
@@ -155,7 +155,8 @@ describe("R150: key-text and the other key twins", () => {
     }
   });
   it("the key-text role checked against the keys is in the audit", () => {
-    const cs = checks(theme({ family: "n62", brightness: "dark", high: false, plain: false }).t, false);
+    const n62Dark = { family: "n62", brightness: "dark", high: false, plain: false } as const;
+    const cs = checks(theme(n62Dark).t, n62Dark);
     expect(cs.some((x) => x.f === "key-text" && x.b === "key-num")).toBe(true);
   });
 });
@@ -290,7 +291,7 @@ describe("R872: Enter stands out", () => {
     });
   it("the generator's audit names the Enter floors (npm run themes refuses a family that breaks them)", () => {
     const c = { family: "bw", brightness: "dark", high: false, plain: false } as const;
-    const ls = checks(theme(c).t, c.high).map((x) => x.l);
+    const ls = checks(theme(c).t, c).map((x) => x.l);
     for (const l of ["Enter on the keypad (non-text)", "Enter apart from Shift", "Enter apart from Alpha"]) expect(ls, l).toContain(l);
   });
 });
