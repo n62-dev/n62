@@ -14,6 +14,8 @@
 //    or a new file past 800, fails. Raising a line is an edit of that file in the same diff, with the reason; a split lowers it.
 // 6. Index (A26): every tracked file under docs/ (not docs/archive, docs/shifts/packages, dated docs/shifts/*-report.md and *-report-2.md, docs/shifts/reports/,
 //    nor docs/README.md) appears in exactly one link of docs/README.md.
+// 7. A267: no conflict markers. Every tracked text file (not *.patch, not binary, not docs/archive/) is read once; a line starting
+//    `<<<<<<< ` or `>>>>>>> `, or a `=======` line after an opening marker, fails with path:line.
 // One line per failure, then one summary line; exit 1 on any failure. `npm run gate` runs it (step "docs").
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
@@ -167,6 +169,22 @@ if (existsSync(join(repo, "docs/README.md"))) {
     const n = indexed.get(f) ?? 0;
     if (n !== 1) failures.push(`index: ${f} is linked ${n} times in docs/README.md (must be exactly once)`);
   }
+}
+
+// 7. Conflict markers (A267).
+const MARKER_SKIP = /\.patch$|^docs\/archive\/|(^|\/)node_modules\//;
+
+for (const f of execFileSync("git", ["ls-files"], { cwd: repo, encoding: "utf8", maxBuffer: 1 << 26 }).split("\n")) {
+  if (!f || MARKER_SKIP.test(f) || !existsSync(join(repo, f))) continue;
+  let buf;
+  try { buf = readFileSync(join(repo, f)); } catch { continue; } // a directory (submodule) or unreadable file
+  if (!buf.includes("<<<<<<< ") && !buf.includes(">>>>>>> ") || buf.includes(0)) continue; // 0 byte: binary
+  let open = false;
+  buf.toString("utf8").split("\n").forEach((l, i) => {
+    if (l.startsWith("<<<<<<< ")) { open = true; failures.push(`markers: ${f}:${i + 1} conflict marker "<<<<<<< "`); }
+    else if (open && /^=======\r?$/.test(l)) failures.push(`markers: ${f}:${i + 1} conflict marker "======="`);
+    else if (l.startsWith(">>>>>>> ")) { open = false; failures.push(`markers: ${f}:${i + 1} conflict marker ">>>>>>> "`); }
+  });
 }
 
 for (const w of warnings) console.log(`warning (untracked, not counted): ${w}`);

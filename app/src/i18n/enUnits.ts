@@ -115,6 +115,7 @@ export const enUnits = {
   // (Home's own e, π, i), and the unit view's places as tools, with the reason a tool cannot run yet.
   "units.menu.constants": "Constants",
   "units.menu.tools": "Tools",
+  "units.menu.title": "Units", // R862: the unit view's ☰ (Tools' rows, then Constants ›)
   "units.const.Math": "Math",
   "units.const.Chemistry": "Chemistry",
   "units.const.Physics": "Physics",
@@ -123,7 +124,7 @@ export const enUnits = {
   "units.const.e": "Euler's number",
   "units.const.pi": "Pi",
   "units.const.i": "Imaginary unit",
-  "units.tool.end": "The end slot",
+  "units.tool.end": "Check against a unit",
   "units.tool.si": "The SI form",
   "units.tool.alts": "The alternatives",
   "units.tool.unit": "The unit alone",

@@ -16,7 +16,8 @@
 # settings (Settings' sections: Your keys and Data are in the shipped app, so all seven are pinned), apps, base (Shift + −),
 # matrix (Shift + 4; New is row 9), function-symb / function-plot / function-num and solve-symb / solve-num (each app view's ☰, Plot
 # with an answer and Solve with an unknown selected, so their last rows are there), stat-linreg and stat-stats1 (R184's sheets),
-# units-menu (the unit Find's category rows), units-cell (its "put on a cell" sheet, U1 to U6), bar (the bar's controls left to
+# units-menu (the unit Find's category rows), units-cell (its "put on a cell" sheet, U1 to U6), units-view (the unit view's ☰,
+# R862: Tools' six rows, then Constants), bar (the bar's controls left to
 # right, R722) and folded-bar (the folded bar's, R724): `digit` = the row's id. Rows of stored content (names, matrices) are not pinned.
 # modifiers (R726): `<key>.<gesture>` = the state it leaves (off, arm, lock, capsLock, lowerLock, lower), built by running a Session.
 # app/src/keyboard/layoutLock.ts LIST_BUILDERS names the files that build each list; a file that opens a new one must be there.
@@ -405,5 +406,13 @@ units-cell:
   "4": "u4"
   "5": "u5"
   "6": "u6"
+units-view:
+  "1": "utool:end"
+  "2": "utool:si"
+  "3": "utool:alts"
+  "4": "utool:unit"
+  "5": "utool:number"
+  "6": "utool:store"
+  "7": "ucat:const"
 
 moves: []
