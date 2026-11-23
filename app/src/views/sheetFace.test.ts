@@ -83,6 +83,16 @@ describe("sheetFace: Store", () => {
   });
 });
 
+describe("R887: the ⚙ key keeps its job in Find, Vars, ☰ and Mode (Settings as the sheet's next level), lit", () => {
+  it("a tap is `pass` in Find and in the other lists, with or without letters, and stays a `line` key in Store", () => {
+    for (const s of [ctx("find"), ctx("find", { empty: false }), ctx("other"), ctx("other", { filter: false })]) {
+      expect(sheetJob(key("help"), s, NO, undefined), s.kind).toEqual({ kind: "pass" });
+      expect(face("help", s), s.kind).toEqual({ dead: false });
+    }
+    expect(sheetJob(key("help"), ctx("store"), NO, undefined)).toEqual({ kind: "line" }); // R281: it opens Settings from the line, as before
+  });
+});
+
 describe("control: dimmed exactly when the sheet's job is none", () => {
   const kinds: SheetCtx["kind"][] = ["find", "store", "other"];
   it("every key, sheet kind, layer and empty or filled query", () => {
