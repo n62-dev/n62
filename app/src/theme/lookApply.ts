@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Puts a look on the page (R50e): applyTheme, then the localStorage mirror the inline script of index.html reads
-// before the first paint, and `<meta name="theme-color">` (the screen colour). A lazy chunk: the start only needs
+// before the first paint, `<meta name="theme-color">` (the screen colour) and Android's bars (theme/bars.ts). A lazy chunk: the start only needs
 // theme/look.ts. While the brightness is System, a change of the phone's scheme is followed.
 import { applyTheme, type Theme } from "./apply.ts";
+import { isLightBg, setBars } from "./bars.ts";
 import type { Look } from "./look.ts";
 
 /** The localStorage key of the mirror the inline script reads: `{ family, brightness, contrast, plain, shadow, bg }` (bg: the
@@ -52,7 +53,10 @@ async function put(look: Look): Promise<void> {
   await applyTheme(themeOf(look, scheme()?.matches === true), root);
   if (current !== look) return; // a newer look began meanwhile: applyTheme set nothing, and the newest one writes the mirror
   const bg = getComputedStyle(root).getPropertyValue("--bg").trim();
-  if (bg) document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
+  if (bg) {
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg);
+    void setBars({ color: bg, light: isLightBg(bg) }); // A266: Android's bars (nothing outside the native shell)
+  }
   mirror(look, bg);
 }
 

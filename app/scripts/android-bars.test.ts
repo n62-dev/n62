@@ -70,3 +70,19 @@ describe("the WebView's first frame is the Dark background (A72)", () => {
     expect((m as RegExpExecArray)[1]!.toLowerCase()).toBe(darkBg());
   });
 });
+
+describe("the bars follow the look from the page on (A266)", () => {
+  const java = (f: string): string => read(join(repo, "android/app/src/main/java/dev/n62/calc", `${f}.java`));
+  it("MainActivity registers N62BarsPlugin before super.onCreate", () => {
+    const main = java("MainActivity");
+    const at = main.indexOf("registerPlugin(N62BarsPlugin.class)");
+    expect(at).toBeGreaterThan(0);
+    expect(at).toBeLessThan(main.indexOf("super.onCreate(savedInstanceState)"));
+  });
+  it("the plugin is named N62Bars on both sides and sets the window background and the icons", () => {
+    const src = java("N62BarsPlugin");
+    expect(/@CapacitorPlugin\(name = "([^"]+)"\)/.exec(src)?.[1]).toBe("N62Bars");
+    expect(read(join(repo, "app/src/theme/bars.ts"))).toMatch(/isPluginAvailable\("N62Bars"\)/);
+    for (const s of ["setBackgroundDrawable", "setAppearanceLightStatusBars", "setAppearanceLightNavigationBars"]) expect(src).toContain(s);
+  });
+});
