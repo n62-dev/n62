@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  import { legend } from "../i18n/index.ts";
-  import { t } from "../i18n/index.ts";
+  import { legend, t } from "../i18n/index.ts";
+  import { noFling } from "./noFling.ts";
   import { FlickTracker, PAD_KEYS, REPEAT_KEYS, Repeat, Stepper, type Flick, type PadDir } from "./gestures.ts";
   import { fitLegends } from "./fit.ts";
   import { keyNames, loadKeyNames } from "./keyNamesLoader.svelte.ts";
@@ -397,7 +397,7 @@
   style:grid-template-columns={`repeat(${keyboard.units}, 1fr)`}
   style:--pad-units={keyboard.units}
   style:--pad-span={padArea?.span ?? 0}
-  bind:this={padEl}
+  bind:this={padEl} use:noFling
   onpointerdown={down}
   onpointermove={move}
   onpointerup={up}
@@ -463,7 +463,7 @@
     background: var(--panel);
     user-select: none;
     -webkit-user-select: none;
-    /* no scrolling or zooming from the pad: every touch is a key, a flick or a trackpad drag */
+    /* no scrolling or zooming from the pad: every touch is a key, a flick or a trackpad drag (noFling.ts: nor a fling) */
     touch-action: none;
     -webkit-touch-callout: none;
     /* Key shadows off (R156): an empty shadow, so a rule that adds it to an inset edge stays valid */
