@@ -348,9 +348,13 @@ export class Sheet {
   get hasSettings(): boolean {
     return this.settings !== undefined && this.levels.length === 1;
   }
-  /** R145: the ⚙ (or an empty ☰): Settings as the next level, or run what opens it (the run item is never drawn: no label). */
-  openSettings(): Picked {
-    const to = this.hasSettings ? this.settings?.() : undefined;
+  /** R887: Settings is a level of this sheet already (Mode's row, the head's ⚙ or the ⚙ key opened it). */
+  get settingsOpen(): boolean {
+    return this.levels.some((l, i) => i > 0 && l.memo.endsWith("/settings"));
+  }
+  /** R145: the ⚙ (or an empty ☰): Settings as the next level, or run what opens it (the run item is never drawn: no label).
+   *  `to` (R887, the ⚙ key): the shell's Settings, on any sheet and level; by default the head's, on the root of a sheet that has it. */
+  openSettings(to = this.hasSettings ? this.settings?.() : undefined): Picked {
     if (typeof to === "function") return { kind: "run", item: { id: "", label: "", run: to } };
     if (to) this.push(this.level, "settings", to);
     return STAY;

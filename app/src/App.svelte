@@ -94,6 +94,7 @@
     };
     shell.openSettings = openSettings;
     shell.openMode = () => openMode("format"); // R785: an app's ☰ › Mode opens as the chip does
+    shell.withModeCode = onModeSheet; // R887: the ⚙ key over a sheet before the Mode code is in
     shell.settingsMenu = () => (loaders.modeSheet ? (settingsMenu ??= loaders.modeSheet.settingsMenu(session, settingsEnv)) : undefined); // (R49)
     shell.homeView = () => (session.view === "cas" ? "cas" : "home"); // the last row of every Menu
     entry.onSymbol = counted(hwOther("symbol"), (ch) => {
