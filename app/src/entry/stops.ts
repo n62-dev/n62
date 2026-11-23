@@ -24,13 +24,8 @@ const NO_BOX = /^\\(?:operatorname\{|imaginaryI$|exponentialE$)/;
 
 /** The atom right after position `c` on its level, or "" where its box ends (a next box starts with "" too). */
 function atomAfter(mf: Field, c: number): string {
-  const d = depthAt(mf, c);
-  for (let p = c + 1; p <= mf.lastOffset; p++) {
-    const dp = depthAt(mf, p);
-    if (dp < d) return "";
-    if (dp === d) return latexAt(mf, p);
-  }
-  return "";
+  const p = nextOn(mf, c);
+  return p === undefined ? "" : latexAt(mf, p);
 }
 
 /** The atom whose part holds position `c` (the first later offset one level up), or "" on the line. */
@@ -79,9 +74,9 @@ export function settle(mf: Field, cmd: string): void {
   }
 }
 
+type Level = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
 /** R867: a sign right after the ᴇ mark, and a single letter (a name's letter on one level). */
 const SIGN = /^[+-]$/;
-type Level = Pick<MathfieldElement, "getElementInfo" | "lastOffset">;
 const LETTER = /^\p{L}$/u;
 
 /** The offset of the atom after position `c` on its level (its parts skipped), or undefined where its box ends. */

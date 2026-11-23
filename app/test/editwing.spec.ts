@@ -148,20 +148,21 @@ test("the round pad: a drag from the hub steps the cursor, a tap on it does noth
   await open(page);
   const hub = page.getByTestId("pad-hub");
   await expect(hub).toHaveCount(1);
-  await tap(page, ["d1", "d2", "d3", "d4"]);
+  // (R867: a drag step goes over a whole number, so the steps are counted on single digits between operators)
+  await tap(page, ["d1", "add", "d2", "add", "d3"]);
   // a tap on the hub: no step
   const t = await touch(page, '[data-testid="pad-hub"]');
   await t.end();
-  await tap(page, ["d5"]);
-  expect(await entryValue(page)).toBe("12345");
+  await tap(page, ["add", "d5"]);
+  expect(await entryValue(page)).toBe("1+2+3+5");
   // a drag from the hub: two steps left
   await drag(page, '[data-testid="pad-hub"]', -26, 0);
   await tap(page, ["d0"]);
-  expect(await entryValue(page)).toBe("123045");
+  expect(await entryValue(page)).toBe("1+2+30+5");
   // a drag that starts on ▲ steps sideways as well (one surface)
   await drag(page, "up", 13, 0);
   await tap(page, ["d9"]);
-  expect(await entryValue(page)).toBe("1230495");
+  expect(await entryValue(page)).toBe("1+2+30+95");
 });
 
 test("High contrast: the arrow zones have no outline, the round pad has one, every other key keeps its", async ({ page }) => {
