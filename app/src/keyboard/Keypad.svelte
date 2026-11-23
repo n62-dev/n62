@@ -657,7 +657,7 @@
     height: min(100%, var(--area-w));
     aspect-ratio: 1;
     border-radius: 50%;
-    background: var(--key-pad); /* R873: its own fill, 1.25:1 from the keypad (theme-gen.ts withKeyPad) */
+    background: var(--key-disc); /* R873: its own fill, 1.25:1 from the keypad (theme-gen.ts withKeyDisc) */
     box-shadow: var(--key-drop);
   }
   .hub {

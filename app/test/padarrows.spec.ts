@@ -232,10 +232,10 @@ for (const viewport of [
       for (const id of ids) expect(back.fills[id], `${id} after Shift`).toBe(back.text);
     });
 
-    // R873 (owner, 2026-11-22, point 4): the round pad is filled with its own role, --key-pad, which stands 1.25:1 from the
+    // R873 (owner, 2026-11-22, point 4): the round pad is filled with its own role, --key-disc, which stands 1.25:1 from the
     // keypad (theme-gen.test.ts); --key-ctl, which it wore before, sat 1.01 to 1.11 from it
     for (const [family, brightness] of [["n62", "dark"], ["n62", "light"], ["bw", "dark"], ["solarized", "light"]] as const)
-      test(`the round pad's fill is --key-pad, not --key-ctl (${family} ${brightness})`, async ({ page }) => {
+      test(`the round pad's fill is --key-disc, not --key-ctl (${family} ${brightness})`, async ({ page }) => {
         await open(page);
         await set(page, brightness, { family });
         const r = await page.locator(".pad").evaluate((pad) => {
@@ -248,10 +248,10 @@ for (const viewport of [
             return c;
           };
           const tp = pad.querySelector(".trackpad");
-          return { fill: tp ? getComputedStyle(tp).backgroundColor : "no pad", pad: tone("--key-pad"), ctl: tone("--key-ctl") };
+          return { fill: tp ? getComputedStyle(tp).backgroundColor : "no pad", pad: tone("--key-disc"), ctl: tone("--key-ctl") };
         });
-        expect(r.pad, "--key-pad is set").not.toBe("rgb(1, 2, 3)");
-        expect(r.pad, "--key-pad differs from --key-ctl").not.toBe(r.ctl);
+        expect(r.pad, "--key-disc is set").not.toBe("rgb(1, 2, 3)");
+        expect(r.pad, "--key-disc differs from --key-ctl").not.toBe(r.ctl);
         expect(r.fill).toBe(r.pad);
       });
 

@@ -26,6 +26,15 @@ describe("generated theme files", () => {
     expect(styleFile(src)).toBe(src);
     expect(expected().size).toBe(4); // style.css and the three families
   });
+  // R873 round 1: a role named --key-pad overrode style.css's 4 px key padding of the same name in every look (keys' text cut,
+  // the user keys' ＋ 1.2 px off): no generated role may share a name with a token of style.css's own :root block
+  it("no generated role takes the name of a token style.css's :root block sets (sizes, mixes)", () => {
+    const src = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
+    const own = new Set([...(/^:root \{([^}]*)\}/m.exec(src)?.[1] ?? "").matchAll(/^\s*--([a-z0-9-]+):/gm)].map((m) => m[1] as string));
+    expect(own.has("key-pad"), "the start :root block is read").toBe(true);
+    const roles = new Set(combos().flatMap((c) => Object.keys(theme(c).t)));
+    expect([...roles].filter((r) => own.has(r))).toEqual([]);
+  });
 });
 
 const CURVES = readFileSync(new URL("../src/apps/function/app.svelte.ts", import.meta.url), "utf8");
@@ -200,9 +209,9 @@ describe("R156: --key-edge, the line under each key (Key shadows)", () => {
 });
 
 // R873 (owner, 2026-11-22, point 4: "solarized and black&white: the arrow pad is not different enough to the background"):
-// --key-pad, the round pad's fill, is --key-ctl with its OKLCH lightness moved away from the keypad's --panel (hue and chroma
+// --key-disc, the round pad's fill, is --key-ctl with its OKLCH lightness moved away from the keypad's --panel (hue and chroma
 // kept) until it stands 1.25:1 from it, lighter in a dark look and darker in a light one; the arrows (--key-text at 70 %) read on it.
-describe("R873: --key-pad, the round pad's fill", () => {
+describe("R873: --key-disc, the round pad's fill", () => {
   const rgb = (h: string): number[] => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   // Solarized's normal looks cannot keep 4.5:1 on a pad 1.25:1 from their keypad: held to their measured values (decisions.md, "Needs the user")
   const HELD: Record<string, number> = { "solarized dark": 4.03, "solarized light": 4.28 };
@@ -210,9 +219,9 @@ describe("R873: --key-pad, the round pad's fill", () => {
   for (const c of combos())
     it(`${selector(c)}: 1.25:1 from --panel on the far side of it, the arrows at least 4.5:1 on it`, () => {
       const { t } = theme(c);
-      const pad = t["key-pad"] ?? "";
+      const pad = t["key-disc"] ?? "";
       const panel = t["panel"] ?? "";
-      expect(pad, "--key-pad").toMatch(/^#[0-9a-f]{6}$/);
+      expect(pad, "--key-disc").toMatch(/^#[0-9a-f]{6}$/);
       expect(cr(pad, panel), "pad : keypad").toBeGreaterThanOrEqual(1.25);
       expect(lum(pad) > lum(panel), c.brightness === "dark" ? "lighter than --panel" : "darker than --panel").toBe(c.brightness === "dark");
       expect(cr(over(pad, t["key-text"] ?? "", 0.7), pad), "arrows (--key-text at 0.7)").toBeGreaterThanOrEqual(c.high ? 4.5 : (HELD[`${c.family} ${c.brightness}`] ?? 4.5));
@@ -220,7 +229,7 @@ describe("R873: --key-pad, the round pad's fill", () => {
   it("keeps --key-ctl's hue and chroma (OKLab a and b within rounding) where the move stays in gamut", () => {
     for (const c of combos().filter((x) => !x.plain && !x.high)) {
       const { t } = theme(c);
-      const [p, k] = [oklabOf(t["key-pad"] ?? ""), oklabOf(t["key-ctl"] ?? "")];
+      const [p, k] = [oklabOf(t["key-disc"] ?? ""), oklabOf(t["key-ctl"] ?? "")];
       expect(Math.hypot((p[1] as number) - (k[1] as number), (p[2] as number) - (k[2] as number)), selector(c)).toBeLessThan(0.006);
     }
   });
@@ -228,12 +237,12 @@ describe("R873: --key-pad, the round pad's fill", () => {
     const CANDS = { "n62 dark": "#1d4140", "n62 light": "#c2dbda", "bw dark": "#242929", "bw light": "#ced4d4", "solarized dark": "#475a6d", "solarized light": "#d6d8b4" } as const;
     for (const [id, want] of Object.entries(CANDS)) {
       const [family, brightness] = id.split(" ") as [string, "dark" | "light"];
-      expect(apart(theme({ family, brightness, high: false, plain: false }).t["key-pad"] ?? "", want), id).toBeLessThan(0.02);
+      expect(apart(theme({ family, brightness, high: false, plain: false }).t["key-disc"] ?? "", want), id).toBeLessThan(0.02);
     }
   });
   it("N62's two start blocks in style.css carry it", () => {
     const css = readFileSync(new URL("../src/style.css", import.meta.url), "utf8");
-    for (const b of ["dark", "light"] as const) expect(css).toContain(`--key-pad: ${theme({ family: "n62", brightness: b, high: false, plain: false }).t["key-pad"]};`);
+    for (const b of ["dark", "light"] as const) expect(css).toContain(`--key-disc: ${theme({ family: "n62", brightness: b, high: false, plain: false }).t["key-disc"]};`);
   });
 });
 

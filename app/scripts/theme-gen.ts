@@ -447,8 +447,8 @@ function oklabHex([L, a, b]: number[]): string {
 }
 
 /** R873: the round pad (Keypad.svelte .trackpad) stands this far from the keypad's --panel; --key-ctl, which it wore, sat 1.00 to 1.11 from it. */
-export const KEY_PAD_APART = 1.25;
-/** R873: the arrows on the round pad are --key-text at this opacity (Keypad.svelte .arrows); they keep 4.5:1 on --key-pad. */
+export const KEY_DISC_APART = 1.25;
+/** R873: the arrows on the round pad are --key-text at this opacity (Keypad.svelte .arrows); they keep 4.5:1 on --key-disc. */
 export const PAD_ARROWS = 0.7;
 /**
  * R873: Solarized's normal looks cannot keep the arrows at 4.5:1 on a pad 1.25:1 from their --panel (Dark: its light --key-text
@@ -460,20 +460,20 @@ export const PAD_ARROWS_HELD: Readonly<Record<string, number>> = { "solarized da
 /** The floor of the arrows on the round pad in combination `c` (R873). */
 export const padArrowsFloor = (c: Combo): number => (c.high ? undefined : PAD_ARROWS_HELD[`${c.family} ${c.brightness}`]) ?? 4.5;
 /**
- * R873 (owner, 2026-11-22, point 4): --key-pad, the round pad's fill: --key-ctl with its OKLCH lightness moved (hue and chroma
+ * R873 (owner, 2026-11-22, point 4): --key-disc, the round pad's fill: --key-ctl with its OKLCH lightness moved (hue and chroma
  * kept: OKLab a and b) away from the keypad's --panel, lighter in a dark combination and darker in a light one, until it stands
- * KEY_PAD_APART from it with the arrows still at 4.5:1 on it. Set last, from the final colours.
+ * KEY_DISC_APART from it with the arrows still at 4.5:1 on it. Set last, from the final colours.
  */
-function withKeyPad(t: Palette, c: Combo): Palette {
+function withKeyDisc(t: Palette, c: Combo): Palette {
   const panel = get(t, "panel");
   const dark = c.brightness === "dark";
-  const ok = (x: string): boolean => cr(x, panel) >= KEY_PAD_APART && lum(x) > lum(panel) === dark && cr(mix(x, get(t, "key-text"), PAD_ARROWS), x) >= padArrowsFloor(c);
+  const ok = (x: string): boolean => cr(x, panel) >= KEY_DISC_APART && lum(x) > lum(panel) === dark && cr(mix(x, get(t, "key-text"), PAD_ARROWS), x) >= padArrowsFloor(c);
   const [L, a, b] = oklabOf(get(t, "key-ctl")) as [number, number, number];
   for (let i = 0; i <= 400; i++) {
     const x = oklabHex([L + (dark ? i : -i) * 0.0025, a, b]);
-    if (ok(x)) return { ...t, "key-pad": x };
+    if (ok(x)) return { ...t, "key-disc": x };
   }
-  throw new Error(`theme-gen: no --key-pad for key-ctl ${get(t, "key-ctl")} on panel ${panel}`);
+  throw new Error(`theme-gen: no --key-disc for key-ctl ${get(t, "key-ctl")} on panel ${panel}`);
 }
 
 /** R156: the line under each key (Key shadows): black in a dark combination; in a light one black at 30 % over the final
@@ -534,7 +534,7 @@ export function theme(c: Combo): { t: Palette; fixes: [string, string, string][]
   if (c.high) o = highContrast(o);
   if (!c.plain) o = withLayersApart(o, c.high);
   o = withEnter(o, c);
-  return { t: withKeyPad(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark), dark), c), fixes };
+  return { t: withKeyDisc(withMarkFaint(withKeyEdge(withRing(withOnLayer(withOnError(withSel(withPfx(withPick(o, c.high), c.high, c.plain), c.high), dark)), c.high), dark), dark), c), fixes };
 }
 
 // --- the audit: every pair the app draws (docs/archive/shifts/2026-10-18-themes-report.md section 2) ---
@@ -586,9 +586,9 @@ export function checks(t: Palette, c: Combo): Check[] {
     for (const [r, l, min] of [["key-shift", "Enter apart from Shift", ef.shift], ["key-alpha", "Enter apart from Alpha", ef.alpha]] as const)
       out.push({ g: "Keys", l, f: "key-enter", b: r, min, v: worstApart(get(t, "key-enter"), get(t, r)) });
   // R873: the round pad and the line under each key (Key shadows) stand out from the keypad
-  add("Keys", "round pad on the keypad (non-text)", "key-pad", "panel", KEY_PAD_APART);
+  add("Keys", "round pad on the keypad (non-text)", "key-disc", "panel", KEY_DISC_APART);
   add("Keys", "key line on the keypad (non-text)", "key-edge", "panel", KEY_EDGE_APART);
-  out.push({ g: "Keys", l: "arrows on the round pad", f: "key-text", b: "key-pad", min: padArrowsFloor(c), v: cr(mix(get(t, "key-pad"), get(t, "key-text"), PAD_ARROWS), get(t, "key-pad")) });
+  out.push({ g: "Keys", l: "arrows on the round pad", f: "key-text", b: "key-disc", min: padArrowsFloor(c), v: cr(mix(get(t, "key-disc"), get(t, "key-text"), PAD_ARROWS), get(t, "key-disc")) });
   add("Keys", "label of a key that is on", "on-key-on", "key-on", T);
   add("Screen", "label on an error ground (Cancel)", "on-error", "error", 4.5);
   add("Keys", "label of the armed Shift key", "on-shift", "shift", 4.5);
