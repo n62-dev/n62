@@ -61,16 +61,15 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888c | R872 one Enter rule; B&W and Solarized Enter colours (Solarized Light orange) | ron, Opus | `p1/ron-enterrule` | R843 |
-| 888d | [R873](packages/R873.md) the round pad and the key line stand out in every look | ron, Opus | `p1/ron-padline` | R872 |
+| 888d | R873 the round pad and the key line stand out in every look | ron, Opus | `p1/ron-padline` | R872 |
 | 888e | [R874](packages/R874.md) the empty-history mark takes the hint's colour, faint | ron, Opus | `p1/ron-markhint` | R860, R873 |
 | 888e1 | [R887](packages/R887.md) ⚙ over a sheet opens Settings | ron, Opus | `p1/ron-gearsheet` | – |
-| 888e2 | [R888](packages/R888.md) row taps under the unit view | ron, Opus | `p1/ron-unitrowtap` | – |
+| 888e2 | [R888](packages/R888.md) row taps under the unit view (waits: owner's layers study) | ron, Opus | `p1/ron-unitrowtap` | – |
 | 888e3 | [R889](packages/R889.md) Alpha in a search types its letter | ron, Opus | `p1/ron-sheetalpha` | – |
 | 888e4 | [R891](packages/R891.md) sheets keep the line in sight | ron, Opus | `p1/ron-sheetline` | – |
 | 888e5 | [R892](packages/R892.md) room under the corner button | ron, Opus | `p1/ron-fullroom` | R891 |
-| 888e6 | [R893](packages/R893.md) a unit from Find in Home | ron, Opus | `p1/ron-findunithome` | – |
-| 888e7 | [R894](packages/R894.md) the units key in CAS goes to Home | ron, Opus | `p1/ron-unitfromcas` | – |
+| 888e6 | [R893](packages/R893.md) a unit from Find in Home (waits: owner's layers study) | ron, Opus | `p1/ron-findunithome` | – |
+| 888e7 | [R894](packages/R894.md) the units key in CAS goes to Home (waits: owner's layers study) | ron, Opus | `p1/ron-unitfromcas` | – |
 | 888e8 | [R897](packages/R897.md) a hold on a Num cell copies | ron, Opus | `p1/ron-numhold` | – |
 | 888e9 | [R898](packages/R898.md) Home↔CAS ends Undo | ron, Opus | `p1/ron-viewundo` | – |
 | 888e10 | [R899](packages/R899.md) a typing error keeps the line (waits: owner's G2 check) | ron, Opus | `p1/ron-keepline` | – |
@@ -109,11 +108,11 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 | 898 | [R781](packages/R781.md) a left-hand layout setting (owner, 2026-11-20) | ron, Opus | `p1/ron-lefthand` | R729 |
 | 905 | [R796](packages/R796.md) Alpha + mol is cd in the unit view (K2) | ron, Opus | `p1/ron-candela` | – |
 | 906 | [R797](packages/R797.md) a hold copies the unit view's reading, message or result (U7) | ron, Opus | `p1/ron-unitholdcopy` | R790 |
-| 906a | [R895](packages/R895.md) Paste in units says why | ron, Opus | `p1/ron-unitpaste` | R797 |
+| 906a | [R895](packages/R895.md) Paste in units says why (waits: owner's layers study) | ron, Opus | `p1/ron-unitpaste` | R797 |
 | 907 | [R806](packages/R806.md) a unit slot gets a caret: the model (owner's walk 2026-11-20, C1) | ron, Opus | `p1/ron-unitcaret` | R801 |
 | 908 | [R807](packages/R807.md) the slot draws its caret and its marks (C2) | ron, Opus | `p1/ron-unitcaretdraw` | R806 |
 | 909 | [R808](packages/R808.md) the caret moves; ⌫ and the powers act at it (C3) | ron, Opus | `p1/ron-unitcaretmove` | R807 |
-| 909a | [R896](packages/R896.md) Clear and Undo in the unit view | ron, Opus | `p1/ron-unitundo` | R808 |
+| 909a | [R896](packages/R896.md) Clear and Undo in the unit view (waits: owner's layers study) | ron, Opus | `p1/ron-unitundo` | R808 |
 | 910 | [R314](packages/R314.md) Memory's delete and Clear all have a one-level Undo | ron, Opus | `p1/ron-memoryundo` | – |
 | 911 | [R813](packages/R813.md) Memory: a swipe left deletes, with Undo (C6) | ron, Opus | `p1/ron-memswipe` | R314 |
 | 912 | [R814](packages/R814.md) Memory: Shift + ⌫ deletes the highlighted name (C6) | ron, Opus | `p1/ron-memdelkey` | R813 |

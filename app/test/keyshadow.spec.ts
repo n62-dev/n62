@@ -59,7 +59,8 @@ const COMBOS: (Omit<Look, "shadow"> & { edge?: string })[] = [
   { family: "n62", brightness: "light", contrast: false, plain: false, edge: "rgb(141, 161, 160)" }, // #8da1a0
   { family: "bw", brightness: "light", contrast: false, plain: false },
   { family: "solarized", brightness: "dark", contrast: false, plain: false, edge: "rgb(0, 0, 0)" },
-  { family: "n62", brightness: "dark", contrast: true, plain: false, edge: "rgb(0, 0, 0)" },
+  { family: "n62", brightness: "dark", contrast: true, plain: false, edge: "rgb(41, 56, 55)" }, // #293837: black stood 1.15:1 on its keypad (R873)
+  { family: "bw", brightness: "dark", contrast: false, plain: false, edge: "rgb(46, 50, 51)" }, // #2e3233 (R873)
   { family: "n62", brightness: "light", contrast: false, plain: true },
 ];
 
