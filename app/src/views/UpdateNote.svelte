@@ -2,13 +2,13 @@
 <!-- A49, R97, R722: the Restart button of a waiting update, a pill at the stage's top beside the engine's notes (App.svelte
      loads this chunk only when state/updateOffer.svelte.ts holds a restart function). -->
 <script lang="ts">
-  import { t } from "../i18n/index.ts";
+  import { updateText } from "../i18n/enUpdate.ts";
   import { pressFlag } from "../input/pressFlag.ts";
 
   let { restart }: { restart: () => void } = $props();
 </script>
 
-<button type="button" class="update" use:pressFlag data-testid="update-note" title={t("update.ready")} onclick={restart}>{t("update.restart")}</button>
+<button type="button" class="update" use:pressFlag data-testid="update-note" title={updateText("update.ready")} onclick={restart}>{updateText("update.restart")}</button>
 
 <style>
   /* at the stage's top right, so it never covers the engine's note in the middle */

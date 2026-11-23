@@ -4,7 +4,7 @@
 // keys (R24b). Key owners while it is up (docs/04 5.5): an open sheet (Find on units), then the pad's cells
 // (UnitPad.route), then this view for the keys that are no cell (◀ ▶ between slots, Esc leaves and the line keeps its
 // slots, a key that changes place leaves first, Settings and Mode open over the view and close back onto it, R838, Store ▶
-// stores the result with its unit, R353; any other key is dead). A hardware key on the field takes the keypad's
+// stores the result with its unit, R353, ☰ opens its tools and Constants over it, R862; any other key is dead). A hardware key on the field takes the keypad's
 // path through the entry line's own map (entry/hwkeys.ts, `onKey`), so it reaches the pad's actions or does nothing, and
 // does on the field what it does on the line; R313: letters first go into the slot as a unit's symbol (units/typed.ts).
 // The view writes a slot only with setPromptValue. What it takes from the start chunk is the route context `c` alone,
@@ -35,7 +35,7 @@ import { ownUnits } from "./ownUnits.ts";
 import { unitCells } from "./userCells.svelte.ts";
 import { putRow, rowSlots, unitRow } from "./row.ts";
 import type { ConstPick } from "./menu.ts";
-import { unitTools } from "./tools.ts";
+import { unitTools, type UnitTool } from "./tools.ts";
 import { HwTyping } from "./typed.ts";
 import { UnitView, carry, type Shown, type ViewHost } from "./view.ts";
 
@@ -110,7 +110,7 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     find: (into, dim) =>
       void unitFind().then((m) => {
         if (current?.view !== view) return;
-        const more = dim === undefined ? { constant, tools: unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home, store, storeRefused }) } : {};
+        const more = dim === undefined ? { constant, tools: tools() } : {};
         m.showUnitFind({ shell: c.shell, index, cat, apply: dim === undefined ? (a) => view.apply(a) : (a) => view.pickMore(a), refresh: () => (unitPad.model = new UnitPad(unitCells.userSet())), ...more }, into, dim);
       }),
     format: () => ({ format: engineFormat(c.session.settings.format), digits: c.session.settings.digits, decimalComma: c.session.decimalComma, grouped: true, groupSep: c.session.settings.groupSep }),
@@ -142,6 +142,8 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
     close();
     c.insertResult(item);
   };
+  /** R92: the Tools rows as the view stands, for Find on units and ☰ (R862). */
+  const tools = (): UnitTool[] => unitTools(view.shown, { end: () => view.toEnd(), alt: (a) => void view.pickAlt(a), alts: () => view.down(), home, store, storeRefused });
   /** R353: the result's row (this visit's, while a result is shown) and the reason a store of it is refused. */
   const resultRow = (): HistoryItem | undefined =>
     rowId === undefined || view.shown.kind !== "result" ? undefined : c.session.home.find((r) => r.id === rowId && r.status === "done");
@@ -270,6 +272,10 @@ export async function openUnits(c: RouteCtx, row?: HistoryItem): Promise<void> {
       if (!view.escape()) close();
     }
     else if (a?.kind === "insert" && a.latex === STORE_ARROW) store();
+    else if (a?.kind === "special" && a.name === "menu") {
+      // R862: the view's tools and Constants over it (a second ☰, Esc or Back closes the sheet: sheetKeys.ts, watchSheet)
+      void unitFind().then((m) => current?.view === view && c2.shell.sheet === null && m.showUnitMenu(c2.shell, index, tools(), constant), () => c2.dead());
+    }
     else if (a?.kind === "special" && a.name === "uncertainty") {
       const row = rowId === undefined ? undefined : c2.session.home.find((r) => r.id === rowId); // R327: the result's row
       lazy(c2, import("../views/uncSheet.ts").then((m) => m.showUncertainty(c2, row)));

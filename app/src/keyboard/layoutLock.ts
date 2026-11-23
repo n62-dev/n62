@@ -112,6 +112,7 @@ export const LIST_BUILDERS: Readonly<Record<string, readonly string[]>> = {
   "stat-stats1": ["views/statSheet.ts"],
   "units-menu": ["units/menu.ts"],
   "units-cell": ["units/find.ts"],
+  "units-view": ["units/menu.ts", "units/find.ts"], // R862: the unit view's ☰ (menu.ts builds it, find.ts opens it)
   bar: ["views/barItems.ts"],
   "folded-bar": ["views/barItems.ts"],
 };

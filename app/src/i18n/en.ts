@@ -68,8 +68,6 @@ export const en = {
   "mark.noDigit": "⚠ no digit confirmed",
   /** R135: a result too long to draw (or one MathLive refuses): drawn in its place; Copy holds the text. */
   "render.tooLong": "Too long to draw ({size}): Copy holds it",
-  /** R135f2: a tap on a result too long to draw puts nothing on the line. */
-  "render.tooLongInsert": "Too long to insert: Copy holds it",
   "history.actions": "Row actions",
   "history.recall": "Use this entry again",
   "history.usesHome": "stored in Home",
@@ -89,9 +87,6 @@ export const en = {
   "engine.error": "The engine failed to start.",
   /** R284: the failure note's button (in the start chunk: it must show when the note's own chunk did not load). */
   "engine.reload": "Reload",
-  /** The update line (A49): a new version of the web build is installed and waits for the user's Restart. */
-  "update.ready": "A new version is ready.",
-  "update.restart": "Restart",
   "engine.safeStart": "Your stored definitions were not loaded because they stopped the engine; Memory lists them.",
   "settings.newer": "Data from a newer version: changes here are not kept",
   "mode.title": "Mode",

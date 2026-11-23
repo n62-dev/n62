@@ -8,7 +8,7 @@ import type { AppShell } from "../apps/shell.svelte.ts";
 import type { FindIndex } from "../find/finder.ts";
 import type { FindItem } from "../find/types.ts";
 import { unitText } from "../i18n/enUnits.ts";
-import { unitsMenu, type ConstPick } from "./menu.ts";
+import { unitViewMenu, unitsMenu, type ConstPick } from "./menu.ts";
 import type { UnitTool } from "./tools.ts";
 import { slotCatalogue, splitPair, type PadAction, type SlotCatalogue } from "./slot.ts";
 import { CELL_KEYS, CELL_LEGS, unitCells, type CellLeg, type CellUnit } from "./userCells.svelte.ts";
@@ -89,6 +89,12 @@ export function showUnitFind(env: UnitFindEnv, into?: { key: string; leg: CellLe
     ...(env.tools && !into ? { tools: env.tools } : {}),
   });
   shell.showFind(unitText("units.pad.find"), categories, search);
+}
+
+/** R862: ☰ in the unit view: a sheet titled "Units" with the Tools rows and Constants ›, the rows Find on units ends
+ *  with; its title row has the ⚙ of every ☰ menu. */
+export function showUnitMenu(shell: Pick<AppShell, "showMenu">, index: FindIndex, tools: readonly UnitTool[], constant: (c: ConstPick) => void): void {
+  shell.showMenu(unitText("units.menu.title"), unitViewMenu(index, tools, constant), { settings: true });
 }
 
 /** Settings › Your keys › Unit pad cells › a leg › Find: the pick sets that leg. */

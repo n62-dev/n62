@@ -178,8 +178,11 @@ export function extraStartFiles(manifest: Record<string, ManifestChunk>): string
  *  Settings and Mode open over the view, which watches the sheet close (padView watchSheet) to take the focus back and draw a
  *  changed setting again with no request (view.ts redraw, 177 B) or recompute after an angle change. Cuts made: the watcher
  *  sees only the close, the angle is read with the result, the redraw keeps its state in a tuple, −182 B. Merged with phase-1
- *  0f5ce229 (G782f1) the branch measures 80,228 B; 80,228 B + 0.05 kB, rounded up to the next 0.01 kB. */
-export const UNIT_VIEW_PIN_RAW = 80_280;
+ *  0f5ce229 (G782f1) the branch measures 80,228 B; 80,228 B + 0.05 kB, rounded up to the next 0.01 kB.
+ *  80.28 → 80.59 kB (R862): phase-1 ebef0cb2 measures 80,222 B, the branch 80,535 B (+313 B: open 30,974 → 31,125 B, ☰'s case in
+ *  the view's key handler and the Tools rows' builder shared with Find on units; find 9,373 → 9,535 B, showUnitMenu and
+ *  menu.ts's unitViewMenu, the one list of Tools and Constants both menus show). 80,535 B + 0.05 kB, rounded up to the next 0.01 kB. */
+export const UNIT_VIEW_PIN_RAW = 80_590;
 
 /** The budgets of docs/04 section 8.3 that apply to files of the build; the device bars are not here. */
 function subjects(manifest: Record<string, ManifestChunk>, all: string[], modules: Record<string, string[]> | null): { present: Subject[]; absent: string[]; missing: string[] } {
@@ -615,7 +618,12 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  run build): cut from 63,017 B (bare) by loading zoomFit.ts as a plain dynamic import (no other chunk imports from it, so
  *  no namespace object is built at run time, −36 B) and the floor inline in the write (−16 B). The usual + 0.05 kB would pass
  *  the 63.00 kB budget (docs/04 8.3), so the pin is the budget itself, 27 B over the measure; the next start-chunk growth
- *  needs a split. */
+ *  needs a split.
+ *  R862 (a cut; the pin stays the budget): the unit view's ☰ adds no start-chunk source, but the lazy chunks' new hashed names in
+ *  the entry's preload list took phase-1 ebef0cb2's 62,997 B gzip (176,865 B raw) to 63,004 B, over the budget. The update
+ *  pill's words and the too-long-to-insert note left the start table (en.ts) for tables their lazy readers import
+ *  (i18n/enUpdate.ts, i18n/enInsert.ts): 62,964 B (176,738 B raw). One table for both measured 62,980 B (its own chunk, one
+ *  more name in the preload list). */
 export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

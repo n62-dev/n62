@@ -19,7 +19,8 @@ import type { AppHost, MenuItem } from "../apps/types.ts";
 import { decimalFromRational } from "../engine/rational.ts";
 import { makeIndex } from "../find/testIndex.ts";
 import type { IndexItem } from "../find/types.ts";
-import { unitsMenu } from "../units/menu.ts";
+import { unitsMenu, unitViewMenu } from "../units/menu.ts";
+import { unitTools } from "../units/tools.ts";
 import { cellRows } from "../units/find.ts";
 import { statItems } from "../views/statSheet.ts";
 import type { Calc } from "../calc/port.ts";
@@ -119,6 +120,8 @@ async function built(kb = keyboard, find: ReadonlyMap<string, FindItem> = findIt
     "stat-stats1": stat("stats1", 6),
     "units-menu": ids(units),
     "units-cell": ids(cellRows(() => {})),
+    // R862: the unit view's ☰, Tools' six rows (with no result: their places are the same, some disabled) and Constants ›
+    "units-view": ids(unitViewMenu(makeIndex([]), unitTools({ kind: "none" }, { end() {}, alt() {}, alts() {}, home() {}, store() {}, storeRefused: () => undefined }), () => {})),
     bar: listSlots(BAR_ITEMS),
     "folded-bar": listSlots(FOLDED_BAR_ITEMS),
     modifiers: modifierPins(() => new Session(new FakeCalc(), fakeKv())),
