@@ -226,7 +226,7 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
         // R887: as the head's ⚙ (R145): Settings as the next level of the open sheet, on any level, so Esc goes back to it;
         // with Settings already open in the sheet there is nothing to open
         if (sheet.settingsOpen) c.dead();
-        else shell.settingsOnSheet();
+        else settingsOnSheet(shell);
         return true;
       }
       if (p.name !== "menu" && p.name !== "apps" && p.name !== "slot" && p.name !== "tmpl") shell.closeSheet();
@@ -234,4 +234,15 @@ export function sheetAct(c: RouteCtx, key: Key, layer: Layer | undefined, mods?:
       return true;
     }
   }
+}
+
+/** R887: the ⚙ key over the open sheet: Settings as its next level on whatever level is open, as the head's ⚙ (R145), so Esc goes
+ *  back to it. Before the Mode code is in it loads first (Shell.withModeCode); a sheet closed or changed meanwhile gets nothing. */
+function settingsOnSheet(shell: RouteCtx["shell"]): void {
+  const s = shell.sheet;
+  const push = (): void => {
+    if (s && shell.sheet === s && !s.settingsOpen) shell.picked(s.openSettings(shell.toSettings()));
+  };
+  if (shell.settingsMenu?.() || !shell.withModeCode) push();
+  else shell.withModeCode(push);
 }

@@ -220,8 +220,9 @@ export class AppShell {
     const v = this.app === null ? (this.homeView?.() ?? "home") : this.view;
     return { text: t("menu.title", { view: t(`view.${v}`) }), icon: v };
   }
-  /** R145: where a ☰ sheet's ⚙ goes: Settings as a level of the sheet (R49), else, before the Mode code is in, Mode › Settings. */
-  private readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
+  /** R145: where a ☰ sheet's ⚙ goes (and the ⚙ key over any sheet, R887): Settings as a level of the sheet (R49), else, before the
+   *  Mode code is in, Mode › Settings. */
+  readonly toSettings = (): SubMenu | (() => void) => this.settingsMenu?.() ?? (() => this.openSettings?.());
 
   // ---- sheets (docs/05 3.1)
   get switcherOpen(): boolean {
@@ -282,17 +283,6 @@ export class AppShell {
       (sheet) => this.menuItems.length === 0 && this.picked(sheet.openSettings()),
     );
     return true;
-  }
-  /** R887: the ⚙ key over the open sheet: Settings as its next level on whatever level is open, as the head's ⚙ (R145), so Esc goes
-   *  back to it. Before the Mode code is in it loads first; a sheet closed or changed meanwhile gets nothing. */
-  settingsOnSheet(): void {
-    const s = this.sheet;
-    if (!s) return;
-    const push = (): void => {
-      if (this.sheet === s && !s.settingsOpen) this.picked(s.openSettings(this.toSettings()));
-    };
-    if (this.settingsMenu?.() || !this.withModeCode) push();
-    else this.withModeCode(push);
   }
   /** Open a list of items over the view (a long press on a history row): same sheet and keys as the Menu key.
    *  `settings`: the ⚙ in its title row opens Settings (R145). */
