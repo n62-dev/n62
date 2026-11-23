@@ -630,7 +630,8 @@ export const LAZY_PARTS = ["src/views/sheetKeys.ts", "src/views/tmplSheet.ts", "
  *  (176,822 B raw).
  *  G785 (a cut; the pin stays the budget): Fmt skips a step that draws what the row shows (deadPress asks Session.formRow).
  *  Phase-1 5c518933 measures 62,986 B gzip, the change 63,015 B; Memory's purge (Session.forget, read only by the lazy
- *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only. */
+ *  find/names.svelte.ts) moved there: 62,967 B (176,789 B raw). Lazy-only en.ts strings to lazy tables gave −1 B only.
+ *  G622 (a cut): patch 0065's engine hash and trust counts made 63,003 B; history.actions to i18n/enRowBar.ts (RowBar, lazy): 62,982 B. */
 export const START_PIN_GZIP = 63_000;
 
 /** R103 (vr-4): the classic inline scripts of index.html run before the first paint, outside every chunk: the stored look

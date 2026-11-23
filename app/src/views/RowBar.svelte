@@ -8,7 +8,7 @@
 <script lang="ts">
   import type { ClipActions } from "../clipboard/actions.svelte.ts";
   import type { EntryController } from "../entry/controller.ts";
-  import { t } from "../i18n/index.ts";
+  import { rowBarText } from "../i18n/enRowBar.ts";
   import type { PickPart } from "../state/pickRows.ts";
   import type { HistoryItem } from "../state/session.svelte.ts";
 
@@ -49,7 +49,7 @@
 
 <div class="rowslot" class:over style:min-height={over && !folded ? `${height}px` : undefined}>
   {#if why}<div class="rowwhy" data-testid="row-why">{why}</div>{/if}
-  <div class="rowbar" class:inbar={folded} role="toolbar" aria-label={t("history.actions")} data-testid="row-actions" use:bar={folded}>
+  <div class="rowbar" class:inbar={folded} role="toolbar" aria-label={rowBarText("history.actions")} data-testid="row-actions" use:bar={folded}>
     {#each clip.rowButtons(row, part) as b (b.id)}
       <button type="button" data-item={b.id} disabled={b.disabled} onpointerdown={noFocus} onclick={() => { onaction(b.id); b.run?.(); }}>{b.label}</button>
     {/each}
