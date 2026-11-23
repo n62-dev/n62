@@ -624,6 +624,9 @@ export const PATCHED_IDS = new Map([
   // G398 (be-4): usual.cc ln(inv(f)) = -ln(f) and sqrt(inv(f)) = inv(sqrt(f)) took the conjugate for a negative real f; the
   // g398-keep-* rows pass on stock and stay in the check file
   ...["ln-inv-1-minus-sqrt2-12", "ln-inv-1-minus-sqrt2-30", "log10-inv-1-minus-sqrt2-12", "log10-inv-1-minus-sqrt2-30", "sqrt-inv-pi-minus-4-12", "sqrt-inv-pi-minus-4-30", "sqrt-sec2-12", "sqrt-sec2-30", "ln-sec2-12", "ln-sec2-30", "sqrt-csc4-12", "sqrt-csc4-30", "log10-sec2-12", "sqrt-inv-e-minus-3-12", "ln-inv-sqrt2-minus-2-12", "ln-inv-neg2-12"].map((k) => [`g398-${k}`, "0057-ln-sqrt-inv-negative-real.patch"]),
+  // G783: the same rule for a free name, rewritten before a value came (subst(ln(1/y),y=-2) = -ln(-2), the conjugate); patch 0057
+  // now rewrites only a proven positive argument; the g783-*keep-* rows are CAS forms or sequences, left out
+  ...["subst-ln-inv-y-neg2-12", "subst-ln-inv-y-neg2-30", "subst-sqrt-inv-y-neg2-12", "subst-sqrt-inv-y-neg2-30", "subst-ln-inv-y-plus-1-neg3-12", "subst-ln-inv-y-plus-1-neg3-30", "subst-ln-y-pow-neg1-neg2-12", "subst-ln-y-pow-neg1-neg2-30"].map((k) => [`g783-${k}`, "0057-ln-sqrt-inv-negative-real.patch"]),
   // G786: permu.cc ascsort read an MPFR element as 0, so median, quartile1, quartile3 and quantile of a float list above 14 digits
   // were 0; the g786-keep-* row (an exact list) passes on stock and stays in the check file
   ...["quartile3-approx-list", "quartile1-approx-list-30", "median-approx-list-30", "quantile-approx-list-30", "quartile1-approx-list-12", "median-approx-list-12", "quantile-approx-list-12", "median-approx-third-30", "quartiles-approx-list-30", "median-approx-matrix-30"].map((k) => [`g786-${k}`, "0058-ascsort-mpfr-elements.patch"]),
@@ -894,6 +897,12 @@ export function build(cases) {
   // gives ln(-1/2) = -ln(2)+pi*i, the principal value; stock rewrote ln(1/y) as -ln(y), -ln(-2) = -ln(2)-pi*i
   patched.push("// patch 0057-ln-sqrt-inv-negative-real.patch", "// g398-assumed-neg-ln-inv (derived: ln(-1/2) = -ln(2)+i*pi)", 'assume(g398y<0):; Digits:=40:; pc("g398-assumed-neg-ln-inv",\'subst(ln(1/g398y),g398y=-2)\',-ln(2)+pi*i,1/10^35);'); // g398y is used by this line only, so its assumption stays
   nPatched++;
+  // Patch 0057 (G783), written lines: a function whose body is evaluated when it is defined (unapply; the golden g783-unapply-* rows
+  // define it in a step before, which the export leaves out) keeps 1/x, so at -2 the principal value; stock stored (x)->1/sqrt(x) and
+  // (x)->-ln(x), the conjugates
+  patched.push("// patch 0057-ln-sqrt-inv-negative-real.patch", "// g783-unapply-sqrt-inv-at-neg2 (derived: sqrt(-1/2) = i/sqrt(2))", 'Digits:=40:; pc("g783-unapply-sqrt-inv-at-neg2",\'(unapply(sqrt(1/x),x))(-2)\',i/sqrt(2),1/10^35);');
+  patched.push("// patch 0057-ln-sqrt-inv-negative-real.patch", "// g783-unapply-ln-inv-at-neg2 (derived: ln(-1/2) = -ln(2)+i*pi)", 'Digits:=40:; pc("g783-unapply-ln-inv-at-neg2",\'(unapply(ln(1/x),x))(-2)\',-ln(2)+pi*i,1/10^35);');
+  nPatched += 2;
   // Patch 0058 (G786), written lines: the forms the golden rows leave out (a list result, a matrix, a typed decimal beside integers);
   // expected values are Giac's own at Digits 12 (quartiles([3/2,-2,7,13/4,1/2,4]) = [[-2],[1/2],[3/2],[4],[7]], the column medians [2,5])
   for (const [id, input, value, why] of [
