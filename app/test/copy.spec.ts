@@ -325,9 +325,55 @@ test("G784 controls: 2+3·i with Shift + 2 (the constant) and e² from the eˣ k
   await expect.poll(() => clipboard(page)).toBe("7.38905609893065022723042746057500781318");
 });
 
-// G784, a known gap, not the wanted behaviour (docs/decisions.md, Needs the user; docs/04 2.6): Paste reads one number, so
-// the copies do not come back as their rows; this pins today's Paste until the owner decides. `2*i` is read as the constant (as Copy's `a+b*i` is), not the name i; a product of names is refused.
-test("G784 known gap, pending the owner (decisions.md): Paste of a copied name does not give the row back: 2*i as the constant i, r*a*i*n*b*o*w and β*2 refused", async ({ page }) => {
+// G784f1: Paste reads one number, so a copied name cannot come back as its row (docs/04 2.6; whether Paste reads names: decisions.md,
+// Needs the user). A text N62 copied from a row with a name (a stand-in turned into its letter) is refused, named, not read as
+// another value: `2*i` from the name i would paste as the constant i (principle 3). The copy is remembered across a reload.
+const NAME_NOTICE = "Paste: the copy holds a name, not a number";
+
+test("G784f1: Paste of 2i (hardware i) copied by N62 is refused, the line stays empty; after a reload too", async ({ page }) => {
+  await typed(page, "2i", 1);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe("2*i");
+  await tap(page, KEYPASTE);
+  await expect(page.getByTestId("notice")).toHaveText(NAME_NOTICE);
+  expect(await entryValue(page)).toBe("");
+  await page.reload();
+  await page.waitForFunction(() => customElements.get("math-field") !== undefined && window.n62 !== undefined);
+  await page.evaluate(() => window.n62.entry.ready);
+  await page.waitForFunction(() => window.n62.session.engineState === "ready", undefined, { timeout: 20_000 });
+  expect(await clipboard(page)).toBe("2*i");
+  await tap(page, KEYPASTE);
+  await expect(page.getByTestId("notice")).toHaveText(NAME_NOTICE);
+  expect(await entryValue(page)).toBe("");
+});
+
+test("G784f1: a hold on the 2i row's result and Copy as › As shown, Exact are refused too; a Copy with no name clears it", async ({ page }) => {
+  await typed(page, "2i", 1);
+  for (const what of ["As shown", "Exact"]) {
+    await setClipboard(page, "");
+    await pickCopyAs(page, what);
+    await expect.poll(() => clipboard(page)).toBe("2*i");
+    await tap(page, ["esc"]); // (no pick left over)
+    await tap(page, KEYPASTE);
+    await expect(page.getByTestId("notice")).toHaveText(NAME_NOTICE);
+    expect(await entryValue(page)).toBe("");
+  }
+  await setClipboard(page, "");
+  await finger(page, "result:last", { ms: 700 });
+  await expect.poll(() => clipboard(page)).toBe("2*i");
+  await tap(page, KEYPASTE);
+  await expect(page.getByTestId("notice")).toHaveText(NAME_NOTICE);
+  expect(await entryValue(page)).toBe("");
+  // 2 × the constant i (Shift + 2) copies the same text with no name: the next Copy without one, so it pastes as the constant
+  await tap(page, ["d2", "mul", "shift", "d2", "enter"]);
+  await done(page, 2);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe("2*i");
+  await tap(page, KEYPASTE);
+  await expect.poll(() => entryValue(page)).toBe("2\\imaginaryI");
+});
+
+test("G784f1 controls: 2*i set from outside pastes the constant i; r*a*i*n*b*o*w and β*2 refused as before; 2+3·i (Shift + 2) copied pastes back", async ({ page }) => {
   await setClipboard(page, "2*i");
   await tap(page, PASTE);
   await expect.poll(() => entryValue(page)).toBe("2\\imaginaryI");
@@ -338,4 +384,10 @@ test("G784 known gap, pending the owner (decisions.md): Paste of a copied name d
     await expect(page.getByTestId("notice")).toHaveText("Paste: not a number");
     expect(await entryValue(page)).toBe("");
   }
+  await tap(page, ["d2", "add", "d3", "mul", "shift", "d2", "enter"]);
+  await done(page, 1);
+  await tap(page, KEYCOPY);
+  await expect.poll(() => clipboard(page)).toBe("2+3*i");
+  await tap(page, KEYPASTE);
+  await expect.poll(() => entryValue(page)).toBe("2+3\\imaginaryI");
 });
