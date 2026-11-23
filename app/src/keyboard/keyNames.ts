@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // R41: the names a screen reader gets for a key: its aria-label (what a tap gives in the layer that is on) and its
-// aria-description (the other layers), and the press dot of the round pad (placeDot). The chunk of its own, loaded after the first paint (keyNamesLoader.svelte.ts).
+// aria-description (the other layers), the press dot of the round pad (placeDot) and the pad's touchmove guard (noFling, R838f1).
+// The chunk of its own, loaded after the first paint (keyNamesLoader.svelte.ts).
 import { enKeyNames, type KeyNameKey } from "../i18n/enKeyNames.ts";
 import { legend } from "../i18n/index.ts";
 import { keyboard, labelFor, type Key, type Layer } from "./keyboard.ts";
+// R838f1: with the key names, which come after the first paint, so the start chunk (at its pin) carries none of it; a flick
+// before they are in can still take the next tap's click
+export { noFling } from "./noFling.ts";
 
 const LAYERS = ["primary", "shift", "alpha"] as const;
 

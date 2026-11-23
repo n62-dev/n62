@@ -1,7 +1,7 @@
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 <script lang="ts">
-  import { legend, t } from "../i18n/index.ts";
-  import { noFling } from "./noFling.ts";
+  import { legend } from "../i18n/index.ts";
+  import { t } from "../i18n/index.ts";
   import { FlickTracker, PAD_KEYS, REPEAT_KEYS, Repeat, Stepper, type Flick, type PadDir } from "./gestures.ts";
   import { fitLegends } from "./fit.ts";
   import { keyNames, loadKeyNames } from "./keyNamesLoader.svelte.ts";
@@ -111,6 +111,7 @@
   let padEl: HTMLDivElement | undefined = $state();
   // R41: the names a screen reader says, from their own chunk after the first paint (a button is named by its face till then)
   $effect(loadKeyNames);
+  $effect(() => keyNames()?.noFling(padEl)); // R838f1: a flick starts no fling (noFling.ts; with the key names, after the first paint)
   $effect(() => {
     const m = keyNames();
     if (m && padEl) m.labelKeys(padEl, keys, shift, alpha, cas);
@@ -119,9 +120,7 @@
   // Every face and legend is shrunk until it fits its key: never cut, never overlapping (U0, docs/05 3.7).
   $effect(() => {
     // re-fit when the layer changes (the faces change with it) and when the pad's width does
-    void shift;
-    void alpha;
-    void cas;
+    void [shift, alpha, cas];
     // R820: and when a sheet opens or closes, its code comes in or its query empties or fills (the faces change with them)
     void [sheet?.kind, sheet?.empty, sheet?.filter, sheetChunk.keys];
     if (!padEl) return;
@@ -397,7 +396,7 @@
   style:grid-template-columns={`repeat(${keyboard.units}, 1fr)`}
   style:--pad-units={keyboard.units}
   style:--pad-span={padArea?.span ?? 0}
-  bind:this={padEl} use:noFling
+  bind:this={padEl}
   onpointerdown={down}
   onpointermove={move}
   onpointerup={up}
