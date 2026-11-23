@@ -415,4 +415,6 @@ units-view:
   "6": "utool:store"
   "7": "ucat:const"
 
-moves: []
+moves:
+  - { entry: layers/help.primary, from: "special help", to: "special settings", version: v0.1.1, decision: "Settings on the tap of row 0, col 4, Help on Shift" }
+  - { entry: layers/help.shift, from: "special settings", to: "special help", version: v0.1.1, decision: "Settings on the tap of row 0, col 4, Help on Shift" }

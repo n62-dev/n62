@@ -10,7 +10,7 @@ import { enKeyNames } from "../i18n/enKeyNames.ts";
 import { desktop } from "./desktopKeys.ts";
 import { actionFor, keyboard, labelFor, type Key } from "./keyboard.ts";
 import { keyLabels, layerName } from "./keyNames.ts";
-import { compareLayout, layerPins, parseLock } from "./layoutLock.ts";
+import { applyMoves, compareLayout, layerPins, parseLock } from "./layoutLock.ts";
 import { opensSheet } from "./opens.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -41,7 +41,8 @@ describe("R327: Shift + 1 is the uncertainty sheet", () => {
     expect(lock.moves.some((m) => m.entry === "layers/d1.shift")).toBe(false); // a fill, not a move
     const before = parseLock(text.replace('"d1.shift": "special uncertainty"', '"d1.shift": "reserved"'));
     const layers = { layers: layerPins(keyboard) };
-    const only = (pins: Record<string, Record<string, string>>) => ({ pins: { layers: pins["layers"] ?? {} }, moves: [] });
+    // (the lock's own moves applied, R863's swap at row 0, col 4 among them)
+    const only = (pins: Record<string, Record<string, string>>) => ({ pins: { layers: applyMoves({ pins, moves: lock.moves }, "").pins["layers"] ?? {} }, moves: [] });
     expect(compareLayout(layers, only(before.pins), "")).toEqual([
       'layers/d1.shift: reserved in the lock but live ("special uncertainty"): record the fill in the lock',
     ]);

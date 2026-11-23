@@ -56,31 +56,33 @@ test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ⚙ | Esc, U
   for (const id of ["help", "select", "deselect"]) await expect(page.locator(`[data-key="${id}"]`), id).not.toHaveAttribute("data-dead", "true");
 });
 
-test("R146, R863: one press for Redo; the ⚙ key's tap opens Settings, Shift + it Help, and so does a flick up on it", async ({ page }) => {
-  await tap(page, ["d7", "mul", "d8", "undo"]);
-  expect(await entryValue(page)).toBe("7\\times");
-  await tap(page, ["redo"]);
-  expect(await entryValue(page)).toBe("7\\times8");
-  await tap(page, ["help"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
-  await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
-  await expect(sheet(page)).toBeHidden();
-  await tap(page, ["esc", "shift", "help"]);
-  await expect(page.getByTestId("find")).toBeVisible(); // nothing at the cursor: Help is Find (R197)
-  await tap(page, ["esc"]);
-  await expect(page.getByTestId("find")).toBeHidden();
-  await flick(page, "help", "up");
-  await expect(page.getByTestId("find")).toBeVisible();
-  await tap(page, ["esc"]);
-  // the function at the cursor: sin, 1, then Shift + the key shows sin's sheet (R197); a flick up does the same
-  await tap(page, ["sin", "d1", "shift", "help"]);
-  await expect(page.getByTestId("menu").locator('[role="menuitem"]').first()).toBeVisible();
-  await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
-  await tap(page, ["esc"]);
-  await expect(sheet(page)).toBeHidden();
-  await flick(page, "help", "up");
-  await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
-});
+for (const width of [412, 360])
+  test(`R146, R863: one press for Redo; the ⚙ key's tap opens Settings, Shift + it Help, and so does a flick up on it (${width} px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 860 });
+    await tap(page, ["d7", "mul", "d8", "undo"]);
+    expect(await entryValue(page)).toBe("7\\times");
+    await tap(page, ["redo"]);
+    expect(await entryValue(page)).toBe("7\\times8");
+    await tap(page, ["help"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+    await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
+    await expect(sheet(page)).toBeHidden();
+    await tap(page, ["esc", "shift", "help"]);
+    await expect(page.getByTestId("find")).toBeVisible(); // nothing at the cursor: Help is Find (R197)
+    await tap(page, ["esc"]);
+    await expect(page.getByTestId("find")).toBeHidden();
+    await flick(page, "help", "up");
+    await expect(page.getByTestId("find")).toBeVisible();
+    await tap(page, ["esc"]);
+    // the function at the cursor: sin, 1, then Shift + the key shows sin's sheet (R197); a flick up does the same
+    await tap(page, ["sin", "d1", "shift", "help"]);
+    await expect(page.getByTestId("menu").locator('[role="menuitem"]').first()).toBeVisible();
+    await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
+    await tap(page, ["esc"]);
+    await expect(sheet(page)).toBeHidden();
+    await flick(page, "help", "up");
+    await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
+  });
 
 test("R723, R785: Mode opens from the STD 12 ▾ chip and from a free key that holds it; Shift + Deselect does not open it", async ({ page }) => {
   await page.getByTestId("chip-format").tap();
