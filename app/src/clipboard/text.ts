@@ -111,8 +111,12 @@ export function copyNames(text: string): string {
   return mapNames(text, (n) => (isStandIn(n.name) ? typedName(n.name) : null), "printed");
 }
 
-/** An engine text as Copy writes it: the letters for the stand-ins, then `;` between a list's elements with the decimal comma (R100). */
-const engineText = (t: string, o: TextOptions): string => (o.decimalComma ? commaResult(copyNames(t), false) : copyNames(t));
+/** An engine text as Copy writes it: the letters for the stand-ins, then `;` between a list's elements with the decimal comma (R100).
+ *  A row read back from storage without its text (not a string) is passed on as it is, as before G784. */
+function engineText(t: string, o: TextOptions): string {
+  if (typeof t !== "string") return t;
+  return o.decimalComma ? commaResult(copyNames(t), false) : copyNames(t);
+}
 
 /** Copy as shown (docs/04 2.6): the row's display text without its mark, the stand-ins as their letters (G784). */
 export function copyShownText(shown: string): string {
