@@ -85,8 +85,8 @@ keys:
   # ---- rows 0-2: the upper cluster, R3 (decisions.md "R15c", chosen by the owner 2026-10-17; built in R15c2). Three bands
   # of two columns: the free keys U1-U6 (`user: true`, all empty, set from Find, R4b), the round pad (a circle, no drawn hub, no OK; a drag from
   # anywhere on it, the centre too, steps the cursor, a tap at the centre does nothing; Keypad.svelte) and the editing wing, read in pairs level with the pad, each pair on one layer
-  # (R146, S25's K1, owner 2026-11-06; R723, owner 2026-11-17): Help | Esc, Undo | Redo, Select | Deselect on the tap; Settings |
-  # Clear, ⇤ | ⇥, Copy | Paste on Shift (a flick up reaches each). ☰, Apps and the views are on the bar (R15c1, R722); Mode is
+  # (R146, S25's K1, owner 2026-11-06; R723, owner 2026-11-17; R863, owner 2026-11-22): ⚙ (Settings) | Esc, Undo | Redo, Select |
+  # Deselect on the tap; Help | Clear, ⇤ | ⇥, Copy | Paste on Shift (a flick up reaches each). ☰, Apps and the views are on the bar (R15c1, R722); Mode is
   # on its STD and 12 chips (no key); results mode is the swipe on the entry line, so there is no View key. There is no Cancel
   # key: Esc stops a running job, closes Settings, goes back one sheet level, drops a picked row, else clears the line. Copy is
   # also the bar's Copy › and a hold on a row, Paste any system paste. Only Esc (r1c5) and the pad keep their G2 cells; every other key here is ours
@@ -94,12 +94,12 @@ keys:
   - { id: u1, row: 0, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: u2, row: 0, col: 1, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
   - { id: up, row: 0, col: 2, span: 2, cls: ctl, label: { primary: "▲" }, primary: { cmd: moveUp }, source: virtual-calc }  # pad up; on an empty entry line it selects the last history row (App.svelte)
-  # Help (R723, owner 2026-11-17): the syntax and example of the function at the cursor on a sheet, else Find (R197,
-  # views/helpSheet.ts); Shift stays Settings (docs/06 section 3b). The ☰ key `menu` (R278) retired: ☰ is on the bar (R722).
-  # Help comes back with its own id, `help`: an id is never reused for another function (TalkBack's name and the press counts
-  # hang on it), and `menu` is never given to another key.
-  - { id: help, row: 0, col: 4, cls: nav, label: { primary: "$key.help", shift: "$key.settings" },
-      primary: { special: help }, shift: { special: settings }, source: assumed }  # Help is ours (assumed); shift Settings is ours too
+  # Settings on the tap, drawn ⚙ (the word does not fit at 360 px), and Help on Shift (owner, 2026-11-22, R863; a move in
+  # spec/layout-lock.yaml, docs/06 section 3b): Help is the syntax and example of the function at the cursor on a sheet, else
+  # Find (R197, views/helpSheet.ts). The key keeps the id `help` (R723): an id is never reused (TalkBack's names and the press
+  # counts hang on it). The ☰ key `menu` (R278) retired: ☰ is on the bar (R722); `menu` is never given to another key.
+  - { id: help, row: 0, col: 4, cls: nav, label: { primary: "$key.gear", shift: "$key.help" },
+      primary: { special: settings }, shift: { special: help }, source: assumed }  # Settings and Help here are ours (assumed)
   - { id: esc, row: 0, col: 5, cls: nav, label: { primary: "$key.esc", shift: "$key.clear" },
       primary: { special: esc }, shift: { special: clear }, source: virtual-calc }  # r1c5; Esc also takes the old Cancel key's jobs (R15c point 3); shift Clear wipes the history on an empty line
   - { id: u3, row: 1, col: 0, cls: nav, user: true, label: { primary: "$key.user" }, primary: { special: none }, source: assumed }
@@ -398,7 +398,7 @@ desktop:
     down: { primary: ArrowDown }
     left: { primary: ArrowLeft }
     right: { primary: ArrowRight }
-    help: { primary: F1, shift: Alt+Shift+M }  # Settings keeps the chord it had on the ☰ key
+    help: { primary: Alt+Shift+M, shift: F1 }  # Settings keeps the chord it had on the ☰ key; F1 stays Help (R863)
     esc: { primary: Escape, shift: Alt+Shift+Backspace }  # Shift+Escape is the browser's task manager on Windows
     undo: { primary: Ctrl+Z, shift: Home }
     redo: { primary: [Ctrl+Y, Ctrl+Shift+Z], shift: End }

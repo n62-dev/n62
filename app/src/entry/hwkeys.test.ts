@@ -232,7 +232,10 @@ describe("R131: % and the desktop keys", () => {
   });
   it("F1 is Help, Shift+Enter ≈, Alt+Shift+Backspace Clear, Alt+ArrowUp and Alt+ArrowDown Select and Deselect", () => {
     const r = run(ev("F1", "F1"), ev("Enter", "Enter", { shift: true }), ev("Backspace", "Backspace", { alt: true, shift: true }), ev("ArrowUp", "ArrowUp", { alt: true }), ev("ArrowDown", "ArrowDown", { alt: true }));
-    expect(r.got).toEqual(["help:primary", "enter:shift", "esc:shift", "select:primary", "deselect:primary"]);
+    expect(r.got).toEqual(["help:shift", "enter:shift", "esc:shift", "select:primary", "deselect:primary"]); // R863: Help is the key's Shift layer
+  });
+  it("R863: Alt+Shift+M is Settings, the tap of row 0, col 4", () => {
+    expect(run(ev("M", "KeyM", { alt: true, shift: true })).got).toEqual(["help:primary"]);
   });
   it("a plain Enter and Escape stay with the controller's own listener", () => {
     expect(run(ev("Enter", "Enter"), ev("Escape", "Escape"))).toEqual({ handled: [false, false], got: [] });

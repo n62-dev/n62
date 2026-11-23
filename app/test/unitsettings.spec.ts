@@ -55,9 +55,9 @@ for (const width of [412, 360]) {
     test.use({ viewport: { width, height: 860 } });
     test.beforeEach(async ({ page }) => open(page));
 
-    test("Shift + Help opens Settings over the view; Esc twice comes back to it, slots and focus as they were", async ({ page }) => {
+    test("the ⚙ key (R863) opens Settings over the view; Esc twice comes back to it, slots and focus as they were", async ({ page }) => {
       await kmPerH(page);
-      await tap(page, ["shift", "help"]);
+      await tap(page, ["help"]);
       await expect(page.getByTestId("menu")).toBeVisible();
       expect(await depth(page)).toBe(2); // Mode › Settings
       expect(await viewOpen(page)).toBe(true);
@@ -82,7 +82,7 @@ for (const width of [412, 360]) {
 
     test("with Settings open over the view every key is the sheet's: 4 picks its row 4, ▲ ▼ move; the slots stay", async ({ page }) => {
       await kmPerH(page);
-      await tap(page, ["shift", "help"]);
+      await tap(page, ["help"]);
       await expect(page.getByTestId("menu")).toBeVisible();
       const hl = (): Promise<number | undefined> => page.evaluate(() => window.n62.shell.sheet?.level.highlight);
       const first = await hl();
@@ -98,17 +98,26 @@ for (const width of [412, 360]) {
       await sameView(page);
     });
 
-    test("Shift + Help with a prefix armed (k): after close the prefix is still armed, m makes km", async ({ page }) => {
+    test("the ⚙ key with a prefix armed (k): after close the prefix is still armed, m makes km", async ({ page }) => {
       await tap(page, ["d3"]);
       await unitsKey(page);
       await tap(page, ["d4"]); // k, armed
       expect(await slotText(page, "u1")).toBe("");
-      await tap(page, ["shift", "help"]);
+      await tap(page, ["help"]);
       await expect(page.getByTestId("menu")).toBeVisible();
       await tap(page, ["esc", "esc"]);
       await backOnView(page);
       await tap(page, ["d9"]);
       expect(await slotText(page, "u1")).toBe("k:m");
+    });
+
+    test("Shift + the ⚙ key (Help, R863) does not open Settings over the view and leaves it as it was", async ({ page }) => {
+      await kmPerH(page);
+      await tap(page, ["shift", "help"]);
+      await page.waitForTimeout(300); // (a sheet would be up by now)
+      await expect(page.getByTestId("menu")).toBeHidden();
+      expect(await page.evaluate(() => window.n62.session.shift)).toBe(false);
+      await sameView(page);
     });
 
     test("control: Home, CAS, Apps and the place switch still close the view", async ({ page }) => {

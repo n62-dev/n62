@@ -36,7 +36,7 @@ import { matrixRows, MATRIX_ROWS } from "../views/matrixSheet.ts";
 import { modeItems, settingsSections } from "../views/modeSheet.ts";
 import { loadKeyboard, keyboard } from "./keyboard.ts";
 import { UserKeys } from "./userKeys.svelte.ts";
-import { compareLayout, compareToRelease, layerPins, LIST_BUILDERS, listSlots, modifierPins, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
+import { applyMoves, compareLayout, compareToRelease, layerPins, LIST_BUILDERS, listSlots, modifierPins, paletteSlots, parseLock, releaseLock, UNPINNED_LISTS, type Lock, type Pins } from "./layoutLock.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 const LOCK = "spec/layout-lock.yaml";
@@ -230,8 +230,8 @@ describe("every numbered list is in the lock (R299)", () => {
 
 describe("a pinned key layer cannot change unnoticed (altered copies of the spec)", () => {
   it("a changed action names the entry", () => {
-    const p = problems(spec((k) => (key(k, "help")["primary"] = { special: "esc" })));
-    expect(p).toEqual(['layers/help.primary: pinned "special help", now "special esc"']);
+    const p = problems(spec((k) => (key(k, "undo")["primary"] = { special: "esc" })));
+    expect(p).toEqual(['layers/undo.primary: pinned "cmd undo", now "special esc"']);
   });
   it("a layer taken away names the entry", () => {
     const p = problems(spec((k) => drop(k, "select", "shift")));
@@ -358,32 +358,34 @@ describe("a move is a line the owner's decision backs", () => {
   // a decisions text of its own, in the bold-title form of decisions.md: the real file is trimmed and rewritten
   const title = "Fixture layout move";
   const fixture = `# Decisions\n\n- **${title} (owner, 2026-01-01):** the owner moved Menu to Esc.\n- **Fixture colon title:** another entry.\n\n### Fixture heading (milestone 9)\n`;
-  const edited = (): Pins => spec((k) => (key(k, "help")["primary"] = { special: "esc" }));
-  const move = { entry: "layers/help.primary", from: "special help", to: "special esc", version: "0.2.0", decision: title };
-  const check = (decision: string): string[] => compareLayout(edited(), { ...lock, moves: [{ ...move, decision }] }, fixture);
+  const edited = (): Pins => spec((k) => (key(k, "undo")["primary"] = { special: "esc" }));
+  const move = { entry: "layers/undo.primary", from: "cmd undo", to: "special esc", version: "0.2.0", decision: title };
+  /** The real lock with its own moves applied (they name entries of the real decisions.md, not of the fixture). */
+  const settled = (): Lock => ({ pins: applyMoves(lock, decisions).pins, moves: [] });
+  const check = (decision: string): string[] => compareLayout(edited(), { ...settled(), moves: [{ ...move, decision }] }, fixture);
   it("is applied on top of the pinned line, which stays as it was", () => {
     expect(check(title)).toEqual([]);
-    expect(lock.pins["layers"]?.["help.primary"]).toBe("special help");
+    expect(lock.pins["layers"]?.["undo.primary"]).toBe("cmd undo");
   });
   it("a removal moves the line to reserved: the layer must be gone", () => {
     const gone = spec((k) => drop(k, "select", "shift"));
     const m = { ...move, entry: "layers/select.shift", from: "special copy", to: "reserved" };
-    expect(compareLayout(gone, { ...lock, moves: [m] }, fixture)).toEqual([]);
+    expect(compareLayout(gone, { ...settled(), moves: [m] }, fixture)).toEqual([]);
   });
   it("a later fill of the removed cell is a move from reserved", () => {
     const m1 = { ...move, entry: "layers/select.shift", from: "special copy", to: "reserved" };
     const m2 = { ...m1, from: "reserved", to: "special find" };
     const a = spec((k) => (key(k, "select")["shift"] = { special: "find" }));
-    expect(compareLayout(a, { ...lock, moves: [m1, m2] }, fixture)).toEqual([]);
+    expect(compareLayout(a, { ...settled(), moves: [m1, m2] }, fixture)).toEqual([]);
   });
   it("must start from the line as it is", () => {
-    expect(compareLayout(edited(), { ...lock, moves: [{ ...move, from: "special esc" }] }, fixture)[0]).toBe('move layers/help.primary: the line is "special help", the move says "special esc"');
+    expect(compareLayout(edited(), { ...settled(), moves: [{ ...move, from: "special esc" }] }, fixture)[0]).toBe('move layers/undo.primary: the line is "cmd undo", the move says "special esc"');
   });
   it("needs a decisions.md entry of that title", () => {
-    expect(check("Nobody decided this")).toEqual(['move layers/help.primary: decisions.md has no entry titled "Nobody decided this"']);
+    expect(check("Nobody decided this")).toEqual(['move layers/undo.primary: decisions.md has no entry titled "Nobody decided this"']);
   });
   it("takes a whole title only: the title ends at the colon or the bracket, so a prefix of it is no decision", () => {
-    const refused = (d: string): string[] => [`move layers/help.primary: decisions.md has no entry titled "${d}"`];
+    const refused = (d: string): string[] => [`move layers/undo.primary: decisions.md has no entry titled "${d}"`];
     expect(check("Fi")).toEqual(refused("Fi"));
     expect(check("Fixture layout")).toEqual(refused("Fixture layout"));
     expect(check("Fixture layout move (owner")).toEqual(refused("Fixture layout move (owner"));
@@ -391,7 +393,7 @@ describe("a move is a line the owner's decision backs", () => {
     expect(check("Fixture colon")).toEqual(refused("Fixture colon"));
   });
   it("takes a whole heading only: the text after the hashes ends or goes on with a bracket, so a word of it is no decision", () => {
-    const refused = (d: string): string[] => [`move layers/help.primary: decisions.md has no entry titled "${d}"`];
+    const refused = (d: string): string[] => [`move layers/undo.primary: decisions.md has no entry titled "${d}"`];
     expect(check("Fixture heading")).toEqual([]);
     expect(check("Fixture")).toEqual(refused("Fixture"));
     expect(check("heading")).toEqual(refused("heading"));
@@ -399,12 +401,25 @@ describe("a move is a line the owner's decision backs", () => {
   it("the real lock's moves (if any) name entries of the real decisions.md", () => {
     expect(problems().filter((p) => p.startsWith("move "))).toEqual([]);
   });
+  it("R863: Settings and Help swapped at row 0, col 4 are two moves; the pinned lines stay, and without the moves the lock fails", () => {
+    expect(lock.pins["layers"]?.["help.primary"]).toBe("special help");
+    expect(lock.pins["layers"]?.["help.shift"]).toBe("special settings");
+    const r863 = lock.moves.filter((m) => m.entry === "layers/help.primary" || m.entry === "layers/help.shift");
+    expect(r863.map((m) => `${m.entry} ${m.from} → ${m.to} ${m.version}`)).toEqual([
+      "layers/help.primary special help → special settings v0.1.1",
+      "layers/help.shift special settings → special help v0.1.1",
+    ]);
+    expect(problems(actual, { ...lock, moves: lock.moves.filter((m) => !r863.includes(m)) })).toEqual([
+      'layers/help.primary: pinned "special help", now "special settings"',
+      'layers/help.shift: pinned "special settings", now "special help"',
+    ]);
+  });
   it("needs a version and an existing line", () => {
-    expect(compareLayout(edited(), { ...lock, moves: [{ ...move, version: "soon" }] }, fixture)[0]).toContain('version "soon" is no version');
-    expect(compareLayout(actual, { ...lock, moves: [{ ...move, entry: "layers/nokey.shift" }] }, fixture)[0]).toBe("move layers/nokey.shift: no such line in the lock");
+    expect(compareLayout(edited(), { ...settled(), moves: [{ ...move, version: "soon" }] }, fixture)[0]).toContain('version "soon" is no version');
+    expect(compareLayout(actual, { ...settled(), moves: [{ ...move, entry: "layers/nokey.shift" }] }, fixture)[0]).toBe("move layers/nokey.shift: no such line in the lock");
   });
   it("a move that the layout does not show is still a pinned line that is gone or changed", () => {
-    expect(compareLayout(actual, { ...lock, moves: [move] }, fixture)).toEqual(['layers/help.primary: pinned "special esc", now "special help"']);
+    expect(compareLayout(actual, { ...settled(), moves: [move] }, fixture)).toEqual(['layers/undo.primary: pinned "special esc", now "cmd undo"']);
   });
 });
 
