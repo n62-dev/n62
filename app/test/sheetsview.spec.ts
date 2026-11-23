@@ -27,7 +27,7 @@ const OPENERS: Record<string, (page: Page) => Promise<void>> = {
   "☰": (page) => tap(page, ["@menu"]),
   "Mode (STD/12)": (page) => tap(page, ["@mode"]),
   Settings: (page) => tap(page, ["@mode", "d6"]),
-  Help: (page) => tap(page, ["sin", "d1", "help"]), // the help sheet of sin
+  Help: (page) => tap(page, ["sin", "d1", "shift", "help"]), // the help sheet of sin (Shift + the ⚙ key, R863)
   Apps: (page) => tap(page, ["@place"]),
   Tmpl: (page) => tap(page, ["tmpl"]),
   "Shift + 6": (page) => tap(page, ["shift", "d6"]),

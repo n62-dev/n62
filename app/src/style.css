@@ -29,6 +29,10 @@
   --mark-size: 0.78em;
   --mark-gap: 0.1em;
   --mark-shift: -0.25em;
+  /* the slot line after a prefix key's letter (R866, G_): its width, the gap before it, and the face's shift left by half of both */
+  --slot-w: 0.42em;
+  --slot-gap: 0.08em;
+  --slot-shift: -0.25em;
   --fs-caption: 12px;
   --fs-small: 13px;
   --fs-note: 14px;

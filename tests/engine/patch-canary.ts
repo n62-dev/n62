@@ -239,6 +239,15 @@ const CANARIES: [string, string, RegExp, string][] = [
   // so the arg of a negative real reached that way was -pi (arg((i*pi)^2) = 2*pi/2-2*pi, arg(i*pi*i) = pi/2+pi/2-2*pi)
   ["0059-arg-negative-real-pi.patch", "giac-2.1.0/src/gen.cc", /gen res=im\(ln\(af\._VECTptr->front\(\),contextptr\)\*af\._VECTptr->back\(\),contextptr\);\s*return _smod\(makesequence\(res,cst_two_pi\),contextptr\);/, "gen arg(const gen & a,GIAC_CONTEXT){"],
   ["0059-arg-negative-real-pi.patch", "giac-2.1.0/src/gen.cc", /if \(nonzero>1\)\s*return _smod\(makesequence\(res,cst_two_pi\),contextptr\);/, "gen arg(const gen & a,GIAC_CONTEXT){"],
+  // G553, patch 0061: _floor's MPFR branch takes a negative value as its truncation when is_zero(res-tmp), an absolute 1e-12 at any
+  // Digits, so ceil(pi*10^-13) = 0 and floor(-pi*10^-13) = 0 (ceil is -floor(-x), round floor(x+1/2))
+  ["0061-floor-mpfr-working-precision.patch", "giac-2.1.0/src/usual.cc", /gen res=real2int\(tmp,contextptr\);\s*if \(is_strictly_positive\(-tmp,contextptr\) && !is_zero\(res-tmp,contextptr\)\)\s*return res-1;/, "static bool warnfloor=true;"],
+  // G551, patch 0062: bitand, bitor and bitxor set the _INT_ beside a _ZINT with mpz_set_ui, which reads a negative int as 2^32+v
+  // (bitand(-2,2^64-1) = 4294967294, bitor(-1,2^31) = 4294967295); the canary is giac_bitand's _INT___ZINT case
+  ["0062-bitops-signed-small-integer.patch", "giac-2.1.0/src/misc.cc", /case _INT___ZINT:\s*e = new ref_mpz_t;\s*mpz_set_ui\(e->z,a\.val\);\s*mpz_and\(e->z,e->z,\*b\._ZINTptr\);/, "gen giac_bitand(const gen & a,const gen & b){"],
+  // G554 (F305), patch 0063: numeric_matrix_exp's loop reads linfnorm(term)._DOUBLE_val, a double from an MPFR norm above Digits 14,
+  // so exp of a float matrix was the identity (exp(evalf([[1,2],[3,4]])) at Digits 40)
+  ["0063-matrix-exp-working-precision.patch", "giac-2.1.0/src/usual.cc", /for \(double j=2;j<max_numexp && linfnorm\(eee,contextptr\)\._DOUBLE_val>eps;\+\+j\)\{/, "static gen numeric_matrix_exp(const gen & e,double eps,GIAC_CONTEXT){"],
 ];
 
 const tar = tarball(SOURCES.giac);

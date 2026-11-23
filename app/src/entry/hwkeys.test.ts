@@ -201,6 +201,19 @@ describe("R131: % and the desktop keys", () => {
     expect(run(ev("(", "Digit9", { alt: true, shift: true }), ev(")", "Digit9", { alt: true, shift: true })).got).toEqual(["paren:shift", "paren:shift"]);
     expect(countsOf(ev("(", "Digit9", { alt: true, shift: true }))).toEqual(["hw:Alt+Shift+9"]);
   });
+  it("R867: Ctrl+← → press ◀ ▶ as a drag step (the action marked drag), counted hw:<name>; Ctrl+Shift+→ stays MathLive's", () => {
+    const { t, got, counts } = target();
+    const drags: boolean[] = [];
+    const desk = t.onDesk;
+    t.onDesk = (as, key, layer, repeat) => void (drags.push(!!key && "drag" in (key.actions.primary ?? {})), desk?.(as, key, layer, repeat));
+    const handled = [ev("ArrowRight", "ArrowRight", { ctrl: true }), ev("ArrowLeft", "ArrowLeft", { meta: true }), ev("ArrowRight", "ArrowRight", { ctrl: true, shift: true })].map((e) => hardwareKey(e, t));
+    expect({ handled, got, counts, drags }).toEqual({
+      handled: [true, true, false],
+      got: ["right:primary", "left:primary"],
+      counts: ["hw:Ctrl+ArrowRight", "hw:Ctrl+ArrowLeft"],
+      drags: [true, true],
+    });
+  });
   it("< > ! insert their own symbols", () => {
     expect(run(ev("<"), ev(">"), ev("!")).got).toEqual(["symbol <", "symbol >", "symbol !"]);
   });
@@ -219,7 +232,10 @@ describe("R131: % and the desktop keys", () => {
   });
   it("F1 is Help, Shift+Enter ≈, Alt+Shift+Backspace Clear, Alt+ArrowUp and Alt+ArrowDown Select and Deselect", () => {
     const r = run(ev("F1", "F1"), ev("Enter", "Enter", { shift: true }), ev("Backspace", "Backspace", { alt: true, shift: true }), ev("ArrowUp", "ArrowUp", { alt: true }), ev("ArrowDown", "ArrowDown", { alt: true }));
-    expect(r.got).toEqual(["help:primary", "enter:shift", "esc:shift", "select:primary", "deselect:primary"]);
+    expect(r.got).toEqual(["help:shift", "enter:shift", "esc:shift", "select:primary", "deselect:primary"]); // R863: Help is the key's Shift layer
+  });
+  it("R863: Alt+Shift+M is Settings, the tap of row 0, col 4", () => {
+    expect(run(ev("M", "KeyM", { alt: true, shift: true })).got).toEqual(["help:primary"]);
   });
   it("a plain Enter and Escape stay with the controller's own listener", () => {
     expect(run(ev("Enter", "Enter"), ev("Escape", "Escape"))).toEqual({ handled: [false, false], got: [] });

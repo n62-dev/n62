@@ -637,6 +637,13 @@ export const PATCHED_IDS = new Map([
   // G399 (be-1): gen.cc arg took a power's, exp's and a product's argument through _smod(x,2*pi), whose range is [-pi,pi), so a
   // negative real gave -pi; the g399-keep-* rows pass on stock and stay in the check file, the DEG and CAS rows are left out
   ...["arg-i-pi-squared", "arg-i-pi-i", "arg-ln-neg1-squared", "arg-acos-5/4-squared", "arg-i-ln-i"].map((k) => [`g399-${k}`, "0059-arg-negative-real-pi.patch"]),
+  // G553 (F304): usual.cc _floor took a negative MPFR value within 1e-12 below an integer as that integer (is_zero's absolute
+  // epsilon; ceil and round through it); the g553-keep-* rows pass on stock and stay in the check file, and the two whose 13 and
+  // 16 digits Home shows rounded (a half unit of 5 lets stock pass) are written lines below
+  ...["ceil-pi-1e-13", "ceil-1-cos-1e-6", "ceil-log10-1e12+1", "floor-neg-pi-1e-13", "round-neg-2.5-pi-1e-13"].map((k) => [`g553-${k}`, "0061-floor-mpfr-working-precision.patch"]),
+  // G551 (F302): misc.cc bitand, bitor and bitxor read a negative _INT_ beside a _ZINT as 2^32+v; the g551-keep-* rows pass on
+  // stock and stay in the check file; the sweep of all pairs of 24 values is a written line per operation below
+  ...["bitand-neg2-2^64-1", "bitand-neg2-hex-ones", "bitxor-neg1-2^63", "bitor-neg1-2^31", "bitand-neg1-neg2^31", "bitand-neg1-2^70"].map((k) => [`g551-${k}`, "0062-bitops-signed-small-integer.patch"]),
 ]);
 // G122: Giac's exact answer is right (patch 0014), but pc()'s evalf of it at Digits 40 cancels the digits of a large k*pi
 // (asin(cos(30!)) = -pi/2+30!-k*pi with k of 32 digits keeps about 7, -pi/2+10^50-k*pi none); Home raises the precision
@@ -946,6 +953,45 @@ export function build(cases) {
     ["quartiles-matrix-inf-max", "quartiles([[1,6],[2,5],[3,4],[-inf,3],[5,inf],[6,1]])[4,1]", "inf", "the second column's maximum"],
   ]) {
     patched.push("// patch 0060-median-list-by-value.patch", `// g789-${k} (derived: ${why}; Giac's answer with -10^9 for -inf and 10^9 for inf, mapped back)`, `Digits:=40:; pc("g789-${k}",'when((${input})==${value},1,0)',1,1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0061 (G553), written lines: the integers whole (Home shows them rounded to 12 digits), the Digits 12 runs, where _floor
+  // raises a double to 100 bits, and a value just past the rounding window at Digits 40 (stock gives 10^12, -10^15, 0, 12 and 3);
+  // the check line guards the window from the other side: sin(1)^2+cos(1)^2-2 is -1-9.2E-41 at Digits 40, its rounding noise
+  check.push("// g553-keep-floor-pythagoras-minus-2-40 (derived: sin(1)^2+cos(1)^2 = 1)", 'Digits:=40:; pc("g553-keep-floor-pythagoras-minus-2-40",\'floor(sin(1)^2+cos(1)^2-2)\',-1,1/10^30);');
+  nCheck++;
+  for (const [k, digits, input, value, why] of [
+    ["ceil-sqrt-1e24+1", 40, "ceil(sqrt(10^24+1))", "1000000000001", "sqrt(10^24+1) = 10^12+5E-13"],
+    ["floor-neg-sqrt-1e30+1", 40, "floor(-sqrt(10^30+1))", "-1000000000000001", "sqrt(10^30+1) = 10^15+5E-16"],
+    ["ceil-pi-1e-13-12", 12, "ceil(pi*10^-13)", "1", "0 < pi*10^-13 <= 1"],
+    ["ceil-log10-1e12+1-12", 12, "ceil(log10(10^12+1))", "13", "log10(10^12+1) = 12+4.3E-13"],
+    ["ceil-sqrt-1e24+1-12", 12, "ceil(sqrt(10^24+1))", "1000000000001", "sqrt(10^24+1) = 10^12+5E-13"],
+    ["ceil-3-pi-1e-36-40", 40, "ceil(3+pi*10^-36)", "4", "3 < 3+pi*10^-36 <= 4, far above the rounding at Digits 40"],
+  ]) {
+    patched.push("// patch 0061-floor-mpfr-working-precision.patch", `// g553-${k} (derived: ${why})`, `Digits:=${digits}:; pc("g553-${k}",'${input}',${value},1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0062 (G551), written lines: bitand, bitor and bitxor on all 576 pairs of 24 integers from 0 to +-2^100 against the
+  // table Python's int wrote (bits-table.py, bits-table.json, row a, column b); each line counts the pairs that differ (0 on our
+  // build; on stock 282 of the 1728 are wrong, each a negative _INT_ beside a _ZINT)
+  const bits = JSON.parse(readFileSync(new URL("bits-table.json", here), "utf8"));
+  for (const op of ["bitand", "bitor", "bitxor"]) {
+    const tables = `pasbv:=[${bits.values.join(",")}]:; pasbt:=[${bits[op].join(",")}]:;`;
+    const count = `sum(seq(abs(sign(${op}(pasbv[iquo(m,24)],pasbv[irem(m,24)])-pasbt[m])),m,0,575))`;
+    patched.push("// patch 0062-bitops-signed-small-integer.patch", `// g551-sweep-${op} (derived: Python's int ${op === "bitand" ? "&" : op === "bitor" ? "|" : "^"} on all pairs of 24 values; the count of pairs that differ)`, `Digits:=40:; ${tables} pc("g551-sweep-${op}",'${count}',0,1/10^30);`);
+    nPatched++;
+  }
+  // Patch 0063 (G554, F305), written lines: exp of a float matrix (usual.cc numeric_matrix_exp; the golden g554-* rows are matrices,
+  // which the export leaves out). Stock gave the identity above Digits 14, and at Digits 12 its 100-term series did not converge for a
+  // larger norm (-155.95 for cos 40, 0.0024 for exp(-30)). Expected values: mpmath at 45 digits (expm, sin, cos, exp; oracle), rounded
+  // to 38 digits at Digits 40 (G554's canary), to 12 at Digits 12.
+  for (const [id, digits, input, value, tol] of [
+    ["g554-exp-evalf-1234-00-40", 40, "exp(evalf([[1,2],[3,4]]))[0][0]", "51968956198705003658124484242647420628/10^36", "5/10^37"],
+    ["g554-exp-evalf-rotation-01-40", 40, "exp(evalf([[0,1],[-1,0]]))[0][1]", "84147098480789650665250232163029899962/10^38", "5/10^39"],
+    ["g554-exp-evalf-rotation40-00-12", 12, "exp(evalf([[0,40],[-40,0]]))[0][0]", "-666938061652/10^12", "1/10^11"],
+    ["g554-exp-evalf-neg30-00-12", 12, "exp(evalf([[-30,0],[0,-30]]))[0][0]", "935762296884/10^25", "1/10^24"],
+  ]) {
+    patched.push("// patch 0063-matrix-exp-working-precision.patch", `// ${id} (oracle: mpmath)`, `Digits:=${digits}:; pc("${id}",'${input}',${value},${tol});`);
     nPatched++;
   }
   for (const [mode, n, tag, value] of [

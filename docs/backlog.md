@@ -22,7 +22,7 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 7. **T1's hands-on items (2026-11-16):** A202 (the key click with the system touch sounds off, the Tab One); A210's feel after it merges (30 % against 90 % on the Fairphone); G9 waits on item 2.
 8. **Later:** the outside rounds (two 30-minute rounds after R4b and R24c, [r18](research/r18-outside-test.md)); at milestone 5, time ten tasks by hand (E-notation against units).
 9. **R779** (decisions.md): the line's drag on the Fairphone.
-10. **A266's device step:** start adb on Windows (`adb start-server` in a Windows session; A266's worker's `adb kill-server` stopped the server behind the WSL bridge), then A266f1 runs by day (the Tab One: does the WebView run under the bars, the five looks with shots); no gate compiles N62BarsPlugin.java until then.
+10. **A266's device step:** plug the Tab One (HA24BZ2Y) in; `adb devices` from WSL must list it (the adb server restarts itself after `adb kill-server`, a gap of about 6 s). Then A266f1 runs by day (does the WebView run under the bars, the five looks with shots); no gate compiles N62BarsPlugin.java until then.
 11. **G784** (decisions.md): should Paste read a copied name back? (G784f1 refuses one N62 copied; a product of names is refused).
 
 ### Upstream reports (owner; drafts in `../outreach/upstream-reports.md`)
@@ -54,10 +54,13 @@ Work continues on `phase-1`; `master` follows it from 2026-11-03 (decisions.md, 
 - **F252, no package (S20).** Home `floor((1+10^-100)^(10^100))` shows **= 1**, right 2 (source: derived: the power lies in (2, 3)); G156's raised start misses the loss. An MPFI interval decides 2 ([r22](research/r22-mpfi.md) 4). Family 3.
 - **nr1116-vg-1, -vg-2, -vg-5 (S1 extreme, `d4bf19bf0`; G403, G405, G404).** A false ≈ 1, a false `=` count, a CAS +2πi. Rerun: `tools/probes/review-1116/author/rerun.sh nr1116-vg-1` (`-vg-2`, `-vg-5`). Family 3.
 - **Night review 2026-11-16:** [the rest](research/night-review-2026-11-16.md).
-- **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F304 G553; F302 G551; F305 G554; F301 G550 (before the freeze); F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
+- **F300–F321 (T2's hunt, 2026-11-16; evidence `../drafts/2026-11-16-ultra/t2-bughunt/findings.md`).** F304 fixed by G553 (patch 0061); F302 fixed by G551 (patch 0062); F305 fixed by G554 (patch 0063); F301 G550 (before the freeze); F306 G555; F307, F308 G556; F318 G558; F321 G560; F313 R551 (before the tag); F312 G559; F314, F315 R552; F300 R550 (after the tag).
 - **F460 (G557's report).** `normal((i*sqrt(-2))^(1/3))` is a rootof worth 1.12246204831·i, stock too (right 0.561231024155+0.972080648620·i). Family 5.
 - **F461 (pass 213, code read).** A CAS row that reads a name stored with a unit (G371) has no unit-dropped note; G392's is Home's. Family 12.
 - **F462 (G576's report).** Home `sin(3^(1e6))` ≈ -0.920699462879 (4.3 s), `sin(2^(1e6))` ≈ -0.9 (right -0.0887753640826, 0.650909333380; mpmath): a huge float argument confirms digits it cannot hold. Family 4.
+- **F475, G790 (G554's report; pass 233).** At Digits > 14 a matrix product whose left factor has only floats within 1e-12 of 0 is the exact zero matrix: Home `approx([[10^-13,0],[0,10^-13]])*[[1,2],[3,4]]` shows [[0,0],[0,0]], not ≈. Family 3.
+- **F476, G791 (G551's report; pass 233).** `hamdist(-1,2^40)` = 33, `hamdist(-2^40,2^40)` = 4294967295 (raw, typed): a negative small integer beside a big one, and opposite signs, give a count. Family 3.
+- **F477, no package (G553's and G554's reports, low).** Giac's `_floor` still truncates a positive MPFR value at rounding noise below an integer (`floor(sin(1)^2+cos(1)^2)` = 0 raw and in CAS at Digits 40; Home 1 by onCut); a float matrix with float zeros (`exp(approx([[-30,0],[0,-30]]))`) shows ⚠, as Home cannot confirm a float zero. Family 3.
 - **F309, no package (T2; owner: after the tag).** Home σ is first order only: a chip at a stationary point loses σ, near a pole it is too small, never ⚠.
 - **F310, F316, F317, F319, no package (T2, low).** linterp refuses an x inside the table when the end check needs > 40 digits; Ans and the last chip are two σ inputs; `floor(evalf(pi,3)*1000)` = 3139 with `=`; weights summing to 0 give `infinity` unmarked.
 - **F350–F365 (T4's sessions, 2026-11-16; evidence in each package).** F350 G575, F353 R576, F354 G577, F355 R577, F356 R578, F358 R579, F359 R580, F360 G578, F361 R581, F363 R583, F364 R584.

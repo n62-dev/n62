@@ -95,11 +95,15 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
   };
   const DEAD = { lit: 0, pop: 0, clicks: 0, pulses: 2 };
 
-  test("Find open: Help is drawn dead and is a dead press", async ({ page }) => {
+  test("Find open: Help (Shift + the ⚙ key, R863) is drawn dead and is a dead press; so is Settings, the tap", async ({ page }) => {
     await tap(page, ["math"]);
     await expect(page.getByTestId("find")).toBeVisible();
     await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
-    expect(await press(page, "help")).toEqual(DEAD);
+    expect(await press(page, "help"), "Settings").toEqual(DEAD);
+    await tap(page, ["shift"]);
+    await expect(page.locator('[data-key="help"]')).toHaveAttribute("data-dead", "true");
+    expect(await press(page, "help"), "Help").toEqual(DEAD);
+    await expect(page.getByTestId("find")).toBeVisible();
   });
   test("Find open: an empty free key (U1) is a dead press", async ({ page }) => {
     await tap(page, ["math"]);
@@ -180,8 +184,8 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     expect(await press(page, "left")).toEqual(DEAD);
   });
   test("in Plot the keys that need the entry line are dead presses; on Home each is live", async ({ page }) => {
-    const needs = ["math", "help", "tmpl", "vars", "select", "deselect"];
-    for (const id of needs.slice(0, 5)) { // (Deselect with nothing selected is the line's own dead press, not asked)
+    const needs = ["math", "tmpl", "vars", "select", "deselect"];
+    for (const id of needs.slice(0, 4)) { // (Deselect with nothing selected is the line's own dead press, not asked)
       await tap(page, ["d1", "d2"]); // (something to select)
       expect(await press(page, id), id).toMatchObject(LIVE);
       await tap(page, ["esc", "esc"]);
@@ -191,6 +195,15 @@ test.describe("a key drawn dead: no click, no look, the double pulse", () => {
     for (const id of needs) expect(await press(page, id), id).toEqual(DEAD);
     await tap(page, ["shift"]);
     expect(await press(page, "deselect"), "paste").toEqual(DEAD); // Shift + Deselect
+    await tap(page, ["shift"]);
+    expect(await press(page, "help"), "Help").toEqual(DEAD); // Shift + the ⚙ key (R863): Help needs the entry line
+    expect(await press(page, "help"), "Settings").toMatchObject(LIVE); // the ⚙ key's tap: Settings, in Plot too
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+  });
+  test("on Home Help (Shift + the ⚙ key) is live (R863)", async ({ page }) => {
+    await tap(page, ["d1", "d2", "shift"]);
+    expect(await press(page, "help"), "Help").toMatchObject(LIVE);
+    await expect(page.getByTestId("find")).toBeVisible();
   });
   // route.ts deadPress: every command the route turns dead in Plot is quiet, not the four arrows (the shell may take them)
   test("in Plot ⌫, Undo and Shift + ⌫ are dead presses (no look, no click, the double pulse); on Home with text they are live", async ({ page }) => {

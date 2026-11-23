@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   await open(page);
 });
 
-test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, Help | Esc, Undo | Redo, Select | Deselect; Settings, Copy | Paste on Shift (R146, R723)", async ({ page }) => {
+test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, ⚙ | Esc, Undo | Redo, Select | Deselect; Help, Copy | Paste on Shift (R146, R723, R863)", async ({ page }) => {
   const ids = ["u1", "u2", "up", "help", "esc", "u3", "u4", "left", "right", "undo", "redo", "u5", "u6", "down", "select", "deselect"];
   const boxes = await page.evaluate(
     (ids) =>
@@ -40,37 +40,49 @@ test("the cluster is R3: U1-U6 empty in columns 1-2, the round pad, Help | Esc, 
   expect(colOf(["esc", "redo", "deselect"])).toBe(1);
   for (const u of ["u1", "u2", "u3", "u4", "u5", "u6"]) await expect(page.locator(`[data-key="${u}"]`)).toHaveAttribute("data-user", "empty");
   for (const id of ["help", "select", "deselect"]) await expect(page.locator(`[data-key="${id}"]`)).not.toHaveAttribute("data-dead", "true"); // (the taps are live)
-  const faces = { help: "Help", esc: "Esc", undo: "Undo", redo: "Redo", select: "Select", deselect: "Deselect" };
+  const faces = { help: "⚙\uFE0E", esc: "Esc", undo: "Undo", redo: "Redo", select: "Select", deselect: "Deselect" };
   for (const [id, l] of Object.entries(faces)) await expect(page.locator(`[data-key="${id}"] .main`), id).toHaveText(l);
-  await expect(page.locator('[data-key="help"] .main')).toHaveAttribute("data-opens", "true"); // Help ▾
-  const legends = { help: "Settings", esc: "Clear", undo: "⇤", redo: "⇥", select: "Copy", deselect: "Paste" };
+  await expect(page.locator('[data-key="help"] .main')).toHaveAttribute("data-opens", "true"); // ⚙ ▾ (Settings)
+  const legends = { help: "Help", esc: "Clear", undo: "⇤", redo: "⇥", select: "Copy", deselect: "Paste" };
   for (const [id, l] of Object.entries(legends)) await expect(page.locator(`[data-key="${id}"] .shiftlegend`), id).toHaveText(l);
-  await expect(page.locator('[data-key="help"] .shiftlegend')).toHaveAttribute("data-opens", "true"); // Settings ▾
+  await expect(page.locator('[data-key="help"] .shiftlegend')).toHaveAttribute("data-opens", "true"); // Help ▾
   for (const id of ["select", "deselect"]) await expect(page.locator(`[data-key="${id}"] .shiftlegend`), id).not.toHaveAttribute("data-opens", "true");
   // no letter line in the cluster (vertical space)
   await expect(page.locator('[data-key="esc"] .alphalegend, [data-key="u1"] .alphalegend')).toHaveCount(0);
   const gone = ["menu", "apps", "symb", "plot", "num", "cancel", "app", "cas", "view", "lstart", "lend", "copy", "paste", "mode"];
   await expect(page.locator(gone.map((id) => `[data-key="${id}"]`).join(", "))).toHaveCount(0);
-  // Shift on: Settings, Copy and Paste are live; no cell of the cluster is reserved
+  // Shift on: Help, Copy and Paste are live; no cell of the cluster is reserved
   await tap(page, ["shift"]);
   for (const id of ["help", "select", "deselect"]) await expect(page.locator(`[data-key="${id}"]`), id).not.toHaveAttribute("data-dead", "true");
 });
 
-test("R146, R723: one press for Redo; Help's tap opens Help, Shift + Help Settings, and so does a flick up on it", async ({ page }) => {
-  await tap(page, ["d7", "mul", "d8", "undo"]);
-  expect(await entryValue(page)).toBe("7\\times");
-  await tap(page, ["redo"]);
-  expect(await entryValue(page)).toBe("7\\times8");
-  await tap(page, ["esc", "help"]);
-  await expect(page.getByTestId("find")).toBeVisible(); // nothing at the cursor: Help is Find (R197)
-  await tap(page, ["esc"]);
-  await tap(page, ["shift", "help"]);
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
-  await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
-  await expect(sheet(page)).toBeHidden();
-  await flick(page, "help", "up");
-  await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
-});
+for (const width of [412, 360])
+  test(`R146, R863: one press for Redo; the ⚙ key's tap opens Settings, Shift + it Help, and so does a flick up on it (${width} px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 860 });
+    await tap(page, ["d7", "mul", "d8", "undo"]);
+    expect(await entryValue(page)).toBe("7\\times");
+    await tap(page, ["redo"]);
+    expect(await entryValue(page)).toBe("7\\times8");
+    await tap(page, ["help"]);
+    await expect(page.getByTestId("sheet-title")).toHaveText("Mode › Settings");
+    await tap(page, ["esc", "esc"]); // back to Mode, then closed (R49)
+    await expect(sheet(page)).toBeHidden();
+    await tap(page, ["esc", "shift", "help"]);
+    await expect(page.getByTestId("find")).toBeVisible(); // nothing at the cursor: Help is Find (R197)
+    await tap(page, ["esc"]);
+    await expect(page.getByTestId("find")).toBeHidden();
+    await flick(page, "help", "up");
+    await expect(page.getByTestId("find")).toBeVisible();
+    await tap(page, ["esc"]);
+    // the function at the cursor: sin, 1, then Shift + the key shows sin's sheet (R197); a flick up does the same
+    await tap(page, ["sin", "d1", "shift", "help"]);
+    await expect(page.getByTestId("menu").locator('[role="menuitem"]').first()).toBeVisible();
+    await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
+    await tap(page, ["esc"]);
+    await expect(sheet(page)).toBeHidden();
+    await flick(page, "help", "up");
+    await expect(page.getByTestId("sheet-title")).toHaveText("Help: Sine");
+  });
 
 test("R723, R785: Mode opens from the STD 12 ▾ chip and from a free key that holds it; Shift + Deselect does not open it", async ({ page }) => {
   await page.getByTestId("chip-format").tap();

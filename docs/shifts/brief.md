@@ -61,18 +61,20 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| 888b | R843 N62 Light's Enter in orange A `#c26a00` (owner's pick, 2026-11-22) | ron, Opus | `p1/ron-enterorange` | R842 |
+| 888b1 | [R843](packages/R843.md) once more, review-only: `scripts/pipeline.sh ron "R843" --no-worker --audit-model auto` (its NOT MERGED of 11-23 11:25 was phase-1 moving under its integ hold, audit APPROVED; owner, 2026-11-23: rerun first; done at its next result line) | ron, Opus | `p1/ron-enterorange` | – |
 | 888c | [R872](packages/R872.md) one Enter rule; B&W and Solarized Enter colours (Solarized Light orange) | ron, Opus | `p1/ron-enterrule` | R843 |
 | 888d | [R873](packages/R873.md) the round pad and the key line stand out in every look | ron, Opus | `p1/ron-padline` | R872 |
 | 888e | [R874](packages/R874.md) the empty-history mark takes the hint's colour, faint | ron, Opus | `p1/ron-markhint` | R860, R873 |
-| 888f | [R863](packages/R863.md) Settings on the tap (⚙), Help on its Shift | ron, Opus | `p1/ron-settingskey` | R856, R838 |
-| 888g | [R866](packages/R866.md) the prefix keys end in a slot line (G_) | ron, Opus | `p1/ron-prefixslot` | – |
-| 888h | [R867](packages/R867.md) a pad drag steps by number or name | ron, Opus | `p1/ron-padtoken` | – |
+| 888f | R863 Settings on the tap (⚙), Help on its Shift | ron, Opus | `p1/ron-settingskey` | R856, R838 |
+| 888g | R866 the prefix keys end in a slot line (G_) | ron, Opus | `p1/ron-prefixslot` | – |
+| 888h | R867 a pad drag steps by number or name | ron, Opus | `p1/ron-padtoken` | – |
 | 888i | [R868](packages/R868.md) a tap on the line brings the keys back (results mode) | ron, Opus | `p1/ron-linetapunfold` | R856 |
 | 888j | [R869](packages/R869.md) Help on Find's highlighted row (help sheet or card) | ron, Opus | `p1/ron-helpfind` | – |
 | 888k | [R870](packages/R870.md) Help in the unit view | ron, Opus | `p1/ron-unithelp` | R869, R838, R862 |
 | 888l | [R871](packages/R871.md) Shift + Fmt opens the Fmt cycle's settings | ron, Opus | `p1/ron-fmtsettings` | G785 |
 | 888m | [R881](packages/R881.md) the "rainbow" easter egg | ron, Opus | `p1/ron-rainbow` | A266 |
+| 888n | [R883](packages/R883.md) a typed ± mutes the digits past its σ, as a constant's does | ron, Opus | `p1/ron-pmmute` | – |
+| 888o | [R884](packages/R884.md) Settings › Uncertainty: "Rounded to σ" | ron, Opus | `p1/ron-uncround` | R883 |
 | 890 | [R742](packages/R742.md) zebra history rows; the picked row's edge | ron, Opus | `p1/ron-zebra` | R832, R743 |
 | 891 | [R728](packages/R728.md) the keys say what they do (CAS letters, Alpha colours, docs/06's differences) | ron, Opus | `p1/ron-keyssay` | R723, R726 |
 | 892 | [R729](packages/R729.md) the key legends: armed a ring, locked a fill; Shift and Alpha show their layers (K4) | ron, Opus | `p1/ron-keylegends` | R723, R726, R728 |
@@ -117,14 +119,11 @@ Two lanes on the Tab One (owner, 2026-11-22: usage has room): `ANDROID_SERIAL=HA
 
 | Step | What | Agent, model | Branch | After |
 |---|---|---|---|---|
-| B2b | G785 Fmt skips a step that draws the same; a press that changes nothing is dead | gorge, Opus | `p1/gorge-fmtskip` | – |
-| B2c | G789 median and the quartiles refuse undef and a name in a list; ±inf sorted by value | gorge, Opus | `p1/gorge-medianundef` | – |
-| B4 | [G553](packages/G553.md) floor, ceil and round decide at the working precision | gorge, Opus | `p1/gorge-floorepsilon` | – |
-| B5 | [G551](packages/G551.md) bitand, bitor and bitxor read a small negative integer as signed | gorge, Opus | `p1/gorge-bitsigned` | – |
-| B6 | [G554](packages/G554.md) exp of a float matrix is its series, never the identity | gorge, Opus | `p1/gorge-matexpfloat` | – |
+| B6a | [G790](packages/G790.md) a matrix product whose left factor has only tiny floats is never the zero matrix | gorge, Opus | `p1/gorge-mmulttiny` | – |
 | B7 | [G405](packages/G405.md) solve keeps two real roots that are distinct but close | gorge, Opus | `p1/gorge-closeroots` | – |
 | B8 | [G404](packages/G404.md) G358's climb on every path; past its reach is never an overflow | gorge, Opus | `p1/gorge-climball` | – |
 | B9 | [G403](packages/G403.md) a tiny constant without an integer literal raises the check's start | gorge, Opus | `p1/gorge-tinyconst` | – |
+| B9a | [G791](packages/G791.md) hamdist reads a negative integer beside a big one as signed; opposite signs are refused | gorge, Opus | `p1/gorge-hamdistsigned` | – |
 | B10 | [G385](packages/G385.md) a temperature difference in brackets takes part in arithmetic | gorge, Opus | `p1/gorge-tempdiffarith` | – |
 | B11 | [G381](packages/G381.md) a stored float list reads back as a list, never a vector | gorge, Opus | `p1/gorge-storedlist` | – |
 | B12 | [G382](packages/G382.md) a decimal inside a string is never rounded | gorge, Opus | `p1/gorge-stringdigits` | – |

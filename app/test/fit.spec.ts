@@ -251,12 +251,12 @@ for (const [width, height, all] of [[360, 740, false], [412, 915, true]] as cons
     }
   });
 
-// R146, R723: Shift + Help's legend ("Settings", on r0c4) fits its cluster key at the legend size at 360 and 412 px wide; R143: with the
-// menu mark ▾ after it (out of the flow, inside the key's width: a cluster key has no padding to spare) it shrinks by at most a pixel (10 px at 360, the legend's 11 px
-// at 412) and the mark ends inside the key. With Shift on the face "Settings" is shrunk to fit (measured 11.5 px at 360,
-// 13.9 px at 412, against 15 px for its neighbours; the report's decision item), never cut.
+// R146, R723, R863: r0c4's Shift legend "Help" fits its cluster key at the legend size at 360 and 412 px wide; R143: with the
+// menu mark ▾ after it (out of the flow, inside the key's width: a cluster key has no padding to spare) it shrinks by at most a
+// pixel and the mark ends inside the key. The face is ⚙ (U+2699 U+FE0E, text style; the word "Settings" fits only at 10.7 px at
+// 360, R863), with its ▾, not cut and at least the size of the Esc face. With Shift on the face "Help" is not cut.
 for (const width of [360, 412])
-  test(`R146: the Settings legend on Help fits at the legend size at ${width} px; Shift on, the face is not cut`, async ({ page }) => {
+  test(`R863: the ⚙ face and the Help legend fit r0c4 at ${width} px; Shift on, the face is not cut`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await open(page);
     const help = page.locator('[data-key="help"]');
@@ -267,18 +267,22 @@ for (const width of [360, 412])
         const r = el?.getBoundingClientRect();
         return {
           text: el?.textContent?.trim(), px: Math.round(parseFloat(el ? getComputedStyle(el).fontSize : "0")),
-          cut: r ? r.right + 0.55 * parseFloat(getComputedStyle(el!).fontSize) > k.right + 0.5 : true, // (the mark hangs after the text, about 0.55 em)
+          cut: r ? r.right + 0.55 * parseFloat(getComputedStyle(el!).fontSize) > k.right + 0.5 || r.left < k.left - 0.5 : true, // (the mark hangs after the text, about 0.55 em)
         };
       }, sel);
-    expect(await fits(".shiftlegend")).toMatchObject({ text: "Settings", cut: false });
+    const escPx = await page.locator('[data-key="esc"] [data-fit="face"]').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    expect(await fits(".shiftlegend")).toMatchObject({ text: "Help", cut: false });
     expect((await fits(".shiftlegend")).px).toBeGreaterThanOrEqual(10);
+    const face = await fits('[data-fit="face"]');
+    expect(face).toMatchObject({ text: "\u2699\uFE0E", cut: false });
+    expect(face.px).toBeGreaterThanOrEqual(Math.round(escPx));
     await tap(page, ["shift"]);
-    expect(await fits('[data-fit="face"]')).toMatchObject({ text: "Settings", cut: false });
+    expect(await fits('[data-fit="face"]')).toMatchObject({ text: "Help", cut: false });
   });
 
-// R723: the faces of Help (with its ▾ mark), Select and Deselect, and Shift's "Settings", "Copy" and "Paste", fit their cluster keys at 360 and 412 px
+// R723, R863: the faces ⚙ (with its ▾ mark), Select and Deselect, and Shift's "Help", "Copy" and "Paste", fit their cluster keys at 360 and 412 px
 for (const width of [360, 412])
-  test(`R723: the faces of Help, Select and Deselect fit their keys at ${width} px, Shift on too`, async ({ page }) => {
+  test(`R723: the faces of ⚙, Select and Deselect fit their keys at ${width} px, Shift on too`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await open(page);
     const faces = (): Promise<{ id: string; text: string; cut: boolean }[]> =>
@@ -293,13 +297,13 @@ for (const width of [360, 412])
         }),
       );
     expect(await faces()).toEqual([
-      { id: "help", text: "Help", cut: false },
+      { id: "help", text: "\u2699\uFE0E", cut: false },
       { id: "select", text: "Select", cut: false },
       { id: "deselect", text: "Deselect", cut: false },
     ]);
     await tap(page, ["shift"]);
     expect(await faces()).toEqual([
-      { id: "help", text: "Settings", cut: false },
+      { id: "help", text: "Help", cut: false },
       { id: "select", text: "Copy", cut: false },
       { id: "deselect", text: "Paste", cut: false },
     ]);

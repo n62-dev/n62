@@ -7,6 +7,9 @@ import { aboutText as t, type AboutKey } from "../i18n/enAbout.ts";
 import type { DesktopMap, DeskTarget } from "./desktopKeys.ts";
 import { keyboard } from "./keyboard.ts";
 
+/** A face that is a sign, not a word: the list names it by its word (R863: the ⚙ of row 0, col 4 is Settings). */
+const WORD: Readonly<Record<string, string>> = { "$key.gear": "$key.settings" };
+
 /** What a desktop key presses, in the keypad's words. */
 function pressed(target: DeskTarget): string {
   if ("action" in target) return t(`keys.action.${target.action}` as AboutKey);
@@ -14,7 +17,7 @@ function pressed(target: DeskTarget): string {
   if (!key) return target.key;
   if (key.user) return `${t("keys.user")} ${key.id.toUpperCase()}${target.layer === "shift" ? `, ${t("keys.shift")}` : ""}`;
   const label = key.label[target.layer] ?? key.label.primary ?? key.id;
-  return legend(label);
+  return legend(WORD[label] ?? label);
 }
 
 /** The help text: the intro, then a line per key and layer that has a desktop key of its own. */
