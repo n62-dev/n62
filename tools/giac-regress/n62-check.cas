@@ -363,6 +363,12 @@ Digits:=40:; pc("g235-bitand-neg",'(bitand(-1,255))',255,5/10^10);
 Digits:=40:; pc("g235-bitor",'(bitor(12,10))',14,5/10^11);
 // g235-bitxor (home.yaml, oracle)
 Digits:=40:; pc("g235-bitxor",'(bitxor(12,10))',6,5/10^12);
+// g551-keep-bitand-neg2-255 (home.yaml, derived)
+Digits:=40:; pc("g551-keep-bitand-neg2-255",'(bitand(-2,255))',254,5/10^10);
+// g551-keep-bitand-2^40-2^40+1 (home.yaml, derived)
+Digits:=40:; pc("g551-keep-bitand-2^40-2^40+1",'(bitand(2^40,2^40+1))',(109951162778*10^1),5*10^0);
+// g551-keep-bitnot-5 (home.yaml, derived)
+Digits:=40:; pc("g551-keep-bitnot-5",'(bitnot(5))',-6,5/10^12);
 // g38-sign-sin1e50 (home.yaml, oracle)
 Digits:=40:; pc("g38-sign-sin1e50",'(sign(sin(10^50)))',-1,5/10^12);
 // g38-abs-sin1e50 (home.yaml, oracle)

@@ -2,7 +2,8 @@
 // G229 (docs/04 5.4: "shifts and rotations as definitions that respect the word size"): `shl`, `shr`, `rotl`, `rotr` and
 // `bnot`, our Giac definitions (homeEval.ts ENGINE_DEFINITIONS, loaded on the first input that names them). Giac has none
 // of these names, and its `bitnot` is the unbounded NOT (bitnot(5) = -6 whatever the word); `bitand`, `bitor`, `bitxor`
-// are right on big and negative integers and stay Giac's.
+// are right on big and negative integers (two's complement, unbounded) since patch 0062 (G551: a negative int beside a big
+// one was read as 2^32+v) and stay Giac's.
 //   shl(x,n,w,s)  shr(x,n,w,s)  rotl(x,n,w,s)  rotr(x,n,w,s)  bnot(x,w,s)
 // w is the word size (8, 16, 32 or 64) and s is 0 (unsigned) or 1 (signed, two's complement). x must fit the word as
 // read: 0 ≤ x < 2^w unsigned, −2^(w−1) ≤ x < 2^(w−1) signed; the count n is an integer ≥ 0. The operation works on the
